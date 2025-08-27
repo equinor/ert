@@ -475,7 +475,7 @@ def _generate_exp_ert_config(config_path, output_dir, config_file):
         ErtConfigKeys.NUM_REALIZATIONS: NUM_REALIZATIONS,
         ErtConfigKeys.RUNPATH: os.path.join(
             output_dir,
-            "egg_simulations/batch_<ITER>/geo_realization_<GEO_ID>/simulation_<IENS>",
+            "egg_simulations/batch_<ITER>/realization_<MODEL_ID>/simulation_<IENS>",
         ),
         ErtConfigKeys.RUNPATH_FILE: os.path.join(
             os.path.realpath("everest/model"),
@@ -486,7 +486,7 @@ def _generate_exp_ert_config(config_path, output_dir, config_file):
             [
                 "copy_directory",
                 [
-                    f"{config_path}/../../eclipse/include/realizations/realization-<GEO_ID>/eclipse",
+                    f"{config_path}/../../eclipse/include/realizations/realization-<MODEL_ID>/eclipse",
                     "eclipse",
                 ],
             ],

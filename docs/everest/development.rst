@@ -74,7 +74,7 @@ multiple `model_realizations` (denoted by `<MODEL_ID>`). A `model_realization` i
 during the optimization) which affect the response of the underlying optimized model (NOTE: `model_realization` is not the same as an
 ERT `realization`; see also :ref:`robust-optimization-label`). Each `model_realization` can contain several `simulations`
 (i.e., forward model runs). This is the key difference between the hierarchical data model of EVEREST and ERT (Fig 3).
-NOTE: `<MODEL_ID>` (or `<GEO_ID>` due to legacy reasons) is inserted (and substituted) in the `run_path` for each `model_realization`.
+NOTE: `<MODEL_ID>` is inserted (and substituted) in the `run_path` for each `model_realization`.
 
 .. figure:: images/Everest_vs_Ert_01.png
     :align: center

@@ -33,7 +33,7 @@ The value of a variable can be set in three different ways:
 
    .. code-block:: yaml
 
-      realization: <GEO_ID>
+      realization: <MODEL_ID>
       configpath: <CONFIG_PATH>
       runpath_file: <RUNPATH_FILE>
       eclbase: <ECLBASE>

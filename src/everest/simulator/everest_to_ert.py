@@ -76,7 +76,7 @@ def _extract_environment(
     ever_config: EverestConfig, ert_config: dict[str, Any]
 ) -> None:
     simulation_fmt = os.path.join(
-        "batch_<ITER>", "geo_realization_<GEO_ID>", SIMULATION_DIR
+        "batch_<ITER>", "realization_<MODEL_ID>", SIMULATION_DIR
     )
 
     assert ever_config.simulation_dir is not None
@@ -251,8 +251,8 @@ def _expand_source_path(source: str, ever_config: EverestConfig) -> str:
     return source
 
 
-def _is_dir_all_geo(source: str, ever_config: EverestConfig) -> bool:
-    """Expands <GEO_ID> for all realizations and if:
+def _is_dir_all_model(source: str, ever_config: EverestConfig) -> bool:
+    """Expands <MODEL_ID> for all realizations and if:
     - all are directories, returns True,
     - all are files, returns False,
     - some are non-existing, raises an AssertionError
@@ -263,16 +263,16 @@ def _is_dir_all_geo(source: str, ever_config: EverestConfig) -> bool:
         raise ValueError(msg)
 
     is_dir = []
-    for geo_id in realizations:
-        geo_source = source.replace("<GEO_ID>", str(geo_id))
-        if not os.path.exists(geo_source):
+    for model_id in realizations:
+        model_source = source.replace("<MODEL_ID>", str(model_id))
+        if not os.path.exists(model_source):
             msg = (
                 "Expected source to exist for data installation, "
-                f"did not find: {geo_source}"
+                f"did not find: {model_source}"
             )
             raise ValueError(msg)
 
-        is_dir.append(os.path.isdir(geo_source))
+        is_dir.append(os.path.isdir(model_source))
 
     if set(is_dir) == {True, False}:
         msg = f"Source: {source} represent both files and directories"
@@ -297,7 +297,7 @@ def _extract_data_operations(ever_config: EverestConfig) -> list[str]:
         target = data_req.target
 
         source = _expand_source_path(data_req.source, ever_config)
-        is_dir = _is_dir_all_geo(source, ever_config)
+        is_dir = _is_dir_all_model(source, ever_config)
 
         if data_req.link:
             forward_model.append(symlink_fmt.format(source=source, link_name=target))

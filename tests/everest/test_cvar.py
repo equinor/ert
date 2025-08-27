@@ -19,7 +19,7 @@ def test_mathfunc_cvar(copy_math_func_test_data_to_tmp):
         "model": {"realizations": [0, 1]},
         "forward_model": [
             (
-                "distance3 --point-file point.json --realization <GEO_ID> "
+                "distance3 --point-file point.json --realization <MODEL_ID> "
                 "--target 0.5 0.5 0.5 --out distance"
             )
         ],

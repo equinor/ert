@@ -88,16 +88,16 @@ def test_remove_run_path(copy_math_func_test_data_to_tmp):
 
     # Check the failed simulation folder still exists
     assert os.path.exists(
-        os.path.join(simulation_dir, "batch_0/geo_realization_0/simulation_2")
+        os.path.join(simulation_dir, "batch_0/realization_0/simulation_2")
     ), "Simulation folder should be there, something went wrong and was removed!"
 
     # Check the successful simulation folders do not exist
     assert not os.path.exists(
-        os.path.join(simulation_dir, "batch_0/geo_realization_0/simulation_0")
+        os.path.join(simulation_dir, "batch_0/realization_0/simulation_0")
     ), "Simulation folder should not be there, something went wrong!"
 
     assert not os.path.exists(
-        os.path.join(simulation_dir, "batch_0/geo_realization_0/simulation_1")
+        os.path.join(simulation_dir, "batch_0/realization_0/simulation_1")
     ), "Simulation folder should not be there, something went wrong!"
 
     # Manually rolling the output folder between two runs
@@ -110,15 +110,15 @@ def test_remove_run_path(copy_math_func_test_data_to_tmp):
 
     # Check the all simulation folder exist when delete_run_path is set to False
     assert os.path.exists(
-        os.path.join(simulation_dir, "batch_0/geo_realization_0/simulation_2")
+        os.path.join(simulation_dir, "batch_0/realization_0/simulation_2")
     ), "Simulation folder should be there, something went wrong and was removed!"
 
     assert os.path.exists(
-        os.path.join(simulation_dir, "batch_0/geo_realization_0/simulation_0")
+        os.path.join(simulation_dir, "batch_0/realization_0/simulation_0")
     ), "Simulation folder should be there, something went wrong and was removed"
 
     assert os.path.exists(
-        os.path.join(simulation_dir, "batch_0/geo_realization_0/simulation_1")
+        os.path.join(simulation_dir, "batch_0/realization_0/simulation_1")
     ), "Simulation folder should be there, something went wrong and was removed"
 
 
