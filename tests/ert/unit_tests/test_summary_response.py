@@ -8,12 +8,13 @@ from packaging import version
 
 from ert.config import ErtConfig
 from ert.run_models._create_run_path import create_run_path
+from ert.runpaths import Runpaths
 from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
 
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_load_summary_response_restart_not_zero(
-    tmpdir, snapshot, request, storage, run_paths, run_args
+    tmpdir, snapshot, request, storage, run_args
 ):
     """
     This is a regression test for summary responses where the index map
@@ -57,7 +58,7 @@ def test_load_summary_response_restart_not_zero(
             env_pr_fm_step=ert_config.env_pr_fm_step,
             substitutions=ert_config.substitutions,
             parameters_file="parameters",
-            runpaths=run_paths(ert_config),
+            runpaths=Runpaths.from_config(ert_config),
         )
         shutil.copy(test_path / "PRED_RUN.SMSPEC", sim_path / "PRED_RUN.SMSPEC")
         shutil.copy(test_path / "PRED_RUN.UNSMRY", sim_path / "PRED_RUN.UNSMRY")

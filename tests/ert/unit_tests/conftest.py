@@ -47,20 +47,7 @@ def prior_ensemble_args(storage):
 
 
 @pytest.fixture
-def run_paths():
-    def func(ert_config: ErtConfig):
-        return Runpaths(
-            jobname_format=ert_config.runpath_config.jobname_format_string,
-            runpath_format=ert_config.runpath_config.runpath_format_string,
-            filename=str(ert_config.runpath_file),
-            substitutions=ert_config.substitutions,
-        )
-
-    yield func
-
-
-@pytest.fixture
-def run_args(run_paths):
+def run_args():
     def func(
         ert_config: ErtConfig,
         ensemble: Ensemble,
@@ -72,7 +59,7 @@ def run_args(run_paths):
             else active_realizations
         )
         return create_run_arguments(
-            run_paths(ert_config),
+            Runpaths.from_config(ert_config),
             [True] * active_realizations,
             ensemble,
         )

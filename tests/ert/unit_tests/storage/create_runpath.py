@@ -29,13 +29,10 @@ def create_runpath(
             iteration=iteration,
         )
 
-    runpaths = Runpaths(
-        jobname_format=ert_config.runpath_config.jobname_format_string,
-        runpath_format=ert_config.runpath_config.runpath_format_string,
-        filename=str(ert_config.runpath_file),
-        substitutions=ert_config.substitutions,
+    runpaths = Runpaths.from_config(ert_config)
+    run_args = create_run_arguments(
+        runpaths.from_config(ert_config), active_mask, ensemble
     )
-    run_args = create_run_arguments(runpaths, active_mask, ensemble)
 
     sample_prior(
         ensemble,
