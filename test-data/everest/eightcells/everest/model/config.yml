@@ -1,0 +1,66 @@
+definitions:
+  eclbase: eclipse/model/EIGHTCELLS
+
+wells:
+  - { name: OP1 }
+  - { name: WI1 }
+
+controls:
+  -
+    name: well_rate
+    type: generic_control
+    perturbation_magnitude: 150
+    variables:
+      -
+        name: OP1
+        index: 1
+        initial_guess: 50
+        min: 10
+        max: 500
+      -
+        name: WI1
+        index: 1
+        initial_guess: 250
+        min: 10
+        max: 500
+
+objective_functions:
+  - name: rf
+
+
+optimization:
+  algorithm: optpp_q_newton
+  min_realizations_success: 1
+  perturbation_num: 1  # per realization
+  speculative: True
+  max_iterations: 2
+  max_function_evaluations: 3
+  convergence_tolerance: 0.01
+
+model:
+  realizations: [0, 1, 2]
+
+environment:
+  simulation_folder: eightcells_simulations
+  random_seed: 123456
+
+simulator:
+  queue_system:
+    name: local
+    max_running: 8
+
+install_data:
+  - source: r{{ configpath }}/../../eclipse/include/realizations/realization-r{{ realization }}/eclipse
+    target: eclipse
+  -
+    source: r{{ configpath }}/../input/files
+    target: files
+    link: true
+
+
+forward_model:
+  - well_constraints  -i files/well_readydate.json -c files/wc_config.yml -rc well_rate.json -o wc_wells.json
+  - add_templates     -i wc_wells.json -c files/at_config.yml -o at_wells.json
+  - schmerge          -s eclipse/include/schedule/schedule.tmpl -i at_wells.json -o eclipse/include/schedule/schedule.sch
+  - flow              r{{ eclbase }} --enable-tuning=true
+  - rf                -s r{{ eclbase }} -o rf
