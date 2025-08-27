@@ -19,7 +19,10 @@ from ert.config import (
 from ert.enkf_main import create_run_path, sample_prior
 from ert.run_arg import create_run_arguments
 from ert.runpaths import Runpaths
-from ert.storage.local_ensemble import RealizationStorageState, forward_model_ok
+from ert.storage.local_ensemble import (
+    RealizationStorageState,
+    load_realization_parameters_and_responses,
+)
 from tests.ert.unit_tests.config.egrid_generator import simple_grid
 from tests.ert.unit_tests.config.summary_generator import simple_smspec, simple_unsmry
 
@@ -742,7 +745,7 @@ def save_zeros(prior_ensemble, num_realizations, dim_size):
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize("itr", [0, 1])
-def test_when_manifest_files_are_written_forward_model_ok_succeeds(storage, itr):
+def test_when_manifest_files_are_written_loading_succeeds(storage, itr):
     num_realizations = 2
     dim_size = 2
     simple_grid().to_file("GRID.EGRID")
@@ -875,10 +878,10 @@ def test_when_manifest_files_are_written_forward_model_ok_succeeds(storage, itr)
             else:
                 raise AssertionError
 
-    # When files in manifest are written we expect forward_model_ok to succeed
+    # When files in manifest are written we expect loading to succeed
     for run_arg in run_args:
         load_result = asyncio.run(
-            forward_model_ok(
+            load_realization_parameters_and_responses(
                 run_arg.runpath, run_arg.iens, run_arg.itr, run_arg.ensemble_storage
             )
         )

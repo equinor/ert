@@ -1352,7 +1352,7 @@ async def _write_responses_to_storage(
     return LoadResult.success()
 
 
-async def forward_model_ok(
+async def load_realization_parameters_and_responses(
     run_path: str,
     realization: int,
     iter_: int,
@@ -1424,7 +1424,9 @@ def load_parameters_and_responses_from_runpath(
     async_result = [
         (
             pool.apply_async(
-                lambda *args: asyncio.run(forward_model_ok(*args)),
+                lambda *args: asyncio.run(
+                    load_realization_parameters_and_responses(*args)
+                ),
                 (
                     run_path_format.replace("<IENS>", str(realization)).replace(
                         "<ITER>", "0"
