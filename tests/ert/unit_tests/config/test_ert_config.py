@@ -341,7 +341,8 @@ def test_that_get_plugin_jobs_fetches_exactly_ert_plugins():
         ),
         encoding="utf-8",
     )
-    ert_config = ErtConfig.from_file("config.ert")
+    with pytest.warns(ConfigWarning, match="Deprecated keywords, SCRIPT and INTERNAL"):
+        ert_config = ErtConfig.from_file("config.ert")
 
     assert ert_config.workflow_jobs["plugin"].is_plugin()
     assert not ert_config.workflow_jobs["script"].is_plugin()
@@ -674,6 +675,7 @@ def test_that_job_definition_file_with_unexecutable_script_gives_validation_erro
 
 
 @pytest.mark.parametrize("c", ["\\", "?", "+", ":", "*"])
+@pytest.mark.filterwarnings("ignore:RUNPATH keyword contains no value placeholders")
 @pytest.mark.usefixtures("use_tmpdir")
 def test_char_in_unquoted_is_allowed(c):
     ert_config = ErtConfig.from_file_contents(
@@ -1157,8 +1159,11 @@ def test_that_failing_to_load_ert_script_with_errors_fails_gracefully(load_state
     with open(test_config_file_name, "w", encoding="utf-8") as fh:
         fh.write(test_config_contents)
 
-    with pytest.warns(
-        ConfigWarning, match="Loading workflow job.*failed.*It will not be loaded."
+    with (
+        pytest.warns(
+            ConfigWarning, match="Loading workflow job.*failed.*It will not be loaded."
+        ),
+        pytest.warns(ConfigWarning, match="Deprecated keywords, SCRIPT and INTERNAL"),
     ):
         ert_config = ErtConfig.from_file(test_config_file_name)
         assert "wf" not in ert_config.workflows
@@ -2017,7 +2022,8 @@ def test_parsing_define_within_workflow():
             )
         )
 
-    ert_config = ErtConfig.from_file("config.ert")
+    with pytest.warns(ConfigWarning, match="SCRIPT has no effect"):
+        ert_config = ErtConfig.from_file("config.ert")
 
     # Expect overwritten defines within workflow scope
     wf = ert_config.workflows["workflow"]
