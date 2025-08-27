@@ -78,6 +78,7 @@ def test_create_run_args_separate_base_and_name(prior_ensemble, run_paths):
 
 
 @pytest.mark.integration_test
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_assert_symlink_deleted(snake_oil_field_example, storage, run_paths):
     ert_config = snake_oil_field_example
     experiment_id = storage.create_experiment(
@@ -334,6 +335,7 @@ def test_run_template_replace_in_file(key, expected, make_run_path):
         ("MY_ECL_BASE<IENS>", "MY_ECL_BASE0.DATA"),
     ),
 )
+@pytest.mark.filterwarnings("ignore:Use DATA_FILE instead of RUN_TEMPLATE")
 def test_run_template_replace_in_ecl(ecl_base, expected_file, make_run_path):
     Path("BASE_ECL_FILE.DATA").write_text(
         "I WANT TO REPLACE:<NUM_CPU>", encoding="utf-8"
@@ -787,6 +789,9 @@ def test_that_duplicate_bracketed_placeholders_is_invalid(runpath):
         "simulations/realization-%d/realization-%d/iter-%d/iter-%d",
     ],
 )
+@pytest.mark.filterwarnings(
+    "ignore:.*RUNPATH keyword contains deprecated value placeholders"
+)
 def test_that_more_than_two_printf_format_placeholders_is_invalid(runpath):
     with pytest.raises(
         ConfigValidationError,
@@ -858,6 +863,7 @@ def save_zeros(prior_ensemble, num_realizations, dim_size):
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize("itr", [0, 1])
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_when_manifest_files_are_written_loading_succeeds(storage, itr):
     num_realizations = 2
     dim_size = 2
