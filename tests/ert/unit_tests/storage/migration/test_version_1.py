@@ -16,6 +16,7 @@ def set_ert_config(block_storage_path):
     local_storage_set_ert_config(None)
 
 
+@pytest.mark.filterwarnings("ignore:.*The SIMULATION_JOB keyword has been removed")
 def test_migrate_gen_kw(setup_case):
     setup_case("block_storage/version-1/poly_example", "poly.ert")
     with open_storage("storage", "w") as storage:
