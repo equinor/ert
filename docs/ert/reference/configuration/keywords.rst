@@ -132,6 +132,19 @@ The last key defined above (KEY) will be replaced with VALUE1 VALUE2
 VALUE3 VALUE4 - i.e. the extra spaces will be discarded.
 
 
+Note that redefining a key to a different value takes effect for the rest of the file:
+
+::
+
+        DEFINE <X> 3
+        SETENV VAR <X>
+        DEFINE <X> 4
+        SETENV VAR2 <X>
+
+In the above example, the environment variable VAR is set to 3 while the environment variable
+VAR2 is set to 4.
+
+
 DATA_FILE
 ---------
 .. _data_file:

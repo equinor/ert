@@ -1420,7 +1420,7 @@ def test_that_multiple_errors_are_shown_for_forward_model():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_redefines_work_with_setenv():
+def test_that_redefine_behavior_is_consistent_with_setting_environment_variables():
     ert_config = ErtConfig.from_file_contents(
         dedent(
             """

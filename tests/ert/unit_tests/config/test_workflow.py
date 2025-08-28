@@ -94,7 +94,7 @@ def test_that_multiple_workflow_jobs_are_ordered_correctly(order):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_multiple_workflow_jobs_with_redefines_are_ordered_correctly():
+def test_that_redefine_in_workflow_overwrites_in_subsequent_lines():
     with open("workflow", "w", encoding="utf-8") as f:
         f.write(
             "\n".join(

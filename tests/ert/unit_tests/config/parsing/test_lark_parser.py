@@ -68,7 +68,7 @@ def test_that_new_line_can_be_escaped():
     "ignore:.*Using DEFINE with substitution strings that are not of "
     "the form '<KEY>'.*:ert.config.ConfigWarning"
 )
-def test_that_redefines_overwrite_existing_defines():
+def test_that_redefine_overwrites_existing_defines_in_subsequent_lines():
     config_dict = parse_contents(
         """
         NUM_REALIZATIONS  1
