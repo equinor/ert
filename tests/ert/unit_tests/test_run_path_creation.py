@@ -28,60 +28,51 @@ from tests.ert.unit_tests.config.egrid_generator import simple_grid
 from tests.ert.unit_tests.config.summary_generator import simple_smspec, simple_unsmry
 
 
+def test_that_default_runpath_is_absolute_and_with_iens_and_iter_substituded(
+    prior_ensemble,
+):
+    ensemble_size = 10
+    config = ErtConfig.from_dict({})
+
+    run_args = create_run_arguments(
+        Runpaths.from_config(config), [True] * ensemble_size, prior_ensemble
+    )
+    assert [real.runpath for real in run_args] == [
+        f"{Path().absolute()}/simulations/realization-{i}/iter-0"
+        for i in range(ensemble_size)
+    ]
+
+
 @pytest.mark.parametrize(
     "config_dict",
     [
-        {"ECLBASE": "name<IENS>"},
-        {"JOBNAME": "name<IENS>"},
+        pytest.param({"ECLBASE": "name<IENS>"}, id="when jobname is set by ECLBASE"),
+        pytest.param({"JOBNAME": "name<IENS>"}, id="when jobname is set by JOBNAME"),
+        pytest.param(
+            {"JOBNAME": "name<IENS>", "ECLBASE": "not_used"},
+            id="when JOBNAME is chosen over ECLBASE",
+        ),
     ],
 )
-def test_create_run_args(prior_ensemble, config_dict):
+def test_that_job_name_in_run_arg_is_the_jobname_from_the_config_with_iens_substituded(
+    prior_ensemble, config_dict
+):
     ensemble_size = 10
     config = ErtConfig.from_dict(config_dict)
 
     run_args = create_run_arguments(
         Runpaths.from_config(config), [True] * ensemble_size, prior_ensemble
     )
-    assert [real.runpath for real in run_args] == [
-        f"{Path().absolute()}/simulations/realization-{i}/iter-0"
-        for i in range(ensemble_size)
-    ]
     assert [real.job_name for real in run_args] == [
         f"name{i}" for i in range(ensemble_size)
     ]
-
-    substitutions = config.substitutions
-    assert "<RUNPATH>" in substitutions
-    assert substitutions.get("<ECL_BASE>") == "name<IENS>"
-    assert substitutions.get("<ECLBASE>") == "name<IENS>"
-
-
-def test_create_run_args_separate_base_and_name(
-    prior_ensemble,
-):
-    ensemble_size = 10
-    config = ErtConfig.from_dict({"JOBNAME": "name<IENS>", "ECLBASE": "base<IENS>"})
-    run_args = create_run_arguments(
-        Runpaths.from_config(config), [True] * ensemble_size, prior_ensemble
-    )
-
-    assert [real.runpath for real in run_args] == [
-        f"{Path().absolute()}/simulations/realization-{i}/iter-0"
-        for i in range(ensemble_size)
-    ]
-    assert [real.job_name for real in run_args] == [
-        f"name{i}" for i in range(ensemble_size)
-    ]
-
-    substitutions = config.substitutions
-    assert "<RUNPATH>" in substitutions
-    assert substitutions.get("<ECL_BASE>") == "base<IENS>"
-    assert substitutions.get("<ECLBASE>") == "base<IENS>"
 
 
 @pytest.mark.integration_test
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
-def test_assert_symlink_deleted(snake_oil_field_example, storage):
+def test_that_create_run_path_overwrites_symlinks_by_file(
+    snake_oil_field_example, storage
+):
     ert_config = snake_oil_field_example
     experiment_id = storage.create_experiment(
         parameters=ert_config.ensemble_config.parameter_configuration
@@ -180,7 +171,9 @@ def make_run_path(run_args, storage):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_setup_with_gen_kw_generates_parameters_txt(make_run_path):
+def test_that_when_gen_kw_is_in_the_config_then_parameters_txt_is_created(
+    make_run_path,
+):
     Path("genkw").write_text("genkw0 UNIFORM 0 1", encoding="utf-8")
     ert_config = ErtConfig.from_file_contents(
         config_contents.format(parameters="GEN_KW GENKW genkw")
@@ -193,7 +186,9 @@ def test_setup_with_gen_kw_generates_parameters_txt(make_run_path):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_setup_without_gen_kw_does_not_generates_parameters_txt(make_run_path):
+def test_that_when_gen_kw_is_not_in_the_config_then_parameters_txt_is_not_created(
+    make_run_path,
+):
     ert_config = ErtConfig.from_file_contents(config_contents.format(parameters=""))
     make_run_path(ert_config)
     assert os.path.exists("simulations/realization-0/iter-0")
@@ -203,7 +198,7 @@ def test_setup_without_gen_kw_does_not_generates_parameters_txt(make_run_path):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_jobs_json_is_backed_up(make_run_path):
+def test_that_jobs_json_is_backed_up_when_run_path_is_recreated(make_run_path):
     Path("genkw").write_text("genkw0 UNIFORM 0 1", encoding="utf-8")
     ert_config = ErtConfig.from_file_contents(
         config_contents.format(parameters="GEN_KW GENKW genkw")
@@ -271,11 +266,9 @@ def test_that_run_template_replace_symlink_does_not_write_to_source(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_run_template_replace_in_file_with_custom_define(make_run_path):
-    """
-    This test checks that we are able to magically replace custom magic
-    strings using the DEFINE keyword
-    """
+def test_that_substitutions_created_with_the_define_keyword_is_substituted_in_template(
+    make_run_path,
+):
     Path("template.tmpl").write_text("I WANT TO REPLACE:<MY_VAR>", encoding="utf-8")
     ert_config = ErtConfig.from_file_contents(
         dedent(
@@ -309,7 +302,7 @@ def test_run_template_replace_in_file_with_custom_define(make_run_path):
         ("<ITER>", "0"),
     ],
 )
-def test_run_template_replace_in_file(key, expected, make_run_path):
+def test_that_pre_defines_are_substituted_templates(key, expected, make_run_path):
     Path("template.tmpl").write_text(f"I WANT TO REPLACE:{key}", encoding="utf-8")
     ert_config = ErtConfig.from_file_contents(
         dedent(
@@ -338,7 +331,9 @@ def test_run_template_replace_in_file(key, expected, make_run_path):
     ),
 )
 @pytest.mark.filterwarnings("ignore:Use DATA_FILE instead of RUN_TEMPLATE")
-def test_run_template_replace_in_ecl(ecl_base, expected_file, make_run_path):
+def test_that_using_eclbase_as_a_runtemplate_target_produces_data_file_in_runpath(
+    ecl_base, expected_file, make_run_path
+):
     Path("BASE_ECL_FILE.DATA").write_text(
         "I WANT TO REPLACE:<NUM_CPU>", encoding="utf-8"
     )
@@ -373,7 +368,9 @@ def test_run_template_replace_in_ecl(ecl_base, expected_file, make_run_path):
         ("<ITER>", "0"),
     ],
 )
-def test_run_template_replace_in_ecl_data_file(key, expected, make_run_path):
+def test_that_the_data_file_keyword_also_has_similar_behavior_to_run_template(
+    key, expected, make_run_path
+):
     """
     This test that we copy the DATA_FILE into the runpath,
     do substitutions and rename it from the DATA_FILE name
@@ -423,11 +420,7 @@ def test_that_error_is_raised_when_data_file_is_badly_encoded(make_run_path):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_run_template_replace_in_file_name(make_run_path):
-    """
-    This test checks that we are able to magically replace custom magic
-    strings using the DEFINE keyword
-    """
+def test_that_a_substitution_can_be_used_as_run_templates_target_file(make_run_path):
     Path("template.tmpl").write_text(
         "Not important, name of the file is important", encoding="utf-8"
     )

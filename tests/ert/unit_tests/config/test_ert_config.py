@@ -2455,3 +2455,24 @@ def test_validation_error_on_invalid_design_matrix_parameter_name(
                 DESIGN_MATRIX {tmp_path}/my_design_matrix.xlsx
                 """
         )
+
+
+def test_that_the_runpath_keyword_sets_the_runpath_substitution():
+    assert (
+        ErtConfig.from_dict({"RUNPATH": "my/runpath"}).substitutions["<RUNPATH>"]
+        == "my/runpath"
+    )
+
+
+@pytest.mark.parametrize("eclbase_substitution", ["<ECLBASE>", "<ECL_BASE>"])
+def test_that_the_eclbase_keyword_sets_the_eclbase_substitution(eclbase_substitution):
+    datafile = "input.data"
+    assert (
+        ErtConfig.from_dict(
+            {
+                "ECLBASE": datafile,
+                "JOBNAME": "job<IENS>",
+            }
+        ).substitutions[eclbase_substitution]
+        == datafile
+    )
