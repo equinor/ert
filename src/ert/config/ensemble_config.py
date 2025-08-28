@@ -69,9 +69,7 @@ class EnsembleConfig(BaseModel):
 
     @staticmethod
     def _check_for_duplicate_gen_kw_param_names(gen_kw_list: list[GenKwConfig]) -> None:
-        gen_kw_param_count = Counter(
-            keyword.name for p in gen_kw_list for keyword in p.transform_functions
-        )
+        gen_kw_param_count = Counter(p.name for p in gen_kw_list)
         duplicate_gen_kw_names = [
             (n, c) for n, c in gen_kw_param_count.items() if c > 1
         ]
@@ -157,7 +155,7 @@ class EnsembleConfig(BaseModel):
             return FieldConfig.from_config_list(grid_file_path, dims, field_list)
 
         parameter_configs = (
-            [GenKwConfig.from_config_list(g) for g in gen_kw_list]
+            [*(cfg for g in gen_kw_list for cfg in GenKwConfig.from_config_list(g))]
             + [SurfaceConfig.from_config_list(s) for s in surface_list]
             + [make_field(f) for f in field_list]
         )

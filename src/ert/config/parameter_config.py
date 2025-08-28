@@ -134,6 +134,10 @@ class ParameterConfig(BaseModel):
         Often a neighbourhood graph.
         """
 
+    @property
+    def group_name(self) -> str:
+        return self.name
+
     def save_experiment_data(
         self,
         experiment_path: Path,
