@@ -135,3 +135,13 @@ class SimulatorConfig(BaseModelWithContextSupport, extra="forbid"):
         if isinstance(data, dict):
             check_removed_config(data.get("queue_system"))
         return data
+
+    @model_validator(mode="after")
+    def update_max_memory(config: "SimulatorConfig") -> "SimulatorConfig":
+        if config.max_memory is not None and config.queue_system is not None:
+            config.queue_system.realization_memory = (
+                parse_realization_memory_str(config.max_memory)
+                if type(config.max_memory) is str
+                else int(config.max_memory)
+            )
+        return config
