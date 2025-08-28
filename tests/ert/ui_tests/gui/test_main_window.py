@@ -937,6 +937,13 @@ warnings.warn('Foobar')"""
     for expected_message in expected_messages:
         assert expected_message in messages
 
+    # Regression test for total progress bar being green given
+    # PostSimulationWarning and no failures
+    assert (
+        run_dialog._total_progress_label.text()
+        == "Total progress 100% — Experiment completed."
+    )
+
 
 def test_denied_run_path_warning_dialog_releases_storage_lock(
     qtbot, opened_main_window_poly, use_tmpdir, monkeypatch
