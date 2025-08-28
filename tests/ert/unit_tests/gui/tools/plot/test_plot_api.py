@@ -1,4 +1,5 @@
 import gc
+import unittest
 from datetime import date, datetime
 from textwrap import dedent
 from urllib.parse import quote
@@ -432,3 +433,83 @@ def test_data_for_response_no_realizations(api_and_storage):
     result_df = api.data_for_response(str(ensemble.id), "FOPT")
 
     assert result_df.empty
+
+
+def test_that_response_key_has_observation_when_only_one_experiment_has_observations(
+    api_and_storage,
+):
+    api, storage = api_and_storage
+
+    date = datetime(year=2024, month=10, day=4)
+    experiment_with_observation = storage.create_experiment(
+        parameters=[],
+        responses=[
+            SummaryConfig(
+                name="summary",
+                input_files=["CASE.UNSMRY", "CASE.SMSPEC"],
+                keys=["FOPR"],
+            )
+        ],
+        observations={
+            "summary": pl.DataFrame(
+                {
+                    "response_key": "FOPR",
+                    "observation_key": "sumobs",
+                    "time": pl.Series([date]).dt.cast_time_unit("ms"),
+                    "observations": pl.Series([1.0], dtype=pl.Float32),
+                    "std": pl.Series([1.0], dtype=pl.Float32),
+                }
+            )
+        },
+    )
+
+    experiment_without_observation = storage.create_experiment(
+        parameters=[],
+        responses=[
+            SummaryConfig(
+                name="summary",
+                input_files=["CASE.UNSMRY", "CASE.SMSPEC"],
+                keys=["FOPR"],
+            )
+        ],
+    )
+
+    ensemble_with_observation = experiment_with_observation.create_ensemble(
+        ensemble_size=1, name="ensemble_with_obs"
+    )
+    ensemble_without_observation = experiment_without_observation.create_ensemble(
+        ensemble_size=1, name="ensemble_without_obs"
+    )
+
+    df_summary = pl.DataFrame(
+        {
+            "response_key": ["FOPR"],
+            "time": [pl.Series([date]).dt.cast_time_unit("ms")],
+            "values": [pl.Series([1.0], dtype=pl.Float32)],
+        }
+    )
+
+    ensemble_with_observation.save_response(
+        "summary",
+        df_summary,
+        0,
+    )
+
+    ensemble_without_observation.save_response(
+        "summary",
+        df_summary,
+        0,
+    )
+
+    with unittest.mock.patch(
+        "ert.storage.Storage.experiments", new_callable=unittest.mock.PropertyMock
+    ) as mock_experiments:
+        mock_experiments.return_value = [
+            experiment_with_observation,
+            experiment_without_observation,
+        ]
+        responses_from_api = api.responses_api_key_defs
+
+        assert responses_from_api[0].observations, (
+            "Expected FOPR to have observations, also when only one experiment has it"
+        )
