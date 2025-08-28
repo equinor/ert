@@ -471,17 +471,14 @@ class RunDialog(QFrame):
         )
         self._notifier.set_is_simulation_running(False)
         self.flag_simulation_done = True
-        if failed or self.post_simulation_warnings:
-            if self.post_simulation_warnings:
-                logger.info(
-                    f"Simulation finished with "
-                    f"{len(self.post_simulation_warnings)} PostSimulationWarnings"
-                )
 
+        if failed:
             self.update_total_progress(1.0, "Failed")
-
             self._progress_widget.set_all_failed()
+        else:
+            self.update_total_progress(1.0, "Experiment completed.")
 
+        if failed or self.post_simulation_warnings:
             self.fail_msg_box = Suggestor(
                 errors=[ErrorInfo(msg)] if failed else [],
                 warnings=[WarningInfo(msg) for msg in self.post_simulation_warnings],
@@ -496,8 +493,12 @@ class RunDialog(QFrame):
                 parent=self,
             )
             self.fail_msg_box.show()
-        else:
-            self.update_total_progress(1.0, "Experiment completed.")
+
+        if self.post_simulation_warnings:
+            logger.info(
+                f"Simulation finished with "
+                f"{len(self.post_simulation_warnings)} PostSimulationWarnings"
+            )
 
     @Slot()
     def _on_ticker(self) -> None:
