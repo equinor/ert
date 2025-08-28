@@ -165,6 +165,11 @@ class PlotApi:
             response = client.get("/experiments", timeout=self._timeout)
             self._check_response(response)
 
+            def update_keydef(plot_key_def: PlotApiKeyDefinition) -> None:
+                # Only replace existing key definition if the new has observations
+                if plot_key_def.key not in key_defs or plot_key_def.observations:
+                    key_defs[plot_key_def.key] = plot_key_def
+
             for experiment in response.json():
                 for response_type, response_metadatas in experiment[
                     "responses"
@@ -183,27 +188,33 @@ class PlotApi:
                             for filter_key, values in metadata["filter_on"].items():
                                 for v in values:
                                     subkey = f"{key}@{v}"
-                                    key_defs[subkey] = PlotApiKeyDefinition(
-                                        key=subkey,
-                                        index_type="VALUE",
-                                        observations=has_obs,
-                                        dimensionality=2,
-                                        metadata={
-                                            "data_origin": response_type,
-                                        },
-                                        filter_on={filter_key: v},
-                                        log_scale=False,
-                                        response_metadata=ResponseMetadata(**metadata),
+                                    update_keydef(
+                                        PlotApiKeyDefinition(
+                                            key=subkey,
+                                            index_type="VALUE",
+                                            observations=has_obs,
+                                            dimensionality=2,
+                                            metadata={
+                                                "data_origin": response_type,
+                                            },
+                                            filter_on={filter_key: v},
+                                            log_scale=False,
+                                            response_metadata=ResponseMetadata(
+                                                **metadata
+                                            ),
+                                        )
                                     )
                         else:
-                            key_defs[key] = PlotApiKeyDefinition(
-                                key=key,
-                                index_type="VALUE",
-                                observations=has_obs,
-                                dimensionality=2,
-                                metadata={"data_origin": response_type},
-                                log_scale=False,
-                                response_metadata=ResponseMetadata(**metadata),
+                            update_keydef(
+                                PlotApiKeyDefinition(
+                                    key=key,
+                                    index_type="VALUE",
+                                    observations=has_obs,
+                                    dimensionality=2,
+                                    metadata={"data_origin": response_type},
+                                    log_scale=False,
+                                    response_metadata=ResponseMetadata(**metadata),
+                                )
                             )
 
         return list(key_defs.values())
