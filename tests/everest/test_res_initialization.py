@@ -519,3 +519,13 @@ def test_that_resubmit_limit_is_set(change_to_tmpdir) -> None:
     ever_config = EverestConfig.with_defaults(simulator={"resubmit_limit": 0})
     config_dict = everest_to_ert_config_dict(ever_config)
     assert config_dict[ErtConfigKeys.MAX_SUBMIT] == 1
+
+
+@pytest.mark.parametrize(
+    "max_memory, realization_memory", [(None, 0), (999, 999), ("1Gb", 1073741824)]
+)
+def test_that_max_memory_is_passed_to_realization_memory(
+    change_to_tmpdir, max_memory, realization_memory
+) -> None:
+    config = EverestConfig.with_defaults(simulator={"max_memory": max_memory})
+    assert config.simulator.queue_system.realization_memory == realization_memory
