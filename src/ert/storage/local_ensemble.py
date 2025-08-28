@@ -567,11 +567,8 @@ class LocalEnsemble(BaseMode):
         otherwise it will return the raw values.
 
         """
-        if group not in self.experiment.parameter_configuration:
-            raise KeyError(f"{group} is not registered to the experiment.")
-        config = self.experiment.parameter_configuration[group]
-        if isinstance(config, GenKwConfig):
-            df_lazy = self._load_parameters_lazy(config.group_name)
+        if group in self.experiment.scalar_group_to_nodes:
+            df_lazy = self._load_parameters_lazy(group)
             if realizations is not None:
                 if isinstance(realizations, int):
                     realizations = np.array([realizations])
@@ -582,23 +579,31 @@ class LocalEnsemble(BaseMode):
                     f"No matching realizations {realizations} found for {group}"
                 )
             if transformed:
+                cfg_by_key = {
+                    cfg.parameter_keys[0]: cfg
+                    for cfg in self.experiment.scalar_group_to_nodes[group]
+                }
+                value_cols = [c for c in df.columns if c != "realization"]
                 df = df.with_columns(
                     [
                         pl.col(col)
                         .map_elements(
-                            config.transform_col(col), return_dtype=df[col].dtype
+                            cfg_by_key[col].transform_col(), return_dtype=df[col].dtype
                         )
                         .alias(col)
-                        for col in df.columns
-                        if col != "realization"
+                        for col in value_cols
                     ]
                 )
             return df
+        elif group not in self.experiment.parameter_configuration:
+            raise KeyError(f"{group} is not registered to the experiment.")
         ds = self._load_dataset(
             group,
-            realizations
-            if realizations is not None
-            else np.flatnonzero(self.get_realization_mask_with_parameters()),
+            (
+                realizations
+                if realizations is not None
+                else np.flatnonzero(self.get_realization_mask_with_parameters())
+            ),
         )
         return ds
 
@@ -703,24 +708,19 @@ class LocalEnsemble(BaseMode):
         real_nr: int,
         random_seed: int,
     ) -> pl.DataFrame:
-        keys = parameter.parameter_keys
-        if not keys:
-            return pl.DataFrame([])
+        key = parameter.parameter_keys[0]
         parameter_value = parameter.sample_value(
-            parameter.name,
-            keys,
+            parameter.group_name,
+            [key],
             str(random_seed),
             real_nr,
         )
 
-        parameter_dict = {
-            parameter_name: parameter_value[idx]
-            for idx, parameter_name in enumerate(keys)
-        }
+        parameter_dict = {key: parameter_value[0]}
         parameter_dict["realization"] = real_nr
         return pl.DataFrame(
             parameter_dict,
-            schema=dict.fromkeys(keys, pl.Float64) | {"realization": pl.Int64},
+            schema=dict.fromkeys(key, pl.Float64) | {"realization": pl.Int64},
         )
 
     @require_write

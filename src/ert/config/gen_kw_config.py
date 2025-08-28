@@ -333,6 +333,10 @@ class GenKwConfig(ParameterConfig):
             ).with_columns([pl.Series(from_data).alias(self.transform_function.name)]),
         )
 
+    @property
+    def group_name(self) -> str:
+        return self.group_name
+
     def copy_parameters(
         self,
         source_ensemble: Ensemble,
