@@ -74,9 +74,9 @@ jobs:
 
     - name: Run Everest on an example configuration with flow
       run: |
-        pushd test-data/everest/egg/everest/model
-        yq eval '.model.realizations = [0, 1]' -i config_flow.yml
-        yq eval '.simulator.queue_system.max_running = 4' -i config_flow.yml
-        uv run everest lint config_flow.yml
-        uv run everest run config_flow.yml --skip-prompt --disable-monitoring
+        pushd test-data/everest/eightcells/everest/model
+        yq eval '.model.realizations = [0, 1]' -i config.yml
+        yq eval '.simulator.queue_system.max_running = 4' -i config.yml
+        uv run everest lint config.yml
+        uv run everest run config.yml --skip-prompt --disable-monitoring
         popd
