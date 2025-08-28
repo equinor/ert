@@ -30,10 +30,10 @@ grammar = r"""
 WHITESPACE: (" "|"\t"|"\\"NEWLINE)+
 %ignore WHITESPACE
 
-_STRING_INNER: /.+?/
+_STRING_INNER: /.*?/
 _STRING_ESC_INNER: _STRING_INNER /(?<!\\)(\\\\)*?/
 
-STRING: "\"" _STRING_ESC_INNER "\"" | "'" _STRING_ESC_INNER "'" | "\"\""
+STRING: "\"" _STRING_ESC_INNER "\"" | "'" _STRING_ESC_INNER "'"
 
 DIGIT: "0".."9"
 LCASE_LETTER: "a".."z"
