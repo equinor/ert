@@ -15,13 +15,16 @@ jobs:
       matrix:
         python-version: ['3.12']
     steps:
-      - uses: actions/checkout@v5
       - name: Generate token
         id: generate-token
         uses: actions/create-github-app-token@v2
         with:
           app-id: ${{ vars.SCOUT_TEAM_APP_ID }}
           private-key: ${{ secrets.SCOUT_TEAM_APP_PRIVATE_KEY }}
+
+      - uses: actions/checkout@v5
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
