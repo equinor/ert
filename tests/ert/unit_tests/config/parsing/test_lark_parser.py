@@ -357,3 +357,40 @@ def test_that_giving_too_few_arguments_to_enkf_alpha_raises_config_validation_er
             file_name="config.ert",
             schema=init_user_config_schema(),
         )
+
+
+def test_that_mismatched_quotes_raises_config_validation_error():
+    with pytest.raises(ConfigValidationError, match='Did not expect character: "'):
+        _ = parse_contents(
+            """
+            NUM_REALIZATIONS 1
+            FORWARD_MODEL poly_eval(<FOO>=""bar")
+            """,
+            file_name="config.ert",
+            schema=init_user_config_schema(),
+        )
+
+
+def test_that_quotes_can_be_escaped():
+    contents = parse_contents(
+        """
+        NUM_REALIZATIONS 1
+        FORWARD_MODEL poly_eval(<FOO>="\\"bar")
+        """,
+        file_name="config.ert",
+        schema=init_user_config_schema(),
+    )
+    assert contents["FORWARD_MODEL"] == [["poly_eval", [("<FOO>", '\\"bar')]]]
+
+
+@pytest.mark.parametrize("empty_string", ["''", '""'])
+def test_that_strings_can_be_empty(empty_string):
+    contents = parse_contents(
+        f"""
+        NUM_REALIZATIONS 1
+        FORWARD_MODEL poly_eval(<FOO>={empty_string})
+        """,
+        file_name="config.ert",
+        schema=init_user_config_schema(),
+    )
+    assert contents["FORWARD_MODEL"] == [["poly_eval", [("<FOO>", "")]]]
