@@ -237,7 +237,7 @@ everest_config.yml::
     install_jobs:
       -
         name: distance3d
-        executable: jobs/distance3.py
+        executable: jobs/distance3d.py
 
     model:
       realizations: [0]
