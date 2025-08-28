@@ -31,7 +31,7 @@ class ServerConfig(BaseModel):
         | None
     ) = Field(
         default=None,
-        description="Defines which queue system the everest submits jobs to",
+        description="Defines which queue system the everest server is submitted to",
         discriminator="name",
     )
     model_config = ConfigDict(
