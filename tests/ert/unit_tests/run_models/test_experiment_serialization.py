@@ -146,8 +146,6 @@ def optional_file(draw):
 def forward_model_steps(substitutions):
     return st.builds(
         ForwardModelStep,
-        name=st.text(min_size=1, max_size=15),
-        executable=st.text(min_size=1, max_size=30),
         stdin_file=optional_file(),
         stdout_file=optional_file(),
         stderr_file=optional_file(),
@@ -159,8 +157,6 @@ def forward_model_steps(substitutions):
         ),
         min_arg=st.one_of(st.none(), st.integers(min_value=0, max_value=5)),
         max_arg=st.one_of(st.none(), st.integers(min_value=0, max_value=10)),
-        arglist=st.lists(realistic_text()),
-        required_keywords=st.lists(realistic_text()),
         default_mapping=st.dictionaries(
             realistic_text(),
             st.one_of(realistic_text(), st.integers()),
@@ -172,8 +168,6 @@ def forward_model_steps(substitutions):
 
 workflow_jobs = st.builds(
     ExecutableWorkflow,
-    executable=realistic_text(),
-    name=realistic_text(),
     min_args=st.integers(min_value=1, max_value=4),
     max_args=st.integers(min_value=1, max_value=4),
     arg_types=st.lists(st.sampled_from(SchemaItemType)),
@@ -357,14 +351,12 @@ def multidass(_):
 
 transform_function_definitions = st.builds(
     TransformFunctionDefinition,
-    name=realistic_text(),
     param_name=st.just("NORMAL"),
     values=st.just([0, 1]),
 )
 
 gen_kw_configs = st.builds(
     GenKwConfig,
-    name=realistic_text(),
     transform_function_definitions=st.lists(
         transform_function_definitions, unique_by=lambda tdf: tdf.name
     ),
@@ -373,7 +365,6 @@ gen_kw_configs = st.builds(
 
 surface_configs = st.builds(
     SurfaceConfig,
-    name=realistic_text(),
     ncol=st.integers(min_value=1, max_value=1000),
     nrow=st.integers(min_value=1, max_value=1000),
     xori=st.floats(allow_nan=False, allow_infinity=False),
@@ -389,7 +380,6 @@ surface_configs = st.builds(
 
 field_configs = st.builds(
     Field,
-    name=realistic_text(),
     nx=st.integers(min_value=1, max_value=100),
     ny=st.integers(min_value=1, max_value=100),
     nz=st.integers(min_value=1, max_value=100),
