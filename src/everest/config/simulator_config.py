@@ -138,7 +138,11 @@ class SimulatorConfig(BaseModelWithContextSupport, extra="forbid"):
 
     @model_validator(mode="after")
     def update_max_memory(config: "SimulatorConfig") -> "SimulatorConfig":
-        if config.max_memory is not None and config.queue_system is not None:
+        if (
+            config.max_memory is not None
+            and config.queue_system is not None
+            and config.queue_system.realization_memory is (None or 0)
+        ):
             config.queue_system.realization_memory = (
                 parse_realization_memory_str(config.max_memory)
                 if type(config.max_memory) is str
