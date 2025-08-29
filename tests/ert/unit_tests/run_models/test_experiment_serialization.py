@@ -19,6 +19,7 @@ from pytest import MonkeyPatch, TempPathFactory
 from ert.config import (
     ConfigWarning,
     ErtConfig,
+    ErtScriptWorkflow,
     ESSettings,
     ExecutableWorkflow,
     Field,
@@ -49,6 +50,7 @@ from ert.mode_definitions import (
     EVALUATE_ENSEMBLE_MODE,
     MANUAL_UPDATE_MODE,
 )
+from ert.plugins import ExternalErtScript
 from ert.run_models import (
     EnsembleExperiment,
     EnsembleInformationFilter,
@@ -166,11 +168,20 @@ def forward_model_steps(substitutions):
     )
 
 
-workflow_jobs = st.builds(
-    ExecutableWorkflow,
-    min_args=st.integers(min_value=1, max_value=4),
-    max_args=st.integers(min_value=1, max_value=4),
-    arg_types=st.lists(st.sampled_from(SchemaItemType)),
+workflow_jobs = st.one_of(
+    st.builds(
+        ExecutableWorkflow,
+        min_args=st.integers(min_value=1, max_value=4),
+        max_args=st.integers(min_value=1, max_value=4),
+        arg_types=st.lists(st.sampled_from(SchemaItemType)),
+    ),
+    st.builds(
+        ErtScriptWorkflow,
+        min_args=st.just(1),
+        max_args=st.just(1),
+        arg_types=st.just([SchemaItemType.STRING]),
+        ert_script=st.just(ExternalErtScript),
+    ),
 )
 
 workflows = st.builds(
