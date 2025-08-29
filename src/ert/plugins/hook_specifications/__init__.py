@@ -10,6 +10,7 @@ from .forward_model_steps import (
 )
 from .help_resources import help_links
 from .jobs import (
+    ertscript_workflow,
     installable_jobs,
     installable_workflow_jobs,
     job_documentation,
@@ -24,6 +25,7 @@ __all__ = [
     "add_span_processor",
     "ecl100_config_path",
     "ecl300_config_path",
+    "ertscript_workflow",
     "flow_config_path",
     "forward_model_configuration",
     "help_links",

@@ -803,7 +803,10 @@ class ErtConfig(BaseModel):
             PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[
                 dict[str, ForwardModelStepPlugin]
             ] = preinstalled_fm_steps
-            PREINSTALLED_WORKFLOWS = pm.get_ertscript_workflows().get_workflows()
+            PREINSTALLED_WORKFLOWS = (
+                pm.get_ertscript_workflows().get_workflows()
+                | pm.get_legacy_ertscript_workflows().get_workflows()
+            )
             ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = env_pr_fm_step
             ACTIVATE_SCRIPT = pm.activate_script()
 

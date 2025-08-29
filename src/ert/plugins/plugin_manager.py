@@ -17,7 +17,7 @@ from typing_extensions import TypedDict
 
 from ert.trace import add_span_processor
 
-from .workflow_config import WorkflowConfigs
+from .workflow_config import LegacyWorkflowConfigs, WorkflowConfigs
 
 logger = logging.getLogger(__name__)
 
@@ -348,17 +348,28 @@ class ErtPluginManager(pluggy.PluginManager):
 
     def get_documentation_for_workflows(self) -> dict[str, JobDoc]:
         workflow_config = self.get_ertscript_workflows()
+        legacy_workflow_config = self.get_legacy_ertscript_workflows()
 
-        job_docs: dict[str, JobDoc] = {
+        job_docs: dict[str, JobDoc] = {  # type: ignore
             workflow.name: {
                 "description": workflow.description,
                 "examples": workflow.examples,
-                "parser": workflow.parser,
+                "parser": workflow_config.parsers[workflow.name],
                 "config_file": None,
                 "source_package": workflow.source_package,
                 "category": workflow.category,
             }
             for workflow in workflow_config._workflows
+        } | {
+            workflow.name: {
+                "description": workflow.description,
+                "examples": workflow.examples,
+                "parser": legacy_workflow_config.parsers[workflow.name],
+                "config_file": None,
+                "source_package": workflow.source_package,
+                "category": workflow.category,
+            }
+            for workflow in legacy_workflow_config._workflows
         }
 
         fm_step_doc = self.get_documentation_for_forward_model_steps()
@@ -378,6 +389,11 @@ class ErtPluginManager(pluggy.PluginManager):
 
     def get_ertscript_workflows(self) -> WorkflowConfigs:
         config = WorkflowConfigs()
+        self.hook.ertscript_workflow(config=config)
+        return config
+
+    def get_legacy_ertscript_workflows(self) -> WorkflowConfigs:
+        config = LegacyWorkflowConfigs()
         self.hook.legacy_ertscript_workflow(config=config)
         return config
 
