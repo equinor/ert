@@ -197,6 +197,13 @@ parallel, if supported by the optimization algorithm.
 The default is to use parallel evaluation if supported.
 """,
     )
+    auto_scale: bool = Field(
+        default=False,
+        description="""
+auto_scale can be set to true to automatically scale both objectives and
+output constraints from values obtained in batch 0.
+""",
+    )
 
     _optimization_plugin: str
 

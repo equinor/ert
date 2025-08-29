@@ -379,6 +379,7 @@ def test_transforms_controls_scaling(ever_config):
         ever_config.objective_functions,
         ever_config.output_constraints,
         ever_config.model,
+        False,
     )
     assert np.allclose(
         transforms["control_scaler"].to_optimizer(
@@ -424,6 +425,7 @@ def test_transforms_controls_input_constraint_scaling(ever_config):
         ever_config.objective_functions,
         ever_config.output_constraints,
         ever_config.model,
+        False,
     )
 
     coefficients = np.asarray(ropt_config["linear_constraints"]["coefficients"])

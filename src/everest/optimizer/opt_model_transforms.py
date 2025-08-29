@@ -201,7 +201,11 @@ class ObjectiveScaler(ObjectiveTransform):
     """
 
     def __init__(
-        self, scales: list[float], auto_scales: list[bool], weights: list[float]
+        self,
+        auto_scale: bool,
+        scales: list[float],
+        realization_weights: list[float],
+        objective_weights: list[float],
     ) -> None:
         """Initialize the object.
 
@@ -210,10 +214,11 @@ class ObjectiveScaler(ObjectiveTransform):
             auto_scales: Flags indicating which objects are auto-scaled.
             weights:     Weights used to perform auto-scaling.
         """
+        self._auto_scale = auto_scale
         self._scales = np.asarray(scales, dtype=np.float64)
-        self._auto_scales = np.asarray(auto_scales, dtype=np.bool_)
-        self._weights = np.asarray(weights, dtype=np.float64)
-        self._needs_auto_scale_calculation = bool(np.any(self._auto_scales))
+        self._realization_weights = np.asarray(realization_weights, dtype=np.float64)
+        self._objective_weights = np.asarray(objective_weights, dtype=np.float64)
+        self._objective_weights /= np.sum(self._objective_weights)
 
     # The transform methods below all return the negative of the objectives.
     # This is because Everest maximizes the objectives, while ropt is a minimizer.
@@ -240,24 +245,6 @@ class ObjectiveScaler(ObjectiveTransform):
         """
         return -objectives * self._scales
 
-    def weighted_objective_from_optimizer(
-        self, weighted_objective: NDArray[np.float64]
-    ) -> NDArray[np.float64]:
-        """Transform the weighted objective to user space.
-
-        The weighted objective is composed of several objectives that may be
-        scaled different. By definition scaling it back somehow is meaningless.
-        However, due to the transformation from maximization to minimization, a
-        factor of -1 is applied.
-
-        Args:
-            weighted_objective: The weighted objective value.
-
-        Returns:
-            The value multiplied with -1.
-        """
-        return -weighted_objective
-
     def calculate_auto_scales(
         self, objectives: NDArray[np.float64], realizations: NDArray[np.intc]
     ) -> None:
@@ -274,18 +261,23 @@ class ObjectiveScaler(ObjectiveTransform):
             objectives:   The objectives for each realization.
             realizations: The realizations to use for the calculation.
         """
-        weights = np.tile(self._weights[realizations, np.newaxis], objectives.shape[1])
-        weights[np.isnan(objectives)] = 0.0
-        weights /= np.sum(weights, axis=0)
-        auto_scales = np.abs(np.sum(objectives * weights, axis=0))
-        auto_scales = np.where(auto_scales > 0.0, auto_scales, 1.0)
-        self._scales[self._auto_scales] *= auto_scales[self._auto_scales]
-        self._needs_auto_scale_calculation = False
+        if self._auto_scale:
+            error_msg = (
+                "Auto-scaling of the objective failed "
+                "to estimate a positive scale factor"
+            )
+            avg_objectives = _avg_functions(
+                realizations, self._realization_weights, objectives, error_msg
+            )
+            self._scales = np.abs(np.dot(avg_objectives, self._objective_weights))
+            if self._scales < np.finfo(np.float64).eps:
+                raise RuntimeError(error_msg)
+        self._auto_scale = False
 
     @property
     def needs_auto_scale_calculation(self) -> bool:
         """Return true auto-scaling must be initialized"""
-        return self._needs_auto_scale_calculation
+        return self._auto_scale
 
 
 class ConstraintScaler(NonLinearConstraintTransform):
@@ -299,7 +291,7 @@ class ConstraintScaler(NonLinearConstraintTransform):
     """
 
     def __init__(
-        self, scales: list[float], auto_scales: list[bool], weights: list[float]
+        self, auto_scale: bool, scales: list[float], realization_weights: list[float]
     ) -> None:
         """Initialize the object.
 
@@ -308,10 +300,9 @@ class ConstraintScaler(NonLinearConstraintTransform):
             auto_scales: Flags indicating which constraints are auto-scaled.
             weights:     Weights used to perform auto-scaling.
         """
+        self._auto_scale = auto_scale
         self._scales = np.asarray(scales, dtype=np.float64)
-        self._auto_scales = np.asarray(auto_scales, dtype=np.bool_)
-        self._weights = np.asarray(weights, dtype=np.float64)
-        self._needs_auto_scale_calculation = bool(np.any(self._auto_scales))
+        self._realization_weights = np.asarray(realization_weights, dtype=np.float64)
 
     def bounds_to_optimizer(
         self, lower_bounds: NDArray[np.float64], upper_bounds: NDArray[np.float64]
@@ -379,18 +370,23 @@ class ConstraintScaler(NonLinearConstraintTransform):
             constraints:  The constraints for each realization.
             realizations: The realizations to use for the calculation.
         """
-        weights = np.tile(self._weights[realizations, np.newaxis], constraints.shape[1])
-        weights[np.isnan(constraints)] = 0.0
-        weights /= np.sum(weights, axis=0)
-        auto_scales = np.abs(np.sum(constraints * weights, axis=0))
-        auto_scales = np.where(auto_scales > 0.0, auto_scales, 1.0)
-        self._scales[self._auto_scales] *= auto_scales[self._auto_scales]
-        self._needs_auto_scale_calculation = False
+        if self._auto_scale:
+            error_msg = (
+                "Auto-scaling of the constraints failed "
+                "to estimate a positive scale factor"
+            )
+            avg_constraints = _avg_functions(
+                realizations, self._realization_weights, constraints, error_msg
+            )
+            self._scales = np.abs(avg_constraints)
+            if np.any(self._scales < np.finfo(np.float64).eps):
+                raise RuntimeError(error_msg)
+        self._auto_scale = False
 
     @property
     def needs_auto_scale_calculation(self) -> bool:
         """Return true if auto-scaling must be initialized"""
-        return self._needs_auto_scale_calculation
+        return self._auto_scale
 
 
 def get_optimization_domain_transforms(
@@ -398,6 +394,7 @@ def get_optimization_domain_transforms(
     objectives: list[ObjectiveFunctionConfig],
     constraints: list[OutputConstraintConfig] | None,
     model: ModelConfig,
+    auto_scale: bool,
 ) -> EverestOptModelTransforms:
     flattened_controls = FlattenedControls(controls)
     control_scaler = ControlScaler(
@@ -407,32 +404,33 @@ def get_optimization_domain_transforms(
         flattened_controls.types,
     )
 
-    weights = (
+    realization_weights = (
         [1.0 / len(model.realizations)] * len(model.realizations)
         if model.realizations_weights is None
         else model.realizations_weights
     )
 
     objective_scaler = ObjectiveScaler(
-        [
+        auto_scale=auto_scale,
+        scales=[
             1.0 if objective.scale is None else objective.scale
             for objective in objectives
         ],
-        [
-            False if objective.auto_scale is None else objective.auto_scale
+        realization_weights=realization_weights,
+        objective_weights=[
+            1.0 if objective.weight is None else objective.weight
             for objective in objectives
         ],
-        weights,
     )
 
     constraint_scaler = (
         ConstraintScaler(
-            [
+            auto_scale=auto_scale,
+            scales=[
                 1.0 if constraint.scale is None else constraint.scale
                 for constraint in constraints
             ],
-            [constraint.auto_scale for constraint in constraints],
-            weights,
+            realization_weights=realization_weights,
         )
         if constraints
         else None
@@ -443,3 +441,20 @@ def get_optimization_domain_transforms(
         "objective_scaler": objective_scaler,
         "constraint_scaler": constraint_scaler,
     }
+
+
+def _avg_functions(
+    realizations: NDArray[np.intc],
+    realization_weights: NDArray[np.float64],
+    functions: NDArray[np.float64],
+    error_msg: str,
+) -> NDArray[np.float64]:
+    realization_weights = np.tile(
+        realization_weights[realizations, np.newaxis], functions.shape[1]
+    )
+    realization_weights[np.isnan(functions)] = 0.0
+    rw_sum = np.sum(realization_weights, axis=0)
+    if np.any(rw_sum < np.finfo(np.float64).eps):
+        raise RuntimeError(error_msg)
+    realization_weights /= rw_sum
+    return np.sum(functions * realization_weights, axis=0)
