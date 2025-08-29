@@ -18,15 +18,16 @@ from collections import defaultdict
 from collections.abc import Callable, Generator, MutableSequence
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, ClassVar, Protocol
+from typing import Any, ClassVar, Protocol, Self
 
 import numpy as np
-from pydantic import BaseModel, PrivateAttr
+from pydantic import PrivateAttr
 
 from _ert.events import EEEvent, EESnapshot, EESnapshotUpdate
 from ert.config import (
     ConfigValidationError,
     DesignMatrix,
+    ErtConfig,
     ForwardModelStep,
     GenKwConfig,
     HookRuntime,
@@ -51,6 +52,8 @@ from ert.ensemble_evaluator.state import (
 )
 from ert.mode_definitions import MODULE_MODE
 from ert.plugins import (
+    ErtPluginContext,
+    ErtPluginManager,
     HookedWorkflowFixtures,
     PostSimulationFixtures,
     PreSimulationFixtures,
@@ -62,6 +65,7 @@ from ert.utils import log_duration
 from ert.warnings import PostSimulationWarning, capture_specific_warning
 from ert.workflow_runner import WorkflowRunner
 
+from ..base_model_context import BaseModelWithContextSupport, init_context
 from ..plugins.workflow_fixtures import create_workflow_fixtures_from_hooked
 from ..run_arg import RunArg
 from ._create_run_path import create_run_path
@@ -140,7 +144,7 @@ class RunModelAPI:
     has_failed_realizations: Callable[[], bool]
 
 
-class RunModel(BaseModel, ABC):
+class RunModel(BaseModelWithContextSupport, ABC):
     storage_path: str
     runpath_file: Path
     user_config_file: Path
@@ -185,6 +189,28 @@ class RunModel(BaseModel, ABC):
 
         if _total_iterations is not None:
             self._total_iterations = _total_iterations
+
+    @classmethod
+    def with_plugins(cls, **kwargs) -> Self:
+        with ErtPluginContext():
+            site_config = ErtConfig.read_site_config()
+            has_site_config = bool(site_config)  # site_config gets mutated by next call
+            ert_config: ErtConfig = ErtConfig.with_plugins().from_dict(
+                config_dict=site_config
+            )
+            context: dict[str, Any] = {
+                "forward_model_steps": ert_config.installed_forward_model_steps,
+                "workflow_jobs": ert_config.PREINSTALLED_WORKFLOWS,
+            }
+            activate_script = ErtPluginManager().activate_script()
+            if has_site_config:
+                context["queue_system"] = QueueConfig.from_dict(
+                    site_config
+                ).queue_options
+            if activate_script:
+                context["activate_script"] = activate_script
+            with init_context(context):
+                return cls(**kwargs)
 
     def model_post_init(self, ctx: Any) -> None:
         self._initial_realizations_mask = self.active_realizations.copy()
