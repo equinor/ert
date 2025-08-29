@@ -12,8 +12,9 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from hypothesis import HealthCheck, given, settings
+from hypothesis import HealthCheck, given, note, settings
 from hypothesis import strategies as st
+from pytest import MonkeyPatch, TempPathFactory
 
 from ert.config import (
     ConfigWarning,
@@ -58,29 +59,6 @@ from ert.run_models import (
     create_model,
 )
 from ert.storage import open_storage
-
-
-@pytest.fixture
-def create_new_tmpdir(tmp_path, monkeypatch):
-    """
-    Fixtures used in hypothesis tests are not regenerated per invocation of the
-    test. This is used to make one testdir per invocation from hypothesis.
-    """
-    last_dir = None
-
-    def _make():
-        nonlocal last_dir
-        new_dir = tmp_path / str(uuid.uuid4())
-        new_dir.mkdir()
-
-        if last_dir is not None:
-            shutil.rmtree(Path(last_dir))
-
-        last_dir = new_dir
-        monkeypatch.chdir(new_dir)
-        return new_dir
-
-    return _make
 
 
 def realistic_text(min_size=1, max_size=4):
@@ -574,22 +552,29 @@ _not_yet_serializable_args = {
     initial_ensemble_runmodel_strategy(),
 )
 def test_that_deserializing_ensemble_experiment_is_the_inverse_of_serializing(
-    create_new_tmpdir,
+    tmp_path_factory: TempPathFactory,
     baserunmodel_args: dict[str, Any],
     ensemble_experiment_args: dict[str, Any],
 ) -> None:
-    create_new_tmpdir()
-    warnings.simplefilter("ignore", category=ConfigWarning)
-    runmodel = EnsembleExperiment(
-        **(baserunmodel_args | ensemble_experiment_args | _not_yet_serializable_args)
-    )
-    runmodel._storage.close()
+    tmp_path = tmp_path_factory.mktemp("deserializing_ensemble_experiment")
+    note(f"Running in directory {tmp_path}")
+    with MonkeyPatch.context() as patch:
+        patch.chdir(tmp_path)
+        warnings.simplefilter("ignore", category=ConfigWarning)
+        runmodel = EnsembleExperiment(
+            **(
+                baserunmodel_args
+                | ensemble_experiment_args
+                | _not_yet_serializable_args
+            )
+        )
+        runmodel._storage.close()
 
-    runmodel_from_serialized = EnsembleExperiment.model_validate(
-        runmodel.model_dump() | _not_yet_serializable_args
-    )
+        runmodel_from_serialized = EnsembleExperiment.model_validate(
+            runmodel.model_dump() | _not_yet_serializable_args
+        )
 
-    assert runmodel_from_serialized.model_dump() == runmodel.model_dump()
+        assert runmodel_from_serialized.model_dump() == runmodel.model_dump()
 
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
@@ -598,22 +583,25 @@ def test_that_deserializing_ensemble_experiment_is_the_inverse_of_serializing(
     runmodel_args(), initial_ensemble_runmodel_strategy(), update_runmodel_strategy()
 )
 def test_that_deserializing_ensemble_smoother_is_the_inverse_of_serializing(
-    create_new_tmpdir,
+    tmp_path_factory: TempPathFactory,
     baserunmodel_args: dict[str, Any],
     initial_ensemble_args: dict[str, Any],
     update_runmodel_args: dict[str, Any],
 ) -> None:
-    create_new_tmpdir()
-    runmodel = EnsembleSmoother(
-        **(baserunmodel_args | initial_ensemble_args | update_runmodel_args)
-    )
-    runmodel._storage.close()
+    tmp_path = tmp_path_factory.mktemp("deserializing_ensemble_smoother")
+    note(f"Running in directory {tmp_path}")
+    with MonkeyPatch.context() as patch:
+        patch.chdir(tmp_path)
+        runmodel = EnsembleSmoother(
+            **(baserunmodel_args | initial_ensemble_args | update_runmodel_args)
+        )
+        runmodel._storage.close()
 
-    runmodel_from_serialized = EnsembleSmoother.model_validate(
-        runmodel.model_dump() | _not_yet_serializable_args
-    )
+        runmodel_from_serialized = EnsembleSmoother.model_validate(
+            runmodel.model_dump() | _not_yet_serializable_args
+        )
 
-    assert runmodel_from_serialized.model_dump() == runmodel.model_dump()
+        assert runmodel_from_serialized.model_dump() == runmodel.model_dump()
 
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
@@ -622,26 +610,28 @@ def test_that_deserializing_ensemble_smoother_is_the_inverse_of_serializing(
     runmodel_args(), initial_ensemble_runmodel_strategy(), update_runmodel_strategy()
 )
 def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serializing(
-    create_new_tmpdir,
+    tmp_path_factory: TempPathFactory,
     baserunmodel_args: dict[str, Any],
     initial_ensemble_args: dict[str, Any],
     update_runmodel_args: dict[str, Any],
 ) -> None:
-    create_new_tmpdir()
-    runmodel = EnsembleInformationFilter(
-        **(baserunmodel_args | initial_ensemble_args | update_runmodel_args)
-    )
-    runmodel._storage.close()
+    tmp_path = tmp_path_factory.mktemp("deserializing_eif")
+    note(f"Running in directory {tmp_path}")
+    with MonkeyPatch.context() as patch:
+        patch.chdir(tmp_path)
+        runmodel = EnsembleInformationFilter(
+            **(baserunmodel_args | initial_ensemble_args | update_runmodel_args)
+        )
+        runmodel._storage.close()
 
-    runmodel_from_serialized = EnsembleInformationFilter.model_validate(
-        runmodel.model_dump() | _not_yet_serializable_args
-    )
+        runmodel_from_serialized = EnsembleInformationFilter.model_validate(
+            runmodel.model_dump() | _not_yet_serializable_args
+        )
 
-    assert runmodel_from_serialized.model_dump() == runmodel.model_dump()
+        assert runmodel_from_serialized.model_dump() == runmodel.model_dump()
 
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
-@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(
     runmodel_args(),
     initial_ensemble_runmodel_strategy(),
@@ -649,28 +639,30 @@ def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serial
     multidass_strategy(),
 )
 def test_that_deserializing_esmda_is_the_inverse_of_serializing(
-    create_new_tmpdir,
-    monkeypatch,
+    tmp_path_factory: TempPathFactory,
     baserunmodel_args: dict[str, Any],
     initial_ensemble_args: dict[str, Any],
     update_runmodel_args: dict[str, Any],
     multidass_args: dict[str, Any],
 ) -> None:
-    create_new_tmpdir()
+    tmp_path = tmp_path_factory.mktemp("deserializing_eif")
+    note(f"Running in directory {tmp_path}")
+    with MonkeyPatch.context() as patch:
+        patch.chdir(tmp_path)
 
-    runmodel = MultipleDataAssimilation(
-        **(
-            baserunmodel_args
-            | initial_ensemble_args
-            | update_runmodel_args
-            | multidass_args
+        runmodel = MultipleDataAssimilation(
+            **(
+                baserunmodel_args
+                | initial_ensemble_args
+                | update_runmodel_args
+                | multidass_args
+            )
         )
-    )
-    runmodel._storage.close()
+        runmodel._storage.close()
 
-    runmodel_from_serialized = MultipleDataAssimilation.model_validate(
-        runmodel.model_dump() | _not_yet_serializable_args
-    )
+        runmodel_from_serialized = MultipleDataAssimilation.model_validate(
+            runmodel.model_dump() | _not_yet_serializable_args
+        )
 
     assert runmodel_from_serialized.model_dump() == runmodel.model_dump()
 
