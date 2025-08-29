@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import shutil
+from collections import defaultdict
 from collections.abc import Generator
 from datetime import datetime
 from functools import cached_property
@@ -20,13 +21,12 @@ from ert.config import (
     GenDataConfig,
     GenKwConfig,
     ParameterConfig,
+    ParameterGroupConfig,
     ResponseConfig,
     SummaryConfig,
     SurfaceConfig,
 )
-from ert.config import (
-    Field as FieldConfig,
-)
+from ert.config import Field as FieldConfig
 from ert.config.parsing.context_values import ContextBoolEncoder
 
 from .mode import BaseMode, Mode, require_write
@@ -384,12 +384,36 @@ class LocalExperiment(BaseMode):
         }
 
     @cached_property
+    def parameter_groups(self) -> dict[str, ParameterGroupConfig]:
+        groups: dict[str, ParameterGroupConfig] = {
+            p.name: ParameterGroupConfig(parameters=[p])
+            for p in self.parameter_configuration.values()
+            if not isinstance(p, GenKwConfig)
+        }
+        genkw = [
+            p
+            for p in self.parameter_configuration.values()
+            if isinstance(p, GenKwConfig)
+        ]
+        if genkw:
+            groups["scalar"] = ParameterGroupConfig(parameters=genkw)
+        return groups
+
+    @cached_property
     def parameter_keys(self) -> list[str]:
         keys = []
         for config in self.parameter_configuration.values():
             keys += config.parameter_keys
 
         return keys
+
+    @cached_property
+    def scalar_group_to_nodes(self) -> dict[str, list[GenKwConfig]]:
+        genkw_dict = defaultdict(list)
+        for config in self.parameter_configuration.values():
+            if isinstance(config, GenKwConfig):
+                genkw_dict[config.group_name].append(config)
+        return genkw_dict
 
     @cached_property
     def parameter_group_to_parameter_keys(self) -> dict[str, list[str]]:

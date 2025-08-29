@@ -571,7 +571,7 @@ class LocalEnsemble(BaseMode):
             raise KeyError(f"{group} is not registered to the experiment.")
         config = self.experiment.parameter_configuration[group]
         if isinstance(config, GenKwConfig):
-            df_lazy = self._load_parameters_lazy(group)
+            df_lazy = self._load_parameters_lazy(config.group_name)
             if realizations is not None:
                 if isinstance(realizations, int):
                     realizations = np.array([realizations])
@@ -614,11 +614,25 @@ class LocalEnsemble(BaseMode):
         param_group: str,
         iens_active_index: npt.NDArray[np.int_],
     ) -> None:
-        config_node = self.experiment.parameter_configuration[param_group]
-        for real, ds in config_node.create_storage_datasets(
-            parameters, iens_active_index
-        ):
-            self.save_parameters(config_node.name, real, ds)
+        if param_group in self.experiment.scalar_group_to_nodes:
+            datasets = [
+                next(
+                    gen_kw_node.create_storage_datasets(
+                        parameters[i:], iens_active_index
+                    )
+                )[1]
+                for i, gen_kw_node in enumerate(
+                    self.experiment.scalar_group_to_nodes[param_group]
+                )
+            ]
+            ds = pl.concat(datasets, how="horizontal")
+            self.save_parameters(param_group, None, ds)
+        else:
+            config_node = self.experiment.parameter_configuration[param_group]
+            for real, ds in config_node.create_storage_datasets(
+                parameters, iens_active_index
+            ):
+                self.save_parameters(config_node.name, real, ds)
 
     def load_scalars(
         self, group: str | None = None, realizations: npt.NDArray[np.int_] | None = None

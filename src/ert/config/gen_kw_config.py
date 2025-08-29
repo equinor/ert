@@ -92,31 +92,25 @@ class TransformFunction:
 
 class GenKwConfig(ParameterConfig):
     type: Literal["gen_kw"] = "gen_kw"
-    transform_function_definitions: list[TransformFunctionDefinition]
+    transform_function_definition: TransformFunctionDefinition
+    group_name: str
 
-    _transform_functions: list[TransformFunction] = PrivateAttr()
+    _transform_function: TransformFunction = PrivateAttr()
 
     @model_validator(mode="after")
     def validate_and_setup_transform_functions(self) -> Self:
-        transform_functions: list[TransformFunction] = []
-
         errors = []
-        for e in self.transform_function_definitions:
-            try:
-                if isinstance(e, dict):
-                    transform_functions.append(
-                        self._parse_transform_function_definition(
-                            TransformFunctionDefinition(**e)
-                        )
-                    )
-                else:
-                    transform_functions.append(
-                        self._parse_transform_function_definition(e)
-                    )
-            except ConfigValidationError as e:
-                errors.append(e)
-
-        self._transform_functions = transform_functions
+        try:
+            if isinstance(self.transform_function_definition, dict):
+                self._transform_function = self._parse_transform_function_definition(
+                    TransformFunctionDefinition(**self.transform_function_definition)
+                )
+            else:
+                self._transform_function = self._parse_transform_function_definition(
+                    self.transform_function_definition
+                )
+        except ConfigValidationError as e:
+            errors.append(e)
 
         try:
             self._validate()
@@ -129,25 +123,22 @@ class GenKwConfig(ParameterConfig):
         return self
 
     def __contains__(self, item: str) -> bool:
-        return item in [v.name for v in self.transform_function_definitions]
+        return item == self.transform_function.name
 
     def __len__(self) -> int:
-        return len(self.transform_functions)
+        return 1
 
     @property
-    def transform_functions(self) -> list[TransformFunction]:
-        return self._transform_functions
+    def transform_function(self) -> TransformFunction:
+        return self._transform_function
 
     @property
     def parameter_keys(self) -> list[str]:
-        keys = []
-        for tf in self.transform_functions:
-            keys.append(tf.name)
-
-        return keys
+        return [self.transform_function.name]
 
     @property
     def metadata(self) -> list[ParameterMetadata]:
+        tf = self.transform_function
         return [
             ParameterMetadata(
                 key=f"{self.name}:{tf.name}",
@@ -155,7 +146,6 @@ class GenKwConfig(ParameterConfig):
                 dimensionality=1,
                 userdata={"data_origin": "GEN_KW"},
             )
-            for tf in self.transform_functions
         ]
 
     @classmethod
@@ -191,7 +181,7 @@ class GenKwConfig(ParameterConfig):
         return None
 
     @classmethod
-    def from_config_list(cls, gen_kw: list[str | dict[str, str]]) -> Self:
+    def from_config_list(cls, gen_kw: list[str | dict[str, str]]) -> list[Self]:
         gen_kw_key = cast(str, gen_kw[0])
 
         options = cast(dict[str, str], gen_kw[-1])
@@ -257,12 +247,16 @@ class GenKwConfig(ParameterConfig):
                 gen_kw_key,
             )
         try:
-            return cls(
-                name=gen_kw_key,
-                forward_init=False,
-                transform_function_definitions=transform_function_definitions,
-                update=update_parameter,
-            )
+            return [
+                cls(
+                    name=tf.name,
+                    group_name=gen_kw_key,
+                    transform_function_definition=tf,
+                    forward_init=False,
+                    update=update_parameter,
+                )
+                for tf in transform_function_definitions
+            ]
         except ValidationError as e:
             raise ConfigValidationError.from_pydantic(e, gen_kw) from e
 
@@ -285,7 +279,7 @@ class GenKwConfig(ParameterConfig):
     def load_parameter_graph(self) -> nx.Graph[int]:
         # Create a graph with no edges
         graph_independence: nx.Graph[int] = nx.Graph()
-        graph_independence.add_nodes_from(range(len(self.transform_functions)))
+        graph_independence.add_nodes_from(0)
         return graph_independence
 
     def read_from_runpath(
@@ -302,26 +296,24 @@ class GenKwConfig(ParameterConfig):
         real_nr: int,
         ensemble: Ensemble,
     ) -> dict[str, dict[str, float | str]]:
-        df = ensemble.load_parameters(self.name, real_nr, transformed=True).drop(
+        df = ensemble.load_parameters(self.group_name, real_nr, transformed=True).drop(
             "realization"
         )
 
         assert isinstance(df, pl.DataFrame)
-        if not df.width == len(self.transform_functions):
+        if not df.width == 1:
             raise ValueError(
-                f"The configuration of GEN_KW parameter {self.name}"
-                f" has {len(self.transform_functions)} parameters, but ensemble dataset"
-                f" for realization {real_nr} has {df.width} parameters."
+                f"GEN_KW {self.group_name}:{self.name} should be a single parameter!"
             )
 
         data = df.to_dicts()[0]
-        return {self.name: data}
+        return {self.group_name: data}
 
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:
         return (
-            ensemble.load_parameters(self.name, realizations)
+            ensemble.load_parameters(self.group_name, realizations)
             .drop("realization")
             .to_numpy()
             .T.copy()
@@ -338,12 +330,7 @@ class GenKwConfig(ParameterConfig):
                 {
                     "realization": iens_active_index,
                 }
-            ).with_columns(
-                [
-                    pl.Series(from_data[i, :]).alias(param_name.name)
-                    for i, param_name in enumerate(self.transform_functions)
-                ]
-            ),
+            ).with_columns([pl.Series(from_data).alias(self.transform_function.name)]),
         )
 
     def copy_parameters(
@@ -356,34 +343,24 @@ class GenKwConfig(ParameterConfig):
         target_ensemble.save_parameters(self.name, realization=None, dataset=df)
 
     def shouldUseLogScale(self, keyword: str) -> bool:
-        for tf in self.transform_functions:
-            if tf.name == keyword:
-                return isinstance(tf.distribution, LogNormalSettings | LogUnifSettings)
-        return False
+        return isinstance(
+            self.transform_function.distribution, LogNormalSettings | LogUnifSettings
+        )
 
     def get_priors(self) -> list[PriorDict]:
-        priors: list[PriorDict] = []
-        for tf in self.transform_functions:
-            priors.append(
-                {
-                    "key": tf.name,
-                    "function": tf.distribution.name.upper(),
-                    "parameters": {
-                        k.upper(): v
-                        for k, v in tf.parameter_list.items()
-                        if k != "name"
-                    },
-                }
-            )
-        return priors
+        tf = self.transform_function
+        return [
+            {
+                "key": tf.name,
+                "function": tf.distribution.name.upper(),
+                "parameters": {
+                    k.upper(): v for k, v in tf.parameter_list.items() if k != "name"
+                },
+            }
+        ]
 
-    def transform_col(self, param_name: str) -> Callable[[float], float]:
-        tf: TransformFunction | None = None
-        for tf in self.transform_functions:
-            if tf.name == param_name:
-                break
-        assert tf is not None, f"Transform function {param_name} not found"
-        return tf.distribution.transform
+    def transform_col(self) -> Callable[[float], float]:
+        return self.transform_function.distribution.transform
 
     def _parse_transform_function_definition(
         self,
