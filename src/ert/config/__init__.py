@@ -27,7 +27,7 @@ from .lint_file import lint_file
 from .model_config import ModelConfig
 from .observations import EnkfObs
 from .parameter_config import ParameterConfig, ParameterMetadata
-from .parameter_group_config import ParameterGroupConfig
+from .parameter_group import ParameterGroup
 from .parsing import (
     ConfigValidationError,
     ConfigWarning,
@@ -80,7 +80,7 @@ __all__ = [
     "ObservationType",
     "OutlierSettings",
     "ParameterConfig",
-    "ParameterGroupConfig",
+    "ParameterGroup",
     "ParameterMetadata",
     "PriorDict",
     "QueueConfig",

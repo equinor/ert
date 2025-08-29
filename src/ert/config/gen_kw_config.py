@@ -93,7 +93,7 @@ class TransformFunction:
 class GenKwConfig(ParameterConfig):
     type: Literal["gen_kw"] = "gen_kw"
     transform_function_definition: TransformFunctionDefinition
-    group_name: str
+    group: str
 
     _transform_function: TransformFunction = PrivateAttr()
 
@@ -250,7 +250,7 @@ class GenKwConfig(ParameterConfig):
             return [
                 cls(
                     name=tf.name,
-                    group_name=gen_kw_key,
+                    group=gen_kw_key,
                     transform_function_definition=tf,
                     forward_init=False,
                     update=update_parameter,
@@ -335,7 +335,7 @@ class GenKwConfig(ParameterConfig):
 
     @property
     def group_name(self) -> str:
-        return self.group_name
+        return self.group
 
     def copy_parameters(
         self,
