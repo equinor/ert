@@ -86,14 +86,8 @@ response_to_pandas_x_axis_fns: dict[str, Callable[[tuple[Any, ...]], Any]] = {
 def _extract_response_type_and_key(
     key: str, response_key_to_response_type: dict[str, str]
 ) -> tuple[str, str] | tuple[None, None]:
-    # Check for exact match first. For example if key is "FOPRH"
-    # it may stop at "FOPR", which would be incorrect
-    response_key = next((k for k in response_key_to_response_type if k == key), None)
-    if response_key is None:
-        response_key = next(
-            (k for k in response_key_to_response_type if k in key and key != f"{k}H"),
-            None,
-        )
+    # Only allow exact matches.
+    response_key = key if key in response_key_to_response_type else None
 
     if response_key is None:
         return None, None
