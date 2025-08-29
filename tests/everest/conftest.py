@@ -172,8 +172,8 @@ def copy_math_func_test_data_to_tmp(tmp_path, monkeypatch):
 
 
 @pytest.fixture
-def copy_egg_test_data_to_tmp(tmp_path, monkeypatch):
-    path = relpath("..", "..", "test-data", "everest", "egg")
+def copy_eightcells_test_data_to_tmp(tmp_path, monkeypatch):
+    path = relpath("..", "..", "test-data", "everest", "eightcells")
     shutil.copytree(path, tmp_path, dirs_exist_ok=True)
     monkeypatch.chdir(tmp_path)
 

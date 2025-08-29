@@ -148,7 +148,7 @@ line: 2, column: 18. controls -> 0 -> initial_guess
 @pytest.mark.everest_models_test
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
-def test_everest_main_configdump_entry(copy_egg_test_data_to_tmp):
+def test_everest_main_configdump_entry(copy_eightcells_test_data_to_tmp):
     # Setup command line arguments
     with capture_streams() as (out, _):
         start_everest(["everest", "render", WELL_ORDER])

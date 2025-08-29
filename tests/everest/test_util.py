@@ -15,9 +15,9 @@ from tests.everest.utils import (
     relpath,
 )
 
-EGG_DATA = relpath(
-    "../../test-data/everest/egg/eclipse/include/",
-    "realizations/realization-0/eclipse/model/EGG.DATA",
+EIGHTCELLS_DATA = relpath(
+    "../../test-data/everest/eightcells/eclipse/include/",
+    "realizations/realization-0/eclipse/model/EIGHTCELLS.DATA",
 )
 
 

@@ -1,0 +1,4 @@
+batch_id,realization,simulation_id,well_rate.OP1.1,well_rate.WI1.1
+1,0,0,50.223395,268.30478
+1,1,1,50.223395,268.30478
+1,2,2,50.223395,268.30478
