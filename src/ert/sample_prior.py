@@ -51,7 +51,7 @@ def sample_prior(
             ]
             if datasets:
                 ensemble.save_parameters(
-                    parameter,
+                    config_node.data_file,
                     realization=None,
                     dataset=pl.concat(datasets, how="vertical"),
                 )

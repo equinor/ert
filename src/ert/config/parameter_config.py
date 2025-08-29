@@ -135,8 +135,8 @@ class ParameterConfig(BaseModel):
         """
 
     @property
-    def group_name(self) -> str:
-        return self.name
+    def data_file(self) -> str:
+        return "SCALAR"
 
     def save_experiment_data(
         self,

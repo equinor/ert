@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import shutil
-from collections import defaultdict
 from collections.abc import Generator
 from datetime import datetime
 from functools import cached_property
@@ -21,7 +20,6 @@ from ert.config import (
     GenDataConfig,
     GenKwConfig,
     ParameterConfig,
-    ParameterGroup,
     ResponseConfig,
     SummaryConfig,
     SurfaceConfig,
@@ -383,21 +381,21 @@ class LocalExperiment(BaseMode):
             )
         }
 
-    @cached_property
-    def parameter_groups(self) -> dict[str, ParameterGroup]:
-        groups: dict[str, ParameterGroup] = {
-            p.name: ParameterGroup(parameters=[p])
-            for p in self.parameter_configuration.values()
-            if not isinstance(p, GenKwConfig)
-        }
-        dict_genkw: dict[str, list[ParameterConfig]] = defaultdict(list)
-        for p in self.parameter_configuration.values():
-            if isinstance(p, GenKwConfig):
-                dict_genkw[p.group_name].append(p)
+    # @cached_property
+    # def parameter_groups(self) -> dict[str, ParameterGroup]:
+    #     groups: dict[str, ParameterGroup] = {
+    #         p.name: ParameterGroup(parameters=[p])
+    #         for p in self.parameter_configuration.values()
+    #         if not isinstance(p, GenKwConfig)
+    #     }
+    #     dict_genkw: dict[str, list[ParameterConfig]] = defaultdict(list)
+    #     for p in self.parameter_configuration.values():
+    #         if isinstance(p, GenKwConfig):
+    #             dict_genkw[p.group_name].append(p)
 
-        for group, genkw_list in dict_genkw.items():
-            groups[group] = ParameterGroup(parameters=genkw_list)
-        return groups
+    #     for group, genkw_list in dict_genkw.items():
+    #         groups[group] = ParameterGroup(parameters=genkw_list)
+    #     return groups
 
     @cached_property
     def parameter_keys(self) -> list[str]:
@@ -408,12 +406,12 @@ class LocalExperiment(BaseMode):
         return keys
 
     @cached_property
-    def scalar_group_to_nodes(self) -> dict[str, list[GenKwConfig]]:
-        genkw_dict = defaultdict(list)
-        for config in self.parameter_configuration.values():
-            if isinstance(config, GenKwConfig):
-                genkw_dict[config.group_name].append(config)
-        return genkw_dict
+    def scalar_nodes(self) -> dict[str, ParameterConfig]:
+        return {
+            config.name: config
+            for config in self.parameter_configuration.values()
+            if isinstance(config, GenKwConfig)
+        }
 
     @cached_property
     def parameter_group_to_parameter_keys(self) -> dict[str, list[str]]:
