@@ -28,7 +28,6 @@ from ert.config import (
     ModelConfig,
     ObservationSettings,
     OutlierSettings,
-    QueueSystem,
     SummaryConfig,
     SurfaceConfig,
     Workflow,
@@ -42,7 +41,6 @@ from ert.config.queue_config import (
     SlurmQueueOptions,
     TorqueQueueOptions,
 )
-from ert.field_utils import FieldFileFormat
 from ert.mode_definitions import (
     ENIF_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
@@ -69,201 +67,145 @@ def realistic_text(min_size=1, max_size=4):
 optional_nonempty_str = st.one_of(st.none(), realistic_text())
 
 
-@st.composite
-def base_queue_fields(draw):
-    return {
-        "max_running": draw(st.integers(min_value=0, max_value=100)),
-        "submit_sleep": draw(st.floats(min_value=0.0, max_value=10.0)),
-        "num_cpu": draw(st.integers(min_value=1, max_value=64)),
-        "realization_memory": draw(st.integers(min_value=0, max_value=1_000_000)),
-        "job_script": shutil.which("fm_dispatch.py") or "fm_dispatch.py",
-        "project_code": draw(optional_nonempty_str),
-        "activate_script": draw(optional_nonempty_str),
-    }
+base_queue_fields = {
+    "max_running": st.integers(min_value=0, max_value=100),
+    "submit_sleep": st.floats(min_value=0.0, max_value=10.0),
+    "num_cpu": st.integers(min_value=1, max_value=64),
+    "realization_memory": st.integers(min_value=0, max_value=1_000_000),
+    "job_script": st.just(shutil.which("fm_dispatch.py") or "fm_dispatch.py"),
+    "project_code": optional_nonempty_str,
+    "activate_script": optional_nonempty_str,
+}
 
 
-@st.composite
-def lsf_queue_options_strategy(draw):
-    base = draw(base_queue_fields())
-    return LsfQueueOptions(
-        name=QueueSystem.LSF,
-        bhist_cmd=draw(optional_nonempty_str),
-        bjobs_cmd=draw(optional_nonempty_str),
-        bkill_cmd=draw(optional_nonempty_str),
-        bsub_cmd=draw(optional_nonempty_str),
-        exclude_host=draw(optional_nonempty_str),
-        lsf_queue=draw(optional_nonempty_str),
-        lsf_resource=draw(optional_nonempty_str),
-        **base,
-    )
+lsf_queue_options = st.builds(
+    LsfQueueOptions,
+    bhist_cmd=optional_nonempty_str,
+    bjobs_cmd=optional_nonempty_str,
+    bkill_cmd=optional_nonempty_str,
+    bsub_cmd=optional_nonempty_str,
+    exclude_host=optional_nonempty_str,
+    lsf_queue=optional_nonempty_str,
+    lsf_resource=optional_nonempty_str,
+    **base_queue_fields,
+)
 
 
-@st.composite
-def torque_queue_options_strategy(draw):
-    base = draw(base_queue_fields())
-    return TorqueQueueOptions(
-        name=QueueSystem.TORQUE,
-        qsub_cmd=draw(optional_nonempty_str),
-        qstat_cmd=draw(optional_nonempty_str),
-        qdel_cmd=draw(optional_nonempty_str),
-        queue=draw(optional_nonempty_str),
-        cluster_label=draw(optional_nonempty_str),
-        job_prefix=draw(optional_nonempty_str),
-        keep_qsub_output=draw(st.booleans()),
-        **base,
-    )
+torque_queue_options = st.builds(
+    TorqueQueueOptions,
+    qsub_cmd=optional_nonempty_str,
+    qstat_cmd=optional_nonempty_str,
+    qdel_cmd=optional_nonempty_str,
+    queue=optional_nonempty_str,
+    cluster_label=optional_nonempty_str,
+    job_prefix=optional_nonempty_str,
+    **base_queue_fields,
+)
 
 
-@st.composite
-def slurm_queue_options_strategy(draw):
-    base = draw(base_queue_fields())
-    return SlurmQueueOptions(
-        name=QueueSystem.SLURM,
-        sbatch=draw(realistic_text(1, 8)),
-        squeue=draw(realistic_text(1, 8)),
-        scancel=draw(realistic_text(1, 8)),
-        **base,
-    )
+slurm_queue_options = st.builds(
+    SlurmQueueOptions,
+    sbatch=realistic_text(1, 8),
+    squeue=realistic_text(1, 8),
+    scancel=realistic_text(1, 8),
+    **base_queue_fields,
+)
 
 
-@st.composite
-def local_queue_options_strategy(draw):
-    base = draw(base_queue_fields())
-    return LocalQueueOptions(name=QueueSystem.LOCAL, **base)
+local_queue_options = st.builds(LocalQueueOptions, **base_queue_fields)
 
 
-queue_options_strategy = st.one_of(
-    lsf_queue_options_strategy(),
-    torque_queue_options_strategy(),
-    slurm_queue_options_strategy(),
-    local_queue_options_strategy(),
+queue_options = st.one_of(
+    lsf_queue_options,
+    torque_queue_options,
+    slurm_queue_options,
+    local_queue_options,
 )
 
 
 @st.composite
-def queue_config_strategy(draw):
-    queue_options = draw(queue_options_strategy)
+def queue_configs(draw):
+    queue_option = draw(queue_options)
 
     return QueueConfig(
         max_submit=draw(st.integers(min_value=1, max_value=4)),
-        queue_system=queue_options.name,
-        queue_options=queue_options,
+        queue_system=queue_option.name,
+        queue_options=queue_option,
         stop_long_running=draw(st.booleans()),
         max_runtime=50000,
     )
 
 
 @st.composite
-def forward_model_step_strategy(draw, substitutions: dict[str, str]):
-    def optional_file():
-        safe_chars = string.ascii_letters + string.digits
-        filename_base = draw(st.text(alphabet=safe_chars, min_size=1, max_size=5))
-        return draw(st.one_of(st.none(), st.just(f"{filename_base}.txt")))
+def optional_file(draw):
+    safe_chars = string.ascii_letters + string.digits
+    filename_base = draw(st.text(alphabet=safe_chars, min_size=1, max_size=5))
+    return draw(st.one_of(st.none(), st.just(f"{filename_base}.txt")))
 
-    name = draw(st.text(min_size=1, max_size=15))
-    executable = draw(st.text(min_size=1, max_size=30))
 
-    stdin_file = optional_file()
-    stdout_file = optional_file()
-    stderr_file = optional_file()
-    start_file = optional_file()
-    target_file = optional_file()
-    error_file = optional_file()
-
-    max_running_minutes = draw(
-        st.one_of(st.none(), st.integers(min_value=1, max_value=10_000))
-    )
-    min_arg = draw(st.one_of(st.none(), st.integers(min_value=0, max_value=5)))
-    max_arg = draw(st.one_of(st.none(), st.integers(min_value=0, max_value=10)))
-
-    arglist = draw(st.lists(realistic_text()))
-    required_keywords = draw(st.lists(realistic_text()))
-
-    arg_types = draw(
-        st.lists(
-            st.sampled_from(list(SchemaItemType)),
-            min_size=0,
-            max_size=5,
-        )
-    )
-
-    environment = draw(
-        st.dictionaries(
+def forward_model_steps(substitutions):
+    return st.builds(
+        ForwardModelStep,
+        name=st.text(min_size=1, max_size=15),
+        executable=st.text(min_size=1, max_size=30),
+        stdin_file=optional_file(),
+        stdout_file=optional_file(),
+        stderr_file=optional_file(),
+        start_file=optional_file(),
+        target_file=optional_file(),
+        error_file=optional_file(),
+        max_running_minutes=st.one_of(
+            st.none(), st.integers(min_value=1, max_value=10_000)
+        ),
+        min_arg=st.one_of(st.none(), st.integers(min_value=0, max_value=5)),
+        max_arg=st.one_of(st.none(), st.integers(min_value=0, max_value=10)),
+        arglist=st.lists(realistic_text()),
+        required_keywords=st.lists(realistic_text()),
+        default_mapping=st.dictionaries(
             realistic_text(),
             st.one_of(realistic_text(), st.integers()),
             max_size=5,
-        )
-    )
-
-    default_mapping = draw(
-        st.dictionaries(
-            realistic_text(),
-            st.one_of(realistic_text(), st.integers()),
-            max_size=5,
-        )
-    )
-
-    return ForwardModelStep(
-        name=name,
-        executable=executable,
-        stdin_file=stdin_file,
-        stdout_file=stdout_file,
-        stderr_file=stderr_file,
-        start_file=start_file,
-        target_file=target_file,
-        error_file=error_file,
-        max_running_minutes=max_running_minutes,
-        min_arg=min_arg,
-        max_arg=max_arg,
-        arglist=arglist,
-        required_keywords=required_keywords,
-        arg_types=arg_types,
-        environment=environment,
-        default_mapping=default_mapping,
+        ),
         private_args=substitutions,
     )
 
 
-@st.composite
-def workflow_strategy(draw):
-    src_file = draw(realistic_text().map(lambda s: f"{s}.wf.json"))
+workflow_jobs = st.builds(
+    ExecutableWorkflow,
+    executable=realistic_text(),
+    name=realistic_text(),
+    min_args=st.integers(min_value=1, max_value=4),
+    max_args=st.integers(min_value=1, max_value=4),
+    arg_types=st.lists(st.sampled_from(SchemaItemType)),
+)
 
-    job = ExecutableWorkflow(
-        executable=draw(realistic_text()),
-        name=draw(realistic_text()),
-        min_args=draw(st.integers(min_value=1, max_value=4)),
-        max_args=draw(st.integers(min_value=1, max_value=4)),
-        arg_types=draw(st.lists(st.sampled_from(SchemaItemType))),
-        stop_on_fail=draw(st.booleans()),
-    )
-
-    job_args = draw(
-        st.one_of(
-            st.none(),
-            st.integers(),
-            realistic_text(),
-            st.lists(realistic_text(), max_size=3),
-            st.dictionaries(realistic_text(), st.integers()),
+workflows = st.builds(
+    Workflow,
+    src_file=realistic_text().map(lambda s: f"{s}.wf.json"),
+    cmd_list=st.lists(
+        st.tuples(
+            workflow_jobs,
+            st.one_of(
+                st.none(),
+                st.integers(),
+                realistic_text(),
+                st.lists(realistic_text(), max_size=3),
+                st.dictionaries(realistic_text(), st.integers()),
+            ),
         )
-    )
-
-    cmd_list = [(job, job_args)]  # could expand to more items if needed
-
-    return Workflow(src_file=src_file, cmd_list=cmd_list)
+    ),
+)
 
 
 @st.composite
-def hooked_workflows_strategy(draw):
+def hooked_workflows(draw):
     keys = draw(
-        st.lists(
-            st.sampled_from(list(HookRuntime)), unique=True, min_size=1, max_size=3
-        )
+        st.lists(st.sampled_from(HookRuntime), unique=True, min_size=1, max_size=3)
     )
     result = defaultdict(list)
 
     for key in keys:
-        workflows = draw(st.lists(workflow_strategy(), min_size=1, max_size=3))
-        result[key] = workflows
+        result[key] = draw(st.lists(workflows, min_size=1, max_size=3))
 
     return result
 
@@ -313,8 +255,6 @@ def runmodel_args(draw):
         gen_kw_export_name="parameters",
     )
 
-    queue_config = draw(queue_config_strategy())
-
     substitutions = draw(
         st.dictionaries(
             st.text(min_size=1, max_size=10),
@@ -323,11 +263,9 @@ def runmodel_args(draw):
         )
     )
 
-    forward_model_steps = draw(
-        st.lists(forward_model_step_strategy(substitutions), min_size=1, max_size=5)
+    forward_model_step_list = draw(
+        st.lists(forward_model_steps(st.just(substitutions)), min_size=1, max_size=5)
     )
-
-    hooked_workflows = draw(hooked_workflows_strategy())
 
     return {
         "storage_path": storage_path,
@@ -341,24 +279,22 @@ def runmodel_args(draw):
         "start_iteration": start_iteration,
         "minimum_required_realizations": minimum_required_realizations,
         "runpath_config": runpath_config,
-        "queue_config": queue_config,
-        "forward_model_steps": forward_model_steps,
+        "queue_config": draw(queue_configs()),
+        "forward_model_steps": forward_model_step_list,
         "substitutions": substitutions,
-        "hooked_workflows": hooked_workflows,
+        "hooked_workflows": draw(hooked_workflows()),
         "status_queue": queue.SimpleQueue(),  # runtime only
     }
 
 
 @st.composite
-def initial_ensemble_runmodel_strategy(
-    draw, min_params: int = 1, max_params: int = 200
-):
+def initial_ensemble_runmodels(draw, min_params: int = 1, max_params: int = 200):
     response_configs = []
 
     if draw(st.booleans()):
-        response_configs.append(draw(gen_data_config_strategy()))
+        response_configs.append(draw(gen_data_configs()))
     if draw(st.booleans()):
-        response_configs.append(draw(summary_config_strategy()))
+        response_configs.append(draw(summary_configs()))
 
     return {
         "target_ensemble": draw(realistic_text()),
@@ -368,9 +304,9 @@ def initial_ensemble_runmodel_strategy(
         "parameter_configuration": draw(
             st.lists(
                 st.one_of(
-                    surface_config_strategy(),
-                    field_config_strategy(),
-                    gen_kw_config_strategy(),
+                    surface_configs,
+                    field_configs,
+                    gen_kw_configs,
                 ),
                 min_size=min_params,
                 max_size=max_params,
@@ -383,7 +319,7 @@ def initial_ensemble_runmodel_strategy(
 
 
 @st.composite
-def update_runmodel_strategy(draw):
+def update_runmodels(draw):
     return {
         "target_ensemble": draw(realistic_text()),
         "analysis_settings": ESSettings(
@@ -409,7 +345,7 @@ def update_runmodel_strategy(draw):
 
 
 @st.composite
-def multidass_strategy(_):
+def multidass(_):
     # Note: this does not test restart runs, it may be
     # better to test that separately
     return {
@@ -419,83 +355,57 @@ def multidass_strategy(_):
     }
 
 
-@st.composite
-def transform_function_definition_strategy(draw):
-    name = draw(realistic_text())
-    param_name = "NORMAL"
-    values = [0, 1]
-    return TransformFunctionDefinition(name=name, param_name=param_name, values=values)
+transform_function_definitions = st.builds(
+    TransformFunctionDefinition,
+    name=realistic_text(),
+    param_name=st.just("NORMAL"),
+    values=st.just([0, 1]),
+)
+
+gen_kw_configs = st.builds(
+    GenKwConfig,
+    name=realistic_text(),
+    transform_function_definitions=st.lists(
+        transform_function_definitions, unique_by=lambda tdf: tdf.name
+    ),
+)
+
+
+surface_configs = st.builds(
+    SurfaceConfig,
+    name=realistic_text(),
+    ncol=st.integers(min_value=1, max_value=1000),
+    nrow=st.integers(min_value=1, max_value=1000),
+    xori=st.floats(allow_nan=False, allow_infinity=False),
+    yori=st.floats(allow_nan=False, allow_infinity=False),
+    xinc=st.floats(min_value=0.001, allow_nan=False, allow_infinity=False),
+    yinc=st.floats(min_value=0.001, allow_nan=False, allow_infinity=False),
+    rotation=st.floats(min_value=0.0, max_value=360.0),
+    yflip=st.integers(min_value=0, max_value=1),
+    forward_init_file=realistic_text().map(lambda s: f"{s}.txt"),
+    output_file=realistic_text().map(lambda s: Path(f"{s}.dat")),
+    base_surface_path=realistic_text(),
+)
+
+field_configs = st.builds(
+    Field,
+    name=realistic_text(),
+    nx=st.integers(min_value=1, max_value=100),
+    ny=st.integers(min_value=1, max_value=100),
+    nz=st.integers(min_value=1, max_value=100),
+    output_transformation=optional_nonempty_str,
+    input_transformation=optional_nonempty_str,
+    truncation_min=st.one_of(st.none(), st.floats(min_value=-1e6, max_value=1e6)),
+    truncation_max=st.one_of(st.none(), st.floats(min_value=-1e6, max_value=1e6)),
+    forward_init_file=realistic_text().map(lambda s: f"{s}.init"),
+    output_file=realistic_text().map(lambda s: Path(f"{s}.dat")),
+    grid_file=realistic_text().map(lambda s: f"{s}.grid"),
+    mask_file=st.one_of(st.none(), realistic_text().map(lambda s: Path(f"{s}.mask"))),
+)
 
 
 @st.composite
-def gen_kw_config_strategy(draw):
-    transform_fns = draw(
-        st.lists(
-            transform_function_definition_strategy(),
-            max_size=3,
-            unique_by=lambda config: config.name,
-        )
-    )
-
-    return GenKwConfig(
-        name=draw(realistic_text()),
-        forward_init=draw(st.booleans()),
-        update=draw(st.booleans()),
-        transform_function_definitions=transform_fns,
-    )
-
-
-@st.composite
-def surface_config_strategy(draw):
-    return SurfaceConfig(
-        name=draw(realistic_text()),
-        forward_init=draw(st.booleans()),
-        update=draw(st.booleans()),
-        ncol=draw(st.integers(min_value=1, max_value=1000)),
-        nrow=draw(st.integers(min_value=1, max_value=1000)),
-        xori=draw(st.floats(allow_nan=False, allow_infinity=False)),
-        yori=draw(st.floats(allow_nan=False, allow_infinity=False)),
-        xinc=draw(st.floats(min_value=0.001, allow_nan=False, allow_infinity=False)),
-        yinc=draw(st.floats(min_value=0.001, allow_nan=False, allow_infinity=False)),
-        rotation=draw(st.floats(min_value=0.0, max_value=360.0)),
-        yflip=draw(st.integers(min_value=0, max_value=1)),
-        forward_init_file=draw(realistic_text().map(lambda s: f"{s}.txt")),
-        output_file=Path(draw(realistic_text().map(lambda s: f"{s}.dat"))),
-        base_surface_path=draw(realistic_text()),
-    )
-
-
-@st.composite
-def field_config_strategy(draw):
-    file_formats = list(FieldFileFormat)  # Assuming it's an Enum
-
-    return Field(
-        name=draw(realistic_text()),
-        forward_init=draw(st.booleans()),
-        update=draw(st.booleans()),
-        nx=draw(st.integers(min_value=1, max_value=100)),
-        ny=draw(st.integers(min_value=1, max_value=100)),
-        nz=draw(st.integers(min_value=1, max_value=100)),
-        file_format=draw(st.sampled_from(file_formats)),
-        output_transformation=draw(optional_nonempty_str),
-        input_transformation=draw(optional_nonempty_str),
-        truncation_min=draw(
-            st.one_of(st.none(), st.floats(min_value=-1e6, max_value=1e6))
-        ),
-        truncation_max=draw(
-            st.one_of(st.none(), st.floats(min_value=-1e6, max_value=1e6))
-        ),
-        forward_init_file=draw(realistic_text().map(lambda s: f"{s}.init")),
-        output_file=Path(draw(realistic_text().map(lambda s: f"{s}.dat"))),
-        grid_file=draw(realistic_text().map(lambda s: f"{s}.grid")),
-        mask_file=draw(
-            st.one_of(st.none(), realistic_text().map(lambda s: Path(f"{s}.mask")))
-        ),
-    )
-
-
-@st.composite
-def gen_data_config_strategy(draw):
+def gen_data_configs(draw):
     num_keys = draw(st.integers(min_value=1, max_value=100))
     input_files = draw(
         st.lists(
@@ -524,7 +434,7 @@ def gen_data_config_strategy(draw):
 
 
 @st.composite
-def summary_config_strategy(draw):
+def summary_configs(draw):
     num_keys = draw(st.integers(min_value=1, max_value=100))
     input_files = draw(
         st.lists(
@@ -549,7 +459,7 @@ _not_yet_serializable_args = {
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(
     runmodel_args(),
-    initial_ensemble_runmodel_strategy(),
+    initial_ensemble_runmodels(),
 )
 def test_that_deserializing_ensemble_experiment_is_the_inverse_of_serializing(
     tmp_path_factory: TempPathFactory,
@@ -579,9 +489,7 @@ def test_that_deserializing_ensemble_experiment_is_the_inverse_of_serializing(
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
-@given(
-    runmodel_args(), initial_ensemble_runmodel_strategy(), update_runmodel_strategy()
-)
+@given(runmodel_args(), initial_ensemble_runmodels(), update_runmodels())
 def test_that_deserializing_ensemble_smoother_is_the_inverse_of_serializing(
     tmp_path_factory: TempPathFactory,
     baserunmodel_args: dict[str, Any],
@@ -606,9 +514,7 @@ def test_that_deserializing_ensemble_smoother_is_the_inverse_of_serializing(
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
-@given(
-    runmodel_args(), initial_ensemble_runmodel_strategy(), update_runmodel_strategy()
-)
+@given(runmodel_args(), initial_ensemble_runmodels(), update_runmodels())
 def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serializing(
     tmp_path_factory: TempPathFactory,
     baserunmodel_args: dict[str, Any],
@@ -634,9 +540,9 @@ def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serial
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @given(
     runmodel_args(),
-    initial_ensemble_runmodel_strategy(),
-    update_runmodel_strategy(),
-    multidass_strategy(),
+    initial_ensemble_runmodels(),
+    update_runmodels(),
+    multidass(),
 )
 def test_that_deserializing_esmda_is_the_inverse_of_serializing(
     tmp_path_factory: TempPathFactory,
