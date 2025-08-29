@@ -21,6 +21,7 @@ from ert.config import (
     GenDataConfig,
     GenKwConfig,
     ParameterConfig,
+    ParameterGroup,
     ResponseConfig,
     SummaryConfig,
     SurfaceConfig,
@@ -382,29 +383,20 @@ class LocalExperiment(BaseMode):
             )
         }
 
-    # @cached_property
-    # def parameter_groups(self) -> dict[str, ParameterGroupConfig]:
-    #     groups: dict[str, ParameterGroupConfig] = {
-    #         p.name: ParameterGroupConfig(parameters=[p])
-    #         for p in self.parameter_configuration.values()
-    #         if not isinstance(p, GenKwConfig)
-    #     }
-    #     genkw = [
-    #         p
-    #         for p in self.parameter_configuration.values()
-    #         if isinstance(p, GenKwConfig)
-    #     ]
-    #     if genkw:
-    #         groups["scalar"] = ParameterGroupConfig(parameters=genkw)
-    #     return groups
-
     @cached_property
-    def parameter_scalar_groups(self) -> dict[str, list[GenKwConfig]]:
-        groups: dict[str, list[GenKwConfig]] = defaultdict(list)
-
+    def parameter_groups(self) -> dict[str, ParameterGroup]:
+        groups: dict[str, ParameterGroup] = {
+            p.name: ParameterGroup(parameters=[p])
+            for p in self.parameter_configuration.values()
+            if not isinstance(p, GenKwConfig)
+        }
+        dict_genkw: dict[str, list[ParameterConfig]] = defaultdict(list)
         for p in self.parameter_configuration.values():
             if isinstance(p, GenKwConfig):
-                groups[p.group_name].append(p)
+                dict_genkw[p.group_name].append(p)
+
+        for group, genkw_list in dict_genkw.items():
+            groups[group] = ParameterGroup(parameters=genkw_list)
         return groups
 
     @cached_property
