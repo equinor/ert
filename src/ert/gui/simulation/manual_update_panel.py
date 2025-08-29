@@ -3,9 +3,9 @@ from dataclasses import dataclass
 from typing import cast
 
 import numpy as np
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtWidgets import QFormLayout, QLabel, QWidget
+from PyQt6.QtWidgets import QComboBox, QFormLayout, QLabel, QWidget
 
 from ert.config import AnalysisConfig, ErrorInfo
 from ert.gui.ertnotifier import ErtNotifier
@@ -19,7 +19,7 @@ from ert.gui.ertwidgets import (
 )
 from ert.gui.simulation.experiment_config_panel import ExperimentConfigPanel
 from ert.gui.suggestor import Suggestor
-from ert.mode_definitions import MANUAL_UPDATE_MODE
+from ert.mode_definitions import MANUAL_ENIF_UPDATE_MODE, MANUAL_UPDATE_MODE
 from ert.run_models.manual_update import ManualUpdate
 from ert.storage import Ensemble, RealizationStorageState
 from ert.validation import EnsembleRealizationsArgument, ProperNameFormatArgument
@@ -36,6 +36,8 @@ class Arguments:
 
 
 class ManualUpdatePanel(ExperimentConfigPanel):
+    updateMethodChanged = pyqtSignal(str)
+
     def __init__(
         self,
         ensemble_size: int,
@@ -48,9 +50,15 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self.setObjectName("Manual_update_panel")
 
         layout = QFormLayout()
-        lab = QLabel(ManualUpdate.name())
-        lab.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        layout.addRow(lab)
+        self._update_method_dropdown = QComboBox()
+        self._update_method_dropdown.addItems(["ES Update", "EnIF Update"])
+        self._update_method_dropdown.currentTextChanged.connect(
+            self._on_update_method_changed
+        )
+        self._update_method_dropdown.setObjectName("manual_update_method_dropdown")
+
+        layout.addRow("Update method:", self._update_method_dropdown)
+
         self._ensemble_selector = EnsembleSelector(notifier)
         layout.addRow("Ensemble:", self._ensemble_selector)
         runpath_label = CopyableLabel(text=run_path)
@@ -72,7 +80,8 @@ class ManualUpdatePanel(ExperimentConfigPanel):
             analysis_config.es_settings, ensemble_size
         )
         self._analysis_module_edit.setObjectName("ensemble_smoother_edit")
-        layout.addRow("Analysis module:", self._analysis_module_edit)
+        self._analysis_module_label = QLabel("Analysis module:")
+        layout.addRow(self._analysis_module_label, self._analysis_module_edit)
 
         self._active_realizations_field = StringBox(
             ActiveRealizationsModel(ensemble_size, show_default=False),  # type: ignore
@@ -100,6 +109,19 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self._ensemble_selector.currentIndexChanged.connect(self._realizations_from_fs)
         self.setLayout(layout)
 
+    @property
+    def selected_update_method(self) -> str:
+        return self._update_method_dropdown.currentText()
+
+    @Slot(str)
+    def _on_update_method_changed(self, new_method: str) -> None:
+        if new_method == "ES Update":
+            self._analysis_module_edit.show()
+            self._analysis_module_label.show()
+        else:
+            self._analysis_module_edit.hide()
+            self._analysis_module_label.hide()
+
     def isConfigurationValid(self) -> bool:
         return (
             self._active_realizations_field.isValid()
@@ -108,7 +130,9 @@ class ManualUpdatePanel(ExperimentConfigPanel):
 
     def get_experiment_arguments(self) -> Arguments:
         return Arguments(
-            mode=MANUAL_UPDATE_MODE,
+            mode=MANUAL_UPDATE_MODE
+            if self.selected_update_method == "ES Update"
+            else MANUAL_ENIF_UPDATE_MODE,
             ensemble_id=str(
                 cast(Ensemble, self._ensemble_selector.selected_ensemble).id
             ),
