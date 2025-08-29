@@ -3,13 +3,13 @@ from __future__ import annotations
 import inspect
 from typing import TYPE_CHECKING, Any
 
-from ert.config.workflow_job import ErtScriptWorkflow
+from ert.config import ErtScriptWorkflow
 from ert.plugins import ErtPlugin, WorkflowFixtures
 
 if TYPE_CHECKING:
     from PyQt6.QtWidgets import QWidget
 
-    from ert.config import _WorkflowJob
+    from ert.config import WorkflowJob
     from ert.gui.ertnotifier import ErtNotifier
     from ert.storage import Ensemble, LocalStorage
 
@@ -65,5 +65,5 @@ class Plugin:
     def ensemble(self) -> Ensemble | None:
         return self.__notifier.current_ensemble
 
-    def getWorkflowJob(self) -> _WorkflowJob:
+    def getWorkflowJob(self) -> WorkflowJob:
         return self.__workflow_job

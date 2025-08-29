@@ -22,8 +22,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.config import ErtConfig
-from ert.config.workflow_job import ErtScriptWorkflow
+from ert.config import ErtConfig, ErtScriptWorkflow
 from ert.gui import is_dark_mode, is_high_contrast_mode
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertnotifier import ErtNotifier

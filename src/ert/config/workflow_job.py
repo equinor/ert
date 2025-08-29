@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import textwrap
+from abc import ABC, abstractmethod
 from dataclasses import field
 from typing import Self, TypeAlias
 
@@ -34,7 +35,7 @@ def workflow_job_parser(file: str) -> ConfigDict:
     return parse(file, schema=schema)
 
 
-def workflow_job_from_file(config_file: str, name: str | None = None) -> _WorkflowJob:
+def workflow_job_from_file(config_file: str, name: str | None = None) -> WorkflowJob:
     if not name:
         name = os.path.basename(config_file)
 
@@ -88,7 +89,7 @@ def workflow_job_from_file(config_file: str, name: str | None = None) -> _Workfl
         )
 
 
-class _WorkflowJob(BaseModel):
+class _WorkflowJob(BaseModel, ABC):
     name: str
     min_args: int | None = None
     max_args: int | None = None
@@ -126,9 +127,15 @@ class _WorkflowJob(BaseModel):
     def is_plugin(self) -> bool:
         return False
 
+    @abstractmethod
+    def location(self) -> str | None: ...
+
 
 class ExecutableWorkflow(_WorkflowJob):
     executable: str | None = None
+
+    def location(self) -> str | None:
+        return self.executable
 
 
 class ErtScriptWorkflow(_WorkflowJob):
@@ -140,6 +147,9 @@ class ErtScriptWorkflow(_WorkflowJob):
     description: str = ""
     examples: str | None = None
     category: str = "other"
+
+    def location(self) -> str | None:
+        return str(self.ert_script) if self.ert_script else None
 
     @model_validator(mode="after")
     def validate_types(self) -> Self:
@@ -163,3 +173,6 @@ class ErtScriptWorkflow(_WorkflowJob):
 
     def is_plugin(self) -> bool:
         return issubclass(self.ert_script, ErtPlugin)
+
+
+WorkflowJob: TypeAlias = ErtScriptWorkflow | ExecutableWorkflow

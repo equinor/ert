@@ -5,7 +5,7 @@ import os
 import pprint
 import re
 from collections import defaultdict
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from datetime import datetime
 from functools import cached_property
 from os import path
@@ -67,8 +67,7 @@ from .workflow import Workflow
 from .workflow_job import (
     ErtScriptLoadFailure,
     ErtScriptWorkflow,
-    ExecutableWorkflow,
-    _WorkflowJob,
+    WorkflowJob,
     workflow_job_from_file,
 )
 
@@ -329,8 +328,8 @@ def read_templates(config_dict) -> list[tuple[str, str]]:
 
 def workflow_jobs_from_dict(
     content_dict: ConfigDict,
-    installed_workflows: dict[str, ErtScriptWorkflow] | None = None,
-) -> dict[str, _WorkflowJob]:
+    installed_workflows: dict[str, WorkflowJob] | None = None,
+) -> dict[str, WorkflowJob]:
     workflow_job_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW_JOB, [])
     workflow_job_dir_info = content_dict.get(ConfigKeys.WORKFLOW_JOB_DIRECTORY, [])
 
@@ -349,20 +348,10 @@ def workflow_jobs_from_dict(
             )
             name = new_job.name
             if name in workflow_jobs:
-                prop = (
-                    new_job.executable
-                    if isinstance(new_job, ExecutableWorkflow)
-                    else new_job.ert_script
-                )
-                old_prop = (
-                    workflow_jobs[name].executable
-                    if isinstance(workflow_jobs[name], ExecutableWorkflow)
-                    else workflow_jobs[name].ert_script
-                )
                 ConfigWarning.warn(
                     f"Duplicate workflow jobs with name {name!r}, choosing "
-                    f"{prop!r} over "
-                    f"{old_prop!r}",
+                    f"{new_job.location()!r} over "
+                    f"{workflow_jobs[name].location()!r}",
                     name,
                 )
             workflow_jobs[name] = new_job
@@ -383,8 +372,8 @@ def workflow_jobs_from_dict(
                 if name in workflow_jobs:
                     ConfigWarning.warn(
                         f"Duplicate workflow jobs with name {name!r}, choosing "
-                        f"{new_job.executable or new_job.ert_script!r} over "
-                        f"{workflow_jobs[name].executable or workflow_jobs[name].ert_script!r}",  # noqa: E501
+                        f"{new_job.location()!r} over "
+                        f"{workflow_jobs[name].location()!r}",
                         name,
                     )
                 workflow_jobs[name] = new_job
@@ -404,7 +393,7 @@ def workflow_jobs_from_dict(
 
 def create_and_hook_workflows(
     content_dict: ConfigDict,
-    workflow_jobs: dict[str, _WorkflowJob],
+    workflow_jobs: dict[str, WorkflowJob],
     substitutions: dict[str, str],
 ) -> tuple[dict[str, Workflow], defaultdict[HookRuntime, list[Workflow]]]:
     hook_workflow_info = content_dict.get(ConfigKeys.HOOK_WORKFLOW, [])
@@ -501,9 +490,9 @@ def create_and_hook_workflows(
 def workflows_from_dict(
     content_dict: ConfigDict,
     substitutions: dict[str, str],
-    installed_workflows: Mapping[str, _WorkflowJob] | None = None,
+    installed_workflows: dict[str, WorkflowJob] | None = None,
 ) -> tuple[
-    dict[str, _WorkflowJob],
+    dict[str, WorkflowJob],
     dict[str, Workflow],
     defaultdict[HookRuntime, list[Workflow]],
 ]:
@@ -689,7 +678,7 @@ class ErtConfig(BaseModel):
     random_seed: int = Field(default_factory=lambda: _seed_sequence(None))
     analysis_config: AnalysisConfig = Field(default_factory=AnalysisConfig)
     queue_config: QueueConfig = Field(default_factory=QueueConfig)
-    workflow_jobs: dict[str, _WorkflowJob] = Field(default_factory=dict)
+    workflow_jobs: dict[str, WorkflowJob] = Field(default_factory=dict)
     workflows: dict[str, Workflow] = Field(default_factory=dict)
     hooked_workflows: defaultdict[HookRuntime, list[Workflow]] = Field(
         default_factory=lambda: defaultdict(list)
