@@ -17,6 +17,7 @@ from _ert.events import (
     EnsembleStarted,
     EnsembleSucceeded,
     FMEvent,
+    ForwardModelStepCancelled,
     ForwardModelStepFailure,
     ForwardModelStepRunning,
     ForwardModelStepStart,
@@ -58,6 +59,7 @@ _FM_TYPE_EVENT_TO_STATUS = {
     ForwardModelStepRunning: state.FORWARD_MODEL_STATE_RUNNING,
     ForwardModelStepSuccess: state.FORWARD_MODEL_STATE_FINISHED,
     ForwardModelStepFailure: state.FORWARD_MODEL_STATE_FAILURE,
+    ForwardModelStepCancelled: state.FORWARD_MODEL_STATE_CANCELLED,
 }
 
 _ENSEMBLE_TYPE_EVENT_TO_STATUS = {
@@ -297,6 +299,23 @@ class EnsembleSnapshot:
                 end_time = convert_iso8601_to_datetime(timestamp)
             if type(event) is RealizationFailed:
                 message = event.message
+                # Mark remaining forward model steps that will never run as cancelled
+                for fm_step_id, fm_step in source_snapshot.get_fm_steps_for_real(
+                    event.real
+                ).items():
+                    if fm_step["status"] == state.FORWARD_MODEL_STATE_INIT:
+                        fm_idx = (event.real, fm_step_id)
+                        if fm_idx not in self._fm_step_snapshots:
+                            self._fm_step_snapshots[fm_idx] = FMStepSnapshot()
+                        if (
+                            self._fm_step_snapshots[fm_idx].get(
+                                "status", state.FORWARD_MODEL_STATE_INIT
+                            )
+                            == state.FORWARD_MODEL_STATE_INIT
+                        ):
+                            self._fm_step_snapshots[fm_idx]["status"] = (
+                                state.FORWARD_MODEL_STATE_CANCELLED
+                            )
             self.update_realization(
                 event.real,
                 status,

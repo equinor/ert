@@ -10,11 +10,13 @@ class Id:
     FORWARD_MODEL_STEP_SUCCESS_TYPE = Literal["forward_model_step.success"]
     FORWARD_MODEL_STEP_FAILURE_TYPE = Literal["forward_model_step.failure"]
     FORWARD_MODEL_STEP_CHECKSUM_TYPE = Literal["forward_model_step.checksum"]
+    FORWARD_MODEL_STEP_CANCELLED_TYPE = Literal["forward_model_step.cancelled"]
     FORWARD_MODEL_STEP_START: Final = "forward_model_step.start"
     FORWARD_MODEL_STEP_RUNNING: Final = "forward_model_step.running"
     FORWARD_MODEL_STEP_SUCCESS: Final = "forward_model_step.success"
     FORWARD_MODEL_STEP_FAILURE: Final = "forward_model_step.failure"
     FORWARD_MODEL_STEP_CHECKSUM: Final = "forward_model_step.checksum"
+    FORWARD_MODEL_STEP_CANCELLED: Final = "forward_model_step.cancelled"
 
     REALIZATION_FAILURE_TYPE = Literal["realization.failure"]
     REALIZATION_PENDING_TYPE = Literal["realization.pending"]
@@ -89,6 +91,10 @@ class ForwardModelStepFailure(ForwardModelStepBaseEvent):
     event_type: Id.FORWARD_MODEL_STEP_FAILURE_TYPE = Id.FORWARD_MODEL_STEP_FAILURE
     error_msg: str
     exit_code: int | None = None
+
+
+class ForwardModelStepCancelled(ForwardModelStepBaseEvent):
+    event_type: Id.FORWARD_MODEL_STEP_CANCELLED_TYPE = Id.FORWARD_MODEL_STEP_CANCELLED
 
 
 class ForwardModelStepChecksum(BaseEvent):
@@ -179,6 +185,7 @@ FMEvent = (
     | ForwardModelStepRunning
     | ForwardModelStepSuccess
     | ForwardModelStepFailure
+    | ForwardModelStepCancelled
 )
 
 RealizationEvent = (
