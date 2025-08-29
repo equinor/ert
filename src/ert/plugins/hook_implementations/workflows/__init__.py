@@ -16,17 +16,14 @@ if TYPE_CHECKING:
 
 
 @ert.plugin(name="ert")
-def legacy_ertscript_workflow(config: WorkflowConfigs) -> None:
-    workflow = config.add_workflow(ExportMisfitDataJob, "EXPORT_MISFIT_DATA")
-    workflow.category = "observations.correlation"
-
-    workflow = config.add_workflow(ExportRunpathJob, "EXPORT_RUNPATH")
-
-    workflow = config.add_workflow(DisableParametersUpdate, "DISABLE_PARAMETERS")
-
-    workflow = config.add_workflow(MisfitPreprocessor, "MISFIT_PREPROCESSOR")
-    workflow.category = "observations.correlation"
-
-    workflow = config.add_workflow(CSVExportJob, "CSV_EXPORT")
-
-    workflow = config.add_workflow(GenDataRFTCSVExportJob, "GEN_DATA_RFT")
+def ertscript_workflow(config: WorkflowConfigs) -> None:
+    config.add_workflow(
+        ExportMisfitDataJob, "EXPORT_MISFIT_DATA", category="observations.correlation"
+    )
+    config.add_workflow(ExportRunpathJob, "EXPORT_RUNPATH")
+    config.add_workflow(DisableParametersUpdate, "DISABLE_PARAMETERS")
+    config.add_workflow(
+        MisfitPreprocessor, "MISFIT_PREPROCESSOR", category="observations.correlation"
+    )
+    config.add_workflow(CSVExportJob, "CSV_EXPORT")
+    config.add_workflow(GenDataRFTCSVExportJob, "GEN_DATA_RFT")

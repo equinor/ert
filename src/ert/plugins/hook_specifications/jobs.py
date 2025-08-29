@@ -46,10 +46,16 @@ def installable_workflow_jobs() -> PluginResponse[dict[str, str]]:
 
 @no_type_check
 @hook_specification
-def legacy_ertscript_workflow(config: WorkflowConfigs) -> None:
+def ertscript_workflow(config: WorkflowConfigs) -> None:
     """
     This hook allows the user to register a workflow with the config object. A workflow
     must add the class inheriting from ErtScript and an optional name.
 
     :param config: A handle to the main workflow config.
     """
+
+
+@no_type_check
+@hook_specification
+def legacy_ertscript_workflow(config: WorkflowConfigs) -> None:
+    """Deprecated Variant of the hook ertscript_workflow"""
