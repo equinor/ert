@@ -62,5 +62,8 @@ forward_model:
   - well_constraints  -i files/well_readydate.json -c files/wc_config.yml -rc well_rate.json -o wc_wells.json
   - add_templates     -i wc_wells.json -c files/at_config.yml -o at_wells.json
   - schmerge          -s eclipse/include/schedule/schedule.tmpl -i at_wells.json -o eclipse/include/schedule/schedule.sch
-  - flow              r{{ eclbase }} --enable-tuning=true
+  - job: flow r{{ eclbase }} --enable-tuning=true
+    results:
+      file_name: r{{ eclbase }}
+      type: summary
   - rf                -s r{{ eclbase }} -o rf

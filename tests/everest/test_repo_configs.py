@@ -20,7 +20,7 @@ def test_all_repo_configs():
     repo_dir = os.path.realpath(repo_dir)
 
     data_folders = (
-        "examples/egg/everest/input",
+        "examples/eightcells/everest/input",
         "everest/data",
     )
 
