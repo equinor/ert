@@ -1,6 +1,7 @@
 {
   "accepted_batches": [
     0,
+    1,
     2
   ],
   "batches": [
@@ -165,7 +166,7 @@
       "point.y": -0.00564829,
       "point.z": 0.49992811
     },
-    "total_objective": -2.00004834
+    "total_objective": -1.83078667
   },
   "output_constraint_names": [],
   "realizations": [
@@ -180,21 +181,21 @@
       "batch": 0,
       "distance_p": -0.75,
       "distance_q": -1.58333333,
-      "objective": -2.33333333
+      "objective": -2.08333333
     },
     {
-      "accepted": 0,
+      "accepted": 1,
       "batch": 1,
       "distance_p": -0.76564598,
       "distance_q": -1.56787999,
-      "objective": -2.33352598
+      "objective": -2.07831065
     },
     {
       "accepted": 1,
       "batch": 2,
       "distance_p": -0.50778502,
       "distance_q": -1.49226332,
-      "objective": -2.00004834
+      "objective": -1.83078667
     }
   ]
 }

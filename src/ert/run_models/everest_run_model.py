@@ -264,6 +264,7 @@ class EverestRunModel(RunModel):
             self.objective_functions,
             self.output_constraints,
             self.model,
+            self.optimization.auto_scale,
         )
 
     @classmethod

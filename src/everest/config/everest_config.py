@@ -283,6 +283,24 @@ and environment variables are exposed in the form 'os.NAME', for example:
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     @model_validator(mode="after")
+    def validate_scales(self) -> Self:
+        if self.optimization.auto_scale:
+            if any(item.scale is not None for item in self.objective_functions):
+                raise ValueError(
+                    "The auto_scale option in the optimization section "
+                    "and the scale options in the objective_functions section "
+                    "are mutually exclusive."
+                )
+
+            if any(item.scale is not None for item in self.output_constraints):
+                raise ValueError(
+                    "The auto_scale option in the optimization section "
+                    "and the scale options in the output_constraints section "
+                    "are mutually exclusive."
+                )
+        return self
+
+    @model_validator(mode="after")
     def validate_queue_system(self) -> Self:
         if self.server.queue_system is None:
             self.server.queue_system = copy(self.simulator.queue_system)

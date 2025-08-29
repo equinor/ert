@@ -19,7 +19,6 @@ objective_functions:
     scale: 0.6666666667
   - name: distance_q
     weight: 0.25
-    scale: 1.0
 
 
 optimization:
