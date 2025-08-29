@@ -558,9 +558,7 @@ def test_that_max_memory_does_not_overwrite_realization_memory(
         (999, 999),
     ],
 )
-def test_parsing_of_relization_memory(
-    change_to_tmpdir, realization_memory, expected
-) -> None:
+def test_parsing_of_relization_memory(realization_memory, expected) -> None:
     config = EverestConfig.with_defaults(
         simulator={
             "queue_system": {"name": "local", "realization_memory": realization_memory},
@@ -569,7 +567,7 @@ def test_parsing_of_relization_memory(
     assert config.simulator.queue_system.realization_memory == expected
 
 
-def test_parsing_of_non_existing_relization_memory(change_to_tmpdir) -> None:
+def test_parsing_of_non_existing_relization_memory() -> None:
     config = EverestConfig.with_defaults(
         simulator={
             "queue_system": {"name": "local"},
