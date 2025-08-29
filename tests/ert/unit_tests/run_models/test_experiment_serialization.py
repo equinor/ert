@@ -10,11 +10,13 @@ from argparse import Namespace
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
+from unittest import mock
 
 import pytest
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
+from ert import ErtScript, WorkflowConfigs
 from ert.config import (
     ConfigWarning,
     ErtConfig,
@@ -41,6 +43,7 @@ from ert.config.queue_config import (
     SlurmQueueOptions,
     TorqueQueueOptions,
 )
+from ert.config.workflow_job import ErtScriptWorkflow, ExecutableWorkflow
 from ert.field_utils import FieldFileFormat
 from ert.mode_definitions import (
     ENIF_MODE,
@@ -872,3 +875,167 @@ def test_that_dumped_esmda_matches_snapshot(
         ),
         case=f"{config_dir}.{config_file}",
     )
+
+
+# Only interested in testing the hooked workflow roundtrip
+def test_that_serialization_roundtrip_preserves_workflowjob(
+    create_new_tmpdir,
+) -> None:
+    create_new_tmpdir()
+    warnings.simplefilter("ignore", category=ConfigWarning)
+
+    class SomeErtScript(ErtScript):
+        def run(self):
+            print("Something")
+
+    def mock_wf_plugins():
+        configs = WorkflowConfigs()
+        configs.add_workflow(
+            ert_script=SomeErtScript, name="PLUGIN_WF", description="the best plugin"
+        )
+        return configs
+
+    with mock.patch(
+        "ert.plugins.ErtPluginManager.get_ertscript_workflows",
+        side_effect=mock_wf_plugins,
+    ):
+        runmodel = EnsembleExperiment.with_plugins(
+            storage_path="0",
+            runpath_file=Path("rpf"),
+            user_config_file=Path(".ucf"),
+            env_vars={},
+            env_pr_fm_step={},
+            active_realizations=[True],
+            log_path=Path("."),
+            random_seed=0,
+            start_iteration=0,
+            minimum_required_realizations=0,
+            runpath_config=ModelConfig(
+                num_realizations=1,
+                runpath_format_string="simulations/realization-<IENS>/iter-<ITER>",
+                jobname_format_string="<CONFIG_FILE>-<IENS>",
+                eclbase_format_string="ECLBASE<IENS>",
+                gen_kw_export_name="parameters",
+            ),
+            queue_config=QueueConfig(
+                max_submit=1,
+                queue_system="lsf",
+                queue_options=LsfQueueOptions(
+                    name="lsf",
+                    max_running=0,
+                    submit_sleep=0.0,
+                    num_cpu=1,
+                    realization_memory=0,
+                    job_script="dummy.py",
+                    project_code=None,
+                    activate_script="source blargh",
+                    bhist_cmd=None,
+                    bjobs_cmd=None,
+                    bkill_cmd=None,
+                    bsub_cmd=None,
+                    exclude_host=None,
+                    lsf_queue=None,
+                    lsf_resource=None,
+                ),
+                stop_long_running=False,
+                max_runtime=50000,
+            ),
+            forward_model_steps=[
+                ForwardModelStep(
+                    name="0",
+                    executable="0",
+                    stdin_file=None,
+                    stdout_file="0.stdout",
+                    stderr_file="0.stderr",
+                    start_file=None,
+                    target_file=None,
+                    error_file=None,
+                    max_running_minutes=None,
+                    min_arg=None,
+                    max_arg=None,
+                    arglist=[],
+                    required_keywords=[],
+                    arg_types=[],
+                    environment={
+                        "_ERT_ITERATION_NUMBER": "<ITER>",
+                        "_ERT_REALIZATION_NUMBER": "<IENS>",
+                        "_ERT_RUNPATH": "<RUNPATH>",
+                    },
+                    default_mapping={},
+                    private_args={},
+                )
+            ],
+            substitutions={},
+            hooked_workflows={
+                "POST_SIMULATION": [
+                    Workflow(
+                        src_file="./helloworld",
+                        cmd_list=[
+                            (
+                                ExecutableWorkflow(
+                                    name="failjob",
+                                    min_args=None,
+                                    max_args=None,
+                                    arg_types=[],
+                                    stop_on_fail=True,
+                                    executable="./fail.sh",
+                                ),
+                                [],
+                            ),
+                            (
+                                ErtScriptWorkflow(
+                                    name="PLUGIN_WF",
+                                    min_args=None,
+                                    max_args=None,
+                                    arg_types=[],
+                                    stop_on_fail=True,
+                                    ert_script=SomeErtScript,
+                                ),
+                                [],
+                            ),
+                        ],
+                    )
+                ]
+            },
+            status_queue=queue.SimpleQueue(),
+            target_ensemble="0",
+            experiment_name="0",
+            design_matrix=None,
+            ert_templates=[],
+            parameter_configuration=[
+                SurfaceConfig(
+                    type="surface",
+                    name="0",
+                    forward_init=False,
+                    update=False,
+                    ncol=1,
+                    nrow=1,
+                    xori=0.0,
+                    yori=0.0,
+                    xinc=1.0,
+                    yinc=1.0,
+                    rotation=0.0,
+                    yflip=0,
+                    forward_init_file="0.txt",
+                    output_file=Path("0.dat"),
+                    base_surface_path="0",
+                )
+            ],
+            response_configuration=[],
+            observations=None,
+        )
+        runmodel._storage.close()
+
+        dump = runmodel.model_dump() | _not_yet_serializable_args
+        reloaded = EnsembleExperiment.with_plugins(**dump)
+
+        original_wfjobs = [
+            reloaded.hooked_workflows["POST_SIMULATION"][0].cmd_list[i][0]
+            for i in range(2)
+        ]
+        roundtrip_wfjobs = [
+            runmodel.hooked_workflows["POST_SIMULATION"][0].cmd_list[i][0]
+            for i in range(2)
+        ]
+
+        assert original_wfjobs == roundtrip_wfjobs

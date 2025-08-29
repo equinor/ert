@@ -2,18 +2,26 @@ from __future__ import annotations
 
 import os
 from collections.abc import Iterator
-from dataclasses import dataclass
-from typing import Any
+from typing import Annotated, Any
+
+from pydantic import BaseModel, Field
 
 from .parsing import ConfigValidationError, ErrorInfo, init_workflow_schema, parse
 from .parsing.types import Defines
-from .workflow_job import _WorkflowJob
+from .workflow_job import ErtScriptWorkflow, ExecutableWorkflow, _WorkflowJob
 
 
-@dataclass
-class Workflow:
+class Workflow(BaseModel):
     src_file: str
-    cmd_list: list[tuple[_WorkflowJob, Any]]
+    cmd_list: list[
+        tuple[
+            Annotated[
+                ExecutableWorkflow | ErtScriptWorkflow,
+                Field(discriminator="type"),
+            ],
+            Any,
+        ]
+    ]
 
     def __len__(self) -> int:
         return len(self.cmd_list)
