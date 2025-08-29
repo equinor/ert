@@ -557,12 +557,14 @@ class LocalEnsemble(BaseMode):
 
     def load_scalar_group(
         self,
-        group: str,
+        param_name: str,
         realizations: int | npt.NDArray[np.int_] | None = None,
         transformed: bool = False,
     ) -> pl.DataFrame | None:
-        if group in self.experiment.scalar_group_to_nodes:
-            df_lazy = self._load_parameters_lazy(group)
+        if param_name in self.experiment.scalar_nodes:
+            config_node = self.experiment.scalar_nodes[param_name]
+            assert isinstance(config_node, GenKwConfig)
+            df_lazy = self._load_parameters_lazy(config_node.data_file)
             if realizations is not None:
                 if isinstance(realizations, int):
                     realizations = np.array([realizations])
@@ -570,22 +572,17 @@ class LocalEnsemble(BaseMode):
             df = df_lazy.collect(engine="streaming")
             if df.is_empty():
                 raise IndexError(
-                    f"No matching realizations {realizations} found for {group}"
+                    f"No matching realizations {realizations} found for {param_name}"
                 )
             if transformed:
-                cfg_by_key = {
-                    cfg.parameter_keys[0]: cfg
-                    for cfg in self.experiment.scalar_group_to_nodes[group]
-                }
-                value_cols = [c for c in df.columns if c != "realization"]
                 df = df.with_columns(
                     [
-                        pl.col(col)
+                        pl.col(param_name)
                         .map_elements(
-                            cfg_by_key[col].transform_col(), return_dtype=df[col].dtype
+                            config_node.transform_col(),
+                            return_dtype=df[param_name].dtype,
                         )
-                        .alias(col)
-                        for col in value_cols
+                        .alias(param_name)
                     ]
                 )
             return df
@@ -620,6 +617,13 @@ class LocalEnsemble(BaseMode):
     def load_parameters_numpy(
         self, group: str, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:
+        if group in self.experiment.scalar_group_to_nodes:
+            return (
+                self.load_parameters(group, realizations)
+                .drop("realization")
+                .to_numpy()
+                .T.copy()
+            )
         config = self.experiment.parameter_configuration[group]
         return config.load_parameters(self, realizations)
 
@@ -730,7 +734,7 @@ class LocalEnsemble(BaseMode):
         parameter_dict["realization"] = real_nr
         return pl.DataFrame(
             parameter_dict,
-            schema=dict.fromkeys(key, pl.Float64) | {"realization": pl.Int64},
+            schema={key: pl.Float64, "realization": pl.Int64},
         )
 
     @require_write
