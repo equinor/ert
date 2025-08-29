@@ -263,8 +263,8 @@ def _is_dir_all_model(source: str, ever_config: EverestConfig) -> bool:
         raise ValueError(msg)
 
     is_dir = []
-    for model_id in realizations:
-        model_source = source.replace("<GEO_ID>", str(model_id))
+    for model_realization in realizations:
+        model_source = source.replace("<GEO_ID>", str(model_realization))
         if not os.path.exists(model_source):
             msg = (
                 "Expected source to exist for data installation, "
