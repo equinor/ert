@@ -108,7 +108,7 @@ class EverestDataAPI:
         obj_values = []
         for b in self._ever_storage.data.batches_with_function_results:
             for (
-                geo_realization,
+                model_realization,
                 simulation_id,
             ), df in b.realization_objectives.sort(
                 ["realization", "simulation_id"]
@@ -124,7 +124,7 @@ class EverestDataAPI:
                     obj_values.append(
                         {
                             "batch": int(b.batch_id),
-                            "realization": int(geo_realization),  # type: ignore
+                            "realization": int(model_realization),  # type: ignore
                             "simulation": int(simulation_id),  # type: ignore
                             "function": obj_name,
                             "scale": float(obj_dict["scale"]),
@@ -233,12 +233,17 @@ class EverestDataAPI:
                     pl.Series("batch", [batch_id] * summary.shape[0])
                 )
 
-                realization_map = (
-                    self._ever_storage.data.simulation_to_geo_realization_map(batch_id)
+                model_realization_map = (
+                    self._ever_storage.data.simulation_to_model_realization_map(
+                        batch_id
+                    )
                 )
                 realizations = pl.Series(
                     "realization",
-                    [realization_map.get(int(sim)) for sim in summary["simulation"]],
+                    [
+                        model_realization_map.get(int(sim))
+                        for sim in summary["simulation"]
+                    ],
                 )
                 realizations = realizations.cast(pl.Int64, strict=False)
                 summary = summary.with_columns(realizations)
