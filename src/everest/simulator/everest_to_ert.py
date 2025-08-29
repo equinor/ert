@@ -10,8 +10,10 @@ import everest
 from ert.config import (
     EnsembleConfig,
     ErtConfig,
+    ExecutableWorkflow,
     ForwardModelStep,
     ModelConfig,
+    WorkflowJob,
 )
 from ert.config.ert_config import (
     _substitutions_from_dict,
@@ -21,7 +23,6 @@ from ert.config.ert_config import (
 )
 from ert.config.parsing import ConfigDict, ConfigWarning, read_file
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
-from ert.config.workflow_job import ExecutableWorkflow, _WorkflowJob
 from ert.plugins import ErtPluginContext
 from ert.plugins.plugin_manager import ErtPluginManager
 from everest.config import EverestConfig
@@ -476,8 +477,8 @@ def get_forward_model_steps(
     return forward_model_steps, env_pr_fm_step
 
 
-def get_workflow_jobs(ever_config: EverestConfig) -> dict[str, _WorkflowJob]:
-    workflow_jobs: dict[str, _WorkflowJob] = {}
+def get_workflow_jobs(ever_config: EverestConfig) -> dict[str, WorkflowJob]:
+    workflow_jobs: dict[str, WorkflowJob] = {}
     for job in ever_config.install_workflow_jobs or []:
         if job.executable is not None:
             if job.name in workflow_jobs:

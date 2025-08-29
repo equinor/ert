@@ -5,8 +5,7 @@ from concurrent import futures
 from concurrent.futures import Future
 from typing import Any, Self
 
-from ert.config import Workflow
-from ert.config.workflow_job import ErtScriptWorkflow, _WorkflowJob
+from ert.config import ErtScriptWorkflow, Workflow, WorkflowJob
 from ert.plugins import (
     ErtScript,
     ExternalErtScript,
@@ -15,7 +14,7 @@ from ert.plugins import (
 
 
 class WorkflowJobRunner:
-    def __init__(self, workflow_job: _WorkflowJob) -> None:
+    def __init__(self, workflow_job: WorkflowJob) -> None:
         self.job = workflow_job
         self.__running = False
         self.__script: ErtScript | None = None

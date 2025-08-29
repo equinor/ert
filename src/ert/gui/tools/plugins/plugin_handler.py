@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
-from ert.config.workflow_job import ErtScriptWorkflow
+from ert.config import ErtScriptWorkflow
 
 from .plugin import Plugin
 

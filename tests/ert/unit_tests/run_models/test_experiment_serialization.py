@@ -19,6 +19,7 @@ from ert.config import (
     ConfigWarning,
     ErtConfig,
     ESSettings,
+    ExecutableWorkflow,
     Field,
     ForwardModelStep,
     GenDataConfig,
@@ -30,7 +31,6 @@ from ert.config import (
     SummaryConfig,
     SurfaceConfig,
     Workflow,
-    _WorkflowJob,
 )
 from ert.config.gen_kw_config import GenKwConfig, TransformFunctionDefinition
 from ert.config.parsing import SchemaItemType
@@ -250,7 +250,8 @@ def forward_model_step_strategy(draw, substitutions: dict[str, str]):
 def workflow_strategy(draw):
     src_file = draw(realistic_text().map(lambda s: f"{s}.wf.json"))
 
-    job = _WorkflowJob(
+    job = ExecutableWorkflow(
+        executable=draw(realistic_text()),
         name=draw(realistic_text()),
         min_args=draw(st.integers(min_value=1, max_value=4)),
         max_args=draw(st.integers(min_value=1, max_value=4)),
