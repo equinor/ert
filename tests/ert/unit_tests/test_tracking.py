@@ -21,9 +21,9 @@ from ert.ensemble_evaluator.event import (
 )
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.ensemble_evaluator.state import (
+    FORWARD_MODEL_STATE_CANCELLED,
     FORWARD_MODEL_STATE_FAILURE,
     FORWARD_MODEL_STATE_FINISHED,
-    FORWARD_MODEL_STATE_INIT,
     REALIZATION_STATE_FINISHED,
 )
 from ert.mode_definitions import (
@@ -124,6 +124,7 @@ def check_expression(original, path_expression, expected: list[str], msg_start):
             "",
             (
                 "    import os\n"
+                "    import sys\n"
                 '    if os.getcwd().split("/")[-2].split("-")[1] == "0": sys.exit(1)'
             ),
             [
@@ -141,7 +142,7 @@ def check_expression(original, path_expression, expected: list[str], msg_start):
                     "reals.'0'.fm_steps.'0'.status",
                     FORWARD_MODEL_STATE_FAILURE,
                 ),
-                ("0", "reals.'0'.fm_steps.'1'.status", FORWARD_MODEL_STATE_INIT),
+                ("0", "reals.'0'.fm_steps.'1'.status", FORWARD_MODEL_STATE_CANCELLED),
                 (
                     ".*",
                     "reals.'1'.fm_steps.*.status",

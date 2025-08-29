@@ -532,7 +532,7 @@ class EnsembleEvaluator:
             self.ensemble.snapshot.data().get("reals", {}).items()
         ):
             if all(
-                fm_step_data["status"] == state.FORWARD_MODEL_STATE_INIT
+                fm_step_data["status"] == state.FORWARD_MODEL_STATE_CANCELLED
                 for fm_step_data in real_data.get("fm_steps", {}).values()
             ):
                 host_name = real_data.get("exec_hosts")
