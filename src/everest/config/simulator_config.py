@@ -141,7 +141,7 @@ class SimulatorConfig(BaseModelWithContextSupport, extra="forbid"):
         if (
             config.max_memory is not None
             and config.queue_system is not None
-            and config.queue_system.realization_memory is (None or 0)
+            and config.queue_system.realization_memory == 0
         ):
             config.queue_system.realization_memory = (
                 parse_realization_memory_str(config.max_memory)
