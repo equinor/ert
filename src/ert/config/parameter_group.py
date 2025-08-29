@@ -10,7 +10,7 @@ from pydantic import BaseModel, model_validator
 from .parameter_config import ParameterConfig, ParameterMetadata
 
 
-class ParameterGroupConfig(BaseModel):
+class ParameterGroup(BaseModel):
     parameters: list[ParameterConfig]
     parameter_type: str | None = None
 

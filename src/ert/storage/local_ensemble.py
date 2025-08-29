@@ -545,18 +545,12 @@ class LocalEnsemble(BaseMode):
         df = pl.scan_parquet(group_path)
         return df
 
-    def load_parameters(
+    def load_scalar_group(
         self,
         group: str,
         realizations: int | npt.NDArray[np.int_] | None = None,
         transformed: bool = False,
-    ) -> xr.Dataset | pl.DataFrame:
-        """
-        Load parameters for group and realizations. If transformed is True,
-        the parameters will be transformed using the parameter transformation
-        otherwise it will return the raw values.
-
-        """
+    ) -> pl.DataFrame | None:
         if group in self.experiment.scalar_group_to_nodes:
             df_lazy = self._load_parameters_lazy(group)
             if realizations is not None:
@@ -584,6 +578,22 @@ class LocalEnsemble(BaseMode):
                         for col in value_cols
                     ]
                 )
+            return df
+        return None
+
+    def load_parameters(
+        self,
+        group: str,
+        realizations: int | npt.NDArray[np.int_] | None = None,
+        transformed: bool = False,
+    ) -> xr.Dataset | pl.DataFrame:
+        """
+        Load parameters for group and realizations. If transformed is True,
+        the parameters will be transformed using the parameter transformation
+        otherwise it will return the raw values.
+
+        """
+        if (df := self.load_scalar_group(group, realizations, transformed)) is not None:
             return df
         elif group not in self.experiment.parameter_configuration:
             raise KeyError(f"{group} is not registered to the experiment.")
