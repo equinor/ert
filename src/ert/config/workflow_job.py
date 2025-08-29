@@ -3,8 +3,6 @@ from __future__ import annotations
 import logging
 import os
 import textwrap
-from argparse import ArgumentParser
-from collections.abc import Callable
 from dataclasses import field
 from typing import Self, TypeAlias
 
@@ -141,7 +139,6 @@ class ErtScriptWorkflow(_WorkflowJob):
     ert_script: type[ErtScript] = None  # type: ignore
     description: str = ""
     examples: str | None = None
-    parser: Callable[[], ArgumentParser] | None = None
     category: str = "other"
 
     @model_validator(mode="after")

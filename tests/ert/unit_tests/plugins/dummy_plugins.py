@@ -47,7 +47,8 @@ def legacy_ertscript_workflow(config):
         def run(self):
             pass
 
-    config.add_workflow(Test)
+    workflow = config.add_workflow(Test)
+    workflow.parser = None
 
 
 @plugin(name="dummy")
