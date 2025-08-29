@@ -4,7 +4,7 @@ from contextlib import ExitStack as does_not_raise
 import pytest
 from hypothesis import given, strategies
 
-from ert.config import ConfigValidationError, Workflow, _WorkflowJob
+from ert.config import ConfigValidationError, ExecutableWorkflow, Workflow
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -32,7 +32,8 @@ def test_that_substitution_happens_in_workflow():
     with open("workflow", "w", encoding="utf-8") as f:
         f.write("JOB <A> <B>\n")
 
-    job = _WorkflowJob(
+    job = ExecutableWorkflow(
+        executable="echo",
         name="JOB",
         min_args=None,
         max_args=None,
@@ -50,7 +51,8 @@ def test_that_substitution_happens_in_workflow():
 
 
 def get_workflow_job(name):
-    return _WorkflowJob(
+    return ExecutableWorkflow(
+        executable="echo",
         name=name,
         min_args=None,
         max_args=None,
@@ -183,7 +185,8 @@ def test_args_validation(config, expectation, min_args, max_args):
             src_file="workflow",
             context=None,
             job_dict={
-                "WORKFLOW": _WorkflowJob(
+                "WORKFLOW": ExecutableWorkflow(
+                    executable="echo",
                     name="WORKFLOW",
                     min_args=min_args,
                     max_args=max_args,
