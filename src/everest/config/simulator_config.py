@@ -117,6 +117,15 @@ class SimulatorConfig(BaseModelWithContextSupport, extra="forbid"):
             return options or LocalQueueOptions(max_running=8)
         return v
 
+    @field_validator("queue_system", mode="before")
+    @classmethod
+    def parse_realization_memory(cls, v: Any) -> Any:
+        if isinstance(v, dict):
+            v["realization_memory"] = parse_realization_memory_str(
+                str(v.get("realization_memory", 0))
+            )
+        return v
+
     @field_validator("max_memory")
     @classmethod
     def validate_max_memory(cls, max_memory: int | str | None) -> str | None:

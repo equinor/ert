@@ -548,3 +548,31 @@ def test_that_max_memory_does_not_overwrite_realization_memory(
         }
     )
     assert config.simulator.queue_system.realization_memory == expected
+
+
+@pytest.mark.parametrize(
+    "realization_memory, expected",
+    [
+        ("1Gb", 1073741824),
+        ("2Kb", 2048),
+        (999, 999),
+    ],
+)
+def test_parsing_of_relization_memory(
+    change_to_tmpdir, realization_memory, expected
+) -> None:
+    config = EverestConfig.with_defaults(
+        simulator={
+            "queue_system": {"name": "local", "realization_memory": realization_memory},
+        }
+    )
+    assert config.simulator.queue_system.realization_memory == expected
+
+
+def test_parsing_of_non_existing_relization_memory(change_to_tmpdir) -> None:
+    config = EverestConfig.with_defaults(
+        simulator={
+            "queue_system": {"name": "local"},
+        }
+    )
+    assert config.simulator.queue_system.realization_memory == 0
