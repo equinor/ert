@@ -1,7 +1,6 @@
 import logging
 import random
 import socket
-import traceback
 from functools import lru_cache
 
 from dns import exception, resolver, reversename
@@ -45,7 +44,6 @@ def get_machine_name() -> str:
         # to socket fqdn which are using /etc/hosts to retrieve this name
         return socket.getfqdn()
     except (socket.gaierror, exception.DNSException):
-        logging.getLogger(__name__).debug(traceback.format_exc())
         return "localhost"
 
 

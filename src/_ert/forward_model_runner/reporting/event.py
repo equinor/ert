@@ -94,6 +94,7 @@ class Event(Reporter):
             target=self._event_publisher, should_raise=False
         )
         self._done = threading.Event()
+        self._reporter_exception: Exception | None = None
         self._ack_timeout = ack_timeout
         self._max_retries = max_retries
         if finished_event_timeout is not None:
@@ -170,9 +171,15 @@ class Event(Reporter):
                     listener_task.cancel()
                     await listener_task
 
-        asyncio.run(publisher())
+        try:
+            asyncio.run(publisher())
+        except Exception as e:
+            self._reporter_exception = e
 
     def report(self, msg: Message) -> None:
+        if self._reporter_exception is not None:
+            self.stop()
+            raise self._reporter_exception
         self._statemachine.transition(msg)
 
     def _dump_event(self, event: DispatcherEvent) -> None:

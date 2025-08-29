@@ -139,8 +139,6 @@ def _report_all_messages(
             except Exception as err:
                 with contextlib.suppress(Exception):
                     del reporters[i]
-                    if isinstance(reporter, reporting.Event):
-                        reporter.stop()
                     logger.exception(
                         f"Reporter {reporter} failed due to {err}."
                         " Removing the reporter."

@@ -18,8 +18,11 @@ from _ert.events import (
     EESnapshotUpdate,
     ForwardModelStepFailure,
     ForwardModelStepRunning,
+    ForwardModelStepStart,
     ForwardModelStepSuccess,
+    RealizationFailed,
     RealizationResubmit,
+    RealizationSuccess,
     dispatcher_event_to_json,
 )
 from _ert.forward_model_runner.client import (
@@ -27,6 +30,7 @@ from _ert.forward_model_runner.client import (
     DISCONNECT_MSG,
     Client,
 )
+from ert.config.ert_config import ErtConfig
 from ert.config.queue_config import QueueConfig
 from ert.ensemble_evaluator import (
     EnsembleEvaluator,
@@ -648,3 +652,68 @@ async def test_queue_config_properties_propagated_to_scheduler_from_ensemble(
     assert Scheduler.__init__.call_args.kwargs["submit_sleep"] == 33
     assert Scheduler.__init__.call_args.kwargs["max_running"] == 44
     assert Scheduler.__init__.call_args.kwargs["max_submit"] == 55
+
+
+async def test_log_forward_model_steps_with_missing_status_updates(
+    monkeypatch: MonkeyPatch, tmpdir, caplog, make_ensemble
+):
+    mocked_config = MagicMock(spec=ErtConfig)
+    num_reals = 11
+    num_fm_steps = 3
+    ensemble: LegacyEnsemble = make_ensemble(
+        monkeypatch, tmpdir, num_reals, num_fm_steps
+    )
+    router_port = 111111
+    mocked_config.router_port = router_port
+    working_machine_name = "working_cluster_machine"
+    evaluator_host = "foo_evaluator_host"
+    evaluator = EnsembleEvaluator(ensemble, mocked_config, Event())
+    monkeypatch.setattr(
+        "ert.ensemble_evaluator.evaluator.get_machine_name",
+        lambda *args: evaluator_host,
+    )
+    # One realization passed with no connection problems and reports successfully
+    fm_events = []
+    for fm_step_id in range(num_fm_steps):
+        fm_events.extend(
+            [
+                ForwardModelStepStart(
+                    ensemble=ensemble.id_, real="10", fm_step=str(fm_step_id)
+                ),
+                ForwardModelStepRunning(
+                    ensemble=ensemble.id_, real="10", fm_step=str(fm_step_id)
+                ),
+                ForwardModelStepSuccess(
+                    ensemble=ensemble.id_, real="10", fm_step=str(fm_step_id)
+                ),
+            ]
+        )
+    evaluator._ensemble.update_snapshot(fm_events)
+    driver_events = [
+        RealizationSuccess(
+            real="10", ensemble=ensemble.id_, exec_hosts=working_machine_name
+        )
+    ]
+    for i in range(10):
+        driver_events.append(
+            RealizationFailed(
+                real=str(i),
+                ensemble=ensemble.id_,
+                exec_hosts="foo_cluster_machine"
+                if i % 2 == 0
+                else "bar_cluster_machine",
+            )
+        )
+
+    evaluator._ensemble.update_snapshot(driver_events)
+    evaluator._log_forward_model_steps_with_missing_status_updates()
+
+    assert "working_cluster_machine" not in caplog.text
+    assert "'10'" not in caplog.text  # The realization that passed with no problems
+    assert (
+        "Ensemble finished, but there were missing ForwardModelStep status updates "
+        "for some realization(s) from some host(s) ({'foo_cluster_machine': ['0', "
+        "'2', '4', '6', '8'], 'bar_cluster_machine': ['1', '3', '5', '7', '9']}). "
+        f"There could be connectivity issues to evaluator running on port "
+        f"{router_port} on host {evaluator_host}"
+    ) in caplog.text
