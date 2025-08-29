@@ -6,6 +6,7 @@ import json
 import os
 from collections.abc import Awaitable
 from datetime import datetime, timedelta
+from textwrap import dedent
 from typing import TypeVar
 from urllib.parse import quote
 from uuid import UUID
@@ -27,6 +28,7 @@ from ert.dark_storage.endpoints.responses import get_response
 from ert.gui.tools.plot.plot_api import PlotApi
 from ert.services import StorageService
 from ert.storage import Storage, open_storage
+from ert.summary_key_type import history_key
 
 T = TypeVar("T")
 
@@ -416,3 +418,53 @@ def test_plotter_on_all_snake_oil_responses_memory(api_and_snake_oil_storage):
     # thresholds are set to about 1.5x local memory used
     assert total_memory_mb < 5000
     assert peak_memory_mb < 1500
+
+
+@pytest.mark.parametrize("well_name", ("46/3-7s", "FOPR"))
+def test_that_responses_do_not_match_substring(api_and_storage, well_name):
+    api, storage = api_and_storage
+    key = f"WBHP:{well_name}"
+    date = datetime(year=2024, month=10, day=4)
+    experiment = storage.create_experiment(
+        parameters=[],
+        responses=[
+            SummaryConfig(
+                name="summary",
+                input_files=["CASE.UNSMRY", "CASE.SMSPEC"],
+                keys=[key, history_key(key), "FOPR"],
+            )
+        ],
+        observations={
+            "summary": pl.DataFrame(
+                {
+                    "observation_key": [key, history_key(key), "FOPR"],
+                    "response_key": [key, history_key(key), "FOPR"],
+                    "time": [date, date, date],
+                    "observations": [0.2, 0.1, 0.01],
+                    "std": [0.1, 0.1, 0.2],
+                }
+            )
+        },
+    )
+    ensemble = experiment.create_ensemble(ensemble_size=1, name="ensemble")
+    assert api.data_for_response(str(ensemble.id), key).empty
+    ensemble.save_response(
+        "summary",
+        pl.DataFrame(
+            {
+                "response_key": ["FOPR"],
+                "time": [pl.Series([date]).dt.cast_time_unit("ms")],
+                "values": [pl.Series([1.0], dtype=pl.Float32)],
+            }
+        ).explode("values", "time"),
+        0,
+    )
+    assert api.data_for_response(str(ensemble.id), "FOPR").to_csv() == dedent(
+        """\
+        Realization,2024-10-04
+        0,1.0
+        """
+    )
+    assert api.data_for_response(
+        str(ensemble.id), key
+    ).empty  # fails when the well name is FOPR
