@@ -262,29 +262,16 @@ class ObjectiveScaler(ObjectiveTransform):
             realizations: The realizations to use for the calculation.
         """
         if self._auto_scale:
-            if np.all(np.isnan(objectives)):  # All forward models failed, don't handle
-                return
-            msg = (
+            error_msg = (
                 "Auto-scaling of the objective failed "
                 "to estimate a positive scale factor"
             )
-            realization_weights = np.tile(
-                self._realization_weights[realizations, np.newaxis], objectives.shape[1]
+            avg_objectives = _avg_functions(
+                realizations, self._realization_weights, objectives, error_msg
             )
-            realization_weights[np.isnan(objectives)] = 0.0
-            rw_sum = np.sum(realization_weights, axis=0)
-            if np.any(rw_sum < np.finfo(np.float64).eps):
-                raise RuntimeError(msg)
-            realization_weights /= rw_sum
-            auto_scale = np.abs(
-                np.dot(
-                    np.sum(objectives * realization_weights, axis=0),
-                    self._objective_weights,
-                )
-            )
-            if auto_scale < np.finfo(np.float64).eps:
-                raise RuntimeError(msg)
-            self._scales = auto_scale
+            self._scales = np.abs(np.dot(avg_objectives, self._objective_weights))
+            if self._scales < np.finfo(np.float64).eps:
+                raise RuntimeError(error_msg)
         self._auto_scale = False
 
     @property
@@ -384,25 +371,16 @@ class ConstraintScaler(NonLinearConstraintTransform):
             realizations: The realizations to use for the calculation.
         """
         if self._auto_scale:
-            if np.all(np.isnan(constraints)):  # All forward models failed, don't handle
-                return
-            weights = np.tile(
-                self._realization_weights[realizations, np.newaxis],
-                constraints.shape[1],
-            )
-            weights[np.isnan(constraints)] = 0.0
-            w_sum = np.sum(weights, axis=0)
-            msg = (
+            error_msg = (
                 "Auto-scaling of the constraints failed "
                 "to estimate a positive scale factor"
             )
-            if w_sum < np.finfo(np.float64).eps:
-                raise RuntimeError(msg)
-            weights /= w_sum
-            auto_scales = np.abs(np.sum(constraints * weights, axis=0))
-            if np.any(auto_scales < np.finfo(np.float64).eps):
-                raise RuntimeError(msg)
-            self._scales = auto_scales
+            avg_constraints = _avg_functions(
+                realizations, self._realization_weights, constraints, error_msg
+            )
+            self._scales = np.abs(avg_constraints)
+            if np.any(self._scales < np.finfo(np.float64).eps):
+                raise RuntimeError(error_msg)
         self._auto_scale = False
 
     @property
@@ -463,3 +441,20 @@ def get_optimization_domain_transforms(
         "objective_scaler": objective_scaler,
         "constraint_scaler": constraint_scaler,
     }
+
+
+def _avg_functions(
+    realizations: NDArray[np.intc],
+    realization_weights: NDArray[np.float64],
+    functions: NDArray[np.float64],
+    error_msg: str,
+) -> NDArray[np.float64]:
+    realization_weights = np.tile(
+        realization_weights[realizations, np.newaxis], functions.shape[1]
+    )
+    realization_weights[np.isnan(functions)] = 0.0
+    rw_sum = np.sum(realization_weights, axis=0)
+    if np.any(rw_sum < np.finfo(np.float64).eps):
+        raise RuntimeError(error_msg)
+    realization_weights /= rw_sum
+    return np.sum(functions * realization_weights, axis=0)
