@@ -807,8 +807,6 @@ class ErtConfig(BaseModel):
             ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = env_pr_fm_step
             ACTIVATE_SCRIPT = pm.activate_script()
 
-        from datetime import datetime  # noqa
-
         ErtConfigWithPlugins.model_rebuild()
         assert issubclass(ErtConfigWithPlugins, ErtConfig)
         return ErtConfigWithPlugins
@@ -1491,8 +1489,3 @@ def _forward_model_step_from_config_contents(
         required_keywords=content_dict.get("REQUIRED", []),
         default_mapping=default_mapping,
     )
-
-
-# Due to circular dependency in type annotations between
-# ErtConfig -> WorkflowJob -> ErtScript -> ErtConfig
-ErtConfig.model_rebuild()
