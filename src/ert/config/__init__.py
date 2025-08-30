@@ -42,7 +42,7 @@ from .summary_config import SummaryConfig
 from .summary_observation import SummaryObservation
 from .surface_config import SurfaceConfig
 from .workflow import Workflow
-from .workflow_job import _WorkflowJob
+from .workflow_job import ErtScriptWorkflow, ExecutableWorkflow, WorkflowJob
 
 __all__ = [
     "AnalysisConfig",
@@ -56,8 +56,10 @@ __all__ = [
     "EnsembleConfig",
     "ErrorInfo",
     "ErtConfig",
+    "ErtScriptWorkflow",
     "EverestConstraintsConfig",
     "EverestObjectivesConfig",
+    "ExecutableWorkflow",
     "ExtParamConfig",
     "Field",
     "ForwardModelStep",
@@ -89,7 +91,7 @@ __all__ = [
     "TransformFunction",
     "WarningInfo",
     "Workflow",
-    "_WorkflowJob",
+    "WorkflowJob",
     "capture_validation",
     "field_transform",
     "lint_file",

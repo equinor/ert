@@ -5,7 +5,7 @@ import pytest
 
 from ert import ErtScript
 from ert.plugins import workflow_config
-from ert.plugins.workflow_config import WorkflowConfigs
+from ert.plugins.workflow_config import LegacyWorkflowConfigs
 
 
 def test_workflow_config_duplicate_log_message(caplog, monkeypatch):
@@ -28,10 +28,10 @@ def test_workflow_config_duplicate_log_message(caplog, monkeypatch):
 @pytest.mark.parametrize(
     "name, expected", [(None, "default_name"), ("some_name", "some_name")]
 )
-def test_workflow_config_init_name(monkeypatch, name, expected):
+def test_workflow_config_init_name(name, expected):
     mock_func = ErtScript
     mock_func.__name__ = "default_name"
-    configs = WorkflowConfigs()
+    configs = LegacyWorkflowConfigs()
     workflow = configs.add_workflow(ert_script=mock_func, name=name)
 
     assert workflow.name == expected

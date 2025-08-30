@@ -4,7 +4,7 @@ import logging
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from ert.config import ErtConfig, _WorkflowJob
+    from ert.config import ErtConfig, WorkflowJob
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.workflow_runner import WorkflowJobRunner
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class Exporter:
     def __init__(
         self,
-        export_job: _WorkflowJob | None,
+        export_job: WorkflowJob | None,
         notifier: ErtNotifier,
         config: ErtConfig,
     ) -> None:

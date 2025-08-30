@@ -7,21 +7,21 @@ from typing import Any
 
 from .parsing import ConfigValidationError, ErrorInfo, init_workflow_schema, parse
 from .parsing.types import Defines
-from .workflow_job import _WorkflowJob
+from .workflow_job import WorkflowJob
 
 
 @dataclass
 class Workflow:
     src_file: str
-    cmd_list: list[tuple[_WorkflowJob, Any]]
+    cmd_list: list[tuple[WorkflowJob, Any]]
 
     def __len__(self) -> int:
         return len(self.cmd_list)
 
-    def __getitem__(self, index: int) -> tuple[_WorkflowJob, Any]:
+    def __getitem__(self, index: int) -> tuple[WorkflowJob, Any]:
         return self.cmd_list[index]
 
-    def __iter__(self) -> Iterator[tuple[_WorkflowJob, Any]]:
+    def __iter__(self) -> Iterator[tuple[WorkflowJob, Any]]:
         return iter(self.cmd_list)
 
     @classmethod
@@ -29,8 +29,8 @@ class Workflow:
         cls,
         src_file: str,
         context: Defines,
-        job_dict: dict[str, _WorkflowJob],
-    ) -> list[tuple[_WorkflowJob, Any]]:
+        job_dict: dict[str, WorkflowJob],
+    ) -> list[tuple[WorkflowJob, Any]]:
         schema = init_workflow_schema()
         config_dict = parse(src_file, schema, pre_defines=context)
 
@@ -85,7 +85,7 @@ class Workflow:
         cls,
         src_file: str,
         context: dict[str, str] | None,
-        job_dict: dict[str, _WorkflowJob],
+        job_dict: dict[str, WorkflowJob],
     ) -> Workflow:
         cmd_list = cls._parse_command_list(
             src_file=src_file,

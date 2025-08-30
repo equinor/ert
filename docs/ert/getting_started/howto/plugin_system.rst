@@ -154,7 +154,7 @@ Workflow job
 
 There are two ways to install workflow jobs in ERT.
 Depending on whether you already have a configuration file or need to include additional documentation,
-you can choose between the ``installable_workflow_jobs`` hook or the ``legacy_ertscript_workflow`` hook.
+you can choose between the ``installable_workflow_jobs`` hook or the ``ertscript_workflow`` hook.
 
 1. **Using the installable_workflow_jobs hook**
 
@@ -199,13 +199,13 @@ Implement the hook specification as follows to register the workflow job ``CSV_E
 
 .. _legacy_ert_workflow_jobs:
 
-2. **Using the legacy_ertscript_workflow hook**
+2. **Using the ertscript_workflow hook**
 
 The second approach does not require creating a workflow job configuration file up-front,
 and allows adding documentation.
 
 .. literalinclude:: ../../../../src/ert/plugins/hook_specifications/jobs.py
-   :pyobject: legacy_ertscript_workflow
+   :pyobject: ertscript_workflow
 
 Minimal example:
 
@@ -218,7 +218,7 @@ Minimal example:
            print("Hello World")
 
    @ert.plugin(name="my_plugin")
-    def legacy_ertscript_workflow(config):
+    def ertscript_workflow(config):
         config.add_workflow(MyJob, "MY_JOB")
 
 
@@ -233,25 +233,22 @@ Full example:
            print("Hello World")
 
    @ert.plugin(name="my_plugin")
-    def legacy_ertscript_workflow(config: ert.WorkflowConfigs):
-        workflow: ert.ErtScriptWorkflow = config.add_workflow(MyJob, "MY_JOB")
-        workflow.parser = my_job_parser  # Optional
-        workflow.description = "My job description"  # Optional
-        workflow.examples = "example of use"  # Optional
+    def ertscript_workflow(config: ert.WorkflowConfigs):
+        config.add_workflow(
+            MyJob,
+            "MY_JOB",
+            parser=my_job_parser,
+            description="My job description", # optional
+            examples="example of use", # optional
+        )
 
 The configuration object and properties are as follows.
 
-.. autofunction:: ert.plugins.hook_specifications.jobs.legacy_ertscript_workflow
+.. autofunction:: ert.plugins.hook_specifications.jobs.ertscript_workflow
 
 .. autoclass:: ert.plugins.workflow_config.WorkflowConfigs
     :members: add_workflow
     :undoc-members:
-
-
-.. autoclass:: ert.plugins.workflow_config.ErtScriptWorkflow
-    :members:
-    :undoc-members:
-    :exclude-members: model_config, validate_types
 
 Logging configuration
 ~~~~~~~~~~~~~~~~~~~~~
