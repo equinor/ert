@@ -8,7 +8,7 @@ import traceback
 import warnings
 from abc import abstractmethod
 from types import MappingProxyType, ModuleType
-from typing import TYPE_CHECKING, Any, TypeAlias
+from typing import Any
 
 from typing_extensions import deprecated
 
@@ -17,11 +17,6 @@ from .workflow_fixtures import (
     all_hooked_workflow_fixtures,
 )
 
-if TYPE_CHECKING:
-    from ert.config import ErtConfig
-    from ert.storage import Ensemble, Storage
-
-    Fixtures: TypeAlias = ErtConfig | Ensemble | Storage
 logger = logging.getLogger(__name__)
 
 
