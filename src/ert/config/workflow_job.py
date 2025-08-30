@@ -102,10 +102,10 @@ class _WorkflowJob(BaseModel):
         # First find the number of args
         specified_arg_types: list[tuple[int, str]] = content_dict.get(
             WorkflowJobKeys.ARG_TYPE, []
-        )  # type: ignore
+        )
 
-        specified_max_args: int = content_dict.get("MAX_ARG", 0)  # type: ignore
-        specified_min_args: int = content_dict.get("MIN_ARG", 0)  # type: ignore
+        specified_max_args: int = content_dict.get("MAX_ARG", 0)
+        specified_min_args: int = content_dict.get("MIN_ARG", 0)
 
         return parse_arg_types_list(
             specified_arg_types, specified_min_args, specified_max_args

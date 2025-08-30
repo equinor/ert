@@ -5,7 +5,7 @@ import os
 import re
 import shutil
 from abc import abstractmethod
-from typing import Annotated, Any, Literal, no_type_check
+from typing import Annotated, Any, Literal, TypeAlias, cast, overload
 
 import pydantic
 from pydantic import BaseModel, Field, field_validator
@@ -20,7 +20,6 @@ from .parsing import (
     ConfigKeys,
     ConfigValidationError,
     ConfigWarning,
-    MaybeWithContext,
     QueueSystem,
     QueueSystemWithGeneric,
 )
@@ -66,12 +65,27 @@ class QueueOptions(
             plugin_script = info.context.get("activate_script")
         return plugin_script or activate_script()  # Return default value
 
+    @overload
+    @staticmethod
+    def create_queue_options(
+        queue_system: QueueSystem,
+        options: dict[str, Any],
+        is_selected_queue_system: Literal[True],
+    ) -> KnownQueueOptions: ...
+    @overload
+    @staticmethod
+    def create_queue_options(
+        queue_system: QueueSystem,
+        options: dict[str, Any],
+        is_selected_queue_system: Literal[False],
+    ) -> KnownQueueOptions | None: ...
+
     @staticmethod
     def create_queue_options(
         queue_system: QueueSystem,
         options: dict[str, Any],
         is_selected_queue_system: bool,
-    ) -> QueueOptions | None:
+    ) -> KnownQueueOptions | None:
         lower_case_options = {key.lower(): value for key, value in options.items()}
         try:
             if queue_system == QueueSystem.LSF:
@@ -212,6 +226,11 @@ class SlurmQueueOptions(QueueOptions):
         return driver_dict
 
 
+KnownQueueOptions: TypeAlias = (
+    LsfQueueOptions | TorqueQueueOptions | SlurmQueueOptions | LocalQueueOptions
+)
+
+
 @dataclass
 class QueueMemoryStringFormat:
     suffixes: list[str]
@@ -288,13 +307,12 @@ def _group_queue_options_by_queue_system(
 class QueueConfig(BaseModel):
     max_submit: int = 1
     queue_system: QueueSystem = QueueSystem.LOCAL
-    queue_options: (
-        LsfQueueOptions | TorqueQueueOptions | SlurmQueueOptions | LocalQueueOptions
-    ) = pydantic.Field(default_factory=LocalQueueOptions, discriminator="name")
+    queue_options: KnownQueueOptions = pydantic.Field(
+        default_factory=LocalQueueOptions, discriminator="name"
+    )
     stop_long_running: bool = False
     max_runtime: int | None = None
 
-    @no_type_check
     @classmethod
     def from_dict(cls, config_dict: ConfigDict) -> QueueConfig:
         selected_queue_system = QueueSystem(
@@ -309,51 +327,48 @@ class QueueConfig(BaseModel):
 
         if (
             ConfigKeys.NUM_CPU not in config_dict
-            and ConfigKeys.DATA_FILE in config_dict
+            and (data_file := config_dict.get(ConfigKeys.DATA_FILE))
+            and (num_cpu := get_num_cpu_from_data_file(data_file))
         ):
-            data_file = config_dict.get(ConfigKeys.DATA_FILE)
-            if num_cpu := get_num_cpu_from_data_file(data_file):
-                logger.info(f"Parsed NUM_CPU={num_cpu} from {data_file}")
-                config_dict[ConfigKeys.NUM_CPU] = num_cpu
+            logger.info(f"Parsed NUM_CPU={num_cpu} from {data_file}")
+            config_dict[ConfigKeys.NUM_CPU] = num_cpu
 
         raw_queue_options = config_dict.get("QUEUE_OPTION", [])
         grouped_queue_options = _group_queue_options_by_queue_system(raw_queue_options)
         _log_duplicated_queue_options(raw_queue_options)
         _raise_for_defaulted_invalid_options(raw_queue_options)
 
-        all_validated_queue_options = {
-            selected_queue_system: QueueOptions.create_queue_options(
-                selected_queue_system,
-                grouped_queue_options[selected_queue_system],
-                True,
-            )
-        }
-        all_validated_queue_options.update(
-            {
-                _queue_system: QueueOptions.create_queue_options(
-                    _queue_system, grouped_queue_options[_queue_system], False
-                )
-                for _queue_system in QueueSystem
-                if _queue_system != selected_queue_system
-            }
+        selected_queue_options = QueueOptions.create_queue_options(
+            selected_queue_system,
+            grouped_queue_options[cast(QueueSystemWithGeneric, selected_queue_system)],
+            True,
         )
 
-        queue_options = all_validated_queue_options[selected_queue_system]
-        queue_options.add_global_queue_options(config_dict)
+        # validate all queue options for the unselected queues
+        # and show a warning
+        for _queue_system in QueueSystem:
+            if _queue_system != selected_queue_system:
+                _ = QueueOptions.create_queue_options(
+                    _queue_system,
+                    grouped_queue_options[cast(QueueSystemWithGeneric, _queue_system)],
+                    False,
+                )
 
-        if queue_options.project_code is None:
+        selected_queue_options.add_global_queue_options(config_dict)
+
+        if selected_queue_options.project_code is None:
             tags = {
                 fm_name.lower()
                 for fm_name, *_ in config_dict.get(ConfigKeys.FORWARD_MODEL, [])
                 if fm_name in {"RMS", "FLOW", "ECLIPSE100", "ECLIPSE300"}
             }
             if tags:
-                queue_options.project_code = "+".join(tags)
+                selected_queue_options.project_code = "+".join(tags)
 
         return QueueConfig(
             max_submit=max_submit,
             queue_system=selected_queue_system,
-            queue_options=queue_options,
+            queue_options=selected_queue_options,
             stop_long_running=bool(stop_long_running),
             max_runtime=config_dict.get(ConfigKeys.MAX_RUNTIME),
         )
@@ -403,7 +418,7 @@ def parse_realization_memory_str(realization_memory_str: str) -> int:
 
 
 def _throw_error_or_warning(
-    error_msg: str, option_value: MaybeWithContext, throw_error: bool
+    error_msg: str, option_value: Any, throw_error: bool
 ) -> None:
     if throw_error:
         raise ConfigValidationError.with_context(

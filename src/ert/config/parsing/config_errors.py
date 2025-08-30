@@ -2,23 +2,22 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Callable, Sequence
-from typing import Self
+from typing import Any, Self
 
 from pydantic import ValidationError
 
 from .error_info import ErrorInfo, WarningInfo
-from .types import MaybeWithContext
 
 
 class ConfigWarning(UserWarning):
     info: WarningInfo
 
     @classmethod
-    def warn(cls, message: str, context: MaybeWithContext = "") -> None:
+    def warn(cls, message: str, context: Any = "") -> None:
         cls._formatted_warn(cls.with_context(message, context))
 
     @classmethod
-    def deprecation_warn(cls, message: str, context: MaybeWithContext = "") -> None:
+    def deprecation_warn(cls, message: str, context: Any = "") -> None:
         warning = cls.with_context(message, context)
         if not hasattr(context, "token"):
             warning.info.set_context_keyword(context)
@@ -51,7 +50,7 @@ class ConfigWarning(UserWarning):
             self.info = info
 
     @classmethod
-    def with_context(cls, msg: str, context: MaybeWithContext) -> Self:
+    def with_context(cls, msg: str, context: Any) -> Self:
         return cls(WarningInfo(msg).set_context(context))
 
     def __str__(self) -> str:
@@ -76,9 +75,7 @@ class ConfigValidationError(ValueError):
         super().__init__(";".join([str(error) for error in self.errors]))
 
     @classmethod
-    def from_pydantic(
-        cls, error: ValidationError, context: MaybeWithContext | None = None
-    ) -> Self:
+    def from_pydantic(cls, error: ValidationError, context: Any = None) -> Self:
         parsed_errors = []
         for pydantic_error_info in error.errors():
             actual_error = pydantic_error_info["ctx"]["error"]
@@ -101,7 +98,7 @@ class ConfigValidationError(ValueError):
         return cls.from_collected(errors=parsed_errors)
 
     @classmethod
-    def with_context(cls, msg: str, context: MaybeWithContext) -> Self:
+    def with_context(cls, msg: str, context: Any) -> Self:
         """
         Create a single `ConfigValidationError` with some potential context
         (location in a file, line number etc.) with the given message.

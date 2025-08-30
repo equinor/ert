@@ -12,7 +12,6 @@ from .lark_parser import parse, parse_contents, read_file
 from .observations_parser import ObservationType
 from .queue_system import QueueSystem, QueueSystemWithGeneric
 from .schema_item_type import SchemaItemType
-from .types import MaybeWithContext
 from .workflow_job_keywords import WorkflowJobKeys
 from .workflow_job_schema import init_workflow_job_schema
 from .workflow_schema import init_workflow_schema
@@ -29,7 +28,6 @@ __all__ = [
     "ForwardModelStepKeys",
     "HistorySource",
     "HookRuntime",
-    "MaybeWithContext",
     "ObservationType",
     "QueueSystem",
     "QueueSystemWithGeneric",
