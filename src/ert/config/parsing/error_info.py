@@ -1,9 +1,8 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Self
+from typing import Any, Self
 
 from .file_context_token import FileContextToken
-from .types import MaybeWithContext
 
 
 @dataclass
@@ -18,7 +17,7 @@ class ErrorInfo:
     end_pos: int | None = None
 
     @classmethod
-    def _take(cls, context: MaybeWithContext, attr: str) -> FileContextToken | None:
+    def _take(cls, context: Any, attr: str) -> FileContextToken | None:
         if isinstance(context, FileContextToken):
             return context
         elif hasattr(context, attr):
@@ -26,15 +25,15 @@ class ErrorInfo:
 
         return None
 
-    def set_context(self, context: MaybeWithContext) -> Self:
+    def set_context(self, context: Any) -> Self:
         self._attach_to_context(self._take(context, "token"))
         return self
 
-    def set_context_keyword(self, context: MaybeWithContext) -> Self:
+    def set_context_keyword(self, context: Any) -> Self:
         self._attach_to_context(self._take(context, "keyword_token"))
         return self
 
-    def set_context_list(self, context_list: Sequence[MaybeWithContext]) -> Self:
+    def set_context_list(self, context_list: Sequence[Any]) -> Self:
         parsed_context_list = []
         for context in context_list:
             the_context = self._take(context, attr="token")

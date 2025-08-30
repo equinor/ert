@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from collections import Counter
-from typing import Self, no_type_check
+from typing import Self
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -21,24 +21,22 @@ from .response_config import ResponseConfig
 from .summary_config import SummaryConfig
 from .surface_config import SurfaceConfig
 
-_KNOWN_RESPONSE_TYPES = [
+KnownResponseTypes = (
+    SummaryConfig | GenDataConfig | EverestConstraintsConfig | EverestObjectivesConfig
+)
+
+_KNOWN_RESPONSE_TYPES = (
     SummaryConfig,
     GenDataConfig,
     EverestConstraintsConfig,
     EverestObjectivesConfig,
-]
+)
 
 logger = logging.getLogger(__name__)
 
 
 class EnsembleConfig(BaseModel):
-    response_configs: dict[
-        str,
-        SummaryConfig
-        | GenDataConfig
-        | EverestConstraintsConfig
-        | EverestObjectivesConfig,
-    ] = Field(default_factory=dict)
+    response_configs: dict[str, KnownResponseTypes] = Field(default_factory=dict)
     parameter_configs: dict[
         str, GenKwConfig | FieldConfig | SurfaceConfig | ExtParamConfig
     ] = Field(default_factory=dict)
@@ -87,7 +85,6 @@ class EnsembleConfig(BaseModel):
                 f" {duplicates_formatted}",
             )
 
-    @no_type_check
     @staticmethod
     def get_gen_kw_templates(config_dict: ConfigDict) -> list[tuple[str, str]]:
         gen_kw_list = config_dict.get(ConfigKeys.GEN_KW, [])
@@ -97,7 +94,6 @@ class EnsembleConfig(BaseModel):
             if (template := GenKwConfig.templates_from_config(g)) is not None
         ]
 
-    @no_type_check
     @classmethod
     def from_dict(cls, config_dict: ConfigDict) -> EnsembleConfig:
         # Grid file handling:
@@ -120,7 +116,7 @@ class EnsembleConfig(BaseModel):
                     global_grid_file_path,
                 ) from err
 
-        def make_field(field_list: list[str]) -> FieldConfig:
+        def make_field(field_list: list[str | dict[str, str]]) -> FieldConfig:
             # An example of `field_list` when the keyword `GRID` is set:
             # ['COND', 'PARAMETER', 'cond.bgrdecl',
             #  {'INIT_FILES': 'cond_%d.bgrdecl', 'FORWARD_INIT': 'False',
@@ -128,6 +124,7 @@ class EnsembleConfig(BaseModel):
             # The fourth element (index 3) of this list is a dictionary of
             # optional keywords, one of which is `GRID`.
             field_settings = field_list[3]
+            assert isinstance(field_settings, dict)
             grid_file_path = field_settings.get(ConfigKeys.GRID)
 
             if grid_file_path is None and global_grid_file_path is None:
@@ -155,6 +152,7 @@ class EnsembleConfig(BaseModel):
                     f"Grid file {grid_file_path} did not contain dimensions",
                     grid_file_path,
                 )
+            assert grid_file_path is not None
 
             return FieldConfig.from_config_list(grid_file_path, dims, field_list)
 
@@ -164,7 +162,7 @@ class EnsembleConfig(BaseModel):
             + [make_field(f) for f in field_list]
         )
 
-        response_configs: list[ResponseConfig] = []
+        response_configs: list[KnownResponseTypes] = []
 
         for config_cls in _KNOWN_RESPONSE_TYPES:
             instance = config_cls.from_config_dict(config_dict)

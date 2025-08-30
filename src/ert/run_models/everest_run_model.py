@@ -215,7 +215,7 @@ class EverestRunModel(RunModel):
 
         env_vars = {}
         substituter = Substitutions(substitutions)
-        for key, val in config_dict.get("SETENV", []):  # type: ignore
+        for key, val in config_dict.get("SETENV", []):
             env_vars[key] = substituter.substitute(val)
 
         delete_run_path: bool = (
