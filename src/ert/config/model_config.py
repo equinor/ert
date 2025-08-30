@@ -5,7 +5,6 @@ import logging
 import os.path
 import shutil
 from pathlib import Path
-from typing import no_type_check
 
 from pydantic import BaseModel, field_validator
 
@@ -102,7 +101,6 @@ class ModelConfig(BaseModel):
     def transform(cls, eclbase_format_string: str) -> str:
         return _replace_runpath_format(eclbase_format_string)
 
-    @no_type_check
     @classmethod
     def from_dict(cls, config_dict: ConfigDict) -> ModelConfig:
         return cls(

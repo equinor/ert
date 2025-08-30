@@ -2,7 +2,7 @@
 import datetime
 import os
 import os.path
-from typing import Self
+from typing import Any, Self
 
 from lark import (
     Discard,
@@ -20,7 +20,7 @@ from .config_errors import ConfigValidationError, ConfigWarning
 from .config_schema import SchemaItem, define_keyword
 from .error_info import ErrorInfo
 from .schema_dict import SchemaItemDict
-from .types import Defines, FileContextToken, Instruction, MaybeWithContext
+from .types import Defines, FileContextToken, Instruction
 
 grammar = r"""
 %import common.CNAME
@@ -313,7 +313,7 @@ class IncludedFile:
 
         return [self.filename, *self.included_from.path_to_root]
 
-    def set_context(self, context: MaybeWithContext) -> Self:
+    def set_context(self, context: Any) -> Self:
         self.context = context
         return self
 

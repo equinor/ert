@@ -6,7 +6,7 @@ from dataclasses import field
 from math import ceil
 from os.path import realpath
 from pathlib import Path
-from typing import Any, Final, no_type_check
+from typing import Any, Final
 
 from pydantic import Field, PositiveFloat, ValidationError
 from pydantic.dataclasses import dataclass
@@ -50,7 +50,6 @@ class AnalysisConfig:
     num_iterations: int = 1
     design_matrix: DesignMatrix | None = None
 
-    @no_type_check
     @classmethod
     def from_dict(cls, config_dict: ConfigDict) -> AnalysisConfig:
         num_realization: int = config_dict.get(ConfigKeys.NUM_REALIZATIONS, 1)
@@ -183,7 +182,7 @@ class AnalysisConfig:
 
             obs_settings = ObservationSettings(
                 outlier_settings=OutlierSettings(**outlier_settings),
-                auto_scale_observations=auto_scale_observations,
+                auto_scale_observations=auto_scale_observations,  # type: ignore
             )
         except ValidationError as err:
             for error in err.errors():

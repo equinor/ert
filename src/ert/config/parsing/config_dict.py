@@ -1,4 +1,3 @@
-from .context_values import ContextString
-from .types import MaybeWithContext
+from typing import Any
 
-ConfigDict = dict[ContextString | str, MaybeWithContext]
+ConfigDict = dict[Any, Any]

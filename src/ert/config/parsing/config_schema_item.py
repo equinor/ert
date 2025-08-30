@@ -2,7 +2,7 @@ import os
 import shutil
 from collections.abc import Mapping, Sequence
 from enum import EnumType
-from typing import TypeVar
+from typing import Any, TypeVar
 
 from pydantic import ConfigDict, Field, NonNegativeInt, PositiveInt
 from pydantic.dataclasses import dataclass
@@ -16,12 +16,12 @@ from .context_values import (
     ContextInt,
     ContextList,
     ContextString,
+    ContextValue,
 )
 from .deprecation_info import DeprecationInfo
 from .error_info import ErrorInfo
 from .file_context_token import FileContextToken
 from .schema_item_type import SchemaItemType
-from .types import MaybeWithContext
 
 T = TypeVar("T")
 
@@ -72,7 +72,7 @@ class SchemaItem:
 
     def token_to_value_with_context(
         self, token: FileContextToken, index: int, keyword: FileContextToken, cwd: str
-    ) -> MaybeWithContext | None:
+    ) -> ContextValue | ContextList[ContextValue] | None:
         """
         Converts a FileContextToken to a value with context that
         behaves like a value, but also contains its location in the file,
@@ -182,7 +182,13 @@ class SchemaItem:
                 assert isinstance(path, str)
 
                 if val_type == SchemaItemType.EXISTING_PATH_INLINE:
-                    return [ContextString(path, token, keyword), read_file(path, token)]
+                    return ContextList.with_values(
+                        token,
+                        [
+                            ContextString(path, token, keyword),
+                            ContextString(read_file(path, token), token, keyword),
+                        ],
+                    )
                 else:
                     return ContextString(path, token, keyword)
             case SchemaItemType.EXECUTABLE:
@@ -253,11 +259,9 @@ class SchemaItem:
         args: list[T],
         keyword: FileContextToken,
         cwd: str,
-    ) -> T | MaybeWithContext | ContextList[T | MaybeWithContext | None] | None:
+    ) -> T | ContextValue | ContextList[T | ContextValue | None] | None:
         errors: list[ErrorInfo | ConfigValidationError] = []
-        args_with_context: ContextList[T | MaybeWithContext | None] = ContextList(
-            token=keyword
-        )
+        args_with_context: ContextList[T | Any] = ContextList(token=keyword)
         for i, x in enumerate(args):
             if isinstance(x, FileContextToken):
                 try:
