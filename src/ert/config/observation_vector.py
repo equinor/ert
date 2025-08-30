@@ -2,18 +2,14 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from datetime import datetime
 
 import numpy as np
+import polars as pl
 
 from .general_observation import GenObservation
 from .parsing import ObservationType
 from .summary_observation import SummaryObservation
-
-if TYPE_CHECKING:
-    from datetime import datetime
-
-import polars as pl
 
 
 @dataclass
