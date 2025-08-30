@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import logging
-import os
 from collections import Counter
-from typing import Self, no_type_check, overload
+from typing import Self, no_type_check
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -30,22 +29,6 @@ _KNOWN_RESPONSE_TYPES = [
 ]
 
 logger = logging.getLogger(__name__)
-
-
-@overload
-def _get_abs_path(file: None) -> None:
-    pass
-
-
-@overload
-def _get_abs_path(file: str) -> str:
-    pass
-
-
-def _get_abs_path(file: str | None) -> str | None:
-    if file is not None:
-        file = os.path.realpath(file)
-    return file
 
 
 class EnsembleConfig(BaseModel):
