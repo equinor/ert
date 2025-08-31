@@ -275,7 +275,8 @@ def test_that_sampling_is_fixed_from_name(
     """
     with tmpdir.as_cwd():
         conf = GenKwConfig(
-            name="KW_NAME",
+            name="MY_KEYWORD",
+            group="KW_NAME",
             forward_init=False,
             transform_function_definitions=prior,
             update=True,

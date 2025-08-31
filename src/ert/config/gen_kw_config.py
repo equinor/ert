@@ -10,7 +10,7 @@ import networkx as nx
 import numpy as np
 import polars as pl
 import xarray as xr
-from pydantic import BaseModel, Field, PrivateAttr, ValidationError, model_validator
+from pydantic import BaseModel, Field, ValidationError, model_validator
 from typing_extensions import TypedDict
 
 from ._str_to_bool import str_to_bool
@@ -94,8 +94,22 @@ class GenKwConfig(ParameterConfig):
     type: Literal["gen_kw"] = "gen_kw"
     transform_function_definition: TransformFunctionDefinition
     group: str
+    distribution: Annotated[
+        UnifSettings
+        | LogNormalSettings
+        | LogUnifSettings
+        | DUnifSettings
+        | RawSettings
+        | ConstSettings
+        | NormalSettings
+        | TruncNormalSettings
+        | ErrfSettings
+        | DerrfSettings
+        | TriangularSettings,
+        Field(discriminator="name"),
+    ]
 
-    _transform_function: TransformFunction = PrivateAttr()
+    # _transform_function: TransformFunction = PrivateAttr()
 
     @model_validator(mode="after")
     def validate_and_setup_transform_functions(self) -> Self:
