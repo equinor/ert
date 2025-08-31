@@ -296,7 +296,7 @@ class GenKwConfig(ParameterConfig):
         real_nr: int,
         ensemble: Ensemble,
     ) -> dict[str, dict[str, float | str]]:
-        df = ensemble.load_parameters(self.group_name, real_nr, transformed=True).drop(
+        df = ensemble.load_parameters(self.name, real_nr, transformed=True).drop(
             "realization"
         )
 
@@ -313,7 +313,7 @@ class GenKwConfig(ParameterConfig):
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
     ) -> npt.NDArray[np.float64]:
         return (
-            ensemble.load_parameters(self.group_name, realizations)
+            ensemble.load_parameters(self.name, realizations)
             .drop("realization")
             .to_numpy()
             .T.copy()
@@ -363,7 +363,7 @@ class GenKwConfig(ParameterConfig):
             }
         ]
 
-    def transform_col(self) -> Callable[[float], float]:
+    def transform_data(self) -> Callable[[float], float]:
         return self.transform_function.distribution.transform
 
     def _parse_transform_function_definition(

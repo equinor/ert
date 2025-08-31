@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from hashlib import sha256
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
@@ -143,6 +143,9 @@ class ParameterConfig(BaseModel):
         experiment_path: Path,
     ) -> None:
         pass
+
+    def transform_data(self) -> Callable[[float], float]:
+        return lambda x: x
 
     @staticmethod
     def sample_value(

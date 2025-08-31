@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import shutil
+from collections import defaultdict
 from collections.abc import Generator
 from datetime import datetime
 from functools import cached_property
@@ -412,6 +413,14 @@ class LocalExperiment(BaseMode):
             for config in self.parameter_configuration.values()
             if isinstance(config, GenKwConfig)
         }
+
+    @cached_property
+    def scalar_groups(self) -> dict[str, list[str]]:
+        dict_genkw: dict[str, list[str]] = defaultdict(list)
+        for p in self.parameter_configuration.values():
+            if isinstance(p, GenKwConfig):
+                dict_genkw[p.group_name].append(p.name)
+        return dict_genkw
 
     @cached_property
     def parameter_group_to_parameter_keys(self) -> dict[str, list[str]]:
