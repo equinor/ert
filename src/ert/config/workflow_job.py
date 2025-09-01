@@ -6,9 +6,10 @@ import textwrap
 from argparse import ArgumentParser
 from collections.abc import Callable
 from dataclasses import field
-from typing import Self, TypeAlias
+from typing import Any, Literal, TypeAlias
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, PrivateAttr, model_validator
+from pydantic_core.core_schema import ValidationInfo
 
 from ..plugins.ert_plugin import ErtPlugin
 from ..plugins.ert_script import ErtScript
@@ -92,6 +93,7 @@ def workflow_job_from_file(config_file: str, name: str | None = None) -> _Workfl
 
 class _WorkflowJob(BaseModel):
     name: str
+    type: Literal["executable", "ert_script"]
     min_args: int | None = None
     max_args: int | None = None
     arg_types: list[SchemaItemType] = field(default_factory=list)
@@ -131,6 +133,7 @@ class _WorkflowJob(BaseModel):
 
 class ExecutableWorkflow(_WorkflowJob):
     executable: str | None = None
+    type: Literal["executable"] = "executable"
 
 
 class ErtScriptWorkflow(_WorkflowJob):
@@ -138,27 +141,48 @@ class ErtScriptWorkflow(_WorkflowJob):
     Single workflow configuration object
     """
 
-    ert_script: type[ErtScript] = None  # type: ignore
     description: str = ""
     examples: str | None = None
     parser: Callable[[], ArgumentParser] | None = None
     category: str = "other"
+    type: Literal["ert_script"] = "ert_script"
+    _ert_script: type[ErtScript] | None = PrivateAttr(default=None)
 
-    @model_validator(mode="after")
-    def validate_types(self) -> Self:
-        if not isinstance(self.ert_script, type):
-            raise ErtScriptLoadFailure(
-                f"Failed to load {self.name}, ert_script is instance, expected "
-                f"type, got {self.ert_script}"
-            )
-        elif not issubclass(self.ert_script, ErtScript):
-            raise ErtScriptLoadFailure(
-                f"Failed to load {self.name}, script had wrong "
-                f"type, expected ErtScript, got {self.ert_script}"
-            )
-        if self.ert_script.__doc__ is not None:
-            self.description = textwrap.dedent(self.ert_script.__doc__.strip())
-        return self
+    @model_validator(mode="before")
+    def do_ert_script(cls, values, info: ValidationInfo) -> dict[str, Any]:
+        if "ert_script" in values:
+            values["type"] = "ert_script"
+
+        if info.context is not None:
+            installed_workflow_jobs = info.context["workflow_jobs"]
+            job_name = values["name"]
+            job_cls = installed_workflow_jobs.get(job_name)
+            values["ert_script"] = job_cls
+
+        return values
+
+    @property
+    def ert_script(self) -> type[ErtScript]:
+        assert self._ert_script is not None
+        return self._ert_script
+
+    def model_post_init(self, context: Any, /) -> None:
+        # If no context, the workflow is just added but
+        # does not need parsing
+        if context:
+            self._ert_script = ""
+            if not isinstance(self.ert_script, type):
+                raise ErtScriptLoadFailure(
+                    f"Failed to load {self.name}, ert_script is instance, expected "
+                    f"type, got {self.ert_script}"
+                )
+            elif not issubclass(self.ert_script, ErtScript):
+                raise ErtScriptLoadFailure(
+                    f"Failed to load {self.name}, script had wrong "
+                    f"type, expected ErtScript, got {self.ert_script}"
+                )
+            if self.ert_script.__doc__ is not None:
+                self.description = textwrap.dedent(self.ert_script.__doc__.strip())
 
     @property
     def source_package(self) -> str:
