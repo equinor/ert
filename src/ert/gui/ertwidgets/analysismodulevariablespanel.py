@@ -117,12 +117,9 @@ class AnalysisModuleVariablesPanel(QWidget):
 
         layout.addRow(cpu_label, self.cpu_spinner)
 
-        local_checkbox.stateChanged.connect(
-            lambda state: (
-                self.local_spinner.setEnabled(state),
-                self.cpu_spinner.setEnabled(state),
-            )
-        )
+        local_checkbox.stateChanged.connect(self.local_spinner.setEnabled)
+        local_checkbox.stateChanged.connect(self.cpu_spinner.setEnabled)
+
         local_checkbox.setChecked(analysis_module.localization)
 
         self.setLayout(layout)
