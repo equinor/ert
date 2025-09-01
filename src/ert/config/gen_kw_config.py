@@ -60,39 +60,8 @@ def _get_abs_path(file: str | None) -> str | None:
     return file
 
 
-# class TransformFunctionDefinition(BaseModel):
-#     name: str
-#     param_name: str
-#     values: list[Any]
-
-
-# @dataclass
-# class TransformFunction:
-#     name: str
-#     distribution: Annotated[
-#         UnifSettings
-#         | LogNormalSettings
-#         | LogUnifSettings
-#         | DUnifSettings
-#         | RawSettings
-#         | ConstSettings
-#         | NormalSettings
-#         | TruncNormalSettings
-#         | ErrfSettings
-#         | DerrfSettings
-#         | TriangularSettings,
-#         Field(discriminator="name"),
-#     ]
-
-#     @property
-#     def parameter_list(self) -> dict[str, float]:
-#         """Return the parameters of the distribution as a dictionary."""
-#         return self.distribution.model_dump(exclude={"name"})
-
-
 class GenKwConfig(ParameterConfig):
     type: Literal["gen_kw"] = "gen_kw"
-    # transform_function_definition: TransformFunctionDefinition
     group: str
     distribution: Annotated[
         UnifSettings
@@ -113,8 +82,6 @@ class GenKwConfig(ParameterConfig):
     def parameter_list(self) -> dict[str, float]:
         """Return the parameters of the distribution as a dictionary."""
         return self.distribution.model_dump(exclude={"name"})
-
-    # _transform_function: TransformFunction = PrivateAttr()
 
     # @model_validator(mode="after")
     # def validate_and_setup_transform_functions(self) -> Self:
@@ -142,14 +109,10 @@ class GenKwConfig(ParameterConfig):
     #     return self
 
     def __contains__(self, item: str) -> bool:
-        return item == self.transform_function.name
+        return item == self.name
 
     def __len__(self) -> int:
         return 1
-
-    # @property
-    # def transform_function(self) -> TransformFunction:
-    #     return self._transform_function
 
     @property
     def parameter_keys(self) -> list[str]:
