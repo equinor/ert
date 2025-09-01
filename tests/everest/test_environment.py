@@ -9,22 +9,24 @@ from everest.config import EverestConfig
 from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
 
 
-def test_seed(change_to_tmpdir):
+def test_that_seed_in_everestconfig_is_passed_to_ert_config(change_to_tmpdir):
     random_seed = 42
     config = EverestConfig.with_defaults()
     config.environment.random_seed = random_seed
     ert_config = _everest_to_ert_config_dict(config)
-    assert random_seed == ert_config["RANDOM_SEED"]
+    assert ert_config["RANDOM_SEED"] == random_seed
 
 
-def test_loglevel():
+def test_that_default_everestconfig_lints():
     config = EverestConfig.with_defaults()
     config.environment.log_level = "info"
     assert len(EverestConfig.lint_config_dict(config.to_dict())) == 0
 
 
 @pytest.mark.parametrize("iteration", [0, 1, 2])
-def test_run_path(tmp_path, min_config, iteration, monkeypatch):
+def test_that_runpath_strings_are_generated_correctly(
+    tmp_path, min_config, iteration, monkeypatch
+):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(ert.run_models.run_model, "open_storage", MagicMock())
 
