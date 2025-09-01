@@ -30,7 +30,7 @@ from .distribution import (
     get_distribution,
 )
 from .parameter_config import ParameterConfig, ParameterMetadata
-from .parsing import ConfigValidationError, ConfigWarning, ErrorInfo
+from .parsing import ConfigValidationError, ConfigWarning
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -190,7 +190,7 @@ class GenKwConfig(ParameterConfig):
                 f"Unexpected positional arguments: {positional_args}"
             )
 
-        distributions: dict[str, DistributionSettings] = {}
+        distributions_spec: list[list[str]] = []
         for line_number, item in enumerate(parameter_file_contents.splitlines()):
             item = item.split("--")[0]  # remove comments
             if item.strip():  # only lines with content
@@ -204,10 +204,9 @@ class GenKwConfig(ParameterConfig):
                         )
                     )
                 else:
-                    distributions[items[0]] = GenKwConfig._parse_distribution(
-                        items[0], items[1], items[2:]
-                    )
-        if not distributions:
+                    distributions_spec.append(items)
+
+        if not distributions_spec:
             errors.append(
                 ConfigValidationError.with_context(
                     f"No parameters specified in {parameter_file_context}",
@@ -228,14 +227,20 @@ class GenKwConfig(ParameterConfig):
         try:
             return [
                 cls(
-                    name=param_name,
+                    name=params[0],
                     group=gen_kw_key,
-                    distribution=dist,
+                    distribution=GenKwConfig._parse_distribution(
+                        params[0], params[1], params[2:]
+                    ),
                     forward_init=False,
                     update=update_parameter,
                 )
-                for param_name, dist in distributions.items()
+                for params in distributions_spec
             ]
+        except ConfigValidationError as e:
+            raise ConfigValidationError.from_collected(
+                [err.set_context(gen_kw_key) for err in e.errors]
+            ) from e
         except ValidationError as e:
             raise ConfigValidationError.from_pydantic(e, gen_kw) from e
 
@@ -345,7 +350,7 @@ class GenKwConfig(ParameterConfig):
         df = source_ensemble.load_parameters(self.name, realizations)
         target_ensemble.save_parameters(self.name, realization=None, dataset=df)
 
-    def shouldUseLogScale(self, keyword: str) -> bool:
+    def shouldUseLogScale(self) -> bool:
         return isinstance(self.distribution, LogNormalSettings | LogUnifSettings)
 
     def get_priors(self) -> list[PriorDict]:
