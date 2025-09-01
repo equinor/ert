@@ -140,10 +140,10 @@ class EverestRunModel(RunModel):
     constraint_names: list[str]
 
     optimization: OptimizationConfig
-
     model: ModelConfig
-
     keep_run_path: bool
+    experiment_name: str
+    target_ensemble: str
 
     _exit_code: EverestExitCode | None = PrivateAttr(default=None)
     _experiment: Experiment | None = PrivateAttr(default=None)
@@ -161,6 +161,10 @@ class EverestRunModel(RunModel):
     def create(
         cls,
         everest_config: EverestConfig,
+        experiment_name: str = (
+            f"EnOpt@{datetime.datetime.now().isoformat(timespec='seconds')}"
+        ),
+        target_ensemble: str = "batch",
         optimization_callback: OptimizerCallback | None = None,
         status_queue: queue.SimpleQueue[StatusEvents] | None = None,
     ) -> EverestRunModel:
@@ -224,6 +228,8 @@ class EverestRunModel(RunModel):
         )
 
         return cls(
+            experiment_name=experiment_name,
+            target_ensemble=target_ensemble,
             controls=everest_config.controls,
             simulation_dir=everest_config.simulation_dir,
             keep_run_path=not delete_run_path,
@@ -356,7 +362,7 @@ class EverestRunModel(RunModel):
         self._eval_server_cfg = evaluator_server_config
 
         self._experiment = self._experiment or self._storage.create_experiment(
-            name=f"EnOpt@{datetime.datetime.now().isoformat(timespec='seconds')}",
+            name=self.experiment_name,
             parameters=self.parameter_configuration,
             responses=self.response_configuration,
         )
@@ -473,7 +479,7 @@ class EverestRunModel(RunModel):
         # Initialize a new ensemble in storage:
         assert self._experiment is not None
         ensemble = self._experiment.create_ensemble(
-            name=f"batch_{self._batch_id}",
+            name=f"{self.target_ensemble}_{self._batch_id}",
             ensemble_size=sim_to_control_vector.shape[0],
             iteration=self._batch_id,
         )
