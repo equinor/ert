@@ -4,6 +4,7 @@ from ert.config import GenDataConfig, GenKwConfig
 from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
+from ert.storage.realization_storage_state import RealizationStorageState
 
 
 @pytest.fixture
@@ -77,11 +78,11 @@ def test_changing_ensemble(qtbot, notifier, storage):
     assert widget_a.count() == 2
     assert widget_b.count() == 2
 
-    # First ensemble is selected in both
-    assert widget_a.currentData() == str(ensemble_a.id)
-    assert widget_b.currentData() == str(ensemble_a.id)
+    # Latest ensemble is selected in both
+    assert widget_a.currentData() == str(ensemble_b.id)
+    assert widget_b.currentData() == str(ensemble_b.id)
 
-    # Second ensemble is selected via signal, changing both widgets'
+    # Second ensemble is selected via signal, widgets do not change'
     # selections
     notifier.set_current_ensemble_id(ensemble_b.id)
     assert widget_a.currentData() == str(ensemble_b.id)
@@ -95,6 +96,24 @@ def test_changing_ensemble(qtbot, notifier, storage):
     assert notifier.current_ensemble.id == ensemble_a.id
     assert widget_a.currentData() == str(ensemble_a.id)
     assert widget_b.currentData() == str(ensemble_a.id)
+
+
+def test_ensembles_are_sorted_failed_first_then_by_start_time(qtbot, notifier, storage):
+    ensemble_a = storage.create_experiment().create_ensemble(
+        name="default_a", ensemble_size=1
+    )
+    ensemble_b = storage.create_experiment().create_ensemble(
+        name="default_b", ensemble_size=1
+    )
+    ensemble_c = storage.create_experiment().create_ensemble(
+        name="default_a", ensemble_size=1
+    )
+    ensemble_b.set_failure(0, RealizationStorageState.FAILURE_IN_CURRENT)
+    assert EnsembleSelector.sort_ensembles([ensemble_a, ensemble_b, ensemble_c]) == [
+        ensemble_b,
+        ensemble_c,
+        ensemble_a,
+    ]
 
 
 @pytest.mark.parametrize(

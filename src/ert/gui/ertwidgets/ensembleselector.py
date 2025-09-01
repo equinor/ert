@@ -34,7 +34,7 @@ class EnsembleSelector(QComboBox):
         super().__init__()
         self.notifier = notifier
 
-        # If true current ensemble of ert will be change
+        # If true current ensemble of ert will be changed
         self._update_ert = update_ert
         # only show initialized ensembles
         self._show_only_undefined = show_only_undefined
@@ -75,16 +75,24 @@ class EnsembleSelector(QComboBox):
         block = self.blockSignals(True)
 
         self.clear()
+        ensemble_list = list(self._ensemble_list())
 
         try:
-            if self._ensemble_list():
+            if ensemble_list:
                 self.setEnabled(True)
 
-            for ensemble in self._ensemble_list():
+            for ensemble in ensemble_list:
                 self.addItem(
                     f"{ensemble.experiment.name} : {ensemble.name}",
                     userData=str(ensemble.id),
                 )
+            if ensemble_list:
+                first_ensemble_id = str(ensemble_list[0].id)
+                current_index = self.findData(
+                    first_ensemble_id, Qt.ItemDataRole.UserRole
+                )
+                self.setCurrentIndex(max(current_index, 0))
+
         except OSError as err:
             logger.error(str(err))
             Suggestor(
@@ -94,18 +102,7 @@ class EnsembleSelector(QComboBox):
             ).show()
             return
 
-        current_index = (
-            self.findData(
-                str(self.notifier.current_ensemble.id), Qt.ItemDataRole.UserRole
-            )
-            if self.notifier.current_ensemble is not None
-            else -1
-        )
-
-        self.setCurrentIndex(max(current_index, 0))
-
         self.blockSignals(block)
-
         self.ensemble_populated.emit()
 
     def _ensemble_list(self) -> Iterable[Ensemble]:
@@ -126,7 +123,21 @@ class EnsembleSelector(QComboBox):
                 ens.parent for ens in self.notifier.storage.ensembles if ens.parent
             ]
             ensemble_list = [val for val in ensemble_list if val.id not in parents]
-        return sorted(ensemble_list, key=lambda x: x.started_at, reverse=True)
+        return self.sort_ensembles(ensemble_list)
+
+    @classmethod
+    def sort_ensembles(cls, ensemble_list: Iterable[Ensemble]) -> Iterable[Ensemble]:
+        return sorted(
+            ensemble_list,
+            key=lambda e: (
+                any(
+                    RealizationStorageState.FAILURE_IN_CURRENT in s
+                    for s in e.get_ensemble_state()
+                ),
+                e.started_at,
+            ),
+            reverse=True,
+        )
 
     def _on_current_index_changed(self, index: int) -> None:
         self.notifier.set_current_ensemble_id(UUID(self.itemData(index)))
