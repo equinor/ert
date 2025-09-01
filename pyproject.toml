@@ -113,7 +113,7 @@ dev = [
     "pytest-mpl",
     "pytest-qt",
     "pytest-raises",
-    "pytest-rerunfailures",
+    "pytest-rerunfailures!=16.0",
     "pytest-snapshot",
     "pytest-timeout",
     "pytest-xdist",
