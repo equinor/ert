@@ -73,7 +73,7 @@ class ESSettings(BaseModel):
 
     def get_num_cpus_localization(self) -> int:
         if self.localization_num_cpu is None:
-            return max(1, psutil.cpu_count(logical=False) or 1 - 2)
+            return max(1, (psutil.cpu_count(logical=False) or 1) - 2)
         else:
             return self.localization_num_cpu
 

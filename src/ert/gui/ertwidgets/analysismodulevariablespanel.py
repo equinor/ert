@@ -95,17 +95,19 @@ class AnalysisModuleVariablesPanel(QWidget):
         lf_layout.addWidget(self.local_spinner)
         layout.addRow(localization_frame)
 
-        cpu_label = QLabel("Number of CPUs for adaptive localization")
-
         cpu_metadata = AnalysisModule.model_fields["localization_num_cpu"]
 
         self.cpu_spinner = QSpinBox()
+        max_cpus = cast(
+            int, next(v for v in cpu_metadata.metadata if isinstance(v, Le)).le
+        )
         self.cpu_spinner.setMinimum(
             cast(int, next(v for v in cpu_metadata.metadata if isinstance(v, Ge)).ge)
         )
-        self.cpu_spinner.setMaximum(
-            cast(int, next(v for v in cpu_metadata.metadata if isinstance(v, Le)).le)
+        cpu_label = QLabel(
+            f"Number of CPUs for adaptive localization (max: {max_cpus})"
         )
+        self.cpu_spinner.setMaximum(max_cpus)
         self.cpu_spinner.setValue(analysis_module.get_num_cpus_localization())
         self.cpu_spinner.setSuffix(" CPUs")
         self.cpu_spinner.setEnabled(local_checkbox.isChecked())
