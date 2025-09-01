@@ -6,22 +6,8 @@ from textwrap import dedent
 import networkx as nx
 import pytest
 from lark import Token
-from pydantic import ValidationError
 
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, GenKwConfig
-from ert.config.distribution import (
-    ConstSettings,
-    DerrfSettings,
-    DUnifSettings,
-    ErrfSettings,
-    LogNormalSettings,
-    LogUnifSettings,
-    NormalSettings,
-    RawSettings,
-    TriangularSettings,
-    TruncNormalSettings,
-    UnifSettings,
-)
 from ert.config.parsing import ContextString
 from ert.config.parsing.file_context_token import FileContextToken
 from ert.run_models._create_run_path import create_run_path
@@ -70,88 +56,122 @@ def test_short_definition_raises_config_error(tmp_path):
         )
 
 
-def test_gen_kw_config_get_priors():
-    conf = [
-        GenKwConfig(name="KEY1", distribution=NormalSettings(mean=0, std=1)),
-        GenKwConfig(name="KEY2", distribution=LogNormalSettings(mean=2, std=3)),
-        GenKwConfig(
-            name="KEY3",
-            distribution=TruncNormalSettings(mean=4, std=5, min=6, max=7),
+@pytest.mark.parametrize(
+    "spec, expected",
+    [
+        (
+            {"name": "KEY1", "distribution": {"name": "normal", "mean": 0, "std": 1}},
+            {"key": "KEY1", "function": "NORMAL", "parameters": {"MEAN": 0, "STD": 1}},
         ),
-        GenKwConfig(name="KEY4", distribution=TriangularSettings(min=0, mode=1, max=2)),
-        GenKwConfig(name="KEY5", distribution=UnifSettings(min=2, max=3)),
-        GenKwConfig(name="KEY6", distribution=DUnifSettings(steps=3, min=0, max=1)),
-        GenKwConfig(
-            name="KEY7",
-            distribution=ErrfSettings(min=0, max=1, skewness=2, width=3),
+        (
+            {
+                "name": "KEY2",
+                "distribution": {"name": "lognormal", "mean": 2, "std": 3},
+            },
+            {
+                "key": "KEY2",
+                "function": "LOGNORMAL",
+                "parameters": {"MEAN": 2, "STD": 3},
+            },
         ),
-        GenKwConfig(
-            name="KEY8",
-            distribution=DerrfSettings(steps=1, min=1, max=2, skewness=3, width=4),
+        (
+            {
+                "name": "KEY3",
+                "distribution": {
+                    "name": "truncated_normal",
+                    "mean": 4,
+                    "std": 5,
+                    "min": 6,
+                    "max": 7,
+                },
+            },
+            {
+                "key": "KEY3",
+                "function": "TRUNCATED_NORMAL",
+                "parameters": {"MEAN": 4, "STD": 5, "MIN": 6, "MAX": 7},
+            },
         ),
-        GenKwConfig(name="KEY9", distribution=LogUnifSettings(min=1, max=2)),
-        GenKwConfig(name="KEY10", distribution=ConstSettings(value=10)),
-    ]
-
-    assert {
-        "key": "KEY1",
-        "function": "NORMAL",
-        "parameters": {"MEAN": 0, "STD": 1},
-    } in conf[0].get_priors()
-
-    assert {
-        "key": "KEY2",
-        "function": "LOGNORMAL",
-        "parameters": {"MEAN": 2, "STD": 3},
-    } in conf[1].get_priors()
-
-    assert {
-        "key": "KEY3",
-        "function": "TRUNCATED_NORMAL",
-        "parameters": {"MEAN": 4, "STD": 5, "MIN": 6, "MAX": 7},
-    } in conf[2].get_priors()
-
-    assert {
-        "key": "KEY4",
-        "function": "TRIANGULAR",
-        "parameters": {"MIN": 0, "MODE": 1, "MAX": 2},
-    } in conf[3].get_priors()
-
-    assert {
-        "key": "KEY5",
-        "function": "UNIFORM",
-        "parameters": {"MIN": 2, "MAX": 3},
-    } in conf[4].get_priors()
-
-    assert {
-        "key": "KEY6",
-        "function": "DUNIF",
-        "parameters": {"STEPS": 3, "MIN": 0, "MAX": 1},
-    } in conf[5].get_priors()
-
-    assert {
-        "key": "KEY7",
-        "function": "ERRF",
-        "parameters": {"MIN": 0, "MAX": 1, "SKEWNESS": 2, "WIDTH": 3},
-    } in conf[6].get_priors()
-
-    assert {
-        "key": "KEY8",
-        "function": "DERRF",
-        "parameters": {"STEPS": 1, "MIN": 1, "MAX": 2, "SKEWNESS": 3, "WIDTH": 4},
-    } in conf[7].get_priors()
-
-    assert {
-        "key": "KEY9",
-        "function": "LOGUNIF",
-        "parameters": {"MIN": 1, "MAX": 2},
-    } in conf[8].get_priors()
-
-    assert {
-        "key": "KEY10",
-        "function": "CONST",
-        "parameters": {"VALUE": 10},
-    } in conf[9].get_priors()
+        (
+            {
+                "name": "KEY4",
+                "distribution": {"name": "triangular", "min": 0, "mode": 1, "max": 2},
+            },
+            {
+                "key": "KEY4",
+                "function": "TRIANGULAR",
+                "parameters": {"MIN": 0, "MODE": 1, "MAX": 2},
+            },
+        ),
+        (
+            {"name": "KEY5", "distribution": {"name": "uniform", "min": 2, "max": 3}},
+            {"key": "KEY5", "function": "UNIFORM", "parameters": {"MIN": 2, "MAX": 3}},
+        ),
+        (
+            {
+                "name": "KEY6",
+                "distribution": {"name": "dunif", "steps": 3, "min": 0, "max": 1},
+            },
+            {
+                "key": "KEY6",
+                "function": "DUNIF",
+                "parameters": {"STEPS": 3, "MIN": 0, "MAX": 1},
+            },
+        ),
+        (
+            {
+                "name": "KEY7",
+                "distribution": {
+                    "name": "errf",
+                    "min": 0,
+                    "max": 1,
+                    "skewness": 2,
+                    "width": 3,
+                },
+            },
+            {
+                "key": "KEY7",
+                "function": "ERRF",
+                "parameters": {"MIN": 0, "MAX": 1, "SKEWNESS": 2, "WIDTH": 3},
+            },
+        ),
+        (
+            {
+                "name": "KEY8",
+                "distribution": {
+                    "name": "derrf",
+                    "steps": 1,
+                    "min": 1,
+                    "max": 2,
+                    "skewness": 3,
+                    "width": 4,
+                },
+            },
+            {
+                "key": "KEY8",
+                "function": "DERRF",
+                "parameters": {
+                    "STEPS": 1,
+                    "MIN": 1,
+                    "MAX": 2,
+                    "SKEWNESS": 3,
+                    "WIDTH": 4,
+                },
+            },
+        ),
+        (
+            {"name": "KEY9", "distribution": {"name": "logunif", "min": 1, "max": 2}},
+            {"key": "KEY9", "function": "LOGUNIF", "parameters": {"MIN": 1, "MAX": 2}},
+        ),
+        (
+            {"name": "KEY10", "distribution": {"name": "const", "value": 10}},
+            {"key": "KEY10", "function": "CONST", "parameters": {"VALUE": 10}},
+        ),
+    ],
+    ids=[f"KEY{i}" for i in range(1, 11)],
+)
+def test_gen_kw_config_get_priors(spec, expected):
+    cfg = GenKwConfig(**spec)
+    assert expected in cfg.get_priors()
 
 
 number_regex = r"[-+]?(?:\d*\.\d+|\d+)"
@@ -196,10 +216,9 @@ def test_gen_kw_is_log_or_not(
 
         ert_config = ErtConfig.from_file("config.ert")
 
-        gen_kw_config = ert_config.ensemble_config.parameter_configs["KW_NAME"]
+        gen_kw_config = ert_config.ensemble_config.parameter_configs["MY_KEYWORD"]
         assert isinstance(gen_kw_config, GenKwConfig)
-        assert gen_kw_config.shouldUseLogScale("MY_KEYWORD") is expect_log
-        assert gen_kw_config.shouldUseLogScale("Non-existent-keyword") is False
+        assert gen_kw_config.shouldUseLogScale() is expect_log
         experiment_id = storage.create_experiment(
             parameters=ert_config.ensemble_config.parameter_configuration
         )
@@ -329,27 +348,19 @@ def test_gen_kw_distribution_errors(tmpdir, distribution, mean, std, error):
 )
 def test_gen_kw_params_parsing(tmpdir, params, error):
     with tmpdir.as_cwd():
-        ss = params.split()
+        parts = params.split()
+        name, dist_name, values = parts[0], parts[1], parts[2:]
 
-        tfd = TransformFunctionDefinition(
-            name=ss[0],
-            param_name=ss[1],
-            values=ss[2:],
-        )
         if error:
-            with pytest.raises(ValidationError, match=error):
-                GenKwConfig(
-                    name="MY_PARAM",
-                    forward_init=False,
-                    update=False,
-                    transform_function_definitions=[tfd],
-                )
+            with pytest.raises(ConfigValidationError, match=error):
+                GenKwConfig._parse_distribution(name, dist_name, values)
         else:
+            dist = GenKwConfig._parse_distribution(name, dist_name, values)
             GenKwConfig(
-                name="MY_PARAM",
+                name=name,
                 forward_init=False,
                 update=False,
-                transform_function_definitions=[tfd],
+                distribution=dist,
             )
 
 
@@ -406,26 +417,15 @@ def test_gen_kw_params_parsing(tmpdir, params, error):
     ],
 )
 def test_gen_kw_trans_func(tmpdir, params, xinput, expected):
-    args = params.split()[2:]
-    float_args = []
-    for a in args:
-        float_args.append(float(a))
-
-    tfd = TransformFunctionDefinition(
-        name=params.split()[0],
-        param_name=params.split()[1],
-        values=params.split()[2:],
-    )
-
+    name, dist_name, *values = params.split()
     with tmpdir.as_cwd():
-        gkw = GenKwConfig(
-            name="MY_PARAM",
+        cfg = GenKwConfig(
+            name=name,
             forward_init=False,
             update=False,
-            transform_function_definitions=[tfd],
+            distribution=GenKwConfig._parse_distribution(name, dist_name, values),
         )
-        tf = gkw.transform_functions[0]
-        assert abs(tf.distribution.transform(xinput) - expected) < 10**-15
+        assert abs(cfg.distribution.transform(xinput) - expected) < 10**-15
 
 
 def test_gen_kw_objects_equal(tmpdir):
@@ -439,23 +439,19 @@ def test_gen_kw_objects_equal(tmpdir):
                 ("prior.txt", "MY_KEYWORD UNIFORM 1 2"),
                 {},
             ]
-        )
-        assert g1.transform_functions[0].name == "MY_KEYWORD"
-
-        tfd = TransformFunctionDefinition(
-            name="MY_KEYWORD", param_name="UNIFORM", values=["1", "2"]
-        )
+        )[0]
+        assert g1.name == "MY_KEYWORD"
+        assert g1.group == "KW_NAME"
 
         g2 = GenKwConfig(
-            name="KW_NAME",
-            forward_init=False,
-            transform_function_definitions=[tfd],
-            update=True,
+            name="MY_KEYWORD",
+            group="KW_NAME",
+            distribution={"name": "uniform", "min": 1, "max": 2},
         )
+
         assert g1.name == g2.name
-        assert (
-            g1.transform_function_definitions[0] == g2.transform_function_definitions[0]
-        )
+        assert g1.group == g2.group
+        assert g1.distribution == g2.distribution
 
 
 @pytest.mark.usefixtures("use_tmpdir")
