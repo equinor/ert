@@ -62,7 +62,6 @@ def _get_abs_path(file: str | None) -> str | None:
 
 class GenKwConfig(ParameterConfig):
     type: Literal["gen_kw"] = "gen_kw"
-    group: str
     distribution: Annotated[
         UnifSettings
         | LogNormalSettings
@@ -77,6 +76,9 @@ class GenKwConfig(ParameterConfig):
         | TriangularSettings,
         Field(discriminator="name"),
     ]
+    forward_init: bool = False
+    update: bool = True
+    group: str = "DEFAULT"
 
     @property
     def parameter_list(self) -> dict[str, float]:
@@ -237,21 +239,41 @@ class GenKwConfig(ParameterConfig):
         except ValidationError as e:
             raise ConfigValidationError.from_pydantic(e, gen_kw) from e
 
-    def _validate(self) -> None:
-        errors = []
-        unique_keys = set()
-        for prior in self.get_priors():
-            key = prior["key"]
-            if key in unique_keys:
-                errors.append(
-                    ErrorInfo(
-                        f"Duplicate GEN_KW keys {key!r} found, keys must be unique."
-                    ).set_context(self.name)
-                )
-            unique_keys.add(key)
+    @classmethod
+    def create(
+        cls,
+        name: str,
+        dist_name: str,
+        dist_params: list[float],
+        group: str = "DEFAULT",
+        update: bool = True,
+    ) -> Self:
+        distribution = cls._parse_distribution(
+            name, dist_name, [str(p) for p in dist_params]
+        )
+        return cls(
+            name=name,
+            group=group,
+            distribution=distribution,
+            forward_init=False,
+            update=update,
+        )
 
-        if errors:
-            raise ConfigValidationError.from_collected(errors)
+    # def _validate(self) -> None:
+    #     errors = []
+    #     unique_keys = set()
+    #     for prior in self.get_priors():
+    #         key = prior["key"]
+    #         if key in unique_keys:
+    #             errors.append(
+    #                 ErrorInfo(
+    #                     f"Duplicate GEN_KW keys {key!r} found, keys must be unique."
+    #                 ).set_context(self.name)
+    #             )
+    #         unique_keys.add(key)
+
+    #     if errors:
+    #         raise ConfigValidationError.from_collected(errors)
 
     def load_parameter_graph(self) -> nx.Graph[int]:
         # Create a graph with no edges

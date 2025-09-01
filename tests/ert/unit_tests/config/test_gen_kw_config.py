@@ -9,59 +9,51 @@ from lark import Token
 from pydantic import ValidationError
 
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, GenKwConfig
-from ert.config.gen_kw_config import TransformFunctionDefinition
+from ert.config.distribution import (
+    ConstSettings,
+    DerrfSettings,
+    DUnifSettings,
+    ErrfSettings,
+    LogNormalSettings,
+    LogUnifSettings,
+    NormalSettings,
+    RawSettings,
+    TriangularSettings,
+    TruncNormalSettings,
+    UnifSettings,
+)
+from ert.config.parsing import ContextString
 from ert.config.parsing.file_context_token import FileContextToken
 from ert.run_models._create_run_path import create_run_path
 from ert.runpaths import Runpaths
 from ert.sample_prior import sample_prior
 
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_gen_kw_config():
-    conf = GenKwConfig(
-        name="KEY",
-        forward_init=False,
-        transform_function_definitions=[
-            TransformFunctionDefinition(
-                name="KEY1", param_name="UNIFORM", values=[0, 1]
-            ),
-            TransformFunctionDefinition(
-                name="KEY2", param_name="UNIFORM", values=[0, 1]
-            ),
-            TransformFunctionDefinition(
-                name="KEY3", param_name="UNIFORM", values=[0, 1]
-            ),
-        ],
-        update=True,
-    )
-    assert len(conf.transform_functions) == 3
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_gen_kw_config_duplicate_keys_raises():
-    with pytest.raises(
-        ValidationError,
-        match="Duplicate GEN_KW keys 'KEY2' found, keys must be unique\\.",
-    ):
-        GenKwConfig(
-            name="KEY",
-            forward_init=False,
-            transform_function_definitions=[
-                TransformFunctionDefinition(
-                    name="KEY1", param_name="UNIFORM", values=[0, 1]
-                ),
-                TransformFunctionDefinition(
-                    name="KEY2", param_name="UNIFORM", values=[0, 1]
-                ),
-                TransformFunctionDefinition(
-                    name="KEY2", param_name="UNIFORM", values=[0, 1]
-                ),
-                TransformFunctionDefinition(
-                    name="KEY3", param_name="UNIFORM", values=[0, 1]
-                ),
-            ],
-            update=True,
-        )
+# TODO might be removed
+# @pytest.mark.usefixtures("use_tmpdir")
+# def test_gen_kw_config_duplicate_keys_raises():
+#     with pytest.raises(
+#         ValidationError,
+#         match="Duplicate GEN_KW keys 'KEY2' found, keys must be unique\\.",
+#     ):
+#         GenKwConfig(
+#             name="KEY",
+#             forward_init=False,
+#             transform_function_definitions=[
+#                 TransformFunctionDefinition(
+#                     name="KEY1", param_name="UNIFORM", values=[0, 1]
+#                 ),
+#                 TransformFunctionDefinition(
+#                     name="KEY2", param_name="UNIFORM", values=[0, 1]
+#                 ),
+#                 TransformFunctionDefinition(
+#                     name="KEY2", param_name="UNIFORM", values=[0, 1]
+#                 ),
+#                 TransformFunctionDefinition(
+#                     name="KEY3", param_name="UNIFORM", values=[0, 1]
+#                 ),
+#             ],
+#             update=True,
+#         )
 
 
 def test_short_definition_raises_config_error(tmp_path):
@@ -79,105 +71,87 @@ def test_short_definition_raises_config_error(tmp_path):
 
 
 def test_gen_kw_config_get_priors():
-    conf = GenKwConfig(
-        name="KW_NAME",
-        forward_init=False,
-        transform_function_definitions=[
-            TransformFunctionDefinition(
-                name="KEY1", param_name="NORMAL", values=["0", "1"]
-            ),
-            TransformFunctionDefinition(
-                name="KEY2", param_name="LOGNORMAL", values=["2", "3"]
-            ),
-            TransformFunctionDefinition(
-                name="KEY3", param_name="TRUNCATED_NORMAL", values=["4", "5", "6", "7"]
-            ),
-            TransformFunctionDefinition(
-                name="KEY4", param_name="TRIANGULAR", values=["0", "1", "2"]
-            ),
-            TransformFunctionDefinition(
-                name="KEY5", param_name="UNIFORM", values=["2", "3"]
-            ),
-            TransformFunctionDefinition(
-                name="KEY6", param_name="DUNIF", values=["3", "0", "1"]
-            ),
-            TransformFunctionDefinition(
-                name="KEY7", param_name="ERRF", values=["0", "1", "2", "3"]
-            ),
-            TransformFunctionDefinition(
-                name="KEY8", param_name="DERRF", values=["1", "1", "2", "3", "4"]
-            ),
-            TransformFunctionDefinition(
-                name="KEY9", param_name="LOGUNIF", values=["1", "2"]
-            ),
-            TransformFunctionDefinition(
-                name="KEY10", param_name="CONST", values=["10"]
-            ),
-        ],
-        update=True,
-    )
-    priors = conf.get_priors()
-    assert len(conf.transform_functions) == 10
+    conf = [
+        GenKwConfig(name="KEY1", distribution=NormalSettings(mean=0, std=1)),
+        GenKwConfig(name="KEY2", distribution=LogNormalSettings(mean=2, std=3)),
+        GenKwConfig(
+            name="KEY3",
+            distribution=TruncNormalSettings(mean=4, std=5, min=6, max=7),
+        ),
+        GenKwConfig(name="KEY4", distribution=TriangularSettings(min=0, mode=1, max=2)),
+        GenKwConfig(name="KEY5", distribution=UnifSettings(min=2, max=3)),
+        GenKwConfig(name="KEY6", distribution=DUnifSettings(steps=3, min=0, max=1)),
+        GenKwConfig(
+            name="KEY7",
+            distribution=ErrfSettings(min=0, max=1, skewness=2, width=3),
+        ),
+        GenKwConfig(
+            name="KEY8",
+            distribution=DerrfSettings(steps=1, min=1, max=2, skewness=3, width=4),
+        ),
+        GenKwConfig(name="KEY9", distribution=LogUnifSettings(min=1, max=2)),
+        GenKwConfig(name="KEY10", distribution=ConstSettings(value=10)),
+    ]
 
     assert {
         "key": "KEY1",
         "function": "NORMAL",
         "parameters": {"MEAN": 0, "STD": 1},
-    } in priors
+    } in conf[0].get_priors()
 
     assert {
         "key": "KEY2",
         "function": "LOGNORMAL",
         "parameters": {"MEAN": 2, "STD": 3},
-    } in priors
+    } in conf[1].get_priors()
 
     assert {
         "key": "KEY3",
         "function": "TRUNCATED_NORMAL",
         "parameters": {"MEAN": 4, "STD": 5, "MIN": 6, "MAX": 7},
-    } in priors
+    } in conf[2].get_priors()
 
     assert {
         "key": "KEY4",
         "function": "TRIANGULAR",
         "parameters": {"MIN": 0, "MODE": 1, "MAX": 2},
-    } in priors
+    } in conf[3].get_priors()
 
     assert {
         "key": "KEY5",
         "function": "UNIFORM",
         "parameters": {"MIN": 2, "MAX": 3},
-    } in priors
+    } in conf[4].get_priors()
 
     assert {
         "key": "KEY6",
         "function": "DUNIF",
         "parameters": {"STEPS": 3, "MIN": 0, "MAX": 1},
-    } in priors
+    } in conf[5].get_priors()
 
     assert {
         "key": "KEY7",
         "function": "ERRF",
         "parameters": {"MIN": 0, "MAX": 1, "SKEWNESS": 2, "WIDTH": 3},
-    } in priors
+    } in conf[6].get_priors()
 
     assert {
         "key": "KEY8",
         "function": "DERRF",
         "parameters": {"STEPS": 1, "MIN": 1, "MAX": 2, "SKEWNESS": 3, "WIDTH": 4},
-    } in priors
+    } in conf[7].get_priors()
 
     assert {
         "key": "KEY9",
         "function": "LOGUNIF",
         "parameters": {"MIN": 1, "MAX": 2},
-    } in priors
+    } in conf[8].get_priors()
 
     assert {
         "key": "KEY10",
         "function": "CONST",
         "parameters": {"VALUE": 10},
-    } in priors
+    } in conf[9].get_priors()
 
 
 number_regex = r"[-+]?(?:\d*\.\d+|\d+)"

@@ -10,7 +10,7 @@ import numpy as np
 import polars as pl
 from polars.exceptions import InvalidOperationError
 
-from .gen_kw_config import GenKwConfig, TransformFunctionDefinition
+from .gen_kw_config import GenKwConfig
 from .parsing import ConfigValidationError, ErrorInfo
 
 if TYPE_CHECKING:
