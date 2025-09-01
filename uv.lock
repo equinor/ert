@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.11, <3.14"
 resolution-markers = [
     "python_full_version >= '3.12'",
@@ -921,7 +921,7 @@ requires-dist = [
     { name = "pytest-mpl", marker = "extra == 'dev'" },
     { name = "pytest-qt", marker = "extra == 'dev'" },
     { name = "pytest-raises", marker = "extra == 'dev'" },
-    { name = "pytest-rerunfailures", marker = "extra == 'dev'" },
+    { name = "pytest-rerunfailures", marker = "extra == 'dev'", specifier = "!=16.0" },
     { name = "pytest-snapshot", marker = "extra == 'dev'" },
     { name = "pytest-timeout", marker = "extra == 'dev'" },
     { name = "pytest-xdist", marker = "extra == 'dev'" },
