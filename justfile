@@ -43,7 +43,7 @@ build-ert-docs:
 build-docs: build-ert-docs build-everest-docs
 
 check-types:
-    mypy src/ert src/everest
+    mypy src
 
 test-all:
     parallel -j4 ::: 'just ert-gui-tests' 'just ert-cli-tests' 'just ert-unit-tests' 'just everest-tests'
