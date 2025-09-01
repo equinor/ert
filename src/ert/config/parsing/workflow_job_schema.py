@@ -1,5 +1,3 @@
-from typing import no_type_check
-
 from .config_dict import ConfigDict
 from .config_errors import ConfigValidationError
 from .config_schema_item import SchemaItem
@@ -76,10 +74,7 @@ def stop_on_fail_keyword() -> SchemaItem:
 
 
 class WorkflowJobSchemaDict(SchemaItemDict):
-    @no_type_check
     def check_required(self, config_dict: ConfigDict, filename: str) -> None:
-        super().check_required(config_dict, filename)
-
         if "MIN_ARG" in config_dict and "MAX_ARG" in config_dict:
             min_arg: int = config_dict["MIN_ARG"]
             max_arg: int = config_dict["MAX_ARG"]
