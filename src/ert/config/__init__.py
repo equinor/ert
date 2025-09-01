@@ -22,7 +22,7 @@ from .forward_model_step import (
     ForwardModelStepWarning,
 )
 from .gen_data_config import GenDataConfig
-from .gen_kw_config import GenKwConfig, PriorDict, TransformFunction
+from .gen_kw_config import GenKwConfig, PriorDict
 from .lint_file import lint_file
 from .model_config import ModelConfig
 from .parameter_config import ParameterConfig, ParameterMetadata
@@ -88,7 +88,6 @@ __all__ = [
     "SummaryConfig",
     "SummaryObservation",
     "SurfaceConfig",
-    "TransformFunction",
     "WarningInfo",
     "Workflow",
     "WorkflowJob",

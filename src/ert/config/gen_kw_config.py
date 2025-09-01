@@ -2,15 +2,14 @@ from __future__ import annotations
 
 import os
 from collections.abc import Callable, Iterator
-from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Any, Literal, Self, cast, overload
+from typing import TYPE_CHECKING, Annotated, Literal, Self, cast, overload
 
 import networkx as nx
 import numpy as np
 import polars as pl
 import xarray as xr
-from pydantic import BaseModel, Field, ValidationError, model_validator
+from pydantic import Field, ValidationError
 from typing_extensions import TypedDict
 
 from ._str_to_bool import str_to_bool
@@ -18,6 +17,7 @@ from .distribution import (
     DISTRIBUTION_CLASSES,
     ConstSettings,
     DerrfSettings,
+    DistributionSettings,
     DUnifSettings,
     ErrfSettings,
     LogNormalSettings,
@@ -60,15 +60,40 @@ def _get_abs_path(file: str | None) -> str | None:
     return file
 
 
-class TransformFunctionDefinition(BaseModel):
-    name: str
-    param_name: str
-    values: list[Any]
+# class TransformFunctionDefinition(BaseModel):
+#     name: str
+#     param_name: str
+#     values: list[Any]
 
 
-@dataclass
-class TransformFunction:
-    name: str
+# @dataclass
+# class TransformFunction:
+#     name: str
+#     distribution: Annotated[
+#         UnifSettings
+#         | LogNormalSettings
+#         | LogUnifSettings
+#         | DUnifSettings
+#         | RawSettings
+#         | ConstSettings
+#         | NormalSettings
+#         | TruncNormalSettings
+#         | ErrfSettings
+#         | DerrfSettings
+#         | TriangularSettings,
+#         Field(discriminator="name"),
+#     ]
+
+#     @property
+#     def parameter_list(self) -> dict[str, float]:
+#         """Return the parameters of the distribution as a dictionary."""
+#         return self.distribution.model_dump(exclude={"name"})
+
+
+class GenKwConfig(ParameterConfig):
+    type: Literal["gen_kw"] = "gen_kw"
+    # transform_function_definition: TransformFunctionDefinition
+    group: str
     distribution: Annotated[
         UnifSettings
         | LogNormalSettings
@@ -89,52 +114,32 @@ class TransformFunction:
         """Return the parameters of the distribution as a dictionary."""
         return self.distribution.model_dump(exclude={"name"})
 
-
-class GenKwConfig(ParameterConfig):
-    type: Literal["gen_kw"] = "gen_kw"
-    transform_function_definition: TransformFunctionDefinition
-    group: str
-    distribution: Annotated[
-        UnifSettings
-        | LogNormalSettings
-        | LogUnifSettings
-        | DUnifSettings
-        | RawSettings
-        | ConstSettings
-        | NormalSettings
-        | TruncNormalSettings
-        | ErrfSettings
-        | DerrfSettings
-        | TriangularSettings,
-        Field(discriminator="name"),
-    ]
-
     # _transform_function: TransformFunction = PrivateAttr()
 
-    @model_validator(mode="after")
-    def validate_and_setup_transform_functions(self) -> Self:
-        errors = []
-        try:
-            if isinstance(self.transform_function_definition, dict):
-                self._transform_function = self._parse_transform_function_definition(
-                    TransformFunctionDefinition(**self.transform_function_definition)
-                )
-            else:
-                self._transform_function = self._parse_transform_function_definition(
-                    self.transform_function_definition
-                )
-        except ConfigValidationError as e:
-            errors.append(e)
+    # @model_validator(mode="after")
+    # def validate_and_setup_transform_functions(self) -> Self:
+    #     errors = []
+    #     try:
+    #         if isinstance(self.transform_function_definition, dict):
+    #             self._transform_function = self._parse_transform_function_definition(
+    #                 TransformFunctionDefinition(**self.transform_function_definition)
+    #             )
+    #         else:
+    #             self._transform_function = self._parse_transform_function_definition(
+    #                 self.transform_function_definition
+    #             )
+    #     except ConfigValidationError as e:
+    #         errors.append(e)
 
-        try:
-            self._validate()
-        except ConfigValidationError as e:
-            errors.append(e)
+    #     try:
+    #         self._validate()
+    #     except ConfigValidationError as e:
+    #         errors.append(e)
 
-        if errors:
-            raise ConfigValidationError.from_collected(errors)
+    #     if errors:
+    #         raise ConfigValidationError.from_collected(errors)
 
-        return self
+    #     return self
 
     def __contains__(self, item: str) -> bool:
         return item == self.transform_function.name
@@ -142,21 +147,20 @@ class GenKwConfig(ParameterConfig):
     def __len__(self) -> int:
         return 1
 
-    @property
-    def transform_function(self) -> TransformFunction:
-        return self._transform_function
+    # @property
+    # def transform_function(self) -> TransformFunction:
+    #     return self._transform_function
 
     @property
     def parameter_keys(self) -> list[str]:
-        return [self.transform_function.name]
+        return [self.name]
 
     @property
     def metadata(self) -> list[ParameterMetadata]:
-        tf = self.transform_function
         return [
             ParameterMetadata(
-                key=f"{self.name}:{tf.name}",
-                transformation=tf.distribution.name.upper(),
+                key=f"{self.group}:{self.name}",
+                transformation=self.distribution.name.upper(),
                 dimensionality=1,
                 userdata={"data_origin": "GEN_KW"},
             )
@@ -221,7 +225,7 @@ class GenKwConfig(ParameterConfig):
                 f"Unexpected positional arguments: {positional_args}"
             )
 
-        transform_function_definitions: list[TransformFunctionDefinition] = []
+        distributions: dict[str, DistributionSettings] = {}
         for line_number, item in enumerate(parameter_file_contents.splitlines()):
             item = item.split("--")[0]  # remove comments
             if item.strip():  # only lines with content
@@ -235,14 +239,10 @@ class GenKwConfig(ParameterConfig):
                         )
                     )
                 else:
-                    transform_function_definitions.append(
-                        TransformFunctionDefinition(
-                            name=items[0],
-                            param_name=items[1],
-                            values=items[2:],
-                        )
+                    distributions[items[0]] = GenKwConfig._parse_distribution(
+                        items[0], items[1], items[2:]
                     )
-        if not transform_function_definitions:
+        if not distributions:
             errors.append(
                 ConfigValidationError.with_context(
                     f"No parameters specified in {parameter_file_context}",
@@ -263,13 +263,13 @@ class GenKwConfig(ParameterConfig):
         try:
             return [
                 cls(
-                    name=tf.name,
+                    name=param_name,
                     group=gen_kw_key,
-                    transform_function_definition=tf,
+                    distribution=dist,
                     forward_init=False,
                     update=update_parameter,
                 )
-                for tf in transform_function_definitions
+                for param_name, dist in distributions.items()
             ]
         except ValidationError as e:
             raise ConfigValidationError.from_pydantic(e, gen_kw) from e
@@ -344,7 +344,7 @@ class GenKwConfig(ParameterConfig):
                 {
                     "realization": iens_active_index,
                 }
-            ).with_columns([pl.Series(from_data).alias(self.transform_function.name)]),
+            ).with_columns([pl.Series(from_data).alias(self.name)]),
         )
 
     @property
@@ -361,62 +361,70 @@ class GenKwConfig(ParameterConfig):
         target_ensemble.save_parameters(self.name, realization=None, dataset=df)
 
     def shouldUseLogScale(self, keyword: str) -> bool:
-        return isinstance(
-            self.transform_function.distribution, LogNormalSettings | LogUnifSettings
-        )
+        return isinstance(self.distribution, LogNormalSettings | LogUnifSettings)
 
     def get_priors(self) -> list[PriorDict]:
-        tf = self.transform_function
         return [
             {
-                "key": tf.name,
-                "function": tf.distribution.name.upper(),
+                "key": self.name,
+                "function": self.distribution.name.upper(),
                 "parameters": {
-                    k.upper(): v for k, v in tf.parameter_list.items() if k != "name"
+                    k.upper(): v for k, v in self.parameter_list.items() if k != "name"
                 },
             }
         ]
 
     def transform_data(self) -> Callable[[float], float]:
-        return self.transform_function.distribution.transform
+        return self.distribution.transform
 
-    def _parse_transform_function_definition(
-        self,
-        t: TransformFunctionDefinition,
-    ) -> TransformFunction:
-        if t.param_name not in DISTRIBUTION_CLASSES:
+    @classmethod
+    def _parse_distribution(
+        cls, param_name: str, dist_name: str, values: list[str]
+    ) -> (
+        UnifSettings
+        | LogNormalSettings
+        | LogUnifSettings
+        | DUnifSettings
+        | RawSettings
+        | ConstSettings
+        | NormalSettings
+        | TruncNormalSettings
+        | ErrfSettings
+        | DerrfSettings
+        | TriangularSettings
+    ):
+        if dist_name not in DISTRIBUTION_CLASSES:
             raise ConfigValidationError(
-                f"Unknown distribution provided: {t.param_name}, for variable {t.name}",
-                self.name,
+                f"Unknown distribution provided: {dist_name}"
+                f", for variable {param_name}",
+                param_name,
             )
+        dist_cls = DISTRIBUTION_CLASSES[dist_name]
 
-        cls = DISTRIBUTION_CLASSES[t.param_name]
-
-        if len(t.values) != len(cls.get_param_names()):
+        if len(values) != len(dist_cls.get_param_names()):
             raise ConfigValidationError.with_context(
-                f"Incorrect number of values: {t.values}, provided for variable "
-                f"{t.name} with distribution {t.param_name}.",
-                self.name,
+                f"Incorrect number of values: {values}, provided for variable "
+                f"{param_name} with distribution {dist_name}.",
+                param_name,
             )
         param_floats = []
-        for p in t.values:
+        for p in values:
             try:
                 param_floats.append(float(p))
             except ValueError as e:
                 raise ConfigValidationError.with_context(
                     f"Unable to convert '{p}' to float number for variable "
-                    f"{t.name} with distribution {t.param_name}.",
-                    self.name,
+                    f"{param_name} with distribution {dist_name}.",
+                    param_name,
                 ) from e
         try:
-            dist = get_distribution(t.param_name, param_floats)
+            dist = get_distribution(dist_name, param_floats)
         except ValidationError as e:
             error_to_raise = ConfigValidationError.from_pydantic(
-                error=e, context=self.name
+                error=e, context=param_name
             )
             for error_info in error_to_raise.errors:
-                error_info.message += f" parameter {t.name}"
+                error_info.message += f" parameter {param_name}"
 
             raise error_to_raise from e
-
-        return TransformFunction(name=t.name, distribution=dist)
+        return dist
