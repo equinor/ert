@@ -9,17 +9,17 @@ from typing import Self, TypeAlias
 
 from pydantic import BaseModel, model_validator
 
-from ..plugins.ert_plugin import ErtPlugin
-from ..plugins.ert_script import ErtScript
+from ert.plugins import ErtPlugin, ErtScript
+
 from .parse_arg_types_list import parse_arg_types_list
 from .parsing import (
     ConfigDict,
+    ConfigWarning,
     SchemaItemType,
     WorkflowJobKeys,
     init_workflow_job_schema,
     parse,
 )
-from .parsing.config_errors import ConfigWarning
 
 logger = logging.getLogger(__name__)
 
