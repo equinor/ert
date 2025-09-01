@@ -7,8 +7,10 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Any
 
+import hypothesis.strategies as st
 import pytest
 import yaml
+from hypothesis import given
 from pydantic import ValidationError
 
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
@@ -16,6 +18,7 @@ from everest.config import EverestConfig, ModelConfig, ObjectiveFunctionConfig
 from everest.config.control_variable_config import ControlVariableConfig
 from everest.config.everest_config import EverestValidationError
 from everest.config.sampler_config import SamplerConfig
+from everest.config.validation_utils import _RESERVED_WORDS
 from everest.simulator.everest_to_ert import (
     everest_to_ert_config_dict,
 )
@@ -1146,16 +1149,16 @@ def test_that_nested_extra_types_are_validated_correctly(change_to_tmpdir):
     Path("everest_config.yml").write_text(
         dedent("""
         objective_functions:
-          - name: func_name
+          - name: my_func
 
         controls:
-          - name: control_name
+          - name: my_control
             type: generic_control
             min: 0
             max: 1
             initial_guess: 0.5
             variables:
-                - name: var_name
+                - name: my_var
 
         model:
           realizations: [0, 1]
@@ -1174,3 +1177,18 @@ def test_that_nested_extra_types_are_validated_correctly(change_to_tmpdir):
     assert "ctx" in err.value.errors[0]
     assert err.value.errors[0]["ctx"] == {"line_number": 17}
     assert err.value.errors[0]["type"] == "extra_forbidden"
+
+
+@given(illegal_name=st.sampled_from(_RESERVED_WORDS))
+def test_that_reserved_words_are_rejected(illegal_name):
+    with pytest.raises(
+        ValidationError,
+        match=f"'{illegal_name}' is a reserved word and cannot be used.",
+    ):
+        EverestConfig.with_defaults(controls=[{"name": illegal_name}])
+
+    with pytest.raises(
+        ValidationError,
+        match=f"'{illegal_name}' is a reserved word and cannot be used.",
+    ):
+        EverestConfig.with_defaults(objective_functions=[{"name": illegal_name}])

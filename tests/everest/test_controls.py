@@ -132,7 +132,7 @@ def test_that_input_constraint_with_deprecated_indexed_name_format_warns():
 def test_that_control_variable_with_initial_guess_below_min_is_invalid():
     with pytest.raises(ValidationError, match="initial_guess"):
         ControlConfig(
-            name="control",
+            name="my_control",
             type="well_control",
             variables=[
                 ControlVariableConfig(name="w00", min=0.5, max=1.0, initial_guess=0.3)
@@ -143,7 +143,7 @@ def test_that_control_variable_with_initial_guess_below_min_is_invalid():
 def test_that_control_variable_with_initial_guess_above_max_is_invalid():
     with pytest.raises(ValidationError, match="initial_guess"):
         ControlConfig(
-            name="control",
+            name="my_control",
             type="well_control",
             variables=[
                 ControlVariableConfig(name="w00", min=0.5, max=1.0, initial_guess=1.3)
