@@ -259,7 +259,7 @@ class SchemaItem:
         args: list[T],
         keyword: FileContextToken,
         cwd: str,
-    ) -> T | ContextValue | ContextList[T | ContextValue | None] | None:
+    ) -> T | ContextValue | ContextList[T | ContextValue]:
         errors: list[ErrorInfo | ConfigValidationError] = []
         args_with_context: ContextList[T | Any] = ContextList(token=keyword)
         for i, x in enumerate(args):

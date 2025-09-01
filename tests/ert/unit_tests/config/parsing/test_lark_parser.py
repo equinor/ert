@@ -96,10 +96,10 @@ def test_that_redefine_overwrites_existing_defines_in_subsequent_lines():
     defines = config_dict["DEFINE"]
     forward_model_steps = config_dict["FORWARD_MODEL"]
 
-    assert ("<U>", "2") in forward_model_steps[0][1]  # first MAKE_SYMLINK
-    assert ("<F>", "5") in forward_model_steps[0][1]  # first MAKE_SYMLINK
-    assert ("<U>", "3") in forward_model_steps[1][1]  # second MAKE_SYMLINK
-    assert ("<D>", "2") in forward_model_steps[1][1]  # second MAKE_SYMLINK
+    assert ["<U>", "2"] in forward_model_steps[0][1]  # first MAKE_SYMLINK
+    assert ["<F>", "5"] in forward_model_steps[0][1]  # first MAKE_SYMLINK
+    assert ["<U>", "3"] in forward_model_steps[1][1]  # second MAKE_SYMLINK
+    assert ["<D>", "2"] in forward_model_steps[1][1]  # second MAKE_SYMLINK
 
     assert ["<A>", "2"] not in defines
     assert ["<B>", "2"] not in defines
@@ -368,7 +368,7 @@ def test_that_quotes_can_be_escaped():
         file_name="config.ert",
         schema=init_user_config_schema(),
     )
-    assert contents["FORWARD_MODEL"] == [["poly_eval", [("<FOO>", '\\"bar')]]]
+    assert contents["FORWARD_MODEL"] == [["poly_eval", [["<FOO>", '\\"bar']]]]
 
 
 @pytest.mark.parametrize("empty_string", ["''", '""'])
@@ -381,4 +381,4 @@ def test_that_strings_can_be_empty(empty_string):
         file_name="config.ert",
         schema=init_user_config_schema(),
     )
-    assert contents["FORWARD_MODEL"] == [["poly_eval", [("<FOO>", "")]]]
+    assert contents["FORWARD_MODEL"] == [["poly_eval", [["<FOO>", ""]]]]

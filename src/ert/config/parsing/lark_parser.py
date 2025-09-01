@@ -1,7 +1,9 @@
-# mypy: ignore-errors
+from __future__ import annotations
+
 import datetime
 import os
 import os.path
+from collections.abc import Iterator, Sequence
 from typing import Any, Self
 
 from lark import (
@@ -68,7 +70,7 @@ instruction: inst NEWLINE | NEWLINE
 """
 
 
-class StringQuotationTransformer(Transformer):
+class StringQuotationTransformer(Transformer[Token, Tree[Token]]):
     """Strips quotation marks from strings"""
 
     @staticmethod
@@ -77,7 +79,9 @@ class StringQuotationTransformer(Transformer):
         return token
 
 
-class ArgumentToStringTransformer(Transformer):
+class ArgumentToStringTransformer(
+    Transformer[FileContextToken, Tree[FileContextToken]]
+):
     """Flattens all argument types to just tokens or
     relevant python datastructures"""
 
@@ -91,8 +95,13 @@ class ArgumentToStringTransformer(Transformer):
 
     @staticmethod
     def forward_model_arguments(
-        kw_list,
-    ) -> list[tuple[FileContextToken, FileContextToken]]:
+        kw_list: list[Tree[FileContextToken]],
+    ) -> list[
+        tuple[
+            FileContextToken | Tree[FileContextToken],
+            FileContextToken | Tree[FileContextToken],
+        ]
+    ]:
         args = []
         for kw_pair in kw_list:
             if kw_pair is not None:
@@ -109,11 +118,11 @@ class FileContextTransformer(Transformer[Token, Tree[FileContextToken]]):
         self.filename = filename
         super().__init__(visit_tokens=True)
 
-    def __default_token__(self, token) -> FileContextToken:
+    def __default_token__(self, token: Token) -> FileContextToken:
         return FileContextToken(token, self.filename)
 
 
-class InstructionTransformer(Transformer):
+class InstructionTransformer(Transformer[FileContextToken, Tree[Instruction]]):
     """Removes all unnecessary levels from the tree,
     resulting in a Tree where each child is one
     instruction from the file, as a list of tokens or
@@ -121,20 +130,20 @@ class InstructionTransformer(Transformer):
     tokens"""
 
     @staticmethod
-    def instruction(children):
-        return children[0] if len(children) > 0 else Discard
+    def instruction(children: list[FileContextToken]) -> FileContextToken:
+        return children[0] if len(children) > 0 else Discard  # type:ignore
 
     @staticmethod
-    def regular_instruction(children):
+    def regular_instruction(children: list[FileContextToken]) -> list[FileContextToken]:
         return children
 
     @staticmethod
-    def job_instruction(children):
+    def job_instruction(children: list[FileContextToken]) -> list[FileContextToken]:
         return children
 
     @staticmethod
-    def NEWLINE(_token):
-        return Discard
+    def NEWLINE(_token: object) -> FileContextToken:
+        return Discard  # type: ignore
 
 
 _parser = Lark(grammar, propagate_positions=True, parser="lalr")
@@ -184,8 +193,8 @@ def _tree_to_dict(
     schema: SchemaItemDict,
 ) -> ConfigDict:
     config_dict = {}
-    defines = pre_defines.copy()
-    config_dict["DEFINE"] = defines  # type: ignore
+    defines = [list(pd) for pd in pre_defines]
+    config_dict["DEFINE"] = defines
 
     errors = []
     cwd = os.path.dirname(os.path.abspath(config_file))
@@ -204,29 +213,30 @@ def _tree_to_dict(
 
         try:
             args = constraints.join_args(args)
-            args = _substitute_args(args, constraints, defines)
-            option_args = list(constraints.parse_options(args))
+            subst_args = _substitute_args(args, constraints, defines)
+            option_args = list(constraints.parse_options(subst_args))  # type: ignore
             value_list = constraints.apply_constraints(option_args, kw, cwd)
 
             arglist = config_dict.get(kw, [])
             if kw == "DEFINE":
+                assert isinstance(value_list, list)
                 define_key, *define_args = value_list
                 existing_define = next(
                     (define for define in arglist if define[0] == define_key), None
                 )
                 if existing_define:
-                    existing_define[1:] = define_args
+                    existing_define[1:] = define_args  # type: ignore
                 else:
-                    arglist.append(value_list)
+                    arglist.append(value_list)  # type: ignore
             elif constraints.multi_occurrence:
-                arglist.append(value_list)
+                arglist.append(value_list)  # type: ignore
 
                 config_dict[kw] = arglist
             else:
-                config_dict[kw] = value_list
+                config_dict[kw] = value_list  # type: ignore
         except ConfigValidationError as e:
             if not constraints.multi_occurrence:
-                config_dict[kw] = None
+                config_dict[kw] = None  # type: ignore
 
             errors.append(e)
 
@@ -241,26 +251,22 @@ def _tree_to_dict(
     return config_dict
 
 
-ArgPairList = list[tuple[FileContextToken]]
-ParsedArgList = list[FileContextToken | ArgPairList]
+ArgPair = list[FileContextToken]
+Arg = FileContextToken | Sequence[ArgPair]
 
 
 def _substitute_args(
-    args: ParsedArgList,
+    args: Sequence[Arg],
     constraints: SchemaItem,
     defines: Defines,
-) -> ParsedArgList:
-    def substitute_arglist_tuple(
-        tup: tuple[FileContextToken, FileContextToken],
-    ) -> tuple[FileContextToken, FileContextToken]:
+) -> list[Arg]:
+    def substitute_arglist_tuple(tup: ArgPair) -> ArgPair:
         key, value = tup
         substituted_value = _substitute_token(defines, value, constraints.expand_envvar)
 
-        return (key, substituted_value)
+        return [key, substituted_value]
 
-    def substitute_arg(
-        arg: FileContextToken | list[tuple[FileContextToken]],
-    ) -> FileContextToken | list[tuple[FileContextToken]]:
+    def substitute_arg(arg: Arg) -> Arg:
         if isinstance(arg, FileContextToken):
             return _substitute_token(defines, arg, constraints.expand_envvar)
 
@@ -281,7 +287,7 @@ def _substitute_args(
 
 
 class IncludedFile:
-    def __init__(self, included_from: "IncludedFile", filename: str) -> None:
+    def __init__(self, included_from: IncludedFile | None, filename: str) -> None:
         self.included_from = included_from
         self.filename = filename
         self.context = None
@@ -296,18 +302,18 @@ class IncludedFile:
         return filename in self.included_from
 
     @property
-    def root(self):
+    def root(self) -> IncludedFile:
         if self.included_from is None:
             return self
 
         return self.included_from.root
 
     @property
-    def path_from_root(self):
+    def path_from_root(self) -> Iterator[str]:
         return reversed(self.path_to_root)
 
     @property
-    def path_to_root(self):
+    def path_to_root(self) -> list[str]:
         if self.included_from is None:
             return [self.filename]
 
@@ -323,7 +329,7 @@ def _handle_includes(
     defines: Defines,
     config_file: str,
     current_included_file: IncludedFile | None = None,
-):
+) -> None:
     if current_included_file is None:
         current_included_file = IncludedFile(included_from=None, filename=config_file)
 
@@ -338,8 +344,8 @@ def _handle_includes(
         if kw == "DEFINE":
             constraints = define_keyword()
             args = constraints.join_args(args)
-            args = _substitute_args(args, constraints, defines)
-            args = constraints.apply_constraints(args, kw, os.getcwd())
+            args = _substitute_args(args, constraints, defines)  # type: ignore
+            args = constraints.apply_constraints(args, kw, os.getcwd())  # type: ignore
             defines.append(args)  # type: ignore
         if kw == "INCLUDE":
             if len(args) > 1:
@@ -354,8 +360,13 @@ def _handle_includes(
             file_to_include = _substitute_token(defines, args[0])
 
             if not os.path.isabs(file_to_include):
-                file_to_include = os.path.normpath(
-                    os.path.join(config_dir, file_to_include)
+                file_to_include = FileContextToken(
+                    file_to_include.update(
+                        value=os.path.normpath(
+                            os.path.join(config_dir, file_to_include)
+                        ),
+                    ),
+                    filename=file_to_include.filename,
                 )
 
             if file_to_include in current_included_file:
@@ -476,7 +487,7 @@ def parse_contents(
     contents: str,
     schema: SchemaItemDict,
     file_name: str,
-    pre_defines: list[tuple[str, str]] | None = None,
+    pre_defines: Defines | None = None,
 ) -> ConfigDict:
     return _transform_tree(
         _parse_contents(contents, file_name), file_name, schema, pre_defines
