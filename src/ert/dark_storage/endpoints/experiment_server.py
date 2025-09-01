@@ -1,5 +1,6 @@
 import asyncio
 import dataclasses
+import datetime
 import logging
 import os
 import queue
@@ -227,7 +228,9 @@ class ExperimentRunner:
         status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
         try:
             run_model = EverestRunModel.create(
-                self._everest_config,
+                everest_config=self._everest_config,
+                experiment_name=f"EnOpt@{datetime.datetime.now().isoformat(timespec='seconds')}",
+                target_ensemble="batch",
                 optimization_callback=partial(_opt_monitor, shared_data=shared_data),
                 status_queue=status_queue,
             )
