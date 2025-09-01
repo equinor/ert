@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Literal, no_type_check
+from typing import Any, Literal
 
 import polars as pl
 from pydantic import field_validator
@@ -80,7 +80,6 @@ class SummaryConfig(ResponseConfig):
     def primary_key(self) -> list[str]:
         return ["time"]
 
-    @no_type_check
     @classmethod
     def from_config_dict(cls, config_dict: ConfigDict) -> SummaryConfig | None:
         if summary_keys := config_dict.get(ConfigKeys.SUMMARY, []):

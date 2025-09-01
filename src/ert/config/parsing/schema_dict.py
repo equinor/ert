@@ -1,11 +1,11 @@
 import abc
 from collections import UserDict
-from typing import no_type_check
+from typing import cast
 
 from .config_dict import ConfigDict
 from .config_errors import ConfigValidationError, ConfigWarning
 from .config_schema_item import SchemaItem
-from .context_values import ContextList, ContextString
+from .context_values import ContextList, ContextString, ContextValue
 from .deprecation_info import DeprecationInfo
 from .error_info import ErrorInfo
 
@@ -51,7 +51,6 @@ class SchemaItemDict(UserDict[str, SchemaItem]):
             else:
                 self[info.keyword].deprecation_info.append(info)
 
-    @no_type_check
     def search_for_deprecated_keyword_usages(
         self,
         config_dict: ConfigDict,
@@ -59,9 +58,13 @@ class SchemaItemDict(UserDict[str, SchemaItem]):
     ) -> None:
         detected_deprecations = []
 
-        def push_deprecation(infos: list[DeprecationInfo], line: list[ContextString]):
+        def push_deprecation(
+            infos: list[DeprecationInfo], line: list[ContextString]
+        ) -> None:
             for info in infos:
-                if info.check is None or (callable(info.check) and info.check(line)):
+                if info.check is None or (
+                    callable(info.check) and info.check(cast(list[ContextValue], line))
+                ):
                     detected_deprecations.append((info, line))
 
         for kw, v in config_dict.items():
@@ -79,16 +82,26 @@ class SchemaItemDict(UserDict[str, SchemaItem]):
                     case ContextString():
                         push_deprecation(
                             schema_info.deprecation_info,
-                            ContextList.with_values(token=v.keyword_token, values=[v]),
+                            cast(
+                                list[ContextString],
+                                ContextList.with_values(
+                                    token=v.keyword_token,  # type: ignore
+                                    values=[v],
+                                ),
+                            ),
                         )
                     case [ContextString(), *_]:
-                        push_deprecation(schema_info.deprecation_info, v)
+                        push_deprecation(
+                            schema_info.deprecation_info, cast(list[ContextString], v)
+                        )
                     case [list(), *_]:
                         for arglist in v:
                             push_deprecation(schema_info.deprecation_info, arglist)
         if detected_deprecations:
             for deprecation, line in detected_deprecations:
-                ConfigWarning.deprecation_warn(deprecation.resolve_message(line), line)
+                ConfigWarning.deprecation_warn(
+                    deprecation.resolve_message(cast(list[str], line)), line
+                )
 
     @abc.abstractmethod
     def check_required(
