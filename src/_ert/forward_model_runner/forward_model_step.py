@@ -12,6 +12,7 @@ import uuid
 from collections.abc import Generator, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime as dt
+from os import path
 from pathlib import Path
 from subprocess import Popen, run
 from typing import TYPE_CHECKING, cast
@@ -130,19 +131,13 @@ class ForwardModelStep:
             stdin = None
 
         if self.std_err:
-            os.makedirs(
-                os.path.dirname(os.path.abspath(self.std_err)),
-                exist_ok=True,
-            )
+            os.makedirs(path.dirname(path.abspath(self.std_err)), exist_ok=True)
             stderr = open(self.std_err, "w", encoding="utf-8")  # noqa
         else:
             stderr = None
 
         if self.std_out:
-            os.makedirs(
-                os.path.dirname(os.path.abspath(self.std_out)),
-                exist_ok=True,
-            )
+            os.makedirs(path.dirname(path.abspath(self.std_out)), exist_ok=True)
             stdout = open(self.std_out, "w", encoding="utf-8")  # noqa
         else:
             stdout = None
@@ -253,7 +248,7 @@ class ForwardModelStep:
             return exited_message
 
         exited_message = Exited(self, exit_code)
-        if self.step_data.get("error_file") and os.path.exists(
+        if self.step_data.get("error_file") and path.exists(
             self.step_data["error_file"]
         ):
             return exited_message.with_error(
@@ -344,15 +339,15 @@ class ForwardModelStep:
         of failed checks.
         """
         errors = []
-        if self.step_data.get("stdin") and not os.path.exists(self.step_data["stdin"]):
+        if self.step_data.get("stdin") and not path.exists(self.step_data["stdin"]):
             errors.append(f"Could not locate stdin file: {self.step_data['stdin']}")
 
-        if self.step_data.get("start_file") and not os.path.exists(
+        if self.step_data.get("start_file") and not path.exists(
             cast(Path, self.step_data["start_file"])
         ):
             errors.append(f"Could not locate start_file:{self.step_data['start_file']}")
 
-        if self.step_data.get("error_file") and os.path.exists(
+        if self.step_data.get("error_file") and path.exists(
             cast(Path, self.step_data.get("error_file"))
         ):
             os.unlink(cast(Path, self.step_data.get("error_file")))
@@ -372,7 +367,7 @@ class ForwardModelStep:
 
         start_time = time.time()
         while True:
-            if os.path.exists(target_file):
+            if path.exists(target_file):
                 stat = os.stat(target_file)
                 if stat.st_mtime_ns > (existing_target_file_mtime or 0):
                     return None
@@ -383,7 +378,7 @@ class ForwardModelStep:
 
         # We have gone out of the loop via the break statement,
         # i.e. on a timeout.
-        if os.path.exists(target_file):
+        if path.exists(target_file):
             stat = os.stat(target_file)
             return (
                 f"The target file:{target_file} has not been updated; "
@@ -399,8 +394,8 @@ class ForwardModelStep:
             arg_list = self.step_data.get("argList", [])
             for index, arg_type in enumerate(arg_types):
                 if arg_type == "RUNTIME_FILE":
-                    file_path = os.path.join(os.getcwd(), arg_list[index])
-                    if not os.path.isfile(file_path):
+                    file_path = path.join(os.getcwd(), arg_list[index])
+                    if not path.isfile(file_path):
                         errors.append(
                             f"In step {self.name()}: RUNTIME_FILE {arg_list[index]} "
                             "does not exist."
@@ -418,7 +413,7 @@ class ForwardModelStep:
 
 def _get_existing_target_file_mtime(file: str | None) -> int | None:
     mtime = None
-    if file and os.path.exists(file):
+    if file and path.exists(file):
         stat = os.stat(file)
         mtime = stat.st_mtime_ns
     return mtime
