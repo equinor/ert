@@ -314,7 +314,7 @@ class OptimizationStorageData:
 
     def simulation_to_model_realization_map(self, batch_id: int) -> dict[int, int]:
         """
-        Mapping from simulation ID to model_realization
+        Mapping from simulation ID to model realization
         """
         dummy_df = next(
             (

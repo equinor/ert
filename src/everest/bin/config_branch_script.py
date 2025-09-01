@@ -58,7 +58,7 @@ def opt_controls_by_batch(optimization_dir: str, batch: int) -> dict[str, Any] |
     )
 
     if function_batch:
-        # All model_realizations should have the same unperturbed control values per
+        # All model realizations should have the same unperturbed control values per
         # batch hence it does not matter which realization we select the controls for
         return function_batch.realization_controls.select(
             control_names.to_list()
