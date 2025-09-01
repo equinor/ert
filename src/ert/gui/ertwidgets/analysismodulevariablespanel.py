@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLayout,
+    QSpinBox,
     QWidget,
 )
 
@@ -94,7 +95,34 @@ class AnalysisModuleVariablesPanel(QWidget):
         lf_layout.addWidget(self.local_spinner)
         layout.addRow(localization_frame)
 
-        local_checkbox.stateChanged.connect(self.local_spinner.setEnabled)
+        cpu_label = QLabel("Number of CPUs for adaptive localization")
+
+        cpu_metadata = AnalysisModule.model_fields["localization_num_cpu"]
+
+        self.cpu_spinner = QSpinBox()
+        self.cpu_spinner.setMinimum(
+            cast(int, next(v for v in cpu_metadata.metadata if isinstance(v, Ge)).ge)
+        )
+        self.cpu_spinner.setMaximum(
+            cast(int, next(v for v in cpu_metadata.metadata if isinstance(v, Le)).le)
+        )
+        self.cpu_spinner.setValue(analysis_module.localization_num_cpu)
+        self.cpu_spinner.setSuffix(" CPUs")
+        self.cpu_spinner.setEnabled(local_checkbox.isChecked())
+        self.cpu_spinner.setFixedWidth(180)
+        self.cpu_spinner.setObjectName("localization_num_cpu")
+        self.cpu_spinner.valueChanged.connect(
+            partial(self.valueChangedSpinner, "localization_num_cpu")
+        )
+
+        layout.addRow(cpu_label, self.cpu_spinner)
+
+        local_checkbox.stateChanged.connect(
+            lambda state: (
+                self.local_spinner.setEnabled(state),
+                self.cpu_spinner.setEnabled(state),
+            )
+        )
         local_checkbox.setChecked(analysis_module.localization)
 
         self.setLayout(layout)

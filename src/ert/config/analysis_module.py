@@ -4,6 +4,7 @@ import logging
 import math
 from typing import Annotated, Literal
 
+import psutil
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
 
 logger = logging.getLogger(__name__)
@@ -49,6 +50,14 @@ class ESSettings(BaseModel):
             title="Adaptive localization correlation threshold",
         ),
     ] = None
+    localization_num_cpu: Annotated[
+        int,
+        Field(
+            ge=1,
+            le=psutil.cpu_count(logical=False) or 1,
+            title="Adaptive localization number of cpus",
+        ),
+    ] = max(1, (psutil.cpu_count(logical=False) or 1) - 1)
 
     def correlation_threshold(self, ensemble_size: int) -> float:
         """Decides whether to use user-defined or default threshold.
