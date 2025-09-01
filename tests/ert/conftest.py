@@ -552,6 +552,17 @@ def no_cert_in_test(monkeypatch):
     monkeypatch.setattr("ert.cli.main.EvaluatorServerConfig", MockESConfig)
 
 
+@pytest.fixture(autouse=True)
+def no_hostname_on_mac(monkeypatch):
+    def mock_get_machine_name() -> str:
+        return "localhost"
+
+    if sys.platform != "linux":
+        monkeypatch.setattr(
+            "ert.ensemble_evaluator.evaluator.get_machine_name", mock_get_machine_name
+        )
+
+
 @pytest.fixture(scope="session", autouse=True)
 def set_multiprocessing_method():
     if (
