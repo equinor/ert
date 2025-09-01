@@ -197,7 +197,7 @@ def as_abs_path(path: str, config_dir: str) -> str:
     return os.path.realpath(os.path.join(config_dir, path))
 
 
-def expand_geo_id_paths(path_source: str, realizations: list[int]) -> list[str]:
+def expand_model_id_paths(path_source: str, realizations: list[int]) -> list[str]:
     if "<GEO_ID>" in path_source:
         return [path_source.replace("<GEO_ID>", str(r)) for r in realizations]
     return [path_source]
@@ -225,7 +225,7 @@ def check_path_exists(
             pos = pos[1:]
             path_source = os.path.join(pre, config_dir, pos)
 
-    expanded_paths = expand_geo_id_paths(str(path_source), realizations)
+    expanded_paths = expand_model_id_paths(str(path_source), realizations)
     for exp_path in [as_abs_path(p, str(config_dir)) for p in expanded_paths]:
         if os.path.ismount(exp_path):
             raise ValueError(f"'{exp_path}' is a mount point and can't be handled")

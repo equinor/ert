@@ -312,9 +312,9 @@ class OptimizationStorageData:
             if isinstance(df, pl.DataFrame):
                 df.write_parquet(self._path / f"{df_name}.parquet")
 
-    def simulation_to_geo_realization_map(self, batch_id: int) -> dict[int, int]:
+    def simulation_to_model_realization_map(self, batch_id: int) -> dict[int, int]:
         """
-        Mapping from simulation ID to geo-realization
+        Mapping from simulation ID to model realization
         """
         dummy_df = next(
             (
