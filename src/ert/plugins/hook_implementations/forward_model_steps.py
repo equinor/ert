@@ -217,7 +217,7 @@ class Eclipse100(ForwardModelStepPlugin):
                 "<NUM_CPU>",
                 "<OPTS>",
             ],
-            default_mapping={"<NUM_CPU>": 1, "<OPTS>": ""},
+            default_mapping={"<NUM_CPU>": "1", "<OPTS>": ""},
         )
 
     def validate_pre_experiment(self, fm_json: ForwardModelStepJSON) -> None:
@@ -227,7 +227,7 @@ class Eclipse100(ForwardModelStepPlugin):
             )
         version = self.private_args["<VERSION>"]
         available_versions = _available_eclrun_versions(
-            simulator="eclipse", env_vars=fm_json["environment"]
+            simulator="eclipse", env_vars=fm_json["environment"] or {}
         )
 
         if available_versions and version not in available_versions:
@@ -282,7 +282,7 @@ class Eclipse300(ForwardModelStepPlugin):
                 "<NUM_CPU>",
                 "<OPTS>",
             ],
-            default_mapping={"<NUM_CPU>": 1, "<OPTS>": "", "<VERSION>": "version"},
+            default_mapping={"<NUM_CPU>": "1", "<OPTS>": "", "<VERSION>": "version"},
         )
 
     def validate_pre_experiment(
@@ -295,7 +295,7 @@ class Eclipse300(ForwardModelStepPlugin):
             )
         version = self.private_args["<VERSION>"]
         available_versions = _available_eclrun_versions(
-            simulator="e300", env_vars=fm_step_json["environment"]
+            simulator="e300", env_vars=fm_step_json["environment"] or {}
         )
         if available_versions and version not in available_versions:
             raise ForwardModelStepValidationError(
@@ -343,7 +343,7 @@ class Flow(ForwardModelStepPlugin):
             ],
             default_mapping={
                 "<VERSION>": "default",
-                "<NUM_CPU>": 1,
+                "<NUM_CPU>": "1",
                 "<OPTS>": "",
             },
         )
@@ -354,7 +354,9 @@ class Flow(ForwardModelStepPlugin):
             raise ForwardModelStepWarning(
                 f"Unknown option(s) supplied to Flow: {sorted(unknowns)}"
             )
-        available_versions = _available_flow_versions(env_vars=fm_json["environment"])
+        available_versions = _available_flow_versions(
+            env_vars=fm_json["environment"] or {}
+        )
         version = fm_json["argList"][fm_json["argList"].index("--version") + 1]
         if version not in available_versions:
             raise ForwardModelStepValidationError(
@@ -565,7 +567,7 @@ class TemplateRender(ForwardModelStepPlugin):
             ],
             default_mapping={
                 "<VERSION>": "default",
-                "<NUM_CPU>": 1,
+                "<NUM_CPU>": "1",
                 "<OPTS>": "",
             },
         )

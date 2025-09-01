@@ -161,7 +161,7 @@ def forward_model_steps(substitutions):
         max_arg=st.one_of(st.none(), st.integers(min_value=0, max_value=10)),
         default_mapping=st.dictionaries(
             realistic_text(),
-            st.one_of(realistic_text(), st.integers()),
+            realistic_text(),
             max_size=5,
         ),
         private_args=substitutions,

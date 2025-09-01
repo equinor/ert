@@ -1,16 +1,17 @@
-# mypy: ignore-errors
+from __future__ import annotations
+
 import copy
 import logging
 import os
 import pprint
 import re
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Mapping
 from datetime import datetime
 from functools import cached_property
 from os import path
 from pathlib import Path
-from typing import Any, ClassVar, Self, no_type_check, overload
+from typing import Any, ClassVar, Self, cast, overload
 
 import polars as pl
 from numpy.random import SeedSequence
@@ -54,6 +55,7 @@ from .parsing import (
     read_file,
 )
 from .parsing.observations_parser import (
+    ConfContent,
     GenObsValues,
     HistoryValues,
     ObservationConfigError,
@@ -138,7 +140,7 @@ def create_forward_model_json(
     context_substitutions = Substitutions(context)
 
     class Substituter:
-        def __init__(self, fm_step) -> None:
+        def __init__(self, fm_step: ForwardModelStep) -> None:
             fm_step_args = ",".join(
                 [f"{key}={value}" for key, value in fm_step.private_args.items()]
             )
@@ -160,7 +162,7 @@ def create_forward_model_json(
         @overload
         def substitute(self, string: None) -> None: ...
 
-        def substitute(self, string):
+        def substitute(self, string: str | None) -> str | None:
             if string is None:
                 return string
             string = self.copy_private_args.substitute(
@@ -294,13 +296,13 @@ def check_non_utf_chars(file_path: str) -> None:
         ) from e
 
 
-def read_templates(config_dict) -> list[tuple[str, str]]:
-    templates = []
+def read_templates(config_dict: ConfigDict) -> list[tuple[str, str]]:
+    templates: list[tuple[str, str]] = []
     if ConfigKeys.DATA_FILE in config_dict and ConfigKeys.ECLBASE in config_dict:
         source_file = config_dict[ConfigKeys.DATA_FILE]
         target_file = config_dict[ConfigKeys.ECLBASE].replace("%d", "<IENS>") + ".DATA"
         check_non_utf_chars(source_file)
-        templates.append([source_file, target_file])
+        templates.append((source_file, target_file))
 
     for template in config_dict.get(ConfigKeys.RUN_TEMPLATE, []):
         if template[1].startswith("<ECL_BASE>"):
@@ -335,7 +337,7 @@ def workflow_jobs_from_dict(
 
     workflow_jobs = copy.copy(installed_workflows) if installed_workflows else {}
 
-    errors = []
+    errors: list[ErrorInfo | ConfigValidationError] = []
 
     for workflow_job in workflow_job_info:
         try:
@@ -447,6 +449,7 @@ def create_and_hook_workflows(
             if not hasattr(job, "ert_script") or job.ert_script is None:
                 continue
 
+            assert isinstance(job, ErtScriptWorkflow)
             ert_script_instance = job.ert_script()
             requested_fixtures = ert_script_instance.requested_fixtures
 
@@ -486,17 +489,16 @@ def create_and_hook_workflows(
     return workflows, hooked_workflows
 
 
-@staticmethod
 def workflows_from_dict(
     content_dict: ConfigDict,
     substitutions: dict[str, str],
-    installed_workflows: dict[str, WorkflowJob] | None = None,
+    installed_workflows: Mapping[str, WorkflowJob] | None = None,
 ) -> tuple[
     dict[str, WorkflowJob],
     dict[str, Workflow],
     defaultdict[HookRuntime, list[Workflow]],
 ]:
-    workflow_jobs = copy.copy(installed_workflows) if installed_workflows else {}
+    workflow_jobs = dict(copy.copy(installed_workflows)) if installed_workflows else {}
     workflow_jobs = workflow_jobs_from_dict(content_dict, workflow_jobs)
     workflows, hooked_workflows = create_and_hook_workflows(
         content_dict, workflow_jobs, substitutions
@@ -504,9 +506,11 @@ def workflows_from_dict(
     return workflow_jobs, workflows, hooked_workflows
 
 
-def installed_forward_model_steps_from_dict(config_dict) -> dict[str, ForwardModelStep]:
-    errors = []
-    fm_steps = {}
+def installed_forward_model_steps_from_dict(
+    config_dict: ConfigDict,
+) -> dict[str, ForwardModelStep]:
+    errors: list[ErrorInfo | ConfigValidationError] = []
+    fm_steps: dict[str, ForwardModelStep] = {}
     for name, (fm_step_config_file, config_contents) in config_dict.get(
         ConfigKeys.INSTALL_JOB, []
     ):
@@ -557,8 +561,8 @@ def installed_forward_model_steps_from_dict(config_dict) -> dict[str, ForwardMod
 def create_list_of_forward_model_steps_to_run(
     installed_steps: dict[str, ForwardModelStep],
     substitutions: dict[str, str],
-    config_dict: dict,
-    preinstalled_forward_model_steps: dict[str, ForwardModelStep],
+    config_dict: ConfigDict,
+    preinstalled_forward_model_steps: Mapping[str, ForwardModelStep],
     env_pr_fm_step: dict[str, dict[str, Any]],
 ) -> list[ForwardModelStep]:
     errors = []
@@ -630,7 +634,7 @@ def create_list_of_forward_model_steps_to_run(
                 fm_json_for_validation = substituted_json["jobList"][0]
                 fm_json_for_validation["environment"] = {
                     **substituted_json["global_environment"],
-                    **fm_json_for_validation["environment"],
+                    **(fm_json_for_validation["environment"] or {}),
                 }
                 fm_step.validate_pre_experiment(fm_json_for_validation)
             except ForwardModelStepValidationError as err:
@@ -646,7 +650,7 @@ def create_list_of_forward_model_steps_to_run(
                     context=fm_step.name,
                 )
 
-            except Exception as e:  # type: ignore
+            except Exception as e:
                 ConfigWarning.warn(
                     f"Unexpected plugin forward model exception: {e!s}",
                     context=fm_step.name,
@@ -665,7 +669,7 @@ RESERVED_KEYWORDS = ["realization", "IENS", "ITER"]
 class ErtConfig(BaseModel):
     DEFAULT_ENSPATH: ClassVar[str] = "storage"
     DEFAULT_RUNPATH_FILE: ClassVar[str] = ".ert_runpath_list"
-    PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[dict[str, ForwardModelStep]] = {}
+    PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[Mapping[str, ForwardModelStep]] = {}
     PREINSTALLED_WORKFLOWS: ClassVar[dict[str, ErtScriptWorkflow]] = {}
     ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = {}
     ACTIVATE_SCRIPT: ClassVar[str | None] = None
@@ -681,7 +685,7 @@ class ErtConfig(BaseModel):
     workflow_jobs: dict[str, WorkflowJob] = Field(default_factory=dict)
     workflows: dict[str, Workflow] = Field(default_factory=dict)
     hooked_workflows: defaultdict[HookRuntime, list[Workflow]] = Field(
-        default_factory=lambda: defaultdict(list)
+        default_factory=lambda: defaultdict(lambda: cast(list[Workflow], []))
     )
     runpath_file: Path = Path(DEFAULT_RUNPATH_FILE)
 
@@ -700,7 +704,7 @@ class ErtConfig(BaseModel):
     enkf_obs: EnkfObs = Field(default_factory=EnkfObs)
 
     @model_validator(mode="after")
-    def set_fields(self):
+    def set_fields(self) -> Self:
         self.config_path = (
             path.dirname(path.abspath(self.user_config_file))
             if self.user_config_file
@@ -709,7 +713,7 @@ class ErtConfig(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def validate_genkw_parameter_name_overlap(self):
+    def validate_genkw_parameter_name_overlap(self) -> Self:
         overlapping_parameter_names = [
             parameter_name
             for parameter_name in self.ensemble_config.get_all_gen_kw_parameter_names()
@@ -725,7 +729,7 @@ class ErtConfig(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def validate_dm_parameter_name_overlap(self):
+    def validate_dm_parameter_name_overlap(self) -> Self:
         if not self.analysis_config.design_matrix:
             return self
         dm_param_config = self.analysis_config.design_matrix.parameter_configuration
@@ -773,30 +777,36 @@ class ErtConfig(BaseModel):
     def with_plugins(
         forward_model_step_classes: list[type[ForwardModelStepPlugin]] | None = None,
         env_pr_fm_step: dict[str, dict[str, Any]] | None = None,
-    ) -> type["ErtConfig"]:
+    ) -> type[ErtConfig]:
         pm = ErtPluginManager()
         if forward_model_step_classes is None:
             forward_model_step_classes = pm.forward_model_steps
 
         preinstalled_fm_steps: dict[str, ForwardModelStepPlugin] = {}
         for fm_step_subclass in forward_model_step_classes:
-            fm_step = fm_step_subclass()
+            # we call without required arguments to
+            # ForwardModelStepPlugin.__init__ as
+            # we expect the subclass to override __init__
+            # and provide those arguments
+            fm_step = fm_step_subclass()  # type: ignore
             preinstalled_fm_steps[fm_step.name] = fm_step
 
         if env_pr_fm_step is None:
-            env_pr_fm_step = uppercase_subkeys_and_stringify_subvalues(
+            env_pr_fm_step_ = uppercase_subkeys_and_stringify_subvalues(
                 pm.get_forward_model_configuration()
             )
+        else:
+            env_pr_fm_step_ = env_pr_fm_step
 
         class ErtConfigWithPlugins(ErtConfig):
             PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[
-                dict[str, ForwardModelStepPlugin]
+                Mapping[str, ForwardModelStep]
             ] = preinstalled_fm_steps
             PREINSTALLED_WORKFLOWS = (
                 pm.get_ertscript_workflows().get_workflows()
                 | pm.get_legacy_ertscript_workflows().get_workflows()
             )
-            ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = env_pr_fm_step
+            ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = env_pr_fm_step_
             ACTIVATE_SCRIPT = pm.activate_script()
 
         ErtConfigWithPlugins.model_rebuild()
@@ -825,7 +835,7 @@ class ErtConfig(BaseModel):
             user_config_contents,
             read_file(site_config_file) if site_config_file else None,
             user_config_file,
-            site_config_file,
+            site_config_file or "",
         )
         cls._log_config_dict(user_config_dict)
         return cls.from_dict(user_config_dict)
@@ -861,8 +871,8 @@ class ErtConfig(BaseModel):
         cls,
         user_config_contents: str,
         site_config_contents: str = "QUEUE_SYSTEM LOCAL\n",
-        config_file_name="./config.ert",
-        site_config_name="site_config.ert",
+        config_file_name: str = "./config.ert",
+        site_config_name: str = "site_config.ert",
     ) -> Self:
         return cls.from_dict(
             cls._config_dict_from_contents(
@@ -874,7 +884,7 @@ class ErtConfig(BaseModel):
         )
 
     @classmethod
-    def from_dict(cls, config_dict) -> Self:
+    def from_dict(cls, config_dict: ConfigDict) -> Self:
         substitutions = _substitutions_from_dict(config_dict)
         runpath_file = config_dict.get(
             ConfigKeys.RUNPATH_FILE, ErtConfig.DEFAULT_RUNPATH_FILE
@@ -889,9 +899,9 @@ class ErtConfig(BaseModel):
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
-        workflow_jobs = {}
-        workflows = {}
-        hooked_workflows = {}
+        workflow_jobs: dict[str, WorkflowJob] = {}
+        workflows: dict[str, Workflow] = {}
+        hooked_workflows: dict[HookRuntime, list[Workflow]] = {}
         installed_forward_model_steps = {}
         model_config = None
 
@@ -915,8 +925,8 @@ class ErtConfig(BaseModel):
             errors.append(e)
 
         try:
-            installed_forward_model_steps = copy.deepcopy(
-                cls.PREINSTALLED_FORWARD_MODEL_STEPS
+            installed_forward_model_steps = dict(
+                copy.deepcopy(cls.PREINSTALLED_FORWARD_MODEL_STEPS)
             )
 
             installed_forward_model_steps.update(
@@ -945,7 +955,7 @@ class ErtConfig(BaseModel):
             errors.append(err)
 
         obs_config_args = config_dict.get(ConfigKeys.OBS_CONFIG)
-        obs_configs = []
+        obs_configs: ConfContent = []
         try:
             if obs_config_args:
                 obs_config_file, obs_config_file_contents = obs_config_args
@@ -1078,7 +1088,7 @@ class ErtConfig(BaseModel):
         cls,
         installed_steps: dict[str, ForwardModelStep],
         substitutions: dict[str, str],
-        config_dict: dict,
+        config_dict: ConfigDict,
     ) -> list[ForwardModelStep]:
         return create_list_of_forward_model_steps_to_run(
             installed_steps,
@@ -1089,7 +1099,7 @@ class ErtConfig(BaseModel):
         )
 
     @classmethod
-    def _read_summary_keys(cls, config_dict) -> list[str]:
+    def _read_summary_keys(cls, config_dict: ConfigDict) -> list[str]:
         return [
             item
             for sublist in config_dict.get(ConfigKeys.SUMMARY, [])
@@ -1216,7 +1226,9 @@ class ErtConfig(BaseModel):
             )
 
     @staticmethod
-    def apply_config_content_defaults(content_dict: dict, config_dir: str):
+    def apply_config_content_defaults(
+        content_dict: ConfigDict, config_dir: str
+    ) -> None:
         if ConfigKeys.ENSPATH not in content_dict:
             content_dict[ConfigKeys.ENSPATH] = path.join(
                 config_dir, ErtConfig.DEFAULT_ENSPATH
@@ -1263,7 +1275,7 @@ class ErtConfig(BaseModel):
                     filtered_queue_options + user_config_dict.get("QUEUE_OPTION", [])
                 )
             elif isinstance(value, list):
-                original_entries: list = user_config_dict.get(keyword, [])
+                original_entries: list[Any] = user_config_dict.get(keyword, [])
                 user_config_dict[keyword] = value + original_entries
             elif keyword not in user_config_dict:
                 user_config_dict[keyword] = value
@@ -1285,9 +1297,9 @@ class ErtConfig(BaseModel):
 
     @classmethod
     def _validate_dict(
-        cls, config_dict, config_file: str
+        cls, config_dict: ConfigDict, config_file: str
     ) -> list[ErrorInfo | ConfigValidationError]:
-        errors = []
+        errors: list[ErrorInfo | ConfigValidationError] = []
 
         if ConfigKeys.SUMMARY in config_dict and ConfigKeys.ECLBASE not in config_dict:
             errors.append(
@@ -1308,8 +1320,7 @@ class ErtConfig(BaseModel):
 
     @staticmethod
     def _create_observations(
-        obs_config_content: dict[str, HistoryValues | SummaryValues | GenObsValues]
-        | None,
+        obs_config_content: ConfContent,
         ensemble_config: EnsembleConfig,
         time_map: list[datetime] | None,
         history: HistorySource,
@@ -1317,7 +1328,7 @@ class ErtConfig(BaseModel):
         if not obs_config_content:
             return EnkfObs({}, [])
         obs_vectors: dict[str, ObsVector] = {}
-        obs_time_list: Sequence[datetime] = []
+        obs_time_list: list[datetime] = []
         if ensemble_config.refcase is not None:
             obs_time_list = ensemble_config.refcase.all_dates
         elif time_map is not None:
@@ -1390,10 +1401,12 @@ def _split_string_into_sections(string: str, section_length: int) -> list[str]:
     ]
 
 
-def _get_files_in_directory(job_path, errors):
+def _get_files_in_directory(
+    job_path: str, errors: list[ErrorInfo | ConfigValidationError]
+) -> list[str]:
     if not path.isdir(job_path):
         errors.append(
-            ConfigValidationError.with_context(
+            ConfigValidationError(
                 f"Unable to locate job directory {job_path!r}", job_path
             )
         )
@@ -1410,7 +1423,7 @@ def _get_files_in_directory(job_path, errors):
     return files
 
 
-def _substitutions_from_dict(config_dict) -> dict[str, str]:
+def _substitutions_from_dict(config_dict: ConfigDict) -> dict[str, str]:
     substitutions = {}
 
     for key, val in config_dict.get("DEFINE", []):
@@ -1436,10 +1449,9 @@ def uppercase_subkeys_and_stringify_subvalues(
     return fixed_dict
 
 
-@no_type_check
 def _forward_model_step_from_config_contents(
     config_contents: str, config_file: str, name: str | None = None
-) -> "ForwardModelStep":
+) -> ForwardModelStep:
     if name is None:
         name = os.path.basename(config_file)
 
@@ -1465,7 +1477,7 @@ def _forward_model_step_from_config_contents(
 
     return ForwardModelStep(
         name=name,
-        executable=content_dict.get("EXECUTABLE"),
+        executable=content_dict["EXECUTABLE"],
         stdin_file=content_dict.get("STDIN"),
         stdout_file=content_dict.get("STDOUT"),
         stderr_file=content_dict.get("STDERR"),
