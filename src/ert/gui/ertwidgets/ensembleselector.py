@@ -125,7 +125,8 @@ class EnsembleSelector(QComboBox):
             ensemble_list = [val for val in ensemble_list if val.id not in parents]
         return self.sort_ensembles(ensemble_list)
 
-    def sort_ensembles(self, ensemble_list: Iterable[Ensemble]) -> Iterable[Ensemble]:
+    @classmethod
+    def sort_ensembles(cls, ensemble_list: Iterable[Ensemble]) -> Iterable[Ensemble]:
         return sorted(
             ensemble_list,
             key=lambda e: (

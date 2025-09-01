@@ -108,14 +108,10 @@ def test_ensembles_are_sorted_failed_first_then_by_start_time(qtbot, notifier, s
     ensemble_c = storage.create_experiment().create_ensemble(
         name="default_a", ensemble_size=1
     )
-    notifier.set_storage(str(storage.path))
-    widget = EnsembleSelector(notifier)
-    qtbot.addWidget(widget)
-
-    ensemble_c.set_failure(0, RealizationStorageState.FAILURE_IN_CURRENT)
-    assert widget.sort_ensembles([ensemble_a, ensemble_b, ensemble_c]) == [
-        ensemble_c,
+    ensemble_b.set_failure(0, RealizationStorageState.FAILURE_IN_CURRENT)
+    assert EnsembleSelector.sort_ensembles([ensemble_a, ensemble_b, ensemble_c]) == [
         ensemble_b,
+        ensemble_c,
         ensemble_a,
     ]
 
