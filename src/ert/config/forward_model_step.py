@@ -52,15 +52,15 @@ class ForwardModelStepJSON(TypedDict):
 
     name: str
     executable: str
-    target_file: str
-    error_file: str
-    start_file: str
-    stdout: str
-    stderr: str
-    stdin: str
+    target_file: str | None
+    error_file: str | None
+    start_file: str | None
+    stdout: str | None
+    stderr: str | None
+    stdin: str | None
     argList: list[str]
-    environment: dict[str, str]
-    max_running_minutes: int
+    environment: dict[str, str] | None
+    max_running_minutes: int | None
 
 
 class ForwardModelStepOptions(TypedDict, total=False):
@@ -71,8 +71,8 @@ class ForwardModelStepOptions(TypedDict, total=False):
     target_file: NotRequired[str]
     error_file: NotRequired[str]
     max_running_minutes: NotRequired[int]
-    environment: NotRequired[dict[str, str | int]]
-    default_mapping: NotRequired[dict[str, str | int]]
+    environment: NotRequired[dict[str, str]]
+    default_mapping: NotRequired[dict[str, str]]
 
 
 @dataclass
@@ -144,8 +144,8 @@ class ForwardModelStep:
     arglist: list[str] = field(default_factory=list)
     required_keywords: list[str] = field(default_factory=list)
     arg_types: list[SchemaItemType] = field(default_factory=list)
-    environment: dict[str, int | str] = field(default_factory=dict)
-    default_mapping: dict[str, int | str] = field(default_factory=dict)
+    environment: dict[str, str] = field(default_factory=dict)
+    default_mapping: dict[str, str] = field(default_factory=dict)
     private_args: dict[str, str] = field(default_factory=dict)
 
     default_env: ClassVar[dict[str, str]] = {

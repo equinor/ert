@@ -15,7 +15,7 @@ from datetime import datetime as dt
 from os import path
 from pathlib import Path
 from subprocess import Popen, run
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any
 
 from psutil import AccessDenied, NoSuchProcess, Process, TimeoutExpired, ZombieProcess
 
@@ -53,7 +53,7 @@ def killed_by_oom(pids: set[int]) -> bool:
             logger.warning(
                 "Could not use dmesg to check for OOM kill, "
                 f"returncode {dmesg_result.returncode} "
-                f"and stderr: {dmesg_result.stderr}"  # type: ignore
+                f"and stderr: {dmesg_result.stderr!r}"
             )
             return False
     except FileNotFoundError:
@@ -115,18 +115,18 @@ class ForwardModelStep:
 
     def _build_arg_list(self) -> list[str]:
         executable = self.step_data.get("executable")
-        combined_arg_list = [executable]
+        combined_arg_list = [executable] if executable is not None else []
         if arg_list := self.step_data.get("argList"):
             combined_arg_list += arg_list
-        return combined_arg_list  # type: ignore
+        return combined_arg_list
 
     def _open_file_handles(
         self,
     ) -> tuple[
         io.TextIOWrapper | None, io.TextIOWrapper | None, io.TextIOWrapper | None
     ]:
-        if self.step_data.get("stdin"):
-            stdin = open(cast(Path, self.step_data.get("stdin")), encoding="utf-8")  # noqa
+        if stdin_file := self.step_data.get("stdin"):
+            stdin = open(stdin_file, encoding="utf-8")  # noqa
         else:
             stdin = None
 
@@ -248,11 +248,9 @@ class ForwardModelStep:
             return exited_message
 
         exited_message = Exited(self, exit_code)
-        if self.step_data.get("error_file") and path.exists(
-            self.step_data["error_file"]
-        ):
+        if (error_file := self.step_data.get("error_file")) and path.exists(error_file):
             return exited_message.with_error(
-                f"Found the error file:{self.step_data['error_file']} - step failed."
+                f"Found the error file:{error_file} - step failed."
             )
 
         if target_file:
@@ -339,18 +337,16 @@ class ForwardModelStep:
         of failed checks.
         """
         errors = []
-        if self.step_data.get("stdin") and not path.exists(self.step_data["stdin"]):
-            errors.append(f"Could not locate stdin file: {self.step_data['stdin']}")
+        if (stdin_file := self.step_data.get("stdin")) and not path.exists(stdin_file):
+            errors.append(f"Could not locate stdin file: {stdin_file}")
 
-        if self.step_data.get("start_file") and not path.exists(
-            cast(Path, self.step_data["start_file"])
+        if (start_file := self.step_data.get("start_file")) and not path.exists(
+            start_file
         ):
-            errors.append(f"Could not locate start_file:{self.step_data['start_file']}")
+            errors.append(f"Could not locate start_file:{start_file}")
 
-        if self.step_data.get("error_file") and path.exists(
-            cast(Path, self.step_data.get("error_file"))
-        ):
-            os.unlink(cast(Path, self.step_data.get("error_file")))
+        if (error_file := self.step_data.get("error_file")) and path.exists(error_file):
+            os.unlink(error_file)
 
         if executable_error := check_executable(self.step_data.get("executable")):
             errors.append(executable_error)
@@ -389,9 +385,11 @@ class ForwardModelStep:
 
     def _assert_arg_list(self) -> list[str]:
         errors: list[str] = []
-        if "arg_types" in self.step_data:  # This seems to be NEVER true(?)
-            arg_types = self.step_data["arg_types"]  # type: ignore
+        arg_types: Any
+        if arg_types := self.step_data.get("arg_types"):  # This seems to be never true
             arg_list = self.step_data.get("argList", [])
+            arg_type: str
+            assert isinstance(arg_types, list)
             for index, arg_type in enumerate(arg_types):
                 if arg_type == "RUNTIME_FILE":
                     file_path = path.join(os.getcwd(), arg_list[index])
