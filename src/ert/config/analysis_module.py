@@ -51,13 +51,13 @@ class ESSettings(BaseModel):
         ),
     ] = None
     localization_num_cpu: Annotated[
-        int,
+        int | None,
         Field(
             ge=1,
             le=psutil.cpu_count(logical=False) or 1,
             title="Adaptive localization number of cpus",
         ),
-    ] = max(1, (psutil.cpu_count(logical=False) or 1) - 1)
+    ] = None
 
     def correlation_threshold(self, ensemble_size: int) -> float:
         """Decides whether to use user-defined or default threshold.
@@ -70,6 +70,12 @@ class ESSettings(BaseModel):
             return 3 / math.sqrt(ensemble_size)
         else:
             return self.localization_correlation_threshold
+
+    def get_num_cpus_localization(self) -> int:
+        if self.localization_num_cpu is None:
+            return max(1, psutil.cpu_count(logical=False) or 1 - 2)
+        else:
+            return self.localization_num_cpu
 
 
 AnalysisModule = ESSettings

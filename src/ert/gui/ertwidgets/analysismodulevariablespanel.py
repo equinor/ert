@@ -106,7 +106,7 @@ class AnalysisModuleVariablesPanel(QWidget):
         self.cpu_spinner.setMaximum(
             cast(int, next(v for v in cpu_metadata.metadata if isinstance(v, Le)).le)
         )
-        self.cpu_spinner.setValue(analysis_module.localization_num_cpu)
+        self.cpu_spinner.setValue(analysis_module.get_num_cpus_localization())
         self.cpu_spinner.setSuffix(" CPUs")
         self.cpu_spinner.setEnabled(local_checkbox.isChecked())
         self.cpu_spinner.setFixedWidth(180)

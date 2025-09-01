@@ -363,7 +363,7 @@ def analysis_ES(
                     cov_YY=cov_YY,
                     progress_callback=adaptive_localization_progress_callback,
                     correlation_callback=correlation_batch_callback,
-                    n_jobs=max(1, (psutil.cpu_count(logical=False) or 1) - 1),
+                    n_jobs=module.get_num_cpus_localization(),
                 )
 
             if cross_correlations:
