@@ -22,6 +22,23 @@ _VARIABLE_ERROR_MESSAGE = (
     " at control level or variable level"
 )
 
+# Words that are used as column names etc internally in everest.
+# These word causes problems if used as variable names
+_RESERVED_WORDS = [
+    "realization",
+    "model_realization",
+    "geo_realization",
+    "batch",
+    "batch_id",
+    "objective",
+    "control",
+    "constraint",
+    "control_name",
+    "constraint_name",
+    "objective_name",
+    "total_objective_value",
+]
+
 
 class InstallDataContext:
     def __init__(
@@ -293,3 +310,9 @@ def validate_forward_model_configs(
         path = args[index + 1]
         message = f"{job = }\t-c/--config = {path}\n\t\t{{error}}"
         parse_forward_model_file(path, schema, message)
+
+
+def not_in_reserved_word_list(str_: str) -> str:
+    if str_ in _RESERVED_WORDS:
+        raise ValueError(f"'{str_}' is a reserved word and cannot be used.")
+    return str_

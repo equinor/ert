@@ -21,6 +21,7 @@ from .sampler_config import SamplerConfig
 from .validation_utils import (
     control_variables_validation,
     no_dots_in_string,
+    not_in_reserved_word_list,
     unique_items,
     valid_range,
 )
@@ -44,9 +45,11 @@ def _all_or_no_index(variables: ControlVariable) -> ControlVariable:
 
 
 class ControlConfig(BaseModel):
-    name: Annotated[str, AfterValidator(no_dots_in_string)] = Field(
-        description="Control name"
-    )
+    name: Annotated[
+        str,
+        AfterValidator(no_dots_in_string),
+        AfterValidator(not_in_reserved_word_list),
+    ] = Field(description="Control name")
     type: Literal["well_control", "generic_control"] = Field(
         description="""
 Only two allowed control types are accepted

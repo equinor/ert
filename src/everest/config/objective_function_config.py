@@ -1,10 +1,12 @@
-from typing import Any
+from typing import Annotated, Any
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import AfterValidator, BaseModel, Field, field_validator, model_validator
+
+from everest.config.validation_utils import not_in_reserved_word_list
 
 
 class ObjectiveFunctionConfig(BaseModel, extra="forbid"):
-    name: str = Field()
+    name: Annotated[str, AfterValidator(not_in_reserved_word_list)] = Field()
     weight: float | None = Field(
         default=None,
         description="""
