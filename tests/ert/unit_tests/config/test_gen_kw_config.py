@@ -761,41 +761,11 @@ def test_validation_derrf_distribution(
             GenKwConfig.from_config_list(config_list)
 
 
-@pytest.mark.parametrize(
-    "transform_fns",
-    [
-        [],
-        [{"name": "dummy", "param_name": "NORMAL", "values": [0, 0.1]}],
-        [
-            {"name": f"dummy_{i}", "param_name": "NORMAL", "values": [0, 0.1]}
-            for i in range(100)
-        ],
-    ],
-)
-def test_that_transfer_function_names_are_reflected_as_parameter_keys(transform_fns):
+def test_genkw_paramgraph_transformfn_node_correspondence():
     config = GenKwConfig(
-        name="a_group",
-        forward_init=False,
-        update=True,
-        transform_function_definitions=[
-            TransformFunctionDefinition(**tf) for tf in transform_fns
-        ],
-    )
-    assert config.parameter_keys == [tf["name"] for tf in transform_fns]
-
-
-@pytest.mark.parametrize("num_tfs", [0, 1, 3, 8])
-def test_genkw_paramgraph_transformfn_node_correspondence(num_tfs):
-    config = GenKwConfig(
-        name="COEFFS",
-        forward_init=True,
-        update=True,
-        transform_function_definitions=[
-            TransformFunctionDefinition(
-                name=f"tf_{i}", param_name="UNIFORM", values=[0, 1]
-            )
-            for i in range(num_tfs)
-        ],
+        name=f"param",
+        group="COEFFS",
+        distribution={"name": "uniform", "min": 1, "max": 2},
     )
 
     graph = config.load_parameter_graph()
@@ -803,4 +773,4 @@ def test_genkw_paramgraph_transformfn_node_correspondence(num_tfs):
     data = nx.node_link_data(graph)
     assert data["links"] == []
 
-    assert data["nodes"] == [{"id": i} for i in range(num_tfs)]
+    assert data["nodes"] == [{"id": 0}]
