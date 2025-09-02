@@ -9,11 +9,13 @@ import sys
 import threading
 import traceback
 from functools import partial
+from pathlib import Path
 from typing import Any
 
+from ert.services import StorageService
 from everest.bin.utils import setup_logging
 from everest.config import EverestConfig, ServerConfig
-from everest.detached import server_is_running, stop_server, wait_for_server_to_stop
+from everest.detached import stop_server, wait_for_server_to_stop
 from everest.util import version_info
 
 logger = logging.getLogger(__name__)
@@ -69,8 +71,15 @@ def _handle_keyboard_interrupt(signal: int, _: Any, after: bool = False) -> None
 
 
 def kill_everest(options: argparse.Namespace) -> None:
-    server_context = ServerConfig.get_server_context(options.config.output_dir)
-    if not server_is_running(*server_context):
+    try:
+        client = StorageService.session(
+            Path(ServerConfig.get_session_dir(options.config.output_dir)), timeout=1
+        )
+        server_context = ServerConfig.get_server_context_from_conn_info(
+            client.conn_info
+        )
+
+    except TimeoutError:
         print("Server is not running.")
         return
 
