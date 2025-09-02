@@ -10,7 +10,7 @@ import numpy as np
 import polars as pl
 from polars.exceptions import InvalidOperationError
 
-from .gen_kw_config import GenKwConfig
+from .gen_kw_config import DataSource, GenKwConfig
 from .parsing import ConfigValidationError, ErrorInfo
 
 if TYPE_CHECKING:
@@ -32,7 +32,7 @@ class DesignMatrix:
             (
                 self.active_realizations,
                 self.design_matrix_df,
-                self.parameter_configuration,
+                self.parameter_configurations,
             ) = self.read_and_validate_design_matrix()
         except (ValueError, AttributeError) as exc:
             raise ConfigValidationError.with_context(
@@ -155,7 +155,7 @@ class DesignMatrix:
 
     def merge_with_existing_parameters(
         self, existing_parameters: list[ParameterConfig]
-    ) -> tuple[list[ParameterConfig], GenKwConfig]:
+    ) -> list[ParameterConfig]:
         """
         This method merges the design matrix parameters with the existing parameters and
         returns the new list of existing parameters, wherein we drop GEN_KW group having
@@ -171,44 +171,29 @@ class DesignMatrix:
             matrix group and any existing GEN_KW group
 
         Returns:
-            tuple[List[ParameterConfig], ParameterConfig]: List of existing parameters
-            and the dedicated design matrix group
+            List[ParameterConfig]: List of existing parameters
         """
 
         new_param_config: list[ParameterConfig] = []
 
-        design_parameter_group = self.parameter_configuration
-        design_keys = [e.name for e in design_parameter_group.transform_functions]
+        design_cfg = {cfg.name: cfg for cfg in self.parameter_configurations}
 
-        design_group_added = False
         for parameter_group in existing_parameters:
             if not isinstance(parameter_group, GenKwConfig):
                 new_param_config += [parameter_group]
                 continue
-            existing_keys = [e.name for e in parameter_group.transform_functions]
-            if set(existing_keys) == set(design_keys):
-                if design_group_added:
-                    raise ConfigValidationError(
-                        "Multiple overlapping groups with design matrix found in "
-                        "existing parameters!\n"
-                        f"{design_parameter_group.name} and {parameter_group.name}"
-                    )
-
-                design_parameter_group.name = parameter_group.name
-                design_group_added = True
-            elif set(design_keys) & set(existing_keys):
-                raise ConfigValidationError(
-                    "Overlapping parameter names found in design matrix!\n"
-                    f"{DESIGN_MATRIX_GROUP}:{design_keys}\n{parameter_group.name}:{existing_keys}"
-                    "\nThey need to match exactly or not at all."
-                )
-            else:
-                new_param_config += [parameter_group]
-        return new_param_config, design_parameter_group
+            if parameter_group.name in design_cfg:
+                parameter_group.input_source = DataSource.DESIGN_MATRIX
+                del design_cfg[parameter_group.name]
+                # set distribution to RAW and set group to DESIGN or keep?
+            new_param_config += [parameter_group]
+        for cfg in design_cfg.values():
+            new_param_config += [cfg]
+        return new_param_config
 
     def read_and_validate_design_matrix(
         self,
-    ) -> tuple[list[bool], pl.DataFrame, GenKwConfig]:
+    ) -> tuple[list[bool], pl.DataFrame, list[GenKwConfig]]:
         # Read the parameter names (first row) as strings to prevent polars from
         # modifying them. This ensures that duplicate or empty column names are
         # preserved exactly as they appear in the Excel sheet. By doing this, we
@@ -308,23 +293,24 @@ class DesignMatrix:
             design_matrix_df = design_matrix_df.with_row_index(name="realization")
 
         design_matrix_df = convert_numeric_string_columns(design_matrix_df)
-        transform_function_definitions = [
-            TransformFunctionDefinition(name=col, param_name="RAW", values=[])
+
+        parameter_configurations: list[GenKwConfig] = [
+            GenKwConfig(
+                name=col,
+                forward_init=False,
+                update=False,
+                group=DESIGN_MATRIX_GROUP,
+                distribution={"name": "RAW"},
+            )
             for col in design_matrix_df.columns
             if col != "realization"
         ]
-        parameter_configuration = GenKwConfig(
-            name=DESIGN_MATRIX_GROUP,
-            forward_init=False,
-            transform_function_definitions=transform_function_definitions,
-            update=False,
-        )
 
         reals = design_matrix_df.get_column("realization").to_list()
         return (
             [x in reals for x in range(max(reals) + 1)],
             design_matrix_df,
-            parameter_configuration,
+            parameter_configurations,
         )
 
     @staticmethod
