@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from collections.abc import Callable, Iterator
+from enum import StrEnum
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Literal, Self, cast, overload
 
@@ -60,6 +61,11 @@ def _get_abs_path(file: str | None) -> str | None:
     return file
 
 
+class DataSource(StrEnum):
+    DESIGN_MATRIX = "design_matrix"
+    SAMPLED = "sampled"
+
+
 class GenKwConfig(ParameterConfig):
     type: Literal["gen_kw"] = "gen_kw"
     distribution: Annotated[
@@ -79,6 +85,7 @@ class GenKwConfig(ParameterConfig):
     forward_init: bool = False
     update: bool = True
     group: str = "DEFAULT"
+    input_source: DataSource = DataSource.SAMPLED
 
     @property
     def parameter_list(self) -> dict[str, float]:
