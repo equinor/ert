@@ -233,7 +233,7 @@ def test_ensemble_creation(cached_example):
     cached_example("math_func/config_advanced.yml")
     with open_storage("everest_output/simulation_results", "r") as storage:
         ensembles = storage.ensembles
-        assert sorted(ensemble.iteration for ensemble in ensembles) == sorted(range(6))
+        assert sorted(ensemble.iteration for ensemble in ensembles) == sorted(range(5))
 
 
 @pytest.mark.integration_test

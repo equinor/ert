@@ -70,8 +70,8 @@ install_templates: []
 
 optimization:
   algorithm: optpp_q_newton
-  convergence_tolerance: 0.005
-  perturbation_num: 7
+  perturbation_num: 5
+  max_batch_num: 5
   speculative: true
 
 environment:

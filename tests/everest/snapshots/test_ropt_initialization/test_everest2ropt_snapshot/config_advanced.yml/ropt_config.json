@@ -7,7 +7,7 @@
   "gradient": {
     "evaluation_policy": "speculative",
     "merge_realizations": false,
-    "number_of_perturbations": 7
+    "number_of_perturbations": 5
   },
   "linear_constraints": {
     "coefficients": [
@@ -58,12 +58,12 @@
     ]
   },
   "optimizer": {
+    "max_batches": 5,
     "method": "optpp_q_newton",
     "output_dir": "not_relevant",
     "parallel": true,
     "stderr": "optimizer.stderr",
-    "stdout": "optimizer.stdout",
-    "tolerance": 0.005
+    "stdout": "optimizer.stdout"
   },
   "realizations": {
     "weights": [
