@@ -15,7 +15,6 @@ from ert.config import (
     ObservationSettings,
     SummaryConfig,
 )
-from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.sample_prior import sample_prior
 from ert.storage import open_storage
 
@@ -36,7 +35,7 @@ def _add_noise_to_df_values(df: pl.DataFrame):
 
 @dataclass
 class ExperimentInfo:
-    gen_kw_config: GenKwConfig
+    gen_kw_configs: list[GenKwConfig]
     gen_data_config: GenDataConfig
     summary_config: SummaryConfig
     summary_observations: pl.DataFrame
@@ -55,19 +54,27 @@ def create_experiment_args(
     num_summary_timesteps: int,
     num_summary_obs: int,
 ) -> ExperimentInfo:
-    gen_kw_config = GenKwConfig(
-        name="all_my_parameters_live_here",
-        forward_init=False,
-        update=True,
-        transform_function_definitions=[
-            TransformFunctionDefinition(
-                name=f"param_{i}",
-                param_name="NORMAL",
-                values=[10, 0.1],
-            )
-            for i in range(num_parameters)
-        ],
-    )
+    # gen_kw_config = GenKwConfig(
+    #     name="all_my_parameters_live_here",
+    #     forward_init=False,
+    #     update=True,
+    #     transform_function_definitions=[
+    #         TransformFunctionDefinition(
+    #             name=f"param_{i}",
+    #             param_name="NORMAL",
+    #             values=[10, 0.1],
+    #         )
+    #         for i in range(num_parameters)
+    #     ],
+    # )
+    gen_kw_configs = [
+        GenKwConfig(
+            name="param_{i}",
+            group="all_my_parameters_live_here",
+            distribution={"name": "normal", "10": 0, "std": 0.1},
+        )
+        for i in range(num_parameters)
+    ]
     gen_data_config = GenDataConfig(
         name="gen_data",
         report_steps_list=[list(range(num_gen_data_report_steps))] * num_gen_data_keys,
@@ -186,7 +193,7 @@ def create_experiment_args(
     )
 
     return ExperimentInfo(
-        gen_kw_config=gen_kw_config,
+        gen_kw_configs=gen_kw_configs,
         gen_data_config=gen_data_config,
         summary_config=summary_config,
         summary_observations=summary_observations,
@@ -383,7 +390,7 @@ def setup_benchmark(tmp_path, request):
     with open_storage(tmp_path / "storage", mode="w") as storage:
         experiment = storage.create_experiment(
             responses=[info.gen_data_config, info.summary_config],
-            parameters=[info.gen_kw_config],
+            parameters=info.gen_kw_configs,
             observations={
                 "gen_data": info.gen_data_observations,
                 "summary": info.summary_observations,
@@ -460,7 +467,7 @@ def setup_es_benchmark(tmp_path, request):
     with open_storage(tmp_path / "storage", mode="w") as storage:
         experiment = storage.create_experiment(
             responses=[info.gen_data_config, info.summary_config],
-            parameters=[info.gen_kw_config],
+            parameters=info.gen_kw_configs,
             observations={
                 "gen_data": info.gen_data_observations,
                 "summary": info.summary_observations,
@@ -483,7 +490,10 @@ def setup_es_benchmark(tmp_path, request):
             )
 
         sample_prior(
-            prior, range(config.num_realizations), 42, [info.gen_kw_config.name]
+            prior,
+            range(config.num_realizations),
+            42,
+            [c.name for c in info.gen_kw_configs],
         )
         posterior = experiment.create_ensemble(
             ensemble_size=config.num_realizations,
