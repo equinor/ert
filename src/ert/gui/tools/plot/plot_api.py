@@ -41,7 +41,6 @@ class PlotApiKeyDefinition(NamedTuple):
     observations: bool
     dimensionality: int
     metadata: dict[Any, Any]
-    log_scale: bool
     filter_on: dict[Any, Any] | None = None
     parameter_metadata: ParameterMetadata | None = None
     response_metadata: ResponseMetadata | None = None
@@ -127,9 +126,6 @@ class PlotApi:
                             observations=False,
                             dimensionality=metadata["dimensionality"],
                             metadata=metadata["userdata"],
-                            log_scale=(metadata["transformation"] or "None")
-                            .lower()
-                            .startswith("log"),
                             parameter_metadata=ParameterMetadata(**metadata),
                         )
                         all_params[param_key] = all_keys[param_key]
@@ -177,7 +173,6 @@ class PlotApi:
                                                 "data_origin": response_type,
                                             },
                                             filter_on={filter_key: v},
-                                            log_scale=False,
                                             response_metadata=ResponseMetadata(
                                                 **metadata
                                             ),
@@ -191,7 +186,6 @@ class PlotApi:
                                     observations=has_obs,
                                     dimensionality=2,
                                     metadata={"data_origin": response_type},
-                                    log_scale=False,
                                     response_metadata=ResponseMetadata(**metadata),
                                 )
                             )

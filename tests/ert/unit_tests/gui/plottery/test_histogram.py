@@ -13,25 +13,15 @@ from ert.gui.tools.plot.plottery.plots import HistogramPlot
 @pytest.fixture(
     params=[
         pytest.param(
-            (True, [EnsembleObject("ensemble_1", "id", False, "experiment_1")]),
-            id="log_scale",
+            ([EnsembleObject("ensemble_1", "id", False, "experiment_1")],),
         ),
-        pytest.param(
-            (False, [EnsembleObject("ensemble_1", "id", False, "experiment_1")]),
-            id="no_log_scale",
-        ),
-        pytest.param((False, []), id="no_ensembles"),
+        pytest.param(([],), id="no_ensembles"),
     ]
 )
 def plot_context(request):
     context = Mock(spec=PlotContext)
-    context.log_scale = request.param[0]
-    context.ensembles.return_value = request.param[1]
-    title = (
-        "log_scale"
-        if context.log_scale
-        else "" + f"num_ensembles={len(request.param[1])}"
-    )
+    context.ensembles.return_value = request.param[0]
+    title = "" + f"num_ensembles={len(request.param[0])}"
     context.plotConfig.return_value = PlotConfig(title=title)
     return context
 
@@ -50,11 +40,7 @@ def ensemble_to_data_map(request, plot_context):
     if len(plot_context.ensembles()) == 0 and not request.param.empty:
         # Only test with empty ensemble list once
         pytest.skip()
-    if (
-        not request.param.empty
-        and request.param[0].dtype == "object"
-        and plot_context.log_scale
-    ):
+    if not request.param.empty and request.param[0].dtype == "object":
         # categorial and logscale is nonsensical
         pytest.skip()
     return dict.fromkeys(plot_context.ensembles(), request.param)
@@ -77,7 +63,6 @@ def test_histogram_plot_for_constant_distribution(monkeypatch):
     # test that the histogram plot is called with the correct min and max values
     # when all the parameter values are the same
     context = Mock(spec=PlotContext)
-    context.log_scale = False
     context.ensembles.return_value = [
         EnsembleObject("ensemble_1", "id", False, "experiment_1")
     ]
@@ -102,7 +87,6 @@ def test_histogram_plot_for_constant_distribution(monkeypatch):
         {},
     )
     mock_plot_histogram.assert_called_once_with(
-        ANY,
         ANY,
         ANY,
         ANY,

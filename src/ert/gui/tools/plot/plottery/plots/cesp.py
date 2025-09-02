@@ -64,9 +64,6 @@ def plotCrossEnsembleStatistics(
 
     plot_context.y_axis = plot_context.VALUE_AXIS
 
-    if plot_context.log_scale:
-        axes.set_yscale("log")
-
     ensemble_list = plot_context.ensembles()
     ensemble_indexes = []
     ccs: CcsData = {

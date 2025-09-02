@@ -50,7 +50,6 @@ def test_key_def_structure(api):
         "key": "FOPR",
         "metadata": {"data_origin": "summary"},
         "observations": True,
-        "log_scale": False,
         "parameter_metadata": None,
         "response_metadata": ResponseMetadata(
             response_type="summary",
@@ -68,7 +67,6 @@ def test_key_def_structure(api):
         "key": "BPR:1,3,8",
         "metadata": {"data_origin": "summary"},
         "observations": False,
-        "log_scale": False,
         "parameter_metadata": None,
         "response_metadata": ResponseMetadata(
             response_type="summary",
@@ -88,7 +86,6 @@ def test_key_def_structure(api):
         "key": "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",
         "metadata": {"data_origin": "GEN_KW"},
         "observations": False,
-        "log_scale": False,
         "parameter_metadata": ParameterMetadata(
             key="SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",
             transformation="NORMAL",

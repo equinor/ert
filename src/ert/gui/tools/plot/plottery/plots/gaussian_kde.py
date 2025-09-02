@@ -46,9 +46,6 @@ def plotGaussianKDE(
     plot_context.x_axis = plot_context.VALUE_AXIS
     plot_context.y_axis = plot_context.DENSITY_AXIS
 
-    if plot_context.log_scale:
-        axes.set_xscale("log")
-
     for ensemble, data in ensemble_to_data_map.items():
         if data.empty:
             continue

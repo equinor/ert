@@ -283,8 +283,6 @@ class PlotWindow(QMainWindow):
                     handle_exception(e)
                     plot_context.history_data = None
 
-            plot_context.log_scale = key_def.log_scale
-
             for data in ensemble_to_data_map.values():
                 data = data.T
 

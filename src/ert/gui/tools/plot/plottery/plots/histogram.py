@@ -71,8 +71,6 @@ def plotHistogram(
         y_label = "Count"
     config.setYLabel(y_label)
 
-    use_log_scale = plot_context.log_scale
-
     data = {}
     minimum = None
     maximum = None
@@ -118,9 +116,6 @@ def plotHistogram(
         axes[ensemble.name].set_xlabel(x_label)
         axes[ensemble.name].set_ylabel(y_label)
 
-        if use_log_scale:
-            axes[ensemble.name].set_xscale("log")
-
         if ensemble.name in data and not data[ensemble.name].empty:
             if categorical:
                 config.addLegendItem(
@@ -143,7 +138,6 @@ def plotHistogram(
                         config.histogramStyle(),
                         data[ensemble.name],
                         bin_count,
-                        use_log_scale,
                         minimum,
                         maximum,
                     ),
@@ -193,16 +187,12 @@ def _plotHistogram(
     style: PlotStyle,
     data: pd.DataFrame,
     bin_count: int,
-    use_log_scale: float = False,
     minimum: float | None = None,
     maximum: float | None = None,
 ) -> Rectangle:
     bins: Sequence[float] | int
     if minimum is not None and maximum is not None:
-        if use_log_scale:
-            bins = _histogramLogBins(bin_count, minimum, maximum)  # type: ignore
-        else:
-            bins = np.linspace(minimum, maximum, bin_count)  # type: ignore
+        bins = np.linspace(minimum, maximum, bin_count)  # type: ignore
 
         if minimum == maximum:
             minimum -= 0.5
