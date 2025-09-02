@@ -113,7 +113,7 @@ def test_parse(file_contents):
             "FWPR",
             {
                 "ERROR": "0.1",
-                "SEGMENT": ("SEG", {"START": "1", "STOP": "0", "ERROR": "0.25"}),
+                ("SEGMENT", "SEG"): {"START": "1", "STOP": "0", "ERROR": "0.25"},
             },
         ),
     ]
@@ -506,3 +506,35 @@ def test_unexpected_character_handling():
     assert err.end_line == 4
     assert err.column == 28
     assert err.end_column == 29
+
+
+def test_that_multiple_segments_are_collected():
+    observations = parse_content(
+        """
+  HISTORY_OBSERVATION GWIR:FIELD
+  {
+     ERROR       = 0.20;
+     ERROR_MODE  = RELMIN;
+     ERROR_MIN   = 100;
+
+     SEGMENT FIRST_YEAR
+     {
+        START = 0;
+        STOP  = 10;
+        ERROR = 0.50;
+        ERROR_MODE = REL;
+     };
+
+     SEGMENT SECOND_YEAR
+     {
+        START      = 11;
+        STOP       = 20;
+        ERROR      = 1000;
+        ERROR_MODE = ABS;
+     };
+  };
+            """,
+        "",
+    )
+
+    assert len(observations[0][1].segment) == 2
