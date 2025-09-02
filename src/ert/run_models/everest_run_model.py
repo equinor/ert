@@ -270,6 +270,7 @@ class EverestRunModel(RunModel):
             self.objective_functions,
             self.output_constraints,
             self.model,
+            self.optimization.auto_scale,
         )
 
     @classmethod
@@ -653,11 +654,17 @@ class EverestRunModel(RunModel):
             # defined as the range over the active control vectors:
             sim_ids: NDArray[np.int32] = np.arange(num_simulations, dtype=np.int32)
 
-            # Calculate auto-scales if necessary.
-            self._calculate_objective_auto_scales(
-                objectives, realization_indices, perturbation_indices
-            )
-            if constraints is not None:
+            # Calculate auto-scales if necessary. Skip this if there are any
+            # objectives or constraints where all realizations failed. In that
+            # case the auto-scale calculations will fail, and the optimization
+            # will terminate afterwards in any case.
+            if not np.any(np.all(np.isnan(objectives), axis=0)):
+                self._calculate_objective_auto_scales(
+                    objectives, realization_indices, perturbation_indices
+                )
+            if constraints is not None and not np.any(
+                np.all(np.isnan(constraints), axis=0)
+            ):
                 self._calculate_constraint_auto_scales(
                     constraints, realization_indices, perturbation_indices
                 )

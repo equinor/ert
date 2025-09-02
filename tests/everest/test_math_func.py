@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 
-import numpy as np
 import pytest
 import yaml
 
@@ -32,9 +31,8 @@ def test_math_func_multiobj(cached_example):
     assert z == pytest.approx(0.5, abs=0.05)
 
     # The overall optimum is a weighted average of the objectives
-    assert result.total_objective == pytest.approx(
-        (-0.5 * (2.0 / 3.0) * 1.5) + (-4.5 * (1.0 / 3.0) * 1.0), abs=0.01
-    )
+    expected = -(0.5 * 2 * 0.5**2 + 0.25 * 2 * 1.5**2) / 0.75
+    assert result.total_objective == pytest.approx(expected, abs=0.01)
 
 
 @pytest.mark.xdist_group("math_func/config_advanced.yml")
@@ -170,23 +168,25 @@ def test_math_func_auto_scaled_objectives(copy_math_func_test_data_to_tmp):
     config_dict = config.model_dump(exclude_none=True)
 
     config_dict["simulator"] = {"queue_system": {"name": "local", "max_running": 2}}
+    del config_dict["objective_functions"][0]["scale"]
 
-    # Normalize only distance_p:
-    config_dict["objective_functions"][0]["auto_scale"] = True
-    config_dict["objective_functions"][0]["scale"] = 1.0
-    config_dict["optimization"]["max_batch_num"] = 1
+    config_dict["environment"]["output_folder"] = "output_no_auto_scale"
     config = EverestConfig.model_validate(config_dict)
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
+    optim1 = get_optimal_result(config.optimization_output_dir).total_objective
 
-    optim = get_optimal_result(config.optimization_output_dir).total_objective
+    config_dict["environment"]["output_folder"] = "output_auto_scale"
+    config_dict["optimization"]["auto_scale"] = True
+    config = EverestConfig.model_validate(config_dict)
+    run_model = EverestRunModel.create(config)
+    evaluator_server_config = EvaluatorServerConfig()
+    run_model.run_experiment(evaluator_server_config)
+    optim2 = get_optimal_result(config.optimization_output_dir).total_objective
 
-    expected_p = 1.0  # normalized
-    expected_q = 4.75  # not normalized
-    total = -(expected_p * 0.5 + expected_q * 0.25) / (0.5 + 0.25)
-
-    assert total == optim
+    assert optim1 != optim2
+    assert optim1 == pytest.approx(optim2, abs=0.001)
 
 
 @pytest.mark.integration_test
@@ -195,36 +195,25 @@ def test_math_func_auto_scaled_constraints(copy_math_func_test_data_to_tmp):
     config_dict = config.model_dump(exclude_none=True)
 
     config_dict["simulator"] = {"queue_system": {"name": "local", "max_running": 2}}
+    del config_dict["output_constraints"][0]["scale"]
 
-    # control number of batches, no need for full convergence:
-    config_dict["optimization"]["convergence_tolerance"] = 1e-10
-    config_dict["optimization"]["max_batch_num"] = 1
+    config_dict["environment"]["output_folder"] = "output_no_auto_scale"
+    config = EverestConfig.model_validate(config_dict)
+    run_model = EverestRunModel.create(config)
+    evaluator_server_config = EvaluatorServerConfig()
+    run_model.run_experiment(evaluator_server_config)
+    optim1 = get_optimal_result(config.optimization_output_dir).total_objective
 
-    # Run with auto_scaling:
     config_dict["environment"]["output_folder"] = "output_auto_scale"
-    config_dict["output_constraints"][0]["auto_scale"] = True
-    config_dict["output_constraints"][0]["scale"] = 1.0
+    config_dict["optimization"]["auto_scale"] = True
     config = EverestConfig.model_validate(config_dict)
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
-    result1 = get_optimal_result(config.optimization_output_dir)
+    optim2 = get_optimal_result(config.optimization_output_dir).total_objective
 
-    # Run the equivalent without auto-scaling:
-    config_dict["environment"]["output_folder"] = "output_manual_scale"
-    config_dict["output_constraints"][0]["auto_scale"] = False
-    config_dict["output_constraints"][0]["scale"] = 0.25  # x(0)
-    config = EverestConfig.model_validate(config_dict)
-    run_model = EverestRunModel.create(config)
-    evaluator_server_config = EvaluatorServerConfig()
-    run_model.run_experiment(evaluator_server_config)
-    result2 = get_optimal_result(config.optimization_output_dir)
-
-    assert result1.total_objective == pytest.approx(result2.total_objective)
-    assert np.allclose(
-        np.fromiter(result1.controls.values(), dtype=np.float64),
-        np.fromiter(result2.controls.values(), dtype=np.float64),
-    )
+    assert optim1 != optim2
+    assert optim1 == pytest.approx(optim2, abs=0.01)
 
 
 @pytest.mark.xdist_group("math_func/config_advanced.yml")

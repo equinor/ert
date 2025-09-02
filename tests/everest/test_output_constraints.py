@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from ert.run_models.everest_run_model import EverestRunModel
-from everest.config import EverestConfig, OutputConstraintConfig
+from everest.config import EverestConfig, OptimizationConfig, OutputConstraintConfig
 from everest.optimizer.everest2ropt import everest2ropt
 
 
@@ -78,6 +78,25 @@ def test_output_constraint_config(config, error):
     with pytest.raises(ValueError, match=error):
         EverestConfig(
             output_constraints=config,
+        )
+
+
+def test_that_auto_scale_and_constraints_scale_are_mutually_exclusive(tmp_path):
+    with pytest.raises(
+        ValueError,
+        match=(
+            "The auto_scale option in the optimization section and the scale "
+            "options in the output_constraints section are mutually exclusive"
+        ),
+    ):
+        EverestConfig.with_defaults(
+            optimization=OptimizationConfig(auto_scale=True),
+            output_constraints=[
+                OutputConstraintConfig(
+                    name=f"oil_prod_rate_{i:03d}", upper_bound=5000.0, scale=7500.0
+                )
+                for i in range(2)
+            ],
         )
 
 

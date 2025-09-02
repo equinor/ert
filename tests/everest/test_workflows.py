@@ -77,7 +77,7 @@ if __name__ == "__main__":
         ):
             config = EverestConfig.model_validate(deprecated_config_dict)
     else:
-        config = EverestConfig(**min_config)
+        config = EverestConfig.model_validate(min_config)
 
     run_model = EverestRunModel.create(config)
     evaluator_server_config = EvaluatorServerConfig()

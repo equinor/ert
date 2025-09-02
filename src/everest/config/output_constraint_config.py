@@ -17,13 +17,6 @@ scale (scale).
 
 """,
     )
-    auto_scale: bool = Field(
-        default=False,
-        description="""If set to true, Everest will automatically
-determine the scaling factor from the constraint value in batch 0.
-
-If scale is also set, the automatic value is multiplied by its value.""",
-    )
     lower_bound: float = Field(
         default=-np.inf,
         description="""Defines the lower bound
@@ -54,7 +47,6 @@ to control its importance relative to the (singular) objective and the controls.
 Both the upper_bound and the function evaluation value will be scaled with this number.
 That means that if, e.g., the upper_bound is 0.5 and the scaling is 10, then the
 function evaluation value will be divided by 10 and bounded from above by 0.05.
-
 """,
     )
 
@@ -67,4 +59,14 @@ function evaluation value will be divided by 10 and bounded from above by 0.05.
             ("target" in values, "lower_bound" in values, "upper_bound" in values)
         ):
             raise ValueError("Must provide target or lower_bound/upper_bound")
+        return values
+
+    @model_validator(mode="before")
+    @classmethod
+    def deprecate_auto_scale(cls, values: dict[str, Any]) -> dict[str, Any]:
+        if "auto_scale" in values:
+            raise ValueError(
+                "auto_scale is deprecated and has been replaced with "
+                "auto_scale in the optimization section"
+            )
         return values
