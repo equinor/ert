@@ -21,6 +21,7 @@ from ert.config.queue_config import (
     activate_script,
 )
 from ert.scheduler.event import FinishedEvent
+from ert.services import StorageService
 from everest.config import EverestConfig, InstallJobConfig
 from everest.config.forward_model_config import ForwardModelStepConfig
 from everest.config.server_config import ServerConfig
@@ -59,37 +60,35 @@ async def test_https_requests(change_to_tmpdir):
     makedirs_if_needed(everest_config.output_dir, roll_if_exists=True)
     await start_server(everest_config, logging_level=logging.INFO)
 
-    wait_for_server(everest_config.output_dir, 240)
-
+    session = StorageService.session(
+        Path(ServerConfig.get_session_dir(everest_config.output_dir)), 10
+    )
+    wait_for_server(session, 240)
     server_status = everserver_status(status_path)
     assert server_status["status"] in {
         ExperimentState.running,
         ExperimentState.pending,
     }
 
-    url, cert, auth = ServerConfig.get_server_context(everest_config.output_dir)
+    url, cert, auth = ServerConfig.get_server_context_from_client(session)
     result = requests.get(url, verify=cert, auth=auth, proxies=PROXY)  # noqa: ASYNC210
     assert result.status_code == 200  # Request has succeeded
 
     # Test http request fail
-    url = url.replace("https", "http")
+    http_url = url.replace("https", "http")
     with pytest.raises(Exception):  # noqa B017
-        response = requests.get(url, verify=cert, auth=auth, proxies=PROXY)  # noqa: ASYNC210
+        response = requests.get(http_url, verify=cert, auth=auth, proxies=PROXY)  # noqa: ASYNC210
         response.raise_for_status()
 
     # Test request with wrong password fails
-    url, cert, _ = ServerConfig.get_server_context(everest_config.output_dir)
-    usr = "admin"
-    password = "wrong_password"
-    with pytest.raises(Exception):  # noqa B017
-        result = requests.get(url, verify=cert, auth=(usr, password), proxies=PROXY)  # noqa: ASYNC210
-        result.raise_for_status()
+    auth = ("admin", "wrong_password")
+    result = requests.get(url, verify=cert, auth=auth, proxies=PROXY)  # noqa: ASYNC210
+
+    assert result.status_code == 401  # Unauthorized
 
     # Test stopping server
-    assert server_is_running(
-        *ServerConfig.get_server_context(everest_config.output_dir)
-    )
-    server_context = ServerConfig.get_server_context(everest_config.output_dir)
+    assert server_is_running(*ServerConfig.get_server_context_from_client(session))
+    server_context = ServerConfig.get_server_context_from_client(session)
     if stop_server(server_context):
         wait_for_server_to_stop(server_context, 240)
         server_status = everserver_status(status_path)
@@ -146,12 +145,11 @@ def test_server_status(change_to_tmpdir):
 
 @patch("everest.detached.server_is_running", return_value=False)
 def test_wait_for_server(_):
-    config = EverestConfig.with_defaults()
-
+    client = MagicMock()
     with pytest.raises(
         RuntimeError, match=r"Failed to get reply from server within .* seconds"
     ):
-        wait_for_server(config.output_dir, timeout=0.01)
+        wait_for_server(client, timeout=0.01)
 
 
 @pytest.mark.usefixtures("no_plugins")

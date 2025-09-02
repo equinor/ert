@@ -92,7 +92,13 @@ class ServerConfig(BaseModel):
         conn_info = client.conn_info
         url = conn_info.base_url + "/experiment_server"
         cert_file = conn_info.cert
-        auth = ("username", conn_info.auth_token)
+        auth_token = conn_info.auth_token
+        if auth_token is None:
+            raise RuntimeError("No authentication token found in storage session")
+        auth = ("username", auth_token)
+        if not isinstance(cert_file, str):
+            raise RuntimeError("Invalid certificate file in storage session")
+
         return url, cert_file, auth
 
     @staticmethod
