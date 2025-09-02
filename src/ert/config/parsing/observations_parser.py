@@ -221,8 +221,7 @@ class TreeToObservations(
 
 
 def _validate_conf_content(
-    directory: str,
-    inp: Sequence[SimpleHistoryDeclaration | ObservationDeclaration],
+    directory: str, inp: Sequence[SimpleHistoryDeclaration | ObservationDeclaration]
 ) -> ConfContent:
     result: list[Declaration] = []
     error_list: list[ErrorInfo] = []
@@ -294,16 +293,17 @@ def _validate_history_values(
     error_min = 0.1
     segment = []
     for key, value in inp.items():
-        if key == "ERROR":
-            error = validate_positive_float(value, key)
-        elif key == "ERROR_MIN":
-            error_min = validate_positive_float(value, key)
-        elif key == "ERROR_MODE":
-            error_mode = validate_error_mode(value)
-        elif key == "SEGMENT":
-            segment.append((value[0], _validate_segment_dict(key, value[1])))
-        else:
-            raise _unknown_key_error(key, name_token)
+        match key:
+            case "ERROR":
+                error = validate_positive_float(value, key)
+            case "ERROR_MIN":
+                error_min = validate_positive_float(value, key)
+            case "ERROR_MODE":
+                error_mode = validate_error_mode(value)
+            case "SEGMENT":
+                segment.append((value[0], _validate_segment_dict(key, value[1])))
+            case _:
+                raise _unknown_key_error(str(key), name_token)
 
     return HistoryValues(
         key=name_token,
@@ -323,22 +323,25 @@ def _validate_summary_values(
     date_dict: DateValues = DateValues()
     float_values: dict[str, float] = {"ERROR_MIN": 0.1}
     for key, value in inp.items():
-        if key == "RESTART":
-            date_dict.restart = validate_positive_int(value, key)
-        elif key in {"ERROR", "ERROR_MIN"}:
-            float_values[str(key)] = validate_positive_float(value, key)
-        elif key in {"DAYS", "HOURS"}:
-            setattr(date_dict, str(key).lower(), validate_positive_float(value, key))
-        elif key == "VALUE":
-            float_values[str(key)] = validate_float(value, key)
-        elif key == "ERROR_MODE":
-            error_mode = validate_error_mode(value)
-        elif key == "KEY":
-            summary_key = value
-        elif key == "DATE":
-            date_dict.date = value
-        else:
-            raise _unknown_key_error(key, name_token)
+        match key:
+            case "RESTART":
+                date_dict.restart = validate_positive_int(value, key)
+            case "ERROR" | "ERROR_MIN":
+                float_values[str(key)] = validate_positive_float(value, key)
+            case "DAYS" | "HOURS":
+                setattr(
+                    date_dict, str(key).lower(), validate_positive_float(value, key)
+                )
+            case "VALUE":
+                float_values[str(key)] = validate_float(value, key)
+            case "ERROR_MODE":
+                error_mode = validate_error_mode(value)
+            case "KEY":
+                summary_key = value
+            case "DATE":
+                date_dict.date = value
+            case _:
+                raise _unknown_key_error(str(key), name_token)
     if "VALUE" not in float_values:
         raise _missing_value_error(name_token, "VALUE")
     if summary_key is None:
@@ -356,27 +359,26 @@ def _validate_summary_values(
     )
 
 
-def _validate_segment_dict(
-    name_token: FileContextToken, inp: ObservationBody
-) -> Segment:
+def _validate_segment_dict(name_token: str, inp: ObservationBody) -> Segment:
     start = None
     stop = None
     error_mode: ErrorModes = "RELMIN"
     error = 0.1
     error_min = 0.1
     for key, value in inp.items():
-        if key == "START":
-            start = validate_int(value, key)
-        elif key == "STOP":
-            stop = validate_int(value, key)
-        elif key == "ERROR":
-            error = validate_positive_float(value, key)
-        elif key == "ERROR_MIN":
-            error_min = validate_positive_float(value, key)
-        elif key == "ERROR_MODE":
-            error_mode = validate_error_mode(value)
-        else:
-            raise _unknown_key_error(key, name_token)
+        match key:
+            case "START":
+                start = validate_int(value, key)
+            case "STOP":
+                stop = validate_int(value, key)
+            case "ERROR":
+                error = validate_positive_float(value, key)
+            case "ERROR_MIN":
+                error_min = validate_positive_float(value, key)
+            case "ERROR_MODE":
+                error_mode = validate_error_mode(value)
+            case _:
+                raise _unknown_key_error(key, name_token)
 
     if start is None:
         raise _missing_value_error(name_token, "START")
@@ -401,28 +403,31 @@ def _validate_gen_obs_values(
 
     output: GenObsValues = GenObsValues(data=data)
     for key, value in inp.items():
-        if key == "RESTART":
-            output.restart = validate_positive_int(value, key)
-        elif key == "VALUE":
-            output.value = validate_float(value, key)
-        elif key in {"ERROR", "DAYS", "HOURS"}:
-            setattr(output, str(key).lower(), validate_positive_float(value, key))
-        elif key in {"DATE", "INDEX_LIST"}:
-            setattr(output, str(key).lower(), value)
-        elif key in {"OBS_FILE", "INDEX_FILE"}:
-            filename = value
-            if not os.path.isabs(filename):
-                filename = os.path.join(directory, filename)
-            if not os.path.exists(filename):
-                raise ObservationConfigError.with_context(
-                    f"The following keywords did not resolve to a valid path:\n {key}",
-                    value,
-                )
-            setattr(output, str(key).lower(), filename)
-        elif key == "DATA":
-            output.data = value
-        else:
-            raise _unknown_key_error(key, name_token)
+        match key:
+            case "RESTART":
+                output.restart = validate_positive_int(value, key)
+            case "VALUE":
+                output.value = validate_float(value, key)
+            case "ERROR" | "DAYS" | "HOURS":
+                setattr(output, str(key).lower(), validate_positive_float(value, key))
+            case "DATE" | "INDEX_LIST":
+                setattr(output, str(key).lower(), value)
+            case "OBS_FILE" | "INDEX_FILE":
+                assert not isinstance(key, tuple)
+                filename = value
+                if not os.path.isabs(filename):
+                    filename = os.path.join(directory, filename)
+                if not os.path.exists(filename):
+                    raise ObservationConfigError.with_context(
+                        "The following keywords did not"
+                        f" resolve to a valid path:\n {key}",
+                        value,
+                    )
+                setattr(output, str(key).lower(), filename)
+            case "DATA":
+                output.data = value
+            case _:
+                raise _unknown_key_error(str(key), name_token)
     if output.value is not None and output.error is None:
         raise ObservationConfigError.with_context(
             f"For GENERAL_OBSERVATION {name_token}, with"
@@ -448,21 +453,21 @@ def validate_error_mode(inp: FileContextToken) -> ErrorModes:
     )
 
 
-def validate_float(val: str, key: FileContextToken) -> float:
+def validate_float(val: str, key: str) -> float:
     try:
         return float(val)
     except ValueError as err:
         raise _conversion_error(key, val, "float") from err
 
 
-def validate_int(val: str, key: FileContextToken) -> int:
+def validate_int(val: str, key: str) -> int:
     try:
         return int(val)
     except ValueError as err:
         raise _conversion_error(key, val, "int") from err
 
 
-def validate_positive_float(val: str, key: FileContextToken) -> float:
+def validate_positive_float(val: str, key: str) -> float:
     v = validate_float(val, key)
     if v < 0:
         raise ObservationConfigError.with_context(
@@ -473,7 +478,7 @@ def validate_positive_float(val: str, key: FileContextToken) -> float:
     return v
 
 
-def validate_positive_int(val: str, key: FileContextToken) -> int:
+def validate_positive_int(val: str, key: str) -> int:
     try:
         v = int(val)
     except ValueError as err:
@@ -487,24 +492,20 @@ def validate_positive_int(val: str, key: FileContextToken) -> int:
     return v
 
 
-def _missing_value_error(
-    name_token: FileContextToken, value_key: str
-) -> ObservationConfigError:
+def _missing_value_error(name_token: str, value_key: str) -> ObservationConfigError:
     return ObservationConfigError.with_context(
         f'Missing item "{value_key}" in {name_token}', name_token
     )
 
 
-def _conversion_error(
-    token: FileContextToken, value: Any, type_name: str
-) -> ObservationConfigError:
+def _conversion_error(token: str, value: Any, type_name: str) -> ObservationConfigError:
     return ObservationConfigError.with_context(
         f'Could not convert {value} to {type_name}. Failed to validate "{value}"',
         token,
     )
 
 
-def _unknown_key_error(key: FileContextToken, name: str) -> ObservationConfigError:
+def _unknown_key_error(key: str, name: str) -> ObservationConfigError:
     raise ObservationConfigError.with_context(f"Unknown {key} in {name}", key)
 
 
