@@ -276,9 +276,10 @@ class ForwardModelStep:
             return exited_message.with_error(
                 f"Forward model step {self.step_data.get('name')} "
                 f"was killed due to out-of-memory on {socket.gethostname()}. "
-                "Max memory usage recorded by Ert for the "
+                "Max memory usage recorded by Ert/Everest for the "
                 f"realization was {max_memory_usage // 1024 // 1024} MB. "
-                "Please add REALIZATION_MEMORY to your ert config together "
+                "Please add REALIZATION_MEMORY to your ert config or "
+                "realization_memory to your everest config together "
                 "with a suitable memory amount to avoid this."
             )
         return exited_message.with_error(
