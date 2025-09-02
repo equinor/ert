@@ -266,6 +266,7 @@ def observations(draw, ensemble_keys, summary_keys, std_cutoff, start_date):
                             ),
                         ),
                         max_size=2,
+                        unique_by=lambda s: s.name,
                     ),
                     name=unique_summary_names,
                 ),
