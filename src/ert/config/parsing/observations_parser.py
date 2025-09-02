@@ -6,6 +6,7 @@ from typing import (
 )
 
 from lark import Lark, Transformer, UnexpectedCharacters, UnexpectedToken
+from lark.exceptions import VisitError
 
 from ._file_context_transformer import FileContextTransformer
 from .config_errors import ConfigValidationError
@@ -37,6 +38,10 @@ def parse_observations(
         return (FileContextTransformer(filename) * TreeToObservations()).transform(
             observations_parser.parse(content)
         )
+    except VisitError as err:
+        if isinstance(err.orig_exc, ObservationConfigError):
+            raise err.orig_exc from None
+        raise err from None
     except UnexpectedCharacters as e:
         unexpected_char = e.char
         allowed_chars = e.allowed
@@ -122,5 +127,21 @@ class TreeToObservations(
     def segment(tree):
         return (("SEGMENT", tree[0]), tree[1])
 
-    object = dict
+    @staticmethod
+    @no_type_check
+    def object(tree):
+        keys = set()
+        error_list: list[ErrorInfo] = []
+        for key, *_ in tree:
+            if key in keys:
+                error_list.append(
+                    ErrorInfo(f"Observation contains duplicate key {key}").set_context(
+                        key
+                    )
+                )
+            keys.add(key)
+        if error_list:
+            raise ObservationConfigError.from_collected(error_list)
+        return dict(tree)
+
     pair = tuple

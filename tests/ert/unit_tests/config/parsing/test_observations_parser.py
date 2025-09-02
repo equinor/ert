@@ -537,3 +537,23 @@ def test_that_multiple_segments_are_collected():
     )
 
     assert len(observations[0][1].segment) == 2
+
+
+@pytest.mark.parametrize("observation_type", ["HISTORY", "GENERAL", "SUMMARY"])
+def test_that_duplicate_keys_results_in_error_message_with_location(observation_type):
+    with pytest.raises(
+        ObservationConfigError,
+        match=r"Line 7 \(Column 16-25\): Observation contains duplicate key ERROR_MIN",
+    ):
+        parse_observations(
+            f"""
+            {observation_type}_OBSERVATION GWIR:FIELD
+            {{
+               ERROR       = 0.20;
+               ERROR_MODE  = RELMIN;
+               ERROR_MIN   = 100;
+               ERROR_MIN   = 50;
+            }};
+            """,
+            "",
+        )
