@@ -2,16 +2,14 @@
   "accepted_batches": [
     0,
     3,
-    4,
-    5
+    4
   ],
   "batches": [
     0,
     1,
     2,
     3,
-    4,
-    5
+    4
   ],
   "control_names": [
     "point.x.0",
@@ -52,152 +50,122 @@
     {
       "batch": 1,
       "control": "point.x.0",
-      "value": 0.25904478
+      "value": 0.25889904
     },
     {
       "batch": 1,
       "control": "point.x.1",
-      "value": 0.13792475
+      "value": 0.13863772
     },
     {
       "batch": 1,
       "control": "point.x.2",
-      "value": 0.17336687
+      "value": 0.17266495
     },
     {
       "batch": 1,
       "control": "point.x.0",
-      "value": 0.25904478
+      "value": 0.25889904
     },
     {
       "batch": 1,
       "control": "point.x.1",
-      "value": 0.13792475
+      "value": 0.13863772
     },
     {
       "batch": 1,
       "control": "point.x.2",
-      "value": 0.17336687
+      "value": 0.17266495
     },
     {
       "batch": 2,
       "control": "point.x.0",
-      "value": 0.31863568
+      "value": 0.32168752
     },
     {
       "batch": 2,
       "control": "point.x.1",
-      "value": 0.00504358
+      "value": -0.00227573
     },
     {
       "batch": 2,
       "control": "point.x.2",
-      "value": 0.13385209
+      "value": 0.13629051
     },
     {
       "batch": 2,
       "control": "point.x.0",
-      "value": 0.31863568
+      "value": 0.32168752
     },
     {
       "batch": 2,
       "control": "point.x.1",
-      "value": 0.00504358
+      "value": -0.00227573
     },
     {
       "batch": 2,
       "control": "point.x.2",
-      "value": 0.13385209
+      "value": 0.13629051
     },
     {
       "batch": 3,
       "control": "point.x.0",
-      "value": 0.24117771
+      "value": 0.24232941
     },
     {
       "batch": 3,
       "control": "point.x.1",
-      "value": 0.03015417
+      "value": 0.02521301
     },
     {
       "batch": 3,
       "control": "point.x.2",
-      "value": 0.24583776
+      "value": 0.24551428
     },
     {
       "batch": 3,
       "control": "point.x.0",
-      "value": 0.24117771
+      "value": 0.24232941
     },
     {
       "batch": 3,
       "control": "point.x.1",
-      "value": 0.03015417
+      "value": 0.02521301
     },
     {
       "batch": 3,
       "control": "point.x.2",
-      "value": 0.24583776
+      "value": 0.24551428
     },
     {
       "batch": 4,
       "control": "point.x.0",
-      "value": 0.15091481
+      "value": 0.14452931
     },
     {
       "batch": 4,
       "control": "point.x.1",
-      "value": -0.00394611
+      "value": 0.0170816
     },
     {
       "batch": 4,
       "control": "point.x.2",
-      "value": 0.36960914
+      "value": 0.36526727
     },
     {
       "batch": 4,
       "control": "point.x.0",
-      "value": 0.15091481
+      "value": 0.14452931
     },
     {
       "batch": 4,
       "control": "point.x.1",
-      "value": -0.00394611
+      "value": 0.0170816
     },
     {
       "batch": 4,
       "control": "point.x.2",
-      "value": 0.36960914
-    },
-    {
-      "batch": 5,
-      "control": "point.x.0",
-      "value": 0.1145273
-    },
-    {
-      "batch": 5,
-      "control": "point.x.1",
-      "value": 0.00635029
-    },
-    {
-      "batch": 5,
-      "control": "point.x.2",
-      "value": 0.38836369
-    },
-    {
-      "batch": 5,
-      "control": "point.x.0",
-      "value": 0.1145273
-    },
-    {
-      "batch": 5,
-      "control": "point.x.1",
-      "value": 0.00635029
-    },
-    {
-      "batch": 5,
-      "control": "point.x.2",
-      "value": 0.38836369
+      "value": 0.36526727
     }
   ],
   "gradient_values": [
@@ -205,73 +173,55 @@
       "batch": 0,
       "control": "point.x.0",
       "function": "distance",
-      "value": -0.49076627
+      "value": -0.49578729
     },
     {
       "batch": 0,
       "control": "point.x.1",
       "function": "distance",
-      "value": -0.50191014
+      "value": -0.49438597
     },
     {
       "batch": 0,
       "control": "point.x.2",
       "function": "distance",
-      "value": 0.50424549
+      "value": 0.49561241
     },
     {
       "batch": 3,
       "control": "point.x.0",
       "function": "distance",
-      "value": -0.47276201
+      "value": -0.49009157
     },
     {
       "batch": 3,
       "control": "point.x.1",
       "function": "distance",
-      "value": -0.0785477
+      "value": -0.04716194
     },
     {
       "batch": 3,
       "control": "point.x.2",
       "function": "distance",
-      "value": 0.51539765
+      "value": 0.50543799
     },
     {
       "batch": 4,
       "control": "point.x.0",
       "function": "distance",
-      "value": -0.30369426
+      "value": -0.2875537
     },
     {
       "batch": 4,
       "control": "point.x.1",
       "function": "distance",
-      "value": 0.02314375
+      "value": -0.03525904
     },
     {
       "batch": 4,
       "control": "point.x.2",
       "function": "distance",
-      "value": 0.25834193
-    },
-    {
-      "batch": 5,
-      "control": "point.x.0",
-      "function": "distance",
-      "value": -0.21656122
-    },
-    {
-      "batch": 5,
-      "control": "point.x.1",
-      "function": "distance",
-      "value": -0.00578828
-    },
-    {
-      "batch": 5,
-      "control": "point.x.2",
-      "function": "distance",
-      "value": 0.2172204
+      "value": 0.27910323
     }
   ],
   "objective_function_names": [
@@ -302,7 +252,7 @@
       "realization": 0,
       "scale": 1.0,
       "simulation": 0,
-      "value": -5.88372993,
+      "value": -5.88601017,
       "weight": 1.0
     },
     {
@@ -311,7 +261,7 @@
       "realization": 2,
       "scale": 1.0,
       "simulation": 1,
-      "value": -0.295847,
+      "value": -0.29586101,
       "weight": 1.0
     },
     {
@@ -320,7 +270,7 @@
       "realization": 0,
       "scale": 1.0,
       "simulation": 0,
-      "value": -5.70665979,
+      "value": -5.69400978,
       "weight": 1.0
     },
     {
@@ -329,7 +279,7 @@
       "realization": 2,
       "scale": 1.0,
       "simulation": 1,
-      "value": -0.411939,
+      "value": -0.416361,
       "weight": 1.0
     },
     {
@@ -338,7 +288,7 @@
       "realization": 0,
       "scale": 1.0,
       "simulation": 0,
-      "value": -5.43767023,
+      "value": -5.42675018,
       "weight": 1.0
     },
     {
@@ -347,7 +297,7 @@
       "realization": 2,
       "scale": 1.0,
       "simulation": 1,
-      "value": -0.35234299,
+      "value": -0.35657999,
       "weight": 1.0
     },
     {
@@ -356,7 +306,7 @@
       "realization": 0,
       "scale": 1.0,
       "simulation": 0,
-      "value": -4.98070002,
+      "value": -5.02416992,
       "weight": 1.0
     },
     {
@@ -365,36 +315,18 @@
       "realization": 2,
       "scale": 1.0,
       "simulation": 1,
-      "value": -0.39282399,
-      "weight": 1.0
-    },
-    {
-      "batch": 5,
-      "function": "distance",
-      "realization": 0,
-      "scale": 1.0,
-      "simulation": 0,
-      "value": -4.88824987,
-      "weight": 1.0
-    },
-    {
-      "batch": 5,
-      "function": "distance",
-      "realization": 2,
-      "scale": 1.0,
-      "simulation": 1,
-      "value": -0.404742,
+      "value": -0.37772301,
       "weight": 1.0
     }
   ],
   "optimal_result_json": {
-    "batch": 5,
+    "batch": 4,
     "controls": {
-      "point.x.0": 0.1145273,
-      "point.x.1": 0.00635029,
-      "point.x.2": 0.38836369
+      "point.x.0": 0.14452931,
+      "point.x.1": 0.0170816,
+      "point.x.2": 0.36526727
     },
-    "total_objective": -1.52561897
+    "total_objective": -1.53933474
   },
   "output_constraint_names": [
     "x-0_coord"
@@ -416,27 +348,22 @@
     {
       "accepted": 0,
       "batch": 1,
-      "objective": -1.69281773
+      "objective": -1.6933983
     },
     {
       "accepted": 0,
       "batch": 2,
-      "objective": -1.73561919
+      "objective": -1.7357732
     },
     {
       "accepted": 1,
       "batch": 3,
-      "objective": -1.6236748
+      "objective": -1.62412254
     },
     {
       "accepted": 1,
       "batch": 4,
-      "objective": -1.539793
-    },
-    {
-      "accepted": 1,
-      "batch": 5,
-      "objective": -1.52561897
+      "objective": -1.53933474
     }
   ]
 }
