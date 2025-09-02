@@ -124,8 +124,8 @@ class EverestDataAPI:
                     obj_values.append(
                         {
                             "batch": int(b.batch_id),
-                            "realization": int(model_realization),  # type: ignore
-                            "simulation": int(simulation_id),  # type: ignore
+                            "realization": int(model_realization),
+                            "simulation": int(simulation_id),
                             "function": obj_name,
                             "scale": float(obj_dict["scale"]),
                             "value": float(df[obj_name].item()),
