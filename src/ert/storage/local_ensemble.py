@@ -867,25 +867,16 @@ class LocalEnsemble(BaseMode):
         if isinstance(dataset, pl.DataFrame):
             try:
                 # since all realizations are saved in a single parquet file,
-                # this makes sure that we only append new realizations.
-                df = self._load_parameters_lazy(group)
-                existing_realizations = (
-                    df.select("realization")
-                    .unique()
-                    .collect()  # only fetch reals, so use standard engine
-                    .get_column("realization")
+                # this makes sure that we only add / replace new data.
+                df = self._load_parameters_lazy(group).collect(engine="streaming")
+                df = df.drop(
+                    [c for c in dataset.columns if c != "realization"], strict=False
                 )
-                new_data = dataset.filter(
-                    ~pl.col("realization").is_in(existing_realizations.implode())
+                df_full = (
+                    df.join(dataset, on="realization", how="left")
+                    .unique(subset=["realization"], keep="first")
+                    .sort("realization")
                 )
-                if new_data.height > 0:
-                    df_full = pl.concat(
-                        [df.collect(), new_data],
-                        # needs all data in memory anyway so using standard engine
-                        how="vertical",
-                    ).sort("realization")
-                else:
-                    return
             except KeyError:
                 df_full = dataset
 
