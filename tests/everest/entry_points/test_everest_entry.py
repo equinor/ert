@@ -32,6 +32,11 @@ def run_detached_monitor_mock(status=ExperimentState.completed, error=None, **kw
 @patch("everest.bin.everest_script.run_detached_monitor")
 @patch("everest.bin.everest_script.wait_for_server")
 @patch("everest.bin.everest_script.start_server")
+@patch("everest.config.ServerConfig.get_server_context_from_conn_info")
+@patch(
+    "ert.services.StorageService.session",
+    side_effect=[TimeoutError(), MagicMock()],
+)
 @patch(
     "everest.bin.everest_script.everserver_status",
     return_value={"status": ExperimentState.never_run, "message": None},
@@ -40,6 +45,8 @@ def run_detached_monitor_mock(status=ExperimentState.completed, error=None, **kw
 def test_everest_entry_debug(
     start_experiment_mock,
     everserver_status_mock,
+    session_mock,
+    get_server_context_from_conn_info_mock,
     start_server_mock,
     wait_for_server_mock,
     start_monitor_mock,
@@ -67,6 +74,8 @@ def test_everest_entry_debug(
     start_monitor_mock.assert_called_once()
     everserver_status_mock.assert_called()
     start_experiment_mock.assert_called_once()
+    assert session_mock.call_count == 2
+    assert get_server_context_from_conn_info_mock.call_count == 2
 
     # the config file itself is dumped at DEBUG level
     assert '"controls"' in logstream
@@ -78,6 +87,11 @@ def test_everest_entry_debug(
 @patch("everest.bin.everest_script.run_detached_monitor")
 @patch("everest.bin.everest_script.wait_for_server")
 @patch("everest.bin.everest_script.start_server")
+@patch("everest.config.ServerConfig.get_server_context_from_conn_info")
+@patch(
+    "ert.services.StorageService.session",
+    side_effect=[TimeoutError(), MagicMock()],
+)
 @patch(
     "everest.bin.everest_script.everserver_status",
     return_value={"status": ExperimentState.never_run, "message": None},
@@ -86,6 +100,8 @@ def test_everest_entry_debug(
 def test_everest_entry(
     start_experiment_mock,
     everserver_status_mock,
+    session_mock,
+    get_server_context_from_conn_info_mock,
     start_server_mock,
     wait_for_server_mock,
     start_monitor_mock,
@@ -102,9 +118,10 @@ def test_everest_entry(
     start_monitor_mock.assert_called_once()
     everserver_status_mock.assert_called()
     start_experiment_mock.assert_called_once()
+    assert session_mock.call_count == 2
+    assert get_server_context_from_conn_info_mock.call_count == 2
 
 
-@patch("everest.bin.everest_script.server_is_running", return_value=False)
 @patch("everest.bin.everest_script.run_detached_monitor")
 @patch("everest.bin.everest_script.wait_for_server")
 @patch("everest.bin.everest_script.start_server")
@@ -113,13 +130,24 @@ def test_everest_entry(
     return_value={"status": ExperimentState.completed, "message": None},
 )
 @patch("everest.bin.everest_script.start_experiment")
+@patch("everest.config.ServerConfig.get_server_context_from_conn_info")
+@patch(
+    "ert.services.StorageService.session",
+    side_effect=[
+        TimeoutError(),
+        TimeoutError(),
+        TimeoutError(),
+        MagicMock(),
+    ],
+)
 def test_everest_entry_detached_already_run(
+    session_mock,
+    get_server_context_from_conn_info_mock,
     start_experiment_mock,
     everserver_status_mock,
     start_server_mock,
     wait_for_server_mock,
     start_monitor_mock,
-    server_is_running_mock,
     change_to_tmpdir,
 ):
     """Test everest detached, when an optimization has already run"""
@@ -135,31 +163,36 @@ def test_everest_entry_detached_already_run(
     start_server_mock.assert_not_called()
     start_monitor_mock.assert_not_called()
     wait_for_server_mock.assert_not_called()
-    server_is_running_mock.assert_called_once()
     everserver_status_mock.assert_called()
     everserver_status_mock.reset_mock()
+    session_mock.assert_called_once()  # Did not try to start a new run
 
-    # stopping the server has no effect
+    # stopping the server has no effect (not running)
     kill_entry(["config.yml"])
     everserver_status_mock.assert_not_called()
+    assert session_mock.call_count == 2
 
     # forcefully re-run the case
     everest_entry(["config.yml", "--new-run", "--skip-prompt"])
     start_server_mock.assert_called_once()
     start_monitor_mock.assert_called_once()
     everserver_status_mock.assert_called()
+    start_experiment_mock.assert_called_once()
+    assert session_mock.call_count == 4
 
 
-@patch("everest.bin.monitor_script.server_is_running", return_value=False)
 @patch("everest.bin.monitor_script.run_detached_monitor")
 @patch(
     "everest.bin.monitor_script.everserver_status",
     return_value={"status": ExperimentState.completed, "message": None},
 )
+@patch("ert.services.StorageService.session", side_effect=TimeoutError())
+@patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 def test_everest_entry_detached_already_run_monitor(
+    get_server_context_from_conn_info_mock,
+    session_mock,
     everserver_status_mock,
     start_monitor_mock,
-    server_is_running_mock,
     change_to_tmpdir,
 ):
     """Test everest detached, when an optimization has already run"""
@@ -173,13 +206,14 @@ def test_everest_entry_detached_already_run_monitor(
         monitor_entry(["config.yml"])
     assert "--new-run" in out.getvalue()
     start_monitor_mock.assert_not_called()
-    server_is_running_mock.assert_called_once()
     everserver_status_mock.assert_called()
     everserver_status_mock.reset_mock()
+    get_server_context_from_conn_info_mock.assert_not_called()
+    session_mock.assert_called_once()
 
 
-@patch("everest.bin.everest_script.server_is_running", return_value=True)
-@patch("everest.bin.kill_script.server_is_running", return_value=True)
+@patch("ert.services.StorageService.session")
+@patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch("everest.bin.everest_script.run_detached_monitor")
 @patch("everest.bin.everest_script.wait_for_server")
 @patch("everest.bin.everest_script.start_server")
@@ -196,8 +230,8 @@ def test_everest_entry_detached_running(
     start_server_mock,
     wait_for_server_mock,
     start_monitor_mock,
-    server_is_running_mock_kill_script,
-    server_is_running_mock_everest_script,
+    get_server_context_from_conn_info_mock,
+    session_mock,
     change_to_tmpdir,
 ):
     """Test everest detached, optimization is running"""
@@ -214,8 +248,9 @@ def test_everest_entry_detached_running(
     start_server_mock.assert_not_called()
     start_monitor_mock.assert_not_called()
     wait_for_server_mock.assert_not_called()
-    server_is_running_mock_everest_script.assert_called_once()
-    server_is_running_mock_everest_script.reset_mock()
+    session_mock.assert_called_once()
+    session_mock.reset_mock()
+    get_server_context_from_conn_info_mock.assert_not_called()
     everserver_status_mock.assert_called_once()
     everserver_status_mock.reset_mock()
 
@@ -223,30 +258,33 @@ def test_everest_entry_detached_running(
     kill_entry(["config.yml"])
     stop_server_mock.assert_called_once()
     wait_for_server_to_stop_mock.assert_called_once()
+    session_mock.assert_called_once()
+    session_mock.reset_mock()
+    get_server_context_from_conn_info_mock.assert_called_once()
     wait_for_server_mock.assert_not_called()
-    server_is_running_mock_kill_script.assert_called_once()
-    server_is_running_mock_kill_script.reset_mock()
     everserver_status_mock.assert_not_called()
 
     # if already running, nothing happens
     assert "everest kill" in out.getvalue()
     assert "everest monitor" in out.getvalue()
     everest_entry(["config.yml", "--skip-prompt"])
+    session_mock.assert_called_once()
     start_server_mock.assert_not_called()
-    server_is_running_mock_everest_script.assert_called_once()
     everserver_status_mock.assert_called()
 
 
-@patch("everest.bin.monitor_script.server_is_running", return_value=True)
 @patch("everest.bin.monitor_script.run_detached_monitor")
 @patch(
     "everest.bin.monitor_script.everserver_status",
     return_value={"status": ExperimentState.completed, "message": None},
 )
+@patch("everest.config.ServerConfig.get_server_context_from_conn_info")
+@patch("ert.services.StorageService.session")
 def test_everest_entry_detached_running_monitor(
+    session_mock,
+    get_server_context_from_conn_info_mock,
     everserver_status_mock,
     start_monitor_mock,
-    server_is_running_mock,
     change_to_tmpdir,
 ):
     """Test everest detached, optimization is running, monitoring"""
@@ -259,20 +297,23 @@ def test_everest_entry_detached_running_monitor(
     with capture_streams():
         monitor_entry(["config.yml"])
     start_monitor_mock.assert_called_once()
-    server_is_running_mock.assert_called_once()
     everserver_status_mock.assert_called()
+    session_mock.assert_called_once()
+    get_server_context_from_conn_info_mock.assert_called_once()
 
 
-@patch("everest.bin.monitor_script.server_is_running", return_value=False)
 @patch("everest.bin.monitor_script.run_detached_monitor")
 @patch(
     "everest.bin.monitor_script.everserver_status",
     return_value={"status": ExperimentState.completed, "message": None},
 )
+@patch("everest.config.ServerConfig.get_server_context_from_conn_info")
+@patch("ert.services.StorageService.session", side_effect=TimeoutError())
 def test_everest_entry_monitor_no_run(
+    session_mock,
+    get_server_context_from_conn_info_mock,
     everserver_status_mock,
     start_monitor_mock,
-    server_is_running_mock,
     change_to_tmpdir,
 ):
     """Test everest detached, optimization is running, monitoring"""
@@ -286,8 +327,9 @@ def test_everest_entry_monitor_no_run(
         monitor_entry(["config.yml"])
     assert "everest run" in out.getvalue()
     start_monitor_mock.assert_not_called()
-    server_is_running_mock.assert_called_once()
     everserver_status_mock.assert_called()
+    session_mock.assert_called_once()
+    get_server_context_from_conn_info_mock.assert_not_called()
 
 
 @pytest.fixture(autouse=True)
@@ -306,7 +348,14 @@ def mock_ssl(monkeypatch):
 @patch("everest.bin.everest_script.wait_for_server")
 @patch("everest.bin.everest_script.start_server")
 @patch("everest.bin.everest_script.start_experiment")
+@patch("everest.config.ServerConfig.get_server_context_from_conn_info")
+@patch(
+    "ert.services.StorageService.session",
+    side_effect=[TimeoutError(), MagicMock()],
+)
 def test_exception_raised_when_server_run_fails(
+    session_mock,
+    get_server_context_from_conn_info_mock,
     start_experiment_mock,
     start_server_mock,
     wait_for_server_mock,
@@ -321,7 +370,6 @@ def test_exception_raised_when_server_run_fails(
         everest_entry(["config.yml", "--skip-prompt"])
 
 
-@patch("everest.bin.monitor_script.server_is_running", return_value=True)
 @patch(
     "everest.bin.monitor_script.run_detached_monitor",
     side_effect=partial(
@@ -330,9 +378,12 @@ def test_exception_raised_when_server_run_fails(
         error="Reality was ripped to shreds!",
     ),
 )
+@patch("everest.config.ServerConfig.get_server_context_from_conn_info")
+@patch("ert.services.StorageService.session")
 def test_exception_raised_when_server_run_fails_monitor(
+    session_mock,
+    get_server_context_from_conn_info_mock,
     start_monitor_mock,
-    server_is_running_mock,
     change_to_tmpdir,
 ):
     Path("config.yml").touch()
@@ -350,7 +401,14 @@ def test_exception_raised_when_server_run_fails_monitor(
 @patch("everest.bin.everest_script.wait_for_server")
 @patch("everest.bin.everest_script.start_server")
 @patch("everest.bin.everest_script.start_experiment")
+@patch(
+    "ert.services.StorageService.session",
+    side_effect=[TimeoutError(), MagicMock()],
+)
+@patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 def test_complete_status_for_normal_run(
+    get_server_context_from_conn_info_mock,
+    session_mock,
     start_experiment_mock,
     start_server_mock,
     wait_for_server_mock,
@@ -371,14 +429,16 @@ def test_complete_status_for_normal_run(
     assert expected_error == status["message"]
 
 
-@patch("everest.bin.monitor_script.server_is_running", return_value=True)
 @patch(
     "everest.bin.monitor_script.run_detached_monitor",
     side_effect=run_detached_monitor_mock,
 )
+@patch("ert.services.StorageService.session")
+@patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 def test_complete_status_for_normal_run_monitor(
+    get_server_context_from_conn_info_mock,
+    session_mock,
     start_monitor_mock,
-    server_is_running_mock,
     change_to_tmpdir,
 ):
     Path("config.yml").touch()
@@ -430,7 +490,14 @@ def test_that_run_everest_prints_where_it_runs(
             "everest.bin.everest_script.everserver_status",
             return_value={"status": ExperimentState.never_run, "message": None},
         ),
-        patch("everest.bin.everest_script.server_is_running", return_value=False),
+        patch(
+            "ert.services.StorageService.session",
+            side_effect=[TimeoutError(), MagicMock()],
+        ),
+        patch(
+            "everest.config.ServerConfig.get_server_context_from_conn_info",
+            return_value=("a", "b", ("c", "d")),
+        ),
         patch("everest.bin.everest_script.start_server"),
         patch("everest.bin.everest_script.wait_for_server"),
         patch("everest.bin.everest_script.start_experiment"),

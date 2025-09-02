@@ -1,7 +1,7 @@
 import os
 import shutil
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -25,7 +25,8 @@ def test_that_one_experiment_creates_one_ensemble_per_batch(cached_example):
         assert ensemble_names == set(batches)
 
 
-@patch("everest.bin.everest_script.server_is_running", return_value=False)
+@patch("ert.services.StorageService.session", side_effect=[TimeoutError(), MagicMock()])
+@patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch("everest.bin.everest_script.run_detached_monitor")
 @patch("everest.bin.everest_script.wait_for_server")
 @patch("everest.bin.everest_script.start_server")
@@ -34,7 +35,7 @@ def test_that_one_experiment_creates_one_ensemble_per_batch(cached_example):
     "everest.bin.everest_script.everserver_status",
     return_value={"status": ExperimentState.never_run, "message": None},
 )
-def test_save_running_config(_, _1, _2, _3, _4, _5, change_to_tmpdir):
+def test_save_running_config(_, _1, _2, _3, _4, _5, _6, change_to_tmpdir):
     """Test everest detached, when an optimization has already run"""
 
     Path("config.yml").touch()

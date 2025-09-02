@@ -20,7 +20,9 @@ from ert.config.queue_config import (
     TorqueQueueOptions,
     activate_script,
 )
+from ert.dark_storage.client import ConnInfo
 from ert.scheduler.event import FinishedEvent
+from ert.services import StorageService
 from everest.config import EverestConfig, InstallJobConfig
 from everest.config.forward_model_config import ForwardModelStepConfig
 from everest.config.server_config import ServerConfig
@@ -59,37 +61,37 @@ async def test_https_requests(change_to_tmpdir):
     makedirs_if_needed(everest_config.output_dir, roll_if_exists=True)
     await start_server(everest_config, logging_level=logging.INFO)
 
-    wait_for_server(everest_config.output_dir, 240)
-
+    session = StorageService.session(
+        Path(ServerConfig.get_session_dir(everest_config.output_dir)), 240
+    )
+    wait_for_server(session, 240)
     server_status = everserver_status(status_path)
     assert server_status["status"] in {
         ExperimentState.running,
         ExperimentState.pending,
     }
 
-    url, cert, auth = ServerConfig.get_server_context(everest_config.output_dir)
+    url, cert, auth = ServerConfig.get_server_context_from_conn_info(session.conn_info)
     result = requests.get(url, verify=cert, auth=auth, proxies=PROXY)  # noqa: ASYNC210
     assert result.status_code == 200  # Request has succeeded
 
     # Test http request fail
-    url = url.replace("https", "http")
+    http_url = url.replace("https", "http")
     with pytest.raises(Exception):  # noqa B017
-        response = requests.get(url, verify=cert, auth=auth, proxies=PROXY)  # noqa: ASYNC210
+        response = requests.get(http_url, verify=cert, auth=auth, proxies=PROXY)  # noqa: ASYNC210
         response.raise_for_status()
 
     # Test request with wrong password fails
-    url, cert, _ = ServerConfig.get_server_context(everest_config.output_dir)
-    usr = "admin"
-    password = "wrong_password"
-    with pytest.raises(Exception):  # noqa B017
-        result = requests.get(url, verify=cert, auth=(usr, password), proxies=PROXY)  # noqa: ASYNC210
-        result.raise_for_status()
+    auth = ("admin", "wrong_password")
+    result = requests.get(url, verify=cert, auth=auth, proxies=PROXY)  # noqa: ASYNC210
+
+    assert result.status_code == 401  # Unauthorized
 
     # Test stopping server
     assert server_is_running(
-        *ServerConfig.get_server_context(everest_config.output_dir)
+        *ServerConfig.get_server_context_from_conn_info(session.conn_info)
     )
-    server_context = ServerConfig.get_server_context(everest_config.output_dir)
+    server_context = ServerConfig.get_server_context_from_conn_info(session.conn_info)
     if stop_server(server_context):
         wait_for_server_to_stop(server_context, 240)
         server_status = everserver_status(status_path)
@@ -145,13 +147,16 @@ def test_server_status(change_to_tmpdir):
 
 
 @patch("everest.detached.server_is_running", return_value=False)
-def test_wait_for_server(_):
-    config = EverestConfig.with_defaults()
-
+@patch(
+    "everest.config.ServerConfig.get_server_context_from_conn_info",
+    return_value=("url", "cert", ("user", "token")),
+)
+def test_wait_for_server(mock_get_context, mock_is_running):
+    client = MagicMock()
     with pytest.raises(
         RuntimeError, match=r"Failed to get reply from server within .* seconds"
     ):
-        wait_for_server(config.output_dir, timeout=0.01)
+        wait_for_server(client, timeout=0.01)
 
 
 @pytest.mark.usefixtures("no_plugins")
@@ -361,3 +366,55 @@ if __name__ == "__main__":
     driver = await start_server(everest_config, logging_level=logging.DEBUG)
     final_state = await server_running()
     assert final_state.returncode == 0
+
+
+def test_get_that_get_server_info_from_conn_info_converts_values():
+    conn_info = ConnInfo(
+        base_url="https://example.com:1234",
+        cert="/path/to/cert.pem",
+        auth_token="sometoken",
+    )
+    url, cert_file, auth = ServerConfig.get_server_context_from_conn_info(conn_info)
+    assert url == "https://example.com:1234/experiment_server"
+    assert cert_file == "/path/to/cert.pem"
+    assert auth == ("username", "sometoken")
+
+
+@pytest.mark.parametrize(
+    "conn_info, expected_exception, expected_message",
+    [
+        (
+            ConnInfo(
+                base_url="https://example.com:1234",
+                cert="/path/to/cert.pem",
+                auth_token=None,
+            ),
+            RuntimeError,
+            "No authentication token found in storage session",
+        ),
+        (
+            ConnInfo(
+                base_url="https://example.com:1234",
+                cert=False,
+                auth_token="sometoken",
+            ),
+            RuntimeError,
+            "Invalid certificate file in storage session",
+        ),
+        (
+            ConnInfo(
+                base_url="https://example.com:1234",
+                cert=True,
+                auth_token="sometoken",
+            ),
+            RuntimeError,
+            "Invalid certificate file in storage session",
+        ),
+    ],
+)
+def test_that_get_server_context_from_conn_info_raises_on_wrong_input(
+    conn_info, expected_exception, expected_message
+):
+    with pytest.raises(expected_exception) as exc_info:
+        ServerConfig.get_server_context_from_conn_info(conn_info)
+    assert str(exc_info.value) == expected_message

@@ -17,6 +17,7 @@ from pydantic import ValidationError
 from websockets import ConnectionClosedError, ConnectionClosedOK
 from websockets.sync.client import connect
 
+from ert.dark_storage.client import Client
 from ert.ensemble_evaluator import EndEvent
 from ert.run_models.event import EverestBatchResultEvent, status_event_from_json
 from ert.scheduler import create_driver
@@ -131,7 +132,7 @@ def extract_errors_from_file(path: str) -> list[str]:
     return re.findall(r"(Error \w+.*)", content)
 
 
-def wait_for_server(output_dir: str, timeout: int | float) -> None:
+def wait_for_server(client: Client, timeout: int | float) -> None:
     """
     Waits until the everest server has started. Polls every second
     for server availability until timeout (measured in seconds).
@@ -141,7 +142,9 @@ def wait_for_server(output_dir: str, timeout: int | float) -> None:
     sleep_time: float = 1.0
     slept_time: float = 0.0
     while slept_time <= timeout:
-        if server_is_running(*ServerConfig.get_server_context(output_dir)):
+        if server_is_running(
+            *ServerConfig.get_server_context_from_conn_info(client.conn_info)
+        ):
             logger.info(f"Waited {slept_time:g} seconds before everest server was up")
             return
         if slept_time + sleep_time > timeout:

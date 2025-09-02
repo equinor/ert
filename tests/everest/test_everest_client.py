@@ -12,6 +12,7 @@ import yaml
 from fastapi import FastAPI
 from starlette.responses import Response
 
+from ert.services import StorageService
 from ert.shared import find_available_socket
 from everest.bin.everest_script import everest_entry
 from everest.config import EverestConfig, ServerConfig
@@ -188,15 +189,18 @@ def test_that_multiple_everest_clients_can_connect_to_server(
     )
 
     everest_main_thread.start()
+    client = StorageService.session(
+        Path(ServerConfig.get_session_dir(ever_config.output_dir))
+    )
 
     def everserver_is_running():
         return server_is_running(
-            *ServerConfig.get_server_context(ever_config.output_dir)
+            *ServerConfig.get_server_context_from_conn_info(client.conn_info)
         )
 
     wait_until(everserver_is_running, interval=1, timeout=300)
 
-    server_context = ServerConfig.get_server_context(ever_config.output_dir)
+    server_context = ServerConfig.get_server_context_from_conn_info(client.conn_info)
     url, cert, auth = server_context
 
     ssl_context = ssl.create_default_context()

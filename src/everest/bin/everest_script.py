@@ -9,14 +9,15 @@ import signal
 import socket
 import threading
 from functools import partial
+from pathlib import Path
 
 from _ert.threading import ErtThread
 from ert.config import QueueSystem
+from ert.services import StorageService
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
     ExperimentState,
     everserver_status,
-    server_is_running,
     start_experiment,
     start_server,
     wait_for_server,
@@ -162,7 +163,15 @@ async def run_everest(options: argparse.Namespace) -> None:
         )
 
     server_state = everserver_status(everserver_status_path)
-    if server_is_running(*ServerConfig.get_server_context(options.config.output_dir)):
+    try:
+        StorageService.session(
+            Path(ServerConfig.get_session_dir(options.config.output_dir)), timeout=1
+        )
+        server_running = True
+    except TimeoutError:
+        server_running = False
+
+    if server_running:
         config_file = options.config.config_file
         print(
             "An optimization is currently running.\n"
@@ -211,12 +220,17 @@ async def run_everest(options: argparse.Namespace) -> None:
 
         print("Waiting for server ...")
         logger.debug("Waiting for response from everserver")
-        wait_for_server(options.config.output_dir, timeout=600)
+        client = StorageService.session(
+            Path(ServerConfig.get_session_dir(options.config.output_dir))
+        )
+        wait_for_server(client, timeout=600)
         print("Everest server found!")
         logger.info("Got response from everserver. Starting experiment")
 
         start_experiment(
-            server_context=ServerConfig.get_server_context(options.config.output_dir),
+            server_context=ServerConfig.get_server_context_from_conn_info(
+                client.conn_info
+            ),
             config=options.config,
         )
 
@@ -229,7 +243,7 @@ async def run_everest(options: argparse.Namespace) -> None:
                 if options.disable_monitoring
                 else run_detached_monitor,
                 name="Everest CLI monitor thread",
-                args=[ServerConfig.get_server_context(options.config.output_dir)],
+                args=[ServerConfig.get_server_context_from_conn_info(client.conn_info)],
                 daemon=True,
             )
             monitor_thread.start()
@@ -237,14 +251,14 @@ async def run_everest(options: argparse.Namespace) -> None:
             monitor_thread.join()
         elif options.disable_monitoring:
             run_empty_detached_monitor(
-                server_context=ServerConfig.get_server_context(
-                    options.config.output_dir
+                server_context=ServerConfig.get_server_context_from_conn_info(
+                    client.conn_info
                 )
             )
         else:
             run_detached_monitor(
-                server_context=ServerConfig.get_server_context(
-                    options.config.output_dir
+                server_context=ServerConfig.get_server_context_from_conn_info(
+                    client.conn_info
                 )
             )
 

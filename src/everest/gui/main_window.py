@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ssl
+from pathlib import Path
 
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtWidgets import (
@@ -12,6 +13,7 @@ from PyQt6.QtWidgets import (
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.plugins import ErtPluginManager
+from ert.services import StorageService
 from everest.config import ServerConfig
 from everest.detached import wait_for_server
 from everest.gui.everest_client import EverestClient
@@ -41,9 +43,14 @@ class EverestMainWindow(QMainWindow):
         self.setCentralWidget(self.central_widget)
 
     def run(self) -> None:
-        wait_for_server(self.output_dir, 60)
+        storage_client = StorageService.session(
+            Path(ServerConfig.get_session_dir(self.output_dir))
+        )
+        wait_for_server(storage_client, 60)
 
-        server_context = ServerConfig.get_server_context(self.output_dir)
+        server_context = ServerConfig.get_server_context_from_conn_info(
+            storage_client.conn_info
+        )
         url, cert, auth = server_context
 
         ssl_context = ssl.create_default_context()
