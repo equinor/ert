@@ -29,15 +29,6 @@ a positive value.
     the weighted sum that Everest tries to optimize.
     """,
     )
-    auto_scale: bool | None = Field(
-        default=None,
-        description="""
-auto_normalize can be set to true to automatically
-determine the scaling factor from the objective value in batch 0.
-
-If scale is also set, the automatic value is divided by its value.
-""",
-    )
     type: str | None = Field(
         default=None,
         description="""
@@ -65,7 +56,8 @@ preferred to be maximized.
         errors = []
         for key, replace in (
             ("normalization", "scale"),
-            ("auto_normalize", "auto_scale"),
+            ("auto_normalize", "auto_scale in the optimization section"),
+            ("auto_scale", "auto_scale in the optimization section"),
         ):
             if key in values:
                 errors.append(

@@ -12,7 +12,12 @@ import yaml
 from pydantic import ValidationError
 
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
-from everest.config import EverestConfig, ModelConfig, ObjectiveFunctionConfig
+from everest.config import (
+    EverestConfig,
+    ModelConfig,
+    ObjectiveFunctionConfig,
+    OptimizationConfig,
+)
 from everest.config.control_variable_config import ControlVariableConfig
 from everest.config.everest_config import EverestValidationError
 from everest.config.sampler_config import SamplerConfig
@@ -1046,6 +1051,22 @@ def test_deprecated_objective_function_auto_normalize():
         match=r"auto_normalize is deprecated .* replaced with auto_scale",
     ):
         ObjectiveFunctionConfig(name="test", auto_normalize=True)
+
+
+def test_that_auto_scale_and_objective_scale_are_mutually_exclusive(tmp_path):
+    with pytest.raises(
+        ValueError,
+        match=(
+            "The auto_scale option in the optimization section and the scale "
+            "options in the objective_functions section are mutually exclusive"
+        ),
+    ):
+        EverestConfig.with_defaults(
+            optimization=OptimizationConfig(auto_scale=True),
+            objective_functions=[
+                ObjectiveFunctionConfig(name=f"f{i:03d}", scale=1.0) for i in range(2)
+            ],
+        )
 
 
 def test_load_file_undefined_substitutions(min_config, change_to_tmpdir, capsys):
