@@ -117,12 +117,13 @@ def parse_content(content: str, filename: str) -> ConfContent:
     )
 
 
+ObservationBody = dict[FileContextToken, Any]
+ObservationDeclaration = tuple[ObservationType, FileContextToken, ObservationBody]
+
+
 def _parse_content_list(
     content: str, filename: str
-) -> list[
-    SimpleHistoryDeclaration
-    | tuple[ObservationType, FileContextToken, dict[FileContextToken, Any]]
-]:
+) -> list[SimpleHistoryDeclaration | ObservationDeclaration]:
     try:
         return (FileContextTransformer(filename) * TreeToObservations()).transform(
             observations_parser.parse(content)
@@ -200,11 +201,7 @@ observations_parser = Lark(
 
 class TreeToObservations(
     Transformer[
-        FileContextToken,
-        list[
-            SimpleHistoryDeclaration
-            | tuple[ObservationType, FileContextToken, dict[FileContextToken, Any]]
-        ],
+        FileContextToken, list[SimpleHistoryDeclaration | ObservationDeclaration]
     ]
 ):
     start = list
@@ -225,10 +222,7 @@ class TreeToObservations(
 
 def _validate_conf_content(
     directory: str,
-    inp: Sequence[
-        SimpleHistoryDeclaration
-        | tuple[ObservationType, FileContextToken, dict[FileContextToken, Any]]
-    ],
+    inp: Sequence[SimpleHistoryDeclaration | ObservationDeclaration],
 ) -> ConfContent:
     result: list[Declaration] = []
     error_list: list[ErrorInfo] = []
@@ -293,7 +287,7 @@ def _validate_unique_names(
 
 
 def _validate_history_values(
-    name_token: FileContextToken, inp: dict[FileContextToken, Any]
+    name_token: FileContextToken, inp: ObservationBody
 ) -> HistoryValues:
     error_mode: ErrorModes = "RELMIN"
     error = 0.1
@@ -321,7 +315,7 @@ def _validate_history_values(
 
 
 def _validate_summary_values(
-    name_token: FileContextToken, inp: dict[FileContextToken, Any]
+    name_token: FileContextToken, inp: ObservationBody
 ) -> SummaryValues:
     error_mode: ErrorModes = "ABS"
     summary_key = None
@@ -363,7 +357,7 @@ def _validate_summary_values(
 
 
 def _validate_segment_dict(
-    name_token: FileContextToken, inp: dict[FileContextToken, Any]
+    name_token: FileContextToken, inp: ObservationBody
 ) -> Segment:
     start = None
     stop = None
@@ -398,7 +392,7 @@ def _validate_segment_dict(
 
 
 def _validate_gen_obs_values(
-    directory: str, name_token: FileContextToken, inp: dict[FileContextToken, Any]
+    directory: str, name_token: FileContextToken, inp: ObservationBody
 ) -> GenObsValues:
     try:
         data = inp[cast(FileContextToken, "DATA")]
