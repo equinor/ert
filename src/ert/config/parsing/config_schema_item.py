@@ -1,6 +1,6 @@
 import os
 import shutil
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from enum import EnumType
 from typing import Any, TypeVar
 
@@ -53,6 +53,9 @@ class SchemaItem:
     # if true, will accumulate many values set for key, otherwise each entry will
     # overwrite any previous value set
     multi_occurrence: bool = False
+    # Only applies to SchemaItemType.EXISTING_PATH_INLINE where
+    # the contents is then parsed
+    parser: Callable[[str, str], Any] = lambda x, y: y
     expand_envvar: bool = True
     # Index of tokens to do substitution from until end
     substitute_from: NonNegativeInt = 1
@@ -72,7 +75,7 @@ class SchemaItem:
 
     def token_to_value_with_context(
         self, token: FileContextToken, index: int, keyword: FileContextToken, cwd: str
-    ) -> ContextValue | ContextList[ContextValue] | None:
+    ) -> Any:
         """
         Converts a FileContextToken to a value with context that
         behaves like a value, but also contains its location in the file,
@@ -186,7 +189,7 @@ class SchemaItem:
                         token,
                         [
                             ContextString(path, token, keyword),
-                            ContextString(read_file(path, token), token, keyword),
+                            self.parser(path, read_file(path, token)),
                         ],
                     )
                 else:
@@ -347,8 +350,10 @@ def existing_path_keyword(keyword: str) -> SchemaItem:
     return SchemaItem(kw=keyword, type_map=[SchemaItemType.EXISTING_PATH])
 
 
-def existing_path_inline_keyword(keyword: str) -> SchemaItem:
-    return SchemaItem(kw=keyword, type_map=[SchemaItemType.EXISTING_PATH_INLINE])
+def existing_path_inline_keyword(keyword: str, parser=lambda _, y: y) -> SchemaItem:
+    return SchemaItem(
+        kw=keyword, type_map=[SchemaItemType.EXISTING_PATH_INLINE], parser=parser
+    )
 
 
 def single_arg_keyword(keyword: str) -> SchemaItem:

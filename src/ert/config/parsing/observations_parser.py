@@ -1,4 +1,4 @@
-from enum import Enum, auto
+from enum import StrEnum
 from typing import (
     Any,
     Literal,
@@ -7,20 +7,20 @@ from typing import (
 
 from lark import Lark, Transformer, UnexpectedCharacters, UnexpectedToken
 
+from ._file_context_transformer import FileContextTransformer
 from .config_errors import ConfigValidationError
 from .error_info import ErrorInfo
 from .file_context_token import FileContextToken
-from .lark_parser import FileContextTransformer
 
 
 class ObservationConfigError(ConfigValidationError):
     pass
 
 
-class ObservationType(Enum):
-    HISTORY = auto()
-    SUMMARY = auto()
-    GENERAL = auto()
+class ObservationType(StrEnum):
+    HISTORY = "HISTORY"
+    SUMMARY = "SUMMARY"
+    GENERAL = "GENERAL"
 
     @classmethod
     def from_rule(cls, rule: str) -> "ObservationType":

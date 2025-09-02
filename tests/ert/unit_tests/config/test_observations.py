@@ -83,8 +83,13 @@ def test_date_parsing_in_observations(datestring, errors):
         "REFCASE": "MY_REFCASE",
         "OBS_CONFIG": (
             "obsconf",
-            "SUMMARY_OBSERVATION FOPR_1 "
-            f"{{ KEY=FOPR; VALUE=1; ERROR=1; DATE={datestring}; }};",
+            [
+                (
+                    "SUMMARY",
+                    "FOPR_1 ",
+                    {"KEY": "FOPR", "VALUE": "1", "ERROR": "1", "DATE": datestring},
+                )
+            ],
         ),
     }
     run_simulator()
@@ -102,8 +107,18 @@ def test_that_using_summary_observations_without_eclbase_shows_user_error():
             {
                 "OBS_CONFIG": (
                     "obsconf",
-                    "SUMMARY_OBSERVATION FOPR_1"
-                    " { KEY=FOPR; VALUE=1; ERROR=1; DATE=2023-03-15; };",
+                    [
+                        (
+                            "SUMMARY",
+                            "FOPR_1",
+                            {
+                                "KEY": "FOPR",
+                                "VALUE": "1",
+                                "ERROR": "1",
+                                "DATE": "2023-03-15",
+                            },
+                        )
+                    ],
                 )
             }
         )
@@ -440,15 +455,18 @@ def test_that_loading_summary_obs_with_days_is_within_tolerance(
                     "ECLBASE": "ECLIPSE_CASE",
                     "OBS_CONFIG": (
                         "obsconf",
-                        f"""
-                        SUMMARY_OBSERVATION FOPR_1
-                        {{
-                        VALUE   = 0.1;
-                        ERROR   = 0.05;
-                        {time_unit} = {time_delta};
-                        KEY     = FOPR;
-                        }};
-                        """,
+                        [
+                            (
+                                "SUMMARY",
+                                "FOPR_1",
+                                {
+                                    "VALUE": "0.1",
+                                    "ERROR": "0.05",
+                                    time_unit: time_delta,
+                                    "KEY": "FOPR",
+                                },
+                            )
+                        ],
                     ),
                     **time_map_statement,
                 }
@@ -472,15 +490,18 @@ def test_that_having_observations_on_starting_date_errors(tmpdir):
                     "REFCASE": "ECLIPSE_CASE",
                     "OBS_CONFIG": (
                         "obsconf",
-                        f"""
-                            SUMMARY_OBSERVATION FOPR_1
-                            {{
-                            VALUE   = 0.1;
-                            ERROR   = 0.05;
-                            DATE    = {date.isoformat()};
-                            KEY     = FOPR;
-                            }};
-                            """,
+                        [
+                            (
+                                "SUMMARY",
+                                "FOPR_1",
+                                {
+                                    "VALUE": "0.1",
+                                    "ERROR": "0.05",
+                                    "DATE": date.isoformat(),
+                                    "KEY": "FOPR",
+                                },
+                            )
+                        ],
                     ),
                 }
             )
@@ -536,22 +557,26 @@ def test_that_out_of_bounds_segments_are_truncated(tmpdir, start, stop, message)
                     "REFCASE": "ECLIPSE_CASE",
                     "OBS_CONFIG": (
                         "obsconf",
-                        f"""
-                        HISTORY_OBSERVATION FOPR
-                        {{
-                           ERROR       = 0.20;
-                           ERROR_MODE  = RELMIN;
-                           ERROR_MIN   = 100;
-
-                           SEGMENT FIRST_YEAR
-                           {{
-                              START = {start};
-                              STOP  = {stop};
-                              ERROR = 0.50;
-                              ERROR_MODE = REL;
-                           }};
-                        }};
-                        """,
+                        [
+                            (
+                                "HISTORY",
+                                "FOPR",
+                                {
+                                    "ERROR": "0.20",
+                                    "ERROR_MODE": "RELMIN",
+                                    "ERROR_MIN": "100",
+                                    "SEGMENT": (
+                                        "FIRST_YEAR",
+                                        {
+                                            "START": start,
+                                            "STOP": stop,
+                                            "ERROR": "0.50",
+                                            "ERROR_MODE": "REL",
+                                        },
+                                    ),
+                                },
+                            )
+                        ],
                     ),
                 }
             )

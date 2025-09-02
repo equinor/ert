@@ -1632,15 +1632,17 @@ def test_no_timemap_or_refcase_provides_clear_error():
                 "GEN_DATA": [["GD", {"RESULT_FILE": "%d", "REPORT_STEPS": "1"}]],
                 "OBS_CONFIG": (
                     "obs_config",
-                    """
-                    GENERAL_OBSERVATION GDO {
-                       DATA       = GD;
-                       INDEX_LIST = 0;
-                       DATE       = 2015-06-13;
-                       VALUE      = 0.0;
-                       ERROR      = 0.1;
-                    };
-                    """,
+                    (
+                        "GENERAL",
+                        "GDO",
+                        {
+                            "DATA": "GD",
+                            "INDEX_LIST": "0",
+                            "DATE": "2015-06-13",
+                            "VALUE": "0.0",
+                            "ERROR": "0.1",
+                        },
+                    ),
                 ),
             }
         )
@@ -1653,27 +1655,24 @@ def test_that_multiple_errors_are_shown_when_validating_observation_config():
                 "GEN_DATA": [["GD", {"RESULT_FILE": "%d", "REPORT_STEPS": "1"}]],
                 "OBS_CONFIG": (
                     "obs_config",
-                    """
-                    SUMMARY_OBSERVATION SUM1
-                    {
-                        VALUE   = 0.7;
-                        ERROR   = 0.07;
-                        DATE    = 2010-12-26;
-                    };
-
-                    SUMMARY_OBSERVATION SUM2
-                    {
-                        ERROR   = 0.05;
-                        DATE    = 2011-12-21;
-                        KEY     = WOPR:OP1;
-                    };
-                    """,
+                    [
+                        (
+                            "SUMMARY",
+                            "SUM1",
+                            {"VALUE": "0.7", "ERROR": "0.07", "DATE": "2010-12-26"},
+                        ),
+                        (
+                            "SUMMARY",
+                            "SUM2",
+                            {"ERROR": "0.05", "DATE": "2011-12-21", "KEY": "WOPR:OP1"},
+                        ),
+                    ],
                 ),
             }
         )
     expected_errors = [
-        'Line 2 (Column 41-45): Missing item "KEY" in SUM1',
-        'Line 9 (Column 41-45): Missing item "VALUE" in SUM2',
+        'Missing item "KEY" in SUM1',
+        'Missing item "VALUE" in SUM2',
     ]
 
     for error in expected_errors:
