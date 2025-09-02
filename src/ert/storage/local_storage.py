@@ -12,7 +12,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from textwrap import dedent
 from types import TracebackType
-from typing import Any, cast
+from typing import cast
 from uuid import UUID, uuid4
 
 import polars as pl
@@ -23,6 +23,7 @@ from pydantic import BaseModel, Field
 from ert.config import ErtConfig, ParameterConfig, ResponseConfig
 from ert.shared import __version__
 
+from . import SimulationArguments
 from .local_ensemble import LocalEnsemble
 from .local_experiment import DictEncodedObservations, LocalExperiment
 from .mode import BaseMode, Mode, require_write
@@ -311,7 +312,7 @@ class LocalStorage(BaseMode):
         observations: dict[str, DictEncodedObservations]
         | dict[str, pl.DataFrame]
         | None = None,
-        simulation_arguments: dict[Any, Any] | None = None,
+        simulation_arguments: SimulationArguments | None = None,
         name: str | None = None,
         templates: list[tuple[str, str]] | None = None,
     ) -> LocalExperiment:

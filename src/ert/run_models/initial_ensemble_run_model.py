@@ -21,6 +21,7 @@ from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.run_arg import create_run_arguments
 from ert.run_models.run_model import RunModel
 from ert.sample_prior import sample_prior
+from ert.storage import SimulationArguments
 from ert.storage.local_ensemble import LocalEnsemble
 from ert.storage.local_experiment import DictEncodedObservations
 
@@ -51,10 +52,10 @@ class InitialEnsembleRunModel(RunModel, ABC):
     def _sample_and_evaluate_ensemble(
         self,
         evaluator_server_config: EvaluatorServerConfig,
-        simulation_arguments: dict[str, str] | None,
         ensemble_name: str,
         rerun_failed_realizations: bool = False,
         ensemble_storage: LocalEnsemble | None = None,
+        simulation_arguments: SimulationArguments | None = None,
     ) -> LocalEnsemble:
         parameters_config, design_matrix, design_matrix_group = (
             self._merge_parameters_from_design_matrix(

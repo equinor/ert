@@ -96,6 +96,11 @@ class DictEncodedObservations(BaseModel):
         )
 
 
+class SimulationArguments(BaseModel):
+    weights: str | None = None
+    time_generated: str = str(datetime.now())
+
+
 class LocalExperiment(BaseMode):
     """
     Represents an experiment within the local storage system of ERT.
@@ -145,7 +150,7 @@ class LocalExperiment(BaseMode):
         parameters: list[ParameterConfig] | None = None,
         responses: list[ResponseConfig] | None = None,
         observations: dict[str, DictEncodedObservations] | None = None,
-        simulation_arguments: dict[Any, Any] | None = None,
+        simulation_arguments: SimulationArguments | None = None,
         name: str | None = None,
         templates: list[tuple[str, str]] | None = None,
     ) -> LocalExperiment:
@@ -180,6 +185,8 @@ class LocalExperiment(BaseMode):
         """
         if name is None:
             name = datetime.today().isoformat()
+        if simulation_arguments is None:
+            simulation_arguments = SimulationArguments()
 
         (path / "index.json").write_text(
             _Index(id=uuid, name=name).model_dump_json(indent=2)
@@ -229,10 +236,12 @@ class LocalExperiment(BaseMode):
                     output_path / f"{response_type}", dataset.to_polars()
                 )
 
-        simulation_data = simulation_arguments or {}
         storage._write_transaction(
             path / cls._metadata_file,
-            json.dumps(simulation_data, cls=ContextBoolEncoder).encode("utf-8"),
+            json.dumps(
+                simulation_arguments.model_dump(exclude_none=True),
+                cls=ContextBoolEncoder,
+            ).encode("utf-8"),
         )
 
         return cls(storage, path, Mode.WRITE)

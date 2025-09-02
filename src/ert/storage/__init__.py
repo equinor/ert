@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 
 from .local_ensemble import LocalEnsemble, load_realization_parameters_and_responses
-from .local_experiment import LocalExperiment
+from .local_experiment import LocalExperiment, SimulationArguments
 from .local_storage import LocalStorage, local_storage_set_ert_config
 from .mode import Mode, ModeLiteral
 from .realization_storage_state import RealizationStorageState
@@ -48,6 +48,7 @@ __all__ = [
     "Experiment",
     "Mode",
     "RealizationStorageState",
+    "SimulationArguments",
     "Storage",
     "load_realization_parameters_and_responses",
     "local_storage_set_ert_config",

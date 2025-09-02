@@ -37,7 +37,6 @@ class EnsembleSmoother(UpdateRunModel, InitialEnsembleRunModel):
 
         prior = self._sample_and_evaluate_ensemble(
             evaluator_server_config,
-            None,
             self.target_ensemble % 0,
         )
         posterior = self.update(prior, self.target_ensemble % 1)

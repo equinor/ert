@@ -10,7 +10,7 @@ from pydantic import PrivateAttr
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.initial_ensemble_run_model import InitialEnsembleRunModel
 from ert.run_models.update_run_model import UpdateRunModel
-from ert.storage import Ensemble
+from ert.storage import Ensemble, SimulationArguments
 from ert.trace import tracer
 
 from ..analysis import smoother_update
@@ -88,11 +88,10 @@ class MultipleDataAssimilation(UpdateRunModel, InitialEnsembleRunModel):
             self.run_workflows(
                 fixtures=PreExperimentFixtures(random_seed=self.random_seed),
             )
-            sim_args = {"weights": self.weights}
             prior = self._sample_and_evaluate_ensemble(
                 evaluator_server_config,
-                sim_args,
                 self.target_ensemble % 0,
+                simulation_arguments=SimulationArguments(weights=self.weights),
             )
 
         enumerated_weights: list[tuple[int, float]] = list(
