@@ -236,45 +236,40 @@ def test_that_first_three_parameters_sampled_snapshot(tmpdir, storage):
         (
             "MY_KEYWORD <MY_KEYWORD>\nMY_SECOND_KEYWORD <MY_SECOND_KEYWORD>",
             [
-                GenKwConfig.create(
+                GenKwConfig(
                     name="MY_KEYWORD",
-                    dist_name="NORMAL",
-                    dist_params=[0, 1],
                     group="KW_NAME",
+                    distribution={"name": "normal", "mean": 0, "std": 1},
                 ),
-                GenKwConfig.create(
+                GenKwConfig(
                     name="MY_SECOND_KEYWORD",
-                    dist_name="NORMAL",
-                    dist_params=[0, 1],
                     group="KW_NAME",
+                    distribution={"name": "normal", "mean": 0, "std": 1},
                 ),
             ],
         ),
         (
             "MY_KEYWORD <MY_KEYWORD>",
             [
-                GenKwConfig.create(
+                GenKwConfig(
                     name="MY_KEYWORD",
-                    dist_name="NORMAL",
-                    dist_params=[0, 1],
                     group="KW_NAME",
+                    distribution={"name": "normal", "mean": 0, "std": 1},
                 ),
             ],
         ),
         (
             "MY_FIRST_KEYWORD <MY_FIRST_KEYWORD>\nMY_KEYWORD <MY_KEYWORD>",
             [
-                GenKwConfig.create(
+                GenKwConfig(
                     name="MY_FIRST_KEYWORD",
-                    dist_name="NORMAL",
-                    dist_params=[0, 1],
                     group="KW_NAME",
+                    distribution={"name": "normal", "mean": 0, "std": 1},
                 ),
-                GenKwConfig.create(
+                GenKwConfig(
                     name="MY_KEYWORD",
-                    dist_name="NORMAL",
-                    dist_params=[0, 1],
                     group="KW_NAME",
+                    distribution={"name": "normal", "mean": 0, "std": 1},
                 ),
             ],
         ),
@@ -449,13 +444,14 @@ def test_gen_kw(storage, tmpdir, config_str, expected, extra_files, expectation)
         (
             [False, False],
             pytest.raises(
-                KeyError, match="No KW_NAME dataset in storage for ensemble default"
+                KeyError, match="No SCALAR dataset in storage for ensemble default"
             ),
         ),
         (
             [False, True],
             pytest.raises(
-                IndexError, match=r"No matching realizations \[0\] found for KW_NAME"
+                IndexError,
+                match=r"No matching realizations \[0\] found for \['MY_KEYWORD'\]",
             ),
         ),
     ],
