@@ -117,7 +117,9 @@ def parse_content(content: str, filename: str) -> ConfContent:
     )
 
 
-ObservationBody = dict[FileContextToken, Any]
+ObservationBody = dict[
+    FileContextToken | tuple[FileContextToken, FileContextToken], Any
+]
 ObservationDeclaration = tuple[ObservationType, FileContextToken, ObservationBody]
 
 
@@ -214,7 +216,7 @@ class TreeToObservations(
     @staticmethod
     @no_type_check
     def segment(tree):
-        return ("SEGMENT", tuple(tree))
+        return (("SEGMENT", tree[0]), tree[1])
 
     object = dict
     pair = tuple
@@ -300,8 +302,10 @@ def _validate_history_values(
                 error_min = validate_positive_float(value, key)
             case "ERROR_MODE":
                 error_mode = validate_error_mode(value)
-            case "SEGMENT":
-                segment.append((value[0], _validate_segment_dict(key, value[1])))
+            case ("SEGMENT", segment_name):
+                segment.append(
+                    (segment_name, _validate_segment_dict(segment_name, value))
+                )
             case _:
                 raise _unknown_key_error(str(key), name_token)
 
@@ -359,7 +363,9 @@ def _validate_summary_values(
     )
 
 
-def _validate_segment_dict(name_token: str, inp: ObservationBody) -> Segment:
+def _validate_segment_dict(
+    name_token: str, inp: dict[FileContextToken, Any]
+) -> Segment:
     start = None
     stop = None
     error_mode: ErrorModes = "RELMIN"
@@ -510,7 +516,7 @@ def _unknown_key_error(key: str, name: str) -> ObservationConfigError:
 
 
 def _unknown_declaration_error(
-    decl: SimpleHistoryDeclaration | tuple[ObservationType, FileContextToken, Any],
+    decl: SimpleHistoryDeclaration | ObservationDeclaration,
 ) -> ObservationConfigError:
     return ObservationConfigError.with_context(
         f"Unexpected declaration in observations {decl}", decl[1]
