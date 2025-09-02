@@ -2,6 +2,7 @@ import logging
 import ssl
 import sys
 import threading
+import warnings
 from pathlib import Path
 
 import pytest
@@ -62,7 +63,18 @@ def client_server_mock() -> tuple[FastAPI, threading.Thread, EverestClient]:
             else:
                 return True
 
-        wait_until(ping_server, timeout=timeout, interval=sleep_between_retries)
+        # These warnings emitted by uvicorn, which is still using legacy
+        # websockets. This is a known issue, and does not cause problems in the
+        # main code. (see: https://github.com/encode/uvicorn/discussions/2476)
+        # Hence we ignore them in the tests. Potentially, this may be
+        # removed when this is resolved within uvicorn.
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message="websockets.legacy is deprecated")
+            warnings.filterwarnings(
+                "ignore",
+                message="websockets.server.WebSocketServerProtocol is deprecated",
+            )
+            wait_until(ping_server, timeout=timeout, interval=sleep_between_retries)
 
     yield server_app, server_thread, everest_client, wait_until_alive
 
