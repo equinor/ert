@@ -11,17 +11,21 @@ import polars as pl
 from ert.summary_key_type import history_key
 from ert.validation import rangestring_to_list
 
-from .gen_data_config import GenDataConfig
-from .general_observation import GenObservation
-from .observation_vector import ObsVector
-from .parsing import ConfigWarning, HistorySource, ObservationType
-from .parsing.observations_parser import (
+from ._observations_input import (
     DateValues,
     ErrorValues,
     GenObsValues,
     HistoryValues,
-    ObservationConfigError,
     SummaryValues,
+)
+from .gen_data_config import GenDataConfig
+from .general_observation import GenObservation
+from .observation_vector import ObsVector
+from .parsing import (
+    ConfigWarning,
+    HistorySource,
+    ObservationConfigError,
+    ObservationType,
 )
 from .summary_observation import SummaryObservation
 

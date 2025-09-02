@@ -75,6 +75,8 @@ def stop_on_fail_keyword() -> SchemaItem:
 
 class WorkflowJobSchemaDict(SchemaItemDict):
     def check_required(self, config_dict: ConfigDict, filename: str) -> None:
+        super().check_required(config_dict, filename)
+
         if "MIN_ARG" in config_dict and "MAX_ARG" in config_dict:
             min_arg: int = config_dict["MIN_ARG"]
             max_arg: int = config_dict["MAX_ARG"]
