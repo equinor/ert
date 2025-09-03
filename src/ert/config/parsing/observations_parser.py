@@ -1,4 +1,4 @@
-from enum import Enum, auto
+from enum import StrEnum
 from typing import (
     Any,
     Literal,
@@ -17,20 +17,10 @@ class ObservationConfigError(ConfigValidationError):
     pass
 
 
-class ObservationType(Enum):
-    HISTORY = auto()
-    SUMMARY = auto()
-    GENERAL = auto()
-
-    @classmethod
-    def from_rule(cls, rule: str) -> "ObservationType":
-        if rule == "summary":
-            return cls.SUMMARY
-        if rule == "general":
-            return cls.GENERAL
-        if rule == "history":
-            return cls.HISTORY
-        raise ValueError(f"Unexpected observation type {rule}")
+class ObservationType(StrEnum):
+    HISTORY = "HISTORY_OBSERVATION"
+    SUMMARY = "SUMMARY_OBSERVATION"
+    GENERAL = "GENERAL_OBSERVATION"
 
 
 SimpleHistoryStatement = tuple[Literal[ObservationType.HISTORY], FileContextToken]
@@ -93,9 +83,9 @@ observations_parser = Lark(
     r"""
     start: observation*
     ?observation: type STRING object? ";"
-    type: "HISTORY_OBSERVATION" -> history
-        | "SUMMARY_OBSERVATION" -> summary
-        | "GENERAL_OBSERVATION" -> general
+    type: "HISTORY_OBSERVATION"
+        | "SUMMARY_OBSERVATION"
+        | "GENERAL_OBSERVATION"
     ?value: object
           | STRING
 
@@ -126,7 +116,7 @@ class TreeToObservations(
     @staticmethod
     @no_type_check
     def observation(tree):
-        return (ObservationType.from_rule(tree[0].data), *tree[1:])
+        return (ObservationType(tree[0]), *tree[1:])
 
     @staticmethod
     @no_type_check
