@@ -9,7 +9,14 @@ from .forward_model_schema import init_forward_model_schema
 from .history_source import HistorySource
 from .hook_runtime import HookRuntime
 from .lark_parser import parse, parse_contents, read_file
-from .observations_parser import ObservationType, parse_observations
+from .observations_parser import (
+    ObservationBody,
+    ObservationConfigError,
+    ObservationDeclaration,
+    ObservationType,
+    SimpleHistoryDeclaration,
+    parse_observations,
+)
 from .queue_system import QueueSystem, QueueSystemWithGeneric
 from .schema_item_type import SchemaItemType
 from .workflow_job_keywords import WorkflowJobKeys
@@ -28,10 +35,15 @@ __all__ = [
     "ForwardModelStepKeys",
     "HistorySource",
     "HookRuntime",
+    "ObservationBody",
+    "ObservationConfigError",
+    "ObservationDeclaration",
+    "ObservationType",
     "ObservationType",
     "QueueSystem",
     "QueueSystemWithGeneric",
     "SchemaItemType",
+    "SimpleHistoryDeclaration",
     "WarningInfo",
     "WorkflowJobKeys",
     "init_forward_model_schema",

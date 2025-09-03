@@ -22,6 +22,13 @@ from ert.plugins import ErtPluginManager, fixtures_per_hook
 from ert.substitutions import Substitutions
 
 from ._design_matrix_validator import DesignMatrixValidator
+from ._observation_declaration import (
+    ConfContent,
+    GenObsValues,
+    HistoryValues,
+    SummaryValues,
+    make_observation_declarations,
+)
 from .analysis_config import AnalysisConfig
 from .design_matrix import DESIGN_MATRIX_GROUP
 from .ensemble_config import EnsembleConfig
@@ -47,6 +54,7 @@ from .parsing import (
     ForwardModelStepKeys,
     HistorySource,
     HookRuntime,
+    ObservationConfigError,
     QueueSystemWithGeneric,
     init_forward_model_schema,
     init_site_config_schema,
@@ -54,13 +62,6 @@ from .parsing import (
     parse_contents,
     parse_observations,
     read_file,
-)
-from .parsing.observations_parser import (
-    ConfContent,
-    GenObsValues,
-    HistoryValues,
-    ObservationConfigError,
-    SummaryValues,
 )
 from .queue_config import QueueConfig
 from .workflow import Workflow
@@ -957,8 +958,9 @@ class ErtConfig(BaseModel):
         try:
             if obs_config_args:
                 obs_config_file, obs_config_file_contents = obs_config_args
-                obs_configs = parse_observations(
-                    obs_config_file_contents, obs_config_file
+                obs_configs = make_observation_declarations(
+                    os.path.dirname(obs_config_file),
+                    parse_observations(obs_config_file_contents, obs_config_file),
                 )
                 if not obs_configs:
                     raise ObservationConfigError.with_context(
