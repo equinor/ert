@@ -286,7 +286,11 @@ and environment variables are exposed in the form 'os.NAME', for example:
     def validate_scales(self) -> Self:
         errors = []
         if self.optimization.auto_scale:
-            for key in ("objective_functions", "output_constraints"):
+            for key in (
+                "objective_functions",
+                "input_constraints",
+                "output_constraints",
+            ):
                 if any(item.scale is not None for item in getattr(self, key)):
                     errors.append(
                         "The auto_scale option in the optimization section and the "
