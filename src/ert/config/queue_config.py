@@ -111,7 +111,7 @@ class QueueOptions(
                 name
             ] == generic_option.default:
                 if name == "realization_memory" and isinstance(generic_value, str):
-                    generic_value = parse_realization_memory_str(generic_value)
+                    generic_value = parse_string_to_bytes(generic_value)
                 try:
                     setattr(self, name, generic_value)
                 except pydantic.ValidationError as exception:
@@ -391,15 +391,19 @@ class QueueConfig(BaseModel):
         return self.queue_options.submit_sleep
 
 
-def parse_realization_memory_str(realization_memory_str: str) -> int:
-    if "-" in realization_memory_str:
-        raise ConfigValidationError.with_context(
-            f"Negative memory does not make sense in {realization_memory_str}",
-            realization_memory_str,
-        )
+def parse_string_to_bytes(input_str: str) -> int:
+    """
+    Convert a string (e.g., "1GB", "512MB") to bytes.
+    """
 
-    if realization_memory_str.isdigit():
-        return int(realization_memory_str)
+    if input_str.strip().startswith("-"):
+        raise ConfigValidationError.with_context(
+            f"Negative memory does not make sense in {input_str}",
+            input_str,
+        )
+    if input_str.isdigit():
+        return int(input_str)
+
     multipliers = {
         "b": 1,
         "k": 1024,
@@ -408,13 +412,28 @@ def parse_realization_memory_str(realization_memory_str: str) -> int:
         "t": 1024**4,
         "p": 1024**5,
     }
-    match = re.search(r"(\d+)\s*(\w)", realization_memory_str)
-    if match is None or match.group(2).lower() not in multipliers:
+
+    # Match the pattern: number followed by an optional unit (e.g., "1GB", "512MB")
+    matches = re.findall(r"(\d+)\s*([bkmgtpBKMGTP]*)", input_str.strip())
+    if not matches:
         raise ConfigValidationError.with_context(
-            f"Could not understand byte unit in {realization_memory_str}",
-            realization_memory_str,
+            f"Invalid memory string: {input_str}", input_str
         )
-    return int(match.group(1)) * multipliers[match.group(2).lower()]
+    if len(matches) > 1:
+        raise ConfigValidationError.with_context(
+            f"Invalid memory string: {input_str}", input_str
+        )
+
+    value, unit = matches[0]
+    unit = unit.lower()
+    if not unit:
+        raise ConfigValidationError.with_context("Unknown memory unit", input_str)
+    if unit and unit[0] not in multipliers:
+        raise ConfigValidationError.with_context(
+            f"Unknown memory unit: {unit}", input_str
+        )
+
+    return int(value) * multipliers.get(unit[0], 1)  # Default to bytes if no unit
 
 
 def _throw_error_or_warning(
