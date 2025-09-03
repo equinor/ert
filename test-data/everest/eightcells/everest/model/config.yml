@@ -9,7 +9,6 @@ controls:
   -
     name: well_rate
     type: generic_control
-    perturbation_magnitude: 150
     variables:
       -
         name: OP1
