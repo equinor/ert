@@ -150,12 +150,9 @@ class EverestRunModel(RunModel):
     _eval_server_cfg: EvaluatorServerConfig | None = PrivateAttr(default=None)
     _batch_id: int = PrivateAttr(default=0)
     _ever_storage: EverestStorage | None = PrivateAttr(default=None)
-    _opt_callback: OptimizerCallback | None = PrivateAttr(default=None)
 
     def __init__(self, **data: Any) -> None:
-        opt_callback = data.pop("opt_callback", None)
         super().__init__(**data)
-        self._opt_callback = opt_callback
 
     @classmethod
     def create(
@@ -419,16 +416,6 @@ class EverestRunModel(RunModel):
             f"Everest experiment finished with exit code {self._exit_code.name}"
         )
 
-    def _check_for_abort(self) -> bool:
-        logger.debug("Optimization callback called")
-        if (
-            self._opt_callback is not None
-            and self._opt_callback() == "stop_optimization"
-        ):
-            logger.info("User abort requested.")
-            return True
-        return False
-
     def _create_optimizer(self) -> tuple[BasicOptimizer, list[float]]:
         enopt_config, initial_guesses = everest2ropt(
             self.controls,
@@ -465,9 +452,6 @@ class EverestRunModel(RunModel):
                 "If the everest installation is correct, please report this as a bug."
             )
             raise ValueError(msg) from exc
-
-        # Before each batch evaluation we check if we should abort:
-        optimizer.set_abort_callback(self._check_for_abort)
 
         return optimizer, initial_guesses
 
