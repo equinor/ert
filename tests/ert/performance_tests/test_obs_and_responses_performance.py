@@ -54,22 +54,9 @@ def create_experiment_args(
     num_summary_timesteps: int,
     num_summary_obs: int,
 ) -> ExperimentInfo:
-    # gen_kw_config = GenKwConfig(
-    #     name="all_my_parameters_live_here",
-    #     forward_init=False,
-    #     update=True,
-    #     transform_function_definitions=[
-    #         TransformFunctionDefinition(
-    #             name=f"param_{i}",
-    #             param_name="NORMAL",
-    #             values=[10, 0.1],
-    #         )
-    #         for i in range(num_parameters)
-    #     ],
-    # )
     gen_kw_configs = [
         GenKwConfig(
-            name="param_{i}",
+            name=f"param_{i}",
             group="all_my_parameters_live_here",
             distribution={"name": "normal", "mean": 10, "std": 0.1},
         )
@@ -506,7 +493,7 @@ def setup_es_benchmark(tmp_path, request):
             alias,
             prior,
             posterior,
-            info.gen_kw_config.name,
+            [cfg.name for cfg in info.gen_kw_configs],
             expected_performance,
         )
 
