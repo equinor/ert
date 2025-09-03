@@ -29,10 +29,6 @@ class ErrorInfo:
         self._attach_to_context(self._take(context, "token"))
         return self
 
-    def set_context_keyword(self, context: Any) -> Self:
-        self._attach_to_context(self._take(context, "keyword_token"))
-        return self
-
     def set_context_list(self, context_list: Sequence[Any]) -> Self:
         parsed_context_list = []
         for context in context_list:

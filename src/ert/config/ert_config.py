@@ -1307,7 +1307,7 @@ class ErtConfig(BaseModel):
                     message="When using SUMMARY keyword, "
                     "the config must also specify ECLBASE",
                     filename=config_file,
-                ).set_context_keyword(config_dict[ConfigKeys.SUMMARY][0][0])
+                ).set_context(config_dict[ConfigKeys.SUMMARY][0])
             )
         return errors
 
