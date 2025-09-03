@@ -111,7 +111,7 @@ def parse(filename: str) -> ConfContent:
         )
 
 
-def parse_content(content: str, filename: str) -> ConfContent:
+def parse_observations(content: str, filename: str) -> ConfContent:
     return _validate_conf_content(
         os.path.dirname(filename), _parse_content_list(content, filename)
     )
