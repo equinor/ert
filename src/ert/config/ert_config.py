@@ -52,6 +52,7 @@ from .parsing import (
     init_site_config_schema,
     init_user_config_schema,
     parse_contents,
+    parse_observations,
     read_file,
 )
 from .parsing.observations_parser import (
@@ -60,9 +61,6 @@ from .parsing.observations_parser import (
     HistoryValues,
     ObservationConfigError,
     SummaryValues,
-)
-from .parsing.observations_parser import (
-    parse_content as parse_observations,
 )
 from .queue_config import QueueConfig
 from .workflow import Workflow

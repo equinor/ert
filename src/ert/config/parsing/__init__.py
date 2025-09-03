@@ -9,7 +9,7 @@ from .forward_model_schema import init_forward_model_schema
 from .history_source import HistorySource
 from .hook_runtime import HookRuntime
 from .lark_parser import parse, parse_contents, read_file
-from .observations_parser import ObservationType
+from .observations_parser import ObservationType, parse_observations
 from .queue_system import QueueSystem, QueueSystemWithGeneric
 from .schema_item_type import SchemaItemType
 from .workflow_job_keywords import WorkflowJobKeys
@@ -41,5 +41,6 @@ __all__ = [
     "init_workflow_schema",
     "parse",
     "parse_contents",
+    "parse_observations",
     "read_file",
 ]

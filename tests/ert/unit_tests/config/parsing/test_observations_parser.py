@@ -5,6 +5,7 @@ import hypothesis.extra.lark as stlark
 import pytest
 from hypothesis import given
 
+from ert.config.parsing import parse_observations
 from ert.config.parsing.observations_parser import (
     GenObsValues,
     HistoryValues,
@@ -15,7 +16,6 @@ from ert.config.parsing.observations_parser import (
     _parse_content_list,
     _validate_conf_content,
     observations_parser,
-    parse_content,
 )
 
 observation_contents = stlark.from_lark(observations_parser)
@@ -234,7 +234,7 @@ def test_that_common_observation_error_validation_is_handled(
         else "RESTART = 1; VALUE=1.0; KEY = FOPR;"
     )
     with pytest.raises(ObservationConfigError, match=match):
-        parse_content(
+        parse_observations(
             f"""
                         {obs_type}  FOPR
                         {{
@@ -431,12 +431,12 @@ def test_that_common_observation_error_validation_is_handled(
 )
 def test_that_summary_observation_validation_is_handled(obs_content, match):
     with pytest.raises(ObservationConfigError, match=match):
-        parse_content(obs_content, filename="")
+        parse_observations(obs_content, filename="")
 
 
 def test_that_general_observation_without_error_is_invalid():
     with pytest.raises(ObservationConfigError, match="ERROR must also be given"):
-        parse_content(
+        parse_observations(
             """
             GENERAL_OBSERVATION  obs
             {
@@ -451,7 +451,7 @@ def test_that_general_observation_without_error_is_invalid():
 
 def test_that_general_observation_without_data_is_invalid():
     with pytest.raises(ObservationConfigError, match='Missing item "DATA"'):
-        parse_content(
+        parse_observations(
             """
             GENERAL_OBSERVATION  obs
             {
@@ -471,7 +471,7 @@ def test_that_general_observation_without_data_is_invalid():
 )
 def test_that_unknown_key_is_handled(observation_type):
     with pytest.raises(ObservationConfigError, match="Unknown SMERROR"):
-        parse_content(f"{observation_type} FOPR {{SMERROR=0.1;DATA=key;}};", "")
+        parse_observations(f"{observation_type} FOPR {{SMERROR=0.1;DATA=key;}};", "")
 
 
 def test_unexpected_character_handling():
@@ -480,7 +480,7 @@ def test_unexpected_character_handling():
         match=r"Did not expect character: \$ \(on line 4: *ERROR *\$"
         r" 0.20;\). Expected one of {'EQUAL'}",
     ) as err_record:
-        parse_content(
+        parse_observations(
             """
             GENERAL_OBSERVATION GEN_OBS
             {
@@ -498,7 +498,7 @@ def test_unexpected_character_handling():
 
 
 def test_that_multiple_segments_are_collected():
-    observations = parse_content(
+    observations = parse_observations(
         """
   HISTORY_OBSERVATION GWIR:FIELD
   {
