@@ -33,16 +33,16 @@ class ObservationType(Enum):
         raise ValueError(f"Unexpected observation type {rule}")
 
 
-SimpleHistoryDeclaration = tuple[Literal[ObservationType.HISTORY], FileContextToken]
+SimpleHistoryStatement = tuple[Literal[ObservationType.HISTORY], FileContextToken]
 
 
-ObservationBody = dict[str | tuple[FileContextToken, FileContextToken], Any]
-ObservationDeclaration = tuple[ObservationType, str, ObservationBody]
+ObservationBody = dict[str | tuple[str, str], Any]
+ObservationStatement = tuple[ObservationType, str, ObservationBody]
 
 
 def parse_observations(
     content: str, filename: str
-) -> list[SimpleHistoryDeclaration | ObservationDeclaration]:
+) -> list[SimpleHistoryStatement | ObservationStatement]:
     try:
         return (FileContextTransformer(filename) * TreeToObservations()).transform(
             observations_parser.parse(content)
@@ -119,9 +119,7 @@ observations_parser = Lark(
 
 
 class TreeToObservations(
-    Transformer[
-        FileContextToken, list[SimpleHistoryDeclaration | ObservationDeclaration]
-    ]
+    Transformer[FileContextToken, list[SimpleHistoryStatement | ObservationStatement]]
 ):
     start = list
 

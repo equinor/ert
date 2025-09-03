@@ -12,9 +12,9 @@ from .lark_parser import parse, parse_contents, read_file
 from .observations_parser import (
     ObservationBody,
     ObservationConfigError,
-    ObservationDeclaration,
+    ObservationStatement,
     ObservationType,
-    SimpleHistoryDeclaration,
+    SimpleHistoryStatement,
     parse_observations,
 )
 from .queue_system import QueueSystem, QueueSystemWithGeneric
@@ -37,13 +37,13 @@ __all__ = [
     "HookRuntime",
     "ObservationBody",
     "ObservationConfigError",
-    "ObservationDeclaration",
+    "ObservationStatement",
     "ObservationType",
     "ObservationType",
     "QueueSystem",
     "QueueSystemWithGeneric",
     "SchemaItemType",
-    "SimpleHistoryDeclaration",
+    "SimpleHistoryStatement",
     "WarningInfo",
     "WorkflowJobKeys",
     "init_forward_model_schema",
