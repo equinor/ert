@@ -87,16 +87,16 @@ class SchemaItem:
         """
 
         if not len(self.type_map) > index:
-            return ContextString(str(token), token, keyword)
+            return ContextString(str(token), token)
         val_type = self.type_map[index]
         match val_type:
             case None:
-                return ContextString(str(token), token, keyword)
+                return ContextString(str(token), token)
             case SchemaItemType.BOOL:
                 if token.lower() == "true":
-                    return ContextBool(True, token, keyword)
+                    return ContextBool(True, token)
                 elif token.lower() == "false":
-                    return ContextBool(False, token, keyword)
+                    return ContextBool(False, token)
                 else:
                     raise ConfigValidationError.with_context(
                         f"{self.kw!r} must have a boolean "
@@ -113,7 +113,7 @@ class SchemaItem:
                         token,
                     ) from e
                 if val > 0:
-                    return ContextInt(val, token, keyword)
+                    return ContextInt(val, token)
                 else:
                     raise ConfigValidationError.with_context(
                         f"{self.kw!r} must have a positive integer "
@@ -122,7 +122,7 @@ class SchemaItem:
                     )
             case SchemaItemType.INT:
                 try:
-                    return ContextInt(int(token), token, keyword)
+                    return ContextInt(int(token), token)
                 except ValueError as e:
                     raise ConfigValidationError.with_context(
                         f"{self.kw!r} must have an integer "
@@ -131,7 +131,7 @@ class SchemaItem:
                     ) from e
             case SchemaItemType.FLOAT:
                 try:
-                    return ContextFloat(float(token), token, keyword)
+                    return ContextFloat(float(token), token)
                 except ValueError as e:
                     raise ConfigValidationError.with_context(
                         f"{self.kw!r} must have a number as argument {index + 1!r}",
@@ -146,7 +146,7 @@ class SchemaItem:
                         token,
                     ) from e
                 if fval > 0:
-                    return ContextFloat(fval, token, keyword)
+                    return ContextFloat(fval, token)
                 else:
                     raise ConfigValidationError.with_context(
                         f"{self.kw!r} must have a positive float "

@@ -19,8 +19,6 @@ class ConfigWarning(UserWarning):
     @classmethod
     def deprecation_warn(cls, message: str, context: Any = "") -> None:
         warning = cls.with_context(message, context)
-        if not hasattr(context, "token"):
-            warning.info.set_context_keyword(context)
         warning.info.is_deprecation = True
         cls._formatted_warn(warning)
 

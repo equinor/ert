@@ -85,7 +85,7 @@ class SchemaItemDict(UserDict[str, SchemaItem]):
                             cast(
                                 list[ContextString],
                                 ContextList.with_values(
-                                    token=v.keyword_token,  # type: ignore
+                                    token=kw.token,
                                     values=[v],
                                 ),
                             ),
