@@ -23,6 +23,7 @@ from ert.config.parsing import (
     HistorySource,
     QueueSystem,
     QueueSystemWithGeneric,
+    parse_observations,
 )
 from ert.config.queue_config import (
     LocalQueueOptions,
@@ -331,7 +332,9 @@ class ErtConfigValues:
             ConfigKeys.TIME_MAP: self.time_map,
             ConfigKeys.OBS_CONFIG: (
                 self.obs_config,
-                "\n".join(str(o) for o in self.observations),
+                parse_observations(
+                    "\n".join(str(o) for o in self.observations), config_file
+                ),
             ),
             ConfigKeys.HISTORY_SOURCE: self.history_source,
             ConfigKeys.REFCASE: self.refcase,

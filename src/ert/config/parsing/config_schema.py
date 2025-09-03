@@ -16,6 +16,7 @@ from .config_schema_item import (
 )
 from .history_source import HistorySource
 from .hook_runtime import HookRuntime
+from .observations_parser import parse_observations
 from .queue_system import QueueSystem, QueueSystemWithGeneric
 from .schema_dict import SchemaItemDict
 from .schema_item_type import SchemaItemType
@@ -349,7 +350,9 @@ def init_user_config_schema() -> ConfigSchemaDict:
         forward_model_keyword(),
         data_kw_keyword(),
         define_keyword(),
-        existing_path_inline_keyword(ConfigKeys.OBS_CONFIG),
+        existing_path_inline_keyword(
+            ConfigKeys.OBS_CONFIG, parser=lambda f, c: parse_observations(c, f)
+        ),
         existing_path_inline_keyword(ConfigKeys.TIME_MAP),
         single_arg_keyword(ConfigKeys.GEN_KW_EXPORT_NAME),
         history_source_keyword(),

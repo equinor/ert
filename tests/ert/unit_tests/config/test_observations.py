@@ -59,7 +59,7 @@ def test_that_correct_key_observation_is_loaded(extra_config, expected):
         {
             "ECLBASE": "my_case%d",
             "REFCASE": "MY_REFCASE",
-            "OBS_CONFIG": ("obsconf", "HISTORY_OBSERVATION FOPR;"),
+            "OBS_CONFIG": ("obsconf", [("HISTORY_OBSERVATION", "FOPR")]),
             **extra_config,
         }
     ).enkf_obs
@@ -83,8 +83,13 @@ def test_date_parsing_in_observations(datestring, errors):
         "REFCASE": "MY_REFCASE",
         "OBS_CONFIG": (
             "obsconf",
-            "SUMMARY_OBSERVATION FOPR_1 "
-            f"{{ KEY=FOPR; VALUE=1; ERROR=1; DATE={datestring}; }};",
+            [
+                (
+                    "SUMMARY_OBSERVATION",
+                    "FOPR_1 ",
+                    {"KEY": "FOPR", "VALUE": "1", "ERROR": "1", "DATE": datestring},
+                )
+            ],
         ),
     }
     run_simulator()
@@ -102,8 +107,18 @@ def test_that_using_summary_observations_without_eclbase_shows_user_error():
             {
                 "OBS_CONFIG": (
                     "obsconf",
-                    "SUMMARY_OBSERVATION FOPR_1"
-                    " { KEY=FOPR; VALUE=1; ERROR=1; DATE=2023-03-15; };",
+                    [
+                        (
+                            "SUMMARY_OBSERVATION",
+                            "FOPR_1",
+                            {
+                                "KEY": "FOPR",
+                                "VALUE": "1",
+                                "ERROR": "1",
+                                "DATE": "2023-03-15",
+                            },
+                        )
+                    ],
                 )
             }
         )
@@ -184,7 +199,7 @@ def test_that_having_no_refcase_but_history_observations_causes_exception():
         ErtConfig.from_dict(
             {
                 "ECLBASE": "my_name%d",
-                "OBS_CONFIG": ("obsconf", "HISTORY_OBSERVATION FOPR;"),
+                "OBS_CONFIG": ("obsconf", [("HISTORY_OBSERVATION", "FOPR")]),
             }
         )
 
@@ -203,12 +218,17 @@ def test_that_index_list_is_read(tmpdir):
                 ],
                 "OBS_CONFIG": (
                     "obsconf",
-                    """
-                    GENERAL_OBSERVATION OBS {
-                       DATA       = RES;
-                       INDEX_LIST = 0,2,4,6,8;
-                       OBS_FILE   = obs_data.txt;
-                    };""",
+                    [
+                        (
+                            "GENERAL_OBSERVATION",
+                            "OBS",
+                            {
+                                "DATA": "RES",
+                                "INDEX_LIST": "0,2,4,6,8",
+                                "OBS_FILE": "obs_data.txt",
+                            },
+                        )
+                    ],
                 ),
                 "TIME_MAP": ("tm.txt", "2017-11-09"),
             }
@@ -237,12 +257,17 @@ def test_that_index_file_is_read(tmpdir):
                 ],
                 "OBS_CONFIG": (
                     "obsconf",
-                    """
-                    GENERAL_OBSERVATION OBS {
-                       DATA       = RES;
-                       INDEX_FILE = obs_idx.txt;
-                       OBS_FILE   = obs_data.txt;
-                    };""",
+                    [
+                        (
+                            "GENERAL_OBSERVATION",
+                            "OBS",
+                            {
+                                "DATA": "RES",
+                                "INDEX_FILE": "obs_idx.txt",
+                                "OBS_FILE": "obs_data.txt",
+                            },
+                        )
+                    ],
                 ),
             }
         ).enkf_obs
@@ -258,14 +283,18 @@ def test_that_missing_obs_file_raises_exception():
             {
                 "OBS_CONFIG": (
                     "obsconf",
-                    """
-                    GENERAL_OBSERVATION OBS {
-                       DATA       = RES;
-                       INDEX_LIST = 0,2,4,6,8;
-                       RESTART    = 0;
-                       OBS_FILE   = does_not_exist/at_all;
-                    };
-                    """,
+                    [
+                        (
+                            "GENERAL_OBSERVATION",
+                            "OBS",
+                            {
+                                "DATA": "RES",
+                                "INDEX_LIST": "0,2,4,6,8",
+                                "RESTART": "0",
+                                "OBS_FILE": "does_not_exist/at_all",
+                            },
+                        )
+                    ],
                 )
             }
         )
@@ -281,15 +310,19 @@ def test_that_missing_time_map_raises_exception():
                 "GEN_DATA": [["RES", {"RESULT_FILE": "out"}]],
                 "OBS_CONFIG": (
                     "obsconf",
-                    """
-                    GENERAL_OBSERVATION OBS {
-                       DATA       = RES;
-                       INDEX_LIST = 0;
-                       DATE       = 2017-11-09;
-                       VALUE      = 0.0;
-                       ERROR      = 0.0;
-                    };
-                    """,
+                    [
+                        (
+                            "GENERAL_OBSERVATION",
+                            "OBS",
+                            {
+                                "DATA": "RES",
+                                "INDEX_LIST": "0",
+                                "DATE": "2017-11-09",
+                                "VALUE": "0.0",
+                                "ERROR": "0.0",
+                            },
+                        )
+                    ],
                 ),
             }
         )
@@ -309,13 +342,17 @@ def test_that_badly_formatted_obs_file_shows_informative_error_message(tmpdir):
                     "GEN_DATA": [["RES", {"RESULT_FILE": "out"}]],
                     "OBS_CONFIG": (
                         "obsconf",
-                        """
-                        GENERAL_OBSERVATION OBS {
-                           DATA       = RES;
-                           INDEX_LIST = 0,2,4,6,8;
-                           OBS_FILE   = obs_data.txt;
-                        };
-                        """,
+                        [
+                            (
+                                "GENERAL_OBSERVATION",
+                                "OBS",
+                                {
+                                    "DATA": "RES",
+                                    "INDEX_LIST": "0,2,4,6,8",
+                                    "OBS_FILE": "obs_data.txt",
+                                },
+                            )
+                        ],
                     ),
                 }
             )
@@ -334,15 +371,19 @@ def test_that_giving_both_index_file_and_index_list_raises_an_exception(tmpdir):
                     "GEN_DATA": [["RES", {"RESULT_FILE": "out"}]],
                     "OBS_CONFIG": (
                         "obsconf",
-                        """
-                        GENERAL_OBSERVATION OBS {
-                           DATA       = RES;
-                           INDEX_LIST = 0,2,4,6,8;
-                           INDEX_FILE = obs_idx.txt;
-                           VALUE      = 0.0;
-                           ERROR      = 0.1;
-                        };
-                        """,
+                        [
+                            (
+                                "GENERAL_OBSERVATION",
+                                "OBS",
+                                {
+                                    "DATA": "RES",
+                                    "INDEX_LIST": "0,2,4,6,8",
+                                    "INDEX_FILE": "obs_idx.txt",
+                                    "VALUE": "0.0",
+                                    "ERROR": "0.0",
+                                },
+                            )
+                        ],
                     ),
                 }
             )
@@ -440,15 +481,18 @@ def test_that_loading_summary_obs_with_days_is_within_tolerance(
                     "ECLBASE": "ECLIPSE_CASE",
                     "OBS_CONFIG": (
                         "obsconf",
-                        f"""
-                        SUMMARY_OBSERVATION FOPR_1
-                        {{
-                        VALUE   = 0.1;
-                        ERROR   = 0.05;
-                        {time_unit} = {time_delta};
-                        KEY     = FOPR;
-                        }};
-                        """,
+                        [
+                            (
+                                "SUMMARY_OBSERVATION",
+                                "FOPR_1",
+                                {
+                                    "VALUE": "0.1",
+                                    "ERROR": "0.05",
+                                    time_unit: time_delta,
+                                    "KEY": "FOPR",
+                                },
+                            )
+                        ],
                     ),
                     **time_map_statement,
                 }
@@ -472,15 +516,18 @@ def test_that_having_observations_on_starting_date_errors(tmpdir):
                     "REFCASE": "ECLIPSE_CASE",
                     "OBS_CONFIG": (
                         "obsconf",
-                        f"""
-                            SUMMARY_OBSERVATION FOPR_1
-                            {{
-                            VALUE   = 0.1;
-                            ERROR   = 0.05;
-                            DATE    = {date.isoformat()};
-                            KEY     = FOPR;
-                            }};
-                            """,
+                        [
+                            (
+                                "SUMMARY_OBSERVATION",
+                                "FOPR_1",
+                                {
+                                    "VALUE": "0.1",
+                                    "ERROR": "0.05",
+                                    "DATE": date.isoformat(),
+                                    "KEY": "FOPR",
+                                },
+                            )
+                        ],
                     ),
                 }
             )
@@ -536,22 +583,23 @@ def test_that_out_of_bounds_segments_are_truncated(tmpdir, start, stop, message)
                     "REFCASE": "ECLIPSE_CASE",
                     "OBS_CONFIG": (
                         "obsconf",
-                        f"""
-                        HISTORY_OBSERVATION FOPR
-                        {{
-                           ERROR       = 0.20;
-                           ERROR_MODE  = RELMIN;
-                           ERROR_MIN   = 100;
-
-                           SEGMENT FIRST_YEAR
-                           {{
-                              START = {start};
-                              STOP  = {stop};
-                              ERROR = 0.50;
-                              ERROR_MODE = REL;
-                           }};
-                        }};
-                        """,
+                        [
+                            (
+                                "HISTORY_OBSERVATION",
+                                "FOPR",
+                                {
+                                    "ERROR": "0.20",
+                                    "ERROR_MODE": "RELMIN",
+                                    "ERROR_MIN": "100",
+                                    ("SEGMENT", "FIRST_YEAR"): {
+                                        "START": start,
+                                        "STOP": stop,
+                                        "ERROR": "0.50",
+                                        "ERROR_MODE": "REL",
+                                    },
+                                },
+                            )
+                        ],
                     ),
                 }
             )
@@ -578,14 +626,17 @@ def test_that_history_observations_are_loaded(tmpdir, keys, with_ext):
                 "REFCASE": f"ECLIPSE_CASE{'.DATA' if with_ext else ''}",
                 "OBS_CONFIG": (
                     "obsconf",
-                    f"""
-                        HISTORY_OBSERVATION  {local_name}
-                        {{
-                           ERROR       = 0.20;
-                           ERROR_MODE  = RELMIN;
-                           ERROR_MIN   = 100;
-                        }};
-                        """,
+                    [
+                        (
+                            "HISTORY_OBSERVATION",
+                            local_name,
+                            {
+                                "ERROR": "0.20",
+                                "ERROR_MODE": "RELMIN",
+                                "ERROR_MIN": "100",
+                            },
+                        )
+                    ],
                 ),
             }
         )
@@ -611,12 +662,17 @@ def test_that_different_length_values_fail(tmpdir):
                     ],
                     "OBS_CONFIG": (
                         "obsconf",
-                        """
-                    GENERAL_OBSERVATION OBS {
-                       DATA       = RES;
-                       INDEX_LIST = 200; -- shorter than number of points
-                       OBS_FILE   = obs_data.txt;
-                    };""",
+                        [
+                            (
+                                "GENERAL_OBSERVATION",
+                                "OBS",
+                                {
+                                    "DATA": "RES",
+                                    "INDEX_LIST": "200",  # shorter than obs_file
+                                    "OBS_FILE": "obs_data.txt",
+                                },
+                            )
+                        ],
                     ),
                 }
             )
@@ -631,15 +687,19 @@ def test_that_missing_ensemble_key_warns():
             {
                 "OBS_CONFIG": (
                     "obsconf",
-                    """
-                    GENERAL_OBSERVATION OBS {
-                       DATA       = RES;
-                       INDEX_LIST = 0,2,4,6,8;
-                       RESTART    = 0;
-                       VALUE   = 1;
-                       ERROR   = 1;
-                    };
-                    """,
+                    [
+                        (
+                            "GENERAL_OBSERVATION",
+                            "OBS",
+                            {
+                                "DATA": "RES",
+                                "INDEX_LIST": "0,2,4,6,8",
+                                "RESTART": "0",
+                                "VALUE": "1",
+                                "ERROR": "1",
+                            },
+                        )
+                    ],
                 ),
             }
         )
@@ -664,15 +724,19 @@ def test_that_report_step_mismatch_warns():
                 ],
                 "OBS_CONFIG": (
                     "obsconf",
-                    """
-                    GENERAL_OBSERVATION OBS {
-                       DATA       = RES;
-                       INDEX_LIST = 0,2,4,6,8;
-                       RESTART    = 0;
-                       VALUE   = 1;
-                       ERROR   = 1;
-                    };
-                    """,
+                    [
+                        (
+                            "GENERAL_OBSERVATION",
+                            "OBS",
+                            {
+                                "DATA": "RES",
+                                "INDEX_LIST": "0,2,4,6,8",
+                                "RESTART": "0",
+                                "VALUE": "1",
+                                "ERROR": "1",
+                            },
+                        )
+                    ],
                 ),
             }
         )
@@ -696,24 +760,33 @@ def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
                 "REFCASE": "ECLIPSE_CASE",
                 "OBS_CONFIG": (
                     "obsconf",
-                    """
-                    HISTORY_OBSERVATION  FOPR
-                    {
-                       ERROR       = 0.20;
-                       ERROR_MODE  = ABS;
-                    };
-                    HISTORY_OBSERVATION  FGPR
-                    {
-                       ERROR       = 0.1;
-                       ERROR_MODE  = REL;
-                    };
-                    HISTORY_OBSERVATION  FWPR
-                    {
-                       ERROR       = 0.1;
-                       ERROR_MODE  = RELMIN;
-                       ERROR_MIN = 10000;
-                    };
-                    """,
+                    [
+                        (
+                            "HISTORY_OBSERVATION",
+                            "FOPR",
+                            {
+                                "ERROR": "0.20",
+                                "ERROR_MODE": "ABS",
+                            },
+                        ),
+                        (
+                            "HISTORY_OBSERVATION",
+                            "FGPR",
+                            {
+                                "ERROR": "0.1",
+                                "ERROR_MODE": "REL",
+                            },
+                        ),
+                        (
+                            "HISTORY_OBSERVATION",
+                            "FWPR",
+                            {
+                                "ERROR": "0.1",
+                                "ERROR_MODE": "RELMIN",
+                                "ERROR_MIN": "10000",
+                            },
+                        ),
+                    ],
                 ),
             }
         )
@@ -749,15 +822,19 @@ def test_validation_of_duplicate_names(tmpdir):
                     "REFCASE": "ECLIPSE_CASE",
                     "OBS_CONFIG": (
                         "obsconf",
-                        """
-                            SUMMARY_OBSERVATION FOPR {
-                               KEY     = FOPR;
-                               RESTART = 1;
-                               VALUE   = 1.0;
-                               ERROR   = 0.1;
-                            };
-                            HISTORY_OBSERVATION FOPR;
-                        """,
+                        [
+                            (
+                                "SUMMARY_OBSERVATION",
+                                "FOPR",
+                                {
+                                    "KEY": "FOPR",
+                                    "RESTART": "1",
+                                    "VALUE": "1.0",
+                                    "ERROR": "0.1",
+                                },
+                            ),
+                            ("HISTORY_OBSERVATION", "FOPR"),
+                        ],
                     ),
                 }
             )
@@ -778,17 +855,19 @@ def test_that_segment_defaults_are_applied(tmpdir):
                 "REFCASE": "ECLIPSE_CASE",
                 "OBS_CONFIG": (
                     "obsconf",
-                    """
-                    HISTORY_OBSERVATION FOPR
-                    {
-                       SEGMENT SEG
-                       {
-                          START = 5;
-                          STOP  = 9;
-                          ERROR = 0.05;
-                       };
-                    };
-                    """,
+                    [
+                        (
+                            "HISTORY_OBSERVATION",
+                            "FOPR",
+                            {
+                                ("SEGMENT", "SEG"): {
+                                    "START": "5",
+                                    "STOP": "9",
+                                    "ERROR": "0.05",
+                                },
+                            },
+                        )
+                    ],
                 ),
             }
         ).enkf_obs
@@ -820,16 +899,19 @@ def test_that_summary_default_error_min_is_applied(tmpdir):
                 "REFCASE": "ECLIPSE_CASE",
                 "OBS_CONFIG": (
                     "obsconf",
-                    """
-                    SUMMARY_OBSERVATION FOPR
-                    {
-                        VALUE = 1;
-                        ERROR = 0.01;
-                        KEY = "FOPR";
-                        RESTART = 1;
-                        ERROR_MODE = RELMIN;
-                    };
-                    """,
+                    [
+                        (
+                            "SUMMARY_OBSERVATION",
+                            "FOPR",
+                            {
+                                "VALUE": "1",
+                                "ERROR": "0.01",
+                                "KEY": "FOPR",
+                                "RESTART": "1",
+                                "ERROR_MODE": "RELMIN",
+                            },
+                        )
+                    ],
                 ),
             }
         ).enkf_obs
