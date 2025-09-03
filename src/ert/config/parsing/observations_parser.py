@@ -12,10 +12,10 @@ from typing import (
 
 from lark import Lark, Transformer, UnexpectedCharacters, UnexpectedToken
 
+from ._file_context_transformer import FileContextTransformer
 from .config_errors import ConfigValidationError
 from .error_info import ErrorInfo
 from .file_context_token import FileContextToken
-from .lark_parser import FileContextTransformer
 
 ErrorModes = Literal["REL", "ABS", "RELMIN"]
 

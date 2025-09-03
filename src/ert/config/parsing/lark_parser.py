@@ -16,6 +16,7 @@ from lark import (
     UnexpectedToken,
 )
 
+from ._file_context_transformer import FileContextTransformer
 from ._read_file import read_file
 from .config_dict import ConfigDict
 from .config_errors import ConfigValidationError, ConfigWarning
@@ -108,18 +109,6 @@ class ArgumentToStringTransformer(
                 key, val = kw_pair.children
                 args.append((key, val))
         return args
-
-
-class FileContextTransformer(Transformer[Token, Tree[FileContextToken]]):
-    """Adds filename to each token,
-    to ensure we have enough context for error messages"""
-
-    def __init__(self, filename: str) -> None:
-        self.filename = filename
-        super().__init__(visit_tokens=True)
-
-    def __default_token__(self, token: Token) -> FileContextToken:
-        return FileContextToken(token, self.filename)
 
 
 class InstructionTransformer(Transformer[FileContextToken, Tree[Instruction]]):
