@@ -647,7 +647,7 @@ class LocalEnsemble(BaseMode):
         for real, ds in config_node.create_storage_datasets(
             parameters, iens_active_index
         ):
-            self.save_parameters(config_node.name, real, ds)
+            self.save_parameters(ds, config_node.name, real)
 
     def load_scalars(
         self, group: str | None = None, realizations: npt.NDArray[np.int_] | None = None
@@ -1310,7 +1310,7 @@ async def _read_parameters(
                 extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
             )
             start_time = time.perf_counter()
-            ensemble.save_parameters(config.name, realization, ds)
+            ensemble.save_parameters(ds, config.name, realization)
             await asyncio.sleep(0)
             logger.debug(
                 f"Saved {config.name} to storage",

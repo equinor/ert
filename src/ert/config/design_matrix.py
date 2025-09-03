@@ -55,8 +55,6 @@ class DesignMatrix:
         ):
             raise KeyError("Active realization mask is not in design matrix!")
         ensemble.save_parameters(
-            design_group_name,
-            realization=None,
             dataset=design_matrix_df.filter(
                 pl.col("realization").is_in(list(active_realizations))
             ),

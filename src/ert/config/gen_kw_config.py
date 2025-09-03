@@ -363,7 +363,7 @@ class GenKwConfig(ParameterConfig):
         realizations: npt.NDArray[np.int_],
     ) -> None:
         df = source_ensemble.load_parameters(self.name, realizations)
-        target_ensemble.save_parameters(self.name, realization=None, dataset=df)
+        target_ensemble.save_parameters(dataset=df)
 
     def shouldUseLogScale(self) -> bool:
         return isinstance(self.distribution, LogNormalSettings | LogUnifSettings)
