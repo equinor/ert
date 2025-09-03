@@ -8,7 +8,6 @@ import time
 import traceback
 import uuid
 from base64 import b64decode
-from functools import partial
 from queue import SimpleQueue
 
 from fastapi import (
@@ -231,7 +230,6 @@ class ExperimentRunner:
                 everest_config=self._everest_config,
                 experiment_name=f"EnOpt@{datetime.datetime.now().isoformat(timespec='seconds')}",
                 target_ensemble="batch",
-                optimization_callback=partial(_opt_monitor, shared_data=shared_data),
                 status_queue=status_queue,
             )
             shared_data.status = ExperimentStatus(
@@ -314,9 +312,3 @@ class Subscriber:
 
     async def is_done(self) -> None:
         await self._done.wait()
-
-
-def _opt_monitor(shared_data: ExperimentRunnerState) -> str | None:
-    if shared_data.status.status.stopped:
-        return "stop_optimization"
-    return None
