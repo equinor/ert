@@ -1,4 +1,6 @@
-from typing import cast
+from __future__ import annotations
+
+from typing import Any, cast
 
 from lark import Token
 
@@ -10,7 +12,7 @@ class FileContextToken(Token):
 
     filename: str
 
-    def __new__(cls, token: Token, filename: str) -> "FileContextToken":
+    def __new__(cls, token: Token, filename: str) -> FileContextToken:
         inst = super().__new__(
             cls,
             token.type,
@@ -44,10 +46,13 @@ class FileContextToken(Token):
     def __hash__(self) -> int:
         return hash(self.value)
 
+    def update(self, value: Any = None) -> FileContextToken:  # type: ignore[override]
+        return FileContextToken(super().update(value=value), self.filename)
+
     @classmethod
     def join_tokens(
-        cls, tokens: list["FileContextToken"], separator: str = " "
-    ) -> "FileContextToken":
+        cls, tokens: list[FileContextToken], separator: str = " "
+    ) -> FileContextToken:
         first = tokens[0]
         min_start_pos = min(x.start_pos for x in tokens if x.start_pos is not None)
         max_end_pos = max(x.end_pos for x in tokens if x.end_pos is not None)
@@ -76,7 +81,7 @@ class FileContextToken(Token):
             filename=first.filename,
         )
 
-    def replace_value(self, old: str, new: str, count: int = -1) -> "FileContextToken":
+    def replace_value(self, old: str, new: str, count: int = -1) -> FileContextToken:
         if old in self.value:
             replaced = self.value.replace(old, new, count)
             return FileContextToken(self.update(value=replaced), filename=self.filename)

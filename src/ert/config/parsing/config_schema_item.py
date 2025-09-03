@@ -15,7 +15,6 @@ from .context_values import (
     ContextFloat,
     ContextInt,
     ContextList,
-    ContextString,
     ContextValue,
 )
 from .deprecation_info import DeprecationInfo
@@ -87,11 +86,11 @@ class SchemaItem:
         """
 
         if not len(self.type_map) > index:
-            return ContextString(str(token), token)
+            return token
         val_type = self.type_map[index]
         match val_type:
             case None:
-                return ContextString(str(token), token)
+                return token
             case SchemaItemType.BOOL:
                 if token.lower() == "true":
                     return ContextBool(True, token)
@@ -185,12 +184,12 @@ class SchemaItem:
                     return ContextList.with_values(
                         token,
                         [
-                            ContextString(path, token, keyword),
-                            ContextString(read_file(path, token), token, keyword),
+                            token.update(value=path),
+                            token.update(read_file(path, token)),
                         ],
                     )
                 else:
-                    return ContextString(path, token, keyword)
+                    return token.update(path)
             case SchemaItemType.EXECUTABLE:
                 absolute_path: str | None
                 is_command = False
@@ -224,11 +223,9 @@ class SchemaItem:
                     raise ConfigValidationError.with_context(
                         f"File not executable: {context}", token
                     )
-                return ContextString(
-                    str(token) if is_command else absolute_path, token, keyword
-                )
+                return token if is_command else token.update(value=absolute_path)
             case SchemaItemType():
-                return ContextString(str(token), token, keyword)
+                return token
             case EnumType():
                 try:
                     return val_type(str(token))
@@ -280,13 +277,13 @@ class SchemaItem:
                 ErrorInfo(
                     message=f"{self.kw} must have at least {self.argc_min} arguments",
                     filename=keyword.filename,
-                ).set_context(ContextString.from_token(keyword))
+                ).set_context(keyword)
             )
         elif self.argc_max is not None and len(args) > self.argc_max:
             errors.append(
                 ErrorInfo(
                     f"{self.kw} must have maximum {self.argc_max} arguments",
-                ).set_context(ContextString.from_token(keyword))
+                ).set_context(keyword)
             )
 
         if len(errors) > 0:

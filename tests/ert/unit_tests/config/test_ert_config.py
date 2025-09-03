@@ -14,6 +14,7 @@ import polars as pl
 import pytest
 from hypothesis import HealthCheck, assume, given, settings
 from hypothesis import strategies as st
+from lark import Token
 from pydantic import RootModel, TypeAdapter
 
 from ert import ErtScript, ErtScriptWorkflow
@@ -1593,7 +1594,7 @@ def test_that_context_types_are_json_serializable():
     bf = ContextBool(val=False, token=None)
     bt = ContextBool(val=True, token=None)
     i = ContextInt(val=23, token=None)
-    s = ContextString(val="forty_two", token=None)
+    s = ContextString(token=Token("typ", "hello", 1, 2, 3, 4, 5), filename="name")
     fl = ContextFloat(val=4.2, token=None)
     cl = ContextList.with_values(None, values=[bf, bt, i, s, fl])
 
