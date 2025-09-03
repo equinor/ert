@@ -30,7 +30,7 @@ from ert.storage import Ensemble, open_storage
 @pytest.fixture
 def uniform_parameter():
     return GenKwConfig(
-        name="KEY1",
+        name="KEY_1",
         group="PARAMETER",
         distribution={"name": "uniform", "min": 0, "max": 1},
     )
@@ -378,13 +378,15 @@ def test_update_raises_on_singular_matrix(tmp_path):
             ],
         )
         prior = storage.create_ensemble(experiment.id, ensemble_size=2, name="prior")
-        for realization_nr in range(prior.ensemble_size):
-            ds = Ensemble.sample_parameter(
+        datasets = [
+            Ensemble.sample_parameter(
                 gen_kw,
                 realization_nr,
                 random_seed=1234,
             )
-            prior.save_parameters("COEFFS", realization_nr, ds)
+            for realization_nr in range(prior.ensemble_size)
+        ]
+        prior.save_parameters(pl.concat(datasets, how="vertical"))
 
         for i, v in enumerate(
             [
@@ -427,7 +429,7 @@ def test_update_raises_on_singular_matrix(tmp_path):
                 prior,
                 posterior,
                 experiment.observation_keys,
-                ["COEFFS"],
+                ["coeff_0"],
                 ObservationSettings(auto_scale_observations=[["OBS*"]]),
                 ESSettings(),
                 rng=np.random.default_rng(1234),
@@ -559,17 +561,16 @@ def test_smoother_snapshot_alpha(
         name="prior",
     )
     rng = np.random.default_rng(1234)
+    dataset = []
     for iens in range(prior_storage.ensemble_size):
         data = rng.uniform(0, 1)
-        prior_storage.save_parameters(
-            "PARAMETER",
-            iens,
+        dataset.append(
             pl.DataFrame(
                 {
                     "KEY_1": [data],
                     "realization": iens,
                 }
-            ),
+            )
         )
         data = rng.uniform(0.8, 1, 3)
         prior_storage.save_response(
@@ -584,6 +585,8 @@ def test_smoother_snapshot_alpha(
             ),
             iens,
         )
+    prior_storage.save_parameters(dataset=pl.concat(dataset, how="vertical"))
+
     posterior_storage = storage.create_ensemble(
         prior_storage.experiment_id,
         ensemble_size=prior_storage.ensemble_size,
@@ -597,7 +600,7 @@ def test_smoother_snapshot_alpha(
             prior_storage,
             posterior_storage,
             observations=["OBSERVATION"],
-            parameters=["PARAMETER"],
+            parameters=["KEY_1"],
             update_settings=ObservationSettings(
                 outlier_settings=OutlierSettings(alpha=alpha)
             ),
@@ -714,7 +717,7 @@ def test_temporary_parameter_storage_with_inactive_fields(
     ]
 
     for iens in range(ensemble_size):
-        prior_ensemble.save_parameters(param_group, iens, fields[iens])
+        prior_ensemble.save_parameters(fields[iens], param_group, iens)
 
     realization_list = list(range(ensemble_size))
     param_ensemble_array = prior_ensemble.load_parameters_numpy(
@@ -1046,17 +1049,16 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
         name="prior",
     )
     rng = np.random.default_rng(1234)
+    dataset = []
     for iens in range(prior.ensemble_size):
         data = rng.uniform(0, 1)
-        prior.save_parameters(
-            "PARAMETER",
-            iens,
+        dataset.append(
             pl.DataFrame(
                 {
                     "KEY_1": [data],
                     "realization": iens,
                 }
-            ),
+            )
         )
 
         data = rng.uniform(0.8, 1, 3)
@@ -1072,6 +1074,8 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
             ),
             iens,
         )
+
+    prior.save_parameters(dataset=pl.concat(dataset, how="vertical"))
     posterior_ens = storage.create_ensemble(
         prior.experiment_id,
         ensemble_size=prior.ensemble_size,
@@ -1087,7 +1091,7 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
             prior,
             posterior_ens,
             ["OBSERVATION"],
-            ["PARAMETER"],
+            ["KEY_1"],
             ObservationSettings(),
             ESSettings(),
         )
@@ -1108,17 +1112,16 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
         name="prior",
     )
     rng = np.random.default_rng(1234)
+    dataset = []
     for iens in range(prior.ensemble_size):
         data = rng.uniform(0, 1)
-        prior.save_parameters(
-            "PARAMETER",
-            iens,
+        dataset.append(
             pl.DataFrame(
                 {
                     "KEY_1": [data],
                     "realization": iens,
                 }
-            ),
+            )
         )
         data = rng.uniform(0.8, 1, 2)  # Importantly, shorter than obs
         prior.save_response(
@@ -1133,6 +1136,7 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
             ),
             iens,
         )
+    prior.save_parameters(dataset=pl.concat(dataset, how="vertical"))
     posterior_ens = storage.create_ensemble(
         prior.experiment_id,
         ensemble_size=prior.ensemble_size,
@@ -1146,7 +1150,7 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
         prior,
         posterior_ens,
         ["OBSERVATION"],
-        ["PARAMETER"],
+        ["KEY_1"],
         ObservationSettings(),
         ESSettings(),
         progress_callback=events.append,
@@ -1162,7 +1166,7 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
 @pytest.mark.usefixtures("use_tmpdir")
 def test_update_subset_parameters(storage, uniform_parameter, obs):
     no_update_param = GenKwConfig(
-        name="KEY1",
+        name="KEY_2",
         group="EXTRA_PARAMETER",
         update=False,
         distribution={"name": "uniform", "min": 0, "max": 1},
@@ -1180,27 +1184,25 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
         name="prior",
     )
     rng = np.random.default_rng(1234)
+    dataset_key_1 = []
+    dataset_key_2 = []
     for iens in range(prior.ensemble_size):
         data = rng.uniform(0, 1)
-        prior.save_parameters(
-            "PARAMETER",
-            iens,
+        dataset_key_1.append(
             pl.DataFrame(
                 {
                     "KEY_1": [data],
                     "realization": iens,
                 }
-            ),
+            )
         )
-        prior.save_parameters(
-            "EXTRA_PARAMETER",
-            iens,
+        dataset_key_2.append(
             pl.DataFrame(
                 {
-                    "KEY_1": [data],
+                    "KEY_2": [data],
                     "realization": iens,
                 }
-            ),
+            )
         )
 
         data = rng.uniform(0.8, 1, 10)
@@ -1216,6 +1218,9 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
             ),
             iens,
         )
+
+    prior.save_parameters(dataset=pl.concat(dataset_key_1, how="vertical"))
+    prior.save_parameters(dataset=pl.concat(dataset_key_2, how="vertical"))
     posterior_ens = storage.create_ensemble(
         prior.experiment_id,
         ensemble_size=prior.ensemble_size,
@@ -1227,7 +1232,7 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
         prior,
         posterior_ens,
         ["OBSERVATION"],
-        ["PARAMETER"],
+        ["KEY_1"],
         ObservationSettings(),
         ESSettings(),
     )
