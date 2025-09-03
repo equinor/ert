@@ -382,22 +382,6 @@ class LocalExperiment(BaseMode):
             )
         }
 
-    # @cached_property
-    # def parameter_groups(self) -> dict[str, ParameterGroup]:
-    #     groups: dict[str, ParameterGroup] = {
-    #         p.name: ParameterGroup(parameters=[p])
-    #         for p in self.parameter_configuration.values()
-    #         if not isinstance(p, GenKwConfig)
-    #     }
-    #     dict_genkw: dict[str, list[ParameterConfig]] = defaultdict(list)
-    #     for p in self.parameter_configuration.values():
-    #         if isinstance(p, GenKwConfig):
-    #             dict_genkw[p.group_name].append(p)
-
-    #     for group, genkw_list in dict_genkw.items():
-    #         groups[group] = ParameterGroup(parameters=genkw_list)
-    #     return groups
-
     @cached_property
     def parameter_keys(self) -> list[str]:
         keys = []
