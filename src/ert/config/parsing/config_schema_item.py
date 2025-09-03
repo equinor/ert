@@ -1,6 +1,6 @@
 import os
 import shutil
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from enum import EnumType
 from typing import Any, TypeVar
 
@@ -52,6 +52,9 @@ class SchemaItem:
     # if true, will accumulate many values set for key, otherwise each entry will
     # overwrite any previous value set
     multi_occurrence: bool = False
+    # Only applies to SchemaItemType.EXISTING_PATH_INLINE where
+    # the contents is then parsed
+    parser: Callable[[str, str], Any] = lambda x, y: y
     expand_envvar: bool = True
     # Index of tokens to do substitution from until end
     substitute_from: NonNegativeInt = 1
@@ -184,8 +187,8 @@ class SchemaItem:
                     return ContextList.with_values(
                         token,
                         [
-                            token.update(value=path),
-                            token.update(read_file(path, token)),
+                            token.update(path),
+                            self.parser(path, read_file(path, token)),
                         ],
                     )
                 else:
@@ -344,8 +347,12 @@ def existing_path_keyword(keyword: str) -> SchemaItem:
     return SchemaItem(kw=keyword, type_map=[SchemaItemType.EXISTING_PATH])
 
 
-def existing_path_inline_keyword(keyword: str) -> SchemaItem:
-    return SchemaItem(kw=keyword, type_map=[SchemaItemType.EXISTING_PATH_INLINE])
+def existing_path_inline_keyword(
+    keyword: str, parser: Callable[[str, str], Any] = lambda _, y: y
+) -> SchemaItem:
+    return SchemaItem(
+        kw=keyword, type_map=[SchemaItemType.EXISTING_PATH_INLINE], parser=parser
+    )
 
 
 def single_arg_keyword(keyword: str) -> SchemaItem:

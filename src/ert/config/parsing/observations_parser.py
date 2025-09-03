@@ -83,9 +83,8 @@ observations_parser = Lark(
     r"""
     start: observation*
     ?observation: type STRING object? ";"
-    type: "HISTORY_OBSERVATION"
-        | "SUMMARY_OBSERVATION"
-        | "GENERAL_OBSERVATION"
+    TYPE: "HISTORY_OBSERVATION" | "SUMMARY_OBSERVATION" | "GENERAL_OBSERVATION"
+    type: TYPE
     ?value: object
           | STRING
 
@@ -116,7 +115,7 @@ class TreeToObservations(
     @staticmethod
     @no_type_check
     def observation(tree):
-        return (ObservationType(tree[0]), *tree[1:])
+        return (ObservationType(tree[0].children[0]), *tree[1:])
 
     @staticmethod
     @no_type_check

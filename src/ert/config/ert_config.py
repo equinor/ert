@@ -60,7 +60,6 @@ from .parsing import (
     init_site_config_schema,
     init_user_config_schema,
     parse_contents,
-    parse_observations,
     read_file,
 )
 from .queue_config import QueueConfig
@@ -957,10 +956,10 @@ class ErtConfig(BaseModel):
         obs_configs: ConfContent = []
         try:
             if obs_config_args:
-                obs_config_file, obs_config_file_contents = obs_config_args
+                obs_config_file, obs_config_input = obs_config_args
                 obs_configs = make_observation_declarations(
                     os.path.dirname(obs_config_file),
-                    parse_observations(obs_config_file_contents, obs_config_file),
+                    obs_config_input,
                 )
                 if not obs_configs:
                     raise ObservationConfigError.with_context(
