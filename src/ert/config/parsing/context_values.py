@@ -62,21 +62,7 @@ class ContextFloat(float):
         return new_instance
 
 
-class ContextString(str):  # noqa: FURB189
-    @classmethod
-    def from_token(cls, token: FileContextToken) -> ContextString:
-        return cls(val=str(token), token=token)
-
-    def __new__(cls, val: str, token: FileContextToken) -> ContextString:
-        obj = super().__new__(cls, val)
-        obj.token = token
-        return obj
-
-    @no_type_check
-    def __deepcopy__(self, memo) -> ContextString:
-        new_instance = ContextString(str(self), self.token)
-        memo[id(self)] = new_instance
-        return new_instance
+ContextString = FileContextToken
 
 
 T = TypeVar("T")

@@ -84,10 +84,7 @@ class SchemaItemDict(UserDict[str, SchemaItem]):
                             schema_info.deprecation_info,
                             cast(
                                 list[ContextString],
-                                ContextList.with_values(
-                                    token=kw.token,
-                                    values=[v],
-                                ),
+                                ContextList.with_values(token=kw, values=[v]),
                             ),
                         )
                     case [ContextString(), *_]:

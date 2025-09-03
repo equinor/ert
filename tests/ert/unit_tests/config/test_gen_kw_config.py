@@ -10,7 +10,6 @@ from pydantic import ValidationError
 
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, GenKwConfig
 from ert.config.gen_kw_config import TransformFunctionDefinition
-from ert.config.parsing import ContextString
 from ert.config.parsing.file_context_token import FileContextToken
 from ert.run_models._create_run_path import create_run_path
 from ert.runpaths import Runpaths
@@ -502,8 +501,8 @@ def test_gen_kw_pred_special_suggested_removal():
     assert any("config.ert: Line 2" in str(w.message) for w in warn_log)
 
 
-def make_context_string(msg: str, filename: str) -> ContextString:
-    return ContextString.from_token(FileContextToken(Token("UNQUOTED", msg), filename))
+def make_context_string(msg: str, filename: str) -> FileContextToken:
+    return FileContextToken(Token("UNQUOTED", msg), filename)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
