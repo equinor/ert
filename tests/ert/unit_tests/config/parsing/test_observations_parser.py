@@ -1,3 +1,4 @@
+import os
 from contextlib import suppress
 from pathlib import Path
 
@@ -5,28 +6,35 @@ import hypothesis.extra.lark as stlark
 import pytest
 from hypothesis import given
 
-from ert.config.parsing import parse_observations
-from ert.config.parsing.observations_parser import (
+from ert.config._observation_declaration import (
     GenObsValues,
     HistoryValues,
-    ObservationConfigError,
-    ObservationType,
     Segment,
     SummaryValues,
-    _parse_content_list,
-    _validate_conf_content,
+    make_observation_declarations,
+)
+from ert.config.parsing import parse_observations
+from ert.config.parsing.observations_parser import (
+    ObservationConfigError,
+    ObservationType,
     observations_parser,
 )
 
 observation_contents = stlark.from_lark(observations_parser)
 
 
+def parse_observation_declarations(contents, filename):
+    return make_observation_declarations(
+        os.path.dirname(filename), parse_observations(contents, filename)
+    )
+
+
 @pytest.mark.integration_test
 @given(observation_contents)
 def test_parsing_contents_succeeds_or_gives_config_error(contents):
     with suppress(ObservationConfigError):
-        _ = _validate_conf_content(
-            ".", _parse_content_list(contents, "observations.txt")
+        _ = make_observation_declarations(
+            ".", parse_observations(contents, "observations.txt")
         )
 
 
@@ -73,7 +81,7 @@ def file_contents():
 
 
 def test_parse(file_contents):
-    assert _parse_content_list(
+    assert parse_observations(
         file_contents,
         "",
     ) == [
@@ -124,11 +132,11 @@ def test_that_unexpected_character_gives_observation_config_error():
         ObservationConfigError,
         match=r"Line 1.*include a;",
     ):
-        _parse_content_list(content="include a;", filename="")
+        parse_observations(content="include a;", filename="")
 
 
 def test_that_double_comments_are_handled():
-    assert _parse_content_list(
+    assert parse_observations(
         """
             SUMMARY_OBSERVATION -- foo -- bar -- baz
                         FOPR;
@@ -141,9 +149,9 @@ def test_that_double_comments_are_handled():
 def test_validate(file_contents):
     Path("wpr_diff_idx.txt").write_text("", encoding="utf8")
     Path("wpr_diff_obs.txt").write_text("", encoding="utf8")
-    assert _validate_conf_content(
+    assert make_observation_declarations(
         "",
-        _parse_content_list(
+        parse_observations(
             file_contents,
             "",
         ),
@@ -234,7 +242,7 @@ def test_that_common_observation_error_validation_is_handled(
         else "RESTART = 1; VALUE=1.0; KEY = FOPR;"
     )
     with pytest.raises(ObservationConfigError, match=match):
-        parse_observations(
+        parse_observation_declarations(
             f"""
                         {obs_type}  FOPR
                         {{
@@ -431,12 +439,12 @@ def test_that_common_observation_error_validation_is_handled(
 )
 def test_that_summary_observation_validation_is_handled(obs_content, match):
     with pytest.raises(ObservationConfigError, match=match):
-        parse_observations(obs_content, filename="")
+        parse_observation_declarations(obs_content, filename="")
 
 
 def test_that_general_observation_without_error_is_invalid():
     with pytest.raises(ObservationConfigError, match="ERROR must also be given"):
-        parse_observations(
+        parse_observation_declarations(
             """
             GENERAL_OBSERVATION  obs
             {
@@ -451,7 +459,7 @@ def test_that_general_observation_without_error_is_invalid():
 
 def test_that_general_observation_without_data_is_invalid():
     with pytest.raises(ObservationConfigError, match='Missing item "DATA"'):
-        parse_observations(
+        parse_observation_declarations(
             """
             GENERAL_OBSERVATION  obs
             {
@@ -471,7 +479,9 @@ def test_that_general_observation_without_data_is_invalid():
 )
 def test_that_unknown_key_is_handled(observation_type):
     with pytest.raises(ObservationConfigError, match="Unknown SMERROR"):
-        parse_observations(f"{observation_type} FOPR {{SMERROR=0.1;DATA=key;}};", "")
+        parse_observation_declarations(
+            f"{observation_type} FOPR {{SMERROR=0.1;DATA=key;}};", ""
+        )
 
 
 def test_unexpected_character_handling():
@@ -480,7 +490,7 @@ def test_unexpected_character_handling():
         match=r"Did not expect character: \$ \(on line 4: *ERROR *\$"
         r" 0.20;\). Expected one of {'EQUAL'}",
     ) as err_record:
-        parse_observations(
+        parse_observation_declarations(
             """
             GENERAL_OBSERVATION GEN_OBS
             {
@@ -498,7 +508,7 @@ def test_unexpected_character_handling():
 
 
 def test_that_multiple_segments_are_collected():
-    observations = parse_observations(
+    observations = parse_observation_declarations(
         """
   HISTORY_OBSERVATION GWIR:FIELD
   {
