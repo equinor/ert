@@ -18,7 +18,6 @@ from .distribution import (
     DISTRIBUTION_CLASSES,
     ConstSettings,
     DerrfSettings,
-    DistributionSettings,
     DUnifSettings,
     ErrfSettings,
     LogNormalSettings,
@@ -335,13 +334,22 @@ class GenKwConfig(ParameterConfig):
         from_data: npt.NDArray[np.float64],
         iens_active_index: npt.NDArray[np.int_],
     ) -> Iterator[tuple[int | None, pl.DataFrame]]:
+        # yield (
+        #     None,
+        #     pl.DataFrame(
+        #         {
+        #             "realization": iens_active_index,
+        #         }
+        #     ).with_columns([pl.Series(from_data).alias(self.name)]),
+        # )
         yield (
             None,
             pl.DataFrame(
                 {
                     "realization": iens_active_index,
+                    self.name: from_data[0, :],
                 }
-            ).with_columns([pl.Series(from_data).alias(self.name)]),
+            ),
         )
 
     @property
