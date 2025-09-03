@@ -103,14 +103,6 @@ Declaration = HistoryDeclaration | SummaryDeclaration | GenObsDeclaration
 ConfContent = Sequence[Declaration]
 
 
-def parse(filename: str) -> ConfContent:
-    filepath = os.path.normpath(os.path.abspath(filename))
-    with open(filepath, encoding="utf-8") as f:
-        return _validate_conf_content(
-            os.path.dirname(filename), _parse_content_list(f.read(), filename)
-        )
-
-
 def parse_observations(content: str, filename: str) -> ConfContent:
     return _validate_conf_content(
         os.path.dirname(filename), _parse_content_list(content, filename)
