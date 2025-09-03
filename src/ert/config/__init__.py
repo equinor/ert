@@ -22,11 +22,12 @@ from .forward_model_step import (
     ForwardModelStepWarning,
 )
 from .gen_data_config import GenDataConfig
-from .gen_kw_config import GenKwConfig, PriorDict, TransformFunction
+from .gen_kw_config import GenKwConfig, PriorDict
 from .lint_file import lint_file
 from .model_config import ModelConfig
 from .observations import EnkfObs
 from .parameter_config import ParameterConfig, ParameterMetadata
+from .parameter_group import ParameterGroup
 from .parsing import (
     ConfigValidationError,
     ConfigWarning,
@@ -79,6 +80,7 @@ __all__ = [
     "ObservationType",
     "OutlierSettings",
     "ParameterConfig",
+    "ParameterGroup",
     "ParameterMetadata",
     "PriorDict",
     "QueueConfig",
@@ -88,7 +90,6 @@ __all__ = [
     "SummaryConfig",
     "SummaryObservation",
     "SurfaceConfig",
-    "TransformFunction",
     "WarningInfo",
     "Workflow",
     "WorkflowJob",

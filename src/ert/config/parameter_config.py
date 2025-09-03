@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from hashlib import sha256
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
@@ -116,7 +116,7 @@ class ParameterConfig(BaseModel):
             # Converts to standard python scalar due to mypy
             realization_int = int(realization)
             ds = source_ensemble.load_parameters(self.name, realization_int)
-            target_ensemble.save_parameters(self.name, realization_int, ds)
+            target_ensemble.save_parameters(ds, self.name, realization_int)
 
     @abstractmethod
     def load_parameters(
@@ -134,11 +134,18 @@ class ParameterConfig(BaseModel):
         Often a neighbourhood graph.
         """
 
+    @property
+    def data_file(self) -> str:
+        return "SCALAR"
+
     def save_experiment_data(
         self,
         experiment_path: Path,
     ) -> None:
         pass
+
+    def transform_data(self) -> Callable[[float], float]:
+        return lambda x: x
 
     @staticmethod
     def sample_value(
