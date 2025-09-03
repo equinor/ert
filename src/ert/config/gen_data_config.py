@@ -108,7 +108,7 @@ class GenDataConfig(ResponseConfig):
                         message="RESULT_FILES using %d must have REPORT_STEPS:xxxx"
                         " defined. Several report steps separated with ',' "
                         "and ranges with '-' can be listed",
-                    ).set_context_keyword(gen_data)
+                    ).set_context(gen_data)
                 )
 
             if report_steps_ is not None and "%d" not in res_file:
@@ -116,7 +116,7 @@ class GenDataConfig(ResponseConfig):
                     ErrorInfo(
                         message=f"When configuring REPORT_STEPS:{report_steps_} "
                         "RESULT_FILES must be configured using %d"
-                    ).set_context_keyword(name)
+                    ).set_context(gen_data)
                 )
 
             keys.append(name)

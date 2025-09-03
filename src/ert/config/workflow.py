@@ -41,7 +41,7 @@ class Workflow:
 
         for job_name in parsed_workflow_job_names:
             for instructions in config_dict[job_name]:
-                job_name_with_context = instructions.keyword_token
+                job_name_with_context = instructions.token
                 job = job_dict.get(job_name)
                 if job is None:
                     errors.append(

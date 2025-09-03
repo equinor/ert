@@ -1590,11 +1590,11 @@ def test_ert_config_parser_fails_gracefully_on_unreadable_config_file(caplog, tm
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_context_types_are_json_serializable():
-    bf = ContextBool(val=False, token=None, keyword_token=None)
-    bt = ContextBool(val=True, token=None, keyword_token=None)
-    i = ContextInt(val=23, token=None, keyword_token=None)
-    s = ContextString(val="forty_two", token=None, keyword_token=None)
-    fl = ContextFloat(val=4.2, token=None, keyword_token=None)
+    bf = ContextBool(val=False, token=None)
+    bt = ContextBool(val=True, token=None)
+    i = ContextInt(val=23, token=None)
+    s = ContextString(val="forty_two", token=None)
+    fl = ContextFloat(val=4.2, token=None)
     cl = ContextList.with_values(None, values=[bf, bt, i, s, fl])
 
     payload = {
