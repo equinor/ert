@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import time
+import uuid
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -68,7 +69,7 @@ def wait_until(func, interval=0.5, timeout=30):
 
 
 class MockZMQServer:
-    def __init__(self, port, signal=0) -> None:
+    def __init__(self, signal=0) -> None:
         """Mock ZMQ server for testing
         signal = 0: normal operation, receive messages but don't store CONNECT
                     and DISCONNECT messages
@@ -78,7 +79,6 @@ class MockZMQServer:
         signal = 4: same as signal = 3, but do not ACK DISCONNECT messages.
         signal = 5: don't respond to anything.
         """
-        self.port = port
         self.messages = []
         self.value = signal
         self.loop = None
@@ -87,6 +87,7 @@ class MockZMQServer:
         self.dealers = set()
         self.no_dealers = asyncio.Event()
         self.no_dealers.set()
+        self.uri = f"ipc:///tmp/socket-{uuid.uuid4().hex[:8]}"
 
     def start_event_loop(self):
         asyncio.set_event_loop(self.loop)
@@ -120,7 +121,7 @@ class MockZMQServer:
         zmq_context = zmq.asyncio.Context()
         self.router_socket = zmq_context.socket(zmq.ROUTER)
         self.router_socket.setsockopt(zmq.LINGER, 0)
-        self.router_socket.bind(f"tcp://*:{self.port}")
+        self.router_socket.bind(self.uri)
 
         self.handler_task = asyncio.create_task(self._handler())
         try:
