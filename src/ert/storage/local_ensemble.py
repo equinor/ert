@@ -643,34 +643,24 @@ class LocalEnsemble(BaseMode):
         self, group: str | None = None, realizations: npt.NDArray[np.int_] | None = None
     ) -> pl.DataFrame:
         dataframes = []
+        gen_kws = list(self.experiment.scalar_nodes.values())
+        if group and group in self.experiment.scalar_groups:
+            gen_kws = [
+                self.experiment.parameter_configuration[key]
+                for key in self.experiment.scalar_groups[group]
+            ]
 
-        if group:
-            gen_kws = (
-                [self.experiment.scalar_nodes[group]]
-                if group in self.experiment.scalar_nodes
-                else []
-            )
-        else:
-            gen_kws = list(self.experiment.scalar_nodes.values())
         for config in gen_kws:
             df = self.load_parameters(config.name, realizations, transformed=True)
             assert isinstance(df, pl.DataFrame)
+            assert isinstance(config, GenKwConfig)
             df = df.rename(
                 {
-                    col: f"{config.name}:{col}"
+                    col: f"{config.group}:{col}"
                     for col in df.columns
                     if col != "realization"
                 }
             )
-            assert isinstance(config, GenKwConfig)
-            for parameter in df.columns:
-                if parameter == "realization":
-                    continue
-                if config.shouldUseLogScale(parameter.split(":")[-1]):
-                    df = df.with_columns(
-                        (np.log10(pl.col(parameter))).alias(f"LOG10_{parameter}")
-                    )
-
             dataframes.append(df)
 
         if not dataframes:

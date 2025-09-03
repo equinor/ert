@@ -9,12 +9,10 @@ import numpy as np
 import pandas as pd
 import polars as pl
 import pytest
-import xarray as xr
 from pandas.testing import assert_frame_equal
 from starlette.testclient import TestClient
 
 from ert.config import GenKwConfig, SummaryConfig
-from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.config.parameter_config import ParameterMetadata
 from ert.config.response_config import ResponseMetadata
 from ert.dark_storage import common
@@ -271,14 +269,10 @@ def test_plot_api_handles_empty_gen_kw(api_and_storage):
     experiment = storage.create_experiment(
         parameters=[
             GenKwConfig(
-                name=key,
-                forward_init=False,
+                name=name,
+                group=key,
                 update=False,
-                transform_function_definitions=[
-                    TransformFunctionDefinition(
-                        name=name, param_name="NORMAL", values=[0, 0.1]
-                    )
-                ],
+                distribution={"name": "normal", "mean": 0, "std": 0.1},
             ),
         ],
         responses=[],
@@ -287,8 +281,6 @@ def test_plot_api_handles_empty_gen_kw(api_and_storage):
     ensemble = storage.create_ensemble(experiment.id, ensemble_size=10)
     assert api.data_for_parameter(str(ensemble.id), key).empty
     ensemble.save_parameters(
-        key,
-        realization=None,
         dataset=pl.DataFrame(
             {
                 name: [1.0],
@@ -311,26 +303,15 @@ def test_plot_api_handles_non_existant_gen_kw(api_and_storage):
     experiment = storage.create_experiment(
         parameters=[
             GenKwConfig(
-                name="gen_kw",
-                forward_init=False,
-                update=False,
-                transform_function_definitions=[],
+                name="KEY_1",
+                group="gen_kw",
+                distribution={"name": "normal", "mean": 0, "std": 1},
             ),
         ],
         responses=[],
         observations={},
     )
     ensemble = storage.create_ensemble(experiment.id, ensemble_size=10)
-    ensemble.save_parameters(
-        "gen_kw",
-        1,
-        xr.Dataset(
-            {
-                "values": ("names", [1.0]),
-                "names": ["key"],
-            }
-        ),
-    )
     assert api.data_for_parameter(str(ensemble.id), "gen_kw").empty
     assert api.data_for_parameter(str(ensemble.id), "gen_kw:does_not_exist").empty
 
@@ -340,14 +321,10 @@ def test_plot_api_handles_colons_in_parameter_keys(api_and_storage):
     experiment = storage.create_experiment(
         parameters=[
             GenKwConfig(
-                name="group",
-                forward_init=False,
+                name="subgroup:1:2:2",
+                group="group",
                 update=False,
-                transform_function_definitions=[
-                    TransformFunctionDefinition(
-                        name="subgroup:1:2:2", param_name="RAW", values=[]
-                    ),
-                ],
+                distribution={"name": "raw"},
             ),
         ],
         responses=[],
@@ -355,8 +332,6 @@ def test_plot_api_handles_colons_in_parameter_keys(api_and_storage):
     )
     ensemble = storage.create_ensemble(experiment.id, ensemble_size=10)
     ensemble.save_parameters(
-        "group",
-        0,
         pl.DataFrame(
             {
                 "subgroup:1:2:2": pl.Series([10], dtype=pl.Float32),
