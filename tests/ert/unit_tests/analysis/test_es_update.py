@@ -23,7 +23,6 @@ from ert.config import (
     ObservationSettings,
     OutlierSettings,
 )
-from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.field_utils import Shape
 from ert.storage import Ensemble, open_storage
 
@@ -31,14 +30,9 @@ from ert.storage import Ensemble, open_storage
 @pytest.fixture
 def uniform_parameter():
     return GenKwConfig(
-        name="PARAMETER",
-        forward_init=False,
-        transform_function_definitions=[
-            TransformFunctionDefinition(
-                name="KEY1", param_name="UNIFORM", values=[0, 1]
-            ),
-        ],
-        update=True,
+        name="KEY1",
+        group="PARAMETER",
+        distribution={"name": "uniform", "min": 0, "max": 1},
     )
 
 
@@ -227,14 +221,9 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
     standard deviation.
     """
     gen_kw = GenKwConfig(
-        name="COEFFS",
-        forward_init=False,
-        update=True,
-        transform_function_definitions=[
-            TransformFunctionDefinition(
-                name="coeff_0", param_name="CONST", values=["0.1"]
-            ),
-        ],
+        name="coeff_0",
+        group="COEFFS",
+        distribution={"name": "const", "value": 0.1},
     )
     # The values given here are chosen so that when computing
     # `ens_std = S.std(ddof=0, axis=1)`, ens_std[0] is not zero even though
@@ -273,13 +262,15 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
             ],
         )
         prior = storage.create_ensemble(experiment.id, ensemble_size=23, name="prior")
-        for realization_nr in range(prior.ensemble_size):
-            ds = Ensemble.sample_parameter(
+        datasets = [
+            Ensemble.sample_parameter(
                 gen_kw,
                 realization_nr,
                 random_seed=1234,
             )
-            prior.save_parameters("COEFFS", realization_nr, ds)
+            for realization_nr in range(prior.ensemble_size)
+        ]
+        prior.save_parameters(pl.concat(datasets, how="vertical"))
 
         prior.save_response(
             "gen_data",
@@ -326,7 +317,7 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
             prior,
             posterior,
             experiment.observation_keys,
-            ["COEFFS"],
+            ["coeff_0"],
             ObservationSettings(auto_scale_observations=[["OBS*"]]),
             ESSettings(),
             progress_callback=events.append,
@@ -346,14 +337,9 @@ def test_update_raises_on_singular_matrix(tmp_path):
     standard deviation.
     """
     gen_kw = GenKwConfig(
-        name="COEFFS",
-        forward_init=False,
-        update=True,
-        transform_function_definitions=[
-            TransformFunctionDefinition(
-                name="coeff_0", param_name="CONST", values=["0.1"]
-            ),
-        ],
+        name="coeff_0",
+        group="COEFFS",
+        distribution={"name": "const", "value": 0.1},
     )
     # The values given here are chosen so that when computing
     # `ens_std = S.std(ddof=0, axis=1)`, ens_std[0] is not zero even though
@@ -1176,14 +1162,10 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
 @pytest.mark.usefixtures("use_tmpdir")
 def test_update_subset_parameters(storage, uniform_parameter, obs):
     no_update_param = GenKwConfig(
-        name="EXTRA_PARAMETER",
-        forward_init=False,
-        transform_function_definitions=[
-            TransformFunctionDefinition(
-                name="KEY1", param_name="UNIFORM", values=[0, 1]
-            ),
-        ],
+        name="KEY1",
+        group="EXTRA_PARAMETER",
         update=False,
+        distribution={"name": "uniform", "min": 0, "max": 1},
     )
     resp = GenDataConfig(keys=["RESPONSE"])
     experiment = storage.create_experiment(
