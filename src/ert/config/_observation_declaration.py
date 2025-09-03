@@ -11,9 +11,9 @@ from .parsing import (
     ErrorInfo,
     ObservationBody,
     ObservationConfigError,
-    ObservationDeclaration,
+    ObservationStatement,
     ObservationType,
-    SimpleHistoryDeclaration,
+    SimpleHistoryStatement,
 )
 
 ErrorModes = Literal["REL", "ABS", "RELMIN"]
@@ -84,45 +84,52 @@ ConfContent = Sequence[Declaration]
 
 
 def make_observation_declarations(
-    directory: str, inp: Sequence[SimpleHistoryDeclaration | ObservationDeclaration]
+    directory: str, statements: Sequence[SimpleHistoryStatement | ObservationStatement]
 ) -> Sequence[Declaration]:
+    """Takes observation statements and returns validated observation declarations.
+
+    Param:
+        directory: The name of the directory the observation config is located in.
+            Used to disambiguate relative paths.
+        inp: The collection of statements to validate.
+    """
     result: list[Declaration] = []
     error_list: list[ErrorInfo] = []
-    for decl in inp:
+    for stat in statements:
         try:
-            if decl[0] == ObservationType.HISTORY:
-                if len(decl) == 2:
+            if stat[0] == ObservationType.HISTORY:
+                if len(stat) == 2:
                     result.append(
                         (
-                            decl[1],
-                            _validate_history_values(decl[1], {}),
+                            stat[1],
+                            _validate_history_values(stat[1], {}),
                         )
                     )
-                if len(decl) == 3:
+                if len(stat) == 3:
                     result.append(
                         (
-                            decl[1],
+                            stat[1],
                             _validate_history_values(
-                                decl[1],
-                                decl[2],
+                                stat[1],
+                                stat[2],
                             ),
                         )
                     )
-            elif decl[0] == ObservationType.SUMMARY:
-                if len(decl) != 3:
-                    raise _unknown_declaration_error(decl)
-                result.append((decl[1], _validate_summary_values(decl[1], decl[2])))
-            elif decl[0] == ObservationType.GENERAL:
-                if len(decl) != 3:
-                    raise _unknown_declaration_error(decl)
+            elif stat[0] == ObservationType.SUMMARY:
+                if len(stat) != 3:
+                    raise _unknown_declaration_error(stat)
+                result.append((stat[1], _validate_summary_values(stat[1], stat[2])))
+            elif stat[0] == ObservationType.GENERAL:
+                if len(stat) != 3:
+                    raise _unknown_declaration_error(stat)
                 result.append(
                     (
-                        decl[1],
-                        _validate_gen_obs_values(directory, decl[1], decl[2]),
+                        stat[1],
+                        _validate_gen_obs_values(directory, stat[1], stat[2]),
                     )
                 )
             else:
-                raise _unknown_declaration_error(decl)
+                raise _unknown_declaration_error(stat)
         except ObservationConfigError as err:
             error_list.extend(err.errors)
 
@@ -367,7 +374,7 @@ def _unknown_key_error(key: str, name: str) -> ObservationConfigError:
 
 
 def _unknown_declaration_error(
-    decl: SimpleHistoryDeclaration | ObservationDeclaration,
+    decl: SimpleHistoryStatement | ObservationStatement,
 ) -> ObservationConfigError:
     return ObservationConfigError.with_context(
         f"Unexpected declaration in observations {decl}", decl[1]
