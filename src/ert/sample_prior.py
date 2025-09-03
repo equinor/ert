@@ -51,13 +51,11 @@ def sample_prior(
             ]
             if datasets:
                 ensemble.save_parameters(
-                    config_node.data_file,
-                    realization=None,
                     dataset=pl.concat(datasets, how="vertical"),
                 )
         else:
             for realization_nr in active_realizations:
                 ds = config_node.read_from_runpath(Path(), realization_nr, 0)
-                ensemble.save_parameters(parameter, realization_nr, ds)
+                ensemble.save_parameters(ds, parameter, realization_nr)
 
     ensemble.refresh_ensemble_state()

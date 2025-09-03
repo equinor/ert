@@ -866,19 +866,20 @@ class LocalEnsemble(BaseMode):
     @require_write
     def save_parameters(
         self,
-        group: str,
-        realization: int | None,
         dataset: xr.Dataset | pl.DataFrame,
+        group: str | None = None,
+        realization: int | None = None,
     ) -> None:
         """
         Saves the provided dataset under a parameter group and realization index(es)
 
         """
         if isinstance(dataset, pl.DataFrame):
+            data_group = "SCALAR"
             try:
                 # since all realizations are saved in a single parquet file,
                 # this makes sure that we only add / replace new data.
-                df = self._load_parameters_lazy(group).collect(engine="streaming")
+                df = self._load_parameters_lazy(data_group).collect(engine="streaming")
                 df = df.drop(
                     [c for c in dataset.columns if c != "realization"], strict=False
                 )
@@ -890,7 +891,7 @@ class LocalEnsemble(BaseMode):
             except KeyError:
                 df_full = dataset
 
-            group_path = self.mount_point / f"{_escape_filename(group)}.parquet"
+            group_path = self.mount_point / f"{_escape_filename(data_group)}.parquet"
             self._storage._to_parquet_transaction(group_path, df_full)
             return
 
