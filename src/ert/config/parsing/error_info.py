@@ -26,7 +26,10 @@ class ErrorInfo:
         return None
 
     def set_context(self, context: Any) -> Self:
-        self._attach_to_context(self._take(context, "token"))
+        if isinstance(context, FileContextToken):
+            self._attach_to_context(context)
+        else:
+            self._attach_to_context(self._take(context, "token"))
         return self
 
     def set_context_list(self, context_list: Sequence[Any]) -> Self:

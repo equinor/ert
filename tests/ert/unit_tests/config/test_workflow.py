@@ -126,6 +126,7 @@ def test_that_redefine_in_workflow_overwrites_in_subsequent_lines():
     )
 
     commands = [(name, args[0]) for (name, args) in wf.cmd_list]
+    print(commands)
 
     assert commands == [(foo, "1"), (bar, "1"), (foo, "3"), (baz, "3")]
 
