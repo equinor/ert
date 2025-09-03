@@ -286,31 +286,33 @@ def test_missing_directory_exits(tmp_path):
         fm_dispatch(["script.py", str(tmp_path / "non_existent")])
 
 
-def test_retry_of_jobs_json_file_read(unused_tcp_port, tmp_path, monkeypatch, caplog):
+def test_retry_of_jobs_json_file_read(tmp_path, monkeypatch, caplog):
     lock = Lock()
     lock.acquire()
     monkeypatch.setattr(
         _ert.forward_model_runner.fm_dispatch, "_wait_for_retry", lock.acquire
     )
-    jobs_json = json.dumps(
-        {
-            "ens_id": "_id_",
-            "dispatch_url": f"tcp://localhost:{unused_tcp_port}",
-            "jobList": [],
-        }
-    )
-
-    def create_jobs_file_after_lock():
-        wait_until(
-            lambda: f"Could not find file {FORWARD_MODEL_DESCRIPTION_FILE}, retrying"
-            in caplog.text,
-            interval=0.1,
-            timeout=2,
+    with MockZMQServer() as zmq_server:
+        jobs_json = json.dumps(
+            {
+                "ens_id": "_id_",
+                "dispatch_url": zmq_server.uri,
+                "jobList": [],
+            }
         )
-        (tmp_path / FORWARD_MODEL_DESCRIPTION_FILE).write_text(jobs_json)
-        lock.release()
 
-    with MockZMQServer(unused_tcp_port):
+        def create_jobs_file_after_lock():
+            wait_until(
+                lambda: (
+                    f"Could not find file {FORWARD_MODEL_DESCRIPTION_FILE}, retrying"
+                )
+                in caplog.text,
+                interval=0.1,
+                timeout=2,
+            )
+            (tmp_path / FORWARD_MODEL_DESCRIPTION_FILE).write_text(jobs_json)
+            lock.release()
+
         thread = ErtThread(target=create_jobs_file_after_lock)
         thread.start()
         fm_dispatch(args=["script.py", str(tmp_path)])
@@ -338,18 +340,16 @@ def test_setup_reporters(is_interactive_run, ens_id):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_fm_dispatch_kills_itself_after_unsuccessful_step(unused_tcp_port):
-    port = unused_tcp_port
-    jobs_json = json.dumps(
-        {"ens_id": "_id_", "dispatch_url": f"tcp://localhost:{port}"}
-    )
-
+def test_fm_dispatch_kills_itself_after_unsuccessful_step():
     with (
         patch("_ert.forward_model_runner.fm_dispatch.os.killpg") as mock_killpg,
         patch("_ert.forward_model_runner.fm_dispatch.os.getpgid") as mock_getpgid,
+        MockZMQServer() as zmq_server,
         patch(
             "_ert.forward_model_runner.fm_dispatch.open",
-            new=mock_open(read_data=jobs_json),
+            new=mock_open(
+                read_data=json.dumps({"ens_id": "_id_", "dispatch_url": zmq_server.uri})
+            ),
         ),
         patch(
             "_ert.forward_model_runner.fm_dispatch.ForwardModelRunner"
@@ -361,8 +361,7 @@ def test_fm_dispatch_kills_itself_after_unsuccessful_step(unused_tcp_port):
         ]
         mock_getpgid.return_value = 17
 
-        with MockZMQServer(port):
-            fm_dispatch(["script.py"])
+        fm_dispatch(["script.py"])
 
         mock_killpg.assert_called_with(17, signal.SIGKILL)
 
@@ -413,7 +412,7 @@ def test_report_all_messages_drops_reporter_on_error():
 @pytest.mark.timeout(30)
 @pytest.mark.integration_test
 async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_sigterm(
-    use_tmpdir, unused_tcp_port
+    use_tmpdir,
 ):
     with open("dummy_executable", "w", encoding="utf-8") as f:  # noqa: ASYNC230
         f.write(
@@ -424,39 +423,38 @@ time.sleep(180)"""
 
     executable = os.path.realpath("dummy_executable")
     os.chmod("dummy_executable", stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
+    async with MockZMQServer() as zmq_server:
+        fm_description = {
+            "ens_id": "_id_",
+            "dispatch_url": zmq_server.uri,
+            "jobList": [
+                {
+                    "name": "dummy_executable",
+                    "executable": executable,
+                    "stdout": "dummy.stdout",
+                    "stderr": "dummy.stderr",
+                }
+            ],
+        }
 
-    fm_description = {
-        "ens_id": "_id_",
-        "dispatch_url": f"tcp://localhost:{unused_tcp_port}",
-        "jobList": [
-            {
-                "name": "dummy_executable",
-                "executable": executable,
-                "stdout": "dummy.stdout",
-                "stderr": "dummy.stderr",
-            }
-        ],
-    }
+        with open(FORWARD_MODEL_DESCRIPTION_FILE, "w", encoding="utf-8") as f:  # noqa: ASYNC230
+            f.write(json.dumps(fm_description))
 
-    with open(FORWARD_MODEL_DESCRIPTION_FILE, "w", encoding="utf-8") as f:  # noqa: ASYNC230
-        f.write(json.dumps(fm_description))
-
-    # macOS doesn't provide /usr/bin/setsid, so we roll our own
-    with open("setsid", "w", encoding="utf-8") as f:  # noqa: ASYNC230
-        f.write(
-            dedent(
-                """\
-            #!/usr/bin/env python
-            import os
-            import sys
-            os.setsid()
-            os.execvp(sys.argv[1], sys.argv[1:])
-            """
+        # macOS doesn't provide /usr/bin/setsid, so we roll our own
+        with open("setsid", "w", encoding="utf-8") as f:  # noqa: ASYNC230
+            f.write(
+                dedent(
+                    """\
+                #!/usr/bin/env python
+                import os
+                import sys
+                os.setsid()
+                os.execvp(sys.argv[1], sys.argv[1:])
+                """
+                )
             )
-        )
-    os.chmod("setsid", 0o755)
+        os.chmod("setsid", 0o755)
 
-    async with MockZMQServer(unused_tcp_port) as zmq_server:
         fm_dispatch_process = Popen(  # noqa: ASYNC220
             [
                 os.getcwd() + "/setsid",
@@ -489,7 +487,7 @@ time.sleep(180)"""
 @pytest.mark.timeout(30)
 @pytest.mark.integration_test
 async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_terminate_message(
-    tmp_path, unused_tcp_port
+    tmp_path,
 ):
     os.chdir(tmp_path)
     with open("dummy_executable", "w", encoding="utf-8") as f:  # noqa: ASYNC230
@@ -501,39 +499,38 @@ time.sleep(180)"""
 
     executable = os.path.realpath("dummy_executable")
     os.chmod("dummy_executable", stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
+    async with MockZMQServer() as zmq_server:
+        fm_description = {
+            "ens_id": "_id_",
+            "dispatch_url": zmq_server.uri,
+            "jobList": [
+                {
+                    "name": "dummy_executable",
+                    "executable": executable,
+                    "stdout": "dummy.stdout",
+                    "stderr": "dummy.stderr",
+                }
+            ],
+        }
 
-    fm_description = {
-        "ens_id": "_id_",
-        "dispatch_url": f"tcp://localhost:{unused_tcp_port}",
-        "jobList": [
-            {
-                "name": "dummy_executable",
-                "executable": executable,
-                "stdout": "dummy.stdout",
-                "stderr": "dummy.stderr",
-            }
-        ],
-    }
+        with open(FORWARD_MODEL_DESCRIPTION_FILE, "w", encoding="utf-8") as f:  # noqa: ASYNC230
+            f.write(json.dumps(fm_description))
 
-    with open(FORWARD_MODEL_DESCRIPTION_FILE, "w", encoding="utf-8") as f:  # noqa: ASYNC230
-        f.write(json.dumps(fm_description))
-
-    # macOS doesn't provide /usr/bin/setsid, so we roll our own
-    with open("setsid", "w", encoding="utf-8") as f:  # noqa: ASYNC230
-        f.write(
-            dedent(
-                """\
-            #!/usr/bin/env python
-            import os
-            import sys
-            os.setsid()
-            os.execvp(sys.argv[1], sys.argv[1:])
-            """
+        # macOS doesn't provide /usr/bin/setsid, so we roll our own
+        with open("setsid", "w", encoding="utf-8") as f:  # noqa: ASYNC230
+            f.write(
+                dedent(
+                    """\
+                #!/usr/bin/env python
+                import os
+                import sys
+                os.setsid()
+                os.execvp(sys.argv[1], sys.argv[1:])
+                """
+                )
             )
-        )
-    os.chmod("setsid", 0o755)
+        os.chmod("setsid", 0o755)
 
-    async with MockZMQServer(unused_tcp_port) as zmq_server:
         fm_dispatch_process = Popen(  # noqa: ASYNC220
             [
                 os.getcwd() + "/setsid",
