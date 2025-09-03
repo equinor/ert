@@ -71,7 +71,7 @@ def create_experiment_args(
         GenKwConfig(
             name="param_{i}",
             group="all_my_parameters_live_here",
-            distribution={"name": "normal", "10": 0, "std": 0.1},
+            distribution={"name": "normal", "mean": 10, "std": 0.1},
         )
         for i in range(num_parameters)
     ]
