@@ -144,7 +144,7 @@ class ControlScaler(VariableTransform):
             \hat{\mathbf{x}}_i = \frac{\mathbf{x}_i - \mathbf{o}_i}{\mathbf{s}_i}
             $$
 
-            In the optimizer domeain, the coefficients and right-hand-side
+            In the optimizer domain, the coefficients and right-hand-side
             values must then be transformed as follows:
 
             $$ \begin{align}
@@ -160,6 +160,8 @@ class ControlScaler(VariableTransform):
             Each linear equation is scaled by a constant value that is either
             determined automatically or manually set.
         """
+        # The inputs may be immutable arrays, hence the `noqa PLR6104`
+
         # Correct for variable scaling:
         if self._offsets is not None:
             offsets = np.matmul(coefficients, self._offsets)
@@ -205,6 +207,7 @@ class ControlScaler(VariableTransform):
             The re-scaled bounds.
         """
         if self._scaling_factors is not None:
+            # The inputs may be immutable arrays, hence the `noqa PLR6104`
             lower_diffs = lower_diffs * self._scaling_factors  # noqa: PLR6104
             upper_diffs = upper_diffs * self._scaling_factors  # noqa: PLR6104
         return lower_diffs, upper_diffs
@@ -227,6 +230,7 @@ class ControlScaler(VariableTransform):
             The original inputs.
         """
         if self._input_constraint_scales is not None:
+            # The inputs may be immutable arrays, hence the `noqa PLR6104`
             lower_diffs = lower_diffs * self._input_constraint_scales  # noqa: PLR6104
             upper_diffs = upper_diffs * self._input_constraint_scales  # noqa: PLR6104
         return lower_diffs, upper_diffs
