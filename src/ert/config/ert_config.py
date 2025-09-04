@@ -23,7 +23,6 @@ from ert.substitutions import Substitutions
 
 from ._design_matrix_validator import DesignMatrixValidator
 from .analysis_config import AnalysisConfig
-from .design_matrix import DESIGN_MATRIX_GROUP
 from .ensemble_config import EnsembleConfig
 from .forward_model_step import (
     ForwardModelJSON,
@@ -61,9 +60,7 @@ from .parsing.observations_parser import (
     ObservationConfigError,
     SummaryValues,
 )
-from .parsing.observations_parser import (
-    parse_content as parse_observations,
-)
+from .parsing.observations_parser import parse_content as parse_observations
 from .queue_config import QueueConfig
 from .workflow import Workflow
 from .workflow_job import (
@@ -1016,38 +1013,19 @@ class ErtConfig(BaseModel):
 
         if dm := analysis_config.design_matrix:
             dm_errors = []
-            dm_params = {
-                x.name
-                for x in dm.parameter_configuration.transform_function_definitions
-            }
-            for group_name, config in ensemble_config.parameter_configs.items():
-                if not isinstance(config, GenKwConfig):
-                    continue
-                group_params = {x.name for x in config.transform_function_definitions}
-                if group_name == DESIGN_MATRIX_GROUP:
-                    dm_errors.append(
-                        ConfigValidationError(
-                            f"Cannot have GEN_KW with group name {DESIGN_MATRIX_GROUP} "
-                            "when using DESIGN_MATRIX keyword."
-                        )
-                    )
-                if dm_params == group_params:
-                    ConfigWarning.warn(
-                        f"Parameters {group_params} from GEN_KW group '{group_name}' "
-                        "will be overridden by design matrix. This will cause "
-                        "updates to be turned off for these parameters."
-                    )
-                elif intersection := dm_params & group_params:
-                    dm_errors.append(
-                        ConfigValidationError(
-                            "Only full overlaps of design matrix and "
-                            "one genkw group are supported.\n"
-                            f"design matrix parameters: {dm_params}\n"
-                            f"parameters in genkw group <{group_name}>: "
-                            f"{group_params}\n"
-                            f"overlap between them: {intersection}"
-                        )
-                    )
+            dm_params = {x.name for x in dm.parameter_configurations}
+            overwrite_params = [
+                cfg.name
+                for cfg in ensemble_config.parameter_configs.values()
+                if isinstance(cfg, GenKwConfig) and cfg.name in dm_params
+            ]
+            if overwrite_params:
+                ConfigWarning.warn(
+                    f"Parameters {dm_params} "
+                    "will be overridden by design matrix. This will cause "
+                    "updates to be turned off for these parameters."
+                )
+
             if dm_errors:
                 raise ConfigValidationError.from_collected(dm_errors)
 

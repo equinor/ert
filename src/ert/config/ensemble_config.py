@@ -48,9 +48,6 @@ class EnsembleConfig(BaseModel):
             [p.name for p in self.parameter_configs.values()],
             [key for config in self.response_configs.values() for key in config.keys],
         )
-        self._check_for_duplicate_gen_kw_param_names(
-            [p for p in self.parameter_configs.values() if isinstance(p, GenKwConfig)]
-        )
 
         return self
 
@@ -159,7 +156,9 @@ class EnsembleConfig(BaseModel):
             + [SurfaceConfig.from_config_list(s) for s in surface_list]
             + [make_field(f) for f in field_list]
         )
-
+        EnsembleConfig._check_for_duplicate_gen_kw_param_names(
+            [p for p in parameter_configs if isinstance(p, GenKwConfig)]
+        )
         response_configs: list[KnownResponseTypes] = []
 
         for config_cls in _KNOWN_RESPONSE_TYPES:
