@@ -1,5 +1,3 @@
-from contextlib import ExitStack as does_not_raise
-
 import pytest
 
 from everest.config import EverestConfig
@@ -37,17 +35,6 @@ from everest.optimizer.everest2ropt import everest2ropt
                 ValueError,
                 match="The objective weight should be greater than 0",
             ),
-        ),
-        (
-            [{"name": "c1", "scale": 0}],
-            pytest.raises(
-                ValueError,
-                match="Scale value cannot be zero",
-            ),
-        ),
-        (
-            [{"name": "c1", "scale": -125}],
-            does_not_raise(),
         ),
     ],
 )
