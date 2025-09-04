@@ -147,47 +147,37 @@ class DesignMatrix:
                 f"{dm_other.default_sheet or ''})': {exc}!"
             ) from exc
 
-        for tfd in dm_other.parameter_configuration.transform_function_definitions:
-            if tfd.name not in common_keys:
-                self.parameter_configuration.transform_function_definitions.append(tfd)
+        for cfg in dm_other.parameter_configurations:
+            if cfg.name not in common_keys:
+                self.parameter_configurations.append(cfg)
 
     def merge_with_existing_parameters(
         self, existing_parameters: list[ParameterConfig]
     ) -> list[ParameterConfig]:
         """
         This method merges the design matrix parameters with the existing parameters and
-        returns the new list of existing parameters, wherein we drop GEN_KW group having
-        a full overlap with the design matrix group. GEN_KW group that was dropped will
-        acquire a new name from the design matrix group. Additionally, the
-        ParameterConfig which is the design matrix group is returned separately.
+        returns the new list of existing parameters.
 
         Args:
             existing_parameters (List[ParameterConfig]): List of existing parameters
-
-        Raises:
-            ConfigValidationError: If there is a partial overlap between the design
-            matrix group and any existing GEN_KW group
 
         Returns:
             List[ParameterConfig]: List of existing parameters
         """
 
-        new_param_config: list[ParameterConfig] = []
+        new_param_configs: list[ParameterConfig] = []
 
-        design_cfg = {cfg.name: cfg for cfg in self.parameter_configurations}
+        design_cfgs = {cfg.name: cfg for cfg in self.parameter_configurations}
 
-        for parameter_group in existing_parameters:
-            if not isinstance(parameter_group, GenKwConfig):
-                new_param_config += [parameter_group]
-                continue
-            if parameter_group.name in design_cfg:
-                parameter_group.input_source = DataSource.DESIGN_MATRIX
-                del design_cfg[parameter_group.name]
+        for param_cfg in existing_parameters:
+            if isinstance(param_cfg, GenKwConfig) and param_cfg.name in design_cfgs:
+                param_cfg.input_source = DataSource.DESIGN_MATRIX
+                del design_cfgs[param_cfg.name]
                 # set distribution to RAW and set group to DESIGN or keep?
-            new_param_config += [parameter_group]
-        for cfg in design_cfg.values():
-            new_param_config += [cfg]
-        return new_param_config
+            new_param_configs += [param_cfg]
+        for design_cfg in design_cfgs.values():
+            new_param_configs += [design_cfg]
+        return new_param_configs
 
     def read_and_validate_design_matrix(
         self,
