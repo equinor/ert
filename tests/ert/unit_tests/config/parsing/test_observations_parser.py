@@ -141,15 +141,6 @@ def test_that_double_comments_are_handled():
 def test_validate(file_contents):
     Path("wpr_diff_idx.txt").write_text("", encoding="utf8")
     Path("wpr_diff_obs.txt").write_text("", encoding="utf8")
-    print(
-        _validate_conf_content(
-            "",
-            _parse_content_list(
-                file_contents,
-                "",
-            ),
-        )
-    )
     assert _validate_conf_content(
         "",
         _parse_content_list(
