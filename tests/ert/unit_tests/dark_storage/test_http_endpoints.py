@@ -141,7 +141,17 @@ def test_get_summary_response(
     userdata = resp_ensemble["userdata"]
 
     assert resp_ensemble["size"] == 5
-    assert userdata == {"name": "default_0", "experiment_name": "ensemble-experiment"}
+    # User data has entry started_at which changes with test every run.
+    # Therefore, we match on all keys except that one.
+    expected_userdata = {
+        "name": "default_0",
+        "experiment_name": "ensemble-experiment",
+    }
+    assert all(
+        userdata[key] == expected_userdata[key]
+        for key in userdata
+        if key != "started_at"
+    )
 
     resp_response: Response = dark_storage_client_snake_oil.get(
         f"/ensembles/{ensemble_id}/responses/FOPR",
