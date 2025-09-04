@@ -4,6 +4,7 @@ import pytest
 from xlsxwriter import Workbook
 
 from ert.config import DataSource, DesignMatrix, GenKwConfig
+from ert.config.design_matrix import DESIGN_MATRIX_GROUP
 from tests.ert.conftest import _create_design_matrix
 
 
@@ -104,12 +105,13 @@ def test_merge_multiple_occurrences(
 
 
 @pytest.mark.parametrize(
-    "parameters, num_configs, input_source",
+    "parameters, num_configs, input_source, group_name",
     [
         pytest.param(
             ["a", "b"],
             2,
             {"a": DataSource.DESIGN_MATRIX, "b": DataSource.DESIGN_MATRIX},
+            {"a": "COEFFS", "b": "COEFFS"},
             id="genkw_replaced",
         ),
         pytest.param(
@@ -121,6 +123,12 @@ def test_merge_multiple_occurrences(
                 "aa": DataSource.SAMPLED,
                 "bb": DataSource.SAMPLED,
             },
+            {
+                "a": DESIGN_MATRIX_GROUP,
+                "b": DESIGN_MATRIX_GROUP,
+                "aa": "COEFFS",
+                "bb": "COEFFS",
+            },
             id="genkw_added",
         ),
         pytest.param(
@@ -131,16 +139,22 @@ def test_merge_multiple_occurrences(
                 "b": DataSource.DESIGN_MATRIX,
                 "bb": DataSource.SAMPLED,
             },
+            {
+                "a": "COEFFS",
+                "b": DESIGN_MATRIX_GROUP,
+                "bb": "COEFFS",
+            },
             id="genkw_added_and_replaced",
         ),
     ],
 )
 def test_read_and_merge_with_existing_parameters(
-    tmp_path, parameters, num_configs, input_source
+    tmp_path, parameters, num_configs, input_source, group_name
 ):
     genkw_configs = [
         GenKwConfig(
             name=param,
+            group="COEFFS",
             distribution={"name": "uniform", "min": 0, "max": 1},
         )
         for param in parameters
@@ -164,6 +178,9 @@ def test_read_and_merge_with_existing_parameters(
         assert config.name in input_source
         assert config.input_source == input_source[config.name], (
             f"{config} mismatch in input source"
+        )
+        assert config.group == group_name[config.name], (
+            f"{config} mismatch in group name"
         )
 
 
