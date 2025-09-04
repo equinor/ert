@@ -22,7 +22,7 @@ from .forward_model_step import (
     ForwardModelStepWarning,
 )
 from .gen_data_config import GenDataConfig
-from .gen_kw_config import GenKwConfig, PriorDict
+from .gen_kw_config import DataSource, GenKwConfig, PriorDict
 from .lint_file import lint_file
 from .model_config import ModelConfig
 from .observations import EnkfObs
@@ -50,6 +50,7 @@ __all__ = [
     "ConfigValidationError",
     "ConfigValidationError",
     "ConfigWarning",
+    "DataSource",
     "DesignMatrix",
     "ESSettings",
     "EnkfObs",
