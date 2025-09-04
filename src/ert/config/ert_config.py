@@ -729,10 +729,10 @@ class ErtConfig(BaseModel):
     def validate_dm_parameter_name_overlap(self) -> Self:
         if not self.analysis_config.design_matrix:
             return self
-        dm_param_config = self.analysis_config.design_matrix.parameter_configuration
+        dm_param_configs = self.analysis_config.design_matrix.parameter_configurations
         overlapping_parameter_names = [
             parameter_definition.name
-            for parameter_definition in dm_param_config.transform_function_definitions
+            for parameter_definition in dm_param_configs
             if f"<{parameter_definition.name}>" in self.substitutions
             or parameter_definition.name in ErtConfig.RESERVED_KEYWORDS
         ]
