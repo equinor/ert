@@ -33,14 +33,13 @@ class HistogramPlot:
         observation_data: pd.DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
     ) -> None:
-        plotHistogram(figure, plot_context, ensemble_to_data_map, observation_data)
+        plotHistogram(figure, plot_context, ensemble_to_data_map)
 
 
 def plotHistogram(
     figure: Figure,
     plot_context: PlotContext,
     ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
-    observation_data: pd.DataFrame,
 ) -> None:
     config = plot_context.plotConfig()
 
