@@ -44,16 +44,6 @@ def plotHistogram(
     config = plot_context.plotConfig()
 
     ensemble_list = plot_context.ensembles()
-    if not ensemble_list:
-        dummy_ensemble_name = "default"
-        dummy_ensemble_object = EnsembleObject(
-            name=dummy_ensemble_name,
-            hidden=False,
-            id="id",
-            experiment_name="default",
-        )
-        ensemble_list = [dummy_ensemble_object]
-        ensemble_to_data_map = {dummy_ensemble_object: pd.DataFrame()}
 
     ensemble_count = len(ensemble_list)
 
@@ -146,7 +136,9 @@ def plotHistogram(
             PlotTools.showGrid(axes[ensemble.name], plot_context)
 
     min_count = 0
-    max_count = max(subplot.get_ylim()[1] for subplot in axes.values())
+    max_count = (
+        max(subplot.get_ylim()[1] for subplot in axes.values()) if axes.values() else 0
+    )
 
     custom_limits = plot_context.plotConfig().limits
 
