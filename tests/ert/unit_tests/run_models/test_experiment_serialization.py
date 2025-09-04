@@ -25,6 +25,7 @@ from ert.config import (
     Field,
     ForwardModelStep,
     GenDataConfig,
+    GenKwConfig,
     HookRuntime,
     ModelConfig,
     ObservationSettings,
@@ -359,19 +360,19 @@ def multidass(_):
     }
 
 
-# TODO refactor
-# transform_function_definitions = st.builds(
-#     TransformFunctionDefinition,
-#     param_name=st.just("NORMAL"),
-#     values=st.just([0, 1]),
-# )
+distribution_strategy = st.fixed_dictionaries(
+    {
+        "name": st.sampled_from(["normal", "lognormal", "uniform"]),
+        "mean": st.floats(min_value=-100, max_value=100),
+        "std": st.floats(min_value=0.001, max_value=10),
+    }
+)
 
-# gen_kw_configs = st.builds(
-#     GenKwConfig,
-#     transform_function_definitions=st.lists(
-#         transform_function_definitions, unique_by=lambda tdf: tdf.name
-#     ),
-# )
+gen_kw_configs = st.builds(
+    GenKwConfig,
+    name=st.text(min_size=1, max_size=20),
+    distribution=distribution_strategy,
+)
 
 
 surface_configs = st.builds(
