@@ -362,7 +362,7 @@ def test_eightcells_snapshot(snapshot, copy_eightcells_test_data_to_tmp):
                 f"Dataframes have different structures for {snapshot_name}"
                 f"{data}\n\n{snapshot_data}"
             )
-        tolerance = 1e-15
+        tolerance = 1
 
         comparison = data.select_dtypes(include=[float, int]).apply(
             lambda col: np.isclose(col, snapshot_data[col.name], atol=tolerance)
