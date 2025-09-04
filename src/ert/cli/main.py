@@ -96,11 +96,12 @@ def run_cli(args: Namespace, runtime_plugins: ErtRuntimePlugins | None = None) -
 
     status_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
     try:
-        model = create_model(
-            ert_config,
-            args,
-            status_queue,
-        )
+        with ErtPluginContext():
+            model = create_model(
+                ert_config,
+                args,
+                status_queue,
+            )
     except ValueError as e:
         raise ErtCliError(f"{args.mode} was not valid, failed with: {e}") from e
 

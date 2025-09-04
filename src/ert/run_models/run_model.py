@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any, ClassVar, Protocol
 
 import numpy as np
-from pydantic import BaseModel, PrivateAttr
+from pydantic import PrivateAttr
 
 from _ert.events import EEEvent, EESnapshot, EESnapshotUpdate
 from ert.config import (
@@ -61,6 +61,7 @@ from ert.utils import log_duration
 from ert.warnings import PostSimulationWarning, capture_specific_warning
 from ert.workflow_runner import WorkflowRunner
 
+from ..base_model_context import BaseModelWithContextSupport
 from ..run_arg import RunArg
 from ._create_run_path import create_run_path
 from .event import EndEvent, FullSnapshotEvent, SnapshotUpdateEvent, StatusEvents
@@ -138,7 +139,7 @@ class RunModelAPI:
     has_failed_realizations: Callable[[], bool]
 
 
-class RunModel(BaseModel, ABC):
+class RunModel(BaseModelWithContextSupport, ABC):
     storage_path: str
     runpath_file: Path
     user_config_file: Path

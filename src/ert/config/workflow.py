@@ -2,16 +2,15 @@ from __future__ import annotations
 
 import os
 from collections.abc import Iterator
-from dataclasses import dataclass
 from typing import Any
 
+from ..base_model_context import BaseModelWithContextSupport
 from .parsing import ConfigValidationError, ErrorInfo, init_workflow_schema, parse
 from .parsing.types import Defines
 from .workflow_job import WorkflowJob
 
 
-@dataclass
-class Workflow:
+class Workflow(BaseModelWithContextSupport):
     src_file: str
     cmd_list: list[tuple[WorkflowJob, Any]]
 
