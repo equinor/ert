@@ -93,7 +93,7 @@ def test_merge_multiple_occurrences(
             design_matrix_1.merge_with_other(design_matrix_2)
     else:
         design_matrix_1.merge_with_other(design_matrix_2)
-        design_params = design_matrix_1.parameter_configuration
+        design_params = [cfg.name for cfg in design_matrix_1.parameter_configurations]
         assert all(param in design_params for param in ("a", "b", "c", "d"))
         assert design_matrix_1.active_realizations == [True, True, True]
         df = design_matrix_1.design_matrix_df
@@ -162,7 +162,9 @@ def test_read_and_merge_with_existing_parameters(
     assert len(new_config_parameters) == num_configs
     for config in new_config_parameters:
         assert config.name in input_source
-        assert config.source == input_source[config.name]
+        assert config.input_source == input_source[config.name], (
+            f"{config} mismatch in input source"
+        )
 
 
 def test_reading_design_matrix(tmp_path):
@@ -181,7 +183,7 @@ def test_reading_design_matrix(tmp_path):
     )
     _create_design_matrix(design_path, design_matrix_df, default_sheet_df)
     design_matrix = DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
-    design_params = design_matrix.parameter_configuration
+    design_params = [cfg.name for cfg in design_matrix.parameter_configurations]
     assert all(param in design_params for param in ("a", "b", "c", "one", "d"))
     assert design_matrix.active_realizations == [True, True, False, False, True]
 
