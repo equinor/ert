@@ -23,7 +23,7 @@ from ert.mode_definitions import (
     WORKFLOW_MODE,
 )
 from ert.namespace import Namespace
-from ert.plugins import ErtPluginManager
+from ert.plugins import ErtPluginContext, ErtRuntimePlugins
 from ert.run_models.event import StatusEvents
 from ert.run_models.model_factory import create_model
 from ert.storage import open_storage
@@ -35,14 +35,20 @@ class ErtCliError(Exception):
     exit with a nonzero return code"""
 
 
-def run_cli(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> None:
+def run_cli(args: Namespace, runtime_plugins: ErtRuntimePlugins | None = None) -> None:
     ert_dir = os.path.abspath(os.path.dirname(args.config))
     os.chdir(ert_dir)
     # Changing current working directory means we need to update
     # the config file to be the base name of the original config
     args.config = os.path.basename(args.config)
 
-    ert_config = ErtConfig.with_plugins().from_file(args.config)
+    if runtime_plugins is not None:
+        ert_config = ErtConfig.with_plugins(runtime_plugins).from_file(args.config)
+    else:
+        with ErtPluginContext() as default_runtime_plugins:
+            ert_config = ErtConfig.with_plugins(default_runtime_plugins).from_file(
+                args.config
+            )
 
     local_storage_set_ert_config(ert_config)
     counter_fm_steps = Counter(fms.name for fms in ert_config.forward_model_steps)
@@ -90,11 +96,12 @@ def run_cli(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> 
 
     status_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
     try:
-        model = create_model(
-            ert_config,
-            args,
-            status_queue,
-        )
+        with ErtPluginContext():
+            model = create_model(
+                ert_config,
+                args,
+                status_queue,
+            )
     except ValueError as e:
         raise ErtCliError(f"{args.mode} was not valid, failed with: {e}") from e
 

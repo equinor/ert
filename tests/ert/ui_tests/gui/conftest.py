@@ -91,8 +91,8 @@ def _new_poly_example(
 def _open_main_window(path) -> Iterator[tuple[ErtMainWindow, Storage, ErtConfig]]:
     args_mock = Mock()
     args_mock.config = str(path)
-    with ErtPluginContext():
-        config = ErtConfig.with_plugins().from_file(path)
+    with ErtPluginContext() as ctx:
+        config = ErtConfig.with_plugins(ctx).from_file(path)
         with (
             add_gui_log_handler() as log_handler,
         ):
