@@ -35,7 +35,8 @@ from ert.config import (
     SurfaceConfig,
 )
 from ert.config.design_matrix import DESIGN_MATRIX_GROUP
-from ert.config.gen_kw_config import TransformFunctionDefinition
+from ert.config.general_observation import GenObservation
+from ert.config.observation_vector import ObsVector
 from ert.sample_prior import sample_prior
 from ert.storage import (
     ErtStorageException,
@@ -215,14 +216,8 @@ def test_that_saving_empty_parameters_fails_nicely(tmp_path):
 
 def test_that_loading_parameter_via_response_api_fails(tmp_path):
     uniform_parameter = GenKwConfig(
-        name="PARAMETER",
-        forward_init=False,
-        transform_function_definitions=[
-            TransformFunctionDefinition(
-                name="KEY1", param_name="UNIFORM", values=[0, 1]
-            ),
-        ],
-        update=True,
+        name="KEY_1",
+        distribution={"name": "uniform", "min": 0, "max": 1},
     )
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment(
@@ -236,17 +231,15 @@ def test_that_loading_parameter_via_response_api_fails(tmp_path):
         )
 
         prior.save_parameters(
-            "PARAMETER",
-            0,
-            xr.Dataset(
+            pl.DataFrame(
                 {
-                    "values": ("names", [1.0]),
-                    "names": ["KEY_1"],
+                    "realization": [0],
+                    "KEY_1": [1.0],
                 }
-            ),
+            )
         )
-        with pytest.raises(ValueError, match="PARAMETER is not a response"):
-            prior.load_responses("PARAMETER", (0,))
+        with pytest.raises(ValueError, match="KEY_1 is not a response"):
+            prior.load_responses("KEY_1", (0,))
 
 
 def test_that_load_responses_throws_exception(tmp_path):
@@ -867,7 +860,9 @@ def test_that_all_parameters_and_gen_data_consolidation_works(
         for batch, realization_info in enumerate(ensemble_realization_infos):
             failed_realizations = failed_realizations_per_batch.get(batch, {})
             num_realizations = len(realization_info)
-            everest_realization_info = {i: v for i, v in enumerate(realization_info)}  # noqa: C416
+            everest_realization_info = {
+                i: v for i, v in enumerate(realization_info)
+            }  # noqa: C416
             ensemble = storage.create_ensemble(
                 experiment, ensemble_size=num_realizations, iteration=batch
             )
