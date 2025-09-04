@@ -19,11 +19,9 @@ async def test_invalid_server(monkeypatch):
             pass
 
 
-async def test_successful_sending(unused_tcp_port):
-    host = "localhost"
-    url = f"tcp://{host}:{unused_tcp_port}"
+async def test_successful_sending():
     messages = ["test_1", "test_2", "test_3"]
-    async with MockZMQServer(unused_tcp_port) as mock_server, Client(url) as client:
+    async with MockZMQServer() as mock_server, Client(mock_server.uri) as client:
         for message in messages:
             await client.send(message)
 
@@ -32,14 +30,12 @@ async def test_successful_sending(unused_tcp_port):
 
 
 @pytest.mark.integration_test
-async def test_retry(unused_tcp_port):
-    host = "localhost"
-    url = f"tcp://{host}:{unused_tcp_port}"
+async def test_retry():
     client_connection_error_set = False
     messages = ["test_1", "test_2", "test_3"]
     async with (
-        MockZMQServer(unused_tcp_port, signal=2) as mock_server,
-        Client(url, ack_timeout=0.5) as client,
+        MockZMQServer(signal=2) as mock_server,
+        Client(mock_server.uri, ack_timeout=0.5) as client,
     ):
         for message in messages:
             try:
@@ -53,13 +49,10 @@ async def test_retry(unused_tcp_port):
     assert mock_server.messages.count("test_3") == 1
 
 
-async def test_reconnect_when_missing_heartbeat(unused_tcp_port, monkeypatch):
-    host = "localhost"
-    url = f"tcp://{host}:{unused_tcp_port}"
-
-    async with MockZMQServer(unused_tcp_port, signal=3) as mock_server:
+async def test_reconnect_when_missing_heartbeat(monkeypatch):
+    async with MockZMQServer(signal=3) as mock_server:
         monkeypatch.setattr(_ert.forward_model_runner.client, "HEARTBEAT_TIMEOUT", 0.01)
-        async with Client(url) as client:
+        async with Client(mock_server.uri) as client:
             await client.send("start", retries=1)
 
             await mock_server.do_heartbeat()
