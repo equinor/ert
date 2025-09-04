@@ -26,7 +26,6 @@ from .gen_kw_config import GenKwConfig, PriorDict
 from .lint_file import lint_file
 from .model_config import ModelConfig
 from .parameter_config import ParameterConfig, ParameterMetadata
-from .parameter_group import ParameterGroup
 from .parsing import (
     ConfigValidationError,
     ConfigWarning,
@@ -78,7 +77,6 @@ __all__ = [
     "ObservationType",
     "OutlierSettings",
     "ParameterConfig",
-    "ParameterGroup",
     "ParameterMetadata",
     "PriorDict",
     "QueueConfig",
