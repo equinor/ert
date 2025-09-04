@@ -13,7 +13,17 @@ from ert.gui.tools.plot.plottery.plots import HistogramPlot
 @pytest.fixture(
     params=[
         pytest.param(
-            ([EnsembleObject("ensemble_1", "id", False, "experiment_1")],),
+            (
+                [
+                    EnsembleObject(
+                        "ensemble_1",
+                        "id",
+                        False,
+                        "experiment_1",
+                        started_at="2012-12-10T00:00:00",
+                    )
+                ],
+            ),
         ),
         pytest.param(([],), id="no_ensembles"),
     ]
@@ -64,7 +74,9 @@ def test_histogram_plot_for_constant_distribution(monkeypatch):
     # when all the parameter values are the same
     context = Mock(spec=PlotContext)
     context.ensembles.return_value = [
-        EnsembleObject("ensemble_1", "id", False, "experiment_1")
+        EnsembleObject(
+            "ensemble_1", "id", False, "experiment_1", started_at="2012-12-10T00:00:00"
+        )
     ]
     title = "Histogram with same values"
     context.plotConfig.return_value = PlotConfig(title=title)

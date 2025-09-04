@@ -14,7 +14,9 @@ from ert.gui.tools.plot.plottery.plots import StdDevPlot
 def plot_context(request):
     context = Mock(spec=PlotContext)
     context.ensembles.return_value = [
-        EnsembleObject("ensemble_1", "id", False, "experiment_1")
+        EnsembleObject(
+            "ensemble_1", "id", False, "experiment_1", started_at="2012-12-10T00:00:00"
+        )
     ]
     context.history_data = None
     context.layer = 0
