@@ -285,10 +285,10 @@ class DesignMatrix:
         parameter_configurations: list[GenKwConfig] = [
             GenKwConfig(
                 name=col,
-                forward_init=False,
                 update=False,
                 group=DESIGN_MATRIX_GROUP,
-                distribution={"name": "RAW"},
+                input_source=DataSource.DESIGN_MATRIX,
+                distribution={"name": "raw"},
             )
             for col in design_matrix_df.columns
             if col != "realization"
