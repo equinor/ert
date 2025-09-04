@@ -15,8 +15,9 @@ from typing import Any, ClassVar, Self, cast, overload
 
 import polars as pl
 from numpy.random import SeedSequence
-from pydantic import BaseModel, Field, PrivateAttr, model_validator
+from pydantic import BaseModel, Field, PrivateAttr
 from pydantic import ValidationError as PydanticValidationError
+from pydantic import model_validator
 
 from ert.plugins import ErtPluginManager, fixtures_per_hook
 from ert.substitutions import Substitutions
@@ -31,7 +32,6 @@ from ._observation_declaration import (
     make_observation_declarations,
 )
 from .analysis_config import AnalysisConfig
-from .design_matrix import DESIGN_MATRIX_GROUP
 from .ensemble_config import EnsembleConfig
 from .forward_model_step import (
     ForwardModelJSON,
@@ -61,6 +61,14 @@ from .parsing import (
     parse_contents,
     read_file,
 )
+from .parsing.observations_parser import (
+    ConfContent,
+    GenObsValues,
+    HistoryValues,
+    ObservationConfigError,
+    SummaryValues,
+)
+from .parsing.observations_parser import parse_content as parse_observations
 from .queue_config import QueueConfig
 from .workflow import Workflow
 from .workflow_job import (
@@ -1015,38 +1023,19 @@ class ErtConfig(BaseModel):
 
         if dm := analysis_config.design_matrix:
             dm_errors = []
-            dm_params = {
-                x.name
-                for x in dm.parameter_configuration.transform_function_definitions
-            }
-            for group_name, config in ensemble_config.parameter_configs.items():
-                if not isinstance(config, GenKwConfig):
-                    continue
-                group_params = {x.name for x in config.transform_function_definitions}
-                if group_name == DESIGN_MATRIX_GROUP:
-                    dm_errors.append(
-                        ConfigValidationError(
-                            f"Cannot have GEN_KW with group name {DESIGN_MATRIX_GROUP} "
-                            "when using DESIGN_MATRIX keyword."
-                        )
-                    )
-                if dm_params == group_params:
-                    ConfigWarning.warn(
-                        f"Parameters {group_params} from GEN_KW group '{group_name}' "
-                        "will be overridden by design matrix. This will cause "
-                        "updates to be turned off for these parameters."
-                    )
-                elif intersection := dm_params & group_params:
-                    dm_errors.append(
-                        ConfigValidationError(
-                            "Only full overlaps of design matrix and "
-                            "one genkw group are supported.\n"
-                            f"design matrix parameters: {dm_params}\n"
-                            f"parameters in genkw group <{group_name}>: "
-                            f"{group_params}\n"
-                            f"overlap between them: {intersection}"
-                        )
-                    )
+            dm_params = {x.name for x in dm.parameter_configurations}
+            overwrite_params = [
+                cfg.name
+                for cfg in ensemble_config.parameter_configs.values()
+                if isinstance(cfg, GenKwConfig) and cfg.name in dm_params
+            ]
+            if overwrite_params:
+                ConfigWarning.warn(
+                    f"Parameters {dm_params} "
+                    "will be overridden by design matrix. This will cause "
+                    "updates to be turned off for these parameters."
+                )
+
             if dm_errors:
                 raise ConfigValidationError.from_collected(dm_errors)
 
@@ -1188,27 +1177,18 @@ class ErtConfig(BaseModel):
         if (
             self.analysis_config.design_matrix is not None
             and (
-                dm_active_realizations
-                := self.analysis_config.design_matrix.active_realizations
+                dm_active_realizations := self.analysis_config.design_matrix.active_realizations
             )
             is not None
         ) and (
             dm_num_realizations := len(dm_active_realizations)
         ) != config_num_realizations:
-            msg = (
-                f"NUM_REALIZATIONS ({config_num_realizations}) is "
-                + (
-                    "greater "
-                    if dm_num_realizations < config_num_realizations
-                    else "less "
-                )
-                + f"than the number of realizations in DESIGN_MATRIX "
-                f"({dm_num_realizations}). Using the realizations from "
-                + (
-                    f"DESIGN_MATRIX ({dm_num_realizations})"
-                    if dm_num_realizations < config_num_realizations
-                    else f"NUM_REALIZATIONS ({config_num_realizations})"
-                )
+            msg = f"NUM_REALIZATIONS ({config_num_realizations}) is " + (
+                "greater " if dm_num_realizations < config_num_realizations else "less "
+            ) + f"than the number of realizations in DESIGN_MATRIX " f"({dm_num_realizations}). Using the realizations from " + (
+                f"DESIGN_MATRIX ({dm_num_realizations})"
+                if dm_num_realizations < config_num_realizations
+                else f"NUM_REALIZATIONS ({config_num_realizations})"
             )
             ConfigWarning.warn(msg)
             return min(config_num_realizations, dm_num_realizations)
@@ -1219,8 +1199,7 @@ class ErtConfig(BaseModel):
         if (
             self.analysis_config.design_matrix is not None
             and (
-                dm_active_realizations
-                := self.analysis_config.design_matrix.active_realizations
+                dm_active_realizations := self.analysis_config.design_matrix.active_realizations
             )
             is not None
         ):
