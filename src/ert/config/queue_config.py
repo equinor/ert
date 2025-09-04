@@ -5,7 +5,7 @@ import os
 import re
 import shutil
 from abc import abstractmethod
-from typing import Annotated, Any, Literal, TypeAlias, cast, overload
+from typing import TYPE_CHECKING, Annotated, Any, Literal, TypeAlias, cast, overload
 
 import pydantic
 from pydantic import BaseModel, Field, field_validator
@@ -23,6 +23,9 @@ from .parsing import (
     QueueSystem,
     QueueSystemWithGeneric,
 )
+
+if TYPE_CHECKING:
+    from ert.plugins import ErtRuntimePlugins
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +65,8 @@ class QueueOptions(
         # Use from plugin system if user has not specified
         plugin_script = None
         if info.context:
-            plugin_script = info.context.get("activate_script")
+            context = cast("ErtRuntimePlugins", info.context)
+            plugin_script = context.activate_script
         return plugin_script or activate_script()  # Return default value
 
     @overload

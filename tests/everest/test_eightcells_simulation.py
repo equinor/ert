@@ -10,6 +10,7 @@ import pytest
 from ert.config import ErtConfig
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.plugins import ErtPluginContext
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
@@ -312,7 +313,8 @@ def test_init_eightcells_model(copy_eightcells_test_data_to_tmp):
     ert_config = _everest_to_ert_config_dict(
         config, site_config=ErtConfig.read_site_config()
     )
-    ErtConfig.with_plugins().from_dict(config_dict=ert_config)
+    with ErtPluginContext() as ctx:
+        ErtConfig.with_plugins(ctx).from_dict(config_dict=ert_config)
 
 
 @pytest.mark.integration_test

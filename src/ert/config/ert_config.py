@@ -11,14 +11,13 @@ from datetime import datetime
 from functools import cached_property
 from os import path
 from pathlib import Path
-from typing import Any, ClassVar, Self, cast, overload
+from typing import TYPE_CHECKING, Any, ClassVar, Self, cast, overload
 
 import polars as pl
 from numpy.random import SeedSequence
 from pydantic import BaseModel, Field, model_validator
 from pydantic import ValidationError as PydanticValidationError
 
-from ert.plugins import ErtPluginManager, fixtures_per_hook
 from ert.substitutions import Substitutions
 
 from ._design_matrix_validator import DesignMatrixValidator
@@ -36,7 +35,6 @@ from .forward_model_step import (
     ForwardModelJSON,
     ForwardModelStep,
     ForwardModelStepJSON,
-    ForwardModelStepPlugin,
     ForwardModelStepValidationError,
     ForwardModelStepWarning,
 )
@@ -64,12 +62,16 @@ from .parsing import (
 )
 from .queue_config import QueueConfig
 from .workflow import Workflow
+from .workflow_fixtures import fixtures_per_hook
 from .workflow_job import (
     ErtScriptLoadFailure,
     ErtScriptWorkflow,
     WorkflowJob,
     workflow_job_from_file,
 )
+
+if TYPE_CHECKING:
+    from ert.plugins import ErtRuntimePlugins
 
 logger = logging.getLogger(__name__)
 
@@ -772,40 +774,18 @@ class ErtConfig(BaseModel):
         return True
 
     @staticmethod
-    def with_plugins(
-        forward_model_step_classes: list[type[ForwardModelStepPlugin]] | None = None,
-        env_pr_fm_step: dict[str, dict[str, Any]] | None = None,
-    ) -> type[ErtConfig]:
-        pm = ErtPluginManager()
-        if forward_model_step_classes is None:
-            forward_model_step_classes = pm.forward_model_steps
-
-        preinstalled_fm_steps: dict[str, ForwardModelStepPlugin] = {}
-        for fm_step_subclass in forward_model_step_classes:
-            # we call without required arguments to
-            # ForwardModelStepPlugin.__init__ as
-            # we expect the subclass to override __init__
-            # and provide those arguments
-            fm_step = fm_step_subclass()  # type: ignore
-            preinstalled_fm_steps[fm_step.name] = fm_step
-
-        if env_pr_fm_step is None:
-            env_pr_fm_step_ = uppercase_subkeys_and_stringify_subvalues(
-                pm.get_forward_model_configuration()
-            )
-        else:
-            env_pr_fm_step_ = env_pr_fm_step
-
+    def with_plugins(runtime_plugins: ErtRuntimePlugins) -> type[ErtConfig]:
         class ErtConfigWithPlugins(ErtConfig):
             PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[
                 Mapping[str, ForwardModelStep]
-            ] = preinstalled_fm_steps
-            PREINSTALLED_WORKFLOWS = (
-                pm.get_ertscript_workflows().get_workflows()
-                | pm.get_legacy_ertscript_workflows().get_workflows()
+            ] = runtime_plugins.installed_forward_model_steps
+            PREINSTALLED_WORKFLOWS = {**runtime_plugins.installed_workflow_jobs}
+            ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = (
+                uppercase_subkeys_and_stringify_subvalues(
+                    {k: dict(v) for k, v in runtime_plugins.env_pr_fm_step.items()}
+                )
             )
-            ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = env_pr_fm_step_
-            ACTIVATE_SCRIPT = pm.activate_script()
+            ACTIVATE_SCRIPT = runtime_plugins.activate_script
 
         ErtConfigWithPlugins.model_rebuild()
         assert issubclass(ErtConfigWithPlugins, ErtConfig)

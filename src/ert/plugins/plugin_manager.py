@@ -13,11 +13,14 @@ from types import TracebackType
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 
 import pluggy
+from pydantic import BaseModel, Field
 from typing_extensions import TypedDict
 
+from ert.base_model_context import init_context_var
+from ert.config import ErtConfig, ErtScriptWorkflow, ForwardModelStep
+from ert.config.queue_config import KnownQueueOptions, LocalQueueOptions
+from ert.config.workflow_config import LegacyWorkflowConfigs, WorkflowConfigs
 from ert.trace import add_span_processor
-
-from .workflow_config import LegacyWorkflowConfigs, WorkflowConfigs
 
 logger = logging.getLogger(__name__)
 
@@ -408,6 +411,21 @@ class ErtPluginManager(pluggy.PluginManager):
             add_span_processor(span_processor)
 
 
+class ErtRuntimePlugins(BaseModel):
+    installed_forward_model_steps: Mapping[str, ForwardModelStep] = Field(
+        default_factory=dict
+    )
+    installed_workflow_jobs: Mapping[str, ErtScriptWorkflow] = Field(
+        default_factory=dict
+    )
+    activate_script: str = Field(default="")
+    queue_options: KnownQueueOptions | None = Field(
+        default_factory=LocalQueueOptions, discriminator="name"
+    )
+    env_pr_fm_step: Mapping[str, Mapping[str, Any]] = Field(default_factory=dict)
+    help_links: dict[str, str] = Field(default_factory=dict)
+
+
 class ErtPluginContext:
     def __init__(
         self,
@@ -430,7 +448,7 @@ class ErtPluginContext:
             logger.debug(f"Temporary site-config created: {tmp_site_config_filename}")
         return tmp_site_config_filename
 
-    def __enter__(self) -> ErtPluginContext:
+    def __enter__(self) -> ErtRuntimePlugins:
         if self._logger is not None:
             self.plugin_manager.add_logging_handle_to_root(logger=self._logger)
         self.plugin_manager.add_span_processor_to_trace_provider()
@@ -443,7 +461,36 @@ class ErtPluginContext:
             "ERT_SITE_CONFIG": self.tmp_site_config_filename,
         }
         self._setup_temp_environment_if_not_already_set(env)
-        return self
+
+        site_config_contents = ErtConfig.read_site_config()
+        has_site_config = bool(site_config_contents)
+        site_config: ErtConfig = ErtConfig.from_dict(config_dict=site_config_contents)
+
+        all_forward_model_steps = site_config.installed_forward_model_steps
+        for fm_step_subclass in self.plugin_manager.forward_model_steps:
+            # we call without required arguments to
+            # ForwardModelStepPlugin.__init__ as
+            # we expect the subclass to override __init__
+            # and provide those arguments
+            fm_step = fm_step_subclass()  # type: ignore
+            all_forward_model_steps[fm_step.name] = fm_step
+
+        pydantic_ctx = ErtRuntimePlugins(
+            installed_forward_model_steps=all_forward_model_steps,
+            installed_workflow_jobs=(
+                self.plugin_manager.get_ertscript_workflows().get_workflows()
+                | self.plugin_manager.get_legacy_ertscript_workflows().get_workflows()
+            ),
+            queue_options=site_config.queue_config.queue_options
+            if has_site_config
+            else None,
+            activate_script=self.plugin_manager.activate_script(),
+            env_pr_fm_step=self.plugin_manager.get_forward_model_configuration(),
+            help_links=self.plugin_manager.get_help_links(),
+        )
+
+        self._context_token = init_context_var.set(pydantic_ctx)  # type: ignore
+        return pydantic_ctx
 
     def _setup_temp_environment_if_not_already_set(
         self, env: Mapping[str, str | None]
@@ -478,3 +525,5 @@ class ErtPluginContext:
         logger.debug("Deleting temporary directory for site-config")
         if self.tmp_dir is not None:
             shutil.rmtree(self.tmp_dir, ignore_errors=True)
+
+        init_context_var.reset(self._context_token)

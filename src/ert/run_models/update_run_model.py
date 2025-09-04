@@ -19,7 +19,7 @@ from ert.config import (
     ObservationSettings,
     ParameterConfig,
 )
-from ert.plugins.workflow_fixtures import (
+from ert.config.workflow_fixtures import (
     PostUpdateFixtures,
     PreFirstUpdateFixtures,
     PreUpdateFixtures,

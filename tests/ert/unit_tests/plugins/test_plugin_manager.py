@@ -1,13 +1,11 @@
 import json
 import logging
-from functools import partial
-from unittest.mock import patch
 
 import pytest
 
 import ert.plugins.hook_implementations
 from ert.config import ErtConfig
-from ert.plugins import ErtPluginManager, plugin
+from ert.plugins import ErtPluginContext, ErtPluginManager, plugin
 from ert.trace import trace, tracer
 from tests.ert.unit_tests.plugins import dummy_plugins
 from tests.ert.unit_tests.plugins.dummy_plugins import DummyFMStep
@@ -34,15 +32,15 @@ def test_with_plugins():
         "test": "test",
         "test2": "test",
     }
-    assert pm.get_flow_config_path() == "/dummy/path/flow_config.yml"
-    assert pm.get_ecl100_config_path() == "/dummy/path/ecl100_config.yml"
-    assert pm.get_ecl300_config_path() == "/dummy/path/ecl300_config.yml"
+    assert pm.get_flow_config_path() == "dummy/path/flow_config.yml"
+    assert pm.get_ecl100_config_path() == "dummy/path/ecl100_config.yml"
+    assert pm.get_ecl300_config_path() == "dummy/path/ecl300_config.yml"
     assert pm.get_forward_model_configuration() == {"FLOW": {"mpipath": "/foo"}}
 
-    assert pm.get_installable_jobs()["job1"] == "/dummy/path/job1"
-    assert pm.get_installable_jobs()["job2"] == "/dummy/path/job2"
-    assert pm._get_config_workflow_jobs()["wf_job1"] == "/dummy/path/wf_job1"
-    assert pm._get_config_workflow_jobs()["wf_job2"] == "/dummy/path/wf_job2"
+    assert pm.get_installable_jobs()["job1"] == "dummy/path/job1"
+    assert pm.get_installable_jobs()["job2"] == "dummy/path/job2"
+    assert pm._get_config_workflow_jobs()["wf_job1"] == "dummy/path/wf_job1"
+    assert pm._get_config_workflow_jobs()["wf_job2"] == "dummy/path/wf_job2"
 
     assert pm._site_config_lines() == [
         "-- Content below originated from dummy (site_config_lines)",
@@ -203,7 +201,7 @@ def test_job_documentation():
     pm = ErtPluginManager(plugins=[dummy_plugins])
     expected = {
         "job1": {
-            "config_file": "/dummy/path/job1",
+            "config_file": "dummy/path/job1",
             "source_package": "dummy",
             "source_function_name": "installable_jobs",
             "description": "job description",
@@ -211,7 +209,7 @@ def test_job_documentation():
             "category": "test.category.for.job",
         },
         "job2": {
-            "config_file": "/dummy/path/job2",
+            "config_file": "dummy/path/job2",
             "source_package": "dummy",
             "source_function_name": "installable_jobs",
         },
@@ -221,8 +219,8 @@ def test_job_documentation():
 
 def test_workflows_merge(monkeypatch):
     expected_result = {
-        "wf_job1": "/dummy/path/wf_job1",
-        "wf_job2": "/dummy/path/wf_job2",
+        "wf_job1": "dummy/path/wf_job1",
+        "wf_job2": "dummy/path/wf_job2",
     }
     pm = ErtPluginManager(plugins=[dummy_plugins])
     result = pm.get_installable_workflow_jobs()
@@ -323,20 +321,15 @@ def test_multiple_activate_script_hook():
 
 
 def test_activate_script_plugin_integration():
-    patched = partial(
-        ert.config.ert_config.ErtPluginManager, plugins=[ActivatePlugin()]
-    )
-    with patch("ert.config.ert_config.ErtPluginManager", patched):
-        config = ErtConfig.with_plugins().from_file_contents("NUM_REALIZATIONS 1\n")
-        assert config.queue_config.queue_options.activate_script == "source something"
+    with ErtPluginContext(plugins=[ActivatePlugin()]) as ctx:
+        config = ErtConfig.with_plugins(ctx).from_file_contents("NUM_REALIZATIONS 1\n")
+
+    assert config.queue_config.queue_options.activate_script == "source something"
 
 
 def test_activate_script_plugin_integration_from_dict():
-    patched = partial(
-        ert.config.ert_config.ErtPluginManager, plugins=[ActivatePlugin()]
-    )
-    with patch("ert.config.ert_config.ErtPluginManager", patched):
-        config = ErtConfig.with_plugins().from_dict(
+    with ErtPluginContext(plugins=[ActivatePlugin()]) as ctx:
+        config = ErtConfig.with_plugins(ctx).from_dict(
             {
                 "NUM_REALIZATIONS": 1,
             }
