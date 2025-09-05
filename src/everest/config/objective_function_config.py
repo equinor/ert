@@ -1,6 +1,12 @@
 from typing import Annotated, Any
 
-from pydantic import AfterValidator, BaseModel, Field, field_validator, model_validator
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    Field,
+    PositiveFloat,
+    model_validator,
+)
 
 from everest.config.validation_utils import not_in_reserved_word_list
 
@@ -19,7 +25,7 @@ used in the optimization process. Weights may be zero or negative, but should ad
 a positive value.
 """,
     )
-    scale: float | None = Field(
+    scale: PositiveFloat | None = Field(
         default=None,
         description="""
     scale is a division factor defined per objective function.
@@ -44,13 +50,6 @@ preferred to be maximized.
 
 """,
     )
-
-    @field_validator("scale")
-    @classmethod
-    def validate_scale_is_not_zero(cls, scale: float | None) -> float | None:
-        if scale == 0.0:
-            raise ValueError("Scale value cannot be zero")
-        return scale
 
     @model_validator(mode="before")
     @classmethod

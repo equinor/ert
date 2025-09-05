@@ -1,7 +1,7 @@
 from typing import Any
 
 import numpy as np
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, PositiveFloat, model_validator
 
 
 class OutputConstraintConfig(BaseModel, extra="forbid"):
@@ -37,7 +37,7 @@ the scale (scale).
 where b is the upper bound, f is a function of the control vector x, and c is
 the scale (scale).""",
     )
-    scale: float | None = Field(
+    scale: PositiveFloat | None = Field(
         default=None,
         description="""Scaling of constraints (scale).
 
