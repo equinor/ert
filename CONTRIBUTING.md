@@ -117,7 +117,7 @@ However, sometimes it is best to split those up:
 ## Test categories
 
 Tests that are in the `tests/ert/unit_tests` directory and are
-not marked with `integration_test` are ment to be exceptionally
+not marked with `integration_test` are meant to be exceptionally
 fast and reliable. This is so that one can run those while
 iterating on the code. This means special care has to
 be made when placing tests here.
@@ -130,7 +130,7 @@ to understand error messages, etc.
 
 ### UI tests
 
-These tests are ment to test behavior from a user interaction view to
+These tests are meant to test behavior from a user interaction view to
 ensure that the application behaves the way the user expects independently
 of code changes. We have two user interfaces, the cli and the gui so those
 are subdirectories.
