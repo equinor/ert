@@ -484,13 +484,16 @@ def test_that_negative_max_memory_fails(max_memory) -> None:
 
 @pytest.mark.usefixtures("no_plugins")
 @pytest.mark.parametrize(
-    "max_memory",
-    ["1x", "1 x", "1 xy", "foo"],
+    "max_memory, exception_message",
+    [
+        ("1x", "Unknown memory unit"),
+        ("1 x", "Unknown memory unit"),
+        ("1 xy", "Unknown memory unit"),
+        ("foo", "Invalid memory string: foo"),
+    ],
 )
-def test_that_invalid_max_memory_fails(max_memory) -> None:
-    with pytest.raises(
-        ValidationError, match=f"Could not understand byte unit in {max_memory}"
-    ):
+def test_that_invalid_max_memory_fails(max_memory, exception_message) -> None:
+    with pytest.raises(ValidationError, match=exception_message):
         EverestConfig.with_defaults(simulator={"max_memory": max_memory})
 
 
