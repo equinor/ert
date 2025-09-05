@@ -43,6 +43,44 @@ for the schmerge job.
 .. everest_forward_model::
 
 
+Template rendering
+==================
+
+.. argparse::
+   :module: ert.resources.forward_models.template_render
+   :func: _build_argument_parser
+   :prog: template_render
+
+Example
+~~~~~~~
+
+Given an input file ``my_input.json``:
+
+.. code-block:: json
+
+   {
+       "my_variable": "my_value"
+   }
+
+And a template file ``tmpl.jinja``:
+
+.. code-block:: jinja
+
+    This is written in my file together with {{my_input.my_variable}}
+
+Run the script with:
+
+.. code-block:: bash
+
+    template_render -i my_input.json -t tmpl.jinja -o my_output.txt
+
+This will produce an output file with the content:
+
+.. code-block:: text
+
+    This is written in my file together with my_value
+
+
 .. _eclipse100:
 
 Eclipse simulator
