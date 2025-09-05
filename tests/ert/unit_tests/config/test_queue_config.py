@@ -140,6 +140,9 @@ def test_supported_memory_units_to_realization_memory(
         ("10Gb", 10 * 1024**3),
         ("10Tb", 10 * 1024**4),
         ("10Pb", 10 * 1024**5),
+        ("'  10      Gb  '", 10 * 1024**3),
+        ("'10   GB'", 10 * 1024**3),
+        (0, 0),
     ],
 )
 def test_realization_memory_unit_support(memory_spec: str, expected_bytes: int):
@@ -154,10 +157,14 @@ def test_realization_memory_unit_support(memory_spec: str, expected_bytes: int):
 @pytest.mark.parametrize(
     "invalid_memory_spec, error_message",
     [
-        ("-1", "Negative memory does not make sense in -1"),
+        ("-1", "Negative memory does not make sense"),
+        ("'      -2'", "Negative memory does not make sense"),
         ("-1b", "Negative memory does not make sense in -1b"),
-        ("b", "Could not understand byte unit in b"),
-        ("4ub", "Could not understand byte unit in 4ub"),
+        ("b", "Invalid memory string"),
+        ("'kljh3 k34f15gg.  asd '", "Invalid memory string"),
+        ("'kljh3 1gb'", "Invalid memory string"),
+        ("' 2gb 3k 1gb'", "Invalid memory string"),
+        ("4ub", "Unknown memory unit"),
     ],
 )
 def test_invalid_realization_memory(invalid_memory_spec: str, error_message: str):
