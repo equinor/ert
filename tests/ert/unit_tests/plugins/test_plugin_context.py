@@ -6,7 +6,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from ert.plugins import ErtPluginContext, ErtPluginManager
+from ert.config.queue_config import LsfQueueOptions
+from ert.plugins import ErtPluginContext, ErtPluginManager, ErtRuntimePlugins
 from tests.ert.unit_tests.plugins import dummy_plugins
 
 env_vars = [
@@ -121,3 +122,22 @@ def test_already_set(monkeypatch):
 
     for var in env_vars:
         assert os.environ[var] == "TEST"
+
+
+def test_that_site_configuration_propagates_through_plugin_manager():
+    pm = ErtPluginManager(plugins=[dummy_plugins])
+    configs = pm.get_site_configurations()
+    assert configs == ErtRuntimePlugins(
+        queue_options=LsfQueueOptions(
+            name="lsf",
+            max_running="1",
+            submit_sleep="1",
+            job_script="fm_dispatch_sitecfg.py",
+            activate_script="cminer",
+        ),
+        environment_variables={
+            "OMP_NUM_THREADS": "5",
+            "MKL_NUM_THREADS": "5",
+            "NUMEXPR_NUM_THREADS": "5",
+        },
+    )

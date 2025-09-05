@@ -56,6 +56,24 @@ def site_config_lines():
 
 
 @plugin(name="dummy")
+def site_configurations():
+    return {
+        "queue_options": {
+            "name": "lsf",
+            "max_running": "1",
+            "submit_sleep": "1",
+            "job_script": "fm_dispatch_sitecfg.py",
+            "activate_script": "cminer",
+        },
+        "environment_variables": {
+            "OMP_NUM_THREADS": "5",
+            "MKL_NUM_THREADS": "5",
+            "NUMEXPR_NUM_THREADS": "5",
+        },
+    }
+
+
+@plugin(name="dummy")
 def job_documentation(job_name):
     if job_name == "job1":
         return {

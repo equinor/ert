@@ -17,7 +17,7 @@ from .jobs import (
     legacy_ertscript_workflow,
 )
 from .logging import add_log_handle_to_root, add_span_processor
-from .site_config import site_config_lines
+from .site_config import site_config_lines, site_configurations
 
 __all__ = [
     "activate_script",
@@ -35,4 +35,5 @@ __all__ = [
     "job_documentation",
     "legacy_ertscript_workflow",
     "site_config_lines",
+    "site_configurations",
 ]
