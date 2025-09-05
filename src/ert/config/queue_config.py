@@ -48,7 +48,29 @@ class QueueOptions(
     max_running: pydantic.NonNegativeInt = 0
     submit_sleep: pydantic.NonNegativeFloat = 0.0
     num_cpu: pydantic.NonNegativeInt = 1
-    realization_memory: pydantic.NonNegativeInt = 0
+    realization_memory: pydantic.NonNegativeInt = Field(
+        default=0,
+        description="""When set, a job is only allowed to use realization_memory
+        of memory.
+
+        realization_memory may be an integer value, indicating the number of bytes, or a
+        string consisting of a number followed by a unit. The unit indicates the
+        multiplier that is applied, and must start with one of these characters:
+
+        * b, B: bytes
+        * k, K: kilobytes (1024 bytes)
+        * m, M: megabytes (1024**2 bytes)
+        * g, G: gigabytes (1024**3 bytes)
+        * t, T: terabytes (1024**4 bytes)
+        * p, P: petabytes (1024**5 bytes)
+
+        Spaces between the number and the unit are ignored, and so are any
+        characters after the first. For example: 2g, 2G, and 2 GB all resolve
+        to the same value: 2 gigabytes, equaling 2 * 1024**3 bytes.
+
+        If not set, or set to zero, the allowed amount of memory is unlimited.
+        """,
+    )
     job_script: str = shutil.which("fm_dispatch.py") or "fm_dispatch.py"
     project_code: str | None = None
     activate_script: str | None = Field(default=None, validate_default=True)
@@ -64,6 +86,15 @@ class QueueOptions(
         if info.context:
             plugin_script = info.context.get("activate_script")
         return plugin_script or activate_script()  # Return default value
+
+    @field_validator("realization_memory", mode="before")
+    @classmethod
+    def validate_realization_memory(cls, v: Any) -> int:
+        if isinstance(v, int):
+            return v
+        if isinstance(v, str):
+            return parse_string_to_bytes(v)
+        raise ValueError(f"Invalid value for realization_memory: {v}")
 
     @overload
     @staticmethod
