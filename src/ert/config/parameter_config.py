@@ -134,8 +134,8 @@ class ParameterConfig(BaseModel):
         Often a neighbourhood graph.
         """
 
-    @property
-    def data_file(self) -> str:
+    @classmethod
+    def scalar_file(self) -> str:
         return "SCALAR"
 
     def save_experiment_data(

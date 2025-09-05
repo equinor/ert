@@ -262,23 +262,26 @@ class LocalEnsemble(BaseMode):
 
     @cached_property
     def _existing_scalars(self) -> dict[str, list[int]]:
-        genkw_mask: dict[str, list[int]] = {}
-        for parameter in self.experiment.parameter_configuration.values():
-            if isinstance(parameter, GenKwConfig):
-                genkw_mask[parameter.name] = []
-                group_path = (
-                    self.mount_point / f"{_escape_filename(parameter.name)}.parquet"
-                )
-                if group_path.exists():
-                    genkw_mask[parameter.name] = (
-                        pl.scan_parquet(group_path)
-                        .select("realization")
-                        .unique()
-                        .collect()  # only fetching reals, so use standard engine
-                        .get_column("realization")
-                        .to_list()
-                    )
-        return genkw_mask
+        group_path = (
+            self.mount_point / f"{_escape_filename(GenKwConfig.scalar_file())}.parquet"
+        )
+        genkw_mask = {param: [] for param in self.experiment.scalar_nodes}
+        if not group_path.exists():
+            return genkw_mask
+        df = pl.scan_parquet(group_path)
+        cols = df.collect_schema().names()
+        real = (
+            df.select("realization")
+            .unique()
+            .collect()
+            .get_column("realization")
+            .to_list()
+        )
+        return {
+            param: real
+            for param in cols
+            if param != "realization" and param in genkw_mask
+        }
 
     def has_data(self) -> list[int]:
         """
@@ -561,8 +564,7 @@ class LocalEnsemble(BaseMode):
         realizations: int | npt.NDArray[np.int_] | None = None,
         transformed: bool = False,
     ) -> pl.DataFrame:
-        config_node = self.experiment.parameter_configuration[keys[0]]
-        df_lazy = self._load_parameters_lazy(config_node.data_file)
+        df_lazy = self._load_parameters_lazy(GenKwConfig.scalar_file())
         df_lazy = df_lazy.select(["realization", *keys])
         if realizations is not None:
             if isinstance(realizations, int):
@@ -640,9 +642,6 @@ class LocalEnsemble(BaseMode):
         param_group: str,
         iens_active_index: npt.NDArray[np.int_],
     ) -> None:
-        # if param_group in self.experiment.scalar_nodes:
-        #     config_node = self.experiment.scalar_nodes[param_group]
-        # else:
         config_node = self.experiment.parameter_configuration[param_group]
         for real, ds in config_node.create_storage_datasets(
             parameters, iens_active_index
@@ -711,19 +710,20 @@ class LocalEnsemble(BaseMode):
         real_nr: int,
         random_seed: int,
     ) -> pl.DataFrame:
-        key = parameter.parameter_keys[0]
+        # we sample genkw only
+        assert isinstance(parameter, GenKwConfig)
         parameter_value = parameter.sample_value(
             parameter.group_name,
-            [key],
+            [parameter.name],
             str(random_seed),
             real_nr,
         )
 
-        parameter_dict = {key: parameter_value[0]}
+        parameter_dict = {parameter.name: parameter_value[0]}
         parameter_dict["realization"] = real_nr
         return pl.DataFrame(
             parameter_dict,
-            schema={key: pl.Float64, "realization": pl.Int64},
+            schema={parameter.name: pl.Float64, "realization": pl.Int64},
         )
 
     @require_write
@@ -865,11 +865,12 @@ class LocalEnsemble(BaseMode):
 
         """
         if isinstance(dataset, pl.DataFrame):
-            data_group = "SCALAR"
             try:
                 # since all realizations are saved in a single parquet file,
                 # this makes sure that we only add / replace new data.
-                df = self._load_parameters_lazy(data_group).collect(engine="streaming")
+                df = self._load_parameters_lazy(GenKwConfig.scalar_file()).collect(
+                    engine="streaming"
+                )
                 df = df.drop(
                     [c for c in dataset.columns if c != "realization"], strict=False
                 )
@@ -881,7 +882,10 @@ class LocalEnsemble(BaseMode):
             except KeyError:
                 df_full = dataset
 
-            group_path = self.mount_point / f"{_escape_filename(data_group)}.parquet"
+            group_path = (
+                self.mount_point
+                / f"{_escape_filename(GenKwConfig.scalar_file())}.parquet"
+            )
             self._storage._to_parquet_transaction(group_path, df_full)
             return
 

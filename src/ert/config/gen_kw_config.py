@@ -347,7 +347,7 @@ class GenKwConfig(ParameterConfig):
             pl.DataFrame(
                 {
                     "realization": iens_active_index,
-                    self.name: from_data[0, :],
+                    self.name: pl.Series(from_data),
                 }
             ),
         )
