@@ -6,7 +6,6 @@ import pytest
 
 from ert.shared import find_available_socket, get_machine_name
 from ert.shared.net_utils import (
-    InvalidHostException,
     NoPortsInRangeException,
     get_family,
 )
@@ -75,16 +74,27 @@ def test_find_available_socket_forced(unused_tcp_port):
     assert sock.fileno() != -1
 
 
-def test_invalid_host_name():
-    invalid_host = "invalid_host"
+def test_that_find_available_socket_host_name_is_irrelevant():
+    # We bind to all interfaces on machine
+    irrelevant_host = "this_is_not_a_valid_host_name"
+    sock = find_available_socket(host=irrelevant_host)
+    assert sock.getsockname()[0] == "0.0.0.0"
 
-    with pytest.raises(InvalidHostException) as exc_info:
-        find_available_socket(host=invalid_host)
 
-    assert (
-        "Trying to bind socket with what looks "
-        f"like an invalid hostname ({invalid_host})"
-    ) in str(exc_info.value)
+def test_that_find_available_socket_ipv6_binds_local():
+    sock = find_available_socket(host="::1")
+    assert sock.getsockname()[0] == "::1"
+
+
+def test_that_find_available_socket_raises_on_invalid_ipv6_host():
+    invalid_host = "0:0:0:0:0:0:0:2"
+    with pytest.raises(OSError):
+        find_available_socket(invalid_host)
+
+
+def test_that_find_available_socket_default_params_binds_all_interfaces():
+    sock = find_available_socket()
+    assert sock.getsockname()[0] == "0.0.0.0"
 
 
 def test_get_family():
