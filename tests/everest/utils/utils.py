@@ -3,11 +3,8 @@ import importlib.util
 import os
 import sys
 from io import StringIO
-from pathlib import Path
 
 import pytest
-
-from everest.jobs import script_names
 
 
 def skipif_no_everest_models(function):
@@ -79,18 +76,3 @@ class MockParser:
 
     def error(self, value=None):
         self.error_msg = value
-
-
-def everest_default_jobs(output_dir):
-    return [
-        (
-            script_name,
-            (
-                os.path.join(output_dir, ".jobs", f"_{script_name}"),
-                Path(os.path.join(output_dir, ".jobs", f"_{script_name}")).read_text(
-                    encoding="utf-8"
-                ),
-            ),
-        )
-        for script_name in script_names
-    ]
