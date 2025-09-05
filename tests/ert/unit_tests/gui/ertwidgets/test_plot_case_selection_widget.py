@@ -11,7 +11,13 @@ from tests.ert.ui_tests.gui.conftest import get_child
 
 def test_ensemble_selection_widget_max_min_selection(qtbot: QtBot):
     test_ensemble_names = [
-        EnsembleObject(name=f"case{i}", id="id", hidden=False, experiment_name="exp")
+        EnsembleObject(
+            name=f"case{i}",
+            id="id",
+            hidden=False,
+            experiment_name="exp",
+            started_at="2012-12-10T00:00:00",
+        )
         for i in range(10)
     ]
     widget = EnsembleSelectionWidget(test_ensemble_names)

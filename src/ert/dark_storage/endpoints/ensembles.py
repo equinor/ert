@@ -21,6 +21,10 @@ def get_ensemble(
     return js.EnsembleOut(
         id=ensemble_id,
         experiment_id=ensemble.experiment_id,
-        userdata={"name": ensemble.name, "experiment_name": ensemble.experiment.name},
+        userdata={
+            "name": ensemble.name,
+            "experiment_name": ensemble.experiment.name,
+            "started_at": ensemble.started_at,
+        },
         size=ensemble.ensemble_size,
     )

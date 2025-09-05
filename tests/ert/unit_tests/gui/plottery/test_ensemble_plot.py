@@ -5,6 +5,7 @@ import pytest
 from matplotlib.figure import Figure
 
 from ert.gui.tools.plot.plot_api import EnsembleObject
+from ert.gui.tools.plot.plot_ensemble_selection_widget import EnsembleSelectListWidget
 from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
 from ert.gui.tools.plot.plottery.plots import EnsemblePlot
 from ert.summary_key_type import is_rate
@@ -19,7 +20,9 @@ from ert.summary_key_type import is_rate
 def plot_context(request):
     context = Mock(spec=PlotContext)
     context.ensembles.return_value = [
-        EnsembleObject("ensemble_1", "id", False, "experiment_1")
+        EnsembleObject(
+            "ensemble_1", "id", False, "experiment_1", started_at="2012-12-10T00:00:00"
+        )
     ]
     context.key.return_value = request.param
     context.history_data = None
@@ -46,3 +49,41 @@ def test_ensemble_plot_handles_rate(plot_context: PlotContext):
             assert mock_plotLines.call_args[0][4] == "steps-pre"
         else:
             assert mock_plotLines.call_args[0][4] is None
+
+
+def test_plot_ensemble_selection_widget_sorts_input_ensembles_reverse_chronologically(
+    qtbot,
+):
+    first_ensemble = "ens1"
+    second_ensemble = "ens2"
+    third_ensemble = "ens3"
+
+    first_ensemble_obj = EnsembleObject(
+        name=first_ensemble,
+        id="id",
+        hidden=False,
+        experiment_name=first_ensemble,
+        started_at="2000-00-00T00:00:00",
+    )
+    second_ensemble_obj = EnsembleObject(
+        name=second_ensemble,
+        id="id",
+        hidden=False,
+        experiment_name=second_ensemble,
+        started_at="2001-11-11T00:00:00",
+    )
+    third_ensemble_obj = EnsembleObject(
+        name=third_ensemble,
+        id="id",
+        hidden=False,
+        experiment_name=third_ensemble,
+        started_at="2002-12-22T00:00:00",
+    )
+
+    list_widget = EnsembleSelectListWidget(
+        [second_ensemble_obj, first_ensemble_obj, third_ensemble_obj]
+    )
+
+    assert third_ensemble in list_widget.item(0).text()
+    assert second_ensemble in list_widget.item(1).text()
+    assert first_ensemble in list_widget.item(2).text()

@@ -33,6 +33,7 @@ class EnsembleObject:
     id: str
     hidden: bool
     experiment_name: str
+    started_at: str
 
 
 class PlotApiKeyDefinition(NamedTuple):
@@ -83,12 +84,14 @@ class PlotApi:
                         experiment_name: str = response_json["userdata"][
                             "experiment_name"
                         ]
+                        ensemble_started_at = response_json["userdata"]["started_at"]
                         self._all_ensembles.append(
                             EnsembleObject(
                                 name=ensemble_name,
                                 id=ensemble_id,
                                 experiment_name=experiment_name,
                                 hidden=ensemble_name.startswith("."),
+                                started_at=ensemble_started_at,
                             )
                         )
             except IndexError as exc:
