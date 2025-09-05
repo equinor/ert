@@ -318,12 +318,29 @@ class QueueConfig(BaseModel):
     max_runtime: int | None = None
 
     @classmethod
-    def from_dict(cls, config_dict: ConfigDict) -> QueueConfig:
+    def from_dict(
+        cls,
+        config_dict: ConfigDict,
+        site_queue_options: QueueOptions | None = None,
+    ) -> QueueConfig:
+        queue_options_dict = (
+            site_queue_options.model_dump(
+                exclude_unset=True, exclude_none=True, exclude_defaults=True
+            )
+            if site_queue_options
+            else {}
+        )
         selected_queue_system = QueueSystem(
-            config_dict.get("QUEUE_SYSTEM", QueueSystem.LOCAL)
+            config_dict.get(
+                "QUEUE_SYSTEM",
+                queue_options_dict.get("queue_system", QueueSystem.LOCAL)
+            )
         )
         job_script: str = config_dict.get(
-            "JOB_SCRIPT", shutil.which("fm_dispatch.py") or "fm_dispatch.py"
+            "JOB_SCRIPT",
+            queue_options_dict.get(
+                "JOB_SCRIPT", shutil.which("fm_dispatch.py") or "fm_dispatch.py"
+            ),
         )
         config_dict["JOB_SCRIPT"] = job_script
         max_submit: int = config_dict.get(ConfigKeys.MAX_SUBMIT, 1)

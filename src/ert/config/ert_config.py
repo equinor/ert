@@ -60,7 +60,7 @@ from .parsing import (
     parse_contents,
     read_file,
 )
-from .queue_config import QueueConfig
+from .queue_config import KnownQueueOptions, QueueConfig
 from .workflow import Workflow
 from .workflow_fixtures import fixtures_per_hook
 from .workflow_job import (
@@ -673,6 +673,8 @@ class ErtConfig(BaseModel):
     PREINSTALLED_WORKFLOWS: ClassVar[dict[str, ErtScriptWorkflow]] = {}
     ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = {}
     ACTIVATE_SCRIPT: ClassVar[str | None] = None
+    ENV_VARIABLES: ClassVar[dict[str, str]] = {}
+    QUEUE_OPTIONS: ClassVar[KnownQueueOptions | None] = {}
     RESERVED_KEYWORDS: ClassVar[list[str]] = RESERVED_KEYWORDS
 
     substitutions: dict[str, str] = Field(default_factory=dict)
@@ -785,7 +787,8 @@ class ErtConfig(BaseModel):
                     {k: dict(v) for k, v in runtime_plugins.env_pr_fm_step.items()}
                 )
             )
-            ACTIVATE_SCRIPT = runtime_plugins.activate_script
+            ENV_VARIABLES = runtime_plugins.environment_variables
+            QUEUE_OPTIONS = runtime_plugins.queue_options
 
         ErtConfigWithPlugins.model_rebuild()
         assert issubclass(ErtConfigWithPlugins, ErtConfig)
@@ -808,12 +811,12 @@ class ErtConfig(BaseModel):
         """
         user_config_contents = read_file(user_config_file)
         cls._log_config_file(user_config_file, user_config_contents)
-        site_config_file = site_config_location()
+        # site_config_file = site_config_location()
         user_config_dict = cls._config_dict_from_contents(
             user_config_contents,
-            read_file(site_config_file) if site_config_file else None,
+            # read_file(site_config_file) if site_config_file else None,
             user_config_file,
-            site_config_file or "",
+            # site_config_file or "",
         )
         cls._log_config_dict(user_config_dict)
         return cls.from_dict(user_config_dict)
@@ -822,23 +825,23 @@ class ErtConfig(BaseModel):
     def _config_dict_from_contents(
         cls,
         user_config_contents: str,
-        site_config_contents: str | None,
+        # site_config_contents: str | None,
         config_file_name: str,
-        site_config_name: str,
+        # site_config_name: str,
     ) -> ConfigDict:
-        site_config_dict = (
-            parse_contents(
-                site_config_contents,
-                file_name=site_config_name,
-                schema=init_site_config_schema(),
-            )
-            if site_config_contents
-            else ConfigDict()
-        )
+        # site_config_dict = (
+        #    parse_contents(
+        #        site_config_contents,
+        #        file_name=site_config_name,
+        #        schema=init_site_config_schema(),
+        #    )
+        #    if site_config_contents
+        #    else ConfigDict()
+        # )
         user_config_dict = cls._read_user_config_and_apply_site_config(
             user_config_contents,
             config_file_name,
-            site_config_dict,
+            # site_config_dict,
         )
         config_dir = path.abspath(path.dirname(config_file_name))
         cls.apply_config_content_defaults(user_config_dict, config_dir)
@@ -848,16 +851,16 @@ class ErtConfig(BaseModel):
     def from_file_contents(
         cls,
         user_config_contents: str,
-        site_config_contents: str = "QUEUE_SYSTEM LOCAL\n",
+        # site_config_contents: str = "QUEUE_SYSTEM LOCAL\n",
         config_file_name: str = "./config.ert",
-        site_config_name: str = "site_config.ert",
+        # site_config_name: str = "site_config.ert",
     ) -> Self:
         return cls.from_dict(
             cls._config_dict_from_contents(
                 user_config_contents,
-                site_config_contents,
+                # site_config_contents,
                 config_file_name,
-                site_config_name,
+                # site_config_name,
             )
         )
 
@@ -925,7 +928,7 @@ class ErtConfig(BaseModel):
                         cls.ACTIVATE_SCRIPT,
                     ]
                 )
-            queue_config = QueueConfig.from_dict(config_dict)
+            queue_config = QueueConfig.from_dict(config_dict, cls.QUEUE_OPTIONS)
 
             substitutions["<NUM_CPU>"] = str(queue_config.queue_options.num_cpu)
 
@@ -1034,6 +1037,10 @@ class ErtConfig(BaseModel):
         substituter = Substitutions(substitutions)
         for key, val in config_dict.get("SETENV", []):
             env_vars[key] = substituter.substitute(val)
+
+        # Insert env vars from plugins/site config
+        for key, val in cls.ENV_VARS.items():
+            env_vars[key] = val  # Q: Substitute these? From site
         try:
             return cls(
                 substitutions=substitutions,
@@ -1240,8 +1247,13 @@ class ErtConfig(BaseModel):
 
     @classmethod
     def _merge_user_and_site_config(
-        cls, user_config_dict: ConfigDict, site_config_dict: ConfigDict
+        cls,
+        user_config_dict: ConfigDict,  # site_config_dict: ConfigDict
     ) -> ConfigDict:
+        # Apply environment variables
+
+        # Apply queue options if exists
+
         for keyword, value in site_config_dict.items():
             if keyword == "QUEUE_OPTION":
                 filtered_queue_options = []
@@ -1265,14 +1277,15 @@ class ErtConfig(BaseModel):
         cls,
         user_config_contents: str,
         user_config_file: str,
-        site_config_dict: ConfigDict,
+        # site_config_dict: ConfigDict,
     ) -> ConfigDict:
         user_config_dict = cls._read_user_config_contents(
             user_config_contents,
             file_name=user_config_file,
         )
         cls._log_custom_forward_model_steps(user_config_dict)
-        return cls._merge_user_and_site_config(user_config_dict, site_config_dict)
+        return user_config_dict
+        # return cls._merge_user_and_site_config(user_config_dict)
 
     @classmethod
     def _validate_dict(
