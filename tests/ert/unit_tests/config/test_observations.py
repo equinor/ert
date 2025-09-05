@@ -14,25 +14,21 @@ from ert.config import (
 from ert.config.general_observation import GenObservation
 from ert.config.observation_vector import ObsVector
 
+from .summary_generator import Date, simple_smspec, simple_unsmry
 
-def run_simulator():
+
+@pytest.fixture
+def refcase(use_tmpdir):
     """
     Create an ecl summary file, we have one value for FOPR (1) and a different
     for FOPRH (2) so we can assert on the difference.
     """
-    summary = Summary.writer("MY_REFCASE", datetime(2000, 1, 1), 10, 10, 10)
-
-    summary.add_variable("FOPR", unit="SM3/DAY")
-    summary.add_variable("FOPRH", unit="SM3/DAY")
-
-    mini_step_count = 10
-
-    for mini_step in range(mini_step_count):
-        t_step = summary.addTStep(1, sim_days=mini_step_count + mini_step)
-        t_step["FOPR"] = 1
-        t_step["FOPRH"] = 2
-
-    summary.fwrite()
+    simple_smspec(
+        keywords=["FOPR", "FOPRH"],
+        start_date=Date(1, 1, 2000, 0, 0, 0),
+        time_unit="DAYS",
+    ).to_file("MY_REFCASE.smspec")
+    simple_unsmry([[[1, 2]] * 20]).to_file("MY_REFCASE.unsmry")
 
 
 @pytest.mark.parametrize(
@@ -51,10 +47,9 @@ def run_simulator():
         ),
     ],
 )
-@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.usefixtures("refcase")
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_correct_key_observation_is_loaded(extra_config, expected):
-    run_simulator()
     observations = ErtConfig.from_dict(
         {
             "ECLBASE": "my_case%d",
@@ -75,9 +70,11 @@ def test_that_correct_key_observation_is_loaded(extra_config, expected):
         pytest.param("20/01/2000", False),
     ],
 )
-@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.usefixtures("refcase")
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
-def test_date_parsing_in_observations(datestring, errors):
+def test_that_deprecation_message_is_shown_for_deprecated_date_formats(
+    datestring, errors
+):
     config_dict = {
         "ECLBASE": "my_case%d",
         "REFCASE": "MY_REFCASE",
@@ -92,7 +89,6 @@ def test_date_parsing_in_observations(datestring, errors):
             ],
         ),
     }
-    run_simulator()
     if errors:
         with pytest.raises(ValueError, match="Please use ISO date format"):
             ErtConfig.from_dict(config_dict)
@@ -124,7 +120,7 @@ def test_that_using_summary_observations_without_eclbase_shows_user_error():
         )
 
 
-def test_observations(minimum_case):
+def test_that_enkf_obs_contains_the_expected_values_for_minimum_case(minimum_case):
     observations = minimum_case.enkf_obs
     count = 10
     summary_key = "test_key"
@@ -166,13 +162,13 @@ def test_observations(minimum_case):
 
 
 @pytest.mark.parametrize("std", [-1.0, 0, 0.0])
-def test_summary_obs_invalid_observation_std(std):
+def test_that_std_must_be_greater_than_zero_in_summary_observations(std):
     with pytest.raises(ValueError, match="must be strictly > 0"):
         SummaryObservation("summary_key", "observation_key", 1.0, std)
 
 
 @pytest.mark.parametrize("std", [[-1.0], [0], [0.0], [1.0, 0]])
-def test_gen_obs_invalid_observation_std(std):
+def test_that_all_std_values_must_be_greater_than_zero_in_general_observations(std):
     with pytest.raises(ValueError, match="must be strictly > 0"):
         GenObservation(
             list(range(len(std))),
@@ -182,7 +178,7 @@ def test_gen_obs_invalid_observation_std(std):
         )
 
 
-def test_that_empty_observations_file_causes_exception():
+def test_that_empty_observations_file_is_invalid():
     with pytest.raises(
         expected_exception=ConfigValidationError,
         match="Empty observations file",
@@ -191,7 +187,7 @@ def test_that_empty_observations_file_causes_exception():
 
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
-def test_that_having_no_refcase_but_history_observations_causes_exception():
+def test_that_when_history_observation_is_used_refcase_is_required():
     with pytest.raises(
         expected_exception=ConfigValidationError,
         match="REFCASE is required for HISTORY_OBSERVATION",
@@ -204,7 +200,7 @@ def test_that_having_no_refcase_but_history_observations_causes_exception():
         )
 
 
-def test_that_index_list_is_read(tmpdir):
+def test_that_index_list_sets_the_indecies_of_general_observations(tmpdir):
     with tmpdir.as_cwd():
         with open("obs_data.txt", "w", encoding="utf-8") as fh:
             fh.writelines(f"{float(i)} 0.1\n" for i in range(5))
@@ -241,7 +237,7 @@ def test_that_invalid_time_map_file_raises_config_validation_error():
         _ = ErtConfig.from_dict({"TIME_MAP": ("time_map.txt", "invalid")})
 
 
-def test_that_index_file_is_read(tmpdir):
+def test_that_index_file_sets_the_indecies_of_general_observations(tmpdir):
     with tmpdir.as_cwd():
         with open("obs_idx.txt", "w", encoding="utf-8") as fh:
             fh.write("0\n2\n4\n6\n8")
@@ -274,7 +270,7 @@ def test_that_index_file_is_read(tmpdir):
         assert observations["OBS"].observations[0].indices == [0, 2, 4, 6, 8]
 
 
-def test_that_missing_obs_file_raises_exception():
+def test_that_non_existent_obs_file_is_invalid():
     with pytest.raises(
         expected_exception=ConfigValidationError,
         match="did not resolve to a valid path:\n OBS_FILE",
@@ -300,7 +296,7 @@ def test_that_missing_obs_file_raises_exception():
         )
 
 
-def test_that_missing_time_map_raises_exception():
+def test_that_non_existent_time_map_file_is_invalid():
     with pytest.raises(
         expected_exception=ConfigValidationError,
         match="TIME_MAP",
@@ -328,7 +324,7 @@ def test_that_missing_time_map_raises_exception():
         )
 
 
-def test_that_badly_formatted_obs_file_shows_informative_error_message(tmpdir):
+def test_that_non_numbers_in_obs_file_shows_informative_error_message(tmpdir):
     with tmpdir.as_cwd():
         with open("obs_data.txt", "w", encoding="utf-8") as fh:
             fh.write("not_an_int 0.1\n")
@@ -358,7 +354,7 @@ def test_that_badly_formatted_obs_file_shows_informative_error_message(tmpdir):
             )
 
 
-def test_that_giving_both_index_file_and_index_list_raises_an_exception(tmpdir):
+def test_that_giving_both_index_file_and_index_list_raises_is_invalid(tmpdir):
     with tmpdir.as_cwd():
         with open("obs_idx.txt", "w", encoding="utf-8") as fh:
             fh.write("0\n2\n4\n6\n8")
@@ -647,7 +643,9 @@ def test_that_history_observations_are_loaded(tmpdir, keys, with_ext):
         assert observations[local_name].observations[datetime(2014, 9, 11)].std == 100.0
 
 
-def test_that_different_length_values_fail(tmpdir):
+def test_that_obs_file_must_have_the_same_number_of_lines_as_the_length_of_index_list(
+    tmpdir,
+):
     with tmpdir.as_cwd():
         with open("obs_data.txt", "w", encoding="utf-8") as fh:
             fh.writelines(f"{float(i)} 0.1\n" for i in range(5))
@@ -679,10 +677,7 @@ def test_that_different_length_values_fail(tmpdir):
 
 
 def test_that_missing_ensemble_key_warns():
-    with pytest.warns(
-        ConfigWarning,
-        match="No GEN_DATA with name: RES found",
-    ):
+    with pytest.warns(ConfigWarning, match="No GEN_DATA with name: RES found"):
         ErtConfig.from_dict(
             {
                 "OBS_CONFIG": (
@@ -707,8 +702,7 @@ def test_that_missing_ensemble_key_warns():
 
 def test_that_report_step_mismatch_warns():
     with pytest.warns(
-        ConfigWarning,
-        match="is not configured to load from report step",
+        ConfigWarning, match="is not configured to load from report step"
     ):
         ErtConfig.from_dict(
             {
@@ -806,38 +800,39 @@ def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
         assert observations["FWPR"].observations[datetime(2014, 9, 11)].std == 10000
 
 
-def test_validation_of_duplicate_names(tmpdir):
-    with tmpdir.as_cwd():
-        run_sim(
-            datetime(2014, 9, 10),
-            [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
+def test_that_observations_with_duplicate_names_is_invalid():
+    with pytest.raises(ConfigValidationError, match="Duplicate observation name FOPR"):
+        ErtConfig.from_dict(
+            {
+                "ECLBASE": "ECLIPSE_CASE",
+                "OBS_CONFIG": (
+                    "obsconf",
+                    [
+                        (
+                            "SUMMARY_OBSERVATION",
+                            "FOPR",
+                            {
+                                "KEY": "FOPR",
+                                "DATE": "2017-11-09",
+                                "VALUE": "1.0",
+                                "ERROR": "0.1",
+                            },
+                        ),
+                        (
+                            "GENERAL_OBSERVATION",
+                            "FOPR",
+                            {
+                                "DATA": "RES",
+                                "INDEX_LIST": "0",
+                                "DATE": "2017-11-09",
+                                "VALUE": "0.0",
+                                "ERROR": "0.0",
+                            },
+                        ),
+                    ],
+                ),
+            }
         )
-
-        with pytest.raises(
-            ConfigValidationError, match="Duplicate observation name FOPR"
-        ):
-            ErtConfig.from_dict(
-                {
-                    "ECLBASE": "ECLIPSE_CASE",
-                    "REFCASE": "ECLIPSE_CASE",
-                    "OBS_CONFIG": (
-                        "obsconf",
-                        [
-                            (
-                                "SUMMARY_OBSERVATION",
-                                "FOPR",
-                                {
-                                    "KEY": "FOPR",
-                                    "RESTART": "1",
-                                    "VALUE": "1.0",
-                                    "ERROR": "0.1",
-                                },
-                            ),
-                            ("HISTORY_OBSERVATION", "FOPR"),
-                        ],
-                    ),
-                }
-            )
 
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
