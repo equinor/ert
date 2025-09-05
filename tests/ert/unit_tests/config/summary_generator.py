@@ -191,7 +191,7 @@ class SmspecIntehead(GrdeclKeyword):
     simulator: Simulator
 
 
-@dataclass
+@dataclass(frozen=True)
 class Date:
     day: conint(ge=1, le=31)  # type: ignore
     month: conint(ge=1, le=12)  # type: ignore
@@ -534,32 +534,41 @@ def summaries(
     return smspec, Unsmry(steps)
 
 
-def simple_unsmry():
+def simple_unsmry(values=(((5.629901e16,),),)):
     return Unsmry(
         steps=[
             SummaryStep(
-                seqnum=0,
+                seqnum=i,
                 ministeps=[
-                    SummaryMiniStep(mini_step=0, params=[0.0, 5.629901e16]),
+                    SummaryMiniStep(mini_step=i + j, params=[float(i + j), *v])
+                    for j, v in enumerate(vs)
                 ],
             )
+            for i, vs in enumerate(values)
         ]
     )
 
 
-def simple_smspec():
+DEFAULT_START_DATE = Date(day=1, month=1, year=2014, hour=0, minutes=0, micro_seconds=0)
+
+
+def simple_smspec(
+    keywords=("FOPR",),
+    start_date=DEFAULT_START_DATE,
+    time_unit="HOURS",
+):
     return Smspec(
         nx=2,
         ny=2,
         nz=2,
         restarted_from_step=0,
-        num_keywords=2,
+        num_keywords=1 + len(keywords),
         restart="        ",
-        keywords=["TIME    ", "FOPR"],
-        well_names=[":+:+:+:+", "        "],
-        region_numbers=[-32676, 0],
-        units=["HOURS   ", "SM3"],
-        start_date=Date(day=1, month=1, year=2014, hour=0, minutes=0, micro_seconds=0),
+        keywords=["TIME    ", *keywords],
+        well_names=[":+:+:+:+", *(["        "] * len(keywords))],
+        region_numbers=[-32676, *([0] * len(keywords))],
+        units=[time_unit.ljust(8), *(["SM3/DAY"] * len(keywords))],
+        start_date=start_date,
         intehead=SmspecIntehead(
             unit=UnitSystem.METRIC,
             simulator=Simulator.ECLIPSE_100,
