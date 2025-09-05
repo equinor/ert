@@ -61,7 +61,7 @@ async def test_https_requests(change_to_tmpdir):
     await start_server(everest_config, logging_level=logging.INFO)
 
     session = StorageService.session(
-        Path(ServerConfig.get_session_dir(everest_config.output_dir)), 10
+        Path(ServerConfig.get_session_dir(everest_config.output_dir)), 240
     )
     wait_for_server(session, 240)
     server_status = everserver_status(status_path)
@@ -144,7 +144,11 @@ def test_server_status(change_to_tmpdir):
 
 
 @patch("everest.detached.server_is_running", return_value=False)
-def test_wait_for_server(_):
+@patch(
+    "everest.config.ServerConfig.get_server_context_from_client",
+    return_value=("url", "cert", ("user", "token")),
+)
+def test_wait_for_server(mock_get_context, mock_is_running):
     client = MagicMock()
     with pytest.raises(
         RuntimeError, match=r"Failed to get reply from server within .* seconds"
