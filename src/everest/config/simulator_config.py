@@ -17,7 +17,7 @@ from ert.config.queue_config import (
     QueueOptions,
     SlurmQueueOptions,
     TorqueQueueOptions,
-    parse_realization_memory_str,
+    parse_string_to_bytes,
 )
 
 simulator_example = {"queue_system": {"name": "local", "max_running": 3}}
@@ -124,7 +124,7 @@ class SimulatorConfig(BaseModelWithContextSupport, extra="forbid"):
             return None
         max_memory = str(max_memory).strip()
         try:
-            parse_realization_memory_str(max_memory)
+            parse_string_to_bytes(max_memory)
         except ConfigValidationError as exc:
             raise ValueError(exc.cli_message) from exc
         return max_memory
@@ -144,7 +144,7 @@ class SimulatorConfig(BaseModelWithContextSupport, extra="forbid"):
             and config.queue_system.realization_memory is (None or 0)
         ):
             config.queue_system.realization_memory = (
-                parse_realization_memory_str(config.max_memory)
+                parse_string_to_bytes(config.max_memory)
                 if type(config.max_memory) is str
                 else int(config.max_memory)
             )
