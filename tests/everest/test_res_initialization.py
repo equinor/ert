@@ -567,6 +567,33 @@ def test_parsing_of_relization_memory(realization_memory, expected) -> None:
     assert config.simulator.queue_system.realization_memory == expected
 
 
+@pytest.mark.parametrize(
+    "invalid_memory_spec, error_message",
+    [
+        ("-1", "Negative memory does not make sense"),
+        ("      -2", "Negative memory does not make sense"),
+        ("-1b", "Negative memory does not make sense in -1b"),
+        ("b", "Invalid memory string"),
+        ("'kljh3 k34f15gg.  asd '", "Invalid memory string"),
+        ("'kljh3 1gb'", "Invalid memory string"),
+        ("' 2gb 3k 1gb'", "Invalid memory string"),
+        ("4ub", "Unknown memory unit"),
+    ],
+)
+def test_parsing_of_invalid_relization_memory(
+    invalid_memory_spec, error_message
+) -> None:
+    with pytest.raises(ValidationError, match=error_message):
+        EverestConfig.with_defaults(
+            simulator={
+                "queue_system": {
+                    "name": "local",
+                    "realization_memory": invalid_memory_spec,
+                },
+            }
+        )
+
+
 def test_parsing_of_non_existing_relization_memory() -> None:
     config = EverestConfig.with_defaults(
         simulator={

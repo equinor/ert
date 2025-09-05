@@ -93,7 +93,7 @@ class QueueOptions(
         if isinstance(v, int):
             return v
         if isinstance(v, str):
-            return parse_realization_memory_str(v)
+            return parse_string_to_bytes(v)
         raise ValueError(f"Invalid value for realization_memory: {v}")
 
     @overload
