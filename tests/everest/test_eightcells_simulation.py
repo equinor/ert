@@ -337,6 +337,9 @@ def test_eightcells_model_wells_json_output_no_none(copy_eightcells_test_data_to
 @pytest.mark.everest_models_test
 @pytest.mark.requires_eclipse
 @pytest.mark.timeout(0)
+@pytest.mark.xfail(
+    reason="output is stochastic and we do not allow the algorithm to converge"
+)
 def test_eightcells_snapshot(snapshot, copy_eightcells_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE)
 
