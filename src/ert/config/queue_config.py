@@ -48,7 +48,29 @@ class QueueOptions(
     max_running: pydantic.NonNegativeInt = 0
     submit_sleep: pydantic.NonNegativeFloat = 0.0
     num_cpu: pydantic.NonNegativeInt = 1
-    realization_memory: pydantic.NonNegativeInt = 0
+    realization_memory: pydantic.NonNegativeInt = Field(
+        default=0,
+        description="""When set, a job is only allowed to use realization_memory
+        of memory.
+
+        realization_memory may be an integer value, indicating the number of bytes, or a
+        string consisting of a number followed by a unit. The unit indicates the
+        multiplier that is applied, and must start with one of these characters:
+
+        * b, B: bytes
+        * k, K: kilobytes (1024 bytes)
+        * m, M: megabytes (1024**2 bytes)
+        * g, G: gigabytes (1024**3 bytes)
+        * t, T: terabytes (1024**4 bytes)
+        * p, P: petabytes (1024**5 bytes)
+
+        Spaces between the number and the unit are ignored, and so are any
+        characters after the first. For example: 2g, 2G, and 2 GB all resolve
+        to the same value: 2 gigabytes, equaling 2 * 1024**3 bytes.
+
+        If not set, or set to zero, the allowed amount of memory is unlimited.
+        """,
+    )
     job_script: str = shutil.which("fm_dispatch.py") or "fm_dispatch.py"
     project_code: str | None = None
     activate_script: str | None = Field(default=None, validate_default=True)
@@ -64,6 +86,15 @@ class QueueOptions(
         if info.context:
             plugin_script = info.context.get("activate_script")
         return plugin_script or activate_script()  # Return default value
+
+    @field_validator("realization_memory", mode="before")
+    @classmethod
+    def validate_realization_memory(cls, v: Any) -> int:
+        if isinstance(v, int):
+            return v
+        if isinstance(v, str):
+            return parse_string_to_bytes(v)
+        raise ValueError(f"Invalid value for realization_memory: {v}")
 
     @staticmethod
     def create_queue_options(
@@ -96,7 +127,7 @@ class QueueOptions(
                 name
             ] == generic_option.default:
                 if name == "realization_memory" and isinstance(generic_value, str):
-                    generic_value = parse_realization_memory_str(generic_value)
+                    generic_value = parse_string_to_bytes(generic_value)
                 try:
                     setattr(self, name, generic_value)
                 except pydantic.ValidationError as exception:
@@ -375,15 +406,19 @@ class QueueConfig(BaseModel):
         return self.queue_options.submit_sleep
 
 
-def parse_realization_memory_str(realization_memory_str: str) -> int:
-    if "-" in realization_memory_str:
-        raise ConfigValidationError.with_context(
-            f"Negative memory does not make sense in {realization_memory_str}",
-            realization_memory_str,
-        )
+def parse_string_to_bytes(input_str: str) -> int:
+    """
+    Convert a string (e.g., "1GB", "512MB") to bytes.
+    """
 
-    if realization_memory_str.isdigit():
-        return int(realization_memory_str)
+    if input_str.strip().startswith("-"):
+        raise ConfigValidationError.with_context(
+            f"Negative memory does not make sense in {input_str}",
+            input_str,
+        )
+    if input_str.isdigit():
+        return int(input_str)
+
     multipliers = {
         "b": 1,
         "k": 1024,
@@ -392,13 +427,28 @@ def parse_realization_memory_str(realization_memory_str: str) -> int:
         "t": 1024**4,
         "p": 1024**5,
     }
-    match = re.search(r"(\d+)\s*(\w)", realization_memory_str)
-    if match is None or match.group(2).lower() not in multipliers:
+
+    # Match the pattern: number followed by an optional unit (e.g., "1GB", "512MB")
+    matches = re.findall(r"(\d+)\s*([bkmgtpBKMGTP]*)", input_str.strip())
+    if not matches:
         raise ConfigValidationError.with_context(
-            f"Could not understand byte unit in {realization_memory_str}",
-            realization_memory_str,
+            f"Invalid memory string: {input_str}", input_str
         )
-    return int(match.group(1)) * multipliers[match.group(2).lower()]
+    if len(matches) > 1:
+        raise ConfigValidationError.with_context(
+            f"Invalid memory string: {input_str}", input_str
+        )
+
+    value, unit = matches[0]
+    unit = unit.lower()
+    if not unit:
+        raise ConfigValidationError.with_context("Unknown memory unit", input_str)
+    if unit and unit[0] not in multipliers:
+        raise ConfigValidationError.with_context(
+            f"Unknown memory unit: {unit}", input_str
+        )
+
+    return int(value) * multipliers.get(unit[0], 1)  # Default to bytes if no unit
 
 
 def _throw_error_or_warning(

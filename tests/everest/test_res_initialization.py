@@ -483,13 +483,16 @@ def test_that_negative_max_memory_fails(max_memory) -> None:
 
 @pytest.mark.usefixtures("no_plugins")
 @pytest.mark.parametrize(
-    "max_memory",
-    ["1x", "1 x", "1 xy", "foo"],
+    "max_memory, exception_message",
+    [
+        ("1x", "Unknown memory unit"),
+        ("1 x", "Unknown memory unit"),
+        ("1 xy", "Unknown memory unit"),
+        ("foo", "Invalid memory string: foo"),
+    ],
 )
-def test_that_invalid_max_memory_fails(max_memory) -> None:
-    with pytest.raises(
-        ValidationError, match=f"Could not understand byte unit in {max_memory}"
-    ):
+def test_that_invalid_max_memory_fails(max_memory, exception_message) -> None:
+    with pytest.raises(ValidationError, match=exception_message):
         EverestConfig.with_defaults(simulator={"max_memory": max_memory})
 
 
@@ -518,3 +521,56 @@ def test_that_resubmit_limit_is_set(change_to_tmpdir) -> None:
     ever_config = EverestConfig.with_defaults(simulator={"resubmit_limit": 0})
     config_dict = everest_to_ert_config_dict(ever_config)
     assert config_dict[ErtConfigKeys.MAX_SUBMIT] == 1
+
+
+@pytest.mark.parametrize(
+    "realization_memory, expected",
+    [
+        ("1Gb", 1073741824),
+        ("2Kb", 2048),
+        (999, 999),
+    ],
+)
+def test_parsing_of_relization_memory(realization_memory, expected) -> None:
+    config = EverestConfig.with_defaults(
+        simulator={
+            "queue_system": {"name": "local", "realization_memory": realization_memory},
+        }
+    )
+    assert config.simulator.queue_system.realization_memory == expected
+
+
+@pytest.mark.parametrize(
+    "invalid_memory_spec, error_message",
+    [
+        ("-1", "Negative memory does not make sense"),
+        ("      -2", "Negative memory does not make sense"),
+        ("-1b", "Negative memory does not make sense in -1b"),
+        ("b", "Invalid memory string"),
+        ("'kljh3 k34f15gg.  asd '", "Invalid memory string"),
+        ("'kljh3 1gb'", "Invalid memory string"),
+        ("' 2gb 3k 1gb'", "Invalid memory string"),
+        ("4ub", "Unknown memory unit"),
+    ],
+)
+def test_parsing_of_invalid_relization_memory(
+    invalid_memory_spec, error_message
+) -> None:
+    with pytest.raises(ValidationError, match=error_message):
+        EverestConfig.with_defaults(
+            simulator={
+                "queue_system": {
+                    "name": "local",
+                    "realization_memory": invalid_memory_spec,
+                },
+            }
+        )
+
+
+def test_parsing_of_non_existing_relization_memory() -> None:
+    config = EverestConfig.with_defaults(
+        simulator={
+            "queue_system": {"name": "local"},
+        }
+    )
+    assert config.simulator.queue_system.realization_memory == 0
