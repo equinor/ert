@@ -29,3 +29,10 @@ class BaseModelWithContextSupport(BaseModel):
             self_instance=__pydantic_self__,
             context=init_context_var.get(),
         )
+
+    @classmethod
+    def model_validate_with_context(cls, context: ErtRuntimePlugins, **data: Any):
+        token = init_context_var.set(context)  # type: ignore
+        instance = cls.model_validate(data)
+        init_context_var.reset(token)
+        return instance
