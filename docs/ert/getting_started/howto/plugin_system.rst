@@ -233,7 +233,7 @@ Full example:
            print("Hello World")
 
    @ert.plugin(name="my_plugin")
-    def ertscript_workflow(config: ert.WorkflowConfigs):
+    def ertscript_workflow(config: ert.config.WorkflowConfigs):
         config.add_workflow(
             MyJob,
             "MY_JOB",
@@ -245,8 +245,9 @@ Full example:
 The configuration object and properties are as follows.
 
 .. autofunction:: ert.plugins.hook_specifications.jobs.ertscript_workflow
-
-.. autoclass:: ert.plugins.workflow_config.WorkflowConfigs
+.. automodule:: ert.config.ert_script
+   :members: ErtScript
+.. autoclass:: ert.config.WorkflowConfigs
     :members: add_workflow
     :undoc-members:
 

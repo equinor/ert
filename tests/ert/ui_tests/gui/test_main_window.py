@@ -52,7 +52,7 @@ from ert.gui.tools.plot.plot_window import (
     PlotApi,
     PlotWindow,
 )
-from ert.plugins import ErtPluginManager
+from ert.plugins import ErtPluginContext
 from ert.run_models import (
     EnsembleExperiment,
     EnsembleInformationFilter,
@@ -187,9 +187,9 @@ def test_help_buttons_in_suggester_dialog(tmp_path, qtbot):
 
     args = Mock()
     args.config = str(config_file)
-    with add_gui_log_handler() as log_handler:
+    with add_gui_log_handler() as log_handler, ErtPluginContext() as runtime_plugins:
         gui, *_ = ert.gui.main._start_initial_gui_window(
-            args, log_handler, ErtPluginManager()
+            args, log_handler, runtime_plugins
         )
         assert isinstance(gui, Suggestor)
 

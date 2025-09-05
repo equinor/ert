@@ -5,10 +5,9 @@ import warnings
 from argparse import ArgumentParser
 from collections.abc import Callable
 
+from ert.config.ert_script import ErtScript
 from ert.config.parsing import SchemaItemType
-
-from ..config.workflow_job import ErtScriptWorkflow
-from .ert_script import ErtScript
+from ert.config.workflow_job import ErtScriptWorkflow
 
 logger = logging.getLogger(__name__)
 

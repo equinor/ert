@@ -16,12 +16,14 @@ from hypothesis import HealthCheck, given, note, settings
 from hypothesis import strategies as st
 from pytest import MonkeyPatch, TempPathFactory
 
+from ert.base_model_context import init_context
 from ert.config import (
     ConfigWarning,
     ErtConfig,
     ErtScriptWorkflow,
     ESSettings,
     ExecutableWorkflow,
+    ExternalErtScript,
     Field,
     ForwardModelStep,
     GenDataConfig,
@@ -50,7 +52,7 @@ from ert.mode_definitions import (
     EVALUATE_ENSEMBLE_MODE,
     MANUAL_UPDATE_MODE,
 )
-from ert.plugins import ExternalErtScript
+from ert.plugins import ErtRuntimePlugins
 from ert.run_models import (
     EnsembleExperiment,
     EnsembleInformationFilter,
@@ -229,7 +231,13 @@ def runmodel_args(draw):
         st.dictionaries(
             realistic_text(),
             st.dictionaries(
-                realistic_text(), st.one_of(st.integers(), st.text(), st.floats())
+                realistic_text(),
+                st.one_of(
+                    st.integers(),
+                    st.text(),
+                    # We do not support nan/infinity here
+                    st.floats(allow_infinity=False, allow_nan=False),
+                ),
             ),
             max_size=3,
         )
@@ -456,6 +464,24 @@ _not_yet_serializable_args = {
 }
 
 
+def _extract_runtime_plugins(hooked_workflows):
+    installed_ertscripts = {}
+    for _, workflows in hooked_workflows.items():
+        for workflow in workflows:
+            for cmd, _ in workflow.cmd_list:
+                if isinstance(cmd, ErtScriptWorkflow):
+                    installed_ertscripts[cmd.name] = cmd
+
+    return ErtRuntimePlugins(
+        installed_forward_model_steps={},
+        installed_workflow_jobs=installed_ertscripts,
+        queue_options=None,
+        activate_script="",
+        env_pr_fm_step={},
+        help_links={},
+    )
+
+
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(
@@ -481,9 +507,14 @@ def test_that_deserializing_ensemble_experiment_is_the_inverse_of_serializing(
         )
         runmodel._storage.close()
 
-        runmodel_from_serialized = EnsembleExperiment.model_validate(
-            runmodel.model_dump() | _not_yet_serializable_args
+        runtime_plugins = _extract_runtime_plugins(
+            hooked_workflows=baserunmodel_args["hooked_workflows"]
         )
+
+        with init_context(runtime_plugins):
+            runmodel_from_serialized = EnsembleExperiment.model_validate(
+                runmodel.model_dump() | _not_yet_serializable_args
+            )
 
         assert runmodel_from_serialized.model_dump() == runmodel.model_dump()
 
@@ -505,10 +536,14 @@ def test_that_deserializing_ensemble_smoother_is_the_inverse_of_serializing(
             **(baserunmodel_args | initial_ensemble_args | update_runmodel_args)
         )
         runmodel._storage.close()
-
-        runmodel_from_serialized = EnsembleSmoother.model_validate(
-            runmodel.model_dump() | _not_yet_serializable_args
+        runtime_plugins = _extract_runtime_plugins(
+            hooked_workflows=baserunmodel_args["hooked_workflows"]
         )
+
+        with init_context(runtime_plugins):
+            runmodel_from_serialized = EnsembleSmoother.model_validate(
+                runmodel.model_dump() | _not_yet_serializable_args
+            )
 
         assert runmodel_from_serialized.model_dump() == runmodel.model_dump()
 
@@ -531,9 +566,14 @@ def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serial
         )
         runmodel._storage.close()
 
-        runmodel_from_serialized = EnsembleInformationFilter.model_validate(
-            runmodel.model_dump() | _not_yet_serializable_args
+        runtime_plugins = _extract_runtime_plugins(
+            hooked_workflows=baserunmodel_args["hooked_workflows"]
         )
+
+        with init_context(runtime_plugins):
+            runmodel_from_serialized = EnsembleInformationFilter.model_validate(
+                runmodel.model_dump() | _not_yet_serializable_args
+            )
 
         assert runmodel_from_serialized.model_dump() == runmodel.model_dump()
 
@@ -554,6 +594,7 @@ def test_that_deserializing_esmda_is_the_inverse_of_serializing(
 ) -> None:
     tmp_path = tmp_path_factory.mktemp("deserializing_eif")
     note(f"Running in directory {tmp_path}")
+
     with MonkeyPatch.context() as patch:
         patch.chdir(tmp_path)
 
@@ -567,9 +608,14 @@ def test_that_deserializing_esmda_is_the_inverse_of_serializing(
         )
         runmodel._storage.close()
 
-        runmodel_from_serialized = MultipleDataAssimilation.model_validate(
-            runmodel.model_dump() | _not_yet_serializable_args
+        dumped = runmodel.model_dump(mode="json") | _not_yet_serializable_args
+
+        runtime_plugins = _extract_runtime_plugins(
+            hooked_workflows=baserunmodel_args["hooked_workflows"]
         )
+
+        with init_context(runtime_plugins):
+            runmodel_from_serialized = MultipleDataAssimilation.model_validate(dumped)
 
     assert runmodel_from_serialized.model_dump() == runmodel.model_dump()
 
@@ -772,3 +818,116 @@ def test_that_dumped_esmda_matches_snapshot(
         ),
         case=f"{config_dir}.{config_file}",
     )
+
+
+@pytest.fixture
+def executable_workflow_job():
+    return ExecutableWorkflow(
+        name="exec_wf_name",
+        type="executable",
+        min_args=4,
+        max_args=3,
+        arg_types=[
+            SchemaItemType.BOOL,
+            SchemaItemType.ISODATE,
+            SchemaItemType.BYTESIZE,
+            SchemaItemType.INT,
+            SchemaItemType.INT,
+            SchemaItemType.INVALID,
+        ],
+        stop_on_fail=False,
+        executable=None,
+    )
+
+
+@pytest.fixture
+def ertscript_workflow_job():
+    return ErtScriptWorkflow(
+        name="the_ertscript_wf_name",
+        type="ert_script",
+        min_args=1,
+        max_args=1,
+        arg_types=[SchemaItemType.STRING],
+        stop_on_fail=False,
+        ert_script=ExternalErtScript,
+        category="other",
+    )
+
+
+def test_that_executable_wf_job_serializes_entire_wfjob(executable_workflow_job):
+    with init_context(ErtRuntimePlugins(installed_workflow_jobs={})):
+        serialized = executable_workflow_job.model_dump(mode="json")
+        deserialized = ExecutableWorkflow.model_validate(serialized)
+        assert deserialized == executable_workflow_job
+
+
+def test_that_workflow_with_executable_wf_job_serializes_entire_wfjob(
+    executable_workflow_job,
+):
+    workflow = Workflow(
+        src_file="Ox.wf.json",
+        cmd_list=[
+            (
+                executable_workflow_job,
+                "R8oZ",
+            ),
+        ],
+    )
+
+    with init_context(ErtRuntimePlugins(installed_workflow_jobs={})):
+        serialized = workflow.model_dump(mode="json")
+        deserialized = Workflow.model_validate(serialized)
+        assert deserialized == workflow
+
+
+def test_that_ertscript_wf_job_serializes_ertscript_by_name(ertscript_workflow_job):
+    with init_context(
+        ErtRuntimePlugins(
+            installed_workflow_jobs={
+                ertscript_workflow_job.name: ertscript_workflow_job
+            }
+        )
+    ):
+        serialized_job = ertscript_workflow_job.model_dump(mode="json")
+        deserialized_workflow_job = ErtScriptWorkflow.model_validate(serialized_job)
+        assert deserialized_workflow_job == ertscript_workflow_job
+
+
+def test_that_ertscript_wf_job_deserialization_raises_error_if_uninstalled(
+    ertscript_workflow_job,
+):
+    serialized_job = ertscript_workflow_job.model_dump(mode="json")
+    with (
+        init_context(
+            ErtRuntimePlugins(
+                installed_workflow_jobs={
+                    f"{ertscript_workflow_job.name}ff": ertscript_workflow_job
+                }
+            )
+        ),
+        pytest.raises(KeyError, match="Did not find installed workflow job"),
+    ):
+        deserialized_workflow_job = ErtScriptWorkflow.model_validate(serialized_job)
+        assert deserialized_workflow_job == ertscript_workflow_job
+
+
+def test_that_workflow_with_ertscript_serializes_ertscript_by_name(
+    ertscript_workflow_job,
+):
+    workflow = Workflow(
+        src_file="Ox.wf.json",
+        cmd_list=[
+            (ertscript_workflow_job, "hello"),
+        ],
+    )
+
+    with init_context(
+        ErtRuntimePlugins(
+            installed_workflow_jobs={
+                ertscript_workflow_job.name: ertscript_workflow_job
+            }
+        )
+    ):
+        serialized = workflow.model_dump(mode="json")
+        deserialized = Workflow.model_validate(serialized)
+        assert deserialized == workflow

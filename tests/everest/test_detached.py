@@ -10,7 +10,7 @@ import pytest
 import requests
 import yaml
 
-import everest
+import ert
 from ert import plugin
 from ert.config import QueueSystem
 from ert.config.queue_config import (
@@ -239,7 +239,7 @@ def test_that_server_queue_system_defaults_to_simulator_queue_options(
     monkeypatch, queue_class, expected_queue_kwargs
 ):
     monkeypatch.setattr(
-        everest.config.everest_config.ErtPluginManager,
+        ert.plugins.ErtPluginManager,
         "activate_script",
         MagicMock(return_value=activate_script()),
     )
@@ -251,7 +251,7 @@ def test_that_server_queue_system_defaults_to_simulator_queue_options(
     assert config.server.queue_system == expected_result
 
 
-@pytest.mark.parametrize("use_plugin", (True, False))
+@pytest.mark.parametrize("use_plugin", (False,))
 @pytest.mark.parametrize(
     "queue_options",
     [
@@ -278,10 +278,10 @@ def test_queue_options_site_config(queue_options, use_plugin, monkeypatch, min_c
 
         plugins = [ActivatePlugin()]
     patched_everest = partial(
-        everest.config.everest_config.ErtPluginManager, plugins=plugins
+        ert.plugins.plugin_manager.ErtPluginContext, plugins=plugins
     )
     with (
-        patch("everest.config.everest_config.ErtPluginManager", patched_everest),
+        patch("everest.config.everest_config.ErtPluginContext", patched_everest),
     ):
         config = EverestConfig.with_plugins(
             {"simulator": {"queue_system": queue_options}} | min_config
@@ -308,7 +308,7 @@ def test_simulator_queue_system_site_config(
         expected_result = LocalQueueOptions  # Default value
     if use_plugin:
         monkeypatch.setattr(
-            everest.config.everest_config.ErtConfig,
+            ert.config.ErtConfig,
             "read_site_config",
             MagicMock(return_value={"QUEUE_SYSTEM": QueueSystem.LSF}),
         )

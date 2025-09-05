@@ -5,7 +5,7 @@ import os
 import re
 import shutil
 from abc import abstractmethod
-from typing import Annotated, Any, Literal, TypeAlias, cast, overload
+from typing import TYPE_CHECKING, Annotated, Any, Literal, TypeAlias, cast, overload
 
 import pydantic
 from pydantic import BaseModel, Field, field_validator
@@ -23,6 +23,9 @@ from .parsing import (
     QueueSystem,
     QueueSystemWithGeneric,
 )
+
+if TYPE_CHECKING:
+    from ert.plugins import ErtRuntimePlugins
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +87,8 @@ class QueueOptions(
         # Use from plugin system if user has not specified
         plugin_script = None
         if info.context:
-            plugin_script = info.context.get("activate_script")
+            context = cast("ErtRuntimePlugins", info.context)
+            plugin_script = context.activate_script
         return plugin_script or activate_script()  # Return default value
 
     @field_validator("realization_memory", mode="before")
@@ -345,12 +349,29 @@ class QueueConfig(BaseModel):
     max_runtime: int | None = None
 
     @classmethod
-    def from_dict(cls, config_dict: ConfigDict) -> QueueConfig:
+    def from_dict(
+        cls,
+        config_dict: ConfigDict,
+        site_queue_options: QueueOptions | None = None,
+    ) -> QueueConfig:
+        queue_options_dict = (
+            site_queue_options.model_dump(
+                exclude_unset=True, exclude_none=True, exclude_defaults=True
+            )
+            if site_queue_options
+            else {}
+        )
         selected_queue_system = QueueSystem(
-            config_dict.get("QUEUE_SYSTEM", QueueSystem.LOCAL)
+            config_dict.get(
+                "QUEUE_SYSTEM",
+                queue_options_dict.get("queue_system", QueueSystem.LOCAL)
+            )
         )
         job_script: str = config_dict.get(
-            "JOB_SCRIPT", shutil.which("fm_dispatch.py") or "fm_dispatch.py"
+            "JOB_SCRIPT",
+            queue_options_dict.get(
+                "JOB_SCRIPT", shutil.which("fm_dispatch.py") or "fm_dispatch.py"
+            ),
         )
         config_dict["JOB_SCRIPT"] = job_script
         max_submit: int = config_dict.get(ConfigKeys.MAX_SUBMIT, 1)

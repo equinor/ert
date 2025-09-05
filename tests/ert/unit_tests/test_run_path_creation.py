@@ -16,6 +16,7 @@ from ert.config import (
     GenKwConfig,
     SurfaceConfig,
 )
+from ert.plugins import ErtPluginContext
 from ert.run_arg import create_run_arguments
 from ert.run_models._create_run_path import create_run_path
 from ert.runpaths import Runpaths
@@ -535,24 +536,25 @@ def test_that_deprecated_runpath_substitution_remain_valid(make_run_path):
     """
     This checks that deprecated runpath substitution, using %d, remain intact.
     """
-    ert_config = ErtConfig.with_plugins().from_file_contents(
-        dedent(
-            """\
-            NUM_REALIZATIONS 2
-            RUNPATH realization-%d/iter-%d
-            FORWARD_MODEL COPY_DIRECTORY(<FROM>=<CONFIG_PATH>/, <TO>=<RUNPATH>/)
-            """
+    with ErtPluginContext() as ctx:
+        ert_config = ErtConfig.with_plugins(ctx).from_file_contents(
+            dedent(
+                """\
+                NUM_REALIZATIONS 2
+                RUNPATH realization-%d/iter-%d
+                FORWARD_MODEL COPY_DIRECTORY(<FROM>=<CONFIG_PATH>/, <TO>=<RUNPATH>/)
+                """
+            )
         )
-    )
 
-    _, run_arg, _ = make_run_path(ert_config)
+        _, run_arg, _ = make_run_path(ert_config)
 
-    for realization in run_arg:
-        assert str(Path().absolute()) + "/realization-" + str(
-            realization.iens
-        ) + "/iter-0" in Path(realization.runpath + "/jobs.json").read_text(
-            encoding="utf-8"
-        )
+        for realization in run_arg:
+            assert str(Path().absolute()) + "/realization-" + str(
+                realization.iens
+            ) + "/iter-0" in Path(realization.runpath + "/jobs.json").read_text(
+                encoding="utf-8"
+            )
 
 
 @pytest.mark.usefixtures("use_tmpdir")

@@ -15,7 +15,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 import yaml
 
-import ert
 import everest
 from ert.config.queue_config import LocalQueueOptions
 from ert.ensemble_evaluator import EvaluatorServerConfig
@@ -287,15 +286,13 @@ def no_plugins():
     patched_context = partial(
         everest.simulator.everest_to_ert.ErtPluginContext, plugins=[]
     )
-    patched = partial(ert.config.ert_config.ErtPluginManager, plugins=[])
     patched_everest = partial(
-        everest.config.everest_config.ErtPluginManager, plugins=[]
+        everest.config.everest_config.ErtPluginContext, plugins=[]
     )
 
     with (
         patch("everest.simulator.everest_to_ert.ErtPluginContext", patched_context),
-        patch("ert.config.ert_config.ErtPluginManager", patched),
-        patch("everest.config.everest_config.ErtPluginManager", patched_everest),
+        patch("everest.config.everest_config.ErtPluginContext", patched_everest),
     ):
         yield
 

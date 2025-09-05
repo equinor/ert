@@ -36,7 +36,7 @@ from ert.config.parsing.context_values import (
     ContextList,
     ContextString,
 )
-from ert.plugins import ErtPluginManager
+from ert.plugins import ErtPluginContext, ErtPluginManager
 from ert.shared import ert_share_path
 from ert.storage import LocalEnsemble, Storage
 from tests.ert.conftest import _create_design_matrix
@@ -323,7 +323,7 @@ def test_that_get_plugin_jobs_fetches_exactly_ert_plugins():
     Path("plugin.py").write_text(
         dedent(
             """
-            from ert.plugins import ErtPlugin
+            from ert.config import ErtPlugin
 
             class Plugin(ErtPlugin):
                 def run(self, *args):
@@ -812,12 +812,16 @@ def test_fm_step_config_via_plugin_ends_up_json_data(monkeypatch, anystring):
         "get_forward_model_configuration",
         MagicMock(return_value={"SOME_STEP": {"FOO": anystring}}),
     )
-    ert_config = ErtConfig.with_plugins().from_dict(
-        {
-            "INSTALL_JOB": [["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]],
-            "FORWARD_MODEL": [["SOME_STEP"]],
-        }
-    )
+
+    with ErtPluginContext() as ctx:
+        ert_config = ErtConfig.with_plugins(ctx).from_dict(
+            {
+                "INSTALL_JOB": [
+                    ["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]
+                ],
+                "FORWARD_MODEL": [["SOME_STEP"]],
+            }
+        )
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
@@ -835,14 +839,19 @@ def test_fm_step_config_via_plugin_does_not_leak_to_other_step(monkeypatch):
         "get_forward_model_configuration",
         MagicMock(return_value={"SOME_STEP": {"FOO": "bar"}}),
     )
-    ert_config = ErtConfig.with_plugins().from_dict(
-        {
-            "INSTALL_JOB": [
-                ["SOME_OTHER_STEP", ("SOME_OTHER_STEP", "EXECUTABLE fm_dispatch.py")]
-            ],
-            "FORWARD_MODEL": [["SOME_OTHER_STEP"]],
-        }
-    )
+
+    with ErtPluginContext() as ctx:
+        ert_config = ErtConfig.with_plugins(ctx).from_dict(
+            {
+                "INSTALL_JOB": [
+                    [
+                        "SOME_OTHER_STEP",
+                        ("SOME_OTHER_STEP", "EXECUTABLE fm_dispatch.py"),
+                    ]
+                ],
+                "FORWARD_MODEL": [["SOME_OTHER_STEP"]],
+            }
+        )
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
@@ -861,12 +870,16 @@ def test_fm_step_config_via_plugin_has_key_names_uppercased(monkeypatch):
         "get_forward_model_configuration",
         MagicMock(return_value={"SOME_STEP": {"foo": "bar"}}),
     )
-    ert_config = ErtConfig.with_plugins().from_dict(
-        {
-            "INSTALL_JOB": [["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]],
-            "FORWARD_MODEL": [["SOME_STEP"]],
-        }
-    )
+
+    with ErtPluginContext() as ctx:
+        ert_config = ErtConfig.with_plugins(ctx).from_dict(
+            {
+                "INSTALL_JOB": [
+                    ["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]
+                ],
+                "FORWARD_MODEL": [["SOME_STEP"]],
+            }
+        )
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
@@ -885,12 +898,17 @@ def test_fm_step_config_via_plugin_stringifies_python_objects(monkeypatch):
         "get_forward_model_configuration",
         MagicMock(return_value={"SOME_STEP": {"FOO": {"a_dict_as_value": 1}}}),
     )
-    ert_config = ErtConfig.with_plugins().from_dict(
-        {
-            "INSTALL_JOB": [["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]],
-            "FORWARD_MODEL": [["SOME_STEP"]],
-        }
-    )
+
+    with ErtPluginContext() as ctx:
+        ert_config = ErtConfig.with_plugins(ctx).from_dict(
+            {
+                "INSTALL_JOB": [
+                    ["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]
+                ],
+                "FORWARD_MODEL": [["SOME_STEP"]],
+            }
+        )
+
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
@@ -915,13 +933,17 @@ def test_fm_step_config_via_plugin_is_overridden_by_setenv(monkeypatch):
             }
         ),
     )
-    ert_config = ErtConfig.with_plugins().from_dict(
-        {
-            "INSTALL_JOB": [["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]],
-            "SETENV": [["FOO", "bar_from_setenv"]],
-            "FORWARD_MODEL": [["SOME_STEP"]],
-        }
-    )
+
+    with ErtPluginContext() as ctx:
+        ert_config = ErtConfig.with_plugins(ctx).from_dict(
+            {
+                "INSTALL_JOB": [
+                    ["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]
+                ],
+                "SETENV": [["FOO", "bar_from_setenv"]],
+                "FORWARD_MODEL": [["SOME_STEP"]],
+            }
+        )
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
@@ -946,7 +968,10 @@ def test_setenv_will_be_substituted_in_jobs_json(monkeypatch):
         ),
         encoding="utf-8",
     )
-    ert_config = ErtConfig.with_plugins().from_file("config.ert")
+
+    with ErtPluginContext() as ctx:
+        ert_config = ErtConfig.with_plugins(ctx).from_file("config.ert")
+
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
@@ -975,7 +1000,10 @@ def test_fm_step_config_via_plugin_does_not_override_default_env(monkeypatch):
         ),
         encoding="utf-8",
     )
-    ert_config = ErtConfig.with_plugins().from_file("config.ert")
+
+    with ErtPluginContext() as ctx:
+        ert_config = ErtConfig.with_plugins(ctx).from_file("config.ert")
+
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
@@ -1008,7 +1036,10 @@ def test_fm_step_config_via_plugin_is_substituted_for_defines(monkeypatch):
         ),
         encoding="utf-8",
     )
-    ert_config = ErtConfig.with_plugins().from_file("config.ert")
+
+    with ErtPluginContext() as ctx:
+        ert_config = ErtConfig.with_plugins(ctx).from_file("config.ert")
+
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
@@ -1037,7 +1068,10 @@ def test_fm_step_config_via_plugin_is_dropped_if_not_define_exists(monkeypatch):
         ),
         encoding="utf-8",
     )
-    ert_config = ErtConfig.with_plugins().from_file("config.ert")
+
+    with ErtPluginContext() as ctx:
+        ert_config = ErtConfig.with_plugins(ctx).from_file("config.ert")
+
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
