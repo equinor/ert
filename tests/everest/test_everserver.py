@@ -17,6 +17,7 @@ import ert
 from ert.dark_storage.app import app
 from ert.ensemble_evaluator import EndEvent
 from ert.scheduler.event import FinishedEvent
+from ert.services import StorageService
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
     ExperimentState,
@@ -65,9 +66,12 @@ async def wait_for_server_to_complete(config):
                 return
 
     driver = await start_server(config, logging.DEBUG)
-    wait_for_server(config.output_dir, 120)
+    client = StorageService.session(
+        Path(ServerConfig.get_session_dir(config.output_dir))
+    )
+    wait_for_server(client, 120)
     start_experiment(
-        server_context=ServerConfig.get_server_context(config.output_dir),
+        server_context=ServerConfig.get_server_context_from_client(client),
         config=config,
     )
     await server_running()

@@ -24,6 +24,7 @@ from ert.ensemble_evaluator import (
     SnapshotUpdateEvent,
 )
 from ert.logging import LOGGING_CONFIG
+from ert.services import StorageService
 from everest.config import EverestConfig
 from everest.config.server_config import ServerConfig
 from everest.detached import (
@@ -94,7 +95,10 @@ def setup_logging(options: argparse.Namespace) -> Generator[None, None, None]:
 def handle_keyboard_interrupt(signum: int, _: Any, options: argparse.Namespace) -> None:
     print("\n" + "=" * 80)
     if options.config.server_queue_system == QueueSystem.LOCAL:
-        server_context = ServerConfig.get_server_context(options.config.output_dir)
+        client = StorageService.session(
+            Path(ServerConfig.get_session_dir(options.config.output_dir))
+        )
+        server_context = ServerConfig.get_server_context_from_client(client)
         if server_is_running(*server_context):
             print(
                 f"KeyboardInterrupt (ID: {signum}) has been caught. \n"
