@@ -938,99 +938,10 @@ def validate_observations(obs_config_contents):
     )
 
 
-@pytest.mark.parametrize("obs_type", ["HISTORY_OBSERVATION", "SUMMARY_OBSERVATION"])
-@pytest.mark.parametrize(
-    "obs_content, match",
-    [
-        (
-            "ERROR = -1;",
-            'Failed to validate "-1"',
-        ),
-        (
-            "ERROR_MODE=RELMIN; ERROR_MIN = -1; ERROR=1.0;",
-            'Failed to validate "-1"',
-        ),
-        (
-            "ERROR_MODE = NOT_ABS; ERROR=1.0;",
-            'Failed to validate "NOT_ABS"',
-        ),
-    ],
-)
-def test_that_common_observation_error_validation_is_handled(
-    obs_type, obs_content, match
-):
-    additional = (
-        ""
-        if obs_type == "HISTORY_OBSERVATION"
-        else "RESTART = 1; VALUE=1.0; KEY = FOPR;"
-    )
-    with pytest.raises(ConfigValidationError, match=match):
-        validate_observations(
-            f"""
-                        {obs_type}  FOPR
-                        {{
-                            {obs_content}
-                            {additional}
-                        }};
-                        """,
-        )
-
-
-@pytest.mark.parametrize(
-    "obs_content, match",
-    [
-        (
-            """
-            SUMMARY_OBSERVATION  FOPR
-            {
-               DAYS       = -1;
-            };
-            """,
-            'Failed to validate "-1"',
-        ),
-        (
-            """
-            SUMMARY_OBSERVATION  FOPR
-            {
-               VALUE       = exactly_1;
-            };
-            """,
-            'Failed to validate "exactly_1"',
-        ),
-        (
-            """
-            SUMMARY_OBSERVATION  FOPR
-            {
-               DAYS       = 1;
-            };
-            """,
-            'Missing item "VALUE"',
-        ),
-        (
-            """
-            SUMMARY_OBSERVATION  FOPR
-            {
-               KEY        = FOPR;
-               VALUE      = 2.0;
-               DAYS       = 1;
-            };
-            """,
-            'Missing item "ERROR"',
-        ),
-        (
-            """
-            SUMMARY_OBSERVATION  FOPR
-            {
-               VALUE = 1;
-               ERROR = 0.1;
-            };
-            """,
-            'Missing item "KEY"',
-        ),
-        (
-            """
-            HISTORY_OBSERVATION  FOPR
-            {
+def test_that_start_must_be_set_in_a_segment():
+    with pytest.raises(ConfigValidationError, match='Missing item "START"'):
+        validate_observations("""
+            HISTORY_OBSERVATION  FOPR {
                ERROR      = 0.1;
 
                SEGMENT SEG
@@ -1039,28 +950,27 @@ def test_that_common_observation_error_validation_is_handled(
                   ERROR = 0.50;
                };
             };
-            """,
-            'Missing item "START"',
-        ),
-        (
-            """
-            HISTORY_OBSERVATION  FOPR
-            {
+        """)
+
+
+def test_that_stop_must_be_set_in_a_segment():
+    with pytest.raises(ConfigValidationError, match='Missing item "STOP"'):
+        validate_observations("""
+            HISTORY_OBSERVATION FOPR {
                ERROR      = 0.1;
 
-               SEGMENT SEG
-               {
+               SEGMENT SEG {
                   START  = 1;
                   ERROR = 0.50;
                };
             };
-            """,
-            'Missing item "STOP"',
-        ),
-        (
-            """
-            HISTORY_OBSERVATION  FOPR
-            {
+        """)
+
+
+def test_that_stop_must_be_given_integer_value():
+    with pytest.raises(ConfigValidationError, match=r'Failed to validate "3\.2"'):
+        validate_observations("""
+            HISTORY_OBSERVATION FOPR {
                ERROR      = 0.1;
 
                SEGMENT SEG
@@ -1070,13 +980,13 @@ def test_that_common_observation_error_validation_is_handled(
                   ERROR = 0.50;
                };
             };
-            """,
-            'Failed to validate "3.2"',
-        ),
-        (
-            """
-            HISTORY_OBSERVATION  FOPR
-            {
+        """)
+
+
+def test_that_start_must_be_given_integer_value():
+    with pytest.raises(ConfigValidationError, match=r'Failed to validate "1\.1"'):
+        validate_observations("""
+            HISTORY_OBSERVATION FOPR {
                ERROR      = 0.1;
 
                SEGMENT SEG
@@ -1086,117 +996,290 @@ def test_that_common_observation_error_validation_is_handled(
                   ERROR = 0.50;
                };
             };
-            """,
-            'Failed to validate "1.1"',
-        ),
-        (
-            """
-            HISTORY_OBSERVATION  FOPR
-            {
-               ERROR      = 0.1;
+        """)
 
-               SEGMENT SEG
-               {
+
+def test_that_error_must_be_positive_in_a_segment():
+    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
+        validate_observations("""
+            HISTORY_OBSERVATION  FOPR {
+               ERROR      = 0.1;
+               SEGMENT SEG {
                   START = 1;
                   STOP  = 0;
                   ERROR = -1;
                };
             };
-            """,
-            'Failed to validate "-1"',
-        ),
-        (
-            """
-            HISTORY_OBSERVATION  FOPR
-            {
-               ERROR      = 0.1;
+        """)
 
-               SEGMENT SEG
-               {
+
+def test_that_error_min_must_be_positive_in_a_segment():
+    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
+        validate_observations("""
+            HISTORY_OBSERVATION FOPR {
+               ERROR      = 0.1;
+               SEGMENT SEG {
                   START = 1;
                   STOP  = 0;
                   ERROR = 0.1;
                   ERROR_MIN = -1;
                };
             };
-            """,
-            'Failed to validate "-1"',
-        ),
-        (
-            """
-            SUMMARY_OBSERVATION  FOPR
-            {
-               RESTART = -1;
+        """)
+
+
+def test_that_error_mode_must_be_one_of_rel_abs_relmin_in_a_segment():
+    with pytest.raises(ConfigValidationError, match='Failed to validate "NOT_ABS"'):
+        validate_observations("""
+            HISTORY_OBSERVATION FOPR {
+               ERROR      = 0.1;
+               SEGMENT SEG
+               {
+                  START = 1;
+                  STOP  = 0;
+                  ERROR = 0.1;
+                  ERROR_MODE = NOT_ABS;
+               };
             };
-            """,
-            'Failed to validate "-1"',
-        ),
-        (
-            """
-            SUMMARY_OBSERVATION  FOPR
-            {
-               RESTART = minus_one;
+        """)
+
+
+def test_that_restart_must_be_positive_in_a_summary_observation():
+    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
+        validate_observations("SUMMARY_OBSERVATION FOPR {RESTART = -1;};")
+
+
+def test_that_restart_must_be_a_number_in_summary_observation():
+    with pytest.raises(ConfigValidationError, match='Failed to validate "minus_one"'):
+        validate_observations("SUMMARY_OBSERVATION FOPR {RESTART = minus_one;};")
+
+
+def test_that_value_must_be_set_in_summary_observation():
+    with pytest.raises(ConfigValidationError, match='Missing item "VALUE"'):
+        validate_observations("SUMMARY_OBSERVATION FOPR {DAYS = 1;};")
+
+
+def test_that_key_must_be_set_in_summary_observation():
+    with pytest.raises(ConfigValidationError, match='Missing item "KEY"'):
+        validate_observations("""
+            SUMMARY_OBSERVATION  FOPR {
+               VALUE = 1;
+               ERROR = 0.1;
             };
-            """,
-            'Failed to validate "minus_one"',
-        ),
-        (
-            """
-                HISTORY_OBSERVATION  FOPR
-                {
-                   ERROR      = 0.1;
-
-                   SEGMENT SEG
-                   {
-                      START = 1;
-                      STOP  = 0;
-                      ERROR = 0.1;
-                      ERROR_MODE = NOT_ABS;
-                   };
-                };
-                """,
-            'Failed to validate "NOT_ABS"',
-        ),
-    ],
-)
-def test_that_summary_observation_validation_is_handled(obs_content, match):
-    with pytest.raises(ConfigValidationError, match=match):
-        validate_observations(obs_content)
+        """)
 
 
-def test_that_general_observation_without_error_is_invalid():
-    with pytest.raises(ConfigValidationError, match="ERROR must also be given"):
-        validate_observations(
-            """
-            GENERAL_OBSERVATION  obs
-            {
-               DATA       = RES;
-               DATE       = 2023-02-01;
-               VALUE      = 1;
-            };
-            """,
-        )
-
-
-def test_that_general_observation_without_data_is_invalid():
+def test_that_data_must_be_set_in_general_observation():
     with pytest.raises(ConfigValidationError, match='Missing item "DATA"'):
-        validate_observations(
-            """
-            GENERAL_OBSERVATION  obs
-            {
+        validate_observations("""
+            GENERAL_OBSERVATION obs {
                DATE       = 2023-02-01;
                VALUE      = 1;
                ERROR      = 0.01;
                ERROR_MIN  = 0.1;
             };
-            """,
-        )
+        """)
+
+
+def test_that_error_must_be_a_positive_number_in_history_observation():
+    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
+        validate_observations("HISTORY_OBSERVATION FOPR { ERROR = -1;};")
+
+
+def test_that_error_min_must_be_a_positive_number_in_history_observation():
+    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
+        validate_observations("""
+            HISTORY_OBSERVATION FOPR {
+                ERROR_MODE=RELMIN;
+                ERROR_MIN = -1;
+                ERROR=1.0;
+            };
+        """)
+
+
+def test_that_error_mode_must_be_one_of_rel_abs_relmin_in_history_observation():
+    with pytest.raises(ConfigValidationError, match='Failed to validate "NOT_ABS"'):
+        validate_observations("""
+            HISTORY_OBSERVATION  FOPR {
+                ERROR_MODE = NOT_ABS;
+                ERROR=1.0;
+            };
+        """)
+
+
+def test_that_error_must_be_a_positive_number_in_summary_observation():
+    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
+        validate_observations("""
+            SUMMARY_OBSERVATION  FOPR
+            {
+                ERROR = -1;
+                RESTART = 1;
+                VALUE=1.0;
+                KEY = FOPR;
+            };
+        """)
+
+
+def test_that_error_min_must_be_a_positive_number_in_summary_observation():
+    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
+        validate_observations("""
+            SUMMARY_OBSERVATION FOPR
+            {
+                ERROR_MODE=RELMIN;
+                ERROR_MIN = -1;
+                ERROR = 1.0;
+                RESTART = 1;
+                VALUE=1.0;
+                KEY = FOPR;
+            };
+        """)
+
+
+def test_that_error_mode_must_be_one_of_rel_abs_relmin_in_summary_observation():
+    with pytest.raises(ConfigValidationError, match='Failed to validate "NOT_ABS"'):
+        validate_observations("""
+            SUMMARY_OBSERVATION  FOPR
+            {
+                ERROR_MODE = NOT_ABS;
+                ERROR=1.0;
+                RESTART = 1;
+                VALUE=1.0;
+                KEY = FOPR;
+            };
+        """)
+
+
+def test_that_days_must_be_a_positive_number_in_general_observation():
+    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
+        validate_observations("""
+            GENERAL_OBSERVATION FOPR
+            {
+                DAYS = -1;
+                DATA = GEN;
+            };
+        """)
+
+
+def test_that_hours_must_be_a_positive_number_in_general_observation():
+    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
+        validate_observations("""
+            GENERAL_OBSERVATION FOPR
+            {
+                HOURS = -1;
+                DATA = GEN;
+            };
+        """)
+
+
+def test_that_date_must_be_a_date_in_general_observation():
+    with pytest.raises(ConfigValidationError, match="Please use ISO date format"):
+        validate_observations("""
+            GENERAL_OBSERVATION FOPR
+            {
+                DATE = wednesday;
+                VALUE = 1.0;
+                ERROR = 0.1;
+                DATA = GEN;
+            };
+        """)
+
+
+def test_that_value_must_be_a_number_in_general_observation():
+    with pytest.raises(ConfigValidationError, match='Failed to validate "exactly_1"'):
+        validate_observations("""
+            GENERAL_OBSERVATION FOPR
+            {
+                VALUE = exactly_1;
+                DATA = GEN;
+            };
+        """)
+
+
+def test_that_error_must_be_set_in_general_observation():
+    with pytest.raises(ConfigValidationError, match="ERROR"):
+        validate_observations("""
+            GENERAL_OBSERVATION FOPR
+            {
+                VALUE = 1;
+                DATA = GEN;
+            };
+        """)
+
+
+def test_that_days_must_be_a_positive_number_in_summary_observation():
+    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
+        validate_observations("""
+            SUMMARY_OBSERVATION FOPR
+            {
+                DAYS = -1;
+                KEY = FOPR;
+            };
+        """)
+
+
+def test_that_hours_must_be_a_positive_number_in_summary_observation():
+    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
+        validate_observations("""
+            SUMMARY_OBSERVATION FOPR
+            {
+                HOURS = -1;
+                KEY = FOPR;
+            };
+        """)
+
+
+def test_that_date_must_be_a_date_in_summary_observation():
+    with pytest.raises(ConfigValidationError, match="Please use ISO date format"):
+        validate_observations("""
+            SUMMARY_OBSERVATION FOPR
+            {
+                DATE = wednesday;
+                VALUE = 1.0;
+                ERROR = 0.1;
+                KEY = FOPR;
+            };
+        """)
+
+
+def test_that_value_must_be_a_number_in_summary_observation():
+    with pytest.raises(ConfigValidationError, match='Failed to validate "exactly_1"'):
+        validate_observations("""
+            SUMMARY_OBSERVATION FOPR
+            {
+                VALUE = exactly_1;
+                KEY = FOPR;
+            };
+        """)
+
+
+def test_that_error_must_be_set_in_summary_observation():
+    with pytest.raises(ConfigValidationError, match="ERROR"):
+        validate_observations("""
+            SUMMARY_OBSERVATION FOPR
+            {
+                VALUE = 1;
+                KEY = FOPR;
+            };
+        """)
 
 
 @pytest.mark.parametrize(
     "observation_type",
     ["HISTORY_OBSERVATION", "SUMMARY_OBSERVATION", "GENERAL_OBSERVATION"],
 )
-def test_that_unknown_key_is_handled(observation_type):
+def test_that_setting_an_unknown_key_is_not_valid(observation_type):
     with pytest.raises(ConfigValidationError, match="Unknown SMERROR"):
         validate_observations(f"{observation_type} FOPR {{SMERROR=0.1;DATA=key;}};")
+
+
+def test_that_setting_an_unknown_key_in_a_segment_is_not_valid():
+    with pytest.raises(ConfigValidationError, match="Unknown SMERROR"):
+        validate_observations("""
+            HISTORY_OBSERVATION FOPR {
+                SEGMENT FIRST_YEAR {
+                    START = 1;
+                    STOP = 2;
+                    SMERROR = 0.02;
+                };
+            };
+        """)
