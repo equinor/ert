@@ -94,7 +94,7 @@ jobs:
       matrix:
         test-type: [ 'test', 'everest-models-test' ]
         os: [ 'macos-latest' ]
-        python-version: [ '3.12' ]
+        python-version: [ '3.13' ]
 
     uses: ./.github/workflows/test_everest.yml
     with:
@@ -109,7 +109,7 @@ jobs:
       fail-fast: false
       matrix:
         test-type: [ 'performance-and-unit-tests', 'gui-tests', 'cli-tests' ]
-        python-version: [ '3.12' ]
+        python-version: [ '3.13' ]
         os: [ 'macos-latest']
 
     uses: ./.github/workflows/test_ert.yml
