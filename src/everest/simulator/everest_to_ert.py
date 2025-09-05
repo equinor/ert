@@ -277,6 +277,8 @@ def _extract_templating(ever_config: EverestConfig) -> list[str]:
 
     forward_model = []
     install_templates = ever_config.install_templates or []
+    if install_templates:
+        logging.getLogger(EVEREST).info("Adding templates (install_templates):")
     for tmpl_request in install_templates:
         # User can define a template w/ extra data to be used with it,
         # append file as arg to input_files if declared.
@@ -293,7 +295,10 @@ def _extract_templating(ever_config: EverestConfig) -> list[str]:
                 *res_input,
             ]
         )
-        forward_model.append(f"template_render {args}")
+
+        job = f"template_render {args}"
+        logging.getLogger(EVEREST).info(job)
+        forward_model.append(job)
 
     return forward_model
 
