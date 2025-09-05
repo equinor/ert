@@ -92,7 +92,7 @@ class Workflow(BaseModelWithContextSupport):
             job_dict=job_dict,
         )
 
-        return cls(src_file, cmd_list)
+        return cls(src_file=src_file, cmd_list=cmd_list)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, type(self)):
