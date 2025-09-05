@@ -111,24 +111,9 @@ def render_template(
 
 def _build_argument_parser() -> argparse.ArgumentParser:
     description = """
-Loads the data from each file ("some/path/filename.xxx") in INPUT_FILES
-and exposes it as the variable "filename". It then loads the Jinja2
-template TEMPLATE_FILE and dumps the rendered result to OUTPUT.
-
-Example:
-Given an input file my_input.json:
-
-{
-    my_variable: my_value
-}
-
-And a template file tmpl.jinja:
-
-This is written in my file together with {{my_input.my_variable}}
-
-This job will produce an output file:
-
-This is written in my file together with my_value
+This forward model loads the data from each input file and exposes it as the
+variable ``filename``. It then loads the given Jinja2 template and dumps the
+rendered result to the output file.
 """
 
     parser = argparse.ArgumentParser(description=description)
@@ -136,19 +121,19 @@ This is written in my file together with my_value
         "--output_file",
         "-o",
         required=True,
-        help="the output file",
+        help="The output file",
     )
     parser.add_argument(
         "--template_file",
         "-t",
         required=True,
-        help="the jinja2 template file",
+        help="The jinja2 template file",
     )
     parser.add_argument(
         "--input_files",
         "-i",
         nargs="+",
-        help="list of json and yaml input files",
+        help="One or more json and yaml input files",
     )
     return parser
 

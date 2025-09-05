@@ -1,6 +1,5 @@
 import json
 import os
-import subprocess
 
 import jinja2
 import pytest
@@ -157,42 +156,6 @@ def test_render_multiple_input(change_to_tmpdir):
 
 
 @pytest.mark.integration_test
-def test_render_executable(change_to_tmpdir):
-    template_file = "dual_input.tmpl"
-    with open(template_file, "w", encoding="utf-8") as fp:
-        fp.write(DUAL_INPUT_TMPL)
-
-    assert os.access(everest.jobs.render, os.X_OK)
-
-    # Dump input
-    wells_north = {f"PROD{idx:d}": 0.2 * idx for idx in range(1, 5)}
-    wells_north_in = "well_drill_north.json"
-    with open(wells_north_in, "w", encoding="utf-8") as fout:
-        json.dump(wells_north, fout)
-
-    wells_south = {f"PROD{idx:d}": 1 - 0.2 * idx for idx in range(1, 5)}
-    wells_south_in = "well_drill_south.json"
-    with open(wells_south_in, "w", encoding="utf-8") as fout:
-        json.dump(wells_south, fout)
-
-    # Format command
-    output_file = "render_out"
-    cmd_fmt = "{render} --output {fout} --template {tmpl} --input_files {fin}"
-    cmd = cmd_fmt.format(
-        render=everest.jobs.render,
-        tmpl=template_file,
-        fout=output_file,
-        fin=" ".join((wells_north_in, wells_south_in)),
-    )
-
-    subprocess.check_call(cmd, shell=True)
-
-    # Verify result
-    with open(output_file, encoding="utf-8") as fout:
-        assert "\n".join(fout.readlines()) == "0.2 vs 0.8"
-
-
-@pytest.mark.integration_test
 def test_install_template(change_to_tmpdir):
     with open("config.yml", "w", encoding="utf-8") as fp:
         YAML(typ="safe", pure=True).dump(CONFIG, fp)
@@ -241,9 +204,8 @@ def test_well_order_template(change_to_tmpdir):
 
 
 @pytest.mark.integration_test
-def test_user_specified_data_n_template(
-    copy_math_func_test_data_to_tmp,
-):
+@pytest.mark.parametrize("test", ["install_templates", "template_render"])
+def test_user_specified_data_n_template(copy_math_func_test_data_to_tmp, test):
     """
     Ensure that a user specifying a data resource and an installed_template
     with "extra_data", the results of that template will be passed to the
@@ -279,15 +241,26 @@ def test_user_specified_data_n_template(
                     "target": "my_constants.yml",
                 }
             ],
-            "install_templates": [
-                {
-                    "template": "<CONFIG_PATH>/my_constants.tmpl",
-                    "output_file": "well_drill_constants.json",
-                    "extra_data": "my_constants.yml",
-                }
-            ],
         }
     )
+    if test == "install_templates":
+        updated_config_dict.update(
+            {
+                "install_templates": [
+                    {
+                        "template": "<CONFIG_PATH>/my_constants.tmpl",
+                        "output_file": "well_drill_constants.json",
+                        "extra_data": "my_constants.yml",
+                    }
+                ],
+            }
+        )
+    if test == "template_render":
+        updated_config_dict["forward_model"].insert(
+            0,
+            "template_render -i my_constants.yml -o well_drill_constants.json "
+            "-t <CONFIG_PATH>/my_constants.tmpl",
+        )
 
     config = EverestConfig.with_defaults(**updated_config_dict)
 

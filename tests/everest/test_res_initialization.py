@@ -115,7 +115,7 @@ def test_everest_to_ert_queue_config(config, config_class, tmp_path, monkeypatch
 def test_default_installed_jobs(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     jobs = [
-        "render",
+        "template_render",
         "make_directory",
         "copy_directory",
         "copy_file",

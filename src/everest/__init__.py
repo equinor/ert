@@ -21,12 +21,11 @@ try:
 except ImportError:
     __version__ = "0.0.0"
 
-from everest import detached, jobs, templates, util
+from everest import detached, templates, util
 
 __author__ = "Equinor ASA and TNO"
 __all__ = [
     "detached",
-    "jobs",
     "load",
     "templates",
     "util",

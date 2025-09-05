@@ -40,7 +40,6 @@ from everest.config.validation_utils import (
     unique_items,
     validate_forward_model_configs,
 )
-from everest.jobs import script_names
 from everest.util.forward_models import (
     validate_forward_model_step_arguments,
 )
@@ -239,10 +238,39 @@ and environment variables are exposed in the form 'os.NAME', for example:
     )
     install_templates: list[InstallTemplateConfig] = Field(
         default_factory=list,
-        description="""Allow the user to define the workflow establishing the model
-        chain for the purpose of sensitivity analysis, enabling the relationship
-        between sensitivity input variables and quantities of interests to be
-        evaluated.
+        description="""Generate files using a jinja2 template.
+
+A list of template files to be rendered to an output file. Extra JSON or YAML
+files can be provided with data that will be exposed as variables to the jinja2
+renderer.
+
+Example:
+
+Given an input file ``my_input.json``:
+
+```
+   {
+       "my_variable": "my_value"
+   }
+```
+
+And a template file ``tmpl.jinja``:
+
+```
+    This is written in my file together with {{my_input.my_variable}}
+```
+
+Run the script with:
+
+```
+    template_render -i my_input.json -t tmpl.jinja -o my_output.txt
+```
+
+This will produce an output file with the content:
+
+```
+    This is written in my file together with my_value
+```
 """,
     )
     server: ServerConfig = Field(
@@ -333,7 +361,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
         if not forward_model_jobs:
             return self
         installed_jobs_name = [job.name for job in install_jobs]
-        installed_jobs_name += list(script_names)  # default jobs
         if info.context:  # Add plugin jobs
             installed_jobs_name += info.context.get("install_jobs", {}).keys()
 
