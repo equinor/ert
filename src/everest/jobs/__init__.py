@@ -2,7 +2,7 @@ import importlib
 import os
 from pathlib import Path
 
-script_names = ("render",)
+script_names: tuple[str, ...] = ()
 
 __all__ = [
     "script_names",

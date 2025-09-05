@@ -1,6 +1,5 @@
 import json
 import os
-import subprocess
 
 import jinja2
 import pytest
@@ -154,42 +153,6 @@ def test_render_multiple_input(change_to_tmpdir):
         output = fin.readlines()
 
     assert output == ["0.2 vs 0.8"]
-
-
-@pytest.mark.integration_test
-def test_render_executable(change_to_tmpdir):
-    template_file = "dual_input.tmpl"
-    with open(template_file, "w", encoding="utf-8") as fp:
-        fp.write(DUAL_INPUT_TMPL)
-
-    assert os.access(everest.jobs.render, os.X_OK)
-
-    # Dump input
-    wells_north = {f"PROD{idx:d}": 0.2 * idx for idx in range(1, 5)}
-    wells_north_in = "well_drill_north.json"
-    with open(wells_north_in, "w", encoding="utf-8") as fout:
-        json.dump(wells_north, fout)
-
-    wells_south = {f"PROD{idx:d}": 1 - 0.2 * idx for idx in range(1, 5)}
-    wells_south_in = "well_drill_south.json"
-    with open(wells_south_in, "w", encoding="utf-8") as fout:
-        json.dump(wells_south, fout)
-
-    # Format command
-    output_file = "render_out"
-    cmd_fmt = "{render} --output {fout} --template {tmpl} --input_files {fin}"
-    cmd = cmd_fmt.format(
-        render=everest.jobs.render,
-        tmpl=template_file,
-        fout=output_file,
-        fin=" ".join((wells_north_in, wells_south_in)),
-    )
-
-    subprocess.check_call(cmd, shell=True)
-
-    # Verify result
-    with open(output_file, encoding="utf-8") as fout:
-        assert "\n".join(fout.readlines()) == "0.2 vs 0.8"
 
 
 @pytest.mark.integration_test
