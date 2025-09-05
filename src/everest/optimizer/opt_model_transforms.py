@@ -130,35 +130,28 @@ class ControlScaler(VariableTransform):
 
         1. Transformation to correct for variable scaling:
 
-            The set of linear constraints can be represented by a matrix
-            equation: $\mathbf{A} \mathbf{x} = \mathbf{b}$. When linearly
-            transforming variables to the optimizer domain, the coefficients
-            ($\mathbf{A}$) and right-hand-side values ($\mathbf{b}$) must be
-            converted to remain valid.
+           The set of linear constraints can be represented by a matrix
+           equation: Ax = b. When linearly transforming variables to the
+           optimizer domain, the coefficients A and right-hand-side values b
+           must be converted to remain valid.
 
-            Here, the linear transformation of the variables to the optimizer
-            domain is given by the scaling factors $\mathbf{s}_i$ and the
-            offsets $\mathbf{o}_i$:
+           the linear transformation of the variables to the optimizer domain is
+           given by the scaling factors s and the offsets o:
 
-            $$
-            \hat{\mathbf{x}}_i = \frac{\mathbf{x}_i - \mathbf{o}_i}{\mathbf{s}_i}
-            $$
+               x = (x - o) / s.
 
-            In the optimizer domain, the coefficients and right-hand-side
-            values must then be transformed as follows:
+           In the optimizer domain, the coefficients and right-hand-side values
+           must then be transformed as follows:
 
-            $$ \begin{align}
-                \hat{\mathbf{A}} &= \mathbf{A} \mathbf{S} \\
-                \hat{\mathbf{b}} &= \mathbf{b} - \mathbf{A}\mathbf{o}
-            \end{align}$$
+               A = AS
+               b = b - Ao
 
-            where $\mathbf{S}$ is a diagonal matrix containing the variable
-            scales $\mathbf{s}_i$.
+           where S is a diagonal matrix containing the variable scales s.
 
         2. Transformation to correct for constraint scaling:
 
-            Each linear equation is scaled by a constant value that is either
-            determined automatically or manually set.
+           Each linear equation is scaled by a constant value that is either
+           determined automatically or manually set.
         """
         # The inputs may be immutable arrays, hence the `noqa PLR6104`
 
