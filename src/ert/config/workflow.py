@@ -20,7 +20,7 @@ class Workflow(BaseModelWithContextSupport):
     def __getitem__(self, index: int) -> tuple[WorkflowJob, Any]:
         return self.cmd_list[index]
 
-    def __iter__(self) -> Iterator[tuple[WorkflowJob, Any]]:
+    def __iter__(self) -> Iterator[tuple[WorkflowJob, Any]]:  # type: ignore
         return iter(self.cmd_list)
 
     @classmethod
