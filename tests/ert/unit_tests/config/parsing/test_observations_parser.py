@@ -7,7 +7,7 @@ from ert.config.parsing.observations_parser import (
 )
 
 
-def test_parse():
+def test_parse_observations():
     assert parse_observations(
         """
         HISTORY_OBSERVATION FOPR;
