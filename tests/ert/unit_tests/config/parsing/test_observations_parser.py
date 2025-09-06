@@ -7,9 +7,9 @@ from ert.config.parsing.observations_parser import (
 )
 
 
-@pytest.fixture
-def file_contents():
-    return """
+def test_parse():
+    assert parse_observations(
+        """
         HISTORY_OBSERVATION FOPR;
 
         SUMMARY_OBSERVATION WOPR_OP1_9
@@ -46,12 +46,7 @@ def file_contents():
               ERROR = 0.25;
            };
         };--comment
-    """
-
-
-def test_parse(file_contents):
-    assert parse_observations(
-        file_contents,
+    """,
         "",
     ) == [
         (ObservationType.HISTORY, "FOPR"),
