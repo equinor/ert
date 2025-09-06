@@ -33,9 +33,7 @@ def parse_observation_declarations(contents, filename):
 @given(observation_contents)
 def test_parsing_contents_succeeds_or_gives_config_error(contents):
     with suppress(ObservationConfigError):
-        _ = make_observation_declarations(
-            ".", parse_observations(contents, "observations.txt")
-        )
+        _ = parse_observation_declarations(contents, "observations.txt")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
