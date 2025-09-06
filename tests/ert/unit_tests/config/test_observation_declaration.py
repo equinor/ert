@@ -39,7 +39,7 @@ def test_parsing_contents_succeeds_or_gives_config_error(contents):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_validate():
+def test_make_observation_declarations():
     Path("wpr_diff_idx.txt").write_text("", encoding="utf8")
     Path("wpr_diff_obs.txt").write_text("", encoding="utf8")
     assert make_observation_declarations(
