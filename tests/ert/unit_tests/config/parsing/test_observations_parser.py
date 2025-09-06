@@ -114,7 +114,7 @@ def test_that_unexpected_characters_are_invalid(
         parse_observations(content=config_with_unexpected_characters, filename="")
 
 
-def test_that_double_comments_are_handled():
+def test_that_repeated_comments_are_ignored():
     assert parse_observations(
         """
             SUMMARY_OBSERVATION -- foo -- bar -- baz
