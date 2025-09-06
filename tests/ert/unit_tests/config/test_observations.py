@@ -1,4 +1,3 @@
-import os
 from contextlib import ExitStack as does_not_raise
 from datetime import datetime, timedelta
 
@@ -12,15 +11,9 @@ from ert.config import (
     ObservationType,
     SummaryObservation,
 )
-from ert.config._observation_declaration import (
-    make_observation_declarations,
-)
 from ert.config.general_observation import GenObservation
 from ert.config.observation_vector import ObsVector
 from ert.config.parsing import parse_observations
-from ert.config.parsing.observations_parser import (
-    ObservationConfigError,
-)
 
 
 def run_simulator():
@@ -928,9 +921,20 @@ def test_that_summary_default_error_min_is_applied(tmpdir):
         assert observations["FOPR"].observations[datetime(2014, 9, 11)].std == 0.1
 
 
-def parse_observation_declarations(contents, filename):
-    return make_observation_declarations(
-        os.path.dirname(filename), parse_observations(contents, filename)
+def validate_observations(obs_config_contents):
+    obs_config_file = "obs_config"
+    ErtConfig.from_dict(
+        {
+            "NUM_REALIZATIONS": 1,
+            "ECLBASE": "BASEBASEBASE",
+            "SUMMARY": "*",
+            "GEN_DATA": [["GEN", {"RESULT_FILE": "gen.txt"}]],
+            "TIME_MAP": ("time_map.txt", "2020-01-01\n"),
+            "OBS_CONFIG": (
+                obs_config_file,
+                parse_observations(obs_config_contents, obs_config_file),
+            ),
+        }
     )
 
 
@@ -960,8 +964,8 @@ def test_that_common_observation_error_validation_is_handled(
         if obs_type == "HISTORY_OBSERVATION"
         else "RESTART = 1; VALUE=1.0; KEY = FOPR;"
     )
-    with pytest.raises(ObservationConfigError, match=match):
-        parse_observation_declarations(
+    with pytest.raises(ConfigValidationError, match=match):
+        validate_observations(
             f"""
                         {obs_type}  FOPR
                         {{
@@ -969,7 +973,6 @@ def test_that_common_observation_error_validation_is_handled(
                             {additional}
                         }};
                         """,
-            "",
         )
 
 
@@ -1157,13 +1160,13 @@ def test_that_common_observation_error_validation_is_handled(
     ],
 )
 def test_that_summary_observation_validation_is_handled(obs_content, match):
-    with pytest.raises(ObservationConfigError, match=match):
-        parse_observation_declarations(obs_content, filename="")
+    with pytest.raises(ConfigValidationError, match=match):
+        validate_observations(obs_content)
 
 
 def test_that_general_observation_without_error_is_invalid():
-    with pytest.raises(ObservationConfigError, match="ERROR must also be given"):
-        parse_observation_declarations(
+    with pytest.raises(ConfigValidationError, match="ERROR must also be given"):
+        validate_observations(
             """
             GENERAL_OBSERVATION  obs
             {
@@ -1172,13 +1175,12 @@ def test_that_general_observation_without_error_is_invalid():
                VALUE      = 1;
             };
             """,
-            "",
         )
 
 
 def test_that_general_observation_without_data_is_invalid():
-    with pytest.raises(ObservationConfigError, match='Missing item "DATA"'):
-        parse_observation_declarations(
+    with pytest.raises(ConfigValidationError, match='Missing item "DATA"'):
+        validate_observations(
             """
             GENERAL_OBSERVATION  obs
             {
@@ -1188,7 +1190,6 @@ def test_that_general_observation_without_data_is_invalid():
                ERROR_MIN  = 0.1;
             };
             """,
-            "",
         )
 
 
@@ -1197,7 +1198,5 @@ def test_that_general_observation_without_data_is_invalid():
     ["HISTORY_OBSERVATION", "SUMMARY_OBSERVATION", "GENERAL_OBSERVATION"],
 )
 def test_that_unknown_key_is_handled(observation_type):
-    with pytest.raises(ObservationConfigError, match="Unknown SMERROR"):
-        parse_observation_declarations(
-            f"{observation_type} FOPR {{SMERROR=0.1;DATA=key;}};", ""
-        )
+    with pytest.raises(ConfigValidationError, match="Unknown SMERROR"):
+        validate_observations(f"{observation_type} FOPR {{SMERROR=0.1;DATA=key;}};")
