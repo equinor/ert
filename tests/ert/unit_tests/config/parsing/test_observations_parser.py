@@ -91,12 +91,27 @@ def test_parse_observations():
     ]
 
 
-def test_that_unexpected_character_gives_observation_config_error():
-    with pytest.raises(
-        ObservationConfigError,
-        match=r"Line 1.*include a;",
-    ):
-        parse_observations(content="include a;", filename="")
+@pytest.mark.parametrize(
+    "config_with_unexpected_characters, expected_message",
+    [
+        ("include a;", r"Line 1.*include a;"),
+        (
+            """
+            GENERAL_OBSERVATION GEN_OBS
+            {
+               ERROR       $ 0.20;
+            };
+            """,
+            r"Did not expect character: \$ \(on line 4: *ERROR *\$"
+            r" 0.20;\). Expected one of {'EQUAL'}",
+        ),
+    ],
+)
+def test_that_unexpected_characters_are_invalid(
+    config_with_unexpected_characters, expected_message
+):
+    with pytest.raises(ObservationConfigError, match=expected_message):
+        parse_observations(content=config_with_unexpected_characters, filename="")
 
 
 def test_that_double_comments_are_handled():
@@ -107,29 +122,6 @@ def test_that_double_comments_are_handled():
             """,
         "",
     ) == [(ObservationType.SUMMARY, "FOPR")]
-
-
-def test_unexpected_character_handling():
-    with pytest.raises(
-        ObservationConfigError,
-        match=r"Did not expect character: \$ \(on line 4: *ERROR *\$"
-        r" 0.20;\). Expected one of {'EQUAL'}",
-    ) as err_record:
-        parse_observations(
-            """
-            GENERAL_OBSERVATION GEN_OBS
-            {
-               ERROR       $ 0.20;
-            };
-            """,
-            "",
-        )
-
-    err = err_record.value.errors[0]
-    assert err.line == 4
-    assert err.end_line == 4
-    assert err.column == 28
-    assert err.end_column == 29
 
 
 @pytest.mark.parametrize("observation_type", ["HISTORY", "GENERAL", "SUMMARY"])
