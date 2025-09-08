@@ -61,14 +61,6 @@ from .parsing import (
     parse_contents,
     read_file,
 )
-from .parsing.observations_parser import (
-    ConfContent,
-    GenObsValues,
-    HistoryValues,
-    ObservationConfigError,
-    SummaryValues,
-)
-from .parsing.observations_parser import parse_content as parse_observations
 from .queue_config import QueueConfig
 from .workflow import Workflow
 from .workflow_job import (
