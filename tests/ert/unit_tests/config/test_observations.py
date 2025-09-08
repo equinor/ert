@@ -754,7 +754,6 @@ def test_that_report_step_mismatch_warns():
                     [
                         "RES",
                         {
-                            "INPUT_FORMAT": "ASCII",
                             "REPORT_STEPS": "1",
                             "RESULT_FILE": "file%d",
                         },

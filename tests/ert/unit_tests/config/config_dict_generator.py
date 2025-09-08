@@ -426,7 +426,6 @@ def ert_config_values(draw, use_eclbase=booleans):
                 st.fixed_dictionaries(
                     {
                         "RESULT_FILE": format_result_file_name,
-                        "INPUT_FORMAT": st.just("ASCII"),
                         "REPORT_STEPS": report_steps(),
                     }
                 ),

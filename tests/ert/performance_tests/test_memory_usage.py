@@ -214,7 +214,7 @@ def create_poly_with_field(field_dim: tuple[int, int, int], realisations: int):
             GRID MY_EGRID.EGRID
 
             GEN_DATA MY_RESPONSE RESULT_FILE:gen_data_%d.out \
-                REPORT_STEPS:0 INPUT_FORMAT:ASCII
+                REPORT_STEPS:0
             INSTALL_JOB poly_eval POLY_EVAL
             FORWARD_MODEL poly_eval
             """

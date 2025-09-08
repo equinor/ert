@@ -263,7 +263,7 @@ def test_parameter_update_with_inactive_cells_xtgeo_grdecl(tmpdir):
                 INIT_FILES:my_param.grdecl FORWARD_INIT:True
             GRID MY_EGRID.EGRID
             GEN_DATA MY_RESPONSE RESULT_FILE:gen_data_%d.out \
-                REPORT_STEPS:0 INPUT_FORMAT:ASCII
+                REPORT_STEPS:0
             INSTALL_JOB poly_eval POLY_EVAL
             FORWARD_MODEL poly_eval
         """

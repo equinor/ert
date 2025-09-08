@@ -168,7 +168,7 @@ def test_load_forward_model_gen_data(setup_case):
     config_text = dedent(
         """
     NUM_REALIZATIONS 1
-    GEN_DATA RESPONSE RESULT_FILE:response_%d.out REPORT_STEPS:0,1 INPUT_FORMAT:ASCII
+    GEN_DATA RESPONSE RESULT_FILE:response_%d.out REPORT_STEPS:0,1
         """
     )
 
@@ -191,7 +191,7 @@ def test_single_valued_gen_data_with_active_info_is_loaded(setup_case):
     config_text = dedent(
         """
     NUM_REALIZATIONS 1
-    GEN_DATA RESPONSE RESULT_FILE:response_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+    GEN_DATA RESPONSE RESULT_FILE:response_%d.out REPORT_STEPS:0
         """
     )
     prior_ensemble = setup_case(config_text)
@@ -211,7 +211,7 @@ def test_that_all_deactivated_values_are_loaded(setup_case):
     config_text = dedent(
         """
     NUM_REALIZATIONS 1
-    GEN_DATA RESPONSE RESULT_FILE:response_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+    GEN_DATA RESPONSE RESULT_FILE:response_%d.out REPORT_STEPS:0
         """
     )
     prior_ensemble = setup_case(config_text)
@@ -233,7 +233,7 @@ def test_loading_gen_data_without_restart(storage, run_args):
     config_text = dedent(
         """
     NUM_REALIZATIONS 1
-    GEN_DATA RESPONSE RESULT_FILE:response.out INPUT_FORMAT:ASCII
+    GEN_DATA RESPONSE RESULT_FILE:response.out
         """
     )
     Path("config.ert").write_text(config_text, encoding="utf-8")
@@ -307,7 +307,7 @@ def test_loading_from_any_available_iter(storage, run_args, itr):
     ert_config = ErtConfig.from_file_contents(
         """\
         NUM_REALIZATIONS 1
-        GEN_DATA RESPONSE RESULT_FILE:response.out INPUT_FORMAT:ASCII
+        GEN_DATA RESPONSE RESULT_FILE:response.out
         """
     )
     prior_ensemble = storage.create_ensemble(

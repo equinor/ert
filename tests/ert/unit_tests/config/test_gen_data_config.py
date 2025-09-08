@@ -8,6 +8,7 @@ from hypothesis import given
 
 from ert.config import (
     ConfigValidationError,
+    ConfigWarning,
     ErtConfig,
     GenDataConfig,
     InvalidResponseFile,
@@ -33,8 +34,8 @@ def test_gen_data_default_report_step():
 
 
 def test_empty_result_file_gives_validation_error():
-    with pytest.raises(ConfigValidationError, match="Invalid argument 'RESULT_FILE:'"):
-        ErtConfig.from_file_contents("NUM_REALIZATIONS 1\nGEN_DATA NAME RESULT_FILE:")
+    with pytest.raises(ConfigValidationError, match="Missing RESULT_FILE for GEN_DATA"):
+        ErtConfig.from_file_contents("NUM_REALIZATIONS 1\nGEN_DATA NAME")
 
 
 def test_unset_result_file_gives_validation_error():
@@ -54,6 +55,27 @@ def test_result_file_is_appended_to_input_files():
         {"GEN_DATA": [["NAME", {"RESULT_FILE": "%d.out", "REPORT_STEPS": "1"}]]}
     )
     assert "%d.out" in gen_data.input_files
+
+
+def test_that_gen_data_input_format_yields_deprecation_warning():
+    with pytest.warns(
+        ConfigWarning,
+        match="INPUT_FORMAT has been removed since 2023, and has no effect.",
+    ):
+        GenDataConfig.from_config_dict(
+            {
+                "GEN_DATA": [
+                    [
+                        "NAME",
+                        {
+                            "INPUT_FORMAT": "ASCII",
+                            "RESULT_FILE": "%d",
+                            "REPORT_STEPS": "1-2,5-8",
+                        },
+                    ]
+                ]
+            }
+        )
 
 
 @pytest.mark.parametrize("not_a_range", ["H", "H,1-3", "invalid-range-argument"])

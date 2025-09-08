@@ -1085,7 +1085,7 @@ def test_that_invalid_ensemble_result_file_errors():
         config_file_contents=dedent(
             """
 NUM_REALIZATIONS  1
-GEN_DATA RFT_3-1_R_DATA INPUT_FORMAT:ASCII REPORT_STEPS:100 RESULT_FILE:RFT_3-1_R_<ITER>
+GEN_DATA RFT_3-1_R_DATA REPORT_STEPS:100 RESULT_FILE:RFT_3-1_R_<ITER>
 
             """
         ),
@@ -1104,7 +1104,7 @@ def test_that_missing_report_steps_errors():
         config_file_contents=dedent(
             """
 NUM_REALIZATIONS  1
-GEN_DATA RFT_3-1_R_DATA INPUT_FORMAT:ASCII RESULT_FILE:RFT_3-1_R%d
+GEN_DATA RFT_3-1_R_DATA RESULT_FILE:RFT_3-1_R%d
 
             """
         ),
@@ -1123,7 +1123,7 @@ def test_that_valid_gen_data_does_not_error():
         config_file_contents=dedent(
             """
 NUM_REALIZATIONS  1
-GEN_DATA RFT_3-1_R_DATA INPUT_FORMAT:ASCII REPORT_STEPS:100 RESULT_FILE:RFT_3-1_R%d
+GEN_DATA RFT_3-1_R_DATA REPORT_STEPS:100 RESULT_FILE:RFT_3-1_R%d
 
             """
         ),

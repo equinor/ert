@@ -112,7 +112,6 @@ def test_ensemble_config_duplicate_node_names():
             [
                 duplicate_name,
                 {
-                    "INPUT_FORMAT": "ASCII",
                     "RESULT_FILE": "snake_oil_opr_diff_%d.txt",
                     "REPORT_STEPS": "0,1,2,199",
                 },

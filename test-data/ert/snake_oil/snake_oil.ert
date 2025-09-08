@@ -37,16 +37,13 @@ GEN_KW \
 
 GEN_DATA \
     SNAKE_OIL_OPR_DIFF \
-    INPUT_FORMAT:ASCII \
     RESULT_FILE:snake_oil_opr_diff_%d.txt \
     REPORT_STEPS:199
 GEN_DATA \
     SNAKE_OIL_WPR_DIFF \
-    INPUT_FORMAT:ASCII \
     RESULT_FILE:snake_oil_wpr_diff_%d.txt \
     REPORT_STEPS:199
 GEN_DATA \
     SNAKE_OIL_GPR_DIFF \
-    INPUT_FORMAT:ASCII \
     RESULT_FILE:snake_oil_gpr_diff_%d.txt \
     REPORT_STEPS:199

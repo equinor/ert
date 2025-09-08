@@ -20,7 +20,7 @@ TIME_MAP time_map
 {% endif %}
 
 {% for n in range(gen_data_count) %}
-GEN_DATA POLY_RES_{{n}} RESULT_FILE:poly_{{n}}_%d.out REPORT_STEPS:0 INPUT_FORMAT:ASCII
+GEN_DATA POLY_RES_{{n}} RESULT_FILE:poly_{{n}}_%d.out REPORT_STEPS:0
 {% endfor %}
 
 {% for n in range(parameter_count) %}
