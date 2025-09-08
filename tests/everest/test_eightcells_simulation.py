@@ -13,10 +13,7 @@ from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
-from tests.everest.utils import (
-    everest_default_jobs,
-    skipif_no_everest_models,
-)
+from tests.everest.utils import skipif_no_everest_models
 
 CONFIG_FILE = "everest/model/config.yml"
 NUM_REALIZATIONS = 3  # tied to the specified config.yml defined in CONFIG_FILE
@@ -139,7 +136,7 @@ def _generate_exp_ert_config(config_path, output_dir, config_file):
             ("<CONFIG_PATH>", config_path),
             ("<CONFIG_FILE>", Path(config_file).stem),
         ],
-        ErtConfigKeys.INSTALL_JOB: everest_default_jobs(output_dir),
+        ErtConfigKeys.INSTALL_JOB: [],
         ErtConfigKeys.NUM_REALIZATIONS: NUM_REALIZATIONS,
         ErtConfigKeys.RUNPATH: os.path.join(
             output_dir,

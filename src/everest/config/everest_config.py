@@ -40,7 +40,6 @@ from everest.config.validation_utils import (
     unique_items,
     validate_forward_model_configs,
 )
-from everest.jobs import script_names
 from everest.util.forward_models import (
     validate_forward_model_step_arguments,
 )
@@ -333,7 +332,6 @@ and environment variables are exposed in the form 'os.NAME', for example:
         if not forward_model_jobs:
             return self
         installed_jobs_name = [job.name for job in install_jobs]
-        installed_jobs_name += list(script_names)  # default jobs
         if info.context:  # Add plugin jobs
             installed_jobs_name += info.context.get("install_jobs", {}).keys()
 

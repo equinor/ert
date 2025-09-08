@@ -1,4 +1,3 @@
-import collections
 import itertools
 import json
 import logging
@@ -119,31 +118,6 @@ def _extract_simulator(ever_config: EverestConfig, ert_config: dict[str, Any]) -
         ert_config[ErtConfigKeys.NUM_CPU] = num_fm_cpu
 
 
-def _fetch_everest_jobs(ever_config: EverestConfig) -> list[Any]:
-    """This injects the default Everest jobs when configuring res. In the
-    future, this should be reviewed when we have proper configuration
-    mechanisms in place."""
-    assert ever_config.output_dir is not None
-    job_storage = os.path.join(ever_config.output_dir, ".jobs")
-    logging.getLogger(EVEREST).debug(f"Creating job description files in {job_storage}")
-
-    if not os.path.isdir(job_storage):
-        os.makedirs(job_storage)
-
-    ever_jobs = []
-    Job = collections.namedtuple("Job", ["name", "source"])
-    all_jobs = everest.jobs.script_names
-    for default_job in all_jobs:
-        script = everest.jobs.fetch_script(default_job)
-        job_spec_file = os.path.join(job_storage, "_" + default_job)
-        with open(job_spec_file, "w", encoding="utf-8") as f:
-            f.write(f"EXECUTABLE {script}")
-
-        ever_jobs.append(Job(name=default_job, source=job_spec_file))
-
-    return ever_jobs
-
-
 def _job_to_dict(job: dict[str, Any] | InstallJobConfig) -> dict[str, Any]:
     if isinstance(job, InstallJobConfig):
         return job.model_dump(exclude_none=True)
@@ -154,20 +128,6 @@ def _extract_jobs(
     ever_config: EverestConfig, ert_config: dict[str, Any], path: str
 ) -> None:
     ever_jobs = [_job_to_dict(j) for j in ever_config.install_jobs]
-
-    std_ever_jobs = _fetch_everest_jobs(ever_config)
-
-    # Add standard Everest jobs
-    job_names = [job["name"] for job in ever_jobs]
-    for default_job in std_ever_jobs:
-        if default_job.name not in job_names:
-            ever_jobs.append(
-                {
-                    "name": default_job.name,
-                    "source": default_job.source,
-                }
-            )
-
     res_jobs = ert_config.get(ErtConfigKeys.INSTALL_JOB, [])
     for job in ever_jobs:
         if job.get("source") is not None:
