@@ -16,6 +16,23 @@ from ert.config.observation_vector import ObsVector
 from ert.config.parsing import parse_observations
 
 
+def make_observations(obs_config_contents):
+    obs_config_file = "obs_config"
+    return ErtConfig.from_dict(
+        {
+            "NUM_REALIZATIONS": 1,
+            "ECLBASE": "BASEBASEBASE",
+            "SUMMARY": "*",
+            "GEN_DATA": [["GEN", {"RESULT_FILE": "gen.txt"}]],
+            "TIME_MAP": ("time_map.txt", "2020-01-01\n"),
+            "OBS_CONFIG": (
+                obs_config_file,
+                parse_observations(obs_config_contents, obs_config_file),
+            ),
+        }
+    ).observations
+
+
 def run_simulator():
     """
     Create an ecl summary file, we have one value for FOPR (1) and a different
@@ -919,23 +936,6 @@ def test_that_summary_default_error_min_is_applied(tmpdir):
 
         # default error_min is 0.1
         assert observations["FOPR"].observations[datetime(2014, 9, 11)].std == 0.1
-
-
-def make_observations(obs_config_contents):
-    obs_config_file = "obs_config"
-    return ErtConfig.from_dict(
-        {
-            "NUM_REALIZATIONS": 1,
-            "ECLBASE": "BASEBASEBASE",
-            "SUMMARY": "*",
-            "GEN_DATA": [["GEN", {"RESULT_FILE": "gen.txt"}]],
-            "TIME_MAP": ("time_map.txt", "2020-01-01\n"),
-            "OBS_CONFIG": (
-                obs_config_file,
-                parse_observations(obs_config_contents, obs_config_file),
-            ),
-        }
-    ).observations
 
 
 def test_that_start_must_be_set_in_a_segment():
