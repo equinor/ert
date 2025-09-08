@@ -46,7 +46,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test-type: [ 'test', 'everest-models-test', 'doc']
+        test-type: [ 'test', 'everest-models-test', 'everviz-test', 'doc' ]
         python-version: [ '3.11', '3.12', '3.13' ]
         os: [ ubuntu-latest ]
         exclude:
