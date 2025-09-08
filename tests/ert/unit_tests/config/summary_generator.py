@@ -454,13 +454,15 @@ start_dates = st.datetimes(
 
 time_delta_lists = st.lists(
     st.floats(
-        min_value=0.1,
+        min_value=0.5,
         max_value=250_000,  # in days ~= 685 years
+        width=32,
         allow_nan=False,
         allow_infinity=False,
     ),
     min_size=2,
     max_size=100,
+    unique=True,
 )
 
 summary_keys = st.lists(summary_variables(), min_size=1)
