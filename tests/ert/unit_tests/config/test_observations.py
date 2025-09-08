@@ -8,11 +8,9 @@ from ert.config import (
     ConfigValidationError,
     ConfigWarning,
     ErtConfig,
-    ObservationType,
     SummaryObservation,
 )
 from ert.config.general_observation import GenObservation
-from ert.config.observation_vector import ObsVector
 from ert.config.parsing import parse_observations
 
 
@@ -142,47 +140,6 @@ def test_that_using_summary_observations_without_eclbase_shows_user_error():
                 )
             }
         )
-
-
-def test_observations(minimum_case):
-    observations = minimum_case.enkf_obs
-    count = 10
-    summary_key = "test_key"
-    observation_key = "test_obs_key"
-    observation_vector = ObsVector(
-        ObservationType.SUMMARY,
-        observation_key,
-        "summary",
-        {},
-    )
-
-    observations.obs_vectors[observation_key] = observation_vector
-
-    values = []
-    for index in range(1, count):
-        value = index * 10.5
-        std = index / 10.0
-        observation_vector.observations[index] = SummaryObservation(
-            summary_key, observation_key, value, std
-        )
-        assert observation_vector.observations[index].value == value
-        values.append((index, value, std))
-
-    test_vector = observations[observation_key]
-
-    for index, node in enumerate(test_vector):
-        assert isinstance(node, SummaryObservation)
-        assert node.value == (index + 1) * 10.5
-
-    assert observation_vector == test_vector
-    for index, value, std in values:
-        assert index in test_vector.observations
-
-        summary_observation_node = test_vector.observations[index]
-
-        assert summary_observation_node.value == value
-        assert summary_observation_node.std == std
-        assert summary_observation_node.summary_key == summary_key
 
 
 @pytest.mark.parametrize("std", [-1.0, 0, 0.0])
