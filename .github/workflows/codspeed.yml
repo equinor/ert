@@ -36,7 +36,7 @@ jobs:
           uv sync --extra dev
           uv pip uninstall pytest-benchmark
           uv pip install pytest-codspeed
-      - uses: CodSpeedHQ/action@v3
+      - uses: CodSpeedHQ/action@v4
         with:
           mode: instrumentation
           token: ${{ secrets.CODSPEED_TOKEN }}
