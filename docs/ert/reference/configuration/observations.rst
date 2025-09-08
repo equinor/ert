@@ -432,13 +432,13 @@ for GEN_OBS when specifying the time.
 So consider a setup like this::
 
    -- Config file:
-   GEN_DATA RFT_BH67 INPUT_FORMAT:ASCII RESULT_FILE:rft_BH67_%d    REPORT_STEPS:20
-   ...                                                       /|\                /|\
-   ...                                                        |                  |
-   -- Observation file:                                       |                  |
-   GENERAL_OBSERVATION GEN_OBS1 {                             +------------------/
-      DATA       = RFT_BH67;                                  |
-      RESTART    = 20;   <------------------------------------/
+   GEN_DATA RFT_BH67 RESULT_FILE:rft_BH67_%d    REPORT_STEPS:20
+   ...                                    /|\                /|\
+   ...                                     |                  |
+   -- Observation file:                    |                  |
+   GENERAL_OBSERVATION GEN_OBS1 {          +------------------/
+      DATA       = RFT_BH67;               |
+      RESTART    = 20;   <-----------------/
       OBS_FILE   = some_file.txt;
    };
 

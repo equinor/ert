@@ -32,16 +32,16 @@ def option_dict(option_list: Sequence[str], offset: int) -> dict[str, str]:
 
     The first step of parsing will separate a line such as
 
-      GEN_DATA NAME INPUT_FORMAT:ASCII RESULT_FILE:file.txt REPORT_STEPS:3
+      GEN_DATA NAME RESULT_FILE:file.txt REPORT_STEPS:3
 
     into
 
-    >>> opts = ["NAME", "INPUT_FORMAT:ASCII", "RESULT_FILE:file.txt", "REPORT_STEPS:3"]
+    >>> opts = ["NAME", "RESULT_FILE:file.txt", "REPORT_STEPS:3"]
 
     From there, option_dict can be used to get a dictionary of the options:
 
     >>> option_dict(opts, 1)
-    {'INPUT_FORMAT': 'ASCII', 'RESULT_FILE': 'file.txt', 'REPORT_STEPS': '3'}
+    {'RESULT_FILE': 'file.txt', 'REPORT_STEPS': '3'}
     """
     result = {}
     for option_pair in option_list[offset:]:

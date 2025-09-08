@@ -33,7 +33,7 @@ def ert_rft_setup(tmp_path):
             QUEUE_SYSTEM LOCAL
             QUEUE_OPTION LOCAL MAX_RUNNING 2
             OBS_CONFIG obs
-            GEN_DATA RFT_DATA INPUT_FORMAT:ASCII RESULT_FILE:rft_%d.txt REPORT_STEPS:0
+            GEN_DATA RFT_DATA RESULT_FILE:rft_%d.txt REPORT_STEPS:0
             TIME_MAP time_map.txt
             """
         )

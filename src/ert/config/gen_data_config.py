@@ -10,7 +10,7 @@ from pydantic import Field
 from ert.substitutions import substitute_runpath_name
 from ert.validation import rangestring_to_list
 
-from .parsing import ConfigDict, ConfigValidationError, ErrorInfo
+from .parsing import ConfigDict, ConfigValidationError, ConfigWarning, ErrorInfo
 from .response_config import (
     InvalidResponseFile,
     ResponseConfig,
@@ -77,6 +77,13 @@ class GenDataConfig(ResponseConfig):
             name = gen_data[0]
             res_file = options.get("RESULT_FILE")
             report_steps_value = options.get("REPORT_STEPS", "")
+
+            if "INPUT_FORMAT" in options:
+                ConfigWarning.deprecation_warn(
+                    "INPUT_FORMAT has been removed since 2023, and has no effect. "
+                    "This can be safely removed.",
+                    name,
+                )
 
             if res_file is None:
                 raise ConfigValidationError.with_context(
