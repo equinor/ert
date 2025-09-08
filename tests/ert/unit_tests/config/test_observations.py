@@ -16,7 +16,7 @@ from ert.config.observation_vector import ObsVector
 from ert.config.parsing import parse_observations
 
 
-def make_observations(obs_config_contents):
+def make_observations(obs_config_contents, parse=True):
     obs_config_file = "obs_config"
     return ErtConfig.from_dict(
         {
@@ -27,7 +27,9 @@ def make_observations(obs_config_contents):
             "TIME_MAP": ("time_map.txt", "2020-01-01\n2020-01-02\n"),
             "OBS_CONFIG": (
                 obs_config_file,
-                parse_observations(obs_config_contents, obs_config_file),
+                parse_observations(obs_config_contents, obs_config_file)
+                if parse
+                else obs_config_contents,
             ),
         }
     ).observations
