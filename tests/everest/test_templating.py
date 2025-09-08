@@ -204,9 +204,8 @@ def test_well_order_template(change_to_tmpdir):
 
 
 @pytest.mark.integration_test
-def test_user_specified_data_n_template(
-    copy_math_func_test_data_to_tmp,
-):
+@pytest.mark.parametrize("test", ["install_templates", "template_render"])
+def test_user_specified_data_n_template(copy_math_func_test_data_to_tmp, test):
     """
     Ensure that a user specifying a data resource and an installed_template
     with "extra_data", the results of that template will be passed to the
@@ -242,15 +241,23 @@ def test_user_specified_data_n_template(
                     "target": "my_constants.yml",
                 }
             ],
-            "install_templates": [
+        }
+    )
+    match test:
+        case "install_templates":
+            updated_config_dict["install_templates"] = [
                 {
                     "template": "<CONFIG_PATH>/my_constants.tmpl",
                     "output_file": "well_drill_constants.json",
                     "extra_data": "my_constants.yml",
                 }
-            ],
-        }
-    )
+            ]
+        case "template_render":
+            updated_config_dict["forward_model"].insert(
+                0,
+                "template_render -i my_constants.yml -o well_drill_constants.json "
+                "-t <CONFIG_PATH>/my_constants.tmpl",
+            )
 
     config = EverestConfig.with_defaults(**updated_config_dict)
 
