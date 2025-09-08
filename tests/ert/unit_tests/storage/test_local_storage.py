@@ -195,7 +195,7 @@ def test_that_saving_empty_parameters_fails_nicely(tmp_path):
                 "must contain a 'values' variable"
             ),
         ):
-            prior.save_parameters("PARAMETER", 0, xr.Dataset())
+            prior.save_parameters(xr.Dataset(), "PARAMETER", 0)
 
         # Test for dataset with 'values' and 'transformed_values' but no actual data
         empty_data = xr.Dataset(
@@ -211,7 +211,7 @@ def test_that_saving_empty_parameters_fails_nicely(tmp_path):
                 "Cannot proceed with saving to storage\\."
             ),
         ):
-            prior.save_parameters("PARAMETER", 0, empty_data)
+            prior.save_parameters(empty_data, "PARAMETER", 0)
 
 
 def test_that_loading_parameter_via_response_api_fails(tmp_path):
@@ -860,9 +860,7 @@ def test_that_all_parameters_and_gen_data_consolidation_works(
         for batch, realization_info in enumerate(ensemble_realization_infos):
             failed_realizations = failed_realizations_per_batch.get(batch, {})
             num_realizations = len(realization_info)
-            everest_realization_info = {
-                i: v for i, v in enumerate(realization_info)
-            }  # noqa: C416
+            everest_realization_info = dict(enumerate(realization_info))
             ensemble = storage.create_ensemble(
                 experiment, ensemble_size=num_realizations, iteration=batch
             )
@@ -879,7 +877,7 @@ def test_that_all_parameters_and_gen_data_consolidation_works(
                         "names": param_keys,
                     }
                 )
-                ensemble.save_parameters("point", realization, param_data)
+                ensemble.save_parameters(param_data, "point", realization)
 
                 if realization in failed_realizations:
                     ensemble.set_failure(
@@ -957,7 +955,7 @@ def test_save_parameters_to_storage_from_design_dataframe(
     design_matrix = DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
     with open_storage(tmp_path / "storage", mode="w") as storage:
         experiment_id = storage.create_experiment(
-            parameters=[design_matrix.parameter_configuration]
+            parameters=design_matrix.parameter_configurations
         )
         ensemble = storage.create_ensemble(
             experiment_id, name="default", ensemble_size=ensemble_size
@@ -1224,13 +1222,13 @@ class StatefulStorageTest(RuleBasedStateMachine):
         for f in fields:
             model_ensemble.parameter_values[f.name] = field_data
             storage_ensemble.save_parameters(
-                f.name,
-                1,
                 xr.DataArray(
                     field_data,
                     name="values",
                     dims=["x", "y", "z"],  # type: ignore
                 ).to_dataset(),
+                f.name,
+                1,
             )
 
     @rule(
@@ -1263,13 +1261,13 @@ class StatefulStorageTest(RuleBasedStateMachine):
                 pytest.raises(RuntimeError),
             ):
                 storage_ensemble.save_parameters(
-                    f.name,
-                    self.iens_to_edit,
                     xr.DataArray(
                         field_data,
                         name="values",
                         dims=["x", "y", "z"],  # type: ignore
                     ).to_dataset(),
+                    f.name,
+                    self.iens_to_edit,
                 )
 
             assert temp_file.entered
