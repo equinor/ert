@@ -1,5 +1,5 @@
 from contextlib import ExitStack as does_not_raise
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import pytest
 from resdata.summary import Summary
@@ -8,9 +8,7 @@ from ert.config import (
     ConfigValidationError,
     ConfigWarning,
     ErtConfig,
-    SummaryObservation,
 )
-from ert.config.general_observation import GenObservation
 from ert.config.parsing import parse_observations
 
 
@@ -21,7 +19,7 @@ def make_observations(obs_config_contents, parse=True):
             "NUM_REALIZATIONS": 1,
             "ECLBASE": "BASEBASEBASE",
             "SUMMARY": "*",
-            "GEN_DATA": [["GEN", {"RESULT_FILE": "gen.txt"}]],
+            "GEN_DATA": [["GEN", {"RESULT_FILE": "gen%d.txt", "REPORT_STEPS": "1"}]],
             "TIME_MAP": ("time_map.txt", "2020-01-01\n2020-01-02\n"),
             "OBS_CONFIG": (
                 obs_config_file,
@@ -67,7 +65,7 @@ def make_refcase_observations(obs_config_contents, parse=True, extra_config=None
             "ECLBASE": "BASEBASEBASE",
             "REFCASE": "MY_REFCASE",
             "SUMMARY": "*",
-            "GEN_DATA": [["GEN", {"RESULT_FILE": "gen.txt"}]],
+            "GEN_DATA": [["GEN", {"RESULT_FILE": "gen%d.txt", "REPORT_STEPS": "1"}]],
             "TIME_MAP": ("time_map.txt", "2020-01-01\n2020-01-02\n"),
             "OBS_CONFIG": (
                 obs_config_file,
@@ -105,36 +103,27 @@ def test_that_when_history_source_is_simulated_the_summary_vector_is_used():
 @pytest.mark.parametrize(
     "datestring, errors",
     [
-        pytest.param("20.01.2000", True),
-        pytest.param("20.1.2000", True),
-        pytest.param("20-01-2000", True),
-        pytest.param("20/01/2000", False),
+        pytest.param("02.01.2020", True),
+        pytest.param("02.1.2020", True),
+        pytest.param("02-01-2020", True),
+        pytest.param("02/01/2020", False),
     ],
 )
-@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_date_parsing_in_observations(datestring, errors):
-    config_dict = {
-        "ECLBASE": "my_case%d",
-        "REFCASE": "MY_REFCASE",
-        "OBS_CONFIG": (
-            "obsconf",
-            [
-                (
-                    "SUMMARY_OBSERVATION",
-                    "FOPR_1 ",
-                    {"KEY": "FOPR", "VALUE": "1", "ERROR": "1", "DATE": datestring},
-                )
-            ],
-        ),
-    }
-    run_simulator()
+    observations = [
+        (
+            "SUMMARY_OBSERVATION",
+            "FOPR",
+            {"KEY": "FOPR", "VALUE": "1", "ERROR": "1", "DATE": datestring},
+        )
+    ]
     if errors:
         with pytest.raises(ValueError, match="Please use ISO date format"):
-            ErtConfig.from_dict(config_dict)
+            make_observations(observations, parse=False)
     else:
         with pytest.warns(ConfigWarning, match="Please use ISO date format"):
-            ErtConfig.from_dict(config_dict)
+            make_observations(observations, parse=False)
 
 
 def test_that_using_summary_observations_without_eclbase_shows_user_error():
@@ -161,20 +150,94 @@ def test_that_using_summary_observations_without_eclbase_shows_user_error():
 
 
 @pytest.mark.parametrize("std", [-1.0, 0, 0.0])
-def test_summary_obs_invalid_observation_std(std):
-    with pytest.raises(ValueError, match="must be strictly > 0"):
-        SummaryObservation("summary_key", "observation_key", 1.0, std)
-
-
-@pytest.mark.parametrize("std", [[-1.0], [0], [0.0], [1.0, 0]])
-def test_gen_obs_invalid_observation_std(std):
-    with pytest.raises(ValueError, match="must be strictly > 0"):
-        GenObservation(
-            list(range(len(std))),
-            list(std),
-            list(range(len(std))),
-            list(range(len(std))),
+def test_that_error_must_be_greater_than_zero_in_summary_observations(std):
+    with pytest.raises(
+        ConfigValidationError, match=r"must be given a positive value|strictly > 0"
+    ):
+        make_observations(
+            [
+                (
+                    "SUMMARY_OBSERVATION",
+                    "FOPR",
+                    {
+                        "KEY": "FOPR",
+                        "VALUE": "1",
+                        "DATE": "2020-01-02",
+                        "ERROR": str(std),
+                    },
+                )
+            ],
+            parse=False,
         )
+
+
+def test_that_computed_error_must_be_greater_than_zero_in_summary_observations():
+    with pytest.raises(
+        ConfigValidationError, match=r"must be given a positive value|strictly > 0"
+    ):
+        make_observations(
+            [
+                (
+                    "SUMMARY_OBSERVATION",
+                    "FOPR",
+                    {
+                        "KEY": "FOPR",
+                        "VALUE": "0",  # ERROR becomes zero when mode is REL
+                        "DATE": "2020-01-02",
+                        "ERROR": "1.0",
+                        "ERROR_MODE": "REL",
+                    },
+                )
+            ],
+            parse=False,
+        )
+
+
+@pytest.mark.parametrize("std", [-1.0, 0, 0.0])
+def test_that_error_must_be_greater_than_zero_in_general_observations(std):
+    with pytest.raises(
+        ConfigValidationError, match=r"must be given a positive value|strictly > 0"
+    ):
+        make_observations(
+            [
+                (
+                    "GENERAL_OBSERVATION",
+                    "OBS",
+                    {
+                        "DATA": "GEN",
+                        "DATE": "2020-01-02",
+                        "INDEX_LIST": "1",
+                        "VALUE": "1.0",
+                        "ERROR": str(std),
+                    },
+                )
+            ],
+            parse=False,
+        )
+
+
+def test_that_all_errors_in_general_observations_must_be_greater_than_zero(tmpdir):
+    with tmpdir.as_cwd():
+        with open("obs_data.txt", "w", encoding="utf-8") as fh:
+            # First error value will be 0
+            fh.writelines(f"{float(i)} {float(i)}\n" for i in range(5))
+        with pytest.raises(
+            ConfigValidationError, match=r"must be given a positive value|strictly > 0"
+        ):
+            make_observations(
+                [
+                    (
+                        "GENERAL_OBSERVATION",
+                        "OBS",
+                        {
+                            "DATA": "GEN",
+                            "DATE": "2020-01-02",
+                            "OBS_FILE": "obs_data.txt",
+                        },
+                    )
+                ],
+                parse=False,
+            )
 
 
 def test_that_empty_observations_file_causes_exception():
@@ -203,32 +266,22 @@ def test_that_index_list_is_read(tmpdir):
     with tmpdir.as_cwd():
         with open("obs_data.txt", "w", encoding="utf-8") as fh:
             fh.writelines(f"{float(i)} 0.1\n" for i in range(5))
-        observations = ErtConfig.from_dict(
-            {
-                "GEN_DATA": [
-                    [
-                        "RES",
-                        {"RESULT_FILE": "out"},
-                    ]
-                ],
-                "OBS_CONFIG": (
-                    "obsconf",
-                    [
-                        (
-                            "GENERAL_OBSERVATION",
-                            "OBS",
-                            {
-                                "DATA": "RES",
-                                "INDEX_LIST": "0,2,4,6,8",
-                                "OBS_FILE": "obs_data.txt",
-                            },
-                        )
-                    ],
-                ),
-                "TIME_MAP": ("tm.txt", "2017-11-09"),
-            }
-        ).enkf_obs
-        assert observations["OBS"].observations[0].indices == [0, 2, 4, 6, 8]
+        observations = make_observations(
+            [
+                (
+                    "GENERAL_OBSERVATION",
+                    "OBS",
+                    {
+                        "DATA": "GEN",
+                        "INDEX_LIST": "0,2,4,6,8",
+                        "DATE": "2020-01-02",
+                        "OBS_FILE": "obs_data.txt",
+                    },
+                )
+            ],
+            parse=False,
+        )
+        assert list(observations["gen_data"]["index"]) == [0, 2, 4, 6, 8]
 
 
 def test_that_invalid_time_map_file_raises_config_validation_error():
@@ -242,60 +295,47 @@ def test_that_index_file_is_read(tmpdir):
             fh.write("0\n2\n4\n6\n8")
         with open("obs_data.txt", "w", encoding="utf-8") as fh:
             fh.writelines(f"{float(i)} 0.1\n" for i in range(5))
-        observations = ErtConfig.from_dict(
-            {
-                "GEN_DATA": [
-                    [
-                        "RES",
-                        {"RESULT_FILE": "out"},
-                    ]
-                ],
-                "OBS_CONFIG": (
-                    "obsconf",
-                    [
-                        (
-                            "GENERAL_OBSERVATION",
-                            "OBS",
-                            {
-                                "DATA": "RES",
-                                "INDEX_FILE": "obs_idx.txt",
-                                "OBS_FILE": "obs_data.txt",
-                            },
-                        )
-                    ],
-                ),
-            }
-        ).enkf_obs
-        assert observations["OBS"].observations[0].indices == [0, 2, 4, 6, 8]
+        observations = make_observations(
+            [
+                (
+                    "GENERAL_OBSERVATION",
+                    "OBS",
+                    {
+                        "DATA": "GEN",
+                        "DATE": "2020-01-02",
+                        "INDEX_FILE": "obs_idx.txt",
+                        "OBS_FILE": "obs_data.txt",
+                    },
+                )
+            ],
+            parse=False,
+        )
+        assert list(observations["gen_data"]["index"]) == [0, 2, 4, 6, 8]
 
 
-def test_that_missing_obs_file_raises_exception():
+def test_that_non_existent_obs_file_is_invalid():
     with pytest.raises(
         expected_exception=ConfigValidationError,
         match="did not resolve to a valid path:\n OBS_FILE",
     ):
-        ErtConfig.from_dict(
-            {
-                "OBS_CONFIG": (
-                    "obsconf",
-                    [
-                        (
-                            "GENERAL_OBSERVATION",
-                            "OBS",
-                            {
-                                "DATA": "RES",
-                                "INDEX_LIST": "0,2,4,6,8",
-                                "RESTART": "0",
-                                "OBS_FILE": "does_not_exist/at_all",
-                            },
-                        )
-                    ],
+        make_observations(
+            [
+                (
+                    "GENERAL_OBSERVATION",
+                    "OBS",
+                    {
+                        "DATA": "RES",
+                        "INDEX_LIST": "0,2,4,6,8",
+                        "RESTART": "0",
+                        "OBS_FILE": "does_not_exist/at_all",
+                    },
                 )
-            }
+            ],
+            parse=False,
         )
 
 
-def test_that_missing_time_map_raises_exception():
+def test_that_non_existent_time_map_file_is_invalid():
     with pytest.raises(
         expected_exception=ConfigValidationError,
         match="TIME_MAP",
@@ -323,7 +363,7 @@ def test_that_missing_time_map_raises_exception():
         )
 
 
-def test_that_badly_formatted_obs_file_shows_informative_error_message(tmpdir):
+def test_that_non_numbers_in_obs_file_shows_informative_error_message(tmpdir):
     with tmpdir.as_cwd():
         with open("obs_data.txt", "w", encoding="utf-8") as fh:
             fh.write("not_an_int 0.1\n")
@@ -332,24 +372,20 @@ def test_that_badly_formatted_obs_file_shows_informative_error_message(tmpdir):
             match=r"Failed to read OBS_FILE obs_data.txt: could not convert"
             " string 'not_an_int' to float64 at row 0, column 1",
         ):
-            ErtConfig.from_dict(
-                {
-                    "GEN_DATA": [["RES", {"RESULT_FILE": "out"}]],
-                    "OBS_CONFIG": (
-                        "obsconf",
-                        [
-                            (
-                                "GENERAL_OBSERVATION",
-                                "OBS",
-                                {
-                                    "DATA": "RES",
-                                    "INDEX_LIST": "0,2,4,6,8",
-                                    "OBS_FILE": "obs_data.txt",
-                                },
-                            )
-                        ],
-                    ),
-                }
+            make_observations(
+                [
+                    (
+                        "GENERAL_OBSERVATION",
+                        "OBS",
+                        {
+                            "DATA": "GEN",
+                            "INDEX_LIST": "0,2,4,6,8",
+                            "DATE": "2020-01-02",
+                            "OBS_FILE": "obs_data.txt",
+                        },
+                    )
+                ],
+                parse=False,
             )
 
 
@@ -361,26 +397,22 @@ def test_that_giving_both_index_file_and_index_list_raises_an_exception(tmpdir):
             expected_exception=ConfigValidationError,
             match="both INDEX_FILE and INDEX_LIST",
         ):
-            ErtConfig.from_dict(
-                {
-                    "GEN_DATA": [["RES", {"RESULT_FILE": "out"}]],
-                    "OBS_CONFIG": (
-                        "obsconf",
-                        [
-                            (
-                                "GENERAL_OBSERVATION",
-                                "OBS",
-                                {
-                                    "DATA": "RES",
-                                    "INDEX_LIST": "0,2,4,6,8",
-                                    "INDEX_FILE": "obs_idx.txt",
-                                    "VALUE": "0.0",
-                                    "ERROR": "0.0",
-                                },
-                            )
-                        ],
-                    ),
-                }
+            make_observations(
+                [
+                    (
+                        "GENERAL_OBSERVATION",
+                        "OBS",
+                        {
+                            "DATA": "GEN",
+                            "INDEX_LIST": "0,2,4,6,8",
+                            "INDEX_FILE": "obs_idx.txt",
+                            "DATE": "2020-01-02",
+                            "VALUE": "0.0",
+                            "ERROR": "0.0",
+                        },
+                    )
+                ],
+                parse=False,
             )
 
 
@@ -642,7 +674,9 @@ def test_that_history_observations_are_loaded(tmpdir, keys, with_ext):
         assert observations[local_name].observations[datetime(2014, 9, 11)].std == 100.0
 
 
-def test_that_different_length_values_fail(tmpdir):
+def test_that_obs_file_must_have_the_same_number_of_lines_as_the_length_of_index_list(
+    tmpdir,
+):
     with tmpdir.as_cwd():
         with open("obs_data.txt", "w", encoding="utf-8") as fh:
             fh.writelines(f"{float(i)} 0.1\n" for i in range(5))
@@ -749,7 +783,7 @@ def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
             {"FOPRH": 20, "FGPRH": 15, "FWPRH": 25},
         )
 
-        ert_config = ErtConfig.from_dict(
+        observations = ErtConfig.from_dict(
             {
                 "ECLBASE": "ECLIPSE_CASE",
                 "REFCASE": "ECLIPSE_CASE",
@@ -784,55 +818,41 @@ def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
                     ],
                 ),
             }
+        ).observations["summary"]
+
+        assert list(observations["response_key"]) == ["FGPR", "FOPR", "FWPR"]
+        assert list(observations["observations"]) == pytest.approx([15, 20, 25])
+        assert list(observations["std"]) == pytest.approx([1.5, 0.2, 10000])
+
+
+def test_that_duplicate_observation_names_are_invalid():
+    with pytest.raises(ConfigValidationError, match="Duplicate observation name FOPR"):
+        make_observations(
+            [
+                (
+                    "SUMMARY_OBSERVATION",
+                    "FOPR",
+                    {
+                        "KEY": "FOPR",
+                        "DATE": "2017-11-09",
+                        "VALUE": "1.0",
+                        "ERROR": "0.1",
+                    },
+                ),
+                (
+                    "GENERAL_OBSERVATION",
+                    "FOPR",
+                    {
+                        "DATA": "RES",
+                        "INDEX_LIST": "0",
+                        "DATE": "2017-11-09",
+                        "VALUE": "0.0",
+                        "ERROR": "0.0",
+                    },
+                ),
+            ],
+            parse=False,
         )
-
-        observations = ert_config.enkf_obs
-
-        assert observations["FGPR"].observation_key == "FGPR"
-        assert observations["FGPR"].observations[datetime(2014, 9, 11)].value == 15.0
-        assert observations["FGPR"].observations[datetime(2014, 9, 11)].std == 1.5
-
-        assert observations["FOPR"].observation_key == "FOPR"
-        assert observations["FOPR"].observations[datetime(2014, 9, 11)].value == 20.0
-        assert observations["FOPR"].observations[datetime(2014, 9, 11)].std == 0.2
-
-        assert observations["FWPR"].observation_key == "FWPR"
-        assert observations["FWPR"].observations[datetime(2014, 9, 11)].value == 25.0
-        assert observations["FWPR"].observations[datetime(2014, 9, 11)].std == 10000
-
-
-def test_validation_of_duplicate_names(tmpdir):
-    with tmpdir.as_cwd():
-        run_sim(
-            datetime(2014, 9, 10),
-            [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
-        )
-
-        with pytest.raises(
-            ConfigValidationError, match="Duplicate observation name FOPR"
-        ):
-            ErtConfig.from_dict(
-                {
-                    "ECLBASE": "ECLIPSE_CASE",
-                    "REFCASE": "ECLIPSE_CASE",
-                    "OBS_CONFIG": (
-                        "obsconf",
-                        [
-                            (
-                                "SUMMARY_OBSERVATION",
-                                "FOPR",
-                                {
-                                    "KEY": "FOPR",
-                                    "RESTART": "1",
-                                    "VALUE": "1.0",
-                                    "ERROR": "0.1",
-                                },
-                            ),
-                            ("HISTORY_OBSERVATION", "FOPR"),
-                        ],
-                    ),
-                }
-            )
 
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
@@ -855,9 +875,10 @@ def test_that_segment_defaults_are_applied(tmpdir):
                             "HISTORY_OBSERVATION",
                             "FOPR",
                             {
+                                "ERROR": "1.0",
                                 ("SEGMENT", "SEG"): {
                                     "START": "5",
-                                    "STOP": "9",
+                                    "STOP": "10",
                                     "ERROR": "0.05",
                                 },
                             },
@@ -865,19 +886,12 @@ def test_that_segment_defaults_are_applied(tmpdir):
                     ],
                 ),
             }
-        ).enkf_obs
+        ).observations["summary"]
 
         # default error_min is 0.1
         # default error method is RELMIN
         # default error is 0.1
-        for i in range(1, 5):
-            assert observations["FOPR"].observations[
-                datetime(2014, 9, 11) + timedelta(days=i)
-            ].std == pytest.approx(0.1)
-        for i in range(5, 9):
-            assert observations["FOPR"].observations[
-                datetime(2014, 9, 11) + timedelta(days=i)
-            ].std == pytest.approx(0.1)
+        assert list(observations["std"]) == pytest.approx([1.0] * 5 + [0.1] * 5)
 
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
@@ -1067,19 +1081,6 @@ def test_that_error_mode_must_be_one_of_rel_abs_relmin_in_history_observation():
             HISTORY_OBSERVATION  FOPR {
                 ERROR_MODE = NOT_ABS;
                 ERROR=1.0;
-            };
-        """)
-
-
-def test_that_error_must_be_a_positive_number_in_summary_observation():
-    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
-        make_observations("""
-            SUMMARY_OBSERVATION  FOPR
-            {
-                ERROR = -1;
-                RESTART = 1;
-                VALUE=1.0;
-                KEY = FOPR;
             };
         """)
 
