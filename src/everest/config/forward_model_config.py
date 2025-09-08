@@ -1,4 +1,4 @@
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import (
     Discriminator,
@@ -42,7 +42,7 @@ class ForwardModelStepConfig(BaseModelWithContextSupport):
 
     @model_validator(mode="before")
     @classmethod
-    def check_discriminator(cls, values):
+    def check_discriminator(cls, values: dict[str, Any]) -> dict[str, Any]:
         results = values.get("results")
         if results is not None and "type" not in results:
             raise ValueError(
