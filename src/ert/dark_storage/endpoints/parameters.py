@@ -89,18 +89,8 @@ def get_parameter_std_dev(
     return Response(content=buffer.getvalue(), media_type="application/octet-stream")
 
 
-def _extract_parameter_group_and_key(key: str) -> tuple[str, str] | tuple[None, None]:
-    key = key.removeprefix("LOG10_")
-    if ":" not in key:
-        # Assume all incoming keys are in format group:key for now
-        return None, None
-
-    param_group, param_key = key.split(":", maxsplit=1)
-    return param_group, param_key
-
-
 def data_for_parameter(ensemble: Ensemble, key: str) -> pd.DataFrame:
-    group, _ = _extract_parameter_group_and_key(key)
+    group = key.split(":", maxsplit=1)[0]
     try:
         df = ensemble.load_scalars(group)
     except KeyError:

@@ -641,13 +641,6 @@ class LocalEnsemble(BaseMode):
                     if col != "realization"
                 }
             )
-            for parameter in df.columns:
-                if parameter == "realization":
-                    continue
-                if config.shouldUseLogScale(parameter.split(":")[-1]):
-                    df = df.with_columns(
-                        (np.log10(pl.col(parameter))).alias(f"LOG10_{parameter}")
-                    )
 
             dataframes.append(df)
 
