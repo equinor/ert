@@ -1,7 +1,10 @@
 from contextlib import ExitStack as does_not_raise
 from datetime import datetime
 
+import hypothesis.strategies as st
 import pytest
+from hypothesis import given
+from pytest import MonkeyPatch, TempPathFactory
 from resdata.summary import Summary
 
 from ert.config import (
@@ -10,6 +13,8 @@ from ert.config import (
     ErtConfig,
 )
 from ert.config.parsing import parse_observations
+
+from .summary_generator import summaries
 
 
 def make_observations(obs_config_contents, parse=True):
@@ -632,22 +637,22 @@ def test_that_out_of_bounds_segments_are_truncated(tmpdir, start, stop, message)
             )
 
 
-@pytest.mark.parametrize("with_ext", [True, False])
-@pytest.mark.parametrize(
-    "keys",
-    [
-        [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
-        [("WWIR", "SM3/DAY", "WNAME"), ("WWIRH", "SM3/DAY", "WNAME")],
-    ],
-)
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
-def test_that_history_observations_are_loaded(tmpdir, keys, with_ext):
-    with tmpdir.as_cwd():
-        key, _, wname = keys[0]
-        local_name = key if wname is None else (key + ":" + wname)
-        run_sim(datetime(2014, 9, 10), keys)
+@given(
+    std=st.floats(min_value=0.1, max_value=1.0e3),
+    with_ext=st.booleans(),
+    summary=summaries(summary_keys=st.just(["FOPR", "FOPRH"])),
+)
+def test_that_history_observations_values_are_fetched_from_refcase(
+    tmp_path_factory: TempPathFactory, summary, with_ext, std
+):
+    with MonkeyPatch.context() as patch:
+        patch.chdir(tmp_path_factory.mktemp("history_observation_values_are_fetched"))
+        smspec, unsmry = summary
+        smspec.to_file("ECLIPSE_CASE.SMSPEC")
+        unsmry.to_file("ECLIPSE_CASE.UNSMRY")
 
-        ert_config = ErtConfig.from_dict(
+        observations = ErtConfig.from_dict(
             {
                 "ECLBASE": "ECLIPSE_CASE",
                 "REFCASE": f"ECLIPSE_CASE{'.DATA' if with_ext else ''}",
@@ -656,22 +661,26 @@ def test_that_history_observations_are_loaded(tmpdir, keys, with_ext):
                     [
                         (
                             "HISTORY_OBSERVATION",
-                            local_name,
+                            "FOPR",
                             {
-                                "ERROR": "0.20",
-                                "ERROR_MODE": "RELMIN",
-                                "ERROR_MIN": "100",
+                                "ERROR": str(std),
+                                "ERROR_MODE": "ABS",
                             },
                         )
                     ],
                 ),
             }
-        )
+        ).observations["summary"]
 
-        observations = ert_config.enkf_obs
-        assert [o.observation_key for o in observations] == [local_name]
-        assert observations[local_name].observations[datetime(2014, 9, 11)].value == 1.0
-        assert observations[local_name].observations[datetime(2014, 9, 11)].std == 100.0
+        steps = len(unsmry.steps)
+        assert list(observations["response_key"]) == ["FOPR"] * steps
+        assert list(observations["observations"]) == pytest.approx(
+            [
+                s.ministeps[-1].params[smspec.keywords.index("FOPRH")]
+                for s in unsmry.steps
+            ]
+        )
+        assert list(observations["std"]) == pytest.approx([std] * steps)
 
 
 def test_that_obs_file_must_have_the_same_number_of_lines_as_the_length_of_index_list(
