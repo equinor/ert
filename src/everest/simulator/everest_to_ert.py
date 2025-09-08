@@ -333,7 +333,7 @@ def _extract_templating(ever_config: EverestConfig) -> list[str]:
                 *res_input,
             ]
         )
-        forward_model.append(f"render {args}")
+        forward_model.append(f"template_render {args}")
 
     return forward_model
 
