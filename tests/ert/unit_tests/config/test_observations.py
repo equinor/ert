@@ -33,6 +33,10 @@ def make_observations(obs_config_contents, parse=True):
     ).observations
 
 
+FOPR_VALUE = 1
+FOPRH_VALUE = 2
+
+
 def run_simulator():
     """
     Create an ecl summary file, we have one value for FOPR (1) and a different
@@ -47,41 +51,55 @@ def run_simulator():
 
     for mini_step in range(mini_step_count):
         t_step = summary.addTStep(1, sim_days=mini_step_count + mini_step)
-        t_step["FOPR"] = 1
-        t_step["FOPRH"] = 2
+        t_step["FOPR"] = FOPR_VALUE
+        t_step["FOPRH"] = FOPRH_VALUE
 
     summary.fwrite()
 
 
-@pytest.mark.parametrize(
-    "extra_config, expected",
-    [
-        pytest.param({}, 2.0, id="Default, equals REFCASE_HISTORY"),
-        pytest.param(
-            {"HISTORY_SOURCE": "REFCASE_HISTORY"},
-            2.0,
-            id="Expect to read the H post-fixed value, i.e. FOPRH",
-        ),
-        pytest.param(
-            {"HISTORY_SOURCE": "REFCASE_SIMULATED"},
-            1.0,
-            id="Expect to read the actual value, i.e. FOPR",
-        ),
-    ],
-)
-@pytest.mark.usefixtures("use_tmpdir")
-@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
-def test_that_correct_key_observation_is_loaded(extra_config, expected):
+def make_refcase_observations(obs_config_contents, parse=True, extra_config=None):
+    extra_config = extra_config or {}
     run_simulator()
-    observations = ErtConfig.from_dict(
+    obs_config_file = "obs_config"
+    return ErtConfig.from_dict(
         {
-            "ECLBASE": "my_case%d",
+            "NUM_REALIZATIONS": 1,
+            "ECLBASE": "BASEBASEBASE",
             "REFCASE": "MY_REFCASE",
-            "OBS_CONFIG": ("obsconf", [("HISTORY_OBSERVATION", "FOPR")]),
+            "SUMMARY": "*",
+            "GEN_DATA": [["GEN", {"RESULT_FILE": "gen.txt"}]],
+            "TIME_MAP": ("time_map.txt", "2020-01-01\n2020-01-02\n"),
+            "OBS_CONFIG": (
+                obs_config_file,
+                parse_observations(obs_config_contents, obs_config_file)
+                if parse
+                else obs_config_contents,
+            ),
             **extra_config,
         }
-    ).enkf_obs
-    assert [obs.value for obs in observations["FOPR"]] == [expected]
+    ).observations
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
+def test_that_when_history_source_is_history_the_history_summary_vector_is_used():
+    observations = make_refcase_observations(
+        [("HISTORY_OBSERVATION", "FOPR")],
+        extra_config={"HISTORY_SOURCE": "REFCASE_HISTORY"},
+        parse=False,
+    )
+    assert list(observations["summary"]["observations"]) == [FOPRH_VALUE]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
+def test_that_when_history_source_is_simulated_the_summary_vector_is_used():
+    observations = make_refcase_observations(
+        [("HISTORY_OBSERVATION", "FOPR")],
+        extra_config={"HISTORY_SOURCE": "REFCASE_SIMULATED"},
+        parse=False,
+    )
+    assert list(observations["summary"]["observations"]) == [FOPR_VALUE]
 
 
 @pytest.mark.parametrize(
@@ -864,37 +882,24 @@ def test_that_segment_defaults_are_applied(tmpdir):
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_summary_default_error_min_is_applied(tmpdir):
-    with tmpdir.as_cwd():
-        run_sim(
-            datetime(2014, 9, 10),
-            [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
-        )
-
-        observations = ErtConfig.from_dict(
-            {
-                "ECLBASE": "ECLIPSE_CASE",
-                "REFCASE": "ECLIPSE_CASE",
-                "OBS_CONFIG": (
-                    "obsconf",
-                    [
-                        (
-                            "SUMMARY_OBSERVATION",
-                            "FOPR",
-                            {
-                                "VALUE": "1",
-                                "ERROR": "0.01",
-                                "KEY": "FOPR",
-                                "RESTART": "1",
-                                "ERROR_MODE": "RELMIN",
-                            },
-                        )
-                    ],
-                ),
-            }
-        ).enkf_obs
-
-        # default error_min is 0.1
-        assert observations["FOPR"].observations[datetime(2014, 9, 11)].std == 0.1
+    observations = make_observations(
+        [
+            (
+                "SUMMARY_OBSERVATION",
+                "FOPR",
+                {
+                    "VALUE": "1",
+                    "ERROR": "0.01",
+                    "KEY": "FOPR",
+                    "DATE": "2020-01-02",
+                    "ERROR_MODE": "RELMIN",
+                },
+            )
+        ],
+        parse=False,
+    )
+    # default error_min is 0.1
+    assert list(observations["summary"]["std"]) == pytest.approx([0.1])
 
 
 def test_that_start_must_be_set_in_a_segment():
