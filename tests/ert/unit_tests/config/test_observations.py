@@ -24,7 +24,7 @@ def make_observations(obs_config_contents):
             "ECLBASE": "BASEBASEBASE",
             "SUMMARY": "*",
             "GEN_DATA": [["GEN", {"RESULT_FILE": "gen.txt"}]],
-            "TIME_MAP": ("time_map.txt", "2020-01-01\n"),
+            "TIME_MAP": ("time_map.txt", "2020-01-01\n2020-01-02\n"),
             "OBS_CONFIG": (
                 obs_config_file,
                 parse_observations(obs_config_contents, obs_config_file),
