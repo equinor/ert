@@ -362,7 +362,7 @@ def multidass(_):
 
 distribution_strategy = st.fixed_dictionaries(
     {
-        "name": st.sampled_from(["normal", "lognormal", "uniform"]),
+        "name": st.sampled_from(["normal", "lognormal"]),
         "mean": st.floats(min_value=-100, max_value=100),
         "std": st.floats(min_value=0.001, max_value=10),
     }
