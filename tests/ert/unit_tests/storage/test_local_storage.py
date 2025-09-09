@@ -489,10 +489,10 @@ parameter_configs = st.lists(
     st.one_of(
         st.builds(
             GenKwConfig,
-            name=words,
+            name=st.text(),
+            group_name=st.text(),
             update=st.booleans(),
-            forward_init=st.booleans(),
-            transform_function_definitions=st.just([]),
+            distribution=st.just({"name": "uniform", "min": 0, "max": 1}),
         ),
         st.builds(SurfaceConfig),
     ),
