@@ -91,31 +91,6 @@ class GenKwConfig(ParameterConfig):
         """Return the parameters of the distribution as a dictionary."""
         return self.distribution.model_dump(exclude={"name"})
 
-    # @model_validator(mode="after")
-    # def validate_and_setup_transform_functions(self) -> Self:
-    #     errors = []
-    #     try:
-    #         if isinstance(self.transform_function_definition, dict):
-    #             self._transform_function = self._parse_transform_function_definition(
-    #                 TransformFunctionDefinition(**self.transform_function_definition)
-    #             )
-    #         else:
-    #             self._transform_function = self._parse_transform_function_definition(
-    #                 self.transform_function_definition
-    #             )
-    #     except ConfigValidationError as e:
-    #         errors.append(e)
-
-    #     try:
-    #         self._validate()
-    #     except ConfigValidationError as e:
-    #         errors.append(e)
-
-    #     if errors:
-    #         raise ConfigValidationError.from_collected(errors)
-
-    #     return self
-
     def __contains__(self, item: str) -> bool:
         return item == self.name
 
@@ -249,42 +224,6 @@ class GenKwConfig(ParameterConfig):
             ) from e
         except ValidationError as e:
             raise ConfigValidationError.from_pydantic(e, gen_kw) from e
-
-    @classmethod
-    def create(
-        cls,
-        name: str,
-        dist_name: str,
-        dist_params: list[float],
-        group: str = "DEFAULT",
-        update: bool = True,
-    ) -> Self:
-        distribution = cls._parse_distribution(
-            name, dist_name, [str(p) for p in dist_params]
-        )
-        return cls(
-            name=name,
-            group=group,
-            distribution=distribution,
-            forward_init=False,
-            update=update,
-        )
-
-    # def _validate(self) -> None:
-    #     errors = []
-    #     unique_keys = set()
-    #     for prior in self.get_priors():
-    #         key = prior["key"]
-    #         if key in unique_keys:
-    #             errors.append(
-    #                 ErrorInfo(
-    #                     f"Duplicate GEN_KW keys {key!r} found, keys must be unique."
-    #                 ).set_context(self.name)
-    #             )
-    #         unique_keys.add(key)
-
-    #     if errors:
-    #         raise ConfigValidationError.from_collected(errors)
 
     def load_parameter_graph(self) -> nx.Graph[int]:
         # Create a graph with no edges
