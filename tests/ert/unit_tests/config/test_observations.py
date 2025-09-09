@@ -775,6 +775,39 @@ def test_that_history_observations_values_are_fetched_from_refcase(
         assert list(observations["std"]) == pytest.approx([std] * steps)
 
 
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_obs_file_must_have_the_same_number_of_lines_as_the_index_file():
+    with open("obs_idx.txt", "w", encoding="utf-8") as fh:
+        fh.write("0\n2\n4\n6")  # Should have 5 lines
+    with open("obs_data.txt", "w", encoding="utf-8") as fh:
+        fh.writelines(f"{float(i)} 0.1\n" for i in range(5))
+    with pytest.raises(ConfigValidationError, match="must be of equal length"):
+        ErtConfig.from_dict(
+            {
+                "GEN_DATA": [
+                    [
+                        "RES",
+                        {"RESULT_FILE": "out"},
+                    ]
+                ],
+                "OBS_CONFIG": (
+                    "obsconf",
+                    [
+                        (
+                            "GENERAL_OBSERVATION",
+                            "OBS",
+                            {
+                                "DATA": "RES",
+                                "INDEX_FILE": "obs_idx.txt",  # shorter than obs_file
+                                "OBS_FILE": "obs_data.txt",
+                            },
+                        )
+                    ],
+                ),
+            }
+        )
+
+
 def test_that_obs_file_must_have_the_same_number_of_lines_as_the_length_of_index_list(
     tmpdir,
 ):
