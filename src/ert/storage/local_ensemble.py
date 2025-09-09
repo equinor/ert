@@ -260,7 +260,9 @@ class LocalEnsemble(BaseMode):
         group_path = (
             self.mount_point / f"{_escape_filename(GenKwConfig.scalar_file())}.parquet"
         )
-        genkw_mask = {param: [] for param in self.experiment.scalar_nodes}
+        genkw_mask: dict[str, list[int]] = {
+            param: [] for param in self.experiment.scalar_nodes
+        }
         if not group_path.exists():
             return genkw_mask
         df = pl.scan_parquet(group_path)
@@ -878,6 +880,8 @@ class LocalEnsemble(BaseMode):
             )
             self._storage._to_parquet_transaction(group_path, df_full)
             return
+
+        assert group is not None, "Group must be provided for xarray Dataset"
 
         assert realization is not None, (
             "Realization must be provided for xarray Dataset"

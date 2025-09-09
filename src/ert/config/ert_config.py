@@ -1014,7 +1014,7 @@ class ErtConfig(BaseModel):
             raise ConfigValidationError.from_collected(errors)
 
         if dm := analysis_config.design_matrix:
-            dm_errors = []
+            dm_errors: list[ErrorInfo | ConfigValidationError] = []
             dm_params = {x.name for x in dm.parameter_configurations}
             overwrite_params = [
                 cfg.name
