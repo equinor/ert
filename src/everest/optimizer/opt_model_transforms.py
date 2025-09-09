@@ -13,6 +13,7 @@ from ropt.transforms.base import (
 
 from everest.config import (
     ControlConfig,
+    InputConstraintConfig,
     ModelConfig,
     ObjectiveFunctionConfig,
     OutputConstraintConfig,
@@ -27,10 +28,20 @@ class EverestOptModelTransforms(TypedDict):
 
 
 class ControlScaler(VariableTransform):
-    """Transformation object to define a linear scaling of controls.
+    """Transformation object to define scaling related to the scales.
 
-    This object defines a linear scaling from lower and upper bounds [lb, ub] in
-    the user domain to a target range in the optimizer domain.
+    For scaling of the controls itself, this object defines a linear scaling
+    from lower and upper bounds [lb, ub] in the user domain to a target range in
+    the optimizer domain.
+
+    Constraints on linear combinations on the controls are defined by the
+    `input_constraints` section of the configuration. If a linear transformation
+    of the controls is defined, the linear
+     constraints are also transformed accordingly. In
+    addition, each of the linear constraints can be scaled by an overall factor,
+    either automatically if the `auto_scale` option in the `optimization`
+    section is set, or manually if the `scale` option in the `input_constraints`
+    section is set.
     """
 
     def __init__(
@@ -39,6 +50,8 @@ class ControlScaler(VariableTransform):
         upper_bounds: Sequence[float],
         scaled_ranges: Sequence[tuple[float, float]],
         control_types: list[Literal["real", "integer"]],
+        auto_scale_input_constraints: bool,
+        input_constraint_scales: list[float] | None,
     ) -> None:
         """Transformation object to define a linear scaling.
 
@@ -47,10 +60,12 @@ class ControlScaler(VariableTransform):
         division by a scaling factor.
 
          Args:
-             lower_bounds:  Lower bounds in the user domain.
-             upper_bounds:  Upper bounds in the user domain.
-             scaled_ranges: target ranges in the optimizer domain.
-             control_types: Types of the controls, real or integer.
+             lower_bounds:                 Lower bounds in the user domain.
+             upper_bounds:                 Upper bounds in the user domain.
+             scaled_ranges:                Target ranges in the optimizer domain.
+             control_types:                Types of the controls, real or integer.
+             auto_scale_input_constraints: Auto-scale any input constraint equations.
+             input_constraint_scales:      Optional scaling factors of input constraints
         """
         self._scaling_factors = [
             (ub - lb) / (sr[1] - sr[0]) if ct == "real" else 1.0
@@ -68,6 +83,8 @@ class ControlScaler(VariableTransform):
                 strict=True,
             )
         ]
+        self._auto_scale_input_constraints = auto_scale_input_constraints
+        self._input_constraint_scales = input_constraint_scales
 
     def to_optimizer(self, values: NDArray[np.float64]) -> NDArray[np.float64]:
         """Transform values to the optimizer domain.
@@ -109,35 +126,58 @@ class ControlScaler(VariableTransform):
     ) -> tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
         r"""Transform a set of linear constraints.
 
-        The set of linear constraints can be represented by a matrix equation:
-        $\mathbf{A} \mathbf{x} = \mathbf{b}$. When linearly transforming
-        variables to the optimizer domain, the coefficients ($\mathbf{A}$) and
-        right-hand-side values ($\mathbf{b}$) must be converted to remain valid.
+        The transformation consists of two steps:
 
-        Here, the linear transformation of the variables to the optimizer domain
-        is given by the scaling factors $\mathbf{s}_i$ and the offsets $\mathbf{o}_i$:
+        1. Transformation to correct for variable scaling:
 
-        $$
-        \hat{\mathbf{x}}_i = \frac{\mathbf{x}_i - \mathbf{o}_i}{\mathbf{s}_i}
-        $$
+           The set of linear constraints can be represented by a matrix
+           equation: Ax = b. When linearly transforming variables to the
+           optimizer domain, the coefficients A and right-hand-side values b
+           must be converted to remain valid.
 
-        In the optimizer domeain, the coefficients and right-hand-side values
-        must then be transformed as follows:
+           the linear transformation of the variables to the optimizer domain is
+           given by the scaling factors s and the offsets o:
 
-        $$ \begin{align}
-            \hat{\mathbf{A}} &= \mathbf{A} \mathbf{S} \\
-            \hat{\mathbf{b}} &= \mathbf{b} - \mathbf{A}\mathbf{o}
-        \end{align}$$
+               x = (x - o) / s.
 
-        where $\mathbf{S}$ is a diagonal matrix containing the variable scales
-        $\mathbf{s}_i$.
+           In the optimizer domain, the coefficients and right-hand-side values
+           must then be transformed as follows:
+
+               A = AS
+               b = b - Ao
+
+           where S is a diagonal matrix containing the variable scales s.
+
+        2. Transformation to correct for constraint scaling:
+
+           Each linear equation is scaled by a constant value that is either
+           determined automatically or manually set.
         """
-        if self._offsets is not None:
-            offsets = np.matmul(coefficients, self._offsets)
-            lower_bounds = lower_bounds - offsets  # noqa: PLR6104
-            upper_bounds = upper_bounds - offsets  # noqa: PLR6104
-        if self._scaling_factors is not None:
-            coefficients = coefficients * self._scaling_factors  # noqa: PLR6104
+        # The inputs may be immutable arrays, hence the `noqa PLR6104`
+
+        # Correct for variable scaling:
+        offsets = np.matmul(coefficients, self._offsets)
+        lower_bounds = lower_bounds - offsets  # noqa: PLR6104
+        upper_bounds = upper_bounds - offsets  # noqa: PLR6104
+        coefficients = coefficients * self._scaling_factors  # noqa: PLR6104
+
+        # Correct for constraint scaling:
+        if self._auto_scale_input_constraints:
+            scales = np.max(
+                [
+                    np.where(np.isfinite(lower_bounds), np.abs(lower_bounds), 0.0),
+                    np.where(np.isfinite(upper_bounds), np.abs(upper_bounds), 0.0),
+                    np.max(np.abs(coefficients), axis=1),
+                ],
+                axis=0,
+            )
+        else:
+            assert self._input_constraint_scales is not None
+            scales = np.asarray(self._input_constraint_scales, np.float64)
+        coefficients = coefficients / scales[:, np.newaxis]  # noqa: PLR6104
+        lower_bounds = lower_bounds / scales  # noqa: PLR6104
+        upper_bounds = upper_bounds / scales  # noqa: PLR6104
+
         return coefficients, lower_bounds, upper_bounds
 
     def bound_constraint_diffs_from_optimizer(
@@ -157,6 +197,7 @@ class ControlScaler(VariableTransform):
             The re-scaled bounds.
         """
         if self._scaling_factors is not None:
+            # The inputs may be immutable arrays, hence the `noqa PLR6104`
             lower_diffs = lower_diffs * self._scaling_factors  # noqa: PLR6104
             upper_diffs = upper_diffs * self._scaling_factors  # noqa: PLR6104
         return lower_diffs, upper_diffs
@@ -175,15 +216,13 @@ class ControlScaler(VariableTransform):
             lower_diffs: Differences with respect to the lower bounds.
             upper_diffs: Differences with respect to the upper bounds.
 
-        Note:
-            This method is defined in the base class to raise a not-implemented
-            error, hence it must be overridden even if it just returns its
-            inputs. The transformation logic in `ropt` expects valid results to
-            be returned.
-
         Returns:
             The original inputs.
         """
+        assert self._input_constraint_scales is not None
+        # The inputs may be immutable arrays, hence the `noqa PLR6104`
+        lower_diffs = lower_diffs * self._input_constraint_scales  # noqa: PLR6104
+        upper_diffs = upper_diffs * self._input_constraint_scales  # noqa: PLR6104
         return lower_diffs, upper_diffs
 
 
@@ -392,7 +431,8 @@ class ConstraintScaler(NonLinearConstraintTransform):
 def get_optimization_domain_transforms(
     controls: list[ControlConfig],
     objectives: list[ObjectiveFunctionConfig],
-    constraints: list[OutputConstraintConfig] | None,
+    input_constraints: list[InputConstraintConfig] | None,
+    output_constraints: list[OutputConstraintConfig] | None,
     model: ModelConfig,
     auto_scale: bool,
 ) -> EverestOptModelTransforms:
@@ -402,6 +442,15 @@ def get_optimization_domain_transforms(
         flattened_controls.upper_bounds,
         flattened_controls.scaled_ranges,
         flattened_controls.types,
+        auto_scale_input_constraints=auto_scale,
+        input_constraint_scales=(
+            None
+            if input_constraints is None
+            else [
+                1.0 if constraint.scale is None else constraint.scale
+                for constraint in input_constraints
+            ]
+        ),
     )
 
     realization_weights = (
@@ -428,11 +477,11 @@ def get_optimization_domain_transforms(
             auto_scale=auto_scale,
             scales=[
                 1.0 if constraint.scale is None else constraint.scale
-                for constraint in constraints
+                for constraint in output_constraints
             ],
             realization_weights=realization_weights,
         )
-        if constraints
+        if output_constraints
         else None
     )
 

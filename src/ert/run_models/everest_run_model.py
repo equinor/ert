@@ -265,6 +265,7 @@ class EverestRunModel(RunModel):
         return get_optimization_domain_transforms(
             self.controls,
             self.objective_functions,
+            self.input_constraints,
             self.output_constraints,
             self.model,
             self.optimization.auto_scale,
