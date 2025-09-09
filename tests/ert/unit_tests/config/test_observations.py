@@ -240,6 +240,144 @@ def test_that_summary_observations_can_use_restart_for_index_if_time_map_is_give
     assert list(observations["time"]) == [datetime.fromisoformat(time_map[restart])]
 
 
+def test_that_the_date_keyword_sets_the_summary_index_without_time_map_or_refcase():
+    date = "2020-01-01"
+    observations = ErtConfig.from_dict(
+        {
+            "ECLBASE": "ECLIPSE_CASE",
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    (
+                        "SUMMARY_OBSERVATION",
+                        "FOPR_1",
+                        {
+                            "KEY": "FOPR",
+                            "VALUE": "1",
+                            "ERROR": "1",
+                            "DATE": date,
+                        },
+                    )
+                ],
+            ),
+        }
+    ).observations["summary"]
+    assert list(observations["time"]) == [datetime.fromisoformat(date)]
+
+
+@given(
+    st.integers(min_value=0, max_value=10000), st.floats(min_value=-1e9, max_value=1e9)
+)
+def test_that_general_observations_can_use_restart_even_without_refcase_and_time_map(
+    restart, value
+):
+    observations = ErtConfig.from_dict(
+        {
+            "GEN_DATA": [
+                ["GEN", {"RESULT_FILE": "gen%d.txt", "REPORT_STEPS": str(restart)}]
+            ],
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    (
+                        "GENERAL_OBSERVATION",
+                        "OBS",
+                        {
+                            "DATA": "GEN",
+                            "RESTART": str(restart),
+                            "VALUE": str(value),
+                            "ERROR": "1.0",
+                        },
+                    )
+                ],
+            ),
+        }
+    ).observations["gen_data"]
+    assert list(observations["report_step"]) == [restart]
+    assert list(observations["observations"]) == pytest.approx([value])
+
+
+def test_that_the_date_keyword_sets_the_general_index_by_looking_up_time_map():
+    restart = 1
+    time_map = ["2024-01-01", "2024-02-02"]
+    observations = ErtConfig.from_dict(
+        {
+            "TIME_MAP": ("time_map.txt", "\n".join(time_map)),
+            "GEN_DATA": [
+                ["GEN", {"RESULT_FILE": "gen%d.txt", "REPORT_STEPS": str(restart)}]
+            ],
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    (
+                        "GENERAL_OBSERVATION",
+                        "OBS",
+                        {
+                            "DATA": "GEN",
+                            "DATE": time_map[restart],
+                            "VALUE": "1.0",
+                            "ERROR": "1.0",
+                        },
+                    )
+                ],
+            ),
+        }
+    ).observations["gen_data"]
+    assert list(observations["report_step"]) == [restart]
+
+
+@given(
+    summary=summaries(),
+)
+def test_that_the_date_keyword_sets_the_report_step_by_looking_up_refcase(
+    tmp_path_factory: TempPathFactory, summary
+):
+    with MonkeyPatch.context() as patch:
+        patch.chdir(tmp_path_factory.mktemp("history_observation_values_are_fetched"))
+        restart = 2
+        smspec, unsmry = summary
+        assume(len(unsmry.steps) > restart)
+        smspec.to_file("ECLIPSE_CASE.SMSPEC")
+        unsmry.to_file("ECLIPSE_CASE.UNSMRY")
+        start_date = smspec.start_date.to_datetime()
+        time_index = smspec.keywords.index("TIME    ")
+        days = smspec.units[time_index] == "DAYS    "
+        time_map = [s.ministeps[-1].params[time_index] for s in unsmry.steps]
+        time_map = [
+            start_date,
+            *[
+                start_date
+                + (timedelta(days=float(t)) if days else timedelta(hours=float(t)))
+                for t in time_map
+            ],
+        ]
+        observations = ErtConfig.from_dict(
+            {
+                "REFCASE": "ECLIPSE_CASE",
+                "GEN_DATA": [
+                    ["GEN", {"RESULT_FILE": "gen%d.txt", "REPORT_STEPS": str(restart)}]
+                ],
+                "OBS_CONFIG": (
+                    "obsconf",
+                    [
+                        (
+                            "GENERAL_OBSERVATION",
+                            "OBS",
+                            {
+                                "DATA": "GEN",
+                                "DATE": time_map[restart].isoformat(),
+                                "VALUE": "1.0",
+                                "ERROR": "1.0",
+                            },
+                        )
+                    ],
+                ),
+            }
+        ).observations["gen_data"]
+
+        assert list(observations["report_step"]) == [restart]
+
+
 @pytest.mark.parametrize("std", [-1.0, 0, 0.0])
 def test_that_error_must_be_greater_than_zero_in_summary_observations(std):
     with pytest.raises(
