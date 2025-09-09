@@ -524,7 +524,8 @@ async def test_long_warning_from_forward_model_is_truncated(
             stdout_file="foo.stdout",
         )
     ]
-    await log_warnings_from_forward_model(realization, start_time - 1)
+    with pytest.warns(PostSimulationWarning):
+        await log_warnings_from_forward_model(realization, start_time - 1)
     for line in caplog.text.splitlines():
         if "Realization 0 step foo.0 warned" in line:
             assert len(line) <= 2048 + 91
@@ -550,7 +551,8 @@ async def test_deduplication_of_repeated_warnings_from_forward_model(
             stdout_file="foo.stdout",
         )
     ]
-    await log_warnings_from_forward_model(realization, start_time - 1)
+    with pytest.warns(PostSimulationWarning):
+        await log_warnings_from_forward_model(realization, start_time - 1)
     assert (
         f"Realization 0 step foo.0 warned 3 time(s) in stdout: {emitted_warning_str}"
         in caplog.text
