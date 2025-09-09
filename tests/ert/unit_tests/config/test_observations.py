@@ -213,6 +213,33 @@ def test_that_summary_observations_can_use_restart_for_index_if_refcase_is_given
         assert abs(restart_time - observations["time"][0]) < timedelta(days=1.0)
 
 
+def test_that_summary_observations_can_use_restart_for_index_if_time_map_is_given():
+    restart = 1
+    time_map = ["2024-01-01", "2024-02-02"]
+    observations = ErtConfig.from_dict(
+        {
+            "ECLBASE": "ECLIPSE_CASE",
+            "TIME_MAP": ("time_map.txt", "\n".join(time_map)),
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    (
+                        "SUMMARY_OBSERVATION",
+                        "FOPR_1",
+                        {
+                            "KEY": "FOPR",
+                            "VALUE": "1",
+                            "ERROR": "1",
+                            "RESTART": str(restart),
+                        },
+                    )
+                ],
+            ),
+        }
+    ).observations["summary"]
+    assert list(observations["time"]) == [datetime.fromisoformat(time_map[restart])]
+
+
 @pytest.mark.parametrize("std", [-1.0, 0, 0.0])
 def test_that_error_must_be_greater_than_zero_in_summary_observations(std):
     with pytest.raises(
