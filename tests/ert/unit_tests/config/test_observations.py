@@ -38,9 +38,13 @@ def make_observations(obs_config_contents, parse=True):
 
 FOPR_VALUE = 1
 FOPRH_VALUE = 2
+SUMMARY_VALUES = {
+    "FOPR": FOPR_VALUE,
+    "FOPRH": FOPRH_VALUE,
+}
 
 
-def run_simulator():
+def run_simulator(summary_values=SUMMARY_VALUES):
     """
     Create an ecl summary file, we have one value for FOPR (1) and a different
     for FOPRH (2) so we can assert on the difference.
@@ -54,15 +58,17 @@ def run_simulator():
 
     for mini_step in range(mini_step_count):
         t_step = summary.addTStep(1, sim_days=mini_step_count + mini_step)
-        t_step["FOPR"] = FOPR_VALUE
-        t_step["FOPRH"] = FOPRH_VALUE
+        for key, value in summary_values.items():
+            t_step[key] = value
 
     summary.fwrite()
 
 
-def make_refcase_observations(obs_config_contents, parse=True, extra_config=None):
+def make_refcase_observations(
+    obs_config_contents, parse=True, extra_config=None, summary_values=SUMMARY_VALUES
+):
     extra_config = extra_config or {}
-    run_simulator()
+    run_simulator(summary_values=summary_values)
     obs_config_file = "obs_config"
     return ErtConfig.from_dict(
         {
@@ -194,6 +200,50 @@ def test_that_computed_error_must_be_greater_than_zero_in_summary_observations()
                     },
                 )
             ],
+            parse=False,
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_absolute_error_must_be_greater_than_zero_in_history_observations():
+    with pytest.raises(
+        ConfigValidationError, match=r"must be given a positive value|strictly > 0"
+    ):
+        make_refcase_observations(
+            [
+                (
+                    "HISTORY_OBSERVATION",
+                    "FOPR",
+                    {
+                        "ERROR": "0.0",
+                        "ERROR_MIN": "0.0",
+                    },
+                )
+            ],
+            parse=False,
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_computed_error_must_be_greater_than_zero_in_history_observations():
+    with pytest.raises(
+        ConfigValidationError, match=r"must be given a positive value|strictly > 0"
+    ):
+        make_refcase_observations(
+            [
+                (
+                    "HISTORY_OBSERVATION",
+                    "FOPR",
+                    {
+                        "ERROR": "1.0",
+                        "ERROR_MODE": "REL",
+                    },
+                )
+            ],
+            summary_values={
+                "FOPR": FOPR_VALUE,
+                "FOPRH": 0,  # ERROR becomes zero when mode is REL
+            },
             parse=False,
         )
 
