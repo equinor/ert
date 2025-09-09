@@ -139,6 +139,7 @@ async def test_job_run_sends_expected_events(
         "read_stdout_and_stderr_files",
         lambda *args: "",
     )
+    scheduler.driver._job_error_message_by_iens = {}
 
     job = Job(scheduler, realization)
     job._verify_checksum = partial(job._verify_checksum, timeout=0)
