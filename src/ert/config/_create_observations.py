@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from typing import TYPE_CHECKING
 
 import numpy as np
+import polars as pl
 
 from ert.summary_key_type import history_key
 from ert.validation import rangestring_to_list
@@ -21,7 +22,6 @@ from .ensemble_config import EnsembleConfig
 from .gen_data_config import GenDataConfig
 from .general_observation import GenObservation
 from .observation_vector import ObsVector
-from .observations import EnkfObs
 from .parsing import (
     ConfigWarning,
     ErrorInfo,
@@ -43,9 +43,9 @@ def create_observations(
     ensemble_config: EnsembleConfig,
     time_map: list[datetime] | None,
     history: HistorySource,
-) -> EnkfObs:
+) -> dict[str, pl.DataFrame]:
     if not obs_config_content:
-        return EnkfObs({}, [])
+        return {}
     obs_vectors: dict[str, ObsVector] = {}
     obs_time_list: list[datetime] = []
     if ensemble_config.refcase is not None:
@@ -103,7 +103,31 @@ def create_observations(
     if config_errors:
         raise ObservationConfigError.from_collected(config_errors)
 
-    return EnkfObs(obs_vectors, obs_time_list)
+    grouped: dict[str, list[pl.DataFrame]] = {}
+    for vec in obs_vectors.values():
+        if vec.observation_type == ObservationType.SUMMARY:
+            if "summary" not in grouped:
+                grouped["summary"] = []
+
+            grouped["summary"].append(vec.to_dataset([]))
+
+        elif vec.observation_type == ObservationType.GENERAL:
+            if "gen_data" not in grouped:
+                grouped["gen_data"] = []
+
+            grouped["gen_data"].append(vec.to_dataset([]))
+
+    datasets: dict[str, pl.DataFrame] = {}
+
+    for name, dfs in grouped.items():
+        non_empty_dfs = [df for df in dfs if not df.is_empty()]
+        if len(non_empty_dfs) > 0:
+            ds = pl.concat(non_empty_dfs).sort("observation_key")
+            if "time" in ds:
+                ds = ds.sort(by="time")
+
+            datasets[name] = ds
+    return datasets
 
 
 def _handle_error_mode(
