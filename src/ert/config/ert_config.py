@@ -15,7 +15,7 @@ from typing import Any, ClassVar, Self, cast, overload
 
 import polars as pl
 from numpy.random import SeedSequence
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, PrivateAttr, model_validator
 from pydantic import ValidationError as PydanticValidationError
 
 from ert.plugins import ErtPluginManager, fixtures_per_hook
@@ -25,7 +25,7 @@ from ._create_observations import create_observations
 from ._design_matrix_validator import DesignMatrixValidator
 from ._observation_declaration import (
     ConfContent,
-    GenObsValues,
+    Declaration,
     HistoryValues,
     SummaryValues,
     make_observation_declarations,
@@ -43,7 +43,6 @@ from .forward_model_step import (
 )
 from .gen_kw_config import GenKwConfig
 from .model_config import ModelConfig
-from .observations import EnkfObs
 from .parse_arg_types_list import parse_arg_types_list
 from .parsing import (
     ConfigDict,
@@ -696,10 +695,23 @@ class ErtConfig(BaseModel):
     runpath_config: ModelConfig = Field(default_factory=ModelConfig)
     user_config_file: str = "no_config"
     config_path: str = Field(init=False, default="")
-    observation_config: list[
-        tuple[str, HistoryValues | SummaryValues | GenObsValues]
-    ] = Field(default_factory=list)
-    enkf_obs: EnkfObs = Field(default_factory=EnkfObs)
+    observation_declarations: list[Declaration] = Field(default_factory=list)
+    time_map: list[datetime] | None = None
+    history_source: HistorySource = HistorySource.REFCASE_HISTORY
+    _observations: dict[str, pl.DataFrame] | None = PrivateAttr(None)
+
+    @property
+    def observations(self) -> dict[str, pl.DataFrame]:
+        if self._observations is None:
+            computed = create_observations(
+                self.observation_declarations,
+                self.ensemble_config,
+                self.time_map,
+                self.history_source,
+            )
+            self._observations = computed
+            return computed
+        return self._observations
 
     @model_validator(mode="after")
     def set_fields(self) -> Self:
@@ -744,10 +756,6 @@ class ErtConfig(BaseModel):
                 "use as magic strings or defined in the user config."
             )
         return self
-
-    @property
-    def observations(self) -> dict[str, pl.DataFrame]:
-        return self.enkf_obs.datasets
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, ErtConfig):
@@ -992,14 +1000,6 @@ class ErtConfig(BaseModel):
                         f"Could not read timemap file {time_map_file}: {err}",
                         time_map_file,
                     ) from err
-            observations = create_observations(
-                obs_configs,
-                ensemble_config,
-                time_map,
-                config_dict.get(
-                    ConfigKeys.HISTORY_SOURCE, HistorySource.REFCASE_HISTORY
-                ),
-            )
         except ConfigValidationError as err:
             errors.append(err)
         except PydanticValidationError as err:
@@ -1052,10 +1052,13 @@ class ErtConfig(BaseModel):
 
         env_vars = {}
         substituter = Substitutions(substitutions)
+        history_source = config_dict.get(
+            ConfigKeys.HISTORY_SOURCE, HistorySource.REFCASE_HISTORY
+        )
         for key, val in config_dict.get("SETENV", []):
             env_vars[key] = substituter.substitute(val)
         try:
-            return cls(
+            cls_config = cls(
                 substitutions=substitutions,
                 ensemble_config=ensemble_config,
                 ens_path=config_dict.get(ConfigKeys.ENSPATH, ErtConfig.DEFAULT_ENSPATH),
@@ -1076,11 +1079,23 @@ class ErtConfig(BaseModel):
                 ),
                 runpath_config=model_config,
                 user_config_file=config_file_path,
-                observation_config=obs_configs,
-                enkf_obs=observations,
+                observation_declarations=list(obs_configs),
+                time_map=time_map,
+                history_source=history_source,
+            )
+
+            # The observations are created here because create_observations
+            # will perform additonal validation which needs the context in
+            # obs_configs which is stripped by pydantic
+            cls_config._observations = create_observations(
+                obs_configs,
+                ensemble_config,
+                time_map,
+                history_source,
             )
         except PydanticValidationError as err:
             raise ConfigValidationError.from_pydantic(err) from err
+        return cls_config
 
     @classmethod
     def _create_list_of_forward_model_steps_to_run(
