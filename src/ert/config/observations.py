@@ -92,17 +92,6 @@ class EnkfObs:
         # Datasets contains the full observations, so if they are equal, everything is
         return all(self.datasets[k].equals(other.datasets[k]) for k in self.datasets)
 
-    def getTypedKeylist(
-        self, observation_implementation_type: ObservationType
-    ) -> list[str]:
-        return sorted(
-            [
-                key
-                for key, obs in self.obs_vectors.items()
-                if observation_implementation_type == obs.observation_type
-            ]
-        )
-
     @staticmethod
     def _handle_error_mode(
         values: "npt.ArrayLike",
