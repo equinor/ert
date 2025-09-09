@@ -1,9 +1,9 @@
 from contextlib import ExitStack as does_not_raise
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import hypothesis.strategies as st
 import pytest
-from hypothesis import given
+from hypothesis import assume, given
 from pytest import MonkeyPatch, TempPathFactory
 from resdata.summary import Summary
 
@@ -158,6 +158,59 @@ def test_that_using_summary_observations_without_eclbase_shows_user_error():
                 )
             }
         )
+
+
+@given(
+    summary=summaries(summary_keys=st.just(["FOPR", "FOPRH"])),
+    value=st.floats(min_value=-1e9, max_value=1e9),
+)
+def test_that_summary_observations_can_use_restart_for_index_if_refcase_is_given(
+    tmp_path_factory: TempPathFactory, summary, value
+):
+    with MonkeyPatch.context() as patch:
+        patch.chdir(tmp_path_factory.mktemp("history_observation_values_are_fetched"))
+        restart = 1
+        smspec, unsmry = summary
+        assume(len(unsmry.steps) > restart)
+        smspec.to_file("ECLIPSE_CASE.SMSPEC")
+        unsmry.to_file("ECLIPSE_CASE.UNSMRY")
+        observations = ErtConfig.from_dict(
+            {
+                "ECLBASE": "ECLIPSE_CASE",
+                "REFCASE": "ECLIPSE_CASE",
+                "OBS_CONFIG": (
+                    "obsconf",
+                    [
+                        (
+                            "SUMMARY_OBSERVATION",
+                            "FOPR_1",
+                            {
+                                "KEY": "FOPR",
+                                "VALUE": str(value),
+                                "ERROR": "1",
+                                "RESTART": str(restart),
+                            },
+                        )
+                    ],
+                ),
+            }
+        ).observations["summary"]
+        assert len(observations["time"]) == 1
+        assert list(observations["observations"]) == pytest.approx([value])
+
+        start_date = smspec.start_date.to_datetime()
+        time_index = smspec.keywords.index("TIME    ")
+        days = smspec.units[time_index] == "DAYS    "
+        # start_date is considered to be restart=0, but that is not a step in
+        # unsmry, therefore we need to look up restart-1
+        restart_value = unsmry.steps[restart - 1].ministeps[-1].params[time_index]
+        restart_time = start_date + (
+            timedelta(days=float(restart_value))
+            if days
+            else timedelta(hours=float(restart_value))
+        )
+
+        assert abs(restart_time - observations["time"][0]) < timedelta(days=1.0)
 
 
 @pytest.mark.parametrize("std", [-1.0, 0, 0.0])
