@@ -996,7 +996,7 @@ def test_that_segment_defaults_are_applied(tmpdir):
 
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
-def test_that_summary_default_error_min_is_applied(tmpdir):
+def test_that_summary_default_error_min_is_applied():
     observations = make_observations(
         [
             (
