@@ -20,7 +20,8 @@ def migrate(path: Path) -> None:
         if observations:
             output_path = experiment / "observations"
             output_path.mkdir(parents=True, exist_ok=True)
-            ert_config.enkf_obs.write_to_folder(dest=output_path)
+            for name, dataset in ert_config.observations.items():
+                dataset.write_parquet(output_path / name)
         with open(experiment / "parameter.json", encoding="utf-8") as fin:
             parameters_json = json.load(fin)
         with open(experiment / "parameter.json", "w", encoding="utf-8") as fout:
