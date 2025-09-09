@@ -24,6 +24,7 @@ from ert.ensemble_evaluator import (
     SnapshotUpdateEvent,
 )
 from ert.logging import LOGGING_CONFIG
+from ert.plugins.plugin_manager import ErtPluginManager
 from ert.services import StorageService
 from everest.config import EverestConfig
 from everest.config.server_config import ServerConfig
@@ -35,7 +36,6 @@ from everest.detached import (
     stop_server,
     wait_for_server_to_stop,
 )
-from everest.plugins.everest_plugin_manager import EverestPluginManager
 from everest.simulator import JOB_FAILURE, JOB_RUNNING, JOB_SUCCESS
 from everest.strings import EVEREST, OPT_PROGRESS_ID, SIM_PROGRESS_ID
 from everest.util import makedirs_if_needed
@@ -84,8 +84,8 @@ def setup_logging(options: argparse.Namespace) -> Generator[None, None, None]:
             handler.setLevel(logging.DEBUG)
             root_logger.addHandler(handler)
 
-        plugin_manager = EverestPluginManager()
-        plugin_manager.add_log_handle_to_root()
+        plugin_manager = ErtPluginManager()
+        plugin_manager.add_logging_handle_to_root(logging.getLogger())
         plugin_manager.add_span_processor_to_trace_provider()
         yield
     finally:
