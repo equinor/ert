@@ -22,6 +22,7 @@ from everest.config import (
 )
 from everest.config.control_variable_config import ControlVariableConfig
 from everest.config.everest_config import EverestValidationError
+from everest.config.forward_model_config import ForwardModelStepConfig
 from everest.config.sampler_config import SamplerConfig
 from everest.config.validation_utils import _RESERVED_WORDS
 from everest.simulator.everest_to_ert import (
@@ -1213,3 +1214,15 @@ def test_that_reserved_words_are_rejected(illegal_name):
         match=f"'{illegal_name}' is a reserved word and cannot be used.",
     ):
         EverestConfig.with_defaults(objective_functions=[{"name": illegal_name}])
+
+
+def test_forward_model_step_config_missing_type():
+    expected_substring = (
+        "Missing required field 'type' in 'results'. This field is needed to "
+        "determine the correct result schema (e.g., 'gen_data' or 'summary')."
+        " Please include a 'type' key in the 'results' section."
+    )
+
+    with pytest.raises(ValidationError) as exc_info:
+        ForwardModelStepConfig(job="example_job", results={"file_name": "output.txt"})
+    assert expected_substring in str(exc_info.value)
