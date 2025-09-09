@@ -46,7 +46,7 @@ class ForwardModelStepConfig(BaseModelWithContextSupport):
         results = values.get("results")
         if results is not None and "type" not in results:
             raise ValueError(
-                "Missing required field 'type' in 'results'. This field is used to "
+                "Missing required field 'type' in 'results'. This field is needed to "
                 "determine the correct result schema (e.g., 'gen_data' or 'summary')."
                 " Please include a 'type' key in the 'results' section."
             )
