@@ -2,7 +2,6 @@ import os
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -483,7 +482,3 @@ class EnkfObs:
 
     def __repr__(self) -> str:
         return f"EnkfObs({self.obs_vectors}, {self.obs_time})"
-
-    def write_to_folder(self, dest: Path) -> None:
-        for name, dataset in self.datasets.items():
-            dataset.write_parquet(dest / name)
