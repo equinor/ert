@@ -1,5 +1,5 @@
 import numpy as np
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, PositiveFloat, field_validator
 
 
 class InputConstraintConfig(BaseModel, extra="forbid"):
@@ -34,7 +34,14 @@ class InputConstraintConfig(BaseModel, extra="forbid"):
     upper_bound: float = Field(
         default=np.inf,
         description="""Only control values that satisfy the following
-         equation will be allowed: sum of (<control> * weight) <= upper_bound`
+        equation will be allowed: sum of (<control> * weight) <= upper_bound`
+        """,
+    )
+    scale: PositiveFloat | None = Field(
+        default=None,
+        description="""Scaling of input constraints (scale).
+        scale is a normalization factor which can be used to scale the input constraint.
+        The bounds or target, and the weights will be scaled with this number.
         """,
     )
 

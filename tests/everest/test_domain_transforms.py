@@ -64,6 +64,7 @@ def test_transforms_controls_scaling(ever_config):
     transforms = get_optimization_domain_transforms(
         ever_config.controls,
         ever_config.objective_functions,
+        ever_config.input_constraints,
         ever_config.output_constraints,
         ever_config.model,
         False,
@@ -82,9 +83,14 @@ def test_transforms_controls_scaling(ever_config):
     )
 
 
-def test_transforms_controls_input_constraint_scaling(ever_config):
+@pytest.mark.parametrize("scaling", ["none", "manual", "auto-scale"])
+def test_transforms_controls_input_constraint_scaling(ever_config, scaling):
     input_constraints_ever_config = ever_config.input_constraints
     assert len(input_constraints_ever_config) == 2
+
+    ever_config.optimization.auto_scale = scaling == "auto-scale"
+    if scaling == "manual":
+        input_constraints_ever_config[1].scale = 2.0
 
     ropt_config, _ = everest2ropt(
         ever_config.controls,
@@ -97,21 +103,23 @@ def test_transforms_controls_input_constraint_scaling(ever_config):
         ever_config.optimization_output_dir,
     )
 
+    controls = ever_config.controls
     min_values = np.asarray(ropt_config["variables"]["lower_bounds"])
     max_values = np.asarray(ropt_config["variables"]["upper_bounds"])
     min_values[1] = -1.0
     max_values[1] = 1.0
     for idx in range(3):
-        ever_config.controls[0].variables[idx].min = min_values[idx]
-        ever_config.controls[0].variables[idx].max = max_values[idx]
-    ever_config.controls[0].scaled_range = [0.3, 0.7]
+        controls[0].variables[idx].min = min_values[idx]
+        controls[0].variables[idx].max = max_values[idx]
+    controls[0].scaled_range = [0.3, 0.7]
 
     transforms = get_optimization_domain_transforms(
         ever_config.controls,
         ever_config.objective_functions,
+        ever_config.input_constraints,
         ever_config.output_constraints,
         ever_config.model,
-        False,
+        scaling == "auto-scale",
     )
 
     coefficients = np.asarray(ropt_config["linear_constraints"]["coefficients"])
@@ -131,11 +139,24 @@ def test_transforms_controls_input_constraint_scaling(ever_config):
         coefficients, min_values - 0.3 * (max_values - min_values) / 0.4
     )
     scaled_coefficients = coefficients * (max_values - min_values) / 0.4
-    scaled_coefficients[:2, 1] = coefficients[:2, 1] * 2.0 / 0.4
+    scaled_coefficients[:, 1] = coefficients[:, 1] * 2.0 / 0.4
 
-    assert np.allclose(transformed_coefficients, scaled_coefficients)
+    match scaling:
+        case "none":
+            scales = np.array([1.0, 1.0])
+        case "manual":
+            scales = np.array([1.0, 2.0])
+        case "auto-scale":
+            b_max = np.maximum(np.abs(scaled_lower_bounds), np.abs(scaled_upper_bounds))
+            c_max = np.max(np.abs(scaled_coefficients), axis=1)
+            scales = np.maximum(b_max, c_max)
+    scaled_lower_bounds /= scales
+    scaled_upper_bounds /= scales
+    scaled_coefficients /= scales[:, np.newaxis]
+
     assert np.allclose(transformed_lower_bounds, scaled_lower_bounds)
     assert np.allclose(transformed_upper_bounds, scaled_upper_bounds)
+    assert np.allclose(transformed_coefficients, scaled_coefficients)
 
 
 def test_objective_no_scaling(ever_config):
@@ -143,6 +164,7 @@ def test_objective_no_scaling(ever_config):
         ever_config.controls,
         ever_config.objective_functions,
         ever_config.output_constraints,
+        ever_config.input_constraints,
         ever_config.model,
         False,
     )
@@ -158,6 +180,7 @@ def test_objective_manual_scaling(ever_config):
         ever_config.controls,
         ever_config.objective_functions,
         ever_config.output_constraints,
+        ever_config.input_constraints,
         ever_config.model,
         False,
     )
@@ -175,6 +198,7 @@ def test_objective_auto_scaling(ever_config):
         ever_config.controls,
         ever_config.objective_functions,
         ever_config.output_constraints,
+        ever_config.input_constraints,
         ever_config.model,
         True,
     )
@@ -193,6 +217,7 @@ def test_that_objective_auto_scaling_with_zero_realization_weights_fails(ever_co
     transforms = get_optimization_domain_transforms(
         ever_config.controls,
         ever_config.objective_functions,
+        ever_config.input_constraints,
         ever_config.output_constraints,
         ever_config.model,
         True,
@@ -210,6 +235,7 @@ def test_that_objective_auto_scaling_with_zero_objectives_fails(ever_config):
     transforms = get_optimization_domain_transforms(
         ever_config.controls,
         ever_config.objective_functions,
+        ever_config.input_constraints,
         ever_config.output_constraints,
         ever_config.model,
         True,
@@ -225,6 +251,7 @@ def test_output_constraint_no_scaling(ever_config):
     transforms = get_optimization_domain_transforms(
         ever_config.controls,
         ever_config.objective_functions,
+        ever_config.input_constraints,
         ever_config.output_constraints,
         ever_config.model,
         False,
@@ -240,6 +267,7 @@ def test_output_constraint_manual_scaling(ever_config):
     transforms = get_optimization_domain_transforms(
         ever_config.controls,
         ever_config.objective_functions,
+        ever_config.input_constraints,
         ever_config.output_constraints,
         ever_config.model,
         False,
@@ -256,6 +284,7 @@ def test_output_constraint_auto_scaling(ever_config):
     transforms = get_optimization_domain_transforms(
         ever_config.controls,
         ever_config.objective_functions,
+        ever_config.input_constraints,
         ever_config.output_constraints,
         ever_config.model,
         True,
@@ -277,6 +306,7 @@ def test_that_output_constraint_auto_scaling_with_zero_realization_weights_fails
     transforms = get_optimization_domain_transforms(
         ever_config.controls,
         ever_config.objective_functions,
+        ever_config.input_constraints,
         ever_config.output_constraints,
         ever_config.model,
         True,
@@ -294,6 +324,7 @@ def test_that_output_constraint_auto_scaling_with_zero_constraints_fails(ever_co
     transforms = get_optimization_domain_transforms(
         ever_config.controls,
         ever_config.objective_functions,
+        ever_config.input_constraints,
         ever_config.output_constraints,
         ever_config.model,
         True,
