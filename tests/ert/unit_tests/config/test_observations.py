@@ -295,6 +295,48 @@ def test_that_all_errors_in_general_observations_must_be_greater_than_zero(tmpdi
             )
 
 
+def test_that_error_mode_is_not_allowed_in_general_observations():
+    with pytest.raises(ConfigValidationError, match=r"Unknown ERROR_MODE"):
+        make_observations(
+            [
+                (
+                    "GENERAL_OBSERVATION",
+                    "OBS",
+                    {
+                        "DATA": "GEN",
+                        "DATE": "2020-01-02",
+                        "INDEX_LIST": "1",
+                        "VALUE": "1.0",
+                        "ERROR": "0.1",
+                        "ERROR_MODE": "REL",
+                    },
+                )
+            ],
+            parse=False,
+        )
+
+
+def test_that_error_min_is_not_allowed_in_general_observations():
+    with pytest.raises(ConfigValidationError, match=r"Unknown ERROR_MIN"):
+        make_observations(
+            [
+                (
+                    "GENERAL_OBSERVATION",
+                    "OBS",
+                    {
+                        "DATA": "GEN",
+                        "DATE": "2020-01-02",
+                        "INDEX_LIST": "1",
+                        "VALUE": "1.0",
+                        "ERROR": "0.1",
+                        "ERROR_MIN": "0.05",
+                    },
+                )
+            ],
+            parse=False,
+        )
+
+
 def test_that_empty_observations_file_causes_exception():
     with pytest.raises(
         expected_exception=ConfigValidationError,
