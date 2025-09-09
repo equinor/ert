@@ -1,7 +1,7 @@
 import os
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Literal, Self, cast
+from typing import Any, Self, cast
 
 import numpy as np
 import polars as pl
@@ -20,7 +20,7 @@ from .responses_index import responses_index
 
 
 class GenDataConfig(ResponseConfig):
-    type: Literal["gen_data"] = "gen_data"
+    type = "gen_data"
     name: str = "gen_data"
     report_steps_list: list[list[int] | None] = Field(default_factory=list)
     has_finalized_keys: bool = True

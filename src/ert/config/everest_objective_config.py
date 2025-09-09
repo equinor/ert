@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Literal, Self, cast
+from typing import Self, cast
 
 import numpy as np
 import polars as pl
@@ -13,7 +13,7 @@ from .responses_index import responses_index
 
 
 class EverestObjectivesConfig(ResponseConfig):
-    type: Literal["everest_objectives"] = "everest_objectives"
+    type = "everest_objectives"
     name: str = "everest_objectives"
     has_finalized_keys: bool = True
 

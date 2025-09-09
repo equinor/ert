@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Literal, Self, cast
+from typing import Self, cast
 
 import numpy as np
 import polars as pl
@@ -26,7 +26,7 @@ class EverestConstraintsConfig(ResponseConfig):
             for response_key in self.keys
         ]
 
-    type: Literal["everest_constraints"] = "everest_constraints"
+    type = "everest_constraints"
     name: str = "everest_constraints"
     has_finalized_keys: bool = True
 

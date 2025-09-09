@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Self
+from typing import Any, Literal, Self
 
 import polars as pl
 from pydantic import BaseModel, Field
@@ -30,7 +30,7 @@ class ResponseMetadata(BaseModel):
 
 
 class ResponseConfig(BaseModel):
-    type: str
+    type: Literal["summary", "gen_data", "everest_constraints", "everest_objectives"]
     name: str
     input_files: list[str] = Field(default_factory=list)
     keys: list[str] = Field(default_factory=list)

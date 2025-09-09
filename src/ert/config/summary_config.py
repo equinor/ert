@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Literal
+from typing import Any
 
 import polars as pl
 from pydantic import field_validator
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class SummaryConfig(ResponseConfig):
-    type: Literal["summary"] = "summary"
+    type = "summary"
     name: str = "summary"
     has_finalized_keys: bool = False
 
