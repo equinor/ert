@@ -240,17 +240,12 @@ class LocalEnsemble(BaseMode):
 
     def get_realization_mask_with_responses(self) -> npt.NDArray[np.bool_]:
         """
-        Mask array indicating realizations with associated responses.
-
-        Parameters
-        ----------
-        key : str, optional
-            Response key to filter realizations. If None, all responses are considered.
+        Get a boolean mask indicating which realizations have responses loaded.
 
         Returns
         -------
-        masks : ndarray of bool
-            Boolean array where True means responses are associated.
+        ndarray of bool
+            Boolean array where True means responses are loaded.
         """
 
         return np.array(
