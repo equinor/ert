@@ -275,22 +275,17 @@ class LocalEnsemble(BaseMode):
                     )
         return genkw_mask
 
-    def has_data(self) -> list[int]:
+    def has_data(self) -> bool:
         """
-        Return the realization numbers where all responses are internalized
+        Check if the ensemble has any responses.
 
         Returns
         -------
-        exists : list[int]
-            Returns the realization numbers with responses
+        bool
+            True if the ensemble has at least one realization with responses,
+            False otherwise.
         """
-
-        ensemble_state = self.get_ensemble_state()
-        return [
-            i
-            for i in range(self.ensemble_size)
-            if RealizationStorageState.RESPONSES_LOADED in ensemble_state[i]
-        ]
+        return any(self.get_realization_list_with_responses())
 
     def get_realization_list_with_responses(self) -> list[int]:
         """
