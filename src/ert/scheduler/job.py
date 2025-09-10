@@ -70,6 +70,7 @@ class Job:
     DEFAULT_FILE_VERIFICATION_TIMEOUT = 120
     WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL = 5
     WAIT_PERIOD_FOR_SUBMIT_TO_FINISH = 5
+    WAIT_PERIOD_FOR_SCHEDULER_TO_KILL_IN_BATCH = 45
 
     def __init__(self, scheduler: Scheduler, real: Realization) -> None:
         self.real = real
@@ -86,6 +87,7 @@ class Job:
         self._previous_file_verification_time = self._remaining_file_verification_time
         self._started_killing_by_evaluator: bool = False
         self._was_killed_by_evaluator = asyncio.Event()
+        self._was_killed_by_scheduler = asyncio.Event()
 
     @property
     def remaining_file_verification_time(self) -> int:
@@ -199,7 +201,17 @@ class Job:
                         f"Realization {self.iens} was not killed gracefully by "
                         "TERM message. Killing it with the driver"
                     )
-                await self.driver.kill(self.iens)
+                await self._scheduler.schedule_kill(self.iens)
+                try:
+                    await asyncio.wait_for(
+                        self._was_killed_by_scheduler.wait(),
+                        timeout=self.WAIT_PERIOD_FOR_SCHEDULER_TO_KILL_IN_BATCH,
+                    )
+                except TimeoutError:
+                    logger.warning(
+                        f"Realization {self.iens} did not get confirmation from "
+                        "scheduler that the batch killing with driver ran successfully."
+                    )
             else:
                 logger.info(f"Realization {self.iens} was killed by the evaluator")
             with suppress(asyncio.CancelledError):

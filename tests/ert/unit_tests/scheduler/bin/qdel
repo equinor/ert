@@ -2,27 +2,33 @@
 set -e
 
 jobdir="${PYTEST_TMP_PATH:-.}/mock_jobs"
-jobid=$1
-
-if ! [ -f "${jobdir}/${jobid}.name" ]
-then
-    echo "No such job ${jobid}" >&2
-    exit 1
-fi
-
-timeout=2
-elapsed=0
-interval=0.1
-
-while [ ! -f "${jobdir}/${jobid}.pid" ] && [ $elapsed -lt $timeout ]; do
-    sleep $interval
-    elapsed=$(echo "$elapsed + $interval" | bc)
-done
-
-if [ ! -f "${jobdir}/${jobid}.pid" ]; then
+found_error=false
+# Iterate over all provided job ids
+for jobid in "$@"; do
+    if ! [ -f "${jobdir}/${jobid}.name" ]
+    then
         echo "No such job ${jobid}" >&2
+        found_error=true
+        continue
+    fi
+
+    timeout=2
+    elapsed=0
+    interval=0.1
+
+    while [ ! -f "${jobdir}/${jobid}.pid" ] && [ $elapsed -lt $timeout ]; do
+        sleep $interval
+        elapsed=$(echo "$elapsed + $interval" | bc)
+    done
+
+    if [ ! -f "${jobdir}/${jobid}.pid" ]; then
+            echo "No such job ${jobid}" >&2
+            found_error=true
+        continue
+    fi
+    pid=$(cat "${jobdir}/${jobid}.pid")
+    kill $pid
+    done
+if [ "$found_error" = true ]; then
     exit 1
 fi
-
-pid=$(cat "${jobdir}/${jobid}.pid")
-kill $pid

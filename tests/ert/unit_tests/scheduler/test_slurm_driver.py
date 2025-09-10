@@ -269,9 +269,10 @@ async def test_faulty_sbatch_produces_error_log(monkeypatch, tmp_path):
 async def test_kill_before_submit_logs_error(caplog):
     caplog.set_level(logging.DEBUG)
     driver = SlurmDriver()
-    await driver.kill(0)
+    await driver.kill([0, 1])
     assert "DEBUG" in caplog.text
     assert "scancel was not run, realization 0 has never been submitted" in caplog.text
+    assert "scancel was not run, realization 1 has never been submitted" in caplog.text
 
 
 @pytest.fixture(autouse=True)
@@ -418,7 +419,7 @@ async def test_kill_before_submit_is_finished(
         )
     )
     await asyncio.sleep(0.01)  # Allow submit task to start executing
-    await driver.kill(0)  # This will wait until the submit is done and then kill
+    await driver.kill([0])  # This will wait until the submit is done and then kill
 
     async def finished(iens: int, returncode: int):
         assert iens == 0

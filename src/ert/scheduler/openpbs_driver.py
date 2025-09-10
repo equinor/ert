@@ -5,7 +5,7 @@ import json
 import logging
 import shlex
 import shutil
-from collections.abc import Mapping, MutableMapping
+from collections.abc import Iterable, Mapping, MutableMapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal, cast, get_type_hints
@@ -233,23 +233,26 @@ class OpenPBSDriver(Driver):
         self._iens2jobid[iens] = job_id_
         self._non_finished_job_ids.add(job_id_)
 
-    async def kill(self, iens: int) -> None:
-        if iens in self._finished_iens:
+    async def kill(self, realizations: Iterable[int]) -> None:
+        job_ids_to_kill: list[str] = []
+        for realization in realizations:
+            if realization in self._finished_iens:
+                continue
+
+            if realization not in self._iens2jobid:
+                logger.warning(
+                    "PBS kill failed due to missing jobid for realization "
+                    f"{realization}. It might have already finished"
+                )
+            else:
+                job_id = self._iens2jobid[realization]
+                logger.info(f"Killing realization {realization} with PBS-id {job_id}")
+                job_ids_to_kill.append(job_id)
+        if not job_ids_to_kill:
             return
-
-        if iens not in self._iens2jobid:
-            logger.warning(
-                f"PBS kill failed due to missing jobid for realization {iens}. "
-                "It might have already finished"
-            )
-            return
-
-        job_id = self._iens2jobid[iens]
-
-        logger.info(f"Killing realization {iens} with PBS-id {job_id}")
 
         process_success, process_message = await self._execute_with_retry(
-            [str(self._qdel_cmd), str(job_id)],
+            [str(self._qdel_cmd), " ".join(job_ids_to_kill)],
             retry_codes=(QDEL_REQUEST_INVALID,),
             accept_codes=(QDEL_JOB_HAS_FINISHED,),
             total_attempts=self._max_pbs_cmd_attempts,
