@@ -59,6 +59,8 @@ class SubmitSleeper:
 
 
 class Scheduler:
+    BATCH_KILLING_INTERVAL = 1.5
+
     def __init__(
         self,
         driver: Driver,
@@ -104,6 +106,10 @@ class Scheduler:
         self._ens_id = ens_id
 
         self.checksum: dict[str, dict[str, Any]] = {}
+        self._num_realizations_to_kill: int | None = None
+        self._realization_ids_to_kill: list[int] = []
+        self._kill_task: asyncio.Task[None] | None = None
+        self._stop_kill_task = asyncio.Event()
 
     async def kill_all_jobs(self) -> None:
         await self.cancel_all_jobs()
@@ -320,12 +326,15 @@ class Scheduler:
         finally:
             for scheduling_task in scheduling_tasks:
                 scheduling_task.cancel()
+            if self._kill_task is not None:
+                self._stop_kill_task.set()
             # We discard exceptions when cancelling the scheduling tasks
             await asyncio.gather(
                 *scheduling_tasks,
                 return_exceptions=True,
             )
-
+            if self._kill_task:
+                await self._kill_task
         if self._cancelled:
             logger.debug("Scheduler has been cancelled, jobs are stopped.")
             return False
@@ -372,3 +381,33 @@ class Scheduler:
             self._jobs[iens].unschedule(error_msg)
             logger.error(error_msg)
             return
+
+    async def schedule_kill(self, realization: int) -> None:
+        self._realization_ids_to_kill.append(realization)
+        if self._kill_task is None or self._kill_task.done():
+            self._kill_task = asyncio.Task(
+                self._batch_killing(), name="batch_killing_task"
+            )
+
+    async def _batch_killing(self) -> None:
+        while True:
+            await self._wait_for_next_batch()
+            if len(self._realization_ids_to_kill) > 0:
+                realizations_to_kill = self._realization_ids_to_kill
+                self._realization_ids_to_kill = []
+                logger.info(
+                    "Scheduler killing a batch of "
+                    f"{len(realizations_to_kill)} realizations"
+                )
+                await self.driver.kill(realizations_to_kill)
+                for realization in realizations_to_kill:
+                    self._jobs[realization]._was_killed_by_scheduler.set()
+            if (
+                self._stop_kill_task.is_set()
+                and len(self._realization_ids_to_kill) == 0
+            ):
+                return
+
+    async def _wait_for_next_batch(self) -> None:
+        """This is a separate method for ease of mocking in tests"""
+        await asyncio.sleep(self.BATCH_KILLING_INTERVAL)

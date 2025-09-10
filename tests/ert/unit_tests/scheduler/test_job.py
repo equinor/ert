@@ -36,6 +36,7 @@ def create_scheduler():
     sch._manifest_queue = None
     sch._cancelled = False
     sch._cancelled_by_evaluator = False
+    sch.schedule_kill = lambda real: sch.driver.kill([real])
     return sch
 
 
@@ -84,13 +85,13 @@ async def test_submitted_job_is_cancelled(realization, mock_event):
     job._requested_max_submit = 1
     job.started = mock_event()
     job.returncode.cancel()
+    job._was_killed_by_scheduler.set()
     job_task = asyncio.create_task(job._submit_and_run_once(asyncio.BoundedSemaphore()))
 
     await asyncio.wait_for(job.started._mock_waited, 5)
 
     job_task.cancel()
     await job_task
-
     await assert_scheduler_events(
         scheduler,
         [
@@ -101,7 +102,7 @@ async def test_submitted_job_is_cancelled(realization, mock_event):
             JobState.ABORTED,
         ],
     )
-    scheduler.driver.kill.assert_called_with(job.iens)
+    scheduler.driver.kill.assert_called_with([job.iens])
     scheduler.driver.kill.assert_called_once()
 
 
@@ -648,7 +649,7 @@ async def test_job_logs_timeouts_from_individual_methods(
     )
 
 
-@pytest.mark.timeout(5)
+@pytest.mark.timeout(10)
 async def test_killing_job_while_submitting_waits_for_submit_to_be_done(realization):
     """This test is to make sure driver.submit calls are shielded from being
     cancelled if we terminate in the middle of submitting jobs. This was a bug
@@ -659,7 +660,7 @@ async def test_killing_job_while_submitting_waits_for_submit_to_be_done(realizat
     job = Job(scheduler, realization)
     job.WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL = 0
     job._requested_max_submit = 1
-
+    job._was_killed_by_scheduler.set()
     job_started_submitting = asyncio.Event()
     job_finished_submitting = asyncio.Event()
     job_waited_for_submitting_to_finish = asyncio.Event()
@@ -680,7 +681,7 @@ async def test_killing_job_while_submitting_waits_for_submit_to_be_done(realizat
     scheduler.driver.kill.assert_not_called()
     job_finished_submitting.set()
     await asyncio.wait_for(job_waited_for_submitting_to_finish.wait(), timeout=5)
-    await job_task
+    await asyncio.wait_for(job_task, timeout=5)
 
     await assert_scheduler_events(
         scheduler,
@@ -691,7 +692,7 @@ async def test_killing_job_while_submitting_waits_for_submit_to_be_done(realizat
             JobState.ABORTED,
         ],
     )
-    scheduler.driver.kill.assert_called_with(job.iens)
+    scheduler.driver.kill.assert_called_with([job.iens])
     scheduler.driver.kill.assert_called_once()
 
 
@@ -707,7 +708,7 @@ async def test_killing_job_submitting_waits_for_submit_to_be_done_does_not_hang(
     job.WAIT_PERIOD_FOR_SUBMIT_TO_FINISH = 0.1
     job.WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL = 0
     job._requested_max_submit = 1
-
+    job._was_killed_by_scheduler.set()
     job_started_submitting = asyncio.Event()
     job_finished_submitting = asyncio.Event()
     submit_was_cancelled = asyncio.Event()
@@ -741,10 +742,45 @@ async def test_killing_job_submitting_waits_for_submit_to_be_done_does_not_hang(
             JobState.ABORTED,
         ],
     )
-    scheduler.driver.kill.assert_called_with(job.iens)
+    scheduler.driver.kill.assert_called_with([job.iens])
     scheduler.driver.kill.assert_called_once()
     assert (
         f"Realization {job.iens} was partially submitted and "
         "could not be terminated. Please check manually."
     ) in caplog.text
     assert "Killing it with the driver" not in caplog.text
+
+
+@pytest.mark.timeout(10)
+async def test_killing_job_does_not_hang_on_waiting_for_scheduler_to_kill_in_batches(
+    realization, caplog, mock_event
+):
+    """This test is to make sure the job does not hang forever on waiting for
+    the scheduler to run batch killing via driver, and set the flag.
+    """
+    scheduler = create_scheduler()
+    job = Job(scheduler, realization)
+    job.WAIT_PERIOD_FOR_SCHEDULER_TO_KILL_IN_BATCH = 0
+    job.WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL = 0
+    job._requested_max_submit = 1
+
+    job_task = asyncio.create_task(job._submit_and_run_once(asyncio.BoundedSemaphore()))
+    job.started = mock_event()
+    await asyncio.wait_for(job.started._mock_waited, 5)
+    job_task.cancel()
+    await asyncio.wait_for(job_task, timeout=5)
+    await assert_scheduler_events(
+        scheduler,
+        [
+            JobState.WAITING,
+            JobState.SUBMITTING,
+            JobState.PENDING,
+            JobState.ABORTING,
+            JobState.ABORTED,
+        ],
+    )
+    scheduler.driver.kill.assert_called_once_with([job.iens])
+    assert (
+        f"Realization {job.iens} did not get confirmation from "
+        "scheduler that the batch killing with driver ran successfully."
+    ) in caplog.text
