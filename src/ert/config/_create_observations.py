@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING
@@ -45,13 +44,6 @@ class ObsVector:
     observation_key: str
     data_key: str
     observations: dict[int | datetime, GenObservation | SummaryObservation]
-
-    def __iter__(self) -> Iterable[SummaryObservation | GenObservation]:
-        """Iterate over active report steps; return node"""
-        return iter(self.observations.values())
-
-    def __len__(self) -> int:
-        return len(self.observations)
 
     def to_dataset(self, active_list: list[int]) -> pl.DataFrame:
         if self.observation_type == ObservationType.GENERAL:
