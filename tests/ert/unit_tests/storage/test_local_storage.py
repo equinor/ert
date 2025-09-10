@@ -24,13 +24,11 @@ from pandas import DataFrame, ExcelWriter
 
 from ert.config import (
     DesignMatrix,
-    EnkfObs,
     ErtConfig,
     ExtParamConfig,
     Field,
     GenDataConfig,
     GenKwConfig,
-    ObservationType,
     ParameterConfig,
     ResponseConfig,
     SummaryConfig,
@@ -38,8 +36,6 @@ from ert.config import (
 )
 from ert.config.design_matrix import DESIGN_MATRIX_GROUP
 from ert.config.gen_kw_config import TransformFunctionDefinition
-from ert.config.general_observation import GenObservation
-from ert.config.observation_vector import ObsVector
 from ert.sample_prior import sample_prior
 from ert.storage import (
     ErtStorageException,
@@ -489,11 +485,18 @@ def add_to_name(prefix: str):
     return _inner
 
 
+words = st.text(
+    min_size=1,
+    max_size=8,
+    alphabet=st.characters(min_codepoint=ord("A"), max_codepoint=ord("Z")),
+)
+
+
 parameter_configs = st.lists(
     st.one_of(
         st.builds(
             GenKwConfig,
-            name=st.text(),
+            name=words,
             update=st.booleans(),
             forward_init=st.booleans(),
             transform_function_definitions=st.just([]),
@@ -535,53 +538,30 @@ response_configs = st.lists(
 ensemble_sizes = st.integers(min_value=1, max_value=1000)
 coordinates = st.integers(min_value=1, max_value=100)
 
-words = st.text(
-    min_size=1,
-    max_size=8,
-    alphabet=st.characters(min_codepoint=ord("A"), max_codepoint=ord("Z")),
-)
 
-gen_observations = st.integers(min_value=1, max_value=10).flatmap(
-    lambda size: st.builds(
-        GenObservation,
-        values=arrays(np.double, shape=size),
-        stds=arrays(
-            np.double,
-            elements=st.floats(min_value=0.1, max_value=1.0),
-            shape=size,
+def vectors(elements, size):
+    return st.lists(elements, min_size=size, max_size=size)
+
+
+observations = (
+    st.integers(min_value=0, max_value=10)
+    .flatmap(
+        lambda num_observations: st.fixed_dictionaries(
+            {
+                "observation_key": vectors(words, num_observations),
+                "response_key": vectors(words, num_observations),
+                "report_step": vectors(
+                    st.integers(min_value=1, max_value=10000), num_observations
+                ),
+                "index": vectors(
+                    st.integers(min_value=1, max_value=10000), num_observations
+                ),
+                "observations": vectors(st.floats(width=32), num_observations),
+                "std": vectors(st.floats(width=32), num_observations),
+            }
         ),
-        indices=arrays(
-            np.int64,
-            elements=st.integers(min_value=0, max_value=100),
-            shape=size,
-        ),
-        std_scaling=arrays(np.double, shape=size),
     )
-)
-
-observations = st.builds(
-    EnkfObs,
-    obs_vectors=st.dictionaries(
-        words,
-        st.builds(
-            ObsVector,
-            observation_type=st.just(ObservationType.GENERAL),
-            observation_key=words,
-            data_key=words,
-            observations=st.dictionaries(
-                st.integers(min_value=0, max_value=200),
-                gen_observations,
-                min_size=1,
-                max_size=1,
-            ),
-        ),
-    ),
-    obs_time=st.lists(
-        st.datetimes(
-            min_value=datetime.strptime("1969-1-1", "%Y-%m-%d"),
-            max_value=datetime.strptime("3000-1-1", "%Y-%m-%d"),
-        )
-    ),
+    .map(lambda df: {"gen_data": pl.DataFrame(df)})
 )
 
 small_ints = st.integers(min_value=1, max_value=10)
@@ -1137,7 +1117,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         state = StatefulStorageTest()
         v1 = state.create_grid(egrid=EGrid(...))
         v2 = state.create_field_list(fields=[...])
-        v3 = state.create_experiment(obs=EnkfObs(...), parameters=[...], responses=[...])
+        v3 = state.create_experiment(obs=(...), parameters=[...], responses=[...])
         v4 = state.create_ensemble(ensemble_size=1, model_experiment=v3)
         v5 = state.create_ensemble_from_prior(prior=v4)
         state.get_ensemble(model_ensemble=v5)
@@ -1147,7 +1127,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
     the same action storage api endpoint: self.storage.create_experiment), and which
     parameters are applied (e.g. v1 is in the grid bundle and is created by the rule
     state.create_grid).
-    """  # noqa: E501
+    """
 
     def __init__(self) -> None:
         super().__init__()
@@ -1210,17 +1190,17 @@ class StatefulStorageTest(RuleBasedStateMachine):
         self,
         parameters: list[ParameterConfig],
         responses: list[ResponseConfig],
-        obs: EnkfObs,
+        obs,
     ):
         experiment_id = self.storage.create_experiment(
             parameters=parameters,
             responses=responses,
-            observations=obs.datasets,
+            observations=obs,
         ).id
         model_experiment = Experiment(experiment_id)
         model_experiment.parameters = parameters
         model_experiment.responses = responses
-        model_experiment.observations = obs.datasets
+        model_experiment.observations = obs
 
         # Ensure that there is at least one ensemble in the experiment
         # to avoid https://github.com/equinor/ert/issues/7040
