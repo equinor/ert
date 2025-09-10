@@ -646,3 +646,105 @@ async def test_job_logs_timeouts_from_individual_methods(
         f"{method_to_test} timed out after waiting "
         f"{Job.DEFAULT_FILE_VERIFICATION_TIMEOUT} seconds for files" in caplog.text
     )
+
+
+@pytest.mark.timeout(5)
+async def test_killing_job_while_submitting_waits_for_submit_to_be_done(realization):
+    """This test is to make sure driver.submit calls are shielded from being
+    cancelled if we terminate in the middle of submitting jobs. This was a bug
+    where jobs would be submitted, and we had no way of cancelling them as we
+    had not gotten the job_id yet.
+    """
+    scheduler = create_scheduler()
+    job = Job(scheduler, realization)
+    job.WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL = 0
+    job._requested_max_submit = 1
+
+    job_started_submitting = asyncio.Event()
+    job_finished_submitting = asyncio.Event()
+    job_waited_for_submitting_to_finish = asyncio.Event()
+
+    async def mock_slow_driver_submit(*args, **kwargs) -> None:
+        nonlocal job_started_submitting, job_finished_submitting
+        job_started_submitting.set()
+        await job_finished_submitting.wait()
+        job_waited_for_submitting_to_finish.set()
+
+    scheduler.driver.submit = mock_slow_driver_submit
+    job_task = asyncio.create_task(job._submit_and_run_once(asyncio.BoundedSemaphore()))
+
+    await asyncio.wait_for(job_started_submitting.wait(), timeout=5)
+    job_task.cancel()
+    await asyncio.sleep(0)  # Manually yield for task.cancel() to propagate
+    # driver.kill should not be called before submit is finished
+    scheduler.driver.kill.assert_not_called()
+    job_finished_submitting.set()
+    await asyncio.wait_for(job_waited_for_submitting_to_finish.wait(), timeout=5)
+    await job_task
+
+    await assert_scheduler_events(
+        scheduler,
+        [
+            JobState.WAITING,
+            JobState.SUBMITTING,
+            JobState.ABORTING,
+            JobState.ABORTED,
+        ],
+    )
+    scheduler.driver.kill.assert_called_with(job.iens)
+    scheduler.driver.kill.assert_called_once()
+
+
+@pytest.mark.timeout(5)
+async def test_killing_job_submitting_waits_for_submit_to_be_done_does_not_hang(
+    realization, caplog
+):
+    """This test is to make sure the shielded driver.submit call will time out
+    after a while, as not to cause everything to hang.
+    """
+    scheduler = create_scheduler()
+    job = Job(scheduler, realization)
+    job.WAIT_PERIOD_FOR_SUBMIT_TO_FINISH = 0.1
+    job.WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL = 0
+    job._requested_max_submit = 1
+
+    job_started_submitting = asyncio.Event()
+    job_finished_submitting = asyncio.Event()
+    submit_was_cancelled = asyncio.Event()
+
+    async def mock_slow_driver_submit(*args, **kwargs) -> None:
+        try:
+            job_started_submitting.set()
+            await asyncio.sleep(5)
+            job_finished_submitting.set()
+        except asyncio.CancelledError:
+            submit_was_cancelled.set()
+            raise
+
+    scheduler.driver.submit = mock_slow_driver_submit
+    job_task = asyncio.create_task(job._submit_and_run_once(asyncio.BoundedSemaphore()))
+
+    await asyncio.wait_for(job_started_submitting.wait(), timeout=5)
+    job_task.cancel()
+    await asyncio.sleep(0)  # Manually yield for task.cancel() to propagate
+    # driver.kill should not be called before submit is timed out
+    scheduler.driver.kill.assert_not_called()
+    await asyncio.wait_for(job_task, timeout=5)
+    assert not job_finished_submitting.is_set()
+    assert submit_was_cancelled.is_set()
+    await assert_scheduler_events(
+        scheduler,
+        [
+            JobState.WAITING,
+            JobState.SUBMITTING,
+            JobState.ABORTING,
+            JobState.ABORTED,
+        ],
+    )
+    scheduler.driver.kill.assert_called_with(job.iens)
+    scheduler.driver.kill.assert_called_once()
+    assert (
+        f"Realization {job.iens} was partially submitted and "
+        "could not be terminated. Please check manually."
+    ) in caplog.text
+    assert "Killing it with the driver" not in caplog.text
