@@ -154,6 +154,10 @@ class EnsembleSnapshot:
         for real_id, other_real_data in ensemble._realization_snapshots.items():
             self._realization_snapshots[real_id].update(other_real_data)
         for fm_step_id, other_fm_data in ensemble._fm_step_snapshots.items():
+            if (
+                previous_error := self._fm_step_snapshots[fm_step_id].get("error")
+            ) and other_fm_data.get("error") == FORWARD_MODEL_TERMINATED_MSG:
+                other_fm_data["error"] = previous_error
             self._fm_step_snapshots[fm_step_id].update(other_fm_data)
         return self
 
