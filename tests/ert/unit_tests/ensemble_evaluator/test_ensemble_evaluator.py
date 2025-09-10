@@ -625,7 +625,7 @@ async def test_signal_cancel_terminates_fm_dispatcher_with_scheduler_as_fallback
     assert isinstance(evaluator._evaluation_result.exception(), UserCancelled)
     assert (
         "Realization 0 was not killed gracefully by TERM message. "
-        "Killing it with the scheduler"
+        "Killing it with the driver"
     ) in caplog.text
 
 
