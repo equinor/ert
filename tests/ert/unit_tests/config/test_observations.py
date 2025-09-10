@@ -163,15 +163,15 @@ def test_that_using_summary_observations_without_eclbase_shows_user_error():
 @given(
     summary=summaries(summary_keys=st.just(["FOPR", "FOPRH"])),
     value=st.floats(min_value=-1e9, max_value=1e9),
+    data=st.data(),
 )
 def test_that_summary_observations_can_use_restart_for_index_if_refcase_is_given(
-    tmp_path_factory: TempPathFactory, summary, value
+    tmp_path_factory: TempPathFactory, summary, value, data
 ):
     with MonkeyPatch.context() as patch:
         patch.chdir(tmp_path_factory.mktemp("history_observation_values_are_fetched"))
-        restart = 1
         smspec, unsmry = summary
-        assume(len(unsmry.steps) > restart)
+        restart = data.draw(st.integers(min_value=1, max_value=len(unsmry.steps)))
         smspec.to_file("ECLIPSE_CASE.SMSPEC")
         unsmry.to_file("ECLIPSE_CASE.UNSMRY")
         observations = ErtConfig.from_dict(
@@ -326,17 +326,13 @@ def test_that_the_date_keyword_sets_the_general_index_by_looking_up_time_map():
     assert list(observations["report_step"]) == [restart]
 
 
-@given(
-    summary=summaries(),
-)
+@given(summary=summaries(), data=st.data())
 def test_that_the_date_keyword_sets_the_report_step_by_looking_up_refcase(
-    tmp_path_factory: TempPathFactory, summary
+    tmp_path_factory: TempPathFactory, summary, data
 ):
     with MonkeyPatch.context() as patch:
         patch.chdir(tmp_path_factory.mktemp("history_observation_values_are_fetched"))
-        restart = 2
         smspec, unsmry = summary
-        assume(len(unsmry.steps) > restart)
         smspec.to_file("ECLIPSE_CASE.SMSPEC")
         unsmry.to_file("ECLIPSE_CASE.UNSMRY")
         start_date = smspec.start_date.to_datetime()
@@ -351,6 +347,8 @@ def test_that_the_date_keyword_sets_the_report_step_by_looking_up_refcase(
                 for t in time_map
             ],
         ]
+        assume(len(time_map) > 2)
+        restart = data.draw(st.integers(min_value=2, max_value=len(time_map) - 1))
         observations = ErtConfig.from_dict(
             {
                 "REFCASE": "ECLIPSE_CASE",

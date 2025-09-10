@@ -1,12 +1,9 @@
 import os
-import pathlib
-from datetime import datetime
 
 import numpy as np
 import polars as pl
 import pytest
 
-from ert.config import ErtConfig
 from ert.data import MeasuredData
 from ert.data._measured_data import ResponseError
 from ert.libres_facade import LibresFacade
@@ -45,26 +42,6 @@ def test_summary_obs(create_measured_data):
         summary_obs.data.columns.get_level_values("key_index").values[0]
         == "2011-12-21 00:00:00.000"
     )
-
-
-@pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
-@pytest.mark.usefixtures("copy_snake_oil_case")
-@pytest.mark.parametrize("formatted_date", ["2015-06-23", "23/06/2015"])
-def test_summary_obs_last_entry(formatted_date):
-    obs_file = pathlib.Path.cwd() / "observations" / "observations.txt"
-    with obs_file.open(mode="w") as fin:
-        fin.write(
-            "\n"
-            "SUMMARY_OBSERVATION LAST_DATE\n"
-            "{\n"
-            "   VALUE   = 10;\n"
-            "   ERROR   = 0.1;\n"
-            f"   DATE    = {formatted_date};\n"
-            "   KEY     = FOPR;\n"
-            "};\n"
-        )
-    observation = ErtConfig.from_file("snake_oil.ert").enkf_obs
-    assert list(observation["LAST_DATE"].observations) == [datetime(2015, 6, 23, 0, 0)]
 
 
 def test_gen_obs(create_measured_data):
