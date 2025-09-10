@@ -247,7 +247,7 @@ class PlotWindow(QMainWindow):
             if "FIELD" in key_def.metadata["data_origin"]:
                 plot_widget.showLayerWidget.emit(True)
 
-                layers = key_def.metadata["nz"]
+                layers = key_def.metadata["ertbox_params"]["nz"]
                 plot_widget.updateLayerWidget.emit(layers)
 
                 if layer is None:

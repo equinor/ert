@@ -47,7 +47,10 @@ _________________________________________     _____    ____________________
 def test_ensemble_config_fails_on_non_sensical_grid_file():
     grid_file = Path("CEST_PAS_UNE_GRID")
     grid_file.write_text("a_grid_maybe?", encoding="utf-8")
-    with pytest.raises(expected_exception=ConfigValidationError, match=str(grid_file)):
+    with pytest.raises(
+        expected_exception=ConfigValidationError,
+        match=r"Only EGRID and GRID formats are supported",
+    ):
         EnsembleConfig.from_dict(config_dict={ConfigKeys.GRID: grid_file})
 
 
@@ -154,7 +157,7 @@ def test_that_empty_grid_file_raises(tmpdir):
 
         with pytest.raises(
             expected_exception=ConfigValidationError,
-            match="did not contain dimensions",
+            match=r"Only EGRID and GRID formats are supported",
         ):
             _ = ErtConfig.from_file("config.ert")
 

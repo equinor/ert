@@ -25,7 +25,6 @@ from ert.storage import (
     RealizationStorageState,
     load_realization_parameters_and_responses,
 )
-from tests.ert.unit_tests.config.egrid_generator import simple_grid
 from tests.ert.unit_tests.config.summary_generator import simple_smspec, simple_unsmry
 
 
@@ -853,7 +852,8 @@ def save_zeros(prior_ensemble, num_realizations, dim_size):
 def test_when_manifest_files_are_written_loading_succeeds(storage, itr):
     num_realizations = 2
     dim_size = 2
-    simple_grid().to_file("GRID.EGRID")
+    grid = xtgeo.create_box_grid((2, 2, 2))
+    grid.to_file("GRID.EGRID", fformat="egrid")
     Path("base.irap").write_text("", encoding="utf-8")
     xtgeo.RegularSurface(ncol=dim_size, nrow=dim_size, xinc=1, yinc=1).to_file(
         "base.irap", fformat="irap_ascii"

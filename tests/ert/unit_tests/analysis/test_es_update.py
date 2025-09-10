@@ -23,7 +23,7 @@ from ert.config import (
     ObservationSettings,
     OutlierSettings,
 )
-from ert.field_utils import Shape
+from ert.field_utils import Shape, calculate_ertbox_parameters
 from ert.storage import Ensemble, open_storage
 
 
@@ -678,9 +678,11 @@ def test_temporary_parameter_storage_with_inactive_fields(
     grid.set_actnum(mask)
     grid.to_file("MY_EGRID.EGRID", "egrid")
 
+    ertbox_params = calculate_ertbox_parameters(grid)
+
     config = Field.from_config_list(
         "MY_EGRID.EGRID",
-        shape,
+        ertbox_params,
         [
             param_group,
             param_group,
