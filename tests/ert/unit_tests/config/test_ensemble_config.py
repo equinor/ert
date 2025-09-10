@@ -154,7 +154,7 @@ def test_that_empty_grid_file_raises(tmpdir):
 
         with pytest.raises(
             expected_exception=ConfigValidationError,
-            match="did not contain dimensions",
+            match="Could not read grid file",
         ):
             _ = ErtConfig.from_file("config.ert")
 

@@ -9,7 +9,7 @@ import xtgeo
 from ert.config import ConfigValidationError, ConfigWarning, Field
 from ert.config.field import TRANSFORM_FUNCTIONS
 from ert.config.parsing import init_user_config_schema, parse_contents
-from ert.field_utils import FieldFileFormat, Shape, read_field
+from ert.field_utils import ErtboxParameters, FieldFileFormat, Shape, read_field
 from ert.sample_prior import sample_prior
 
 
@@ -179,6 +179,11 @@ def grid_shape():
 
 
 @pytest.fixture
+def ertbox_params():
+    return ErtboxParameters(2, 3, 4, 1, 1, 1, 1, 1, (0, 0))
+
+
+@pytest.fixture
 def egrid_file(tmp_path, grid_shape):
     grid = xtgeo.create_box_grid(
         dimension=(grid_shape.nx, grid_shape.ny, grid_shape.nz)
@@ -188,11 +193,11 @@ def egrid_file(tmp_path, grid_shape):
 
 
 @pytest.fixture
-def parse_field_line(grid_shape, egrid_file):
+def parse_field_line(ertbox_params, egrid_file):
     def make_field(field_line):
         return Field.from_config_list(
             egrid_file,
-            grid_shape,
+            ertbox_params,
             parse_contents(
                 f"NUM_REALIZATIONS 1\nGRID {egrid_file}\n" + field_line,
                 init_user_config_schema(),
