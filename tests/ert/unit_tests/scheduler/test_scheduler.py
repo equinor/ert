@@ -110,7 +110,7 @@ async def test_cancel(realization, mock_driver):
 
     driver = mock_driver(wait=wait, kill=kill)
     sch = scheduler.Scheduler(driver, [realization])
-
+    sch.BATCH_KILLING_INTERVAL = 0.1
     scheduler_task = asyncio.create_task(sch.execute())
 
     # Wait for the job to start
@@ -210,7 +210,7 @@ async def test_max_runtime(realization, mock_driver, caplog):
     realization.max_runtime = 1
 
     sch = scheduler.Scheduler(mock_driver(wait=wait), [realization])
-
+    sch.BATCH_KILLING_INTERVAL = 0.1
     scheduler_finished_successfully = await asyncio.create_task(sch.execute())
     assert wait_started.is_set()
     assert scheduler_finished_successfully
@@ -241,6 +241,7 @@ async def test_no_resubmit_on_max_runtime_kill(realization, mock_driver):
     sch = scheduler.Scheduler(
         mock_driver(init=init, wait=wait), [realization], max_submit=2
     )
+    sch.BATCH_KILLING_INTERVAL = 0.1
     assert await sch.execute()
 
     assert retries == 1
@@ -307,6 +308,7 @@ async def test_max_runtime_while_killing(monkeypatch, realization, mock_driver):
 
     realization.max_runtime = 1
     sch = scheduler.Scheduler(mock_driver(wait=wait, kill=kill), [realization])
+    sch.BATCH_KILLING_INTERVAL = 0.1
 
     scheduler_task = asyncio.create_task(sch.execute())
 
@@ -355,7 +357,7 @@ async def test_that_job_does_not_retry_when_killed_by_scheduler(
     sch = scheduler.Scheduler(
         mock_driver(wait=wait, kill=kill), [realization], max_submit=2
     )
-
+    sch.BATCH_KILLING_INTERVAL = 0.1
     scheduler_task = asyncio.create_task(sch.execute())
 
     await kill_me.wait()
@@ -431,7 +433,7 @@ async def test_that_failed_realization_will_not_be_cancelled(
 
     driver = mock_driver(wait=wait, kill=kill)
     sch = scheduler.Scheduler(driver, [realization])
-
+    sch.BATCH_KILLING_INTERVAL = 0.1
     scheduler_task = asyncio.create_task(sch.execute())
 
     await started.wait()
@@ -473,7 +475,7 @@ async def test_that_long_running_jobs_were_stopped(
         realizations,
         max_running=ensemble_size,
     )
-
+    sch.BATCH_KILLING_INTERVAL = 0.1
     assert await sch.execute(min_required_realizations=5)
 
     stop_long_running_events_found = 0
@@ -599,7 +601,7 @@ async def test_that_driver_poll_exceptions_are_propagated(
     driver = mock_driver()
     driver.poll = partial(mock_failure, "Status polling failed")
     sch = scheduler.Scheduler(driver, [realization])
-
+    sch.BATCH_KILLING_INTERVAL = 0.1
     with pytest.raises(RuntimeError, match="Status polling failed"):
         await sch.execute()
 
@@ -611,6 +613,7 @@ async def test_that_publisher_exceptions_are_propagated(
     driver = mock_driver()
     monkeypatch.setattr(asyncio.Queue, "get", partial(mock_failure, "Publisher failed"))
     sch = scheduler.Scheduler(driver, [realization])
+    sch.BATCH_KILLING_INTERVAL = 0.1
     with pytest.raises(RuntimeError, match="Publisher failed"):
         await sch.execute()
 
@@ -625,7 +628,7 @@ async def test_that_process_event_queue_exceptions_are_propagated(
     driver = mock_driver()
 
     sch = scheduler.Scheduler(driver, [realization])
-
+    sch.BATCH_KILLING_INTERVAL = 0.1
     with pytest.raises(RuntimeError, match="Processing event queue failed"):
         await sch.execute()
 

@@ -69,6 +69,7 @@ class Job:
 
     DEFAULT_FILE_VERIFICATION_TIMEOUT = 120
     WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL = 5
+    WAIT_PERIOD_FOR_SUBMIT_TO_FINISH = 5
 
     def __init__(self, scheduler: Scheduler, real: Realization) -> None:
         self.real = real
@@ -85,6 +86,7 @@ class Job:
         self._previous_file_verification_time = self._remaining_file_verification_time
         self._started_killing_by_evaluator: bool = False
         self._was_killed_by_evaluator = asyncio.Event()
+        self._was_killed_by_scheduler = asyncio.Event()
 
     @property
     def remaining_file_verification_time(self) -> int:
@@ -129,22 +131,25 @@ class Job:
         await self._send(JobState.WAITING)
         await sem.acquire()
         timeout_task: asyncio.Task[None] | None = None
-
+        submit_task: asyncio.Task[None] | None = None
         try:
             if self._scheduler.submit_sleep_state:
                 await self._scheduler.submit_sleep_state.sleep_until_we_can_submit()
             await self._send(JobState.SUBMITTING)
             self.submit_time = time.time()
             try:
-                await self.driver.submit(
-                    self.real.iens,
-                    self.real.job_script,
-                    self.real.run_arg.runpath,
-                    num_cpu=self.real.num_cpu,
-                    realization_memory=self.real.realization_memory,
-                    name=self.real.run_arg.job_name,
-                    runpath=Path(self.real.run_arg.runpath),
+                submit_task = asyncio.create_task(
+                    self.driver.submit(
+                        self.real.iens,
+                        self.real.job_script,
+                        self.real.run_arg.runpath,
+                        num_cpu=self.real.num_cpu,
+                        realization_memory=self.real.realization_memory,
+                        name=self.real.run_arg.job_name,
+                        runpath=Path(self.real.run_arg.runpath),
+                    )
                 )
+                await asyncio.shield(submit_task)
             except FailedSubmit as err:
                 await self._send(JobState.FAILED)
                 logger.error(f"Failed to submit: {err}")
@@ -169,20 +174,45 @@ class Job:
             await self.returncode
 
         except asyncio.CancelledError:
+            if submit_task is not None:
+                try:
+                    await asyncio.wait_for(
+                        submit_task, timeout=self.WAIT_PERIOD_FOR_SUBMIT_TO_FINISH
+                    )
+                except TimeoutError:
+                    logger.warning(
+                        f"Realization {self.iens} did not finish "
+                        f"submitting within {self.WAIT_PERIOD_FOR_SUBMIT_TO_FINISH}s. "
+                        "It might be necessary to manually kill the job"
+                    )
             await self._send(JobState.ABORTING)
+            was_submitted = False
+            if submit_task is not None:
+                try:
+                    await asyncio.wait_for(
+                        submit_task, timeout=self.WAIT_PERIOD_FOR_SUBMIT_TO_FINISH
+                    )
+                    was_submitted = True
+                except TimeoutError:
+                    logger.warning(
+                        f"Realization {self.iens} was partially submitted and "
+                        "could not be terminated. Please check manually."
+                    )
             killed_by_evaluator = False
-            if self._started_killing_by_evaluator:
+            if self._started_killing_by_evaluator and was_submitted:
                 with suppress(asyncio.TimeoutError):
                     killed_by_evaluator = await asyncio.wait_for(
                         self._was_killed_by_evaluator.wait(),
                         timeout=self.WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL,
                     )
             if not killed_by_evaluator:
-                logger.warning(
-                    f"Realization {self.iens} was not killed gracefully by "
-                    "TERM message. Killing it with the scheduler"
-                )
-                await self.driver.kill(self.iens)
+                if was_submitted:
+                    logger.warning(
+                        f"Realization {self.iens} was not killed gracefully by "
+                        "TERM message. Killing it with the scheduler"
+                    )
+                await self._scheduler.schedule_kill(self.iens)
+                await self._was_killed_by_scheduler.wait()
             else:
                 logger.info(f"Realization {self.iens} was killed by the evaluator")
             with suppress(asyncio.CancelledError):

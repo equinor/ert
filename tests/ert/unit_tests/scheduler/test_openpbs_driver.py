@@ -253,9 +253,9 @@ async def test_faulty_qstat(monkeypatch, tmp_path, qstat_script, started_expecte
 
     was_started = False
 
-    async def started(iens):
+    async def started(realizations: list[int]):
         nonlocal was_started
-        if iens == 0:
+        if realizations[0] == 0:
             was_started = True
 
     with contextlib.suppress(asyncio.TimeoutError):
@@ -404,8 +404,8 @@ async def test_that_qdel_will_retry_and_succeed(
     driver = OpenPBSDriver()
     driver._max_pbs_cmd_attempts = 2
     driver._sleep_time_between_cmd_retries = 0.2
-    driver._iens2jobid[0] = 111
-    await driver.kill(0)
+    driver._iens2jobid[0] = str(111)
+    await driver.kill([0])
     assert "TRIED" in (bin_path / "script_try").read_text()
     if exit_code == QDEL_JOB_HAS_FINISHED:
         # the job has been already qdel-ed so no need to retry
@@ -533,7 +533,7 @@ async def test_that_kill_does_not_log_error_for_finished_realization(
 
     driver.poll = mock_poll
     await driver.poll()
-    await driver.kill(0)
+    await driver.kill([0])
 
     assert "kill" not in capsys.readouterr().out
     assert "kill" not in capsys.readouterr().err
