@@ -58,23 +58,36 @@ long as the optimization process is running.
 
 EVEREST vs. ERT data models
 ===========================
-EVEREST uses ERT for running an `experiment`. An `experiment` contains several `batches` (i.e., `ensembles`).
-An `ensemble` / `batch` contains inputs & computed outputs for several `realizations`, denoted as `simulations` in EVEREST.
-EVEREST `controls` are mapped to ERT `parameters` and serve as input to each forward model evaluation.
-ERT generates `responses` for each forward model evaluation in the `batch`.
-ERT writes these `responses` to storage in the `simulation_results` folder (per `batch` and per `realization`).
-These `responses` are mapped to `objectives` and `constraints` in EVEREST and forwarded to `ropt` (i.e., the optimizer).
-To summarize, every forward model evaluation for a single set of inputs/parameters (`controls`) and generated outputs/responses (`objectives` / `constraints`)
-constitutes an ERT `realization` (`simulation` in EVEREST).
+EVEREST uses ERT for running an `experiment`. An `experiment` contains several
+`batches`, which are implemented by ERT `ensembles`. A `batch` contains inputs &
+computed outputs for several model realizations, each of which may contain
+multiple `simulations` that correspond to either function evaluations, or to
+perturbations. Each of these correspond to a single forward model evaluation
+implemented as an ERT `realization`. EVEREST `controls` are mapped to ERT
+`parameters` and serve as input to each forward model evaluation. ERT generates
+`responses` for each forward model evaluation in the `batch`. ERT writes these
+`responses` to storage in the `simulation_results` folder (per `batch` and per
+`realization`). These `responses` are mapped to `objectives` and `constraints`
+in EVEREST and forwarded to `ropt` (i.e., the optimizer). To summarize, every
+forward model evaluation for a single set of inputs/parameters (`controls`) and
+generated outputs/responses (`objectives` / `constraints`) constitutes an ERT
+`realization` (a `simulation` in EVEREST).
 
-For `controls` in EVEREST, there is a distinction between `unperturbed controls` (i.e., `controls` of the current best solution
-yielding the best objective function value(s), see also :ref:`opt-process-label`) and
-`perturbed controls` (i.e., required to calculate the `gradient`). Furthermore, when performing robust optimization a `batch` contains
-multiple `model_realizations` (denoted by `<MODEL_ID>`). A `model_realization` is a set of `static` variables (i.e., not changing
-during the optimization) which affect the response of the underlying optimized model (NOTE: `model_realization` is not the same as an
-ERT `realization`; see also :ref:`robust-optimization-label`). Each `model_realization` can contain several `simulations`
-(i.e., forward model runs). This is the key difference between the hierarchical data model of EVEREST and ERT (Fig 3).
-NOTE: `<MODEL_ID>` (or `<GEO_ID>` due to legacy reasons) is inserted (and substituted) in the `run_path` for each `model_realization`.
+In EVEREST, there is a distinction between function `evaluations` and
+`perturbations`. The former are requested directly by the optimizer during
+optimization, while the latter are used to calculate the gradients, which are
+also needed by the optimizer. (see also :ref:`opt-process-label`). Furthermore,
+when performing robust optimization a `batch` contains multiple
+`model_realizations` (denoted by `<MODEL_ID>`). A `model_realization` is a set
+of `static` variables (i.e., not changing during the optimization) which affect
+the response of the underlying optimized model (NOTE: `model_realization` is not
+the same as an ERT `realization`; see also :ref:`robust-optimization-label`).
+Each `model_realization` can contain several `simulations` (i.e., forward model
+runs). This is the key difference between the hierarchical data model of EVEREST
+and ERT (Fig 3).
+
+NOTE: `<MODEL_ID>` (or `<GEO_ID>` due to legacy reasons) is
+inserted (and substituted) in the `run_path` for each `model_realization`.
 
 .. figure:: images/Everest_vs_Ert_01.png
     :align: center
