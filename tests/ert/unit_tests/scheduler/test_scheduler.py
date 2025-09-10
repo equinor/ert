@@ -1,12 +1,13 @@
 import asyncio
 import itertools
 import json
+import logging
 import random
 import shutil
 import time
 from functools import partial
 from pathlib import Path
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -110,7 +111,7 @@ async def test_cancel(realization, mock_driver):
 
     driver = mock_driver(wait=wait, kill=kill)
     sch = scheduler.Scheduler(driver, [realization])
-
+    sch.BATCH_KILLING_INTERVAL = 0.1
     scheduler_task = asyncio.create_task(sch.execute())
 
     # Wait for the job to start
@@ -210,7 +211,7 @@ async def test_max_runtime(realization, mock_driver, caplog):
     realization.max_runtime = 1
 
     sch = scheduler.Scheduler(mock_driver(wait=wait), [realization])
-
+    sch.BATCH_KILLING_INTERVAL = 0.1
     scheduler_finished_successfully = await asyncio.create_task(sch.execute())
     assert wait_started.is_set()
     assert scheduler_finished_successfully
@@ -241,6 +242,7 @@ async def test_no_resubmit_on_max_runtime_kill(realization, mock_driver):
     sch = scheduler.Scheduler(
         mock_driver(init=init, wait=wait), [realization], max_submit=2
     )
+    sch.BATCH_KILLING_INTERVAL = 0.1
     assert await sch.execute()
 
     assert retries == 1
@@ -307,6 +309,7 @@ async def test_max_runtime_while_killing(monkeypatch, realization, mock_driver):
 
     realization.max_runtime = 1
     sch = scheduler.Scheduler(mock_driver(wait=wait, kill=kill), [realization])
+    sch.BATCH_KILLING_INTERVAL = 0.1
 
     scheduler_task = asyncio.create_task(sch.execute())
 
@@ -355,7 +358,7 @@ async def test_that_job_does_not_retry_when_killed_by_scheduler(
     sch = scheduler.Scheduler(
         mock_driver(wait=wait, kill=kill), [realization], max_submit=2
     )
-
+    sch.BATCH_KILLING_INTERVAL = 0.1
     scheduler_task = asyncio.create_task(sch.execute())
 
     await kill_me.wait()
@@ -431,7 +434,7 @@ async def test_that_failed_realization_will_not_be_cancelled(
 
     driver = mock_driver(wait=wait, kill=kill)
     sch = scheduler.Scheduler(driver, [realization])
-
+    sch.BATCH_KILLING_INTERVAL = 0.1
     scheduler_task = asyncio.create_task(sch.execute())
 
     await started.wait()
@@ -473,7 +476,7 @@ async def test_that_long_running_jobs_were_stopped(
         realizations,
         max_running=ensemble_size,
     )
-
+    sch.BATCH_KILLING_INTERVAL = 0.1
     assert await sch.execute(min_required_realizations=5)
 
     stop_long_running_events_found = 0
@@ -599,7 +602,7 @@ async def test_that_driver_poll_exceptions_are_propagated(
     driver = mock_driver()
     driver.poll = partial(mock_failure, "Status polling failed")
     sch = scheduler.Scheduler(driver, [realization])
-
+    sch.BATCH_KILLING_INTERVAL = 0.1
     with pytest.raises(RuntimeError, match="Status polling failed"):
         await sch.execute()
 
@@ -611,6 +614,7 @@ async def test_that_publisher_exceptions_are_propagated(
     driver = mock_driver()
     monkeypatch.setattr(asyncio.Queue, "get", partial(mock_failure, "Publisher failed"))
     sch = scheduler.Scheduler(driver, [realization])
+    sch.BATCH_KILLING_INTERVAL = 0.1
     with pytest.raises(RuntimeError, match="Publisher failed"):
         await sch.execute()
 
@@ -625,7 +629,7 @@ async def test_that_process_event_queue_exceptions_are_propagated(
     driver = mock_driver()
 
     sch = scheduler.Scheduler(driver, [realization])
-
+    sch.BATCH_KILLING_INTERVAL = 0.1
     with pytest.raises(RuntimeError, match="Processing event queue failed"):
         await sch.execute()
 
@@ -742,3 +746,145 @@ async def test_log_warnings_from_forward_model_is_run_once_per_ensemble(
     sch = scheduler.Scheduler(mock_driver(), realizations)
     await sch.execute()
     mocked_stdouterr_parser.assert_called_once()
+
+
+async def test_schedule_kills_in_batches(
+    tmp_path, mock_driver, monkeypatch, storage, caplog
+):
+    caplog.set_level(logging.INFO)
+    ensemble_size = 5
+    ensemble = storage.create_experiment().create_ensemble(
+        name="foo", ensemble_size=ensemble_size
+    )
+
+    realizations = [
+        create_stub_realization(ensemble, tmp_path, iens)
+        for iens in range(ensemble_size)
+    ]
+
+    next_batch_ready_event = asyncio.Event()
+    batch_done = asyncio.Event()
+
+    async def mock_wait_for_next_batch(self):
+        nonlocal next_batch_ready_event, batch_done
+        batch_done.set()
+        await next_batch_ready_event.wait()
+        # Clear it, so the next round will await it again
+        next_batch_ready_event.clear()
+        batch_done.clear()
+
+    monkeypatch.setattr(
+        scheduler.Scheduler, "_wait_for_next_batch", mock_wait_for_next_batch
+    )
+    mock_driver = MagicMock()
+    mock_driver.kill = AsyncMock()
+    sch = scheduler.Scheduler(mock_driver, realizations=realizations)
+
+    first_batch = True
+    batch_of_even_realizations = [i for i in range(ensemble_size) if i % 2 == 0]
+    batch_of_odd_realizations = [i for i in range(ensemble_size) if i % 2 == 1]
+    expected_batches = [batch_of_even_realizations, batch_of_odd_realizations]
+    for expected_batch in expected_batches:
+        for iens in expected_batch:
+            assert not sch._jobs[iens]._was_killed_by_scheduler.is_set()
+            await sch.schedule_kill(iens)
+            # Should not be set before the batch is actually killed
+            assert not sch._jobs[iens]._was_killed_by_scheduler.is_set()
+
+        if first_batch:
+            first_batch = False
+            # Should not call kill before batch is ready
+            mock_driver.kill.assert_not_called()
+        else:
+            assert not sch._kill_task.done()
+        next_batch_ready_event.set()
+        await batch_done.wait()
+        await asyncio.sleep(0.05)
+        assert (
+            f"Scheduler killing a batch of {len(expected_batch)} realizations"
+            in caplog.text
+        )
+        mock_driver.kill.assert_called_with(expected_batch)
+        for iens in expected_batch:
+            assert sch._jobs[iens]._was_killed_by_scheduler.is_set()
+
+    sch._stop_kill_task.set()
+    next_batch_ready_event.set()
+    if sch._kill_task is not None:
+        await sch._kill_task
+
+
+@pytest.mark.timeout(10)
+async def test_batch_killing_runs_batches_in_parallell(
+    tmp_path, mock_driver, monkeypatch, storage, caplog
+):
+    """This is a test that makes sure the batches run in parallell and not in series.
+    Previously, this ran in series, and caused jobs to time out as bkill of hundreds
+    of jobs at the same time often takes more than 10 seconds.
+    """
+    caplog.set_level(logging.INFO)
+    ensemble_size = 5
+    ensemble = storage.create_experiment().create_ensemble(
+        name="foo", ensemble_size=ensemble_size
+    )
+
+    realizations = [
+        create_stub_realization(ensemble, tmp_path, iens)
+        for iens in range(ensemble_size)
+    ]
+
+    next_batch_ready_event = asyncio.Event()
+
+    async def mock_wait_for_next_batch(self):
+        nonlocal next_batch_ready_event
+        await next_batch_ready_event.wait()
+        # Clear it, so the next round will await it again
+        next_batch_ready_event.clear()
+
+    monkeypatch.setattr(
+        scheduler.Scheduler, "_wait_for_next_batch", mock_wait_for_next_batch
+    )
+
+    driver_kill_call_count = 0
+    driver_kill_event = asyncio.Event()
+
+    async def mock_kill(*args, **kwargs) -> None:
+        nonlocal driver_kill_call_count, driver_kill_event
+        driver_kill_call_count += 1
+        await driver_kill_event.wait()
+
+    mock_driver = MagicMock()
+    mock_driver.kill = mock_kill
+    sch = scheduler.Scheduler(mock_driver, realizations=realizations)
+
+    for odd_or_even_reminder in [0, 1]:
+        expected_batch = [
+            i for i in range(ensemble_size) if i % 2 == odd_or_even_reminder
+        ]
+        for iens in expected_batch:
+            await sch.schedule_kill(iens)
+
+        next_batch_ready_event.set()
+        await asyncio.sleep(0.05)
+        assert (
+            f"Scheduler killing a batch of {len(expected_batch)} realizations"
+            in caplog.text
+        )
+
+    assert driver_kill_call_count == 2, (
+        "Batch killing did not run multiple batches in parallell"
+    )
+    # Multiple batches should now be waiting for this event to be set
+    driver_kill_event.set()
+    # Let batch killing continue and set was_killed_by_scheduler flag
+    await asyncio.sleep(0.05)
+    for odd_or_even_reminder in [0, 1]:
+        expected_batch = [
+            i for i in range(ensemble_size) if i % 2 == odd_or_even_reminder
+        ]
+        for iens in expected_batch:
+            assert sch._jobs[iens]._was_killed_by_scheduler.is_set()
+    sch._stop_kill_task.set()
+    next_batch_ready_event.set()
+    assert sch._kill_task is not None
+    await sch._kill_task

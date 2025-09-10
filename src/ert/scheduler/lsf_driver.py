@@ -381,53 +381,60 @@ class LsfDriver(Driver):
             )
             self._iens2jobid[iens] = job_id
 
-    async def kill(self, iens: int) -> None:
-        if iens not in self._submit_locks:
-            logger.debug(
-                f"LSF kill was not run, realization {iens} has never been submitted"
-            )
-            return
-
-        async with self._submit_locks[iens]:
-            if iens not in self._iens2jobid:
-                logger.warning(
-                    f"LSF kill failed, realization {iens} was not submitted properly, "
-                    "or it has already finished"
+    async def kill(self, realizations: Iterable[int]) -> None:
+        realizations_to_kill: list[int] = []
+        for iens in realizations:
+            if iens in self._submit_locks:
+                realizations_to_kill.append(iens)
+            else:
+                logger.debug(
+                    f"LSF kill was not run, realization {iens} has never been submitted"
                 )
-                return
+        if not realizations_to_kill:
+            return
+        job_ids_to_kill: list[str] = []
+        for realization in realizations_to_kill:
+            async with self._submit_locks[realization]:
+                if job_id := self._iens2jobid.get(realization):
+                    logger.info(
+                        f"Killing realization {realization} with LSF-id {job_id}"
+                    )
+                    job_ids_to_kill.append(self._iens2jobid[realization])
+                else:
+                    logger.warning(
+                        f"LSF kill failed, realization {realization} was not "
+                        "submitted properly, or it has already finished"
+                    )
+        if not job_ids_to_kill:
+            return
+        bkill_with_args: list[str] = [
+            str(self._bkill_cmd),
+            "-s",
+            "SIGTERM",
+            *job_ids_to_kill,
+        ]
 
-            job_id = self._iens2jobid[iens]
+        _, process_message = await self._execute_with_retry(
+            bkill_with_args,
+            retry_codes=(FLAKY_SSH_RETURNCODE,),
+            total_attempts=3,
+            retry_interval=self._sleep_time_between_cmd_retries,
+            return_on_msgs=(JOB_ALREADY_FINISHED_BKILL_MSG),
+        )
+        await asyncio.create_subprocess_shell(
+            f"sleep {self._sleep_time_between_bkills}; "
+            f"{self._bkill_cmd} -s SIGKILL {' '.join(job_ids_to_kill)}",
+            start_new_session=True,
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.DEVNULL,
+        )
 
-            logger.info(f"Killing realization {iens} with LSF-id {job_id}")
-            bkill_with_args: list[str] = [
-                str(self._bkill_cmd),
-                "-s",
-                "SIGTERM",
-                job_id,
-            ]
-
-            _, process_message = await self._execute_with_retry(
-                bkill_with_args,
-                retry_codes=(FLAKY_SSH_RETURNCODE,),
-                total_attempts=3,
-                retry_interval=self._sleep_time_between_cmd_retries,
-                return_on_msgs=(JOB_ALREADY_FINISHED_BKILL_MSG),
-            )
-            await asyncio.create_subprocess_shell(
-                f"sleep {self._sleep_time_between_bkills}; "
-                f"{self._bkill_cmd} -s SIGKILL {job_id}",
-                start_new_session=True,
-                stdout=asyncio.subprocess.DEVNULL,
-                stderr=asyncio.subprocess.DEVNULL,
-            )
-
-            if not re.search(
-                f"Job <{job_id}> is being (terminated|signaled)", process_message
-            ):
-                if JOB_ALREADY_FINISHED_BKILL_MSG in process_message:
-                    logger.debug(f"LSF kill failed with: {process_message}")
-                    return
-                logger.error(f"LSF kill failed with: {process_message}")
+        for line in process_message.strip().split("\n"):
+            if not ("is being terminated" in line or "is being signaled" in line):
+                if JOB_ALREADY_FINISHED_BKILL_MSG in line:
+                    logger.debug(f"LSF kill failed with: {line}")
+                else:
+                    logger.error(f"LSF kill failed with: {line}")
 
     async def poll(self) -> None:
         while True:

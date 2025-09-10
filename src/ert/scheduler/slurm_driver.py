@@ -8,7 +8,7 @@ import shlex
 import signal
 import stat
 import time
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
@@ -215,30 +215,39 @@ class SlurmDriver(Driver):
             )
             self._iens2jobid[iens] = job_id
 
-    async def kill(self, iens: int) -> None:
-        if iens not in self._submit_locks:
-            logger.debug(
-                f"scancel was not run, realization {iens} has never been submitted"
-            )
-            return
-
-        async with self._submit_locks[iens]:
-            if iens not in self._iens2jobid:
-                logger.warning(
-                    f"scancel failed, realization {iens} was not submitted properly, "
-                    "or it has already finished"
+    async def kill(self, realizations: Iterable[int]) -> None:
+        kill_tasks: list[asyncio.Task[tuple[bool, str]]] = []
+        for realization in realizations:
+            if realization not in self._submit_locks:
+                logger.debug(
+                    f"scancel was not run, realization {realization} "
+                    "has never been submitted"
                 )
-                return
+                continue
 
-            job_id = self._iens2jobid[iens]
+            async with self._submit_locks[realization]:
+                if realization not in self._iens2jobid:
+                    logger.warning(
+                        f"scancel failed, realization {realization} was "
+                        "not submitted properly, or it has already finished"
+                    )
+                    continue
 
-            logger.info(f"Killing realization {iens} with SLURM-id {job_id}")
-            await self._execute_with_retry(
-                [
-                    self._scancel,
-                    str(job_id),
-                ]
-            )
+                job_id = self._iens2jobid[realization]
+
+                logger.info(f"Killing realization {realization} with SLURM-id {job_id}")
+                kill_tasks.append(
+                    asyncio.Task(
+                        self._execute_with_retry(
+                            [
+                                self._scancel,
+                                str(job_id),
+                            ]
+                        )
+                    )
+                )
+        if kill_tasks:
+            await asyncio.gather(*kill_tasks)
 
     async def poll(self) -> None:
         while True:

@@ -59,6 +59,8 @@ class SubmitSleeper:
 
 
 class Scheduler:
+    BATCH_KILLING_INTERVAL = 1.5
+
     def __init__(
         self,
         driver: Driver,
@@ -104,6 +106,9 @@ class Scheduler:
         self._ens_id = ens_id
 
         self.checksum: dict[str, dict[str, Any]] = {}
+        self._realization_ids_to_kill: list[int] = []
+        self._kill_task: asyncio.Task[None] | None = None
+        self._stop_kill_task = asyncio.Event()
 
     async def kill_all_jobs(self) -> None:
         await self.cancel_all_jobs()
@@ -320,12 +325,15 @@ class Scheduler:
         finally:
             for scheduling_task in scheduling_tasks:
                 scheduling_task.cancel()
+            if self._kill_task is not None:
+                self._stop_kill_task.set()
             # We discard exceptions when cancelling the scheduling tasks
             await asyncio.gather(
                 *scheduling_tasks,
                 return_exceptions=True,
             )
-
+            if self._kill_task:
+                await self._kill_task
         if self._cancelled:
             logger.debug("Scheduler has been cancelled, jobs are stopped.")
             return False
@@ -372,3 +380,52 @@ class Scheduler:
             self._jobs[iens].unschedule(error_msg)
             logger.error(error_msg)
             return
+
+    async def schedule_kill(self, realization: int) -> None:
+        """Schedule a specific realization to be killed by the driver
+
+        Args:
+            realization (int): The realization id to schedule for killing
+        """
+        self._realization_ids_to_kill.append(realization)
+        if self._kill_task is None or self._kill_task.done():
+            self._kill_task = asyncio.Task(
+                self._kill_in_batches(), name="batch_killing_task"
+            )
+
+    async def _kill_in_batches(self) -> None:
+        """Batch the realizations that are scheduled for killing, and
+        kill them with the driver. This will not hang, but instead spawn
+        killing-tasks that will be gathered and awaited on exiting
+        """
+        kill_tasks: list[asyncio.Task[None]] = []
+
+        while (
+            not self._stop_kill_task.is_set() or len(self._realization_ids_to_kill) > 0
+        ):
+            await self._wait_for_next_batch()
+            if len(self._realization_ids_to_kill) > 0:
+                realizations_to_kill = self._realization_ids_to_kill
+                self._realization_ids_to_kill = []
+                kill_tasks.append(asyncio.create_task(self._kill(realizations_to_kill)))
+
+        if kill_tasks:
+            await asyncio.gather(*kill_tasks)
+
+    async def _kill(self, realizations_to_kill: list[int]) -> None:
+        """Kill the realizations with the driver,
+        and mark the jobs as killed by scheduler
+
+        Args:
+            realizations_to_kill (list[int]): The realizations to kill
+        """
+        logger.info(
+            f"Scheduler killing a batch of {len(realizations_to_kill)} realizations"
+        )
+        await self.driver.kill(realizations_to_kill)
+        for realization in realizations_to_kill:
+            self._jobs[realization]._was_killed_by_scheduler.set()
+
+    async def _wait_for_next_batch(self) -> None:
+        """This is a separate method for ease of mocking in tests"""
+        await asyncio.sleep(self.BATCH_KILLING_INTERVAL)
