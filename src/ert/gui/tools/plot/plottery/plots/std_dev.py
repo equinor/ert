@@ -38,7 +38,7 @@ class StdDevPlot:
             figure.set_layout_engine("constrained")
             gridspec = figure.add_gridspec(2, ensemble_count, hspace=0.2)
 
-            for i, ensemble in enumerate(plot_context.ensembles(), start=1):
+            for i, ensemble in enumerate(reversed(plot_context.ensembles()), start=1):
                 ax_heat = figure.add_subplot(gridspec[0, i - 1])
                 ax_box = figure.add_subplot(gridspec[1, i - 1])
                 data = std_dev_data[ensemble.name]

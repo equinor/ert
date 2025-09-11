@@ -35,7 +35,7 @@ class EnsembleSelectionWidget(QWidget):
 
     def __init__(self, ensembles: list[EnsembleObject]) -> None:
         QWidget.__init__(self)
-        self.__dndlist = EnsembleSelectListWidget(ensembles[::-1])
+        self.__dndlist = EnsembleSelectListWidget(ensembles)
 
         self.__ensemble_layout = QVBoxLayout()
         self.__ensemble_layout.setSpacing(0)
@@ -59,8 +59,10 @@ class EnsembleSelectListWidget(QListWidget):
         super().__init__()
         self._ensemble_count = 0
         self.setObjectName("ensemble_selector")
-
-        for i, ensemble in enumerate(ensembles):
+        sorted_ensembles = sorted(
+            ensembles, key=lambda ens: ens.started_at, reverse=True
+        )
+        for i, ensemble in enumerate(sorted_ensembles):
             it = QListWidgetItem(f"{ensemble.experiment_name} : {ensemble.name}")
             it.setData(Qt.ItemDataRole.UserRole, ensemble)
             it.setData(Qt.ItemDataRole.CheckStateRole, i == 0)
