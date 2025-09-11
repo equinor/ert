@@ -962,9 +962,25 @@ def test_save_parameters_to_storage_from_design_dataframe(
         )
         if expect_error:
             with pytest.raises(KeyError):
-                design_matrix.save_to_ensemble(ensemble, reals)
+                sample_prior(
+                    storage,
+                    range(ensemble_size),
+                    random_seed=123,
+                    parameters=[
+                        param.name for param in design_matrix.parameter_configurations
+                    ],
+                    design_matrix_df=design_matrix.design_matrix_df,
+                )
         else:
-            design_matrix.save_to_ensemble(ensemble, reals)
+            sample_prior(
+                storage,
+                range(ensemble_size),
+                random_seed=123,
+                parameters=[
+                    param.name for param in design_matrix.parameter_configurations
+                ],
+                design_matrix_df=design_matrix.design_matrix_df,
+            )
             params = ensemble.load_parameters(DESIGN_MATRIX_GROUP).drop("realization")
             assert isinstance(params, pl.DataFrame)
             assert params.columns == ["a", "b", "c"]

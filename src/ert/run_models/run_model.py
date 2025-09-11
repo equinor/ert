@@ -28,7 +28,6 @@ from ert.config import (
     ConfigValidationError,
     DesignMatrix,
     ForwardModelStep,
-    GenKwConfig,
     HookRuntime,
     ModelConfig,
     ParameterConfig,
@@ -777,17 +776,16 @@ class RunModel(BaseModel, ABC):
         parameters_config: list[ParameterConfig],
         design_matrix: DesignMatrix | None,
         rerun_failed_realizations: bool,
-    ) -> tuple[list[ParameterConfig], DesignMatrix | None, GenKwConfig | None]:
-        design_matrix_group = None
+    ) -> tuple[list[ParameterConfig], DesignMatrix | None]:
         # If a design matrix is present, we try to merge design matrix parameters
         # to the experiment parameters and set new active realizations
         if design_matrix is not None and not rerun_failed_realizations:
             try:
-                parameters_config, design_matrix_group = (
-                    design_matrix.merge_with_existing_parameters(parameters_config)
+                parameters_config = design_matrix.merge_with_existing_parameters(
+                    parameters_config
                 )
 
             except ConfigValidationError as exc:
                 raise ErtRunError(str(exc)) from exc
 
-        return parameters_config, design_matrix, design_matrix_group
+        return parameters_config, design_matrix
