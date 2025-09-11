@@ -125,6 +125,9 @@ def _generate_certificate(cert_folder: str) -> tuple[str, str, bytes]:
         ]
     )
     dns_name = get_machine_name()
+    subject_alternative_names = (
+        _get_host_list()
+    )  # Important that this matches potential server url hosts
     cert = (
         x509.CertificateBuilder()
         .subject_name(subject)
@@ -136,7 +139,9 @@ def _generate_certificate(cert_folder: str) -> tuple[str, str, bytes]:
             datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=365)
         )  # 1 year
         .add_extension(
-            x509.SubjectAlternativeName([x509.DNSName(f"{dns_name}")]),
+            x509.SubjectAlternativeName(
+                [x509.DNSName(f"{san_name}") for san_name in subject_alternative_names]
+            ),
             critical=False,
         )
         .sign(key, hashes.SHA256(), default_backend())
