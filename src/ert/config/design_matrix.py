@@ -143,7 +143,7 @@ class DesignMatrix:
             existing_parameters (List[ParameterConfig]): List of existing parameters
 
         Returns:
-            List[ParameterConfig]: List of existing parameters
+            List[ParameterConfig]: List of new parameters after merge
         """
 
         new_param_configs: list[ParameterConfig] = []
@@ -155,7 +155,7 @@ class DesignMatrix:
                 param_cfg.input_source = DataSource.DESIGN_MATRIX
                 param_cfg.update = False
                 param_cfg.distribution = RawSettings()
-                # del design_cfgs[param_cfg.name]
+                del design_cfgs[param_cfg.name]
             new_param_configs += [param_cfg]
         for design_cfg in design_cfgs.values():
             new_param_configs += [design_cfg]
