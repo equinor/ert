@@ -88,16 +88,19 @@ class StorageService(BaseService):
                     auth=self.fetch_auth(),
                     verify=con_info["cert"],
                 )
-                if resp.status_code == 200:
-                    self._url = url
-                    return str(url)
                 logging.getLogger(__name__).info(
                     f"Connecting to {url} got status: "
                     f"{resp.status_code}, {resp.headers}, {resp.reason}, {resp.text}"
                 )
+                if resp.status_code == 200:
+                    self._url = url
+                    return str(url)
 
             except requests.ConnectionError as ce:
-                logging.getLogger(__name__).info(f"Could not connect to {url}: {ce}")
+                logging.getLogger(__name__).info(
+                    f"Could not connect to {url}, but will try something else. "
+                    f"Error: {ce}"
+                )
         raise TimeoutError(
             "None of the URLs provided for the ert storage server worked."
         )
