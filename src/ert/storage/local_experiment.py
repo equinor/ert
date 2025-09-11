@@ -53,11 +53,9 @@ _responses_adapter = TypeAdapter(  # type: ignore
 )
 
 _parameters_adapter = TypeAdapter(
-    list[
-        Annotated[
-            (GenKwConfig | SurfaceConfig | FieldConfig | ExtParamConfig),
-            Field(discriminator="type"),
-        ]
+    Annotated[
+        (GenKwConfig | SurfaceConfig | FieldConfig | ExtParamConfig),
+        Field(discriminator="type"),
     ]
 )
 
@@ -376,10 +374,8 @@ class LocalExperiment(BaseMode):
     @cached_property
     def parameter_configuration(self) -> dict[str, ParameterConfig]:
         return {
-            instance.name: instance
-            for instance in _parameters_adapter.validate_python(
-                self.parameter_info.values()
-            )
+            name: _parameters_adapter.validate_python(cfg)
+            for name, cfg in self.parameter_info.items()
         }
 
     @cached_property

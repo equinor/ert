@@ -43,36 +43,38 @@ def migrate(path: Path) -> None:
                     continue
 
             group_dfs = {}
-            parameter_configs = {}
+            new_configs = {}
             for param_config in parameters_json.values():
-                if param_config["_ert_kind"] == "GenKwConfig":
+                if param_config["type"] == "gen_kw":
                     group = param_config["name"]
                     tfds = param_config["transform_function_definitions"]
                     for tfd in tfds:
                         dist_type = tfd["param_name"]
                         keys = tfd_to_distributions[dist_type]
                         vals = [dist_type.lower()] + tfd["values"]
-                        parameter_configs[tfd["name"]] = {
+                        input_source = (
+                            "design"
+                            if tfd["param_name"] == "RAW" and param_config["update"]
+                            else "sampled"
+                        )
+                        new_configs[tfd["name"]] = {
+                            "name": tfd["name"],
                             "type": "gen_kw",
                             "group": group,
                             "distribution": dict(zip(keys, vals, strict=False)),
                             "forward_init": False,
                             "update": param_config["update"],
-                            "input_source": "sampled",
+                            "input_source": input_source,
                         }
-                        if (
-                            tfd["param_name"] == "RAW"
-                            and param_config["update"] is False
-                        ):
-                            parameter_configs["input_source"] = "design"
                     group_path = ens / f"{_escape_filename(group)}.parquet"
                     if group_path.exists():
                         group_dfs[group] = pl.read_parquet(group_path)
                         os.remove(group_path)
                 else:
-                    parameter_configs[param_config["name"]] = param_config
+                    new_configs[param_config["name"]] = param_config
             if group_dfs:
                 df = pl.concat(list(group_dfs.values()), how="align")
                 df = df.unique(subset=["realization"], keep="first").sort("realization")
+                df.write_parquet(ens / "SCALAR.parquet")
             with open(experiment / "parameter.json", "w", encoding="utf-8") as fout:
-                fout.write(json.dumps(parameter_configs, indent=3))
+                fout.write(json.dumps(new_configs, indent=3))
