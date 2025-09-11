@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import json
 import logging
 import logging.config
@@ -12,11 +13,17 @@ import sys
 import threading
 import time
 import warnings
+from base64 import b64encode
 from types import FrameType
 from typing import Any
 
 import uvicorn
 import yaml
+from cryptography import x509
+from cryptography.hazmat._oid import NameOID
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 from uvicorn.supervisors import ChangeReload
 
@@ -26,10 +33,7 @@ from ert.shared import __file__ as ert_shared_path
 from ert.shared import find_available_socket, get_machine_name
 from ert.shared.storage.command import add_parser_options
 from ert.trace import tracer
-from everest.detached.everserver import (
-    _generate_authentication,
-    _generate_certificate,
-)
+from everest.util import makedirs_if_needed
 
 DARK_STORAGE_APP = "ert.dark_storage.app:app"
 
@@ -95,6 +99,71 @@ def _create_connection_info(
     )
 
     return connection_info
+
+
+def _generate_certificate(cert_folder: str) -> tuple[str, str, bytes]:
+    """Generate a private key and a certificate signed with it
+
+    Both the certificate and the key are written to files in the folder given
+    by `get_certificate_dir(config)`. The key is encrypted before being
+    stored.
+    Returns the path to the certificate file, the path to the key file, and
+    the password used for encrypting the key
+    """
+    # Generate private key
+    key = rsa.generate_private_key(
+        public_exponent=65537, key_size=4096, backend=default_backend()
+    )
+
+    # Generate the certificate and sign it with the private key
+    subject = issuer = x509.Name(
+        [
+            x509.NameAttribute(NameOID.COUNTRY_NAME, "NO"),
+            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "Bergen"),
+            x509.NameAttribute(NameOID.LOCALITY_NAME, "Sandsli"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Equinor"),
+        ]
+    )
+    dns_name = get_machine_name()
+    cert = (
+        x509.CertificateBuilder()
+        .subject_name(subject)
+        .issuer_name(issuer)
+        .public_key(key.public_key())
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(datetime.datetime.now(datetime.UTC))
+        .not_valid_after(
+            datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=365)
+        )  # 1 year
+        .add_extension(
+            x509.SubjectAlternativeName([x509.DNSName(f"{dns_name}")]),
+            critical=False,
+        )
+        .sign(key, hashes.SHA256(), default_backend())
+    )
+
+    # Write certificate and key to disk
+    makedirs_if_needed(cert_folder)
+    cert_path = os.path.join(cert_folder, dns_name + ".crt")
+    with open(cert_path, "wb") as f:
+        f.write(cert.public_bytes(serialization.Encoding.PEM))
+    key_path = os.path.join(cert_folder, dns_name + ".key")
+    pw = bytes(os.urandom(28))
+    with open(key_path, "wb") as f:
+        f.write(
+            key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.TraditionalOpenSSL,
+                encryption_algorithm=serialization.BestAvailableEncryption(pw),
+            )
+        )
+    return cert_path, key_path, pw
+
+
+def _generate_authentication() -> str:
+    n_bytes = 128
+    random_bytes = bytes(os.urandom(n_bytes))
+    return b64encode(random_bytes).decode("utf-8")
 
 
 def run_server(

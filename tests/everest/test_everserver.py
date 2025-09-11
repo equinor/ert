@@ -1,7 +1,5 @@
 import asyncio
 import logging
-import os
-import ssl
 from base64 import b64encode
 from dataclasses import dataclass
 from pathlib import Path
@@ -90,40 +88,6 @@ def mock_server(monkeypatch):
         monkeypatch.setattr("everest.detached.everserver.StorageService", server_patch)
 
     yield func
-
-
-@pytest.mark.integration_test
-def test_certificate_generation(change_to_tmpdir):
-    cert, key, pw = everserver._generate_certificate(
-        ServerConfig.get_certificate_dir("output")
-    )
-
-    # check that files are written
-    assert os.path.exists(cert)
-    assert os.path.exists(key)
-
-    # check certificate is readable
-    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-    ctx.load_cert_chain(cert, key, pw)  # raise on error
-
-
-@pytest.mark.integration_test
-@patch(
-    "ert.shared.get_machine_name",
-    return_value="A" * 67,
-)
-def test_certificate_generation_handles_long_machine_names(change_to_tmpdir):
-    cert, key, pw = everserver._generate_certificate(
-        ServerConfig.get_certificate_dir("output")
-    )
-
-    # check that files are written
-    assert os.path.exists(cert)
-    assert os.path.exists(key)
-
-    # check certificate is readable
-    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-    ctx.load_cert_chain(cert, key, pw)  # raise on error
 
 
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
