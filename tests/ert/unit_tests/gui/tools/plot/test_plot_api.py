@@ -40,6 +40,14 @@ def use_testclient(monkeypatch):
 
     PlotApi.escape = test_escape
 
+    original_get = client.get
+
+    def get_without_timeout(*args, **kwargs):
+        kwargs.pop("timeout", None)
+        return original_get(*args, **kwargs)
+
+    client.get = get_without_timeout
+
 
 def test_key_def_structure(api):
     key_defs = api.parameters_api_key_defs + api.responses_api_key_defs
