@@ -5,7 +5,6 @@ from collections.abc import Iterable
 from pathlib import Path
 
 import polars as pl
-from polars.exceptions import InvalidOperationError
 
 from ert.utils import log_duration
 
@@ -54,14 +53,11 @@ def sample_prior(
                     raise KeyError(
                         f"Design matrix is missing column(s): {', '.join(missing)}"
                     )
-                try:
-                    dataset = design_matrix_df.select(
-                        ["realization", config_node.name]
-                    ).filter(pl.col("realization").is_in(list(active_realizations)))
-                except InvalidOperationError as exc:
-                    raise KeyError(
-                        "Active realization mask is not in design matrix!"
-                    ) from exc
+                dataset = design_matrix_df.select(
+                    ["realization", config_node.name]
+                ).filter(pl.col("realization").is_in(list(active_realizations)))
+                if dataset.is_empty():
+                    raise KeyError("Active realization mask is not in design matrix!")
             elif config_node.input_source == DataSource.SAMPLED:
                 datasets = [
                     Ensemble.sample_parameter(

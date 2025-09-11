@@ -961,8 +961,8 @@ def test_sample_parameter_with_design_matrix(tmp_path, reals, expect_error):
         if expect_error:
             with pytest.raises(KeyError):
                 sample_prior(
-                    storage,
-                    range(ensemble_size),
+                    ensemble,
+                    reals,
                     random_seed=123,
                     parameters=[
                         param.name for param in design_matrix.parameter_configurations
@@ -971,8 +971,8 @@ def test_sample_parameter_with_design_matrix(tmp_path, reals, expect_error):
                 )
         else:
             sample_prior(
-                storage,
-                range(ensemble_size),
+                ensemble,
+                reals,
                 random_seed=123,
                 parameters=[
                     param.name for param in design_matrix.parameter_configurations
