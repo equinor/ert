@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 from typing import Any
@@ -7,6 +8,8 @@ import polars as pl
 from ert.storage import open_storage
 from everest.config import EverestConfig
 from everest.everest_storage import EverestStorage
+
+logger = logging.getLogger(__name__)
 
 
 class EverestDataAPI:
@@ -121,6 +124,18 @@ class EverestDataAPI:
                     else []
                 ):
                     obj_name = obj_dict["objective_name"]
+                    obj_value = df[obj_name].item()
+
+                    if obj_value is None:
+                        logger.error(
+                            f"Objective {obj_name} has no value for "
+                            f"batch {b.batch_id}, "
+                            f"model realization {model_realization},"
+                            f"simulation id {simulation_id}. "
+                            f"Columns in dataframe: {', '.join(df.columns)}"
+                        )
+                        continue
+
                     obj_values.append(
                         {
                             "batch": int(b.batch_id),
@@ -128,7 +143,7 @@ class EverestDataAPI:
                             "simulation": int(simulation_id),  # type: ignore
                             "function": obj_name,
                             "scale": float(obj_dict["scale"]),
-                            "value": float(df[obj_name].item()),
+                            "value": float(obj_value),
                             "weight": float(obj_dict["weight"]),
                         }
                     )
