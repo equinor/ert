@@ -2,13 +2,15 @@ import glob
 import json
 import os
 import socket
+import ssl
 from unittest.mock import patch
 
 import pytest
 
 from ert.services import StorageService
-from ert.services._storage_main import _create_connection_info
+from ert.services._storage_main import _create_connection_info, _generate_certificate
 from ert.shared import find_available_socket
+from everest.config import ServerConfig
 
 
 def test_create_connection_string():
@@ -136,3 +138,51 @@ def test_storage_logging(change_to_tmpdir):
             )
             == 1
         ), "Found duplicated log entries"
+
+
+def test_certificate_generation(change_to_tmpdir):
+    cert, key, pw = _generate_certificate(ServerConfig.get_certificate_dir("output"))
+
+    # check that files are written
+    assert os.path.exists(cert)
+    assert os.path.exists(key)
+
+    # check certificate is readable
+    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    ctx.load_cert_chain(cert, key, pw)  # raise on error
+
+
+def test_certificate_generation_handles_long_machine_names(change_to_tmpdir):
+    with patch(
+        "ert.shared.get_machine_name",
+        return_value="A" * 67,
+    ):
+        cert, key, pw = _generate_certificate(
+            ServerConfig.get_certificate_dir("output")
+        )
+
+    # check that files are written
+    assert os.path.exists(cert)
+    assert os.path.exists(key)
+
+    # check certificate is readable
+    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    ctx.load_cert_chain(cert, key, pw)  # raise on error
+
+
+def test_that_server_hosts_exists_as_san_in_certificate(change_to_tmpdir):
+    auth_token = "very_secret_token"
+    sock = find_available_socket()
+
+    cert_path, _, _ = _generate_certificate(ServerConfig.get_certificate_dir("output"))
+
+    conn_info = _create_connection_info(sock, auth_token, cert_path)
+    # check certificate is readable
+    x509 = ssl._ssl._test_decode_cert(conn_info["cert"])  # type: ignore[attr-defined]
+    sans = [san[1] for san in x509["subjectAltName"]]
+
+    # extract hostname from the url strings "https://<hostname>:<port>/..."
+    hosts_from_urls = [u.split("https://")[1].split(":")[0] for u in conn_info["urls"]]
+
+    assert set(sans) == set(hosts_from_urls)
+    del os.environ["ERT_STORAGE_CONNECTION_STRING"]
