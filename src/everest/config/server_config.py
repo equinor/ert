@@ -57,20 +57,6 @@ class ServerConfig(BaseModel):
         return f"https://{server_info['host']}:{server_info['port']}/experiment_server"
 
     @staticmethod
-    def get_server_context(output_dir: str) -> tuple[str, str, tuple[str, str]]:
-        """Returns a tuple with
-        - url of the server
-        - path to the .cert file
-        - password for the certificate file
-        """
-        server_info = ServerConfig.get_server_info(output_dir)
-        return (
-            ServerConfig.get_server_url(output_dir),
-            server_info[CERTIFICATE_DIR],
-            ("username", server_info["auth"]),
-        )
-
-    @staticmethod
     def get_server_context_from_client(
         client: Client,
     ) -> tuple[str, str, tuple[str, str]]:
