@@ -63,14 +63,16 @@ def test_migration_to_genkw_with_polars_and_design_matrix(
         ensemble = ensembles[0]
         df = ensemble.load_parameters("DESIGN_MATRIX")
         assert isinstance(df, pl.DataFrame)
-        assert df.schema == pl.Schema(
-            {
-                "a": pl.Int64,
-                "category": pl.String,
-                "b": pl.Int64,
-                "c": pl.Int64,
-                "realization": pl.Int64,
-            }
+        assert dict(df.schema) == dict(
+            pl.Schema(
+                {
+                    "a": pl.Int64,
+                    "category": pl.String,
+                    "b": pl.Int64,
+                    "c": pl.Int64,
+                    "realization": pl.Int64,
+                }
+            )
         )
         snapshot.assert_match(
             orjson.dumps(df.to_dicts(), option=orjson.OPT_INDENT_2)
