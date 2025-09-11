@@ -938,9 +938,7 @@ def test_that_all_parameters_and_gen_data_consolidation_works(
         pytest.param([10, 11], True, id="incorrect_active_realizations"),
     ],
 )
-def test_save_parameters_to_storage_from_design_dataframe(
-    tmp_path, reals, expect_error
-):
+def test_sample_parameter_with_design_matrix(tmp_path, reals, expect_error):
     design_path = tmp_path / "design_matrix.xlsx"
     ensemble_size = 10
     a_values = np.random.default_rng().uniform(-5, 5, 10)
