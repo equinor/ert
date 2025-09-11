@@ -5,6 +5,7 @@ import pytest
 from matplotlib.figure import Figure
 
 from ert.gui.tools.plot.plot_api import EnsembleObject
+from ert.gui.tools.plot.plot_ensemble_selection_widget import EnsembleSelectListWidget
 from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
 from ert.gui.tools.plot.plottery.plots import EnsemblePlot
 from ert.summary_key_type import is_rate
@@ -48,3 +49,30 @@ def test_ensemble_plot_handles_rate(plot_context: PlotContext):
             assert mock_plotLines.call_args[0][4] == "steps-pre"
         else:
             assert mock_plotLines.call_args[0][4] is None
+
+
+def test_plot_ensemble_selection_widget_sorts_input_ensembles_reverse_chronologically(
+    qtbot,
+):
+    times = [
+        "2001-11-11T00:00:00",  # Second
+        "2000-00-00T00:00:00",  # First
+        "2002-12-22T00:00:00",  # Last
+    ]
+    ensembles = [
+        EnsembleObject(
+            name=f"ens_{i}",
+            id="id",
+            hidden=False,
+            experiment_name=f"exp_{i}",
+            started_at=t,
+        )
+        for i, t in enumerate(times)
+    ]
+    list_widget = EnsembleSelectListWidget(ensembles)
+    # Assert experiments are sorted from Last -> First
+    assert [list_widget.item(i).text() for i in range(len(ensembles))] == [
+        "exp_2 : ens_2",  # Last
+        "exp_0 : ens_0",  # Second
+        "exp_1 : ens_1",  # First
+    ]
