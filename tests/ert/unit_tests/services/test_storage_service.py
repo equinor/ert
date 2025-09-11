@@ -21,7 +21,13 @@ def test_create_connection_string():
     connection_string = json.loads(os.environ["ERT_STORAGE_CONNECTION_STRING"])
     assert "urls" in connection_string
     assert "authtoken" in connection_string
-    assert len(connection_string["urls"]) == 4
+    assert (
+        len(connection_string["urls"]) > 0
+    )  # If we don't get a FQDN we may get only one url
+
+    assert len(connection_string["urls"]) == len(
+        set(connection_string["urls"])
+    )  # all unique
 
     del os.environ["ERT_STORAGE_CONNECTION_STRING"]
 

@@ -72,18 +72,16 @@ def parse_args() -> argparse.Namespace:
     return ap.parse_args()
 
 
+def _get_host_list() -> list[str]:
+    return list({socket.gethostname(), socket.getfqdn(), get_machine_name()})
+
+
 def _create_connection_info(
     sock: socket.socket, authtoken: str, cert: str | os.PathLike[str]
 ) -> dict[str, Any]:
     connection_info = {
         "urls": [
-            f"https://{host}:{sock.getsockname()[1]}"
-            for host in (
-                sock.getsockname()[0],
-                socket.gethostname(),
-                socket.getfqdn(),
-                get_machine_name(),
-            )
+            f"https://{host}:{sock.getsockname()[1]}" for host in _get_host_list()
         ],
         "authtoken": authtoken,
         "host": get_machine_name(),
