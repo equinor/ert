@@ -95,14 +95,24 @@ def find_available_socket(
 
 
 def _bind_socket(host: str, port: int) -> socket.socket:
+    """Binds a socket to the given port.
+    NOTE: The host is only used to determine if we should bind to
+    all interfaces (ipv4) or a specific interface (ipv6).
+    """
+
     try:
         family = get_family(host=host)
         sock = socket.socket(family=family, type=socket.SOCK_STREAM)
-        sock.bind((host, port))
+        if family == socket.AF_INET6:
+            sock.bind((host, port))
+        else:
+            sock.bind(
+                ("", port)
+            )  # Bind to all interfaces when IPV4, https://docs.python.org/3/library/socket.html#socket-families
     except socket.gaierror as err_info:
         raise InvalidHostException(
             f"Trying to bind socket with what looks like "
-            f"an invalid hostname ({host}). "
+            f"an invalid hostname (IP) ({host}). "
             f"Actual "
             f"error msg is: {err_info.strerror}"
         ) from err_info
