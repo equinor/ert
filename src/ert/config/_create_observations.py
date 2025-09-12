@@ -37,7 +37,7 @@ DEFAULT_TIME_DELTA = timedelta(seconds=30)
 
 
 @dataclass(eq=False)
-class GenObservation:
+class _GenObservation:
     values: list[float]
     stds: list[float]
     indices: list[int]
@@ -49,7 +49,7 @@ class GenObservation:
                 raise ValueError("Observation uncertainty must be strictly > 0")
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, GenObservation):
+        if not isinstance(other, _GenObservation):
             return False
         return (
             np.array_equal(self.values, other.values)
@@ -66,7 +66,7 @@ class GenObservation:
 class _GenObs:
     observation_key: str
     data_key: str
-    observations: dict[int, GenObservation]
+    observations: dict[int, _GenObservation]
 
     def to_dataset(self) -> pl.DataFrame:
         dataframes = []
@@ -450,7 +450,7 @@ def _create_gen_obs(
     obs_file: str | None = None,
     data_index: str | None = None,
     context: Any = None,
-) -> GenObservation:
+) -> _GenObservation:
     if scalar_value is None and obs_file is None:
         raise ObservationConfigError.with_context(
             "GENERAL_OBSERVATION must contain either VALUE and ERROR or OBS_FILE",
@@ -499,7 +499,7 @@ def _create_gen_obs(
             obs_file if obs_file is not None else "",
         )
     try:
-        return GenObservation(
+        return _GenObservation(
             values.tolist(), stds.tolist(), indices.tolist(), std_scaling.tolist()
         )
     except ValueError as err:
