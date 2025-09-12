@@ -53,7 +53,7 @@ from ert.validation import (
 logger = logging.getLogger(__name__)
 
 
-def run_ert_storage(args: Namespace, _: ErtRuntimePlugins | None = None) -> None:
+def run_ert_storage(args: Namespace) -> None:
     with ErtServer.start_server(
         verbose=True,
         project=Path(ErtConfig.from_file(args.config).ens_path),
@@ -62,7 +62,7 @@ def run_ert_storage(args: Namespace, _: ErtRuntimePlugins | None = None) -> None
         server.wait()
 
 
-def run_webviz_ert(args: Namespace, _: ErtRuntimePlugins | None = None) -> None:
+def run_webviz_ert(args: Namespace) -> None:
     try:
         import webviz_ert  # type: ignore  # noqa
     except ImportError as err:
@@ -199,11 +199,11 @@ def valid_port_range(user_input: str) -> range:
     return range(port_a, port_b + 1)
 
 
-def run_gui_wrapper(args: Namespace, runtime_plugins: ErtRuntimePlugins) -> None:
+def run_gui_wrapper(args: Namespace) -> None:
     # Importing ert.gui on-demand saves ~0.5 seconds off `from ert import __main__`
     from ert.gui.main import run_gui  # noqa: PLC0415
 
-    run_gui(args, runtime_plugins)
+    run_gui(args)
 
 
 def run_lint_wrapper(args: Namespace, _: ErtRuntimePlugins) -> None:
@@ -668,7 +668,7 @@ def main() -> None:
         setup_site_logging(logging.getLogger())
         with use_runtime_plugins(site_plugins):
             logger.info(f"Running ert with {args} in {os.getcwd()}")
-            args.func(args, site_plugins)
+            args.func(args)
     except ErtStoragePermissionError as err:
         logger.error(str(err))
         sys.exit(str(err))

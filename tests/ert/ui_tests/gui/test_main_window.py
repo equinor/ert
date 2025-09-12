@@ -50,7 +50,6 @@ from ert.gui.tools.plot.plot_window import (
     PlotApi,
     PlotWindow,
 )
-from ert.plugins import get_site_plugins
 from ert.run_models import (
     EnsembleExperiment,
     EnsembleInformationFilter,
@@ -184,9 +183,7 @@ def test_that_there_is_a_link_to_github_in_the_suggester(tmp_path, qtbot):
     args = Mock()
     args.config = str(config_file)
     with add_gui_log_handler() as log_handler:
-        gui, *_ = ert.gui.main._start_initial_gui_window(
-            args, log_handler, get_site_plugins()
-        )
+        gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
         assert isinstance(gui, Suggestor)
 
         with patch("webbrowser.open", MagicMock(return_value=True)) as browser_open:
