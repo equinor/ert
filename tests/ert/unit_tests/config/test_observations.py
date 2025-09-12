@@ -676,6 +676,53 @@ def test_that_non_existent_time_map_file_is_invalid():
         )
 
 
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_general_observation_cannot_contain_both_value_and_obs_file():
+    with open("obs_idx.txt", "w", encoding="utf-8") as fh:
+        fh.write("0\n2\n4\n6\n8")
+    with open("obs_data.txt", "w", encoding="utf-8") as fh:
+        fh.writelines(f"{float(i)} 0.1\n" for i in range(5))
+    with pytest.raises(
+        ConfigValidationError, match=r"cannot contain both VALUE.*OBS_FILE"
+    ):
+        make_observations(
+            [
+                (
+                    "GENERAL_OBSERVATION",
+                    "OBS",
+                    {
+                        "DATA": "GEN",
+                        "DATE": "2020-01-02",
+                        "INDEX_FILE": "obs_idx.txt",
+                        "OBS_FILE": "obs_data.txt",
+                        "VALUE": "1.0",
+                        "ERROR": "0.1",
+                    },
+                )
+            ],
+            parse=False,
+        )
+
+
+def test_that_general_observation_must_contain_either_value_or_obs_file():
+    with pytest.raises(
+        ConfigValidationError, match=r"must contain either VALUE.*OBS_FILE"
+    ):
+        make_observations(
+            [
+                (
+                    "GENERAL_OBSERVATION",
+                    "OBS",
+                    {
+                        "DATA": "GEN",
+                        "DATE": "2020-01-02",
+                    },
+                )
+            ],
+            parse=False,
+        )
+
+
 def test_that_non_numbers_in_obs_file_shows_informative_error_message(tmpdir):
     with tmpdir.as_cwd():
         with open("obs_data.txt", "w", encoding="utf-8") as fh:
@@ -700,6 +747,53 @@ def test_that_non_numbers_in_obs_file_shows_informative_error_message(tmpdir):
                 ],
                 parse=False,
             )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_the_number_of_columns_in_obs_file_cannot_change():
+    with open("obs_data.txt", "w", encoding="utf-8") as fh:
+        fh.writelines(f"{float(i)} 0.1\n" for i in range(5))
+        fh.writelines("0.1\n")
+    with pytest.raises(
+        ConfigValidationError, match="the number of columns changed from 2 to 1"
+    ):
+        make_observations(
+            [
+                (
+                    "GENERAL_OBSERVATION",
+                    "OBS",
+                    {
+                        "DATA": "GEN",
+                        "INDEX_LIST": "0,2,4,6,8",
+                        "DATE": "2020-01-02",
+                        "OBS_FILE": "obs_data.txt",
+                    },
+                )
+            ],
+            parse=False,
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_the_number_of_values_in_obs_file_must_be_even():
+    with open("obs_data.txt", "w", encoding="utf-8") as fh:
+        fh.writelines(f"{float(i)} 0.1 0.1\n" for i in range(5))
+    with pytest.raises(ConfigValidationError, match="Expected even number of values"):
+        make_observations(
+            [
+                (
+                    "GENERAL_OBSERVATION",
+                    "OBS",
+                    {
+                        "DATA": "GEN",
+                        "INDEX_LIST": "0,2,4,6,8",
+                        "DATE": "2020-01-02",
+                        "OBS_FILE": "obs_data.txt",
+                    },
+                )
+            ],
+            parse=False,
+        )
 
 
 def test_that_giving_both_index_file_and_index_list_raises_an_exception(tmpdir):
