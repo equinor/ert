@@ -86,11 +86,6 @@ class GenKwConfig(ParameterConfig):
     group: str = "DEFAULT"
     input_source: DataSource = DataSource.SAMPLED
 
-    @property
-    def parameter_list(self) -> dict[str, float]:
-        """Return the parameters of the distribution as a dictionary."""
-        return self.distribution.model_dump(exclude={"name"})
-
     def __contains__(self, item: str) -> bool:
         return item == self.name
 
@@ -308,13 +303,12 @@ class GenKwConfig(ParameterConfig):
         return isinstance(self.distribution, LogNormalSettings | LogUnifSettings)
 
     def get_priors(self) -> list[PriorDict]:
+        dist_json = self.distribution.model_dump(exclude={"name"})
         return [
             {
                 "key": self.name,
                 "function": self.distribution.name.upper(),
-                "parameters": {
-                    k.upper(): v for k, v in self.parameter_list.items() if k != "name"
-                },
+                "parameters": {k.upper(): v for k, v in dist_json.items()},
             }
         ]
 

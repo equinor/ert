@@ -151,14 +151,15 @@ class EnsembleConfig(BaseModel):
 
             return FieldConfig.from_config_list(grid_file_path, dims, field_list)
 
+        gen_kw_cfgs = [
+            *(cfg for g in gen_kw_list for cfg in GenKwConfig.from_config_list(g))
+        ]
         parameter_configs = (
-            [*(cfg for g in gen_kw_list for cfg in GenKwConfig.from_config_list(g))]
+            gen_kw_cfgs
             + [SurfaceConfig.from_config_list(s) for s in surface_list]
             + [make_field(f) for f in field_list]
         )
-        EnsembleConfig._check_for_duplicate_gen_kw_param_names(
-            [p for p in parameter_configs if isinstance(p, GenKwConfig)]
-        )
+        EnsembleConfig._check_for_duplicate_gen_kw_param_names(gen_kw_cfgs)
         response_configs: list[KnownResponseTypes] = []
 
         for config_cls in _KNOWN_RESPONSE_TYPES:
