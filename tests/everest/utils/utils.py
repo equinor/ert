@@ -7,6 +7,13 @@ from io import StringIO
 import pytest
 
 
+def skipif_no_everviz(function):
+    """Decorator to skip a test if everviz is not available"""
+    spec = importlib.util.find_spec("everviz")
+    not_found = spec is None
+    return pytest.mark.skipif(not_found, reason="everviz not found")(function)
+
+
 def skipif_no_everest_models(function):
     """Decorator to skip a test if everest-models is not available"""
     spec = importlib.util.find_spec("everest_models")

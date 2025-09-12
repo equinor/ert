@@ -7,6 +7,7 @@ from .utils import (
     satisfy_callable,
     satisfy_type,
     skipif_no_everest_models,
+    skipif_no_everviz,
 )
 
 __all__ = [
@@ -18,4 +19,5 @@ __all__ = [
     "satisfy_callable",
     "satisfy_type",
     "skipif_no_everest_models",
+    "skipif_no_everviz",
 ]
