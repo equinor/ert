@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 
 @tracer.start_as_current_span("ert.application.gui")
-def run_gui(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> int:
+def run_gui(args: Namespace) -> int:
     span = trace.get_current_span()
     # Replace Python's exception handler for SIGINT with the system default.
     #
@@ -98,7 +98,7 @@ def run_gui(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> 
     app.setWindowIcon(QIcon("img:ert_icon.svg"))
 
     with add_gui_log_handler() as log_handler:
-        window, ens_path = _start_initial_gui_window(args, log_handler, plugin_manager)
+        window, ens_path = _start_initial_gui_window(args, log_handler)
 
         def show_window() -> int:
             window.show()
@@ -120,7 +120,6 @@ def run_gui(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> 
 def _start_initial_gui_window(
     args: Namespace,
     log_handler: GUILogHandler,
-    plugin_manager: ErtPluginManager | None = None,
 ) -> tuple[QWidget, str | None]:
     # Create logger inside function to make sure all handlers have been added to
     # the root-logger.
@@ -153,6 +152,7 @@ def _start_initial_gui_window(
             )
     if validation_messages.errors:
         logger.info(f"Error in config file shown in gui: {validation_messages.errors}")
+        plugin_manager = ErtPluginManager()
         return (
             Suggestor(
                 validation_messages.errors,
@@ -181,9 +181,7 @@ def _start_initial_gui_window(
         logger.info(f"Warning shown in gui '{msg}'")
 
     assert storage_path is not None
-    main_window = _setup_main_window(
-        ert_config, args, log_handler, storage_path, plugin_manager
-    )
+    main_window = _setup_main_window(ert_config, args, log_handler, storage_path)
 
     if validation_messages.warnings or validation_messages.deprecations:
 
@@ -198,7 +196,7 @@ def _start_initial_gui_window(
             validation_messages.warnings,
             validation_messages.deprecations,
             continue_action,
-            plugin_manager.get_help_links() if plugin_manager is not None else {},
+            ErtPluginManager().get_help_links(),
             widget_info="""\
                 <p style="font-size: 28px;">Some problems detected</p>
                 <p style="font-size: 16px;">The following problems were detected
@@ -221,10 +219,9 @@ def _setup_main_window(
     args: Namespace,
     log_handler: GUILogHandler,
     storage_path: str,
-    plugin_manager: ErtPluginManager | None = None,
 ) -> ErtMainWindow:
     # window reference must be kept until app.exec returns:
-    window = ErtMainWindow(args.config, ert_config, plugin_manager, log_handler)
+    window = ErtMainWindow(args.config, ert_config, log_handler)
     window.notifier.set_storage(storage_path)
     window.post_init()
     window.adjustSize()
