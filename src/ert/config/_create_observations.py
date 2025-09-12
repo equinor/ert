@@ -38,10 +38,10 @@ DEFAULT_TIME_DELTA = timedelta(seconds=30)
 
 @dataclass(eq=False)
 class _GenObservation:
-    values: list[float]
-    stds: list[float]
-    indices: list[int]
-    std_scaling: list[float]
+    values: npt.NDArray[np.float64]
+    stds: npt.NDArray[np.float64]
+    indices: npt.NDArray[np.int32]
+    std_scaling: npt.NDArray[np.float64]
 
     def __post_init__(self) -> None:
         for val in self.stds:
@@ -471,13 +471,13 @@ def _create_gen_obs(
         stds = np.array([obs_std])
 
     if data_index is not None:
-        indices = np.array([])
+        indices = np.array([], dtype=np.int32)
         if os.path.isfile(data_index):
-            indices = np.loadtxt(data_index, delimiter=None, dtype=int).ravel()
+            indices = np.loadtxt(data_index, delimiter=None, dtype=np.int32).ravel()
         else:
             indices = np.array(sorted(rangestring_to_list(data_index)), dtype=np.int32)
     else:
-        indices = np.arange(len(values))
+        indices = np.arange(len(values), dtype=np.int32)
     std_scaling = np.full(len(values), 1.0)
     if len({len(stds), len(values), len(indices)}) != 1:
         raise ObservationConfigError.with_context(
@@ -486,9 +486,7 @@ def _create_gen_obs(
             obs_file if obs_file is not None else "",
         )
     try:
-        return _GenObservation(
-            values.tolist(), stds.tolist(), indices.tolist(), std_scaling.tolist()
-        )
+        return _GenObservation(values, stds, indices, std_scaling)
     except ValueError as err:
         raise ObservationConfigError.with_context(str(err), context) from err
 
