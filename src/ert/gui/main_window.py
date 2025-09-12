@@ -31,7 +31,7 @@ from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.plot.plot_window import PlotWindow
 from ert.gui.tools.plugins import PluginHandler, PluginsTool
 from ert.gui.tools.workflows import WorkflowsTool
-from ert.plugins import ErtRuntimePlugins
+from ert.plugins import get_site_plugins
 from ert.trace import get_trace_id
 
 from .detect_mode import is_dark_mode
@@ -90,7 +90,6 @@ class ErtMainWindow(QMainWindow):
         self,
         config_file: str,
         ert_config: ErtConfig,
-        runtime_plugins: ErtRuntimePlugins | None = None,
         log_handler: GUILogHandler | None = None,
     ) -> None:
         QMainWindow.__init__(self)
@@ -103,7 +102,7 @@ class ErtMainWindow(QMainWindow):
         self.setWindowTitle(
             f"ERT - {config_file} - {find_ert_info()} - {get_trace_id()[:8]}"
         )
-        self.runtime_plugins = runtime_plugins
+        self.runtime_plugins = get_site_plugins()
         self.central_widget = QFrame(self)
         self.central_layout = QHBoxLayout(self.central_widget)
         self.central_layout.setContentsMargins(0, 0, 0, 0)
