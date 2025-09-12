@@ -1,0 +1,77 @@
+on:
+  workflow_dispatch:
+  push:
+
+env:
+  ERT_SHOW_BACKTRACE: 1
+  UV_FROZEN: true
+  OMP_NUM_THREADS: 1
+
+jobs:
+  tests-ert:
+    name: Run screenshot tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - name: Install fonts
+      run: |
+        sudo apt install -y \
+          fonts-ubuntu \
+          xvfb
+
+    - name: List Available Fonts
+      run: |
+        fc-list
+        fc-cache -f -v
+        ls /etc/fonts/conf.d/
+        export FONTCONFIG_PATH=/etc/fonts
+        echo $FONTCONFIG_PATH
+        export FC_DEBUG=1
+
+    - uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+        submodules: true
+        lfs: true
+
+    - uses: ./.github/actions/install_dependencies_qt
+      with:
+        os: ubuntu-latest
+
+    - uses: actions/setup-python@v5
+      id: setup_python
+      with:
+        python-version: 3.12
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        enable-cache: true
+        python-version: 3.12
+
+    - name: Install ert
+      run: |
+        uv sync --extra dev
+
+    - name: Screenshot Test
+      run: |
+        # Start Xvfb
+        Xvfb :99 -screen 0 1920x1080x24 &
+        export DISPLAY=:99
+        uv run pytest --junit-xml=junit.xml -o junit_family=legacy -v --durations=25 --benchmark-disable tests/ert/ui_tests/gui/test_docs_screenshots.py
+
+    - name: Upload artifact images
+      uses: actions/upload-artifact@v4
+      if: ${{ failure() }}
+      continue-on-error: true
+      with:
+        name: test-images-${{ github.run_number }}-${{ github.run_id }}
+        path: |
+          /tmp/pytest-of-runner/**/*.png
+          /home/runner/work/ert/ert/docs/ert/getting_started/configuration/poly_new/**/*.png
+
+    - uses: test-summary/action@v2
+      if: ${{ !cancelled() }}
+      continue-on-error: true
+      with:
+        paths: junit.xml
