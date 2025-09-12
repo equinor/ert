@@ -411,20 +411,17 @@ def _handle_summary_observation(
             f"{' at ' + str(_get_time(summary_dict, time_map[0], obs_key)) if summary_dict.restart is None else ''}",  # noqa: E501
             obs_key,
         )
-    try:
-        if float(std_dev) <= 0:
-            raise ObservationConfigError.with_context(
-                "Observation uncertainty must be strictly > 0", summary_key
-            ) from None
-        return {
-            obs_key: _SummaryObs(
-                summary_key,
-                "summary",
-                {date: _SummaryObservation(summary_key, obs_key, value, std_dev)},
-            )
-        }
-    except ValueError as err:
-        raise ObservationConfigError.with_context(str(err), obs_key) from err
+    if float(std_dev) <= 0:
+        raise ObservationConfigError.with_context(
+            "Observation uncertainty must be strictly > 0", summary_key
+        ) from None
+    return {
+        obs_key: _SummaryObs(
+            summary_key,
+            "summary",
+            {date: _SummaryObservation(summary_key, obs_key, value, std_dev)},
+        )
+    }
 
 
 def _create_gen_obs(
