@@ -714,6 +714,7 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
     "design_matrix_entry",
     (True, False),
 )
+@pytest.mark.filterwarnings("ignore:NUM_REALIZATIONS")
 def test_that_design_matrix_show_parameters_button_is_visible(
     design_matrix_entry, qtbot: QtBot, use_tmpdir
 ):
@@ -889,6 +890,7 @@ def test_forward_model_overview_label_selected_on_tab_change(
         (MultipleDataAssimilation, MultipleDataAssimilationPanel, 15),
     ],
 )
+@pytest.mark.filterwarnings("ignore:NUM_REALIZATIONS")
 def test_that_ert_chooses_minimum_realization_with_design_matrix(
     qtbot: QtBot, experiment_mode, dm_realizations, experiment_mode_panel, use_tmpdir
 ):
