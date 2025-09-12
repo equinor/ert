@@ -20,7 +20,9 @@ jobs:
           xvfb
 
     - name: List Available Fonts
-      run: fc-list
+      run: |
+        fc-list
+        fc-cache -f -v
 
     - uses: actions/checkout@v5
       with:
