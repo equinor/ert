@@ -48,19 +48,6 @@ class _GenObservation:
             if val <= 0:
                 raise ValueError("Observation uncertainty must be strictly > 0")
 
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, _GenObservation):
-            return False
-        return (
-            np.array_equal(self.values, other.values)
-            and np.array_equal(self.stds, other.stds)
-            and np.array_equal(self.indices, other.indices)
-            and np.array_equal(self.std_scaling, other.std_scaling)
-        )
-
-    def __len__(self) -> int:
-        return len(self.values)
-
 
 @dataclass
 class _GenObs:
