@@ -24,6 +24,7 @@ jobs:
         fc-list
         fc-cache -f -v
         ls /etc/fonts/conf.d/
+        export FONTCONFIG_PATH=/etc/fonts
         echo $FONTCONFIG_PATH
         export FC_DEBUG=1
 
