@@ -217,7 +217,7 @@ def test_that_poly_new_minimal_screenshots_are_up_to_date(
 
     compare_img_with_gui(gui_changed, example_folder, "simulations.png", gui, qtbot)
 
-    assert not gui_changed, assert_error_message(gui_changed)
+    assert not gui_changed, assert_error_message(gui_changed + gui.available_fonts)
 
 
 def test_that_poly_new_with_simple_script_screenshots_are_up_to_date(
