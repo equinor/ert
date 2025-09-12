@@ -15,7 +15,7 @@ from datetime import datetime as dt
 from os import path
 from pathlib import Path
 from subprocess import Popen, run
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from psutil import AccessDenied, NoSuchProcess, Process, TimeoutExpired, ZombieProcess
 
@@ -107,7 +107,6 @@ class ForwardModelStep:
         start_message = Start(self)
 
         errors = self._check_step_files()
-        errors.extend(self._assert_arg_list())
 
         if errors:
             start_message = start_message.with_error("\n".join(errors))
@@ -383,31 +382,6 @@ class ForwardModelStep:
                 f"stat_start_time:{existing_target_file_mtime}"
             )
         return f"Could not find target_file:{target_file}"
-
-    def _assert_arg_list(self) -> list[str]:
-        errors: list[str] = []
-        arg_types: Any
-        if arg_types := self.step_data.get("arg_types"):  # This seems to be never true
-            arg_list = self.step_data.get("argList", [])
-            arg_type: str
-            assert isinstance(arg_types, list)
-            for index, arg_type in enumerate(arg_types):
-                if arg_type == "RUNTIME_FILE":
-                    file_path = path.join(os.getcwd(), arg_list[index])
-                    if not path.isfile(file_path):
-                        errors.append(
-                            f"In step {self.name()}: RUNTIME_FILE {arg_list[index]} "
-                            "does not exist."
-                        )
-                if arg_type == "RUNTIME_INT":
-                    try:
-                        int(arg_list[index])
-                    except ValueError:
-                        errors.append(
-                            f"In step {self.name()}: argument with index {index} "
-                            "is of incorrect type, should be integer."
-                        )
-        return errors
 
 
 def _get_existing_target_file_mtime(file: str | None) -> int | None:
