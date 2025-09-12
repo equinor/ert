@@ -33,7 +33,7 @@ jobs:
       with:
         os: ${{ inputs.os }}
 
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
       id: setup_python
       with:
         python-version: ${{ inputs.python-version }}
