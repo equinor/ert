@@ -132,44 +132,36 @@ def create_observations(
     config_errors: list[ErrorInfo] = []
     for obs_name, values in obs_config_content:
         try:
-            if type(values) is HistoryValues:
-                obs_vectors.update(
-                    **_handle_history_observation(
-                        ensemble_config,
-                        values,
-                        obs_name,
-                        history,
-                        time_len,
-                    )
-                )
-            elif type(values) is SummaryValues:
-                obs_vectors.update(
-                    **_handle_summary_observation(
-                        values,
-                        obs_name,
-                        obs_time_list,
-                        bool(ensemble_config.refcase),
-                    )
-                )
-            elif type(values) is GenObsValues:
-                obs_vectors.update(
-                    **_handle_general_observation(
-                        ensemble_config,
-                        values,
-                        obs_name,
-                        obs_time_list,
-                        bool(ensemble_config.refcase),
-                    )
-                )
-            else:
-                config_errors.append(
-                    ErrorInfo(
-                        message=(
-                            f"Unknown ObservationType {type(values)} for {obs_name}"
+            match values:
+                case HistoryValues():
+                    obs_vectors.update(
+                        **_handle_history_observation(
+                            ensemble_config,
+                            values,
+                            obs_name,
+                            history,
+                            time_len,
                         )
-                    ).set_context(obs_name)
-                )
-                continue
+                    )
+                case SummaryValues():
+                    obs_vectors.update(
+                        **_handle_summary_observation(
+                            values,
+                            obs_name,
+                            obs_time_list,
+                            bool(ensemble_config.refcase),
+                        )
+                    )
+                case GenObsValues():
+                    obs_vectors.update(
+                        **_handle_general_observation(
+                            ensemble_config,
+                            values,
+                            obs_name,
+                            obs_time_list,
+                            bool(ensemble_config.refcase),
+                        )
+                    )
         except ObservationConfigError as err:
             config_errors.extend(err.errors)
 
