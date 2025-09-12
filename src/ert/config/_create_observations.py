@@ -43,11 +43,6 @@ class _GenObservation:
     indices: npt.NDArray[np.int32]
     std_scaling: npt.NDArray[np.float64]
 
-    def __post_init__(self) -> None:
-        for val in self.stds:
-            if val <= 0:
-                raise ValueError("Observation uncertainty must be strictly > 0")
-
 
 @dataclass
 class _GenObs:
@@ -485,10 +480,12 @@ def _create_gen_obs(
             f"index list ({indices}) must be of equal length",
             obs_file if obs_file is not None else "",
         )
-    try:
-        return _GenObservation(values, stds, indices, std_scaling)
-    except ValueError as err:
-        raise ObservationConfigError.with_context(str(err), context) from err
+
+    if np.any(stds <= 0):
+        raise ObservationConfigError.with_context(
+            "Observation uncertainty must be strictly > 0", context
+        )
+    return _GenObservation(values, stds, indices, std_scaling)
 
 
 def _handle_general_observation(
