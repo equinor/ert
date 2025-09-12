@@ -4,6 +4,7 @@ import asyncio
 import contextlib
 import time
 import uuid
+from collections.abc import Callable
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -167,7 +168,13 @@ class MockZMQServer:
                 break
 
 
-async def poll(driver: Driver, expected: set[int], *, started=None, finished=None):
+async def poll(
+    driver: Driver,
+    expected: set[int],
+    *,
+    started: Callable[[int], None] | None = None,
+    finished=None,
+):
     """Poll driver until expected realisations finish
 
     This function polls the given `driver` until realisations given by
@@ -199,7 +206,7 @@ async def poll(driver: Driver, expected: set[int], *, started=None, finished=Non
             event = await driver.event_queue.get()
             if isinstance(event, StartedEvent):
                 if started:
-                    await started(event.iens)
+                    await started([event.iens])
             elif isinstance(event, FinishedEvent):
                 if finished is not None:
                     await finished(event.iens, event.returncode)

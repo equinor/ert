@@ -411,7 +411,7 @@ async def test_kill(
     # Needed because we are not submitting anything in this test
     driver._submit_locks[iens_to_kill] = asyncio.Lock()
 
-    await driver.kill(iens_to_kill)
+    await driver.kill([iens_to_kill])
 
     async def wait_for_sigkill_in_file():
         while True:
@@ -942,7 +942,7 @@ async def test_kill_does_not_log_error_on_accepted_bkill_outputs(
 
     driver.submit = mock_submit
     await driver.submit(0, "sh", "-c", f"echo test>{tmp_path}/test")
-    await driver.kill(0)
+    await driver.kill([0])
     assert "LSF kill failed" not in caplog.text
     assert "LSF kill failed" not in capsys.readouterr().err
     assert "LSF kill failed" not in capsys.readouterr().out
@@ -976,7 +976,7 @@ def test_filter_job_ids_on_submission_time(time_submitted_modifier, expected_res
 async def test_kill_before_submit_logs_error(caplog):
     caplog.set_level(logging.DEBUG)
     driver = LsfDriver()
-    await driver.kill(0)
+    await driver.kill([0])
     assert "DEBUG" in caplog.text
     assert "LSF kill was not run, realization 0 has never been submitted" in caplog.text
 
@@ -1347,7 +1347,7 @@ async def test_that_kill_before_submit_is_finished_works(tmp_path, monkeypatch, 
     )
     await asyncio.sleep(0.01)  # Allow submit task to start executing
     # This will wait until the submit is done and then kill
-    await driver.kill(0)
+    await driver.kill([0])
 
     async def finished(iens: int, returncode: int):
         SIGTERM = 15
