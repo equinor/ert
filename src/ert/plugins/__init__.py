@@ -2,30 +2,16 @@ from collections.abc import Callable
 from functools import wraps
 from typing import Any, ParamSpec
 
-from .ert_plugin import CancelPluginException, ErtPlugin
-from .ert_script import ErtScript
-from .external_ert_script import ExternalErtScript
+from ert.config.ert_plugin import CancelPluginException, ErtPlugin
+
 from .plugin_manager import (
     ErtPluginContext,
     ErtPluginManager,
+    ErtRuntimePlugins,
     JobDoc,
     hook_implementation,
 )
 from .plugin_response import PluginMetadata, PluginResponse
-from .workflow_config import ErtScriptWorkflow, WorkflowConfigs
-from .workflow_fixtures import (
-    HookedWorkflowFixtures,
-    PostExperimentFixtures,
-    PostSimulationFixtures,
-    PostUpdateFixtures,
-    PreExperimentFixtures,
-    PreFirstUpdateFixtures,
-    PreSimulationFixtures,
-    PreUpdateFixtures,
-    WorkflowFixtures,
-    all_hooked_workflow_fixtures,
-    fixtures_per_hook,
-)
 
 P = ParamSpec("P")
 
@@ -47,8 +33,7 @@ def plugin(name: str) -> Callable[[Callable[P, Any]], Callable[P, Any]]:
                     "ecl100_config_path",
                     "ecl300_config_path",
                     "flow_config_path",
-                    "site_config_lines",
-                    "activate_script",
+                    "site_configurations",
                 }
                 and res is not None
             ):
@@ -68,21 +53,7 @@ __all__ = [
     "ErtPlugin",
     "ErtPluginContext",
     "ErtPluginManager",
-    "ErtScript",
-    "ErtScriptWorkflow",
-    "ExternalErtScript",
-    "HookedWorkflowFixtures",
+    "ErtRuntimePlugins",
     "JobDoc",
-    "PostExperimentFixtures",
-    "PostSimulationFixtures",
-    "PostUpdateFixtures",
-    "PreExperimentFixtures",
-    "PreFirstUpdateFixtures",
-    "PreSimulationFixtures",
-    "PreUpdateFixtures",
-    "WorkflowConfigs",
-    "WorkflowFixtures",
-    "all_hooked_workflow_fixtures",
-    "fixtures_per_hook",
     "plugin",
 ]

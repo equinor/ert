@@ -78,8 +78,8 @@ class LibresFacade:
     def from_config_file(
         cls, config_file: str, read_only: bool = False
     ) -> LibresFacade:
-        with ErtPluginContext():
+        with ErtPluginContext() as runtime_plugins:
             return cls(
-                ErtConfig.with_plugins().from_file(config_file),
+                ErtConfig.with_plugins(runtime_plugins).from_file(config_file),
                 read_only,
             )

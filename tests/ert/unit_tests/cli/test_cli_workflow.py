@@ -10,7 +10,7 @@ from ert.plugins.plugin_manager import ErtPluginContext
 
 @pytest.mark.usefixtures("copy_poly_case")
 def test_executing_workflow(storage):
-    with ErtPluginContext():
+    with ErtPluginContext() as ctx:
         with open("test_wf", "w", encoding="utf-8") as wf_file:
             wf_file.write("CSV_EXPORT test_workflow_output.csv")
 
@@ -18,7 +18,7 @@ def test_executing_workflow(storage):
         with open(config_file, "a", encoding="utf-8") as file_handle:
             file_handle.write("LOAD_WORKFLOW test_wf")
 
-        rc = ErtConfig.with_plugins().from_file(config_file)
+        rc = ErtConfig.with_plugins(ctx).from_file(config_file)
         args = Namespace(name="test_wf")
         execute_workflow(rc, storage, args.name)
         assert os.path.isfile("test_workflow_output.csv")

@@ -38,9 +38,9 @@ def test_that_ert_warns_on_duplicate_workflow_jobs(tmp_path):
         pytest.warns(
             ConfigWarning, match="Duplicate workflow jobs with name 'CAREFUL_COPY_FILE'"
         ),
-        ErtPluginContext(),
+        ErtPluginContext() as runtime_plugins,
     ):
-        _ = ErtConfig.from_file(test_config_file_name)
+        _ = ErtConfig.with_plugins(runtime_plugins).from_file(test_config_file_name)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
