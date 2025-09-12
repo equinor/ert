@@ -104,7 +104,7 @@ jobs:
     secrets: inherit
 
   test-mac-main-ert:
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') # only perform mac tests on main branch and tags
+    # if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') # only perform mac tests on main branch and tags
     strategy:
       fail-fast: false
       matrix:
