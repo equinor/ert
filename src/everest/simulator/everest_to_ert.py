@@ -480,8 +480,8 @@ def get_ensemble_config(
 
 def _everest_to_ert_config_dict(ever_config: EverestConfig) -> ConfigDict:
     """
-    Takes as input an Everest configuration, the site-config and converts them
-    to a corresponding ert configuration.
+    Takes as input an Everest configuration and converts it
+    to a corresponding ert config dict.
     """
     ert_config: dict[str, Any] = {}
 
