@@ -24,6 +24,8 @@ jobs:
         fc-list
         fc-cache -f -v
         ls /etc/fonts/conf.d/
+        echo $FONTCONFIG_PATH
+        export FC_DEBUG=1
 
     - uses: actions/checkout@v5
       with:
