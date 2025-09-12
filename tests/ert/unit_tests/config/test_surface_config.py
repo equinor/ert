@@ -50,7 +50,7 @@ def test_runpath_roundtrip(tmp_path, storage, surface):
 
     # run_path -> storage
     ds = config.read_from_runpath(tmp_path, 0, 0)
-    ensemble.save_parameters(config.name, 0, ds)
+    ensemble.save_parameters(ds, config.name, 0)
 
     # storage -> run_path
     config.forward_init_file = "output_%d"
