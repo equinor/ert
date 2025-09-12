@@ -23,6 +23,7 @@ jobs:
       run: |
         fc-list
         fc-cache -f -v
+        ls /etc/fonts/conf.d/
 
     - uses: actions/checkout@v5
       with:
