@@ -1,8 +1,7 @@
 import numpy as np
 import pytest
 
-from ert.config._create_observations import _create_gen_obs
-from ert.config.general_observation import GenObservation
+from ert.config._create_observations import GenObservation, _create_gen_obs
 
 
 def test_create(tmp_path):
