@@ -92,7 +92,6 @@ class ErtMainWindow(QMainWindow):
         self,
         config_file: str,
         ert_config: ErtConfig,
-        plugin_manager: ErtPluginManager | None = None,
         log_handler: GUILogHandler | None = None,
     ) -> None:
         QMainWindow.__init__(self)
@@ -105,7 +104,6 @@ class ErtMainWindow(QMainWindow):
         self.setWindowTitle(
             f"ERT - {config_file} - {find_ert_info()} - {get_trace_id()[:8]}"
         )
-        self.plugin_manager = plugin_manager
         self.central_widget = QFrame(self)
         self.central_layout = QHBoxLayout(self.central_widget)
         self.central_layout.setContentsMargins(0, 0, 0, 0)
@@ -341,7 +339,7 @@ class ErtMainWindow(QMainWindow):
         help_menu = menuBar.addMenu("&Help")
         assert help_menu is not None
 
-        help_links = self.plugin_manager.get_help_links() if self.plugin_manager else {}
+        help_links = ErtPluginManager().get_help_links()
 
         for menu_label, link in help_links.items():
             help_link_item = help_menu.addAction(menu_label)
