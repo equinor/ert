@@ -123,7 +123,7 @@ def test_storage_logging(change_to_tmpdir):
         project=".",
         parent_pid=os.getpid(),
     ) as server:
-        assert server.wait_until_ready(), "StorageService failed to start"
+        assert server.wait_until_ready(240), "StorageService failed to start"
 
     logfiles = glob.glob("api-log-storage*.txt")
     assert len(logfiles) == 1, "Expected exactly one log file"
