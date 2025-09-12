@@ -21,7 +21,6 @@ from ._observation_declaration import (
 )
 from .ensemble_config import EnsembleConfig
 from .gen_data_config import GenDataConfig
-from .general_observation import GenObservation
 from .parsing import (
     ConfigWarning,
     ErrorInfo,
@@ -35,6 +34,32 @@ if TYPE_CHECKING:
 
 
 DEFAULT_TIME_DELTA = timedelta(seconds=30)
+
+
+@dataclass(eq=False)
+class GenObservation:
+    values: list[float]
+    stds: list[float]
+    indices: list[int]
+    std_scaling: list[float]
+
+    def __post_init__(self) -> None:
+        for val in self.stds:
+            if val <= 0:
+                raise ValueError("Observation uncertainty must be strictly > 0")
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, GenObservation):
+            return False
+        return (
+            np.array_equal(self.values, other.values)
+            and np.array_equal(self.stds, other.stds)
+            and np.array_equal(self.indices, other.indices)
+            and np.array_equal(self.std_scaling, other.std_scaling)
+        )
+
+    def __len__(self) -> int:
+        return len(self.values)
 
 
 @dataclass
@@ -417,7 +442,7 @@ def _handle_summary_observation(
             )
         }
     except ValueError as err:
-        raise ObservationConfigError.with_context(str(err), obs_key) from None
+        raise ObservationConfigError.with_context(str(err), obs_key) from err
 
 
 def _create_gen_obs(
