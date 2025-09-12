@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import polars as pl
@@ -157,8 +157,6 @@ def create_observations(
                 continue
         except ObservationConfigError as err:
             config_errors.extend(err.errors)
-        except ValueError as err:
-            config_errors.append(ErrorInfo(message=str(err)).set_context(obs_name))
 
     if config_errors:
         raise ObservationConfigError.from_collected(config_errors)
@@ -266,7 +264,12 @@ def _handle_history_observation(
         )
     data: dict[datetime, SummaryObservation] = {}
     for date, error, value in zip(refcase.dates, std_dev, values, strict=False):
-        data[date] = SummaryObservation(summary_key, summary_key, value, float(error))
+        try:
+            data[date] = SummaryObservation(
+                summary_key, summary_key, value, float(error)
+            )
+        except ValueError as err:
+            raise ObservationConfigError.with_context(str(err), summary_key) from None
 
     return {
         summary_key: _SummaryObs(
@@ -277,7 +280,9 @@ def _handle_history_observation(
     }
 
 
-def _get_time(date_dict: DateValues, start_time: datetime) -> tuple[datetime, str]:
+def _get_time(
+    date_dict: DateValues, start_time: datetime, context: Any = None
+) -> tuple[datetime, str]:
     if date_dict.date is not None:
         return _parse_date(date_dict.date), f"DATE={date_dict.date}"
     if date_dict.days is not None:
@@ -286,7 +291,7 @@ def _get_time(date_dict: DateValues, start_time: datetime) -> tuple[datetime, st
     if date_dict.hours is not None:
         hours = date_dict.hours
         return start_time + timedelta(hours=hours), f"HOURS={hours}"
-    raise ValueError("Missing time specifier")
+    raise ObservationConfigError.with_context("Missing time specifier", context=context)
 
 
 def _parse_date(date_str: str) -> datetime:
@@ -340,14 +345,7 @@ def _get_restart(
             obs_name,
         )
 
-    try:
-        time, date_str = _get_time(date_dict, time_map[0])
-    except ObservationConfigError:
-        raise
-    except ValueError as err:
-        raise ObservationConfigError.with_context(
-            f"Failed to parse date of {obs_name}", obs_name
-        ) from err
+    time, date_str = _get_time(date_dict, time_map[0], context=obs_name)
 
     try:
         return _find_nearest(time_map, time)
@@ -393,51 +391,51 @@ def _handle_summary_observation(
     summary_key = summary_dict.key
     value, std_dev = _make_value_and_std_dev(summary_dict)
 
-    try:
-        if summary_dict.date is not None and not time_map:
-            # We special case when the user has provided date in SUMMARY_OBS
-            # and not REFCASE or time_map so that we don't change current behavior.
-            date = _parse_date(summary_dict.date)
-            restart = None
-        else:
-            restart = _get_restart(summary_dict, obs_key, time_map, has_refcase)
-            date = time_map[restart]
-    except ValueError as err:
-        raise ObservationConfigError.with_context(
-            f"Problem with date in summary observation {obs_key}: " + str(err),
-            obs_key,
-        ) from err
+    if summary_dict.date is not None and not time_map:
+        # We special case when the user has provided date in SUMMARY_OBS
+        # and not REFCASE or time_map so that we don't change current behavior.
+        date = _parse_date(summary_dict.date)
+        restart = None
+    else:
+        restart = _get_restart(summary_dict, obs_key, time_map, has_refcase)
+        date = time_map[restart]
 
     if restart == 0:
         raise ObservationConfigError.with_context(
             "It is unfortunately not possible to use summary "
             "observations from the start of the simulation. "
             f"Problem with observation {obs_key}"
-            f"{' at ' + str(_get_time(summary_dict, time_map[0])) if summary_dict.restart is None else ''}",  # noqa: E501
+            f"{' at ' + str(_get_time(summary_dict, time_map[0], obs_key)) if summary_dict.restart is None else ''}",  # noqa: E501
             obs_key,
         )
-    return {
-        obs_key: _SummaryObs(
-            summary_key,
-            "summary",
-            {date: SummaryObservation(summary_key, obs_key, value, std_dev)},
-        )
-    }
+    try:
+        return {
+            obs_key: _SummaryObs(
+                summary_key,
+                "summary",
+                {date: SummaryObservation(summary_key, obs_key, value, std_dev)},
+            )
+        }
+    except ValueError as err:
+        raise ObservationConfigError.with_context(str(err), obs_key) from None
 
 
 def _create_gen_obs(
     scalar_value: tuple[float, float] | None = None,
     obs_file: str | None = None,
     data_index: str | None = None,
+    context: Any = None,
 ) -> GenObservation:
     if scalar_value is None and obs_file is None:
-        raise ValueError(
-            "Exactly one the scalar_value and obs_file arguments must be present"
+        raise ObservationConfigError.with_context(
+            "GENERAL_OBSERVATION must contain either VALUE and ERROR or OBS_FILE",
+            context=context,
         )
 
     if scalar_value is not None and obs_file is not None:
-        raise ValueError(
-            "Exactly one the scalar_value and obs_file arguments must be present"
+        raise ObservationConfigError.with_context(
+            "GENERAL_OBSERVATION cannot contain both VALUE/ERROR and OBS_FILE",
+            context=obs_file,
         )
 
     if obs_file is not None:
@@ -475,9 +473,12 @@ def _create_gen_obs(
             f"index list ({indices}) must be of equal length",
             obs_file if obs_file is not None else "",
         )
-    return GenObservation(
-        values.tolist(), stds.tolist(), indices.tolist(), std_scaling.tolist()
-    )
+    try:
+        return GenObservation(
+            values.tolist(), stds.tolist(), indices.tolist(), std_scaling.tolist()
+        )
+    except ValueError as err:
+        raise ObservationConfigError.with_context(str(err), context) from err
 
 
 def _handle_general_observation(
@@ -538,27 +539,25 @@ def _handle_general_observation(
             obs_key,
         )
     indices = index_list if index_list is not None else index_file
-    try:
-        return {
-            obs_key: _GenObs(
-                obs_key,
-                response_key,
-                {
-                    restart: _create_gen_obs(
+    return {
+        obs_key: _GenObs(
+            obs_key,
+            response_key,
+            {
+                restart: _create_gen_obs(
+                    (
                         (
-                            (
-                                general_observation.value,
-                                general_observation.error,
-                            )
-                            if general_observation.value is not None
-                            and general_observation.error is not None
-                            else None
-                        ),
-                        general_observation.obs_file,
-                        indices,
+                            general_observation.value,
+                            general_observation.error,
+                        )
+                        if general_observation.value is not None
+                        and general_observation.error is not None
+                        else None
                     ),
-                },
-            )
-        }
-    except ValueError as err:
-        raise ObservationConfigError.with_context(str(err), obs_key) from err
+                    general_observation.obs_file,
+                    indices,
+                    obs_key,
+                ),
+            },
+        )
+    }

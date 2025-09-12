@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import os.path
+import re
 import stat
 import warnings
 from datetime import date
@@ -1702,14 +1703,14 @@ def test_that_multiple_errors_are_shown_when_generating_observations():
         _ = ErtConfig.from_file("snake_oil.ert")
 
     expected_errors = [
-        "Line 3 (Column 21-31): It is unfortunately not possible",
-        "Line 11 (Column 21-32): It is unfortunately not possible",
-        "Line 27 (Column 21-33): Problem with date in summary observation WOPR_OP1_108",
-        "Line 35 (Column 21-33): Problem with date in summary observation WOPR_OP1_144",
+        r"Line 3 \(Column 21-31\): It is unfortunately not possible",
+        r"Line 11 \(Column 21-32\): It is unfortunately not possible",
+        r"Line 27 \(Column 21-33\): Could not find 2009-12-15.*for.*WOPR_OP1_108",
+        r"Line 35 \(Column 21-33\): Could not find 2010-12-10.*for.*WOPR_OP1_144",
     ]
 
     for error in expected_errors:
-        assert error in str(err.value)
+        assert re.search(error, str(err.value))
 
 
 def test_job_name_with_slash_fails_validation():
