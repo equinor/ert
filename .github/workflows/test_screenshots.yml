@@ -48,7 +48,9 @@ jobs:
       continue-on-error: true
       with:
         name: test-images-${{ github.run_number }}-${{ github.run_id }}
-        path: /tmp/tmp*/**/*.png
+        path: |
+          /tmp/pytest-of-runner/**/*.png
+          /home/runner/work/ert/ert/docs/ert/getting_started/configuration/poly_new/**/*.png
 
     - uses: test-summary/action@v2
       if: ${{ !cancelled() }}
