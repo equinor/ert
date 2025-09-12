@@ -140,10 +140,8 @@ class ParameterConfig(BaseModel):
     ) -> None:
         pass
 
-    @staticmethod
     def sample_value(
-        parameter_group_name: str,
-        keys: list[str],
+        self,
         global_seed: str,
         realization: int,
     ) -> npt.NDArray[np.double]:
@@ -156,10 +154,6 @@ class ParameterConfig(BaseModel):
         parameter.
 
         Parameters:
-        - parameter_group_name (str): The name of the parameter group, used to ensure
-        unique RNG seeds for different groups.
-        - keys (list[str]): A list of parameter keys for which the sample values are
-        generated.
         - global_seed (str): A global seed string used for RNG seed generation to ensure
         reproducibility across runs.
         - realization (int): An integer used to advance the RNG to a specific point in
@@ -177,9 +171,9 @@ class ParameterConfig(BaseModel):
         generation of large, unused sample sets.
         """
         parameter_values = []
-        for key in keys:
+        for key in self.parameter_keys:
             key_hash = sha256(
-                global_seed.encode("utf-8") + f"{parameter_group_name}:{key}".encode()
+                global_seed.encode("utf-8") + f"{self.name}:{key}".encode()
             )
             seed = np.frombuffer(key_hash.digest(), dtype="uint32")
             rng = np.random.default_rng(seed)
