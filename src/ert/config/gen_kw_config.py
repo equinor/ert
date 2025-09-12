@@ -346,15 +346,6 @@ class GenKwConfig(ParameterConfig):
             ),
         )
 
-    def copy_parameters(
-        self,
-        source_ensemble: Ensemble,
-        target_ensemble: Ensemble,
-        realizations: npt.NDArray[np.int_],
-    ) -> None:
-        df = source_ensemble.load_parameters(self.name, realizations)
-        target_ensemble.save_parameters(self.name, realization=None, dataset=df)
-
     def shouldUseLogScale(self, keyword: str) -> bool:
         for tf in self.transform_functions:
             if tf.name == keyword:
