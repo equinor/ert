@@ -1,8 +1,6 @@
-import logging
 from collections.abc import Sequence
 from typing import Any
 
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from pydantic import BaseModel
 
 from everest.plugins import hookspec
@@ -90,26 +88,6 @@ def installable_workflow_jobs() -> dict[str, Any]:  # type: ignore[empty-body]
     """
     :return: dict with workflow job names as keys and path to config as value
     :rtype: PluginResponse with data as dict[str,str]
-    """
-
-
-@hookspec
-def add_log_handle_to_root() -> logging.Handler:  # type: ignore[empty-body]
-    """
-    Create a log handle which will be added to the root logger
-    in the main entry point.
-    :return: A log handle that will be added to the root logger
-    :rtype: logging.Handler
-    """
-
-
-@hookspec
-def add_span_processor() -> BatchSpanProcessor:  # type: ignore
-    """
-    Create a BatchSpanProcessor which will be added to the trace provider
-    in ert.
-
-    :return: A BatchSpanProcessor that will be added to the trace provider in everest
     """
 
 
