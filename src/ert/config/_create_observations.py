@@ -43,11 +43,9 @@ class _GenObs:
     data_key: str
     observations: dict[int, GenObservation]
 
-    def to_dataset(self, active_list: list[int]) -> pl.DataFrame:
+    def to_dataset(self) -> pl.DataFrame:
         dataframes = []
         for time_step, node in self.observations.items():
-            if active_list and time_step not in active_list:
-                continue
             dataframes.append(
                 pl.DataFrame(
                     {
@@ -74,14 +72,12 @@ class _SummaryObs:
     data_key: str
     observations: dict[datetime, SummaryObservation]
 
-    def to_dataset(self, active_list: list[int]) -> pl.DataFrame:
+    def to_dataset(self) -> pl.DataFrame:
         observations = []
         actual_response_key = self.observation_key
         actual_observation_keys = []
         errors = []
         dates = list(self.observations.keys())
-        if active_list:
-            dates = [date for i, date in enumerate(dates) if i in active_list]
 
         for time_step in dates:
             n = self.observations[time_step]
@@ -173,13 +169,13 @@ def create_observations(
             if "summary" not in grouped:
                 grouped["summary"] = []
 
-            grouped["summary"].append(vec.to_dataset([]))
+            grouped["summary"].append(vec.to_dataset())
 
         elif isinstance(vec, _GenObs):
             if "gen_data" not in grouped:
                 grouped["gen_data"] = []
 
-            grouped["gen_data"].append(vec.to_dataset([]))
+            grouped["gen_data"].append(vec.to_dataset())
 
     datasets: dict[str, pl.DataFrame] = {}
 
