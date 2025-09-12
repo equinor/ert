@@ -123,21 +123,21 @@ def test_storage_logging(change_to_tmpdir):
         project=".",
         parent_pid=os.getpid(),
     ) as server:
-        server.wait_until_ready()
+        assert server.wait_until_ready(), "StorageService failed to start"
 
-        logfiles = glob.glob("api-log-storage*.txt")
-        assert len(logfiles) == 1, "Expected exactly one log file"
-        with open(logfiles[0], encoding="utf-8") as logfile:
-            contents = logfile.readlines()
+    logfiles = glob.glob("api-log-storage*.txt")
+    assert len(logfiles) == 1, "Expected exactly one log file"
+    with open(logfiles[0], encoding="utf-8") as logfile:
+        contents = logfile.readlines()
 
-        # check for duplicated log entries
-        assert (
-            sum(
-                "[INFO] ert.shared.storage.info: Starting dark storage" in e
-                for e in contents
-            )
-            == 1
-        ), "Found duplicated log entries"
+    # check for duplicated log entries
+    assert (
+        sum(
+            "[INFO] ert.shared.storage.info: Starting dark storage" in e
+            for e in contents
+        )
+        == 1
+    ), "Found duplicated log entries"
 
 
 def test_certificate_generation(change_to_tmpdir):
