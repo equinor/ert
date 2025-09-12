@@ -1,3 +1,4 @@
+from collections import defaultdict
 from enum import StrEnum
 from typing import (
     Any,
@@ -31,13 +32,46 @@ ObservationBody = dict[str | tuple[str, str], Any]
 ObservationStatement = tuple[ObservationType, str, ObservationBody]
 
 
+def log_parsed_observations(
+    observations: list[SimpleHistoryStatement | ObservationStatement],
+):
+    observation_types_count = defaultdict(lambda: 0)
+    observation_keyword_count = defaultdict(lambda: 0)
+
+    def count_observation_statement_keywords(obs: ObservationStatement):
+        pass
+
+    def count_simple_history_statement_keywords(obs: SimpleHistoryStatement):
+        pass
+
+    for observation in observations:
+        observation_types_count[observation[0].value] += 1
+        count_simple_history_statement_keywords(observation) if len(
+            observation
+        ) == 2 else count_observation_statement_keywords(observation)
+
+    msgs = [
+        "Count of observation types:",
+        "".join(
+            [f"\t{key} : {value}" for key, value in observation_types_count.items()]
+        ),
+        "Count of observation keywords:",
+        "".join(
+            [f"\t{key} : {value}" for key, value in observation_keyword_count.items()]
+        ),
+    ]
+    print("\n".join(msgs))
+
+
 def parse_observations(
     content: str, filename: str
 ) -> list[SimpleHistoryStatement | ObservationStatement]:
     try:
-        return (FileContextTransformer(filename) * TreeToObservations()).transform(
-            observations_parser.parse(content)
-        )
+        parsed_observations = (
+            FileContextTransformer(filename) * TreeToObservations()
+        ).transform(observations_parser.parse(content))
+        log_parsed_observations(parsed_observations)
+        return parsed_observations
     except VisitError as err:
         if isinstance(err.orig_exc, ObservationConfigError):
             raise err.orig_exc from None
