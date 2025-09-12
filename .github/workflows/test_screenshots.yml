@@ -19,6 +19,9 @@ jobs:
           fonts-ubuntu \
           xvfb
 
+    - name: List Available Fonts
+      run: fc-list
+
     - uses: actions/checkout@v5
       with:
         fetch-depth: 0
