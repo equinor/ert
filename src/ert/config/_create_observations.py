@@ -132,44 +132,36 @@ def create_observations(
     config_errors: list[ErrorInfo] = []
     for obs_name, values in obs_config_content:
         try:
-            if type(values) is HistoryValues:
-                obs_vectors.update(
-                    **_handle_history_observation(
-                        ensemble_config,
-                        values,
-                        obs_name,
-                        history,
-                        time_len,
-                    )
-                )
-            elif type(values) is SummaryValues:
-                obs_vectors.update(
-                    **_handle_summary_observation(
-                        values,
-                        obs_name,
-                        obs_time_list,
-                        bool(ensemble_config.refcase),
-                    )
-                )
-            elif type(values) is GenObsValues:
-                obs_vectors.update(
-                    **_handle_general_observation(
-                        ensemble_config,
-                        values,
-                        obs_name,
-                        obs_time_list,
-                        bool(ensemble_config.refcase),
-                    )
-                )
-            else:
-                config_errors.append(
-                    ErrorInfo(
-                        message=(
-                            f"Unknown ObservationType {type(values)} for {obs_name}"
+            match values:
+                case HistoryValues():
+                    obs_vectors.update(
+                        **_handle_history_observation(
+                            ensemble_config,
+                            values,
+                            obs_name,
+                            history,
+                            time_len,
                         )
-                    ).set_context(obs_name)
-                )
-                continue
+                    )
+                case SummaryValues():
+                    obs_vectors.update(
+                        **_handle_summary_observation(
+                            values,
+                            obs_name,
+                            obs_time_list,
+                            bool(ensemble_config.refcase),
+                        )
+                    )
+                case GenObsValues():
+                    obs_vectors.update(
+                        **_handle_general_observation(
+                            ensemble_config,
+                            values,
+                            obs_name,
+                            obs_time_list,
+                            bool(ensemble_config.refcase),
+                        )
+                    )
         except ObservationConfigError as err:
             config_errors.extend(err.errors)
 
@@ -208,16 +200,15 @@ def _handle_error_mode(
     error_dict: ErrorValues,
 ) -> npt.NDArray[np.double]:
     values = np.asarray(values)
-    error_mode = error_dict.error_mode
     error_min = error_dict.error_min
     error = error_dict.error
-    if error_mode == "ABS":
-        return np.full(values.shape, error)
-    elif error_mode == "REL":
-        return np.abs(values) * error
-    elif error_mode == "RELMIN":
-        return np.maximum(np.abs(values) * error, np.full(values.shape, error_min))
-    raise ObservationConfigError(f"Unknown error mode {error_mode}", error_mode)
+    match error_dict.error_mode:
+        case "ABS":
+            return np.full(values.shape, error)
+        case "REL":
+            return np.abs(values) * error
+        case "RELMIN":
+            return np.maximum(np.abs(values) * error, np.full(values.shape, error_min))
 
 
 def _handle_history_observation(
@@ -235,8 +226,6 @@ def _handle_history_observation(
         local_key = history_key(summary_key)
     else:
         local_key = summary_key
-    if local_key is None:
-        return {}
     if local_key not in refcase.keys:
         return {}
     values = refcase.values[refcase.keys.index(local_key)]
@@ -422,20 +411,17 @@ def _handle_summary_observation(
             f"{' at ' + str(_get_time(summary_dict, time_map[0], obs_key)) if summary_dict.restart is None else ''}",  # noqa: E501
             obs_key,
         )
-    try:
-        if float(std_dev) <= 0:
-            raise ObservationConfigError.with_context(
-                "Observation uncertainty must be strictly > 0", summary_key
-            ) from None
-        return {
-            obs_key: _SummaryObs(
-                summary_key,
-                "summary",
-                {date: _SummaryObservation(summary_key, obs_key, value, std_dev)},
-            )
-        }
-    except ValueError as err:
-        raise ObservationConfigError.with_context(str(err), obs_key) from err
+    if float(std_dev) <= 0:
+        raise ObservationConfigError.with_context(
+            "Observation uncertainty must be strictly > 0", summary_key
+        ) from None
+    return {
+        obs_key: _SummaryObs(
+            summary_key,
+            "summary",
+            {date: _SummaryObservation(summary_key, obs_key, value, std_dev)},
+        )
+    }
 
 
 def _create_gen_obs(
