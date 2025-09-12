@@ -683,8 +683,6 @@ class LocalEnsemble(BaseMode):
         if not keys:
             return pl.DataFrame([])
         parameter_value = parameter.sample_value(
-            parameter.name,
-            keys,
             str(random_seed),
             real_nr,
         )
