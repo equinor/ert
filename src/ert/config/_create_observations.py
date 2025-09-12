@@ -279,25 +279,7 @@ def _handle_history_observation(
 
 def _get_time(date_dict: DateValues, start_time: datetime) -> tuple[datetime, str]:
     if date_dict.date is not None:
-        date_str = date_dict.date
-        try:
-            return datetime.fromisoformat(date_str), f"DATE={date_str}"
-        except ValueError:
-            try:
-                date = datetime.strptime(date_str, "%d/%m/%Y")
-            except ValueError as err:
-                raise ObservationConfigError.with_context(
-                    f"Unsupported date format {date_str}. Please use ISO date format",
-                    date_str,
-                ) from err
-            else:
-                ConfigWarning.warn(
-                    f"Deprecated time format {date_str}."
-                    " Please use ISO date format YYYY-MM-DD",
-                    date_str,
-                )
-                return date, f"DATE={date_str}"
-
+        return _parse_date(date_dict.date), f"DATE={date_dict.date}"
     if date_dict.days is not None:
         days = date_dict.days
         return start_time + timedelta(days=days), f"DAYS={days}"
@@ -305,6 +287,26 @@ def _get_time(date_dict: DateValues, start_time: datetime) -> tuple[datetime, st
         hours = date_dict.hours
         return start_time + timedelta(hours=hours), f"HOURS={hours}"
     raise ValueError("Missing time specifier")
+
+
+def _parse_date(date_str: str) -> datetime:
+    try:
+        return datetime.fromisoformat(date_str)
+    except ValueError:
+        try:
+            date = datetime.strptime(date_str, "%d/%m/%Y")
+        except ValueError as err:
+            raise ObservationConfigError.with_context(
+                f"Unsupported date format {date_str}. Please use ISO date format",
+                date_str,
+            ) from err
+        else:
+            ConfigWarning.warn(
+                f"Deprecated time format {date_str}."
+                " Please use ISO date format YYYY-MM-DD",
+                date_str,
+            )
+            return date
 
 
 def _find_nearest(
