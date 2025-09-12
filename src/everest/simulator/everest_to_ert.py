@@ -29,7 +29,7 @@ from everest.config.forward_model_config import SummaryResults
 from everest.config.install_data_config import InstallDataConfig
 from everest.config.install_job_config import InstallJobConfig
 from everest.config.simulator_config import SimulatorConfig
-from everest.strings import EVEREST, SIMULATION_DIR, STORAGE_DIR
+from everest.strings import EVEREST, STORAGE_DIR
 
 
 def _extract_summary_keys(
@@ -75,9 +75,7 @@ def _extract_summary_keys(
 def _extract_environment(
     ever_config: EverestConfig, ert_config: dict[str, Any]
 ) -> None:
-    simulation_fmt = os.path.join(
-        "batch_<ITER>", "geo_realization_<GEO_ID>", SIMULATION_DIR
-    )
+    simulation_fmt = os.path.join("batch_<ITER>", "realization_<GEO_ID>", "<SIM_DIR>")
 
     assert ever_config.simulation_dir is not None
     simulation_path = os.path.join(ever_config.simulation_dir, simulation_fmt)
