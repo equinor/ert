@@ -43,10 +43,6 @@ class _SummaryObservation:
     std: float
     std_scaling: float = 1.0
 
-    def __post_init__(self) -> None:
-        if self.std <= 0:
-            raise ValueError("Observation uncertainty must be strictly > 0")
-
 
 @dataclass(eq=False)
 class _GenObservation:
@@ -283,12 +279,11 @@ def _handle_history_observation(
         )
     data: dict[datetime, _SummaryObservation] = {}
     for date, error, value in zip(refcase.dates, std_dev, values, strict=False):
-        try:
-            data[date] = _SummaryObservation(
-                summary_key, summary_key, value, float(error)
-            )
-        except ValueError as err:
-            raise ObservationConfigError.with_context(str(err), summary_key) from None
+        if float(error) <= 0:
+            raise ObservationConfigError.with_context(
+                "Observation uncertainty must be strictly > 0", summary_key
+            ) from None
+        data[date] = _SummaryObservation(summary_key, summary_key, value, float(error))
 
     return {
         summary_key: _SummaryObs(
@@ -428,6 +423,10 @@ def _handle_summary_observation(
             obs_key,
         )
     try:
+        if float(std_dev) <= 0:
+            raise ObservationConfigError.with_context(
+                "Observation uncertainty must be strictly > 0", summary_key
+            ) from None
         return {
             obs_key: _SummaryObs(
                 summary_key,
