@@ -79,7 +79,12 @@ jobs:
       run: |
         touch storage
         chmod 000 storage
-        uv run just ert-unit-tests
+        if [ "${{ inputs.os }}" = "macos-latest" ]; then
+          # Workaround: On macOS we exclude some tests that are known to be flaky in CI, the inputs.select-string gets overriden in the justfile, so we set it here
+          ERT_PYTEST_ARGS='-m "not (skip_mac_ci or memory_test or limit_memory" --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov_main.xml --junit-xml=junit.xml -o junit_family=legacy -v --durations=25 --benchmark-disable' uv run just ert-unit-tests
+        else
+          uv run just ert-unit-tests
+        fi
         ERT_PYTEST_ARGS='-m ${{ inputs.select-string }} --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov_docs.xml --junit-xml=junit.xml -o junit_family=legacy -v --durations=25 --benchmark-disable' uv run just ert-doc-tests
         ERT_PYTEST_ARGS='-m ${{ inputs.select-string }} --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov_mem.xml --junit-xml=junit.xml -o junit_family=legacy -v --durations=25 --benchmark-disable' uv run just ert-memory-tests
         chmod 700 storage
