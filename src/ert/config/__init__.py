@@ -38,7 +38,6 @@ from .parsing.observations_parser import ObservationType
 from .queue_config import QueueConfig
 from .response_config import InvalidResponseFile, ResponseConfig, ResponseMetadata
 from .summary_config import SummaryConfig
-from .summary_observation import SummaryObservation
 from .surface_config import SurfaceConfig
 from .workflow import Workflow
 from .workflow_job import ErtScriptWorkflow, ExecutableWorkflow, WorkflowJob
@@ -84,7 +83,6 @@ __all__ = [
     "ResponseConfig",
     "ResponseMetadata",
     "SummaryConfig",
-    "SummaryObservation",
     "SurfaceConfig",
     "TransformFunction",
     "WarningInfo",

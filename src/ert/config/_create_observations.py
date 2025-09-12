@@ -36,7 +36,7 @@ DEFAULT_TIME_DELTA = timedelta(seconds=30)
 
 
 @dataclass
-class SummaryObservation:
+class _SummaryObservation:
     summary_key: str
     observation_key: str
     value: float
@@ -89,7 +89,7 @@ class _GenObs:
 class _SummaryObs:
     observation_key: str
     data_key: str
-    observations: dict[datetime, SummaryObservation]
+    observations: dict[datetime, _SummaryObservation]
 
     def to_dataset(self) -> pl.DataFrame:
         observations = []
@@ -281,10 +281,10 @@ def _handle_history_observation(
             values[start:stop],
             segment_instance,
         )
-    data: dict[datetime, SummaryObservation] = {}
+    data: dict[datetime, _SummaryObservation] = {}
     for date, error, value in zip(refcase.dates, std_dev, values, strict=False):
         try:
-            data[date] = SummaryObservation(
+            data[date] = _SummaryObservation(
                 summary_key, summary_key, value, float(error)
             )
         except ValueError as err:
@@ -432,7 +432,7 @@ def _handle_summary_observation(
             obs_key: _SummaryObs(
                 summary_key,
                 "summary",
-                {date: SummaryObservation(summary_key, obs_key, value, std_dev)},
+                {date: _SummaryObservation(summary_key, obs_key, value, std_dev)},
             )
         }
     except ValueError as err:
