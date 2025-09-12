@@ -15,7 +15,10 @@ jobs:
     steps:
     - name: Install fonts
       run: |
-        sudo apt install fonts-ubuntu
+        sudo apt install -y \
+          fonts-ubuntu \
+          xvfb
+
     - uses: actions/checkout@v5
       with:
         fetch-depth: 0
@@ -43,6 +46,9 @@ jobs:
 
     - name: Screenshot Test
       run: |
+        # Start Xvfb
+        Xvfb :99 -screen 0 1920x1080x24 &
+        export DISPLAY=:99
         uv run pytest --junit-xml=junit.xml -o junit_family=legacy -v --durations=25 --benchmark-disable tests/ert/ui_tests/gui/test_docs_screenshots.py
 
     - name: Upload artifact images
