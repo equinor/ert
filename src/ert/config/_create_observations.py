@@ -397,10 +397,7 @@ def _handle_summary_observation(
         if summary_dict.date is not None and not time_map:
             # We special case when the user has provided date in SUMMARY_OBS
             # and not REFCASE or time_map so that we don't change current behavior.
-            try:
-                date = datetime.fromisoformat(summary_dict.date)
-            except ValueError as err:
-                raise ValueError("Please use ISO date format YYYY-MM-DD.") from err
+            date = _parse_date(summary_dict.date)
             restart = None
         else:
             restart = _get_restart(summary_dict, obs_key, time_map, has_refcase)
