@@ -112,13 +112,13 @@ def _handle_error_mode(
     error_mode = error_dict.error_mode
     error_min = error_dict.error_min
     error = error_dict.error
-    if error_mode == "ABS":
-        return np.full(values.shape, error)
-    elif error_mode == "REL":
-        return np.abs(values) * error
-    elif error_mode == "RELMIN":
-        return np.maximum(np.abs(values) * error, np.full(values.shape, error_min))
-    raise ObservationConfigError(f"Unknown error mode {error_mode}", error_mode)
+    match error_mode:
+        case "ABS":
+            return np.full(values.shape, error)
+        case "REL":
+            return np.abs(values) * error
+        case "RELMIN":
+            return np.maximum(np.abs(values) * error, np.full(values.shape, error_min))
 
 
 def _handle_history_observation(
