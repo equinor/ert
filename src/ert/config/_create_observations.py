@@ -53,46 +53,38 @@ def create_observations(
     grouped: dict[str, list[pl.DataFrame]] = defaultdict(list)
     for obs_name, values in obs_config_content:
         try:
-            if type(values) is HistoryValues:
-                if (
-                    obs := _handle_history_observation(
-                        ensemble_config,
-                        values,
-                        obs_name,
-                        history,
-                        time_len,
-                    )
-                ) is not None:
-                    grouped["summary"].append(obs)
-            elif type(values) is SummaryValues:
-                grouped["summary"].append(
-                    _handle_summary_observation(
-                        values,
-                        obs_name,
-                        obs_time_list,
-                        bool(ensemble_config.refcase),
-                    )
-                )
-            elif type(values) is GenObsValues:
-                if (
-                    obs := _handle_general_observation(
-                        ensemble_config,
-                        values,
-                        obs_name,
-                        obs_time_list,
-                        bool(ensemble_config.refcase),
-                    )
-                ) is not None:
-                    grouped["gen_data"].append(obs)
-            else:
-                config_errors.append(
-                    ErrorInfo(
-                        message=(
-                            f"Unknown ObservationType {type(values)} for {obs_name}"
+            match values:
+                case HistoryValues():
+                    if (
+                        obs := _handle_history_observation(
+                            ensemble_config,
+                            values,
+                            obs_name,
+                            history,
+                            time_len,
                         )
-                    ).set_context(obs_name)
-                )
-                continue
+                    ) is not None:
+                        grouped["summary"].append(obs)
+                case SummaryValues():
+                    grouped["summary"].append(
+                        _handle_summary_observation(
+                            values,
+                            obs_name,
+                            obs_time_list,
+                            bool(ensemble_config.refcase),
+                        )
+                    )
+                case GenObsValues():
+                    if (
+                        obs := _handle_general_observation(
+                            ensemble_config,
+                            values,
+                            obs_name,
+                            obs_time_list,
+                            bool(ensemble_config.refcase),
+                        )
+                    ) is not None:
+                        grouped["gen_data"].append(obs)
         except ObservationConfigError as err:
             config_errors.extend(err.errors)
 
