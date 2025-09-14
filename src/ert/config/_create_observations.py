@@ -136,8 +136,6 @@ def _handle_history_observation(
         local_key = history_key(summary_key)
     else:
         local_key = summary_key
-    if local_key is None:
-        return None
     if local_key not in refcase.keys:
         return None
     values = refcase.values[refcase.keys.index(local_key)]
