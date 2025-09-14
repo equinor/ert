@@ -52,65 +52,61 @@ class _GenObservation:
     std_scaling: npt.NDArray[np.float64]
 
 
-@dataclass
-class _GenObs:
-    observation_key: str
-    data_key: str
-    observations: dict[int, _GenObservation]
-
-    def to_dataset(self) -> pl.DataFrame:
-        dataframes = []
-        for time_step, node in self.observations.items():
-            dataframes.append(
-                pl.DataFrame(
-                    {
-                        "response_key": self.data_key,
-                        "observation_key": self.observation_key,
-                        "report_step": pl.Series(
-                            np.full(len(node.indices), time_step),
-                            dtype=pl.UInt16,
-                        ),
-                        "index": pl.Series(node.indices, dtype=pl.UInt16),
-                        "observations": pl.Series(node.values, dtype=pl.Float32),
-                        "std": pl.Series(node.stds, dtype=pl.Float32),
-                    }
-                )
+def _gen_obs(
+    observation_key: str,
+    data_key: str,
+    observations: dict[int, _GenObservation],
+) -> pl.DataFrame:
+    dataframes = []
+    for time_step, node in observations.items():
+        dataframes.append(
+            pl.DataFrame(
+                {
+                    "response_key": data_key,
+                    "observation_key": observation_key,
+                    "report_step": pl.Series(
+                        np.full(len(node.indices), time_step),
+                        dtype=pl.UInt16,
+                    ),
+                    "index": pl.Series(node.indices, dtype=pl.UInt16),
+                    "observations": pl.Series(node.values, dtype=pl.Float32),
+                    "std": pl.Series(node.stds, dtype=pl.Float32),
+                }
             )
-
-        combined = pl.concat(dataframes)
-        return combined
-
-
-@dataclass
-class _SummaryObs:
-    observation_key: str
-    data_key: str
-    observations: dict[datetime, _SummaryObservation]
-
-    def to_dataset(self) -> pl.DataFrame:
-        values = []
-        actual_response_key = self.observation_key
-        actual_observation_keys = []
-        errors = []
-        dates = list(self.observations.keys())
-
-        for time_step in dates:
-            n = self.observations[time_step]
-            actual_observation_keys.append(n.observation_key)
-            values.append(n.value)
-            errors.append(n.std)
-
-        dates_series = pl.Series(dates).dt.cast_time_unit("ms")
-
-        return pl.DataFrame(
-            {
-                "response_key": actual_response_key,
-                "observation_key": actual_observation_keys,
-                "time": dates_series,
-                "observations": pl.Series(values, dtype=pl.Float32),
-                "std": pl.Series(errors, dtype=pl.Float32),
-            }
         )
+
+    combined = pl.concat(dataframes)
+    return combined
+
+
+def _summary_obs(
+    observation_key: str,
+    data_key: str,
+    observations: dict[datetime, _SummaryObservation],
+) -> pl.DataFrame:
+    values = []
+    actual_response_key = observation_key
+    actual_observation_keys = []
+    errors = []
+    dates = list(observations.keys())
+
+    for time_step in dates:
+        n = observations[time_step]
+        actual_observation_keys.append(n.observation_key)
+        values.append(n.value)
+        errors.append(n.std)
+
+    dates_series = pl.Series(dates).dt.cast_time_unit("ms")
+
+    return pl.DataFrame(
+        {
+            "response_key": actual_response_key,
+            "observation_key": actual_observation_keys,
+            "time": dates_series,
+            "observations": pl.Series(values, dtype=pl.Float32),
+            "std": pl.Series(errors, dtype=pl.Float32),
+        }
+    )
 
 
 def create_observations(
@@ -121,7 +117,7 @@ def create_observations(
 ) -> dict[str, pl.DataFrame]:
     if not obs_config_content:
         return {}
-    obs_vectors: dict[str, _GenObs | _SummaryObs] = {}
+    obs_vectors: dict[str, pl.DataFrame] = {}
     obs_time_list: list[datetime] = []
     if ensemble_config.refcase is not None:
         obs_time_list = ensemble_config.refcase.all_dates
@@ -178,17 +174,16 @@ def create_observations(
 
     grouped: dict[str, list[pl.DataFrame]] = {}
     for vec in obs_vectors.values():
-        if isinstance(vec, _SummaryObs):
+        if "time" in vec:
             if "summary" not in grouped:
                 grouped["summary"] = []
 
-            grouped["summary"].append(vec.to_dataset())
-
-        elif isinstance(vec, _GenObs):
+            grouped["summary"].append(vec)
+        else:
             if "gen_data" not in grouped:
                 grouped["gen_data"] = []
 
-            grouped["gen_data"].append(vec.to_dataset())
+            grouped["gen_data"].append(vec)
 
     datasets: dict[str, pl.DataFrame] = {}
 
@@ -226,7 +221,7 @@ def _handle_history_observation(
     summary_key: str,
     history_type: HistorySource,
     time_len: int,
-) -> dict[str, _SummaryObs]:
+) -> dict[str, pl.DataFrame]:
     refcase = ensemble_config.refcase
     if refcase is None:
         raise ObservationConfigError("REFCASE is required for HISTORY_OBSERVATION")
@@ -286,7 +281,7 @@ def _handle_history_observation(
         data[date] = _SummaryObservation(summary_key, summary_key, value, float(error))
 
     return {
-        summary_key: _SummaryObs(
+        summary_key: _summary_obs(
             summary_key,
             "summary",
             data,
@@ -401,7 +396,7 @@ def _handle_summary_observation(
     obs_key: str,
     time_map: list[datetime],
     has_refcase: bool,
-) -> dict[str, _SummaryObs]:
+) -> dict[str, pl.DataFrame]:
     summary_key = summary_dict.key
     value, std_dev = _make_value_and_std_dev(summary_dict)
 
@@ -428,7 +423,7 @@ def _handle_summary_observation(
                 "Observation uncertainty must be strictly > 0", summary_key
             ) from None
         return {
-            obs_key: _SummaryObs(
+            obs_key: _summary_obs(
                 summary_key,
                 "summary",
                 {date: _SummaryObservation(summary_key, obs_key, value, std_dev)},
@@ -505,7 +500,7 @@ def _handle_general_observation(
     obs_key: str,
     time_map: list[datetime],
     has_refcase: bool,
-) -> dict[str, _GenObs]:
+) -> dict[str, pl.DataFrame]:
     response_key = general_observation.data
     if not ensemble_config.hasNodeGenData(response_key):
         ConfigWarning.warn(
@@ -558,7 +553,7 @@ def _handle_general_observation(
         )
     indices = index_list if index_list is not None else index_file
     return {
-        obs_key: _GenObs(
+        obs_key: _gen_obs(
             obs_key,
             response_key,
             {
