@@ -44,33 +44,6 @@ class _GenObservation:
     std_scaling: npt.NDArray[np.float64]
 
 
-def _gen_obs(
-    observation_key: str,
-    data_key: str,
-    observations: dict[int, _GenObservation],
-) -> pl.DataFrame:
-    dataframes = []
-    for time_step, node in observations.items():
-        dataframes.append(
-            pl.DataFrame(
-                {
-                    "response_key": data_key,
-                    "observation_key": observation_key,
-                    "report_step": pl.Series(
-                        np.full(len(node.indices), time_step),
-                        dtype=pl.UInt16,
-                    ),
-                    "index": pl.Series(node.indices, dtype=pl.UInt16),
-                    "observations": pl.Series(node.values, dtype=pl.Float32),
-                    "std": pl.Series(node.stds, dtype=pl.Float32),
-                }
-            )
-        )
-
-    combined = pl.concat(dataframes)
-    return combined
-
-
 def create_observations(
     obs_config_content: ConfContent,
     ensemble_config: EnsembleConfig,
@@ -506,23 +479,30 @@ def _handle_general_observation(
             obs_key,
         )
     indices = index_list if index_list is not None else index_file
-    return _gen_obs(
+    node = _create_gen_obs(
+        (
+            (
+                general_observation.value,
+                general_observation.error,
+            )
+            if general_observation.value is not None
+            and general_observation.error is not None
+            else None
+        ),
+        general_observation.obs_file,
+        indices,
         obs_key,
-        response_key,
+    )
+    return pl.DataFrame(
         {
-            restart: _create_gen_obs(
-                (
-                    (
-                        general_observation.value,
-                        general_observation.error,
-                    )
-                    if general_observation.value is not None
-                    and general_observation.error is not None
-                    else None
-                ),
-                general_observation.obs_file,
-                indices,
-                obs_key,
+            "response_key": response_key,
+            "observation_key": obs_key,
+            "report_step": pl.Series(
+                np.full(len(node.indices), restart),
+                dtype=pl.UInt16,
             ),
-        },
+            "index": pl.Series(node.indices, dtype=pl.UInt16),
+            "observations": pl.Series(node.values, dtype=pl.Float32),
+            "std": pl.Series(node.stds, dtype=pl.Float32),
+        }
     )
