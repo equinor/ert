@@ -290,21 +290,6 @@ def _get_restart(
         ) from err
 
 
-def _make_value_and_std_dev(
-    observation_dict: SummaryValues,
-) -> tuple[float, float]:
-    value = observation_dict.value
-    return (
-        value,
-        float(
-            _handle_error_mode(
-                np.array(value),
-                observation_dict,
-            )
-        ),
-    )
-
-
 def _handle_summary_observation(
     summary_dict: SummaryValues,
     obs_key: str,
@@ -312,7 +297,8 @@ def _handle_summary_observation(
     has_refcase: bool,
 ) -> pl.DataFrame:
     summary_key = summary_dict.key
-    value, std_dev = _make_value_and_std_dev(summary_dict)
+    value = summary_dict.value
+    std_dev = float(_handle_error_mode(np.array(value), summary_dict))
 
     if summary_dict.date is not None and not time_map:
         # We special case when the user has provided date in SUMMARY_OBS
