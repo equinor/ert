@@ -355,12 +355,6 @@ class GenKwConfig(ParameterConfig):
         df = source_ensemble.load_parameters(self.name, realizations)
         target_ensemble.save_parameters(self.name, realization=None, dataset=df)
 
-    def shouldUseLogScale(self, keyword: str) -> bool:
-        for tf in self.transform_functions:
-            if tf.name == keyword:
-                return isinstance(tf.distribution, LogNormalSettings | LogUnifSettings)
-        return False
-
     def get_priors(self) -> list[PriorDict]:
         priors: list[PriorDict] = []
         for tf in self.transform_functions:
