@@ -81,7 +81,6 @@ def _gen_obs(
 
 def _summary_obs(
     observation_key: str,
-    data_key: str,
     observations: dict[datetime, _SummaryObservation],
 ) -> pl.DataFrame:
     values = []
@@ -283,7 +282,6 @@ def _handle_history_observation(
     return {
         summary_key: _summary_obs(
             summary_key,
-            "summary",
             data,
         )
     }
@@ -425,7 +423,6 @@ def _handle_summary_observation(
         return {
             obs_key: _summary_obs(
                 summary_key,
-                "summary",
                 {date: _SummaryObservation(summary_key, obs_key, value, std_dev)},
             )
         }
