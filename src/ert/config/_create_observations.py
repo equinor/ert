@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
@@ -171,17 +172,11 @@ def create_observations(
     if config_errors:
         raise ObservationConfigError.from_collected(config_errors)
 
-    grouped: dict[str, list[pl.DataFrame]] = {}
+    grouped: dict[str, list[pl.DataFrame]] = defaultdict(list)
     for vec in obs_vectors.values():
         if "time" in vec:
-            if "summary" not in grouped:
-                grouped["summary"] = []
-
             grouped["summary"].append(vec)
         else:
-            if "gen_data" not in grouped:
-                grouped["gen_data"] = []
-
             grouped["gen_data"].append(vec)
 
     datasets: dict[str, pl.DataFrame] = {}
