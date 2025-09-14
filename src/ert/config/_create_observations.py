@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
@@ -401,14 +400,7 @@ def _handle_general_observation(
         return None
 
     restart = 0 if restart is None else restart
-    index_list = general_observation.index_list
-    index_file = general_observation.index_file
-    if index_list is not None and index_file is not None:
-        raise ObservationConfigError.with_context(
-            f"GENERAL_OBSERVATION {obs_key} has both INDEX_FILE and INDEX_LIST.",
-            obs_key,
-        )
-    index_source = index_list if index_list is not None else index_file
+
     if (
         general_observation.value is None
         and general_observation.error is None
@@ -455,16 +447,20 @@ def _handle_general_observation(
         values = np.array([general_observation.value])
         stds = np.array([general_observation.error])
 
-    if index_source is not None:
-        indices = np.array([], dtype=np.int32)
-        if os.path.isfile(index_source):
-            indices = np.loadtxt(index_source, delimiter=None, dtype=np.int32).ravel()
-        else:
-            indices = np.array(
-                sorted(rangestring_to_list(index_source)), dtype=np.int32
-            )
+    index_list = general_observation.index_list
+    index_file = general_observation.index_file
+    if index_list is not None and index_file is not None:
+        raise ObservationConfigError.with_context(
+            f"GENERAL_OBSERVATION {obs_key} has both INDEX_FILE and INDEX_LIST.",
+            obs_key,
+        )
+    if index_file is not None:
+        indices = np.loadtxt(index_file, delimiter=None, dtype=np.int32).ravel()
+    elif index_list is not None:
+        indices = np.array(sorted(rangestring_to_list(index_list)), dtype=np.int32)
     else:
         indices = np.arange(len(values), dtype=np.int32)
+
     if len({len(stds), len(values), len(indices)}) != 1:
         raise ObservationConfigError.with_context(
             f"Values ({values}), error ({stds}) and "
