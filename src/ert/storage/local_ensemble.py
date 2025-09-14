@@ -646,18 +646,6 @@ class LocalEnsemble(BaseMode):
 
         return pl.concat(dataframes, how="align")
 
-    def load_cross_correlations(self) -> xr.Dataset:
-        input_path = self.mount_point / "corr_XY.nc"
-
-        if not input_path.exists():
-            raise FileNotFoundError(
-                f"No cross-correlation data available at '{input_path}'. "
-                "Make sure to run the update with "
-                "Adaptive Localization enabled."
-            )
-        logger.info("Loading cross correlations")
-        return xr.open_dataset(input_path, engine="scipy")
-
     @require_write
     def save_observation_scaling_factors(self, dataset: pl.DataFrame) -> None:
         self._storage._to_parquet_transaction(
@@ -696,24 +684,6 @@ class LocalEnsemble(BaseMode):
             parameter_dict,
             schema=dict.fromkeys(keys, pl.Float64) | {"realization": pl.Int64},
         )
-
-    @require_write
-    def save_cross_correlations(
-        self,
-        cross_correlations: npt.NDArray[np.float64],
-        param_group: str,
-        parameter_names: list[str],
-    ) -> None:
-        data_vars = {
-            param_group: xr.DataArray(
-                data=cross_correlations,
-                dims=["parameter", "response"],
-                coords={"parameter": parameter_names},
-            )
-        }
-        dataset = xr.Dataset(data_vars)
-        file_path = os.path.join(self.mount_point, "corr_XY.nc")
-        self._storage._to_netcdf_transaction(file_path, dataset)
 
     def load_responses(self, key: str, realizations: tuple[int, ...]) -> pl.DataFrame:
         """Load responses for key and realizations into xarray Dataset.
