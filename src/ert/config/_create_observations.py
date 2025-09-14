@@ -317,23 +317,20 @@ def _handle_summary_observation(
             f"{' at ' + str(_get_time(summary_dict, time_map[0], obs_key)) if summary_dict.restart is None else ''}",  # noqa: E501
             obs_key,
         )
-    try:
-        if float(std_dev) <= 0:
-            raise ObservationConfigError.with_context(
-                "Observation uncertainty must be strictly > 0", summary_key
-            ) from None
+    if float(std_dev) <= 0:
+        raise ObservationConfigError.with_context(
+            "Observation uncertainty must be strictly > 0", summary_key
+        ) from None
 
-        return pl.DataFrame(
-            {
-                "response_key": [summary_key],
-                "observation_key": [obs_key],
-                "time": pl.Series([date]).dt.cast_time_unit("ms"),
-                "observations": pl.Series([value], dtype=pl.Float32),
-                "std": pl.Series([std_dev], dtype=pl.Float32),
-            }
-        )
-    except ValueError as err:
-        raise ObservationConfigError.with_context(str(err), obs_key) from err
+    return pl.DataFrame(
+        {
+            "response_key": [summary_key],
+            "observation_key": [obs_key],
+            "time": pl.Series([date]).dt.cast_time_unit("ms"),
+            "observations": pl.Series([value], dtype=pl.Float32),
+            "std": pl.Series([std_dev], dtype=pl.Float32),
+        }
+    )
 
 
 def _handle_general_observation(
