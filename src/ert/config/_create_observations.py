@@ -36,15 +36,6 @@ if TYPE_CHECKING:
 DEFAULT_TIME_DELTA = timedelta(seconds=30)
 
 
-@dataclass
-class _SummaryObservation:
-    summary_key: str
-    observation_key: str
-    value: float
-    std: float
-    std_scaling: float = 1.0
-
-
 @dataclass(eq=False)
 class _GenObservation:
     values: npt.NDArray[np.float64]
@@ -78,35 +69,6 @@ def _gen_obs(
 
     combined = pl.concat(dataframes)
     return combined
-
-
-def _summary_obs(
-    observation_key: str,
-    observations: dict[datetime, _SummaryObservation],
-) -> pl.DataFrame:
-    values = []
-    actual_response_key = observation_key
-    actual_observation_keys = []
-    errors = []
-    dates = list(observations.keys())
-
-    for time_step in dates:
-        n = observations[time_step]
-        actual_observation_keys.append(n.observation_key)
-        values.append(n.value)
-        errors.append(n.std)
-
-    dates_series = pl.Series(dates).dt.cast_time_unit("ms")
-
-    return pl.DataFrame(
-        {
-            "response_key": actual_response_key,
-            "observation_key": actual_observation_keys,
-            "time": dates_series,
-            "observations": pl.Series(values, dtype=pl.Float32),
-            "std": pl.Series(errors, dtype=pl.Float32),
-        }
-    )
 
 
 def create_observations(
@@ -261,15 +223,21 @@ def _handle_history_observation(
             values[start:stop],
             segment_instance,
         )
-    data: dict[datetime, _SummaryObservation] = {}
-    for date, error, value in zip(refcase.dates, std_dev, values, strict=False):
-        if float(error) <= 0:
-            raise ObservationConfigError.with_context(
-                "Observation uncertainty must be strictly > 0", summary_key
-            ) from None
-        data[date] = _SummaryObservation(summary_key, summary_key, value, float(error))
+    dates_series = pl.Series(refcase.dates).dt.cast_time_unit("ms")
+    if (std_dev <= 0).any():
+        raise ObservationConfigError.with_context(
+            "Observation uncertainty must be strictly > 0", summary_key
+        ) from None
 
-    return _summary_obs(summary_key, data)
+    return pl.DataFrame(
+        {
+            "response_key": summary_key,
+            "observation_key": summary_key,
+            "time": dates_series,
+            "observations": pl.Series(values, dtype=pl.Float32),
+            "std": pl.Series(std_dev, dtype=pl.Float32),
+        }
+    )
 
 
 def _get_time(
@@ -405,9 +373,15 @@ def _handle_summary_observation(
             raise ObservationConfigError.with_context(
                 "Observation uncertainty must be strictly > 0", summary_key
             ) from None
-        return _summary_obs(
-            summary_key,
-            {date: _SummaryObservation(summary_key, obs_key, value, std_dev)},
+
+        return pl.DataFrame(
+            {
+                "response_key": [summary_key],
+                "observation_key": [obs_key],
+                "time": pl.Series([date]).dt.cast_time_unit("ms"),
+                "observations": pl.Series([value], dtype=pl.Float32),
+                "std": pl.Series([std_dev], dtype=pl.Float32),
+            }
         )
     except ValueError as err:
         raise ObservationConfigError.with_context(str(err), obs_key) from err
