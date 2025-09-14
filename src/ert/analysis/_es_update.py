@@ -376,16 +376,6 @@ def analysis_ES(
                         )
                     )
 
-                if cross_correlations:
-                    assert isinstance(config_node, GenKwConfig)
-                    parameter_names = config_node.parameter_keys
-                    cross_correlations_ = np.vstack(cross_correlations)
-                    if cross_correlations_.size != 0:
-                        source_ensemble.save_cross_correlations(
-                            cross_correlations_,
-                            param_group,
-                            parameter_names[: cross_correlations_.shape[0]],
-                        )
                 logger.info(
                     f"Adaptive Localization of {param_group} completed "
                     f"in {(time.time() - start) / 60} minutes"

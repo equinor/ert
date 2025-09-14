@@ -311,16 +311,6 @@ def test_that_posterior_generalized_variance_increases_in_cutoff():
         "poly_localization_cutoff2.ert", "test_experiment_cutoff2"
     )
     with open_storage(storage_cutoff1) as storage:
-        cross_correlations = storage.get_ensemble(
-            prior_ensemble_cutoff1_id
-        ).load_cross_correlations()
-        assert all(cross_correlations.parameter.to_numpy() == ["a", "b", "c"])
-        assert cross_correlations["COEFFS"].values.shape == (3, 5)
-        assert (
-            (cross_correlations["COEFFS"].values >= -1)
-            & (cross_correlations["COEFFS"].values <= 1)
-        ).all()
-
         prior_sample_cutoff1 = (
             storage.get_ensemble(prior_ensemble_cutoff1_id)
             .load_parameters_numpy("COEFFS", np.arange(NUM_REALIZATIONS_TO_TEST))
