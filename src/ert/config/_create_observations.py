@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 from collections import defaultdict
-from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
@@ -34,14 +33,6 @@ if TYPE_CHECKING:
 
 
 DEFAULT_TIME_DELTA = timedelta(seconds=30)
-
-
-@dataclass(eq=False)
-class _GenObservation:
-    values: npt.NDArray[np.float64]
-    stds: npt.NDArray[np.float64]
-    indices: npt.NDArray[np.int32]
-    std_scaling: npt.NDArray[np.float64]
 
 
 def create_observations(
@@ -360,67 +351,6 @@ def _handle_summary_observation(
         raise ObservationConfigError.with_context(str(err), obs_key) from err
 
 
-def _create_gen_obs(
-    scalar_value: tuple[float, float] | None = None,
-    obs_file: str | None = None,
-    data_index: str | None = None,
-    context: Any = None,
-) -> _GenObservation:
-    if scalar_value is None and obs_file is None:
-        raise ObservationConfigError.with_context(
-            "GENERAL_OBSERVATION must contain either VALUE and ERROR or OBS_FILE",
-            context=context,
-        )
-
-    if scalar_value is not None and obs_file is not None:
-        raise ObservationConfigError.with_context(
-            "GENERAL_OBSERVATION cannot contain both VALUE/ERROR and OBS_FILE",
-            context=obs_file,
-        )
-
-    if obs_file is not None:
-        try:
-            file_values = np.loadtxt(obs_file, delimiter=None).ravel()
-        except ValueError as err:
-            raise ObservationConfigError.with_context(
-                f"Failed to read OBS_FILE {obs_file}: {err}", obs_file
-            ) from err
-        if len(file_values) % 2 != 0:
-            raise ObservationConfigError.with_context(
-                "Expected even number of values in GENERAL_OBSERVATION", obs_file
-            )
-        values = file_values[::2]
-        stds = file_values[1::2]
-
-    else:
-        assert scalar_value is not None
-        obs_value, obs_std = scalar_value
-        values = np.array([obs_value])
-        stds = np.array([obs_std])
-
-    if data_index is not None:
-        indices = np.array([], dtype=np.int32)
-        if os.path.isfile(data_index):
-            indices = np.loadtxt(data_index, delimiter=None, dtype=np.int32).ravel()
-        else:
-            indices = np.array(sorted(rangestring_to_list(data_index)), dtype=np.int32)
-    else:
-        indices = np.arange(len(values), dtype=np.int32)
-    std_scaling = np.full(len(values), 1.0)
-    if len({len(stds), len(values), len(indices)}) != 1:
-        raise ObservationConfigError.with_context(
-            f"Values ({values}), error ({stds}) and "
-            f"index list ({indices}) must be of equal length",
-            obs_file if obs_file is not None else "",
-        )
-
-    if np.any(stds <= 0):
-        raise ObservationConfigError.with_context(
-            "Observation uncertainty must be strictly > 0", context
-        )
-    return _GenObservation(values, stds, indices, std_scaling)
-
-
 def _handle_general_observation(
     ensemble_config: EnsembleConfig,
     general_observation: GenObsValues,
@@ -478,31 +408,86 @@ def _handle_general_observation(
             f"GENERAL_OBSERVATION {obs_key} has both INDEX_FILE and INDEX_LIST.",
             obs_key,
         )
-    indices = index_list if index_list is not None else index_file
-    node = _create_gen_obs(
-        (
-            (
-                general_observation.value,
-                general_observation.error,
+    index_source = index_list if index_list is not None else index_file
+    if (
+        general_observation.value is None
+        and general_observation.error is None
+        and general_observation.obs_file is None
+    ):
+        raise ObservationConfigError.with_context(
+            "GENERAL_OBSERVATION must contain either VALUE and ERROR or OBS_FILE",
+            context=obs_key,
+        )
+
+    if (
+        general_observation.value is not None
+        and general_observation.error is not None
+        and general_observation.obs_file is not None
+    ):
+        raise ObservationConfigError.with_context(
+            "GENERAL_OBSERVATION cannot contain both VALUE/ERROR and OBS_FILE",
+            context=general_observation.obs_file,
+        )
+
+    if general_observation.obs_file is not None:
+        try:
+            file_values = np.loadtxt(
+                general_observation.obs_file, delimiter=None
+            ).ravel()
+        except ValueError as err:
+            raise ObservationConfigError.with_context(
+                f"Failed to read OBS_FILE {general_observation.obs_file}: {err}",
+                general_observation.obs_file,
+            ) from err
+        if len(file_values) % 2 != 0:
+            raise ObservationConfigError.with_context(
+                "Expected even number of values in GENERAL_OBSERVATION",
+                general_observation.obs_file,
             )
-            if general_observation.value is not None
+        values = file_values[::2]
+        stds = file_values[1::2]
+
+    else:
+        assert (
+            general_observation.value is not None
             and general_observation.error is not None
-            else None
-        ),
-        general_observation.obs_file,
-        indices,
-        obs_key,
-    )
+        )
+        values = np.array([general_observation.value])
+        stds = np.array([general_observation.error])
+
+    if index_source is not None:
+        indices = np.array([], dtype=np.int32)
+        if os.path.isfile(index_source):
+            indices = np.loadtxt(index_source, delimiter=None, dtype=np.int32).ravel()
+        else:
+            indices = np.array(
+                sorted(rangestring_to_list(index_source)), dtype=np.int32
+            )
+    else:
+        indices = np.arange(len(values), dtype=np.int32)
+    if len({len(stds), len(values), len(indices)}) != 1:
+        raise ObservationConfigError.with_context(
+            f"Values ({values}), error ({stds}) and "
+            f"index list ({indices}) must be of equal length",
+            general_observation.obs_file
+            if general_observation.obs_file is not None
+            else "",
+        )
+
+    if np.any(stds <= 0):
+        raise ObservationConfigError.with_context(
+            "Observation uncertainty must be strictly > 0", obs_key
+        )
     return pl.DataFrame(
         {
             "response_key": response_key,
             "observation_key": obs_key,
             "report_step": pl.Series(
-                np.full(len(node.indices), restart),
+                np.full(len(indices), restart),
                 dtype=pl.UInt16,
             ),
-            "index": pl.Series(node.indices, dtype=pl.UInt16),
-            "observations": pl.Series(node.values, dtype=pl.Float32),
-            "std": pl.Series(node.stds, dtype=pl.Float32),
+            "index": pl.Series(indices, dtype=pl.UInt16),
+            "observations": pl.Series(values, dtype=pl.Float32),
+            "std": pl.Series(stds, dtype=pl.Float32),
         }
     )
