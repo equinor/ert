@@ -317,7 +317,7 @@ def _handle_summary_observation(
             f"{' at ' + str(_get_time(summary_dict, time_map[0], obs_key)) if summary_dict.restart is None else ''}",  # noqa: E501
             obs_key,
         )
-    if float(std_dev) <= 0:
+    if std_dev <= 0:
         raise ObservationConfigError.with_context(
             "Observation uncertainty must be strictly > 0", summary_key
         ) from None
