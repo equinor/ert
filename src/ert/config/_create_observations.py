@@ -88,7 +88,7 @@ class _SummaryObs:
     observations: dict[datetime, _SummaryObservation]
 
     def to_dataset(self) -> pl.DataFrame:
-        observations = []
+        values = []
         actual_response_key = self.observation_key
         actual_observation_keys = []
         errors = []
@@ -97,7 +97,7 @@ class _SummaryObs:
         for time_step in dates:
             n = self.observations[time_step]
             actual_observation_keys.append(n.observation_key)
-            observations.append(n.value)
+            values.append(n.value)
             errors.append(n.std)
 
         dates_series = pl.Series(dates).dt.cast_time_unit("ms")
@@ -107,7 +107,7 @@ class _SummaryObs:
                 "response_key": actual_response_key,
                 "observation_key": actual_observation_keys,
                 "time": dates_series,
-                "observations": pl.Series(observations, dtype=pl.Float32),
+                "observations": pl.Series(values, dtype=pl.Float32),
                 "std": pl.Series(errors, dtype=pl.Float32),
             }
         )
