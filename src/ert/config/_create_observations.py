@@ -117,7 +117,6 @@ def create_observations(
 ) -> dict[str, pl.DataFrame]:
     if not obs_config_content:
         return {}
-    obs_vectors: dict[str, pl.DataFrame] = {}
     obs_time_list: list[datetime] = []
     if ensemble_config.refcase is not None:
         obs_time_list = ensemble_config.refcase.all_dates
@@ -126,21 +125,23 @@ def create_observations(
 
     time_len = len(obs_time_list)
     config_errors: list[ErrorInfo] = []
+    grouped: dict[str, list[pl.DataFrame]] = defaultdict(list)
     for obs_name, values in obs_config_content:
         try:
             if type(values) is HistoryValues:
-                obs_vectors.update(
-                    **_handle_history_observation(
+                if (
+                    obs := _handle_history_observation(
                         ensemble_config,
                         values,
                         obs_name,
                         history,
                         time_len,
                     )
-                )
+                ) is not None:
+                    grouped["summary"].append(obs)
             elif type(values) is SummaryValues:
-                obs_vectors.update(
-                    **_handle_summary_observation(
+                grouped["summary"].append(
+                    _handle_summary_observation(
                         values,
                         obs_name,
                         obs_time_list,
@@ -148,15 +149,16 @@ def create_observations(
                     )
                 )
             elif type(values) is GenObsValues:
-                obs_vectors.update(
-                    **_handle_general_observation(
+                if (
+                    obs := _handle_general_observation(
                         ensemble_config,
                         values,
                         obs_name,
                         obs_time_list,
                         bool(ensemble_config.refcase),
                     )
-                )
+                ) is not None:
+                    grouped["gen_data"].append(obs)
             else:
                 config_errors.append(
                     ErrorInfo(
@@ -171,13 +173,6 @@ def create_observations(
 
     if config_errors:
         raise ObservationConfigError.from_collected(config_errors)
-
-    grouped: dict[str, list[pl.DataFrame]] = defaultdict(list)
-    for vec in obs_vectors.values():
-        if "time" in vec:
-            grouped["summary"].append(vec)
-        else:
-            grouped["gen_data"].append(vec)
 
     datasets: dict[str, pl.DataFrame] = {}
 
@@ -215,7 +210,7 @@ def _handle_history_observation(
     summary_key: str,
     history_type: HistorySource,
     time_len: int,
-) -> dict[str, pl.DataFrame]:
+) -> pl.DataFrame | None:
     refcase = ensemble_config.refcase
     if refcase is None:
         raise ObservationConfigError("REFCASE is required for HISTORY_OBSERVATION")
@@ -225,9 +220,9 @@ def _handle_history_observation(
     else:
         local_key = summary_key
     if local_key is None:
-        return {}
+        return None
     if local_key not in refcase.keys:
-        return {}
+        return None
     values = refcase.values[refcase.keys.index(local_key)]
     std_dev = _handle_error_mode(values, history_observation)
     for segment_name, segment_instance in history_observation.segment:
@@ -274,12 +269,7 @@ def _handle_history_observation(
             ) from None
         data[date] = _SummaryObservation(summary_key, summary_key, value, float(error))
 
-    return {
-        summary_key: _summary_obs(
-            summary_key,
-            data,
-        )
-    }
+    return _summary_obs(summary_key, data)
 
 
 def _get_time(
@@ -389,7 +379,7 @@ def _handle_summary_observation(
     obs_key: str,
     time_map: list[datetime],
     has_refcase: bool,
-) -> dict[str, pl.DataFrame]:
+) -> pl.DataFrame:
     summary_key = summary_dict.key
     value, std_dev = _make_value_and_std_dev(summary_dict)
 
@@ -415,12 +405,10 @@ def _handle_summary_observation(
             raise ObservationConfigError.with_context(
                 "Observation uncertainty must be strictly > 0", summary_key
             ) from None
-        return {
-            obs_key: _summary_obs(
-                summary_key,
-                {date: _SummaryObservation(summary_key, obs_key, value, std_dev)},
-            )
-        }
+        return _summary_obs(
+            summary_key,
+            {date: _SummaryObservation(summary_key, obs_key, value, std_dev)},
+        )
     except ValueError as err:
         raise ObservationConfigError.with_context(str(err), obs_key) from err
 
@@ -492,7 +480,7 @@ def _handle_general_observation(
     obs_key: str,
     time_map: list[datetime],
     has_refcase: bool,
-) -> dict[str, pl.DataFrame]:
+) -> pl.DataFrame | None:
     response_key = general_observation.data
     if not ensemble_config.hasNodeGenData(response_key):
         ConfigWarning.warn(
@@ -500,7 +488,7 @@ def _handle_general_observation(
             f"ignoring observation {obs_key}",
             response_key,
         )
-        return {}
+        return None
 
     if all(
         getattr(general_observation, key) is None
@@ -519,7 +507,7 @@ def _handle_general_observation(
             f"Observation {obs_key} on GEN_DATA key {response_key}, but GEN_DATA"
             f" key {response_key} is non-existing"
         )
-        return {}
+        return None
 
     _, report_steps = gen_data_config.get_args_for_key(response_key)
 
@@ -533,7 +521,7 @@ def _handle_general_observation(
             " - The observation will be ignored",
             response_key,
         )
-        return {}
+        return None
 
     restart = 0 if restart is None else restart
     index_list = general_observation.index_list
@@ -544,25 +532,23 @@ def _handle_general_observation(
             obs_key,
         )
     indices = index_list if index_list is not None else index_file
-    return {
-        obs_key: _gen_obs(
-            obs_key,
-            response_key,
-            {
-                restart: _create_gen_obs(
+    return _gen_obs(
+        obs_key,
+        response_key,
+        {
+            restart: _create_gen_obs(
+                (
                     (
-                        (
-                            general_observation.value,
-                            general_observation.error,
-                        )
-                        if general_observation.value is not None
-                        and general_observation.error is not None
-                        else None
-                    ),
-                    general_observation.obs_file,
-                    indices,
-                    obs_key,
+                        general_observation.value,
+                        general_observation.error,
+                    )
+                    if general_observation.value is not None
+                    and general_observation.error is not None
+                    else None
                 ),
-            },
-        )
-    }
+                general_observation.obs_file,
+                indices,
+                obs_key,
+            ),
+        },
+    )
