@@ -2479,3 +2479,27 @@ def test_that_the_eclbase_keyword_sets_the_eclbase_substitution(eclbase_substitu
         ).substitutions[eclbase_substitution]
         == datafile
     )
+
+
+def test_that_time_map_or_refcase_is_present_if_restart_is_used_for_summary_observation():  # noqa E501
+    with pytest.raises(ConfigValidationError, match="either TIME_MAP or REFCASE"):
+        ErtConfig.from_dict(
+            {
+                "ECLBASE": "ECLIPSE_CASE",
+                "OBS_CONFIG": (
+                    "obsconf",
+                    [
+                        (
+                            "SUMMARY_OBSERVATION",
+                            "FOPR",
+                            {
+                                "KEY": "FOPR",
+                                "RESTART": "1",
+                                "VALUE": "1.0",
+                                "ERROR": "0.1",
+                            },
+                        ),
+                    ],
+                ),
+            }
+        )
