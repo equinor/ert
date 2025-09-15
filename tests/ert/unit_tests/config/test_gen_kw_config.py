@@ -8,38 +8,10 @@ import pytest
 from lark import Token
 
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, GenKwConfig
-from ert.config.parsing import ContextString
 from ert.config.parsing.file_context_token import FileContextToken
 from ert.run_models._create_run_path import create_run_path
 from ert.runpaths import Runpaths
 from ert.sample_prior import sample_prior
-
-# TODO might be removed
-# @pytest.mark.usefixtures("use_tmpdir")
-# def test_gen_kw_config_duplicate_keys_raises():
-#     with pytest.raises(
-#         ValidationError,
-#         match="Duplicate GEN_KW keys 'KEY2' found, keys must be unique\\.",
-#     ):
-#         GenKwConfig(
-#             name="KEY",
-#             forward_init=False,
-#             transform_function_definitions=[
-#                 TransformFunctionDefinition(
-#                     name="KEY1", param_name="UNIFORM", values=[0, 1]
-#                 ),
-#                 TransformFunctionDefinition(
-#                     name="KEY2", param_name="UNIFORM", values=[0, 1]
-#                 ),
-#                 TransformFunctionDefinition(
-#                     name="KEY2", param_name="UNIFORM", values=[0, 1]
-#                 ),
-#                 TransformFunctionDefinition(
-#                     name="KEY3", param_name="UNIFORM", values=[0, 1]
-#                 ),
-#             ],
-#             update=True,
-#         )
 
 
 def test_short_definition_raises_config_error(tmp_path):
@@ -762,7 +734,7 @@ def test_validation_derrf_distribution(
 
 def test_genkw_paramgraph_transformfn_node_correspondence():
     config = GenKwConfig(
-        name=f"param",
+        name="param",
         group="COEFFS",
         distribution={"name": "uniform", "min": 1, "max": 2},
     )
