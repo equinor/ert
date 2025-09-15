@@ -25,8 +25,9 @@ ert-memory-tests:
     _RJEM_MALLOC_CONF="dirty_decay_ms:100,muzzy_decay_ms:100" pytest -n 2 {{pytest_args}} tests/ert -m "memory_test"
     _RJEM_MALLOC_CONF="dirty_decay_ms:100,muzzy_decay_ms:100" pytest -n 2 {{pytest_args}} tests/ert -m "limit_memory" --memray
 
+# Put the pytest_args at the end, so they will override -m (and other) args set here
 ert-unit-tests:
-    pytest {{pytest_args}} -n 4 --dist loadgroup --benchmark-disable tests/ert/unit_tests tests/ert/performance_tests -m "not (memory_test or limit_memory)"
+    pytest -n 4 --dist loadgroup --benchmark-disable tests/ert/unit_tests tests/ert/performance_tests -m "not (memory_test or limit_memory)" {{pytest_args}}
 
 ert-doc-tests:
     pytest {{pytest_args}} --doctest-modules src/ --ignore src/ert/dark_storage
