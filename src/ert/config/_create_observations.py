@@ -290,6 +290,11 @@ def _handle_summary_observation(
     value = summary_dict.value
     std_dev = float(_handle_error_mode(np.array(value), summary_dict))
 
+    if summary_dict.restart and not (time_map or has_refcase):
+        raise ObservationConfigError.with_context(
+            "Keyword 'RESTART' requires either TIME_MAP or REFCASE", context=obs_key
+        )
+
     if summary_dict.date is not None and not time_map:
         # We special case when the user has provided date in SUMMARY_OBS
         # and not REFCASE or time_map so that we don't change current behavior.
