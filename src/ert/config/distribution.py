@@ -142,24 +142,22 @@ class TruncNormalSettings(TransSettingsValidation):
     min: float = 0.0
     max: float = 1.0
 
+    @field_validator("std")
+    @classmethod
+    def std_must_be_positive(cls, value: float) -> float:
+        if value <= 0:
+            raise ConfigValidationError(
+                f"Negative STD {value} for truncated normal distribution"
+            )
+        return value
+
     @model_validator(mode="after")
-    def valid_trunc_normal_params(self) -> Self:
-        errors = []
+    def valid_min_max_relationship(self) -> Self:
         if not (self.min < self.max):
-            errors.append(
-                ErrorInfo(
-                    message=f"Minimum {self.min} must be strictly less than"
-                    f" the maximum {self.max} for truncated_normal distribution"
-                )
+            raise ConfigValidationError(
+                f"Minimum {self.min} must be strictly less than"
+                f" the maximum {self.max} for truncated_normal distribution"
             )
-        if self.std <= 0:
-            errors.append(
-                ErrorInfo(
-                    message=f"Negative STD {self.std} for truncated normal distribution"
-                )
-            )
-        if errors:
-            raise ConfigValidationError.from_collected(errors)
         return self
 
     def transform(self, x: float) -> float:
