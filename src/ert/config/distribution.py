@@ -228,25 +228,22 @@ class ErrfSettings(TransSettingsValidation):
     skewness: float = 0.0
     width: float = 1.0
 
+    @field_validator("width")
+    @classmethod
+    def width_must_be_positive(cls, value: float) -> float:
+        if value <= 0:
+            raise ConfigValidationError(
+                f"The width {value} must be greater than 0 for errf distribution"
+            )
+        return value
+
     @model_validator(mode="after")
-    def valid_errf_params(self) -> Self:
-        errors = []
-        if not self.width > 0:
-            errors.append(
-                ErrorInfo(
-                    message=f"The width {self.width} must be greater than"
-                    " 0 for errf distribution"
-                )
-            )
+    def valid_min_max_relationship(self) -> Self:
         if not (self.min < self.max):
-            errors.append(
-                ErrorInfo(
-                    message=f"Minimum {self.min} must be strictly less"
-                    f" than the maximum {self.max} for errf distribution"
-                )
+            raise ConfigValidationError(
+                f"Minimum {self.min} must be strictly less than"
+                f" the maximum {self.max} for errf distribution"
             )
-        if errors:
-            raise ConfigValidationError.from_collected(errors)
         return self
 
     def transform(self, x: float) -> float:
