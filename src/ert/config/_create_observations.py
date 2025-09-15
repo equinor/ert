@@ -139,7 +139,9 @@ def _handle_history_observation(
     else:
         local_key = summary_key
     if local_key not in refcase.keys:
-        return None
+        raise ObservationConfigError.with_context(
+            f"Key {local_key!r} is not present in refcase", summary_key
+        )
     values = refcase.values[refcase.keys.index(local_key)]
     std_dev = _handle_error_mode(values, history_observation)
     for segment_name, segment_instance in history_observation.segment:

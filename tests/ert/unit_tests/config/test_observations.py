@@ -102,6 +102,18 @@ def test_that_when_history_source_is_history_the_history_summary_vector_is_used(
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
+def test_that_the_key_of_an_history_observation_must_be_in_the_refcase():
+    with pytest.raises(
+        ConfigValidationError, match="Key 'MISSINGH' is not present in refcase"
+    ):
+        make_refcase_observations(
+            [("HISTORY_OBSERVATION", "MISSING")],
+            parse=False,
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_when_history_source_is_simulated_the_summary_vector_is_used():
     observations = make_refcase_observations(
         [("HISTORY_OBSERVATION", "FOPR")],
