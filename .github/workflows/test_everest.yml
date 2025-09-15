@@ -56,6 +56,10 @@ jobs:
       run: |
         uv sync --extra dev
 
+    - name: Set env variable ERT_TESTS_RUN_ON_MAC_CI
+      if: inputs.os == 'macos-latest'
+      run: echo "ERT_TESTS_RUN_ON_MAC_CI=1" >> $GITHUB_ENV
+
     - name: Run Tests Linux
       if: ${{ inputs.test-type == 'test' && runner.os != 'macOS'}}
       run: |
