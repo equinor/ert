@@ -47,7 +47,7 @@ jobs:
 
     - name: Set env variable ERT_TESTS_RUN_ON_MAC_CI
       if: inputs.os == 'macos-latest'
-      run: echo "ERT_TESTS_RUN_ON_MAC_CI=1" >> $GITHUB_ENV
+      run: echo "ERT_TESTS_RUN_ON_MAC_CI=1" >> "$GITHUB_ENV"
 
     - name: GUI Test
       if: inputs.test-type == 'gui-tests'
