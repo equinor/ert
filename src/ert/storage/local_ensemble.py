@@ -851,9 +851,9 @@ class LocalEnsemble(BaseMode):
 
         assert group is not None, "Group must be provided for xarray Dataset"
 
-        assert (
-            realization is not None
-        ), "Realization must be provided for xarray Dataset"
+        assert realization is not None, (
+            "Realization must be provided for xarray Dataset"
+        )
         if "values" not in dataset.variables:
             raise ValueError(
                 f"Dataset for parameter group '{group}' "
@@ -923,9 +923,6 @@ class LocalEnsemble(BaseMode):
     def calculate_std_dev_for_parameter_group(
         self, parameter_group: str
     ) -> npt.NDArray[np.float64]:
-        if parameter_group not in self.experiment.parameter_configuration:
-            raise ValueError(f"{parameter_group} is not registered to the experiment.")
-
         data = self.load_parameters(parameter_group)
         if isinstance(data, pl.DataFrame):
             return data.drop("realization").std().to_numpy().reshape(-1)
