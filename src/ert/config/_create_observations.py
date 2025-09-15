@@ -74,16 +74,15 @@ def create_observations(
                         )
                     )
                 case GenObsValues():
-                    if (
-                        obs := _handle_general_observation(
+                    grouped["gen_data"].append(
+                        _handle_general_observation(
                             ensemble_config,
                             values,
                             obs_name,
                             obs_time_list,
                             bool(ensemble_config.refcase),
                         )
-                    ) is not None:
-                        grouped["gen_data"].append(obs)
+                    )
         except ObservationConfigError as err:
             config_errors.extend(err.errors)
 
@@ -332,7 +331,7 @@ def _handle_general_observation(
     obs_key: str,
     time_map: list[datetime],
     has_refcase: bool,
-) -> pl.DataFrame | None:
+) -> pl.DataFrame:
     response_key = general_observation.data
 
     if all(
