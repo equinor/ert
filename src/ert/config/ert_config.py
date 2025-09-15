@@ -54,7 +54,9 @@ from .parsing import (
     HistorySource,
     HookRuntime,
     ObservationConfigError,
+    ObservationStatement,
     QueueSystemWithGeneric,
+    SimpleHistoryStatement,
     init_forward_model_schema,
     init_site_config_schema,
     init_user_config_schema,
@@ -660,6 +662,29 @@ def create_list_of_forward_model_steps_to_run(
     return fm_steps
 
 
+def log_observation_keys(
+    observations: list[SimpleHistoryStatement | ObservationStatement],
+) -> None:
+    observation_types_count: dict[str, int] = defaultdict(int)
+    observation_keywords_count: dict[str, int] = defaultdict(int)
+
+    for observation in observations:
+        observation_type = getattr(observation[0], "value", observation[0])
+        observation_types_count[observation_type] += 1
+
+        if observation_body := (observation[2] if len(observation) == 3 else None):
+            for key in observation_body:
+                if isinstance(key, tuple):
+                    observation_keywords_count["SEGMENT"] += 1
+                else:
+                    observation_keywords_count[key] += 1
+
+    logger.info(
+        f"Count of observation types:\n\t{dict(observation_types_count)}\n"
+        f"Count of observation keywords:\n\t{dict(observation_keywords_count)}"
+    )
+
+
 RESERVED_KEYWORDS = ["realization", "IENS", "ITER"]
 
 
@@ -965,6 +990,7 @@ class ErtConfig(BaseModel):
         try:
             if obs_config_args:
                 obs_config_file, obs_config_input = obs_config_args
+                log_observation_keys(obs_config_input)
                 obs_configs = make_observation_declarations(
                     os.path.dirname(obs_config_file),
                     obs_config_input,

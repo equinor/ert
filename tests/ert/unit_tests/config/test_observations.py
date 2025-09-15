@@ -1,3 +1,4 @@
+import logging
 from contextlib import ExitStack as does_not_raise
 from datetime import datetime, timedelta
 
@@ -1703,3 +1704,25 @@ def test_that_setting_an_unknown_key_in_a_segment_is_not_valid():
                 };
             };
         """)
+
+
+def test_ert_config_logs_observation_types_and_keywords(caplog):
+    obs_config_contents = """
+                        GENERAL_OBSERVATION OBS1 {
+                            VALUE = 1;
+                            DATA = Foo;
+                            ERROR = 0.1;
+                            RESTART = 0;
+                        };
+                        GENERAL_OBSERVATION OBS2 {
+                            VALUE = 1;
+                            DATA = Bar;
+                            ERROR = 0.1;
+                        };
+            """
+    with caplog.at_level(logging.INFO):
+        make_observations(obs_config_contents)
+    assert "Count of observation types" in caplog.text
+    assert "'GENERAL_OBSERVATION': 2" in caplog.text
+    assert "Count of observation keywords" in caplog.text
+    assert "'VALUE': 2, 'DATA': 2, 'ERROR': 2, 'RESTART': 1" in caplog.text
