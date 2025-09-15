@@ -55,16 +55,15 @@ def create_observations(
         try:
             match values:
                 case HistoryValues():
-                    if (
-                        obs := _handle_history_observation(
+                    grouped["summary"].append(
+                        _handle_history_observation(
                             ensemble_config,
                             values,
                             obs_name,
                             history,
                             time_len,
                         )
-                    ) is not None:
-                        grouped["summary"].append(obs)
+                    )
                 case SummaryValues():
                     grouped["summary"].append(
                         _handle_summary_observation(
@@ -127,7 +126,7 @@ def _handle_history_observation(
     summary_key: str,
     history_type: HistorySource,
     time_len: int,
-) -> pl.DataFrame | None:
+) -> pl.DataFrame:
     refcase = ensemble_config.refcase
     if refcase is None:
         raise ObservationConfigError.with_context(
