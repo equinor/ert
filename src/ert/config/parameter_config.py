@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
 from hashlib import sha256
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
@@ -130,6 +130,10 @@ class ParameterConfig(BaseModel):
     ) -> None:
         pass
 
+    @property
+    def group_name(self) -> str:
+        return self.name
+
     def sample_value(
         self,
         global_seed: str,
@@ -160,18 +164,15 @@ class ParameterConfig(BaseModel):
         before generating a single sample, enhancing efficiency by avoiding the
         generation of large, unused sample sets.
         """
-        parameter_values = []
-        for key in self.parameter_keys:
-            key_hash = sha256(
-                global_seed.encode("utf-8") + f"{self.name}:{key}".encode()
-            )
-            seed = np.frombuffer(key_hash.digest(), dtype="uint32")
-            rng = np.random.default_rng(seed)
+        key_hash = sha256(
+            global_seed.encode("utf-8") + f"{self.group_name}:{self.name}".encode()
+        )
+        seed = np.frombuffer(key_hash.digest(), dtype="uint32")
+        rng = np.random.default_rng(seed)
 
-            # Advance the RNG state to the realization point
-            rng.standard_normal(realization)
+        # Advance the RNG state to the realization point
+        rng.standard_normal(realization)
 
-            # Generate a single sample
-            value = rng.standard_normal(1)
-            parameter_values.append(value[0])
-        return np.array(parameter_values)
+        # Generate a single sample
+        value = rng.standard_normal(1)
+        return np.array([value[0]])
