@@ -24,7 +24,7 @@ class ErtSummary:
         ) in self.ert_config.ensemble_config.parameter_configs.items():
             match config:
                 case GenKwConfig():
-                    parameters.append(f"{key}")
+                    parameters.append(key)
                     count += len(config)
                 case Field(nx=nx, ny=ny, nz=nz):
                     parameters.append(f"{key} ({nx}, {ny}, {nz})")
