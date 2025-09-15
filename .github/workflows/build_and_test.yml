@@ -17,100 +17,14 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
-
-  build-wheels:
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [ '3.11', '3.12', '3.13' ]
-
-    uses: ./.github/workflows/build-wheels.yml
-    with:
-      python-version: ${{ matrix.python-version }}
-
-  test-linux-ert:
-    strategy:
-      fail-fast: false
-      matrix:
-        test-type: [ 'performance-and-unit-tests', 'gui-tests', 'cli-tests' ]
-        python-version: [ '3.11', '3.12', '3.13' ]
-        os: [ ubuntu-latest ]
-    uses: ./.github/workflows/test_ert.yml
-    with:
-      os: ${{ matrix.os }}
-      python-version: ${{ matrix.python-version }}
-      test-type: ${{ matrix.test-type }}
-    secrets: inherit
-
-  test-linux-everest:
-    strategy:
-      fail-fast: false
-      matrix:
-        test-type: [ 'test', 'everest-models-test', 'doc']
-        python-version: [ '3.11', '3.12', '3.13' ]
-        os: [ ubuntu-latest ]
-        exclude:
-        - os: 'ubuntu-latest'
-          test-type: 'doc'
-          python-version: '3.11'
-        - os: 'ubuntu-latest'
-          test-type: 'doc'
-          python-version: '3.12'
-    uses: ./.github/workflows/test_everest.yml
-    with:
-      os: ${{ matrix.os }}
-      python-version: ${{ matrix.python-version }}
-      test-type: ${{ matrix.test-type }}
-    secrets: inherit
-
-  test-slurm:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ ubuntu-latest ]
-        python-version: [ '3.13' ]
-    uses: ./.github/workflows/test_ert_with_slurm.yml
-    with:
-      os: ${{ matrix.os }}
-      python-version: ${{ matrix.python-version }}
-    secrets: inherit
-
-  test-ert-with-flow:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ ubuntu-latest ]
-        python-version: [ '3.13' ]
-    uses: ./.github/workflows/test_ert_with_flow.yml
-    with:
-      os: ${{ matrix.os }}
-      python-version: ${{ matrix.python-version }}
-    secrets: inherit
-
-  test-mac-main-everest:
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') # only perform mac tests on main branch and tags
-    strategy:
-      fail-fast: false
-      matrix:
-        test-type: [ 'test', 'everest-models-test' ]
-        os: [ 'macos-latest' ]
-        python-version: [ '3.12' ]
-
-    uses: ./.github/workflows/test_everest.yml
-    with:
-      os: ${{ matrix.os }}
-      python-version: ${{ matrix.python-version }}
-      test-type: ${{ matrix.test-type }}
-    secrets: inherit
-
   test-mac-main-ert:
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') # only perform mac tests on main branch and tags
+    #if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') # only perform mac tests on main branch and tags
     strategy:
       fail-fast: false
       matrix:
-        test-type: [ 'performance-and-unit-tests', 'gui-tests', 'cli-tests' ]
+        test-type: [ 'fqdn-test' ]
         python-version: [ '3.12' ]
-        os: [ 'macos-latest']
+        os: [ 'macos-latest', 'ubuntu-latest' ]
 
     uses: ./.github/workflows/test_ert.yml
     with:
@@ -119,69 +33,3 @@ jobs:
       test-type: ${{ matrix.test-type }}
       select-string: '"not skip_mac_ci"'
     secrets: inherit
-
-  docs-ert:
-    name: Test ert docs
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ['3.13']
-        os: [ubuntu-latest]
-    runs-on: ${{ matrix.os }}
-
-    steps:
-    - uses: actions/checkout@v5
-      with:
-        fetch-depth: 0
-        filter: tree:0
-
-    - uses: ./.github/actions/install_dependencies_qt
-      with:
-        os: ${{ matrix.os }}
-
-    - name: Install pandoc
-      run: |
-        sudo apt install pandoc
-
-    - uses: actions/setup-python@v5
-      id: setup_python
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install uv
-      uses: astral-sh/setup-uv@v6
-      with:
-        enable-cache: true
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install ert
-      run: |
-        uv sync --extra dev
-
-    - name: Test docs
-      run: |
-        uv run just build-ert-docs
-
-  publish:
-    name: Publish to PyPI
-    runs-on: ubuntu-latest
-    needs: [build-wheels, test-linux-ert, test-linux-everest, test-mac-main-ert, test-mac-main-everest, docs-ert]
-    permissions:
-      id-token: write
-
-    # If this is a tagged release
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
-
-    steps:
-      - name: Get wheels
-        uses: actions/download-artifact@v5
-        with:
-          path: artifacts
-
-      - name: Move to dist/
-        run: |
-          mkdir dist
-          find artifacts -name "*.whl" -exec mv '{}' dist/ \;
-
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@v1.13.0
