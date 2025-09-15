@@ -690,8 +690,6 @@ class LocalEnsemble(BaseMode):
         real_nr: int,
         random_seed: int,
     ) -> pl.DataFrame:
-        # we sample genkw only
-        assert isinstance(parameter, GenKwConfig)
         parameter_value = parameter.sample_value(
             str(random_seed),
             real_nr,
