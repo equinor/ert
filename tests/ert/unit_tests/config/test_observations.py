@@ -1190,9 +1190,9 @@ def test_that_general_observations_data_must_match_a_gen_datas_name():
         )
 
 
-def test_that_report_step_mismatch_warns():
-    with pytest.warns(
-        ConfigWarning,
+def test_that_general_observation_restart_must_match_gen_data_report_step():
+    with pytest.raises(
+        ConfigValidationError,
         match="is not configured to load from report step",
     ):
         ErtConfig.from_dict(
