@@ -130,7 +130,9 @@ def _handle_history_observation(
 ) -> pl.DataFrame | None:
     refcase = ensemble_config.refcase
     if refcase is None:
-        raise ObservationConfigError("REFCASE is required for HISTORY_OBSERVATION")
+        raise ObservationConfigError.with_context(
+            "REFCASE is required for HISTORY_OBSERVATION", summary_key
+        )
 
     if history_type == HistorySource.REFCASE_HISTORY:
         local_key = history_key(summary_key)
