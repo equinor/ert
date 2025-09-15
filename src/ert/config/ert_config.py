@@ -5,7 +5,7 @@ import logging
 import os
 import pprint
 import re
-from collections import defaultdict
+from collections import Counter, defaultdict
 from collections.abc import Mapping
 from datetime import datetime
 from functools import cached_property
@@ -665,23 +665,17 @@ def create_list_of_forward_model_steps_to_run(
 def log_observation_keys(
     observations: list[SimpleHistoryStatement | ObservationStatement],
 ) -> None:
-    observation_types_count: dict[str, int] = defaultdict(int)
-    observation_keywords_count: dict[str, int] = defaultdict(int)
-
-    for observation in observations:
-        observation_type = getattr(observation[0], "value", observation[0])
-        observation_types_count[observation_type] += 1
-
-        if observation_body := (observation[2] if len(observation) == 3 else None):
-            for key in observation_body:
-                if isinstance(key, tuple):
-                    observation_keywords_count["SEGMENT"] += 1
-                else:
-                    observation_keywords_count[key] += 1
+    observation_type_counts = Counter(str(o[0]) for o in observations)
+    observation_keyword_counts = Counter(
+        "SEGMENT" if isinstance(key, tuple) else str(key)
+        for o in observations
+        if len(o) == 3
+        for key in o[2]
+    )
 
     logger.info(
-        f"Count of observation types:\n\t{dict(observation_types_count)}\n"
-        f"Count of observation keywords:\n\t{dict(observation_keywords_count)}"
+        f"Count of observation types:\n\t{dict(observation_type_counts)}\n"
+        f"Count of observation keywords:\n\t{dict(observation_keyword_counts)}"
     )
 
 
