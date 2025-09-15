@@ -335,12 +335,10 @@ def _handle_general_observation(
 ) -> pl.DataFrame | None:
     response_key = general_observation.data
     if not ensemble_config.hasNodeGenData(response_key):
-        ConfigWarning.warn(
-            f"No GEN_DATA with name: {response_key} found - "
-            f"ignoring observation {obs_key}",
+        raise ObservationConfigError.with_context(
+            f"No GEN_DATA with name: {response_key} found",
             response_key,
         )
-        return None
 
     if all(
         getattr(general_observation, key) is None
