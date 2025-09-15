@@ -1166,7 +1166,7 @@ def test_that_obs_file_must_have_the_same_number_of_lines_as_the_length_of_index
 def test_that_general_observations_data_must_match_a_gen_datas_name():
     with pytest.raises(
         ConfigValidationError,
-        match="No GEN_DATA with name: RES found",
+        match="No GEN_DATA with name 'RES' found",
     ):
         ErtConfig.from_dict(
             {

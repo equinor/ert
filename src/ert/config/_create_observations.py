@@ -334,11 +334,6 @@ def _handle_general_observation(
     has_refcase: bool,
 ) -> pl.DataFrame | None:
     response_key = general_observation.data
-    if not ensemble_config.hasNodeGenData(response_key):
-        raise ObservationConfigError.with_context(
-            f"No GEN_DATA with name: {response_key} found",
-            response_key,
-        )
 
     if all(
         getattr(general_observation, key) is None
@@ -350,14 +345,16 @@ def _handle_general_observation(
     else:
         restart = _get_restart(general_observation, obs_key, time_map, has_refcase)
 
-    gen_data_config = ensemble_config.response_configs.get("gen_data", None)
-    assert isinstance(gen_data_config, GenDataConfig)
-    if response_key not in gen_data_config.keys:
-        ConfigWarning.warn(
-            f"Observation {obs_key} on GEN_DATA key {response_key}, but GEN_DATA"
-            f" key {response_key} is non-existing"
+    if (
+        (gen_data_config := ensemble_config.response_configs.get("gen_data", None))
+        is None
+    ) or response_key not in gen_data_config.keys:
+        raise ObservationConfigError.with_context(
+            f"Problem with GENERAL_OBSERVATION {obs_key}:"
+            f" No GEN_DATA with name {response_key!r} found",
+            response_key,
         )
-        return None
+    assert isinstance(gen_data_config, GenDataConfig)
 
     _, report_steps = gen_data_config.get_args_for_key(response_key)
 
