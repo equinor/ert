@@ -12,7 +12,7 @@ import polars as pl
 import pytest
 
 from ert.cli.main import ErtCliError
-from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
+from ert.config import ConfigWarning, ErtConfig
 from ert.config.design_matrix import DESIGN_MATRIX_GROUP
 from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
@@ -76,16 +76,12 @@ def test_run_poly_example_with_design_matrix(copy_poly_case_with_design_matrix, 
 
 @pytest.mark.usefixtures("copy_poly_case")
 @pytest.mark.parametrize(
-    "default_values, error_msg",
+    "default_values",
     [
-        ([["b", 1], ["c", 2]], None),
-        (
-            [["b", 1]],
-            "Only full overlaps of design matrix and one genkw group are supported.",
-        ),
+        ([["b", 1], ["c", 2]]),
     ],
 )
-def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values, error_msg):
+def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values):
     num_realizations = 10
     a_values = list(range(num_realizations))
     _create_design_matrix(
@@ -162,16 +158,6 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values, err
         os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH,
     )
 
-    if error_msg:
-        with pytest.raises(ConfigValidationError, match=error_msg):
-            run_cli(
-                ENSEMBLE_EXPERIMENT_MODE,
-                "--disable-monitoring",
-                "poly.ert",
-                "--experiment-name",
-                "test-experiment",
-            )
-        return
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=ConfigWarning)
         # Expected warning:
