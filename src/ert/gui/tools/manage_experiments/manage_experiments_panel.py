@@ -147,9 +147,9 @@ class ManageExperimentsPanel(QTabWidget):
                     active_realizations=active_realizations,
                     parameters=parameters,
                     random_seed=self.ert_config.random_seed,
-                    design_matrix_df=design_matrix.design_matrix_df
-                    if design_matrix is not None
-                    else None,
+                    design_matrix_df=(
+                        design_matrix.design_matrix_df if design_matrix else None
+                    ),
                 )
 
         @Slot()
