@@ -128,9 +128,11 @@ class DesignMatrix:
                 f"{dm_other.default_sheet or ''})': {exc}!"
             ) from exc
 
-        for cfg in dm_other.parameter_configurations:
-            if cfg.name not in common_keys:
-                self.parameter_configurations.append(cfg)
+        self.parameter_configurations.extend(
+            cfg
+            for cfg in dm_other.parameter_configurations
+            if cfg.name not in common_keys
+        )
 
     def merge_with_existing_parameters(
         self, existing_parameters: list[ParameterConfig]
@@ -157,8 +159,8 @@ class DesignMatrix:
                 param_cfg.distribution = RawSettings()
                 del design_cfgs[param_cfg.name]
             new_param_configs += [param_cfg]
-        for design_cfg in design_cfgs.values():
-            new_param_configs += [design_cfg]
+        if design_cfgs.values():
+            new_param_configs += list(design_cfgs.values())
         return new_param_configs
 
     def read_and_validate_design_matrix(
