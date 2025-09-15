@@ -367,13 +367,11 @@ def _handle_general_observation(
     if (restart is None and response_report_steps) or (
         restart is not None and restart not in response_report_steps
     ):
-        ConfigWarning.warn(
+        raise ObservationConfigError.with_context(
             f"The GEN_DATA node:{response_key} is not configured to load from"
-            f" report step:{restart} for the observation:{obs_key}"
-            " - The observation will be ignored",
+            f" report step:{restart} for the observation:{obs_key}",
             response_key,
         )
-        return None
 
     restart = 0 if restart is None else restart
 
