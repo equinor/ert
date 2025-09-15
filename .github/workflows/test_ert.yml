@@ -7,15 +7,13 @@ on:
         type: string
       test-type:
         type: string
-      select-string:
-        type: string
-        default: '""'
 
 env:
   ERT_SHOW_BACKTRACE: 1
-  ERT_PYTEST_ARGS: '-m ${{ inputs.select-string }} --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov_main.xml --junit-xml=junit.xml -o junit_family=legacy -v --durations=25 --benchmark-disable'
+  ERT_PYTEST_ARGS: '--cov=ert --cov=everest --cov=_ert --cov-report=xml:cov_main.xml --junit-xml=junit.xml -o junit_family=legacy -v --durations=25 --benchmark-disable'
   UV_FROZEN: true
   OMP_NUM_THREADS: 1
+  ERT_TESTS_RUN_ON_MAC_CI: ${{ inputs.os == 'macos-latest'}}
 
 jobs:
   tests-ert:
@@ -80,8 +78,8 @@ jobs:
         touch storage
         chmod 000 storage
         uv run just ert-unit-tests
-        ERT_PYTEST_ARGS='-m ${{ inputs.select-string }} --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov_docs.xml --junit-xml=junit.xml -o junit_family=legacy -v --durations=25 --benchmark-disable' uv run just ert-doc-tests
-        ERT_PYTEST_ARGS='-m ${{ inputs.select-string }} --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov_mem.xml --junit-xml=junit.xml -o junit_family=legacy -v --durations=25 --benchmark-disable' uv run just ert-memory-tests
+        ERT_PYTEST_ARGS='--cov=ert --cov=everest --cov=_ert --cov-report=xml:cov_docs.xml --junit-xml=junit.xml -o junit_family=legacy -v --durations=25 --benchmark-disable' uv run just ert-doc-tests
+        ERT_PYTEST_ARGS='--cov=ert --cov=everest --cov=_ert --cov-report=xml:cov_mem.xml --junit-xml=junit.xml -o junit_family=legacy -v --durations=25 --benchmark-disable' uv run just ert-memory-tests
         chmod 700 storage
         rm storage
 
