@@ -18,20 +18,6 @@ if TYPE_CHECKING:
     from ert.storage import Ensemble
 
 
-class CustomDict(dict):  # type: ignore  # noqa: FURB189
-    """Used for converting types that can not be serialized
-    directly to json
-    """
-
-    def __init__(self, data: list[tuple[Any, Any]]) -> None:
-        for i, (key, value) in enumerate(data):
-            if isinstance(value, Path):
-                data[i] = (key, str(value))
-            if isinstance(value, set):
-                data[i] = (key, list(value))
-        super().__init__(data)
-
-
 class ParameterMetadata(BaseModel):
     key: str
     transformation: str | None
