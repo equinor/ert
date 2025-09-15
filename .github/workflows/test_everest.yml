@@ -37,6 +37,9 @@ jobs:
         fetch-depth: 0
         filter: tree:0
 
+    - if: ${{ inputs.os == 'macos-latest' }}
+      run: echo "ERT_TESTS_RUN_ON_MAC_CI=true" >> "$GITHUB_ENV"
+
     - uses: ./.github/actions/install_dependencies_qt
       with:
         os: ${{ inputs.os }}
@@ -64,7 +67,7 @@ jobs:
     - name: Run Tests macOS
       if: ${{ inputs.test-type == 'test' && runner.os == 'macOS'}}
       run: |
-        ERT_PYTEST_ARGS='-n 3 --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -m "not skip_mac_ci" -v' uv run just everest-tests
+        ERT_PYTEST_ARGS='-n 3 --cov=ert --cov=everest --cov=_ert --cov-report=xml:cov1.xml --junit-xml=junit.xml -o junit_family=legacy -v' uv run just everest-tests
 
     - name: Build Documentation
       if: inputs.test-type == 'doc'
