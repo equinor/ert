@@ -195,13 +195,6 @@ class EnsembleConfig(BaseModel):
         else:
             raise KeyError(f"The key:{key} is not in the ensemble configuration")
 
-    def hasNodeGenData(self, key: str) -> bool:
-        if "gen_data" not in self.response_configs:
-            return False
-
-        config = self.response_configs["gen_data"]
-        return key in config.keys
-
     def get_keylist_gen_kw(self) -> list[str]:
         return [
             val.name
