@@ -398,7 +398,7 @@ class LsfDriver(Driver):
 
             job_id = self._iens2jobid[iens]
 
-            logger.debug(f"Killing realization {iens} with LSF-id {job_id}")
+            logger.info(f"Killing realization {iens} with LSF-id {job_id}")
             bkill_with_args: list[str] = [
                 str(self._bkill_cmd),
                 "-s",
