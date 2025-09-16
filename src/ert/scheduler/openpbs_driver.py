@@ -246,7 +246,7 @@ class OpenPBSDriver(Driver):
 
         job_id = self._iens2jobid[iens]
 
-        logger.debug(f"Killing realization {iens} with PBS-id {job_id}")
+        logger.info(f"Killing realization {iens} with PBS-id {job_id}")
 
         process_success, process_message = await self._execute_with_retry(
             [str(self._qdel_cmd), str(job_id)],
