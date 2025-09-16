@@ -73,7 +73,7 @@ def test_remove_run_path(copy_math_func_test_data_to_tmp):
         config_yaml["install_jobs"].append(
             {"name": "toggle_failure", "executable": "jobs/fail_simulation.py"}
         )
-        config_yaml["forward_model"].append("toggle_failure --fail simulation_2")
+        config_yaml["forward_model"].append("toggle_failure --fail perturbation_1")
     with open("config.yml", "w", encoding="utf-8") as fout:
         yaml.dump(config_yaml, fout)
     config = EverestConfig.load_file("config.yml")
@@ -86,16 +86,16 @@ def test_remove_run_path(copy_math_func_test_data_to_tmp):
 
     # Check the failed simulation folder still exists
     assert os.path.exists(
-        os.path.join(simulation_dir, "batch_0/geo_realization_0/simulation_2")
+        os.path.join(simulation_dir, "batch_0/realization_0/perturbation_1")
     ), "Simulation folder should be there, something went wrong and was removed!"
 
     # Check the successful simulation folders do not exist
     assert not os.path.exists(
-        os.path.join(simulation_dir, "batch_0/geo_realization_0/simulation_0")
+        os.path.join(simulation_dir, "batch_0/realization_0/evaluation_0")
     ), "Simulation folder should not be there, something went wrong!"
 
     assert not os.path.exists(
-        os.path.join(simulation_dir, "batch_0/geo_realization_0/simulation_1")
+        os.path.join(simulation_dir, "batch_0/realization_0/simulation_1")
     ), "Simulation folder should not be there, something went wrong!"
 
     # Manually rolling the output folder between two runs
@@ -108,15 +108,15 @@ def test_remove_run_path(copy_math_func_test_data_to_tmp):
 
     # Check the all simulation folder exist when delete_run_path is set to False
     assert os.path.exists(
-        os.path.join(simulation_dir, "batch_0/geo_realization_0/simulation_2")
+        os.path.join(simulation_dir, "batch_0/realization_0/perturbation_1")
     ), "Simulation folder should be there, something went wrong and was removed!"
 
     assert os.path.exists(
-        os.path.join(simulation_dir, "batch_0/geo_realization_0/simulation_0")
+        os.path.join(simulation_dir, "batch_0/realization_0/evaluation_0")
     ), "Simulation folder should be there, something went wrong and was removed"
 
     assert os.path.exists(
-        os.path.join(simulation_dir, "batch_0/geo_realization_0/simulation_1")
+        os.path.join(simulation_dir, "batch_0/realization_0/perturbation_0")
     ), "Simulation folder should be there, something went wrong and was removed"
 
 

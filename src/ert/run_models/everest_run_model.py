@@ -8,6 +8,7 @@ import os
 import queue
 import shutil
 import traceback
+from collections import defaultdict
 from collections.abc import Callable, MutableSequence
 from enum import IntEnum, auto
 from functools import cached_property
@@ -506,7 +507,9 @@ class EverestRunModel(RunModel):
                 offset += n_param_keys
 
         # Evaluate the batch:
-        run_args = self._get_run_args(ensemble, sim_to_model_realization)
+        run_args = self._get_run_args(
+            ensemble, sim_to_model_realization, sim_to_perturbation
+        )
         self._context_env.update(
             {
                 "_ERT_EXPERIMENT_ID": str(ensemble.experiment_id),
@@ -725,13 +728,29 @@ class EverestRunModel(RunModel):
         self,
         ensemble: Ensemble,
         sim_to_model_realization: list[int],
+        sim_to_perturbation: list[int],
     ) -> list[RunArg]:
         substitutions = self.substitutions
         self.active_realizations = [True] * len(sim_to_model_realization)
-        for sim_id, model_realization in enumerate(sim_to_model_realization):
+        eval_idx: defaultdict[int, int] = defaultdict(lambda: 0)
+        pert_idx: defaultdict[int, int] = defaultdict(lambda: 0)
+        for sim_id, (model_realization, perturbation) in enumerate(
+            zip(sim_to_model_realization, sim_to_perturbation, strict=True)
+        ):
             substitutions[f"<GEO_ID_{sim_id}_{ensemble.iteration}>"] = str(
                 int(model_realization)
             )
+            if perturbation >= 0:
+                substitutions[f"<SIM_DIR_{sim_id}_{ensemble.iteration}>"] = (
+                    f"perturbation_{pert_idx[model_realization]}"
+                )
+                pert_idx[model_realization] += 1
+            else:
+                substitutions[f"<SIM_DIR_{sim_id}_{ensemble.iteration}>"] = (
+                    f"evaluation_{eval_idx[model_realization]}"
+                )
+                eval_idx[model_realization] += 1
+
         run_paths = Runpaths(
             jobname_format=self.runpath_config.jobname_format_string,
             runpath_format=self.runpath_config.runpath_format_string,

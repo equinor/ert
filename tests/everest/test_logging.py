@@ -29,7 +29,7 @@ def test_logging_setup(copy_math_func_test_data_to_tmp):
 
     everest_config = EverestConfig.load_file(config_file)
     everest_config.forward_model.append(
-        ForwardModelStepConfig(job="toggle_failure --fail simulation_2")
+        ForwardModelStepConfig(job="toggle_failure --fail perturbation_1")
     )
     everest_config.install_jobs.append(
         InstallJobConfig(name="toggle_failure", source="jobs/FAIL_SIMULATION")
