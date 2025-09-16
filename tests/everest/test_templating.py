@@ -270,8 +270,8 @@ def test_user_specified_data_n_template(copy_math_func_test_data_to_tmp, test):
         "everest_output",
         "sim_output",
         "batch_0",
-        "geo_realization_0",
-        "simulation_1",
+        "realization_0",
+        "perturbation_0",
         "well_drill_constants.json",
     )
     assert os.path.isfile(expected_file)

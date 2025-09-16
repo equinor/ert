@@ -31,15 +31,16 @@ def test_that_runpath_strings_are_generated_correctly(
     monkeypatch.setattr(ert.run_models.run_model, "open_storage", MagicMock())
 
     model_realizations = [0, 2]
+    perturbations = [-1, -1]
     config = EverestConfig(**min_config)
     run_model = EverestRunModel.create(config)
     ensemble_mock = MagicMock()
     ensemble_mock.iteration = iteration
-    run_args = run_model._get_run_args(ensemble_mock, model_realizations)
+    run_args = run_model._get_run_args(ensemble_mock, model_realizations, perturbations)
     assert [
         str(Path(run_arg.runpath).relative_to(Path().absolute()))
         for run_arg in run_args
     ] == [
-        f"everest_output/simulation_folder/batch_{iteration}/geo_realization_0/simulation_0",
-        f"everest_output/simulation_folder/batch_{iteration}/geo_realization_2/simulation_1",
+        f"everest_output/simulation_folder/batch_{iteration}/realization_0/evaluation_0",
+        f"everest_output/simulation_folder/batch_{iteration}/realization_2/evaluation_0",
     ]
