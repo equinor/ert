@@ -96,13 +96,9 @@ def test_design_matrix_in_manage_experiments_panel(
     assert {e.name for e in experiments} == {"my-experiment", "my-experiment-2"}
     exp2 = notifier.storage.get_experiment_by_name("my-experiment-2")
     ensemble = exp2.get_ensemble_by_name("my-design-2")
-    assert "DESIGN_MATRIX" in exp2.parameter_configuration
-    assert {
-        t.name
-        for t in exp2.parameter_configuration[
-            "DESIGN_MATRIX"
-        ].transform_function_definitions
-    } == {"a", "b", "c"}
+    for param in exp2.parameter_configuration.values():
+        assert param.group_name == "DESIGN_MATRIX"
+    assert {p.name for p in exp2.parameter_configuration.values()} == {"a", "b", "c"}
     assert all(
         RealizationStorageState.UNDEFINED in s for s in ensemble.get_ensemble_state()
     )
