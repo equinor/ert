@@ -951,7 +951,7 @@ def test_sample_parameter_with_design_matrix(tmp_path, reals, expect_error):
     design_matrix = DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
     with open_storage(tmp_path / "storage", mode="w") as storage:
         experiment_id = storage.create_experiment(
-            parameters=design_matrix.parameter_configurations
+            parameters=list(design_matrix.parameter_configurations)
         )
         ensemble = storage.create_ensemble(
             experiment_id, name="default", ensemble_size=ensemble_size
