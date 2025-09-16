@@ -184,7 +184,9 @@ def _plotHistogram(
 ) -> Rectangle:
     bins: Sequence[float] | int
     if minimum is not None and maximum is not None:
-        bins = np.linspace(minimum, maximum, bin_count)  # type: ignore
+        # Ensure we have at least 2 bin edges to create 1 bin
+        effective_bin_count = max(bin_count + 1, 2)
+        bins = np.linspace(minimum, maximum, effective_bin_count)  # type: ignore
 
         if minimum == maximum:
             minimum -= 0.5
