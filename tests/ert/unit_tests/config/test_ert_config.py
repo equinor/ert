@@ -2447,3 +2447,24 @@ def test_validation_error_on_invalid_design_matrix_parameter_name(
                 DESIGN_MATRIX {tmp_path}/my_design_matrix.xlsx
                 """
         )
+
+
+def test_that_time_map_or_refcase_is_present_if_restart_is_used_for_summary_observation():  # noqa E501
+    with pytest.raises(ConfigValidationError, match="either TIME_MAP or REFCASE"):
+        ErtConfig.from_dict(
+            {
+                "ECLBASE": "ECLIPSE_CASE",
+                "OBS_CONFIG": (
+                    "obsconf",
+                    """
+                    SUMMARY_OBSERVATION FOPR
+                    {
+                        KEY = FOPR;
+                        RESTART = 1;
+                        VALUE = 1.0;
+                        ERROR = 0.1;
+                    };
+                    """,
+                ),
+            }
+        )
