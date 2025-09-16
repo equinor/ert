@@ -118,7 +118,9 @@ class ManageExperimentsPanel(QTabWidget):
                 return
 
         parameter_model = SelectableListModel(
-            self.ert_config.ensemble_config.parameters
+            [p.name for p in parameters_config]
+            if design_matrix
+            else self.ert_config.ensemble_config.parameters
         )
         parameter_check_list = CheckList(parameter_model, "Parameters")
         parameter_check_list.setMinimumWidth(500)

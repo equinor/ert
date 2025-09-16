@@ -45,7 +45,9 @@ def test_design_matrix_in_manage_experiments_panel(
 
     with notifier.write_storage() as storage:
         storage.create_experiment(
-            parameters=[config.analysis_config.design_matrix.parameter_configuration],
+            parameters=list(
+                config.analysis_config.design_matrix.parameter_configurations
+            ),
             responses=config.ensemble_config.response_configuration,
             name="my-experiment",
         ).create_ensemble(
