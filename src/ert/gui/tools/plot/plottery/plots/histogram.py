@@ -66,32 +66,33 @@ def plotHistogram(
     categories: set[str] = set()
     max_element_count = 0
     categorical = False
+
     for ensemble, datas in ensemble_to_data_map.items():
         if datas.empty:
-            data[ensemble.name] = pd.Series(dtype="float64")
+            data[ensemble.id] = pd.Series(dtype="float64")
             continue
 
-        data[ensemble.name] = datas[0]
+        data[ensemble.id] = datas[0]
 
-        if data[ensemble.name].dtype == "object":
+        if data[ensemble.id].dtype == "object":
             try:
-                data[ensemble.name] = convert_to_numeric(data[ensemble.name])
+                data[ensemble.id] = convert_to_numeric(data[ensemble.id])
             except AttributeError:
-                data[ensemble.name] = data[ensemble.name].convert_objects(
+                data[ensemble.id] = data[ensemble.id].convert_objects(
                     convert_numeric=True
                 )
 
-        if data[ensemble.name].dtype == "object":
+        if data[ensemble.id].dtype == "object":
             categorical = True
 
         if categorical:
-            categories = categories.union(set(data[ensemble.name].unique()))
+            categories = categories.union(set(data[ensemble.id].unique()))
         else:
-            current_min = data[ensemble.name].min()
-            current_max = data[ensemble.name].max()
+            current_min = data[ensemble.id].min()
+            current_max = data[ensemble.id].max()
             minimum = current_min if minimum is None else min(minimum, current_min)
             maximum = current_max if maximum is None else max(maximum, current_max)
-            max_element_count = max(max_element_count, len(data[ensemble.name].index))
+            max_element_count = max(max_element_count, len(data[ensemble.id].index))
 
     bin_count = ceil(sqrt(max_element_count))
 
@@ -105,14 +106,14 @@ def plotHistogram(
         axes[ensemble.name].set_xlabel(x_label)
         axes[ensemble.name].set_ylabel(y_label)
 
-        if ensemble.name in data and not data[ensemble.name].empty:
+        if ensemble.id in data and not data[ensemble.id].empty:
             if categorical:
                 config.addLegendItem(
                     ensemble.name,
                     _plotCategoricalHistogram(
                         axes[ensemble.name],
                         config.histogramStyle(),
-                        data[ensemble.name],
+                        data[ensemble.id],
                         sorted(categories),
                     ),
                 )
@@ -125,7 +126,7 @@ def plotHistogram(
                     _plotHistogram(
                         axes[ensemble.name],
                         config.histogramStyle(),
-                        data[ensemble.name],
+                        data[ensemble.id],
                         bin_count,
                         minimum,
                         maximum,
