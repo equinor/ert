@@ -35,8 +35,6 @@ from ert.config import (
     SurfaceConfig,
 )
 from ert.config.design_matrix import DESIGN_MATRIX_GROUP
-from ert.config.general_observation import GenObservation
-from ert.config.observation_vector import ObsVector
 from ert.sample_prior import sample_prior
 from ert.storage import (
     ErtStorageException,
