@@ -232,7 +232,7 @@ class SlurmDriver(Driver):
 
             job_id = self._iens2jobid[iens]
 
-            logger.debug(f"Killing realization {iens} with SLURM-id {job_id}")
+            logger.info(f"Killing realization {iens} with SLURM-id {job_id}")
             await self._execute_with_retry(
                 [
                     self._scancel,
