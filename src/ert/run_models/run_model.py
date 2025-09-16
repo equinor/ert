@@ -29,13 +29,17 @@ from ert.config import (
     DesignMatrix,
     ForwardModelStep,
     GenKwConfig,
+    HookedWorkflowFixtures,
     HookRuntime,
     ModelConfig,
     ParameterConfig,
+    PostSimulationFixtures,
+    PreSimulationFixtures,
     QueueConfig,
     QueueSystem,
     Workflow,
 )
+from ert.config.workflow_fixtures import create_workflow_fixtures_from_hooked
 from ert.ensemble_evaluator import Ensemble as EEEnsemble
 from ert.ensemble_evaluator import (
     EnsembleEvaluator,
@@ -50,11 +54,6 @@ from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FINISHED,
 )
 from ert.mode_definitions import MODULE_MODE
-from ert.plugins import (
-    HookedWorkflowFixtures,
-    PostSimulationFixtures,
-    PreSimulationFixtures,
-)
 from ert.runpaths import Runpaths
 from ert.storage import Ensemble, Storage, open_storage
 from ert.trace import tracer
@@ -62,7 +61,6 @@ from ert.utils import log_duration
 from ert.warnings import PostSimulationWarning, capture_specific_warning
 from ert.workflow_runner import WorkflowRunner
 
-from ..plugins.workflow_fixtures import create_workflow_fixtures_from_hooked
 from ..run_arg import RunArg
 from ._create_run_path import create_run_path
 from .event import EndEvent, FullSnapshotEvent, SnapshotUpdateEvent, StatusEvents

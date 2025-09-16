@@ -3,12 +3,11 @@ from __future__ import annotations
 import logging
 import warnings
 from argparse import ArgumentParser
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 
+from ert.config.ert_script import ErtScript
 from ert.config.parsing import SchemaItemType
-
-from ..config.workflow_job import ErtScriptWorkflow
-from .ert_script import ErtScript
+from ert.config.workflow_job import ErtScriptWorkflow
 
 logger = logging.getLogger(__name__)
 
@@ -139,7 +138,7 @@ class WorkflowConfigs:
         self._workflows.append(workflow)
         self.parsers[workflow.name] = parser
 
-    def get_workflows(self) -> dict[str, ErtScriptWorkflow]:
+    def get_workflows(self) -> Mapping[str, ErtScriptWorkflow]:
         configs = {}
         for workflow in self._workflows:
             if workflow.name in configs:

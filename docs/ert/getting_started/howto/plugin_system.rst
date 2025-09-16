@@ -245,8 +245,9 @@ Full example:
 The configuration object and properties are as follows.
 
 .. autofunction:: ert.plugins.hook_specifications.jobs.ertscript_workflow
-
-.. autoclass:: ert.plugins.workflow_config.WorkflowConfigs
+.. automodule:: ert
+   :members: ErtScript
+.. autoclass:: ert.WorkflowConfigs
     :members: add_workflow
     :undoc-members:
 

@@ -15,9 +15,8 @@ from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 import pluggy
 from typing_extensions import TypedDict
 
+from ert.config import LegacyWorkflowConfigs, WorkflowConfigs
 from ert.trace import add_span_processor
-
-from .workflow_config import LegacyWorkflowConfigs, WorkflowConfigs
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +33,7 @@ if TYPE_CHECKING:
     )
 
     from .plugin_response import PluginMetadata, PluginResponse
+
 
 K = TypeVar("K")
 V = TypeVar("V")
@@ -388,11 +388,19 @@ class ErtPluginManager(pluggy.PluginManager):
         return job_docs
 
     def get_ertscript_workflows(self) -> WorkflowConfigs:
+        # from ert.config import (
+        #    WorkflowConfigs,
+        # )
+
         config = WorkflowConfigs()
         self.hook.ertscript_workflow(config=config)
         return config
 
     def get_legacy_ertscript_workflows(self) -> WorkflowConfigs:
+        # from ert.config import (
+        #    LegacyWorkflowConfigs,
+        # )
+
         config = LegacyWorkflowConfigs()
         self.hook.legacy_ertscript_workflow(config=config)
         return config
