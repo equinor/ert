@@ -311,6 +311,11 @@ class EnkfObs:
         summary_key = summary_dict.key
         value, std_dev = cls._make_value_and_std_dev(summary_dict)
 
+        if summary_dict.restart and not (time_map or has_refcase):
+            raise ObservationConfigError.with_context(
+                "Keyword 'RESTART' requires either TIME_MAP or REFCASE", context=obs_key
+            )
+
         try:
             if summary_dict.date is not None and not time_map:
                 # We special case when the user has provided date in SUMMARY_OBS
