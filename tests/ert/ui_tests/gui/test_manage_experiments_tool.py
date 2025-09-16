@@ -533,7 +533,16 @@ def test_realization_view(
     assert {"gen_data - RESPONSES_LOADED", "summary - RESPONSES_LOADED"}.issubset(
         set(realization_widget._response_text_edit.toPlainText().splitlines())
     )
-    assert (
-        realization_widget._parameter_text_edit.toPlainText()
-        == "\nSNAKE_OIL_PARAM - PARAMETERS_LOADED\n"
-    )
+
+    assert {
+        "OP1_PERSISTENCE - PARAMETERS_LOADED",
+        "OP1_OCTAVES - PARAMETERS_LOADED",
+        "OP1_DIVERGENCE_SCALE - PARAMETERS_LOADED",
+        "OP1_OFFSET - PARAMETERS_LOADED",
+        "OP2_PERSISTENCE - PARAMETERS_LOADED",
+        "OP2_OCTAVES - PARAMETERS_LOADED",
+        "OP2_DIVERGENCE_SCALE - PARAMETERS_LOADED",
+        "OP2_OFFSET - PARAMETERS_LOADED",
+        "BPR_555_PERSISTENCE - PARAMETERS_LOADED",
+        "BPR_138_PERSISTENCE - PARAMETERS_LOADED",
+    } == set(realization_widget._parameter_text_edit.toPlainText().strip().splitlines())
