@@ -5,10 +5,18 @@ import os
 import re
 import shutil
 from abc import abstractmethod
-from typing import Annotated, Any, Literal, TypeAlias, cast, overload
+from typing import (
+    TYPE_CHECKING,
+    Annotated,
+    Any,
+    Literal,
+    TypeAlias,
+    cast,
+    overload,
+)
 
 import pydantic
-from pydantic import BaseModel, Field, field_validator
+from pydantic import Field, TypeAdapter, field_validator
 from pydantic.dataclasses import dataclass
 from pydantic_core.core_schema import ValidationInfo
 
@@ -23,6 +31,9 @@ from .parsing import (
     QueueSystem,
     QueueSystemWithGeneric,
 )
+
+if TYPE_CHECKING:
+    from ert.plugins import ErtRuntimePlugins
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +95,12 @@ class QueueOptions(
         # Use from plugin system if user has not specified
         plugin_script = None
         if info.context:
-            plugin_script = info.context.get("activate_script")
+            context = cast("ErtRuntimePlugins", info.context)
+            plugin_script = (
+                context.queue_options.activate_script
+                if context.queue_options is not None
+                else None
+            )
         return plugin_script or activate_script()  # Return default value
 
     @field_validator("realization_memory", mode="before")
@@ -135,23 +151,6 @@ class QueueOptions(
                     is_selected_queue_system,
                 )
             return None
-
-    def add_global_queue_options(self, config_dict: ConfigDict) -> None:
-        for name, generic_option in QueueOptions.model_fields.items():
-            if (generic_value := config_dict.get(name.upper(), None)) and self.__dict__[
-                name
-            ] == generic_option.default:
-                if name == "realization_memory" and isinstance(generic_value, str):
-                    generic_value = parse_string_to_bytes(generic_value)
-                try:
-                    setattr(self, name, generic_value)
-                except pydantic.ValidationError as exception:
-                    for error in exception.errors():
-                        _throw_error_or_warning(
-                            f"{error['msg']}. Got input '{error['input']}'.",
-                            error["input"],
-                            True,
-                        )
 
     @property
     @abstractmethod
@@ -261,6 +260,13 @@ KnownQueueOptions: TypeAlias = (
     LsfQueueOptions | TorqueQueueOptions | SlurmQueueOptions | LocalQueueOptions
 )
 
+KnownQueueOptionsAdapter: TypeAdapter[KnownQueueOptions] = TypeAdapter(
+    Annotated[
+        KnownQueueOptions,
+        Field(discriminator="name"),
+    ]
+)
+
 
 @dataclass
 class QueueMemoryStringFormat:
@@ -293,16 +299,33 @@ valid_options: dict[str, list[str]] = {
 }
 
 
-def _log_duplicated_queue_options(queue_config_list: list[list[str]]) -> None:
+def _log_duplicated_queue_options(
+    queue_config_list: list[list[str]],
+    site_queue_options_dict: dict[str, Any],
+) -> None:
     processed_options: dict[str, str] = {}
     for queue_system, option_name, *values in queue_config_list:
         value = values[0] if values else ""
+
+        site_option_key = option_name.lower()
+        if (
+            option_name not in processed_options
+            and site_option_key in site_queue_options_dict
+        ):
+            # We are overriding a site config option
+            site_option_key = option_name.lower()
+            site_value = site_queue_options_dict[site_option_key]
+            logger.info(
+                f"Overwriting site config setting: {site_option_key}={site_value}"
+                f" with QUEUE_OPTION {queue_system.upper()} {option_name} {value}"
+            )
         if (
             option_name in processed_options
             and processed_options.get(option_name) != value
         ):
             logger.info(
-                f"Overwriting QUEUE_OPTION {queue_system} {option_name}:"
+                f"Overwriting "
+                f"QUEUE_OPTION {queue_system.upper()} {option_name.upper()}:"
                 f" \n Old value: {processed_options[option_name]} \n New value: {value}"
             )
         processed_options[option_name] = value
@@ -335,7 +358,7 @@ def _group_queue_options_by_queue_system(
     return grouped
 
 
-class QueueConfig(BaseModel):
+class QueueConfig(BaseModelWithContextSupport):
     max_submit: int = 1
     queue_system: QueueSystem = QueueSystem.LOCAL
     queue_options: KnownQueueOptions = pydantic.Field(
@@ -345,33 +368,84 @@ class QueueConfig(BaseModel):
     max_runtime: int | None = None
 
     @classmethod
-    def from_dict(cls, config_dict: ConfigDict) -> QueueConfig:
-        selected_queue_system = QueueSystem(
-            config_dict.get("QUEUE_SYSTEM", QueueSystem.LOCAL)
+    def from_dict(
+        cls,
+        config_dict: ConfigDict,
+        site_queue_options: QueueOptions | None = None,
+    ) -> QueueConfig:
+        site_queue_options_dict = (
+            site_queue_options.model_dump(exclude_unset=True)
+            if site_queue_options
+            else {}
         )
-        job_script: str = config_dict.get(
-            "JOB_SCRIPT", shutil.which("fm_dispatch.py") or "fm_dispatch.py"
+
+        usr_queue_system = config_dict.get("QUEUE_SYSTEM")
+        site_queue_system = site_queue_options.name if site_queue_options else None
+
+        config_dict["QUEUE_SYSTEM"] = selected_queue_system = QueueSystem(
+            usr_queue_system or site_queue_system or QueueSystem.LOCAL
         )
-        config_dict["JOB_SCRIPT"] = job_script
+
+        usr_queue_options_dict = {}
+        default_queue_options_dict = {
+            name: generic_option.default
+            for name, generic_option in QueueOptions.model_fields.items()
+        }
+
+        for name in QueueOptions.model_fields:
+            generic_value = config_dict.get(name.upper(), None)
+            if generic_value is not None:
+                if name == "realization_memory" and isinstance(generic_value, str):
+                    generic_value = parse_string_to_bytes(generic_value)
+
+                usr_queue_options_dict[name] = generic_value
+
+        for line in config_dict.get("QUEUE_OPTION", []):
+            queue_system, option_name, *values = line
+            value = None if len(values) == 0 else values[0]
+
+            if value is not None and queue_system == selected_queue_system:
+                usr_queue_options_dict[option_name.lower()] = value
+
+        usr_job_script = usr_queue_options_dict.get("job_script")
+        site_job_script = site_queue_options_dict.get("job_script")
+
+        config_dict["JOB_SCRIPT"] = (
+            usr_job_script
+            or site_job_script
+            or shutil.which("fm_dispatch.py")
+            or "fm_dispatch.py"
+        )
+
         max_submit: int = config_dict.get(ConfigKeys.MAX_SUBMIT, 1)
         stop_long_running = config_dict.get(ConfigKeys.STOP_LONG_RUNNING, False)
 
-        if (
-            ConfigKeys.NUM_CPU not in config_dict
+        usr_num_cpu = usr_queue_options_dict.get("num_cpu") or config_dict.get(
+            "NUM_CPU"
+        )
+        site_num_cpu = site_queue_options_dict.get("num_cpu")
+
+        if usr_num_cpu is not None:
+            config_dict["NUM_CPU"] = usr_num_cpu
+        elif (
+            site_num_cpu is None
             and (data_file := config_dict.get(ConfigKeys.DATA_FILE))
             and (num_cpu := get_num_cpu_from_data_file(data_file))
         ):
             logger.info(f"Parsed NUM_CPU={num_cpu} from {data_file}")
-            config_dict[ConfigKeys.NUM_CPU] = num_cpu
+            usr_queue_options_dict[ConfigKeys.NUM_CPU] = num_cpu
 
         raw_queue_options = config_dict.get("QUEUE_OPTION", [])
         grouped_queue_options = _group_queue_options_by_queue_system(raw_queue_options)
-        _log_duplicated_queue_options(raw_queue_options)
+        _log_duplicated_queue_options(raw_queue_options, site_queue_options_dict)
         _raise_for_defaulted_invalid_options(raw_queue_options)
 
         selected_queue_options = QueueOptions.create_queue_options(
             selected_queue_system,
-            grouped_queue_options[cast(QueueSystemWithGeneric, selected_queue_system)],
+            default_queue_options_dict
+            | site_queue_options_dict
+            | grouped_queue_options[cast(QueueSystemWithGeneric, selected_queue_system)]
+            | usr_queue_options_dict,
             True,
         )
 
@@ -384,8 +458,6 @@ class QueueConfig(BaseModel):
                     grouped_queue_options[cast(QueueSystemWithGeneric, _queue_system)],
                     False,
                 )
-
-        selected_queue_options.add_global_queue_options(config_dict)
 
         if selected_queue_options.project_code is None:
             tags = {

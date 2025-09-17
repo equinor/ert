@@ -3,9 +3,7 @@ from typing import Any
 
 from ert.__main__ import ert_parser
 from ert.cli.main import run_cli as cli_runner
-from ert.plugins import ErtPluginManager
-
-PM = ErtPluginManager()
+from ert.plugins.plugin_manager import ErtPluginContext, ErtRuntimePlugins
 
 
 def run_cli(*args):
@@ -15,10 +13,12 @@ def run_cli(*args):
     return res
 
 
-def run_cli_with_pm(args: list[Any], pm: ErtPluginManager | None = None):
-    if pm is None:
-        pm = PM
+def run_cli_with_pm(args: list[Any], runtime_plugins: ErtRuntimePlugins | None = None):
     parser = ArgumentParser(prog="test_main")
     parsed = ert_parser(parser, args)
-    res = cli_runner(parsed, pm)
+    if runtime_plugins:
+        res = cli_runner(parsed, runtime_plugins)
+    else:
+        with ErtPluginContext() as ad_hoc_runtime_plugins:
+            res = cli_runner(parsed, ad_hoc_runtime_plugins)
     return res

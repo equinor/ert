@@ -1,4 +1,3 @@
-from .activate_script import activate_script
 from .ecl_config import (
     ecl100_config_path,
     ecl300_config_path,
@@ -17,10 +16,9 @@ from .jobs import (
     legacy_ertscript_workflow,
 )
 from .logging import add_log_handle_to_root, add_span_processor
-from .site_config import site_config_lines
+from .site_config import site_configurations
 
 __all__ = [
-    "activate_script",
     "add_log_handle_to_root",
     "add_span_processor",
     "ecl100_config_path",
@@ -34,5 +32,5 @@ __all__ = [
     "installable_workflow_jobs",
     "job_documentation",
     "legacy_ertscript_workflow",
-    "site_config_lines",
+    "site_configurations",
 ]

@@ -103,9 +103,9 @@ def test_failing_writes_lead_to_isolated_failures(tmp_path, monkeypatch, pytestc
             " submit script: Don't like realization-1",
         ),
         patch_raising_named_temporary_file(queue_system.lower()),
-        ErtPluginContext() as context,
+        ErtPluginContext() as runtime_plugins,
     ):
         run_cli_with_pm(
             ["ensemble_experiment", "config.ert", "--disable-monitoring"],
-            pm=context.plugin_manager,
+            runtime_plugins=runtime_plugins,
         )

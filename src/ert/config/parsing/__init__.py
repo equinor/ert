@@ -1,7 +1,7 @@
 from .config_dict import ConfigDict
 from .config_errors import ConfigValidationError, ConfigWarning
 from .config_keywords import ConfigKeys
-from .config_schema import init_site_config_schema, init_user_config_schema
+from .config_schema import init_user_config_schema
 from .context_values import ContextList, ContextString, ContextValue
 from .error_info import ErrorInfo, WarningInfo
 from .forward_model_keywords import ForwardModelStepKeys
@@ -47,7 +47,6 @@ __all__ = [
     "WarningInfo",
     "WorkflowJobKeys",
     "init_forward_model_schema",
-    "init_site_config_schema",
     "init_user_config_schema",
     "init_workflow_job_schema",
     "init_workflow_schema",

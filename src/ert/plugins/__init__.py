@@ -7,6 +7,7 @@ from ert.config.ert_plugin import CancelPluginException, ErtPlugin
 from .plugin_manager import (
     ErtPluginContext,
     ErtPluginManager,
+    ErtRuntimePlugins,
     JobDoc,
     hook_implementation,
 )
@@ -32,8 +33,7 @@ def plugin(name: str) -> Callable[[Callable[P, Any]], Callable[P, Any]]:
                     "ecl100_config_path",
                     "ecl300_config_path",
                     "flow_config_path",
-                    "site_config_lines",
-                    "activate_script",
+                    "site_configurations",
                 }
                 and res is not None
             ):
@@ -53,6 +53,7 @@ __all__ = [
     "ErtPlugin",
     "ErtPluginContext",
     "ErtPluginManager",
+    "ErtRuntimePlugins",
     "JobDoc",
     "plugin",
 ]

@@ -5,6 +5,7 @@ from unittest import mock
 
 import pytest
 
+from ert.plugins import ErtPluginContext, ErtRuntimePlugins
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 
@@ -38,10 +39,17 @@ def test_site_config_with_substitutions(monkeypatch, change_to_tmpdir):
     )
 
     with mock.patch(
-        "ert.config.ert_config.site_config_location", return_value=str(test_site_config)
+        "ert.plugins.plugin_manager.ErtRuntimePlugins",
+        return_value=ErtRuntimePlugins(
+            environment_variables={"HOW_MANY_CPU": "<NUM_CPU>"}
+        ),
     ):
         config = EverestConfig.with_defaults()
-        everest_run_model = EverestRunModel.create(config)
+
+        with ErtPluginContext() as runtime_plugins:
+            everest_run_model = EverestRunModel.create(
+                config, runtime_plugins=runtime_plugins
+            )
 
         assert ("<NUM_CPU>", "1") in everest_run_model.substitutions.items()
         assert everest_run_model.env_vars["HOW_MANY_CPU"] == "1"

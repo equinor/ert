@@ -176,36 +176,108 @@ def test_invalid_realization_memory(invalid_memory_spec: str, error_message: str
         )
 
 
-@pytest.mark.parametrize(
-    "queue_system, queue_system_option",
-    [
-        (QueueSystem.LSF, "LSF_QUEUE"),
-        (QueueSystem.SLURM, "SQUEUE"),
-        (QueueSystem.TORQUE, "QUEUE"),
-    ],
+@pytest.fixture(
+    params=[
+        (QueueSystem.LSF, LsfQueueOptions, "LSF_QUEUE"),
+        (QueueSystem.SLURM, SlurmQueueOptions, "SQUEUE"),
+        (QueueSystem.TORQUE, TorqueQueueOptions, "QUEUE"),
+    ]
 )
-def test_that_overwriting_QUEUE_OPTIONS_warns(
-    queue_system, queue_system_option, caplog
-):
+def queue_that_overrides_site_config(request, caplog):
+    queue_system, queue_options_cls, queue_system_option = request.param
+
+    config_dict = ErtConfig._config_dict_from_contents(
+        f"""
+        NUM_REALIZATIONS 1
+        QUEUE_SYSTEM {queue_system}
+        QUEUE_OPTION {queue_system} {queue_system_option} test_1
+        QUEUE_OPTION {queue_system} MAX_RUNNING 10
+        QUEUE_OPTION {queue_system} NUM_CPU 9
+        QUEUE_OPTION {queue_system} SUBMIT_SLEEP 1337
+        QUEUE_OPTION {queue_system} JOB_SCRIPT usr_dispatch.py
+        QUEUE_OPTION {queue_system} JOB_SCRIPT usr_dispatch2.py
+        QUEUE_OPTION {queue_system} JOB_SCRIPT usr_dispatch3.py
+        """,
+        "config.ert",
+    )
+
     with caplog.at_level(logging.INFO):
-        ErtConfig.from_file_contents(
-            user_config_contents="NUM_REALIZATIONS 1\n"
-            f"QUEUE_SYSTEM {queue_system}\n"
-            f"QUEUE_OPTION {queue_system} {queue_system_option} test_1\n"
-            f"QUEUE_OPTION {queue_system} MAX_RUNNING 10\n",
-            site_config_contents="JOB_SCRIPT fm_dispatch.py\n"
-            f"QUEUE_SYSTEM {queue_system}\n"
-            f"QUEUE_OPTION {queue_system} {queue_system_option} test_0\n"
-            f"QUEUE_OPTION {queue_system} MAX_RUNNING 10\n",
+        queue_config = QueueConfig.from_dict(
+            config_dict,
+            site_queue_options=queue_options_cls(
+                **{
+                    "name": queue_system,
+                    queue_system_option.lower(): "the_site_queue",
+                    "max_running": 2,
+                    "num_cpu": 3,
+                    "submit_sleep": 4,
+                    "job_script": "site_job_script.sh",
+                }
+            ),
         )
+
+    # return both params and logs so tests can use them
+    return queue_config, queue_system, queue_system_option, caplog.text
+
+
+def test_that_overwriting_QUEUE_OPTIONS_warns(queue_that_overrides_site_config):
+    _, queue_system, queue_system_option, captured_log = (
+        queue_that_overrides_site_config
+    )
+
     assert (
-        f"Overwriting QUEUE_OPTION {queue_system} {queue_system_option}: \n Old value:"
-        " test_0 \n New value: test_1"
-    ) in caplog.text
+        f"Overwriting site config setting: "
+        f"{queue_system_option.lower()}=the_site_queue with "
+        f"QUEUE_OPTION {queue_system.upper()} {queue_system_option} test_1"
+        in captured_log
+    )
+
     assert (
-        f"Overwriting QUEUE_OPTION {queue_system} MAX_RUNNING: \n Old value:"
-        " 10 \n New value: 10"
-    ) not in caplog.text
+        f"Overwriting site config setting: max_running=2 with "
+        f"QUEUE_OPTION {queue_system.upper()} MAX_RUNNING 10" in captured_log
+    )
+
+    assert (
+        f"Overwriting site config setting: num_cpu=3 with "
+        f"QUEUE_OPTION {queue_system.upper()} NUM_CPU 9" in captured_log
+    )
+
+    assert (
+        f"Overwriting site config setting: submit_sleep=4.0 with "
+        f"QUEUE_OPTION {queue_system.upper()} SUBMIT_SLEEP 1337" in captured_log
+    )
+
+    assert (
+        f"Overwriting site config setting: job_script=site_job_script.sh with "
+        f"QUEUE_OPTION {queue_system.upper()} JOB_SCRIPT usr_dispatch.py"
+        in captured_log
+    )
+
+    assert (
+        f"Overwriting QUEUE_OPTION {queue_system.upper()} JOB_SCRIPT: \n "
+        f"Old value: usr_dispatch.py \n New value: usr_dispatch2.py\n" in captured_log
+    )
+
+    assert (
+        f"Overwriting QUEUE_OPTION {queue_system.upper()} JOB_SCRIPT: \n "
+        f"Old value: usr_dispatch2.py \n New value: usr_dispatch3.py\n" in captured_log
+    )
+
+
+def test_that_user_given_queue_settings_overwrites_site_config(
+    queue_that_overrides_site_config,
+):
+    queue_config, _, queue_system_option, _ = queue_that_overrides_site_config
+
+    actual = queue_config.queue_options.model_dump(exclude_unset=True)
+    expected = {
+        "max_running": 10,
+        "submit_sleep": 1337.0,
+        "job_script": "usr_dispatch3.py",
+        "num_cpu": 9,
+        queue_system_option.lower(): "test_1",
+    }
+    assert {k: actual[k] for k in expected} == expected
 
 
 @pytest.mark.parametrize(

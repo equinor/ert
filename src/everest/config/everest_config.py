@@ -27,9 +27,9 @@ from pydantic_core import ErrorDetails
 from pydantic_core.core_schema import ValidationInfo
 from ruamel.yaml import YAML, YAMLError
 
-from ert.base_model_context import BaseModelWithContextSupport, init_context
-from ert.config import ConfigWarning, ErtConfig, QueueConfig, QueueSystem
-from ert.plugins import ErtPluginContext, ErtPluginManager
+from ert.base_model_context import BaseModelWithContextSupport
+from ert.config import ConfigWarning, QueueSystem
+from ert.plugins import ErtPluginContext
 from everest.config.install_template_config import InstallTemplateConfig
 from everest.config.server_config import ServerConfig
 from everest.config.validation_utils import (
@@ -366,7 +366,7 @@ This will produce an output file with the content:
             return self
         installed_jobs_name = [job.name for job in install_jobs]
         if info.context:  # Add plugin jobs
-            installed_jobs_name += info.context.get("install_jobs", {}).keys()
+            installed_jobs_name += info.context.installed_forward_model_steps.keys()
 
         errors = []
         for fm_job in forward_model_jobs:
@@ -878,23 +878,7 @@ to read summary data from forward model, do:
     @classmethod
     def with_plugins(cls, config_dict: dict[str, Any] | ConfigDict) -> Self:
         with ErtPluginContext():
-            site_config = ErtConfig.read_site_config()
-            has_site_config = bool(site_config)  # site_config gets mutated by next call
-            ert_config: ErtConfig = ErtConfig.with_plugins().from_dict(
-                config_dict=site_config
-            )
-            context: dict[str, Any] = {
-                "install_jobs": ert_config.installed_forward_model_steps,
-            }
-            activate_script = ErtPluginManager().activate_script()
-            if has_site_config:
-                context["queue_system"] = QueueConfig.from_dict(
-                    site_config
-                ).queue_options
-            if activate_script:
-                context["activate_script"] = activate_script
-            with init_context(context):
-                return cls(**config_dict)
+            return cls(**config_dict)
 
     @staticmethod
     def load_file_with_argparser(

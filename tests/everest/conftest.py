@@ -1,4 +1,3 @@
-import contextlib
 import os
 import queue
 import shutil
@@ -15,7 +14,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 import yaml
 
-import ert
 import everest
 from ert.config.queue_config import LocalQueueOptions
 from ert.ensemble_evaluator import EvaluatorServerConfig
@@ -287,27 +285,12 @@ def no_plugins():
     patched_context = partial(
         everest.simulator.everest_to_ert.ErtPluginContext, plugins=[]
     )
-    patched = partial(ert.plugins.ErtPluginManager, plugins=[])
     patched_everest = partial(
-        everest.config.everest_config.ErtPluginManager, plugins=[]
+        everest.config.everest_config.ErtPluginContext, plugins=[]
     )
 
     with (
         patch("everest.simulator.everest_to_ert.ErtPluginContext", patched_context),
-        patch("ert.plugins.ErtPluginManager", patched),
-        patch("everest.config.everest_config.ErtPluginManager", patched_everest),
+        patch("everest.config.everest_config.ErtPluginContext", patched_everest),
     ):
         yield
-
-
-@pytest.fixture(autouse=True)
-def no_site_config():
-    site_config_patcher = patch(
-        "ert.config.ert_config.site_config_location", return_value=None
-    )
-    site_config_patcher.start()
-
-    yield site_config_patcher
-
-    with contextlib.suppress(RuntimeError, AttributeError):
-        site_config_patcher.stop()

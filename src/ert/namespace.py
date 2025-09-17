@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 from collections.abc import Callable
 
-from ert.plugins.plugin_manager import ErtPluginManager
+from ert.plugins import ErtRuntimePlugins
 
 
 class Namespace(argparse.Namespace):
@@ -17,4 +17,4 @@ class Namespace(argparse.Namespace):
     experimental_mode: bool
     logdir: str
     experiment_name: str | None = None
-    func: Callable[[Namespace, ErtPluginManager | None], None]
+    func: Callable[[Namespace, ErtRuntimePlugins | None], None]

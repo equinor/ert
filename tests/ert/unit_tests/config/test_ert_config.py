@@ -27,7 +27,7 @@ from ert.config import (
     QueueSystem,
 )
 from ert.config.ert_config import _split_string_into_sections, create_forward_model_json
-from ert.config.forward_model_step import ForwardModelStep
+from ert.config.forward_model_step import ForwardModelStep, ForwardModelStepPlugin
 from ert.config.parsing import ConfigKeys, ConfigWarning
 from ert.config.parsing.context_values import (
     ContextBool,
@@ -37,7 +37,8 @@ from ert.config.parsing.context_values import (
     ContextList,
     ContextString,
 )
-from ert.plugins import ErtPluginManager
+from ert.config.queue_config import LocalQueueOptions
+from ert.plugins import ErtPluginContext, ErtPluginManager, ErtRuntimePlugins
 from ert.shared import ert_share_path
 from ert.storage import LocalEnsemble, Storage
 from tests.ert.conftest import _create_design_matrix
@@ -107,21 +108,7 @@ def test_that_job_script_can_be_set_in_site_config(monkeypatch):
     This overwrites the value by appending to the default siteconfig.
     Need to check that the second JOB_SCRIPT is the one that gets used.
     """
-    test_site_config = Path("test_site_config.ert")
     my_script = Path("my_script").resolve()
-    my_script.write_text("", encoding="utf-8")
-    st = os.stat(my_script)
-    os.chmod(my_script, st.st_mode | stat.S_IEXEC)
-    test_site_config.write_text(
-        dedent(f"""
-        JOB_SCRIPT fm_dispatch.py
-        JOB_SCRIPT {my_script}
-        QUEUE_SYSTEM LOCAL
-        """),
-        encoding="utf-8",
-    )
-    monkeypatch.setenv("ERT_SITE_CONFIG", str(test_site_config))
-
     test_user_config = Path("user_config.ert")
 
     test_user_config.write_text(
@@ -132,7 +119,11 @@ def test_that_job_script_can_be_set_in_site_config(monkeypatch):
         encoding="utf-8",
     )
 
-    ert_config = ErtConfig.from_file(test_user_config)
+    ert_config = ErtConfig.with_plugins(
+        ErtRuntimePlugins.model_validate(
+            {"queue_options": {"name": "local", "job_script": str(my_script)}}
+        )
+    ).from_file(test_user_config)
 
     assert Path(ert_config.queue_config.queue_options.job_script).resolve() == my_script
 
@@ -813,12 +804,16 @@ def test_fm_step_config_via_plugin_ends_up_json_data(monkeypatch, anystring):
         "get_forward_model_configuration",
         MagicMock(return_value={"SOME_STEP": {"FOO": anystring}}),
     )
-    ert_config = ErtConfig.with_plugins().from_dict(
-        {
-            "INSTALL_JOB": [["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]],
-            "FORWARD_MODEL": [["SOME_STEP"]],
-        }
-    )
+
+    with ErtPluginContext() as ctx:
+        ert_config = ErtConfig.with_plugins(ctx).from_dict(
+            {
+                "INSTALL_JOB": [
+                    ["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]
+                ],
+                "FORWARD_MODEL": [["SOME_STEP"]],
+            }
+        )
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
@@ -836,14 +831,19 @@ def test_fm_step_config_via_plugin_does_not_leak_to_other_step(monkeypatch):
         "get_forward_model_configuration",
         MagicMock(return_value={"SOME_STEP": {"FOO": "bar"}}),
     )
-    ert_config = ErtConfig.with_plugins().from_dict(
-        {
-            "INSTALL_JOB": [
-                ["SOME_OTHER_STEP", ("SOME_OTHER_STEP", "EXECUTABLE fm_dispatch.py")]
-            ],
-            "FORWARD_MODEL": [["SOME_OTHER_STEP"]],
-        }
-    )
+
+    with ErtPluginContext() as ctx:
+        ert_config = ErtConfig.with_plugins(ctx).from_dict(
+            {
+                "INSTALL_JOB": [
+                    [
+                        "SOME_OTHER_STEP",
+                        ("SOME_OTHER_STEP", "EXECUTABLE fm_dispatch.py"),
+                    ]
+                ],
+                "FORWARD_MODEL": [["SOME_OTHER_STEP"]],
+            }
+        )
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
@@ -862,12 +862,16 @@ def test_fm_step_config_via_plugin_has_key_names_uppercased(monkeypatch):
         "get_forward_model_configuration",
         MagicMock(return_value={"SOME_STEP": {"foo": "bar"}}),
     )
-    ert_config = ErtConfig.with_plugins().from_dict(
-        {
-            "INSTALL_JOB": [["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]],
-            "FORWARD_MODEL": [["SOME_STEP"]],
-        }
-    )
+
+    with ErtPluginContext() as ctx:
+        ert_config = ErtConfig.with_plugins(ctx).from_dict(
+            {
+                "INSTALL_JOB": [
+                    ["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]
+                ],
+                "FORWARD_MODEL": [["SOME_STEP"]],
+            }
+        )
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
@@ -886,12 +890,17 @@ def test_fm_step_config_via_plugin_stringifies_python_objects(monkeypatch):
         "get_forward_model_configuration",
         MagicMock(return_value={"SOME_STEP": {"FOO": {"a_dict_as_value": 1}}}),
     )
-    ert_config = ErtConfig.with_plugins().from_dict(
-        {
-            "INSTALL_JOB": [["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]],
-            "FORWARD_MODEL": [["SOME_STEP"]],
-        }
-    )
+
+    with ErtPluginContext() as ctx:
+        ert_config = ErtConfig.with_plugins(ctx).from_dict(
+            {
+                "INSTALL_JOB": [
+                    ["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]
+                ],
+                "FORWARD_MODEL": [["SOME_STEP"]],
+            }
+        )
+
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
@@ -916,13 +925,17 @@ def test_fm_step_config_via_plugin_is_overridden_by_setenv(monkeypatch):
             }
         ),
     )
-    ert_config = ErtConfig.with_plugins().from_dict(
-        {
-            "INSTALL_JOB": [["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]],
-            "SETENV": [["FOO", "bar_from_setenv"]],
-            "FORWARD_MODEL": [["SOME_STEP"]],
-        }
-    )
+
+    with ErtPluginContext() as ctx:
+        ert_config = ErtConfig.with_plugins(ctx).from_dict(
+            {
+                "INSTALL_JOB": [
+                    ["SOME_STEP", ("SOME_STEP", "EXECUTABLE fm_dispatch.py")]
+                ],
+                "SETENV": [["FOO", "bar_from_setenv"]],
+                "FORWARD_MODEL": [["SOME_STEP"]],
+            }
+        )
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
@@ -947,7 +960,10 @@ def test_setenv_will_be_substituted_in_jobs_json(monkeypatch):
         ),
         encoding="utf-8",
     )
-    ert_config = ErtConfig.with_plugins().from_file("config.ert")
+
+    with ErtPluginContext() as ctx:
+        ert_config = ErtConfig.with_plugins(ctx).from_file("config.ert")
+
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
@@ -976,7 +992,10 @@ def test_fm_step_config_via_plugin_does_not_override_default_env(monkeypatch):
         ),
         encoding="utf-8",
     )
-    ert_config = ErtConfig.with_plugins().from_file("config.ert")
+
+    with ErtPluginContext() as ctx:
+        ert_config = ErtConfig.with_plugins(ctx).from_file("config.ert")
+
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
@@ -1009,7 +1028,10 @@ def test_fm_step_config_via_plugin_is_substituted_for_defines(monkeypatch):
         ),
         encoding="utf-8",
     )
-    ert_config = ErtConfig.with_plugins().from_file("config.ert")
+
+    with ErtPluginContext() as ctx:
+        ert_config = ErtConfig.with_plugins(ctx).from_file("config.ert")
+
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
@@ -1038,7 +1060,10 @@ def test_fm_step_config_via_plugin_is_dropped_if_not_define_exists(monkeypatch):
         ),
         encoding="utf-8",
     )
-    ert_config = ErtConfig.with_plugins().from_file("config.ert")
+
+    with ErtPluginContext() as ctx:
+        ert_config = ErtConfig.with_plugins(ctx).from_file("config.ert")
+
     step_json = create_forward_model_json(
         context=ert_config.substitutions,
         forward_model_steps=ert_config.forward_model_steps,
@@ -1794,7 +1819,11 @@ def test_queue_config_max_running_queue_option_has_priority_over_general_option(
 
 
 def test_general_option_in_local_config_has_priority_over_site_config():
-    config = ErtConfig.from_file_contents(
+    config = ErtConfig.with_plugins(
+        ErtRuntimePlugins(
+            queue_options=LocalQueueOptions(max_running=6, submit_sleep=7)
+        )
+    ).from_file_contents(
         user_config_contents=dedent(
             """
             NUM_REALIZATIONS  100
@@ -1805,13 +1834,6 @@ def test_general_option_in_local_config_has_priority_over_site_config():
             MAX_RUNNING 13
             SUBMIT_SLEEP 14
             """
-        ),
-        site_config_contents=dedent(
-            """
-        QUEUE_OPTION TORQUE MAX_RUNNING 6
-        QUEUE_SYSTEM LOCAL
-        QUEUE_OPTION TORQUE SUBMIT_SLEEP 7
-        """
         ),
     )
     assert config.queue_config.max_running == 13
@@ -2503,3 +2525,162 @@ def test_that_time_map_or_refcase_is_present_if_restart_is_used_for_summary_obse
                 ),
             }
         )
+
+
+def test_that_user_envvars_overrides_site_envvars():
+    config = ErtConfig.with_plugins(
+        ErtRuntimePlugins(
+            environment_variables={
+                "A": "site_A",
+                "B": "site_B",
+                "C": "site_C",
+                "D": "site_D",
+            }
+        )
+    ).from_file_contents(
+        user_config_contents=dedent(
+            """
+            NUM_REALIZATIONS  100
+            SETENV A users_A
+            SETENV B users_B
+            SETENV C users_C
+            """
+        ),
+    )
+
+    assert config.env_vars == {
+        "A": "users_A",
+        "B": "users_B",
+        "C": "users_C",
+        "D": "site_D",
+    }
+
+
+def test_that_site_envvars_are_substituted():
+    """
+     Used from site configurations to set parallelization-related envvars
+     to the same as NUM_CPU.
+
+     Old behavior of ERT site config:
+
+    "SETENV OMP_NUM_THREADS <NUM_CPU>",  # OpenMP
+    "SETENV MKL_NUM_THREADS <NUM_CPU>",  # Intel Math Kernel Library
+    "SETENV NUMEXPR_NUM_THREADS <NUM_CPU>",  # NumExpr library in Python
+
+    """
+
+    config = ErtConfig.with_plugins(
+        ErtRuntimePlugins(
+            environment_variables={
+                "A": "<NUM_CPU>",
+            }
+        )
+    ).from_file_contents(
+        user_config_contents=dedent(
+            """
+            NUM_REALIZATIONS  100
+
+            NUM_CPU 1337
+            """
+        ),
+    )
+
+    assert config.env_vars == {
+        "A": "1337",
+    }
+
+
+def test_that_rewriting_envvars_warn_distinctly_for_site_and_user(caplog):
+    with caplog.at_level(logging.WARNING):
+        ErtConfig.with_plugins(
+            ErtRuntimePlugins(
+                environment_variables={
+                    "A": "<NUM_CPU>",
+                }
+            )
+        ).from_file_contents(
+            user_config_contents=dedent(
+                """
+                NUM_REALIZATIONS  100
+
+                NUM_CPU 1337
+                SETENV A 999
+                SETENV A 998
+                """
+            ),
+        )
+
+    assert ([m for m in caplog.messages if "re-written by user" in m]) == [
+        "Site configured environment variable A re-written by user: 1337->999",
+        "User configured environment variable A re-written by user: 999->998",
+    ]
+
+
+def test_that_user_forward_models_overwrite_site_forward_models(
+    monkeypatch, tmp_path, caplog
+):
+    monkeypatch.chdir(tmp_path)
+
+    site_exec = Path("site_echo")
+    site_exec.write_text("echo site", encoding="utf-8")
+    site_exec.chmod(site_exec.stat().st_mode | stat.S_IXUSR)
+
+    user_exec = Path("user_echo")
+    user_exec.write_text("echo user", encoding="utf-8")
+    user_exec.chmod(user_exec.stat().st_mode | stat.S_IXUSR)
+
+    Path("deletor.txt").write_text("EXECUTABLE user_echo", encoding="utf-8")
+
+    class SiteDeleteDirectory(ForwardModelStepPlugin):
+        def __init__(self) -> None:
+            super().__init__(
+                name="DELETE_DIRECTORY",
+                command=["site_echo"],
+            )
+
+    class SiteDeleteDirectories(ForwardModelStepPlugin):
+        def __init__(self) -> None:
+            super().__init__(
+                name="DELETE_DIRECTORIES",
+                command=["site_echo"],
+            )
+
+    class SiteDeleteDirectoryz(ForwardModelStepPlugin):
+        def __init__(self) -> None:
+            super().__init__(
+                name="DELETE_DIRECTORYZ",
+                command=["site_echo"],
+            )
+
+    with caplog.at_level(logging.INFO):
+        config = ErtConfig.with_plugins(
+            ErtRuntimePlugins(
+                installed_forward_model_steps={
+                    "DELETE_DIRECTORY": SiteDeleteDirectory(),
+                    "DELETE_DIRECTORIES": SiteDeleteDirectories(),
+                    "DELETE_DIRECTORYZ": SiteDeleteDirectoryz(),
+                },
+            )
+        ).from_file_contents(
+            user_config_contents=dedent(
+                """
+                NUM_REALIZATIONS  100
+
+                INSTALL_JOB DELETE_DIRECTORY deletor.txt
+                INSTALL_JOB DELETE_DIRECTORIES deletor.txt
+                INSTALL_JOB DELETE_DIRECTORYZ deletor.txt
+                INSTALL_JOB DELETE_DIRECTORZ deletor.txt
+                FORWARD_MODEL DELETE_DIRECTORY
+                """
+            ),
+        )
+
+    assert len(config.forward_model_steps) == 1
+    fm_step = config.forward_model_steps[0]
+    assert "user_echo" in fm_step.executable
+
+    assert (
+        "The following forward model steps from site configurations have "
+        "been overwritten by user: "
+        "['DELETE_DIRECTORIES', 'DELETE_DIRECTORY', 'DELETE_DIRECTORYZ']"
+    ) in caplog.messages
