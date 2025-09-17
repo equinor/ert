@@ -306,18 +306,6 @@ def test_that_storage_matches(
         "6.0.2",
         "6.0.1",
         "6.0.0",
-        "5.0.12",
-        "5.0.11",
-        "5.0.10",
-        "5.0.9",
-        "5.0.8",
-        "5.0.7",
-        "5.0.6",
-        "5.0.5",
-        "5.0.4",
-        "5.0.2",
-        "5.0.1",
-        "5.0.0",
     ],
 )
 def test_that_storage_works_with_missing_parameters_and_responses(
@@ -425,7 +413,6 @@ def test_that_migrate_blockfs_creates_backup_folder(tmp_path, caplog):
         "8.4.5",
         "8.0.11",
         "6.0.5",
-        "5.0.0",
     ],
 )
 def test_that_manual_update_from_migrated_storage_works(
@@ -562,16 +549,6 @@ def test_that_manual_update_from_migrated_storage_works(
         "6.0.3",
         "6.0.1",
         "6.0.0",
-        "5.0.11",
-        "5.0.9",
-        "5.0.8",
-        "5.0.7",
-        "5.0.6",
-        "5.0.5",
-        "5.0.4",
-        "5.0.2",
-        "5.0.1",
-        "5.0.0",
     ],
 )
 def test_migrate_storage_with_no_responses(
