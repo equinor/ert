@@ -15,9 +15,8 @@ from typing import Any, ClassVar, Self, cast, overload
 
 import polars as pl
 from numpy.random import SeedSequence
-from pydantic import BaseModel, Field, PrivateAttr
+from pydantic import BaseModel, Field, PrivateAttr, model_validator
 from pydantic import ValidationError as PydanticValidationError
-from pydantic import model_validator
 
 from ert.plugins import ErtPluginManager, fixtures_per_hook
 from ert.substitutions import Substitutions
@@ -1189,18 +1188,27 @@ class ErtConfig(BaseModel):
         if (
             self.analysis_config.design_matrix is not None
             and (
-                dm_active_realizations := self.analysis_config.design_matrix.active_realizations
+                dm_active_realizations
+                := self.analysis_config.design_matrix.active_realizations
             )
             is not None
         ) and (
             dm_num_realizations := len(dm_active_realizations)
         ) != config_num_realizations:
-            msg = f"NUM_REALIZATIONS ({config_num_realizations}) is " + (
-                "greater " if dm_num_realizations < config_num_realizations else "less "
-            ) + f"than the number of realizations in DESIGN_MATRIX " f"({dm_num_realizations}). Using the realizations from " + (
-                f"DESIGN_MATRIX ({dm_num_realizations})"
-                if dm_num_realizations < config_num_realizations
-                else f"NUM_REALIZATIONS ({config_num_realizations})"
+            msg = (
+                f"NUM_REALIZATIONS ({config_num_realizations}) is "
+                + (
+                    "greater "
+                    if dm_num_realizations < config_num_realizations
+                    else "less "
+                )
+                + f"than the number of realizations in DESIGN_MATRIX "
+                f"({dm_num_realizations}). Using the realizations from "
+                + (
+                    f"DESIGN_MATRIX ({dm_num_realizations})"
+                    if dm_num_realizations < config_num_realizations
+                    else f"NUM_REALIZATIONS ({config_num_realizations})"
+                )
             )
             ConfigWarning.warn(msg)
             return min(config_num_realizations, dm_num_realizations)
@@ -1211,7 +1219,8 @@ class ErtConfig(BaseModel):
         if (
             self.analysis_config.design_matrix is not None
             and (
-                dm_active_realizations := self.analysis_config.design_matrix.active_realizations
+                dm_active_realizations
+                := self.analysis_config.design_matrix.active_realizations
             )
             is not None
         ):
