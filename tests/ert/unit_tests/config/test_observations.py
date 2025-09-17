@@ -1,3 +1,4 @@
+import logging
 from contextlib import ExitStack as does_not_raise
 from datetime import datetime, timedelta
 
@@ -51,8 +52,8 @@ def run_simulator(summary_values=SUMMARY_VALUES):
     """
     summary = Summary.writer("MY_REFCASE", datetime(2000, 1, 1), 10, 10, 10)
 
-    summary.add_variable("FOPR", unit="SM3/DAY")
-    summary.add_variable("FOPRH", unit="SM3/DAY")
+    for key in summary_values:
+        summary.add_variable(key, unit="SM3/DAY")
 
     mini_step_count = 10
 
@@ -1703,3 +1704,44 @@ def test_that_setting_an_unknown_key_in_a_segment_is_not_valid():
                 };
             };
         """)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_ert_config_logs_observation_types_and_keywords(caplog):
+    obs_config_contents = """
+    GENERAL_OBSERVATION OBS1 {
+        VALUE = 1;
+        DATA = GEN;
+        ERROR = 0.1;
+        RESTART = 1;
+    };
+    HISTORY_OBSERVATION FWPR;
+    HISTORY_OBSERVATION FOPR {
+        SEGMENT FIRST_YEAR {
+            START = 1;
+            STOP = 2;
+            ERROR = 0.02;
+        };
+    };
+    SUMMARY_OBSERVATION SUMOP {
+        VALUE = 1;
+        ERROR = 0.1;
+        KEY = FGPR;
+        RESTART = 1;
+    };
+    """
+    with caplog.at_level(logging.INFO):
+        make_refcase_observations(
+            obs_config_contents,
+            summary_values={"FOPR": 1, "FOPRH": 2, "FWPR": 3, "FWPRH": 4},
+        )
+    assert "Count of observation types" in caplog.text
+    assert (
+        "'GENERAL_OBSERVATION': 1, 'HISTORY_OBSERVATION': 2, 'SUMMARY_OBSERVATION': 1"
+        in caplog.text
+    )
+    assert "Count of observation keywords" in caplog.text
+    assert (
+        "'VALUE': 2, 'DATA': 1, 'ERROR': 2, 'RESTART': 2, 'SEGMENT': 1, 'KEY': 1"
+        in caplog.text
+    )

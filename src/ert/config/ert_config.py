@@ -5,7 +5,7 @@ import logging
 import os
 import pprint
 import re
-from collections import defaultdict
+from collections import Counter, defaultdict
 from collections.abc import Mapping
 from datetime import datetime
 from functools import cached_property
@@ -54,7 +54,9 @@ from .parsing import (
     HistorySource,
     HookRuntime,
     ObservationConfigError,
+    ObservationStatement,
     QueueSystemWithGeneric,
+    SimpleHistoryStatement,
     init_forward_model_schema,
     init_site_config_schema,
     init_user_config_schema,
@@ -660,6 +662,23 @@ def create_list_of_forward_model_steps_to_run(
     return fm_steps
 
 
+def log_observation_keys(
+    observations: list[SimpleHistoryStatement | ObservationStatement],
+) -> None:
+    observation_type_counts = Counter(str(o[0]) for o in observations)
+    observation_keyword_counts = Counter(
+        "SEGMENT" if isinstance(key, tuple) else str(key)
+        for o in observations
+        if len(o) == 3
+        for key in o[2]
+    )
+
+    logger.info(
+        f"Count of observation types:\n\t{dict(observation_type_counts)}\n"
+        f"Count of observation keywords:\n\t{dict(observation_keyword_counts)}"
+    )
+
+
 RESERVED_KEYWORDS = ["realization", "IENS", "ITER"]
 
 
@@ -965,6 +984,7 @@ class ErtConfig(BaseModel):
         try:
             if obs_config_args:
                 obs_config_file, obs_config_input = obs_config_args
+                log_observation_keys(obs_config_input)
                 obs_configs = make_observation_declarations(
                     os.path.dirname(obs_config_file),
                     obs_config_input,
