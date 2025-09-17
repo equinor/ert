@@ -14,13 +14,6 @@ def skipif_no_everviz(function):
     return pytest.mark.skipif(not_found, reason="everviz not found")(function)
 
 
-def skipif_no_everest_models(function):
-    """Decorator to skip a test if everest-models is not available"""
-    spec = importlib.util.find_spec("everest_models")
-    not_found = spec is None
-    return pytest.mark.skipif(not_found, reason="everest-models not found")(function)
-
-
 def relpath(*path):
     return os.path.join(os.path.dirname(os.path.dirname(__file__)), *path)
 

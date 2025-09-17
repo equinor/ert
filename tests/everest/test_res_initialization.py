@@ -33,7 +33,6 @@ from everest.simulator.everest_to_ert import (
     get_substitutions,
     get_workflow_jobs,
 )
-from tests.everest.utils import skipif_no_everest_models
 
 
 @pytest.mark.usefixtures("no_plugins")
@@ -232,8 +231,6 @@ def test_install_data_no_init(tmp_path, source, target, symlink, cmd, monkeypatc
 
 
 @pytest.mark.integration_test
-@skipif_no_everest_models
-@pytest.mark.everest_models_test
 @pytest.mark.skip_mac_ci
 def test_summary_default_no_opm(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)

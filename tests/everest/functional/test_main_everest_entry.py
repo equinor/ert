@@ -1,4 +1,3 @@
-import os
 import threading
 import time
 from pathlib import Path
@@ -10,7 +9,6 @@ from ruamel.yaml import YAML
 from tests.everest.utils import (
     capture_streams,
     get_optimal_result,
-    skipif_no_everest_models,
 )
 
 from everest import __version__ as everest_version
@@ -18,7 +16,6 @@ from everest.bin.main import start_everest
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import ExperimentState, everserver_status
 
-WELL_ORDER = "everest/model/config.yml"
 CONFIG_FILE_ADVANCED = "config_advanced.yml"
 
 
@@ -144,26 +141,6 @@ line: 2, column: 18. controls -> 0 -> initial_guess
 """
     )
     assert validation_msg in err.getvalue()
-
-
-@skipif_no_everest_models
-@pytest.mark.everest_models_test
-@pytest.mark.integration_test
-@pytest.mark.xdist_group(name="starts_everest")
-def test_everest_main_configdump_entry(copy_eightcells_test_data_to_tmp):
-    # Setup command line arguments
-    with capture_streams() as (out, _):
-        start_everest(["everest", "render", WELL_ORDER])
-    yaml = YAML(typ="safe", pure=True)
-    render_dict = yaml.load(out.getvalue())
-
-    # Test whether the config file is correctly rendered with jinja
-    assert (
-        Path(render_dict["install_data"][0]["source"])
-        == Path(os.getcwd())
-        / "everest/model/../../eclipse/include/"
-        "realizations/realization-<GEO_ID>/eclipse"
-    )
 
 
 @pytest.mark.skip_mac_ci
