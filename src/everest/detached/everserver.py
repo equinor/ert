@@ -20,6 +20,7 @@ from ert.ensemble_evaluator import (
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
+from ert.plugins.plugin_manager import ErtPluginManager
 from ert.run_models import StatusEvents
 from ert.run_models.everest_run_model import (
     EverestExitCode,
@@ -33,7 +34,6 @@ from everest.detached import (
     everserver_status,
     update_everserver_status,
 )
-from everest.plugins.everest_plugin_manager import EverestPluginManager
 from everest.strings import (
     DEFAULT_LOGGING_FORMAT,
     EVEREST,
@@ -112,8 +112,8 @@ def _configure_loggers(
             yaml.dump(logging_config, outfile, default_flow_style=False)
     logging.config.dictConfig(logging_config)
 
-    plugin_manager = EverestPluginManager()
-    plugin_manager.add_log_handle_to_root()
+    plugin_manager = ErtPluginManager()
+    plugin_manager.add_logging_handle_to_root(logging.getLogger())
     plugin_manager.add_span_processor_to_trace_provider()
 
 
