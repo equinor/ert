@@ -1,6 +1,7 @@
 import json
 import os
 from pathlib import Path
+from typing import Any
 
 import polars as pl
 
@@ -24,6 +25,35 @@ tfd_to_distributions = {
 }
 
 
+def migrate_gen_kw_param(parameters_json: dict[str, Any]) -> dict[str, Any]:
+    new_configs = {}
+    for param_config in parameters_json.values():
+        if param_config["type"] == "gen_kw":
+            group = param_config["name"]
+            tfds = param_config["transform_function_definitions"]
+            for tfd in tfds:
+                dist_type = tfd["param_name"]
+                keys = tfd_to_distributions[dist_type]
+                vals = [dist_type.lower()] + tfd["values"]
+                input_source = (
+                    "design"
+                    if tfd["param_name"] == "RAW" and param_config["update"]
+                    else "sampled"
+                )
+                new_configs[tfd["name"]] = {
+                    "name": tfd["name"],
+                    "type": "gen_kw",
+                    "group": group,
+                    "distribution": dict(zip(keys, vals, strict=False)),
+                    "forward_init": False,
+                    "update": param_config["update"],
+                    "input_source": input_source,
+                }
+        else:
+            new_configs[param_config["name"]] = param_config
+    return new_configs
+
+
 def migrate(path: Path) -> None:
     for experiment in path.glob("experiments/*"):
         ensembles = path.glob("ensembles/*")
@@ -36,6 +66,11 @@ def migrate(path: Path) -> None:
         with open(experiment / "parameter.json", encoding="utf-8") as fin:
             parameters_json = json.load(fin)
 
+        new_parameter_configs = migrate_gen_kw_param(parameters_json)
+        with open(experiment / "parameter.json", "w", encoding="utf-8") as fout:
+            fout.write(json.dumps(new_parameter_configs, indent=3))
+
+        # migrate parquet files
         for ens in ensembles:
             with open(ens / "index.json", encoding="utf-8") as f:
                 ens_file = json.load(f)
@@ -43,38 +78,14 @@ def migrate(path: Path) -> None:
                     continue
 
             group_dfs = {}
-            new_configs = {}
             for param_config in parameters_json.values():
                 if param_config["type"] == "gen_kw":
                     group = param_config["name"]
-                    tfds = param_config["transform_function_definitions"]
-                    for tfd in tfds:
-                        dist_type = tfd["param_name"]
-                        keys = tfd_to_distributions[dist_type]
-                        vals = [dist_type.lower()] + tfd["values"]
-                        input_source = (
-                            "design"
-                            if tfd["param_name"] == "RAW" and param_config["update"]
-                            else "sampled"
-                        )
-                        new_configs[tfd["name"]] = {
-                            "name": tfd["name"],
-                            "type": "gen_kw",
-                            "group": group,
-                            "distribution": dict(zip(keys, vals, strict=False)),
-                            "forward_init": False,
-                            "update": param_config["update"],
-                            "input_source": input_source,
-                        }
                     group_path = ens / f"{_escape_filename(group)}.parquet"
                     if group_path.exists():
                         group_dfs[group] = pl.read_parquet(group_path)
                         os.remove(group_path)
-                else:
-                    new_configs[param_config["name"]] = param_config
             if group_dfs:
                 df = pl.concat(list(group_dfs.values()), how="align")
                 df = df.unique(subset=["realization"], keep="first").sort("realization")
                 df.write_parquet(ens / "SCALAR.parquet")
-            with open(experiment / "parameter.json", "w", encoding="utf-8") as fout:
-                fout.write(json.dumps(new_configs, indent=3))
