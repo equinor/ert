@@ -18,8 +18,6 @@ from ert.config import (
     HookRuntime,
     ObservationSettings,
     ParameterConfig,
-)
-from ert.plugins.workflow_fixtures import (
     PostUpdateFixtures,
     PreFirstUpdateFixtures,
     PreUpdateFixtures,

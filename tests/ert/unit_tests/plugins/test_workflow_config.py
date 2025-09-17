@@ -3,8 +3,8 @@ import logging
 from unittest.mock import Mock
 
 from ert import ErtScript
-from ert.plugins import workflow_config
-from ert.plugins.workflow_config import LegacyWorkflowConfigs
+from ert.config import workflow_config
+from ert.config.workflow_config import LegacyWorkflowConfigs
 
 
 def test_workflow_config_duplicate_log_message(caplog, monkeypatch):

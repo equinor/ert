@@ -324,7 +324,7 @@ def test_that_get_plugin_jobs_fetches_exactly_ert_plugins():
     Path("plugin.py").write_text(
         dedent(
             """
-            from ert.plugins import ErtPlugin
+            from ert.config import ErtPlugin
 
             class Plugin(ErtPlugin):
                 def run(self, *args):

@@ -9,8 +9,8 @@ from typing import Self, TypeAlias
 
 from pydantic import BaseModel, model_validator
 
-from ert.plugins import ErtPlugin, ErtScript
-
+from .ert_plugin import ErtPlugin
+from .ert_script import ErtScript
 from .parse_arg_types_list import parse_arg_types_list
 from .parsing import (
     ConfigDict,

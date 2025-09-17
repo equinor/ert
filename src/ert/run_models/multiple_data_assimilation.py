@@ -7,6 +7,7 @@ from uuid import UUID
 
 from pydantic import PrivateAttr
 
+from ert.config import PostExperimentFixtures, PreExperimentFixtures
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.initial_ensemble_run_model import InitialEnsembleRunModel
 from ert.run_models.update_run_model import UpdateRunModel
@@ -14,7 +15,6 @@ from ert.storage import Ensemble
 from ert.trace import tracer
 
 from ..analysis import smoother_update
-from ..plugins import PostExperimentFixtures, PreExperimentFixtures
 from ..run_arg import create_run_arguments
 from .run_model import ErtRunError
 

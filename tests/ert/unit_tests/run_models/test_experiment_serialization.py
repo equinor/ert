@@ -22,6 +22,7 @@ from ert.config import (
     ErtScriptWorkflow,
     ESSettings,
     ExecutableWorkflow,
+    ExternalErtScript,
     Field,
     ForwardModelStep,
     GenDataConfig,
@@ -50,7 +51,6 @@ from ert.mode_definitions import (
     EVALUATE_ENSEMBLE_MODE,
     MANUAL_UPDATE_MODE,
 )
-from ert.plugins import ExternalErtScript
 from ert.run_models import (
     EnsembleExperiment,
     EnsembleInformationFilter,
