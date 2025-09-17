@@ -515,7 +515,7 @@ def installed_forward_model_steps_from_dict(
     ):
         fm_step_config_file = path.abspath(fm_step_config_file)
         try:
-            new_fm_step = _forward_model_step_from_config_contents(
+            new_fm_step = forward_model_step_from_config_contents(
                 config_contents,
                 name=name,
                 config_file=fm_step_config_file,
@@ -537,7 +537,7 @@ def installed_forward_model_steps_from_dict(
                 continue
             try:
                 config_contents = read_file(file_name)
-                new_fm_step = _forward_model_step_from_config_contents(
+                new_fm_step = forward_model_step_from_config_contents(
                     config_contents, config_file=file_name
                 )
             except ConfigValidationError as e:
@@ -1417,7 +1417,7 @@ def uppercase_subkeys_and_stringify_subvalues(
     return fixed_dict
 
 
-def _forward_model_step_from_config_contents(
+def forward_model_step_from_config_contents(
     config_contents: str, config_file: str, name: str | None = None
 ) -> ForwardModelStep:
     if name is None:

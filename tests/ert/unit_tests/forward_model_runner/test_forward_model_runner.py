@@ -10,8 +10,8 @@ from _ert.forward_model_runner.reporting.message import Checksum, Exited, Start
 from _ert.forward_model_runner.runner import ForwardModelRunner
 from ert.config import ErtConfig, ForwardModelStep
 from ert.config.ert_config import (
-    _forward_model_step_from_config_contents,
     create_forward_model_json,
+    forward_model_step_from_config_contents,
 )
 
 
@@ -190,7 +190,7 @@ def test_env_var_available_inside_step_context():
         )
     os.chmod("run_me.py", stat.S_IEXEC + stat.S_IREAD)
 
-    step = _forward_model_step_from_config_contents(
+    step = forward_model_step_from_config_contents(
         """
         EXECUTABLE run_me.py
         ENV TEST_ENV 123
@@ -241,7 +241,7 @@ def test_default_env_variables_available_inside_fm_step_context():
         )
     os.chmod("run_me.py", stat.S_IEXEC + stat.S_IREAD)
 
-    step = _forward_model_step_from_config_contents(
+    step = forward_model_step_from_config_contents(
         "EXECUTABLE run_me.py", name=None, config_file="RUN_ENV"
     )
     with open("jobs.json", mode="w", encoding="utf-8") as fptr:

@@ -8,7 +8,7 @@ from .analysis_module import AnalysisModule, ESSettings, InversionTypeES
 from .capture_validation import capture_validation
 from .design_matrix import DesignMatrix
 from .ensemble_config import EnsembleConfig
-from .ert_config import ErtConfig
+from .ert_config import ErtConfig, forward_model_step_from_config_contents
 from .ert_plugin import ErtPlugin
 from .ert_script import ErtScript
 from .everest_constraints_config import EverestConstraintsConfig
@@ -133,6 +133,7 @@ __all__ = [
     "create_workflow_fixtures_from_hooked",
     "field_transform",
     "fixtures_per_hook",
+    "forward_model_step_from_config_contents",
     "lint_file",
     "workflow_job_from_file",
 ]
