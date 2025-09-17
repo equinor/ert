@@ -11,8 +11,8 @@ from hypothesis import given, settings
 
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
 from ert.config.ert_config import (
-    _forward_model_step_from_config_contents,
     create_forward_model_json,
+    forward_model_step_from_config_contents,
 )
 from ert.config.forward_model_step import (
     ForwardModelStepJSON,
@@ -37,7 +37,7 @@ def test_load_forward_model():
         STDERR null
         EXECUTABLE script.sh
         """
-    fm_step = _forward_model_step_from_config_contents(
+    fm_step = forward_model_step_from_config_contents(
         contents,
         "CONFIG",
     )
@@ -50,7 +50,7 @@ def test_load_forward_model():
 
     assert fm_step.min_arg is None
 
-    fm_step = _forward_model_step_from_config_contents(contents, "CONFIG", name="Step")
+    fm_step = forward_model_step_from_config_contents(contents, "CONFIG", name="Step")
     assert fm_step.name == "Step"
     assert repr(fm_step).startswith("ForwardModelStep(")
 
@@ -63,7 +63,7 @@ def test_load_forward_model_upgraded():
     mode = os.stat(name).st_mode
     mode |= stat.S_IXUSR | stat.S_IXGRP
     os.chmod(name, stat.S_IMODE(mode))
-    fm_step = _forward_model_step_from_config_contents(
+    fm_step = forward_model_step_from_config_contents(
         """
         EXECUTABLE script.sh
         MIN_ARG 2
@@ -96,14 +96,14 @@ def test_portable_exe_error_message():
         pytest.raises(ConfigValidationError, match="EXECUTABLE must be set"),
         pytest.warns(ConfigWarning, match='"PORTABLE_EXE" key is deprecated'),
     ):
-        _ = _forward_model_step_from_config_contents(
+        _ = forward_model_step_from_config_contents(
             "PORTABLE_EXE fm_dispatch.py", "CONFIG"
         )
 
 
 def test_load_forward_model_missing_raises():
     with pytest.raises(ConfigValidationError, match="Could not find executable"):
-        _ = _forward_model_step_from_config_contents(
+        _ = forward_model_step_from_config_contents(
             "EXECUTABLE missing_script.sh", "CONFIG"
         )
 
@@ -111,23 +111,23 @@ def test_load_forward_model_missing_raises():
 @pytest.mark.filterwarnings("ignore:.*Unknown keyword 'EXECU'.*:UserWarning")
 def test_load_forward_model_execu_missing_raises():
     with pytest.raises(ConfigValidationError, match="EXECUTABLE must be set"):
-        _ = _forward_model_step_from_config_contents(
+        _ = forward_model_step_from_config_contents(
             "EXECU missing_script.sh\n", "CONFIG"
         )
 
 
 def test_load_forward_model_is_directory_raises():
     with pytest.raises(ConfigValidationError, match="directory"):
-        _ = _forward_model_step_from_config_contents("EXECUTABLE /tmp", "CONFIG")
+        _ = forward_model_step_from_config_contents("EXECUTABLE /tmp", "CONFIG")
 
 
 def test_load_forward_model_foreign_raises():
     with pytest.raises(ConfigValidationError, match="File not executable"):
-        _ = _forward_model_step_from_config_contents("EXECUTABLE /etc/passwd", "CONFIG")
+        _ = forward_model_step_from_config_contents("EXECUTABLE /etc/passwd", "CONFIG")
 
 
 def test_forward_model_stdout_stderr_defaults_to_filename():
-    forward_model = _forward_model_step_from_config_contents(
+    forward_model = forward_model_step_from_config_contents(
         "EXECUTABLE fm_dispatch.py", "CONFIG"
     )
 
@@ -137,7 +137,7 @@ def test_forward_model_stdout_stderr_defaults_to_filename():
 
 
 def test_forward_model_stdout_stderr_null_results_in_none():
-    forward_model = _forward_model_step_from_config_contents(
+    forward_model = forward_model_step_from_config_contents(
         """
         EXECUTABLE fm_dispatch.py
         STDIN null
@@ -154,7 +154,7 @@ def test_forward_model_stdout_stderr_null_results_in_none():
 
 
 def test_that_arglist_is_parsed_correctly():
-    forward_model = _forward_model_step_from_config_contents(
+    forward_model = forward_model_step_from_config_contents(
         """
         EXECUTABLE fm_dispatch.py
         ARGLIST <A> B <C> <D> <E>
@@ -166,7 +166,7 @@ def test_that_arglist_is_parsed_correctly():
 
 
 def test_that_default_env_is_set():
-    forward_model = _forward_model_step_from_config_contents(
+    forward_model = forward_model_step_from_config_contents(
         """
         EXECUTABLE fm_dispatch.py
         """,
@@ -176,7 +176,7 @@ def test_that_default_env_is_set():
 
 
 def test_forward_model_arglist_with_weird_characters():
-    forward_model = _forward_model_step_from_config_contents(
+    forward_model = forward_model_step_from_config_contents(
         """
         STDERR    insert_nosim.stderr
         STDOUT    insert_nosim.stdout
