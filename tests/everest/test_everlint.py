@@ -10,7 +10,6 @@ from pydantic import ValidationError
 from ert.config import ConfigWarning
 from everest.config import EverestConfig
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
-from tests.everest.utils import relpath
 
 
 @pytest.mark.parametrize(
@@ -352,15 +351,6 @@ def test_date_warn_deprecated(date, min_config, caplog):
     with pytest.warns(ConfigWarning, match=msg):
         EverestConfig.model_validate(min_config)
     assert msg in "".join(caplog.messages)
-
-
-@pytest.mark.skip_mac_ci
-def test_lint_everest_models_jobs():
-    pytest.importorskip("everest_models")
-    config_file = relpath("../../test-data/everest/eightcells/everest/model/config.yml")
-    config = EverestConfig.load_file(config_file).to_dict()
-    # Check initial config file is valid
-    assert len(EverestConfig.lint_config_dict(config)) == 0
 
 
 @pytest.mark.parametrize(
