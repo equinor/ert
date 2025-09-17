@@ -831,3 +831,116 @@ def test_that_dumped_esmda_matches_snapshot(
         ),
         case=f"{config_dir}.{config_file}",
     )
+
+
+@pytest.fixture
+def executable_workflow_job():
+    return ExecutableWorkflow(
+        name="exec_wf_name",
+        type="executable",
+        min_args=4,
+        max_args=3,
+        arg_types=[
+            SchemaItemType.BOOL,
+            SchemaItemType.ISODATE,
+            SchemaItemType.BYTESIZE,
+            SchemaItemType.INT,
+            SchemaItemType.INT,
+            SchemaItemType.INVALID,
+        ],
+        stop_on_fail=False,
+        executable=None,
+    )
+
+
+@pytest.fixture
+def ertscript_workflow_job():
+    return ErtScriptWorkflow(
+        name="the_ertscript_wf_name",
+        type="ert_script",
+        min_args=1,
+        max_args=1,
+        arg_types=[SchemaItemType.STRING],
+        stop_on_fail=False,
+        ert_script=ExternalErtScript,
+        category="other",
+    )
+
+
+def test_that_executable_wf_job_serializes_entire_wfjob(executable_workflow_job):
+    with init_context(ErtRuntimePlugins(installed_workflow_jobs={})):
+        serialized = executable_workflow_job.model_dump(mode="json")
+        deserialized = ExecutableWorkflow.model_validate(serialized)
+        assert deserialized == executable_workflow_job
+
+
+def test_that_workflow_with_executable_wf_job_serializes_entire_wfjob(
+    executable_workflow_job,
+):
+    workflow = Workflow(
+        src_file="Ox.wf.json",
+        cmd_list=[
+            (
+                executable_workflow_job,
+                "R8oZ",
+            ),
+        ],
+    )
+
+    with init_context(ErtRuntimePlugins(installed_workflow_jobs={})):
+        serialized = workflow.model_dump(mode="json")
+        deserialized = Workflow.model_validate(serialized)
+        assert deserialized == workflow
+
+
+def test_that_ertscript_wf_job_serializes_ertscript_by_name(ertscript_workflow_job):
+    with init_context(
+        ErtRuntimePlugins(
+            installed_workflow_jobs={
+                ertscript_workflow_job.name: ertscript_workflow_job
+            }
+        )
+    ):
+        serialized_job = ertscript_workflow_job.model_dump(mode="json")
+        deserialized_workflow_job = ErtScriptWorkflow.model_validate(serialized_job)
+        assert deserialized_workflow_job == ertscript_workflow_job
+
+
+def test_that_ertscript_wf_job_deserialization_raises_error_if_uninstalled(
+    ertscript_workflow_job,
+):
+    serialized_job = ertscript_workflow_job.model_dump(mode="json")
+    with (
+        init_context(
+            ErtRuntimePlugins(
+                installed_workflow_jobs={
+                    f"{ertscript_workflow_job.name}ff": ertscript_workflow_job
+                }
+            )
+        ),
+        pytest.raises(KeyError, match="Did not find installed workflow job"),
+    ):
+        deserialized_workflow_job = ErtScriptWorkflow.model_validate(serialized_job)
+        assert deserialized_workflow_job == ertscript_workflow_job
+
+
+def test_that_workflow_with_ertscript_serializes_ertscript_by_name(
+    ertscript_workflow_job,
+):
+    workflow = Workflow(
+        src_file="Ox.wf.json",
+        cmd_list=[
+            (ertscript_workflow_job, "hello"),
+        ],
+    )
+
+    with init_context(
+        ErtRuntimePlugins(
+            installed_workflow_jobs={
+                ertscript_workflow_job.name: ertscript_workflow_job
+            }
+        )
+    ):
+        serialized = workflow.model_dump(mode="json")
+        deserialized = Workflow.model_validate(serialized)
+        assert deserialized == workflow

@@ -1,13 +1,17 @@
 from __future__ import annotations
 
+import builtins
 import logging
 import os
 import textwrap
 from abc import ABC, abstractmethod
 from dataclasses import field
-from typing import Self, TypeAlias
+from typing import TYPE_CHECKING, Self, TypeAlias, cast
 
-from pydantic import BaseModel, model_validator
+from pydantic import field_serializer, field_validator, model_validator
+from pydantic_core.core_schema import ValidationInfo
+
+from ert.base_model_context import BaseModelWithContextSupport
 
 from .ert_plugin import ErtPlugin
 from .ert_script import ErtScript
@@ -20,6 +24,9 @@ from .parsing import (
     init_workflow_job_schema,
     parse,
 )
+
+if TYPE_CHECKING:
+    from ert.plugins import ErtRuntimePlugins
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +96,7 @@ def workflow_job_from_file(config_file: str, name: str | None = None) -> Workflo
         )
 
 
-class _WorkflowJob(BaseModel, ABC):
+class _WorkflowJob(BaseModelWithContextSupport, ABC):
     name: str
     min_args: int | None = None
     max_args: int | None = None
@@ -143,10 +150,35 @@ class ErtScriptWorkflow(_WorkflowJob):
     Single workflow configuration object
     """
 
-    ert_script: type[ErtScript] = None  # type: ignore
+    ert_script: builtins.type[ErtScript] = None  # type: ignore
     description: str = ""
     examples: str | None = None
     category: str = "other"
+
+    @field_serializer("ert_script")
+    def serialize_ert_script(self, _: str | builtins.type[ErtScript]) -> str:
+        return self.name
+
+    @field_validator("ert_script", mode="before")
+    @classmethod
+    def deserialize_ert_script(
+        cls, ert_script: str | builtins.type[ErtScript], info: ValidationInfo
+    ) -> builtins.type[ErtScript]:
+        if isinstance(ert_script, type) and issubclass(ert_script, ErtScript):
+            return ert_script
+
+        runtime_plugins = cast("ErtRuntimePlugins", info.context)
+        ertscript_workflow_job = runtime_plugins.installed_workflow_jobs.get(ert_script)
+
+        if ertscript_workflow_job is None:
+            raise KeyError(
+                f"Did not find installed workflow job: {ert_script}. "
+                f"installed workflow jobs are: "
+                f"{runtime_plugins.installed_workflow_jobs.keys()}"
+            )
+        assert isinstance(ertscript_workflow_job, ErtScriptWorkflow)
+
+        return ertscript_workflow_job.ert_script
 
     def location(self) -> str | None:
         return str(self.ert_script) if self.ert_script else None
