@@ -61,11 +61,12 @@ def _configure_loggers(
             "class": "logging.FileHandler",
             "formatter": "default",
             "level": log_level,
-            "filename": path,
+            "filename": str(path),
         }
 
     logging_config = {
         "version": 1,
+        "disable_existing_loggers": False,
         "handlers": {
             "endpoint_log": make_handler_config(
                 detached_dir / "endpoint.log", logging_level
@@ -80,21 +81,21 @@ def _configure_loggers(
             EVERSERVER: {
                 "handlers": ["endpoint_log"],
                 "level": logging_level,
-                "propagate": False,
+                "propagate": True,
             },
             EVEREST: {
                 "handlers": ["everest_log"],
                 "level": logging_level,
-                "propagate": False,
+                "propagate": True,
             },
             "forward_models": {
                 "handlers": ["forward_models_log"],
                 "level": logging_level,
-                "propagate": False,
+                "propagate": True,
             },
             "ert.scheduler.job": {
                 "handlers": ["forward_models_log"],
-                "propagate": False,
+                "propagate": True,
                 "level": logging_level,
             },
         },
