@@ -13,7 +13,7 @@ import pytest
 import ert.ensemble_evaluator
 from _ert.events import EEEvent
 from ert.config import QueueConfig, QueueSystem
-from ert.config.ert_config import _forward_model_step_from_config_contents
+from ert.config.ert_config import forward_model_step_from_config_contents
 from ert.config.queue_config import LocalQueueOptions
 from ert.ensemble_evaluator._ensemble import LegacyEnsemble
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
@@ -101,7 +101,7 @@ def make_ensemble(queue_config):
                 os.chmod(forward_model_exec, stat.S_IMODE(mode))
 
                 forward_model_list.append(
-                    _forward_model_step_from_config_contents(
+                    forward_model_step_from_config_contents(
                         f"EXECUTABLE ext_{job_index}.py\n",
                         str(Path(tmpdir) / f"EXT_JOB_{job_index}"),
                         name=f"forward_model_{job_index}",

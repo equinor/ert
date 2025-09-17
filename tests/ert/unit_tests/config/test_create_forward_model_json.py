@@ -9,8 +9,8 @@ import pytest
 
 from ert.config import ErtConfig, ForwardModelStep
 from ert.config.ert_config import (
-    _forward_model_step_from_config_contents,
     create_forward_model_json,
+    forward_model_step_from_config_contents,
 )
 
 
@@ -157,7 +157,7 @@ def _generate_step(
     mode |= stat.S_IXUSR | stat.S_IXGRP
     os.chmod(executable, stat.S_IMODE(mode))
 
-    return _forward_model_step_from_config_contents(config_contents, config_file, name)
+    return forward_model_step_from_config_contents(config_contents, config_file, name)
 
 
 def empty_list_if_none(list_):
