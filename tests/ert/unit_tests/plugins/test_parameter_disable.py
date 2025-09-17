@@ -17,6 +17,6 @@ def test_that_we_can_disable_a_parameter():
         fh.writelines("MY_KEYWORD NORMAL 0 1")
     with (
         pytest.raises(ConfigValidationError, match="use the UPDATE:FALSE option"),
-        ErtPluginContext(),
+        ErtPluginContext() as ctx,
     ):
-        ErtConfig.with_plugins().from_file("poly.ert")
+        ErtConfig.with_plugins(ctx).from_file("poly.ert")

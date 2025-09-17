@@ -34,6 +34,7 @@ from ert.config.ert_config import (
 )
 from ert.config.model_config import ModelConfig as ErtModelConfig
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
+from ert.plugins import ErtRuntimePlugins
 from ert.runpaths import Runpaths
 from everest.config import (
     ControlConfig,
@@ -165,6 +166,7 @@ class EverestRunModel(RunModel):
         target_ensemble: str = "batch",
         optimization_callback: OptimizerCallback | None = None,
         status_queue: queue.SimpleQueue[StatusEvents] | None = None,
+        runtime_plugins: ErtRuntimePlugins | None = None,
     ) -> EverestRunModel:
         logger.info(
             "Using random seed: %d. To deterministically reproduce this experiment, "
@@ -188,7 +190,12 @@ class EverestRunModel(RunModel):
 
         runpath_config = ErtModelConfig.from_dict(config_dict)
 
-        queue_config = QueueConfig.from_dict(config_dict)
+        queue_config = QueueConfig.from_dict(
+            config_dict,
+            site_queue_options=runtime_plugins.queue_options
+            if runtime_plugins
+            else None,
+        )
         assert everest_config.simulator is not None
         assert everest_config.simulator.queue_system is not None
         queue_config.queue_options = everest_config.simulator.queue_system
@@ -216,8 +223,28 @@ class EverestRunModel(RunModel):
         )
 
         env_vars = {}
+        plugin_env_vars = (
+            runtime_plugins.environment_variables if runtime_plugins else {}
+        )
         substituter = Substitutions(substitutions)
+
+        if runtime_plugins is not None:
+            for key, val in plugin_env_vars.items():
+                env_vars[key] = substituter.substitute(val)
+
         for key, val in config_dict.get("SETENV", []):
+            if key in env_vars:
+                message = (
+                    f"Overriding environment variable: {key}, "
+                    f"old value: {env_vars[key]}, new value: {val}"
+                )
+
+                if key in plugin_env_vars:
+                    site_value = plugin_env_vars
+                    message += f", site configuration value: {site_value}"
+
+                logger.warning(message)
+
             env_vars[key] = substituter.substitute(val)
 
         delete_run_path: bool = (

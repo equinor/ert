@@ -18,12 +18,14 @@ from collections import defaultdict
 from collections.abc import Callable, Generator, MutableSequence
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, ClassVar, Protocol
+from typing import TYPE_CHECKING, Any, ClassVar, Protocol, cast
 
 import numpy as np
-from pydantic import BaseModel, PrivateAttr
+from pydantic import PrivateAttr, field_validator
+from pydantic_core.core_schema import ValidationInfo
 
 from _ert.events import EEEvent, EESnapshot, EESnapshotUpdate
+from ert.base_model_context import BaseModelWithContextSupport
 from ert.config import (
     ConfigValidationError,
     DesignMatrix,
@@ -40,6 +42,7 @@ from ert.config import (
     Workflow,
     create_workflow_fixtures_from_hooked,
 )
+from ert.config.queue_config import KnownQueueOptionsAdapter
 from ert.ensemble_evaluator import Ensemble as EEEnsemble
 from ert.ensemble_evaluator import (
     EnsembleEvaluator,
@@ -64,6 +67,9 @@ from ert.workflow_runner import WorkflowRunner
 from ..run_arg import RunArg
 from ._create_run_path import create_run_path
 from .event import EndEvent, FullSnapshotEvent, SnapshotUpdateEvent, StatusEvents
+
+if TYPE_CHECKING:
+    from ert.plugins import ErtRuntimePlugins
 
 logger = logging.getLogger(__name__)
 
@@ -138,7 +144,7 @@ class RunModelAPI:
     has_failed_realizations: Callable[[], bool]
 
 
-class RunModel(BaseModel, ABC):
+class RunModel(BaseModelWithContextSupport, ABC):
     storage_path: str
     runpath_file: Path
     user_config_file: Path
@@ -248,6 +254,49 @@ class RunModel(BaseModel, ABC):
             f"Settings summary: {settings_summary}\n\n"
             f"Settings: {settings_dict}"
         )
+
+    @field_validator("env_vars", mode="after")
+    @classmethod
+    def inject_site_configuration_env_vars(
+        cls, env_vars: dict[str, str], info: ValidationInfo
+    ) -> dict[str, str]:
+        if not info.context:
+            return env_vars
+
+        context = cast("ErtRuntimePlugins", info.context)
+        site_env_vars = dict(context.environment_variables or {})
+
+        return site_env_vars | env_vars
+
+    @field_validator("queue_config", mode="after")
+    @classmethod
+    def inject_site_configuration_queue_options(
+        cls, queue_config: QueueConfig, info: ValidationInfo
+    ) -> QueueConfig:
+        if not info.context or info.context.queue_options is None:
+            return queue_config
+
+        context = cast("ErtRuntimePlugins", info.context)
+        site_queue_options_dict = (
+            context.queue_options.model_dump(exclude_unset=True, exclude_defaults=True)
+            if context.queue_options
+            else {}
+        )
+        usr_queue_options_dict = queue_config.queue_options.model_dump(
+            exclude_unset=True, exclude_defaults=True
+        )
+
+        queue_system = queue_config.queue_options.name or site_queue_options_dict.get(
+            "name", "local"
+        )
+
+        queue_options = KnownQueueOptionsAdapter.validate_python(
+            {"name": queue_system} | site_queue_options_dict | usr_queue_options_dict
+        )
+
+        queue_config.queue_system = queue_options.name
+        queue_config.queue_options = queue_options
+        return queue_config
 
     @classmethod
     @abstractmethod

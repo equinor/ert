@@ -75,8 +75,8 @@ def test_rft_csv_export_plugin_exports_rft_data(
     args.config = "config.ert"
 
     output_file = Path("output.csv")
-    with ErtPluginContext():
-        ert_config = ErtConfig.with_plugins().from_file(args.config)
+    with ErtPluginContext() as ctx:
+        ert_config = ErtConfig.with_plugins(ctx).from_file(args.config)
         gui = _setup_main_window(ert_config, args, GUILogHandler(), ert_config.ens_path)
         qtbot.addWidget(gui)
 

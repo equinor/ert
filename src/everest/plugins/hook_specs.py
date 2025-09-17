@@ -29,14 +29,6 @@ def install_job_directories() -> list[str]:  # type: ignore[empty-body]
     """
 
 
-@hookspec()
-def site_config_lines() -> list[str]:  # type: ignore[empty-body]
-    """
-    :return: List of lines to append to site config file
-    :rtype: PluginResponse with data as list[str]
-    """
-
-
 @hookspec(firstresult=True)
 def ecl100_config_path() -> str:  # type: ignore[empty-body]
     """

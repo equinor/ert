@@ -2,20 +2,30 @@ from __future__ import annotations
 
 import collections
 import logging
-import os
-import shutil
-import tempfile
 import warnings
 from argparse import ArgumentParser
 from collections.abc import Callable, Mapping, Sequence
-from itertools import chain
+from pathlib import Path
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 
 import pluggy
+from pydantic import BaseModel, Field
 from typing_extensions import TypedDict
 
-from ert.config import LegacyWorkflowConfigs, WorkflowConfigs
+from ert.base_model_context import init_context_var
+from ert.config import (
+    ForwardModelStep,
+    ForwardModelStepDocumentation,
+    ForwardModelStepPlugin,
+    KnownQueueOptions,
+    LegacyWorkflowConfigs,
+    LocalQueueOptions,
+    WorkflowConfigs,
+    WorkflowJob,
+    forward_model_step_from_config_contents,
+    workflow_job_from_file,
+)
 from ert.trace import add_span_processor
 
 logger = logging.getLogger(__name__)
@@ -27,11 +37,6 @@ hook_specification = pluggy.HookspecMarker(_PLUGIN_NAMESPACE)
 
 
 if TYPE_CHECKING:
-    from ert import (
-        ForwardModelStepDocumentation,
-        ForwardModelStepPlugin,
-    )
-
     from .plugin_response import PluginMetadata, PluginResponse
 K = TypeVar("K")
 V = TypeVar("V")
@@ -180,69 +185,27 @@ class ErtPluginManager(pluggy.PluginManager):
                     fm_configs[fmstep_name][key] = value
         return fm_configs
 
-    def _site_config_lines(self) -> list[str]:
+    def get_site_configurations(self) -> ErtRuntimePlugins | None:
         try:
-            plugin_responses = self.hook.site_config_lines()
-        except AttributeError:
-            return []
-        plugin_site_config_lines = [
-            [
-                "-- Content below originated from "
-                f"{plugin_response.plugin_metadata.plugin_name} "
-                f"({plugin_response.plugin_metadata.function_name})",
-                *plugin_response.data,
-            ]
-            for plugin_response in plugin_responses
-        ]
-        return list(chain.from_iterable(reversed(plugin_site_config_lines)))
+            plugin_response = self.hook.site_configurations()
 
-    def activate_script(self) -> str:
-        plugin_responses = self.hook.activate_script()
-        if not plugin_responses:
-            return ""
-        if len(plugin_responses) > 1:
-            raise ValueError(
-                f"Only one activate script is allowed, got"
-                f"{[plugin.plugin_metadata.plugin_name for plugin in plugin_responses]}"
-            )
-        else:
-            return plugin_responses[0].data
+            if len(plugin_response) == 0:
+                return None
+
+            if len(plugin_response) > 1:
+                plugin_names = [
+                    plugin.plugin_metadata.plugin_name for plugin in plugin_response
+                ]
+                raise ValueError(
+                    f"Only one site configuration is allowed, got {plugin_names}"
+                )
+            return ErtRuntimePlugins.model_validate(plugin_response[0].data)
+        except AttributeError:
+            return None
 
     def get_installable_workflow_jobs(self) -> dict[str, str]:
         config_workflow_jobs = self._get_config_workflow_jobs()
         return config_workflow_jobs
-
-    def get_site_config_content(self) -> str:
-        site_config_lines = self._site_config_lines()
-
-        config_env_vars = {
-            "ECL100_SITE_CONFIG": self.get_ecl100_config_path(),
-            "ECL300_SITE_CONFIG": self.get_ecl300_config_path(),
-            "FLOW_SITE_CONFIG": self.get_flow_config_path(),
-        }
-        config_lines = [
-            f"SETENV {env_var} {env_value}"
-            for env_var, env_value in config_env_vars.items()
-            if env_value is not None
-        ]
-        site_config_lines.extend([*config_lines, ""])
-
-        install_job_lines = [
-            f"INSTALL_JOB {job_name} {job_path}"
-            for job_name, job_path in self.get_installable_jobs().items()
-        ]
-
-        site_config_lines.extend([*install_job_lines, ""])
-
-        installable_workflow_jobs = self.get_installable_workflow_jobs()
-
-        install_workflow_job_lines = [
-            f"LOAD_WORKFLOW_JOB {job_path}"
-            for _, job_path in installable_workflow_jobs.items()
-        ]
-        site_config_lines.extend([*install_workflow_job_lines, ""])
-
-        return "\n".join(site_config_lines) + "\n"
 
     @staticmethod
     def _merge_internal_jobs(
@@ -406,6 +369,19 @@ class ErtPluginManager(pluggy.PluginManager):
             add_span_processor(span_processor)
 
 
+class ErtRuntimePlugins(BaseModel):
+    installed_forward_model_steps: Mapping[str, ForwardModelStep] = Field(
+        default_factory=dict
+    )
+    installed_workflow_jobs: Mapping[str, WorkflowJob] = Field(default_factory=dict)
+    queue_options: KnownQueueOptions | None = Field(
+        default_factory=LocalQueueOptions, discriminator="name"
+    )
+    environment_variables: Mapping[str, str] = Field(default_factory=dict)
+    env_pr_fm_step: Mapping[str, Mapping[str, Any]] = Field(default_factory=dict)
+    help_links: dict[str, str] = Field(default_factory=dict)
+
+
 class ErtPluginContext:
     def __init__(
         self,
@@ -413,58 +389,80 @@ class ErtPluginContext:
         logger: logging.Logger | None = None,
     ) -> None:
         self.plugin_manager = ErtPluginManager(plugins=plugins)
-        self.tmp_dir: str | None = None
-        self.tmp_site_config_filename: str | None = None
         self._logger = logger
 
-    def _create_site_config(self, tmp_dir: str) -> str | None:
-        site_config_content = self.plugin_manager.get_site_config_content()
-        tmp_site_config_filename = None
-        if site_config_content is not None:
-            logger.debug("Creating temporary site-config")
-            tmp_site_config_filename = os.path.join(tmp_dir, "site-config")
-            with open(tmp_site_config_filename, "w", encoding="utf-8") as fh:
-                fh.write(site_config_content)
-            logger.debug(f"Temporary site-config created: {tmp_site_config_filename}")
-        return tmp_site_config_filename
-
-    def __enter__(self) -> ErtPluginContext:
+    def __enter__(self) -> ErtRuntimePlugins:
         if self._logger is not None:
             self.plugin_manager.add_logging_handle_to_root(logger=self._logger)
         self.plugin_manager.add_span_processor_to_trace_provider()
         logger.debug(str(self.plugin_manager))
-        logger.debug("Creating temporary directory for site-config")
-        self.tmp_dir = tempfile.mkdtemp()
-        logger.debug(f"Temporary directory created: {self.tmp_dir}")
-        self.tmp_site_config_filename = self._create_site_config(self.tmp_dir)
-        env = {
-            "ERT_SITE_CONFIG": self.tmp_site_config_filename,
-        }
-        self._setup_temp_environment_if_not_already_set(env)
-        return self
 
-    def _setup_temp_environment_if_not_already_set(
-        self, env: Mapping[str, str | None]
-    ) -> None:
-        self.backup_env = os.environ.copy()
-        self.env = env
+        site_configurations = self.plugin_manager.get_site_configurations()
 
-        for name, value in env.items():
-            if self.backup_env.get(name) is None:
-                if value is not None:
-                    logger.debug(f"Setting environment variable {name}={value}")
-                    os.environ[name] = value
-            else:
-                logger.debug(
-                    f"Environment variable already set "
-                    f"{name}={self.backup_env.get(name)}, leaving it as is"
-                )
+        ecl100_config_path = self.plugin_manager.get_ecl100_config_path()
+        ecl300_config_path = self.plugin_manager.get_ecl300_config_path()
+        flow_config_path = self.plugin_manager.get_flow_config_path()
 
-    def _reset_environment(self) -> None:
-        for name in self.env:
-            if self.backup_env.get(name) is None and name in os.environ:
-                logger.debug(f"Resetting environment variable {name}")
-                del os.environ[name]
+        config_env_vars = {}
+        if ecl100_config_path is not None:
+            config_env_vars["ECL100_SITE_CONFIG"] = ecl100_config_path
+
+        if ecl300_config_path is not None:
+            config_env_vars["ECL300_SITE_CONFIG"] = ecl300_config_path
+
+        if flow_config_path is not None:
+            config_env_vars["FLOW_SITE_CONFIG"] = flow_config_path
+
+        installable_workflow_jobs = self.plugin_manager.get_installable_workflow_jobs()
+
+        all_forward_model_steps = (
+            dict(site_configurations.installed_forward_model_steps)
+            if site_configurations
+            else {}
+        )
+
+        for job_name, job_path in self.plugin_manager.get_installable_jobs().items():
+            fm_step = forward_model_step_from_config_contents(
+                Path(job_path).read_text(encoding="utf-8"), job_path, job_name
+            )
+            all_forward_model_steps[job_name] = fm_step
+
+        all_workflow_jobs: dict[str, WorkflowJob] = dict[str, WorkflowJob](
+            self.plugin_manager.get_ertscript_workflows().get_workflows()
+        ) | dict[str, WorkflowJob](
+            self.plugin_manager.get_legacy_ertscript_workflows().get_workflows()
+        )
+
+        for _, job_path in installable_workflow_jobs.items():
+            wf_job = workflow_job_from_file(job_path)
+            all_workflow_jobs[wf_job.name] = wf_job
+
+        for fm_step_subclass in self.plugin_manager.forward_model_steps:
+            # we call without required arguments to
+            # ForwardModelStepPlugin.__init__ as
+            # we expect the subclass to override __init__
+            # and provide those arguments
+            fm_step = fm_step_subclass()  # type: ignore
+            all_forward_model_steps[fm_step.name] = fm_step
+
+        runtime_plugins = ErtRuntimePlugins(
+            installed_forward_model_steps=all_forward_model_steps,
+            installed_workflow_jobs=all_workflow_jobs,
+            queue_options=site_configurations.queue_options
+            if site_configurations
+            else None,
+            environment_variables=config_env_vars
+            | (
+                dict(site_configurations.environment_variables)
+                if site_configurations
+                else {}
+            ),
+            env_pr_fm_step=self.plugin_manager.get_forward_model_configuration(),
+            help_links=self.plugin_manager.get_help_links(),
+        )
+
+        self._context_token = init_context_var.set(runtime_plugins)  # type: ignore
+        return runtime_plugins
 
     def __exit__(
         self,
@@ -472,7 +470,5 @@ class ErtPluginContext:
         exception_type: type[BaseException],
         traceback: TracebackType,
     ) -> None:
-        self._reset_environment()
-        logger.debug("Deleting temporary directory for site-config")
-        if self.tmp_dir is not None:
-            shutil.rmtree(self.tmp_dir, ignore_errors=True)
+        logger.debug("Exiting plugin context")
+        init_context_var.reset(self._context_token)

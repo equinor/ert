@@ -40,6 +40,7 @@ from .parsing import (
 from .parsing.observations_parser import ObservationType
 from .queue_config import (
     KnownQueueOptions,
+    KnownQueueOptionsAdapter,
     LocalQueueOptions,
     QueueConfig,
 )
@@ -100,6 +101,7 @@ __all__ = [
     "InvalidResponseFile",
     "InversionTypeES",
     "KnownQueueOptions",
+    "KnownQueueOptionsAdapter",
     "LegacyWorkflowConfigs",
     "LocalQueueOptions",
     "ModelConfig",

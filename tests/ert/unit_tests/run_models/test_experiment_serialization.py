@@ -16,6 +16,7 @@ from hypothesis import HealthCheck, given, note, settings
 from hypothesis import strategies as st
 from pytest import MonkeyPatch, TempPathFactory
 
+from ert.base_model_context import init_context
 from ert.config import (
     ConfigWarning,
     ErtConfig,
@@ -51,6 +52,7 @@ from ert.mode_definitions import (
     EVALUATE_ENSEMBLE_MODE,
     MANUAL_UPDATE_MODE,
 )
+from ert.plugins import ErtRuntimePlugins
 from ert.run_models import (
     EnsembleExperiment,
     EnsembleInformationFilter,
@@ -229,7 +231,13 @@ def runmodel_args(draw):
         st.dictionaries(
             realistic_text(),
             st.dictionaries(
-                realistic_text(), st.one_of(st.integers(), st.text(), st.floats())
+                realistic_text(),
+                st.one_of(
+                    st.integers(),
+                    st.text(),
+                    # We do not support nan/infinity here
+                    st.floats(allow_infinity=False, allow_nan=False),
+                ),
             ),
             max_size=3,
         )
@@ -272,6 +280,36 @@ def runmodel_args(draw):
         st.lists(forward_model_steps(st.just(substitutions)), min_size=1, max_size=5)
     )
 
+    hooked_workflows_dict = draw(hooked_workflows())
+    installed_ertscripts = {}
+    for _, workflows in hooked_workflows_dict.items():
+        for workflow in workflows:
+            for cmd, _ in workflow.cmd_list:
+                if isinstance(cmd, ErtScriptWorkflow):
+                    installed_ertscripts[cmd.name] = cmd
+
+    overridden_env_vars_in_plugins = (
+        {
+            k: env_vars[k] + "_PLUGIN"
+            for k in draw(st.sets(st.sampled_from(list(env_vars))))
+        }
+        if len(env_vars) > 0
+        else {}
+    )
+    env_vars_in_plugins = draw(
+        st.dictionaries(realistic_text(), realistic_text(), max_size=5)
+    )
+
+    runtime_plugins = ErtRuntimePlugins(
+        installed_forward_model_steps={},
+        installed_workflow_jobs=installed_ertscripts,
+        queue_options=None,
+        activate_script="",
+        environment_variables=env_vars_in_plugins | overridden_env_vars_in_plugins,
+        env_pr_fm_step={},
+        help_links={},
+    )
+
     return {
         "storage_path": storage_path,
         "runpath_file": runpath_file,
@@ -287,9 +325,9 @@ def runmodel_args(draw):
         "queue_config": draw(queue_configs()),
         "forward_model_steps": forward_model_step_list,
         "substitutions": substitutions,
-        "hooked_workflows": draw(hooked_workflows()),
+        "hooked_workflows": hooked_workflows_dict,
         "status_queue": queue.SimpleQueue(),  # runtime only
-    }
+    }, runtime_plugins
 
 
 @st.composite
@@ -464,12 +502,13 @@ _not_yet_serializable_args = {
 )
 def test_that_deserializing_ensemble_experiment_is_the_inverse_of_serializing(
     tmp_path_factory: TempPathFactory,
-    baserunmodel_args: dict[str, Any],
+    runmodel_args_and_plugins: tuple[dict[str, Any], ErtRuntimePlugins],
     ensemble_experiment_args: dict[str, Any],
 ) -> None:
     tmp_path = tmp_path_factory.mktemp("deserializing_ensemble_experiment")
+    baserunmodel_args, runtime_plugins = runmodel_args_and_plugins
     note(f"Running in directory {tmp_path}")
-    with MonkeyPatch.context() as patch:
+    with MonkeyPatch.context() as patch, init_context(runtime_plugins):
         patch.chdir(tmp_path)
         warnings.simplefilter("ignore", category=ConfigWarning)
         runmodel = EnsembleExperiment(
@@ -485,6 +524,10 @@ def test_that_deserializing_ensemble_experiment_is_the_inverse_of_serializing(
             runmodel.model_dump() | _not_yet_serializable_args
         )
 
+        assert (
+            runmodel_from_serialized.env_vars
+            == runtime_plugins.environment_variables | baserunmodel_args["env_vars"]
+        )
         assert runmodel_from_serialized.model_dump() == runmodel.model_dump()
 
 
@@ -493,13 +536,14 @@ def test_that_deserializing_ensemble_experiment_is_the_inverse_of_serializing(
 @given(runmodel_args(), initial_ensemble_runmodels(), update_runmodels())
 def test_that_deserializing_ensemble_smoother_is_the_inverse_of_serializing(
     tmp_path_factory: TempPathFactory,
-    baserunmodel_args: dict[str, Any],
+    runmodel_args_and_plugins: tuple[dict[str, Any], ErtRuntimePlugins],
     initial_ensemble_args: dict[str, Any],
     update_runmodel_args: dict[str, Any],
 ) -> None:
     tmp_path = tmp_path_factory.mktemp("deserializing_ensemble_smoother")
+    baserunmodel_args, runtime_plugins = runmodel_args_and_plugins
     note(f"Running in directory {tmp_path}")
-    with MonkeyPatch.context() as patch:
+    with MonkeyPatch.context() as patch, init_context(runtime_plugins):
         patch.chdir(tmp_path)
         runmodel = EnsembleSmoother(
             **(baserunmodel_args | initial_ensemble_args | update_runmodel_args)
@@ -510,6 +554,10 @@ def test_that_deserializing_ensemble_smoother_is_the_inverse_of_serializing(
             runmodel.model_dump() | _not_yet_serializable_args
         )
 
+        assert (
+            runmodel_from_serialized.env_vars
+            == runtime_plugins.environment_variables | baserunmodel_args["env_vars"]
+        )
         assert runmodel_from_serialized.model_dump() == runmodel.model_dump()
 
 
@@ -518,13 +566,14 @@ def test_that_deserializing_ensemble_smoother_is_the_inverse_of_serializing(
 @given(runmodel_args(), initial_ensemble_runmodels(), update_runmodels())
 def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serializing(
     tmp_path_factory: TempPathFactory,
-    baserunmodel_args: dict[str, Any],
+    runmodel_args_and_plugins: tuple[dict[str, Any], ErtRuntimePlugins],
     initial_ensemble_args: dict[str, Any],
     update_runmodel_args: dict[str, Any],
 ) -> None:
     tmp_path = tmp_path_factory.mktemp("deserializing_eif")
+    baserunmodel_args, runtime_plugins = runmodel_args_and_plugins
     note(f"Running in directory {tmp_path}")
-    with MonkeyPatch.context() as patch:
+    with MonkeyPatch.context() as patch, init_context(runtime_plugins):
         patch.chdir(tmp_path)
         runmodel = EnsembleInformationFilter(
             **(baserunmodel_args | initial_ensemble_args | update_runmodel_args)
@@ -535,6 +584,10 @@ def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serial
             runmodel.model_dump() | _not_yet_serializable_args
         )
 
+        assert (
+            runmodel_from_serialized.env_vars
+            == runtime_plugins.environment_variables | baserunmodel_args["env_vars"]
+        )
         assert runmodel_from_serialized.model_dump() == runmodel.model_dump()
 
 
@@ -547,14 +600,16 @@ def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serial
 )
 def test_that_deserializing_esmda_is_the_inverse_of_serializing(
     tmp_path_factory: TempPathFactory,
-    baserunmodel_args: dict[str, Any],
+    runmodel_args_and_plugins: tuple[dict[str, Any], ErtRuntimePlugins],
     initial_ensemble_args: dict[str, Any],
     update_runmodel_args: dict[str, Any],
     multidass_args: dict[str, Any],
 ) -> None:
     tmp_path = tmp_path_factory.mktemp("deserializing_eif")
+    baserunmodel_args, runtime_plugins = runmodel_args_and_plugins
     note(f"Running in directory {tmp_path}")
-    with MonkeyPatch.context() as patch:
+
+    with MonkeyPatch.context() as patch, init_context(runtime_plugins):
         patch.chdir(tmp_path)
 
         runmodel = MultipleDataAssimilation(
@@ -567,11 +622,15 @@ def test_that_deserializing_esmda_is_the_inverse_of_serializing(
         )
         runmodel._storage.close()
 
-        runmodel_from_serialized = MultipleDataAssimilation.model_validate(
-            runmodel.model_dump() | _not_yet_serializable_args
-        )
+        dumped = runmodel.model_dump(mode="json") | _not_yet_serializable_args
 
-    assert runmodel_from_serialized.model_dump() == runmodel.model_dump()
+        runmodel_from_serialized = MultipleDataAssimilation.model_validate(dumped)
+
+        assert (
+            runmodel_from_serialized.env_vars
+            == runtime_plugins.environment_variables | baserunmodel_args["env_vars"]
+        )
+        assert runmodel_from_serialized.model_dump() == runmodel.model_dump()
 
 
 def _create_and_verify_runmodel_snapshot(config, snapshot, cli_args, case):
