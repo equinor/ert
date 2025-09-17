@@ -152,8 +152,9 @@ class EnsembleConfig(BaseModel):
             return FieldConfig.from_config_list(grid_file_path, dims, field_list)
 
         gen_kw_cfgs = [
-            *(cfg for g in gen_kw_list for cfg in GenKwConfig.from_config_list(g))
+            cfg for g in gen_kw_list for cfg in GenKwConfig.from_config_list(g)
         ]
+
         parameter_configs = (
             gen_kw_cfgs
             + [SurfaceConfig.from_config_list(s) for s in surface_list]
