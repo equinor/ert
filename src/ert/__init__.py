@@ -11,11 +11,14 @@ from .config import (
     ForwardModelStepValidationError,
     ForwardModelStepWarning,
     ForwardModelStepDocumentation,
+    ErtScript,
+    ErtScriptWorkflow,
+    WorkflowConfigs,
 )
 from .data import MeasuredData
 from .libres_facade import LibresFacade
 from .workflow_runner import WorkflowRunner
-from .plugins import plugin, ErtScript, WorkflowConfigs, ErtScriptWorkflow
+from .plugins import plugin
 from .scheduler import JobState
 
 __all__ = [

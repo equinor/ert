@@ -50,7 +50,7 @@ configuration is passed to the workflow:
 state of the experiment that is running:
 
 
-.. autoclass:: ert.plugins.workflow_fixtures.WorkflowFixtures
+.. autoclass:: ert.config.workflow_fixtures.WorkflowFixtures
     :members:
     :undoc-members:
     :exclude-members: parent, random_seed, reports_dir, observation_settings, es_setting, run_paths

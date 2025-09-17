@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING, no_type_check
 from ert.plugins.plugin_manager import hook_specification
 
 if TYPE_CHECKING:
+    from ert.config import WorkflowConfigs
     from ert.plugins.plugin_response import PluginResponse
-    from ert.plugins.workflow_config import WorkflowConfigs
 
 
 @no_type_check

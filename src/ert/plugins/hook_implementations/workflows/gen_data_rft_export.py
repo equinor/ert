@@ -10,7 +10,8 @@ import pandas as pd
 import polars as pl
 from PyQt6.QtWidgets import QCheckBox, QWidget
 
-from ert.plugins import CancelPluginException, ErtPlugin
+from ert.config import ErtPlugin
+from ert.plugins import CancelPluginException
 from ert.storage import Storage
 
 logger = logging.getLogger(__name__)

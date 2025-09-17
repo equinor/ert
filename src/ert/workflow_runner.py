@@ -5,11 +5,13 @@ from concurrent import futures
 from concurrent.futures import Future
 from typing import Any, Self
 
-from ert.config import ErtScriptWorkflow, Workflow, WorkflowJob
-from ert.plugins import (
-    ErtScript,
+from ert import ErtScript
+from ert.config import (
+    ErtScriptWorkflow,
     ExternalErtScript,
+    Workflow,
     WorkflowFixtures,
+    WorkflowJob,
 )
 
 
