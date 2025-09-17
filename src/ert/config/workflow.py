@@ -2,16 +2,16 @@ from __future__ import annotations
 
 import os
 from collections.abc import Iterator
-from dataclasses import dataclass
 from typing import Any
+
+from ert.base_model_context import BaseModelWithContextSupport
 
 from .parsing import ConfigValidationError, ErrorInfo, init_workflow_schema, parse
 from .parsing.types import Defines
 from .workflow_job import WorkflowJob
 
 
-@dataclass
-class Workflow:
+class Workflow(BaseModelWithContextSupport):
     src_file: str
     cmd_list: list[tuple[WorkflowJob, Any]]
 
@@ -21,7 +21,7 @@ class Workflow:
     def __getitem__(self, index: int) -> tuple[WorkflowJob, Any]:
         return self.cmd_list[index]
 
-    def __iter__(self) -> Iterator[tuple[WorkflowJob, Any]]:
+    def __iter__(self) -> Iterator[tuple[WorkflowJob, Any]]:  # type: ignore
         return iter(self.cmd_list)
 
     @classmethod
@@ -93,7 +93,7 @@ class Workflow:
             job_dict=job_dict,
         )
 
-        return cls(src_file, cmd_list)
+        return cls(src_file=src_file, cmd_list=cmd_list)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, type(self)):
