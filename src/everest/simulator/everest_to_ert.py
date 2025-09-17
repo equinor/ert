@@ -8,7 +8,6 @@ from typing import Any, cast
 import everest
 from ert.config import (
     EnsembleConfig,
-    ErtConfig,
     ExecutableWorkflow,
     ForwardModelStep,
     ModelConfig,
@@ -479,14 +478,12 @@ def get_ensemble_config(
     return ensemble_config
 
 
-def _everest_to_ert_config_dict(
-    ever_config: EverestConfig, site_config: dict[Any, Any] | None = None
-) -> ConfigDict:
+def _everest_to_ert_config_dict(ever_config: EverestConfig) -> ConfigDict:
     """
     Takes as input an Everest configuration, the site-config and converts them
     to a corresponding ert configuration.
     """
-    ert_config = site_config if site_config is not None else {}
+    ert_config: dict[str, Any] = {}
 
     config_dir = ever_config.config_directory
     ert_config[ErtConfigKeys.DEFINE] = [
@@ -510,7 +507,5 @@ def _everest_to_ert_config_dict(
 
 def everest_to_ert_config_dict(everest_config: EverestConfig) -> ConfigDict:
     with ErtPluginContext():
-        config_dict = _everest_to_ert_config_dict(
-            everest_config, site_config=ErtConfig.read_site_config()
-        )
+        config_dict = _everest_to_ert_config_dict(everest_config)
     return config_dict

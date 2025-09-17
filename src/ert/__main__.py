@@ -32,7 +32,7 @@ from ert.mode_definitions import (
     WORKFLOW_MODE,
 )
 from ert.namespace import Namespace
-from ert.plugins import ErtPluginContext, ErtPluginManager
+from ert.plugins import ErtPluginContext, ErtRuntimePlugins
 from ert.run_models.multiple_data_assimilation import MultipleDataAssimilation
 from ert.services import StorageService, WebvizErt
 from ert.shared.storage.command import add_parser_options as ert_api_add_parser_options
@@ -50,7 +50,7 @@ from ert.validation import (
 logger = logging.getLogger(__name__)
 
 
-def run_ert_storage(args: Namespace, _: ErtPluginManager | None = None) -> None:
+def run_ert_storage(args: Namespace, _: ErtRuntimePlugins | None = None) -> None:
     with StorageService.start_server(
         verbose=True,
         project=ErtConfig.from_file(args.config).ens_path,
@@ -59,7 +59,7 @@ def run_ert_storage(args: Namespace, _: ErtPluginManager | None = None) -> None:
         server.wait()
 
 
-def run_webviz_ert(args: Namespace, _: ErtPluginManager | None = None) -> None:
+def run_webviz_ert(args: Namespace, _: ErtRuntimePlugins | None = None) -> None:
     try:
         import webviz_ert  # type: ignore  # noqa
     except ImportError as err:
@@ -68,7 +68,9 @@ def run_webviz_ert(args: Namespace, _: ErtPluginManager | None = None) -> None:
         ) from err
 
     kwargs: dict[str, Any] = {"verbose": args.verbose}
-    ert_config = ErtConfig.with_plugins().from_file(args.config)
+    with ErtPluginContext() as runtime_plugins:
+        ert_config = ErtConfig.with_plugins(runtime_plugins).from_file(args.config)
+
     os.chdir(ert_config.config_path)
     ens_path = ert_config.ens_path
 
@@ -195,14 +197,14 @@ def valid_port_range(user_input: str) -> range:
     return range(port_a, port_b + 1)
 
 
-def run_gui_wrapper(args: Namespace, ert_plugin_manager: ErtPluginManager) -> None:
+def run_gui_wrapper(args: Namespace, runtime_plugins: ErtRuntimePlugins) -> None:
     # Importing ert.gui on-demand saves ~0.5 seconds off `from ert import __main__`
     from ert.gui.main import run_gui  # noqa: PLC0415
 
-    run_gui(args, ert_plugin_manager)
+    run_gui(args, runtime_plugins)
 
 
-def run_lint_wrapper(args: Namespace, _: ErtPluginManager) -> None:
+def run_lint_wrapper(args: Namespace, _: ErtRuntimePlugins) -> None:
     lint_file(args.config)
 
 
@@ -661,9 +663,9 @@ def main() -> None:
         handler.setLevel(logging.INFO)
         root_logger.addHandler(handler)
     try:
-        with ErtPluginContext(logger=logging.getLogger()) as context:
+        with ErtPluginContext(logger=logging.getLogger()) as runtime_plugins:
             logger.info(f"Running ert with {args} in {os.getcwd()}")
-            args.func(args, context.plugin_manager)
+            args.func(args, runtime_plugins)
     except (ErtCliError, ErtStorageException) as err:
         span.set_status(Status(StatusCode.ERROR))
         span.record_exception(err)

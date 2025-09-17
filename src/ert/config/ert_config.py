@@ -11,7 +11,7 @@ from datetime import datetime
 from functools import cached_property
 from os import path
 from pathlib import Path
-from typing import Any, ClassVar, Self, cast, overload
+from typing import TYPE_CHECKING, Any, ClassVar, Self, cast, overload
 
 import polars as pl
 from numpy.random import SeedSequence
@@ -36,7 +36,6 @@ from .forward_model_step import (
     ForwardModelJSON,
     ForwardModelStep,
     ForwardModelStepJSON,
-    ForwardModelStepPlugin,
     ForwardModelStepValidationError,
     ForwardModelStepWarning,
 )
@@ -54,15 +53,13 @@ from .parsing import (
     HookRuntime,
     ObservationConfigError,
     ObservationStatement,
-    QueueSystemWithGeneric,
     SimpleHistoryStatement,
     init_forward_model_schema,
-    init_site_config_schema,
     init_user_config_schema,
     parse_contents,
     read_file,
 )
-from .queue_config import QueueConfig
+from .queue_config import KnownQueueOptions, QueueConfig
 from .workflow import Workflow
 from .workflow_fixtures import fixtures_per_hook
 from .workflow_job import (
@@ -72,6 +69,9 @@ from .workflow_job import (
     workflow_job_from_file,
 )
 
+if TYPE_CHECKING:
+    from ert.plugins import ErtRuntimePlugins
+
 logger = logging.getLogger(__name__)
 
 EMPTY_LINES = re.compile(r"\n[\s\n]*\n")
@@ -80,12 +80,6 @@ ECL_BASE_DEPRECATION_MSG = (
     "Substitution template <ECL_BASE> is deprecated and "
     "will be removed in the future. Please use <ECLBASE> instead."
 )
-
-
-def site_config_location() -> str | None:
-    if "ERT_SITE_CONFIG" in os.environ:
-        return os.environ["ERT_SITE_CONFIG"]
-    return None
 
 
 def _seed_sequence(seed: int | None) -> int:
@@ -686,10 +680,12 @@ class ErtConfig(BaseModel):
     DEFAULT_ENSPATH: ClassVar[str] = "storage"
     DEFAULT_RUNPATH_FILE: ClassVar[str] = ".ert_runpath_list"
     PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[Mapping[str, ForwardModelStep]] = {}
-    PREINSTALLED_WORKFLOWS: ClassVar[dict[str, ErtScriptWorkflow]] = {}
+    PREINSTALLED_WORKFLOWS: ClassVar[dict[str, WorkflowJob]] = {}
     ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = {}
-    ACTIVATE_SCRIPT: ClassVar[str | None] = None
+    ENV_VARIABLES: ClassVar[dict[str, str]] = {}
+    QUEUE_OPTIONS: ClassVar[KnownQueueOptions | None] = None
     RESERVED_KEYWORDS: ClassVar[list[str]] = RESERVED_KEYWORDS
+    ENV_VARS: ClassVar[dict[str, str]] = {}
 
     substitutions: dict[str, str] = Field(default_factory=dict)
     ensemble_config: EnsembleConfig = Field(default_factory=EnsembleConfig)
@@ -799,42 +795,19 @@ class ErtConfig(BaseModel):
         return True
 
     @staticmethod
-    def with_plugins(
-        forward_model_step_classes: list[type[ForwardModelStepPlugin]] | None = None,
-        env_pr_fm_step: dict[str, dict[str, Any]] | None = None,
-    ) -> type[ErtConfig]:
-        from ert.plugins import ErtPluginManager  # noqa: PLC0415
-
-        pm = ErtPluginManager()
-        if forward_model_step_classes is None:
-            forward_model_step_classes = pm.forward_model_steps
-
-        preinstalled_fm_steps: dict[str, ForwardModelStepPlugin] = {}
-        for fm_step_subclass in forward_model_step_classes:
-            # we call without required arguments to
-            # ForwardModelStepPlugin.__init__ as
-            # we expect the subclass to override __init__
-            # and provide those arguments
-            fm_step = fm_step_subclass()  # type: ignore
-            preinstalled_fm_steps[fm_step.name] = fm_step
-
-        if env_pr_fm_step is None:
-            env_pr_fm_step_ = uppercase_subkeys_and_stringify_subvalues(
-                pm.get_forward_model_configuration()
-            )
-        else:
-            env_pr_fm_step_ = env_pr_fm_step
-
+    def with_plugins(runtime_plugins: ErtRuntimePlugins) -> type[ErtConfig]:
         class ErtConfigWithPlugins(ErtConfig):
             PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[
                 Mapping[str, ForwardModelStep]
-            ] = preinstalled_fm_steps
-            PREINSTALLED_WORKFLOWS = (
-                pm.get_ertscript_workflows().get_workflows()
-                | pm.get_legacy_ertscript_workflows().get_workflows()
+            ] = runtime_plugins.installed_forward_model_steps
+            PREINSTALLED_WORKFLOWS = dict(runtime_plugins.installed_workflow_jobs)
+            ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = (
+                uppercase_subkeys_and_stringify_subvalues(
+                    {k: dict(v) for k, v in runtime_plugins.env_pr_fm_step.items()}
+                )
             )
-            ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = env_pr_fm_step_
-            ACTIVATE_SCRIPT = pm.activate_script()
+            ENV_VARS = dict(runtime_plugins.environment_variables)
+            QUEUE_OPTIONS = runtime_plugins.queue_options
 
         ErtConfigWithPlugins.model_rebuild()
         assert issubclass(ErtConfigWithPlugins, ErtConfig)
@@ -857,12 +830,9 @@ class ErtConfig(BaseModel):
         """
         user_config_contents = read_file(user_config_file)
         cls._log_config_file(user_config_file, user_config_contents)
-        site_config_file = site_config_location()
         user_config_dict = cls._config_dict_from_contents(
             user_config_contents,
-            read_file(site_config_file) if site_config_file else None,
             user_config_file,
-            site_config_file or "",
         )
         cls._log_config_dict(user_config_dict)
         return cls.from_dict(user_config_dict)
@@ -871,24 +841,14 @@ class ErtConfig(BaseModel):
     def _config_dict_from_contents(
         cls,
         user_config_contents: str,
-        site_config_contents: str | None,
         config_file_name: str,
-        site_config_name: str,
     ) -> ConfigDict:
-        site_config_dict = (
-            parse_contents(
-                site_config_contents,
-                file_name=site_config_name,
-                schema=init_site_config_schema(),
-            )
-            if site_config_contents
-            else ConfigDict()
-        )
-        user_config_dict = cls._read_user_config_and_apply_site_config(
+        user_config_dict = cls._read_user_config_contents(
             user_config_contents,
-            config_file_name,
-            site_config_dict,
+            file_name=config_file_name,
         )
+        cls._log_custom_forward_model_steps(user_config_dict)
+
         config_dir = path.abspath(path.dirname(config_file_name))
         cls.apply_config_content_defaults(user_config_dict, config_dir)
         return user_config_dict
@@ -897,16 +857,12 @@ class ErtConfig(BaseModel):
     def from_file_contents(
         cls,
         user_config_contents: str,
-        site_config_contents: str = "QUEUE_SYSTEM LOCAL\n",
         config_file_name: str = "./config.ert",
-        site_config_name: str = "site_config.ert",
     ) -> Self:
         return cls.from_dict(
             cls._config_dict_from_contents(
                 user_config_contents,
-                site_config_contents,
                 config_file_name,
-                site_config_name,
             )
         )
 
@@ -952,29 +908,33 @@ class ErtConfig(BaseModel):
             errors.append(e)
 
         try:
-            installed_forward_model_steps = dict(
+            site_installed_forward_model_steps = dict(
                 copy.deepcopy(cls.PREINSTALLED_FORWARD_MODEL_STEPS)
             )
 
-            installed_forward_model_steps.update(
+            user_installed_forward_model_steps = (
                 installed_forward_model_steps_from_dict(config_dict)
+            )
+
+            overwritten_fm_steps = set(site_installed_forward_model_steps).intersection(
+                user_installed_forward_model_steps
+            )
+            if overwritten_fm_steps:
+                msg = (
+                    f"The following forward model steps from site configurations "
+                    f"have been overwritten by user: {sorted(overwritten_fm_steps)}"
+                )
+                logger.warning(msg)
+
+            installed_forward_model_steps = (
+                site_installed_forward_model_steps | user_installed_forward_model_steps
             )
 
         except ConfigValidationError as e:
             errors.append(e)
 
         try:
-            if cls.ACTIVATE_SCRIPT:
-                if "QUEUE_OPTION" not in config_dict:
-                    config_dict["QUEUE_OPTION"] = []
-                config_dict["QUEUE_OPTION"].append(
-                    [
-                        QueueSystemWithGeneric.GENERIC,
-                        "ACTIVATE_SCRIPT",
-                        cls.ACTIVATE_SCRIPT,
-                    ]
-                )
-            queue_config = QueueConfig.from_dict(config_dict)
+            queue_config = QueueConfig.from_dict(config_dict, cls.QUEUE_OPTIONS)
 
             substitutions["<NUM_CPU>"] = str(queue_config.queue_options.num_cpu)
 
@@ -1077,8 +1037,27 @@ class ErtConfig(BaseModel):
         history_source = config_dict.get(
             ConfigKeys.HISTORY_SOURCE, HistorySource.REFCASE_HISTORY
         )
-        for key, val in config_dict.get("SETENV", []):
+
+        # Insert env vars from plugins/site config
+        for key, val in cls.ENV_VARS.items():
             env_vars[key] = substituter.substitute(val)
+
+        user_configured_ = set()
+        for key, val in config_dict.get("SETENV", []):
+            if key in user_configured_:
+                logger.warning(
+                    f"User configured environment variable {key} re-written by user: "
+                    f"{env_vars[key]}->{val}"
+                )
+            elif key in cls.ENV_VARS:
+                logger.warning(
+                    f"Site configured environment variable {key} re-written by user: "
+                    f"{env_vars[key]}->{val}"
+                )
+
+            user_configured_.add(key)
+            env_vars[key] = substituter.substitute(val)
+
         try:
             cls_config = cls(
                 substitutions=substitutions,
@@ -1279,57 +1258,10 @@ class ErtConfig(BaseModel):
             )
 
     @classmethod
-    def read_site_config(cls) -> ConfigDict:
-        site_config_file = site_config_location()
-        if not site_config_file:
-            return ConfigDict()
-        return parse_contents(
-            read_file(site_config_file),
-            file_name=site_config_file,
-            schema=init_site_config_schema(),
-        )
-
-    @classmethod
     def _read_user_config_contents(cls, user_config: str, file_name: str) -> ConfigDict:
         return parse_contents(
             user_config, file_name=file_name, schema=init_user_config_schema()
         )
-
-    @classmethod
-    def _merge_user_and_site_config(
-        cls, user_config_dict: ConfigDict, site_config_dict: ConfigDict
-    ) -> ConfigDict:
-        for keyword, value in site_config_dict.items():
-            if keyword == "QUEUE_OPTION":
-                filtered_queue_options = []
-                for queue_option in value:
-                    option_name = queue_option[1]
-                    if option_name in user_config_dict:
-                        continue
-                    filtered_queue_options.append(queue_option)
-                user_config_dict["QUEUE_OPTION"] = (
-                    filtered_queue_options + user_config_dict.get("QUEUE_OPTION", [])
-                )
-            elif isinstance(value, list):
-                original_entries: list[Any] = user_config_dict.get(keyword, [])
-                user_config_dict[keyword] = value + original_entries
-            elif keyword not in user_config_dict:
-                user_config_dict[keyword] = value
-        return user_config_dict
-
-    @classmethod
-    def _read_user_config_and_apply_site_config(
-        cls,
-        user_config_contents: str,
-        user_config_file: str,
-        site_config_dict: ConfigDict,
-    ) -> ConfigDict:
-        user_config_dict = cls._read_user_config_contents(
-            user_config_contents,
-            file_name=user_config_file,
-        )
-        cls._log_custom_forward_model_steps(user_config_dict)
-        return cls._merge_user_and_site_config(user_config_dict, site_config_dict)
 
     @classmethod
     def _validate_dict(

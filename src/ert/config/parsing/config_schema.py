@@ -291,31 +291,6 @@ class ConfigSchemaDict(SchemaItemDict):
         )
 
 
-def init_site_config_schema() -> ConfigSchemaDict:
-    schema = ConfigSchemaDict()
-    for item in [
-        positive_int_keyword(ConfigKeys.MAX_SUBMIT),
-        positive_int_keyword(ConfigKeys.NUM_CPU),
-        string_keyword(ConfigKeys.REALIZATION_MEMORY),
-        queue_system_keyword(False),
-        queue_option_keyword(),
-        job_script_keyword(),
-        workflow_job_directory_keyword(),
-        load_workflow_keyword(),
-        load_workflow_job_keyword(),
-        set_env_keyword(),
-        install_job_keyword(),
-        install_job_directory_keyword(),
-        hook_workflow_keyword(),
-    ]:
-        schema[item.kw] = item
-        if item.kw in ConfigAliases:
-            for name in ConfigAliases[ConfigKeys(item.kw)]:
-                schema[name] = item
-
-    return schema
-
-
 def init_user_config_schema() -> ConfigSchemaDict:
     schema = ConfigSchemaDict()
     for item in [

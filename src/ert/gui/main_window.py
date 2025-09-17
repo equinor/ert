@@ -36,7 +36,7 @@ from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.plot.plot_window import PlotWindow
 from ert.gui.tools.plugins import PluginHandler, PluginsTool
 from ert.gui.tools.workflows import WorkflowsTool
-from ert.plugins import ErtPluginManager
+from ert.plugins import ErtRuntimePlugins
 from ert.trace import get_trace_id
 
 logger = logging.getLogger(__name__)
@@ -92,7 +92,7 @@ class ErtMainWindow(QMainWindow):
         self,
         config_file: str,
         ert_config: ErtConfig,
-        plugin_manager: ErtPluginManager | None = None,
+        runtime_plugins: ErtRuntimePlugins | None = None,
         log_handler: GUILogHandler | None = None,
     ) -> None:
         QMainWindow.__init__(self)
@@ -105,7 +105,7 @@ class ErtMainWindow(QMainWindow):
         self.setWindowTitle(
             f"ERT - {config_file} - {find_ert_info()} - {get_trace_id()[:8]}"
         )
-        self.plugin_manager = plugin_manager
+        self.runtime_plugins = runtime_plugins
         self.central_widget = QFrame(self)
         self.central_layout = QHBoxLayout(self.central_widget)
         self.central_layout.setContentsMargins(0, 0, 0, 0)
@@ -341,7 +341,7 @@ class ErtMainWindow(QMainWindow):
         help_menu = menuBar.addMenu("&Help")
         assert help_menu is not None
 
-        help_links = self.plugin_manager.get_help_links() if self.plugin_manager else {}
+        help_links = self.runtime_plugins.help_links if self.runtime_plugins else {}
 
         for menu_label, link in help_links.items():
             help_link_item = help_menu.addAction(menu_label)

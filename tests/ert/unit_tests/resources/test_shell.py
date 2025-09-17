@@ -583,8 +583,8 @@ def minimal_case(tmpdir):
 
 
 def test_shell_script_fmstep_availability(minimal_case):
-    with ErtPluginContext():
-        ert_config = ErtConfig.with_plugins().from_file("config.ert")
+    with ErtPluginContext() as ctx:
+        ert_config = ErtConfig.with_plugins(ctx).from_file("config.ert")
     fm_shell_jobs = {}
     for fm_step in ert_config.installed_forward_model_steps.values():
         exe = fm_step.executable
@@ -612,8 +612,8 @@ def test_shell_script_fmstep_names(minimal_case):
         "SYMLINK",
         "COPY_FILE",
     ]
-    with ErtPluginContext():
-        ert_config = ErtConfig.with_plugins().from_file("config.ert")
+    with ErtPluginContext() as ctx:
+        ert_config = ErtConfig.with_plugins(ctx).from_file("config.ert")
     found_jobs = set()
     for wf_name, wf in ert_config.workflow_jobs.items():
         if isinstance(wf, ExecutableWorkflow) and "shell_scripts" in wf.executable:

@@ -32,10 +32,8 @@ def _open_main_window(
     """)
     )
     (path / "test_wf").write_text("EXPORT_RUNPATH\n")
-    with ErtPluginContext() as ctx:
-        config = ErtConfig.with_plugins(
-            ctx.plugin_manager.forward_model_steps
-        ).from_file(path / "config.ert")
+    with ErtPluginContext() as runtime_plugins:
+        config = ErtConfig.with_plugins(runtime_plugins).from_file(path / "config.ert")
 
         args_mock = Mock()
         args_mock.config = "config.ert"
