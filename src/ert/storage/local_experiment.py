@@ -52,7 +52,7 @@ _responses_adapter = TypeAdapter(  # type: ignore
     ]
 )
 
-_parameters_adapter = TypeAdapter(
+_parameters_adapter = TypeAdapter(  # type: ignore
     Annotated[
         (GenKwConfig | SurfaceConfig | FieldConfig | ExtParamConfig),
         Field(discriminator="type"),
