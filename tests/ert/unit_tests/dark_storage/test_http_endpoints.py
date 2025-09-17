@@ -169,26 +169,30 @@ def test_get_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
     experiment_json = resp.json()[0]
 
     assert experiment_json["parameters"] == {
-        "COEFFS": [
+        "a": [
             {
                 "key": "COEFFS:a",
                 "transformation": "UNIFORM",
                 "dimensionality": 1,
                 "userdata": {"data_origin": "GEN_KW"},
-            },
+            }
+        ],
+        "b": [
             {
                 "key": "COEFFS:b",
                 "transformation": "UNIFORM",
                 "dimensionality": 1,
                 "userdata": {"data_origin": "GEN_KW"},
-            },
+            }
+        ],
+        "c": [
             {
                 "key": "COEFFS:c",
                 "transformation": "UNIFORM",
                 "dimensionality": 1,
                 "userdata": {"data_origin": "GEN_KW"},
-            },
-        ]
+            }
+        ],
     }
 
 
