@@ -90,7 +90,7 @@ jobs:
 
 
     - name: Upload coverage to Codecov
-      if: inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc'
+      if: inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc' && inputs.test-type != 'everviz-test'
       id: codecov1
       uses: codecov/codecov-action@v5
       continue-on-error: true
@@ -100,12 +100,12 @@ jobs:
         files: cov1.xml,cov2.xml
         flags: ${{ inputs.test-type }}
     - name: codecov retry sleep
-      if: steps.codecov1.outcome == 'failure' && inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc'
+      if: steps.codecov1.outcome == 'failure' && inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc' && inputs.test-type != 'everviz-test'
       run: |
         sleep 30
     - name: Codecov retry
       uses: codecov/codecov-action@v5
-      if: steps.codecov1.outcome == 'failure' && inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc'
+      if: steps.codecov1.outcome == 'failure' && inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc' && inputs.test-type != 'everviz-test'
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: cov1.xml,cov2.xml
@@ -113,13 +113,13 @@ jobs:
         fail_ci_if_error: ${{ github.ref == 'refs/heads/main' }}
 
     - name: Upload test results to Codecov
-      if: ${{ !cancelled() && inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc' }}
+      if: ${{ !cancelled() && inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc' && inputs.test-type != 'everviz-test' }}
       uses: codecov/test-results-action@v1
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Test for a clean repository
-      if: ${{ inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc' }}
+      if: ${{ inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc' && inputs.test-type != 'everviz-test' }}
       run: |
         # Remove things we have generated on purpose:
         ls -la
