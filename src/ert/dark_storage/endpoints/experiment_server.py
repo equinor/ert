@@ -26,15 +26,21 @@ from starlette.websockets import WebSocket
 
 from ert.config import QueueSystem
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
+from ert.ensemble_evaluator.event import FullSnapshotEvent, SnapshotUpdateEvent
+from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.run_models import StatusEvents
-from ert.run_models.everest_run_model import EverestRunModel
+from ert.run_models.everest_run_model import EverestExitCode, EverestRunModel
 from everest.config import EverestConfig
 from everest.detached.everserver import (
     ExperimentState,
     ExperimentStatus,
-    _get_optimization_status,
 )
-from everest.strings import EVERSERVER, EverEndpoints
+from everest.strings import (
+    EVERSERVER,
+    OPT_FAILURE_ALL_REALIZATIONS,
+    OPT_FAILURE_REALIZATIONS,
+    EverEndpoints,
+)
 
 router = APIRouter(prefix="/experiment_server", tags=["experiment_server"])
 
@@ -54,6 +60,61 @@ class ExperimentRunnerState:
 
 shared_data = ExperimentRunnerState()
 security = HTTPBasic()
+
+
+def _failed_realizations_messages(
+    events: list[StatusEvents], exit_code: EverestExitCode
+) -> list[str]:
+    snapshots: dict[int, EnsembleSnapshot] = {}
+    for event in events:
+        if isinstance(event, FullSnapshotEvent) and event.snapshot:
+            snapshots[event.iteration] = event.snapshot
+        elif isinstance(event, SnapshotUpdateEvent) and event.snapshot:
+            snapshot = snapshots[event.iteration]
+            assert isinstance(snapshot, EnsembleSnapshot)
+            snapshot.merge_snapshot(event.snapshot)
+    logging.getLogger("forward_models").info("Status event")
+    messages = [
+        OPT_FAILURE_REALIZATIONS
+        if exit_code == EverestExitCode.TOO_FEW_REALIZATIONS
+        else OPT_FAILURE_ALL_REALIZATIONS
+    ]
+    for snapshot in snapshots.values():
+        for job in snapshot.get_all_fm_steps().values():
+            if error := job.get("error"):
+                msg = f"{job.get('name', 'Unknown name')} Failed with: {error}"
+                if msg not in messages:
+                    messages.append(msg)
+    return messages
+
+
+def _get_optimization_status(
+    exit_code: EverestExitCode, events: list[StatusEvents]
+) -> tuple[ExperimentState, str]:
+    match exit_code:
+        case EverestExitCode.MAX_BATCH_NUM_REACHED:
+            return ExperimentState.completed, "Maximum number of batches reached."
+
+        case EverestExitCode.MAX_FUNCTIONS_REACHED:
+            return (
+                ExperimentState.completed,
+                "Maximum number of function evaluations reached.",
+            )
+
+        case EverestExitCode.USER_ABORT:
+            return ExperimentState.stopped, "Optimization aborted."
+
+        case (
+            EverestExitCode.TOO_FEW_REALIZATIONS
+            | EverestExitCode.ALL_REALIZATIONS_FAILED
+        ):
+            status_ = ExperimentState.failed
+            messages = _failed_realizations_messages(events, exit_code)
+            for msg in messages:
+                logging.getLogger(EVERSERVER).error(msg)
+            return status_, "\n".join(messages)
+        case _:
+            return ExperimentState.completed, "Optimization completed."
 
 
 def _check_authentication(auth_header: str | None) -> None:
