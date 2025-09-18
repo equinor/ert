@@ -15,16 +15,7 @@ from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapProp
 from pydantic import BaseModel
 
 from ert.dark_storage.client import Client as DarkStorageClient
-from ert.ensemble_evaluator import (
-    EnsembleSnapshot,
-    FullSnapshotEvent,
-    SnapshotUpdateEvent,
-)
 from ert.plugins.plugin_manager import ErtPluginManager
-from ert.run_models import StatusEvents
-from ert.run_models.everest_run_model import (
-    EverestExitCode,
-)
 from ert.services import StorageService
 from ert.services._base_service import BaseServiceExit
 from ert.trace import tracer
@@ -38,8 +29,6 @@ from everest.strings import (
     DEFAULT_LOGGING_FORMAT,
     EVEREST,
     EVERSERVER,
-    OPT_FAILURE_ALL_REALIZATIONS,
-    OPT_FAILURE_REALIZATIONS,
     OPTIMIZATION_LOG_DIR,
 )
 from everest.util import makedirs_if_needed, version_info
@@ -245,61 +234,6 @@ def main() -> None:
         finally:
             if client is not None:
                 client.close()
-
-
-def _get_optimization_status(
-    exit_code: EverestExitCode, events: list[StatusEvents]
-) -> tuple[ExperimentState, str]:
-    match exit_code:
-        case EverestExitCode.MAX_BATCH_NUM_REACHED:
-            return ExperimentState.completed, "Maximum number of batches reached."
-
-        case EverestExitCode.MAX_FUNCTIONS_REACHED:
-            return (
-                ExperimentState.completed,
-                "Maximum number of function evaluations reached.",
-            )
-
-        case EverestExitCode.USER_ABORT:
-            return ExperimentState.stopped, "Optimization aborted."
-
-        case (
-            EverestExitCode.TOO_FEW_REALIZATIONS
-            | EverestExitCode.ALL_REALIZATIONS_FAILED
-        ):
-            status_ = ExperimentState.failed
-            messages = _failed_realizations_messages(events, exit_code)
-            for msg in messages:
-                logging.getLogger(EVEREST).error(msg)
-            return status_, "\n".join(messages)
-        case _:
-            return ExperimentState.completed, "Optimization completed."
-
-
-def _failed_realizations_messages(
-    events: list[StatusEvents], exit_code: EverestExitCode
-) -> list[str]:
-    snapshots: dict[int, EnsembleSnapshot] = {}
-    for event in events:
-        if isinstance(event, FullSnapshotEvent) and event.snapshot:
-            snapshots[event.iteration] = event.snapshot
-        elif isinstance(event, SnapshotUpdateEvent) and event.snapshot:
-            snapshot = snapshots[event.iteration]
-            assert isinstance(snapshot, EnsembleSnapshot)
-            snapshot.merge_snapshot(event.snapshot)
-    logging.getLogger("forward_models").info("Status event")
-    messages = [
-        OPT_FAILURE_REALIZATIONS
-        if exit_code == EverestExitCode.TOO_FEW_REALIZATIONS
-        else OPT_FAILURE_ALL_REALIZATIONS
-    ]
-    for snapshot in snapshots.values():
-        for job in snapshot.get_all_fm_steps().values():
-            if error := job.get("error"):
-                msg = f"{job['name']} Failed with: {error}"
-                if msg not in messages:
-                    messages.append(msg)
-    return messages
 
 
 if __name__ == "__main__":
