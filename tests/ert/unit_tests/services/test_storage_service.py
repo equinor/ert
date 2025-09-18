@@ -3,6 +3,7 @@ import json
 import os
 import socket
 import ssl
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -192,3 +193,17 @@ def test_that_server_hosts_exists_as_san_in_certificate(change_to_tmpdir):
 
     assert set(sans) == set(hosts_from_urls)
     del os.environ["ERT_STORAGE_CONNECTION_STRING"]
+
+
+def test_that_an_exception_is_raised_if_storage_server_file_has_no_permissions(
+    change_to_tmpdir,
+):
+    file_path = Path("storage_server.json")
+    file_path.write_text("{}", encoding="utf-8")
+    mode = file_path.stat().st_mode
+    os.chmod(file_path, 0o000)  # no permissions
+    try:
+        with pytest.raises(PermissionError):
+            StorageService.init_service()
+    finally:
+        os.chmod(file_path, mode)

@@ -76,25 +76,36 @@ def run_webviz_ert(args: Namespace, _: ErtPluginManager | None = None) -> None:
     # only use the base name of the config file path
     kwargs["ert_config"] = os.path.basename(args.config)
     kwargs["project"] = os.path.abspath(ens_path)
-    with StorageService.init_service(project=os.path.abspath(ens_path)) as storage:
-        storage.wait_until_ready()
+    try:
+        with StorageService.init_service(project=os.path.abspath(ens_path)) as storage:
+            storage.wait_until_ready()
+            print(
+                """
+    -----------------------------------------------------------
+
+    Starting up Webviz-ERT. This might take more than a minute.
+
+    -----------------------------------------------------------
+    """
+            )
+            webviz_kwargs = {
+                "experimental_mode": args.experimental_mode,
+                "verbose": args.verbose,
+                "title": kwargs.get("ert_config", "ERT - Visualization tool"),
+                "project": kwargs.get("project", os.getcwd()),
+            }
+            with WebvizErt.start_server(**webviz_kwargs) as webviz_ert_server:
+                webviz_ert_server.wait()
+    except PermissionError as pe:
+        print(f"Error: {pe}", file=sys.stderr)
         print(
-            """
------------------------------------------------------------
-
-Starting up Webviz-ERT. This might take more than a minute.
-
------------------------------------------------------------
-"""
+            "Cannot start or connect to storage service due to permission issues.",
+            file=sys.stderr,
         )
-        webviz_kwargs = {
-            "experimental_mode": args.experimental_mode,
-            "verbose": args.verbose,
-            "title": kwargs.get("ert_config", "ERT - Visualization tool"),
-            "project": kwargs.get("project", os.getcwd()),
-        }
-        with WebvizErt.start_server(**webviz_kwargs) as webviz_ert_server:
-            webviz_ert_server.wait()
+        print(
+            "This is most likely due to another user starting ERT using this storage",
+            file=sys.stderr,
+        )
 
 
 def strip_error_message_and_raise_exception(validated: ValidationStatus) -> None:
