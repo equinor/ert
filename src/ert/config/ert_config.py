@@ -491,8 +491,10 @@ def workflows_from_dict(
     dict[str, Workflow],
     defaultdict[HookRuntime, list[Workflow]],
 ]:
-    workflow_jobs = dict(copy.copy(installed_workflows)) if installed_workflows else {}
-    workflow_jobs = workflow_jobs_from_dict(content_dict, workflow_jobs)
+    workflow_jobs = workflow_jobs_from_dict(
+        content_dict,
+        dict(copy.copy(installed_workflows)) if installed_workflows else {},
+    )
     workflows, hooked_workflows = create_and_hook_workflows(
         content_dict, workflow_jobs, substitutions
     )
