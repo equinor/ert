@@ -1023,19 +1023,27 @@ class ErtConfig(BaseModel):
         history_source = config_dict.get(
             ConfigKeys.HISTORY_SOURCE, HistorySource.REFCASE_HISTORY
         )
-        for key, val in config_dict.get("SETENV", []):
-            env_vars[key] = substituter.substitute(val)
 
         # Insert env vars from plugins/site config
         for key, val in cls.ENV_VARS.items():
-            if key in env_vars:
+            env_vars[key] = substituter.substitute(val)
+
+        user_configured_ = set()
+        for key, val in config_dict.get("SETENV", []):
+            if key in user_configured_:
                 logger.warning(
-                    f"Site configuration environment variable: "
-                    f"{key}={val} overridden by user "
-                    f"(value={env_vars[key]})"
+                    f"User configured environment variable {key} re-written by user: "
+                    f"{env_vars[key]}->{val}"
                 )
-            else:
-                env_vars[key] = val
+            elif key in cls.ENV_VARS:
+                logger.warning(
+                    f"Site configured environment variable {key} re-written by user: "
+                    f"{env_vars[key]}->{val}"
+                )
+
+            user_configured_.add(key)
+            env_vars[key] = substituter.substitute(val)
+
         try:
             cls_config = cls(
                 substitutions=substitutions,

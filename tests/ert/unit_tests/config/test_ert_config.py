@@ -2525,3 +2525,92 @@ def test_that_time_map_or_refcase_is_present_if_restart_is_used_for_summary_obse
                 ),
             }
         )
+
+
+def test_that_user_envvars_overrides_site_envvars():
+    config = ErtConfig.with_plugins(
+        ErtRuntimePlugins(
+            environment_variables={
+                "A": "site_A",
+                "B": "site_B",
+                "C": "site_C",
+                "D": "site_D",
+            }
+        )
+    ).from_file_contents(
+        user_config_contents=dedent(
+            """
+            NUM_REALIZATIONS  100
+            SETENV A users_A
+            SETENV B users_B
+            SETENV C users_C
+            """
+        ),
+    )
+
+    assert config.env_vars == {
+        "A": "users_A",
+        "B": "users_B",
+        "C": "users_C",
+        "D": "site_D",
+    }
+
+
+def test_that_site_envvars_are_substituted():
+    """
+     Used from site configurations to set parallelization-related envvars
+     to the same as NUM_CPU.
+
+     Old behavior of ERT site config:
+
+    "SETENV OMP_NUM_THREADS <NUM_CPU>",  # OpenMP
+    "SETENV MKL_NUM_THREADS <NUM_CPU>",  # Intel Math Kernel Library
+    "SETENV NUMEXPR_NUM_THREADS <NUM_CPU>",  # NumExpr library in Python
+
+    """
+
+    config = ErtConfig.with_plugins(
+        ErtRuntimePlugins(
+            environment_variables={
+                "A": "<NUM_CPU>",
+            }
+        )
+    ).from_file_contents(
+        user_config_contents=dedent(
+            """
+            NUM_REALIZATIONS  100
+
+            NUM_CPU 1337
+            """
+        ),
+    )
+
+    assert config.env_vars == {
+        "A": "1337",
+    }
+
+
+def test_that_rewriting_envvars_warn_distinctly_for_site_and_user(caplog):
+    with caplog.at_level(logging.WARNING):
+        ErtConfig.with_plugins(
+            ErtRuntimePlugins(
+                environment_variables={
+                    "A": "<NUM_CPU>",
+                }
+            )
+        ).from_file_contents(
+            user_config_contents=dedent(
+                """
+                NUM_REALIZATIONS  100
+
+                NUM_CPU 1337
+                SETENV A 999
+                SETENV A 998
+                """
+            ),
+        )
+
+    assert ([m for m in caplog.messages if "re-written by user" in m]) == [
+        "Site configured environment variable A re-written by user: 1337->999",
+        "User configured environment variable A re-written by user: 999->998",
+    ]
