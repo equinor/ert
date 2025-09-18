@@ -82,3 +82,5 @@ class CopyableLabel(QHBoxLayout):
 
         self.addWidget(self.label)
         self.addWidget(self.copy_button, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        self.setStretch(1, 1)
