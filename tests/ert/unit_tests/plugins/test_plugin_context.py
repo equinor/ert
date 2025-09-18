@@ -4,6 +4,8 @@ import tempfile
 from pathlib import Path
 from unittest.mock import Mock
 
+import pytest
+
 from ert import ForwardModelStepPlugin
 from ert.config.queue_config import LsfQueueOptions
 from ert.plugins import ErtPluginContext, ErtPluginManager, ErtRuntimePlugins, plugin
@@ -166,3 +168,20 @@ def test_that_site_configuration_forward_models_are_merged_with_other_plugins():
             "OPM9000": OPM9000(),
             "OPM10000": OPM10000(),
         }
+
+
+def test_that_plugin_context_with_two_site_configurations_raises_error(tmpdir):
+    class SiteOne:
+        @plugin(name="foo")
+        def site_configurations():
+            return ErtRuntimePlugins(environment_variables={"a": "b"})
+
+    class SiteTwo:
+        @plugin(name="foo")
+        def site_configurations():
+            return ErtRuntimePlugins(environment_variables={"a": "c"})
+
+    with (
+        pytest.raises(ValueError, match="Only one site configuration is allowed"),
+    ):
+        ErtPluginContext(plugins=[SiteOne, SiteTwo]).__enter__()  # noqa

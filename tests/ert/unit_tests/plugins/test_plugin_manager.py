@@ -4,7 +4,7 @@ import logging
 import pytest
 
 import ert.plugins.hook_implementations
-from ert.plugins import ErtPluginManager, plugin
+from ert.plugins import ErtPluginManager, ErtRuntimePlugins, plugin
 from ert.trace import trace, tracer
 from tests.ert.unit_tests.plugins import dummy_plugins
 from tests.ert.unit_tests.plugins.dummy_plugins import DummyFMStep
@@ -277,3 +277,18 @@ def test_that_forward_model_step_is_registered(tmpdir):
     with tmpdir.as_cwd():
         pm = ErtPluginManager(plugins=[dummy_plugins])
         assert pm.forward_model_steps == [DummyFMStep]
+
+
+def test_that_plugin_manager_with_two_site_configurations_raises_error(tmpdir):
+    class SiteOne:
+        @plugin(name="foo")
+        def site_configurations():
+            return ErtRuntimePlugins(environment_variables={"a": "b"})
+
+    class SiteTwo:
+        @plugin(name="foo")
+        def site_configurations():
+            return ErtRuntimePlugins(environment_variables={"a": "c"})
+
+    with pytest.raises(ValueError, match="Only one site configuration is allowed"):
+        ErtPluginManager(plugins=[SiteOne, SiteTwo]).get_site_configurations()
