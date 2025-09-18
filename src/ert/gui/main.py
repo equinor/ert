@@ -112,8 +112,20 @@ def run_gui(args: Namespace, plugin_manager: ErtPluginManager | None = None) -> 
         if ens_path is None:
             return show_window()
 
-        with StorageService.init_service(project=os.path.abspath(ens_path)):
-            return show_window()
+        try:
+            with StorageService.init_service(project=os.path.abspath(ens_path)):
+                return show_window()
+        except PermissionError as pe:
+            print(f"Error: {pe}", file=sys.stderr)
+            print(
+                "Cannot start or connect to storage service due to permission issues.",
+                file=sys.stderr,
+            )
+            print(
+                "This is most likely due to another user starting ERT "
+                "with this storage.",
+                file=sys.stderr,
+            )
     return -1
 
 

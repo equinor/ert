@@ -73,6 +73,12 @@ class StorageService(BaseService):
                 f"{type(e).__name__}: {e}, starting new service"
             )
             return cls.start_server(*args, **kwargs)
+        except PermissionError as pe:
+            logging.getLogger(__name__).error(
+                f"{type(pe).__name__}: {pe}, cannot connect to storage service "
+                f"due to permission issues."
+            )
+            raise pe
         return _Context(service)
 
     def fetch_url(self) -> str:
