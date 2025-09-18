@@ -908,12 +908,26 @@ class ErtConfig(BaseModel):
             errors.append(e)
 
         try:
-            installed_forward_model_steps = dict(
+            site_installed_forward_model_steps = dict(
                 copy.deepcopy(cls.PREINSTALLED_FORWARD_MODEL_STEPS)
             )
 
-            installed_forward_model_steps.update(
+            user_installed_forward_model_steps = (
                 installed_forward_model_steps_from_dict(config_dict)
+            )
+
+            overwritten_fm_steps = set(site_installed_forward_model_steps).intersection(
+                user_installed_forward_model_steps
+            )
+            if overwritten_fm_steps:
+                msg = (
+                    f"The following forward model steps from site configurations "
+                    f"have been overwritten by user: {sorted(overwritten_fm_steps)}"
+                )
+                logger.warning(msg)
+
+            installed_forward_model_steps = (
+                site_installed_forward_model_steps | user_installed_forward_model_steps
             )
 
         except ConfigValidationError as e:

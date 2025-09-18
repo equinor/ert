@@ -27,7 +27,7 @@ from ert.config import (
     QueueSystem,
 )
 from ert.config.ert_config import _split_string_into_sections, create_forward_model_json
-from ert.config.forward_model_step import ForwardModelStep
+from ert.config.forward_model_step import ForwardModelStep, ForwardModelStepPlugin
 from ert.config.parsing import ConfigKeys, ConfigWarning
 from ert.config.parsing.context_values import (
     ContextBool,
@@ -2614,3 +2614,73 @@ def test_that_rewriting_envvars_warn_distinctly_for_site_and_user(caplog):
         "Site configured environment variable A re-written by user: 1337->999",
         "User configured environment variable A re-written by user: 999->998",
     ]
+
+
+def test_that_user_forward_models_overwrite_site_forward_models(
+    monkeypatch, tmp_path, caplog
+):
+    monkeypatch.chdir(tmp_path)
+
+    site_exec = Path("site_echo")
+    site_exec.write_text("echo site", encoding="utf-8")
+    site_exec.chmod(site_exec.stat().st_mode | stat.S_IXUSR)
+
+    user_exec = Path("user_echo")
+    user_exec.write_text("echo user", encoding="utf-8")
+    user_exec.chmod(user_exec.stat().st_mode | stat.S_IXUSR)
+
+    Path("deletor.txt").write_text("EXECUTABLE user_echo", encoding="utf-8")
+
+    class SiteDeleteDirectory(ForwardModelStepPlugin):
+        def __init__(self) -> None:
+            super().__init__(
+                name="DELETE_DIRECTORY",
+                command=["site_echo"],
+            )
+
+    class SiteDeleteDirectories(ForwardModelStepPlugin):
+        def __init__(self) -> None:
+            super().__init__(
+                name="DELETE_DIRECTORIES",
+                command=["site_echo"],
+            )
+
+    class SiteDeleteDirectoryz(ForwardModelStepPlugin):
+        def __init__(self) -> None:
+            super().__init__(
+                name="DELETE_DIRECTORYZ",
+                command=["site_echo"],
+            )
+
+    with caplog.at_level(logging.INFO):
+        config = ErtConfig.with_plugins(
+            ErtRuntimePlugins(
+                installed_forward_model_steps={
+                    "DELETE_DIRECTORY": SiteDeleteDirectory(),
+                    "DELETE_DIRECTORIES": SiteDeleteDirectories(),
+                    "DELETE_DIRECTORYZ": SiteDeleteDirectoryz(),
+                },
+            )
+        ).from_file_contents(
+            user_config_contents=dedent(
+                """
+                NUM_REALIZATIONS  100
+
+                INSTALL_JOB DELETE_DIRECTORY deletor.txt
+                INSTALL_JOB DELETE_DIRECTORIES deletor.txt
+                INSTALL_JOB DELETE_DIRECTORYZ deletor.txt
+                INSTALL_JOB DELETE_DIRECTORZ deletor.txt
+                FORWARD_MODEL DELETE_DIRECTORY
+                """
+            ),
+        )
+
+    assert len(config.forward_model_steps) == 1
+    fm_step = config.forward_model_steps[0]
+    assert "user_echo" in fm_step.executable
+
+    assert (
+        "The following forward model steps from site configurations have "
+        "been overwritten by user: "
+        "['DELETE_DIRECTORIES', 'DELETE_DIRECTORY', 'DELETE_DIRECTORYZ']"
+    ) in caplog.messages
