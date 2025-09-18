@@ -5,6 +5,7 @@ import logging
 from typing import Any, ClassVar
 from uuid import UUID
 
+import numpy as np
 from pydantic import PrivateAttr
 
 from ert.ensemble_evaluator import EvaluatorServerConfig
@@ -71,6 +72,10 @@ class MultipleDataAssimilation(UpdateRunModel, InitialEnsembleRunModel):
                 ensemble_id = UUID(id_)
                 prior = self._storage.get_ensemble(ensemble_id)
                 experiment = prior.experiment
+                self.active_realizations = (
+                    np.array(self.active_realizations)
+                    & prior.get_realization_mask_without_failure()
+                ).tolist()
                 self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
                 self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
                 assert isinstance(prior, Ensemble)
