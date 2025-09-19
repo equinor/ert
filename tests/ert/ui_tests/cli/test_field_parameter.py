@@ -27,7 +27,7 @@ def test_field_param_update_using_heat_equation_enif(
     symlinked_heat_equation_storage_enif,
 ):
     config = ErtConfig.from_file("config.ert")
-    with open_storage(config.ens_path, mode="w") as storage:
+    with open_storage(config.ens_path, mode="r") as storage:
         experiment = storage.get_experiment_by_name("enif")
         [prior, posterior] = experiment.ensembles
 
@@ -174,7 +174,7 @@ def test_field_param_update_using_heat_equation_enif_snapshot(
     symlinked_heat_equation_storage_enif, snapshot, request
 ):
     config = ErtConfig.from_file("config.ert")
-    with open_storage(config.ens_path, mode="w") as storage:
+    with open_storage(config.ens_path, mode="r") as storage:
         experiment = storage.get_experiment_by_name("enif")
         prior = experiment.get_ensemble_by_name("iter-0")
         posterior = experiment.get_ensemble_by_name("iter-1")
@@ -214,7 +214,7 @@ def test_field_param_update_using_heat_equation_enif_snapshot(
 
 def test_field_param_update_using_heat_equation(symlinked_heat_equation_storage_es):
     config = ErtConfig.from_file("config.ert")
-    with open_storage(config.ens_path, mode="w") as storage:
+    with open_storage(config.ens_path, mode="r") as storage:
         experiment = storage.get_experiment_by_name("es")
         prior = experiment.get_ensemble_by_name("iter-0")
         posterior = experiment.get_ensemble_by_name("iter-1")

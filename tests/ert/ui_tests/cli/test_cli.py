@@ -679,7 +679,7 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
             reals_rerun_option,
         )
 
-    with open_storage(ert_config.ens_path, mode="w") as storage:
+    with open_storage(ert_config.ens_path, mode="r") as storage:
         parameter_values = storage.get_ensemble(ensemble.id).load_parameters_numpy(
             "COEFFS", np.arange(num_realizations)
         )

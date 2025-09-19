@@ -294,7 +294,7 @@ def test_that_the_plot_window_contains_the_expected_elements(
     esmda_has_run: ErtMainWindow, qtbot
 ):
     gui = esmda_has_run
-    open_storage(gui.ert_config.ens_path, mode="w")
+    open_storage(gui.ert_config.ens_path, mode="r")
     with StorageService.init_service(
         project=os.path.abspath(gui.ert_config.ens_path),
     ):
@@ -633,7 +633,7 @@ def test_that_gui_plotter_works_when_no_data(qtbot, monkeypatch, use_tmpdir):
     ert_config = ErtConfig.from_file(config_file)
     # Open up storage to create it, so that dark storage can be mounted onto it
     # Not creating will result in dark storage hanging/lagging
-    open_storage(ert_config.ens_path, mode="w")
+    open_storage(ert_config.ens_path, mode="r")
 
     with StorageService.init_service(
         project=os.path.abspath(ert_config.ens_path),
@@ -665,7 +665,7 @@ def test_right_click_plot_button_opens_external_plotter(qtbot, use_tmpdir, monke
 
     # Open up storage to create it, so that dark storage can be mounted onto it
     # Not creating will result in dark storage hanging/lagging
-    open_storage("storage", mode="w")
+    open_storage("storage", mode="r")
 
     args_mock = Mock()
     args_mock.config = config_file

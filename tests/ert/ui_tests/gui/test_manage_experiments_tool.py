@@ -393,7 +393,7 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
     config = ErtConfig.from_file("poly_localization_0.ert")
 
     notifier = ErtNotifier()
-    with open_storage(config.ens_path, mode="w") as storage:
+    with open_storage(config.ens_path, mode="r") as storage:
         notifier.set_storage(str(storage.path))
 
         tool = ManageExperimentsPanel(

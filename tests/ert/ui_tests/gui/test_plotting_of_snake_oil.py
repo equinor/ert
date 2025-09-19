@@ -59,7 +59,7 @@ def plot_figure(
         args_mock.config = "config.ert"
 
     # For dark storage not to hang
-    open_storage(storage_config.ens_path, mode="w")
+    open_storage(storage_config.ens_path, mode="r")
     log_handler = GUILogHandler()
     with (
         StorageService.init_service(
