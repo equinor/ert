@@ -1339,12 +1339,18 @@ async def test_that_kill_before_submit_is_finished_works(tmp_path, monkeypatch, 
 
     async def finished(iens: int, returncode: int):
         SIGTERM = 15
+        EXIT_CODE_KILLED_BY_OWNER = 130
         assert iens == 0
         # If the kill is issued before the job really starts, you will not
         # get SIGTERM but rather LSF_FAILED_JOB. Whether SIGNAL_OFFSET is
         # added or not depends on various shell configurations and is a
         # detail we do not want to track.
-        assert returncode in {SIGTERM, SIGNAL_OFFSET + SIGTERM, LSF_FAILED_JOB}
+        assert returncode in {
+            SIGTERM,
+            SIGNAL_OFFSET + SIGTERM,
+            LSF_FAILED_JOB,
+            EXIT_CODE_KILLED_BY_OWNER,
+        }
 
     await poll(driver, {0}, finished=finished)
     assert "ERROR" not in str(caplog.text)
