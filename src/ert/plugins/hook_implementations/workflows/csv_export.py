@@ -108,22 +108,36 @@ class CSVExportJob(ErtScript):
                 summary_data = pl.DataFrame({})
 
             if not summary_data.is_empty():
-                ensemble_data = ensemble_data.join(
-                    summary_data.to_pandas(), how="outer"
+                pivoted_summary = summary_data.pivot(
+                    index=["realization", "time"], on="response_key", values="values"
+                ).to_pandas()
+
+                # Rename columns to match ensemble_data conventions before merge
+                pivoted_summary = pivoted_summary.rename(
+                    columns={"realization": "Realization", "time": "Date"}
+                )
+
+                # Reset index to make 'Realization' a regular column
+                ensemble_data = ensemble_data.reset_index()
+
+                ensemble_data = pd.merge(
+                    ensemble_data,
+                    pivoted_summary,
+                    on="Realization",
+                    how="left",
                 )
             else:
-                ensemble_data["Date"] = None
-                ensemble_data.set_index(["Date"], append=True, inplace=True)
+                ensemble_data = ensemble_data.reset_index()
+                ensemble_data["Date"] = pd.NaT
 
             ensemble_data["Iteration"] = ensemble.iteration
             ensemble_data["Ensemble"] = ensemble.name
-            ensemble_data.set_index(
-                ["Ensemble", "Iteration"], append=True, inplace=True
+            ensemble_data = ensemble_data.set_index(
+                ["Realization", "Iteration", "Date", "Ensemble"]
             )
 
             data = pd.concat([data, ensemble_data])
-        if not data.empty:
-            data = data.reorder_levels(["Realization", "Iteration", "Date", "Ensemble"])
+
         if drop_const_cols:
             data = data.loc[:, (data != data.iloc[0]).any()]
 
