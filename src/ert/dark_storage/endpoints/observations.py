@@ -1,11 +1,12 @@
 import json
+import logging
 import operator
 from typing import Any
 from urllib.parse import unquote
 from uuid import UUID, uuid4
 
 import polars as pl
-from fastapi import APIRouter, Body, Depends, Query
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
 
 from ert.dark_storage import json_schema as js
 from ert.dark_storage.common import (
@@ -15,6 +16,8 @@ from ert.dark_storage.endpoints.responses import response_to_pandas_x_axis_fns
 from ert.storage import Experiment, Storage
 
 router = APIRouter(tags=["ensemble"])
+logger = logging.getLogger(__name__)
+
 
 DEFAULT_STORAGE = Depends(get_storage)
 DEFAULT_BODY = Body(...)
@@ -26,7 +29,15 @@ DEFAULT_BODY = Body(...)
 def get_observations(
     *, storage: Storage = DEFAULT_STORAGE, experiment_id: UUID
 ) -> list[js.ObservationOut]:
-    experiment = storage.get_experiment(experiment_id)
+    try:
+        experiment = storage.get_experiment(experiment_id)
+    except KeyError as e:
+        logger.error(e)
+        raise HTTPException(status_code=404, detail="Experiment not found") from e
+    except Exception as ex:
+        logger.exception(ex)
+        raise HTTPException(status_code=500, detail="Internal server error") from ex
+
     return [
         js.ObservationOut(
             id=UUID(int=0),
@@ -49,7 +60,15 @@ async def get_observations_for_response(
     filter_on: str | None = Query(None, description="JSON string with filters"),
 ) -> list[js.ObservationOut]:
     response_key = unquote(response_key)
-    ensemble = storage.get_ensemble(ensemble_id)
+    try:
+        ensemble = storage.get_ensemble(ensemble_id)
+    except KeyError as e:
+        logger.error(e)
+        raise HTTPException(status_code=404, detail="Ensemble not found") from e
+    except Exception as ex:
+        logger.exception(ex)
+        raise HTTPException(status_code=500, detail="Internal server error") from ex
+
     experiment = ensemble.experiment
 
     response_type = experiment.response_key_to_response_type.get(response_key, "")
@@ -64,10 +83,10 @@ async def get_observations_for_response(
         obs_keys,
         json.loads(filter_on) if filter_on is not None else None,
     )
-
-    obss.sort(key=operator.itemgetter("name"))
     if not obss:
         return []
+
+    obss.sort(key=operator.itemgetter("name"))
 
     return [
         js.ObservationOut(
