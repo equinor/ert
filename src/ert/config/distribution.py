@@ -315,6 +315,20 @@ class DerrfSettings(TransSettingsValidation):
         return float(result)
 
 
+DistributionSettings = (
+    UnifSettings
+    | LogNormalSettings
+    | LogUnifSettings
+    | DUnifSettings
+    | RawSettings
+    | ConstSettings
+    | NormalSettings
+    | TruncNormalSettings
+    | ErrfSettings
+    | DerrfSettings
+    | TriangularSettings
+)
+
 DISTRIBUTION_CLASSES: dict[str, type[TransSettingsValidation]] = {
     "NORMAL": NormalSettings,
     "LOGNORMAL": LogNormalSettings,
