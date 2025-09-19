@@ -19,7 +19,7 @@ import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import TypedDict
 
-from ert.config import GenKwConfig, ParameterConfig
+from ert.config import GenKwConfig, ParameterCardinality, ParameterConfig
 from ert.config.response_config import InvalidResponseFile
 
 from .load_status import LoadResult
@@ -595,14 +595,21 @@ class LocalEnsemble(BaseMode):
         otherwise it will return the raw values.
 
         """
-        if group in self.experiment.scalar_groups:
-            return self._load_scalar_keys(
-                self.experiment.scalar_groups[group], realizations, transformed
-            )
-        elif group not in self.experiment.parameter_configuration:
+        if group not in self.experiment.param_cardinality:
             raise KeyError(f"{group} is not registered to the experiment.")
-        if group in self.experiment.scalar_nodes:
+        if (
+            self.experiment.param_cardinality[group]
+            == ParameterCardinality.multiple_params_per_ensemble
+        ):
+            return self._load_scalar_keys(
+                self.experiment.param_groups[group], realizations, transformed
+            )
+        elif (
+            self.experiment.param_cardinality[group]
+            == ParameterCardinality.one_param_per_ensemble
+        ):
             return self._load_scalar_keys([group], realizations, transformed)
+
         ds = self._load_dataset(
             group,
             (
@@ -654,10 +661,9 @@ class LocalEnsemble(BaseMode):
         for config in gen_kws:
             df = self.load_parameters(config.name, realizations, transformed=True)
             assert isinstance(df, pl.DataFrame)
-            assert isinstance(config, GenKwConfig)
             df = df.rename(
                 {
-                    col: f"{config.group}:{col}"
+                    col: f"{config.group_name}:{col}"
                     for col in df.columns
                     if col != "realization"
                 }

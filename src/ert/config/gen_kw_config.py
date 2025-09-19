@@ -29,7 +29,7 @@ from .distribution import (
     UnifSettings,
     get_distribution,
 )
-from .parameter_config import ParameterConfig, ParameterMetadata
+from .parameter_config import ParameterCardinality, ParameterConfig, ParameterMetadata
 from .parsing import ConfigValidationError, ConfigWarning
 
 if TYPE_CHECKING:
@@ -95,6 +95,10 @@ class GenKwConfig(ParameterConfig):
     @property
     def parameter_keys(self) -> list[str]:
         return [self.name]
+
+    @property
+    def data_cardinality(self) -> ParameterCardinality:
+        return ParameterCardinality.ONE_PARAM_PER_ENSEMBLE
 
     @property
     def metadata(self) -> list[ParameterMetadata]:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from collections.abc import Callable, Iterator
+from enum import StrEnum, auto
 from hashlib import sha256
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
@@ -16,6 +17,12 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from ert.storage import Ensemble
+
+
+class ParameterCardinality(StrEnum):
+    one_param_per_ensemble = auto()
+    multiple_params_per_ensemble = auto()
+    multiple_params_per_realization = auto()
 
 
 class ParameterMetadata(BaseModel):
@@ -119,6 +126,10 @@ class ParameterConfig(BaseModel):
         Load the graph encoding Markov properties on the parameter `group`
         Often a neighbourhood graph.
         """
+
+    @property
+    def data_cardinality(self) -> ParameterCardinality:
+        return ParameterCardinality.MULTIPLE_PARAMS_PER_REALIZATION
 
     @classmethod
     def scalar_file(self) -> str:

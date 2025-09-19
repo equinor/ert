@@ -14,10 +14,9 @@ import polars as pl
 from pydantic import BaseModel, Field, TypeAdapter
 from surfio import IrapSurface
 
+from ert.config import EverestConstraintsConfig, EverestObjectivesConfig, ExtParamConfig
+from ert.config import Field as FieldConfig
 from ert.config import (
-    EverestConstraintsConfig,
-    EverestObjectivesConfig,
-    ExtParamConfig,
     GenDataConfig,
     GenKwConfig,
     ParameterConfig,
@@ -25,7 +24,7 @@ from ert.config import (
     SummaryConfig,
     SurfaceConfig,
 )
-from ert.config import Field as FieldConfig
+from ert.config.parameter_config import ParameterCardinality
 from ert.config.parsing.context_values import ContextBoolEncoder
 
 from .mode import BaseMode, Mode, require_write
@@ -395,12 +394,21 @@ class LocalExperiment(BaseMode):
         }
 
     @cached_property
-    def scalar_groups(self) -> dict[str, list[str]]:
-        dict_genkw: dict[str, list[str]] = defaultdict(list)
+    def param_groups(self) -> dict[str, list[str]]:
+        dict_param: dict[str, list[str]] = defaultdict(list)
         for p in self.parameter_configuration.values():
-            if isinstance(p, GenKwConfig):
-                dict_genkw[p.group_name].append(p.name)
-        return dict_genkw
+            dict_param[p.group_name].append(p.name)
+        return dict_param
+
+    @cached_property
+    def param_cardinality(self) -> dict[str, ParameterCardinality]:
+        return {
+            p.name: p.data_cardinality for p in self.parameter_configuration.values()
+        } | {
+            p.group_name: ParameterCardinality.multiple_params_per_ensemble
+            for p in self.parameter_configuration.values()
+            if p.name != p.group_name
+        }
 
     @cached_property
     def parameter_group_to_parameter_keys(self) -> dict[str, list[str]]:
