@@ -1,3 +1,4 @@
+import logging
 from contextlib import ExitStack as does_not_raise
 from datetime import datetime, timedelta
 
@@ -826,3 +827,54 @@ def test_that_summary_default_error_min_is_applied(tmpdir):
 
         # default error_min is 0.1
         assert observations["FOPR"].observations[datetime(2014, 9, 11)].std == 0.1
+
+
+def test_ert_config_logs_observation_types_and_keywords(caplog, tmpdir):
+    obs_config_contents = """
+    GENERAL_OBSERVATION OBS1 {
+        VALUE = 1;
+        DATA = GEN;
+        ERROR = 0.1;
+        RESTART = 1;
+    };
+    HISTORY_OBSERVATION FWPR;
+    HISTORY_OBSERVATION FOPR {
+        SEGMENT FIRST_YEAR {
+            START = 1;
+            STOP = 2;
+            ERROR = 0.02;
+        };
+    };
+    SUMMARY_OBSERVATION SUMOP {
+        VALUE = 1;
+        ERROR = 0.1;
+        KEY = FGPR;
+        RESTART = 1;
+    };
+    """
+    with tmpdir.as_cwd(), caplog.at_level(logging.INFO):
+        run_sim(
+            datetime(2014, 9, 10),
+            [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
+        )
+        ErtConfig.from_dict(
+            {
+                "ECLBASE": "ECLIPSE_CASE",
+                "REFCASE": "ECLIPSE_CASE",
+                "OBS_CONFIG": (
+                    "obsconf",
+                    obs_config_contents,
+                ),
+            }
+        )
+    assert "Count of observation types" in caplog.text
+    assert (
+        "'ObservationType.GENERAL': 1, "
+        "'ObservationType.HISTORY': 2, "
+        "'ObservationType.SUMMARY': 1"
+    ) in caplog.text
+    assert "Count of observation keywords" in caplog.text
+    assert (
+        "'VALUE': 2, 'DATA': 1, 'ERROR': 2, 'RESTART': 2, 'SEGMENT': 1, 'KEY': 1"
+        in caplog.text
+    )

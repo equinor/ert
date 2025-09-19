@@ -1,3 +1,4 @@
+import logging
 import os
 from collections import Counter
 from collections.abc import Sequence
@@ -123,13 +124,32 @@ ObservationBody = dict[
 ObservationDeclaration = tuple[ObservationType, FileContextToken, ObservationBody]
 
 
+def log_obs_keywords(
+    observations: list[SimpleHistoryDeclaration | ObservationDeclaration],
+) -> None:
+    logger = logging.getLogger(__name__)
+    observation_type_counts = Counter(str(o[0]) for o in observations)
+    observation_keyword_counts = Counter(
+        "SEGMENT" if isinstance(key, tuple) else str(key)
+        for o in observations
+        if len(o) == 3
+        for key in o[2]
+    )
+
+    logger.info(
+        f"Count of observation types:\n\t{dict(observation_type_counts)}\n"
+        f"Count of observation keywords:\n\t{dict(observation_keyword_counts)}"
+    )
+
+
 def _parse_content_list(
     content: str, filename: str
 ) -> list[SimpleHistoryDeclaration | ObservationDeclaration]:
     try:
-        return (FileContextTransformer(filename) * TreeToObservations()).transform(
-            observations_parser.parse(content)
-        )
+        parsed_obs = (
+            FileContextTransformer(filename) * TreeToObservations()
+        ).transform(observations_parser.parse(content))
+        log_obs_keywords(parsed_obs)
     except UnexpectedCharacters as e:
         unexpected_char = e.char
         allowed_chars = e.allowed
@@ -170,6 +190,8 @@ def _parse_content_list(
                 end_column=e.column + 1,
             )
         ) from e
+    else:
+        return parsed_obs
 
 
 observations_parser = Lark(
