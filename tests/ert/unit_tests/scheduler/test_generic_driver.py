@@ -111,9 +111,9 @@ async def test_kill_gives_correct_state(driver: Driver, use_tmpdir, request):
             256 + signal.SIGTERM,
         ]
 
-    async def started(iens):
+    async def started(realizations: list[int]):
         nonlocal driver
-        await driver.kill(iens)
+        await driver.kill(realizations)
 
     async def finished(iens, returncode):
         assert iens == 0

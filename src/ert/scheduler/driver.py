@@ -69,11 +69,11 @@ class Driver(ABC):
         """
 
     @abstractmethod
-    async def kill(self, iens: int) -> None:
+    async def kill(self, realizations: Iterable[int]) -> None:
         """Terminate execution of a job associated with a realization.
 
         Args:
-          iens: Realization number.
+          realizations: An iterable of realization numbers to kill.
         """
 
     @abstractmethod

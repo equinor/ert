@@ -5,7 +5,7 @@ import contextlib
 import logging
 import signal
 from asyncio.subprocess import Process
-from collections.abc import MutableMapping
+from collections.abc import Iterable, MutableMapping
 from contextlib import suppress
 from pathlib import Path
 
@@ -39,21 +39,24 @@ class LocalDriver(Driver):
         with suppress(KeyError):
             self._sent_finished_events.remove(iens)
 
-    async def kill(self, iens: int) -> None:
-        try:
-            self._tasks[iens].cancel()
-            logger.info(f"Killing realization {iens}")
-            with contextlib.suppress(asyncio.CancelledError):
-                await self._tasks[iens]
-            del self._tasks[iens]
-            await self._dispatch_finished_event(iens, signal.SIGTERM + SIGNAL_OFFSET)
+    async def kill(self, realizations: Iterable[int]) -> None:
+        for realization in realizations:
+            try:
+                self._tasks[realization].cancel()
+                logger.info(f"Killing realization {realization}")
+                with contextlib.suppress(asyncio.CancelledError):
+                    await self._tasks[realization]
+                del self._tasks[realization]
+                await self._dispatch_finished_event(
+                    realization, signal.SIGTERM + SIGNAL_OFFSET
+                )
 
-        except KeyError:
-            logger.info(f"Realization {iens} is already killed")
-            return
-        except Exception as err:
-            logger.error(f"Killing realization {iens} failed with error {err}")
-            raise err
+            except KeyError:
+                logger.info(f"Realization {realization} is already killed")
+            except Exception:
+                logger.error(
+                    f"Killing realization {realization} failed with error {realization}"
+                )
 
     async def finish(self) -> None:
         results = await asyncio.gather(*self._tasks.values(), return_exceptions=True)

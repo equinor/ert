@@ -324,12 +324,12 @@ async def test_that_when_bsub_has_exit_code_1_its_output_is_in_the_error_message
 
 @pytest.mark.timeout(10)
 @pytest.mark.parametrize(
-    "mocked_iens2jobid, iens_to_kill, "
+    "mocked_iens2jobid, realizations_to_kill, "
     "bkill_returncode, bkill_stdout, bkill_stderr, expected_logged_error",
     [
         pytest.param(
             {"1": "11"},
-            "1",
+            ["1"],
             0,
             "Job <11> is being terminated",
             "",
@@ -338,7 +338,7 @@ async def test_that_when_bsub_has_exit_code_1_its_output_is_in_the_error_message
         ),
         pytest.param(
             {"1": "11"},
-            "2",
+            ["2"],
             1,
             "",
             "",
@@ -347,7 +347,7 @@ async def test_that_when_bsub_has_exit_code_1_its_output_is_in_the_error_message
         ),
         pytest.param(
             {"1": "11"},
-            "1",
+            ["1"],
             255,
             "",
             "Job <22>: No matching job found",
@@ -356,7 +356,7 @@ async def test_that_when_bsub_has_exit_code_1_its_output_is_in_the_error_message
         ),
         pytest.param(
             {"1": "11"},
-            "1",
+            ["1"],
             0,
             "wrong_stdout...",
             "",
@@ -365,7 +365,7 @@ async def test_that_when_bsub_has_exit_code_1_its_output_is_in_the_error_message
         ),
         pytest.param(
             {"1": "11"},
-            "1",
+            ["1"],
             1,
             "",
             "wrong_on_stderr",
@@ -374,12 +374,21 @@ async def test_that_when_bsub_has_exit_code_1_its_output_is_in_the_error_message
         ),
         pytest.param(
             {"1": "11"},
-            "1",
+            ["1"],
             255,
             "",
             "Job <11>: Job has already finished",
             "",
             id="job_already_finished",
+        ),
+        pytest.param(
+            {"1": "11", "2": "22", "3": "33", "4": "44", "5": "55", "6": "66"},
+            ["1", "2", "3", "4", "5", "6"],
+            255,
+            "Job <11> is being terminated\nJob <22> is being terminated\nJob <55> is being signaled",  # noqa: E501
+            "Job <33>: Job has already finished\nJob <44>: Job has already finished\nJob <66>: No matching job found",  # noqa: E501
+            None,
+            id="batch_killing_jobs",
         ),
     ],
 )
@@ -387,7 +396,7 @@ async def test_kill(
     monkeypatch,
     tmp_path,
     mocked_iens2jobid,
-    iens_to_kill,
+    realizations_to_kill,
     bkill_returncode,
     bkill_stdout,
     bkill_stderr,
@@ -409,9 +418,10 @@ async def test_kill(
     driver._sleep_time_between_bkills = 0
 
     # Needed because we are not submitting anything in this test
-    driver._submit_locks[iens_to_kill] = asyncio.Lock()
+    for iens in realizations_to_kill:
+        driver._submit_locks[iens] = asyncio.Lock()
 
-    await driver.kill(iens_to_kill)
+    await driver.kill(realizations_to_kill)
 
     async def wait_for_sigkill_in_file():
         while True:
@@ -425,8 +435,10 @@ async def test_kill(
         assert expected_logged_error in caplog.text
     else:
         bkill_args = Path("bkill_args").read_text(encoding="utf-8").strip().split("\n")
-        assert f"-s SIGTERM {mocked_iens2jobid[iens_to_kill]}" in bkill_args
-
+        assert (
+            f"-s SIGTERM {' '.join(mocked_iens2jobid[iens] for iens in realizations_to_kill)}"  # noqa: E501
+            in bkill_args
+        )
         await asyncio.wait_for(wait_for_sigkill_in_file(), timeout=5)
 
 
@@ -942,7 +954,7 @@ async def test_kill_does_not_log_error_on_accepted_bkill_outputs(
 
     driver.submit = mock_submit
     await driver.submit(0, "sh", "-c", f"echo test>{tmp_path}/test")
-    await driver.kill(0)
+    await driver.kill([0])
     assert "LSF kill failed" not in caplog.text
     assert "LSF kill failed" not in capsys.readouterr().err
     assert "LSF kill failed" not in capsys.readouterr().out
@@ -976,7 +988,7 @@ def test_filter_job_ids_on_submission_time(time_submitted_modifier, expected_res
 async def test_kill_before_submit_logs_error(caplog):
     caplog.set_level(logging.DEBUG)
     driver = LsfDriver()
-    await driver.kill(0)
+    await driver.kill([0])
     assert "DEBUG" in caplog.text
     assert "LSF kill was not run, realization 0 has never been submitted" in caplog.text
 
@@ -1347,7 +1359,7 @@ async def test_that_kill_before_submit_is_finished_works(tmp_path, monkeypatch, 
     )
     await asyncio.sleep(0.01)  # Allow submit task to start executing
     # This will wait until the submit is done and then kill
-    await driver.kill(0)
+    await driver.kill([0])
 
     async def finished(iens: int, returncode: int):
         SIGTERM = 15

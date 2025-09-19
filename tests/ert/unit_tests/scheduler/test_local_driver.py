@@ -40,10 +40,15 @@ async def test_kill_while_running():
     driver = LocalDriver()
 
     await driver.submit(42, "/usr/bin/env", "sleep", "10")
+    await driver.submit(43, "/usr/bin/env", "sleep", "10")
     assert await driver.event_queue.get() == StartedEvent(iens=42)
-    await driver.kill(42)
+    assert await driver.event_queue.get() == StartedEvent(iens=43)
+    await driver.kill([42, 43])
     assert await driver.event_queue.get() == FinishedEvent(
         iens=42, returncode=signal.SIGTERM + SIGNAL_OFFSET
+    )
+    assert await driver.event_queue.get() == FinishedEvent(
+        iens=43, returncode=signal.SIGTERM + SIGNAL_OFFSET
     )
 
 
@@ -57,7 +62,7 @@ async def test_kill_before_running(sleep_before_killing):
     await driver.submit(42, "/usr/bin/env", "sleep", "10")
     if sleep_before_killing is not None:
         await asyncio.sleep(sleep_before_killing)
-    await driver.kill(42)
+    await driver.kill([42])
     if driver.event_queue.qsize() == 2:
         # We waited so long that it actually started
         assert await driver.event_queue.get() == StartedEvent(iens=42)
@@ -94,7 +99,7 @@ async def test_kill_unresponsive_process(monkeypatch, tmp_path):
     # Allow the script to trap signals
     await asyncio.sleep(1)
 
-    await driver.kill(42)
+    await driver.kill([42])
     assert await driver.event_queue.get() == FinishedEvent(
         iens=42, returncode=signal.SIGKILL + SIGNAL_OFFSET
     )
@@ -108,7 +113,7 @@ async def test_kill_when_job_completed(cmd, returncode, use_tmpdir):
     await driver.submit(42, "/usr/bin/env", cmd)
     assert await driver.event_queue.get() == StartedEvent(iens=42)
     await asyncio.sleep(0.5)
-    await driver.kill(42)
+    await driver.kill([42])
     assert await driver.event_queue.get() == FinishedEvent(
         iens=42, returncode=returncode
     )
@@ -118,14 +123,14 @@ async def test_that_killing_killed_job_does_not_raise(use_tmpdir):
     driver = LocalDriver()
     await driver.submit(23, "/usr/bin/env", "sleep", "10")
     assert await driver.event_queue.get() == StartedEvent(iens=23)
-    await driver.kill(23)
+    await driver.kill([23])
     assert await driver.event_queue.get() == FinishedEvent(
         iens=23, returncode=signal.SIGTERM + SIGNAL_OFFSET
     )
     # Killing a dead job should not raise an exception
-    await driver.kill(23)
-    await driver.kill(23)
-    await driver.kill(23)
+    await driver.kill([23])
+    await driver.kill([23])
+    await driver.kill([23])
     assert driver.event_queue.empty()
 
 
