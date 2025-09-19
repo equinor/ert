@@ -142,7 +142,7 @@ jobs:
       run: |
         sudo apt install pandoc
 
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
       id: setup_python
       with:
         python-version: ${{ matrix.python-version }}
