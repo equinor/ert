@@ -68,7 +68,7 @@ dependencies = [
     "xtgeo >= 3.3.0",
     "networkx",
     "graphite-maps",
-    "surfio>=0.0.9",
+    "surfio>=0.0.11",
     "fastexcel>=0.14.0", # extra dependency for polars (excel)
 ]
 

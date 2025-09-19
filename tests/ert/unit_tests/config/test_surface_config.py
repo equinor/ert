@@ -4,6 +4,7 @@ import networkx as nx
 import numpy as np
 import pytest
 import xtgeo
+from surfio import IrapSurface
 
 from ert.config import ConfigValidationError, SurfaceConfig
 
@@ -61,24 +62,44 @@ def test_runpath_roundtrip(tmp_path, storage, surface):
     actual_surface = xtgeo.surface_from_file(
         tmp_path / "output", fformat="irap_ascii", dtype=np.float32
     )
+    actual_surface_surfio = IrapSurface.from_ascii_file(tmp_path / "output")
+
     np.testing.assert_allclose(
         actual_surface.values, surface.values, rtol=0, atol=1e-06
+    )
+    np.testing.assert_allclose(
+        actual_surface_surfio.values, surface.values, rtol=0, atol=1e-06
     )
 
     # Compare header, set all properties to different values to assert
     for prop, val in (
-        ("ncol", 5),
-        ("nrow", 3),
-        ("xori", 3),
-        ("yori", 4),
-        ("xinc", 1),
-        ("yinc", 2),
-        ("yflip", 1.0),
-        ("rotation", 10),
+        ("ncol", surface.ncol),
+        ("nrow", surface.nrow),
+        ("xori", surface.xori),
+        ("yori", surface.yori),
+        ("xinc", surface.xinc),
+        ("yinc", surface.yinc),
     ):
-        assert getattr(config, prop) == getattr(actual_surface, prop) == val, (
-            f"Failed for: {prop}"
-        )
+        assert (
+            getattr(config, prop)
+            == getattr(actual_surface_surfio.header, prop)
+            == getattr(actual_surface, prop)
+            == val
+        ), f"Failed for: {prop}"
+
+    assert actual_surface.yflip == config.yflip == surface.yflip
+    assert actual_surface.rotation == config.rotation == surface.rotation
+
+    assert actual_surface_surfio.header.xrot == surface.xori
+    assert actual_surface_surfio.header.yrot == surface.yori
+    assert (
+        actual_surface_surfio.header.xmax
+        == surface.xori + (surface.ncol - 1) * surface.xinc
+    )
+    assert (
+        actual_surface_surfio.header.ymax
+        == surface.yori + (surface.nrow - 1) * surface.yinc
+    )
 
 
 def test_init_files_must_contain_placeholder_when_not_forward_init():
