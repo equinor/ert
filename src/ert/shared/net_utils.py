@@ -1,8 +1,10 @@
+import ipaddress
 import logging
 import random
 import socket
 from functools import lru_cache
 
+import psutil
 from dns import exception, resolver, reversename
 
 
@@ -135,20 +137,31 @@ def get_family(host: str) -> socket.AddressFamily:
         return socket.AF_INET6
 
 
-# See https://stackoverflow.com/a/28950776
 def get_ip_address() -> str:
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        try:
-            s.settimeout(0)
-            # try pinging a reserved, internal address in order
-            # to determine IP representing the default route
-            s.connect(("10.255.255.255", 1))
-            address = s.getsockname()[0]
-        finally:
-            s.close()
-    except BaseException:
-        logger.warning("Cannot determine ip-address. Falling back to localhost.")
-        address = "127.0.0.1"
-    logger.debug(f"ip-address: {address}")
-    return address
+    """
+    Get the first private IPv4 address of the current machine on the LAN.
+    Returns the private IP, public IP if no private is found,
+    or loopback as a last resort.
+
+    Returns:
+        str: The selected IP address as a string.
+    """
+    loopback = ""
+    public = ""
+    interfaces = psutil.net_if_addrs()
+    for addresses in interfaces.values():
+        for address in addresses:
+            if address.family.name == "AF_INET":
+                ip = address.address
+                if ipaddress.ip_address(ip).is_loopback:
+                    loopback = ip
+                elif ipaddress.ip_address(ip).is_private:
+                    return ip
+                else:
+                    public = ip
+
+    if public or loopback:
+        return public or loopback  # returns first non-None value
+    else:
+        logger.warning("Cannot determine ip-address. Falling back to 127.0.0.1")
+        return "127.0.0.1"

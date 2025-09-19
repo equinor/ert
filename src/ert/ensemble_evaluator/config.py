@@ -4,8 +4,8 @@ import warnings
 
 import zmq
 
+from ert.shared import get_ip_address
 from ert.shared import get_machine_name as ert_shared_get_machine_name
-from ert.shared.net_utils import get_ip_address
 
 logger = logging.getLogger(__name__)
 
