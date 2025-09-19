@@ -148,7 +148,7 @@ def create_experiment_args(
     response_key_repeated = pl.concat(
         [smry_response_key_series] * num_summary_timesteps
     )
-    time_repeated = pl.concat([smry_time_series] * num_summary_keys)
+    time_repeated = smry_time_series.repeat_by(num_summary_keys).explode()
     values_repeated = pl.concat([smry_values_series] * num_summary_timesteps)
 
     # Create the DataFrame
