@@ -6,9 +6,8 @@ from unittest.mock import patch
 import pytest
 
 from ert.cli.main import ErtCliError
-from ert.plugins import ErtPluginContext
 
-from .run_cli import run_cli_with_pm
+from .run_cli import run_cli
 
 config_contents = """\
 QUEUE_SYSTEM {queue_system}
@@ -57,9 +56,7 @@ def test_missing_runpath_has_isolated_failures(tmp_path, monkeypatch):
             match=r"successful realizations \(9\) is less "
             r"than .* MIN_REALIZATIONS\(10\)",
         ):
-            run_cli_with_pm(
-                ["ensemble_experiment", "config.ert", "--disable-monitoring"]
-            )
+            run_cli("ensemble_experiment", "config.ert", "--disable-monitoring")
     finally:
         with suppress(FileNotFoundError):
             (tmp_path / "simulations/realization-0/iter-0").chmod(0x777)
@@ -103,9 +100,5 @@ def test_failing_writes_lead_to_isolated_failures(tmp_path, monkeypatch, pytestc
             " submit script: Don't like realization-1",
         ),
         patch_raising_named_temporary_file(queue_system.lower()),
-        ErtPluginContext() as context,
     ):
-        run_cli_with_pm(
-            ["ensemble_experiment", "config.ert", "--disable-monitoring"],
-            pm=context.plugin_manager,
-        )
+        run_cli("ensemble_experiment", "config.ert", "--disable-monitoring")
