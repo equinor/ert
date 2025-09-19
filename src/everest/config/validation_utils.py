@@ -168,7 +168,7 @@ def valid_range(range_value: tuple[float, float]) -> tuple[float, float]:
     return range_value
 
 
-def check_path_valid(path: str) -> None:
+def check_path_valid(path: Any) -> None:
     if not isinstance(path, str):
         raise ValueError("str type expected")
 
