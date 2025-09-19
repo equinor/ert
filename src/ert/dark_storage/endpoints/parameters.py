@@ -1,4 +1,5 @@
 import io
+import logging
 from typing import Annotated
 from urllib.parse import unquote
 from uuid import UUID
@@ -17,6 +18,7 @@ DEFAULT_STORAGE = Depends(get_storage)
 DEFAULT_BODY = Body(...)
 
 router = APIRouter(tags=["parameters"])
+logger = logging.getLogger(__name__)
 
 
 @router.get(
@@ -43,12 +45,26 @@ async def get_parameter(
     parameter_key: str,
     accept: Annotated[str | None, Header()] = None,
 ) -> Response:
-    ensemble = storage.get_ensemble(ensemble_id)
+    try:
+        ensemble = storage.get_ensemble(ensemble_id)
+    except KeyError as e:
+        logger.error(e)
+        raise HTTPException(status_code=404, detail="Ensemble not found") from e
+    except Exception as ex:
+        logger.exception(ex)
+        raise HTTPException(status_code=500, detail="Internal server error") from ex
+
     unquoted_pkey = unquote(parameter_key)
+
     try:
         dataframe = data_for_parameter(ensemble, unquoted_pkey)
     except PermissionError as e:
+        logger.error(e)
         raise HTTPException(status_code=401, detail=str(e)) from e
+    except Exception as ex:
+        logger.exception(ex)
+        raise HTTPException(status_code=500, detail="Internal server error") from ex
+
     media_type = accept if accept is not None else "text/csv"
     if media_type == "application/x-parquet":
         dataframe.columns = [str(s) for s in dataframe.columns]
@@ -72,14 +88,22 @@ def get_parameter_std_dev(
     *, storage: Storage = DEFAULT_STORAGE, ensemble_id: UUID, key: str, z: int
 ) -> Response:
     key = unquote(key)
-    ensemble = storage.get_ensemble(ensemble_id)
     try:
+        ensemble = storage.get_ensemble(ensemble_id)
         da = ensemble.calculate_std_dev_for_parameter_group(key)
     except ValueError as e:
+        logger.error(e)
         raise HTTPException(status_code=404, detail="Data not found") from e
+    except KeyError as ke:
+        logger.error(ke)
+        raise HTTPException(status_code=404, detail="Ensemble not found") from ke
+    except Exception as ex:
+        logger.exception(ex)
+        raise HTTPException(status_code=500, detail="Internal server error") from ex
 
     if z >= int(da.shape[2]):
-        raise HTTPException(status_code=400, detail="Invalid z index")
+        logger.error("invalid z index")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
     data_2d = da[:, :, z]
 
@@ -103,8 +127,12 @@ def data_for_parameter(ensemble: Ensemble, key: str) -> pd.DataFrame:
     group, _ = _extract_parameter_group_and_key(key)
     try:
         df = ensemble.load_scalars(group)
-    except KeyError:
+    except KeyError as e:
+        logger.error(e)
         return pd.DataFrame()
+    except Exception as ex:
+        logger.exception(ex)
+        raise HTTPException(status_code=500, detail="Internal server error") from ex
 
     dataframe = df.to_pandas().set_index("realization")
     dataframe.columns.name = None
