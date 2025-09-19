@@ -71,7 +71,7 @@ def test_create_experiment(tmp_path):
 
 def test_that_loading_non_existing_experiment_throws(tmp_path):
     with (
-        open_storage(tmp_path, mode="w") as storage,
+        open_storage(tmp_path, mode="r") as storage,
         pytest.raises(
             KeyError, match="Experiment with name 'non-existing-experiment' not found"
         ),
@@ -1132,7 +1132,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
     def __init__(self) -> None:
         super().__init__()
         self.tmpdir = tempfile.mkdtemp(prefix="StatefulStorageTest")
-        self.storage = open_storage(self.tmpdir + "/storage/", "w")
+        self.storage = open_storage(self.tmpdir + "/storage/", mode="w")
         note(f"storage path is: {self.storage.path}")
         self.model: dict[UUID, Experiment] = {}
         assert list(self.storage.ensembles) == []
