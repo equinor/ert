@@ -1,5 +1,6 @@
 import io
 import json
+import logging
 from collections.abc import Callable
 from typing import Annotated, Any
 from urllib.parse import unquote
@@ -15,6 +16,8 @@ from ert.dark_storage.common import get_storage
 from ert.storage import Ensemble, Storage
 
 router = APIRouter(tags=["responses"])
+logger = logging.getLogger(__name__)
+
 
 DEFAULT_STORAGE = Depends(get_storage)
 DEFAULT_BODY = Body(...)
@@ -45,7 +48,15 @@ async def get_response(
     filter_on: str | None = Query(None, description="JSON string with filters"),
     accept: Annotated[str | None, Header()] = None,
 ) -> Response:
-    ensemble = storage.get_ensemble(ensemble_id)
+    try:
+        ensemble = storage.get_ensemble(ensemble_id)
+    except KeyError as e:
+        logger.error(e)
+        raise HTTPException(status_code=404, detail="Ensemble not found") from e
+    except Exception as ex:
+        logger.exception(ex)
+        raise HTTPException(status_code=500, detail="Internal server error") from ex
+
     try:
         unquoted_rkey = unquote(response_key)
         dataframe = data_for_response(
@@ -54,7 +65,12 @@ async def get_response(
             json.loads(filter_on) if filter_on is not None else None,
         )
     except PermissionError as e:
+        logger.error(e)
         raise HTTPException(status_code=401, detail=str(e)) from e
+    except Exception as ex:
+        logger.exception(ex)
+        raise HTTPException(status_code=500, detail="Internal server error") from ex
+
     media_type = accept if accept is not None else "text/csv"
     if media_type == "application/x-parquet":
         dataframe.columns = [str(s) for s in dataframe.columns]

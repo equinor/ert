@@ -1,6 +1,7 @@
+import logging
 from uuid import UUID
 
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends, HTTPException
 
 from ert.config import SurfaceConfig
 from ert.dark_storage import json_schema as js
@@ -9,6 +10,7 @@ from ert.shared.storage.extraction import create_priors
 from ert.storage import Storage
 
 router = APIRouter(tags=["experiment"])
+logger = logging.getLogger(__name__)
 
 DEFAULT_STORAGE = Depends(get_storage)
 DEFAULT_BODY = Body(...)
@@ -47,7 +49,15 @@ def get_experiment_by_id(
     storage: Storage = DEFAULT_STORAGE,
     experiment_id: UUID,
 ) -> js.ExperimentOut:
-    experiment = storage.get_experiment(experiment_id)
+    try:
+        experiment = storage.get_experiment(experiment_id)
+    except KeyError as e:
+        logger.error(e)
+        raise HTTPException(status_code=404, detail="Experiment not found") from e
+    except Exception as ex:
+        logger.exception(ex)
+        raise HTTPException(status_code=500, detail="Internal server error") from ex
+
     return js.ExperimentOut(
         name=experiment.name,
         id=experiment.id,
@@ -74,12 +84,19 @@ def get_experiment_ensembles(
     storage: Storage = DEFAULT_STORAGE,
     experiment_id: UUID,
 ) -> list[js.EnsembleOut]:
-    return [
-        js.EnsembleOut(
-            id=ensemble.id,
-            experiment_id=ensemble.experiment_id,
-            userdata={"name": ensemble.name},
-            size=ensemble.ensemble_size,
-        )
-        for ensemble in storage.get_experiment(experiment_id).ensembles
-    ]
+    try:
+        return [
+            js.EnsembleOut(
+                id=ensemble.id,
+                experiment_id=ensemble.experiment_id,
+                userdata={"name": ensemble.name},
+                size=ensemble.ensemble_size,
+            )
+            for ensemble in storage.get_experiment(experiment_id).ensembles
+        ]
+    except KeyError as e:
+        logger.error(e)
+        raise HTTPException(status_code=404, detail="Experiment not found") from e
+    except Exception as ex:
+        logger.exception(ex)
+        raise HTTPException(status_code=500, detail="Internal server error") from ex
