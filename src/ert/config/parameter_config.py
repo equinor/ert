@@ -129,7 +129,7 @@ class ParameterConfig(BaseModel):
 
     @property
     def data_cardinality(self) -> ParameterCardinality:
-        return ParameterCardinality.MULTIPLE_PARAMS_PER_REALIZATION
+        return ParameterCardinality.multiple_params_per_ensemble
 
     @classmethod
     def scalar_file(self) -> str:

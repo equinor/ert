@@ -651,11 +651,15 @@ class LocalEnsemble(BaseMode):
         self, group: str | None = None, realizations: npt.NDArray[np.int_] | None = None
     ) -> pl.DataFrame:
         dataframes = []
-        gen_kws = list(self.experiment.scalar_nodes.values())
-        if group and group in self.experiment.scalar_groups:
+        gen_kws = list(
+            p
+            for p in self.experiment.parameter_configuration.values()
+            if p.data_cardinality == ParameterCardinality.one_param_per_ensemble
+        )
+        if group and group in self.experiment.param_groups:
             gen_kws = [
                 self.experiment.parameter_configuration[key]
-                for key in self.experiment.scalar_groups[group]
+                for key in self.experiment.param_groups[group]
             ]
 
         for config in gen_kws:
