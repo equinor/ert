@@ -43,6 +43,7 @@ class ExperimentInfo:
     summary_responses: pl.DataFrame
     gen_data_responses: pl.DataFrame
     gen_data_observations: pl.DataFrame
+    genkw_data: pl.DataFrame
 
 
 def create_experiment_args(
@@ -54,7 +55,12 @@ def create_experiment_args(
     num_summary_keys: int,
     num_summary_timesteps: int,
     num_summary_obs: int,
+    num_realizations: int | None = None,
 ) -> ExperimentInfo:
+    seed = 123456789
+    rng = np.random.default_rng(seed)
+    random.seed(seed)
+
     gen_kw_config = GenKwConfig(
         name="all_my_parameters_live_here",
         forward_init=False,
@@ -77,6 +83,18 @@ def create_experiment_args(
     # Remember to do one explicit .save_parameters to an ensemble
     # to get the finalized summary keys stored in the experiment
     summary_config = SummaryConfig(name="summary", keys=["*"])
+
+    genkw_data = (
+        pl.DataFrame(
+            {
+                f"param_{i}": np.arange(num_realizations) + i / 10
+                for i in range(num_parameters)
+            }
+            | {"realization": np.arange(num_realizations)}
+        )
+        if num_realizations is not None
+        else None
+    )
 
     # Now create the observations
     gen_obs_keys = [f"genobs_{i}" for i in range(num_gen_data_obs)]
@@ -103,7 +121,7 @@ def create_experiment_args(
                 dtype=pl.UInt16,
             ),
             "values": pl.Series(
-                _rng.normal(loc=10, scale=0.1, size=num_gendata_rows),
+                rng.normal(loc=10, scale=0.1, size=num_gendata_rows),
                 dtype=pl.Float32,
             ),
         }
@@ -122,11 +140,11 @@ def create_experiment_args(
                 dtype=pl.UInt16,
             ),
             "observations": pl.Series(
-                _rng.normal(loc=10, scale=0.1, size=num_gen_data_obs),
+                rng.normal(loc=10, scale=0.1, size=num_gen_data_obs),
                 dtype=pl.Float32,
             ),
             "std": pl.Series(
-                _rng.normal(loc=0.2, scale=0.1, size=num_gen_data_obs),
+                rng.normal(loc=0.2, scale=0.1, size=num_gen_data_obs),
                 dtype=pl.Float32,
             ),
         }
@@ -147,14 +165,14 @@ def create_experiment_args(
     smry_time_series = pl.Series("time", summary_timesteps, dtype=pl.Datetime("ms"))
     smry_values_series = pl.Series(
         "values",
-        _rng.normal(loc=10, scale=0.1, size=num_summary_keys),
+        rng.normal(loc=10, scale=0.1, size=num_summary_keys),
         dtype=pl.Float32,
     )
 
     response_key_repeated = pl.concat(
         [smry_response_key_series] * num_summary_timesteps
     )
-    time_repeated = pl.concat([smry_time_series] * num_summary_keys)
+    time_repeated = smry_time_series.repeat_by(num_summary_keys).explode()
     values_repeated = pl.concat([smry_values_series] * num_summary_timesteps)
 
     # Create the DataFrame
@@ -175,11 +193,11 @@ def create_experiment_args(
                 dtype=pl.Datetime("ms"),
             ),
             "observations": pl.Series(
-                _rng.normal(loc=10, scale=0.1, size=num_summary_obs),
+                rng.normal(loc=10, scale=0.1, size=num_summary_obs),
                 dtype=pl.Float32,
             ),
             "std": pl.Series(
-                _rng.normal(loc=0.2, scale=0.1, size=num_summary_obs),
+                rng.normal(loc=0.2, scale=0.1, size=num_summary_obs),
                 dtype=pl.Float32,
             ),
         }
@@ -193,6 +211,7 @@ def create_experiment_args(
         summary_responses=summary_responses,
         gen_data_responses=gen_data_responses,
         gen_data_observations=gen_data_observations,
+        genkw_data=genkw_data,
     )
 
 
