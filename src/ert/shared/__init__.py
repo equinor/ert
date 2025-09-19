@@ -6,7 +6,7 @@ except ImportError:
 import importlib.util
 from pathlib import Path
 
-from .net_utils import find_available_socket, get_machine_name
+from .net_utils import find_available_socket, get_ip_address, get_machine_name
 
 
 def ert_share_path() -> str:
@@ -18,4 +18,10 @@ def ert_share_path() -> str:
     return str(Path(spec_origin).parent.parent / "resources")
 
 
-__all__ = ["__version__", "ert_share_path", "find_available_socket", "get_machine_name"]
+__all__ = [
+    "__version__",
+    "ert_share_path",
+    "find_available_socket",
+    "get_ip_address",
+    "get_machine_name",
+]
