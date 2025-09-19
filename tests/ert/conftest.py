@@ -350,10 +350,7 @@ def hide_window(request):
         return
 
     old_value = os.environ.get("QT_QPA_PLATFORM")
-    if sys.platform == "darwin":
-        os.environ["QT_QPA_PLATFORM"] = "offscreen"
-    else:
-        os.environ["QT_QPA_PLATFORM"] = "minimal"
+    os.environ["QT_QPA_PLATFORM"] = "offscreen"
     yield
     if old_value is None:
         del os.environ["QT_QPA_PLATFORM"]
