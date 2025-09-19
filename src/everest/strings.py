@@ -7,7 +7,7 @@ DEFAULT_OUTPUT_DIR = "everest_output"
 DEFAULT_LOGGING_FORMAT = "%(asctime)s %(name)s %(levelname)s: %(message)s"
 
 EVEREST = "everest"
-EVERSERVER = "everserver"
+EVERSERVER = "everest.everserver"
 
 HOSTFILE_NAME = "storage_server.json"
 
