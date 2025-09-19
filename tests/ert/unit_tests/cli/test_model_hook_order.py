@@ -6,8 +6,10 @@ from unittest.mock import ANY, MagicMock, call
 import pytest
 from pydantic import ConfigDict
 
-from ert.config import ESSettings, ModelConfig, ObservationSettings, QueueConfig
-from ert.plugins import (
+from ert.config import (
+    ESSettings,
+    ModelConfig,
+    ObservationSettings,
     PostExperimentFixtures,
     PostSimulationFixtures,
     PostUpdateFixtures,
@@ -15,6 +17,7 @@ from ert.plugins import (
     PreFirstUpdateFixtures,
     PreSimulationFixtures,
     PreUpdateFixtures,
+    QueueConfig,
     fixtures_per_hook,
 )
 from ert.run_models import (

@@ -18,7 +18,6 @@ from numpy.random import SeedSequence
 from pydantic import BaseModel, Field, PrivateAttr, model_validator
 from pydantic import ValidationError as PydanticValidationError
 
-from ert.plugins import ErtPluginManager, fixtures_per_hook
 from ert.substitutions import Substitutions
 
 from ._create_observations import create_observations
@@ -65,6 +64,7 @@ from .parsing import (
 )
 from .queue_config import QueueConfig
 from .workflow import Workflow
+from .workflow_fixtures import fixtures_per_hook
 from .workflow_job import (
     ErtScriptLoadFailure,
     ErtScriptWorkflow,
@@ -803,6 +803,8 @@ class ErtConfig(BaseModel):
         forward_model_step_classes: list[type[ForwardModelStepPlugin]] | None = None,
         env_pr_fm_step: dict[str, dict[str, Any]] | None = None,
     ) -> type[ErtConfig]:
+        from ert.plugins import ErtPluginManager  # noqa: PLC0415
+
         pm = ErtPluginManager()
         if forward_model_step_classes is None:
             forward_model_step_classes = pm.forward_model_steps
