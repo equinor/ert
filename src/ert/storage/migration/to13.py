@@ -37,7 +37,7 @@ def migrate_gen_kw_param(parameters_json: dict[str, Any]) -> dict[str, Any]:
                 vals = [dist_type.lower()] + tfd["values"]
                 input_source = (
                     "design"
-                    if tfd["param_name"] == "RAW" and param_config["update"]
+                    if tfd["param_name"] == "RAW" and not param_config["update"]
                     else "sampled"
                 )
                 new_configs[tfd["name"]] = {
