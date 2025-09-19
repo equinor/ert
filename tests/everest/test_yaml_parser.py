@@ -3,14 +3,12 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
-from pydantic import ValidationError
 
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from everest.config import EverestConfig
 from everest.simulator.everest_to_ert import (
     everest_to_ert_config_dict,
 )
-from tests.everest.utils import skipif_no_everest_models
 
 
 @pytest.mark.parametrize("random_seed", [None, 1234])
@@ -55,40 +53,3 @@ def test_read_file(tmp_path, monkeypatch):
     exp_dir, exp_fn = os.path.split(os.path.realpath("config.yml"))
     assert exp_dir == everest_config.config_directory
     assert exp_fn == everest_config.config_file
-
-
-@skipif_no_everest_models
-@pytest.mark.everest_models_test
-@pytest.mark.skip_mac_ci
-def test_invalid_forward_model_config_files(tmp_path):
-    template_rel_path = "configs/template_config.yml"
-    template_abs_path = tmp_path / template_rel_path
-
-    template_abs_path.parent.mkdir(parents=True, exist_ok=True)
-    (template_abs_path.parent / "templates").mkdir(parents=True, exist_ok=True)
-
-    with pytest.raises(ValidationError) as exc_info:
-        EverestConfig.with_defaults(
-            controls=[
-                {
-                    "name": "initial_control",
-                    "min": 0.0,
-                    "max": 1.0,
-                    "type": "well_control",
-                    "variables": [{"name": "param_a", "initial_guess": 0.5}],
-                }
-            ],
-            environment={"output_folder": str(tmp_path / "output")},
-            model={"realizations": [1]},
-            forward_model=[
-                (
-                    "add_templates -i wells_sw_result.json "
-                    "-c configs/template_config.yml "
-                    "-o wells_tmpl_result.json"
-                )
-            ],
-        )
-
-    assert (
-        f"File does not exists or is a directory: {template_rel_path} [type=value_error"
-    ) in str(exc_info.value)

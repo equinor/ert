@@ -7,8 +7,6 @@ import pluggy
 import pytest
 from pydantic import BaseModel
 
-from ert import ForwardModelStepPlugin
-from ert.config import ErtConfig
 from everest.plugins import hook_impl, hook_specs, hookimpl
 from everest.strings import EVEREST
 
@@ -35,16 +33,6 @@ def plugin_manager() -> Iterator[Callable[..., MockPluginManager]]:
         return pm
 
     yield register_plugin_hooks
-
-
-def test_everest_models_jobs():
-    everest_models = pytest.importorskip("everest_models")
-    jobs = everest_models.forward_models.get_forward_models()
-    assert bool(jobs)
-    for job in jobs:
-        job_class = ErtConfig.with_plugins().PREINSTALLED_FORWARD_MODEL_STEPS.get(job)
-        assert job_class is not None
-        assert isinstance(job_class, ForwardModelStepPlugin)
 
 
 def test_multiple_plugins(plugin_manager):

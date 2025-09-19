@@ -165,7 +165,6 @@ markers = [
     "requires_window_manager",
     "script",
     "slow",
-    "everest_models_test",
     "skip_mac_ci",
 ]
 log_cli = "false"
