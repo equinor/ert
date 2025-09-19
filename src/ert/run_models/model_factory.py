@@ -20,6 +20,7 @@ from ert.mode_definitions import (
     ENSEMBLE_SMOOTHER_MODE,
     ES_MDA_MODE,
     EVALUATE_ENSEMBLE_MODE,
+    MANUAL_ENIF_UPDATE_MODE,
     MANUAL_UPDATE_MODE,
     TEST_RUN_MODE,
 )
@@ -31,6 +32,7 @@ from .ensemble_information_filter import EnsembleInformationFilter
 from .ensemble_smoother import EnsembleSmoother
 from .evaluate_ensemble import EvaluateEnsemble
 from .manual_update import ManualUpdate
+from .manual_update_enif import ManualUpdateEnIF
 from .multiple_data_assimilation import MultipleDataAssimilation
 from .run_model import RunModel
 from .single_test_run import SingleTestRun
@@ -85,6 +87,8 @@ def create_model(
         )
     if args.mode == MANUAL_UPDATE_MODE:
         return _setup_manual_update(config, args, update_settings, status_queue)
+    if args.mode == MANUAL_ENIF_UPDATE_MODE:
+        return _setup_manual_update_enif(config, args, update_settings, status_queue)
     raise NotImplementedError(f"Run type not supported {args.mode}")
 
 
@@ -261,6 +265,43 @@ def _setup_manual_update(
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
         observations=serialize_observations(config.observations),
+    )
+
+
+def _setup_manual_update_enif(
+    config: ErtConfig,
+    args: Namespace,
+    update_settings: ObservationSettings,
+    status_queue: SimpleQueue[StatusEvents],
+) -> ManualUpdate:
+    active_realizations = _realizations(args, config.runpath_config.num_realizations)
+
+    return ManualUpdateEnIF(
+        random_seed=config.random_seed,
+        active_realizations=active_realizations.tolist(),
+        ensemble_id=args.ensemble_id,
+        minimum_required_realizations=config.analysis_config.minimum_required_realizations,
+        target_ensemble=args.target_ensemble,
+        config=config,
+        storage_path=config.ens_path,
+        queue_config=config.queue_config,
+        analysis_settings=config.analysis_config.es_settings,
+        update_settings=update_settings,
+        status_queue=status_queue,
+        runpath_file=config.runpath_file,
+        design_matrix=config.analysis_config.design_matrix,
+        parameter_configuration=config.ensemble_config.parameter_configuration,
+        response_configuration=config.ensemble_config.response_configuration,
+        ert_templates=config.ert_templates,
+        user_config_file=Path(config.user_config_file),
+        env_vars=config.env_vars,
+        env_pr_fm_step=config.env_pr_fm_step,
+        runpath_config=config.runpath_config,
+        forward_model_steps=config.forward_model_steps,
+        substitutions=config.substitutions,
+        hooked_workflows=config.hooked_workflows,
+        log_path=config.analysis_config.log_path,
+        observations=config.observations,
     )
 
 
