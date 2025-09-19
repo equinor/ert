@@ -163,6 +163,8 @@ class SurfaceConfig(ParameterConfig):
                 xinc=self.xinc,
                 yinc=yinc,
                 rot=self.rotation,
+                xrot=self.xori,
+                yrot=self.yori,
             ),
             values=data.values,
         )
