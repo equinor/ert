@@ -67,6 +67,7 @@ PNGS_NOT_APPLICABLE_FOR_GENERATION = [
     "docs/everest/images/Everest_vs_Ert_01.png",
 ]
 
+
 # List of png files under docs that could be tested for change
 # and generated, but that has not yet been added to a test.
 TODOS = [
@@ -98,8 +99,10 @@ def run_experiment(qtbot, experiment_mode, gui, click_done=True):
     # Select correct experiment in the simulation panel
     experiment_panel = gui.findChild(ExperimentPanel)
     assert isinstance(experiment_panel, ExperimentPanel)
+
     simulation_mode_combo = experiment_panel.findChild(QComboBox)
     assert isinstance(simulation_mode_combo, QComboBox)
+
     simulation_mode_combo.setCurrentText(experiment_mode.display_name())
 
     # Click start simulation and agree to the message
@@ -111,11 +114,9 @@ def run_experiment(qtbot, experiment_mode, gui, click_done=True):
             lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=False),
         )
 
-    if experiment_mode.name() not in {
-        "Ensemble experiment",
-        "Evaluate ensemble",
-    }:
+    if experiment_mode.name() not in {"Ensemble experiment", "Evaluate ensemble"}:
         QTimer.singleShot(500, handle_dialog)
+
     qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
 
     if click_done:
@@ -129,6 +130,7 @@ def run_experiment(qtbot, experiment_mode, gui, click_done=True):
         # equal to the number of realizations
         realization_widget = run_dialog._tab_widget.currentWidget()
         assert isinstance(realization_widget, RealizationWidget)
+
         list_model = realization_widget._real_view.model()
         assert (
             list_model.rowCount()
@@ -172,6 +174,7 @@ class GuiEvaluator:
             if os.path.isfile(full_image_path)
             else 0
         )
+
         if ssim_score < threshold:
             if IS_RUNNING_IN_GITHUB_ACTIONS:
                 # Copy the new image in temp storage for artifact upload
@@ -201,6 +204,7 @@ class GuiEvaluator:
     def change_report(self):
         if not self.gui_change_detected():
             return "No gui changes detected"
+
         newline = "\n            - "
         return dedent(
             f"""
@@ -232,8 +236,10 @@ def set_data_type_selection_index(data_type_widget, index):
 def clean_up_diplayed_runpath(gui: QWidget):
     experiment_panel = gui.findChild(ExperimentPanel)
     assert isinstance(experiment_panel, ExperimentPanel)
+
     single_test_run_panel = experiment_panel.findChild(SingleTestRunPanel)
     assert isinstance(single_test_run_panel, SingleTestRunPanel)
+
     runpath_label = single_test_run_panel.findChild(CopyableLabel)
     current_directory = os.getcwd()
     label_text = runpath_label.label.text()
