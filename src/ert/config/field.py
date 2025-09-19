@@ -86,6 +86,12 @@ class Field(ParameterConfig):
     nx: int
     ny: int
     nz: int
+    xlength: float
+    ylength: float
+    xinc: float
+    yinc: float
+    rotation_angle: float
+    origin: tuple[float, float]
     file_format: FieldFileFormat
     output_transformation: str | None
     input_transformation: str | None
@@ -120,6 +126,12 @@ class Field(ParameterConfig):
                     "nx": self.nx,
                     "ny": self.ny,
                     "nz": self.nz,
+                    "xlength": self.xlength,
+                    "ylength": self.ylength,
+                    "xinc": self.xinc,
+                    "yinc": self.yinc,
+                    "rotation_angle": self.rotation_angle,
+                    "origin": self.origin,
                 },
             )
         ]
@@ -128,7 +140,7 @@ class Field(ParameterConfig):
     def from_config_list(
         cls,
         grid_file_path: str,
-        dims: Shape,
+        ertbox_params,
         config_list: list[str | dict[str, str]],
     ) -> Self:
         name = cast(str, config_list[0])
@@ -200,9 +212,15 @@ class Field(ParameterConfig):
         assert init_files is not None
         return cls(
             name=name,
-            nx=dims.nx,
-            ny=dims.ny,
-            nz=dims.nz,
+            nx=ertbox_params.nx,
+            ny=ertbox_params.ny,
+            nz=ertbox_params.nz,
+            xlength=ertbox_params.xlength,
+            ylength=ertbox_params.ylength,
+            xinc=ertbox_params.xinc,
+            yinc=ertbox_params.yinc,
+            rotation_angle=ertbox_params.rotation_angle,
+            origin=ertbox_params.origin,
             file_format=file_format,
             output_transformation=output_transform,
             input_transformation=init_transform,
