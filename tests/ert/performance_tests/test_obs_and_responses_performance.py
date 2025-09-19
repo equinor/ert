@@ -42,6 +42,7 @@ class ExperimentInfo:
     summary_responses: pl.DataFrame
     gen_data_responses: pl.DataFrame
     gen_data_observations: pl.DataFrame
+    genkw_data: pl.DataFrame
 
 
 def create_experiment_args(
@@ -53,6 +54,7 @@ def create_experiment_args(
     num_summary_keys: int,
     num_summary_timesteps: int,
     num_summary_obs: int,
+    num_realizations: int | None = None,
 ) -> ExperimentInfo:
     gen_kw_configs = [
         GenKwConfig(
@@ -71,6 +73,18 @@ def create_experiment_args(
     # Remember to do one explicit .save_parameters to an ensemble
     # to get the finalized summary keys stored in the experiment
     summary_config = SummaryConfig(name="summary", keys=["*"])
+
+    genkw_data = (
+        pl.DataFrame(
+            {
+                f"param_{i}": np.arange(num_realizations) + i / 10
+                for i in range(num_parameters)
+            }
+            | {"realization": np.arange(num_realizations)}
+        )
+        if num_realizations is not None
+        else None
+    )
 
     # Now create the observations
     gen_obs_keys = [f"genobs_{i}" for i in range(num_gen_data_obs)]
@@ -187,6 +201,7 @@ def create_experiment_args(
         summary_responses=summary_responses,
         gen_data_responses=gen_data_responses,
         gen_data_observations=gen_data_observations,
+        genkw_data=genkw_data,
     )
 
 
