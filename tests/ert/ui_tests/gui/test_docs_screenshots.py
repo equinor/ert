@@ -163,6 +163,10 @@ class GuiEvaluator:
         image_path = os.path.join(self.example_folder, name)
         full_image_path = os.path.join(self.source_root, image_path)
 
+        # The ssim_score is a decimal value between -1 and 1, where:
+        #   1 indicates perfect similarity,
+        #   0 indicates no similarity,
+        #   and -1 indicates perfect anti-correlation.
         ssim_score = (
             self._get_ssim_score(new_img, io.imread(full_image_path, as_gray=True))
             if os.path.isfile(full_image_path)
@@ -175,15 +179,13 @@ class GuiEvaluator:
                     "/tmp/test_docs_screenshots", self.example_folder
                 )
                 os.makedirs(tmp_img_storage, exist_ok=True)
-                shutil.copy(
-                    temp_image_path,
-                    os.path.join(tmp_img_storage, f"{name}"),
-                )
-            else:
-                shutil.copy(temp_image_path, full_image_path)
+                full_image_path = os.path.join(tmp_img_storage, f"{name}")
+
+            shutil.copy(temp_image_path, full_image_path)
             self.gui_changed.append(
                 f"{image_path} SSIM:{ssim_score} < Threshold:{threshold}"
             )
+
         os.remove(temp_image_path)
 
     def gui_change_detected(self):
@@ -266,6 +268,7 @@ def open_gui_with_docs_example(
     return next(gui_generator)
 
 
+@pytest.mark.skip_mac_ci
 def test_that_poly_new_minimal_screenshots_are_up_to_date(
     tmp_path,
     monkeypatch,
@@ -290,6 +293,7 @@ def test_that_poly_new_minimal_screenshots_are_up_to_date(
     assert not gui_evaluator.gui_change_detected(), gui_evaluator.change_report()
 
 
+@pytest.mark.skip_mac_ci
 def test_that_poly_new_with_simple_script_screenshots_are_up_to_date(
     tmp_path,
     monkeypatch,
@@ -315,6 +319,7 @@ def test_that_poly_new_with_simple_script_screenshots_are_up_to_date(
     assert not gui_evaluator.gui_change_detected(), gui_evaluator.change_report()
 
 
+@pytest.mark.skip_mac_ci
 def test_that_poly_new_with_results_screenshots_are_up_to_date(
     tmp_path,
     monkeypatch,
@@ -353,6 +358,7 @@ def test_that_poly_new_with_results_screenshots_are_up_to_date(
     assert not gui_evaluator.gui_change_detected(), gui_evaluator.change_report()
 
 
+@pytest.mark.skip_mac_ci
 def test_that_poly_new_with_observations_screenshots_are_up_to_date(
     tmp_path,
     monkeypatch,
@@ -385,18 +391,16 @@ def test_that_poly_new_with_observations_screenshots_are_up_to_date(
             gui, qtbot, EnsembleSelectionWidget, "Plot ensemble"
         )
 
-        # Swap plot order to better illustrate example
-        item = ensemble_selector_widget._EnsembleSelectionWidget__dndlist.takeItem(0)
-        ensemble_selector_widget._EnsembleSelectionWidget__dndlist.insertItem(1, item)
+        dndlist = ensemble_selector_widget._EnsembleSelectionWidget__dndlist
 
-        for index in range(
-            ensemble_selector_widget._EnsembleSelectionWidget__dndlist.count()
-        ):
-            item = ensemble_selector_widget._EnsembleSelectionWidget__dndlist.item(
-                index
-            )
+        # Swap plot order to better illustrate example
+        item = dndlist.takeItem(0)
+        dndlist.insertItem(1, item)
+
+        for index in range(dndlist.count()):
+            item = dndlist.item(index)
             item.setData(Qt.ItemDataRole.CheckStateRole, True)
-        ensemble_selector_widget._EnsembleSelectionWidget__dndlist.ensembleSelectionListChanged.emit()
+        dndlist.ensembleSelectionListChanged.emit()
 
         gui_evaluator.compare_img_with_gui("plot_obs.png", PLOT_OBS_PNG_THRESHOLD)
 
@@ -413,6 +417,7 @@ def test_that_poly_new_with_observations_screenshots_are_up_to_date(
     assert not gui_evaluator.gui_change_detected(), gui_evaluator.change_report()
 
 
+@pytest.mark.skip_mac_ci
 def test_that_poly_new_with_more_observations_screenshots_are_up_to_date(
     tmp_path,
     monkeypatch,
@@ -447,14 +452,11 @@ def test_that_poly_new_with_more_observations_screenshots_are_up_to_date(
             gui, qtbot, EnsembleSelectionWidget, "Plot ensemble"
         )
 
-        for index in range(
-            ensemble_selector_widget._EnsembleSelectionWidget__dndlist.count()
-        ):
-            item = ensemble_selector_widget._EnsembleSelectionWidget__dndlist.item(
-                index
-            )
+        dndlist = ensemble_selector_widget._EnsembleSelectionWidget__dndlist
+        for index in range(dndlist.count()):
+            item = dndlist.item(index)
             item.setData(Qt.ItemDataRole.CheckStateRole, True)
-        ensemble_selector_widget._EnsembleSelectionWidget__dndlist.ensembleSelectionListChanged.emit()
+        dndlist.ensembleSelectionListChanged.emit()
 
         data_type_widget = wait_for_child(gui, qtbot, DataTypeKeysWidget, "Data types")
         set_data_type_selection_index(data_type_widget, 2)
