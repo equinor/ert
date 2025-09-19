@@ -12,7 +12,7 @@ from .gen_data_rft_export import GenDataRFTCSVExportJob
 from .misfit_preprocessor import MisfitPreprocessor
 
 if TYPE_CHECKING:
-    from ert.plugins.workflow_config import WorkflowConfigs
+    from ert.config import WorkflowConfigs
 
 
 @ert.plugin(name="ert")

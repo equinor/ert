@@ -14,26 +14,10 @@ def visualize_data(api: Any) -> None:
 
 
 @hookspec(firstresult=True)
-def default_site_config_lines() -> list[str]:  # type: ignore[empty-body]
-    """
-    :return: List default site config of lines to
-    :rtype: List of strings
-    """
-
-
-@hookspec(firstresult=True)
 def install_job_directories() -> list[str]:  # type: ignore[empty-body]
     """
     :return: List default site config of lines to
     :rtype: List of strings
-    """
-
-
-@hookspec()
-def site_config_lines() -> list[str]:  # type: ignore[empty-body]
-    """
-    :return: List of lines to append to site config file
-    :rtype: PluginResponse with data as list[str]
     """
 
 

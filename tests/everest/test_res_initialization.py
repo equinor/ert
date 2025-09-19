@@ -3,7 +3,8 @@ import stat
 from pathlib import Path
 from shutil import which
 from textwrap import dedent
-from unittest.mock import MagicMock, patch
+from unittest import mock
+from unittest.mock import MagicMock
 
 import pytest
 import yaml
@@ -21,6 +22,7 @@ from ert.config.queue_config import (
     SlurmQueueOptions,
     TorqueQueueOptions,
 )
+from ert.plugins import ErtPluginContext, ErtRuntimePlugins
 from everest.config import EverestConfig
 from everest.simulator.everest_to_ert import (
     _everest_to_ert_config_dict,
@@ -402,14 +404,24 @@ def test_that_queue_settings_are_taken_from_site_config(
     with open("config.yml", "w", encoding="utf-8") as f:
         yaml.dump(min_config, f)
 
-    with patch(
-        "ert.config.ert_config.site_config_location", return_value="site-config"
+    obj = ErtRuntimePlugins(
+        queue_options=LsfQueueOptions(lsf_resource="my_resource", lsf_queue="my_queue")
+    )
+    with mock.patch(
+        "ert.plugins.plugin_manager.ErtRuntimePlugins",
+        return_value=obj,
     ):
         config = EverestConfig.load_file("config.yml")
         assert config.simulator.queue_system == LsfQueueOptions(
             lsf_queue="my_queue", lsf_resource="my_resource"
         )
-        queue_config = QueueConfig.from_dict(everest_to_ert_config_dict(config))
+
+        with ErtPluginContext() as runtime_plugins:
+            queue_config = QueueConfig.from_dict(
+                everest_to_ert_config_dict(config),
+                site_queue_options=runtime_plugins.queue_options,
+            )
+
         assert queue_config.queue_options == LsfQueueOptions(
             lsf_queue="my_queue", lsf_resource="my_resource"
         )

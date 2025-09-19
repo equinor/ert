@@ -18,27 +18,27 @@ def forward_model_configuration():
 
 @plugin(name="dummy")
 def ecl100_config_path():
-    return "/dummy/path/ecl100_config.yml"
+    return "dummy/path/ecl100_config.yml"
 
 
 @plugin(name="dummy")
 def ecl300_config_path():
-    return "/dummy/path/ecl300_config.yml"
+    return "dummy/path/ecl300_config.yml"
 
 
 @plugin(name="dummy")
 def flow_config_path():
-    return "/dummy/path/flow_config.yml"
+    return "dummy/path/flow_config.yml"
 
 
 @plugin(name="dummy")
 def installable_jobs():
-    return {"job1": "/dummy/path/job1", "job2": "/dummy/path/job2"}
+    return {"job1": "dummy/path/job1", "job2": "dummy/path/job2"}
 
 
 @plugin(name="dummy")
 def installable_workflow_jobs():
-    return {"wf_job1": "/dummy/path/wf_job1", "wf_job2": "/dummy/path/wf_job2"}
+    return {"wf_job1": "dummy/path/wf_job1", "wf_job2": "dummy/path/wf_job2"}
 
 
 @plugin(name="dummy")
@@ -51,8 +51,20 @@ def legacy_ertscript_workflow(config):
 
 
 @plugin(name="dummy")
-def site_config_lines():
-    return ["JOB_SCRIPT fm_dispatch_dummy.py", "QUEUE_OPTION LOCAL MAX_RUNNING 2"]
+def site_configurations():
+    return {
+        "queue_options": {
+            "name": "lsf",
+            "max_running": "1",
+            "submit_sleep": "1",
+            "job_script": "fm_dispatch_sitecfg.py",
+        },
+        "environment_variables": {
+            "OMP_NUM_THREADS": "5",
+            "MKL_NUM_THREADS": "5",
+            "NUMEXPR_NUM_THREADS": "5",
+        },
+    }
 
 
 @plugin(name="dummy")
