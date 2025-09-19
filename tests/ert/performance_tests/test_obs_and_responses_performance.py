@@ -57,6 +57,10 @@ def create_experiment_args(
     num_summary_obs: int,
     num_realizations: int | None = None,
 ) -> ExperimentInfo:
+    seed = 123456789
+    rng = np.random.default_rng(seed)
+    random.seed(seed)
+
     gen_kw_config = GenKwConfig(
         name="all_my_parameters_live_here",
         forward_init=False,
@@ -117,7 +121,7 @@ def create_experiment_args(
                 dtype=pl.UInt16,
             ),
             "values": pl.Series(
-                _rng.normal(loc=10, scale=0.1, size=num_gendata_rows),
+                rng.normal(loc=10, scale=0.1, size=num_gendata_rows),
                 dtype=pl.Float32,
             ),
         }
@@ -136,11 +140,11 @@ def create_experiment_args(
                 dtype=pl.UInt16,
             ),
             "observations": pl.Series(
-                _rng.normal(loc=10, scale=0.1, size=num_gen_data_obs),
+                rng.normal(loc=10, scale=0.1, size=num_gen_data_obs),
                 dtype=pl.Float32,
             ),
             "std": pl.Series(
-                _rng.normal(loc=0.2, scale=0.1, size=num_gen_data_obs),
+                rng.normal(loc=0.2, scale=0.1, size=num_gen_data_obs),
                 dtype=pl.Float32,
             ),
         }
@@ -161,7 +165,7 @@ def create_experiment_args(
     smry_time_series = pl.Series("time", summary_timesteps, dtype=pl.Datetime("ms"))
     smry_values_series = pl.Series(
         "values",
-        _rng.normal(loc=10, scale=0.1, size=num_summary_keys),
+        rng.normal(loc=10, scale=0.1, size=num_summary_keys),
         dtype=pl.Float32,
     )
 
@@ -189,11 +193,11 @@ def create_experiment_args(
                 dtype=pl.Datetime("ms"),
             ),
             "observations": pl.Series(
-                _rng.normal(loc=10, scale=0.1, size=num_summary_obs),
+                rng.normal(loc=10, scale=0.1, size=num_summary_obs),
                 dtype=pl.Float32,
             ),
             "std": pl.Series(
-                _rng.normal(loc=0.2, scale=0.1, size=num_summary_obs),
+                rng.normal(loc=0.2, scale=0.1, size=num_summary_obs),
                 dtype=pl.Float32,
             ),
         }
