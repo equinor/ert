@@ -447,8 +447,8 @@ def test_that_numeric_string_columns_are_converted(tmp_path):
     _create_design_matrix(design_path, design_matrix_df)
     design_matrix = DesignMatrix(design_path, "DesignSheet", None)
     df = design_matrix.design_matrix_df
-    assert df.schema["a"] == pl.Int64
-    assert df.schema["b"] == pl.Float64
+    assert df.schema["a"] == pl.Int32
+    assert df.schema["b"] == pl.Float32
     assert df.schema["c"] == pl.String
     np.testing.assert_equal(df["a"], np.array([1, 2, 3]))
     np.testing.assert_equal(df["b"], np.array([0, 2.2, 0.1]))
