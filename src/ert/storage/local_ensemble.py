@@ -143,8 +143,6 @@ class LocalEnsemble(BaseMode):
             Instance of the newly created ensemble.
         """
 
-        (path / "experiment").mkdir(parents=True, exist_ok=False)
-
         index = _Index(
             id=uuid,
             ensemble_size=ensemble_size,
