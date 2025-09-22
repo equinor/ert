@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import sys
 import warnings
 from typing import Any, Literal, Self
 
@@ -8,7 +9,7 @@ import numpy as np
 from pydantic import BaseModel, field_validator, model_validator
 from scipy.stats import norm
 
-from .parsing import ConfigValidationError, ErrorInfo
+from .parsing import ConfigValidationError, ConfigWarning, ErrorInfo
 
 
 class TransSettingsValidation(BaseModel):
@@ -130,6 +131,20 @@ class LogNormalSettings(TransSettingsValidation):
                 f"Negative STD {value} for lognormal distribution"
             )
         return value
+
+    @model_validator(mode="after")
+    def valid_transformed(self) -> Self:
+        # Warn about potential overflow in transform's exp(x * self.std + self.mean).
+        # "x" is drawn from a standard normal distribution, 99.7% of values are within
+        # [-3, 3] stddev from the mean. I.e. 3*std + mean is a reasonable upper bound
+        # for the exponent for num realizations < 1000
+        if (3 * self.std + self.mean) > math.log(sys.float_info.max):
+            ConfigWarning.warn(
+                f"LOGNORMAL distribution: Too large values for mean ({self.mean}) "
+                f"or standard deviation ({self.std}). Resulting values may overflow.",
+                "Ensure that the given values are log values.",
+            )
+        return self
 
     def transform(self, x: float) -> float:
         return math.exp(x * self.std + self.mean)
