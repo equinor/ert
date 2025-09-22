@@ -40,7 +40,7 @@ class MockEnsemble(LocalEnsemble):
 
 class MockExperiment(LocalExperiment):
     def __init__(self, experiment_name) -> None:
-        self._index = _ExperimentIndex(id=uuid4(), name=experiment_name)
+        self._index = _ExperimentIndex(id=uuid4(), name=experiment_name, ensembles=[])
 
     @property
     def relative_weights(self) -> str:
