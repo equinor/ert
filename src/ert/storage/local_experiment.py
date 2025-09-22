@@ -142,8 +142,9 @@ class LocalExperiment(BaseMode):
         if name is None:
             name = datetime.today().isoformat()
 
-        (path / "index.json").write_text(
-            _Index(id=uuid, name=name).model_dump_json(indent=2)
+        storage._write_transaction(
+            path / "index.json",
+            _Index(id=uuid, name=name, ensembles=[]).model_dump_json(indent=2),
         )
 
         parameter_data = {}
