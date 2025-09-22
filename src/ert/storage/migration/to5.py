@@ -34,7 +34,9 @@ def migrate(path: Path) -> None:
         with open(experiment.joinpath("index.json"), mode="w", encoding="utf-8") as f:
             print(
                 _Index(
-                    id=UUID(experiment.name), name="default_experiment_name"
+                    id=UUID(experiment.name),
+                    name="default_experiment_name",
+                    ensembles=[],
                 ).model_dump_json(indent=2),
                 file=f,
             )
