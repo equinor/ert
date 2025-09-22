@@ -7,7 +7,49 @@ import polars as pl
 
 from ert.storage.local_ensemble import _escape_filename
 
-info = "Split up one GenKw group config into single parameters"
+info = (
+    "Split up one GenKw group config into single parameters. "
+    "Point experiments to ensembles"
+)
+
+
+def point_experiments_to_ensembles(path: Path) -> None:
+    ensemble_to_experiment = {}
+    for ensemble in path.glob("ensembles/*"):
+        with open(ensemble / "index.json", encoding="utf-8") as fin:
+            index_ = json.load(fin)
+            ensemble_to_experiment[index_["id"]] = index_["experiment_id"]
+
+    experiment_to_ensemble = {
+        exp_id: [
+            ens_id
+            for ens_id, ens_exp_id in ensemble_to_experiment.items()
+            if ens_exp_id == exp_id
+        ]
+        for exp_id in set(ensemble_to_experiment.values())
+    }
+
+    for experiment_path in path.glob("experiments/*"):
+        with open(experiment_path / "index.json", encoding="utf-8") as fin:
+            old_json = json.load(fin)
+            exp_id = old_json["id"]
+
+        if exp_id not in experiment_to_ensemble:
+            with open(experiment_path / "index.json", "w", encoding="utf-8") as fout:
+                json.dump(
+                    old_json | {"ensembles": []},
+                    fout,
+                    indent=4,
+                )
+            continue
+
+        with open(experiment_path / "index.json", "w", encoding="utf-8") as fout:
+            json.dump(
+                old_json
+                | {"ensembles": sorted(experiment_to_ensemble.get(exp_id, []))},
+                fout,
+                indent=4,
+            )
 
 
 tfd_to_distributions = {
@@ -96,3 +138,4 @@ def migrate_genkw(path: Path) -> None:
 
 def migrate(path: Path) -> None:
     migrate_genkw(path)
+    point_experiments_to_ensembles(path)
