@@ -4,16 +4,13 @@
     "name": "BPR",
     "forward_init": false,
     "update": true,
-    "transform_function_definitions": [
-      {
-        "name": "BPR",
-        "param_name": "NORMAL",
-        "values": [
-          "0",
-          "1"
-        ]
-      }
-    ]
+    "distribution": {
+      "name": "normal",
+      "mean": 0.0,
+      "std": 1.0
+    },
+    "group": "BPR",
+    "input_source": "sampled"
   },
   "PORO": {
     "type": "field",

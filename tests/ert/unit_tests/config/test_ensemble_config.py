@@ -122,7 +122,7 @@ def test_ensemble_config_duplicate_node_names():
                 duplicate_name,
                 ("FAULT_TEMPLATE", ""),
                 "MULTFLT.INC",
-                ("MULTFLT.TXT", "a UNIFORM 0 1"),
+                ("MULTFLT.TXT", f"{duplicate_name} UNIFORM 0 1"),
                 {"FORWARD_INIT": "FALSE"},
             ]
         ],

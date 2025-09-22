@@ -45,7 +45,9 @@ def test_design_matrix_in_manage_experiments_panel(
 
     with notifier.write_storage() as storage:
         storage.create_experiment(
-            parameters=[config.analysis_config.design_matrix.parameter_configuration],
+            parameters=list(
+                config.analysis_config.design_matrix.parameter_configurations
+            ),
             responses=config.ensemble_config.response_configuration,
             name="my-experiment",
         ).create_ensemble(
@@ -94,13 +96,9 @@ def test_design_matrix_in_manage_experiments_panel(
     assert {e.name for e in experiments} == {"my-experiment", "my-experiment-2"}
     exp2 = notifier.storage.get_experiment_by_name("my-experiment-2")
     ensemble = exp2.get_ensemble_by_name("my-design-2")
-    assert "DESIGN_MATRIX" in exp2.parameter_configuration
-    assert {
-        t.name
-        for t in exp2.parameter_configuration[
-            "DESIGN_MATRIX"
-        ].transform_function_definitions
-    } == {"a", "b", "c"}
+    for param in exp2.parameter_configuration.values():
+        assert param.group_name == "DESIGN_MATRIX"
+    assert {p.name for p in exp2.parameter_configuration.values()} == {"a", "b", "c"}
     assert all(
         RealizationStorageState.UNDEFINED in s for s in ensemble.get_ensemble_state()
     )
@@ -535,7 +533,16 @@ def test_realization_view(
     assert {"gen_data - RESPONSES_LOADED", "summary - RESPONSES_LOADED"}.issubset(
         set(realization_widget._response_text_edit.toPlainText().splitlines())
     )
-    assert (
-        realization_widget._parameter_text_edit.toPlainText()
-        == "\nSNAKE_OIL_PARAM - PARAMETERS_LOADED\n"
-    )
+
+    assert {
+        "OP1_PERSISTENCE - PARAMETERS_LOADED",
+        "OP1_OCTAVES - PARAMETERS_LOADED",
+        "OP1_DIVERGENCE_SCALE - PARAMETERS_LOADED",
+        "OP1_OFFSET - PARAMETERS_LOADED",
+        "OP2_PERSISTENCE - PARAMETERS_LOADED",
+        "OP2_OCTAVES - PARAMETERS_LOADED",
+        "OP2_DIVERGENCE_SCALE - PARAMETERS_LOADED",
+        "OP2_OFFSET - PARAMETERS_LOADED",
+        "BPR_555_PERSISTENCE - PARAMETERS_LOADED",
+        "BPR_138_PERSISTENCE - PARAMETERS_LOADED",
+    } == set(realization_widget._parameter_text_edit.toPlainText().strip().splitlines())
