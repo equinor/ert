@@ -295,6 +295,45 @@ def test_gen_kw_distribution_errors(tmpdir, distribution, mean, std, error):
 
 
 @pytest.mark.parametrize(
+    "param_name, values, expected_warning",
+    [
+        (
+            "LOGNORMAL",
+            ["700", "300"],  # high mean, high stdev
+            "LOGNORMAL distribution: Too large values for mean.*",
+        ),
+        (
+            "LOGNORMAL",
+            ["800", "1"],  # high mean, low stdev
+            "LOGNORMAL distribution: Too large values for mean.*",
+        ),
+        (
+            "LOGNORMAL",
+            ["1", "300"],  # low mean, high stdev
+            "LOGNORMAL distribution: Too large values for mean.*",
+        ),
+    ],
+)
+def test_that_high_mean_stddev_lognormal_gives_warning(
+    param_name, values, expected_warning
+):
+    with pytest.warns(
+        ConfigWarning,
+        match=expected_warning,
+    ) as _:
+        GenKwConfig(
+            name="KW_NAME",
+            forward_init=False,
+            transform_function_definitions=[
+                TransformFunctionDefinition(
+                    name="KEY1", param_name=param_name, values=values
+                ),
+            ],
+            update=True,
+        )
+
+
+@pytest.mark.parametrize(
     "params, error",
     [
         ("MYNAME NORMAL 0 1", None),
