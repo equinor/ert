@@ -61,8 +61,10 @@ jobs:
       if: ${{ failure() }}
       continue-on-error: true
       with:
-        name: test-images-${{ github.run_number }}-${{ github.run_id }}
-        path: /tmp/tmp*/**/*.png
+        name: test-images-${{ github.run_number }}-${{ github.run_id }}-${{ inputs.python-version }}
+        path: |
+          /tmp/tmp*/**/*.png
+          /tmp/test_docs_screenshots/**/*.png
 
     - name: CLI Test
       if: inputs.test-type == 'cli-tests'
