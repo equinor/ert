@@ -42,11 +42,13 @@ from .observations_generator import (
 )
 from .summary_generator import Date, Smspec, Unsmry, smspecs, summary_variables, unsmrys
 
+# Exclude SCRIPT because it is used as folder-name in
+# generate_files_and_dict
 words = st.text(
     min_size=4,
     max_size=8,
     alphabet=st.characters(min_codepoint=ord("A"), max_codepoint=ord("Z")),
-)
+).filter(lambda x: x != "SCRIPT")
 
 
 def touch(filename):
