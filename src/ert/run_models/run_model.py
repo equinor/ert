@@ -237,14 +237,6 @@ class RunModel(BaseModelWithContextSupport, ABC):
             "run_model": self.name(),
             "num_realizations": self.runpath_config.num_realizations,
             "num_active_realizations": self.active_realizations.count(True),
-            "num_parameters": (
-                sum(
-                    len(param_config.parameter_keys)
-                    for param_config in self.parameter_configuration
-                )
-                if hasattr(self, "parameter_configuration")
-                else "NA"
-            ),
             "localization": getattr(
                 settings_dict.get("analysis_settings", {}), "localization", "NA"
             ),
