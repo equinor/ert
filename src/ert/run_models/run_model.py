@@ -286,12 +286,16 @@ class RunModel(BaseModelWithContextSupport, ABC):
             exclude_unset=True, exclude_defaults=True
         )
 
-        queue_system = queue_config.queue_options.name or site_queue_options_dict.get(
-            "name", "local"
+        site_queue_system = str(
+            context.queue_options.name if context.queue_options is not None else "local"
         )
+        usr_queue_system = queue_config.queue_options.name
+        queue_system = usr_queue_system or site_queue_system
 
         queue_options = KnownQueueOptionsAdapter.validate_python(
-            {"name": queue_system} | site_queue_options_dict | usr_queue_options_dict
+            {"name": queue_system}
+            | (site_queue_options_dict if site_queue_system == usr_queue_system else {})
+            | usr_queue_options_dict
         )
 
         queue_config.queue_system = queue_options.name

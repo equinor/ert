@@ -442,10 +442,18 @@ class QueueConfig(BaseModelWithContextSupport):
 
         selected_queue_options = QueueOptions.create_queue_options(
             selected_queue_system,
-            default_queue_options_dict
-            | site_queue_options_dict
-            | grouped_queue_options[cast(QueueSystemWithGeneric, selected_queue_system)]
-            | usr_queue_options_dict,
+            (
+                default_queue_options_dict
+                | (
+                    site_queue_options_dict
+                    if str(selected_queue_system) == site_queue_system
+                    else {}
+                )
+                | grouped_queue_options[
+                    cast(QueueSystemWithGeneric, selected_queue_system)
+                ]
+                | usr_queue_options_dict
+            ),
             True,
         )
 
