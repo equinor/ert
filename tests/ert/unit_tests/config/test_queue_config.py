@@ -18,6 +18,7 @@ from ert.config.queue_config import (
     SlurmQueueOptions,
     TorqueQueueOptions,
 )
+from ert.plugins import ErtRuntimePlugins
 from ert.scheduler import LocalDriver, LsfDriver, OpenPBSDriver, SlurmDriver
 
 
@@ -548,3 +549,11 @@ def test_that_job_script_from_queue_options_takes_precedence_over_global(
         "QUEUE_OPTION LSF JOB_SCRIPT fm_dispatch_lsf.py\n"
     )
     assert config.queue_config.queue_options.job_script == "fm_dispatch_lsf.py"
+
+
+def test_that_site_queue_options_are_ignored_with_differing_user_queue_system_arg():
+    config = ErtConfig.with_plugins(
+        ErtRuntimePlugins(queue_options=LsfQueueOptions())
+    ).from_file_contents("NUM_REALIZATIONS 1\nQUEUE_SYSTEM LOCAL\n")
+
+    assert config.queue_config.queue_system == QueueSystem.LOCAL
