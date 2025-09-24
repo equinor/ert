@@ -23,6 +23,7 @@ from ert.config.queue_config import (
     TorqueQueueOptions,
 )
 from ert.plugins import ErtPluginContext, ErtRuntimePlugins
+from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from everest.simulator.everest_to_ert import (
     _everest_to_ert_config_dict,
@@ -112,6 +113,19 @@ def test_everest_to_ert_queue_config(config, config_class, tmp_path, monkeypatch
     queue_config.queue_system = ever_config.simulator.queue_system.name
 
     assert queue_config.queue_options == config_class(**config)
+
+
+@pytest.mark.usefixtures("use_site_configurations_with_lsf_queue_options")
+def test_that_site_config_queue_options_do_not_override_user_queue_config(
+    min_config, monkeypatch, tmp_path
+):
+    ever_config = EverestConfig.with_defaults(
+        simulator={"queue_system": {"name": "local"}}, model={"realizations": [0]}
+    )
+
+    with ErtPluginContext():
+        config = EverestRunModel.create(ever_config, "some_exp_name", "batch")
+        assert config.queue_system == "local"
 
 
 def test_default_installed_jobs(tmp_path, monkeypatch):
@@ -535,6 +549,7 @@ def test_that_resubmit_limit_is_set(change_to_tmpdir) -> None:
     assert config_dict[ErtConfigKeys.MAX_SUBMIT] == 1
 
 
+@pytest.mark.usefixtures("no_plugins")
 @pytest.mark.parametrize(
     "max_memory, realization_memory",
     [(None, 0), (999, 999), ("1Gb", 1073741824), (0, 0)],
@@ -546,6 +561,7 @@ def test_that_max_memory_is_passed_to_realization_memory(
     assert config.simulator.queue_system.realization_memory == realization_memory
 
 
+@pytest.mark.usefixtures("no_plugins")
 @pytest.mark.parametrize(
     "max_memory, realization_memory, expected",
     [(None, 0, 0), (0, 0, 0), (111, 999, 999), (55, 0, 55)],

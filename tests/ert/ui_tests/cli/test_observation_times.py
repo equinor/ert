@@ -29,7 +29,7 @@ observation_times = st.dates(
 @pytest.mark.filterwarnings(
     "ignore:.*overflow encountered in multiply.*:RuntimeWarning"
 )
-@pytest.mark.usefixtures("set_site_config")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @settings(max_examples=3)
 @given(
     responses_observation=observation_times.flatmap(

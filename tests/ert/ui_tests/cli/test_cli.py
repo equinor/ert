@@ -248,14 +248,14 @@ expected_vars = {
 }
 
 
-@pytest.mark.usefixtures("set_site_config")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_that_setenv_config_is_parsed_correctly(setenv_config):
     config = ErtConfig.from_file(str(setenv_config))
     # then res config should read the SETENV as is
     assert config.env_vars == expected_vars
 
 
-@pytest.mark.usefixtures("set_site_config")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_that_setenv_sets_environment_variables_in_steps(setenv_config):
     # When running the jobs
     run_cli(

@@ -93,6 +93,7 @@ if __name__ == "__main__":
         assert Path(runpath_content).exists()
 
 
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.integration_test
 @pytest.mark.everest_models_test
 @skipif_no_everest_models

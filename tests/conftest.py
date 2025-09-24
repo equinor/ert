@@ -1,8 +1,11 @@
 import os
 from importlib.resources import files
+from unittest.mock import patch
 
 import pytest
 from PyQt6.QtCore import QDir
+
+from ert.plugins import ErtRuntimePlugins
 
 
 def pytest_addoption(parser):
@@ -123,3 +126,15 @@ def setup_svg_search_path():
     QDir.addSearchPath(
         "img", str(files("ert.gui").joinpath("../../ert/gui/resources/gui/img"))
     )
+
+
+@pytest.fixture()
+def use_site_configurations_with_no_queue_options():
+    def ErtRuntimePluginsWithNoQueueOptions(**kwargs):
+        return ErtRuntimePlugins(**(kwargs | {"queue_options": None}))
+
+    with patch(
+        "ert.plugins.plugin_manager.ErtRuntimePlugins",
+        ErtRuntimePluginsWithNoQueueOptions,
+    ):
+        yield

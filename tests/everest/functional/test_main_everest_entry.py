@@ -46,6 +46,7 @@ def test_everest_main_entry_bad_command():
 @pytest.mark.skip_mac_ci
 @pytest.mark.integration_test
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_everest_entry_run(cached_example):
     _, config_file, _, _ = cached_example("math_func/config_minimal.yml")
 
@@ -170,6 +171,7 @@ def test_everest_main_configdump_entry(copy_eightcells_test_data_to_tmp):
 @pytest.mark.timeout(60)
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_that_keyboard_interrupt_stops_optimization_with_a_graceful_shutdown(
     capsys, setup_minimal_everest_case
 ):

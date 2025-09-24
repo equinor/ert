@@ -87,13 +87,6 @@ settings.register_profile(
 )
 
 
-@pytest.fixture()
-def set_site_config(monkeypatch, tmp_path):
-    test_site_config = tmp_path / "test_site_config.ert"
-    test_site_config.write_text("JOB_SCRIPT fm_dispatch.py\nQUEUE_SYSTEM LOCAL\n")
-    monkeypatch.setenv("ERT_SITE_CONFIG", str(test_site_config))
-
-
 @pytest.fixture(scope="session", name="source_root")
 def fixture_source_root():
     return SOURCE_DIR

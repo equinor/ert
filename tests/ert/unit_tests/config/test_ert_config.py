@@ -434,7 +434,7 @@ def test_that_subst_list_is_given_default_runpath_file():
 
 @pytest.mark.integration_test
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
-@pytest.mark.usefixtures("set_site_config")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @settings(max_examples=10)
 @given(config_generators())
 def test_that_creating_ert_config_from_dict_is_same_as_from_file(
@@ -452,7 +452,7 @@ def test_that_creating_ert_config_from_dict_is_same_as_from_file(
 
 @pytest.mark.integration_test
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
-@pytest.mark.usefixtures("set_site_config")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @settings(max_examples=20)
 @given(config_generators())
 def test_that_ert_config_is_serializable(tmp_path_factory, config_generator):
@@ -471,7 +471,7 @@ def test_that_ert_config_has_valid_schema():
 
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
-@pytest.mark.usefixtures("set_site_config")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.integration_test
 @settings(max_examples=10)
 @given(config_generators())
@@ -762,7 +762,7 @@ def test_that_unknown_hooked_job_gives_config_validation_error():
 
 
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("set_site_config")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @settings(max_examples=10)
 @given(config_generators())
 def test_that_if_field_is_given_and_grid_is_missing_you_get_error(
@@ -1320,7 +1320,7 @@ def test_that_boolean_values_can_be_any_case(val, expected):
     assert ert_config.queue_config.stop_long_running == expected
 
 
-@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
+@pytest.mark.usefixtures("use_tmpdir", "use_site_configurations_with_no_queue_options")
 def test_that_include_take_into_account_path():
     """
     Tests that use_new_parser resolves an issue
@@ -1357,7 +1357,7 @@ def test_that_include_take_into_account_path():
     ]
 
 
-@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
+@pytest.mark.usefixtures("use_tmpdir", "use_site_configurations_with_no_queue_options")
 def test_that_substitution_happens_for_include():
     test_config_file_name = "test.ert"
     test_config_contents = dedent(
@@ -1386,7 +1386,7 @@ def test_that_substitution_happens_for_include():
     )
 
 
-@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
+@pytest.mark.usefixtures("use_tmpdir", "use_site_configurations_with_no_queue_options")
 def test_that_defines_in_included_files_has_immediate_effect():
     test_config_file_name = "test.ert"
     test_config_contents = dedent(
@@ -1413,7 +1413,7 @@ def test_that_defines_in_included_files_has_immediate_effect():
     assert "baz-<ITER>-<IENS>" in ert_config.runpath_config.runpath_format_string
 
 
-@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
+@pytest.mark.usefixtures("use_tmpdir", "use_site_configurations_with_no_queue_options")
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_multiple_errors_are_shown_for_forward_model():
     with pytest.raises(ConfigValidationError) as err:

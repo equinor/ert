@@ -12,7 +12,7 @@ from ert.storage import open_storage
 from .run_cli import run_cli
 
 
-@pytest.mark.usefixtures("set_site_config")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_surface_param_update(tmpdir):
     """Full update with a surface parameter, it mirrors the poly example,
     except it uses SURFACE instead of GEN_KW.

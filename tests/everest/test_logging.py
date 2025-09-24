@@ -18,6 +18,7 @@ from everest.config.install_job_config import InstallJobConfig
 @pytest.mark.timeout(240)  # Simulation might not finish
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
+@pytest.mark.usefixtures("no_plugins")
 def test_logging_setup(copy_math_func_test_data_to_tmp):
     # Ensure no interference with plugins which may set queue system
     config_file = "config_minimal.yml"

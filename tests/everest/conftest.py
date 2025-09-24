@@ -14,9 +14,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 import yaml
 
+import ert
 import everest
-from ert.config.queue_config import LocalQueueOptions
+from ert.config.queue_config import LocalQueueOptions, LsfQueueOptions
 from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.plugins import ErtRuntimePlugins
 from ert.run_models import StatusEvents
 from ert.run_models.event import status_event_from_json, status_event_to_json
 from ert.run_models.everest_run_model import EverestRunModel
@@ -177,6 +179,7 @@ def copy_eightcells_test_data_to_tmp(tmp_path, monkeypatch):
 
 
 @pytest.fixture
+@pytest.mark.usefixtures("no_plugins")
 def cached_example(pytestconfig):
     cache = pytestconfig.cache
 
@@ -281,7 +284,48 @@ def mock_server(monkeypatch):
 
 
 @pytest.fixture()
+def use_site_configurations_with_lsf_queue_options():
+    """
+    Mimic site config
+    """
+
+    lsf_queue_options = LsfQueueOptions(
+        name="lsf",
+        max_running="1",
+        submit_sleep="1",
+        job_script="fm_dispatch_sitecfg.py",
+    )
+
+    def ErtRuntimePluginsWithLSFQueueOptions(**kwargs):
+        return ErtRuntimePlugins(**(kwargs | {"queue_options": lsf_queue_options}))
+
+    class SiteConfigBlank:
+        @ert.plugin(name="dummy")
+        def site_configurations() -> ErtRuntimePlugins:
+            return ErtRuntimePlugins(queue_options=lsf_queue_options)
+
+    patched_context = partial(
+        everest.simulator.everest_to_ert.ErtPluginContext, plugins=[SiteConfigBlank]
+    )
+    patched_everest = partial(
+        everest.config.everest_config.ErtPluginContext, plugins=[SiteConfigBlank]
+    )
+
+    with (
+        patch("everest.simulator.everest_to_ert.ErtPluginContext", patched_context),
+        patch("everest.config.everest_config.ErtPluginContext", patched_everest),
+        patch(
+            "ert.plugins.plugin_manager.ErtRuntimePlugins",
+            ErtRuntimePluginsWithLSFQueueOptions,
+        ),
+    ):
+        yield
+
+
+@pytest.fixture()
 def no_plugins():
+    patched_plugin_ctx = partial(ert.plugins.ErtPluginContext, plugins=[])
+
     patched_context = partial(
         everest.simulator.everest_to_ert.ErtPluginContext, plugins=[]
     )
@@ -290,6 +334,7 @@ def no_plugins():
     )
 
     with (
+        patch("ert.plugins.ErtPluginContext", patched_plugin_ctx),
         patch("everest.simulator.everest_to_ert.ErtPluginContext", patched_context),
         patch("everest.config.everest_config.ErtPluginContext", patched_everest),
     ):

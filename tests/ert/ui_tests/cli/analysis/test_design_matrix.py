@@ -24,6 +24,7 @@ from tests.ert.conftest import _create_design_matrix
 from tests.ert.ui_tests.cli.run_cli import run_cli
 
 
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_run_poly_example_with_design_matrix(copy_poly_case_with_design_matrix, caplog):
     caplog.set_level(logging.INFO)
     num_realizations = 10
@@ -74,7 +75,9 @@ def test_run_poly_example_with_design_matrix(copy_poly_case_with_design_matrix, 
             assert isinstance(v, float | int)
 
 
-@pytest.mark.usefixtures("copy_poly_case")
+@pytest.mark.usefixtures(
+    "copy_poly_case", "use_site_configurations_with_no_queue_options"
+)
 @pytest.mark.parametrize(
     "default_values, error_msg",
     [
@@ -208,7 +211,9 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values, err
         assert output[3] == "category: cat2"
 
 
-@pytest.mark.usefixtures("copy_poly_case")
+@pytest.mark.usefixtures(
+    "copy_poly_case", "use_site_configurations_with_no_queue_options"
+)
 def test_run_poly_example_with_multiple_design_matrix_instances():
     num_realizations = 10
     a_values = list(range(num_realizations))
@@ -297,7 +302,9 @@ def test_run_poly_example_with_multiple_design_matrix_instances():
         np.testing.assert_array_equal(params["g"].to_list(), 10 * [4])
 
 
-@pytest.mark.usefixtures("copy_poly_case")
+@pytest.mark.usefixtures(
+    "copy_poly_case", "use_site_configurations_with_no_queue_options"
+)
 @pytest.mark.parametrize(
     "experiment_mode, ensemble_name, iterations",
     [
@@ -406,6 +413,7 @@ def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
             assert values == pytest.approx(coeffs_b, 0.0001)
 
 
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_run_poly_example_with_design_matrix_selective_realizations(
     copy_poly_case_with_design_matrix, capsys
 ):
@@ -487,6 +495,7 @@ def test_design_matrix_on_esmda_fail_without_updateable_parameters(
         )
 
 
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
     "realizations_in_design_matrix, expected_message_format",
     [
@@ -548,6 +557,7 @@ def test_run_poly_example_with_different_realization_count_chooses_smaller_and_w
     )
 
 
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
     "specified_realizations, intersected_realizations_count",
     [
