@@ -19,7 +19,7 @@ def test_load_summary_response_restart_not_zero(
     """
     This is a regression test for summary responses where the index map
     was not correctly loaded, this is relevant for restart cases from eclipse.
-    The :term:`summary files` cannot be easily created programatically because the
+    The :term:`summary files` cannot be easily created programmatically because the
     report steps do not start from 1 as they usually do.
     """
     test_path = Path(request.module.__file__).parent / "summary_response"
