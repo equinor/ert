@@ -91,6 +91,7 @@ def capturing_bsub(monkeypatch, tmp_path):
     )
 
 
+@pytest.mark.integration_test
 @pytest.mark.parametrize(
     "bjobs_script, bhist_script, exit_code",
     [
@@ -116,6 +117,7 @@ async def test_exit_codes(
     assert await driver._get_exit_code("0") == exit_code
 
 
+@pytest.mark.integration_test
 @given(
     jobstate_sequence=st.lists(st.sampled_from(JobState.__args__), min_size=1),
     exit_code=st.integers(min_value=1, max_value=254),
@@ -252,6 +254,7 @@ async def test_that_realization_memory_parameter_sets_bsub_rusage_option():
     assert "-R rusage[mem=1]" in Path("captured_bsub_args").read_text(encoding="utf-8")
 
 
+@pytest.mark.integration_test
 @pytest.mark.parametrize(
     "bsub_script, expectation",
     [

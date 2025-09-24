@@ -46,6 +46,7 @@ def make_api_snapshot(api) -> dict[str, Any]:
     return api_json
 
 
+@pytest.mark.integration_test
 @pytest.mark.parametrize(
     "config_file",
     [

@@ -34,6 +34,7 @@ def test_history_obs(create_measured_data):
     assert fopr.data.shape == (7, 200)
 
 
+@pytest.mark.integration_test
 def test_summary_obs(create_measured_data):
     summary_obs = create_measured_data(["WOPR_OP1_72"])
     summary_obs.remove_inactive_observations()
