@@ -43,7 +43,7 @@ def test_make_observation_declarations():
     assert make_observation_declarations(
         "",
         [
-            (ObservationType.HISTORY, "FOPR"),
+            (ObservationType.HISTORY, "FOPR", {}),
             (
                 ObservationType.SUMMARY,
                 "WOPR_OP1_9",

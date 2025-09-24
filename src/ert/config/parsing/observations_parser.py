@@ -1,7 +1,6 @@
 from enum import StrEnum
 from typing import (
     Any,
-    Literal,
     no_type_check,
 )
 
@@ -24,16 +23,12 @@ class ObservationType(StrEnum):
     GENERAL = "GENERAL_OBSERVATION"
 
 
-SimpleHistoryStatement = tuple[Literal[ObservationType.HISTORY], FileContextToken]
-
-
 ObservationBody = dict[str | tuple[str, str], Any]
-ObservationStatement = tuple[ObservationType, str, ObservationBody]
+ObservationName = str
+ObservationStatement = tuple[ObservationType, ObservationName, ObservationBody]
 
 
-def parse_observations(
-    content: str, filename: str
-) -> list[SimpleHistoryStatement | ObservationStatement]:
+def parse_observations(content: str, filename: str) -> list[ObservationStatement]:
     try:
         return (FileContextTransformer(filename) * TreeToObservations()).transform(
             observations_parser.parse(content)
@@ -112,15 +107,16 @@ observations_parser = Lark(
 )
 
 
-class TreeToObservations(
-    Transformer[FileContextToken, list[SimpleHistoryStatement | ObservationStatement]]
-):
+class TreeToObservations(Transformer[FileContextToken, list[ObservationStatement]]):
     start = list
 
     @staticmethod
     @no_type_check
     def observation(tree):
-        return (ObservationType(tree[0].children[0]), *tree[1:])
+        if len(tree) == 2:
+            return (ObservationType(tree[0].children[0]), *tree[1:], {})
+        else:
+            return (ObservationType(tree[0].children[0]), *tree[1:])
 
     @staticmethod
     @no_type_check

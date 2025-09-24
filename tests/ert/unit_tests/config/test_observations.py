@@ -94,7 +94,7 @@ def make_refcase_observations(
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_when_history_source_is_history_the_history_summary_vector_is_used():
     observations = make_refcase_observations(
-        [("HISTORY_OBSERVATION", "FOPR")],
+        [("HISTORY_OBSERVATION", "FOPR", {})],
         extra_config={"HISTORY_SOURCE": "REFCASE_HISTORY"},
         parse=False,
     )
@@ -108,7 +108,7 @@ def test_that_the_key_of_an_history_observation_must_be_in_the_refcase():
         ConfigValidationError, match="Key 'MISSINGH' is not present in refcase"
     ):
         make_refcase_observations(
-            [("HISTORY_OBSERVATION", "MISSING")],
+            [("HISTORY_OBSERVATION", "MISSING", {})],
             parse=False,
         )
 
@@ -117,7 +117,7 @@ def test_that_the_key_of_an_history_observation_must_be_in_the_refcase():
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_when_history_source_is_simulated_the_summary_vector_is_used():
     observations = make_refcase_observations(
-        [("HISTORY_OBSERVATION", "FOPR")],
+        [("HISTORY_OBSERVATION", "FOPR", {})],
         extra_config={"HISTORY_SOURCE": "REFCASE_SIMULATED"},
         parse=False,
     )
@@ -583,7 +583,7 @@ def test_that_having_no_refcase_but_history_observations_causes_exception():
         ErtConfig.from_dict(
             {
                 "ECLBASE": "my_name%d",
-                "OBS_CONFIG": ("obsconf", [("HISTORY_OBSERVATION", "FOPR")]),
+                "OBS_CONFIG": ("obsconf", [("HISTORY_OBSERVATION", "FOPR", {})]),
             }
         )
 
@@ -1539,6 +1539,12 @@ def test_that_error_mode_must_be_one_of_rel_abs_relmin_in_history_observation():
                 ERROR=1.0;
             };
         """)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_history_observations_can_omit_body():
+    obs = make_refcase_observations("HISTORY_OBSERVATION  FOPR;")
+    assert list(obs["summary"]["response_key"]) == ["FOPR"]
 
 
 def test_that_error_min_must_be_a_positive_number_in_summary_observation():
