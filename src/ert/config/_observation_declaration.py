@@ -13,7 +13,6 @@ from .parsing import (
     ObservationConfigError,
     ObservationStatement,
     ObservationType,
-    SimpleHistoryStatement,
 )
 
 ErrorModes = Literal["REL", "ABS", "RELMIN"]
@@ -83,7 +82,7 @@ Declaration = HistoryDeclaration | SummaryDeclaration | GenObsDeclaration
 
 
 def make_observation_declarations(
-    directory: str, statements: Sequence[SimpleHistoryStatement | ObservationStatement]
+    directory: str, statements: Sequence[ObservationStatement]
 ) -> list[Declaration]:
     """Takes observation statements and returns validated observation declarations.
 
@@ -97,23 +96,7 @@ def make_observation_declarations(
     for stat in statements:
         try:
             if stat[0] == ObservationType.HISTORY:
-                if len(stat) == 2:
-                    result.append(
-                        (
-                            stat[1],
-                            _validate_history_values(stat[1], {}),
-                        )
-                    )
-                if len(stat) == 3:
-                    result.append(
-                        (
-                            stat[1],
-                            _validate_history_values(
-                                stat[1],
-                                stat[2],
-                            ),
-                        )
-                    )
+                result.append((stat[1], _validate_history_values(stat[1], stat[2])))
             elif stat[0] == ObservationType.SUMMARY:
                 if len(stat) != 3:
                     raise _unknown_declaration_error(stat)
@@ -373,7 +356,7 @@ def _unknown_key_error(key: str, name: str) -> ObservationConfigError:
 
 
 def _unknown_declaration_error(
-    decl: SimpleHistoryStatement | ObservationStatement,
+    decl: ObservationStatement,
 ) -> ObservationConfigError:
     return ObservationConfigError.with_context(
         f"Unexpected declaration in observations {decl}", decl[1]

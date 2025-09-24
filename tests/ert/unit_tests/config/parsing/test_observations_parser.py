@@ -49,7 +49,7 @@ def test_parse_observations():
     """,
         "",
     ) == [
-        (ObservationType.HISTORY, "FOPR"),
+        (ObservationType.HISTORY, "FOPR", {}),
         (
             ObservationType.SUMMARY,
             "WOPR_OP1_9",
@@ -121,7 +121,7 @@ def test_that_repeated_comments_are_ignored():
                         FOPR;
             """,
         "",
-    ) == [(ObservationType.SUMMARY, "FOPR")]
+    ) == [(ObservationType.SUMMARY, "FOPR", {})]
 
 
 @pytest.mark.parametrize("observation_type", ["HISTORY", "GENERAL", "SUMMARY"])

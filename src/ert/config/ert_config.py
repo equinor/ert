@@ -52,7 +52,6 @@ from .parsing import (
     HookRuntime,
     ObservationConfigError,
     ObservationStatement,
-    SimpleHistoryStatement,
     init_forward_model_schema,
     init_user_config_schema,
     parse_contents,
@@ -658,13 +657,12 @@ def create_list_of_forward_model_steps_to_run(
 
 
 def log_observation_keys(
-    observations: list[SimpleHistoryStatement | ObservationStatement],
+    observations: list[ObservationStatement],
 ) -> None:
     observation_type_counts = Counter(str(o[0]) for o in observations)
     observation_keyword_counts = Counter(
         "SEGMENT" if isinstance(key, tuple) else str(key)
         for o in observations
-        if len(o) == 3
         for key in o[2]
     )
 

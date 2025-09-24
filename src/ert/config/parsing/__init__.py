@@ -14,7 +14,6 @@ from .observations_parser import (
     ObservationConfigError,
     ObservationStatement,
     ObservationType,
-    SimpleHistoryStatement,
     parse_observations,
 )
 from .queue_system import QueueSystem, QueueSystemWithGeneric
@@ -43,7 +42,6 @@ __all__ = [
     "QueueSystem",
     "QueueSystemWithGeneric",
     "SchemaItemType",
-    "SimpleHistoryStatement",
     "WarningInfo",
     "WorkflowJobKeys",
     "init_forward_model_schema",
