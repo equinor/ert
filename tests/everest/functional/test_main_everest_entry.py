@@ -86,6 +86,7 @@ def test_everest_entry_run(cached_example):
     assert status["status"] == ExperimentState.completed
 
 
+@pytest.mark.integration_test
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
 def test_everest_entry_monitor_no_run(cached_example):
     _, config_file, _, _ = cached_example("math_func/config_minimal.yml")
