@@ -39,13 +39,6 @@ from ert.storage import open_storage
 from .run_cli import run_cli
 
 
-@pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
-def test_bad_config_error_message(tmp_path):
-    (tmp_path / "test.ert").write_text("NUM_REL 10\n")
-    with pytest.raises(ConfigValidationError, match="NUM_REALIZATIONS must be set\\."):
-        run_cli(TEST_RUN_MODE, "--disable-monitoring", str(tmp_path / "test.ert"))
-
-
 def test_test_run_on_lsf_configuration_works_with_no_errors(tmp_path):
     (tmp_path / "test.ert").write_text(
         "NUM_REALIZATIONS 1\nQUEUE_SYSTEM LSF", encoding="utf-8"

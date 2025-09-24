@@ -398,7 +398,7 @@ def test_that_strings_escape_comments():
 
 
 @pytest.mark.filterwarnings("ignore:.*Unknown keyword.*:ert.config.ConfigWarning")
-def test_bad_user_config_file_error_message():
+def test_that_num_realizations_is_a_required_keyword():
     with pytest.raises(ConfigValidationError, match="NUM_REALIZATIONS must be set"):
         _ = ErtConfig.from_file_contents("NUM_REL 10\n")
 
