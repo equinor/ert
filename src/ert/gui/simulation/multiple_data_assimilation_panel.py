@@ -24,12 +24,14 @@ from ert.gui.ertwidgets import (
 from ert.gui.suggestor import Suggestor
 from ert.mode_definitions import ES_MDA_MODE
 from ert.run_models import MultipleDataAssimilation
+from ert.storage.realization_storage_state import RealizationStorageState
 from ert.validation import (
     ExperimentValidation,
     NumberListStringArgument,
     ProperNameFormatArgument,
 )
 from ert.validation.active_range import ActiveRange
+from ert.validation.ensemble_realizations_argument import EnsembleRealizationsArgument
 from ert.validation.range_string_argument import RangeSubsetStringArgument
 
 from ._design_matrix_panel import DesignMatrixPanel
@@ -121,13 +123,23 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             ActiveRealizationsModel(len(active_realizations)),  # type: ignore
             "config/simulation/active_realizations",
         )
+        self._new_ensemble_realizations_validator = RangeSubsetStringArgument(
+            ActiveRange(active_realizations)
+        )
         self._active_realizations_field.setValidator(
-            RangeSubsetStringArgument(ActiveRange(active_realizations))
+            self._new_ensemble_realizations_validator
         )
         self._active_realizations_field.model.setValueFromMask(  # type: ignore
             active_realizations
         )
         self._ensemble_selector = EnsembleSelector(notifier)
+        self._previous_ensemble_realizations_validator = EnsembleRealizationsArgument(
+            lambda: self._ensemble_selector.selected_ensemble,
+            max_value=len(active_realizations),
+            required_realization_storage_states=[
+                RealizationStorageState.RESPONSES_LOADED
+            ],
+        )
         layout.addRow("Active realizations:", self._active_realizations_field)
         self._active_realizations_field.setObjectName("active_realizations_box")
 
@@ -233,9 +245,15 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             else MultipleDataAssimilation.default_weights
         )
         if self._restart_box.isChecked():
+            self._active_realizations_field.setValidator(
+                self._previous_ensemble_realizations_validator
+            )
             self._realizations_from_fs()
         else:
             # If box is unchecked we reset to the default mask
+            self._active_realizations_field.setValidator(
+                self._new_ensemble_realizations_validator
+            )
             self._active_realizations_field.model.setValue(value="")
 
     def _createInputForWeights(self, layout: QFormLayout) -> None:
@@ -309,7 +327,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         ensemble = self._ensemble_selector.selected_ensemble
         try:
             if ensemble:
-                mask = ensemble.get_realization_mask_with_parameters()
+                mask = ensemble.get_realization_mask_with_responses()
                 self._active_realizations_field.model.setValueFromMask(mask)  # type: ignore
         except OSError as err:
             logger.error(str(err))
