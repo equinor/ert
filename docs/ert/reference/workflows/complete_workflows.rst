@@ -47,7 +47,7 @@ internally in ERT, but you can optionally supply a second extra argument
 which will be used as the name for the workflow.  Alternatively,
 you can load a workflow interactively.
 
-.. _hook_workflow:
+.. _automatically-run-workflows:
 
 Automatically run workflows
 ---------------------------------------------------
