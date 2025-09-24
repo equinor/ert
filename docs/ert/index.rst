@@ -42,6 +42,7 @@ To understand the theoretical foundations of ensemble-based methods, head over t
    reference/running_ert
    reference/configuration/index
    reference/workflows/index
+   reference/glossary
 
 .. toctree::
    :hidden:
@@ -55,7 +56,6 @@ To understand the theoretical foundations of ensemble-based methods, head over t
 
    developer_documentation/roadmap
    developer_documentation/dev-strategy
-   developer_documentation/concepts
    developer_documentation/forward_model
    developer_documentation/qt
 

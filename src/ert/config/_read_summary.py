@@ -61,7 +61,7 @@ def read_summary(
         )
     except resfo.ResfoParsingError as err:
         raise InvalidResponseFile(
-            f"Failed to read summary file {summary_basename}: {err}"
+            f"Failed to read summary files {summary_basename}: {err}"
         ) from err
     return (start_date, keys, time_map, fetched)
 
@@ -77,7 +77,7 @@ def make_summary_key(
     lj: int | None = None,
     lk: int | None = None,
 ) -> str:
-    """Converts values found in the summary file to the summary_key format.
+    """Converts values found in the smspec file to the summary_key format.
 
     Ert and some other applications use a colon separated format to specify
     summary parameters. For instance:

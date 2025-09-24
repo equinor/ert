@@ -828,7 +828,7 @@ def test_that_a_custom_eclrun_can_be_activated_through_setenv():
 
 def run_sim(start_date):
     """
-    Create a summary file, the contents of which are not important
+    Creates summary files, the contents of which are not important
     """
     summary = Summary.writer("ECLIPSE_CASE", start_date, 3, 3, 3)
     summary.add_variable("FOPR", unit="SM3/DAY")

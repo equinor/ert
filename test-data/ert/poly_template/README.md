@@ -14,7 +14,7 @@ It takes several parameters:
 * `gen_data_entries` &mdash; Number of entries in each gen_data vector
 * `summary_data_entries` &mdash; Number of entries in each summary vector
 * `reals` &mdash; Number of realizations to run
-* `summary_data_count` &mdash; Number of summary vectors to put in the summary file
+* `summary_data_count` &mdash; Number of summary vectors to put in the summary files
 * `sum_obs_count` &mdash; Attach observations to this many gen_data vectors, must be less that gen_data_count
 * `gen_obs_count` &mdash; Attach observations to this many gen_data vectors, must be less that gen_data_count
 * `sum_obs_every` &mdash; Put an observation point for every n summary_data entry, for the summary vectors that have

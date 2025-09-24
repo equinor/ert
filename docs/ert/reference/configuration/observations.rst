@@ -23,19 +23,20 @@ to this observation file is declared in the main ERT config file using the
 The observation file is a plain text file, and is in essence built around three
 different classes of observations using the associated keywords:
 
- - :ref:`SUMMARY_OBSERVATION <summary_observation>`: For scalar values that
-   can be extracted from an ECLIPSE summary file. Examples are rates from
-   separator tests, water cut, GOR, shut in pressures, etc.
+ - :ref:`HISTORY_OBSERVATION <history_observation>`: For time series of
+   observations for which the observed values can be extracted from the
+   :term:`summary files` of the :ref:`refcase`. Used for easy / quick
+   configuration of production rates and fractions.
+
+ - :ref:`SUMMARY_OBSERVATION <summary_observation>`: For explicitly giving
+   scalar observation values for responses that can be extracted from a
+   reservoir simulator :term:`summary files`. Examples are rates from separator
+   tests, water cut, GOR, shut in pressures, etc.
 
  - :ref:`GENERAL_OBSERVATION <general_observation>`: All other observations.
    These observations are extracted from ascii files and allows for loading
    of just about anything. Examples: 4D seismic, results from non ECLIPSE
    compatible simulators, etc.
-
- - :ref:`HISTORY_OBSERVATION <history_observation>`: For time series of
-   observations for which the observed values can be extracted from
-   WCONPROD or WCONINJE section of ECLIPSE schedule files. Used for easy / quick
-   configuration of production rates and fractions.
 
 
 Please note that observations and datatypes are quite tightly linked together.
@@ -48,11 +49,11 @@ as described in :ref:`Data types available in ERT <Data_types_available_in_ERT>`
 SUMMARY_OBSERVATION keyword
 ---------------------------
 
-The keyword SUMMARY_OBSERVATION can be used to condition on any
-observation for which the simulated value is written to the ECLIPSE
-summary file, e.g. well rates, region properties, group and field
-rates etc. A typical usage of SUMMARY_OBSERVATION is to condition
-on results from separator tests.
+The keyword SUMMARY_OBSERVATION can be used to condition on any observation for
+which the simulated value is in the :term:`summary files` with basename
+:ref:`eclbase` produced by each :term:`realisation`, e.g. well rates, region properties, group and field rates etc.
+A typical usage of SUMMARY_OBSERVATION is to condition on results from
+separator tests.
 
 In order to create a summary observation, four pieces of information
 are needed: The observed value, the observation error, the time of
@@ -74,20 +75,21 @@ group on 21th of august 2005. The observed value was 100 with a
 standard deviation of 5. The name SEP_TEST_2005 will be used as a
 label for the observation within ERT and must be unique.
 
-Date format YYYY-MM-DD (ISO 8601) is required.
-Other time formats, like DD/MM/YYYY or DD.MM.YYYY, are deprecated
-and their support will be removed in a future release. The date format
-can also include hours and seconds: "YYYY-MM-DDTHH:mm:ss". When the
-summary file is read from the realization, report times are rounded
-to seconds and matched to closest observations with 1 second tolerance.
+Date format YYYY-MM-DD (ISO 8601) is required. Other time formats, like
+DD/MM/YYYY or DD.MM.YYYY, are deprecated and their support will be removed in a
+future release. The date format can also include hours and seconds:
+"YYYY-MM-DDTHH:mm:ss". When the :ref:`eclbase` :term:`summary files` are read
+from the realization, report times are rounded to seconds and matched to
+closest observations with 1 second tolerance.
 
-The item KEY in a SUMMARY_OBSERVATION is used to look up the simulated value
-from the summary file. To condition on the summary key VAR in a well, group or
+The item KEY is a :term:`summary key`, which is used to look up the simulated
+value from the :term:`summary files` with basename :ref:`eclbase` from each
+:term:`realisation`. To condition on the summary key VAR in a well, group or
 region WGRNAME, use::
 
  KEY = VAR:WGRNAME;
 
-For example, to condition on RPPW in region 8, use::
+For example, to condition on ``RPPW`` in region 8, use::
 
  KEY = RPPW:8;
 
@@ -124,24 +126,23 @@ Here are two examples:
 HISTORY_OBSERVATION keyword
 ---------------------------
 
-The keyword HISTORY_OBSERVATION is used to condition on observations
-fetched from the WCONHIST and WCONINJH keywords in schedule file provided to
-the ERT project (or alternatively an ECLIPSE summary file if you have
-changed the HISTORY_SOURCE keyword in the ERT project). The keyword
-is typically used to condition on production and injection rates for
-groups and wells, as well as bottom hole and tubing head pressures. An
-observation entered with the HISTORY_OBSERVATION keyword will be
-active at all report steps where data for the observation can be
-found.
+The keyword HISTORY_OBSERVATION is used to condition on observations fetched
+from the :ref:`refcase`. The keyword is typically used to condition
+on production and injection rates for groups and wells, as well as bottom hole
+and tubing head pressures. An observation entered with the HISTORY_OBSERVATION
+keyword will be active at all report steps where data for the observation can
+be found.
 
 In its simplest form, a history observation is created as follows::
 
    HISTORY_OBSERVATION WOPR:P1;
 
-This will condition on WOPR in well P1 using a default observation
+This will condition on ``WOPR`` in well P1 using a default observation
 error.
 
-In general, to condition on variable VAR in well or group WGNAME, use::
+In general, a :term:`summary key` is given following the
+HISTORY_OBSERVATION keyword, e.g. to condition on variable VAR in well or group
+WGNAME, use::
 
    HISTORY_OBSERVATION VAR:WGNAME;
 
@@ -251,14 +252,6 @@ the previous:
 .. code-block:: none
 
  HISTORY_OBSERVATION GWIR:FIELD { ERROR = 0.20; ERROR_MODE = RELMIN; ERROR_MIN = 100; };
-
-By default, an observation entered with the HISTORY_OBSERVATION
-keyword will get the observed values, i.e. the 'true' values, from the
-WCONHIST and WCONINJH keywords in the schedule file provided to the
-ERT project. However it is also possible to get the observed values from
-a reference case. In that case you must set HISTORY_SOURCE
-variable in the ERT configuration file, see Creating a configuration
-file for ERT.
 
 To change the observation error for a HISTORY_OBSERVATION for one or
 more segments of the historic period, you can use the SEGMENT

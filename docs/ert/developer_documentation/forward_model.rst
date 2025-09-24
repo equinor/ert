@@ -4,10 +4,8 @@ The forward model
 Purpose
 -------
 
-The task of the forward model is to bring the model under study forward and by
-doing so create its response to the given input. For an overview of how the
-forward model fits into the larger picture of an ensemble we refer the reader
-to :doc:`concepts`.
+The task of the :term:`forward model` is to bring the model under study forward and by
+doing so create its response to the given input.
 
 ERT forward models
 ------------------

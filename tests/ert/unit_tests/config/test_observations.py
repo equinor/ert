@@ -47,7 +47,7 @@ SUMMARY_VALUES = {
 
 def run_simulator(summary_values=SUMMARY_VALUES):
     """
-    Create an ecl summary file, we have one value for FOPR (1) and a different
+    Create :term:`summary files` with one value for FOPR (1) and a different
     for FOPRH (2) so we can assert on the difference.
     """
     summary = Summary.writer("MY_REFCASE", datetime(2000, 1, 1), 10, 10, 10)
@@ -837,9 +837,7 @@ def test_that_giving_both_index_file_and_index_list_raises_an_exception(tmpdir):
 
 
 def run_sim(start_date, keys=None, values=None, days=None):
-    """
-    Create a summary file, the contents of which are not important
-    """
+    """Create :term:`summary files`"""
     keys = keys or [("FOPR", "SM3/DAY", None)]
     values = {} if values is None else values
     days = [1] if days is None else days
