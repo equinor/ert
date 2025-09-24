@@ -19,6 +19,7 @@ class MockPluginManager(pluggy.PluginManager):
         self.register(hook_impl)
 
 
+@pytest.mark.integration_test
 @pytest.mark.xdist_group("math_func/config_advanced.yml")
 @patch("everest.bin.visualization_script.EverestPluginManager", MockPluginManager)
 def test_expected_message_when_no_visualisation_plugin_is_installed(cached_example):
