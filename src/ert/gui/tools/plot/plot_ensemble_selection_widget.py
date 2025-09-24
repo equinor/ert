@@ -49,6 +49,9 @@ class EnsembleSelectionWidget(QWidget):
     def get_selected_ensembles(self) -> list[EnsembleObject]:
         return self.__dndlist.get_checked_ensembles()
 
+    def get_selected_ensembles_indexes(self) -> list[int]:
+        return self.__dndlist.get_checked_indexes()
+
 
 class EnsembleSelectListWidget(QListWidget):
     ensembleSelectionListChanged = Signal()
@@ -87,6 +90,16 @@ class EnsembleSelectListWidget(QListWidget):
                 assert item is not None
                 if item.data(Qt.ItemDataRole.CheckStateRole):
                     yield item.data(Qt.ItemDataRole.UserRole)
+
+        return list(_iter())
+
+    def get_checked_indexes(self) -> list[int]:
+        def _iter() -> Iterator[int]:
+            for index in range(self._ensemble_count):
+                item = self.item(index)
+                assert item is not None
+                if item.data(Qt.ItemDataRole.CheckStateRole):
+                    yield index
 
         return list(_iter())
 
