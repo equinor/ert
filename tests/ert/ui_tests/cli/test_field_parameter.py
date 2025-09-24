@@ -250,6 +250,7 @@ def test_field_param_update_using_heat_equation(symlinked_heat_equation_storage_
     assert (cond_iter0 != cond_iter1).all()
 
 
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_parameter_update_with_inactive_cells_xtgeo_grdecl(tmpdir):
     """
     This replicates the poly example, only it uses FIELD parameter

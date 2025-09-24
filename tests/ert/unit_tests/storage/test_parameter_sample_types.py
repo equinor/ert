@@ -359,7 +359,7 @@ def test_that_sub_sample_maintains_order(tmpdir, storage, mask, expected):
         assert df.select("MY_KEYWORD").to_numpy().ravel().tolist() == expected
 
 
-@pytest.mark.usefixtures("set_site_config")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
     "config_str, expected",
     [
@@ -395,7 +395,7 @@ def write_file(fname, contents):
         fout.writelines(contents)
 
 
-@pytest.mark.usefixtures("set_site_config")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
     "config_str, expected, extra_files, expectation",
     [
@@ -469,7 +469,7 @@ def test_gen_kw_missing_in_storage(storage, tmpdir, active_reals, expectation):
             ensemble.load_parameters("KW_NAME", 0)
 
 
-@pytest.mark.usefixtures("set_site_config")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
     "config_str, expected, extra_files",
     [
@@ -525,7 +525,7 @@ def test_gen_kw_templating(
         )
 
 
-@pytest.mark.usefixtures("set_site_config")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
     "relpath, err_msg",
     [

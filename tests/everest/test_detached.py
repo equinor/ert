@@ -45,6 +45,7 @@ from everest.util import makedirs_if_needed
 @pytest.mark.integration_test
 @pytest.mark.skip_mac_ci
 @pytest.mark.xdist_group(name="starts_everest")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 async def test_https_requests(change_to_tmpdir):
     Path("./config.yml").touch()
     everest_config = EverestConfig.with_defaults(config_path="./config.yml")
@@ -199,6 +200,7 @@ def test_detached_mode_config_error():
         )
 
 
+@pytest.mark.usefixtures("no_plugins")
 @pytest.mark.parametrize(
     "config_kwargs, expected_result",
     [
@@ -241,6 +243,7 @@ def test_generate_queue_options_no_config():
         ),
     ],
 )
+@pytest.mark.usefixtures("no_plugins")
 def test_that_server_queue_system_defaults_to_simulator_queue_options(
     monkeypatch, queue_class, expected_queue_kwargs
 ):
@@ -327,6 +330,7 @@ def test_simulator_queue_system_site_config(
 @pytest.mark.timeout(5)  # Simulation might not finish
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 async def test_starting_not_in_folder(tmp_path, monkeypatch):
     """
     This tests that the second argument to the everserver is the config

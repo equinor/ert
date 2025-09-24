@@ -162,6 +162,7 @@ async def test_status_exception(_, change_to_tmpdir, min_config):
 @pytest.mark.xdist_group(name="starts_everest")
 @pytest.mark.timeout(240)
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file("config_minimal.yml")
     config_dict = {
@@ -192,6 +193,7 @@ async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
 @pytest.mark.xdist_group(name="starts_everest")
 @pytest.mark.timeout(240)
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 async def test_status_too_few_realizations_succeeded(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file("config_minimal.yml")
     config_dict = {
@@ -222,6 +224,7 @@ async def test_status_too_few_realizations_succeeded(copy_math_func_test_data_to
 @pytest.mark.xdist_group(name="starts_everest")
 @pytest.mark.timeout(240)
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 async def test_status_all_realizations_failed(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file("config_minimal.yml")
     config_dict = {

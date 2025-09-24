@@ -182,6 +182,7 @@ def make_summary_data(
     )
 
 
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.memory_test
 @pytest.mark.limit_memory("130 MB")
 @pytest.mark.flaky(reruns=5)
@@ -198,7 +199,7 @@ def test_field_param_memory(tmpdir):
         run_poly()
 
 
-@pytest.mark.usefixtures("set_site_config")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def create_poly_with_field(field_dim: tuple[int, int, int], realisations: int):
     """
     This replicates the poly example, only it uses FIELD parameter

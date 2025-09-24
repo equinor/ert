@@ -73,7 +73,7 @@ from .conftest import (
 )
 
 
-@pytest.mark.usefixtures("set_site_config")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
     "config, expected_message_types",
     [
@@ -123,7 +123,7 @@ def test_that_the_ui_show_no_errors_and_enables_update_for_poly_example(qapp):
         assert gui.windowTitle().startswith("ERT - poly.ert")
 
 
-@pytest.mark.usefixtures("set_site_config")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_gui_shows_a_warning_and_disables_update_when_there_are_no_observations(
     qapp, tmp_path
 ):
@@ -173,7 +173,7 @@ def test_gui_shows_a_warning_and_disables_update_when_parameters_are_missing(
         assert gui.windowTitle().startswith("ERT - poly-no-gen-kw.ert")
 
 
-@pytest.mark.usefixtures("set_site_config")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_help_buttons_in_suggester_dialog(tmp_path, qtbot):
     """
     WHEN I am shown an error in the gui
@@ -209,7 +209,7 @@ def test_that_run_workflow_component_disabled_when_no_workflows(qapp):
         assert not gui.workflows_tool.getAction().isEnabled()
 
 
-@pytest.mark.usefixtures("set_site_config")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_that_run_workflow_component_enabled_when_workflows(qapp, tmp_path):
     config_file = tmp_path / "config.ert"
 
@@ -620,7 +620,7 @@ def test_that_a_failing_job_shows_error_message_with_context(
 
 
 @pytest.mark.skip_mac_ci
-@pytest.mark.usefixtures("set_site_config")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_that_gui_plotter_works_when_no_data(qtbot, monkeypatch, use_tmpdir):
     monkeypatch.setattr(PlotApi, "get_all_ensembles", lambda _: [])
     config_file = "minimal_config.ert"
@@ -655,7 +655,7 @@ def test_that_gui_plotter_works_when_no_data(qtbot, monkeypatch, use_tmpdir):
 
 
 @pytest.mark.skip_mac_ci
-@pytest.mark.usefixtures("use_tmpdir", "set_site_config")
+@pytest.mark.usefixtures("use_tmpdir", "use_site_configurations_with_no_queue_options")
 def test_right_click_plot_button_opens_external_plotter(qtbot, use_tmpdir, monkeypatch):
     monkeypatch.setattr(PlotApi, "get_all_ensembles", lambda _: [])
     config_file = "minimal_config.ert"

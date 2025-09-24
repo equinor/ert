@@ -66,6 +66,7 @@ def test_math_func_advanced(cached_example):
 
 
 @pytest.mark.integration_test
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_remove_run_path(copy_math_func_test_data_to_tmp):
     with open("config_minimal.yml", encoding="utf-8") as file:
         config_yaml = yaml.safe_load(file)
@@ -121,6 +122,7 @@ def test_remove_run_path(copy_math_func_test_data_to_tmp):
 
 
 @pytest.mark.integration_test
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_math_func_auto_scaled_controls(copy_math_func_test_data_to_tmp):
     # Arrange
     config = EverestConfig.load_file("config_minimal.yml")
@@ -163,6 +165,7 @@ def test_math_func_auto_scaled_controls(copy_math_func_test_data_to_tmp):
 
 
 @pytest.mark.integration_test
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_math_func_auto_scaled_objectives(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file("config_multiobj.yml")
     config_dict = config.model_dump(exclude_none=True)
@@ -190,6 +193,7 @@ def test_math_func_auto_scaled_objectives(copy_math_func_test_data_to_tmp):
 
 
 @pytest.mark.integration_test
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_math_func_auto_scaled_constraints(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file("config_advanced.yml")
     config_dict = config.model_dump(exclude_none=True)
@@ -226,6 +230,7 @@ def test_ensemble_creation(cached_example):
 
 
 @pytest.mark.integration_test
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_that_math_func_violating_output_constraints_has_no_result(
     copy_math_func_test_data_to_tmp,
 ):
@@ -247,6 +252,7 @@ def test_that_math_func_violating_output_constraints_has_no_result(
 
 
 @pytest.mark.integration_test
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_that_math_func_violating_output_constraints_has_a_result(
     copy_math_func_test_data_to_tmp,
 ):
@@ -268,6 +274,7 @@ def test_that_math_func_violating_output_constraints_has_a_result(
 
 
 @pytest.mark.integration_test
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_that_math_func_violating_input_constraints_has_no_result(
     copy_math_func_test_data_to_tmp,
 ):
@@ -289,6 +296,7 @@ def test_that_math_func_violating_input_constraints_has_no_result(
 
 
 @pytest.mark.integration_test
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_that_math_func_violating_input_constraints_has_a_result(
     copy_math_func_test_data_to_tmp,
 ):
