@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Sequence
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
@@ -11,8 +12,8 @@ from ert.summary_key_type import history_key
 from ert.validation import rangestring_to_list
 
 from ._observation_declaration import (
-    ConfContent,
     DateValues,
+    Declaration,
     ErrorValues,
     GenObsValues,
     HistoryValues,
@@ -35,7 +36,7 @@ DEFAULT_TIME_DELTA = timedelta(seconds=30)
 
 
 def create_observations(
-    obs_config_content: ConfContent,
+    obs_config_content: Sequence[Declaration],
     ensemble_config: EnsembleConfig,
     time_map: list[datetime] | None,
     history: HistorySource,

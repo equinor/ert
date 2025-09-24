@@ -80,12 +80,11 @@ class GenObsValues(DateValues, _GenObsValues):
 
 GenObsDeclaration = tuple[str, GenObsValues]
 Declaration = HistoryDeclaration | SummaryDeclaration | GenObsDeclaration
-ConfContent = Sequence[Declaration]
 
 
 def make_observation_declarations(
     directory: str, statements: Sequence[SimpleHistoryStatement | ObservationStatement]
-) -> Sequence[Declaration]:
+) -> list[Declaration]:
     """Takes observation statements and returns validated observation declarations.
 
     Param:

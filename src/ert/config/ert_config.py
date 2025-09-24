@@ -23,7 +23,6 @@ from ert.substitutions import Substitutions
 from ._create_observations import create_observations
 from ._design_matrix_validator import DesignMatrixValidator
 from ._observation_declaration import (
-    ConfContent,
     Declaration,
     HistoryValues,
     SummaryValues,
@@ -944,7 +943,7 @@ class ErtConfig(BaseModel):
             errors.append(err)
 
         obs_config_args = config_dict.get(ConfigKeys.OBS_CONFIG)
-        obs_configs: ConfContent = []
+        obs_configs: list[Declaration] = []
         try:
             if obs_config_args:
                 obs_config_file, obs_config_input = obs_config_args
