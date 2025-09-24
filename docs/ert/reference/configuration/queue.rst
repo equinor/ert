@@ -37,7 +37,7 @@ all queue systems. These are documented in :ref:`ert_kw_full_doc`.
 * ``MAX_SUBMIT`` — see :ref:`List of keywords<max_submit>`
 * ``NUM_CPU`` — see :ref:`List of keywords<num_cpu>`
 * ``STOP_LONG_RUNNING`` — see :ref:`List of keywords<stop_long_running>`
-* ``SUBMIT_SLEEP`` — see :ref:`List of keywords<submit_sleep>`
+* ``SUBMIT_SLEEP`` — see :ref:`List of keywords<queue_option_submit_sleep>`
 
 
 .. _local-queue:
@@ -140,7 +140,7 @@ The following is a list of available LSF configuration options:
 
     QUEUE_OPTION LSF BHIST_CMD command
 
-.. _submit_sleep:
+.. _queue_option_submit_sleep:
 .. topic:: SUBMIT_SLEEP
 
   Determines for how long in seconds the system will sleep between submitting jobs.
