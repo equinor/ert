@@ -74,7 +74,7 @@ def monitor_everest(options: argparse.Namespace) -> None:
 
     try:
         client = StorageService.session(
-            Path(ServerConfig.get_session_dir(config.output_dir))
+            Path(ServerConfig.get_session_dir(config.output_dir)), timeout=1
         )
         server_context = ServerConfig.get_server_context_from_conn_info(
             client.conn_info
