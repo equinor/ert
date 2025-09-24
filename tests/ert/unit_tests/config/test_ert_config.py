@@ -1856,7 +1856,7 @@ def test_warning_raised_when_summary_key_and_no_simulation_job_present():
         str(w.message)
         == (
             "Config contains a SUMMARY key but no forward model "
-            "steps known to generate a summary file"
+            "steps known to generate summary files"
         )
         for w in all_warnings
         if isinstance(w.message, ConfigWarning)

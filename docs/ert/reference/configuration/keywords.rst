@@ -1478,19 +1478,10 @@ model is run again.
 SUMMARY
 -------
 
-The SUMMARY keyword is used to add summary vectors from the summary file to
-be read from the runpath. Summary variables are described in the `opm flow reference manual
-<https://opm-project.org/wp-content/uploads/2023/06/OPM_Flow_Reference_Manual_2023-04_Rev-0_Reduced.pdf>`
-section 11.1.
-A summary vector is uniquely specified by giving a summary variable, and
-potentially one or more of the following properties: well name, region name, lgr
-name, block index, completion index, network name.
+The SUMMARY keyword is used to add summary vectors from the summary files to
+be read from the runpath.
 
-Ert uses the following textual format, called summary key, to refer to a summary vector.
-
-A summary key is a colon separated list of the required properties needed to uniquely
-specify a summary vector. What properties are required is specified in
-OPM Flow Reference manual 2023-04 section F.9.2.
+Ert uses the following textual format, called :term:`summary key`, to refer to a summary vector.
 
 So for example for field variables, no additional information is required:
 `FOPR`, `FWPR`, etc. For well variables, the well name need to be specified:
@@ -1499,7 +1490,7 @@ given: `BOPR:10,9,50`. For a local completion, both the lgr name, well name,
 and index has to be given: `LWWITH:LGR1:WELL2:3,5,5`.
 
 The SUMMARY keyword accepts wildcard '*'. This adds all summary vectors where
-the corresponding summary key matches the pattern.
+the corresponding :term:`summary key` matches the pattern.
 
 *Example:*
 

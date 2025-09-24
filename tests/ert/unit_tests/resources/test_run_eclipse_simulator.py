@@ -212,7 +212,7 @@ def test_await_completed_summary_file_does_not_time_out_on_nosim_with_mpi(source
 def test_run_reservoirsimulator_on_nosim_with_mpi_and_existing_unsmry_file(source_root):
     """This emulates users rerunning Eclipse in an existing runpath, with MPI.
 
-    The wait for timeout will not happen, since there is a summary file present.
+    The wait for timeout will not happen, since there are no summary files present.
 
     This test only effectively asserts that no crash occurs"""
     deck = (source_root / "test-data/ert/eclipse/SPE1.DATA").read_text(encoding="utf-8")
