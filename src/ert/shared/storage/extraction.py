@@ -32,9 +32,6 @@ def create_priors(
                     "function": _PRIOR_NAME_MAP[func.distribution.name.upper()],
                 }
                 for name, value in func.parameter_list.items():
-                    # Libres calls it steps, but normal stats uses bins
-                    if name == "STEPS":
-                        name = "bins"
                     prior[name.lower()] = value
 
                 priors_dict[f"{group}:{func.name}"] = prior
