@@ -26,6 +26,26 @@ class SamplerConfig(BaseModel):
         description=dedent(
             """
             The sampling method or distribution used by the sampler backend.
+
+            The set of available methods depends on the sampler backend used. By
+            default a plugin based on `scipy.stats` is used, implementing the
+            following methods:
+
+            - From Probability Distributions:
+                - `norm`: Samples from a standard normal distribution (mean 0,
+                  standard deviation 1).
+                - `truncnorm`: Samples from a truncated normal distribution
+                  (mean 0, std. dev. 1), truncated to the range `[-1, 1]`.
+                - `uniform`: Samples from a uniform distribution in the range
+                  `[-1, 1]`.
+
+            - From Quasi-Monte Carlo Sequences:
+                - `sobol`: Uses Sobol' sequences.
+                - `halton`: Uses Halton sequences.
+                - `lhs`: Uses Latin Hypercube Sampling.
+
+                Note: QMC samples are generated in the unit hypercube `[0, 1]^d`
+                and then scaled to the hypercube `[-1, 1]^d`.
             """
         ),
     )
