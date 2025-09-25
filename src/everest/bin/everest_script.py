@@ -118,7 +118,8 @@ def _build_args_parser() -> argparse.ArgumentParser:
     arg_parser.add_argument(
         "--new-run",
         action="store_true",
-        help="Run the optimization even though results are already available",
+        help="DEPRECATED: This option is deprecated and has no effect. "
+        "Update your scripts accordingly.",
     )
     arg_parser.add_argument(
         "--gui",
@@ -132,7 +133,7 @@ def _build_args_parser() -> argparse.ArgumentParser:
         "--show-all-jobs",
         action="store_true",
         help=(
-            "This option no longer has an effect, "
+            "DEPRECATED: This option no longer has an effect, "
             "and will be removed in a future version"
         ),
     )
@@ -157,10 +158,9 @@ async def run_everest(options: argparse.Namespace) -> None:
         options.config.output_dir
     )
 
-    if not options.new_run:
-        EverestStorage.check_for_deprecated_seba_storage(
-            options.config.optimization_output_dir
-        )
+    EverestStorage.check_for_deprecated_seba_storage(
+        options.config.optimization_output_dir
+    )
 
     server_state = everserver_status(everserver_status_path)
     try:
@@ -180,7 +180,7 @@ async def run_everest(options: argparse.Namespace) -> None:
             "To kill the running optimization use command:\n"
             f"  `everest kill {config_file}`"
         )
-    elif server_state["status"] == ExperimentState.never_run or options.new_run:
+    elif server_state["status"] == ExperimentState.never_run:
         config_dict = options.config.to_dict()
         logger.info("Running everest with the following config:")
         logger.info(json.dumps(config_dict, sort_keys=True, indent=2))
