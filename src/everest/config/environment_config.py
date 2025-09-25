@@ -43,8 +43,8 @@ class EnvironmentConfig(BaseModel, extra="forbid"):
                low`). The software is still working as expected.
             - `error`: Due to a more serious problem, the software has not been
                able to perform some function.
-            - `critical`: A serious error, indicating that the program itself
-               may be unable to continue running.
+            - `critical`: A serious error, indicating that the program will not
+              be able to continue running.
             """
         ),
     )

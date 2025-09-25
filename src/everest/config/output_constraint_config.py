@@ -65,7 +65,7 @@ class OutputConstraintConfig(BaseModel, extra="forbid"):
             the scaling is 10, then the function evaluation value will be
             divided by 10 and bounded from above by 0.05.
 
-            This option may not be set if `auto_scale` is set in the
+            This option will be disabled if `auto_scale` is set in the
             `optimization` section.
             """
         ),
