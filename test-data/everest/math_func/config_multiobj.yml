@@ -43,6 +43,10 @@ forward_model:
               --target -1.5 -1.5 0.5
               --out distance_q
 
+simulator:
+  queue_system:
+    name: local
+
 environment:
   simulation_folder: sim_output
   output_folder: everest_output_multiobj

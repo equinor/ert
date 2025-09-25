@@ -74,6 +74,10 @@ optimization:
   max_batch_num: 5
   speculative: true
 
+simulator:
+  queue_system:
+    name: local
+
 environment:
   log_level: info
   random_seed: 999

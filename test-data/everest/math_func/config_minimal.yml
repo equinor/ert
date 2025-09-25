@@ -33,6 +33,10 @@ model:
 forward_model:
   - distance3 --point-file point.json --target 0.5 0.5 0.5 --out distance
 
+simulator:
+  queue_system:
+    name: local
+
 environment:
   simulation_folder: sim_output
   log_level: info
