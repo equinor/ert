@@ -31,7 +31,12 @@ def create_priors(
                 "function": _PRIOR_NAME_MAP[param.distribution.name.upper()],
                 **param.distribution.model_dump(exclude={"name"}),
             }
-
+            # webviz-ert expects some variables names
+            if param.distribution.name == "triangular":
+                mapping = {"min": "_xmin", "max": "xmax", "mode": "xmode"}
+            else:
+                mapping = {"min": "_min", "max": "_max"}
+            prior = {mapping.get(k, k): v for k, v in prior.items()}
             priors_dict[f"{param.group}:{param.name}"] = prior
 
     return priors_dict
