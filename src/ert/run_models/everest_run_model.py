@@ -26,7 +26,15 @@ from ropt.results import FunctionResults, Results
 from ropt.transforms import OptModelTransforms
 from typing_extensions import TypedDict
 
-from ert.config import ParameterConfig, QueueConfig, ResponseConfig
+from ert.config import (
+    EverestConstraintsConfig,
+    EverestObjectivesConfig,
+    GenDataConfig,
+    ParameterConfig,
+    QueueConfig,
+    ResponseConfig,
+    SummaryConfig,
+)
 from ert.config.ert_config import (
     create_and_hook_workflows,
     read_templates,
@@ -52,8 +60,8 @@ from everest.optimizer.opt_model_transforms import (
     get_optimization_domain_transforms,
 )
 from everest.simulator.everest_to_ert import (
+    _extract_summary_keys,
     everest_to_ert_config_dict,
-    get_ensemble_config,
     get_forward_model_steps,
     get_substitutions,
     get_workflow_jobs,
@@ -201,11 +209,45 @@ class EverestRunModel(RunModel):
         queue_config.queue_options = everest_config.simulator.queue_system
         queue_config.queue_system = everest_config.simulator.queue_system.name
 
-        ensemble_config = get_ensemble_config(config_dict, everest_config)
-        parameter_configs = {
-            control.name: control.to_ert_parameter_config()
-            for control in everest_config.controls
-        }
+        parameter_configs = [
+            control.to_ert_parameter_config() for control in everest_config.controls
+        ]
+
+        response_configs = []
+
+        objective_names = [c.name for c in everest_config.objective_functions]
+        response_configs.append(
+            EverestObjectivesConfig(keys=objective_names, input_files=objective_names)
+        )
+
+        constraint_names = [c.name for c in everest_config.output_constraints]
+
+        if constraint_names:
+            response_configs.append(
+                EverestConstraintsConfig(
+                    keys=constraint_names,
+                    input_files=constraint_names,
+                )
+            )
+
+        gen_data_keys = [
+            fm.results.file_name
+            for fm in (everest_config.forward_model or [])
+            if fm.results is not None and fm.results.type == "gen_data"
+        ]
+
+        if gen_data_keys:
+            response_configs.append(
+                GenDataConfig(
+                    keys=gen_data_keys,
+                    report_steps_list=[None] * len(gen_data_keys),
+                    input_files=gen_data_keys,
+                )
+            )
+
+        summary_keys = _extract_summary_keys(everest_config)
+        if summary_keys:
+            response_configs.append(SummaryConfig(keys=summary_keys))
 
         substitutions = get_substitutions(
             config_dict,
@@ -277,7 +319,7 @@ class EverestRunModel(RunModel):
             # (Not totally in conformity with ERT runmodel logic)
             active_realizations=[],
             parameter_configuration=parameter_configs,
-            response_configuration=ensemble_config.response_configuration,
+            response_configuration=response_configs,
             ert_templates=ert_templates,
             user_config_file=config_file,
             env_vars=env_vars,
