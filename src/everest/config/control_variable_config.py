@@ -49,8 +49,10 @@ class _ControlVariable(BaseModel):
             """
             Enable/disable the variable.
 
-            If set to `False` the variable will not be changed during
-            optimization. Overrides the value of `enabled` in the control group.
+            If set to `False` the variable will be kept kept constant at the
+            initial guess value during optimization.
+
+            If set, overrides the value of `enabled` in the control group.
             """
         ),
     )

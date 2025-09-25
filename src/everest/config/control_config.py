@@ -122,7 +122,7 @@ class ControlConfig(BaseModel):
             Enable/disable control groups.
 
             Whether all control variables in the control group are enabled or
-            not. When not enabled, variables are kept constant at the intial
+            not. When not enabled, variables are kept constant at the initial
             guess value during optimization.
 
             This default value can be overridden at the variable level.
