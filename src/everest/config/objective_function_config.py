@@ -1,4 +1,5 @@
-from typing import Annotated, Any
+from textwrap import dedent
+from typing import Annotated, Any, Literal
 
 from pydantic import (
     AfterValidator,
@@ -12,43 +13,65 @@ from everest.config.validation_utils import not_in_reserved_word_list
 
 
 class ObjectiveFunctionConfig(BaseModel, extra="forbid"):
-    name: Annotated[str, AfterValidator(not_in_reserved_word_list)] = Field()
+    name: Annotated[str, AfterValidator(not_in_reserved_word_list)] = Field(
+        description=dedent(
+            """
+            The name of the objective function.
+            """
+        )
+    )
     weight: float | None = Field(
         default=None,
-        description="""
-weight determines the importance of an objective function relative to the other
-objective functions.
+        description=dedent(
+            """
+            The weight determines the importance of an objective function relative
+            to the other objective functions.
 
-Ultimately, the weighted sum of all the objectives is what Everest tries to optimize.
-Note that, in case the weights do not sum up to 1, they are normalized before being
-used in the optimization process. Weights may be zero or negative, but should add up to
-a positive value.
-""",
+            Everest optimizes the weighted sum of all objectives. The weights of
+            all objectives are normalized to a total value of one by dividing
+            them by their sum. Weights may be zero or negative, but should add
+            up to a positive value.
+            """
+        ),
     )
     scale: PositiveFloat | None = Field(
         default=None,
-        description="""
-    scale is a division factor defined per objective function.
+        description=dedent(
+            """
+            Optional scaling of the objective function value.
 
-    The value of each objective function is divided by the related scaling value.
-    When optimizing with respect to multiple objective functions, it is important
-    that the scaling is set so that all the scaled objectives have the same order
-    of magnitude. Ultimately, the scaled objectives are used in computing
-    the weighted sum that Everest tries to optimize.
-    """,
+            Each objective function will be divided by this scale value. This
+            can be used to change the overall range of the objective values. For
+            instance, this may be needed to properly balance the relative scales
+            of objectives and output constraints.
+
+            Note: This option should be used with care in case of
+            multi-objective optimization, since scaling each objective
+            differently will change their relative weights.
+
+            This option may not be set if `auto_scale` is set in the
+            `optimization` section.
+            """
+        ),
     )
-    type: str | None = Field(
-        default=None,
-        description="""
-type can be set to the name of a method that should be applied to calculate a
-total objective function from the objectives obtained for all realizations.
-Currently, the only values supported are "mean" and "stddev", which calculate
-the mean and the negative of the standard deviation over the realizations,
-respectively. The negative of the standard deviation is used, since in general
-the aim is to minimize the standard deviation as opposed to the mean, which is
-preferred to be maximized.
+    type: Literal["mean", "stddev"] = Field(
+        default="mean",
+        description=dedent(
+            """
+            How to calculate the objective from realizations.
 
-""",
+            The objective function value is aggregated from their individual
+            realization values, usually by averaging them. The calculation used
+            for this operation can be modified by setting this field. Currently,
+            the two values are supported:
+
+            - `"mean"` (default): calculates the mean over the realizations.
+            - `"stddev"`: calculates the negative of the standard deviation over
+              the realizations. The negative is used since in general the aim is
+              to minimize the standard deviation (as opposed to the mean, which
+              is preferred to be maximized).
+            """
+        ),
     )
 
     @model_validator(mode="before")

@@ -1,4 +1,5 @@
 from collections.abc import Iterator
+from textwrap import dedent
 from typing import Any, Self
 
 from pydantic import BaseModel, Field, NonNegativeInt, field_validator, model_validator
@@ -8,17 +9,33 @@ from ert.config import ConfigWarning
 
 class ModelConfig(BaseModel, extra="forbid"):
     realizations: list[NonNegativeInt] = Field(
-        description="""Realizations to use in optimization ensemble.
+        description=dedent(
+            """
+            Realizations to use from the ensemble.
 
-This is a list [0, 1, ..., n-1] of all realizations in the ensemble, or a string
-consisting of comma separated values and ranges, i.e '1, 2, 5-8, 10'.""",
+            This should be a list of realization ID's, indicating which
+            realizations of the ensemble should be used.
+
+            The list can be specified directly as a (YAML) list, or as a string
+            consisting of comma separated values and ranges.
+
+            For example `1, 2, 5-7, 10` is equivalent to `[1, 2, 5, 6, 7, 10]`.
+            """
+        ),
         min_length=1,
     )
     realizations_weights: list[float] = Field(
         default_factory=list,
-        description="""List of weights, one per realization.
+        description=dedent(
+            """
+            A list of realization weights.
 
-If specified, it must be a list of numeric values, one per realization.""",
+            If provided, the list must consist of one weight for each
+            realization (as determined by the `realizations` field). If not
+            provided, the weight of each realization is equal to one divided by
+            the number or realizations.
+            """
+        ),
     )
 
     @model_validator(mode="before")

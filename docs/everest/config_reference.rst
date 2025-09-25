@@ -5,10 +5,10 @@ Keyword reference
 *****************
 
 The keywords that are recognized by the Everest configuration system are
-described below. Each keyword is followed by its data type in brackets, usually
-some basic type. It may also be a list, which indicates that the keyword can be
-repeated as a yaml list. If a keyword is required, this is also indicated in
-brackets after the keyword name.
+described below. Each keyword indicates the expected data type, usually some
+basic type. It may also be a list, which indicates that the keyword can be
+provided as a (YAML) list. If a keyword is required or deprecated, this is also
+indicated.
 
 .. raw:: html
    :file: config_schema.html

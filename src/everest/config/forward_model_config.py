@@ -1,3 +1,4 @@
+from textwrap import dedent
 from typing import Annotated, Any, Literal
 
 from pydantic import (
@@ -10,14 +11,25 @@ from ert.base_model_context import BaseModelWithContextSupport
 
 
 class ForwardModelResult(BaseModelWithContextSupport):
-    file_name: str = Field(description="Output file produced by the forward model")
+    file_name: str = Field(
+        description=dedent(
+            """
+        The output file produced by the forward model.
+        """
+        )
+    )
 
 
 class SummaryResults(ForwardModelResult):
     type: Literal["summary"]
     keys: Literal["*"] | list[str] = Field(
-        description="List of keys to include in the result. "
-        "Defaults to '*' indicating all keys",
+        description=dedent(
+            """
+            The list of keys to include in the result.
+
+            Defaults to '*' indicating all keys.
+            """
+        ),
         default="*",
     )
 
@@ -28,7 +40,14 @@ class GenDataResults(ForwardModelResult):
 
 class ForwardModelStepConfig(BaseModelWithContextSupport):
     job: str = Field(
-        description="Name of the forward model step",
+        description=dedent(
+            """
+            The forward model step to execute.
+
+            A string that consists of the name of the job, followed by zero or
+            more job options.
+            """
+        ),
     )
     results: (
         (

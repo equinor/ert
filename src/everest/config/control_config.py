@@ -1,5 +1,6 @@
 import logging
 from itertools import chain
+from textwrap import dedent
 from typing import (
     Annotated,
     Any,
@@ -49,124 +50,171 @@ class ControlConfig(BaseModel):
         str,
         AfterValidator(no_dots_in_string),
         AfterValidator(not_in_reserved_word_list),
-    ] = Field(description="Control name")
+    ] = Field(
+        description=dedent(
+            """
+            The control group name.
+
+            Controls name must be unique.
+            """
+        )
+    )
     type: Literal["well_control", "generic_control"] = Field(
-        description="""
-Only two allowed control types are accepted
+        description=dedent(
+            r"""
+            Control group type.
 
-* **well_control**: Standard built-in Everest control type designed for field\
- optimization
+            Only two allowed control types are accepted:
 
-* **generic_control**: Enables the user to define controls types to be employed for\
- customized optimization jobs.
-"""
+            * `"well_control"`: Standard built-in Everest control type designed
+              for field optimization
+            * `"generic_control"`: Enables the user to define controls types to
+              be employed for customized optimization jobs.
+            """
+        )
     )
     variables: Annotated[
         ControlVariable,
         AfterValidator(_all_or_no_index),
         AfterValidator(unique_items),
-    ] = Field(description="List of control variables", min_length=1)
+    ] = Field(
+        description=dedent(
+            """
+            List of control variables.
+            """
+        ),
+        min_length=1,
+    )
     initial_guess: float | None = Field(
         default=None,
-        description="""
-Initial guess for the control group all control variables with initial_guess not
-defined will be assigned this value. Individual initial_guess values in the control
-variables will overwrite this value.
-""",
+        description=dedent(
+            """
+            Initial guess for the control group.
+
+            The initial guess value that is assigned to all control variables in
+            the control group unless overridden at the variable level.
+            """
+        ),
     )
     control_type: Literal["real", "integer"] = Field(
         default="real",
-        description="""
-The type of the controls for the control group. Individual control types in the
-control variables will override this value. Set to "integer" for discrete
-optimization. This may be ignored if the algorithm that is used does not support
-different control types.
-""",
+        description=dedent(
+            """
+            Control data type for the control group.
+
+            The data type value that is assigned to all control variables in
+            the control group unless overridden at the variable level.
+
+            Set to `"integer"` for discrete optimization, or `"real"` for
+            continuous optimization (default). This may be ignored if the
+            optimization algorithm that is used does not support this.
+            """
+        ),
     )
     enabled: bool = Field(
         default=True,
-        description="""
-If `True`, all variables in this control group will be optimized. If set to `False`
-the value of the variables will remain fixed.
-""",
+        description=dedent(
+            """
+            Enable/disable control groups.
+
+            Whether all control variables in the control group are enabled or
+            not. When not enabled, variables are kept constant at the intial
+            guess value during optimization. This can be overridden at the
+            variable level.
+            """
+        ),
     )
     min: float | None = Field(
         default=None,
-        description="""
-Defines left-side value in the control group range [min, max].
-This value will be overwritten by the control variable min value if given.
+        description=dedent(
+            """
+            The minimum values of all control variables in the control group
+            unless overridden at the variable level.
 
-The initial guess for both the group and the individual variables needs to be contained
-in the resulting [min, max] range
-""",
+            The `initial_guess` field of this control group and of all of its
+            variables must respect this minimum value.
+            """
+        ),
     )
     max: float | None = Field(
         default=None,
-        description="""
-Defines right-side value in the control group range [min, max].
-This value will be overwritten by the control variable max value if given.
+        description=dedent(
+            """
+            The maximum values of all control variables in the control group
+            unless overridden at the variable level.
 
-The initial guess for both the group and the individual variables needs to be contained
-in the resulting [min, max] range
-""",
+            The `initial_guess` field of this control group and of all of its
+            variables must respect this maximum value.
+            """
+        ),
     )
     perturbation_type: Literal["absolute", "relative"] = Field(
         default="absolute",
-        description="""
-Example: absolute or relative
-Specifies the perturbation type for a set of controls of a certain type.  The
- perturbation type keyword defines whether the perturbation magnitude
- (perturbation_magnitude) should be considered as an absolute value or relative
- to the dynamic range of the controls.
+        description=dedent(
+            """
+            The perturbation type for the control group.
 
-NOTE: currently the dynamic range is computed with respect to all controls, so
- defining relative perturbation type for control types with different dynamic
- ranges might have unintended effects.
-        """,
+            The `perturbation_type` keyword defines whether the perturbation
+            magnitude (`perturbation_magnitude`) should be treated as an
+            absolute value or as relative to the dynamic range of the controls.
+
+            Note: currently the dynamic range is computed with respect to all
+            controls, so defining a relative perturbation type for control types
+            with different dynamic ranges might have unintended effects.
+            """
+        ),
     )
     perturbation_magnitude: float | None = Field(
         default=None,
-        description="""
-Specifies the perturbation magnitude for a set of controls of a certain type.
+        description=dedent(
+            """
+            The magnitude of the perturbation of all control variables in the
+            control group unless overridden at the variable level.
 
-This controls the size of perturbations (standard deviation of a
-normal distribution) of controls used to approximate the gradient.
-The value depends on the type of control and magnitude of the variables.
-For continuous controls smaller values should give a better gradient,
-whilst for more discrete controls larger values should give a better
-result. However, this is a balance as too large or too small
-of values also cause issues.
-
-NOTE: In most cases this should not be configured, and the default value should be used.
-        """,
+            This controls the magnitude of perturbations (e.g. the standard
+            deviation in case of a normal distribution) of controls, used to
+            approximate the gradient.
+            """
+        ),
     )
     scaled_range: Annotated[tuple[float, float], AfterValidator(valid_range)] = Field(
         default=(0.0, 1.0),
-        description="""
-Can be used to set the range of the control values
-after scaling (default = [0, 1]).
+        description=dedent(
+            """
+            The target range of the control variable scaling for the control group.
 
-This option has no effect on discrete controls.
-        """,
+            Internally control variables are scaled from their minimal and
+            maximum values (`min`/`max` settings) to the range given by
+            `target_range` (default = [0, 1]).
+
+            This may be overridden at the variable level.
+
+            This option has no effect on discrete controls.
+            """
+        ),
     )
     sampler: SamplerConfig | None = Field(
         default=None,
-        description="""
-A sampler specification section applies to a group of controls, or to an
-individual control. Sampler specifications are not required, with the
-following behavior, if no sampler sections are provided, a normal
-distribution is used.
+        description=dedent(
+            """
+            Sampler configuration for a control group.
 
-If at least one control group or variable has a sampler specification, only
-the groups or variables with a sampler specification are perturbed.
-Controls/variables that do not have a sampler section will not be perturbed
-at all. If that is not desired, make sure to specify a sampler for each
-control group and/or variable (or none at all to use a normal distribution
-for each control).
+            A sampler specification section applies to a group of controls, or
+            to an individual control. Sampler specifications are not required,
+            if no sampler sections are provided, a normal distribution is used.
 
-Within the sampler section, the *shared* keyword can be used to direct the
-sampler to use the same perturbations for each realization.
-        """,
+            If at least one control group or variable has a sampler specification, only
+            the groups or variables with a sampler specification are perturbed.
+            Controls/variables that do not have a sampler section will not be perturbed
+            at all. If that is not desired, make sure to specify a sampler for each
+            control group and/or variable (or none at all to use a normal distribution
+            for each control).
+
+            Within the sampler section, the `shared` keyword can be used to
+            direct the sampler to use the same perturbations for each
+            realization.
+            """
+        ),
     )
 
     @property

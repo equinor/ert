@@ -1,4 +1,5 @@
 import logging
+from textwrap import dedent
 from typing import Any, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -10,32 +11,42 @@ from everest.strings import EVEREST
 class SamplerConfig(BaseModel):
     backend: str | None = Field(
         default=None,
-        description="""(deprecated) The backend used by Everest for sampling points.
+        description=dedent(
+            """
+            [Deprecated]
 
-The sampler backend provides the methods for sampling the points used to
-estimate the gradient. The default is the built-in 'scipy' backend.
-
-""",
-    )
-    options: dict[str, Any] | None = Field(
-        default=None,
-        alias="backend_options",
-        description="""
-Specifies a dict of optional parameters for the sampler backend.
-
-This dict of values is passed unchanged to the selected method in the backend.
-
-""",
+            The correct backend will be inferred by the method. If several backends
+            have a method named `A`, pick a specific backend `B` by putting `B/A` in
+            the `method` field.
+            """
+        ),
     )
     method: str = Field(
         default="norm",
-        description="""The sampling method or distribution used by the sampler backend.
-""",
+        description=dedent(
+            """
+            The sampling method or distribution used by the sampler backend.
+            """
+        ),
+    )
+    options: dict[str, Any] | None = Field(
+        default=None,
+        description=dedent(
+            """
+            Specifies a dict of optional parameters for the sampler backend.
+
+            This dict of values is passed unchanged to the selected method in
+            the backend.
+            """
+        ),
     )
     shared: bool | None = Field(
         default=None,
-        description="""Whether to share perturbations between realizations.
-""",
+        description=dedent(
+            """
+            Whether to share perturbations between realizations.
+            """
+        ),
     )
     model_config = ConfigDict(extra="forbid")
 
