@@ -103,6 +103,15 @@ start_tests() {
     if [ "$CI_SUBSYSTEM_TEST" == "ert" ]; then
       just -f "${CI_SOURCE_ROOT}"/justfile ert-tests
       return $?
+    elif [ "$CI_SUBSYSTEM_TEST" == "ert-gui-tests" ]; then
+      just -f "${CI_SOURCE_ROOT}"/justfile ert-gui-tests
+      return $?
+    elif [ "$CI_SUBSYSTEM_TEST" == "ert-cli-tests" ]; then
+      just -f "${CI_SOURCE_ROOT}"/justfile ert-cli-tests
+      return $?
+    elif [ "$CI_SUBSYSTEM_TEST" == "ert-unit-tests" ]; then
+      just -f "${CI_SOURCE_ROOT}"/justfile ert-unit-tests
+      return $?
     elif [ "$CI_SUBSYSTEM_TEST" == "everest" ]; then
       just -f "${CI_SOURCE_ROOT}"/justfile everest-tests
       return $?
