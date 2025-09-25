@@ -1661,15 +1661,15 @@ def test_no_timemap_or_refcase_provides_clear_error():
                     "obs_config",
                     [
                         (
-                            "GENERAL_OBSERVATION",
-                            "GDO",
                             {
+                                "type": "GENERAL_OBSERVATION",
+                                "name": "GDO",
                                 "DATA": "GD",
                                 "INDEX_LIST": "0",
                                 "DATE": "2015-06-13",
                                 "VALUE": "0.0",
                                 "ERROR": "0.1",
-                            },
+                            }
                         )
                     ],
                 ),
@@ -1686,14 +1686,22 @@ def test_that_multiple_errors_are_shown_when_validating_observation_config():
                     "obs_config",
                     [
                         (
-                            "SUMMARY_OBSERVATION",
-                            "SUM1",
-                            {"VALUE": "0.7", "ERROR": "0.07", "DATE": "2010-12-26"},
+                            {
+                                "type": "SUMMARY_OBSERVATION",
+                                "name": "SUM1",
+                                "VALUE": "0.7",
+                                "ERROR": "0.07",
+                                "DATE": "2010-12-26",
+                            }
                         ),
                         (
-                            "SUMMARY_OBSERVATION",
-                            "SUM2",
-                            {"ERROR": "0.05", "DATE": "2011-12-21", "KEY": "WOPR:OP1"},
+                            {
+                                "type": "SUMMARY_OBSERVATION",
+                                "name": "SUM2",
+                                "ERROR": "0.05",
+                                "DATE": "2011-12-21",
+                                "KEY": "WOPR:OP1",
+                            }
                         ),
                     ],
                 ),
@@ -2484,14 +2492,14 @@ def test_that_time_map_or_refcase_is_present_if_restart_is_used_for_summary_obse
                     "obsconf",
                     [
                         (
-                            "SUMMARY_OBSERVATION",
-                            "FOPR",
                             {
+                                "type": "SUMMARY_OBSERVATION",
+                                "name": "FOPR",
                                 "KEY": "FOPR",
                                 "RESTART": "1",
                                 "VALUE": "1.0",
                                 "ERROR": "0.1",
-                            },
+                            }
                         ),
                     ],
                 ),
