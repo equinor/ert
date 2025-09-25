@@ -1,3 +1,5 @@
+from textwrap import dedent
+
 import pytest
 
 from ert.config.parsing import parse_observations
@@ -91,27 +93,59 @@ def test_parse_observations():
     ]
 
 
-@pytest.mark.parametrize(
-    "config_with_unexpected_characters, expected_message",
-    [
-        ("include a;", r"Line 1.*include a;"),
-        (
-            """
-            GENERAL_OBSERVATION GEN_OBS
-            {
-               ERROR       $ 0.20;
-            };
-            """,
-            r"Did not expect character: \$ \(on line 4: *ERROR *\$"
-            r" 0.20;\). Expected one of {'EQUAL'}",
-        ),
-    ],
-)
-def test_that_unexpected_characters_are_invalid(
-    config_with_unexpected_characters, expected_message
-):
-    with pytest.raises(ObservationConfigError, match=expected_message):
-        parse_observations(content=config_with_unexpected_characters, filename="")
+def test_that_missing_assignment_in_observation_body_shows_informative_error_message():
+    expected_match = (
+        r"Line 5 \(Column 4-5\): Expected assignment to property 'A'. Got '}' instead."
+    )
+    with pytest.raises(ObservationConfigError, match=expected_match):
+        parse_observations(
+            content=dedent("""\
+                GENERAL_OBSERVATION POLY_OBS_0 {
+                   DATA       = POLY_RES;
+                   INDEX_LIST = 0,2,4,6,8;
+                   OBS_FILE   = poly_obs_data.txt;
+                   A
+                };
+            """),
+            filename="",
+        )
+
+
+def test_that_misspelled_observation_type_shows_informative_error_message():
+    expected_match = (
+        r"Line 1 \(Column 1-23\): Unknown observation type 'MISSPELLED_OBSERVATION', "
+        r"expected either 'GENERAL_OBSERVATION', "
+        r"'SUMMARY_OBSERVATION' or 'HISTORY_OBSERVATION'."
+    )
+    with pytest.raises(ObservationConfigError, match=expected_match):
+        parse_observations(
+            content=dedent("""\
+                MISSPELLED_OBSERVATION POLY_OBS_0 {
+                   DATA       = POLY_RES;
+                   INDEX_LIST = 0,2,4,6,8;
+                   OBS_FILE   = poly_obs_data.txt;
+                };
+            """),
+            filename="",
+        )
+
+
+def test_that_invalid_start_of_observation_body_symbol_show_informative_error_message():
+    expected_match = (
+        r"Line 1 \(Column 32-33\): Expected either start of observation body \('{'\) "
+        r"or end of observation \(';'\), got '\(' instead."
+    )
+    with pytest.raises(ObservationConfigError, match=expected_match):
+        parse_observations(
+            content=dedent("""\
+                GENERAL_OBSERVATION POLY_OBS_0 (
+                   DATA       = POLY_RES;
+                   INDEX_LIST = 0,2,4,6,8;
+                   OBS_FILE   = poly_obs_data.txt;
+                };
+            """),
+            filename="",
+        )
 
 
 def test_that_repeated_comments_are_ignored():

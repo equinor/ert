@@ -4,7 +4,7 @@ from typing import (
     no_type_check,
 )
 
-from lark import Lark, Transformer, UnexpectedCharacters, UnexpectedToken
+from lark import Lark, Token, Transformer, UnexpectedCharacters, UnexpectedToken
 from lark.exceptions import VisitError
 
 from ._file_context_transformer import FileContextTransformer
@@ -58,23 +58,67 @@ def parse_observations(content: str, filename: str) -> list[ObservationStatement
             )
         ) from e
     except UnexpectedToken as e:
-        unexpected_char = e.token
-        allowed_chars = e.expected
-        unexpected_line = content.splitlines()[e.line - 1]
-        message = (
-            f"Observation parsing failed: Did not expect character: {unexpected_char}"
-            f" (on line {e.line}: {unexpected_line}). "
-            f"Expected one of {allowed_chars}."
-        )
+        line: int | None = e.line
+        end_line: int | None = e.line
+        column: int | None = e.column
+        end_column: int | None = e.token.end_column
+        match e, sorted(e.expected):
+            case UnexpectedToken(
+                token=unexpected_token,
+                token_history=[
+                    Token(
+                        type="STRING",
+                        value=property_name,
+                        line=line,
+                        column=column,
+                        end_line=end_line,
+                        end_column=end_column,
+                    )
+                ],
+            ), ["EQUAL"]:
+                message = (
+                    f"Expected assignment to property '{property_name}'. "
+                    f"Got '{unexpected_token}' instead."
+                )
+            case UnexpectedToken(
+                token=unexpected_token,
+                token_history=[
+                    Token(
+                        type="STRING",
+                    )
+                ],
+            ), ["LBRACE", "SEMICOLON"]:
+                message = (
+                    "Expected either start of observation body ('{') "
+                    f"or end of observation (';'), got '{unexpected_token}' instead."
+                )
+            case UnexpectedToken(
+                token=unexpected_token,
+            ), ["TYPE"]:
+                message = (
+                    f"Unknown observation type '{unexpected_token}', "
+                    f"expected either 'GENERAL_OBSERVATION', "
+                    f"'SUMMARY_OBSERVATION' or 'HISTORY_OBSERVATION'."
+                )
+            case UnexpectedToken(token=unexpected_char, expected=allowed_chars), _:
+                unexpected_line = content.splitlines()[e.line - 1]
+                message = (
+                    f"Observation parsing failed: "
+                    f"Did not expect character: {unexpected_char}"
+                    f" (on line {e.line}: {unexpected_line}). "
+                    f"Expected one of {allowed_chars}."
+                )
+            case _:
+                raise
 
         raise ObservationConfigError.from_info(
             ErrorInfo(
                 filename=filename,
                 message=message,
-                line=e.line,
-                end_line=e.line,
-                column=e.column,
-                end_column=e.column + 1,
+                line=line,
+                end_line=end_line,
+                column=column,
+                end_column=end_column,
             )
         ) from e
 
