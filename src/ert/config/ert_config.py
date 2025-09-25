@@ -50,12 +50,12 @@ from .parsing import (
     HistorySource,
     HookRuntime,
     ObservationConfigError,
-    ObservationStatement,
     init_forward_model_schema,
     init_user_config_schema,
     parse_contents,
     read_file,
 )
+from .parsing.observations_parser import ObservationDict
 from .queue_config import KnownQueueOptions, QueueConfig
 from .workflow import Workflow
 from .workflow_fixtures import fixtures_per_hook
@@ -656,13 +656,14 @@ def create_list_of_forward_model_steps_to_run(
 
 
 def log_observation_keys(
-    observations: list[ObservationStatement],
+    observations: list[ObservationDict],
 ) -> None:
-    observation_type_counts = Counter(str(o[0]) for o in observations)
+    observation_type_counts = Counter(o["type"] for o in observations)
     observation_keyword_counts = Counter(
         "SEGMENT" if isinstance(key, tuple) else str(key)
         for o in observations
-        for key in o[2]
+        for key in o
+        if key not in {"name", "type"}
     )
 
     logger.info(
