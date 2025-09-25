@@ -36,12 +36,12 @@ DEFAULT_TIME_DELTA = timedelta(seconds=30)
 
 
 def create_observations(
-    obs_config_content: Sequence[Declaration],
+    observation_declarations: Sequence[Declaration],
     ensemble_config: EnsembleConfig,
     time_map: list[datetime] | None,
     history: HistorySource,
 ) -> dict[str, pl.DataFrame]:
-    if not obs_config_content:
+    if not observation_declarations:
         return {}
     obs_time_list: list[datetime] = []
     if ensemble_config.refcase is not None:
@@ -52,7 +52,7 @@ def create_observations(
     time_len = len(obs_time_list)
     config_errors: list[ErrorInfo] = []
     grouped: dict[str, list[pl.DataFrame]] = defaultdict(list)
-    for obs_name, values in obs_config_content:
+    for obs_name, values in observation_declarations:
         try:
             match values:
                 case HistoryValues():
