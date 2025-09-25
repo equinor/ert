@@ -807,7 +807,7 @@ class RunModel(BaseModelWithContextSupport, ABC):
         )
         logger.info(
             f"Experiment run ended with number of realizations failing: "
-            f"{self.ensemble_size - num_successful_realizations}"
+            f"{len(starting_realizations) - num_successful_realizations}"
         )
         logger.info(f"Experiment run finished in: {self.get_runtime()}s")
         self.run_workflows(
