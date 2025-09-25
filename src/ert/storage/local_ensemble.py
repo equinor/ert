@@ -672,7 +672,7 @@ class LocalEnsemble(BaseMode):
         parameter_dict["realization"] = real_nr
         return pl.DataFrame(
             parameter_dict,
-            schema=dict.fromkeys(keys, pl.Float64) | {"realization": pl.Int64},
+            schema=dict.fromkeys(keys, pl.Float32) | {"realization": pl.Int32},
         )
 
     def load_responses(self, key: str, realizations: tuple[int, ...]) -> pl.DataFrame:
@@ -1153,7 +1153,7 @@ class LocalEnsemble(BaseMode):
             param_df = param_df.cast(
                 {
                     "realization": pl.UInt16,
-                    **{c: pl.Float64 for c in param_df.columns if c != "realization"},
+                    **{c: pl.Float32 for c in param_df.columns if c != "realization"},
                 }
             )
             param_dfs.append(param_df)

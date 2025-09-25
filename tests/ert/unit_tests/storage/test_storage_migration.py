@@ -199,7 +199,7 @@ def test_that_storage_matches(
         assert experiment.templates_configuration == [("\nBPR:<BPR>\n", "params.txt")]
         df = ensemble.load_parameters("BPR")
         assert isinstance(df, pl.DataFrame)
-        assert df.schema == pl.Schema({"BPR": pl.Float64, "realization": pl.Int64})
+        assert df.schema == pl.Schema({"BPR": pl.Float32, "realization": pl.Int32})
         assert df["realization"].to_list() == list(range(ensemble.ensemble_size))
         snapshot.assert_match(
             json.dumps(
