@@ -11,7 +11,7 @@ import yaml
 from pydantic import ValidationError
 
 import everest
-from ert.config import ConfigWarning, EnsembleConfig
+from ert.config import ConfigWarning, SummaryConfig
 from ert.config.ert_config import create_and_hook_workflows, workflows_from_dict
 from ert.config.model_config import ModelConfig
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
@@ -26,7 +26,6 @@ from ert.plugins import ErtPluginContext, ErtRuntimePlugins
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from everest.simulator.everest_to_ert import (
-    _everest_to_ert_config_dict,
     _get_installed_forward_model_steps,
     everest_to_ert_config_dict,
     get_forward_model_steps,
@@ -185,10 +184,11 @@ def test_combined_wells_everest_to_ert(tmp_path, monkeypatch):
     """)
         )
     )
-    config_dict = everest_to_ert_config_dict(ever_config)
-    ensemble_config = EnsembleConfig.from_dict(config_dict)
-
-    assert "WOPR:fakename" in ensemble_config.response_configs["summary"].keys
+    runmodel = EverestRunModel.create(ever_config, "some_exp_name", "batch")
+    smry_config = next(
+        r for r in runmodel.response_configuration if isinstance(r, SummaryConfig)
+    )
+    assert "WOPR:fakename" in smry_config.keys
 
 
 @pytest.mark.parametrize(
@@ -259,9 +259,12 @@ def test_summary_default_no_opm(tmp_path, monkeypatch):
         ]
     )
     sum_keys = [list(set(sum_keys))]
-    res_conf = _everest_to_ert_config_dict(everconf)
+    runmodel = EverestRunModel.create(everconf, "some_exp_name", "batch")
+    smry_config = next(
+        r for r in runmodel.response_configuration if isinstance(r, SummaryConfig)
+    )
 
-    assert set(sum_keys[0]) == set(res_conf[ErtConfigKeys.SUMMARY][0]) - {"*"}
+    assert set(sum_keys[0]) == set(smry_config.keys) - {"*"}
 
 
 def test_workflow_job_deprecated(tmp_path, monkeypatch):
@@ -463,8 +466,12 @@ def test_passthrough_explicit_summary_keys(change_to_tmpdir):
         ]
     )
 
-    ert_config = _everest_to_ert_config_dict(config)
-    assert set(custom_sum_keys).issubset(set(ert_config[ErtConfigKeys.SUMMARY][0]))
+    runmodel = EverestRunModel.create(config, "some_exp_name", "batch")
+    smry_config = next(
+        r for r in runmodel.response_configuration if isinstance(r, SummaryConfig)
+    )
+
+    assert set(custom_sum_keys).issubset(set(smry_config.keys))
 
 
 @pytest.mark.usefixtures("no_plugins")

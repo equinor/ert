@@ -8,8 +8,6 @@ from pydantic import BaseModel, Field, model_validator
 
 from ert.field_utils import get_shape
 
-from .everest_constraints_config import EverestConstraintsConfig
-from .everest_objective_config import EverestObjectivesConfig
 from .ext_param_config import ExtParamConfig
 from .field import Field as FieldConfig
 from .gen_data_config import GenDataConfig
@@ -21,15 +19,11 @@ from .response_config import ResponseConfig
 from .summary_config import SummaryConfig
 from .surface_config import SurfaceConfig
 
-KnownResponseTypes = (
-    SummaryConfig | GenDataConfig | EverestConstraintsConfig | EverestObjectivesConfig
-)
+KnownResponseTypes = SummaryConfig | GenDataConfig
 
 _KNOWN_RESPONSE_TYPES = (
     SummaryConfig,
     GenDataConfig,
-    EverestConstraintsConfig,
-    EverestObjectivesConfig,
 )
 
 logger = logging.getLogger(__name__)
