@@ -213,7 +213,6 @@ def parse_field_line(ertbox_params, egrid_file):
     def make_field(field_line):
         return Field.from_config_list(
             egrid_file,
-            ertbox_params,
             parse_contents(
                 f"NUM_REALIZATIONS 1\nGRID {egrid_file}\n" + field_line,
                 init_user_config_schema(),

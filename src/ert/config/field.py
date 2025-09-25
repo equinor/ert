@@ -11,12 +11,15 @@ from typing import TYPE_CHECKING, Any, Literal, Self, cast, overload
 import networkx as nx
 import numpy as np
 import xarray as xr
+import xtgeo
 from pydantic import field_serializer
 
 from ert.field_utils import (
     ErtboxParameters,
     FieldFileFormat,
     Shape,
+    calculate_ertbox_parameters,
+    get_shape,
     read_field,
     read_mask,
     save_field,
@@ -128,7 +131,6 @@ class Field(ParameterConfig):
     def from_config_list(
         cls,
         grid_file_path: str,
-        ertbox_params: ErtboxParameters,
         config_list: list[str | dict[str, str]],
     ) -> Self:
         name = cast(str, config_list[0])
@@ -198,6 +200,29 @@ class Field(ParameterConfig):
         assert file_format is not None
 
         assert init_files is not None
+
+        grid_extension = Path(grid_file_path).suffix.lower()
+
+        try:
+            if grid_extension == ".egrid":
+                grid = xtgeo.grid_from_file(grid_file_path)
+                ertbox_params = calculate_ertbox_parameters(grid)
+            else:
+                dims = get_shape(grid_file_path)
+
+                if dims is None:
+                    raise ConfigValidationError.with_context(
+                        f"Grid file {grid_file_path} did not contain dimensions",
+                        grid_file_path,
+                    )
+
+                ertbox_params = ErtboxParameters(dims.nx, dims.ny, dims.nz)
+        except Exception as err:
+            raise ConfigValidationError.with_context(
+                f"Could not read grid file {grid_file_path}: {err}",
+                grid_file_path,
+            ) from err
+
         return cls(
             name=name,
             ertbox_params=ertbox_params,

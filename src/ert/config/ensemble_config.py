@@ -5,14 +5,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Self
 
-import xtgeo  # type: ignore
 from pydantic import BaseModel, Field, model_validator
-
-from ert.field_utils import (
-    ErtboxParameters,
-    calculate_ertbox_parameters,
-    get_shape,
-)
 
 from .everest_constraints_config import EverestConstraintsConfig
 from .everest_objective_config import EverestObjectivesConfig
@@ -105,29 +98,12 @@ class EnsembleConfig(BaseModel):
         surface_list = config_dict.get(ConfigKeys.SURFACE, [])
         field_list = config_dict.get(ConfigKeys.FIELD, [])
 
-        global_ertbox_params: ErtboxParameters | None = None
         if global_grid_file_path is not None:
             global_grid_file_path = Path(global_grid_file_path)
 
             grid_extension = global_grid_file_path.suffix.lower()
             if grid_extension not in {".egrid", ".grid"}:
                 raise ConfigValidationError("Only EGRID and GRID formats are supported")
-
-            try:
-                if grid_extension == ".egrid":
-                    global_grid = xtgeo.grid_from_file(global_grid_file_path)
-                    global_ertbox_params = calculate_ertbox_parameters(global_grid)
-                else:
-                    global_dims = get_shape(global_grid_file_path)
-                    assert global_dims is not None
-                    global_ertbox_params = ErtboxParameters(
-                        nx=global_dims.nx, ny=global_dims.ny, nz=global_dims.nz
-                    )
-            except Exception as err:
-                raise ConfigValidationError.with_context(
-                    f"Could not read grid file {global_grid_file_path}: {err}",
-                    global_grid_file_path,
-                ) from err
 
         def make_field(field_list: list[str | dict[str, str]]) -> FieldConfig:
             # An example of `field_list` when the keyword `GRID` is set:
@@ -138,10 +114,7 @@ class EnsembleConfig(BaseModel):
             # optional keywords, one of which is `GRID`.
             field_settings = field_list[3]
             assert isinstance(field_settings, dict)
-            grid_file_path_str = field_settings.get(ConfigKeys.GRID)
-            grid_file_path = (
-                Path(grid_file_path_str) if grid_file_path_str is not None else None
-            )
+            grid_file_path = field_settings.get(ConfigKeys.GRID)
 
             if grid_file_path is None and global_grid_file_path is None:
                 raise ConfigValidationError.with_context(
@@ -151,39 +124,12 @@ class EnsembleConfig(BaseModel):
 
             # Use field-specific grid if provided,
             # otherwise fall back to global grid.
-            if grid_file_path is not None:
-                try:
-                    global_grid = xtgeo.grid_from_file(grid_file_path)
-                except Exception as err:
-                    raise ConfigValidationError.with_context(
-                        f"Could not read grid file {grid_file_path}: {err}",
-                        grid_file_path,
-                    ) from err
-
-                ertbox_params = calculate_ertbox_parameters(global_grid)
-
-            else:
-                assert global_grid_file_path is not None
-                assert global_ertbox_params is not None
-
+            if grid_file_path is None:
                 grid_file_path = global_grid_file_path
-                ertbox_params = global_ertbox_params
 
-            # TODO: Don't think I need this as xtgeo.grid_from_file will
-            # fail on empty grid.
-            if (
-                ertbox_params.nx is None
-                or ertbox_params.ny is None
-                or ertbox_params.nz is None
-            ):
-                raise ConfigValidationError.with_context(
-                    f"Grid file {grid_file_path} did not contain dimensions",
-                    grid_file_path,
-                )
+            assert grid_file_path is not None
 
-            return FieldConfig.from_config_list(
-                str(grid_file_path), ertbox_params, field_list
-            )
+            return FieldConfig.from_config_list(str(grid_file_path), field_list)
 
         gen_kw_cfgs = [
             cfg for g in gen_kw_list for cfg in GenKwConfig.from_config_list(g)

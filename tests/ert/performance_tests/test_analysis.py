@@ -9,7 +9,7 @@ from scipy.ndimage import gaussian_filter
 
 from ert.analysis import smoother_update
 from ert.config import ESSettings, Field, GenDataConfig, ObservationSettings
-from ert.field_utils import Shape, calculate_ertbox_parameters
+from ert.field_utils import Shape
 
 
 def test_and_benchmark_adaptive_localization_with_fields(
@@ -88,11 +88,8 @@ def test_and_benchmark_adaptive_localization_with_fields(
 
     param_group = "PARAM_FIELD"
 
-    ertbox_params = calculate_ertbox_parameters(grid)
-
     config = Field.from_config_list(
         "MY_EGRID.EGRID",
-        ertbox_params,
         [
             param_group,
             param_group,
