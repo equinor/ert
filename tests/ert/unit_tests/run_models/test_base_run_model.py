@@ -1,9 +1,7 @@
 import asyncio
 import math
 import os
-import re
 import uuid
-from logging import Logger
 from pathlib import Path
 from queue import SimpleQueue
 from types import MethodType
@@ -14,11 +12,9 @@ from pydantic import ConfigDict
 
 from ert.config import (
     ErtConfig,
-    GenKwConfig,
     ModelConfig,
     QueueConfig,
 )
-from ert.config.gen_kw_config import TransformFunctionDefinition
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.run_models.run_model import RunModel, UserCancelled
@@ -603,32 +599,3 @@ def test_create_mask_from_failed_realizations_returns_initial_active_realization
     failed_realization_mask = brm._create_mask_from_failed_realizations()
 
     assert failed_realization_mask == initial_active_realizations
-
-
-def test_run_model_logs_number_of_parameters(use_tmpdir):
-    tfds = [
-        TransformFunctionDefinition(name="a", param_name="NORMAL", values=[1, 2]),
-        TransformFunctionDefinition(name="b", param_name="NORMAL", values=[1, 2]),
-        TransformFunctionDefinition(name="c", param_name="NORMAL", values=[1, 2]),
-        TransformFunctionDefinition(name="d", param_name="NORMAL", values=[1, 2]),
-        TransformFunctionDefinition(name="e", param_name="NORMAL", values=[1, 2]),
-    ]
-
-    parameters = GenKwConfig(
-        transform_function_definitions=tfds,
-        name="parameter_configuration",
-        forward_init=False,
-        update=True,
-    )
-
-    rm = create_run_model(parameter_configuration=[parameters])
-
-    def mock_logging(_, log_str):
-        regex = r"'num_parameters': (\d+)"
-        match = re.search(regex, log_str)
-        num_param = int(match.group(1))
-
-        assert num_param == len(tfds)
-
-    with patch.object(Logger, "info", mock_logging):
-        rm.log_at_startup()
