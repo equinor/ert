@@ -49,7 +49,7 @@ class ObjectiveFunctionConfig(BaseModel, extra="forbid"):
             multi-objective optimization, since scaling each objective
             differently will change their relative weights.
 
-            This option may not be set if `auto_scale` is set in the
+            This option will be disabled if `auto_scale` is set in the
             `optimization` section.
             """
         ),

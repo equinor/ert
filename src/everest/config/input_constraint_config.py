@@ -74,7 +74,7 @@ class InputConstraintConfig(BaseModel, extra="forbid"):
             input constraint. The bounds or target, and the weights will be
             scaled with this number.
 
-            This option may not be set if `auto_scale` is set in the
+            This option will be disabled if `auto_scale` is set in the
             `optimization` section.
             """
         ),
