@@ -125,16 +125,14 @@ def test_everest_entry(
 @patch("everest.bin.everest_script.run_detached_monitor")
 @patch("everest.bin.everest_script.wait_for_server")
 @patch("everest.bin.everest_script.start_server")
-@patch(
-    "everest.bin.everest_script.everserver_status",
-    return_value={"status": ExperimentState.completed, "message": None},
-)
+@patch("everest.bin.everest_script.everserver_status")
 @patch("everest.bin.everest_script.start_experiment")
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch(
     "ert.services.StorageService.session",
     side_effect=[
         TimeoutError(),
+        MagicMock(),
         TimeoutError(),
         TimeoutError(),
         MagicMock(),
@@ -150,35 +148,48 @@ def test_everest_entry_detached_already_run(
     start_monitor_mock,
     change_to_tmpdir,
 ):
-    """Test everest detached, when an optimization has already run"""
+    """Test everest detached, when an optimization has already run
+    In this case we should just start a new run"""
 
     Path("config.yml").touch()
     config = EverestConfig.with_defaults(config_path="./config.yml")
     config.dump("config.yml")
 
-    # optimization already run, notify the user
-    with capture_streams() as (out, _):
-        everest_entry(["config.yml", "--skip-prompt"])
-    assert "--new-run" in out.getvalue()
-    start_server_mock.assert_not_called()
-    start_monitor_mock.assert_not_called()
-    wait_for_server_mock.assert_not_called()
-    everserver_status_mock.assert_called()
-    everserver_status_mock.reset_mock()
-    session_mock.assert_called_once()  # Did not try to start a new run
+    everserver_status_mock.return_value = {
+        "status": ExperimentState.never_run,
+        "message": None,
+    }
 
-    # stopping the server has no effect (not running)
-    kill_entry(["config.yml"])
-    everserver_status_mock.assert_not_called()
-    assert session_mock.call_count == 2
-
-    # forcefully re-run the case
-    everest_entry(["config.yml", "--new-run", "--skip-prompt"])
+    # start a new run
+    everest_entry(["config.yml", "--skip-prompt"])
     start_server_mock.assert_called_once()
     start_monitor_mock.assert_called_once()
     everserver_status_mock.assert_called()
     start_experiment_mock.assert_called_once()
-    assert session_mock.call_count == 4
+    assert session_mock.call_count == 2
+
+    everserver_status_mock.reset_mock()
+    start_server_mock.reset_mock()
+    start_monitor_mock.reset_mock()
+    start_experiment_mock.reset_mock()
+
+    # stopping the server has no effect (not running)
+    kill_entry(["config.yml"])
+    everserver_status_mock.assert_not_called()
+    assert session_mock.call_count == 3
+
+    everserver_status_mock.return_value = {
+        "status": ExperimentState.never_run,
+        "message": None,
+    }
+
+    # run again, should start a new run like above
+    everest_entry(["config.yml", "--skip-prompt"])
+    start_server_mock.assert_called_once()
+    start_monitor_mock.assert_called_once()
+    everserver_status_mock.assert_called()
+    start_experiment_mock.assert_called_once()
+    assert session_mock.call_count == 5
 
 
 @patch("everest.bin.monitor_script.run_detached_monitor")
@@ -202,9 +213,7 @@ def test_everest_entry_detached_already_run_monitor(
     config.dump("config.yml")
 
     # optimization already run, notify the user
-    with capture_streams() as (out, _):
-        monitor_entry(["config.yml"])
-    assert "--new-run" in out.getvalue()
+    monitor_entry(["config.yml"])
     start_monitor_mock.assert_not_called()
     everserver_status_mock.assert_called()
     everserver_status_mock.reset_mock()
@@ -242,7 +251,7 @@ def test_everest_entry_detached_running(
 
     # can't start a new run if one is already running
     with capture_streams() as (out, _):
-        everest_entry(["config.yml", "--new-run", "--skip-prompt"])
+        everest_entry(["config.yml", "--skip-prompt"])
     assert "everest kill" in out.getvalue()
     assert "everest monitor" in out.getvalue()
     start_server_mock.assert_not_called()
@@ -325,7 +334,7 @@ def test_everest_entry_monitor_no_run(
     # Attach to a running optimization.
     with capture_streams() as (out, _):
         monitor_entry(["config.yml"])
-    assert "everest run" in out.getvalue()
+    assert "Optimization completed." in out.getvalue()
     start_monitor_mock.assert_not_called()
     everserver_status_mock.assert_called()
     session_mock.assert_called_once()

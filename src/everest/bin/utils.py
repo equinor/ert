@@ -425,17 +425,10 @@ def report_on_previous_run(
     server_state = everserver_status(everserver_status_path)
     if server_state["status"] == ExperimentState.failed:
         error_msg = server_state["message"]
-        print(
-            f"Optimization run failed, with error: {error_msg}\n"
-            "To re-run optimization case use command:\n"
-            f"`  everest run --new-run {config_file}`\n"
-        )
+        print(f"Optimization run failed, with error: {error_msg}\n")
     else:
         print(
-            f"Optimization completed.\n"
-            "\nTo re-run the optimization use command:\n"
-            f"  `everest run --new-run {config_file}`\n"
-            f"Results are stored in {optimization_output_dir}"
+            f"Optimization completed.\nResults are stored in {optimization_output_dir}"
         )
 
 
