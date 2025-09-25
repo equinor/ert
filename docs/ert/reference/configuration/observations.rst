@@ -140,6 +140,11 @@ In its simplest form, a history observation is created as follows::
 This will condition on ``WOPR`` in well P1 using a default observation
 error.
 
+By default, this will not extract the simulated values for the vector ``WOPR:P1``
+from :ref:`refcase`, but rather the corresponding history values: ``WOPRH:P1``
+(see `OPM Flow manual`_ table 11.4 "Fifth Character"). This can changed to
+fetch ``WOPR:P1`` instead with the :ref:`history_source` keyword.
+
 In general, a :term:`summary key` is given following the
 HISTORY_OBSERVATION keyword, e.g. to condition on variable VAR in well or group
 WGNAME, use::
@@ -438,3 +443,5 @@ So consider a setup like this::
 Here we see that the observation is active at report step 20, and we
 expect the forward model to create a file rft_BH67_20 in each
 realization directory.
+
+.. _OPM Flow manual: https://opm-project.org/wp-content/uploads/2023/06/OPM_Flow_Reference_Manual_2023-04_Rev-0_Reduced.pdf
