@@ -1,14 +1,12 @@
-import os
 from pathlib import Path
-from typing import Literal, Self, cast
+from typing import Literal, Self
 
 import numpy as np
 import polars as pl
 
-from ert.config.parsing import ConfigKeys
 from ert.substitutions import substitute_runpath_name
 
-from .parsing import ConfigDict, ConfigValidationError
+from .parsing import ConfigDict
 from .response_config import InvalidResponseFile, ResponseConfig, ResponseMetadata
 from .responses_index import responses_index
 
@@ -36,35 +34,7 @@ class EverestConstraintsConfig(ResponseConfig):
 
     @classmethod
     def from_config_dict(cls, config_dict: ConfigDict) -> Self:
-        keys = []
-        input_files = []
-
-        for constraint in cast(
-            list[dict[str, str]], config_dict.get(ConfigKeys.EVEREST_CONSTRAINTS, [])
-        ):
-            name = constraint["name"]
-            input_file = constraint.get("input_file")
-
-            if input_file is None:
-                raise ConfigValidationError.with_context(
-                    f"Missing input file for Everest constraint {name!r}",
-                    name,
-                )
-            if os.path.isabs(input_file):
-                raise ConfigValidationError.with_context(
-                    f"The input file:{input_file} for {name} is "
-                    f"invalid - must be a relative path",
-                    name,
-                )
-
-            keys.append(name)
-            input_files.append(input_file)
-
-        return cls(
-            name="everest_constraints",
-            keys=keys,
-            input_files=input_files,
-        )
+        raise NotImplementedError("Should only be directly initialized")
 
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
         def _read_file(filename: Path) -> pl.DataFrame:

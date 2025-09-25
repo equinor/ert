@@ -30,9 +30,7 @@ from everest.config.simulator_config import SimulatorConfig
 from everest.strings import EVEREST, STORAGE_DIR
 
 
-def _extract_summary_keys(
-    ever_config: EverestConfig, ert_config: dict[str, Any]
-) -> None:
+def _extract_summary_keys(ever_config: EverestConfig) -> list[str]:
     summary_fms = [
         fm
         for fm in ever_config.forward_model
@@ -40,7 +38,7 @@ def _extract_summary_keys(
     ]
 
     if not summary_fms:
-        return None
+        return []
 
     summary_fm = summary_fms[0]
     assert summary_fm.results is not None
@@ -65,9 +63,7 @@ def _extract_summary_keys(
 
     all_keys = data_keys + field_keys + well_keys + deprecated_user_specified_keys
 
-    all_keys = list(set(all_keys + requested_keys))
-    ert_config[ErtConfigKeys.SUMMARY] = [all_keys]
-    ert_config[ErtConfigKeys.ECLBASE] = smry_results.file_name
+    return list(set(all_keys + requested_keys))
 
 
 def _extract_environment(
@@ -299,7 +295,17 @@ def _extract_forward_model(
 
 
 def _extract_model(ever_config: EverestConfig, ert_config: dict[str, Any]) -> None:
-    _extract_summary_keys(ever_config, ert_config)
+    summary_fms = [
+        fm
+        for fm in ever_config.forward_model
+        if fm.results is not None and fm.results.type == "summary"
+    ]
+
+    if summary_fms:
+        summary_fm = summary_fms[0]
+        assert summary_fm.results is not None
+
+        ert_config[ErtConfigKeys.ECLBASE] = summary_fm.results.file_name
 
     if ErtConfigKeys.NUM_REALIZATIONS not in ert_config:
         if ever_config.model.realizations is not None:
@@ -315,34 +321,6 @@ def _extract_seed(ever_config: EverestConfig, ert_config: dict[str, Any]) -> Non
 
     if random_seed:
         ert_config[ErtConfigKeys.RANDOM_SEED] = random_seed
-
-
-def _extract_results(ever_config: EverestConfig, ert_config: dict[str, Any]) -> None:
-    everest_objectives = []
-    for objective in ever_config.objective_functions:
-        everest_objectives.append(
-            {"name": objective.name, "input_file": objective.name}
-        )
-    if everest_objectives:
-        ert_config[ErtConfigKeys.EVEREST_OBJECTIVES] = everest_objectives
-
-    everest_constraints = []
-    for constraint in ever_config.output_constraints:
-        everest_constraints.append(
-            {"name": constraint.name, "input_file": constraint.name}
-        )
-    if everest_constraints:
-        ert_config[ErtConfigKeys.EVEREST_CONSTRAINTS] = everest_constraints
-
-    gen_data = [
-        (fm.results.file_name, {"RESULT_FILE": fm.results.file_name})
-        for fm in (ever_config.forward_model or [])
-        if fm.results is not None and fm.results.type == "gen_data"
-    ]
-    ert_config[ErtConfigKeys.GEN_DATA] = [
-        *ert_config.get(ErtConfigKeys.GEN_DATA, []),
-        *gen_data,
-    ]
 
 
 def get_substitutions(
@@ -439,14 +417,6 @@ def get_ensemble_config(
 ) -> EnsembleConfig:
     ensemble_config = EnsembleConfig.from_dict(config_dict)
 
-    # This adds an EXT_PARAM key to the ert_config, which is not a true ERT
-    # configuration key. When initializing an ERT config object, it is ignored.
-    # It is used by the Simulator object to inject ExtParamConfig nodes.
-    for control in everest_config.controls or []:
-        ensemble_config.parameter_configs[control.name] = (
-            control.to_ert_parameter_config()
-        )
-
     return ensemble_config
 
 
@@ -472,7 +442,6 @@ def _everest_to_ert_config_dict(ever_config: EverestConfig) -> ConfigDict:
     _extract_workflows(ever_config, ert_config, config_dir)
     _extract_model(ever_config, ert_config)
     _extract_seed(ever_config, ert_config)
-    _extract_results(ever_config, ert_config)
 
     return ert_config
 
