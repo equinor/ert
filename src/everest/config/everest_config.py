@@ -23,6 +23,7 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from pydantic.json_schema import SkipJsonSchema
 from pydantic_core import ErrorDetails
 from pydantic_core.core_schema import ValidationInfo
 from ruamel.yaml import YAML, YAMLError
@@ -307,7 +308,7 @@ This will produce an output file with the content:
         default_factory=ExportConfig,
         description="Settings to control the exports of a optimization run by everest.",
     )
-    config_path: Path = Field()
+    config_path: SkipJsonSchema[Path] = Field()
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     @model_validator(mode="after")
