@@ -15,9 +15,9 @@ from ._observation_declaration import (
     DateValues,
     Declaration,
     ErrorValues,
-    GenObsValues,
-    HistoryValues,
-    SummaryValues,
+    GenObsDeclaration,
+    HistoryDeclaration,
+    SummaryDeclaration,
 )
 from .ensemble_config import EnsembleConfig
 from .gen_data_config import GenDataConfig
@@ -52,33 +52,34 @@ def create_observations(
     time_len = len(obs_time_list)
     config_errors: list[ErrorInfo] = []
     grouped: dict[str, list[pl.DataFrame]] = defaultdict(list)
-    for obs_name, values in observation_declarations:
+    for declaration in observation_declarations:
+        obs_name = declaration.name
         try:
-            match values:
-                case HistoryValues():
+            match declaration:
+                case HistoryDeclaration():
                     grouped["summary"].append(
                         _handle_history_observation(
                             ensemble_config,
-                            values,
+                            declaration,
                             obs_name,
                             history,
                             time_len,
                         )
                     )
-                case SummaryValues():
+                case SummaryDeclaration():
                     grouped["summary"].append(
                         _handle_summary_observation(
-                            values,
+                            declaration,
                             obs_name,
                             obs_time_list,
                             bool(ensemble_config.refcase),
                         )
                     )
-                case GenObsValues():
+                case GenObsDeclaration():
                     grouped["gen_data"].append(
                         _handle_general_observation(
                             ensemble_config,
-                            values,
+                            declaration,
                             obs_name,
                             obs_time_list,
                             bool(ensemble_config.refcase),
@@ -122,7 +123,7 @@ def _handle_error_mode(
 
 def _handle_history_observation(
     ensemble_config: EnsembleConfig,
-    history_observation: HistoryValues,
+    history_observation: HistoryDeclaration,
     summary_key: str,
     history_type: HistorySource,
     time_len: int,
@@ -284,7 +285,7 @@ def _get_restart(
 
 
 def _handle_summary_observation(
-    summary_dict: SummaryValues,
+    summary_dict: SummaryDeclaration,
     obs_key: str,
     time_map: list[datetime],
     has_refcase: bool,
@@ -333,7 +334,7 @@ def _handle_summary_observation(
 
 def _handle_general_observation(
     ensemble_config: EnsembleConfig,
-    general_observation: GenObsValues,
+    general_observation: GenObsDeclaration,
     obs_key: str,
     time_map: list[datetime],
     has_refcase: bool,
