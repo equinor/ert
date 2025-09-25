@@ -67,7 +67,7 @@ def parse_observations(content: str, filename: str) -> list[ObservationStatement
                 token=unexpected_token,
                 token_history=[
                     Token(
-                        type="STRING",
+                        type="PARAMETER_NAME",
                         value=property_name,
                         line=line,
                         column=column,
@@ -84,7 +84,7 @@ def parse_observations(content: str, filename: str) -> list[ObservationStatement
                 token=unexpected_token,
                 token_history=[
                     Token(
-                        type="STRING",
+                        type="OBSERVATION_NAME",
                     )
                 ],
             ), ["LBRACE", "SEMICOLON"]:
@@ -126,7 +126,7 @@ def parse_observations(content: str, filename: str) -> list[ObservationStatement
 observations_parser = Lark(
     r"""
     start: observation*
-    ?observation: type STRING object? ";"
+    ?observation: type OBSERVATION_NAME object? ";"
     TYPE: "HISTORY_OBSERVATION" | "SUMMARY_OBSERVATION" | "GENERAL_OBSERVATION"
     type: TYPE
     ?value: object
@@ -135,10 +135,12 @@ observations_parser = Lark(
 
     CHAR: /[^; \t\n{}=]/
     STRING : CHAR+
+    OBSERVATION_NAME : CHAR+
+    PARAMETER_NAME : CHAR+
     object : "{" [(declaration";")*] "}"
     ?declaration: "SEGMENT" STRING object -> segment
                 | pair
-    pair   : STRING "=" value
+    pair   : PARAMETER_NAME "=" value
 
 
     %import common.WS
