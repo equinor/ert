@@ -467,14 +467,6 @@ def get_ensemble_config(
 ) -> EnsembleConfig:
     ensemble_config = EnsembleConfig.from_dict(config_dict)
 
-    # This adds an EXT_PARAM key to the ert_config, which is not a true ERT
-    # configuration key. When initializing an ERT config object, it is ignored.
-    # It is used by the Simulator object to inject ExtParamConfig nodes.
-    for control in everest_config.controls or []:
-        ensemble_config.parameter_configs[control.name] = (
-            control.to_ert_parameter_config()
-        )
-
     return ensemble_config
 
 

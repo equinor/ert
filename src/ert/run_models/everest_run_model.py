@@ -202,6 +202,10 @@ class EverestRunModel(RunModel):
         queue_config.queue_system = everest_config.simulator.queue_system.name
 
         ensemble_config = get_ensemble_config(config_dict, everest_config)
+        parameter_configs = {
+            control.name: control.to_ert_parameter_config()
+            for control in everest_config.controls
+        }
 
         substitutions = get_substitutions(
             config_dict,
@@ -272,7 +276,7 @@ class EverestRunModel(RunModel):
             # Mutated throughout execution of Everest
             # (Not totally in conformity with ERT runmodel logic)
             active_realizations=[],
-            parameter_configuration=ensemble_config.parameter_configuration,
+            parameter_configuration=parameter_configs,
             response_configuration=ensemble_config.response_configuration,
             ert_templates=ert_templates,
             user_config_file=config_file,
