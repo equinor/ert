@@ -46,8 +46,9 @@ class SimulatorConfig(BaseModelWithContextSupport, extra="forbid"):
             """
             Defines the number of CPUs when running the forward models. This can
             for example be used in conjunction with the Eclipse parallel keyword
-            for multiple CPU simulation runs. This keyword has no effect when
-            running with the local queue.
+            for multiple CPU simulation runs.
+
+            This keyword has no effect when running with the local queue.
             """
         ),
     )
@@ -55,7 +56,7 @@ class SimulatorConfig(BaseModelWithContextSupport, extra="forbid"):
         default=False,
         description=dedent(
             """
-            If `True`, delete the output folder of a succesful forward model run.
+            If `True`, delete the output folder of a successful forward model run.
             """
         ),
     )
@@ -63,9 +64,8 @@ class SimulatorConfig(BaseModelWithContextSupport, extra="forbid"):
         default=None,
         description=dedent(
             """
-            Maximum allowed running time of a forward model job.
-
-            When set, a job is only allowed to run for `max_runtime` seconds.
+            Maximum allowed running time for each individual forward model job
+            specified in seconds.
 
             A value of 0 means unlimited runtime.
             """
@@ -120,14 +120,14 @@ class SimulatorConfig(BaseModelWithContextSupport, extra="forbid"):
         default=1,
         description=dedent(
             """
-        Defines how many times the queue system may retry a forward model.
+        Specifies how many times a forward model may be submitted to the queue
+        system.
 
-        A forward model may fail for reasons that are not due to the forward
-        model itself, like a node in the cluster crashing, network issues, etc.
-        Therefore, it might make sense to resubmit a forward model in case it
-        fails. `resumbit_limit` defines the number of times we will resubmit a
-        failing forward model. If not specified, a default value of 1 will be
-        used.
+        A forward model may fail for external reasons, examples include node in
+        the cluster crashing, network issues, etc. Therefore, it might make
+        sense to resubmit a forward model in case it fails. `resubmit_limit`
+        defines the number of times we will resubmit a failing forward model. If
+        not specified, a default value of 1 will be used.
         """
         ),
     )

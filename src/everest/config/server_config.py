@@ -36,6 +36,15 @@ class ServerConfig(BaseModel):
         description=dedent(
             """
             Defines which queue system the everest server is submitted to.
+
+            For example, to run the server locally even if the forward model may
+            run on another system:
+
+            ```yaml
+            server:
+              queue_system:
+                name: local
+            ```
             """
         ),
         discriminator="name",

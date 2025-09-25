@@ -92,7 +92,9 @@ class ControlConfig(BaseModel):
             Initial guess for the control group.
 
             The initial guess value that is assigned to all control variables in
-            the control group unless overridden at the variable level.
+            the control group.
+
+            This default value can be overridden at the variable level.
             """
         ),
     )
@@ -103,11 +105,13 @@ class ControlConfig(BaseModel):
             Control data type for the control group.
 
             The data type value that is assigned to all control variables in
-            the control group unless overridden at the variable level.
+            the control group.
 
             Set to `"integer"` for discrete optimization, or `"real"` for
             continuous optimization (default). This may be ignored if the
             optimization algorithm that is used does not support this.
+
+            This default value can be overridden at the variable level.
             """
         ),
     )
@@ -119,8 +123,9 @@ class ControlConfig(BaseModel):
 
             Whether all control variables in the control group are enabled or
             not. When not enabled, variables are kept constant at the intial
-            guess value during optimization. This can be overridden at the
-            variable level.
+            guess value during optimization.
+
+            This default value can be overridden at the variable level.
             """
         ),
     )
@@ -128,11 +133,12 @@ class ControlConfig(BaseModel):
         default=None,
         description=dedent(
             """
-            The minimum values of all control variables in the control group
-            unless overridden at the variable level.
+            The minimum values of all control variables in the control group.
 
             The `initial_guess` field of this control group and of all of its
             variables must respect this minimum value.
+
+            This default value can be overridden at the variable level.
             """
         ),
     )
@@ -140,11 +146,12 @@ class ControlConfig(BaseModel):
         default=None,
         description=dedent(
             """
-            The maximum values of all control variables in the control group
-            unless overridden at the variable level.
+            The maximum values of all control variables in the control group.
 
             The `initial_guess` field of this control group and of all of its
             variables must respect this maximum value.
+
+            This default value can be overridden at the variable level.
             """
         ),
     )
@@ -157,10 +164,6 @@ class ControlConfig(BaseModel):
             The `perturbation_type` keyword defines whether the perturbation
             magnitude (`perturbation_magnitude`) should be treated as an
             absolute value or as relative to the dynamic range of the controls.
-
-            Note: currently the dynamic range is computed with respect to all
-            controls, so defining a relative perturbation type for control types
-            with different dynamic ranges might have unintended effects.
             """
         ),
     )
@@ -169,11 +172,13 @@ class ControlConfig(BaseModel):
         description=dedent(
             """
             The magnitude of the perturbation of all control variables in the
-            control group unless overridden at the variable level.
+            control group.
 
             This controls the magnitude of perturbations (e.g. the standard
             deviation in case of a normal distribution) of controls, used to
             approximate the gradient.
+
+            This default value can be overridden at the variable level.
             """
         ),
     )
@@ -187,7 +192,7 @@ class ControlConfig(BaseModel):
             maximum values (`min`/`max` settings) to the range given by
             `target_range` (default = [0, 1]).
 
-            This may be overridden at the variable level.
+            This default value can be overridden at the variable level.
 
             This option has no effect on discrete controls.
             """
@@ -202,6 +207,8 @@ class ControlConfig(BaseModel):
             A sampler specification section applies to a group of controls, or
             to an individual control. Sampler specifications are not required,
             if no sampler sections are provided, a normal distribution is used.
+
+            This can be overridden at the variable level.
 
             If at least one control group or variable has a sampler specification, only
             the groups or variables with a sampler specification are perturbed.

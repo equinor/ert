@@ -14,8 +14,8 @@ class ForwardModelResult(BaseModelWithContextSupport):
     file_name: str = Field(
         description=dedent(
             """
-        The output file produced by the forward model.
-        """
+            The output file produced by the forward model.
+            """
         )
     )
 
