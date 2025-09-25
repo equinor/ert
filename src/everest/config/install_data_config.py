@@ -1,26 +1,33 @@
 from pathlib import Path
+from textwrap import dedent
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class InstallDataConfig(BaseModel, extra="forbid"):
     source: str = Field(
-        description="""
-        Path to file or directory that needs to be copied or linked in the evaluation
-        execution context.
-        """
+        description=dedent(
+            """
+            Path to file or directory that needs to be copied or linked into the
+            directory where the forward model executes.
+            """
+        )
     )  # existing path
     target: str = Field(
-        description="""
-        Relative path to place the copy or link for the given source.
-        """
+        description=dedent(
+            """
+            Relative destination path to copy or link the given source to.
+            """
+        )
     )  # path
     link: bool = Field(
         default=False,
-        description="""
-        If set to true will create a link to the given source at the given target,
-        if not set the source will be copied at the given target.
-        """,
+        description=dedent(
+            """
+            If set to true will create a link to the given source at the given target,
+            if not set the source will be copied at the given target.
+            """
+        ),
     )
 
     @field_validator("link", mode="before")

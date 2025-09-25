@@ -1,3 +1,4 @@
+from textwrap import dedent
 from typing import Any
 
 from pydantic import BaseModel, Field, model_validator
@@ -8,7 +9,11 @@ from ert.config import ConfigWarning
 class ExportConfig(BaseModel, extra="forbid"):
     keywords: list[str] = Field(
         default_factory=list,
-        description="List of eclipse keywords to be exported.",
+        description=dedent(
+            """
+            A list of Eclipse keywords to export.
+            """
+        ),
     )
 
     @model_validator(mode="before")

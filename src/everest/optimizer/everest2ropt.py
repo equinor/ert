@@ -68,21 +68,18 @@ def _parse_objectives(
         # function estimators in ropt to implement these types. This is done by
         # supplying a list of estimators and for each objective an index into
         # that list:
-        objective_type = "mean" if objective.type is None else objective.type
-
-        # Find the estimator if it exists:
         function_estimator_idx = next(
             (
                 idx
                 for idx, estimator in enumerate(function_estimators)
-                if estimator["method"] == objective_type
+                if estimator["method"] == objective.type
             ),
             None,
         )
         # If not, make a new estimator:
         if function_estimator_idx is None:
             function_estimator_idx = len(function_estimators)
-            function_estimators.append({"method": objective_type})
+            function_estimators.append({"method": objective.type})
         function_estimator_indices.append(function_estimator_idx)
 
     ropt_objectives: dict[str, Any] = {"weights": weights}

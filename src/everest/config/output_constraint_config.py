@@ -1,3 +1,4 @@
+from textwrap import dedent
 from typing import Any
 
 import numpy as np
@@ -5,49 +6,69 @@ from pydantic import BaseModel, Field, PositiveFloat, model_validator
 
 
 class OutputConstraintConfig(BaseModel, extra="forbid"):
-    name: str = Field(description="The unique name of the output constraint.")
+    name: str = Field(
+        description=dedent(
+            """
+        The unique name of the output constraint.
+        """
+        )
+    )
     target: float | None = Field(
         default=None,
-        description="""Defines the equality constraint
+        description=dedent(
+            """
+            Defines the equality constraint
 
-(f(x) - b) / c = 0,
+            f(x) = b,
 
-where b is the target, f is a function of the control vector x, and c is the
-scale (scale).
-
-""",
+            where f is a function of the control vector x and b is the target.
+            """
+        ),
     )
     lower_bound: float = Field(
         default=-np.inf,
-        description="""Defines the lower bound
-(greater than or equal) constraint
+        description=dedent(
+            """
+            Defines the equality constraint
 
-(f(x) - b) / c >= 0,
+            f(x) >= b,
 
-where b is the lower bound, f is a function of the control vector x, and c is
-the scale (scale).
-""",
+            where f is a function of the control vector x and b is the lower
+            bound.
+            """
+        ),
     )
     upper_bound: float = Field(
         default=np.inf,
-        description="""Defines the upper bound (less than or equal) constraint:
+        description=dedent(
+            """
+            Defines the equality constraint
 
-(f(x) - b) / c <= 0,
+            f(x) <= b,
 
-where b is the upper bound, f is a function of the control vector x, and c is
-the scale (scale).""",
+            where f is a function of the control vector x and b is the upper
+            bound.
+            """
+        ),
     )
     scale: PositiveFloat | None = Field(
         default=None,
-        description="""Scaling of constraints (scale).
+        description=dedent(
+            """
+            Scaling of constraints.
 
-scale is a normalization factor which can be used to scale the constraint
-to control its importance relative to the (singular) objective and the controls.
+            `scale` is a normalization factor which can be used to scale the
+            constraint to control its importance relative to the objective.
 
-Both the upper_bound and the function evaluation value will be scaled with this number.
-That means that if, e.g., the upper_bound is 0.5 and the scaling is 10, then the
-function evaluation value will be divided by 10 and bounded from above by 0.05.
-""",
+            Both the bounds or target and the function evaluation value will be
+            scaled with this number. For example, if the upper bound is 0.5 and
+            the scaling is 10, then the function evaluation value will be
+            divided by 10 and bounded from above by 0.05.
+
+            This option may not be set if `auto_scale` is set in the
+            `optimization` section.
+            """
+        ),
     )
 
     @model_validator(mode="before")

@@ -166,147 +166,332 @@ def _find_loc(loc: tuple[int | str, ...] | None, file_content: list[str]) -> int
 
 class EverestConfig(BaseModelWithContextSupport):
     controls: Annotated[list[ControlConfig], AfterValidator(unique_items)] = Field(
-        description="""Defines a list of controls.
-         Controls should have unique names each control defines
-            a group of control variables
-        """,
+        description=dedent(
+            """
+            Defines a list of controls.
+
+            Each control defines a group of control variables. Each group of
+            control variables is defined by a list of variable definitions, for
+            example like this:
+
+            ```yaml
+            controls:
+              - name: point
+                  type: generic_control
+                  min: -1.0
+                  max: 1.0
+                  initial_guess: 0.1
+                  perturbation_magnitude: 0.001
+                  variables:
+                    - name: x
+                      initial_guess: 0.5
+                    - name: y
+                      min: 0.0
+                      max: 1.0
+                    - name: z
+            ```
+
+            This defines a group of controls names `point`, with variables `x`,
+            `y` and `z`. The names of variables passed to the optimizer will be
+            composed of of the control name and the variable names: `point.x`,
+            `point.y`, and `point.z`.
+
+            Note that many variable properties may be defined both at the level
+            of the control group and at the variable level. Definitions at the
+            level of the control group set the properties for all variables in
+            the group, except when they are overridden by the same field at the
+            level of the variable. For instance, in the example above, all
+            variables have an initial guess of 0.1, except for the `point.x`
+            variable which has an initial value of 0.5.
+
+            Control names must be unique. Variables names must be unique within
+            a control group, except when they are modified with an index, like this:
+
+            ```yaml
+            controls:
+              - name: point
+                  max: 1.0
+                  min: -1.0
+                  initial_guess: 0.25
+                  type: generic_control
+                  variables:
+                    - name: x
+                      index: 1
+                    - name: x
+                      index: 2
+                    - name: x
+                      index: 3
+            ```
+
+            This defines three variables `point.x.1`, `point.x.2` and
+            `point.x.3`. When a variable has an `index` field, all variables in
+            the control group must have an index, which must be a unique
+            non-negative integer.
+
+            There is a shortcut for the case that the `index` fields form a
+            sequence starting at 1. In this case, the indexed variables can be
+            defined by providing a list of initial guesses. This is equivalent
+            to the example above:
+
+            ```yaml
+            controls:
+              - name: point
+                  max: 1.0
+                  min: -1.0
+                  type: generic_control
+                  variables:
+                    - name: x
+                      initial_guess: [0.25, 0.25, 0.25]
+            ```
+        """
+        ),
         min_length=1,
     )
     objective_functions: list[ObjectiveFunctionConfig] = Field(
-        description="List of objective function specifications", min_length=1
+        description=dedent(
+            """
+            List of objective function specifications.
+            """
+        ),
+        min_length=1,
     )
     optimization: OptimizationConfig = Field(
         default_factory=OptimizationConfig,
-        description="Optimizer options",
+        description=dedent(
+            """
+            Optimizer options.
+
+            Ensemble-based optimization in Everest is handled internally by the
+            `ropt` library for robust optimization, which in turn uses a plugin
+            mechanism to provide multiple low-level optimization backends. By
+            default Everest includes backends based on the Dakota optimization
+            package and on the SciPy package.
+
+            Many of the optimization options in this section are handled by
+            `ropt` in an uniform way, i.e. they will be handled identically by
+            the backend optimization algorithm. However, some options may be
+            handled differently, or not be supported, depending on the
+            optimization backend used. If this is the case, this will be
+            indicated in the description of the option.
+            """
+        ),
     )
     model: ModelConfig = Field(
-        description="Configuration of the Everest model",
+        description=dedent(
+            """
+            Configuration of the ensemble model that is optimized.
+            """
+        ),
     )
     environment: EnvironmentConfig = Field(
         default_factory=EnvironmentConfig,
-        description="The environment of Everest, specifies which folders are used "
-        "for simulation and output, as well as the level of detail in Everest-logs",
+        description=dedent(
+            """
+            The environment of the optimization run.
+
+            This specifies which folders are used for simulation and output, as
+            well as the level of detail in the logs""",
+        ),
     )
     wells: list[WellConfig] = Field(
         default_factory=list,
-        description="A list of well configurations, all with unique names.",
+        description=dedent(
+            """
+            A list of well configurations.
+            """
+        ),
     )
     definitions: dict[str, Any] = Field(
         default_factory=dict[str, Any],
-        description="""Section for specifying variables.
+        description=dedent(
+            """
+            Section for specifying variables.
 
-Used to specify variables that will be replaced in the file when encountered.
-
-| scratch: /scratch/ert/
-| num_reals: 10
-| min_success: 13
-| fixed_wells: [Prod1, Inj3]
-
-Some keywords are pre-defined by Everest,
-
-| realization: <GEO_ID>
-| configpath: <CONFIG_PATH>
-| runpath_file: <RUNPATH_FILE>
-| eclbase: <ECLBASE>
-
-and environment variables are exposed in the form 'os.NAME', for example:
-
-| os.USER: $USER
-| os.HOSTNAME: $HOSTNAME
-| ...
-    """,
+            Used to specify variables that will be replaced in the file when
+            encountered as `r{{ NAME }}`.
+            """
+        ),
     )
     input_constraints: list[InputConstraintConfig] = Field(
-        default_factory=list, description="List of input constraints"
+        default_factory=list,
+        description=dedent(
+            """
+            A list of input constraint definitions.
+
+            Input constraints (linear constraints) are defined by a set of
+            linear equations that must be equal to (or less- or greater-than) a
+            given right-hand-side value. The optimizer will be directed to limit
+            the control variables, during optimization, to the set of of values
+            that obey all of these equations (i.e. find feasible control values).
+
+            The values of the linear constraints are calculated directly from
+            the control vector values and do not require the results of the
+            forward model that is being optimized.
+
+            How linear constraints are handled depends on the backend
+            optimization algorithm: some may keep the control variables feasible
+            during the entire optimization, some may allow constraint violations
+            at intermediate trial points.
+            """
+        ),
     )
     output_constraints: list[OutputConstraintConfig] = Field(
         default_factory=list,
-        description="A list of output constraints with unique names.",
+        description=dedent(
+            """
+            A list of output constraint definitions.
+
+            Output constraints (non-linear constraints) are defined by a set of
+            arbitrary functions that must be equal to (or less- or greater-than)
+            a given right-hand-side value. The optimizer will attempt to find a
+            solution that maximizes the objective function and does not violate
+            these constraints.
+
+            The values of the non-linear constraints must be provided by the
+            forward model that is being optimized.
+
+            How non-linear constraints are handled depends on the backend
+            optimization algorithm: in most cases some intermediate trial points
+            will violate the constraint.
+            """
+        ),
     )
     install_jobs: list[InstallJobConfig] = Field(
         default_factory=list,
-        description="A list of jobs to install",
+        description=dedent(
+            """
+            A list of jobs to install.
+
+            This defines the set of executables that can be referenced in the
+            `forward_model` section.
+            """
+        ),
         validate_default=True,
     )
     install_workflow_jobs: list[InstallJobConfig] = Field(
-        default_factory=list, description="A list of workflow jobs to install"
+        default_factory=list,
+        description=dedent(
+            """
+            A list of workflow jobs to install.
+
+            This defines the set of executables that can be referenced in the
+            `workflows` section.
+            """
+        ),
     )
     install_data: list[InstallDataConfig] = Field(
         default_factory=list,
-        description="""A list of install data elements from the install_data config
-        section. Each item marks what folders or paths need to be copied or linked
-        in order for the evaluation jobs to run.""",
+        description=dedent(
+            """
+            A list of directories and/or files to copy or link to the directory
+            where the evaluation jobs will run.
+            """
+        ),
     )
     install_templates: list[InstallTemplateConfig] = Field(
         default_factory=list,
-        description="""Generate files using a jinja2 template.
+        description=dedent(
+            """
+            Generate files using a jinja2 template.
 
-A list of template files to be rendered to an output file. Extra JSON or YAML
-files can be provided with data that will be exposed as variables to the jinja2
-renderer.
+            A list of template files to be rendered to an output file. Extra
+            JSON or YAML files can be provided with data that will be exposed as
+            variables to the jinja2 renderer.
 
-Example:
+            Example:
 
-Given an input file ``my_input.json``:
+            Given two files `my_input.json` and `tmpl.jinja`, stored in a
+            `files` directory:
 
-```
-   {
-       "my_variable": "my_value"
-   }
-```
+            `files/my_input.json`:
 
-And a template file ``tmpl.jinja``:
+            ```json
+            {
+                "my_variable": "my_value"
+            }
+            ```
 
-```
-    This is written in my file together with {{my_input.my_variable}}
-```
+            and `files/tmpl.jinja`:
 
-Run the script with:
+            ```text
+            This is written in my file: {{my_input.my_variable}}
+            ```
 
-```
-    template_render -i my_input.json -t tmpl.jinja -o my_output.txt
-```
+            Add this to the config file:
 
-This will produce an output file with the content:
+            ```yaml
+            install_data:
+              - source: files
+                target: files
 
-```
-    This is written in my file together with my_value
-```
-""",
+            install_templates:
+              - template: files/tmpl.jinja
+                output_file: my_output.txt
+                extra_data: files/my_input.json
+            ```
+
+            This will produce an output file with the content:
+
+            ```text
+            This is written in my file: my_value
+            ```
+            """
+        ),
     )
     server: ServerConfig = Field(
         default_factory=ServerConfig,
-        description="""Defines Everest server settings, i.e., which queue system,
-            queue name and queue options are used for the everest server.
-            The main reason for changing this section is situations where everest
-            times out because it can not add the server to the queue.
-            This makes it possible to reduce the resource requirements as they tend to
-            be low compared with the forward model.
+        description=dedent(
+            """
+            Defines Everest server settings, i.e., which queue system, queue
+            name and queue options are used for the everest server. This makes
+            it possible to reduce the resource requirements for the server that
+            tend to be low compared with the forward models. This may prevent
+            situations where everest times out because it can not add the server
+            to the queue.
 
-            Queue system and queue name defaults to the same as simulator, and the
-            server should not need to be configured by most users.
-            This is also true for the --include-host and --exclude-host options
-            that are used by the SLURM driver.
+            Queue system and queue name defaults to the same as simulator, and
+            the server should not need to be configured by most users. This is
+            also true for the `--include-host` and `--exclude-host` options that are
+            used by the SLURM driver.
 
-            Note that changing values in this section has no impact on the resource
-            requirements of the forward models.
-""",
+            Note that changing values in this section has no impact on the
+            resource requirements of the forward models.
+            """
+        ),
     )
     simulator: SimulatorConfig = Field(
         default_factory=SimulatorConfig,
-        description="Simulation settings",
+        description=dedent(
+            """
+            Defines simulator settings, i.e., which queue system, queue
+            name and queue options are used for running the forward models.
+            """
+        ),
         examples=[simulator_example],
     )
     forward_model: list[ForwardModelStepConfig] = Field(
-        default_factory=list, description="List of jobs to run"
+        default_factory=list,
+        description=dedent(
+            """
+            The list of jobs to run.
+            """
+        ),
     )
     workflows: WorkflowConfig = Field(
         default_factory=WorkflowConfig,
-        description="Workflows to run during optimization",
+        description=dedent(
+            """
+            Optional workflow jobs to run during optimization.
+            """
+        ),
     )
     export: ExportConfig = Field(
         default_factory=ExportConfig,
-        description="Settings to control the exports of a optimization run by everest.",
+        description=dedent(
+            """
+            Settings to control the exports of an optimization run by everest.
+            """
+        ),
     )
     config_path: SkipJsonSchema[Path] = Field()
     model_config = ConfigDict(extra="forbid", frozen=True)

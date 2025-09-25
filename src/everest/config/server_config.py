@@ -1,6 +1,7 @@
 import json
 import os
 from pathlib import Path
+from textwrap import dedent
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -32,7 +33,11 @@ class ServerConfig(BaseModel):
         | None
     ) = Field(
         default=None,
-        description="Defines which queue system the everest server is submitted to",
+        description=dedent(
+            """
+            Defines which queue system the everest server is submitted to.
+            """
+        ),
         discriminator="name",
     )
     model_config = ConfigDict(
