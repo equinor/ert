@@ -7,10 +7,10 @@ import pytest
 from hypothesis import given
 
 from ert.config._observation_declaration import (
-    GenObsValues,
-    HistoryValues,
+    GenObsDeclaration,
+    HistoryDeclaration,
     Segment,
-    SummaryValues,
+    SummaryDeclaration,
     make_observation_declarations,
 )
 from ert.config.parsing import parse_observations
@@ -84,61 +84,55 @@ def test_make_observation_declarations():
             ),
         ],
     ) == [
-        (
-            "FOPR",
-            HistoryValues(
-                key="FOPR", error_mode="RELMIN", error=0.1, error_min=0.1, segment=[]
-            ),
+        HistoryDeclaration(
+            name="FOPR",
+            key="FOPR",
+            error_mode="RELMIN",
+            error=0.1,
+            error_min=0.1,
+            segment=[],
         ),
-        (
-            "WOPR_OP1_9",
-            SummaryValues(
-                error_mode="ABS",
-                error=0.05,
-                error_min=0.1,
-                key="WOPR:OP1",
-                value=0.1,
-                date="2010-03-31",
-            ),
+        SummaryDeclaration(
+            name="WOPR_OP1_9",
+            error_mode="ABS",
+            error=0.05,
+            error_min=0.1,
+            key="WOPR:OP1",
+            value=0.1,
+            date="2010-03-31",
         ),
-        (
-            "WPR_DIFF_1",
-            GenObsValues(
-                data="SNAKE_OIL_WPR_DIFF",
-                index_list="400,800,1200,1800",
-                date="2015-06-13",
-                obs_file="wpr_diff_obs.txt",
-            ),
+        GenObsDeclaration(
+            name="WPR_DIFF_1",
+            data="SNAKE_OIL_WPR_DIFF",
+            index_list="400,800,1200,1800",
+            date="2015-06-13",
+            obs_file="wpr_diff_obs.txt",
         ),
-        (
-            "WPR_DIFF_2",
-            GenObsValues(
-                data="SNAKE_OIL_WPR_DIFF",
-                index_file="wpr_diff_idx.txt",
-                date="2015-06-13",
-                obs_file="wpr_diff_obs.txt",
-            ),
+        GenObsDeclaration(
+            name="WPR_DIFF_2",
+            data="SNAKE_OIL_WPR_DIFF",
+            index_file="wpr_diff_idx.txt",
+            date="2015-06-13",
+            obs_file="wpr_diff_obs.txt",
         ),
-        (
-            "FWPR",
-            HistoryValues(
-                key="FWPR",
-                error_mode="RELMIN",
-                error=0.1,
-                error_min=0.1,
-                segment=[
-                    (
-                        "SEG",
-                        Segment(
-                            start=1,
-                            stop=0,
-                            error_mode="RELMIN",
-                            error=0.25,
-                            error_min=0.1,
-                        ),
-                    )
-                ],
-            ),
+        HistoryDeclaration(
+            name="FWPR",
+            key="FWPR",
+            error_mode="RELMIN",
+            error=0.1,
+            error_min=0.1,
+            segment=[
+                (
+                    "SEG",
+                    Segment(
+                        start=1,
+                        stop=0,
+                        error_mode="RELMIN",
+                        error=0.25,
+                        error_min=0.1,
+                    ),
+                )
+            ],
         ),
     ]
 
@@ -172,4 +166,4 @@ def test_that_multiple_segments_are_collected():
         "",
     )
 
-    assert len(observations[0][1].segment) == 2
+    assert len(observations[0].segment) == 2

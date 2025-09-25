@@ -32,12 +32,10 @@ class Segment(ErrorValues):
 
 
 @dataclass
-class HistoryValues(ErrorValues):
+class HistoryDeclaration(ErrorValues):
+    name: str
     key: str
     segment: list[tuple[str, Segment]]
-
-
-HistoryDeclaration = tuple[str, HistoryValues]
 
 
 @dataclass
@@ -50,20 +48,19 @@ class DateValues:
 
 @dataclass
 class _SummaryValues:
+    name: str
     value: float
     key: str
 
 
 @dataclass
-class SummaryValues(DateValues, ErrorValues, _SummaryValues):
+class SummaryDeclaration(DateValues, ErrorValues, _SummaryValues):
     pass
-
-
-SummaryDeclaration = tuple[str, SummaryValues]
 
 
 @dataclass
 class _GenObsValues:
+    name: str
     data: str
     value: float | None = None
     error: float | None = None
@@ -73,11 +70,10 @@ class _GenObsValues:
 
 
 @dataclass
-class GenObsValues(DateValues, _GenObsValues):
+class GenObsDeclaration(DateValues, _GenObsValues):
     pass
 
 
-GenObsDeclaration = tuple[str, GenObsValues]
 Declaration = HistoryDeclaration | SummaryDeclaration | GenObsDeclaration
 
 
@@ -96,20 +92,15 @@ def make_observation_declarations(
     for stat in statements:
         try:
             if stat[0] == ObservationType.HISTORY:
-                result.append((stat[1], _validate_history_values(stat[1], stat[2])))
+                result.append(_validate_history_values(stat[1], stat[2]))
             elif stat[0] == ObservationType.SUMMARY:
                 if len(stat) != 3:
                     raise _unknown_declaration_error(stat)
-                result.append((stat[1], _validate_summary_values(stat[1], stat[2])))
+                result.append(_validate_summary_values(stat[1], stat[2]))
             elif stat[0] == ObservationType.GENERAL:
                 if len(stat) != 3:
                     raise _unknown_declaration_error(stat)
-                result.append(
-                    (
-                        stat[1],
-                        _validate_gen_obs_values(directory, stat[1], stat[2]),
-                    )
-                )
+                result.append(_validate_gen_obs_values(directory, stat[1], stat[2]))
             else:
                 raise _unknown_declaration_error(stat)
         except ObservationConfigError as err:
@@ -123,9 +114,9 @@ def make_observation_declarations(
 
 
 def _validate_unique_names(
-    conf_content: Sequence[tuple[str, Any]],
+    declarations: Sequence[Declaration],
 ) -> None:
-    names_counter = Counter(n for n, _ in conf_content)
+    names_counter = Counter(d.name for d in declarations)
     duplicate_names = [n for n, c in names_counter.items() if c > 1]
     errors = [
         ErrorInfo(
@@ -137,7 +128,9 @@ def _validate_unique_names(
         raise ObservationConfigError.from_collected(errors)
 
 
-def _validate_history_values(name_token: str, inp: ObservationBody) -> HistoryValues:
+def _validate_history_values(
+    name_token: str, inp: ObservationBody
+) -> HistoryDeclaration:
     error_mode: ErrorModes = "RELMIN"
     error = 0.1
     error_min = 0.1
@@ -157,7 +150,8 @@ def _validate_history_values(name_token: str, inp: ObservationBody) -> HistoryVa
             case _:
                 raise _unknown_key_error(str(key), name_token)
 
-    return HistoryValues(
+    return HistoryDeclaration(
+        name=name_token,
         key=name_token,
         error_mode=error_mode,
         error=error,
@@ -166,7 +160,9 @@ def _validate_history_values(name_token: str, inp: ObservationBody) -> HistoryVa
     )
 
 
-def _validate_summary_values(name_token: str, inp: ObservationBody) -> SummaryValues:
+def _validate_summary_values(
+    name_token: str, inp: ObservationBody
+) -> SummaryDeclaration:
     error_mode: ErrorModes = "ABS"
     summary_key = None
 
@@ -199,7 +195,8 @@ def _validate_summary_values(name_token: str, inp: ObservationBody) -> SummaryVa
     if "ERROR" not in float_values:
         raise _missing_value_error(name_token, "ERROR")
 
-    return SummaryValues(
+    return SummaryDeclaration(
+        name=name_token,
         error_mode=error_mode,
         error=float_values["ERROR"],
         error_min=float_values["ERROR_MIN"],
@@ -245,13 +242,13 @@ def _validate_segment_dict(name_token: str, inp: dict[str, Any]) -> Segment:
 
 def _validate_gen_obs_values(
     directory: str, name_token: str, inp: ObservationBody
-) -> GenObsValues:
+) -> GenObsDeclaration:
     try:
         data = inp["DATA"]
     except KeyError as err:
         raise _missing_value_error(name_token, "DATA") from err
 
-    output: GenObsValues = GenObsValues(data=data)
+    output: GenObsDeclaration = GenObsDeclaration(name=name_token, data=data)
     for key, value in inp.items():
         match key:
             case "RESTART":

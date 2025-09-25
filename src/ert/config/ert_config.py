@@ -24,8 +24,8 @@ from ._create_observations import create_observations
 from ._design_matrix_validator import DesignMatrixValidator
 from ._observation_declaration import (
     Declaration,
-    HistoryValues,
-    SummaryValues,
+    HistoryDeclaration,
+    SummaryDeclaration,
     make_observation_declarations,
 )
 from .analysis_config import AnalysisConfig
@@ -961,9 +961,9 @@ class ErtConfig(BaseModel):
         try:
             if obs_configs:
                 summary_obs = {
-                    obs[1].key
+                    obs.key
                     for obs in obs_configs
-                    if isinstance(obs[1], HistoryValues | SummaryValues)
+                    if isinstance(obs, HistoryDeclaration | SummaryDeclaration)
                 }
                 if summary_obs:
                     summary_keys = ErtConfig._read_summary_keys(config_dict)
