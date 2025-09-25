@@ -669,6 +669,7 @@ cases_to_test = [
 # readable/accessible wrt single test case failures
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.parametrize("case", cases_to_test)
+@pytest.mark.integration_test
 def test_that_dumped_manual_update_matches_snapshot(
     case, copy_case, snapshot, change_to_tmpdir
 ):
@@ -704,6 +705,7 @@ def test_that_dumped_manual_update_matches_snapshot(
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.parametrize("case", cases_to_test)
+@pytest.mark.integration_test
 def test_that_dumped_evaluate_ensemble_matches_snapshot(
     case, copy_case, snapshot, change_to_tmpdir
 ):
@@ -738,6 +740,7 @@ def test_that_dumped_evaluate_ensemble_matches_snapshot(
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.parametrize("case", cases_to_test)
+@pytest.mark.integration_test
 def test_that_dumped_ensemble_experiment_matches_snapshot(
     case, copy_case, snapshot, change_to_tmpdir
 ):
@@ -762,6 +765,7 @@ def test_that_dumped_ensemble_experiment_matches_snapshot(
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.parametrize("case", cases_to_test)
+@pytest.mark.integration_test
 def test_that_dumped_ensemble_smoother_matches_snapshot(
     case, copy_case, snapshot, change_to_tmpdir
 ):
@@ -786,6 +790,7 @@ def test_that_dumped_ensemble_smoother_matches_snapshot(
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.parametrize("case", cases_to_test)
+@pytest.mark.integration_test
 def test_that_dumped_enif_matches_snapshot(case, copy_case, snapshot, change_to_tmpdir):
     config_dir, config_file = case.split("/")
     copy_case(config_dir)
@@ -808,6 +813,7 @@ def test_that_dumped_enif_matches_snapshot(case, copy_case, snapshot, change_to_
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.parametrize("case", cases_to_test)
+@pytest.mark.integration_test
 def test_that_dumped_esmda_matches_snapshot(
     case, copy_case, snapshot, change_to_tmpdir
 ):
