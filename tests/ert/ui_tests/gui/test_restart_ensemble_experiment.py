@@ -1,3 +1,4 @@
+import logging
 import os
 import random
 import stat
@@ -95,11 +96,13 @@ def test_rerun_failed_all_realizations(opened_main_window_poly, qtbot):
     )
 
 
-def test_rerun_failed_realizations(opened_main_window_poly, qtbot):
+def test_rerun_failed_realizations(opened_main_window_poly, qtbot, caplog):
     """This runs an ensemble experiment with some failing realizations, and then
     restarts two times, checking that only the failed realizations are started.
+    Verifies that the number of successful and failed realizations is logged correctly
     """
     gui = opened_main_window_poly
+    caplog.set_level(logging.INFO)
 
     def write_poly_eval(failing_reals: set[int]):
         with open("poly_eval.py", "w", encoding="utf-8") as f:
@@ -158,6 +161,13 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot):
     qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=60000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
+    def verify_logged_realization_status(realization_count: int, failed_count: int):
+        expected_success = realization_count - failed_count
+        assert f"number of realizations succeeding: {expected_success}" in caplog.text
+        assert f"number of realizations failing: {failed_count}" in caplog.text
+
+    verify_logged_realization_status(num_reals, len(failing_reals_first_try))
+
     # Assert that the number of boxes in the detailed view is
     # equal to the number of realizations
     realization_widget = run_dialog._tab_widget.currentWidget()
@@ -191,6 +201,10 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot):
     qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=60000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
+    verify_logged_realization_status(
+        len(failing_reals_first_try), len(failing_reals_second_try)
+    )
+
     # We expect to have the same amount of realizations in list_model
     # since we reuse the snapshot_model
     realization_widget = run_dialog._tab_widget.currentWidget()
@@ -219,6 +233,10 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot):
 
     qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=60000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
+
+    verify_logged_realization_status(
+        len(failing_reals_second_try), len(failing_reals_third_try)
+    )
 
     # We expect to have the same amount of realizations in list_model
     # since we reuse the snapshot_model
