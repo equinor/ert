@@ -17,6 +17,8 @@ from ert.config.parsing import parse_observations
 
 from .summary_generator import summaries
 
+pytestmark = pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
+
 
 def make_observations(obs_config_contents, parse=True):
     obs_config_file = "obs_config"
@@ -91,7 +93,6 @@ def make_refcase_observations(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_when_history_source_is_history_the_history_summary_vector_is_used():
     observations = make_refcase_observations(
         [("HISTORY_OBSERVATION", "FOPR", {})],
@@ -102,7 +103,6 @@ def test_that_when_history_source_is_history_the_history_summary_vector_is_used(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_the_key_of_an_history_observation_must_be_in_the_refcase():
     with pytest.raises(
         ConfigValidationError, match="Key 'MISSINGH' is not present in refcase"
@@ -114,7 +114,6 @@ def test_that_the_key_of_an_history_observation_must_be_in_the_refcase():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_when_history_source_is_simulated_the_summary_vector_is_used():
     observations = make_refcase_observations(
         [("HISTORY_OBSERVATION", "FOPR", {})],
@@ -133,7 +132,6 @@ def test_that_when_history_source_is_simulated_the_summary_vector_is_used():
         pytest.param("02/01/2020", False),
     ],
 )
-@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_date_parsing_in_observations(datestring, errors):
     observations = [
         (
@@ -574,7 +572,6 @@ def test_that_empty_observations_file_causes_exception():
         ErtConfig.from_dict({"OBS_CONFIG": ("obs_conf", "")})
 
 
-@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_having_no_refcase_but_history_observations_causes_exception():
     with pytest.raises(
         expected_exception=ConfigValidationError,
@@ -908,7 +905,6 @@ def run_sim(start_date, keys=None, values=None, days=None):
         ),
     ],
 )
-@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_loading_summary_obs_with_days_is_within_tolerance(
     tmpdir,
     time_delta,
@@ -944,7 +940,6 @@ def test_that_loading_summary_obs_with_days_is_within_tolerance(
             )
 
 
-@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_having_observations_on_starting_date_errors(tmpdir):
     date = datetime(2014, 9, 10)
     with tmpdir.as_cwd():
@@ -1013,7 +1008,6 @@ def test_that_having_observations_on_starting_date_errors(tmpdir):
         ),
     ],
 )
-@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_out_of_bounds_segments_are_truncated(tmpdir, start, stop, message):
     with tmpdir.as_cwd():
         run_sim(
@@ -1050,7 +1044,6 @@ def test_that_out_of_bounds_segments_are_truncated(tmpdir, start, stop, message)
             )
 
 
-@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 @given(
     std=st.floats(min_value=0.1, max_value=1.0e3),
     with_ext=st.booleans(),
@@ -1225,7 +1218,6 @@ def test_that_general_observation_restart_must_match_gen_data_report_step():
         )
 
 
-@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
     with tmpdir.as_cwd():
         run_sim(
@@ -1309,7 +1301,6 @@ def test_that_duplicate_observation_names_are_invalid():
         )
 
 
-@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_segment_defaults_are_applied(tmpdir):
     with tmpdir.as_cwd():
         run_sim(
@@ -1348,7 +1339,6 @@ def test_that_segment_defaults_are_applied(tmpdir):
         assert list(observations["std"]) == pytest.approx([1.0] * 5 + [0.1] * 5)
 
 
-@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_summary_default_error_min_is_applied():
     observations = make_observations(
         [
@@ -1711,6 +1701,9 @@ def test_that_setting_an_unknown_key_in_a_segment_is_not_valid():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings(
+    r"ignore:.*((does not contain any time steps)|(out of bounds)|(start after stop)).*"
+)
 def test_ert_config_logs_observation_types_and_keywords(caplog):
     obs_config_contents = """
     GENERAL_OBSERVATION OBS1 {
