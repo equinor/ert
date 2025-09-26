@@ -50,21 +50,35 @@ class InstallDataContext:
 
     def __enter__(self) -> Self:
         self._temp_dir = tempfile.TemporaryDirectory()
-        for data in self._install_data:
-            if "<GEO_ID>" not in data.source:
-                self._set_symlink(data.source, data.target, None)
-
         os.chdir(self._temp_dir.name)
+        for item in self._install_data:
+            try:
+                Path(item.target).resolve().relative_to(Path.cwd())
+            except ValueError as err:
+                raise ValueError(
+                    f"Target location '{item.target}' is outside of the runpath."
+                ) from err
+
+            if item.data is not None:
+                target, data = item.inline_data_as_str()
+                internal_target = Path(".internal_data") / target
+                internal_target.parent.mkdir(exist_ok=True, parents=True)
+                internal_target.write_text(data, encoding="utf-8")
+                source = str(internal_target)
+            else:
+                assert item.source is not None
+                source = item.source
+                target = item.target
+
+            if "<GEO_ID>" not in source:
+                self._set_symlink(source, target, None)
+
         return self
 
     def _set_symlink(self, source: str, target: str, realization: int | None) -> None:
         if realization is not None:
             source = source.replace("<GEO_ID>", str(realization))
             target = target.replace("<GEO_ID>", str(realization))
-        if target.startswith("../"):
-            raise ValueError(
-                f"Target location outside of runpath {target} not allowed!"
-            )
 
         tmp_target = Path(self._temp_dir.name) / Path(target)
         if tmp_target.exists():
@@ -74,7 +88,7 @@ class InstallDataContext:
 
     def add_links_for_realization(self, realization: int) -> None:
         for data in self._install_data:
-            if "<GEO_ID>" in data.source:
+            if data.source is not None and "<GEO_ID>" in data.source:
                 self._set_symlink(data.source, data.target, realization)
 
     def __exit__(self, exc_type: Any, exc_value: Any, exc_tb: Any) -> None:
