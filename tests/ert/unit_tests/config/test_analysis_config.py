@@ -109,7 +109,7 @@ def test_merging_ignores_identical_design_matrices(tmp_path, monkeypatch, caplog
 
 
 @pytest.mark.filterwarnings(
-    "ignore:.*MIN_REALIZATIONS set to more "
+    "ignore:.*MIN_REALIZATIONS is set to more "
     "than NUM_REALIZATIONS.*:ert.config.ConfigWarning"
 )
 @pytest.mark.parametrize(
