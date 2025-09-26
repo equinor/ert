@@ -2,6 +2,7 @@ import os
 from collections import Counter
 from collections.abc import Sequence
 from dataclasses import dataclass
+from itertools import starmap
 from typing import (
     Any,
     Literal,
@@ -9,9 +10,8 @@ from typing import (
 
 from .parsing import (
     ErrorInfo,
-    ObservationBody,
     ObservationConfigError,
-    ObservationStatement,
+    ObservationDict,
     ObservationType,
 )
 
@@ -27,6 +27,7 @@ class ErrorValues:
 
 @dataclass
 class Segment(ErrorValues):
+    name: str
     start: int
     stop: int
 
@@ -35,7 +36,7 @@ class Segment(ErrorValues):
 class HistoryDeclaration(ErrorValues):
     name: str
     key: str
-    segment: list[tuple[str, Segment]]
+    segments: list[Segment]
 
 
 @dataclass
@@ -78,7 +79,7 @@ Declaration = HistoryDeclaration | SummaryDeclaration | GenObsDeclaration
 
 
 def make_observation_declarations(
-    directory: str, statements: Sequence[ObservationStatement]
+    directory: str, observation_dicts: Sequence[ObservationDict]
 ) -> list[Declaration]:
     """Takes observation statements and returns validated observation declarations.
 
@@ -89,20 +90,16 @@ def make_observation_declarations(
     """
     result: list[Declaration] = []
     error_list: list[ErrorInfo] = []
-    for stat in statements:
+    for obs_dict in observation_dicts:
         try:
-            if stat[0] == ObservationType.HISTORY:
-                result.append(_validate_history_values(stat[1], stat[2]))
-            elif stat[0] == ObservationType.SUMMARY:
-                if len(stat) != 3:
-                    raise _unknown_declaration_error(stat)
-                result.append(_validate_summary_values(stat[1], stat[2]))
-            elif stat[0] == ObservationType.GENERAL:
-                if len(stat) != 3:
-                    raise _unknown_declaration_error(stat)
-                result.append(_validate_gen_obs_values(directory, stat[1], stat[2]))
+            if obs_dict["type"] == ObservationType.HISTORY:
+                result.append(_validate_history_values(obs_dict))
+            elif obs_dict["type"] == ObservationType.SUMMARY:
+                result.append(_validate_summary_values(obs_dict))
+            elif obs_dict["type"] == ObservationType.GENERAL:
+                result.append(_validate_gen_obs_values(directory, obs_dict))
             else:
-                raise _unknown_declaration_error(stat)
+                raise _unknown_declaration_error(obs_dict)
         except ObservationConfigError as err:
             error_list.extend(err.errors)
 
@@ -128,48 +125,46 @@ def _validate_unique_names(
         raise ObservationConfigError.from_collected(errors)
 
 
-def _validate_history_values(
-    name_token: str, inp: ObservationBody
-) -> HistoryDeclaration:
+def _validate_history_values(observation_dict: ObservationDict) -> HistoryDeclaration:
     error_mode: ErrorModes = "RELMIN"
     error = 0.1
     error_min = 0.1
-    segment = []
-    for key, value in inp.items():
+    segments = []
+    for key, value in observation_dict.items():
         match key:
+            case "type" | "name":
+                pass
             case "ERROR":
                 error = validate_positive_float(value, key)
             case "ERROR_MIN":
                 error_min = validate_positive_float(value, key)
             case "ERROR_MODE":
                 error_mode = validate_error_mode(value)
-            case ("SEGMENT", segment_name):
-                segment.append(
-                    (segment_name, _validate_segment_dict(segment_name, value))
-                )
+            case "segments":
+                segments = list(starmap(_validate_segment_dict, value))
             case _:
-                raise _unknown_key_error(str(key), name_token)
+                raise _unknown_key_error(str(key), observation_dict["name"])
 
     return HistoryDeclaration(
-        name=name_token,
-        key=name_token,
+        name=observation_dict["name"],
+        key=observation_dict["name"],
         error_mode=error_mode,
         error=error,
         error_min=error_min,
-        segment=segment,
+        segments=segments,
     )
 
 
-def _validate_summary_values(
-    name_token: str, inp: ObservationBody
-) -> SummaryDeclaration:
+def _validate_summary_values(observation_dict: ObservationDict) -> SummaryDeclaration:
     error_mode: ErrorModes = "ABS"
     summary_key = None
 
     date_dict: DateValues = DateValues()
     float_values: dict[str, float] = {"ERROR_MIN": 0.1}
-    for key, value in inp.items():
+    for key, value in observation_dict.items():
         match key:
+            case "type" | "name":
+                pass
             case "RESTART":
                 date_dict.restart = validate_positive_int(value, key)
             case "ERROR" | "ERROR_MIN":
@@ -187,16 +182,16 @@ def _validate_summary_values(
             case "DATE":
                 date_dict.date = value
             case _:
-                raise _unknown_key_error(str(key), name_token)
+                raise _unknown_key_error(str(key), observation_dict["name"])
     if "VALUE" not in float_values:
-        raise _missing_value_error(name_token, "VALUE")
+        raise _missing_value_error(observation_dict["name"], "VALUE")
     if summary_key is None:
-        raise _missing_value_error(name_token, "KEY")
+        raise _missing_value_error(observation_dict["name"], "KEY")
     if "ERROR" not in float_values:
-        raise _missing_value_error(name_token, "ERROR")
+        raise _missing_value_error(observation_dict["name"], "ERROR")
 
     return SummaryDeclaration(
-        name=name_token,
+        name=observation_dict["name"],
         error_mode=error_mode,
         error=float_values["ERROR"],
         error_min=float_values["ERROR_MIN"],
@@ -232,6 +227,7 @@ def _validate_segment_dict(name_token: str, inp: dict[str, Any]) -> Segment:
     if stop is None:
         raise _missing_value_error(name_token, "STOP")
     return Segment(
+        name=name_token,
         start=start,
         stop=stop,
         error_mode=error_mode,
@@ -241,16 +237,20 @@ def _validate_segment_dict(name_token: str, inp: dict[str, Any]) -> Segment:
 
 
 def _validate_gen_obs_values(
-    directory: str, name_token: str, inp: ObservationBody
+    directory: str, observation_dict: ObservationDict
 ) -> GenObsDeclaration:
     try:
-        data = inp["DATA"]
+        data = observation_dict["DATA"]
     except KeyError as err:
-        raise _missing_value_error(name_token, "DATA") from err
+        raise _missing_value_error(observation_dict["name"], "DATA") from err
 
-    output: GenObsDeclaration = GenObsDeclaration(name=name_token, data=data)
-    for key, value in inp.items():
+    output: GenObsDeclaration = GenObsDeclaration(
+        name=observation_dict["name"], data=data
+    )
+    for key, value in observation_dict.items():
         match key:
+            case "type" | "name":
+                pass
             case "RESTART":
                 output.restart = validate_positive_int(value, key)
             case "VALUE":
@@ -274,12 +274,12 @@ def _validate_gen_obs_values(
             case "DATA":
                 output.data = value
             case _:
-                raise _unknown_key_error(str(key), name_token)
+                raise _unknown_key_error(str(key), observation_dict["name"])
     if output.value is not None and output.error is None:
         raise ObservationConfigError.with_context(
-            f"For GENERAL_OBSERVATION {name_token}, with"
+            f"For GENERAL_OBSERVATION {observation_dict['name']}, with"
             f" VALUE = {output.value}, ERROR must also be given.",
-            name_token,
+            observation_dict["name"],
         )
     return output
 
@@ -353,8 +353,8 @@ def _unknown_key_error(key: str, name: str) -> ObservationConfigError:
 
 
 def _unknown_declaration_error(
-    decl: ObservationStatement,
+    decl: ObservationDict,
 ) -> ObservationConfigError:
     return ObservationConfigError.with_context(
-        f"Unexpected declaration in observations {decl}", decl[1]
+        f"Unexpected declaration in observations {decl}", decl["name"]
     )

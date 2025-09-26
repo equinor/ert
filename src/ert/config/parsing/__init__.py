@@ -10,9 +10,8 @@ from .history_source import HistorySource
 from .hook_runtime import HookRuntime
 from .lark_parser import parse, parse_contents, read_file
 from .observations_parser import (
-    ObservationBody,
     ObservationConfigError,
-    ObservationStatement,
+    ObservationDict,
     ObservationType,
     parse_observations,
 )
@@ -34,9 +33,8 @@ __all__ = [
     "ForwardModelStepKeys",
     "HistorySource",
     "HookRuntime",
-    "ObservationBody",
     "ObservationConfigError",
-    "ObservationStatement",
+    "ObservationDict",
     "ObservationType",
     "ObservationType",
     "QueueSystem",

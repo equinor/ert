@@ -43,45 +43,37 @@ def test_make_observation_declarations():
     assert make_observation_declarations(
         "",
         [
-            (ObservationType.HISTORY, "FOPR", {}),
-            (
-                ObservationType.SUMMARY,
-                "WOPR_OP1_9",
-                {
-                    "VALUE": "0.1",
-                    "ERROR": "0.05",
-                    "DATE": "2010-03-31",
-                    "KEY": "WOPR:OP1",
-                },
-            ),
-            (
-                ObservationType.GENERAL,
-                "WPR_DIFF_1",
-                {
-                    "DATA": "SNAKE_OIL_WPR_DIFF",
-                    "INDEX_LIST": "400,800,1200,1800",
-                    "DATE": "2015-06-13",
-                    "OBS_FILE": "wpr_diff_obs.txt",
-                },
-            ),
-            (
-                ObservationType.GENERAL,
-                "WPR_DIFF_2",
-                {
-                    "DATA": "SNAKE_OIL_WPR_DIFF",
-                    "INDEX_FILE": "wpr_diff_idx.txt",
-                    "DATE": "2015-06-13",
-                    "OBS_FILE": "wpr_diff_obs.txt",
-                },
-            ),
-            (
-                ObservationType.HISTORY,
-                "FWPR",
-                {
-                    "ERROR": "0.1",
-                    ("SEGMENT", "SEG"): {"START": "1", "STOP": "0", "ERROR": "0.25"},
-                },
-            ),
+            ({"type": ObservationType.HISTORY, "name": "FOPR"}),
+            {
+                "type": ObservationType.SUMMARY,
+                "name": "WOPR_OP1_9",
+                "VALUE": "0.1",
+                "ERROR": "0.05",
+                "DATE": "2010-03-31",
+                "KEY": "WOPR:OP1",
+            },
+            {
+                "type": ObservationType.GENERAL,
+                "name": "WPR_DIFF_1",
+                "DATA": "SNAKE_OIL_WPR_DIFF",
+                "INDEX_LIST": "400,800,1200,1800",
+                "DATE": "2015-06-13",
+                "OBS_FILE": "wpr_diff_obs.txt",
+            },
+            {
+                "type": ObservationType.GENERAL,
+                "name": "WPR_DIFF_2",
+                "DATA": "SNAKE_OIL_WPR_DIFF",
+                "INDEX_FILE": "wpr_diff_idx.txt",
+                "DATE": "2015-06-13",
+                "OBS_FILE": "wpr_diff_obs.txt",
+            },
+            {
+                "type": ObservationType.HISTORY,
+                "name": "FWPR",
+                "ERROR": "0.1",
+                "segments": [("SEG", {"START": "1", "STOP": "0", "ERROR": "0.25"})],
+            },
         ],
     ) == [
         HistoryDeclaration(
@@ -90,7 +82,7 @@ def test_make_observation_declarations():
             error_mode="RELMIN",
             error=0.1,
             error_min=0.1,
-            segment=[],
+            segments=[],
         ),
         SummaryDeclaration(
             name="WOPR_OP1_9",
@@ -121,17 +113,15 @@ def test_make_observation_declarations():
             error_mode="RELMIN",
             error=0.1,
             error_min=0.1,
-            segment=[
-                (
-                    "SEG",
-                    Segment(
-                        start=1,
-                        stop=0,
-                        error_mode="RELMIN",
-                        error=0.25,
-                        error_min=0.1,
-                    ),
-                )
+            segments=[
+                Segment(
+                    name="SEG",
+                    start=1,
+                    stop=0,
+                    error_mode="RELMIN",
+                    error=0.25,
+                    error_min=0.1,
+                ),
             ],
         ),
     ]
@@ -166,4 +156,4 @@ def test_that_multiple_segments_are_collected():
         "",
     )
 
-    assert len(observations[0].segment) == 2
+    assert len(observations[0].segments) == 2

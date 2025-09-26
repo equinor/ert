@@ -144,42 +144,39 @@ def _handle_history_observation(
         )
     values = refcase.values[refcase.keys.index(local_key)]
     std_dev = _handle_error_mode(values, history_observation)
-    for segment_name, segment_instance in history_observation.segment:
-        start = segment_instance.start
-        stop = segment_instance.stop
+    for segment in history_observation.segments:
+        start = segment.start
+        stop = segment.stop
         if start < 0:
             ConfigWarning.warn(
-                f"Segment {segment_name} out of bounds."
+                f"Segment {segment.name} out of bounds."
                 " Truncating start of segment to 0.",
-                segment_name,
+                segment.name,
             )
             start = 0
         if stop >= time_len:
             ConfigWarning.warn(
-                f"Segment {segment_name} out of bounds. Truncating"
+                f"Segment {segment.name} out of bounds. Truncating"
                 f" end of segment to {time_len - 1}.",
-                segment_name,
+                segment.name,
             )
             stop = time_len - 1
         if start > stop:
             ConfigWarning.warn(
-                f"Segment {segment_name} start after stop. Truncating"
+                f"Segment {segment.name} start after stop. Truncating"
                 f" end of segment to {start}.",
-                segment_name,
+                segment.name,
             )
             stop = start
         if np.size(std_dev[start:stop]) == 0:
             ConfigWarning.warn(
-                f"Segment {segment_name} does not"
+                f"Segment {segment.name} does not"
                 " contain any time steps. The interval "
                 f"[{start}, {stop}) does not intersect with steps in the"
                 "time map.",
-                segment_name,
+                segment.name,
             )
-        std_dev[start:stop] = _handle_error_mode(
-            values[start:stop],
-            segment_instance,
-        )
+        std_dev[start:stop] = _handle_error_mode(values[start:stop], segment)
     dates_series = pl.Series(refcase.dates).dt.cast_time_unit("ms")
     if (std_dev <= 0).any():
         raise ObservationConfigError.with_context(

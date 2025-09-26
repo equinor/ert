@@ -37,6 +37,7 @@ from ert.config.parsing.context_values import (
     ContextList,
     ContextString,
 )
+from ert.config.parsing.observations_parser import ObservationType
 from ert.config.queue_config import LocalQueueOptions
 from ert.plugins import ErtPluginContext, ErtPluginManager, ErtRuntimePlugins
 from ert.shared import ert_share_path
@@ -1660,17 +1661,15 @@ def test_no_timemap_or_refcase_provides_clear_error():
                 "OBS_CONFIG": (
                     "obs_config",
                     [
-                        (
-                            "GENERAL_OBSERVATION",
-                            "GDO",
-                            {
-                                "DATA": "GD",
-                                "INDEX_LIST": "0",
-                                "DATE": "2015-06-13",
-                                "VALUE": "0.0",
-                                "ERROR": "0.1",
-                            },
-                        )
+                        {
+                            "type": ObservationType.GENERAL,
+                            "name": "GDO",
+                            "DATA": "GD",
+                            "INDEX_LIST": "0",
+                            "DATE": "2015-06-13",
+                            "VALUE": "0.0",
+                            "ERROR": "0.1",
+                        }
                     ],
                 ),
             }
@@ -1685,16 +1684,20 @@ def test_that_multiple_errors_are_shown_when_validating_observation_config():
                 "OBS_CONFIG": (
                     "obs_config",
                     [
-                        (
-                            "SUMMARY_OBSERVATION",
-                            "SUM1",
-                            {"VALUE": "0.7", "ERROR": "0.07", "DATE": "2010-12-26"},
-                        ),
-                        (
-                            "SUMMARY_OBSERVATION",
-                            "SUM2",
-                            {"ERROR": "0.05", "DATE": "2011-12-21", "KEY": "WOPR:OP1"},
-                        ),
+                        {
+                            "type": ObservationType.SUMMARY,
+                            "name": "SUM1",
+                            "VALUE": "0.7",
+                            "ERROR": "0.07",
+                            "DATE": "2010-12-26",
+                        },
+                        {
+                            "type": ObservationType.SUMMARY,
+                            "name": "SUM2",
+                            "ERROR": "0.05",
+                            "DATE": "2011-12-21",
+                            "KEY": "WOPR:OP1",
+                        },
                     ],
                 ),
             }
@@ -2483,16 +2486,14 @@ def test_that_time_map_or_refcase_is_present_if_restart_is_used_for_summary_obse
                 "OBS_CONFIG": (
                     "obsconf",
                     [
-                        (
-                            "SUMMARY_OBSERVATION",
-                            "FOPR",
-                            {
-                                "KEY": "FOPR",
-                                "RESTART": "1",
-                                "VALUE": "1.0",
-                                "ERROR": "0.1",
-                            },
-                        ),
+                        {
+                            "type": ObservationType.SUMMARY,
+                            "name": "FOPR",
+                            "KEY": "FOPR",
+                            "RESTART": "1",
+                            "VALUE": "1.0",
+                            "ERROR": "0.1",
+                        }
                     ],
                 ),
             }

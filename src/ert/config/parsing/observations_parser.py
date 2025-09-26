@@ -1,8 +1,5 @@
 from enum import StrEnum
-from typing import (
-    Any,
-    no_type_check,
-)
+from typing import Any, no_type_check
 
 from lark import Lark, Token, Transformer, UnexpectedCharacters, UnexpectedToken
 from lark.exceptions import VisitError
@@ -23,12 +20,10 @@ class ObservationType(StrEnum):
     GENERAL = "GENERAL_OBSERVATION"
 
 
-ObservationBody = dict[str | tuple[str, str], Any]
-ObservationName = str
-ObservationStatement = tuple[ObservationType, ObservationName, ObservationBody]
+ObservationDict = dict[str, Any]
 
 
-def parse_observations(content: str, filename: str) -> list[ObservationStatement]:
+def parse_observations(content: str, filename: str) -> list[ObservationDict]:
     try:
         return (FileContextTransformer(filename) * TreeToObservations()).transform(
             observations_parser.parse(content)
@@ -153,16 +148,41 @@ observations_parser = Lark(
 )
 
 
-class TreeToObservations(Transformer[FileContextToken, list[ObservationStatement]]):
+class TreeToObservations(Transformer[FileContextToken, list[ObservationDict]]):
     start = list
 
     @staticmethod
     @no_type_check
     def observation(tree):
         if len(tree) == 2:
-            return (ObservationType(tree[0].children[0]), *tree[1:], {})
+            return {
+                "type": ObservationType(tree[0].children[0]),
+                "name": tree[1],
+            }
         else:
-            return (ObservationType(tree[0].children[0]), *tree[1:])
+            non_segments = {
+                k: v for k, v in tree[2].items() if not isinstance(k, tuple)
+            }
+            segments = [(k[1], v) for k, v in tree[2].items() if isinstance(k, tuple)]
+            error_list = []
+            for unknown_key in ["type", "segments", "name"]:
+                if unknown_key in non_segments:
+                    error_list.append(
+                        ErrorInfo(f"Unknown {unknown_key} in {tree[1]}").set_context(
+                            tree[1]
+                        )
+                    )
+            if error_list:
+                raise ObservationConfigError.from_collected(error_list)
+
+            res = {
+                "type": ObservationType(tree[0].children[0]),
+                "name": tree[1],
+                **non_segments,
+            }
+            if segments:
+                res["segments"] = segments
+            return res
 
     @staticmethod
     @no_type_check
