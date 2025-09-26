@@ -82,7 +82,7 @@ def test_make_observation_declarations():
             error_mode="RELMIN",
             error=0.1,
             error_min=0.1,
-            segment=[],
+            segments=[],
         ),
         SummaryDeclaration(
             name="WOPR_OP1_9",
@@ -113,7 +113,7 @@ def test_make_observation_declarations():
             error_mode="RELMIN",
             error=0.1,
             error_min=0.1,
-            segment=[
+            segments=[
                 (
                     "SEG",
                     Segment(
@@ -158,4 +158,4 @@ def test_that_multiple_segments_are_collected():
         "",
     )
 
-    assert len(observations[0].segment) == 2
+    assert len(observations[0].segments) == 2

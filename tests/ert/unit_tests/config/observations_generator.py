@@ -61,7 +61,7 @@ class Segment(Observation):
 @dataclass
 class HistoryObservation(Observation):
     error_mode: ErrorMode
-    segment: list[Segment] = field(default_factory=list)
+    segments: list[Segment] = field(default_factory=list)
 
     @property
     def class_name(self):
@@ -244,7 +244,7 @@ def observations(draw, ensemble_keys, summary_keys, std_cutoff, start_date):
                         allow_nan=False,
                         allow_infinity=False,
                     ),
-                    segment=st.lists(
+                    segments=st.lists(
                         st.builds(
                             Segment,
                             name=names,

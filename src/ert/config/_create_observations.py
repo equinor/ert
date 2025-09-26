@@ -144,7 +144,7 @@ def _handle_history_observation(
         )
     values = refcase.values[refcase.keys.index(local_key)]
     std_dev = _handle_error_mode(values, history_observation)
-    for segment_name, segment_instance in history_observation.segment:
+    for segment_name, segment_instance in history_observation.segments:
         start = segment_instance.start
         stop = segment_instance.stop
         if start < 0:

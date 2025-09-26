@@ -34,7 +34,7 @@ class Segment(ErrorValues):
 class HistoryDeclaration(ErrorValues):
     name: str
     key: str
-    segment: list[tuple[str, Segment]]
+    segments: list[Segment]
 
 
 @dataclass
@@ -149,7 +149,7 @@ def _validate_history_values(observation_dict: ObservationDict) -> HistoryDeclar
         error_mode=error_mode,
         error=error,
         error_min=error_min,
-        segment=segments,
+        segments=segments,
     )
 
 
