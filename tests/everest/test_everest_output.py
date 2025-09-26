@@ -12,6 +12,7 @@ from everest.detached import ExperimentState
 
 
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
+@pytest.mark.integration_test
 def test_that_one_experiment_creates_one_ensemble_per_batch(cached_example):
     _, config, _, _ = cached_example("math_func/config_minimal.yml")
     config = EverestConfig.load_file(config)

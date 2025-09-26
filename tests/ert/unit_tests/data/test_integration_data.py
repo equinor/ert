@@ -27,6 +27,7 @@ def create_measured_data(snake_oil_case_storage, snake_oil_default_storage):
     return func
 
 
+@pytest.mark.integration_test
 def test_history_obs(create_measured_data):
     fopr = create_measured_data(["FOPR"])
     fopr.remove_inactive_observations()
@@ -45,6 +46,7 @@ def test_summary_obs(create_measured_data):
     )
 
 
+@pytest.mark.integration_test
 def test_gen_obs(create_measured_data):
     df = create_measured_data(["WPR_DIFF_1"])
     df.remove_inactive_observations()
@@ -55,6 +57,7 @@ def test_gen_obs(create_measured_data):
     )
 
 
+@pytest.mark.integration_test
 def test_gen_obs_and_summary(create_measured_data):
     df = create_measured_data(["WPR_DIFF_1", "WOPR_OP1_9"])
     df.remove_inactive_observations()
@@ -124,6 +127,7 @@ def create_general_observation():
     return observations
 
 
+@pytest.mark.integration_test
 def test_all_measured_snapshot(snapshot, snake_oil_storage, create_measured_data):
     """
     While there is no guarantee that this snapshot is 100% correct, it does represent

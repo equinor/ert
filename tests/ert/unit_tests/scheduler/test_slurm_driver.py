@@ -39,6 +39,7 @@ def capturing_sbatch(monkeypatch, tmp_path):
     sbatch_path.chmod(sbatch_path.stat().st_mode | stat.S_IEXEC)
 
 
+@pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "sbatch_script, scontrol_script, sacct_script, exit_code",

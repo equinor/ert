@@ -616,6 +616,7 @@ def test_smoother_snapshot_alpha(
         )
 
 
+@pytest.mark.integration_test
 def test_update_only_using_subset_observations(
     snake_oil_case_storage, snake_oil_storage, snapshot
 ):
