@@ -55,6 +55,7 @@ from everest.simulator.everest_to_ert import (
     everest_to_ert_config_dict,
     get_ensemble_config,
     get_forward_model_steps,
+    get_internal_files,
     get_substitutions,
     get_workflow_jobs,
 )
@@ -210,6 +211,11 @@ class EverestRunModel(RunModel):
             queue_config.queue_options.num_cpu,
         )
         ert_templates = read_templates(config_dict)
+
+        for datafile, data in get_internal_files(everest_config).items():
+            datafile.parent.mkdir(exist_ok=True, parents=True)
+            with open(datafile, "w", encoding="utf-8") as fp:
+                fp.write(data)
 
         workflow_jobs = get_workflow_jobs(everest_config)
         if deprecated_workflow_jobs := workflow_jobs_from_dict(config_dict):

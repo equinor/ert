@@ -30,6 +30,7 @@ from everest.simulator.everest_to_ert import (
     _get_installed_forward_model_steps,
     everest_to_ert_config_dict,
     get_forward_model_steps,
+    get_internal_files,
     get_substitutions,
     get_workflow_jobs,
 )
@@ -337,6 +338,10 @@ def test_workflows_deprecated(tmp_path, monkeypatch):
         runpath_file=MagicMock(),
         num_cpu=0,
     )
+    for datafile, data in get_internal_files(ever_config).items():
+        datafile.parent.mkdir(exist_ok=True, parents=True)
+        with open(datafile, "w", encoding="utf-8") as fp:
+            fp.write(data)
     _, workflows, _ = workflows_from_dict(config_dict, substitutions)
 
     jobs = workflows.get("pre_simulation")
@@ -360,6 +365,10 @@ def test_workflows(tmp_path, monkeypatch):
         runpath_file=MagicMock(),
         num_cpu=0,
     )
+    for datafile, data in get_internal_files(ever_config).items():
+        datafile.parent.mkdir(exist_ok=True, parents=True)
+        with open(datafile, "w", encoding="utf-8") as fp:
+            fp.write(data)
     workflow_jobs = get_workflow_jobs(ever_config)
     workflows, _ = create_and_hook_workflows(config_dict, workflow_jobs, substitutions)
     jobs = workflows.get("pre_simulation")
