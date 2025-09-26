@@ -124,6 +124,7 @@ def test_that_invalid_gendata_outfile_error_propagates(tmp_path):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:.*loadtxt.*input contained no data.*")
 @given(st.binary())
 def test_that_read_file_does_not_raise_unexpected_exceptions_on_invalid_file(contents):
     Path("./output").write_bytes(contents)
