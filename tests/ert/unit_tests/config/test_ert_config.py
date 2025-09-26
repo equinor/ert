@@ -683,6 +683,7 @@ def test_char_in_unquoted_is_allowed(c):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:.*SCRIPT has no effect.*")
 def test_that_magic_strings_get_substituted_in_workflow():
     script_file_contents = dedent(
         """
@@ -763,6 +764,7 @@ def test_that_unknown_hooked_job_gives_config_validation_error():
 
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
+@pytest.mark.filterwarnings("ignore:MIN_REALIZATIONS")
 @settings(max_examples=10)
 @given(config_generators())
 def test_that_if_field_is_given_and_grid_is_missing_you_get_error(
@@ -1465,6 +1467,7 @@ def test_that_redefine_behavior_is_consistent_with_setting_environment_variables
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:.*SCRIPT has no effect.*")
 def test_parsing_workflow_with_multiple_args():
     script_file_contents = dedent(
         """
@@ -1936,6 +1939,7 @@ def test_warning_is_emitted_for_run_template(template_target):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:.*Use DATA_FILE instead of RUN_TEMPLATE.*")
 def test_warning_is_emitted_for_ecl_base_in_run_template():
     Path("templates").mkdir()
     Path("templates/ECLDECK.DATA").touch()
@@ -2454,6 +2458,7 @@ def test_validation_error_on_invalid_design_matrix_parameter_name(
         )
 
 
+@pytest.mark.filterwarnings("ignore:.*RUNPATH keyword contains no value placeholders.*")
 def test_that_the_runpath_keyword_sets_the_runpath_substitution():
     assert (
         ErtConfig.from_dict({"RUNPATH": "my/runpath"}).substitutions["<RUNPATH>"]
@@ -2475,6 +2480,7 @@ def test_that_the_eclbase_keyword_sets_the_eclbase_substitution(eclbase_substitu
     )
 
 
+@pytest.mark.filterwarnings("ignore:.*Config contains a SUMMARY key.*")
 def test_that_time_map_or_refcase_is_present_if_restart_is_used_for_summary_observation():  # noqa E501
     with pytest.raises(ConfigValidationError, match="either TIME_MAP or REFCASE"):
         ErtConfig.from_dict(
