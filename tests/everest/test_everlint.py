@@ -108,7 +108,15 @@ def test_extra_key(min_config):
         ),
         (
             {"install_data": [{"source": None, "target": "not_relevant"}]},
-            "source\n  Input should be a valid string",
+            "Either source or data must be provided",
+        ),
+        (
+            {
+                "install_data": [
+                    {"source": "", "data": {"foo": 1}, "target": "not_relevant"}
+                ]
+            },
+            "The data and source options are mutually exclusive",
         ),
         (
             {"install_data": [{"source": ["a", "b"], "target": "not_relevant"}]},
