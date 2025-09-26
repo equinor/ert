@@ -203,6 +203,7 @@ def test_api_summary_snapshot_missing_batch(snapshot, cached_example):
 
 
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
+@pytest.mark.integration_test
 def test_that_summary_returns_empty_df_when_missing_data(cached_example):
     config_path, config_file, _, _ = cached_example("math_func/config_minimal.yml")
 

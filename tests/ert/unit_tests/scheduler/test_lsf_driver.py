@@ -325,6 +325,7 @@ async def test_that_when_bsub_has_exit_code_1_its_output_is_in_the_error_message
     )
 
 
+@pytest.mark.integration_test
 @pytest.mark.timeout(10)
 @pytest.mark.parametrize(
     "mocked_iens2jobid, realizations_to_kill, "
@@ -850,6 +851,7 @@ async def test_parse_bhist(bhist_output, expected):
 empty_states = _parse_jobs_dict({})
 
 
+@pytest.mark.integration_test
 @pytest.mark.parametrize(
     "previous_bhist, bhist_output, expected_states",
     [

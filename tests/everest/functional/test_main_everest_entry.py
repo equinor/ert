@@ -114,6 +114,7 @@ def test_everest_main_export_entry(cached_example):
 
 
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
+@pytest.mark.integration_test
 def test_everest_main_lint_entry(cached_example):
     # Setup command line arguments
     _, config_file, _, _ = cached_example("math_func/config_minimal.yml")
