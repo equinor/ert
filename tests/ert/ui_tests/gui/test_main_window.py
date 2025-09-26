@@ -750,7 +750,7 @@ def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_cases(qtbot):
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_help_menu(qtbot):
+def test_that_the_help_menu_contains_the_about_dialog(qtbot):
     args = Mock()
     args.config = "poly.ert"
     gui, *_ = ert.gui.main._start_initial_gui_window(args, GUILogHandler())
