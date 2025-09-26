@@ -2,6 +2,7 @@ import os
 from collections import Counter
 from collections.abc import Sequence
 from dataclasses import dataclass
+from itertools import starmap
 from typing import (
     Any,
     Literal,
@@ -26,6 +27,7 @@ class ErrorValues:
 
 @dataclass
 class Segment(ErrorValues):
+    name: str
     start: int
     stop: int
 
@@ -139,7 +141,7 @@ def _validate_history_values(observation_dict: ObservationDict) -> HistoryDeclar
             case "ERROR_MODE":
                 error_mode = validate_error_mode(value)
             case "segments":
-                segments = [(v[0], _validate_segment_dict(*v)) for v in value]
+                segments = list(starmap(_validate_segment_dict, value))
             case _:
                 raise _unknown_key_error(str(key), observation_dict["name"])
 
@@ -225,6 +227,7 @@ def _validate_segment_dict(name_token: str, inp: dict[str, Any]) -> Segment:
     if stop is None:
         raise _missing_value_error(name_token, "STOP")
     return Segment(
+        name=name_token,
         start=start,
         stop=stop,
         error_mode=error_mode,

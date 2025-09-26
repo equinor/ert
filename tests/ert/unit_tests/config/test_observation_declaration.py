@@ -114,16 +114,14 @@ def test_make_observation_declarations():
             error=0.1,
             error_min=0.1,
             segments=[
-                (
-                    "SEG",
-                    Segment(
-                        start=1,
-                        stop=0,
-                        error_mode="RELMIN",
-                        error=0.25,
-                        error_min=0.1,
-                    ),
-                )
+                Segment(
+                    name="SEG",
+                    start=1,
+                    stop=0,
+                    error_mode="RELMIN",
+                    error=0.25,
+                    error_min=0.1,
+                ),
             ],
         ),
     ]
