@@ -7,7 +7,6 @@ import stat
 import sys
 import threading
 import warnings
-from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import Mock, call, patch
@@ -18,7 +17,6 @@ import pytest
 import xtgeo
 import zmq
 from psutil import NoSuchProcess, Popen, Process, ZombieProcess
-from resdata.summary import Summary
 
 import _ert.threading
 import ert.shared
@@ -827,44 +825,21 @@ def test_that_a_custom_eclrun_can_be_activated_through_setenv():
     )
 
 
-def run_sim(start_date):
-    """
-    Creates summary files, the contents of which are not important
-    """
-    summary = Summary.writer("ECLIPSE_CASE", start_date, 3, 3, 3)
-    summary.add_variable("FOPR", unit="SM3/DAY")
-    t_step = summary.add_t_step(1, sim_days=1)
-    t_step["FOPR"] = 1
-    summary.fwrite()
-
-
-def test_tracking_missing_ecl(monkeypatch, tmp_path, caplog):
-    config_file = tmp_path / "config.ert"
-    monkeypatch.chdir(tmp_path)
-    config_file.write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 2
-
-            ECLBASE ECLIPSE_CASE
-            SUMMARY *
-            MAX_SUBMIT 1 -- will fail first and every time
-            REFCASE ECLIPSE_CASE
-
-            """
-        )
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings(
+    "ignore:Config contains a SUMMARY key but no forward model steps"
+)
+def test_that_missing_summary_files_fails_gracefully(caplog):
+    (config_file := Path("config.ert")).write_text(
+        """
+        NUM_REALIZATIONS 2
+        ECLBASE ECLIPSE_CASE
+        SUMMARY *
+        MAX_SUBMIT 1 -- will fail first and every time
+        """
     )
-    # We create a reference case, but there will be no response
-    run_sim(datetime(2014, 9, 10))
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", category=ConfigWarning)
-        # Config contains a SUMMARY key but no forward model known..
-        with pytest.raises(ErtCliError):
-            run_cli(
-                TEST_RUN_MODE,
-                "--disable-monitoring",
-                str(config_file),
-            )
+    with pytest.raises(ErtCliError):
+        run_cli(TEST_RUN_MODE, "--disable-monitoring", str(config_file))
     assert (
         f"Realization: 0 failed after reaching max submit (1):\n\t\n"
         "status from done callback: "
