@@ -37,6 +37,7 @@ from ert.config.parsing.context_values import (
     ContextList,
     ContextString,
 )
+from ert.config.parsing.observations_parser import ObservationType
 from ert.config.queue_config import LocalQueueOptions
 from ert.plugins import ErtPluginContext, ErtPluginManager, ErtRuntimePlugins
 from ert.shared import ert_share_path
@@ -1662,7 +1663,7 @@ def test_no_timemap_or_refcase_provides_clear_error():
                     [
                         (
                             {
-                                "type": "GENERAL_OBSERVATION",
+                                "type": ObservationType.GENERAL,
                                 "name": "GDO",
                                 "DATA": "GD",
                                 "INDEX_LIST": "0",
@@ -1687,7 +1688,7 @@ def test_that_multiple_errors_are_shown_when_validating_observation_config():
                     [
                         (
                             {
-                                "type": "SUMMARY_OBSERVATION",
+                                "type": ObservationType.SUMMARY,
                                 "name": "SUM1",
                                 "VALUE": "0.7",
                                 "ERROR": "0.07",
@@ -1696,7 +1697,7 @@ def test_that_multiple_errors_are_shown_when_validating_observation_config():
                         ),
                         (
                             {
-                                "type": "SUMMARY_OBSERVATION",
+                                "type": ObservationType.SUMMARY,
                                 "name": "SUM2",
                                 "ERROR": "0.05",
                                 "DATE": "2011-12-21",
@@ -2493,7 +2494,7 @@ def test_that_time_map_or_refcase_is_present_if_restart_is_used_for_summary_obse
                     [
                         (
                             {
-                                "type": "SUMMARY_OBSERVATION",
+                                "type": ObservationType.SUMMARY,
                                 "name": "FOPR",
                                 "KEY": "FOPR",
                                 "RESTART": "1",

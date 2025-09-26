@@ -14,6 +14,7 @@ from ert.config import (
     ErtConfig,
 )
 from ert.config.parsing import parse_observations
+from ert.config.parsing.observations_parser import ObservationType
 
 from .summary_generator import summaries
 
@@ -97,7 +98,7 @@ def test_that_when_history_source_is_history_the_history_summary_vector_is_used(
         [
             (
                 {
-                    "type": "HISTORY_OBSERVATION",
+                    "type": ObservationType.HISTORY,
                     "name": "FOPR",
                 }
             )
@@ -118,7 +119,7 @@ def test_that_the_key_of_an_history_observation_must_be_in_the_refcase():
             [
                 (
                     {
-                        "type": "HISTORY_OBSERVATION",
+                        "type": ObservationType.HISTORY,
                         "name": "MISSING",
                     }
                 )
@@ -134,7 +135,7 @@ def test_that_when_history_source_is_simulated_the_summary_vector_is_used():
         [
             (
                 {
-                    "type": "HISTORY_OBSERVATION",
+                    "type": ObservationType.HISTORY,
                     "name": "FOPR",
                 }
             )
@@ -159,7 +160,7 @@ def test_date_parsing_in_observations(datestring, errors):
     observations = [
         (
             {
-                "type": "SUMMARY_OBSERVATION",
+                "type": ObservationType.SUMMARY,
                 "name": "FOPR",
                 "KEY": "FOPR",
                 "VALUE": "1",
@@ -185,7 +186,7 @@ def test_that_using_summary_observations_without_eclbase_shows_user_error():
                     [
                         (
                             {
-                                "type": "SUMMARY_OBSERVATION",
+                                "type": ObservationType.SUMMARY,
                                 "name": "FOPR_1",
                                 "KEY": "FOPR",
                                 "VALUE": "1",
@@ -222,7 +223,7 @@ def test_that_summary_observations_can_use_restart_for_index_if_refcase_is_given
                     [
                         (
                             {
-                                "type": "SUMMARY_OBSERVATION",
+                                "type": ObservationType.SUMMARY,
                                 "name": "FOPR_1",
                                 "KEY": "FOPR",
                                 "VALUE": str(value),
@@ -264,7 +265,7 @@ def test_that_summary_observations_can_use_restart_for_index_if_time_map_is_give
                 [
                     (
                         {
-                            "type": "SUMMARY_OBSERVATION",
+                            "type": ObservationType.SUMMARY,
                             "name": "FOPR_1",
                             "KEY": "FOPR",
                             "VALUE": "1",
@@ -289,7 +290,7 @@ def test_that_the_date_keyword_sets_the_summary_index_without_time_map_or_refcas
                 [
                     (
                         {
-                            "type": "SUMMARY_OBSERVATION",
+                            "type": ObservationType.SUMMARY,
                             "name": "FOPR_1",
                             "KEY": "FOPR",
                             "VALUE": "1",
@@ -320,7 +321,7 @@ def test_that_general_observations_can_use_restart_even_without_refcase_and_time
                 [
                     (
                         {
-                            "type": "GENERAL_OBSERVATION",
+                            "type": ObservationType.GENERAL,
                             "name": "OBS",
                             "DATA": "GEN",
                             "RESTART": str(restart),
@@ -350,7 +351,7 @@ def test_that_the_date_keyword_sets_the_general_index_by_looking_up_time_map():
                 [
                     (
                         {
-                            "type": "GENERAL_OBSERVATION",
+                            "type": ObservationType.GENERAL,
                             "name": "OBS",
                             "DATA": "GEN",
                             "DATE": time_map[restart],
@@ -399,7 +400,7 @@ def test_that_the_date_keyword_sets_the_report_step_by_looking_up_refcase(
                     [
                         (
                             {
-                                "type": "GENERAL_OBSERVATION",
+                                "type": ObservationType.GENERAL,
                                 "name": "OBS",
                                 "DATA": "GEN",
                                 "DATE": time_map[restart].isoformat(),
@@ -424,7 +425,7 @@ def test_that_error_must_be_greater_than_zero_in_summary_observations(std):
             [
                 (
                     {
-                        "type": "SUMMARY_OBSERVATION",
+                        "type": ObservationType.SUMMARY,
                         "name": "FOPR",
                         "KEY": "FOPR",
                         "VALUE": "1",
@@ -445,7 +446,7 @@ def test_that_computed_error_must_be_greater_than_zero_in_summary_observations()
             [
                 (
                     {
-                        "type": "SUMMARY_OBSERVATION",
+                        "type": ObservationType.SUMMARY,
                         "name": "FOPR",
                         "KEY": "FOPR",
                         "VALUE": "0",  # ERROR becomes zero when mode is REL
@@ -468,7 +469,7 @@ def test_that_absolute_error_must_be_greater_than_zero_in_history_observations()
             [
                 (
                     {
-                        "type": "HISTORY_OBSERVATION",
+                        "type": ObservationType.HISTORY,
                         "name": "FOPR",
                         "ERROR": "0.0",
                         "ERROR_MIN": "0.0",
@@ -488,7 +489,7 @@ def test_that_computed_error_must_be_greater_than_zero_in_history_observations()
             [
                 (
                     {
-                        "type": "HISTORY_OBSERVATION",
+                        "type": ObservationType.HISTORY,
                         "name": "FOPR",
                         "ERROR": "1.0",
                         "ERROR_MODE": "REL",
@@ -512,7 +513,7 @@ def test_that_error_must_be_greater_than_zero_in_general_observations(std):
             [
                 (
                     {
-                        "type": "GENERAL_OBSERVATION",
+                        "type": ObservationType.GENERAL,
                         "name": "OBS",
                         "DATA": "GEN",
                         "DATE": "2020-01-02",
@@ -538,7 +539,7 @@ def test_that_all_errors_in_general_observations_must_be_greater_than_zero(tmpdi
                 [
                     (
                         {
-                            "type": "GENERAL_OBSERVATION",
+                            "type": ObservationType.GENERAL,
                             "name": "OBS",
                             "DATA": "GEN",
                             "DATE": "2020-01-02",
@@ -556,7 +557,7 @@ def test_that_error_mode_is_not_allowed_in_general_observations():
             [
                 (
                     {
-                        "type": "GENERAL_OBSERVATION",
+                        "type": ObservationType.GENERAL,
                         "name": "OBS",
                         "DATA": "GEN",
                         "DATE": "2020-01-02",
@@ -577,7 +578,7 @@ def test_that_error_min_is_not_allowed_in_general_observations():
             [
                 (
                     {
-                        "type": "GENERAL_OBSERVATION",
+                        "type": ObservationType.GENERAL,
                         "name": "OBS",
                         "DATA": "GEN",
                         "DATE": "2020-01-02",
@@ -611,7 +612,7 @@ def test_that_having_no_refcase_but_history_observations_causes_exception():
                 "ECLBASE": "my_name%d",
                 "OBS_CONFIG": (
                     "obsconf",
-                    [{"type": "HISTORY_OBSERVATION", "name": "FOPR"}],
+                    [{"type": ObservationType.HISTORY, "name": "FOPR"}],
                 ),
             }
         )
@@ -625,7 +626,7 @@ def test_that_index_list_is_read(tmpdir):
             [
                 (
                     {
-                        "type": "GENERAL_OBSERVATION",
+                        "type": ObservationType.GENERAL,
                         "name": "OBS",
                         "DATA": "GEN",
                         "INDEX_LIST": "0,2,4,6,8",
@@ -654,7 +655,7 @@ def test_that_index_file_is_read(tmpdir):
             [
                 (
                     {
-                        "type": "GENERAL_OBSERVATION",
+                        "type": ObservationType.GENERAL,
                         "name": "OBS",
                         "DATA": "GEN",
                         "DATE": "2020-01-02",
@@ -677,7 +678,7 @@ def test_that_non_existent_obs_file_is_invalid():
             [
                 (
                     {
-                        "type": "GENERAL_OBSERVATION",
+                        "type": ObservationType.GENERAL,
                         "name": "OBS",
                         "DATA": "RES",
                         "INDEX_LIST": "0,2,4,6,8",
@@ -703,7 +704,7 @@ def test_that_non_existent_time_map_file_is_invalid():
                     [
                         (
                             {
-                                "type": "GENERAL_OBSERVATION",
+                                "type": ObservationType.GENERAL,
                                 "name": "OBS",
                                 "DATA": "RES",
                                 "INDEX_LIST": "0",
@@ -731,7 +732,7 @@ def test_that_general_observation_cannot_contain_both_value_and_obs_file():
             [
                 (
                     {
-                        "type": "GENERAL_OBSERVATION",
+                        "type": ObservationType.GENERAL,
                         "name": "OBS",
                         "DATA": "GEN",
                         "DATE": "2020-01-02",
@@ -754,7 +755,7 @@ def test_that_general_observation_must_contain_either_value_or_obs_file():
             [
                 (
                     {
-                        "type": "GENERAL_OBSERVATION",
+                        "type": ObservationType.GENERAL,
                         "name": "OBS",
                         "DATA": "GEN",
                         "DATE": "2020-01-02",
@@ -778,7 +779,7 @@ def test_that_non_numbers_in_obs_file_shows_informative_error_message(tmpdir):
                 [
                     (
                         {
-                            "type": "GENERAL_OBSERVATION",
+                            "type": ObservationType.GENERAL,
                             "name": "OBS",
                             "DATA": "GEN",
                             "INDEX_LIST": "0,2,4,6,8",
@@ -803,7 +804,7 @@ def test_that_the_number_of_columns_in_obs_file_cannot_change():
             [
                 (
                     {
-                        "type": "GENERAL_OBSERVATION",
+                        "type": ObservationType.GENERAL,
                         "name": "OBS",
                         "DATA": "GEN",
                         "INDEX_LIST": "0,2,4,6,8",
@@ -825,7 +826,7 @@ def test_that_the_number_of_values_in_obs_file_must_be_even():
             [
                 (
                     {
-                        "type": "GENERAL_OBSERVATION",
+                        "type": ObservationType.GENERAL,
                         "name": "OBS",
                         "DATA": "GEN",
                         "INDEX_LIST": "0,2,4,6,8",
@@ -850,7 +851,7 @@ def test_that_giving_both_index_file_and_index_list_raises_an_exception(tmpdir):
                 [
                     (
                         {
-                            "type": "GENERAL_OBSERVATION",
+                            "type": ObservationType.GENERAL,
                             "name": "OBS",
                             "DATA": "GEN",
                             "INDEX_LIST": "0,2,4,6,8",
@@ -958,7 +959,7 @@ def test_that_loading_summary_obs_with_days_is_within_tolerance(
                         [
                             (
                                 {
-                                    "type": "SUMMARY_OBSERVATION",
+                                    "type": ObservationType.SUMMARY,
                                     "name": "FOPR_1",
                                     "VALUE": "0.1",
                                     "ERROR": "0.05",
@@ -993,7 +994,7 @@ def test_that_having_observations_on_starting_date_errors(tmpdir):
                         [
                             (
                                 {
-                                    "type": "SUMMARY_OBSERVATION",
+                                    "type": ObservationType.SUMMARY,
                                     "name": "FOPR_1",
                                     "VALUE": "0.1",
                                     "ERROR": "0.05",
@@ -1060,7 +1061,7 @@ def test_that_out_of_bounds_segments_are_truncated(tmpdir, start, stop, message)
                         [
                             (
                                 {
-                                    "type": "HISTORY_OBSERVATION",
+                                    "type": ObservationType.HISTORY,
                                     "name": "FOPR",
                                     "ERROR": "0.20",
                                     "ERROR_MODE": "RELMIN",
@@ -1103,7 +1104,7 @@ def test_that_history_observations_values_are_fetched_from_refcase(
                     [
                         (
                             {
-                                "type": "HISTORY_OBSERVATION",
+                                "type": ObservationType.HISTORY,
                                 "name": "FOPR",
                                 "ERROR": str(std),
                                 "ERROR_MODE": "ABS",
@@ -1145,7 +1146,7 @@ def test_that_obs_file_must_have_the_same_number_of_lines_as_the_index_file():
                     [
                         (
                             {
-                                "type": "GENERAL_OBSERVATION",
+                                "type": ObservationType.GENERAL,
                                 "name": "OBS",
                                 "DATA": "RES",
                                 "INDEX_FILE": "obs_idx.txt",  # shorter than obs_file
@@ -1178,7 +1179,7 @@ def test_that_obs_file_must_have_the_same_number_of_lines_as_the_length_of_index
                         [
                             (
                                 {
-                                    "type": "GENERAL_OBSERVATION",
+                                    "type": ObservationType.GENERAL,
                                     "name": "OBS",
                                     "DATA": "RES",
                                     "INDEX_LIST": "200",  # shorter than obs_file
@@ -1203,7 +1204,7 @@ def test_that_general_observations_data_must_match_a_gen_datas_name():
                     [
                         (
                             {
-                                "type": "GENERAL_OBSERVATION",
+                                "type": ObservationType.GENERAL,
                                 "name": "OBS",
                                 "DATA": "RES",
                                 "INDEX_LIST": "0,2,4,6,8",
@@ -1239,7 +1240,7 @@ def test_that_general_observation_restart_must_match_gen_data_report_step():
                     [
                         (
                             {
-                                "type": "GENERAL_OBSERVATION",
+                                "type": ObservationType.GENERAL,
                                 "name": "OBS",
                                 "DATA": "RES",
                                 "INDEX_LIST": "0,2,4,6,8",
@@ -1275,7 +1276,7 @@ def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
                     [
                         (
                             {
-                                "type": "HISTORY_OBSERVATION",
+                                "type": ObservationType.HISTORY,
                                 "name": "FOPR",
                                 "ERROR": "0.20",
                                 "ERROR_MODE": "ABS",
@@ -1283,7 +1284,7 @@ def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
                         ),
                         (
                             {
-                                "type": "HISTORY_OBSERVATION",
+                                "type": ObservationType.HISTORY,
                                 "name": "FGPR",
                                 "ERROR": "0.1",
                                 "ERROR_MODE": "REL",
@@ -1291,7 +1292,7 @@ def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
                         ),
                         (
                             {
-                                "type": "HISTORY_OBSERVATION",
+                                "type": ObservationType.HISTORY,
                                 "name": "FWPR",
                                 "ERROR": "0.1",
                                 "ERROR_MODE": "RELMIN",
@@ -1314,7 +1315,7 @@ def test_that_duplicate_observation_names_are_invalid():
             [
                 (
                     {
-                        "type": "SUMMARY_OBSERVATION",
+                        "type": ObservationType.SUMMARY,
                         "name": "FOPR",
                         "KEY": "FOPR",
                         "DATE": "2017-11-09",
@@ -1324,7 +1325,7 @@ def test_that_duplicate_observation_names_are_invalid():
                 ),
                 (
                     {
-                        "type": "GENERAL_OBSERVATION",
+                        "type": ObservationType.GENERAL,
                         "name": "FOPR",
                         "DATA": "RES",
                         "INDEX_LIST": "0",
@@ -1356,7 +1357,7 @@ def test_that_segment_defaults_are_applied(tmpdir):
                     [
                         (
                             {
-                                "type": "HISTORY_OBSERVATION",
+                                "type": ObservationType.HISTORY,
                                 "name": "FOPR",
                                 "ERROR": "1.0",
                                 ("SEGMENT", "SEG"): {
@@ -1383,7 +1384,7 @@ def test_that_summary_default_error_min_is_applied():
         [
             (
                 {
-                    "type": "SUMMARY_OBSERVATION",
+                    "type": ObservationType.SUMMARY,
                     "name": "FOPR",
                     "VALUE": "1",
                     "ERROR": "0.01",

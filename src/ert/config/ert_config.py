@@ -658,7 +658,7 @@ def create_list_of_forward_model_steps_to_run(
 def log_observation_keys(
     observations: list[ObservationDict],
 ) -> None:
-    observation_type_counts = Counter(o["type"] for o in observations)
+    observation_type_counts = Counter(o["type"].value for o in observations)
     observation_keyword_counts = Counter(
         "SEGMENT" if isinstance(key, tuple) else str(key)
         for o in observations
