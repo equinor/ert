@@ -1,6 +1,7 @@
 import json
 import os
 from pathlib import Path
+from textwrap import dedent
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -32,7 +33,20 @@ class ServerConfig(BaseModel):
         | None
     ) = Field(
         default=None,
-        description="Defines which queue system the everest server is submitted to",
+        description=dedent(
+            """
+            Defines which queue system the everest server is submitted to.
+
+            For example, to run the server locally even if the forward model may
+            run on another system:
+
+            ```yaml
+            server:
+              queue_system:
+                name: local
+            ```
+            """
+        ),
         discriminator="name",
     )
     model_config = ConfigDict(

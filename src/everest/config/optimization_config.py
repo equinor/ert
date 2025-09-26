@@ -1,4 +1,5 @@
 import logging
+from textwrap import dedent
 from typing import Any, Self
 
 from pydantic import BaseModel, Field, model_validator
@@ -11,198 +12,302 @@ from everest.strings import EVEREST
 class OptimizationConfig(BaseModel, extra="forbid"):
     algorithm: str = Field(
         default="optpp_q_newton",
-        description="""Algorithm used by Everest.  Defaults to
-optpp_q_newton, a quasi-Newton algorithm in Dakota's OPT PP library.
-""",
+        description=dedent(
+            """
+            The optimization algorithm used by Everest.  Defaults to
+            `optpp_q_newton`, a quasi-Newton algorithm in Dakota's OPT++
+            library.
+            """
+        ),
     )
     convergence_tolerance: float | None = Field(
         default=None,
-        description="""Defines the threshold value on relative change
-in the objective function that indicates convergence.
+        description=dedent(
+            """
+            Defines the threshold value to test for convergence.
 
-The convergence_tolerance specification provides a real value for controlling
-the termination of iteration.  In most cases, it is a relative convergence tolerance
-for the objective function; i.e., if the change in the objective function between
-successive iterations divided by the previous objective function is less than
-the amount specified by convergence_tolerance, then this convergence criterion is
-satisfied on the current iteration.
+            In most cases, this is used to set a relative convergence tolerance
+            for the objective function: if the change in the objective function
+            between one or more successive iterations divided by the previous
+            objective function is less than `convergence_tolerance`, the
+            optimization is terminated.
 
-Since no progress may be made on one iteration followed by significant progress
-on a subsequent iteration, some libraries require that the convergence tolerance
-be satisfied on two or more consecutive iterations prior to termination of
-iteration.
-
-(From the Dakota Manual.)""",
+            Note: this option is passed to the optimization backend unchanged,
+            and therefore its actual interpretation depends on the algorithm
+            used.
+            """
+        ),
     )
     backend: str | None = Field(
         default=None,
-        description="""(deprecated) The optimization backend used.".
+        description=dedent(
+            """
+            [Deprecated]
 
-Currently, backends are included to use Dakota or SciPy ("dakota" and "scipy").
-The Dakota backend is the default, and can be assumed to be installed. The SciPy
-backend is optional, and will only be available if SciPy is installed on the
-system.""",
+            The correct backend will be inferred by the method. If several backends
+            have a method named `A`, pick a specific backend `B` by putting `B/A` in
+            the `method` field.
+            """
+        ),
     )
     backend_options: dict[str, Any] | None = Field(
         default=None,
-        description="""Dict of optional parameters for the optimizer backend.
-This dict of values is passed unchanged to the selected algorithm in the backend.
+        description=dedent(
+            """
+            [Deprecated]
 
-Note that the default Dakota backend ignores this option, because it requires a
-list of strings rather than a dictionary. For setting Dakota backend options, see
-the 'option' keyword.""",
+            This field is deprecated. Please use `options` instead, it will
+            accept both objects and lists of strings.
+            """
+        ),
+    )
+    options: list[str] | dict[str, Any] | None = Field(
+        default=None,
+        description=dedent(
+            """
+            Specify options that are passed unchanged to the optimization
+            algorithm.
+
+            This field  accepts dictionaries with key/values pair or lists of
+            strings. The type required depends on the optimization backend that
+            is used. The Dakota backend requires a list of a strings that are
+            added to the Dakota configuration. The SciPy backend requires a
+            dictionary with values, which will be passed as keyword arguments to
+            the optimizer.
+
+            Consult the documentation of the optimization backend for valid
+            options.
+            """
+        ),
     )
     constraint_tolerance: float | None = Field(
         default=None,
-        description="""Determines the maximum allowable value of
-infeasibility that any constraint in an optimization problem may possess and
-still be considered to be satisfied.
+        description=dedent(
+            """
+            Output constraint tolerance for Dakota.
 
-It is specified as a positive real value.  If a constraint function is greater
-than this value then it is considered to be violated by the optimization
-algorithm.  This specification gives some control over how tightly the
-constraints will be satisfied at convergence of the algorithm.  However, if the
-value is set too small the algorithm may terminate with one or more constraints
-being violated.
+            Determines the maximum allowable value of infeasibility that any
+            constraint in an optimization problem may possess and still be
+            considered to be satisfied.
 
-(From the Dakota Manual.)""",
+            It is specified as a positive real value.  If a constraint function
+            is greater than this value then it is considered to be violated by
+            the optimization algorithm.  This specification gives some control
+            over how tightly the constraints will be satisfied at convergence of
+            the algorithm.  However, if the value is set too small the algorithm
+            may terminate with one or more constraints being violated.
+
+            This option is only used by the Dakota backend.
+            """
+        ),
     )
     cvar: CVaRConfig | None = Field(
         default=None,
-        description="""Directs the optimizer to use CVaR estimation.
+        description=dedent(
+            """
+            Directs the optimizer to use CVaR estimation.
 
-When this section is present Everest will use Conditional Value at Risk (CVaR)
-to minimize risk. Effectively this means that at each iteration the objective
-and constraint functions will be calculated as the mean over the sub-set of the
-realizations that perform worst. The size of this set is specified as an
-absolute number or as a percentile value. These options are selected by setting
-either the **number_of_realizations** option, or the **percentile** option,
-which are mutually exclusive.
-""",
+            When this section is present, Conditional Value at Risk (CVaR) will
+            be used to minimize risk. Effectively this means that at each
+            iteration the objective and constraint functions will be calculated
+            as the mean over the sub-set of the realizations that perform worst.
+            The size of this set is specified as an absolute number or as a
+            percentile value. These options are selected by setting either the
+            `number_of_realizations` option, or the `percentile` option, which
+            are mutually exclusive.
+            """
+        ),
     )
     max_batch_num: int | None = Field(
         default=None,
         gt=0,
-        description="""Limits the number of batches of simulations
-during optimization, where 0 represents unlimited simulation batches.
-When max_batch_num is specified and the current batch index is greater than
-max_batch_num an exception is raised.""",
+        description=dedent(
+            """
+            Limit the number of batches of simulations.
+
+            The optimization will be terminated if the given number of batches
+            has been reached.
+            """
+        ),
     )
     max_function_evaluations: int | None = Field(
         default=None,
         gt=0,
-        description="""Limits the maximum number of function evaluations.
+        description=dedent(
+            """
+            Limits the maximum number of function evaluations.
 
-The max_function_evaluations controls the number of control update steps the optimizer
-will allow before convergence is obtained.
+            If the given number of function evaluations is reached, the
+            optimization will be terminated. This differs from the
+            `max_batch_num` and `max_iterations` options, because these may
+            require multiple (or no) function evaluations.
 
-See max_iterations for a description.
-""",
+            Note: Evaluations of perturbed values are not included in this
+                  limit.
+            """
+        ),
     )
     max_iterations: int | None = Field(
         default=None,
         gt=0,
-        description="""Limits the maximum number of iterations.
+        description=dedent(
+            """
+            Limits the maximum number of iterations.
 
-The difference between an iteration and a batch is that an iteration corresponds to
-a complete accepted batch (i.e., a batch that provides an improvement in the
-objective function while satisfying all constraints).""",
+            This limits the number of iterations that the optimization algorithm
+            will perform.
+
+            This differs from `max_batch_num` and `max_functions` options, since
+            an iteration may require multiple batches and/or function
+            evaluations.
+
+            This option is passed through unchanged, and its exact
+            interpretation depends on the backend optimization algorithm used.
+            """
+        ),
     )
     min_pert_success: int | None = Field(
         default=None,
         gt=0,
-        description="""specifies the minimum number of successfully completed
-evaluations of perturbed controls required to compute a gradient.  The optimization
-process will stop if this minimum is not reached, and otherwise a gradient will be
-computed based on the set of successful perturbation runs.  The minimum is checked for
-each realization individually.
+        description=dedent(
+            """
+            The number of perturbations that must succeed.
 
-A special case is robust optimization with `perturbation_num: 1`.  In that case the
-minimum applies to all realizations combined. In other words, a robust gradient may then
-still be computed based on a subset of the realizations.
+            To calculate gradients, the optimizer requests a number of forward
+            model evaluations for perturbed variables. There are two possible
+            ways to calculate the gradient of the objective function:
 
-The user-provided value is reset to perturbation_num if it is larger than this number
-and a message is produced.  In the special case of robust optimization case with
-`perturbation_num: 1` the maximum allowed value is the number of realizations specified
-by realizations instead.""",
+            1. For each realization, `perturbation_num` objective functions are
+               evaluated with perturbed controls, which will be used to
+               calculate a gradient for that realization. The gradient
+               calculation for a single realization is considered successful if
+               at least `min_pert_success` forward model runs for that
+               realization are successful. The overall gradient can be
+               calculated from the set of realization gradients if a sufficient
+               number succeeded (see the `min_realizations_success` option). If
+               not, the optimization terminates with an error.
+            2. If the `perturbation_num` field is equal to 1, the overall
+               gradient is directly calculated from a single perturbation for
+               each realization. In this case `min_pert_success` is internally
+               set to 1, and the number of successful realizations is equal to
+               the number of successful perturbed runs. The gradient calculation
+               succeeds if this is at least equal to `min_realizations_success`.
+
+            Note: The value of `min_pert_success` is internally adjusted to be
+            capped by `perturbation_num`.
+            """
+        ),
     )
     min_realizations_success: int | None = Field(
         default=None,
         ge=0,
-        description="""Minimum number of realizations
+        description=dedent(
+            """
+            Minimum number of successful realizations.
 
-The minimum number of realizations that should be available for the computation
-of either expected function values (both objective function and constraint
-functions) or of the expected gradient.  Note that this keyword does not apply
-to gradient computation in the robust case with 1 perturbation in which the
-expected gradient is computed directly.
+            The overall objective functions and gradients are calculated from a
+            set of forward model runs for a number of realizations of an
+            ensemble. This is done by aggregating the functions and gradients,
+            usually by averaging. If one or more of the forward model
+            evaluations fail, this may lead to a failure of either the function
+            or the gradient evaluation. However, the number of realizations that
+            are successfully evaluated may still be sufficient to calculate
+            robust aggregated functions and gradients.
 
-The optimization process will stop if this minimum is not reached, and otherwise
-the expected objective function value (and expected gradient/constraint function
-values) will be computed based on the set of successful contributions.  In other
-words, a robust objective function, a robust gradient and robust constraint
-functions may then still be computed based on a subset of the realizations.
+            To calculate the aggregated objective function and gradient, the
+            number of successful forward models that calculate the objective
+            function for each realization must be at least equal to
+            `min_realizations_success`. The number of realizations that are
+            successful in terms of the gradient calculation is additionally
+            determined by the `min_pert_success` field, see its documentation
+            for more details.
 
-The user-provided value is reset to the number of realizations specified by
-realizations if it is larger than this number and a message is produced.
+            If these requirements are not met, the optimizer will stop and
+            report an error.
 
-Note that it is possible to set the minimum number of successful realizations equal
-to zero. Some optimization algorithms are able to handle this and will proceed even
-if all realizations failed. Most algorithms are not capable of this and will adjust
-the value to be equal to one.
-""",
-    )
-    options: list[str] | dict[str, Any] | None = Field(
-        default=None,
-        description="""specifies non-validated, optional
-passthrough parameters for the optimizer
-
-| Examples used are
-| - max_repetitions = 300
-| - retry_if_fail
-| - classical_search 1""",
+            Note: The value of `min_realizations_success` is internally adjusted
+            to be capped by the number of realizations. It is possible to set
+            the minimum number of successful realizations equal to zero. Some
+            optimization algorithms are able to handle this and will proceed
+            even if all realizations failed. Most algorithms are not capable of
+            this and will internally adjust the value to be equal to one.
+            """
+        ),
     )
     perturbation_num: int | None = Field(
         default=None,
         gt=0,
-        description="""The number of perturbed control vectors per realization.
+        description=dedent(
+            """
+            The number of perturbed control vectors per realization.
 
-The number of simulation runs used for estimating the gradient is equal to the
-the product of perturbation_num and model.realizations.""",
+            The number of simulation runs used for estimating the gradient is
+            equal to the the product of `perturbation_num` and
+            `model.realizations`.
+            """
+        ),
     )
     speculative: bool = Field(
         default=False,
-        description="""specifies whether to enable speculative computation.
+        description=dedent(
+            """
+            Calculate gradients, even if not strictly needed.
 
-The speculative specification enables speculative computation of gradient and/or
-Hessian information, where applicable, for parallel optimization studies. By
-speculating that the derivative information at the current point will be used
-later, the complete data set (all available gradient/Hessian information) can be
-computed on every function evaluation. While some of these computations will be
-wasted, the positive effects are a consistent parallel load balance and usually
-shorter wall clock time. The speculative specification is applicable only when
-parallelism in the gradient calculations can be exploited by Dakota (it will be
-ignored for vendor numerical gradients).  (From the Dakota Manual.)""",
+            When running forward models in parallel, e.g. on a computing
+            cluster, it may be advantageous to calculate a gradient along with
+            each function evaluation. The reason is that the optimizer may be
+            able to use the gradient in a next iteration. Although this wastes
+            resources if the gradient is not used, it may save clock time, since
+            the gradient does not need to be calculated again.
+
+            Notes:
+
+            - This is mostly useful if a full set of functions and perturbations
+              (for the gradient) can run in parallel. Additional batches may be
+              needed anyway if this is not the case.
+            - Running an optimization with or without this disabled will yield
+              slightly different results, since the perturbed variables will
+              differ because different (longer) sequences of random numbers will
+              be generated.
+            - This does potentially waste a lot of computational resources!
+            """
+        ),
     )
     parallel: bool = Field(
         default=True,
-        description="""whether to allow parallel function evaluation.
+        description=dedent(
+            """
+            Enable parallel function evaluation.
 
-By default Everest will evaluate a single function and gradient evaluation at
-a time. In case of gradient-free optimizer this can be highly inefficient,
-since these tend to need many independent function evaluations at each
-iteration. By setting parallel to True, multiple functions may be evaluated in
-parallel, if supported by the optimization algorithm.
+            If set to `False`, a single function evaluation is performed in each
+            batch. In case of gradient-free optimizers this can be highly
+            inefficient, since these tend to need many independent function
+            evaluations at each iteration. By setting parallel to `True`,
+            multiple functions may be evaluated in parallel, if supported by the
+            optimization algorithm.
 
-The default is to use parallel evaluation if supported.
-""",
+            The default is to use parallel evaluation if supported.
+            """
+        ),
     )
     auto_scale: bool = Field(
         default=False,
-        description="""
-auto_scale can be set to true to automatically scale both objectives and
-output constraints from values obtained in batch 0.
-""",
+        description=dedent(
+            """
+            Enable auto-scaling of objectives and input/output constraints.
+
+            If set to `True`, objectives, input constraints and output
+            constraints are automatically scaled.
+
+            In the case of objectives and output constraints this is done by
+            scaling by the values obtained in the first batch. Input constraints
+            are scaled by dividing by the maximum values of their coefficients
+            or right-hand-sides.
+
+            Note: If enabled, the individual scale options for objectives and
+            constraints are not allowed.
+            """
+        ),
     )
 
     _optimization_plugin: str

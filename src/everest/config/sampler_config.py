@@ -1,4 +1,5 @@
 import logging
+from textwrap import dedent
 from typing import Any, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -10,32 +11,62 @@ from everest.strings import EVEREST
 class SamplerConfig(BaseModel):
     backend: str | None = Field(
         default=None,
-        description="""(deprecated) The backend used by Everest for sampling points.
+        description=dedent(
+            """
+            [Deprecated]
 
-The sampler backend provides the methods for sampling the points used to
-estimate the gradient. The default is the built-in 'scipy' backend.
-
-""",
-    )
-    options: dict[str, Any] | None = Field(
-        default=None,
-        alias="backend_options",
-        description="""
-Specifies a dict of optional parameters for the sampler backend.
-
-This dict of values is passed unchanged to the selected method in the backend.
-
-""",
+            The correct backend will be inferred by the method. If several backends
+            have a method named `A`, pick a specific backend `B` by putting `B/A` in
+            the `method` field.
+            """
+        ),
     )
     method: str = Field(
         default="norm",
-        description="""The sampling method or distribution used by the sampler backend.
-""",
+        description=dedent(
+            """
+            The sampling method or distribution used by the sampler backend.
+
+            The set of available methods depends on the sampler backend used. By
+            default a plugin based on `scipy.stats` is used, implementing the
+            following methods:
+
+            - From Probability Distributions:
+                - `norm`: Samples from a standard normal distribution (mean 0,
+                  standard deviation 1).
+                - `truncnorm`: Samples from a truncated normal distribution
+                  (mean 0, std. dev. 1), truncated to the range `[-1, 1]`.
+                - `uniform`: Samples from a uniform distribution in the range
+                  `[-1, 1]`.
+
+            - From Quasi-Monte Carlo Sequences:
+                - `sobol`: Uses Sobol' sequences.
+                - `halton`: Uses Halton sequences.
+                - `lhs`: Uses Latin Hypercube Sampling.
+
+                Note: QMC samples are generated in the unit hypercube `[0, 1]^d`
+                and then scaled to the hypercube `[-1, 1]^d`.
+            """
+        ),
+    )
+    options: dict[str, Any] | None = Field(
+        default=None,
+        description=dedent(
+            """
+            Specifies a dict of optional parameters for the sampler backend.
+
+            This dict of values is passed unchanged to the selected method in
+            the backend.
+            """
+        ),
     )
     shared: bool | None = Field(
         default=None,
-        description="""Whether to share perturbations between realizations.
-""",
+        description=dedent(
+            """
+            Whether to share perturbations between realizations.
+            """
+        ),
     )
     model_config = ConfigDict(extra="forbid")
 
