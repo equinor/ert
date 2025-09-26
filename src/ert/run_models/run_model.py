@@ -801,14 +801,17 @@ class RunModel(BaseModelWithContextSupport, ABC):
         num_successful_realizations = len(successful_realizations)
         self.validate_successful_realizations_count()
         logger.info(f"Experiment ran on QUEUESYSTEM: {self.queue_config.queue_system}")
-        logger.info(f"Experiment ran with number of realizations: {self.ensemble_size}")
+        logger.info(
+            f"Experiment ran with number of realizations: {len(starting_realizations)} "
+            f"out of a total {self.ensemble_size}"
+        )
         logger.info(
             f"Experiment run ended with number of realizations succeeding: "
             f"{num_successful_realizations}"
         )
         logger.info(
             f"Experiment run ended with number of realizations failing: "
-            f"{self.ensemble_size - num_successful_realizations}"
+            f"{len(starting_realizations) - num_successful_realizations}"
         )
         logger.info(f"Experiment run finished in: {self.get_runtime()}s")
         self.run_workflows(
