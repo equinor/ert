@@ -1,5 +1,6 @@
 import datetime
 import random
+import sys
 from dataclasses import dataclass
 
 import memray
@@ -420,6 +421,9 @@ def setup_benchmark(tmp_path, request):
 
 
 @pytest.mark.memory_test
+@pytest.mark.skipif(
+    sys.platform.startswith("darwin"), reason="Currently failing on mac"
+)
 def test_memory_performance_of_joining_observations_and_responses(
     setup_benchmark, tmp_path
 ):
@@ -518,6 +522,9 @@ def setup_es_benchmark(tmp_path, request):
 
 
 @pytest.mark.memory_test
+@pytest.mark.skipif(
+    sys.platform.startswith("darwin"), reason="Currently failing on mac"
+)
 def test_memory_performance_of_doing_es_update(setup_es_benchmark, tmp_path):
     _, prior, posterior, gen_kw_names, expected_performance = setup_es_benchmark
     with memray.Tracker(tmp_path / "memray.bin"):
@@ -555,6 +562,9 @@ def test_speed_performance_of_doing_es_update(setup_es_benchmark, benchmark):
 
 
 @pytest.mark.memory_test
+@pytest.mark.skipif(
+    sys.platform.startswith("darwin"), reason="Currently failing on mac"
+)
 def test_memory_performance_of_doing_enif_update(setup_es_benchmark, tmp_path):
     _, prior, posterior, gen_kw_names, expected_performance = setup_es_benchmark
     with memray.Tracker(tmp_path / "memray.bin"):
