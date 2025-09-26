@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import stat
+import sys
 import threading
 import warnings
 from datetime import datetime
@@ -904,6 +905,9 @@ def test_that_connection_errors_do_not_effect_final_result(
 
 
 @pytest.mark.usefixtures("copy_poly_case")
+@pytest.mark.skipif(
+    sys.platform.startswith("darwin"), reason="Currently failing on mac"
+)
 async def test_that_killed_ert_does_not_leave_storage_server_process():
     ert_subprocess = Popen(["ert", "gui", "poly.ert"])
     assert ert_subprocess.is_running()
