@@ -2,6 +2,7 @@ import itertools
 import json
 import logging
 import os
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any, cast
 
@@ -221,17 +222,25 @@ def _extract_data_operations(ever_config: EverestConfig) -> list[str]:
     forward_model = []
 
     for data_req in ever_config.install_data or []:
-        target = data_req.target
+        if data_req.source is not None:
+            target = data_req.target
 
-        source = _expand_source_path(data_req.source, ever_config)
-        is_dir = _is_dir_all_model(source, ever_config)
+            source = _expand_source_path(data_req.source, ever_config)
+            is_dir = _is_dir_all_model(source, ever_config)
 
-        if data_req.link:
-            forward_model.append(symlink_fmt.format(source=source, link_name=target))
-        elif is_dir:
-            forward_model.append(copy_dir_fmt.format(source=source, target=target))
-        else:
-            forward_model.append(copy_file_fmt.format(source=source, target=target))
+            if data_req.link:
+                forward_model.append(
+                    symlink_fmt.format(source=source, link_name=target)
+                )
+            elif is_dir:
+                forward_model.append(copy_dir_fmt.format(source=source, target=target))
+            else:
+                forward_model.append(copy_file_fmt.format(source=source, target=target))
+
+    for data_file, _ in _get_install_data_files(ever_config):
+        forward_model.append(
+            copy_file_fmt.format(source=data_file, target=data_file.name)
+        )
 
     well_path, _ = _get_well_file(ever_config)
     forward_model.append(
@@ -510,6 +519,14 @@ def _get_workflow_files(ever_config: EverestConfig) -> dict[str, tuple[Path, str
     }
 
 
+def _get_install_data_files(ever_config: EverestConfig) -> Iterator[tuple[Path, str]]:
+    data_storage = (Path(ever_config.output_dir) / ".internal_data").resolve()
+    for item in ever_config.install_data or []:
+        if item.data is not None:
+            target, data = item.inline_data_as_str()
+            yield (data_storage / Path(target).name, data)
+
+
 def get_internal_files(ever_config: EverestConfig) -> dict[Path, str]:
     return dict(
         [
@@ -519,5 +536,6 @@ def get_internal_files(ever_config: EverestConfig) -> dict[Path, str]:
                 for workflow_file, jobs in _get_workflow_files(ever_config).values()
                 if jobs
             ),
+            *_get_install_data_files(ever_config),
         ],
     )
