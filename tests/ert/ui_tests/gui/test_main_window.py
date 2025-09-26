@@ -174,11 +174,11 @@ def test_gui_shows_a_warning_and_disables_update_when_parameters_are_missing(
 
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
-def test_help_buttons_in_suggester_dialog(tmp_path, qtbot):
+def test_that_there_is_a_link_to_github_in_the_suggester(tmp_path, qtbot):
     """
     WHEN I am shown an error in the gui
     THEN the suggester gui comes up
-    AND go to github to submit an issue by clicking a button.
+    AND I can go to github to submit an issue by clicking a button.
     """
     config_file = tmp_path / "config.ert"
     config_file.write_text(
@@ -750,7 +750,7 @@ def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_cases(qtbot):
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_help_menu(qtbot):
+def test_that_the_help_menu_contains_the_about_dialog(qtbot):
     args = Mock()
     args.config = "poly.ert"
     gui, *_ = ert.gui.main._start_initial_gui_window(args, GUILogHandler())
