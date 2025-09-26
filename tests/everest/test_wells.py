@@ -80,8 +80,7 @@ def test_well_config_to_file(min_config, monkeypatch, tmp_path, config):
     everest_to_ert_config_dict(ever_config)
     for datafile, data in get_internal_files(ever_config).items():
         datafile.parent.mkdir(exist_ok=True, parents=True)
-        with open(datafile, "w", encoding="utf-8") as fp:
-            fp.write(data)
+        datafile.write_text(data, encoding="utf-8")
     with open("everest_output/.internal_data/wells.json", encoding="utf-8") as fin:
         wells_json = json.load(fin)
     assert wells_json == config

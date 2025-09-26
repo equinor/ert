@@ -214,8 +214,7 @@ class EverestRunModel(RunModel):
 
         for datafile, data in get_internal_files(everest_config).items():
             datafile.parent.mkdir(exist_ok=True, parents=True)
-            with open(datafile, "w", encoding="utf-8") as fp:
-                fp.write(data)
+            datafile.write_text(data, encoding="utf-8")
 
         workflow_jobs = get_workflow_jobs(everest_config)
         if deprecated_workflow_jobs := workflow_jobs_from_dict(config_dict):
