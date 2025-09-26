@@ -153,7 +153,7 @@ def run_dialog(qtbot: QtBot, use_tmpdir, mock_set_env_key):
 
 
 @pytest.mark.integration_test
-def test_terminating_experiment_shows_a_confirmation_dialog(
+def test_that_terminating_experiment_shows_a_confirmation_dialog(
     qtbot: QtBot, run_dialog, monkeypatch
 ):
     monkeypatch.setattr(Job, "WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL", 0)
