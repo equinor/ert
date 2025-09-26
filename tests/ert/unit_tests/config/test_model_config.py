@@ -11,6 +11,7 @@ def test_default_model_config_run_path():
     assert mc.runpath_format_string == "simulations/realization-<IENS>/iter-<ITER>"
 
 
+@pytest.mark.filterwarnings("ignore:.*RUNPATH keyword contains no value placeholder.*")
 def test_invalid_model_config_run_path():
     mc = ModelConfig(
         num_realizations=1, runpath_format_string="realization-no-specifier"
