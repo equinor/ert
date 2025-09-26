@@ -127,7 +127,7 @@ def _validate_history_values(observation_dict: ObservationDict) -> HistoryDeclar
     error_mode: ErrorModes = "RELMIN"
     error = 0.1
     error_min = 0.1
-    segment = []
+    segments = []
     for key, value in observation_dict.items():
         match key:
             case "type" | "name":
@@ -138,10 +138,8 @@ def _validate_history_values(observation_dict: ObservationDict) -> HistoryDeclar
                 error_min = validate_positive_float(value, key)
             case "ERROR_MODE":
                 error_mode = validate_error_mode(value)
-            case ("SEGMENT", segment_name):
-                segment.append(
-                    (segment_name, _validate_segment_dict(segment_name, value))
-                )
+            case "segments":
+                segments = [(v[0], _validate_segment_dict(*v)) for v in value]
             case _:
                 raise _unknown_key_error(str(key), observation_dict["name"])
 
@@ -151,7 +149,7 @@ def _validate_history_values(observation_dict: ObservationDict) -> HistoryDeclar
         error_mode=error_mode,
         error=error,
         error_min=error_min,
-        segment=segment,
+        segment=segments,
     )
 
 

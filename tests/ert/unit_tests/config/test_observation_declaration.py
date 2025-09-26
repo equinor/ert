@@ -44,44 +44,36 @@ def test_make_observation_declarations():
         "",
         [
             ({"type": ObservationType.HISTORY, "name": "FOPR"}),
-            (
-                {
-                    "type": ObservationType.SUMMARY,
-                    "name": "WOPR_OP1_9",
-                    "VALUE": "0.1",
-                    "ERROR": "0.05",
-                    "DATE": "2010-03-31",
-                    "KEY": "WOPR:OP1",
-                }
-            ),
-            (
-                {
-                    "type": ObservationType.GENERAL,
-                    "name": "WPR_DIFF_1",
-                    "DATA": "SNAKE_OIL_WPR_DIFF",
-                    "INDEX_LIST": "400,800,1200,1800",
-                    "DATE": "2015-06-13",
-                    "OBS_FILE": "wpr_diff_obs.txt",
-                }
-            ),
-            (
-                {
-                    "type": ObservationType.GENERAL,
-                    "name": "WPR_DIFF_2",
-                    "DATA": "SNAKE_OIL_WPR_DIFF",
-                    "INDEX_FILE": "wpr_diff_idx.txt",
-                    "DATE": "2015-06-13",
-                    "OBS_FILE": "wpr_diff_obs.txt",
-                }
-            ),
-            (
-                {
-                    "type": ObservationType.HISTORY,
-                    "name": "FWPR",
-                    "ERROR": "0.1",
-                    ("SEGMENT", "SEG"): {"START": "1", "STOP": "0", "ERROR": "0.25"},
-                }
-            ),
+            {
+                "type": ObservationType.SUMMARY,
+                "name": "WOPR_OP1_9",
+                "VALUE": "0.1",
+                "ERROR": "0.05",
+                "DATE": "2010-03-31",
+                "KEY": "WOPR:OP1",
+            },
+            {
+                "type": ObservationType.GENERAL,
+                "name": "WPR_DIFF_1",
+                "DATA": "SNAKE_OIL_WPR_DIFF",
+                "INDEX_LIST": "400,800,1200,1800",
+                "DATE": "2015-06-13",
+                "OBS_FILE": "wpr_diff_obs.txt",
+            },
+            {
+                "type": ObservationType.GENERAL,
+                "name": "WPR_DIFF_2",
+                "DATA": "SNAKE_OIL_WPR_DIFF",
+                "INDEX_FILE": "wpr_diff_idx.txt",
+                "DATE": "2015-06-13",
+                "OBS_FILE": "wpr_diff_obs.txt",
+            },
+            {
+                "type": ObservationType.HISTORY,
+                "name": "FWPR",
+                "ERROR": "0.1",
+                "segments": [("SEG", {"START": "1", "STOP": "0", "ERROR": "0.25"})],
+            },
         ],
     ) == [
         HistoryDeclaration(

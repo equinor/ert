@@ -660,7 +660,7 @@ def log_observation_keys(
 ) -> None:
     observation_type_counts = Counter(o["type"].value for o in observations)
     observation_keyword_counts = Counter(
-        "SEGMENT" if isinstance(key, tuple) else str(key)
+        "SEGMENT" if key == "segments" else str(key)
         for o in observations
         for key in o
         if key not in {"name", "type"}

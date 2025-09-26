@@ -1,8 +1,5 @@
 from enum import StrEnum
-from typing import (
-    TypedDict,
-    no_type_check,
-)
+from typing import Any, no_type_check
 
 from lark import Lark, Token, Transformer, UnexpectedCharacters, UnexpectedToken
 from lark.exceptions import VisitError
@@ -23,9 +20,7 @@ class ObservationType(StrEnum):
     GENERAL = "GENERAL_OBSERVATION"
 
 
-class ObservationDict(TypedDict):
-    type: ObservationType
-    name: str
+ObservationDict = dict[str, Any]
 
 
 def parse_observations(content: str, filename: str) -> list[ObservationDict]:
@@ -165,11 +160,29 @@ class TreeToObservations(Transformer[FileContextToken, list[ObservationDict]]):
                 "name": tree[1],
             }
         else:
-            return {
+            non_segments = {
+                k: v for k, v in tree[2].items() if not isinstance(k, tuple)
+            }
+            segments = [(k[1], v) for k, v in tree[2].items() if isinstance(k, tuple)]
+            error_list = []
+            for unknown_key in ["type", "segments", "name"]:
+                if unknown_key in non_segments:
+                    error_list.append(
+                        ErrorInfo(f"Unknown {unknown_key} in {tree[1]}").set_context(
+                            tree[1]
+                        )
+                    )
+            if error_list:
+                raise ObservationConfigError.from_collected(error_list)
+
+            res = {
                 "type": ObservationType(tree[0].children[0]),
                 "name": tree[1],
-                **tree[2],
+                **non_segments,
             }
+            if segments:
+                res["segments"] = segments
+            return res
 
     @staticmethod
     @no_type_check
