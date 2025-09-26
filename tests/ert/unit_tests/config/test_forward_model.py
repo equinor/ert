@@ -200,6 +200,10 @@ def test_forward_model_arglist_with_weird_characters():
 
 
 @pytest.mark.integration_test
+@pytest.mark.filterwarnings("ignore:MIN_REALIZATIONS")
+@pytest.mark.filterwarnings(
+    "ignore:Config contains a SUMMARY key but no forward model steps"
+)
 @settings(max_examples=10)
 @given(config_generators())
 def test_ert_config_throws_on_missing_forward_model_step(
