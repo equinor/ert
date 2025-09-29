@@ -376,11 +376,11 @@ def test_data_file_with_non_utf_8_character_gives_error_message():
         ErtConfig.from_file("config.ert")
 
 
-def test_that_double_comments_are_handled():
+def test_that_line_comments_are_ignored_in_the_config_file():
     ert_config = ErtConfig.from_file_contents(
         """
         NUM_REALIZATIONS 1 -- foo -- bar -- 2
-        JOBNAME &SUM$VAR@12@#£¤<
+        JOBNAME &SUM$VAR@12@#£¤< -- A comment
         """
     )
     assert ert_config.runpath_config.num_realizations == 1
