@@ -1,4 +1,5 @@
 import logging
+import os
 from enum import StrEnum
 from pathlib import Path
 from typing import Any, no_type_check
@@ -51,10 +52,12 @@ def parse_observations(content: str, filename: str) -> list[ObservationDict]:
                     to_str(parsed_observation),
                     file,
                 )
+            relative_filename = os.path.relpath(filename)
             ConfigWarning.deprecation_warn(
-                "In the future Ert will use yaml for observation files."
-                f"Your observations have been written as '{filename}.yml'"
-                f"Add 'OBSERVATIONS {filename}.yml' and remove 'OBS_CONFIG {filename}'"
+                "In the future Ert will use yaml for observation files. "
+                f"Your observations have been written as '{relative_filename}.yml' "
+                f"Add 'OBSERVATIONS {relative_filename}.yml' and remove "
+                f"'OBS_CONFIG {relative_filename}' "
                 "in your config file to use it now."
             )
     except VisitError as err:
