@@ -1238,6 +1238,19 @@ def test_that_define_can_set_substitutions_to_the_empty_string():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_that_quoted_arguments_to_define_escapes_spaces_and_comments():
+    ert_Config = ErtConfig.from_file_contents(
+        dedent(
+            """
+            DEFINE <A> "A--string  "
+            NUM_REALIZATIONS 1
+            """
+        )
+    )
+    assert ert_Config.substitutions.get("<A>") == "A--string  "
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_that_include_statements_work():
     test_config_file_name = "test.ert"
     test_config_contents = dedent(
@@ -1259,19 +1272,6 @@ def test_that_include_statements_work():
 
     ert_config = ErtConfig.from_file(test_config_file_name)
     assert ert_config.runpath_config.jobname_format_string == "included"
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_define_string_quotes_are_removed():
-    ert_Config = ErtConfig.from_file_contents(
-        dedent(
-            """
-            DEFINE <A> "A"
-            NUM_REALIZATIONS 1
-            """
-        )
-    )
-    assert ert_Config.substitutions.get("<A>") == "A"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
