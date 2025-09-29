@@ -399,7 +399,14 @@ def _setup_multiple_data_assimilation(
     )
 
 
-def _realizations(args: Namespace, ensemble_size: int) -> npt.NDArray[np.bool_]:
+def _realizations(
+    args: Namespace, ensemble_size_from_config: int
+) -> npt.NDArray[np.bool_]:
+    ensemble_size = (
+        args.ensemble_size
+        if hasattr(args, "ensemble_size") and args.ensemble_size is not None
+        else ensemble_size_from_config
+    )
     if not hasattr(args, "realizations") or args.realizations is None:
         return np.ones(ensemble_size, dtype=bool)
     return np.array(
