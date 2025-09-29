@@ -4,11 +4,16 @@ from typing import Any, no_type_check
 from lark import Lark, Token, Transformer, UnexpectedCharacters, UnexpectedToken
 from lark.exceptions import VisitError
 from ruamel.yaml import YAML
+import logging
+from pathlib import Path
+from .config_errors import ConfigWarning
 
 from ._file_context_transformer import FileContextTransformer
 from .config_errors import ConfigValidationError
 from .error_info import ErrorInfo
 from .file_context_token import FileContextToken
+
+logger = logging.getLogger(__name__)
 
 
 class ObservationConfigError(ConfigValidationError):
@@ -30,17 +35,25 @@ def parse_observations(content: str, filename: str) -> list[ObservationDict]:
             FileContextTransformer(filename) * TreeToObservations()
         ).transform(observations_parser.parse(content))
 
-        def to_str(d: Any) -> str:
+        def to_str(d: Any) -> Any:
             if isinstance(d, str):
                 return str(d)
             if isinstance(d, list):
                 return [to_str(o) for o in d]
             return {str(k).lower(): to_str(v) for k, v in d.items()}
 
-        with open(f"{filename}.yml", "w") as file:
-            YAML(pure=True).dump(
-                to_str(parsed_observation),
-                file,
+        if Path(f"{filename}.yml").exists():
+            logger.warning("yaml file for obs config already exists. Not overwriting")
+        else:
+            with open(f"{filename}.yml", "w", encoding="utf-8") as file:
+                YAML(pure=True).dump(
+                    to_str(parsed_observation),
+                    file,
+                )
+            ConfigWarning.deprecation_warn(
+                "In the future Ert will use yaml for observation files."
+                f"Your observations have been written as '{filename}.yml'"
+                f"Add 'OBERVATIONS {filename}.yml' and remove 'OBS_CONFIG {filename}' in your config file to use it now."
             )
         return parsed_observation
     except VisitError as err:
