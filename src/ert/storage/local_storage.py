@@ -456,13 +456,35 @@ class LocalStorage(BaseMode):
             self._index.model_dump_json(indent=4).encode("utf-8"),
         )
 
+    def _legacy_storage_migration_message(
+        self, backup_path: Path, ert_version_to_use: str
+    ) -> str:
+        return dedent(
+            f"""
+            Detected outdated storage, which is no longer supported
+            by ERT. Its contents are copied to:
+
+            {backup_path}
+
+            In order to migrate this storage, do the following:
+
+            (1) with ert version <= {ert_version_to_use}, open up
+            the same ert config with: ENSPATH={backup_path}
+
+            (2) with current ert version, open up the same storage again.
+            The contents of the storage should now be up-to-date, and you may
+            copy the ensembles and experiments into the original folder @
+             {self.path}.
+
+            This is not guaranteed to work. Other than setting the custom
+            ENSPATH, the ERT config should ideally be the same as it was
+            when the old storage was created.
+        """
+        )
+
     @require_write
     def _migrate(self, version: int) -> None:
         from .migration import (  # noqa: PLC0415
-            to2,
-            to3,
-            to4,
-            to5,
             to6,
             to7,
             to8,
@@ -489,59 +511,36 @@ class LocalStorage(BaseMode):
                 self._index = self._load_index()
 
                 logger.info("Blockfs storage backed up")
-                print(
-                    dedent(
-                        f"""
-                    Detected outdated storage (blockfs), which is no longer supported
-                    by ERT. Its contents are copied to:
-
-                    {self.path / "_ert_block_storage_backup"}
-
-                    In order to migrate this storage, do the following:
-
-                    (1) with ert version <= 10.3.*, open up the same ert config with:
-                    ENSPATH={self.path / "_ert_block_storage_backup"}
-
-                    (2) with current ert version, open up the same storage again.
-                    The contents of the storage should now be up-to-date, and you may
-                    copy the ensembles and experiments into the original folder @
-                     {self.path}.
-
-                    This is not guaranteed to work. Other than setting the custom
-                    ENSPATH, the ERT config should ideally be the same as it was
-                    when the old blockfs storage was created.
-                """
-                    )
-                )
+                print(self._legacy_storage_migration_message(bkup_path, "10.3.*"))
                 return None
+            elif version < 5:
+                bkup_path = self.path / "_storage_backup_lt_5"
+                dirs = set(os.listdir(self.path)) - {"storage.lock"}
+                os.mkdir(bkup_path)
+                for directory in dirs:
+                    shutil.move(self.path / directory, bkup_path / directory)
 
+                self._index = self._load_index()
+
+                logger.info("storage backed up for version less than 6")
+                print(self._legacy_storage_migration_message(bkup_path, "14.6.*"))
+                return None
             elif version < _LOCAL_STORAGE_VERSION:
-                migrations = list(
-                    enumerate(
-                        [
-                            to2,
-                            to3,
-                            to4,
-                            to5,
-                            to6,
-                            to7,
-                            to8,
-                            to9,
-                            to10,
-                            to11,
-                            to12,
-                            to13,
-                        ],
-                        start=1,
-                    )
-                )
-                for from_version, migration in migrations[version - 1 :]:
-                    print(f"* Updating storage to version: {from_version + 1}")
-                    migration.migrate(self.path)
+                migrations = {
+                    5: to6,
+                    6: to7,
+                    7: to8,
+                    8: to9,
+                    9: to10,
+                    10: to11,
+                    11: to12,
+                    12: to13,
+                }
+                for from_version in range(version, _LOCAL_STORAGE_VERSION):
+                    migrations[from_version].migrate(self.path)
                     self._add_migration_information(
-                        from_version, from_version + 1, migration.info
+                        from_version, from_version + 1, migrations[from_version].info
                     )
-
         except Exception as e:
             logger.error(
                 f"Migrating storage at {self.path} failed with: {e}", stack_info=True
