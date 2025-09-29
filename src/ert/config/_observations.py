@@ -128,8 +128,8 @@ def _validate_history_values(observation_dict: ObservationDict) -> HistoryObserv
     error_min = 0.1
     segments = []
     for key, value in observation_dict.items():
-        match key:
-            case "type" | "name":
+        match key.upper():
+            case "TYPE" | "NAME":
                 pass
             case "ERROR":
                 error = validate_positive_float(value, key)
@@ -137,7 +137,7 @@ def _validate_history_values(observation_dict: ObservationDict) -> HistoryObserv
                 error_min = validate_positive_float(value, key)
             case "ERROR_MODE":
                 error_mode = validate_error_mode(value)
-            case "segments":
+            case "SEGMENTS":
                 segments = list(starmap(_validate_segment_dict, value))
             case _:
                 raise _unknown_key_error(str(key), observation_dict["name"])
@@ -159,8 +159,8 @@ def _validate_summary_values(observation_dict: ObservationDict) -> SummaryObserv
     date_dict: ObservationDate = ObservationDate()
     float_values: dict[str, float] = {"ERROR_MIN": 0.1}
     for key, value in observation_dict.items():
-        match key:
-            case "type" | "name":
+        match key.upper():
+            case "TYPE" | "NAME":
                 pass
             case "RESTART":
                 date_dict.restart = validate_positive_int(value, key)
@@ -205,7 +205,7 @@ def _validate_segment_dict(name_token: str, inp: dict[str, Any]) -> Segment:
     error = 0.1
     error_min = 0.1
     for key, value in inp.items():
-        match key:
+        match key.upper():
             case "START":
                 start = validate_int(value, key)
             case "STOP":
@@ -237,7 +237,7 @@ def _validate_gen_obs_values(
     directory: str, observation_dict: ObservationDict
 ) -> GeneralObservation:
     try:
-        data = observation_dict["DATA"]
+        data = observation_dict.get("DATA") or observation_dict["data"]
     except KeyError as err:
         raise _missing_value_error(observation_dict["name"], "DATA") from err
 
@@ -245,8 +245,8 @@ def _validate_gen_obs_values(
         name=observation_dict["name"], data=data
     )
     for key, value in observation_dict.items():
-        match key:
-            case "type" | "name":
+        match key.upper():
+            case "TYPE" | "NAME":
                 pass
             case "RESTART":
                 output.restart = validate_positive_int(value, key)

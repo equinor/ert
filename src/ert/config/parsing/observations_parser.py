@@ -1,15 +1,14 @@
+import logging
 from enum import StrEnum
+from pathlib import Path
 from typing import Any, no_type_check
 
 from lark import Lark, Token, Transformer, UnexpectedCharacters, UnexpectedToken
 from lark.exceptions import VisitError
 from ruamel.yaml import YAML
-import logging
-from pathlib import Path
-from .config_errors import ConfigWarning
 
 from ._file_context_transformer import FileContextTransformer
-from .config_errors import ConfigValidationError
+from .config_errors import ConfigValidationError, ConfigWarning
 from .error_info import ErrorInfo
 from .file_context_token import FileContextToken
 
@@ -40,6 +39,8 @@ def parse_observations(content: str, filename: str) -> list[ObservationDict]:
                 return str(d)
             if isinstance(d, list):
                 return [to_str(o) for o in d]
+            if isinstance(d, tuple):
+                return tuple(to_str(o) for o in list(d))
             return {str(k).lower(): to_str(v) for k, v in d.items()}
 
         if Path(f"{filename}.yml").exists():
@@ -53,9 +54,9 @@ def parse_observations(content: str, filename: str) -> list[ObservationDict]:
             ConfigWarning.deprecation_warn(
                 "In the future Ert will use yaml for observation files."
                 f"Your observations have been written as '{filename}.yml'"
-                f"Add 'OBERVATIONS {filename}.yml' and remove 'OBS_CONFIG {filename}' in your config file to use it now."
+                f"Add 'OBSERVATIONS {filename}.yml' and remove 'OBS_CONFIG {filename}'"
+                "in your config file to use it now."
             )
-        return parsed_observation
     except VisitError as err:
         if isinstance(err.orig_exc, ObservationConfigError):
             raise err.orig_exc from None
@@ -144,6 +145,8 @@ def parse_observations(content: str, filename: str) -> list[ObservationDict]:
                 end_column=end_column,
             )
         ) from e
+    else:
+        return parsed_observation
 
 
 observations_parser = Lark(
