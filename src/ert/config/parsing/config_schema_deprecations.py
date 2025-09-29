@@ -204,4 +204,10 @@ deprecated_keywords_list = [
         "It has been replaced with the path to the directory containing the "
         "configuration file for the experiment.",
     ),
+    DeprecationInfo(
+        keyword="FORWARD_MODEL",
+        message="FORWARD_MODEL DESIGN2PARAMS have been replaced with DESIGN_MATRIX. "
+        "Please change configuration according to the ERT manual.",
+        check=lambda line: "DESIGN2PARAMS" in line,
+    ),
 ]
