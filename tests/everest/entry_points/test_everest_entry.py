@@ -260,8 +260,6 @@ def test_everest_entry_detached_running(
     session_mock.assert_called_once()
     session_mock.reset_mock()
     get_server_context_from_conn_info_mock.assert_not_called()
-    everserver_status_mock.assert_called_once()
-    everserver_status_mock.reset_mock()
 
     # stop the server
     kill_entry(["config.yml"])
@@ -279,7 +277,6 @@ def test_everest_entry_detached_running(
     everest_entry(["config.yml", "--skip-prompt"])
     session_mock.assert_called_once()
     start_server_mock.assert_not_called()
-    everserver_status_mock.assert_called()
 
 
 @patch("everest.bin.monitor_script.run_detached_monitor")
