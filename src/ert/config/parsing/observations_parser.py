@@ -3,6 +3,7 @@ from typing import Any, no_type_check
 
 from lark import Lark, Token, Transformer, UnexpectedCharacters, UnexpectedToken
 from lark.exceptions import VisitError
+from ruamel.yaml import YAML
 
 from ._file_context_transformer import FileContextTransformer
 from .config_errors import ConfigValidationError
@@ -25,9 +26,23 @@ ObservationDict = dict[str, Any]
 
 def parse_observations(content: str, filename: str) -> list[ObservationDict]:
     try:
-        return (FileContextTransformer(filename) * TreeToObservations()).transform(
-            observations_parser.parse(content)
-        )
+        parsed_observation = (
+            FileContextTransformer(filename) * TreeToObservations()
+        ).transform(observations_parser.parse(content))
+
+        def to_str(d: Any) -> str:
+            if isinstance(d, str):
+                return str(d)
+            if isinstance(d, list):
+                return [to_str(o) for o in d]
+            return {str(k).lower(): to_str(v) for k, v in d.items()}
+
+        with open(f"{filename}.yml", "w") as file:
+            YAML(pure=True).dump(
+                to_str(parsed_observation),
+                file,
+            )
+        return parsed_observation
     except VisitError as err:
         if isinstance(err.orig_exc, ObservationConfigError):
             raise err.orig_exc from None

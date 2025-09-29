@@ -1,3 +1,5 @@
+from ruamel.yaml import YAML
+
 from .config_dict import ConfigDict
 from .config_keywords import ConfigKeys
 from .config_schema_deprecations import deprecated_keywords_list
@@ -327,6 +329,10 @@ def init_user_config_schema() -> ConfigSchemaDict:
         define_keyword(),
         existing_path_inline_keyword(
             ConfigKeys.OBS_CONFIG, parser=lambda f, c: parse_observations(c, f)
+        ),
+        existing_path_inline_keyword(
+            ConfigKeys.OBSERVATIONS,
+            parser=lambda f, c: YAML(typ="safe", pure=True).load(c),
         ),
         existing_path_inline_keyword(ConfigKeys.TIME_MAP),
         single_arg_keyword(ConfigKeys.GEN_KW_EXPORT_NAME),
