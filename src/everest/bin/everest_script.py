@@ -31,7 +31,6 @@ from everest.util import (
 
 from .utils import (
     handle_keyboard_interrupt,
-    report_on_previous_run,
     run_detached_monitor,
     run_empty_detached_monitor,
     setup_logging,
@@ -154,15 +153,10 @@ def _build_args_parser() -> argparse.ArgumentParser:
 
 
 async def run_everest(options: argparse.Namespace) -> None:
-    everserver_status_path = ServerConfig.get_everserver_status_path(
-        options.config.output_dir
-    )
-
     EverestStorage.check_for_deprecated_seba_storage(
         options.config.optimization_output_dir
     )
 
-    server_state = everserver_status(everserver_status_path)
     try:
         StorageService.session(
             Path(ServerConfig.get_session_dir(options.config.output_dir)), timeout=1
@@ -180,103 +174,100 @@ async def run_everest(options: argparse.Namespace) -> None:
             "To kill the running optimization use command:\n"
             f"  `everest kill {config_file}`"
         )
-    elif server_state["status"] == ExperimentState.never_run:
-        config_dict = options.config.to_dict()
-        logger.info("Running everest with the following config:")
-        logger.info(json.dumps(config_dict, sort_keys=True, indent=2))
-        for fm_job in options.config.forward_model_step_commands:
-            job_name = fm_job.split()[0]
-            logger.info(f"Everest forward model contains job {job_name}")
+        return
 
-        if (
-            options.config.simulation_dir is not None
-            and os.path.exists(options.config.simulation_dir)
-            and any(os.listdir(options.config.simulation_dir))
-        ):
-            warn_user_that_runpath_is_nonempty()
-        if not options.skip_prompt:
-            show_scaled_controls_warning()
+    config_dict = options.config.to_dict()
+    logger.info("Running everest with the following config:")
+    logger.info(json.dumps(config_dict, sort_keys=True, indent=2))
+    for fm_job in options.config.forward_model_step_commands:
+        job_name = fm_job.split()[0]
+        logger.info(f"Everest forward model contains job {job_name}")
 
-        try:
-            output_dir = options.config.output_dir
-            config_file = options.config.config_file
-            save_config_path = os.path.join(output_dir, config_file)
-            options.config.dump(save_config_path)
-        except (OSError, LookupError) as e:
-            logger.error(f"Failed to save optimization config: {e}")
+    if (
+        options.config.simulation_dir is not None
+        and os.path.exists(options.config.simulation_dir)
+        and any(os.listdir(options.config.simulation_dir))
+    ):
+        warn_user_that_runpath_is_nonempty()
+    if not options.skip_prompt:
+        show_scaled_controls_warning()
 
-        logging_level = logging.DEBUG if options.debug else options.config.logging_level
+    try:
+        output_dir = options.config.output_dir
+        config_file = options.config.config_file
+        save_config_path = os.path.join(output_dir, config_file)
+        options.config.dump(save_config_path)
+    except (OSError, LookupError) as e:
+        logger.error(f"Failed to save optimization config: {e}")
 
-        print("Adding everest server to queue ...")
-        logger.debug("Submitting everserver")
-        try:
-            await asyncio.wait_for(
-                start_server(options.config, logging_level), timeout=1800
-            )  # 30 minutes
-            logger.debug("Everserver submitted and started")
-        except TimeoutError as e:
-            logger.error("Everserver failed to start within timeout")
-            raise SystemExit("Failed to start the server") from e
+    logging_level = logging.DEBUG if options.debug else options.config.logging_level
 
-        print("Waiting for server ...")
-        logger.debug("Waiting for response from everserver")
-        client = StorageService.session(
-            Path(ServerConfig.get_session_dir(options.config.output_dir))
+    print("Adding everest server to queue ...")
+    logger.debug("Submitting everserver")
+    try:
+        await asyncio.wait_for(
+            start_server(options.config, logging_level), timeout=1800
+        )  # 30 minutes
+        logger.debug("Everserver submitted and started")
+    except TimeoutError as e:
+        logger.error("Everserver failed to start within timeout")
+        raise SystemExit("Failed to start the server") from e
+
+    print("Waiting for server ...")
+    logger.debug("Waiting for response from everserver")
+    client = StorageService.session(
+        Path(ServerConfig.get_session_dir(options.config.output_dir))
+    )
+    wait_for_server(client, timeout=600)
+    print("Everest server found!")
+    logger.info("Got response from everserver. Starting experiment")
+
+    start_experiment(
+        server_context=ServerConfig.get_server_context_from_conn_info(client.conn_info),
+        config=options.config,
+    )
+
+    # blocks until the run is finished
+    if options.gui:
+        from everest.gui.main import run_gui  # noqa
+
+        monitor_thread = ErtThread(
+            target=run_empty_detached_monitor
+            if options.disable_monitoring
+            else run_detached_monitor,
+            name="Everest CLI monitor thread",
+            args=[ServerConfig.get_server_context_from_conn_info(client.conn_info)],
+            daemon=True,
         )
-        wait_for_server(client, timeout=600)
-        print("Everest server found!")
-        logger.info("Got response from everserver. Starting experiment")
-
-        start_experiment(
+        monitor_thread.start()
+        run_gui(options.config.output_dir)
+        monitor_thread.join()
+    elif options.disable_monitoring:
+        run_empty_detached_monitor(
             server_context=ServerConfig.get_server_context_from_conn_info(
                 client.conn_info
-            ),
-            config=options.config,
+            )
         )
-
-        # blocks until the run is finished
-        if options.gui:
-            from everest.gui.main import run_gui  # noqa
-
-            monitor_thread = ErtThread(
-                target=run_empty_detached_monitor
-                if options.disable_monitoring
-                else run_detached_monitor,
-                name="Everest CLI monitor thread",
-                args=[ServerConfig.get_server_context_from_conn_info(client.conn_info)],
-                daemon=True,
-            )
-            monitor_thread.start()
-            run_gui(options.config.output_dir)
-            monitor_thread.join()
-        elif options.disable_monitoring:
-            run_empty_detached_monitor(
-                server_context=ServerConfig.get_server_context_from_conn_info(
-                    client.conn_info
-                )
-            )
-        else:
-            run_detached_monitor(
-                server_context=ServerConfig.get_server_context_from_conn_info(
-                    client.conn_info
-                )
-            )
-
-        logger.info("Everest experiment finished")
-
-        server_state = everserver_status(everserver_status_path)
-        server_state_info = server_state["message"]
-        if server_state["status"] == ExperimentState.failed:
-            raise SystemExit(f"Everest run failed with: {server_state_info}")
-        if server_state_info is not None:
-            logger.info(f"Everest run finished with: {server_state_info}")
-            print(server_state_info)
     else:
-        report_on_previous_run(
-            config_file=options.config.config_file,
-            everserver_status_path=everserver_status_path,
-            optimization_output_dir=options.config.optimization_output_dir,
+        run_detached_monitor(
+            server_context=ServerConfig.get_server_context_from_conn_info(
+                client.conn_info
+            )
         )
+
+    logger.info("Everest experiment finished")
+
+    everserver_status_path = ServerConfig.get_everserver_status_path(
+        options.config.output_dir
+    )
+
+    server_state = everserver_status(everserver_status_path)
+    server_state_info = server_state["message"]
+    if server_state["status"] == ExperimentState.failed:
+        raise SystemExit(f"Everest run failed with: {server_state_info}")
+    if server_state_info is not None:
+        logger.info(f"Everest run finished with: {server_state_info}")
+        print(server_state_info)
 
 
 if __name__ == "__main__":
