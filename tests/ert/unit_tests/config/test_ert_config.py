@@ -1821,23 +1821,18 @@ def test_queue_config_max_running_queue_option_has_priority_over_general_option(
     )
 
 
-def test_general_option_in_local_config_has_priority_over_site_config():
+def test_that_local_config_overrides_site_config():
     config = ErtConfig.with_plugins(
         ErtRuntimePlugins(
             queue_options=LocalQueueOptions(max_running=6, submit_sleep=7)
         )
     ).from_file_contents(
-        user_config_contents=dedent(
-            """
-            NUM_REALIZATIONS  100
-            DEFINE <STORAGE> storage/<CONFIG_FILE_BASE>-<DATE>
-            RUNPATH <STORAGE>/runpath/realization-<IENS>/iter-<ITER>
-            ENSPATH <STORAGE>/ensemble
-            QUEUE_SYSTEM TORQUE
-            MAX_RUNNING 13
-            SUBMIT_SLEEP 14
-            """
-        ),
+        """
+        NUM_REALIZATIONS  100
+        QUEUE_SYSTEM TORQUE
+        MAX_RUNNING 13
+        SUBMIT_SLEEP 14
+        """
     )
     assert config.queue_config.max_running == 13
     assert config.queue_config.submit_sleep == 14
