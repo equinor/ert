@@ -390,7 +390,9 @@ def test_various_null_fields(fm_step_list, context):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_values_with_brackets_are_ommitted(caplog, fm_step_list, context):
+def test_that_env_vars_with_surrounded_by_brackets_are_ommitted_from_Jobs_json(
+    caplog, fm_step_list, context
+):
     forward_model_list: list[ForwardModelStep] = set_up_forward_model(fm_step_list)
     forward_model_list[0].environment["ENV_VAR"] = "<SOME_BRACKETS>"
     run_id = "test_no_jobs_id"
