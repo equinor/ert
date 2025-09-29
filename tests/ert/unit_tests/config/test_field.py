@@ -326,3 +326,30 @@ def test_invalid_argument_gives_a_user_error_message(
         _ = parse_field_line(
             f"FIELD f parameter out.roff INIT_FILES:file.init {invalid_argument}"
         )
+
+
+def test_numpy_mismatch_in_grid_and_field_shapes_raises_altered_error_message():
+    field_path = (
+        Path(__file__).resolve().parents[5]
+        / "ert"
+        / "test-data"
+        / "ert"
+        / "heat_equation"
+        / "cond_0.bgrdecl"
+    )
+
+    field_name = "COND"
+    mask = np.zeros((5, 5, 5), dtype=bool)
+    mask[:, :, 1] = True
+
+    # Field contains 100 values, which is not reshape-able into 125
+    shape = Shape(5, 5, 5)
+    expected_error = (
+        r"Error trying to read FIELD (.*?). This might be due to "
+        r"a mismatch between the dimensions of the grids and fields used with "
+        r"the GRID and FIELD keywords in the configuration. "
+        r"\(could not reshape array of size 100 into shape of size 125 "
+        r"\(product of dimensions: x=5 y=5 z=5\)\)"
+    )
+    with pytest.raises(ValueError, match=expected_error):
+        read_field(field_path, field_name, mask, shape)

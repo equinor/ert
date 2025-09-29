@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, NamedTuple, TypeAlias
 
@@ -125,10 +126,21 @@ def read_field(
                 f'Could not read {field_path}. Unrecognized suffix "{ext}"'
             )
     except ValueError as err:
+        err_msg = str(err)
+        numpy_reshape_expressions = (
+            r"cannot reshape array of size (\d+) into shape \((\d+),(\d+),(\d+)\)"
+        )
+        if match := re.match(numpy_reshape_expressions, str(err)):
+            array_size, x, y, z = tuple(map(int, match.groups()))
+            err_msg = (
+                f"could not reshape array of size {array_size} into shape "
+                f"of size {x * y * z} (product of dimensions: {x=} {y=} {z=})"
+            )
+
         msg = (
             f"Error trying to read FIELD {field_path}. This might be due to "
             "a mismatch between the dimensions of the grids and fields used with "
-            f"the GRID and FIELD keywords in the configuration. ({err})"
+            f"the GRID and FIELD keywords in the configuration. ({err_msg})"
         )
         raise ValueError(msg) from err
 
