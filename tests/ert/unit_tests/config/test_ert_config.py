@@ -1212,7 +1212,7 @@ def test_that_define_statements_with_less_than_one_argument_raises_error():
         )
 
 
-def test_that_define_statements_with_more_than_one_argument():
+def test_that_define_statements_with_more_than_one_argument_are_concatenated():
     ert_config = ErtConfig.from_file_contents(
         dedent(
             """
