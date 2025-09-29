@@ -6,7 +6,7 @@ from collections.abc import Generator
 from datetime import datetime
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Any, Literal
+from typing import TYPE_CHECKING, Annotated, Any, Literal, Self
 from uuid import UUID
 
 import polars as pl
@@ -76,11 +76,9 @@ class DictEncodedObservations(BaseModel):
     datatypes: dict[str, str]
 
     @classmethod
-    def from_polars(self, data: pl.DataFrame) -> DictEncodedObservations:
+    def from_polars(cls, data: pl.DataFrame) -> Self:
         str_schema = {k: str(dtype) for k, dtype in data.schema.items()}
-        return DictEncodedObservations(
-            type="dicts", data=data.to_dicts(), datatypes=str_schema
-        )
+        return cls(type="dicts", data=data.to_dicts(), datatypes=str_schema)
 
     def to_polars(self) -> pl.DataFrame:
         return pl.from_dicts(
