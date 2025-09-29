@@ -12,10 +12,10 @@ from ert.summary_key_type import history_key
 from ert.validation import rangestring_to_list
 
 from ._observations import (
-    DateObservation,
     GeneralObservation,
     HistoryObservation,
     Observation,
+    ObservationDate,
     ObservationError,
     SummaryObservation,
 )
@@ -195,7 +195,7 @@ def _handle_history_observation(
 
 
 def _get_time(
-    date_dict: DateObservation, start_time: datetime, context: Any = None
+    date_dict: ObservationDate, start_time: datetime, context: Any = None
 ) -> tuple[datetime, str]:
     if date_dict.date is not None:
         return _parse_date(date_dict.date), f"DATE={date_dict.date}"
@@ -246,7 +246,7 @@ def _find_nearest(
 
 
 def _get_restart(
-    date_dict: DateObservation,
+    date_dict: ObservationDate,
     obs_name: str,
     time_map: list[datetime],
     has_refcase: bool,

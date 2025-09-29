@@ -37,7 +37,7 @@ class HistoryObservation(ObservationError):
 
 
 @dataclass
-class DateObservation:
+class ObservationDate:
     days: float | None = None
     hours: float | None = None
     date: str | None = None
@@ -52,7 +52,7 @@ class _SummaryValues:
 
 
 @dataclass
-class SummaryObservation(DateObservation, ObservationError, _SummaryValues):
+class SummaryObservation(ObservationDate, ObservationError, _SummaryValues):
     pass
 
 
@@ -68,7 +68,7 @@ class _GeneralObservation:
 
 
 @dataclass
-class GeneralObservation(DateObservation, _GeneralObservation):
+class GeneralObservation(ObservationDate, _GeneralObservation):
     pass
 
 
@@ -156,7 +156,7 @@ def _validate_summary_values(observation_dict: ObservationDict) -> SummaryObserv
     error_mode: ErrorModes = "ABS"
     summary_key = None
 
-    date_dict: DateObservation = DateObservation()
+    date_dict: ObservationDate = ObservationDate()
     float_values: dict[str, float] = {"ERROR_MIN": 0.1}
     for key, value in observation_dict.items():
         match key:
