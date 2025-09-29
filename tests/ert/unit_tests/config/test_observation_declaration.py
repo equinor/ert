@@ -6,12 +6,12 @@ import hypothesis.extra.lark as stlark
 import pytest
 from hypothesis import given
 
-from ert.config._observation_declaration import (
-    GenObsDeclaration,
-    HistoryDeclaration,
+from ert.config._observations import (
+    GeneralObservation,
+    HistoryObservation,
     Segment,
-    SummaryDeclaration,
-    make_observation_declarations,
+    SummaryObservation,
+    make_observations,
 )
 from ert.config.parsing import parse_observations
 from ert.config.parsing.observations_parser import (
@@ -23,8 +23,8 @@ from ert.config.parsing.observations_parser import (
 observation_contents = stlark.from_lark(observations_parser)
 
 
-def parse_observation_declarations(contents, filename):
-    return make_observation_declarations(
+def make_and_parse_observations(contents, filename):
+    return make_observations(
         os.path.dirname(filename), parse_observations(contents, filename)
     )
 
@@ -33,14 +33,14 @@ def parse_observation_declarations(contents, filename):
 @given(observation_contents)
 def test_parsing_contents_succeeds_or_gives_config_error(contents):
     with suppress(ObservationConfigError):
-        _ = parse_observation_declarations(contents, "observations.txt")
+        _ = make_and_parse_observations(contents, "observations.txt")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_make_observation_declarations():
+def test_make_observations():
     Path("wpr_diff_idx.txt").write_text("", encoding="utf8")
     Path("wpr_diff_obs.txt").write_text("", encoding="utf8")
-    assert make_observation_declarations(
+    assert make_observations(
         "",
         [
             ({"type": ObservationType.HISTORY, "name": "FOPR"}),
@@ -76,7 +76,7 @@ def test_make_observation_declarations():
             },
         ],
     ) == [
-        HistoryDeclaration(
+        HistoryObservation(
             name="FOPR",
             key="FOPR",
             error_mode="RELMIN",
@@ -84,7 +84,7 @@ def test_make_observation_declarations():
             error_min=0.1,
             segments=[],
         ),
-        SummaryDeclaration(
+        SummaryObservation(
             name="WOPR_OP1_9",
             error_mode="ABS",
             error=0.05,
@@ -93,21 +93,21 @@ def test_make_observation_declarations():
             value=0.1,
             date="2010-03-31",
         ),
-        GenObsDeclaration(
+        GeneralObservation(
             name="WPR_DIFF_1",
             data="SNAKE_OIL_WPR_DIFF",
             index_list="400,800,1200,1800",
             date="2015-06-13",
             obs_file="wpr_diff_obs.txt",
         ),
-        GenObsDeclaration(
+        GeneralObservation(
             name="WPR_DIFF_2",
             data="SNAKE_OIL_WPR_DIFF",
             index_file="wpr_diff_idx.txt",
             date="2015-06-13",
             obs_file="wpr_diff_obs.txt",
         ),
-        HistoryDeclaration(
+        HistoryObservation(
             name="FWPR",
             key="FWPR",
             error_mode="RELMIN",
@@ -128,7 +128,7 @@ def test_make_observation_declarations():
 
 
 def test_that_multiple_segments_are_collected():
-    observations = parse_observation_declarations(
+    observations = make_and_parse_observations(
         """
   HISTORY_OBSERVATION GWIR:FIELD
   {

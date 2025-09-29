@@ -11,13 +11,13 @@ import polars as pl
 from ert.summary_key_type import history_key
 from ert.validation import rangestring_to_list
 
-from ._observation_declaration import (
-    DateValues,
-    Declaration,
-    ErrorValues,
-    GenObsDeclaration,
-    HistoryDeclaration,
-    SummaryDeclaration,
+from ._observations import (
+    GeneralObservation,
+    HistoryObservation,
+    Observation,
+    ObservationDate,
+    ObservationError,
+    SummaryObservation,
 )
 from .ensemble_config import EnsembleConfig
 from .gen_data_config import GenDataConfig
@@ -35,13 +35,13 @@ if TYPE_CHECKING:
 DEFAULT_TIME_DELTA = timedelta(seconds=30)
 
 
-def create_observations(
-    observation_declarations: Sequence[Declaration],
+def create_observation_dataframes(
+    observations: Sequence[Observation],
     ensemble_config: EnsembleConfig,
     time_map: list[datetime] | None,
     history: HistorySource,
 ) -> dict[str, pl.DataFrame]:
-    if not observation_declarations:
+    if not observations:
         return {}
     obs_time_list: list[datetime] = []
     if ensemble_config.refcase is not None:
@@ -52,34 +52,34 @@ def create_observations(
     time_len = len(obs_time_list)
     config_errors: list[ErrorInfo] = []
     grouped: dict[str, list[pl.DataFrame]] = defaultdict(list)
-    for declaration in observation_declarations:
-        obs_name = declaration.name
+    for obs in observations:
+        obs_name = obs.name
         try:
-            match declaration:
-                case HistoryDeclaration():
+            match obs:
+                case HistoryObservation():
                     grouped["summary"].append(
                         _handle_history_observation(
                             ensemble_config,
-                            declaration,
+                            obs,
                             obs_name,
                             history,
                             time_len,
                         )
                     )
-                case SummaryDeclaration():
+                case SummaryObservation():
                     grouped["summary"].append(
                         _handle_summary_observation(
-                            declaration,
+                            obs,
                             obs_name,
                             obs_time_list,
                             bool(ensemble_config.refcase),
                         )
                     )
-                case GenObsDeclaration():
+                case GeneralObservation():
                     grouped["gen_data"].append(
                         _handle_general_observation(
                             ensemble_config,
-                            declaration,
+                            obs,
                             obs_name,
                             obs_time_list,
                             bool(ensemble_config.refcase),
@@ -106,7 +106,7 @@ def create_observations(
 
 def _handle_error_mode(
     values: npt.ArrayLike,
-    error_dict: ErrorValues,
+    error_dict: ObservationError,
 ) -> npt.NDArray[np.double]:
     values = np.asarray(values)
     error_mode = error_dict.error_mode
@@ -123,7 +123,7 @@ def _handle_error_mode(
 
 def _handle_history_observation(
     ensemble_config: EnsembleConfig,
-    history_observation: HistoryDeclaration,
+    history_observation: HistoryObservation,
     summary_key: str,
     history_type: HistorySource,
     time_len: int,
@@ -195,7 +195,7 @@ def _handle_history_observation(
 
 
 def _get_time(
-    date_dict: DateValues, start_time: datetime, context: Any = None
+    date_dict: ObservationDate, start_time: datetime, context: Any = None
 ) -> tuple[datetime, str]:
     if date_dict.date is not None:
         return _parse_date(date_dict.date), f"DATE={date_dict.date}"
@@ -246,7 +246,7 @@ def _find_nearest(
 
 
 def _get_restart(
-    date_dict: DateValues,
+    date_dict: ObservationDate,
     obs_name: str,
     time_map: list[datetime],
     has_refcase: bool,
@@ -282,7 +282,7 @@ def _get_restart(
 
 
 def _handle_summary_observation(
-    summary_dict: SummaryDeclaration,
+    summary_dict: SummaryObservation,
     obs_key: str,
     time_map: list[datetime],
     has_refcase: bool,
@@ -331,7 +331,7 @@ def _handle_summary_observation(
 
 def _handle_general_observation(
     ensemble_config: EnsembleConfig,
-    general_observation: GenObsDeclaration,
+    general_observation: GeneralObservation,
     obs_key: str,
     time_map: list[datetime],
     has_refcase: bool,
