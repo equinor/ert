@@ -20,13 +20,13 @@ from pydantic import ValidationError as PydanticValidationError
 
 from ert.substitutions import Substitutions
 
-from ._create_observations import create_observations
+from ._create_observation_dataframes import create_observation_dataframes
 from ._design_matrix_validator import DesignMatrixValidator
-from ._observation_declaration import (
-    Declaration,
-    HistoryDeclaration,
-    SummaryDeclaration,
-    make_observation_declarations,
+from ._observations import (
+    HistoryObservation,
+    Observation,
+    SummaryObservation,
+    make_observations,
 )
 from .analysis_config import AnalysisConfig
 from .ensemble_config import EnsembleConfig
@@ -709,7 +709,7 @@ class ErtConfig(BaseModel):
     runpath_config: ModelConfig = Field(default_factory=ModelConfig)
     user_config_file: str = "no_config"
     config_path: str = Field(init=False, default="")
-    observation_declarations: list[Declaration] = Field(default_factory=list)
+    observation_declarations: list[Observation] = Field(default_factory=list)
     time_map: list[datetime] | None = None
     history_source: HistorySource = HistorySource.REFCASE_HISTORY
     _observations: dict[str, pl.DataFrame] | None = PrivateAttr(None)
@@ -717,7 +717,7 @@ class ErtConfig(BaseModel):
     @property
     def observations(self) -> dict[str, pl.DataFrame]:
         if self._observations is None:
-            computed = create_observations(
+            computed = create_observation_dataframes(
                 self.observation_declarations,
                 self.ensemble_config,
                 self.time_map,
@@ -941,12 +941,12 @@ class ErtConfig(BaseModel):
             errors.append(err)
 
         obs_config_args = config_dict.get(ConfigKeys.OBS_CONFIG)
-        obs_configs: list[Declaration] = []
+        obs_configs: list[Observation] = []
         try:
             if obs_config_args:
                 obs_config_file, obs_config_input = obs_config_args
                 log_observation_keys(obs_config_input)
-                obs_configs = make_observation_declarations(
+                obs_configs = make_observations(
                     os.path.dirname(obs_config_file),
                     obs_config_input,
                 )
@@ -963,7 +963,7 @@ class ErtConfig(BaseModel):
                 summary_obs = {
                     obs.key
                     for obs in obs_configs
-                    if isinstance(obs, HistoryDeclaration | SummaryDeclaration)
+                    if isinstance(obs, HistoryObservation | SummaryObservation)
                 }
                 if summary_obs:
                     summary_keys = ErtConfig._read_summary_keys(config_dict)
@@ -1065,10 +1065,10 @@ class ErtConfig(BaseModel):
                 history_source=history_source,
             )
 
-            # The observations are created here because create_observations
+            # The observations are created here because create_observation_dataframes
             # will perform additonal validation which needs the context in
             # obs_configs which is stripped by pydantic
-            cls_config._observations = create_observations(
+            cls_config._observations = create_observation_dataframes(
                 obs_configs,
                 ensemble_config,
                 time_map,

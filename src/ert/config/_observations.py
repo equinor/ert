@@ -3,10 +3,7 @@ from collections import Counter
 from collections.abc import Sequence
 from dataclasses import dataclass
 from itertools import starmap
-from typing import (
-    Any,
-    Literal,
-)
+from typing import Any, Literal
 
 from .parsing import (
     ErrorInfo,
@@ -19,28 +16,28 @@ ErrorModes = Literal["REL", "ABS", "RELMIN"]
 
 
 @dataclass
-class ErrorValues:
+class ObservationError:
     error_mode: ErrorModes
     error: float
     error_min: float
 
 
 @dataclass
-class Segment(ErrorValues):
+class Segment(ObservationError):
     name: str
     start: int
     stop: int
 
 
 @dataclass
-class HistoryDeclaration(ErrorValues):
+class HistoryObservation(ObservationError):
     name: str
     key: str
     segments: list[Segment]
 
 
 @dataclass
-class DateValues:
+class DateObservation:
     days: float | None = None
     hours: float | None = None
     date: str | None = None
@@ -55,12 +52,12 @@ class _SummaryValues:
 
 
 @dataclass
-class SummaryDeclaration(DateValues, ErrorValues, _SummaryValues):
+class SummaryObservation(DateObservation, ObservationError, _SummaryValues):
     pass
 
 
 @dataclass
-class _GenObsValues:
+class _GeneralObservation:
     name: str
     data: str
     value: float | None = None
@@ -71,24 +68,24 @@ class _GenObsValues:
 
 
 @dataclass
-class GenObsDeclaration(DateValues, _GenObsValues):
+class GeneralObservation(DateObservation, _GeneralObservation):
     pass
 
 
-Declaration = HistoryDeclaration | SummaryDeclaration | GenObsDeclaration
+Observation = HistoryObservation | SummaryObservation | GeneralObservation
 
 
-def make_observation_declarations(
+def make_observations(
     directory: str, observation_dicts: Sequence[ObservationDict]
-) -> list[Declaration]:
-    """Takes observation statements and returns validated observation declarations.
+) -> list[Observation]:
+    """Takes observation dicts and returns validated observations.
 
     Param:
         directory: The name of the directory the observation config is located in.
             Used to disambiguate relative paths.
         inp: The collection of statements to validate.
     """
-    result: list[Declaration] = []
+    result: list[Observation] = []
     error_list: list[ErrorInfo] = []
     for obs_dict in observation_dicts:
         try:
@@ -99,7 +96,7 @@ def make_observation_declarations(
             elif obs_dict["type"] == ObservationType.GENERAL:
                 result.append(_validate_gen_obs_values(directory, obs_dict))
             else:
-                raise _unknown_declaration_error(obs_dict)
+                raise _unknown_observation_type_error(obs_dict)
         except ObservationConfigError as err:
             error_list.extend(err.errors)
 
@@ -111,9 +108,9 @@ def make_observation_declarations(
 
 
 def _validate_unique_names(
-    declarations: Sequence[Declaration],
+    observations: Sequence[Observation],
 ) -> None:
-    names_counter = Counter(d.name for d in declarations)
+    names_counter = Counter(d.name for d in observations)
     duplicate_names = [n for n, c in names_counter.items() if c > 1]
     errors = [
         ErrorInfo(
@@ -125,7 +122,7 @@ def _validate_unique_names(
         raise ObservationConfigError.from_collected(errors)
 
 
-def _validate_history_values(observation_dict: ObservationDict) -> HistoryDeclaration:
+def _validate_history_values(observation_dict: ObservationDict) -> HistoryObservation:
     error_mode: ErrorModes = "RELMIN"
     error = 0.1
     error_min = 0.1
@@ -145,7 +142,7 @@ def _validate_history_values(observation_dict: ObservationDict) -> HistoryDeclar
             case _:
                 raise _unknown_key_error(str(key), observation_dict["name"])
 
-    return HistoryDeclaration(
+    return HistoryObservation(
         name=observation_dict["name"],
         key=observation_dict["name"],
         error_mode=error_mode,
@@ -155,11 +152,11 @@ def _validate_history_values(observation_dict: ObservationDict) -> HistoryDeclar
     )
 
 
-def _validate_summary_values(observation_dict: ObservationDict) -> SummaryDeclaration:
+def _validate_summary_values(observation_dict: ObservationDict) -> SummaryObservation:
     error_mode: ErrorModes = "ABS"
     summary_key = None
 
-    date_dict: DateValues = DateValues()
+    date_dict: DateObservation = DateObservation()
     float_values: dict[str, float] = {"ERROR_MIN": 0.1}
     for key, value in observation_dict.items():
         match key:
@@ -190,7 +187,7 @@ def _validate_summary_values(observation_dict: ObservationDict) -> SummaryDeclar
     if "ERROR" not in float_values:
         raise _missing_value_error(observation_dict["name"], "ERROR")
 
-    return SummaryDeclaration(
+    return SummaryObservation(
         name=observation_dict["name"],
         error_mode=error_mode,
         error=float_values["ERROR"],
@@ -238,13 +235,13 @@ def _validate_segment_dict(name_token: str, inp: dict[str, Any]) -> Segment:
 
 def _validate_gen_obs_values(
     directory: str, observation_dict: ObservationDict
-) -> GenObsDeclaration:
+) -> GeneralObservation:
     try:
         data = observation_dict["DATA"]
     except KeyError as err:
         raise _missing_value_error(observation_dict["name"], "DATA") from err
 
-    output: GenObsDeclaration = GenObsDeclaration(
+    output: GeneralObservation = GeneralObservation(
         name=observation_dict["name"], data=data
     )
     for key, value in observation_dict.items():
@@ -352,9 +349,7 @@ def _unknown_key_error(key: str, name: str) -> ObservationConfigError:
     raise ObservationConfigError.with_context(f"Unknown {key} in {name}", key)
 
 
-def _unknown_declaration_error(
-    decl: ObservationDict,
-) -> ObservationConfigError:
+def _unknown_observation_type_error(obs: ObservationDict) -> ObservationConfigError:
     return ObservationConfigError.with_context(
-        f"Unexpected declaration in observations {decl}", decl["name"]
+        f"Unexpected type in observations {obs}", obs["name"]
     )
