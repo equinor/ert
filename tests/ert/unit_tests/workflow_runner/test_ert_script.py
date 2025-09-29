@@ -1,3 +1,5 @@
+import sys
+
 import pytest
 
 from ert import ErtScript
@@ -66,3 +68,13 @@ def test_empty_ert_script_raises_value_error():
 
     with pytest.raises(ValueError, match="does not contain an ErtScript"):
         _ = ErtScript.loadScriptFromFile("empty_script.py")
+
+
+def test_that_exits_in_ert_script_is_trapped():
+    class FailingScript(ErtScript):
+        def run(self, *arg):
+            sys.exit(-1)
+
+    failing = FailingScript()
+    failing.initializeAndRun([], [])
+    assert failing.hasFailed()
