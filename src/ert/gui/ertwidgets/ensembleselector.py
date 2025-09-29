@@ -30,6 +30,7 @@ class EnsembleSelector(QComboBox):
         update_ert: bool = True,
         show_only_undefined: bool = False,
         show_only_no_children: bool = False,
+        show_only_with_response_data: bool = False,
     ) -> None:
         super().__init__()
         self.notifier = notifier
@@ -44,6 +45,7 @@ class EnsembleSelector(QComboBox):
         # if the ensemble has not been used in an update, as that would
         # invalidate the result
         self._show_only_no_children = show_only_no_children
+        self._show_only_with_response_data = show_only_with_response_data
         self.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
 
         self.setEnabled(False)
@@ -123,6 +125,10 @@ class EnsembleSelector(QComboBox):
                 ens.parent for ens in self.notifier.storage.ensembles if ens.parent
             ]
             ensemble_list = [val for val in ensemble_list if val.id not in parents]
+        if self._show_only_with_response_data:
+            ensemble_list = [
+                ensemble for ensemble in ensemble_list if ensemble.has_data()
+            ]
         return self.sort_ensembles(ensemble_list)
 
     @classmethod
