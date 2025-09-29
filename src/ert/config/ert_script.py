@@ -159,7 +159,7 @@ class ErtScript:
         except UserWarning as uw:
             self.__failed = True
             return uw.args[0]
-        except Exception as e:
+        except BaseException as e:
             full_trace = "".join(traceback.format_exception(*sys.exc_info()))
             self.output_stack_trace(f"{e!s}\n{full_trace}")
             return None
