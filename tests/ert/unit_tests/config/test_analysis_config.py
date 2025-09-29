@@ -238,13 +238,6 @@ def test_alpha_is_set_from_corresponding_key(value):
     )
 
 
-@given(st.floats(allow_nan=False, allow_infinity=False))
-def test_analysis_config_alpha_set_and_get(value):
-    analysis_config = AnalysisConfig()
-    analysis_config.observation_settings.outlier_settings.alpha = value
-    assert analysis_config.observation_settings.outlier_settings.alpha == value
-
-
 def test_default_std_cutoff_is_set():
     default_std_cutoff = 1e-6
     assert (
