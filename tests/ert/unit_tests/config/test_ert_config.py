@@ -1226,7 +1226,7 @@ def test_that_define_statements_with_more_than_one_argument_are_concatenated():
     assert ert_config.substitutions.get("<TEST2>") == "111 222 333 444 555"
 
 
-def test_that_define_statements_works_with_empty_string():
+def test_that_define_can_set_substitutions_to_the_empty_string():
     ert_config = ErtConfig.from_file_contents(
         dedent(
             """
