@@ -292,7 +292,7 @@ class LocalEnsemble(BaseMode):
             True if the ensemble has at least one realization with responses,
             False otherwise.
         """
-        return any(self.get_realization_list_with_responses())
+        return len(self.get_realization_list_with_responses()) > 0
 
     def get_realization_list_with_responses(self) -> list[int]:
         """

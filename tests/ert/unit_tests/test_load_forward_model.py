@@ -345,3 +345,34 @@ def test_loading_from_any_available_iter(storage, run_args, itr):
     df = prior_ensemble.load_responses("RESPONSE", (0,))
     df_no_nans = df.filter(pl.col("values").is_not_nan())
     assert df_no_nans["values"].to_list() == [1.0, 3.0]
+
+
+@pytest.mark.usefixtures("copy_snake_oil_case_storage")
+@pytest.mark.integration_test
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
+def test_that_ensemble_has_data_returns_true_with_only_realization_id_0():
+    """
+    When creating a new ensemble with one realization, has_data should return True
+    even though the id is falsy (0)
+    """
+    config = ErtConfig.from_file("snake_oil.ert")
+    storage = open_storage(config.ens_path, mode="w")
+    experiment = storage.get_experiment_by_name("ensemble-experiment")
+    ensemble = experiment.get_ensemble_by_name("default_0")
+    ensemble_size = 1
+
+    new_ensemble = storage.create_ensemble(
+        experiment=ensemble.experiment, ensemble_size=ensemble_size
+    )
+    load_parameters_and_responses_from_runpath(
+        config.runpath_config.runpath_format_string,
+        new_ensemble,
+        list(range(ensemble_size)),
+    )
+
+    assert all(
+        RealizationStorageState.PARAMETERS_LOADED not in state
+        for state in new_ensemble.get_ensemble_state()
+    )
+
+    assert new_ensemble.has_data()
