@@ -28,7 +28,7 @@ def test_parse_config(input_config, expected):
     assert parse_variable_options(*input_config) == expected
 
 
-def test_positional_after_named():
+def test_that_positional_arguments_must_come_before_named_arguments():
     with pytest.raises(ValueError, match="Invalid argument 'positional'"):
         parse_variable_options(
             [
