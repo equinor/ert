@@ -813,6 +813,8 @@ class RunModel(BaseModelWithContextSupport, ABC):
             f"Experiment run ended with number of realizations failing: "
             f"{len(starting_realizations) - num_successful_realizations}"
         )
+        if len(starting_realizations) - num_successful_realizations < 0:
+            1 / 0
         logger.info(f"Experiment run finished in: {self.get_runtime()}s")
         self.run_workflows(
             fixtures=PostSimulationFixtures(
