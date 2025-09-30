@@ -25,7 +25,6 @@ from ert.plugins import ErtPluginContext
 from ert.plugins.plugin_manager import ErtPluginManager
 from everest.config import EverestConfig
 from everest.config.forward_model_config import SummaryResults
-from everest.config.install_data_config import InstallDataConfig
 from everest.config.install_job_config import InstallJobConfig
 from everest.config.simulator_config import SimulatorConfig
 from everest.strings import EVEREST, STORAGE_DIR
@@ -159,40 +158,15 @@ def _extract_workflows(
     res_workflows = ert_config.get(ErtConfigKeys.LOAD_WORKFLOW, [])
     res_hooks = ert_config.get(ErtConfigKeys.HOOK_WORKFLOW, [])
 
-    for ever_trigger, res_trigger in trigger2res.items():
-        jobs = getattr(ever_config.workflows, ever_trigger, [])
+    for ever_trigger, (workflow_file, jobs) in _get_workflow_files(ever_config).items():
         if jobs:
-            name = os.path.join(path, f".{ever_trigger}.workflow")
-            with open(name, "w", encoding="utf-8") as fp:
-                fp.writelines(jobs)
-            res_workflows.append((name, ever_trigger))
+            res_trigger = trigger2res[ever_trigger]
+            res_workflows.append((str(workflow_file), ever_trigger))
             res_hooks.append((ever_trigger, res_trigger))
 
     if res_workflows:
         ert_config[ErtConfigKeys.LOAD_WORKFLOW] = res_workflows
         ert_config[ErtConfigKeys.HOOK_WORKFLOW] = res_hooks
-
-
-def _internal_data_files(ever_config: EverestConfig) -> tuple[str]:
-    assert ever_config.output_dir is not None
-    data_storage = os.path.join(ever_config.output_dir, ".internal_data")
-    data_storage = os.path.realpath(data_storage)
-    logging.getLogger(EVEREST).debug(f"Storing internal data in {data_storage}")
-
-    if not os.path.isdir(data_storage):
-        os.makedirs(data_storage)
-
-    well_datafile = os.path.join(data_storage, "wells.json")
-    with open(well_datafile, "w", encoding="utf-8") as fout:
-        json.dump(
-            [
-                x.model_dump(exclude_none=True, exclude_unset=True)
-                for x in ever_config.wells or []
-            ],
-            fout,
-        )
-
-    return (well_datafile,)
 
 
 def _expand_source_path(source: str, ever_config: EverestConfig) -> str:
@@ -243,13 +217,8 @@ def _extract_data_operations(ever_config: EverestConfig) -> list[str]:
     copy_file_fmt = "copy_file {source} {target}"
 
     forward_model = []
-    install_data = ever_config.install_data or []
-    install_data += [
-        InstallDataConfig(source=datafile, target=os.path.basename(datafile))
-        for datafile in _internal_data_files(ever_config)
-    ]
 
-    for data_req in install_data:
+    for data_req in ever_config.install_data or []:
         target = data_req.target
 
         source = _expand_source_path(data_req.source, ever_config)
@@ -262,13 +231,18 @@ def _extract_data_operations(ever_config: EverestConfig) -> list[str]:
         else:
             forward_model.append(copy_file_fmt.format(source=source, target=target))
 
+    well_path, _ = _get_well_file(ever_config)
+    forward_model.append(
+        copy_file_fmt.format(source=str(well_path), target=well_path.name)
+    )
+
     return forward_model
 
 
 def _extract_templating(ever_config: EverestConfig) -> list[str]:
     res_input = [control.name for control in ever_config.controls]
     res_input = [fn + ".json" for fn in res_input]
-    res_input += _internal_data_files(ever_config)
+    res_input.append(str(_get_well_file(ever_config)[0]))
 
     forward_model = []
     install_templates = ever_config.install_templates or []
@@ -507,3 +481,41 @@ def everest_to_ert_config_dict(everest_config: EverestConfig) -> ConfigDict:
     with ErtPluginContext():
         config_dict = _everest_to_ert_config_dict(everest_config)
     return config_dict
+
+
+def _get_well_file(ever_config: EverestConfig) -> tuple[Path, str]:
+    assert ever_config.output_dir is not None
+    data_storage = (Path(ever_config.output_dir) / ".internal_data").resolve()
+    return (
+        data_storage / "wells.json",
+        json.dumps(
+            [
+                x.model_dump(exclude_none=True, exclude_unset=True)
+                for x in ever_config.wells or []
+            ]
+        ),
+    )
+
+
+def _get_workflow_files(ever_config: EverestConfig) -> dict[str, tuple[Path, str]]:
+    data_storage = (Path(ever_config.output_dir) / ".internal_data").resolve()
+    return {
+        trigger: (
+            data_storage / f"{trigger}.workflow",
+            "\n".join(getattr(ever_config.workflows, trigger, [])),
+        )
+        for trigger in ("pre_simulation", "post_simulation")
+    }
+
+
+def get_internal_files(ever_config: EverestConfig) -> dict[Path, str]:
+    return dict(
+        [
+            _get_well_file(ever_config),
+            *(
+                (workflow_file, jobs)
+                for workflow_file, jobs in _get_workflow_files(ever_config).values()
+                if jobs
+            ),
+        ],
+    )
