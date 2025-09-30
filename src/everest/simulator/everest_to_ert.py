@@ -69,15 +69,9 @@ def extract_summary_keys(ever_config: EverestConfig) -> list[str]:
 def _extract_environment(
     ever_config: EverestConfig, ert_config: dict[str, Any]
 ) -> None:
-    simulation_fmt = os.path.join("batch_<ITER>", "realization_<GEO_ID>", "<SIM_DIR>")
-
-    simulation_path = os.path.join(ever_config.simulation_dir, simulation_fmt)
-    # load log configuration data
-
     default_runpath_file = os.path.join(ever_config.output_dir, ".res_runpath_list")
     default_ens_path = os.path.join(ever_config.output_dir, STORAGE_DIR)
 
-    ert_config[ErtConfigKeys.RUNPATH] = simulation_path
     ert_config[ErtConfigKeys.ENSPATH] = default_ens_path
     ert_config[ErtConfigKeys.RUNPATH_FILE] = default_runpath_file
 
@@ -294,28 +288,6 @@ def _extract_forward_model(
     ert_config[ErtConfigKeys.FORWARD_MODEL] = fm_steps
 
 
-def _extract_model(ever_config: EverestConfig, ert_config: dict[str, Any]) -> None:
-    summary_fms = [
-        fm
-        for fm in ever_config.forward_model
-        if fm.results is not None and fm.results.type == "summary"
-    ]
-
-    if summary_fms:
-        summary_fm = summary_fms[0]
-        assert summary_fm.results is not None
-
-        ert_config[ErtConfigKeys.ECLBASE] = summary_fm.results.file_name
-
-    if ErtConfigKeys.NUM_REALIZATIONS not in ert_config:
-        if ever_config.model.realizations is not None:
-            ert_config[ErtConfigKeys.NUM_REALIZATIONS] = len(
-                ever_config.model.realizations
-            )
-        else:
-            ert_config[ErtConfigKeys.NUM_REALIZATIONS] = 1
-
-
 def _extract_seed(ever_config: EverestConfig, ert_config: dict[str, Any]) -> None:
     random_seed = ever_config.environment.random_seed
 
@@ -440,7 +412,6 @@ def _everest_to_ert_config_dict(ever_config: EverestConfig) -> ConfigDict:
     _extract_jobs(ever_config, ert_config, config_dir)
     _extract_workflow_jobs(ever_config, ert_config, config_dir)
     _extract_workflows(ever_config, ert_config, config_dir)
-    _extract_model(ever_config, ert_config)
     _extract_seed(ever_config, ert_config)
 
     return ert_config

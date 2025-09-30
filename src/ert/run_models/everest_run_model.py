@@ -40,6 +40,9 @@ from ert.config.ert_config import (
     read_templates,
     workflow_jobs_from_dict,
 )
+from ert.config.model_config import (
+    DEFAULT_ECLBASE_FORMAT,
+)
 from ert.config.model_config import ModelConfig as ErtModelConfig
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.plugins import ErtRuntimePlugins
@@ -198,18 +201,14 @@ class EverestRunModel(RunModel):
         assert everest_config.config_file is not None
         config_file: Path = Path(everest_config.config_path)
 
-        runpath_config = ErtModelConfig.from_dict(config_dict)
-
-        queue_config = QueueConfig.from_dict(
-            config_dict,
-            site_queue_options=runtime_plugins.queue_options
-            if runtime_plugins
-            else None,
+        summary_fm = next(
+            (
+                fm
+                for fm in everest_config.forward_model
+                if fm.results is not None and isinstance(fm.results, SummaryResults)
+            ),
+            None,
         )
-        assert everest_config.simulator is not None
-        assert everest_config.simulator.queue_system is not None
-        queue_config.queue_options = everest_config.simulator.queue_system
-        queue_config.queue_system = everest_config.simulator.queue_system.name
 
         parameter_configs = [
             control.to_ert_parameter_config() for control in everest_config.controls
@@ -247,23 +246,42 @@ class EverestRunModel(RunModel):
                 )
             )
 
-        summary_fm = next(
-            (
-                fm
-                for fm in everest_config.forward_model
-                if fm.results is not None and fm.results.type == "summary"
-            ),
-            None,
-        )
-
         if summary_fm:
             assert isinstance(summary_fm.results, SummaryResults)
-            summary_keys = extract_summary_keys(everest_config)
+            eclbase = summary_fm.results.file_name
             response_configs.append(
                 SummaryConfig(
-                    keys=summary_keys, input_files=[summary_fm.results.file_name]
+                    keys=extract_summary_keys(everest_config), input_files=[eclbase]
                 )
             )
+        else:
+            eclbase = None
+
+        runpath_config = ErtModelConfig(
+            num_realizations=len(everest_config.model.realizations)
+            if everest_config.model.realizations is not None
+            else 1,
+            runpath_format_string=str(
+                Path(everest_config.simulation_dir)
+                / "batch_<ITER>"
+                / "realization_<GEO_ID>"
+                / "<SIM_DIR>"
+            ),
+            eclbase_format_string=eclbase
+            if eclbase is not None
+            else DEFAULT_ECLBASE_FORMAT,
+        )
+
+        queue_config = QueueConfig.from_dict(
+            config_dict,
+            site_queue_options=runtime_plugins.queue_options
+            if runtime_plugins
+            else None,
+        )
+        assert everest_config.simulator is not None
+        assert everest_config.simulator.queue_system is not None
+        queue_config.queue_options = everest_config.simulator.queue_system
+        queue_config.queue_system = everest_config.simulator.queue_system.name
 
         substitutions = get_substitutions(
             config_dict,
