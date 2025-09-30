@@ -1,5 +1,5 @@
 import datetime
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import dataclass, field, fields
 from enum import Enum
 
@@ -15,32 +15,39 @@ class Observation(ABC):
     name: str
     error: PositiveFloat
 
-    @property
-    @abstractmethod
-    def class_name(self):
-        pass
 
-    def __str__(self) -> str:
-        result = f"{self.class_name} {self.name}"
-        result += " { "
-        for f in fields(self):
-            if f.name == "name":
-                continue
-            val = getattr(self, f.name)
-            if val is None or val == []:
-                continue
-            if isinstance(val, Enum):
-                result += f"{f.name.upper()} = {val.name}; "
-            elif isinstance(val, float | str | int):
-                result += f"{f.name.upper()} = {val}; "
-            elif isinstance(val, Observation):
-                result += str(val)
-            elif isinstance(val, list):
-                result += f"{' '.join([str(v) for v in val])}"
-            else:
-                raise AssertionError
-        result += " };"
-        return result
+def class_name(o: Observation):
+    if isinstance(o, Segment):
+        return "SEGMENT"
+    if isinstance(o, GeneralObservation):
+        return "GENERAL_OBSERVATION"
+    if isinstance(o, HistoryObservation):
+        return "HISTORY_OBSERVATION"
+    if isinstance(o, SummaryObservation):
+        return "SUMMARY_OBSERVATION"
+
+
+def as_obs_config_content(observation: Observation) -> str:
+    result = f"{class_name(observation)} {observation.name}"
+    result += " { "
+    for f in fields(observation):
+        if f.name == "name":
+            continue
+        val = getattr(observation, f.name)
+        if val is None or val == []:
+            continue
+        if isinstance(val, Enum):
+            result += f"{f.name.upper()} = {val.name}; "
+        elif isinstance(val, float | str | int):
+            result += f"{f.name.upper()} = {val}; "
+        elif isinstance(val, Observation):
+            result += str(val)
+        elif isinstance(val, list):
+            result += f"{' '.join([as_obs_config_content(v) for v in val])}"
+        else:
+            raise AssertionError
+    result += " };"
+    return result
 
 
 @dataclass
@@ -49,22 +56,11 @@ class Segment(Observation):
     stop: int
     error_min: PositiveFloat
 
-    @property
-    def class_name(self):
-        return "SEGMENT"
-
 
 @dataclass
 class HistoryObservation(Observation):
     error_mode: ErrorModes
     segments: list[Segment] = field(default_factory=list)
-
-    @property
-    def class_name(self):
-        return "HISTORY_OBSERVATION"
-
-    def get_date(self, start):
-        return start
 
 
 @dataclass
@@ -78,20 +74,6 @@ class SummaryObservation(Observation):
     restart: int | None = None
     date: str | None = None
 
-    @property
-    def class_name(self):
-        return "SUMMARY_OBSERVATION"
-
-    def get_date(self, start):
-        if self.date is not None:
-            return datetime.datetime.strptime(self.date, "%Y-%m-%d")
-        delta = datetime.timedelta(days=0)
-        if self.days is not None:
-            delta += datetime.timedelta(days=self.days)
-        if self.hours is not None:
-            delta += datetime.timedelta(hours=self.hours)
-        return start + delta
-
 
 @dataclass
 class GeneralObservation(Observation):
@@ -103,20 +85,6 @@ class GeneralObservation(Observation):
     obs_file: str | None = None
     value: float | None = None
     index_list: list[int] | None = None
-
-    def get_date(self, start):
-        if self.date is not None:
-            return datetime.datetime.strptime(self.date, "%Y-%m-%d")
-        delta = datetime.timedelta(0)
-        if self.days is not None:
-            delta += datetime.timedelta(days=self.days)
-        if self.hours is not None:
-            delta += datetime.timedelta(hours=self.hours)
-        return start + delta
-
-    @property
-    def class_name(self):
-        return "GENERAL_OBSERVATION"
 
 
 @st.composite
