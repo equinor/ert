@@ -8,7 +8,7 @@ from pathlib import Path
 
 from ert.services import StorageService
 from everest.config import EverestConfig, ServerConfig
-from everest.detached import ExperimentState, everserver_status
+from everest.detached import ExperimentState
 from everest.everest_storage import EverestStorage
 
 from .utils import (
@@ -69,9 +69,6 @@ def _build_args_parser() -> argparse.ArgumentParser:
 
 def monitor_everest(options: argparse.Namespace) -> None:
     config: EverestConfig = options.config
-    status_path = ServerConfig.get_everserver_status_path(config.output_dir)
-    server_state = everserver_status(status_path)
-
     try:
         with StorageService.session(
             Path(ServerConfig.get_session_dir(config.output_dir)), timeout=1
@@ -81,11 +78,13 @@ def monitor_everest(options: argparse.Namespace) -> None:
             )
             run_detached_monitor(server_context=server_context)
 
-            server_state = everserver_status(status_path)
-            if server_state["status"] == ExperimentState.failed:
-                raise SystemExit(server_state["message"])
-            if server_state["message"] is not None:
-                print(server_state["message"])
+            experiment_status = get_experiment_status(config.storage_dir)
+            if experiment_status and experiment_status.status == ExperimentState.failed:
+                raise SystemExit(experiment_status.message or "Optimization failed")
+            if experiment_status:
+                print(
+                    experiment_status.message or "Optimization completed successfully"
+                )
 
     except TimeoutError:
         experiment_status = get_experiment_status(config.storage_dir)

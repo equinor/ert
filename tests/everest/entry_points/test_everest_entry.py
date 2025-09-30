@@ -1,6 +1,5 @@
 import logging
 import os
-from functools import partial
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -23,6 +22,10 @@ from tests.everest.utils import capture_streams
 CONFIG_FILE_MINIMAL = "config_minimal.yml"
 
 
+def raise_system_error(*args, **kwargs):
+    raise SystemError("Reality was ripped to shreds!")
+
+
 def run_detached_monitor_mock(status=ExperimentState.completed, error=None, **kwargs):
     path = os.path.join(
         os.getcwd(), "everest_output/detached_node_output/.session/status"
@@ -38,14 +41,9 @@ def run_detached_monitor_mock(status=ExperimentState.completed, error=None, **kw
     "ert.services.StorageService.session",
     side_effect=[TimeoutError(), MagicMock()],
 )
-@patch(
-    "everest.bin.everest_script.everserver_status",
-    return_value={"status": ExperimentState.never_run, "message": None},
-)
 @patch("everest.bin.everest_script.start_experiment")
 def test_everest_entry_debug(
     start_experiment_mock,
-    everserver_status_mock,
     session_mock,
     get_server_context_from_conn_info_mock,
     start_server_mock,
@@ -73,7 +71,6 @@ def test_everest_entry_debug(
     start_server_mock.assert_called_once()
     wait_for_server_mock.assert_called_once()
     start_monitor_mock.assert_called_once()
-    everserver_status_mock.assert_called()
     start_experiment_mock.assert_called_once()
     assert session_mock.call_count == 2
     assert get_server_context_from_conn_info_mock.call_count == 2
@@ -93,14 +90,9 @@ def test_everest_entry_debug(
     "ert.services.StorageService.session",
     side_effect=[TimeoutError(), MagicMock()],
 )
-@patch(
-    "everest.bin.everest_script.everserver_status",
-    return_value={"status": ExperimentState.never_run, "message": None},
-)
 @patch("everest.bin.everest_script.start_experiment")
 def test_everest_entry(
     start_experiment_mock,
-    everserver_status_mock,
     session_mock,
     get_server_context_from_conn_info_mock,
     start_server_mock,
@@ -117,7 +109,6 @@ def test_everest_entry(
     start_server_mock.assert_called_once()
     wait_for_server_mock.assert_called_once()
     start_monitor_mock.assert_called_once()
-    everserver_status_mock.assert_called()
     start_experiment_mock.assert_called_once()
     assert session_mock.call_count == 2
     assert get_server_context_from_conn_info_mock.call_count == 2
@@ -126,7 +117,6 @@ def test_everest_entry(
 @patch("everest.bin.everest_script.run_detached_monitor")
 @patch("everest.bin.everest_script.wait_for_server")
 @patch("everest.bin.everest_script.start_server")
-@patch("everest.bin.everest_script.everserver_status")
 @patch("everest.bin.everest_script.start_experiment")
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch(
@@ -143,7 +133,6 @@ def test_everest_entry_detached_already_run(
     session_mock,
     get_server_context_from_conn_info_mock,
     start_experiment_mock,
-    everserver_status_mock,
     start_server_mock,
     wait_for_server_mock,
     start_monitor_mock,
@@ -156,54 +145,40 @@ def test_everest_entry_detached_already_run(
     config = EverestConfig.with_defaults(config_path="./config.yml")
     config.dump("config.yml")
 
-    everserver_status_mock.return_value = {
-        "status": ExperimentState.never_run,
-        "message": None,
-    }
-
     # start a new run
     everest_entry(["config.yml", "--skip-prompt"])
     start_server_mock.assert_called_once()
     start_monitor_mock.assert_called_once()
-    everserver_status_mock.assert_called()
     start_experiment_mock.assert_called_once()
     assert session_mock.call_count == 2
 
-    everserver_status_mock.reset_mock()
     start_server_mock.reset_mock()
     start_monitor_mock.reset_mock()
     start_experiment_mock.reset_mock()
 
     # stopping the server has no effect (not running)
     kill_entry(["config.yml"])
-    everserver_status_mock.assert_not_called()
     assert session_mock.call_count == 3
-
-    everserver_status_mock.return_value = {
-        "status": ExperimentState.never_run,
-        "message": None,
-    }
 
     # run again, should start a new run like above
     everest_entry(["config.yml", "--skip-prompt"])
     start_server_mock.assert_called_once()
     start_monitor_mock.assert_called_once()
-    everserver_status_mock.assert_called()
     start_experiment_mock.assert_called_once()
     assert session_mock.call_count == 5
 
 
 @patch("everest.bin.monitor_script.run_detached_monitor")
 @patch(
-    "everest.bin.monitor_script.everserver_status",
-    return_value={"status": ExperimentState.completed, "message": None},
+    "everest.bin.monitor_script.get_experiment_status",
+    return_value=ExperimentStatus(status=ExperimentState.completed, message=""),
 )
 @patch("ert.services.StorageService.session", side_effect=TimeoutError())
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 def test_everest_entry_detached_already_run_monitor(
     get_server_context_from_conn_info_mock,
     session_mock,
-    everserver_status_mock,
+    get_experiment_status_mock,
     start_monitor_mock,
     change_to_tmpdir,
 ):
@@ -216,8 +191,7 @@ def test_everest_entry_detached_already_run_monitor(
     # optimization already run, notify the user
     monitor_entry(["config.yml"])
     start_monitor_mock.assert_not_called()
-    everserver_status_mock.assert_called()
-    everserver_status_mock.reset_mock()
+    get_experiment_status_mock.assert_called()
     get_server_context_from_conn_info_mock.assert_not_called()
     session_mock.assert_called_once()
 
@@ -229,12 +203,7 @@ def test_everest_entry_detached_already_run_monitor(
 @patch("everest.bin.everest_script.start_server")
 @patch("everest.bin.kill_script.stop_server", return_value=True)
 @patch("everest.bin.kill_script.wait_for_server_to_stop")
-@patch(
-    "everest.bin.everest_script.everserver_status",
-    return_value={"status": ExperimentState.completed, "message": None},
-)
 def test_everest_entry_detached_running(
-    everserver_status_mock,
     wait_for_server_to_stop_mock,
     stop_server_mock,
     start_server_mock,
@@ -270,7 +239,6 @@ def test_everest_entry_detached_running(
     session_mock.reset_mock()
     get_server_context_from_conn_info_mock.assert_called_once()
     wait_for_server_mock.assert_not_called()
-    everserver_status_mock.assert_not_called()
 
     # if already running, nothing happens
     assert "everest kill" in out.getvalue()
@@ -281,16 +249,11 @@ def test_everest_entry_detached_running(
 
 
 @patch("everest.bin.monitor_script.run_detached_monitor")
-@patch(
-    "everest.bin.monitor_script.everserver_status",
-    return_value={"status": ExperimentState.completed, "message": None},
-)
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch("ert.services.StorageService.session")
 def test_everest_entry_detached_running_monitor(
     session_mock,
     get_server_context_from_conn_info_mock,
-    everserver_status_mock,
     start_monitor_mock,
     change_to_tmpdir,
 ):
@@ -304,7 +267,6 @@ def test_everest_entry_detached_running_monitor(
     with capture_streams():
         monitor_entry(["config.yml"])
     start_monitor_mock.assert_called_once()
-    everserver_status_mock.assert_called()
     session_mock.assert_called_once()
     get_server_context_from_conn_info_mock.assert_called_once()
 
@@ -343,11 +305,7 @@ def mock_ssl(monkeypatch):
 
 @patch(
     "everest.bin.everest_script.run_detached_monitor",
-    side_effect=partial(
-        run_detached_monitor_mock,
-        status=ExperimentState.failed,
-        error="Reality was ripped to shreds!",
-    ),
+    side_effect=raise_system_error,
 )
 @patch("everest.bin.everest_script.wait_for_server")
 @patch("everest.bin.everest_script.start_server")
@@ -370,17 +328,13 @@ def test_exception_raised_when_server_run_fails(
     config = EverestConfig.with_defaults(config_path="./config.yml")
     config.dump("config.yml")
 
-    with pytest.raises(SystemExit, match="Reality was ripped to shreds!"):
+    with pytest.raises(SystemError, match="Reality was ripped to shreds!"):
         everest_entry(["config.yml", "--skip-prompt"])
 
 
 @patch(
     "everest.bin.monitor_script.run_detached_monitor",
-    side_effect=partial(
-        run_detached_monitor_mock,
-        status=ExperimentState.failed,
-        error="Reality was ripped to shreds!",
-    ),
+    side_effect=raise_system_error,
 )
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch("ert.services.StorageService.session")
@@ -394,7 +348,7 @@ def test_exception_raised_when_server_run_fails_monitor(
     config = EverestConfig.with_defaults(config_path="./config.yml")
     config.dump("config.yml")
 
-    with pytest.raises(SystemExit, match="Reality was ripped to shreds!"):
+    with pytest.raises(SystemError, match="Reality was ripped to shreds!"):
         monitor_entry(["config.yml"])
 
 
@@ -485,14 +439,6 @@ def test_that_run_everest_prints_where_it_runs(
     with (
         patch(
             "everest.bin.everest_script.EverestStorage.check_for_deprecated_seba_storage"
-        ),
-        patch(
-            "everest.bin.everest_script.ServerConfig.get_everserver_status_path",
-            return_value="mock_status_path",
-        ),
-        patch(
-            "everest.bin.everest_script.everserver_status",
-            return_value={"status": ExperimentState.never_run, "message": None},
         ),
         patch(
             "ert.services.StorageService.session",
