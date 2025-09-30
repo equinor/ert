@@ -61,8 +61,8 @@ from everest.optimizer.opt_model_transforms import (
     get_optimization_domain_transforms,
 )
 from everest.simulator.everest_to_ert import (
-    _extract_summary_keys,
     everest_to_ert_config_dict,
+    extract_summary_keys,
     get_forward_model_steps,
     get_substitutions,
     get_workflow_jobs,
@@ -257,7 +257,7 @@ class EverestRunModel(RunModel):
 
         if summary_fm:
             assert isinstance(summary_fm.results, SummaryResults)
-            summary_keys = _extract_summary_keys(everest_config)
+            summary_keys = extract_summary_keys(everest_config)
             response_configs.append(
                 SummaryConfig(
                     keys=summary_keys, input_files=[summary_fm.results.file_name]
