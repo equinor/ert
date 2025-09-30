@@ -52,17 +52,17 @@ def load_args(filename: str, column_names: list[str] | None = None) -> pd.DataFr
 
 
 class GenDataRFTCSVExportJob(ErtPlugin):
-    """Export of GEN_DATA based rfts to a CSV file. The csv file will in
-    addition contain the depth as duplicated seperate row.
+    """Export of GEN_DATA based :term:`RFT` responses to a CSV file. The csv file will
+    in addition contain the depth as duplicated seperate row.
 
     The script expects four arguments:
 
        output_file: this is the path to the file to output the CSV data to
 
-       key: this is the ert GEN_DATA key used for this particular RFT.
+       key: this is the ert GEN_DATA key used for this particular :term:`RFT`.
 
        report_step: This is the report step configured in the ert
-         configuration file for this RFT.
+         configuration file for this :term:`RFT`.
 
        trajectory_file: This is the the file containing the
 
@@ -154,6 +154,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
                 if not os.path.isfile(trajectory_file):
                     trajectory_file = os.path.join(trajectory_path, f"{well_key}_R.txt")
 
+                # See :term:`MD` and :term:`TVD`
                 arg = load_args(
                     trajectory_file, column_names=["utm_x", "utm_y", "md", "tvd"]
                 )
