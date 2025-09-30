@@ -3,7 +3,7 @@ from collections import Counter
 from collections.abc import Sequence
 from dataclasses import dataclass
 from itertools import starmap
-from typing import Any, Literal
+from typing import Any, Literal, Self
 
 from .parsing import (
     ErrorInfo,
@@ -35,6 +35,36 @@ class HistoryObservation(ObservationError):
     key: str
     segments: list[Segment]
 
+    @classmethod
+    def from_obs_dict(cls, directory: str, observation_dict: ObservationDict) -> Self:
+        error_mode: ErrorModes = "RELMIN"
+        error = 0.1
+        error_min = 0.1
+        segments = []
+        for key, value in observation_dict.items():
+            match key:
+                case "type" | "name":
+                    pass
+                case "ERROR":
+                    error = validate_positive_float(value, key)
+                case "ERROR_MIN":
+                    error_min = validate_positive_float(value, key)
+                case "ERROR_MODE":
+                    error_mode = validate_error_mode(value)
+                case "segments":
+                    segments = list(starmap(_validate_segment_dict, value))
+                case _:
+                    raise _unknown_key_error(str(key), observation_dict["name"])
+
+        return cls(
+            name=observation_dict["name"],
+            key=observation_dict["name"],
+            error_mode=error_mode,
+            error=error,
+            error_min=error_min,
+            segments=segments,
+        )
+
 
 @dataclass
 class ObservationDate:
@@ -53,7 +83,51 @@ class _SummaryValues:
 
 @dataclass
 class SummaryObservation(ObservationDate, ObservationError, _SummaryValues):
-    pass
+    @classmethod
+    def from_obs_dict(cls, directory: str, observation_dict: ObservationDict) -> Self:
+        error_mode: ErrorModes = "ABS"
+        summary_key = None
+
+        date_dict: ObservationDate = ObservationDate()
+        float_values: dict[str, float] = {"ERROR_MIN": 0.1}
+        for key, value in observation_dict.items():
+            match key:
+                case "type" | "name":
+                    pass
+                case "RESTART":
+                    date_dict.restart = validate_positive_int(value, key)
+                case "ERROR" | "ERROR_MIN":
+                    float_values[str(key)] = validate_positive_float(value, key)
+                case "DAYS" | "HOURS":
+                    setattr(
+                        date_dict, str(key).lower(), validate_positive_float(value, key)
+                    )
+                case "VALUE":
+                    float_values[str(key)] = validate_float(value, key)
+                case "ERROR_MODE":
+                    error_mode = validate_error_mode(value)
+                case "KEY":
+                    summary_key = value
+                case "DATE":
+                    date_dict.date = value
+                case _:
+                    raise _unknown_key_error(str(key), observation_dict["name"])
+        if "VALUE" not in float_values:
+            raise _missing_value_error(observation_dict["name"], "VALUE")
+        if summary_key is None:
+            raise _missing_value_error(observation_dict["name"], "KEY")
+        if "ERROR" not in float_values:
+            raise _missing_value_error(observation_dict["name"], "ERROR")
+
+        return cls(
+            name=observation_dict["name"],
+            error_mode=error_mode,
+            error=float_values["ERROR"],
+            error_min=float_values["ERROR_MIN"],
+            key=summary_key,
+            value=float_values["VALUE"],
+            **date_dict.__dict__,
+        )
 
 
 @dataclass
@@ -69,10 +143,60 @@ class _GeneralObservation:
 
 @dataclass
 class GeneralObservation(ObservationDate, _GeneralObservation):
-    pass
+    @classmethod
+    def from_obs_dict(cls, directory: str, observation_dict: ObservationDict) -> Self:
+        try:
+            data = observation_dict["DATA"]
+        except KeyError as err:
+            raise _missing_value_error(observation_dict["name"], "DATA") from err
+
+        output = cls(name=observation_dict["name"], data=data)
+        for key, value in observation_dict.items():
+            match key:
+                case "type" | "name":
+                    pass
+                case "RESTART":
+                    output.restart = validate_positive_int(value, key)
+                case "VALUE":
+                    output.value = validate_float(value, key)
+                case "ERROR" | "DAYS" | "HOURS":
+                    setattr(
+                        output, str(key).lower(), validate_positive_float(value, key)
+                    )
+                case "DATE" | "INDEX_LIST":
+                    setattr(output, str(key).lower(), value)
+                case "OBS_FILE" | "INDEX_FILE":
+                    assert not isinstance(key, tuple)
+                    filename = value
+                    if not os.path.isabs(filename):
+                        filename = os.path.join(directory, filename)
+                    if not os.path.exists(filename):
+                        raise ObservationConfigError.with_context(
+                            "The following keywords did not"
+                            f" resolve to a valid path:\n {key}",
+                            value,
+                        )
+                    setattr(output, str(key).lower(), filename)
+                case "DATA":
+                    output.data = value
+                case _:
+                    raise _unknown_key_error(str(key), observation_dict["name"])
+        if output.value is not None and output.error is None:
+            raise ObservationConfigError.with_context(
+                f"For GENERAL_OBSERVATION {observation_dict['name']}, with"
+                f" VALUE = {output.value}, ERROR must also be given.",
+                observation_dict["name"],
+            )
+        return output
 
 
 Observation = HistoryObservation | SummaryObservation | GeneralObservation
+
+_TYPE_TO_CLASS: dict[ObservationType, type[Observation]] = {
+    ObservationType.HISTORY: HistoryObservation,
+    ObservationType.SUMMARY: SummaryObservation,
+    ObservationType.GENERAL: GeneralObservation,
+}
 
 
 def make_observations(
@@ -89,14 +213,11 @@ def make_observations(
     error_list: list[ErrorInfo] = []
     for obs_dict in observation_dicts:
         try:
-            if obs_dict["type"] == ObservationType.HISTORY:
-                result.append(_validate_history_values(obs_dict))
-            elif obs_dict["type"] == ObservationType.SUMMARY:
-                result.append(_validate_summary_values(obs_dict))
-            elif obs_dict["type"] == ObservationType.GENERAL:
-                result.append(_validate_gen_obs_values(directory, obs_dict))
-            else:
-                raise _unknown_observation_type_error(obs_dict)
+            result.append(
+                _TYPE_TO_CLASS[obs_dict["type"]].from_obs_dict(directory, obs_dict)
+            )
+        except KeyError as err:
+            raise _unknown_observation_type_error(obs_dict) from err
         except ObservationConfigError as err:
             error_list.extend(err.errors)
 
@@ -120,82 +241,6 @@ def _validate_unique_names(
     ]
     if errors:
         raise ObservationConfigError.from_collected(errors)
-
-
-def _validate_history_values(observation_dict: ObservationDict) -> HistoryObservation:
-    error_mode: ErrorModes = "RELMIN"
-    error = 0.1
-    error_min = 0.1
-    segments = []
-    for key, value in observation_dict.items():
-        match key:
-            case "type" | "name":
-                pass
-            case "ERROR":
-                error = validate_positive_float(value, key)
-            case "ERROR_MIN":
-                error_min = validate_positive_float(value, key)
-            case "ERROR_MODE":
-                error_mode = validate_error_mode(value)
-            case "segments":
-                segments = list(starmap(_validate_segment_dict, value))
-            case _:
-                raise _unknown_key_error(str(key), observation_dict["name"])
-
-    return HistoryObservation(
-        name=observation_dict["name"],
-        key=observation_dict["name"],
-        error_mode=error_mode,
-        error=error,
-        error_min=error_min,
-        segments=segments,
-    )
-
-
-def _validate_summary_values(observation_dict: ObservationDict) -> SummaryObservation:
-    error_mode: ErrorModes = "ABS"
-    summary_key = None
-
-    date_dict: ObservationDate = ObservationDate()
-    float_values: dict[str, float] = {"ERROR_MIN": 0.1}
-    for key, value in observation_dict.items():
-        match key:
-            case "type" | "name":
-                pass
-            case "RESTART":
-                date_dict.restart = validate_positive_int(value, key)
-            case "ERROR" | "ERROR_MIN":
-                float_values[str(key)] = validate_positive_float(value, key)
-            case "DAYS" | "HOURS":
-                setattr(
-                    date_dict, str(key).lower(), validate_positive_float(value, key)
-                )
-            case "VALUE":
-                float_values[str(key)] = validate_float(value, key)
-            case "ERROR_MODE":
-                error_mode = validate_error_mode(value)
-            case "KEY":
-                summary_key = value
-            case "DATE":
-                date_dict.date = value
-            case _:
-                raise _unknown_key_error(str(key), observation_dict["name"])
-    if "VALUE" not in float_values:
-        raise _missing_value_error(observation_dict["name"], "VALUE")
-    if summary_key is None:
-        raise _missing_value_error(observation_dict["name"], "KEY")
-    if "ERROR" not in float_values:
-        raise _missing_value_error(observation_dict["name"], "ERROR")
-
-    return SummaryObservation(
-        name=observation_dict["name"],
-        error_mode=error_mode,
-        error=float_values["ERROR"],
-        error_min=float_values["ERROR_MIN"],
-        key=summary_key,
-        value=float_values["VALUE"],
-        **date_dict.__dict__,
-    )
 
 
 def _validate_segment_dict(name_token: str, inp: dict[str, Any]) -> Segment:
@@ -231,54 +276,6 @@ def _validate_segment_dict(name_token: str, inp: dict[str, Any]) -> Segment:
         error=error,
         error_min=error_min,
     )
-
-
-def _validate_gen_obs_values(
-    directory: str, observation_dict: ObservationDict
-) -> GeneralObservation:
-    try:
-        data = observation_dict["DATA"]
-    except KeyError as err:
-        raise _missing_value_error(observation_dict["name"], "DATA") from err
-
-    output: GeneralObservation = GeneralObservation(
-        name=observation_dict["name"], data=data
-    )
-    for key, value in observation_dict.items():
-        match key:
-            case "type" | "name":
-                pass
-            case "RESTART":
-                output.restart = validate_positive_int(value, key)
-            case "VALUE":
-                output.value = validate_float(value, key)
-            case "ERROR" | "DAYS" | "HOURS":
-                setattr(output, str(key).lower(), validate_positive_float(value, key))
-            case "DATE" | "INDEX_LIST":
-                setattr(output, str(key).lower(), value)
-            case "OBS_FILE" | "INDEX_FILE":
-                assert not isinstance(key, tuple)
-                filename = value
-                if not os.path.isabs(filename):
-                    filename = os.path.join(directory, filename)
-                if not os.path.exists(filename):
-                    raise ObservationConfigError.with_context(
-                        "The following keywords did not"
-                        f" resolve to a valid path:\n {key}",
-                        value,
-                    )
-                setattr(output, str(key).lower(), filename)
-            case "DATA":
-                output.data = value
-            case _:
-                raise _unknown_key_error(str(key), observation_dict["name"])
-    if output.value is not None and output.error is None:
-        raise ObservationConfigError.with_context(
-            f"For GENERAL_OBSERVATION {observation_dict['name']}, with"
-            f" VALUE = {output.value}, ERROR must also be given.",
-            observation_dict["name"],
-        )
-    return output
 
 
 def validate_error_mode(inp: str) -> ErrorModes:
