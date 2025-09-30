@@ -1,8 +1,10 @@
 from abc import ABC
-from typing import Annotated, cast
+from typing import Annotated, Any, Literal, Self, cast
 
 import numpy as np
-from pydantic import Field
+import polars as pl
+from polars.datatypes import DataTypeClass
+from pydantic import BaseModel, Field, field_validator
 
 from ert.config import (
     DesignMatrix,
@@ -22,7 +24,37 @@ from ert.run_arg import create_run_arguments
 from ert.run_models.run_model import RunModel
 from ert.sample_prior import sample_prior
 from ert.storage.local_ensemble import LocalEnsemble
-from ert.storage.local_experiment import DictEncodedObservations
+
+
+# https://github.com/pola-rs/polars/issues/13152#issuecomment-1864600078
+# PS: Serializing/deserializing schema is scheduled to be added to polars core,
+# ref https://github.com/pola-rs/polars/issues/20426
+# then this workaround can be omitted.
+def str_to_dtype(dtype_str: str) -> pl.DataType:
+    dtype = eval(f"pl.{dtype_str}")
+    if isinstance(dtype, DataTypeClass):
+        dtype = dtype()
+    return dtype
+
+
+class DictEncodedObservations(BaseModel):
+    type: Literal["dicts"]
+    data: list[dict[str, Any]]
+    datatypes: dict[str, str]
+
+    @classmethod
+    def from_polars(cls, data: pl.DataFrame) -> Self:
+        str_schema = {k: str(dtype) for k, dtype in data.schema.items()}
+        return cls(type="dicts", data=data.to_dicts(), datatypes=str_schema)
+
+    def to_polars(self) -> pl.DataFrame:
+        return pl.from_dicts(
+            self.data,
+            schema={
+                col: str_to_dtype(dtype_str)
+                for col, dtype_str in self.datatypes.items()
+            },
+        )
 
 
 class InitialEnsembleRunModel(RunModel, ABC):
@@ -48,6 +80,19 @@ class InitialEnsembleRunModel(RunModel, ABC):
     ert_templates: list[tuple[str, str]]
     observations: dict[str, DictEncodedObservations] | None
 
+    @field_validator("observations", mode="before")
+    def make_dict_encoded_observations(
+        cls, v: dict[str, pl.DataFrame | DictEncodedObservations] | None
+    ) -> dict[str, DictEncodedObservations] | None:
+        if v is None:
+            return None
+        return {
+            k: df
+            if isinstance(df, DictEncodedObservations)
+            else DictEncodedObservations.from_polars(df)
+            for k, df in v.items()
+        }
+
     def _sample_and_evaluate_ensemble(
         self,
         evaluator_server_config: EvaluatorServerConfig,
@@ -64,7 +109,9 @@ class InitialEnsembleRunModel(RunModel, ABC):
         if ensemble_storage is None:
             experiment_storage = self._storage.create_experiment(
                 parameters=parameters_config,
-                observations=self.observations,
+                observations={k: v.to_polars() for k, v in self.observations.items()}
+                if self.observations is not None
+                else None,
                 responses=cast(list[ResponseConfig], self.response_configuration),
                 simulation_arguments=simulation_arguments,
                 name=self.experiment_name,

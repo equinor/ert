@@ -12,7 +12,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from textwrap import dedent
 from types import TracebackType
-from typing import Any, cast
+from typing import Any
 from uuid import UUID, uuid4
 
 import polars as pl
@@ -24,7 +24,7 @@ from ert.config import ErtConfig, ParameterConfig, ResponseConfig
 from ert.shared import __version__
 
 from .local_ensemble import LocalEnsemble
-from .local_experiment import DictEncodedObservations, LocalExperiment
+from .local_experiment import LocalExperiment
 from .mode import BaseMode, Mode, require_write
 from .realization_storage_state import RealizationStorageState
 
@@ -308,9 +308,7 @@ class LocalStorage(BaseMode):
         self,
         parameters: list[ParameterConfig] | None = None,
         responses: list[ResponseConfig] | None = None,
-        observations: dict[str, DictEncodedObservations]
-        | dict[str, pl.DataFrame]
-        | None = None,
+        observations: dict[str, pl.DataFrame] | None = None,
         simulation_arguments: dict[Any, Any] | None = None,
         name: str | None = None,
         templates: list[tuple[str, str]] | None = None,
@@ -343,28 +341,13 @@ class LocalStorage(BaseMode):
         path = self._experiment_path(exp_id)
         path.mkdir(parents=True, exist_ok=False)
 
-        serialized_observations: dict[str, DictEncodedObservations] = {}
-        if (
-            observations is not None
-            and len(observations) > 0
-            and isinstance(next(iter(observations.values())), pl.DataFrame)
-        ):
-            serialized_observations = {
-                k: DictEncodedObservations.from_polars(cast(pl.DataFrame, df))
-                for k, df in observations.items()
-            }
-        else:
-            serialized_observations = cast(
-                dict[str, DictEncodedObservations], observations
-            )
-
         exp = LocalExperiment.create(
             self,
             exp_id,
             path,
             parameters=parameters,
             responses=responses,
-            observations=serialized_observations,
+            observations=observations,
             simulation_arguments=simulation_arguments,
             name=name,
             templates=templates,
