@@ -258,8 +258,6 @@ def start_monitor(
                     break
                 except ValidationError as e:
                     logger.error("Error when processing event %s", exc_info=e)
-                except Exception:
-                    raise
 
                 time.sleep(polling_interval)
 
