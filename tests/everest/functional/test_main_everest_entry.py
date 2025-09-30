@@ -41,7 +41,7 @@ def test_everest_main_entry_bad_command():
 
 
 @pytest.mark.xfail(
-    reason="Will be fixed when report_on_previous_run() dont read state from disk"
+    reason="Will be fixed when report_on_previous_run() doesn't read state from disk"
 )
 @pytest.mark.skip_mac_ci
 @pytest.mark.integration_test
