@@ -13,10 +13,9 @@ from pathlib import Path
 from _ert.threading import ErtThread
 from ert.config import QueueSystem
 from ert.services import StorageService
+from ert.storage.local_experiment import ExperimentState
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
-    ExperimentState,
-    everserver_status,
     start_experiment,
     start_server,
     wait_for_server,
@@ -29,6 +28,7 @@ from everest.util import (
 )
 
 from .utils import (
+    get_experiment_status,
     handle_keyboard_interrupt,
     run_detached_monitor,
     run_empty_detached_monitor,
@@ -252,19 +252,19 @@ async def run_everest(options: argparse.Namespace) -> None:
             )
         )
 
-    logger.info("Everest experiment finished")
-
-    everserver_status_path = ServerConfig.get_everserver_status_path(
-        options.config.output_dir
-    )
-
-    server_state = everserver_status(everserver_status_path)
-    server_state_info = server_state["message"]
-    if server_state["status"] == ExperimentState.failed:
-        raise SystemExit(f"Everest run failed with: {server_state_info}")
-    if server_state_info is not None:
-        logger.info(f"Everest run finished with: {server_state_info}")
-        print(server_state_info)
+    msg: str = ""
+    experiment_status = get_experiment_status(options.config.storage_dir)
+    if experiment_status and experiment_status.status == ExperimentState.failed:
+        msg = f"Everest run failed with: {experiment_status.message or 'Unknown error'}"
+        logger.error(msg)
+        raise SystemExit(msg)
+    if experiment_status:
+        msg = (
+            "Everest run finished with: "
+            f"{experiment_status.message or 'Experiment completed successfully'}"
+        )
+        logger.info(msg)
+        print(msg)
 
 
 if __name__ == "__main__":

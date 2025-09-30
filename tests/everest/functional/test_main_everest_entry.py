@@ -13,6 +13,7 @@ from tests.everest.utils import (
 
 from everest import __version__ as everest_version
 from everest.bin.main import start_everest
+from everest.bin.utils import get_experiment_status
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import ExperimentState, everserver_status
 
@@ -55,18 +56,15 @@ def test_everest_entry_run(cached_example):
     )
 
     # Setup command line arguments
-    with capture_streams():
+    with capture_streams() as (out, _):
         start_everest(["everest", "run", config_file, "--skip-prompt"])
 
-    config = EverestConfig.load_file(config_file)
-    status = everserver_status(
-        ServerConfig.get_everserver_status_path(config.output_dir)
+    assert (
+        "Everest run finished with: Maximum number of batches reached" in out.getvalue()
     )
 
-    assert status["status"] == ExperimentState.completed
-
+    config = EverestConfig.load_file(config_file)
     optimal = get_optimal_result(config.optimization_output_dir)
-
     assert optimal.controls["point.x"] == pytest.approx(0.5, abs=0.05)
     assert optimal.controls["point.y"] == pytest.approx(0.5, abs=0.05)
     assert optimal.controls["point.z"] == pytest.approx(0.5, abs=0.05)
@@ -77,11 +75,8 @@ def test_everest_entry_run(cached_example):
         start_everest(["everest", "monitor", config_file])
 
     config = EverestConfig.load_file(config_file)
-    status = everserver_status(
-        ServerConfig.get_everserver_status_path(config.output_dir)
-    )
-
-    assert status["status"] == ExperimentState.completed
+    experiment_status = get_experiment_status(config.storage_dir)
+    assert experiment_status.status == ExperimentState.completed
 
 
 @pytest.mark.integration_test

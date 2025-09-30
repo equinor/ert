@@ -23,6 +23,7 @@ from ert.ensemble_evaluator import (
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
+from ert.ensemble_evaluator.event import EndEvent
 from ert.logging import LOGGING_CONFIG
 from ert.plugins.plugin_manager import ErtPluginManager
 from ert.services import StorageService
@@ -214,6 +215,8 @@ class _DetachedMonitor:
                     self._clear_lines = 0
             if SIM_PROGRESS_ID in status:
                 match status[SIM_PROGRESS_ID]:
+                    case EndEvent(msg=msg):
+                        return
                     case FullSnapshotEvent(snapshot=snapshot, iteration=batch):
                         if snapshot is not None:
                             self._snapshots[batch] = snapshot
@@ -404,7 +407,9 @@ class _DetachedMonitor:
             print(colorama.Cursor.UP(), end=colorama.ansi.clear_line())
 
 
-def run_detached_monitor(server_context: tuple[str, str, tuple[str, str]]) -> None:
+def run_detached_monitor(
+    server_context: tuple[str, str, tuple[str, str]],
+) -> None:
     monitor = _DetachedMonitor()
     start_monitor(server_context, callback=monitor.update)
 

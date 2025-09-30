@@ -17,7 +17,6 @@ from websockets import ConnectionClosedError, ConnectionClosedOK
 from websockets.sync.client import connect
 
 from ert.dark_storage.client import Client
-from ert.ensemble_evaluator import EndEvent
 from ert.run_models.event import EverestBatchResultEvent, status_event_from_json
 from ert.scheduler import create_driver
 from ert.scheduler.driver import Driver, FailedSubmit
@@ -236,9 +235,7 @@ def start_monitor(
                 try:
                     message = websocket.recv(timeout=1.0)
                     event = status_event_from_json(message)
-                    if isinstance(event, EndEvent):
-                        print(event.msg)
-                    elif isinstance(event, EverestBatchResultEvent):
+                    if isinstance(event, EverestBatchResultEvent):
                         if event.result_type == "FunctionResult":
                             callback(
                                 {
@@ -261,8 +258,9 @@ def start_monitor(
                     logger.error("Error when processing event %s", exc_info=e)
 
                 time.sleep(polling_interval)
+
     except Exception:
-        logger.debug(traceback.format_exc())
+        logger.exception(traceback.format_exc())
 
 
 def update_everserver_status(
