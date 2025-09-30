@@ -165,13 +165,13 @@ def _validate_summary_values(observation_dict: ObservationDict) -> SummaryObserv
             case "RESTART":
                 date_dict.restart = validate_positive_int(value, key)
             case "ERROR" | "ERROR_MIN":
-                float_values[str(key)] = validate_positive_float(value, key)
+                float_values[str(key).upper()] = validate_positive_float(value, key)
             case "DAYS" | "HOURS":
                 setattr(
                     date_dict, str(key).lower(), validate_positive_float(value, key)
                 )
             case "VALUE":
-                float_values[str(key)] = validate_float(value, key)
+                float_values[str(key).upper()] = validate_float(value, key)
             case "ERROR_MODE":
                 error_mode = validate_error_mode(value)
             case "KEY":
