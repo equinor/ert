@@ -183,10 +183,8 @@ async def run_everest(options: argparse.Namespace) -> None:
         job_name = fm_job.split()[0]
         logger.info(f"Everest forward model contains job {job_name}")
 
-    if (
-        options.config.simulation_dir is not None
-        and os.path.exists(options.config.simulation_dir)
-        and any(os.listdir(options.config.simulation_dir))
+    if os.path.exists(options.config.simulation_dir) and any(
+        os.listdir(options.config.simulation_dir)
     ):
         warn_user_that_runpath_is_nonempty()
     if not options.skip_prompt:

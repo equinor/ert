@@ -76,11 +76,9 @@ def _extract_environment(
 ) -> None:
     simulation_fmt = os.path.join("batch_<ITER>", "realization_<GEO_ID>", "<SIM_DIR>")
 
-    assert ever_config.simulation_dir is not None
     simulation_path = os.path.join(ever_config.simulation_dir, simulation_fmt)
     # load log configuration data
 
-    assert ever_config.output_dir is not None
     default_runpath_file = os.path.join(ever_config.output_dir, ".res_runpath_list")
     default_ens_path = os.path.join(ever_config.output_dir, STORAGE_DIR)
 
