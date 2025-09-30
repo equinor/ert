@@ -521,14 +521,16 @@ def test_that_deserializing_ensemble_experiment_is_the_inverse_of_serializing(
         runmodel._storage.close()
 
         runmodel_from_serialized = EnsembleExperiment.model_validate(
-            runmodel.model_dump() | _not_yet_serializable_args
+            runmodel.model_dump(mode="json") | _not_yet_serializable_args
         )
 
         assert (
             runmodel_from_serialized.env_vars
             == runtime_plugins.environment_variables | baserunmodel_args["env_vars"]
         )
-        assert runmodel_from_serialized.model_dump() == runmodel.model_dump()
+        assert runmodel_from_serialized.model_dump(mode="json") == runmodel.model_dump(
+            mode="json"
+        )
 
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
@@ -551,14 +553,16 @@ def test_that_deserializing_ensemble_smoother_is_the_inverse_of_serializing(
         runmodel._storage.close()
 
         runmodel_from_serialized = EnsembleSmoother.model_validate(
-            runmodel.model_dump() | _not_yet_serializable_args
+            runmodel.model_dump(mode="json") | _not_yet_serializable_args
         )
 
         assert (
             runmodel_from_serialized.env_vars
             == runtime_plugins.environment_variables | baserunmodel_args["env_vars"]
         )
-        assert runmodel_from_serialized.model_dump() == runmodel.model_dump()
+        assert runmodel_from_serialized.model_dump(mode="json") == runmodel.model_dump(
+            mode="json"
+        )
 
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
@@ -581,14 +585,16 @@ def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serial
         runmodel._storage.close()
 
         runmodel_from_serialized = EnsembleInformationFilter.model_validate(
-            runmodel.model_dump() | _not_yet_serializable_args
+            runmodel.model_dump(mode="json") | _not_yet_serializable_args
         )
 
         assert (
             runmodel_from_serialized.env_vars
             == runtime_plugins.environment_variables | baserunmodel_args["env_vars"]
         )
-        assert runmodel_from_serialized.model_dump() == runmodel.model_dump()
+        assert runmodel_from_serialized.model_dump(mode="json") == runmodel.model_dump(
+            mode="json"
+        )
 
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
@@ -630,7 +636,9 @@ def test_that_deserializing_esmda_is_the_inverse_of_serializing(
             runmodel_from_serialized.env_vars
             == runtime_plugins.environment_variables | baserunmodel_args["env_vars"]
         )
-        assert runmodel_from_serialized.model_dump() == runmodel.model_dump()
+        assert runmodel_from_serialized.model_dump(mode="json") == runmodel.model_dump(
+            mode="json"
+        )
 
 
 def _create_and_verify_runmodel_snapshot(config, snapshot, cli_args, case):
