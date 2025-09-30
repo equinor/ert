@@ -16,8 +16,6 @@ from ert.config import QueueSystem
 from ert.services import StorageService
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
-    ExperimentState,
-    everserver_status,
     start_experiment,
     start_server,
     wait_for_server,
@@ -228,46 +226,38 @@ async def run_everest(options: argparse.Namespace) -> None:
     )
 
     # blocks until the run is finished
-    if options.gui:
-        from everest.gui.main import run_gui  # noqa
+    try:
+        if options.gui:
+            from everest.gui.main import run_gui  # noqa
 
-        monitor_thread = ErtThread(
-            target=run_empty_detached_monitor
-            if options.disable_monitoring
-            else run_detached_monitor,
-            name="Everest CLI monitor thread",
-            args=[ServerConfig.get_server_context_from_conn_info(client.conn_info)],
-            daemon=True,
-        )
-        monitor_thread.start()
-        run_gui(options.config.output_dir)
-        monitor_thread.join()
-    elif options.disable_monitoring:
-        run_empty_detached_monitor(
-            server_context=ServerConfig.get_server_context_from_conn_info(
-                client.conn_info
+            monitor_thread = ErtThread(
+                target=run_empty_detached_monitor
+                if options.disable_monitoring
+                else run_detached_monitor,
+                name="Everest CLI monitor thread",
+                args=[ServerConfig.get_server_context_from_conn_info(client.conn_info)],
+                daemon=True,
             )
-        )
-    else:
-        run_detached_monitor(
-            server_context=ServerConfig.get_server_context_from_conn_info(
-                client.conn_info
+            monitor_thread.start()
+            run_gui(options.config.output_dir)
+            monitor_thread.join()
+        elif options.disable_monitoring:
+            run_empty_detached_monitor(
+                server_context=ServerConfig.get_server_context_from_conn_info(
+                    client.conn_info
+                )
             )
-        )
+        else:
+            run_detached_monitor(
+                server_context=ServerConfig.get_server_context_from_conn_info(
+                    client.conn_info
+                )
+            )
+    except SystemError as err:
+        logger.error(f"Everest experiment failed: {err}")
+        raise
 
     logger.info("Everest experiment finished")
-
-    everserver_status_path = ServerConfig.get_everserver_status_path(
-        options.config.output_dir
-    )
-
-    server_state = everserver_status(everserver_status_path)
-    server_state_info = server_state["message"]
-    if server_state["status"] == ExperimentState.failed:
-        raise SystemExit(f"Everest run failed with: {server_state_info}")
-    if server_state_info is not None:
-        logger.info(f"Everest run finished with: {server_state_info}")
-        print(server_state_info)
 
 
 if __name__ == "__main__":
