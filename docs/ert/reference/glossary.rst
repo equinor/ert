@@ -107,4 +107,19 @@ It is not about being correct, it is about being relevant and coherent.
         potentially one or more of the following properties: well name, region name, lgr
         name, block index, completion index, network name.
 
+    Repeat Formation Tester
+    RFT
+        RFT is short for Repeat Formation Tester which is a wireline formation
+        tester that measures formation pressure. However, in this context RFT
+        usually means measurements or simulated data for formation pressure and
+        saturation.
+
+    True Vertical Depth
+    TVD
+        The depth (in the vertical plane) of a point along a wells borehole.
+
+    Measured Depth
+    MD
+        The length (along the well path) for a point along a well borehole.
+
 .. _OPM Flow manual: https://opm-project.org/wp-content/uploads/2023/06/OPM_Flow_Reference_Manual_2023-04_Rev-0_Reduced.pdf
