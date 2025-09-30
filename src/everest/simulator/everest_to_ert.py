@@ -30,7 +30,7 @@ from everest.config.simulator_config import SimulatorConfig
 from everest.strings import EVEREST, STORAGE_DIR
 
 
-def _extract_summary_keys(ever_config: EverestConfig) -> list[str]:
+def extract_summary_keys(ever_config: EverestConfig) -> list[str]:
     summary_fms = [
         fm
         for fm in ever_config.forward_model
