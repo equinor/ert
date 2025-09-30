@@ -1,17 +1,13 @@
 import datetime
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field, fields
-from enum import Enum, auto
+from enum import Enum
 
 import hypothesis.strategies as st
 from hypothesis import assume
 from pydantic import PositiveFloat
 
-
-class ErrorMode(Enum):
-    REL = auto()
-    ABS = auto()
-    RELMIN = auto()
+from ert.config._observations import ErrorModes
 
 
 @dataclass
@@ -60,7 +56,7 @@ class Segment(Observation):
 
 @dataclass
 class HistoryObservation(Observation):
-    error_mode: ErrorMode
+    error_mode: ErrorModes
     segments: list[Segment] = field(default_factory=list)
 
     @property
@@ -76,7 +72,7 @@ class SummaryObservation(Observation):
     value: float
     key: str
     error_min: PositiveFloat
-    error_mode: ErrorMode
+    error_mode: ErrorModes
     days: float | None = None
     hours: float | None = None
     restart: int | None = None
@@ -169,9 +165,9 @@ def summary_observations(
                 allow_infinity=False,
             )
         ),
-        "error_mode": draw(st.sampled_from(ErrorMode)),
+        "error_mode": draw(st.sampled_from(ErrorModes)),
     }
-    if kws["error_mode"] == ErrorMode.ABS:
+    if kws["error_mode"] == ErrorModes.ABS:
         kws["error"] = draw(
             st.floats(
                 min_value=std_cutoff,
