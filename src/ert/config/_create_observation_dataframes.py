@@ -12,6 +12,7 @@ from ert.summary_key_type import history_key
 from ert.validation import rangestring_to_list
 
 from ._observations import (
+    ErrorModes,
     GeneralObservation,
     HistoryObservation,
     Observation,
@@ -113,11 +114,11 @@ def _handle_error_mode(
     error_min = error_dict.error_min
     error = error_dict.error
     match error_mode:
-        case "ABS":
+        case ErrorModes.ABS:
             return np.full(values.shape, error)
-        case "REL":
+        case ErrorModes.REL:
             return np.abs(values) * error
-        case "RELMIN":
+        case ErrorModes.RELMIN:
             return np.maximum(np.abs(values) * error, np.full(values.shape, error_min))
 
 

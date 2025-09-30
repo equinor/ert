@@ -2,8 +2,9 @@ import os
 from collections import Counter
 from collections.abc import Sequence
 from dataclasses import dataclass
+from enum import StrEnum
 from itertools import starmap
-from typing import Any, Literal, Self
+from typing import Any, Self
 
 from .parsing import (
     ErrorInfo,
@@ -12,7 +13,11 @@ from .parsing import (
     ObservationType,
 )
 
-ErrorModes = Literal["REL", "ABS", "RELMIN"]
+
+class ErrorModes(StrEnum):
+    REL = "REL"
+    ABS = "ABS"
+    RELMIN = "RELMIN"
 
 
 @dataclass
@@ -37,7 +42,7 @@ class HistoryObservation(ObservationError):
 
     @classmethod
     def from_obs_dict(cls, directory: str, observation_dict: ObservationDict) -> Self:
-        error_mode: ErrorModes = "RELMIN"
+        error_mode = ErrorModes.RELMIN
         error = 0.1
         error_min = 0.1
         segments = []
@@ -85,7 +90,7 @@ class _SummaryValues:
 class SummaryObservation(ObservationDate, ObservationError, _SummaryValues):
     @classmethod
     def from_obs_dict(cls, directory: str, observation_dict: ObservationDict) -> Self:
-        error_mode: ErrorModes = "ABS"
+        error_mode = ErrorModes.ABS
         summary_key = None
 
         date_dict: ObservationDate = ObservationDate()
@@ -246,7 +251,7 @@ def _validate_unique_names(
 def _validate_segment_dict(name_token: str, inp: dict[str, Any]) -> Segment:
     start = None
     stop = None
-    error_mode: ErrorModes = "RELMIN"
+    error_mode = ErrorModes.RELMIN
     error = 0.1
     error_min = 0.1
     for key, value in inp.items():
@@ -280,11 +285,11 @@ def _validate_segment_dict(name_token: str, inp: dict[str, Any]) -> Segment:
 
 def validate_error_mode(inp: str) -> ErrorModes:
     if inp == "REL":
-        return "REL"
+        return ErrorModes.REL
     if inp == "ABS":
-        return "ABS"
+        return ErrorModes.ABS
     if inp == "RELMIN":
-        return "RELMIN"
+        return ErrorModes.RELMIN
     raise ObservationConfigError.with_context(
         f'Unexpected ERROR_MODE {inp}. Failed to validate "{inp}"', inp
     )
