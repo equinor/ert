@@ -949,16 +949,13 @@ to read summary data from forward model, do:
         return os.path.join(cfgdir, path)
 
     @property
-    def simulation_dir(self) -> str | None:
+    def simulation_dir(self) -> str:
         path = self.environment.simulation_folder
 
         if os.path.isabs(path):
             return path
 
         cfgdir = self.output_dir
-        if cfgdir is None:
-            return path
-
         return os.path.join(cfgdir, path)
 
     def _get_output_subdirectory(self, subdirname: str) -> str:

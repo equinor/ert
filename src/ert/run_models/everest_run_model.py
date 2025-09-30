@@ -850,8 +850,6 @@ class EverestRunModel(RunModel):
         return objectives, constraints if constraint_names else None
 
     def check_if_runpath_exists(self) -> bool:
-        return (
-            self.simulation_dir is not None
-            and os.path.exists(self.simulation_dir)
-            and any(os.listdir(self.simulation_dir))
+        return os.path.exists(self.simulation_dir) and any(
+            os.listdir(self.simulation_dir)
         )
