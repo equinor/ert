@@ -491,7 +491,6 @@ def summary_configs(draw):
 _not_yet_serializable_args = {
     # Should not be needed, will be replaced by endpoint
     "status_queue": queue.SimpleQueue(),
-    "observations": None,  # Should just be serialized
 }
 
 
