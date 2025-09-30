@@ -37,8 +37,11 @@ class Segment(ObservationError):
 @dataclass
 class HistoryObservation(ObservationError):
     name: str
-    key: str
     segments: list[Segment]
+
+    @property
+    def key(self) -> str:
+        return self.name
 
     @classmethod
     def from_obs_dict(cls, directory: str, observation_dict: ObservationDict) -> Self:
@@ -63,7 +66,6 @@ class HistoryObservation(ObservationError):
 
         return cls(
             name=observation_dict["name"],
-            key=observation_dict["name"],
             error_mode=error_mode,
             error=error,
             error_min=error_min,

@@ -35,9 +35,11 @@ from ert.config.queue_config import (
 
 from .egrid_generator import EGrid, egrids
 from .observations_generator import (
+    GeneralObservation,
     HistoryObservation,
     Observation,
     SummaryObservation,
+    as_obs_config_content,
     observations,
 )
 from .summary_generator import Date, Smspec, Unsmry, smspecs, summary_variables, unsmrys
@@ -335,7 +337,8 @@ class ErtConfigValues:
             ConfigKeys.OBS_CONFIG: (
                 self.obs_config,
                 parse_observations(
-                    "\n".join(str(o) for o in self.observations), config_file
+                    "\n".join(as_obs_config_content(o) for o in self.observations),
+                    config_file,
                 ),
             ),
             ConfigKeys.HISTORY_SOURCE: self.history_source,
@@ -570,6 +573,17 @@ def sim_job(installed_jobs):
     return x
 
 
+def get_date(observation, start):
+    if observation.date is not None:
+        return datetime.datetime.strptime(observation.date, "%Y-%m-%d")
+    delta = datetime.timedelta(days=0)
+    if observation.days is not None:
+        delta += datetime.timedelta(days=observation.days)
+    if observation.hours is not None:
+        delta += datetime.timedelta(hours=observation.hours)
+    return start + delta
+
+
 def _observation_dates(
     observations, start_date: datetime.datetime
 ) -> list[datetime.datetime]:
@@ -577,7 +591,16 @@ def _observation_dates(
     :returns: the dates that need to exist in the refcase for ert to accept the
         observations
     """
-    dates = list(set([start_date] + [o.get_date(start_date) for o in observations]))
+    dates = list(
+        set(
+            [start_date]
+            + [
+                get_date(o, start_date)
+                for o in observations
+                if isinstance(o, (GeneralObservation, SummaryObservation))
+            ]
+        )
+    )
     restart_obs = [
         o for o in observations if hasattr(o, "restart") and o.restart is not None
     ]
@@ -695,7 +718,7 @@ def config_generators(draw, use_eclbase=booleans):
 
             with open(config_values.obs_config, "w", encoding="utf-8") as fh:
                 for o in obs:
-                    fh.write(str(o))
+                    fh.write(as_obs_config_content(o))
                     fh.write("\n")
 
             def make_executable(filename):

@@ -14,7 +14,10 @@ from hypothesis import assume, given, settings
 
 from ert.cli.main import ErtCliError
 from ert.mode_definitions import ES_MDA_MODE
-from tests.ert.unit_tests.config.observations_generator import summary_observations
+from tests.ert.unit_tests.config.observations_generator import (
+    as_obs_config_content,
+    summary_observations,
+)
 from tests.ert.unit_tests.config.summary_generator import summaries
 
 from .run_cli import run_cli
@@ -107,7 +110,7 @@ def test_small_time_mismatches_are_ignored(
             unsmry.to_file(
                 tmp_path / f"simulations/realization-{i}/iter-{j}/CASE.UNSMRY"
             )
-    (tmp_path / "observations.txt").write_text(str(observation))
+    (tmp_path / "observations.txt").write_text(as_obs_config_content(observation))
 
     if abs(epsilon) < 1 / 3600:  # less than one second
         stderr = StringIO()

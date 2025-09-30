@@ -78,7 +78,6 @@ def test_make_observations():
     ) == [
         HistoryObservation(
             name="FOPR",
-            key="FOPR",
             error_mode="RELMIN",
             error=0.1,
             error_min=0.1,
@@ -109,7 +108,6 @@ def test_make_observations():
         ),
         HistoryObservation(
             name="FWPR",
-            key="FWPR",
             error_mode="RELMIN",
             error=0.1,
             error_min=0.1,
