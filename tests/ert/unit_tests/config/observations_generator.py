@@ -208,6 +208,13 @@ def observations(draw, ensemble_keys, summary_keys, std_cutoff, start_date):
                         allow_nan=False,
                         allow_infinity=False,
                     ),
+                    error_min=st.floats(
+                        min_value=0.0,
+                        max_value=1e20,
+                        allow_nan=False,
+                        allow_infinity=False,
+                        exclude_min=True,
+                    ),
                     segments=st.lists(
                         st.builds(
                             Segment,
