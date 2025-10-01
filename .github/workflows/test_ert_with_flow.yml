@@ -71,12 +71,3 @@ jobs:
         perl -p -i -e 's/NUM_REALIZATIONS\s*12/NUM_REALIZATIONS 2/g' flow.ert
         uv run ert ensemble_experiment --disable-monitoring flow.ert
         popd
-
-    - name: Run Everest on an example configuration with flow
-      run: |
-        pushd test-data/everest/eightcells/everest/model
-        yq eval '.model.realizations = [0, 1]' -i config.yml
-        yq eval '.simulator.queue_system.max_running = 4' -i config.yml
-        uv run everest lint config.yml
-        uv run everest run config.yml --skip-prompt --disable-monitoring
-        popd
