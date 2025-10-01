@@ -766,7 +766,7 @@ def test_that_the_help_menu_contains_the_about_dialog(qtbot):
     )
 
 
-def test_validation_of_experiment_names_in_run_models(
+def test_that_the_run_experiment_button_is_disabled_when_the_experiment_name_is_invalid(
     ensemble_experiment_has_run_no_failure, qtbot
 ):
     gui = ensemble_experiment_has_run_no_failure
