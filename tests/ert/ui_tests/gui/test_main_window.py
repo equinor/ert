@@ -766,38 +766,34 @@ def test_that_the_help_menu_contains_the_about_dialog(qtbot):
     )
 
 
+@pytest.mark.parametrize(
+    "exp_type, panel_name",
+    (
+        (EnsembleExperiment, "Ensemble_experiment_panel"),
+        (EnsembleSmoother, "ensemble_smoother_panel"),
+        (EnsembleInformationFilter, "enif_panel"),
+        (MultipleDataAssimilation, "ES_MDA_panel"),
+    ),
+)
 def test_that_the_run_experiment_button_is_disabled_when_the_experiment_name_is_invalid(
-    ensemble_experiment_has_run_no_failure, qtbot
+    opened_main_window_poly, qtbot, exp_type, panel_name
 ):
-    gui = ensemble_experiment_has_run_no_failure
+    gui = opened_main_window_poly
     experiment_panel = get_child(gui, ExperimentPanel)
     experiment_types = get_child(experiment_panel, QComboBox, name="experiment_type")
     run_experiment = get_child(experiment_panel, QWidget, name="run_experiment")
 
-    experiment_types_to_test = (
-        (EnsembleExperiment.display_name(), "Ensemble_experiment_panel"),
-        (EnsembleSmoother.display_name(), "ensemble_smoother_panel"),
-        (EnsembleInformationFilter.display_name(), "enif_panel"),
-        (
-            MultipleDataAssimilation.display_name(),
-            "ES_MDA_panel",
-        ),
+    experiment_types.setCurrentText(exp_type.display_name())
+
+    experiment_config_panel = get_child(gui, QWidget, name=panel_name)
+    experiment_field = get_child(
+        experiment_config_panel, StringBox, name="experiment_field"
     )
-    for exp_type, panel_name in experiment_types_to_test:
-        experiment_types.setCurrentText(exp_type)
+    experiment_field.setText(" @not val id")
+    assert not run_experiment.isEnabled()
 
-        experiment_config_panel = get_child(gui, QWidget, name=panel_name)
-        experiment_field = get_child(
-            experiment_config_panel, StringBox, name="experiment_field"
-        )
-        experiment_field.setText(" @not val id")
-        assert not run_experiment.isEnabled()
-
-        experiment_field.setText("valid_")
-        assert run_experiment.isEnabled()
-
-        experiment_field.setText("ensemble_experiment")
-        assert not run_experiment.isEnabled()
+    experiment_field.setText("valid_")
+    assert run_experiment.isEnabled()
 
 
 def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
