@@ -64,7 +64,7 @@ observation_times = st.dates(
     enkf_alpha=st.floats(min_value=3.0, max_value=10.0),
     epsilon=st.sampled_from([0.0, 1.1, 2.0, -2.0]),
 )
-def test_small_time_mismatches_are_ignored(
+def test_that_small_time_mismatches_in_summaries_are_ignored(
     responses_observation, tmp_path_factory, std_cutoff, enkf_alpha, epsilon
 ):
     responses = responses_observation["responses"]
