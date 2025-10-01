@@ -405,7 +405,7 @@ def test_that_num_realizations_is_a_required_keyword():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_ert_config_parses_date():
+def test_that_the_date_magic_string_is_substituted_with_todays_date():
     test_config_file_base = "test"
     test_config_file_name = f"{test_config_file_base}.ert"
     test_config_contents = dedent(
