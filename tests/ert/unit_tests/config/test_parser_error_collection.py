@@ -390,7 +390,7 @@ def test_invalid_num_realizations_does_not_lead_to_unset_error():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_summary_without_eclbase():
+def test_that_using_summary_keyword_without_setting_eclbase_is_invalid():
     assert_that_config_leads_to_error(
         config_file_contents=dedent(
             """
