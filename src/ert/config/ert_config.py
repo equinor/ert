@@ -1004,7 +1004,7 @@ class ErtConfig(BaseModel):
             ]
             if overwrite_params:
                 ConfigWarning.warn(
-                    f"Parameters {dm_params} "
+                    f"Parameters {overwrite_params} "
                     "will be overridden by design matrix. This will cause "
                     "updates to be turned off for these parameters."
                 )
