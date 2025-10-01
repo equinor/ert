@@ -194,9 +194,6 @@ async def start_experiment(
         runner = ExperimentRunner(config)
         try:
             background_tasks.add_task(runner.run)
-            shared_data.status = ExperimentStatus(
-                status=ExperimentState.running, message="Experiment started"
-            )
             # Assume only one unique running experiment per everserver instance
             # Ideally, we should return the experiment ID in the response here
             shared_data.config_path = config.config_path
@@ -351,7 +348,7 @@ class ExperimentRunner:
                 status=exp_status,
             )
         except UserCancelled as e:
-            logging.getLogger(EVERSERVER).exception(e)
+            logging.getLogger(EVERSERVER).info(f"User cancelled: {e}")
         except Exception as e:
             logging.getLogger(EVERSERVER).exception(e)
             shared_data.status = ExperimentStatus(

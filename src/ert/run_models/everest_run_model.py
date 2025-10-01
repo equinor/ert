@@ -79,7 +79,7 @@ from ..run_arg import RunArg, create_run_arguments
 from ..storage.local_ensemble import EverestRealizationInfo
 from ..substitutions import Substitutions
 from .event import EverestBatchResultEvent, EverestStatusEvent
-from .run_model import RunModel, StatusEvents
+from .run_model import ExperimentState, ExperimentStatus, RunModel, StatusEvents
 
 if TYPE_CHECKING:
     from ert.storage import Ensemble, Experiment
@@ -504,6 +504,17 @@ class EverestRunModel(RunModel):
     def exit_code(self) -> EverestExitCode | None:
         return self._exit_code
 
+    def cancel(self) -> None:
+        if self._experiment is not None:
+            self.set_experiment_status(
+                self._experiment.id,
+                ExperimentStatus(
+                    message="Optimization aborted",
+                    status=ExperimentState.stopped,
+                ),
+            )
+        super().cancel()
+
     def __repr__(self) -> str:
         return f"EverestRunModel(config={self.user_config_file})"
 
@@ -587,6 +598,13 @@ class EverestRunModel(RunModel):
             responses=self.response_configuration,
         )
 
+        self.set_experiment_status(
+            self._experiment.id,
+            ExperimentStatus(
+                message="Experiment started", status=ExperimentState.running
+            ),
+        )
+
         # Initialize the ropt optimizer:
         optimizer, initial_guesses = self._create_optimizer()
 
@@ -617,22 +635,46 @@ class EverestRunModel(RunModel):
         ):
             self._ever_storage.export_everest_opt_results_to_csv()
 
+        experiment_status = None
         if self._exit_code is None:
             match optimizer_exit_code:
                 case RoptExitCode.MAX_FUNCTIONS_REACHED:
                     self._exit_code = EverestExitCode.MAX_FUNCTIONS_REACHED
+                    experiment_status = ExperimentStatus(
+                        message="Maximum number of function evaluations reached.",
+                        status=ExperimentState.completed,
+                    )
                 case RoptExitCode.MAX_BATCHES_REACHED:
                     self._exit_code = EverestExitCode.MAX_BATCH_NUM_REACHED
+                    experiment_status = ExperimentStatus(
+                        message="Maximum number of batches reached.",
+                        status=ExperimentState.completed,
+                    )
                 case RoptExitCode.USER_ABORT:
                     self._exit_code = EverestExitCode.USER_ABORT
+                    experiment_status = ExperimentStatus(
+                        message="Optimization aborted.", status=ExperimentState.stopped
+                    )
                 case RoptExitCode.TOO_FEW_REALIZATIONS:
                     self._exit_code = (
                         EverestExitCode.TOO_FEW_REALIZATIONS
                         if self.get_number_of_successful_realizations() > 0
                         else EverestExitCode.ALL_REALIZATIONS_FAILED
                     )
+                    experiment_status = ExperimentStatus(
+                        message="Too few realizations."
+                        if self.get_number_of_successful_realizations() > 0
+                        else "All realizations failed.",
+                        status=ExperimentState.failed,
+                    )
                 case _:
                     self._exit_code = EverestExitCode.COMPLETED
+                    experiment_status = ExperimentStatus(
+                        message="Experiment completed", status=ExperimentState.completed
+                    )
+
+        if experiment_status is not None:
+            self.set_experiment_status(self._experiment.id, experiment_status)
 
         logger.debug(
             f"Everest experiment finished with exit code {self._exit_code.name}"

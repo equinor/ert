@@ -41,6 +41,7 @@ class _Index(BaseModel):
     # from a different experiment. For example, a manual update
     # is a separate experiment from the one that created the prior.
     ensembles: list[UUID]
+    status: dict[str, Any] | None = None
 
 
 _responses_adapter = TypeAdapter(  # type: ignore
@@ -73,6 +74,7 @@ class LocalExperiment(BaseMode):
     _responses_file = Path("responses.json")
     _metadata_file = Path("metadata.json")
     _templates_file = Path("templates.json")
+    _index_file = Path("index.json")
 
     def __init__(
         self,
@@ -97,7 +99,7 @@ class LocalExperiment(BaseMode):
         self._storage = storage
         self._path = path
         self._index = _Index.model_validate_json(
-            (path / "index.json").read_text(encoding="utf-8")
+            (path / self._index_file).read_text(encoding="utf-8")
         )
 
     @classmethod
@@ -147,7 +149,7 @@ class LocalExperiment(BaseMode):
             name = datetime.today().isoformat()
 
         storage._write_transaction(
-            path / "index.json",
+            path / cls._index_file,
             _Index(id=uuid, name=name, ensembles=[])
             .model_dump_json(indent=2)
             .encode("utf-8"),
@@ -294,6 +296,20 @@ class LocalExperiment(BaseMode):
     @property
     def id(self) -> UUID:
         return self._index.id
+
+    @property
+    def status(self) -> dict[str, Any] | None:
+        return self._index.status
+
+    @status.setter
+    @require_write
+    def status(self, status: dict[str, Any] | None) -> None:
+        if status != self._index.status:
+            self._index.status = status
+            self._storage._write_transaction(
+                self.mount_point / self._index_file,
+                self._index.model_dump_json(indent=2).encode("utf-8"),
+            )
 
     @property
     def mount_point(self) -> Path:
