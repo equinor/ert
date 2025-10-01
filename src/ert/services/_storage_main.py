@@ -207,9 +207,6 @@ def run_server(
     connection_info = _create_connection_info(sock, authtoken, config.ssl_certfile)
     server = Server(config, json.dumps(connection_info))
 
-    if args.logging_config:
-        with open(args.logging_config, encoding="utf-8") as fin:
-            logging.config.dictConfig(yaml.safe_load(fin))
     logger = logging.getLogger("ert.shared.storage.info")
     if args.verbose:
         handler = logging.StreamHandler(sys.stdout)
@@ -278,7 +275,7 @@ def main() -> None:
         "ssl_keyfile_password": key_pw,
         "ssl_version": ssl.PROTOCOL_TLS_SERVER,
     }
-    with open(STORAGE_LOG_CONFIG, encoding="utf-8") as conf_file:
+    with open(args.logging_config or STORAGE_LOG_CONFIG, encoding="utf-8") as conf_file:
         logging_conf = yaml.safe_load(conf_file)
         logging.config.dictConfig(logging_conf)
         config_args.update(log_config=logging_conf)
