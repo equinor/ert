@@ -200,7 +200,7 @@ def test_that_there_is_a_link_to_github_in_the_suggester(tmp_path, qtbot):
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_that_run_workflow_component_disabled_when_no_workflows(qapp):
+def test_that_the_run_workflow_tool_is_disabled_when_there_are_no_workflows(qapp):
     args = Mock()
     args.config = "poly.ert"
     with add_gui_log_handler() as log_handler:
@@ -210,7 +210,7 @@ def test_that_run_workflow_component_disabled_when_no_workflows(qapp):
 
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
-def test_that_run_workflow_component_enabled_when_workflows(qapp, tmp_path):
+def test_that_the_run_workflow_tool_is_enabled_when_there_are_workflows(qapp, tmp_path):
     config_file = tmp_path / "config.ert"
 
     with open(config_file, "a+", encoding="utf-8") as ert_file:
