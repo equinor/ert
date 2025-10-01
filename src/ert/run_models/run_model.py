@@ -860,3 +860,9 @@ class RunModel(BaseModelWithContextSupport, ABC):
                 raise ErtRunError(str(exc)) from exc
 
         return parameters_config, design_matrix
+
+    def set_experiment_status(
+        self, experiment_id: uuid.UUID, experiment_status: ExperimentStatus
+    ) -> None:
+        experiment = self._storage.get_experiment(experiment_id)
+        experiment.status = experiment_status.model_dump(mode="json")
