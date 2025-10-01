@@ -15,7 +15,7 @@ def test_default_num_cpu():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_num_cpu_from_config_preferred():
+def test_that_num_cpu_from_config_is_preferred_over_parallel_from_data_file():
     data_file = "dfile"
     config_num_cpu = 17
     data_file_num_cpu = 4
@@ -41,7 +41,7 @@ def test_num_cpu_from_config_preferred():
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @given(st.text())
 @pytest.mark.usefixtures("use_tmpdir")
-def test_reading_num_cpu_from_data_file_does_not_crash(data_file_contents):
+def test_that_reading_num_cpu_from_invalid_data_file_does_not_crash(data_file_contents):
     data_file = "case.data"
     Path(data_file).write_text(data_file_contents, encoding="utf-8")
     _ = ErtConfig.from_dict(
@@ -55,7 +55,7 @@ def test_reading_num_cpu_from_data_file_does_not_crash(data_file_contents):
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @given(st.binary())
 @pytest.mark.usefixtures("use_tmpdir")
-def test_reading_num_cpu_from_binary_data_file_does_not_crash(data_file_contents):
+def test_that_reading_num_cpu_from_non_textual_file_does_not_crash(data_file_contents):
     data_file = "case.data"
     Path(data_file).write_bytes(data_file_contents)
     _ = ErtConfig.from_dict(
@@ -79,7 +79,7 @@ def test_reading_num_cpu_from_binary_data_file_does_not_crash(data_file_contents
     ],
 )
 @pytest.mark.usefixtures("use_tmpdir")
-def test_num_cpu_from_data_file_used_if_config_num_cpu_not_set(
+def test_that_num_cpu_from_data_file_is_used_if_config_num_cpu_is_not_set(
     parallelsuffix, casetitle
 ):
     data_file_num_cpu = 4
@@ -117,7 +117,7 @@ def test_num_cpu_from_data_file_used_if_config_num_cpu_not_set(
         (1.5, "must have an integer value as argument"),
     ],
 )
-def test_wrong_num_cpu_raises_validation_error(num_cpu_value, error_msg):
+def test_that_invalid_num_cpu_raises_validation_error(num_cpu_value, error_msg):
     with pytest.raises(ConfigValidationError, match=error_msg):
         ErtConfig.from_file_contents(
             f"{ConfigKeys.NUM_REALIZATIONS} 1\n{ConfigKeys.NUM_CPU} {num_cpu_value}\n"
