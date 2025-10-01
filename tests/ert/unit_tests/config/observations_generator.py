@@ -1,19 +1,18 @@
 import datetime
-from abc import ABC
-from dataclasses import dataclass, field, fields
+from dataclasses import fields
 from enum import Enum
 
 import hypothesis.strategies as st
 from hypothesis import assume
-from pydantic import PositiveFloat
 
-from ert.config._observations import ErrorModes
-
-
-@dataclass
-class Observation(ABC):
-    name: str
-    error: PositiveFloat
+from ert.config._observations import (
+    ErrorModes,
+    GeneralObservation,
+    HistoryObservation,
+    Observation,
+    Segment,
+    SummaryObservation,
+)
 
 
 def class_name(o: Observation):
@@ -48,43 +47,6 @@ def as_obs_config_content(observation: Observation) -> str:
             raise AssertionError
     result += " };"
     return result
-
-
-@dataclass
-class Segment(Observation):
-    start: int
-    stop: int
-    error_min: PositiveFloat
-
-
-@dataclass
-class HistoryObservation(Observation):
-    error_mode: ErrorModes
-    segments: list[Segment] = field(default_factory=list)
-
-
-@dataclass
-class SummaryObservation(Observation):
-    value: float
-    key: str
-    error_min: PositiveFloat
-    error_mode: ErrorModes
-    days: float | None = None
-    hours: float | None = None
-    restart: int | None = None
-    date: str | None = None
-
-
-@dataclass
-class GeneralObservation(Observation):
-    data: str
-    date: str | None = None
-    days: float | None = None
-    hours: float | None = None
-    restart: int | None = None
-    obs_file: str | None = None
-    value: float | None = None
-    index_list: list[int] | None = None
 
 
 @st.composite
