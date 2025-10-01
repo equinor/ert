@@ -69,9 +69,8 @@ def test_logging_setup(copy_math_func_test_data_to_tmp):
     # Avoid cases where optimization finished before we get a chance to check that
     # the everest server has started
     if endpoint_logs:
-        assert (
-            "everserver INFO: /experiment_server/status entered from" in endpoint_logs
-        )
+        assert "everserver INFO: Everserver starting" in endpoint_logs
+        assert "everserver INFO: ExperimentRunner done" in endpoint_logs
 
 
 def test_that_cleanup_logging_is_idempotent(monkeypatch):
