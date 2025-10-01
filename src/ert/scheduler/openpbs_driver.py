@@ -252,7 +252,7 @@ class OpenPBSDriver(Driver):
             return
 
         process_success, process_message = await self._execute_with_retry(
-            [str(self._qdel_cmd), " ".join(job_ids_to_kill)],
+            [str(self._qdel_cmd), *job_ids_to_kill],
             retry_codes=(QDEL_REQUEST_INVALID,),
             accept_codes=(QDEL_JOB_HAS_FINISHED,),
             total_attempts=self._max_pbs_cmd_attempts,

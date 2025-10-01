@@ -159,28 +159,45 @@ async def test_repeated_submit_same_iens(driver: Driver, tmp_path, monkeypatch):
 @pytest.mark.flaky(reruns=5)
 async def test_kill_actually_kills(driver: Driver, tmp_path, pytestconfig, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    finished = False
+    realizations = {0, 1}
+    iens_status = {
+        realization: {"finished": False, "started": False}
+        for realization in realizations
+    }
+
     driver._poll_period = 0.01
 
-    async def kill_job_once_started(iens):
-        nonlocal driver
-        await driver.kill(iens)
+    async def kill_jobs_once_all_started(realizations):
+        nonlocal driver, iens_status
+        for realization in realizations:
+            iens_status[realization]["started"] = True
+        if all(realization["started"] for realization in iens_status.values()):
+            await driver.kill(iens_status.keys())
 
     async def mark_as_finished(iens, code):
-        nonlocal finished
-        finished = True
+        nonlocal iens_status
+        iens_status[iens]["finished"] = True
 
-    await driver.submit(
-        0,
-        "sh",
-        "-c",
-        f"sleep 10; touch {tmp_path}/survived",
-        name="kill_me",
+    for realization_id in realizations:
+        await driver.submit(
+            realization_id,
+            "sh",
+            "-c",
+            f"sleep 10; touch {tmp_path}/{realization_id}",
+            name=f"kill_me_{realization_id}",
+        )
+
+    await poll(
+        driver,
+        realizations,
+        started=kill_jobs_once_all_started,
+        finished=mark_as_finished,
     )
-    await poll(driver, {0}, started=kill_job_once_started, finished=mark_as_finished)
-    assert finished
-
-    assert not Path("survived").exists(), "Job should have been killed"
+    for realization_id in realizations:
+        assert iens_status[realization_id]["finished"]
+        assert not Path(f"survived_{realization_id}").exists(), (
+            "Job should have been killed"
+        )
 
 
 @pytest.mark.integration_test
