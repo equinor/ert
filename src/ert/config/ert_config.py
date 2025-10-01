@@ -658,7 +658,7 @@ def create_list_of_forward_model_steps_to_run(
 def log_observation_keys(
     observations: list[ObservationDict],
 ) -> None:
-    observation_type_counts = Counter(o["type"].value for o in observations)
+    observation_type_counts = Counter(str(o["type"]) for o in observations)
     observation_keyword_counts = Counter(
         "SEGMENT" if key == "segments" else str(key)
         for o in observations
@@ -941,6 +941,14 @@ class ErtConfig(BaseModel):
             errors.append(err)
 
         obs_config_args = config_dict.get(ConfigKeys.OBS_CONFIG)
+        observations_args = config_dict.get(ConfigKeys.OBSERVATIONS)
+        if obs_config_args and observations_args:
+            raise ConfigValidationError.with_context(
+                "Cannot have both OBS_CONFIG and"
+                "OBSERVATIONS in the ert config file at the same time",
+                context=obs_config_args[0],
+            )
+        obs_config_args = obs_config_args or observations_args
         obs_configs: list[Observation] = []
         try:
             if obs_config_args:

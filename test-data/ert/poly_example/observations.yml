@@ -1,0 +1,5 @@
+- type: GENERAL_OBSERVATION
+  name: POLY_OBS
+  data: POLY_RES
+  index_list: 0,2,4,6,8
+  obs_file: poly_obs_data.txt

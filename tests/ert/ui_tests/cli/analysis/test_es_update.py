@@ -99,19 +99,18 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert():
         )
         surf.to_file(f"surface/surf_init_{i}.irap", fformat="irap_ascii")
 
-    # Single observation with a large ERROR to make sure the udpate is minimal.
-    obs = """
-    SUMMARY_OBSERVATION WOPR_OP1_9
-    {
-        VALUE   = 0.1;
-        ERROR   = 200.0;
-        DATE    = 2010-03-31;
-        KEY     = WOPR:OP1;
-    };
-    """
-
-    with open("observations/observations.txt", "w", encoding="utf-8") as file:
-        file.write(obs)
+    with open("observations/observations.yml", "w", encoding="utf-8") as file:
+        # Single observation with a large ERROR to make sure the udpate is minimal.
+        file.write(
+            dedent("""\
+                   - type: SUMMARY_OBSERVATION
+                     name: WOPR_OP1_9
+                     value: '0.1'
+                     error: '200.0'
+                     date: '2010-03-31'
+                     key: WOPR:OP1
+                   """)
+        )
 
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,

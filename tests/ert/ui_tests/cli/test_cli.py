@@ -604,6 +604,7 @@ def test_cli_does_not_run_without_observations(mode, target):
 
     # Remove observations from config file
     remove_linestartswith("poly.ert", "OBS_CONFIG")
+    remove_linestartswith("poly.ert", "OBSERVATIONS")
 
     with pytest.raises(ErtCliError, match=f"To run {mode}, observations are needed."):
         run_cli(mode, "--disable-monitoring", "--target-ensemble", target, "poly.ert")

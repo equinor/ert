@@ -80,14 +80,14 @@ def test_that_adaptive_localization_works_with_a_single_observation():
         lines = f.readlines()
         lines.insert(9, set_adaptive_localization_0)
 
-    content = """GENERAL_OBSERVATION POLY_OBS {
-        DATA       = POLY_RES;
-        INDEX_LIST = 0;
-        OBS_FILE   = poly_obs_data.txt;
-    };"""
-
-    with open("observations", "w", encoding="utf-8") as file:
-        file.write(content)
+    with open("observations.yml", "w", encoding="utf-8") as file:
+        file.write("""
+- type: GENERAL_OBSERVATION
+  name: POLY_OBS
+  data: POLY_RES
+  index_list: "0"
+  obs_file: poly_obs_data.txt
+""")
 
     content = "2.1457049781272213 0.6"
 

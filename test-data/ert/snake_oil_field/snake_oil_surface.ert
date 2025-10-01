@@ -20,7 +20,7 @@ HISTORY_SOURCE REFCASE_HISTORY
 REFCASE refcase/SNAKE_OIL_FIELD
 
 TIME_MAP refcase/time_map.txt
-OBS_CONFIG observations/observations.txt
+OBSERVATIONS observations/observations.yml
 
 INSTALL_JOB SNAKE_OIL_ECLIPSE_SIMULATOR forward_models/SNAKE_OIL_SIMULATOR
 INSTALL_JOB SNAKE_OIL_NPV forward_models/SNAKE_OIL_NPV
