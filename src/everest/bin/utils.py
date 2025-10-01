@@ -26,18 +26,19 @@ from ert.ensemble_evaluator import (
 from ert.logging import LOGGING_CONFIG
 from ert.plugins.plugin_manager import ErtPluginManager
 from ert.services import StorageService
+from ert.storage import open_storage
 from everest.config import EverestConfig
 from everest.config.server_config import ServerConfig
 from everest.detached import (
-    ExperimentState,
-    everserver_status,
     server_is_running,
     start_monitor,
     stop_server,
     wait_for_server_to_stop,
 )
+from everest.detached.client import ExperimentState
+from everest.detached.everserver import ExperimentStatus
 from everest.simulator import JOB_FAILURE, JOB_RUNNING, JOB_SUCCESS
-from everest.strings import EVEREST, OPT_PROGRESS_ID, SIM_PROGRESS_ID
+from everest.strings import EVEREST, OPT_PROGRESS_ID, SIM_PROGRESS_ID, STORAGE_DIR
 from everest.util import makedirs_if_needed
 
 
@@ -417,21 +418,6 @@ def run_empty_detached_monitor(
     start_monitor(server_context, callback=lambda _: None)
 
 
-def report_on_previous_run(
-    config_file: str,
-    everserver_status_path: str,
-    optimization_output_dir: str,
-) -> None:
-    server_state = everserver_status(everserver_status_path)
-    if server_state["status"] == ExperimentState.failed:
-        error_msg = server_state["message"]
-        print(f"Optimization run failed, with error: {error_msg}\n")
-    else:
-        print(
-            f"Optimization completed.\nResults are stored in {optimization_output_dir}"
-        )
-
-
 def _read_user_preferences(user_info_path: Path) -> dict[str, dict[str, Any]]:
     try:
         if user_info_path.exists():
@@ -477,3 +463,19 @@ def show_scaled_controls_warning() -> None:
                 logging.getLogger(EVEREST).error(str(e))
         case "n":
             raise SystemExit(0)
+
+
+def get_experiment_status(config: EverestConfig) -> ExperimentStatus:
+    """
+    Reads the experiment status from storage. If no experiments are found,
+    returns an ExperimentStatus with status 'never_run'. We assume that there is
+    only one experiment for each everest run in storage.
+    """
+    storage_dir = os.path.join(config.output_dir, STORAGE_DIR)
+    with open_storage(storage_dir, "w") as storage:
+        if len(list(storage.experiments)) == 0:
+            return ExperimentStatus(status=ExperimentState.never_run)
+        experiment_status = next(iter(storage.experiments)).status
+        if experiment_status is not None:
+            return ExperimentStatus(**experiment_status)
+        return ExperimentStatus(status=ExperimentState.never_run)
