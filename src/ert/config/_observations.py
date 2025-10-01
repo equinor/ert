@@ -41,6 +41,10 @@ class HistoryObservation(ObservationError):
 
     @property
     def key(self) -> str:
+        """The :term:`summary key` to be fetched from :ref:`refcase`."""
+        # For history observations the key is also the name, ie.
+        # "HISTORY_OBSERVATION FOPR" means to add the values from
+        # the summary vector FOPRH in refcase as observations.
         return self.name
 
     @classmethod
@@ -85,7 +89,7 @@ class ObservationDate:
 class _SummaryValues:
     name: str
     value: float
-    key: str
+    key: str  #: The :term:`summary key` in the summary response
 
 
 @dataclass
