@@ -78,7 +78,7 @@ def _check_user(credentials: HTTPBasicCredentials) -> None:
 
 
 def _log(request: Request) -> None:
-    logging.getLogger(EVERSERVER).info(
+    logging.getLogger(EVERSERVER).debug(
         f"{request.scope['path']} entered from "
         f"{request.client.host if request.client else 'unknown host'} "
         f"with HTTP {request.method}"
