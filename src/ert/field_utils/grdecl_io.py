@@ -1,13 +1,42 @@
 from __future__ import annotations
 
+import operator
 import os
 from collections.abc import Iterator
 from contextlib import contextmanager
+from functools import reduce
 from typing import Any, TextIO
 
 import numpy as np
 import numpy.typing as npt
 import resfo
+
+from ert.config.parameter_config import InvalidParameterFile
+
+
+class GridFieldMismatchError(InvalidParameterFile):
+    """
+    Raised when a Field's values does not fit the size of
+    the provided Grid.
+    """
+
+    def __init__(
+        self,
+        field_values: npt.NDArray[np.float32],
+        grid_dimensions: tuple[int, int, int],
+        field_name: str,
+        file_path: str | os.PathLike[str],
+    ) -> None:
+        grid_size = reduce(operator.mul, grid_dimensions)
+        field_size = len(field_values)
+        msg = (
+            f"The FIELD '{field_name}' from file "
+            f"{os.path.relpath(file_path, os.getcwd())} "
+            f"is of size ({field_size}) which does not match the "
+            f"size of the GRID ({grid_size}) - "
+            f"derived from dimensions: {tuple(grid_dimensions)}."
+        )
+        super().__init__(msg)
 
 
 def _split_line(line: str) -> Iterator[str]:
@@ -187,6 +216,10 @@ def import_grdecl(
 
     # The values are stored in F order in the grdecl file
     f_order_values = np.asarray(result, dtype=dtype)
+    grid_size = reduce(operator.mul, dimensions)
+    field_size = len(f_order_values)
+    if field_size != grid_size:
+        raise GridFieldMismatchError(f_order_values, dimensions, field_name, file_path)
     return np.ascontiguousarray(f_order_values.reshape(dimensions, order="F"))
 
 
@@ -213,6 +246,12 @@ def import_bgrdecl(
                         f" in {file_path}"
                     )
                 values = values.astype(np.float32)
+                field_size = len(values)
+                grid_size = reduce(operator.mul, dimensions)
+                if field_size != grid_size:
+                    raise GridFieldMismatchError(
+                        values, dimensions, field_name, file_path
+                    )
                 return values.reshape(dimensions, order="F")
 
     raise ValueError(f"Did not find field parameter {field_name} in {file_path}")

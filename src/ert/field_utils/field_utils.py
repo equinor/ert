@@ -111,26 +111,16 @@ def read_field(
             f'Could not read {field_path}. Unrecognized suffix "{file_extension}"'
         ) from err
 
-    try:
-        values: npt.NDArray[np.float32] | np.ma.MaskedArray[Any, np.dtype[np.float32]]
-        if file_format in ROFF_FORMATS:
-            values = import_roff(field_path, field_name)
-        elif file_format == FieldFileFormat.GRDECL:
-            values = import_grdecl(field_path, field_name, shape, dtype=np.float32)
-        elif file_format == FieldFileFormat.BGRDECL:
-            values = import_bgrdecl(field_path, field_name, shape)
-        else:
-            ext = path.suffix
-            raise ValueError(
-                f'Could not read {field_path}. Unrecognized suffix "{ext}"'
-            )
-    except ValueError as err:
-        msg = (
-            f"Error trying to read FIELD {field_path}. This might be due to "
-            "a mismatch between the dimensions of the grids and fields used with "
-            f"the GRID and FIELD keywords in the configuration. ({err})"
-        )
-        raise ValueError(msg) from err
+    values: npt.NDArray[np.float32] | np.ma.MaskedArray[Any, np.dtype[np.float32]]
+    if file_format in ROFF_FORMATS:
+        values = import_roff(field_path, field_name)
+    elif file_format == FieldFileFormat.GRDECL:
+        values = import_grdecl(field_path, field_name, shape, dtype=np.float32)
+    elif file_format == FieldFileFormat.BGRDECL:
+        values = import_bgrdecl(field_path, field_name, shape)
+    else:
+        ext = path.suffix
+        raise ValueError(f'Could not read {field_path}. Unrecognized suffix "{ext}"')
 
     return np.ma.MaskedArray(data=values, mask=mask, fill_value=np.nan)  # type: ignore
 
