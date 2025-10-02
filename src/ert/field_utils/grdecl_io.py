@@ -152,8 +152,8 @@ def open_grdecl(
 
 
 def import_grdecl(
-    filename: str | os.PathLike[str],
-    name: str,
+    file_path: str | os.PathLike[str],
+    field_name: str,
     dimensions: tuple[int, int, int],
     dtype: npt.DTypeLike = np.float32,
 ) -> npt.NDArray[np.float32]:
@@ -162,8 +162,8 @@ def import_grdecl(
     of format.
 
     Args:
-        filename (pathlib.Path or str): File in grdecl format.
-        name (str): The name of the field to get from the file
+        file_path (pathlib.Path or str): File in grdecl format.
+        field_name (str): The name of the field to get from the file
         dimensions ((int,int,int)): Triple of the size of grid.
         dtype (data-type, optional): The datatype to be read, ie., float.
 
@@ -177,12 +177,12 @@ def import_grdecl(
     """
     result = None
 
-    with open_grdecl(filename, keywords=[name]) as kw_generator:
+    with open_grdecl(file_path, keywords=[field_name]) as kw_generator:
         try:
             _, result = next(kw_generator)
         except StopIteration as si:
             raise ValueError(
-                f"Did not find field parameter {name} in {filename}"
+                f"Did not find field parameter {field_name} in {file_path}"
             ) from si
 
     # The values are stored in F order in the grdecl file
