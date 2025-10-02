@@ -116,7 +116,7 @@ def read_field(
         if file_format in ROFF_FORMATS:
             values = import_roff(field_path, field_name)
         elif file_format == FieldFileFormat.GRDECL:
-            values = import_grdecl(path, field_name, shape, dtype=np.float32)
+            values = import_grdecl(field_path, field_name, shape, dtype=np.float32)
         elif file_format == FieldFileFormat.BGRDECL:
             values = import_bgrdecl(field_path, field_name, shape)
         else:
