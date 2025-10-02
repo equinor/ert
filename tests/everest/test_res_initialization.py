@@ -708,3 +708,64 @@ def test_that_summary_keys_are_passed_through_forward_model_results(
     )
 
     assert {"one", "two", "three"}.issubset(summary_config.keys)
+
+
+def test_that_summary_keys_default_to_expected_keys_according_to_wells(
+    monkeypatch, tmp_path, min_config
+):
+    monkeypatch.chdir(tmp_path)
+    min_config["forward_model"] = [
+        {
+            "job": "eclipse100 CASE.DATA",
+            "results": {
+                "file_name": "CASE",
+                "type": "summary",
+            },
+        }
+    ]
+    min_config["wells"] = [{"name": "OP1"}, {"name": "WI1"}]
+    min_config["controls"] = [
+        {
+            "name": "well_rate",
+            "type": "generic_control",
+            "variables": [
+                {
+                    "name": "OP1",
+                    "index": 1,
+                    "initial_guess": 50,
+                    "min": 10,
+                    "max": 500,
+                },
+                {
+                    "name": "WI1",
+                    "index": 1,
+                    "initial_guess": 250,
+                    "min": 10,
+                    "max": 500,
+                },
+            ],
+        }
+    ]
+
+    with ErtPluginContext() as runtime_plugins:
+        config = EverestConfig(**min_config)
+        runmodel = EverestRunModel.create(
+            config, "exp", "batch", runtime_plugins=runtime_plugins
+        )
+
+    summary_config = next(
+        r for r in runmodel.response_configuration if isinstance(r, SummaryConfig)
+    )
+
+    data_keys = everest.simulator.DEFAULT_DATA_SUMMARY_KEYS
+    field_keys = everest.simulator.DEFAULT_FIELD_SUMMARY_KEYS
+    well_sum_keys = everest.simulator.DEFAULT_WELL_SUMMARY_KEYS
+
+    expected_defaulted_sum_keys = (
+        ["*"]
+        + data_keys
+        + field_keys
+        + [":".join(tup) for tup in itertools.product(well_sum_keys, ["OP1", "WI1"])]
+    )
+
+    assert set(summary_config.keys) == set(expected_defaulted_sum_keys)
