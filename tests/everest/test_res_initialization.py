@@ -647,3 +647,36 @@ def test_that_everest_to_ert_config_dict_does_not_create_files(tmp_path, monkeyp
     monkeypatch.chdir(tmp_path)
     everest_to_ert_config_dict(EverestConfig.with_defaults())
     assert not os.listdir(tmp_path)
+
+
+def test_that_export_keywords_are_turned_into_summary_config_keys(
+    monkeypatch, tmp_path, min_config
+):
+    monkeypatch.chdir(tmp_path)
+    extra_sum_keys = [
+        "GOIR:PRODUC",
+        "GOIT:INJECT",
+        "GOIT:PRODUC",
+        "GWPR:INJECT",
+        "GWPR:PRODUC",
+        "GWPT:INJECT",
+        "GWPT:PRODUC",
+        "GWIR:INJECT",
+    ]
+
+    min_config["export"] = {"keywords": extra_sum_keys}
+    min_config["forward_model"] = [
+        {
+            "job": "eclipse100 CASE.DATA",
+            "results": {"file_name": "CASE", "type": "summary"},
+        }
+    ]
+    with ErtPluginContext() as runtime_plugins:
+        config = EverestConfig(**min_config)
+        runmodel = EverestRunModel.create(
+            config, "exp", "batch", runtime_plugins=runtime_plugins
+        )
+    summary_config = next(
+        r for r in runmodel.response_configuration if isinstance(r, SummaryConfig)
+    )
+    assert set(extra_sum_keys).issubset(summary_config.keys)
