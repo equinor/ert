@@ -27,11 +27,14 @@ def test_site_config_with_substitutions(monkeypatch, change_to_tmpdir):
         encoding="utf-8",
     )
 
+    def runtime_plugins_with_cpu_override(**kwargs):
+        return ErtRuntimePlugins(
+            **(kwargs | {"environment_variables": {"HOW_MANY_CPU": "<NUM_CPU>"}})
+        )
+
     with mock.patch(
         "ert.plugins.plugin_manager.ErtRuntimePlugins",
-        return_value=ErtRuntimePlugins(
-            environment_variables={"HOW_MANY_CPU": "<NUM_CPU>"}
-        ),
+        side_effect=runtime_plugins_with_cpu_override,
     ):
         config = EverestConfig.with_defaults()
 

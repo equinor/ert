@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 
+from ert.plugins import ErtPluginContext
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig, OptimizationConfig, OutputConstraintConfig
 from everest.optimizer.everest2ropt import everest2ropt
@@ -142,4 +143,5 @@ def test_upper_bound_output_constraint_def(tmp_path):
         == ropt_conf["nonlinear_constraints"]["upper_bounds"]
     )
 
-    EverestRunModel.create(config)
+    with ErtPluginContext() as runtime_plugins:
+        EverestRunModel.create(config, runtime_plugins=runtime_plugins)
