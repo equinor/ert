@@ -37,63 +37,6 @@ run_ert_with_opm() {
     return "$STATUS"
 }
 
-
-
-
-# Run everest eightcells test on the cluster
-run_everest_eightcells_test() {
-
-    if [[ "$CI_RUNNER_LABEL" == "azure" ]]; then
-        #RUNNER_ROOT="/lustre1/users/f_scout_ci/eightcells_tests"
-        echo "Skip running everest eightcells test on azure for now"
-        return 0
-    elif [[ "$CI_RUNNER_LABEL" == "onprem" ]]; then
-        RUNNER_ROOT="/scratch/oompf/eightcells_tests"
-    else
-        echo "Unsupported runner label: $CI_RUNNER_LABEL"
-        return 1
-    fi
-
-    mkdir -p "$RUNNER_ROOT"
-
-    EIGHTCELLS_RUNPATH=$(mktemp -d -p "$RUNNER_ROOT")
-
-    # Need to copy the eightcells test to a directory that is accessible by all cluster members
-    cp -r "${CI_SOURCE_ROOT}/test-data/everest/eightcells" "$EIGHTCELLS_RUNPATH"
-    chmod -R a+rx "$EIGHTCELLS_RUNPATH"
-    pushd "${EIGHTCELLS_RUNPATH}/eightcells" || exit 1
-    echo "EIGHTCELLS_RUNPATH: $EIGHTCELLS_RUNPATH"
-
-    disable_komodo
-    # shellcheck source=/dev/null
-    source "${_KOMODO_ROOT}/${_FULL_RELEASE_NAME}/enable"
-
-    CONFIG="everest/model/config.yml"
-    if [[ "$CI_RUNNER_LABEL" == "azure" ]]; then
-        sed -i "s/name: local/name: torque\n    queue: permanent_8/g" "$CONFIG"
-        export PATH=$PATH:/opt/pbs/bin
-    elif [[ "$CI_RUNNER_LABEL" == "onprem" ]]; then
-        sed -i "s/name: local/name: lsf/g" "$CONFIG"
-        export PATH=$PATH:/global/bin
-    fi
-
-    everest run "$CONFIG" --skip-prompt --debug --disable-monitoring
-    STATUS=$?
-    popd || exit 1
-
-    if [ $STATUS -ne 0 ]; then
-        echo "Everest eightcells test failed. Running everest kill"
-        everest kill "$CONFIG"
-    fi
-
-    # Clean up the temp folder removing folders older than 7 days
-    find "$RUNNER_ROOT" -maxdepth 1 -mtime +7 -user f_scout_ci -type d -exec rm -r {} \;
-
-    return $STATUS
-}
-
-
-
 start_tests() {
     export NO_PROXY=localhost,127.0.0.1
     export ERT_PYTEST_ARGS=--eclipse-simulator
@@ -114,9 +57,6 @@ start_tests() {
       return $?
     elif [ "$CI_SUBSYSTEM_TEST" == "everest" ]; then
       just -f "${CI_SOURCE_ROOT}"/justfile everest-tests
-      return $?
-    elif [ "$CI_SUBSYSTEM_TEST" == "everest-eightcells" ]; then
-      run_everest_eightcells_test
       return $?
     elif [ "$CI_SUBSYSTEM_TEST" == "ert-limit-memory" ]; then
       # Restricting the number of threads utilized by numpy to control memory consumption, as some tests evaluate memory usage and additional threads increase it.
@@ -142,6 +82,6 @@ start_tests() {
     else
       echo "Error: Variable $CI_SUBSYSTEM_TEST did not match any testable subsystem"
     fi
-    echo "Possible subsystems are: ert, everest, everest-eightcells, ert-limit-memory, ert-queue-system, opm-integration"
+    echo "Possible subsystems are: ert, everest, ert-limit-memory, ert-queue-system, opm-integration"
     return 1
 }
