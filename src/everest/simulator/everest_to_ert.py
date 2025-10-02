@@ -1,6 +1,5 @@
 import itertools
 import json
-import logging
 import os
 from collections.abc import Iterator
 from pathlib import Path
@@ -10,25 +9,20 @@ import everest
 from ert.config import (
     EnsembleConfig,
     ExecutableWorkflow,
-    ForwardModelStep,
     ModelConfig,
     WorkflowJob,
 )
 from ert.config.ert_config import (
     _substitutions_from_dict,
-    create_list_of_forward_model_steps_to_run,
-    installed_forward_model_steps_from_dict,
-    uppercase_subkeys_and_stringify_subvalues,
 )
 from ert.config.parsing import ConfigDict, ConfigWarning, read_file
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from ert.plugins import ErtPluginContext
-from ert.plugins.plugin_manager import ErtPluginManager
 from everest.config import EverestConfig
 from everest.config.forward_model_config import SummaryResults
 from everest.config.install_job_config import InstallJobConfig
 from everest.config.simulator_config import SimulatorConfig
-from everest.strings import EVEREST, STORAGE_DIR
+from everest.strings import STORAGE_DIR
 
 
 def extract_summary_keys(ever_config: EverestConfig) -> list[str]:
@@ -202,88 +196,6 @@ def _is_dir_all_model(source: str, ever_config: EverestConfig) -> bool:
     return is_dir[0]
 
 
-def _extract_data_operations(ever_config: EverestConfig) -> list[str]:
-    forward_model = []
-    for data_req in ever_config.install_data or []:
-        if data_req.source is not None:
-            source = _expand_source_path(data_req.source, ever_config)
-            if data_req.link:
-                forward_model.append(f"symlink {source} {data_req.target}")
-            elif _is_dir_all_model(source, ever_config):
-                forward_model.append(f"copy_directory {source} {data_req.target}")
-            else:
-                forward_model.append(f"copy_file {source} {data_req.target}")
-
-    forward_model.extend(
-        f"copy_file {data_file} {data_file.name}"
-        for data_file, _ in _get_install_data_files(ever_config)
-    )
-
-    well_path, _ = _get_well_file(ever_config)
-    forward_model.append(f"copy_file {well_path} {well_path.name}")
-
-    return forward_model
-
-
-def _extract_templating(ever_config: EverestConfig) -> list[str]:
-    res_input = [control.name for control in ever_config.controls]
-    res_input = [fn + ".json" for fn in res_input]
-    res_input.append(str(_get_well_file(ever_config)[0]))
-
-    forward_model = []
-    install_templates = ever_config.install_templates or []
-    if install_templates:
-        logging.getLogger(EVEREST).info("Adding templates (install_templates):")
-    for tmpl_request in install_templates:
-        # User can define a template w/ extra data to be used with it,
-        # append file as arg to input_files if declared.
-        if tmpl_request.extra_data is not None:
-            res_input.append(tmpl_request.extra_data)
-
-        args = " ".join(
-            [
-                "--output",
-                tmpl_request.output_file,
-                "--template",
-                tmpl_request.template,
-                "--input_files",
-                *res_input,
-            ]
-        )
-
-        job = f"template_render {args}"
-        logging.getLogger(EVEREST).info(job)
-        forward_model.append(job)
-
-    return forward_model
-
-
-def _extract_forward_model(
-    ever_config: EverestConfig, ert_config: dict[str, Any]
-) -> None:
-    forward_model = _extract_data_operations(ever_config)
-    forward_model += _extract_templating(ever_config)
-    forward_model += ever_config.forward_model_step_commands
-
-    fm_steps = ert_config.get(ErtConfigKeys.FORWARD_MODEL, [])
-    for job in forward_model:
-        job_name, *args = job.split()
-        match job_name:
-            # All three reservoir simulator fm_steps map to
-            # "run_reservoirsimulator" which requires the simulator name
-            # as its first argument.
-            case "eclipse100":
-                fm_steps.append(["eclipse100", ["eclipse", *args]])
-            case "eclipse300":
-                fm_steps.append(["eclipse300", ["e300", *args]])
-            case "flow":
-                fm_steps.append(["flow", ["flow", *args]])
-            case _:
-                fm_steps.append([job_name, args])
-
-    ert_config[ErtConfigKeys.FORWARD_MODEL] = fm_steps
-
-
 def _extract_seed(ever_config: EverestConfig, ert_config: dict[str, Any]) -> None:
     random_seed = ever_config.environment.random_seed
 
@@ -301,60 +213,6 @@ def get_substitutions(
     substitutions["<ECLBASE>"] = model_config.eclbase_format_string
     substitutions["<NUM_CPU>"] = str(num_cpu)
     return substitutions
-
-
-def _get_installed_forward_model_steps(
-    ever_config: EverestConfig, config_dict: ConfigDict
-) -> dict[str, ForwardModelStep]:
-    installed_forward_model_steps: dict[str, ForwardModelStep] = {}
-    pm = ErtPluginManager()
-    for fm_step_subclass in pm.forward_model_steps:
-        fm_step = fm_step_subclass()  # type: ignore
-        installed_forward_model_steps[fm_step.name] = fm_step
-
-    installed_forward_model_steps.update(
-        installed_forward_model_steps_from_dict(config_dict)
-    )
-
-    for job in ever_config.install_jobs or []:
-        if job.executable:
-            if job.name in installed_forward_model_steps:
-                ConfigWarning.warn(
-                    f"Duplicate forward model with name {job.name!r}, "
-                    f"overriding it with {job.executable!r}.",
-                    job.name,
-                )
-            executable = Path(job.executable)
-            if not executable.is_absolute():
-                executable = ever_config.config_directory / executable
-            installed_forward_model_steps[job.name] = ForwardModelStep(
-                name=job.name, executable=str(executable)
-            )
-
-    return installed_forward_model_steps
-
-
-def get_forward_model_steps(
-    ever_config: EverestConfig, config_dict: ConfigDict, substitutions: dict[str, str]
-) -> tuple[list[ForwardModelStep], dict[str, dict[str, Any]]]:
-    installed_forward_model_steps = _get_installed_forward_model_steps(
-        ever_config, config_dict
-    )
-
-    pm = ErtPluginManager()
-    env_pr_fm_step = uppercase_subkeys_and_stringify_subvalues(
-        pm.get_forward_model_configuration()
-    )
-
-    forward_model_steps = create_list_of_forward_model_steps_to_run(
-        installed_forward_model_steps,
-        substitutions,
-        config_dict,
-        installed_forward_model_steps,
-        env_pr_fm_step,
-    )
-
-    return forward_model_steps, env_pr_fm_step
 
 
 def get_workflow_jobs(ever_config: EverestConfig) -> dict[str, WorkflowJob]:
@@ -403,7 +261,6 @@ def _everest_to_ert_config_dict(ever_config: EverestConfig) -> ConfigDict:
 
     # Extract simulator and simulation related configs
     _extract_simulator(ever_config, ert_config)
-    _extract_forward_model(ever_config, ert_config)
     _extract_environment(ever_config, ert_config)
     _extract_jobs(ever_config, ert_config, config_dir)
     _extract_workflow_jobs(ever_config, ert_config, config_dir)

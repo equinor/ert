@@ -8,6 +8,7 @@ from ruamel.yaml import YAML
 
 import everest
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.plugins import ErtPluginContext
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from tests.ert.unit_tests.resources._import_from_location import import_from_location
@@ -167,7 +168,8 @@ def test_install_template(change_to_tmpdir):
     with open(template_file, "w", encoding="utf-8") as fp:
         fp.write(THE_OPTIMAL_TEMPLATE_TMPL)
     config = EverestConfig.load_file("config.yml")
-    run_model = EverestRunModel.create(config)
+    with ErtPluginContext() as runtime_plugins:
+        run_model = EverestRunModel.create(config, runtime_plugins=runtime_plugins)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
 
@@ -263,7 +265,8 @@ def test_user_specified_data_n_template(copy_math_func_test_data_to_tmp, test):
 
     config = EverestConfig.with_defaults(**updated_config_dict)
 
-    run_model = EverestRunModel.create(config)
+    with ErtPluginContext() as runtime_plugins:
+        run_model = EverestRunModel.create(config, runtime_plugins=runtime_plugins)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
 
