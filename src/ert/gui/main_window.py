@@ -192,7 +192,7 @@ class ErtMainWindow(QMainWindow):
                 self._manage_experiments_panel = ManageExperimentsPanel(
                     self.ert_config,
                     self.notifier,
-                    self.ert_config.runpath_config.num_realizations,
+                    self.ert_config.ensemble_size,
                 )
 
                 self.central_panels_map["Manage experiments"] = (
