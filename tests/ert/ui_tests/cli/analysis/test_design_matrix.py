@@ -13,7 +13,6 @@ import pytest
 
 from ert.cli.main import ErtCliError
 from ert.config import ConfigWarning, ErtConfig
-from ert.config.design_matrix import DESIGN_MATRIX_GROUP
 from ert.mode_definitions import (
     ENSEMBLE_EXPERIMENT_MODE,
     ENSEMBLE_SMOOTHER_MODE,
@@ -44,7 +43,10 @@ def test_run_poly_example_with_design_matrix(copy_poly_case_with_design_matrix, 
         "--experiment-name",
         "test-experiment",
     )
-    assert f"Sampling parameter {DESIGN_MATRIX_GROUP}" not in caplog.text
+
+    for param in ["a", "b", "c", "category"]:
+        assert f"Getting parameter {param} from design matrix" in caplog.text
+
     storage_path = ErtConfig.from_file("poly.ert").ens_path
     config_path = ErtConfig.from_file("poly.ert").config_path
     with open_storage(storage_path) as storage:

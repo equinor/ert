@@ -37,16 +37,17 @@ def sample_prior(
         config_node = parameter_configs[parameter]
         if config_node.forward_init:
             continue
-        logger.info(
-            f"Sampling parameter {config_node.name} "
-            f"for realizations {active_realizations}"
-        )
+
         if isinstance(config_node, GenKwConfig):
             dataset: pl.DataFrame | None = None
             if (
                 config_node.input_source == DataSource.DESIGN_MATRIX
                 and design_matrix_df is not None
             ):
+                logger.info(
+                    f"Getting parameter {config_node.name} "
+                    f"from design matrix for realizations {active_realizations}"
+                )
                 cols = {"realization", config_node.name}
                 missing = cols - set(design_matrix_df.columns)
                 if missing:
@@ -59,6 +60,10 @@ def sample_prior(
                 if dataset.is_empty():
                     raise KeyError("Active realization mask is not in design matrix!")
             elif config_node.input_source == DataSource.SAMPLED:
+                logger.info(
+                    f"Sampling parameter {config_node.name} "
+                    f"for realizations {active_realizations}"
+                )
                 datasets = [
                     Ensemble.sample_parameter(
                         config_node,
