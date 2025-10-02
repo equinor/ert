@@ -1,4 +1,5 @@
 import os
+import shutil
 from pathlib import Path
 
 import networkx as nx
@@ -8,6 +9,7 @@ import xtgeo
 
 from ert.config import ConfigValidationError, ConfigWarning, Field
 from ert.config.field import TRANSFORM_FUNCTIONS
+from ert.config.parameter_config import InvalidParameterFile
 from ert.config.parsing import init_user_config_schema, parse_contents
 from ert.field_utils import FieldFileFormat, Shape, read_field
 from ert.sample_prior import sample_prior
@@ -326,3 +328,30 @@ def test_invalid_argument_gives_a_user_error_message(
         _ = parse_field_line(
             f"FIELD f parameter out.roff INIT_FILES:file.init {invalid_argument}"
         )
+
+
+def test_that_read_field_raises_grid_field_mismatch_error_given_different_sized_field_and_grid(  # noqa
+    tmpdir, monkeypatch, parse_field_line
+):
+    field_file_name = "cond_0.bgrdecl"
+    field_path = (
+        Path(__file__).resolve().parents[5]
+        / "ert"
+        / "test-data"
+        / "ert"
+        / "heat_equation"
+        / field_file_name
+    )
+    field_name = "COND"
+    mask = np.ndarray([])
+    shape = Shape(nx=5, ny=5, nz=5)
+
+    with tmpdir.as_cwd():
+        shutil.copy(field_path, field_file_name)
+        expected_error_message = (
+            rf"The FIELD '{field_name}' from file {field_file_name} is of size \(100\) "
+            r"which does not match the size of the GRID \(125\) - "
+            r"derived from dimensions: \(5, 5, 5\)."
+        )
+        with pytest.raises(InvalidParameterFile, match=expected_error_message):
+            read_field(field_file_name, field_name, mask=mask, shape=shape)

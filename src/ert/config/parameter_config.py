@@ -19,6 +19,13 @@ if TYPE_CHECKING:
     from ert.storage import Ensemble
 
 
+class InvalidParameterFile(Exception):
+    """
+    Raised when a parameter file does not fulfill its
+    format requirements.
+    """
+
+
 class ParameterCardinality(StrEnum):
     """
     multiple_configs_per_ensemble_dataset: multiple config instances per group, one
