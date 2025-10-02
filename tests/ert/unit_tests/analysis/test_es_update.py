@@ -1175,6 +1175,8 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_update_subset_parameters(storage, uniform_parameter, obs):
+    ensemble_size = 12  # We only want to update 0-9
+    active_realizations = [True] * 10 + [False] * 2
     no_update_param = GenKwConfig(
         name="EXTRA_PARAMETER",
         forward_init=False,
@@ -1193,7 +1195,7 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
     )
     prior = storage.create_ensemble(
         experiment,
-        ensemble_size=10,
+        ensemble_size=ensemble_size,
         iteration=0,
         name="prior",
     )
@@ -1248,6 +1250,7 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
         ["PARAMETER"],
         ObservationSettings(),
         ESSettings(),
+        active_realizations=active_realizations,
     )
 
     assert (
@@ -1258,3 +1261,8 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
         prior.load_parameters("PARAMETER", 0).rows()
         != posterior_ens.load_parameters("PARAMETER", 0).rows()
     )
+    assert prior.ensemble_size == posterior_ens.ensemble_size
+    assert len(prior.load_parameters("PARAMETER")["realization"]) == ensemble_size
+    assert len(
+        posterior_ens.load_parameters("PARAMETER")["realization"]
+    ) == active_realizations.count(True)

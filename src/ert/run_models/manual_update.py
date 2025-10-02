@@ -59,6 +59,7 @@ class ManualUpdate(UpdateRunModel):
                 prior.iteration,
                 prior.id,
             ),
+            active_realizations=self.active_realizations,
         )
 
     @classmethod
