@@ -15,14 +15,13 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLineEdit,
-    QMessageBox,
     QToolButton,
     QTreeView,
     QVBoxLayout,
     QWidget,
 )
 
-from ert.config import ConfigValidationError, ErrorInfo, ErtConfig
+from ert.config import ErrorInfo, ErtConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
 from ert.gui.suggestor import Suggestor
@@ -167,27 +166,10 @@ class StorageWidget(QWidget):
         create_experiment_dialog = CreateExperimentDialog(self._notifier, parent=self)
         create_experiment_dialog.show()
         if create_experiment_dialog.exec():
-            parameters_config = self._ert_config.ensemble_config.parameter_configuration
-            design_matrix = self._ert_config.analysis_config.design_matrix
-            if design_matrix is not None:
-                try:
-                    parameters_config = design_matrix.merge_with_existing_parameters(
-                        parameters_config
-                    )
-                except ConfigValidationError as exc:
-                    QMessageBox.warning(
-                        self,
-                        "Warning",
-                        (
-                            "The following issues were found when merging GenKW "
-                            f'with design matrix parameters: "{exc}"'
-                        ),
-                    )
-                    return
             try:
                 with self._notifier.write_storage() as storage:
                     ensemble = storage.create_experiment(
-                        parameters=parameters_config,
+                        parameters=self._ert_config.parameter_configurations_with_design_matrix,
                         responses=self._ert_config.ensemble_config.response_configuration,
                         observations=self._ert_config.observations,
                         name=create_experiment_dialog.experiment_name,

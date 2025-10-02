@@ -69,6 +69,8 @@ from .workflow_job import (
 if TYPE_CHECKING:
     from ert.plugins import ErtRuntimePlugins
 
+    from .parameter_config import ParameterConfig
+
 logger = logging.getLogger(__name__)
 
 EMPTY_LINES = re.compile(r"\n[\s\n]*\n")
@@ -1194,6 +1196,14 @@ class ErtConfig(BaseModel):
             ConfigWarning.warn(msg)
             return min(config_num_realizations, dm_num_realizations)
         return config_num_realizations
+
+    @property
+    def parameter_configurations_with_design_matrix(self) -> list[ParameterConfig]:
+        if self.analysis_config.design_matrix is not None:
+            return self.analysis_config.design_matrix.merge_with_existing_parameters(
+                self.ensemble_config.parameter_configuration
+            )
+        return self.ensemble_config.parameter_configuration
 
     @cached_property
     def active_realizations(self) -> list[bool]:

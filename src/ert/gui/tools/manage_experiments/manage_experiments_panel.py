@@ -7,14 +7,12 @@ from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
-    QMessageBox,
     QPushButton,
     QTabWidget,
     QVBoxLayout,
     QWidget,
 )
 
-from ert.config import ConfigValidationError
 from ert.gui.ertwidgets import (
     CheckList,
     EnsembleSelector,
@@ -27,8 +25,6 @@ from .storage_info_widget import StorageInfoWidget
 from .storage_widget import StorageWidget
 
 if TYPE_CHECKING:
-    from collections.abc import Collection
-
     from ert.config import ErtConfig
     from ert.gui.ertnotifier import ErtNotifier
 
@@ -91,37 +87,14 @@ class ManageExperimentsPanel(QTabWidget):
         main_layout.addLayout(ensemble_layout)
 
         center_layout = QHBoxLayout()
-        design_matrix = self.ert_config.analysis_config.design_matrix
-        parameters_config = self.ert_config.ensemble_config.parameter_configuration
-        realizations: Collection[int] = range(
-            self.ert_config.runpath_config.num_realizations
-        )
-        if design_matrix is not None:
-            try:
-                parameters_config = design_matrix.merge_with_existing_parameters(
-                    parameters_config
-                )
-                realizations = [
-                    real
-                    for real, active in enumerate(design_matrix.active_realizations)
-                    if active
-                ]
-            except ConfigValidationError as exc:
-                QMessageBox.warning(
-                    self,
-                    "Warning",
-                    (
-                        "The following issues were found when merging GenKW "
-                        f'with design matrix parameters: "{exc}"'
-                    ),
-                )
-                return
+        parameters_config = self.ert_config.parameter_configurations_with_design_matrix
+        realizations = [
+            real
+            for real, active in enumerate(self.ert_config.active_realizations)
+            if active
+        ]
 
-        parameter_model = SelectableListModel(
-            [p.name for p in parameters_config]
-            if design_matrix
-            else self.ert_config.ensemble_config.parameters
-        )
+        parameter_model = SelectableListModel([p.name for p in parameters_config])
         parameter_check_list = CheckList(parameter_model, "Parameters")
         parameter_check_list.setMinimumWidth(500)
         center_layout.addWidget(parameter_check_list)
@@ -150,7 +123,9 @@ class ManageExperimentsPanel(QTabWidget):
                     parameters=parameters,
                     random_seed=self.ert_config.random_seed,
                     design_matrix_df=(
-                        design_matrix.design_matrix_df if design_matrix else None
+                        self.ert_config.analysis_config.design_matrix.design_matrix_df
+                        if self.ert_config.analysis_config.design_matrix
+                        else None
                     ),
                 )
 
