@@ -27,9 +27,7 @@ from ert.plugins import ErtPluginContext, ErtRuntimePlugins
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from everest.simulator.everest_to_ert import (
-    _get_installed_forward_model_steps,
     everest_to_ert_config_dict,
-    get_forward_model_steps,
     get_internal_files,
     get_substitutions,
     get_workflow_jobs,
@@ -123,8 +121,10 @@ def test_that_site_config_queue_options_do_not_override_user_queue_config(
         simulator={"queue_system": {"name": "local"}}, model={"realizations": [0]}
     )
 
-    with ErtPluginContext():
-        config = EverestRunModel.create(ever_config, "some_exp_name", "batch")
+    with ErtPluginContext() as runtime_plugins:
+        config = EverestRunModel.create(
+            ever_config, "some_exp_name", "batch", runtime_plugins=runtime_plugins
+        )
         assert config.queue_system == "local"
 
 
@@ -147,19 +147,10 @@ def test_default_installed_jobs(tmp_path, monkeypatch):
         )
     )
 
-    config_dict = everest_to_ert_config_dict(ever_config)
-    substitutions = get_substitutions(
-        config_dict=config_dict,
-        model_config=ModelConfig(),
-        runpath_file=MagicMock(),
-        num_cpu=0,
-    )
-    forward_model_steps, _ = get_forward_model_steps(
-        ever_config, config_dict, substitutions
-    )
+    with ErtPluginContext() as runtime_plugins:
+        runmodel = EverestRunModel.create(ever_config, runtime_plugins=runtime_plugins)
 
-    # Index 0 is the copy job for wells.json
-    assert [c.name for c in forward_model_steps[1:]] == jobs
+    assert [fm.name for fm in runmodel.forward_model_steps[1:]] == jobs
 
 
 @pytest.mark.filterwarnings(
@@ -186,7 +177,11 @@ def test_combined_wells_everest_to_ert(tmp_path, monkeypatch):
     """)
         )
     )
-    runmodel = EverestRunModel.create(ever_config, "some_exp_name", "batch")
+
+    with ErtPluginContext() as runtime_plugins:
+        runmodel = EverestRunModel.create(
+            ever_config, "some_exp_name", "batch", runtime_plugins=runtime_plugins
+        )
     smry_config = next(
         r for r in runmodel.response_configuration if isinstance(r, SummaryConfig)
     )
@@ -217,19 +212,11 @@ def test_install_data_no_init(tmp_path, source, target, symlink, cmd, monkeypatc
     errors = EverestConfig.lint_config_dict(ever_config.to_dict())
     assert len(errors) == 0
 
-    config_dict = everest_to_ert_config_dict(ever_config)
-    substitutions = get_substitutions(
-        config_dict=config_dict,
-        model_config=ModelConfig(),
-        runpath_file=MagicMock(),
-        num_cpu=0,
-    )
-    forward_model_steps, _ = get_forward_model_steps(
-        ever_config, config_dict, substitutions
-    )
+    with ErtPluginContext() as runtime_plugins:
+        runmodel = EverestRunModel.create(ever_config, runtime_plugins=runtime_plugins)
 
-    expected_fm = next(val for val in forward_model_steps if val.name == cmd)
-    assert expected_fm.arglist == [f"./{source}", target]
+    matching_fm_step = next(fm for fm in runmodel.forward_model_steps if fm.name == cmd)
+    assert matching_fm_step.arglist == [f"./{source}", target]
 
 
 @pytest.mark.integration_test
@@ -261,7 +248,11 @@ def test_summary_default_no_opm(tmp_path, monkeypatch):
         ]
     )
     sum_keys = [list(set(sum_keys))]
-    runmodel = EverestRunModel.create(everconf, "some_exp_name", "batch")
+
+    with ErtPluginContext() as runtime_plugins:
+        runmodel = EverestRunModel.create(
+            everconf, "some_exp_name", "batch", runtime_plugins=runtime_plugins
+        )
     smry_config = next(
         r for r in runmodel.response_configuration if isinstance(r, SummaryConfig)
     )
@@ -382,31 +373,25 @@ def test_user_config_jobs_precedence(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     existing_job = "copy_file"
     ever_config = EverestConfig.with_defaults(model={"realizations": [0]})
-    config_dict = everest_to_ert_config_dict(ever_config)
-    installed_forward_model_steps = _get_installed_forward_model_steps(
-        ever_config, config_dict
-    )
+    with ErtPluginContext() as runtime_plugins:
+        runmodel = EverestRunModel.create(ever_config, runtime_plugins=runtime_plugins)
 
-    assert existing_job in installed_forward_model_steps
-
+    assert runmodel.forward_model_steps[0].name == existing_job
+    runmodel._storage.close()
     echo = which("echo")
+
     ever_config_new = EverestConfig.with_defaults(
         model={"realizations": [0]},
         install_jobs=[{"name": existing_job, "executable": echo}],
     )
-    config_dict_new = everest_to_ert_config_dict(ever_config_new)
-    with pytest.warns(
-        ConfigWarning,
-        match=(
-            f"Duplicate forward model with name '{existing_job}'"
-            f", overriding it with '{echo}'."
-        ),
-    ):
-        installed_forward_model_steps_new = _get_installed_forward_model_steps(
-            ever_config_new, config_dict_new
+    with ErtPluginContext() as runtime_plugins:
+        runmodel_new = EverestRunModel.create(
+            ever_config_new, runtime_plugins=runtime_plugins
         )
 
-    assert installed_forward_model_steps_new.get(existing_job).executable == echo
+    only_fm_step = runmodel_new.forward_model_steps[0]
+    assert only_fm_step.executable == echo
+    assert only_fm_step.name == existing_job
 
 
 @pytest.mark.usefixtures("no_plugins")
@@ -474,7 +459,10 @@ def test_passthrough_explicit_summary_keys(change_to_tmpdir):
         ]
     )
 
-    runmodel = EverestRunModel.create(config, "some_exp_name", "batch")
+    with ErtPluginContext() as runtime_plugins:
+        runmodel = EverestRunModel.create(
+            config, "some_exp_name", "batch", runtime_plugins=runtime_plugins
+        )
     smry_config = next(
         r for r in runmodel.response_configuration if isinstance(r, SummaryConfig)
     )

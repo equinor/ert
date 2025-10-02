@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import dataclasses
 import datetime
 import importlib.metadata
@@ -29,6 +30,7 @@ from typing_extensions import TypedDict
 from ert.config import (
     EverestConstraintsConfig,
     EverestObjectivesConfig,
+    ForwardModelStep,
     GenDataConfig,
     ParameterConfig,
     QueueConfig,
@@ -37,7 +39,9 @@ from ert.config import (
 )
 from ert.config.ert_config import (
     create_and_hook_workflows,
+    forward_model_step_from_config_contents,
     read_templates,
+    uppercase_subkeys_and_stringify_subvalues,
     workflow_jobs_from_dict,
 )
 from ert.config.model_config import (
@@ -64,9 +68,12 @@ from everest.optimizer.opt_model_transforms import (
     get_optimization_domain_transforms,
 )
 from everest.simulator.everest_to_ert import (
+    _expand_source_path,
+    _get_install_data_files,
+    _get_well_file,
+    _is_dir_all_model,
     everest_to_ert_config_dict,
     extract_summary_keys,
-    get_forward_model_steps,
     get_internal_files,
     get_substitutions,
     get_workflow_jobs,
@@ -302,8 +309,123 @@ class EverestRunModel(RunModel):
             config_dict, workflow_jobs, substitutions
         )
 
-        forward_model_steps, env_pr_fm_step = get_forward_model_steps(
-            everest_config, config_dict, substitutions
+        user_installed_fm_steps = {}
+        for job in everest_config.install_jobs:
+            if job.executable is not None:
+                executable = Path(job.executable)
+                if not executable.is_absolute():
+                    executable = everest_config.config_directory / executable
+                user_installed_fm_steps[job.name] = ForwardModelStep(
+                    name=job.name, executable=str(executable)
+                )
+            elif job.source is not None:
+                user_installed_fm_steps[job.name] = (
+                    forward_model_step_from_config_contents(
+                        config_contents=Path(job.source).read_text(encoding="utf-8"),
+                        config_file=job.source,
+                        name=job.name,
+                    )
+                )
+
+        site_installed_fm_steps = (
+            runtime_plugins.installed_forward_model_steps
+            if runtime_plugins is not None
+            else {}
+        )
+        installed_fm_steps = dict(site_installed_fm_steps) | user_installed_fm_steps
+
+        forward_model_steps = []
+
+        # Map install data to copy/symlink
+        for install_data in everest_config.install_data:
+            target = install_data.target
+
+            if install_data.source is None:
+                continue
+
+            source = _expand_source_path(install_data.source, everest_config)
+            is_dir = _is_dir_all_model(source, everest_config)
+
+            fm_name: str | None = None
+            if install_data.link:
+                fm_name = "symlink"
+            elif is_dir:
+                fm_name = "copy_directory"
+            else:
+                fm_name = "copy_file"
+
+            assert isinstance(fm_name, str)
+
+            fm_step_instance = copy.deepcopy(installed_fm_steps.get(fm_name))
+            assert fm_step_instance is not None
+            fm_step_instance.arglist = [source, target]
+            forward_model_steps.append(fm_step_instance)
+
+        for data_file, _ in _get_install_data_files(everest_config):
+            fm_step_instance = copy.deepcopy(installed_fm_steps.get("copy_file"))
+            assert fm_step_instance is not None
+            fm_step_instance.arglist = [str(data_file), data_file.name]
+            forward_model_steps.append(fm_step_instance)
+
+        well_path, _ = _get_well_file(everest_config)
+        copy_wellfile = copy.deepcopy(installed_fm_steps.get("copy_file"))
+        assert copy_wellfile is not None
+        copy_wellfile.arglist = [str(well_path), str(well_path.name)]
+        forward_model_steps.append(copy_wellfile)
+
+        # map templating to template_render job
+        res_input = [control.name + ".json" for control in everest_config.controls]
+        res_input.append(str(_get_well_file(everest_config)[0]))
+
+        for tmpl_request in everest_config.install_templates:
+            fm_step_instance = copy.deepcopy(installed_fm_steps.get("template_render"))
+            assert fm_step_instance is not None
+            if tmpl_request.extra_data is not None:
+                res_input.append(tmpl_request.extra_data)
+
+            fm_step_instance.arglist = [
+                "--output",
+                tmpl_request.output_file,
+                "--template",
+                tmpl_request.template,
+                "--input_files",
+                *res_input,
+            ]
+            logging.getLogger(EVEREST).info(
+                f"template_render {' '.join(fm_step_instance.arglist)}"
+            )
+            # User can define a template w/ extra data to be used with it,
+            # append file as arg to input_files if declared.
+            forward_model_steps.append(fm_step_instance)
+
+        for fm_spec in everest_config.forward_model:
+            fm_name, *arglist = fm_spec.job.split()
+            match fm_name:
+                # All three reservoir simulator fm_steps map to
+                # "run_reservoirsimulator" which requires the simulator name
+                # as its first argument.
+                case "eclipse100":
+                    arglist = ["eclipse", *arglist]
+                case "eclipse300":
+                    arglist = ["e300", *arglist]
+                case "flow":
+                    arglist = ["flow", *arglist]
+
+            fm_cls = installed_fm_steps.get(fm_name)
+            fm_step_instance = copy.deepcopy(fm_cls)
+            assert fm_step_instance is not None
+            fm_step_instance.arglist = arglist
+            forward_model_steps.append(fm_step_instance)
+
+        env_pr_fm_step = uppercase_subkeys_and_stringify_subvalues(
+            {
+                k: dict(v)
+                for k, v in (
+                    runtime_plugins.env_pr_fm_step
+                    if runtime_plugins is not None
+                    else {}
+                ).items()
+            }
         )
 
         env_vars = {}

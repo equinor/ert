@@ -5,6 +5,7 @@ import pytest
 import yaml
 
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.plugins import ErtPluginContext
 from ert.run_models.everest_run_model import EverestRunModel
 from ert.storage import open_storage
 from everest.config import EverestConfig
@@ -81,7 +82,9 @@ def test_remove_run_path(copy_math_func_test_data_to_tmp):
 
     simulation_dir = config.simulation_dir
 
-    run_model = EverestRunModel.create(config)
+    with ErtPluginContext() as runtime_plugins:
+        run_model = EverestRunModel.create(config, runtime_plugins=runtime_plugins)
+
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
 
@@ -103,7 +106,9 @@ def test_remove_run_path(copy_math_func_test_data_to_tmp):
     makedirs_if_needed(config.output_dir, roll_if_exists=True)
 
     config.simulator.delete_run_path = False
-    run_model = EverestRunModel.create(config)
+    with ErtPluginContext() as runtime_plugins:
+        run_model = EverestRunModel.create(config, runtime_plugins=runtime_plugins)
+
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
 
@@ -145,7 +150,8 @@ def test_math_func_auto_scaled_controls(copy_math_func_test_data_to_tmp):
     config = EverestConfig.model_validate(config_dict)
 
     # Act
-    run_model = EverestRunModel.create(config)
+    with ErtPluginContext() as runtime_plugins:
+        run_model = EverestRunModel.create(config, runtime_plugins=runtime_plugins)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
 
@@ -175,7 +181,8 @@ def test_math_func_auto_scaled_objectives(copy_math_func_test_data_to_tmp):
 
     config_dict["environment"]["output_folder"] = "output_no_auto_scale"
     config = EverestConfig.model_validate(config_dict)
-    run_model = EverestRunModel.create(config)
+    with ErtPluginContext() as runtime_plugins:
+        run_model = EverestRunModel.create(config, runtime_plugins=runtime_plugins)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
     optim1 = get_optimal_result(config.optimization_output_dir).total_objective
@@ -183,7 +190,8 @@ def test_math_func_auto_scaled_objectives(copy_math_func_test_data_to_tmp):
     config_dict["environment"]["output_folder"] = "output_auto_scale"
     config_dict["optimization"]["auto_scale"] = True
     config = EverestConfig.model_validate(config_dict)
-    run_model = EverestRunModel.create(config)
+    with ErtPluginContext() as runtime_plugins:
+        run_model = EverestRunModel.create(config, runtime_plugins=runtime_plugins)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
     optim2 = get_optimal_result(config.optimization_output_dir).total_objective
@@ -203,7 +211,8 @@ def test_math_func_auto_scaled_constraints(copy_math_func_test_data_to_tmp):
 
     config_dict["environment"]["output_folder"] = "output_no_auto_scale"
     config = EverestConfig.model_validate(config_dict)
-    run_model = EverestRunModel.create(config)
+    with ErtPluginContext() as runtime_plugins:
+        run_model = EverestRunModel.create(config, runtime_plugins=runtime_plugins)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
     optim1 = get_optimal_result(config.optimization_output_dir).total_objective
@@ -211,7 +220,8 @@ def test_math_func_auto_scaled_constraints(copy_math_func_test_data_to_tmp):
     config_dict["environment"]["output_folder"] = "output_auto_scale"
     config_dict["optimization"]["auto_scale"] = True
     config = EverestConfig.model_validate(config_dict)
-    run_model = EverestRunModel.create(config)
+    with ErtPluginContext() as runtime_plugins:
+        run_model = EverestRunModel.create(config, runtime_plugins=runtime_plugins)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
     optim2 = get_optimal_result(config.optimization_output_dir).total_objective
@@ -244,7 +254,8 @@ def test_that_math_func_violating_output_constraints_has_no_result(
     config_dict["controls"][0]["initial_guess"] = 0.05
 
     config = EverestConfig.model_validate(config_dict)
-    run_model = EverestRunModel.create(config)
+    with ErtPluginContext() as runtime_plugins:
+        run_model = EverestRunModel.create(config, runtime_plugins=runtime_plugins)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
     optimal_result = get_optimal_result(config.optimization_output_dir)
@@ -266,7 +277,8 @@ def test_that_math_func_violating_output_constraints_has_a_result(
     config_dict["controls"][0]["initial_guess"] = 0.05
 
     config = EverestConfig.model_validate(config_dict)
-    run_model = EverestRunModel.create(config)
+    with ErtPluginContext() as runtime_plugins:
+        run_model = EverestRunModel.create(config, runtime_plugins=runtime_plugins)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
     optimal_result = get_optimal_result(config.optimization_output_dir)
@@ -288,7 +300,8 @@ def test_that_math_func_violating_input_constraints_has_no_result(
     config_dict["controls"][0]["initial_guess"] = 0.5
 
     config = EverestConfig.model_validate(config_dict)
-    run_model = EverestRunModel.create(config)
+    with ErtPluginContext() as runtime_plugins:
+        run_model = EverestRunModel.create(config, runtime_plugins=runtime_plugins)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
     optimal_result = get_optimal_result(config.optimization_output_dir)
@@ -310,7 +323,8 @@ def test_that_math_func_violating_input_constraints_has_a_result(
     config_dict["controls"][0]["initial_guess"] = 0.5
 
     config = EverestConfig.model_validate(config_dict)
-    run_model = EverestRunModel.create(config)
+    with ErtPluginContext() as runtime_plugins:
+        run_model = EverestRunModel.create(config, runtime_plugins=runtime_plugins)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
     optimal_result = get_optimal_result(config.optimization_output_dir)
