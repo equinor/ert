@@ -339,29 +339,16 @@ class EverestRunModel(RunModel):
         forward_model_steps.append(copy_wellfile)
 
         # map templating to template_render job
-        res_input = [control.name + ".json" for control in everest_config.controls]
-        res_input.append(str(well_path))
-
-        for tmpl_request in everest_config.install_templates:
-            fm_step_instance = copy.deepcopy(installed_fm_steps.get("template_render"))
-            assert fm_step_instance is not None
-            if tmpl_request.extra_data is not None:
-                res_input.append(tmpl_request.extra_data)
-
-            fm_step_instance.arglist = [
-                "--output",
-                tmpl_request.output_file,
-                "--template",
-                tmpl_request.template,
-                "--input_files",
-                *res_input,
-            ]
-            logging.getLogger(EVEREST).info(
-                f"template_render {' '.join(fm_step_instance.arglist)}"
+        template_fm_steps = [
+            tmpl_request.to_ert_forward_model_step(
+                control_names=[control.name for control in everest_config.controls],
+                installed_fm_steps=installed_fm_steps,
+                well_path=str(well_path),
             )
-            # User can define a template w/ extra data to be used with it,
-            # append file as arg to input_files if declared.
-            forward_model_steps.append(fm_step_instance)
+            for tmpl_request in everest_config.install_templates
+        ]
+
+        forward_model_steps += template_fm_steps
 
         for fm_spec in everest_config.forward_model:
             fm_name, *arglist = fm_spec.job.split()
