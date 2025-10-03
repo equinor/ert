@@ -30,7 +30,7 @@ from ert.run_models.event import (
     RunModelUpdateEndEvent,
 )
 from ert.run_models.run_model import ErtRunError, RunModel
-from ert.storage import Ensemble
+from ert.storage import Ensemble, LocalExperiment
 
 
 class UpdateRunModel(RunModel):
@@ -65,6 +65,7 @@ class UpdateRunModel(RunModel):
         prior: Ensemble,
         posterior_name: str,
         weight: float = 1.0,
+        target_experiment: LocalExperiment | None = None,
     ) -> Ensemble:
         self.validate_successful_realizations_count()
         self.send_event(
@@ -89,7 +90,7 @@ class UpdateRunModel(RunModel):
         )
 
         posterior = self._storage.create_ensemble(
-            prior.experiment,
+            target_experiment or prior.experiment,
             ensemble_size=prior.ensemble_size,
             iteration=prior.iteration + 1,
             name=posterior_name,

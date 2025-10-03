@@ -38,9 +38,24 @@ class ManualUpdate(UpdateRunModel):
         rerun_failed_realizations: bool = False,
     ) -> None:
         self.log_at_startup()
-        self.set_env_key("_ERT_EXPERIMENT_ID", str(self._prior.experiment.id))
+        prior_experiment = self._prior.experiment
+
+        self.set_env_key("_ERT_EXPERIMENT_ID", str(prior_experiment.id))
         self.set_env_key("_ERT_ENSEMBLE_ID", str(self._prior.id))
-        self.update(self._prior, self.target_ensemble % (self._prior.iteration + 1))
+
+        target_experiment = self._storage.create_experiment(
+            parameters=list(prior_experiment.parameter_configuration.values()),
+            responses=list(prior_experiment.response_configuration.values()),
+            observations=prior_experiment.observations,
+            simulation_arguments=prior_experiment.metadata,
+            name=f"Manual update of {self._prior.name}",
+            templates=self._prior.experiment.templates_configuration,
+        )
+        self.update(
+            self._prior,
+            self.target_ensemble % (self._prior.iteration + 1),
+            target_experiment=target_experiment,
+        )
 
     def update_ensemble_parameters(
         self, prior: Ensemble, posterior: Ensemble, weight: float
