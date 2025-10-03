@@ -14,13 +14,34 @@ from ert.substitutions import substitute_runpath_name
 
 from ._str_to_bool import str_to_bool
 from .field import create_flattened_cube_graph
-from .parameter_config import ParameterConfig, ParameterMetadata
+from .parameter_config import InvalidParameterFile, ParameterConfig, ParameterMetadata
 from .parsing import ConfigValidationError, ErrorInfo
 
 if TYPE_CHECKING:
     import numpy.typing as npt
 
     from ert.storage import Ensemble
+
+
+class SurfaceMismatchError(InvalidParameterFile):
+    def __init__(
+        self,
+        surface_name: str,
+        base_surface_path: str,
+        surface_size: int,
+        realization: int,
+        base_surface_col: int,
+        base_surface_row: int,
+    ) -> None:
+        base_surface_name = base_surface_path.rsplit("/", maxsplit=1)[-1]
+        msg = (
+            f"Saving parameters for SURFACE '{surface_name}' for realization "
+            f"{int(realization)} to storage failed. "
+            f"SURFACE {surface_name} (size {surface_size}) and BASE_SURFACE "
+            f"{base_surface_name} (size {base_surface_row * base_surface_col}) "
+            f"must have the same size."
+        )
+        super().__init__(msg)
 
 
 class SurfaceConfig(ParameterConfig):
@@ -182,11 +203,25 @@ class SurfaceConfig(ParameterConfig):
         iens_active_index: npt.NDArray[np.int_],
     ) -> Iterator[tuple[int, xr.Dataset]]:
         for i, realization in enumerate(iens_active_index):
+            surface_parameters = from_data[:, i]
+            surface_size = surface_parameters.size
+            base_surface_size = self.nrow * self.ncol
+            if surface_size != base_surface_size:
+                raise SurfaceMismatchError(
+                    self.name,
+                    self.base_surface_path,
+                    surface_size,
+                    realization,
+                    self.ncol,
+                    self.nrow,
+                ) from None
             ds = xr.Dataset(
                 {
                     "values": (
                         ["x", "y"],
-                        from_data[:, i].reshape(self.ncol, self.nrow).astype("float32"),
+                        surface_parameters.reshape(self.ncol, self.nrow).astype(
+                            "float32"
+                        ),
                     )
                 }
             )
