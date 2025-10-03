@@ -64,6 +64,7 @@ class MultipleDataAssimilation(UpdateRunModel, InitialEnsembleRunModel):
         if rerun_failed_realizations:
             raise ErtRunError("ESMDA does not support restart")
 
+        target_experiment = None
         if self.restart_run:
             id_ = self.prior_ensemble_id
             assert id_ is not None
@@ -80,6 +81,14 @@ class MultipleDataAssimilation(UpdateRunModel, InitialEnsembleRunModel):
                         f"iteration: {self.start_iteration},"
                         f"restart iteration = {prior.iteration + 1}"
                     )
+                target_experiment = self._storage.create_experiment(
+                    parameters=list(prior.experiment.parameter_configuration.values()),
+                    responses=list(prior.experiment.response_configuration.values()),
+                    observations=prior.experiment.observations,
+                    simulation_arguments=prior.experiment.metadata,
+                    name=f"Restart from {prior.name}",
+                    templates=prior.experiment.templates_configuration,
+                )
             except (KeyError, ValueError) as err:
                 raise ErtRunError(
                     f"Prior ensemble with ID: {id_} does not exists"
@@ -105,6 +114,7 @@ class MultipleDataAssimilation(UpdateRunModel, InitialEnsembleRunModel):
                 prior,
                 self.target_ensemble % (iteration + 1),
                 weight=weight,
+                target_experiment=target_experiment,
             )
             posterior_args = create_run_arguments(
                 self._run_paths,
