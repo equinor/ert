@@ -1,4 +1,5 @@
 import fileinput
+import re
 from contextlib import ExitStack as does_not_raise
 from pathlib import Path
 from textwrap import dedent
@@ -108,7 +109,15 @@ def test_extra_key(min_config):
         ),
         (
             {"install_data": [{"source": None, "target": "not_relevant"}]},
-            "source\n  Input should be a valid string",
+            "Either source or data must be provided",
+        ),
+        (
+            {
+                "install_data": [
+                    {"source": "", "data": {"foo": 1}, "target": "not_relevant"}
+                ]
+            },
+            "The data and source options are mutually exclusive",
         ),
         (
             {"install_data": [{"source": ["a", "b"], "target": "not_relevant"}]},
@@ -179,7 +188,10 @@ def test_that_install_data_target_path_outside_runpath_is_invalid(
     Path.mkdir(Path("test_dir"))
     Path("test_dir/my_file").touch()
     min_config["install_data"] = [{"source": source, "target": target, "link": link}]
-    with pytest.raises(ValidationError, match="Target location outside of runpath"):
+    with pytest.raises(
+        ValidationError,
+        match=re.escape(f"Target location '{target}' is outside of the runpath."),
+    ):
         EverestConfig(**min_config)
 
 

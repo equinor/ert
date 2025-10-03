@@ -1,3 +1,4 @@
+import json
 import os
 import pathlib
 import re
@@ -14,6 +15,8 @@ from hypothesis import given
 from pydantic import ValidationError
 
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
+from ert.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import (
     EverestConfig,
     ModelConfig,
@@ -496,7 +499,7 @@ def test_that_install_data_allows_runpath_root_as_target(
         ),
         (
             {"source": None, "link": True, "target": "bar.json"},
-            "Input should be a valid string",
+            "Either source or data must be provided",
         ),
         (
             {"source": "", "link": "false", "target": "bar.json"},
@@ -505,6 +508,22 @@ def test_that_install_data_allows_runpath_root_as_target(
         (
             {"source": "baz/", "link": True, "target": 3},
             "Input should be a valid string",
+        ),
+        (
+            {"link": True, "target": "bar.json"},
+            "Either source or data must be provided",
+        ),
+        (
+            {"source": "baz/", "data": {"foo": 1}, "link": True, "target": "bar.json"},
+            "The data and source options are mutually exclusive",
+        ),
+        (
+            {"data": {"foo": 1}, "link": True, "target": "bar.txt"},
+            "Invalid target extension .txt (.json expected).",
+        ),
+        (
+            {"data": {"foo": 1}, "link": False, "target": ""},
+            "A target name must be provided with data.",
         ),
     ],
 )
@@ -559,6 +578,38 @@ def test_that_install_data_source_exists(change_to_tmpdir):
         install_data=[data],
         config_path=Path("config_dir/test.yml"),
     )
+
+
+def test_that_install_data_with_inline_data_generates_a_file(
+    copy_math_func_test_data_to_tmp,
+):
+    config = EverestConfig.load_file("config_minimal.yml")
+    config_dict = {
+        **config.model_dump(exclude_none=True),
+        "optimization": {
+            "algorithm": "optpp_q_newton",
+            "perturbation_num": 1,
+            "max_batch_num": 1,
+        },
+        "install_data": [
+            {
+                "data": {"x": 1},
+                "target": "output.json",
+            }
+        ],
+    }
+    config = EverestConfig.model_validate(config_dict)
+    run_model = EverestRunModel.create(config)
+    run_model.run_experiment(EvaluatorServerConfig())
+    for expected_dir in ("evaluation_0", "perturbation_0"):
+        expected_file = Path(
+            f"everest_output/sim_output/batch_0/realization_0/{expected_dir}/output.json"
+        )
+        assert expected_file.exists()
+        with expected_file.open(encoding="utf-8") as fp:
+            data = json.load(fp)
+        assert set(data.keys()) == {"x"}
+        assert data["x"] == 1
 
 
 @pytest.mark.parametrize(

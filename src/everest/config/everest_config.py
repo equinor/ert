@@ -763,9 +763,10 @@ to read summary data from forward model, do:
         model = self.model
         if model and config_path:
             for install_data_cfg in install_data:
-                check_path_exists(
-                    install_data_cfg.source, config_path, model.realizations
-                )
+                if install_data_cfg.source is not None:
+                    check_path_exists(
+                        install_data_cfg.source, config_path, model.realizations
+                    )
 
         return self
 
