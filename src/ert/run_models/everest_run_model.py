@@ -334,7 +334,7 @@ class EverestRunModel(RunModel):
             )
             if not os.path.isabs(source):
                 source = os.path.join(everest_config.config_directory, source)
-            is_dir = _is_dir_all_model(source, everest_config)
+            is_dir = _is_dir_all_model(source, everest_config.model.realizations)
 
             fm_name: str | None = None
             if install_data.link:
