@@ -66,7 +66,6 @@ from everest.optimizer.opt_model_transforms import (
     get_optimization_domain_transforms,
 )
 from everest.simulator.everest_to_ert import (
-    _expand_source_path,
     _get_well_file,
     _is_dir_all_model,
     everest_to_ert_config_dict,
@@ -326,7 +325,12 @@ class EverestRunModel(RunModel):
         for install_data in everest_config.install_data:
             target = install_data.target
 
-            source = _expand_source_path(install_data.source, everest_config)
+            source = install_data.source.replace(
+                "<CONFIG_PATH>", everest_config.config_directory
+            )
+            if not os.path.isabs(source):
+                source = os.path.join(everest_config.config_directory, source)
+
             is_dir = _is_dir_all_model(source, everest_config)
 
             fm_name: str | None = None
