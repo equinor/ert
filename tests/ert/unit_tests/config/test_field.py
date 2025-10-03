@@ -1,10 +1,10 @@
 import os
-import shutil
 from pathlib import Path
 
 import networkx as nx
 import numpy as np
 import pytest
+import resfo
 import xtgeo
 
 from ert.config import ConfigValidationError, ConfigWarning, Field
@@ -353,21 +353,26 @@ def test_invalid_argument_gives_a_user_error_message(
 def test_that_read_field_raises_grid_field_mismatch_error_given_different_sized_field_and_grid(  # noqa
     tmpdir, monkeypatch, parse_field_line
 ):
-    field_file_name = "cond_0.bgrdecl"
-    field_path = (
-        Path(__file__).resolve().parents[5]
-        / "ert"
-        / "test-data"
-        / "ert"
-        / "heat_equation"
-        / field_file_name
-    )
+    class MockFieldFile:
+        def read_keyword(self):
+            return "COND"
+
+        def read_array(self):
+            return np.ndarray(shape=100, buffer=np.ones(100), dtype=float)
+
+    def mock_lazy_read(*args):
+        return [MockFieldFile()]
+
+    monkeypatch.setattr(resfo, "lazy_read", mock_lazy_read)
+    field_file_name = "foo.bgrdecl"
+
     field_name = "COND"
     mask = np.ndarray([])
     shape = Shape(nx=5, ny=5, nz=5)
 
     with tmpdir.as_cwd():
-        shutil.copy(field_path, field_file_name)
+        # The file context manager needs a file to read, even if the content is mocked
+        Path(field_file_name).touch()
         expected_error_message = (
             rf"The FIELD '{field_name}' from file {field_file_name} is of size \(100\) "
             r"which does not match the size of the GRID \(125\) - "
