@@ -37,6 +37,10 @@ if TYPE_CHECKING:
 class _Index(BaseModel):
     id: UUID
     name: str
+    # An experiment may point to ensembles that are originated
+    # from a different experiment. For example, a manual update
+    # is a separate experiment from the one that created the prior.
+    ensembles: list[UUID]
 
 
 _responses_adapter = TypeAdapter(  # type: ignore
@@ -142,8 +146,11 @@ class LocalExperiment(BaseMode):
         if name is None:
             name = datetime.today().isoformat()
 
-        (path / "index.json").write_text(
-            _Index(id=uuid, name=name).model_dump_json(indent=2)
+        storage._write_transaction(
+            path / "index.json",
+            _Index(id=uuid, name=name, ensembles=[])
+            .model_dump_json(indent=2)
+            .encode("utf-8"),
         )
 
         parameter_data = {}
@@ -228,12 +235,22 @@ class LocalExperiment(BaseMode):
             The newly created ensemble instance.
         """
 
-        return self._storage.create_ensemble(
+        ensemble = self._storage.create_ensemble(
             self,
             ensemble_size=ensemble_size,
             iteration=iteration,
             name=name,
             prior_ensemble=prior_ensemble,
+        )
+
+        self.add_ensemble(ensemble.id)
+        return ensemble
+
+    def add_ensemble(self, ensemble_id: UUID) -> None:
+        self._index.ensembles.append(ensemble_id)
+        self._storage._write_transaction(
+            self._path / "index.json",
+            self._index.model_dump_json(indent=2).encode("utf-8"),
         )
 
     @property

@@ -60,8 +60,10 @@ def test_manual_analysis_workflow(ensemble_experiment_has_run, qtbot):
 
     model = tree_view.model()
     assert model is not None
-    assert model.rowCount() == 1
-    assert "iter-0_1" in model.index(1, 0, model.index(0, 0)).data(0)
+    assert model.rowCount() == 2
+    assert model.data(model.index(1, 0)) == "ensemble_experiment"
+    assert model.data(model.index(0, 0)) == "Manual update of iter-0"
+    assert "iter-0_1" in model.index(0, 0, model.index(0, 0)).data(0)
 
     experiments_panel.close()
 
@@ -70,7 +72,7 @@ def test_manual_analysis_workflow(ensemble_experiment_has_run, qtbot):
     simulation_mode_combo.setCurrentText(EvaluateEnsemble.name())
 
     idx = simulation_settings._ensemble_selector.findData(
-        "ensemble_experiment : iter-0_1",
+        "Manual update of iter-0 : iter-0_1",
         Qt.ItemDataRole.DisplayRole,
         Qt.MatchFlag.MatchStartsWith,
     )
@@ -89,7 +91,9 @@ def test_manual_analysis_workflow(ensemble_experiment_has_run, qtbot):
     )
 
     df_prior = ensemble_prior.load_all_gen_kw_data()
-    ensemble_posterior = experiment.get_ensemble_by_name("iter-0_1")
+
+    exp_posterior = storage.get_experiment_by_name("Manual update of iter-0")
+    ensemble_posterior = exp_posterior.get_ensemble_by_name("iter-0_1")
     df_posterior = ensemble_posterior.load_all_gen_kw_data()
 
     # Making sure measured data works with failed realizations
