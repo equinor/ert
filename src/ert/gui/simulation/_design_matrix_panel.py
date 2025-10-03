@@ -78,7 +78,7 @@ class DesignMatrixPanel(QDialog):
         number_of_realizations_label: QLabel,
         config_num_realization: int,
     ) -> QHBoxLayout:
-        show_dm_param_button = QPushButton("Show parameters")
+        show_dm_param_button = QPushButton("Show design matrix")
         show_dm_param_button.setObjectName("show-dm-parameters")
         show_dm_param_button.setMinimumWidth(50)
 
