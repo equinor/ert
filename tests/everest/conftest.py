@@ -179,7 +179,6 @@ def copy_eightcells_test_data_to_tmp(tmp_path, monkeypatch):
 
 
 @pytest.fixture
-@pytest.mark.usefixtures("no_plugins")
 def cached_example(pytestconfig):
     cache = pytestconfig.cache
 
