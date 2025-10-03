@@ -26,7 +26,7 @@ from ert.ensemble_evaluator import (
 from ert.logging import LOGGING_CONFIG
 from ert.plugins.plugin_manager import ErtPluginManager
 from ert.services import StorageService
-from ert.storage import open_storage
+from ert.storage import ExperimentState, ExperimentStatus, open_storage
 from everest.config import EverestConfig
 from everest.config.server_config import ServerConfig
 from everest.detached import (
@@ -35,8 +35,6 @@ from everest.detached import (
     stop_server,
     wait_for_server_to_stop,
 )
-from everest.detached.client import ExperimentState
-from everest.detached.everserver import ExperimentStatus
 from everest.simulator import JOB_FAILURE, JOB_RUNNING, JOB_SUCCESS
 from everest.strings import EVEREST, OPT_PROGRESS_ID, SIM_PROGRESS_ID, STORAGE_DIR
 from everest.util import makedirs_if_needed
@@ -477,5 +475,5 @@ def get_experiment_status(config: EverestConfig) -> ExperimentStatus:
             return ExperimentStatus(status=ExperimentState.never_run)
         experiment_status = next(iter(storage.experiments)).status
         if experiment_status is not None:
-            return ExperimentStatus(**experiment_status)
+            return experiment_status
         return ExperimentStatus(status=ExperimentState.never_run)
