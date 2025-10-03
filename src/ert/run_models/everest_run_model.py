@@ -318,8 +318,6 @@ class EverestRunModel(RunModel):
         )
         installed_fm_steps = dict(site_installed_fm_steps) | install_job_fm_steps
 
-        forward_model_steps = []
-
         install_data_fm_steps = [
             install_data.to_ert_forward_model_step(
                 config_directory=everest_config.config_directory,
@@ -330,13 +328,10 @@ class EverestRunModel(RunModel):
             for install_data in everest_config.install_data
         ]
 
-        forward_model_steps += install_data_fm_steps
-
         well_path, _ = _get_well_file(everest_config)
         copy_wellfile = copy.deepcopy(installed_fm_steps.get("copy_file"))
         assert copy_wellfile is not None
         copy_wellfile.arglist = [str(well_path), str(well_path.name)]
-        forward_model_steps.append(copy_wellfile)
 
         # map templating to template_render job
         template_fm_steps = [
@@ -348,26 +343,17 @@ class EverestRunModel(RunModel):
             for tmpl_request in everest_config.install_templates
         ]
 
-        forward_model_steps += template_fm_steps
+        user_fm_steps = [
+            fm_spec.to_ert_forward_model_step(installed_fm_steps)
+            for fm_spec in everest_config.forward_model
+        ]
 
-        for fm_spec in everest_config.forward_model:
-            fm_name, *arglist = fm_spec.job.split()
-            match fm_name:
-                # All three reservoir simulator fm_steps map to
-                # "run_reservoirsimulator" which requires the simulator name
-                # as its first argument.
-                case "eclipse100":
-                    arglist = ["eclipse", *arglist]
-                case "eclipse300":
-                    arglist = ["e300", *arglist]
-                case "flow":
-                    arglist = ["flow", *arglist]
-
-            fm_cls = installed_fm_steps.get(fm_name)
-            fm_step_instance = copy.deepcopy(fm_cls)
-            assert fm_step_instance is not None
-            fm_step_instance.arglist = arglist
-            forward_model_steps.append(fm_step_instance)
+        forward_model_steps = [
+            *install_data_fm_steps,
+            copy_wellfile,
+            *template_fm_steps,
+            *user_fm_steps,
+        ]
 
         env_pr_fm_step = uppercase_subkeys_and_stringify_subvalues(
             {

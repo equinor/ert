@@ -1,3 +1,4 @@
+import copy
 from textwrap import dedent
 from typing import Annotated, Any, Literal
 
@@ -8,6 +9,7 @@ from pydantic import (
 )
 
 from ert.base_model_context import BaseModelWithContextSupport
+from ert.config import ForwardModelStep
 
 
 class ForwardModelResult(BaseModelWithContextSupport):
@@ -70,3 +72,24 @@ class ForwardModelStepConfig(BaseModelWithContextSupport):
                 " Please include a 'type' key in the 'results' section."
             )
         return values
+
+    def to_ert_forward_model_step(
+        self, installed_fm_steps: dict[str, ForwardModelStep]
+    ) -> ForwardModelStep:
+        fm_name, *arglist = self.job.split()
+        match fm_name:
+            # All three reservoir simulator fm_steps map to
+            # "run_reservoirsimulator" which requires the simulator name
+            # as its first argument.
+            case "eclipse100":
+                arglist = ["eclipse", *arglist]
+            case "eclipse300":
+                arglist = ["e300", *arglist]
+            case "flow":
+                arglist = ["flow", *arglist]
+
+        fm_cls = installed_fm_steps.get(fm_name)
+        fm_step_instance = copy.deepcopy(fm_cls)
+        assert fm_step_instance is not None
+        fm_step_instance.arglist = arglist
+        return fm_step_instance
