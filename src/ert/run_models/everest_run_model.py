@@ -340,7 +340,7 @@ class EverestRunModel(RunModel):
 
         # map templating to template_render job
         res_input = [control.name + ".json" for control in everest_config.controls]
-        res_input.append(str(_get_well_file(everest_config)[0]))
+        res_input.append(str(well_path))
 
         for tmpl_request in everest_config.install_templates:
             fm_step_instance = copy.deepcopy(installed_fm_steps.get("template_render"))
