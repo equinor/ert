@@ -343,7 +343,7 @@ class EverestRunModel(RunModel):
             assert fm_step_instance is not None
             res_input = [control.name for control in everest_config.controls]
             res_input = [fn + ".json" for fn in res_input]
-            res_input.append(str(_get_well_file(everest_config)[0]))
+            res_input.append(str(well_path))
             if tmpl_request.extra_data is not None:
                 res_input.append(tmpl_request.extra_data)
 
