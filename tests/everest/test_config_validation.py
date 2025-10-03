@@ -519,7 +519,11 @@ def test_that_install_data_allows_runpath_root_as_target(
         ),
         (
             {"data": {"foo": 1}, "link": True, "target": "bar.txt"},
-            "Invalid target extension",
+            "Invalid target extension .txt (.json expected).",
+        ),
+        (
+            {"data": {"foo": 1}, "link": False, "target": ""},
+            "A target name must be provided with data.",
         ),
     ],
 )

@@ -5,7 +5,6 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Any
 
-import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
@@ -41,14 +40,8 @@ class InstallDataConfig(BaseModel):
             """
             Data to be exported to the target file.
 
-            If provided, the data is exported to `target`, according to its file
-            extension:
-
-            - `.json`: Export to json.
-            - `.yaml` or `.yml`: Export to yaml.
-
-            If `target` has no extension, json format is used, and a `.json`
-            extension is added.
+            If provided, the data is exported to a JSON file. If `target` has no
+            `.json` extension, it is added.
 
             The `data` and `source` fields are mutually exclusive.
 
@@ -79,8 +72,8 @@ class InstallDataConfig(BaseModel):
                 raise ValueError("A target name must be provided with data.")
 
             ext = Path(self.target).suffix.lower()
-            if ext not in {".json", ".yaml", ".yml", ""}:
-                raise ValueError(f"Invalid target extension {ext}.")
+            if ext not in {".json", ""}:
+                raise ValueError(f"Invalid target extension {ext} (.json expected).")
 
             return self
 
@@ -92,15 +85,8 @@ class InstallDataConfig(BaseModel):
         return self
 
     def inline_data_as_str(self) -> tuple[str, str]:
-        if self.data is None:
-            return "", ""
-        match Path(self.target).suffix.lower():
-            case ".json" | "":
-                target = str(Path(self.target).with_suffix(".json"))
-                data = json.dumps(self.data, indent=2)
-            case ".yaml" | ".yml":
-                target = self.target
-                data = yaml.dump(self.data, sort_keys=False, default_flow_style=False)
-            case _ as ext:
-                raise ValueError(f"Invalid target extension {ext}.")
-        return target, data
+        assert self.data is not None
+        return (
+            str(Path(self.target).with_suffix(".json")),
+            json.dumps(self.data, indent=2),
+        )

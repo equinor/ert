@@ -1,4 +1,5 @@
 import fileinput
+import re
 from contextlib import ExitStack as does_not_raise
 from pathlib import Path
 from textwrap import dedent
@@ -187,7 +188,10 @@ def test_that_install_data_target_path_outside_runpath_is_invalid(
     Path.mkdir(Path("test_dir"))
     Path("test_dir/my_file").touch()
     min_config["install_data"] = [{"source": source, "target": target, "link": link}]
-    with pytest.raises(ValidationError, match="Target location outside of runpath"):
+    with pytest.raises(
+        ValidationError,
+        match=re.escape(f"Target location '{target}' is outside of the runpath."),
+    ):
         EverestConfig(**min_config)
 
 

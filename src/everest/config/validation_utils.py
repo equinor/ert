@@ -56,7 +56,7 @@ class InstallDataContext:
                 Path(item.target).resolve().relative_to(Path.cwd())
             except ValueError as err:
                 raise ValueError(
-                    f"Target location outside of runpath {item.target} not allowed!"
+                    f"Target location '{item.target}' is outside of the runpath."
                 ) from err
 
             if item.data is not None:
