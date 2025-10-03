@@ -33,6 +33,7 @@ class Arguments:
     realizations: str
     ensemble_id: str
     target_ensemble: str
+    ensemble_size: int
 
 
 class ManualUpdatePanel(ExperimentConfigPanel):
@@ -51,13 +52,16 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         lab = QLabel(ManualUpdate.name())
         lab.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.addRow(lab)
-        self._ensemble_selector = EnsembleSelector(notifier)
+        self._ensemble_selector = EnsembleSelector(notifier, show_only_with_data=True)
         layout.addRow("Ensemble:", self._ensemble_selector)
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
 
-        number_of_realizations_label = QLabel(f"<b>{ensemble_size}</b>")
-        layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
+        self._number_of_realizations_label = QLabel()
+        layout.addRow(
+            QLabel("Number of realizations with responses:"),
+            self._number_of_realizations_label,
+        )
 
         self._ensemble_format_model = TargetEnsembleModel(analysis_config, notifier)
         self._ensemble_format_field = StringBox(
@@ -68,25 +72,16 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self._ensemble_format_field.setValidator(ProperNameFormatArgument())
         layout.addRow("Ensemble format:", self._ensemble_format_field)
 
-        self._analysis_module_edit = AnalysisModuleEdit(
-            analysis_config.es_settings, ensemble_size
-        )
+        self._analysis_module_edit = AnalysisModuleEdit(analysis_config.es_settings, 0)
         self._analysis_module_edit.setObjectName("ensemble_smoother_edit")
+        self._analysis_module_edit.setEnabled(False)
         layout.addRow("Analysis module:", self._analysis_module_edit)
-
+        self._active_realizations_model = ActiveRealizationsModel(0, show_default=False)
         self._active_realizations_field = StringBox(
-            ActiveRealizationsModel(ensemble_size, show_default=False),  # type: ignore
+            self._active_realizations_model,  # type: ignore
             continuous_update=True,
         )
-        self._realizations_validator = EnsembleRealizationsArgument(
-            lambda: self._ensemble_selector.selected_ensemble,
-            max_value=ensemble_size,
-            required_realization_storage_states=[
-                RealizationStorageState.PARAMETERS_LOADED,
-                RealizationStorageState.RESPONSES_LOADED,
-            ],
-        )
-        self._active_realizations_field.setValidator(self._realizations_validator)
+        self._active_realizations_field.setObjectName("active_realizations_box")
         self._realizations_from_fs()
         layout.addRow("Active realizations", self._active_realizations_field)
 
@@ -114,6 +109,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
             ),
             realizations=self._active_realizations_field.text(),
             target_ensemble=self._ensemble_format_model.getValue(),  # type: ignore
+            ensemble_size=self._ensemble_size,
         )
 
     def _realizations_from_fs(self) -> None:
@@ -124,7 +120,27 @@ class ManualUpdatePanel(ExperimentConfigPanel):
                 parameters = ensemble.get_realization_mask_with_parameters()
                 responses = ensemble.get_realization_mask_with_responses()
                 mask = np.logical_and(parameters, responses)
-                self._active_realizations_field.model.setValueFromMask(mask)  # type: ignore
+                self._number_of_realizations_with_responses_in_selected_ensemble = list(
+                    mask
+                ).count(True)
+                self._ensemble_size = ensemble.ensemble_size
+                self._active_realizations_field.setValidator(
+                    EnsembleRealizationsArgument(
+                        lambda: ensemble,
+                        max_value=ensemble.ensemble_size,
+                        required_realization_storage_states=[
+                            RealizationStorageState.PARAMETERS_LOADED,
+                            RealizationStorageState.RESPONSES_LOADED,
+                        ],
+                    )
+                )
+                self._active_realizations_model.ensemble_size = ensemble.ensemble_size
+                self._active_realizations_model.setValueFromMask(mask)
+                self._number_of_realizations_label.setText(
+                    f"<b>{self._number_of_realizations_with_responses_in_selected_ensemble}</b>"
+                )
+                self._analysis_module_edit.ensemble_size = ensemble.ensemble_size
+                self._analysis_module_edit.setEnabled(bool(ensemble.ensemble_size))
         except OSError as err:
             logger.error(str(err))
             Suggestor(

@@ -66,7 +66,7 @@ def test_active_realizations_esmda(opened_main_window_poly, qtbot):
     simulation_mode_combo.setCurrentText(MultipleDataAssimilation.display_name())
     es_mda_panel = gui.findChild(QWidget, name="ES_MDA_panel")
     assert es_mda_panel
-    active_reals = gui.findChild(StringBox, "active_realizations_box")
+    active_reals = es_mda_panel.findChild(StringBox, "active_realizations_box")
     assert active_reals.text() == "0-9"
 
     restart_checkbox = es_mda_panel.findChild(QCheckBox, name="restart_checkbox_esmda")
