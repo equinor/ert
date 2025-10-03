@@ -8,7 +8,6 @@ import time
 import traceback
 from base64 import b64encode
 from collections.abc import Callable
-from enum import StrEnum, auto
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +19,7 @@ from websockets.sync.client import connect
 from ert.dark_storage.client import Client
 from ert.ensemble_evaluator import EndEvent
 from ert.run_models.event import EverestBatchResultEvent, status_event_from_json
+from ert.run_models.run_model import ExperimentState
 from ert.scheduler import create_driver
 from ert.scheduler.driver import Driver, FailedSubmit
 from ert.scheduler.event import StartedEvent
@@ -265,15 +265,6 @@ def start_monitor(
                 time.sleep(polling_interval)
     except Exception:
         logger.debug(traceback.format_exc())
-
-
-class ExperimentState(StrEnum):
-    pending = auto()
-    running = auto()
-    completed = auto()
-    stopped = auto()
-    failed = auto()
-    never_run = auto()
 
 
 def update_everserver_status(
