@@ -12,8 +12,6 @@ from .model_factory import create_model
 from .multiple_data_assimilation import MultipleDataAssimilation
 from .run_model import (
     ErtRunError,
-    ExperimentState,
-    ExperimentStatus,
     RunModel,
     RunModelAPI,
     StatusEvents,
@@ -25,8 +23,6 @@ __all__ = [
     "EnsembleInformationFilter",
     "EnsembleSmoother",
     "ErtRunError",
-    "ExperimentState",
-    "ExperimentStatus",
     "MultipleDataAssimilation",
     "RunModel",
     "RunModelAPI",
