@@ -161,9 +161,6 @@ def _is_dir_all_model(source: str, ever_config: EverestConfig) -> bool:
     - some are non-existing, raises an AssertionError
     """
     realizations = ever_config.model.realizations
-    if not realizations:
-        msg = "Expected realizations when analysing data installation source"
-        raise ValueError(msg)
 
     is_dir = []
     for model_realization in realizations:
