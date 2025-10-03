@@ -66,9 +66,7 @@ from everest.optimizer.opt_model_transforms import (
     get_optimization_domain_transforms,
 )
 from everest.simulator.everest_to_ert import (
-    _get_install_data_files,
     _get_well_file,
-    _is_dir_all_model,
     everest_to_ert_config_dict,
     extract_summary_keys,
     get_internal_files,
@@ -322,40 +320,17 @@ class EverestRunModel(RunModel):
 
         forward_model_steps = []
 
-        # Map install data to copy/symlink
-        for install_data in everest_config.install_data:
-            target = install_data.target
-
-            if install_data.source is None:
-                continue
-
-            source = install_data.source.replace(
-                "<CONFIG_PATH>", everest_config.config_directory
+        install_data_fm_steps = [
+            install_data.to_ert_forward_model_step(
+                config_directory=everest_config.config_directory,
+                output_directory=everest_config.output_dir,
+                model_realizations=everest_config.model.realizations,
+                installed_fm_steps=installed_fm_steps,
             )
-            if not os.path.isabs(source):
-                source = os.path.join(everest_config.config_directory, source)
-            is_dir = _is_dir_all_model(source, everest_config.model.realizations)
+            for install_data in everest_config.install_data
+        ]
 
-            fm_name: str | None = None
-            if install_data.link:
-                fm_name = "symlink"
-            elif is_dir:
-                fm_name = "copy_directory"
-            else:
-                fm_name = "copy_file"
-
-            assert isinstance(fm_name, str)
-
-            fm_step_instance = copy.deepcopy(installed_fm_steps.get(fm_name))
-            assert fm_step_instance is not None
-            fm_step_instance.arglist = [source, target]
-            forward_model_steps.append(fm_step_instance)
-
-        for data_file, _ in _get_install_data_files(everest_config):
-            fm_step_instance = copy.deepcopy(installed_fm_steps.get("copy_file"))
-            assert fm_step_instance is not None
-            fm_step_instance.arglist = [str(data_file), data_file.name]
-            forward_model_steps.append(fm_step_instance)
+        forward_model_steps += install_data_fm_steps
 
         well_path, _ = _get_well_file(everest_config)
         copy_wellfile = copy.deepcopy(installed_fm_steps.get("copy_file"))

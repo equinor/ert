@@ -154,32 +154,6 @@ def _extract_workflows(
         ert_config[ErtConfigKeys.HOOK_WORKFLOW] = res_hooks
 
 
-def _is_dir_all_model(source: str, model_realizations: list[int]) -> bool:
-    """Expands <GEO_ID> for all realizations and if:
-    - all are directories, returns True,
-    - all are files, returns False,
-    - some are non-existing, raises an AssertionError
-    """
-
-    is_dir = []
-    for model_realization in model_realizations:
-        model_source = source.replace("<GEO_ID>", str(model_realization))
-        if not os.path.exists(model_source):
-            msg = (
-                "Expected source to exist for data installation, "
-                f"did not find: {model_source}"
-            )
-            raise ValueError(msg)
-
-        is_dir.append(os.path.isdir(model_source))
-
-    if set(is_dir) == {True, False}:
-        msg = f"Source: {source} represent both files and directories"
-        raise ValueError(msg)
-
-    return is_dir[0]
-
-
 def _extract_seed(ever_config: EverestConfig, ert_config: dict[str, Any]) -> None:
     random_seed = ever_config.environment.random_seed
 
