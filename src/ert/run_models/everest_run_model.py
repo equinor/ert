@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import dataclasses
 import datetime
 import importlib.metadata
@@ -38,6 +39,7 @@ from ert.config import (
 from ert.config.ert_config import (
     create_and_hook_workflows,
     read_templates,
+    uppercase_subkeys_and_stringify_subvalues,
     workflow_jobs_from_dict,
 )
 from ert.config.model_config import (
@@ -64,9 +66,9 @@ from everest.optimizer.opt_model_transforms import (
     get_optimization_domain_transforms,
 )
 from everest.simulator.everest_to_ert import (
+    _get_well_file,
     everest_to_ert_config_dict,
     extract_summary_keys,
-    get_forward_model_steps,
     get_internal_files,
     get_substitutions,
     get_workflow_jobs,
@@ -302,8 +304,65 @@ class EverestRunModel(RunModel):
             config_dict, workflow_jobs, substitutions
         )
 
-        forward_model_steps, env_pr_fm_step = get_forward_model_steps(
-            everest_config, config_dict, substitutions
+        install_job_fm_steps = {
+            job.name: job.to_ert_forward_model_step(
+                config_directory=everest_config.config_directory
+            )
+            for job in everest_config.install_jobs
+        }
+
+        site_installed_fm_steps = (
+            runtime_plugins.installed_forward_model_steps
+            if runtime_plugins is not None
+            else {}
+        )
+        installed_fm_steps = dict(site_installed_fm_steps) | install_job_fm_steps
+
+        install_data_fm_steps = [
+            install_data.to_ert_forward_model_step(
+                config_directory=everest_config.config_directory,
+                model_realizations=everest_config.model.realizations,
+                installed_fm_steps=installed_fm_steps,
+            )
+            for install_data in everest_config.install_data
+        ]
+
+        well_path, _ = _get_well_file(everest_config)
+        copy_wellfile = copy.deepcopy(installed_fm_steps.get("copy_file"))
+        assert copy_wellfile is not None
+        copy_wellfile.arglist = [str(well_path), str(well_path.name)]
+
+        # map templating to template_render job
+        template_fm_steps = [
+            tmpl_request.to_ert_forward_model_step(
+                control_names=[control.name for control in everest_config.controls],
+                installed_fm_steps=installed_fm_steps,
+                well_path=str(well_path),
+            )
+            for tmpl_request in everest_config.install_templates
+        ]
+
+        user_fm_steps = [
+            fm_spec.to_ert_forward_model_step(installed_fm_steps)
+            for fm_spec in everest_config.forward_model
+        ]
+
+        forward_model_steps = [
+            *install_data_fm_steps,
+            copy_wellfile,
+            *template_fm_steps,
+            *user_fm_steps,
+        ]
+
+        env_pr_fm_step = uppercase_subkeys_and_stringify_subvalues(
+            {
+                k: dict(v)
+                for k, v in (
+                    runtime_plugins.env_pr_fm_step
+                    if runtime_plugins is not None
+                    else {}
+                ).items()
+            }
         )
 
         env_vars = {}

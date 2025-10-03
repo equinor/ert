@@ -18,7 +18,7 @@ import ert
 import everest
 from ert.config.queue_config import LocalQueueOptions, LsfQueueOptions
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.plugins import ErtRuntimePlugins
+from ert.plugins import ErtPluginContext, ErtRuntimePlugins
 from ert.run_models import StatusEvents
 from ert.run_models.event import status_event_from_json, status_event_to_json
 from ert.run_models.everest_run_model import EverestRunModel
@@ -179,7 +179,7 @@ def copy_eightcells_test_data_to_tmp(tmp_path, monkeypatch):
 
 
 @pytest.fixture
-@pytest.mark.usefixtures("no_plugins")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def cached_example(pytestconfig):
     cache = pytestconfig.cache
 
@@ -204,7 +204,11 @@ def cached_example(pytestconfig):
             config = EverestConfig.load_file(my_tmpdir / "everest" / config_file)
             config.simulator.queue_system = LocalQueueOptions(max_running=2)
             status_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
-            run_model = EverestRunModel.create(config, status_queue=status_queue)
+
+            with ErtPluginContext() as runtime_plugins:
+                run_model = EverestRunModel.create(
+                    config, status_queue=status_queue, runtime_plugins=runtime_plugins
+                )
             evaluator_server_config = EvaluatorServerConfig()
             try:
                 run_model.run_experiment(evaluator_server_config)

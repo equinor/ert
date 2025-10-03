@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 import pytest
 
 import ert.run_models.everest_run_model
+from ert.plugins import ErtPluginContext
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
@@ -33,7 +34,10 @@ def test_that_runpath_strings_are_generated_correctly(
     model_realizations = [0, 2]
     perturbations = [-1, -1]
     config = EverestConfig(**min_config)
-    run_model = EverestRunModel.create(config)
+
+    with ErtPluginContext() as runtime_plugins:
+        run_model = EverestRunModel.create(config, runtime_plugins=runtime_plugins)
+
     ensemble_mock = MagicMock()
     ensemble_mock.iteration = iteration
     run_args = run_model._get_run_args(ensemble_mock, model_realizations, perturbations)
