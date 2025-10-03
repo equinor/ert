@@ -13,14 +13,13 @@ from ert.analysis.event import (
 )
 from ert.config import (
     DesignMatrix,
-    ESSettings,
     HookRuntime,
-    ObservationSettings,
     ParameterConfig,
     PostUpdateFixtures,
     PreFirstUpdateFixtures,
     PreUpdateFixtures,
 )
+from ert.run_models.ert_runmodel_configs import UpdateRunModelConfig
 from ert.run_models.event import (
     RunModelDataEvent,
     RunModelErrorEvent,
@@ -33,11 +32,7 @@ from ert.run_models.run_model import ErtRunError, RunModel
 from ert.storage import Ensemble
 
 
-class UpdateRunModel(RunModel):
-    target_ensemble: str
-    analysis_settings: ESSettings
-    update_settings: ObservationSettings
-
+class UpdateRunModel(RunModel, UpdateRunModelConfig):
     @abstractmethod
     def update_ensemble_parameters(
         self, prior: Ensemble, posterior: Ensemble, weight: float
