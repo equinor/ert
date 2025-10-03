@@ -154,18 +154,6 @@ def _extract_workflows(
         ert_config[ErtConfigKeys.HOOK_WORKFLOW] = res_hooks
 
 
-def _expand_source_path(source: str, ever_config: EverestConfig) -> str:
-    """Expands <CONFIG_PATH> in @source and makes it absolute to config
-    directory if relative.
-    """
-    assert ever_config.config_directory is not None
-    config_dir = ever_config.config_directory
-    source = source.replace("<CONFIG_PATH>", config_dir)
-    if not os.path.isabs(source):
-        source = os.path.join(config_dir, source)
-    return source
-
-
 def _is_dir_all_model(source: str, ever_config: EverestConfig) -> bool:
     """Expands <GEO_ID> for all realizations and if:
     - all are directories, returns True,
