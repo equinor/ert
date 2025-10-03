@@ -117,7 +117,7 @@ def test_everest_to_ert_queue_config(config, config_class, tmp_path, monkeypatch
 
 @pytest.mark.usefixtures("use_site_configurations_with_lsf_queue_options")
 def test_that_site_config_queue_options_do_not_override_user_queue_config(
-    min_config, monkeypatch, tmp_path
+    min_config, monkeypatch, change_to_tmpdir
 ):
     ever_config = EverestConfig.with_defaults(
         simulator={"queue_system": {"name": "local"}}, model={"realizations": [0]}
