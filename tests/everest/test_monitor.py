@@ -168,7 +168,10 @@ def test_failed_jobs_monitor(
     monkeypatch.setattr(everest.detached.client, "connect", server_mock)
     monkeypatch.setattr(everest.detached.client, "ssl", MagicMock())
     patched = partial(everest.detached.start_monitor, polling_interval=0.1)
-    with patch("everest.bin.utils.start_monitor", patched):
+    with (
+        patch("everest.bin.utils.start_monitor", patched),
+        pytest.raises(SystemError, match="Failed"),
+    ):
         run_detached_monitor(("some/url", "cert", ("username", "password")))
     captured = capsys.readouterr()
     expected = [
@@ -182,7 +185,6 @@ def test_failed_jobs_monitor(
     assert output.startswith(
         "".join(expected).translate({ord(c): None for c in string.whitespace})
     )
-    assert output.endswith("Failed")
 
 
 @pytest.mark.integration_test
@@ -198,16 +200,18 @@ def test_monitor(monkeypatch, full_snapshot_event, snapshot_update_event, capsys
     monkeypatch.setattr(everest.detached.client, "connect", server_mock)
     monkeypatch.setattr(everest.detached.client, "ssl", MagicMock())
     patched = partial(everest.detached.start_monitor, polling_interval=0.1)
-    with patch("everest.bin.utils.start_monitor", patched):
+    with (
+        patch("everest.bin.utils.start_monitor", patched),
+        pytest.raises(SystemExit, match="Experiment complete"),
+    ):
         run_detached_monitor(("some/url", "cert", ("username", "password")))
     captured = capsys.readouterr()
     expected = [
         "===================== Running forward models (Batch #0) ======================\n",  # noqa: E501
         "  Waiting: 0 | Pending: 0 | Running: 0 | Finished: 1 | Failed: 0\n",
         "  fm_step_0: 1/1/0 | Finished: 1\n",
-        "Experiment complete\n",
     ]
-    expected[-1:-1] = [f"{name}: 2/0/0" for name in all_shell_script_fm_steps]
+    expected.extend([f"{name}: 2/0/0" for name in all_shell_script_fm_steps])
     # Ignore whitespace
     assert captured.out.translate({ord(c): None for c in string.whitespace}) == "".join(
         expected
@@ -228,20 +232,25 @@ def test_forward_model_message_reaches_the_cli(
     monkeypatch.setattr(everest.detached.client, "connect", server_mock)
     monkeypatch.setattr(everest.detached.client, "ssl", MagicMock())
     patched = partial(everest.detached.start_monitor, polling_interval=0.1)
-    with patch("everest.bin.utils.start_monitor", patched):
+    with (
+        patch("everest.bin.utils.start_monitor", patched),
+        pytest.raises(SystemError, match="Failed"),
+    ):
         run_detached_monitor(("some/url", "cert", ("username", "password")))
     captured = capsys.readouterr()
+
     expected = [
         "===================== Running forward models (Batch #0) ======================\n",  # noqa: E501
         "  Waiting: 0 | Pending: 0 | Running: 0 | Finished: 1 | Failed: 0\n",
         "  fm_step_0: 1/1/0 | Finished: 1\n",
-        "Failed\n",
     ]
-    expected[-1:-1] = ["Something went wrong!\n"]
-
-    expected[-1:-1] = [
-        f"{name}: 2/0/0\n Something went wrong!\n" for name in all_shell_script_fm_steps
-    ]
+    expected.append("Something went wrong!\n")
+    expected.extend(
+        [
+            f"{name}: 2/0/0\n Something went wrong!\n"
+            for name in all_shell_script_fm_steps
+        ]
+    )
 
     # Ignore whitespace
     assert captured.out.translate({ord(c): None for c in string.whitespace}) == "".join(
