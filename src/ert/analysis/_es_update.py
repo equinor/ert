@@ -419,6 +419,7 @@ def smoother_update(
     rng: np.random.Generator | None = None,
     progress_callback: Callable[[AnalysisEvent], None] | None = None,
     global_scaling: float = 1.0,
+    active_realizations: list[bool] | None = None,
 ) -> SmootherSnapshot:
     if not progress_callback:
         progress_callback = noop_progress_callback
@@ -426,6 +427,8 @@ def smoother_update(
         rng = np.random.default_rng()
 
     ens_mask = prior_storage.get_realization_mask_with_responses()
+    if active_realizations:
+        ens_mask &= active_realizations
 
     smoother_snapshot = SmootherSnapshot(
         source_ensemble_name=prior_storage.name,

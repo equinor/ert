@@ -143,6 +143,7 @@ class MultipleDataAssimilation(UpdateRunModel, InitialEnsembleRunModel):
                 prior.iteration,
                 prior.id,
             ),
+            active_realizations=self.active_realizations,
         )
 
     @staticmethod
