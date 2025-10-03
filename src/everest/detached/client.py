@@ -19,10 +19,10 @@ from websockets.sync.client import connect
 from ert.dark_storage.client import Client
 from ert.ensemble_evaluator import EndEvent
 from ert.run_models.event import EverestBatchResultEvent, status_event_from_json
-from ert.run_models.run_model import ExperimentState
 from ert.scheduler import create_driver
 from ert.scheduler.driver import Driver, FailedSubmit
 from ert.scheduler.event import StartedEvent
+from ert.storage import ExperimentState
 from ert.trace import get_traceparent
 from everest.config import EverestConfig, ServerConfig
 from everest.strings import (
