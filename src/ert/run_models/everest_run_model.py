@@ -30,7 +30,6 @@ from typing_extensions import TypedDict
 from ert.config import (
     EverestConstraintsConfig,
     EverestObjectivesConfig,
-    ForwardModelStep,
     GenDataConfig,
     ParameterConfig,
     QueueConfig,
@@ -39,7 +38,6 @@ from ert.config import (
 )
 from ert.config.ert_config import (
     create_and_hook_workflows,
-    forward_model_step_from_config_contents,
     read_templates,
     uppercase_subkeys_and_stringify_subvalues,
     workflow_jobs_from_dict,
@@ -309,30 +307,19 @@ class EverestRunModel(RunModel):
             config_dict, workflow_jobs, substitutions
         )
 
-        user_installed_fm_steps = {}
-        for job in everest_config.install_jobs:
-            if job.executable is not None:
-                executable = Path(job.executable)
-                if not executable.is_absolute():
-                    executable = everest_config.config_directory / executable
-                user_installed_fm_steps[job.name] = ForwardModelStep(
-                    name=job.name, executable=str(executable)
-                )
-            elif job.source is not None:
-                user_installed_fm_steps[job.name] = (
-                    forward_model_step_from_config_contents(
-                        config_contents=Path(job.source).read_text(encoding="utf-8"),
-                        config_file=job.source,
-                        name=job.name,
-                    )
-                )
+        install_job_fm_steps = {
+            job.name: job.to_ert_forward_model_step(
+                config_directory=everest_config.config_directory
+            )
+            for job in everest_config.install_jobs
+        }
 
         site_installed_fm_steps = (
             runtime_plugins.installed_forward_model_steps
             if runtime_plugins is not None
             else {}
         )
-        installed_fm_steps = dict(site_installed_fm_steps) | user_installed_fm_steps
+        installed_fm_steps = dict(site_installed_fm_steps) | install_job_fm_steps
 
         forward_model_steps = []
 
