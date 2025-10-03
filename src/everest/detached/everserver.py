@@ -12,10 +12,10 @@ from typing import Any
 import httpx
 import yaml
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
-from pydantic import BaseModel
 
 from ert.dark_storage.client import Client as DarkStorageClient
 from ert.plugins.plugin_manager import ErtPluginManager
+from ert.run_models.run_model import ExperimentStatus
 from ert.services import StorageService
 from ert.services._base_service import BaseServiceExit
 from ert.trace import tracer
@@ -34,11 +34,6 @@ from everest.strings import (
 from everest.util import makedirs_if_needed, version_info
 
 logger = logging.getLogger(__name__)
-
-
-class ExperimentStatus(BaseModel):
-    message: str = ""
-    status: ExperimentState = ExperimentState.pending
 
 
 def _configure_loggers(
