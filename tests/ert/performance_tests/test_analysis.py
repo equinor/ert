@@ -90,7 +90,6 @@ def test_and_benchmark_adaptive_localization_with_fields(
 
     config = Field.from_config_list(
         "MY_EGRID.EGRID",
-        shape,
         [
             param_group,
             param_group,

@@ -11,7 +11,13 @@ from ert.config import ConfigValidationError, ConfigWarning, Field
 from ert.config.field import TRANSFORM_FUNCTIONS
 from ert.config.parameter_config import InvalidParameterFile
 from ert.config.parsing import init_user_config_schema, parse_contents
-from ert.field_utils import FieldFileFormat, Shape, read_field
+from ert.field_utils import (
+    ErtboxParameters,
+    FieldFileFormat,
+    Shape,
+    calculate_ertbox_parameters,
+    read_field,
+)
 from ert.sample_prior import sample_prior
 
 
@@ -64,13 +70,23 @@ def test_write_to_runpath_produces_the_transformed_field_in_storage(
 def create_dummy_field(nx, ny, nz, mask):
     np.save(Path("grid_mask.npy"), mask)
 
+    ertbox_params = ErtboxParameters(
+        nx,
+        ny,
+        nz,
+        xlength=1,
+        ylength=1,
+        xinc=1,
+        yinc=1,
+        rotation_angle=45,
+        origin=(0, 0),
+    )
+
     return Field(
         name="some_name",
         forward_init=True,
         update=True,
-        nx=nx,
-        ny=ny,
-        nz=nz,
+        ertbox_params=ertbox_params,
         file_format=FieldFileFormat.ROFF,
         output_transformation=None,
         input_transformation=None,
@@ -181,6 +197,11 @@ def grid_shape():
 
 
 @pytest.fixture
+def ertbox_params():
+    return ErtboxParameters(2, 3, 4, 1, 1, 1, 1, 1, (0, 0))
+
+
+@pytest.fixture
 def egrid_file(tmp_path, grid_shape):
     grid = xtgeo.create_box_grid(
         dimension=(grid_shape.nx, grid_shape.ny, grid_shape.nz)
@@ -190,11 +211,10 @@ def egrid_file(tmp_path, grid_shape):
 
 
 @pytest.fixture
-def parse_field_line(grid_shape, egrid_file):
+def parse_field_line(ertbox_params, egrid_file):
     def make_field(field_line):
         return Field.from_config_list(
             egrid_file,
-            grid_shape,
             parse_contents(
                 f"NUM_REALIZATIONS 1\nGRID {egrid_file}\n" + field_line,
                 init_user_config_schema(),
@@ -355,3 +375,70 @@ def test_that_read_field_raises_grid_field_mismatch_error_given_different_sized_
         )
         with pytest.raises(InvalidParameterFile, match=expected_error_message):
             read_field(field_file_name, field_name, mask=mask, shape=shape)
+
+
+@pytest.mark.parametrize(
+    "origin, increment, rotation, flip",
+    [
+        ((1000.0, 2000.0, 1000.0), (100.0, 150.0, 10.0), 90, 1),
+        ((1000.0, 2000.0, 1000.0), (100.0, 150.0, 10.0), 45, -1),
+        ((1000.0, 2000.0, 1000.0), (100.0, 150.0, 10.0), 180, 1),
+        ((1000.0, 2000.0, 1000.0), (100.0, 150.0, 10.0), -30, 1),
+        ((0, 0, -10.0), (1, 1, 1), 0, 1),
+    ],
+)
+def test_calculate_ertbox_parameters_synthetic_grid(origin, increment, rotation, flip):
+    """Test calculate_ertbox_parameters with a synthetic box grid."""
+
+    # Create a synthetic box grid with rotation
+    grid = xtgeo.create_box_grid(
+        dimension=(5, 4, 3),  # nx, ny, nz
+        origin=origin,  # x0, y0, z0
+        oricenter=False,  # origin at corner, not center
+        increment=increment,  # dx, dy, dz
+        rotation=rotation,  # rotation in degrees
+        flip=flip,  # 1 for right-handed, -1 for left-handed
+    )
+    params = calculate_ertbox_parameters(grid)
+
+    # Test calculated increments (should match input within tolerance)
+    tolerance = 1e-10
+    expected_xinc = increment[0]
+    expected_yinc = increment[1]
+    assert abs(params.xinc - expected_xinc) < tolerance, (
+        f"Expected xinc={expected_xinc}, got {params.xinc}"
+    )
+    assert abs(params.yinc - expected_yinc) < tolerance, (
+        f"Expected yinc={expected_yinc}, got {params.yinc}"
+    )
+
+    # Test rotation angle (should match input within tolerance)
+    expected_angle = rotation
+    angle_tolerance = 1e-6  # degrees
+    assert abs(params.rotation_angle - expected_angle) < angle_tolerance, (
+        f"Expected rotation={expected_angle}°, got {params.rotation_angle:.6f}°"
+    )
+
+    # Test that xlength and ylength are consistent with grid dimensions and increments
+    expected_xlength = params.nx * expected_xinc
+    expected_ylength = params.ny * expected_yinc
+    assert abs(params.xlength - expected_xlength) < tolerance, (
+        f"Expected xlength={expected_xlength}, got {params.xlength}"
+    )
+    assert abs(params.ylength - expected_ylength) < tolerance, (
+        f"Expected ylength={expected_ylength}, got {params.ylength}"
+    )
+
+    # Test that xinc and yinc are positive
+    assert params.xinc > 0, f"xinc should be positive, got {params.xinc}"
+    assert params.yinc > 0, f"yinc should be positive, got {params.yinc}"
+
+    # Test that rotation angle is in reasonable range
+    assert -180 <= params.rotation_angle <= 180, (
+        f"Rotation angle should be between -180° and 180°, got {params.rotation_angle}"
+    )
+
+    # Test grid dimensions
+    assert params.nx == 5
+    assert params.ny == 4
+    assert params.nz == 3

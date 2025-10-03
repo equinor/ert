@@ -215,9 +215,20 @@
       "name": "COND",
       "forward_init": true,
       "update": true,
-      "nx": 10,
-      "ny": 10,
-      "nz": 1,
+      "ertbox_params": {
+        "nx": 10,
+        "ny": 10,
+        "nz": 1,
+        "xlength": 10.0,
+        "ylength": 10.0,
+        "xinc": 1.0,
+        "yinc": 1.0,
+        "rotation_angle": 0.0,
+        "origin": [
+          6.123233998228043e-16,
+          10.0
+        ]
+      },
       "file_format": "bgrdecl",
       "output_transformation": null,
       "input_transformation": null,

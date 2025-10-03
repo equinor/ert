@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from ert.config import Field, GenKwConfig, SurfaceConfig
-from ert.field_utils import FieldFileFormat
+from ert.field_utils import ErtboxParameters, FieldFileFormat
 from ert.gui.ertwidgets.models.ertsummary import ErtSummary
 
 
@@ -48,12 +48,22 @@ def mock_ert(monkeypatch):
         update=True,
     )
 
-    field = Field(
-        name="some_name",
-        forward_init=True,
+    ertbox_params = ErtboxParameters(
         nx=10,
         ny=5,
         nz=3,
+        xlength=1,
+        ylength=1,
+        xinc=1,
+        yinc=1,
+        rotation_angle=45,
+        origin=(0, 0),
+    )
+
+    field = Field(
+        name="some_name",
+        forward_init=True,
+        ertbox_params=ertbox_params,
         file_format=FieldFileFormat.ROFF,
         output_transformation=None,
         input_transformation=None,

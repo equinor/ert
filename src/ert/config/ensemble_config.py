@@ -2,11 +2,10 @@ from __future__ import annotations
 
 import logging
 from collections import Counter
+from pathlib import Path
 from typing import Self
 
 from pydantic import BaseModel, Field, model_validator
-
-from ert.field_utils import get_shape
 
 from .ext_param_config import ExtParamConfig
 from .field import Field as FieldConfig
@@ -92,18 +91,13 @@ class EnsembleConfig(BaseModel):
         gen_kw_list = config_dict.get(ConfigKeys.GEN_KW, [])
         surface_list = config_dict.get(ConfigKeys.SURFACE, [])
         field_list = config_dict.get(ConfigKeys.FIELD, [])
-        global_dims = None
 
-        # When users specify GRID as a separate line in the config,
-        # and not as an option to the FIELD keyword.
         if global_grid_file_path is not None:
-            try:
-                global_dims = get_shape(global_grid_file_path)
-            except Exception as err:
-                raise ConfigValidationError.with_context(
-                    f"Could not read grid file {global_grid_file_path}: {err}",
-                    global_grid_file_path,
-                ) from err
+            global_grid_file_path = Path(global_grid_file_path)
+
+            grid_extension = global_grid_file_path.suffix.lower()
+            if grid_extension not in {".egrid", ".grid"}:
+                raise ConfigValidationError("Only EGRID and GRID formats are supported")
 
         def make_field(field_list: list[str | dict[str, str]]) -> FieldConfig:
             # An example of `field_list` when the keyword `GRID` is set:
@@ -124,26 +118,10 @@ class EnsembleConfig(BaseModel):
 
             # Use field-specific grid if provided,
             # otherwise fall back to global grid.
-            if grid_file_path is not None:
-                try:
-                    dims = get_shape(grid_file_path)
-                except Exception as err:
-                    raise ConfigValidationError.with_context(
-                        f"Could not read grid file {grid_file_path}: {err}",
-                        grid_file_path,
-                    ) from err
-            else:
-                grid_file_path = global_grid_file_path
-                dims = global_dims
+            if grid_file_path is None:
+                grid_file_path = str(global_grid_file_path)
 
-            if dims is None:
-                raise ConfigValidationError.with_context(
-                    f"Grid file {grid_file_path} did not contain dimensions",
-                    grid_file_path,
-                )
-            assert grid_file_path is not None
-
-            return FieldConfig.from_config_list(grid_file_path, dims, field_list)
+            return FieldConfig.from_config_list(grid_file_path, field_list)
 
         gen_kw_cfgs = [
             cfg for g in gen_kw_list for cfg in GenKwConfig.from_config_list(g)
