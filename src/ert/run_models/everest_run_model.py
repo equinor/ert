@@ -67,7 +67,6 @@ from everest.optimizer.opt_model_transforms import (
 )
 from everest.simulator.everest_to_ert import (
     _get_well_file,
-    _is_dir_all_model,
     everest_to_ert_config_dict,
     extract_summary_keys,
     get_internal_files,
@@ -321,32 +320,16 @@ class EverestRunModel(RunModel):
 
         forward_model_steps = []
 
-        # Map install data to copy/symlink
-        for install_data in everest_config.install_data:
-            target = install_data.target
-
-            source = install_data.source.replace(
-                "<CONFIG_PATH>", everest_config.config_directory
+        install_data_fm_steps = [
+            install_data.to_ert_forward_model_step(
+                config_directory=everest_config.config_directory,
+                model_realizations=everest_config.model.realizations,
+                installed_fm_steps=installed_fm_steps,
             )
-            if not os.path.isabs(source):
-                source = os.path.join(everest_config.config_directory, source)
+            for install_data in everest_config.install_data
+        ]
 
-            is_dir = _is_dir_all_model(source, everest_config.model.realizations)
-
-            fm_name: str | None = None
-            if install_data.link:
-                fm_name = "symlink"
-            elif is_dir:
-                fm_name = "copy_directory"
-            else:
-                fm_name = "copy_file"
-
-            assert isinstance(fm_name, str)
-
-            fm_step_instance = copy.deepcopy(installed_fm_steps.get(fm_name))
-            assert fm_step_instance is not None
-            fm_step_instance.arglist = [source, target]
-            forward_model_steps.append(fm_step_instance)
+        forward_model_steps += install_data_fm_steps
 
         well_path, _ = _get_well_file(everest_config)
         copy_wellfile = copy.deepcopy(installed_fm_steps.get("copy_file"))
