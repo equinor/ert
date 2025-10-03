@@ -154,16 +154,15 @@ def _extract_workflows(
         ert_config[ErtConfigKeys.HOOK_WORKFLOW] = res_hooks
 
 
-def _is_dir_all_model(source: str, ever_config: EverestConfig) -> bool:
+def _is_dir_all_model(source: str, model_realizations: list[int]) -> bool:
     """Expands <GEO_ID> for all realizations and if:
     - all are directories, returns True,
     - all are files, returns False,
     - some are non-existing, raises an AssertionError
     """
-    realizations = ever_config.model.realizations
 
     is_dir = []
-    for model_realization in realizations:
+    for model_realization in model_realizations:
         model_source = source.replace("<GEO_ID>", str(model_realization))
         if not os.path.exists(model_source):
             msg = (
