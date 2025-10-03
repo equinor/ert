@@ -7,6 +7,7 @@ import xtgeo
 from surfio import IrapSurface
 
 from ert.config import ConfigValidationError, SurfaceConfig
+from ert.config.parameter_config import InvalidParameterFile
 
 
 @pytest.fixture
@@ -297,3 +298,44 @@ def test_surface_parameter_graph(shape, expected_nodes, expected_links):
     data = nx.node_link_data(g)
     assert data["nodes"] == expected_nodes
     assert data["links"] == expected_links
+
+
+def test_surface_create_storage_datasets_raises_surface_mismatch_error_when_the_number_of_surface_parameters_is_different_than_base_surface_size():  # noqa
+    surface_name = "foo_surface"
+    realization = 13
+    surface_parameters = 10
+    base_surface_name = "base_surface.irap"
+    base_surface_col = 3
+    base_surface_row = 3
+    config = SurfaceConfig(
+        name=surface_name,
+        forward_init=False,
+        update=True,
+        ncol=base_surface_col,
+        nrow=base_surface_row,
+        xori=0,
+        yori=0,
+        xinc=0,
+        yinc=0,
+        rotation=0,
+        yflip=0,
+        forward_init_file="0",
+        output_file=Path("0"),
+        base_surface_path=f"foo/bar/{base_surface_name}",
+    )
+    storage_dataset_iterator = config.create_storage_datasets(
+        from_data=np.ndarray(
+            [surface_parameters, 1],
+        ),
+        iens_active_index=np.array([realization]),
+    )
+
+    expected_error_msg = (
+        rf"Saving parameters for SURFACE '{surface_name}' for realization "
+        rf"{realization} to storage failed. "
+        rf"SURFACE {surface_name} \(size {surface_parameters}\) and BASE_SURFACE "
+        rf"{base_surface_name} \(size {base_surface_col * base_surface_row}\) "
+        rf"must have the same size."
+    )
+    with pytest.raises(InvalidParameterFile, match=expected_error_msg):
+        next(storage_dataset_iterator)
