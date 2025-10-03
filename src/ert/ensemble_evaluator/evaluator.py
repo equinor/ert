@@ -537,7 +537,7 @@ class EnsembleEvaluator:
             ):
                 host_name = real_data.get("exec_hosts")
                 if host_name == "-":
-                    host_name = "localhost"
+                    host_name = "unknown"
                 if (
                     host_name
                     and real_id
