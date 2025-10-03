@@ -680,3 +680,31 @@ def test_that_export_keywords_are_turned_into_summary_config_keys(
         r for r in runmodel.response_configuration if isinstance(r, SummaryConfig)
     )
     assert set(extra_sum_keys).issubset(summary_config.keys)
+
+
+def test_that_summary_keys_are_passed_through_forward_model_results(
+    monkeypatch, tmp_path, min_config
+):
+    monkeypatch.chdir(tmp_path)
+    min_config["forward_model"] = [
+        {
+            "job": "eclipse100 CASE.DATA",
+            "results": {
+                "file_name": "CASE",
+                "type": "summary",
+                "keys": ["one", "two", "three"],
+            },
+        }
+    ]
+
+    with ErtPluginContext() as runtime_plugins:
+        config = EverestConfig(**min_config)
+        runmodel = EverestRunModel.create(
+            config, "exp", "batch", runtime_plugins=runtime_plugins
+        )
+
+    summary_config = next(
+        r for r in runmodel.response_configuration if isinstance(r, SummaryConfig)
+    )
+
+    assert {"one", "two", "three"}.issubset(summary_config.keys)
