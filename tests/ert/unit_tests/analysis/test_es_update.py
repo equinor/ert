@@ -681,7 +681,6 @@ def test_temporary_parameter_storage_with_inactive_fields(
 
     config = Field.from_config_list(
         "MY_EGRID.EGRID",
-        shape,
         [
             param_group,
             param_group,

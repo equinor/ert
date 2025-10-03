@@ -746,7 +746,7 @@ def config_generators(draw, use_eclbase=booleans):
                 os.mkdir("./refcase")
             config_values.refcase_smspec.to_file(f"./refcase/{summary_basename}.SMSPEC")
             config_values.refcase_unsmry.to_file(f"./refcase/{summary_basename}.UNSMRY")
-            config_values.egrid.to_file(config_values.grid_file)
+            config_values.egrid.to_file(config_values.grid_file, fformat="egrid")
             with open(config_values.time_map[0], "w", encoding="utf-8") as fh:
                 fh.write(config_values.time_map[1])
 

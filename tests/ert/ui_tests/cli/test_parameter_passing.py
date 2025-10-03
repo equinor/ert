@@ -131,14 +131,14 @@ class IoProvider:
             grid.to_file(grid_file, str(grid_format))
         elif lib == IoLibrary.ERT:
             egrid = self.data.draw(egrids)
-            self.dims = egrid.shape
+            self.dims = (egrid.ncol, egrid.nrow, egrid.nlay)
             self.size = self.dims[0] * self.dims[1] * self.dims[2]
             self.actnum = (
-                egrid.global_grid.actnum
-                if egrid.global_grid.actnum is not None
+                egrid.actnum_array
+                if egrid.actnum_array is not None
                 else np.ones(self.size)
             )
-            egrid.to_file(grid_file)
+            egrid.to_file(grid_file, fformat=str(grid_format))
         else:
             raise ValueError
 

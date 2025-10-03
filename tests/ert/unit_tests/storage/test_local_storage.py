@@ -561,7 +561,9 @@ small_ints = st.integers(min_value=1, max_value=10)
 @st.composite
 def fields(draw, egrid, num_fields=small_ints) -> list[Field]:
     grid_file, grid = egrid
-    nx, ny, nz = grid.shape
+    nx = grid.ncol
+    ny = grid.nrow
+    nz = grid.nlay
     return [
         draw(
             st.builds(
@@ -1154,7 +1156,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
     @initialize(target=grid, egrid=egrids)
     def create_grid(self, egrid):
         grid_file = self.tmpdir + "/grid.egrid"
-        egrid.to_file(grid_file)
+        egrid.to_file(grid_file, fformat="egrid")
         return (grid_file, egrid)
 
     @initialize(
@@ -1218,7 +1220,9 @@ class StatefulStorageTest(RuleBasedStateMachine):
 
     @rule(
         model_ensemble=ensembles,
-        field_data=grid.flatmap(lambda g: arrays(np.float32, shape=g[1].shape)),
+        field_data=grid.flatmap(
+            lambda g: arrays(np.float32, shape=(g[1].ncol, g[1].nrow, g[1].nlay))
+        ),
     )
     def save_field(self, model_ensemble: Ensemble, field_data):
         storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
@@ -1245,7 +1249,9 @@ class StatefulStorageTest(RuleBasedStateMachine):
 
     @rule(
         model_ensemble=ensembles,
-        field_data=grid.flatmap(lambda g: arrays(np.float32, shape=g[1].shape)),
+        field_data=grid.flatmap(
+            lambda g: arrays(np.float32, shape=(g[1].ncol, g[1].nrow, g[1].nlay))
+        ),
     )
     def write_error_in_save_field(self, model_ensemble: Ensemble, field_data):
         storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)

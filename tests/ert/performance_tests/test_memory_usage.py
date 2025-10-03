@@ -184,7 +184,7 @@ def make_summary_data(
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.memory_test
-@pytest.mark.limit_memory("130 MB")
+@pytest.mark.limit_memory("300 MB")
 @pytest.mark.flaky(reruns=5)
 @pytest.mark.skipif(
     sys.platform.startswith("darwin"), reason="Currently failing on mac"

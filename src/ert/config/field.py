@@ -11,9 +11,19 @@ from typing import TYPE_CHECKING, Any, Literal, Self, cast, overload
 import networkx as nx
 import numpy as np
 import xarray as xr
+import xtgeo  # type: ignore
 from pydantic import field_serializer
 
-from ert.field_utils import FieldFileFormat, Shape, read_field, read_mask, save_field
+from ert.field_utils import (
+    ErtboxParameters,
+    FieldFileFormat,
+    Shape,
+    calculate_ertbox_parameters,
+    get_shape,
+    read_field,
+    read_mask,
+    save_field,
+)
 from ert.substitutions import substitute_runpath_name
 from ert.utils import log_duration
 
@@ -83,9 +93,7 @@ def adjust_graph_for_masking(
 
 class Field(ParameterConfig):
     type: Literal["field"] = "field"
-    nx: int
-    ny: int
-    nz: int
+    ertbox_params: ErtboxParameters
     file_format: FieldFileFormat
     output_transformation: str | None
     input_transformation: str | None
@@ -115,12 +123,7 @@ class Field(ParameterConfig):
                 key=self.name,
                 transformation=self.output_transformation,
                 dimensionality=3,
-                userdata={
-                    "data_origin": "FIELD",
-                    "nx": self.nx,
-                    "ny": self.ny,
-                    "nz": self.nz,
-                },
+                userdata={"data_origin": "FIELD", "ertbox_params": self.ertbox_params},
             )
         ]
 
@@ -128,7 +131,6 @@ class Field(ParameterConfig):
     def from_config_list(
         cls,
         grid_file_path: str,
-        dims: Shape,
         config_list: list[str | dict[str, str]],
     ) -> Self:
         name = cast(str, config_list[0])
@@ -198,11 +200,32 @@ class Field(ParameterConfig):
         assert file_format is not None
 
         assert init_files is not None
+
+        grid_extension = Path(grid_file_path).suffix.lower()
+
+        try:
+            if grid_extension == ".egrid":
+                grid = xtgeo.grid_from_file(grid_file_path)
+                ertbox_params = calculate_ertbox_parameters(grid)
+            else:
+                dims = get_shape(grid_file_path)
+
+                if dims is None:
+                    raise ConfigValidationError.with_context(
+                        f"Grid file {grid_file_path} did not contain dimensions",
+                        grid_file_path,
+                    )
+
+                ertbox_params = ErtboxParameters(dims.nx, dims.ny, dims.nz)
+        except Exception as err:
+            raise ConfigValidationError.with_context(
+                f"Could not read grid file {grid_file_path}: {err}",
+                grid_file_path,
+            ) from err
+
         return cls(
             name=name,
-            nx=dims.nx,
-            ny=dims.ny,
-            nz=dims.nz,
+            ertbox_params=ertbox_params,
             file_format=file_format,
             output_transformation=output_transform,
             input_transformation=init_transform,
@@ -217,7 +240,7 @@ class Field(ParameterConfig):
 
     def __len__(self) -> int:
         if self.mask_file is None:
-            return self.nx * self.ny * self.nz
+            return self.ertbox_params.nx * self.ertbox_params.ny * self.ertbox_params.nz
 
         # Uses int() to convert to standard python int for mypy
         return int(np.size(self.mask) - np.count_nonzero(self.mask))
@@ -236,7 +259,11 @@ class Field(ParameterConfig):
                             run_path / file_name,
                             self.name,
                             self.mask,
-                            Shape(self.nx, self.ny, self.nz),
+                            Shape(
+                                self.ertbox_params.nx,
+                                self.ertbox_params.ny,
+                                self.ertbox_params.nz,
+                            ),
                         ),
                         self.input_transformation,
                     ),
@@ -332,9 +359,21 @@ class Field(ParameterConfig):
 
     def load_parameter_graph(self) -> nx.Graph:  # type: ignore
         parameter_graph = create_flattened_cube_graph(
-            px=self.nx, py=self.ny, pz=self.nz
+            px=self.ertbox_params.nx, py=self.ertbox_params.ny, pz=self.ertbox_params.nz
         )
         return adjust_graph_for_masking(G=parameter_graph, mask=self.mask.flatten())
+
+    @property
+    def nx(self) -> int:
+        return self.ertbox_params.nx
+
+    @property
+    def ny(self) -> int:
+        return self.ertbox_params.ny
+
+    @property
+    def nz(self) -> int:
+        return self.ertbox_params.nz
 
 
 TRANSFORM_FUNCTIONS = {
