@@ -76,10 +76,11 @@ from everest.simulator.everest_to_ert import (
 from everest.strings import EVEREST, STORAGE_DIR
 
 from ..run_arg import RunArg, create_run_arguments
+from ..storage import ExperimentState, ExperimentStatus
 from ..storage.local_ensemble import EverestRealizationInfo
 from ..substitutions import Substitutions
 from .event import EverestBatchResultEvent, EverestStatusEvent
-from .run_model import ExperimentState, ExperimentStatus, RunModel, StatusEvents
+from .run_model import RunModel, StatusEvents
 
 if TYPE_CHECKING:
     from ert.storage import Ensemble, Experiment

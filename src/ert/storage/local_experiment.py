@@ -4,6 +4,7 @@ import json
 import shutil
 from collections.abc import Generator
 from datetime import datetime
+from enum import StrEnum, auto
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any
@@ -34,6 +35,20 @@ if TYPE_CHECKING:
     from .local_storage import LocalStorage
 
 
+class ExperimentState(StrEnum):
+    pending = auto()
+    running = auto()
+    completed = auto()
+    stopped = auto()
+    failed = auto()
+    never_run = auto()
+
+
+class ExperimentStatus(BaseModel):
+    message: str = ""
+    status: ExperimentState = ExperimentState.pending
+
+
 class _Index(BaseModel):
     id: UUID
     name: str
@@ -41,7 +56,7 @@ class _Index(BaseModel):
     # from a different experiment. For example, a manual update
     # is a separate experiment from the one that created the prior.
     ensembles: list[UUID]
-    status: dict[str, Any] | None = None
+    status: ExperimentStatus | None = None
 
 
 _responses_adapter = TypeAdapter(  # type: ignore
@@ -298,12 +313,12 @@ class LocalExperiment(BaseMode):
         return self._index.id
 
     @property
-    def status(self) -> dict[str, Any] | None:
+    def status(self) -> ExperimentStatus | None:
         return self._index.status
 
     @status.setter
     @require_write
-    def status(self, status: dict[str, Any] | None) -> None:
+    def status(self, status: ExperimentStatus | None) -> None:
         if status != self._index.status:
             self._index.status = status
             self._storage._write_transaction(
