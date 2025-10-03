@@ -178,6 +178,7 @@ class ExperimentPanel(QWidget):
         self.addExperimentConfigPanel(
             MultipleDataAssimilationPanel(
                 analysis_config,
+                config.ensemble_config,
                 run_path,
                 notifier,
                 active_realizations,
