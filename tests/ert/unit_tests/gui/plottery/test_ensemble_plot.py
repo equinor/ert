@@ -24,6 +24,7 @@ def plot_context(request):
             "ensemble_1", "id", False, "experiment_1", started_at="2012-12-10T00:00:00"
         )
     ]
+    context.ensembles_index.return_value = [1]
     context.key.return_value = request.param
     context.history_data = None
     context.plotConfig.return_value = PlotConfig(title="Ensemble Plot")

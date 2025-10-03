@@ -30,12 +30,14 @@ class PlotContext:
         self,
         plot_config: PlotConfig,
         ensembles: list[EnsembleObject],
+        ensembles_index: list[int],
         key: str,
         layer: int | None = None,
     ) -> None:
         super().__init__()
         self._key = key
         self._ensembles = ensembles
+        self._ensembles_index = ensembles_index
         self._plot_config = plot_config
         self.history_data: DataFrame | None = None
         self._layer: int | None = layer
@@ -49,6 +51,9 @@ class PlotContext:
 
     def ensembles(self) -> list[EnsembleObject]:
         return self._ensembles
+
+    def ensembles_index(self) -> list[int]:
+        return self._ensembles_index
 
     def key(self) -> str:
         return self._key

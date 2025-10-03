@@ -217,6 +217,9 @@ class PlotWindow(QMainWindow):
             selected_ensembles = (
                 self._ensemble_selection_widget.get_selected_ensembles()
             )
+            selected_ensembles_indexes = (
+                self._ensemble_selection_widget.get_selected_ensembles_indexes()
+            )
             ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame] = {}
             for ensemble in selected_ensembles:
                 try:
@@ -265,7 +268,9 @@ class PlotWindow(QMainWindow):
                 plot_widget.showLayerWidget.emit(False)
 
             plot_config = PlotConfig.createCopy(self._plot_customizer.getPlotConfig())
-            plot_context = PlotContext(plot_config, selected_ensembles, key, layer)
+            plot_context = PlotContext(
+                plot_config, selected_ensembles, selected_ensembles_indexes, key, layer
+            )
 
             # Check if key is a history key.
             # If it is it already has the data it needs
