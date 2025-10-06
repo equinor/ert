@@ -5,6 +5,7 @@ import logging
 import warnings
 from argparse import ArgumentParser
 from collections.abc import Callable, Mapping, Sequence
+from contextlib import contextmanager
 from pathlib import Path
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
@@ -381,6 +382,20 @@ class ErtRuntimePlugins(BaseModel):
     env_pr_fm_step: Mapping[str, Mapping[str, Any]] = Field(default_factory=dict)
     help_links: dict[str, str] = Field(default_factory=dict)
 
+    def inject_installed_workflow_jobs(
+        self, workflow_jobs: dict[str, WorkflowJob]
+    ) -> None:
+        self.installed_workflow_jobs = (
+            dict(self.installed_workflow_jobs) | workflow_jobs
+        )
+
+    def inject_installed_forward_model_steps(
+        self, fm_steps: dict[str, ForwardModelStep]
+    ) -> None:
+        self.installed_forward_model_steps = (
+            dict(self.installed_forward_model_steps) | fm_steps
+        )
+
 
 class ErtPluginContext:
     def __init__(
@@ -472,3 +487,12 @@ class ErtPluginContext:
     ) -> None:
         logger.debug("Exiting plugin context")
         init_context_var.reset(self._context_token)
+
+
+@contextmanager
+def use_runtime_plugins(runtime_plugins: ErtRuntimePlugins) -> None:
+    token = init_context_var.set(runtime_plugins)
+    try:
+        yield runtime_plugins
+    finally:
+        init_context_var.reset(token)

@@ -20,7 +20,6 @@ class InitialEnsembleRunModel(RunModel, InitialEnsembleRunModelConfig):
     def _sample_and_evaluate_ensemble(
         self,
         evaluator_server_config: EvaluatorServerConfig,
-        simulation_arguments: dict[str, str] | None,
         ensemble_name: str,
         ensemble_storage: LocalEnsemble | None = None,
     ) -> LocalEnsemble:
@@ -31,7 +30,6 @@ class InitialEnsembleRunModel(RunModel, InitialEnsembleRunModelConfig):
                 if self.observations is not None
                 else None,
                 responses=cast(list[ResponseConfig], self.response_configuration),
-                simulation_arguments=simulation_arguments,
                 name=self.experiment_name,
                 templates=self.ert_templates,
             )

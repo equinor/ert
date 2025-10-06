@@ -46,10 +46,10 @@ class ManualUpdate(UpdateRunModel, ManualUpdateConfig):
             parameters=list(prior_experiment.parameter_configuration.values()),
             responses=list(prior_experiment.response_configuration.values()),
             observations=prior_experiment.observations,
-            simulation_arguments=prior_experiment.metadata,
             name=f"Manual update of {self._prior.name}",
             templates=self._prior.experiment.templates_configuration,
         )
+        target_experiment.save_experiment_config(self.model_dump())
         self.update(
             self._prior,
             self.target_ensemble % (self._prior.iteration + 1),

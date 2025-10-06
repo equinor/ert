@@ -128,6 +128,8 @@ class ForwardModelStep:
         private_args: A dictionary of user-provided keyword arguments.
             For example, if the user provides <A>=2, the dictionary will contain
             { "A": "2" }
+        source_file: The file from which the forward model step was loaded.
+            If the forward model step was loaded from a plugin, this will be None.
     """
 
     name: str
@@ -147,6 +149,7 @@ class ForwardModelStep:
     environment: dict[str, str] = field(default_factory=dict)
     default_mapping: dict[str, str] = field(default_factory=dict)
     private_args: dict[str, str] = field(default_factory=dict)
+    source_file: str | None = None
 
     default_env: ClassVar[dict[str, str]] = {
         "_ERT_ITERATION_NUMBER": "<ITER>",

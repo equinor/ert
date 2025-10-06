@@ -84,9 +84,11 @@ class MultipleDataAssimilation(
                     parameters=list(prior.experiment.parameter_configuration.values()),
                     responses=list(prior.experiment.response_configuration.values()),
                     observations=prior.experiment.observations,
-                    simulation_arguments=prior.experiment.metadata,
                     name=f"Restart from {prior.name}",
                     templates=prior.experiment.templates_configuration,
+                )
+                target_experiment.save_experiment_config(
+                    serialized_experiment=self.model_dump()
                 )
             except (KeyError, ValueError) as err:
                 raise ErtRunError(
@@ -96,10 +98,8 @@ class MultipleDataAssimilation(
             self.run_workflows(
                 fixtures=PreExperimentFixtures(random_seed=self.random_seed),
             )
-            sim_args = {"weights": self.weights}
             prior = self._sample_and_evaluate_ensemble(
                 evaluator_server_config,
-                sim_args,
                 self.target_ensemble % 0,
             )
 
