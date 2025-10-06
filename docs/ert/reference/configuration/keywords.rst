@@ -261,6 +261,40 @@ contain parameters d and e, where d=0 and e=1 for all of the them.
    * - e
      - 1
 
+The final design matrix would be then as follows:
+
+.. _final_design_matrix:
+
+.. list-table:: final design matrix
+   :widths: 20 20 20 20 20 20
+   :width: 80%
+   :header-rows: 1
+
+   * - REAL
+     - a
+     - b
+     - c
+     - d
+     - e
+   * - 0
+     - 1
+     - 1
+     - 2
+     - 0
+     - 1
+   * - 1
+     - 1
+     - 1
+     - 2
+     - 0
+     - 1
+   * - 3
+     - 1
+     - 1
+     - 3
+     - 0
+     - 1
+
 If the :ref:`design_sheet` contains column `REAL`, ert will automatically set the active realizations to what is
 specified in `REAL` column; i.e.; 0,1 and 3 in the example. If the `REAL` column is not present, ert will enumerate individual rows
 as realization; i.e. 0,1 and 2 in the example.
@@ -281,29 +315,26 @@ wherein coeff_priors
 
 ::
 
-        a UNIFORM 0 1
-        b UNIFORM 0 2
-        c UNIFORM 0 5
-        d UNIFORM 0 2
-        e UNIFORM 0 5
+        b UNIFORM 0 1
+        c UNIFORM 0 2
+        d UNIFORM 0 5
+        f UNIFORM 0 10
 
 
-the :ref:`GEN_KW <gen_kw>` group COEFFS would remain, but the values would be read from the design matrix while update is disabled for COEFFS.
-Notice that this requires a full overlap of parameter names.
-The case with only a partial overlap will result in a validation error.
-An example of a partial overlap is when GEN_KW contains parameters a,b,c,d,e and the design matrix contains a,b,c,d.
-Additionally, the overlap needs to be present only in a single GEN_KW group, which means that having for instance:
-
+the :ref:`GEN_KW <gen_kw>` group COEFFS would remain, but the values (for b, c and d) would be read from the design matrix
+and the update will be disabled, while f would be sampled and the update flag will remain.
+In this case the final set of parameters (for example in parameters.txt in real==0) would be:
 ::
 
-        GEN_KW COEFFS1 coeff_priors_1 -- defining parameters a,b,c
-        GEN_KW COEFFS2 coeff_priors_2 -- defining parameters d,e
+        DESIGN_MATRIX:a=1 <- design value
+        COEFFS:b=1 <- design value
+        COEFFS:c=2 <- design value
+        COEFFS:d=0 <- design value
+        DESIGN_MATRIX:e=1 <- design value
+        COEFFS:f=5.7 <- sampled value
 
-would also yield validation error, even the union of parameters overlaps the design matrix parameters.
-In such cases consider to comment out GEN_KW definitions and thus only the design parameters will be used.
-
-
-In case there is no overlap with a GEN_KW group, the GEN_KW group will be sampled normally.
+So the genkw would keep its name (COEFFS) and the design matrix parameters would be prefixed with DESIGN_MATRIX.
+Note that GEN_KW parameters that are not found in the design matrix will be sampled normally (eg. COEFFS:f).
 
 .. _design_matrix_notes:
 .. note::
