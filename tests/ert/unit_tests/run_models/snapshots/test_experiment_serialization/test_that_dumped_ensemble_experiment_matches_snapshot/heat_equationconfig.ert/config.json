@@ -59,7 +59,8 @@
       "private_args": {
         "<ARG0>": "<IENS>",
         "<ARG1>": "<ITER>"
-      }
+      },
+      "source_file": "test-data/ert/heat_equation.config.ert/HEAT_EQUATION"
     }
   ],
   "substitutions": {
@@ -181,6 +182,10 @@
   "random_seed": 1,
   "start_iteration": 0,
   "minimum_required_realizations": 2,
+  "user_installed_workflow_jobs": {},
+  "user_installed_fm_steps": {
+    "heat_equation": "test-data/ert/heat_equation.config.ert/HEAT_EQUATION"
+  },
   "experiment_name": "default_name",
   "design_matrix": null,
   "parameter_configuration": [

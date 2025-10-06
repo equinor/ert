@@ -89,15 +89,12 @@ class MultipleDataAssimilation(
                     parameters=list(prior.experiment.parameter_configuration.values()),
                     responses=list(prior.experiment.response_configuration.values()),
                     observations=prior.experiment.observations,
-                    simulation_arguments=prior.experiment.metadata,
                     name=f"Restart from {prior.name}",
                     templates=prior.experiment.templates_configuration,
                 )
-
                 target_experiment.save_experiment_config(
                     serialized_experiment=self.model_dump()
                 )
-
             except (KeyError, ValueError) as err:
                 raise ErtRunError(
                     f"Prior ensemble with ID: {id_} does not exists"

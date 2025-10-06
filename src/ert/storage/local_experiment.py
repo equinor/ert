@@ -129,7 +129,6 @@ class LocalExperiment(BaseMode):
         parameters: list[ParameterConfig] | None = None,
         responses: list[ResponseConfig] | None = None,
         observations: dict[str, pl.DataFrame] | None = None,
-        simulation_arguments: dict[Any, Any] | None = None,
         name: str | None = None,
         templates: list[tuple[str, str]] | None = None,
     ) -> LocalExperiment:
@@ -150,8 +149,6 @@ class LocalExperiment(BaseMode):
             List of response configurations.
         observations : dict of str to encoded observation datasets, optional
             Observations dictionary.
-        simulation_arguments : SimulationArguments, optional
-            Simulation arguments for the experiment.
         name : str, optional
             Experiment name. Defaults to current date if None.
         templates : list of tuple[str, str], optional
