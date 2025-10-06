@@ -227,9 +227,8 @@ def create_poly_with_field(field_dim: tuple[int, int, int], realisations: int):
     grid.to_file("MY_EGRID.EGRID", "egrid")
     del grid
 
-    with open("forward_model", "w", encoding="utf-8") as f:
-        f.write(
-            f"""#!/usr/bin/env python
+    Path("forward_model").write_text(
+        f"""#!/usr/bin/env python
 import numpy as np
 import os
 import resfo
@@ -245,38 +244,39 @@ if __name__ == "__main__":
     output = [float(a) * x**2 + float(b) * x + float(c) for x in range(10)]
     with open("gen_data_0.out", "w", encoding="utf-8") as f:
         f.write("\\n".join(map(str, output)))
-            """
-        )
+            """,
+        encoding="utf-8",
+    )
+
     os.chmod(
         "forward_model",
         os.stat("forward_model").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH,
     )
-    with open("POLY_EVAL", "w", encoding="utf-8") as fout:
-        fout.write("EXECUTABLE forward_model")
-    with open("observations", "w", encoding="utf-8") as fout:
-        fout.write(
-            dedent(
-                """
+    Path("POLY_EVAL").write_text("EXECUTABLE forward_model", encoding="utf-8")
+    Path("observations").write_text(
+        dedent(
+            """
         GENERAL_OBSERVATION MY_OBS {
             DATA       = MY_RESPONSE;
             INDEX_LIST = 0,2,4,6,8;
             RESTART    = 0;
             OBS_FILE   = obs.txt;
         };"""
-            )
-        )
+        ),
+        encoding="utf-8",
+    )
 
-    with open("obs.txt", "w", encoding="utf-8") as fobs:
-        fobs.write(
-            dedent(
-                """
+    Path("obs.txt").write_text(
+        dedent(
+            """
         2.1457049781272213 0.6
         8.769219841380755 1.4
         12.388014786122742 3.0
         25.600464531354252 5.4
         42.35204755970952 8.6"""
-            )
-        )
+        ),
+        encoding="utf-8",
+    )
 
 
 def run_poly():

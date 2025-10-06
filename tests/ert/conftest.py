@@ -212,10 +212,9 @@ def copy_poly_case_with_design_matrix(copy_case):
             pl.DataFrame(design_dict),
             pl.DataFrame(default_list, orient="row"),
         )
-        with open("poly.ert", "w", encoding="utf-8") as fout:
-            fout.write(
-                dedent(
-                    f"""\
+        Path("poly.ert").write_text(
+            dedent(
+                f"""\
                     QUEUE_OPTION LOCAL MAX_RUNNING 2
                     RUNPATH poly_out/realization-<IENS>/iter-<ITER>
                     NUM_REALIZATIONS {num_realizations}
@@ -225,13 +224,13 @@ def copy_poly_case_with_design_matrix(copy_case):
                     INSTALL_JOB poly_eval POLY_EVAL
                     FORWARD_MODEL poly_eval
                     """
-                )
-            )
+            ),
+            encoding="utf-8",
+        )
 
-        with open("poly_eval.py", "w", encoding="utf-8") as f:
-            f.write(
-                dedent(
-                    """\
+        Path("poly_eval.py").write_text(
+            dedent(
+                """\
                     #!/usr/bin/env python
                     import json
 
@@ -248,8 +247,10 @@ def copy_poly_case_with_design_matrix(copy_case):
                         with open("poly.out", "w", encoding="utf-8") as f:
                             f.write("\\n".join(map(str, output)))
                     """
-                )
-            )
+            ),
+            encoding="utf-8",
+        )
+
         os.chmod(
             "poly_eval.py",
             os.stat("poly_eval.py").st_mode

@@ -4,6 +4,7 @@ import stat
 import warnings
 from collections.abc import Sequence
 from dataclasses import dataclass
+from pathlib import Path
 from textwrap import dedent
 
 import pytest
@@ -742,8 +743,7 @@ def test_that_unicode_decode_error_is_localized_random_line_single_insert():
         before = lines[0:insertion_index]
         after = lines[insertion_index : len(lines)]
 
-        with open("test.ert", "w", encoding="utf-8") as f:
-            f.write("\n".join(before) + "\n")
+        Path("test.ert").write_text("\n".join(before) + "\n", encoding="utf-8")
 
         with open("test.ert", "ab") as f:
             f.write(b"\xff")

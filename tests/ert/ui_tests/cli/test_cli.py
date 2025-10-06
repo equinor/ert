@@ -473,16 +473,13 @@ def test_that_stop_on_fail_workflow_jobs_stop_ert(
     script_name = f"failing_script.{file_extension}"
     monkeypatch.setattr(_ert.threading, "_can_raise", False)
 
-    with open("failing_job", "w", encoding="utf-8") as f:
-        f.write(workflow_job_config_content)
+    Path("failing_job").write_text(workflow_job_config_content, encoding="utf-8")
 
-    with open(script_name, "w", encoding="utf-8") as s:
-        s.write(script_content)
+    Path(script_name).write_text(script_content, encoding="utf-8")
 
     os.chmod(script_name, os.stat(script_name).st_mode | 0o111)
 
-    with open("dump_failing_workflow", "w", encoding="utf-8") as f:
-        f.write("failjob")
+    Path("dump_failing_workflow").write_text("failjob", encoding="utf-8")
 
     with open("poly.ert", mode="a", encoding="utf-8") as fh:
         fh.write(

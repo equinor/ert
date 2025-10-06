@@ -3,6 +3,7 @@ Contains code that was used to generate files expected by ert.
 """
 
 from collections.abc import Callable
+from pathlib import Path
 from textwrap import dedent
 
 import numpy as np
@@ -139,8 +140,9 @@ if __name__ == "__main__":
         )
 
     for obs_time in obs_times:
-        with open(f"obs_{obs_time}.txt", "w", encoding="utf-8") as fobs:
-            df = d.iloc[d.index.get_level_values("k") == obs_time]
-            fobs.write(df.sort_index().to_csv(header=False, index=False, sep=" "))
+        df = d.iloc[d.index.get_level_values("k") == obs_time]
+        Path(f"obs_{obs_time}.txt").write_text(
+            df.sort_index().to_csv(header=False, index=False, sep=" "), encoding="utf-8"
+        )
 
     generate_priors()

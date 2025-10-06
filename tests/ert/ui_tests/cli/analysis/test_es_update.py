@@ -110,8 +110,7 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert():
     };
     """
 
-    with open("observations/observations.txt", "w", encoding="utf-8") as file:
-        file.write(obs)
+    Path("observations/observations.txt").write_text(obs, encoding="utf-8")
 
     run_cli(
         ENSEMBLE_SMOOTHER_MODE,
@@ -174,10 +173,9 @@ def test_update_multiple_param():
 
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_reals_with_load_failure_in_prior_become_parent_failure_in_posterior():
-    with open("poly_eval.py", "w", encoding="utf-8") as f:
-        f.write(
-            dedent(
-                """\
+    Path("poly_eval.py").write_text(
+        dedent(
+            """\
                 #!/usr/bin/env python
                 import numpy as np
                 import sys
@@ -203,8 +201,10 @@ def test_that_reals_with_load_failure_in_prior_become_parent_failure_in_posterio
                     with open("poly.out", "w", encoding="utf-8") as f:
                         f.write("\\n".join(map(str, output)))
                 """
-            )
-        )
+        ),
+        encoding="utf-8",
+    )
+
     os.chmod(
         "poly_eval.py",
         os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH,

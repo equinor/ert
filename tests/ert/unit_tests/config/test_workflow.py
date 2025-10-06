@@ -1,5 +1,6 @@
 import os
 from contextlib import ExitStack as does_not_raise
+from pathlib import Path
 
 import pytest
 from hypothesis import given, strategies
@@ -18,8 +19,7 @@ def test_reading_non_existent_workflow_raises_config_error():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_failure_in_parsing_workflow_gives_config_validation_error():
-    with open("workflow", "w", encoding="utf-8") as f:
-        f.write("DEFINE\n")
+    Path("workflow").write_text("DEFINE\n", encoding="utf-8")
     with pytest.raises(
         ConfigValidationError, match=r"DEFINE must have .* arguments"
     ) as err:
@@ -29,8 +29,7 @@ def test_that_failure_in_parsing_workflow_gives_config_validation_error():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_substitution_happens_in_workflow():
-    with open("workflow", "w", encoding="utf-8") as f:
-        f.write("JOB <A> <B>\n")
+    Path("workflow").write_text("JOB <A> <B>\n", encoding="utf-8")
 
     job = ExecutableWorkflow(
         executable="echo",
@@ -75,8 +74,7 @@ def get_workflow_job(name):
     )
 )
 def test_that_multiple_workflow_jobs_are_ordered_correctly(order):
-    with open("workflow", "w", encoding="utf-8") as f:
-        f.write("\n".join(order))
+    Path("workflow").write_text("\n".join(order), encoding="utf-8")
 
     foo = get_workflow_job("foo")
     bar = get_workflow_job("bar")
@@ -97,19 +95,19 @@ def test_that_multiple_workflow_jobs_are_ordered_correctly(order):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_redefine_in_workflow_overwrites_in_subsequent_lines():
-    with open("workflow", "w", encoding="utf-8") as f:
-        f.write(
-            "\n".join(
-                [
-                    "DEFINE <A> 1",
-                    "foo <A>",
-                    "bar <A>",
-                    "DEFINE <A> 3",
-                    "foo <A>",
-                    "baz <A>",
-                ]
-            )
-        )
+    Path("workflow").write_text(
+        "\n".join(
+            [
+                "DEFINE <A> 1",
+                "foo <A>",
+                "bar <A>",
+                "DEFINE <A> 3",
+                "foo <A>",
+                "baz <A>",
+            ]
+        ),
+        encoding="utf-8",
+    )
 
     foo = get_workflow_job("foo")
     bar = get_workflow_job("bar")
@@ -132,15 +130,15 @@ def test_that_redefine_in_workflow_overwrites_in_subsequent_lines():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_unknown_jobs_gives_error():
-    with open("workflow", "w", encoding="utf-8") as f:
-        f.write(
-            "\n".join(
-                [
-                    "boo <A>",
-                    "kingboo <A>",
-                ]
-            )
-        )
+    Path("workflow").write_text(
+        "\n".join(
+            [
+                "boo <A>",
+                "kingboo <A>",
+            ]
+        ),
+        encoding="utf-8",
+    )
 
     with pytest.raises(
         ConfigValidationError, match="Job with name: kingboo is not recognized"
@@ -176,8 +174,7 @@ def test_that_unknown_jobs_gives_error():
 )
 @pytest.mark.parametrize("min_args, max_args", [(1, 2), (None, None)])
 def test_args_validation(config, expectation, min_args, max_args):
-    with open("workflow", "w", encoding="utf-8") as f:
-        f.write(config)
+    Path("workflow").write_text(config, encoding="utf-8")
     if min_args is None and max_args is None:
         expectation = does_not_raise()
     with expectation:

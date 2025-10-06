@@ -46,10 +46,9 @@ def test_run_with_process_failing(mock_process, mock_popen, mock_check_executabl
 def test_memory_usage_counts_grandchildren():
     scriptname = "recursive_memory_hog.py"
     blobsize = 1e7
-    with open(scriptname, "w", encoding="utf-8") as script:
-        script.write(
-            textwrap.dedent(
-                """\
+    pathlib.Path(scriptname).write_text(
+        textwrap.dedent(
+            """\
             #!/usr/bin/env python
             import os
             import sys
@@ -73,8 +72,9 @@ def test_memory_usage_counts_grandchildren():
                         ]
                         )
             time.sleep(3)"""  # Too low sleep will make the test faster but flaky
-            )
-        )
+        ),
+        encoding="utf-8",
+    )
     executable = os.path.realpath(scriptname)
     os.chmod(scriptname, stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
 

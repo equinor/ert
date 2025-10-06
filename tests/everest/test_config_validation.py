@@ -486,9 +486,8 @@ def test_that_install_data_allows_runpath_root_as_target(
     target, link, change_to_tmpdir
 ):
     data = {"source": "relative/path_<GEO_ID>", "target": target, "link": link}
-    os.makedirs("config_dir/relative/path_0")
-    with open("config_dir/test.yml", "w", encoding="utf-8") as f:
-        f.write(" ")
+    Path("config_dir/relative/path_0").mkdir(parents=True)
+    Path("config_dir/test.yml").write_text(" ", encoding="utf-8")
     config = EverestConfig.with_defaults(
         install_data=[data],
         config_path=Path("config_dir/test.yml"),
@@ -577,9 +576,8 @@ def test_that_install_data_source_exists(change_to_tmpdir):
         "source": "relative/path",
         "target": "xxx",
     }
-    os.makedirs("config_dir")
-    with open("config_dir/test.yml", "w", encoding="utf-8") as f:
-        f.write(" ")
+    Path("config_dir").mkdir()
+    Path("config_dir/test.yml").write_text(" ", encoding="utf-8")
 
     with pytest.raises(ValueError, match="No such file or directory"):
         EverestConfig.with_defaults(
@@ -587,7 +585,7 @@ def test_that_install_data_source_exists(change_to_tmpdir):
             config_path=Path("config_dir/test.yml"),
         )
 
-    os.makedirs("config_dir/relative/path")
+    Path("config_dir/relative/path").mkdir(parents=True)
     EverestConfig.with_defaults(
         install_data=[data],
         config_path=Path("config_dir/test.yml"),
@@ -637,9 +635,8 @@ def test_that_install_data_with_inline_data_generates_a_file(
 def test_that_non_existing_install_job_errors_deprecated(
     install_keyword, change_to_tmpdir
 ):
-    os.makedirs("config_dir")
-    with open("config_dir/test.yml", "w", encoding="utf-8") as f:
-        f.write(" ")
+    Path("config_dir").mkdir()
+    Path("config_dir/test.yml").write_text(" ", encoding="utf-8")
     with pytest.warns(
         ConfigWarning, match=f"`{install_keyword}: source` is deprecated"
     ):
@@ -944,9 +941,8 @@ def test_that_install_templates_must_have_unique_names(change_to_tmpdir):
 
 
 def test_that_install_template_template_must_be_existing_file(change_to_tmpdir):
-    os.makedirs("config_dir")
-    with open("config_dir/test.yml", "w", encoding="utf-8") as f:
-        f.write(" ")
+    Path("config_dir").mkdir()
+    Path("config_dir/test.yml").write_text(" ", encoding="utf-8")
     with pytest.raises(ValueError, match=r"No.*file.*hello.*No.*file.*hey"):
         EverestConfig.with_defaults(
             install_templates=[
@@ -1028,8 +1024,7 @@ def test_load_file_with_errors(capsys):
     -   name: distance
 """)
 
-    with open("config_minimal_error.yml", "w", encoding="utf-8") as file:
-        file.write(content)
+    Path("config_minimal_error.yml").write_text(content, encoding="utf-8")
 
     with pytest.raises(SystemExit):
         parser = ArgumentParser(prog="test")

@@ -220,11 +220,12 @@ class File(Reporter):
 
     @staticmethod
     def _dump_ok_file() -> None:
-        with open(OK_file, "w", encoding="utf-8") as f:
-            f.write(
-                f"All jobs complete {time.strftime(TIME_FORMAT, time.localtime())} \n"
-            )
+        Path(OK_file).write_text(
+            f"All jobs complete {time.strftime(TIME_FORMAT, time.localtime())} \n",
+            encoding="utf-8",
+        )
 
     def _dump_status_json(self) -> None:
-        with open(STATUS_json, "wb") as fp:
-            fp.write(orjson.dumps(self.status_dict, option=orjson.OPT_INDENT_2))
+        Path(STATUS_json).write_bytes(
+            orjson.dumps(self.status_dict, option=orjson.OPT_INDENT_2)
+        )

@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from textwrap import dedent
 
 import pytest
@@ -12,8 +13,7 @@ from ert.config.parsing import (
 
 
 def touch(filename):
-    with open(filename, "w", encoding="utf-8") as fh:
-        fh.write(" ")
+    Path(filename).write_text(" ", encoding="utf-8")
 
 
 def test_that_no_arguments_to_summary_raises_config_validation_error():
@@ -148,17 +148,15 @@ def test_that_cyclical_includes_raise_config_validation_error():
     test_include_file_name = "include.ert"
     test_include_contents = "JOBNAME included\nINCLUDE test.ert\n"
 
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-    with open(test_include_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_include_contents)
+    Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
+    Path(test_include_file_name).write_text(test_include_contents, encoding="utf-8")
 
     with pytest.raises(ConfigValidationError, match=r"Cyclical .*test.ert"):
         _ = parse(test_config_file_name, schema=init_user_config_schema())
 
     # Test self include raises cyclical include error
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_self_include)
+    Path(test_config_file_name).write_text(test_config_self_include, encoding="utf-8")
+
     with pytest.raises(ConfigValidationError, match=r"Cyclical .*test.ert->test.ert"):
         _ = parse(test_config_file_name, schema=init_user_config_schema())
 
@@ -226,8 +224,7 @@ def test_that_file_without_read_access_raises_config_validation_error(
         ConfigValidationError,
         match=f'{template_file}" is not readable; please check read access.',
     ):
-        with open(config_file_name, mode="w", encoding="utf-8") as file:
-            file.write(config_file_contents)
+        Path(config_file_name).write_text(config_file_contents, encoding="utf-8")
 
         _ = parse(config_file_name, schema=init_user_config_schema())
 
@@ -245,8 +242,7 @@ def test_not_executable_job_script_raises_config_validation_error():
          JOB_SCRIPT {script_name}
          """
     )
-    with open(config_file_name, mode="w", encoding="utf-8") as fh:
-        fh.write(config_file_contents)
+    Path(config_file_name).write_text(config_file_contents, encoding="utf-8")
     with pytest.raises(ConfigValidationError, match=f"not executable.*{script_name}"):
         _ = parse(config_file_name, schema=init_user_config_schema())
 
@@ -273,8 +269,8 @@ def test_not_executable_job_script_somewhere_in_PATH_raises_config_validation_er
          JOB_SCRIPT {script_name}
          """
     )
-    with open(config_file_name, mode="w", encoding="utf-8") as fh:
-        fh.write(config_file_contents)
+    Path(config_file_name).write_text(config_file_contents, encoding="utf-8")
+
     with pytest.raises(
         ConfigValidationError,
         match="Could not find executable",
@@ -316,8 +312,7 @@ def test_that_giving_non_executable_in_job_script_raises_config_validation_error
         JOB_SCRIPT  not-an-executable-anyone-would-have-on-their-laptop
         """
     )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
+    Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
 
     with pytest.raises(ConfigValidationError, match="executable"):
         _ = parse(test_config_file_name, schema=init_user_config_schema())

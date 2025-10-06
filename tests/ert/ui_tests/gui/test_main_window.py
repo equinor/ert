@@ -220,10 +220,12 @@ def test_that_the_run_workflow_tool_is_enabled_when_there_are_workflows(qapp, tm
 
     os.mkdir(tmp_path / "workflows")
 
-    with open(tmp_path / "workflows/MAGIC_PRINT", "w", encoding="utf-8") as f:
-        f.write("print_uber\n")
-    with open(tmp_path / "workflows/UBER_PRINT", "w", encoding="utf-8") as f:
-        f.write("EXECUTABLE ls\n")
+    Path(tmp_path / "workflows/MAGIC_PRINT").write_text(
+        "print_uber\n", encoding="utf-8"
+    )
+    Path(tmp_path / "workflows/UBER_PRINT").write_text(
+        "EXECUTABLE ls\n", encoding="utf-8"
+    )
 
     args = Mock()
     args.config = str(config_file)
@@ -559,17 +561,17 @@ def test_that_a_failing_job_shows_error_message_with_context(
     gui = opened_main_window_poly
 
     # break poly eval script so realz fail
-    with open("poly_eval.py", "w", encoding="utf-8") as f:
-        f.write(
-            dedent(
-                """\
+    Path("poly_eval.py").write_text(
+        dedent(
+            """\
                 #!/usr/bin/env python
 
                 if __name__ == "__main__":
                     raise RuntimeError('Argh')
                 """
-            )
-        )
+        ),
+        encoding="utf-8",
+    )
     os.chmod(
         "poly_eval.py",
         os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH,
