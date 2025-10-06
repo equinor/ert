@@ -14,6 +14,7 @@ def test_input_constraint_control_references(tmp_path, capsys, caplog, monkeypat
             "min": 0,
             "max": 1,
             "initial_guess": 0,
+            "perturbation_magnitude": 0.01,
             "variables": [
                 {"name": "x", "index": "0"},
                 {"name": "x", "index": "1"},

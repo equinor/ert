@@ -41,6 +41,7 @@ def test_that_control_config_is_initialized_with_control_variables():
         "type": "generic_control",
         "min": 0,
         "max": 1,
+        "perturbation_magnitude": 0.01,
         "variables": [
             {
                 "name": "var1",
@@ -91,6 +92,7 @@ def test_that_get_output_dir_returns_same_for_old_and_new():
                 "type": "well_control",
                 "min": 0,
                 "max": 0.1,
+                "perturbation_magnitude": 0.01,
                 "variables": [
                     {"name": "w00", "initial_guess": 0.0626},
                 ],
@@ -130,6 +132,7 @@ def test_that_invalid_keys_are_linted():
                 "inital_guss": "well_control",
                 "min": 0,
                 "max": 0.1,
+                "perturbation_magnitude": 0.01,
                 "variables": [
                     {"name": "w00"},
                 ],
@@ -140,6 +143,7 @@ def test_that_invalid_keys_are_linted():
                 "initial_guess": "well_control",
                 "min": 0,
                 "max": 0.1,
+                "perturbation_magnitude": 0.01,
                 "variables": [
                     {"name": "w00", "inital_guess": 0.0626},
                     {"name": "w01", "sampler": {"bakkend": "#DYSNEKTIC"}},
@@ -271,6 +275,7 @@ def test_that_log_level_property_is_consistent_with_environment_log_level():
                 "type": "well_control",
                 "min": 0,
                 "max": 0.1,
+                "perturbation_magnitude": 0.01,
                 "variables": [
                     {"name": "w01", "initial_guess": 0.0626},
                 ],

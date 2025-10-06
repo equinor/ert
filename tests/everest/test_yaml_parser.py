@@ -39,6 +39,7 @@ def test_read_file(tmp_path, monkeypatch):
         type: well_control
         min: 0
         max: 0.1
+        perturbation_magnitude: 0.01
         variables:
           - { name: test, initial_guess: 0.1 }
     objective_functions:

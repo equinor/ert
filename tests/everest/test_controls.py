@@ -18,6 +18,7 @@ def test_that_duplicate_control_group_name_is_invalid(min_config):
         {
             "name": existing_name,
             "type": "generic_control",
+            "perturbation_magnitude": 0.01,
             "variables": [{"name": "var_b", "min": 0, "max": 1, "initial_guess": 0.9}],
         }
     )
@@ -66,6 +67,7 @@ def test_that_duplicate_control_variable_name_and_index_is_invalid():
             name="group",
             type="generic_control",
             initial_guess=0.5,
+            perturbation_magnitude=0.01,
             variables=[
                 ControlVariableConfig(name="w00", min=0, max=1, index=0),
                 ControlVariableConfig(name="w00", min=0, max=1, index=0),
@@ -85,6 +87,7 @@ def test_that_unmatched_weight_name_due_to_missing_index_is_invalid():
                     name="group",
                     type="generic_control",
                     initial_guess=0.5,
+                    perturbation_magnitude=0.01,
                     variables=[
                         ControlVariableConfig(name="w00", min=0, max=1, index=0),
                         ControlVariableConfig(name="w01", min=0, max=1, index=0),
@@ -111,6 +114,7 @@ def test_that_input_constraint_with_deprecated_indexed_name_format_warns():
                     name="group",
                     type="generic_control",
                     initial_guess=0.5,
+                    perturbation_magnitude=0.01,
                     variables=[
                         ControlVariableConfig(name="w00", min=0, max=1, index=0),
                         ControlVariableConfig(name="w01", min=0, max=1, index=0),
@@ -134,6 +138,7 @@ def test_that_control_variable_with_initial_guess_below_min_is_invalid():
         ControlConfig(
             name="my_control",
             type="well_control",
+            perturbation_magnitude=0.01,
             variables=[
                 ControlVariableConfig(name="w00", min=0.5, max=1.0, initial_guess=0.3)
             ],
@@ -145,6 +150,7 @@ def test_that_control_variable_with_initial_guess_above_max_is_invalid():
         ControlConfig(
             name="my_control",
             type="well_control",
+            perturbation_magnitude=0.01,
             variables=[
                 ControlVariableConfig(name="w00", min=0.5, max=1.0, initial_guess=1.3)
             ],

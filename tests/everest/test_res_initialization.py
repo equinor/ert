@@ -728,6 +728,7 @@ def test_that_summary_keys_default_to_expected_keys_according_to_wells(
         {
             "name": "well_rate",
             "type": "generic_control",
+            "perturbation_magnitude": 0.01,
             "variables": [
                 {
                     "name": "OP1",

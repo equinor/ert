@@ -24,6 +24,7 @@ CONFIG = {
             "type": "well_control",
             "min": 0,
             "max": 1,
+            "perturbation_magnitude": 0.01,
             "variables": [
                 {"name": "PROD1", "initial_guess": 1},
                 {"name": "PROD2", "initial_guess": 0.9},

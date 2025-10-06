@@ -1018,6 +1018,7 @@ to read summary data from forward model, do:
                     "name": "default_group",
                     "type": "generic_control",
                     "initial_guess": 0.5,
+                    "perturbation_magnitude": 0.01,
                     "variables": [
                         {"name": "default_name", "min": 0, "max": 1},
                     ],
