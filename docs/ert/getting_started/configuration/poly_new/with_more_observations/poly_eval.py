@@ -1,6 +1,6 @@
 #!/usr/bin/env python
-
 import json
+from pathlib import Path
 
 with open("parameters.json", encoding="utf-8") as f:
     coeffs = json.load(f)["COEFFS"]
@@ -11,5 +11,4 @@ def evaluate(coeffs, x):
 
 
 output = [evaluate(coeffs, x) for x in range(50)]
-with open("poly.out", "w", encoding="utf-8") as f:
-    f.write("\n".join(map(str, output)))
+Path("poly.out").write_text("\n".join(map(str, output)), encoding="utf-8")

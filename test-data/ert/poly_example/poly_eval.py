@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+from pathlib import Path
 
 
 def _load_coeffs(filename):
@@ -14,5 +15,4 @@ def _evaluate(coeffs, x):
 if __name__ == "__main__":
     coeffs = _load_coeffs("parameters.json")
     output = [_evaluate(coeffs, x) for x in range(10)]
-    with open("poly.out", "w", encoding="utf-8") as f:
-        f.write("\n".join(map(str, output)))
+    Path("poly.out").write_text("\n".join(map(str, output)), encoding="utf-8")

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from pathlib import Path
 
 coeffs = {"a": 1, "b": 2, "c": 3}
 
@@ -8,5 +9,4 @@ def evaluate(coeffs, x):
 
 
 output = [evaluate(coeffs, x) for x in range(10)]
-with open("poly.out", "w", encoding="utf-8") as f:
-    f.write("\n".join(map(str, output)))
+Path("poly.out").write_text("\n".join(map(str, output)), encoding="utf-8")

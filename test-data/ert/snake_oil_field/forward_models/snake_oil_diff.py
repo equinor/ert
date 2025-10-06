@@ -1,11 +1,12 @@
 #!/usr/bin/env python
+from pathlib import Path
+
 from resdata.summary import Summary
 
 
 def writeDiff(filename, vector1, vector2):
-    with open(filename, "w", encoding="utf-8") as f:
-        diff = vector1 - vector2
-        f.write("\n".join([str(itm) for itm in diff]))
+    diff = vector1 - vector2
+    Path(filename).write_text("\n".join([str(itm) for itm in diff]), encoding="utf-8")
 
 
 if __name__ == "__main__":

@@ -3,6 +3,7 @@ import logging
 import os
 import os.path
 import stat
+from pathlib import Path
 from textwrap import dedent
 
 import pytest
@@ -540,20 +541,13 @@ def test_that_env_vars_with_surrounded_by_brackets_are_ommitted_from_Jobs_json(
     ],
 )
 def test_forward_model_job(job, forward_model, expected_args):
-    with open("job_file", "w", encoding="utf-8") as fout:
-        fout.write(job)
+    Path("job_file").write_text(job, encoding="utf-8")
 
-    with open("config_file.ert", "w", encoding="utf-8") as fout:
-        # Write a minimal config file
-        fout.write(
-            dedent(
-                """
-        NUM_REALIZATIONS 1
-        """
-            )
-        )
-        fout.write("INSTALL_JOB job_name job_file\n")
-        fout.write(forward_model)
+    # Write a minimal config file
+    Path("config_file.ert").write_text(
+        "NUM_REALIZATIONS 1\nINSTALL_JOB job_name job_file\n" + forward_model,
+        encoding="utf-8",
+    )
 
     ert_config = ErtConfig.from_file("config_file.ert")
 
@@ -573,21 +567,23 @@ def test_forward_model_job(job, forward_model, expected_args):
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_config_path_is_the_directory_of_the_main_ert_config():
     os.mkdir("jobdir")
-    with open("jobdir/job_file", "w", encoding="utf-8") as fout:
-        fout.write(
-            dedent(
-                """
+    Path("jobdir/job_file").write_text(
+        dedent(
+            """
             EXECUTABLE echo
             ARGLIST <CONFIG_PATH>
             """
-            )
-        )
+        ),
+        encoding="utf-8",
+    )
 
-    with open("config_file.ert", "w", encoding="utf-8") as fout:
-        # Write a minimal config file
-        fout.write("NUM_REALIZATIONS 1\n")
-        fout.write("INSTALL_JOB job_name jobdir/job_file\n")
-        fout.write("FORWARD_MODEL job_name")
+    # Write a minimal config file
+    Path("config_file.ert").write_text(
+        "NUM_REALIZATIONS 1\n"
+        "INSTALL_JOB job_name jobdir/job_file\n"
+        "FORWARD_MODEL job_name",
+        encoding="utf-8",
+    )
 
     ert_config = ErtConfig.from_file("config_file.ert")
     data = create_forward_model_json(
@@ -603,23 +599,25 @@ def test_that_config_path_is_the_directory_of_the_main_ert_config():
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_private_over_global_args_gives_logging_message(caplog):
     caplog.set_level(logging.INFO)
-    with open("job_file", "w", encoding="utf-8") as fout:
-        fout.write(
-            dedent(
-                """
+    Path("job_file").write_text(
+        dedent(
+            """
             EXECUTABLE echo
             ARGLIST <ARG>
             ARG_TYPE 0 STRING
             """
-            )
-        )
+        ),
+        encoding="utf-8",
+    )
 
-    with open("config_file.ert", "w", encoding="utf-8") as fout:
-        # Write a minimal config file
-        fout.write("NUM_REALIZATIONS 1\n")
-        fout.write("DEFINE <ARG> A\n")
-        fout.write("INSTALL_JOB job_name job_file\n")
-        fout.write("FORWARD_MODEL job_name(<ARG>=B)")
+    # Write a minimal config file
+    Path("config_file.ert").write_text(
+        "NUM_REALIZATIONS 1\n"
+        "DEFINE <ARG> A\n"
+        "INSTALL_JOB job_name job_file\n"
+        "FORWARD_MODEL job_name(<ARG>=B)",
+        encoding="utf-8",
+    )
 
     ert_config = ErtConfig.from_file("config_file.ert")
     data = create_forward_model_json(
@@ -642,23 +640,25 @@ def test_that_private_over_global_args_does_not_give_logging_message_for_argpass
     caplog,
 ):
     caplog.set_level(logging.INFO)
-    with open("job_file", "w", encoding="utf-8") as fout:
-        fout.write(
-            dedent(
-                """
+    Path("job_file").write_text(
+        dedent(
+            """
             EXECUTABLE echo
             ARGLIST <ARG>
             ARG_TYPE 0 STRING
             """
-            )
-        )
+        ),
+        encoding="utf-8",
+    )
 
-    with open("config_file.ert", "w", encoding="utf-8") as fout:
-        # Write a minimal config file
-        fout.write("NUM_REALIZATIONS 1\n")
-        fout.write("DEFINE <ARG> A\n")
-        fout.write("INSTALL_JOB job_name job_file\n")
-        fout.write("FORWARD_MODEL job_name(<ARG>=<ARG>)")
+    # Write a minimal config file
+    Path("config_file.ert").write_text(
+        "NUM_REALIZATIONS 1\n"
+        "DEFINE <ARG> A\n"
+        "INSTALL_JOB job_name job_file\n"
+        "FORWARD_MODEL job_name(<ARG>=<ARG>)",
+        encoding="utf-8",
+    )
 
     ert_config = ErtConfig.from_file("config_file.ert")
     data = create_forward_model_json(
@@ -699,8 +699,7 @@ def test_that_environment_variables_are_set_in_forward_model(
     monkeypatch, job, forward_model, expected_args
 ):
     monkeypatch.setenv("ENV", "env_value")
-    with open("job_file", "w", encoding="utf-8") as fout:
-        fout.write(job)
+    Path("job_file").write_text(job, encoding="utf-8")
 
     with open("config_file.ert", "w", encoding="utf-8") as fout:
         # Write a minimal config file

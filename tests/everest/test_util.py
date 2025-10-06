@@ -22,20 +22,19 @@ EIGHTCELLS_DATA = relpath(
 
 
 def test_get_values(change_to_tmpdir):
-    exp_dir = "the_config_directory"
+    exp_dir = Path("the_config_directory")
     exp_file = "the_config_file"
     rel_out_dir = "the_output_directory"
     abs_out_dir = "/the_output_directory"
-    os.makedirs(exp_dir)
-    with open(os.path.join(exp_dir, exp_file), "w", encoding="utf-8") as f:
-        f.write(" ")
+    exp_dir.mkdir()
+    (exp_dir / exp_file).write_text(" ", encoding="utf-8")
 
     config = EverestConfig.with_defaults(
         environment={
             "output_folder": abs_out_dir,
             "simulation_folder": "simulation_folder",
         },
-        config_path=Path(os.path.join(exp_dir, exp_file)),
+        config_path=exp_dir / exp_file,
     )
 
     config.environment.output_folder = rel_out_dir
@@ -109,8 +108,7 @@ def test_get_everserver_status_path():
     return_value={"status": ExperimentState.failed, "message": "mock error"},
 )
 def test_report_on_previous_run(_, change_to_tmpdir):
-    with open("config_file", "w", encoding="utf-8") as f:
-        f.write(" ")
+    Path("config_file").write_text(" ", encoding="utf-8")
     config = EverestConfig.with_defaults(config_path="config_file")
     with capture_streams() as (out, _):
         report_on_previous_run(

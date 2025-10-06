@@ -3,6 +3,7 @@
 import argparse
 import json
 import sys
+from pathlib import Path
 
 
 def main(argv):
@@ -17,8 +18,7 @@ def main(argv):
 
     for k, v in controls.items():
         out_file = f"{opts.out_prefix}{k}{opts.out_suffix}"
-        with open(out_file, "w", encoding="utf-8") as f:
-            f.write(f"{v:g} \n")
+        Path(out_file).write_text(f"{v:g} \n", encoding="utf-8")
 
 
 if __name__ == "__main__":

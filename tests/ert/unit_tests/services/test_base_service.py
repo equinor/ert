@@ -270,21 +270,19 @@ def test_local_exec_args_multi():
 def test_cleanup_service_files(tmpdir):
     with tmpdir.as_cwd():
         storage_service_name = "storage"
-        storage_service_file = f"{storage_service_name}_server.json"
-        with open(storage_service_file, "w", encoding="utf-8") as f:
-            f.write("storage_service info")
-        assert Path(storage_service_file).exists()
+        storage_service_file = Path(f"{storage_service_name}_server.json")
+        storage_service_file.write_text("storage_service info", encoding="utf-8")
+        assert storage_service_file.exists()
         SERVICE_CONF_PATHS.add(tmpdir / storage_service_file)
 
         webviz_service_name = "webviz-ert"
-        webviz_service_file = f"{webviz_service_name}_server.json"
-        with open(webviz_service_file, "w", encoding="utf-8") as f:
-            f.write("webviz-ert info")
-        assert Path(webviz_service_file).exists()
+        webviz_service_file = Path(f"{webviz_service_name}_server.json")
+        webviz_service_file.write_text("webviz-ert info", encoding="utf-8")
+        assert webviz_service_file.exists()
         SERVICE_CONF_PATHS.add(tmpdir / webviz_service_file)
 
         with pytest.raises(OSError):
             cleanup_service_files(signum=99, frame=None)
 
-        assert not Path(storage_service_file).exists()
-        assert not Path(webviz_service_file).exists()
+        assert not storage_service_file.exists()
+        assert not webviz_service_file.exists()

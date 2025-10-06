@@ -1,5 +1,6 @@
 import datetime
 import shutil
+from pathlib import Path
 
 import numpy as np
 import polars as pl
@@ -303,9 +304,8 @@ def test_ensemble_view(
 
 @pytest.mark.usefixtures("copy_poly_case")
 def test_ensemble_observations_view(qtbot):
-    with open("observations", "w", encoding="utf-8") as file:
-        file.write(
-            """GENERAL_OBSERVATION POLY_OBS {
+    Path("observations").write_text(
+        """GENERAL_OBSERVATION POLY_OBS {
         DATA       = POLY_RES;
         INDEX_LIST = 0,1,2,3,4;
         OBS_FILE   = poly_obs_data.txt;
@@ -320,12 +320,12 @@ def test_ensemble_observations_view(qtbot):
         INDEX_LIST = 0,1,2,3,4;
         OBS_FILE   = poly_obs_data2.txt;
     };
-    """
-        )
+    """,
+        encoding="utf-8",
+    )
 
-    with open("poly_eval.py", "w", encoding="utf-8") as file:
-        file.write(
-            """#!/usr/bin/env python3
+    Path("poly_eval.py").write_text(
+        """#!/usr/bin/env python3
 import json
 
 
@@ -349,15 +349,15 @@ if __name__ == "__main__":
 
     with open("poly.out2", "w", encoding="utf-8") as f:
         f.write("\\n".join(map(str, [x*3 for x in output])))
-"""
-        )
+""",
+        encoding="utf-8",
+    )
 
     shutil.copy("poly_obs_data.txt", "poly_obs_data1.txt")
     shutil.copy("poly_obs_data.txt", "poly_obs_data2.txt")
 
-    with open("poly_localization_0.ert", "w", encoding="utf-8") as f:
-        f.write(
-            """
+    Path("poly_localization_0.ert").write_text(
+        """
         QUEUE_SYSTEM LOCAL
 QUEUE_OPTION LOCAL MAX_RUNNING 2
 
@@ -382,8 +382,9 @@ ANALYSIS_SET_VAR STD_ENKF LOCALIZATION_CORRELATION_THRESHOLD 0.0
 
 ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE *
 ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
-"""
-        )
+""",
+        encoding="utf-8",
+    )
 
     prior_ens_id, _, _ = run_cli_ES_with_case(
         "poly_localization_0.ert", "test_experiment"

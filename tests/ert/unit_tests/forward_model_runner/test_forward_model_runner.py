@@ -3,6 +3,7 @@ import os
 import os.path
 import stat
 import textwrap
+from pathlib import Path
 
 import pytest
 
@@ -109,8 +110,7 @@ def test_when_forward_model_contains_multiple_steps_just_one_checksum_status_is_
             "argList": [fm_step_index],
         }
         fm_step_list.append(fm_step)
-    with open("manifest.json", "w", encoding="utf-8") as f:
-        json.dump(manifest, f)
+    Path("manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
 
     fmr = ForwardModelRunner(create_jobs_json(fm_step_list))
 
@@ -134,8 +134,7 @@ def test_when_manifest_file_is_not_created_by_fm_runner_checksum_contains_error(
             "argList": ["not_test"],
         }
     )
-    with open("manifest.json", "w", encoding="utf-8") as f:
-        json.dump(manifest, f)
+    Path("manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
 
     fmr = ForwardModelRunner(create_jobs_json(fm_step_list))
 
@@ -178,16 +177,16 @@ def test_run_multiple_fail_only_runs_one():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_env_var_available_inside_step_context():
-    with open("run_me.py", "w", encoding="utf-8") as f:
-        f.write(
-            textwrap.dedent(
-                """\
+    Path("run_me.py").write_text(
+        textwrap.dedent(
+            """\
                 #!/usr/bin/env python
                 import os
                 assert os.environ["TEST_ENV"] == "123"
                 """
-            )
-        )
+        ),
+        encoding="utf-8",
+    )
     os.chmod("run_me.py", stat.S_IEXEC + stat.S_IREAD)
 
     step = forward_model_step_from_config_contents(
@@ -227,18 +226,18 @@ def test_env_var_available_inside_step_context():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_default_env_variables_available_inside_fm_step_context():
-    with open("run_me.py", "w", encoding="utf-8") as f:
-        f.write(
-            textwrap.dedent(
-                """\
+    Path("run_me.py").write_text(
+        textwrap.dedent(
+            """\
                 #!/usr/bin/env python
                 import os
                 assert os.environ["_ERT_ITERATION_NUMBER"] == "0"
                 assert os.environ["_ERT_REALIZATION_NUMBER"] == "0"
                 assert os.environ["_ERT_RUNPATH"] == "./"
                 """
-            )
-        )
+        ),
+        encoding="utf-8",
+    )
     os.chmod("run_me.py", stat.S_IEXEC + stat.S_IREAD)
 
     step = forward_model_step_from_config_contents(

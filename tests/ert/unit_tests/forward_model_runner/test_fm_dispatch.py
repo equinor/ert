@@ -7,6 +7,7 @@ import os
 import signal
 import stat
 import sys
+from pathlib import Path
 from subprocess import Popen
 from textwrap import dedent
 from threading import Lock
@@ -36,17 +37,17 @@ from tests.ert.utils import MockZMQServer, wait_until
 @pytest.mark.usefixtures("use_tmpdir")
 def test_terminate_steps():
     # Executes itself recursively and sleeps for 100 seconds
-    with open("dummy_executable", "w", encoding="utf-8") as f:
-        f.write(
-            """#!/usr/bin/env python
+    Path("dummy_executable").write_text(
+        """#!/usr/bin/env python
 import sys, os, time
 counter = eval(sys.argv[1])
 if counter > 0:
     os.fork()
     os.execv(sys.argv[0],[sys.argv[0], str(counter - 1) ])
 else:
-    time.sleep(100)"""
-        )
+    time.sleep(100)""",
+        encoding="utf-8",
+    )
 
     executable = os.path.realpath("dummy_executable")
     os.chmod("dummy_executable", stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
@@ -77,22 +78,23 @@ else:
         "ert_pid": "",
     }
 
-    with open(FORWARD_MODEL_DESCRIPTION_FILE, "w", encoding="utf-8") as f:
-        f.write(json.dumps(fm_description))
+    Path(FORWARD_MODEL_DESCRIPTION_FILE).write_text(
+        json.dumps(fm_description), encoding="utf-8"
+    )
 
     # macOS doesn't provide /usr/bin/setsid, so we roll our own
-    with open("setsid", "w", encoding="utf-8") as f:
-        f.write(
-            dedent(
-                """\
+    Path("setsid").write_text(
+        dedent(
+            """\
             #!/usr/bin/env python
             import os
             import sys
             os.setsid()
             os.execvp(sys.argv[1], sys.argv[1:])
             """
-            )
-        )
+        ),
+        encoding="utf-8",
+    )
     os.chmod("setsid", 0o755)
 
     # (we wait for the process below)
@@ -124,13 +126,13 @@ def test_memory_profile_is_logged_as_csv(monkeypatch):
     fm_stepname = "do_nothing"
     scriptname = fm_stepname + ".py"
     fm_step_repeats = 3
-    with open(scriptname, "w", encoding="utf-8") as script:
-        script.write(
-            """#!/bin/sh
+    Path(scriptname).write_text(
+        """#!/bin/sh
         sleep 0.5
         exit 0
-        """
-        )
+        """,
+        encoding="utf-8",
+    )
     os.chmod(scriptname, stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
     forward_model_steps = {
         "jobList": [
@@ -143,8 +145,9 @@ def test_memory_profile_is_logged_as_csv(monkeypatch):
         * fm_step_repeats,
     }
 
-    with open(FORWARD_MODEL_DESCRIPTION_FILE, "w", encoding="utf-8") as f:
-        f.write(json.dumps(forward_model_steps))
+    Path(FORWARD_MODEL_DESCRIPTION_FILE).write_text(
+        json.dumps(forward_model_steps), encoding="utf-8"
+    )
 
     monkeypatch.setattr(
         _ert.forward_model_runner.runner.ForwardModelStep, "MEMORY_POLL_PERIOD", 0.1
@@ -161,14 +164,14 @@ def test_memory_profile_is_logged_as_csv(monkeypatch):
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
 def test_fm_dispatch_run_subset_specified_as_parameter():
-    with open("dummy_executable", "w", encoding="utf-8") as f:
-        f.write(
-            "#!/usr/bin/env python\n"
-            "import sys, os\n"
-            'filename = "step_{}.out".format(sys.argv[1])\n'
-            'f = open(filename, "w", encoding="utf-8")\n'
-            "f.close()\n"
-        )
+    Path("dummy_executable").write_text(
+        "#!/usr/bin/env python\n"
+        "import sys, os\n"
+        'filename = "step_{}.out".format(sys.argv[1])\n'
+        'f = open(filename, "w", encoding="utf-8")\n'
+        "f.close()\n",
+        encoding="utf-8",
+    )
 
     executable = os.path.realpath("dummy_executable")
     os.chmod("dummy_executable", stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
@@ -233,22 +236,23 @@ def test_fm_dispatch_run_subset_specified_as_parameter():
         "ert_pid": "",
     }
 
-    with open(FORWARD_MODEL_DESCRIPTION_FILE, "w", encoding="utf-8") as f:
-        f.write(json.dumps(fm_description))
+    Path(FORWARD_MODEL_DESCRIPTION_FILE).write_text(
+        json.dumps(fm_description), encoding="utf-8"
+    )
 
     # macOS doesn't provide /usr/bin/setsid, so we roll our own
-    with open("setsid", "w", encoding="utf-8") as f:
-        f.write(
-            dedent(
-                """\
+    Path("setsid").write_text(
+        dedent(
+            """\
             #!/usr/bin/env python
             import os
             import sys
             os.setsid()
             os.execvp(sys.argv[1], sys.argv[1:])
             """
-            )
-        )
+        ),
+        encoding="utf-8",
+    )
     os.chmod("setsid", 0o755)
 
     # (we wait for the process below)
@@ -414,12 +418,12 @@ def test_report_all_messages_drops_reporter_on_error():
 async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_sigterm(
     use_tmpdir,
 ):
-    with open("dummy_executable", "w", encoding="utf-8") as f:  # noqa: ASYNC230
-        f.write(
-            """#!/usr/bin/env python
+    Path("dummy_executable").write_text(
+        """#!/usr/bin/env python
 import time
-time.sleep(180)"""
-        )
+time.sleep(180)""",
+        encoding="utf-8",
+    )
 
     executable = os.path.realpath("dummy_executable")
     os.chmod("dummy_executable", stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
@@ -437,22 +441,23 @@ time.sleep(180)"""
             ],
         }
 
-        with open(FORWARD_MODEL_DESCRIPTION_FILE, "w", encoding="utf-8") as f:  # noqa: ASYNC230
-            f.write(json.dumps(fm_description))
+        Path(FORWARD_MODEL_DESCRIPTION_FILE).write_text(
+            json.dumps(fm_description), encoding="utf-8"
+        )
 
         # macOS doesn't provide /usr/bin/setsid, so we roll our own
-        with open("setsid", "w", encoding="utf-8") as f:  # noqa: ASYNC230
-            f.write(
-                dedent(
-                    """\
+        Path("setsid").write_text(
+            dedent(
+                """\
                 #!/usr/bin/env python
                 import os
                 import sys
                 os.setsid()
                 os.execvp(sys.argv[1], sys.argv[1:])
                 """
-                )
-            )
+            ),
+            encoding="utf-8",
+        )
         os.chmod("setsid", 0o755)
 
         fm_dispatch_process = Popen(  # noqa: ASYNC220
@@ -490,12 +495,12 @@ async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_terminate_m
     tmp_path,
 ):
     os.chdir(tmp_path)
-    with open("dummy_executable", "w", encoding="utf-8") as f:  # noqa: ASYNC230
-        f.write(
-            """#!/usr/bin/env python
+    Path("dummy_executable").write_text(
+        """#!/usr/bin/env python
 import time
-time.sleep(180)"""
-        )
+time.sleep(180)""",
+        encoding="utf-8",
+    )
 
     executable = os.path.realpath("dummy_executable")
     os.chmod("dummy_executable", stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
@@ -513,22 +518,23 @@ time.sleep(180)"""
             ],
         }
 
-        with open(FORWARD_MODEL_DESCRIPTION_FILE, "w", encoding="utf-8") as f:  # noqa: ASYNC230
-            f.write(json.dumps(fm_description))
+        Path(FORWARD_MODEL_DESCRIPTION_FILE).write_text(
+            json.dumps(fm_description), encoding="utf-8"
+        )
 
         # macOS doesn't provide /usr/bin/setsid, so we roll our own
-        with open("setsid", "w", encoding="utf-8") as f:  # noqa: ASYNC230
-            f.write(
-                dedent(
-                    """\
+        Path("setsid").write_text(
+            dedent(
+                """\
                 #!/usr/bin/env python
                 import os
                 import sys
                 os.setsid()
                 os.execvp(sys.argv[1], sys.argv[1:])
                 """
-                )
-            )
+            ),
+            encoding="utf-8",
+        )
         os.chmod("setsid", 0o755)
 
         fm_dispatch_process = Popen(  # noqa: ASYNC220

@@ -3,6 +3,7 @@
 import argparse
 import json
 import sys
+from pathlib import Path
 
 
 def main(argv):
@@ -20,8 +21,7 @@ def main(argv):
             out_file = "{}{}{}".format(
                 opts.out_prefix, f"{name}-{idx}", opts.out_suffix
             )
-            with open(out_file, "w", encoding="utf-8") as f:
-                f.write(f"{val:g} \n")
+            Path(out_file).write_text(f"{val:g} \n", encoding="utf-8")
 
 
 if __name__ == "__main__":

@@ -86,16 +86,16 @@ def make_ensemble(queue_config):
             forward_model_list = []
             for job_index in range(num_jobs):
                 forward_model_exec = Path(tmpdir) / f"ext_{job_index}.py"
-                with open(forward_model_exec, "w", encoding="utf-8") as f:
-                    f.write(
-                        "#!/usr/bin/env python\n"
-                        "import time\n"
-                        "\n"
-                        'if __name__ == "__main__":\n'
-                        f'    print("stdout from {job_index}")\n'
-                        f"    time.sleep({job_sleep})\n"
-                        f"    with open('status.txt', 'a', encoding='utf-8'): pass\n"
-                    )
+                forward_model_exec.write_text(
+                    "#!/usr/bin/env python\n"
+                    "import time\n"
+                    "\n"
+                    'if __name__ == "__main__":\n'
+                    f'    print("stdout from {job_index}")\n'
+                    f"    time.sleep({job_sleep})\n"
+                    f"    with open('status.txt', 'a', encoding='utf-8'): pass\n",
+                    encoding="utf-8",
+                )
                 mode = os.stat(forward_model_exec).st_mode
                 mode |= stat.S_IXUSR | stat.S_IXGRP
                 os.chmod(forward_model_exec, stat.S_IMODE(mode))
@@ -110,10 +110,9 @@ def make_ensemble(queue_config):
             realizations = []
             for iens in range(num_reals):
                 run_path = Path(tmpdir / f"real_{iens}")
-                os.mkdir(run_path)
-
-                with open(run_path / "jobs.json", "w", encoding="utf-8") as f:
-                    json.dump(
+                run_path.mkdir()
+                (run_path / "jobs.json").write_text(
+                    json.dumps(
                         {
                             "jobList": [
                                 _dump_forward_model(forward_model, index)
@@ -122,8 +121,9 @@ def make_ensemble(queue_config):
                                 )
                             ],
                         },
-                        f,
-                    )
+                    ),
+                    encoding="utf-8",
+                )
 
                 realizations.append(
                     ert.ensemble_evaluator.Realization(

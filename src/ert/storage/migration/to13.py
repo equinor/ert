@@ -109,8 +109,9 @@ def migrate_genkw(path: Path) -> None:
             parameters_json = json.load(fin)
 
         new_parameter_configs = migrate_gen_kw_param(parameters_json)
-        with open(experiment / "parameter.json", "w", encoding="utf-8") as fout:
-            fout.write(json.dumps(new_parameter_configs, indent=2))
+        Path(experiment / "parameter.json").write_text(
+            json.dumps(new_parameter_configs, indent=2), encoding="utf-8"
+        )
 
         # migrate parquet files
         for ens in ensembles:

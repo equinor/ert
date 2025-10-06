@@ -28,8 +28,7 @@ from .config_dict_generator import config_generators
 @pytest.mark.usefixtures("use_tmpdir")
 def test_load_forward_model():
     name = "script.sh"
-    with open(name, "w", encoding="utf-8") as f:
-        f.write("This is a script")
+    Path(name).write_text("This is a script", encoding="utf-8")
     mode = os.stat(name).st_mode
     mode |= stat.S_IXUSR | stat.S_IXGRP
     os.chmod(name, stat.S_IMODE(mode))
@@ -59,8 +58,7 @@ def test_load_forward_model():
 @pytest.mark.usefixtures("use_tmpdir")
 def test_load_forward_model_upgraded():
     name = "script.sh"
-    with open(name, "w", encoding="utf-8") as f:
-        f.write("This is a script")
+    Path(name).write_text("This is a script", encoding="utf-8")
     mode = os.stat(name).st_mode
     mode |= stat.S_IXUSR | stat.S_IXGRP
     os.chmod(name, stat.S_IMODE(mode))
@@ -381,8 +379,7 @@ def test_that_installing_two_forward_model_steps_with_the_same_name_warn():
         INSTALL_JOB job job
         """
     )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
+    Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
 
     with pytest.warns(ConfigWarning, match="Duplicate forward model step"):
         _ = ErtConfig.from_file(test_config_file_name)
@@ -400,8 +397,7 @@ def test_that_forward_model_substitution_does_not_warn_about_reaching_max_iterat
         FORWARD_MODEL ECLIPSE100(<VERSION>=2020.2)
         """
     )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
+    Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
 
     with ErtPluginContext() as ctx:
         ert_config = ErtConfig.with_plugins(ctx).from_file(test_config_file_name)
@@ -432,8 +428,7 @@ def test_that_installing_two_forward_model_steps_with_the_same_name_warn_with_di
         INSTALL_JOB job job
         """
     )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
+    Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
 
     with pytest.warns(ConfigWarning, match="Duplicate forward model step"):
         _ = ErtConfig.from_file(test_config_file_name)
@@ -471,8 +466,7 @@ def test_that_forward_model_with_different_token_kinds_are_added():
         FORWARD_MODEL job(<MESSAGE>=HELLO)
         """
     )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
+    Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
 
     assert [
         (j.name, len(j.private_args))

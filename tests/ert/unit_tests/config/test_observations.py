@@ -1,6 +1,7 @@
 import logging
 from contextlib import ExitStack as does_not_raise
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import hypothesis.strategies as st
 import pytest
@@ -497,9 +498,10 @@ def test_that_error_must_be_greater_than_zero_in_general_observations(std):
 
 def test_that_all_errors_in_general_observations_must_be_greater_than_zero(tmpdir):
     with tmpdir.as_cwd():
-        with open("obs_data.txt", "w", encoding="utf-8") as fh:
-            # First error value will be 0
-            fh.writelines(f"{float(i)} {float(i)}\n" for i in range(5))
+        # First error value will be 0
+        Path("obs_data.txt").write_text(
+            "\n".join(f"{float(i)} {float(i)}" for i in range(5)), encoding="utf-8"
+        )
         with pytest.raises(
             ConfigValidationError, match=r"must be given a positive value|strictly > 0"
         ):
@@ -581,8 +583,9 @@ def test_that_having_no_refcase_but_history_observations_causes_exception():
 
 def test_that_index_list_is_read(tmpdir):
     with tmpdir.as_cwd():
-        with open("obs_data.txt", "w", encoding="utf-8") as fh:
-            fh.writelines(f"{float(i)} 0.1\n" for i in range(5))
+        Path("obs_data.txt").write_text(
+            "\n".join(f"{float(i)} 0.1" for i in range(5)), encoding="utf-8"
+        )
         observations = make_observations(
             [
                 {
@@ -606,10 +609,10 @@ def test_that_invalid_time_map_file_raises_config_validation_error():
 
 def test_that_index_file_is_read(tmpdir):
     with tmpdir.as_cwd():
-        with open("obs_idx.txt", "w", encoding="utf-8") as fh:
-            fh.write("0\n2\n4\n6\n8")
-        with open("obs_data.txt", "w", encoding="utf-8") as fh:
-            fh.writelines(f"{float(i)} 0.1\n" for i in range(5))
+        Path("obs_idx.txt").write_text("0\n2\n4\n6\n8", encoding="utf-8")
+        Path("obs_data.txt").write_text(
+            "\n".join(f"{float(i)} 0.1\n" for i in range(5)), encoding="utf-8"
+        )
         observations = make_observations(
             [
                 {
@@ -674,10 +677,10 @@ def test_that_non_existent_time_map_file_is_invalid():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_general_observation_cannot_contain_both_value_and_obs_file():
-    with open("obs_idx.txt", "w", encoding="utf-8") as fh:
-        fh.write("0\n2\n4\n6\n8")
-    with open("obs_data.txt", "w", encoding="utf-8") as fh:
-        fh.writelines(f"{float(i)} 0.1\n" for i in range(5))
+    Path("obs_idx.txt").write_text("0\n2\n4\n6\n8", encoding="utf-8")
+    Path("obs_data.txt").write_text(
+        "\n".join(f"{float(i)} 0.1" for i in range(5)), encoding="utf-8"
+    )
     with pytest.raises(
         ConfigValidationError, match=r"cannot contain both VALUE.*OBS_FILE"
     ):
@@ -717,8 +720,7 @@ def test_that_general_observation_must_contain_either_value_or_obs_file():
 
 def test_that_non_numbers_in_obs_file_shows_informative_error_message(tmpdir):
     with tmpdir.as_cwd():
-        with open("obs_data.txt", "w", encoding="utf-8") as fh:
-            fh.write("not_an_int 0.1\n")
+        Path("obs_data.txt").write_text("not_an_int 0.1\n", encoding="utf-8")
         with pytest.raises(
             expected_exception=ConfigValidationError,
             match=r"Failed to read OBS_FILE obs_data.txt: could not convert"
@@ -784,8 +786,7 @@ def test_that_the_number_of_values_in_obs_file_must_be_even():
 
 def test_that_giving_both_index_file_and_index_list_raises_an_exception(tmpdir):
     with tmpdir.as_cwd():
-        with open("obs_idx.txt", "w", encoding="utf-8") as fh:
-            fh.write("0\n2\n4\n6\n8")
+        Path("obs_idx.txt").write_text("0\n2\n4\n6\n8", encoding="utf-8")
         with pytest.raises(
             expected_exception=ConfigValidationError,
             match="both INDEX_FILE and INDEX_LIST",
@@ -1062,10 +1063,12 @@ def test_that_history_observations_values_are_fetched_from_refcase(
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_obs_file_must_have_the_same_number_of_lines_as_the_index_file():
-    with open("obs_idx.txt", "w", encoding="utf-8") as fh:
-        fh.write("0\n2\n4\n6")  # Should have 5 lines
-    with open("obs_data.txt", "w", encoding="utf-8") as fh:
-        fh.writelines(f"{float(i)} 0.1\n" for i in range(5))
+    Path("obs_idx.txt").write_text(
+        "0\n2\n4\n6", encoding="utf-8"
+    )  # Should have 5 lines
+    Path("obs_data.txt").write_text(
+        "\n".join(f"{float(i)} 0.1" for i in range(5)), encoding="utf-8"
+    )
     with pytest.raises(ConfigValidationError, match="must be of equal length"):
         ErtConfig.from_dict(
             {

@@ -20,8 +20,9 @@ def test_that_ert_warns_on_duplicate_workflow_jobs(tmp_path):
     Relies on the internal workflow CAREFUL_COPY_FILE.
     """
     test_workflow_job = tmp_path / "CAREFUL_COPY_FILE"
-    with open(test_workflow_job, "w", encoding="utf-8") as fh:
-        fh.write("EXECUTABLE test_copy_duplicate.py")
+    Path(test_workflow_job).write_text(
+        "EXECUTABLE test_copy_duplicate.py", encoding="utf-8"
+    )
     test_workflow_job_executable = tmp_path / "test_copy_duplicate.py"
     Path(test_workflow_job_executable).touch(mode=0o755)
     test_config_file_name = tmp_path / "test.ert"
@@ -31,8 +32,7 @@ def test_that_ert_warns_on_duplicate_workflow_jobs(tmp_path):
         LOAD_WORKFLOW_JOB CAREFUL_COPY_FILE
         """
     )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
+    Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
 
     with (
         pytest.warns(
@@ -45,10 +45,9 @@ def test_that_ert_warns_on_duplicate_workflow_jobs(tmp_path):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_stop_on_fail_is_parsed_external():
-    with open("fail_job", "w+", encoding="utf-8") as f:
-        f.write("EXECUTABLE echo\n")
-        f.write("MIN_ARG 1\n")
-        f.write("STOP_ON_FAIL True\n")
+    Path("fail_job").write_text(
+        "EXECUTABLE echo\nMIN_ARG 1\nSTOP_ON_FAIL True\n", encoding="utf-8"
+    )
 
     job_internal = workflow_job_from_file(
         name="FAIL",

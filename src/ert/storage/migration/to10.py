@@ -25,13 +25,15 @@ def migrate(path: Path) -> None:
         with open(experiment / "parameter.json", encoding="utf-8") as fin:
             parameters_json = json.load(fin)
 
-        with open(experiment / "parameter.json", "w", encoding="utf-8") as fout:
-            for param in parameters_json.values():
-                if param["_ert_kind"] == "GenKwConfig":
-                    param.pop("forward_init_file", None)
-                    param.pop("template_file", None)
-                    param.pop("output_file", None)
-            fout.write(json.dumps(parameters_json, indent=4))
+        for param in parameters_json.values():
+            if param["_ert_kind"] == "GenKwConfig":
+                param.pop("forward_init_file", None)
+                param.pop("template_file", None)
+                param.pop("output_file", None)
+        Path(experiment / "parameter.json").write_text(
+            json.dumps(parameters_json, indent=4), encoding="utf-8"
+        )
 
-        with open(experiment / "templates.json", "w", encoding="utf-8") as fout:
-            fout.write(json.dumps(templates_abs))
+        Path(experiment / "templates.json").write_text(
+            json.dumps(templates_abs), encoding="utf-8"
+        )

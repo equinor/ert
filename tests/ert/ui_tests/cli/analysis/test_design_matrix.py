@@ -101,10 +101,9 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values):
         pl.DataFrame(default_values, orient="row"),
     )
 
-    with open("poly.ert", "w", encoding="utf-8") as fout:
-        fout.write(
-            dedent(
-                """\
+    Path("poly.ert").write_text(
+        dedent(
+            """\
                 QUEUE_OPTION LOCAL MAX_RUNNING 2
                 RUNPATH poly_out/realization-<IENS>/iter-<ITER>
                 NUM_REALIZATIONS 10
@@ -116,18 +115,18 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values):
                 INSTALL_JOB poly_eval POLY_EVAL
                 FORWARD_MODEL poly_eval
                 """
-            )
-        )
+        ),
+        encoding="utf-8",
+    )
 
     # This adds a dummy category parameter to COEFFS GENKW
     # which will be overridden by the design matrix catagorical entries
     with open("coeff_priors", "a", encoding="utf-8") as f:
         f.write("category UNIFORM 0 1")
 
-    with open("poly_eval.py", "w", encoding="utf-8") as f:
-        f.write(
-            dedent(
-                """\
+    Path("poly_eval.py").write_text(
+        dedent(
+            """\
                 #!/usr/bin/env python
                 import json
 
@@ -144,20 +143,22 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values):
                     with open("poly.out", "w", encoding="utf-8") as f:
                         f.write("\\n".join(map(str, output)))
                 """
-            )
-        )
+        ),
+        encoding="utf-8",
+    )
 
-    with open("my_template", "w", encoding="utf-8") as f:
-        f.write(
-            dedent(
-                """\
+    Path("my_template").write_text(
+        dedent(
+            """\
                 a: <a>
                 b: <b>
                 c: <c>
                 category: <category>
                 """
-            )
-        )
+        ),
+        encoding="utf-8",
+    )
+
     os.chmod(
         "poly_eval.py",
         os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH,
@@ -226,10 +227,9 @@ def test_run_poly_example_with_multiple_design_matrix_instances():
         pl.DataFrame([["g", 4]], orient="row"),
     )
 
-    with open("poly.ert", "w", encoding="utf-8") as fout:
-        fout.write(
-            dedent(
-                """\
+    Path("poly.ert").write_text(
+        dedent(
+            """\
                 QUEUE_OPTION LOCAL MAX_RUNNING 2
                 RUNPATH poly_out/realization-<IENS>/iter-<ITER>
                 NUM_REALIZATIONS 10
@@ -240,13 +240,13 @@ def test_run_poly_example_with_multiple_design_matrix_instances():
                 INSTALL_JOB poly_eval POLY_EVAL
                 FORWARD_MODEL poly_eval
                 """
-            )
-        )
+        ),
+        encoding="utf-8",
+    )
 
-    with open("poly_eval.py", "w", encoding="utf-8") as f:
-        f.write(
-            dedent(
-                """\
+    Path("poly_eval.py").write_text(
+        dedent(
+            """\
                 #!/usr/bin/env python
                 import json
 
@@ -263,8 +263,10 @@ def test_run_poly_example_with_multiple_design_matrix_instances():
                     with open("poly.out", "w", encoding="utf-8") as f:
                         f.write("\\n".join(map(str, output)))
                 """
-            )
-        )
+        ),
+        encoding="utf-8",
+    )
+
     os.chmod(
         "poly_eval.py",
         os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH,
@@ -314,10 +316,9 @@ def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
         ),
     )
 
-    with open("poly.ert", "w", encoding="utf-8") as f:
-        f.write(
-            dedent(
-                """\
+    Path("poly.ert").write_text(
+        dedent(
+            """\
                 QUEUE_OPTION LOCAL MAX_RUNNING 2
                 RUNPATH poly_out/realization-<IENS>/iter-<ITER>
                 OBS_CONFIG observations
@@ -330,13 +331,13 @@ def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
                 INSTALL_JOB poly_eval POLY_EVAL
                 FORWARD_MODEL poly_eval
                 """
-            )
-        )
+        ),
+        encoding="utf-8",
+    )
 
-    with open("poly_eval.py", "w", encoding="utf-8") as f:
-        f.write(
-            dedent(
-                """\
+    Path("poly_eval.py").write_text(
+        dedent(
+            """\
                 #!/usr/bin/env python3
                 import json
 
@@ -355,19 +356,18 @@ def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
                     with open("poly.out", "w", encoding="utf-8") as f:
                         f.write("\\n".join(map(str, output)))
                 """  # noqa: E501
-            )
-        )
+        ),
+        encoding="utf-8",
+    )
+
     os.chmod(
         "poly_eval.py",
         os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH,
     )
 
-    with open("coeff_priors_a", "w", encoding="utf-8") as f:
-        f.write("a UNIFORM 0 1")
-    with open("coeff_priors_b", "w", encoding="utf-8") as f:
-        f.write("b UNIFORM 0 2")
-    with open("coeff_priors_c", "w", encoding="utf-8") as f:
-        f.write("c UNIFORM 0 5")
+    Path("coeff_priors_a").write_text("a UNIFORM 0 1", encoding="utf-8")
+    Path("coeff_priors_b").write_text("b UNIFORM 0 2", encoding="utf-8")
+    Path("coeff_priors_c").write_text("c UNIFORM 0 5", encoding="utf-8")
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=ConfigWarning)

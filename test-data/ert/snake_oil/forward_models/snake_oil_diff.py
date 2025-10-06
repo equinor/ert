@@ -1,13 +1,16 @@
 #!/usr/bin/env python
+from pathlib import Path
+
 from resdata.summary import Summary
 
 
 def writeDiff(filename, vector1, vector2):
-    with open(filename, "w", encoding="utf-8") as f:
-        f.writelines(
-            f"{node1 - node2:f}\n"
-            for node1, node2 in zip(vector1, vector2, strict=False)
-        )
+    Path(filename).write_text(
+        "\n".join(
+            f"{node1 - node2:f}" for node1, node2 in zip(vector1, vector2, strict=False)
+        ),
+        encoding="utf-8",
+    )
 
 
 if __name__ == "__main__":

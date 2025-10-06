@@ -70,8 +70,7 @@ template_render = import_from_location(
 
 def test_render_invalid(change_to_tmpdir):
     template_file = "well_drill_info.tmpl"
-    with open(template_file, "w", encoding="utf-8") as fp:
-        fp.write(WELL_DRILL_TMPL)
+    Path(template_file).write_text(WELL_DRILL_TMPL, encoding="utf-8")
 
     render = template_render.render_template
 
@@ -100,8 +99,7 @@ def test_render_invalid(change_to_tmpdir):
 
 def test_render(change_to_tmpdir):
     template_file = "well_drill_info.tmpl"
-    with open(template_file, "w", encoding="utf-8") as fp:
-        fp.write(WELL_DRILL_TMPL)
+    Path(template_file).write_text(WELL_DRILL_TMPL, encoding="utf-8")
 
     render = template_render.render_template
 
@@ -134,8 +132,7 @@ def test_render(change_to_tmpdir):
 
 def test_render_multiple_input(change_to_tmpdir):
     template_file = "dual_input.tmpl"
-    with open(template_file, "w", encoding="utf-8") as fp:
-        fp.write(DUAL_INPUT_TMPL)
+    Path(template_file).write_text(DUAL_INPUT_TMPL, encoding="utf-8")
 
     render = template_render.render_template
 
@@ -152,22 +149,16 @@ def test_render_multiple_input(change_to_tmpdir):
     wells_out = "sub_folder/wells.out"
     render((wells_north_in, wells_south_in), template_file, wells_out)
 
-    with open(wells_out, encoding="utf-8") as fin:
-        output = fin.readlines()
-
-    assert output == ["0.2 vs 0.8"]
+    assert Path(wells_out).read_text(encoding="utf-8").splitlines() == ["0.2 vs 0.8"]
 
 
 @pytest.mark.integration_test
 def test_install_template(change_to_tmpdir):
-    with open("config.yml", "w", encoding="utf-8") as fp:
-        YAML(typ="safe", pure=True).dump(CONFIG, fp)
-    template_file = "well_drill_info.tmpl"
-    with open(template_file, "w", encoding="utf-8") as fp:
-        fp.write(WELL_DRILL_TMPL)
-    template_file = "the_optimal_template.tmpl"
-    with open(template_file, "w", encoding="utf-8") as fp:
-        fp.write(THE_OPTIMAL_TEMPLATE_TMPL)
+    YAML(typ="safe", pure=True).dump(CONFIG, Path("config.yml"))
+    Path("well_drill_info.tmpl").write_text(WELL_DRILL_TMPL, encoding="utf-8")
+    Path("the_optimal_template.tmpl").write_text(
+        THE_OPTIMAL_TEMPLATE_TMPL, encoding="utf-8"
+    )
     config = EverestConfig.load_file("config.yml")
     with ErtPluginContext() as runtime_plugins:
         run_model = EverestRunModel.create(config, runtime_plugins=runtime_plugins)
@@ -189,8 +180,7 @@ def test_well_order_template(change_to_tmpdir):
     }
 
     data_file = "well_order.json"
-    with open(data_file, "w", encoding="utf-8") as fout:
-        json.dump(well_order, fout)
+    Path(data_file).write_text(json.dumps(well_order), encoding="utf-8")
 
     output_file = "well_order_list.json"
     template_render.render_template(
@@ -199,8 +189,7 @@ def test_well_order_template(change_to_tmpdir):
         output_file,
     )
 
-    with open(output_file, encoding="utf-8") as fin:
-        order = json.load(fin)
+    order = json.loads(Path(output_file).read_text(encoding="utf-8"))
 
     assert len(well_order) == len(order)
     for idx in range(len(order) - 1):
@@ -221,13 +210,14 @@ def test_user_specified_data_n_template(copy_math_func_test_data_to_tmp, test):
 
     # Write out some constants to a yaml file; doing it here, so config
     # test (TestRepoConfigs) doesn't try to lint this yaml file.
-    yaml = YAML(typ="safe", pure=True)
-    with open("my_constants.yml", "w", encoding="utf-8") as f:
-        yaml.dump({"CONST1": "VALUE1", "CONST2": "VALUE2"}, f)
+    YAML(typ="safe", pure=True).dump(
+        {"CONST1": "VALUE1", "CONST2": "VALUE2"}, Path("my_constants.yml")
+    )
 
     # Write out the template to which takes the constants above
-    with open("my_constants.tmpl", "w", encoding="utf-8") as f:
-        f.write("{{ my_constants.CONST1 }}+{{ my_constants.CONST2 }}")
+    Path("my_constants.tmpl").write_text(
+        "{{ my_constants.CONST1 }}+{{ my_constants.CONST2 }}", encoding="utf-8"
+    )
 
     # Modify the minimal config with template and constants
     updated_config_dict = config.to_dict()
