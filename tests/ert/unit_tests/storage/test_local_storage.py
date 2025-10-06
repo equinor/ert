@@ -178,6 +178,53 @@ def test_that_saving_response_updates_configs(tmp_path):
         }
 
 
+def test_that_saving_arbitrary_parameter_dataframe_fails(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        uniform_parameter = GenKwConfig(
+            name="KEY_1",
+            distribution={"name": "uniform", "min": 0, "max": 1},
+        )
+        experiment = storage.create_experiment(parameters=[uniform_parameter])
+        prior = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="prior"
+        )
+
+        with pytest.raises(
+            ValueError,
+            match=r"Parameters dataframe is empty.",
+        ):
+            prior.save_parameters(pl.DataFrame())
+
+        with pytest.raises(
+            KeyError,
+            match="Columns KEY_2, KEY_3 not in experiment parameters",
+        ):
+            prior.save_parameters(
+                pl.DataFrame(
+                    {
+                        "realization": [0],
+                        "KEY_2": [1.0],
+                        "KEY_3": [1.0],
+                    }
+                )
+            )
+
+        with pytest.raises(
+            KeyError,
+            match=(
+                "DataFrame must contain a 'realization' column for"
+                " saving scalar parameters"
+            ),
+        ):
+            prior.save_parameters(
+                pl.DataFrame(
+                    {
+                        "KEY_1": [1.0],
+                    }
+                )
+            )
+
+
 def test_that_saving_empty_parameters_fails_nicely(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment()

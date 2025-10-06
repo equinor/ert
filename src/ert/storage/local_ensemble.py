@@ -839,6 +839,24 @@ class LocalEnsemble(BaseMode):
 
         """
         if isinstance(dataset, pl.DataFrame):
+            if dataset.is_empty():
+                raise ValueError("Parameters dataframe is empty.")
+            allowed_cols = set(self.experiment.parameter_configuration) | {
+                "realization"
+            }
+            actual_cols = set(dataset.columns)
+            unexpected_cols = actual_cols - allowed_cols
+            if unexpected_cols:
+                raise KeyError(
+                    f"Columns {', '.join(sorted(unexpected_cols))}"
+                    " not in experiment parameters"
+                )
+            if "realization" not in dataset.columns:
+                raise KeyError(
+                    "DataFrame must contain a 'realization' column for"
+                    " saving scalar parameters"
+                )
+
             try:
                 # since all realizations are saved in a single parquet file,
                 # this makes sure that we only add / replace new data.
