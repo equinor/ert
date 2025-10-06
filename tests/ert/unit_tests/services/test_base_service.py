@@ -158,8 +158,7 @@ time.sleep(10)  # Wait for the test to read the JSON file
 def test_json_created(server):
     server.fetch_conn_info()  # wait for it to start
 
-    with open("dummy_server.json", encoding="utf-8") as f:
-        assert f.read()
+    assert Path("dummy_server.json").read_text(encoding="utf-8")
 
 
 @pytest.mark.integration_test

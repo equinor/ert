@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from .config_errors import ConfigValidationError, ErrorInfo
 from .file_context_token import FileContextToken
@@ -7,8 +8,7 @@ from .file_context_token import FileContextToken
 def read_file(file: str, token: FileContextToken | None = None) -> str:
     file = os.path.normpath(os.path.abspath(file))
     try:
-        with open(file, encoding="utf-8") as f:
-            return f.read()
+        return Path(file).read_text(encoding="utf-8")
     except OSError as err:
         raise ConfigValidationError.with_context(str(err), token or file) from err
     except UnicodeDecodeError as e:

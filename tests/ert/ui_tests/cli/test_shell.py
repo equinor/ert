@@ -1,5 +1,4 @@
-import os
-import os.path
+from pathlib import Path
 
 from .run_cli import run_cli_with_pm
 
@@ -12,9 +11,8 @@ def test_shell_scripts_integration(tmpdir):
     """
     with tmpdir.as_cwd():
         ert_config_fname = "test.ert"
-        with open(ert_config_fname, "w", encoding="utf-8") as file_h:
-            file_h.write(
-                """
+        Path(ert_config_fname).write_text(
+            """
 RUNPATH realization-<IENS>/iter-<ITER>
 JOBNAME TEST
 QUEUE_SYSTEM LOCAL
@@ -29,21 +27,23 @@ FORWARD_MODEL COPY_DIRECTORY(<FROM>=mydir, <TO>=mydir2)
 FORWARD_MODEL DELETE_DIRECTORY(<DIRECTORY>=mydir)
 FORWARD_MODEL COPY_FILE(<FROM>=<CONFIG_PATH>/file.txt, <TO>=mydir3/copied.txt)
 FORWARD_MODEL MOVE_DIRECTORY(<FROM>=mydir3, <TO>=mydir4/mydir3)
-"""
-            )
+""",
+            encoding="utf-8",
+        )
 
-        with open("file.txt", "w", encoding="utf-8") as file_h:
-            file_h.write("something")
+        Path("file.txt").write_text("something", encoding="utf-8")
 
         run_cli_with_pm(["test_run", "--disable-monitoring", ert_config_fname])
 
-        with open("realization-0/iter-0/moved.txt", encoding="utf-8") as output_file:
-            assert output_file.read() == "something"
-        assert not os.path.exists("realization-0/iter-0/copied.txt")
-        assert not os.path.exists("realization-0/iter-0/copied2.txt")
-        assert os.path.exists("realization-0/iter-0/copied3.txt")
-        assert not os.path.exists("realization-0/iter-0/mydir")
-        assert os.path.exists("realization-0/iter-0/mydir2")
-        assert not os.path.exists("realization-0/iter-0/mydir3")
-        assert os.path.exists("realization-0/iter-0/mydir4/mydir3")
-        assert os.path.exists("realization-0/iter-0/mydir4/mydir3/copied.txt")
+        assert (
+            Path("realization-0/iter-0/moved.txt").read_text(encoding="utf-8")
+            == "something"
+        )
+        assert not Path("realization-0/iter-0/copied.txt").exists()
+        assert not Path("realization-0/iter-0/copied2.txt").exists()
+        assert Path("realization-0/iter-0/copied3.txt").exists()
+        assert not Path("realization-0/iter-0/mydir").exists()
+        assert Path("realization-0/iter-0/mydir2").exists()
+        assert not Path("realization-0/iter-0/mydir3").exists()
+        assert Path("realization-0/iter-0/mydir4/mydir3").exists()
+        assert Path("realization-0/iter-0/mydir4/mydir3/copied.txt").exists()

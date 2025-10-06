@@ -1,5 +1,6 @@
 import json
 import logging
+from pathlib import Path
 
 import pytest
 
@@ -240,9 +241,9 @@ def test_add_logging_handle(tmpdir):
         pm = ErtPluginManager(plugins=[dummy_plugins])
         pm.add_logging_handle_to_root(logging.getLogger())
         logging.critical("I should write this to spam.log")  # noqa: LOG015
-        with open("spam.log", encoding="utf-8") as fin:
-            result = fin.read()
-        assert "I should write this to spam.log" in result
+        assert "I should write this to spam.log" in Path("spam.log").read_text(
+            encoding="utf-8"
+        )
 
 
 def test_add_span_processor():

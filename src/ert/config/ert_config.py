@@ -267,8 +267,7 @@ def create_forward_model_json(
 
 def check_non_utf_chars(file_path: str) -> None:
     try:
-        with open(file_path, encoding="utf-8") as f:
-            f.read()
+        Path(file_path).read_text(encoding="utf-8")
     except UnicodeDecodeError as e:
         error_words = str(e).split(" ")
         hex_str = error_words[error_words.index("byte") + 1]

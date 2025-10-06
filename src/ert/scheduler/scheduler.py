@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import os
 import time
 import traceback
 from collections import defaultdict
 from collections.abc import Iterable, MutableMapping, Sequence
 from contextlib import suppress
 from dataclasses import asdict
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import orjson
@@ -368,13 +368,11 @@ class Scheduler:
             dispatch_url=ee_uri,
             ee_token=ee_token,
         )
-        jobs_path = os.path.join(runpath, "jobs.json")
+        jobs_path = Path(runpath) / "jobs.json"
         try:
-            with open(jobs_path, "rb") as fp:
-                data = orjson.loads(fp.read())
-            with open(jobs_path, "wb") as fp:
-                data.update(asdict(jobs))
-                fp.write(orjson.dumps(data, option=orjson.OPT_INDENT_2))
+            data = orjson.loads(jobs_path.read_bytes())
+            data.update(asdict(jobs))
+            jobs_path.write_bytes(orjson.dumps(data, option=orjson.OPT_INDENT_2))
         except OSError as err:
             error_msg = f"Could not update jobs.json: {err}"
             self._jobs[iens].unschedule(error_msg)
