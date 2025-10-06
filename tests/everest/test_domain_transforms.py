@@ -17,6 +17,7 @@ def ever_config() -> EverestConfig:
                 "max": 1.0,
                 "scaled_range": [0.3, 0.7],
                 "initial_guess": 0.5,
+                "perturbation_magnitude": 0.01,
                 "variables": [
                     {"name": "a"},
                     {"name": "b"},

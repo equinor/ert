@@ -27,6 +27,7 @@ def test_discrete_optimizer(copy_math_func_test_data_to_tmp):
                 "max": 10,
                 "control_type": "integer",
                 "initial_guess": 0,
+                "perturbation_magnitude": 0.01,
                 "variables": [{"name": "x"}, {"name": "y"}],
             }
         ],

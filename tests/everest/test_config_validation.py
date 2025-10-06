@@ -128,6 +128,7 @@ def test_that_duplicate_control_names_raise_error():
                     "type": "well_control",
                     "min": 0,
                     "max": 0.1,
+                    "perturbation_magnitude": 0.01,
                     "variables": [
                         {"name": "w00", "initial_guess": 0.06},
                     ],
@@ -137,6 +138,7 @@ def test_that_duplicate_control_names_raise_error():
                     "type": "well_control",
                     "min": 0,
                     "max": 0.1,
+                    "perturbation_magnitude": 0.01,
                     "variables": [
                         {"name": "w01", "initial_guess": 0.09},
                     ],
@@ -154,6 +156,7 @@ def test_that_dot_not_in_control_names():
                     "type": "well_control",
                     "min": 0,
                     "max": 0.1,
+                    "perturbation_magnitude": 0.01,
                     "variables": [
                         {"name": "w00", "initial_guess": 0.06},
                         {"name": "w01", "initial_guess": 0.09},
@@ -174,6 +177,7 @@ def test_that_scaled_range_is_valid_range():
                     "type": "well_control",
                     "min": 0,
                     "max": 0.1,
+                    "perturbation_magnitude": 0.01,
                     "scaled_range": [2, 1],
                     "variables": [
                         {"name": "w00", "initial_guess": 0.06},
@@ -225,7 +229,12 @@ def test_that_invalid_control_initial_guess_outside_bounds(
     with pytest.raises(ValueError) as e:
         EverestConfig.with_defaults(
             controls=[
-                {"name": "group_0", "type": "well_control", "variables": variables}
+                {
+                    "name": "group_0",
+                    "type": "well_control",
+                    "perturbation_magnitude": 0.01,
+                    "variables": variables,
+                }
             ]
         )
 
@@ -278,6 +287,7 @@ def test_that_invalid_control_unique_entry(variables, unique_key):
                     "type": "well_control",
                     "max": 0,
                     "min": 0.1,
+                    "perturbation_magnitude": 0.01,
                     "variables": variables,
                 }
             ]
@@ -294,6 +304,7 @@ def test_that_invalid_control_undefined_fields():
                 {
                     "name": "group_0",
                     "type": "well_control",
+                    "perturbation_magnitude": 0.01,
                     "variables": [
                         {"name": "w00"},
                     ],
@@ -313,6 +324,7 @@ def test_that_control_variables_index_is_defined_for_all_variables():
                     "type": "well_control",
                     "min": 0,
                     "max": 0.1,
+                    "perturbation_magnitude": 0.01,
                     "variables": [
                         {"name": "w01", "initial_guess": 0.06, "index": 0},
                         {"name": "w00", "initial_guess": 0.09},
@@ -542,6 +554,7 @@ def test_install_data_with_invalid_templates(
                     "type": "well_control",
                     "min": 0,
                     "max": 1,
+                    "perturbation_magnitude": 0.01,
                     "variables": [
                         {
                             "name": "param_a",
@@ -999,6 +1012,7 @@ def test_load_file_with_errors(capsys):
         min: -1.0
         name: point
         type: yolo_control
+        perturbation_magnitude: 0.01
         variables:
         -   name: x
     install_jobs:
@@ -1034,7 +1048,7 @@ def test_load_file_with_errors(capsys):
         "unable to parse string as a number (type=float_parsing)"
     ) in captured.err
 
-    assert "line: 13, column: 14" in captured.err
+    assert "line: 14, column: 14" in captured.err
     assert "install_jobs -> 0 -> invalid" in captured.err
     assert "Extra inputs are not permitted (type=extra_forbidden)" in captured.err
 
@@ -1066,6 +1080,7 @@ def test_load_file_with_errors(capsys):
                     "name": "test",
                     "type": "generic_control",
                     "initial_guess": 0.5,
+                    "perturbation_magnitude": 0.01,
                     "variables": [
                         {"name": "test", "min": 0, "max": 1},
                     ],
@@ -1230,6 +1245,7 @@ def test_that_nested_extra_types_are_validated_correctly(change_to_tmpdir):
             min: 0
             max: 1
             initial_guess: 0.5
+            perturbation_magnitude: 0.01
             variables:
                 - name: my_var
 
@@ -1248,7 +1264,7 @@ def test_that_nested_extra_types_are_validated_correctly(change_to_tmpdir):
         EverestConfig.load_file("everest_config.yml")
 
     assert "ctx" in err.value.errors[0]
-    assert err.value.errors[0]["ctx"] == {"line_number": 17}
+    assert err.value.errors[0]["ctx"] == {"line_number": 18}
     assert err.value.errors[0]["type"] == "extra_forbidden"
 
 

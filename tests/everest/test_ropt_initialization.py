@@ -19,6 +19,7 @@ def ever_config() -> EverestConfig:
                 "type": "generic_control",
                 "min": 0,
                 "max": 0.1,
+                "perturbation_magnitude": 0.01,
                 "variables": [
                     {"name": "a", "initial_guess": 0.01},
                     {

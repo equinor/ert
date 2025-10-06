@@ -167,8 +167,7 @@ class ControlConfig(BaseModel):
             """
         ),
     )
-    perturbation_magnitude: float | None = Field(
-        default=None,
+    perturbation_magnitude: float = Field(
         description=dedent(
             """
             The magnitude of the perturbation of all control variables in the
@@ -177,6 +176,14 @@ class ControlConfig(BaseModel):
             This controls the magnitude of perturbations (e.g. the standard
             deviation in case of a normal distribution) of controls, used to
             approximate the gradient.
+
+            The interpretation of this field depends on the value of the
+            `perturbation_type` field:
+
+            - `absolute`: The given value is used as-is.
+            - `relative`: The perturbation magnitude is calculated by
+              multiplying the given by value by the difference between the `max`
+              and `min` fields.
 
             This default value can be overridden at the variable level.
             """

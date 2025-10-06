@@ -23,22 +23,16 @@ def _parse_controls(
         "variable_count": len(controls.initial_guesses),
         "lower_bounds": controls.lower_bounds,
         "upper_bounds": controls.upper_bounds,
+        "perturbation_types": [
+            PerturbationType[perturbation_type.upper()]
+            for perturbation_type in controls.perturbation_types
+        ],
+        "perturbation_magnitudes": controls.perturbation_magnitudes,
         "mask": controls.enabled,
         "seed": random_seed,
+        "samplers": controls.sampler_indices,
     }
 
-    default_magnitude = (max(controls.upper_bounds) - min(controls.lower_bounds)) / 10.0
-    ropt_variables["perturbation_magnitudes"] = [
-        default_magnitude if perturbation_magnitude is None else perturbation_magnitude
-        for perturbation_magnitude in controls.perturbation_magnitudes
-    ]
-
-    ropt_variables["perturbation_types"] = [
-        PerturbationType[perturbation_type.upper()]
-        for perturbation_type in controls.perturbation_types
-    ]
-
-    ropt_variables["samplers"] = controls.sampler_indices
     ropt_samplers = [
         {}
         if sampler is None
