@@ -670,9 +670,10 @@ def test_num_cpu_subst(append, numcpu, make_run_path):
     )
     make_run_path(config)
 
-    with open("simulations/realization-0/iter-0/jobs.json", encoding="utf-8") as f:
-        jobs = orjson.loads(f.read())
-        assert [str(numcpu)] == jobs["jobList"][0]["argList"]
+    jobs = orjson.loads(
+        Path("simulations/realization-0/iter-0/jobs.json").read_text(encoding="utf-8")
+    )
+    assert [str(numcpu)] == jobs["jobList"][0]["argList"]
 
 
 @pytest.mark.filterwarnings(
@@ -950,9 +951,8 @@ def test_when_manifest_files_are_written_loading_succeeds(storage, itr):
             if itr == 0
             else set()
         )
-        with open(manifest_path, encoding="utf-8") as f:
-            manifest = orjson.loads(f.read())
-            assert {run_path + "/" + f for f in manifest.values()} == expected_files
+        manifest = orjson.loads(manifest_path.read_text(encoding="utf-8"))
+        assert {run_path + "/" + f for f in manifest.values()} == expected_files
 
         # write files in manifest
         for file in expected_files:

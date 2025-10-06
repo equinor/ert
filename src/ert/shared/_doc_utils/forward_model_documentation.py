@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from argparse import ArgumentParser
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 from docutils import nodes
@@ -34,8 +35,7 @@ class _ForwardModelDocumentation:
         )
 
         if self.job_config_file:
-            with open(self.job_config_file, encoding="utf-8") as fh:
-                job_config_text = fh.read()
+            job_config_text = Path(self.job_config_file).read_text(encoding="utf-8")
             job_config_text_node = nodes.literal_block(text=job_config_text)
             config_section_node.append(job_config_text_node)
 

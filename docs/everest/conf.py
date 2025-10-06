@@ -14,6 +14,7 @@ import json
 import os
 import sys
 from importlib import metadata
+from pathlib import Path
 
 from json_schema_for_humans.generate import generate_from_filename
 from json_schema_for_humans.generation_configuration import GenerationConfiguration
@@ -58,8 +59,7 @@ with open("config_schema.json", "w", encoding="utf-8") as fout:
 
 generate_from_filename("config_schema.json", "config_schema.html", config=config)
 
-with open("config_schema.html", encoding="utf-8") as fin:
-    data = fin.read()
+data = Path("config_schema.html").read_text(encoding="utf-8")
 data = data.replace("schema_doc.css", "_static/styles/furo.css")
 with open("config_schema.html", "w", encoding="utf-8") as fout:
     fout.write(data)

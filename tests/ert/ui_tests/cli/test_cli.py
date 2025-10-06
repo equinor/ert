@@ -135,8 +135,7 @@ def test_that_non_existent_forward_init_surface_file_fails_gracefully(
 @pytest.mark.usefixtures("copy_snake_oil_field")
 def test_that_unopenable_observation_config_fails_gracefully():
     config_file_name = "snake_oil_field.ert"
-    with open(config_file_name, encoding="utf-8") as config_file_handler:
-        content_lines = config_file_handler.read().splitlines()
+    content_lines = Path(config_file_name).read_text(encoding="utf-8").splitlines()
     index_line_with_observation_config = next(
         index
         for index, line in enumerate(content_lines)

@@ -69,8 +69,7 @@ def test_run_external_job():
     assert runner.run(["test", "text"]) is None
     assert runner.stdoutdata() == "Hello World\n"
 
-    with open("test", encoding="utf-8") as f:
-        assert f.read() == "text"
+    assert Path("test").read_text(encoding="utf-8") == "text"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -188,11 +187,8 @@ def test_workflow_run():
 
     WorkflowRunner(workflow, fixtures={}).run_blocking()
 
-    with open("dump1", encoding="utf-8") as f:
-        assert f.read() == "dump_text_1"
-
-    with open("dump2", encoding="utf-8") as f:
-        assert f.read() == "dump_text_2"
+    assert Path("dump1").read_text(encoding="utf-8") == "dump_text_1"
+    assert Path("dump2").read_text(encoding="utf-8") == "dump_text_2"
 
 
 @pytest.mark.integration_test

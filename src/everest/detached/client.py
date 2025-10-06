@@ -127,9 +127,7 @@ def start_experiment(
 
 
 def extract_errors_from_file(path: str) -> list[str]:
-    with open(path, encoding="utf-8") as f:
-        content = f.read()
-    return re.findall(r"(Error \w+.*)", content)
+    return re.findall(r"(Error \w+.*)", Path(path).read_text(encoding="utf-8"))
 
 
 def wait_for_server(client: Client, timeout: int | float) -> None:

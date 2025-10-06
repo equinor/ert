@@ -107,19 +107,17 @@ def test_symlink():
 @pytest.mark.usefixtures("use_tmpdir")
 def test_symlink2():
     os.makedirs("path")
-    with open("path/target", "w", encoding="utf-8") as f:
-        f.write("1234")
+    Path("path/target").write_text("1234", encoding="utf-8")
 
     symlink("path/target", "link")
     assert os.path.islink("link")
-    assert os.path.isfile("path/target")
+    assert Path("path/target").is_file()
 
     symlink("path/target", "link")
     assert os.path.islink("link")
-    assert os.path.isfile("path/target")
-    with open("link", encoding="utf-8") as f:
-        s = f.read()
-        assert s == "1234"
+    assert Path("path/target").is_file()
+
+    assert Path("link").read_text(encoding="utf-8") == "1234"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -213,55 +211,43 @@ def test_move_directory():
 @pytest.mark.usefixtures("use_tmpdir")
 def test_move_file_into_folder_file_exists():
     mkdir("dst_folder")
-    with open("dst_folder/file", "w", encoding="utf-8") as f:
-        f.write("old")
 
-    with open("file", "w", encoding="utf-8") as f:
-        f.write("new")
-
-    with open("dst_folder/file", encoding="utf-8") as f:
-        content = f.read()
-        assert content == "old"
+    Path("dst_folder/file").write_text("old", encoding="utf-8")
+    Path("file").write_text("new", encoding="utf-8")
 
     move_file("file", "dst_folder")
-    with open("dst_folder/file", encoding="utf-8") as f:
-        content = f.read()
-        assert content == "new"
+    assert Path("dst_folder/file").read_text(encoding="utf-8") == "new"
 
-    assert not os.path.exists("file")
+    assert not Path("file").exists()
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_move_pathfile_into_folder():
     mkdir("dst_folder")
     mkdir("source1/source2/")
-    with open("source1/source2/file", "w", encoding="utf-8") as f:
-        f.write("stuff")
+    orig_file = Path("source1/source2/file")
+    orig_file.write_text("stuff", encoding="utf-8")
 
     move_file("source1/source2/file", "dst_folder")
-    with open("dst_folder/file", encoding="utf-8") as f:
-        content = f.read()
-        assert content == "stuff"
+    assert Path("dst_folder/file").read_text(encoding="utf-8") == "stuff"
 
-    assert not os.path.exists("source1/source2/file")
+    assert not orig_file.exists()
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_move_pathfile_into_folder_file_exists():
     mkdir("dst_folder")
     mkdir("source1/source2/")
-    with open("source1/source2/file", "w", encoding="utf-8") as f:
-        f.write("stuff")
+    orig_file = Path("source1/source2/file")
 
-    with open("dst_folder/file", "w", encoding="utf-8") as f:
-        f.write("garbage")
+    orig_file.write_text("stuff", encoding="utf-8")
+
+    Path("dst_folder/file").write_text("garbage", encoding="utf-8")
 
     move_file("source1/source2/file", "dst_folder")
-    with open("dst_folder/file", encoding="utf-8") as f:
-        content = f.read()
-        assert content == "stuff"
+    assert Path("dst_folder/file").read_text(encoding="utf-8") == "stuff"
 
-    assert not os.path.exists("source1/source2/file")
+    assert not orig_file.exists()
 
 
 @pytest.mark.usefixtures("use_tmpdir")

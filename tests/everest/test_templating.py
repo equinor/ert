@@ -1,5 +1,6 @@
 import json
 import os
+from pathlib import Path
 
 import jinja2
 import pytest
@@ -267,19 +268,18 @@ def test_user_specified_data_n_template(copy_math_func_test_data_to_tmp, test):
     run_model.run_experiment(evaluator_server_config)
 
     # The data should have been loaded and passed through template to file.
-    expected_file = os.path.join(
-        "everest_output",
-        "sim_output",
-        "batch_0",
-        "realization_0",
-        "perturbation_0",
-        "well_drill_constants.json",
+    expected_file = (
+        Path("everest_output")
+        / "sim_output"
+        / "batch_0"
+        / "realization_0"
+        / "perturbation_0"
+        / "well_drill_constants.json"
     )
-    assert os.path.isfile(expected_file)
+    assert expected_file.is_file()
 
     # Check expected contents of file
-    with open(expected_file, encoding="utf-8") as f:
-        contents = f.read()
+    contents = Path(expected_file).read_text(encoding="utf-8")
     assert contents == "VALUE1+VALUE2", (
         f'Expected contents: "VALUE1+VALUE2", found: {contents}'
     )

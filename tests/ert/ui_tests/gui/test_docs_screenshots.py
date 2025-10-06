@@ -1,5 +1,6 @@
 import os.path
 import shutil
+from pathlib import Path
 from textwrap import dedent
 
 import pytest
@@ -260,15 +261,13 @@ def open_gui_with_docs_example(
     )
 
     if random_seed is not None:
-        with open(config_file, encoding="utf-8") as f:
-            original_content = f.read()
+        original_content = Path(config_file).read_text(encoding="utf-8")
 
         combined_content = (
             f"RANDOM_SEED {random_seed}\n" + original_content
         )  # Add fixed random seed to make the plots reproducible
 
-        with open(config_file, "w", encoding="utf-8") as f:
-            f.write(combined_content)
+        Path(config_file).write_text(combined_content, encoding="utf-8")
 
     gui_generator = open_gui_with_config(tmp_path / config_file)
     return next(gui_generator)

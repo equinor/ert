@@ -156,12 +156,10 @@ def test_template_multiple_input():
 
     render_template(["second.json", "third.json"], "template", "out_file")
 
-    with open("out_file", encoding="utf-8") as parameter_file:
-        expected_output = (
-            "FILENAME\n" + "F1 1999.22\n" + "OTH 1400\n" + "OTH_TEST 3000.22"
-        )
-
-        assert parameter_file.read() == expected_output
+    assert (
+        Path("out_file").read_text(encoding="utf-8")
+        == "FILENAME\n" + "F1 1999.22\n" + "OTH 1400\n" + "OTH_TEST 3000.22"
+    )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -189,12 +187,10 @@ def test_no_parameters_json():
         "out_file",
     )
 
-    with open("out_file", encoding="utf-8") as parameter_file:
-        expected_output = (
-            "FILENAME\n" + "F1 1999.22\n" + "OTH 1400\n" + "OTH_TEST 3000.22"
-        )
-
-        assert parameter_file.read() == expected_output
+    assert (
+        Path("out_file").read_text(encoding="utf-8")
+        == "FILENAME\n" + "F1 1999.22\n" + "OTH 1400\n" + "OTH_TEST 3000.22"
+    )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -226,9 +222,10 @@ def test_template_executable():
 
     subprocess.call(template_render_exec + params, shell=True, stdout=subprocess.PIPE)
 
-    with open("out_file", encoding="utf-8") as parameter_file:
-        expected_output = "FILENAME\n" + "F1 1999.22\n" + "F2 200"
-        assert parameter_file.read() == expected_output
+    assert (
+        Path("out_file").read_text(encoding="utf-8")
+        == "FILENAME\n" + "F1 1999.22\n" + "F2 200"
+    )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
