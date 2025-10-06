@@ -4,7 +4,14 @@ from typing import Annotated, Any, ClassVar, Literal, Self
 
 import polars as pl
 from polars.datatypes import DataTypeClass
-from pydantic import BaseModel, Field, field_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
+from pydantic_core.core_schema import ValidationInfo
 
 from ert.base_model_context import BaseModelWithContextSupport
 from ert.config import (
@@ -22,8 +29,12 @@ from ert.config import (
     SummaryConfig,
     SurfaceConfig,
     Workflow,
+    WorkflowJob,
+    forward_model_step_from_config_contents,
+    workflow_job_from_file,
 )
 from ert.config import Field as FieldConfig
+from ert.plugins import ErtRuntimePlugins
 
 
 class RunModelConfig(BaseModelWithContextSupport):
@@ -43,6 +54,79 @@ class RunModelConfig(BaseModelWithContextSupport):
     start_iteration: int = 0
     minimum_required_realizations: int = 0
     supports_rerunning_failed_realizations: ClassVar[bool] = False
+    user_installed_workflow_jobs: dict[str, WorkflowJob]
+    user_installed_fm_steps: dict[str, ForwardModelStep]
+
+    # Note: Must be model validator to be invoked before other "before"
+    # field validators downstream
+    @model_validator(mode="before")
+    @classmethod
+    def deserialize_user_installed_workflow_jobs_and_forward_model_steps(
+        cls, values: dict[str, Any], info: ValidationInfo
+    ) -> dict[str, Any]:
+        def _parse_workflow_job(job: str | WorkflowJob) -> WorkflowJob:
+            if isinstance(job, WorkflowJob):
+                parsed_job = job
+            else:
+                parsed_job = workflow_job_from_file(job)
+
+            return parsed_job
+
+        def _parse_fm_step(fm_step: str | ForwardModelStep) -> ForwardModelStep:
+            if isinstance(fm_step, ForwardModelStep):
+                parsed_fm_step = fm_step
+            else:
+                fm_name = Path(fm_step).name
+                fm_config_contents = Path(fm_step).read_text(encoding="utf-8")
+                parsed_fm_step = forward_model_step_from_config_contents(
+                    config_contents=fm_config_contents,
+                    name=fm_name,
+                    config_file=fm_step,
+                )
+
+            return parsed_fm_step
+
+        user_installed_forward_model_steps = {
+            k: _parse_fm_step(v)
+            for k, v in values.get("user_installed_fm_steps", {}).items()
+        }
+        user_installed_workflow_jobs = {
+            k: _parse_workflow_job(v)
+            for k, v in values.get("user_installed_workflow_jobs", {}).items()
+        }
+
+        values["user_installed_fm_steps"] = user_installed_forward_model_steps
+        values["user_installed_workflow_jobs"] = user_installed_workflow_jobs
+
+        if info.context is not None:
+            runtime_plugins: ErtRuntimePlugins = info.context
+
+            runtime_plugins.inject_installed_forward_model_steps(
+                user_installed_forward_model_steps
+            )
+            runtime_plugins.inject_installed_workflow_jobs(user_installed_workflow_jobs)
+
+        return values
+
+    @field_serializer("user_installed_workflow_jobs")
+    def serialize_workflow_jobs(
+        self, user_installed_workflow_jobs: dict[str, WorkflowJob]
+    ) -> dict[str, str]:
+        return {
+            k: v.source_file
+            for k, v in user_installed_workflow_jobs.items()
+            if v.source_file is not None
+        }
+
+    @field_serializer("user_installed_fm_steps")
+    def serialize_fm_steps(
+        self, user_installed_fm_steps: dict[str, WorkflowJob]
+    ) -> dict[str, str]:
+        return {
+            k: v.source_file
+            for k, v in user_installed_fm_steps.items()
+            if v.source_file is not None
+        }
 
 
 # https://github.com/pola-rs/polars/issues/13152#issuecomment-1864600078

@@ -149,12 +149,16 @@ def _setup_single_test_run(
             "Cannot run single test run when the first realization is inactive."
         )
 
+    user_installed_workflow_jobs, user_installed_fm_steps = (
+        _extract_user_installed_fm_steps_and_workflow_jobs(config)
+    )
+
     parameter_configs, design_matrix = _merge_parameters(
         design_matrix=config.analysis_config.design_matrix,
         parameter_configs=config.ensemble_config.parameter_configuration,
     )
 
-    config = SingleTestRunConfig(
+    runmodel_config = SingleTestRunConfig(
         random_seed=config.random_seed,
         runpath_file=config.runpath_file,
         active_realizations=[True],
@@ -176,12 +180,12 @@ def _setup_single_test_run(
         storage_path=config.ens_path,
         queue_config=config.queue_config.create_local_copy(),
         observations=config.observations,
+        user_installed_workflow_jobs=user_installed_workflow_jobs,
+        user_installed_fm_steps=user_installed_fm_steps,
     )
 
-    return SingleTestRun(
-        **config.model_dump(),
-        status_queue=status_queue,
-    )
+    with ErtPluginContext():
+        return SingleTestRun(**runmodel_config.model_dump(), status_queue=status_queue)
 
 
 def validate_minimum_realizations(
@@ -213,7 +217,10 @@ def _setup_ensemble_experiment(
         parameter_configs=config.ensemble_config.parameter_configuration,
     )
 
-    config = EnsembleExperimentConfig(
+    user_installed_workflow_jobs, user_installed_fm_steps = (
+        _extract_user_installed_fm_steps_and_workflow_jobs(config)
+    )
+    runmodel_config = EnsembleExperimentConfig(
         random_seed=config.random_seed,
         runpath_file=config.runpath_file,
         active_realizations=active_realizations,
@@ -235,12 +242,15 @@ def _setup_ensemble_experiment(
         storage_path=config.ens_path,
         queue_config=config.queue_config,
         observations=config.observations,
+        user_installed_workflow_jobs=user_installed_workflow_jobs,
+        user_installed_fm_steps=user_installed_fm_steps,
     )
 
-    return EnsembleExperiment(
-        **config.model_dump(),
-        status_queue=status_queue,
-    )
+    with ErtPluginContext():
+        return EnsembleExperiment(
+            **runmodel_config.model_dump(),
+            status_queue=status_queue,
+        )
 
 
 def _setup_evaluate_ensemble(
@@ -250,7 +260,12 @@ def _setup_evaluate_ensemble(
 ) -> EvaluateEnsemble:
     active_realizations = _get_and_validate_active_realizations_list(args, config)
     validate_minimum_realizations(config, active_realizations)
-    config = EvaluateEnsembleConfig(
+
+    user_installed_workflow_jobs, user_installed_fm_steps = (
+        _extract_user_installed_fm_steps_and_workflow_jobs(config)
+    )
+
+    runmodel_config = EvaluateEnsembleConfig(
         random_seed=config.random_seed,
         active_realizations=active_realizations,
         ensemble_id=args.ensemble_id,
@@ -266,8 +281,11 @@ def _setup_evaluate_ensemble(
         substitutions=config.substitutions,
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
+        user_installed_workflow_jobs=user_installed_workflow_jobs,
+        user_installed_fm_steps=user_installed_fm_steps,
     )
-    return EvaluateEnsemble(**config.model_dump(), status_queue=status_queue)
+
+    return EvaluateEnsemble(**runmodel_config.model_dump(), status_queue=status_queue)
 
 
 def _get_and_validate_active_realizations_list(
@@ -307,7 +325,10 @@ def _setup_manual_update(
     active_realizations = _realizations(args, config.runpath_config.num_realizations)
     validate_minimum_realizations(config, active_realizations.tolist())
 
-    config = ManualUpdateConfig(
+    user_installed_workflow_jobs, user_installed_fm_steps = (
+        _extract_user_installed_fm_steps_and_workflow_jobs(config)
+    )
+    runmodel_config = ManualUpdateConfig(
         random_seed=config.random_seed,
         active_realizations=active_realizations.tolist(),
         ensemble_id=args.ensemble_id,
@@ -327,8 +348,12 @@ def _setup_manual_update(
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
         observations=config.observations,
+        user_installed_workflow_jobs=user_installed_workflow_jobs,
+        user_installed_fm_steps=user_installed_fm_steps,
     )
-    return ManualUpdate(**config.model_dump(), status_queue=status_queue)
+
+    with ErtPluginContext():
+        return ManualUpdate(**runmodel_config.model_dump(), status_queue=status_queue)
 
 
 def _setup_ensemble_smoother(
@@ -344,13 +369,17 @@ def _setup_ensemble_smoother(
             "Number of active realizations must be at least 2 for an update step"
         )
 
+    user_installed_workflow_jobs, user_installed_fm_steps = (
+        _extract_user_installed_fm_steps_and_workflow_jobs(config)
+    )
+
     parameter_configs, design_matrix = _merge_parameters(
         design_matrix=config.analysis_config.design_matrix,
         parameter_configs=config.ensemble_config.parameter_configuration,
         require_updateable_param=True,
     )
 
-    config = EnsembleSmootherConfig(
+    runmodel_config = EnsembleSmootherConfig(
         target_ensemble=args.target_ensemble,
         experiment_name=getattr(args, "experiment_name", ""),
         active_realizations=active_realizations,
@@ -374,8 +403,10 @@ def _setup_ensemble_smoother(
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
         observations=config.observations,
+        user_installed_workflow_jobs=user_installed_workflow_jobs,
+        user_installed_fm_steps=user_installed_fm_steps,
     )
-    return EnsembleSmoother(**config.model_dump(), status_queue=status_queue)
+    return EnsembleSmoother(**runmodel_config.model_dump(), status_queue=status_queue)
 
 
 def _setup_ensemble_information_filter(
@@ -391,12 +422,16 @@ def _setup_ensemble_information_filter(
             "Number of active realizations must be at least 2 for an update step"
         )
 
+    user_installed_workflow_jobs, user_installed_fm_steps = (
+        _extract_user_installed_fm_steps_and_workflow_jobs(config)
+    )
+
     parameter_configs, design_matrix = _merge_parameters(
         design_matrix=config.analysis_config.design_matrix,
         parameter_configs=config.ensemble_config.parameter_configuration,
     )
 
-    config = EnsembleInformationFilterConfig(
+    runmodel_config = EnsembleInformationFilterConfig(
         target_ensemble=args.target_ensemble,
         experiment_name=getattr(args, "experiment_name", ""),
         active_realizations=active_realizations,
@@ -420,8 +455,13 @@ def _setup_ensemble_information_filter(
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
         observations=config.observations,
+        user_installed_workflow_jobs=user_installed_workflow_jobs,
+        user_installed_fm_steps=user_installed_fm_steps,
     )
-    return EnsembleInformationFilter(**config.model_dump(), status_queue=status_queue)
+
+    return EnsembleInformationFilter(
+        **runmodel_config.model_dump(), status_queue=status_queue
+    )
 
 
 def _determine_restart_info(args: Namespace) -> tuple[bool, str | None]:
@@ -463,7 +503,10 @@ def _setup_multiple_data_assimilation(
         require_updateable_param=True,
     )
 
-    config = MultipleDataAssimilationConfig(
+    user_installed_workflow_jobs, user_installed_fm_steps = (
+        _extract_user_installed_fm_steps_and_workflow_jobs(config)
+    )
+    runmodel_config = MultipleDataAssimilationConfig(
         random_seed=config.random_seed,
         active_realizations=active_realizations,
         target_ensemble=_iterative_ensemble_format(args),
@@ -490,8 +533,12 @@ def _setup_multiple_data_assimilation(
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
         observations=config.observations,
+        user_installed_workflow_jobs=user_installed_workflow_jobs,
+        user_installed_fm_steps=user_installed_fm_steps,
     )
-    return MultipleDataAssimilation(**config.model_dump(), status_queue=status_queue)
+    return MultipleDataAssimilation(
+        **runmodel_config.model_dump(), status_queue=status_queue
+    )
 
 
 def _realizations(

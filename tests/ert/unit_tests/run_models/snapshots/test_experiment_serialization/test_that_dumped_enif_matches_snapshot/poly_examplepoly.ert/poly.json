@@ -49,7 +49,8 @@
         "_ERT_RUNPATH": "<RUNPATH>"
       },
       "default_mapping": {},
-      "private_args": {}
+      "private_args": {},
+      "source_file": "test-data/ert/poly_example.poly.ert/POLY_EVAL"
     }
   ],
   "substitutions": {
@@ -171,6 +172,10 @@
   "random_seed": 1,
   "start_iteration": 0,
   "minimum_required_realizations": 1,
+  "user_installed_workflow_jobs": {},
+  "user_installed_fm_steps": {
+    "poly_eval": "test-data/ert/poly_example.poly.ert/POLY_EVAL"
+  },
   "target_ensemble": "helloworld<ITER>",
   "analysis_settings": {
     "enkf_truncation": 0.98,
