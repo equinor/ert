@@ -57,8 +57,7 @@ def write_summary_data(file, x_size, keywords, update_steps):
 def render_template(folder, template, target, **kwargs):
     output = template.render(kwargs)
     file = folder / target
-    with open(file, "w", encoding="utf-8") as f:
-        f.write(output)
+    Path(file).write_text(output, encoding="utf-8")
 
 
 def make_poly_example(folder, source, **kwargs):

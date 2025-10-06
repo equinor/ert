@@ -1,5 +1,6 @@
 import os
 import stat
+from pathlib import Path
 from textwrap import dedent
 
 import numpy as np
@@ -42,11 +43,10 @@ FORWARD_MODEL poly_eval
         )
         base_surface.to_file("surf.irap", fformat="irap_ascii")
 
-        with open("forward_model", "w", encoding="utf-8") as f:
-            f.write(
-                """#!/usr/bin/env python
+        Path("forward_model").write_text(
+            """#!/usr/bin/env python
 import os
-
+from pathlib import Path
 import xtgeo
 import numpy as np
 
@@ -69,10 +69,11 @@ if __name__ == "__main__":
 
     output = [a * x**2 + b * x + c for x in range(10)]
 
-    with open("gen_data_0.out", "w", encoding="utf-8") as f:
-        f.write("\\n".join(map(str, output)))
-        """
-            )
+    Path("gen_data_0.out").write_text("\\n".join(map(str, output)), encoding="utf-8")
+        """,
+            encoding="utf-8",
+        )
+
         os.chmod(
             "forward_model",
             os.stat("forward_model").st_mode
@@ -80,35 +81,33 @@ if __name__ == "__main__":
             | stat.S_IXGRP
             | stat.S_IXOTH,
         )
-        with open("POLY_EVAL", "w", encoding="utf-8") as fout:
-            fout.write("EXECUTABLE forward_model")
-        with open("observations", "w", encoding="utf-8") as fout:
-            fout.write(
-                dedent(
-                    """
+        Path("POLY_EVAL").write_text("EXECUTABLE forward_model", encoding="utf-8")
+        Path("observations").write_text(
+            dedent(
+                """
             GENERAL_OBSERVATION MY_OBS {
                 DATA       = MY_RESPONSE;
                 INDEX_LIST = 0,2,4,6,8;
                 RESTART    = 0;
                 OBS_FILE   = obs.txt;
             };"""
-                )
-            )
+            ),
+            encoding="utf-8",
+        )
 
-        with open("obs.txt", "w", encoding="utf-8") as fobs:
-            fobs.write(
-                dedent(
-                    """
+        Path("obs.txt").write_text(
+            dedent(
+                """
             2.1457049781272213 0.6
             8.769219841380755 1.4
             12.388014786122742 3.0
             25.600464531354252 5.4
             42.35204755970952 8.6"""
-                )
-            )
+            ),
+            encoding="utf-8",
+        )
 
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
+        Path("config.ert").write_text(config, encoding="utf-8")
 
         run_cli(
             ENSEMBLE_SMOOTHER_MODE,

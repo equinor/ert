@@ -3,6 +3,7 @@
 import argparse
 import json
 import sys
+from pathlib import Path
 
 
 def compute_func(x, y):
@@ -28,8 +29,8 @@ def main(argv):
     value = compute_func(*point)
 
     if options.out:
-        with open(options.out, "w", encoding="utf-8") as f:
-            f.write(f"{value:g} \n")
+        Path(options.out).write_text(f"{value:g} \n", encoding="utf-8")
+
     else:
         print(value)
 

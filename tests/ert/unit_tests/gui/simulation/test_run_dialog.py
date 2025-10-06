@@ -1,4 +1,5 @@
 import tempfile
+from pathlib import Path
 from unittest.mock import MagicMock, Mock, call, patch
 
 import pandas as pd
@@ -133,8 +134,7 @@ def run_dialog(qtbot: QtBot, use_tmpdir, mock_set_env_key, monkeypatch):
     monkeypatch.setattr(
         "ert.ensemble_evaluator.EnsembleEvaluator.BATCHING_INTERVAL", 0.01
     )
-    with open(config_file, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1")
+    Path(config_file).write_text("NUM_REALIZATIONS 1", encoding="utf-8")
     args_mock = Mock()
     args_mock.config = config_file
     ert_config = ErtConfig.from_file(config_file)
@@ -606,8 +606,7 @@ def test_run_dialog_fm_label_show_correct_info(
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_exception_in_run_model_is_handled(qtbot: QtBot, use_tmpdir):
     config_file = "minimal_config.ert"
-    with open(config_file, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1")
+    Path(config_file).write_text("NUM_REALIZATIONS 1", encoding="utf-8")
     args_mock = Mock()
     args_mock.config = config_file
 

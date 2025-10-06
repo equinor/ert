@@ -74,15 +74,13 @@ def test_symlink():
     with pytest.raises(IOError, match="must exist"):
         symlink("target/does/not/exist", "link")
 
-    with open("target", "w", encoding="utf-8") as fileH:
-        fileH.write("target ...")
+    Path("target").write_text("target ...", encoding="utf-8")
 
     symlink("target", "link")
     assert os.path.islink("link")
     assert os.readlink("link") == "target"
 
-    with open("target2", "w", encoding="utf-8") as fileH:
-        fileH.write("target ...")
+    Path("target2").write_text("target ...", encoding="utf-8")
 
     with pytest.raises(IOError, match="File exists"):
         symlink("target2", "target")
@@ -122,8 +120,7 @@ def test_symlink2():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_mkdir():
-    with open("file", "w", encoding="utf-8") as f:
-        f.write("Hei")
+    Path("file").write_text("Hei", encoding="utf-8")
 
     with pytest.raises(OSError, match="File exists"):
         mkdir("file")
@@ -138,8 +135,7 @@ def test_mkdir():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_move_file():
-    with open("file", "w", encoding="utf-8") as f:
-        f.write("Hei")
+    Path("file").write_text("hei", encoding="utf-8")
 
     move_file("file", "file2")
     assert os.path.isfile("file2")
@@ -159,16 +155,14 @@ def test_move_file():
     with pytest.raises(OSError, match="not an existing file"):
         move_file("not_existing", "target")
 
-    with open("file2", "w", encoding="utf-8") as f:
-        f.write("123")
+    Path("file2").write_text("123", encoding="utf-8")
 
     move_file("file2", "path/file2")
     assert os.path.isfile("path/file2")
     assert not os.path.isfile("file2")
 
     mkdir("rms/ipl")
-    with open("global_variables.ipl", "w", encoding="utf-8") as f:
-        f.write("123")
+    Path("global_variables.ipl").write_text("123", encoding="utf-8")
 
     move_file("global_variables.ipl", "rms/ipl/global_variables.ipl")
 
@@ -286,8 +280,7 @@ def test_that_delete_non_existing_directory_is_silently_ignored(capsys):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_delete_directory_on_regular_file_fails():
-    with open("file", mode="w", encoding="utf-8") as f:
-        f.write("hei")
+    Path("file").write_text("hei", encoding="utf-8")
 
     with pytest.raises(OSError, match="not a directory"):
         delete_directory("file")
@@ -296,15 +289,11 @@ def test_that_delete_directory_on_regular_file_fails():
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_delete_directory_does_not_follow_symlinks():
     mkdir("link_target/subpath")
-    with open("link_target/link_file", "w", encoding="utf-8") as f:
-        f.write("hei")
+    Path("link_target/link_file").write_text("hei", encoding="utf-8")
 
     mkdir("path/subpath")
-    with open("path/file", "w", encoding="utf-8") as f:
-        f.write("hei")
-
-    with open("path/subpath/file", "w", encoding="utf-8") as f:
-        f.write("hei")
+    Path("path/file").write_text("hei", encoding="utf-8")
+    Path("path/subpath/file").write_text("hei", encoding="utf-8")
 
     symlink("../link_target", "path/link")
     delete_directory("path")
@@ -314,8 +303,7 @@ def test_that_delete_directory_does_not_follow_symlinks():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_delete_directory_on_a_symlink_to_file_fails():
-    with open("link_target", "w", encoding="utf-8") as f:
-        f.write("hei")
+    Path("link_target").write_text("hei", encoding="utf-8")
     symlink("link_target", "link")
     with pytest.raises(IOError, match="is not a directory"):
         delete_directory("link")
@@ -326,8 +314,7 @@ def test_that_delete_directory_on_a_symlink_to_file_fails():
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_delete_directory_on_a_symlink_to_a_directory_only_deletes_link():
     mkdir("link_target")
-    with open("link_target/file", "w", encoding="utf-8") as f:
-        f.write("hei")
+    Path("link_target/file").write_text("hei", encoding="utf-8")
     symlink("link_target", "link")
     delete_directory("link")
     assert os.path.exists("link_target/file")
@@ -350,8 +337,7 @@ def test_that_delete_directory_on_a_symlink_to_a_directory_is_conditionally_igno
     altered as documented by this test.
     """
     mkdir("link_target")
-    with open("link_target/file", "w", encoding="utf-8") as f:
-        f.write("hei")
+    Path("link_target/file").write_text("hei", encoding="utf-8")
     symlink("link_target", "link")
 
     with suppress(NotADirectoryError):
@@ -462,8 +448,7 @@ def test_copy_file():
     with pytest.raises(OSError, match="existing file"):
         copy_file("path", "target")
 
-    with open("file1", "w", encoding="utf-8") as f:
-        f.write("hei")
+    Path("file1").write_text("hei", encoding="utf-8")
 
     copy_file("file1", "file2")
     assert os.path.isfile("file2")
@@ -479,14 +464,12 @@ def test_copy_file():
 def test_copy_file2():
     mkdir("root/sub/path")
 
-    with open("file", "w", encoding="utf-8") as f:
-        f.write("Hei ...")
+    Path("file").write_text("Hei ...", encoding="utf-8")
 
     copy_file("file", "root/sub/path/file")
-    assert os.path.isfile("root/sub/path/file")
+    assert Path("root/sub/path/file").read_text(encoding="utf-8") == "Hei ..."
 
-    with open("file2", "w", encoding="utf-8") as f:
-        f.write("Hei ...")
+    Path("file2").write_text("Hei ...", encoding="utf-8")
 
     with pushd("root/sub/path"):
         copy_file("../../../file2")
@@ -497,11 +480,9 @@ def test_copy_file2():
 def test_copy_file3():
     mkdir("rms/output")
 
-    with open("file.txt", "w", encoding="utf-8") as f:
-        f.write("Hei")
-
+    Path("file.txt").write_text("Hei", encoding="utf-8")
     copy_file("file.txt", "rms/output/")
-    assert os.path.isfile("rms/output/file.txt")
+    assert Path("rms/output/file.txt").read_text(encoding="utf-8") == "Hei"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -522,17 +503,13 @@ def test_copy_when_target_is_none_in_same_directory():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_careful_copy_file():
-    with open("file1", "w", encoding="utf-8") as f:
-        f.write("hei")
-    with open("file2", "w", encoding="utf-8") as f:
-        f.write("hallo")
-
+    Path("file1").write_text("hei", encoding="utf-8")
+    Path("file2").write_text("hallo", encoding="utf-8")
     careful_copy_file("file1", "file2")
-    with open("file2", encoding="utf-8") as f:
-        assert f.readline() == "hallo"
+    assert Path("file2").read_text(encoding="utf-8") == "hallo"
 
     print(careful_copy_file("file1", "file3"))
-    assert os.path.isfile("file3")
+    assert Path("file3").is_file()
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -563,8 +540,7 @@ def test_careful_copy_when_target_is_none_does_not_touch_existing():
 @pytest.fixture
 def minimal_case(tmpdir):
     with tmpdir.as_cwd():
-        with open("config.ert", "w", encoding="utf-8") as fout:
-            fout.write("NUM_REALIZATIONS 1")
+        Path("config.ert").write_text("NUM_REALIZATIONS 1", encoding="utf-8")
         yield
 
 

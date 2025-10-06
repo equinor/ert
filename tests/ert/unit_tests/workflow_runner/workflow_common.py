@@ -1,32 +1,34 @@
 import os
 import stat
+from pathlib import Path
 
 
 class WorkflowCommon:
     @staticmethod
     def createExternalDumpJob():
-        with open("dump_job", "w", encoding="utf-8") as f:
-            f.write("EXECUTABLE dump.py\n")
-            f.write("MIN_ARG 2\n")
-            f.write("MAX_ARG 2\n")
-            f.write("ARG_TYPE 0 STRING\n")
+        Path("dump_job").write_text(
+            "EXECUTABLE dump.py\nMIN_ARG 2\nMAX_ARG 2\nARG_TYPE 0 STRING\n",
+            encoding="utf-8",
+        )
 
-        with open("dump_failing_job", "w", encoding="utf-8") as f:
-            f.write("EXECUTABLE dump_failing.py\n")
+        Path("dump_failing_job").write_text(
+            "EXECUTABLE dump_failing.py\n", encoding="utf-8"
+        )
 
-        with open("dump.py", "w", encoding="utf-8") as f:
-            f.write("#!/usr/bin/env python\n")
-            f.write("import sys\n")
-            f.write("f = open('%s' % sys.argv[1], 'w')\n")
-            f.write("f.write('%s' % sys.argv[2])\n")
-            f.write("f.close()\n")
-            f.write('print("Hello World")')
+        Path("dump.py").write_text(
+            "#!/usr/bin/env python\n"
+            "import sys\n"
+            "f = open('%s' % sys.argv[1], 'w')\n"
+            "f.write('%s' % sys.argv[2])\n"
+            "f.close()\n"
+            'print("Hello World")',
+            encoding="utf-8",
+        )
 
-        with open("dump_failing.py", "w", encoding="utf-8") as f:
-            f.write("#!/usr/bin/env python\n")
-            f.write('print("Hello Failing")\n')
-            f.write("raise Exception")
-
+        Path("dump_failing.py").write_text(
+            '#!/usr/bin/env python\nprint("Hello Failing")\nraise Exception',
+            encoding="utf-8",
+        )
         st = os.stat("dump.py")
         os.chmod(
             "dump.py", st.st_mode | stat.S_IEXEC
@@ -34,84 +36,93 @@ class WorkflowCommon:
         st = os.stat("dump_failing.py")
         os.chmod("dump_failing.py", st.st_mode | stat.S_IEXEC)
 
-        with open("dump_workflow", "w", encoding="utf-8") as f:
-            f.write("DUMP dump1 dump_text_1\n")
-            f.write("DUMP dump2 dump_<PARAM>_2\n")
+        Path("dump_workflow").write_text(
+            "DUMP dump1 dump_text_1\nDUMP dump2 dump_<PARAM>_2\n", encoding="utf-8"
+        )
 
     @staticmethod
     def createErtScriptsJob():
-        with open("subtract_script.py", "w", encoding="utf-8") as f:
-            f.write("from ert import ErtScript\n")
-            f.write("class SubtractScript(ErtScript):\n")
-            f.write("    def run(self, *argv):\n")
-            f.write("        return argv[0] - argv[1]\n")
+        Path("subtract_script.py").write_text(
+            "from ert import ErtScript\n"
+            "class SubtractScript(ErtScript):\n"
+            "    def run(self, *argv):\n"
+            "        return argv[0] - argv[1]\n",
+            encoding="utf-8",
+        )
 
-        with open("subtract_script_job", "w", encoding="utf-8") as f:
-            f.write("INTERNAL True\n")
-            f.write("SCRIPT subtract_script.py\n")
-            f.write("MIN_ARG 2\n")
-            f.write("MAX_ARG 2\n")
-            f.write("ARG_TYPE 0 FLOAT\n")
-            f.write("ARG_TYPE 1 FLOAT\n")
+        Path("subtract_script_job").write_text(
+            "INTERNAL True\n"
+            "SCRIPT subtract_script.py\n"
+            "MIN_ARG 2\n"
+            "MAX_ARG 2\n"
+            "ARG_TYPE 0 FLOAT\n"
+            "ARG_TYPE 1 FLOAT\n",
+            encoding="utf-8",
+        )
 
     @staticmethod
     def createWaitJob():
-        with open("wait_job.py", "w", encoding="utf-8") as f:
-            f.write("from ert import ErtScript\n")
-            f.write("import time\n")
-            f.write("\n")
-            f.write("class WaitScript(ErtScript):\n")
-            f.write("    def dump(self, filename, content):\n")
-            f.write("        with open(filename, 'w') as f:\n")
-            f.write("            f.write(content)\n")
-            f.write("\n")
-            f.write("    def run(self, *argv):\n")
-            f.write("        number, wait_time = argv\n")
-            f.write("        self.dump('wait_started_%d' % number, 'text')\n")
-            f.write("        start = time.time()\n")
-            f.write("        diff = 0\n")
-            f.write("        while not self.isCancelled() and diff < wait_time: \n")
-            f.write("           time.sleep(0.2)\n")
-            f.write("           diff = time.time() - start\n")
-            f.write("\n")
-            f.write("        if self.isCancelled():\n")
-            f.write("            self.dump('wait_cancelled_%d' % number, 'text')\n")
-            f.write("        else:\n")
-            f.write("            self.dump('wait_finished_%d' % number, 'text')\n")
-            f.write("\n")
-            f.write("        return None\n")
+        Path("wait_job.py").write_text(
+            "import time\n"
+            "from pathlib import Path\n"
+            "\n"
+            "from ert import ErtScript\n"
+            "\n"
+            "class WaitScript(ErtScript):\n"
+            "    def dump(self, filename, content):\n"
+            "        Path(filename).write_text(content, encoding='utf-8')\n"
+            "\n"
+            "    def run(self, *argv):\n"
+            "        number, wait_time = argv\n"
+            "        self.dump('wait_started_%d' % number, 'text')\n"
+            "        start = time.time()\n"
+            "        diff = 0\n"
+            "        while not self.isCancelled() and diff < wait_time: \n"
+            "           time.sleep(0.2)\n"
+            "           diff = time.time() - start\n"
+            "        if self.isCancelled():\n"
+            "            self.dump('wait_cancelled_%d' % number, 'text')\n"
+            "        else:\n"
+            "            self.dump('wait_finished_%d' % number, 'text')\n"
+            "        return None\n",
+            encoding="utf-8",
+        )
 
-        with open("external_wait_job.sh", "w", encoding="utf-8") as f:
-            f.write("#!/usr/bin/env bash\n")
-            f.write('echo "text" > wait_started_$1\n')
-            f.write("sleep $2\n")
-            f.write('echo "text" > wait_finished_$1\n')
+        Path("external_wait_job.sh").write_text(
+            "#!/usr/bin/env bash\n"
+            'echo "text" > wait_started_$1\n'
+            "sleep $2\n"
+            'echo "text" > wait_finished_$1\n',
+            encoding="utf-8",
+        )
 
         st = os.stat("external_wait_job.sh")
         os.chmod(
             "external_wait_job.sh", st.st_mode | stat.S_IEXEC
         )  # | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
 
-        with open("wait_job", "w", encoding="utf-8") as f:
-            f.write("INTERNAL True\n")
-            f.write("SCRIPT wait_job.py\n")
-            f.write("MIN_ARG 2\n")
-            f.write("MAX_ARG 2\n")
-            f.write("ARG_TYPE 0 INT\n")
-            f.write("ARG_TYPE 1 INT\n")
+        Path("wait_job").write_text(
+            "INTERNAL True\n"
+            "SCRIPT wait_job.py\n"
+            "MIN_ARG 2\n"
+            "MAX_ARG 2\n"
+            "ARG_TYPE 0 INT\n"
+            "ARG_TYPE 1 INT\n",
+            encoding="utf-8",
+        )
 
-        with open("external_wait_job", "w", encoding="utf-8") as f:
-            f.write("EXECUTABLE external_wait_job.sh\n")
-            f.write("MIN_ARG 2\n")
-            f.write("MAX_ARG 2\n")
-            f.write("ARG_TYPE 0 INT\n")
-            f.write("ARG_TYPE 1 INT\n")
+        Path("external_wait_job").write_text(
+            "EXECUTABLE external_wait_job.sh\n"
+            "MIN_ARG 2\n"
+            "MAX_ARG 2\n"
+            "ARG_TYPE 0 INT\n"
+            "ARG_TYPE 1 INT\n",
+            encoding="utf-8",
+        )
 
-        with open("wait_workflow", "w", encoding="utf-8") as f:
-            f.write("WAIT 0 1\n")
-            f.write("WAIT 1 10\n")
-            f.write("WAIT 2 1\n")
-
-        with open("fast_wait_workflow", "w", encoding="utf-8") as f:
-            f.write("WAIT 0 1\n")
-            f.write("EXTERNAL_WAIT 1 1\n")
+        Path("wait_workflow").write_text(
+            "WAIT 0 1\nWAIT 1 10\nWAIT 2 1\n", encoding="utf-8"
+        )
+        Path("fast_wait_workflow").write_text(
+            "WAIT 0 1\nEXTERNAL_WAIT 1 1\n", encoding="utf-8"
+        )

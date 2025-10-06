@@ -357,17 +357,17 @@ async def test_starting_not_in_folder(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("PATH", f".:{os.environ['PATH']}")
     everserver_path = Path("everserver")
-    with open(everserver_path, "w", encoding="utf-8") as file:  # noqa: ASYNC230
-        file.write(
-            """#!/usr/bin/env python
+    everserver_path.write_text(
+        """#!/usr/bin/env python
 import sys
 from pathlib import Path
 if __name__ == "__main__":
     config_path = sys.argv[2]
     if not Path(config_path).exists():
         raise ValueError(f"config_path ({config_path}) does not exist")
-"""
-        )
+""",
+        encoding="utf-8",
+    )
     everserver_path.chmod(everserver_path.stat().st_mode | stat.S_IEXEC)
     makedirs_if_needed(everest_config.output_dir, roll_if_exists=True)
     driver = await start_server(everest_config, logging_level=logging.DEBUG)

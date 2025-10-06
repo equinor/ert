@@ -114,8 +114,7 @@ def test_run_internal_script():
 @pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
 def test_deprecated_keywords(config, expected_result, monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
-    with open("test_job", "w", encoding="utf-8") as f:
-        f.write("\n".join(config))
+    Path("test_job").write_text("\n".join(config), encoding="utf-8")
     Path("script.py").write_text(
         dedent("""
     from ert import ErtScript
@@ -330,8 +329,7 @@ def test_workflow_stops_with_stopping_job():
     with open("dump_failing_job", "a", encoding="utf-8") as f:
         f.write("STOP_ON_FAIL True")
 
-    with open("dump_failing_workflow", "w", encoding="utf-8") as f:
-        f.write("DUMP")
+    Path("dump_failing_workflow").write_text("DUMP", encoding="utf-8")
 
     job_failing_dump = workflow_job_from_file("dump_failing_job")
     assert job_failing_dump.stop_on_fail

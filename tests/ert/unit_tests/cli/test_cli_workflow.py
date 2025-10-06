@@ -1,5 +1,6 @@
 import os
 from argparse import Namespace
+from pathlib import Path
 
 import pytest
 
@@ -11,8 +12,9 @@ from ert.plugins.plugin_manager import ErtPluginContext
 @pytest.mark.usefixtures("copy_poly_case")
 def test_executing_workflow(storage):
     with ErtPluginContext() as ctx:
-        with open("test_wf", "w", encoding="utf-8") as wf_file:
-            wf_file.write("CSV_EXPORT test_workflow_output.csv")
+        Path("test_wf").write_text(
+            "CSV_EXPORT test_workflow_output.csv", encoding="utf-8"
+        )
 
         config_file = "poly.ert"
         with open(config_file, "a", encoding="utf-8") as file_handle:

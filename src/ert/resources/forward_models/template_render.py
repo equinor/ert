@@ -3,6 +3,7 @@ import argparse
 import json
 import os
 from collections.abc import Sequence
+from pathlib import Path
 from typing import Any
 
 import jinja2
@@ -105,8 +106,7 @@ def render_template(
     template = _load_template(template_file)
     data = _load_input(all_input_files)
 
-    with open(output_file, "w", encoding="utf-8") as fout:
-        fout.write(template.render(**data))
+    Path(output_file).write_text(template.render(**data), encoding="utf-8")
 
 
 def _build_argument_parser() -> argparse.ArgumentParser:

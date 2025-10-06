@@ -2,6 +2,7 @@ import os
 import stat
 from collections.abc import Generator
 from contextlib import contextmanager
+from pathlib import Path
 from textwrap import dedent
 from unittest.mock import Mock
 
@@ -27,10 +28,9 @@ from .conftest import get_child
 def _open_main_window(
     path,
 ) -> Generator[tuple[ErtMainWindow, Storage, ErtConfig], None, None]:
-    with open("forward_model.py", "w", encoding="utf-8") as f:
-        f.write(
-            dedent(
-                """\
+    Path("forward_model.py").write_text(
+        dedent(
+            """\
                 #!/usr/bin/env python3
                 import os
 
@@ -38,8 +38,10 @@ def _open_main_window(
                     if int(os.getenv("_ERT_REALIZATION_NUMBER")) % 2 == 0:
                         raise ValueError()
                 """
-            )
-        )
+        ),
+        encoding="utf-8",
+    )
+
     os.chmod(
         "forward_model.py",
         os.stat("forward_model.py").st_mode
@@ -47,8 +49,8 @@ def _open_main_window(
         | stat.S_IXGRP
         | stat.S_IXOTH,
     )
-    with open("FORWARD_MODEL", "w", encoding="utf-8") as fout:
-        fout.write("EXECUTABLE forward_model.py")
+    Path("FORWARD_MODEL").write_text("EXECUTABLE forward_model.py", encoding="utf-8")
+
     config = dedent("""
     QUEUE_SYSTEM LOCAL
     QUEUE_OPTION LOCAL MAX_RUNNING 2

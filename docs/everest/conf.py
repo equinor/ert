@@ -61,8 +61,8 @@ generate_from_filename("config_schema.json", "config_schema.html", config=config
 
 data = Path("config_schema.html").read_text(encoding="utf-8")
 data = data.replace("schema_doc.css", "_static/styles/furo.css")
-with open("config_schema.html", "w", encoding="utf-8") as fout:
-    fout.write(data)
+Path("config_schema.html").write_text(data, encoding="utf-8")
+
 
 # -- General configuration ---------------------------------------------------
 

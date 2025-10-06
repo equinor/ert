@@ -481,8 +481,7 @@ def make_context_string(msg: str, filename: str) -> FileContextToken:
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_gen_kw_config_validation():
-    with open("template.txt", "w", encoding="utf-8") as f:
-        f.write("Hello")
+    Path("template.txt").write_text("Hello", encoding="utf-8")
 
     GenKwConfig.templates_from_config(
         [

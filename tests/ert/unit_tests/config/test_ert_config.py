@@ -254,16 +254,11 @@ def test_that_parsing_workflows_gives_expected():
 
     os.mkdir("workflows")
 
-    with open("workflows/MAGIC_PRINT", "w", encoding="utf-8") as f:
-        f.write("print_uber\n")
-    with open("workflows/NO_PRINT", "w", encoding="utf-8") as f:
-        f.write("print_uber\n")
-    with open("workflows/SOME_PRINT", "w", encoding="utf-8") as f:
-        f.write("print_uber\n")
-    with open("workflows/UBER_PRINT", "w", encoding="utf-8") as f:
-        f.write("EXECUTABLE ls\n")
-    with open("workflows/HIDDEN_PRINT", "w", encoding="utf-8") as f:
-        f.write("EXECUTABLE ls\n")
+    Path("workflows/MAGIC_PRINT").write_text("print_uber\n", encoding="utf-8")
+    Path("workflows/NO_PRINT").write_text("print_uber\n", encoding="utf-8")
+    Path("workflows/SOME_PRINT").write_text("print_uber\n", encoding="utf-8")
+    Path("workflows/UBER_PRINT").write_text("EXECUTABLE ls\n", encoding="utf-8")
+    Path("workflows/HIDDEN_PRINT").write_text("EXECUTABLE ls\n", encoding="utf-8")
 
     ert_config = ErtConfig.from_dict(config_dict)
 
@@ -649,19 +644,19 @@ def test_that_job_definition_file_with_unexecutable_script_gives_validation_erro
     test_config_file_name = "test.ert"
     job_script_file = os.path.abspath("not_executable")
     job_name = "JOB_NAME"
-    with open(job_name, "w", encoding="utf-8") as fh:
-        fh.write(f"EXECUTABLE {job_script_file}\n")
-    with open(job_script_file, "w", encoding="utf-8") as fh:
-        fh.write("#!/bin/sh\n")
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(
-            dedent(
-                f"""
+    Path(job_name).write_text(f"EXECUTABLE {job_script_file}\n", encoding="utf-8")
+    Path(job_script_file).write_text("#!/bin/sh\n", encoding="utf-8")
+
+    Path(test_config_file_name).write_text(
+        dedent(
+            f"""
                 NUM_REALIZATIONS  1
                 LOAD_WORKFLOW_JOB {job_name}
                 """
-            )
-        )
+        ),
+        encoding="utf-8",
+    )
+
     with pytest.raises(
         expected_exception=ConfigValidationError,
     ):
@@ -700,33 +695,32 @@ def test_that_magic_strings_get_substituted_in_workflow():
     )
     script_file_path = os.path.join(os.getcwd(), "script")
     workflow_file_path = os.path.join(os.getcwd(), "workflow")
-    with open(script_file_path, mode="w", encoding="utf-8") as fh:
-        fh.write(script_file_contents)
-    with open(workflow_file_path, mode="w", encoding="utf-8") as fh:
-        fh.write(workflow_file_contents)
+    Path(script_file_path).write_text(script_file_contents, encoding="utf-8")
+    Path(workflow_file_path).write_text(workflow_file_contents, encoding="utf-8")
 
-    with open("script.py", mode="w", encoding="utf-8") as fh:
-        fh.write(
-            dedent(
-                """
+    Path("script.py").write_text(
+        dedent(
+            """
                 from ert import ErtScript
                 class Script(ErtScript):
                     def run(self, *args):
                         pass
                 """
-            )
-        )
-    with open("config.ert", mode="w", encoding="utf-8") as fh:
-        fh.write(
-            dedent(
-                f"""
+        ),
+        encoding="utf-8",
+    )
+
+    Path("config.ert").write_text(
+        dedent(
+            f"""
                 NUM_REALIZATIONS 1
                 DEFINE <ZERO> 0
                 LOAD_WORKFLOW_JOB {script_file_path} script
                 LOAD_WORKFLOW {workflow_file_path}
                 """
-            )
-        )
+        ),
+        encoding="utf-8",
+    )
 
     ert_config = ErtConfig.from_file("config.ert")
 
@@ -1101,8 +1095,7 @@ def test_that_workflows_with_errors_are_not_loaded():
         """
     )
 
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
+    Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
 
     with pytest.warns(
         ConfigWarning,
@@ -1150,8 +1143,7 @@ def test_that_adding_a_workflow_twice_warns():
         """
     )
 
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
+    Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
 
     with pytest.warns(
         ConfigWarning,
@@ -1186,8 +1178,7 @@ def test_that_failing_to_load_ert_script_with_errors_fails_gracefully(load_state
         """
     )
 
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
+    Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
 
     with (
         pytest.warns(
@@ -1268,10 +1259,8 @@ def test_that_include_statements_work():
         JOBNAME included
         """
     )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-    with open(test_include_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_include_contents)
+    Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
+    Path(test_include_file_name).write_text(test_include_contents, encoding="utf-8")
 
     ert_config = ErtConfig.from_file(test_config_file_name)
     assert ert_config.runpath_config.jobname_format_string == "included"
@@ -1299,12 +1288,9 @@ def test_that_included_files_uses_paths_relative_to_itself():
         EXECUTABLE echo
         """
     )
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-    with open(test_include_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_include_contents)
-    with open(test_fm_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_fm_contents)
+    Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
+    Path(test_include_file_name).write_text(test_include_contents, encoding="utf-8")
+    Path(test_fm_file_name).write_text(test_fm_contents, encoding="utf-8")
 
     ert_config = ErtConfig.from_file(test_config_file_name)
     assert ert_config.installed_forward_model_steps["FM"].name == "FM"
@@ -1348,10 +1334,8 @@ def test_that_include_take_into_account_path():
     os.mkdir("dir")
     Path("dir/job1").write_text("EXECUTABLE echo\n", encoding="utf-8")
     Path("job2").write_text("EXECUTABLE ls\n", encoding="utf-8")
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-    with open(test_include_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_include_contents)
+    Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
+    Path(test_include_file_name).write_text(test_include_contents, encoding="utf-8")
 
     ert_config = ErtConfig.from_file(test_config_file_name)
     assert list(ert_config.installed_forward_model_steps.keys()) == [
@@ -1377,10 +1361,8 @@ def test_that_substitution_happens_for_include():
         """
     )
     os.mkdir("dir")
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-    with open(test_include_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_include_contents)
+    Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
+    Path(test_include_file_name).write_text(test_include_contents, encoding="utf-8")
 
     ert_config = ErtConfig.from_file(test_config_file_name)
     assert (
@@ -1407,10 +1389,8 @@ def test_that_defines_in_included_files_has_immediate_effect():
         """
     )
     os.mkdir("dir")
-    with open(test_config_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_config_contents)
-    with open(test_include_file_name, "w", encoding="utf-8") as fh:
-        fh.write(test_include_contents)
+    Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
+    Path(test_include_file_name).write_text(test_include_contents, encoding="utf-8")
 
     ert_config = ErtConfig.from_file(test_config_file_name)
     assert "baz-<ITER>-<IENS>" in ert_config.runpath_config.runpath_format_string
@@ -1483,33 +1463,31 @@ def test_parsing_workflow_with_multiple_args():
     )
     script_file_path = os.path.join(os.getcwd(), "script")
     workflow_file_path = os.path.join(os.getcwd(), "workflow")
-    with open(script_file_path, mode="w", encoding="utf-8") as fh:
-        fh.write(script_file_contents)
-    with open(workflow_file_path, mode="w", encoding="utf-8") as fh:
-        fh.write(workflow_file_contents)
+    Path(script_file_path).write_text(script_file_contents, encoding="utf-8")
+    Path(workflow_file_path).write_text(workflow_file_contents, encoding="utf-8")
 
-    with open("script.py", mode="w", encoding="utf-8") as fh:
-        fh.write(
-            dedent(
-                """
+    Path("script.py").write_text(
+        dedent(
+            """
                 from ert import ErtScript
                 class Script(ErtScript):
                     def run(self, *args):
                         pass
                 """
-            )
-        )
-    with open("config.ert", mode="w", encoding="utf-8") as fh:
-        fh.write(
-            dedent(
-                f"""
+        ),
+        encoding="utf-8",
+    )
+    Path("config.ert").write_text(
+        dedent(
+            f"""
                 NUM_REALIZATIONS 1
                 DEFINE <ZERO> 0
                 LOAD_WORKFLOW_JOB {script_file_path} script
                 LOAD_WORKFLOW {workflow_file_path}
                 """
-            )
-        )
+        ),
+        encoding="utf-8",
+    )
 
     ert_config = ErtConfig.from_file("config.ert")
 
@@ -1541,8 +1519,9 @@ def test_no_warning_given_when_using_parameters_defined_by_ert_in_forward_model_
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_validate_no_logs_when_overwriting_with_same_value(caplog):
-    with open("step_file", "w", encoding="utf-8") as fout:
-        fout.write("EXECUTABLE echo\nARGLIST <VAR1> <VAR2> <VAR3>\n")
+    Path("step_file").write_text(
+        "EXECUTABLE echo\nARGLIST <VAR1> <VAR2> <VAR3>\n", encoding="utf-8"
+    )
 
     with caplog.at_level(logging.INFO):
         ert_config = ErtConfig.from_file_contents(
@@ -2017,30 +1996,26 @@ def test_parsing_define_within_workflow():
     workflow_file_path = os.path.join(os.getcwd(), "workflow")
     workflow2_file_path = os.path.join(os.getcwd(), "workflow2")
 
-    with open(script_file_path, mode="w", encoding="utf-8") as fh:
-        fh.write(script_file_contents)
+    Path(script_file_path).write_text(script_file_contents, encoding="utf-8")
 
-    with open(workflow_file_path, mode="w", encoding="utf-8") as fh:
-        fh.write(workflow_file_contents)
+    Path(workflow_file_path).write_text(workflow_file_contents, encoding="utf-8")
 
-    with open(workflow2_file_path, mode="w", encoding="utf-8") as fh:
-        fh.write(workflow2_file_contents)
+    Path(workflow2_file_path).write_text(workflow2_file_contents, encoding="utf-8")
 
-    with open("script.py", mode="w", encoding="utf-8") as fh:
-        fh.write(
-            dedent(
-                """
+    Path("script.py").write_text(
+        dedent(
+            """
                 from ert import ErtScript
                 class Script(ErtScript):
                     def run(self, *args):
                         pass
                 """
-            )
-        )
-    with open("config.ert", mode="w", encoding="utf-8") as fh:
-        fh.write(
-            dedent(
-                f"""
+        ),
+        encoding="utf-8",
+    )
+    Path("config.ert").write_text(
+        dedent(
+            f"""
                 NUM_REALIZATIONS 1
                 DEFINE <FOO> ertconfig_foo
                 DEFINE <FOO2> ertconfig_foo2
@@ -2048,8 +2023,9 @@ def test_parsing_define_within_workflow():
                 LOAD_WORKFLOW {workflow_file_path}
                 LOAD_WORKFLOW {workflow2_file_path}
                 """
-            )
-        )
+        ),
+        encoding="utf-8",
+    )
 
     with pytest.warns(ConfigWarning, match="SCRIPT has no effect"):
         ert_config = ErtConfig.from_file("config.ert")
@@ -2248,20 +2224,19 @@ def test_run_template_raises_configvalidationerror_with_more_than_two_arguments(
 @pytest.fixture
 def setup_workflow_file():
     workflow_file_path = os.path.join(os.getcwd(), "workflow")
-    with open(workflow_file_path, mode="w", encoding="utf-8") as fh:
-        fh.write("TEST_SCRIPT")
+    Path(workflow_file_path).write_text("TEST_SCRIPT", encoding="utf-8")
 
-    with open("config.ert", mode="w", encoding="utf-8") as fh:
-        fh.write(
-            dedent(
-                f"""
+    Path("config.ert").write_text(
+        dedent(
+            f"""
                     NUM_REALIZATIONS 1
 
                     LOAD_WORKFLOW {workflow_file_path} workflow_alias
                     HOOK_WORKFLOW workflow_alias PRE_EXPERIMENT
                     """
-            )
-        )
+        ),
+        encoding="utf-8",
+    )
 
 
 @pytest.mark.usefixtures("use_tmpdir", "setup_workflow_file")
@@ -2344,13 +2319,11 @@ def test_ert_script_hook_pre_experiment_essettings_fails():
 @pytest.mark.usefixtures("use_tmpdir")
 def test_ert_script_hook_valid_essettings_succeed():
     workflow_file_path = os.path.join(os.getcwd(), "workflow")
-    with open(workflow_file_path, mode="w", encoding="utf-8") as fh:
-        fh.write("TEST_SCRIPT")
+    Path(workflow_file_path).write_text("TEST_SCRIPT", encoding="utf-8")
 
-    with open("config.ert", mode="w", encoding="utf-8") as fh:
-        fh.write(
-            dedent(
-                f"""
+    Path("config.ert").write_text(
+        dedent(
+            f"""
                 NUM_REALIZATIONS 1
 
                 LOAD_WORKFLOW {workflow_file_path} workflow_alias
@@ -2358,8 +2331,9 @@ def test_ert_script_hook_valid_essettings_succeed():
                 HOOK_WORKFLOW workflow_alias POST_UPDATE
                 HOOK_WORKFLOW workflow_alias PRE_FIRST_UPDATE
                 """
-            )
-        )
+        ),
+        encoding="utf-8",
+    )
 
     class SomeScript(ErtScript):
         def run(self, es_settings: ESSettings):
@@ -2399,8 +2373,9 @@ def test_queue_options_are_joined_after_option_name():
 def test_validation_error_on_invalid_parameter_name(
     invalid_parameter_definition_name, tmp_path, caplog
 ):
-    with open(tmp_path / "coeffs_priors", mode="w", encoding="utf-8") as fh:
-        fh.write(invalid_parameter_definition_name)
+    Path(tmp_path / "coeffs_priors").write_text(
+        invalid_parameter_definition_name, encoding="utf-8"
+    )
     with pytest.raises(
         ConfigValidationError,
         match=(

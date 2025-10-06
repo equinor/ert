@@ -2,6 +2,7 @@ import logging
 import os
 import random
 import stat
+from pathlib import Path
 from textwrap import dedent
 
 from PyQt6.QtCore import Qt, QTimer
@@ -22,10 +23,9 @@ def test_rerun_failed_all_realizations(opened_main_window_poly, qtbot):
     gui = opened_main_window_poly
 
     def write_poly_eval(failing_reals: bool):
-        with open("poly_eval.py", "w", encoding="utf-8") as f:
-            f.write(
-                dedent(
-                    f"""\
+        Path("poly_eval.py").write_text(
+            dedent(
+                f"""\
                     #!/usr/bin/env python
                     import numpy as np
                     import sys
@@ -47,8 +47,10 @@ def test_rerun_failed_all_realizations(opened_main_window_poly, qtbot):
                         with open("poly.out", "w", encoding="utf-8") as f:
                             f.write("\\n".join(map(str, output)))
                     """
-                )
-            )
+            ),
+            encoding="utf-8",
+        )
+
         os.chmod(
             "poly_eval.py",
             os.stat("poly_eval.py").st_mode
@@ -105,10 +107,9 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot, caplog):
     caplog.set_level(logging.INFO)
 
     def write_poly_eval(failing_reals: set[int]):
-        with open("poly_eval.py", "w", encoding="utf-8") as f:
-            f.write(
-                dedent(
-                    f"""\
+        Path("poly_eval.py").write_text(
+            dedent(
+                f"""\
                     #!/usr/bin/env python
                     import numpy as np
                     import sys
@@ -130,8 +131,10 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot, caplog):
                         with open("poly.out", "w", encoding="utf-8") as f:
                             f.write("\\n".join(map(str, output)))
                     """  # noqa: E501
-                )
-            )
+            ),
+            encoding="utf-8",
+        )
+
         os.chmod(
             "poly_eval.py",
             os.stat("poly_eval.py").st_mode
@@ -272,10 +275,9 @@ def test_rerun_failed_realizations_evaluate_ensemble(
     gui = ensemble_experiment_has_run_no_failure
 
     def write_poly_eval(failing_reals: set[int]):
-        with open("poly_eval.py", "w", encoding="utf-8") as f:
-            f.write(
-                dedent(
-                    f"""\
+        Path("poly_eval.py").write_text(
+            dedent(
+                f"""\
                     #!/usr/bin/env python
                     import numpy as np
                     import sys
@@ -297,8 +299,10 @@ def test_rerun_failed_realizations_evaluate_ensemble(
                         with open("poly.out", "w", encoding="utf-8") as f:
                             f.write("\\n".join(map(str, output)))
                     """  # noqa: E501
-                )
-            )
+            ),
+            encoding="utf-8",
+        )
+
         os.chmod(
             "poly_eval.py",
             os.stat("poly_eval.py").st_mode

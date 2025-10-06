@@ -146,10 +146,9 @@ def _ensemble_experiment_run(
     ):
         mp.chdir(path)
         if failing_reals:
-            with open("poly_eval.py", "w", encoding="utf-8") as f:
-                f.write(
-                    dedent(
-                        """\
+            Path("poly_eval.py").write_text(
+                dedent(
+                    """\
                         #!/usr/bin/env python3
                         import os
                         import sys
@@ -170,8 +169,10 @@ def _ensemble_experiment_run(
                             with open("poly.out", "w", encoding="utf-8") as f:
                                 f.write("\\n".join(map(str, output)))
                         """
-                    )
-                )
+                ),
+                encoding="utf-8",
+            )
+
             os.chmod(
                 "poly_eval.py",
                 os.stat("poly_eval.py").st_mode

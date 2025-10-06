@@ -1,4 +1,5 @@
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -47,24 +48,25 @@ def test_ert_script_from_file():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_ert_script_with_syntax_error_raises_value_error():
-    with open("syntax_error_script.py", "w", encoding="utf-8") as f:
-        f.write("from ert not_legal_syntax ErtScript\n")
+    Path("syntax_error_script.py").write_text(
+        "from ert not_legal_syntax ErtScript\n", encoding="utf-8"
+    )
     with pytest.raises(ValueError, match=r"ErtScript .*.py contains syntax error"):
         _ = ErtScript.loadScriptFromFile("syntax_error_script.py")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_ert_script_with_import_error_raises_value_error():
-    with open("import_error_script.py", "w", encoding="utf-8") as f:
-        f.write("from ert import DoesNotExist\n")
+    Path("import_error_script.py").write_text(
+        "from ert import DoesNotExist\n", encoding="utf-8"
+    )
     with pytest.raises(ValueError, match="cannot import name 'DoesNotExist'"):
         _ = ErtScript.loadScriptFromFile("import_error_script.py")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_empty_ert_script_raises_value_error():
-    with open("empty_script.py", "w", encoding="utf-8") as f:
-        f.write("from ert import ErtScript\n")
+    Path("empty_script.py").write_text("from ert import ErtScript\n", encoding="utf-8")
 
     with pytest.raises(ValueError, match="does not contain an ErtScript"):
         _ = ErtScript.loadScriptFromFile("empty_script.py")

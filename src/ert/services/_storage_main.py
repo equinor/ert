@@ -14,6 +14,7 @@ import threading
 import time
 import warnings
 from base64 import b64encode
+from pathlib import Path
 from typing import Any
 
 import uvicorn
@@ -150,18 +151,16 @@ def _generate_certificate(cert_folder: str) -> tuple[str, str, bytes]:
     # Write certificate and key to disk
     makedirs_if_needed(cert_folder)
     cert_path = os.path.join(cert_folder, dns_name + ".crt")
-    with open(cert_path, "wb") as f:
-        f.write(cert.public_bytes(serialization.Encoding.PEM))
+    Path(cert_path).write_bytes(cert.public_bytes(serialization.Encoding.PEM))
     key_path = os.path.join(cert_folder, dns_name + ".key")
     pw = bytes(os.urandom(28))
-    with open(key_path, "wb") as f:
-        f.write(
-            key.private_bytes(
-                encoding=serialization.Encoding.PEM,
-                format=serialization.PrivateFormat.TraditionalOpenSSL,
-                encryption_algorithm=serialization.BestAvailableEncryption(pw),
-            )
+    Path(key_path).write_bytes(
+        key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.TraditionalOpenSSL,
+            encryption_algorithm=serialization.BestAvailableEncryption(pw),
         )
+    )
     return cert_path, key_path, pw
 
 
