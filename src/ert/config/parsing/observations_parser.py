@@ -1,5 +1,5 @@
 from enum import StrEnum
-from typing import Any, no_type_check
+from typing import Any, assert_never, no_type_check
 
 from lark import Lark, Token, Transformer, UnexpectedCharacters, UnexpectedToken
 from lark.exceptions import VisitError
@@ -103,8 +103,8 @@ def parse_observations(content: str, filename: str) -> list[ObservationDict]:
                     f" (on line {e.line}: {unexpected_line}). "
                     f"Expected one of {allowed_chars}."
                 )
-            case _:
-                raise
+            case default, _:
+                assert_never(default)
 
         raise ObservationConfigError.from_info(
             ErrorInfo(

@@ -13,10 +13,7 @@ import re
 from collections.abc import Callable, Sequence
 from datetime import datetime, timedelta
 from enum import Enum, auto
-from typing import (
-    Any,
-    TypeVar,
-)
+from typing import Any, TypeVar, assert_never
 
 import numpy as np
 import numpy.typing as npt
@@ -134,6 +131,8 @@ def make_summary_key(
         case SummaryKeyType.NETWORK:
             (name,) = _check_if_missing("network", "WGNAMES", name)
             return f"{keyword}:{name}"
+        case default:
+            assert_never(default)
 
 
 __all__ = ["make_summary_key", "read_summary"]

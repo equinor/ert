@@ -4,3 +4,4 @@ exclude_also =
     if TYPE_CHECKING:
     ; Don't complain about overload type specifications, they aren't run:
     @(typing\.)?overload
+    assert_never

@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from collections.abc import Sequence
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, assert_never
 
 import numpy as np
 import polars as pl
@@ -86,6 +86,8 @@ def create_observation_dataframes(
                             bool(ensemble_config.refcase),
                         )
                     )
+                case default:
+                    assert_never(default)
         except ObservationConfigError as err:
             config_errors.extend(err.errors)
 
@@ -120,6 +122,8 @@ def _handle_error_mode(
             return np.abs(values) * error
         case ErrorModes.RELMIN:
             return np.maximum(np.abs(values) * error, np.full(values.shape, error_min))
+        case default:
+            assert_never(default)
 
 
 def _handle_history_observation(
