@@ -127,8 +127,12 @@ def mock_set_env_key():
 
 
 @pytest.fixture
-def run_dialog(qtbot: QtBot, use_tmpdir, mock_set_env_key):
+def run_dialog(qtbot: QtBot, use_tmpdir, mock_set_env_key, monkeypatch):
     config_file = "minimal_config.ert"
+    monkeypatch.setattr("ert.scheduler.Scheduler.BATCH_KILLING_INTERVAL", 0.01)
+    monkeypatch.setattr(
+        "ert.ensemble_evaluator.EnsembleEvaluator.BATCHING_INTERVAL", 0.01
+    )
     with open(config_file, "w", encoding="utf-8") as f:
         f.write("NUM_REALIZATIONS 1")
     args_mock = Mock()

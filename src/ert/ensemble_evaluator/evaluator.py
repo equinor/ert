@@ -67,6 +67,8 @@ class EventSentinel:
 
 
 class EnsembleEvaluator:
+    BATCHING_INTERVAL = 0.5
+
     def __init__(
         self,
         ensemble: Ensemble,
@@ -93,7 +95,7 @@ class EnsembleEvaluator:
             list[tuple[EVENT_HANDLER, SnapshotInputEvent]]
         ] = asyncio.Queue()
         self._max_batch_size: int = 500
-        self._batching_interval: float = 0.5
+        self._batching_interval: float = self.BATCHING_INTERVAL
         self._complete_batch: asyncio.Event = asyncio.Event()
         self._server_started: asyncio.Future[None] = asyncio.Future()
         self._dispatchers_connected: set[bytes] = set()
