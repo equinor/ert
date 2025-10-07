@@ -868,13 +868,12 @@ def test_that_all_parameters_and_gen_data_consolidation_works(
             ensemble.save_everest_realization_info(everest_realization_info)
 
             for realization in range(num_realizations):
-                param_data = xr.Dataset(
+                # ExtParamConfig now uses polars DataFrame instead of xarray Dataset
+                param_data = pl.DataFrame(
                     {
-                        "values": (
-                            "names",
-                            np.array([realization] * len(param_keys)) + (batch / 10),
-                        ),
-                        "names": param_keys,
+                        "realization": [realization],
+                        "P1": [realization + (batch / 10)],
+                        "P2": [realization + (batch / 10)],
                     }
                 )
                 ensemble.save_parameters(param_data, "point", realization)
