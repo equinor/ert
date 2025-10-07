@@ -455,6 +455,8 @@ class RunDialog(QFrame):
         )
 
         if kill_job == QMessageBox.StandardButton.Yes:
+            self.kill_button.setEnabled(False)
+            self.kill_button.setText("Terminating")
             # Normally this slot would be invoked by the signal/slot system,
             # but the worker is busy tracking the evaluation.
             self._run_model_api.cancel()
@@ -465,6 +467,7 @@ class RunDialog(QFrame):
         self.processing_animation.setVisible(False)
         self.processing_stopped.setVisible(True)
         self.kill_button.setEnabled(False)
+        self.kill_button.setText("Terminate experiment")
         self.rerun_button.setEnabled(
             self._run_model_api.has_failed_realizations()
             and self._run_model_api.supports_rerunning_failed_realizations
