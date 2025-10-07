@@ -10,7 +10,7 @@ from collections import Counter
 from contextlib import suppress
 from enum import StrEnum
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, assert_never
 
 from lxml import etree
 from opentelemetry.trace import Status, StatusCode
@@ -434,6 +434,8 @@ class Job:
                 event = RealizationSuccess(real=str(self.iens))
                 self._end_time = time.time()
                 await self._scheduler.completed_jobs.put(self.iens)
+            case default:
+                assert_never(default)
 
         self.state = state
         if event is not None:

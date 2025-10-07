@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from os import getuid
 from pwd import getpwuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, assert_never
 
 from ert.config import QueueSystem
 
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 
 def create_driver(queue_options: QueueOptions) -> Driver:
-    match str(queue_options.name):
+    match queue_options.name:
         case QueueSystem.LOCAL:
             return LocalDriver()
         case QueueSystem.TORQUE:
@@ -33,9 +33,8 @@ def create_driver(queue_options: QueueOptions) -> Driver:
                     **queue_options.driver_options,
                 )
             )
-    raise NotImplementedError(
-        "Only LOCAL, SLURM, TORQUE and LSF drivers are implemented"
-    )
+        case default:
+            assert_never(default)
 
 
 __all__ = [

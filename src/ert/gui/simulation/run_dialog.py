@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 from queue import SimpleQueue
-from typing import cast
+from typing import assert_never, cast
 
 import humanize
 from PyQt6.QtCore import QModelIndex, QSize, Qt, QThread, QTimer
@@ -641,6 +641,8 @@ class RunDialog(QFrame):
                 formatted_queue_system = "Torque/OpenPBS"
             case QueueSystem.SLURM:
                 formatted_queue_system = "Slurm"
+            case default:
+                assert_never(default)
         self.queue_system.setText(f"Queue system:\n{formatted_queue_system}")
 
     def hideEvent(self, event: QHideEvent | None) -> None:
