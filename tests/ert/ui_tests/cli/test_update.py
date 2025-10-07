@@ -232,12 +232,10 @@ def test_update_lowers_generalized_variance_or_deactivates_observations(
         if success:
             with open_storage("storage") as storage:
                 experiment = storage.get_experiment_by_name("experiment")
-                prior = experiment.get_ensemble_by_name("iter-0").load_all_gen_kw_data()
-                posterior = experiment.get_ensemble_by_name(
-                    "iter-1"
-                ).load_all_gen_kw_data()
+                prior = experiment.get_ensemble_by_name("iter-0").load_scalars()
+                posterior = experiment.get_ensemble_by_name("iter-1").load_scalars()
 
             assert (
-                np.linalg.det(posterior.cov().to_numpy())
-                <= np.linalg.det(prior.cov().to_numpy()) + 0.001
+                np.linalg.det(np.cov(posterior.to_numpy(), rowvar=False))
+                <= np.linalg.det(np.cov(prior.to_numpy(), rowvar=False)) + 0.001
             )
