@@ -59,10 +59,8 @@ class EverestClient:
         )
 
     @property
-    def config_filename(self) -> str:
-        config_path = self._http_get(EverEndpoints.config_path).text
-
-        return Path(config_path).name
+    def config(self) -> dict[str, str]:
+        return self._http_get(EverEndpoints.config_path).json()
 
     def get_runtime(self) -> int:
         if self._start_time is None:
@@ -126,7 +124,7 @@ class EverestClient:
             pass
 
         return RunModelAPI(
-            experiment_name=self.config_filename,
+            experiment_name=Path(self.config["config_path"]).name,
             supports_rerunning_failed_realizations=False,
             start_simulations_thread=start_fn,
             cancel=self.stop,
