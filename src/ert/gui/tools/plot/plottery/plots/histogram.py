@@ -163,8 +163,8 @@ def _plotCategoricalHistogram(
     counts = data.value_counts()
     freq = [counts.get(category, 0) for category in categories]
     pos = np.arange(len(categories))
-    width = 1.0
-    axes.set_xticks(pos + (width / 2.0))
+    width = 0.95
+    axes.set_xticks(pos)
     axes.set_xticklabels(categories)
 
     axes.bar(pos, freq, alpha=style.alpha, color=style.color, width=width)
