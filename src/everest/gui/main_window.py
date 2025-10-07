@@ -65,7 +65,9 @@ class EverestMainWindow(QMainWindow):
             ssl_context=ssl_context,
         )
 
-        self.setWindowTitle(f"Everest - {client.config_filename}")
+        config = client.config
+        title = Path(config["config_path"]).name
+        self.setWindowTitle(f"Everest - {title}")
 
         run_model_api = client.create_run_model_api()
         event_queue, event_monitor_thread = client.setup_event_queue_from_ws_endpoint(
@@ -73,11 +75,13 @@ class EverestMainWindow(QMainWindow):
         )
 
         run_dialog = RunDialog(
-            title=str(client.config_filename),
+            title=title,
             run_model_api=run_model_api,
             event_queue=event_queue,
             is_everest=True,
             notifier=ErtNotifier(),
+            run_path=Path(config["run_path"]),
+            storage_path=Path(config["storage_path"]),
         )
 
         self.central_layout.addWidget(run_dialog)

@@ -18,6 +18,7 @@ from fastapi import (
     WebSocketException,
 )
 from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from starlette import status
 from starlette.requests import Request
@@ -56,6 +57,8 @@ class ExperimentRunnerState:
     events: list[StatusEvents] = dataclasses.field(default_factory=list)
     subscribers: dict[str, "Subscriber"] = dataclasses.field(default_factory=dict)
     config_path: str | os.PathLike[str] | None = None
+    run_path: str | os.PathLike[str] | None = None
+    storage_path: str | os.PathLike[str] | None = None
     start_time_unix: int | None = None
 
 
@@ -198,6 +201,9 @@ async def start_experiment(
             # Ideally, we should return the experiment ID in the response here
             shared_data.config_path = config.config_path
 
+            shared_data.run_path = config.simulation_dir
+            shared_data.storage_path = config.output_dir
+
             # Assume client and server is always in the same timezone
             # so disregard timestamps
             shared_data.start_time_unix = int(time.time())
@@ -215,13 +221,20 @@ async def start_experiment(
 @router.get("/" + EverEndpoints.config_path)
 async def config_path(
     request: Request, credentials: HTTPBasicCredentials = Depends(security)
-) -> Response:
+) -> JSONResponse:
     _log(request)
     _check_user(credentials)
     if shared_data.status.status == ExperimentState.pending:
-        return Response("No experiment started", status_code=404)
+        return JSONResponse("No experiment started", status_code=404)
 
-    return Response(str(shared_data.config_path), status_code=200)
+    return JSONResponse(
+        {
+            "config_path": str(shared_data.config_path),
+            "run_path": str(shared_data.run_path),
+            "storage_path": str(shared_data.storage_path),
+        },
+        status_code=200,
+    )
 
 
 @router.get("/" + EverEndpoints.start_time)
