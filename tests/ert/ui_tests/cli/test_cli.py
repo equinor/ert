@@ -537,7 +537,11 @@ def test_that_es_mda_on_poly_case_matches_snapshot(snapshot):
         experiment = storage.get_experiment_by_name("es-mda")
         for iter_nr in range(4):
             ensemble = experiment.get_ensemble_by_name(f"iter-{iter_nr}")
-            data.append(ensemble.load_all_gen_kw_data())
+            ensemble_data = ensemble.load_scalars().to_pandas().set_index("realization")
+            ensemble_data.columns.name = None
+            ensemble_data.index.name = "Realization"
+            ensemble_data = ensemble_data.sort_index(axis=1)
+            data.append(ensemble_data)
     result = pd.concat(
         data,
         keys=[f"iter-{iter_}" for iter_ in range(len(data))],
@@ -573,7 +577,11 @@ def test_that_enif_on_poly_case_matches_snapshot(snapshot):
         experiment = storage.get_experiment_by_name("enif")
         for iter_nr in range(2):
             ensemble = experiment.get_ensemble_by_name(f"iter-{iter_nr}")
-            data.append(ensemble.load_all_gen_kw_data())
+            ensemble_data = ensemble.load_scalars().to_pandas().set_index("realization")
+            ensemble_data.columns.name = None
+            ensemble_data.index.name = "Realization"
+            ensemble_data = ensemble_data.sort_index(axis=1)
+            data.append(ensemble_data)
     result = pd.concat(
         data,
         keys=[f"iter-{i}" for i in range(len(data))],

@@ -1068,40 +1068,69 @@ def test_load_gen_kw_not_sorted(storage, tmpdir, snapshot):
         )
 
         sample_prior(ensemble, range(ensemble_size), random_seed=1234)
-
-        data = ensemble.load_all_gen_kw_data()
+        data = ensemble.load_scalars().to_pandas().set_index("realization")
+        data.columns.name = None
+        data.index.name = "Realization"
+        data = data.sort_index(axis=1)
         snapshot.assert_match(data.round(12).to_csv(), "gen_kw_unsorted")
 
 
 def test_gen_kw_collector(snake_oil_default_storage, snapshot):
-    data = snake_oil_default_storage.load_all_gen_kw_data()
+    data = snake_oil_default_storage.load_scalars().to_pandas().set_index("realization")
+    data.columns.name = None
+    data.index.name = "Realization"
+    data = data.sort_index(axis=1)
     snapshot.assert_match(data.round(6).to_csv(), "gen_kw_collector.csv")
 
     with pytest.raises(KeyError):
         # realization 60:
         _ = data.loc[60]
 
-    data = snake_oil_default_storage.load_all_gen_kw_data(
-        "SNAKE_OIL_PARAM",
-    )[["SNAKE_OIL_PARAM:OP1_PERSISTENCE", "SNAKE_OIL_PARAM:OP1_OFFSET"]]
+    data = (
+        snake_oil_default_storage.load_scalars(
+            "SNAKE_OIL_PARAM",
+        )
+        .to_pandas()
+        .set_index("realization")
+    )
+    data.columns.name = None
+    data.index.name = "Realization"
+    data = data.sort_index(axis=1)
+    data = data[["SNAKE_OIL_PARAM:OP1_PERSISTENCE", "SNAKE_OIL_PARAM:OP1_OFFSET"]]
     snapshot.assert_match(data.round(6).to_csv(), "gen_kw_collector_2.csv")
 
     with pytest.raises(KeyError):
         _ = data["SNAKE_OIL_PARAM:OP1_DIVERGENCE_SCALE"]
 
     realization_index = 3
-    data = snake_oil_default_storage.load_all_gen_kw_data(
-        "SNAKE_OIL_PARAM",
-        realization_index=realization_index,
-    )["SNAKE_OIL_PARAM:OP1_PERSISTENCE"]
+    data = (
+        snake_oil_default_storage.load_scalars(
+            "SNAKE_OIL_PARAM",
+            realizations=[realization_index],
+        )
+        .to_pandas()
+        .set_index("realization")
+    )
+    data.columns.name = None
+    data.index.name = "Realization"
+    data = data.sort_index(axis=1)
+    data = data["SNAKE_OIL_PARAM:OP1_PERSISTENCE"]
     snapshot.assert_match(data.round(6).to_csv(), "gen_kw_collector_3.csv")
 
     non_existing_realization_index = 150
     with pytest.raises((IndexError, KeyError)):
-        _ = snake_oil_default_storage.load_all_gen_kw_data(
-            "SNAKE_OIL_PARAM",
-            realization_index=non_existing_realization_index,
-        )["SNAKE_OIL_PARAM:OP1_PERSISTENCE"]
+        data = (
+            snake_oil_default_storage.load_scalars(
+                "SNAKE_OIL_PARAM",
+                realizations=[non_existing_realization_index],
+            )
+            .to_pandas()
+            .set_index("realization")
+        )
+        data.columns.name = None
+        data.index.name = "Realization"
+        data = data.sort_index(axis=1)
+        data = data["SNAKE_OIL_PARAM:OP1_PERSISTENCE"]
 
 
 def test_keyword_type_checks(snake_oil_default_storage):
@@ -1130,12 +1159,12 @@ def test_data_fetching_missing_key(snake_oil_case):
         empty_case = experiment.create_ensemble(name="new_case", ensemble_size=25)
 
         data = [
-            empty_case.load_all_gen_kw_data("nokey", None),
+            empty_case.load_scalars("nokey", None),
         ]
 
         for dataframe in data:
-            assert isinstance(dataframe, DataFrame)
-            assert dataframe.empty
+            assert isinstance(dataframe, pl.DataFrame)
+            assert dataframe.is_empty()
 
 
 def test_set_failure_will_create_realization_directory(storage):

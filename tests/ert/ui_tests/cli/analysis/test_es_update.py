@@ -53,9 +53,9 @@ def test_that_posterior_has_lower_variance_than_prior():
     with open_storage("storage") as storage:
         experiment = storage.get_experiment_by_name("es-test")
         prior_ensemble = experiment.get_ensemble_by_name("iter-0")
-        df_default = prior_ensemble.load_all_gen_kw_data()
+        df_default = prior_ensemble.load_scalars()
         posterior_ensemble = experiment.get_ensemble_by_name("iter-1")
-        df_target = posterior_ensemble.load_all_gen_kw_data()
+        df_target = posterior_ensemble.load_scalars()
 
         # The std for the ensemble should decrease
         assert float(
@@ -68,8 +68,8 @@ def test_that_posterior_has_lower_variance_than_prior():
     # generalized variance for the parameters.
     assert (
         0
-        < np.linalg.det(df_target.cov().to_numpy())
-        < np.linalg.det(df_default.cov().to_numpy())
+        < np.linalg.det(np.cov(df_target.to_numpy(), rowvar=False))
+        < np.linalg.det(np.cov(df_default.to_numpy(), rowvar=False))
     )
 
 

@@ -90,7 +90,10 @@ class CSVExportJob(ErtScript):
                     f"The ensemble '{ensemble.name}' does not have any data!"
                 )
 
-            ensemble_data = ensemble.load_all_gen_kw_data()
+            ensemble_data = ensemble.load_scalars().to_pandas().set_index("realization")
+            ensemble_data.columns.name = None
+            ensemble_data.index.name = "Realization"
+            ensemble_data = ensemble_data.sort_index(axis=1)
 
             if design_matrix_path is not None:
                 design_matrix_data = loadDesignMatrix(design_matrix_path)

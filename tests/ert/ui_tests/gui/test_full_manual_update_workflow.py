@@ -90,11 +90,11 @@ def test_manual_analysis_workflow(ensemble_experiment_has_run, qtbot):
         10,
     )
 
-    df_prior = ensemble_prior.load_all_gen_kw_data()
+    df_prior = ensemble_prior.load_scalars().to_pandas()
 
     exp_posterior = storage.get_experiment_by_name("Manual update of iter-0")
     ensemble_posterior = exp_posterior.get_ensemble_by_name("iter-0_1")
-    df_posterior = ensemble_posterior.load_all_gen_kw_data()
+    df_posterior = ensemble_posterior.load_scalars().to_pandas()
 
     # Making sure measured data works with failed realizations
     MeasuredData(experiment.get_ensemble_by_name("iter-0"), ["POLY_OBS"])

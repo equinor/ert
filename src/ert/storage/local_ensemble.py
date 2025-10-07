@@ -788,50 +788,6 @@ class LocalEnsemble(BaseMode):
 
         return pl.concat(loaded) if loaded else pl.DataFrame().lazy()
 
-    def load_all_gen_kw_data(
-        self,
-        group: str | None = None,
-        realization_index: int | None = None,
-    ) -> pd.DataFrame:
-        """Loads scalar parameters (GEN_KWs) into a pandas DataFrame
-        with columns <PARAMETER_GROUP>:<PARAMETER_NAME> and
-        "Realization" as index.
-
-        Parameters
-        ----------
-        group : str, optional
-            Name of parameter group to load.
-        relization_index : int, optional
-            The realization to load.
-
-        Returns
-        -------
-        data : DataFrame
-            A pandas DataFrame containing the GEN_KW data.
-
-        Notes
-        -----
-        Any provided keys that are not gen_kw will be ignored.
-        """
-        if realization_index is not None:
-            realizations = np.array([realization_index])
-        else:
-            ens_mask = (
-                self.get_realization_mask_with_responses()
-                + self.get_realization_mask_with_parameters()
-            )
-            realizations = np.flatnonzero(ens_mask)
-
-        df = self.load_scalars(group, realizations)
-
-        if df.is_empty():
-            return pd.DataFrame()
-
-        dataframe = df.to_pandas().set_index("realization")
-        dataframe.columns.name = None
-        dataframe.index.name = "Realization"
-        return dataframe.sort_index(axis=1)
-
     @require_write
     def save_parameters(
         self,

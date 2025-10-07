@@ -68,7 +68,7 @@ def verify_exported_content(file_name, gui, ensemble_select):
     for name in ensemble_names:
         experiment = gui.notifier.storage.get_experiment_by_name("es_mda")
         ensemble = experiment.get_ensemble_by_name(name)
-        gen_kw_data = ensemble.load_all_gen_kw_data()
+        gen_kw_data = ensemble.load_scalars().to_pandas()
 
         facade = LibresFacade.from_config_file("poly.ert")
         misfit_data = facade.load_all_misfit_data(ensemble)
