@@ -154,9 +154,10 @@ def run_dialog(qtbot: QtBot, use_tmpdir, mock_set_env_key):
 
 @pytest.mark.integration_test
 def test_that_terminating_experiment_shows_a_confirmation_dialog(
-    qtbot: QtBot, run_dialog, monkeypatch
+    qtbot: QtBot, run_dialog: RunDialog, monkeypatch
 ):
     monkeypatch.setattr(Job, "WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL", 0)
+    kill_button = run_dialog.kill_button
     with qtbot.waitSignal(run_dialog.simulation_done, timeout=10000):
 
         def handle_dialog():
@@ -166,8 +167,14 @@ def test_that_terminating_experiment_shows_a_confirmation_dialog(
             qtbot.mouseClick(yes_button, Qt.MouseButton.LeftButton)
 
         QTimer.singleShot(100, handle_dialog)
+        assert kill_button.isEnabled()
+        assert kill_button.text() == "Terminate experiment"
         qtbot.mouseClick(run_dialog.kill_button, Qt.MouseButton.LeftButton)
+        assert not kill_button.isEnabled()
+        assert kill_button.text() == "Terminating"
     suggestor_termination_window = wait_for_attribute(run_dialog.fail_msg_box, qtbot)
+    assert kill_button.text() == "Terminate experiment"
+    assert not kill_button.isEnabled()
     assert (
         "Experiment cancelled by user during evaluation"
         in suggestor_termination_window.findChild(QWidget, name="suggestor_messages")
