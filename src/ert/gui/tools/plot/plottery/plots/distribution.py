@@ -7,7 +7,7 @@ import pandas as pd
 
 from ert.gui.tools.plot.plot_api import EnsembleObject
 
-from .plot_tools import PlotTools
+from .plot_tools import ConditionalAxisFormatter, PlotTools
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -94,6 +94,7 @@ def _plotDistribution(
 ) -> None:
     data = pd.Series(dtype="float64") if data.empty else data[0]
 
+    axes.yaxis.set_major_formatter(ConditionalAxisFormatter())
     axes.set_xlabel(plot_config.xLabel())  # type: ignore
     axes.set_ylabel(plot_config.yLabel())  # type: ignore
 

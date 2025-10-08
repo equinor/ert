@@ -1,6 +1,44 @@
 import datetime
+import math
 
 from ert.gui.tools.plot.plottery import PlotConfig, PlotLimits, PlotStyle
+from ert.gui.tools.plot.plottery.plots.plot_tools import ConditionalAxisFormatter
+
+
+def test_conditional_axis_formatter():
+    fmt = ConditionalAxisFormatter(low=1e-3, high=1e4, precision=0)
+
+    assert fmt(0) == "0"
+    assert fmt(-0) == "0"
+    assert fmt(0.001) == "0.001"
+    assert fmt(-0.001) == "-0.001"
+    assert fmt(0.0001) == "1e-4"
+    assert fmt(-0.0001) == "-1e-4"
+    assert fmt(123) == "123"
+    assert fmt(1e3) == "1000"
+
+    assert fmt(2e-2) == "0.02"
+    assert fmt(2e-6) == "2e-6"
+    assert fmt(-2e-6) == "-2e-6"
+    assert fmt(2e5) == "2e5"
+    assert fmt(-3e6) == "-3e6"
+    assert fmt(10000) == "1e4"
+    assert fmt(-10000) == "-1e4"
+    assert fmt(1e4) == "1e4"
+    assert fmt(9999) == "9999"
+    assert fmt(-9999) == "-9999"
+
+    assert fmt(0.001) == "0.001"
+
+    assert fmt(0.0001) == "1e-4"
+
+    assert fmt(math.nan) == "nan"
+    assert fmt(math.inf) == "inf"
+    assert fmt(-math.inf) == "-inf"
+
+    # precision
+    fmt_p1 = ConditionalAxisFormatter(low=1e-3, high=1e4, precision=1)
+    assert fmt_p1(2.5e-6) == "2.5e-6"
 
 
 def test_plot_style_test_defaults():
