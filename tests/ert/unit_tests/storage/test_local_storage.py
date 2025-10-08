@@ -1138,6 +1138,35 @@ def test_data_fetching_missing_key(snake_oil_case):
             assert dataframe.empty
 
 
+def test_set_failure_will_create_realization_directory(storage):
+    # Setup
+    dummy_ensemble = storage.create_experiment().create_ensemble(
+        name="dummy", ensemble_size=1
+    )
+    assert dummy_ensemble._path.exists(), "Assumptions for test has changed"
+    assert not (dummy_ensemble._path / "realization-0").exists()
+
+    # Function test:
+    dummy_ensemble.set_failure(0, RealizationStorageState.FAILURE_IN_CURRENT)
+
+    # Then
+    assert dummy_ensemble._path.glob(f"realization-0/{dummy_ensemble._error_log_name}")
+
+
+def test_set_failure_will_not_recreate_ensemble_directory(storage):
+    dummy_ensemble = storage.create_experiment().create_ensemble(
+        name="dummy", ensemble_size=1
+    )
+    # Emulate a user deleting storage:
+    shutil.rmtree(dummy_ensemble._path)
+
+    # Then when a realization fails internalizing,
+    dummy_ensemble.set_failure(0, RealizationStorageState.FAILURE_IN_CURRENT)
+
+    # the ensemble path will not be created
+    assert not dummy_ensemble._path.exists()
+
+
 @dataclass
 class Ensemble:
     uuid: UUID
