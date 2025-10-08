@@ -4,13 +4,14 @@ import copy
 import dataclasses
 import datetime
 import importlib.metadata
+import json
 import logging
 import os
 import queue
 import shutil
 import traceback
 from collections import defaultdict
-from collections.abc import Callable, MutableSequence
+from collections.abc import Callable, Iterator, MutableSequence
 from enum import IntEnum, auto
 from functools import cached_property
 from pathlib import Path
@@ -66,10 +67,9 @@ from everest.optimizer.opt_model_transforms import (
     get_optimization_domain_transforms,
 )
 from everest.simulator.everest_to_ert import (
-    _get_well_file,
+    _get_workflow_files,
     everest_to_ert_config_dict,
     extract_summary_keys,
-    get_internal_files,
     get_substitutions,
     get_workflow_jobs,
 )
@@ -136,6 +136,42 @@ class _EvaluationInfo:
 
 
 logger = logging.getLogger(EVEREST)
+
+
+def _get_well_file(ever_config: EverestConfig) -> tuple[Path, str]:
+    assert ever_config.output_dir is not None
+    data_storage = (Path(ever_config.output_dir) / ".internal_data").resolve()
+    return (
+        data_storage / "wells.json",
+        json.dumps(
+            [
+                x.model_dump(exclude_none=True, exclude_unset=True)
+                for x in ever_config.wells or []
+            ]
+        ),
+    )
+
+
+def _get_install_data_files(ever_config: EverestConfig) -> Iterator[tuple[Path, str]]:
+    data_storage = (Path(ever_config.output_dir) / ".internal_data").resolve()
+    for item in ever_config.install_data or []:
+        if item.data is not None:
+            target, data = item.inline_data_as_str()
+            yield (data_storage / Path(target).name, data)
+
+
+def _get_internal_files(ever_config: EverestConfig) -> dict[Path, str]:
+    return dict(
+        [
+            _get_well_file(ever_config),
+            *(
+                (workflow_file, jobs)
+                for workflow_file, jobs in _get_workflow_files(ever_config).values()
+                if jobs
+            ),
+            *_get_install_data_files(ever_config),
+        ],
+    )
 
 
 class EverestRunModel(RunModel):
@@ -293,7 +329,7 @@ class EverestRunModel(RunModel):
         )
         ert_templates = read_templates(config_dict)
 
-        for datafile, data in get_internal_files(everest_config).items():
+        for datafile, data in _get_internal_files(everest_config).items():
             datafile.parent.mkdir(exist_ok=True, parents=True)
             datafile.write_text(data, encoding="utf-8")
 
