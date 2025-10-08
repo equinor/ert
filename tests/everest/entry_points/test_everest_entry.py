@@ -8,6 +8,7 @@ import pytest
 
 import everest
 from ert.config import QueueSystem
+from ert.run_models.everest_run_model import ExperimentStatus
 from everest.bin.everest_script import everest_entry
 from everest.bin.kill_script import kill_entry
 from everest.bin.monitor_script import monitor_entry
@@ -310,28 +311,25 @@ def test_everest_entry_detached_running_monitor(
 
 @patch("everest.bin.monitor_script.run_detached_monitor")
 @patch(
-    "everest.bin.monitor_script.everserver_status",
-    return_value={"status": ExperimentState.completed, "message": None},
+    "everest.bin.monitor_script.get_experiment_status",
+    return_value=ExperimentStatus(status=ExperimentState.completed),
 )
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch("ert.services.StorageService.session", side_effect=TimeoutError())
-def test_everest_entry_monitor_no_run(
+def test_everest_entry_monitor_already_run(
     session_mock,
     get_server_context_from_conn_info_mock,
     everserver_status_mock,
     start_monitor_mock,
     change_to_tmpdir,
 ):
-    """Test everest detached, optimization is running, monitoring"""
-
     Path("config.yml").touch()
     config = EverestConfig.with_defaults(config_path="./config.yml")
     config.dump("config.yml")
 
-    # Attach to a running optimization.
     with capture_streams() as (out, _):
         monitor_entry(["config.yml"])
-    assert "Optimization completed." in out.getvalue()
+    assert "Optimization already completed." in out.getvalue()
     start_monitor_mock.assert_not_called()
     everserver_status_mock.assert_called()
     session_mock.assert_called_once()

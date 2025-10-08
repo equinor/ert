@@ -4,6 +4,7 @@ import json
 import shutil
 from collections.abc import Generator
 from datetime import datetime
+from enum import StrEnum, auto
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any
@@ -34,9 +35,24 @@ if TYPE_CHECKING:
     from .local_storage import LocalStorage
 
 
+class ExperimentState(StrEnum):
+    pending = auto()
+    running = auto()
+    completed = auto()
+    stopped = auto()
+    failed = auto()
+    never_run = auto()
+
+
+class ExperimentStatus(BaseModel):
+    message: str = ""
+    status: ExperimentState = ExperimentState.pending
+
+
 class _Index(BaseModel):
     id: UUID
     name: str
+    status: ExperimentStatus | None = None
 
 
 _responses_adapter = TypeAdapter(  # type: ignore
@@ -69,6 +85,7 @@ class LocalExperiment(BaseMode):
     _responses_file = Path("responses.json")
     _metadata_file = Path("metadata.json")
     _templates_file = Path("templates.json")
+    _index_file = Path("index.json")
 
     def __init__(
         self,
@@ -93,7 +110,7 @@ class LocalExperiment(BaseMode):
         self._storage = storage
         self._path = path
         self._index = _Index.model_validate_json(
-            (path / "index.json").read_text(encoding="utf-8")
+            (path / self._index_file).read_text(encoding="utf-8")
         )
 
     @classmethod
@@ -142,7 +159,7 @@ class LocalExperiment(BaseMode):
         if name is None:
             name = datetime.today().isoformat()
 
-        (path / "index.json").write_text(
+        (path / cls._index_file).write_text(
             _Index(id=uuid, name=name).model_dump_json(indent=2)
         )
 
@@ -280,6 +297,20 @@ class LocalExperiment(BaseMode):
     @property
     def id(self) -> UUID:
         return self._index.id
+
+    @property
+    def status(self) -> ExperimentStatus | None:
+        return self._index.status
+
+    @status.setter
+    @require_write
+    def status(self, status: ExperimentStatus | None) -> None:
+        if status != self._index.status:
+            self._index.status = status
+            self._storage._write_transaction(
+                self.mount_point / self._index_file,
+                self._index.model_dump_json(indent=2).encode("utf-8"),
+            )
 
     @property
     def mount_point(self) -> Path:

@@ -1,17 +1,14 @@
 import json
 import os.path
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
 from everest import util
-from everest.bin.utils import report_on_previous_run, show_scaled_controls_warning
+from everest.bin.utils import show_scaled_controls_warning
 from everest.config import EverestConfig, ServerConfig
-from everest.detached import ExperimentState
 from everest.strings import EVEREST, SERVER_STATUS
 from tests.everest.utils import (
-    capture_streams,
     relpath,
 )
 
@@ -102,26 +99,6 @@ def test_get_everserver_status_path():
     expected_path = os.path.join(session_path, SERVER_STATUS)
 
     assert path == expected_path
-
-
-@patch(
-    "everest.bin.utils.everserver_status",
-    return_value={"status": ExperimentState.failed, "message": "mock error"},
-)
-def test_report_on_previous_run(_, change_to_tmpdir):
-    with open("config_file", "w", encoding="utf-8") as f:
-        f.write(" ")
-    config = EverestConfig.with_defaults(config_path="config_file")
-    with capture_streams() as (out, _):
-        report_on_previous_run(
-            config_file=config.config_file,
-            everserver_status_path=ServerConfig.get_everserver_status_path(
-                config.output_dir
-            ),
-            optimization_output_dir=config.optimization_output_dir,
-        )
-    lines = [line.strip() for line in out.getvalue().split("\n")]
-    assert lines[0] == "Optimization run failed, with error: mock error"
 
 
 @pytest.mark.parametrize(
