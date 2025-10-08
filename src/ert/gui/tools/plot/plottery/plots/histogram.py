@@ -11,7 +11,7 @@ from matplotlib.patches import Rectangle
 from ert.gui.tools.plot.plot_api import EnsembleObject
 from ert.shared.status.utils import convert_to_numeric
 
-from .plot_tools import PlotTools
+from .plot_tools import ConditionalAxisFormatter, PlotTools
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -197,6 +197,7 @@ def _plotHistogram(
     axes.hist(data.values, alpha=style.alpha, bins=bins, color=style.color)
 
     axes.set_xlim(minimum, maximum)
+    axes.xaxis.set_major_formatter(ConditionalAxisFormatter())
 
     return Rectangle(
         (0, 0), 1, 1, color=style.color

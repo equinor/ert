@@ -10,7 +10,7 @@ from typing_extensions import TypedDict
 
 from ert.gui.tools.plot.plot_api import EnsembleObject
 
-from .plot_tools import PlotTools
+from .plot_tools import ConditionalAxisFormatter, PlotTools
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -119,7 +119,7 @@ def plotCrossEnsembleStatistics(
         + [""],
         rotation=rotation,
     )
-
+    axes.yaxis.set_major_formatter(ConditionalAxisFormatter())
     PlotTools.finalizePlot(
         plot_context, figure, axes, default_x_label="Ensemble", default_y_label="Value"
     )
