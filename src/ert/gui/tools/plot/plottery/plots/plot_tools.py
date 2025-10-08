@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING
+
+import matplotlib.ticker as mticker
 
 if TYPE_CHECKING:
     from datetime import date
@@ -9,6 +12,48 @@ if TYPE_CHECKING:
     from matplotlib.figure import Figure
 
     from ert.gui.tools.plot.plottery import PlotContext
+
+
+class ConditionalAxisFormatter(mticker.Formatter):
+    """
+    Show scientific notation only when |x| < low or |x| >= high.
+    Otherwise show plain numbers.
+
+    Parameters
+    ----------
+    low : float
+        Lower threshold for switching to scientific notation.
+    high : float
+        Upper threshold for switching to scientific notation.
+    precision : int
+        Digits after decimal in the mantissa for scientific labels.
+    """
+
+    def __init__(
+        self,
+        low: float = 1e-3,
+        high: float = 1e4,
+        precision: float = 0,
+    ) -> None:
+        self.low = low
+        self.high = high
+        self.precision = precision
+
+    def __call__(self, x: float, pos: int | None = None) -> str:
+        if (
+            x == 0
+            or (self.low <= abs(x) < self.high)
+            or x in {math.inf, -math.inf, math.nan}
+        ):
+            return f"{x:.6g}"
+
+        s = f"{x:.{self.precision}e}"
+        mant, exp = s.split("e")
+        mant = mant.rstrip("0").rstrip(".")  # '-2.0' -> '-2'
+        sign = "-" if exp.startswith("-") else ""
+        exp_num = exp.lstrip("+-").lstrip("0") or "0"
+
+        return f"{mant}e{sign}{exp_num}"
 
 
 class PlotTools:
