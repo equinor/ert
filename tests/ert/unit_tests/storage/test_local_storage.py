@@ -1167,6 +1167,57 @@ def test_set_failure_will_not_recreate_ensemble_directory(storage):
     assert not dummy_ensemble._path.exists()
 
 
+def test_save_response_will_create_realization_directory(storage):
+    # Given a fresh ensemble storage with no realizations
+    dummy_ensemble = storage.create_experiment(
+        responses=[SummaryConfig(keys=["DUMMY"])]
+    ).create_ensemble(name="dummy", ensemble_size=1)
+    assert dummy_ensemble._path.exists(), "Assumptions for test has changed"
+    assert not (dummy_ensemble._path / "realization-0").exists()
+
+    # When a response is saved:
+    dummy_ensemble.save_response(
+        "summary",
+        pl.DataFrame(
+            {
+                "response_key": ["DUMMY"],
+                "time": pl.Series([datetime(2000, 1, 1)]).dt.cast_time_unit("ms"),
+                "values": pl.Series([0.0], dtype=pl.Float32),
+            }
+        ),
+        0,
+    )
+
+    # Then the realization directory was implicitly created
+    assert (dummy_ensemble._path / "realization-0").exists()
+    assert list(dummy_ensemble._path.glob("realization-0/*.parquet"))
+
+
+def test_save_response_will_not_recreate_ensemble_directory(storage):
+    dummy_ensemble = storage.create_experiment().create_ensemble(
+        name="dummy", ensemble_size=1
+    )
+    # Emulate a user deleting storage:
+    shutil.rmtree(dummy_ensemble._path)
+
+    # Function test will raise:
+    with pytest.raises(FileNotFoundError):
+        dummy_ensemble.save_response(
+            "summary",
+            pl.DataFrame(
+                {
+                    "response_key": ["DUMMY"],
+                    "time": pl.Series([datetime(2000, 1, 1)]).dt.cast_time_unit("ms"),
+                    "values": pl.Series([0.0], dtype=pl.Float32),
+                }
+            ),
+            0,
+        )
+
+    # and the ensemble path will not be created
+    assert not dummy_ensemble._path.exists()
+
+
 @dataclass
 class Ensemble:
     uuid: UUID
