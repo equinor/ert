@@ -25,7 +25,7 @@ from ert.config.queue_config import (
 )
 from ert.plugins import ErtPluginContext, ErtRuntimePlugins
 from ert.run_models.everest_run_model import EverestRunModel, _get_internal_files
-from everest.config import EverestConfig
+from everest.config import EverestConfig, InstallDataConfig
 from everest.simulator.everest_to_ert import (
     everest_to_ert_config_dict,
     get_substitutions,
@@ -756,3 +756,63 @@ def test_that_summary_keys_default_to_expected_keys_according_to_wells(
     )
 
     assert set(summary_config.keys) == set(expected_defaulted_sum_keys)
+
+
+def test_that_install_data_raises_error_on_missing_copy_file(tmp_path):
+    source_file = tmp_path / "some_file.json"
+    source_file.write_text('{"mock_key": "mock_value"}')
+
+    config = InstallDataConfig(source=str(source_file), target="the_output.json")
+
+    with pytest.raises(KeyError, match=r"ERT forward model: copy_file to be installed"):
+        config.to_ert_forward_model_step(
+            config_directory=str(tmp_path),
+            output_directory=str(tmp_path / "output"),
+            model_realizations=[0],
+            installed_fm_steps={},
+        )
+
+
+def test_that_install_data_raises_error_on_missing_copy_directory(tmp_path):
+    config_directory = tmp_path / "config_dir"
+    source_directory = config_directory / "<GEO_ID>"
+    realizations = [0, 1, 2]
+
+    for realization in realizations:
+        realization_dir = source_directory.with_name(
+            source_directory.name.replace("<GEO_ID>", str(realization))
+        )
+        realization_dir.mkdir(parents=True)
+
+    config = InstallDataConfig(
+        source=str(source_directory), target="target_dir", link=False
+    )
+
+    with pytest.raises(
+        KeyError, match=r"ERT forward model: copy_directory to be installed"
+    ):
+        config.to_ert_forward_model_step(
+            config_directory=str(config_directory),
+            output_directory=str(tmp_path / "output"),
+            model_realizations=realizations,
+            installed_fm_steps={},
+        )
+
+
+def test_that_install_data_raises_error_on_missing_symlink(tmp_path):
+    source_file = tmp_path / "source_file.json"
+    source_file.write_text('{"mock_key": "mock_value"}')
+
+    config = InstallDataConfig(
+        source=str(source_file),
+        target="linked_file.json",
+        link=True,
+    )
+
+    with pytest.raises(KeyError, match=r"ERT forward model: symlink to be installed"):
+        config.to_ert_forward_model_step(
+            config_directory=str(tmp_path),
+            output_directory=str(tmp_path / "output"),
+            model_realizations=[0],
+            installed_fm_steps={},
+        )
