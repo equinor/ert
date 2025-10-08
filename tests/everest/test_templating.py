@@ -10,7 +10,7 @@ import everest
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.plugins import ErtPluginContext
 from ert.run_models.everest_run_model import EverestRunModel
-from everest.config import EverestConfig
+from everest.config import EverestConfig, InstallTemplateConfig
 from tests.ert.unit_tests.resources._import_from_location import import_from_location
 from tests.ert.utils import SOURCE_DIR
 
@@ -287,3 +287,16 @@ def test_user_specified_data_n_template(copy_math_func_test_data_to_tmp, test):
     assert contents == "VALUE1+VALUE2", (
         f'Expected contents: "VALUE1+VALUE2", found: {contents}'
     )
+
+
+def test_that_install_template_raises_error_on_missing_render_template_fm_step():
+    config = InstallTemplateConfig(
+        template="some_file.tmpl", output_file="some_file.json"
+    )
+
+    with pytest.raises(
+        KeyError, match=r"ERT forward model: template_render to be installed"
+    ):
+        config.to_ert_forward_model_step(
+            control_names=["a", "b", "c"], installed_fm_steps={}, well_path="bla"
+        )

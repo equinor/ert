@@ -42,7 +42,13 @@ class InstallTemplateConfig(BaseModel, extra="forbid"):
         well_path: str,
     ) -> ForwardModelStep:
         fm_step_instance = copy.deepcopy(installed_fm_steps.get("template_render"))
-        assert fm_step_instance is not None
+        if fm_step_instance is None:
+            raise KeyError(
+                "Using install_templates in Everest requires the "
+                "ERT forward model: template_render to be installed. "
+                "It was not found in the installed forward model steps: "
+                + (", ".join(installed_fm_steps.keys()))
+            )
         res_input = (
             control_names  # [control.name for control in everest_config.controls]
         )
