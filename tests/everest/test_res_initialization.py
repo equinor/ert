@@ -24,11 +24,10 @@ from ert.config.queue_config import (
     TorqueQueueOptions,
 )
 from ert.plugins import ErtPluginContext, ErtRuntimePlugins
-from ert.run_models.everest_run_model import EverestRunModel
+from ert.run_models.everest_run_model import EverestRunModel, _get_internal_files
 from everest.config import EverestConfig
 from everest.simulator.everest_to_ert import (
     everest_to_ert_config_dict,
-    get_internal_files,
     get_substitutions,
     get_workflow_jobs,
 )
@@ -333,7 +332,7 @@ def test_workflows_deprecated(tmp_path, monkeypatch):
         runpath_file=MagicMock(),
         num_cpu=0,
     )
-    for datafile, data in get_internal_files(ever_config).items():
+    for datafile, data in _get_internal_files(ever_config).items():
         datafile.parent.mkdir(exist_ok=True, parents=True)
         datafile.write_text(data, encoding="utf-8")
     _, workflows, _ = workflows_from_dict(config_dict, substitutions)
@@ -359,7 +358,7 @@ def test_workflows(tmp_path, monkeypatch):
         runpath_file=MagicMock(),
         num_cpu=0,
     )
-    for datafile, data in get_internal_files(ever_config).items():
+    for datafile, data in _get_internal_files(ever_config).items():
         datafile.parent.mkdir(exist_ok=True, parents=True)
         datafile.write_text(data, encoding="utf-8")
     workflow_jobs = get_workflow_jobs(ever_config)

@@ -1,7 +1,5 @@
 import itertools
-import json
 import os
-from collections.abc import Iterator
 from pathlib import Path
 from typing import Any, cast
 
@@ -234,20 +232,6 @@ def everest_to_ert_config_dict(everest_config: EverestConfig) -> ConfigDict:
     return config_dict
 
 
-def _get_well_file(ever_config: EverestConfig) -> tuple[Path, str]:
-    assert ever_config.output_dir is not None
-    data_storage = (Path(ever_config.output_dir) / ".internal_data").resolve()
-    return (
-        data_storage / "wells.json",
-        json.dumps(
-            [
-                x.model_dump(exclude_none=True, exclude_unset=True)
-                for x in ever_config.wells or []
-            ]
-        ),
-    )
-
-
 def _get_workflow_files(ever_config: EverestConfig) -> dict[str, tuple[Path, str]]:
     data_storage = (Path(ever_config.output_dir) / ".internal_data").resolve()
     return {
@@ -257,25 +241,3 @@ def _get_workflow_files(ever_config: EverestConfig) -> dict[str, tuple[Path, str
         )
         for trigger in ("pre_simulation", "post_simulation")
     }
-
-
-def _get_install_data_files(ever_config: EverestConfig) -> Iterator[tuple[Path, str]]:
-    data_storage = (Path(ever_config.output_dir) / ".internal_data").resolve()
-    for item in ever_config.install_data or []:
-        if item.data is not None:
-            target, data = item.inline_data_as_str()
-            yield (data_storage / Path(target).name, data)
-
-
-def get_internal_files(ever_config: EverestConfig) -> dict[Path, str]:
-    return dict(
-        [
-            _get_well_file(ever_config),
-            *(
-                (workflow_file, jobs)
-                for workflow_file, jobs in _get_workflow_files(ever_config).values()
-                if jobs
-            ),
-            *_get_install_data_files(ever_config),
-        ],
-    )
