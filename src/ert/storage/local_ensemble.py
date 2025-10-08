@@ -890,7 +890,7 @@ class LocalEnsemble(BaseMode):
             )
 
         output_path = self._realization_dir(realization)
-        Path.mkdir(output_path, parents=True, exist_ok=True)
+        Path(output_path).mkdir(exist_ok=True)
 
         self._storage._to_parquet_transaction(
             output_path / f"{response_type}.parquet", data
