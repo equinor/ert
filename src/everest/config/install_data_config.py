@@ -130,6 +130,14 @@ class InstallDataConfig(BaseModel):
     ) -> ForwardModelStep:
         target = self.target
 
+        def _missing_fm_msg(fm_name: str) -> str:
+            return (
+                f"Using install_data in Everest requires the "
+                f"ERT forward model: {fm_name} to be installed. "
+                f"It was not found in the installed forward model steps: "
+                + (", ".join(installed_fm_steps.keys()))
+            )
+
         if self.source is not None:
             source = self.source.replace("<CONFIG_PATH>", config_directory)
             if not os.path.isabs(source):
@@ -145,13 +153,19 @@ class InstallDataConfig(BaseModel):
                 fm_name = "copy_file"
 
             fm_step_instance = copy.deepcopy(installed_fm_steps.get(fm_name))
-            assert fm_step_instance is not None
+            if fm_step_instance is None:
+                error_message = _missing_fm_msg(fm_name)
+                raise KeyError(error_message)
+
             fm_step_instance.arglist = [source, target]
             return fm_step_instance
         else:
             data_storage = (Path(output_directory) / ".internal_data").resolve()
             data_file = data_storage / Path(self.target).with_suffix(".json")
             fm_step_instance = copy.deepcopy(installed_fm_steps.get("copy_file"))
-            assert fm_step_instance is not None
+            if fm_step_instance is None:
+                error_message = _missing_fm_msg("copy_file")
+                raise KeyError(error_message)
+
             fm_step_instance.arglist = [str(data_file), Path(data_file).name]
             return fm_step_instance
