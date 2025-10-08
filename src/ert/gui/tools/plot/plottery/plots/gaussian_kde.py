@@ -8,7 +8,7 @@ from scipy.stats import gaussian_kde
 
 from ert.gui.tools.plot.plot_api import EnsembleObject
 
-from .plot_tools import PlotTools
+from .plot_tools import ConditionalAxisFormatter, PlotTools
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -75,6 +75,8 @@ def _plotGaussianKDE(
     )
     gkde = gaussian_kde(data.values)
     evaluated_gkde = gkde.evaluate(indexes)
+
+    axes.xaxis.set_major_formatter(ConditionalAxisFormatter())
 
     lines = axes.plot(
         indexes,
