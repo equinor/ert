@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import os
 import time
 from collections.abc import Iterable
 from datetime import datetime
@@ -325,8 +324,14 @@ class LocalEnsemble(BaseMode):
         """
 
         filename: Path = self._realization_dir(realization) / self._error_log_name
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
         error = _Failure(type=failure_type, message=message or "", time=datetime.now())
+        if not filename.parent.parent.exists():
+            logger.warning(
+                f"Storage {filename.parent.parent} does not exist, "
+                f"skipping writing {error} to {filename}"
+            )
+            return
+        filename.parent.mkdir(exist_ok=True)
         self._storage._write_transaction(
             filename, error.model_dump_json(indent=2).encode("utf-8")
         )
