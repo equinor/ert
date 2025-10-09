@@ -37,7 +37,7 @@ def str_to_dtype(dtype_str: str) -> pl.DataType:
     return dtype
 
 
-class DictEncodedObservations(BaseModel):
+class DictEncodedDataFrame(BaseModel):
     type: Literal["dicts"]
     data: list[dict[str, Any]]
     datatypes: dict[str, str]
@@ -78,18 +78,18 @@ class InitialEnsembleRunModel(RunModel, ABC):
         ]
     ]
     ert_templates: list[tuple[str, str]]
-    observations: dict[str, DictEncodedObservations] | None
+    observations: dict[str, DictEncodedDataFrame] | None
 
     @field_validator("observations", mode="before")
     def make_dict_encoded_observations(
-        cls, v: dict[str, pl.DataFrame | DictEncodedObservations] | None
-    ) -> dict[str, DictEncodedObservations] | None:
+        cls, v: dict[str, pl.DataFrame | DictEncodedDataFrame] | None
+    ) -> dict[str, DictEncodedDataFrame] | None:
         if v is None:
             return None
         return {
             k: df
-            if isinstance(df, DictEncodedObservations)
-            else DictEncodedObservations.from_polars(df)
+            if isinstance(df, DictEncodedDataFrame)
+            else DictEncodedDataFrame.from_polars(df)
             for k, df in v.items()
         }
 
