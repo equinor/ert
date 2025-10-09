@@ -38,7 +38,7 @@ class EnsemblePlot:
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.DATE_AXIS
         draw_style = "steps-pre" if is_rate(plot_context.key()) else None
-
+        zorder = 0
         for ensemble, data in ensemble_to_data_map.items():
             data = data.T
 
@@ -53,7 +53,9 @@ class EnsemblePlot:
                     data,
                     f"{ensemble.experiment_name} : {ensemble.name}",
                     draw_style,
+                    zorder=zorder,
                 )
+                zorder -= 1
                 config.nextColor()
 
         plotObservations(observation_data, plot_context, axes)
@@ -75,6 +77,7 @@ class EnsemblePlot:
         data: pd.DataFrame,
         ensemble_label: str,
         draw_style: str | None = None,
+        zorder: float = 1,
     ) -> None:
         style = plot_config.defaultStyle()
 
@@ -91,6 +94,7 @@ class EnsemblePlot:
             linestyle=style.line_style,
             markersize=style.size,
             drawstyle=draw_style,
+            zorder=zorder,
         )
 
         if len(lines) > 0:
