@@ -155,15 +155,34 @@ def test_default_installed_jobs(tmp_path, monkeypatch):
 @pytest.mark.filterwarnings(
     "ignore:Config contains a SUMMARY key but no forward model steps"
 )
-def test_combined_wells_everest_to_ert(tmp_path, monkeypatch):
+@pytest.mark.parametrize(
+    "config_yaml",
+    [
+        dedent("""
+    wells: [{ name: fakename}]
+    """),
+        dedent("""
+    controls:
+      - name: default_group
+        type: well_control
+        initial_guess: 0.5
+        perturbation_magnitude: 0.01
+        variables:
+          - name: fakename
+            min: 0
+            max: 1
+    """),
+    ],
+)
+def test_combined_wells_everest_to_ert(tmp_path, monkeypatch, config_yaml):
     monkeypatch.chdir(tmp_path)
     Path("my_file").touch()
     Path("my_executable").touch(mode=stat.S_IEXEC)
     ever_config = EverestConfig.with_defaults(
         **yaml.safe_load(
-            dedent("""
+            config_yaml
+            + dedent("""
     model: {"realizations": [0]}
-    wells: [{ name: fakename}]
     definitions: {eclbase: my_test_case}
     install_jobs:
       - name: nothing
@@ -220,9 +239,22 @@ def test_install_data_no_init(tmp_path, source, target, symlink, cmd, monkeypatc
 
 @pytest.mark.integration_test
 @pytest.mark.skip_mac_ci
-def test_summary_default_no_opm(tmp_path, monkeypatch):
+@pytest.mark.parametrize("wells_config", [None, [{"name": "default_name"}]])
+def test_summary_default_no_opm(tmp_path, monkeypatch, wells_config):
     monkeypatch.chdir(tmp_path)
     everconf = EverestConfig.with_defaults(
+        wells=wells_config,
+        controls=[
+            {
+                "name": "default_group",
+                "type": "well_control",
+                "initial_guess": 0.5,
+                "perturbation_magnitude": 0.01,
+                "variables": [
+                    {"name": "default_name", "min": 0, "max": 1},
+                ],
+            }
+        ],
         forward_model=[
             {
                 "job": "eclipse100 eclipse/model/EgG.DATA --version 2020.2",
@@ -232,10 +264,19 @@ def test_summary_default_no_opm(tmp_path, monkeypatch):
                     "keys": ["*"],
                 },
             }
-        ]
+        ],
     )
     # Read wells from the config instead of using opm
-    wells = [w.name for w in everconf.wells]
+    wells = (
+        [
+            variable.name
+            for control in everconf.controls
+            for variable in control.variables
+            if control.type == "well_control"
+        ]
+        if wells_config is None
+        else [w.name for w in everconf.wells]
+    )
     sum_keys = (
         list(everest.simulator.DEFAULT_DATA_SUMMARY_KEYS)
         + list(everest.simulator.DEFAULT_FIELD_SUMMARY_KEYS)
@@ -714,7 +755,7 @@ def test_that_summary_keys_default_to_expected_keys_according_to_wells(
     min_config["controls"] = [
         {
             "name": "well_rate",
-            "type": "generic_control",
+            "type": "well_control",
             "perturbation_magnitude": 0.01,
             "variables": [
                 {

@@ -7,7 +7,6 @@ from everest.config.control_config import ControlConfig
 from everest.config.control_variable_config import (
     ControlVariableConfig,
 )
-from everest.config.well_config import WellConfig
 from everest.optimizer.everest2ropt import everest2ropt
 
 
@@ -169,9 +168,9 @@ def test_that_control_variable_name_with_too_many_dots_is_invalid(min_config):
 
 def test_that_control_variable_without_too_many_dots_does_not_raise(min_config):
     weirdo_name = "something/with-symbols_=/()*&%$#!"
+    min_config["controls"][0]["variables"][0]["name"] = weirdo_name
+    min_config["wells"] = [{"name": weirdo_name}]
     new_config = EverestConfig.model_validate(min_config)
-    new_config.wells.append(WellConfig(name=weirdo_name))
-    new_config.controls[0].variables[0].name = weirdo_name
     EverestConfig.model_validate(new_config.to_dict())
 
 

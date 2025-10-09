@@ -73,7 +73,7 @@ def test_that_well_names_must_be_unique(min_config):
         pytest.param([{"name": "test"}], id="Default value not in result"),
     ],
 )
-def test_well_config_to_file(min_config, monkeypatch, tmp_path, config):
+def test_well_config_to_wells_json(min_config, monkeypatch, tmp_path, config):
     monkeypatch.chdir(tmp_path)
     min_config["wells"] = config
     ever_config = EverestConfig(**min_config)
@@ -84,3 +84,29 @@ def test_well_config_to_file(min_config, monkeypatch, tmp_path, config):
     with open("everest_output/.internal_data/wells.json", encoding="utf-8") as fin:
         wells_json = json.load(fin)
     assert wells_json == config
+
+
+@pytest.mark.parametrize(
+    "variables",
+    [
+        [{"name": "test", "initial_guess": 0.1}],
+        [{"name": "test", "initial_guess": 0.1, "index": 1}],
+        [
+            {"name": "test", "initial_guess": 0.1, "index": 1},
+            {"name": "test", "initial_guess": 0.1, "index": 2},
+        ],
+        [{"name": "test", "initial_guess": [0.1]}],
+        [{"name": "test", "initial_guess": [0.1, 0.1]}],
+    ],
+)
+def test_controls_config_to_wells_json(min_config, monkeypatch, tmp_path, variables):
+    monkeypatch.chdir(tmp_path)
+    min_config["controls"][0]["variables"] = variables
+    ever_config = EverestConfig(**min_config)
+    everest_to_ert_config_dict(ever_config)
+    for datafile, data in _get_internal_files(ever_config).items():
+        datafile.parent.mkdir(exist_ok=True, parents=True)
+        datafile.write_text(data, encoding="utf-8")
+    with open("everest_output/.internal_data/wells.json", encoding="utf-8") as fin:
+        wells_json = json.load(fin)
+    assert wells_json == [{"name": "test"}]

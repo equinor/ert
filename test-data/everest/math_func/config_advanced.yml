@@ -1,5 +1,3 @@
-wells: []
-
 controls:
   - name: point
     max: 1.0

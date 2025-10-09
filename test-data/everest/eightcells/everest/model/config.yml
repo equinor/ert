@@ -1,10 +1,6 @@
 definitions:
   eclbase: eclipse/model/EIGHTCELLS
 
-wells:
-  - { name: OP1 }
-  - { name: WI1 }
-
 controls:
   -
     name: well_rate
