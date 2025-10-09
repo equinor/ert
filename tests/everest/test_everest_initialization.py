@@ -29,7 +29,11 @@ def test_site_config_with_substitutions(monkeypatch, change_to_tmpdir):
 
     def runtime_plugins_with_cpu_override(**kwargs):
         return ErtRuntimePlugins(
-            **(kwargs | {"environment_variables": {"HOW_MANY_CPU": "<NUM_CPU>"}})
+            **(
+                kwargs
+                | {"queue_options": None}
+                | {"environment_variables": {"HOW_MANY_CPU": "<NUM_CPU>"}}
+            )
         )
 
     with mock.patch(
