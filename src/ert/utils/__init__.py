@@ -30,3 +30,8 @@ def log_duration(
         return wrapper
 
     return decorator
+
+
+def file_safe_timestamp(timestamp: str) -> str:
+    """Convert an ISO timestamp string to a file-safe version"""
+    return timestamp.replace(":", "")

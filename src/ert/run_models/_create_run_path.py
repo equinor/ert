@@ -20,7 +20,7 @@ from ert.config import (
 )
 from ert.config.ert_config import create_forward_model_json
 from ert.substitutions import Substitutions, substitute_runpath_name
-from ert.utils import log_duration
+from ert.utils import file_safe_timestamp, log_duration
 
 if TYPE_CHECKING:
     from ert.run_arg import RunArg
@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 def _backup_if_existing(path: Path) -> None:
     if not path.exists():
         return
-    timestamp = datetime.now(UTC).isoformat(timespec="seconds")
+    timestamp = file_safe_timestamp(datetime.now(UTC).isoformat(timespec="seconds"))
     new_path = path.parent / f"{path.name}_backup_{timestamp}"
     path.rename(new_path)
 
