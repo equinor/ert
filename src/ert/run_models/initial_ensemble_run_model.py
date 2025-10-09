@@ -7,7 +7,6 @@ from polars.datatypes import DataTypeClass
 from pydantic import BaseModel, Field, field_validator
 
 from ert.config import (
-    DesignMatrix,
     EverestConstraintsConfig,
     EverestObjectivesConfig,
     ExtParamConfig,
@@ -59,7 +58,7 @@ class DictEncodedDataFrame(BaseModel):
 
 class InitialEnsembleRunModel(RunModel, ABC):
     experiment_name: str
-    design_matrix: DesignMatrix | None
+    design_matrix: DictEncodedDataFrame | None
     parameter_configuration: list[
         Annotated[
             (GenKwConfig | SurfaceConfig | FieldConfig | ExtParamConfig),
@@ -98,17 +97,11 @@ class InitialEnsembleRunModel(RunModel, ABC):
         evaluator_server_config: EvaluatorServerConfig,
         simulation_arguments: dict[str, str] | None,
         ensemble_name: str,
-        rerun_failed_realizations: bool = False,
         ensemble_storage: LocalEnsemble | None = None,
     ) -> LocalEnsemble:
-        parameters_config, design_matrix = self._merge_parameters_from_design_matrix(
-            cast(list[ParameterConfig], self.parameter_configuration),
-            self.design_matrix,
-            rerun_failed_realizations,
-        )
         if ensemble_storage is None:
             experiment_storage = self._storage.create_experiment(
-                parameters=parameters_config,
+                parameters=cast(list[ParameterConfig], self.parameter_configuration),
                 observations={k: v.to_polars() for k, v in self.observations.items()}
                 if self.observations is not None
                 else None,
@@ -132,10 +125,10 @@ class InitialEnsembleRunModel(RunModel, ABC):
         sample_prior(
             ensemble_storage,
             np.where(self.active_realizations)[0],
-            parameters=[param.name for param in parameters_config],
+            parameters=[param.name for param in self.parameter_configuration],
             random_seed=self.random_seed,
-            design_matrix_df=design_matrix.design_matrix_df
-            if design_matrix is not None
+            design_matrix_df=self.design_matrix.to_polars()
+            if self.design_matrix is not None
             else None,
         )
 

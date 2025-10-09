@@ -46,7 +46,6 @@ class EnsembleExperiment(InitialEnsembleRunModel):
             evaluator_server_config,
             None,
             self.target_ensemble,
-            rerun_failed_realizations,
             self._ensemble if rerun_failed_realizations else None,
         )
 

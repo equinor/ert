@@ -12,11 +12,9 @@ from ert.analysis.event import (
     AnalysisTimeEvent,
 )
 from ert.config import (
-    DesignMatrix,
     ESSettings,
     HookRuntime,
     ObservationSettings,
-    ParameterConfig,
     PostUpdateFixtures,
     PreFirstUpdateFixtures,
     PreUpdateFixtures,
@@ -164,21 +162,3 @@ class UpdateRunModel(RunModel):
                         iteration=iteration, run_id=run_id, data=event.data
                     )
                 )
-
-    @classmethod
-    def _merge_parameters_from_design_matrix(
-        cls,
-        parameters_config: list[ParameterConfig],
-        design_matrix: DesignMatrix | None,
-        rerun_failed_realizations: bool,
-    ) -> tuple[list[ParameterConfig], DesignMatrix | None]:
-        parameters_config, design_matrix = super()._merge_parameters_from_design_matrix(
-            parameters_config, design_matrix, rerun_failed_realizations
-        )
-
-        if design_matrix and not any(p.update for p in parameters_config):
-            raise ErtRunError(
-                "No parameters to update as all parameters were set to update:false!"
-            )
-
-        return parameters_config, design_matrix
