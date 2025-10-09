@@ -1,5 +1,3 @@
-from pathlib import Path
-from textwrap import dedent
 from unittest import mock
 
 import pytest
@@ -18,15 +16,6 @@ def test_no_config_init():
 
 
 def test_site_config_with_substitutions(monkeypatch, change_to_tmpdir):
-    # set up siteconfig
-    test_site_config = Path("test_site_config.ert")
-    test_site_config.write_text(
-        dedent("""
-        SETENV HOW_MANY_CPU <NUM_CPU>
-        """),
-        encoding="utf-8",
-    )
-
     def runtime_plugins_with_cpu_override(**kwargs):
         return ErtRuntimePlugins(
             **(
