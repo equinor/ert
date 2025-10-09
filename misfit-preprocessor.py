@@ -27,6 +27,7 @@ import polars as pl
 from scipy.cluster.hierarchy import fcluster, linkage
 from scipy.stats import spearmanr
 from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
 
 from ert.storage import open_storage
 
@@ -257,6 +258,33 @@ ax.grid(True, alpha=0.3)
 
 
 # %%
+def find_optimal_clusters_silhouette(data):
+    X = np.asarray(data)
+    if X.ndim == 1:
+        X = X.reshape(-1, 1)
+
+    n = len(X)
+    if n < 3:
+        return 1  # not enough points to cluster
+
+    k_max = 10  # function of number of observation types perhaps?
+    max_k = min(k_max, n - 1)
+    ks = list(range(k_min, max_k + 1))
+    if not ks:
+        return 2
+
+    scores = []
+    for k in ks:
+        km = KMeans(n_clusters=k, random_state=42, n_init=10)
+        labels = km.fit_predict(X)
+        score = silhouette_score(X, labels, random_state=42)
+        scores.append(score)
+
+    best_idx = int(np.argmax(scores))
+    optimal_k = ks[best_idx]
+    return optimal_k
+
+
 def find_optimal_clusters_elbow(data):
     """
     Find optimal number of clusters using the "elbow method"
@@ -345,7 +373,8 @@ def cluster_by_misfit_kmeans_auto(observed, predicted, measurement_std):
     # Step 2: Automatically figure out how many groups we need
     # Some responses will fit well (small residuals), others poorly (big residuals)
     # The elbow method finds natural groupings in this "badness of fit"
-    n_clusters = find_optimal_clusters_elbow(standardized_residuals)
+    # n_clusters = find_optimal_clusters_elbow(standardized_residuals)
+    n_clusters = find_optimal_clusters_silhouette(standardized_residuals)
 
     # Step 3: Group responses by similar "badness of fit"
     # K-means will find groups where responses within each group have similar
