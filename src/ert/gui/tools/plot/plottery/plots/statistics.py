@@ -39,7 +39,12 @@ class StatisticsPlot:
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.DATE_AXIS
 
-        for ensemble, data in ensemble_to_data_map.items():
+        for (ensemble, data), color_index in zip(
+            ensemble_to_data_map.items(),
+            plot_context.ensembles_color_indexes(),
+            strict=False,
+        ):
+            config.setCurrentColor(color_index)
             data = data.T
             if not data.empty:
                 if data.index.inferred_type != "datetime64":
@@ -67,9 +72,7 @@ class StatisticsPlot:
                 std = data.std(axis=1) * std_dev_factor
                 statistics_data["std+"] = statistics_data["Mean"] + std
                 statistics_data["std-"] = statistics_data["Mean"] - std
-
                 _plotPercentiles(axes, config, statistics_data, label)
-                config.nextColor()
 
         _addStatisticsLegends(plot_config=config)
 
