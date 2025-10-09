@@ -141,21 +141,21 @@ logger = logging.getLogger(EVEREST)
 def _get_well_file(ever_config: EverestConfig) -> tuple[Path, str]:
     assert ever_config.output_dir is not None
 
-    def _get_variables(controls: list[ControlConfig]) -> list[dict[str, Any]]:
-        wells = []
+    def _get_wells_from_controls(controls: list[ControlConfig]) -> list[str]:
+        wells: list[str] = []
         for control in controls:
             if control.type != "well_control":
                 continue
             for variable in control.variables:
                 if variable.name not in wells:
                     wells.append(variable.name)
-        return [{"name": name} for name in wells]
+        return wells
 
     data_storage = (Path(ever_config.output_dir) / ".internal_data").resolve()
     return (
         data_storage / "wells.json",
         json.dumps(
-            _get_variables(ever_config.controls)
+            [{"name": name} for name in _get_wells_from_controls(ever_config.controls)]
             if ever_config.wells is None
             else [
                 x.model_dump(exclude_none=True, exclude_unset=True)
