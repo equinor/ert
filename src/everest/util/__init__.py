@@ -8,6 +8,7 @@ try:
     from ert.shared.version import version as ert_version
 except ImportError:
     ert_version = "0.0.0"
+from _ert.utils import file_safe_timestamp
 from everest.strings import EVEREST
 
 
@@ -37,6 +38,7 @@ def warn_user_that_runpath_is_nonempty() -> None:
 
 def _roll_dir(old_name: str) -> None:
     old_name = os.path.realpath(old_name)
-    new_name = f"{old_name}__{datetime.now(UTC).isoformat()}"
+    timestamp = file_safe_timestamp(datetime.now(UTC).isoformat())
+    new_name = f"{old_name}__{timestamp}"
     os.rename(old_name, new_name)
     logging.getLogger(EVEREST).info(f"renamed {old_name} to {new_name}")

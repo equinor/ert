@@ -19,6 +19,7 @@ from _ert.forward_model_runner.reporting.message import (
     ProcessTreeStatus,
 )
 from _ert.forward_model_runner.runner import ForwardModelRunner
+from _ert.utils import file_safe_timestamp
 
 if TYPE_CHECKING:
     from ert.config.forward_model_step import ForwardModelJSON
@@ -81,10 +82,10 @@ def _setup_logging(directory: str = "logs") -> None:
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
-    filename = (
-        f"forward-model-runner-log-{datetime.now().isoformat(timespec='minutes')}.txt"
-    )
-    csv_filename = f"memory-profile-{datetime.now().isoformat(timespec='minutes')}.csv"
+    timestamp = file_safe_timestamp(datetime.now().isoformat(timespec="minutes"))
+
+    filename = f"forward-model-runner-log-{timestamp}.txt"
+    csv_filename = f"memory-profile-{timestamp}.csv"
 
     handler = logging.FileHandler(filename=directory + "/" + filename)
     handler.setFormatter(formatter)
