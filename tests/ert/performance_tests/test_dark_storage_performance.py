@@ -78,21 +78,6 @@ def run_in_loop(coro: Awaitable[T]) -> T:
     return loop.run_until_complete(coro)
 
 
-def get_single_record_csv(storage, ensemble_id1, keyword, poly_ran):
-    csv = run_in_loop(
-        get_response(
-            storage=storage,
-            response_key=keyword,
-            ensemble_id=ensemble_id1,
-        )
-    ).body
-    record_df1_indexed = pd.read_csv(
-        io.BytesIO(csv), index_col=0, float_precision="round_trip"
-    )
-    assert len(record_df1_indexed.columns) == poly_ran["gen_data_entries"]
-    assert len(record_df1_indexed.index) == 1
-
-
 def get_record_observations(storage, ensemble_id, keyword: str, poly_ran):
     response_key, report_step = (
         keyword.split("@") if "@" in keyword else (keyword, None)
