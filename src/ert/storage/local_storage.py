@@ -299,9 +299,7 @@ class LocalStorage(BaseMode):
 
     def _release_lock(self) -> None:
         self._lock.release()
-
-        if (self.path / "storage.lock").exists():
-            (self.path / "storage.lock").unlink()
+        (self.path / "storage.lock").unlink(missing_ok=True)
 
     @require_write
     def create_experiment(
