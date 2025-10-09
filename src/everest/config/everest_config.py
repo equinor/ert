@@ -293,11 +293,20 @@ class EverestConfig(BaseModelWithContextSupport):
             well as the level of detail in the logs""",
         ),
     )
-    wells: list[WellConfig] = Field(
-        default_factory=list,
+    wells: list[WellConfig] | None = Field(
+        default=None,
         description=dedent(
             """
-            A list of well configurations.
+            An optional list of well configurations.
+
+            Each well configuration consists of a `name` field, and an optional
+            `drill_time` field. All variables in control groups with
+            `control.type == "well_control"` must also be listed in this
+            section.
+
+            If not present, a minimal well configuration containing only the
+            names of wells will be derived from controls that have
+            `control.type == "well_control"`.
             """
         ),
     )
@@ -840,7 +849,7 @@ to read summary data from forward model, do:
         if not well_names:
             return self
         for c in controls:
-            if c.type == "generic_control":
+            if c.type != "well_control":
                 continue
             for v in c.variables:
                 if v.name not in well_names:
@@ -861,7 +870,9 @@ to read summary data from forward model, do:
     @field_validator("wells")
     @no_type_check
     @classmethod
-    def validate_unique_well_names(cls, wells: list[WellConfig]):
+    def validate_unique_well_names(cls, wells: list[WellConfig] | None):
+        if wells is None:
+            return None
         check_for_duplicate_names([w.name for w in wells], "well", "name")
         return wells
 

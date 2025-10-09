@@ -47,7 +47,16 @@ def extract_summary_keys(ever_config: EverestConfig) -> list[str]:
         [] if ever_config.export is None else ever_config.export.keywords
     )
 
-    wells = [well.name for well in ever_config.wells]
+    wells = (
+        [
+            variable.name
+            for control in ever_config.controls
+            for variable in control.variables
+            if control.type == "well_control"
+        ]
+        if ever_config.wells is None
+        else [w.name for w in ever_config.wells]
+    )
 
     well_keys = [
         f"{sum_key}:{wname}"
