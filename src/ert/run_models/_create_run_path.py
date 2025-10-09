@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any
 
 import orjson
 
+from _ert.utils import file_safe_timestamp
 from ert.config import (
     ExtParamConfig,
     Field,
@@ -33,7 +34,7 @@ logger = logging.getLogger(__name__)
 def _backup_if_existing(path: Path) -> None:
     if not path.exists():
         return
-    timestamp = datetime.now(UTC).isoformat(timespec="seconds")
+    timestamp = file_safe_timestamp(datetime.now(UTC).isoformat(timespec="seconds"))
     new_path = path.parent / f"{path.name}_backup_{timestamp}"
     path.rename(new_path)
 

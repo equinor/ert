@@ -8,6 +8,8 @@ from pathlib import Path
 from types import TracebackType
 from typing import Any
 
+from _ert.utils import file_safe_timestamp
+
 LOGGING_CONFIG = pathlib.Path(__file__).parent.resolve() / "logger.conf"
 STORAGE_LOG_CONFIG = pathlib.Path(__file__).parent.resolve() / "storage_log.conf"
 
@@ -34,7 +36,8 @@ _FORMATS = _FORMATS_ANSI if os.isatty(sys.stderr.fileno()) else _FORMATS_NO_COLO
 
 class TimestampedFileHandler(logging.FileHandler):
     def __init__(self, filename: str, *args: Any, **kwargs: Any) -> None:
-        timestamp = f"{datetime.now().isoformat(timespec='minutes')}"
+        timestamp = file_safe_timestamp(datetime.now().isoformat(timespec="minutes"))
+
         filename, extension = os.path.splitext(filename)
 
         if "config_filename" in kwargs:
