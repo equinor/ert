@@ -8,7 +8,6 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from ert.config import ConfigWarning
 from everest.config import EverestConfig
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
 
@@ -331,38 +330,6 @@ def test_that_control_variable_name_contains_dot_is_linted(min_config):
         == ("controls", 0, "variables", "list[ControlVariableConfig]", 0, "name")
         and lint_["type"] == "value_error"
     )
-
-
-@pytest.mark.parametrize(
-    "date, valid",
-    [
-        ("2018-12-31", True),
-        ("32.01.2000", False),
-        ("2000-1-32", False),
-        ("fdsafdas", False),
-        ("01-01-01", False),
-        ("...", False),
-        ("2000-2-30", False),
-    ],
-)
-def test_date_type(date, valid, min_config):
-    expectation = (
-        does_not_raise()
-        if valid
-        else pytest.raises(ValidationError, match=f"malformed date: {date}")
-    )
-    min_config["wells"] = [{"drill_date": date, "name": "test"}]
-    with expectation:
-        EverestConfig.model_validate(min_config)
-
-
-@pytest.mark.parametrize("date", ["2000-1-1", "2010-1-1"])
-def test_date_warn_deprecated(date, min_config, caplog):
-    min_config["wells"] = [{"drill_date": date, "name": "test"}]
-    msg = f"Deprecated date format: {date}"
-    with pytest.warns(ConfigWarning, match=msg):
-        EverestConfig.model_validate(min_config)
-    assert msg in "".join(caplog.messages)
 
 
 @pytest.mark.parametrize(
