@@ -46,6 +46,8 @@ class SurfaceMismatchError(InvalidParameterFile):
 
 class SurfaceConfig(ParameterConfig):
     type: Literal["surface"] = "surface"
+    forward_init: bool = False
+    update: bool = True
     ncol: int
     nrow: int
     xori: float
@@ -86,34 +88,46 @@ class SurfaceConfig(ParameterConfig):
         ]
 
     @classmethod
-    def from_config_list(cls, surface: list[str | dict[str, str]]) -> Self:
-        name = cast(str, surface[0])
-        options = cast(dict[str, str], surface[1])
+    def from_config_list(cls, config_list: list[str | dict[str, str]]) -> Self:
+        name = cast(str, config_list[0])
+        options = cast(dict[str, str], config_list[1])
         init_file = options.get("INIT_FILES")
         out_file = options.get("OUTPUT_FILE")
         base_surface = options.get("BASE_SURFACE")
-        forward_init = str_to_bool(options.get("FORWARD_INIT", "FALSE"))
-        update_parameter = str_to_bool(options.get("UPDATE", "TRUE"))
+        forward_init = (
+            str_to_bool(options.get("FORWARD_INIT", "FALSE"))
+            if options.get("FORWARD_INIT") is not None
+            else None
+        )
+        update_parameter = (
+            str_to_bool(options.get("UPDATE", "TRUE"))
+            if options.get("UPDATE") is not None
+            else None
+        )
         errors = []
         if not out_file:
             errors.append(
-                ErrorInfo("Missing required OUTPUT_FILE").set_context(surface)
+                ErrorInfo("Missing required OUTPUT_FILE").set_context(config_list)
             )
         if not init_file:
-            errors.append(ErrorInfo("Missing required INIT_FILES").set_context(surface))
+            errors.append(
+                ErrorInfo("Missing required INIT_FILES").set_context(config_list)
+            )
         elif not forward_init and not ("%d" in init_file or "<IENS>" in init_file):
             errors.append(
                 ErrorInfo(
                     "INIT_FILES must contain %d or <IENS> when FORWARD_INIT:FALSE"
-                ).set_context(surface)
+                ).set_context(config_list)
             )
         if not base_surface:
             errors.append(
-                ErrorInfo("Missing required BASE_SURFACE").set_context(surface)
+                ErrorInfo("Missing required BASE_SURFACE").set_context(config_list)
             )
         elif not Path(base_surface).exists():
             errors.append(
-                ErrorInfo(f"BASE_SURFACE:{base_surface} not found").set_context(surface)
+                ErrorInfo(f"BASE_SURFACE:{base_surface} not found").set_context(
+                    config_list
+                )
             )
         if errors:
             raise ConfigValidationError.from_collected(errors)
@@ -125,24 +139,27 @@ class SurfaceConfig(ParameterConfig):
             yflip = -1 if surf.header.yinc < 0 else 1
         except Exception as err:
             raise ConfigValidationError.with_context(
-                f"Could not load surface {base_surface!r}", surface
+                f"Could not load surface {base_surface!r}", config_list
             ) from err
-        return cls(
-            ncol=surf.header.ncol,
-            nrow=surf.header.nrow,
-            xori=surf.header.xori,
-            yori=surf.header.yori,
-            xinc=surf.header.xinc,
-            yinc=surf.header.yinc * yflip,
-            rotation=surf.header.rot,
-            yflip=yflip,
-            name=name,
-            forward_init=forward_init,
-            forward_init_file=init_file,
-            output_file=Path(out_file),
-            base_surface_path=base_surface,
-            update=update_parameter,
-        )
+
+        input_dict = {
+            "ncol": surf.header.ncol,
+            "nrow": surf.header.nrow,
+            "xori": surf.header.xori,
+            "yori": surf.header.yori,
+            "xinc": surf.header.xinc,
+            "yinc": surf.header.yinc * yflip,
+            "rotation": surf.header.rot,
+            "yflip": yflip,
+            "name": name,
+            "forward_init": forward_init,
+            "forward_init_file": init_file,
+            "output_file": Path(out_file),
+            "base_surface_path": base_surface,
+            "update": update_parameter,
+        }
+        input_dict = {k: v for k, v in input_dict.items() if v is not None}
+        return cls(**input_dict)
 
     def __len__(self) -> int:
         return self.ncol * self.nrow
