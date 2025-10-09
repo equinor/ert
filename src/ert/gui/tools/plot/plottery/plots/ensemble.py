@@ -39,14 +39,18 @@ class EnsemblePlot:
         plot_context.x_axis = plot_context.DATE_AXIS
         draw_style = "steps-pre" if is_rate(plot_context.key()) else None
 
-        for ensemble, data in ensemble_to_data_map.items():
+        for (ensemble, data), color_index in zip(
+            ensemble_to_data_map.items(),
+            plot_context.ensembles_color_indexes(),
+            strict=False,
+        ):
             data = data.T
 
             if not data.empty:
                 if data.index.inferred_type != "datetime64":
                     plot_context.deactivateDateSupport()
                     plot_context.x_axis = plot_context.INDEX_AXIS
-
+                config.setCurrentColor(color_index)
                 self._plotLines(
                     axes,
                     config,
@@ -54,7 +58,6 @@ class EnsemblePlot:
                     f"{ensemble.experiment_name} : {ensemble.name}",
                     draw_style,
                 )
-                config.nextColor()
 
         plotObservations(observation_data, plot_context, axes)
         plotHistory(plot_context, axes)

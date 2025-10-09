@@ -24,6 +24,7 @@ def plot_context(request):
             "ensemble_1", "id", False, "experiment_1", started_at="2012-12-10T00:00:00"
         )
     ]
+    context.ensembles_color_indexes.return_value = [1]
     context.key.return_value = request.param
     context.history_data = None
     context.plotConfig.return_value = PlotConfig(title="Ensemble Plot")
@@ -69,7 +70,7 @@ def test_plot_ensemble_selection_widget_sorts_input_ensembles_reverse_chronologi
         )
         for i, t in enumerate(times)
     ]
-    list_widget = EnsembleSelectListWidget(ensembles)
+    list_widget = EnsembleSelectListWidget(ensembles, 1)
     # Assert experiments are sorted from Last -> First
     assert [list_widget.item(i).text() for i in range(len(ensembles))] == [
         "exp_2 : ens_2",  # Last

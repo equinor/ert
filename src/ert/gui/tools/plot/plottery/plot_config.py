@@ -88,6 +88,14 @@ class PlotConfig:
 
         self._std_dev_factor = 1  # sigma 1 is default std dev
 
+    def getNumberOfColors(self) -> int:
+        return len(self._line_color_cycle_colors)
+
+    def setCurrentColor(self, index: int) -> None:
+        self._current_color = self._line_color_cycle_colors[
+            index % len(self._line_color_cycle_colors)
+        ]
+
     def currentColor(self) -> tuple[str, float]:
         if self._current_color is None:
             return self.nextColor()
