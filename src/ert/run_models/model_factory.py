@@ -10,8 +10,10 @@ import numpy as np
 from ert.config import (
     ConfigValidationError,
     ConfigWarning,
+    DesignMatrix,
     ErtConfig,
     ObservationSettings,
+    ParameterConfig,
 )
 from ert.mode_definitions import (
     ENIF_MODE,
@@ -28,6 +30,7 @@ from .ensemble_experiment import EnsembleExperiment
 from .ensemble_information_filter import EnsembleInformationFilter
 from .ensemble_smoother import EnsembleSmoother
 from .evaluate_ensemble import EvaluateEnsemble
+from .initial_ensemble_run_model import DictEncodedDataFrame
 from .manual_update import ManualUpdate
 from .multiple_data_assimilation import MultipleDataAssimilation
 from .run_model import RunModel
@@ -78,6 +81,28 @@ def create_model(
     raise NotImplementedError(f"Run type not supported {args.mode}")
 
 
+def _merge_parameters(
+    design_matrix: DesignMatrix | None,
+    parameter_configs: list[ParameterConfig],
+    require_updateable_param: bool = False,
+) -> tuple[list[ParameterConfig], DictEncodedDataFrame | None]:
+    if design_matrix is None:
+        return parameter_configs, None
+
+    merged_parameter_configs = design_matrix.merge_with_existing_parameters(
+        parameter_configs
+    )
+
+    if require_updateable_param and not any(p.update for p in merged_parameter_configs):
+        raise ConfigValidationError(
+            "No parameters to update as all parameters were set to update:false!"
+        )
+
+    return merged_parameter_configs, DictEncodedDataFrame.from_polars(
+        design_matrix.design_matrix_df
+    )
+
+
 def _setup_single_test_run(
     config: ErtConfig,
     args: Namespace,
@@ -91,6 +116,12 @@ def _setup_single_test_run(
         raise ConfigValidationError(
             "Cannot run single test run when the first realization is inactive."
         )
+
+    parameter_configs, design_matrix = _merge_parameters(
+        design_matrix=config.analysis_config.design_matrix,
+        parameter_configs=config.ensemble_config.parameter_configuration,
+    )
+
     return SingleTestRun(
         random_seed=config.random_seed,
         runpath_file=config.runpath_file,
@@ -98,8 +129,8 @@ def _setup_single_test_run(
         target_ensemble=args.current_ensemble,
         minimum_required_realizations=1,
         experiment_name=experiment_name,
-        design_matrix=config.analysis_config.design_matrix,
-        parameter_configuration=config.ensemble_config.parameter_configuration,
+        design_matrix=design_matrix,
+        parameter_configuration=parameter_configs,
         response_configuration=config.ensemble_config.response_configuration,
         ert_templates=config.ert_templates,
         user_config_file=Path(config.user_config_file),
@@ -141,6 +172,11 @@ def _setup_ensemble_experiment(
     experiment_name = args.experiment_name
     assert experiment_name is not None
 
+    parameter_configs, design_matrix = _merge_parameters(
+        design_matrix=config.analysis_config.design_matrix,
+        parameter_configs=config.ensemble_config.parameter_configuration,
+    )
+
     return EnsembleExperiment(
         random_seed=config.random_seed,
         runpath_file=config.runpath_file,
@@ -148,8 +184,8 @@ def _setup_ensemble_experiment(
         target_ensemble=args.current_ensemble,
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,
         experiment_name=experiment_name,
-        design_matrix=config.analysis_config.design_matrix,
-        parameter_configuration=config.ensemble_config.parameter_configuration,
+        design_matrix=design_matrix,
+        parameter_configuration=parameter_configs,
         response_configuration=config.ensemble_config.response_configuration,
         ert_templates=config.ert_templates,
         user_config_file=Path(config.user_config_file),
@@ -230,6 +266,7 @@ def _setup_manual_update(
 ) -> ManualUpdate:
     active_realizations = _realizations(args, config.runpath_config.num_realizations)
     validate_minimum_realizations(config, active_realizations.tolist())
+
     return ManualUpdate(
         random_seed=config.random_seed,
         active_realizations=active_realizations.tolist(),
@@ -267,6 +304,12 @@ def _setup_ensemble_smoother(
             "Number of active realizations must be at least 2 for an update step"
         )
 
+    parameter_configs, design_matrix = _merge_parameters(
+        design_matrix=config.analysis_config.design_matrix,
+        parameter_configs=config.ensemble_config.parameter_configuration,
+        require_updateable_param=True,
+    )
+
     return EnsembleSmoother(
         target_ensemble=args.target_ensemble,
         experiment_name=getattr(args, "experiment_name", ""),
@@ -279,8 +322,8 @@ def _setup_ensemble_smoother(
         update_settings=update_settings,
         status_queue=status_queue,
         runpath_file=config.runpath_file,
-        design_matrix=config.analysis_config.design_matrix,
-        parameter_configuration=config.ensemble_config.parameter_configuration,
+        design_matrix=design_matrix,
+        parameter_configuration=parameter_configs,
         response_configuration=config.ensemble_config.response_configuration,
         ert_templates=config.ert_templates,
         user_config_file=Path(config.user_config_file),
@@ -308,6 +351,11 @@ def _setup_ensemble_information_filter(
             "Number of active realizations must be at least 2 for an update step"
         )
 
+    parameter_configs, design_matrix = _merge_parameters(
+        design_matrix=config.analysis_config.design_matrix,
+        parameter_configs=config.ensemble_config.parameter_configuration,
+    )
+
     return EnsembleInformationFilter(
         target_ensemble=args.target_ensemble,
         experiment_name=getattr(args, "experiment_name", ""),
@@ -320,8 +368,8 @@ def _setup_ensemble_information_filter(
         update_settings=update_settings,
         status_queue=status_queue,
         runpath_file=config.runpath_file,
-        design_matrix=config.analysis_config.design_matrix,
-        parameter_configuration=config.ensemble_config.parameter_configuration,
+        design_matrix=design_matrix,
+        parameter_configuration=parameter_configs,
         response_configuration=config.ensemble_config.response_configuration,
         ert_templates=config.ert_templates,
         user_config_file=Path(config.user_config_file),
@@ -368,6 +416,13 @@ def _setup_multiple_data_assimilation(
         raise ConfigValidationError(
             "Number of active realizations must be at least 2 for an update step"
         )
+
+    parameter_configs, design_matrix = _merge_parameters(
+        design_matrix=None if restart_run else config.analysis_config.design_matrix,
+        parameter_configs=config.ensemble_config.parameter_configuration,
+        require_updateable_param=True,
+    )
+
     return MultipleDataAssimilation(
         random_seed=config.random_seed,
         active_realizations=active_realizations,
@@ -383,8 +438,8 @@ def _setup_multiple_data_assimilation(
         storage_path=config.ens_path,
         analysis_settings=config.analysis_config.es_settings,
         runpath_file=config.runpath_file,
-        design_matrix=config.analysis_config.design_matrix,
-        parameter_configuration=config.ensemble_config.parameter_configuration,
+        design_matrix=design_matrix,
+        parameter_configuration=parameter_configs,
         response_configuration=config.ensemble_config.response_configuration,
         ert_templates=config.ert_templates,
         user_config_file=Path(config.user_config_file),
