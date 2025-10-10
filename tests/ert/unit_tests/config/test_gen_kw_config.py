@@ -1,3 +1,4 @@
+import logging
 import math
 import re
 from pathlib import Path
@@ -777,3 +778,16 @@ def test_genkw_paramgraph_transformfn_node_correspondence():
     assert data["links"] == []
 
     assert data["nodes"] == [{"id": 0}]
+
+
+def test_gen_kw_from_config_list_logs_parameters_on_instance_instantiation(caplog):
+    config_list = [
+        "KW_NAME",
+        ("template.txt", "MY_KEYWORD <MY_KEYWORD>"),
+        "kw.txt",
+        ("prior.txt", "MY_KEYWORD LOGNORMAL 0 1"),
+        {},
+    ]
+    caplog.set_level(logging.INFO)
+    GenKwConfig.from_config_list(config_list)
+    print(caplog.text)

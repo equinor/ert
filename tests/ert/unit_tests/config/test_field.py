@@ -473,8 +473,8 @@ def test_field_logs_provided_unprovided_and_defaulted_parameters_after_instantia
     Field.from_config_list(grid_file_path, config_list)
 
     parameter_log_pattern = (
-        r"User set parameters:\n\{([^}]+)\}\n"
-        r"User did not set parameters:\n\{([^}]+)\}"
+        r"Parameters with input:\n\{([^}]+)\}\n"
+        r"Parameters with defaults:\n\{([^}]+)\}"
     )
     match = re.search(parameter_log_pattern, caplog.text)
 
@@ -494,6 +494,7 @@ def test_field_logs_provided_unprovided_and_defaulted_parameters_after_instantia
         "file_format",
         "name",
         "forward_init_file",
+        "ertbox_params",
     }
     assert logged_properties_to_set(unprovided_parameters) == {
         "truncation_max",
@@ -501,4 +502,5 @@ def test_field_logs_provided_unprovided_and_defaulted_parameters_after_instantia
         "output_transformation",
         "forward_init",
         "update",
+        "mask_file",
     }
