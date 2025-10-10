@@ -70,7 +70,7 @@ def cluster_responses(
     be clustered together.
     """
     correlation = spearmanr(responses).statistic
-    if isinstance(correlation, np.float32):
+    if isinstance(correlation, np.floating):
         correlation = np.array([[1, correlation], [correlation, 1]])
     # Take absolute value to cluster based on correlation strength rather
     # than direction.
@@ -84,9 +84,9 @@ def cluster_responses(
 
 
 def main(
-    responses: npt.NDArray[np.float32],
-    obs_errors: npt.NDArray[np.float32],
-) -> tuple[npt.NDArray[np.float32], npt.NDArray[np.int_], npt.NDArray[np.int_]]:
+    responses: npt.NDArray[np.floating],
+    obs_errors: npt.NDArray[np.floating],
+) -> tuple[npt.NDArray[np.floating], npt.NDArray[np.int_], npt.NDArray[np.int_]]:
     """
     Perform 'Auto Scaling' to mitigate issues with correlated observations in ensemble
     smoothers.
