@@ -412,12 +412,9 @@ def field_transform(
 
 def _field_truncate(data: npt.ArrayLike, min_: float | None, max_: float | None) -> Any:
     if min_ is not None and max_ is not None:
-        vfunc = np.vectorize(lambda x: max(min(x, max_), min_))
-        return vfunc(data)
+        return np.clip(data, min_, max_)
     elif min_ is not None:
-        vfunc = np.vectorize(lambda x: max(x, min_))
-        return vfunc(data)
+        return np.maximum(data, min_)
     elif max_ is not None:
-        vfunc = np.vectorize(lambda x: min(x, max_))
-        return vfunc(data)
+        return np.minimum(data, max_)
     return data
