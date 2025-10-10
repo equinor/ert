@@ -299,8 +299,8 @@ def analysis_ES(
         np.fill_diagonal(T, T.diagonal() + 1)
 
     def correlation_callback(
-        cross_correlations_of_batch: npt.NDArray[np.float64],
-        cross_correlations_accumulator: list[npt.NDArray[np.float64]],
+        cross_correlations_of_batch: npt.NDArray[np.float32],
+        cross_correlations_accumulator: list[npt.NDArray[np.float32]],
     ) -> None:
         cross_correlations_accumulator.append(cross_correlations_of_batch)
 
@@ -350,7 +350,7 @@ def analysis_ES(
             progress_callback(AnalysisStatusEvent(msg=log_msg))
 
             start = time.time()
-            cross_correlations: list[npt.NDArray[np.float64]] = []
+            cross_correlations: list[npt.NDArray[np.float32]] = []
             for param_batch_idx in batches:
                 update_idx = param_batch_idx[non_zero_variance_mask[param_batch_idx]]
                 X_local = param_ensemble_array[update_idx, :]

@@ -297,7 +297,12 @@ def test_that_sampling_is_fixed_from_name(
         expected = np.random.default_rng(seed).standard_normal(num_realisations)
         df = fs.load_parameters("KW_NAME")
         assert isinstance(df, pl.DataFrame)
-        assert df.select("MY_KEYWORD").to_numpy().ravel().tolist() == list(expected)
+        assert np.allclose(
+            df.select("MY_KEYWORD").to_numpy().ravel(),
+            np.asarray(expected),
+            rtol=1e-6,
+            atol=1e-8,
+        )
 
 
 @pytest.mark.parametrize(
@@ -359,7 +364,12 @@ def test_that_sub_sample_maintains_order(tmpdir, storage, mask, expected):
 
         df = fs.load_parameters("KW_NAME")
         assert isinstance(df, pl.DataFrame)
-        assert df.select("MY_KEYWORD").to_numpy().ravel().tolist() == expected
+        assert np.allclose(
+            df.select("MY_KEYWORD").to_numpy().ravel(),
+            np.asarray(expected),
+            rtol=1e-6,
+            atol=1e-8,
+        )
 
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
