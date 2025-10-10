@@ -805,6 +805,7 @@ dependencies = [
     { name = "filelock" },
     { name = "graphite-maps" },
     { name = "httpx" },
+    { name = "httpx-retries" },
     { name = "humanize" },
     { name = "iterative-ensemble-smoother" },
     { name = "jinja2" },
@@ -913,6 +914,7 @@ requires-dist = [
     { name = "furo", marker = "extra == 'dev'" },
     { name = "graphite-maps" },
     { name = "httpx" },
+    { name = "httpx-retries" },
     { name = "humanize" },
     { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.85,!=6.102.0,!=6.112.3" },
     { name = "iterative-ensemble-smoother", specifier = ">=0.4.0" },
@@ -1291,6 +1293,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/b1/df/48c586a5fe32a0f01324ee087459e112ebb7224f646c0b5023f5e79e9956/httpx-0.28.1.tar.gz", hash = "sha256:75e98c5f16b0f35b567856f597f06ff2270a374470a5c2392242528e3e3e42fc", size = 141406, upload-time = "2024-12-06T15:37:23.222Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2a/39/e50c7c3a983047577ee07d2a9e53faf5a69493943ec3f6a384bdc792deb2/httpx-0.28.1-py3-none-any.whl", hash = "sha256:d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad", size = 73517, upload-time = "2024-12-06T15:37:21.509Z" },
+]
+
+[[package]]
+name = "httpx-retries"
+version = "0.4.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/30/45/e8dda952a110a157445247837a25e6977d44a8d1c734cf06909c7ca81830/httpx_retries-0.4.3.tar.gz", hash = "sha256:7c3c9c7b0b6d630a0f01423d7aca8e539bee963bfdf2f1acbe9826e8698b39fc", size = 12764, upload-time = "2025-10-08T13:57:11.432Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1a/9e/ee8f6b9f37b1e1f1faea5576a9ec0f865a787b44e6b2f6a70deee17d6fb2/httpx_retries-0.4.3-py3-none-any.whl", hash = "sha256:eb0ffd0dd713ece7652cf32780956c780139e5434974df6e8b17746ef0e4b650", size = 8278, upload-time = "2025-10-08T13:57:10.668Z" },
 ]
 
 [[package]]
