@@ -69,7 +69,7 @@ def plotHistogram(
 
     for ensemble, datas in ensemble_to_data_map.items():
         if datas.empty:
-            data[ensemble.id] = pd.Series(dtype="float64")
+            data[ensemble.id] = pd.Series(dtype="float32")
             continue
 
         data[ensemble.id] = datas[0]

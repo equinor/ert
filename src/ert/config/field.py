@@ -319,7 +319,7 @@ class Field(ParameterConfig):
 
     def create_storage_datasets(
         self,
-        from_data: npt.NDArray[np.float64],
+        from_data: npt.NDArray[np.float32],
         iens_active_index: npt.NDArray[np.int_],
     ) -> Iterator[tuple[int, xr.Dataset]]:
         for i, realization in enumerate(iens_active_index):
@@ -336,7 +336,7 @@ class Field(ParameterConfig):
 
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
-    ) -> npt.NDArray[np.float64]:
+    ) -> npt.NDArray[np.float32]:
         ds = ensemble.load_parameters(self.name, realizations)
         assert isinstance(ds, xr.Dataset)
         ensemble_size = len(ds.realizations)
