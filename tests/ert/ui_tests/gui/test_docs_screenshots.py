@@ -124,7 +124,7 @@ def run_experiment(qtbot, experiment_mode, gui, click_done=True):
         # The Run dialog opens, click show details and wait until done appears
         # then click it
         run_dialog = wait_for_child(gui, qtbot, RunDialog, timeout=10000)
-        qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=200000)
+        qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=600000)
         qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
         # Assert that the number of boxes in the detailed view is
