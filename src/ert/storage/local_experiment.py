@@ -24,8 +24,9 @@ from ert.config import (
     SummaryConfig,
     SurfaceConfig,
 )
-from ert.config import Field as FieldConfig
-from ert.config.parsing.context_values import ContextBoolEncoder
+from ert.config import (
+    Field as FieldConfig,
+)
 
 from .mode import BaseMode, Mode, require_write
 
@@ -41,6 +42,7 @@ class _Index(BaseModel):
     # from a different experiment. For example, a manual update
     # is a separate experiment from the one that created the prior.
     ensembles: list[UUID]
+    experiment: dict[str, Any] | None = None
 
 
 _responses_adapter = TypeAdapter(  # type: ignore
@@ -71,7 +73,6 @@ class LocalExperiment(BaseMode):
 
     _parameter_file = Path("parameter.json")
     _responses_file = Path("responses.json")
-    _metadata_file = Path("metadata.json")
     _templates_file = Path("templates.json")
 
     def __init__(
@@ -110,7 +111,6 @@ class LocalExperiment(BaseMode):
         parameters: list[ParameterConfig] | None = None,
         responses: list[ResponseConfig] | None = None,
         observations: dict[str, pl.DataFrame] | None = None,
-        simulation_arguments: dict[Any, Any] | None = None,
         name: str | None = None,
         templates: list[tuple[str, str]] | None = None,
     ) -> LocalExperiment:
@@ -131,8 +131,6 @@ class LocalExperiment(BaseMode):
             List of response configurations.
         observations : dict of str to encoded observation datasets, optional
             Observations dictionary.
-        simulation_arguments : SimulationArguments, optional
-            Simulation arguments for the experiment.
         name : str, optional
             Experiment name. Defaults to current date if None.
         templates : list of tuple[str, str], optional
@@ -196,12 +194,6 @@ class LocalExperiment(BaseMode):
                 storage._to_parquet_transaction(
                     output_path / f"{response_type}", dataset
                 )
-
-        simulation_data = simulation_arguments or {}
-        storage._write_transaction(
-            path / cls._metadata_file,
-            json.dumps(simulation_data, cls=ContextBoolEncoder).encode("utf-8"),
-        )
 
         return cls(storage, path, Mode.WRITE)
 
@@ -276,16 +268,9 @@ class LocalExperiment(BaseMode):
         raise KeyError(f"Ensemble with name '{name}' not found")
 
     @property
-    def metadata(self) -> dict[str, Any]:
-        path = self.mount_point / self._metadata_file
-        if not path.exists():
-            raise ValueError(f"{self._metadata_file!s} does not exist")
-        with open(path, encoding="utf-8") as f:
-            return json.load(f)
-
-    @property
     def relative_weights(self) -> str:
-        return self.metadata.get("weights", "")
+        assert self._index.experiment is not None
+        return self._index.experiment.get("weights", "")
 
     @property
     def name(self) -> str:
@@ -504,3 +489,7 @@ class LocalExperiment(BaseMode):
             return None
 
         return pl.concat(ensemble_dfs)
+
+    def save_experiment_config(self, serialized_experiment: dict[str, Any]) -> None:
+        self._index.experiment = serialized_experiment
+        (self._path / "index.json").write_text(self._index.model_dump_json(indent=2))

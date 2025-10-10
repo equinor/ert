@@ -12,14 +12,13 @@ from ert.run_models.update_run_model import UpdateRunModel
 from ert.storage import Ensemble
 
 from ..analysis import smoother_update
+from .ert_runmodel_configs import ManualUpdateConfig
 from .run_model import ErtRunError
 
 logger = logging.getLogger(__name__)
 
 
-class ManualUpdate(UpdateRunModel):
-    ensemble_id: str
-
+class ManualUpdate(UpdateRunModel, ManualUpdateConfig):
     _prior: Ensemble = PrivateAttr()
 
     def model_post_init(self, ctx: Any) -> None:
@@ -47,10 +46,10 @@ class ManualUpdate(UpdateRunModel):
             parameters=list(prior_experiment.parameter_configuration.values()),
             responses=list(prior_experiment.response_configuration.values()),
             observations=prior_experiment.observations,
-            simulation_arguments=prior_experiment.metadata,
             name=f"Manual update of {self._prior.name}",
             templates=self._prior.experiment.templates_configuration,
         )
+        target_experiment.save_experiment_config(self.model_dump())
         self.update(
             self._prior,
             self.target_ensemble % (self._prior.iteration + 1),

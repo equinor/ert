@@ -12,7 +12,6 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from textwrap import dedent
 from types import TracebackType
-from typing import Any
 from uuid import UUID, uuid4
 
 import polars as pl
@@ -307,7 +306,6 @@ class LocalStorage(BaseMode):
         parameters: list[ParameterConfig] | None = None,
         responses: list[ResponseConfig] | None = None,
         observations: dict[str, pl.DataFrame] | None = None,
-        simulation_arguments: dict[Any, Any] | None = None,
         name: str | None = None,
         templates: list[tuple[str, str]] | None = None,
     ) -> LocalExperiment:
@@ -322,8 +320,6 @@ class LocalStorage(BaseMode):
             The responses for the experiment.
         observations : dict of str to observation datasets, optional
             The observations for the experiment.
-        simulation_arguments : SimulationArguments, optional
-            The simulation arguments for the experiment.
         name : str, optional
             The name of the experiment.
         templates : list of tuple[str, str], optional
@@ -346,7 +342,6 @@ class LocalStorage(BaseMode):
             parameters=parameters,
             responses=responses,
             observations=observations,
-            simulation_arguments=simulation_arguments,
             name=name,
             templates=templates,
         )

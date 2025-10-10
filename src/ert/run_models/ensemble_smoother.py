@@ -15,12 +15,13 @@ from ert.trace import tracer
 
 from ..analysis import smoother_update
 from ..run_arg import create_run_arguments
+from .ert_runmodel_configs import EnsembleSmootherConfig
 from .run_model import ErtRunError
 
 logger = logging.getLogger(__name__)
 
 
-class EnsembleSmoother(UpdateRunModel, InitialEnsembleRunModel):
+class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmootherConfig):
     _total_iterations: int = PrivateAttr(default=2)
 
     @tracer.start_as_current_span(f"{__name__}.run_experiment")
@@ -37,7 +38,6 @@ class EnsembleSmoother(UpdateRunModel, InitialEnsembleRunModel):
 
         prior = self._sample_and_evaluate_ensemble(
             evaluator_server_config,
-            None,
             self.target_ensemble % 0,
         )
         posterior = self.update(prior, self.target_ensemble % 1)

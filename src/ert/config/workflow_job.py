@@ -84,6 +84,7 @@ def workflow_job_from_file(config_file: str, name: str | None = None) -> Workflo
             max_args=max_args,
             arg_types=arg_types_list,
             stop_on_fail=bool(content_dict.get("STOP_ON_FAIL")),
+            source_file=config_file,
         )
     else:
         return ExecutableWorkflow(
@@ -93,6 +94,7 @@ def workflow_job_from_file(config_file: str, name: str | None = None) -> Workflo
             arg_types=arg_types_list,
             executable=content_dict.get("EXECUTABLE"),
             stop_on_fail=bool(content_dict.get("STOP_ON_FAIL")),
+            source_file=config_file,
         )
 
 
@@ -102,6 +104,7 @@ class _WorkflowJob(BaseModelWithContextSupport, ABC):
     max_args: int | None = None
     arg_types: list[SchemaItemType] = field(default_factory=list)
     stop_on_fail: bool = False
+    source_file: str | None = None
 
     @staticmethod
     def _make_arg_types_list(content_dict: ConfigDict) -> list[SchemaItemType]:

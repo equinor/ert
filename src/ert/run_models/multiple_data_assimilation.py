@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import functools
 import logging
-from typing import Any, ClassVar
+from typing import Any
 from uuid import UUID
 
 from pydantic import PrivateAttr
@@ -16,6 +16,7 @@ from ert.trace import tracer
 
 from ..analysis import smoother_update
 from ..run_arg import create_run_arguments
+from .ert_runmodel_configs import MultipleDataAssimilationConfig
 from .run_model import ErtRunError
 
 logger = logging.getLogger(__name__)
@@ -23,18 +24,16 @@ logger = logging.getLogger(__name__)
 MULTIPLE_DATA_ASSIMILATION_GROUP = "Parameter update"
 
 
-class MultipleDataAssimilation(UpdateRunModel, InitialEnsembleRunModel):
+class MultipleDataAssimilation(
+    UpdateRunModel, InitialEnsembleRunModel, MultipleDataAssimilationConfig
+):
     """
     Run multiple data assimilation (MDA) ensemble smoother with custom weights.
     """
 
-    default_weights: ClassVar[str] = "4, 2, 1"
-    restart_run: bool
-    prior_ensemble_id: str | None
-    weights: str
-
     _parsed_weights: list[float] = PrivateAttr()
     _total_iterations: int = PrivateAttr(default=2)
+    _start_iteration: int = PrivateAttr(default=0)
 
     def model_post_init(self, ctx: Any) -> None:
         super().model_post_init(ctx)
@@ -51,7 +50,7 @@ class MultipleDataAssimilation(UpdateRunModel, InitialEnsembleRunModel):
         elif not self.experiment_name:
             raise ValueError("For non-restart run, experiment name must be set")
 
-        self.start_iteration = start_iteration
+        self._start_iteration = start_iteration
         self._total_iterations = total_iterations
 
     @tracer.start_as_current_span(f"{__name__}.run_experiment")
@@ -75,19 +74,21 @@ class MultipleDataAssimilation(UpdateRunModel, InitialEnsembleRunModel):
                 self.set_env_key("_ERT_EXPERIMENT_ID", str(experiment.id))
                 self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
                 assert isinstance(prior, Ensemble)
-                if self.start_iteration != prior.iteration + 1:
+                if self._start_iteration != prior.iteration + 1:
                     raise ValueError(
                         "Experiment misconfigured, got starting "
-                        f"iteration: {self.start_iteration},"
+                        f"iteration: {self._start_iteration},"
                         f"restart iteration = {prior.iteration + 1}"
                     )
                 target_experiment = self._storage.create_experiment(
                     parameters=list(prior.experiment.parameter_configuration.values()),
                     responses=list(prior.experiment.response_configuration.values()),
                     observations=prior.experiment.observations,
-                    simulation_arguments=prior.experiment.metadata,
                     name=f"Restart from {prior.name}",
                     templates=prior.experiment.templates_configuration,
+                )
+                target_experiment.save_experiment_config(
+                    serialized_experiment=self.model_dump()
                 )
             except (KeyError, ValueError) as err:
                 raise ErtRunError(
@@ -97,10 +98,8 @@ class MultipleDataAssimilation(UpdateRunModel, InitialEnsembleRunModel):
             self.run_workflows(
                 fixtures=PreExperimentFixtures(random_seed=self.random_seed),
             )
-            sim_args = {"weights": self.weights}
             prior = self._sample_and_evaluate_ensemble(
                 evaluator_server_config,
-                sim_args,
                 self.target_ensemble % 0,
             )
 

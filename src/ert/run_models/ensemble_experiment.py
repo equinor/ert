@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import logging
-from typing import ClassVar
 from uuid import UUID
 
 from pydantic import PrivateAttr
 
 from ert.config import PostExperimentFixtures, PreExperimentFixtures
 from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.run_models.ert_runmodel_configs import EnsembleExperimentConfig
 from ert.run_models.initial_ensemble_run_model import InitialEnsembleRunModel
 from ert.storage import Ensemble
 from ert.trace import tracer
@@ -15,7 +15,7 @@ from ert.trace import tracer
 logger = logging.getLogger(__name__)
 
 
-class EnsembleExperiment(InitialEnsembleRunModel):
+class EnsembleExperiment(InitialEnsembleRunModel, EnsembleExperimentConfig):
     """
     This workflow will create a new experiment and a new ensemble from
     the user configuration.<br>It will never overwrite existing ensembles, and
@@ -23,8 +23,6 @@ class EnsembleExperiment(InitialEnsembleRunModel):
     """
 
     _ensemble_id: UUID | None = PrivateAttr(None)
-    supports_rerunning_failed_realizations: ClassVar[bool] = True
-    target_ensemble: str
 
     @property
     def _ensemble(self) -> Ensemble:
@@ -44,7 +42,6 @@ class EnsembleExperiment(InitialEnsembleRunModel):
 
         self._sample_and_evaluate_ensemble(
             evaluator_server_config,
-            None,
             self.target_ensemble,
             self._ensemble if rerun_failed_realizations else None,
         )
