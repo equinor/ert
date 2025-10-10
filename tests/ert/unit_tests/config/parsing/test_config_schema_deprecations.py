@@ -1,8 +1,10 @@
 import warnings
+from unittest.mock import patch
 
 import pytest
 
 from ert.config import ConfigWarning, ErtConfig
+from ert.config.forward_model_step import ForwardModelStep
 from ert.config.parsing.config_schema_deprecations import (
     JUST_REMOVE_KEYWORDS,
     REPLACE_WITH_GEN_KW,
@@ -201,3 +203,57 @@ def test_that_a_deprecation_message_is_shown_for_use_of_the_job_prefix_queue_opt
         ErtConfig.from_file_contents(
             "NUM_REALIZATIONS 1\nQUEUE_OPTION TORQUE JOB_PREFIX foo\n"
         )
+
+
+@pytest.mark.parametrize(
+    "forward_model_config, expected_design_matrix_file, expected_design_sheet,"
+    " expected_defaults_sheet",
+    [
+        (
+            "FORWARD_MODEL DESIGN2PARAMS(<xls_filename>=poly_design.xslx)",
+            "poly_design.xslx",
+            "<name_of_design_sheet>",
+            "<name_of_defaults_sheet>",
+        ),
+        (
+            "FORWARD_MODEL DESIGN2PARAMS()",
+            "<name_of_design_matrix_file.xlsx>",
+            "<name_of_design_sheet>",
+            "<name_of_defaults_sheet>",
+        ),
+        (
+            "FORWARD_MODEL DESIGN2PARAMS(<xls_filename>=poly_design.xslx, <designsheet>"
+            "=TheDesignSheet, <defaultssheet>=TheDefaultsSheet)",
+            "poly_design.xslx",
+            "TheDesignSheet",
+            "TheDefaultsSheet",
+        ),
+    ],
+)
+def test_that_forward_model_design2params_is_deprecated(
+    forward_model_config,
+    expected_design_matrix_file,
+    expected_design_sheet,
+    expected_defaults_sheet,
+):
+    # Create a mock DESIGN2PARAMS forward model step, since it is not installed
+    mock_design2params_step = ForwardModelStep(
+        name="DESIGN2PARAMS",
+        executable="design2params",
+    )
+
+    with (
+        patch(
+            "ert.config.ert_config.installed_forward_model_steps_from_dict",
+            return_value={"DESIGN2PARAMS": mock_design2params_step},
+        ),
+        pytest.warns(
+            ConfigWarning,
+            match="FORWARD_MODEL DESIGN2PARAMS will be replaced with DESIGN_MATRIX. "
+            "Please change configuration line with FORWARD_MODEL DESIGN2PARAMS,\n"
+            f"To this format:\n 'DESIGN_MATRIX {expected_design_matrix_file} "
+            f"DESIGN_SHEET:{expected_design_sheet} "
+            f"DEFAULT_SHEET:{expected_defaults_sheet}'",
+        ),
+    ):
+        ErtConfig.from_file_contents(f"NUM_REALIZATIONS 1\n{forward_model_config}")

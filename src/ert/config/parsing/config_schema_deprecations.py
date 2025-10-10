@@ -1,7 +1,28 @@
 from functools import partial
-from typing import cast
+from typing import Any, cast
 
 from .deprecation_info import DeprecationInfo
+
+
+def make_forward_model_design2params_deprecation_message(line: list[Any]) -> str:
+    design_matrix_file = "<name_of_design_matrix_file.xlsx>"
+    design_sheet = "<name_of_design_sheet>"
+    defaults_sheet = "<name_of_defaults_sheet>"
+    arguments_dict = dict(line[1])
+
+    design_matrix_file = arguments_dict.get("<xls_filename>", design_matrix_file)
+    design_sheet = arguments_dict.get("<designsheet>", design_sheet)
+    defaults_sheet = arguments_dict.get("<defaultssheet>", defaults_sheet)
+
+    msg = (
+        f"FORWARD_MODEL DESIGN2PARAMS will be replaced with DESIGN_MATRIX. "
+        "Please change configuration line with FORWARD_MODEL DESIGN2PARAMS,\n"
+        "To this format:\n "
+        f"'DESIGN_MATRIX {design_matrix_file} DESIGN_SHEET:{design_sheet} "
+        f"DEFAULT_SHEET:{defaults_sheet}'"
+    )
+    return msg
+
 
 REPLACE_WITH_GEN_KW = [
     "RELPERM",
@@ -203,5 +224,10 @@ deprecated_keywords_list = [
         "configuration path if provided."
         "It has been replaced with the path to the directory containing the "
         "configuration file for the experiment.",
+    ),
+    DeprecationInfo(
+        keyword="FORWARD_MODEL",
+        message=make_forward_model_design2params_deprecation_message,
+        check=lambda line: line[0] == "DESIGN2PARAMS",
     ),
 ]
