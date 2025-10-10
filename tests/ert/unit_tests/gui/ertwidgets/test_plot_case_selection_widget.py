@@ -20,7 +20,7 @@ def test_ensemble_selection_widget_max_min_selection(qtbot: QtBot):
         )
         for i in range(10)
     ]
-    widget = EnsembleSelectionWidget(test_ensemble_names)
+    widget = EnsembleSelectionWidget(test_ensemble_names, 1)
     qtbot.addWidget(widget)
     list_widget = get_child(widget, EnsembleSelectListWidget, "ensemble_selector")
 

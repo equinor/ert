@@ -23,14 +23,16 @@ from ert.gui.tools.plot.plottery.plots import HistogramPlot
                         started_at="2012-12-10T00:00:00",
                     )
                 ],
+                [1],
             ),
         ),
-        pytest.param(([],), id="no_ensembles"),
+        pytest.param(([], []), id="no_ensembles"),
     ]
 )
 def plot_context(request):
     context = Mock(spec=PlotContext)
     context.ensembles.return_value = request.param[0]
+    context.ensembles_color_indexes.return_value = request.param[1]
     title = "" + f"num_ensembles={len(request.param[0])}"
     context.plotConfig.return_value = PlotConfig(title=title)
     return context
@@ -78,6 +80,7 @@ def test_histogram_plot_for_constant_distribution(monkeypatch):
             "ensemble_1", "id", False, "experiment_1", started_at="2012-12-10T00:00:00"
         )
     ]
+    context.ensembles_color_indexes.return_value = [1]
     title = "Histogram with same values"
     context.plotConfig.return_value = PlotConfig(title=title)
     value = 0

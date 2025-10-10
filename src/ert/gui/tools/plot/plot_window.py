@@ -187,7 +187,9 @@ class PlotWindow(QMainWindow):
         self._data_type_keys_widget = DataTypeKeysWidget(self._key_definitions)
         self._data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
         self.addDock("Data types", self._data_type_keys_widget)
-        self._ensemble_selection_widget = EnsembleSelectionWidget(plot_case_objects)
+        self._ensemble_selection_widget = EnsembleSelectionWidget(
+            plot_case_objects, self._plot_customizer.getPlotConfig().getNumberOfColors()
+        )
 
         self._ensemble_selection_widget.ensembleSelectionChanged.connect(
             self.keySelected
@@ -265,7 +267,13 @@ class PlotWindow(QMainWindow):
                 plot_widget.showLayerWidget.emit(False)
 
             plot_config = PlotConfig.createCopy(self._plot_customizer.getPlotConfig())
-            plot_context = PlotContext(plot_config, selected_ensembles, key, layer)
+            plot_context = PlotContext(
+                plot_config,
+                selected_ensembles,
+                self._ensemble_selection_widget.get_selected_ensembles_color_indexes(),
+                key,
+                layer,
+            )
 
             # Check if key is a history key.
             # If it is it already has the data it needs
