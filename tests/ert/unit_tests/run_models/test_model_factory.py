@@ -164,6 +164,7 @@ def test_setup_ensemble_experiment(tmp_path):
     assert model.active_realizations == [True] * 100
 
 
+@pytest.mark.filterwarnings("ignore:MIN_REALIZATIONS")
 def test_setup_ensemble_smoother(tmp_path):
     model = model_factory._setup_ensemble_smoother(
         ErtConfig.from_file_contents(f"NUM_REALIZATIONS 100\nENSPATH {tmp_path}"),
@@ -183,6 +184,7 @@ def test_setup_ensemble_smoother(tmp_path):
     )
 
 
+@pytest.mark.filterwarnings("ignore:MIN_REALIZATIONS")
 def test_setup_multiple_data_assimilation(tmp_path):
     model = model_factory._setup_multiple_data_assimilation(
         ErtConfig.from_file_contents(f"NUM_REALIZATIONS 100\nENSPATH {tmp_path}"),

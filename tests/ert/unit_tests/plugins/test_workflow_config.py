@@ -2,6 +2,8 @@ import argparse
 import logging
 from unittest.mock import Mock
 
+import pytest
+
 from ert import ErtScript
 from ert.config import workflow_config
 from ert.config.workflow_config import LegacyWorkflowConfigs
@@ -24,6 +26,7 @@ def test_workflow_config_duplicate_log_message(caplog, monkeypatch):
     assert "Duplicate workflow name: same_name, skipping" in caplog.text
 
 
+@pytest.mark.filterwarnings("ignore:Use of legacy_ertscript_workflow is deprecated")
 def test_legacy_workflow_config_can_set_name_through_dunder_field():
     class MockedErtScript(ErtScript):
         pass
@@ -34,6 +37,7 @@ def test_legacy_workflow_config_can_set_name_through_dunder_field():
     assert configs.get_workflows()["MockedErtScript"].ert_script is MockedErtScript
 
 
+@pytest.mark.filterwarnings("ignore:Use of legacy_ertscript_workflow is deprecated")
 def test_legacy_workflow_config_can_set_name_through_parameter():
     class MockedErtScript(ErtScript):
         pass
@@ -44,6 +48,7 @@ def test_legacy_workflow_config_can_set_name_through_parameter():
     assert configs.get_workflows()["parameter_name"].ert_script is MockedErtScript
 
 
+@pytest.mark.filterwarnings("ignore:Use of legacy_ertscript_workflow is deprecated")
 def test_legacy_workflow_config_can_set_name_through_add_workflow_return_value():
     configs = LegacyWorkflowConfigs()
 
@@ -56,6 +61,7 @@ def test_legacy_workflow_config_can_set_name_through_add_workflow_return_value()
     assert configs.get_workflows()["name"].ert_script is MockedErtScript
 
 
+@pytest.mark.filterwarnings("ignore:Use of legacy_ertscript_workflow is deprecated")
 def test_legacy_workflow_config_description_defaults_to_its_docstring():
     class MockedErtScript(ErtScript):
         """description"""
@@ -66,6 +72,7 @@ def test_legacy_workflow_config_description_defaults_to_its_docstring():
     assert configs.get_workflows()["MockedErtScript"].description == "description"
 
 
+@pytest.mark.filterwarnings("ignore:Use of legacy_ertscript_workflow is deprecated")
 def test_legacy_workflow_config_can_set_description_through_parameter():
     class MockedErtScript(ErtScript):
         pass
@@ -76,6 +83,7 @@ def test_legacy_workflow_config_can_set_description_through_parameter():
     assert configs.get_workflows()["MockedErtScript"].description == "description"
 
 
+@pytest.mark.filterwarnings("ignore:Use of legacy_ertscript_workflow is deprecated")
 def test_legacy_workflow_config_can_set_description_through_add_workflow_return_value():
     configs = LegacyWorkflowConfigs()
     workflow = configs.add_workflow(ert_script=ErtScript)
@@ -84,6 +92,7 @@ def test_legacy_workflow_config_can_set_description_through_add_workflow_return_
     assert configs.get_workflows()["ErtScript"].description == "description"
 
 
+@pytest.mark.filterwarnings("ignore:Use of legacy_ertscript_workflow is deprecated")
 def test_legacy_workflow_config_can_set_examples_through_parameter():
     configs = LegacyWorkflowConfigs()
     workflow = configs.add_workflow(ert_script=ErtScript, examples="examples")
@@ -92,6 +101,7 @@ def test_legacy_workflow_config_can_set_examples_through_parameter():
     assert configs.get_workflows()["name"].examples == "examples"
 
 
+@pytest.mark.filterwarnings("ignore:Use of legacy_ertscript_workflow is deprecated")
 def test_legacy_workflow_config_can_set_examples_through_add_workflow_return_value():
     configs = LegacyWorkflowConfigs()
     workflow = configs.add_workflow(ert_script=ErtScript)
@@ -100,6 +110,7 @@ def test_legacy_workflow_config_can_set_examples_through_add_workflow_return_val
     assert configs.get_workflows()["ErtScript"].examples == "examples"
 
 
+@pytest.mark.filterwarnings("ignore:Use of legacy_ertscript_workflow is deprecated")
 def test_legacy_workflow_configs_sets_parser_through_add_workflow_return_value():
     configs = LegacyWorkflowConfigs()
     workflow = configs.add_workflow(ert_script=ErtScript, name="name")

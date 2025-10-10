@@ -14,6 +14,7 @@ from .config.config_dict_generator import config_generators
 @pytest.mark.filterwarnings("ignore:MIN_REALIZATIONS")
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 @pytest.mark.filterwarnings("ignore:Duplicate forward model step")
+@pytest.mark.filterwarnings("ignore:.* Segment .* out of bounds. Truncating")
 @settings(max_examples=100)
 @given(config_generators(), config_generators())
 def test_different_defines_give_different_subst_lists(

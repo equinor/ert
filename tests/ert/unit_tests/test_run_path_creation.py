@@ -70,6 +70,7 @@ def test_that_job_name_in_run_arg_is_the_jobname_from_the_config_with_iens_subst
 
 @pytest.mark.integration_test
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
+@pytest.mark.filterwarnings("ignore:EGrid file given with numres")
 def test_that_create_run_path_overwrites_symlinks_by_file(
     snake_oil_field_example, storage
 ):
@@ -850,6 +851,7 @@ def save_zeros(prior_ensemble, num_realizations, dim_size):
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize("itr", [0, 1])
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
+@pytest.mark.filterwarnings("ignore:Number of maps nodes are None. Exporting regular")
 def test_when_manifest_files_are_written_loading_succeeds(storage, itr):
     num_realizations = 2
     dim_size = 2
