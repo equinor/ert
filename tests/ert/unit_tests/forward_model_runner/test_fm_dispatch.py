@@ -33,8 +33,26 @@ from _ert.threading import ErtThread
 from tests.ert.utils import MockZMQServer, wait_until
 
 
+@pytest.fixture
+def use_custom_setsid(use_tmpdir):
+    """macOS doesn't provide /usr/bin/setsid, so we roll our own"""
+    Path("setsid").write_text(
+        dedent(
+            """\
+            #!/usr/bin/env python
+            import os
+            import sys
+            os.setsid()
+            os.execvp(sys.argv[1], sys.argv[1:])
+            """
+        ),
+        encoding="utf-8",
+    )
+    os.chmod("setsid", 0o755)
+
+
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.usefixtures("use_custom_setsid")
 def test_terminate_steps():
     # Executes itself recursively and sleeps for 100 seconds
     Path("dummy_executable").write_text(
@@ -81,21 +99,6 @@ else:
     Path(FORWARD_MODEL_DESCRIPTION_FILE).write_text(
         json.dumps(fm_description), encoding="utf-8"
     )
-
-    # macOS doesn't provide /usr/bin/setsid, so we roll our own
-    Path("setsid").write_text(
-        dedent(
-            """\
-            #!/usr/bin/env python
-            import os
-            import sys
-            os.setsid()
-            os.execvp(sys.argv[1], sys.argv[1:])
-            """
-        ),
-        encoding="utf-8",
-    )
-    os.chmod("setsid", 0o755)
 
     # (we wait for the process below)
     fm_dispatch_process = Popen(
@@ -162,7 +165,7 @@ def test_memory_profile_is_logged_as_csv(monkeypatch):
 
 
 @pytest.mark.integration_test
-@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.usefixtures("use_custom_setsid")
 def test_fm_dispatch_run_subset_specified_as_parameter():
     Path("dummy_executable").write_text(
         "#!/usr/bin/env python\n"
@@ -239,21 +242,6 @@ def test_fm_dispatch_run_subset_specified_as_parameter():
     Path(FORWARD_MODEL_DESCRIPTION_FILE).write_text(
         json.dumps(fm_description), encoding="utf-8"
     )
-
-    # macOS doesn't provide /usr/bin/setsid, so we roll our own
-    Path("setsid").write_text(
-        dedent(
-            """\
-            #!/usr/bin/env python
-            import os
-            import sys
-            os.setsid()
-            os.execvp(sys.argv[1], sys.argv[1:])
-            """
-        ),
-        encoding="utf-8",
-    )
-    os.chmod("setsid", 0o755)
 
     # (we wait for the process below)
     fm_dispatch_process = Popen(
@@ -371,6 +359,7 @@ def test_fm_dispatch_kills_itself_after_unsuccessful_step():
 
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No oom_score on MacOS")
+@pytest.mark.usefixtures("use_custom_setsid")
 def test_killed_by_oom(tmp_path, monkeypatch):
     """Test out-of-memory detection for pid and descendants based
     on a mocked dmesg system utility."""
@@ -415,9 +404,8 @@ def test_report_all_messages_drops_reporter_on_error():
 
 @pytest.mark.timeout(30)
 @pytest.mark.integration_test
-async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_sigterm(
-    use_tmpdir,
-):
+@pytest.mark.usefixtures("use_custom_setsid")
+async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_sigterm():
     Path("dummy_executable").write_text(
         """#!/usr/bin/env python
 import time
@@ -444,21 +432,6 @@ time.sleep(180)""",
         Path(FORWARD_MODEL_DESCRIPTION_FILE).write_text(
             json.dumps(fm_description), encoding="utf-8"
         )
-
-        # macOS doesn't provide /usr/bin/setsid, so we roll our own
-        Path("setsid").write_text(
-            dedent(
-                """\
-                #!/usr/bin/env python
-                import os
-                import sys
-                os.setsid()
-                os.execvp(sys.argv[1], sys.argv[1:])
-                """
-            ),
-            encoding="utf-8",
-        )
-        os.chmod("setsid", 0o755)
 
         fm_dispatch_process = Popen(  # noqa: ASYNC220
             [
@@ -491,10 +464,8 @@ time.sleep(180)""",
 
 @pytest.mark.timeout(30)
 @pytest.mark.integration_test
-async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_terminate_message(
-    tmp_path,
-):
-    os.chdir(tmp_path)
+@pytest.mark.usefixtures("use_custom_setsid")
+async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_terminate_msg():
     Path("dummy_executable").write_text(
         """#!/usr/bin/env python
 import time
@@ -521,21 +492,6 @@ time.sleep(180)""",
         Path(FORWARD_MODEL_DESCRIPTION_FILE).write_text(
             json.dumps(fm_description), encoding="utf-8"
         )
-
-        # macOS doesn't provide /usr/bin/setsid, so we roll our own
-        Path("setsid").write_text(
-            dedent(
-                """\
-                #!/usr/bin/env python
-                import os
-                import sys
-                os.setsid()
-                os.execvp(sys.argv[1], sys.argv[1:])
-                """
-            ),
-            encoding="utf-8",
-        )
-        os.chmod("setsid", 0o755)
 
         fm_dispatch_process = Popen(  # noqa: ASYNC220
             [
