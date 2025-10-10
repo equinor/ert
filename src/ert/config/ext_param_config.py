@@ -78,7 +78,7 @@ class ExtParamConfig(ParameterConfig):
 
     def create_storage_datasets(
         self,
-        from_data: npt.NDArray[np.float64],
+        from_data: npt.NDArray[np.float32],
         iens_active_index: npt.NDArray[np.int_],
     ) -> Iterator[tuple[int, xr.Dataset]]:
         for i, realization in enumerate(iens_active_index):
@@ -97,7 +97,7 @@ class ExtParamConfig(ParameterConfig):
 
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
-    ) -> npt.NDArray[np.float64]:
+    ) -> npt.NDArray[np.float32]:
         raise NotImplementedError
 
     def load_parameter_graph(self) -> nx.Graph[int]:
