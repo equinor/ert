@@ -6,9 +6,9 @@ import pandas as pd
 
 
 def _calculate_misfit(
-    obs_value: npt.NDArray[np.float64],
-    response_value: npt.NDArray[np.float64],
-    obs_std: npt.NDArray[np.float64],
+    obs_value: npt.NDArray[np.float32],
+    response_value: npt.NDArray[np.float32],
+    obs_std: npt.NDArray[np.float32],
 ) -> list[float]:
     difference = response_value - obs_value
     misfit = (difference / obs_std) ** 2
