@@ -154,7 +154,7 @@ METADATA = EnsembleSnapshotMetadata(
                 name="Micky",
                 data=DataSection(
                     header=["Some", "string", "elements"],
-                    data=[["a", 1.1, "b"], ["c", 3]],
+                    data=[["a", 1.1, "b"], ["c", 3.0]],
                     extra={"a": "b", "c": "d"},
                 ),
             ),
@@ -166,7 +166,7 @@ METADATA = EnsembleSnapshotMetadata(
                 run_id=uuid.uuid1(),
                 data=DataSection(
                     header=["Some", "string", "elements"],
-                    data=[["a", 1.1, "b"], ["c", 3]],
+                    data=[["a", 1.1, "b"], ["c", 3.0]],
                     extra={"a": "b", "c": "d"},
                 ),
             ),
