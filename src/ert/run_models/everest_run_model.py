@@ -251,7 +251,7 @@ class EverestRunModel(RunModel):
         parameter_configs = [
             control.to_ert_parameter_config() for control in everest_config.controls
         ]
-
+        print(f"{parameter_configs=}")
         response_configs: list[ResponseConfig] = []
 
         objective_names = [c.name for c in everest_config.objective_functions]

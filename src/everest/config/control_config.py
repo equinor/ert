@@ -292,7 +292,7 @@ class ControlConfig(BaseModel):
                 formatted_names.append(f"{self.name}.{variable.name}.{variable.index}")
             else:
                 formatted_names.append(f"{self.name}.{variable.name}")
-
+        print(f"{formatted_names=}")
         return formatted_names
 
     @property

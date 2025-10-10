@@ -915,16 +915,9 @@ def test_that_all_parameters_and_gen_data_consolidation_works(
             ensemble.save_everest_realization_info(everest_realization_info)
 
             for realization in range(num_realizations):
-                param_data = xr.Dataset(
-                    {
-                        "values": (
-                            "names",
-                            np.array([realization] * len(param_keys)) + (batch / 10),
-                        ),
-                        "names": param_keys,
-                    }
-                )
-                ensemble.save_parameters(param_data, "point", realization)
+                param_data = np.array([realization] * len(param_keys)) + (batch / 10)
+                print(f"{param_data=} {batch=} {realization=}")
+                ensemble.save_parameters_numpy(param_data, "point", realization)
 
                 if realization in failed_realizations:
                     ensemble.set_failure(
@@ -946,6 +939,7 @@ def test_that_all_parameters_and_gen_data_consolidation_works(
                     ensemble.save_response("gen_data", response_data, realization)
 
             ensemble_data = ensemble.all_parameters_and_gen_data
+            print(f"Ensemble_data: {ensemble_data}")
             snapshot_str = (
                 orjson.dumps(
                     ensemble_data.to_dicts(),
