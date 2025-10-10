@@ -176,11 +176,11 @@ def test_that_default_env_is_set():
 
 def test_forward_model_arglist_with_weird_characters():
     forward_model = forward_model_step_from_config_contents(
-        """
+        r"""
         STDERR    insert_nosim.stderr
         STDOUT    insert_nosim.stdout
         EXECUTABLE sed
-        ARGLIST   -i s/^RUNSPEC.*/|RUNSPEC\\nNOSIM/ <ECLBASE>.DATA
+        ARGLIST   -i s/^RUNSPEC.*/|RUNSPEC\nNOSIM/ <ECLBASE>.DATA
         MIN_ARG 3
         MAX_ARG 3
         ARG_TYPE 0 STRING
@@ -192,7 +192,7 @@ def test_forward_model_arglist_with_weird_characters():
     assert forward_model.environment == forward_model.default_env
     assert forward_model.arglist == [
         "-i",
-        "s/^RUNSPEC.*/|RUNSPEC\nNOSIM/",
+        r"s/^RUNSPEC.*/|RUNSPEC\nNOSIM/",
         "<ECLBASE>.DATA",
     ]
 

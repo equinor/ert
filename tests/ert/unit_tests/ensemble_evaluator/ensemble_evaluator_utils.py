@@ -11,7 +11,8 @@ class TestEnsemble(Ensemble):
             Realization(
                 real_no,
                 fm_steps=[
-                    ForwardModelStep(str(fm_idx), "") for fm_idx in range(fm_steps)
+                    ForwardModelStep(name=str(fm_idx), executable="")
+                    for fm_idx in range(fm_steps)
                 ],
                 active=True,
                 max_runtime=0,

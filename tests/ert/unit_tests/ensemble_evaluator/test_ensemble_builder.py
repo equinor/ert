@@ -17,7 +17,7 @@ def test_build_ensemble(active_real):
                 num_cpu=1,
                 max_runtime=0,
                 job_script="job_script",
-                fm_steps=[ForwardModelStep("echo_command", "")],
+                fm_steps=[ForwardModelStep(name="echo_command", executable="")],
                 active=active_real,
                 realization_memory=0,
             )
