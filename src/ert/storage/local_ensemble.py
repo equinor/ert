@@ -19,6 +19,7 @@ from pydantic import BaseModel
 from typing_extensions import TypedDict
 
 from ert.config import ParameterCardinality, ParameterConfig
+from ert.config.ext_param_config import ExtParamConfig
 from ert.config.response_config import InvalidResponseFile
 
 from .load_status import LoadResult
@@ -564,18 +565,23 @@ class LocalEnsemble(BaseMode):
         transformed: bool = False,
     ) -> pl.DataFrame:
         df_lazy = self._load_parameters_lazy(SCALAR_FILENAME)
+        print(f"{keys=}")
         df_lazy = df_lazy.select(["realization", *keys])
         if realizations is not None:
+            print(f"{realizations=}")
             if isinstance(realizations, int):
                 realizations = np.array([realizations])
             df_lazy = df_lazy.filter(pl.col("realization").is_in(realizations))
         df = df_lazy.collect(engine="streaming")
+        print("5. ", df)
         if df.is_empty():
             raise IndexError(
                 f"No matching realizations {realizations} found for {keys}"
             )
 
         if transformed:
+            print("TRANSFORMED!")
+            # print(self.experiment.parameter_configuration)
             df = df.with_columns(
                 [
                     pl.col(col)
@@ -588,6 +594,7 @@ class LocalEnsemble(BaseMode):
                     if col != "realization"
                 ]
             )
+        print("2.", df)
         return df
 
     def load_parameters(
@@ -602,11 +609,15 @@ class LocalEnsemble(BaseMode):
         otherwise it will return the raw values.
 
         """
-        cfgs = [
-            p
-            for p in self.experiment.parameter_configuration.values()
-            if group in {p.name, p.group_name}
-        ]
+        cfgs: list[str] = []
+
+        for p in self.experiment.parameter_configuration.values():
+            if group in {p.name, p.group_name}:
+                cfgs.append(p)
+            if isinstance(p, ExtParamConfig) and any(
+                input_key == group for input_key in p.input_keys
+            ):
+                cfgs.append(p)
 
         if not cfgs:
             raise KeyError(f"{group} is not registered to the experiment.")
@@ -615,9 +626,14 @@ class LocalEnsemble(BaseMode):
         cardinality = next(cfg.cardinality for cfg in cfgs)
 
         if cardinality == ParameterCardinality.multiple_configs_per_ensemble_dataset:
-            return self._load_scalar_keys(
-                [cfg.name for cfg in cfgs], realizations, transformed
-            )
+            keys = set()
+            for cfg in cfgs:
+                if isinstance(cfg, ExtParamConfig):
+                    keys = keys.union(set(cfg.input_keys))
+                else:
+                    keys.add(cfg.name)
+            # print(f"{keys=}")
+            return self._load_scalar_keys(list(keys), realizations, transformed)
         return self._load_dataset(
             group,
             (
@@ -656,10 +672,13 @@ class LocalEnsemble(BaseMode):
         iens_active_index: npt.NDArray[np.int_],
     ) -> None:
         config_node = self.experiment.parameter_configuration[param_group]
+        might_have_new_realizations = isinstance(config_node, ExtParamConfig)
         for real, ds in config_node.create_storage_datasets(
             parameters, iens_active_index
         ):
-            self.save_parameters(ds, config_node.name, real)
+            self.save_parameters(
+                ds, config_node.name, real, might_have_new_realizations
+            )
 
     def load_scalars(
         self, group: str | None = None, realizations: npt.NDArray[np.int_] | None = None
@@ -794,6 +813,7 @@ class LocalEnsemble(BaseMode):
         dataset: xr.Dataset | pl.DataFrame,
         group: str | None = None,
         realization: int | None = None,
+        might_have_new_realizations: bool = False,
     ) -> None:
         """
         Saves the provided dataset under a parameter group and realization index(es)
@@ -802,15 +822,22 @@ class LocalEnsemble(BaseMode):
         if isinstance(dataset, pl.DataFrame):
             if dataset.is_empty():
                 raise ValueError("Parameters dataframe is empty.")
-            allowed_cols = set(self.experiment.parameter_configuration) | {
-                "realization"
-            }
+            # print(f"{set(self.experiment.parameter_configuration)=}")
+            allowed_cols = {"realization"}
+            for (
+                param_name,
+                param_config,
+            ) in self.experiment.parameter_configuration.items():
+                if isinstance(param_config, ExtParamConfig):
+                    allowed_cols |= set(param_config.input_keys)
+                allowed_cols.add(param_name)
+
             actual_cols = set(dataset.columns)
             unexpected_cols = actual_cols - allowed_cols
             if unexpected_cols:
                 raise KeyError(
                     f"Columns {', '.join(sorted(unexpected_cols))}"
-                    " not in experiment parameters"
+                    f" not in experiment parameters {allowed_cols=}"
                 )
             if "realization" not in dataset.columns:
                 raise KeyError(
@@ -824,14 +851,25 @@ class LocalEnsemble(BaseMode):
                 df = self._load_parameters_lazy(SCALAR_FILENAME).collect(
                     engine="streaming"
                 )
-                df = df.drop(
-                    [c for c in dataset.columns if c != "realization"], strict=False
-                )
-                df_full = (
-                    df.join(dataset, on="realization", how="left")
-                    .unique(subset=["realization"], keep="first")
-                    .sort("realization")
-                )
+                if not might_have_new_realizations:
+                    df = df.drop(  # Why we do this??
+                        [c for c in dataset.columns if c != "realization"], strict=False
+                    )
+                print("joining old = ", df)
+                print("with new = ", dataset)
+                if might_have_new_realizations:
+                    df_full = (
+                        pl.concat([df, dataset])
+                        .unique(subset=["realization"], keep="first")
+                        .sort("realization")
+                    )
+                else:
+                    df_full = (
+                        df.join(dataset, on="realization", how="left")
+                        .unique(subset=["realization"], keep="first")
+                        .sort("realization")
+                    )
+                print("resulted in = ", df_full)
             except KeyError:
                 df_full = dataset
 
@@ -1150,24 +1188,31 @@ class LocalEnsemble(BaseMode):
         Only for Everest wrt objectives/constraints,
         disregards summary data and primary key values
         """
-        param_dfs = []
+        param_dfs: list[pl.DataFrame] = []
         for param_group in self.experiment.parameter_configuration:
-            params_pd = self.load_parameters(param_group)["values"].to_pandas()
-
-            assert isinstance(params_pd, pd.DataFrame)
-            params_pd = params_pd.reset_index()
-            param_df = pl.from_pandas(params_pd)
-
+            params_pd = self.load_parameters(param_group)
+            if isinstance(params_pd, xr.Dataset):
+                # print(f"JONAK. {params_pd}")
+                params_pd = params_pd["values"].to_pandas()
+                assert isinstance(params_pd, pd.DataFrame)
+                params_pd = params_pd.reset_index()
+                params_pd = pl.from_pandas(params_pd)
+            param_df = params_pd
+            assert isinstance(param_df, pl.DataFrame)
             param_columns = [c for c in param_df.columns if c != "realizations"]
+            print(f"{param_columns=}")
             param_df = param_df.rename(
                 {
                     **{
                         c: param_group + "." + c.replace("\0", ".")
                         for c in param_columns
+                        if c != "realization"
                     },
-                    "realizations": "realization",
+                    # "realizations": "realization",
+                    # maybe allow it, but change strict=False?
                 }
             )
+            print(f"newmanoyiem {param_df}")
             param_df = param_df.cast(
                 {
                     "realization": pl.UInt16,
@@ -1198,10 +1243,11 @@ class LocalEnsemble(BaseMode):
         responses_wide = responses["realization", "response_key", "values"].pivot(
             on="response_key", values="values"
         )
-
+        print(f"{responses_wide=}")
         # If responses are missing for some realizations, this _left_ join will
         # put null (polars) which maps to nan when doing .to_numpy() into the
         # response columns for those realizations
+        print(f"params wide {params_wide=}")
         params_and_responses = params_wide.join(
             responses_wide, on="realization", how="left"
         ).with_columns(pl.lit(self.iteration).alias("batch"))

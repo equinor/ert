@@ -351,10 +351,14 @@ class LocalExperiment(BaseMode):
 
     @cached_property
     def parameter_configuration(self) -> dict[str, ParameterConfig]:
-        return {
-            name: _parameters_adapter.validate_python(cfg)
-            for name, cfg in self.parameter_info.items()
-        }
+        itms = {}
+        for name, cfg in self.parameter_info.items():
+            itms[name] = _parameters_adapter.validate_python(cfg)
+            # if cfg.get("type") == "everest_parameters":
+            #    for input_key in cfg.get("input_keys", []):
+            #        itms[input_key] = itms[name]
+
+        return itms
 
     @cached_property
     def parameter_keys(self) -> list[str]:
