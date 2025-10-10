@@ -391,14 +391,14 @@ def convert_numeric_string_columns(df: pl.DataFrame) -> pl.DataFrame:
     for col, dtype in zip(df.columns, df.dtypes, strict=False):
         if dtype == pl.String:
             try:
-                df = df.with_columns(pl.col(col).cast(pl.Int64, strict=True).alias(col))
+                df = df.with_columns(pl.col(col).cast(pl.Int32, strict=True).alias(col))
                 continue
             except InvalidOperationError:
                 pass
 
             try:  # noqa: SIM105
                 df = df.with_columns(
-                    pl.col(col).cast(pl.Float64, strict=True).alias(col)
+                    pl.col(col).cast(pl.Float32, strict=True).alias(col)
                 )
             except InvalidOperationError:
                 pass

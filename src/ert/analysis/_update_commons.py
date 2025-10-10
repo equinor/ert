@@ -96,7 +96,7 @@ def _auto_scale_observations(
     obs_mask: npt.NDArray[np.bool_],
     active_realizations: list[str],
     progress_callback: Callable[[AnalysisEvent], None],
-) -> tuple[npt.NDArray[np.float64], pl.DataFrame] | tuple[None, None]:
+) -> tuple[npt.NDArray[np.float32], pl.DataFrame] | tuple[None, None]:
     """
     Performs 'Auto Scaling' to mitigate issues with correlated observations,
     and saves computed scaling factors across input groups to ERT storage.
@@ -328,7 +328,7 @@ class _OutlierColumns(StrEnum):
 def _all_parameters(
     ensemble: Ensemble,
     iens_active_index: npt.NDArray[np.int_],
-) -> npt.NDArray[np.float64]:
+) -> npt.NDArray[np.float32]:
     """Return all parameters in assimilation problem"""
 
     param_groups = list(ensemble.experiment.parameter_configuration.keys())

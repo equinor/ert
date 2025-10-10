@@ -100,7 +100,7 @@ class ParameterConfig(BaseModel):
     @abstractmethod
     def create_storage_datasets(
         self,
-        from_data: npt.NDArray[np.float64],
+        from_data: npt.NDArray[np.float32],
         iens_active_index: npt.NDArray[np.int_],
     ) -> Iterator[tuple[int | None, pl.DataFrame | xr.Dataset]]:
         """
@@ -128,7 +128,7 @@ class ParameterConfig(BaseModel):
     @abstractmethod
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
-    ) -> npt.NDArray[np.float64]:
+    ) -> npt.NDArray[np.float32]:
         """
         Load the parameter from internal storage for the given ensemble.
         Must return array of shape (number of parameters, number of realizations).
