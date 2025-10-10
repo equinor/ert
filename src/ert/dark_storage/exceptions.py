@@ -27,7 +27,11 @@ class ExpectationError(ErtStorageError):
 
 
 class UnprocessableError(ErtStorageError):
-    __status_code__ = status.HTTP_422_UNPROCESSABLE_ENTITY
+    try:
+        # Starlette 0.48.0 and onwards:
+        __status_code__ = status.HTTP_422_UNPROCESSABLE_CONTENT
+    except AttributeError:
+        __status_code__ = status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
 class InternalServerError(ErtStorageError):
