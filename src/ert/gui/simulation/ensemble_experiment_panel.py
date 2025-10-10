@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.config import AnalysisConfig
+from ert.config import AnalysisConfig, ParameterConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
     ActiveRealizationsModel,
@@ -23,6 +23,7 @@ from ert.validation import ExperimentValidation, ProperNameArgument
 from ert.validation.active_range import ActiveRange
 from ert.validation.range_string_argument import RangeSubsetStringArgument
 
+from ..ertwidgets.parameterviewer import get_parameters_button
 from ._design_matrix_panel import DesignMatrixPanel
 from .experiment_config_panel import ExperimentConfigPanel
 
@@ -39,6 +40,7 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
     def __init__(
         self,
         analysis_config: AnalysisConfig,
+        parameter_configuration: list[ParameterConfig],
         active_realizations: list[bool],
         config_num_realization: int,
         run_path: str,
@@ -102,6 +104,7 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         layout.addRow("Active realizations", self._active_realizations_field)
 
         design_matrix = analysis_config.design_matrix
+        merged_parameters = parameter_configuration
         if design_matrix is not None:
             layout.addRow(
                 "Design Matrix",
@@ -111,7 +114,11 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
                     config_num_realization,
                 ),
             )
+            merged_parameters = design_matrix.merge_with_existing_parameters(
+                merged_parameters
+            )
 
+        layout.addRow("Parameters:", get_parameters_button(merged_parameters, self))
         self.setLayout(layout)
 
         self._active_realizations_field.getValidationSupport().validationChanged.connect(

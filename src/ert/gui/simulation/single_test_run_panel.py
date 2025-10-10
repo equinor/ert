@@ -8,6 +8,9 @@ from ert.gui.ertwidgets import CopyableLabel
 from ert.mode_definitions import TEST_RUN_MODE
 from ert.run_models import SingleTestRun
 
+from ...config import AnalysisConfig, ParameterConfig
+from ..ertwidgets.parameterviewer import get_parameters_button
+from ._design_matrix_panel import DesignMatrixPanel
 from .experiment_config_panel import ExperimentConfigPanel
 
 
@@ -19,7 +22,13 @@ class Arguments:
 
 
 class SingleTestRunPanel(ExperimentConfigPanel):
-    def __init__(self, run_path: str, notifier: ErtNotifier) -> None:
+    def __init__(
+        self,
+        analysis_config: AnalysisConfig,
+        parameter_configuration: list[ParameterConfig],
+        run_path: str,
+        notifier: ErtNotifier,
+    ) -> None:
         ExperimentConfigPanel.__init__(self, SingleTestRun)
         self.notifier = notifier
         self.setObjectName("Single_test_run_panel")
@@ -32,6 +41,20 @@ class SingleTestRunPanel(ExperimentConfigPanel):
 
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
+        design_matrix = analysis_config.design_matrix
+        merged_parameters = parameter_configuration
+        if design_matrix is not None:
+            layout.addRow(
+                "Design Matrix",
+                DesignMatrixPanel.get_design_matrix_button(
+                    design_matrix,
+                ),
+            )
+            merged_parameters = design_matrix.merge_with_existing_parameters(
+                merged_parameters
+            )
+
+        layout.addRow("Parameters:", get_parameters_button(merged_parameters, self))
 
         self.setLayout(layout)
 

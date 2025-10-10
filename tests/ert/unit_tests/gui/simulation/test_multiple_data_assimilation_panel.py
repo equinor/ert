@@ -1,6 +1,7 @@
 from PyQt6.QtWidgets import QCheckBox
 from pytestqt.qtbot import QtBot
 
+from ert.config import EnsembleConfig
 from ert.config.analysis_config import AnalysisConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
@@ -29,6 +30,7 @@ def test_that_active_realizations_selector_validates_with_ensemble_size_from_con
     notifier._storage = MockStorage()
     panel = MultipleDataAssimilationPanel(
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
+        parameter_configuration=EnsembleConfig().parameter_configuration,
         run_path="",
         notifier=notifier,
         active_realizations=active_realizations,
@@ -74,6 +76,7 @@ def test_that_active_realizations_selector_validates_with_with_realizations_from
     )
     panel = MultipleDataAssimilationPanel(
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
+        parameter_configuration=EnsembleConfig().parameter_configuration,
         run_path="",
         notifier=notifier,
         active_realizations=active_realizations,

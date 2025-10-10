@@ -75,8 +75,8 @@ class DesignMatrixPanel(QDialog):
     @staticmethod
     def get_design_matrix_button(
         design_matrix: "DesignMatrix",
-        number_of_realizations_label: QLabel,
-        config_num_realization: int,
+        number_of_realizations_label: QLabel | None = None,
+        config_num_realization: int | None = None,
     ) -> QHBoxLayout:
         show_dm_param_button = QPushButton("Show design matrix")
         show_dm_param_button.setObjectName("show-dm-parameters")
@@ -89,7 +89,11 @@ class DesignMatrixPanel(QDialog):
         show_dm_param_button.clicked.connect(
             lambda: DesignMatrixPanel.show_dm_params(design_matrix)
         )
-        if len(design_matrix.active_realizations) != config_num_realization:
+        if (
+            number_of_realizations_label
+            and config_num_realization
+            and len(design_matrix.active_realizations) != config_num_realization
+        ):
             parent_widget = number_of_realizations_label.parent()
 
             if isinstance(parent_widget, QWidget) and (

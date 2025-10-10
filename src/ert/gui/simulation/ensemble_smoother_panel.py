@@ -25,11 +25,12 @@ from ert.validation import (
 from ert.validation.active_range import ActiveRange
 from ert.validation.range_string_argument import RangeSubsetStringArgument
 
+from ..ertwidgets.parameterviewer import get_parameters_button
 from ._design_matrix_panel import DesignMatrixPanel
 from .experiment_config_panel import ExperimentConfigPanel
 
 if TYPE_CHECKING:
-    from ert.config import AnalysisConfig
+    from ert.config import AnalysisConfig, ParameterConfig
 
 
 @dataclass
@@ -44,6 +45,7 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
     def __init__(
         self,
         analysis_config: AnalysisConfig,
+        parameter_configuration: list[ParameterConfig],
         run_path: str,
         notifier: ErtNotifier,
         active_realizations: list[bool],
@@ -113,14 +115,21 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         layout.addRow("Active realizations", self._active_realizations_field)
 
         design_matrix = analysis_config.design_matrix
+        merged_parameters = parameter_configuration
         if design_matrix is not None:
             layout.addRow(
                 "Design Matrix",
                 DesignMatrixPanel.get_design_matrix_button(
-                    design_matrix, number_of_realizations_label, config_num_realization
+                    design_matrix,
+                    number_of_realizations_label,
+                    config_num_realization,
                 ),
             )
+            merged_parameters = design_matrix.merge_with_existing_parameters(
+                merged_parameters
+            )
 
+        layout.addRow("Parameters:", get_parameters_button(merged_parameters, self))
         self.setLayout(layout)
 
         self._experiment_name_field.getValidationSupport().validationChanged.connect(
