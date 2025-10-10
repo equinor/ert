@@ -1,8 +1,11 @@
+import pytest
+
 from ert.config import ErtConfig
 from ert.storage import open_storage
 from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 def test_load_from_context(benchmark, template_config):
     path = template_config["folder"]
 

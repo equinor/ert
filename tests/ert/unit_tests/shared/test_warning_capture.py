@@ -1,8 +1,11 @@
 import warnings
 
+import pytest
+
 from ert.warnings import capture_specific_warning
 
 
+@pytest.mark.filterwarnings("ignore:Bar")
 def test_capture_specific_warning_propagates_specific_warning():
     class SpecificWarning(Warning):
         pass
