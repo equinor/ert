@@ -88,7 +88,7 @@ def mock_server(monkeypatch):
         response_mock = MagicMock()
         response_mock.json.return_value = {"status": status, "message": message}
         client_mock.get.return_value = response_mock
-        server_patch.session.return_value = client_mock
+        server_patch.session.return_value.__enter__.return_value = client_mock
         monkeypatch.setattr("everest.detached.everserver.StorageService", server_patch)
 
     yield func

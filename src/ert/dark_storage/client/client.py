@@ -1,6 +1,7 @@
 import ssl
 
 import httpx
+from httpx_retries import Retry, RetryTransport
 
 from ._session import ConnInfo, find_conn_info
 
@@ -25,8 +26,13 @@ class Client(httpx.Client):
         super().__init__(
             base_url=conn_info.base_url,
             headers=headers,
-            verify=ssl.create_default_context(cafile=conn_info.cert)
-            if isinstance(conn_info.cert, str)
-            else conn_info.cert,
-            timeout=15,
+            transport=RetryTransport(
+                httpx.HTTPTransport(
+                    verify=ssl.create_default_context(cafile=conn_info.cert)
+                    if isinstance(conn_info.cert, str)
+                    else conn_info.cert,
+                ),
+                retry=Retry(total=5, backoff_factor=0.5),
+            ),
+            timeout=3,
         )

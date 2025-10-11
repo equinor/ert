@@ -9,11 +9,9 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any
 
-import httpx
 import yaml
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
-from ert.dark_storage.client import Client as DarkStorageClient
 from ert.plugins.plugin_manager import ErtPluginManager
 from ert.run_models.run_model import ExperimentStatus
 from ert.services import StorageService
@@ -147,14 +145,10 @@ def main() -> None:
         else None
     )
 
-    def _create_client(server_path: str) -> DarkStorageClient:
-        return StorageService.session(project=server_path)
-
     with (
         tracer.start_as_current_span("everest.everserver", context=ctx),
         NamedTemporaryFile() as log_file,
     ):
-        client = None
         try:
             _configure_loggers(
                 detached_dir=Path(ServerConfig.get_detached_node_dir(output_dir)),
@@ -174,30 +168,19 @@ def main() -> None:
                 timeout=240, project=server_path, logging_config=log_file.name
             ) as server:
                 server.fetch_conn_info()
-                client = _create_client(server_path)
-                update_everserver_status(status_path, ExperimentState.running)
-                done = False
-                while not done:
-                    try:
+                with StorageService.session(project=server_path) as client:
+                    update_everserver_status(status_path, ExperimentState.running)
+                    done = False
+                    while not done:
                         response = client.get(
                             "/experiment_server/status", auth=server.fetch_auth()
                         )
-                    except httpx.RemoteProtocolError:
-                        logger.warning(
-                            "httpx.RemoteProtocolError caught when polling "
-                            "experiment_server for status. "
-                            "Will recreate client and try to continue"
-                        )
-                        client.close()
-                        time.sleep(1)  # Be nice
-                        client = _create_client(server_path)
-                        continue
-                    status = ExperimentStatus(**response.json())
-                    done = status.status not in {
-                        ExperimentState.pending,
-                        ExperimentState.running,
-                    }
-                    time.sleep(0.5)
+                        status = ExperimentStatus(**response.json())
+                        done = status.status not in {
+                            ExperimentState.pending,
+                            ExperimentState.running,
+                        }
+                        time.sleep(0.5)
                     if status.status == ExperimentState.completed:
                         update_everserver_status(
                             status_path,
@@ -212,11 +195,8 @@ def main() -> None:
                         )
                     elif status.status == ExperimentState.failed:
                         update_everserver_status(
-                            status_path,
-                            ExperimentState.failed,
-                            message=status.message,
+                            status_path, ExperimentState.failed, message=status.message
                         )
-
         except BaseServiceExit:
             # Server exit, happens on normal shutdown and keyboard interrupt
             server_status = everserver_status(status_path)
@@ -229,9 +209,6 @@ def main() -> None:
                 message=traceback.format_exc(),
             )
             logging.getLogger(EVERSERVER).exception(e)
-        finally:
-            if client is not None:
-                client.close()
 
 
 if __name__ == "__main__":
