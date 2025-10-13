@@ -2057,8 +2057,8 @@ def test_design2params_also_validates_design_matrix(tmp_path, caplog, monkeypatc
         pl.DataFrame([["b", 1], ["c", 2]], orient="row"),
     )
     mock_design2params = ForwardModelStep(
-        "DESIGN2PARAMS",
-        "/usr/bin/env",
+        name="DESIGN2PARAMS",
+        executable="/usr/bin/env",
         arglist=["<IENS>", "<xls_filename>", "<designsheet>", "<defaultssheet>"],
     )
     monkeypatch.setattr(
@@ -2096,8 +2096,8 @@ def test_two_design2params_validates_design_matrix_merging(
         pl.DataFrame(),
     )
     mock_design2params = ForwardModelStep(
-        "DESIGN2PARAMS",
-        "/usr/bin/env",
+        name="DESIGN2PARAMS",
+        executable="/usr/bin/env",
         arglist=["<IENS>", "<xls_filename>", "<designsheet>", "<defaultssheet>"],
     )
     monkeypatch.setattr(
@@ -2154,8 +2154,8 @@ def test_three_design2params_validates_design_matrix_merging(
         pl.DataFrame(),
     )
     mock_design2params = ForwardModelStep(
-        "DESIGN2PARAMS",
-        "/usr/bin/env",
+        name="DESIGN2PARAMS",
+        executable="/usr/bin/env",
         arglist=["<IENS>", "<xls_filename>", "<designsheet>", "<defaultssheet>"],
     )
     monkeypatch.setattr(
