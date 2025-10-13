@@ -48,14 +48,18 @@ def plotDistribution(
     ensemble_list = plot_context.ensembles()
     ensemble_indexes: list[int] = []
     previous_data = None
-    for ensemble_index, (ensemble, data) in enumerate(ensemble_to_data_map.items()):
+    for (ensemble_index, (ensemble, data)), color_index in zip(
+        enumerate(ensemble_to_data_map.items()),
+        plot_context.ensembles_color_indexes(),
+        strict=False,
+    ):
+        config.setCurrentColor(color_index)
         ensemble_indexes.append(ensemble_index)
 
         if not data.empty:
             _plotDistribution(
                 axes, config, data, ensemble.name, ensemble_index, previous_data
             )
-            config.nextColor()
 
         previous_data = data
 
