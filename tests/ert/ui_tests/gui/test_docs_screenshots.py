@@ -404,12 +404,17 @@ def test_that_poly_new_with_observations_screenshots_are_up_to_date(
 
         for index in range(dndlist.count()):
             item = dndlist.item(index)
-            item.setData(Qt.ItemDataRole.CheckStateRole, True)
+            if not item.data(Qt.ItemDataRole.CheckStateRole):
+                dndlist.slot_toggle_plot(item)
         dndlist.ensembleSelectionListChanged.emit()
 
         gui_evaluator.compare_img_with_gui("plot_obs.png", PLOT_OBS_PNG_THRESHOLD)
 
         data_type_widget = wait_for_child(gui, qtbot, DataTypeKeysWidget, "Data types")
+
+        # Swap back plot order
+        item = dndlist.takeItem(0)
+        dndlist.insertItem(1, item)
 
         for index, img, threshold in [
             (1, "coeff_a.png", COEFF_A_PNG_THRESHOLD),
@@ -460,7 +465,8 @@ def test_that_poly_new_with_more_observations_screenshots_are_up_to_date(
         dndlist = ensemble_selector_widget._EnsembleSelectionWidget__dndlist
         for index in range(dndlist.count()):
             item = dndlist.item(index)
-            item.setData(Qt.ItemDataRole.CheckStateRole, True)
+            if not item.data(Qt.ItemDataRole.CheckStateRole):
+                dndlist.slot_toggle_plot(item)
         dndlist.ensembleSelectionListChanged.emit()
 
         data_type_widget = wait_for_child(gui, qtbot, DataTypeKeysWidget, "Data types")

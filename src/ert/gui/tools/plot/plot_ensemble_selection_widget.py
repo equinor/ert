@@ -1,4 +1,6 @@
+from collections import deque
 from collections.abc import Iterator
+from enum import IntEnum
 from typing import Any
 
 from PyQt6.QtCore import (
@@ -33,9 +35,11 @@ from .plot_api import EnsembleObject
 class EnsembleSelectionWidget(QWidget):
     ensembleSelectionChanged = Signal()
 
-    def __init__(self, ensembles: list[EnsembleObject]) -> None:
+    def __init__(
+        self, ensembles: list[EnsembleObject], number_of_plot_colors: int
+    ) -> None:
         QWidget.__init__(self)
-        self.__dndlist = EnsembleSelectListWidget(ensembles)
+        self.__dndlist = EnsembleSelectListWidget(ensembles, number_of_plot_colors)
 
         self.__ensemble_layout = QVBoxLayout()
         self.__ensemble_layout.setSpacing(0)
@@ -49,14 +53,27 @@ class EnsembleSelectionWidget(QWidget):
     def get_selected_ensembles(self) -> list[EnsembleObject]:
         return self.__dndlist.get_checked_ensembles()
 
+    def get_selected_ensembles_color_indexes(self) -> list[int]:
+        return self.__dndlist.get_checked_color_indexes()
+
+
+class EnsembleSelectListWidgetItemDataRole(IntEnum):
+    ENSEMBLE = Qt.ItemDataRole.UserRole
+    COLOR_INDEX = Qt.ItemDataRole.UserRole + 1
+
 
 class EnsembleSelectListWidget(QListWidget):
     ensembleSelectionListChanged = Signal()
     MAXIMUM_SELECTED = 5
     MINIMUM_SELECTED = 1
 
-    def __init__(self, ensembles: list[EnsembleObject]) -> None:
+    def __init__(
+        self, ensembles: list[EnsembleObject], number_of_plot_colors: int
+    ) -> None:
         super().__init__()
+        self.available_colors = deque(
+            range(max(number_of_plot_colors, self.MAXIMUM_SELECTED))
+        )
         self._ensemble_count = 0
         self.setObjectName("ensemble_selector")
         sorted_ensembles = sorted(
@@ -64,7 +81,11 @@ class EnsembleSelectListWidget(QListWidget):
         )
         for i, ensemble in enumerate(sorted_ensembles):
             it = QListWidgetItem(f"{ensemble.experiment_name} : {ensemble.name}")
-            it.setData(Qt.ItemDataRole.UserRole, ensemble)
+            it.setData(EnsembleSelectListWidgetItemDataRole.ENSEMBLE, ensemble)
+            it.setData(
+                EnsembleSelectListWidgetItemDataRole.COLOR_INDEX,
+                self.assign_available_color(None) if i == 0 else None,
+            )
             it.setData(Qt.ItemDataRole.CheckStateRole, i == 0)
             self.addItem(it)
             self._ensemble_count += 1
@@ -86,7 +107,17 @@ class EnsembleSelectListWidget(QListWidget):
                 item = self.item(index)
                 assert item is not None
                 if item.data(Qt.ItemDataRole.CheckStateRole):
-                    yield item.data(Qt.ItemDataRole.UserRole)
+                    yield item.data(EnsembleSelectListWidgetItemDataRole.ENSEMBLE)
+
+        return list(_iter())
+
+    def get_checked_color_indexes(self) -> list[int]:
+        def _iter() -> Iterator[int]:
+            for index in range(self._ensemble_count):
+                item = self.item(index)
+                assert item is not None
+                if item.data(Qt.ItemDataRole.CheckStateRole):
+                    yield item.data(EnsembleSelectListWidgetItemDataRole.COLOR_INDEX)
 
         return list(_iter())
 
@@ -106,11 +137,33 @@ class EnsembleSelectListWidget(QListWidget):
         selected = item.data(Qt.ItemDataRole.CheckStateRole)
 
         if selected and count > self.MINIMUM_SELECTED:
+            self.release_color(
+                item.data(EnsembleSelectListWidgetItemDataRole.COLOR_INDEX)
+            )
             item.setData(Qt.ItemDataRole.CheckStateRole, False)
         elif not selected and count < self.MAXIMUM_SELECTED:
+            item.setData(
+                EnsembleSelectListWidgetItemDataRole.COLOR_INDEX,
+                self.assign_available_color(
+                    item.data(EnsembleSelectListWidgetItemDataRole.COLOR_INDEX)
+                ),
+            )
             item.setData(Qt.ItemDataRole.CheckStateRole, True)
 
         self.ensembleSelectionListChanged.emit()
+
+    def assign_available_color(self, current_color_index: int | None) -> int:
+        if (
+            current_color_index is not None
+            and current_color_index in self.available_colors
+        ):
+            self.available_colors.remove(current_color_index)
+            return current_color_index
+        return self.available_colors.popleft()
+
+    def release_color(self, current_color_index: int | None) -> None:
+        if current_color_index is not None:
+            self.available_colors.append(current_color_index)
 
 
 class CustomItemDelegate(QStyledItemDelegate):
