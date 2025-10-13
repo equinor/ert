@@ -78,7 +78,12 @@ def plotCrossEnsembleStatistics(
         "p67": {},
         "p90": {},
     }
-    for ensemble_index, data in enumerate(ensemble_to_data_map.values()):
+    for (ensemble_index, data), color_index in zip(
+        enumerate(ensemble_to_data_map.values()),
+        plot_context.ensembles_color_indexes(),
+        strict=False,
+    ):
+        config.setCurrentColor(color_index)
         ensemble_indexes.append(ensemble_index)
         std_dev_factor = config.getStandardDeviationFactor()
 
@@ -97,7 +102,6 @@ def plotCrossEnsembleStatistics(
                 ccs["p90"][ensemble_index] = data.quantile(0.9)
 
                 _plotCrossEnsembleStatistics(axes, config, ccs, ensemble_index)
-                config.nextColor()
 
     if config.isDistributionLineEnabled() and len(ccs["index"]) > 1:
         _plotConnectionLines(axes, config, ccs)
