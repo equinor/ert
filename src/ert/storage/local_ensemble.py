@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import time
+from collections import Counter
 from collections.abc import Iterable
 from datetime import datetime
 from functools import cache, cached_property, lru_cache
@@ -14,12 +16,14 @@ from uuid import UUID
 import numpy as np
 import pandas as pd
 import polars as pl
+import resfo
 import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import TypedDict
 
-from ert.config import ParameterCardinality, ParameterConfig
+from ert.config import ParameterCardinality, ParameterConfig, SummaryConfig
 from ert.config.response_config import InvalidResponseFile
+from ert.substitutions import substitute_runpath_name
 
 from .load_status import LoadResult
 from .mode import BaseMode, Mode, require_write
@@ -1275,6 +1279,41 @@ async def _read_parameters(
     return result
 
 
+def _log_grid_contents(
+    run_path: str, summary_config: SummaryConfig, iens: int, iter_: int
+) -> None:
+    try:
+        filename = substitute_runpath_name(summary_config.input_files[0], iens, iter_)
+        base, extension = os.path.splitext(filename)
+        # Cut of extensions ".data", ".smspec" or ".unsmry"
+        if extension.lower() in {".data", ".smspec", ".unsmry"}:
+            filename = base
+        for grid_file_components in filter(
+            lambda fn: fn[0] == filename and fn[1].lower() in {".egrid", ".grid"},
+            map(os.path.splitext, os.listdir(run_path)),
+        ):
+            grid_file = run_path + "/" + "".join(grid_file_components)
+            keywords: Counter[str] = Counter()
+            for entry in resfo.lazy_read(grid_file):
+                kw = entry.read_keyword().strip()
+                keywords[kw] += 1
+                match kw:
+                    case "FILEHEAD" | "GRIDHEAD":
+                        arr = entry.read_array()
+                        arr_len = 8 if kw == "FILEHEAD" else 33
+                        arr_printout = (
+                            "MESS"
+                            if isinstance(arr, resfo.MESS)
+                            else str(arr[0:arr_len])
+                        )
+                        logger.info(f"{grid_file} {kw} contains {arr_printout}")
+
+            logger.info(f"{grid_file} contained keywords {sorted(keywords)}")
+
+    except Exception as err:
+        logger.error(f"Error while logging grid contents: {err}")
+
+
 async def _write_responses_to_storage(
     run_path: str,
     realization: int,
@@ -1287,6 +1326,10 @@ async def _write_responses_to_storage(
             start_time = time.perf_counter()
             logger.debug(f"Starting to load response: {config.response_type}")
             try:
+                if isinstance(config, SummaryConfig) and realization == 0:
+                    _log_grid_contents(
+                        run_path, config, realization, ensemble.iteration
+                    )
                 ds = config.read_from_file(run_path, realization, ensemble.iteration)
             except (FileNotFoundError, InvalidResponseFile) as err:
                 errors.append(str(err))

@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 from datetime import datetime
 from pathlib import Path
@@ -987,3 +988,64 @@ def test_when_manifest_files_are_written_loading_succeeds(storage, itr):
             )
         )
         assert load_result.successful
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
+@pytest.mark.filterwarnings("ignore:Number of maps nodes are None. Exporting regular")
+def test_that_contents_of_gridfile_is_logged(storage, caplog):
+    num_realizations = 1
+    grid = xtgeo.create_box_grid((2, 2, 2))
+    grid.to_file("GRID.EGRID", fformat="egrid")
+    config = ErtConfig.from_dict(
+        {"ECLBASE": "CASE", "GRID": "GRID.EGRID", "SUMMARY": [["FOPR"]]}
+    )
+
+    experiment_id = storage.create_experiment(
+        parameters=config.ensemble_config.parameter_configuration,
+        responses=config.ensemble_config.response_configuration,
+    )
+    prior_ensemble = storage.create_ensemble(
+        experiment_id, name="prior", ensemble_size=num_realizations, iteration=0
+    )
+    run_paths = Runpaths.from_config(config)
+    sample_prior(prior_ensemble, range(num_realizations), 123)
+    run_args = create_run_arguments(
+        run_paths,
+        [True] * num_realizations,
+        prior_ensemble,
+    )
+
+    create_run_path(
+        run_args=run_args,
+        ensemble=prior_ensemble,
+        user_config_file=config.user_config_file,
+        env_vars=config.env_vars,
+        env_pr_fm_step=config.env_pr_fm_step,
+        forward_model_steps=config.forward_model_steps,
+        substitutions=config.substitutions,
+        parameters_file="parameters",
+        runpaths=run_paths,
+    )
+
+    for run_path in run_paths.get_paths(range(num_realizations), 0):
+        simple_unsmry().to_file(run_path + "/" + "CASE.UNSMRY")
+        simple_smspec().to_file(run_path + "/" + "CASE.SMSPEC")
+        grid.to_file(run_path + "/" + "CASE.EGRID", fformat="egrid")
+
+    caplog.set_level(logging.INFO)
+    for run_arg in run_args:
+        load_result = asyncio.run(
+            load_realization_parameters_and_responses(
+                run_arg.runpath, run_arg.iens, run_arg.itr, run_arg.ensemble_storage
+            )
+        )
+        assert load_result.successful
+
+    for msg in (
+        "CASE.EGRID FILEHEAD contains",
+        "CASE.EGRID GRIDHEAD contains",
+        "CASE.EGRID contained keywords ['COORD',"
+        " 'ENDGRID', 'FILEHEAD', 'GRIDHEAD', 'GRIDUNIT', 'ZCORN']",
+    ):
+        assert any(msg in record.message for record in caplog.records)
