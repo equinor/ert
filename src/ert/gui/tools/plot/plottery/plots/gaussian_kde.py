@@ -46,7 +46,12 @@ def plotGaussianKDE(
     plot_context.x_axis = plot_context.VALUE_AXIS
     plot_context.y_axis = plot_context.DENSITY_AXIS
 
-    for ensemble, data in ensemble_to_data_map.items():
+    for (ensemble, data), color_index in zip(
+        ensemble_to_data_map.items(),
+        plot_context.ensembles_color_indexes(),
+        strict=False,
+    ):
+        config.setCurrentColor(color_index)
         if data.empty:
             continue
         data = data[0]
@@ -54,7 +59,6 @@ def plotGaussianKDE(
             _plotGaussianKDE(
                 axes, config, data, f"{ensemble.experiment_name} : {ensemble.name}"
             )
-            config.nextColor()
 
     PlotTools.finalizePlot(
         plot_context, figure, axes, default_x_label="Value", default_y_label="Density"
