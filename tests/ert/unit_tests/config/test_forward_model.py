@@ -192,7 +192,7 @@ def test_forward_model_arglist_with_weird_characters():
     assert forward_model.environment == forward_model.default_env
     assert forward_model.arglist == [
         "-i",
-        "s/^RUNSPEC.*/|RUNSPEC\nNOSIM/",
+        "s/^RUNSPEC.*/|RUNSPEC\\nNOSIM/",
         "<ECLBASE>.DATA",
     ]
 

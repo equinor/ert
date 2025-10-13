@@ -185,13 +185,6 @@ class ForwardModelStep:
             )
 
     def __post_init__(self) -> None:
-        # We unescape backslash here to keep backwards compatability ie. If
-        # the arglist contains a '\n' we interpret it as a newline.
-        self.arglist = [
-            s.encode("utf-8", "backslashreplace").decode("unicode_escape")
-            for s in self.arglist
-        ]
-
         self.environment.update(ForwardModelStep.default_env)
 
         if self.stdout_file is None:
