@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import logging
-from abc import abstractmethod
-from dataclasses import dataclass, field
-from typing import ClassVar, Literal, NotRequired
+from typing import ClassVar, Literal, NotRequired, Self
 
+from pydantic import BaseModel, Field, field_validator, model_validator
 from typing_extensions import TypedDict, Unpack
 
 from .parsing import ConfigValidationError, ConfigWarning, SchemaItemType
@@ -75,13 +74,12 @@ class ForwardModelStepOptions(TypedDict, total=False):
     default_mapping: NotRequired[dict[str, str]]
 
 
-@dataclass
-class ForwardModelStepDocumentation:
-    config_file: str | None = field(default=None)
-    source_package: str = field(default="ert")
-    source_function_name: str = field(default="ert")
-    description: str = field(default="No description")
-    examples: str = field(default="No examples")
+class ForwardModelStepDocumentation(BaseModel):
+    config_file: str | None = Field(default=None)
+    source_package: str = Field(default="ert")
+    source_function_name: str = Field(default="ert")
+    description: str = Field(default="No description")
+    examples: str = Field(default="No examples")
     category: (
         Literal[
             "utility.file_system",
@@ -90,11 +88,10 @@ class ForwardModelStepDocumentation:
             "utility.templating",
         ]
         | str
-    ) = field(default="Uncategorized")
+    ) = Field(default="Uncategorized")
 
 
-@dataclass
-class ForwardModelStep:
+class ForwardModelStep(BaseModel):
     """
     Holds information to execute one step of a forward model
 
@@ -141,12 +138,12 @@ class ForwardModelStep:
     max_running_minutes: int | None = None
     min_arg: int | None = None
     max_arg: int | None = None
-    arglist: list[str] = field(default_factory=list)
-    required_keywords: list[str] = field(default_factory=list)
-    arg_types: list[SchemaItemType] = field(default_factory=list)
-    environment: dict[str, str] = field(default_factory=dict)
-    default_mapping: dict[str, str] = field(default_factory=dict)
-    private_args: dict[str, str] = field(default_factory=dict)
+    arglist: list[str] = Field(default_factory=list)
+    required_keywords: list[str] = Field(default_factory=list)
+    arg_types: list[SchemaItemType] = Field(default_factory=list)
+    environment: dict[str, str] = Field(default_factory=dict)
+    default_mapping: dict[str, str] = Field(default_factory=dict)
+    private_args: dict[str, str] = Field(default_factory=dict)
 
     default_env: ClassVar[dict[str, str]] = {
         "_ERT_ITERATION_NUMBER": "<ITER>",
@@ -184,21 +181,25 @@ class ForwardModelStep:
                 self.name,
             )
 
-    def __post_init__(self) -> None:
+    @model_validator(mode="after")
+    def set_default_env(self) -> Self:
         self.environment.update(ForwardModelStep.default_env)
+        return self
 
-        if self.stdout_file is None:
-            self.stdout_file = f"{self.name}.stdout"
-        elif self.stdout_file == "null":
-            self.stdout_file = None
+    @model_validator(mode="after")
+    def set_stdout_stderr_defaults(self) -> Self:
+        for attr in ["stdout_file", "stderr_file"]:
+            value = getattr(self, attr, None)
+            if value is None:
+                setattr(self, attr, f"{self.name}.{attr.split('_')[0]}")
+            elif value == "null":
+                setattr(self, attr, None)
+        return self
 
-        if self.stderr_file is None:
-            self.stderr_file = f"{self.name}.stderr"
-        elif self.stderr_file == "null":
-            self.stderr_file = None
-
-        if self.stdin_file == "null":
-            self.stdin_file = None
+    @field_validator("stdin_file", mode="after")
+    @classmethod
+    def set_stdin_file(cls, v: str | None) -> str | None:
+        return None if v == "null" else v
 
 
 class ForwardModelStepPlugin(ForwardModelStep):
@@ -222,7 +223,7 @@ class ForwardModelStepPlugin(ForwardModelStep):
         default_mapping = kwargs.get("default_mapping", {}) or {}
 
         super().__init__(
-            name,
+            name=name,
             executable=executable,
             arglist=arglist,
             stdin_file=stdin_file,
@@ -242,11 +243,11 @@ class ForwardModelStepPlugin(ForwardModelStep):
         )
 
     @staticmethod
-    @abstractmethod
     def documentation() -> ForwardModelStepDocumentation | None:
         """
         Returns the documentation for the plugin forward model
         """
+        return None
 
 
 class ForwardModelJSON(TypedDict):
