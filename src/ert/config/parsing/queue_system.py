@@ -20,19 +20,6 @@ class QueueSystem(StrEnum):
         assert isinstance(value, str)
         return _ignore_case(cls, value)
 
-
-class QueueSystemWithGeneric(StrEnum):
-    LSF = auto()
-    LOCAL = auto()
-    TORQUE = auto()
-    SLURM = auto()
-    GENERIC = auto()
-
     @staticmethod
     def ert_config_case() -> str:
         return "upper"
-
-    @classmethod
-    def _missing_(cls, value: object) -> StrEnum | None:
-        assert isinstance(value, str)
-        return _ignore_case(cls, value)

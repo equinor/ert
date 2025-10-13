@@ -442,19 +442,3 @@ only the most necessary options have been added.
     FORWARD_MODEL ECLIPSE100 <args>
 
   This will set the PROJECT_CODE option to ``rms+eclipse100``
-
-GENERIC queue options
----------------------
-
-There are a number of queue options valid for all queue systems and for those we can use
-the `GENERIC` keyword. ::
-
-    QUEUE_SYSTEM LSF
-    QUEUE_OPTION GENERIC MAX_RUNNING 10
-    QUEUE_OPTION GENERIC SUBMIT_SLEEP 2
-
-Is equivalent to::
-
-    QUEUE_SYSTEM LSF
-    QUEUE_OPTION LSF MAX_RUNNING 10
-    QUEUE_OPTION LSF SUBMIT_SLEEP 2

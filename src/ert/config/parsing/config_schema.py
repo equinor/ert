@@ -17,7 +17,7 @@ from .config_schema_item import (
 from .history_source import HistorySource
 from .hook_runtime import HookRuntime
 from .observations_parser import parse_observations
-from .queue_system import QueueSystem, QueueSystemWithGeneric
+from .queue_system import QueueSystem
 from .schema_dict import SchemaItemDict
 from .schema_item_type import SchemaItemType
 
@@ -171,7 +171,7 @@ def queue_option_keyword() -> SchemaItem:
         argc_min=2,
         argc_max=None,
         join_after=2,
-        type_map=[QueueSystemWithGeneric, SchemaItemType.STRING, SchemaItemType.STRING],
+        type_map=[QueueSystem, SchemaItemType.STRING, SchemaItemType.STRING],
         multi_occurrence=True,
     )
 

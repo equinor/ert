@@ -72,13 +72,10 @@ def test_project_code_is_not_overwritten_if_set_in_config(queue_system):
     assert queue_config.queue_options.project_code == "test_code"
 
 
-@pytest.mark.parametrize("invalid_queue_system", ["VOID", "BLABLA", "GENERIC", "*"])
+@pytest.mark.parametrize("invalid_queue_system", ["VOID", "BLABLA", "*"])
 def test_that_the_first_argument_to_queue_option_must_be_a_known_queue_system(
     invalid_queue_system,
 ):
-    """There is actually a "queue-system" called GENERIC, but it is
-    only there for making queue options global, it should not be
-    possible to try to use it"""
     with pytest.raises(
         expected_exception=ConfigValidationError,
         match=(
@@ -342,13 +339,12 @@ def test_max_running_property():
     assert config.queue_config.max_running == 19
 
 
-@pytest.mark.parametrize("queue_system", ["LSF", "GENERIC"])
-def test_multiple_submit_sleep_keywords(queue_system):
+def test_multiple_submit_sleep_keywords():
     config = ErtConfig.from_file_contents(
         "NUM_REALIZATIONS 1\n"
         "QUEUE_SYSTEM LSF\n"
         "QUEUE_OPTION LSF SUBMIT_SLEEP 10\n"
-        f"QUEUE_OPTION {queue_system} SUBMIT_SLEEP 42\n"
+        "QUEUE_OPTION LSF SUBMIT_SLEEP 42\n"
         "QUEUE_OPTION TORQUE SUBMIT_SLEEP 22\n"
     )
     assert config.queue_config.submit_sleep == 42
@@ -403,7 +399,7 @@ def test_global_queue_options(queue_system, key, value):
         "NUM_REALIZATIONS 1\n"
         f"QUEUE_SYSTEM {queue_system}\n"
         f"QUEUE_OPTION {queue_system} {key} 10\n"
-        f"QUEUE_OPTION GENERIC {key} {value}\n"
+        f"QUEUE_OPTION {queue_system} {key} {value}\n"
     )
 
     _check_results(f"NUM_REALIZATIONS 1\nQUEUE_SYSTEM {queue_system}\n{key} {value}\n")
@@ -437,13 +433,6 @@ def test_global_config_key_does_not_overwrite_queue_options(queue_system, key, v
         f"{key} {value + 42}\n"
     )
 
-    _check_results(
-        "NUM_REALIZATIONS 1\n"
-        f"QUEUE_SYSTEM {queue_system}\n"
-        f"QUEUE_OPTION GENERIC {key} {value}\n"
-        f"{key} {value + 42}\n"
-    )
-
 
 @pytest.mark.parametrize(
     "queue_system, key, value",
@@ -456,14 +445,14 @@ def test_global_config_key_does_not_overwrite_queue_options(queue_system, key, v
         ("TORQUE", "SUBMIT_SLEEP", -4.2),
     ],
 )
-def test_wrong_generic_queue_option_raises_validation_error(queue_system, key, value):
+def test_wrong_queue_option_raises_validation_error(queue_system, key, value):
     with pytest.raises(
         ConfigValidationError, match="Input should be greater than or equal to 0"
     ):
         ErtConfig.from_file_contents(
             "NUM_REALIZATIONS 1\n"
             f"QUEUE_SYSTEM {queue_system}\n"
-            f"QUEUE_OPTION GENERIC {key} {value}\n"
+            f"QUEUE_OPTION {queue_system} {key} {value}\n"
         )
 
     error_msg = (

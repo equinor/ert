@@ -220,7 +220,7 @@ def test_that_disallowed_argument_is_located_1fn():
             end_column=19,
             match=(
                 "argument 1 must be one of "
-                r"\['LSF', 'LOCAL', 'TORQUE', 'SLURM', 'GENERIC'\]"
+                r"\['LSF', 'LOCAL', 'TORQUE', 'SLURM'\]"
             ),
         ),
     )
