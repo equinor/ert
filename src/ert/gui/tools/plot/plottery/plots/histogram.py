@@ -97,7 +97,10 @@ def plotHistogram(
     bin_count = ceil(sqrt(max_element_count))
 
     axes = {}
-    for index, ensemble in enumerate(ensemble_list):
+    for (index, ensemble), color_index in zip(
+        enumerate(ensemble_list), plot_context.ensembles_color_indexes(), strict=False
+    ):
+        config.setCurrentColor(color_index)
         axes[ensemble.name] = figure.add_subplot(ensemble_count, 1, index + 1)
 
         axes[ensemble.name].set_title(
@@ -133,7 +136,6 @@ def plotHistogram(
                     ),
                 )
 
-            config.nextColor()
             PlotTools.showGrid(axes[ensemble.name], plot_context)
 
     min_count = 0
