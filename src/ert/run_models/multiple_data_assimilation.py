@@ -2,12 +2,17 @@ from __future__ import annotations
 
 import functools
 import logging
-from typing import Any, ClassVar
+from typing import Any, ClassVar, cast
 from uuid import UUID
 
 from pydantic import PrivateAttr
 
-from ert.config import PostExperimentFixtures, PreExperimentFixtures
+from ert.config import (
+    ParameterConfig,
+    PostExperimentFixtures,
+    PreExperimentFixtures,
+    ResponseConfig,
+)
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.initial_ensemble_run_model import InitialEnsembleRunModel
 from ert.run_models.update_run_model import UpdateRunModel
@@ -98,11 +103,27 @@ class MultipleDataAssimilation(UpdateRunModel, InitialEnsembleRunModel):
                 fixtures=PreExperimentFixtures(random_seed=self.random_seed),
             )
             sim_args = {"weights": self.weights}
-            prior = self._sample_and_evaluate_ensemble(
-                evaluator_server_config,
-                sim_args,
-                self.target_ensemble % 0,
+            experiment_storage = self._storage.create_experiment(
+                parameters=cast(list[ParameterConfig], self.parameter_configuration),
+                observations={k: v.to_polars() for k, v in self.observations.items()}
+                if self.observations is not None
+                else None,
+                responses=cast(list[ResponseConfig], self.response_configuration),
+                name=self.experiment_name,
+                templates=self.ert_templates,
+                simulation_arguments=sim_args,
             )
+
+            prior = self._storage.create_ensemble(
+                experiment_storage,
+                ensemble_size=self.ensemble_size,
+                name=self.target_ensemble % 0,
+            )
+
+            self.set_env_key("_ERT_EXPERIMENT_ID", str(prior.experiment.id))
+            self.set_env_key("_ERT_ENSEMBLE_ID", str(prior.id))
+
+            self._sample_and_evaluate_ensemble(evaluator_server_config, prior)
 
         enumerated_weights: list[tuple[int, float]] = list(
             enumerate(self._parsed_weights)

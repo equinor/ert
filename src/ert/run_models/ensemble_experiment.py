@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 import logging
-from typing import ClassVar
+from typing import ClassVar, cast
 from uuid import UUID
 
 from pydantic import PrivateAttr
 
-from ert.config import PostExperimentFixtures, PreExperimentFixtures
+from ert.config import (
+    ParameterConfig,
+    PostExperimentFixtures,
+    PreExperimentFixtures,
+    ResponseConfig,
+)
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.initial_ensemble_run_model import InitialEnsembleRunModel
 from ert.storage import Ensemble
@@ -42,12 +47,27 @@ class EnsembleExperiment(InitialEnsembleRunModel):
 
         self.run_workflows(fixtures=PreExperimentFixtures(random_seed=self.random_seed))
 
-        self._sample_and_evaluate_ensemble(
-            evaluator_server_config,
-            None,
-            self.target_ensemble,
-            self._ensemble if rerun_failed_realizations else None,
+        experiment_storage = self._storage.create_experiment(
+            parameters=cast(list[ParameterConfig], self.parameter_configuration),
+            observations={k: v.to_polars() for k, v in self.observations.items()}
+            if self.observations is not None
+            else None,
+            responses=cast(list[ResponseConfig], self.response_configuration),
+            name=self.experiment_name,
+            templates=self.ert_templates,
         )
+
+        ensemble_storage = self._storage.create_ensemble(
+            experiment_storage,
+            ensemble_size=self.ensemble_size,
+            name=self.target_ensemble,
+        )
+
+        self._ensemble_id = ensemble_storage.id
+        self.set_env_key("_ERT_EXPERIMENT_ID", str(ensemble_storage.experiment.id))
+        self.set_env_key("_ERT_ENSEMBLE_ID", str(ensemble_storage.id))
+
+        self._sample_and_evaluate_ensemble(evaluator_server_config, ensemble_storage)
 
         self.run_workflows(
             fixtures=PostExperimentFixtures(
