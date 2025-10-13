@@ -541,7 +541,7 @@ def test_that_es_mda_on_poly_case_matches_snapshot(snapshot):
             ensemble_data.columns.name = None
             ensemble_data.index.name = "Realization"
             ensemble_data = ensemble_data.sort_index(axis=1)
-            data.append(ensemble_data)
+            data.append(ensemble_data.astype("float32"))
     result = pd.concat(
         data,
         keys=[f"iter-{iter_}" for iter_ in range(len(data))],
@@ -581,7 +581,7 @@ def test_that_enif_on_poly_case_matches_snapshot(snapshot):
             ensemble_data.columns.name = None
             ensemble_data.index.name = "Realization"
             ensemble_data = ensemble_data.sort_index(axis=1)
-            data.append(ensemble_data)
+            data.append(ensemble_data.astype("float32"))
     result = pd.concat(
         data,
         keys=[f"iter-{i}" for i in range(len(data))],
