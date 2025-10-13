@@ -1,5 +1,5 @@
 from abc import ABC
-from typing import Annotated, Any, Literal, Self, cast
+from typing import Annotated, Any, Literal, Self
 
 import numpy as np
 import polars as pl
@@ -12,8 +12,6 @@ from ert.config import (
     ExtParamConfig,
     GenDataConfig,
     GenKwConfig,
-    ParameterConfig,
-    ResponseConfig,
     SummaryConfig,
     SurfaceConfig,
 )
@@ -95,33 +93,8 @@ class InitialEnsembleRunModel(RunModel, ABC):
     def _sample_and_evaluate_ensemble(
         self,
         evaluator_server_config: EvaluatorServerConfig,
-        simulation_arguments: dict[str, str] | None,
-        ensemble_name: str,
-        ensemble_storage: LocalEnsemble | None = None,
+        ensemble_storage: LocalEnsemble,
     ) -> LocalEnsemble:
-        if ensemble_storage is None:
-            experiment_storage = self._storage.create_experiment(
-                parameters=cast(list[ParameterConfig], self.parameter_configuration),
-                observations={k: v.to_polars() for k, v in self.observations.items()}
-                if self.observations is not None
-                else None,
-                responses=cast(list[ResponseConfig], self.response_configuration),
-                simulation_arguments=simulation_arguments,
-                name=self.experiment_name,
-                templates=self.ert_templates,
-            )
-            ensemble_storage = self._storage.create_ensemble(
-                experiment_storage,
-                ensemble_size=self.ensemble_size,
-                name=ensemble_name,
-            )
-            if hasattr(self, "_ensemble_id"):
-                setattr(self, "_ensemble_id", ensemble_storage.id)  # noqa: B010
-
-        assert ensemble_storage is not None
-        self.set_env_key("_ERT_EXPERIMENT_ID", str(ensemble_storage.experiment.id))
-        self.set_env_key("_ERT_ENSEMBLE_ID", str(ensemble_storage.id))
-
         sample_prior(
             ensemble_storage,
             np.where(self.active_realizations)[0],
