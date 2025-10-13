@@ -1439,9 +1439,7 @@ def load_parameters_and_responses_from_runpath(
                     load_realization_parameters_and_responses(*args)
                 ),
                 (
-                    run_path_format.replace("<IENS>", str(realization)).replace(
-                        "<ITER>", "0"
-                    ),
+                    substitute_runpath_name(run_path_format, realization, 0),
                     realization,
                     0,
                     ensemble,
