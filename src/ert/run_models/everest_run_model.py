@@ -706,25 +706,21 @@ class EverestRunModel(RunModel):
         }
 
         ensemble.save_everest_realization_info(realization_info)
+        sim_vec = list(range(sim_to_control_vector.shape[0]))
+        offset = 0
+        for control_config in self.controls:
+            ext_param_config = next(
+                c for c in self.parameter_configuration if c.name == control_config.name
+            )
+            n_param_keys = len(ext_param_config.parameter_keys)
 
-        for sim_id in range(sim_to_control_vector.shape[0]):
-            sim_controls = sim_to_control_vector[sim_id]
-            offset = 0
-            for control_config in self.controls:
-                ext_param_config = next(
-                    c
-                    for c in self.parameter_configuration
-                    if c.name == control_config.name
-                )
-                n_param_keys = len(ext_param_config.parameter_keys)
-
-                # Save controls to ensemble
-                ensemble.save_parameters_numpy(
-                    sim_controls[offset : (offset + n_param_keys)].reshape(-1, 1),
-                    ext_param_config.name,
-                    np.array([sim_id]),
-                )
-                offset += n_param_keys
+            # Save controls to ensemble
+            ensemble.save_parameters_numpy(
+                sim_to_control_vector[:, offset : (offset + n_param_keys)],
+                ext_param_config.name,
+                np.array(sim_vec),
+            )
+            offset += n_param_keys
 
         # Evaluate the batch:
         run_args = self._get_run_args(
