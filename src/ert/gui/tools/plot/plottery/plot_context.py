@@ -45,6 +45,7 @@ class PlotContext:
         self._date_support_active = True
         self._x_axis: str | None = None
         self._y_axis: str | None = None
+        self._log_scale = False
 
     def plotConfig(self) -> PlotConfig:
         return self._plot_config
@@ -91,3 +92,11 @@ class PlotContext:
                 f"Axis: '{value}' is not one of: {PlotContext.AXIS_TYPES}"
             )
         self._y_axis = value
+
+    @property
+    def log_scale(self) -> bool:
+        return self._log_scale
+
+    @log_scale.setter
+    def log_scale(self, value: bool) -> None:
+        self._log_scale = value
