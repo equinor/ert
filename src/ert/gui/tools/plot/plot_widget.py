@@ -64,6 +64,60 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
                 self._layer_action = self.insertWidget(action, layer_combobox)
                 self._layer_action.setVisible(False)
 
+        self.addSeparator()
+
+        self._xlog_action = QAction("X: log", self)
+        self._xlog_action.setCheckable(True)
+        self._xlog_action.toggled.connect(self._toggle_xscale)
+        self.addAction(self._xlog_action)
+
+        self._ylog_action = QAction("Y: log", self)
+        self._ylog_action.setCheckable(True)
+        self._ylog_action.toggled.connect(self._toggle_yscale)
+        self.addAction(self._ylog_action)
+
+    @Slot(bool)
+    def _toggle_xscale(self, checked: bool) -> None:
+        fig = self.canvas.figure
+        try:
+            for ax in fig.axes:
+                ax.set_xscale("log" if checked else "linear")
+            fig.canvas.draw_idle()
+        except ValueError:
+            # Non-positive data for log: revert toggle
+            self._xlog_action.blockSignals(True)
+            self._xlog_action.setChecked(False)
+            self._xlog_action.blockSignals(False)
+
+    @Slot(bool)
+    def _toggle_yscale(self, checked: bool) -> None:
+        fig = self.canvas.figure
+        try:
+            for ax in fig.axes:
+                ax.set_yscale("log" if checked else "linear")
+            fig.canvas.draw_idle()
+        except ValueError:
+            self._ylog_action.blockSignals(True)
+            self._ylog_action.setChecked(False)
+            self._ylog_action.blockSignals(False)
+
+    def _set_checked_safely(self, action: QAction, checked: bool) -> None:
+        action.blockSignals(True)
+        action.setChecked(checked)
+        action.blockSignals(False)
+
+    @Slot()
+    def syncScaleButtons(self) -> None:
+        axes = self.canvas.figure.axes
+        if not axes:
+            # Default to linear when nothing is drawn
+            self._set_checked_safely(self._xlog_action, False)
+            self._set_checked_safely(self._ylog_action, False)
+            return
+        ax0 = axes[0]
+        self._set_checked_safely(self._xlog_action, ax0.get_xscale() == "log")
+        self._set_checked_safely(self._ylog_action, ax0.get_yscale() == "log")
+
     @Slot(bool)
     def showLayerWidget(self, show: bool) -> None:
         self._layer_action.setVisible(show)
@@ -153,6 +207,7 @@ class PlotWidget(QWidget):
                 std_dev_images,
             )
             self._canvas.draw()
+            self._toolbar.syncScaleButtons()
         except Exception as e:
             exc_type, _, exc_tb = sys.exc_info()
             sys.stderr.write("-" * 80 + "\n")
