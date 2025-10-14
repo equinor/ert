@@ -15,9 +15,17 @@ from PyQt6.QtCore import QStringListModel, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtGui import QAction, QIcon
-from PyQt6.QtWidgets import QComboBox, QVBoxLayout, QWidget, QWidgetAction
+from PyQt6.QtWidgets import (
+    QCheckBox,
+    QComboBox,
+    QHBoxLayout,
+    QVBoxLayout,
+    QWidget,
+    QWidgetAction,
+)
 
 from .plot_api import EnsembleObject
+from .plottery.plots.plot_tools import ConditionalAxisFormatter
 
 if TYPE_CHECKING:
     from .plottery import PlotContext
@@ -133,7 +141,21 @@ class PlotWidget(QWidget):
         self.resetLayerWidget.connect(self._toolbar.resetLayerWidget)
         self.showLayerWidget.connect(self._toolbar.showLayerWidget)
 
+        self._log_checkbox = QCheckBox("Log scale", self)
+        self._log_checkbox.setObjectName("log_scale_checkbox")
+        self._log_checkbox.setCheckable(True)
+        # only for supported plots see _log_axis_for_plotter
+        self._log_checkbox.setVisible(False)
+        self._log_checkbox.setToolTip("Toggle data domain to log scale and back")
+        self._log_checkbox.toggled.connect(self._on_log_toggled)
+
+        log_checkbox_row = QHBoxLayout()
+        log_checkbox_row.addWidget(self._log_checkbox)
+        log_checkbox_row.setContentsMargins(16, 8, 16, 8)
+        log_checkbox_row.addStretch()
+        vbox.addLayout(log_checkbox_row)
         vbox.addWidget(self._toolbar)
+        vbox.addSpacing(8)
         self.setLayout(vbox)
 
         self._dirty = True
@@ -142,6 +164,63 @@ class PlotWidget(QWidget):
 
     def resetPlot(self) -> None:
         self._figure.clear()
+
+    def _log_axis_for_plotter(self) -> str | None:
+        """Return 'x' or 'y' if this plotter supports log toggle, else None."""
+        cls = type(self._plotter).__name__
+        x_only = {"HistogramPlot"}
+        # we don't support any y-only log plots yet
+        if cls in x_only:
+            return "x"
+        return None
+
+    @Slot(bool)
+    def _on_log_toggled(self, checked: bool) -> None:
+        ok = self._apply_log_state(checked)
+        if not ok:
+            self._log_checkbox.blockSignals(True)
+            self._log_checkbox.setChecked(False)
+            self._log_checkbox.blockSignals(False)
+        self._sync_log_checkbox()
+
+    def _sync_log_checkbox(self) -> None:
+        """Show/hide + set checked state; does NOT change scales."""
+        axis = self._log_axis_for_plotter()
+        visible = (axis is not None) and bool(self._figure.axes)
+        self._log_checkbox.setVisible(visible)
+
+        if not visible or not self._figure.axes:
+            return
+
+        ax0 = self._figure.axes[0]
+        is_log = (
+            (ax0.get_xscale() == "log") if axis == "x" else (ax0.get_yscale() == "log")
+        )
+        self._log_checkbox.blockSignals(True)
+        self._log_checkbox.setChecked(is_log)
+        self._log_checkbox.blockSignals(False)
+
+        if not is_log:
+            self._apply_log_state(False)
+
+    def _apply_log_state(self, checked: bool) -> bool:
+        axis = self._log_axis_for_plotter()
+        if axis is None:
+            return True
+        try:
+            for ax in self._figure.axes:
+                if axis == "x":
+                    ax.set_xscale("log" if checked else "linear")
+                    if not checked:
+                        ax.xaxis.set_major_formatter(ConditionalAxisFormatter())
+                else:
+                    ax.set_yscale("log" if checked else "linear")
+                    if not checked:
+                        ax.yaxis.set_major_formatter(ConditionalAxisFormatter())
+            self._canvas.draw_idle()
+        except ValueError:
+            return False
+        return True
 
     @property
     def name(self) -> str:
@@ -164,6 +243,7 @@ class PlotWidget(QWidget):
                 std_dev_images,
             )
             self._canvas.draw()
+            self._sync_log_checkbox()
         except Exception as e:
             exc_type, _, exc_tb = sys.exc_info()
             sys.stderr.write("-" * 80 + "\n")
