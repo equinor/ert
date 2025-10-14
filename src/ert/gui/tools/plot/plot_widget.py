@@ -11,11 +11,18 @@ from matplotlib.backends.backend_qt5agg import (  # type: ignore
     NavigationToolbar2QT,
 )
 from matplotlib.figure import Figure
-from PyQt6.QtCore import QStringListModel, Qt
+from PyQt6.QtCore import QStringListModel, Qt, pyqtBoundSignal
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtGui import QAction, QIcon
-from PyQt6.QtWidgets import QComboBox, QVBoxLayout, QWidget, QWidgetAction
+from PyQt6.QtWidgets import (
+    QCheckBox,
+    QComboBox,
+    QHBoxLayout,
+    QVBoxLayout,
+    QWidget,
+    QWidgetAction,
+)
 
 from .plot_api import EnsembleObject
 
@@ -133,15 +140,38 @@ class PlotWidget(QWidget):
         self.resetLayerWidget.connect(self._toolbar.resetLayerWidget)
         self.showLayerWidget.connect(self._toolbar.showLayerWidget)
 
+        self._log_checkbox = QCheckBox("Log scale", self)
+        self._log_checkbox.setObjectName("log_scale_checkbox")
+        self._log_checkbox.setCheckable(True)
+        # only for histogram plot see _sync_log_checkbox
+        self._log_checkbox.setVisible(False)
+        self._log_checkbox.setToolTip("Toggle data domain to log scale and back")
+
+        log_checkbox_row = QHBoxLayout()
+        log_checkbox_row.addWidget(self._log_checkbox)
+        log_checkbox_row.setContentsMargins(16, 8, 16, 8)
+        log_checkbox_row.addStretch()
+        vbox.addLayout(log_checkbox_row)
         vbox.addWidget(self._toolbar)
+        vbox.addSpacing(8)
         self.setLayout(vbox)
 
         self._dirty = True
         self._active = False
         self.resetPlot()
 
+    @property
+    def plotUpdateRequested(self) -> pyqtBoundSignal:
+        return self._log_checkbox.toggled
+
     def resetPlot(self) -> None:
         self._figure.clear()
+
+    def _sync_log_checkbox(self) -> None:
+        if type(self._plotter).__name__ == "HistogramPlot":
+            self._log_checkbox.setVisible(True)
+        else:
+            self._log_checkbox.setVisible(False)
 
     @property
     def name(self) -> str:
@@ -156,6 +186,9 @@ class PlotWidget(QWidget):
     ) -> None:
         self.resetPlot()
         try:
+            plot_context.log_scale = (
+                self._log_checkbox.isVisible() and self._log_checkbox.isChecked()
+            )
             self._plotter.plot(
                 self._figure,
                 plot_context,
@@ -164,6 +197,7 @@ class PlotWidget(QWidget):
                 std_dev_images,
             )
             self._canvas.draw()
+            self._sync_log_checkbox()
         except Exception as e:
             exc_type, _, exc_tb = sys.exc_info()
             sys.stderr.write("-" * 80 + "\n")
