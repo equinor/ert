@@ -323,7 +323,6 @@ class FieldParameter(Parameter):
                 path / self.out_filename,
                 self.name,
                 shape=Shape(*io_source.dims),
-                mask=mask,
             )
             np.testing.assert_allclose(
                 read_values,

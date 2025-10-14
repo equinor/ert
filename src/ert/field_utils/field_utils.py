@@ -216,7 +216,6 @@ def calculate_ertbox_parameters(
 def read_field(
     field_path: _PathLike,
     field_name: str,
-    mask: npt.NDArray[np.bool_],
     shape: Shape,
 ) -> np.ma.MaskedArray[Any, np.dtype[np.float32]]:
     path = Path(field_path)
@@ -239,7 +238,7 @@ def read_field(
         ext = path.suffix
         raise ValueError(f'Could not read {field_path}. Unrecognized suffix "{ext}"')
 
-    return np.ma.MaskedArray(data=values, mask=mask, fill_value=np.nan)  # type: ignore
+    return np.ma.MaskedArray(data=values, fill_value=np.nan)  # type: ignore
 
 
 def save_field(
