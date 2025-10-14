@@ -24,7 +24,7 @@ body:
     attributes:
       label: Steps to reproduce
       description: Detailed desription of how to reproduce the failure.
-      render: Python
+      render: console
     validations:
       required: false
 
