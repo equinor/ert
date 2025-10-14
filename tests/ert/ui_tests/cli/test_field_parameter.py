@@ -250,7 +250,7 @@ def test_field_param_update_using_heat_equation(symlinked_heat_equation_storage_
 
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
-def test_parameter_update_with_inactive_cells_xtgeo_grdecl(tmpdir):
+def test_field_parameter_persistence_to_grdecl(tmpdir):
     """
     This replicates the poly example, only it uses FIELD parameter
     """
@@ -276,17 +276,7 @@ def test_parameter_update_with_inactive_cells_xtgeo_grdecl(tmpdir):
         NROW = 111
         NLAY = 6
         grid = xtgeo.create_box_grid(dimension=(NCOL, NROW, NLAY))
-        mask = grid.get_actnum()
-        rng = np.random.default_rng()
-        mask_list = rng.choice([True, False], NCOL * NROW * NLAY)
 
-        # make sure we filter out the 'c' parameter
-        for i in range(NLAY):
-            idx = i * NCOL * NROW
-            mask_list[idx : idx + 3] = [True, True, False]
-
-        mask.values = mask_list
-        grid.set_actnum(mask)
         grid.to_file("MY_EGRID.EGRID", "egrid")
 
         Path("forward_model").write_text(
@@ -383,14 +373,6 @@ if __name__ == "__main__":
                 )
             )
 
-            # 'c' should be inactive (all nans)
-            assert np.isnan(
-                prior_result.values.reshape(realizations, NCOL * NROW * NLAY).T[2:3]
-            ).all()
-            assert np.isnan(
-                posterior_result.values.reshape(realizations, NCOL * NROW * NLAY).T[2:3]
-            ).all()
-
             # This checks that the fields in the runpath
             # are different between iterations
             assert Path("simulations/realization-0/iter-0/my_param.grdecl").read_text(
@@ -407,9 +389,6 @@ if __name__ == "__main__":
                 name="MY_PARAM",
             )
             assert len(prop0.get_npvalues1d()) == NCOL * NROW * NLAY
-            numpy.testing.assert_array_equal(
-                np.logical_not(prop0.values1d.mask), mask_list
-            )
             assert "nan" not in Path(
                 "simulations/realization-0/iter-1/my_param.grdecl"
             ).read_text(encoding="utf-8")

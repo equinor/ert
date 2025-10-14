@@ -23,7 +23,6 @@ from pydantic import BaseModel, Field
 
 from ert.config import ErtConfig, ParameterConfig, ResponseConfig
 from ert.shared import __version__
-from ert.storage.migration import to15
 
 from .local_ensemble import LocalEnsemble
 from .local_experiment import LocalExperiment
@@ -32,7 +31,7 @@ from .realization_storage_state import RealizationStorageState
 
 logger = logging.getLogger(__name__)
 
-_LOCAL_STORAGE_VERSION = 15
+_LOCAL_STORAGE_VERSION = 16
 
 
 class _Migrations(BaseModel):
@@ -506,6 +505,8 @@ class LocalStorage(BaseMode):
             to12,
             to13,
             to14,
+            to15,
+            to16,
         )
 
         try:
@@ -550,6 +551,7 @@ class LocalStorage(BaseMode):
                     12: to13,
                     13: to14,
                     14: to15,
+                    15: to16,
                 }
                 for from_version in range(version, _LOCAL_STORAGE_VERSION):
                     migrations[from_version].migrate(self.path)
