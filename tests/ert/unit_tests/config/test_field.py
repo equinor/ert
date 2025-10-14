@@ -3,7 +3,6 @@ import os
 import re
 from pathlib import Path
 
-import networkx as nx
 import numpy as np
 import pytest
 import resfo
@@ -50,7 +49,6 @@ def test_write_to_runpath_produces_the_transformed_field_in_storage(
         assert read_field(
             f"export/with/path/{real}/permx.grdecl",
             "PERMX",
-            permx_field.mask,
             Shape(permx_field.nx, permx_field.ny, permx_field.nz),
         ).flatten().tolist() == pytest.approx(
             permx_field._transform_data(
@@ -120,77 +118,6 @@ def test_field_grid_mask_correspondence_all_false(monkeypatch, tmp_path):
     # Expect nx*ny*nz lattice graph
     assert graph.number_of_nodes() == nx * ny * nz
     assert graph.number_of_edges() == _n_lattice_edges(nx, ny, nz)
-
-
-def test_field_grid_mask_correspondence_all_true(monkeypatch, tmp_path):
-    monkeypatch.chdir(tmp_path)
-    mask = np.ones((3, 3, 3), dtype=bool)
-    field_config = create_dummy_field(nx=3, ny=3, nz=3, mask=mask)
-    assert nx.node_link_data(field_config.load_parameter_graph())["links"] == []
-
-
-def test_field_grid_mask_correspondence_one_false(monkeypatch, tmp_path):
-    monkeypatch.chdir(tmp_path)
-    mask = np.ones((3, 3, 3), dtype=bool)
-    mask[1, 1, 1] = False
-    field_config = create_dummy_field(nx=3, ny=3, nz=3, mask=mask)
-    assert nx.node_link_data(field_config.load_parameter_graph())["links"] == []
-
-
-def test_field_grid_mask_correspondence_one_true(monkeypatch, tmp_path):
-    monkeypatch.chdir(tmp_path)
-
-    nx = 3
-    ny = 3
-    nz = 3
-
-    mask = np.zeros((nx, ny, nz), dtype=bool)
-    mask[1, 1, 1] = True
-    field_config = create_dummy_field(nx=nx, ny=ny, nz=nz, mask=mask)
-    graph = field_config.load_parameter_graph()
-
-    # Expect lattice but minus 1 node and 6 links
-    assert graph.number_of_nodes() == nx * ny * nz - 1
-    assert graph.number_of_edges() == _n_lattice_edges(nx, ny, nz) - 6
-
-
-def test_field_grid_mask_correspondence_slice_x_true(monkeypatch, tmp_path):
-    monkeypatch.chdir(tmp_path)
-    mask = np.zeros((3, 3, 3), dtype=bool)
-    mask[1, :, :] = True
-    field_config = create_dummy_field(nx=3, ny=3, nz=3, mask=mask)
-    graph = field_config.load_parameter_graph()
-    assert nx.number_connected_components(graph) == 2
-    for component in nx.connected_components(graph):
-        subgraph = graph.subgraph(component)
-        assert subgraph.number_of_nodes() == 3 * 3
-        assert subgraph.number_of_edges() == _n_lattice_edges(3, 3, 1)
-
-
-def test_field_grid_mask_correspondence_slice_y_true(monkeypatch, tmp_path):
-    monkeypatch.chdir(tmp_path)
-    mask = np.zeros((3, 3, 3), dtype=bool)
-    mask[:, 1, :] = True
-    field_config = create_dummy_field(nx=3, ny=3, nz=3, mask=mask)
-    graph = field_config.load_parameter_graph()
-    assert nx.number_connected_components(graph) == 2
-    for component in nx.connected_components(graph):
-        subgraph = graph.subgraph(component)
-        assert subgraph.number_of_nodes() == 3 * 3
-        assert subgraph.number_of_edges() == _n_lattice_edges(3, 3, 1)
-
-
-def test_field_grid_mask_correspondence_slice_z_true(monkeypatch, tmp_path):
-    monkeypatch.chdir(tmp_path)
-    mask = np.zeros((3, 3, 3), dtype=bool)
-    mask[:, :, 1] = True
-    field_config = create_dummy_field(nx=3, ny=3, nz=3, mask=mask)
-    graph = field_config.load_parameter_graph()
-    assert nx.number_connected_components(graph) == 2
-    for component in nx.connected_components(graph):
-        subgraph = graph.subgraph(component)
-        assert subgraph.number_of_nodes() == 3 * 3
-        assert subgraph.number_of_edges() == _n_lattice_edges(3, 3, 1)
 
 
 @pytest.fixture
@@ -369,7 +296,6 @@ def test_that_read_field_raises_grid_field_mismatch_error_given_different_sized_
     field_file_name = "foo.bgrdecl"
 
     field_name = "COND"
-    mask = np.ndarray([])
     shape = Shape(nx=5, ny=5, nz=5)
 
     with tmpdir.as_cwd():
@@ -381,7 +307,7 @@ def test_that_read_field_raises_grid_field_mismatch_error_given_different_sized_
             r"derived from dimensions: \(5, 5, 5\)."
         )
         with pytest.raises(InvalidParameterFile, match=expected_error_message):
-            read_field(field_file_name, field_name, mask=mask, shape=shape)
+            read_field(field_file_name, field_name, shape=shape)
 
 
 @pytest.mark.parametrize(

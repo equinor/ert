@@ -4,7 +4,6 @@ import itertools
 import logging
 import os
 from collections.abc import Iterator
-from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Self, cast, overload
 
@@ -21,7 +20,6 @@ from ert.field_utils import (
     calculate_ertbox_parameters,
     get_shape,
     read_field,
-    read_mask,
     save_field,
 )
 from ert.substitutions import substitute_runpath_name
@@ -67,9 +65,7 @@ def create_flattened_cube_graph(px: int, py: int, pz: int) -> nx.Graph[int]:
     return G
 
 
-def adjust_graph_for_masking(
-    G: nx.Graph[int], mask: npt.NDArray[np.bool_]
-) -> nx.Graph[int]:
+def adjust_graph_for_masking(G: nx.Graph[int]) -> nx.Graph[int]:
     """
     Adjust the graph G according to the masking indices.
     Removes nodes specified by the mask and relabels the remaining nodes
@@ -80,10 +76,6 @@ def adjust_graph_for_masking(
     Returns:
     - The adjusted graph
     """
-    # Step 1: Remove nodes specified by mask_indices
-    mask_indices = np.where(mask)[0]
-    G.remove_nodes_from(mask_indices)
-
     # Step 2: Relabel remaining nodes to 0, 1, 2, ..., G.number_of_nodes - 1
     new_labels = {old_label: new_label for new_label, old_label in enumerate(G.nodes())}
     G = nx.relabel_nodes(G, new_labels, copy=True)
@@ -104,12 +96,10 @@ class Field(ParameterConfig):
     forward_init_file: str
     output_file: Path
     grid_file: str
-    mask_file: Path | None = None
 
     @model_validator(mode="after")
     def log_parameters_on_instantiation(self) -> Field:
         properties_to_skip = {
-            "mask_file",  # Provided at runtime
             "ertbox_params",  # Derived from grid_file
         }
 
@@ -129,10 +119,6 @@ class Field(ParameterConfig):
     @field_serializer("output_file")
     def serialize_output_file(self, path: Path) -> str:
         return str(path)
-
-    @field_serializer("mask_file")
-    def serialize_mask_file(self, path: Path | None) -> str | None:
-        return str(path) if path is not None else None
 
     @property
     def parameter_keys(self) -> list[str]:
@@ -267,11 +253,7 @@ class Field(ParameterConfig):
         return cls(**input_dict)
 
     def __len__(self) -> int:
-        if self.mask_file is None:
-            return self.ertbox_params.nx * self.ertbox_params.ny * self.ertbox_params.nz
-
-        # Uses int() to convert to standard python int for mypy
-        return int(np.size(self.mask) - np.count_nonzero(self.mask))
+        return self.ertbox_params.nx * self.ertbox_params.ny * self.ertbox_params.nz
 
     @log_duration(_logger, custom_name="load_field")
     def read_from_runpath(
@@ -286,7 +268,6 @@ class Field(ParameterConfig):
                         read_field(
                             run_path / file_name,
                             self.name,
-                            self.mask,
                             Shape(
                                 self.ertbox_params.nx,
                                 self.ertbox_params.ny,
@@ -324,13 +305,18 @@ class Field(ParameterConfig):
     ) -> Iterator[tuple[int, xr.Dataset]]:
         for i, realization in enumerate(iens_active_index):
             ma = np.ma.MaskedArray(  # type: ignore
-                data=np.zeros(self.mask.size),
-                mask=self.mask,
+                data=np.zeros(
+                    self.ertbox_params.nx
+                    * self.ertbox_params.ny
+                    * self.ertbox_params.nz
+                ),
                 fill_value=np.nan,
                 dtype=from_data.dtype,
             )
             ma[~ma.mask] = from_data[:, i]
-            ma = ma.reshape(self.mask.shape)  # type: ignore
+            ma = ma.reshape(
+                (self.ertbox_params.nx, self.ertbox_params.ny, self.ertbox_params.nz)
+            )  # type: ignore
             ds = xr.Dataset({"values": (["x", "y", "z"], ma.filled())})
             yield int(realization), ds
 
@@ -342,7 +328,7 @@ class Field(ParameterConfig):
         ensemble_size = len(ds.realizations)
         da = xr.DataArray(
             [
-                np.ma.MaskedArray(data=d, mask=self.mask).compressed()  # type: ignore
+                np.ma.MaskedArray(data=d).compressed()  # type: ignore
                 for d in ds["values"].values.reshape(ensemble_size, -1)
             ]
         )
@@ -365,31 +351,14 @@ class Field(ParameterConfig):
                 self.truncation_min,
                 self.truncation_max,
             ),
-            self.mask,
             fill_value=np.nan,
         )
-
-    def save_experiment_data(self, experiment_path: Path) -> None:
-        mask_path = experiment_path / "grid_mask.npy"
-        if not mask_path.exists():
-            mask, _ = read_mask(self.grid_file)
-            np.save(mask_path, mask)
-        self.mask_file = mask_path
-
-    @cached_property
-    def mask(self) -> Any:
-        if self.mask_file is None:
-            raise ValueError(
-                "In order to get Field.mask, Field.save_experiment_data has"
-                " to be called first"
-            )
-        return np.load(self.mask_file)
 
     def load_parameter_graph(self) -> nx.Graph:  # type: ignore
         parameter_graph = create_flattened_cube_graph(
             px=self.ertbox_params.nx, py=self.ertbox_params.ny, pz=self.ertbox_params.nz
         )
-        return adjust_graph_for_masking(G=parameter_graph, mask=self.mask.flatten())
+        return adjust_graph_for_masking(G=parameter_graph)
 
     @property
     def nx(self) -> int:
