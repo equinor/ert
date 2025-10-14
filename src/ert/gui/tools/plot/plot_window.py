@@ -371,18 +371,21 @@ class PlotWindow(QMainWindow):
     def addPlotWidget(
         self,
         name: str,
-        plotter: EnsemblePlot
-        | StatisticsPlot
-        | HistogramPlot
-        | GaussianKDEPlot
-        | DistributionPlot
-        | CrossEnsembleStatisticsPlot
-        | StdDevPlot,
+        plotter: (
+            EnsemblePlot
+            | StatisticsPlot
+            | HistogramPlot
+            | GaussianKDEPlot
+            | DistributionPlot
+            | CrossEnsembleStatisticsPlot
+            | StdDevPlot
+        ),
         enabled: bool = True,
     ) -> None:
         plot_widget = PlotWidget(name, plotter)
         plot_widget.customizationTriggered.connect(self.toggleCustomizeDialog)
         plot_widget.layerIndexChanged.connect(self.layerIndexChanged)
+        plot_widget.plotUpdateRequested.connect(self.updatePlot)
 
         index = self._central_tab.addTab(plot_widget, name)
         self._plot_widgets.append(plot_widget)

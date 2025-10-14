@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from math import ceil, sqrt
-from typing import TYPE_CHECKING
+from math import ceil, floor, log10, sqrt
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
@@ -131,6 +131,7 @@ def plotHistogram(
                         config.histogramStyle(),
                         data[ensemble.id],
                         bin_count,
+                        plot_context.log_scale,
                         minimum,
                         maximum,
                     ),
@@ -181,6 +182,7 @@ def _plotHistogram(
     style: PlotStyle,
     data: pd.DataFrame,
     bin_count: int,
+    use_log_scale: bool = False,
     minimum: float | None = None,
     maximum: float | None = None,
 ) -> Rectangle:
@@ -188,19 +190,46 @@ def _plotHistogram(
     if minimum is not None and maximum is not None:
         # Ensure we have at least 2 bin edges to create 1 bin
         effective_bin_count = max(bin_count + 1, 2)
-        bins = np.linspace(minimum, maximum, effective_bin_count)  # type: ignore
-
         if minimum == maximum:
             minimum -= 0.5
             maximum += 0.5
+        if use_log_scale:
+            bins = _histogramLogBins(effective_bin_count, minimum, maximum)  # type: ignore
+            axes.set_xscale("log")
+        else:
+            bins = np.linspace(minimum, maximum, effective_bin_count)  # type: ignore
+            axes.set_xscale("linear")
+            axes.xaxis.set_major_formatter(ConditionalAxisFormatter())
+
     else:
         bins = bin_count
 
     axes.hist(data.values, alpha=style.alpha, bins=bins, color=style.color)
 
     axes.set_xlim(minimum, maximum)
-    axes.xaxis.set_major_formatter(ConditionalAxisFormatter())
 
     return Rectangle(
         (0, 0), 1, 1, color=style.color
     )  # creates rectangle patch for legend use.'
+
+
+def _histogramLogBins(
+    bin_count: int, minimum: float, maximum: float
+) -> npt.NDArray[np.floating[Any]]:
+    minimum = log10(float(minimum))
+    maximum = log10(float(maximum))
+
+    min_value = floor(minimum)
+    max_value = ceil(maximum)
+
+    log_bin_count = max_value - min_value
+
+    if log_bin_count < bin_count:
+        next_bin_count = log_bin_count * 2
+
+        if bin_count - log_bin_count > next_bin_count - bin_count:
+            log_bin_count = next_bin_count
+        else:
+            log_bin_count = bin_count
+
+    return 10 ** np.linspace(minimum, maximum, log_bin_count)
