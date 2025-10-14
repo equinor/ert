@@ -17,6 +17,7 @@ from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtWidgets import QComboBox, QVBoxLayout, QWidget, QWidgetAction
 
 from .plot_api import EnsembleObject
+from .plottery.plots.plot_tools import ConditionalAxisFormatter
 
 if TYPE_CHECKING:
     from .plottery import PlotContext
@@ -64,59 +65,30 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
                 self._layer_action = self.insertWidget(action, layer_combobox)
                 self._layer_action.setVisible(False)
 
-        self.addSeparator()
-
-        self._xlog_action = QAction("X: log", self)
-        self._xlog_action.setCheckable(True)
-        self._xlog_action.toggled.connect(self._toggle_xscale)
-        self.addAction(self._xlog_action)
-
-        self._ylog_action = QAction("Y: log", self)
-        self._ylog_action.setCheckable(True)
-        self._ylog_action.toggled.connect(self._toggle_yscale)
-        self.addAction(self._ylog_action)
+        # self.addSeparator()
+        self._log_action = QAction("Log scale", self)
+        self._log_action.setToolTip("Toggle data domain to log scale and back")
+        self._log_action.setCheckable(True)
+        self._log_action.setVisible(False)  # only visible for supported plots
+        self._log_action.toggled.connect(self._on_log_toggled)
+        self.addAction(self._log_action)
 
     @Slot(bool)
-    def _toggle_xscale(self, checked: bool) -> None:
-        fig = self.canvas.figure
-        try:
-            for ax in fig.axes:
-                ax.set_xscale("log" if checked else "linear")
-            fig.canvas.draw_idle()
-        except ValueError:
-            # Non-positive data for log: revert toggle
-            self._xlog_action.blockSignals(True)
-            self._xlog_action.setChecked(False)
-            self._xlog_action.blockSignals(False)
+    def showLogAction(self, show: bool) -> None:
+        self._log_action.setVisible(show)
 
     @Slot(bool)
-    def _toggle_yscale(self, checked: bool) -> None:
-        fig = self.canvas.figure
-        try:
-            for ax in fig.axes:
-                ax.set_yscale("log" if checked else "linear")
-            fig.canvas.draw_idle()
-        except ValueError:
-            self._ylog_action.blockSignals(True)
-            self._ylog_action.setChecked(False)
-            self._ylog_action.blockSignals(False)
+    def setLogChecked(self, checked: bool) -> None:
+        self._log_action.blockSignals(True)
+        self._log_action.setChecked(checked)
+        self._log_action.blockSignals(False)
 
-    def _set_checked_safely(self, action: QAction, checked: bool) -> None:
-        action.blockSignals(True)
-        action.setChecked(checked)
-        action.blockSignals(False)
-
-    @Slot()
-    def syncScaleButtons(self) -> None:
-        axes = self.canvas.figure.axes
-        if not axes:
-            # Default to linear when nothing is drawn
-            self._set_checked_safely(self._xlog_action, False)
-            self._set_checked_safely(self._ylog_action, False)
-            return
-        ax0 = axes[0]
-        self._set_checked_safely(self._xlog_action, ax0.get_xscale() == "log")
-        self._set_checked_safely(self._ylog_action, ax0.get_yscale() == "log")
+    @Slot(bool)
+    def _on_log_toggled(self, checked: bool) -> None:
+        # Delegate to PlotWidget so it can pick the correct axis per plot type
+        log_scale_ok = self.parent()._apply_log_toggle(checked)
+        if not log_scale_ok:
+            self.setLogChecked(False)
 
     @Slot(bool)
     def showLayerWidget(self, show: bool) -> None:
@@ -186,6 +158,57 @@ class PlotWidget(QWidget):
     def resetPlot(self) -> None:
         self._figure.clear()
 
+    def _log_axis_for_plotter(self) -> str | None:
+        """Return 'x' or 'y' if this plotter supports log toggle, else None."""
+        cls = type(self._plotter).__name__
+        x_only = {"HistogramPlot", "GaussianKDEPlot"}
+        y_only = {"DistributionPlot", "CrossEnsembleStatisticsPlot"}
+        if cls in x_only:
+            return "x"
+        if cls in y_only:
+            return "y"
+        return None
+
+    def _do_log_button(self) -> None:
+        axis = self._log_axis_for_plotter()
+        self.showLayerWidget.emit(axis is not None)
+        self._toolbar.showLogAction(axis is not None)
+        if axis is None:
+            return
+        axes = self._figure.axes
+        if not axes:
+            self._toolbar.setLogChecked(False)
+            return
+        ax0 = axes[0]
+        if axis == "x":
+            self._toolbar.setLogChecked(ax0.get_xscale() == "log")
+        else:
+            self._toolbar.setLogChecked(ax0.get_yscale() == "log")
+
+    def _apply_log_toggle(self, checked: bool) -> bool:
+        """Called by toolbar when 'Log scale' is toggled. Returns True if applied."""
+        axis = self._log_axis_for_plotter()
+        if axis is None:
+            return True
+        try:
+            for ax in self._figure.axes:
+                if axis == "x":
+                    if checked:
+                        ax.set_xscale("log")
+                    else:
+                        ax.set_xscale("linear")
+                        ax.xaxis.set_major_formatter(ConditionalAxisFormatter())
+
+                elif checked:
+                    ax.set_yscale("log")
+                else:
+                    ax.set_yscale("linear")
+                    ax.yaxis.set_major_formatter(ConditionalAxisFormatter())
+            self._canvas.draw_idle()
+        except ValueError:
+            return False
+        return True
+
     @property
     def name(self) -> str:
         return self._name
@@ -207,7 +230,7 @@ class PlotWidget(QWidget):
                 std_dev_images,
             )
             self._canvas.draw()
-            self._toolbar.syncScaleButtons()
+            self._do_log_button()
         except Exception as e:
             exc_type, _, exc_tb = sys.exc_info()
             sys.stderr.write("-" * 80 + "\n")
