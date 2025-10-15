@@ -507,12 +507,9 @@ class EverestRunModel(RunModel):
 
     def cancel(self) -> None:
         if self._experiment is not None:
-            self.set_experiment_status(
-                self._experiment.id,
-                ExperimentStatus(
-                    message="Optimization aborted",
-                    status=ExperimentState.stopped,
-                ),
+            self._experiment.status = ExperimentStatus(
+                message="Optimization aborted",
+                status=ExperimentState.stopped,
             )
         super().cancel()
 
@@ -599,11 +596,8 @@ class EverestRunModel(RunModel):
             responses=self.response_configuration,
         )
 
-        self.set_experiment_status(
-            self._experiment.id,
-            ExperimentStatus(
-                message="Experiment started", status=ExperimentState.running
-            ),
+        self._experiment.status = ExperimentStatus(
+            message="Experiment started", status=ExperimentState.running
         )
 
         # Initialize the ropt optimizer:
@@ -675,7 +669,7 @@ class EverestRunModel(RunModel):
                     )
 
         if experiment_status is not None:
-            self.set_experiment_status(self._experiment.id, experiment_status)
+            self._experiment.status = experiment_status
 
         logger.debug(
             f"Everest experiment finished with exit code {self._exit_code.name}"
