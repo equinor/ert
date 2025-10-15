@@ -9,7 +9,7 @@ from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QCheckBox, QFormLayout, QHBoxLayout, QLabel, QWidget
 
-from ert.config import ErrorInfo
+from ert.config import ErrorInfo, ParameterConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
     ActiveRealizationsModel,
@@ -21,6 +21,7 @@ from ert.gui.ertwidgets import (
     TextModel,
     ValueModel,
 )
+from ert.gui.ertwidgets.parameterviewer import get_parameters_button
 from ert.gui.suggestor import Suggestor
 from ert.mode_definitions import ES_MDA_MODE
 from ert.run_models import MultipleDataAssimilation
@@ -58,6 +59,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
     def __init__(
         self,
         analysis_config: AnalysisConfig,
+        parameter_configuration: list[ParameterConfig],
         run_path: str,
         notifier: ErtNotifier,
         active_realizations: list[bool],
@@ -171,6 +173,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         )
 
         design_matrix = analysis_config.design_matrix
+        merged_parameters = parameter_configuration
         if design_matrix is not None:
             layout.addRow(
                 "Design Matrix",
@@ -180,6 +183,11 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                     config_num_realization,
                 ),
             )
+            merged_parameters = design_matrix.merge_with_existing_parameters(
+                merged_parameters
+            )
+
+        layout.addRow("Parameters:", get_parameters_button(merged_parameters, self))
 
         self.setLayout(layout)
 
