@@ -4,6 +4,7 @@ import contextlib
 import json
 import logging
 import os
+import re
 import shutil
 from collections.abc import Generator, MutableSequence
 from datetime import datetime
@@ -560,21 +561,17 @@ class LocalStorage(BaseMode):
         if experiment_name not in [e.name for e in self.experiments]:
             return experiment_name
 
-        if (
-            len(
-                same_prefix := [
-                    e.name
-                    for e in self.experiments
-                    if e.name.startswith(experiment_name + "_")
-                ]
-            )
-            > 0
-        ):
-            return (
-                experiment_name
-                + "_"
-                + str(max(int(e[e.rfind("_") + 1 :]) for e in same_prefix) + 1)
-            )
+        # Only match names that follow the pattern: experiment_name_<digits>
+        pattern = re.escape(experiment_name) + r"_(\d+)$"
+
+        numeric_suffixes = []
+        for e in self.experiments:
+            match = re.match(pattern, e.name)
+            if match:
+                numeric_suffixes.append(int(match.group(1)))
+
+        if numeric_suffixes:
+            return experiment_name + "_" + str(max(numeric_suffixes) + 1)
         else:
             return experiment_name + "_0"
 
