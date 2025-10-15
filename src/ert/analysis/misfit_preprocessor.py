@@ -29,7 +29,7 @@ def get_scaling_factor(nr_observations: int, nr_components: int) -> float:
 
 
 def get_nr_primary_components(
-    responses: npt.NDArray[np.float64], threshold: float
+    responses: npt.NDArray[np.float32], threshold: float
 ) -> int:
     """
     Calculate the number of principal components required
@@ -61,7 +61,7 @@ def get_nr_primary_components(
 
 
 def cluster_responses(
-    responses: npt.NDArray[np.float64],
+    responses: npt.NDArray[np.float32],
     nr_clusters: int,
 ) -> npt.NDArray[np.int_]:
     """
@@ -70,7 +70,7 @@ def cluster_responses(
     be clustered together.
     """
     correlation = spearmanr(responses).statistic
-    if isinstance(correlation, np.float64):
+    if isinstance(correlation, np.floating):
         correlation = np.array([[1, correlation], [correlation, 1]])
     # Take absolute value to cluster based on correlation strength rather
     # than direction.
@@ -84,9 +84,9 @@ def cluster_responses(
 
 
 def main(
-    responses: npt.NDArray[np.float64],
-    obs_errors: npt.NDArray[np.float64],
-) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.int_], npt.NDArray[np.int_]]:
+    responses: npt.NDArray[np.floating],
+    obs_errors: npt.NDArray[np.floating],
+) -> tuple[npt.NDArray[np.floating], npt.NDArray[np.int_], npt.NDArray[np.int_]]:
     """
     Perform 'Auto Scaling' to mitigate issues with correlated observations in ensemble
     smoothers.

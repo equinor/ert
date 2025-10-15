@@ -529,9 +529,9 @@ class LocalEnsemble(BaseMode):
     def _load_dataset(
         self,
         group: str,
-        realizations: int | np.int64 | npt.NDArray[np.int_],
+        realizations: int | np.int32 | npt.NDArray[np.int_],
     ) -> xr.Dataset:
-        if isinstance(realizations, int | np.int64):
+        if isinstance(realizations, int | np.int32):
             return self._load_single_dataset(group, int(realizations)).isel(
                 realizations=0, drop=True
             )
@@ -633,7 +633,7 @@ class LocalEnsemble(BaseMode):
 
     def load_parameters_numpy(
         self, group: str, realizations: npt.NDArray[np.int_]
-    ) -> npt.NDArray[np.float64]:
+    ) -> npt.NDArray[np.float32]:
         if group in self.experiment.parameter_configuration:
             config = self.experiment.parameter_configuration[group]
             return config.load_parameters(self, realizations)
@@ -655,7 +655,7 @@ class LocalEnsemble(BaseMode):
 
     def save_parameters_numpy(
         self,
-        parameters: npt.NDArray[np.float64],
+        parameters: npt.NDArray[np.float32],
         param_group: str,
         iens_active_index: npt.NDArray[np.int_],
     ) -> None:
@@ -724,7 +724,7 @@ class LocalEnsemble(BaseMode):
         parameter_dict["realization"] = real_nr
         return pl.DataFrame(
             parameter_dict,
-            schema={parameter.name: pl.Float64, "realization": pl.Int64},
+            schema={parameter.name: pl.Float32, "realization": pl.Int32},
         )
 
     def load_responses(self, key: str, realizations: tuple[int, ...]) -> pl.DataFrame:
