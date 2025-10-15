@@ -265,7 +265,7 @@ def test_multiple_data_assimilation_restart_paths(
         "ert.run_models.run_model.Storage.get_ensemble", return_value=ensemble_mock
     ):
         model = model_factory._setup_multiple_data_assimilation(
-            config, args, MagicMock(spec=ObservationSettings), MagicMock()
+            config, args, ObservationSettings(), queue.SimpleQueue()
         )
     base_path = tmp_path / "simulations"
     expected_path = [str(base_path / expected) for expected in expected_path]
@@ -294,7 +294,7 @@ def test_num_realizations_specified_incorrectly_raises(analysis_mode):
         ConfigValidationError,
         match="Number of active realizations must be at least 2 for an update step",
     ):
-        analysis_mode(config, args, MagicMock(), MagicMock())
+        analysis_mode(config, args, ObservationSettings(), queue.SimpleQueue())
 
 
 @pytest.mark.parametrize(
@@ -334,7 +334,7 @@ def test_evaluate_ensemble_paths(
                 mode=EVALUATE_ENSEMBLE_MODE,
                 realizations=None,
             ),
-            MagicMock(),
+            queue.SimpleQueue(),
         )
 
     base_path = tmp_path / "simulations"
