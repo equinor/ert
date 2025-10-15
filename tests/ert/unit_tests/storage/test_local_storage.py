@@ -514,6 +514,25 @@ def test_get_unique_experiment_name(snake_oil_storage):
         assert snake_oil_storage.get_unique_experiment_name("") == "default_0"
 
 
+def test_get_unique_experiment_name_ignores_non_numeric_suffixes(tmp_path):
+    """
+    Regression test for bug where non-numeric suffixes caused ValueError.
+
+    When an experiment like 'es_mda_adaptive' existed, attempting to generate
+    a unique name for 'es_mda' would incorrectly try to parse 'adaptive' as
+    an integer, causing: ValueError: invalid literal for int() with base 10: 'adaptive'
+
+    The fix ensures only numeric suffixes (e.g., 'es_mda_0', 'es_mda_1') are
+    considered when generating new unique names.
+    """
+    with open_storage(tmp_path, mode="w") as storage:
+        storage.create_experiment(name="es_mda")
+        storage.create_experiment(name="es_mda_adaptive")
+
+        # Should return es_mda_0, not crash on "adaptive"
+        assert storage.get_unique_experiment_name("es_mda") == "es_mda_0"
+
+
 def add_to_name(prefix: str):
     def _inner(params):
         for param in params:
