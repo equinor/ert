@@ -363,6 +363,27 @@ class QueueConfig(BaseModelWithContextSupport):
     stop_long_running: bool = False
     max_runtime: int | None = None
 
+    @staticmethod
+    def _user_queue_options_from_dict(
+        selected_queue_system: QueueSystem, config_dict: ConfigDict
+    ) -> dict[str, Any]:
+        usr_queue_options_dict = {}
+
+        for name in QueueOptions.model_fields:
+            generic_value = config_dict.get(name.upper(), None)
+            if generic_value is not None:
+                if name == "realization_memory" and isinstance(generic_value, str):
+                    generic_value = parse_string_to_bytes(generic_value)
+                usr_queue_options_dict[name] = generic_value
+
+        for line in config_dict.get("QUEUE_OPTION", []):
+            queue_system, option_name, *values = line
+            value = None if len(values) == 0 else values[0]
+            if value is not None and queue_system == selected_queue_system:
+                usr_queue_options_dict[option_name.lower()] = value
+
+        return usr_queue_options_dict
+
     @classmethod
     def from_dict(
         cls,
@@ -382,26 +403,13 @@ class QueueConfig(BaseModelWithContextSupport):
             usr_queue_system or site_queue_system or QueueSystem.LOCAL
         )
 
-        usr_queue_options_dict = {}
+        usr_queue_options_dict = cls._user_queue_options_from_dict(
+            selected_queue_system, config_dict
+        )
         default_queue_options_dict = {
             name: generic_option.default
             for name, generic_option in QueueOptions.model_fields.items()
         }
-
-        for name in QueueOptions.model_fields:
-            generic_value = config_dict.get(name.upper(), None)
-            if generic_value is not None:
-                if name == "realization_memory" and isinstance(generic_value, str):
-                    generic_value = parse_string_to_bytes(generic_value)
-
-                usr_queue_options_dict[name] = generic_value
-
-        for line in config_dict.get("QUEUE_OPTION", []):
-            queue_system, option_name, *values = line
-            value = None if len(values) == 0 else values[0]
-
-            if value is not None and queue_system == selected_queue_system:
-                usr_queue_options_dict[option_name.lower()] = value
 
         usr_job_script = usr_queue_options_dict.get("job_script")
         site_job_script = site_queue_options_dict.get("job_script")
