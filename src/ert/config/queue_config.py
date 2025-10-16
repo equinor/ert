@@ -439,11 +439,6 @@ class QueueConfig(BaseModelWithContextSupport):
             logger.info(f"Parsed NUM_CPU={num_cpu} from {data_file}")
             usr_queue_options_dict[ConfigKeys.NUM_CPU] = num_cpu
 
-        raw_queue_options = config_dict.get("QUEUE_OPTION", [])
-        grouped_queue_options = _group_queue_options_by_queue_system(raw_queue_options)
-        _log_duplicated_queue_options(raw_queue_options, site_queue_options_dict)
-        _raise_for_defaulted_invalid_options(raw_queue_options)
-
         selected_queue_options = QueueOptions.create_queue_options(
             selected_queue_system,
             (
@@ -458,15 +453,9 @@ class QueueConfig(BaseModelWithContextSupport):
             True,
         )
 
-        # validate all queue options for the unselected queues
-        # and show a warning
-        for _queue_system in QueueSystem:
-            if _queue_system != selected_queue_system:
-                _ = QueueOptions.create_queue_options(
-                    _queue_system,
-                    grouped_queue_options[_queue_system],
-                    False,
-                )
+        cls._validate_config_dict(
+            selected_queue_system, config_dict, site_queue_options_dict
+        )
 
         if selected_queue_options.project_code is None:
             tags = {
@@ -484,6 +473,27 @@ class QueueConfig(BaseModelWithContextSupport):
             stop_long_running=bool(stop_long_running),
             max_runtime=config_dict.get(ConfigKeys.MAX_RUNTIME),
         )
+
+    @staticmethod
+    def _validate_config_dict(
+        selected_queue_system: QueueSystem,
+        config_dict: ConfigDict,
+        site_queue_options_dict: ConfigDict,
+    ) -> None:
+        raw_queue_options = config_dict.get("QUEUE_OPTION", [])
+        grouped_queue_options = _group_queue_options_by_queue_system(raw_queue_options)
+        _log_duplicated_queue_options(raw_queue_options, site_queue_options_dict)
+        _raise_for_defaulted_invalid_options(raw_queue_options)
+
+        # validate all queue options for the unselected queues
+        # and show a warning
+        for _queue_system in QueueSystem:
+            if _queue_system != selected_queue_system:
+                _ = QueueOptions.create_queue_options(
+                    _queue_system,
+                    grouped_queue_options[_queue_system],
+                    False,
+                )
 
     def create_local_copy(self) -> QueueConfig:
         return QueueConfig(
