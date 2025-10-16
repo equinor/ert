@@ -45,8 +45,8 @@ class ExperimentState(StrEnum):
 
 
 class ExperimentStatus(BaseModel):
-    message: str = ""
-    status: ExperimentState = ExperimentState.pending
+    message: str = Field(default="")
+    status: ExperimentState = Field(default=ExperimentState.pending)
 
 
 class _Index(BaseModel):
@@ -56,7 +56,7 @@ class _Index(BaseModel):
     # from a different experiment. For example, a manual update
     # is a separate experiment from the one that created the prior.
     ensembles: list[UUID]
-    status: ExperimentStatus | None = None
+    status: ExperimentStatus = Field(default_factory=ExperimentStatus)
 
 
 _responses_adapter = TypeAdapter(  # type: ignore
@@ -313,12 +313,12 @@ class LocalExperiment(BaseMode):
         return self._index.id
 
     @property
-    def status(self) -> ExperimentStatus | None:
+    def status(self) -> ExperimentStatus:
         return self._index.status
 
     @status.setter
     @require_write
-    def status(self, status: ExperimentStatus | None) -> None:
+    def status(self, status: ExperimentStatus) -> None:
         if status != self._index.status:
             self._index.status = status
             self._storage._write_transaction(

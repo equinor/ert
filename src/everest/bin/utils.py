@@ -36,7 +36,7 @@ from everest.detached import (
     wait_for_server_to_stop,
 )
 from everest.simulator import JOB_FAILURE, JOB_RUNNING, JOB_SUCCESS
-from everest.strings import EVEREST, OPT_PROGRESS_ID, SIM_PROGRESS_ID, STORAGE_DIR
+from everest.strings import EVEREST, OPT_PROGRESS_ID, SIM_PROGRESS_ID
 from everest.util import makedirs_if_needed
 
 
@@ -463,14 +463,13 @@ def show_scaled_controls_warning() -> None:
             raise SystemExit(0)
 
 
-def get_experiment_status(config: EverestConfig) -> ExperimentStatus:
+def get_experiment_status(storage_dir: str) -> ExperimentStatus:
     """
     Reads the experiment status from storage. If no experiments are found,
     returns an ExperimentStatus with status 'never_run'. We assume that there is
     only one experiment for each everest run in storage.
     """
-    storage_dir = os.path.join(config.output_dir, STORAGE_DIR)
-    with open_storage(storage_dir, "w") as storage:
+    with open_storage(storage_dir, "r") as storage:
         if len(list(storage.experiments)) == 0:
             return ExperimentStatus(status=ExperimentState.never_run)
         experiment_status = next(iter(storage.experiments)).status
