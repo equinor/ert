@@ -375,35 +375,32 @@ def test_wrong_max_submit_raises_validation_error(max_submit_value, error_msg):
 
 
 @pytest.mark.parametrize(
-    "queue_system, key, value",
+    "key, value",
     [
-        ("LSF", "MAX_RUNNING", -50),
-        ("SLURM", "MAX_RUNNING", -50),
-        ("TORQUE", "MAX_RUNNING", -50),
-        ("LSF", "SUBMIT_SLEEP", -4.2),
-        ("SLURM", "SUBMIT_SLEEP", -4.2),
-        ("TORQUE", "SUBMIT_SLEEP", -4.2),
+        ("MAX_RUNNING", -50),
+        ("SUBMIT_SLEEP", -4.2),
     ],
 )
-def test_invalid_queue_option_value_raises_validation_error(queue_system, key, value):
-    with pytest.raises(
-        ConfigValidationError, match="Input should be greater than or equal to 0"
-    ):
-        ErtConfig.from_file_contents(
-            "NUM_REALIZATIONS 1\n"
-            f"QUEUE_SYSTEM {queue_system}\n"
-            f"QUEUE_OPTION {queue_system} {key} {value}\n"
-        )
+def test_invalid_queue_option_value_raises_validation_error(key, value):
+    for queue_system in ["LSF", "SLURM", "TORQUE", "LOCAL"]:
+        with pytest.raises(
+            ConfigValidationError, match="Input should be greater than or equal to 0"
+        ):
+            ErtConfig.from_file_contents(
+                "NUM_REALIZATIONS 1\n"
+                f"QUEUE_SYSTEM {queue_system}\n"
+                f"QUEUE_OPTION {queue_system} {key} {value}\n"
+            )
 
-    error_msg = (
-        "must have a positive integer value"
-        if key == "MAX_RUNNING"
-        else "Input should be greater than or equal to 0"
-    )
-    with pytest.raises(ConfigValidationError, match=error_msg):
-        ErtConfig.from_file_contents(
-            f"NUM_REALIZATIONS 1\nQUEUE_SYSTEM {queue_system}\n{key} {value}\n"
+        error_msg = (
+            "must have a positive integer value"
+            if key == "MAX_RUNNING"
+            else "Input should be greater than or equal to 0"
         )
+        with pytest.raises(ConfigValidationError, match=error_msg):
+            ErtConfig.from_file_contents(
+                f"NUM_REALIZATIONS 1\nQUEUE_SYSTEM {queue_system}\n{key} {value}\n"
+            )
 
 
 @pytest.mark.parametrize(
