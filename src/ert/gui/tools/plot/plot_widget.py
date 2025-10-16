@@ -52,26 +52,28 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
         layer_combobox.setModel(self._model)
         layer_combobox.currentIndexChanged.connect(self.layerIndexChanged)
 
-        for action in self.actions():
-            if str(action.text()).lower() == "subplots":
-                self.removeAction(action)
-
-            if str(action.text()).lower() == "customize":
-                self.insertAction(action, customize_action)
-                self.removeAction(action)
-
-            # insert the layer widget before the coordinates widget
-            if isinstance(action, QWidgetAction):
-                self._layer_action = self.insertWidget(action, layer_combobox)
-                self._layer_action.setVisible(False)
-
-        # self.addSeparator()
         self._log_action = QAction("Log scale", self)
         self._log_action.setToolTip("Toggle data domain to log scale and back")
         self._log_action.setCheckable(True)
         self._log_action.setVisible(False)  # only visible for supported plots
         self._log_action.toggled.connect(self._on_log_toggled)
-        self.addAction(self._log_action)
+        for action in self.actions():
+            if str(action.text()).lower() == "subplots":
+                self.removeAction(action)
+                continue
+
+            if str(action.text()).lower() == "customize":
+                self.insertAction(action, customize_action)
+                self.removeAction(action)
+                continue
+
+            # insert the layer widget before the coordinates widget
+            if isinstance(action, QWidgetAction):
+                self._layer_action = self.insertWidget(action, layer_combobox)
+                self._layer_action.setVisible(False)
+                self.insertSeparator(action)
+                self.insertAction(action, self._log_action)
+                break
 
     @Slot(bool)
     def showLogAction(self, show: bool) -> None:
