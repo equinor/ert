@@ -186,7 +186,7 @@ class GenKwConfig(ParameterConfig):
                         params[0], params[1], params[2:]
                     ),
                     forward_init=False,
-                    update=update_parameter,
+                    update="CONST" not in params and update_parameter,
                 )
                 for params in distributions_spec
             ]
