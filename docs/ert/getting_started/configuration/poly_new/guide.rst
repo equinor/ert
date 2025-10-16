@@ -249,7 +249,8 @@ Creating parameters
 To sample different parameters across realizations in ERT,
 you'll need to define the prior distribution for each parameter.
 Furthermore, you'll detail how ERT can identify and inject these parameters into
-each simulation run via a templating mechanism.
+each simulation run via a templating mechanism. If you have parameters defined, you can inspect them
+by clicking the "Parameters" button in the simulation panel.
 
 Adding prior distributions
 **************************
@@ -280,6 +281,16 @@ The two required arguments for :ref:`GEN_KW <gen_kw>` are:
 
  1. **COEFFS**: The name assigned to the parameter set, serving as an identifier.
  2. **coeff_priors**: The name of the file containing the defined priors.
+
+Once configured, a button "Parameters" will appear in the simulation panel
+Clicking this will open the "Parameter viewer" window, displaying the defined parameters:
+
+.. image:: with_results/parameter_viewer.png
+
+This window shows parameters organized by their "type" (see :ref:`Data_types_available_in_ERT`) for an overview.
+The "Source" property refers to if the parameter is sampled by ERT, or provided using a design matrix (see :ref:`design_matrix`).
+"Update" tells you if ERT will update this parameter, and "Forward Init" indicates if the parameter is produced using a
+forward model step.
 
 Reading parameters in the simulation script
 *******************************************
