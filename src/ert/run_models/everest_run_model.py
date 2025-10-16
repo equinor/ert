@@ -73,7 +73,7 @@ from everest.simulator.everest_to_ert import (
     get_substitutions,
     get_workflow_jobs,
 )
-from everest.strings import EVEREST, STORAGE_DIR
+from everest.strings import EVEREST
 
 from ..run_arg import RunArg, create_run_arguments
 from ..storage import ExperimentState, ExperimentStatus
@@ -238,8 +238,6 @@ class EverestRunModel(RunModel):
             "add the above random seed to your configuration file.",
             everest_config.environment.random_seed,
         )
-
-        storage_dir = os.path.join(everest_config.output_dir, STORAGE_DIR)
 
         if status_queue is None:
             status_queue = queue.SimpleQueue()
@@ -476,7 +474,7 @@ class EverestRunModel(RunModel):
             forward_model_steps=forward_model_steps,
             substitutions=substitutions,
             hooked_workflows=hooked_workflows,
-            storage_path=storage_dir,
+            storage_path=everest_config.storage_dir,
             queue_config=queue_config,
             status_queue=status_queue,
             optimization_callback=optimization_callback,

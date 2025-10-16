@@ -4,8 +4,10 @@ from pathlib import Path
 
 import pytest
 
+from ert.storage import open_storage
+from ert.storage.local_experiment import ExperimentState, ExperimentStatus
 from everest import util
-from everest.bin.utils import show_scaled_controls_warning
+from everest.bin.utils import get_experiment_status, show_scaled_controls_warning
 from everest.config import EverestConfig, ServerConfig
 from everest.strings import EVEREST, SERVER_STATUS
 from tests.everest.utils import (
@@ -264,3 +266,27 @@ def test_show_scaled_controls_warning_preserves_extra_keys(
         user_info = json.load(f)
     assert user_info.get(EVEREST).get("show_scaling_warning") == result
     assert user_info.get("ert").get("test_key") == 42
+
+
+def test_get_experiment_status(change_to_tmpdir):
+    storage_dir = "."
+
+    # No experiments in storage
+    status = get_experiment_status(storage_dir)
+    assert status.status == ExperimentState.never_run
+
+    with open_storage(storage_dir, "w") as writable_storage:
+        experiment = writable_storage.create_experiment(name="test_experiment")
+        writable_storage.create_ensemble(
+            experiment=experiment, name="test_ensemble", ensemble_size=10
+        )
+        assert len(list(writable_storage.experiments)) == 1
+        experiment.status.status = ExperimentState.pending
+
+    status = get_experiment_status(storage_dir)
+    assert status.status == ExperimentState.pending
+
+    # Update the experiment status to running
+    experiment.status = ExperimentStatus(status=ExperimentState.running)
+    status = get_experiment_status(storage_dir)
+    assert status.status == ExperimentState.running
