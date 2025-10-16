@@ -15,7 +15,7 @@ from .observations_parser import (
     ObservationType,
     parse_observations,
 )
-from .queue_system import QueueSystem, QueueSystemWithGeneric
+from .queue_system import QueueSystem
 from .schema_item_type import SchemaItemType
 from .workflow_job_keywords import WorkflowJobKeys
 from .workflow_job_schema import init_workflow_job_schema
@@ -38,7 +38,6 @@ __all__ = [
     "ObservationType",
     "ObservationType",
     "QueueSystem",
-    "QueueSystemWithGeneric",
     "SchemaItemType",
     "WarningInfo",
     "WorkflowJobKeys",

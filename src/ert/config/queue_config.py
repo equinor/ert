@@ -29,7 +29,6 @@ from .parsing import (
     ConfigValidationError,
     ConfigWarning,
     QueueSystem,
-    QueueSystemWithGeneric,
 )
 
 if TYPE_CHECKING:
@@ -293,9 +292,6 @@ valid_options: dict[str, list[str]] = {
     QueueSystem.LSF: [field.upper() for field in LsfQueueOptions.model_fields],
     QueueSystem.SLURM: [field.upper() for field in SlurmQueueOptions.model_fields],
     QueueSystem.TORQUE: [field.upper() for field in TorqueQueueOptions.model_fields],
-    QueueSystemWithGeneric.GENERIC: [
-        field.upper() for field in QueueOptions.model_fields
-    ],
 }
 
 
@@ -345,13 +341,13 @@ def _raise_for_defaulted_invalid_options(queue_config_list: list[list[str]]) -> 
 
 def _group_queue_options_by_queue_system(
     queue_config_list: list[list[str]],
-) -> dict[QueueSystemWithGeneric, dict[str, str]]:
-    grouped: dict[QueueSystemWithGeneric, dict[str, str]] = {}
-    for system in QueueSystemWithGeneric:
+) -> dict[QueueSystem, dict[str, str]]:
+    grouped: dict[QueueSystem, dict[str, str]] = {}
+    for system in QueueSystem:
         grouped[system] = {
             option_line[1]: option_line[2]
             for option_line in queue_config_list
-            if option_line[0] in {QueueSystemWithGeneric.GENERIC, system}
+            if option_line[0] == system
             # Empty option values are ignored, yields defaults:
             and len(option_line) > 2
         }
@@ -449,9 +445,7 @@ class QueueConfig(BaseModelWithContextSupport):
                     if str(selected_queue_system) == site_queue_system
                     else {}
                 )
-                | grouped_queue_options[
-                    cast(QueueSystemWithGeneric, selected_queue_system)
-                ]
+                | grouped_queue_options[selected_queue_system]
                 | usr_queue_options_dict
             ),
             True,
@@ -463,7 +457,7 @@ class QueueConfig(BaseModelWithContextSupport):
             if _queue_system != selected_queue_system:
                 _ = QueueOptions.create_queue_options(
                     _queue_system,
-                    grouped_queue_options[cast(QueueSystemWithGeneric, _queue_system)],
+                    grouped_queue_options[_queue_system],
                     False,
                 )
 
