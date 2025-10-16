@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ert.config import Field, GenKwConfig, SurfaceConfig
+from ert.config import ErtConfig, Field, GenKwConfig, SurfaceConfig
 from ert.field_utils import ErtboxParameters, FieldFileFormat
 from ert.gui.ertwidgets.models.ertsummary import ErtSummary
 
@@ -120,9 +120,12 @@ def test_that_design_matrix_parameters_are_included_in_the_parameter_count(mock_
     )
 
     # Modify the mock to return parameters including design matrix
-    mock_ert.parameter_configurations_with_design_matrix = list(
-        mock_ert.ensemble_config.parameter_configs.values()
-    ) + [dm_param1, dm_param2, dm_param3]
+    mock_ert.parameter_configurations_with_design_matrix = [
+        *mock_ert.ensemble_config.parameter_configs.values(),
+        dm_param1,
+        dm_param2,
+        dm_param3,
+    ]
 
     parameter_list, parameter_count = ErtSummary(mock_ert).getParameters()
 
@@ -137,8 +140,6 @@ def test_getParameters_with_design_matrix_from_config(
     copy_poly_case_with_design_matrix,
 ):
     """Test that design matrix parameters are counted when loaded from a real config"""
-    from ert.config import ErtConfig
-
     # Create a design matrix with 3 parameters (a, b, c)
     design_dict = {"REAL": [0, 1, 2], "a": [1, 2, 3], "b": [4, 5, 6], "c": [7, 8, 9]}
     copy_poly_case_with_design_matrix(design_dict, [])
