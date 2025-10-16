@@ -121,7 +121,7 @@ class GenKwConfig(ParameterConfig):
         gen_kw_key = cast(str, gen_kw[0])
 
         options = cast(dict[str, str], gen_kw[-1])
-        positional_args = cast(list[str], gen_kw[:-1])
+        positional_args = cast(list[str | list[str]], gen_kw[:-1])
         errors = []
         update_parameter = str_to_bool(options.get("UPDATE", "TRUE"))
         if _get_abs_path(options.get("INIT_FILES")):
@@ -186,7 +186,7 @@ class GenKwConfig(ParameterConfig):
                         params[0], params[1], params[2:]
                     ),
                     forward_init=False,
-                    update=update_parameter,
+                    update="CONST" not in params and update_parameter,
                 )
                 for params in distributions_spec
             ]
