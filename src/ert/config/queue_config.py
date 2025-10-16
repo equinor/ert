@@ -453,7 +453,6 @@ class QueueConfig(BaseModelWithContextSupport):
                     if str(selected_queue_system) == site_queue_system
                     else {}
                 )
-                | grouped_queue_options[selected_queue_system]
                 | usr_queue_options_dict
             ),
             True,
