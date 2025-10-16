@@ -553,12 +553,12 @@ parameter_configs = st.lists(
     st.one_of(
         st.builds(
             GenKwConfig,
-            name=st.text(),
+            name=words,
             group_name=st.text(),
             update=st.booleans(),
             distribution=st.just({"name": "uniform", "min": 0, "max": 1}),
         ),
-        st.builds(SurfaceConfig),
+        st.builds(SurfaceConfig, name=words),
     ),
     unique_by=lambda x: x.name,
     min_size=1,
