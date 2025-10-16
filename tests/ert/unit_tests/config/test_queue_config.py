@@ -377,66 +377,6 @@ def test_wrong_max_submit_raises_validation_error(max_submit_value, error_msg):
 @pytest.mark.parametrize(
     "queue_system, key, value",
     [
-        ("LSF", "MAX_RUNNING", 50),
-        ("SLURM", "MAX_RUNNING", 50),
-        ("TORQUE", "MAX_RUNNING", 50),
-        ("LSF", "SUBMIT_SLEEP", 4.2),
-        ("SLURM", "SUBMIT_SLEEP", 4.2),
-        ("TORQUE", "SUBMIT_SLEEP", 4.2),
-    ],
-)
-def test_global_queue_options(queue_system, key, value):
-    def _check_results(contents):
-        ert_config = ErtConfig.from_file_contents(contents)
-        if key == "MAX_RUNNING":
-            assert ert_config.queue_config.max_running == value
-        elif key == "SUBMIT_SLEEP":
-            assert ert_config.queue_config.submit_sleep == value
-        else:
-            raise KeyError("Unexpected key")
-
-    _check_results(
-        "NUM_REALIZATIONS 1\n"
-        f"QUEUE_SYSTEM {queue_system}\n"
-        f"QUEUE_OPTION {queue_system} {key} 10\n"
-        f"QUEUE_OPTION {queue_system} {key} {value}\n"
-    )
-
-    _check_results(f"NUM_REALIZATIONS 1\nQUEUE_SYSTEM {queue_system}\n{key} {value}\n")
-
-
-@pytest.mark.parametrize(
-    "queue_system, key, value",
-    [
-        ("LSF", "MAX_RUNNING", 50),
-        ("SLURM", "MAX_RUNNING", 50),
-        ("TORQUE", "MAX_RUNNING", 50),
-        ("LSF", "SUBMIT_SLEEP", 4.2),
-        ("SLURM", "SUBMIT_SLEEP", 4.2),
-        ("TORQUE", "SUBMIT_SLEEP", 4.2),
-    ],
-)
-def test_global_config_key_does_not_overwrite_queue_options(queue_system, key, value):
-    def _check_results(contents):
-        ert_config = ErtConfig.from_file_contents(contents)
-        if key == "MAX_RUNNING":
-            assert ert_config.queue_config.max_running == value
-        elif key == "SUBMIT_SLEEP":
-            assert ert_config.queue_config.submit_sleep == value
-        else:
-            raise KeyError("Unexpected key")
-
-    _check_results(
-        "NUM_REALIZATIONS 1\n"
-        f"QUEUE_SYSTEM {queue_system}\n"
-        f"QUEUE_OPTION {queue_system} {key} {value}\n"
-        f"{key} {value + 42}\n"
-    )
-
-
-@pytest.mark.parametrize(
-    "queue_system, key, value",
-    [
         ("LSF", "MAX_RUNNING", -50),
         ("SLURM", "MAX_RUNNING", -50),
         ("TORQUE", "MAX_RUNNING", -50),
