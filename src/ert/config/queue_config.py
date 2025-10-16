@@ -424,9 +424,7 @@ class QueueConfig(BaseModelWithContextSupport):
         max_submit: int = config_dict.get(ConfigKeys.MAX_SUBMIT, 1)
         stop_long_running = config_dict.get(ConfigKeys.STOP_LONG_RUNNING, False)
 
-        usr_num_cpu = usr_queue_options_dict.get("num_cpu") or config_dict.get(
-            "NUM_CPU"
-        )
+        usr_num_cpu = usr_queue_options_dict.get("num_cpu")
         site_num_cpu = site_queue_options_dict.get("num_cpu")
 
         if usr_num_cpu is not None:
