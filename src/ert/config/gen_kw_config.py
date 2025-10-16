@@ -121,7 +121,7 @@ class GenKwConfig(ParameterConfig):
         gen_kw_key = cast(str, config_list[0])
 
         options = cast(dict[str, str], config_list[-1])
-        positional_args = cast(list[str], config_list[:-1])
+        positional_args = cast(list[str | list[str]], config_list[:-1])
         errors = []
         update = options.get("UPDATE")
         update_parameter = str_to_bool(update) if isinstance(update, str) else None
