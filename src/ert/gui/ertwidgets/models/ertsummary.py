@@ -21,18 +21,15 @@ class ErtSummary:
         parameters = []
         genkw_groups: dict[str, int] = defaultdict(int)
         count = 0
-        for (
-            key,
-            config,
-        ) in self.ert_config.ensemble_config.parameter_configs.items():
+        for config in self.ert_config.parameter_configurations_with_design_matrix:
             match config:
-                case GenKwConfig():
+                case GenKwConfig(name=key):
                     genkw_groups[config.group_name] += 1
                     count += 1
-                case Field(nx=nx, ny=ny, nz=nz):
+                case Field(name=key, nx=nx, ny=ny, nz=nz):
                     parameters.append(f"{key} ({nx}, {ny}, {nz})")
                     count += len(config)
-                case SurfaceConfig(ncol=ncol, nrow=nrow):
+                case SurfaceConfig(name=key, ncol=ncol, nrow=nrow):
                     parameters.append(f"{key} ({ncol}, {nrow})")
                     count += len(config)
         parameters += [

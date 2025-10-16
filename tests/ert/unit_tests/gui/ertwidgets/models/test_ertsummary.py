@@ -32,7 +32,7 @@ def mock_ert(monkeypatch):
     }
 
     surface = SurfaceConfig(
-        name="some_name",
+        name="surface",
         forward_init=True,
         ncol=10,
         nrow=7,
@@ -61,7 +61,7 @@ def mock_ert(monkeypatch):
     )
 
     field = Field(
-        name="some_name",
+        name="field",
         forward_init=True,
         ertbox_params=ertbox_params,
         file_format=FieldFileFormat.ROFF,
@@ -80,6 +80,10 @@ def mock_ert(monkeypatch):
         "field": field,
     } | gen_kws
 
+    ert_mock.parameter_configurations_with_design_matrix = list(
+        ert_mock.ensemble_config.parameter_configs.values()
+    )
+
     yield ert_mock
 
 
@@ -94,6 +98,59 @@ def test_getParameters(mock_ert):
     parameter_list, parameter_count = ErtSummary(mock_ert).getParameters()
     assert parameter_list == expected_list
     assert parameter_count == 223
+
+
+def test_getParameters_with_design_matrix(mock_ert):
+    """Test that design matrix parameters are included in the parameter count"""
+    # Add design matrix parameters
+    dm_param1 = GenKwConfig(
+        name="dm_param_a",
+        distribution={"name": "uniform", "min": 0, "max": 1},
+        group="DESIGN_MATRIX",
+    )
+    dm_param2 = GenKwConfig(
+        name="dm_param_b",
+        distribution={"name": "uniform", "min": 0, "max": 1},
+        group="DESIGN_MATRIX",
+    )
+    dm_param3 = GenKwConfig(
+        name="dm_param_c",
+        distribution={"name": "uniform", "min": 0, "max": 1},
+        group="DESIGN_MATRIX",
+    )
+
+    # Modify the mock to return parameters including design matrix
+    mock_ert.parameter_configurations_with_design_matrix = list(
+        mock_ert.ensemble_config.parameter_configs.values()
+    ) + [dm_param1, dm_param2, dm_param3]
+
+    parameter_list, parameter_count = ErtSummary(mock_ert).getParameters()
+
+    # Check that design matrix parameters are counted
+    assert "DESIGN_MATRIX (3)" in parameter_list
+    # Original count (223) + 3 design matrix parameters
+    assert parameter_count == 226
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_getParameters_with_design_matrix_from_config(
+    copy_poly_case_with_design_matrix,
+):
+    """Test that design matrix parameters are counted when loaded from a real config"""
+    from ert.config import ErtConfig
+
+    # Create a design matrix with 3 parameters (a, b, c)
+    design_dict = {"REAL": [0, 1, 2], "a": [1, 2, 3], "b": [4, 5, 6], "c": [7, 8, 9]}
+    copy_poly_case_with_design_matrix(design_dict, [])
+
+    config = ErtConfig.from_file("poly.ert")
+    summary = ErtSummary(config)
+
+    parameter_list, parameter_count = summary.getParameters()
+
+    # Should have 3 parameters from design matrix (a, b, c)
+    assert "DESIGN_MATRIX (3)" in parameter_list
+    assert parameter_count == 3
 
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
