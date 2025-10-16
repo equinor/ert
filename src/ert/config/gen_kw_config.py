@@ -179,23 +179,36 @@ class GenKwConfig(ParameterConfig):
                 gen_kw_key,
             )
         try:
-            return [
-                cls(
-                    **{
-                        k: v
-                        for k, v in {
-                            "name": params[0],
-                            "group": gen_kw_key,
-                            "distribution": GenKwConfig._parse_distribution(
-                                params[0], params[1], params[2:]
-                            ),
-                            "update": update_parameter,
-                        }.items()
-                        if v is not None
-                    }
+            config = []
+            for params in distributions_spec:
+                if "CONST" not in params and update_parameter:
+                    ConfigWarning.warn(
+                        "Updates are disabled for this GEN_KW due to CONST keyword "
+                        "in at least one parameter.\n"
+                        "Set the parameter group to UPDATE:FALSE to silence "
+                        "this warning.\n"
+                        "Consider splitting CONST and updatable parameters into "
+                        "different files if you use both in the same group.\n",
+                        gen_kw_key,
+                    )
+                config.append(
+                    cls(
+                        **{
+                            k: v
+                            for k, v in {
+                                "name": params[0],
+                                "group": gen_kw_key,
+                                "distribution": GenKwConfig._parse_distribution(
+                                    params[0], params[1], params[2:]
+                                ),
+                                "update": "CONST" not in params and update_parameter,
+                            }.items()
+                            if v is not None
+                        }
+                    )
                 )
-                for params in distributions_spec
-            ]
+
+            return config  # noqa: TRY300
         except ConfigValidationError as e:
             raise ConfigValidationError.from_collected(
                 [err.set_context(gen_kw_key) for err in e.errors]
