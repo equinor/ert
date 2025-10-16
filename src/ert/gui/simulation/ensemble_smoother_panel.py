@@ -129,7 +129,9 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
                 merged_parameters
             )
 
-        layout.addRow("Parameters:", get_parameters_button(merged_parameters, self))
+        if merged_parameters:
+            layout.addRow("Parameters", get_parameters_button(merged_parameters, self))
+
         self.setLayout(layout)
 
         self._experiment_name_field.getValidationSupport().validationChanged.connect(
