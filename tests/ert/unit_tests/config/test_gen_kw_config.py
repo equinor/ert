@@ -774,3 +774,23 @@ def test_genkw_paramgraph_transformfn_node_correspondence():
     assert data["links"] == []
 
     assert data["nodes"] == [{"id": 0}]
+
+
+def test_that_const_keyword_sets_update_to_false(tmpdir):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        GEN_KW CONST_TEST prior.txt UPDATE:TRUE
+        """
+        )
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("prior.txt", "w", encoding="utf-8") as fh:
+            fh.writelines("CONST_TEST CONST 1")
+
+        ert_config = ErtConfig.from_file("config.ert")
+
+        gen_kw_config = ert_config.ensemble_config.parameter_configs["CONST_TEST"]
+        assert gen_kw_config.update is False
