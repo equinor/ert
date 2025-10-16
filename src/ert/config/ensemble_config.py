@@ -13,7 +13,6 @@ from .gen_data_config import GenDataConfig
 from .gen_kw_config import GenKwConfig
 from .parameter_config import ParameterConfig
 from .parsing import ConfigDict, ConfigKeys, ConfigValidationError
-from .refcase import Refcase
 from .response_config import ResponseConfig
 from .summary_config import SummaryConfig
 from .surface_config import SurfaceConfig
@@ -33,7 +32,6 @@ class EnsembleConfig(BaseModel):
     parameter_configs: dict[
         str, GenKwConfig | FieldConfig | SurfaceConfig | ExtParamConfig
     ] = Field(default_factory=dict)
-    refcase: Refcase | None = None
 
     @model_validator(mode="after")
     def set_derived_fields(self) -> Self:
@@ -141,14 +139,11 @@ class EnsembleConfig(BaseModel):
             if instance is not None and instance.keys:
                 response_configs.append(instance)
 
-        refcase = Refcase.from_config_dict(config_dict)
-
         return cls(
             response_configs={response.name: response for response in response_configs},
             parameter_configs={
                 parameter.name: parameter for parameter in parameter_configs
             },
-            refcase=refcase,
         )
 
     def __getitem__(self, key: str) -> ParameterConfig | ResponseConfig:
