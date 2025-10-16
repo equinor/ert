@@ -385,7 +385,7 @@ def test_wrong_max_submit_raises_validation_error(max_submit_value, error_msg):
         ("TORQUE", "SUBMIT_SLEEP", -4.2),
     ],
 )
-def test_wrong_queue_option_raises_validation_error(queue_system, key, value):
+def test_invalid_queue_option_value_raises_validation_error(queue_system, key, value):
     with pytest.raises(
         ConfigValidationError, match="Input should be greater than or equal to 0"
     ):
