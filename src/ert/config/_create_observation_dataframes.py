@@ -20,7 +20,6 @@ from ._observations import (
     ObservationError,
     SummaryObservation,
 )
-from .ensemble_config import EnsembleConfig
 from .gen_data_config import GenDataConfig
 from .parsing import (
     ConfigWarning,
@@ -28,6 +27,7 @@ from .parsing import (
     HistorySource,
     ObservationConfigError,
 )
+from .refcase import Refcase
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -38,15 +38,16 @@ DEFAULT_TIME_DELTA = timedelta(seconds=30)
 
 def create_observation_dataframes(
     observations: Sequence[Observation],
-    ensemble_config: EnsembleConfig,
+    refcase: Refcase | None,
+    gen_data_config: GenDataConfig | None,
     time_map: list[datetime] | None,
     history: HistorySource,
 ) -> dict[str, pl.DataFrame]:
     if not observations:
         return {}
     obs_time_list: list[datetime] = []
-    if ensemble_config.refcase is not None:
-        obs_time_list = ensemble_config.refcase.all_dates
+    if refcase is not None:
+        obs_time_list = refcase.all_dates
     elif time_map is not None:
         obs_time_list = time_map
 
@@ -60,7 +61,7 @@ def create_observation_dataframes(
                 case HistoryObservation():
                     grouped["summary"].append(
                         _handle_history_observation(
-                            ensemble_config,
+                            refcase,
                             obs,
                             obs_name,
                             history,
@@ -73,17 +74,17 @@ def create_observation_dataframes(
                             obs,
                             obs_name,
                             obs_time_list,
-                            bool(ensemble_config.refcase),
+                            bool(refcase),
                         )
                     )
                 case GeneralObservation():
                     grouped["gen_data"].append(
                         _handle_general_observation(
-                            ensemble_config,
+                            gen_data_config,
                             obs,
                             obs_name,
                             obs_time_list,
-                            bool(ensemble_config.refcase),
+                            bool(refcase),
                         )
                     )
                 case default:
@@ -127,13 +128,12 @@ def _handle_error_mode(
 
 
 def _handle_history_observation(
-    ensemble_config: EnsembleConfig,
+    refcase: Refcase | None,
     history_observation: HistoryObservation,
     summary_key: str,
     history_type: HistorySource,
     time_len: int,
 ) -> pl.DataFrame:
-    refcase = ensemble_config.refcase
     if refcase is None:
         raise ObservationConfigError.with_context(
             "REFCASE is required for HISTORY_OBSERVATION", summary_key
@@ -335,7 +335,7 @@ def _handle_summary_observation(
 
 
 def _handle_general_observation(
-    ensemble_config: EnsembleConfig,
+    gen_data_config: GenDataConfig | None,
     general_observation: GeneralObservation,
     obs_key: str,
     time_map: list[datetime],
@@ -353,10 +353,7 @@ def _handle_general_observation(
     else:
         restart = _get_restart(general_observation, obs_key, time_map, has_refcase)
 
-    if (
-        (gen_data_config := ensemble_config.response_configs.get("gen_data", None))
-        is None
-    ) or response_key not in gen_data_config.keys:
+    if gen_data_config is None or response_key not in gen_data_config.keys:
         raise ObservationConfigError.with_context(
             f"Problem with GENERAL_OBSERVATION {obs_key}:"
             f" No GEN_DATA with name {response_key!r} found",

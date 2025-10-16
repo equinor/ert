@@ -37,6 +37,7 @@ from .forward_model_step import (
     ForwardModelStepValidationError,
     ForwardModelStepWarning,
 )
+from .gen_data_config import GenDataConfig
 from .gen_kw_config import GenKwConfig
 from .model_config import ModelConfig
 from .parse_arg_types_list import parse_arg_types_list
@@ -720,7 +721,11 @@ class ErtConfig(BaseModel):
         if self._observations is None:
             computed = create_observation_dataframes(
                 self.observation_declarations,
-                self.ensemble_config,
+                self.ensemble_config.refcase,
+                cast(
+                    GenDataConfig | None,
+                    self.ensemble_config.response_configs.get("gen_data", None),
+                ),
                 self.time_map,
                 self.history_source,
             )
@@ -1071,7 +1076,11 @@ class ErtConfig(BaseModel):
             # obs_configs which is stripped by pydantic
             cls_config._observations = create_observation_dataframes(
                 obs_configs,
-                ensemble_config,
+                ensemble_config.refcase,
+                cast(
+                    GenDataConfig | None,
+                    ensemble_config.response_configs.get("gen_data", None),
+                ),
                 time_map,
                 history_source,
             )
