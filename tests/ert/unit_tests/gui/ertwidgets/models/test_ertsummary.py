@@ -95,7 +95,7 @@ def test_getForwardModels(mock_ert):
 
 def test_getParameters(mock_ert):
     expected_list = ["DEFAULT (3)", "field (10, 5, 3)", "surface (10, 7)"]
-    parameter_list, parameter_count = ErtSummary(mock_ert).getParameters()
+    parameter_list, parameter_count = ErtSummary(mock_ert).get_parameters()
     assert parameter_list == expected_list
     assert parameter_count == 223
 
@@ -127,7 +127,7 @@ def test_that_design_matrix_parameters_are_included_in_the_parameter_count(mock_
         dm_param3,
     ]
 
-    parameter_list, parameter_count = ErtSummary(mock_ert).getParameters()
+    parameter_list, parameter_count = ErtSummary(mock_ert).get_parameters()
 
     # Check that design matrix parameters are counted
     assert "DESIGN_MATRIX (3)" in parameter_list
@@ -147,7 +147,7 @@ def test_getParameters_with_design_matrix_from_config(
     config = ErtConfig.from_file("poly.ert")
     summary = ErtSummary(config)
 
-    parameter_list, parameter_count = summary.getParameters()
+    parameter_list, parameter_count = summary.get_parameters()
 
     # Should have 3 parameters from design matrix (a, b, c)
     assert "DESIGN_MATRIX (3)" in parameter_list
@@ -164,7 +164,7 @@ def test_snake_oil(snake_oil_case):
         "SNAKE_OIL_DIFF",
     ]
 
-    assert summary.getParameters() == (["SNAKE_OIL_PARAM (10)"], 10)
+    assert summary.get_parameters() == (["SNAKE_OIL_PARAM (10)"], 10)
 
     assert summary.getObservations() == [
         {"observation_key": "FOPR", "count": 200},

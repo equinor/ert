@@ -97,7 +97,7 @@ class SummaryPanel(QFrame):
 
         self.addColumn(text.getText())
 
-        parameter_list, parameter_count = summary.getParameters()
+        parameter_list, parameter_count = summary.get_parameters()
         text = SummaryTemplate(f"Parameters ({parameter_count:,})")
         for parameters in parameter_list:
             text.addRow(parameters)
