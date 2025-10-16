@@ -1,14 +1,10 @@
-from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
 
 import pytest
-import xtgeo
-from resdata.summary import Summary
 
 from ert.config import ConfigValidationError, EnsembleConfig, ErtConfig
 from ert.config.parsing import ConfigKeys
-from ert.config.refcase import Refcase
 
 
 def test_create():
@@ -25,26 +21,6 @@ def test_create():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_refcase_fails_on_non_sensical_refcase_file():
-    refcase_file = "CEST_PAS_UNE_REFCASE"
-    refcase_file_content = """
-_________________________________________     _____    ____________________
-\\______   \\_   _____/\\_   _____/\\_   ___ \\   /  _  \\  /   _____/\\_   _____/
- |       _/|    __)_  |    __)  /    \\  \\/  /  /_\\  \\ \\_____  \\  |    __)_
- |    |   \\|        \\ |     \\   \\     \\____/    |    \\/        \\ |        \\
- |____|_  /_______  / \\___  /    \\______  /\\____|__  /_______  //_______  /
-        \\/        \\/      \\/            \\/         \\/        \\/         \\/
-"""
-    with open(refcase_file + ".UNSMRY", "w+", encoding="utf-8") as refcase_file_handler:
-        refcase_file_handler.write(refcase_file_content)
-    with open(refcase_file + ".SMSPEC", "w+", encoding="utf-8") as refcase_file_handler:
-        refcase_file_handler.write(refcase_file_content)
-    with pytest.raises(expected_exception=ConfigValidationError, match=refcase_file):
-        config_dict = {ConfigKeys.REFCASE: refcase_file}
-        Refcase.from_config_dict(config_dict=config_dict)
-
-
-@pytest.mark.usefixtures("use_tmpdir")
 def test_ensemble_config_fails_on_non_sensical_grid_file():
     grid_file = Path("CEST_PAS_UNE_GRID")
     grid_file.write_text("a_grid_maybe?", encoding="utf-8")
@@ -53,56 +29,6 @@ def test_ensemble_config_fails_on_non_sensical_grid_file():
         match=r"Only EGRID and GRID formats are supported",
     ):
         EnsembleConfig.from_dict(config_dict={ConfigKeys.GRID: grid_file})
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_ert_config_construct_refcase():
-    refcase_file = "REFCASE_NAME"
-    xtgeo.create_box_grid(dimension=(10, 10, 1)).to_file("CASE.EGRID", "egrid")
-    summary = Summary.writer("REFCASE_NAME", datetime(2014, 9, 10), 3, 3, 3)
-    summary.add_variable("FOPR", unit="SM3/DAY")
-    t_step = summary.add_t_step(1, sim_days=10)
-    t_step["FOPR"] = 10
-    summary.fwrite()
-    ert_config = ErtConfig.from_dict(
-        {
-            ConfigKeys.REFCASE: refcase_file,
-        }
-    )
-    assert ert_config.refcase is not None
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-@pytest.mark.parametrize(
-    "existing_suffix, expected_suffix",
-    [
-        pytest.param(
-            "UNSMRY",
-            "SMSPEC",
-        ),
-        pytest.param(
-            "SMSPEC",
-            "UNSMRY",
-        ),
-    ],
-)
-def test_that_files_for_refcase_exists(existing_suffix, expected_suffix):
-    refcase_file = "missing_refcase_file"
-
-    with open(
-        refcase_file + "." + existing_suffix, "w+", encoding="utf-8"
-    ) as refcase_writer:
-        refcase_writer.write("")
-
-    with pytest.raises(
-        ConfigValidationError,
-        match=f"Could not find .* {refcase_file}",
-    ):
-        _ = Refcase.from_config_dict(
-            config_dict={
-                ConfigKeys.REFCASE: refcase_file,
-            },
-        )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
