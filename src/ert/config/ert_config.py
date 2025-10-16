@@ -58,6 +58,7 @@ from .parsing import (
 )
 from .parsing.observations_parser import ObservationDict
 from .queue_config import KnownQueueOptions, QueueConfig
+from .refcase import Refcase
 from .workflow import Workflow
 from .workflow_fixtures import fixtures_per_hook
 from .workflow_job import (
@@ -714,6 +715,7 @@ class ErtConfig(BaseModel):
     observation_declarations: list[Observation] = Field(default_factory=list)
     time_map: list[datetime] | None = None
     history_source: HistorySource = HistorySource.REFCASE_HISTORY
+    refcase: Refcase | None = None
     _observations: dict[str, pl.DataFrame] | None = PrivateAttr(None)
 
     @property
@@ -721,7 +723,7 @@ class ErtConfig(BaseModel):
         if self._observations is None:
             computed = create_observation_dataframes(
                 self.observation_declarations,
-                self.ensemble_config.refcase,
+                self.refcase,
                 cast(
                     GenDataConfig | None,
                     self.ensemble_config.response_configs.get("gen_data", None),
@@ -1045,6 +1047,7 @@ class ErtConfig(BaseModel):
             env_vars[key] = substituter.substitute(val)
 
         try:
+            refcase = Refcase.from_config_dict(config_dict)
             cls_config = cls(
                 substitutions=substitutions,
                 ensemble_config=ensemble_config,
@@ -1069,6 +1072,7 @@ class ErtConfig(BaseModel):
                 observation_declarations=list(obs_configs),
                 time_map=time_map,
                 history_source=history_source,
+                refcase=refcase,
             )
 
             # The observations are created here because create_observation_dataframes
@@ -1076,7 +1080,7 @@ class ErtConfig(BaseModel):
             # obs_configs which is stripped by pydantic
             cls_config._observations = create_observation_dataframes(
                 obs_configs,
-                ensemble_config.refcase,
+                refcase,
                 cast(
                     GenDataConfig | None,
                     ensemble_config.response_configs.get("gen_data", None),

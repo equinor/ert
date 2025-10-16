@@ -129,7 +129,7 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
 
             source.save_response("gen_data", pl.concat(gendatas), real)
 
-            obs_time_list = ens_config.refcase.all_dates
+            obs_time_list = ert_config.refcase.all_dates
 
             summary_keys = ert_config.observations["summary"]["response_key"].unique(
                 maintain_order=True

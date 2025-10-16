@@ -8,6 +8,7 @@ from resdata.summary import Summary
 
 from ert.config import ConfigValidationError, EnsembleConfig, ErtConfig
 from ert.config.parsing import ConfigKeys
+from ert.config.refcase import Refcase
 
 
 def test_create():
@@ -24,7 +25,7 @@ def test_create():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_ensemble_config_fails_on_non_sensical_refcase_file():
+def test_that_refcase_fails_on_non_sensical_refcase_file():
     refcase_file = "CEST_PAS_UNE_REFCASE"
     refcase_file_content = """
 _________________________________________     _____    ____________________
@@ -40,7 +41,7 @@ _________________________________________     _____    ____________________
         refcase_file_handler.write(refcase_file_content)
     with pytest.raises(expected_exception=ConfigValidationError, match=refcase_file):
         config_dict = {ConfigKeys.REFCASE: refcase_file}
-        EnsembleConfig.from_dict(config_dict=config_dict)
+        Refcase.from_config_dict(config_dict=config_dict)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -55,7 +56,7 @@ def test_ensemble_config_fails_on_non_sensical_grid_file():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_ensemble_config_construct_refcase():
+def test_ert_config_construct_refcase():
     refcase_file = "REFCASE_NAME"
     xtgeo.create_box_grid(dimension=(10, 10, 1)).to_file("CASE.EGRID", "egrid")
     summary = Summary.writer("REFCASE_NAME", datetime(2014, 9, 10), 3, 3, 3)
@@ -63,14 +64,12 @@ def test_ensemble_config_construct_refcase():
     t_step = summary.add_t_step(1, sim_days=10)
     t_step["FOPR"] = 10
     summary.fwrite()
-    ec = EnsembleConfig.from_dict(
-        config_dict={
+    ert_config = ErtConfig.from_dict(
+        {
             ConfigKeys.REFCASE: refcase_file,
-        },
+        }
     )
-
-    assert isinstance(ec, EnsembleConfig)
-    assert ec.refcase is not None
+    assert ert_config.refcase is not None
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -99,7 +98,7 @@ def test_that_files_for_refcase_exists(existing_suffix, expected_suffix):
         ConfigValidationError,
         match=f"Could not find .* {refcase_file}",
     ):
-        _ = EnsembleConfig.from_dict(
+        _ = Refcase.from_config_dict(
             config_dict={
                 ConfigKeys.REFCASE: refcase_file,
             },
