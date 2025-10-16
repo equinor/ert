@@ -519,7 +519,7 @@ class EverestConfig(BaseModelWithContextSupport):
                         "The auto_scale option in the optimization section and the "
                         f"scale options in the {key} section are mutually exclusive."
                     )
-            if len(errors) > 0:
+            if len(errors) > 0:  # Revisit when pydantic supports ExceptionGroup.
                 raise ValueError(errors)
         return self
 
@@ -569,7 +569,7 @@ class EverestConfig(BaseModelWithContextSupport):
             if job_name not in installed_jobs_name:
                 errors.append(f"unknown job {job_name}")
 
-        if len(errors) > 0:  # Note: python3.11 ExceptionGroup will solve this nicely
+        if len(errors) > 0:  # Revisit when pydantic supports ExceptionGroup.
             raise ValueError(errors)
         return self
 
@@ -648,7 +648,7 @@ class EverestConfig(BaseModelWithContextSupport):
             errors.extend(_check_jobs(self.install_jobs))
         if self.install_workflow_jobs is not None:
             errors.extend(_check_jobs(self.install_workflow_jobs))
-        if len(errors) > 0:  # Note: python3.11 ExceptionGroup will solve this nicely
+        if len(errors) > 0:  # Revisit when pydantic supports ExceptionGroup.
             raise ValueError(errors)
         return self
 
@@ -667,7 +667,7 @@ class EverestConfig(BaseModelWithContextSupport):
                 if job_name not in installed_jobs_name:
                     errors.append(f"unknown workflow job {job_name}")
 
-        if len(errors) > 0:  # Note: python3.11 ExceptionGroup will solve this nicely
+        if len(errors) > 0:  # Revisit when pydantic supports ExceptionGroup.
             raise ValueError(errors)
         return self
 
@@ -730,7 +730,7 @@ to read summary data from forward model, do:
             except ValueError as e:
                 errors.append(str(e))
 
-        if len(errors) > 0:
+        if len(errors) > 0:  # Revisit when pydantic supports ExceptionGroup.
             raise ValueError(errors)
 
         return self
@@ -834,7 +834,7 @@ to read summary data from forward model, do:
                         f"control_name.variable_name.variable_index"
                     )
 
-        if len(errors) > 0:  # Note: python3.11 ExceptionGroup will solve this nicely
+        if len(errors) > 0:  # Revisit when pydantic supports ExceptionGroup.
             raise ValueError(errors)
 
         return self
