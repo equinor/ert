@@ -15,7 +15,7 @@ def headless() -> bool:
 if headless():
     mpl.use("Agg")
 else:
-    mpl.use("Qt5Agg")
+    mpl.use("QtAgg")
 
 
 def is_high_contrast_mode() -> bool:
