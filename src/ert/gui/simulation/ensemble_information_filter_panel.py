@@ -110,7 +110,8 @@ class EnsembleInformationFilterPanel(ExperimentConfigPanel):
                 merged_parameters
             )
 
-        layout.addRow("Parameters:", get_parameters_button(merged_parameters, self))
+        if merged_parameters:
+            layout.addRow("Parameters", get_parameters_button(merged_parameters, self))
 
         self.setLayout(layout)
 
