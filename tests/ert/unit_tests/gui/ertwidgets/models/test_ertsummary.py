@@ -101,7 +101,6 @@ def test_getParameters(mock_ert):
 
 
 def test_that_design_matrix_parameters_are_included_in_the_parameter_count(mock_ert):
-    """Test that design matrix parameters are included in the parameter count"""
     # Add design matrix parameters
     dm_param1 = GenKwConfig(
         name="dm_param_a",
