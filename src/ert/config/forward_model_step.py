@@ -146,7 +146,7 @@ class ForwardModelStep(BaseModel):
     environment: dict[str, str] = Field(default_factory=dict)
     default_mapping: dict[str, str] = Field(default_factory=dict)
     private_args: dict[str, str] = Field(default_factory=dict)
-    source_file: str | None = None
+    source_file: str | None = None  # None if installed via ERT plugin
 
     default_env: ClassVar[dict[str, str]] = {
         "_ERT_ITERATION_NUMBER": "<ITER>",

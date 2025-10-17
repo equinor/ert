@@ -104,7 +104,7 @@ class _WorkflowJob(BaseModelWithContextSupport, ABC):
     max_args: int | None = None
     arg_types: list[SchemaItemType] = field(default_factory=list)
     stop_on_fail: bool = False
-    source_file: str | None = None
+    source_file: str | None = None  # None if installed via ERT plugin
 
     @staticmethod
     def _make_arg_types_list(content_dict: ConfigDict) -> list[SchemaItemType]:
