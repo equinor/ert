@@ -117,11 +117,11 @@ class GenKwConfig(ParameterConfig):
         return None
 
     @classmethod
-    def from_config_list(cls, gen_kw: list[str | dict[str, str]]) -> list[Self]:
-        gen_kw_key = cast(str, gen_kw[0])
+    def from_config_list(cls, config_list: list[str | dict[str, str]]) -> list[Self]:
+        gen_kw_key = cast(str, config_list[0])
 
-        options = cast(dict[str, str], gen_kw[-1])
-        positional_args = cast(list[str], gen_kw[:-1])
+        options = cast(dict[str, str], config_list[-1])
+        positional_args = cast(list[str], config_list[:-1])
         errors = []
         update = options.get("UPDATE")
         update_parameter = str_to_bool(update) if isinstance(update, str) else None
@@ -130,7 +130,7 @@ class GenKwConfig(ParameterConfig):
                 "INIT_FILES with GEN_KW has been removed. "
                 f"Please remove INIT_FILES from the GEN_KW {gen_kw_key} config. "
                 "Alternatively, use DESIGN_MATRIX to load parameters from files.",
-                gen_kw,
+                config_list,
             )
 
         if len(positional_args) == 2:
@@ -154,7 +154,7 @@ class GenKwConfig(ParameterConfig):
                         ConfigValidationError.with_context(
                             f"Too few values on line {line_number} in parameter "
                             f"file {parameter_file_context}",
-                            gen_kw,
+                            config_list,
                         )
                     )
                 else:
@@ -201,7 +201,7 @@ class GenKwConfig(ParameterConfig):
                 [err.set_context(gen_kw_key) for err in e.errors]
             ) from e
         except ValidationError as e:
-            raise ConfigValidationError.from_pydantic(e, gen_kw) from e
+            raise ConfigValidationError.from_pydantic(e, config_list) from e
 
     def load_parameter_graph(self) -> nx.Graph[int]:
         # Create a graph with no edges
