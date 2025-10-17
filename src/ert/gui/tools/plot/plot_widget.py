@@ -173,7 +173,6 @@ class PlotWidget(QWidget):
 
     def _do_log_button(self) -> None:
         axis = self._log_axis_for_plotter()
-        self.showLayerWidget.emit(axis is not None)
         self._toolbar.showLogAction(axis is not None)
         if axis is None:
             return
