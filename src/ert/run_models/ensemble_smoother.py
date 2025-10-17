@@ -21,12 +21,13 @@ from ert.trace import tracer
 
 from ..analysis import smoother_update
 from ..run_arg import create_run_arguments
+from .ert_runmodel_configs import EnsembleSmootherConfig
 from .run_model import ErtRunError
 
 logger = logging.getLogger(__name__)
 
 
-class EnsembleSmoother(UpdateRunModel, InitialEnsembleRunModel):
+class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmootherConfig):
     _total_iterations: int = PrivateAttr(default=2)
 
     @tracer.start_as_current_span(f"{__name__}.run_experiment")
@@ -49,6 +50,10 @@ class EnsembleSmoother(UpdateRunModel, InitialEnsembleRunModel):
             responses=cast(list[ResponseConfig], self.response_configuration),
             name=self.experiment_name,
             templates=self.ert_templates,
+        )
+
+        experiment_storage.save_experiment_config(
+            serialized_experiment=self.model_dump()
         )
 
         prior = self._storage.create_ensemble(

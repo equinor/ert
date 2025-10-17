@@ -13,7 +13,6 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from textwrap import dedent
 from types import TracebackType
-from typing import Any
 from uuid import UUID, uuid4
 
 import polars as pl
@@ -31,7 +30,7 @@ from .realization_storage_state import RealizationStorageState
 
 logger = logging.getLogger(__name__)
 
-_LOCAL_STORAGE_VERSION = 14
+_LOCAL_STORAGE_VERSION = 15
 
 
 class _Migrations(BaseModel):
@@ -308,7 +307,6 @@ class LocalStorage(BaseMode):
         parameters: list[ParameterConfig] | None = None,
         responses: list[ResponseConfig] | None = None,
         observations: dict[str, pl.DataFrame] | None = None,
-        simulation_arguments: dict[Any, Any] | None = None,
         name: str | None = None,
         templates: list[tuple[str, str]] | None = None,
     ) -> LocalExperiment:
@@ -323,8 +321,6 @@ class LocalStorage(BaseMode):
             The responses for the experiment.
         observations : dict of str to observation datasets, optional
             The observations for the experiment.
-        simulation_arguments : SimulationArguments, optional
-            The simulation arguments for the experiment.
         name : str, optional
             The name of the experiment.
         templates : list of tuple[str, str], optional
@@ -347,7 +343,6 @@ class LocalStorage(BaseMode):
             parameters=parameters,
             responses=responses,
             observations=observations,
-            simulation_arguments=simulation_arguments,
             name=name,
             templates=templates,
         )
@@ -493,6 +488,7 @@ class LocalStorage(BaseMode):
             to12,
             to13,
             to14,
+            to15,
         )
 
         try:
@@ -536,6 +532,7 @@ class LocalStorage(BaseMode):
                     11: to12,
                     12: to13,
                     13: to14,
+                    14: to15,
                 }
                 for from_version in range(version, _LOCAL_STORAGE_VERSION):
                     migrations[from_version].migrate(self.path)

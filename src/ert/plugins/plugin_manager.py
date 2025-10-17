@@ -381,6 +381,20 @@ class ErtRuntimePlugins(BaseModel):
     env_pr_fm_step: Mapping[str, Mapping[str, Any]] = Field(default_factory=dict)
     help_links: dict[str, str] = Field(default_factory=dict)
 
+    def inject_installed_workflow_jobs(
+        self, workflow_jobs: dict[str, WorkflowJob]
+    ) -> None:
+        self.installed_workflow_jobs = (
+            dict(self.installed_workflow_jobs) | workflow_jobs
+        )
+
+    def inject_installed_forward_model_steps(
+        self, fm_steps: dict[str, ForwardModelStep]
+    ) -> None:
+        self.installed_forward_model_steps = (
+            dict(self.installed_forward_model_steps) | fm_steps
+        )
+
 
 class ErtPluginContext:
     def __init__(

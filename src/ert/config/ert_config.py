@@ -1394,4 +1394,5 @@ def forward_model_step_from_config_contents(
         environment=environment,
         required_keywords=content_dict.get("REQUIRED", []),
         default_mapping=default_mapping,
+        source_file=config_file,
     )
