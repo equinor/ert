@@ -406,10 +406,6 @@ class QueueConfig(BaseModelWithContextSupport):
         usr_queue_options_dict = cls._user_queue_options_from_dict(
             selected_queue_system, config_dict
         )
-        default_queue_options_dict = {
-            name: generic_option.default
-            for name, generic_option in QueueOptions.model_fields.items()
-        }
 
         usr_job_script = usr_queue_options_dict.get("job_script")
         site_job_script = site_queue_options_dict.get("job_script")
@@ -440,8 +436,7 @@ class QueueConfig(BaseModelWithContextSupport):
         selected_queue_options = QueueOptions.create_queue_options(
             selected_queue_system,
             (
-                default_queue_options_dict
-                | (
+                (
                     site_queue_options_dict
                     if str(selected_queue_system) == site_queue_system
                     else {}
