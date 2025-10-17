@@ -7,7 +7,7 @@ import pytest
 from numpy.testing import assert_array_equal
 from requests import Response
 
-from ert.dark_storage.common import get_storage_version
+from ert.dark_storage.common import get_storage_api_version
 
 
 @pytest.mark.integration_test
@@ -21,11 +21,11 @@ def test_get_experiment(poly_example_tmp_dir, dark_storage_client):
 
 
 @pytest.mark.integration_test
-def test_get_storage_version(poly_example_tmp_dir, dark_storage_client):
+def test_get_storage_api_version(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments/version")
     answer_json = resp.json()
 
-    assert answer_json == get_storage_version()
+    assert answer_json == get_storage_api_version()
 
     version_pattern = r"^\d+\.\d+$"
 

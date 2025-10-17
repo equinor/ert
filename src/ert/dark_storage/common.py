@@ -23,7 +23,7 @@ def get_storage() -> Storage:
     return _storage
 
 
-def get_storage_version() -> str:
+def get_storage_api_version() -> str:
     major = minor = 0
     match = re.match(r"(\d+)\.(\d+)", metadata.version("ert"))
     if match:
