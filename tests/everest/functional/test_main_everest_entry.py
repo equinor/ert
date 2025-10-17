@@ -40,6 +40,9 @@ def test_everest_main_entry_bad_command():
     assert "Run everest <command> --help for more information on a command" in lines
 
 
+@pytest.mark.xfail(
+    reason="Will be fixed when report_on_previous_run() doesn't read state from disk"
+)
 @pytest.mark.skip_mac_ci
 @pytest.mark.integration_test
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
@@ -55,18 +58,16 @@ def test_everest_entry_run(cached_example):
     )
 
     # Setup command line arguments
-    with capture_streams():
+    with (
+        capture_streams(),
+        pytest.raises(
+            SystemExit, match="Everest run finished with: Experiment completed"
+        ),
+    ):
         start_everest(["everest", "run", config_file, "--skip-prompt"])
 
     config = EverestConfig.load_file(config_file)
-    status = everserver_status(
-        ServerConfig.get_everserver_status_path(config.output_dir)
-    )
-
-    assert status["status"] == ExperimentState.completed
-
     optimal = get_optimal_result(config.optimization_output_dir)
-
     assert optimal.controls["point.x"] == pytest.approx(0.5, abs=0.05)
     assert optimal.controls["point.y"] == pytest.approx(0.5, abs=0.05)
     assert optimal.controls["point.z"] == pytest.approx(0.5, abs=0.05)

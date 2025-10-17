@@ -23,6 +23,7 @@ from ert.ensemble_evaluator import (
     FullSnapshotEvent,
     SnapshotUpdateEvent,
 )
+from ert.ensemble_evaluator.event import EndEvent
 from ert.logging import LOGGING_CONFIG
 from ert.plugins.plugin_manager import ErtPluginManager
 from ert.services import StorageService
@@ -216,6 +217,14 @@ class _DetachedMonitor:
                     self._clear_lines = 0
             if SIM_PROGRESS_ID in status:
                 match status[SIM_PROGRESS_ID]:
+                    case EndEvent(msg=msg) as end_event:
+                        if end_event.failed:
+                            raise SystemError(
+                                f"{Fore.RED}FAILED{Fore.RESET}"
+                                f" Everest run failed with: {msg}"
+                            )
+                        else:
+                            raise SystemExit(f"Everest run finished with: {msg}")
                     case FullSnapshotEvent(snapshot=snapshot, iteration=batch):
                         if snapshot is not None:
                             self._snapshots[batch] = snapshot
@@ -246,6 +255,8 @@ class _DetachedMonitor:
                             self._last_reported_batch = max(
                                 self._last_reported_batch, batch
                             )
+        except (SystemExit, SystemError):
+            raise
         except Exception:
             logging.getLogger(EVEREST).debug(traceback.format_exc())
 

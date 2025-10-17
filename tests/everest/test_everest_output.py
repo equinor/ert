@@ -8,7 +8,6 @@ import pytest
 from ert.storage import open_storage
 from everest.bin.everest_script import everest_entry
 from everest.config import EverestConfig
-from everest.detached import ExperimentState
 
 
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
@@ -32,11 +31,7 @@ def test_that_one_experiment_creates_one_ensemble_per_batch(cached_example):
 @patch("everest.bin.everest_script.wait_for_server")
 @patch("everest.bin.everest_script.start_server")
 @patch("everest.bin.everest_script.start_experiment")
-@patch(
-    "everest.bin.everest_script.everserver_status",
-    return_value={"status": ExperimentState.never_run, "message": None},
-)
-def test_save_running_config(_, _1, _2, _3, _4, _5, _6, change_to_tmpdir):
+def test_save_running_config(_, _1, _2, _3, _4, _5, change_to_tmpdir):
     """Test everest detached, when an optimization has already run"""
 
     Path("config.yml").touch()
