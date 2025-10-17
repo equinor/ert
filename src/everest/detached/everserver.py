@@ -13,9 +13,9 @@ import yaml
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
 from ert.plugins.plugin_manager import ErtPluginManager
-from ert.run_models.run_model import ExperimentStatus
 from ert.services import StorageService
 from ert.services._base_service import BaseServiceExit
+from ert.storage import ExperimentStatus
 from ert.trace import tracer
 from everest.config import ServerConfig
 from everest.detached import (

@@ -73,9 +73,10 @@ from everest.simulator.everest_to_ert import (
     get_substitutions,
     get_workflow_jobs,
 )
-from everest.strings import EVEREST, STORAGE_DIR
+from everest.strings import EVEREST
 
 from ..run_arg import RunArg, create_run_arguments
+from ..storage import ExperimentState, ExperimentStatus
 from ..storage.local_ensemble import EverestRealizationInfo
 from ..substitutions import Substitutions
 from .event import EverestBatchResultEvent, EverestStatusEvent
@@ -237,8 +238,6 @@ class EverestRunModel(RunModel):
             "add the above random seed to your configuration file.",
             everest_config.environment.random_seed,
         )
-
-        storage_dir = os.path.join(everest_config.output_dir, STORAGE_DIR)
 
         if status_queue is None:
             status_queue = queue.SimpleQueue()
@@ -475,7 +474,7 @@ class EverestRunModel(RunModel):
             forward_model_steps=forward_model_steps,
             substitutions=substitutions,
             hooked_workflows=hooked_workflows,
-            storage_path=storage_dir,
+            storage_path=everest_config.storage_dir,
             queue_config=queue_config,
             status_queue=status_queue,
             optimization_callback=optimization_callback,
@@ -503,6 +502,14 @@ class EverestRunModel(RunModel):
     @property
     def exit_code(self) -> EverestExitCode | None:
         return self._exit_code
+
+    def cancel(self) -> None:
+        if self._experiment is not None:
+            self._experiment.status = ExperimentStatus(
+                message="Optimization aborted",
+                status=ExperimentState.stopped,
+            )
+        super().cancel()
 
     def __repr__(self) -> str:
         return f"EverestRunModel(config={self.user_config_file})"
@@ -542,7 +549,7 @@ class EverestRunModel(RunModel):
                             traceback=traceback_str,
                         )
                         if failed
-                        else "Experiment completed."
+                        else "Experiment completed"
                     ),
                 )
             )
@@ -587,6 +594,10 @@ class EverestRunModel(RunModel):
             responses=self.response_configuration,
         )
 
+        self._experiment.status = ExperimentStatus(
+            message="Experiment started", status=ExperimentState.running
+        )
+
         # Initialize the ropt optimizer:
         optimizer, initial_guesses = self._create_optimizer()
 
@@ -617,22 +628,46 @@ class EverestRunModel(RunModel):
         ):
             self._ever_storage.export_everest_opt_results_to_csv()
 
+        experiment_status = None
         if self._exit_code is None:
             match optimizer_exit_code:
                 case RoptExitCode.MAX_FUNCTIONS_REACHED:
                     self._exit_code = EverestExitCode.MAX_FUNCTIONS_REACHED
+                    experiment_status = ExperimentStatus(
+                        message="Maximum number of function evaluations reached",
+                        status=ExperimentState.completed,
+                    )
                 case RoptExitCode.MAX_BATCHES_REACHED:
                     self._exit_code = EverestExitCode.MAX_BATCH_NUM_REACHED
+                    experiment_status = ExperimentStatus(
+                        message="Maximum number of batches reached",
+                        status=ExperimentState.completed,
+                    )
                 case RoptExitCode.USER_ABORT:
                     self._exit_code = EverestExitCode.USER_ABORT
+                    experiment_status = ExperimentStatus(
+                        message="Optimization aborted", status=ExperimentState.stopped
+                    )
                 case RoptExitCode.TOO_FEW_REALIZATIONS:
                     self._exit_code = (
                         EverestExitCode.TOO_FEW_REALIZATIONS
                         if self.get_number_of_successful_realizations() > 0
                         else EverestExitCode.ALL_REALIZATIONS_FAILED
                     )
+                    experiment_status = ExperimentStatus(
+                        message="Too few realizations are evaluated successfully"
+                        if self.get_number_of_successful_realizations() > 0
+                        else "All realizations failed",
+                        status=ExperimentState.failed,
+                    )
                 case _:
                     self._exit_code = EverestExitCode.COMPLETED
+                    experiment_status = ExperimentStatus(
+                        message="Experiment completed", status=ExperimentState.completed
+                    )
+
+        if experiment_status is not None:
+            self._experiment.status = experiment_status
 
         logger.debug(
             f"Everest experiment finished with exit code {self._exit_code.name}"
