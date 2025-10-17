@@ -407,44 +407,29 @@ class QueueConfig(BaseModelWithContextSupport):
             selected_queue_system, config_dict
         )
 
-        usr_job_script = usr_queue_options_dict.get("job_script")
-        site_job_script = site_queue_options_dict.get("job_script")
-
-        config_dict["JOB_SCRIPT"] = (
-            usr_job_script
-            or site_job_script
-            or shutil.which("fm_dispatch.py")
-            or "fm_dispatch.py"
-        )
+        merged_queue_options_dict = (
+            site_queue_options_dict
+            if str(selected_queue_system) == site_queue_system
+            else {}
+        ) | usr_queue_options_dict
 
         max_submit: int = config_dict.get(ConfigKeys.MAX_SUBMIT, 1)
         stop_long_running = config_dict.get(ConfigKeys.STOP_LONG_RUNNING, False)
 
-        usr_num_cpu = usr_queue_options_dict.get("num_cpu")
-        site_num_cpu = site_queue_options_dict.get("num_cpu")
-
-        if usr_num_cpu is not None:
-            config_dict["NUM_CPU"] = usr_num_cpu
-        elif (
-            site_num_cpu is None
-            and (data_file := config_dict.get(ConfigKeys.DATA_FILE))
-            and (num_cpu := get_num_cpu_from_data_file(data_file))
+        if "num_cpu" in merged_queue_options_dict:
+            config_dict["NUM_CPU"] = merged_queue_options_dict.get("num_cpu")
+        elif (data_file := config_dict.get(ConfigKeys.DATA_FILE)) and (
+            num_cpu := get_num_cpu_from_data_file(data_file)
         ):
             logger.info(f"Parsed NUM_CPU={num_cpu} from {data_file}")
-            usr_queue_options_dict[ConfigKeys.NUM_CPU] = num_cpu
+            merged_queue_options_dict[ConfigKeys.NUM_CPU] = num_cpu
 
         selected_queue_options = QueueOptions.create_queue_options(
             selected_queue_system,
-            (
-                (
-                    site_queue_options_dict
-                    if str(selected_queue_system) == site_queue_system
-                    else {}
-                )
-                | usr_queue_options_dict
-            ),
+            merged_queue_options_dict,
             True,
         )
+        config_dict["JOB_SCRIPT"] = selected_queue_options.job_script
 
         cls._validate_config_dict(
             selected_queue_system, config_dict, site_queue_options_dict
