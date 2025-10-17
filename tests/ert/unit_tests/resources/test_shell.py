@@ -544,16 +544,16 @@ def minimal_case(tmpdir):
         yield
 
 
-def test_shell_script_fmstep_availability(minimal_case):
-    ert_config = ErtConfig.with_plugins(get_site_plugins()).from_file("config.ert")
+def test_shell_script_fmstep_availability():
+    plugins = get_site_plugins()
     fm_shell_jobs = {}
-    for fm_step in ert_config.installed_forward_model_steps.values():
+    for fm_step in plugins.installed_forward_model_steps.values():
         exe = fm_step.executable
         if "shell_scripts" in exe:
             fm_shell_jobs[fm_step.name.upper()] = Path(exe).resolve()
 
     wf_shell_jobs = {}
-    for wf_name, wf in ert_config.workflow_jobs.items():
+    for wf_name, wf in plugins.installed_workflow_jobs.items():
         if isinstance(wf, ExecutableWorkflow) and "shell_scripts" in wf.executable:
             wf_shell_jobs[wf_name] = Path(wf.executable).resolve()
 
