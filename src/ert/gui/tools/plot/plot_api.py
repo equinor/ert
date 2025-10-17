@@ -53,6 +53,19 @@ class PlotApi:
         self._all_ensembles: list[EnsembleObject] | None = None
         self._timeout = 120
 
+    @property
+    def api_version(self) -> str:
+        with StorageService.session(project=self.ens_path) as client:
+            try:
+                response = client.get("/version", timeout=self._timeout)
+                self._check_response(response)
+                api_version = str(response.json())
+            except Exception as exc:
+                logger.exception(exc)
+                raise exc
+            else:
+                return api_version
+
     @staticmethod
     def escape(s: str) -> str:
         return quote(quote(s, safe=""))
