@@ -21,7 +21,12 @@ import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import TypedDict
 
-from ert.config import ParameterCardinality, ParameterConfig, SummaryConfig
+from ert.config import (
+    ExtParamConfig,
+    ParameterCardinality,
+    ParameterConfig,
+    SummaryConfig,
+)
 from ert.config.response_config import InvalidResponseFile
 from ert.substitutions import substitute_runpath_name
 
@@ -606,11 +611,15 @@ class LocalEnsemble(BaseMode):
         otherwise it will return the raw values.
 
         """
-        cfgs = [
-            p
-            for p in self.experiment.parameter_configuration.values()
-            if group in {p.name, p.group_name}
-        ]
+        cfgs: list[ParameterConfig] = []
+
+        for p in self.experiment.parameter_configuration.values():
+            if group in {p.name, p.group_name}:
+                cfgs.append(p)
+            if isinstance(p, ExtParamConfig) and any(
+                input_key == group for input_key in p.input_keys
+            ):
+                cfgs.append(p)
 
         if not cfgs:
             raise KeyError(f"{group} is not registered to the experiment.")
@@ -619,9 +628,13 @@ class LocalEnsemble(BaseMode):
         cardinality = next(cfg.cardinality for cfg in cfgs)
 
         if cardinality == ParameterCardinality.multiple_configs_per_ensemble_dataset:
-            return self._load_scalar_keys(
-                [cfg.name for cfg in cfgs], realizations, transformed
-            )
+            keys: list[str] = []
+            for cfg in cfgs:
+                if isinstance(cfg, ExtParamConfig):
+                    keys.extend(list(cfg.column_names))
+                else:
+                    keys.append(cfg.name)
+            return self._load_scalar_keys(list(keys), realizations, transformed)
         return self._load_dataset(
             group,
             (
@@ -806,9 +819,15 @@ class LocalEnsemble(BaseMode):
         if isinstance(dataset, pl.DataFrame):
             if dataset.is_empty():
                 raise ValueError("Parameters dataframe is empty.")
-            allowed_cols = set(self.experiment.parameter_configuration) | {
-                "realization"
-            }
+            allowed_cols = {"realization"}
+            for (
+                param_name,
+                param_config,
+            ) in self.experiment.parameter_configuration.items():
+                if isinstance(param_config, ExtParamConfig):
+                    allowed_cols |= param_config.column_names
+                allowed_cols.add(param_name)
+
             actual_cols = set(dataset.columns)
             unexpected_cols = actual_cols - allowed_cols
             if unexpected_cols:
@@ -828,6 +847,9 @@ class LocalEnsemble(BaseMode):
                 df = self._load_parameters_lazy(SCALAR_FILENAME).collect(
                     engine="streaming"
                 )
+
+                # Drop columns in old dataset if they are to be overwritten
+                # by columns in the new dataset
                 df = df.drop(
                     [c for c in dataset.columns if c != "realization"], strict=False
                 )
@@ -1154,22 +1176,25 @@ class LocalEnsemble(BaseMode):
         Only for Everest wrt objectives/constraints,
         disregards summary data and primary key values
         """
-        param_dfs = []
+        param_dfs: list[pl.DataFrame] = []
         for param_group in self.experiment.parameter_configuration:
-            params_pd = self.load_parameters(param_group)["values"].to_pandas()
-
-            assert isinstance(params_pd, pd.DataFrame)
-            params_pd = params_pd.reset_index()
-            param_df = pl.from_pandas(params_pd)
-
+            params_pd = self.load_parameters(param_group)
+            if isinstance(params_pd, xr.Dataset):
+                param_df = params_pd["values"].to_pandas()
+                assert isinstance(param_df, pd.DataFrame)
+                param_df = param_df.reset_index()
+                param_df = pl.from_pandas(params_pd)
+            else:
+                param_df = params_pd
+            assert isinstance(param_df, pl.DataFrame)
             param_columns = [c for c in param_df.columns if c != "realizations"]
             param_df = param_df.rename(
                 {
                     **{
                         c: param_group + "." + c.replace("\0", ".")
                         for c in param_columns
+                        if c != "realization"
                     },
-                    "realizations": "realization",
                 }
             )
             param_df = param_df.cast(

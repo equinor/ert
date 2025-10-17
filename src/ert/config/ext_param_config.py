@@ -8,11 +8,12 @@ from typing import TYPE_CHECKING, Literal
 
 import networkx as nx
 import numpy as np
+import polars as pl
 import xarray as xr
 
 from ert.substitutions import substitute_runpath_name
 
-from .parameter_config import ParameterConfig, ParameterMetadata
+from .parameter_config import ParameterCardinality, ParameterConfig, ParameterMetadata
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -61,17 +62,18 @@ class ExtParamConfig(ParameterConfig):
         Path.mkdir(file_path.parent, exist_ok=True, parents=True)
 
         data: MutableDataType = {}
-        for da in ensemble.load_parameters(self.name, real_nr)["values"]:
-            assert isinstance(da, xr.DataArray)
-            name = str(da.names.values)
+        for da in ensemble.load_parameters(self.name, real_nr).drop("realization"):
+            assert isinstance(da, pl.Series)
+            name = da.name
+            da_values = da.to_list()
             try:
                 outer, inner = name.split("\0")
 
                 if outer not in data:
                     data[outer] = {}
-                data[outer][inner] = float(da)  # type: ignore
+                data[outer][inner] = float(da_values[0])  # type: ignore
             except ValueError:
-                data[name] = float(da)
+                data[name] = float(da_values[0])
 
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f)
@@ -80,20 +82,13 @@ class ExtParamConfig(ParameterConfig):
         self,
         from_data: npt.NDArray[np.float64],
         iens_active_index: npt.NDArray[np.int_],
-    ) -> Iterator[tuple[int, xr.Dataset]]:
-        for i, realization in enumerate(iens_active_index):
-            yield (
-                int(realization),
-                xr.Dataset(
-                    {
-                        "values": ("names", from_data[:, i]),
-                        "names": [
-                            x.split(f"{self.name}.")[1].replace(".", "\0")
-                            for x in self.parameter_keys
-                        ],
-                    }
-                ),
+    ) -> Iterator[tuple[None, pl.DataFrame]]:
+        for i, x in enumerate(self.parameter_keys):
+            df = pl.DataFrame(
+                {self._encode_key(x): from_data[:, i]}
+                | {"realization": iens_active_index}
             )
+            yield (None, df)
 
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
@@ -105,3 +100,14 @@ class ExtParamConfig(ParameterConfig):
 
     def __len__(self) -> int:
         return len(self.input_keys)
+
+    @property
+    def cardinality(self) -> ParameterCardinality:
+        return ParameterCardinality.multiple_configs_per_ensemble_dataset
+
+    @property
+    def column_names(self) -> set[str]:
+        return {self._encode_key(input_key) for input_key in self.input_keys}
+
+    def _encode_key(self, input_key: str) -> str:
+        return input_key.split(f"{self.name}.")[1].replace(".", "\0")

@@ -919,7 +919,9 @@ def test_that_all_parameters_and_gen_data_consolidation_works(
 
         experiment = storage.create_experiment(
             responses=[GenDataConfig(keys=["R1", "R2"])],
-            parameters=[ExtParamConfig(name="point", input_keys=["P1", "P2"])],
+            parameters=[
+                ExtParamConfig(name="point", input_keys=["point.P1", "point.P2"])
+            ],
         )
 
         ensemble_datas = []
@@ -933,18 +935,16 @@ def test_that_all_parameters_and_gen_data_consolidation_works(
 
             ensemble.save_everest_realization_info(everest_realization_info)
 
+            param_data = np.array(
+                [
+                    [realization] * len(param_keys)
+                    for realization in range(num_realizations)
+                ]
+            ) + (batch / 10)
+            ensemble.save_parameters_numpy(
+                param_data, "point", list(range(num_realizations))
+            )
             for realization in range(num_realizations):
-                param_data = xr.Dataset(
-                    {
-                        "values": (
-                            "names",
-                            np.array([realization] * len(param_keys)) + (batch / 10),
-                        ),
-                        "names": param_keys,
-                    }
-                )
-                ensemble.save_parameters(param_data, "point", realization)
-
                 if realization in failed_realizations:
                     ensemble.set_failure(
                         realization,
