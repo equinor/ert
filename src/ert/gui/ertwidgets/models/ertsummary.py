@@ -17,7 +17,7 @@ class ErtSummary:
     def getForwardModels(self) -> list[str]:
         return self.ert_config.forward_model_step_name_list()
 
-    def getParameters(self) -> tuple[list[str], int]:
+    def get_parameters(self) -> tuple[list[str], int]:
         parameters = []
         genkw_groups: dict[str, int] = defaultdict(int)
         count = 0

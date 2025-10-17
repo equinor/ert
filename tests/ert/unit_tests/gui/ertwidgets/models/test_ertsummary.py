@@ -135,7 +135,7 @@ def test_that_design_matrix_parameters_are_included_in_the_parameter_count(mock_
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_getParameters_with_design_matrix_from_config(
+def test_get_parameters_with_design_matrix_from_config(
     copy_poly_case_with_design_matrix,
 ):
     """Test that design matrix parameters are counted when loaded from a real config"""
