@@ -15,12 +15,14 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QMainWindow,
+    QStyle,
     QTabWidget,
     QTextEdit,
     QVBoxLayout,
     QWidget,
 )
 
+from ert.dark_storage.common import get_storage_api_version
 from ert.gui.ertwidgets import CopyButton, showWaitCursorWhileWaiting
 from ert.services._base_service import ServerBootFail
 from ert.utils import log_duration
@@ -128,76 +130,109 @@ class PlotWindow(QMainWindow):
         self.setWindowTitle(f"Plotting - {config_file}")
         self.activateWindow()
         self._preferred_ensemble_x_axis_format = PlotContext.INDEX_AXIS
-        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
-        try:
-            self._api = PlotApi(ens_path)
-            self._key_definitions = (
-                self._api.responses_api_key_defs + self._api.parameters_api_key_defs
+        self._api = PlotApi(ens_path)
+
+        self.local_version = get_storage_api_version()
+
+        if self._api.api_version != self.local_version:
+            central_widget = QWidget()
+            central_layout = QVBoxLayout()
+            central_layout.setContentsMargins(20, 20, 20, 20)
+            central_widget.setLayout(central_layout)
+            label = QLabel(
+                f"<b>Plot API version mismatch detected</b><br>"
+                f"Runtime API version:<b>{self.local_version}</b><br>"
+                f"Plot API version:<b>{self._api.api_version}</b><br><br>"
+                "Unable to continue plotting operation"
             )
-        except BaseException as e:
-            handle_exception(e)
-            self._key_definitions = []
-        QApplication.restoreOverrideCursor()
+            label.setObjectName("plot_api_warning_label")
+            icon_label = QLabel()
 
-        self._plot_customizer = PlotCustomizer(self, self._key_definitions)
+            style = QApplication.style()
 
-        self._plot_customizer.settingsChanged.connect(self.keySelected)
+            if style:
+                warning_icon = style.standardIcon(
+                    QStyle.StandardPixmap.SP_MessageBoxWarning
+                )
+                icon_label.setPixmap(warning_icon.pixmap(64, 64))
 
-        self._central_tab = QTabWidget()
+            central_layout.addWidget(icon_label)
+            central_layout.addWidget(label)
+            central_layout.addStretch(1)
+            self.setCentralWidget(central_widget)
+        else:
+            QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+            try:
+                self._key_definitions = (
+                    self._api.responses_api_key_defs + self._api.parameters_api_key_defs
+                )
+            except BaseException as e:
+                handle_exception(e)
+                self._key_definitions = []
+            QApplication.restoreOverrideCursor()
 
-        central_widget = QWidget()
-        central_layout = QVBoxLayout()
-        central_layout.setContentsMargins(0, 0, 0, 0)
-        central_widget.setLayout(central_layout)
+            self._plot_customizer = PlotCustomizer(self, self._key_definitions)
+            self._plot_customizer.settingsChanged.connect(self.keySelected)
+            self._central_tab = QTabWidget()
 
-        central_layout.addWidget(self._central_tab)
+            central_widget = QWidget()
+            central_layout = QVBoxLayout()
+            central_layout.setContentsMargins(0, 0, 0, 0)
+            central_widget.setLayout(central_layout)
 
-        self.setCentralWidget(central_widget)
+            central_layout.addWidget(self._central_tab)
 
-        self._plot_widgets: list[PlotWidget] = []
+            self.setCentralWidget(central_widget)
 
-        self.addPlotWidget(ENSEMBLE, EnsemblePlot())
-        self.addPlotWidget(STATISTICS, StatisticsPlot())
-        self.addPlotWidget(HISTOGRAM, HistogramPlot())
-        self.addPlotWidget(GAUSSIAN_KDE, GaussianKDEPlot())
-        self.addPlotWidget(DISTRIBUTION, DistributionPlot())
-        self.addPlotWidget(CROSS_ENSEMBLE_STATISTICS, CrossEnsembleStatisticsPlot())
-        self.addPlotWidget(STD_DEV, StdDevPlot())
-        self._central_tab.currentChanged.connect(self.currentTabChanged)
-        self.logPlotTabUsage(self._central_tab.tabText(0), default=True)
+            self._plot_widgets: list[PlotWidget] = []
 
-        self._prev_tab_widget_index = -1
-        self._current_tab_index = -1
-        self._prev_key_dimensionality = -1
-        self._prev_tab_widget_index_map: dict[int, int] = {
-            2: RESPONSE_DEFAULT,
-            1: GEN_KW_DEFAULT,
-            3: STD_DEV_DEFAULT,
-        }
+            self.addPlotWidget(ENSEMBLE, EnsemblePlot())
+            self.addPlotWidget(STATISTICS, StatisticsPlot())
+            self.addPlotWidget(HISTOGRAM, HistogramPlot())
+            self.addPlotWidget(GAUSSIAN_KDE, GaussianKDEPlot())
+            self.addPlotWidget(DISTRIBUTION, DistributionPlot())
+            self.addPlotWidget(CROSS_ENSEMBLE_STATISTICS, CrossEnsembleStatisticsPlot())
+            self.addPlotWidget(STD_DEV, StdDevPlot())
+            self._central_tab.currentChanged.connect(self.currentTabChanged)
+            self.logPlotTabUsage(self._central_tab.tabText(0), default=True)
 
-        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
-        try:
-            ensembles = self._api.get_all_ensembles()
-        except BaseException as e:
-            handle_exception(e)
-            ensembles = []
-        QApplication.restoreOverrideCursor()
+            self._prev_tab_widget_index = -1
+            self._current_tab_index = -1
+            self._prev_key_dimensionality = -1
+            self._prev_tab_widget_index_map: dict[int, int] = {
+                2: RESPONSE_DEFAULT,
+                1: GEN_KW_DEFAULT,
+                3: STD_DEV_DEFAULT,
+            }
 
-        plot_case_objects = [obj for obj in ensembles if not obj.hidden]
+            QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+            try:
+                ensembles = self._api.get_all_ensembles()
+            except BaseException as e:
+                handle_exception(e)
+                ensembles = []
+            QApplication.restoreOverrideCursor()
 
-        self._data_type_keys_widget = DataTypeKeysWidget(self._key_definitions)
-        self._data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
-        self.addDock("Data types", self._data_type_keys_widget)
-        self._ensemble_selection_widget = EnsembleSelectionWidget(
-            plot_case_objects, self._plot_customizer.getPlotConfig().getNumberOfColors()
-        )
+            plot_case_objects = [obj for obj in ensembles if not obj.hidden]
 
-        self._ensemble_selection_widget.ensembleSelectionChanged.connect(
-            self.keySelected
-        )
-        self.addDock("Plot ensemble", self._ensemble_selection_widget)
+            self._data_type_keys_widget = DataTypeKeysWidget(self._key_definitions)
+            self._data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
+            self.addDock("Data types", self._data_type_keys_widget)
 
-        self._data_type_keys_widget.selectDefault()
+            self._ensemble_selection_widget = EnsembleSelectionWidget(
+                plot_case_objects,
+                self._plot_customizer.getPlotConfig().getNumberOfColors(),
+            )
+
+            self._ensemble_selection_widget.ensembleSelectionChanged.connect(
+                self.keySelected
+            )
+            self.addDock("Plot ensemble", self._ensemble_selection_widget)
+
+            self._data_type_keys_widget.selectDefault()
+
+    def get_plot_api_version(self) -> str:
+        return self._api.api_version
 
     @Slot(int)
     def currentTabChanged(self, index: int) -> None:
