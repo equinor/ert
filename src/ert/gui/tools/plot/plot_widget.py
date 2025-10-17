@@ -14,7 +14,14 @@ from PyQt6.QtCore import QStringListModel, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtGui import QAction, QIcon
-from PyQt6.QtWidgets import QComboBox, QVBoxLayout, QWidget, QWidgetAction
+from PyQt6.QtWidgets import (
+    QCheckBox,
+    QComboBox,
+    QHBoxLayout,
+    QVBoxLayout,
+    QWidget,
+    QWidgetAction,
+)
 
 from .plot_api import EnsembleObject
 from .plottery.plots.plot_tools import ConditionalAxisFormatter
@@ -52,45 +59,18 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
         layer_combobox.setModel(self._model)
         layer_combobox.currentIndexChanged.connect(self.layerIndexChanged)
 
-        self._log_action = QAction("Log scale", self)
-        self._log_action.setToolTip("Toggle data domain to log scale and back")
-        self._log_action.setCheckable(True)
-        self._log_action.setVisible(False)  # only visible for supported plots
-        self._log_action.toggled.connect(self._on_log_toggled)
         for action in self.actions():
             if str(action.text()).lower() == "subplots":
                 self.removeAction(action)
-                continue
 
             if str(action.text()).lower() == "customize":
                 self.insertAction(action, customize_action)
                 self.removeAction(action)
-                continue
 
             # insert the layer widget before the coordinates widget
             if isinstance(action, QWidgetAction):
                 self._layer_action = self.insertWidget(action, layer_combobox)
                 self._layer_action.setVisible(False)
-                self.insertSeparator(action)
-                self.insertAction(action, self._log_action)
-                break
-
-    @Slot(bool)
-    def showLogAction(self, show: bool) -> None:
-        self._log_action.setVisible(show)
-
-    @Slot(bool)
-    def setLogChecked(self, checked: bool) -> None:
-        self._log_action.blockSignals(True)
-        self._log_action.setChecked(checked)
-        self._log_action.blockSignals(False)
-
-    @Slot(bool)
-    def _on_log_toggled(self, checked: bool) -> None:
-        # Delegate to PlotWidget so it can pick the correct axis per plot type
-        log_scale_ok = self.parent()._apply_log_toggle(checked)
-        if not log_scale_ok:
-            self.setLogChecked(False)
 
     @Slot(bool)
     def showLayerWidget(self, show: bool) -> None:
@@ -150,6 +130,16 @@ class PlotWidget(QWidget):
         self.resetLayerWidget.connect(self._toolbar.resetLayerWidget)
         self.showLayerWidget.connect(self._toolbar.showLayerWidget)
 
+        self._log_checkbox = QCheckBox("Log scale", self)
+        self._log_checkbox.setCheckable(True)
+        self._log_checkbox.setVisible(False)  # only for supported plots
+        self._log_checkbox.setToolTip("Toggle data domain to log scale and back")
+        self._log_checkbox.toggled.connect(self._on_log_toggle)
+
+        btn_row = QHBoxLayout()
+        btn_row.addWidget(self._log_checkbox)
+        btn_row.addStretch()
+        vbox.addLayout(btn_row)
         vbox.addWidget(self._toolbar)
         self.setLayout(vbox)
 
@@ -171,22 +161,8 @@ class PlotWidget(QWidget):
             return "y"
         return None
 
-    def _do_log_button(self) -> None:
-        axis = self._log_axis_for_plotter()
-        self._toolbar.showLogAction(axis is not None)
-        if axis is None:
-            return
-        axes = self._figure.axes
-        if not axes:
-            self._toolbar.setLogChecked(False)
-            return
-        ax0 = axes[0]
-        if axis == "x":
-            self._toolbar.setLogChecked(ax0.get_xscale() == "log")
-        else:
-            self._toolbar.setLogChecked(ax0.get_yscale() == "log")
-
-    def _apply_log_toggle(self, checked: bool) -> bool:
+    @Slot(bool)
+    def _on_log_toggle(self, checked: bool) -> bool:
         """Called by toolbar when 'Log scale' is toggled. Returns True if applied."""
         axis = self._log_axis_for_plotter()
         if axis is None:
@@ -207,6 +183,9 @@ class PlotWidget(QWidget):
                     ax.yaxis.set_major_formatter(ConditionalAxisFormatter())
             self._canvas.draw_idle()
         except ValueError:
+            self._log_checkbox.blockSignals(True)
+            self._log_checkbox.setChecked(False)
+            self._log_checkbox.blockSignals(False)
             return False
         return True
 
@@ -231,7 +210,8 @@ class PlotWidget(QWidget):
                 std_dev_images,
             )
             self._canvas.draw()
-            self._do_log_button()
+            axis = self._log_axis_for_plotter()
+            self._log_checkbox.setVisible(axis is not None)
         except Exception as e:
             exc_type, _, exc_tb = sys.exc_info()
             sys.stderr.write("-" * 80 + "\n")
