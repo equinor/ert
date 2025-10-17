@@ -1,7 +1,7 @@
-from ert.storage.migration.to15 import update_json
+from ert.storage.migration.to15 import add_experiment_status_to_index_json
 
 
-def test_update_json():
+def test_add_experiment_status_to_index_json():
     original_index = {
         "id": "my_experiment_id",
         "name": "my_experiment_name",
@@ -20,5 +20,5 @@ def test_update_json():
         "status": {"message": "", "status": "completed"},
     }
 
-    migrated_index = update_json(original_index)
+    migrated_index = add_experiment_status_to_index_json(original_index)
     assert migrated_index == expected_index
