@@ -1224,6 +1224,7 @@ def test_that_included_files_uses_paths_relative_to_itself():
         """
         NUM_REALIZATIONS 1
         INCLUDE includes/install_jobs.ert
+        FORWARD_MODEL FM
         """
     )
     os.mkdir("includes")
@@ -1244,7 +1245,7 @@ def test_that_included_files_uses_paths_relative_to_itself():
     Path(test_fm_file_name).write_text(test_fm_contents, encoding="utf-8")
 
     ert_config = ErtConfig.from_file(test_config_file_name)
-    assert ert_config.installed_forward_model_steps["FM"].name == "FM"
+    assert ert_config.forward_model_steps[0].name == "FM"
 
 
 @pytest.mark.parametrize("val, expected", [("TrUe", True), ("FaLsE", False)])
@@ -1273,6 +1274,8 @@ def test_that_include_take_into_account_path():
         NUM_REALIZATIONS  1
         INCLUDE dir/include.ert
         INSTALL_JOB job2 job2
+        FORWARD_MODEL job1
+        FORWARD_MODEL job2
         """
     )
     test_include_file_name = "dir/include.ert"
@@ -1289,7 +1292,7 @@ def test_that_include_take_into_account_path():
     Path(test_include_file_name).write_text(test_include_contents, encoding="utf-8")
 
     ert_config = ErtConfig.from_file(test_config_file_name)
-    assert list(ert_config.installed_forward_model_steps.keys()) == [
+    assert [i.name for i in ert_config.forward_model_steps] == [
         "job1",
         "job2",
     ]
