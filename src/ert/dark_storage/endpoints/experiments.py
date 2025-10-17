@@ -5,7 +5,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException
 
 from ert.config import SurfaceConfig
 from ert.dark_storage import json_schema as js
-from ert.dark_storage.common import get_storage
+from ert.dark_storage.common import get_storage, get_storage_version
 from ert.shared.storage.extraction import create_priors
 from ert.storage import Storage
 
@@ -41,6 +41,11 @@ def get_experiments(
         )
         for experiment in storage.experiments
     ]
+
+
+@router.get("/experiments/version")
+def get_running_storage_version() -> str:
+    return get_storage_version()
 
 
 @router.get("/experiments/{experiment_id}", response_model=js.ExperimentOut)
