@@ -88,9 +88,9 @@ class SurfaceConfig(ParameterConfig):
         ]
 
     @classmethod
-    def from_config_list(cls, surface: list[str | dict[str, str]]) -> Self:
-        name = cast(str, surface[0])
-        options = cast(dict[str, str], surface[1])
+    def from_config_list(cls, config_list: list[str | dict[str, str]]) -> Self:
+        name = cast(str, config_list[0])
+        options = cast(dict[str, str], config_list[1])
         init_file = options.get("INIT_FILES")
         out_file = options.get("OUTPUT_FILE")
         base_surface = options.get("BASE_SURFACE")
@@ -107,23 +107,27 @@ class SurfaceConfig(ParameterConfig):
         errors = []
         if not out_file:
             errors.append(
-                ErrorInfo("Missing required OUTPUT_FILE").set_context(surface)
+                ErrorInfo("Missing required OUTPUT_FILE").set_context(config_list)
             )
         if not init_file:
-            errors.append(ErrorInfo("Missing required INIT_FILES").set_context(surface))
+            errors.append(
+                ErrorInfo("Missing required INIT_FILES").set_context(config_list)
+            )
         elif not forward_init and not ("%d" in init_file or "<IENS>" in init_file):
             errors.append(
                 ErrorInfo(
                     "INIT_FILES must contain %d or <IENS> when FORWARD_INIT:FALSE"
-                ).set_context(surface)
+                ).set_context(config_list)
             )
         if not base_surface:
             errors.append(
-                ErrorInfo("Missing required BASE_SURFACE").set_context(surface)
+                ErrorInfo("Missing required BASE_SURFACE").set_context(config_list)
             )
         elif not Path(base_surface).exists():
             errors.append(
-                ErrorInfo(f"BASE_SURFACE:{base_surface} not found").set_context(surface)
+                ErrorInfo(f"BASE_SURFACE:{base_surface} not found").set_context(
+                    config_list
+                )
             )
         if errors:
             raise ConfigValidationError.from_collected(errors)
@@ -135,7 +139,7 @@ class SurfaceConfig(ParameterConfig):
             yflip = -1 if surf.header.yinc < 0 else 1
         except Exception as err:
             raise ConfigValidationError.with_context(
-                f"Could not load surface {base_surface!r}", surface
+                f"Could not load surface {base_surface!r}", config_list
             ) from err
 
         input_dict = {
