@@ -200,8 +200,6 @@ class GenKwConfig(ParameterConfig):
             raise ConfigValidationError.from_collected(
                 [err.set_context(gen_kw_key) for err in e.errors]
             ) from e
-        except ValidationError as e:
-            raise ConfigValidationError.from_pydantic(e, gen_kw) from e
 
     def load_parameter_graph(self) -> nx.Graph[int]:
         # Create a graph with no edges
