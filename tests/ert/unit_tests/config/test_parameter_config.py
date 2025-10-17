@@ -13,6 +13,7 @@ from ert.config import (
     ParameterConfig,
     SurfaceConfig,
 )
+from ert.config.parameter_config import EXT4_MAX_BYTE_LENGTH, InvalidParameterFile
 from ert.field_utils import Shape
 
 
@@ -206,3 +207,44 @@ def test_parameters_are_logged_for_ext_param_instances(caplog):
         ExtParamConfig,
         caplog,
     )
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        # ASCII characters are 1 byte each (utf-8)
+        "@" * (EXT4_MAX_BYTE_LENGTH + 1),
+        # Chinese characters are 3 bytes each (utf-8)
+        "汉" * (EXT4_MAX_BYTE_LENGTH // 3 + 1),
+    ],
+)
+def test_parameter_configs_raises_exception_when_input_name_exceeds_max_name_length(
+    name,
+):
+    byte_representation_of_name = name.encode("utf8")
+    bytes_in_name = len(byte_representation_of_name)
+    assert bytes_in_name > 255
+
+    expected_error_msg = (
+        f"The byte size '{bytes_in_name}' of parameter name '{name}' "
+        f"exceeds maximum size '{EXT4_MAX_BYTE_LENGTH}'.\n"
+        f"Consider shortening this parameter name."
+    )
+
+    gen_kw_config_list = [
+        "KW_NAME",
+        ("template.txt", "MY_KEYWORD <MY_KEYWORD>"),
+        "kw.txt",
+        ("prior.txt", f"{name} LOGNORMAL 0 1"),
+        {},
+    ]
+
+    with pytest.raises(InvalidParameterFile, match=expected_error_msg):
+        GenKwConfig.from_config_list(gen_kw_config_list)
+
+    with pytest.raises(InvalidParameterFile, match=expected_error_msg):
+        ExtParamConfig(
+            name=name,
+            output_file="Bar",
+            update=False,
+        )

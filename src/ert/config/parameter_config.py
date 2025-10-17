@@ -21,6 +21,8 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+EXT4_MAX_BYTE_LENGTH = 255
+
 
 class InvalidParameterFile(Exception):
     """
@@ -66,6 +68,18 @@ class ParameterConfig(BaseModel):
             f"{defaulted_parameters}"
         )
         logger.info(msg)
+        return self
+
+    @model_validator(mode="after")
+    def validate_name_length(self) -> ParameterConfig:
+        byte_representation_of_name = self.name.encode("utf8")
+        bytes_in_name = len(byte_representation_of_name)
+        if bytes_in_name > EXT4_MAX_BYTE_LENGTH:
+            raise InvalidParameterFile(
+                f"The byte size '{bytes_in_name}' of parameter name '{self.name}' "
+                f"exceeds maximum size '{EXT4_MAX_BYTE_LENGTH}'.\n"
+                f"Consider shortening this parameter name."
+            )
         return self
 
     @property
