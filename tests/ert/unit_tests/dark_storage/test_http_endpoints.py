@@ -22,7 +22,7 @@ def test_get_experiment(poly_example_tmp_dir, dark_storage_client):
 
 @pytest.mark.integration_test
 def test_get_storage_api_version(poly_example_tmp_dir, dark_storage_client):
-    resp: Response = dark_storage_client.get("/experiments/version")
+    resp: Response = dark_storage_client.get("/version")
     answer_json = resp.json()
 
     assert answer_json == get_storage_api_version()
