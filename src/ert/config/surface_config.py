@@ -131,7 +131,7 @@ class SurfaceConfig(ParameterConfig):
         assert out_file is not None
         assert base_surface is not None
         try:
-            surf = IrapSurface.from_ascii_file(base_surface)
+            surf = IrapSurface.from_ascii_file(Path(base_surface))
             yflip = -1 if surf.header.yinc < 0 else 1
         except Exception as err:
             raise ConfigValidationError.with_context(
