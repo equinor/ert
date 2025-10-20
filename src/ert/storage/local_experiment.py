@@ -56,7 +56,7 @@ class _Index(BaseModel):
     # from a different experiment. For example, a manual update
     # is a separate experiment from the one that created the prior.
     ensembles: list[UUID]
-    status: ExperimentStatus = Field(default_factory=ExperimentStatus)
+    status: ExperimentStatus | None = Field(default=None)
 
 
 _responses_adapter = TypeAdapter(  # type: ignore
@@ -166,7 +166,7 @@ class LocalExperiment(BaseMode):
         storage._write_transaction(
             path / cls._index_file,
             _Index(id=uuid, name=name, ensembles=[])
-            .model_dump_json(indent=2)
+            .model_dump_json(indent=2, exclude_none=True)
             .encode("utf-8"),
         )
 
@@ -313,7 +313,7 @@ class LocalExperiment(BaseMode):
         return self._index.id
 
     @property
-    def status(self) -> ExperimentStatus:
+    def status(self) -> ExperimentStatus | None:
         return self._index.status
 
     @status.setter

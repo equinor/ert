@@ -89,7 +89,10 @@ def monitor_everest(options: argparse.Namespace) -> None:
 
     except TimeoutError:
         experiment_status = get_experiment_status(config.storage_dir)
-        if experiment_status.status == ExperimentState.never_run:
+        if (
+            experiment_status is None
+            or experiment_status.status == ExperimentState.never_run
+        ):
             print(
                 "The optimization has not run yet.\n"
                 "To run the optimization use command:\n"

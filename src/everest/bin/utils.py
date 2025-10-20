@@ -26,7 +26,7 @@ from ert.ensemble_evaluator import (
 from ert.logging import LOGGING_CONFIG
 from ert.plugins.plugin_manager import ErtPluginManager
 from ert.services import StorageService
-from ert.storage import ExperimentState, ExperimentStatus, open_storage
+from ert.storage import ExperimentStatus, open_storage
 from everest.config import EverestConfig
 from everest.config.server_config import ServerConfig
 from everest.detached import (
@@ -463,16 +463,15 @@ def show_scaled_controls_warning() -> None:
             raise SystemExit(0)
 
 
-def get_experiment_status(storage_dir: str) -> ExperimentStatus:
+def get_experiment_status(storage_dir: str) -> ExperimentStatus | None:
     """
-    Reads the experiment status from storage. If no experiments are found,
-    returns an ExperimentStatus with status 'never_run'. We assume that there is
+    Reads the experiment status from storage. We assume that there is
     only one experiment for each everest run in storage.
     """
     with open_storage(storage_dir, "r") as storage:
         if len(list(storage.experiments)) == 0:
-            return ExperimentStatus(status=ExperimentState.never_run)
+            return None
         experiment_status = next(iter(storage.experiments)).status
         if experiment_status is not None:
             return experiment_status
-        return ExperimentStatus(status=ExperimentState.never_run)
+        return None

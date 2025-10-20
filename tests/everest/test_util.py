@@ -273,7 +273,7 @@ def test_get_experiment_status(change_to_tmpdir):
 
     # No experiments in storage
     status = get_experiment_status(storage_dir)
-    assert status.status == ExperimentState.never_run
+    assert status is None
 
     with open_storage(storage_dir, "w") as writable_storage:
         experiment = writable_storage.create_experiment(name="test_experiment")
@@ -281,10 +281,10 @@ def test_get_experiment_status(change_to_tmpdir):
             experiment=experiment, name="test_ensemble", ensemble_size=10
         )
         assert len(list(writable_storage.experiments)) == 1
-        experiment.status.status = ExperimentState.pending
+        assert experiment.status is None
 
     status = get_experiment_status(storage_dir)
-    assert status.status == ExperimentState.pending
+    assert status is None
 
     # Update the experiment status to running
     experiment.status = ExperimentStatus(status=ExperimentState.running)
