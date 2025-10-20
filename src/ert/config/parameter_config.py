@@ -58,7 +58,7 @@ class ParameterConfig(BaseModel):
     @model_validator(mode="after")
     def log_parameters_on_instantiation(self) -> ParameterConfig:
         specified_parameters = self.model_fields_set
-        defaulted_parameters = set(self.model_fields.keys()) - specified_parameters
+        defaulted_parameters = set(self.model_dump().keys()) - specified_parameters
         msg = (
             f"Attributes for {type(self).__name__} with input values:\n"
             f"{specified_parameters}\n"
