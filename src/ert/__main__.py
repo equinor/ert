@@ -12,6 +12,7 @@ import sys
 import warnings
 from argparse import ArgumentParser, ArgumentTypeError
 from collections.abc import Sequence
+from pathlib import Path
 from typing import Any
 from uuid import UUID
 
@@ -636,25 +637,24 @@ def main() -> None:
 
     os.environ["ERT_LOG_DIR"] = log_dir
 
-    with open(LOGGING_CONFIG, encoding="utf-8") as conf_file:
-        config_dict = yaml.safe_load(conf_file)
-        for handler_name, handler_config in config_dict["handlers"].items():
-            if handler_name == "file":
-                handler_config["filename"] = "ert-log.txt"
-            if "ert.logging.TimestampedFileHandler" in handler_config.values():
-                handler_config["config_filename"] = args.config
-        try:
-            logging.config.dictConfig(config_dict)
-        except ValueError as err:
-            if "handler 'file'" in str(err):
-                exit_msg = (
-                    f"Could not configure log handler for files. "
-                    f"Check if you have write-access to the logs-directory ({log_dir})."
-                )
-            else:
-                exit_msg = str(err)
-            os.environ.pop("ERT_LOG_DIR")
-            sys.exit(exit_msg)
+    config_dict = yaml.safe_load(Path(LOGGING_CONFIG).read_text(encoding="utf-8"))
+    for handler_name, handler_config in config_dict["handlers"].items():
+        if handler_name == "file":
+            handler_config["filename"] = "ert-log.txt"
+        if "ert.logging.TimestampedFileHandler" in handler_config.values():
+            handler_config["config_filename"] = args.config
+    try:
+        logging.config.dictConfig(config_dict)
+    except ValueError as err:
+        if "handler 'file'" in str(err):
+            exit_msg = (
+                f"Could not configure log handler for files. "
+                f"Check if you have write-access to the logs-directory ({log_dir})."
+            )
+        else:
+            exit_msg = str(err)
+        os.environ.pop("ERT_LOG_DIR")
+        sys.exit(exit_msg)
 
     logger = logging.getLogger(__name__)
     if args.verbose:

@@ -22,8 +22,9 @@ def migrate(path: Path) -> None:
             shutil.copyfile(incoming_template, template_file_path)
             templates_abs.append((str(template_file_path.relative_to(experiment)), dst))
 
-        with open(experiment / "parameter.json", encoding="utf-8") as fin:
-            parameters_json = json.load(fin)
+        parameters_json = json.loads(
+            (experiment / "parameter.json").read_text(encoding="utf-8")
+        )
 
         for param in parameters_json.values():
             if param["_ert_kind"] == "GenKwConfig":

@@ -122,8 +122,7 @@ def config_branch_entry(args: list[str] | None = None) -> None:
         yaml = YAML()
         yaml.indent(mapping=2, sequence=4, offset=2)
         yaml.preserve_quotes = True
-        with open(options.output_config, "w", encoding="utf-8") as f:
-            yaml.dump(yml_config, f)
+        yaml.dump(yml_config, Path(options.output_config))
         print(f"New config file {options.output_config} created.")
 
 

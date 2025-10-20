@@ -125,9 +125,7 @@ def _convert_to_everest_validation_error(
     """
     everest_validation_error = EverestValidationError()
 
-    file_content = []
-    with open(config_path, encoding="utf-8") as f:
-        file_content = f.readlines()
+    file_content = Path(config_path).read_text(encoding="utf-8").splitlines()
 
     for error in validation_error.errors(
         include_context=True, include_input=True, include_url=False
@@ -1108,8 +1106,7 @@ to read summary data from forward model, do:
                 yaml.dump(stripped_conf, sio)
                 return sio.getvalue()
 
-        with open(fname, "w", encoding="utf-8") as out:
-            yaml.dump(stripped_conf, out)
+        yaml.dump(stripped_conf, Path(fname))
 
         return None
 

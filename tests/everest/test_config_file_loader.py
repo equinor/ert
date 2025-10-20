@@ -168,7 +168,6 @@ def test_load_empty_configuration(tmp_path):
 
 
 def test_load_invalid_configuration(tmp_path):
-    with open(tmp_path / "config.yml", mode="w", encoding="utf-8") as fh:
-        fh.writelines("asdf")
+    (tmp_path / "config.yml").write_text("asdf", encoding="utf-8")
     with pytest.raises(EverestValidationError, match="missing"):
         EverestConfig.load_file(tmp_path / "config.yml")

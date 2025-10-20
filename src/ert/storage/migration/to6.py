@@ -6,8 +6,9 @@ info = "Rename and change transfer_function_definitions"
 
 def migrate(path: Path) -> None:
     for experiment in path.glob("experiments/*"):
-        with open(experiment / "parameter.json", encoding="utf-8") as fin:
-            parameters_json = json.load(fin)
+        parameters_json = json.loads(
+            (experiment / "parameter.json").read_text(encoding="utf-8")
+        )
 
         for param in parameters_json.values():
             if "transfer_function_definitions" in param:

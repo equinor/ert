@@ -274,10 +274,12 @@ def main() -> None:
         "ssl_keyfile_password": key_pw,
         "ssl_version": ssl.PROTOCOL_TLS_SERVER,
     }
-    with open(args.logging_config or STORAGE_LOG_CONFIG, encoding="utf-8") as conf_file:
-        logging_conf = yaml.safe_load(conf_file)
-        logging.config.dictConfig(logging_conf)
-        config_args.update(log_config=logging_conf)
+
+    logging_conf = yaml.safe_load(
+        Path(args.logging_config or STORAGE_LOG_CONFIG).read_text(encoding="utf-8")
+    )
+    logging.config.dictConfig(logging_conf)
+    config_args.update(log_config=logging_conf)
     warnings.filterwarnings("ignore", category=DeprecationWarning)
 
     if args.debug:

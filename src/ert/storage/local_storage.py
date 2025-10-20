@@ -626,8 +626,9 @@ def _storage_version(path: Path) -> int:
     if not path.exists():
         return _LOCAL_STORAGE_VERSION
     try:
-        with open(path / "index.json", encoding="utf-8") as f:
-            return int(json.load(f)["version"])
+        return int(
+            json.loads((path / "index.json").read_text(encoding="utf-8"))["version"]
+        )
     except KeyError as exc:
         raise NotImplementedError("Incompatible ERT Local Storage") from exc
     except FileNotFoundError:

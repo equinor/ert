@@ -9,8 +9,9 @@ info = "Standardize response configs"
 
 def _migrate_response_configs(path: Path) -> None:
     for experiment in path.glob("experiments/*"):
-        with open(experiment / "responses.json", encoding="utf-8") as fin:
-            responses = json.load(fin)
+        responses = json.loads(
+            (experiment / "responses.json").read_text(encoding="utf-8")
+        )
 
         # If we for example do a .to2() migration
         # this will implicitly upgrade it to v7 since
@@ -58,8 +59,9 @@ def _migrate_response_configs(path: Path) -> None:
                 }
             )
 
-        with open(experiment / "responses.json", "w", encoding="utf-8") as fout:
-            json.dump(migrated, fout)
+        (experiment / "responses.json").write_text(
+            json.dumps(migrated), encoding="utf-8"
+        )
 
 
 def _ensure_coord_order(
@@ -83,13 +85,11 @@ def _migrate_response_datasets(path: Path) -> None:
         ensembles = path.glob("ensembles/*")
 
         experiment_id = None
-        with open(experiment / "index.json", encoding="utf-8") as f:
-            exp_index = json.load(f)
-            experiment_id = exp_index["id"]
+        exp_index = json.loads((experiment / "index.json").read_text(encoding="utf-8"))
+        experiment_id = exp_index["id"]
 
         responses_file = experiment / "responses.json"
-        with open(responses_file, encoding="utf-8") as f:
-            responses_obj = json.load(f)
+        responses_obj = json.loads(responses_file.read_text(encoding="utf-8"))
 
         assert responses_obj is not None, (
             f"Failed to load responses.json @ {responses_file}"
@@ -98,10 +98,9 @@ def _migrate_response_datasets(path: Path) -> None:
         gendata_keys = responses_obj.get("gen_data", {}).get("keys", [])
 
         for ens in ensembles:
-            with open(ens / "index.json", encoding="utf-8") as f:
-                ens_file = json.load(f)
-                if ens_file["experiment_id"] != experiment_id:
-                    continue
+            ens_file = json.loads((ens / "index.json").read_text(encoding="utf-8"))
+            if ens_file["experiment_id"] != experiment_id:
+                continue
 
             real_dirs = [*ens.glob("realization-*")]
 

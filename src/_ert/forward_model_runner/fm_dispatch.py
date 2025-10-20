@@ -8,6 +8,7 @@ import sys
 import time
 from collections.abc import Generator, Iterable
 from datetime import datetime
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from _ert.forward_model_runner import reporting
@@ -108,8 +109,9 @@ def _wait_for_retry() -> None:
 
 def _read_fm_description_file(retry: bool = True) -> "ForwardModelDescriptionJSON":
     try:
-        with open(FORWARD_MODEL_DESCRIPTION_FILE, encoding="utf-8") as json_file:
-            return json.load(json_file)
+        return json.loads(
+            Path(FORWARD_MODEL_DESCRIPTION_FILE).read_text(encoding="utf-8")
+        )
     except json.JSONDecodeError as e:
         raise OSError(
             "fm_dispatch failed to load JSON-file describing the forward model."

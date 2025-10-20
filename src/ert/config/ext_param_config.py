@@ -73,8 +73,7 @@ class ExtParamConfig(ParameterConfig):
             except ValueError:
                 data[name] = float(da)
 
-        with open(file_path, "w", encoding="utf-8") as f:
-            json.dump(data, f)
+        file_path.write_text(json.dumps(data), encoding="utf-8")
 
     def create_storage_datasets(
         self,

@@ -93,8 +93,9 @@ def _configure_loggers(
 
     yaml.add_representer(pathlib.PosixPath, path_representer)
     if output_file:
-        with open(output_file, "w", encoding="utf-8") as outfile:
-            yaml.dump(logging_config, outfile, default_flow_style=False)
+        Path(output_file).write_text(
+            yaml.dump(logging_config, default_flow_style=False), encoding="utf-8"
+        )
     logging.config.dictConfig(logging_config)
 
     plugin_manager = ErtPluginManager()

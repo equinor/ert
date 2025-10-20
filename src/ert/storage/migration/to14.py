@@ -30,9 +30,9 @@ def migrate_field_param(parameters_json: dict[str, Any]) -> dict[str, Any]:
 
 def migrate_fields(path: Path) -> None:
     for experiment in path.glob("experiments/*"):
-        with open(experiment / "parameter.json", encoding="utf-8") as fin:
-            parameters_json = json.load(fin)
-
+        parameters_json = json.loads(
+            (experiment / "parameter.json").read_text(encoding="utf-8")
+        )
         new_parameter_configs = migrate_field_param(parameters_json)
         Path(experiment / "parameter.json").write_text(
             json.dumps(new_parameter_configs, indent=2), encoding="utf-8"
