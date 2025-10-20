@@ -40,8 +40,7 @@ class ForwardModelRunner:
     def _read_manifest(self) -> dict[str, Manifest] | None:
         if not Path("manifest.json").exists():
             return None
-        with open("manifest.json", encoding="utf-8") as f:
-            data = json.load(f)
+        data = json.loads(Path("manifest.json").read_text(encoding="utf-8"))
         return {
             name: {"type": "file", "path": str(Path(file).absolute())}
             for name, file in data.items()

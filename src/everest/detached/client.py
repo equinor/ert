@@ -273,8 +273,7 @@ def update_everserver_status(
     path = everserver_status_path
     if not os.path.exists(os.path.dirname(path)):
         os.makedirs(os.path.dirname(path))
-        with open(path, "w", encoding="utf-8") as outfile:
-            json.dump(new_status, outfile)
+        Path(path).write_text(json.dumps(new_status), encoding="utf-8")
     elif os.path.exists(path):
         server_status = everserver_status(path)
         if server_status["message"] is not None:
@@ -284,8 +283,7 @@ def update_everserver_status(
                 )
             else:
                 new_status["message"] = server_status["message"]
-        with open(path, "w", encoding="utf-8") as outfile:
-            json.dump(new_status, outfile)
+        Path(path).write_text(json.dumps(new_status), encoding="utf-8")
 
 
 def everserver_status(everserver_status_path: str) -> dict[str, Any]:
@@ -299,7 +297,6 @@ def everserver_status(everserver_status_path: str) -> dict[str, Any]:
              }
     """
     if os.path.exists(everserver_status_path):
-        with open(everserver_status_path, encoding="utf-8") as f:
-            return json.load(f)
+        return json.loads(Path(everserver_status_path).read_text(encoding="utf-8"))
     else:
         return {"status": ExperimentState.never_run, "message": None}

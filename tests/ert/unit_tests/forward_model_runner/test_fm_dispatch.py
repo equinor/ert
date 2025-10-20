@@ -11,7 +11,7 @@ from pathlib import Path
 from subprocess import Popen
 from textwrap import dedent
 from threading import Lock
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import MagicMock, patch
 
 import pandas as pd
 import psutil
@@ -338,12 +338,6 @@ def test_fm_dispatch_kills_itself_after_unsuccessful_step():
         patch("_ert.forward_model_runner.fm_dispatch.os.getpgid") as mock_getpgid,
         MockZMQServer() as zmq_server,
         patch(
-            "_ert.forward_model_runner.fm_dispatch.open",
-            new=mock_open(
-                read_data=json.dumps({"ens_id": "_id_", "dispatch_url": zmq_server.uri})
-            ),
-        ),
-        patch(
             "_ert.forward_model_runner.fm_dispatch.ForwardModelRunner"
         ) as mock_runner,
     ):
@@ -352,6 +346,15 @@ def test_fm_dispatch_kills_itself_after_unsuccessful_step():
             Finish().with_error("overall bad run"),
         ]
         mock_getpgid.return_value = 17
+        Path("jobs.json").write_text(
+            json.dumps(
+                {
+                    "ens_id": "_id_",
+                    "dispatch_url": zmq_server.uri,
+                }
+            ),
+            encoding="utf-8",
+        )
 
         fm_dispatch(["script.py"])
 

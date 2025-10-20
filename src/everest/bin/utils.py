@@ -60,22 +60,21 @@ def setup_logging(options: argparse.Namespace) -> Generator[None, None, None]:
     try:
         os.environ["ERT_LOG_DIR"] = str(log_dir)
 
-        with open(LOGGING_CONFIG, encoding="utf-8") as log_conf_file:
-            config_dict = yaml.safe_load(log_conf_file)
-            if config_dict:
-                for handler_name, handler_config in config_dict["handlers"].items():
-                    if handler_name == "file":
-                        handler_config["filename"] = "everest-log.txt"
-                    if "ert.logging.TimestampedFileHandler" in handler_config.values():
-                        handler_config["config_filename"] = ""
-                        if isinstance(options.config, EverestConfig):
-                            handler_config["config_filename"] = (
-                                options.config.config_path.name
-                            )
-                        else:
-                            # `everest branch`
-                            handler_config["config_filename"] = options.config[0]
-                logging.config.dictConfig(config_dict)
+        config_dict = yaml.safe_load(LOGGING_CONFIG.read_text(encoding="utf-8"))
+        if config_dict:
+            for handler_name, handler_config in config_dict["handlers"].items():
+                if handler_name == "file":
+                    handler_config["filename"] = "everest-log.txt"
+                if "ert.logging.TimestampedFileHandler" in handler_config.values():
+                    handler_config["config_filename"] = ""
+                    if isinstance(options.config, EverestConfig):
+                        handler_config["config_filename"] = (
+                            options.config.config_path.name
+                        )
+                    else:
+                        # `everest branch`
+                        handler_config["config_filename"] = options.config[0]
+            logging.config.dictConfig(config_dict)
 
         if "debug" in options and options.debug:
             root_logger = logging.getLogger()
@@ -419,12 +418,12 @@ def run_empty_detached_monitor(
 def _read_user_preferences(user_info_path: Path) -> dict[str, dict[str, Any]]:
     try:
         if user_info_path.exists():
-            with open(user_info_path, encoding="utf-8") as f:
-                return json.load(f)
+            return json.loads(user_info_path.read_text(encoding="utf-8"))
 
         user_info = {EVEREST: {"show_scaling_warning": True}}
-        with open(user_info_path, mode="w", encoding="utf-8") as f:
-            json.dump(user_info, f, ensure_ascii=False, indent=4)
+        user_info_path.write_text(
+            json.dumps(user_info, ensure_ascii=False, indent=4), encoding="utf-8"
+        )
     except json.decoder.JSONDecodeError:
         return {EVEREST: {}}
     else:

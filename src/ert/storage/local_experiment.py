@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import json
 import shutil
 from collections.abc import Generator
@@ -297,8 +298,7 @@ class LocalExperiment(BaseMode):
         path = self.mount_point / self._metadata_file
         if not path.exists():
             raise ValueError(f"{self._metadata_file!s} does not exist")
-        with open(path, encoding="utf-8") as f:
-            return json.load(f)
+        return json.loads(path.read_text(encoding="utf-8"))
 
     @property
     def relative_weights(self) -> str:
@@ -332,19 +332,17 @@ class LocalExperiment(BaseMode):
 
     @property
     def parameter_info(self) -> dict[str, Any]:
-        info: dict[str, Any]
-        with open(self.mount_point / self._parameter_file, encoding="utf-8") as f:
-            info = json.load(f)
-        return info
+        return json.loads(
+            (self.mount_point / self._parameter_file).read_text(encoding="utf-8")
+        )
 
     @property
     def templates_configuration(self) -> list[tuple[str, str]]:
         templates: list[tuple[str, str]] = []
-        try:
-            with open(self.mount_point / self._templates_file, encoding="utf-8") as f:
-                templates = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
-            pass
+        with contextlib.suppress(FileNotFoundError, json.JSONDecodeError):
+            templates = json.loads(
+                (self.mount_point / self._templates_file).read_text(encoding="utf-8")
+            )
         templates_with_content: list[tuple[str, str]] = []
         for source_file, target_file in templates:
             try:
@@ -358,10 +356,9 @@ class LocalExperiment(BaseMode):
 
     @property
     def response_info(self) -> dict[str, Any]:
-        info: dict[str, Any]
-        with open(self.mount_point / self._responses_file, encoding="utf-8") as f:
-            info = json.load(f)
-        return info
+        return json.loads(
+            (self.mount_point / self._responses_file).read_text(encoding="utf-8")
+        )
 
     def get_surface(self, name: str) -> IrapSurface:
         """

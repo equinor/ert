@@ -39,10 +39,11 @@ def migrate(path: Path) -> None:
                 if not config.get("has_finalized_keys"):
                     # Read a sample response and write the keys
                     for ens in ensembles:
-                        with open(ens / "index.json", encoding="utf-8") as f_ensemble:
-                            ens_file = json.load(f_ensemble)
-                            if ens_file["experiment_id"] != experiment_id:
-                                continue
+                        ens_file = json.loads(
+                            (ens / "index.json").read_text(encoding="utf-8")
+                        )
+                        if ens_file["experiment_id"] != experiment_id:
+                            continue
 
                         real_dirs = [*ens.glob("realization-*")]
 

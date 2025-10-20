@@ -25,22 +25,20 @@ def migrate_everest_param(config: dict[str, Any]) -> dict[str, Any]:
 
 def migrate(path: Path) -> None:
     def _replace_ert_kind(file: Path, kind_to_type: dict[str, str]) -> None:
-        with open(file, encoding="utf-8") as fin:
-            old_json = json.load(fin)
-            new_json = {}
+        old_json = json.loads(file.read_text(encoding="utf-8"))
+        new_json = {}
 
-            for key, config in old_json.items():
-                ert_kind = config.pop("_ert_kind")
+        for key, config in old_json.items():
+            ert_kind = config.pop("_ert_kind")
 
-                if ert_kind == "ExtParamConfig":
-                    new_json[key] = migrate_everest_param(config) | {
-                        "type": "everest_parameters"
-                    }
-                else:
-                    new_json[key] = config | {"type": kind_to_type[ert_kind]}
+            if ert_kind == "ExtParamConfig":
+                new_json[key] = migrate_everest_param(config) | {
+                    "type": "everest_parameters"
+                }
+            else:
+                new_json[key] = config | {"type": kind_to_type[ert_kind]}
 
-        with open(file, "w", encoding="utf-8") as fout:
-            json.dump(new_json, fout, indent=2)
+        file.write_text(json.dumps(new_json, indent=2), encoding="utf-8")
 
     for experiment in path.glob("experiments/*"):
         _replace_ert_kind(
@@ -63,12 +61,13 @@ def migrate(path: Path) -> None:
             },
         )
 
-        with open(experiment / "responses.json", encoding="utf-8") as fin:
-            old_json = json.load(fin)
-            new_json = {}
+        old_json = json.loads(
+            (experiment / "responses.json").read_text(encoding="utf-8")
+        )
+        new_json = {}
 
-            for key, config in old_json.items():
-                if config["type"] == "summary" and "refcase" in config:
-                    config.pop("refcase")
+        for key, config in old_json.items():
+            if config["type"] == "summary" and "refcase" in config:
+                config.pop("refcase")
 
-                new_json[key] = config
+            new_json[key] = config

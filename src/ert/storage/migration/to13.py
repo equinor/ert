@@ -16,37 +16,39 @@ info = (
 def point_experiments_to_ensembles(path: Path) -> None:
     experiment_to_ensemble: dict[str, list[str]] = {}
     for ensemble in path.glob("ensembles/*"):
-        with open(ensemble / "index.json", encoding="utf-8") as fin:
-            index_ = json.load(fin)
-            ensemble_id = index_["id"]
-            experiment_id = index_["experiment_id"]
+        index_ = json.loads((ensemble / "index.json").read_text(encoding="utf-8"))
+        ensemble_id = index_["id"]
+        experiment_id = index_["experiment_id"]
 
-            if experiment_id not in experiment_to_ensemble:
-                experiment_to_ensemble[experiment_id] = []
+        if experiment_id not in experiment_to_ensemble:
+            experiment_to_ensemble[experiment_id] = []
 
-            experiment_to_ensemble[experiment_id].append(ensemble_id)
+        experiment_to_ensemble[experiment_id].append(ensemble_id)
 
     for experiment_path in path.glob("experiments/*"):
-        with open(experiment_path / "index.json", encoding="utf-8") as fin:
-            old_json = json.load(fin)
-            exp_id = old_json["id"]
+        old_json = json.loads(
+            (experiment_path / "index.json").read_text(encoding="utf-8")
+        )
+        exp_id = old_json["id"]
 
         if exp_id not in experiment_to_ensemble:
-            with open(experiment_path / "index.json", "w", encoding="utf-8") as fout:
-                json.dump(
+            (experiment_path / "index.json").write_text(
+                json.dumps(
                     old_json | {"ensembles": []},
-                    fout,
                     indent=2,
-                )
+                ),
+                encoding="utf-8",
+            )
             continue
 
-        with open(experiment_path / "index.json", "w", encoding="utf-8") as fout:
-            json.dump(
+        (experiment_path / "index.json").write_text(
+            json.dumps(
                 old_json
                 | {"ensembles": sorted(experiment_to_ensemble.get(exp_id, []))},
-                fout,
                 indent=2,
-            )
+            ),
+            encoding="utf-8",
+        )
 
 
 tfd_to_distributions = {
@@ -101,12 +103,12 @@ def migrate_genkw(path: Path) -> None:
         ensembles = path.glob("ensembles/*")
 
         experiment_id = None
-        with open(experiment / "index.json", encoding="utf-8") as f:
-            exp_index = json.load(f)
-            experiment_id = exp_index["id"]
+        exp_index = json.loads((experiment / "index.json").read_text(encoding="utf-8"))
+        experiment_id = exp_index["id"]
 
-        with open(experiment / "parameter.json", encoding="utf-8") as fin:
-            parameters_json = json.load(fin)
+        parameters_json = json.loads(
+            (experiment / "parameter.json").read_text(encoding="utf-8")
+        )
 
         new_parameter_configs = migrate_gen_kw_param(parameters_json)
         Path(experiment / "parameter.json").write_text(
@@ -115,10 +117,9 @@ def migrate_genkw(path: Path) -> None:
 
         # migrate parquet files
         for ens in ensembles:
-            with open(ens / "index.json", encoding="utf-8") as f:
-                ens_file = json.load(f)
-                if ens_file["experiment_id"] != experiment_id:
-                    continue
+            ens_file = json.loads((ens / "index.json").read_text(encoding="utf-8"))
+            if ens_file["experiment_id"] != experiment_id:
+                continue
 
             group_dfs = []
             for param_config in parameters_json.values():

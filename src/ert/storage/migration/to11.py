@@ -15,18 +15,17 @@ def migrate(path: Path) -> None:
         ensembles = path.glob("ensembles/*")
 
         experiment_id = None
-        with open(experiment / "index.json", encoding="utf-8") as f:
-            exp_index = json.load(f)
-            experiment_id = exp_index["id"]
+        exp_index = json.loads((experiment / "index.json").read_text(encoding="utf-8"))
+        experiment_id = exp_index["id"]
 
-        with open(experiment / "parameter.json", encoding="utf-8") as fin:
-            parameters_json = json.load(fin)
+        parameters_json = json.loads(
+            (experiment / "parameter.json").read_text(encoding="utf-8")
+        )
 
         for ens in ensembles:
-            with open(ens / "index.json", encoding="utf-8") as f:
-                ens_file = json.load(f)
-                if ens_file["experiment_id"] != experiment_id:
-                    continue
+            ens_file = json.loads((ens / "index.json").read_text(encoding="utf-8"))
+            if ens_file["experiment_id"] != experiment_id:
+                continue
 
             real_dirs = [*ens.glob("realization-*")]
             for param_config in parameters_json.values():

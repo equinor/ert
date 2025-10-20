@@ -4,6 +4,7 @@ import logging
 import os
 import re
 from io import StringIO
+from pathlib import Path
 from typing import Any
 
 import jinja2
@@ -31,23 +32,22 @@ ERT_CONFIG_TEMPLATES = {
 
 
 def load_yaml(file_name: str, safe: bool = False) -> dict[str, Any]:
-    with open(file_name, encoding="utf-8") as input_file:
-        input_data: list[str] = input_file.readlines()
-        try:
-            yaml = YAML(typ="safe", pure=True) if safe else YAML()
-            yaml.preserve_quotes = True
-            return yaml.load("".join(input_data))
-        except YAMLError as exc:
-            if hasattr(exc, "problem_mark"):
-                mark = exc.problem_mark
-                raise YAMLError(
-                    str(exc)
-                    + "\nError in line: {}\n {}^)".format(
-                        input_data[mark.line], " " * mark.column
-                    )
-                ) from exc
-            else:
-                raise YAMLError(str(exc)) from exc
+    input_data = Path(file_name).read_text(encoding="utf-8").splitlines()
+    try:
+        yaml = YAML(typ="safe", pure=True) if safe else YAML()
+        yaml.preserve_quotes = True
+        return yaml.load("\n".join(input_data))
+    except YAMLError as exc:
+        if hasattr(exc, "problem_mark"):
+            mark = exc.problem_mark
+            raise YAMLError(
+                str(exc)
+                + "\nError in line: {}\n {}^)".format(
+                    input_data[mark.line], " " * mark.column
+                )
+            ) from exc
+        else:
+            raise YAMLError(str(exc)) from exc
 
 
 def _get_definitions(

@@ -65,7 +65,7 @@ def test_everest_entry_debug(
     logger_conf = Path("dummy_logger.conf")
     logger_conf.write_text("", encoding="utf-8")
     with (
-        patch("everest.bin.utils.LOGGING_CONFIG", str(logger_conf)),
+        patch("everest.bin.utils.LOGGING_CONFIG", logger_conf),
         caplog.at_level(logging.DEBUG),
     ):
         everest_entry(["config.yml", "--debug", "--skip"])

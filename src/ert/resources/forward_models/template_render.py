@@ -19,16 +19,16 @@ def load_data(filename: str) -> dict[str, Any]:
     """
     yaml_err = ""
     json_err = ""
-    with open(filename, encoding="utf-8") as fin:
-        try:
-            return yaml.safe_load(fin)
-        except yaml.YAMLError as err:
-            yaml_err = str(err)
+    raw_data = Path(filename).read_text(encoding="utf-8")
+    try:
+        return yaml.safe_load(raw_data)
+    except yaml.YAMLError as err:
+        yaml_err = str(err)
 
-        try:
-            return json.load(fin)
-        except yaml.YAMLError as err:
-            json_err = str(err)
+    try:
+        return json.loads(raw_data)
+    except yaml.YAMLError as err:
+        json_err = str(err)
 
     raise OSError(
         f"{filename} is neither yaml (err_msg={yaml_err}) nor json (err_msg={json_err})"

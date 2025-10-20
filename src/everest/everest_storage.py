@@ -153,16 +153,12 @@ class BatchStorageData:
 
     @cached_property
     def is_improvement(self) -> bool:
-        with open(self._path / "batch.json", encoding="utf-8") as f:
-            info = json.load(f)
-
+        info = json.loads((self._path / "batch.json").read_text(encoding="utf-8"))
         return bool(info["is_improvement"])
 
     @cached_property
     def batch_id(self) -> bool:
-        with open(self._path / "batch.json", encoding="utf-8") as f:
-            info = json.load(f)
-
+        info = json.loads((self._path / "batch.json").read_text(encoding="utf-8"))
         return info["batch_id"]
 
     def write_metadata(self, is_improvement: bool) -> None:
@@ -170,15 +166,9 @@ class BatchStorageData:
         if "is_improvement" in self.__dict__:
             del self.is_improvement
 
-        with open(self._path / "batch.json", encoding="utf-8") as f:
-            info = json.load(f)
-            info["is_improvement"] = is_improvement
-
-        with open(self._path / "batch.json", "w", encoding="utf-8") as f:
-            json.dump(
-                info,
-                f,
-            )
+        info = json.loads((self._path / "batch.json").read_text(encoding="utf-8"))
+        info["is_improvement"] = is_improvement
+        (self._path / "batch.json").write_text(json.dumps(info), encoding="utf-8")
 
 
 class FunctionBatchStorageData(BatchStorageData):
@@ -906,18 +896,15 @@ class EverestStorage:
         for batch_id, batch_dict in batch_dicts.items():
             target_ensemble = self._experiment.get_ensemble_by_name(f"batch_{batch_id}")
 
-            with open(
-                target_ensemble.optimizer_mount_point / "batch.json",
-                "w+",
-                encoding="utf-8",
-            ) as f:
-                json.dump(
+            (target_ensemble.optimizer_mount_point / "batch.json").write_text(
+                json.dumps(
                     {
                         "batch_id": batch_id,
                         "is_improvement": False,
                     },
-                    f,
-                )
+                ),
+                encoding="utf-8",
+            )
 
             batch_data = BatchStorageData(path=target_ensemble.optimizer_mount_point)
 
