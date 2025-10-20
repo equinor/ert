@@ -138,9 +138,11 @@ class PlotWidget(QWidget):
 
         btn_row = QHBoxLayout()
         btn_row.addWidget(self._log_checkbox)
+        btn_row.setContentsMargins(16, 8, 16, 8)
         btn_row.addStretch()
         vbox.addLayout(btn_row)
         vbox.addWidget(self._toolbar)
+        vbox.addSpacing(8)
         self.setLayout(vbox)
 
         self._dirty = True
