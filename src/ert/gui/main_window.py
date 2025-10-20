@@ -23,6 +23,7 @@ from PyQt6.QtWidgets import (
 )
 
 from ert.config import ErtConfig, ErtScriptWorkflow
+from ert.dark_storage.common import get_storage_api_version
 from ert.gui import is_dark_mode, is_high_contrast_mode
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertnotifier import ErtNotifier
@@ -152,6 +153,7 @@ class ErtMainWindow(QMainWindow):
             "Simulation status", QIcon("img:in_progress.svg")
         )
         self.results_button.setEnabled(False)
+        self.previous_selection = ""
         self.simulation_button.click()
         self.run_dialog_counter = 0
 
@@ -165,14 +167,53 @@ class ErtMainWindow(QMainWindow):
         self.__add_tools_menu()
         self.__add_help_menu()
 
+    def get_previous_selected_button(self) -> str | None:
+        for button in self.button_group.buttons():
+            if button.isChecked():
+                return button.text()
+        return None
+
+    def select_only_specific_button(self, previous_button_text: str) -> None:
+        for button in self.button_group.buttons():
+            button.setChecked(False)
+
+        for button in self.button_group.buttons():
+            if previous_button_text == button.text():
+                button.setChecked(True)
+                button.click()
+
     def right_clicked(self) -> None:
         actor = self.sender()
         if actor and actor.property("index") == "Create plot":
             pw = PlotWindow(
                 self.config_file, Path(self.ert_config.ens_path).absolute(), None
             )
-            pw.show()
-            self._external_plot_windows.append(pw)
+
+            # if not self.verify_plot_api_version(pw.get_plot_api_version()):
+            if True:
+                pw.close()
+                self.select_only_specific_button(self.previous_selection)
+            else:
+                pw.show()
+                self._external_plot_windows.append(pw)
+
+    @staticmethod
+    def verify_plot_api_version(api_version: str) -> bool:
+        if api_version != get_storage_api_version():
+            error_topic = "Plot API version mismatch detected"
+            error_message = (
+                f"Plot API version {api_version} does not match local version"
+                f" {get_storage_api_version()}. Cannot open plotter."
+            )
+            msg_box = QMessageBox()
+            msg_box.setIcon(QMessageBox.Icon.Critical)
+            msg_box.setWindowTitle(error_topic)
+            msg_box.setText(error_message)
+            msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
+            msg_box.setModal(True)
+            msg_box.exec()
+            return False
+        return True
 
     def get_external_plot_windows(self) -> list[PlotWindow]:
         return self._external_plot_windows
@@ -206,8 +247,16 @@ class ErtMainWindow(QMainWindow):
                 self._plot_window = PlotWindow(
                     self.config_file, Path(self.ert_config.ens_path).absolute(), self
                 )
-                self.central_layout.addWidget(self._plot_window)
-                self.central_panels_map["Create plot"] = self._plot_window
+
+                if not self.verify_plot_api_version(
+                    self._plot_window.get_plot_api_version()
+                ):
+                    self._plot_window.close()
+                    self.select_only_specific_button(self.previous_selection)
+                    return
+                else:
+                    self.central_layout.addWidget(self._plot_window)
+                    self.central_panels_map["Create plot"] = self._plot_window
 
             if index_name == "Simulation status":
                 # select the only available simulation
@@ -224,6 +273,8 @@ class ErtMainWindow(QMainWindow):
                 for button in self.button_group.buttons()
             ]:
                 self.results_button.setChecked(True)
+
+        self.previous_selection = self.get_previous_selected_button()
 
     @Slot()
     def onMenuAboutToHide(self) -> None:
@@ -274,6 +325,7 @@ class ErtMainWindow(QMainWindow):
             add_sim_run_option(simulation_id)
 
         self.results_button.setEnabled(True)
+        self.previous_selection = self.results_button.text()
 
     def post_init(self) -> None:
         experiment_panel = ExperimentPanel(
