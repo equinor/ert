@@ -803,6 +803,11 @@ class LocalEnsemble(BaseMode):
         Saves the provided dataset under a parameter group and realization index(es)
 
         """
+        assert isinstance(dataset, (xr.Dataset | pl.DataFrame)), (
+            f"Dataset must be either an xarray Dataset or polars Dataframe, "
+            f"was '{type(dataset).__name__}'"
+        )
+
         if isinstance(dataset, pl.DataFrame):
             if dataset.is_empty():
                 raise ValueError("Parameters dataframe is empty.")
