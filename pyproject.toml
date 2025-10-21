@@ -30,7 +30,9 @@ dependencies = [
     "decorator",
     "dnspython >= 2",
     "fastapi",
+    "fastexcel>=0.14.0", # extra dependency for polars (excel)
     "filelock",
+    "graphite-maps",
     "httpx",
     "httpx-retries",
     "humanize",
@@ -40,10 +42,11 @@ dependencies = [
     "lxml",
     "matplotlib",
     "netCDF4",
+    "networkx",
     "numpy",
     "opentelemetry-api",
-    "opentelemetry-sdk",
     "opentelemetry-instrumentation-threading",
+    "opentelemetry-sdk",
     "orjson",
     "packaging",
     "pandas",
@@ -53,11 +56,11 @@ dependencies = [
     "psutil",
     "pyarrow", # extra dependency for pandas (parquet)
     "pydantic > 2",
+    "pyqt6!=6.10.0",
     "python-dateutil",
     "python-multipart", # extra dependency for fastapi
     "pyyaml",
     "pyzmq",
-    "pyqt6!=6.10.0",
     "requests",
     "resfo",
     "ropt-dakota>=0.24,<0.25",
@@ -65,6 +68,7 @@ dependencies = [
     "ruamel.yaml",
     "scipy >= 1.10.1",
     "seaborn",
+    "surfio>=0.0.11",
     "tables", # extra dependency for pandas (hdf5)
     "tabulate",
     "tqdm>=4.62.0",
@@ -73,11 +77,6 @@ dependencies = [
     "websockets",
     "xarray",
     "xtgeo >= 3.3.0",
-    "networkx",
-    "graphite-maps",
-    "surfio>=0.0.11",
-    "fastexcel>=0.14.0", # extra dependency for polars (excel)
-    "websockets",
 ]
 
 [project.scripts]
