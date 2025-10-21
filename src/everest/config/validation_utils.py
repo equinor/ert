@@ -39,6 +39,8 @@ _RESERVED_WORDS = [
     "total_objective_value",
 ]
 
+_OVERWRITE_MESSAGE = "Are you overwriting other parts of install_data?"
+
 
 class InstallDataContext:
     def __init__(
@@ -82,9 +84,20 @@ class InstallDataContext:
 
         tmp_target = Path(self._temp_dir.name) / Path(target)
         if tmp_target.exists():
+            if tmp_target.is_dir() and not tmp_target.is_symlink():
+                raise ValueError(
+                    "Cannot make symlink due to existing directory at target location"
+                    f" {tmp_target}. " + _OVERWRITE_MESSAGE
+                )
             tmp_target.unlink()
-        tmp_target.parent.mkdir(parents=True, exist_ok=True)
-        tmp_target.symlink_to(as_abs_path(source, self._config_dir))
+        try:
+            tmp_target.parent.mkdir(parents=True, exist_ok=True)
+            tmp_target.symlink_to(as_abs_path(source, self._config_dir))
+        except FileExistsError as err:
+            raise ValueError(
+                f"Cannot install data {source} into {target} due to existing "
+                "file or directory. " + _OVERWRITE_MESSAGE
+            ) from err
 
     def add_links_for_realization(self, realization: int) -> None:
         for data in self._install_data:
