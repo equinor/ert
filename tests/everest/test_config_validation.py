@@ -28,7 +28,7 @@ from everest.config.control_variable_config import ControlVariableConfig
 from everest.config.everest_config import EverestValidationError
 from everest.config.forward_model_config import ForwardModelStepConfig
 from everest.config.sampler_config import SamplerConfig
-from everest.config.validation_utils import _RESERVED_WORDS
+from everest.config.validation_utils import _OVERWRITE_MESSAGE, _RESERVED_WORDS
 from everest.simulator.everest_to_ert import (
     everest_to_ert_config_dict,
 )
@@ -590,6 +590,55 @@ def test_that_install_data_source_exists(change_to_tmpdir):
         install_data=[data],
         config_path=Path("config_dir/test.yml"),
     )
+
+
+def test_that_repeated_install_elements_to_same_location_will_fail(
+    change_to_tmpdir: None,
+) -> None:
+    Path("config_dir").mkdir()
+    Path("config_dir/test.yml").touch()
+    Path("config_dir/foo").mkdir()
+    with pytest.raises(ValueError, match=_OVERWRITE_MESSAGE):
+        EverestConfig.with_defaults(
+            install_data=[
+                {"source": "foo", "target": "foo"},
+                {"source": "foo", "target": "foo"},
+            ],
+            config_path=Path("config_dir/test.yml"),
+        )
+
+
+def test_that_install_elements_cannot_install_over_previously_installed_folder(
+    change_to_tmpdir: None,
+) -> None:
+    Path("config_dir").mkdir()
+    Path("config_dir/test.yml").touch()
+    Path("config_dir/foo/bar").mkdir(parents=True)
+    with pytest.raises(ValueError, match=_OVERWRITE_MESSAGE):
+        EverestConfig.with_defaults(
+            install_data=[
+                {"source": "foo/bar", "target": "foo/bar"},
+                {"source": "foo", "target": "foo"},
+            ],
+            config_path=Path("config_dir/test.yml"),
+        )
+
+
+def test_that_install_elements_cannot_install_into_previously_installed_folders(
+    change_to_tmpdir: None,
+) -> None:
+    Path("config_dir").mkdir()
+    Path("config_dir/test.yml").touch()
+    Path("config_dir/foo").mkdir()
+    Path("config_dir/bar").touch()
+    with pytest.raises(ValueError, match=_OVERWRITE_MESSAGE):
+        EverestConfig.with_defaults(
+            install_data=[
+                {"source": "foo", "target": "foo"},
+                {"source": "bar", "target": "foo/bar"},
+            ],
+            config_path=Path("config_dir/test.yml"),
+        )
 
 
 def test_that_install_data_with_inline_data_generates_a_file(
