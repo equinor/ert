@@ -17,12 +17,11 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Callable, Generator, MutableSequence
 from contextlib import contextmanager
-from enum import StrEnum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Protocol, cast
 
 import numpy as np
-from pydantic import BaseModel, PrivateAttr, field_validator
+from pydantic import PrivateAttr, field_validator
 from pydantic_core.core_schema import ValidationInfo
 
 from _ert.events import EEEvent, EESnapshot, EESnapshotUpdate
@@ -58,7 +57,11 @@ from ert.ensemble_evaluator.state import (
 )
 from ert.mode_definitions import MODULE_MODE
 from ert.runpaths import Runpaths
-from ert.storage import Ensemble, Storage, open_storage
+from ert.storage import (
+    Ensemble,
+    Storage,
+    open_storage,
+)
 from ert.trace import tracer
 from ert.utils import log_duration
 from ert.warnings import PostSimulationWarning, capture_specific_warning
@@ -72,20 +75,6 @@ if TYPE_CHECKING:
     from ert.plugins import ErtRuntimePlugins
 
 logger = logging.getLogger(__name__)
-
-
-class ExperimentState(StrEnum):
-    pending = auto()
-    running = auto()
-    completed = auto()
-    stopped = auto()
-    failed = auto()
-    never_run = auto()
-
-
-class ExperimentStatus(BaseModel):
-    message: str = ""
-    status: ExperimentState = ExperimentState.pending
 
 
 class OutOfOrderSnapshotUpdateException(ValueError):

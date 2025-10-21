@@ -12,8 +12,8 @@ from everest.detached import ExperimentState, everserver_status
 from everest.everest_storage import EverestStorage
 
 from .utils import (
+    get_experiment_status,
     handle_keyboard_interrupt,
-    report_on_previous_run,
     run_detached_monitor,
     setup_logging,
 )
@@ -73,32 +73,37 @@ def monitor_everest(options: argparse.Namespace) -> None:
     server_state = everserver_status(status_path)
 
     try:
-        client = StorageService.session(
+        with StorageService.session(
             Path(ServerConfig.get_session_dir(config.output_dir)), timeout=1
-        )
-        server_context = ServerConfig.get_server_context_from_conn_info(
-            client.conn_info
-        )
-        run_detached_monitor(server_context=server_context)
-        server_state = everserver_status(status_path)
-        if server_state["status"] == ExperimentState.failed:
-            raise SystemExit(server_state["message"])
-        if server_state["message"] is not None:
-            print(server_state["message"])
+        ) as client:
+            server_context = ServerConfig.get_server_context_from_conn_info(
+                client.conn_info
+            )
+            run_detached_monitor(server_context=server_context)
+
+            server_state = everserver_status(status_path)
+            if server_state["status"] == ExperimentState.failed:
+                raise SystemExit(server_state["message"])
+            if server_state["message"] is not None:
+                print(server_state["message"])
 
     except TimeoutError:
-        if server_state["status"] == ExperimentState.never_run:
-            config_file = config.config_file
+        experiment_status = get_experiment_status(config.storage_dir)
+        if (
+            experiment_status is None
+            or experiment_status.status == ExperimentState.never_run
+        ):
             print(
                 "The optimization has not run yet.\n"
                 "To run the optimization use command:\n"
-                f"  `everest run {config_file}`"
+                f"  `everest run {config.config_file}`"
             )
+        elif experiment_status.status == ExperimentState.failed:
+            print(f"Optimization run failed, with error: {experiment_status.message}\n")
         else:
-            report_on_previous_run(
-                config_file=config.config_file,
-                everserver_status_path=status_path,
-                optimization_output_dir=config.optimization_output_dir,
+            print(
+                f"Optimization already completed.\n"
+                f"Results are stored in {config.optimization_output_dir}"
             )
 
 

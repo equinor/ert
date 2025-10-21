@@ -1,17 +1,16 @@
 import json
 import os.path
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
+from ert.storage import open_storage
+from ert.storage.local_experiment import ExperimentState, ExperimentStatus
 from everest import util
-from everest.bin.utils import report_on_previous_run, show_scaled_controls_warning
+from everest.bin.utils import get_experiment_status, show_scaled_controls_warning
 from everest.config import EverestConfig, ServerConfig
-from everest.detached import ExperimentState
 from everest.strings import EVEREST, SERVER_STATUS
 from tests.everest.utils import (
-    capture_streams,
     relpath,
 )
 
@@ -101,25 +100,6 @@ def test_get_everserver_status_path():
     expected_path = os.path.join(session_path, SERVER_STATUS)
 
     assert path == expected_path
-
-
-@patch(
-    "everest.bin.utils.everserver_status",
-    return_value={"status": ExperimentState.failed, "message": "mock error"},
-)
-def test_report_on_previous_run(_, change_to_tmpdir):
-    Path("config_file").write_text(" ", encoding="utf-8")
-    config = EverestConfig.with_defaults(config_path="config_file")
-    with capture_streams() as (out, _):
-        report_on_previous_run(
-            config_file=config.config_file,
-            everserver_status_path=ServerConfig.get_everserver_status_path(
-                config.output_dir
-            ),
-            optimization_output_dir=config.optimization_output_dir,
-        )
-    lines = [line.strip() for line in out.getvalue().split("\n")]
-    assert lines[0] == "Optimization run failed, with error: mock error"
 
 
 @pytest.mark.parametrize(
@@ -286,3 +266,27 @@ def test_show_scaled_controls_warning_preserves_extra_keys(
         user_info = json.load(f)
     assert user_info.get(EVEREST).get("show_scaling_warning") == result
     assert user_info.get("ert").get("test_key") == 42
+
+
+def test_get_experiment_status(change_to_tmpdir):
+    storage_dir = "."
+
+    # No experiments in storage
+    status = get_experiment_status(storage_dir)
+    assert status is None
+
+    with open_storage(storage_dir, "w") as writable_storage:
+        experiment = writable_storage.create_experiment(name="test_experiment")
+        writable_storage.create_ensemble(
+            experiment=experiment, name="test_ensemble", ensemble_size=10
+        )
+        assert len(list(writable_storage.experiments)) == 1
+        assert experiment.status is None
+
+    status = get_experiment_status(storage_dir)
+    assert status is None
+
+    # Update the experiment status to running
+    experiment.status = ExperimentStatus(status=ExperimentState.running)
+    status = get_experiment_status(storage_dir)
+    assert status.status == ExperimentState.running
