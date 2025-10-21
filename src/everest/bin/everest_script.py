@@ -3,7 +3,6 @@ import argparse
 import asyncio
 import json
 import logging
-import logging.config
 import os
 import signal
 import socket
