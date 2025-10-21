@@ -38,7 +38,7 @@ from everest.detached.everserver import (
     ExperimentStatus,
 )
 from everest.strings import (
-    EVERSERVER,
+    EXPERIMENT_SERVER,
     OPT_FAILURE_ALL_REALIZATIONS,
     OPT_FAILURE_REALIZATIONS,
     EverEndpoints,
@@ -115,7 +115,7 @@ def _get_optimization_status(
             status_ = ExperimentState.failed
             messages = _failed_realizations_messages(events, exit_code)
             for msg in messages:
-                logging.getLogger(EVERSERVER).error(msg)
+                logging.getLogger(EXPERIMENT_SERVER).error(msg)
             return status_, "\n".join(messages)
         case _:
             return ExperimentState.completed, "Optimization completed."
@@ -143,7 +143,7 @@ def _check_user(credentials: HTTPBasicCredentials) -> None:
 
 
 def _log(request: Request) -> None:
-    logging.getLogger(EVERSERVER).debug(
+    logging.getLogger(EXPERIMENT_SERVER).debug(
         f"{request.scope['path']} entered from "
         f"{request.client.host if request.client else 'unknown host'} "
         f"with HTTP {request.method}"
@@ -210,7 +210,7 @@ async def start_experiment(
                 status=ExperimentState.failed,
                 message=f"Could not start experiment: {e!s}",
             )
-            logging.getLogger(EVERSERVER).exception(e)
+            logging.getLogger(EXPERIMENT_SERVER).exception(e)
             return Response(f"Could not start experiment: {e!s}", status_code=501)
     return Response("Everest experiment is running")
 
@@ -258,9 +258,9 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             if isinstance(event, EndEvent):
                 break
     except Exception as e:
-        logging.getLogger(EVERSERVER).exception(str(e))
+        logging.getLogger(EXPERIMENT_SERVER).exception(str(e))
     finally:
-        logging.getLogger(EVERSERVER).info(
+        logging.getLogger(EXPERIMENT_SERVER).info(
             f"Subscriber {subscriber_id} done. Closing websocket"
         )
         # Give some time for subscribers to get events
@@ -348,15 +348,15 @@ class ExperimentRunner:
                 status=exp_status,
             )
         except UserCancelled as e:
-            logging.getLogger(EVERSERVER).info(f"User cancelled: {e}")
+            logging.getLogger(EXPERIMENT_SERVER).info(f"User cancelled: {e}")
         except Exception as e:
-            logging.getLogger(EVERSERVER).exception(e)
+            logging.getLogger(EXPERIMENT_SERVER).exception(e)
             shared_data.status = ExperimentStatus(
                 message=f"Exception: {e}\n{traceback.format_exc()}",
                 status=ExperimentState.failed,
             )
         finally:
-            logging.getLogger(EVERSERVER).info(
+            logging.getLogger(EXPERIMENT_SERVER).info(
                 f"ExperimentRunner done. Items left in queue: {status_queue.qsize()}"
             )
 

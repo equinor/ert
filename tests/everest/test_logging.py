@@ -71,7 +71,7 @@ def test_logging_setup(copy_math_func_test_data_to_tmp):
     # the everest server has started
     if endpoint_logs:
         assert "everserver INFO: Everserver starting" in endpoint_logs
-        assert "everserver INFO: ExperimentRunner done" in endpoint_logs
+        assert "experiment_server INFO: ExperimentRunner done" in endpoint_logs
 
 
 def test_that_cleanup_logging_is_idempotent(monkeypatch):
