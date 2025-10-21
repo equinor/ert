@@ -469,9 +469,5 @@ def get_experiment_status(storage_dir: str) -> ExperimentStatus | None:
     only one experiment for each everest run in storage.
     """
     with open_storage(storage_dir, "r") as storage:
-        if len(list(storage.experiments)) == 0:
-            return None
-        experiment_status = next(iter(storage.experiments)).status
-        if experiment_status is not None:
-            return experiment_status
-        return None
+        experiments = list(storage.experiments)
+        return None if not experiments else experiments[0].status
