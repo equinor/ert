@@ -162,8 +162,7 @@ def test_dependent_definitions_value_error(tmp_path):
 
 
 def test_load_empty_configuration(tmp_path):
-    with open(tmp_path / "config.yml", mode="w", encoding="utf-8") as fh:
-        fh.writelines("")
+    (tmp_path / "config.yml").touch()
     with pytest.raises(EverestValidationError, match="missing"):
         EverestConfig.load_file(tmp_path / "config.yml")
 
