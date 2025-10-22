@@ -21,7 +21,6 @@ from hypothesis import assume, given, note, settings
 from hypothesis.extra.numpy import arrays
 from hypothesis.stateful import Bundle, RuleBasedStateMachine, initialize, rule
 from pandas import DataFrame, ExcelWriter
-from pydantic import BaseModel
 
 from ert.config import (
     DesignMatrix,
@@ -43,8 +42,8 @@ from ert.storage import (
     RealizationStorageState,
     open_storage,
 )
-from ert.storage.local_storage import _LOCAL_STORAGE_VERSION, LocalStorage
-from ert.storage.mode import Mode, ModeError
+from ert.storage.local_storage import _LOCAL_STORAGE_VERSION
+from ert.storage.mode import ModeError
 from tests.ert.unit_tests.config.egrid_generator import egrids
 from tests.ert.unit_tests.config.summary_generator import summaries, summary_variables
 
@@ -127,17 +126,13 @@ def test_that_saving_empty_responses_fails_nicely(tmp_path):
 
 
 def test_that_local_ensemble_save_parameter_raises_value_error_given_xr_array_dataset(
-    monkeypatch,
+    monkeypatch, tmp_path
 ):
-    # Mock storage interactions
-    monkeypatch.setattr(Path, "read_text", lambda *args, **kwargs: None)
-    monkeypatch.setattr(BaseModel, "model_validate_json", lambda _: True)
-    monkeypatch.setattr(LocalStorage, "_save_index", lambda _: None)
-
-    # Create read only storage but pretend it's write to avoid lock files
-    local_storage = LocalStorage(path=Path(""), mode=Mode.READ)
-    local_ensemble = LocalEnsemble(storage=local_storage, path=Path(""), mode=Mode.READ)
-    monkeypatch.setattr(LocalEnsemble, "can_write", lambda _: True)
+    storage = open_storage(tmp_path, mode="w")
+    experiment = storage.create_experiment()
+    local_ensemble = storage.create_ensemble(
+        experiment, ensemble_size=1, iteration=0, name="prior"
+    )
 
     expected_error_msg = (
         r"Dataset must be either an xarray Dataset or polars Dataframe, was 'ndarray'"
