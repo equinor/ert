@@ -52,14 +52,14 @@ class PlotApi:
         self.ens_path = ens_path
         self._all_ensembles: list[EnsembleObject] | None = None
         self._timeout = 120
-        self._api_version = ""
 
-    @property
-    def api_version(self) -> str:
         with StorageService.session(project=self.ens_path) as client:
             response = client.get("/version", timeout=self._timeout)
             self._check_response(response)
             self._api_version = response.json()
+
+    @property
+    def api_version(self) -> str:
         return str(self._api_version)
 
     @staticmethod
