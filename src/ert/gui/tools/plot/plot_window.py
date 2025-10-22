@@ -228,7 +228,10 @@ class PlotWindow(QMainWindow):
                             response_key=key_def.response_metadata.response_key,
                             filter_on=key_def.filter_on,
                         )
-                    elif key_def.parameter_metadata is not None:
+                    elif (
+                        key_def.parameter_metadata is not None
+                        and "GEN_KW" in key_def.metadata["data_origin"]
+                    ):
                         ensemble_to_data_map[ensemble] = self._api.data_for_parameter(
                             ensemble_id=ensemble.id,
                             parameter_key=key_def.parameter_metadata.key,
