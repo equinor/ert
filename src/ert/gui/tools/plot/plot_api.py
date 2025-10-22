@@ -57,6 +57,13 @@ class PlotApi:
     def escape(s: str) -> str:
         return quote(quote(s, safe=""))
 
+    @property
+    def api_version(self) -> str:
+        with StorageService.session(project=self.ens_path) as client:
+            response = client.get("/version", timeout=self._timeout)
+            self._check_response(response)
+        return str(response.json())
+
     def _get_ensemble_by_id(self, id_: str) -> EnsembleObject | None:
         for ensemble in self.get_all_ensembles():
             if ensemble.id == id_:

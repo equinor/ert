@@ -6,7 +6,7 @@ import logging
 import webbrowser
 from pathlib import Path
 
-from PyQt6.QtCore import QCoreApplication, QEvent, QSize, Qt
+from PyQt6.QtCore import QCoreApplication, QEvent, QSize, Qt, QTimer
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtGui import QAction, QCloseEvent, QCursor, QFontDatabase, QIcon, QMouseEvent
@@ -23,6 +23,7 @@ from PyQt6.QtWidgets import (
 )
 
 from ert.config import ErtConfig, ErtScriptWorkflow
+from ert.dark_storage.common import get_storage_api_version
 from ert.gui import is_dark_mode, is_high_contrast_mode
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertnotifier import ErtNotifier
@@ -145,8 +146,12 @@ class ErtMainWindow(QMainWindow):
         self.simulation_button = self._add_sidebar_button(
             "Start simulation", QIcon("img:library_add.svg")
         )
-        plot_button = self._add_sidebar_button("Create plot", QIcon("img:timeline.svg"))
-        plot_button.setToolTip("Right click to open external window")
+        self.plot_button = self._add_sidebar_button(
+            "Create plot", QIcon("img:timeline.svg")
+        )
+        self.plot_button.setToolTip("Right click to open external window")
+        self.plot_button.setEnabled(False)
+
         self._add_sidebar_button("Manage experiments", QIcon("img:build_wrench.svg"))
         self.results_button = self._add_sidebar_button(
             "Simulation status", QIcon("img:in_progress.svg")
@@ -164,6 +169,20 @@ class ErtMainWindow(QMainWindow):
 
         self.__add_tools_menu()
         self.__add_help_menu()
+
+        QTimer.singleShot(100, self.enable_plot_if_plot_api_compatible)
+
+    def enable_plot_if_plot_api_compatible(self) -> bool:
+        plot_api_version = PlotWindow.get_plot_api_version(self.ert_config.ens_path)
+        local_version = get_storage_api_version()
+        enable_plot_button = plot_api_version == local_version
+        if not enable_plot_button:
+            logger.warning(
+                f"Plot API version {plot_api_version} differs"
+                f" from Ert runtime {local_version}."
+            )
+
+        self.plot_button.setEnabled(enable_plot_button)
 
     def right_clicked(self) -> None:
         actor = self.sender()

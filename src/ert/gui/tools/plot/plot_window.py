@@ -198,6 +198,10 @@ class PlotWindow(QMainWindow):
 
         self._data_type_keys_widget.selectDefault()
 
+    @staticmethod
+    def get_plot_api_version(ens_path: Path) -> str:
+        return PlotApi(ens_path).api_version
+
     @Slot(int)
     def currentTabChanged(self, index: int) -> None:
         self._current_tab_index = index
