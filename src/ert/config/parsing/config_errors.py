@@ -76,7 +76,7 @@ class ConfigValidationError(ValueError):
     def from_pydantic(cls, error: ValidationError, context: Any = None) -> Self:
         parsed_errors = []
         for pydantic_error_info in error.errors():
-            actual_error = pydantic_error_info["ctx"]["error"]
+            actual_error = pydantic_error_info.get("ctx", {}).get("error")
 
             if isinstance(actual_error, ConfigValidationError):
                 parsed_errors += [
