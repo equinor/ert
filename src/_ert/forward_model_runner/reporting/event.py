@@ -137,6 +137,7 @@ class Event(Reporter):
                 return
             except ClientConnectionError as exc:
                 logger.error(f"Failed to send event: {exc}")
+                self._reporter_exception = exc
                 return
             except queue.Empty:
                 await asyncio.sleep(0)
