@@ -777,3 +777,20 @@ def test_genkw_paramgraph_transformfn_node_correspondence():
     assert data["links"] == []
 
     assert data["nodes"] == [{"id": 0}]
+
+
+def test_genkw_raises_config_validation_error_from_pydantic_validation_error_given_invalid_model_input(  # noqa E501
+    monkeypatch,
+):
+    # Bool is not a valid input to GenKwConfig's "distribution" attribute
+    monkeypatch.setattr(GenKwConfig, "_parse_distribution", lambda *args: False)
+
+    config_list = [
+        "KW_NAME",
+        ("template.txt", "MY_KEYWORD <MY_KEYWORD>"),
+        "kw.txt",
+        ("prior.txt", "MY_KEYWORD DERFF 10 20"),
+        {},
+    ]
+    with pytest.raises(ConfigValidationError):
+        GenKwConfig.from_config_list(config_list)
