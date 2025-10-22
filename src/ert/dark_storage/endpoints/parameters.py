@@ -132,6 +132,9 @@ def data_for_parameter(ensemble: Ensemble, key: str) -> pd.DataFrame:
         )
     try:
         df = ensemble.load_scalars(group)
+        if df.is_empty():
+            logger.warning(f"No data found for parameter '{group}:{key}'")
+            return pd.DataFrame()
     except KeyError as e:
         logger.error(e)
         return pd.DataFrame()
