@@ -8,6 +8,7 @@ DEFAULT_LOGGING_FORMAT = "%(asctime)s %(name)s %(levelname)s: %(message)s"
 
 EVEREST = "everest"
 EVERSERVER = "everserver"
+EXPERIMENT_SERVER = "experiment_server"
 
 HOSTFILE_NAME = "storage_server.json"
 

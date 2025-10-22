@@ -27,6 +27,7 @@ from everest.strings import (
     DEFAULT_LOGGING_FORMAT,
     EVEREST,
     EVERSERVER,
+    EXPERIMENT_SERVER,
     OPTIMIZATION_LOG_DIR,
 )
 from everest.util import makedirs_if_needed, version_info
@@ -63,6 +64,11 @@ def _configure_loggers(
                 "level": logging.WARNING,
             },
             EVERSERVER: {
+                "handlers": ["endpoint_log"],
+                "level": logging_level,
+                "propagate": False,
+            },
+            EXPERIMENT_SERVER: {
                 "handlers": ["endpoint_log"],
                 "level": logging_level,
                 "propagate": False,
