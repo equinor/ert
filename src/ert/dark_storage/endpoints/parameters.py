@@ -125,6 +125,11 @@ def _extract_parameter_group_and_key(key: str) -> tuple[str, str] | tuple[None, 
 
 def data_for_parameter(ensemble: Ensemble, key: str) -> pd.DataFrame:
     group, _ = _extract_parameter_group_and_key(key)
+    if group is None:
+        logger.warning(
+            f"Parameter with key '{key}' does not have a group, "
+            "fetching data for all parameters"
+        )
     try:
         df = ensemble.load_scalars(group)
     except KeyError as e:
