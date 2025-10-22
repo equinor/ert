@@ -625,17 +625,17 @@ class LocalStorage(BaseMode):
 def _storage_version(path: Path) -> int:
     if not path.exists():
         return _LOCAL_STORAGE_VERSION
+    if not (path / "index.json").exists():
+        if _is_block_storage(path):
+            return 0
+        else:
+            raise FileNotFoundError(path / "index.json")
     try:
         return int(
             json.loads((path / "index.json").read_text(encoding="utf-8"))["version"]
         )
     except KeyError as exc:
         raise NotImplementedError("Incompatible ERT Local Storage") from exc
-    except FileNotFoundError:
-        if _is_block_storage(path):
-            return 0
-        else:
-            raise
 
 
 _migration_ert_config: ErtConfig | None = None
