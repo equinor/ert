@@ -5,7 +5,12 @@ from textwrap import dedent
 
 from pydantic import BaseModel, Field, model_validator
 
-from ert.config import ForwardModelStep, forward_model_step_from_config_contents
+from ert.config import (
+    ExecutableWorkflow,
+    ForwardModelStep,
+    forward_model_step_from_config_contents,
+    workflow_job_from_file,
+)
 
 
 class InstallJobConfig(BaseModel, extra="forbid"):
@@ -44,6 +49,12 @@ class InstallJobConfig(BaseModel, extra="forbid"):
             raise ValueError("Either source or executable must be provided")
         return self
 
+    @model_validator(mode="after")
+    def validate_source_exists(self) -> InstallJobConfig:
+        if self.source is not None and not Path(self.source).is_file():
+            raise ValueError(f"No such file or directory: {self.source}")
+        return self
+
     def to_ert_forward_model_step(self, config_directory: str) -> ForwardModelStep:
         if self.executable is not None:
             executable = Path(self.executable)
@@ -59,3 +70,24 @@ class InstallJobConfig(BaseModel, extra="forbid"):
                 config_file=self.source,
                 name=self.name,
             )
+
+    def to_ert_executable_workflow(self, config_directory: str) -> ExecutableWorkflow:
+        if self.executable is not None:
+            executable = Path(self.executable)
+            if not executable.is_absolute():
+                executable = Path(config_directory) / executable
+            return ExecutableWorkflow(
+                name=self.name,
+                min_args=None,
+                max_args=None,
+                arg_types=[],
+                executable=str(executable),
+            )
+        else:
+            assert self.source is not None
+            workflow = workflow_job_from_file(
+                config_file=str(Path(config_directory) / self.source), name=self.name
+            )
+            if not isinstance(workflow, ExecutableWorkflow):
+                raise ValueError(f"Workflow must be an executable: {self.source}")
+            return workflow

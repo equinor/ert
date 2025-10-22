@@ -14,7 +14,7 @@ import yaml
 from hypothesis import given
 from pydantic import ValidationError
 
-from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
+from ert.config import ConfigValidationError, ConfigWarning
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.plugins import ErtPluginContext
 from ert.run_models.everest_run_model import EverestRunModel
@@ -29,9 +29,6 @@ from everest.config.everest_config import EverestValidationError
 from everest.config.forward_model_config import ForwardModelStepConfig
 from everest.config.sampler_config import SamplerConfig
 from everest.config.validation_utils import _OVERWRITE_MESSAGE, _RESERVED_WORDS
-from everest.simulator.everest_to_ert import (
-    everest_to_ert_config_dict,
-)
 
 
 def all_errors(error: ValidationError, match: str):
@@ -681,25 +678,37 @@ def test_that_install_data_with_inline_data_generates_a_file(
         ("install_workflow_jobs",),
     ],
 )
+def test_that_either_source_or_executable_is_provided(install_keyword):
+    with pytest.raises(
+        ValidationError, match="Either source or executable must be provided"
+    ):
+        EverestConfig.with_defaults(
+            model={"realizations": [1, 2, 3]},
+            config_path=Path("."),
+            **{install_keyword: [{"name": "test"}]},
+        )
+
+
+@pytest.mark.parametrize(
+    ["install_keyword"],
+    [
+        ("install_jobs",),
+        ("install_workflow_jobs",),
+    ],
+)
 def test_that_non_existing_install_job_errors_deprecated(
     install_keyword, change_to_tmpdir
 ):
     Path("config_dir").mkdir()
     Path("config_dir/test.yml").write_text(" ", encoding="utf-8")
-    with pytest.warns(
-        ConfigWarning, match=f"`{install_keyword}: source` is deprecated"
-    ):
-        config = EverestConfig.with_defaults(
+    with pytest.raises(ValidationError, match="No such file or directory:"):
+        EverestConfig.with_defaults(
             model={
                 "realizations": [1, 2, 3],
             },
             config_path=Path("config_dir/test.yml"),
             **{install_keyword: [{"name": "test", "source": "non_existing"}]},
         )
-
-    with pytest.raises(ConfigValidationError, match="No such file or directory:"):
-        dictionary = everest_to_ert_config_dict(config)
-        ErtConfig.from_dict(dictionary)
 
 
 @pytest.mark.parametrize(
@@ -743,8 +752,7 @@ def test_that_existing_install_job_with_malformed_executable_errors_deprecated(
     with pytest.raises(
         ConfigValidationError, match="EXECUTABLE must have at least 1 arguments"
     ):
-        dictionary = everest_to_ert_config_dict(config)
-        ErtConfig.from_dict(dictionary)
+        EverestRunModel.create(config)
 
 
 @pytest.mark.parametrize(
@@ -785,8 +793,7 @@ def test_that_existing_install_job_with_non_executable_executable_errors_depreca
         )
 
     with pytest.raises(ConfigValidationError, match="File not executable"):
-        dictionary = everest_to_ert_config_dict(config)
-        ErtConfig.from_dict(dictionary)
+        EverestRunModel.create(config)
 
 
 @pytest.mark.parametrize(
@@ -853,8 +860,7 @@ def test_that_existing_install_job_with_non_existing_executable_errors_deprecate
         )
 
     with pytest.raises(ConfigValidationError, match="Could not find executable"):
-        dictionary = everest_to_ert_config_dict(config)
-        ErtConfig.from_dict(dictionary)
+        EverestRunModel.create(config)
 
 
 @pytest.mark.parametrize(
