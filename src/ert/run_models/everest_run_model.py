@@ -32,21 +32,21 @@ from ert.config import (
     EverestConstraintsConfig,
     EverestObjectivesConfig,
     GenDataConfig,
+    HookRuntime,
     ParameterConfig,
     QueueConfig,
     ResponseConfig,
     SummaryConfig,
+    WorkflowJob,
 )
 from ert.config.ert_config import (
     create_and_hook_workflows,
     read_templates,
     uppercase_subkeys_and_stringify_subvalues,
-    workflow_jobs_from_dict,
 )
-from ert.config.model_config import (
-    DEFAULT_ECLBASE_FORMAT,
-)
+from ert.config.model_config import DEFAULT_ECLBASE_FORMAT
 from ert.config.model_config import ModelConfig as ErtModelConfig
+from ert.config.parsing import ConfigWarning
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.plugins import ErtRuntimePlugins
 from ert.runpaths import Runpaths
@@ -67,11 +67,9 @@ from everest.optimizer.opt_model_transforms import (
     get_optimization_domain_transforms,
 )
 from everest.simulator.everest_to_ert import (
-    _get_workflow_files,
     everest_to_ert_config_dict,
     extract_summary_keys,
     get_substitutions,
-    get_workflow_jobs,
 )
 from everest.strings import EVEREST
 
@@ -174,6 +172,17 @@ def _get_install_data_files(ever_config: EverestConfig) -> Iterator[tuple[Path, 
             yield (data_storage / Path(target).name, data)
 
 
+def _get_workflow_files(ever_config: EverestConfig) -> dict[str, tuple[Path, str]]:
+    data_storage = (Path(ever_config.output_dir) / ".internal_data").resolve()
+    return {
+        trigger: (
+            data_storage / f"{trigger}.workflow",
+            "\n".join(getattr(ever_config.workflows, trigger, [])),
+        )
+        for trigger in ("pre_simulation", "post_simulation")
+    }
+
+
 def _get_internal_files(ever_config: EverestConfig) -> dict[Path, str]:
     return dict(
         [
@@ -186,6 +195,36 @@ def _get_internal_files(ever_config: EverestConfig) -> dict[Path, str]:
             *_get_install_data_files(ever_config),
         ],
     )
+
+
+def _get_workflow_jobs(ever_config: EverestConfig) -> dict[str, WorkflowJob]:
+    workflow_jobs: dict[str, WorkflowJob] = {}
+    for job in ever_config.install_workflow_jobs or []:
+        workflow = job.to_ert_executable_workflow(ever_config.config_directory)
+        if workflow.name in workflow_jobs:
+            ConfigWarning.warn(
+                f"Duplicate workflow job with name {job.name!r}, "
+                f"overriding it with {job.executable!r}.",
+                job.name,
+            )
+        workflow_jobs[workflow.name] = workflow
+    return workflow_jobs
+
+
+def _get_workflows(
+    ever_config: EverestConfig,
+) -> tuple[list[tuple[str, HookRuntime]], list[tuple[str, str]]]:
+    trigger2res: dict[str, HookRuntime] = {
+        "pre_simulation": HookRuntime.PRE_SIMULATION,
+        "post_simulation": HookRuntime.POST_SIMULATION,
+    }
+    res_hooks: list[tuple[str, HookRuntime]] = []
+    res_workflows: list[tuple[str, str]] = []
+    for ever_trigger, (workflow_file, jobs) in _get_workflow_files(ever_config).items():
+        if jobs:
+            res_hooks.append((ever_trigger, trigger2res[ever_trigger]))
+            res_workflows.append((str(workflow_file), ever_trigger))
+    return res_hooks, res_workflows
 
 
 class EverestRunModel(RunModel):
@@ -345,11 +384,10 @@ class EverestRunModel(RunModel):
             datafile.parent.mkdir(exist_ok=True, parents=True)
             datafile.write_text(data, encoding="utf-8")
 
-        workflow_jobs = get_workflow_jobs(everest_config)
-        if deprecated_workflow_jobs := workflow_jobs_from_dict(config_dict):
-            workflow_jobs.update(deprecated_workflow_jobs)
+        workflow_jobs = _get_workflow_jobs(everest_config)
+        hooks, workflows = _get_workflows(everest_config)
         _, hooked_workflows = create_and_hook_workflows(
-            config_dict, workflow_jobs, substitutions
+            hooks, workflows, workflow_jobs, substitutions
         )
 
         install_job_fm_steps = {

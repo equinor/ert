@@ -5,20 +5,14 @@ from typing import Any, cast
 
 import everest
 from ert.config import (
-    EnsembleConfig,
-    ExecutableWorkflow,
     ModelConfig,
-    WorkflowJob,
 )
-from ert.config.ert_config import (
-    _substitutions_from_dict,
-)
-from ert.config.parsing import ConfigDict, ConfigWarning, read_file
+from ert.config.ert_config import _substitutions_from_dict
+from ert.config.parsing import ConfigDict
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from ert.plugins import ErtPluginContext
 from everest.config import EverestConfig
 from everest.config.forward_model_config import SummaryResults
-from everest.config.install_job_config import InstallJobConfig
 from everest.config.simulator_config import SimulatorConfig
 from everest.strings import STORAGE_DIR
 
@@ -104,63 +98,6 @@ def _extract_simulator(ever_config: EverestConfig, ert_config: dict[str, Any]) -
         ert_config[ErtConfigKeys.NUM_CPU] = num_fm_cpu
 
 
-def _job_to_dict(job: dict[str, Any] | InstallJobConfig) -> dict[str, Any]:
-    if isinstance(job, InstallJobConfig):
-        return job.model_dump(exclude_none=True)
-    return job
-
-
-def _extract_jobs(
-    ever_config: EverestConfig, ert_config: dict[str, Any], path: str
-) -> None:
-    ever_jobs = [_job_to_dict(j) for j in ever_config.install_jobs]
-    res_jobs = ert_config.get(ErtConfigKeys.INSTALL_JOB, [])
-    for job in ever_jobs:
-        if job.get("source") is not None:
-            source_path = os.path.join(path, job["source"])
-            new_job = (job["name"], (source_path, read_file(source_path)))
-            res_jobs.append(new_job)
-
-    ert_config[ErtConfigKeys.INSTALL_JOB] = res_jobs
-
-
-def _extract_workflow_jobs(
-    ever_config: EverestConfig, ert_config: dict[str, Any], path: str
-) -> None:
-    workflow_jobs = [_job_to_dict(j) for j in (ever_config.install_workflow_jobs or [])]
-
-    res_jobs = ert_config.get(ErtConfigKeys.LOAD_WORKFLOW_JOB, [])
-    for job in workflow_jobs:
-        if job.get("source") is not None:
-            new_job = (os.path.join(path, job["source"]), job["name"])
-            res_jobs.append(new_job)
-
-    if res_jobs:
-        ert_config[ErtConfigKeys.LOAD_WORKFLOW_JOB] = res_jobs
-
-
-def _extract_workflows(
-    ever_config: EverestConfig, ert_config: dict[str, Any], path: str
-) -> None:
-    trigger2res = {
-        "pre_simulation": "PRE_SIMULATION",
-        "post_simulation": "POST_SIMULATION",
-    }
-
-    res_workflows = ert_config.get(ErtConfigKeys.LOAD_WORKFLOW, [])
-    res_hooks = ert_config.get(ErtConfigKeys.HOOK_WORKFLOW, [])
-
-    for ever_trigger, (workflow_file, jobs) in _get_workflow_files(ever_config).items():
-        if jobs:
-            res_trigger = trigger2res[ever_trigger]
-            res_workflows.append((str(workflow_file), ever_trigger))
-            res_hooks.append((ever_trigger, res_trigger))
-
-    if res_workflows:
-        ert_config[ErtConfigKeys.LOAD_WORKFLOW] = res_workflows
-        ert_config[ErtConfigKeys.HOOK_WORKFLOW] = res_hooks
-
-
 def _extract_seed(ever_config: EverestConfig, ert_config: dict[str, Any]) -> None:
     random_seed = ever_config.environment.random_seed
 
@@ -180,37 +117,6 @@ def get_substitutions(
     return substitutions
 
 
-def get_workflow_jobs(ever_config: EverestConfig) -> dict[str, WorkflowJob]:
-    workflow_jobs: dict[str, WorkflowJob] = {}
-    for job in ever_config.install_workflow_jobs or []:
-        if job.executable is not None:
-            if job.name in workflow_jobs:
-                ConfigWarning.warn(
-                    f"Duplicate workflow job with name {job.name!r}, "
-                    f"overriding it with {job.executable!r}.",
-                    job.name,
-                )
-            executable = Path(job.executable)
-            if not executable.is_absolute():
-                executable = ever_config.config_directory / executable
-            workflow_jobs[job.name] = ExecutableWorkflow(
-                name=job.name,
-                min_args=None,
-                max_args=None,
-                arg_types=[],
-                executable=str(executable),
-            )
-    return workflow_jobs
-
-
-def get_ensemble_config(
-    config_dict: ConfigDict, everest_config: EverestConfig
-) -> EnsembleConfig:
-    ensemble_config = EnsembleConfig.from_dict(config_dict)
-
-    return ensemble_config
-
-
 def _everest_to_ert_config_dict(ever_config: EverestConfig) -> ConfigDict:
     """
     Takes as input an Everest configuration and converts it
@@ -227,9 +133,6 @@ def _everest_to_ert_config_dict(ever_config: EverestConfig) -> ConfigDict:
     # Extract simulator and simulation related configs
     _extract_simulator(ever_config, ert_config)
     _extract_environment(ever_config, ert_config)
-    _extract_jobs(ever_config, ert_config, config_dir)
-    _extract_workflow_jobs(ever_config, ert_config, config_dir)
-    _extract_workflows(ever_config, ert_config, config_dir)
     _extract_seed(ever_config, ert_config)
 
     return ert_config
@@ -239,14 +142,3 @@ def everest_to_ert_config_dict(everest_config: EverestConfig) -> ConfigDict:
     with ErtPluginContext():
         config_dict = _everest_to_ert_config_dict(everest_config)
     return config_dict
-
-
-def _get_workflow_files(ever_config: EverestConfig) -> dict[str, tuple[Path, str]]:
-    data_storage = (Path(ever_config.output_dir) / ".internal_data").resolve()
-    return {
-        trigger: (
-            data_storage / f"{trigger}.workflow",
-            "\n".join(getattr(ever_config.workflows, trigger, [])),
-        )
-        for trigger in ("pre_simulation", "post_simulation")
-    }

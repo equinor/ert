@@ -5,7 +5,6 @@ from pathlib import Path
 from shutil import which
 from textwrap import dedent
 from unittest import mock
-from unittest.mock import MagicMock
 
 import pytest
 import yaml
@@ -13,8 +12,6 @@ from pydantic import ValidationError
 
 import everest
 from ert.config import ConfigWarning, SummaryConfig
-from ert.config.ert_config import create_and_hook_workflows, workflows_from_dict
-from ert.config.model_config import ModelConfig
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from ert.config.queue_config import (
     LocalQueueOptions,
@@ -24,13 +21,9 @@ from ert.config.queue_config import (
     TorqueQueueOptions,
 )
 from ert.plugins import ErtPluginContext, ErtRuntimePlugins
-from ert.run_models.everest_run_model import EverestRunModel, _get_internal_files
+from ert.run_models.everest_run_model import EverestRunModel, _get_workflow_jobs
 from everest.config import EverestConfig, InstallDataConfig
-from everest.simulator.everest_to_ert import (
-    everest_to_ert_config_dict,
-    get_substitutions,
-    get_workflow_jobs,
-)
+from everest.simulator.everest_to_ert import everest_to_ert_config_dict
 
 
 @pytest.mark.usefixtures("no_plugins")
@@ -300,36 +293,13 @@ def test_summary_default_no_opm(tmp_path, monkeypatch, wells_config):
     assert set(sum_keys[0]) == set(smry_config.keys) - {"*"}
 
 
-def test_workflow_job_deprecated(tmp_path, monkeypatch):
-    monkeypatch.chdir(tmp_path)
-    Path("TEST").write_text("EXECUTABLE echo", encoding="utf-8")
-    workflow_jobs = [{"name": "test", "source": "TEST"}]
-    with pytest.warns(
-        ConfigWarning, match="`install_workflow_jobs: source` is deprecated"
-    ):
-        ever_config = EverestConfig.with_defaults(
-            install_workflow_jobs=workflow_jobs, model={"realizations": [0]}
-        )
-    config_dict = everest_to_ert_config_dict(ever_config)
-    substitutions = get_substitutions(
-        config_dict=config_dict,
-        model_config=ModelConfig(),
-        runpath_file=MagicMock(),
-        num_cpu=0,
-    )
-    workflow_jobs, _, _ = workflows_from_dict(config_dict, substitutions)
-
-    jobs = workflow_jobs.get("test")
-    assert jobs.executable == "echo"
-
-
 def test_workflow_job(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     workflow_jobs = [{"name": "test", "executable": which("echo")}]
     ever_config = EverestConfig.with_defaults(
         install_workflow_jobs=workflow_jobs, model={"realizations": [0]}
     )
-    workflow_jobs = get_workflow_jobs(ever_config)
+    workflow_jobs = _get_workflow_jobs(ever_config)
     jobs = workflow_jobs.get("test")
     assert jobs.executable == which("echo")
 
@@ -348,7 +318,7 @@ def test_workflow_job_override(tmp_path, monkeypatch):
         ConfigWarning,
         match=f"Duplicate workflow job with name 'test', overriding it with {echo!r}.",
     ):
-        workflow_jobs = get_workflow_jobs(ever_config)
+        workflow_jobs = _get_workflow_jobs(ever_config)
     jobs = workflow_jobs.get("test")
     assert jobs.executable == echo
 
@@ -366,47 +336,30 @@ def test_workflows_deprecated(tmp_path, monkeypatch):
             model={"realizations": [0]},
             install_workflow_jobs=workflow_jobs,
         )
-    config_dict = everest_to_ert_config_dict(ever_config)
-    substitutions = get_substitutions(
-        config_dict=config_dict,
-        model_config=ModelConfig(),
-        runpath_file=MagicMock(),
-        num_cpu=0,
-    )
-    for datafile, data in _get_internal_files(ever_config).items():
-        datafile.parent.mkdir(exist_ok=True, parents=True)
-        datafile.write_text(data, encoding="utf-8")
-    _, workflows, _ = workflows_from_dict(config_dict, substitutions)
-
-    jobs = workflows.get("pre_simulation")
-    assert jobs.cmd_list[0][0].name == "my_test"
-    assert jobs.cmd_list[0][0].executable == "echo"
+    with ErtPluginContext() as runtime_plugins:
+        runmodel = EverestRunModel.create(ever_config, runtime_plugins=runtime_plugins)
+        assert (
+            runmodel.hooked_workflows.popitem()[1][0].cmd_list[0][0].executable
+            == "echo"
+        )
 
 
 def test_workflows(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    workflow_jobs = [{"name": "my_test", "executable": which("echo")}]
+    executable = which("echo")
+    workflow_jobs = [{"name": "my_test", "executable": executable}]
     workflow = {"pre_simulation": ["my_test"]}
     ever_config = EverestConfig.with_defaults(
         workflows=workflow,
         model={"realizations": [0]},
         install_workflow_jobs=workflow_jobs,
     )
-    config_dict = everest_to_ert_config_dict(ever_config)
-    substitutions = get_substitutions(
-        config_dict=config_dict,
-        model_config=ModelConfig(),
-        runpath_file=MagicMock(),
-        num_cpu=0,
-    )
-    for datafile, data in _get_internal_files(ever_config).items():
-        datafile.parent.mkdir(exist_ok=True, parents=True)
-        datafile.write_text(data, encoding="utf-8")
-    workflow_jobs = get_workflow_jobs(ever_config)
-    workflows, _ = create_and_hook_workflows(config_dict, workflow_jobs, substitutions)
-    jobs = workflows.get("pre_simulation")
-    assert jobs.cmd_list[0][0].name == "my_test"
-    assert jobs.cmd_list[0][0].executable == which("echo")
+    with ErtPluginContext() as runtime_plugins:
+        runmodel = EverestRunModel.create(ever_config, runtime_plugins=runtime_plugins)
+        assert (
+            runmodel.hooked_workflows.popitem()[1][0].cmd_list[0][0].executable
+            == executable
+        )
 
 
 def test_user_config_jobs_precedence(tmp_path, monkeypatch):

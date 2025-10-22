@@ -387,13 +387,11 @@ def workflow_jobs_from_dict(
 
 
 def create_and_hook_workflows(
-    content_dict: ConfigDict,
+    hook_workflow_info: list[tuple[str, HookRuntime]],
+    workflow_info: list[tuple[str, str]],
     workflow_jobs: dict[str, WorkflowJob],
     substitutions: dict[str, str],
 ) -> tuple[dict[str, Workflow], defaultdict[HookRuntime, list[Workflow]]]:
-    hook_workflow_info = content_dict.get(ConfigKeys.HOOK_WORKFLOW, [])
-    workflow_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW, [])
-
     workflows = {}
     hooked_workflows = defaultdict(list)
 
@@ -496,7 +494,10 @@ def workflows_from_dict(
         dict(copy.copy(installed_workflows)) if installed_workflows else {},
     )
     workflows, hooked_workflows = create_and_hook_workflows(
-        content_dict, workflow_jobs, substitutions
+        content_dict.get(ConfigKeys.HOOK_WORKFLOW, []),
+        content_dict.get(ConfigKeys.LOAD_WORKFLOW, []),
+        workflow_jobs,
+        substitutions,
     )
     return workflow_jobs, workflows, hooked_workflows
 
