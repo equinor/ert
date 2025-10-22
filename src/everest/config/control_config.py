@@ -313,9 +313,13 @@ class ControlConfig(BaseModel):
         extra="forbid",
     )
 
-    def to_ert_parameter_config(self) -> ExtParamConfig:
-        return ExtParamConfig(
-            name=self.name,
-            input_keys=self.formatted_control_names,
-            output_file=self.name + ".json",
-        )
+    def to_ert_parameter_config(self) -> list[ExtParamConfig]:
+        return [
+            ExtParamConfig(
+                group=self.name,
+                name=control_name,
+                input_keys=self.formatted_control_names,
+                output_file=self.name + ".json",
+            )
+            for control_name in self.formatted_control_names
+        ]
