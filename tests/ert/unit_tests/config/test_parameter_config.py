@@ -200,6 +200,7 @@ def test_parameters_are_logged_for_ext_param_instances(caplog):
         {
             "forward_init",
             "forward_init_file",
+            "group",
             "input_keys",
             "type",
         },
