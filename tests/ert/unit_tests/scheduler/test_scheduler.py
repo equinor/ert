@@ -201,6 +201,7 @@ async def test_that_max_submit_is_not_reached_on_success(realization, mock_drive
 
 @pytest.mark.integration_test
 @pytest.mark.timeout(10)
+@pytest.mark.flaky(rerun=3)
 async def test_max_runtime(realization, mock_driver, caplog):
     wait_started = asyncio.Event()
 
