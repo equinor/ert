@@ -390,8 +390,6 @@ class PlotWindow(QMainWindow):
             self._central_tab.setTabEnabled(
                 self._central_tab.indexOf(plot_widget), plot_widget in available_widgets
             )
-        self._central_tab.currentChanged.connect(self.currentTabChanged)
-
         current_widget = self._central_tab.currentWidget()
 
         if 0 < self._prev_key_dimensionality != key_def.dimensionality:
@@ -406,6 +404,7 @@ class PlotWindow(QMainWindow):
             self._current_tab_index = -1
 
         self._central_tab.setCurrentWidget(current_widget)
+        self._central_tab.currentChanged.connect(self.currentTabChanged)
         self._prev_tab_widget_index = self._central_tab.currentIndex()
         self._prev_key_dimensionality = key_def.dimensionality
         self.updatePlot()
