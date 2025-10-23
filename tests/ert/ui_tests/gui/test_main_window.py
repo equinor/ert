@@ -383,7 +383,7 @@ def test_that_the_plot_window_contains_the_expected_elements(
 
         # no log scale checkbox yet
         cb = get_log_checkbox()
-        assert cb is None or not cb.isVisible()
+        assert not cb.isVisibleTo(plot_window._central_tab.currentWidget())
 
         click_plotter_item(gen_kw_index)
         assert plot_window._central_tab.currentIndex() == GEN_KW_DEFAULT
@@ -401,14 +401,15 @@ def test_that_the_plot_window_contains_the_expected_elements(
         assert plot_window._central_tab.currentIndex() == gen_kw_alternate_index
 
         # wait until the checkbox exists
-        plot_window.updatePlot()
-        qtbot.wait(10)
         qtbot.waitUntil(lambda: get_log_checkbox() is not None, timeout=2000)
         cb = get_log_checkbox()
 
         # wait until it becomes visible
-        qtbot.waitUntil(cb.isVisible(), timeout=2000)
-        assert cb.isVisible()
+        qtbot.waitUntil(
+            lambda: cb.isVisibleTo(plot_window._central_tab.currentWidget()) is True,
+            timeout=2000,
+        )
+        assert cb.isVisibleTo(plot_window._central_tab.currentWidget())
 
         # finally click all items
         for i in range(model.rowCount()):
