@@ -103,6 +103,11 @@ def _extract_simulator(ever_config: EverestConfig, ert_config: dict[str, Any]) -
     if num_fm_cpu is not None:
         ert_config[ErtConfigKeys.NUM_CPU] = num_fm_cpu
 
+    if ever_simulation.queue_system and (
+        queue_system_name := ever_simulation.queue_system.name
+    ):
+        ert_config[ErtConfigKeys.QUEUE_SYSTEM] = queue_system_name
+
 
 def _job_to_dict(job: dict[str, Any] | InstallJobConfig) -> dict[str, Any]:
     if isinstance(job, InstallJobConfig):
