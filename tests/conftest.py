@@ -1,11 +1,14 @@
 import os
+from collections.abc import Generator
 from importlib.resources import files
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 from PyQt6.QtCore import QDir
 
 from ert.plugins import ErtRuntimePlugins
+from ert.storage import Storage, open_storage
 
 
 def pytest_addoption(parser):
@@ -138,3 +141,9 @@ def use_site_configurations_with_no_queue_options():
         ErtRuntimePluginsWithNoQueueOptions,
     ):
         yield
+
+
+@pytest.fixture
+def storage(tmp_path: Path) -> Generator[Storage, None, None]:
+    with open_storage(tmp_path / "storage", mode="w") as storage:
+        yield storage

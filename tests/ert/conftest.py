@@ -489,12 +489,6 @@ def _shared_heat_equation_enif(request, monkeypatch, source_root):
 
 
 @pytest.fixture
-def storage(tmp_path):
-    with open_storage(tmp_path / "storage", mode="w") as storage:
-        yield storage
-
-
-@pytest.fixture
 def new_ensemble(storage):
     experiment_id = storage.create_experiment()
     return storage.create_ensemble(
