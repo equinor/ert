@@ -424,21 +424,6 @@ class EverestRunModel(RunModel):
             for key, val in plugin_env_vars.items():
                 env_vars[key] = substituter.substitute(val)
 
-        for key, val in config_dict.get("SETENV", []):
-            if key in env_vars:
-                message = (
-                    f"Overriding environment variable: {key}, "
-                    f"old value: {env_vars[key]}, new value: {val}"
-                )
-
-                if key in plugin_env_vars:
-                    site_value = plugin_env_vars
-                    message += f", site configuration value: {site_value}"
-
-                logger.warning(message)
-
-            env_vars[key] = substituter.substitute(val)
-
         delete_run_path: bool = (
             everest_config.simulator is not None
             and everest_config.simulator.delete_run_path
