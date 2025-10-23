@@ -960,7 +960,7 @@ requires-dist = [
     { name = "psutil" },
     { name = "pyarrow" },
     { name = "pydantic", specifier = ">2" },
-    { name = "pyqt6" },
+    { name = "pyqt6", specifier = "!=6.10.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">6" },
     { name = "pytest-asyncio", marker = "extra == 'dev'" },
     { name = "pytest-benchmark", marker = "extra == 'dev'" },

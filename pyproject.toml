@@ -57,7 +57,7 @@ dependencies = [
     "python-multipart", # extra dependency for fastapi
     "pyyaml",
     "pyzmq",
-    "pyqt6",
+    "pyqt6!=6.10.0",
     "requests",
     "resfo",
     "ropt-dakota>=0.24,<0.25",
