@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ert.config import Field, GenKwConfig, SurfaceConfig
+from ert.config import ErtConfig, Field, GenKwConfig, SurfaceConfig
 from ert.field_utils import ErtboxParameters, FieldFileFormat
 from ert.gui.ertwidgets.models.ertsummary import ErtSummary
 
@@ -32,7 +32,7 @@ def mock_ert(monkeypatch):
     }
 
     surface = SurfaceConfig(
-        name="some_name",
+        name="surface",
         forward_init=True,
         ncol=10,
         nrow=7,
@@ -61,7 +61,7 @@ def mock_ert(monkeypatch):
     )
 
     field = Field(
-        name="some_name",
+        name="field",
         forward_init=True,
         ertbox_params=ertbox_params,
         file_format=FieldFileFormat.ROFF,
@@ -80,6 +80,10 @@ def mock_ert(monkeypatch):
         "field": field,
     } | gen_kws
 
+    ert_mock.parameter_configurations_with_design_matrix = list(
+        ert_mock.ensemble_config.parameter_configs.values()
+    )
+
     yield ert_mock
 
 
@@ -91,9 +95,61 @@ def test_getForwardModels(mock_ert):
 
 def test_getParameters(mock_ert):
     expected_list = ["DEFAULT (3)", "field (10, 5, 3)", "surface (10, 7)"]
-    parameter_list, parameter_count = ErtSummary(mock_ert).getParameters()
+    parameter_list, parameter_count = ErtSummary(mock_ert).get_parameters()
     assert parameter_list == expected_list
     assert parameter_count == 223
+
+
+def test_that_design_matrix_parameters_are_included_in_the_parameter_count(mock_ert):
+    # Add design matrix parameters
+    dm_param1 = GenKwConfig(
+        name="dm_param_a",
+        distribution={"name": "uniform", "min": 0, "max": 1},
+        group="DESIGN_MATRIX",
+    )
+    dm_param2 = GenKwConfig(
+        name="dm_param_b",
+        distribution={"name": "uniform", "min": 0, "max": 1},
+        group="DESIGN_MATRIX",
+    )
+    dm_param3 = GenKwConfig(
+        name="dm_param_c",
+        distribution={"name": "uniform", "min": 0, "max": 1},
+        group="DESIGN_MATRIX",
+    )
+
+    # Modify the mock to return parameters including design matrix
+    mock_ert.parameter_configurations_with_design_matrix = [
+        *mock_ert.ensemble_config.parameter_configs.values(),
+        dm_param1,
+        dm_param2,
+        dm_param3,
+    ]
+
+    parameter_list, parameter_count = ErtSummary(mock_ert).get_parameters()
+
+    # Check that design matrix parameters are counted
+    assert "DESIGN_MATRIX (3)" in parameter_list
+    # Original count (223) + 3 design matrix parameters
+    assert parameter_count == 226
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_design_matrix_parameters_counted_when_loaded_from_real_config(
+    copy_poly_case_with_design_matrix,
+):
+    # Create a design matrix with 3 parameters (a, b, c)
+    design_dict = {"REAL": [0, 1, 2], "a": [1, 2, 3], "b": [4, 5, 6], "c": [7, 8, 9]}
+    copy_poly_case_with_design_matrix(design_dict, [])
+
+    config = ErtConfig.from_file("poly.ert")
+    summary = ErtSummary(config)
+
+    parameter_list, parameter_count = summary.get_parameters()
+
+    # Should have 3 parameters from design matrix (a, b, c)
+    assert "DESIGN_MATRIX (3)" in parameter_list
+    assert parameter_count == 3
 
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
@@ -106,7 +162,7 @@ def test_snake_oil(snake_oil_case):
         "SNAKE_OIL_DIFF",
     ]
 
-    assert summary.getParameters() == (["SNAKE_OIL_PARAM (10)"], 10)
+    assert summary.get_parameters() == (["SNAKE_OIL_PARAM (10)"], 10)
 
     assert summary.getObservations() == [
         {"observation_key": "FOPR", "count": 200},
