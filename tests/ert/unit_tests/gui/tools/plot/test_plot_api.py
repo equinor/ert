@@ -114,10 +114,11 @@ def test_case_structure(api):
         "default_0",
         "default_1",
         "default_manyobs",
+        "uninitialized_ensemble",
     ]
 
     assert ensembles == expected
-    assert hidden_case == [".ensemble_2"]
+    assert hidden_case == [".ensemble_2", "uninitialized_ensemble"]
 
 
 def test_can_load_data_and_observations(api):
