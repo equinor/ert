@@ -19,6 +19,7 @@ from pandas.errors import ParserError
 
 from ert.config import ParameterMetadata, ResponseMetadata
 from ert.services import StorageService
+from ert.storage.realization_storage_state import RealizationStorageState
 from ert.summary_key_type import history_key
 
 logger = logging.getLogger(__name__)
@@ -79,18 +80,27 @@ class PlotApi:
                             f"/ensembles/{ensemble_id}", timeout=self._timeout
                         )
                         self._check_response(response)
-                        response_json = response.json()
+                        response_json: dict[str, Any] = response.json()
                         ensemble_name: str = response_json["userdata"]["name"]
                         experiment_name: str = response_json["userdata"][
                             "experiment_name"
                         ]
                         ensemble_started_at = response_json["userdata"]["started_at"]
+                        ensemble_undefined = False
+                        if realization_storage_states := response_json.get(
+                            "realization_storage_states"
+                        ):
+                            ensemble_undefined = (
+                                RealizationStorageState.PARAMETERS_LOADED
+                                not in set(realization_storage_states)
+                            )
                         self._all_ensembles.append(
                             EnsembleObject(
                                 name=ensemble_name,
                                 id=ensemble_id,
                                 experiment_name=experiment_name,
-                                hidden=ensemble_name.startswith("."),
+                                hidden=ensemble_name.startswith(".")
+                                or ensemble_undefined,
                                 started_at=ensemble_started_at,
                             )
                         )
