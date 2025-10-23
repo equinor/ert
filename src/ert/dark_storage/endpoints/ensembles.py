@@ -1,4 +1,5 @@
 import logging
+from collections import Counter
 from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends, HTTPException
@@ -38,4 +39,7 @@ def get_ensemble(
             "started_at": ensemble.started_at,
         },
         size=ensemble.ensemble_size,
+        realization_storage_states=Counter(
+            state.name for i in ensemble.get_ensemble_state() for state in i
+        ),
     )

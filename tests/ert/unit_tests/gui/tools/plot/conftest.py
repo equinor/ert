@@ -87,29 +87,47 @@ def mocked_requests_get(*args, **kwargs):
 
     ensemble = {
         "/ensembles/ens_id_1": {
-            "name": "ensemble_1",
-            "experiment_name": "experiment",
-            "started_at": "2012-12-10T00:00:00",
+            "userdata": {
+                "name": "ensemble_1",
+                "experiment_name": "experiment",
+                "started_at": "2012-12-10T00:00:00",
+            }
         },
         "/ensembles/ens_id_2": {
-            "name": ".ensemble_2",
-            "experiment_name": "experiment",
-            "started_at": "2012-12-10T01:00:00",
+            "userdata": {
+                "name": ".ensemble_2",
+                "experiment_name": "experiment",
+                "started_at": "2012-12-10T01:00:00",
+            }
         },
         "/ensembles/ens_id_3": {
-            "name": "default_0",
-            "experiment_name": "experiment",
-            "started_at": "2012-12-10T02:00:00",
+            "userdata": {
+                "name": "default_0",
+                "experiment_name": "experiment",
+                "started_at": "2012-12-10T02:00:00",
+            }
         },
         "/ensembles/ens_id_4": {
-            "name": "default_1",
-            "experiment_name": "experiment",
-            "started_at": "2012-12-10T03:00:00",
+            "userdata": {
+                "name": "default_1",
+                "experiment_name": "experiment",
+                "started_at": "2012-12-10T03:00:00",
+            }
         },
         "/ensembles/ens_id_5": {
-            "name": "default_manyobs",
-            "experiment_name": "experiment",
-            "started_at": "2012-12-10T04:00:00",
+            "userdata": {
+                "name": "default_manyobs",
+                "experiment_name": "experiment",
+                "started_at": "2012-12-10T04:00:00",
+            }
+        },
+        "/ensembles/ens_id_uninitialized": {
+            "userdata": {
+                "name": "uninitialized_ensemble",
+                "experiment_name": "experiment",
+                "started_at": "2012-12-10T04:00:00",
+            },
+            "realization_storage_states": {"UNDEFINED": 1},
         },
     }
 
@@ -316,6 +334,7 @@ def mocked_requests_get(*args, **kwargs):
                 "ens_id_3",
                 "ens_id_4",
                 "ens_id_5",
+                "ens_id_uninitialized",
             ],
             "parameters": {
                 "default": [
@@ -379,7 +398,7 @@ def mocked_requests_get(*args, **kwargs):
     ]
 
     if args[0] in ensemble:
-        return MockResponse({"userdata": ensemble[args[0]]}, 200)
+        return MockResponse(ensemble[args[0]], 200)
     elif args[0] in observations:
         return MockResponse(
             observations[args[0]],
