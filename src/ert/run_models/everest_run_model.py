@@ -362,14 +362,11 @@ class EverestRunModel(RunModel):
 
         queue_config = QueueConfig.from_dict(
             config_dict,
+            queue_options_from_everest=everest_config.simulator.queue_system,
             site_queue_options=runtime_plugins.queue_options
             if runtime_plugins
             else None,
         )
-        assert everest_config.simulator is not None
-        assert everest_config.simulator.queue_system is not None
-        queue_config.queue_options = everest_config.simulator.queue_system
-        queue_config.queue_system = everest_config.simulator.queue_system.name
 
         substitutions = {
             "<RUNPATH_FILE>": str(runpath_file),
