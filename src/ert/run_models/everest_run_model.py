@@ -328,10 +328,6 @@ class EverestRunModel(RunModel):
             if runtime_plugins
             else None,
         )
-        assert everest_config.simulator is not None
-        assert everest_config.simulator.queue_system is not None
-        queue_config.queue_options = everest_config.simulator.queue_system
-        queue_config.queue_system = everest_config.simulator.queue_system.name
 
         substitutions = get_substitutions(
             config_dict,

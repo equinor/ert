@@ -45,3 +45,23 @@ def test_that_queue_system_name_passes_through_create(
             runtime_plugins=runtime_plugins,
         )
     assert runmodel.queue_config.queue_system == queue_system
+
+
+def test_that_num_cpu_passes_through_create(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("ert.run_models.run_model.open_storage", Mock())
+    with ErtPluginContext() as runtime_plugins:
+        runmodel = EverestRunModel.create(
+            EverestConfig(
+                **(
+                    minimal_config
+                    | {
+                        "simulator": {
+                            "cores_per_node": 4,
+                            "queue_system": {"name": "local"},
+                        }
+                    }
+                )
+            ),
+            runtime_plugins=runtime_plugins,
+        )
+    assert runmodel.queue_config.queue_options.num_cpu == 4
