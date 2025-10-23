@@ -942,7 +942,9 @@ class ErtConfig(BaseModel):
             errors.append(e)
 
         try:
-            queue_config = QueueConfig.from_dict(config_dict, cls.QUEUE_OPTIONS)
+            queue_config = QueueConfig.from_dict(
+                config_dict, site_queue_options=cls.QUEUE_OPTIONS
+            )
 
             substitutions["<NUM_CPU>"] = str(queue_config.queue_options.num_cpu)
 
