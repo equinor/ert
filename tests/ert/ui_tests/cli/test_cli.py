@@ -12,7 +12,7 @@ from textwrap import dedent
 from unittest.mock import Mock, call, patch
 
 import numpy as np
-import pandas as pd
+import polars as pl
 import pytest
 import xtgeo
 import zmq
@@ -533,19 +533,17 @@ def test_that_es_mda_on_poly_case_matches_snapshot(snapshot):
     )
 
     with open_storage("storage", "r") as storage:
-        data = []
+        data: list[pl.DataFrame] = []
         experiment = storage.get_experiment_by_name("es-mda")
         for iter_nr in range(4):
             ensemble = experiment.get_ensemble_by_name(f"iter-{iter_nr}")
-            ensemble_data = ensemble.load_scalars().to_pandas().set_index("realization")
-            ensemble_data.columns.name = None
-            ensemble_data.index.name = "Realization"
-            ensemble_data = ensemble_data.sort_index(axis=1)
+            ensemble_data = ensemble.load_scalars()
+            ensemble_data = ensemble_data.with_columns(
+                pl.lit(f"iter-{iter_nr}").alias("iteration")
+            )
             data.append(ensemble_data)
-    result = pd.concat(
+    result = pl.concat(
         data,
-        keys=[f"iter-{iter_}" for iter_ in range(len(data))],
-        names=("Iteration", "Realization"),
     )
 
     numpy_suffix = ""
@@ -553,7 +551,7 @@ def test_that_es_mda_on_poly_case_matches_snapshot(snapshot):
         numpy_suffix = "_numpy1"
 
     snapshot.assert_match(
-        result.to_csv(float_format="%.12g"),
+        result.write_csv(float_precision=12),
         f"es_mda_integration_snapshot{numpy_suffix}",
     )
 
@@ -573,21 +571,19 @@ def test_that_enif_on_poly_case_matches_snapshot(snapshot):
     )
 
     with open_storage("storage", "r") as storage:
-        data = []
+        data: list[pl.DataFrame] = []
         experiment = storage.get_experiment_by_name("enif")
         for iter_nr in range(2):
             ensemble = experiment.get_ensemble_by_name(f"iter-{iter_nr}")
-            ensemble_data = ensemble.load_scalars().to_pandas().set_index("realization")
-            ensemble_data.columns.name = None
-            ensemble_data.index.name = "Realization"
-            ensemble_data = ensemble_data.sort_index(axis=1)
+            ensemble_data = ensemble.load_scalars()
+            ensemble_data = ensemble_data.with_columns(
+                pl.lit(f"iter-{iter_nr}").alias("iteration")
+            )
             data.append(ensemble_data)
-    result = pd.concat(
+    result = pl.concat(
         data,
-        keys=[f"iter-{i}" for i in range(len(data))],
-        names=("Iteration", "Realization"),
     )
-    snapshot.assert_match(result.to_csv(float_format="%.12g"), "enif_snapshot.csv")
+    snapshot.assert_match(result.write_csv(float_precision=11), "enif_snapshot.csv")
 
 
 @pytest.mark.parametrize(
