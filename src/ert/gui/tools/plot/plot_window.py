@@ -164,6 +164,7 @@ class PlotWindow(QMainWindow):
         self.addPlotWidget(CROSS_ENSEMBLE_STATISTICS, CrossEnsembleStatisticsPlot())
         self.addPlotWidget(STD_DEV, StdDevPlot())
         self._central_tab.currentChanged.connect(self.currentTabChanged)
+        self.logPlotTabUsage(self._central_tab.tabText(0), default=True)
 
         self._prev_tab_widget_index = -1
         self._current_tab_index = -1
@@ -202,6 +203,11 @@ class PlotWindow(QMainWindow):
     def currentTabChanged(self, index: int) -> None:
         self._current_tab_index = index
         self.updatePlot()
+        self.logPlotTabUsage(self._central_tab.tabText(index))
+
+    def logPlotTabUsage(self, tab_name: str, default: bool = False) -> None:
+        msg = f"Plotwindow tab used: {tab_name}" + (" (default tab)" if default else "")
+        logger.info(msg)
 
     @Slot(int)
     def layerIndexChanged(self, index: int | None) -> None:
