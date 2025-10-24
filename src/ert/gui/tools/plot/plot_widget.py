@@ -1,3 +1,4 @@
+import logging
 import sys
 import traceback
 from typing import TYPE_CHECKING, Union
@@ -28,6 +29,8 @@ if TYPE_CHECKING:
     from .plottery.plots.statistics import StatisticsPlot
     from .plottery.plots.std_dev import StdDevPlot
 
+logger = logging.getLogger(__name__)
+
 
 class CustomNavigationToolbar(NavigationToolbar2QT):
     customizationTriggered = Signal()
@@ -45,6 +48,9 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
         customize_action = QAction(gear, "Customize", self)
         customize_action.setToolTip("Customize plot settings")
         customize_action.triggered.connect(self.customizationTriggered)
+        customize_action.triggered.connect(
+            lambda: self.logToolbarUsage(customize_action.text())
+        )
 
         layer_combobox = QComboBox()
         self._model = QStringListModel()
@@ -63,6 +69,11 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
             if isinstance(action, QWidgetAction):
                 self._layer_action = self.insertWidget(action, layer_combobox)
                 self._layer_action.setVisible(False)
+
+            action.triggered.connect(lambda _, a=action: self.logToolbarUsage(a.text()))
+
+    def logToolbarUsage(self, action_name: str) -> None:
+        logger.info(f"Plotwindow toolbar used: {action_name}")
 
     @Slot(bool)
     def showLayerWidget(self, show: bool) -> None:
