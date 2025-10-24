@@ -118,6 +118,11 @@ def _extract_simulator(ever_config: EverestConfig, ert_config: dict[str, Any]) -
     ):
         ert_config[ErtConfigKeys.SUBMIT_SLEEP] = submit_sleep
 
+    if ever_simulation.queue_system and (
+        realization_memory := ever_simulation.queue_system.realization_memory
+    ):
+        ert_config[ErtConfigKeys.REALIZATION_MEMORY] = realization_memory
+
 
 def _job_to_dict(job: dict[str, Any] | InstallJobConfig) -> dict[str, Any]:
     if isinstance(job, InstallJobConfig):
