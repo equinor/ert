@@ -1,8 +1,7 @@
 .. _cha_optimization_backends:
 
-*********************
 Optimization backends
-*********************
+=====================
 
 Everest offers the possibility to specify the backend used for optimization with
 the `backend` keyword. Everest will check if the requested backend is installed
@@ -13,14 +12,13 @@ the `options` or `backend_options` keywords.
 
 Out of the box, Everest supports Dakota and SciPy backends, provided their
 corresponding prerequisites are installed, i.e., provided Dakota and/or Scipy are
-installed. Additional backends may be installed in your local installation,
-consult your systems manager for options.
+installed.
 
 By default, if the `backend` keyword is missing, Everest will select the Dakota
 backend.
 
 The Dakota backend
-==================
+------------------
 
 The Dakota backend is the default choice for the optimization backend, it will
 be selected when the `backend` keyword is not present, or if it is set to
@@ -53,7 +51,7 @@ are listed in :ref:`cha_optimization_algorithms`.
             - classical_search 1
 
 The SciPy backend
-=================
+-----------------
 
 Everest supports algorithms from the SciPy Optimization package (`scipy.optimize
 <https://docs.scipy.org/doc/scipy/reference/tutorial/optimize.html>`_). This

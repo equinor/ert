@@ -1,8 +1,8 @@
-.. _cha_sampler_backends:
+.. _cha_sampling_backends:
 
-********
-Samplers
-********
+
+Sampling backends
+=================
 
 By default Everest generates perturbations to estimate gradients using sampling
 code from SciPy. It provides sampling from common distributions such as

@@ -19,20 +19,23 @@ This guide serves as documentation for the *Everest* decision-making tool.
 
    introduction
    installation
-   minimal_example
+   example
 
 .. toctree::
    :hidden:
    :caption: Reference
 
    cli
-   config
-   config_reference
-   optimization_backends
-   sampler_backends
-   forward_model_jobs
-   creating_custom_jobs
-   custom_workflow_jobs
+   configuration/index
+   forward_models/index
+   workflow_jobs
+   backends/index
+
+.. toctree::
+   :hidden:
+   :caption: Everest-Models
+
+   everest_models
 
 .. toctree::
    :hidden:
