@@ -180,6 +180,7 @@ def main() -> None:
                         }
                         time.sleep(0.5)
         except BaseServiceExit:
+            # Server exit, happens on normal shutdown and keyboard interrupt
             logging.getLogger(EVERSERVER).info("Everserver stopped by user")
         except Exception as e:
             logging.getLogger(EVERSERVER).exception(e)

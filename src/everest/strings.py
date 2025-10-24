@@ -23,7 +23,6 @@ OPT_FAILURE_REALIZATIONS = (
 OPT_FAILURE_ALL_REALIZATIONS = "Optimization failed: all realizations failed."
 
 SESSION_DIR = ".session"
-SERVER_STATUS = "status"
 SIMULATION = "simulation"
 SIMULATOR_START = "start"
 SIMULATOR_UPDATE = "update"

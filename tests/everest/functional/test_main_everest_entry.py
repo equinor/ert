@@ -11,11 +11,11 @@ from tests.everest.utils import (
     get_optimal_result,
 )
 
+from ert.storage import ExperimentState
 from everest import __version__ as everest_version
 from everest.bin.main import start_everest
 from everest.bin.utils import get_experiment_status
-from everest.config import EverestConfig, ServerConfig
-from everest.detached import ExperimentState, everserver_status
+from everest.config import EverestConfig
 
 CONFIG_FILE_ADVANCED = "config_advanced.yml"
 
@@ -81,17 +81,19 @@ def test_everest_entry_run(cached_example):
 
 @pytest.mark.integration_test
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
-def test_everest_entry_monitor_no_run(cached_example):
+def test_everest_entry_monitor_already_run(cached_example):
     _, config_file, _, _ = cached_example("math_func/config_minimal.yml")
-    with capture_streams():
+    with capture_streams() as (out, _):
         start_everest(["everest", "monitor", config_file])
+    assert "Optimization already completed." in out.getvalue()
 
-    config = EverestConfig.load_file(config_file)
-    status = everserver_status(
-        ServerConfig.get_everserver_status_path(config.output_dir)
-    )
 
-    assert status["status"] == ExperimentState.never_run
+@pytest.mark.integration_test
+def test_everest_entry_monitor_not_run(change_to_tmpdir):
+    EverestConfig.with_defaults().dump("config.yml")
+    with capture_streams() as (out, _):
+        start_everest(["everest", "monitor", "config.yml"])
+    assert "The optimization has not run yet." in out.getvalue()
 
 
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
@@ -153,10 +155,8 @@ def test_that_keyboard_interrupt_stops_optimization_with_a_graceful_shutdown(
 
         def wait_and_kill():
             while True:
-                status = everserver_status(
-                    ServerConfig.get_everserver_status_path(config.output_dir)
-                )
-                if status.get("status") == ExperimentState.running:
+                status = get_experiment_status(config.storage_dir)
+                if status and status.status == ExperimentState.running:
                     import _thread  # noqa: PLC0415
 
                     _thread.interrupt_main()
@@ -178,6 +178,5 @@ def test_that_keyboard_interrupt_stops_optimization_with_a_graceful_shutdown(
         assert "KeyboardInterrupt" in out
         assert "The optimization will be stopped and the program will exit..." in out
 
-        status_path = ServerConfig.get_everserver_status_path(config.output_dir)
-        status = everserver_status(status_path)
-        assert status["status"] == ExperimentState.stopped
+        status = get_experiment_status(config.storage_dir)
+        assert status.status == ExperimentState.stopped
