@@ -137,3 +137,28 @@ def test_that_realization_memory_passes_through_create(
             runtime_plugins=runtime_plugins,
         )
     assert runmodel.queue_config.queue_options.realization_memory == 12 * 1024**3
+
+
+@pytest.mark.parametrize("queue_system", ["lsf", "local", "torque", "slurm"])
+def test_that_project_code_passes_through_create(
+    monkeypatch: pytest.MonkeyPatch, queue_system: str
+) -> None:
+    monkeypatch.setattr("ert.run_models.run_model.open_storage", Mock())
+    with ErtPluginContext() as runtime_plugins:
+        runmodel = EverestRunModel.create(
+            EverestConfig(
+                **(
+                    minimal_config
+                    | {
+                        "simulator": {
+                            "queue_system": {
+                                "name": queue_system,
+                                "project_code": "foobar",
+                            },
+                        }
+                    }
+                )
+            ),
+            runtime_plugins=runtime_plugins,
+        )
+    assert runmodel.queue_config.queue_options.project_code == "foobar"

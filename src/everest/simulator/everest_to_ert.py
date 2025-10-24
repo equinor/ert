@@ -123,6 +123,13 @@ def _extract_simulator(ever_config: EverestConfig, ert_config: dict[str, Any]) -
     ):
         ert_config[ErtConfigKeys.REALIZATION_MEMORY] = realization_memory
 
+    if ever_simulation.queue_system and (
+        project_code := ever_simulation.queue_system.project_code
+    ):
+        ert_config[ErtConfigKeys.QUEUE_OPTION] = [
+            [ever_simulation.queue_system.name, "PROJECT_CODE", project_code]
+        ]
+
 
 def _job_to_dict(job: dict[str, Any] | InstallJobConfig) -> dict[str, Any]:
     if isinstance(job, InstallJobConfig):
