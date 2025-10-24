@@ -544,21 +544,20 @@ def minimal_case(tmpdir):
         yield
 
 
-def test_shell_script_fmstep_availability(minimal_case):
+def test_shell_script_fmstep_availability():
     with ErtPluginContext() as ctx:
-        ert_config = ErtConfig.with_plugins(ctx).from_file("config.ert")
-    fm_shell_jobs = {}
-    for fm_step in ert_config.installed_forward_model_steps.values():
-        exe = fm_step.executable
-        if "shell_scripts" in exe:
-            fm_shell_jobs[fm_step.name.upper()] = Path(exe).resolve()
+        fm_shell_jobs = {}
+        for fm_step in ctx.installed_forward_model_steps.values():
+            exe = fm_step.executable
+            if "shell_scripts" in exe:
+                fm_shell_jobs[fm_step.name.upper()] = Path(exe).resolve()
 
-    wf_shell_jobs = {}
-    for wf_name, wf in ert_config.workflow_jobs.items():
-        if isinstance(wf, ExecutableWorkflow) and "shell_scripts" in wf.executable:
-            wf_shell_jobs[wf_name] = Path(wf.executable).resolve()
+        wf_shell_jobs = {}
+        for wf_name, wf in ctx.installed_workflow_jobs.items():
+            if isinstance(wf, ExecutableWorkflow) and "shell_scripts" in wf.executable:
+                wf_shell_jobs[wf_name] = Path(wf.executable).resolve()
 
-    assert fm_shell_jobs == wf_shell_jobs
+        assert fm_shell_jobs == wf_shell_jobs
 
 
 def test_shell_script_fmstep_names(minimal_case):
