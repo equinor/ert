@@ -21,7 +21,11 @@ import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import TypedDict
 
-from ert.config import ParameterCardinality, ParameterConfig, SummaryConfig
+from ert.config import (
+    ParameterCardinality,
+    ParameterConfig,
+    SummaryConfig,
+)
 from ert.config.response_config import InvalidResponseFile
 from ert.substitutions import substitute_runpath_name
 
@@ -833,6 +837,9 @@ class LocalEnsemble(BaseMode):
                 df = self._load_parameters_lazy(SCALAR_FILENAME).collect(
                     engine="streaming"
                 )
+
+                # Drop columns in old dataset if they are to be overwritten
+                # by columns in the new dataset
                 df = df.drop(
                     [c for c in dataset.columns if c != "realization"], strict=False
                 )
@@ -1159,24 +1166,17 @@ class LocalEnsemble(BaseMode):
         Only for Everest wrt objectives/constraints,
         disregards summary data and primary key values
         """
-        param_dfs = []
+        param_dfs: list[pl.DataFrame] = []
         for param_group in self.experiment.parameter_configuration:
-            params_pd = self.load_parameters(param_group)["values"].to_pandas()
-
-            assert isinstance(params_pd, pd.DataFrame)
-            params_pd = params_pd.reset_index()
-            param_df = pl.from_pandas(params_pd)
-
-            param_columns = [c for c in param_df.columns if c != "realizations"]
-            param_df = param_df.rename(
-                {
-                    **{
-                        c: param_group + "." + c.replace("\0", ".")
-                        for c in param_columns
-                    },
-                    "realizations": "realization",
-                }
-            )
+            params_pd = self.load_parameters(param_group)
+            if isinstance(params_pd, xr.Dataset):
+                param_df = params_pd["values"].to_pandas()
+                assert isinstance(param_df, pd.DataFrame)
+                param_df = param_df.reset_index()
+                param_df = pl.from_pandas(params_pd)
+            else:
+                param_df = params_pd
+            assert isinstance(param_df, pl.DataFrame)
             param_df = param_df.cast(
                 {
                     "realization": pl.UInt16,
@@ -1203,7 +1203,6 @@ class LocalEnsemble(BaseMode):
             ],
             how="horizontal",
         )
-
         responses_wide = responses["realization", "response_key", "values"].pivot(
             on="response_key", values="values"
         )

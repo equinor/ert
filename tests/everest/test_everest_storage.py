@@ -111,7 +111,7 @@ def test_everest_data_stored_in_ert_local_storage(
 
         local_storage_params = []
         for param_config in experiment.parameter_configuration.values():
-            local_storage_params += param_config.input_keys
+            local_storage_params += param_config.parameter_keys
 
         formatted_control_names = [
             name
