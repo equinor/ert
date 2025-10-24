@@ -97,6 +97,16 @@ def _extract_simulator(ever_config: EverestConfig, ert_config: dict[str, Any]) -
     if num_fm_cpu is not None:
         ert_config[ErtConfigKeys.NUM_CPU] = num_fm_cpu
 
+    if ever_simulation.queue_system and (
+        queue_system_name := ever_simulation.queue_system.name
+    ):
+        ert_config[ErtConfigKeys.QUEUE_SYSTEM] = queue_system_name
+
+    if ever_simulation.queue_system and (
+        max_running := ever_simulation.queue_system.max_running
+    ):
+        ert_config[ErtConfigKeys.MAX_RUNNING] = max_running
+
 
 def _extract_seed(ever_config: EverestConfig, ert_config: dict[str, Any]) -> None:
     random_seed = ever_config.environment.random_seed
