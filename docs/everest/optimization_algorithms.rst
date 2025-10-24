@@ -1,8 +1,8 @@
 .. _cha_optimization_algorithms:
 
-***************************************************
-Optimization algorithms for constrained experiments
-***************************************************
+***********************
+Optimization algorithms
+***********************
 
 Constrained optimization problems are characterized by imposed limitations on the weighted combinations of controls (linear input constraints) or on the outputs of the simulator (nonlinear output constraints). More advanced algorithms are required to solve such problems. The Dakota backend supports two algorithms for solving constrained optimization problems, accessible through the optimizers **opt++** and **conmin** respectively. Examples on the parameter specification can be found in The :ref:`cha_optimization_backends`.
 

@@ -1,8 +1,9 @@
-.. _cha_custom_workflow_jobs:
 
-*************************
+.. _cha_creating_custom_jobs:
+
+
 Custom workflow jobs
-*************************
+====================
 
 To use a custom workflow job in everest, the job needs to be added to the `install_workflow_jobs` section of the config file.
 
