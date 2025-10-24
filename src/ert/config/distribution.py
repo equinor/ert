@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import math
-import sys
 import warnings
 from typing import Annotated, Any, Literal, Self, TypeVar
 
@@ -136,15 +135,33 @@ class LogNormalSettings(TransSettingsValidation):
 
     @model_validator(mode="after")
     def valid_transformed(self) -> Self:
-        # Warn about potential overflow in transform's exp(x * self.std + self.mean).
-        # "x" is drawn from a standard normal distribution, 99.7% of values are within
-        # [-3, 3] stddev from the mean. I.e. 3*std + mean is a reasonable upper bound
-        # for the exponent for num realizations < 1000
-        if (3 * self.std + self.mean) > math.log(sys.float_info.max):
+        # If expected value exp(mu + 0.5 sigma^2) is too large, warn the user
+        # 100000 is chosen from input from expert when considering permeability
+        # If the expected value overflows, issue an error, as this is definitely wrong
+        try:
+            expected_value = math.exp(self.mean + 0.5 * self.std**2)
+        except OverflowError as e:
+            raise ConfigValidationError(
+                "Expectation value of the lognormal distribution is too large! "
+                "These are the specified parameters:\n\n"
+                f"mean (of log values): {self.mean}\n"
+                f"standard deviation (of log values): {self.std}\n\n"
+                "Remember that the input parameters for keyword "
+                "LOGNORMAL are the mean and standard deviation of the natural "
+                "logarithm of your parameter data.",
+            ) from e
+
+        if expected_value > 100000:
             ConfigWarning.warn(
-                f"LOGNORMAL distribution: Too large values for mean ({self.mean}) "
-                f"or standard deviation ({self.std}). Resulting values may overflow.",
-                "Ensure that the given values are log values.",
+                "Expectation value of the lognormal distribution is"
+                f" {expected_value:.2e}. "
+                "This is quite large and may be unintended. "
+                "These are the specified parameters:\n\n"
+                f"mean (of log values): {self.mean}\n"
+                f"standard deviation (of log values): {self.std}\n\n"
+                "Remember that the input parameters for keyword "
+                "LOGNORMAL are the mean and standard deviation of the natural "
+                "logarithm of your parameter data.",
             )
         return self
 

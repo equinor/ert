@@ -260,37 +260,34 @@ def test_gen_kw_distribution_errors(tmpdir, distribution, mean, std, error):
             GenKwConfig.from_config_list(config_list)
 
 
-@pytest.mark.parametrize(
-    "param_name, values, expected_warning",
-    [
-        (
-            "LOGNORMAL",
-            ["700", "300"],  # high mean, high stdev
-            "LOGNORMAL distribution: Too large values for mean.*",
-        ),
-        (
-            "LOGNORMAL",
-            ["800", "1"],  # high mean, low stdev
-            "LOGNORMAL distribution: Too large values for mean.*",
-        ),
-        (
-            "LOGNORMAL",
-            ["1", "300"],  # low mean, high stdev
-            "LOGNORMAL distribution: Too large values for mean.*",
-        ),
-    ],
-)
-def test_that_high_mean_stddev_lognormal_gives_warning(
-    param_name, values, expected_warning
-):
+def test_that_high_mean_stddev_lognormal_gives_warning():
+    mean_log = 4
+    stdev_log = 4
+    expected_warning = r"Expectation value of the lognormal distribution is.*"
     with pytest.warns(
         ConfigWarning,
         match=expected_warning,
     ) as _:
         GenKwConfig(
             name="KEY1",
-            distribution={"name": "lognormal", "mean": values[0], "std": values[1]},
+            distribution={"name": "lognormal", "mean": mean_log, "std": stdev_log},
         )
+
+
+def test_that_very_high_mean_stddev_lognormal_gives_error(tmpdir):
+    mean_log = 3000
+    stdev_log = 10
+    expected_error = r"Expectation value of the lognormal distribution is too large!.*"
+    config_list = [
+        "COEFFS",
+        ["coeff_priors", f"MYVARIABLE LOGNORMAL {mean_log} {stdev_log}"],
+        {},
+    ]
+    with pytest.raises(
+        ConfigValidationError,
+        match=expected_error,
+    ):
+        GenKwConfig.from_config_list(config_list)
 
 
 @pytest.mark.parametrize(
