@@ -30,12 +30,9 @@ from everest.config.server_config import ServerConfig
 from everest.config.simulator_config import SimulatorConfig
 from everest.detached import (
     PROXY,
-    ExperimentState,
-    everserver_status,
     server_is_running,
     start_server,
     stop_server,
-    update_everserver_status,
     wait_for_server,
     wait_for_server_to_stop,
 )
@@ -57,9 +54,6 @@ async def test_https_requests(change_to_tmpdir):
     # overwrite it
     everest_config.dump("config.yml")
 
-    status_path = ServerConfig.get_everserver_status_path(everest_config.output_dir)
-    expected_server_status = ExperimentState.never_run
-    assert expected_server_status == everserver_status(status_path)["status"]
     makedirs_if_needed(everest_config.output_dir, roll_if_exists=True)
     await start_server(everest_config, logging_level=logging.INFO)
 
@@ -67,12 +61,6 @@ async def test_https_requests(change_to_tmpdir):
         Path(ServerConfig.get_session_dir(everest_config.output_dir)), 240
     )
     wait_for_server(session, 240)
-    server_status = everserver_status(status_path)
-    assert server_status["status"] in {
-        ExperimentState.running,
-        ExperimentState.pending,
-    }
-
     url, cert, auth = ServerConfig.get_server_context_from_conn_info(session.conn_info)
     result = requests.get(url, verify=cert, auth=auth, proxies=PROXY)  # noqa: ASYNC210
     assert result.status_code == 200  # Request has succeeded
@@ -96,56 +84,7 @@ async def test_https_requests(change_to_tmpdir):
     server_context = ServerConfig.get_server_context_from_conn_info(session.conn_info)
     if stop_server(server_context):
         wait_for_server_to_stop(server_context, 240)
-        server_status = everserver_status(status_path)
-
-        # Possible the case completed while waiting for the server to stop
-        assert server_status["status"] in {
-            ExperimentState.stopped,
-            ExperimentState.completed,
-        }
         assert not server_is_running(*server_context)
-    else:
-        server_status = everserver_status(status_path)
-        assert ExperimentState.stopped == server_status["status"]
-
-
-def test_server_status(change_to_tmpdir):
-    config = EverestConfig.with_defaults()
-
-    everserver_status_path = ServerConfig.get_everserver_status_path(config.output_dir)
-    # Check status file does not exist before initial status update
-    assert not os.path.exists(everserver_status_path)
-    update_everserver_status(everserver_status_path, ExperimentState.pending)
-
-    # Check status file exists after initial status update
-    assert os.path.exists(everserver_status_path)
-
-    # Check we can read the server status from disk
-    status = everserver_status(everserver_status_path)
-    assert status["status"] == ExperimentState.pending
-    assert status["message"] is None
-
-    err_msg_1 = "Danger the universe is preparing for implosion!!!"
-    update_everserver_status(
-        everserver_status_path, ExperimentState.failed, message=err_msg_1
-    )
-    status = everserver_status(everserver_status_path)
-    assert status["status"] == ExperimentState.failed
-    assert status["message"] == err_msg_1
-
-    err_msg_2 = "Danger exotic matter detected!!!"
-    update_everserver_status(
-        everserver_status_path, ExperimentState.failed, message=err_msg_2
-    )
-    status = everserver_status(everserver_status_path)
-    assert status["status"] == ExperimentState.failed
-    assert status["message"] == f"{err_msg_1}\n{err_msg_2}"
-
-    update_everserver_status(everserver_status_path, ExperimentState.completed)
-    status = everserver_status(everserver_status_path)
-    assert status["status"] == ExperimentState.completed
-    assert status["message"] is not None
-    assert status["message"] == f"{err_msg_1}\n{err_msg_2}"
 
 
 @patch("everest.detached.server_is_running", return_value=False)

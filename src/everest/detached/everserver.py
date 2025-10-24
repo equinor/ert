@@ -4,7 +4,6 @@ import logging.config
 import os
 import pathlib
 import time
-import traceback
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any
@@ -16,13 +15,9 @@ from ert.plugins.plugin_manager import ErtPluginManager
 from ert.services import StorageService
 from ert.services._base_service import BaseServiceExit
 from ert.storage import ExperimentStatus
+from ert.storage.local_experiment import ExperimentState
 from ert.trace import tracer
 from everest.config import ServerConfig
-from everest.detached import (
-    ExperimentState,
-    everserver_status,
-    update_everserver_status,
-)
 from everest.strings import (
     DEFAULT_LOGGING_FORMAT,
     EVEREST,
@@ -142,8 +137,6 @@ def main() -> None:
 
     output_dir = options.output_dir
 
-    status_path = ServerConfig.get_everserver_status_path(output_dir)
-
     ctx = (
         TraceContextTextMapPropagator().extract(
             carrier={"traceparent": options.traceparent}
@@ -165,7 +158,6 @@ def main() -> None:
             )
 
             logging.getLogger(EVERSERVER).info("Everserver starting ...")
-            update_everserver_status(status_path, ExperimentState.pending)
             logger.info(version_info())
             logger.info(f"Output directory: {output_dir}")
             # Starting the server
@@ -175,8 +167,7 @@ def main() -> None:
                 timeout=240, project=server_path, logging_config=log_file.name
             ) as server:
                 server.fetch_conn_info()
-                with StorageService.session(project=server_path) as client:
-                    update_everserver_status(status_path, ExperimentState.running)
+                with StorageService.session(project=Path(server_path)) as client:
                     done = False
                     while not done:
                         response = client.get(
@@ -188,33 +179,10 @@ def main() -> None:
                             ExperimentState.running,
                         }
                         time.sleep(0.5)
-                    if status.status == ExperimentState.completed:
-                        update_everserver_status(
-                            status_path,
-                            ExperimentState.completed,
-                            message=status.message,
-                        )
-                    elif status.status == ExperimentState.stopped:
-                        update_everserver_status(
-                            status_path,
-                            ExperimentState.stopped,
-                            message=status.message,
-                        )
-                    elif status.status == ExperimentState.failed:
-                        update_everserver_status(
-                            status_path, ExperimentState.failed, message=status.message
-                        )
         except BaseServiceExit:
             # Server exit, happens on normal shutdown and keyboard interrupt
-            server_status = everserver_status(status_path)
-            if server_status["status"] == ExperimentState.running:
-                update_everserver_status(status_path, ExperimentState.stopped)
+            logging.getLogger(EVERSERVER).info("Everserver stopped by user")
         except Exception as e:
-            update_everserver_status(
-                status_path,
-                ExperimentState.failed,
-                message=traceback.format_exc(),
-            )
             logging.getLogger(EVERSERVER).exception(e)
 
 

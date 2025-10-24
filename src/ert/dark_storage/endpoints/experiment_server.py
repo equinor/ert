@@ -297,6 +297,7 @@ class ExperimentRunner:
 
     async def run(self) -> None:
         status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
+        run_model: EverestRunModel | None = None
         try:
             with ErtPluginContext() as runtime_plugins:
                 run_model = EverestRunModel.create(
@@ -356,6 +357,9 @@ class ExperimentRunner:
                 status=ExperimentState.failed,
             )
         finally:
+            if run_model and run_model._experiment:
+                run_model._experiment.status = shared_data.status
+
             logging.getLogger(EXPERIMENT_SERVER).info(
                 f"ExperimentRunner done. Items left in queue: {status_queue.qsize()}"
             )

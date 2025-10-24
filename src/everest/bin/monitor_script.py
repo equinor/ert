@@ -7,8 +7,8 @@ from functools import partial
 from pathlib import Path
 
 from ert.services import StorageService
+from ert.storage import ExperimentState
 from everest.config import EverestConfig, ServerConfig
-from everest.detached import ExperimentState
 from everest.everest_storage import EverestStorage
 
 from .utils import (

@@ -8,8 +8,8 @@ from ert.storage import open_storage
 from ert.storage.local_experiment import ExperimentState, ExperimentStatus
 from everest import util
 from everest.bin.utils import get_experiment_status, show_scaled_controls_warning
-from everest.config import EverestConfig, ServerConfig
-from everest.strings import EVEREST, SERVER_STATUS
+from everest.config import EverestConfig
+from everest.strings import EVEREST
 from tests.everest.utils import (
     relpath,
 )
@@ -88,18 +88,6 @@ def test_makedirs_roll_existing(change_to_tmpdir):
     util.makedirs_if_needed(output_dir, True)
     assert os.path.isdir(output_dir)
     assert len(os.listdir(cwd)) == 3
-
-
-def test_get_everserver_status_path():
-    config = EverestConfig.with_defaults()
-    cwd = os.getcwd()
-    session_path = os.path.join(
-        cwd, "everest_output", "detached_node_output", ".session"
-    )
-    path = ServerConfig.get_everserver_status_path(config.output_dir)
-    expected_path = os.path.join(session_path, SERVER_STATUS)
-
-    assert path == expected_path
 
 
 @pytest.mark.parametrize(

@@ -16,11 +16,11 @@ from ert.dark_storage.app import app
 from ert.ensemble_evaluator import EndEvent
 from ert.scheduler.event import FinishedEvent
 from ert.services import StorageService
+from ert.storage import ExperimentState
+from everest.bin.utils import get_experiment_status
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
-    ExperimentState,
     everserver,
-    everserver_status,
     start_experiment,
     start_server,
     wait_for_server,
@@ -99,44 +99,10 @@ def mock_server(monkeypatch):
     "everest.detached.everserver._configure_loggers",
     side_effect=configure_everserver_logger,
 )
-def test_configure_logger_failure(_, change_to_tmpdir):
-    everserver.main()
-    status = everserver_status(
-        ServerConfig.get_everserver_status_path("everest_output")
-    )
-
-    assert status["status"] == ExperimentState.failed
-    assert "Exception: Configuring logger failed" in status["message"]
-
-
-@pytest.mark.integration_test
-@patch("sys.argv", ["name", "--output-dir", "everest_output"])
-@patch("everest.detached.everserver._configure_loggers")
-def test_status_running_complete(_, change_to_tmpdir, mock_server):
-    mock_server(ExperimentState.completed, "Optimization completed.")
-    everserver.main()
-
-    status = everserver_status(
-        ServerConfig.get_everserver_status_path("everest_output")
-    )
-
-    assert status["status"] == ExperimentState.completed
-    assert status["message"] == "Optimization completed."
-
-
-@pytest.mark.integration_test
-@patch("sys.argv", ["name", "--output-dir", "everest_output"])
-@patch("everest.detached.everserver._configure_loggers")
-def test_status_failed_job(_, change_to_tmpdir, mock_server):
-    mock_server(ExperimentState.failed, OPT_FAILURE_REALIZATIONS)
-    everserver.main()
-
-    status = everserver_status(
-        ServerConfig.get_everserver_status_path("everest_output")
-    )
-
-    # The server should fail and store a user-friendly message.
-    assert status["status"] == ExperimentState.failed
+def test_configure_logger_failure(_, change_to_tmpdir, caplog):
+    with caplog.at_level(logging.ERROR):
+        everserver.main()
+    assert "Configuring logger failed" in caplog.records[0].getMessage()
 
 
 @pytest.mark.skip_mac_ci
@@ -149,12 +115,11 @@ async def test_status_exception(_, change_to_tmpdir, min_config):
     config = EverestConfig(**min_config)
 
     await wait_for_server_to_complete(config)
-    status = everserver_status(
-        ServerConfig.get_everserver_status_path("everest_output")
-    )
 
-    assert status["status"] == ExperimentState.failed
-    assert "Optimization failed:" in status["message"]
+    status = get_experiment_status(config.storage_dir)
+
+    assert status.status == ExperimentState.failed
+    assert "Optimization failed: all realizations failed" in status.message
 
 
 @pytest.mark.skip_mac_ci
@@ -174,13 +139,11 @@ async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
 
     await wait_for_server_to_complete(config)
 
-    status = everserver_status(
-        ServerConfig.get_everserver_status_path(config.output_dir)
-    )
+    status = get_experiment_status(config.storage_dir)
 
     # The server should complete without error.
-    assert status["status"] == ExperimentState.completed
-    assert status["message"] == "Maximum number of batches reached."
+    assert status.status == ExperimentState.completed
+    assert status.message == "Maximum number of batches reached."
     storage = EverestStorage(Path(config.optimization_output_dir))
     storage.read_from_output_dir()
 
@@ -210,13 +173,11 @@ async def test_status_too_few_realizations_succeeded(copy_math_func_test_data_to
 
     await wait_for_server_to_complete(config)
 
-    status = everserver_status(
-        ServerConfig.get_everserver_status_path(config.output_dir)
-    )
+    status = get_experiment_status(config.storage_dir)
 
     # The server should complete without error.
-    assert status["status"] == ExperimentState.failed
-    assert OPT_FAILURE_REALIZATIONS in status["message"]
+    assert status.status == ExperimentState.failed
+    assert OPT_FAILURE_REALIZATIONS in status.message
 
 
 @pytest.mark.skip_mac_ci
@@ -238,13 +199,11 @@ async def test_status_all_realizations_failed(copy_math_func_test_data_to_tmp):
 
     await wait_for_server_to_complete(config)
 
-    status = everserver_status(
-        ServerConfig.get_everserver_status_path(config.output_dir)
-    )
+    status = get_experiment_status(config.storage_dir)
 
     # The server should complete without error.
-    assert status["status"] == ExperimentState.failed
-    assert OPT_FAILURE_ALL_REALIZATIONS in status["message"]
+    assert status.status == ExperimentState.failed
+    assert OPT_FAILURE_ALL_REALIZATIONS in status.message
 
 
 @pytest.mark.skip_mac_ci
@@ -264,12 +223,10 @@ async def test_status_contains_max_runtime_failure(change_to_tmpdir, min_config)
 
     await wait_for_server_to_complete(config)
 
-    status = everserver_status(
-        ServerConfig.get_everserver_status_path("everest_output")
-    )
+    status = get_experiment_status(config.storage_dir)
 
-    assert status["status"] == ExperimentState.failed
-    assert "The run is cancelled due to reaching MAX_RUNTIME" in status["message"]
+    assert status.status == ExperimentState.failed
+    assert "The run is cancelled due to reaching MAX_RUNTIME" in status.message
 
 
 def test_websocket_no_authentication(monkeypatch, setup_client):

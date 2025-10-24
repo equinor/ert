@@ -1,7 +1,5 @@
 import asyncio
-import json
 import logging
-import os
 import re
 import ssl
 import time
@@ -21,7 +19,6 @@ from ert.run_models.event import EverestBatchResultEvent, status_event_from_json
 from ert.scheduler import create_driver
 from ert.scheduler.driver import Driver, FailedSubmit
 from ert.scheduler.event import StartedEvent
-from ert.storage import ExperimentState
 from ert.trace import get_traceparent
 from everest.config import EverestConfig, ServerConfig
 from everest.strings import (
@@ -261,40 +258,3 @@ def start_monitor(
 
     except Exception:
         logger.exception(traceback.format_exc())
-
-
-def update_everserver_status(
-    everserver_status_path: str, status: ExperimentState, message: str | None = None
-) -> None:
-    """Update the everest server status with new status information"""
-    new_status = {"status": status, "message": message}
-    path = everserver_status_path
-    if not os.path.exists(os.path.dirname(path)):
-        os.makedirs(os.path.dirname(path))
-        Path(path).write_text(json.dumps(new_status), encoding="utf-8")
-    elif os.path.exists(path):
-        server_status = everserver_status(path)
-        if server_status["message"] is not None:
-            if message is not None:
-                new_status["message"] = "{}\n{}".format(
-                    server_status["message"], message
-                )
-            else:
-                new_status["message"] = server_status["message"]
-        Path(path).write_text(json.dumps(new_status), encoding="utf-8")
-
-
-def everserver_status(everserver_status_path: str) -> dict[str, Any]:
-    """Returns a dictionary representing the everest server status. If the
-    status file is not found we assume the server has never ran before, and will
-    return a status of ServerStatus.never_run
-
-    Example: {
-                'status': ServerStatus.completed
-                'message': None
-             }
-    """
-    if os.path.exists(everserver_status_path):
-        return json.loads(Path(everserver_status_path).read_text(encoding="utf-8"))
-    else:
-        return {"status": ExperimentState.never_run, "message": None}
