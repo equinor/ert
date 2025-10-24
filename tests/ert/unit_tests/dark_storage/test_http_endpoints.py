@@ -1,10 +1,13 @@
 import io
 import json
+import re
 
 import pandas as pd
 import pytest
 from numpy.testing import assert_array_equal
 from requests import Response
+
+from ert.dark_storage.common import get_storage_api_version
 
 
 @pytest.mark.integration_test
@@ -15,6 +18,20 @@ def test_get_experiment(poly_example_tmp_dir, dark_storage_client):
     assert "ensemble_ids" in answer_json[0]
     assert len(answer_json[0]["ensemble_ids"]) == 2
     assert "name" in answer_json[0]
+
+
+@pytest.mark.integration_test
+def test_get_storage_api_version(poly_example_tmp_dir, dark_storage_client):
+    resp: Response = dark_storage_client.get("/version")
+    answer_json = resp.json()
+
+    assert answer_json == get_storage_api_version()
+
+    version_pattern = r"^\d+\.\d+$"
+
+    assert re.match(version_pattern, answer_json), (
+        f"Version format is invalid: {answer_json}"
+    )
 
 
 @pytest.mark.integration_test
