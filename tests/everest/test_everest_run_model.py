@@ -89,3 +89,27 @@ def test_that_max_running_passes_through_create(
             runtime_plugins=runtime_plugins,
         )
     assert runmodel.queue_config.queue_options.max_running == 4
+
+
+def test_that_submit_sleep_passes_through_create(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("ert.run_models.run_model.open_storage", Mock())
+    with ErtPluginContext() as runtime_plugins:
+        runmodel = EverestRunModel.create(
+            EverestConfig(
+                **(
+                    minimal_config
+                    | {
+                        "simulator": {
+                            "queue_system": {
+                                "name": "local",
+                                "submit_sleep": 8,
+                            },
+                        }
+                    }
+                )
+            ),
+            runtime_plugins=runtime_plugins,
+        )
+    assert runmodel.queue_config.queue_options.submit_sleep == 8
