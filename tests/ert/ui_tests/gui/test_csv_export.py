@@ -68,14 +68,15 @@ def verify_exported_content(file_name, gui, ensemble_select):
     for name in ensemble_names:
         experiment = gui.notifier.storage.get_experiment_by_name("es_mda")
         ensemble = experiment.get_ensemble_by_name(name)
-        gen_kw_data = ensemble.load_scalars().to_pandas()
+        gen_kw_data = ensemble.load_scalars()
 
         facade = LibresFacade.from_config_file("poly.ert")
         misfit_data = facade.load_all_misfit_data(ensemble)
 
         for i in range(ensemble.ensemble_size):
+            row = gen_kw_data.row(i, named=True)
             assert (
-                f",{name},{gen_kw_data.iloc[i]['COEFFS:a']:.6f},{gen_kw_data.iloc[i]['COEFFS:b']:.6f},{gen_kw_data.iloc[i]['COEFFS:c']:.6f},{misfit_data.iloc[i]['MISFIT:POLY_OBS']:.6f},{misfit_data.iloc[i]['MISFIT:TOTAL']:.6f}"
+                f",{name},{row['COEFFS:a']:.6f},{row['COEFFS:b']:.6f},{row['COEFFS:c']:.6f},{misfit_data.iloc[i]['MISFIT:POLY_OBS']:.6f},{misfit_data.iloc[i]['MISFIT:TOTAL']:.6f}"
                 in file_content
             )
 
