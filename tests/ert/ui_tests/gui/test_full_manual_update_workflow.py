@@ -2,6 +2,7 @@ import contextlib
 import shutil
 
 import numpy as np
+import polars as pl
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QComboBox, QToolButton, QTreeView, QWidget
 
@@ -90,19 +91,18 @@ def test_manual_analysis_workflow(ensemble_experiment_has_run, qtbot):
         10,
     )
 
-    df_prior = ensemble_prior.load_scalars().to_pandas()
+    df_prior: pl.DataFrame = ensemble_prior.load_scalars()
 
     exp_posterior = storage.get_experiment_by_name("Manual update of iter-0")
     ensemble_posterior = exp_posterior.get_ensemble_by_name("iter-0_1")
-    df_posterior = ensemble_posterior.load_scalars().to_pandas()
+    df_posterior: pl.DataFrame = ensemble_posterior.load_scalars()
 
     # Making sure measured data works with failed realizations
     MeasuredData(experiment.get_ensemble_by_name("iter-0"), ["POLY_OBS"])
 
+    cov_posterior = np.cov(df_posterior.to_numpy().T)
+    cov_prior = np.cov(df_prior.to_numpy().T)
+
     # We expect that ERT's update step lowers the
     # generalized variance for the parameters.
-    assert (
-        0
-        < np.linalg.det(df_posterior.cov().to_numpy())
-        < np.linalg.det(df_prior.cov().to_numpy())
-    )
+    assert 0 < np.linalg.det(cov_posterior) < np.linalg.det(cov_prior)
