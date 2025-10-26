@@ -1103,68 +1103,43 @@ def test_load_gen_kw_not_sorted(storage, tmpdir, snapshot):
         )
 
         sample_prior(ensemble, range(ensemble_size), random_seed=1234)
-        data = ensemble.load_scalars().to_pandas().set_index("realization")
-        data.columns.name = None
-        data.index.name = "Realization"
-        data = data.sort_index(axis=1)
-        snapshot.assert_match(data.round(12).to_csv(), "gen_kw_unsorted")
+        data = ensemble.load_scalars()
+        snapshot.assert_match(data.write_csv(float_precision=12), "gen_kw_unsorted")
 
 
 def test_gen_kw_collector(snake_oil_default_storage, snapshot):
-    data = snake_oil_default_storage.load_scalars().to_pandas().set_index("realization")
-    data.columns.name = None
-    data.index.name = "Realization"
-    data = data.sort_index(axis=1)
-    snapshot.assert_match(data.round(6).to_csv(), "gen_kw_collector.csv")
+    data: pl.DataFrame = snake_oil_default_storage.load_scalars()
+    snapshot.assert_match(data.write_csv(float_precision=6), "gen_kw_collector.csv")
 
     with pytest.raises(KeyError):
         # realization 60:
-        _ = data.loc[60]
+        _ = data.to_dict()[60]
 
-    data = (
-        snake_oil_default_storage.load_scalars(
-            "SNAKE_OIL_PARAM",
-        )
-        .to_pandas()
-        .set_index("realization")
+    data: pl.DataFrame = snake_oil_default_storage.load_scalars(
+        "SNAKE_OIL_PARAM",
     )
-    data.columns.name = None
-    data.index.name = "Realization"
-    data = data.sort_index(axis=1)
-    data = data[["SNAKE_OIL_PARAM:OP1_PERSISTENCE", "SNAKE_OIL_PARAM:OP1_OFFSET"]]
-    snapshot.assert_match(data.round(6).to_csv(), "gen_kw_collector_2.csv")
+    data = data[
+        ["realization", "SNAKE_OIL_PARAM:OP1_PERSISTENCE", "SNAKE_OIL_PARAM:OP1_OFFSET"]
+    ]
+    snapshot.assert_match(data.write_csv(float_precision=6), "gen_kw_collector_2.csv")
 
     with pytest.raises(KeyError):
-        _ = data["SNAKE_OIL_PARAM:OP1_DIVERGENCE_SCALE"]
+        _ = data.to_dict()["SNAKE_OIL_PARAM:OP1_DIVERGENCE_SCALE"]
 
     realization_index = 3
-    data = (
-        snake_oil_default_storage.load_scalars(
-            "SNAKE_OIL_PARAM",
-            realizations=[realization_index],
-        )
-        .to_pandas()
-        .set_index("realization")
+    data: pl.DataFrame = snake_oil_default_storage.load_scalars(
+        "SNAKE_OIL_PARAM",
+        realizations=[realization_index],
     )
-    data.columns.name = None
-    data.index.name = "Realization"
-    data = data.sort_index(axis=1)
-    data = data["SNAKE_OIL_PARAM:OP1_PERSISTENCE"]
-    snapshot.assert_match(data.round(6).to_csv(), "gen_kw_collector_3.csv")
+    data = data.select("realization", "SNAKE_OIL_PARAM:OP1_PERSISTENCE")
+    snapshot.assert_match(data.write_csv(float_precision=6), "gen_kw_collector_3.csv")
 
     non_existing_realization_index = 150
     with pytest.raises((IndexError, KeyError)):
-        data = (
-            snake_oil_default_storage.load_scalars(
-                "SNAKE_OIL_PARAM",
-                realizations=[non_existing_realization_index],
-            )
-            .to_pandas()
-            .set_index("realization")
+        data: pl.DataFrame = snake_oil_default_storage.load_scalars(
+            "SNAKE_OIL_PARAM",
+            realizations=[non_existing_realization_index],
         )
-        data.columns.name = None
-        data.index.name = "Realization"
-        data = data.sort_index(axis=1)
         data = data["SNAKE_OIL_PARAM:OP1_PERSISTENCE"]
 
 
