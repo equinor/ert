@@ -137,7 +137,6 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._ensemble_selector = EnsembleSelector(notifier)
         self._previous_ensemble_realizations_validator = EnsembleRealizationsArgument(
             lambda: self._ensemble_selector.selected_ensemble,
-            max_value=len(active_realizations),
             required_realization_storage_states=[
                 RealizationStorageState.RESPONSES_LOADED
             ],

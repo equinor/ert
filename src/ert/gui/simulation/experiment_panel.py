@@ -158,7 +158,6 @@ class ExperimentPanel(QWidget):
             True,
         )
 
-        ensemble_size = config.ensemble_size
         active_realizations = config.active_realizations
         config_num_realization = config.runpath_config.num_realizations
         self.addExperimentConfigPanel(
@@ -173,7 +172,7 @@ class ExperimentPanel(QWidget):
             True,
         )
         self.addExperimentConfigPanel(
-            EvaluateEnsemblePanel(ensemble_size, run_path, notifier),
+            EvaluateEnsemblePanel(run_path, notifier),
             True,
         )
 
@@ -215,7 +214,7 @@ class ExperimentPanel(QWidget):
             experiment_type_valid,
         )
         self.addExperimentConfigPanel(
-            ManualUpdatePanel(ensemble_size, run_path, notifier, analysis_config),
+            ManualUpdatePanel(run_path, notifier, analysis_config),
             experiment_type_valid,
         )
 

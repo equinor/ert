@@ -17,11 +17,13 @@ class EnsembleRealizationsArgument(RangeStringArgument):
     def __init__(
         self,
         ensemble: Callable[[], Union["Ensemble", None]],
-        max_value: int | None,
         required_realization_storage_states: Iterable["RealizationStorageState"],
         **kwargs: bool,
     ) -> None:
-        super().__init__(max_value, **kwargs)
+        ens = ensemble()
+        size = ens.ensemble_size if ens is not None else None
+        super().__init__(size, **kwargs)
+
         self.__ensemble_getter = ensemble
         self._required_realization_storage_states: Iterable[RealizationStorageState] = (
             required_realization_storage_states
