@@ -1,9 +1,9 @@
-from enum import Enum
+from enum import StrEnum, auto
 
 
-class RealizationStorageState(Enum):
-    UNDEFINED = 1
-    PARAMETERS_LOADED = 2
-    RESPONSES_LOADED = 4
-    FAILURE_IN_CURRENT = 8
-    FAILURE_IN_PARENT = 16
+class RealizationStorageState(StrEnum):
+    UNDEFINED = auto()
+    PARAMETERS_LOADED = auto()
+    RESPONSES_LOADED = auto()
+    FAILURE_IN_CURRENT = auto()
+    FAILURE_IN_PARENT = auto()
