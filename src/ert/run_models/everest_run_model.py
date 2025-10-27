@@ -323,6 +323,14 @@ class EverestRunModel(RunModel):
                 EverestConstraintsConfig(
                     keys=constraint_names,
                     input_files=constraint_names,
+                    scales=[c.scale for c in everest_config.output_constraints],
+                    targets=[c.target for c in everest_config.output_constraints],
+                    upper_bounds=[
+                        c.upper_bound for c in everest_config.output_constraints
+                    ],
+                    lower_bounds=[
+                        c.lower_bound for c in everest_config.output_constraints
+                    ],
                 )
             )
 
