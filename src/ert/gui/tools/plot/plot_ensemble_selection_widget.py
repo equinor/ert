@@ -39,22 +39,24 @@ class EnsembleSelectionWidget(QWidget):
         self, ensembles: list[EnsembleObject], number_of_plot_colors: int
     ) -> None:
         QWidget.__init__(self)
-        self.__dndlist = EnsembleSelectListWidget(ensembles, number_of_plot_colors)
+        self._selected_ensembles = EnsembleSelectListWidget(
+            ensembles, number_of_plot_colors
+        )
 
-        self.__ensemble_layout = QVBoxLayout()
-        self.__ensemble_layout.setSpacing(0)
-        self.__ensemble_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.__ensemble_layout.addWidget(self.__dndlist)
-        self.setLayout(self.__ensemble_layout)
-        self.__dndlist.ensembleSelectionListChanged.connect(
+        self._ensemble_layout = QVBoxLayout()
+        self._ensemble_layout.setSpacing(0)
+        self._ensemble_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self._ensemble_layout.addWidget(self._selected_ensembles)
+        self.setLayout(self._ensemble_layout)
+        self._selected_ensembles.ensembleSelectionListChanged.connect(
             self.ensembleSelectionChanged.emit
         )
 
     def get_selected_ensembles(self) -> list[EnsembleObject]:
-        return self.__dndlist.get_checked_ensembles()
+        return self._selected_ensembles.get_checked_ensembles()
 
     def get_selected_ensembles_color_indexes(self) -> list[int]:
-        return self.__dndlist.get_checked_color_indexes()
+        return self._selected_ensembles.get_checked_color_indexes()
 
 
 class EnsembleSelectListWidgetItemDataRole(IntEnum):
