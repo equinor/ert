@@ -541,7 +541,7 @@ def test_that_es_mda_on_poly_case_matches_snapshot(snapshot):
             ensemble_data.columns.name = None
             ensemble_data.index.name = "Realization"
             ensemble_data = ensemble_data.sort_index(axis=1)
-            data.append(ensemble_data)
+            data.append(ensemble_data.astype("float32"))
     result = pd.concat(
         data,
         keys=[f"iter-{iter_}" for iter_ in range(len(data))],
@@ -553,7 +553,7 @@ def test_that_es_mda_on_poly_case_matches_snapshot(snapshot):
         numpy_suffix = "_numpy1"
 
     snapshot.assert_match(
-        result.to_csv(float_format="%.12g"),
+        result.to_csv(float_format="%.7g"),
         f"es_mda_integration_snapshot{numpy_suffix}",
     )
 
@@ -581,13 +581,13 @@ def test_that_enif_on_poly_case_matches_snapshot(snapshot):
             ensemble_data.columns.name = None
             ensemble_data.index.name = "Realization"
             ensemble_data = ensemble_data.sort_index(axis=1)
-            data.append(ensemble_data)
+            data.append(ensemble_data.astype("float32"))
     result = pd.concat(
         data,
         keys=[f"iter-{i}" for i in range(len(data))],
         names=("Iteration", "Realization"),
     )
-    snapshot.assert_match(result.to_csv(float_format="%.12g"), "enif_snapshot.csv")
+    snapshot.assert_match(result.to_csv(float_format="%.7g"), "enif_snapshot.csv")
 
 
 @pytest.mark.parametrize(

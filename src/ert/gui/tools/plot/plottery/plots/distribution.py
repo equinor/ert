@@ -93,7 +93,7 @@ def _plotDistribution(
     index: int,
     previous_data: pd.DataFrame | None,
 ) -> None:
-    data = pd.Series(dtype="float64") if data.empty else data[0]
+    data = pd.Series(dtype="float32") if data.empty else data[0]
 
     axes.yaxis.set_major_formatter(ConditionalAxisFormatter())
     axes.set_xlabel(plot_config.xLabel())  # type: ignore
