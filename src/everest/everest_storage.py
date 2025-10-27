@@ -12,7 +12,7 @@ import numpy as np
 import polars as pl
 from ropt.results import FunctionResults, GradientResults, Results
 
-from everest.config.objective_function_config import ObjectiveFunctionConfig
+from ert.config import EverestObjectivesConfig
 from everest.config.output_constraint_config import OutputConstraintConfig
 from everest.strings import EVEREST
 
@@ -531,7 +531,7 @@ class EverestStorage:
     def init(
         self,
         formatted_control_names: list[str],
-        objective_functions: list[ObjectiveFunctionConfig],
+        objective_functions: EverestObjectivesConfig,
         output_constraints: list[OutputConstraintConfig] | None,
         realizations: list[int],
     ) -> None:
@@ -544,18 +544,21 @@ class EverestStorage:
         # TODO: The weight and normalization keys are only used by the everest api,
         # with everviz. They should be removed in the long run.
         weights = np.fromiter(
-            (1.0 if obj.weight is None else obj.weight for obj in objective_functions),
+            (
+                1.0 if weight is None else weight
+                for weight in objective_functions.weights
+            ),
             dtype=np.float64,
         )
 
         objective_functions_dataframe = pl.DataFrame(
             {
-                "objective_name": [objective.name for objective in objective_functions],
+                "objective_name": objective_functions.keys,
                 "weight": pl.Series(weights / sum(weights), dtype=pl.Float64),
                 "scale": pl.Series(
                     [
-                        1.0 if obj.scale is None else obj.scale
-                        for obj in objective_functions
+                        1.0 if scale is None else scale
+                        for scale in objective_functions.scales
                     ],
                     dtype=pl.Float64,
                 ),

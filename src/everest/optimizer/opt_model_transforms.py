@@ -11,11 +11,11 @@ from ropt.transforms.base import (
     VariableTransform,
 )
 
+from ert.config import EverestObjectivesConfig
 from everest.config import (
     ControlConfig,
     InputConstraintConfig,
     ModelConfig,
-    ObjectiveFunctionConfig,
     OutputConstraintConfig,
 )
 from everest.config.utils import FlattenedControls
@@ -430,7 +430,7 @@ class ConstraintScaler(NonLinearConstraintTransform):
 
 def get_optimization_domain_transforms(
     controls: list[ControlConfig],
-    objectives: list[ObjectiveFunctionConfig],
+    objectives: EverestObjectivesConfig,
     input_constraints: list[InputConstraintConfig] | None,
     output_constraints: list[OutputConstraintConfig] | None,
     model: ModelConfig,
@@ -461,14 +461,10 @@ def get_optimization_domain_transforms(
 
     objective_scaler = ObjectiveScaler(
         auto_scale=auto_scale,
-        scales=[
-            1.0 if objective.scale is None else objective.scale
-            for objective in objectives
-        ],
+        scales=[1.0 if scale is None else scale for scale in objectives.scales],
         realization_weights=realization_weights,
         objective_weights=[
-            1.0 if objective.weight is None else objective.weight
-            for objective in objectives
+            1.0 if weight is None else weight for weight in objectives.weights
         ],
     )
 
