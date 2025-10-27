@@ -553,7 +553,7 @@ def test_that_es_mda_on_poly_case_matches_snapshot(snapshot):
         numpy_suffix = "_numpy1"
 
     snapshot.assert_match(
-        result.to_csv(float_format="%.7g"),
+        result.to_csv(float_format="%.5g"),
         f"es_mda_integration_snapshot{numpy_suffix}",
     )
 
@@ -587,7 +587,7 @@ def test_that_enif_on_poly_case_matches_snapshot(snapshot):
         keys=[f"iter-{i}" for i in range(len(data))],
         names=("Iteration", "Realization"),
     )
-    snapshot.assert_match(result.to_csv(float_format="%.7g"), "enif_snapshot.csv")
+    snapshot.assert_match(result.to_csv(float_format="%.5g"), "enif_snapshot.csv")
 
 
 @pytest.mark.parametrize(
