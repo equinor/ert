@@ -90,7 +90,8 @@ Command Line Interface
 ``everest export``
 ==================
 
-The ``everest export`` command has been removed. All data is now always exported to the optimization output directory.
+The ``everest export`` command has been removed. All data is now always exported
+to the optimization output directory.
 
 ================
 ``everest gui``
