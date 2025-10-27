@@ -1,4 +1,5 @@
 import logging
+import shutil
 
 import hypothesis.strategies as st
 import pytest
@@ -483,3 +484,56 @@ def test_that_site_queue_options_are_ignored_with_differing_user_queue_system_ar
     ).from_file_contents("NUM_REALIZATIONS 1\nQUEUE_SYSTEM LOCAL\n")
 
     assert config.queue_config.queue_system == QueueSystem.LOCAL
+
+
+def test_that_job_script_precedence_is_user_then_site_then_defaults(caplog):
+    config_dict = ErtConfig._config_dict_from_contents(
+        """
+        NUM_REALIZATIONS 1
+        QUEUE_SYSTEM LOCAL
+        QUEUE_OPTION LOCAL JOB_SCRIPT usr_dispatch3.py
+        """,
+        "config.ert",
+    )
+
+    queue_config = QueueConfig.from_dict(
+        config_dict,
+        site_queue_options=LocalQueueOptions(job_script="site_job_script.sh"),
+    )
+
+    assert queue_config.queue_options.job_script == "usr_dispatch3.py"
+
+
+def test_that_usr_none_job_script_defaults_to_site(caplog):
+    config_dict = ErtConfig._config_dict_from_contents(
+        """
+        NUM_REALIZATIONS 1
+        QUEUE_SYSTEM LOCAL
+        """,
+        "config.ert",
+    )
+
+    queue_config = QueueConfig.from_dict(
+        config_dict,
+        site_queue_options=LocalQueueOptions(job_script="site_job_script.sh"),
+    )
+
+    assert queue_config.queue_options.job_script == "site_job_script.sh"
+
+
+def test_that_usr_none_site_none_job_script_defaults_to_fmdispatch(caplog):
+    config_dict = ErtConfig._config_dict_from_contents(
+        """
+        NUM_REALIZATIONS 1
+        QUEUE_SYSTEM LOCAL
+        """,
+        "config.ert",
+    )
+
+    queue_config = QueueConfig.from_dict(
+        config_dict,
+        site_queue_options=LocalQueueOptions(),
+    )
+
+    expected_default_job_script = shutil.which("fm_dispatch.py") or "fm_dispatch.py"
+    assert queue_config.queue_options.job_script == expected_default_job_script
