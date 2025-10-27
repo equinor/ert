@@ -11,14 +11,12 @@ from typing import (
     Any,
     Literal,
     TypeAlias,
-    cast,
     overload,
 )
 
 import pydantic
 from pydantic import Field, TypeAdapter, field_validator
 from pydantic.dataclasses import dataclass
-from pydantic_core.core_schema import ValidationInfo
 
 from ert.base_model_context import BaseModelWithContextSupport
 
@@ -85,22 +83,28 @@ class QueueOptions(
     project_code: str | None = None
     activate_script: str | None = Field(default=None, validate_default=True)
 
-    @field_validator("activate_script", mode="before")
-    @classmethod
-    def inject_site_config_script(cls, v: str, info: ValidationInfo) -> str:
-        # User value gets highest priority
-        if isinstance(v, str):
-            return v
-        # Use from plugin system if user has not specified
-        plugin_script = None
-        if info.context:
-            context = cast("ErtRuntimePlugins", info.context)
-            plugin_script = (
-                context.queue_options.activate_script
-                if context.queue_options is not None
-                else None
-            )
-        return plugin_script or activate_script()  # Return default value
+    def apply_context(
+        self,
+        site_runtime_plugins: ErtRuntimePlugins,
+        user_runtime_plugins: ErtRuntimePlugins | None = None,
+    ) -> QueueOptions:
+        if self.activate_script is None:
+            return self.model_copy()
+
+        cpy = self.model_copy()
+
+        user_qo = user_runtime_plugins.queue_options if user_runtime_plugins else None
+        site_qo = site_runtime_plugins.queue_options
+
+        match (user_qo, site_qo):
+            case (uqo, _) if uqo and uqo.activate_script:
+                cpy.activate_script = uqo.activate_script
+            case (_, sqo) if sqo and sqo.activate_script:
+                cpy.activate_script = sqo.activate_script
+            case _:
+                pass
+
+        return cpy
 
     @field_validator("realization_memory", mode="before")
     @classmethod

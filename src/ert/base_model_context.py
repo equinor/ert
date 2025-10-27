@@ -29,3 +29,56 @@ class BaseModelWithContextSupport(BaseModel):
             self_instance=__pydantic_self__,
             context=init_context_var.get(),
         )
+
+    def apply_context(
+        self,
+        site_runtime_plugins: ErtRuntimePlugins,
+        user_runtime_plugins: ErtRuntimePlugins | None = None,
+    ) -> BaseModelWithContextSupport:
+        return self._apply_context_on_fn(
+            self, site_runtime_plugins, user_runtime_plugins
+        )
+
+    def _apply_context_on_fn(
+        self,
+        obj: Any,
+        site_runtime_plugins: ErtRuntimePlugins,
+        user_runtime_plugins: ErtRuntimePlugins | None,
+    ) -> Any:
+        if callable(getattr(obj, "apply_context", None)) and obj is not self:
+            return obj.apply_context(site_runtime_plugins, user_runtime_plugins)
+
+        if isinstance(obj, BaseModel):
+            new_data = {
+                k: self._apply_context_on_fn(
+                    v, site_runtime_plugins, user_runtime_plugins
+                )
+                for k, v in obj.__dict__.items()
+            }
+            return obj.__class__(**new_data)
+
+        if isinstance(obj, dict):
+            return {
+                k: self._apply_context_on_fn(
+                    v, site_runtime_plugins, user_runtime_plugins
+                )
+                for k, v in obj.items()
+            }
+
+        if isinstance(obj, list):
+            return [
+                self._apply_context_on_fn(i, site_runtime_plugins, user_runtime_plugins)
+                for i in obj
+            ]
+        if isinstance(obj, tuple):
+            return tuple(
+                self._apply_context_on_fn(i, site_runtime_plugins, user_runtime_plugins)
+                for i in obj
+            )
+        if isinstance(obj, set):
+            return {
+                self._apply_context_on_fn(i, site_runtime_plugins, user_runtime_plugins)
+                for i in obj
+            }
+
+        return obj
