@@ -11,19 +11,19 @@ from everest.config import EverestConfig
 def _build_args_parser() -> argparse.ArgumentParser:
     """Build arg parser"""
     arg_parser = argparse.ArgumentParser(
-        description="Check if a config file is valid",
+        description="Check if a configuration file is valid.",
         usage="""everest lint <config_file>""",
     )
     arg_parser.add_argument(
         "config",
         type=partial(EverestConfig.load_file_with_argparser, parser=arg_parser),
-        help="The path to the everest configuration file",
+        help="The path to the everest configuration file.",
     )
     arg_parser.add_argument(
         "-v",
         "--verbose",
         action="store_true",
-        help="Display verbose errors and warnings",
+        help="Display verbose errors and warnings.",
     )
     return arg_parser
 

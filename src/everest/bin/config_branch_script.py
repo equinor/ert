@@ -2,6 +2,7 @@ import argparse
 from copy import deepcopy as copy
 from functools import partial
 from pathlib import Path
+from textwrap import dedent
 from typing import Any
 
 from ruamel.yaml import YAML
@@ -10,6 +11,8 @@ from everest.bin.utils import setup_logging
 from everest.config import EverestConfig
 from everest.config_file_loader import load_yaml
 from everest.everest_storage import EverestStorage
+
+from .utils import ArgParseFormatter
 
 
 def _yaml_config(
@@ -23,23 +26,43 @@ def _yaml_config(
 
 def _build_args_parser() -> argparse.ArgumentParser:
     arg_parser = argparse.ArgumentParser(
-        description="Create new config file with updated controls "
-        "from specified simulation batch number\n"
-        "**Warning**: Previous simulation output folder will be overwritten"
-        " if it was placed outside the everest output folder",
+        description=dedent(
+            """
+            Create a new config file with updated controls.
+
+            The *everest branch* command creates a new configuration file based
+            on the configuration file from a previous optimization run. The new
+            file is identical to the old configuration, but has updated control
+            values that are retrieved from the batch specified by the mandatory
+            `--batch` argument.
+
+            **Warning:**
+            Do not remove the optimization output folder before running the
+            *branch* command or it will fail.
+
+            **Note:**
+            The *branch* command does not provide true restart functionality.
+            The new config file merely defines new initial controls defined by
+            the given batch. An optimization run based on the new configuration
+            will generate slightly different results.
+            """
+        ),
+        formatter_class=ArgParseFormatter,
         usage="""everest branch <config_file> <new_config_file> -b #""",
     )
     arg_parser.add_argument(
         "config",
-        help="The path to the everest configuration file",
+        help="The path to the everest configuration file.",
         type=partial(_yaml_config, parser=arg_parser),
     )
-    arg_parser.add_argument("output_config", help="The path to the new everest file")
+    arg_parser.add_argument(
+        "output_config", help="The path to the new everest configuration file."
+    )
     arg_parser.add_argument(
         "-b",
         "--batch",
         type=int,
-        help="Batch id from which to retrieve control values",
+        help="ID of the batch providing the new control values.",
         required=True,
     )
     return arg_parser

@@ -37,7 +37,7 @@ def test_everest_main_entry_bad_command():
         start_everest(["everest", "bad_command"])
     lines = [line.strip() for line in err.getvalue().split("\n")]
     # Check everest run fails and correct err msg is displayed
-    assert "The most commonly used everest commands are:" in lines
+    assert "Supported commands:" in lines
     assert "Run everest <command> --help for more information on a command" in lines
 
 
@@ -104,7 +104,7 @@ def test_everest_main_export_entry(cached_example):
     with capture_streams() as (out, _):
         start_everest(["everest", "export", str(config_file)])
 
-    assert "Everexport is deprecated" in out.getvalue()
+    assert "everest export is deprecated" in out.getvalue()
 
 
 @pytest.mark.xdist_group("math_func/config_minimal.yml")

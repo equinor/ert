@@ -9,6 +9,7 @@ import socket
 import threading
 from functools import partial
 from pathlib import Path
+from textwrap import dedent
 
 from _ert.threading import ErtThread
 from ert.config import QueueSystem
@@ -28,6 +29,7 @@ from everest.util import (
 )
 
 from .utils import (
+    ArgParseFormatter,
     get_experiment_status,
     handle_keyboard_interrupt,
     run_detached_monitor,
@@ -102,16 +104,23 @@ def _build_args_parser() -> argparse.ArgumentParser:
     """Build arg parser"""
 
     arg_parser = argparse.ArgumentParser(
-        description=(
-            "Everest console runner, start an "
-            "optimization case based on a given config file"
+        description=dedent(
+            """
+            Start an "optimization run.
+
+            Closing the console or interrupting the `everest run` process does
+            not terminate the optimization. To continue monitoring the running
+            optimization, use `everest monitor config_file.yml`. To stop a
+            running optimization, use `everest kill config_file.yml`.
+            """
         ),
+        formatter_class=ArgParseFormatter,
         usage="everest run <config_file> [arguments]",
     )
     arg_parser.add_argument(
         "config",
         type=partial(EverestConfig.load_file_with_argparser, parser=arg_parser),
-        help="The path to the everest configuration file",
+        help="The path to the everest configuration file.",
     )
     arg_parser.add_argument(
         "--new-run",
@@ -125,14 +134,16 @@ def _build_args_parser() -> argparse.ArgumentParser:
         help="Spawn a GUI monitoring simulation statuses.",
     )
     arg_parser.add_argument(
-        "--debug", action="store_true", help="Display debug information in the terminal"
+        "--debug",
+        action="store_true",
+        help="Display debug information in the terminal.",
     )
     arg_parser.add_argument(
         "--show-all-jobs",
         action="store_true",
         help=(
             "DEPRECATED: This option no longer has an effect, "
-            "and will be removed in a future version"
+            "and will be removed in a future version."
         ),
     )
     arg_parser.add_argument(

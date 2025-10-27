@@ -5,6 +5,7 @@ import logging
 import sys
 from functools import partial
 from pathlib import Path
+from textwrap import dedent
 
 from ert.storage import ErtStorageException, open_storage
 from everest.api import EverestDataAPI
@@ -13,16 +14,32 @@ from everest.config import EverestConfig
 from everest.everest_storage import EverestStorage
 from everest.plugins.everest_plugin_manager import EverestPluginManager
 
+from .utils import ArgParseFormatter
+
 
 def _build_args_parser() -> argparse.ArgumentParser:
     arg_parser = argparse.ArgumentParser(
-        description="Start possible plugin containing everest visualization",
+        description=dedent(
+            """
+            Start an everest visualization plugin.
+
+            If no visualization plugin is installed the message: ``No
+            visualization plugin installed!`` will be displayed in the console.
+
+            The recommended open-source everest visualization plugin is Everviz:
+
+            https://github.com/equinor/everviz
+
+            It can be installed using ``pip install everviz``.
+            """
+        ),
+        formatter_class=ArgParseFormatter,
         usage="""everest results <config_file>""",
     )
     arg_parser.add_argument(
         "config",
         type=partial(EverestConfig.load_file_with_argparser, parser=arg_parser),
-        help="The path to the everest configuration file",
+        help="The path to the everest configuration file.",
     )
     return arg_parser
 

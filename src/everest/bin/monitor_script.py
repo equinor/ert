@@ -5,6 +5,7 @@ import signal
 import threading
 from functools import partial
 from pathlib import Path
+from textwrap import dedent
 
 from ert.services import StorageService
 from ert.storage import ExperimentState
@@ -12,6 +13,7 @@ from everest.config import EverestConfig, ServerConfig
 from everest.everest_storage import EverestStorage
 
 from .utils import (
+    ArgParseFormatter,
     get_experiment_status,
     handle_keyboard_interrupt,
     run_detached_monitor,
@@ -42,25 +44,35 @@ def _build_args_parser() -> argparse.ArgumentParser:
     """Build arg parser"""
 
     arg_parser = argparse.ArgumentParser(
-        description=(
-            "Everest console monitor a running optimization case based on a config file"
+        description=dedent(
+            """
+            Monitor a running optimization process.
+
+            Closing the console or interrupting the `everest run` process does
+            not terminate the optimization process. To continue monitoring the
+            running optimization, use `everest monitor config_file.yml`. To stop
+            a running optimization, use `everest kill config_file.yml`.
+            """
         ),
+        formatter_class=ArgParseFormatter,
         usage="everest monitor <config_file>",
     )
     arg_parser.add_argument(
         "config",
         type=partial(EverestConfig.load_file_with_argparser, parser=arg_parser),
-        help="The path to the everest configuration file",
+        help="The path to the everest configuration file.",
     )
     arg_parser.add_argument(
-        "--debug", action="store_true", help="Display debug information in the terminal"
+        "--debug",
+        action="store_true",
+        help="Display debug information in the terminal.",
     )
     arg_parser.add_argument(
         "--show-all-jobs",
         action="store_true",
         help=(
             "This option no longer has an effect, "
-            "and will be removed in a future version"
+            "and will be removed in a future version."
         ),
     )
 
