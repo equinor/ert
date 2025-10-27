@@ -32,9 +32,7 @@ class Arguments:
 
 
 class EvaluateEnsemblePanel(ExperimentConfigPanel):
-    def __init__(
-        self, ensemble_size: int, run_path: str, notifier: ErtNotifier
-    ) -> None:
+    def __init__(self, run_path: str, notifier: ErtNotifier) -> None:
         self.notifier = notifier
         super().__init__(EvaluateEnsemble)
         self.setObjectName("Evaluate_parameters_panel")
@@ -49,8 +47,14 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
 
-        number_of_realizations_label = QLabel(f"<b>{ensemble_size}</b>")
-        layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
+        ensemble_size = 0
+        if self._ensemble_selector.selected_ensemble:
+            ensemble_size = self._ensemble_selector.selected_ensemble.ensemble_size
+
+        self._number_of_realizations_label = QLabel(f"<b>{ensemble_size}</b>")
+        layout.addRow(
+            QLabel("Number of realizations:"), self._number_of_realizations_label
+        )
 
         self._active_realizations_field = StringBox(
             ActiveRealizationsModel(ensemble_size, show_default=False),  # type: ignore
@@ -58,7 +62,6 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
         )
         self._realizations_validator = EnsembleRealizationsArgument(
             lambda: self._ensemble_selector.selected_ensemble,
-            max_value=ensemble_size,
             required_realization_storage_states=[
                 RealizationStorageState.PARAMETERS_LOADED
             ],
@@ -106,6 +109,9 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
                 if not any(mask):
                     mask = parameters
                 self._active_realizations_field.model.setValueFromMask(mask)  # type: ignore
+                self._number_of_realizations_label.setText(
+                    f"<b>{ensemble.ensemble_size}</b>"
+                )
         except OSError as err:
             logger.error(str(err))
             Suggestor(
