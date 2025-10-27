@@ -33,6 +33,10 @@ For examples and help with configuration, see the [ert Documentation](https://er
 
 # Everest™
 
+<h1 align="center">
+<img src="https://raw.githubusercontent.com/equinor/ert/everest_logo/src/everest/assets/everest_logo.svg" width="300">
+</h1>
+
 The primary goal of the Everest tool is to find *optimal* well
 planning and production strategies by utilizing an ensemble of
 reservoir models (e.g., an ensemble of geologically-consistent models).

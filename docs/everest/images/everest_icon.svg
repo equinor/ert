@@ -1,8 +1,206 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 55.22 55.22">
-<defs><style>.cls-1{fill:#fff;}.cls-2{fill:#fec340;}.cls-3{fill:#0f385a;}</style></defs>
-<title>everest_icon</title>
-<circle class="cls-1" cx="27.61" cy="27.61" r="27.61"/>
-<path class="cls-2" d="M59.68,35.11l-6.8-4.84,6.8-4.83L72,34.21A21.77,21.77,0,0,0,29.18,30l11.69-8.32Z" transform="translate(-22.66 -7.82)"/>
-<path class="cls-3" d="M50.27,7.82A27.61,27.61,0,0,0,22.68,34.67L29.18,30A21.77,21.77,0,0,1,72,34.21L59.68,25.44v9.67L40.87,21.72v4.64a3.78,3.78,0,0,1-1.58,3.07L23.2,40.88a27.84,27.84,0,0,0,1.62,5.28l16-11.43v4.65a3.76,3.76,0,0,1-1.58,3.06L27.4,50.9A27.73,27.73,0,0,0,30.75,55l10.12-7.2v4.64a3.75,3.75,0,0,1-1.58,3.06l-4.24,3A27.62,27.62,0,0,0,77.74,38.29c.09-.94.14-1.89.14-2.86A27.61,27.61,0,0,0,50.27,7.82Z" transform="translate(-22.66 -7.82)"/>
-<polygon class="cls-1" points="37.02 27.29 37.02 17.61 30.22 22.45 37.02 27.29"/>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   id="Laag_1"
+   data-name="Laag 1"
+   width="44.978996mm"
+   height="44.978996mm"
+   viewBox="0 0 127.49951 127.49952"
+   version="1.1"
+   sodipodi:docname="everest_icon.svg"
+   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview60"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     inkscape:zoom="8.0638734"
+     inkscape:cx="75.708033"
+     inkscape:cy="96.851718"
+     inkscape:window-width="2573"
+     inkscape:window-height="1907"
+     inkscape:window-x="3407"
+     inkscape:window-y="56"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="Laag_1" />
+  <defs
+     id="defs13">
+    <radialGradient
+       id="radial-gradient"
+       cx="64.03392"
+       cy="64.03392"
+       fx="49.353233"
+       fy="82.396118"
+       r="59.086895"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         offset="0"
+         stop-color="#f5aba7"
+         id="stop1" />
+      <stop
+         offset=".217861041112723"
+         stop-color="#f4a8a5"
+         id="stop2" />
+      <stop
+         offset=".361136125615505"
+         stop-color="#f39f9f"
+         id="stop3" />
+      <stop
+         offset=".482893104808535"
+         stop-color="#f29094"
+         id="stop4" />
+      <stop
+         offset=".592650507232557"
+         stop-color="#ef7b86"
+         id="stop5" />
+      <stop
+         offset=".694335183107659"
+         stop-color="#ec5f73"
+         id="stop6" />
+      <stop
+         offset=".78871442354024"
+         stop-color="#e93e5d"
+         id="stop7" />
+      <stop
+         offset=".860573681175441"
+         stop-color="#e62048"
+         id="stop8" />
+    </radialGradient>
+    <clipPath
+       id="clippath">
+      <circle
+         cx="64.03392"
+         cy="64.03392"
+         r="64.03392"
+         fill="none"
+         stroke-width="0"
+         id="circle8" />
+    </clipPath>
+    <linearGradient
+       id="linear-gradient"
+       x1="32.965416"
+       y1="147.10043"
+       x2="93.746849"
+       y2="41.823895"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         offset="0"
+         stop-color="#284899"
+         id="stop9" />
+      <stop
+         offset=".138867226110765"
+         stop-color="#273f87"
+         id="stop10" />
+      <stop
+         offset=".311629315711017"
+         stop-color="#26397a"
+         id="stop11" />
+      <stop
+         offset=".536330265490111"
+         stop-color="#263673"
+         id="stop12" />
+      <stop
+         offset="1"
+         stop-color="#263571"
+         id="stop13" />
+    </linearGradient>
+    <radialGradient
+       id="radial-gradient-7"
+       cx="64.03392"
+       cy="64.03392"
+       fx="49.353233"
+       fy="82.396118"
+       r="59.086895"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.9955624,0,0,0.9955624,0.28415642,0.28415917)">
+      <stop
+         offset="0"
+         stop-color="#f5aba7"
+         id="stop1-4" />
+      <stop
+         offset=".217861041112723"
+         stop-color="#f4a8a5"
+         id="stop2-2" />
+      <stop
+         offset=".361136125615505"
+         stop-color="#f39f9f"
+         id="stop3-7" />
+      <stop
+         offset=".482893104808535"
+         stop-color="#f29094"
+         id="stop4-7" />
+      <stop
+         offset=".592650507232557"
+         stop-color="#ef7b86"
+         id="stop5-9" />
+      <stop
+         offset=".694335183107659"
+         stop-color="#ec5f73"
+         id="stop6-3" />
+      <stop
+         offset=".78871442354024"
+         stop-color="#e93e5d"
+         id="stop7-1" />
+      <stop
+         offset=".860573681175441"
+         stop-color="#e62048"
+         id="stop8-9" />
+    </radialGradient>
+    <mask
+       maskUnits="userSpaceOnUse"
+       id="mask16">
+      <circle
+         cx="64.03392"
+         cy="64.03392"
+         fill="url(#radial-gradient)"
+         stroke-width="0"
+         id="circle16"
+         style="fill:#ffffff;fill-opacity:1"
+         r="63.74976" />
+    </mask>
+  </defs>
+  <g
+     id="g16"
+     mask="url(#mask16)"
+     transform="translate(-0.28416061,-0.28416061)">
+    <circle
+       cx="64.03392"
+       cy="64.03392"
+       r="64.03392"
+       fill="url(#radial-gradient)"
+       stroke-width="0"
+       id="circle13"
+       style="fill:url(#radial-gradient)" />
+    <g
+       clip-path="url(#clippath)"
+       id="g15">
+      <g
+         id="g14">
+        <polygon
+           points="42.035928,128.06784 86.198552,128.06784 128.06784,128.06784 127.91906,68.32343 86.198552,37.46588 86.198552,60.074086 42.035928,27.309721 1.0004e-11,58.508567 0,128.06784 42.035928,128.06784 "
+           fill="url(#linear-gradient)"
+           stroke-width="0"
+           id="polygon13"
+           style="fill:url(#linear-gradient)" />
+        <polygon
+           points="86.198562,60.175133 86.198562,37.566934 70.870099,48.802914 "
+           fill="#ffffff"
+           stroke-width="0"
+           id="polygon14" />
+        <path
+           d="m 38.763237,67.759224 c 2.990335,-2.053995 4.951441,-5.497907 4.951441,-9.399859 l -8.579382,-5.901845 6.725446,-4.922761 -6.616443,-4.964692 6.791802,-5.143195 V 27.410768 L 0,58.609614 v 37.87583 z"
+           fill="#ffffff"
+           stroke-width="0"
+           id="path14" />
+      </g>
+    </g>
+  </g>
 </svg>
