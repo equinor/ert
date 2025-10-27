@@ -49,8 +49,7 @@
         "_ERT_RUNPATH": "<RUNPATH>"
       },
       "default_mapping": {},
-      "private_args": {},
-      "source_file": "test-data/ert/snake_oil.snake_oil.ert/forward_models/SNAKE_OIL_SIMULATOR"
+      "private_args": {}
     },
     {
       "name": "SNAKE_OIL_NPV",
@@ -73,8 +72,7 @@
         "_ERT_RUNPATH": "<RUNPATH>"
       },
       "default_mapping": {},
-      "private_args": {},
-      "source_file": "test-data/ert/snake_oil.snake_oil.ert/forward_models/SNAKE_OIL_NPV"
+      "private_args": {}
     },
     {
       "name": "SNAKE_OIL_DIFF",
@@ -97,8 +95,7 @@
         "_ERT_RUNPATH": "<RUNPATH>"
       },
       "default_mapping": {},
-      "private_args": {},
-      "source_file": "test-data/ert/snake_oil.snake_oil.ert/forward_models/SNAKE_OIL_DIFF"
+      "private_args": {}
     }
   ],
   "substitutions": {
@@ -147,11 +144,6 @@
   "start_iteration": 0,
   "minimum_required_realizations": 2,
   "user_installed_workflow_jobs": {},
-  "user_installed_fm_steps": {
-    "SNAKE_OIL_DIFF": "test-data/ert/snake_oil.snake_oil.ert/forward_models/SNAKE_OIL_DIFF",
-    "SNAKE_OIL_NPV": "test-data/ert/snake_oil.snake_oil.ert/forward_models/SNAKE_OIL_NPV",
-    "SNAKE_OIL_SIMULATOR": "test-data/ert/snake_oil.snake_oil.ert/forward_models/SNAKE_OIL_SIMULATOR"
-  },
   "target_ensemble": "helloworld<ITER>",
   "analysis_settings": {
     "enkf_truncation": 0.98,

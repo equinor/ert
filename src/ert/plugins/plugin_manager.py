@@ -388,13 +388,6 @@ class ErtRuntimePlugins(BaseModel):
             dict(self.installed_workflow_jobs) | workflow_jobs
         )
 
-    def inject_installed_forward_model_steps(
-        self, fm_steps: dict[str, ForwardModelStep]
-    ) -> None:
-        self.installed_forward_model_steps = (
-            dict(self.installed_forward_model_steps) | fm_steps
-        )
-
 
 class ErtPluginContext:
     def __init__(

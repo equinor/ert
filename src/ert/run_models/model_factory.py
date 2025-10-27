@@ -12,7 +12,6 @@ from ert.config import (
     ConfigWarning,
     DesignMatrix,
     ErtConfig,
-    ForwardModelStep,
     ObservationSettings,
     ParameterConfig,
     WorkflowJob,
@@ -93,24 +92,16 @@ def create_model(
     raise NotImplementedError(f"Run type not supported {args.mode}")
 
 
-def _extract_user_installed_fm_steps_and_workflow_jobs(
+def _extract_user_installed_workflow_jobs(
     config: ErtConfig,
-) -> tuple[dict[str, WorkflowJob], dict[str, ForwardModelStep]]:
+) -> dict[str, WorkflowJob]:
     with ErtPluginContext() as runtime_plugins:
         user_installed_workflow_jobs = {
             k: v
             for k, v in config.workflow_jobs.items()
             if k not in runtime_plugins.installed_workflow_jobs and v is not None
         }
-        user_installed_fm_steps = {
-            k: v
-            for k, v in config.installed_forward_model_steps.items()
-            if k not in runtime_plugins.installed_forward_model_steps and v is not None
-        }
-
-        return dict(sorted(user_installed_workflow_jobs.items())), dict(
-            sorted(user_installed_fm_steps.items())
-        )
+        return dict(sorted(user_installed_workflow_jobs.items()))
 
 
 def _merge_parameters(
@@ -149,9 +140,7 @@ def _setup_single_test_run(
             "Cannot run single test run when the first realization is inactive."
         )
 
-    user_installed_workflow_jobs, user_installed_fm_steps = (
-        _extract_user_installed_fm_steps_and_workflow_jobs(config)
-    )
+    user_installed_workflow_jobs = _extract_user_installed_workflow_jobs(config)
 
     parameter_configs, design_matrix = _merge_parameters(
         design_matrix=config.analysis_config.design_matrix,
@@ -181,7 +170,6 @@ def _setup_single_test_run(
         queue_config=config.queue_config.create_local_copy(),
         observations=config.observations,
         user_installed_workflow_jobs=user_installed_workflow_jobs,
-        user_installed_fm_steps=user_installed_fm_steps,
     )
 
     with ErtPluginContext():
@@ -217,9 +205,7 @@ def _setup_ensemble_experiment(
         parameter_configs=config.ensemble_config.parameter_configuration,
     )
 
-    user_installed_workflow_jobs, user_installed_fm_steps = (
-        _extract_user_installed_fm_steps_and_workflow_jobs(config)
-    )
+    user_installed_workflow_jobs = _extract_user_installed_workflow_jobs(config)
     runmodel_config = EnsembleExperimentConfig(
         random_seed=config.random_seed,
         runpath_file=config.runpath_file,
@@ -243,7 +229,6 @@ def _setup_ensemble_experiment(
         queue_config=config.queue_config,
         observations=config.observations,
         user_installed_workflow_jobs=user_installed_workflow_jobs,
-        user_installed_fm_steps=user_installed_fm_steps,
     )
 
     with ErtPluginContext():
@@ -261,9 +246,7 @@ def _setup_evaluate_ensemble(
     active_realizations = _get_and_validate_active_realizations_list(args, config)
     validate_minimum_realizations(config, active_realizations)
 
-    user_installed_workflow_jobs, user_installed_fm_steps = (
-        _extract_user_installed_fm_steps_and_workflow_jobs(config)
-    )
+    user_installed_workflow_jobs = _extract_user_installed_workflow_jobs(config)
 
     runmodel_config = EvaluateEnsembleConfig(
         random_seed=config.random_seed,
@@ -282,7 +265,6 @@ def _setup_evaluate_ensemble(
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
         user_installed_workflow_jobs=user_installed_workflow_jobs,
-        user_installed_fm_steps=user_installed_fm_steps,
     )
 
     return EvaluateEnsemble(**runmodel_config.model_dump(), status_queue=status_queue)
@@ -325,9 +307,7 @@ def _setup_manual_update(
     active_realizations = _realizations(args, config.runpath_config.num_realizations)
     validate_minimum_realizations(config, active_realizations.tolist())
 
-    user_installed_workflow_jobs, user_installed_fm_steps = (
-        _extract_user_installed_fm_steps_and_workflow_jobs(config)
-    )
+    user_installed_workflow_jobs = _extract_user_installed_workflow_jobs(config)
     runmodel_config = ManualUpdateConfig(
         random_seed=config.random_seed,
         active_realizations=active_realizations.tolist(),
@@ -349,7 +329,6 @@ def _setup_manual_update(
         log_path=config.analysis_config.log_path,
         observations=config.observations,
         user_installed_workflow_jobs=user_installed_workflow_jobs,
-        user_installed_fm_steps=user_installed_fm_steps,
     )
 
     with ErtPluginContext():
@@ -369,9 +348,7 @@ def _setup_ensemble_smoother(
             "Number of active realizations must be at least 2 for an update step"
         )
 
-    user_installed_workflow_jobs, user_installed_fm_steps = (
-        _extract_user_installed_fm_steps_and_workflow_jobs(config)
-    )
+    user_installed_workflow_jobs = _extract_user_installed_workflow_jobs(config)
 
     parameter_configs, design_matrix = _merge_parameters(
         design_matrix=config.analysis_config.design_matrix,
@@ -404,7 +381,6 @@ def _setup_ensemble_smoother(
         log_path=config.analysis_config.log_path,
         observations=config.observations,
         user_installed_workflow_jobs=user_installed_workflow_jobs,
-        user_installed_fm_steps=user_installed_fm_steps,
     )
     return EnsembleSmoother(**runmodel_config.model_dump(), status_queue=status_queue)
 
@@ -422,9 +398,7 @@ def _setup_ensemble_information_filter(
             "Number of active realizations must be at least 2 for an update step"
         )
 
-    user_installed_workflow_jobs, user_installed_fm_steps = (
-        _extract_user_installed_fm_steps_and_workflow_jobs(config)
-    )
+    user_installed_workflow_jobs = _extract_user_installed_workflow_jobs(config)
 
     parameter_configs, design_matrix = _merge_parameters(
         design_matrix=config.analysis_config.design_matrix,
@@ -456,7 +430,6 @@ def _setup_ensemble_information_filter(
         log_path=config.analysis_config.log_path,
         observations=config.observations,
         user_installed_workflow_jobs=user_installed_workflow_jobs,
-        user_installed_fm_steps=user_installed_fm_steps,
     )
 
     return EnsembleInformationFilter(
@@ -503,9 +476,7 @@ def _setup_multiple_data_assimilation(
         require_updateable_param=True,
     )
 
-    user_installed_workflow_jobs, user_installed_fm_steps = (
-        _extract_user_installed_fm_steps_and_workflow_jobs(config)
-    )
+    user_installed_workflow_jobs = _extract_user_installed_workflow_jobs(config)
     runmodel_config = MultipleDataAssimilationConfig(
         random_seed=config.random_seed,
         active_realizations=active_realizations,
@@ -534,7 +505,6 @@ def _setup_multiple_data_assimilation(
         log_path=config.analysis_config.log_path,
         observations=config.observations,
         user_installed_workflow_jobs=user_installed_workflow_jobs,
-        user_installed_fm_steps=user_installed_fm_steps,
     )
     return MultipleDataAssimilation(
         **runmodel_config.model_dump(), status_queue=status_queue

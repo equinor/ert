@@ -59,8 +59,7 @@
       "private_args": {
         "<ARG0>": "<IENS>",
         "<ARG1>": "<ITER>"
-      },
-      "source_file": "test-data/ert/heat_equation.config.ert/HEAT_EQUATION"
+      }
     }
   ],
   "substitutions": {
@@ -183,9 +182,6 @@
   "start_iteration": 0,
   "minimum_required_realizations": 2,
   "user_installed_workflow_jobs": {},
-  "user_installed_fm_steps": {
-    "heat_equation": "test-data/ert/heat_equation.config.ert/HEAT_EQUATION"
-  },
   "target_ensemble": "posterior<ITER>",
   "analysis_settings": {
     "enkf_truncation": 0.98,
