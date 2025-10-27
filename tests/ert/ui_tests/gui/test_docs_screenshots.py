@@ -396,13 +396,13 @@ def test_that_poly_new_with_observations_screenshots_are_up_to_date(
             gui, qtbot, EnsembleSelectionWidget, "Plot ensemble"
         )
 
-        dndlist = ensemble_selector_widget._EnsembleSelectionWidget__dndlist
+        selected_ensembles = ensemble_selector_widget._selected_ensembles
 
-        for index in range(dndlist.count()):
-            item = dndlist.item(index)
+        for index in range(selected_ensembles.count()):
+            item = selected_ensembles.item(index)
             if not item.data(Qt.ItemDataRole.CheckStateRole):
-                dndlist.slot_toggle_plot(item)
-        dndlist.ensembleSelectionListChanged.emit()
+                selected_ensembles.slot_toggle_plot(item)
+        selected_ensembles.ensembleSelectionListChanged.emit()
 
         gui_evaluator.compare_img_with_gui("plot_obs.png", PLOT_OBS_PNG_THRESHOLD)
 
@@ -454,12 +454,12 @@ def test_that_poly_new_with_more_observations_screenshots_are_up_to_date(
             gui, qtbot, EnsembleSelectionWidget, "Plot ensemble"
         )
 
-        dndlist = ensemble_selector_widget._EnsembleSelectionWidget__dndlist
-        for index in range(dndlist.count()):
-            item = dndlist.item(index)
+        selected_ensembles = ensemble_selector_widget._selected_ensembles
+        for index in range(selected_ensembles.count()):
+            item = selected_ensembles.item(index)
             if not item.data(Qt.ItemDataRole.CheckStateRole):
-                dndlist.slot_toggle_plot(item)
-        dndlist.ensembleSelectionListChanged.emit()
+                selected_ensembles.slot_toggle_plot(item)
+        selected_ensembles.ensembleSelectionListChanged.emit()
 
         data_type_widget = wait_for_child(gui, qtbot, DataTypeKeysWidget, "Data types")
         set_data_type_selection_index(data_type_widget, 2)
