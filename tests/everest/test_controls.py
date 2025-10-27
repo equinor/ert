@@ -243,7 +243,7 @@ def test_that_controls_ordering_is_the_same_for_ropt_and_extparam():
 
     ropt_var_wise = everest2ropt(
         ever_config_var_wise.controls,
-        ever_config_var_wise.objective_functions,
+        ever_config_var_wise.create_ert_objectives_config(),
         ever_config_var_wise.input_constraints,
         ever_config_var_wise.output_constraints,
         ever_config_var_wise.optimization,
@@ -254,7 +254,7 @@ def test_that_controls_ordering_is_the_same_for_ropt_and_extparam():
 
     ropt_index_wise = everest2ropt(
         ever_config_index_wise.controls,
-        ever_config_index_wise.objective_functions,
+        ever_config_index_wise.create_ert_objectives_config(),
         ever_config_index_wise.input_constraints,
         ever_config_index_wise.output_constraints,
         ever_config_index_wise.optimization,
@@ -305,7 +305,7 @@ def test_that_controls_ordering_disregards_index():
 
     ropt_var_wise = everest2ropt(
         ever_config_var_wise.controls,
-        ever_config_var_wise.objective_functions,
+        ever_config_var_wise.create_ert_objectives_config(),
         ever_config_var_wise.input_constraints,
         ever_config_var_wise.output_constraints,
         ever_config_var_wise.optimization,
@@ -368,7 +368,7 @@ def test_that_setting_initial_guess_in_a_list_is_the_same_as_one_per_index():
 
     ropt_config1, initial1 = everest2ropt(
         ever_config1.controls,
-        ever_config1.objective_functions,
+        ever_config1.create_ert_objectives_config(),
         ever_config1.input_constraints,
         ever_config1.output_constraints,
         ever_config1.optimization,
@@ -379,7 +379,7 @@ def test_that_setting_initial_guess_in_a_list_is_the_same_as_one_per_index():
 
     ropt_config2, initial2 = everest2ropt(
         ever_config2.controls,
-        ever_config2.objective_functions,
+        ever_config2.create_ert_objectives_config(),
         ever_config2.input_constraints,
         ever_config2.output_constraints,
         ever_config2.optimization,

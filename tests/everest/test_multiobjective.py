@@ -56,7 +56,7 @@ def test_multi_objectives2ropt():
     )
     enopt_config, _ = everest2ropt(
         config.controls,
-        config.objective_functions,
+        config.create_ert_objectives_config(),
         config.input_constraints,
         config.output_constraints,
         config.optimization,

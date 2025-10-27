@@ -15,6 +15,9 @@ class EverestObjectivesConfig(ResponseConfig):
     type: Literal["everest_objectives"] = "everest_objectives"
     name: str = "everest_objectives"
     has_finalized_keys: bool = True
+    weights: list[float | None]
+    scales: list[float | None]
+    objective_types: list[Literal["mean", "stddev"]]
 
     @property
     def metadata(self) -> list[ResponseMetadata]:

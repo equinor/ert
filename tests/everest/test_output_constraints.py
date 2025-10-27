@@ -121,7 +121,7 @@ def test_upper_bound_output_constraint_def(tmp_path):
 
     ropt_conf, _ = everest2ropt(
         config.controls,
-        config.objective_functions,
+        config.create_ert_objectives_config(),
         config.input_constraints,
         config.output_constraints,
         config.optimization,

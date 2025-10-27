@@ -56,7 +56,6 @@ from everest.config import (
     EverestConfig,
     InputConstraintConfig,
     ModelConfig,
-    ObjectiveFunctionConfig,
     OptimizationConfig,
     OutputConstraintConfig,
 )
@@ -234,8 +233,6 @@ class EverestRunModel(RunModel):
     response_configuration: list[ResponseConfig]
     controls: list[ControlConfig]
 
-    objective_functions: list[ObjectiveFunctionConfig]
-
     input_constraints: list[InputConstraintConfig]
 
     output_constraints: list[OutputConstraintConfig]
@@ -298,7 +295,7 @@ class EverestRunModel(RunModel):
 
         response_configs: list[ResponseConfig] = []
 
-        response_configs.append(everest_config.create_response_config())
+        response_configs.append(everest_config.create_ert_objectives_config())
 
         constraint_names = [c.name for c in everest_config.output_constraints]
 
@@ -649,6 +646,16 @@ class EverestRunModel(RunModel):
                 )
             )
 
+    @property
+    def objectives_config(self) -> EverestObjectivesConfig:
+        obj_config = next(
+            c for c in self.response_configuration if c.type == "everest_objectives"
+        )
+        # There will and must always be one objectives config for an
+        # Everest optimization.
+        assert isinstance(obj_config, EverestObjectivesConfig)
+        return obj_config
+
     def run_experiment(
         self,
         evaluator_server_config: EvaluatorServerConfig,
@@ -992,7 +999,7 @@ class EverestRunModel(RunModel):
             # Nothing to do, there may only have been inactive control vectors:
             num_all_simulations = control_values.shape[0]
             objectives = np.zeros(
-                (num_all_simulations, len(self.objective_functions)),
+                (num_all_simulations, len(self.objectives_config.keys)),
                 dtype=np.float64,
             )
             constraints = (
@@ -1110,7 +1117,7 @@ class EverestRunModel(RunModel):
     def _gather_simulation_results(
         self, ensemble: Ensemble
     ) -> tuple[NDArray[np.float64], NDArray[np.float64] | None]:
-        objective_names = [o.name for o in self.objective_functions]
+        objective_names = self.objectives_config.keys
         objectives = np.zeros((ensemble.ensemble_size, len(objective_names)))
 
         constraint_names = [c.name for c in self.output_constraints]

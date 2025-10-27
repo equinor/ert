@@ -37,7 +37,7 @@ def test_csv_export(config_file, cached_example, snapshot):
             for control_config in config.controls
             for name in control_config.formatted_control_names
         ],
-        objective_functions=config.objective_functions,
+        objective_functions=config.create_ert_objectives_config(),
         output_constraints=config.output_constraints,
         realizations=config.model.realizations,
     )

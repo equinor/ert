@@ -3,11 +3,11 @@ from typing import Any
 
 from ropt.enums import PerturbationType, VariableType
 
+from ert.config import EverestObjectivesConfig
 from everest.config import (
     ControlConfig,
     InputConstraintConfig,
     ModelConfig,
-    ObjectiveFunctionConfig,
     OptimizationConfig,
     OutputConstraintConfig,
 )
@@ -48,16 +48,15 @@ def _parse_controls(
 
 
 def _parse_objectives(
-    objective_functions: list[ObjectiveFunctionConfig],
+    objective_functions: EverestObjectivesConfig,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
-    weights: list[float] = []
+    weights: list[float] = [
+        1.0 if weight is None else weight for weight in objective_functions.weights
+    ]
     function_estimator_indices: list[int] = []
     function_estimators: list = []  # type: ignore
 
-    for objective in objective_functions:
-        assert isinstance(objective.name, str)
-        weights.append(objective.weight or 1.0)
-
+    for objective_type in objective_functions.objective_types:
         # If any objective specifies an objective type, we have to specify
         # function estimators in ropt to implement these types. This is done by
         # supplying a list of estimators and for each objective an index into
@@ -66,14 +65,14 @@ def _parse_objectives(
             (
                 idx
                 for idx, estimator in enumerate(function_estimators)
-                if estimator["method"] == objective.type
+                if estimator["method"] == objective_type
             ),
             None,
         )
         # If not, make a new estimator:
         if function_estimator_idx is None:
             function_estimator_idx = len(function_estimators)
-            function_estimators.append({"method": objective.type})
+            function_estimators.append({"method": objective_type})
         function_estimator_indices.append(function_estimator_idx)
 
     ropt_objectives: dict[str, Any] = {"weights": weights}
@@ -250,7 +249,7 @@ def _parse_optimization(
 
 def everest2ropt(
     controls: list[ControlConfig],
-    objective_functions: list[ObjectiveFunctionConfig],
+    objective_functions: EverestObjectivesConfig,
     input_constraints: list[InputConstraintConfig],
     output_constraints: list[OutputConstraintConfig],
     optimization: OptimizationConfig | None,
@@ -297,7 +296,7 @@ def everest2ropt(
             "variable": [
                 name for config in controls for name in config.formatted_control_names
             ],
-            "objective": [objective.name for objective in objective_functions],
+            "objective": objective_functions.keys,
             "nonlinear_constraint": [
                 constraint.name for constraint in output_constraints
             ],
