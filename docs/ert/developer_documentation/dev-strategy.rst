@@ -1,9 +1,8 @@
 Development strategy
 ====================
 
-For the goals of the ERT development itself we refer the reader to the
-:ref:`Roadmap`. Here, we will instead give a direction for how the roadmap is
-to be realised. Both as an overarching strategy, as well as tactical choices
+Here we describe the basic strategies how ert achieves general goals.
+Both as an overarching strategy, as well as tactical choices
 and milestones along the way. None of this is set in stone and in particular
 the tactical elements should be frequently discussed.
 
