@@ -176,6 +176,8 @@ timeout = 360
 
 [tool.setuptools_scm]
 write_to = "src/ert/shared/version.py"
+# Fallback needed due to https://github.com/dependabot/dependabot-core/issues/12340
+fallback_version = "0.0.0"
 
 [tool.ruff]
 src = ["src"]
