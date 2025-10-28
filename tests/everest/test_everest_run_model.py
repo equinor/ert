@@ -4,6 +4,7 @@ from unittest.mock import Mock
 
 import pytest
 
+from ert.base_model_context import use_runtime_plugins
 from ert.config.queue_config import (
     LocalQueueOptions,
     LsfQueueOptions,
@@ -29,7 +30,8 @@ def create_runmodel(min_config: dict, monkeypatch: pytest.MonkeyPatch) -> Callab
         config_path: str | None = None,
         config: dict | None = None,
     ) -> EverestRunModel:
-        with ErtPluginContext() as runtime_plugins:
+        site_plugins = ErtPluginContext.get_site_plugins()
+        with use_runtime_plugins(site_plugins):
             runtime_plugins.queue_options = None
             return EverestRunModel.create(
                 EverestConfig(
@@ -49,7 +51,7 @@ def create_runmodel(min_config: dict, monkeypatch: pytest.MonkeyPatch) -> Callab
                         | (config if config is not None else {})
                     ),
                 ),
-                runtime_plugins=runtime_plugins,
+                runtime_plugins=site_plugins,
             )
 
     return _create_runmodel
