@@ -229,15 +229,16 @@ def test_that_substitutions_can_be_done_in_job_names():
     that was broken by changes to forward_model substitutions.
     """
 
-    with ErtPluginContext() as ctx:
-        ert_config = ErtConfig.with_plugins(ctx).from_file_contents(
-            """
-            NUM_REALIZATIONS  1
-            DEFINE <ECL100OR300> E100
-            FORWARD_MODEL ECLIPS<ECL100OR300>(\
-            <VERSION>=2024.1, <NUM_CPU>=42, <OPTS>="-m")
-            """
-        )
+    ert_config = ErtConfig.with_plugins(
+        ErtPluginContext.get_site_plugins()
+    ).from_file_contents(
+        """
+        NUM_REALIZATIONS  1
+        DEFINE <ECL100OR300> E100
+        FORWARD_MODEL ECLIPS<ECL100OR300>(\
+        <VERSION>=2024.1, <NUM_CPU>=42, <OPTS>="-m")
+        """
+    )
     assert len(ert_config.forward_model_steps) == 1
     job = ert_config.forward_model_steps[0]
     assert job.name == "ECLIPSE100"
@@ -249,14 +250,15 @@ def test_parsing_forward_model_with_double_dash_is_possible():
     which by the ert config parser used to be interpreted as a comment. In the new
     parser this is allowed"""
 
-    with ErtPluginContext() as ctx:
-        res_config = ErtConfig.with_plugins(ctx).from_file_contents(
-            """
-            NUM_REALIZATIONS  1
-            JOBNAME job_%d--hei
-            FORWARD_MODEL COPY_FILE(<FROM>=foo,<TO>=something/hello--there.txt)
-            """
-        )
+    res_config = ErtConfig.with_plugins(
+        ErtPluginContext.get_site_plugins()
+    ).from_file_contents(
+        """
+        NUM_REALIZATIONS  1
+        JOBNAME job_%d--hei
+        FORWARD_MODEL COPY_FILE(<FROM>=foo,<TO>=something/hello--there.txt)
+        """
+    )
     assert res_config.runpath_config.jobname_format_string == "job_<IENS>--hei"
     assert (
         res_config.forward_model_steps[0].private_args["<TO>"]
@@ -273,16 +275,17 @@ def test_parsing_forward_model_with_quotes_does_not_introduce_spaces():
     comment interpretation, quotation marks are used"""
 
     str_with_quotes = """smt/<foo>"/bar"/xx/"t--s.s"/yy/"z/z"/oo"""
-    with ErtPluginContext() as ctx:
-        ert_config = ErtConfig.with_plugins(ctx).from_file_contents(
-            dedent(
-                f"""
-                NUM_REALIZATIONS  1
-                JOBNAME job_%d
-                FORWARD_MODEL COPY_FILE(<FROM>=foo,<TO>={str_with_quotes})
-                """
-            )
+    ert_config = ErtConfig.with_plugins(
+        ErtPluginContext.get_site_plugins()
+    ).from_file_contents(
+        dedent(
+            f"""
+            NUM_REALIZATIONS  1
+            JOBNAME job_%d
+            FORWARD_MODEL COPY_FILE(<FROM>=foo,<TO>={str_with_quotes})
+            """
         )
+    )
     assert list(ert_config.forward_model_steps[0].private_args.values()) == [
         "foo",
         "smt/<foo>/bar/xx/t--s.s/yy/z/z/oo",
@@ -295,15 +298,16 @@ def test_that_comments_are_ignored():
     which by the ert config parser used to be interpreted as a comment. In the new
     parser this is allowed"""
 
-    with ErtPluginContext() as ctx:
-        res_config = ErtConfig.with_plugins(ctx).from_file_contents(
-            """
-            NUM_REALIZATIONS  1
-            --comment
-            JOBNAME job_%d--hei --hei
-            FORWARD_MODEL COPY_FILE(<FROM>=foo,<TO>=something/hello--there.txt)--foo
-            """
-        )
+    res_config = ErtConfig.with_plugins(
+        ErtPluginContext.get_site_plugins()
+    ).from_file_contents(
+        """
+        NUM_REALIZATIONS  1
+        --comment
+        JOBNAME job_%d--hei --hei
+        FORWARD_MODEL COPY_FILE(<FROM>=foo,<TO>=something/hello--there.txt)--foo
+        """
+    )
     assert res_config.runpath_config.jobname_format_string == "job_<IENS>--hei"
     assert (
         res_config.forward_model_steps[0].private_args["<TO>"]
@@ -316,18 +320,19 @@ def test_that_quotations_in_forward_model_arglist_are_handled_correctly():
     They should all result in the same.
     See https://github.com/equinor/ert/issues/2766"""
 
-    with ErtPluginContext() as ctx:
-        res_config = ErtConfig.with_plugins(ctx).from_file_contents(
-            """
-            NUM_REALIZATIONS  1
-            FORWARD_MODEL COPY_FILE(<FROM>='some, thing', <TO>="some stuff", \
-                <FILE>=file.txt)
-            FORWARD_MODEL COPY_FILE(<FROM>='some, thing', <TO>='some stuff', \
-                <FILE>=file.txt)
-            FORWARD_MODEL COPY_FILE(<FROM>="some, thing", <TO>="some stuff", \
-                <FILE>=file.txt)
-            """
-        )
+    res_config = ErtConfig.with_plugins(
+        ErtPluginContext.get_site_plugins()
+    ).from_file_contents(
+        """
+        NUM_REALIZATIONS  1
+        FORWARD_MODEL COPY_FILE(<FROM>='some, thing', <TO>="some stuff", \
+            <FILE>=file.txt)
+        FORWARD_MODEL COPY_FILE(<FROM>='some, thing', <TO>='some stuff', \
+            <FILE>=file.txt)
+        FORWARD_MODEL COPY_FILE(<FROM>="some, thing", <TO>="some stuff", \
+            <FILE>=file.txt)
+        """
+    )
 
     assert res_config.forward_model_steps[0].private_args["<FROM>"] == "some, thing"
     assert res_config.forward_model_steps[0].private_args["<TO>"] == "some stuff"
@@ -348,9 +353,8 @@ def test_unmatched_quotes_in_step_arg_gives_config_validation_error(
 ):
     with (
         pytest.raises(ConfigValidationError, match="Did not expect character"),
-        ErtPluginContext() as ctx,
     ):
-        ErtConfig.with_plugins(ctx).from_file_contents(
+        ErtConfig.with_plugins(ErtPluginContext.get_site_plugins()).from_file_contents(
             f"""
             NUM_REALIZATIONS 1
             FORWARD_MODEL COPY_FILE(<FROM>={quote_mismatched_arg})
@@ -399,8 +403,9 @@ def test_that_forward_model_substitution_does_not_warn_about_reaching_max_iterat
     )
     Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
 
-    with ErtPluginContext() as ctx:
-        ert_config = ErtConfig.with_plugins(ctx).from_file(test_config_file_name)
+    ert_config = ErtConfig.with_plugins(ErtPluginContext.get_site_plugins()).from_file(
+        test_config_file_name
+    )
     with caplog.at_level(logging.WARNING):
         create_forward_model_json(
             context=ert_config.substitutions,
@@ -437,13 +442,14 @@ def test_that_installing_two_forward_model_steps_with_the_same_name_warn_with_di
 @pytest.mark.integration_test
 def test_that_spaces_in_forward_model_args_are_dropped():
     # Intentionally inserted several spaces before comma
-    with ErtPluginContext() as ctx:
-        ert_config = ErtConfig.with_plugins(ctx).from_file_contents(
-            """
-            NUM_REALIZATIONS  1
-            FORWARD_MODEL ECLIPSE100(<VERSION>=2024.1                    , <NUM_CPU>=42)
-            """
-        )
+    ert_config = ErtConfig.with_plugins(
+        ErtPluginContext.get_site_plugins()
+    ).from_file_contents(
+        """
+        NUM_REALIZATIONS  1
+        FORWARD_MODEL ECLIPSE100(<VERSION>=2024.1                    , <NUM_CPU>=42)
+        """
+    )
     assert len(ert_config.forward_model_steps) == 1
     job = ert_config.forward_model_steps[0]
     assert job.private_args.get("<VERSION>") == "2024.1"
@@ -482,9 +488,10 @@ def test_that_eclipse_fm_step_require_explicit_version(eclipse_v):
             match=f".*Forward model step {eclipse_v} must"
             rf" be given a VERSION argument.*",
         ),
-        ErtPluginContext() as ctx,
     ):
-        _ = ErtConfig.with_plugins(ctx).from_file_contents(
+        _ = ErtConfig.with_plugins(
+            ErtPluginContext.get_site_plugins()
+        ).from_file_contents(
             f"""
             NUM_REALIZATIONS  1
             FORWARD_MODEL {eclipse_v}
@@ -508,9 +515,10 @@ def test_that_eclipse_fm_step_check_version_availability(eclipse_v):
             match=rf".*Unavailable {eclipse_v} version dummy."
             rf" Available versions: \[\'20.*",
         ),
-        ErtPluginContext() as ctx,
     ):
-        ErtConfig.with_plugins(ctx).from_file(config_file_name)
+        ErtConfig.with_plugins(ErtPluginContext.get_site_plugins()).from_file(
+            config_file_name
+        )
 
 
 @pytest.mark.parametrize("eclipse_v", ["ECLIPSE100", "ECLIPSE300"])
@@ -538,9 +546,10 @@ def test_that_we_can_point_to_a_custom_eclrun_when_checking_versions(eclipse_v):
                 rf"Available versions: \[\'2036.1.*"
             ),
         ),
-        ErtPluginContext() as ctx,
     ):
-        ErtConfig.with_plugins(ctx).from_file(config_file_name)
+        ErtConfig.with_plugins(ErtPluginContext.get_site_plugins()).from_file(
+            config_file_name
+        )
 
 
 @pytest.mark.skipif(shutil.which("eclrun") is not None, reason="eclrun is present")
@@ -549,10 +558,9 @@ def test_that_we_can_point_to_a_custom_eclrun_when_checking_versions(eclipse_v):
 def test_that_no_error_thrown_when_checking_eclipse_version_and_eclrun_is_not_present(
     eclipse_v,
 ):
-    with ErtPluginContext() as ctx:
-        _ = ErtConfig.with_plugins(ctx).from_file_contents(
-            f"NUM_REALIZATIONS 1\nFORWARD_MODEL {eclipse_v}(<VERSION>=1)\n"
-        )
+    _ = ErtConfig.with_plugins(ErtPluginContext.get_site_plugins()).from_file_contents(
+        f"NUM_REALIZATIONS 1\nFORWARD_MODEL {eclipse_v}(<VERSION>=1)\n"
+    )
 
 
 @pytest.mark.integration_test
@@ -563,8 +571,9 @@ def test_that_flow_fm_step_does_not_need_explicit_version():
         "NUM_REALIZATIONS 1\nFORWARD_MODEL FLOW\n",
         encoding="utf-8",
     )
-    with ErtPluginContext() as ctx:
-        ErtConfig.with_plugins(ctx).from_file(config_file_name)
+    ErtConfig.with_plugins(ErtPluginContext.get_site_plugins()).from_file(
+        config_file_name
+    )
 
 
 @pytest.mark.integration_test
@@ -575,8 +584,9 @@ def test_that_flow_fm_step_always_allow_explicit_default_version():
         "NUM_REALIZATIONS 1\nFORWARD_MODEL FLOW(<VERSION>=default)\n",
         encoding="utf-8",
     )
-    with ErtPluginContext() as ctx:
-        ErtConfig.with_plugins(ctx).from_file(config_file_name)
+    ErtConfig.with_plugins(ErtPluginContext.get_site_plugins()).from_file(
+        config_file_name
+    )
 
 
 @pytest.mark.integration_test
@@ -593,9 +603,10 @@ def test_that_flow_fm_step_check_version_availability():
             ConfigValidationError,
             match=r".*Unavailable Flow version dummy. Available versions: \[\'.*",
         ),
-        ErtPluginContext() as ctx,
     ):
-        ErtConfig.with_plugins(ctx).from_file(config_file_name)
+        ErtConfig.with_plugins(ErtPluginContext.get_site_plugins()).from_file(
+            config_file_name
+        )
 
 
 @pytest.mark.integration_test
@@ -611,9 +622,10 @@ def test_that_flow_fm_gives_config_warning_on_unknown_options():
             ConfigWarning,
             match=r".*Unknown option.*Flow: .*DUMMY.*",
         ),
-        ErtPluginContext() as ctx,
     ):
-        ErtConfig.with_plugins(ctx).from_file(config_file_name)
+        ErtConfig.with_plugins(ErtPluginContext.get_site_plugins()).from_file(
+            config_file_name
+        )
 
 
 def test_that_plugin_forward_models_are_installed(tmp_path):

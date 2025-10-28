@@ -657,8 +657,8 @@ def test_that_install_data_with_inline_data_generates_a_file(
         ],
     }
     config = EverestConfig.model_validate(config_dict)
-    with ErtPluginContext() as runtime_plugins:
-        run_model = EverestRunModel.create(config, runtime_plugins=runtime_plugins)
+    runtime_plugins = ErtPluginContext.get_site_plugins()
+    run_model = EverestRunModel.create(config, runtime_plugins=runtime_plugins)
     run_model.run_experiment(EvaluatorServerConfig())
     for expected_dir in ("evaluation_0", "perturbation_0"):
         expected_file = Path(

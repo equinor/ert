@@ -32,7 +32,7 @@ def create_runmodel(min_config: dict, monkeypatch: pytest.MonkeyPatch) -> Callab
     ) -> EverestRunModel:
         site_plugins = ErtPluginContext.get_site_plugins()
         with use_runtime_plugins(site_plugins):
-            runtime_plugins.queue_options = None
+            site_plugins.queue_options = None
             return EverestRunModel.create(
                 EverestConfig(
                     **(

@@ -302,19 +302,19 @@ def main() -> None:
     terminate_on_parent_death_thread = threading.Thread(
         target=terminate_on_parent_death, args=[stopped, args.parent_pid, 1.0]
     )
-    with ErtPluginContext(logger=logging.getLogger()):
-        terminate_on_parent_death_thread.start()
-        with tracer.start_as_current_span("run_storage_server", ctx):
-            logger = logging.getLogger("ert.shared.storage.info")
-            try:
-                logger.info("Starting dark storage")
-                logger.info(f"Started dark storage with parent {args.parent_pid}")
-                run_server(args, debug=False, uvicorn_config=uvicorn_config)
-            except (SystemExit, BaseServiceExit):
-                logger.info("Stopping dark storage")
-            finally:
-                stopped.set()
-                _join_terminate_thread(terminate_on_parent_death_thread)
+    ErtPluginContext.setup_logging(logging.getLogger())
+    terminate_on_parent_death_thread.start()
+    with tracer.start_as_current_span("run_storage_server", ctx):
+        logger = logging.getLogger("ert.shared.storage.info")
+        try:
+            logger.info("Starting dark storage")
+            logger.info(f"Started dark storage with parent {args.parent_pid}")
+            run_server(args, debug=False, uvicorn_config=uvicorn_config)
+        except (SystemExit, BaseServiceExit):
+            logger.info("Stopping dark storage")
+        finally:
+            stopped.set()
+            _join_terminate_thread(terminate_on_parent_death_thread)
 
 
 if __name__ == "__main__":

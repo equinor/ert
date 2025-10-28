@@ -6,14 +6,12 @@ import warnings
 from argparse import ArgumentParser
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
-from types import TracebackType
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 
 import pluggy
 from pydantic import BaseModel, Field
 from typing_extensions import TypedDict
 
-from ert.base_model_context import init_context_var
 from ert.config import (
     ForwardModelStep,
     ForwardModelStepDocumentation,
@@ -471,20 +469,3 @@ class ErtPluginContext:
             pm.add_logging_handle_to_root(logger=root_logger)
 
         pm.add_span_processor_to_trace_provider()
-
-    def __enter__(self) -> ErtRuntimePlugins:
-        self.setup_logging()
-        logger.debug(str(self.plugin_manager))
-
-        runtime_plugins = self.get_site_plugins(self.plugin_manager)
-        self._context_token = init_context_var.set(runtime_plugins)  # type: ignore
-        return runtime_plugins
-
-    def __exit__(
-        self,
-        exception: BaseException,
-        exception_type: type[BaseException],
-        traceback: TracebackType,
-    ) -> None:
-        logger.debug("Exiting plugin context")
-        init_context_var.reset(self._context_token)

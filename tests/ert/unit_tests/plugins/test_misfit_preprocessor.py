@@ -16,9 +16,10 @@ def test_that_misfit_preprocessor_raises():
             ConfigValidationError,
             match="MISFIT_PREPROCESSOR is removed, use ANALYSIS_SET_VAR OBSERVATIONS",
         ),
-        ErtPluginContext() as ctx,
     ):
-        ErtConfig.with_plugins(ctx).from_file("poly.ert")
+        ErtConfig.with_plugins(ErtPluginContext.get_site_plugins()).from_file(
+            "poly.ert"
+        )
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -33,6 +34,7 @@ def test_that_misfit_preprocessor_raises_with_config():
             ConfigValidationError,
             match="Add multiple entries to set up multiple groups",
         ),
-        ErtPluginContext() as ctx,
     ):
-        ErtConfig.with_plugins(ctx).from_file("poly.ert")
+        ErtConfig.with_plugins(ErtPluginContext.get_site_plugins()).from_file(
+            "poly.ert"
+        )

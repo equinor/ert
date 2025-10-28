@@ -15,7 +15,7 @@ import pytest
 import yaml
 
 import ert
-import everest
+from ert.base_model_context import use_runtime_plugins
 from ert.config.queue_config import LocalQueueOptions, LsfQueueOptions
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.plugins import ErtPluginContext, ErtRuntimePlugins
@@ -204,9 +204,10 @@ def cached_example(pytestconfig):
             config.simulator.queue_system = LocalQueueOptions(max_running=2)
             status_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
 
-            with ErtPluginContext() as runtime_plugins:
+            site_plugins = ErtPluginContext.get_site_plugins()
+            with use_runtime_plugins(site_plugins):
                 run_model = EverestRunModel.create(
-                    config, status_queue=status_queue, runtime_plugins=runtime_plugins
+                    config, status_queue=status_queue, runtime_plugins=site_plugins
                 )
             evaluator_server_config = EvaluatorServerConfig()
             try:
@@ -303,21 +304,7 @@ def use_site_configurations_with_lsf_queue_options():
     def ErtRuntimePluginsWithLSFQueueOptions(**kwargs):
         return ErtRuntimePlugins(**(kwargs | {"queue_options": lsf_queue_options}))
 
-    class SiteConfigBlank:
-        @ert.plugin(name="dummy")
-        def site_configurations() -> ErtRuntimePlugins:
-            return ErtRuntimePlugins(queue_options=lsf_queue_options)
-
-    patched_context = partial(
-        everest.simulator.everest_to_ert.ErtPluginContext, plugins=[SiteConfigBlank]
-    )
-    patched_everest = partial(
-        everest.config.everest_config.ErtPluginContext, plugins=[SiteConfigBlank]
-    )
-
     with (
-        patch("everest.simulator.everest_to_ert.ErtPluginContext", patched_context),
-        patch("everest.config.everest_config.ErtPluginContext", patched_everest),
         patch(
             "ert.plugins.plugin_manager.ErtRuntimePlugins",
             ErtRuntimePluginsWithLSFQueueOptions,
@@ -328,18 +315,9 @@ def use_site_configurations_with_lsf_queue_options():
 
 @pytest.fixture()
 def no_plugins():
-    patched_plugin_ctx = partial(ert.plugins.ErtPluginContext, plugins=[])
-
-    patched_context = partial(
-        everest.simulator.everest_to_ert.ErtPluginContext, plugins=[]
-    )
-    patched_everest = partial(
-        everest.config.everest_config.ErtPluginContext, plugins=[]
-    )
+    patched_plugin_manager = partial(ert.plugins.ErtPluginManager, plugins=[])
 
     with (
-        patch("ert.plugins.ErtPluginContext", patched_plugin_ctx),
-        patch("everest.simulator.everest_to_ert.ErtPluginContext", patched_context),
-        patch("everest.config.everest_config.ErtPluginContext", patched_everest),
+        patch("ert.plugins.ErtPluginManager", patched_plugin_manager),
     ):
         yield

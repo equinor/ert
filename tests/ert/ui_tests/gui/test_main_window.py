@@ -187,9 +187,9 @@ def test_that_there_is_a_link_to_github_in_the_suggester(tmp_path, qtbot):
 
     args = Mock()
     args.config = str(config_file)
-    with add_gui_log_handler() as log_handler, ErtPluginContext() as runtime_plugins:
+    with add_gui_log_handler() as log_handler:
         gui, *_ = ert.gui.main._start_initial_gui_window(
-            args, log_handler, runtime_plugins
+            args, log_handler, ErtPluginContext.get_site_plugins()
         )
         assert isinstance(gui, Suggestor)
 

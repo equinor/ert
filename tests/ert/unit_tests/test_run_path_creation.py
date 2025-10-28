@@ -537,25 +537,25 @@ def test_that_deprecated_runpath_substitution_remain_valid(make_run_path):
     """
     This checks that deprecated runpath substitution, using %d, remain intact.
     """
-    with ErtPluginContext() as ctx:
-        ert_config = ErtConfig.with_plugins(ctx).from_file_contents(
-            dedent(
-                """\
-                NUM_REALIZATIONS 2
-                RUNPATH realization-%d/iter-%d
-                FORWARD_MODEL COPY_DIRECTORY(<FROM>=<CONFIG_PATH>/, <TO>=<RUNPATH>/)
-                """
-            )
+    site_plugins = ErtPluginContext.get_site_plugins()
+    ert_config = ErtConfig.with_plugins(site_plugins).from_file_contents(
+        dedent(
+            """\
+            NUM_REALIZATIONS 2
+            RUNPATH realization-%d/iter-%d
+            FORWARD_MODEL COPY_DIRECTORY(<FROM>=<CONFIG_PATH>/, <TO>=<RUNPATH>/)
+            """
         )
+    )
 
-        _, run_arg, _ = make_run_path(ert_config)
+    _, run_arg, _ = make_run_path(ert_config)
 
-        for realization in run_arg:
-            assert str(Path().absolute()) + "/realization-" + str(
-                realization.iens
-            ) + "/iter-0" in Path(realization.runpath + "/jobs.json").read_text(
-                encoding="utf-8"
-            )
+    for realization in run_arg:
+        assert str(Path().absolute()) + "/realization-" + str(
+            realization.iens
+        ) + "/iter-0" in Path(realization.runpath + "/jobs.json").read_text(
+            encoding="utf-8"
+        )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
