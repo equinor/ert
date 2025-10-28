@@ -16,7 +16,7 @@ from hypothesis import HealthCheck, given, note, settings
 from hypothesis import strategies as st
 from pytest import MonkeyPatch, TempPathFactory
 
-from ert.base_model_context import init_context
+from ert.base_model_context import use_runtime_plugins
 from ert.config import (
     ConfigWarning,
     ErtConfig,
@@ -508,7 +508,7 @@ def test_that_deserializing_ensemble_experiment_is_the_inverse_of_serializing(
     tmp_path = tmp_path_factory.mktemp("deserializing_ensemble_experiment")
     baserunmodel_args, runtime_plugins = runmodel_args_and_plugins
     note(f"Running in directory {tmp_path}")
-    with MonkeyPatch.context() as patch, init_context(runtime_plugins):
+    with MonkeyPatch.context() as patch, use_runtime_plugins(runtime_plugins):
         patch.chdir(tmp_path)
         warnings.simplefilter("ignore", category=ConfigWarning)
         runmodel = EnsembleExperiment(
@@ -545,7 +545,7 @@ def test_that_deserializing_ensemble_smoother_is_the_inverse_of_serializing(
     tmp_path = tmp_path_factory.mktemp("deserializing_ensemble_smoother")
     baserunmodel_args, runtime_plugins = runmodel_args_and_plugins
     note(f"Running in directory {tmp_path}")
-    with MonkeyPatch.context() as patch, init_context(runtime_plugins):
+    with MonkeyPatch.context() as patch, use_runtime_plugins(runtime_plugins):
         patch.chdir(tmp_path)
         runmodel = EnsembleSmoother(
             **(baserunmodel_args | initial_ensemble_args | update_runmodel_args)
@@ -577,7 +577,7 @@ def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serial
     tmp_path = tmp_path_factory.mktemp("deserializing_eif")
     baserunmodel_args, runtime_plugins = runmodel_args_and_plugins
     note(f"Running in directory {tmp_path}")
-    with MonkeyPatch.context() as patch, init_context(runtime_plugins):
+    with MonkeyPatch.context() as patch, use_runtime_plugins(runtime_plugins):
         patch.chdir(tmp_path)
         runmodel = EnsembleInformationFilter(
             **(baserunmodel_args | initial_ensemble_args | update_runmodel_args)
@@ -615,7 +615,7 @@ def test_that_deserializing_esmda_is_the_inverse_of_serializing(
     baserunmodel_args, runtime_plugins = runmodel_args_and_plugins
     note(f"Running in directory {tmp_path}")
 
-    with MonkeyPatch.context() as patch, init_context(runtime_plugins):
+    with MonkeyPatch.context() as patch, use_runtime_plugins(runtime_plugins):
         patch.chdir(tmp_path)
 
         runmodel = MultipleDataAssimilation(
@@ -882,7 +882,7 @@ def ertscript_workflow_job():
 
 
 def test_that_executable_wf_job_serializes_entire_wfjob(executable_workflow_job):
-    with init_context(ErtRuntimePlugins(installed_workflow_jobs={})):
+    with use_runtime_plugins(ErtRuntimePlugins(installed_workflow_jobs={})):
         serialized = executable_workflow_job.model_dump(mode="json")
         deserialized = ExecutableWorkflow.model_validate(serialized)
         assert deserialized == executable_workflow_job
@@ -901,14 +901,14 @@ def test_that_workflow_with_executable_wf_job_serializes_entire_wfjob(
         ],
     )
 
-    with init_context(ErtRuntimePlugins(installed_workflow_jobs={})):
+    with use_runtime_plugins(ErtRuntimePlugins(installed_workflow_jobs={})):
         serialized = workflow.model_dump(mode="json")
         deserialized = Workflow.model_validate(serialized)
         assert deserialized == workflow
 
 
 def test_that_ertscript_wf_job_serializes_ertscript_by_name(ertscript_workflow_job):
-    with init_context(
+    with use_runtime_plugins(
         ErtRuntimePlugins(
             installed_workflow_jobs={
                 ertscript_workflow_job.name: ertscript_workflow_job
@@ -925,7 +925,7 @@ def test_that_ertscript_wf_job_deserialization_raises_error_if_uninstalled(
 ):
     serialized_job = ertscript_workflow_job.model_dump(mode="json")
     with (
-        init_context(
+        use_runtime_plugins(
             ErtRuntimePlugins(
                 installed_workflow_jobs={
                     f"{ertscript_workflow_job.name}ff": ertscript_workflow_job
@@ -948,7 +948,7 @@ def test_that_workflow_with_ertscript_serializes_ertscript_by_name(
         ],
     )
 
-    with init_context(
+    with use_runtime_plugins(
         ErtRuntimePlugins(
             installed_workflow_jobs={
                 ertscript_workflow_job.name: ertscript_workflow_job

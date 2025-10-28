@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 @contextmanager
-def init_context(value: ErtRuntimePlugins) -> Iterator[None]:
+def use_runtime_plugins(value: ErtRuntimePlugins) -> Iterator[None]:
     token = init_context_var.set(value)  # type: ignore
     try:
         yield
