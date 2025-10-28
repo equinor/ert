@@ -27,7 +27,8 @@ from ert.mode_definitions import (
 )
 from ert.validation import ActiveRange
 
-from ..plugins import ErtPluginContext
+from ..base_model_context import init_context
+from ..plugins import ErtPluginContext, ErtRuntimePlugins
 from .ensemble_experiment import EnsembleExperiment
 from .ensemble_information_filter import EnsembleInformationFilter
 from .ensemble_smoother import EnsembleSmoother
@@ -78,7 +79,9 @@ def create_model(
     if args.mode == EVALUATE_ENSEMBLE_MODE:
         return _setup_evaluate_ensemble(config, args, status_queue)
     if args.mode == ENSEMBLE_SMOOTHER_MODE:
-        return _setup_ensemble_smoother(config, args, update_settings, status_queue)
+        return _setup_ensemble_smoother(
+            config, args, update_settings, status_queue
+        )
     if args.mode == ENIF_MODE:
         return _setup_ensemble_information_filter(
             config, args, update_settings, status_queue
@@ -88,7 +91,9 @@ def create_model(
             config, args, update_settings, status_queue
         )
     if args.mode == MANUAL_UPDATE_MODE:
-        return _setup_manual_update(config, args, update_settings, status_queue)
+        return _setup_manual_update(
+            config, args, update_settings, status_queue
+        )
     raise NotImplementedError(f"Run type not supported {args.mode}")
 
 
@@ -172,8 +177,24 @@ def _setup_single_test_run(
         user_installed_workflow_jobs=user_installed_workflow_jobs,
     )
 
-    with ErtPluginContext():
-        return SingleTestRun(**runmodel_config.model_dump(), status_queue=status_queue)
+    user_plugins = ErtPluginContext.get_user_plugins(
+        config.user_installed_workflow_jobs
+    )
+
+    site_plugins = ErtPluginContext.get_site_plugins()
+
+    with init_context(user_plugins):
+        runmodel_config_with_user_plugins = runmodel_config.model_copy()
+
+    with init_context(site_plugins):
+        runmodel_config_with_user_and_site_plugins = (
+            runmodel_config_with_user_plugins.model_copy()
+        )
+
+    return SingleTestRun(
+        runmodel_config_with_user_and_site_plugins.model_dump(),
+        status_queue=status_queue,
+    )
 
 
 def validate_minimum_realizations(
