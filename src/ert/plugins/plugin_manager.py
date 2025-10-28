@@ -464,10 +464,16 @@ class ErtPluginContext:
 
         return runtime_plugins
 
+    @staticmethod
+    def setup_logging(root_logger: logging.Logger | None = None) -> None:
+        pm = ErtPluginManager()
+        if root_logger is not None:
+            pm.add_logging_handle_to_root(logger=root_logger)
+
+        pm.add_span_processor_to_trace_provider()
+
     def __enter__(self) -> ErtRuntimePlugins:
-        if self._logger is not None:
-            self.plugin_manager.add_logging_handle_to_root(logger=self._logger)
-        self.plugin_manager.add_span_processor_to_trace_provider()
+        self.setup_logging()
         logger.debug(str(self.plugin_manager))
 
         runtime_plugins = self.get_site_plugins(self.plugin_manager)
