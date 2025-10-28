@@ -45,6 +45,7 @@ class PlotContext:
         self._date_support_active = True
         self._x_axis: str | None = None
         self._y_axis: str | None = None
+        self._log_scale = False
 
     def plotConfig(self) -> PlotConfig:
         return self._plot_config

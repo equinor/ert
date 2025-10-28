@@ -124,6 +124,10 @@ def plotHistogram(
                 if minimum is not None and maximum is not None and minimum == maximum:
                     minimum -= 0.1
                     maximum += 0.1
+                xscale = "log" if plot_context._log_scale else "linear"
+                ax = axes[ensemble.name]
+                if ax.get_xscale() != xscale:
+                    ax.set_xscale(xscale)
                 config.addLegendItem(
                     ensemble.name,
                     _plotHistogram(

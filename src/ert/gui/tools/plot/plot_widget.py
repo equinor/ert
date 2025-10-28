@@ -166,13 +166,14 @@ class PlotWidget(QWidget):
         self._figure.clear()
 
     def _log_axis_for_plotter(self) -> str | None:
-        """Return 'x' or 'y' if this plotter supports log toggle, else None."""
-        cls = type(self._plotter).__name__
-        x_only = {"HistogramPlot"}
-        # we don't support any y-only log plots yet
-        if cls in x_only:
-            return "x"
-        return None
+        return "x" if type(self._plotter).__name__ == "HistogramPlot" else None
+        # """Return 'x' or 'y' if this plotter supports log toggle, else None."""
+        # cls = type(self._plotter).__name__
+        # x_only = {"HistogramPlot"}
+        # # we don't support any y-only log plots yet
+        # if cls in x_only:
+        #     return "x"
+        # return None
 
     @Slot(bool)
     def _on_log_toggled(self, checked: bool) -> None:
@@ -200,8 +201,8 @@ class PlotWidget(QWidget):
         self._log_checkbox.setChecked(is_log)
         self._log_checkbox.blockSignals(False)
 
-        if not is_log:
-            self._apply_log_state(False)
+        # if not is_log:
+        #     self._apply_log_state(False)
 
     def _apply_log_state(self, checked: bool) -> bool:
         axis = self._log_axis_for_plotter()
@@ -217,6 +218,7 @@ class PlotWidget(QWidget):
                     ax.set_yscale("log" if checked else "linear")
                     if not checked:
                         ax.yaxis.set_major_formatter(ConditionalAxisFormatter())
+
             self._canvas.draw_idle()
         except ValueError:
             return False
@@ -235,6 +237,11 @@ class PlotWidget(QWidget):
     ) -> None:
         self.resetPlot()
         try:
+            is_hist = type(self._plotter).__name__ == "HistogramPlot"
+            desired = (
+                "log" if (is_hist and self._log_checkbox.isChecked()) else "linear"
+            )
+            plot_context._log_scale = desired == "log"
             self._plotter.plot(
                 self._figure,
                 plot_context,
