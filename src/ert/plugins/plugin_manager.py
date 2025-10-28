@@ -391,17 +391,18 @@ class ErtPluginContext:
         self.plugin_manager = ErtPluginManager(plugins=plugins)
         self._logger = logger
 
-    def __enter__(self) -> ErtRuntimePlugins:
-        if self._logger is not None:
-            self.plugin_manager.add_logging_handle_to_root(logger=self._logger)
-        self.plugin_manager.add_span_processor_to_trace_provider()
-        logger.debug(str(self.plugin_manager))
+    @staticmethod
+    def get_site_plugins(
+        plugin_manager: ErtPluginManager | None = None,
+    ) -> ErtRuntimePlugins:
+        if plugin_manager is None:
+            plugin_manager = ErtPluginManager()
 
-        site_configurations = self.plugin_manager.get_site_configurations()
+        site_configurations = plugin_manager.get_site_configurations()
 
-        ecl100_config_path = self.plugin_manager.get_ecl100_config_path()
-        ecl300_config_path = self.plugin_manager.get_ecl300_config_path()
-        flow_config_path = self.plugin_manager.get_flow_config_path()
+        ecl100_config_path = plugin_manager.get_ecl100_config_path()
+        ecl300_config_path = plugin_manager.get_ecl300_config_path()
+        flow_config_path = plugin_manager.get_flow_config_path()
 
         config_env_vars = {}
         if ecl100_config_path is not None:
@@ -413,7 +414,7 @@ class ErtPluginContext:
         if flow_config_path is not None:
             config_env_vars["FLOW_SITE_CONFIG"] = flow_config_path
 
-        installable_workflow_jobs = self.plugin_manager.get_installable_workflow_jobs()
+        installable_workflow_jobs = plugin_manager.get_installable_workflow_jobs()
 
         all_forward_model_steps = (
             dict(site_configurations.installed_forward_model_steps)
@@ -421,23 +422,23 @@ class ErtPluginContext:
             else {}
         )
 
-        for job_name, job_path in self.plugin_manager.get_installable_jobs().items():
+        for job_name, job_path in plugin_manager.get_installable_jobs().items():
             fm_step = forward_model_step_from_config_contents(
                 Path(job_path).read_text(encoding="utf-8"), job_path, job_name
             )
             all_forward_model_steps[job_name] = fm_step
 
         all_workflow_jobs: dict[str, WorkflowJob] = dict[str, WorkflowJob](
-            self.plugin_manager.get_ertscript_workflows().get_workflows()
+            plugin_manager.get_ertscript_workflows().get_workflows()
         ) | dict[str, WorkflowJob](
-            self.plugin_manager.get_legacy_ertscript_workflows().get_workflows()
+            plugin_manager.get_legacy_ertscript_workflows().get_workflows()
         )
 
         for _, job_path in installable_workflow_jobs.items():
             wf_job = workflow_job_from_file(job_path)
             all_workflow_jobs[wf_job.name] = wf_job
 
-        for fm_step_subclass in self.plugin_manager.forward_model_steps:
+        for fm_step_subclass in plugin_manager.forward_model_steps:
             # we call without required arguments to
             # ForwardModelStepPlugin.__init__ as
             # we expect the subclass to override __init__
@@ -457,10 +458,19 @@ class ErtPluginContext:
                 if site_configurations
                 else {}
             ),
-            env_pr_fm_step=self.plugin_manager.get_forward_model_configuration(),
-            help_links=self.plugin_manager.get_help_links(),
+            env_pr_fm_step=plugin_manager.get_forward_model_configuration(),
+            help_links=plugin_manager.get_help_links(),
         )
 
+        return runtime_plugins
+
+    def __enter__(self) -> ErtRuntimePlugins:
+        if self._logger is not None:
+            self.plugin_manager.add_logging_handle_to_root(logger=self._logger)
+        self.plugin_manager.add_span_processor_to_trace_provider()
+        logger.debug(str(self.plugin_manager))
+
+        runtime_plugins = self.get_site_plugins(self.plugin_manager)
         self._context_token = init_context_var.set(runtime_plugins)  # type: ignore
         return runtime_plugins
 
