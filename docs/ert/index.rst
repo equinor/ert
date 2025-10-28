@@ -54,7 +54,6 @@ To understand the theoretical foundations of ensemble-based methods, head over t
    :hidden:
    :caption: Developer Documentation
 
-   developer_documentation/roadmap
    developer_documentation/dev-strategy
    developer_documentation/forward_model
    developer_documentation/qt
