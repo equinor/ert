@@ -25,6 +25,7 @@ from starlette.requests import Request
 from starlette.responses import PlainTextResponse, Response
 from starlette.websockets import WebSocket
 
+from ert.base_model_context import use_runtime_plugins
 from ert.config import QueueSystem
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.ensemble_evaluator.event import FullSnapshotEvent, SnapshotUpdateEvent
@@ -299,13 +300,14 @@ class ExperimentRunner:
         status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
         run_model: EverestRunModel | None = None
         try:
-            with ErtPluginContext() as runtime_plugins:
+            site_plugins = ErtPluginContext.get_site_plugins()
+            with use_runtime_plugins(site_plugins):
                 run_model = EverestRunModel.create(
                     everest_config=self._everest_config,
                     experiment_name=f"EnOpt@{datetime.datetime.now().isoformat(timespec='seconds')}",
                     target_ensemble="batch",
                     status_queue=status_queue,
-                    runtime_plugins=runtime_plugins,
+                    runtime_plugins=site_plugins,
                 )
             shared_data.status = ExperimentStatus(
                 message="Experiment started", status=ExperimentState.running

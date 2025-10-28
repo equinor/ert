@@ -110,8 +110,8 @@ def test_that_storage_matches(
         tmp_path / "all_data_types" / f"storage-{ert_version}",
     )
     monkeypatch.chdir(tmp_path / "all_data_types")
-    with ErtPluginContext() as ctx:
-        ert_config = ErtConfig.with_plugins(ctx).from_file("config.ert")
+    site_plugins = ErtPluginContext.get_site_plugins()
+    ert_config = ErtConfig.with_plugins(site_plugins).from_file("config.ert")
 
     local_storage_set_ert_config(ert_config)
     # To make sure all tests run against the same snapshot
@@ -260,8 +260,8 @@ def test_that_storage_works_with_missing_parameters_and_responses(
         os.remove(real_dir / gen_data_file)
 
     monkeypatch.chdir(tmp_path / "all_data_types")
-    with ErtPluginContext() as ctx:
-        ert_config = ErtConfig.with_plugins(ctx).from_file("config.ert")
+    site_plugins = ErtPluginContext.get_site_plugins()
+    ert_config = ErtConfig.with_plugins(site_plugins).from_file("config.ert")
 
     local_storage_set_ert_config(ert_config)
     # To make sure all tests run against the same snapshot
@@ -348,8 +348,8 @@ def test_that_manual_update_from_migrated_storage_works(
         tmp_path / "all_data_types" / f"storage-{ert_version}",
     )
     monkeypatch.chdir(tmp_path / "all_data_types")
-    with ErtPluginContext() as ctx:
-        ert_config = ErtConfig.with_plugins(ctx).from_file("config.ert")
+    site_plugins = ErtPluginContext.get_site_plugins()
+    ert_config = ErtConfig.with_plugins(site_plugins).from_file("config.ert")
 
     local_storage_set_ert_config(ert_config)
     # To make sure all tests run against the same snapshot
@@ -461,8 +461,8 @@ def test_migrate_storage_with_no_responses(
         os.remove(real_dir / summary_file)
 
     monkeypatch.chdir(tmp_path / "all_data_types")
-    with ErtPluginContext() as ctx:
-        ert_config = ErtConfig.with_plugins(ctx).from_file("config.ert")
+    site_plugins = ErtPluginContext.get_site_plugins()
+    ert_config = ErtConfig.with_plugins(site_plugins).from_file("config.ert")
 
     local_storage_set_ert_config(ert_config)
 

@@ -21,6 +21,7 @@ from opentelemetry.trace import Status, StatusCode
 
 import ert.shared
 from _ert.threading import set_signal_handler
+from ert.base_model_context import use_runtime_plugins
 from ert.cli.main import ErtCliError, run_cli
 from ert.config import ConfigValidationError, ErtConfig, lint_file
 from ert.logging import LOGGING_CONFIG
@@ -69,8 +70,9 @@ def run_webviz_ert(args: Namespace, _: ErtRuntimePlugins | None = None) -> None:
         ) from err
 
     kwargs: dict[str, Any] = {"verbose": args.verbose}
-    with ErtPluginContext() as runtime_plugins:
-        ert_config = ErtConfig.with_plugins(runtime_plugins).from_file(args.config)
+    ert_config = ErtConfig.with_plugins(ErtPluginContext.get_site_plugins()).from_file(
+        args.config
+    )
 
     os.chdir(ert_config.config_path)
     ens_path = ert_config.ens_path
@@ -663,9 +665,11 @@ def main() -> None:
         handler.setLevel(logging.INFO)
         root_logger.addHandler(handler)
     try:
-        with ErtPluginContext(logger=logging.getLogger()) as runtime_plugins:
+        site_plugins = ErtPluginContext.get_site_plugins()
+        ErtPluginContext.setup_logging(logging.getLogger())
+        with use_runtime_plugins(site_plugins):
             logger.info(f"Running ert with {args} in {os.getcwd()}")
-            args.func(args, runtime_plugins)
+            args.func(args, site_plugins)
     except ErtStoragePermissionError as err:
         logger.error(str(err))
         sys.exit(str(err))

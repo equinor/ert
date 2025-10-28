@@ -32,18 +32,19 @@ def _open_main_window(
     """)
     )
     (path / "test_wf").write_text("EXPORT_RUNPATH\n")
-    with ErtPluginContext() as runtime_plugins:
-        config = ErtConfig.with_plugins(runtime_plugins).from_file(path / "config.ert")
+    config = ErtConfig.with_plugins(ErtPluginContext.get_site_plugins()).from_file(
+        path / "config.ert"
+    )
 
-        args_mock = Mock()
-        args_mock.config = "config.ert"
-        # handler defined here to ensure lifetime until end of function, if inlined
-        # it will cause the following error:
-        # RuntimeError: wrapped C/C++ object of type GUILogHandler
-        handler = GUILogHandler()
-        gui = _setup_main_window(config, args_mock, handler, config.ens_path)
-        yield gui
-        gui.close()
+    args_mock = Mock()
+    args_mock.config = "config.ert"
+    # handler defined here to ensure lifetime until end of function, if inlined
+    # it will cause the following error:
+    # RuntimeError: wrapped C/C++ object of type GUILogHandler
+    handler = GUILogHandler()
+    gui = _setup_main_window(config, args_mock, handler, config.ens_path)
+    yield gui
+    gui.close()
 
 
 @pytest.fixture

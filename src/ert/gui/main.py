@@ -149,10 +149,9 @@ def _start_initial_gui_window(
         if runtime_plugins is not None:
             ert_config = ErtConfig.with_plugins(runtime_plugins).from_file(args.config)
         else:
-            with ErtPluginContext() as default_runtime_plugins:
-                ert_config = ErtConfig.with_plugins(default_runtime_plugins).from_file(
-                    args.config
-                )
+            ert_config = ErtConfig.with_plugins(
+                ErtPluginContext.get_site_plugins()
+            ).from_file(args.config)
         local_storage_set_ert_config(ert_config)
 
     storage_path = None

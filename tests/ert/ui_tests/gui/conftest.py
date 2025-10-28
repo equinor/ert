@@ -24,6 +24,7 @@ from PyQt6.QtWidgets import (
 )
 from pytestqt.qtbot import QtBot
 
+from ert.base_model_context import use_runtime_plugins
 from ert.config import ErtConfig
 from ert.gui.ertwidgets import ClosableDialog
 from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
@@ -91,8 +92,9 @@ def _new_poly_example(
 def _open_main_window(path) -> Iterator[tuple[ErtMainWindow, Storage, ErtConfig]]:
     args_mock = Mock()
     args_mock.config = str(path)
-    with ErtPluginContext() as ctx:
-        config = ErtConfig.with_plugins(ctx).from_file(path)
+    site_plugins = ErtPluginContext.get_site_plugins()
+    with use_runtime_plugins(site_plugins):
+        config = ErtConfig.with_plugins(site_plugins).from_file(path)
         with (
             add_gui_log_handler() as log_handler,
         ):

@@ -354,8 +354,8 @@ def test_everest2ropt_validation_error(
         ropt_dict["foo"] = "bar"
         return ropt_dict, initial_value
 
-    with ErtPluginContext() as runtime_plugins:
-        run_model = EverestRunModel.create(ever_config, runtime_plugins=runtime_plugins)
+    runtime_plugins = ErtPluginContext.get_site_plugins()
+    run_model = EverestRunModel.create(ever_config, runtime_plugins=runtime_plugins)
 
     monkeypatch.setattr(everest_run_model, "everest2ropt", _patched_everest2ropt)
     evaluator_server_config = EvaluatorServerConfig()

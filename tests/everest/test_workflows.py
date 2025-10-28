@@ -78,8 +78,9 @@ if __name__ == "__main__":
     else:
         config = EverestConfig.model_validate(min_config)
 
-    with ErtPluginContext() as runtime_plugins:
-        run_model = EverestRunModel.create(config, runtime_plugins=runtime_plugins)
+    run_model = EverestRunModel.create(
+        config, runtime_plugins=ErtPluginContext.get_site_plugins()
+    )
 
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)

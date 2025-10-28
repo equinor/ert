@@ -35,10 +35,8 @@ def mock_dummy_plugins(target_dir: Path):
 
 
 def test_no_plugins():
-    with (
-        ErtPluginContext(plugins=[]) as runtime_plugins,
-    ):
-        assert ErtRuntimePlugins(queue_options=None) == runtime_plugins
+    runtime_plugins = ErtPluginContext.get_site_plugins(ErtPluginManager(plugins=[]))
+    assert ErtRuntimePlugins(queue_options=None) == runtime_plugins
 
 
 def test_that_ecl_and_flow_envvars_plugins_are_passed_through_plugin_context(
@@ -49,17 +47,17 @@ def test_that_ecl_and_flow_envvars_plugins_are_passed_through_plugin_context(
     mock_dummy_plugins(Path(some_tmpdir))
     monkeypatch.setattr(tempfile, "mkdtemp", Mock(return_value=some_tmpdir))
 
-    with (
-        ErtPluginContext(plugins=[dummy_plugins]) as plugin_context,
-    ):
-        assert plugin_context.environment_variables == {
-            "ECL100_SITE_CONFIG": "dummy/path/ecl100_config.yml",
-            "ECL300_SITE_CONFIG": "dummy/path/ecl300_config.yml",
-            "FLOW_SITE_CONFIG": "dummy/path/flow_config.yml",
-            "OMP_NUM_THREADS": "5",
-            "MKL_NUM_THREADS": "5",
-            "NUMEXPR_NUM_THREADS": "5",
-        }
+    runtime_plugins = ErtPluginContext.get_site_plugins(
+        plugin_manager=ErtPluginManager(plugins=[dummy_plugins])
+    )
+    assert runtime_plugins.environment_variables == {
+        "ECL100_SITE_CONFIG": "dummy/path/ecl100_config.yml",
+        "ECL300_SITE_CONFIG": "dummy/path/ecl300_config.yml",
+        "FLOW_SITE_CONFIG": "dummy/path/flow_config.yml",
+        "OMP_NUM_THREADS": "5",
+        "MKL_NUM_THREADS": "5",
+        "NUMEXPR_NUM_THREADS": "5",
+    }
 
 
 def test_that_site_configuration_propagates_through_plugin_manager():
@@ -100,8 +98,10 @@ def test_that_site_configuration_propagates_through_plugin_context():
         def site_configurations():
             return site_config_content
 
-    with ErtPluginContext(plugins=[SomePlugin]) as runtime_plugins:
-        assert runtime_plugins == ErtRuntimePlugins(**site_config_content)
+    runtime_plugins = ErtPluginContext.get_site_plugins(
+        ErtPluginManager(plugins=[SomePlugin])
+    )
+    assert runtime_plugins == ErtRuntimePlugins(**site_config_content)
 
 
 def test_that_site_configuration_forward_models_are_merged_with_other_plugins():
@@ -163,11 +163,13 @@ def test_that_site_configuration_forward_models_are_merged_with_other_plugins():
         def installable_forward_model_steps():
             return [OPM10000]
 
-    with ErtPluginContext(plugins=[SomePlugin]) as runtime_plugins:
-        assert runtime_plugins.installed_forward_model_steps == {
-            "OPM9000": OPM9000(),
-            "OPM10000": OPM10000(),
-        }
+    runtime_plugins = ErtPluginContext.get_site_plugins(
+        ErtPluginManager(plugins=[SomePlugin])
+    )
+    assert runtime_plugins.installed_forward_model_steps == {
+        "OPM9000": OPM9000(),
+        "OPM10000": OPM10000(),
+    }
 
 
 def test_that_plugin_context_with_two_site_configurations_raises_error(tmpdir):
@@ -184,4 +186,4 @@ def test_that_plugin_context_with_two_site_configurations_raises_error(tmpdir):
     with (
         pytest.raises(ValueError, match="Only one site configuration is allowed"),
     ):
-        ErtPluginContext(plugins=[SiteOne, SiteTwo]).__enter__()  # noqa
+        ErtPluginContext.get_site_plugins(ErtPluginManager(plugins=[SiteOne, SiteTwo]))

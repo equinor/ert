@@ -28,7 +28,7 @@ from pydantic_core import ErrorDetails
 from pydantic_core.core_schema import ValidationInfo
 from ruamel.yaml import YAML, YAMLError
 
-from ert.base_model_context import BaseModelWithContextSupport
+from ert.base_model_context import BaseModelWithContextSupport, use_runtime_plugins
 from ert.config import ConfigWarning, QueueSystem
 from ert.plugins import ErtPluginContext
 from everest.config.install_template_config import InstallTemplateConfig
@@ -1071,7 +1071,7 @@ to read summary data from forward model, do:
 
     @classmethod
     def with_plugins(cls, config_dict: dict[str, Any] | ConfigDict) -> Self:
-        with ErtPluginContext():
+        with use_runtime_plugins(ErtPluginContext.get_site_plugins()):
             return cls(**config_dict)
 
     @staticmethod

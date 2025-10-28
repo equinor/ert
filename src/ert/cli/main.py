@@ -10,6 +10,7 @@ from collections import Counter
 from typing import TextIO
 
 from _ert.threading import ErtThread
+from ert.base_model_context import use_runtime_plugins
 from ert.cli.monitor import Monitor
 from ert.cli.workflow import execute_workflow
 from ert.config import ErtConfig, QueueSystem
@@ -45,10 +46,9 @@ def run_cli(args: Namespace, runtime_plugins: ErtRuntimePlugins | None = None) -
     if runtime_plugins is not None:
         ert_config = ErtConfig.with_plugins(runtime_plugins).from_file(args.config)
     else:
-        with ErtPluginContext() as default_runtime_plugins:
-            ert_config = ErtConfig.with_plugins(default_runtime_plugins).from_file(
-                args.config
-            )
+        ert_config = ErtConfig.with_plugins(
+            ErtPluginContext.get_site_plugins()
+        ).from_file(args.config)
 
     local_storage_set_ert_config(ert_config)
     counter_fm_steps = Counter(fms.name for fms in ert_config.forward_model_steps)
@@ -96,7 +96,7 @@ def run_cli(args: Namespace, runtime_plugins: ErtRuntimePlugins | None = None) -
 
     status_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
     try:
-        with ErtPluginContext():
+        with use_runtime_plugins(ErtPluginContext.get_site_plugins()):
             model = create_model(
                 ert_config,
                 args,

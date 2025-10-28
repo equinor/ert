@@ -3,6 +3,7 @@ import warnings
 from typing import Any, cast
 
 import everest
+from ert.base_model_context import use_runtime_plugins
 from ert.config.parsing import ConfigDict
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from ert.plugins import ErtPluginContext
@@ -103,6 +104,6 @@ def _everest_to_ert_config_dict(ever_config: EverestConfig) -> ConfigDict:
 
 
 def everest_to_ert_config_dict(everest_config: EverestConfig) -> ConfigDict:
-    with ErtPluginContext():
+    with use_runtime_plugins(ErtPluginContext.get_site_plugins()):
         config_dict = _everest_to_ert_config_dict(everest_config)
     return config_dict

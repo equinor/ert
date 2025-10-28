@@ -19,6 +19,5 @@ def run_cli_with_pm(args: list[Any], runtime_plugins: ErtRuntimePlugins | None =
     if runtime_plugins:
         res = cli_runner(parsed, runtime_plugins)
     else:
-        with ErtPluginContext() as ad_hoc_runtime_plugins:
-            res = cli_runner(parsed, ad_hoc_runtime_plugins)
+        res = cli_runner(parsed, ErtPluginContext.get_site_plugins())
     return res

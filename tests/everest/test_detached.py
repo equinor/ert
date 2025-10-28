@@ -220,10 +220,10 @@ def test_queue_options_site_config(queue_options, use_plugin, monkeypatch, min_c
 
         plugins = [ActivatePlugin()]
     patched_everest = partial(
-        ert.plugins.plugin_manager.ErtPluginContext, plugins=plugins
+        ert.plugins.plugin_manager.ErtPluginManager, plugins=plugins
     )
     with (
-        patch("everest.config.everest_config.ErtPluginContext", patched_everest),
+        patch("ert.plugins.ErtPluginManager", patched_everest),
     ):
         config = EverestConfig.with_plugins(
             {"simulator": {"queue_system": queue_options}} | min_config
