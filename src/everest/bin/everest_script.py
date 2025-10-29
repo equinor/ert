@@ -106,7 +106,7 @@ def _build_args_parser() -> argparse.ArgumentParser:
     arg_parser = argparse.ArgumentParser(
         description=dedent(
             """
-            Start an "optimization run.
+            Start an optimization run.
 
             Closing the console or interrupting the `everest run` process does
             not terminate the optimization. To continue monitoring the running

@@ -28,23 +28,20 @@ def _build_args_parser() -> argparse.ArgumentParser:
     arg_parser = argparse.ArgumentParser(
         description=dedent(
             """
-            Create a new config file with updated controls.
+            Create a configuration file with updated controls based on a
+            previous run.
 
-            The *everest branch* command creates a new configuration file based
-            on the configuration file from a previous optimization run. The new
-            file is identical to the old configuration, but has updated control
-            values that are retrieved from the batch specified by the mandatory
-            `--batch` argument.
+            The *everest branch* command reads an existing configuration and
+            creates a new configuration file, with initial control values taken
+            from a batch of a previous optimization run.
 
-            **Warning:**
-            Do not remove the optimization output folder before running the
-            *branch* command or it will fail.
+            **Warning:** Do not remove the optimization output folder before
+            running the *branch* command or it will fail.
 
-            **Note:**
-            The *branch* command does not provide true restart functionality.
-            The new config file merely defines new initial controls defined by
-            the given batch. An optimization run based on the new configuration
-            will generate slightly different results.
+            **Note:** The *branch* command does not provide true restart
+            functionality. The new config file merely sets new initial controls
+            defined by the given batch. Subsequent optimization runs will likely
+            produce slightly different results.
             """
         ),
         formatter_class=ArgParseFormatter,

@@ -79,7 +79,7 @@ class EverestMain:
         )
 
     def export(self, args: list[str]) -> None:
-        """Deprecated."""
+        """Deprecated. Results are stored by default in the output directory."""
         everexport_entry(args)
 
     def lint(self, args: list[str]) -> None:
