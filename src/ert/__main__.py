@@ -34,7 +34,7 @@ from ert.mode_definitions import (
     WORKFLOW_MODE,
 )
 from ert.namespace import Namespace
-from ert.plugins import ErtPluginContext, ErtRuntimePlugins
+from ert.plugins import ErtRuntimePlugins, get_site_plugins, setup_site_logging
 from ert.run_models.multiple_data_assimilation import MultipleDataAssimilation
 from ert.services import StorageService, WebvizErt
 from ert.shared.storage.command import add_parser_options as ert_api_add_parser_options
@@ -70,9 +70,7 @@ def run_webviz_ert(args: Namespace, _: ErtRuntimePlugins | None = None) -> None:
         ) from err
 
     kwargs: dict[str, Any] = {"verbose": args.verbose}
-    ert_config = ErtConfig.with_plugins(ErtPluginContext.get_site_plugins()).from_file(
-        args.config
-    )
+    ert_config = ErtConfig.with_plugins(get_site_plugins()).from_file(args.config)
 
     os.chdir(ert_config.config_path)
     ens_path = ert_config.ens_path
@@ -665,8 +663,8 @@ def main() -> None:
         handler.setLevel(logging.INFO)
         root_logger.addHandler(handler)
     try:
-        site_plugins = ErtPluginContext.get_site_plugins()
-        ErtPluginContext.setup_logging(logging.getLogger())
+        site_plugins = get_site_plugins()
+        setup_site_logging(logging.getLogger())
         with use_runtime_plugins(site_plugins):
             logger.info(f"Running ert with {args} in {os.getcwd()}")
             args.func(args, site_plugins)

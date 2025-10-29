@@ -13,7 +13,7 @@ from ert.gui.main import _setup_main_window
 from ert.gui.main_window import ErtMainWindow
 from ert.gui.tools.event_viewer import GUILogHandler
 from ert.gui.tools.workflows import RunWorkflowWidget
-from ert.plugins import ErtPluginContext
+from ert.plugins import get_site_plugins
 from ert.run_models import EnsembleExperiment
 from ert.storage import Storage
 
@@ -32,9 +32,7 @@ def _open_main_window(
     """)
     )
     (path / "test_wf").write_text("EXPORT_RUNPATH\n")
-    config = ErtConfig.with_plugins(ErtPluginContext.get_site_plugins()).from_file(
-        path / "config.ert"
-    )
+    config = ErtConfig.with_plugins(get_site_plugins()).from_file(path / "config.ert")
 
     args_mock = Mock()
     args_mock.config = "config.ert"

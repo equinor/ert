@@ -8,7 +8,7 @@ import pytest
 
 from ert.config import ConfigWarning
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
-from ert.plugins import ErtPluginContext
+from ert.plugins import get_site_plugins
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 
@@ -78,9 +78,7 @@ if __name__ == "__main__":
     else:
         config = EverestConfig.model_validate(min_config)
 
-    run_model = EverestRunModel.create(
-        config, runtime_plugins=ErtPluginContext.get_site_plugins()
-    )
+    run_model = EverestRunModel.create(config, runtime_plugins=get_site_plugins())
 
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)

@@ -2,7 +2,7 @@ import pytest
 
 from ert.base_model_context import use_runtime_plugins
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
-from ert.plugins import ErtPluginContext
+from ert.plugins import get_site_plugins
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from tests.everest.utils import get_optimal_result
@@ -42,7 +42,7 @@ def test_discrete_optimizer(copy_math_func_test_data_to_tmp):
     config = EverestConfig.model_validate(config_dict)
 
     # Act
-    site_plugins = ErtPluginContext.get_site_plugins()
+    site_plugins = get_site_plugins()
     with use_runtime_plugins(site_plugins):
         run_model = EverestRunModel.create(config, runtime_plugins=site_plugins)
 

@@ -6,7 +6,7 @@ from unittest.mock import patch
 import pytest
 
 from ert.cli.main import ErtCliError
-from ert.plugins import ErtPluginContext
+from ert.plugins import get_site_plugins
 
 from .run_cli import run_cli_with_pm
 
@@ -106,5 +106,5 @@ def test_failing_writes_lead_to_isolated_failures(tmp_path, monkeypatch, pytestc
     ):
         run_cli_with_pm(
             ["ensemble_experiment", "config.ert", "--disable-monitoring"],
-            runtime_plugins=ErtPluginContext.get_site_plugins(),
+            runtime_plugins=get_site_plugins(),
         )

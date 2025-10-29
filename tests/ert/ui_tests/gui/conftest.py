@@ -36,7 +36,7 @@ from ert.gui.simulation.view import RealizationWidget
 from ert.gui.tools.load_results.load_results_panel import LoadResultsPanel
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget
-from ert.plugins import ErtPluginContext
+from ert.plugins import get_site_plugins
 from ert.run_models import EnsembleExperiment, MultipleDataAssimilation
 from ert.storage import Storage
 from tests.ert.unit_tests.gui.simulation.test_run_path_dialog import (
@@ -92,7 +92,7 @@ def _new_poly_example(
 def _open_main_window(path) -> Iterator[tuple[ErtMainWindow, Storage, ErtConfig]]:
     args_mock = Mock()
     args_mock.config = str(path)
-    site_plugins = ErtPluginContext.get_site_plugins()
+    site_plugins = get_site_plugins()
     with use_runtime_plugins(site_plugins):
         config = ErtConfig.with_plugins(site_plugins).from_file(path)
         with (

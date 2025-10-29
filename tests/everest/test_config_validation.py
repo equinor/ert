@@ -16,7 +16,7 @@ from pydantic import ValidationError
 
 from ert.config import ConfigValidationError, ConfigWarning
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
-from ert.plugins import ErtPluginContext
+from ert.plugins import get_site_plugins
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import (
     EverestConfig,
@@ -657,7 +657,7 @@ def test_that_install_data_with_inline_data_generates_a_file(
         ],
     }
     config = EverestConfig.model_validate(config_dict)
-    runtime_plugins = ErtPluginContext.get_site_plugins()
+    runtime_plugins = get_site_plugins()
     run_model = EverestRunModel.create(config, runtime_plugins=runtime_plugins)
     run_model.run_experiment(EvaluatorServerConfig())
     for expected_dir in ("evaluation_0", "perturbation_0"):

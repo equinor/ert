@@ -17,7 +17,7 @@ from ert.config import (
     GenKwConfig,
     SurfaceConfig,
 )
-from ert.plugins import ErtPluginContext
+from ert.plugins import get_site_plugins
 from ert.run_arg import create_run_arguments
 from ert.run_models._create_run_path import create_run_path
 from ert.runpaths import Runpaths
@@ -537,7 +537,7 @@ def test_that_deprecated_runpath_substitution_remain_valid(make_run_path):
     """
     This checks that deprecated runpath substitution, using %d, remain intact.
     """
-    site_plugins = ErtPluginContext.get_site_plugins()
+    site_plugins = get_site_plugins()
     ert_config = ErtConfig.with_plugins(site_plugins).from_file_contents(
         dedent(
             """\

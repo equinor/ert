@@ -28,7 +28,7 @@ from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapProp
 from uvicorn.supervisors import ChangeReload
 
 from ert.logging import STORAGE_LOG_CONFIG
-from ert.plugins import ErtPluginContext
+from ert.plugins import setup_site_logging
 from ert.services._base_service import BaseServiceExit
 from ert.shared import __file__ as ert_shared_path
 from ert.shared import find_available_socket, get_machine_name
@@ -302,7 +302,7 @@ def main() -> None:
     terminate_on_parent_death_thread = threading.Thread(
         target=terminate_on_parent_death, args=[stopped, args.parent_pid, 1.0]
     )
-    ErtPluginContext.setup_logging(logging.getLogger())
+    setup_site_logging(logging.getLogger())
     terminate_on_parent_death_thread.start()
     with tracer.start_as_current_span("run_storage_server", ctx):
         logger = logging.getLogger("ert.shared.storage.info")
