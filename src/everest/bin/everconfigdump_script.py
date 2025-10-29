@@ -18,7 +18,7 @@ def _build_args_parser() -> argparse.ArgumentParser:
         usage="""everest show <config_file>""",
     )
     arg_parser.add_argument(
-        "config_file", help="The path to the everest configuration file"
+        "config_file", help="The path to the everest configuration file."
     )
     return arg_parser
 

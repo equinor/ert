@@ -39,16 +39,18 @@ def _build_args_parser() -> argparse.ArgumentParser:
     """Build arg parser"""
 
     arg_parser = argparse.ArgumentParser(
-        description="Kill a running optimization case based on a given config file",
+        description="Kill a running optimization process.",
         usage="everest kill <config_file>",
     )
     arg_parser.add_argument(
         "config",
         type=partial(EverestConfig.load_file_with_argparser, parser=arg_parser),
-        help="The path to the everest configuration file",
+        help="The path to the everest configuration file.",
     )
     arg_parser.add_argument(
-        "--debug", action="store_true", help="Display debug information in the terminal"
+        "--debug",
+        action="store_true",
+        help="Display debug information in the terminal.",
     )
 
     return arg_parser

@@ -19,10 +19,10 @@ from everest.bin.visualization_script import visualization_entry
 def _build_args_parser() -> argparse.ArgumentParser:
     """Build arg parser"""
     arg_parser = argparse.ArgumentParser(
-        description="Tool for performing reservoir management optimization",
+        description="Tool for performing reservoir management optimization.",
         usage=(
             "everest <command> [<args>]\n\n"
-            "The most commonly used everest commands are:\n"
+            "Supported commands:\n"
             f"{EverestMain.methods_help()}\n\n"
             "Run everest <command> --help for more information on a command"
         ),
@@ -51,52 +51,51 @@ class EverestMain:
     @classmethod
     def methods_help(cls) -> str:
         """Return documentation of the public methods in this class"""
-        pubmets = [m for m in dir(cls) if not m.startswith("_")]
-        pubmets.remove("methods_help")  # Current method should not show up in desc
+        pubmets = ["run", "monitor", "kill", "lint", "render", "branch", "results"]
         maxlen = max(len(m) for m in pubmets)
         docstrs = [getattr(cls, m).__doc__ for m in pubmets]
         doclist = [
-            m.ljust(maxlen + 1) + d for m, d in zip(pubmets, docstrs, strict=False)
+            m.ljust(maxlen + 2) + d for m, d in zip(pubmets, docstrs, strict=False)
         ]
         return "\n".join(doclist)
 
     def run(self, args: list[str]) -> None:
-        """Start an optimization case base on given config file"""
+        """Start an optimization run"""
         everest_entry(args)
 
     def monitor(self, args: list[str]) -> None:
-        """Monitor a running optimization case base on given config file"""
+        """Monitor a running optimization"""
         monitor_entry(args)
 
     def kill(self, args: list[str]) -> None:
-        """Kill a running optimization case base on given config file"""
+        """Kill a running optimization"""
         kill_entry(args)
 
     def gui(self, _: list[str]) -> None:
-        """Start the graphical user interface (Removed)"""
+        """Removed."""
         print(
             "The gui command has been removed. "
             "Please use the run command with the --gui option instead."
         )
 
     def export(self, args: list[str]) -> None:
-        """Export data from a completed optimization case"""
+        """Deprecated. Results are stored by default in the output directory."""
         everexport_entry(args)
 
     def lint(self, args: list[str]) -> None:
-        """Validate a config file"""
+        """Validate the configuration file"""
         lint_entry(args)
 
     def render(self, args: list[str]) -> None:
-        """Display the configuration data loaded from a config file"""
+        """Display the configuration data"""
         config_dump_entry(args)
 
     def branch(self, args: list[str]) -> None:
-        """Construct possible restart config file"""
+        """Construct a new configuration file from a given batch"""
         config_branch_entry(args)
 
     def results(self, args: list[str]) -> None:
-        """Start everest visualization plugin"""
+        """Start the everest visualization plugin"""
         visualization_entry(args)
 
 

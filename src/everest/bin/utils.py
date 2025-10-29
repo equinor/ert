@@ -475,3 +475,13 @@ def get_experiment_status(storage_dir: str) -> ExperimentStatus | None:
     with open_storage(storage_dir, "r") as storage:
         experiments = list(storage.experiments)
         return None if not experiments else experiments[0].status
+
+
+class ArgParseFormatter(argparse.HelpFormatter):
+    def _fill_text(self, text: str, width: int, indent: str) -> str:
+        return "\n\n".join(
+            [
+                argparse.HelpFormatter._fill_text(self, p, width, indent)
+                for p in text.split("\n\n")
+            ]
+        )
