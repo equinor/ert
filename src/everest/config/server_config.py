@@ -18,7 +18,6 @@ from ..strings import (
     CERTIFICATE_DIR,
     DETACHED_NODE_DIR,
     HOSTFILE_NAME,
-    SERVER_STATUS,
     SESSION_DIR,
 )
 from .simulator_config import check_removed_config
@@ -129,11 +128,6 @@ class ServerConfig(BaseModel):
         """Return path to the session directory containing information about the
         certificates and host information"""
         return os.path.join(ServerConfig.get_detached_node_dir(output_dir), SESSION_DIR)
-
-    @staticmethod
-    def get_everserver_status_path(output_dir: str) -> str:
-        """Returns path to the everest server status file"""
-        return os.path.join(ServerConfig.get_session_dir(output_dir), SERVER_STATUS)
 
     @staticmethod
     def get_certificate_dir(output_dir: str) -> str:

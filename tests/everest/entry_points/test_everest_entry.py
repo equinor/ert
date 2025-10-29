@@ -8,15 +8,11 @@ import pytest
 import everest
 from ert.config import QueueSystem
 from ert.run_models.everest_run_model import ExperimentStatus
+from ert.storage import ExperimentState
 from everest.bin.everest_script import everest_entry
 from everest.bin.kill_script import kill_entry
 from everest.bin.monitor_script import monitor_entry
-from everest.config import EverestConfig, ServerConfig
-from everest.detached import (
-    ExperimentState,
-    everserver_status,
-    update_everserver_status,
-)
+from everest.config import EverestConfig
 from tests.everest.utils import capture_streams
 
 CONFIG_FILE_MINIMAL = "config_minimal.yml"
@@ -24,13 +20,6 @@ CONFIG_FILE_MINIMAL = "config_minimal.yml"
 
 def raise_system_error(*args, **kwargs):
     raise SystemError("Reality was ripped to shreds!")
-
-
-def run_detached_monitor_mock(status=ExperimentState.completed, error=None, **kwargs):
-    path = os.path.join(
-        os.getcwd(), "everest_output/detached_node_output/.session/status"
-    )
-    update_everserver_status(path, status, message=error)
 
 
 @patch("everest.bin.everest_script.run_detached_monitor")
@@ -281,7 +270,7 @@ def test_everest_entry_detached_running_monitor(
 def test_everest_entry_monitor_already_run(
     session_mock,
     get_server_context_from_conn_info_mock,
-    everserver_status_mock,
+    get_experiment_status_mock,
     start_monitor_mock,
     change_to_tmpdir,
 ):
@@ -293,7 +282,7 @@ def test_everest_entry_monitor_already_run(
         monitor_entry(["config.yml"])
     assert "Optimization already completed." in out.getvalue()
     start_monitor_mock.assert_not_called()
-    everserver_status_mock.assert_called()
+    get_experiment_status_mock.assert_called()
     session_mock.assert_called_once()
     get_server_context_from_conn_info_mock.assert_not_called()
 
@@ -350,66 +339,6 @@ def test_exception_raised_when_server_run_fails_monitor(
 
     with pytest.raises(SystemError, match="Reality was ripped to shreds!"):
         monitor_entry(["config.yml"])
-
-
-@patch(
-    "everest.bin.everest_script.run_detached_monitor",
-    side_effect=run_detached_monitor_mock,
-)
-@patch("everest.bin.everest_script.wait_for_server")
-@patch("everest.bin.everest_script.start_server")
-@patch("everest.bin.everest_script.start_experiment")
-@patch(
-    "ert.services.StorageService.session",
-    side_effect=[TimeoutError(), MagicMock()],
-)
-@patch("everest.config.ServerConfig.get_server_context_from_conn_info")
-def test_complete_status_for_normal_run(
-    get_server_context_from_conn_info_mock,
-    session_mock,
-    start_experiment_mock,
-    start_server_mock,
-    wait_for_server_mock,
-    start_monitor_mock,
-    change_to_tmpdir,
-):
-    Path("config.yml").touch()
-    config = EverestConfig.with_defaults(config_path="./config.yml")
-    config.dump("config.yml")
-
-    everest_entry(["config.yml", "--skip-prompt"])
-    status_path = ServerConfig.get_everserver_status_path(config.output_dir)
-    status = everserver_status(status_path)
-    expected_status = ExperimentState.completed
-    expected_error = None
-
-    assert expected_status == status["status"]
-    assert expected_error == status["message"]
-
-
-@patch(
-    "everest.bin.monitor_script.run_detached_monitor",
-    side_effect=run_detached_monitor_mock,
-)
-@patch("ert.services.StorageService.session")
-@patch("everest.config.ServerConfig.get_server_context_from_conn_info")
-def test_complete_status_for_normal_run_monitor(
-    get_server_context_from_conn_info_mock,
-    session_mock,
-    start_monitor_mock,
-    change_to_tmpdir,
-):
-    Path("config.yml").touch()
-    config = EverestConfig.with_defaults(config_path="./config.yml")
-    config.dump("config.yml")
-    monitor_entry(["config.yml"])
-    status_path = ServerConfig.get_everserver_status_path(config.output_dir)
-    status = everserver_status(status_path)
-    expected_status = ExperimentState.completed
-    expected_error = None
-
-    assert expected_status == status["status"]
-    assert expected_error == status["message"]
 
 
 class ServerStatus:
