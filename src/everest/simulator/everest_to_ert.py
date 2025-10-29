@@ -1,5 +1,4 @@
 import itertools
-import os
 from typing import Any, cast
 
 import everest
@@ -9,7 +8,6 @@ from ert.plugins import ErtPluginContext
 from everest.config import EverestConfig
 from everest.config.forward_model_config import SummaryResults
 from everest.config.simulator_config import SimulatorConfig
-from everest.strings import STORAGE_DIR
 
 
 def extract_summary_keys(ever_config: EverestConfig) -> list[str]:
@@ -57,16 +55,6 @@ def extract_summary_keys(ever_config: EverestConfig) -> list[str]:
     return list(set(all_keys + requested_keys))
 
 
-def _extract_environment(
-    ever_config: EverestConfig, ert_config: dict[str, Any]
-) -> None:
-    default_runpath_file = os.path.join(ever_config.output_dir, ".res_runpath_list")
-    default_ens_path = os.path.join(ever_config.output_dir, STORAGE_DIR)
-
-    ert_config[ErtConfigKeys.ENSPATH] = default_ens_path
-    ert_config[ErtConfigKeys.RUNPATH_FILE] = default_runpath_file
-
-
 def _extract_simulator(ever_config: EverestConfig, ert_config: dict[str, Any]) -> None:
     """
     Extracts simulation data from ever_config and injects it into ert_config.
@@ -102,7 +90,6 @@ def _everest_to_ert_config_dict(ever_config: EverestConfig) -> ConfigDict:
 
     # Extract simulator and simulation related configs
     _extract_simulator(ever_config, ert_config)
-    _extract_environment(ever_config, ert_config)
 
     return ert_config
 
