@@ -98,17 +98,6 @@ def test_everest_entry_monitor_not_run(change_to_tmpdir):
 
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
 @pytest.mark.integration_test
-def test_everest_main_export_entry(cached_example):
-    # Setup command line arguments
-    _, config_file, _, _ = cached_example("math_func/config_minimal.yml")
-    with capture_streams() as (out, _):
-        start_everest(["everest", "export", str(config_file)])
-
-    assert "everest export is deprecated" in out.getvalue()
-
-
-@pytest.mark.xdist_group("math_func/config_minimal.yml")
-@pytest.mark.integration_test
 def test_everest_main_lint_entry(cached_example):
     # Setup command line arguments
     _, config_file, _, _ = cached_example("math_func/config_minimal.yml")
