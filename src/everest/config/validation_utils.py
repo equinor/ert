@@ -190,7 +190,7 @@ def unique_items(items: Sequence[T]) -> Sequence[T]:
 
 
 def valid_range(range_value: tuple[float, float]) -> tuple[float, float]:
-    if range_value[0] >= range_value[1]:
+    if range_value is not None and range_value[0] >= range_value[1]:
         raise ValueError("scaled_range must be a valid range [a, b], where a < b.")
     return range_value
 

@@ -143,6 +143,7 @@
   "random_seed": 1,
   "start_iteration": 0,
   "minimum_required_realizations": 2,
+  "user_installed_workflow_jobs": {},
   "experiment_name": "default_name",
   "design_matrix": null,
   "parameter_configuration": [
