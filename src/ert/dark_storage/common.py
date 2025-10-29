@@ -2,7 +2,12 @@ import logging
 import os
 
 from ert.dark_storage.exceptions import InternalServerError
-from ert.storage import ErtStorageException, Storage, open_storage
+from ert.storage import (
+    ErtStorageException,
+    ErtStoragePermissionError,
+    Storage,
+    open_storage,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +20,11 @@ def get_storage() -> Storage:
     if _storage is None:
         try:
             return (_storage := open_storage(os.environ["ERT_STORAGE_ENS_PATH"]))
+        except ErtStoragePermissionError as err:
+            logger.error(f"Permission error accessing storage: {err!s}")
+            raise InternalServerError("Permission error accessing storage") from None
         except ErtStorageException as err:
-            raise InternalServerError(f"{err!s}") from err
+            logger.exception(f"Error accessing storage: {err!s}")
+            raise InternalServerError("Error accessing storage") from None
     _storage.refresh()
     return _storage

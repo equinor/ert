@@ -27,7 +27,10 @@ from ert.ensemble_evaluator.event import EndEvent
 from ert.logging import LOGGING_CONFIG
 from ert.plugins.plugin_manager import ErtPluginManager
 from ert.services import StorageService
-from ert.storage import ExperimentStatus, open_storage
+from ert.storage import (
+    ExperimentStatus,
+    open_storage,
+)
 from everest.config import EverestConfig
 from everest.config.server_config import ServerConfig
 from everest.detached import (

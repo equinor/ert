@@ -8,7 +8,7 @@ from pathlib import Path
 from textwrap import dedent
 
 from ert.services import StorageService
-from ert.storage import ExperimentState
+from ert.storage import ErtStorageException, ExperimentState
 from everest.config import EverestConfig, ServerConfig
 from everest.everest_storage import EverestStorage
 
@@ -90,32 +90,45 @@ def monitor_everest(options: argparse.Namespace) -> None:
             )
             run_detached_monitor(server_context=server_context)
 
-            experiment_status = get_experiment_status(config.storage_dir)
-            if experiment_status and experiment_status.status == ExperimentState.failed:
-                raise SystemExit(experiment_status.message or "Optimization failed")
-            if experiment_status:
-                print(
-                    experiment_status.message or "Optimization completed successfully"
-                )
+            try:
+                experiment_status = get_experiment_status(config.storage_dir)
+                if (
+                    experiment_status
+                    and experiment_status.status == ExperimentState.failed
+                ):
+                    raise SystemExit(experiment_status.message or "Optimization failed")
+                if experiment_status:
+                    print(
+                        experiment_status.message
+                        or "Optimization completed successfully"
+                    )
+            except ErtStorageException as err:
+                print(f"Error reading experiment status: {err}")
 
     except TimeoutError:
-        experiment_status = get_experiment_status(config.storage_dir)
-        if (
-            experiment_status is None
-            or experiment_status.status == ExperimentState.never_run
-        ):
-            print(
-                "The optimization has not run yet.\n"
-                "To run the optimization use command:\n"
-                f"  `everest run {config.config_file}`"
-            )
-        elif experiment_status.status == ExperimentState.failed:
-            print(f"Optimization run failed, with error: {experiment_status.message}\n")
-        else:
-            print(
-                f"Optimization already completed.\n"
-                f"Results are stored in {config.optimization_output_dir}"
-            )
+        try:
+            experiment_status = get_experiment_status(config.storage_dir)
+            if (
+                experiment_status is None
+                or experiment_status.status == ExperimentState.never_run
+            ):
+                print(
+                    "The optimization has not run yet.\n"
+                    "To run the optimization use command:\n"
+                    f"  `everest run {config.config_file}`"
+                )
+            elif experiment_status.status == ExperimentState.failed:
+                print(
+                    "Optimization run failed, with error: "
+                    f"{experiment_status.message}\n"
+                )
+            else:
+                print(
+                    "Optimization already completed.\n"
+                    f"Results are stored in {config.optimization_output_dir}"
+                )
+        except ErtStorageException as err:
+            print(f"Error reading experiment status: {err}")
 
 
 if __name__ == "__main__":

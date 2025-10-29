@@ -213,7 +213,7 @@ class LocalStorage(BaseMode):
                 "Permission error when loading index from path: "
                 f"{self.path / 'index.json'}. Error: {e}",
             )
-            return _Index()
+            raise e
         except FileNotFoundError:
             return _Index()
 
@@ -230,7 +230,7 @@ class LocalStorage(BaseMode):
                     "Permission error when loading ensemble from path: "
                     f"{ensemble_path}. Error: {e}",
                 )
-                continue
+                raise e
             except FileNotFoundError:
                 logger.exception(
                     "Failed to load an ensemble from path: %s", ensemble_path

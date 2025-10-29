@@ -37,7 +37,7 @@ from ert.plugins import ErtPluginContext, ErtRuntimePlugins
 from ert.run_models.multiple_data_assimilation import MultipleDataAssimilation
 from ert.services import StorageService, WebvizErt
 from ert.shared.storage.command import add_parser_options as ert_api_add_parser_options
-from ert.storage import ErtStorageException
+from ert.storage import ErtStorageException, ErtStoragePermissionError
 from ert.trace import trace, tracer
 from ert.validation import (
     IntegerArgument,
@@ -666,6 +666,9 @@ def main() -> None:
         with ErtPluginContext(logger=logging.getLogger()) as runtime_plugins:
             logger.info(f"Running ert with {args} in {os.getcwd()}")
             args.func(args, runtime_plugins)
+    except ErtStoragePermissionError as err:
+        logger.error(str(err))
+        sys.exit(str(err))
     except (ErtCliError, ErtStorageException) as err:
         span.set_status(Status(StatusCode.ERROR))
         span.record_exception(err)
