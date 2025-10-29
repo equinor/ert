@@ -69,7 +69,6 @@ from everest.optimizer.opt_model_transforms import (
 from everest.simulator.everest_to_ert import (
     everest_to_ert_config_dict,
     extract_summary_keys,
-    get_substitutions,
 )
 from everest.strings import EVEREST
 
@@ -372,12 +371,16 @@ class EverestRunModel(RunModel):
         queue_config.queue_options = everest_config.simulator.queue_system
         queue_config.queue_system = everest_config.simulator.queue_system.name
 
-        substitutions = get_substitutions(
-            config_dict,
-            runpath_config,
-            runpath_file,
-            queue_config.queue_options.num_cpu,
-        )
+        substitutions = {
+            "<RUNPATH_FILE>": str(runpath_file),
+            "<RUNPATH>": runpath_config.runpath_format_string,
+            "<ECL_BASE>": runpath_config.eclbase_format_string,
+            "<ECLBASE>": runpath_config.eclbase_format_string,
+            "<NUM_CPU>": str(queue_config.queue_options.num_cpu),
+            "<CONFIG_PATH>": everest_config.config_directory,
+            "<CONFIG_FILE>": Path(everest_config.config_file).stem,
+        }
+
         ert_templates = read_templates(config_dict)
 
         for datafile, data in _get_internal_files(everest_config).items():

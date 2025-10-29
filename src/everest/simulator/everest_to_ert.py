@@ -1,13 +1,8 @@
 import itertools
 import os
-from pathlib import Path
 from typing import Any, cast
 
 import everest
-from ert.config import (
-    ModelConfig,
-)
-from ert.config.ert_config import _substitutions_from_dict
 from ert.config.parsing import ConfigDict
 from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from ert.plugins import ErtPluginContext
@@ -105,30 +100,12 @@ def _extract_seed(ever_config: EverestConfig, ert_config: dict[str, Any]) -> Non
         ert_config[ErtConfigKeys.RANDOM_SEED] = random_seed
 
 
-def get_substitutions(
-    config_dict: ConfigDict, model_config: ModelConfig, runpath_file: Path, num_cpu: int
-) -> dict[str, str]:
-    substitutions = _substitutions_from_dict(config_dict)
-    substitutions["<RUNPATH_FILE>"] = str(runpath_file)
-    substitutions["<RUNPATH>"] = model_config.runpath_format_string
-    substitutions["<ECL_BASE>"] = model_config.eclbase_format_string
-    substitutions["<ECLBASE>"] = model_config.eclbase_format_string
-    substitutions["<NUM_CPU>"] = str(num_cpu)
-    return substitutions
-
-
 def _everest_to_ert_config_dict(ever_config: EverestConfig) -> ConfigDict:
     """
     Takes as input an Everest configuration and converts it
     to a corresponding ert config dict.
     """
     ert_config: dict[str, Any] = {}
-
-    config_dir = ever_config.config_directory
-    ert_config[ErtConfigKeys.DEFINE] = [
-        ("<CONFIG_PATH>", config_dir),
-        ("<CONFIG_FILE>", Path(ever_config.config_file).stem),
-    ]
 
     # Extract simulator and simulation related configs
     _extract_simulator(ever_config, ert_config)
