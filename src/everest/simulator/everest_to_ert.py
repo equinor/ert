@@ -93,13 +93,6 @@ def _extract_simulator(ever_config: EverestConfig, ert_config: dict[str, Any]) -
         ert_config[ErtConfigKeys.NUM_CPU] = num_fm_cpu
 
 
-def _extract_seed(ever_config: EverestConfig, ert_config: dict[str, Any]) -> None:
-    random_seed = ever_config.environment.random_seed
-
-    if random_seed:
-        ert_config[ErtConfigKeys.RANDOM_SEED] = random_seed
-
-
 def _everest_to_ert_config_dict(ever_config: EverestConfig) -> ConfigDict:
     """
     Takes as input an Everest configuration and converts it
@@ -110,7 +103,6 @@ def _everest_to_ert_config_dict(ever_config: EverestConfig) -> ConfigDict:
     # Extract simulator and simulation related configs
     _extract_simulator(ever_config, ert_config)
     _extract_environment(ever_config, ert_config)
-    _extract_seed(ever_config, ert_config)
 
     return ert_config
 
