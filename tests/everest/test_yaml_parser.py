@@ -2,30 +2,7 @@ import os
 from pathlib import Path
 from textwrap import dedent
 
-import pytest
-
-from ert.config.parsing import ConfigKeys as ErtConfigKeys
 from everest.config import EverestConfig
-from everest.simulator.everest_to_ert import (
-    everest_to_ert_config_dict,
-)
-
-
-@pytest.mark.parametrize("random_seed", [None, 1234])
-def test_random_seed(tmp_path, monkeypatch, random_seed):
-    monkeypatch.chdir(tmp_path)
-    config = {"model": {"realizations": [0]}}
-    if random_seed:
-        config["environment"] = {"random_seed": random_seed}
-    ever_config = EverestConfig.with_defaults(**config)
-    dictionary = everest_to_ert_config_dict(ever_config)
-
-    if random_seed is None:
-        assert ever_config.environment.random_seed > 0
-        assert dictionary[ErtConfigKeys.RANDOM_SEED] > 0
-    else:
-        assert ever_config.environment.random_seed == random_seed
-        assert dictionary[ErtConfigKeys.RANDOM_SEED] == random_seed
 
 
 def test_read_file(tmp_path, monkeypatch):

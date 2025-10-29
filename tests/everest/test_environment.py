@@ -7,15 +7,6 @@ import ert.run_models.everest_run_model
 from ert.plugins import ErtPluginContext
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
-from everest.simulator.everest_to_ert import _everest_to_ert_config_dict
-
-
-def test_that_seed_in_everestconfig_is_passed_to_ert_config(change_to_tmpdir):
-    random_seed = 42
-    config = EverestConfig.with_defaults()
-    config.environment.random_seed = random_seed
-    ert_config = _everest_to_ert_config_dict(config)
-    assert ert_config["RANDOM_SEED"] == random_seed
 
 
 def test_that_default_everestconfig_lints():

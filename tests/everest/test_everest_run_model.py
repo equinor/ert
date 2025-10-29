@@ -21,7 +21,7 @@ def create_runmodel(min_config: dict, monkeypatch: pytest.MonkeyPatch) -> Callab
     monkeypatch.setattr("ert.run_models.run_model.open_storage", Mock())
 
     def _create_runmodel(
-        queue_system: dict[str, str | int | bool | float],
+        queue_system: dict[str, str | int | bool | float] | None = None,
         environment: dict[str, str] | None = None,
         config_path: str | None = None,
     ) -> EverestRunModel:
@@ -53,7 +53,7 @@ def create_runmodel(min_config: dict, monkeypatch: pytest.MonkeyPatch) -> Callab
 def test_that_queue_system_name_passes_through_create(
     create_runmodel: Callable, queue_system: str
 ) -> None:
-    runmodel = create_runmodel({"name": queue_system})
+    runmodel = create_runmodel(queue_system={"name": queue_system})
     assert runmodel.queue_config.queue_system == queue_system
 
 
@@ -70,7 +70,7 @@ def test_general_queue_options_properties_pass_through_create(
         "job_script": "foo_script",
         "activate_script": "foo_activate",
     }
-    runmodel = create_runmodel(properties)
+    runmodel = create_runmodel(queue_system=properties)
     for property_name, value in properties.items():
         assert getattr(runmodel.queue_config.queue_options, property_name) == value
 
@@ -137,7 +137,7 @@ def test_queue_options_properties_pass_through_create(
     config: dict[str, str | int | float | bool],
     config_class: QueueOptions,
 ) -> None:
-    runmodel = create_runmodel(config)
+    runmodel = create_runmodel(queue_system=config)
     assert runmodel.queue_config.queue_options == config_class(**config)
 
 
@@ -172,3 +172,15 @@ def test_substitutions_from_everest_config(
         "<CONFIG_PATH>": str(config_dir),
         "<CONFIG_FILE>": "strong_optimizer",
     }
+
+
+@pytest.mark.parametrize("random_seed", [None, 1234])
+def test_random_seed(create_runmodel: Callable, random_seed: int | None) -> None:
+    runmodel = create_runmodel(
+        environment={"random_seed": random_seed} if random_seed is not None else None
+    )
+
+    if random_seed is None:
+        assert runmodel.random_seed > 0
+    else:
+        assert runmodel.random_seed == random_seed
