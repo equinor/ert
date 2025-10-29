@@ -9,7 +9,6 @@ from ert.trace import tracer
 from everest.bin.config_branch_script import config_branch_entry
 from everest.bin.everconfigdump_script import config_dump_entry
 from everest.bin.everest_script import everest_entry
-from everest.bin.everexport_script import everexport_entry
 from everest.bin.everlint_script import lint_entry
 from everest.bin.kill_script import kill_entry
 from everest.bin.monitor_script import monitor_entry
@@ -70,17 +69,6 @@ class EverestMain:
     def kill(self, args: list[str]) -> None:
         """Kill a running optimization"""
         kill_entry(args)
-
-    def gui(self, _: list[str]) -> None:
-        """Removed."""
-        print(
-            "The gui command has been removed. "
-            "Please use the run command with the --gui option instead."
-        )
-
-    def export(self, args: list[str]) -> None:
-        """Deprecated. Results are stored by default in the output directory."""
-        everexport_entry(args)
 
     def lint(self, args: list[str]) -> None:
         """Validate the configuration file"""
