@@ -27,6 +27,7 @@ def create_runmodel(min_config: dict, monkeypatch: pytest.MonkeyPatch) -> Callab
         queue_system: dict[str, str | int | bool | float] | None = None,
         environment: dict[str, str] | None = None,
         config_path: str | None = None,
+        config: dict | None = None,
     ) -> EverestRunModel:
         with ErtPluginContext() as runtime_plugins:
             runtime_plugins.queue_options = None
@@ -45,6 +46,7 @@ def create_runmodel(min_config: dict, monkeypatch: pytest.MonkeyPatch) -> Callab
                             if config_path is not None
                             else {}
                         )
+                        | (config if config is not None else {})
                     ),
                 ),
                 runtime_plugins=runtime_plugins,
@@ -190,3 +192,28 @@ def test_that_random_seed_passes_through_create(
         assert runmodel.random_seed > 0
     else:
         assert runmodel.random_seed == random_seed
+
+
+def test_cores_per_node_is_used_over_defaulted_num_cpu(
+    create_runmodel: Callable,
+) -> None:
+    runmodel = create_runmodel(
+        queue_system=None, config={"simulator": {"cores_per_node": 88}}
+    )
+    assert runmodel.queue_config.queue_options.num_cpu == 88
+
+
+def test_cores_per_node_is_ignored_num_cpu_is_set(
+    create_runmodel: Callable,
+) -> None:
+    with pytest.warns(UserWarning, match="Ignoring cores_per_node.*"):
+        runmodel = create_runmodel(
+            queue_system=None,
+            config={
+                "simulator": {
+                    "cores_per_node": 88,
+                    "queue_system": {"name": "lsf", "num_cpu": 99},
+                }
+            },
+        )
+    assert runmodel.queue_config.queue_options.num_cpu == 99
