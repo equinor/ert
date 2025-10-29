@@ -12,8 +12,7 @@ from ert.config import (
 )
 from ert.data import MeasuredData
 from ert.data._measured_data import ObservationError, ResponseError
-
-from .plugins import ErtPluginContext
+from ert.plugins import get_site_plugins
 
 if TYPE_CHECKING:
     from ert.storage import Ensemble
@@ -79,8 +78,6 @@ class LibresFacade:
         cls, config_file: str, read_only: bool = False
     ) -> LibresFacade:
         return cls(
-            ErtConfig.with_plugins(ErtPluginContext.get_site_plugins()).from_file(
-                config_file
-            ),
+            ErtConfig.with_plugins(get_site_plugins()).from_file(config_file),
             read_only,
         )

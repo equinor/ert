@@ -1,7 +1,7 @@
 import pytest
 
 from ert.config import ConfigValidationError, ErtConfig
-from ert.plugins import ErtPluginContext
+from ert.plugins import get_site_plugins
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -18,6 +18,4 @@ def test_that_we_can_disable_a_parameter():
     with (
         pytest.raises(ConfigValidationError, match="use the UPDATE:FALSE option"),
     ):
-        ErtConfig.with_plugins(
-            runtime_plugins=ErtPluginContext.get_site_plugins()
-        ).from_file("poly.ert")
+        ErtConfig.with_plugins(runtime_plugins=get_site_plugins()).from_file("poly.ert")

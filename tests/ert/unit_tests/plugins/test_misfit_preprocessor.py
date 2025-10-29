@@ -1,7 +1,7 @@
 import pytest
 
 from ert.config import ConfigValidationError, ErtConfig
-from ert.plugins import ErtPluginContext
+from ert.plugins import get_site_plugins
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -17,9 +17,7 @@ def test_that_misfit_preprocessor_raises():
             match="MISFIT_PREPROCESSOR is removed, use ANALYSIS_SET_VAR OBSERVATIONS",
         ),
     ):
-        ErtConfig.with_plugins(ErtPluginContext.get_site_plugins()).from_file(
-            "poly.ert"
-        )
+        ErtConfig.with_plugins(get_site_plugins()).from_file("poly.ert")
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -35,6 +33,4 @@ def test_that_misfit_preprocessor_raises_with_config():
             match="Add multiple entries to set up multiple groups",
         ),
     ):
-        ErtConfig.with_plugins(ErtPluginContext.get_site_plugins()).from_file(
-            "poly.ert"
-        )
+        ErtConfig.with_plugins(get_site_plugins()).from_file("poly.ert")

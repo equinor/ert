@@ -5,11 +5,12 @@ from typing import Any, ParamSpec
 from ert.config.ert_plugin import CancelPluginException, ErtPlugin
 
 from .plugin_manager import (
-    ErtPluginContext,
     ErtPluginManager,
     ErtRuntimePlugins,
     JobDoc,
+    get_site_plugins,
     hook_implementation,
+    setup_site_logging,
 )
 from .plugin_response import PluginMetadata, PluginResponse
 
@@ -51,9 +52,10 @@ def plugin(name: str) -> Callable[[Callable[P, Any]], Callable[P, Any]]:
 __all__ = [
     "CancelPluginException",
     "ErtPlugin",
-    "ErtPluginContext",
     "ErtPluginManager",
     "ErtRuntimePlugins",
     "JobDoc",
+    "get_site_plugins",
     "plugin",
+    "setup_site_logging",
 ]

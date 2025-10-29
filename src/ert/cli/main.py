@@ -24,7 +24,7 @@ from ert.mode_definitions import (
     WORKFLOW_MODE,
 )
 from ert.namespace import Namespace
-from ert.plugins import ErtPluginContext, ErtRuntimePlugins
+from ert.plugins import ErtRuntimePlugins, get_site_plugins
 from ert.run_models.event import StatusEvents
 from ert.run_models.model_factory import create_model
 from ert.storage import open_storage
@@ -46,9 +46,7 @@ def run_cli(args: Namespace, runtime_plugins: ErtRuntimePlugins | None = None) -
     if runtime_plugins is not None:
         ert_config = ErtConfig.with_plugins(runtime_plugins).from_file(args.config)
     else:
-        ert_config = ErtConfig.with_plugins(
-            ErtPluginContext.get_site_plugins()
-        ).from_file(args.config)
+        ert_config = ErtConfig.with_plugins(get_site_plugins()).from_file(args.config)
 
     local_storage_set_ert_config(ert_config)
     counter_fm_steps = Counter(fms.name for fms in ert_config.forward_model_steps)
@@ -96,7 +94,7 @@ def run_cli(args: Namespace, runtime_plugins: ErtRuntimePlugins | None = None) -
 
     status_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
     try:
-        with use_runtime_plugins(ErtPluginContext.get_site_plugins()):
+        with use_runtime_plugins(get_site_plugins()):
             model = create_model(
                 ert_config,
                 args,

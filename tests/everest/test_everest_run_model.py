@@ -12,7 +12,7 @@ from ert.config.queue_config import (
     SlurmQueueOptions,
     TorqueQueueOptions,
 )
-from ert.plugins import ErtPluginContext
+from ert.plugins import get_site_plugins
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 
@@ -30,7 +30,7 @@ def create_runmodel(min_config: dict, monkeypatch: pytest.MonkeyPatch) -> Callab
         config_path: str | None = None,
         config: dict | None = None,
     ) -> EverestRunModel:
-        site_plugins = ErtPluginContext.get_site_plugins()
+        site_plugins = get_site_plugins()
         with use_runtime_plugins(site_plugins):
             site_plugins.queue_options = None
             return EverestRunModel.create(

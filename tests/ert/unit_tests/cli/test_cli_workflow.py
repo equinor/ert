@@ -6,7 +6,7 @@ import pytest
 
 from ert.cli.workflow import execute_workflow
 from ert.config import ErtConfig
-from ert.plugins.plugin_manager import ErtPluginContext
+from ert.plugins import get_site_plugins
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -17,9 +17,7 @@ def test_executing_workflow(storage):
     with open(config_file, "a", encoding="utf-8") as file_handle:
         file_handle.write("LOAD_WORKFLOW test_wf")
 
-    rc = ErtConfig.with_plugins(ErtPluginContext.get_site_plugins()).from_file(
-        config_file
-    )
+    rc = ErtConfig.with_plugins(get_site_plugins()).from_file(config_file)
     args = Namespace(name="test_wf")
     execute_workflow(rc, storage, args.name)
     assert os.path.isfile("test_workflow_output.csv")

@@ -3,7 +3,7 @@ from unittest import mock
 import pytest
 
 from ert.base_model_context import use_runtime_plugins
-from ert.plugins import ErtPluginContext, ErtRuntimePlugins
+from ert.plugins import ErtRuntimePlugins, get_site_plugins
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 
@@ -32,7 +32,7 @@ def test_site_config_with_substitutions(monkeypatch, change_to_tmpdir):
     ):
         config = EverestConfig.with_defaults()
 
-        runtime_plugins = ErtPluginContext.get_site_plugins()
+        runtime_plugins = get_site_plugins()
         with use_runtime_plugins(runtime_plugins):
             everest_run_model = EverestRunModel.create(
                 config, runtime_plugins=runtime_plugins

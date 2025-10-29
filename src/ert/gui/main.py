@@ -26,7 +26,7 @@ from ert.gui.tools.event_viewer import (
     add_gui_log_handler,
 )
 from ert.namespace import Namespace
-from ert.plugins import ErtPluginContext, ErtRuntimePlugins
+from ert.plugins import ErtRuntimePlugins, get_site_plugins
 from ert.services import StorageService
 from ert.storage import ErtStorageException, local_storage_set_ert_config, open_storage
 from ert.trace import trace, tracer
@@ -149,9 +149,9 @@ def _start_initial_gui_window(
         if runtime_plugins is not None:
             ert_config = ErtConfig.with_plugins(runtime_plugins).from_file(args.config)
         else:
-            ert_config = ErtConfig.with_plugins(
-                ErtPluginContext.get_site_plugins()
-            ).from_file(args.config)
+            ert_config = ErtConfig.with_plugins(get_site_plugins()).from_file(
+                args.config
+            )
         local_storage_set_ert_config(ert_config)
 
     storage_path = None

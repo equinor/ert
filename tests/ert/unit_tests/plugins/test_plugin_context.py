@@ -8,7 +8,7 @@ import pytest
 
 from ert import ForwardModelStepPlugin
 from ert.config.queue_config import LsfQueueOptions
-from ert.plugins import ErtPluginContext, ErtPluginManager, ErtRuntimePlugins, plugin
+from ert.plugins import ErtPluginManager, ErtRuntimePlugins, get_site_plugins, plugin
 from tests.ert.unit_tests.plugins import dummy_plugins
 
 
@@ -35,7 +35,7 @@ def mock_dummy_plugins(target_dir: Path):
 
 
 def test_no_plugins():
-    runtime_plugins = ErtPluginContext.get_site_plugins(ErtPluginManager(plugins=[]))
+    runtime_plugins = get_site_plugins(ErtPluginManager(plugins=[]))
     assert ErtRuntimePlugins(queue_options=None) == runtime_plugins
 
 
@@ -47,7 +47,7 @@ def test_that_ecl_and_flow_envvars_plugins_are_passed_through_plugin_context(
     mock_dummy_plugins(Path(some_tmpdir))
     monkeypatch.setattr(tempfile, "mkdtemp", Mock(return_value=some_tmpdir))
 
-    runtime_plugins = ErtPluginContext.get_site_plugins(
+    runtime_plugins = get_site_plugins(
         plugin_manager=ErtPluginManager(plugins=[dummy_plugins])
     )
     assert runtime_plugins.environment_variables == {
@@ -98,9 +98,7 @@ def test_that_site_configuration_propagates_through_plugin_context():
         def site_configurations():
             return site_config_content
 
-    runtime_plugins = ErtPluginContext.get_site_plugins(
-        ErtPluginManager(plugins=[SomePlugin])
-    )
+    runtime_plugins = get_site_plugins(ErtPluginManager(plugins=[SomePlugin]))
     assert runtime_plugins == ErtRuntimePlugins(**site_config_content)
 
 
@@ -163,9 +161,7 @@ def test_that_site_configuration_forward_models_are_merged_with_other_plugins():
         def installable_forward_model_steps():
             return [OPM10000]
 
-    runtime_plugins = ErtPluginContext.get_site_plugins(
-        ErtPluginManager(plugins=[SomePlugin])
-    )
+    runtime_plugins = get_site_plugins(ErtPluginManager(plugins=[SomePlugin]))
     assert runtime_plugins.installed_forward_model_steps == {
         "OPM9000": OPM9000(),
         "OPM10000": OPM10000(),
@@ -186,4 +182,4 @@ def test_that_plugin_context_with_two_site_configurations_raises_error(tmpdir):
     with (
         pytest.raises(ValueError, match="Only one site configuration is allowed"),
     ):
-        ErtPluginContext.get_site_plugins(ErtPluginManager(plugins=[SiteOne, SiteTwo]))
+        get_site_plugins(ErtPluginManager(plugins=[SiteOne, SiteTwo]))

@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import QCheckBox, QMessageBox
 from ert.config import ErtConfig
 from ert.gui.ertwidgets import CustomDialog, ListEditBox, PathChooser
 from ert.gui.main import GUILogHandler, _setup_main_window
-from ert.plugins import ErtPluginContext
+from ert.plugins import get_site_plugins
 
 from .conftest import (
     add_experiment_manually,
@@ -75,9 +75,7 @@ def test_rft_csv_export_plugin_exports_rft_data(
     args.config = "config.ert"
 
     output_file = Path("output.csv")
-    ert_config = ErtConfig.with_plugins(ErtPluginContext.get_site_plugins()).from_file(
-        args.config
-    )
+    ert_config = ErtConfig.with_plugins(get_site_plugins()).from_file(args.config)
     gui = _setup_main_window(ert_config, args, GUILogHandler(), ert_config.ens_path)
     qtbot.addWidget(gui)
 

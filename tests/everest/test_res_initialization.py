@@ -21,7 +21,7 @@ from ert.config.queue_config import (
     SlurmQueueOptions,
     TorqueQueueOptions,
 )
-from ert.plugins import ErtPluginContext, ErtRuntimePlugins
+from ert.plugins import ErtRuntimePlugins, get_site_plugins
 from ert.run_models.everest_run_model import EverestRunModel, _get_workflow_jobs
 from everest.config import EverestConfig, InstallDataConfig
 from everest.simulator.everest_to_ert import everest_to_ert_config_dict
@@ -114,7 +114,7 @@ def test_that_site_config_queue_options_do_not_override_user_queue_config(
         simulator={"queue_system": {"name": "local"}}, model={"realizations": [0]}
     )
 
-    site_plugins = ErtPluginContext.get_site_plugins()
+    site_plugins = get_site_plugins()
     with use_runtime_plugins(site_plugins):
         config = EverestRunModel.create(
             ever_config, "some_exp_name", "batch", runtime_plugins=site_plugins
@@ -141,7 +141,7 @@ def test_default_installed_jobs(tmp_path, monkeypatch):
         )
     )
 
-    site_plugins = ErtPluginContext.get_site_plugins()
+    site_plugins = get_site_plugins()
     with use_runtime_plugins(site_plugins):
         runmodel = EverestRunModel.create(ever_config, runtime_plugins=site_plugins)
 
@@ -192,7 +192,7 @@ def test_combined_wells_everest_to_ert(tmp_path, monkeypatch, config_yaml):
         )
     )
 
-    site_plugins = ErtPluginContext.get_site_plugins()
+    site_plugins = get_site_plugins()
     with use_runtime_plugins(site_plugins):
         runmodel = EverestRunModel.create(
             ever_config, "some_exp_name", "batch", runtime_plugins=site_plugins
@@ -227,7 +227,7 @@ def test_install_data_no_init(tmp_path, source, target, symlink, cmd, monkeypatc
     errors = EverestConfig.lint_config_dict(ever_config.to_dict())
     assert len(errors) == 0
 
-    site_plugins = ErtPluginContext.get_site_plugins()
+    site_plugins = get_site_plugins()
     with use_runtime_plugins(site_plugins):
         runmodel = EverestRunModel.create(ever_config, runtime_plugins=site_plugins)
 
@@ -287,7 +287,7 @@ def test_summary_default_no_opm(tmp_path, monkeypatch, wells_config):
     )
     sum_keys = [list(set(sum_keys))]
 
-    site_plugins = ErtPluginContext.get_site_plugins()
+    site_plugins = get_site_plugins()
     with use_runtime_plugins(site_plugins):
         runmodel = EverestRunModel.create(
             everconf, "some_exp_name", "batch", runtime_plugins=site_plugins
@@ -342,7 +342,7 @@ def test_workflows_deprecated(tmp_path, monkeypatch):
             model={"realizations": [0]},
             install_workflow_jobs=workflow_jobs,
         )
-    site_plugins = ErtPluginContext.get_site_plugins()
+    site_plugins = get_site_plugins()
     with use_runtime_plugins(site_plugins):
         runmodel = EverestRunModel.create(ever_config, runtime_plugins=site_plugins)
         assert (
@@ -361,7 +361,7 @@ def test_workflows(tmp_path, monkeypatch):
         model={"realizations": [0]},
         install_workflow_jobs=workflow_jobs,
     )
-    site_plugins = ErtPluginContext.get_site_plugins()
+    site_plugins = get_site_plugins()
     with use_runtime_plugins(site_plugins):
         runmodel = EverestRunModel.create(ever_config, runtime_plugins=site_plugins)
         assert (
@@ -374,7 +374,7 @@ def test_user_config_jobs_precedence(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     existing_job = "copy_file"
     ever_config = EverestConfig.with_defaults(model={"realizations": [0]})
-    site_plugins = ErtPluginContext.get_site_plugins()
+    site_plugins = get_site_plugins()
     with use_runtime_plugins(site_plugins):
         runmodel = EverestRunModel.create(ever_config, runtime_plugins=site_plugins)
 
@@ -425,7 +425,7 @@ def test_that_queue_settings_are_taken_from_site_config(
             lsf_queue="my_queue", lsf_resource="my_resource"
         )
 
-        site_plugins = ErtPluginContext.get_site_plugins()
+        site_plugins = get_site_plugins()
         with use_runtime_plugins(site_plugins):
             queue_config = QueueConfig.from_dict(
                 everest_to_ert_config_dict(config),
@@ -461,7 +461,7 @@ def test_passthrough_explicit_summary_keys(change_to_tmpdir):
             }
         ]
     )
-    site_plugins = ErtPluginContext.get_site_plugins()
+    site_plugins = get_site_plugins()
     with use_runtime_plugins(site_plugins):
         runmodel = EverestRunModel.create(
             config, "some_exp_name", "batch", runtime_plugins=site_plugins
@@ -662,7 +662,7 @@ def test_that_export_keywords_are_turned_into_summary_config_keys(
             "results": {"file_name": "CASE", "type": "summary"},
         }
     ]
-    site_plugins = ErtPluginContext.get_site_plugins()
+    site_plugins = get_site_plugins()
     with use_runtime_plugins(site_plugins):
         config = EverestConfig(**min_config)
         runmodel = EverestRunModel.create(
@@ -689,7 +689,7 @@ def test_that_summary_keys_are_passed_through_forward_model_results(
         }
     ]
 
-    site_plugins = ErtPluginContext.get_site_plugins()
+    site_plugins = get_site_plugins()
     with use_runtime_plugins(site_plugins):
         config = EverestConfig(**min_config)
         runmodel = EverestRunModel.create(
@@ -741,7 +741,7 @@ def test_that_summary_keys_default_to_expected_keys_according_to_wells(
         }
     ]
 
-    site_plugins = ErtPluginContext.get_site_plugins()
+    site_plugins = get_site_plugins()
     with use_runtime_plugins(site_plugins):
         config = EverestConfig(**min_config)
         runmodel = EverestRunModel.create(

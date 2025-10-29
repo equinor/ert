@@ -18,7 +18,7 @@ import ert
 from ert.base_model_context import use_runtime_plugins
 from ert.config.queue_config import LocalQueueOptions, LsfQueueOptions
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.plugins import ErtPluginContext, ErtRuntimePlugins
+from ert.plugins import ErtRuntimePlugins, get_site_plugins
 from ert.run_models import StatusEvents
 from ert.run_models.event import status_event_from_json, status_event_to_json
 from ert.run_models.everest_run_model import EverestRunModel
@@ -204,7 +204,7 @@ def cached_example(pytestconfig):
             config.simulator.queue_system = LocalQueueOptions(max_running=2)
             status_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
 
-            site_plugins = ErtPluginContext.get_site_plugins()
+            site_plugins = get_site_plugins()
             with use_runtime_plugins(site_plugins):
                 run_model = EverestRunModel.create(
                     config, status_queue=status_queue, runtime_plugins=site_plugins

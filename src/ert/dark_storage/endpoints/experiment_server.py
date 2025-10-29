@@ -30,7 +30,7 @@ from ert.config import QueueSystem
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.ensemble_evaluator.event import FullSnapshotEvent, SnapshotUpdateEvent
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
-from ert.plugins import ErtPluginContext
+from ert.plugins import get_site_plugins
 from ert.run_models import StatusEvents
 from ert.run_models.everest_run_model import EverestExitCode, EverestRunModel
 from everest.config import EverestConfig
@@ -300,7 +300,7 @@ class ExperimentRunner:
         status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
         run_model: EverestRunModel | None = None
         try:
-            site_plugins = ErtPluginContext.get_site_plugins()
+            site_plugins = get_site_plugins()
             with use_runtime_plugins(site_plugins):
                 run_model = EverestRunModel.create(
                     everest_config=self._everest_config,

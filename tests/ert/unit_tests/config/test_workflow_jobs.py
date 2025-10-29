@@ -5,7 +5,7 @@ import pytest
 
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
 from ert.config.workflow_job import workflow_job_from_file
-from ert.plugins import ErtPluginContext
+from ert.plugins import get_site_plugins
 
 
 def test_reading_non_existent_workflow_job_raises_config_error():
@@ -39,9 +39,7 @@ def test_that_ert_warns_on_duplicate_workflow_jobs(tmp_path):
             ConfigWarning, match="Duplicate workflow jobs with name 'CAREFUL_COPY_FILE'"
         ),
     ):
-        _ = ErtConfig.with_plugins(ErtPluginContext.get_site_plugins()).from_file(
-            test_config_file_name
-        )
+        _ = ErtConfig.with_plugins(get_site_plugins()).from_file(test_config_file_name)
 
 
 @pytest.mark.usefixtures("use_tmpdir")

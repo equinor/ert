@@ -3,7 +3,7 @@ from orjson import orjson
 from pydantic import ValidationError
 
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
-from ert.plugins import ErtPluginContext
+from ert.plugins import get_site_plugins
 from ert.run_models import everest_run_model
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
@@ -354,7 +354,7 @@ def test_everest2ropt_validation_error(
         ropt_dict["foo"] = "bar"
         return ropt_dict, initial_value
 
-    runtime_plugins = ErtPluginContext.get_site_plugins()
+    runtime_plugins = get_site_plugins()
     run_model = EverestRunModel.create(ever_config, runtime_plugins=runtime_plugins)
 
     monkeypatch.setattr(everest_run_model, "everest2ropt", _patched_everest2ropt)

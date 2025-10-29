@@ -10,7 +10,7 @@ import pytest
 
 from ert.config import ErtConfig
 from ert.config.workflow_job import ExecutableWorkflow
-from ert.plugins import ErtPluginContext
+from ert.plugins import get_site_plugins
 from tests.ert.utils import SOURCE_DIR
 
 from ._import_from_location import import_from_location
@@ -545,9 +545,7 @@ def minimal_case(tmpdir):
 
 
 def test_shell_script_fmstep_availability(minimal_case):
-    ert_config = ErtConfig.with_plugins(ErtPluginContext.get_site_plugins()).from_file(
-        "config.ert"
-    )
+    ert_config = ErtConfig.with_plugins(get_site_plugins()).from_file("config.ert")
     fm_shell_jobs = {}
     for fm_step in ert_config.installed_forward_model_steps.values():
         exe = fm_step.executable
@@ -575,9 +573,7 @@ def test_shell_script_fmstep_names(minimal_case):
         "SYMLINK",
         "COPY_FILE",
     ]
-    ert_config = ErtConfig.with_plugins(ErtPluginContext.get_site_plugins()).from_file(
-        "config.ert"
-    )
+    ert_config = ErtConfig.with_plugins(get_site_plugins()).from_file("config.ert")
     found_jobs = set()
     for wf_name, wf in ert_config.workflow_jobs.items():
         if isinstance(wf, ExecutableWorkflow) and "shell_scripts" in wf.executable:
