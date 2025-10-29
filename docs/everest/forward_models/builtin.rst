@@ -41,34 +41,141 @@ This will produce an output file with the content:
     This is written in my file together with my_value
 
 
-.. _eclipse100:
+.. _build_in_reservoir_simulators:
 
-Eclipse simulator
------------------
+Reservoir simulators (Flow & Eclipse)
+-------------------------------------
 
-.. code-block:: bash
+Everest supports built-in forward model steps for running common reservoir simulators
+in optimization workflows related to subsurface activities.
+This includes **OPM Flow**, **Eclipse100**, and **Eclipse300**.
 
-  eclipse100 <eclbase> --version <version_number>
+Supported simulator jobs
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-Running eclipse with parallel option
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+You can specify the following simulator jobs in your Everest configuration:
 
-It is possible to run eclipse with multiple CPUs on clusters. This requires the eclipse data file to have the
-parallel option and the everest config needs to specify the number of CPUs per node:
+- ``flow`` — runs OPM Flow.
+- ``eclipse100`` — runs Eclipse 100.
+- ``eclipse300`` — runs Eclipse 300.
+
+All three map internally to the same reservoir simulator runner, but differ in how
+arguments are interpreted and which simulator is launched.
+
+.. _flow:
+
+Flow usage
+~~~~~~~~~~
+
+Everest will run the Flow simulator using either the `flow` binary or a wrapper script
+called `flowrun`, depending on what is available in the user's environment (`$PATH`).
+
+- If `flowrun` is found, it takes precedence and enables additional features such as:
+  - version selection (`--version`)
+  - parallel execution (`--np`, `--threads`)
+  - default flags (e.g., `--enable-esmry=true`)
+- If only `flow` is available, Everest will invoke it directly with the provided arguments.
+
+You can check which binary is used by running `which flowrun` or `which flow` in your terminal.
+
+Single-threaded Flow example
+""""""""""""""""""""""""""""
 
 .. code-block:: yaml
 
-  simulator:
-    cores_per_realization: x
+   forward_model:
+     - job: flow r{{ eclbase }}
+       results:
+         file_name: r{{ eclbase }}
+         type: summary
 
-where x is an int giving the number of cores. The eclipse100 forward model also needs to be given the argument to use
-multiple cores:
+Multi-process and multi-threaded Flow example
+"""""""""""""""""""""""""""""""""""""""""""""
 
-.. code-block:: bash
+.. code-block:: yaml
 
-  eclipse100 <eclbase> --version <version_number> --num-cpu x
+   forward_model:
+     - job: flow r{{ eclbase }} --np 8 --threads 4 --version stable
+       results:
+         file_name: r{{ eclbase }}
+         type: summary
+         keys: ["FOPR", "WOPR"]
 
-where x is the number of cores.
+This runs Flow with 8 MPI ranks, each using 4 OpenMP threads. The version `stable` is selected
+(if supported by the wrapper). Additional Flow arguments can be passed as needed.
+
+Manual MPI launch (without flowrun wrapper)
+"""""""""""""""""""""""""""""""""""""""""""
+
+If your environment does **not** include a `flowrun` wrapper, Everest will invoke the `flow` binary directly. In this case, Everest does **not** insert `mpirun` or manage parallel execution. You must handle MPI launching manually by including `mpirun` in the job line.
+
+.. code-block:: yaml
+
+   forward_model:
+     - job: mpirun -np 8 flow r{{ eclbase }}.DATA --threads-per-process=4
+       results:
+         file_name: r{{ eclbase }}
+         type: summary
+         keys: ["FOPR", "WOPR"]
+
+This example:
+
+- Launches Flow with `mpirun -np 8` (8 MPI ranks)
+- Sets 4 OpenMP threads per rank using Flow's native flag `--threads-per-process=4`
+- Assumes `mpirun` and `flow` are available in the environment
+
+.. _eclipse100:
+.. _eclipse300:
+
+Eclipse100 and Eclipse300 usage
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To run Eclipse100, use the following syntax:
+
+.. code-block:: yaml
+
+   forward_model:
+     - job: eclipse100 r{{ eclbase }} --version 2020.2
+       results:
+         file_name: r{{ eclbase }}
+         type: summary
+         keys: ["FOPR", "WOPR"]
+
+Or Eclipse300:
+
+.. code-block:: yaml
+
+   forward_model:
+     - job: eclipse300 r{{ eclbase }} --version 2021.1
+       results:
+         file_name: r{{ eclbase }}
+         type: summary
+         keys: ["FOPT", "FWPT"]
+
+and running in parallel (assuming eclrun supports this syntax, maybe it should be just the same syntax as OPM Flow):
+
+.. code-block:: yaml
+
+    forward_model:
+      - job: eclipse300 r{{ eclbase }} --version 2021.1 --np 16 --threads 2
+        results:
+        file_name: r{{ eclbase }}
+        type: summary
+
+**Required and optional arguments**
+
+- ``--version <str>``: **Required** for Eclipse jobs. Specifies the simulator version.
+- ``-n / --num-cpu <int>``: Number of CPUs to use (parallel execution).
+- ``-i / --ignore-errors``: Continue even if the simulator returns an error.
+- ``--summary-conversion``: Enables summary conversion (only available for Eclipse).
+
+These arguments are passed to the simulator runner and used to construct the command:
+
+.. code-block:: text
+
+   <runner> eclipse300 --version 2021.1 <deckfile> --summary-conversion yes
+
+The deck file is automatically resolved from the base name (e.g., ``r{{ eclbase }}.DATA``).
 
 Everest usage example
 ~~~~~~~~~~~~~~~~~~~~~
@@ -388,7 +495,7 @@ where ``"--"`` marks the beginning of a comment line and will be ignored by the 
 
 
 Other template examples
-^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------
 The `jinja2 <https://jinja.palletsprojects.com/>`_ templating language is supported by
 the schedule merge job, and can be used to write the templates.
 Below a few default examples can be found:
