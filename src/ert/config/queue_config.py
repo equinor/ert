@@ -460,7 +460,6 @@ class QueueConfig(BaseModelWithContextSupport):
             merged_queue_options_dict,
             True,
         )
-        config_dict["JOB_SCRIPT"] = selected_queue_options.job_script
 
         cls._validate_config_dict(
             selected_queue_system, config_dict, site_queue_options_dict

@@ -193,9 +193,6 @@ def queue_that_overrides_site_config(request, caplog):
         QUEUE_OPTION {queue_system} MAX_RUNNING 10
         QUEUE_OPTION {queue_system} NUM_CPU 9
         QUEUE_OPTION {queue_system} SUBMIT_SLEEP 1337
-        QUEUE_OPTION {queue_system} JOB_SCRIPT usr_dispatch.py
-        QUEUE_OPTION {queue_system} JOB_SCRIPT usr_dispatch2.py
-        QUEUE_OPTION {queue_system} JOB_SCRIPT usr_dispatch3.py
         """,
         "config.ert",
     )
@@ -246,22 +243,6 @@ def test_that_overwriting_QUEUE_OPTIONS_warns(queue_that_overrides_site_config):
         f"QUEUE_OPTION {queue_system.upper()} SUBMIT_SLEEP 1337" in captured_log
     )
 
-    assert (
-        f"Overwriting site config setting: job_script=site_job_script.sh with "
-        f"QUEUE_OPTION {queue_system.upper()} JOB_SCRIPT usr_dispatch.py"
-        in captured_log
-    )
-
-    assert (
-        f"Overwriting QUEUE_OPTION {queue_system.upper()} JOB_SCRIPT: \n "
-        f"Old value: usr_dispatch.py \n New value: usr_dispatch2.py\n" in captured_log
-    )
-
-    assert (
-        f"Overwriting QUEUE_OPTION {queue_system.upper()} JOB_SCRIPT: \n "
-        f"Old value: usr_dispatch2.py \n New value: usr_dispatch3.py\n" in captured_log
-    )
-
 
 def test_that_user_given_queue_settings_overwrites_site_config(
     queue_that_overrides_site_config,
@@ -272,7 +253,6 @@ def test_that_user_given_queue_settings_overwrites_site_config(
     expected = {
         "max_running": 10,
         "submit_sleep": 1337.0,
-        "job_script": "usr_dispatch3.py",
         "num_cpu": 9,
         queue_system_option.lower(): "test_1",
     }
@@ -466,42 +446,12 @@ def test_max_runtime_is_set_from_corresponding_keyword(value):
     assert QueueConfig(max_runtime=value).max_runtime == value
 
 
-def test_that_job_script_from_queue_options_takes_precedence_over_global(
-    copy_poly_case,
-):
-    config = ErtConfig.from_file_contents(
-        "NUM_REALIZATIONS 1\n"
-        "JOB_SCRIPT poly_eval.py\n"
-        "QUEUE_SYSTEM LSF\n"
-        "QUEUE_OPTION LSF JOB_SCRIPT fm_dispatch_lsf.py\n"
-    )
-    assert config.queue_config.queue_options.job_script == "fm_dispatch_lsf.py"
-
-
 def test_that_site_queue_options_are_ignored_with_differing_user_queue_system_arg():
     config = ErtConfig.with_plugins(
         ErtRuntimePlugins(queue_options=LsfQueueOptions())
     ).from_file_contents("NUM_REALIZATIONS 1\nQUEUE_SYSTEM LOCAL\n")
 
     assert config.queue_config.queue_system == QueueSystem.LOCAL
-
-
-def test_that_job_script_precedence_is_user_then_site_then_defaults(caplog):
-    config_dict = ErtConfig._config_dict_from_contents(
-        """
-        NUM_REALIZATIONS 1
-        QUEUE_SYSTEM LOCAL
-        QUEUE_OPTION LOCAL JOB_SCRIPT usr_dispatch3.py
-        """,
-        "config.ert",
-    )
-
-    queue_config = QueueConfig.from_dict(
-        config_dict,
-        site_queue_options=LocalQueueOptions(job_script="site_job_script.sh"),
-    )
-
-    assert queue_config.queue_options.job_script == "usr_dispatch3.py"
 
 
 def test_that_usr_none_job_script_defaults_to_site(caplog):
