@@ -1,4 +1,5 @@
 import itertools
+import warnings
 from typing import Any, cast
 
 import everest
@@ -76,9 +77,16 @@ def _extract_simulator(ever_config: EverestConfig, ert_config: dict[str, Any]) -
         ert_config[ErtConfigKeys.REALIZATION_MEMORY] = max_memory or 0
 
     # Number of cores reserved on queue nodes (NUM_CPU)
-    num_fm_cpu = ever_simulation.cores_per_node
-    if num_fm_cpu is not None:
-        ert_config[ErtConfigKeys.NUM_CPU] = num_fm_cpu
+    if (num_fm_cpu := ever_simulation.cores_per_node) is not None:
+        if (
+            ever_simulation.queue_system is not None
+            and "num_cpu" not in ever_simulation.queue_system.model_fields_set
+        ):
+            ert_config[ErtConfigKeys.NUM_CPU] = num_fm_cpu
+        else:
+            warnings.warn(
+                "Ignoring cores_per_node as num_cpu was set", UserWarning, stacklevel=2
+            )
 
 
 def _everest_to_ert_config_dict(ever_config: EverestConfig) -> ConfigDict:
