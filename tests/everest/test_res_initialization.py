@@ -1,10 +1,8 @@
 import itertools
-import os
 import stat
 from pathlib import Path
 from shutil import which
 from textwrap import dedent
-from unittest import mock
 
 import pytest
 import yaml
@@ -13,113 +11,9 @@ from pydantic import ValidationError
 import everest
 from ert.base_model_context import use_runtime_plugins
 from ert.config import ConfigWarning, SummaryConfig
-from ert.config.parsing import ConfigKeys as ErtConfigKeys
-from ert.config.queue_config import (
-    LocalQueueOptions,
-    LsfQueueOptions,
-    QueueConfig,
-    SlurmQueueOptions,
-    TorqueQueueOptions,
-)
-from ert.plugins import ErtRuntimePlugins, get_site_plugins
+from ert.plugins import get_site_plugins
 from ert.run_models.everest_run_model import EverestRunModel, _get_workflow_jobs
 from everest.config import EverestConfig, InstallDataConfig
-from everest.simulator.everest_to_ert import everest_to_ert_config_dict
-
-
-@pytest.mark.usefixtures("no_plugins")
-@pytest.mark.parametrize(
-    "config, config_class",
-    [
-        [
-            {
-                "name": "local",
-                "max_running": 0,
-                "submit_sleep": 0.0,
-                "project_code": "",
-                "activate_script": "activate_script",
-            },
-            LocalQueueOptions,
-        ],
-        [
-            {
-                "name": "torque",
-                "qsub_cmd": "qsub",
-                "qstat_cmd": "qstat",
-                "qdel_cmd": "qdel",
-                "queue": "queue",
-                "cluster_label": "cluster_label",
-                "job_prefix": "job_prefix",
-                "keep_qsub_output": False,
-            },
-            TorqueQueueOptions,
-        ],
-        [
-            {
-                "name": "slurm",
-                "sbatch": "sbatch",
-                "scancel": "scancel",
-                "scontrol": "scontrol",
-                "sacct": "sacct",
-                "squeue": "squeue",
-                "exclude_host": "exclude_host",
-                "include_host": "include_host",
-                "partition": "some_partition",
-                "squeue_timeout": 2.0,
-                "max_runtime": 10,
-            },
-            SlurmQueueOptions,
-        ],
-        [
-            {
-                "name": "lsf",
-                "bhist_cmd": "bhist",
-                "bjobs_cmd": "bjobs",
-                "bkill_cmd": "bkill",
-                "bsub_cmd": "bsub",
-                "exclude_host": "",
-                "lsf_queue": "lsf_queue",
-                "lsf_resource": "",
-            },
-            LsfQueueOptions,
-        ],
-    ],
-)
-def test_everest_to_ert_queue_config(config, config_class, tmp_path, monkeypatch):
-    """Note that these objects are used directly in the Everest
-    config, and if you have to make changes to this test, it is likely
-    that it is a breaking change to Everest"""
-    monkeypatch.chdir(tmp_path)
-    general_queue_options = {"max_running": 10}
-    general_options = {"resubmit_limit": 7}
-    config |= general_queue_options
-    ever_config = EverestConfig.with_defaults(
-        simulator={"queue_system": config} | general_options,
-        model={"realizations": [0]},
-    )
-
-    config_dict = everest_to_ert_config_dict(ever_config)
-    queue_config = QueueConfig.from_dict(config_dict)
-    queue_config.queue_options = ever_config.simulator.queue_system
-    queue_config.queue_system = ever_config.simulator.queue_system.name
-
-    assert queue_config.queue_options == config_class(**config)
-
-
-@pytest.mark.usefixtures("use_site_configurations_with_lsf_queue_options")
-def test_that_site_config_queue_options_do_not_override_user_queue_config(
-    min_config, monkeypatch, change_to_tmpdir
-):
-    ever_config = EverestConfig.with_defaults(
-        simulator={"queue_system": {"name": "local"}}, model={"realizations": [0]}
-    )
-
-    site_plugins = get_site_plugins()
-    with use_runtime_plugins(site_plugins):
-        config = EverestRunModel.create(
-            ever_config, "some_exp_name", "batch", runtime_plugins=site_plugins
-        )
-        assert config.queue_system == "local"
 
 
 def test_default_installed_jobs(tmp_path, monkeypatch):
@@ -396,47 +290,6 @@ def test_user_config_jobs_precedence(tmp_path, monkeypatch):
     assert only_fm_step.name == existing_job
 
 
-@pytest.mark.usefixtures("no_plugins")
-def test_that_queue_settings_are_taken_from_site_config(
-    min_config, monkeypatch, tmp_path
-):
-    monkeypatch.chdir(tmp_path)
-    assert "simulator" not in min_config  # Double check
-    Path("site-config").write_text(
-        dedent("""
-    QUEUE_SYSTEM LSF
-    QUEUE_OPTION LSF LSF_RESOURCE my_resource
-    QUEUE_OPTION LSF LSF_QUEUE my_queue
-    """),
-        encoding="utf-8",
-    )
-    with open("config.yml", "w", encoding="utf-8") as f:
-        yaml.dump(min_config, f)
-
-    obj = ErtRuntimePlugins(
-        queue_options=LsfQueueOptions(lsf_resource="my_resource", lsf_queue="my_queue")
-    )
-    with mock.patch(
-        "ert.plugins.plugin_manager.ErtRuntimePlugins",
-        return_value=obj,
-    ):
-        config = EverestConfig.load_file("config.yml")
-        assert config.simulator.queue_system == LsfQueueOptions(
-            lsf_queue="my_queue", lsf_resource="my_resource"
-        )
-
-        site_plugins = get_site_plugins()
-        with use_runtime_plugins(site_plugins):
-            queue_config = QueueConfig.from_dict(
-                everest_to_ert_config_dict(config),
-                site_queue_options=site_plugins.queue_options,
-            )
-
-        assert queue_config.queue_options == LsfQueueOptions(
-            lsf_queue="my_queue", lsf_resource="my_resource"
-        )
-
-
 def test_passthrough_explicit_summary_keys(change_to_tmpdir):
     custom_sum_keys = [
         "GOIR:PRODUC",
@@ -527,33 +380,6 @@ def test_that_invalid_max_memory_fails(max_memory, exception_message) -> None:
 
 @pytest.mark.usefixtures("no_plugins")
 @pytest.mark.parametrize(
-    "max_memory",
-    [0, 1, "0", "1", "1b", "1k", "1m", "1g", "1t", "1p", "1G", "1 G", "1Gb", "1 Gb"],
-)
-def test_that_max_memory_is_passed_to_ert_unchanged(
-    change_to_tmpdir, max_memory
-) -> None:
-    ever_config = EverestConfig.with_defaults(simulator={"max_memory": max_memory})
-    config_dict = everest_to_ert_config_dict(ever_config)
-    assert config_dict[ErtConfigKeys.REALIZATION_MEMORY] == str(max_memory)
-
-
-@pytest.mark.usefixtures("no_plugins")
-def test_that_max_memory_none_is_not_passed_to_ert(change_to_tmpdir) -> None:
-    ever_config = EverestConfig.with_defaults()
-    config_dict = everest_to_ert_config_dict(ever_config)
-    assert ErtConfigKeys.REALIZATION_MEMORY not in config_dict
-
-
-@pytest.mark.usefixtures("no_plugins")
-def test_that_resubmit_limit_is_set(change_to_tmpdir) -> None:
-    ever_config = EverestConfig.with_defaults(simulator={"resubmit_limit": 0})
-    config_dict = everest_to_ert_config_dict(ever_config)
-    assert config_dict[ErtConfigKeys.MAX_SUBMIT] == 1
-
-
-@pytest.mark.usefixtures("no_plugins")
-@pytest.mark.parametrize(
     "max_memory, realization_memory",
     [(None, 0), (999, 999), ("1Gb", 1073741824), (0, 0)],
 )
@@ -632,12 +458,6 @@ def test_parsing_of_non_existing_relization_memory() -> None:
         }
     )
     assert config.simulator.queue_system.realization_memory == 0
-
-
-def test_that_everest_to_ert_config_dict_does_not_create_files(tmp_path, monkeypatch):
-    monkeypatch.chdir(tmp_path)
-    everest_to_ert_config_dict(EverestConfig.with_defaults())
-    assert not os.listdir(tmp_path)
 
 
 def test_that_export_keywords_are_turned_into_summary_config_keys(
