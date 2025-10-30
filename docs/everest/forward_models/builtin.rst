@@ -141,18 +141,36 @@ To run Eclipse100, use the following syntax:
          type: summary
          keys: ["FOPR", "WOPR"]
 
-Or Eclipse300:
+**Required and optional arguments**
+
+- ``--version <str>``: **Required** for Eclipse jobs. Specifies the simulator version.
+- ``-n / --num-cpu <int>``: Number of CPUs to use (parallel execution).
+- ``-i / --ignore-errors``: Continue even if the simulator returns an error.
+- ``--summary-conversion``: Enables summary conversion (only available for Eclipse).
+
+To run Eclipse300, please use the following syntax:
 
 .. code-block:: yaml
 
    forward_model:
-     - job: eclipse300 r{{ eclbase }} --version 2021.1
+     - job: eclipse300 r{{ eclbase }} --version 2021.1 --summary-conversion
        results:
          file_name: r{{ eclbase }}
          type: summary
          keys: ["FOPT", "FWPT"]
 
-and running in parallel (assuming eclrun supports this syntax, maybe it should be just the same syntax as OPM Flow):
+These arguments are passed to the simulator runner and used to construct the command:
+
+.. code-block:: text
+
+   eclrun eclipse300 --version 2021.1 <deckfile> --summary-conversion yes
+
+The deck file is automatically resolved from the base name (e.g., ``r{{ eclbase }}.DATA``).
+
+Running Eclipse in parallel
+"""""""""""""""""""""""""""
+
+To run Eclipse100 or Eclipse300 in parallel, please use following syntax (TODO: assuming eclrun supports this syntax, maybe it should be just the same syntax as OPM Flow? double check):
 
 .. code-block:: yaml
 
@@ -161,21 +179,6 @@ and running in parallel (assuming eclrun supports this syntax, maybe it should b
         results:
         file_name: r{{ eclbase }}
         type: summary
-
-**Required and optional arguments**
-
-- ``--version <str>``: **Required** for Eclipse jobs. Specifies the simulator version.
-- ``-n / --num-cpu <int>``: Number of CPUs to use (parallel execution).
-- ``-i / --ignore-errors``: Continue even if the simulator returns an error.
-- ``--summary-conversion``: Enables summary conversion (only available for Eclipse).
-
-These arguments are passed to the simulator runner and used to construct the command:
-
-.. code-block:: text
-
-   <runner> eclipse300 --version 2021.1 <deckfile> --summary-conversion yes
-
-The deck file is automatically resolved from the base name (e.g., ``r{{ eclbase }}.DATA``).
 
 Everest usage example
 ~~~~~~~~~~~~~~~~~~~~~
