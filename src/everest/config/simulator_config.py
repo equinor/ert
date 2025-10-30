@@ -75,9 +75,22 @@ class SimulatorConfig(BaseModelWithContextSupport, extra="forbid"):
         default=None,
         description=dedent(
             """
-            Maximum allowed memory usage of a forward model.
+            Amount of memory to set aside for a forward model.
 
-            When set, a job is only allowed to use `max_memory` of memory.
+            This information is propagated to the queue system as the amount of memory
+            to reserve/book for a realization to complete. It is up to the configuration
+            of the queuing system how to treat this information, but usually it will
+            stop more realizations being assigned to a compute node if the compute nodes
+            memory is already fully booked.
+
+            Setting this number lower than the peak memory consumption of each
+            realization puts the realization at risk of being killed in an out-of-memory
+            situation. Setting this number higher than needed will give longer wait
+            times in the queue.
+
+            For the local queue system, this keyword has no effect. In that scenario,
+            you can use `max_running`  to choke the memory consumption.
+            scheduling of compute jobs.
 
             `max_memory` may be an integer value, indicating the number of
             bytes, or a string consisting of a number followed by a unit. The
@@ -94,9 +107,6 @@ class SimulatorConfig(BaseModelWithContextSupport, extra="forbid"):
             Spaces between the number and the unit are ignored, and so are any
             characters after the first. For example: 2g, 2G, and 2 GB all
             resolve to the same value: 2 gigabytes, equaling 2 * 1024**3 bytes.
-
-            If not set, or a set to zero, the allowed amount of memory is
-            unlimited.
             """
         ),
     )
