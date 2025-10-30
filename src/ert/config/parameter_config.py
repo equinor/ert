@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from abc import abstractmethod
 from collections.abc import Callable, Iterator
 from enum import StrEnum, auto
@@ -12,14 +11,12 @@ import networkx as nx
 import numpy as np
 import polars as pl
 import xarray as xr
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel
 
 if TYPE_CHECKING:
     import numpy.typing as npt
 
     from ert.storage import Ensemble
-
-logger = logging.getLogger(__name__)
 
 
 class InvalidParameterFile(Exception):
@@ -54,19 +51,6 @@ class ParameterConfig(BaseModel):
     name: str
     forward_init: bool
     update: bool
-
-    @model_validator(mode="after")
-    def log_parameters_on_instantiation(self) -> ParameterConfig:
-        specified_parameters = self.model_fields_set
-        defaulted_parameters = set(self.model_fields.keys()) - specified_parameters
-        msg = (
-            f"Attributes for {type(self).__name__} with input values:\n"
-            f"{specified_parameters}\n"
-            f"Attributes for {type(self).__name__} with defaulted values:\n"
-            f"{defaulted_parameters}"
-        )
-        logger.info(msg)
-        return self
 
     @property
     @abstractmethod
