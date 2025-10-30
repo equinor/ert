@@ -1283,37 +1283,34 @@ def test_that_permission_error_is_logged_in_load_ensembles(snake_oil_storage, ca
     ensemble = snake_oil_storage.get_experiment_by_name(
         "ensemble-experiment"
     ).get_ensemble_by_name("default_0")
-    path = Path(ensemble._path)
-    mode = path.stat().st_mode
-    os.chmod(path, 0o000)  # no permissions
+    Path(ensemble._path).chmod(0o000)  # no permissions
     snake_oil_storage._ensembles.clear()
     try:
         with caplog.at_level(logging.ERROR), pytest.raises(PermissionError):
             snake_oil_storage._load_ensembles()
             assert (
-                f"Permission error when loading ensemble from path: {path}."
+                f"Permission error when loading ensemble from path: {ensemble._path}."
                 in caplog.records[0].message
             )
             assert len(snake_oil_storage._ensembles) == 0
     finally:
-        os.chmod(path, mode)
+        Path(ensemble._path).chmod(0o755)  # restore permissions
 
 
 def test_that_permission_error_is_logged_in_load_index(snake_oil_storage, caplog):
     old_index = snake_oil_storage._index
-    path = Path(snake_oil_storage.path / "index.json")
-    mode = path.stat().st_mode
-    os.chmod(path, 0o000)  # no permissions
+    index_path = Path(snake_oil_storage.path / "index.json")
+    index_path.chmod(0o000)  # no permissions
     try:
         with caplog.at_level(logging.ERROR), pytest.raises(PermissionError):
             index = snake_oil_storage._load_index()
             assert index == old_index
             assert (
-                f"Permission error when loading index from path: {path}."
+                f"Permission error when loading index from path: {index_path}."
                 in caplog.records[0].message
             )
     finally:
-        os.chmod(path, mode)
+        index_path.chmod(0o744)  # restore permissions
 
 
 @dataclass
