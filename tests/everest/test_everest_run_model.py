@@ -23,6 +23,7 @@ def create_runmodel(min_config: dict, monkeypatch: pytest.MonkeyPatch) -> Callab
         queue_system: dict[str, str | int | bool | float],
     ) -> EverestRunModel:
         with ErtPluginContext() as runtime_plugins:
+            runtime_plugins.queue_options = None
             return EverestRunModel.create(
                 EverestConfig(
                     **(min_config | {"simulator": {"queue_system": queue_system}})
