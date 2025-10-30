@@ -14,6 +14,7 @@ from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.single_test_run_panel import SingleTestRunPanel
 from ert.gui.simulation.view import RealizationWidget
+from ert.gui.simulation.view.disk_space_widget import DiskSpaceWidget
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
 from ert.gui.tools.plot.plot_ensemble_selection_widget import EnsembleSelectionWidget
 from ert.run_models import EnsembleExperiment, EnsembleSmoother
@@ -86,14 +87,14 @@ but qt are not able to detect these fonts for some reason.
 
 FIXED_RANDOM_SEED = 11223344
 
-COEFF_A_PNG_THRESHOLD = 0.9
-COEFF_B_PNG_THRESHOLD = 0.9
-COEFF_C_PNG_THRESHOLD = 0.9
-ERT_PNG_THRESHOLD = 0.9
-PLOT_OBS_PNG_THRESHOLD = 0.9
-PLOTS_PNG_THRESHOLD = 0.9
-POLY_PLOT_PNG_THRESHOLD = 0.9
-SIMULATIONS_PNG_THRESHOLD = 0.9
+COEFF_A_PNG_THRESHOLD = 0.999
+COEFF_B_PNG_THRESHOLD = 0.999
+COEFF_C_PNG_THRESHOLD = 0.999
+ERT_PNG_THRESHOLD = 0.999
+PLOT_OBS_PNG_THRESHOLD = 0.999
+PLOTS_PNG_THRESHOLD = 0.999
+POLY_PLOT_PNG_THRESHOLD = 0.999
+SIMULATIONS_PNG_THRESHOLD = 0.999
 
 
 def run_experiment(qtbot, experiment_mode, gui, click_done=True):
@@ -282,6 +283,9 @@ def test_that_poly_new_minimal_screenshots_are_up_to_date(
 ):
     monkeypatch.chdir(tmp_path)
 
+    # Set static values for disk space to not trigger false gui change detection
+    monkeypatch.setattr(DiskSpaceWidget, "_get_status", lambda self: (50, "100 GB"))
+
     example_folder = "docs/ert/getting_started/configuration/poly_new/minimal"
     gui = open_gui_with_docs_example(tmp_path, source_root, example_folder, "poly.ert")
 
@@ -292,6 +296,12 @@ def test_that_poly_new_minimal_screenshots_are_up_to_date(
     gui_evaluator.compare_img_with_gui("ert.png", ERT_PNG_THRESHOLD)
 
     run_experiment(qtbot, EnsembleExperiment, gui)
+
+    # Set static values for running time to not trigger false gui change detection
+    run_dialog = gui.findChild(RunDialog)
+    assert isinstance(run_dialog, RunDialog)
+    run_dialog._run_model_api.get_runtime = lambda: 2
+    run_dialog._on_ticker()
 
     gui_evaluator.compare_img_with_gui("simulations.png", SIMULATIONS_PNG_THRESHOLD)
 
