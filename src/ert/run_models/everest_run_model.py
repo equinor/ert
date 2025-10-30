@@ -10,6 +10,7 @@ import os
 import queue
 import shutil
 import traceback
+import warnings
 from collections import defaultdict
 from collections.abc import Callable, Iterator, MutableSequence
 from enum import IntEnum, auto
@@ -33,6 +34,7 @@ from ert.config import (
     EverestObjectivesConfig,
     GenDataConfig,
     HookRuntime,
+    KnownQueueOptionsAdapter,
     ParameterConfig,
     QueueConfig,
     ResponseConfig,
@@ -66,7 +68,6 @@ from everest.optimizer.opt_model_transforms import (
     get_optimization_domain_transforms,
 )
 from everest.simulator.everest_to_ert import (
-    everest_to_ert_config_dict,
     extract_summary_keys,
 )
 from everest.strings import EVEREST
@@ -279,8 +280,6 @@ class EverestRunModel(RunModel):
         if status_queue is None:
             status_queue = queue.SimpleQueue()
 
-        config_dict = everest_to_ert_config_dict(everest_config)
-
         runpath_file: Path = Path(
             os.path.join(everest_config.output_dir, ".res_runpath_list")
         )
@@ -359,12 +358,66 @@ class EverestRunModel(RunModel):
             else DEFAULT_ECLBASE_FORMAT,
         )
 
-        queue_config = QueueConfig.from_dict(
-            config_dict,
-            queue_options_from_everest=everest_config.simulator.queue_system,
-            site_queue_options=runtime_plugins.queue_options
-            if runtime_plugins
-            else None,
+        simulator_config = everest_config.simulator
+        queue_options_from_everconfig = {"name": "local"} | (
+            simulator_config.queue_system.model_dump(exclude_unset=True)
+            if simulator_config.queue_system is not None
+            else {}
+        )
+
+        if simulator_config.max_memory is not None:
+            queue_options_from_everconfig["realization_memory"] = (
+                simulator_config.max_memory or 0
+            )
+
+        # Number of cores reserved on queue nodes (NUM_CPU)
+        if (num_fm_cpu := simulator_config.cores_per_node) is not None:
+            if (
+                simulator_config.queue_system is not None
+                and "num_cpu" not in simulator_config.queue_system.model_fields_set
+            ):
+                queue_options_from_everconfig["num_cpu"] = num_fm_cpu
+            else:
+                warnings.warn(
+                    "Ignoring cores_per_node as num_cpu was set",
+                    UserWarning,
+                    stacklevel=2,
+                )
+
+        # Only take into account site queue options
+        # if and only if they exist and are of same type as user
+        # specified queue system
+        applied_site_queue_options = (
+            runtime_plugins.queue_options.model_dump(exclude_unset=True)
+            if (
+                runtime_plugins is not None
+                and runtime_plugins.queue_options is not None
+                and runtime_plugins.queue_options.name
+                == queue_options_from_everconfig["name"]
+            )
+            else {}
+        )
+
+        queue_options_dict = applied_site_queue_options | queue_options_from_everconfig
+
+        queue_options = KnownQueueOptionsAdapter.validate_python(queue_options_dict)
+
+        if queue_options.project_code is None:
+            tags = {
+                fm_name.lower()
+                for fm_name in everest_config.forward_model_step_commands
+                if fm_name.split(" ")[0].upper()
+                in {"RMS", "FLOW", "ECLIPSE100", "ECLIPSE300"}
+            }
+            if tags:
+                queue_options.project_code = "+".join(tags)
+
+        queue_config = QueueConfig(
+            max_submit=simulator_config.resubmit_limit + 1,
+            queue_system=queue_options.name,
+            queue_options=queue_options,
+            stop_long_running=False,
+            max_runtime=simulator_config.max_runtime,
         )
 
         substitutions = {

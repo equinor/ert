@@ -5,9 +5,6 @@ import pytest
 
 from ert.run_models.everest_run_model import _get_internal_files
 from everest.config import EverestConfig, WellConfig
-from everest.simulator.everest_to_ert import (
-    everest_to_ert_config_dict,
-)
 
 
 @pytest.mark.parametrize(
@@ -77,7 +74,6 @@ def test_well_config_to_wells_json(min_config, monkeypatch, tmp_path, config):
     monkeypatch.chdir(tmp_path)
     min_config["wells"] = config
     ever_config = EverestConfig(**min_config)
-    everest_to_ert_config_dict(ever_config)
     for datafile, data in _get_internal_files(ever_config).items():
         datafile.parent.mkdir(exist_ok=True, parents=True)
         datafile.write_text(data, encoding="utf-8")
@@ -103,7 +99,6 @@ def test_controls_config_to_wells_json(min_config, monkeypatch, tmp_path, variab
     monkeypatch.chdir(tmp_path)
     min_config["controls"][0]["variables"] = variables
     ever_config = EverestConfig(**min_config)
-    everest_to_ert_config_dict(ever_config)
     for datafile, data in _get_internal_files(ever_config).items():
         datafile.parent.mkdir(exist_ok=True, parents=True)
         datafile.write_text(data, encoding="utf-8")
