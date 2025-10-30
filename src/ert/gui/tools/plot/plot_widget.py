@@ -25,7 +25,6 @@ from PyQt6.QtWidgets import (
 )
 
 from .plot_api import EnsembleObject
-from .plottery.plots.plot_tools import ConditionalAxisFormatter
 
 if TYPE_CHECKING:
     from .plottery import PlotContext
@@ -145,7 +144,7 @@ class PlotWidget(QWidget):
         self._log_checkbox = QCheckBox("Log scale", self)
         self._log_checkbox.setObjectName("log_scale_checkbox")
         self._log_checkbox.setCheckable(True)
-        # only for supported plots see _log_axis_for_plotter
+        # only for histogram plot see _sync_log_checkbox
         self._log_checkbox.setVisible(False)
         self._log_checkbox.setToolTip("Toggle data domain to log scale and back")
         self._log_checkbox.toggled.connect(self._on_log_toggled)
