@@ -79,9 +79,11 @@ Everest will run the Flow simulator using either the ``flow`` binary or a wrappe
 called ``flowrun``, depending on what is available in the user's environment (``$PATH``).
 
 - If ``flowrun`` is found, it takes precedence and enables additional features such as:
+
   - version selection (``--version``)
   - parallel execution (``--np``, ``--threads``)
   - default flags (e.g., ``--enable-esmry=true``)
+
 - If only ``flow`` is available, Everest will invoke it directly with the provided arguments.
 
 You can check which binary is used by running ``which flowrun`` or ``which flow`` in your terminal.
@@ -151,7 +153,7 @@ To run Eclipse100, use the following syntax:
          type: summary
          keys: ["FOPR", "WOPR"]
 
-**Required and optional arguments**
+Required and optional arguments:
 
 - ``--version <VERSION>``: **Required** for Eclipse jobs. Specifies the simulator version.
 - ``-i / --ignore-errors``: Continue even if the simulator returns an error.
@@ -186,7 +188,10 @@ Eclipse simulators do not natively support OpenMP-style multithreading in the sa
 The ``--threads`` option may be passed through the runner but is not guaranteed to affect simulator behavior.
 Always verify with the simulator documentation or vendor support.
 
-While Eclipse determines parallelism internally, the job scheduler (e.g., SLURM, LSF) may allocate resources based on ``cores_per_node``, for example:
+While Eclipse determines parallelism internally, the job scheduler (e.g., SLURM, LSF) may allocate resources based on
+``cores_per_node``, (see the example below). This affects how many MPI ranks are launched if the runner
+or wrapper respects the allocation. However, Eclipse itself still relies on the deck configuration
+to determine actual parallel behavior.
 
 .. code-block:: yaml
 
@@ -199,8 +204,7 @@ While Eclipse determines parallelism internally, the job scheduler (e.g., SLURM,
         file_name: r{{ eclbase }}
         type: summary
 
-This affects how many MPI ranks are launched if the runner or wrapper respects the allocation.
-However, Eclipse itself still relies on the deck configuration to determine actual parallel behavior.
+
 
 Everest usage example
 ~~~~~~~~~~~~~~~~~~~~~
