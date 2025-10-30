@@ -12,7 +12,7 @@ import networkx as nx
 import numpy as np
 import xarray as xr
 import xtgeo  # type: ignore
-from pydantic import field_serializer, model_validator
+from pydantic import field_serializer
 
 from ert.field_utils import (
     ErtboxParameters,
@@ -105,26 +105,6 @@ class Field(ParameterConfig):
     output_file: Path
     grid_file: str
     mask_file: Path | None = None
-
-    @model_validator(mode="after")
-    def log_parameters_on_instantiation(self) -> Field:
-        properties_to_skip = {
-            "mask_file",  # Provided at runtime
-            "ertbox_params",  # Derived from grid_file
-        }
-
-        specified_parameters = self.model_fields_set - properties_to_skip
-        defaulted_parameters = (
-            set(self.model_fields.keys()) - specified_parameters - properties_to_skip
-        )
-
-        msg = (
-            "Field instance instantiated.\n"
-            + f"User set parameters:\n{specified_parameters}\n"
-            + f"User did not set parameters:\n{defaulted_parameters}"
-        )
-        _logger.info(msg)
-        return self
 
     @field_serializer("output_file")
     def serialize_output_file(self, path: Path) -> str:
