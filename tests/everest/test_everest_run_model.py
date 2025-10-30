@@ -18,6 +18,9 @@ from everest.config import EverestConfig
 @pytest.fixture
 def create_runmodel(min_config: dict, monkeypatch: pytest.MonkeyPatch) -> Callable:
     monkeypatch.setattr("ert.run_models.run_model.open_storage", Mock())
+    monkeypatch.setattr(
+        "ert.run_models.everest_run_model._get_internal_files", lambda _: {}
+    )
 
     def _create_runmodel(
         queue_system: dict[str, str | int | bool | float],
