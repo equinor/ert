@@ -55,7 +55,7 @@ This includes **OPM Flow**, **Eclipse100**, and **Eclipse300**.
     Everest does not include the simulators themselves. You must have separate
     installations of **OPM Flow**, **Eclipse100**, and **Eclipse300** available
     in your environment. Everest interfaces with these simulators but does not
-    bundle or install them. Ensure they are accessible via your system's `$PATH`
+    bundle or install them. Ensure they are accessible via your system's ``$PATH``
     or configured appropriately in your environment.
 
 Supported simulator jobs
@@ -64,8 +64,8 @@ Supported simulator jobs
 You can specify the following simulator jobs in your Everest configuration:
 
 - ``flow`` — runs OPM Flow.
-- ``eclipse100`` — runs Eclipse 100 (i.e., `eclipse`).
-- ``eclipse300`` — runs Eclipse 300 (i.e., `e300`).
+- ``eclipse100`` — runs Eclipse 100 (i.e., ``eclipse``).
+- ``eclipse300`` — runs Eclipse 300 (i.e., ``e300``).
 
 All three map internally to the same reservoir simulator runner, but differ in how
 arguments are interpreted and which simulator is launched.
@@ -75,16 +75,16 @@ arguments are interpreted and which simulator is launched.
 Flow usage
 ~~~~~~~~~~
 
-Everest will run the Flow simulator using either the `flow` binary or a wrapper script
-called `flowrun`, depending on what is available in the user's environment (`$PATH`).
+Everest will run the Flow simulator using either the ``flow`` binary or a wrapper script
+called ``flowrun``, depending on what is available in the user's environment (``$PATH``).
 
-- If `flowrun` is found, it takes precedence and enables additional features such as:
-  - version selection (`--version`)
-  - parallel execution (`--np`, `--threads`)
-  - default flags (e.g., `--enable-esmry=true`)
-- If only `flow` is available, Everest will invoke it directly with the provided arguments.
+- If ``flowrun`` is found, it takes precedence and enables additional features such as:
+  - version selection (``--version``)
+  - parallel execution (``--np``, ``--threads``)
+  - default flags (e.g., ``--enable-esmry=true``)
+- If only ``flow`` is available, Everest will invoke it directly with the provided arguments.
 
-You can check which binary is used by running `which flowrun` or `which flow` in your terminal.
+You can check which binary is used by running ``which flowrun`` or ``which flow`` in your terminal.
 
 Single-threaded Flow example
 """"""""""""""""""""""""""""
@@ -109,15 +109,15 @@ Multi-process and multi-threaded Flow example
          type: summary
          keys: ["FOPR", "WOPR"]
 
-This runs Flow with 8 MPI ranks, each using 4 OpenMP threads. The version `stable` is selected
+This runs Flow with 8 MPI ranks, each using 4 OpenMP threads. The version ``stable`` is selected
 (if supported by the wrapper). Additional Flow arguments can be passed as needed.
 
 Manual MPI launch (without flowrun wrapper)
 """""""""""""""""""""""""""""""""""""""""""
 
-If your environment does **not** include a `flowrun` wrapper, Everest will invoke the `flow` binary directly.
-In this case, Everest does **not** insert `mpirun` or manage parallel execution.
-You must handle MPI launching manually by including `mpirun` in the job line.
+If your environment does **not** include a ``flowrun`` wrapper, Everest will invoke the ``flow`` binary directly.
+In this case, Everest does **not** insert ``mpirun`` or manage parallel execution.
+You must handle MPI launching manually by including ``mpirun`` in the job line.
 
 .. code-block:: yaml
 
@@ -130,9 +130,9 @@ You must handle MPI launching manually by including `mpirun` in the job line.
 
 This example:
 
-- Launches Flow with `mpirun -np 8` (8 MPI ranks)
-- Sets 4 OpenMP threads per rank using Flow's native flag `--threads-per-process=4`
-- Assumes `mpirun` and `flow` are available in the environment
+- Launches Flow with ``mpirun -np 8`` (8 MPI ranks)
+- Sets 4 OpenMP threads per rank using Flow's native flag ``--threads-per-process=4``
+- Assumes ``mpirun`` and ``flow`` are available in the environment
 
 .. _eclipse100:
 .. _eclipse300:
@@ -179,14 +179,14 @@ The deck file is automatically resolved from the base name (e.g., ``r{{ eclbase 
 Running Eclipse in parallel
 """""""""""""""""""""""""""
 
-To run Eclipse simulators (`eclipse`, `e300`) in parallel, you must include the `PARALLEL` keyword in the `RUNSPEC` section of your simulation deck.
-The number of MPI processes is determined internally by Eclipse based on the deck configuration, not by command-line options (i.e., `--np`).
-If `PARALLEL` is missing, the simulation runs in serial mode regardless of `--np`.
+To run Eclipse simulators (``eclipse``, ``e300``) in parallel, you must include the ``PARALLEL`` keyword in the ``RUNSPEC`` section of your simulation deck.
+The number of MPI processes is determined internally by Eclipse based on the deck configuration, not by command-line options (i.e., ``--np``).
+If ``PARALLEL`` is missing, the simulation runs in serial mode regardless of ``--np``.
 Eclipse simulators do not natively support OpenMP-style multithreading in the same way Flow does.
-The `--threads` option may be passed through the runner but is not guaranteed to affect simulator behavior.
+The ``--threads`` option may be passed through the runner but is not guaranteed to affect simulator behavior.
 Always verify with the simulator documentation or vendor support.
 
-While Eclipse determines parallelism internally, the job scheduler (e.g., SLURM, LSF) may allocate resources based on `cores_per_node`, for example:
+While Eclipse determines parallelism internally, the job scheduler (e.g., SLURM, LSF) may allocate resources based on ``cores_per_node``, for example:
 
 .. code-block:: yaml
 
