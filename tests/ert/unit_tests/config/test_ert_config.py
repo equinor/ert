@@ -610,10 +610,10 @@ def test_that_loading_non_existent_workflow_job_gives_validation_error():
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_job_definition_file_with_unexecutable_script_gives_validation_error():
     test_config_file_name = "test.ert"
-    job_script_file = os.path.abspath("not_executable")
+    job_definition_file = os.path.abspath("not_executable")
     job_name = "JOB_NAME"
-    Path(job_name).write_text(f"EXECUTABLE {job_script_file}\n", encoding="utf-8")
-    Path(job_script_file).write_text("#!/bin/sh\n", encoding="utf-8")
+    Path(job_name).write_text(f"EXECUTABLE {job_definition_file}\n", encoding="utf-8")
+    Path(job_definition_file).write_text("#!/bin/sh\n", encoding="utf-8")
 
     Path(test_config_file_name).write_text(
         dedent(

@@ -19,7 +19,7 @@ def test_workflow_will_run_during_experiment(
     min_config, test_deprecated, tmp_path, monkeypatch
 ):
     monkeypatch.chdir(tmp_path)
-    workflow_job_script_content = dedent("""#!/usr/bin/env python
+    workflow_job_executable_content = dedent("""#!/usr/bin/env python
 
 import argparse
 import sys
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     """)
 
     wf_path = Path("test_wf.py")
-    wf_path.write_text(workflow_job_script_content, encoding="utf-8")
+    wf_path.write_text(workflow_job_executable_content, encoding="utf-8")
     wf_path.chmod(wf_path.stat().st_mode | stat.S_IEXEC)
 
     min_config["install_workflow_jobs"] = [
