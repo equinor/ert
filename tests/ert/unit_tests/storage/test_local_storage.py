@@ -36,6 +36,7 @@ from ert.config import (
     SurfaceConfig,
 )
 from ert.config.design_matrix import DESIGN_MATRIX_GROUP
+from ert.dark_storage.common import ErtStoragePermissionError
 from ert.sample_prior import sample_prior
 from ert.storage import (
     ErtStorageException,
@@ -338,6 +339,26 @@ def test_open_empty_write(tmp_path):
 
     # Storage creates the directory
     assert (tmp_path / "empty").is_dir()
+
+
+def test_open_with_no_permissions(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(experiment, name="foo", ensemble_size=1)
+    path = Path(ensemble._path)
+    mode = path.stat().st_mode
+    os.chmod(path, 0o000)  # no permissions
+    try:
+        with (
+            pytest.raises(
+                ErtStoragePermissionError,
+                match="Permission error when accessing storage at:",
+            ),
+            open_storage(tmp_path, mode="r") as storage,
+        ):
+            storage._load_experiments()
+    finally:
+        os.chmod(path, mode)  # restore permissions
 
 
 def test_refresh(tmp_path):
