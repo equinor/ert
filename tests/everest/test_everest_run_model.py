@@ -179,7 +179,9 @@ def test_substitutions_from_everest_config(
 
 
 @pytest.mark.parametrize("random_seed", [None, 1234])
-def test_random_seed(create_runmodel: Callable, random_seed: int | None) -> None:
+def test_that_random_seed_passes_through_create(
+    create_runmodel: Callable, random_seed: int | None
+) -> None:
     runmodel = create_runmodel(
         environment={"random_seed": random_seed} if random_seed is not None else None
     )
