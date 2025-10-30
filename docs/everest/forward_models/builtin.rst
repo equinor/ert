@@ -51,11 +51,11 @@ in optimization workflows related to subsurface activities.
 This includes **OPM Flow**, **Eclipse100**, and **Eclipse300**.
 
 .. note::
-    
-    Everest does not include the simulators themselves. You must have separate 
-    installations of **OPM Flow**, **Eclipse100**, and **Eclipse300** available 
-    in your environment. Everest interfaces with these simulators but does not 
-    bundle or install them. Ensure they are accessible via your system's `$PATH` 
+
+    Everest does not include the simulators themselves. You must have separate
+    installations of **OPM Flow**, **Eclipse100**, and **Eclipse300** available
+    in your environment. Everest interfaces with these simulators but does not
+    bundle or install them. Ensure they are accessible via your system's `$PATH`
     or configured appropriately in your environment.
 
 Supported simulator jobs
@@ -115,8 +115,8 @@ This runs Flow with 8 MPI ranks, each using 4 OpenMP threads. The version `stabl
 Manual MPI launch (without flowrun wrapper)
 """""""""""""""""""""""""""""""""""""""""""
 
-If your environment does **not** include a `flowrun` wrapper, Everest will invoke the `flow` binary directly. 
-In this case, Everest does **not** insert `mpirun` or manage parallel execution. 
+If your environment does **not** include a `flowrun` wrapper, Everest will invoke the `flow` binary directly.
+In this case, Everest does **not** insert `mpirun` or manage parallel execution.
 You must handle MPI launching manually by including `mpirun` in the job line.
 
 .. code-block:: yaml
@@ -179,11 +179,11 @@ The deck file is automatically resolved from the base name (e.g., ``r{{ eclbase 
 Running Eclipse in parallel
 """""""""""""""""""""""""""
 
-To run Eclipse simulators (`eclipse`, `e300`) in parallel, you must include the `PARALLEL` keyword in the `RUNSPEC` section of your simulation deck. 
-The number of MPI processes is determined internally by Eclipse based on the deck configuration, not by command-line options (i.e., `--np`). 
+To run Eclipse simulators (`eclipse`, `e300`) in parallel, you must include the `PARALLEL` keyword in the `RUNSPEC` section of your simulation deck.
+The number of MPI processes is determined internally by Eclipse based on the deck configuration, not by command-line options (i.e., `--np`).
 If `PARALLEL` is missing, the simulation runs in serial mode regardless of `--np`.
-Eclipse simulators do not natively support OpenMP-style multithreading in the same way Flow does. 
-The `--threads` option may be passed through the runner but is not guaranteed to affect simulator behavior. 
+Eclipse simulators do not natively support OpenMP-style multithreading in the same way Flow does.
+The `--threads` option may be passed through the runner but is not guaranteed to affect simulator behavior.
 Always verify with the simulator documentation or vendor support.
 
 While Eclipse determines parallelism internally, the job scheduler (e.g., SLURM, LSF) may allocate resources based on `cores_per_node`, for example:
@@ -192,14 +192,14 @@ While Eclipse determines parallelism internally, the job scheduler (e.g., SLURM,
 
     simulator:
       cores_per_node: 16
-    
+
     forward_model:
       - job: eclipse300 r{{ eclbase }} --version 2021.1 --threads 2
         results:
         file_name: r{{ eclbase }}
         type: summary
 
-This affects how many MPI ranks are launched if the runner or wrapper respects the allocation. 
+This affects how many MPI ranks are launched if the runner or wrapper respects the allocation.
 However, Eclipse itself still relies on the deck configuration to determine actual parallel behavior.
 
 Everest usage example
