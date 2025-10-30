@@ -397,28 +397,20 @@ class QueueConfig(BaseModelWithContextSupport):
     def from_dict(
         cls,
         config_dict: ConfigDict,
-        queue_options_from_everest: QueueOptions | None = None,
         site_queue_options: QueueOptions | None = None,
     ) -> QueueConfig:
         """Merge ConfigDict with QueueOptions.
 
-        A ConfigDict is parsed from an Ert configuration. Everest parses its
-        configuration and provides a partial (for now) ConfigDict completed by
-        the object queue_options_for_everest.
+        A ConfigDict is parsed from an Ert configuration.
 
-        site_queue_options is overridden by config_dict, which is again overridden
-        by queue_options_from_everest."""
+        site_queue_options is overridden by config_dict"""
         site_queue_options_dict = (
             site_queue_options.model_dump(exclude_unset=True)
             if site_queue_options
             else {}
         )
 
-        usr_queue_system = (
-            queue_options_from_everest.name
-            if queue_options_from_everest
-            else config_dict.get("QUEUE_SYSTEM")
-        )
+        usr_queue_system = config_dict.get("QUEUE_SYSTEM")
         site_queue_system = site_queue_options.name if site_queue_options else None
 
         config_dict["QUEUE_SYSTEM"] = selected_queue_system = QueueSystem(
@@ -428,10 +420,6 @@ class QueueConfig(BaseModelWithContextSupport):
         usr_queue_options_dict = cls._user_queue_options_from_dict(
             selected_queue_system, config_dict
         )
-        if queue_options_from_everest:
-            usr_queue_options_dict |= queue_options_from_everest.model_dump(
-                exclude_unset=True
-            )
 
         merged_queue_options_dict = (
             site_queue_options_dict
