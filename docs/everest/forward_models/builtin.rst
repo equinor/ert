@@ -56,8 +56,8 @@ Supported simulator jobs
 You can specify the following simulator jobs in your Everest configuration:
 
 - ``flow`` — runs OPM Flow.
-- ``eclipse100`` — runs Eclipse 100.
-- ``eclipse300`` — runs Eclipse 300.
+- ``eclipse100`` — runs Eclipse 100 (i.e., `eclipse`).
+- ``eclipse300`` — runs Eclipse 300 (i.e., `e300`).
 
 All three map internally to the same reservoir simulator runner, but differ in how
 arguments are interpreted and which simulator is launched.
@@ -107,7 +107,9 @@ This runs Flow with 8 MPI ranks, each using 4 OpenMP threads. The version `stabl
 Manual MPI launch (without flowrun wrapper)
 """""""""""""""""""""""""""""""""""""""""""
 
-If your environment does **not** include a `flowrun` wrapper, Everest will invoke the `flow` binary directly. In this case, Everest does **not** insert `mpirun` or manage parallel execution. You must handle MPI launching manually by including `mpirun` in the job line.
+If your environment does **not** include a `flowrun` wrapper, Everest will invoke the `flow` binary directly. 
+In this case, Everest does **not** insert `mpirun` or manage parallel execution. 
+You must handle MPI launching manually by including `mpirun` in the job line.
 
 .. code-block:: yaml
 
@@ -143,8 +145,7 @@ To run Eclipse100, use the following syntax:
 
 **Required and optional arguments**
 
-- ``--version <str>``: **Required** for Eclipse jobs. Specifies the simulator version.
-- ``-n / --num-cpu <int>``: Number of CPUs to use (parallel execution).
+- ``--version <VERSION>``: **Required** for Eclipse jobs. Specifies the simulator version.
 - ``-i / --ignore-errors``: Continue even if the simulator returns an error.
 - ``--summary-conversion``: Enables summary conversion (only available for Eclipse).
 
@@ -163,22 +164,35 @@ These arguments are passed to the simulator runner and used to construct the com
 
 .. code-block:: text
 
-   eclrun eclipse300 --version 2021.1 <deckfile> --summary-conversion yes
+   eclrun -v 2021.1 e300 <deckfile> --summary-conversion yes
 
 The deck file is automatically resolved from the base name (e.g., ``r{{ eclbase }}.DATA``).
 
 Running Eclipse in parallel
 """""""""""""""""""""""""""
 
-To run Eclipse100 or Eclipse300 in parallel, please use following syntax (TODO: assuming eclrun supports this syntax, maybe it should be just the same syntax as OPM Flow? double check):
+To run Eclipse simulators (`eclipse`, `e300`) in parallel, you must include the `PARALLEL` keyword in the `RUNSPEC` section of your simulation deck. 
+The number of MPI processes is determined internally by Eclipse based on the deck configuration, not by command-line options (i.e., `--np`). 
+If `PARALLEL` is missing, the simulation runs in serial mode regardless of `--np`.
+Eclipse simulators do not natively support OpenMP-style multithreading in the same way Flow does. 
+The `--threads` option may be passed through the runner but is not guaranteed to affect simulator behavior. 
+Always verify with the simulator documentation or vendor support.
+
+While Eclipse determines parallelism internally, the job scheduler (e.g., SLURM, LSF) may allocate resources based on `cores_per_node`, for example:
 
 .. code-block:: yaml
 
+    simulator:
+      cores_per_node: 16
+    
     forward_model:
-      - job: eclipse300 r{{ eclbase }} --version 2021.1 --np 16 --threads 2
+      - job: eclipse300 r{{ eclbase }} --version 2021.1 --threads 2
         results:
         file_name: r{{ eclbase }}
         type: summary
+
+This affects how many MPI ranks are launched if the runner or wrapper respects the allocation. 
+However, Eclipse itself still relies on the deck configuration to determine actual parallel behavior.
 
 Everest usage example
 ~~~~~~~~~~~~~~~~~~~~~
