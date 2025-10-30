@@ -124,10 +124,6 @@ def plotHistogram(
                 if minimum is not None and maximum is not None and minimum == maximum:
                     minimum -= 0.1
                     maximum += 0.1
-                xscale = "log" if plot_context._log_scale else "linear"
-                ax = axes[ensemble.name]
-                if ax.get_xscale() != xscale:
-                    ax.set_xscale(xscale)
                 config.addLegendItem(
                     ensemble.name,
                     _plotHistogram(
@@ -137,6 +133,7 @@ def plotHistogram(
                         bin_count,
                         minimum,
                         maximum,
+                        log_scale=plot_context._log_scale,
                     ),
                 )
 
@@ -187,20 +184,23 @@ def _plotHistogram(
     bin_count: int,
     minimum: float | None = None,
     maximum: float | None = None,
+    log_scale: bool = False,
 ) -> Rectangle:
     bins: Sequence[float] | int
     if minimum is not None and maximum is not None:
         # Ensure we have at least 2 bin edges to create 1 bin
         effective_bin_count = max(bin_count + 1, 2)
-        if axes.get_xscale() == "log":
-            bins = _histogramLogBins(effective_bin_count, minimum, maximum)  # type: ignore
-        else:
-            bins = np.linspace(minimum, maximum, effective_bin_count)  # type: ignore
-            axes.xaxis.set_major_formatter(ConditionalAxisFormatter())
-
         if minimum == maximum:
             minimum -= 0.5
             maximum += 0.5
+        if log_scale:
+            bins = _histogramLogBins(effective_bin_count, minimum, maximum)  # type: ignore
+            axes.set_xscale("log")
+        else:
+            bins = np.linspace(minimum, maximum, effective_bin_count)  # type: ignore
+            axes.set_xscale("linear")
+            axes.xaxis.set_major_formatter(ConditionalAxisFormatter())
+
     else:
         bins = bin_count
 

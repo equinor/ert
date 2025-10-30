@@ -106,6 +106,7 @@ class PlotWidget(QWidget):
     updateLayerWidget = Signal(int)
     resetLayerWidget = Signal()
     showLayerWidget = Signal(bool)
+    updatePlotRequested = Signal()
 
     def __init__(
         self,
@@ -165,64 +166,15 @@ class PlotWidget(QWidget):
     def resetPlot(self) -> None:
         self._figure.clear()
 
-    def _log_axis_for_plotter(self) -> str | None:
-        return "x" if type(self._plotter).__name__ == "HistogramPlot" else None
-        # """Return 'x' or 'y' if this plotter supports log toggle, else None."""
-        # cls = type(self._plotter).__name__
-        # x_only = {"HistogramPlot"}
-        # # we don't support any y-only log plots yet
-        # if cls in x_only:
-        #     return "x"
-        # return None
-
     @Slot(bool)
     def _on_log_toggled(self, checked: bool) -> None:
-        ok = self._apply_log_state(checked)
-        if not ok:
-            self._log_checkbox.blockSignals(True)
-            self._log_checkbox.setChecked(False)
-            self._log_checkbox.blockSignals(False)
-        self._sync_log_checkbox()
+        self.updatePlotRequested.emit()
 
     def _sync_log_checkbox(self) -> None:
-        """Show/hide + set checked state; does NOT change scales."""
-        axis = self._log_axis_for_plotter()
-        visible = (axis is not None) and bool(self._figure.axes)
-        self._log_checkbox.setVisible(visible)
-
-        if not visible or not self._figure.axes:
-            return
-
-        ax0 = self._figure.axes[0]
-        is_log = (
-            (ax0.get_xscale() == "log") if axis == "x" else (ax0.get_yscale() == "log")
-        )
-        self._log_checkbox.blockSignals(True)
-        self._log_checkbox.setChecked(is_log)
-        self._log_checkbox.blockSignals(False)
-
-        # if not is_log:
-        #     self._apply_log_state(False)
-
-    def _apply_log_state(self, checked: bool) -> bool:
-        axis = self._log_axis_for_plotter()
-        if axis is None:
-            return True
-        try:
-            for ax in self._figure.axes:
-                if axis == "x":
-                    ax.set_xscale("log" if checked else "linear")
-                    if not checked:
-                        ax.xaxis.set_major_formatter(ConditionalAxisFormatter())
-                else:
-                    ax.set_yscale("log" if checked else "linear")
-                    if not checked:
-                        ax.yaxis.set_major_formatter(ConditionalAxisFormatter())
-
-            self._canvas.draw_idle()
-        except ValueError:
-            return False
-        return True
+        if type(self._plotter).__name__ == "HistogramPlot":
+            self._log_checkbox.setVisible(True)
+        else:
+            self._log_checkbox.setVisible(False)
 
     @property
     def name(self) -> str:
@@ -237,11 +189,9 @@ class PlotWidget(QWidget):
     ) -> None:
         self.resetPlot()
         try:
-            is_hist = type(self._plotter).__name__ == "HistogramPlot"
-            desired = (
-                "log" if (is_hist and self._log_checkbox.isChecked()) else "linear"
+            plot_context._log_scale = (
+                self._log_checkbox.isVisible() and self._log_checkbox.isChecked()
             )
-            plot_context._log_scale = desired == "log"
             self._plotter.plot(
                 self._figure,
                 plot_context,
