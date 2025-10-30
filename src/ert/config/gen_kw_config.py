@@ -123,8 +123,7 @@ class GenKwConfig(ParameterConfig):
         options = cast(dict[str, str], config_list[-1])
         positional_args = cast(list[str], config_list[:-1])
         errors = []
-        update = options.get("UPDATE")
-        update_parameter = str_to_bool(update) if isinstance(update, str) else None
+        update_parameter = str_to_bool(options.get("UPDATE", "TRUE"))
         if _get_abs_path(options.get("INIT_FILES")):
             raise ConfigValidationError.with_context(
                 "INIT_FILES with GEN_KW has been removed. "
@@ -171,7 +170,7 @@ class GenKwConfig(ParameterConfig):
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
-        if gen_kw_key == "PRED" and update_parameter is not False:
+        if gen_kw_key == "PRED" and update_parameter:
             ConfigWarning.warn(
                 "GEN_KW PRED used to hold a special meaning and be "
                 "excluded from being updated.\n If the intention was "
@@ -181,18 +180,13 @@ class GenKwConfig(ParameterConfig):
         try:
             return [
                 cls(
-                    **{
-                        k: v
-                        for k, v in {
-                            "name": params[0],
-                            "group": gen_kw_key,
-                            "distribution": GenKwConfig._parse_distribution(
-                                params[0], params[1], params[2:]
-                            ),
-                            "update": update_parameter,
-                        }.items()
-                        if v is not None
-                    }
+                    name=params[0],
+                    group=gen_kw_key,
+                    distribution=GenKwConfig._parse_distribution(
+                        params[0], params[1], params[2:]
+                    ),
+                    forward_init=False,
+                    update=update_parameter,
                 )
                 for params in distributions_spec
             ]
