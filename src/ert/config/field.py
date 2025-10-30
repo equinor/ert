@@ -93,14 +93,12 @@ def adjust_graph_for_masking(
 
 class Field(ParameterConfig):
     type: Literal["field"] = "field"
-    forward_init: bool = False
-    update: bool = True
     ertbox_params: ErtboxParameters
     file_format: FieldFileFormat
-    output_transformation: str | None = None
-    input_transformation: str | None = None
-    truncation_min: float | None = None
-    truncation_max: float | None = None
+    output_transformation: str | None
+    input_transformation: str | None
+    truncation_min: float | None
+    truncation_max: float | None
     forward_init_file: str
     output_file: Path
     grid_file: str
@@ -139,35 +137,15 @@ class Field(ParameterConfig):
         out_file_name = cast(str, config_list[2])
         out_file = Path(out_file_name)
         options = cast(dict[str, str], config_list[3])
+        init_transform = options.get("INIT_TRANSFORM")
+        forward_init = str_to_bool(options.get("FORWARD_INIT", "FALSE"))
+        output_transform = options.get("OUTPUT_TRANSFORM")
+        input_transform = options.get("INPUT_TRANSFORM")
+        update_parameter = str_to_bool(options.get("UPDATE", "TRUE"))
+        min_ = options.get("MIN")
+        max_ = options.get("MAX")
         init_files = options.get("INIT_FILES")
-        forward_init = (
-            str_to_bool(options.get("FORWARD_INIT", "FALSE"))
-            if options.get("FORWARD_INIT") is not None
-            else None
-        )
-        update = (
-            str_to_bool(options.get("UPDATE", "TRUE"))
-            if options.get("UPDATE") is not None
-            else None
-        )
-        input_dict = {
-            "name": name,
-            "output_file": out_file,
-            "forward_init_file": init_files,
-            "grid_file": os.path.abspath(grid_file_path),
-            "forward_init": forward_init,
-            "update": update,
-            "input_transformation": options.get("INIT_TRANSFORM"),
-            "output_transformation": options.get("OUTPUT_TRANSFORM"),
-            "truncation_min": options.get("MIN"),
-            "truncation_max": options.get("MAX"),
-        }
-        input_dict = {k: v for k, v in input_dict.items() if v is not None}
-
-        init_transform = input_dict.get("input_transformation")
-        output_transform = input_dict.get("output_transformation")
-
-        if options.get("INPUT_TRANSFORM"):
+        if input_transform:
             ConfigWarning.warn(
                 f"Got INPUT_TRANSFORM for FIELD: {name}, "
                 f"this has no effect and can be removed",
@@ -199,9 +177,9 @@ class Field(ParameterConfig):
                     out_file_name,
                 )
             )
-
+        file_format = None
         try:
-            input_dict["file_format"] = FieldFileFormat[file_extension]
+            file_format = FieldFileFormat[file_extension]
         except KeyError:
             errors.append(
                 ConfigValidationError.with_context(
@@ -219,6 +197,7 @@ class Field(ParameterConfig):
 
         if errors:
             raise ConfigValidationError.from_collected(errors)
+        assert file_format is not None
 
         assert init_files is not None
 
@@ -238,13 +217,26 @@ class Field(ParameterConfig):
                     )
 
                 ertbox_params = ErtboxParameters(dims.nx, dims.ny, dims.nz)
-            input_dict["ertbox_params"] = ertbox_params
         except Exception as err:
             raise ConfigValidationError.with_context(
                 f"Could not read grid file {grid_file_path}: {err}",
                 grid_file_path,
             ) from err
-        return cls(**input_dict)
+
+        return cls(
+            name=name,
+            ertbox_params=ertbox_params,
+            file_format=file_format,
+            output_transformation=output_transform,
+            input_transformation=init_transform,
+            truncation_max=float(max_) if max_ is not None else None,
+            truncation_min=float(min_) if min_ is not None else None,
+            forward_init=forward_init,
+            forward_init_file=init_files,
+            output_file=out_file,
+            grid_file=os.path.abspath(grid_file_path),
+            update=update_parameter,
+        )
 
     def __len__(self) -> int:
         if self.mask_file is None:
