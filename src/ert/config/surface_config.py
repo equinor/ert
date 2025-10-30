@@ -46,8 +46,6 @@ class SurfaceMismatchError(InvalidParameterFile):
 
 class SurfaceConfig(ParameterConfig):
     type: Literal["surface"] = "surface"
-    forward_init: bool = False
-    update: bool = True
     ncol: int
     nrow: int
     xori: float
@@ -94,16 +92,8 @@ class SurfaceConfig(ParameterConfig):
         init_file = options.get("INIT_FILES")
         out_file = options.get("OUTPUT_FILE")
         base_surface = options.get("BASE_SURFACE")
-        forward_init = (
-            str_to_bool(options.get("FORWARD_INIT", "FALSE"))
-            if options.get("FORWARD_INIT") is not None
-            else None
-        )
-        update_parameter = (
-            str_to_bool(options.get("UPDATE", "TRUE"))
-            if options.get("UPDATE") is not None
-            else None
-        )
+        forward_init = str_to_bool(options.get("FORWARD_INIT", "FALSE"))
+        update_parameter = str_to_bool(options.get("UPDATE", "TRUE"))
         errors = []
         if not out_file:
             errors.append(
@@ -137,25 +127,22 @@ class SurfaceConfig(ParameterConfig):
             raise ConfigValidationError.with_context(
                 f"Could not load surface {base_surface!r}", surface
             ) from err
-
-        input_dict = {
-            "ncol": surf.header.ncol,
-            "nrow": surf.header.nrow,
-            "xori": surf.header.xori,
-            "yori": surf.header.yori,
-            "xinc": surf.header.xinc,
-            "yinc": surf.header.yinc * yflip,
-            "rotation": surf.header.rot,
-            "yflip": yflip,
-            "name": name,
-            "forward_init": forward_init,
-            "forward_init_file": init_file,
-            "output_file": Path(out_file),
-            "base_surface_path": base_surface,
-            "update": update_parameter,
-        }
-        input_dict = {k: v for k, v in input_dict.items() if v is not None}
-        return cls(**input_dict)
+        return cls(
+            ncol=surf.header.ncol,
+            nrow=surf.header.nrow,
+            xori=surf.header.xori,
+            yori=surf.header.yori,
+            xinc=surf.header.xinc,
+            yinc=surf.header.yinc * yflip,
+            rotation=surf.header.rot,
+            yflip=yflip,
+            name=name,
+            forward_init=forward_init,
+            forward_init_file=init_file,
+            output_file=Path(out_file),
+            base_surface_path=base_surface,
+            update=update_parameter,
+        )
 
     def __len__(self) -> int:
         return self.ncol * self.nrow
