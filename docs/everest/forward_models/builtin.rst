@@ -52,9 +52,9 @@ This includes **OPM Flow**, **Eclipse100**, and **Eclipse300**.
 
 .. note::
 
-    Everest does not include the simulators themselves. You must have separate
-    installations of **OPM Flow**, **Eclipse100**, and **Eclipse300** available
-    in your environment. Everest interfaces with these simulators but does not
+    Everest does not include the simulators themselves. Any use of simulators **OPM Flow**,
+    **Eclipse100**, or **Eclipse300**, requires respective installation of that simulator
+    available in your environment. Everest interfaces with these simulators but does not
     bundle or install them. Ensure they are accessible via your system's ``$PATH``
     or configured appropriately in your environment.
 
