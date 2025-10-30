@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
@@ -21,11 +22,26 @@ def create_runmodel(min_config: dict, monkeypatch: pytest.MonkeyPatch) -> Callab
 
     def _create_runmodel(
         queue_system: dict[str, str | int | bool | float],
+        environment: dict[str, str] | None = None,
+        config_path: str | None = None,
     ) -> EverestRunModel:
         with ErtPluginContext() as runtime_plugins:
             return EverestRunModel.create(
                 EverestConfig(
-                    **(min_config | {"simulator": {"queue_system": queue_system}})
+                    **(
+                        min_config
+                        | (
+                            {"simulator": {"queue_system": queue_system}}
+                            if queue_system
+                            else {}
+                        )
+                        | ({"environment": environment} if environment else {})
+                        | (
+                            {"config_path": config_path}
+                            if config_path is not None
+                            else {}
+                        )
+                    ),
                 ),
                 runtime_plugins=runtime_plugins,
             )
@@ -123,3 +139,36 @@ def test_queue_options_properties_pass_through_create(
 ) -> None:
     runmodel = create_runmodel(config)
     assert runmodel.queue_config.queue_options == config_class(**config)
+
+
+def test_substitutions_from_everest_config(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, create_runmodel: Callable
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    config_path = Path("./hello/world/strong_optimizer.yml")
+    config_dir = config_path.parent
+    config_dir.mkdir(parents=True)
+    config_path.touch()
+    runmodel = create_runmodel(
+        queue_system={"name": "lsf", "num_cpu": 1337},
+        config_path=str(config_path),
+        environment={
+            "simulation_folder": "the_simulations_dir",
+            "output_folder": "custom_output_folder",
+        },
+    )
+
+    assert runmodel.substitutions == {
+        "<RUNPATH_FILE>": "hello/world/custom_output_folder/.res_runpath_list",
+        "<RUNPATH>": (
+            f"{config_dir}"
+            "/custom_output_folder"
+            "/the_simulations_dir/"
+            "batch_<ITER>/realization_<GEO_ID>/<SIM_DIR>"
+        ),
+        "<ECL_BASE>": "ECLBASE<IENS>",
+        "<ECLBASE>": "ECLBASE<IENS>",
+        "<NUM_CPU>": "1337",
+        "<CONFIG_PATH>": str(config_dir),
+        "<CONFIG_FILE>": "strong_optimizer",
+    }
