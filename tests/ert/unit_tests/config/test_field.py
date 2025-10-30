@@ -1,4 +1,6 @@
+import logging
 import os
+import re
 from pathlib import Path
 
 import networkx as nx
@@ -447,3 +449,56 @@ def test_calculate_ertbox_parameters_synthetic_grid(origin, increment, rotation,
     assert params.nx == 5
     assert params.ny == 4
     assert params.nz == 3
+
+
+def test_field_logs_provided_unprovided_and_defaulted_parameters_after_instantiation(
+    ertbox_params, monkeypatch, grid_shape, caplog
+):
+    caplog.set_level(logging.INFO)
+    options = {
+        "INIT_FILES": "foobar",
+        "INIT_TRANSFORM": "LOG",
+        "MIN": "10",
+    }
+    grid_file_path = "Foo.egrid"
+
+    def mock_grid(_):
+        return xtgeo.create_box_grid(
+            dimension=(grid_shape.nx, grid_shape.ny, grid_shape.nz)
+        )
+
+    monkeypatch.setattr(xtgeo, "grid_from_file", mock_grid)
+
+    config_list = ["Name", "", "output_filename.grdecl", options]
+    Field.from_config_list(grid_file_path, config_list)
+
+    parameter_log_pattern = (
+        r"User set parameters:\n\{([^}]+)\}\n"
+        r"User did not set parameters:\n\{([^}]+)\}"
+    )
+    match = re.search(parameter_log_pattern, caplog.text)
+
+    provided_parameters = match.group(1)
+    unprovided_parameters = match.group(2)
+
+    def logged_properties_to_set(logged_properties: str):
+        # The order of logged properties is arbitrary,
+        # creating a set of the properties solves this
+        return set(logged_properties.strip("'").split("', '"))
+
+    assert logged_properties_to_set(provided_parameters) == {
+        "input_transformation",
+        "truncation_min",
+        "grid_file",
+        "output_file",
+        "file_format",
+        "name",
+        "forward_init_file",
+    }
+    assert logged_properties_to_set(unprovided_parameters) == {
+        "truncation_max",
+        "type",
+        "output_transformation",
+        "forward_init",
+        "update",
+    }
