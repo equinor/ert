@@ -1464,7 +1464,7 @@ def test_that_max_memory_is_valid(max_memory) -> None:
     everest_config_with_defaults(simulator={"max_memory": max_memory})
 
 
-@pytest.mark.usefixtures("no_plugins")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
     "max_memory",
     [-1, "-1", "-1G", "-1 G", "-1Gb"],
