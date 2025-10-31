@@ -115,7 +115,7 @@ def get_shape(
 
 
 @dataclass(frozen=True)
-class ErtboxParameters:
+class GridGeometry:
     nx: int
     ny: int
     nz: int
@@ -128,17 +128,17 @@ class ErtboxParameters:
     origin: tuple[float, float] | None = None
 
 
-def calculate_ertbox_parameters(grid: xtgeo.Grid) -> ErtboxParameters:
-    """Calculate ERTBOX grid parameters from an XTGeo grid.
+def calculate_grid_geometry(grid: xtgeo.Grid) -> GridGeometry:
+    """Calculate grid geometry from an XTGeo grid.
 
     Extracts geometric parameters including dimensions, cell increments,
-    rotation angle, and origin coordinates needed for ERTBOX.
+    rotation angle, and origin coordinates needed for the grid.
 
     Args:
         grid: XTGeo Grid3D object
 
     Returns:
-        ErtboxParameters with grid dimensions, increments, rotation, and origin
+        GridGeometry with grid dimensions, increments, rotation, and origin
     """
 
     (nx, ny, nz) = grid.dimensions
@@ -213,7 +213,7 @@ def calculate_ertbox_parameters(grid: xtgeo.Grid) -> ErtboxParameters:
     elif deltax1 < 0:
         angle = (math.atan(deltay1 / deltax1) + math.pi) * 180.0 / math.pi
 
-    return ErtboxParameters(
+    return GridGeometry(
         nx=nx,
         ny=ny,
         nz=nz,
@@ -303,8 +303,8 @@ def transform_positions_to_local_field_coordinates(
     # Rotate
     # Input angle is the local coordinate systems rotation
     # anticlockwise relative to global x-axis in degrees
-    rotation_of_ertbox = coordsys_rotation_angle
-    rotation_angle = np.deg2rad(rotation_of_ertbox)
+    rotation_of_grid = coordsys_rotation_angle
+    rotation_angle = np.deg2rad(rotation_of_grid)
     cos_theta = np.cos(rotation_angle)
     sin_theta = np.sin(rotation_angle)
     x2 = x1 * cos_theta + y1 * sin_theta

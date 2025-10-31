@@ -13,10 +13,10 @@ from ert.config.parameter_config import InvalidParameterFile
 from ert.config.parsing import parse_contents
 from ert.field_utils import (
     AxisOrientation,
-    ErtboxParameters,
     FieldFileFormat,
+    GridGeometry,
     Shape,
-    calculate_ertbox_parameters,
+    calculate_grid_geometry,
     read_field,
 )
 from ert.sample_prior import sample_prior
@@ -73,7 +73,7 @@ def test_write_to_runpath_produces_the_transformed_field_in_storage(
 def create_dummy_field(nx, ny, nz, mask):
     np.save(Path("grid_mask.npy"), mask)
 
-    ertbox_params = ErtboxParameters(
+    grid_geometry = GridGeometry(
         nx,
         ny,
         nz,
@@ -89,7 +89,7 @@ def create_dummy_field(nx, ny, nz, mask):
         name="some_name",
         forward_init=True,
         update=True,
-        ertbox_params=ertbox_params,
+        grid_geometry=grid_geometry,
         file_format=FieldFileFormat.ROFF,
         output_transformation=None,
         input_transformation=None,
@@ -129,8 +129,8 @@ def grid_shape():
 
 
 @pytest.fixture
-def ertbox_params():
-    return ErtboxParameters(2, 3, 4, 1, 1, 1, 1, 1, (0, 0))
+def grid_geometry():
+    return GridGeometry(2, 3, 4, 1, 1, 1, 1, 1, (0, 0))
 
 
 @pytest.fixture
@@ -143,7 +143,7 @@ def egrid_file(tmp_path, grid_shape):
 
 
 @pytest.fixture
-def parse_field_line(ertbox_params, egrid_file):
+def parse_field_line(grid_geometry, egrid_file):
     def make_field(field_line):
         return Field.from_config_list(
             egrid_file,
@@ -325,8 +325,8 @@ def test_that_read_field_raises_grid_field_mismatch_error_given_different_sized_
         ((0, 0, -10.0), (1, 1, 1), 0, 1),
     ],
 )
-def test_calculate_ertbox_parameters_synthetic_grid(origin, increment, rotation, flip):
-    """Test calculate_ertbox_parameters with a synthetic box grid."""
+def test_calculate_grid_parameters_synthetic_grid(origin, increment, rotation, flip):
+    """Test calculate_grid_parameters with a synthetic box grid."""
 
     # Create a synthetic box grid with rotation
     grid = xtgeo.create_box_grid(
@@ -337,7 +337,7 @@ def test_calculate_ertbox_parameters_synthetic_grid(origin, increment, rotation,
         rotation=rotation,  # rotation in degrees
         flip=flip,  # -1 for right-handed, 1 for left-handed
     )
-    params = calculate_ertbox_parameters(grid)
+    params = calculate_grid_geometry(grid)
 
     # Test calculated increments (should match input within tolerance)
     tolerance = 1e-10
@@ -383,9 +383,9 @@ def test_calculate_ertbox_parameters_synthetic_grid(origin, increment, rotation,
 
 
 @pytest.fixture
-def field_with_ertbox_params():
+def field_with_grid_params():
     # Return a Field object for test purpose
-    # Define parameters for the grid (ertbox parameters)
+    # Define parameters for the grid (grid parameters)
     nx = 50
     ny = 110
     nz = 10
@@ -397,7 +397,7 @@ def field_with_ertbox_params():
     yinc = ysize / ny
     rotation = 0.0
 
-    params = ErtboxParameters(
+    params = GridGeometry(
         nx=nx,
         ny=ny,
         nz=nz,
@@ -437,7 +437,7 @@ def field_with_ertbox_params():
         name="MyField",
         forward_init=True,
         update=True,
-        ertbox_params=params,
+        grid_geometry=params,
         file_format=FieldFileFormat.ROFF,
         output_transformation=None,
         input_transformation=None,
@@ -466,7 +466,7 @@ def test_that_calculate_ertbox_parameters_detects_axis_orientation_from_egrid(
     grid.to_file(egrid_path, "egrid")
 
     grid_from_file = xtgeo.grid_from_file(egrid_path, fformat="egrid")
-    params = calculate_ertbox_parameters(grid_from_file)
+    params = calculate_grid_geometry(grid_from_file)
 
     assert params.axis_orientation == expected_axis_orientation
     assert params.nx == nx

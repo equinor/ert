@@ -360,7 +360,7 @@ def analysis_ES(
 
             if (
                 isinstance(param_cfg, Field)
-                and param_cfg.ertbox_params.origin is not None
+                and param_cfg.grid_geometry.origin is not None
             ):
                 start = time.time()
                 log_msg = (
@@ -370,39 +370,39 @@ def analysis_ES(
                 )
                 logger.info(log_msg)
 
-                if param_cfg.ertbox_params.axis_orientation is None:
+                if param_cfg.grid_geometry.axis_orientation is None:
                     logger.warning("Axis orientation is not defined, do not update")
                     continue
 
-                assert param_cfg.ertbox_params.xinc is not None, (
+                assert param_cfg.grid_geometry.xinc is not None, (
                     "Parameter for grid resolution must be defined"
                 )
-                assert param_cfg.ertbox_params.yinc is not None, (
+                assert param_cfg.grid_geometry.yinc is not None, (
                     "Parameter for grid resolution must be defined"
                 )
-                assert param_cfg.ertbox_params.origin is not None, (
+                assert param_cfg.grid_geometry.origin is not None, (
                     "Parameter for grid origin must be defined"
                 )
-                assert param_cfg.ertbox_params.rotation_angle is not None, (
+                assert param_cfg.grid_geometry.rotation_angle is not None, (
                     "Parameter for grid rotation must be defined"
                 )
 
                 xpos, ypos = transform_positions_to_local_field_coordinates(
-                    param_cfg.ertbox_params.origin,
-                    param_cfg.ertbox_params.rotation_angle,
+                    param_cfg.grid_geometry.origin,
+                    param_cfg.grid_geometry.rotation_angle,
                     obs_xpos,
                     obs_ypos,
                 )
                 ellipse_rotation = transform_local_ellipse_angle_to_local_coords(
-                    param_cfg.ertbox_params.rotation_angle,
+                    param_cfg.grid_geometry.rotation_angle,
                     np.zeros_like(obs_main_range, dtype=np.float64),
                 )
 
                 rho_matrix = calc_rho_for_2d_grid_layer(
-                    param_cfg.ertbox_params.nx,
-                    param_cfg.ertbox_params.ny,
-                    param_cfg.ertbox_params.xinc,
-                    param_cfg.ertbox_params.yinc,
+                    param_cfg.grid_geometry.nx,
+                    param_cfg.grid_geometry.ny,
+                    param_cfg.grid_geometry.xinc,
+                    param_cfg.grid_geometry.yinc,
                     xpos,
                     ypos,
                     obs_main_range,
@@ -416,7 +416,7 @@ def analysis_ES(
                     X=param_ensemble_array,
                     Y=S_with_loc,
                     rho_input=rho_matrix,
-                    nz=param_cfg.ertbox_params.nz,
+                    nz=param_cfg.grid_geometry.nz,
                 )
                 logger.info(
                     f"Distance Localization of Field {param_group} completed "

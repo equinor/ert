@@ -422,14 +422,12 @@ FIELD data and define the dimension of the property parameter files in
 the FIELD keyword. The grid argument will only be used by the main ERT
 application and not passed down to the forward model in any way.
 
-A new way of handling property values for the FIELD keyword is to use a
-help grid called ERTBOX grid. The GRID keyword should in this case
-specify the ERTBOX filename (which is in EGRID format). The ERTBOX grid
-is a grid with the same spatial location and rotation (x,y location) as
-the modelling grid, but it is a regular grid in a rectangular box. The
-dimensions of the ERTBOX grid laterally is the same as the modelling
-grid, but the number of layers is only large enough to store the
-properties for one zone, not the whole modelling grid.
+Property values for the FIELD keyword can be handled using a zone-specific
+grid. The GRID keyword should in this case specify a grid file (in EGRID format)
+with dimensions matching the zone requirements. This grid has the same spatial
+location and rotation (x,y location) as the modeling grid, but may have fewer
+layers - only enough to store properties for one zone rather than the whole
+modeling grid.
 
 The number of layers must at least be as large as the number of layers
 in the zone in the modelling grid with most layers. The properties used

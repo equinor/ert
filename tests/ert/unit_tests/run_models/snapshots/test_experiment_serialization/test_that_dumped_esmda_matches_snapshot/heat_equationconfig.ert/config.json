@@ -232,7 +232,7 @@
       "forward_init": true,
       "update": true,
       "dimensionality": 3,
-      "ertbox_params": {
+      "grid_geometry": {
         "nx": 10,
         "ny": 10,
         "nz": 1,
