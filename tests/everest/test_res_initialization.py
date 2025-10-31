@@ -396,7 +396,7 @@ def test_user_config_jobs_precedence(tmp_path, monkeypatch):
     assert only_fm_step.name == existing_job
 
 
-@pytest.mark.usefixtures("no_plugins")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_that_queue_settings_are_taken_from_site_config(
     min_config, monkeypatch, tmp_path
 ):
@@ -473,7 +473,7 @@ def test_passthrough_explicit_summary_keys(change_to_tmpdir):
     assert set(custom_sum_keys).issubset(set(smry_config.keys))
 
 
-@pytest.mark.usefixtures("no_plugins")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
     "max_memory",
     [
@@ -498,7 +498,7 @@ def test_that_max_memory_is_valid(max_memory) -> None:
     EverestConfig.with_defaults(simulator={"max_memory": max_memory})
 
 
-@pytest.mark.usefixtures("no_plugins")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
     "max_memory",
     [-1, "-1", "-1G", "-1 G", "-1Gb"],
@@ -510,7 +510,7 @@ def test_that_negative_max_memory_fails(max_memory) -> None:
         EverestConfig.with_defaults(simulator={"max_memory": max_memory})
 
 
-@pytest.mark.usefixtures("no_plugins")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
     "max_memory, exception_message",
     [
@@ -562,7 +562,7 @@ def test_that_max_memory_is_passed_to_realization_memory(
     assert config.simulator.queue_system.realization_memory == realization_memory
 
 
-@pytest.mark.usefixtures("no_plugins")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
     "max_memory, realization_memory, expected",
     [(None, 0, 0), (0, 0, 0), (111, 999, 999), (55, 0, 55)],
