@@ -388,7 +388,7 @@ class EverestRunModel(RunModel):
                 )
 
         # Only take into acct site queue options
-        # iff they exist and are of same type as user
+        # if and only if they exist and are of same type as user
         # specified queue system
         applied_site_queue_options = (
             runtime_plugins.queue_options.model_dump(exclude_unset=True)
