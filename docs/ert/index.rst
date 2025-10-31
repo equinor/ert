@@ -57,7 +57,7 @@ To understand the theoretical foundations of ensemble-based methods, head over t
    developer_documentation/dev-strategy
    developer_documentation/forward_model
    developer_documentation/qt
-
+   developer_documentation/storage_migration
 
 .. toctree::
    :hidden:
