@@ -6,7 +6,6 @@ import tempfile
 from collections.abc import Callable, Generator, Iterator
 from contextlib import AbstractContextManager, contextmanager
 from copy import deepcopy
-from functools import partial
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import MagicMock, patch
@@ -14,7 +13,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 import yaml
 
-import ert
 from ert.base_model_context import use_runtime_plugins
 from ert.config.queue_config import LocalQueueOptions, LsfQueueOptions
 from ert.ensemble_evaluator import EvaluatorServerConfig
@@ -290,15 +288,5 @@ def use_site_configurations_with_lsf_queue_options():
             "ert.plugins.plugin_manager.ErtRuntimePlugins",
             ErtRuntimePluginsWithLSFQueueOptions,
         ),
-    ):
-        yield
-
-
-@pytest.fixture()
-def no_plugins():
-    patched_plugin_manager = partial(ert.plugins.ErtPluginManager, plugins=[])
-
-    with (
-        patch("ert.plugins.ErtPluginManager", patched_plugin_manager),
     ):
         yield

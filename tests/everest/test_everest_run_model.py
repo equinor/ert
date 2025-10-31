@@ -347,13 +347,13 @@ def test_that_max_memory_is_passed_to_ert_unchanged(
     )
 
 
-@pytest.mark.usefixtures("no_plugins")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_that_max_memory_none_is_not_passed_to_ert(create_runmodel) -> None:
     runmodel = create_runmodel()
     assert runmodel.queue_config.queue_options.realization_memory == 0
 
 
-@pytest.mark.usefixtures("no_plugins")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_that_resubmit_limit_is_set(create_runmodel) -> None:
     runmodel = create_runmodel(simulator={"resubmit_limit": 2})
     assert runmodel.queue_config.max_submit == 3
