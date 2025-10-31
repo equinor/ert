@@ -105,7 +105,6 @@ class PlotWidget(QWidget):
     updateLayerWidget = Signal(int)
     resetLayerWidget = Signal()
     showLayerWidget = Signal(bool)
-    updatePlotRequested = Signal()
 
     def __init__(
         self,
@@ -147,7 +146,6 @@ class PlotWidget(QWidget):
         # only for histogram plot see _sync_log_checkbox
         self._log_checkbox.setVisible(False)
         self._log_checkbox.setToolTip("Toggle data domain to log scale and back")
-        self._log_checkbox.toggled.connect(self._on_log_toggled)
 
         log_checkbox_row = QHBoxLayout()
         log_checkbox_row.addWidget(self._log_checkbox)
@@ -164,10 +162,6 @@ class PlotWidget(QWidget):
 
     def resetPlot(self) -> None:
         self._figure.clear()
-
-    @Slot(bool)
-    def _on_log_toggled(self, checked: bool) -> None:
-        self.updatePlotRequested.emit()
 
     def _sync_log_checkbox(self) -> None:
         if type(self._plotter).__name__ == "HistogramPlot":

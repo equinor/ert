@@ -33,6 +33,7 @@ def plot_context(request):
     context = Mock(spec=PlotContext)
     context.ensembles.return_value = request.param[0]
     context.ensembles_color_indexes.return_value = request.param[1]
+    context._log_scale = False
     title = "" + f"num_ensembles={len(request.param[0])}"
     context.plotConfig.return_value = PlotConfig(title=title)
     return context
