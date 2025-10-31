@@ -23,7 +23,6 @@ def test_that_active_realizations_selector_validates_with_ensemble_size_from_pri
     """
     notifier = ErtNotifier()
     notifier._storage = MockStorage()
-    config_ensemble_size = 2
     notifier._storage._setup_mocked_run(
         "mock_ensemble0",
         "mock_experiment0",
@@ -51,7 +50,6 @@ def test_that_active_realizations_selector_validates_with_ensemble_size_from_pri
         ],
     )
     panel = ManualUpdatePanel(
-        ensemble_size=config_ensemble_size,
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
         run_path="",
         notifier=notifier,
@@ -112,7 +110,6 @@ def test_that_manual_update_ensemble_selector_only_shows_ensembles_with_data(
     """
     notifier = ErtNotifier()
     notifier._storage = MockStorage()
-    config_ensemble_size = 2
     notifier._storage._setup_mocked_run(
         "mock_ensemble_no_data",
         "mock_experiment2",
@@ -120,7 +117,6 @@ def test_that_manual_update_ensemble_selector_only_shows_ensembles_with_data(
     )
 
     panel = ManualUpdatePanel(
-        ensemble_size=config_ensemble_size,
         analysis_config=AnalysisConfig(minimum_required_realizations=1),
         run_path="",
         notifier=notifier,

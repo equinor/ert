@@ -39,7 +39,6 @@ class Arguments:
 class ManualUpdatePanel(ExperimentConfigPanel):
     def __init__(
         self,
-        ensemble_size: int,
         run_path: str,
         notifier: ErtNotifier,
         analysis_config: AnalysisConfig,
@@ -126,7 +125,6 @@ class ManualUpdatePanel(ExperimentConfigPanel):
                 self._active_realizations_field.setValidator(
                     EnsembleRealizationsArgument(
                         lambda: ensemble,
-                        max_value=ensemble.ensemble_size,
                         required_realization_storage_states=[
                             RealizationStorageState.PARAMETERS_LOADED,
                             RealizationStorageState.RESPONSES_LOADED,
