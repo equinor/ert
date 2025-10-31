@@ -36,7 +36,6 @@ def create_runmodel(min_config: dict, monkeypatch: pytest.MonkeyPatch) -> Callab
     ) -> EverestRunModel:
         site_plugins = get_site_plugins()
         with use_runtime_plugins(site_plugins):
-            site_plugins.queue_options = None
             return EverestRunModel.create(
                 EverestConfig(
                     **(
@@ -57,6 +56,7 @@ def create_runmodel(min_config: dict, monkeypatch: pytest.MonkeyPatch) -> Callab
     return _create_runmodel
 
 
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize("queue_system", ["lsf", "local", "torque", "slurm"])
 def test_that_queue_system_name_passes_through_create(
     create_runmodel: Callable, queue_system: str
@@ -65,6 +65,7 @@ def test_that_queue_system_name_passes_through_create(
     assert runmodel.queue_config.queue_system == queue_system
 
 
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_general_queue_options_properties_pass_through_create(
     create_runmodel: Callable,
 ) -> None:
@@ -82,6 +83,7 @@ def test_general_queue_options_properties_pass_through_create(
         assert getattr(runmodel.queue_config.queue_options, property_name) == value
 
 
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
     "config, config_class",
     [
@@ -219,7 +221,7 @@ def test_cores_per_node_is_ignored_num_cpu_is_set(
     assert runmodel.queue_config.queue_options.num_cpu == 99
 
 
-@pytest.mark.usefixtures("no_plugins")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
     "config, config_class",
     [
@@ -309,7 +311,7 @@ def test_that_site_config_queue_options_do_not_override_user_queue_config(
         assert config.queue_system == "local"
 
 
-@pytest.mark.usefixtures("no_plugins")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_that_queue_settings_are_taken_from_site_config(
     create_runmodel, monkeypatch, tmp_path
 ):
@@ -330,7 +332,7 @@ def test_that_queue_settings_are_taken_from_site_config(
         )
 
 
-@pytest.mark.usefixtures("no_plugins")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
     "max_memory",
     [0, 1, "0", "1", "1b", "1k", "1m", "1g", "1t", "1p", "1G", "1 G", "1Gb", "1 Gb"],
