@@ -3,6 +3,7 @@ from ruamel.yaml import YAML
 
 from ert.config import ConfigWarning
 from everest.config import EverestConfig, InputConstraintConfig, OptimizationConfig
+from tests.everest.conftest import everest_config_with_defaults
 
 
 def test_input_constraint_control_references(tmp_path, capsys, caplog, monkeypatch):
@@ -92,7 +93,7 @@ def test_that_auto_scale_and_input_constraints_scale_are_mutually_exclusive(tmp_
             "options in the input_constraints section are mutually exclusive"
         ),
     ):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             optimization=OptimizationConfig(auto_scale=True),
             input_constraints=[
                 InputConstraintConfig.model_validate(

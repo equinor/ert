@@ -4,11 +4,12 @@ import pytest
 from everest.config import EverestConfig
 from everest.optimizer.everest2ropt import everest2ropt
 from everest.optimizer.opt_model_transforms import get_optimization_domain_transforms
+from tests.everest.conftest import everest_config_with_defaults
 
 
 @pytest.fixture
 def ever_config() -> EverestConfig:
-    return EverestConfig.with_defaults(
+    return everest_config_with_defaults(
         controls=[
             {
                 "name": "default",

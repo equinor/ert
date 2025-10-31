@@ -8,8 +8,8 @@ from ert.storage import open_storage
 from ert.storage.local_experiment import ExperimentState, ExperimentStatus
 from everest import util
 from everest.bin.utils import get_experiment_status, show_scaled_controls_warning
-from everest.config import EverestConfig
 from everest.strings import EVEREST
+from tests.everest.conftest import everest_config_with_defaults
 from tests.everest.utils import (
     relpath,
 )
@@ -28,7 +28,7 @@ def test_get_values(change_to_tmpdir):
     exp_dir.mkdir()
     (exp_dir / exp_file).write_text(" ", encoding="utf-8")
 
-    config = EverestConfig.with_defaults(
+    config = everest_config_with_defaults(
         environment={
             "output_folder": abs_out_dir,
             "simulation_folder": "simulation_folder",

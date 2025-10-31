@@ -7,12 +7,13 @@ import pytest
 from everest import config_file_loader as loader
 from everest.config import EverestConfig
 from everest.config.everest_config import EverestValidationError
+from tests.everest.conftest import everest_config_with_defaults
 
 
 def test_load_yaml(tmp_path):
     config_file_path = tmp_path / "config.yml"
 
-    initial_config = EverestConfig.with_defaults(definitions={})
+    initial_config = everest_config_with_defaults(definitions={})
 
     initial_config.dump(str(config_file_path))
 
@@ -26,7 +27,7 @@ def test_load_yaml(tmp_path):
 def test_load_yaml_preprocess(tmp_path):
     config_file = tmp_path / "config.yml"
 
-    initial_config = EverestConfig.with_defaults(
+    initial_config = everest_config_with_defaults(
         environment={"simulation_folder": "simulations_r{{ os.USER }}"}
     )
 
@@ -38,7 +39,7 @@ def test_load_yaml_preprocess(tmp_path):
 
 
 def test_get_definitions(tmp_path):
-    initial_config = EverestConfig.with_defaults(
+    initial_config = everest_config_with_defaults(
         definitions={
             "case": "MOCKED_TEST_CASE",
             "eclbase": "eclipse/ECL",
@@ -75,7 +76,7 @@ def test_get_definitions(tmp_path):
 def test_load_config_as_yaml(tmp_path):
     config_file = tmp_path / "config.yml"
 
-    initial_config = EverestConfig.with_defaults(definitions={"case": "MINIMAL_CASE"})
+    initial_config = everest_config_with_defaults(definitions={"case": "MINIMAL_CASE"})
 
     initial_config.dump(str(config_file))
 
@@ -92,7 +93,7 @@ def test_configpath_in_defs(tmp_path, monkeypatch):
 
     config_file_path = tmp_path / "config.yml"
 
-    config = EverestConfig.with_defaults(definitions=definitions_for_yaml_creation)
+    config = everest_config_with_defaults(definitions=definitions_for_yaml_creation)
     config.dump(config_file_path)
 
     loaded_config = EverestConfig.load_file(str(config_file_path))
@@ -122,7 +123,7 @@ def test_dependent_definitions(tmp_path, monkeypatch):
 
     definitions_for_initial_config_object[all_chars[-1]] = "r{{ configpath }}"
 
-    initial_config_object = EverestConfig.with_defaults(
+    initial_config_object = everest_config_with_defaults(
         definitions=definitions_for_initial_config_object
     )
 
@@ -152,7 +153,7 @@ def test_dependent_definitions_value_error(tmp_path):
         "local_jobs_folder": "{{ configpath }}/jobs",
     }
 
-    initial_config_object = EverestConfig.with_defaults(
+    initial_config_object = everest_config_with_defaults(
         definitions=definitions_with_circular_dependency
     )
     initial_config_object.dump(str(config_file_path))

@@ -10,6 +10,7 @@ from pydantic import ValidationError
 
 from everest.config import EverestConfig
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
+from tests.everest.conftest import everest_config_with_defaults
 
 
 @pytest.mark.parametrize(
@@ -48,7 +49,7 @@ def test_optional_keys(optional_key, min_config):
 
 def test_extra_key(min_config):
     with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
-        EverestConfig.with_defaults(**min_config | {"extra": "extra"})
+        everest_config_with_defaults(**min_config | {"extra": "extra"})
 
 
 @pytest.mark.parametrize(
@@ -235,7 +236,7 @@ def test_bool_validation(value, valid, min_config, tmp_path, monkeypatch):
 def test_invalid_wells(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     with pytest.raises(ValidationError, match="cannot contain any dots"):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             **yaml.safe_load(
                 dedent("""
     model: {"realizations": [0] }

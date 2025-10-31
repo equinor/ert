@@ -320,3 +320,27 @@ def no_plugins():
         patch("ert.plugins.ErtPluginManager", patched_plugin_manager),
     ):
         yield
+
+
+def everest_config_with_defaults(**kwargs) -> EverestConfig:
+    """
+    Creates an Everest config with default values. Useful for initializing a config
+    without having to provide empty defaults.
+    """
+    defaults = {
+        "controls": [
+            {
+                "name": "default_group",
+                "type": "generic_control",
+                "initial_guess": 0.5,
+                "perturbation_magnitude": 0.01,
+                "variables": [
+                    {"name": "default_name", "min": 0, "max": 1},
+                ],
+            }
+        ],
+        "objective_functions": [{"name": "default"}],
+        "config_path": ".",
+        "model": {"realizations": [0]},
+    }
+    return EverestConfig.with_plugins({**defaults, **kwargs})  # type: ignore

@@ -6,6 +6,7 @@ from textwrap import dedent
 import pytest
 import yaml
 from ruamel.yaml import YAML
+from tests.everest.conftest import everest_config_with_defaults
 from tests.everest.utils import (
     capture_streams,
     get_optimal_result,
@@ -90,7 +91,7 @@ def test_everest_entry_monitor_already_run(cached_example):
 
 @pytest.mark.integration_test
 def test_everest_entry_monitor_not_run(change_to_tmpdir):
-    EverestConfig.with_defaults().dump("config.yml")
+    everest_config_with_defaults().dump("config.yml")
     with capture_streams() as (out, _):
         start_everest(["everest", "monitor", "config.yml"])
     assert "The optimization has not run yet." in out.getvalue()

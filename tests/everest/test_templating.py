@@ -14,6 +14,7 @@ from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig, InstallTemplateConfig
 from tests.ert.unit_tests.resources._import_from_location import import_from_location
 from tests.ert.utils import SOURCE_DIR
+from tests.everest.conftest import everest_config_with_defaults
 
 CONFIG = {
     "wells": [
@@ -256,7 +257,7 @@ def test_user_specified_data_n_template(copy_math_func_test_data_to_tmp, test):
                 "-t <CONFIG_PATH>/my_constants.tmpl",
             )
 
-    config = EverestConfig.with_defaults(**updated_config_dict)
+    config = everest_config_with_defaults(**updated_config_dict)
 
     site_plugins = get_site_plugins()
     with use_runtime_plugins(site_plugins):

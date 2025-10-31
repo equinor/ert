@@ -5,7 +5,7 @@ import pytest
 from ert.base_model_context import use_runtime_plugins
 from ert.plugins import ErtRuntimePlugins, get_site_plugins
 from ert.run_models.everest_run_model import EverestRunModel
-from everest.config import EverestConfig
+from tests.everest.conftest import everest_config_with_defaults
 
 
 def test_no_config_init():
@@ -30,7 +30,7 @@ def test_site_config_with_substitutions(monkeypatch, change_to_tmpdir):
         "ert.plugins.plugin_manager.ErtRuntimePlugins",
         side_effect=runtime_plugins_with_cpu_override,
     ):
-        config = EverestConfig.with_defaults()
+        config = everest_config_with_defaults()
 
         runtime_plugins = get_site_plugins()
         with use_runtime_plugins(runtime_plugins):

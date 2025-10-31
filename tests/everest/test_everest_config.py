@@ -14,6 +14,7 @@ from everest.config.control_config import ControlConfig
 from everest.config.control_variable_config import ControlVariableConfig
 from everest.config.cvar_config import CVaRConfig
 from everest.config.optimization_config import OptimizationConfig
+from tests.everest.conftest import everest_config_with_defaults
 
 
 def test_that_str_type_failures_are_propagated(tmp_path, monkeypatch):
@@ -113,7 +114,7 @@ def test_that_get_output_dir_returns_same_for_old_and_new():
         },
     }
 
-    config = EverestConfig.with_defaults(**config_src)
+    config = everest_config_with_defaults(**config_src)
 
     assert Path(config.output_dir) == Path(config_src["environment"]["output_folder"])
 
@@ -304,7 +305,7 @@ def test_that_log_level_property_is_consistent_with_environment_log_level():
         "critical": logging.CRITICAL,  # 50
     }
 
-    config = EverestConfig.with_defaults(**config_src)
+    config = everest_config_with_defaults(**config_src)
     assert config.logging_level == levels[config.environment.log_level]
 
     for lvl_str, lvl_int in levels.items():
