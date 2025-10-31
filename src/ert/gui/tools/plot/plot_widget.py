@@ -182,7 +182,7 @@ class PlotWidget(QWidget):
     ) -> None:
         self.resetPlot()
         try:
-            plot_context._log_scale = (
+            plot_context.log_scale = (
                 self._log_checkbox.isVisible() and self._log_checkbox.isChecked()
             )
             self._plotter.plot(

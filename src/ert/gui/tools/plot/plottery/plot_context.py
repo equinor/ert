@@ -92,3 +92,11 @@ class PlotContext:
                 f"Axis: '{value}' is not one of: {PlotContext.AXIS_TYPES}"
             )
         self._y_axis = value
+
+    @property
+    def log_scale(self) -> bool:
+        return self._log_scale
+
+    @log_scale.setter
+    def log_scale(self, value: bool) -> None:
+        self._log_scale = value

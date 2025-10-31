@@ -131,9 +131,9 @@ def plotHistogram(
                         config.histogramStyle(),
                         data[ensemble.id],
                         bin_count,
+                        plot_context.log_scale,
                         minimum,
                         maximum,
-                        log_scale=plot_context._log_scale,
                     ),
                 )
 
@@ -182,9 +182,9 @@ def _plotHistogram(
     style: PlotStyle,
     data: pd.DataFrame,
     bin_count: int,
+    use_log_scale: bool = False,
     minimum: float | None = None,
     maximum: float | None = None,
-    log_scale: bool = False,
 ) -> Rectangle:
     bins: Sequence[float] | int
     if minimum is not None and maximum is not None:
@@ -193,7 +193,7 @@ def _plotHistogram(
         if minimum == maximum:
             minimum -= 0.5
             maximum += 0.5
-        if log_scale:
+        if use_log_scale:
             bins = _histogramLogBins(effective_bin_count, minimum, maximum)  # type: ignore
             axes.set_xscale("log")
         else:

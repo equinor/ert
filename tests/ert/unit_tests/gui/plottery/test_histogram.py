@@ -82,6 +82,7 @@ def test_histogram_plot_for_constant_distribution(monkeypatch):
         )
     ]
     context.ensembles_color_indexes.return_value = [1]
+    context.log_scale = False
     title = "Histogram with same values"
     context.plotConfig.return_value = PlotConfig(title=title)
     value = 0
@@ -103,6 +104,7 @@ def test_histogram_plot_for_constant_distribution(monkeypatch):
         {},
     )
     mock_plot_histogram.assert_called_once_with(
+        ANY,
         ANY,
         ANY,
         ANY,
