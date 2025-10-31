@@ -14,11 +14,11 @@ import xtgeo
 from pydantic import field_serializer
 
 from ert.field_utils import (
-    ErtboxParameters,
     FieldFileFormat,
+    GridGeometry,
     Shape,
     calc_rho_for_2d_grid_layer,
-    calculate_ertbox_parameters,
+    calculate_grid_geometry,
     get_shape,
     read_field,
     save_field,
@@ -71,7 +71,7 @@ def create_flattened_cube_graph(px: int, py: int, pz: int) -> nx.Graph[int]:
 class Field(ParameterConfig):
     type: Literal["field"] = "field"
     dimensionality: Literal[3] = 3
-    ertbox_params: ErtboxParameters
+    grid_geometry: GridGeometry
     file_format: FieldFileFormat
     output_transformation: str | None
     input_transformation: str | None
@@ -168,7 +168,7 @@ class Field(ParameterConfig):
         try:
             if grid_extension == ".egrid":
                 grid = xtgeo.grid_from_file(grid_file_path)
-                ertbox_params = calculate_ertbox_parameters(grid)
+                grid_geometry = calculate_grid_geometry(grid)
             else:
                 dims = get_shape(grid_file_path)
 
@@ -178,7 +178,7 @@ class Field(ParameterConfig):
                         grid_file_path,
                     )
 
-                ertbox_params = ErtboxParameters(dims.nx, dims.ny, dims.nz)
+                grid_geometry = GridGeometry(dims.nx, dims.ny, dims.nz)
         except Exception as err:
             raise ConfigValidationError.with_context(
                 f"Could not read grid file {grid_file_path}: {err}",
@@ -187,7 +187,7 @@ class Field(ParameterConfig):
 
         return cls(
             name=name,
-            ertbox_params=ertbox_params,
+            grid_geometry=grid_geometry,
             file_format=file_format,
             output_transformation=output_transform,
             input_transformation=init_transform,
@@ -201,7 +201,7 @@ class Field(ParameterConfig):
         )
 
     def __len__(self) -> int:
-        return self.ertbox_params.nx * self.ertbox_params.ny * self.ertbox_params.nz
+        return self.grid_geometry.nx * self.grid_geometry.ny * self.grid_geometry.nz
 
     @log_duration(_logger, custom_name="load_field")
     def read_from_runpath(
@@ -217,9 +217,9 @@ class Field(ParameterConfig):
                             run_path / file_name,
                             self.name,
                             Shape(
-                                self.ertbox_params.nx,
-                                self.ertbox_params.ny,
-                                self.ertbox_params.nz,
+                                self.grid_geometry.nx,
+                                self.grid_geometry.ny,
+                                self.grid_geometry.nz,
                             ),
                         ),
                         self.input_transformation,
@@ -252,9 +252,9 @@ class Field(ParameterConfig):
         iens_active_index: npt.NDArray[np.int_],
     ) -> Iterator[tuple[int, xr.Dataset]]:
         dim_nx, dim_ny, dim_nz = (
-            self.ertbox_params.nx,
-            self.ertbox_params.ny,
-            self.ertbox_params.nz,
+            self.grid_geometry.nx,
+            self.grid_geometry.ny,
+            self.grid_geometry.nz,
         )
 
         for i, realization in enumerate(iens_active_index):
@@ -298,7 +298,9 @@ class Field(ParameterConfig):
 
     def load_parameter_graph(self) -> nx.Graph[int]:
         parameter_graph = create_flattened_cube_graph(
-            px=self.ertbox_params.nx, py=self.ertbox_params.ny, pz=self.ertbox_params.nz
+            px=self.grid_geometry.nx,
+            py=self.grid_geometry.ny,
+            pz=self.grid_geometry.nz,
         )
         new_labels = {
             old_label: new_label
@@ -308,15 +310,15 @@ class Field(ParameterConfig):
 
     @property
     def nx(self) -> int:
-        return self.ertbox_params.nx
+        return self.grid_geometry.nx
 
     @property
     def ny(self) -> int:
-        return self.ertbox_params.ny
+        return self.grid_geometry.ny
 
     @property
     def nz(self) -> int:
-        return self.ertbox_params.nz
+        return self.grid_geometry.nz
 
     def calc_rho_for_2d_grid_layer(
         self,
@@ -349,36 +351,36 @@ class Field(ParameterConfig):
               of shape=(nx,ny,nobservations)
 
         """
-        # Can only be used if ertbox coordinate system is defined
-        assert self.ertbox_params.xinc is not None, (
+        # Can only be used if grid_dimensions coordinate system is defined
+        assert self.grid_geometry.xinc is not None, (
             "Parameter for grid resolution must be defined"
         )
-        assert self.ertbox_params.yinc is not None, (
+        assert self.grid_geometry.yinc is not None, (
             "Parameter for grid resolution must be defined"
         )
-        assert self.ertbox_params.origin is not None, (
+        assert self.grid_geometry.origin is not None, (
             "Parameter for grid origin must be defined"
         )
-        assert self.ertbox_params.rotation_angle is not None, (
+        assert self.grid_geometry.rotation_angle is not None, (
             "Parameter for grid rotation must be defined"
         )
         # Transform positions of observations into local coordinates
         xpos, ypos = transform_positions_to_local_field_coordinates(
-            self.ertbox_params.origin,
-            self.ertbox_params.rotation_angle,
+            self.grid_geometry.origin,
+            self.grid_geometry.rotation_angle,
             obs_xpos,
             obs_ypos,
         )
         # Transform localization ellipse orientation to local coordinates
         ellipse_rotation = transform_local_ellipse_angle_to_local_coords(
-            self.ertbox_params.rotation_angle, obs_anisotropy_angle
+            self.grid_geometry.rotation_angle, obs_anisotropy_angle
         )
 
         return calc_rho_for_2d_grid_layer(
-            self.ertbox_params.nx,
-            self.ertbox_params.ny,
-            self.ertbox_params.xinc,
-            self.ertbox_params.yinc,
+            self.grid_geometry.nx,
+            self.grid_geometry.ny,
+            self.grid_geometry.xinc,
+            self.grid_geometry.yinc,
             xpos,
             ypos,
             obs_main_range,
