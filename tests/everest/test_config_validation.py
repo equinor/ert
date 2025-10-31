@@ -1368,7 +1368,7 @@ def test_ambiguous_max_memory_vs_realization_memory_is_detected():
         (55, 55, 55),
     ],
 )
-def test_that_max_memory_propagages_to_realization_memory(
+def test_that_max_memory_propagates_to_realization_memory(
     max_memory, realization_memory, expected
 ) -> None:
     """Also testing that 0 for realization_memory means not set"""
