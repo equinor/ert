@@ -173,14 +173,26 @@ class SimulatorConfig(BaseModelWithContextSupport, extra="forbid"):
 
     @model_validator(mode="after")
     def update_max_memory(config: "SimulatorConfig") -> "SimulatorConfig":
+        if config.max_memory is None:
+            return config
+        parsed_max_memory = (
+            parse_string_to_bytes(config.max_memory)
+            if type(config.max_memory) is str
+            else int(config.max_memory)
+        )
         if (
-            config.max_memory is not None
-            and config.queue_system is not None
+            config.queue_system is not None
             and config.queue_system.realization_memory == 0
         ):
-            config.queue_system.realization_memory = (
-                parse_string_to_bytes(config.max_memory)
-                if type(config.max_memory) is str
-                else int(config.max_memory)
+            config.queue_system.realization_memory = parsed_max_memory
+        elif (
+            config.queue_system is not None
+            and config.queue_system.realization_memory > 0
+            and config.queue_system.realization_memory != parsed_max_memory
+        ):
+            raise ConfigValidationError(
+                "Ambiguous configuration of realization_memory. "
+                "Specify either max_memory or realization_memory, not both"
             )
+
         return config

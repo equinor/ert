@@ -72,11 +72,6 @@ def _extract_simulator(ever_config: EverestConfig, ert_config: dict[str, Any]) -
     if max_runtime is not None:
         ert_config[ErtConfigKeys.MAX_RUNTIME] = max_runtime or 0
 
-    # Maximum amount of memory (REALIZATION_MEMORY) a forward model is allowed to use
-    max_memory = ever_simulation.max_memory
-    if max_memory is not None:
-        ert_config[ErtConfigKeys.REALIZATION_MEMORY] = max_memory or 0
-
     # Number of cores reserved on queue nodes (NUM_CPU)
     if (num_fm_cpu := ever_simulation.cores_per_node) is not None:
         if (

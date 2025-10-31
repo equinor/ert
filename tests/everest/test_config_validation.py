@@ -1345,3 +1345,131 @@ def test_forward_model_step_config_missing_type():
     with pytest.raises(ValidationError) as exc_info:
         ForwardModelStepConfig(job="example_job", results={"file_name": "output.txt"})
     assert expected_substring in str(exc_info.value)
+
+
+def test_ambiguous_max_memory_vs_realization_memory_is_detected():
+    with pytest.raises(
+        ValidationError, match="Ambiguous configuration of realization_memory"
+    ):
+        EverestConfig.with_defaults(
+            simulator={
+                "max_memory": "20",
+                "queue_system": {"name": "local", "realization_memory": "40"},
+            }
+        )
+
+
+@pytest.mark.parametrize(
+    "max_memory, realization_memory, expected",
+    [
+        (None, 0, 0),
+        (0, 0, 0),
+        (55, 0, 55),
+        (55, 55, 55),
+    ],
+)
+def test_that_max_memory_propagates_to_realization_memory(
+    max_memory, realization_memory, expected
+) -> None:
+    """Also testing that 0 for realization_memory means not set"""
+    config = EverestConfig.with_defaults(
+        simulator={
+            "max_memory": max_memory,
+            "queue_system": {"name": "local", "realization_memory": realization_memory},
+        }
+    )
+    assert config.simulator.queue_system.realization_memory == expected
+
+
+@pytest.mark.parametrize(
+    "realization_memory, expected",
+    [
+        ("1Gb", 1073741824),
+        ("2Kb", 2048),
+        (999, 999),
+    ],
+)
+def test_parsing_of_realization_memory(realization_memory, expected) -> None:
+    config = EverestConfig.with_defaults(
+        simulator={
+            "queue_system": {"name": "local", "realization_memory": realization_memory},
+        }
+    )
+    assert config.simulator.queue_system.realization_memory == expected
+
+
+@pytest.mark.parametrize(
+    "invalid_memory_spec, error_message",
+    [
+        ("-1", "Negative memory does not make sense"),
+        ("      -2", "Negative memory does not make sense"),
+        ("-1b", "Negative memory does not make sense in -1b"),
+        ("b", "Invalid memory string"),
+        ("'kljh3 k34f15gg.  asd '", "Invalid memory string"),
+        ("'kljh3 1gb'", "Invalid memory string"),
+        ("' 2gb 3k 1gb'", "Invalid memory string"),
+        ("4ub", "Unknown memory unit"),
+        ("1x", "Unknown memory unit"),
+        ("1 x", "Unknown memory unit"),
+        ("1 xy", "Unknown memory unit"),
+        ("foo", "Invalid memory string: foo"),
+    ],
+)
+def test_parsing_of_invalid_memory_spec(invalid_memory_spec, error_message) -> None:
+    with pytest.raises(ValidationError, match=error_message):
+        EverestConfig.with_defaults(
+            simulator={
+                "queue_system": {
+                    "name": "local",
+                    "realization_memory": invalid_memory_spec,
+                },
+            }
+        )
+    with pytest.raises(ValidationError, match=error_message):
+        EverestConfig.with_defaults(simulator={"max_memory": invalid_memory_spec})
+
+
+def test_parsing_of_unset_realization_memory() -> None:
+    config = EverestConfig.with_defaults(
+        simulator={
+            "queue_system": {"name": "local"},
+        }
+    )
+    assert config.simulator.queue_system.realization_memory == 0
+
+
+@pytest.mark.usefixtures("no_plugins")
+@pytest.mark.parametrize(
+    "max_memory",
+    [
+        None,
+        0,
+        1,
+        "0",
+        "1",
+        "1b",
+        "1k",
+        "1m",
+        "1g",
+        "1t",
+        "1p",
+        "1G",
+        "1 G",
+        "1Gb",
+        "1 Gb",
+    ],
+)
+def test_that_max_memory_is_valid(max_memory) -> None:
+    EverestConfig.with_defaults(simulator={"max_memory": max_memory})
+
+
+@pytest.mark.usefixtures("no_plugins")
+@pytest.mark.parametrize(
+    "max_memory",
+    [-1, "-1", "-1G", "-1 G", "-1Gb"],
+)
+def test_that_negative_max_memory_fails(max_memory) -> None:
+    with pytest.raises(
+        ValidationError, match=f"Negative memory does not make sense in {max_memory}"
+    ):
+        EverestConfig.with_defaults(simulator={"max_memory": max_memory})
