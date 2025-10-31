@@ -1347,7 +1347,7 @@ def test_forward_model_step_config_missing_type():
     assert expected_substring in str(exc_info.value)
 
 
-def test_ambigous_max_memory_vs_realization_memory_is_detected():
+def test_ambiguous_max_memory_vs_realization_memory_is_detected():
     with pytest.raises(
         ValidationError, match="Ambiguous configuration of realization_memory"
     ):
