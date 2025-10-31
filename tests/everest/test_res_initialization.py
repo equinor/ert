@@ -27,7 +27,7 @@ from everest.config import EverestConfig, InstallDataConfig
 from everest.simulator.everest_to_ert import everest_to_ert_config_dict
 
 
-@pytest.mark.usefixtures("no_plugins")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
     "config, config_class",
     [
@@ -525,7 +525,7 @@ def test_that_invalid_max_memory_fails(max_memory, exception_message) -> None:
         EverestConfig.with_defaults(simulator={"max_memory": max_memory})
 
 
-@pytest.mark.usefixtures("no_plugins")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
     "max_memory",
     [0, 1, "0", "1", "1b", "1k", "1m", "1g", "1t", "1p", "1G", "1 G", "1Gb", "1 Gb"],
@@ -538,21 +538,19 @@ def test_that_max_memory_is_passed_to_ert_unchanged(
     assert config_dict[ErtConfigKeys.REALIZATION_MEMORY] == str(max_memory)
 
 
-@pytest.mark.usefixtures("no_plugins")
 def test_that_max_memory_none_is_not_passed_to_ert(change_to_tmpdir) -> None:
     ever_config = EverestConfig.with_defaults()
     config_dict = everest_to_ert_config_dict(ever_config)
     assert ErtConfigKeys.REALIZATION_MEMORY not in config_dict
 
 
-@pytest.mark.usefixtures("no_plugins")
 def test_that_resubmit_limit_is_set(change_to_tmpdir) -> None:
     ever_config = EverestConfig.with_defaults(simulator={"resubmit_limit": 0})
     config_dict = everest_to_ert_config_dict(ever_config)
     assert config_dict[ErtConfigKeys.MAX_SUBMIT] == 1
 
 
-@pytest.mark.usefixtures("no_plugins")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
     "max_memory, realization_memory",
     [(None, 0), (999, 999), ("1Gb", 1073741824), (0, 0)],
