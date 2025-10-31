@@ -31,7 +31,6 @@ Options that affect all queue systems
 In addition to the queue-specific settings, the following options affect
 all queue systems. These are documented in :ref:`ert_kw_full_doc`.
 
-* ``JOB_SCRIPT`` — see :ref:`List of keywords<job_script>`
 * ``MAX_RUNNING`` — see :ref:`List of keywords<max_running>`
 * ``MAX_RUNTIME`` — see :ref:`List of keywords<max_runtime>`
 * ``MAX_SUBMIT`` — see :ref:`List of keywords<max_submit>`
