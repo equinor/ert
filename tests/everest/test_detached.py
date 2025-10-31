@@ -100,7 +100,7 @@ def test_wait_for_server(mock_get_context, mock_is_running):
         wait_for_server(client, timeout=0.01)
 
 
-@pytest.mark.usefixtures("no_plugins")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_detached_mode_config_base(min_config, monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
     with open("config.yml", "w", encoding="utf-8") as fout:
@@ -139,7 +139,7 @@ def test_detached_mode_config_error():
         )
 
 
-@pytest.mark.usefixtures("no_plugins")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
     "config_kwargs, expected_result",
     [
@@ -162,7 +162,7 @@ def test_find_queue_system(config_kwargs, expected_result):
     assert result.queue_system.name == expected_result
 
 
-@pytest.mark.usefixtures("no_plugins")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_generate_queue_options_no_config():
     config = EverestConfig.with_defaults()
     assert config.server.queue_system == LocalQueueOptions(max_running=1)
@@ -182,7 +182,7 @@ def test_generate_queue_options_no_config():
         ),
     ],
 )
-@pytest.mark.usefixtures("no_plugins")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_that_server_queue_system_defaults_to_simulator_queue_options(
     monkeypatch, queue_class, expected_queue_kwargs
 ):
