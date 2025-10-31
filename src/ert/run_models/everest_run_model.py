@@ -41,7 +41,6 @@ from ert.config import (
 )
 from ert.config.ert_config import (
     create_and_hook_workflows,
-    read_templates,
     uppercase_subkeys_and_stringify_subvalues,
 )
 from ert.config.model_config import DEFAULT_ECLBASE_FORMAT
@@ -378,8 +377,6 @@ class EverestRunModel(RunModel):
             "<CONFIG_FILE>": Path(everest_config.config_file).stem,
         }
 
-        ert_templates = read_templates(config_dict)
-
         for datafile, data in _get_internal_files(everest_config).items():
             datafile.parent.mkdir(exist_ok=True, parents=True)
             datafile.write_text(data, encoding="utf-8")
@@ -489,7 +486,7 @@ class EverestRunModel(RunModel):
             active_realizations=[],
             parameter_configuration=parameter_configs,
             response_configuration=response_configs,
-            ert_templates=ert_templates,
+            ert_templates=[],  # Everest dont use ert templates
             user_config_file=config_file,
             env_vars=env_vars,
             env_pr_fm_step=env_pr_fm_step,
