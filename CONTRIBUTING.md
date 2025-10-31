@@ -194,3 +194,8 @@ noise in the review process.
   * rebase onto base branch if necessary,
   * squash whatever still needs squashing, and
   * [fast-forward](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/defining-the-mergeability-of-pull-requests/about-protected-branches#require-linear-history) merge.
+
+## Docstrings
+
+Avoid adding trivial documentation but where warranted, docstrings should follow the
+[google style guide](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings).

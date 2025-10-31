@@ -121,6 +121,7 @@ Reject commits that bundle unrelated changes (e.g., test addition + API rename +
 ## 4. Documentation
 
 - Avoid trivial docstrings that restate the obvious (`get_count()` does not need “Return count”).
+- Docstrings should follow the google style guide.
 - Remove commented-out code blocks; if something is temporarily disabled, use version control (or explain in commit message) rather than comments.
 - For user-facing changes (new features, changed behaviors, configuration adjustments), ensure an `.rst` file under `docs/` is added or updated:
   - Include usage examples.
