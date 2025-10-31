@@ -38,14 +38,10 @@ from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.suggestor import Suggestor
 from ert.gui.suggestor._suggestor_message import SuggestorMessage
 from ert.gui.tools.event_viewer import add_gui_log_handler
-from ert.gui.tools.manage_experiments import (
-    ManageExperimentsPanel,
-)
+from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
-from ert.gui.tools.plot.plot_ensemble_selection_widget import (
-    EnsembleSelectListWidget,
-)
+from ert.gui.tools.plot.plot_ensemble_selection_widget import EnsembleSelectListWidget
 from ert.gui.tools.plot.plot_window import (
     GEN_KW_DEFAULT,
     RESPONSE_DEFAULT,
@@ -357,6 +353,12 @@ def test_that_the_plot_window_contains_the_expected_elements(
         model = data_keys.model()
         assert model is not None
 
+        def tab_index_by_text(text: str) -> int:
+            for i in range(plot_window._central_tab.count()):
+                if plot_window._central_tab.tabText(i) == text:
+                    return i
+            raise AssertionError(f"Tab '{text}' not found")
+
         def click_plotter_item(pos: int) -> None:
             center = data_keys.visualRect(model.index(pos, 0)).center()
             viewport = data_keys.viewport()
@@ -371,15 +373,24 @@ def test_that_the_plot_window_contains_the_expected_elements(
             tab_center = tab_bar.tabRect(pos).center()
             qtbot.mouseClick(tab_bar, Qt.MouseButton.LeftButton, pos=tab_center)
 
+        def get_log_checkbox():
+            w = plot_window._central_tab.currentWidget()
+            return w.findChild(QCheckBox, "log_scale_checkbox")
+
         # make sure plotter remembers plot types selected previously
         response_index = 0  # responses are at the start, thus POLY_RES@0 is at index0
         gen_kw_index = 3
         response_alternate_index = 1
-        gen_kw_alternate_index = 3
+        gen_kw_alternate_index = tab_index_by_text("Histogram")
 
         # check default selections
         click_plotter_item(response_index)
         assert plot_window._central_tab.currentIndex() == RESPONSE_DEFAULT
+
+        # no log scale checkbox yet
+        cb = get_log_checkbox()
+        assert not cb.isVisibleTo(plot_window._central_tab.currentWidget())
+
         click_plotter_item(gen_kw_index)
         assert plot_window._central_tab.currentIndex() == GEN_KW_DEFAULT
 
@@ -394,6 +405,16 @@ def test_that_the_plot_window_contains_the_expected_elements(
         assert plot_window._central_tab.currentIndex() == response_alternate_index
         click_plotter_item(gen_kw_index)
         assert plot_window._central_tab.currentIndex() == gen_kw_alternate_index
+
+        # wait until the checkbox exists
+        qtbot.waitUntil(lambda: get_log_checkbox() is not None, timeout=2000)
+        cb = get_log_checkbox()
+
+        # wait until it becomes visible
+        qtbot.waitUntil(
+            lambda: cb.isVisibleTo(plot_window._central_tab.currentWidget()) is True,
+            timeout=2000,
+        )
 
         # finally click all items
         for i in range(model.rowCount()):

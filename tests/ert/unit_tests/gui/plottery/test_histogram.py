@@ -33,6 +33,7 @@ def plot_context(request):
     context = Mock(spec=PlotContext)
     context.ensembles.return_value = request.param[0]
     context.ensembles_color_indexes.return_value = request.param[1]
+    context._log_scale = False
     title = "" + f"num_ensembles={len(request.param[0])}"
     context.plotConfig.return_value = PlotConfig(title=title)
     return context
@@ -81,6 +82,7 @@ def test_histogram_plot_for_constant_distribution(monkeypatch):
         )
     ]
     context.ensembles_color_indexes.return_value = [1]
+    context.log_scale = False
     title = "Histogram with same values"
     context.plotConfig.return_value = PlotConfig(title=title)
     value = 0
@@ -102,6 +104,7 @@ def test_histogram_plot_for_constant_distribution(monkeypatch):
         {},
     )
     mock_plot_histogram.assert_called_once_with(
+        ANY,
         ANY,
         ANY,
         ANY,
