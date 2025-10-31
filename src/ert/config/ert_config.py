@@ -705,9 +705,6 @@ class ErtConfig(BaseModel):
     runpath_file: Path = Path(DEFAULT_RUNPATH_FILE)
 
     ert_templates: list[tuple[str, str]] = Field(default_factory=list)
-    installed_forward_model_steps: dict[str, ForwardModelStep] = Field(
-        default_factory=dict
-    )
 
     forward_model_steps: list[ForwardModelStep] = Field(default_factory=list)
     runpath_config: ModelConfig = Field(default_factory=ModelConfig)
@@ -1064,7 +1061,6 @@ class ErtConfig(BaseModel):
                 hooked_workflows=hooked_workflows,
                 runpath_file=Path(runpath_file),
                 ert_templates=read_templates(config_dict),
-                installed_forward_model_steps=installed_forward_model_steps,
                 forward_model_steps=cls._create_list_of_forward_model_steps_to_run(
                     installed_forward_model_steps,
                     substitutions,
