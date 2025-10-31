@@ -215,7 +215,7 @@
       "name": "COND",
       "forward_init": true,
       "update": true,
-      "ertbox_params": {
+      "grid_dimensions": {
         "nx": 10,
         "ny": 10,
         "nz": 1,

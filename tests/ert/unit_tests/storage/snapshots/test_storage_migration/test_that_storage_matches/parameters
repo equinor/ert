@@ -17,7 +17,7 @@
     "name": "PORO",
     "forward_init": false,
     "update": true,
-    "ertbox_params": {
+    "grid_dimensions": {
       "nx": 2,
       "ny": 3,
       "nz": 4,
