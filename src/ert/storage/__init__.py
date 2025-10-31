@@ -32,11 +32,20 @@ class ErtStorageException(Exception):
     pass
 
 
+class ErtStoragePermissionError(ErtStorageException):
+    pass
+
+
 def open_storage(
     path: str | os.PathLike[str], mode: ModeLiteral | Mode = "r"
 ) -> Storage:
     try:
         return LocalStorage(Path(path), Mode(mode))
+    except PermissionError as err:
+        raise ErtStoragePermissionError(
+            "Permission error when accessing storage at: "
+            f"{path} with mode: '{mode}'. Error: {err}"
+        ) from err
     except Exception as err:
         raise ErtStorageException(
             f"Failed to open storage: {path} with error: {err}"

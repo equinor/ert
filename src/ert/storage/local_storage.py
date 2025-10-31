@@ -208,6 +208,12 @@ class LocalStorage(BaseMode):
             return _Index.model_validate_json(
                 (self.path / "index.json").read_text(encoding="utf-8")
             )
+        except PermissionError as e:
+            logger.error(
+                "Permission error when loading index from path: "
+                f"{self.path / 'index.json'}. Error: {e}",
+            )
+            raise e
         except FileNotFoundError:
             return _Index()
 
@@ -219,6 +225,12 @@ class LocalStorage(BaseMode):
             try:
                 ensemble = LocalEnsemble(self, ensemble_path, self.mode)
                 ensembles.append(ensemble)
+            except PermissionError as e:
+                logger.error(
+                    "Permission error when loading ensemble from path: "
+                    f"{ensemble_path}. Error: {e}",
+                )
+                raise e
             except FileNotFoundError:
                 logger.exception(
                     "Failed to load an ensemble from path: %s", ensemble_path

@@ -1,12 +1,16 @@
 import datetime
+import logging
+from unittest.mock import patch
 
 import pandas as pd
 import polars as pl
 import pytest
 
 from ert.config import GenDataConfig, SummaryConfig
+from ert.dark_storage.common import ErtStoragePermissionError, get_storage
 from ert.dark_storage.endpoints.responses import data_for_response
-from ert.storage import open_storage
+from ert.dark_storage.exceptions import InternalServerError
+from ert.storage import ErtStorageException, open_storage
 from tests.ert.unit_tests.config.summary_generator import (
     Date,
     Simulator,
@@ -129,3 +133,34 @@ def test_data_for_response_returns_empty_gen_data_config(tmp_path):
         ensemble.refresh_ensemble_state()
         data = data_for_response(ensemble, "response", filter_on={"report_step": 0})
         assert not data.empty
+
+
+@patch(
+    "ert.dark_storage.common.open_storage",
+    side_effect=ErtStoragePermissionError("Great Permission Error"),
+)
+def test_get_storage_with_open_storage_permission_error(
+    mocked_open_storage, monkeypatch, caplog
+):
+    caplog.set_level(logging.ERROR)
+    monkeypatch.setenv("ERT_STORAGE_ENS_PATH", "/path/to/storage")
+    with pytest.raises(InternalServerError, match="Permission error accessing storage"):
+        get_storage()
+    assert (
+        "Permission error accessing storage: Great Permission Error"
+        in caplog.messages[0]
+    )
+
+
+@patch(
+    "ert.dark_storage.common.open_storage",
+    side_effect=ErtStorageException("Great Exception"),
+)
+def test_get_storage_with_open_storage_exception(
+    mocked_open_storage, monkeypatch, caplog
+):
+    caplog.set_level(logging.ERROR)
+    monkeypatch.setenv("ERT_STORAGE_ENS_PATH", "/path/to/storage")
+    with pytest.raises(InternalServerError, match="Error accessing storage"):
+        get_storage()
+    assert "Error accessing storage: Great Exception" in caplog.messages[0]
