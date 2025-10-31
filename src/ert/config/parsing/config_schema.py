@@ -176,13 +176,6 @@ def queue_option_keyword() -> SchemaItem:
     )
 
 
-def job_script_keyword() -> SchemaItem:
-    return SchemaItem(
-        kw=ConfigKeys.JOB_SCRIPT,
-        type_map=[SchemaItemType.EXECUTABLE],
-    )
-
-
 def gen_kw_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.GEN_KW,
@@ -339,7 +332,6 @@ def init_user_config_schema() -> ConfigSchemaDict:
         design_matrix_keyword(),
         queue_system_keyword(False),
         queue_option_keyword(),
-        job_script_keyword(),
         load_workflow_job_keyword(),
         set_env_keyword(),
         install_job_keyword(),

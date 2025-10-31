@@ -20,7 +20,6 @@
       "submit_sleep": 0.0,
       "num_cpu": 1,
       "realization_memory": 52428800,
-      "job_script": "fm_dispatch.py",
       "project_code": null,
       "activate_script": "activate"
     },

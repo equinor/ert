@@ -68,7 +68,6 @@ def test_that_site_configuration_propagates_through_plugin_manager():
             name="lsf",
             max_running="1",
             submit_sleep="1",
-            job_script="fm_dispatch_sitecfg.py",
         ),
         environment_variables={
             "OMP_NUM_THREADS": "5",
@@ -84,7 +83,6 @@ def test_that_site_configuration_propagates_through_plugin_context():
             "name": "lsf",
             "max_running": "1",
             "submit_sleep": "1",
-            "job_script": "fm_dispatch_sitecfg.py",
         },
         "environment_variables": {
             "OMP_NUM_THREADS": "5",

@@ -237,8 +237,6 @@ def test_that_disallowed_argument_is_located_1fn():
                 NUM_REALIZATIONS not_int
                 ENKF_ALPHA not_float
                 RUN_TEMPLATE dsajldkald/sdjkahsjka/wqehwqhdsa
-                JOB_SCRIPT dnsjklajdlksaljd/dhs7sh/qhwhe
-                JOB_SCRIPT non_executable_file
                 NUM_REALIZATIONS 1 2 3 4 5
                 NUM_REALIZATIONS
                 """
@@ -283,29 +281,12 @@ def test_that_disallowed_argument_is_located_1fn():
                 ),
                 ExpectedErrorInfo(
                     line=7,
-                    column=12,
-                    end_column=41,
-                    match="Could not find executable",
-                ),
-                ExpectedErrorInfo(
-                    other_files={
-                        "non_executable_file": FileDetail(
-                            contents="", is_executable=False
-                        )
-                    },
-                    line=8,
-                    column=12,
-                    end_column=31,
-                    match="File not executable",
-                ),
-                ExpectedErrorInfo(
-                    line=9,
                     column=1,
                     end_column=17,
                     match="must have maximum",
                 ),
                 ExpectedErrorInfo(
-                    line=10,
+                    line=8,
                     column=1,
                     end_column=17,
                     match="must have at least",
@@ -334,10 +315,6 @@ def test_that_multiple_keyword_specific_tokens_are_located(contents, expected_er
                 (
                     "RUN_TEMPLATE dsajldkald/sdjkahsjka/wqehwqhdsa",
                     {"column": 14, "end_column": 46},
-                ),
-                (
-                    "JOB_SCRIPT dnsjklajdlksaljd/dhs7sh/qhwhe",
-                    {"column": 12, "end_column": 41},
                 ),
                 ("NUM_REALIZATIONS 1 2 3 4 5", {"column": 1, "end_column": 17}),
                 ("NUM_REALIZATIONS", {"column": 1, "end_column": 17}),
@@ -702,8 +679,6 @@ def test_that_unicode_decode_error_is_localized_first_line():
                     NUM_REALIZATIONS not_int
                     ENKF_ALPHA not_float
                     RUN_TEMPLATE dsajldkald/sdjkahsjka/wqehwqhdsa
-                    JOB_SCRIPT dnsjklajdlksaljd/dhs7sh/qhwhe
-                    JOB_SCRIPT non_executable_file
                     NUM_REALIZATIONS 1 2 3 4 5
                     NUM_REALIZATIONS
                 """
@@ -733,8 +708,6 @@ def test_that_unicode_decode_error_is_localized_random_line_single_insert():
         NUM_REALIZATIONS not_int
         ENKF_ALPHA not_float
         RUN_TEMPLATE dsajldkald/sdjkahsjka/wqehwqhdsa
-        JOB_SCRIPT dnsjklajdlksaljd/dhs7sh/qhwhe
-        JOB_SCRIPT non_executable_file
         NUM_REALIZATIONS 1 2 3 4 5
         NUM_REALIZATIONS
     """.splitlines()
@@ -778,8 +751,6 @@ def test_that_unicode_decode_error_is_localized_random_line_single_insert():
                 "NUM_REALIZATIONS not_int",
                 "ENKF_ALPHA not_float",
                 "RUN_TEMPLATE dsajldkald/sdjkahsjka/wqehwqhdsa",
-                "JOB_SCRIPT dnsjklajdlksaljd/dhs7sh/qhwhe",
-                "JOB_SCRIPT non_executable_file",
                 "NUM_REALIZATIONS 1 2 3 4 5",
                 "NUM_REALIZATIONS",
             ]
@@ -919,27 +890,6 @@ QUEUE_OPTION LOCAL MAX_RUNNING ert
         ),
         unexpected_error=ExpectedErrorInfo(
             match="is negative: 'ert'",
-        ),
-    )
-
-
-@pytest.mark.parametrize("dirname", ["the_dir", "/tmp"])
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_executable_directory_errors(dirname):
-    os.mkdir("the_dir")
-    assert_that_config_leads_to_error(
-        config_file_contents=dedent(
-            f"""
-NUM_REALIZATIONS  1
-JOB_SCRIPT {dirname}
-
-            """
-        ),
-        expected_error=ExpectedErrorInfo(
-            match="is a directory",
-            line=3,
-            column=12,
-            end_column=12 + len(dirname),
         ),
     )
 

@@ -45,7 +45,6 @@ Keyword name                                                            Required
 :ref:`INSTALL_JOB <install_job>`                                        NO                                                                      Install a job for use in a forward model
 :ref:`INVERSION <inversion_algorithm>`                                  NO                                                                      Set inversion method for analysis module
 :ref:`JOBNAME <jobname>`                                                NO                                      <CONFIG_FILE>-<IENS>            Name used for simulation files.
-:ref:`JOB_SCRIPT <job_script>`                                          NO                                                                      Python script managing the forward model
 :ref:`LOAD_WORKFLOW <load_workflow>`                                    NO                                                                      Load a workflow into ERT
 :ref:`LOAD_WORKFLOW_JOB <load_workflow_job>`                            NO                                                                      Load a workflow job into ERT
 :ref:`LOCALIZATION <localization>`                                      NO                                      False                           Enable experimental adaptive localization correlation
@@ -1809,18 +1808,6 @@ FORWARD_MODEL
 
     In available steps in ERT you can see a list of the steps which are available.
 
-.. _job_script:
-
-JOB_SCRIPT
-----------
-
-When Ert submits forward models to a queueing system, it relies on a script to
-be run on the compute node. This script is responsible for parsing a file
-prepared by Ert per realization that describes the entire forward model and
-executing it.
-
-The keyword `JOB_SCRIPT` can be used to inject a different script to do this,
-but should normally only be set in the site wide configuration.
 
 .. _queue_system:
 

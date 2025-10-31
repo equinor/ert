@@ -677,6 +677,7 @@ class RunModel(BaseModelWithContextSupport, ABC):
         experiment_id: uuid.UUID,
     ) -> EEEnsemble:
         realizations = []
+        job_script = shutil.which("fm_dispatch.py") or "fm_dispatch.py"
         for run_arg in run_args:
             realizations.append(
                 Realization(
@@ -686,7 +687,7 @@ class RunModel(BaseModelWithContextSupport, ABC):
                     max_runtime=self.queue_config.max_runtime,
                     run_arg=run_arg,
                     num_cpu=self.queue_config.queue_options.num_cpu,
-                    job_script=self.queue_config.queue_options.job_script,
+                    job_script=job_script,
                     realization_memory=self.queue_config.queue_options.realization_memory,
                 )
             )
