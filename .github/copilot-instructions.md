@@ -5,6 +5,7 @@ Focus on: correctness, clarity, reliability, and maintainability.
 
 ## Quick Checklist
 
+- [ ] Code should not have any critical security flaws or bugs
 - [ ] All new or changed logic is covered by appropriate automated tests.
 - [ ] Test names follow the `test_that_<behavior_or_condition>` specification style.
 - [ ] Test names clearly state the expected behavior or invariant (they answer: “What is correct behavior?”).
@@ -19,12 +20,27 @@ Focus on: correctness, clarity, reliability, and maintainability.
 
 ---
 
-## 1. Testing
+## 1. Critical flaws and incorrect code
 
-### 1.1 Coverage
+
+Ensure that there are no issues that would cause observable failures, including
+
+* Runtime errors (crashes, exceptions, undefined behavior)
+* Breaking changes (API changes, data structure changes)
+* Security vulnerabilities (exploitable, not theoretical)
+
+Also ensure that the code does not have any inconsistencies such as
+
+* Incorrect or vague type annotations
+* Comment vs code discrepancies
+
+
+## 2. Testing
+
+### 2.1 Coverage
 Ensure all new functional paths or behaviors introduced by the PR are covered with unit tests or integration/UI tests as appropriate.
 
-### 1.2 Naming Style
+### 2.2 Naming Style
 Test names MUST:
 - Start with `test_that_` (or `test_when_` if describing conditional sequences) and then explicitly describe the behavior, condition, or invariant.
 - Read like an executable specification: someone running `pytest --collect-only tests/` should infer purpose without opening the test file.
@@ -48,7 +64,7 @@ Poor examples (too vague, not behavior-focused, etc.):
 - `test_print_progress`
 - `test_bad_user_config_file_error_message`
 
-### 1.3 Avoid Vague Terms (“Name Smells”)
+### 2.3 Avoid Vague Terms (“Name Smells”)
 Reject test names containing ambiguous fillers, e.g.:
 - `works`, `correctly`, `as_expected`, `are_handled`, `handles`, `success`, `failure`
 These words state *judgment* rather than *behavior*. Replace with the explicit condition or outcome.
@@ -64,7 +80,7 @@ Prefer: `test_that_double_comments_are_ignored`
 
 (NOTE: If the PR contains any of the vague forms above, recommend renaming.)
 
-### 1.4 Fast, Reliable Unit Tests
+### 2.4 Fast, Reliable Unit Tests
 Tests in `tests/ert/unit_tests` not marked `integration_test` MUST:
 - Execute quickly (aim: sub-second or minimal dependency overhead).
 - Have deterministic outcomes (no flaky timing, random seeds un-fixed, or external service reliance).
@@ -75,14 +91,14 @@ interacts with external systems/resources, involves complex multi-component
 orchestration, or commonly yields opaque errors. If a test fails any of the
 fast/reliable criteria, ensure it is marked appropriately or refactored.
 
-### 1.5 UI Tests
+### 2.5 UI Tests
 Tests in `tests/ert/ui_tests` SHOULD:
 - Reflect user-visible workflows (actions + expected UI states).
 - Avoid duplicating pure logic assertions that are already covered in unit tests.
 
 ---
 
-## 2. Commit Messages
+## 3. Commit Messages
 
 Each commit SHOULD represent one atomic concern (e.g., “Refactor parameter parsing”, “Add adaptive localization cutoff test”).
 
@@ -102,7 +118,7 @@ Reject commits that bundle unrelated changes (e.g., test addition + API rename +
 
 ---
 
-## 3. Documentation
+## 4. Documentation
 
 - Avoid trivial docstrings that restate the obvious (`get_count()` does not need “Return count”).
 - Remove commented-out code blocks; if something is temporarily disabled, use version control (or explain in commit message) rather than comments.
@@ -112,17 +128,22 @@ Reject commits that bundle unrelated changes (e.g., test addition + API rename +
 
 ---
 
-## 4. Prioritization
+## 5. Prioritization
 
 Address in order:
-1. Incorrect or missing tests for critical logic.
-2. Flaky or slow unit tests not marked as integration.
-3. Poorly named tests (vague or non-spec style).
-4. Commit message policy violations.
-5. Documentation gaps.
-6. Minor style / incidental issues.
+1. Critical flaws
+2. Incorrect or missing tests for critical logic.
+3. Flaky or slow unit tests not marked as integration.
+4. Poorly named tests (vague or non-spec style).
+5. Commit message policy violations.
+6. Documentation gaps.
 
 Provide concise, actionable suggestions—avoid generic praise or ungrounded criticism.
+
+Do not include any of the following suggestions:
+
+* Style suggestions outside the established guidelines
+* Micro-optimizations without measurable impact
 
 ---
 
