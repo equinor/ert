@@ -43,6 +43,7 @@ PNGS_NOT_APPLICABLE_FOR_GENERATION = [
     "docs/ert/about/click-on-stderr.png",
     "docs/ert/about/click-show-details.png",
     "docs/ert/about/v9_update_param.png",
+    "docs/ert/about/version-8.0-suggestor.png",
     "docs/ert/img/logo.png",
     "docs/ert/reference/configuration/fig/errf_symmetric_uniform.png",
     "docs/ert/reference/configuration/fig/truncated_ok.png",
@@ -73,9 +74,24 @@ PNGS_NOT_APPLICABLE_FOR_GENERATION = [
 # List of png files under docs that could be tested for change
 # and generated, but that has not yet been added to a test.
 TODOS = [
+    "docs/ert/getting_started/configuration/poly_new/with_results/parameter_viewer.png",
     "docs/ert/getting_started/updating_parameters/fig/update_report.png",
     "docs/ert/getting_started/howto/restart-es-mda.png",
     "docs/ert/getting_started/howto/ert_screenshot_adaptive_loc.png",
+]
+
+# List of png files under docs that have been added to a screenshot test
+PNGS_TESTED_FOR_CHANGE = [
+    "docs/ert/getting_started/configuration/poly_new/minimal/ert.png",
+    "docs/ert/getting_started/configuration/poly_new/minimal/simulations.png",
+    "docs/ert/getting_started/configuration/poly_new/with_simple_script/ert.png",
+    "docs/ert/getting_started/configuration/poly_new/with_results/poly_plot.png",
+    "docs/ert/getting_started/configuration/poly_new/with_results/plots.png",
+    "docs/ert/getting_started/configuration/poly_new/with_observations/plot_obs.png",
+    "docs/ert/getting_started/configuration/poly_new/with_observations/coeff_a.png",
+    "docs/ert/getting_started/configuration/poly_new/with_observations/coeff_b.png",
+    "docs/ert/getting_started/configuration/poly_new/with_observations/coeff_c.png",
+    "docs/ert/getting_started/configuration/poly_new/with_more_observations/coeff_b.png",
 ]
 
 SKIP_MESSAGE = """Skipping this test because no fonts could be found by qt.
@@ -145,6 +161,8 @@ IS_RUNNING_IN_GITHUB_ACTIONS = (
     os.getenv("CI") == "true" and os.getenv("GITHUB_ACTIONS") == "true"
 )
 
+CI_CMP_PREFIX = "ci_cmp_"
+
 
 class GuiEvaluator:
     def __init__(self, source_root, example_folder, gui, qtbot) -> None:
@@ -157,8 +175,6 @@ class GuiEvaluator:
     def compare_img_with_gui(self, img_name, threshold=0.99):
         temp_image_path = self.qtbot.screenshot(self.gui)
         new_img = io.imread(temp_image_path, as_gray=True)
-
-        CI_CMP_PREFIX = "ci_cmp_"
 
         name = (
             f"{CI_CMP_PREFIX}{img_name}" if IS_RUNNING_IN_GITHUB_ACTIONS else img_name
@@ -477,3 +493,34 @@ def test_that_poly_new_with_more_observations_screenshots_are_up_to_date(
         gui_evaluator.compare_img_with_gui("coeff_b.png", COEFF_B_PNG_THRESHOLD)
 
     assert not gui_evaluator.gui_change_detected(), gui_evaluator.change_report()
+
+
+def test_that_all_png_files_under_the_docs_folder_has_been_considered_for_testing(
+    source_root,
+):
+    docs_folder = Path(os.path.join(source_root, "docs"))
+    pngs_files_in_docs = {
+        str(file.relative_to(source_root)) for file in docs_folder.rglob("*.png")
+    }
+
+    uncategorized_png_files = (
+        pngs_files_in_docs
+        - set(PNGS_NOT_APPLICABLE_FOR_GENERATION)
+        - set(PNGS_TESTED_FOR_CHANGE)
+        - set(TODOS)
+    )
+    uncategorized_png_files = {
+        file_path
+        for file_path in uncategorized_png_files
+        if not os.path.basename(file_path).startswith(CI_CMP_PREFIX)
+    }
+
+    newline = "\n  - "
+    assert not uncategorized_png_files, (
+        "The following uncategorised png file(s) have been detected under the docs "
+        f"folder:\n  - {newline.join(uncategorized_png_files)}\n"
+        "If this is a screenshot of the gui consider adding a screenshot test for it\n"
+        "and add the filepath to PNGS_TESTED_FOR_CHANGE list.\n"
+        "Alternatively, add the filepath to either the TODOS or\n"
+        "PNGS_NOT_APPLICABLE_FOR_GENERATION lists"
+    )
