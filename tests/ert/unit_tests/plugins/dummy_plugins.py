@@ -57,7 +57,6 @@ def site_configurations():
             "name": "lsf",
             "max_running": "1",
             "submit_sleep": "1",
-            "job_script": "fm_dispatch_sitecfg.py",
         },
         "environment_variables": {
             "OMP_NUM_THREADS": "5",

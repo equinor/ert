@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import os
 import re
-import shutil
 from abc import abstractmethod
 from textwrap import dedent
 from typing import (
@@ -95,7 +94,6 @@ class QueueOptions(
         to the same value: 2 gigabytes, equaling 2 * 1024**3 bytes.
         """),
     )
-    job_script: str = shutil.which("fm_dispatch.py") or "fm_dispatch.py"
     project_code: str | None = None
     activate_script: str | None = Field(default=None, validate_default=True)
 
@@ -198,7 +196,6 @@ class LsfQueueOptions(QueueOptions):
                 "max_running",
                 "num_cpu",
                 "realization_memory",
-                "job_script",
             }
         )
         driver_dict["exclude_hosts"] = driver_dict.pop("exclude_host")
@@ -226,7 +223,6 @@ class TorqueQueueOptions(QueueOptions):
                 "submit_sleep",
                 "num_cpu",
                 "realization_memory",
-                "job_script",
             }
         )
         driver_dict["queue_name"] = driver_dict.pop("queue")
@@ -255,7 +251,6 @@ class SlurmQueueOptions(QueueOptions):
                 "submit_sleep",
                 "num_cpu",
                 "realization_memory",
-                "job_script",
             }
         )
         driver_dict["sbatch_cmd"] = driver_dict.pop("sbatch")

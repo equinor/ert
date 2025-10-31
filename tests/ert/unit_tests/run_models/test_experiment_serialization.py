@@ -1,6 +1,5 @@
 import os
 import queue
-import shutil
 import string
 import tempfile
 import unittest
@@ -76,7 +75,6 @@ base_queue_fields = {
     "submit_sleep": st.floats(min_value=0.0, max_value=10.0),
     "num_cpu": st.integers(min_value=1, max_value=64),
     "realization_memory": st.integers(min_value=0, max_value=1_000_000),
-    "job_script": st.just(shutil.which("fm_dispatch.py") or "fm_dispatch.py"),
     "project_code": optional_nonempty_str,
     "activate_script": optional_nonempty_str,
 }
@@ -645,7 +643,6 @@ def _create_and_verify_runmodel_snapshot(config, snapshot, cli_args, case):
     runmodel = create_model(config, cli_args, queue.SimpleQueue())
 
     # Override these to avoid user time/env-specifics in snapshots
-    runmodel.queue_config.queue_options.job_script = "fm_dispatch.py"
     runmodel.queue_config.queue_options.activate_script = "activate"
     runmodel.substitutions["<DATE>"] = "2000-01-01"
 
