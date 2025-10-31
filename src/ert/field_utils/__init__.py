@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from .field_file_format import FieldFileFormat
 from .field_utils import (
-    ErtboxParameters,
+    GridDimensions,
     Shape,
-    calculate_ertbox_parameters,
+    calculate_grid_dimensions,
     get_shape,
     read_field,
     read_mask,
@@ -12,10 +12,10 @@ from .field_utils import (
 )
 
 __all__ = [
-    "ErtboxParameters",
     "FieldFileFormat",
+    "GridDimensions",
     "Shape",
-    "calculate_ertbox_parameters",
+    "calculate_grid_dimensions",
     "get_shape",
     "read_field",
     "read_mask",
