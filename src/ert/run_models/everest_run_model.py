@@ -305,7 +305,13 @@ class EverestRunModel(RunModel):
 
         objective_names = [c.name for c in everest_config.objective_functions]
         response_configs.append(
-            EverestObjectivesConfig(keys=objective_names, input_files=objective_names)
+            EverestObjectivesConfig(
+                keys=objective_names,
+                input_files=objective_names,
+                weights=[o.weight for o in everest_config.objective_functions],
+                scales=[o.scale for o in everest_config.objective_functions],
+                objective_types=[o.type for o in everest_config.objective_functions],
+            )
         )
 
         constraint_names = [c.name for c in everest_config.output_constraints]
@@ -315,6 +321,14 @@ class EverestRunModel(RunModel):
                 EverestConstraintsConfig(
                     keys=constraint_names,
                     input_files=constraint_names,
+                    scales=[c.scale for c in everest_config.output_constraints],
+                    targets=[c.target for c in everest_config.output_constraints],
+                    upper_bounds=[
+                        c.upper_bound for c in everest_config.output_constraints
+                    ],
+                    lower_bounds=[
+                        c.lower_bound for c in everest_config.output_constraints
+                    ],
                 )
             )
 
