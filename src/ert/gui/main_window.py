@@ -147,6 +147,7 @@ class ErtMainWindow(QMainWindow):
         plot_button = self._add_sidebar_button("Create plot", QIcon("img:timeline.svg"))
         plot_button.setToolTip("Right click to open external window")
         self._add_sidebar_button("Manage experiments", QIcon("img:build_wrench.svg"))
+        self._add_sidebar_button("New button", QIcon("img:notifications.svg"))
         self.results_button = self._add_sidebar_button(
             "Simulation status", QIcon("img:in_progress.svg")
         )
