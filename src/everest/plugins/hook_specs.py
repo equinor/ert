@@ -22,30 +22,6 @@ def install_job_directories() -> list[str]:  # type: ignore[empty-body]
 
 
 @hookspec(firstresult=True)
-def ecl100_config_path() -> str:  # type: ignore[empty-body]
-    """
-    :return: Path to ecl100 config file
-    :rtype: PluginResponse with data as str
-    """
-
-
-@hookspec(firstresult=True)
-def ecl300_config_path() -> str:  # type: ignore[empty-body]
-    """
-    :return: Path to ecl300 config file
-    :rtype: PluginResponse with data as str
-    """
-
-
-@hookspec(firstresult=True)
-def flow_config_path() -> str:  # type: ignore[empty-body]
-    """
-    :return: Path to flow config file
-    :rtype: PluginResponse with data as str
-    """
-
-
-@hookspec(firstresult=True)
 def lint_forward_model(job: str, args: Sequence[str]) -> list[str]:  # type: ignore[empty-body]
     """
     Return a error string, if forward model job failed to lint.

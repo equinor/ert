@@ -14,9 +14,6 @@ from tests.ert.unit_tests.plugins.dummy_plugins import DummyFMStep
 def test_no_plugins():
     pm = ErtPluginManager(plugins=[ert.plugins.hook_implementations])
     assert pm.get_help_links() == {"GitHub page": "https://github.com/equinor/ert"}
-    assert pm.get_flow_config_path() is None
-    assert pm.get_ecl100_config_path() is None
-    assert pm.get_ecl300_config_path() is None
     assert pm.get_forward_model_configuration() == {}
 
     assert len(pm.forward_model_steps) > 0
@@ -30,9 +27,6 @@ def test_with_plugins():
         "test": "test",
         "test2": "test",
     }
-    assert pm.get_flow_config_path() == "dummy/path/flow_config.yml"
-    assert pm.get_ecl100_config_path() == "dummy/path/ecl100_config.yml"
-    assert pm.get_ecl300_config_path() == "dummy/path/ecl300_config.yml"
     assert pm.get_forward_model_configuration() == {"FLOW": {"mpipath": "/foo"}}
 
     assert pm.get_installable_jobs()["job1"] == "dummy/path/job1"

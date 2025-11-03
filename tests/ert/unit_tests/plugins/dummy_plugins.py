@@ -17,21 +17,6 @@ def forward_model_configuration():
 
 
 @plugin(name="dummy")
-def ecl100_config_path():
-    return "dummy/path/ecl100_config.yml"
-
-
-@plugin(name="dummy")
-def ecl300_config_path():
-    return "dummy/path/ecl300_config.yml"
-
-
-@plugin(name="dummy")
-def flow_config_path():
-    return "dummy/path/flow_config.yml"
-
-
-@plugin(name="dummy")
 def installable_jobs():
     return {"job1": "dummy/path/job1", "job2": "dummy/path/job2"}
 

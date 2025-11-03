@@ -127,21 +127,6 @@ class ErtPluginManager(pluggy.PluginManager):
 
         return response.data
 
-    def get_ecl100_config_path(self) -> str | None:
-        return ErtPluginManager._evaluate_config_hook(
-            hook=self.hook.ecl100_config_path, config_name="ecl100"
-        )
-
-    def get_ecl300_config_path(self) -> str | None:
-        return ErtPluginManager._evaluate_config_hook(
-            hook=self.hook.ecl300_config_path, config_name="ecl300"
-        )
-
-    def get_flow_config_path(self) -> str | None:
-        return ErtPluginManager._evaluate_config_hook(
-            hook=self.hook.flow_config_path, config_name="flow"
-        )
-
     def get_forward_model_configuration(self) -> dict[str, dict[str, Any]]:
         response: list[PluginResponse[dict[str, str]]] = (
             self.hook.forward_model_configuration()
@@ -387,21 +372,6 @@ def get_site_plugins(
         plugin_manager = ErtPluginManager()
 
     site_configurations = plugin_manager.get_site_configurations()
-
-    ecl100_config_path = plugin_manager.get_ecl100_config_path()
-    ecl300_config_path = plugin_manager.get_ecl300_config_path()
-    flow_config_path = plugin_manager.get_flow_config_path()
-
-    config_env_vars = {}
-    if ecl100_config_path is not None:
-        config_env_vars["ECL100_SITE_CONFIG"] = ecl100_config_path
-
-    if ecl300_config_path is not None:
-        config_env_vars["ECL300_SITE_CONFIG"] = ecl300_config_path
-
-    if flow_config_path is not None:
-        config_env_vars["FLOW_SITE_CONFIG"] = flow_config_path
-
     installable_workflow_jobs = plugin_manager.get_installable_workflow_jobs()
 
     all_forward_model_steps = (
@@ -440,8 +410,7 @@ def get_site_plugins(
         queue_options=site_configurations.queue_options
         if site_configurations
         else None,
-        environment_variables=config_env_vars
-        | (
+        environment_variables=(
             dict(site_configurations.environment_variables)
             if site_configurations
             else {}
