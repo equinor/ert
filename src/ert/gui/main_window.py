@@ -81,8 +81,7 @@ class SidebarToolButton(QToolButton):
         if event:
             if event.button() == Qt.MouseButton.RightButton:
                 self.right_clicked.emit()
-            else:
-                super().mousePressEvent(event)
+            super().mousePressEvent(event)
 
 
 class ErtMainWindow(QMainWindow):
