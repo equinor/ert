@@ -12,33 +12,27 @@ Forward model jobs
     builtin
     custom
 
-Some of the forward models are connected and often the output of one is the
-input to another. However, they maintain the same format, and thus a subset
-of the jobs can be run independently. For example, if well_constraints is not
-necessary, it can be omitted, and if well_order is not a concern, the input to
-the well_constraints can be setup and copied (in the everest configuration,
-rather than using the drill_planner every time).
-Some of them are however mandatory, e.g. the add_templates is a prerequisite
-for the schmerge job.
+During optimization the values of the objective functions and output constraints
+are calculated by a series of jobs specified in the `forward_model` section of
+the configuration file:
 
-**Example**
+.. code:: yaml
 
-.. code-block:: yaml
+  forward_model:
+    - job-name <arguments>
+    - job-name <arguments>
 
-    forward_model:
-      - fm_drill_planner -i well.json
-                         -c drill_planner_config.yaml
-                         -opt optimizer_values.yml
-                         -o wells_dp_result.json
-      - fm_well_constraints -i wells_dp_result.json
-                            -c well_constraint_config.yml
-                            -rc rate_input.json
-                            -pc phase_input.json
-                            -dc duration_input.json
-                            -o wells_wc_result.json
-      - fm_add_templates -c template_config.yml
-                         -i wells_wc_result.json
-                         -o wells_tmpl_result.json
-      - fm_schmerge  -s raw_schedule.sch
-                     -i wells_tmpl_result.json
-                     -o result_schedule.sch
+These jobs are executed in the order they are specified, and exchange data via
+files. Before starting a new batch of forward model jobs, Everest writes an
+input file containing the current control values and copies other user-specified
+input files to the location in the file system where the forward model jobs will
+run. Jobs can produce output files that serve as inputs for jobs that are
+started later. Finally, the outputs of the forward model (objective and
+constraint values) are saved, read by Everest and send back to the optimizer.
+
+Forward model jobs are command line applications that are run by the Everest job
+scheduler. A few built-in jobs are provided, which are described in the section
+:ref:`cha_builtin_forward_model_jobs`. The Everest installation is generally
+providing additional forward models via its plugin system, such as those
+described in :ref:`cha_everest_models`. The user can also add their own forward
+models using the mechanism described in :ref:`cha_creating_custom_jobs`.
