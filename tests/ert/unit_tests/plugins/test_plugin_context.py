@@ -51,9 +51,6 @@ def test_that_ecl_and_flow_envvars_plugins_are_passed_through_plugin_context(
         plugin_manager=ErtPluginManager(plugins=[dummy_plugins])
     )
     assert runtime_plugins.environment_variables == {
-        "ECL100_SITE_CONFIG": "dummy/path/ecl100_config.yml",
-        "ECL300_SITE_CONFIG": "dummy/path/ecl300_config.yml",
-        "FLOW_SITE_CONFIG": "dummy/path/flow_config.yml",
         "OMP_NUM_THREADS": "5",
         "MKL_NUM_THREADS": "5",
         "NUMEXPR_NUM_THREADS": "5",
