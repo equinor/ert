@@ -90,7 +90,9 @@ class InstallWorkflowJobConfig(InstallJobConfig):
         else:
             assert self.source is not None
             workflow = workflow_job_from_file(
-                config_file=str(Path(config_directory) / self.source), name=self.name
+                config_file=str(Path(config_directory) / self.source),
+                name=self.name,
+                origin="user",
             )
             if not isinstance(workflow, ExecutableWorkflow):
                 raise ValueError(f"Workflow must be an executable: {self.source}")

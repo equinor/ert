@@ -62,6 +62,7 @@ from .refcase import Refcase
 from .workflow import Workflow
 from .workflow_fixtures import fixtures_per_hook
 from .workflow_job import (
+    BaseErtScriptWorkflow,
     ErtScriptLoadFailure,
     ErtScriptWorkflow,
     WorkflowJob,
@@ -348,6 +349,7 @@ def workflow_jobs_from_dict(
             user_job = workflow_job_from_file(
                 config_file=user_workflow_job[0],
                 name=None if len(user_workflow_job) == 1 else user_workflow_job[1],
+                origin="user",
             )
             name = user_job.name
             if name in workflow_jobs:
@@ -370,7 +372,9 @@ def workflow_jobs_from_dict(
     for user_job_path in user_installed_workflow_job_dir_info:
         for user_job_file in _get_files_in_directory(user_job_path, errors):
             try:
-                user_job = workflow_job_from_file(config_file=user_job_file)
+                user_job = workflow_job_from_file(
+                    config_file=user_job_file, origin="user"
+                )
                 name = user_job.name
                 if name in workflow_jobs:
                     ConfigWarning.warn(
@@ -417,7 +421,7 @@ def create_and_hook_workflows(
             for job, args in workflow:
                 if isinstance(job, ErtScriptWorkflow):
                     try:
-                        job.ert_script.validate(args)
+                        job.load_ert_script_class().validate(args)
                     except ConfigValidationError as err:
                         errors.append(ErrorInfo(message=str(err)).set_context(work[0]))
                         continue
@@ -445,11 +449,11 @@ def create_and_hook_workflows(
         wf = workflows[hook_name]
         available_fixtures = fixtures_per_hook[mode]
         for job, _ in wf.cmd_list:
-            if not hasattr(job, "ert_script") or job.ert_script is None:
+            if not isinstance(job, BaseErtScriptWorkflow):
                 continue
 
-            assert isinstance(job, ErtScriptWorkflow)
-            ert_script_instance = job.ert_script()
+            ert_script_class = job.load_ert_script_class()
+            ert_script_instance = ert_script_class()
             requested_fixtures = ert_script_instance.requested_fixtures
 
             # Look for requested fixtures that are not available for the given

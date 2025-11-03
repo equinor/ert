@@ -393,7 +393,7 @@ def get_site_plugins(
     )
 
     for _, job_path in installable_workflow_jobs.items():
-        wf_job = workflow_job_from_file(job_path)
+        wf_job = workflow_job_from_file(job_path, origin="site")
         all_workflow_jobs[wf_job.name] = wf_job
 
     for fm_step_subclass in plugin_manager.forward_model_steps:

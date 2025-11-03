@@ -7,6 +7,7 @@ from typing import Any, Self
 
 from ert import ErtScript
 from ert.config import (
+    BaseErtScriptWorkflow,
     ErtScriptWorkflow,
     ExternalErtScript,
     Workflow,
@@ -43,8 +44,9 @@ class WorkflowJobRunner:
                 f"{self.job.max_args} arguments, {len(arguments)} given."
             )
 
-        if isinstance(self.job, ErtScriptWorkflow):
-            self.__script = self.job.ert_script()
+        if isinstance(self.job, BaseErtScriptWorkflow):
+            ert_script_class = self.job.load_ert_script_class()
+            self.__script = ert_script_class()
             # We let stop on fail either from class or config take precedence
             self.stop_on_fail = self.job.stop_on_fail or self.__script.stop_on_fail
 
