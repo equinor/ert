@@ -193,6 +193,7 @@ def test_that_server_queue_system_defaults_to_simulator_queue_options(
     assert config.server.queue_system == expected_result
 
 
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize("use_plugin", (False,))
 @pytest.mark.parametrize(
     "queue_options",
@@ -231,6 +232,7 @@ def test_queue_options_site_config(queue_options, use_plugin, monkeypatch, min_c
     assert config.simulator.queue_system.activate_script == expected_result
 
 
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize("use_plugin", (True, False))
 @pytest.mark.parametrize(
     "queue_options",
