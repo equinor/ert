@@ -27,6 +27,25 @@
 Highlighted changes
 ===================
 
+Version 16.0
+------------
+
+Plotting with log scale
+#######################
+
+We’ve added a “Log scale” checkbox to the Histogram plot, placed just above the
+bottom toolbar (red circle). This control lets you switch the histogram’s
+x-axis between linear and logarithmic scales. The toggle is available only
+on Histogram, while other plots remain unchanged.
+
+.. image:: log_scale_button.png
+
+.. note::
+
+    Once active, the log scale setting persists across different
+    parameters until you choose to disable it.
+
+
 Version 10.3
 ------------
 

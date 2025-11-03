@@ -39,6 +39,7 @@ PNGS_NOT_APPLICABLE_FOR_GENERATION = [
     "docs/ert/theory/images/posterior_path.png",
     "docs/ert/about/v9_auto_scale.png",
     "docs/ert/about/v10_manage_experiments.png",
+    "docs/ert/about/log_scale_button.png",
     "docs/ert/about/license-retry.png",
     "docs/ert/about/click-on-stderr.png",
     "docs/ert/about/click-show-details.png",
