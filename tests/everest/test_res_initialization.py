@@ -156,18 +156,18 @@ def test_default_installed_jobs(tmp_path, monkeypatch):
     "config_yaml",
     [
         dedent("""
-    wells: [{ name: fakename}]
+    wells: [{ name: test}]
     """),
         dedent("""
     controls:
-      - name: default_group
+      - name: my_control
         type: well_control
-        initial_guess: 0.5
+        initial_guess: 0.1
         perturbation_magnitude: 0.01
         variables:
-          - name: fakename
+          - name: test
             min: 0
-            max: 1
+            max: 0.1
     """),
     ],
 )
@@ -201,7 +201,7 @@ def test_combined_wells_everest_to_ert(tmp_path, monkeypatch, config_yaml):
     smry_config = next(
         r for r in runmodel.response_configuration if isinstance(r, SummaryConfig)
     )
-    assert "WOPR:fakename" in smry_config.keys
+    assert "WOPR:test" in smry_config.keys
 
 
 @pytest.mark.parametrize(

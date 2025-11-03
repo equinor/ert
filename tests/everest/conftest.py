@@ -29,6 +29,24 @@ from everest.config.control_config import ControlConfig
 from everest.detached import everserver
 from tests.everest.utils import get_optimal_result, relpath
 
+MIN_CONFIG = dedent(
+    """
+    model: {"realizations": [0]}
+    controls:
+      -
+        name: my_control
+        type: well_control
+        min: 0
+        max: 0.1
+        perturbation_magnitude: 0.01
+        variables:
+          - { name: test, initial_guess: 0.1 }
+    objective_functions:
+      - {name: my_objective}
+    config_path: .
+    """
+)
+
 
 @pytest.fixture(scope="session")
 def testdata() -> Path:
@@ -255,25 +273,7 @@ def cached_example(pytestconfig):
 
 @pytest.fixture
 def min_config():
-    yield yaml.safe_load(
-        dedent(
-            """
-    model: {"realizations": [0]}
-    controls:
-      -
-        name: my_control
-        type: well_control
-        min: 0
-        max: 0.1
-        perturbation_magnitude: 0.01
-        variables:
-          - { name: test, initial_guess: 0.1 }
-    objective_functions:
-      - {name: my_objective}
-    config_path: .
-    """
-        )
-    )
+    yield yaml.safe_load(MIN_CONFIG)
 
 
 @pytest.fixture()
@@ -327,20 +327,4 @@ def everest_config_with_defaults(**kwargs) -> EverestConfig:
     Creates an Everest config with default values. Useful for initializing a config
     without having to provide empty defaults.
     """
-    defaults = {
-        "controls": [
-            {
-                "name": "default_group",
-                "type": "generic_control",
-                "initial_guess": 0.5,
-                "perturbation_magnitude": 0.01,
-                "variables": [
-                    {"name": "default_name", "min": 0, "max": 1},
-                ],
-            }
-        ],
-        "objective_functions": [{"name": "default"}],
-        "config_path": ".",
-        "model": {"realizations": [0]},
-    }
-    return EverestConfig.with_plugins({**defaults, **kwargs})  # type: ignore
+    return EverestConfig.with_plugins(yaml.safe_load(MIN_CONFIG) | {**kwargs})  # type: ignore

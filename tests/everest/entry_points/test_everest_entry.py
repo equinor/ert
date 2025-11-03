@@ -67,7 +67,7 @@ def test_everest_entry_debug(
     # the config file itself is dumped at DEBUG level
     assert '"controls"' in logstream
     assert '"objective_functions"' in logstream
-    assert '"name": "default"' in logstream
+    assert '"name": "my_control"' in logstream
     assert f'"config_path": "{os.getcwd()}/config.yml"' in logstream
 
 
