@@ -1,0 +1,93 @@
+name: Run ERT tests against dummy site config
+
+on: [ push, pull_request, workflow_dispatch ]
+
+jobs:
+  test-against-lsf:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: ['ubuntu-latest']
+        test-type: [ 'gui-tests', 'rapid-tests' ]
+        python-version: ["3.12"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - uses: ./.github/actions/install_dependencies_qt
+        with:
+          os: ${{ matrix.os }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel pytest uv
+
+      - name: Use uv and make venv
+        run: |
+          uv venv .venv
+
+      - name: Install ERT + dummy plugin package that sets site config
+        run: |
+          set -euo pipefail
+
+          # Create package structure
+          mkdir -p dummy_site_config/dummy_plugin
+
+          # --- pyproject.toml ---
+          cat > dummy_site_config/pyproject.toml <<'END_OF_FILE'
+          [build-system]
+          requires = ["setuptools", "wheel"]
+          build-backend = "setuptools.build_meta"
+
+          [project]
+          name = "dummy-site-configuration"
+          version = "0.1.0"
+          description = "Dummy ERT plugin for testing"
+          requires-python = ">=3.8"
+
+          [project.entry-points.ert]
+          dummy_site_config = "dummy_plugin"
+          END_OF_FILE
+
+          # --- __init__.py ---
+          cat > dummy_site_config/dummy_plugin/__init__.py <<'END_OF_FILE'
+          from ert import plugin
+          from ert.plugins import ErtRuntimePlugins
+          from ert.config.queue_config import LsfQueueOptions
+
+          @plugin(name="fmu-site-configuration")
+          def site_configurations():
+              return ErtRuntimePlugins(
+                  queue_options=LsfQueueOptions(
+                      lsf_resource="select[cs && x86_64Linux]",
+                      lsf_queue="mr",
+                      max_running=10000,
+                      submit_sleep=1,
+                      realization_memory=10737418240
+                  ),
+              )
+          END_OF_FILE
+
+          # Install the dummy package
+          source .venv/bin/activate
+          uv sync --extra dev
+          uv pip install ./dummy_site_config
+
+      - name: Rapid tests
+        if: matrix.test-type == 'rapid-tests'
+        run: |
+          source .venv/bin/activate
+          uv run just rapid-tests
+
+      - name: GUI screenshot tests
+        if: matrix.test-type == 'gui-tests'
+        run: |
+          source .venv/bin/activate
+          uv run pytest tests/ert/ui_tests/gui/test_docs_screenshots.py
