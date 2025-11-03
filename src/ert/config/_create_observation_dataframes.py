@@ -7,8 +7,8 @@ from typing import TYPE_CHECKING, Any, assert_never
 
 import numpy as np
 import polars as pl
+from resfo_utilities import history_key
 
-from ert.summary_key_type import history_key
 from ert.validation import rangestring_to_list
 
 from ._observations import (

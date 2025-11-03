@@ -6,15 +6,13 @@ import hypothesis.strategies as st
 import pytest
 import resfo
 from hypothesis import given
+from resfo_utilities import make_summary_key
+from resfo_utilities.testing import summaries
 
 from ert.config import InvalidResponseFile
-from ert.config._read_summary import make_summary_key, read_summary
+from ert.config._read_summary import read_summary
 
-from .summary_generator import (
-    simple_smspec,
-    simple_unsmry,
-    summaries,
-)
+from .summary_generator import simple_smspec, simple_unsmry
 
 
 @given(summaries(), st.sampled_from(resfo.Format))
@@ -132,11 +130,15 @@ def test_mess_values_in_summary_files_raises_informative_errors(tmp_path):
 def test_empty_keywords_in_summary_files_raises_informative_errors(tmp_path):
     resfo.write(
         tmp_path / "test.SMSPEC",
-        [("STARTDAT", array("i", [31, 12, 2012, 00])), ("KEYWORDS", ["        "])],
+        [
+            ("STARTDAT", array("i", [31, 12, 2012, 00])),
+            ("KEYWORDS", ["TIME    ", "        "]),
+            ("UNITS   ", ["DAYS    "]),
+        ],
     )
     (tmp_path / "test.UNSMRY").write_bytes(b"")
 
-    with pytest.raises(InvalidResponseFile, match="Got empty summary keyword"):
+    with pytest.warns(match="Got empty summary keyword"):
         read_summary(str(tmp_path / "test"), ["*"])
 
 
@@ -145,13 +147,16 @@ def test_missing_names_keywords_in_summary_files_raises_informative_errors(
 ):
     resfo.write(
         tmp_path / "test.SMSPEC",
-        [("STARTDAT", array("i", [31, 12, 2012, 00])), ("KEYWORDS", ["BART    "])],
+        [
+            ("STARTDAT", array("i", [31, 12, 2012, 00])),
+            ("KEYWORDS", ["TIME    ", "BART    "]),
+            ("UNITS   ", ["DAYS    "]),
+        ],
     )
     (tmp_path / "test.UNSMRY").write_bytes(b"")
 
-    with pytest.raises(
-        InvalidResponseFile,
-        match="Found block keyword in summary specification without dimens keyword",
+    with pytest.warns(
+        match="Found block keyword without dimens in summary specification",
     ):
         read_summary(str(tmp_path / "test"), ["*"])
 
@@ -190,7 +195,7 @@ def test_missing_units_in_summary_files_raises_an_informative_error(
 
     with pytest.raises(
         InvalidResponseFile,
-        match="Keyword units",
+        match="Unit missing for TIME",
     ):
         read_summary(str(tmp_path / "test"), ["*"])
 
@@ -250,18 +255,5 @@ def test_missing_keywords_in_smspec_raises_informative_error(
     with pytest.raises(
         InvalidResponseFile,
         match="Keywords missing",
-    ):
-        read_summary(str(tmp_path / "test"), ["*"])
-
-
-def test_that_ambiguous_case_restart_raises_an_informative_error(tmp_path):
-    (tmp_path / "test.UNSMRY").write_bytes(b"")
-    (tmp_path / "test.FUNSMRY").write_bytes(b"")
-    (tmp_path / "test.smspec").write_bytes(b"")
-    (tmp_path / "test.Smspec").write_bytes(b"")
-
-    with pytest.raises(
-        FileNotFoundError,
-        match="Ambiguous reference to unified summary",
     ):
         read_summary(str(tmp_path / "test"), ["*"])

@@ -22,6 +22,7 @@ from hypothesis import assume, given, note, settings
 from hypothesis.extra.numpy import arrays
 from hypothesis.stateful import Bundle, RuleBasedStateMachine, initialize, rule
 from pandas import DataFrame, ExcelWriter
+from resfo_utilities.testing import summaries, summary_variables
 
 from ert.config import (
     DesignMatrix,
@@ -46,8 +47,7 @@ from ert.storage import (
 )
 from ert.storage.local_storage import _LOCAL_STORAGE_VERSION
 from ert.storage.mode import ModeError
-from tests.ert.unit_tests.config.egrid_generator import egrids
-from tests.ert.unit_tests.config.summary_generator import summaries, summary_variables
+from tests.ert.grid_generator import xtgeo_box_grids
 
 
 def _ensembles(storage):
@@ -1375,7 +1375,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
     field_list = Bundle("field_list")
     grid = Bundle("grid")
 
-    @initialize(target=grid, egrid=egrids)
+    @initialize(target=grid, egrid=xtgeo_box_grids())
     def create_grid(self, egrid):
         grid_file = self.tmpdir + "/grid.egrid"
         egrid.to_file(grid_file, fformat="egrid")

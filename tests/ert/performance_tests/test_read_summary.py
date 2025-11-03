@@ -1,8 +1,8 @@
 import pytest
 from hypothesis import given
+from resfo_utilities.testing import summaries
 
 from ert.config._read_summary import read_summary
-from tests.ert.unit_tests.config.summary_generator import summaries
 
 
 @pytest.mark.timeout(100)

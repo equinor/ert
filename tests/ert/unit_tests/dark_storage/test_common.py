@@ -5,13 +5,7 @@ from unittest.mock import patch
 import pandas as pd
 import polars as pl
 import pytest
-
-from ert.config import GenDataConfig, SummaryConfig
-from ert.dark_storage.common import ErtStoragePermissionError, get_storage
-from ert.dark_storage.endpoints.responses import data_for_response
-from ert.dark_storage.exceptions import InternalServerError
-from ert.storage import ErtStorageException, open_storage
-from tests.ert.unit_tests.config.summary_generator import (
+from resfo_utilities.testing import (
     Date,
     Simulator,
     Smspec,
@@ -21,6 +15,12 @@ from tests.ert.unit_tests.config.summary_generator import (
     UnitSystem,
     Unsmry,
 )
+
+from ert.config import GenDataConfig, SummaryConfig
+from ert.dark_storage.common import ErtStoragePermissionError, get_storage
+from ert.dark_storage.endpoints.responses import data_for_response
+from ert.dark_storage.exceptions import InternalServerError
+from ert.storage import ErtStorageException, open_storage
 
 
 def test_data_for_response_gives_mean_for_duplicate_values(tmp_path):

@@ -16,10 +16,10 @@ import numpy.typing as npt
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
 from pandas.errors import ParserError
+from resfo_utilities import history_key
 
 from ert.config import ParameterMetadata, ResponseMetadata
 from ert.services import StorageService
-from ert.summary_key_type import history_key
 
 logger = logging.getLogger(__name__)
 

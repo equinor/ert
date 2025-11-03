@@ -15,8 +15,17 @@ import hypothesis.strategies as st
 from hypothesis import assume, note
 from py import path as py_path
 from pydantic import PositiveInt
+from resfo_utilities import make_summary_key
+from resfo_utilities.testing import (
+    Date,
+    EGrid,
+    Smspec,
+    Unsmry,
+    egrids,
+    smspecs,
+    summary_variables,
+)
 
-from ert.config._read_summary import make_summary_key
 from ert.config.field import TRANSFORM_FUNCTIONS
 from ert.config.parsing import (
     ConfigKeys,
@@ -31,7 +40,6 @@ from ert.config.queue_config import (
     TorqueQueueOptions,
 )
 
-from .egrid_generator import EGrid, egrids
 from .observations_generator import (
     GeneralObservation,
     HistoryObservation,
@@ -40,7 +48,7 @@ from .observations_generator import (
     as_obs_config_content,
     observations,
 )
-from .summary_generator import Date, Smspec, Unsmry, smspecs, summary_variables, unsmrys
+from .summary_generator import unsmrys
 
 # Exclude SCRIPT because it is used as folder-name in
 # generate_files_and_dict
@@ -730,7 +738,7 @@ def config_generators(draw, use_eclbase=booleans):
                 os.mkdir("./refcase")
             config_values.refcase_smspec.to_file(f"./refcase/{summary_basename}.SMSPEC")
             config_values.refcase_unsmry.to_file(f"./refcase/{summary_basename}.UNSMRY")
-            config_values.egrid.to_file(config_values.grid_file, fformat="egrid")
+            config_values.egrid.to_file(config_values.grid_file)
             Path(config_values.time_map[0]).write_text(
                 config_values.time_map[1], encoding="utf-8"
             )

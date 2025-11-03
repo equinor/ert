@@ -8,6 +8,7 @@ import pytest
 from hypothesis import assume, given
 from pytest import MonkeyPatch, TempPathFactory
 from resdata.summary import Summary
+from resfo_utilities.testing import summaries
 
 from ert.config import (
     ConfigValidationError,
@@ -16,8 +17,6 @@ from ert.config import (
 )
 from ert.config.parsing import parse_observations
 from ert.config.parsing.observations_parser import ObservationType
-
-from .summary_generator import summaries
 
 pytestmark = pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 

@@ -843,8 +843,8 @@ def test_that_missing_summary_files_fails_gracefully(caplog):
     assert (
         f"Realization: 0 failed after reaching max submit (1):\n\t\n"
         "status from done callback: "
-        "Could not find any unified "
-        f"summary file matching case path "
+        "Could not find any "
+        f"summary files matching "
         f"{Path().absolute()}/simulations/realization-0/"
         "iter-0/ECLIPSE_CASE"
     ) in caplog.messages
