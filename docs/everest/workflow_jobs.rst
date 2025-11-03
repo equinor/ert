@@ -4,7 +4,7 @@
 Workflow jobs
 *************
 
-Workflow  jobs are intended to run at specific points during optimization,
+Workflow jobs are intended to run at specific points during optimization,
 e.g. just before or after running a batch of simulations.
 
 They are defined in the `install_workflow_jobs` section of the config file:
@@ -15,6 +15,10 @@ They are defined in the `install_workflow_jobs` section of the config file:
     -
       name: <name used inside config>
       executable: <path to job executable>
+
+Where the ``executable`` field may be an absolute path, or relative to the
+location of the config file. The executable can be any program that can be
+executed on the command line.
 
 This is very similar to the way forward model jobs are installed, refer to
 :ref:`cha_creating_custom_jobs` for more details.
@@ -34,7 +38,8 @@ run:
 
 Currently `pre_simulation` and `post_simulation` triggers are defined, which run
 the specified jobs just before, and directly after, running each batch of
-simulations.
+simulations. Each section contains a list of jobs, that will run in the order
+they are specified.
 
 Example
 -------
@@ -46,19 +51,14 @@ of batches that ran so far:
 
   #!/usr/bin/env python
   import sys
+  from pathlib import Path
 
   def main(filename):
       try:
-          # Get the batch count from the file:
-          with open(filename, "r", encoding="utf-8") as f:
-              count = int(f.read().strip())
+          count = int(Path(filename).read_text())
       except FileNotFoundError:
-          # If the file does not exists, the count is zero:
           count = 0
-
-      # Increase the count, and write it back:
-      with open(filename, "w", encoding="utf-8") as f:
-          f.write(f"{int(count + 1)}\n")
+      Path(filename).write_text(str(count + 1))
 
   if __name__ == "__main__":
       main(sys.argv[1])
@@ -70,12 +70,12 @@ Save it as ``count.py`` and make the script executable:
 
   chmod a+x count.py
 
-Add it to the ``install_jobs`` section:
+Add it to the ``install_workflow_jobs`` section:
 
 .. code-block:: yaml
 
   install_workflow_jobs:
-  -
+    -
       name: count
       executable: count.py
 
