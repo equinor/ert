@@ -200,8 +200,7 @@ def queue_options(draw, systems):
     queue_system = draw(systems)
     queue_option = draw(st.sampled_from(valid_queue_options(queue_system)))
 
-    # The JOB_SCRIPT queue_option must have a value
-    if draw(booleans) or queue_option == "JOB_SCRIPT":
+    if draw(booleans):
         return [
             queue_system,
             queue_option,
@@ -280,7 +279,6 @@ class ErtConfigValues:
     data_kw_key: list[tuple[str, str]]
     data_file: str
     grid_file: str
-    job_script: str
     jobname: str | None
     runpath: str
     enspath: str
@@ -324,7 +322,6 @@ class ErtConfigValues:
             ConfigKeys.DATA_KW: self.data_kw_key,
             ConfigKeys.DATA_FILE: self.data_file,
             ConfigKeys.GRID: self.grid_file,
-            ConfigKeys.JOB_SCRIPT: self.job_script,
             ConfigKeys.RUNPATH: self.runpath,
             ConfigKeys.ENSPATH: self.enspath,
             ConfigKeys.TIME_MAP: self.time_map,
@@ -493,7 +490,6 @@ def ert_config_values(draw, use_eclbase=booleans):
             ),
             data_file=st.just(draw(file_names) + ".DATA"),
             grid_file=st.just(draw(words) + ".EGRID"),
-            job_script=st.just(draw(file_names) + "job_script"),
             jobname=(
                 st.just("JOBNAME-" + draw(words)) if not use_eclbase else st.just(None)
             ),
@@ -650,7 +646,6 @@ def config_generators(draw, use_eclbase=booleans):
     should_exist_files.extend(
         [
             config_values.data_file,
-            config_values.job_script,
             config_values.time_map[0],
             config_values.obs_config,
         ]
@@ -663,7 +658,6 @@ def config_generators(draw, use_eclbase=booleans):
             should_exist_files.append(o.index_file)
 
     should_exist_files.extend([src for src, _ in config_values.run_template])
-    should_be_executable_files = [config_values.job_script]
     should_exist_directories = config_values.install_job_directory
 
     def generate_job_config(job_path, name):
@@ -697,7 +691,6 @@ def config_generators(draw, use_eclbase=booleans):
                 "enspath",
                 "obs_config",
                 "data_file",
-                "job_script",
             ]:
                 setattr(
                     config_values, key, os.path.join(tmp, getattr(config_values, key))
@@ -718,9 +711,6 @@ def config_generators(draw, use_eclbase=booleans):
             def make_executable(filename):
                 current_mode = os.stat(filename).st_mode
                 os.chmod(filename, current_mode | stat.S_IEXEC)
-
-            for filename in should_be_executable_files:
-                make_executable(filename)
 
             for job_file, executable_file in should_exist_job_configs:
                 path = Path(job_file).parent

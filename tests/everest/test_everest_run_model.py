@@ -75,7 +75,6 @@ def test_general_queue_options_properties_pass_through_create(
         "num_cpu": 33,
         "realization_memory": 44,
         "project_code": "foo_code",
-        "job_script": "foo_script",
         "activate_script": "foo_activate",
     }
     runmodel = create_runmodel(queue_system=properties)

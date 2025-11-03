@@ -298,7 +298,6 @@ def use_site_configurations_with_lsf_queue_options():
         name="lsf",
         max_running="1",
         submit_sleep="1",
-        job_script="fm_dispatch_sitecfg.py",
     )
 
     def ErtRuntimePluginsWithLSFQueueOptions(**kwargs):

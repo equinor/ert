@@ -105,33 +105,6 @@ def test_runpath_file_is_absolute(monkeypatch, tmp_path):
     assert config.runpath_file == runpath_path
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_job_script_can_be_set_in_site_config(monkeypatch):
-    """
-    We use the jobscript field to inject a komodo environment onprem.
-    This overwrites the value by appending to the default siteconfig.
-    Need to check that the second JOB_SCRIPT is the one that gets used.
-    """
-    my_script = Path("my_script").resolve()
-    test_user_config = Path("user_config.ert")
-
-    test_user_config.write_text(
-        dedent("""
-        JOBNAME Job%d
-        NUM_REALIZATIONS 1
-        """),
-        encoding="utf-8",
-    )
-
-    ert_config = ErtConfig.with_plugins(
-        ErtRuntimePlugins.model_validate(
-            {"queue_options": {"name": "local", "job_script": str(my_script)}}
-        )
-    ).from_file(test_user_config)
-
-    assert Path(ert_config.queue_config.queue_options.job_script).resolve() == my_script
-
-
 @pytest.mark.parametrize(
     "run_mode",
     [
@@ -483,14 +456,6 @@ def test_that_parsing_ert_config_result_in_expected_values(
         assert ert_config.ens_path == config_values.enspath
         assert ert_config.random_seed == config_values.random_seed
         assert ert_config.queue_config.max_submit == config_values.max_submit
-
-        # If there is a job_script in queue_option it has precedence
-        job_script = config_values.job_script
-        for e in config_values.queue_option:
-            if ert_config.queue_config.queue_system in e and "JOB_SCRIPT" in e:
-                job_script = e[e.index("JOB_SCRIPT") + 1]
-
-        assert ert_config.queue_config.queue_options.job_script == job_script
         assert ert_config.user_config_file == os.path.abspath(filename)
         assert ert_config.config_path == os.getcwd()
         assert str(ert_config.runpath_file) == os.path.abspath(
@@ -645,10 +610,10 @@ def test_that_loading_non_existent_workflow_job_gives_validation_error():
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_job_definition_file_with_unexecutable_script_gives_validation_error():
     test_config_file_name = "test.ert"
-    job_script_file = os.path.abspath("not_executable")
+    job_definition_file = os.path.abspath("not_executable")
     job_name = "JOB_NAME"
-    Path(job_name).write_text(f"EXECUTABLE {job_script_file}\n", encoding="utf-8")
-    Path(job_script_file).write_text("#!/bin/sh\n", encoding="utf-8")
+    Path(job_name).write_text(f"EXECUTABLE {job_definition_file}\n", encoding="utf-8")
+    Path(job_definition_file).write_text("#!/bin/sh\n", encoding="utf-8")
 
     Path(test_config_file_name).write_text(
         dedent(
