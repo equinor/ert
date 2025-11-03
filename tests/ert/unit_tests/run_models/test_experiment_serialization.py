@@ -848,7 +848,7 @@ def test_that_dumped_esmda_matches_snapshot(
 def executable_workflow_job():
     return ExecutableWorkflow(
         name="exec_wf_name",
-        type="executable",
+        type="user_installed_executable",
         min_args=4,
         max_args=3,
         arg_types=[
@@ -868,7 +868,7 @@ def executable_workflow_job():
 def ertscript_workflow_job():
     return ErtScriptWorkflow(
         name="the_ertscript_wf_name",
-        type="ert_script",
+        type="site_installed",
         min_args=1,
         max_args=1,
         arg_types=[SchemaItemType.STRING],
@@ -929,7 +929,11 @@ def test_that_ertscript_wf_job_deserialization_raises_error_if_uninstalled(
                 }
             )
         ),
-        pytest.raises(KeyError, match="Did not find installed workflow job"),
+        pytest.raises(
+            KeyError,
+            match=f"Expected workflow job {ertscript_workflow_job.name}"
+            " to be installed",
+        ),
     ):
         deserialized_workflow_job = ErtScriptWorkflow.model_validate(serialized_job)
         assert deserialized_workflow_job == ertscript_workflow_job

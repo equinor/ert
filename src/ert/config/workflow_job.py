@@ -6,10 +6,23 @@ import os
 import textwrap
 from abc import ABC, abstractmethod
 from dataclasses import field
-from typing import TYPE_CHECKING, Self, TypeAlias, cast
+from typing import (
+    TYPE_CHECKING,
+    Annotated,
+    Any,
+    Literal,
+    Self,
+    TypeAlias,
+    cast,
+)
 
-from pydantic import field_serializer, field_validator, model_validator
+from pydantic import (
+    Field,
+    model_serializer,
+    model_validator,
+)
 from pydantic_core.core_schema import ValidationInfo
+from typing_extensions import TypedDict
 
 from ert.base_model_context import BaseModelWithContextSupport
 
@@ -42,7 +55,11 @@ def workflow_job_parser(file: str) -> ConfigDict:
     return parse(file, schema=schema)
 
 
-def workflow_job_from_file(config_file: str, name: str | None = None) -> WorkflowJob:
+def workflow_job_from_file(
+    config_file: str,
+    origin: Literal["user", "site"] = "site",
+    name: str | None = None,
+) -> WorkflowJob:
     if not name:
         name = os.path.basename(config_file)
 
@@ -71,20 +88,32 @@ def workflow_job_from_file(config_file: str, name: str | None = None) -> Workflo
         )
         logger.warning(msg)
         ConfigWarning.deprecation_warn(msg, content_dict["SCRIPT"])
+
         try:
             ert_script = ErtScript.loadScriptFromFile(script)
         # Bare Exception here as we have no control
         # of exceptions in the loaded ErtScript
         except Exception as err:
             raise ErtScriptLoadFailure(f"Failed to load {name}: {err}") from err
-        return ErtScriptWorkflow(
-            ert_script=ert_script,
-            name=name,
-            min_args=min_args,
-            max_args=max_args,
-            arg_types=arg_types_list,
-            stop_on_fail=bool(content_dict.get("STOP_ON_FAIL")),
-        )
+
+        if origin == "user":
+            return UserInstalledErtScriptWorkflow(
+                name=name,
+                min_args=min_args,
+                max_args=max_args,
+                arg_types=arg_types_list,
+                source=script,
+                stop_on_fail=bool(content_dict.get("STOP_ON_FAIL")),
+            )
+        else:
+            return ErtScriptWorkflow(
+                ert_script=ert_script,
+                name=name,
+                min_args=min_args,
+                max_args=max_args,
+                arg_types=arg_types_list,
+                stop_on_fail=bool(content_dict.get("STOP_ON_FAIL")),
+            )
     else:
         return ExecutableWorkflow(
             name=name,
@@ -139,72 +168,124 @@ class _WorkflowJob(BaseModelWithContextSupport, ABC):
 
 
 class ExecutableWorkflow(_WorkflowJob):
+    type: Literal["user_installed_executable"] = "user_installed_executable"
     executable: str | None = None
 
     def location(self) -> str | None:
         return self.executable
 
 
-class ErtScriptWorkflow(_WorkflowJob):
+class BaseErtScriptWorkflow(_WorkflowJob, ABC):
+    @abstractmethod
+    def load_ert_script_class(self) -> builtins.type[ErtScript]: ...
+
+    def location(self) -> str | None:
+        return (
+            str(self.load_ert_script_class()) if self.load_ert_script_class() else None
+        )
+
+    @model_validator(mode="after")
+    def validate_types(self) -> Self:
+        ertscript_class = self.load_ert_script_class()
+        if not isinstance(ertscript_class, type):
+            raise ErtScriptLoadFailure(
+                f"Failed to load {self.name}, ert_script is instance, expected "
+                f"type, got {ertscript_class}"
+            )
+        elif not issubclass(ertscript_class, ErtScript):
+            raise ErtScriptLoadFailure(
+                f"Failed to load {self.name}, script had wrong "
+                f"type, expected ErtScript, got {ertscript_class}"
+            )
+        if ertscript_class.__doc__:
+            self.description = textwrap.dedent(ertscript_class.__doc__.strip())
+        return self
+
+    @property
+    def source_package(self) -> str:
+        return self.load_ert_script_class().__module__.partition(".")[2]
+
+    def is_plugin(self) -> bool:
+        return issubclass(self.load_ert_script_class(), ErtPlugin)
+
+
+class _SerializedSiteInstalledErtScriptWorkflow(TypedDict):
+    type: Literal["site_installed"]
+    name: str
+
+
+class SiteInstalledErtScriptWorkflow(BaseErtScriptWorkflow):
     """
-    Single workflow configuration object
+    Single workflow configuration object installed from site plugins
     """
 
+    type: Literal["site_installed"] = "site_installed"
     ert_script: builtins.type[ErtScript] = None  # type: ignore
     description: str = ""
     examples: str | None = None
     category: str = "other"
 
-    @field_serializer("ert_script")
-    def serialize_ert_script(self, _: str | builtins.type[ErtScript]) -> str:
-        return self.name
+    @model_serializer(mode="plain")
+    def serialize_model(self) -> _SerializedSiteInstalledErtScriptWorkflow:
+        return {"type": "site_installed", "name": self.name}
 
-    @field_validator("ert_script", mode="before")
+    def load_ert_script_class(self) -> builtins.type[ErtScript]:
+        return self.ert_script
+
+    @model_validator(mode="before")
     @classmethod
-    def deserialize_ert_script(
-        cls, ert_script: str | builtins.type[ErtScript], info: ValidationInfo
-    ) -> builtins.type[ErtScript]:
-        if isinstance(ert_script, type) and issubclass(ert_script, ErtScript):
-            return ert_script
-
+    def deserialize_model(
+        cls, values: dict[str, Any], info: ValidationInfo
+    ) -> dict[str, Any]:
         runtime_plugins = cast("ErtRuntimePlugins", info.context)
-        ertscript_workflow_job = runtime_plugins.installed_workflow_jobs.get(ert_script)
+        name = values["name"]
 
-        if ertscript_workflow_job is None:
+        if runtime_plugins is None:
+            if set(values.keys()) == {"name", "type"}:
+                raise ValueError(
+                    f"Cannot resolve workflow job {values},"
+                    f"as it expects a the workflow job {name}"
+                    f"to be installed."
+                )
+            return values
+
+        if name not in runtime_plugins.installed_workflow_jobs:
             raise KeyError(
-                f"Did not find installed workflow job: {ert_script}. "
-                f"installed workflow jobs are: "
-                f"{runtime_plugins.installed_workflow_jobs.keys()}"
+                f"Expected workflow job {name} to be installed "
+                f"via plugins, but it was not found. Please check that "
+                f"your python environment has it installed."
             )
-        assert isinstance(ertscript_workflow_job, ErtScriptWorkflow)
+        site_installed_wfjob = runtime_plugins.installed_workflow_jobs[name]
 
-        return ertscript_workflow_job.ert_script
-
-    def location(self) -> str | None:
-        return str(self.ert_script) if self.ert_script else None
-
-    @model_validator(mode="after")
-    def validate_types(self) -> Self:
-        if not isinstance(self.ert_script, type):
-            raise ErtScriptLoadFailure(
-                f"Failed to load {self.name}, ert_script is instance, expected "
-                f"type, got {self.ert_script}"
-            )
-        elif not issubclass(self.ert_script, ErtScript):
-            raise ErtScriptLoadFailure(
-                f"Failed to load {self.name}, script had wrong "
-                f"type, expected ErtScript, got {self.ert_script}"
-            )
-        if self.ert_script.__doc__ is not None:
-            self.description = textwrap.dedent(self.ert_script.__doc__.strip())
-        return self
-
-    @property
-    def source_package(self) -> str:
-        return self.ert_script.__module__.partition(".")[2]
-
-    def is_plugin(self) -> bool:
-        return issubclass(self.ert_script, ErtPlugin)
+        # Intent: copy the site installed workflow to this instance.
+        # bypassing the model_serializer
+        return {
+            k: getattr(site_installed_wfjob, k)
+            for k in SiteInstalledErtScriptWorkflow.model_fields
+        }
 
 
-WorkflowJob: TypeAlias = ErtScriptWorkflow | ExecutableWorkflow
+# We keep the old name for compatability with .legacy_ertscript_workflow
+# all of which add ErtScriptWorkflow (always through plugins, i.e., site-installed)
+ErtScriptWorkflow = SiteInstalledErtScriptWorkflow
+
+
+class UserInstalledErtScriptWorkflow(BaseErtScriptWorkflow):
+    type: Literal["user_installed_ertscript"] = "user_installed_ertscript"
+    source: str
+
+    def load_ert_script_class(self) -> builtins.type[ErtScript]:
+        try:
+            return ErtScript.loadScriptFromFile(self.source)
+        except Exception as err:
+            raise ErtScriptLoadFailure(f"Failed to load {self.name}: {err}") from err
+
+
+WorkflowJob: TypeAlias = Annotated[
+    (
+        SiteInstalledErtScriptWorkflow
+        | UserInstalledErtScriptWorkflow
+        | ExecutableWorkflow
+    ),
+    Field(discriminator="type"),
+]

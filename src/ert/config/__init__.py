@@ -63,6 +63,7 @@ from .workflow_fixtures import (
     fixtures_per_hook,
 )
 from .workflow_job import (
+    BaseErtScriptWorkflow,
     ErtScriptWorkflow,
     ExecutableWorkflow,
     WorkflowJob,
@@ -72,6 +73,7 @@ from .workflow_job import (
 __all__ = [
     "AnalysisConfig",
     "AnalysisModule",
+    "BaseErtScriptWorkflow",
     "ConfigValidationError",
     "ConfigWarning",
     "DataSource",

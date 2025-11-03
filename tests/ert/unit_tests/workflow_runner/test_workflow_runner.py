@@ -7,8 +7,8 @@ import pytest
 
 from ert.config import ConfigWarning, Workflow
 from ert.config.workflow_job import (
-    ErtScriptWorkflow,
     ExecutableWorkflow,
+    UserInstalledErtScriptWorkflow,
     workflow_job_from_file,
 )
 from ert.workflow_runner import WorkflowJobRunner, WorkflowRunner
@@ -24,11 +24,10 @@ def test_read_internal_function():
         pytest.warns(ConfigWarning, match="Deprecated keywords, SCRIPT and INTERNAL"),
     ):
         workflow_job = workflow_job_from_file(
-            name="SUBTRACT",
-            config_file="subtract_script_job",
+            name="SUBTRACT", config_file="subtract_script_job", origin="user"
         )
     assert workflow_job.name == "SUBTRACT"
-    assert workflow_job.ert_script.__name__ == "SubtractScript"
+    assert workflow_job.load_ert_script_class().__name__ == "SubtractScript"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -37,10 +36,9 @@ def test_arguments():
     WorkflowCommon.createErtScriptsJob()
 
     job = workflow_job_from_file(
-        name="SUBTRACT",
-        config_file="subtract_script_job",
+        name="SUBTRACT", config_file="subtract_script_job", origin="user"
     )
-    assert isinstance(job, ErtScriptWorkflow)
+    assert isinstance(job, UserInstalledErtScriptWorkflow)
     assert job.min_args == 2
     assert job.max_args == 2
     assert job.argument_types() == [float, float]
@@ -58,10 +56,7 @@ def test_arguments():
 def test_run_external_job():
     WorkflowCommon.createExternalDumpJob()
 
-    job = workflow_job_from_file(
-        name="DUMP",
-        config_file="dump_job",
-    )
+    job = workflow_job_from_file(name="DUMP", config_file="dump_job", origin="user")
     assert isinstance(job, ExecutableWorkflow)
     argTypes = job.argument_types()
     assert argTypes == [str, str]
@@ -77,8 +72,7 @@ def test_error_handling_external_job():
     WorkflowCommon.createExternalDumpJob()
 
     job = workflow_job_from_file(
-        name="DUMP",
-        config_file="dump_failing_job",
+        name="DUMP", config_file="dump_failing_job", origin="user"
     )
 
     assert isinstance(job, ExecutableWorkflow)
@@ -94,8 +88,7 @@ def test_run_internal_script():
     WorkflowCommon.createErtScriptsJob()
 
     job = workflow_job_from_file(
-        name="SUBTRACT",
-        config_file="subtract_script_job",
+        name="SUBTRACT", config_file="subtract_script_job", origin="user"
     )
 
     result = WorkflowJobRunner(job).run(["1", "2"])
@@ -126,10 +119,7 @@ def test_deprecated_keywords(config, expected_result, monkeypatch, tmp_path):
         encoding="utf-8",
     )
     with pytest.warns(ConfigWarning, match=expected_result):
-        workflow_job_from_file(
-            name="TEST",
-            config_file="test_job",
-        )
+        workflow_job_from_file(name="TEST", config_file="test_job", origin="user")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -158,8 +148,7 @@ class SevereErtFailureScript(ErtScript):
         )
 
     job_internal = workflow_job_from_file(
-        name="FAIL",
-        config_file="fail_job",
+        name="FAIL", config_file="fail_job", origin="user"
     )
 
     assert job_internal.stop_on_fail
@@ -169,7 +158,7 @@ class SevereErtFailureScript(ErtScript):
 def test_workflow_run():
     WorkflowCommon.createExternalDumpJob()
 
-    dump_job = workflow_job_from_file("dump_job", name="DUMP")
+    dump_job = workflow_job_from_file("dump_job", name="DUMP", origin="user")
 
     workflow = Workflow.from_file(
         "dump_workflow", {"<PARAM>": "text"}, {"DUMP": dump_job}
@@ -196,7 +185,7 @@ def test_workflow_run():
 def test_workflow_thread_cancel_ert_script():
     WorkflowCommon.createWaitJob()
 
-    wait_job = workflow_job_from_file("wait_job", name="WAIT")
+    wait_job = workflow_job_from_file("wait_job", name="WAIT", origin="user")
 
     workflow = Workflow.from_file("wait_workflow", {}, {"WAIT": wait_job})
 
@@ -235,8 +224,7 @@ def test_workflow_thread_cancel_external():
     WorkflowCommon.createWaitJob()
 
     wait_job = workflow_job_from_file(
-        name="WAIT",
-        config_file="wait_job",
+        name="WAIT", config_file="wait_job", origin="user"
     )
     workflow = Workflow.from_file("wait_workflow", {}, {"WAIT": wait_job})
 
@@ -267,6 +255,7 @@ def test_workflow_failed_job():
     dump_job = workflow_job_from_file(
         name="DUMP",
         config_file="dump_job",
+        origin="user",
     )
     workflow = Workflow.from_file("dump_workflow", {}, {"DUMP": dump_job})
     assert len(workflow) == 2
@@ -293,11 +282,10 @@ def test_workflow_success():
     WorkflowCommon.createWaitJob()
 
     external_job = workflow_job_from_file(
-        name="EXTERNAL_WAIT", config_file="external_wait_job"
+        name="EXTERNAL_WAIT", config_file="external_wait_job", origin="user"
     )
     wait_job = workflow_job_from_file(
-        name="WAIT",
-        config_file="wait_job",
+        name="WAIT", config_file="wait_job", origin="user"
     )
     workflow = Workflow.from_file(
         "fast_wait_workflow",
@@ -331,7 +319,7 @@ def test_workflow_stops_with_stopping_job():
 
     Path("dump_failing_workflow").write_text("DUMP", encoding="utf-8")
 
-    job_failing_dump = workflow_job_from_file("dump_failing_job")
+    job_failing_dump = workflow_job_from_file("dump_failing_job", origin="user")
     assert job_failing_dump.stop_on_fail
 
     workflow = Workflow.from_file(
@@ -347,7 +335,7 @@ def test_workflow_stops_with_stopping_job():
     with open("dump_failing_job", "a", encoding="utf-8") as f:
         f.write("\nSTOP_ON_FAIL False")
 
-    job_successful_dump = workflow_job_from_file("dump_failing_job")
+    job_successful_dump = workflow_job_from_file("dump_failing_job", origin="user")
     assert not job_successful_dump.stop_on_fail
     workflow = Workflow.from_file(
         src_file="dump_failing_workflow",

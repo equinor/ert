@@ -24,7 +24,7 @@ class Plugin:
         self.__description = script.getDescription()
 
     def __loadPlugin(self) -> ErtPlugin:
-        script_obj = self.__workflow_job.ert_script
+        script_obj = self.__workflow_job.load_ert_script_class()
         script = script_obj()
         assert isinstance(script, ErtPlugin)
         return script
