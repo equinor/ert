@@ -1439,7 +1439,7 @@ def test_parsing_of_unset_realization_memory() -> None:
     assert config.simulator.queue_system.realization_memory == 0
 
 
-@pytest.mark.usefixtures("no_plugins")
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
     "max_memory",
     [
