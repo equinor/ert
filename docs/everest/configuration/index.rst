@@ -73,6 +73,3 @@ The value of a variable can be set in three different ways:
     by pre-processing the config file to replace all variables with their value.
     It is possible to define variables that have the same name as a keyword, but
     this should be done sparingly to avoid confusion.
-
-
-.. _cha_config_reference:
