@@ -21,12 +21,12 @@ executed on the command line.
 Here we show an example of implementing a simple custom forward job in Python.
 
 
-Example: prioritizing a group of wells
+Example: Prioritizing a group of wells
 --------------------------------------
 
-Our example job will part of a forward model that consists of several jobs that
-run in sequence. These jobs generally communicate by reading and writing to
-files: the output of one job may serve as the input for the next job. We will
+Our example job will be part of a forward model that consists of several jobs
+that run in sequence. These jobs generally communicate by reading and writing to
+files, the output of one job may serve as the input for the next job. We will
 create a job that accepts a file containing well priorities and outputs a file
 with re-arranged priorities.
 
@@ -134,11 +134,11 @@ We can put this all together in a script ``prioritize.py``:
 
 
   def rearrange_priorities(well_priorities, first_wells):
-    ...  # replace with the function defined above
+      ...  # replace with the function defined above
 
 
   def main(argv):
-    ...  # replace with the main function defined above
+      ...  # replace with the main function defined above
 
 
   if __name__ == "__main__":
@@ -146,7 +146,7 @@ We can put this all together in a script ``prioritize.py``:
 
 
 
-Testing the python script:
+Testing the Python script:
 --------------------------
 
 To test the script we write the user input file ``wells.yaml``:
@@ -203,9 +203,9 @@ and making the script executable:
 
 .. code-block:: bash
 
-  chmod +x prioritize.py
+  chmod a+x prioritize.py
 
-Add it to the ``install_data`` section:
+Add it to the ``install_jobs`` section:
 
 .. code-block:: yaml
 
