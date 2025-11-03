@@ -24,12 +24,12 @@ from pytest import MonkeyPatch, TempPathFactory, mark
 from resdata import ResDataType
 from resdata.grid import GridGenerator
 from resdata.resfile import ResdataKW
+from resfo_utilities.testing import egrids, summaries
 
 from ert.field_utils import FieldFileFormat, Shape, read_field, save_field
 from ert.field_utils.field_file_format import ROFF_FORMATS
 from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
-from tests.ert.unit_tests.config.egrid_generator import egrids
-from tests.ert.unit_tests.config.summary_generator import summaries
+from tests.ert.grid_generator import xtgeo_box_grids
 
 from .run_cli import run_cli_with_pm
 
@@ -127,18 +127,29 @@ class IoProvider:
             )
             grid.save_EGRID(grid_file)
         elif lib == IoLibrary.XTGEO:
-            grid = xtgeo.create_box_grid(dimension=self.dims)
+            grid = self.data.draw(xtgeo_box_grids())
+            self.dims = tuple(grid.dimensions)
+            self.size = self.dims[0] * self.dims[1] * self.dims[2]
+            self.actnum = (
+                grid.actnum_array
+                if grid.actnum_array is not None
+                else np.ones(self.size)
+            )
             grid.to_file(grid_file, str(grid_format))
         elif lib == IoLibrary.ERT:
             egrid = self.data.draw(egrids)
-            self.dims = (egrid.ncol, egrid.nrow, egrid.nlay)
+            self.dims = (
+                egrid.global_grid.grid_head.num_x,
+                egrid.global_grid.grid_head.num_y,
+                egrid.global_grid.grid_head.num_z,
+            )
             self.size = self.dims[0] * self.dims[1] * self.dims[2]
             self.actnum = (
-                egrid.actnum_array
-                if egrid.actnum_array is not None
+                egrid.global_grid.actnum
+                if egrid.global_grid.actnum is not None
                 else np.ones(self.size)
             )
-            egrid.to_file(grid_file, fformat=str(grid_format))
+            egrid.to_file(grid_file)
         else:
             raise ValueError
 

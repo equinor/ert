@@ -11,6 +11,7 @@ import hypothesis.strategies as st
 import numpy as np
 import pytest
 from hypothesis import assume, given, settings
+from resfo_utilities.testing import summaries
 
 from ert.cli.main import ErtCliError
 from ert.mode_definitions import ES_MDA_MODE
@@ -18,7 +19,6 @@ from tests.ert.unit_tests.config.observations_generator import (
     as_obs_config_content,
     summary_observations,
 )
-from tests.ert.unit_tests.config.summary_generator import summaries
 
 from .run_cli import run_cli
 

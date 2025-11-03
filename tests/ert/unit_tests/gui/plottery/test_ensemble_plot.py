@@ -3,12 +3,12 @@ from unittest.mock import Mock, patch
 import pandas as pd
 import pytest
 from matplotlib.figure import Figure
+from resfo_utilities import is_rate
 
 from ert.gui.tools.plot.plot_api import EnsembleObject
 from ert.gui.tools.plot.plot_ensemble_selection_widget import EnsembleSelectListWidget
 from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
 from ert.gui.tools.plot.plottery.plots import EnsemblePlot
-from ert.summary_key_type import is_rate
 
 
 @pytest.fixture(

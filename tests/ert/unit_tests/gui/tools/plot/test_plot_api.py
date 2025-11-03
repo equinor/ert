@@ -10,6 +10,7 @@ import pandas as pd
 import polars as pl
 import pytest
 from pandas.testing import assert_frame_equal
+from resfo_utilities import history_key
 from starlette.testclient import TestClient
 
 from ert.config import GenKwConfig, SummaryConfig
@@ -20,7 +21,6 @@ from ert.dark_storage.app import app
 from ert.gui.tools.plot.plot_api import PlotApi, PlotApiKeyDefinition
 from ert.services import StorageService
 from ert.storage import open_storage
-from ert.summary_key_type import history_key
 from tests.ert.unit_tests.gui.tools.plot.conftest import MockResponse
 
 

@@ -5,13 +5,12 @@ from pathlib import Path
 import hypothesis.strategies as st
 import pytest
 from hypothesis import given, settings
+from resfo_utilities.testing import summaries
 
 from ert.config import (
     InvalidResponseFile,
     SummaryConfig,
 )
-
-from .summary_generator import summaries
 
 
 @settings(max_examples=10)
