@@ -12,8 +12,7 @@ from ert.storage import ExperimentState
 from everest.bin.everest_script import everest_entry
 from everest.bin.kill_script import kill_entry
 from everest.bin.monitor_script import monitor_entry
-from tests.everest.conftest import everest_config_with_defaults
-from tests.everest.utils import capture_streams
+from tests.everest.utils import capture_streams, everest_config_with_defaults
 
 CONFIG_FILE_MINIMAL = "config_minimal.yml"
 

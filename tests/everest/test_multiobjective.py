@@ -2,7 +2,7 @@ import pytest
 
 from everest.config import EverestConfig
 from everest.optimizer.everest2ropt import everest2ropt
-from tests.everest.conftest import everest_config_with_defaults
+from tests.everest.utils import everest_config_with_defaults
 
 
 @pytest.mark.parametrize(

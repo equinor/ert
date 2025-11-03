@@ -29,7 +29,7 @@ from everest.config.everest_config import EverestValidationError
 from everest.config.forward_model_config import ForwardModelStepConfig
 from everest.config.sampler_config import SamplerConfig
 from everest.config.validation_utils import _OVERWRITE_MESSAGE, _RESERVED_WORDS
-from tests.everest.conftest import everest_config_with_defaults
+from tests.everest.utils import everest_config_with_defaults
 
 
 def all_errors(error: ValidationError, match: str):
@@ -1352,7 +1352,7 @@ def test_ambiguous_max_memory_vs_realization_memory_is_detected():
     with pytest.raises(
         ValidationError, match="Ambiguous configuration of realization_memory"
     ):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             simulator={
                 "max_memory": "20",
                 "queue_system": {"name": "local", "realization_memory": "40"},
@@ -1373,7 +1373,7 @@ def test_that_max_memory_propagates_to_realization_memory(
     max_memory, realization_memory, expected
 ) -> None:
     """Also testing that 0 for realization_memory means not set"""
-    config = EverestConfig.with_defaults(
+    config = everest_config_with_defaults(
         simulator={
             "max_memory": max_memory,
             "queue_system": {"name": "local", "realization_memory": realization_memory},
@@ -1391,7 +1391,7 @@ def test_that_max_memory_propagates_to_realization_memory(
     ],
 )
 def test_parsing_of_realization_memory(realization_memory, expected) -> None:
-    config = EverestConfig.with_defaults(
+    config = everest_config_with_defaults(
         simulator={
             "queue_system": {"name": "local", "realization_memory": realization_memory},
         }
@@ -1418,7 +1418,7 @@ def test_parsing_of_realization_memory(realization_memory, expected) -> None:
 )
 def test_parsing_of_invalid_memory_spec(invalid_memory_spec, error_message) -> None:
     with pytest.raises(ValidationError, match=error_message):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             simulator={
                 "queue_system": {
                     "name": "local",
@@ -1427,11 +1427,11 @@ def test_parsing_of_invalid_memory_spec(invalid_memory_spec, error_message) -> N
             }
         )
     with pytest.raises(ValidationError, match=error_message):
-        EverestConfig.with_defaults(simulator={"max_memory": invalid_memory_spec})
+        everest_config_with_defaults(simulator={"max_memory": invalid_memory_spec})
 
 
 def test_parsing_of_unset_realization_memory() -> None:
-    config = EverestConfig.with_defaults(
+    config = everest_config_with_defaults(
         simulator={
             "queue_system": {"name": "local"},
         }
@@ -1461,7 +1461,7 @@ def test_parsing_of_unset_realization_memory() -> None:
     ],
 )
 def test_that_max_memory_is_valid(max_memory) -> None:
-    EverestConfig.with_defaults(simulator={"max_memory": max_memory})
+    everest_config_with_defaults(simulator={"max_memory": max_memory})
 
 
 @pytest.mark.usefixtures("no_plugins")
@@ -1473,4 +1473,4 @@ def test_that_negative_max_memory_fails(max_memory) -> None:
     with pytest.raises(
         ValidationError, match=f"Negative memory does not make sense in {max_memory}"
     ):
-        EverestConfig.with_defaults(simulator={"max_memory": max_memory})
+        everest_config_with_defaults(simulator={"max_memory": max_memory})

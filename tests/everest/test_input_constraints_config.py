@@ -3,7 +3,7 @@ from ruamel.yaml import YAML
 
 from ert.config import ConfigWarning
 from everest.config import EverestConfig, InputConstraintConfig, OptimizationConfig
-from tests.everest.conftest import everest_config_with_defaults
+from tests.everest.utils import everest_config_with_defaults
 
 
 def test_input_constraint_control_references(tmp_path, capsys, caplog, monkeypatch):

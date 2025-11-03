@@ -25,7 +25,7 @@ from ert.plugins import ErtRuntimePlugins, get_site_plugins
 from ert.run_models.everest_run_model import EverestRunModel, _get_workflow_jobs
 from everest.config import EverestConfig, InstallDataConfig
 from everest.simulator.everest_to_ert import everest_to_ert_config_dict
-from tests.everest.conftest import everest_config_with_defaults
+from tests.everest.utils import everest_config_with_defaults
 
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")

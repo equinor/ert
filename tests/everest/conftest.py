@@ -27,25 +27,12 @@ from everest.config import (
 )
 from everest.config.control_config import ControlConfig
 from everest.detached import everserver
-from tests.everest.utils import get_optimal_result, relpath
+from tests.everest.utils import MIN_CONFIG, get_optimal_result, relpath
 
-MIN_CONFIG = dedent(
-    """
-    model: {"realizations": [0]}
-    controls:
-      -
-        name: my_control
-        type: well_control
-        min: 0
-        max: 0.1
-        perturbation_magnitude: 0.01
-        variables:
-          - { name: test, initial_guess: 0.1 }
-    objective_functions:
-      - {name: my_objective}
-    config_path: .
-    """
-)
+
+@pytest.fixture
+def min_config():
+    yield yaml.safe_load(MIN_CONFIG)
 
 
 @pytest.fixture(scope="session")
@@ -271,11 +258,6 @@ def cached_example(pytestconfig):
     return run_config
 
 
-@pytest.fixture
-def min_config():
-    yield yaml.safe_load(MIN_CONFIG)
-
-
 @pytest.fixture()
 def mock_server(monkeypatch):
     monkeypatch.setattr(everserver, "_configure_loggers", MagicMock())
@@ -320,11 +302,3 @@ def no_plugins():
         patch("ert.plugins.ErtPluginManager", patched_plugin_manager),
     ):
         yield
-
-
-def everest_config_with_defaults(**kwargs) -> EverestConfig:
-    """
-    Creates an Everest config with default values. Useful for initializing a config
-    without having to provide empty defaults.
-    """
-    return EverestConfig.with_plugins(yaml.safe_load(MIN_CONFIG) | {**kwargs})  # type: ignore

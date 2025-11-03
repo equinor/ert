@@ -14,7 +14,7 @@ from everest.config.control_config import ControlConfig
 from everest.config.control_variable_config import ControlVariableConfig
 from everest.config.cvar_config import CVaRConfig
 from everest.config.optimization_config import OptimizationConfig
-from tests.everest.conftest import everest_config_with_defaults
+from tests.everest.utils import everest_config_with_defaults
 
 
 def test_that_str_type_failures_are_propagated(tmp_path, monkeypatch):

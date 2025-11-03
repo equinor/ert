@@ -10,7 +10,7 @@ from pydantic import ValidationError
 
 from everest.config import EverestConfig
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
-from tests.everest.conftest import everest_config_with_defaults
+from tests.everest.utils import everest_config_with_defaults
 
 
 @pytest.mark.parametrize(

@@ -5,7 +5,7 @@ import pytest
 from ert.base_model_context import use_runtime_plugins
 from ert.plugins import ErtRuntimePlugins, get_site_plugins
 from ert.run_models.everest_run_model import EverestRunModel
-from tests.everest.conftest import everest_config_with_defaults
+from tests.everest.utils import everest_config_with_defaults
 
 
 def test_no_config_init():

@@ -8,7 +8,7 @@ import pytest
 from ert.storage import open_storage
 from everest.bin.everest_script import everest_entry
 from everest.config import EverestConfig
-from tests.everest.conftest import everest_config_with_defaults
+from tests.everest.utils import everest_config_with_defaults
 
 
 @pytest.mark.xdist_group("math_func/config_minimal.yml")

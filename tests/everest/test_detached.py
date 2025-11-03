@@ -37,7 +37,7 @@ from everest.detached import (
     wait_for_server_to_stop,
 )
 from everest.util import makedirs_if_needed
-from tests.everest.conftest import everest_config_with_defaults
+from tests.everest.utils import everest_config_with_defaults
 
 
 @pytest.mark.integration_test

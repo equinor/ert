@@ -8,8 +8,7 @@ from ert.run_models import everest_run_model
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from everest.optimizer.everest2ropt import everest2ropt
-from tests.everest.conftest import everest_config_with_defaults
-from tests.everest.utils import relpath
+from tests.everest.utils import everest_config_with_defaults, relpath
 
 
 @pytest.fixture

@@ -6,9 +6,9 @@ from textwrap import dedent
 import pytest
 import yaml
 from ruamel.yaml import YAML
-from tests.everest.conftest import everest_config_with_defaults
 from tests.everest.utils import (
     capture_streams,
+    everest_config_with_defaults,
     get_optimal_result,
 )
 

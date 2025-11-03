@@ -9,8 +9,8 @@ from ert.storage.local_experiment import ExperimentState, ExperimentStatus
 from everest import util
 from everest.bin.utils import get_experiment_status, show_scaled_controls_warning
 from everest.strings import EVEREST
-from tests.everest.conftest import everest_config_with_defaults
 from tests.everest.utils import (
+    everest_config_with_defaults,
     relpath,
 )
 

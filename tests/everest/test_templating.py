@@ -14,7 +14,7 @@ from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig, InstallTemplateConfig
 from tests.ert.unit_tests.resources._import_from_location import import_from_location
 from tests.ert.utils import SOURCE_DIR
-from tests.everest.conftest import everest_config_with_defaults
+from tests.everest.utils import everest_config_with_defaults
 
 CONFIG = {
     "wells": [
