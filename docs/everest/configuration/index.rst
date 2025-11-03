@@ -12,10 +12,15 @@ Everest configuration
 Everest is configured via a yaml file, using a set of pre-defined keywords that
 are described in more detail in the section :ref:`cha_config_reference`.
 
-In addition to the standard yaml syntax, Everest also supports the use of
-variables that are replaced with their value when referred in the following
-way: ``r{{variable}}``. For instance in the following snippet, the variable
-``tol`` is replaced by its value:
+.. _config_variables:
+
+Configuration variables
+-----------------------
+
+In addition to the standard yaml syntax, Everest also supports variables that
+are replaced with their value when referred in the following way:
+``r{{variable}}``. For instance in the following snippet, the variable ``tol``
+is replaced by its value:
 
 .. code-block:: yaml
 
@@ -36,20 +41,29 @@ The value of a variable can be set in three different ways:
 
 2. Everest pre-defines the following variables:
 
-   .. code-block:: yaml
+   ``realization``
+       Evaluates to the string "<GEO_ID>", which is replaced by the realization
+       number during execution of the forward model.
 
-      realization: <GEO_ID>
-      configpath: <CONFIG_PATH>
-      runpath_file: <RUNPATH_FILE>
-      eclbase: <ECLBASE>
+   ``configpath``
+       The fully qualified path to the directory that contains the configuration
+       file.
+
+   ``runpath_file``
+       Evaluates to "<RUNPATH_FILE>", the fully qualified name of the runpath
+       file that is saved before each batch is started.
+
+   ``eclbase``
+       Evaluates to "<ECLBASE>", used by ERT to set the basename for
+       ECLIPSE simulations.
 
    These variables do not need to be defined by the user, although their values
    can be overridden in the ``definitions`` section. However, this is not
    recommended for the ``realization`` entry, and Everest will produce a warning
    when this is attempted.
 
-3. Variables with a name of the form ``os.ENVIRONMENT_VARIABLE_NAME`` can be used to access
-   the values of environment variables. For instance, the variable
+3. Variables with a name of the form ``os.ENVIRONMENT_VARIABLE_NAME`` can be
+   used to access environment variables. For instance, the variable
    ``r{{os.HOSTNAME}}`` will be replaced by the contents of the environment
    variable ``HOSTNAME``.
 
