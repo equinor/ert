@@ -290,6 +290,7 @@ def open_gui_with_docs_example(
     return next(gui_generator)
 
 
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.skip_mac_ci
 def test_that_poly_new_minimal_screenshots_are_up_to_date(
     tmp_path,
