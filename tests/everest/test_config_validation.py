@@ -29,6 +29,7 @@ from everest.config.everest_config import EverestValidationError
 from everest.config.forward_model_config import ForwardModelStepConfig
 from everest.config.sampler_config import SamplerConfig
 from everest.config.validation_utils import _OVERWRITE_MESSAGE, _RESERVED_WORDS
+from tests.everest.utils import everest_config_with_defaults
 
 
 def all_errors(error: ValidationError, match: str):
@@ -47,13 +48,13 @@ def test_that_sampler_config_with_wrong_method():
 def test_that_cvar_attrs_are_mutex():
     cvar = {"percentile": 0.1, "number_of_realizations": 3}
     with pytest.raises(ValueError, match="Invalid CVaR section"):
-        EverestConfig.with_defaults(optimization={"cvar": cvar})
+        everest_config_with_defaults(optimization={"cvar": cvar})
 
 
 @pytest.mark.parametrize("nreals", [-1, 0, 8])
 def test_that_cvar_nreals_interval_outside_range_errors(nreals):
     with pytest.raises(ValueError, match=f"number_of_realizations: \\(got {nreals}"):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             optimization={
                 "cvar": {
                     "number_of_realizations": nreals,
@@ -65,7 +66,7 @@ def test_that_cvar_nreals_interval_outside_range_errors(nreals):
 
 @pytest.mark.parametrize("nreals", [1, 2, 3, 4, 5])
 def test_that_cvar_nreals_valid_doesnt_error(nreals):
-    EverestConfig.with_defaults(
+    everest_config_with_defaults(
         optimization={
             "cvar": {
                 "number_of_realizations": nreals,
@@ -77,16 +78,16 @@ def test_that_cvar_nreals_valid_doesnt_error(nreals):
 
 def test_that_max_runtime_errors_only_on_negative():
     with pytest.raises(ValueError, match=r".*greater than or equal to 0"):
-        EverestConfig.with_defaults(simulator={"max_runtime": -1})
+        everest_config_with_defaults(simulator={"max_runtime": -1})
 
-    EverestConfig.with_defaults(simulator={"max_runtime": 0})
+    everest_config_with_defaults(simulator={"max_runtime": 0})
 
 
 def test_that_invalid_queue_system_errors():
     with pytest.raises(
         ValueError, match=r"does not match .*'local'.*'lsf'.*'slurm'.*'torque'"
     ):
-        EverestConfig.with_defaults(simulator={"queue_system": {"name": "docal"}})
+        everest_config_with_defaults(simulator={"queue_system": {"name": "docal"}})
 
 
 @pytest.mark.parametrize(
@@ -99,7 +100,7 @@ def test_that_cores_errors_only_on_lt_eq0(cores, expected_error):
         else does_not_raise()
     )
     with expectation:
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             simulator={"queue_system": {"name": "local", "max_running": cores}}
         )
 
@@ -114,12 +115,12 @@ def test_that_cores_per_node_errors_only_on_lt0(cores, expected_error):
         else does_not_raise()
     )
     with expectation:
-        EverestConfig.with_defaults(simulator={"cores_per_node": cores})
+        everest_config_with_defaults(simulator={"cores_per_node": cores})
 
 
 def test_that_duplicate_control_names_raise_error():
     with pytest.raises(ValueError, match=r"(.*)`name` must be unique"):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             controls=[
                 {
                     "name": "group_0",
@@ -147,7 +148,7 @@ def test_that_duplicate_control_names_raise_error():
 
 def test_that_dot_not_in_control_names():
     with pytest.raises(ValueError, match=r"(.*)can not contain any dots"):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             controls=[
                 {
                     "name": "group_0.2",
@@ -168,7 +169,7 @@ def test_that_scaled_range_is_valid_range():
     with pytest.raises(
         ValueError, match=r"(.*)must be a valid range \[a, b\], where a < b."
     ):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             controls=[
                 {
                     "name": "group_0",
@@ -225,7 +226,7 @@ def test_that_invalid_control_initial_guess_outside_bounds(
     variables: list[dict[str, Any]], count: int
 ):
     with pytest.raises(ValueError) as e:
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             controls=[
                 {
                     "name": "group_0",
@@ -278,7 +279,7 @@ def test_that_invalid_control_initial_guess_outside_bounds(
 )
 def test_that_invalid_control_unique_entry(variables, unique_key):
     with pytest.raises(ValueError, match=f"(.*)`{unique_key}` must be unique"):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             controls=[
                 {
                     "name": "group_0",
@@ -297,7 +298,7 @@ def test_that_invalid_control_undefined_fields():
         ValueError,
         match=r"define min.* value.*define max*. value.*define initial_guess.* value",
     ):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             controls=[
                 {
                     "name": "group_0",
@@ -315,7 +316,7 @@ def test_that_control_variables_index_is_defined_for_all_variables():
     with pytest.raises(
         ValueError, match="given either for all of the variables or for none of them"
     ):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             controls=[
                 {
                     "name": "group_0",
@@ -334,7 +335,7 @@ def test_that_control_variables_index_is_defined_for_all_variables():
 
 def test_that_duplicate_output_constraint_names_raise_error():
     with pytest.raises(ValueError, match="Output constraint names must be unique"):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             output_constraints=[
                 {"target": 0.3, "name": "a"},
                 {"target": 0.3, "name": "a"},
@@ -373,7 +374,7 @@ def test_that_duplicate_output_constraint_names_raise_error():
 )
 def test_that_output_constraints_bounds_are_mutex(constraint, expectation):
     with expectation:
-        EverestConfig.with_defaults(output_constraints=[constraint])
+        everest_config_with_defaults(output_constraints=[constraint])
 
 
 def test_that_variable_name_does_not_contain_dots():
@@ -407,38 +408,38 @@ def test_that_variable_perturbation_is_positive(perturbation, expected_error):
 
 def test_that_model_realizations_accept_only_positive_ints():
     with pytest.raises(ValueError, match="Input should be greater than or equal to 0"):
-        EverestConfig.with_defaults(model={"realizations": [-1, 1, 2, 3]})
+        everest_config_with_defaults(model={"realizations": [-1, 1, 2, 3]})
 
-    EverestConfig.with_defaults(model={"realizations": [0, 1, 2, 3]})
+    everest_config_with_defaults(model={"realizations": [0, 1, 2, 3]})
 
 
 def test_that_model_realizations_weights_must_correspond_to_realizations():
     with pytest.raises(
         ValueError, match="Specified realizations_weights must have one weight per"
     ):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             model={"realizations": [1, 2, 3], "realizations_weights": [1, 2]}
         )
 
     with pytest.raises(
         ValueError, match="Specified realizations_weights must have one weight per"
     ):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             model={
                 "realizations": [1, 2, 3],
                 "realizations_weights": [1, 2, 3, 4],
             }
         )
 
-    EverestConfig.with_defaults(model={"realizations": [1, 2, 3]})
-    EverestConfig.with_defaults(
+    everest_config_with_defaults(model={"realizations": [1, 2, 3]})
+    everest_config_with_defaults(
         model={"realizations": [1, 2, 3], "realizations_weights": [5, 5, -5]}
     )
 
 
 def test_that_missing_optimization_algorithm_errors():
     with pytest.raises(ValueError, match="Optimizer algorithm 'ddlygldt' not found"):
-        EverestConfig.with_defaults(optimization={"algorithm": "ddlygldt"})
+        everest_config_with_defaults(optimization={"algorithm": "ddlygldt"})
 
 
 @pytest.mark.parametrize(
@@ -453,21 +454,21 @@ def test_that_missing_optimization_algorithm_errors():
 )
 def test_that_some_optimization_attrs_must_be_positive(optimizer_attr):
     with pytest.raises(ValueError, match=r"(.*)Input should be greater than 0"):
-        EverestConfig.with_defaults(optimization={optimizer_attr: -1})
+        everest_config_with_defaults(optimization={optimizer_attr: -1})
 
     with pytest.raises(ValueError, match=r"(.*)Input should be greater than 0"):
-        EverestConfig.with_defaults(optimization={optimizer_attr: 0})
+        everest_config_with_defaults(optimization={optimizer_attr: 0})
 
-    EverestConfig.with_defaults(optimization={optimizer_attr: 1})
+    everest_config_with_defaults(optimization={optimizer_attr: 1})
 
 
 def test_that_min_realizations_success_is_nonnegative():
     with pytest.raises(
         ValueError, match=r"(.*)Input should be greater than or equal to 0"
     ):
-        EverestConfig.with_defaults(optimization={"min_realizations_success": -1})
+        everest_config_with_defaults(optimization={"min_realizations_success": -1})
 
-    EverestConfig.with_defaults(optimization={"min_realizations_success": 0})
+    everest_config_with_defaults(optimization={"min_realizations_success": 0})
 
 
 @pytest.mark.parametrize(
@@ -485,7 +486,7 @@ def test_that_install_data_allows_runpath_root_as_target(
     data = {"source": "relative/path_<GEO_ID>", "target": target, "link": link}
     Path("config_dir/relative/path_0").mkdir(parents=True)
     Path("config_dir/test.yml").write_text(" ", encoding="utf-8")
-    config = EverestConfig.with_defaults(
+    config = everest_config_with_defaults(
         install_data=[data],
         config_path=Path("config_dir/test.yml"),
         model={"realizations": [0]},
@@ -544,7 +545,7 @@ def test_install_data_with_invalid_templates(
     check invalid template rendering (e.g 'r{{ foo }}/) that maps to '/'
     """
     with pytest.raises(ValidationError) as exc_info:
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             controls=[
                 {
                     "name": "initial_control",
@@ -577,13 +578,13 @@ def test_that_install_data_source_exists(change_to_tmpdir):
     Path("config_dir/test.yml").write_text(" ", encoding="utf-8")
 
     with pytest.raises(ValueError, match="No such file or directory"):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             install_data=[data],
             config_path=Path("config_dir/test.yml"),
         )
 
     Path("config_dir/relative/path").mkdir(parents=True)
-    EverestConfig.with_defaults(
+    everest_config_with_defaults(
         install_data=[data],
         config_path=Path("config_dir/test.yml"),
     )
@@ -596,7 +597,7 @@ def test_that_repeated_install_elements_to_same_location_will_fail(
     Path("config_dir/test.yml").touch()
     Path("config_dir/foo").mkdir()
     with pytest.raises(ValueError, match=_OVERWRITE_MESSAGE):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             install_data=[
                 {"source": "foo", "target": "foo"},
                 {"source": "foo", "target": "foo"},
@@ -612,7 +613,7 @@ def test_that_install_elements_cannot_install_over_previously_installed_folder(
     Path("config_dir/test.yml").touch()
     Path("config_dir/foo/bar").mkdir(parents=True)
     with pytest.raises(ValueError, match=_OVERWRITE_MESSAGE):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             install_data=[
                 {"source": "foo/bar", "target": "foo/bar"},
                 {"source": "foo", "target": "foo"},
@@ -629,7 +630,7 @@ def test_that_install_elements_cannot_install_into_previously_installed_folders(
     Path("config_dir/foo").mkdir()
     Path("config_dir/bar").touch()
     with pytest.raises(ValueError, match=_OVERWRITE_MESSAGE):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             install_data=[
                 {"source": "foo", "target": "foo"},
                 {"source": "bar", "target": "foo/bar"},
@@ -682,7 +683,7 @@ def test_that_either_source_or_executable_is_provided(install_keyword):
     with pytest.raises(
         ValidationError, match="Either source or executable must be provided"
     ):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             model={"realizations": [1, 2, 3]},
             config_path=Path("."),
             **{install_keyword: [{"name": "test"}]},
@@ -702,7 +703,7 @@ def test_that_non_existing_install_job_errors_deprecated(
     Path("config_dir").mkdir()
     Path("config_dir/test.yml").write_text(" ", encoding="utf-8")
     with pytest.raises(ValidationError, match="No such file or directory:"):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             model={
                 "realizations": [1, 2, 3],
             },
@@ -736,7 +737,7 @@ def test_that_existing_install_job_with_malformed_executable_errors_deprecated(
     with pytest.warns(
         ConfigWarning, match=f"`{install_keyword}: source` is deprecated"
     ):
-        config = EverestConfig.with_defaults(
+        config = everest_config_with_defaults(
             model={
                 "realizations": [1, 2, 3],
             },
@@ -780,7 +781,7 @@ def test_that_existing_install_job_with_non_executable_executable_errors_depreca
     with pytest.warns(
         ConfigWarning, match=f"`{install_keyword}: source` is deprecated"
     ):
-        config = EverestConfig.with_defaults(
+        config = everest_config_with_defaults(
             model={
                 "realizations": [1, 2, 3],
             },
@@ -813,7 +814,7 @@ def test_that_existing_install_job_with_non_executable_executable_errors(
     assert not os.access("non_executable", os.X_OK)
 
     with pytest.raises(ValidationError, match="File not executable"):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             model={
                 "realizations": [1, 2, 3],
             },
@@ -847,7 +848,7 @@ def test_that_existing_install_job_with_non_existing_executable_errors_deprecate
     with pytest.warns(
         ConfigWarning, match=f"`{install_keyword}: source` is deprecated"
     ):
-        config = EverestConfig.with_defaults(
+        config = everest_config_with_defaults(
             model={
                 "realizations": [1, 2, 3],
             },
@@ -876,7 +877,7 @@ def test_that_existing_install_job_with_non_existing_executable_errors(
     assert not os.access("non_executable", os.X_OK)
 
     with pytest.raises(ValidationError, match="Could not find executable"):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             model={
                 "realizations": [1, 2, 3],
             },
@@ -904,11 +905,11 @@ def test_that_objective_function_attrs_are_valid(value, expect_error):
             ValueError,
             match="The objective weight should be greater than 0",
         ):
-            EverestConfig.with_defaults(
+            everest_config_with_defaults(
                 objective_functions=[{"name": "npv", "weight": value}]
             )
     else:
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             objective_functions=[{"name": "npv", "weight": value}]
         )
 
@@ -917,21 +918,21 @@ def test_that_objective_function_weight_defined_for_all_or_no_function():
     with pytest.raises(
         ValueError, match=r"(.*) either for all of the objectives or for none of them"
     ):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             objective_functions=[
                 {"name": "npv", "weight": 0.7},
                 {"name": "npv2"},
             ]
         )
 
-    EverestConfig.with_defaults(
+    everest_config_with_defaults(
         objective_functions=[
             {"name": "npv"},
             {"name": "npv2"},
         ]
     )
 
-    EverestConfig.with_defaults(
+    everest_config_with_defaults(
         objective_functions=[
             {"name": "npv", "weight": 0.7},
             {"name": "npv2", "weight": 0.3},
@@ -954,14 +955,14 @@ def test_that_objective_function_weights_sum_is_positive(values, expect_error):
             ValueError,
             match="The sum of the objective weights should be greater than 0",
         ):
-            EverestConfig.with_defaults(
+            everest_config_with_defaults(
                 objective_functions=[
                     {"name": "npv", "weight": values[0]},
                     {"name": "npv2", "weight": values[1]},
                 ]
             )
     else:
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             objective_functions=[
                 {"name": "npv", "weight": values[0]},
                 {"name": "npv2", "weight": values[1]},
@@ -978,7 +979,7 @@ def test_that_install_templates_must_have_unique_names(change_to_tmpdir):
         match=r"Install_templates output_files "
         "must be unique. (.*) outputf \\(2 occurrences\\)",
     ):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             install_templates=[
                 {"template": "heyyy", "output_file": "outputf"},
                 {"template": "hey", "output_file": "outputf"},
@@ -987,7 +988,7 @@ def test_that_install_templates_must_have_unique_names(change_to_tmpdir):
 
     print("Install_templates templates must be unique")
 
-    EverestConfig.with_defaults(
+    everest_config_with_defaults(
         install_templates=[
             {"template": "hey", "output_file": "outputf"},
             {"template": "hesy", "output_file": "outputff"},
@@ -999,7 +1000,7 @@ def test_that_install_template_template_must_be_existing_file(change_to_tmpdir):
     Path("config_dir").mkdir()
     Path("config_dir/test.yml").write_text(" ", encoding="utf-8")
     with pytest.raises(ValueError, match=r"No.*file.*hello.*No.*file.*hey"):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             install_templates=[
                 {"template": "hello", "output_file": "output"},
                 {"template": "hey", "output_file": "outputf"},
@@ -1018,7 +1019,7 @@ def test_that_missing_required_fields_cause_error():
     # controls, objective_functions, config_path, model
     assert len(error_dicts) == 4
 
-    config_with_defaults = EverestConfig.with_defaults()
+    config_with_defaults = everest_config_with_defaults()
     config_args = {}
     required_argnames = [
         "controls",
@@ -1037,7 +1038,7 @@ def test_that_missing_required_fields_cause_error():
 
 def test_that_non_existing_workflow_jobs_cause_error():
     with pytest.raises(ValidationError, match="unknown workflow job job1"):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             workflows={
                 "pre_simulation": [
                     "job1 -i out -o result",
@@ -1146,7 +1147,7 @@ def test_load_file_with_errors(capsys):
 def test_warning_empty_controls_and_objectives(controls, objectives, error_msg):
     if error_msg:
         with pytest.raises(ValueError) as e:
-            EverestConfig.with_defaults(
+            everest_config_with_defaults(
                 objective_functions=objectives,
                 controls=controls,
             )
@@ -1154,7 +1155,7 @@ def test_warning_empty_controls_and_objectives(controls, objectives, error_msg):
         for msg in error_msg:
             assert msg in str(e.value)
     else:
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             objective_functions=objectives,
             controls=controls,
         )
@@ -1183,7 +1184,7 @@ def test_that_auto_scale_and_objective_scale_are_mutually_exclusive(tmp_path):
             "options in the objective_functions section are mutually exclusive"
         ),
     ):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             optimization=OptimizationConfig(auto_scale=True),
             objective_functions=[
                 ObjectiveFunctionConfig(name=f"f{i:03d}", scale=1.0) for i in range(2)
@@ -1257,7 +1258,7 @@ def test_that_model_realizations_specs_are_invalid(realizations):
     with pytest.raises(
         ValueError, match=f"Invalid realizations specification: {realizations}"
     ):
-        EverestConfig.with_defaults(model={"realizations": realizations})
+        everest_config_with_defaults(model={"realizations": realizations})
 
 
 @pytest.mark.parametrize(
@@ -1281,7 +1282,7 @@ def test_that_model_realizations_specs_are_invalid(realizations):
     ],
 )
 def test_that_model_realizations_specs_are_valid(realizations, expected):
-    config = EverestConfig.with_defaults(model={"realizations": realizations})
+    config = everest_config_with_defaults(model={"realizations": realizations})
     assert config.model.realizations == expected
 
 
@@ -1326,13 +1327,13 @@ def test_that_reserved_words_are_rejected(illegal_name):
         ValidationError,
         match=f"'{illegal_name}' is a reserved word and cannot be used.",
     ):
-        EverestConfig.with_defaults(controls=[{"name": illegal_name}])
+        everest_config_with_defaults(controls=[{"name": illegal_name}])
 
     with pytest.raises(
         ValidationError,
         match=f"'{illegal_name}' is a reserved word and cannot be used.",
     ):
-        EverestConfig.with_defaults(objective_functions=[{"name": illegal_name}])
+        everest_config_with_defaults(objective_functions=[{"name": illegal_name}])
 
 
 def test_forward_model_step_config_missing_type():
@@ -1351,7 +1352,7 @@ def test_ambiguous_max_memory_vs_realization_memory_is_detected():
     with pytest.raises(
         ValidationError, match="Ambiguous configuration of realization_memory"
     ):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             simulator={
                 "max_memory": "20",
                 "queue_system": {"name": "local", "realization_memory": "40"},
@@ -1372,7 +1373,7 @@ def test_that_max_memory_propagates_to_realization_memory(
     max_memory, realization_memory, expected
 ) -> None:
     """Also testing that 0 for realization_memory means not set"""
-    config = EverestConfig.with_defaults(
+    config = everest_config_with_defaults(
         simulator={
             "max_memory": max_memory,
             "queue_system": {"name": "local", "realization_memory": realization_memory},
@@ -1390,7 +1391,7 @@ def test_that_max_memory_propagates_to_realization_memory(
     ],
 )
 def test_parsing_of_realization_memory(realization_memory, expected) -> None:
-    config = EverestConfig.with_defaults(
+    config = everest_config_with_defaults(
         simulator={
             "queue_system": {"name": "local", "realization_memory": realization_memory},
         }
@@ -1417,7 +1418,7 @@ def test_parsing_of_realization_memory(realization_memory, expected) -> None:
 )
 def test_parsing_of_invalid_memory_spec(invalid_memory_spec, error_message) -> None:
     with pytest.raises(ValidationError, match=error_message):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             simulator={
                 "queue_system": {
                     "name": "local",
@@ -1426,11 +1427,11 @@ def test_parsing_of_invalid_memory_spec(invalid_memory_spec, error_message) -> N
             }
         )
     with pytest.raises(ValidationError, match=error_message):
-        EverestConfig.with_defaults(simulator={"max_memory": invalid_memory_spec})
+        everest_config_with_defaults(simulator={"max_memory": invalid_memory_spec})
 
 
 def test_parsing_of_unset_realization_memory() -> None:
-    config = EverestConfig.with_defaults(
+    config = everest_config_with_defaults(
         simulator={
             "queue_system": {"name": "local"},
         }
@@ -1460,7 +1461,7 @@ def test_parsing_of_unset_realization_memory() -> None:
     ],
 )
 def test_that_max_memory_is_valid(max_memory) -> None:
-    EverestConfig.with_defaults(simulator={"max_memory": max_memory})
+    everest_config_with_defaults(simulator={"max_memory": max_memory})
 
 
 @pytest.mark.usefixtures("no_plugins")
@@ -1472,4 +1473,4 @@ def test_that_negative_max_memory_fails(max_memory) -> None:
     with pytest.raises(
         ValidationError, match=f"Negative memory does not make sense in {max_memory}"
     ):
-        EverestConfig.with_defaults(simulator={"max_memory": max_memory})
+        everest_config_with_defaults(simulator={"max_memory": max_memory})

@@ -3,8 +3,38 @@ import importlib.util
 import os
 import sys
 from io import StringIO
+from textwrap import dedent
 
 import pytest
+import yaml
+
+from everest.config.everest_config import EverestConfig
+
+MIN_CONFIG = dedent(
+    """
+    model: {"realizations": [0]}
+    controls:
+      -
+        name: my_control
+        type: well_control
+        min: 0
+        max: 0.1
+        perturbation_magnitude: 0.01
+        variables:
+          - { name: test, initial_guess: 0.1 }
+    objective_functions:
+      - {name: my_objective}
+    config_path: .
+    """
+)
+
+
+def everest_config_with_defaults(**kwargs) -> EverestConfig:
+    """
+    Creates an Everest config with default values. Useful for initializing a config
+    without having to provide empty defaults.
+    """
+    return EverestConfig.with_plugins(yaml.safe_load(MIN_CONFIG) | {**kwargs})  # type: ignore
 
 
 def skipif_no_everviz(function):

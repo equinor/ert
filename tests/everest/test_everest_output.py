@@ -8,6 +8,7 @@ import pytest
 from ert.storage import open_storage
 from everest.bin.everest_script import everest_entry
 from everest.config import EverestConfig
+from tests.everest.utils import everest_config_with_defaults
 
 
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
@@ -35,7 +36,7 @@ def test_save_running_config(_, _1, _2, _3, _4, _5, change_to_tmpdir):
     """Test everest detached, when an optimization has already run"""
 
     Path("config.yml").touch()
-    config = EverestConfig.with_defaults(
+    config = everest_config_with_defaults(
         config_path="./config.yml", environment={"random_seed": 12345}
     )
     config.dump("config.yml")

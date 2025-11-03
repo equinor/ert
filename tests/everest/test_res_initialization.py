@@ -25,6 +25,7 @@ from ert.plugins import ErtRuntimePlugins, get_site_plugins
 from ert.run_models.everest_run_model import EverestRunModel, _get_workflow_jobs
 from everest.config import EverestConfig, InstallDataConfig
 from everest.simulator.everest_to_ert import everest_to_ert_config_dict
+from tests.everest.utils import everest_config_with_defaults
 
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
@@ -93,7 +94,7 @@ def test_everest_to_ert_queue_config(config, config_class, tmp_path, monkeypatch
     general_queue_options = {"max_running": 10}
     general_options = {"resubmit_limit": 7}
     config |= general_queue_options
-    ever_config = EverestConfig.with_defaults(
+    ever_config = everest_config_with_defaults(
         simulator={"queue_system": config} | general_options,
         model={"realizations": [0]},
     )
@@ -110,7 +111,7 @@ def test_everest_to_ert_queue_config(config, config_class, tmp_path, monkeypatch
 def test_that_site_config_queue_options_do_not_override_user_queue_config(
     min_config, monkeypatch, change_to_tmpdir
 ):
-    ever_config = EverestConfig.with_defaults(
+    ever_config = everest_config_with_defaults(
         simulator={"queue_system": {"name": "local"}}, model={"realizations": [0]}
     )
 
@@ -132,7 +133,7 @@ def test_default_installed_jobs(tmp_path, monkeypatch):
         "move_file",
         "symlink",
     ]
-    ever_config = EverestConfig.with_defaults(
+    ever_config = everest_config_with_defaults(
         **yaml.safe_load(
             dedent(f"""
     model: {{"realizations": [0]}}
@@ -155,18 +156,18 @@ def test_default_installed_jobs(tmp_path, monkeypatch):
     "config_yaml",
     [
         dedent("""
-    wells: [{ name: fakename}]
+    wells: [{ name: test}]
     """),
         dedent("""
     controls:
-      - name: default_group
+      - name: my_control
         type: well_control
-        initial_guess: 0.5
+        initial_guess: 0.1
         perturbation_magnitude: 0.01
         variables:
-          - name: fakename
+          - name: test
             min: 0
-            max: 1
+            max: 0.1
     """),
     ],
 )
@@ -174,7 +175,7 @@ def test_combined_wells_everest_to_ert(tmp_path, monkeypatch, config_yaml):
     monkeypatch.chdir(tmp_path)
     Path("my_file").touch()
     Path("my_executable").touch(mode=stat.S_IEXEC)
-    ever_config = EverestConfig.with_defaults(
+    ever_config = everest_config_with_defaults(
         **yaml.safe_load(
             config_yaml
             + dedent("""
@@ -200,7 +201,7 @@ def test_combined_wells_everest_to_ert(tmp_path, monkeypatch, config_yaml):
     smry_config = next(
         r for r in runmodel.response_configuration if isinstance(r, SummaryConfig)
     )
-    assert "WOPR:fakename" in smry_config.keys
+    assert "WOPR:test" in smry_config.keys
 
 
 @pytest.mark.parametrize(
@@ -219,7 +220,7 @@ def test_install_data_no_init(tmp_path, source, target, symlink, cmd, monkeypatc
     monkeypatch.chdir(tmp_path)
     Path("source_file").touch()
     Path.mkdir("source_folder")
-    ever_config = EverestConfig.with_defaults(
+    ever_config = everest_config_with_defaults(
         model={"realizations": [0]},
         install_data=[{"source": source, "target": target, "link": symlink}],
     )
@@ -240,7 +241,7 @@ def test_install_data_no_init(tmp_path, source, target, symlink, cmd, monkeypatc
 @pytest.mark.parametrize("wells_config", [None, [{"name": "default_name"}]])
 def test_summary_default_no_opm(tmp_path, monkeypatch, wells_config):
     monkeypatch.chdir(tmp_path)
-    everconf = EverestConfig.with_defaults(
+    everconf = everest_config_with_defaults(
         wells=wells_config,
         controls=[
             {
@@ -302,7 +303,7 @@ def test_summary_default_no_opm(tmp_path, monkeypatch, wells_config):
 def test_workflow_job(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     workflow_jobs = [{"name": "test", "executable": which("echo")}]
-    ever_config = EverestConfig.with_defaults(
+    ever_config = everest_config_with_defaults(
         install_workflow_jobs=workflow_jobs, model={"realizations": [0]}
     )
     workflow_jobs = _get_workflow_jobs(ever_config)
@@ -317,7 +318,7 @@ def test_workflow_job_override(tmp_path, monkeypatch):
         {"name": "test", "executable": which("true")},
         {"name": "test", "executable": echo},
     ]
-    ever_config = EverestConfig.with_defaults(
+    ever_config = everest_config_with_defaults(
         install_workflow_jobs=workflow_jobs, model={"realizations": [0]}
     )
     with pytest.warns(
@@ -337,7 +338,7 @@ def test_workflows_deprecated(tmp_path, monkeypatch):
     with pytest.warns(
         ConfigWarning, match="`install_workflow_jobs: source` is deprecated"
     ):
-        ever_config = EverestConfig.with_defaults(
+        ever_config = everest_config_with_defaults(
             workflows=workflow,
             model={"realizations": [0]},
             install_workflow_jobs=workflow_jobs,
@@ -356,7 +357,7 @@ def test_workflows(tmp_path, monkeypatch):
     executable = which("echo")
     workflow_jobs = [{"name": "my_test", "executable": executable}]
     workflow = {"pre_simulation": ["my_test"]}
-    ever_config = EverestConfig.with_defaults(
+    ever_config = everest_config_with_defaults(
         workflows=workflow,
         model={"realizations": [0]},
         install_workflow_jobs=workflow_jobs,
@@ -373,7 +374,7 @@ def test_workflows(tmp_path, monkeypatch):
 def test_user_config_jobs_precedence(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     existing_job = "copy_file"
-    ever_config = EverestConfig.with_defaults(model={"realizations": [0]})
+    ever_config = everest_config_with_defaults(model={"realizations": [0]})
     site_plugins = get_site_plugins()
     with use_runtime_plugins(site_plugins):
         runmodel = EverestRunModel.create(ever_config, runtime_plugins=site_plugins)
@@ -382,7 +383,7 @@ def test_user_config_jobs_precedence(tmp_path, monkeypatch):
     runmodel._storage.close()
     echo = which("echo")
 
-    ever_config_new = EverestConfig.with_defaults(
+    ever_config_new = everest_config_with_defaults(
         model={"realizations": [0]},
         install_jobs=[{"name": existing_job, "executable": echo}],
     )
@@ -449,7 +450,7 @@ def test_passthrough_explicit_summary_keys(change_to_tmpdir):
         "GWIR:INJECT",
     ]
 
-    config = EverestConfig.with_defaults(
+    config = everest_config_with_defaults(
         forward_model=[
             {
                 "job": "eclipse100 eclipse/model/EgG.DATA --version 2020.2",
@@ -474,7 +475,7 @@ def test_passthrough_explicit_summary_keys(change_to_tmpdir):
 
 
 def test_that_resubmit_limit_is_set(change_to_tmpdir) -> None:
-    ever_config = EverestConfig.with_defaults(simulator={"resubmit_limit": 0})
+    ever_config = everest_config_with_defaults(simulator={"resubmit_limit": 0})
     config_dict = everest_to_ert_config_dict(ever_config)
     assert config_dict[ErtConfigKeys.MAX_SUBMIT] == 1
 
@@ -489,7 +490,7 @@ def test_that_resubmit_limit_is_set(change_to_tmpdir) -> None:
     ],
 )
 def test_parsing_of_relization_memory(realization_memory, expected) -> None:
-    config = EverestConfig.with_defaults(
+    config = everest_config_with_defaults(
         simulator={
             "queue_system": {"name": "local", "realization_memory": realization_memory},
         }
@@ -514,7 +515,7 @@ def test_parsing_of_invalid_relization_memory(
     invalid_memory_spec, error_message
 ) -> None:
     with pytest.raises(ValidationError, match=error_message):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             simulator={
                 "queue_system": {
                     "name": "local",
@@ -525,7 +526,7 @@ def test_parsing_of_invalid_relization_memory(
 
 
 def test_parsing_of_non_existing_relization_memory() -> None:
-    config = EverestConfig.with_defaults(
+    config = everest_config_with_defaults(
         simulator={
             "queue_system": {"name": "local"},
         }
@@ -535,7 +536,7 @@ def test_parsing_of_non_existing_relization_memory() -> None:
 
 def test_that_everest_to_ert_config_dict_does_not_create_files(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    everest_to_ert_config_dict(EverestConfig.with_defaults())
+    everest_to_ert_config_dict(everest_config_with_defaults())
     assert not os.listdir(tmp_path)
 
 

@@ -6,11 +6,12 @@ from ert.plugins import get_site_plugins
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig, OptimizationConfig, OutputConstraintConfig
 from everest.optimizer.everest2ropt import everest2ropt
+from tests.everest.utils import everest_config_with_defaults
 
 
 def test_constraints_init(tmp_path):
     num_constraints = 16
-    initial_everest_config = EverestConfig.with_defaults(
+    initial_everest_config = everest_config_with_defaults(
         output_constraints=[
             OutputConstraintConfig(
                 name=f"oil_prod_rate_{i:03d}", upper_bound=5000.0, scale=7500.0
@@ -91,7 +92,7 @@ def test_that_auto_scale_and_constraints_scale_are_mutually_exclusive(tmp_path):
             "options in the output_constraints section are mutually exclusive"
         ),
     ):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             optimization=OptimizationConfig(auto_scale=True),
             output_constraints=[
                 OutputConstraintConfig(
@@ -109,7 +110,7 @@ def test_upper_bound_output_constraint_def(tmp_path):
         scale=1.0,
     )
 
-    initial_config = EverestConfig.with_defaults(
+    initial_config = everest_config_with_defaults(
         output_constraints=[output_constraint_definition],
     )
 

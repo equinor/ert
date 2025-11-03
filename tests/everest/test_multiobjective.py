@@ -2,6 +2,7 @@ import pytest
 
 from everest.config import EverestConfig
 from everest.optimizer.everest2ropt import everest2ropt
+from tests.everest.utils import everest_config_with_defaults
 
 
 @pytest.mark.parametrize(
@@ -47,7 +48,7 @@ def test_config_multi_objectives(min_config, config, expectation, tmp_path):
 
 def test_multi_objectives2ropt():
     weights = [1.33, 3.1]
-    config = EverestConfig.with_defaults(
+    config = everest_config_with_defaults(
         objective_functions=[
             {"name": "f1", "weight": weights[0]},
             {"name": "f2", "weight": weights[1]},

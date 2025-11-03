@@ -12,8 +12,7 @@ from ert.storage import ExperimentState
 from everest.bin.everest_script import everest_entry
 from everest.bin.kill_script import kill_entry
 from everest.bin.monitor_script import monitor_entry
-from everest.config import EverestConfig
-from tests.everest.utils import capture_streams
+from tests.everest.utils import capture_streams, everest_config_with_defaults
 
 CONFIG_FILE_MINIMAL = "config_minimal.yml"
 
@@ -44,7 +43,7 @@ def test_everest_entry_debug(
     """Test running everest with --debug"""
 
     Path("config.yml").touch()
-    config = EverestConfig.with_defaults(config_path="./config.yml")
+    config = everest_config_with_defaults(config_path="./config.yml")
     config.dump("config.yml")
 
     # Need to deactivate the logging.config.dictConfig() statement in the entry
@@ -67,7 +66,7 @@ def test_everest_entry_debug(
     # the config file itself is dumped at DEBUG level
     assert '"controls"' in logstream
     assert '"objective_functions"' in logstream
-    assert '"name": "default"' in logstream
+    assert '"name": "my_control"' in logstream
     assert f'"config_path": "{os.getcwd()}/config.yml"' in logstream
 
 
@@ -92,7 +91,7 @@ def test_everest_entry(
     """Test running everest in detached mode"""
 
     Path("config.yml").touch()
-    config = EverestConfig.with_defaults(config_path="./config.yml")
+    config = everest_config_with_defaults(config_path="./config.yml")
     config.dump("config.yml")
     everest_entry(["config.yml", "--skip"])
     start_server_mock.assert_called_once()
@@ -131,7 +130,7 @@ def test_everest_entry_detached_already_run(
     In this case we should just start a new run"""
 
     Path("config.yml").touch()
-    config = EverestConfig.with_defaults(config_path="./config.yml")
+    config = everest_config_with_defaults(config_path="./config.yml")
     config.dump("config.yml")
 
     # start a new run
@@ -174,7 +173,7 @@ def test_everest_entry_detached_already_run_monitor(
     """Test everest detached, when an optimization has already run"""
 
     Path("config.yml").touch()
-    config = EverestConfig.with_defaults(config_path="./config.yml")
+    config = everest_config_with_defaults(config_path="./config.yml")
     config.dump("config.yml")
 
     # optimization already run, notify the user
@@ -205,7 +204,7 @@ def test_everest_entry_detached_running(
     """Test everest detached, optimization is running"""
 
     Path("config.yml").touch()
-    config = EverestConfig.with_defaults(config_path="./config.yml")
+    config = everest_config_with_defaults(config_path="./config.yml")
     config.dump("config.yml")
 
     # can't start a new run if one is already running
@@ -249,7 +248,7 @@ def test_everest_entry_detached_running_monitor(
     """Test everest detached, optimization is running, monitoring"""
 
     Path("config.yml").touch()
-    config = EverestConfig.with_defaults(config_path="./config.yml")
+    config = everest_config_with_defaults(config_path="./config.yml")
     config.dump("config.yml")
 
     # Attach to a running optimization.
@@ -275,7 +274,7 @@ def test_everest_entry_monitor_already_run(
     change_to_tmpdir,
 ):
     Path("config.yml").touch()
-    config = EverestConfig.with_defaults(config_path="./config.yml")
+    config = everest_config_with_defaults(config_path="./config.yml")
     config.dump("config.yml")
 
     with capture_streams() as (out, _):
@@ -314,7 +313,7 @@ def test_exception_raised_when_server_run_fails(
     change_to_tmpdir,
 ):
     Path("config.yml").touch()
-    config = EverestConfig.with_defaults(config_path="./config.yml")
+    config = everest_config_with_defaults(config_path="./config.yml")
     config.dump("config.yml")
 
     with pytest.raises(SystemError, match="Reality was ripped to shreds!"):
@@ -334,7 +333,7 @@ def test_exception_raised_when_server_run_fails_monitor(
     change_to_tmpdir,
 ):
     Path("config.yml").touch()
-    config = EverestConfig.with_defaults(config_path="./config.yml")
+    config = everest_config_with_defaults(config_path="./config.yml")
     config.dump("config.yml")
 
     with pytest.raises(SystemError, match="Reality was ripped to shreds!"):
@@ -360,7 +359,7 @@ class ServerStatus:
 def test_that_run_everest_prints_where_it_runs(
     server_queue_system, simulator_queue_system, capsys, change_to_tmpdir
 ):
-    EverestConfig.with_defaults(
+    everest_config_with_defaults(
         simulator={"queue_system": {"name": simulator_queue_system}},
         server={"queue_system": {"name": server_queue_system}},
     ).dump("config.yml")

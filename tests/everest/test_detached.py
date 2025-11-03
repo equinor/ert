@@ -37,6 +37,7 @@ from everest.detached import (
     wait_for_server_to_stop,
 )
 from everest.util import makedirs_if_needed
+from tests.everest.utils import everest_config_with_defaults
 
 
 @pytest.mark.integration_test
@@ -45,7 +46,7 @@ from everest.util import makedirs_if_needed
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 async def test_https_requests(change_to_tmpdir):
     Path("./config.yml").touch()
-    everest_config = EverestConfig.with_defaults(config_path="./config.yml")
+    everest_config = everest_config_with_defaults(config_path="./config.yml")
     everest_config.forward_model.append(ForwardModelStepConfig(job="sleep 5"))
     everest_config.install_jobs.append(
         InstallJobConfig(name="sleep", executable=f"{which('sleep')}")
@@ -123,7 +124,7 @@ def test_detached_mode_config_base(min_config, monkeypatch, tmp_path):
 )
 def test_everserver_queue_config_equal_to_run_config(queue_system, cores):
     simulator_config = {"queue_system": {"name": queue_system, "max_running": cores}}
-    everest_config = EverestConfig.with_defaults(simulator=simulator_config)
+    everest_config = everest_config_with_defaults(simulator=simulator_config)
     everest_config.server.queue_system = SimulatorConfig(**simulator_config)
 
 
@@ -133,7 +134,7 @@ def test_detached_mode_config_error():
     same time the everserver queue to be something other than local
     """
     with pytest.raises(ValueError, match="so must the everest server"):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             simulator={"queue_system": {"name": "local"}},
             server={"queue_system": {"name": "lsf"}},
         )
@@ -156,7 +157,7 @@ def test_detached_mode_config_error():
     ],
 )
 def test_find_queue_system(config_kwargs, expected_result):
-    config = EverestConfig.with_defaults(**config_kwargs)
+    config = everest_config_with_defaults(**config_kwargs)
 
     result = config.simulator
     assert result.queue_system.name == expected_result
@@ -164,7 +165,7 @@ def test_find_queue_system(config_kwargs, expected_result):
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_generate_queue_options_no_config():
-    config = EverestConfig.with_defaults()
+    config = everest_config_with_defaults()
     assert config.server.queue_system == LocalQueueOptions(max_running=1)
 
 
@@ -186,7 +187,7 @@ def test_generate_queue_options_no_config():
 def test_that_server_queue_system_defaults_to_simulator_queue_options(
     monkeypatch, queue_class, expected_queue_kwargs
 ):
-    config = EverestConfig.with_defaults(
+    config = everest_config_with_defaults(
         simulator={"queue_system": expected_queue_kwargs}
     )
     expected_result = queue_class(**expected_queue_kwargs)
@@ -288,7 +289,7 @@ async def test_starting_not_in_folder(tmp_path, monkeypatch):
 
     os.makedirs(tmp_path / "new_folder")
     monkeypatch.chdir(tmp_path / "new_folder")
-    everest_config = EverestConfig.with_defaults()
+    everest_config = everest_config_with_defaults()
     everest_config.dump("minimal_config.yml")
     config_dict = {
         **everest_config.model_dump(exclude_none=True),

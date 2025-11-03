@@ -27,7 +27,12 @@ from everest.config import (
 )
 from everest.config.control_config import ControlConfig
 from everest.detached import everserver
-from tests.everest.utils import get_optimal_result, relpath
+from tests.everest.utils import MIN_CONFIG, get_optimal_result, relpath
+
+
+@pytest.fixture
+def min_config():
+    yield yaml.safe_load(MIN_CONFIG)
 
 
 @pytest.fixture(scope="session")
@@ -251,29 +256,6 @@ def cached_example(pytestconfig):
         )
 
     return run_config
-
-
-@pytest.fixture
-def min_config():
-    yield yaml.safe_load(
-        dedent(
-            """
-    model: {"realizations": [0]}
-    controls:
-      -
-        name: my_control
-        type: well_control
-        min: 0
-        max: 0.1
-        perturbation_magnitude: 0.01
-        variables:
-          - { name: test, initial_guess: 0.1 }
-    objective_functions:
-      - {name: my_objective}
-    config_path: .
-    """
-        )
-    )
 
 
 @pytest.fixture()

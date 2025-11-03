@@ -8,6 +8,7 @@ from everest.config.control_variable_config import (
     ControlVariableConfig,
 )
 from everest.optimizer.everest2ropt import everest2ropt
+from tests.everest.utils import everest_config_with_defaults
 
 
 def test_that_duplicate_control_group_name_is_invalid(min_config):
@@ -80,7 +81,7 @@ def test_that_unmatched_weight_name_due_to_missing_index_is_invalid():
         match="does not match any instance of "
         "control_name\\.variable_name\\.variable_index",
     ):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             controls=[
                 ControlConfig(
                     name="group",
@@ -107,7 +108,7 @@ def test_that_input_constraint_with_deprecated_indexed_name_format_warns():
     with pytest.warns(
         ConfigWarning, match="Deprecated input control name: group.w00-0"
     ):
-        EverestConfig.with_defaults(
+        everest_config_with_defaults(
             controls=[
                 ControlConfig(
                     name="group",
@@ -182,7 +183,7 @@ def test_that_control_variables_not_matching_any_well_name_is_invalid(min_config
         ValidationError,
         match="Variable name does not match any well name",
     ):
-        EverestConfig.with_defaults(**(min_config | {"wells": [{"name": "a"}]}))
+        everest_config_with_defaults(**(min_config | {"wells": [{"name": "a"}]}))
 
 
 def test_that_controls_ordering_is_the_same_for_ropt_and_extparam():
@@ -237,8 +238,8 @@ def test_that_controls_ordering_is_the_same_for_ropt_and_extparam():
         scaled_range=(0.0, 1.0),
     )
 
-    ever_config_var_wise = EverestConfig.with_defaults(controls=[var_wise])
-    ever_config_index_wise = EverestConfig.with_defaults(controls=[index_wise])
+    ever_config_var_wise = everest_config_with_defaults(controls=[var_wise])
+    ever_config_index_wise = everest_config_with_defaults(controls=[index_wise])
 
     ropt_var_wise = everest2ropt(
         ever_config_var_wise.controls,
@@ -300,7 +301,7 @@ def test_that_controls_ordering_disregards_index():
         scaled_range=(0.0, 1.0),
     )
 
-    ever_config_var_wise = EverestConfig.with_defaults(controls=[var_wise])
+    ever_config_var_wise = everest_config_with_defaults(controls=[var_wise])
 
     ropt_var_wise = everest2ropt(
         ever_config_var_wise.controls,
@@ -362,8 +363,8 @@ def test_that_setting_initial_guess_in_a_list_is_the_same_as_one_per_index():
         enabled=False,
     )
 
-    ever_config1 = EverestConfig.with_defaults(controls=[controls1])
-    ever_config2 = EverestConfig.with_defaults(controls=[controls2])
+    ever_config1 = everest_config_with_defaults(controls=[controls1])
+    ever_config2 = everest_config_with_defaults(controls=[controls2])
 
     ropt_config1, initial1 = everest2ropt(
         ever_config1.controls,
