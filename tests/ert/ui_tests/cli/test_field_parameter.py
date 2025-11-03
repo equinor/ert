@@ -37,6 +37,7 @@ def test_field_param_update_using_heat_equation_enif(
         assert len(prior_result.z) == param_config.nz
 
         posterior_result = posterior.load_parameters("COND")["values"]
+        assert posterior_result.dtype == np.float32
         prior_covariance = np.cov(
             prior_result.values.reshape(
                 prior.ensemble_size, param_config.nx * param_config.ny * param_config.nz
@@ -366,6 +367,7 @@ if __name__ == "__main__":
             # check the shape of internal data used in the update
             assert prior_result.shape == (5, NCOL, NROW, NLAY)
             assert posterior_result.shape == (5, NCOL, NROW, NLAY)
+            assert posterior_result.dtype == np.float32
 
             # Only assert on the first three rows, as there are only three parameters,
             # a, b and c, the rest have no correlation to the results.
@@ -504,6 +506,7 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
         param_config = config.ensemble_config.parameter_configs["COND"]
         prior_result = new_prior.load_parameters("COND")["values"]
         posterior_result = new_posterior.load_parameters("COND")["values"]
+        assert posterior_result.dtype == np.float32
 
         # Make sure parameters with zero variance are not updated.
         assert (
