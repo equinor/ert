@@ -65,24 +65,6 @@ def create_flattened_cube_graph(px: int, py: int, pz: int) -> nx.Graph[int]:
     return G
 
 
-def adjust_graph_for_masking(G: nx.Graph[int]) -> nx.Graph[int]:
-    """
-    Adjust the graph G according to the masking indices.
-    Removes nodes specified by the mask and relabels the remaining nodes
-    to have consecutive labels from 0 to G.number_of_nodes - 1.
-    Parameters:
-    - G: The graph to adjust
-    - mask: Boolean mask flattened array
-    Returns:
-    - The adjusted graph
-    """
-    # Step 2: Relabel remaining nodes to 0, 1, 2, ..., G.number_of_nodes - 1
-    new_labels = {old_label: new_label for new_label, old_label in enumerate(G.nodes())}
-    G = nx.relabel_nodes(G, new_labels, copy=True)
-
-    return G
-
-
 class Field(ParameterConfig):
     type: Literal["field"] = "field"
     forward_init: bool = False
@@ -303,21 +285,11 @@ class Field(ParameterConfig):
         from_data: npt.NDArray[np.float64],
         iens_active_index: npt.NDArray[np.int_],
     ) -> Iterator[tuple[int, xr.Dataset]]:
+        nx, ny, nz = self.ertbox_params.nx, self.ertbox_params.ny, self.ertbox_params.nz
+
         for i, realization in enumerate(iens_active_index):
-            ma = np.ma.MaskedArray(  # type: ignore
-                data=np.zeros(
-                    self.ertbox_params.nx
-                    * self.ertbox_params.ny
-                    * self.ertbox_params.nz
-                ),
-                fill_value=np.nan,
-                dtype=from_data.dtype,
-            )
-            ma[~ma.mask] = from_data[:, i]
-            ma = ma.reshape(
-                (self.ertbox_params.nx, self.ertbox_params.ny, self.ertbox_params.nz)
-            )  # type: ignore
-            ds = xr.Dataset({"values": (["x", "y", "z"], ma.filled())})
+            values = from_data[:, i].reshape((nx, ny, nz))
+            ds = xr.Dataset({"values": (["x", "y", "z"], values)})
             yield int(realization), ds
 
     def load_parameters(
@@ -358,7 +330,11 @@ class Field(ParameterConfig):
         parameter_graph = create_flattened_cube_graph(
             px=self.ertbox_params.nx, py=self.ertbox_params.ny, pz=self.ertbox_params.nz
         )
-        return adjust_graph_for_masking(G=parameter_graph)
+        new_labels = {
+            old_label: new_label
+            for new_label, old_label in enumerate(parameter_graph.nodes())
+        }
+        return nx.relabel_nodes(parameter_graph, new_labels, copy=True)
 
     @property
     def nx(self) -> int:
