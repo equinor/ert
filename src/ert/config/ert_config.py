@@ -323,12 +323,16 @@ def read_templates(config_dict: ConfigDict) -> list[tuple[str, str]]:
 
 def workflow_jobs_from_dict(
     content_dict: ConfigDict,
-    installed_workflows: dict[str, WorkflowJob] | None = None,
+    site_installed_workflows_jobs: dict[str, WorkflowJob] | None = None,
 ) -> dict[str, WorkflowJob]:
     workflow_job_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW_JOB, [])
     workflow_job_dir_info = content_dict.get(ConfigKeys.WORKFLOW_JOB_DIRECTORY, [])
 
-    workflow_jobs = copy.copy(installed_workflows) if installed_workflows else {}
+    workflow_jobs = (
+        copy.copy(site_installed_workflows_jobs)
+        if site_installed_workflows_jobs
+        else {}
+    )
 
     errors: list[ErrorInfo | ConfigValidationError] = []
 
@@ -483,7 +487,7 @@ def create_and_hook_workflows(
 def workflows_from_dict(
     content_dict: ConfigDict,
     substitutions: dict[str, str],
-    installed_workflows: Mapping[str, WorkflowJob] | None = None,
+    site_installed_workflows_jobs: Mapping[str, WorkflowJob] | None = None,
 ) -> tuple[
     dict[str, WorkflowJob],
     dict[str, Workflow],
@@ -491,7 +495,9 @@ def workflows_from_dict(
 ]:
     workflow_jobs = workflow_jobs_from_dict(
         content_dict,
-        dict(copy.copy(installed_workflows)) if installed_workflows else {},
+        dict(copy.copy(site_installed_workflows_jobs))
+        if site_installed_workflows_jobs
+        else {},
     )
     workflows, hooked_workflows = create_and_hook_workflows(
         content_dict.get(ConfigKeys.HOOK_WORKFLOW, []),
