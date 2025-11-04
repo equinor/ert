@@ -205,37 +205,7 @@ def test_that_a_deprecation_message_is_shown_for_use_of_the_job_prefix_queue_opt
         )
 
 
-@pytest.mark.parametrize(
-    "forward_model_config, expected_design_matrix_file, expected_design_sheet,"
-    " expected_defaults_sheet",
-    [
-        (
-            "FORWARD_MODEL DESIGN2PARAMS(<xls_filename>=poly_design.xslx)",
-            "poly_design.xslx",
-            "<name_of_design_sheet>",
-            "<name_of_defaults_sheet>",
-        ),
-        (
-            "FORWARD_MODEL DESIGN2PARAMS()",
-            "<name_of_design_matrix_file.xlsx>",
-            "<name_of_design_sheet>",
-            "<name_of_defaults_sheet>",
-        ),
-        (
-            "FORWARD_MODEL DESIGN2PARAMS(<xls_filename>=poly_design.xslx, <designsheet>"
-            "=TheDesignSheet, <defaultssheet>=TheDefaultsSheet)",
-            "poly_design.xslx",
-            "TheDesignSheet",
-            "TheDefaultsSheet",
-        ),
-    ],
-)
-def test_that_forward_model_design2params_is_deprecated(
-    forward_model_config,
-    expected_design_matrix_file,
-    expected_design_sheet,
-    expected_defaults_sheet,
-):
+def test_that_forward_model_design2params_is_deprecated():
     # Create a mock DESIGN2PARAMS forward model step, since it is not installed
     mock_design2params_step = ForwardModelStep(
         name="DESIGN2PARAMS",
@@ -250,10 +220,11 @@ def test_that_forward_model_design2params_is_deprecated(
         pytest.warns(
             ConfigWarning,
             match="FORWARD_MODEL DESIGN2PARAMS will be replaced with DESIGN_MATRIX. "
-            "Please change configuration line with FORWARD_MODEL DESIGN2PARAMS,\n"
-            f"To this format:\n 'DESIGN_MATRIX {expected_design_matrix_file} "
-            f"DESIGN_SHEET:{expected_design_sheet} "
-            f"DEFAULT_SHEET:{expected_defaults_sheet}'",
+            "Note that validation of DESIGN_MATRIX is more strict, missing values.*",
         ),
     ):
-        ErtConfig.from_file_contents(f"NUM_REALIZATIONS 1\n{forward_model_config}")
+        config = (
+            "FORWARD_MODEL DESIGN2PARAMS(<xls_filename>=poly_design.xslx, "
+            "<designsheet>=TheDesignSheet, <defaultssheet>=TheDefaultsSheet)"
+        )
+        ErtConfig.from_file_contents(f"NUM_REALIZATIONS 1\n{config}")
