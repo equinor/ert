@@ -1,28 +1,7 @@
 from functools import partial
-from typing import Any, cast
+from typing import cast
 
 from .deprecation_info import DeprecationInfo
-
-
-def make_forward_model_design2params_deprecation_message(line: list[Any]) -> str:
-    design_matrix_file = "<name_of_design_matrix_file.xlsx>"
-    design_sheet = "<name_of_design_sheet>"
-    defaults_sheet = "<name_of_defaults_sheet>"
-    arguments_dict = dict(line[1])
-
-    design_matrix_file = arguments_dict.get("<xls_filename>", design_matrix_file)
-    design_sheet = arguments_dict.get("<designsheet>", design_sheet)
-    defaults_sheet = arguments_dict.get("<defaultssheet>", defaults_sheet)
-
-    msg = (
-        f"FORWARD_MODEL DESIGN2PARAMS will be replaced with DESIGN_MATRIX. "
-        "Please change configuration line with FORWARD_MODEL DESIGN2PARAMS,\n"
-        "To this format:\n "
-        f"'DESIGN_MATRIX {design_matrix_file} DESIGN_SHEET:{design_sheet} "
-        f"DEFAULT_SHEET:{defaults_sheet}'"
-    )
-    return msg
-
 
 REPLACE_WITH_GEN_KW = [
     "RELPERM",
@@ -227,7 +206,15 @@ deprecated_keywords_list = [
     ),
     DeprecationInfo(
         keyword="FORWARD_MODEL",
-        message=make_forward_model_design2params_deprecation_message,
+        message=(
+            "FORWARD_MODEL DESIGN2PARAMS will be replaced with DESIGN_MATRIX. "
+            "Note that validation of DESIGN_MATRIX is more strict, "
+            "missing values are not allowed.\n"
+            "Please change configuration line with FORWARD_MODEL DESIGN2PARAMS,\n"
+            "To this format:\n\n"
+            "'DESIGN_MATRIX <CONFIG_PATH>/<DESIGN_MATRIX> DESIGN_SHEET:<DESIGN_SHEET> "
+            "DEFAULT_SHEET:DefaultValues'"
+        ),
         check=lambda line: line[0] == "DESIGN2PARAMS",
     ),
 ]
