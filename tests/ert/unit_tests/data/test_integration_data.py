@@ -141,6 +141,7 @@ def test_all_measured_snapshot(snapshot, snake_oil_storage, create_measured_data
     )
 
 
+@pytest.mark.integration_test
 def test_that_measured_data_gives_error_on_missing_response(snake_oil_case_storage):
     with open_storage(snake_oil_case_storage.ens_path, mode="w") as storage:
         experiment = storage.get_experiment_by_name("ensemble-experiment")
