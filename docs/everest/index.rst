@@ -33,9 +33,10 @@ This guide serves as documentation for the *Everest* decision-making tool.
 
 .. toctree::
    :hidden:
-   :caption: Everest-Models
+   :caption: See also
 
    everest_models
+   tutorials
 
 .. toctree::
    :hidden:
