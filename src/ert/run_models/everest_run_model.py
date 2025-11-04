@@ -359,10 +359,15 @@ class EverestRunModel(RunModel):
         )
 
         simulator_config = everest_config.simulator
-        queue_options_from_everconfig = {"name": "local"} | (
-            simulator_config.queue_system.model_dump(exclude_unset=True)
-            if simulator_config.queue_system is not None
-            else {}
+        queue_options_from_everconfig: dict[str, Any] = (
+            {"name": "local"}
+            if simulator_config.queue_system is None
+            else (
+                simulator_config.queue_system.model_dump(exclude_unset=True)
+                | {
+                    "name": simulator_config.queue_system.name,
+                }
+            )
         )
 
         if simulator_config.max_memory is not None:
