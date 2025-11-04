@@ -325,8 +325,12 @@ def workflow_jobs_from_dict(
     content_dict: ConfigDict,
     site_installed_workflows_jobs: dict[str, WorkflowJob] | None = None,
 ) -> dict[str, WorkflowJob]:
-    workflow_job_info = content_dict.get(ConfigKeys.LOAD_WORKFLOW_JOB, [])
-    workflow_job_dir_info = content_dict.get(ConfigKeys.WORKFLOW_JOB_DIRECTORY, [])
+    user_installed_workflow_job_info = content_dict.get(
+        ConfigKeys.LOAD_WORKFLOW_JOB, []
+    )
+    user_installed_workflow_job_dir_info = content_dict.get(
+        ConfigKeys.WORKFLOW_JOB_DIRECTORY, []
+    )
 
     workflow_jobs = (
         copy.copy(site_installed_workflows_jobs)
@@ -336,54 +340,54 @@ def workflow_jobs_from_dict(
 
     errors: list[ErrorInfo | ConfigValidationError] = []
 
-    for workflow_job in workflow_job_info:
+    for user_workflow_job in user_installed_workflow_job_info:
         try:
             # workflow_job_from_file only throws error if a
             # non-readable file is provided.
             # Non-existing files are caught by the new parser
-            new_job = workflow_job_from_file(
-                config_file=workflow_job[0],
-                name=None if len(workflow_job) == 1 else workflow_job[1],
+            user_job = workflow_job_from_file(
+                config_file=user_workflow_job[0],
+                name=None if len(user_workflow_job) == 1 else user_workflow_job[1],
             )
-            name = new_job.name
+            name = user_job.name
             if name in workflow_jobs:
                 ConfigWarning.warn(
                     f"Duplicate workflow jobs with name {name!r}, choosing "
-                    f"{new_job.location()!r} over "
+                    f"{user_job.location()!r} over "
                     f"{workflow_jobs[name].location()!r}",
                     name,
                 )
-            workflow_jobs[name] = new_job
+            workflow_jobs[name] = user_job
         except ErtScriptLoadFailure as err:
             ConfigWarning.warn(
-                f"Loading workflow job {workflow_job[0]!r}"
+                f"Loading workflow job {user_workflow_job[0]!r}"
                 f" failed with '{err}'. It will not be loaded.",
-                workflow_job[0],
+                user_workflow_job[0],
             )
         except ConfigValidationError as err:
-            errors.append(ErrorInfo(message=str(err)).set_context(workflow_job[0]))
+            errors.append(ErrorInfo(message=str(err)).set_context(user_workflow_job[0]))
 
-    for job_path in workflow_job_dir_info:
-        for file_name in _get_files_in_directory(job_path, errors):
+    for user_job_path in user_installed_workflow_job_dir_info:
+        for user_job_file in _get_files_in_directory(user_job_path, errors):
             try:
-                new_job = workflow_job_from_file(config_file=file_name)
-                name = new_job.name
+                user_job = workflow_job_from_file(config_file=user_job_file)
+                name = user_job.name
                 if name in workflow_jobs:
                     ConfigWarning.warn(
                         f"Duplicate workflow jobs with name {name!r}, choosing "
-                        f"{new_job.location()!r} over "
+                        f"{user_job.location()!r} over "
                         f"{workflow_jobs[name].location()!r}",
                         name,
                     )
-                workflow_jobs[name] = new_job
+                workflow_jobs[name] = user_job
             except ErtScriptLoadFailure as err:
                 ConfigWarning.warn(
-                    f"Loading workflow job {file_name!r}"
+                    f"Loading workflow job {user_job_file!r}"
                     f" failed with '{err}'. It will not be loaded.",
-                    file_name,
+                    user_job_file,
                 )
             except ConfigValidationError as err:
-                errors.append(ErrorInfo(message=str(err)).set_context(job_path))
+                errors.append(ErrorInfo(message=str(err)).set_context(user_job_path))
     if errors:
         raise ConfigValidationError.from_collected(errors)
 
