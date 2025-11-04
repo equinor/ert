@@ -639,6 +639,7 @@ def test_that_install_elements_cannot_install_into_previously_installed_folders(
         )
 
 
+@pytest.mark.integration_test
 def test_that_install_data_with_inline_data_generates_a_file(
     copy_math_func_test_data_to_tmp,
 ):

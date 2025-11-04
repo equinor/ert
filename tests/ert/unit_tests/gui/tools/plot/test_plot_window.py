@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock
 
+import pytest
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QLabel, QPushButton
 from pytestqt.qtbot import QtBot
@@ -18,6 +19,7 @@ def test_pressing_copy_button_in_error_dialog(qtbot: QtBot):
     assert QApplication.clipboard().text() == "world"
 
 
+@pytest.mark.integration_test
 def test_warning_is_visible_on_incompatible_plot_api_version(
     qtbot: QtBot, tmp_path, monkeypatch, use_tmpdir
 ):
