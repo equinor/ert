@@ -12,12 +12,12 @@ from pydantic import BaseModel, Field
 from typing_extensions import TypedDict
 
 from ert.config import (
-    ForwardModelStep,
     ForwardModelStepDocumentation,
     ForwardModelStepPlugin,
     KnownQueueOptions,
     LegacyWorkflowConfigs,
     LocalQueueOptions,
+    SiteInstalledForwardModelStep,
     WorkflowConfigs,
     WorkflowJob,
     workflow_job_from_file,
@@ -328,7 +328,7 @@ class ErtPluginManager(pluggy.PluginManager):
 
 
 class ErtRuntimePlugins(BaseModel):
-    installed_forward_model_steps: Mapping[str, ForwardModelStep] = Field(
+    installed_forward_model_steps: Mapping[str, SiteInstalledForwardModelStep] = Field(
         default_factory=dict
     )
     installed_workflow_jobs: Mapping[str, WorkflowJob] = Field(default_factory=dict)
