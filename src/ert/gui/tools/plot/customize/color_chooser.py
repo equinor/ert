@@ -7,10 +7,10 @@ from typing_extensions import override
 
 
 class ColorBox(QFrame):
+    """A widget that shows a colored box"""
+
     colorChanged = Signal(QColor)
     mouseRelease = Signal()
-
-    """A widget that shows a colored box"""
 
     def __init__(self, size: int = 15) -> None:
         QFrame.__init__(self)
