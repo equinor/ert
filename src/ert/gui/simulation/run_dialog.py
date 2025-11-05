@@ -31,6 +31,7 @@ from PyQt6.QtWidgets import (
 )
 from typing_extensions import override
 
+from _ert.events import EnsembleEvaluationWarning
 from ert.config import ErrorInfo, QueueSystem, WarningInfo
 from ert.ensemble_evaluator import (
     EndEvent,
@@ -555,6 +556,9 @@ class RunDialog(QFrame):
                 self._ticker.stop()
             case WarningEvent(msg=msg):
                 self.post_simulation_warnings.append(msg)
+            case EnsembleEvaluationWarning(warning_message=msg):
+                self._show_warning(msg)
+
             case FullSnapshotEvent(
                 status_count=status_count, realization_count=realization_count
             ):
@@ -680,6 +684,15 @@ class RunDialog(QFrame):
     def hideEvent(self, event: QHideEvent | None) -> None:
         for file_dialog in self.findChildren(FileDialog):
             file_dialog.close()
+
+    def _show_warning(self, msg: str) -> None:
+        msg_box = QMessageBox(self)
+        msg_box.setObjectName("EnsembleEvaluationWarningBox")
+        msg_box.setIcon(QMessageBox.Icon.Warning)
+        msg_box.setWindowTitle("Ensemble Evaluation Warning")
+        msg_box.setText(msg)
+        msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
+        msg_box.show()
 
 
 # Cannot use a non-static method here as

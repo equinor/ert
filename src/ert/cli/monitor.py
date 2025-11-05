@@ -9,6 +9,7 @@ from typing import TextIO
 import humanize
 from tqdm import tqdm
 
+from _ert.events import EnsembleEvaluationWarning
 from ert.ensemble_evaluator import (
     EndEvent,
     EnsembleSnapshot,
@@ -19,6 +20,7 @@ from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator.state import (
     COLOR_FAILED,
     COLOR_FINISHED,
+    COLOR_WARNING,
     FORWARD_MODEL_STATE_FAILURE,
     REAL_STATE_TO_COLOR,
 )
@@ -96,6 +98,11 @@ class Monitor:
                     | RunModelErrorEvent() as event
                 ):
                     event.write_as_csv(output_path)
+                case EnsembleEvaluationWarning(warning_message=msg):
+                    print(
+                        self._colorize(msg, color=COLOR_WARNING),
+                        file=self._out,
+                    )
 
     def _print_step_errors(self) -> None:
         failed_steps: dict[str | None, int] = {}

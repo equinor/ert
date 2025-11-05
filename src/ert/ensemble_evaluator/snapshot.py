@@ -12,6 +12,7 @@ from _ert.events import (
     EESnapshot,
     EESnapshotUpdate,
     EnsembleCancelled,
+    EnsembleEvaluationWarning,
     EnsembleEvent,
     EnsembleFailed,
     EnsembleStarted,
@@ -424,7 +425,8 @@ class EnsembleSnapshot:
 
         elif e_type in get_args(EnsembleEvent):
             event = cast(EnsembleEvent, event)
-            self._ensemble_state = _ENSEMBLE_TYPE_EVENT_TO_STATUS[type(event)]
+            if not isinstance(event, EnsembleEvaluationWarning):
+                self._ensemble_state = _ENSEMBLE_TYPE_EVENT_TO_STATUS[type(event)]
         elif type(event) is EESnapshotUpdate:
             self.merge_snapshot(EnsembleSnapshot.from_nested_dict(event.snapshot))
         elif type(event) is EESnapshot:

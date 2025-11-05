@@ -15,6 +15,7 @@ import orjson
 from pydantic.dataclasses import dataclass
 
 from _ert.events import (
+    EnsembleEvaluationWarning,
     ForwardModelStepChecksum,
     RealizationEvent,
     RealizationFailed,
@@ -343,6 +344,10 @@ class Scheduler:
     async def _process_event_queue(self) -> None:
         while True:
             event = await self.driver.event_queue.get()
+            if isinstance(event, EnsembleEvaluationWarning):
+                if self._ensemble_evaluator_queue:
+                    await self._ensemble_evaluator_queue.put(event)
+                continue
             job = self._jobs[event.iens]
 
             # Any event implies the job has at least started

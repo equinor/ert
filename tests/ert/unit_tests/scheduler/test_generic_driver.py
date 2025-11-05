@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from _ert.events import EnsembleEvaluationWarning
 from ert.scheduler.driver import SIGNAL_OFFSET, Driver
 from ert.scheduler.local_driver import LocalDriver
 from ert.scheduler.lsf_driver import LsfDriver
@@ -266,3 +267,71 @@ async def test_poll_ignores_filenotfounderror(driver: Driver, caplog):
     )
     assert "No such file or directory" in str(caplog.text)
     assert "/usr/bin/foo" in str(caplog.text)
+
+
+@pytest.mark.integration_test
+async def test_that_driver_emits_warning_event_when_polling_fails_for_timeout_period(
+    driver: Driver, tmp_path, job_name, monkeypatch, caplog
+):
+    """This test is to make sure that a WarningEvent from driver is emitted in case
+    polling fails completely, and does not get back on its feet within the set
+    period"""
+    if isinstance(driver, LocalDriver):
+        pytest.skip("LocalDriver has no polling concept")
+    monkeypatch.chdir(tmp_path)
+    driver._poll_period = 0.01
+    old_poll_cmd = ""
+    non_existent_cmd = "/usr/bin/foo_bar_cmd"
+    expected_error_msg = f"No such file or directory: '{non_existent_cmd}'"
+    # Set the polling command to a non existent one, so it will fail consistently
+    if isinstance(driver, LsfDriver):
+        old_poll_cmd = driver._bjobs_cmd
+        driver._bjobs_cmd = non_existent_cmd
+    elif isinstance(driver, OpenPBSDriver):
+        old_poll_cmd = driver._qstat_cmd
+        driver._qstat_cmd = non_existent_cmd
+    elif isinstance(driver, SlurmDriver):
+        old_poll_cmd = driver._squeue
+        driver._squeue = non_existent_cmd
+    else:
+        raise ValueError("Invalid Driver")
+
+    await driver.submit(
+        0,
+        "sh",
+        "-c",
+        "echo 'foo'",
+        name=job_name,
+    )
+
+    warning_event: asyncio.Future[EnsembleEvaluationWarning] = asyncio.Future()
+
+    def handle_warning(event: EnsembleEvaluationWarning) -> None:
+        nonlocal warning_event
+        if warning_event.done():
+            return
+        warning_event.set_result(event)
+
+    poll_task = asyncio.create_task(poll(driver, {0}, handle_warning=handle_warning))
+
+    async def wait_for_warning_message():
+        nonlocal driver
+        while True:
+            if expected_error_msg in caplog.text:
+                return
+            await asyncio.sleep(0.01)
+
+    await asyncio.wait_for(wait_for_warning_message(), timeout=5.0)
+    # Set the timeout to 0 after getting the first warning message
+    driver._polling_timeout_period = 0
+    received_event = await asyncio.wait_for(warning_event, timeout=5.0)
+
+    assert expected_error_msg in received_event.warning_message
+    # Reset command so it can finish correctly
+    if isinstance(driver, LsfDriver):
+        driver._bjobs_cmd = old_poll_cmd
+    elif isinstance(driver, OpenPBSDriver):
+        driver._qstat_cmd = old_poll_cmd
+    elif isinstance(driver, SlurmDriver):
+        driver._squeue = old_poll_cmd
+    await poll_task

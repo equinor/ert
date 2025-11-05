@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
 from pytestqt.qtbot import QtBot
 
 import ert.run_models
+from _ert.events import EnsembleEvaluationWarning
 from ert.config import ErtConfig
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.event import (
@@ -977,3 +978,79 @@ def test_that_run_dialog_clears_warnings_when_rerun(qtbot, monkeypatch):
     )
     run_dialog.rerun_failed_realizations()
     assert len(run_dialog.post_simulation_warnings) == 0
+
+
+@pytest.mark.integration_test
+@pytest.mark.parametrize(
+    "events",
+    [
+        pytest.param(
+            [
+                FullSnapshotEvent(
+                    snapshot=(
+                        SnapshotBuilder()
+                        .add_fm_step(
+                            fm_step_id="0",
+                            index="0",
+                            name="fm_step_0",
+                            status=state.FORWARD_MODEL_STATE_START,
+                        )
+                        .build(["0", "1"], state.REALIZATION_STATE_UNKNOWN)
+                    ),
+                    iteration_label="Foo",
+                    total_iterations=1,
+                    progress=0.5,
+                    realization_count=2,
+                    status_count={"Finished": 1, "Pending": 1},
+                    iteration=0,
+                ),
+                EnsembleEvaluationWarning(warning_message="foo_bar_error"),
+                FullSnapshotEvent(
+                    snapshot=(
+                        SnapshotBuilder()
+                        .add_fm_step(
+                            fm_step_id="0",
+                            index="0",
+                            name="fm_step_0",
+                            status=state.FORWARD_MODEL_STATE_START,
+                        )
+                        .build(["0", "1"], state.REALIZATION_STATE_FINISHED)
+                    ),
+                    iteration_label="Foo",
+                    total_iterations=1,
+                    progress=0.5,
+                    realization_count=2,
+                    status_count={"Finished": 1, "Pending": 1},
+                    iteration=1,
+                ),
+                EndEvent(failed=False, msg=""),
+            ],
+            id="scheduler_warning_event_between_snapshot_events",
+        ),
+    ],
+)
+def test_that_experiment_with_a_scheduler_warning_event_shows_a_warning_dialog(
+    events, event_queue, qtbot: QtBot, run_dialog: RunDialog
+):
+    with qtbot.waitSignal(run_dialog.simulation_done, timeout=10000):
+
+        def handle_dialog():
+            ensemble_evaluation_warning_box = wait_for_child(
+                run_dialog, qtbot, QMessageBox
+            )
+
+            assert ensemble_evaluation_warning_box.text() == "foo_bar_error"
+
+            dialog_buttons = wait_for_child(
+                ensemble_evaluation_warning_box, qtbot, QDialogButtonBox
+            ).buttons()
+            assert (
+                ensemble_evaluation_warning_box.objectName()
+                == "EnsembleEvaluationWarningBox"
+            )
+            yes_button = next(b for b in dialog_buttons if "OK" in b.text())
+            qtbot.mouseClick(yes_button, Qt.MouseButton.LeftButton)
+
+        handle_dialog()
+
+    assert run_dialog is not None

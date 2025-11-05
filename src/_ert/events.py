@@ -41,10 +41,12 @@ class Id:
     ENSEMBLE_SUCCEEDED_TYPE = Literal["ensemble.succeeded"]
     ENSEMBLE_CANCELLED_TYPE = Literal["ensemble.cancelled"]
     ENSEMBLE_FAILED_TYPE = Literal["ensemble.failed"]
+    ENSEMBLE_WARNING_TYPE = Literal["ensemble.warning"]
     ENSEMBLE_STARTED: Final = "ensemble.started"
     ENSEMBLE_SUCCEEDED: Final = "ensemble.succeeded"
     ENSEMBLE_CANCELLED: Final = "ensemble.cancelled"
     ENSEMBLE_FAILED: Final = "ensemble.failed"
+    ENSEMBLE_WARNING: Final = "ensemble.warning"
     ENSEMBLE_TYPES = (
         ENSEMBLE_STARTED_TYPE
         | ENSEMBLE_FAILED_TYPE
@@ -170,6 +172,15 @@ class EnsembleCancelled(EnsembleBaseEvent):
     event_type: Id.ENSEMBLE_CANCELLED_TYPE = Id.ENSEMBLE_CANCELLED
 
 
+class EnsembleEvaluationWarning(EnsembleBaseEvent):
+    """This event is to indicate that something unexpected happened while
+    running the ensemble, and that it might be stuck in an unresponsive state.
+    """
+
+    event_type: Id.ENSEMBLE_WARNING_TYPE = Id.ENSEMBLE_WARNING
+    warning_message: str
+
+
 class EESnapshot(EnsembleBaseEvent):
     event_type: Id.EE_SNAPSHOT_TYPE = Id.EE_SNAPSHOT
     snapshot: Any
@@ -200,9 +211,15 @@ RealizationEvent = (
     | RealizationResubmit
 )
 
-EnsembleEvent = EnsembleStarted | EnsembleSucceeded | EnsembleFailed | EnsembleCancelled
+EnsembleEvent = (
+    EnsembleStarted
+    | EnsembleSucceeded
+    | EnsembleFailed
+    | EnsembleCancelled
+    | EnsembleEvaluationWarning
+)
 
-EEEvent = EESnapshot | EESnapshotUpdate
+EEEvent = EESnapshot | EESnapshotUpdate | EnsembleEvaluationWarning
 
 SnapshotInputEvent = RealizationEvent | EnsembleEvent | FMEvent
 

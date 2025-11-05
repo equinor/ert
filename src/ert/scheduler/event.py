@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from _ert.events import EnsembleEvaluationWarning
+
 
 @dataclass
 class StartedEvent:
@@ -16,4 +18,4 @@ class FinishedEvent:
     exec_hosts: str = "-"
 
 
-DriverEvent = StartedEvent | FinishedEvent
+DriverEvent = StartedEvent | FinishedEvent | EnsembleEvaluationWarning
