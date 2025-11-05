@@ -15,7 +15,7 @@ from everest.util.forward_models import (
     parse_forward_model_file,
 )
 
-from .install_job_config import InstallJobConfig
+from .install_job_config import InstallForwardModelStepConfig
 
 _VARIABLE_ERROR_MESSAGE = (
     "Variable {name} must define {variable_type} value either"
@@ -297,7 +297,7 @@ def check_writeable_path(path_source: str, config_path: Path) -> None:
 
 
 def validate_forward_model_configs(
-    forward_model: list[str], install_jobs: list[InstallJobConfig]
+    forward_model: list[str], install_jobs: list[InstallForwardModelStepConfig]
 ) -> None:
     if not forward_model:
         return
