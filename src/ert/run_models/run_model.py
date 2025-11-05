@@ -25,7 +25,12 @@ import numpy as np
 from pydantic import PrivateAttr, field_validator
 from pydantic_core.core_schema import ValidationInfo
 
-from _ert.events import EEEvent, EESnapshot, EESnapshotUpdate
+from _ert.events import (
+    EEEvent,
+    EESnapshot,
+    EESnapshotUpdate,
+    EnsembleEvaluationWarning,
+)
 from ert.config import (
     ConfigValidationError,
     DesignMatrix,
@@ -607,6 +612,8 @@ class RunModel(RunModelConfig, ABC):
                     snapshot=copy.deepcopy(snapshot),
                 )
             )
+        elif type(event) is EnsembleEvaluationWarning:
+            self.send_event(event)
 
     async def run_ensemble_evaluator_async(
         self,

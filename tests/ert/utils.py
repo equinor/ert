@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 import zmq
 import zmq.asyncio
 
+from _ert.events import EnsembleEvaluationWarning
 from _ert.forward_model_runner.client import (
     ACK_MSG,
     CONNECT_MSG,
@@ -19,7 +20,10 @@ from _ert.forward_model_runner.client import (
     TERMINATE_MSG,
 )
 from _ert.threading import ErtThread
-from ert.scheduler.event import FinishedEvent, StartedEvent
+from ert.scheduler.event import (
+    FinishedEvent,
+    StartedEvent,
+)
 
 if TYPE_CHECKING:
     from ert.scheduler.driver import Driver
@@ -174,6 +178,7 @@ async def poll(
     *,
     started: Callable[[int], None] | None = None,
     finished=None,
+    handle_warning: Callable[[EnsembleEvaluationWarning], None] | None = None,
 ):
     """Poll driver until expected realisations finish
 
@@ -196,6 +201,8 @@ async def poll(
         Called for each job when it finishes. The first argument is the
         associated realisation index and the second is the returncode of the job
         process.
+    handle_warning : Callable[[EnsembleEvaluationWarning], None]
+        Called on EnsembleEvaluationWarnings from driver.
 
     """
 
@@ -213,6 +220,11 @@ async def poll(
                 completed.add(event.iens)
                 if completed == expected:
                     break
+            elif (
+                isinstance(event, EnsembleEvaluationWarning)
+                and handle_warning is not None
+            ):
+                handle_warning(event)
     finally:
         poll_task.cancel()
         await driver.finish()

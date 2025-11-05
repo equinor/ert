@@ -17,6 +17,7 @@ from _ert.events import (
     EESnapshot,
     EESnapshotUpdate,
     EnsembleCancelled,
+    EnsembleEvaluationWarning,
     EnsembleFailed,
     EnsembleStarted,
     EnsembleSucceeded,
@@ -162,6 +163,11 @@ class EnsembleEvaluator:
                         self._evaluation_result.set_result(True)
                     return
 
+                elif isinstance(event, EnsembleEvaluationWarning):
+                    if self._event_handler:
+                        self._event_handler(event)
+                    self._events_to_send.task_done()
+
                 elif type(event) in {
                     EESnapshot,
                     EESnapshotUpdate,
@@ -261,6 +267,7 @@ class EnsembleEvaluator:
                 event_handler[event_type] = func
 
         set_event_handler(set(get_args(FMEvent | RealizationEvent)), self._fm_handler)
+        set_event_handler({EnsembleEvaluationWarning}, self._warning_event_handler)
         set_event_handler({EnsembleStarted}, self._started_handler)
         set_event_handler({EnsembleSucceeded}, self._stopped_handler)
         set_event_handler({EnsembleCancelled}, self._cancelled_handler)
@@ -290,6 +297,12 @@ class EnsembleEvaluator:
 
     async def _fm_handler(self, events: Sequence[FMEvent | RealizationEvent]) -> None:
         await self._append_message(self.ensemble.update_snapshot(events))
+
+    async def _warning_event_handler(
+        self, events: Sequence[EnsembleEvaluationWarning]
+    ) -> None:
+        for event in events:
+            await self._events_to_send.put(event)
 
     async def _started_handler(self, events: Sequence[EnsembleStarted]) -> None:
         if self.ensemble.status != ENSEMBLE_STATE_FAILED:

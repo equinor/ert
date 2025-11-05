@@ -16,6 +16,7 @@ from pytest import MonkeyPatch
 from _ert.events import (
     EESnapshot,
     EESnapshotUpdate,
+    EnsembleEvaluationWarning,
     ForwardModelStepFailure,
     ForwardModelStepRunning,
     ForwardModelStepStart,
@@ -775,3 +776,22 @@ async def test_that_evaluator_listen_for_messages_exits_if_socket_has_been_close
         )
         == 1
     ), "The warning message should only be logged once"
+
+
+@pytest.mark.timeout(5)
+@pytest.mark.integration_test
+async def test_evaluator_forwards_scheduler_warning(
+    evaluator_to_use,
+):
+    (evaluator, event_queue) = evaluator_to_use
+    warning_event = EnsembleEvaluationWarning(warning_message="Foo occurred in bar!")
+    await evaluator._events.put(warning_event)
+
+    async def wait_for_warning_event_in_output_queue():
+        nonlocal event_queue
+        while True:
+            event = await event_queue.get()
+            if event is warning_event:
+                break
+
+    await asyncio.wait_for(wait_for_warning_event_in_output_queue(), timeout=5)
