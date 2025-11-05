@@ -16,6 +16,7 @@ from pytest import MonkeyPatch
 from _ert.events import (
     EESnapshot,
     EESnapshotUpdate,
+    EnsembleEvaluationWarningEvent,
     ForwardModelStepFailure,
     ForwardModelStepRunning,
     ForwardModelStepStart,
@@ -717,3 +718,24 @@ async def test_log_forward_model_steps_with_missing_status_updates(
         f"There could be connectivity issues to evaluator running on port "
         f"{router_port} on host {evaluator_host}"
     ) in caplog.text
+
+
+@pytest.mark.timeout(5)
+@pytest.mark.integration_test
+async def test_evaluator_forwards_scheduler_warning_event_to_run_model(
+    evaluator_to_use,
+):
+    (evaluator, event_queue) = evaluator_to_use
+    warning_event = EnsembleEvaluationWarningEvent(
+        warning_message="Foo occurred in bar!"
+    )
+    await evaluator._events.put(warning_event)
+
+    async def wait_for_warning_event_in_output_queue():
+        nonlocal event_queue
+        while True:
+            event = await event_queue.get()
+            if event is warning_event:
+                break
+
+    await asyncio.wait_for(wait_for_warning_event_in_output_queue(), timeout=5)

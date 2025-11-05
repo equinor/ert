@@ -5,6 +5,7 @@ import json
 import logging
 import shlex
 import shutil
+import time
 from collections.abc import Iterable, Mapping, MutableMapping
 from dataclasses import dataclass
 from pathlib import Path
@@ -263,7 +264,17 @@ class OpenPBSDriver(Driver):
             raise RuntimeError(process_message)
 
     async def poll(self) -> None:
+        last_successful_poll = time.time()
+        last_error_message = "unknown error"
+        has_warned_evaluator_of_polling_error = False
         while True:
+            if (
+                last_successful_poll < time.time() - self._polling_timeout_period
+            ) and not has_warned_evaluator_of_polling_error:
+                await self._warn_evaluator_about_polling_difficulties(
+                    last_error_message
+                )
+                has_warned_evaluator_of_polling_error = True
             if not self._jobs:
                 await asyncio.sleep(self._poll_period)
                 continue
@@ -280,6 +291,7 @@ class OpenPBSDriver(Driver):
                     )
                 except OSError as e:
                     logger.error(str(e))
+                    last_error_message = str(e)
                     await asyncio.sleep(self._poll_period)
                     continue
                 stdout, stderr = await process.communicate()
@@ -289,10 +301,12 @@ class OpenPBSDriver(Driver):
                     await asyncio.sleep(self._poll_period)
                     continue
                 if process.returncode == QSTAT_UNKNOWN_JOB_ID:
+                    error_msg = stderr.decode(errors="ignore")
                     logger.debug(
                         f"qstat gave returncode {QSTAT_UNKNOWN_JOB_ID} "
-                        f"with message {stderr.decode(errors='ignore')}"
+                        f"with message {error_msg}"
                     )
+                    last_error_message = error_msg
                 parsed_jobs = _parse_jobs_dict(
                     parse_qstat(stdout.decode(errors="ignore"))
                 )
@@ -330,6 +344,7 @@ class OpenPBSDriver(Driver):
                 for job_id, job in parsed_jobs_dict.items():
                     await self._process_job_update(job_id, job)
 
+            last_successful_poll = time.time()
             await asyncio.sleep(self._poll_period)
 
     async def _process_job_update(self, job_id: str, new_state: AnyJob) -> None:
