@@ -1,5 +1,6 @@
 import logging
 from collections.abc import Callable
+from typing import cast
 
 from PyQt6.QtCore import (
     QAbstractItemModel,
@@ -149,7 +150,8 @@ class StorageWidget(QWidget):
         self.setLayout(layout)
 
     def _currentChanged(self, selected: QModelIndex, previous: QModelIndex) -> None:
-        idx = self._tree_view.model().mapToSource(selected)  # type: ignore
+        model = cast(_SortingProxyModel, self._tree_view.model())
+        idx = model.mapToSource(selected)
         cls = idx.internalPointer()
 
         if isinstance(cls, EnsembleModel):
