@@ -4,7 +4,9 @@ from unittest.mock import patch
 import pytest
 
 from ert.config import ConfigWarning, ErtConfig
-from ert.config.forward_model_step import ForwardModelStep
+from ert.config.forward_model_step import (
+    UserInstalledForwardModelStep,
+)
 from ert.config.parsing.config_schema_deprecations import (
     JUST_REMOVE_KEYWORDS,
     REPLACE_WITH_GEN_KW,
@@ -207,7 +209,7 @@ def test_that_a_deprecation_message_is_shown_for_use_of_the_job_prefix_queue_opt
 
 def test_that_forward_model_design2params_is_deprecated():
     # Create a mock DESIGN2PARAMS forward model step, since it is not installed
-    mock_design2params_step = ForwardModelStep(
+    mock_design2params_step = UserInstalledForwardModelStep(
         name="DESIGN2PARAMS",
         executable="design2params",
     )
@@ -232,7 +234,7 @@ def test_that_forward_model_design2params_is_deprecated():
 
 def test_that_forward_model_design_kw_is_deprecated():
     # Create a mock DESIGN_KW forward model step, since it is not installed
-    mock_design_kw_step = ForwardModelStep(
+    mock_design_kw_step = UserInstalledForwardModelStep(
         name="DESIGN_KW",
         executable="design_kw",
     )

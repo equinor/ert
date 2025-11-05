@@ -4,7 +4,7 @@ from textwrap import dedent
 
 from pydantic import BaseModel, Field
 
-from ert.config import ForwardModelStep
+from ert.config import SiteOrUserForwardModelStep
 from everest.strings import EVEREST
 
 
@@ -38,9 +38,9 @@ class InstallTemplateConfig(BaseModel, extra="forbid"):
     def to_ert_forward_model_step(
         self,
         control_names: list[str],
-        installed_fm_steps: dict[str, ForwardModelStep],
+        installed_fm_steps: dict[str, SiteOrUserForwardModelStep],
         well_path: str,
-    ) -> ForwardModelStep:
+    ) -> SiteOrUserForwardModelStep:
         fm_step_instance = copy.deepcopy(installed_fm_steps.get("template_render"))
         if fm_step_instance is None:
             raise KeyError(

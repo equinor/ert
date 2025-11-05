@@ -36,6 +36,9 @@ from .forward_model_step import (
     ForwardModelStepJSON,
     ForwardModelStepValidationError,
     ForwardModelStepWarning,
+    SiteInstalledForwardModelStep,
+    SiteOrUserForwardModelStep,
+    UserInstalledForwardModelStep,
 )
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import DataSource, GenKwConfig
@@ -518,18 +521,16 @@ def workflows_from_dict(
 
 def installed_forward_model_steps_from_dict(
     config_dict: ConfigDict,
-) -> dict[str, ForwardModelStep]:
+) -> dict[str, UserInstalledForwardModelStep]:
     errors: list[ErrorInfo | ConfigValidationError] = []
-    fm_steps: dict[str, ForwardModelStep] = {}
+    fm_steps: dict[str, UserInstalledForwardModelStep] = {}
     for name, (fm_step_config_file, config_contents) in config_dict.get(
         ConfigKeys.INSTALL_JOB, []
     ):
         fm_step_config_file = path.abspath(fm_step_config_file)
         try:
             new_fm_step = forward_model_step_from_config_contents(
-                config_contents,
-                name=name,
-                config_file=fm_step_config_file,
+                config_contents, name=name, config_file=fm_step_config_file
             )
         except ConfigValidationError as e:
             errors.append(e)
@@ -720,7 +721,7 @@ class ErtConfig(BaseModel):
 
     ert_templates: list[tuple[str, str]] = Field(default_factory=list)
 
-    forward_model_steps: list[ForwardModelStep] = Field(default_factory=list)
+    forward_model_steps: list[SiteOrUserForwardModelStep] = Field(default_factory=list)
     runpath_config: ModelConfig = Field(default_factory=ModelConfig)
     user_config_file: str = "no_config"
     config_path: str = Field(init=False, default="")
@@ -817,7 +818,7 @@ class ErtConfig(BaseModel):
     def with_plugins(runtime_plugins: ErtRuntimePlugins) -> type[ErtConfig]:
         class ErtConfigWithPlugins(ErtConfig):
             PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[
-                Mapping[str, ForwardModelStep]
+                Mapping[str, SiteInstalledForwardModelStep]
             ] = runtime_plugins.installed_forward_model_steps
             PREINSTALLED_WORKFLOWS = dict(runtime_plugins.installed_workflow_jobs)
             ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = (
@@ -1384,8 +1385,10 @@ def uppercase_subkeys_and_stringify_subvalues(
 
 
 def forward_model_step_from_config_contents(
-    config_contents: str, config_file: str, name: str | None = None
-) -> ForwardModelStep:
+    config_contents: str,
+    config_file: str,
+    name: str | None = None,
+) -> UserInstalledForwardModelStep:
     if name is None:
         name = os.path.basename(config_file)
 
@@ -1409,7 +1412,7 @@ def forward_model_step_from_config_contents(
     environment = {k: v for [k, v] in content_dict.get("ENV", [])}
     default_mapping = {k: v for [k, v] in content_dict.get("DEFAULT", [])}
 
-    return ForwardModelStep(
+    return UserInstalledForwardModelStep(
         name=name,
         executable=content_dict["EXECUTABLE"],
         stdin_file=content_dict.get("STDIN"),

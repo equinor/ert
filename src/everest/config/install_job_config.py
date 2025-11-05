@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from ert.config import (
     ExecutableWorkflow,
-    ForwardModelStep,
+    UserInstalledForwardModelStep,
     forward_model_step_from_config_contents,
     workflow_job_from_file,
 )
@@ -57,12 +57,16 @@ class InstallJobConfig(BaseModel, extra="forbid"):
 
 
 class InstallForwardModelStepConfig(InstallJobConfig):
-    def to_ert_forward_model_step(self, config_directory: str) -> ForwardModelStep:
+    def to_ert_forward_model_step(
+        self, config_directory: str
+    ) -> UserInstalledForwardModelStep:
         if self.executable is not None:
             executable = Path(self.executable)
             if not executable.is_absolute():
                 executable = Path(config_directory) / executable
-            return ForwardModelStep(name=self.name, executable=str(executable))
+            return UserInstalledForwardModelStep(
+                name=self.name, executable=str(executable)
+            )
         else:
             assert (
                 self.source is not None

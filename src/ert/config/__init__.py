@@ -23,6 +23,9 @@ from .forward_model_step import (
     ForwardModelStepPlugin,
     ForwardModelStepValidationError,
     ForwardModelStepWarning,
+    SiteInstalledForwardModelStep,
+    SiteOrUserForwardModelStep,
+    UserInstalledForwardModelStep,
 )
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import DataSource, GenKwConfig, PriorDict
@@ -129,8 +132,11 @@ __all__ = [
     "QueueSystem",
     "ResponseConfig",
     "ResponseMetadata",
+    "SiteInstalledForwardModelStep",
+    "SiteOrUserForwardModelStep",
     "SummaryConfig",
     "SurfaceConfig",
+    "UserInstalledForwardModelStep",
     "WarningInfo",
     "Workflow",
     "WorkflowConfigs",

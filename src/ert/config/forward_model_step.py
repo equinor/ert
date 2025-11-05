@@ -1,12 +1,32 @@
 from __future__ import annotations
 
 import logging
-from typing import ClassVar, Literal, NotRequired, Self
+from typing import (
+    TYPE_CHECKING,
+    Annotated,
+    Any,
+    ClassVar,
+    Literal,
+    NotRequired,
+    Self,
+    cast,
+)
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    field_validator,
+    model_serializer,
+    model_validator,
+)
+from pydantic_core.core_schema import ValidationInfo
 from typing_extensions import TypedDict, Unpack
 
+from ..base_model_context import BaseModelWithContextSupport
 from .parsing import ConfigValidationError, ConfigWarning, SchemaItemType
+
+if TYPE_CHECKING:
+    from ert.plugins import ErtRuntimePlugins
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +112,7 @@ class ForwardModelStepDocumentation(BaseModel):
     ) = Field(default="Uncategorized")
 
 
-class ForwardModelStep(BaseModel):
+class ForwardModelStep(BaseModelWithContextSupport):
     """
     Holds information to execute one step of a forward model
 
@@ -203,7 +223,87 @@ class ForwardModelStep(BaseModel):
         return None if v == "null" else v
 
 
-class ForwardModelStepPlugin(ForwardModelStep):
+class UserInstalledForwardModelStep(ForwardModelStep):
+    """
+    Represents a forward model step installed by a user via the ERT Config
+    forward model step format provided via the INSTALL_JOB keyword.
+    User-installed forward model steps serialize with their full configuration,
+    unlike site-installed steps which only serialize as references.
+    """
+
+    type: Literal["user_installed"] = "user_installed"
+
+
+class _SerializedSiteInstalledForwardModelStep(TypedDict):
+    type: Literal["site_installed"]
+    name: str
+    private_args: dict[str, str]
+
+
+class SiteInstalledForwardModelStep(ForwardModelStep):
+    """
+    Represents a forward model step installed via external plugins.
+    Instances of this class serialize only as references to the plugin by name, and
+    the user-provided private_args, allowing them to dynamically update when plugins
+    change, rather than being locked to a specific executable at serialization time.
+    """
+
+    type: Literal["site_installed"] = "site_installed"
+
+    @model_serializer(mode="plain")
+    def serialize_model(self) -> _SerializedSiteInstalledForwardModelStep:
+        return {
+            "type": "site_installed",
+            "name": self.name,
+            "private_args": self.private_args,
+        }
+
+    @model_validator(mode="before")
+    @classmethod
+    def deserialize_model(
+        cls, values: dict[str, Any], info: ValidationInfo
+    ) -> dict[str, Any]:
+        runtime_plugins = cast("ErtRuntimePlugins", info.context)
+        name = values["name"]
+
+        if runtime_plugins is None:
+            if values.get("type") == "site_installed":
+                msg = (
+                    f"Trying to find site-installed forward model step {name} "
+                    f"without site plugins. This forward model must be loaded "
+                    f"with ERT site plugins available."
+                )
+                raise KeyError(msg)
+            return values
+
+        if name not in runtime_plugins.installed_forward_model_steps:
+            msg = (
+                f"Expected forward model step {name} to be installed "
+                f"via plugins, but it was not found. Please check that "
+                f"your python environment has it installed."
+            )
+            raise KeyError(msg)
+        site_installed_fm = runtime_plugins.installed_forward_model_steps[name]
+
+        # Intent: copy the site installed forward model to this instance.
+        # bypassing the model_serializer
+        site_fm_instance = {
+            k: getattr(site_installed_fm, k)
+            for k in SiteInstalledForwardModelStep.model_fields
+        }
+
+        return site_fm_instance | (
+            {"private_args": values["private_args"]} if "private_args" in values else {}
+        )
+
+
+SiteOrUserForwardModelStep = Annotated[
+    (UserInstalledForwardModelStep | SiteInstalledForwardModelStep),
+    Field(discriminator="type"),
+]
+
+
+class ForwardModelStepPlugin(SiteInstalledForwardModelStep):
     def __init__(
         self, name: str, command: list[str], **kwargs: Unpack[ForwardModelStepOptions]
     ) -> None:

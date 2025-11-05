@@ -29,7 +29,10 @@ from ert.config import (
     QueueSystem,
 )
 from ert.config.ert_config import _split_string_into_sections, create_forward_model_json
-from ert.config.forward_model_step import ForwardModelStep, ForwardModelStepPlugin
+from ert.config.forward_model_step import (
+    ForwardModelStepPlugin,
+    SiteInstalledForwardModelStep,
+)
 from ert.config.parsing import ConfigKeys, ConfigWarning
 from ert.config.parsing.context_values import (
     ContextBool,
@@ -2010,7 +2013,7 @@ def test_design2params_also_validates_design_matrix(tmp_path, caplog, monkeypatc
         ),
         pl.DataFrame([["b", 1], ["c", 2]], orient="row"),
     )
-    mock_design2params = ForwardModelStep(
+    mock_design2params = SiteInstalledForwardModelStep(
         name="DESIGN2PARAMS",
         executable="/usr/bin/env",
         arglist=["<IENS>", "<xls_filename>", "<designsheet>", "<defaultssheet>"],
@@ -2049,7 +2052,7 @@ def test_two_design2params_validates_design_matrix_merging(
         pl.DataFrame({"REAL": [1, 2], "numbers": [99, 98]}),
         pl.DataFrame(),
     )
-    mock_design2params = ForwardModelStep(
+    mock_design2params = SiteInstalledForwardModelStep(
         name="DESIGN2PARAMS",
         executable="/usr/bin/env",
         arglist=["<IENS>", "<xls_filename>", "<designsheet>", "<defaultssheet>"],
@@ -2107,7 +2110,7 @@ def test_three_design2params_validates_design_matrix_merging(
         pl.DataFrame({"REAL": [1, 2], "numbers": [99, 98]}),
         pl.DataFrame(),
     )
-    mock_design2params = ForwardModelStep(
+    mock_design2params = SiteInstalledForwardModelStep(
         name="DESIGN2PARAMS",
         executable="/usr/bin/env",
         arglist=["<IENS>", "<xls_filename>", "<designsheet>", "<defaultssheet>"],

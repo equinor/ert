@@ -8,7 +8,9 @@ from textwrap import dedent
 
 import pytest
 from hypothesis import given, settings
+from pydantic import TypeAdapter
 
+from ert.base_model_context import use_runtime_plugins
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
 from ert.config.ert_config import (
     create_forward_model_json,
@@ -18,6 +20,8 @@ from ert.config.forward_model_step import (
     ForwardModelStepJSON,
     ForwardModelStepPlugin,
     ForwardModelStepValidationError,
+    SiteInstalledForwardModelStep,
+    SiteOrUserForwardModelStep,
 )
 from ert.config.parsing import SchemaItemType
 from ert.plugins import ErtRuntimePlugins, get_site_plugins
@@ -37,10 +41,7 @@ def test_load_forward_model():
         STDERR null
         EXECUTABLE script.sh
         """
-    fm_step = forward_model_step_from_config_contents(
-        contents,
-        "CONFIG",
-    )
+    fm_step = forward_model_step_from_config_contents(contents, "CONFIG")
     assert fm_step.name == "CONFIG"
     assert fm_step.stdout_file is None
     assert fm_step.stderr_file is None
@@ -52,7 +53,7 @@ def test_load_forward_model():
 
     fm_step = forward_model_step_from_config_contents(contents, "CONFIG", name="Step")
     assert fm_step.name == "Step"
-    assert repr(fm_step).startswith("ForwardModelStep(")
+    assert repr(fm_step).startswith("UserInstalledForwardModelStep(")
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -1028,4 +1029,151 @@ def test_that_all_required_keywords_in_forward_model_are_validated():
            INSTALL_JOB step step
            FORWARD_MODEL step
            """
+        )
+
+
+def test_that_site_fm_step_serializes_as_reference_to_site_plugin(use_tmpdir):
+    class SiteForwardModel(ForwardModelStepPlugin):
+        def __init__(self) -> None:
+            super().__init__(
+                name="SITE_FM",
+                command=["echo", "helloworld", "<ONE>", "<TWO>"],
+            )
+
+    with use_runtime_plugins(
+        ErtRuntimePlugins(installed_forward_model_steps={"SITE_FM": SiteForwardModel()})
+    ):
+        site_fm = SiteForwardModel()
+        # PS: It is missing private args, this must be added by mutation
+        # as it is the current practice in ert config
+        site_fm.private_args = {"ONE": 1, "TWO": "2"}
+
+        serialized_fm_step = site_fm.model_dump(mode="json")
+        assert serialized_fm_step == {
+            "name": "SITE_FM",
+            "type": "site_installed",
+            "private_args": {"ONE": 1, "TWO": "2"},
+        }
+
+
+def test_that_site_fm_step_deserialization_is_overwritten_by_site_installed_fmsteps(
+    use_tmpdir,
+):
+    custom_echo_path = Path("custom_echo.sh")
+    custom_echo_path.write_text("#!/bin/bash\necho hello", encoding="utf-8")
+    custom_echo_path.chmod(custom_echo_path.stat().st_mode | stat.S_IEXEC)
+
+    class SomeUpdatedForwardModel(ForwardModelStepPlugin):
+        def __init__(self) -> None:
+            super().__init__(
+                name="SITE_FM",
+                command=["custom_echo.sh", "helloworld", "<hello>", "<hi>", "<noop>"],
+            )
+
+    with use_runtime_plugins(
+        ErtRuntimePlugins(
+            installed_forward_model_steps={"SITE_FM": SomeUpdatedForwardModel()}
+        )
+    ):
+        site_fm_with_updated_executable = TypeAdapter(
+            SiteOrUserForwardModelStep
+        ).validate_python(
+            {
+                "name": "SITE_FM",
+                "type": "site_installed",
+                "private_args": {"hello": "hi", "hi": "2"},
+            }
+        )
+
+        assert isinstance(
+            site_fm_with_updated_executable, SiteInstalledForwardModelStep
+        )
+        assert site_fm_with_updated_executable.executable == "custom_echo.sh"
+        assert site_fm_with_updated_executable.private_args == {
+            "hello": "hi",
+            "hi": "2",
+        }
+
+
+def test_that_user_fm_step_retains_executable_and_private_args_when_serialized(
+    use_tmpdir,
+):
+    Path("fm_step").write_text("EXECUTABLE echo\nARGLIST ARG1 ARG2", encoding="utf-8")
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS 1
+        INSTALL_JOB user_fm fm_step
+        FORWARD_MODEL user_fm(ARG1=<arg1>,ARG2=<arg2>)
+        """
+    )
+    Path("config.ert").write_text(test_config_contents, encoding="utf-8")
+
+    ert_config = ErtConfig.from_file("config.ert")
+    user_fm = ert_config.forward_model_steps[0]
+    assert user_fm.type == "user_installed"
+    assert user_fm.executable == "echo"
+    assert user_fm.arglist == ["ARG1", "ARG2"]
+    assert user_fm.private_args == {"ARG1": "<arg1>", "ARG2": "<arg2>"}
+    assert (
+        TypeAdapter(SiteOrUserForwardModelStep).validate_python(user_fm.model_dump())
+        == user_fm
+    )
+
+
+def test_that_fm_step_serializes_name_and_private_args_only_for_site_and_full_for_user(
+    use_tmpdir,
+):
+    Path("fm_step").write_text(
+        "EXECUTABLE echo\nARGLIST ONE TWO THREE", encoding="utf-8"
+    )
+    test_config_contents = dedent(
+        """
+        NUM_REALIZATIONS 1
+        INSTALL_JOB users_fm fm_step
+        FORWARD_MODEL users_fm(ONE=1,TWO=2,THREE=3)
+        FORWARD_MODEL SITE_INSTALLED_FM(ONE=1,TWO=2,THREE=3)
+        """
+    )
+    Path("config.ert").write_text(test_config_contents, encoding="utf-8")
+
+    class SiteForwardModel(ForwardModelStepPlugin):
+        def __init__(self) -> None:
+            super().__init__(
+                name="SITE_INSTALLED_FM",
+                command=["echo", "hello_from_site", "<ONE>", "<TWO>", "<THREE>"],
+            )
+
+    site_plugins = ErtRuntimePlugins(
+        installed_forward_model_steps={"SITE_INSTALLED_FM": SiteForwardModel()}
+    )
+    ert_config = ErtConfig.with_plugins(site_plugins).from_file("config.ert")
+    [user_fm, site_fm] = ert_config.forward_model_steps
+    assert user_fm.type == "user_installed"
+    assert site_fm.model_dump() == {
+        "type": "site_installed",
+        "name": "SITE_INSTALLED_FM",
+        "private_args": {"ONE": "1", "TWO": "2", "THREE": "3"},
+    }
+
+    assert user_fm.private_args == {"ONE": "1", "TWO": "2", "THREE": "3"}
+    assert user_fm.private_args == site_fm.private_args
+
+
+def test_that_deserializing_site_forward_model_without_site_plugins_raises_error():
+    with pytest.raises(KeyError, match="Trying to find site-installed forward model"):
+        SiteInstalledForwardModelStep.model_validate(
+            {"type": "site_installed", "name": "queue pool's closed"}
+        )
+
+
+def test_that_deserializing_site_forward_model_step_not_in_plugins_raises_error():
+    with (
+        pytest.raises(
+            KeyError,
+            match=r"Expected forward model step queue pool",
+        ),
+        use_runtime_plugins(ErtRuntimePlugins(installed_forward_model_steps={})),
+    ):
+        SiteInstalledForwardModelStep.model_validate(
+            {"type": "site_installed", "name": "queue pool's closed"}
         )
