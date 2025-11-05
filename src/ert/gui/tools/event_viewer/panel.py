@@ -33,10 +33,7 @@ class _GUILogHandler(logging.Handler):
 
 
 class GUILogHandler(_Signaler):
-    """
-    Log handler which will emit a qt signal every time a
-    log is emitted
-    """
+    """Log handler which will emit a qt signal every time a log is emitted."""
 
     def __init__(self) -> None:
         super().__init__()
