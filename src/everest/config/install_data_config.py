@@ -10,6 +10,9 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from ert.config import ForwardModelStep
+from ert.config.forward_model_step import (
+    SiteOrUserForwardModelStep,
+)
 
 
 def _is_dir_all_model(source: str, model_realizations: list[int]) -> bool:
@@ -126,7 +129,7 @@ class InstallDataConfig(BaseModel):
         config_directory: str,
         output_directory: str,
         model_realizations: list[int],
-        installed_fm_steps: dict[str, ForwardModelStep],
+        installed_fm_steps: dict[str, SiteOrUserForwardModelStep],
     ) -> ForwardModelStep:
         target = self.target
 

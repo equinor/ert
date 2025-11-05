@@ -105,6 +105,7 @@ def make_ensemble(queue_config):
                         f"EXECUTABLE ext_{job_index}.py\n",
                         str(Path(tmpdir) / f"EXT_JOB_{job_index}"),
                         name=f"forward_model_{job_index}",
+                        origin="user",
                     )
                 )
             realizations = []
