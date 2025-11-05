@@ -9,6 +9,7 @@ from typing import TextIO
 import humanize
 from tqdm import tqdm
 
+from _ert.events import EnsembleEvaluationWarningEvent
 from ert.ensemble_evaluator import (
     EndEvent,
     EnsembleSnapshot,
@@ -19,6 +20,7 @@ from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator.state import (
     COLOR_FAILED,
     COLOR_FINISHED,
+    COLOR_WARNING,
     FORWARD_MODEL_STATE_FAILURE,
     REAL_STATE_TO_COLOR,
 )
@@ -96,6 +98,17 @@ class Monitor:
                     | RunModelErrorEvent() as event
                 ):
                     event.write_as_csv(output_path)
+                case EnsembleEvaluationWarningEvent(warning_message=msg):
+                    formatted_msg = (
+                        "ert has not been able to update the job status for some time."
+                        "\nThis might be resolved by itself, and it does not mean that"
+                        " the run has crashed.\nPlease check the runpath if it seems "
+                        f"to still be running.\nThe last error message was '{msg}'"
+                    )
+                    print(
+                        self._colorize(formatted_msg, color=COLOR_WARNING),
+                        file=self._out,
+                    )
 
     def _print_step_errors(self) -> None:
         failed_steps: dict[str | None, int] = {}
