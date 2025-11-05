@@ -129,15 +129,28 @@ Reject commits that bundle unrelated changes (e.g., test addition + API rename +
 
 ---
 
-## 5. Prioritization
+## 5. Type Hints
+
+All code should have type hints checked by mypy.
+
+1. Prefer not to use the `Any` type when possible.
+1. Except for dunder methods (`__repr__`, `__eq__` etc.),  overridden methods
+   should be decorated with the `@override` decorator.
+1. Prefer use of `cast` or `assert` (as a type guard) over using the `#type: ignore`
+   to ignore type errors.
+
+---
+
+## 6. Prioritization
 
 Address in order:
 1. Critical flaws
 2. Incorrect or missing tests for critical logic.
 3. Flaky or slow unit tests not marked as integration.
-4. Poorly named tests (vague or non-spec style).
-5. Commit message policy violations.
-6. Documentation gaps.
+4. Incorrect or missing type hints.
+5. Poorly named tests (vague or non-spec style).
+6. Commit message policy violations.
+7. Documentation gaps.
 
 Provide concise, actionable suggestions—avoid generic praise or ungrounded criticism.
 
