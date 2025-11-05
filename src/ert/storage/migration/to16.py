@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-info = "Add ertbox_params to field config"
+info = "Remove mask file from field config"
 
 
 def migrate_field_param(parameters_json: dict[str, Any]) -> dict[str, Any]:
