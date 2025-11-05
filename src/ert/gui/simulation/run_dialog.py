@@ -64,6 +64,7 @@ from ert.run_models.event import (
     RunModelDataEvent,
     RunModelErrorEvent,
 )
+from ert.scheduler.event import SchedulerWarningEvent
 from ert.shared.status.utils import (
     byte_with_unit,
     file_has_content,
@@ -202,7 +203,7 @@ class RunDialog(QFrame):
         self,
         title: str,
         run_model_api: RunModelAPI,
-        event_queue: SimpleQueue[StatusEvents],
+        event_queue: SimpleQueue[StatusEvents | SchedulerWarningEvent],
         notifier: ErtNotifier,
         parent: QWidget | None = None,
         output_path: Path | None = None,
@@ -531,6 +532,9 @@ class RunDialog(QFrame):
                 self._ticker.stop()
             case WarningEvent(msg=msg):
                 self.post_simulation_warnings.append(msg)
+            case SchedulerWarningEvent(warning_message=msg):
+                self._show_warning(msg)
+
             case FullSnapshotEvent(
                 status_count=status_count, realization_count=realization_count
             ):
@@ -654,6 +658,22 @@ class RunDialog(QFrame):
     def hideEvent(self, event: QHideEvent | None) -> None:
         for file_dialog in self.findChildren(FileDialog):
             file_dialog.close()
+
+    def _show_warning(self, msg: str) -> None:
+        msg_box = QMessageBox(self)
+        msg_box.setObjectName("EnsembleEvaluationWarningBox")
+        msg_box.setIcon(QMessageBox.Icon.Warning)
+        msg_box.setWindowTitle("Ensemble Evaluation Warning")
+        formatted_msg = (
+            "Something unexpected has happened, and ert has not been able to poll "
+            "the run for updates for some time. This might be resolved "
+            "by itself, and it does not mean that the run has crashed. "
+            "Please check the runpath if it seems to still be running. "
+            f"The last error message was '{msg}'"
+        )
+        msg_box.setText(formatted_msg)
+        msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
+        msg_box.show()
 
 
 # Cannot use a non-static method here as

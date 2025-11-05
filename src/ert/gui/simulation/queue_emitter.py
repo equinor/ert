@@ -12,6 +12,7 @@ from PyQt6.QtCore import pyqtSlot as Slot
 from ert.ensemble_evaluator import EndEvent, FullSnapshotEvent, SnapshotUpdateEvent
 from ert.gui.model.snapshot import SnapshotModel
 from ert.run_models import StatusEvents
+from ert.scheduler.event import SchedulerWarningEvent
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ class QueueEmitter(QObject):
 
     def __init__(
         self,
-        event_queue: SimpleQueue[StatusEvents],
+        event_queue: SimpleQueue[StatusEvents | SchedulerWarningEvent],
         parent: QObject | None = None,
     ) -> None:
         super().__init__(parent)

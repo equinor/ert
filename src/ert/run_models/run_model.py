@@ -57,6 +57,7 @@ from ert.ensemble_evaluator.state import (
 )
 from ert.mode_definitions import MODULE_MODE
 from ert.runpaths import Runpaths
+from ert.scheduler.event import SchedulerWarningEvent
 from ert.storage import (
     Ensemble,
     Storage,
@@ -183,7 +184,7 @@ class RunModel(BaseModelWithContextSupport, ABC):
     def __init__(
         self,
         *,
-        status_queue: queue.SimpleQueue[StatusEvents],
+        status_queue: queue.SimpleQueue[StatusEvents | SchedulerWarningEvent],
         _total_iterations: int | None = None,
         **data: Any,
     ) -> None:
@@ -327,7 +328,7 @@ class RunModel(BaseModelWithContextSupport, ABC):
         """
         return None
 
-    def send_event(self, event: StatusEvents) -> None:
+    def send_event(self, event: StatusEvents | SchedulerWarningEvent) -> None:
         self._status_queue.put(event)
 
     @property
@@ -564,7 +565,7 @@ class RunModel(BaseModelWithContextSupport, ABC):
 
     def forward_event_from_ee(
         self,
-        event: EEEvent,
+        event: EEEvent | SchedulerWarningEvent,
         iteration: int,
     ) -> None:
         if type(event) is EESnapshot:
@@ -609,6 +610,8 @@ class RunModel(BaseModelWithContextSupport, ABC):
                     snapshot=copy.deepcopy(snapshot),
                 )
             )
+        elif type(event) is SchedulerWarningEvent:
+            self.send_event(event)
 
     async def run_ensemble_evaluator_async(
         self,

@@ -26,6 +26,7 @@ from ert.config import QueueSystem
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.run_models import RunModel, StatusEvents, create_model
+from ert.scheduler.event import SchedulerWarningEvent
 
 from ..find_ert_info import find_ert_info
 from ..summarypanel import SummaryPanel
@@ -275,7 +276,7 @@ class ExperimentPanel(QWidget):
     def run_experiment(self) -> None:
         args = self.get_experiment_arguments()
         QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
-        event_queue: SimpleQueue[StatusEvents] = SimpleQueue()
+        event_queue: SimpleQueue[StatusEvents | SchedulerWarningEvent] = SimpleQueue()
         try:
             model = create_model(
                 self.config,

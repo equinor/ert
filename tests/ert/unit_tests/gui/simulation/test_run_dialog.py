@@ -45,6 +45,7 @@ from ert.run_models import (
     EnsembleSmoother,
     MultipleDataAssimilation,
 )
+from ert.scheduler.event import SchedulerWarningEvent
 from ert.scheduler.job import Job
 from tests.ert import SnapshotBuilder
 from tests.ert.ui_tests.gui.conftest import wait_for_attribute, wait_for_child
@@ -966,3 +967,81 @@ def test_that_file_dialog_close_when_run_dialog_hidden(qtbot: QtBot, run_dialog)
             assert file_dialog.isVisible()
             run_dialog.setVisible(False)
             assert not file_dialog.isVisible()
+
+
+@pytest.mark.integration_test
+@pytest.mark.parametrize(
+    "events",
+    [
+        pytest.param(
+            [
+                FullSnapshotEvent(
+                    snapshot=(
+                        SnapshotBuilder()
+                        .add_fm_step(
+                            fm_step_id="0",
+                            index="0",
+                            name="fm_step_0",
+                            status=state.FORWARD_MODEL_STATE_START,
+                        )
+                        .build(["0", "1"], state.REALIZATION_STATE_UNKNOWN)
+                    ),
+                    iteration_label="Foo",
+                    total_iterations=1,
+                    progress=0.5,
+                    realization_count=2,
+                    status_count={"Finished": 1, "Pending": 1},
+                    iteration=0,
+                ),
+                SchedulerWarningEvent(warning_message="foo_bar_error"),
+                FullSnapshotEvent(
+                    snapshot=(
+                        SnapshotBuilder()
+                        .add_fm_step(
+                            fm_step_id="0",
+                            index="0",
+                            name="fm_step_0",
+                            status=state.FORWARD_MODEL_STATE_START,
+                        )
+                        .build(["0", "1"], state.REALIZATION_STATE_FINISHED)
+                    ),
+                    iteration_label="Foo",
+                    total_iterations=1,
+                    progress=0.5,
+                    realization_count=2,
+                    status_count={"Finished": 1, "Pending": 1},
+                    iteration=1,
+                ),
+                EndEvent(failed=False, msg=""),
+            ],
+            id="scheduler_warning_event_between_snapshot_events",
+        ),
+    ],
+)
+def test_that_experiment_with_a_scheduler_warning_event_shows_a_warning_dialog(
+    events, event_queue, qtbot: QtBot, run_dialog: RunDialog
+):
+    with qtbot.waitSignal(run_dialog.simulation_done, timeout=10000):
+
+        def handle_dialog():
+            ensemble_evaluation_warning_box = wait_for_child(
+                run_dialog, qtbot, QMessageBox
+            )
+            assert ensemble_evaluation_warning_box.text().startswith(
+                "Something unexpected has happened, and ert has not been able to "
+                "poll the run for updates for some time"
+            )
+            assert "foo_bar_error" in ensemble_evaluation_warning_box.text()
+            assert (
+                ensemble_evaluation_warning_box.windowTitle()
+                == "Ensemble Evaluation Warning"
+            )
+            dialog_buttons = wait_for_child(
+                ensemble_evaluation_warning_box, qtbot, QDialogButtonBox
+            ).buttons()
+            yes_button = next(b for b in dialog_buttons if "OK" in b.text())
+            qtbot.mouseClick(yes_button, Qt.MouseButton.LeftButton)
+
+        QTimer.singleShot(100, handle_dialog)
+
+    assert run_dialog is not None

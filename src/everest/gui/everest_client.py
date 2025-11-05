@@ -19,6 +19,7 @@ from _ert.threading import ErtThread
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models import RunModelAPI
 from ert.run_models.event import StatusEvents, status_event_from_json
+from ert.scheduler.event import SchedulerWarningEvent
 from everest.strings import EverEndpoints
 
 logger = logging.getLogger(__name__)
@@ -77,8 +78,10 @@ class EverestClient:
         refresh_interval: float = 0.01,
         open_timeout: float = 30,
         websocket_recv_timeout: float = 1.0,
-    ) -> tuple[queue.SimpleQueue[StatusEvents], ErtThread]:
-        event_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
+    ) -> tuple[queue.SimpleQueue[StatusEvents | SchedulerWarningEvent], ErtThread]:
+        event_queue: queue.SimpleQueue[StatusEvents | SchedulerWarningEvent] = (
+            queue.SimpleQueue()
+        )
 
         def passthrough_ws_events() -> None:
             try:

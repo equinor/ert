@@ -16,4 +16,13 @@ class FinishedEvent:
     exec_hosts: str = "-"
 
 
-DriverEvent = StartedEvent | FinishedEvent
+@dataclass
+class SchedulerWarningEvent:
+    """This event is to indicate that something unexpected happened while
+    running the ensemble, and that it might be stuck in an unresponsive state.
+    """
+
+    warning_message: str
+
+
+DriverEvent = StartedEvent | FinishedEvent | SchedulerWarningEvent

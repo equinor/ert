@@ -23,7 +23,7 @@ from _ert.events import (
 )
 
 from .driver import Driver
-from .event import FinishedEvent, StartedEvent
+from .event import FinishedEvent, SchedulerWarningEvent, StartedEvent
 from .job import Job, JobState
 
 if TYPE_CHECKING:
@@ -66,7 +66,10 @@ class Scheduler:
         driver: Driver,
         realizations: Sequence[Realization] | None = None,
         manifest_queue: asyncio.Queue[ForwardModelStepChecksum] | None = None,
-        ensemble_evaluator_queue: asyncio.Queue[SnapshotInputEvent] | None = None,
+        ensemble_evaluator_queue: asyncio.Queue[
+            SnapshotInputEvent | SchedulerWarningEvent
+        ]
+        | None = None,
         *,
         max_submit: int = 1,
         max_running: int = 1,
@@ -343,6 +346,10 @@ class Scheduler:
     async def _process_event_queue(self) -> None:
         while True:
             event = await self.driver.event_queue.get()
+            if isinstance(event, SchedulerWarningEvent):
+                if self._ensemble_evaluator_queue:
+                    await self._ensemble_evaluator_queue.put(event)
+                continue
             job = self._jobs[event.iens]
 
             # Any event implies the job has at least started

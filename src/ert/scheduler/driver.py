@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from pathlib import Path
 
-from .event import DriverEvent
+from .event import DriverEvent, SchedulerWarningEvent
 
 SIGNAL_OFFSET = 128
 """Bash and other shells add an offset of 128 to the signal
@@ -32,10 +32,13 @@ class FailedSubmit(RuntimeError):
 class Driver(ABC):
     """Adapter for the HPC cluster."""
 
+    POLLING_TIMEOUT_PERIOD = 600
+
     def __init__(self, activate_script: str = "") -> None:
         self._event_queue: asyncio.Queue[DriverEvent] | None = None
         self._job_error_message_by_iens: dict[int, str] = {}
         self.activate_script = activate_script
+        self._polling_timeout_period = Driver.POLLING_TIMEOUT_PERIOD
 
     @property
     def event_queue(self) -> asyncio.Queue[DriverEvent]:
@@ -175,3 +178,16 @@ class Driver(ABC):
         )
         logger.error(error_message)
         return False, error_message
+
+    async def _warn_evaluator_about_polling_difficulties(
+        self, last_polling_error_message: str
+    ) -> None:
+        logger = logging.getLogger(__name__)
+        logger.warning(
+            "Driver has not successfully polled statuses for "
+            f"{self._polling_timeout_period}s. The previous error "
+            f"was due to '{last_polling_error_message}'"
+        )
+        await self.event_queue.put(
+            SchedulerWarningEvent(warning_message=last_polling_error_message)
+        )
