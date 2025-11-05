@@ -55,6 +55,8 @@ class InstallJobConfig(BaseModel, extra="forbid"):
             raise ValueError(f"No such file or directory: {self.source}")
         return self
 
+
+class InstallForwardModelStepConfig(InstallJobConfig):
     def to_ert_forward_model_step(self, config_directory: str) -> ForwardModelStep:
         if self.executable is not None:
             executable = Path(self.executable)
@@ -71,6 +73,8 @@ class InstallJobConfig(BaseModel, extra="forbid"):
                 name=self.name,
             )
 
+
+class InstallWorkflowJobConfig(InstallJobConfig):
     def to_ert_executable_workflow(self, config_directory: str) -> ExecutableWorkflow:
         if self.executable is not None:
             executable = Path(self.executable)

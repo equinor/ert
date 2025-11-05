@@ -11,7 +11,7 @@ from everest.config import (
     ServerConfig,
 )
 from everest.config.forward_model_config import ForwardModelStepConfig
-from everest.config.install_job_config import InstallJobConfig
+from everest.config.install_job_config import InstallForwardModelStepConfig
 
 
 @pytest.mark.skip_mac_ci
@@ -33,7 +33,9 @@ def test_logging_setup(copy_math_func_test_data_to_tmp):
         ForwardModelStepConfig(job="toggle_failure --fail perturbation_1")
     )
     everest_config.install_jobs.append(
-        InstallJobConfig(name="toggle_failure", source="jobs/FAIL_SIMULATION")
+        InstallForwardModelStepConfig(
+            name="toggle_failure", source="jobs/FAIL_SIMULATION"
+        )
     )
     everest_config.optimization.min_pert_success = 1
     everest_config.optimization.max_iterations = 1

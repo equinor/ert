@@ -12,6 +12,7 @@ from typing import (
     Any,
     Optional,
     Self,
+    TypeVar,
     no_type_check,
 )
 
@@ -60,7 +61,11 @@ from .forward_model_config import (
 )
 from .input_constraint_config import InputConstraintConfig
 from .install_data_config import InstallDataConfig
-from .install_job_config import InstallJobConfig
+from .install_job_config import (
+    InstallForwardModelStepConfig,
+    InstallJobConfig,
+    InstallWorkflowJobConfig,
+)
 from .model_config import ModelConfig
 from .objective_function_config import ObjectiveFunctionConfig
 from .optimization_config import OptimizationConfig
@@ -160,6 +165,9 @@ def _find_loc(loc: tuple[int | str, ...] | None, file_content: list[str]) -> int
         if str(loc[0]) in line:
             return index + 1
     return None
+
+
+InstallJobConfigSubclass = TypeVar("InstallJobConfigSubclass", bound=InstallJobConfig)
 
 
 class EverestConfig(BaseModelWithContextSupport):
@@ -363,7 +371,7 @@ class EverestConfig(BaseModelWithContextSupport):
             """
         ),
     )
-    install_jobs: list[InstallJobConfig] = Field(
+    install_jobs: list[InstallForwardModelStepConfig] = Field(
         default_factory=list,
         description=dedent(
             """
@@ -375,7 +383,7 @@ class EverestConfig(BaseModelWithContextSupport):
         ),
         validate_default=True,
     )
-    install_workflow_jobs: list[InstallJobConfig] = Field(
+    install_workflow_jobs: list[InstallWorkflowJobConfig] = Field(
         default_factory=list,
         description=dedent(
             """
@@ -622,7 +630,7 @@ class EverestConfig(BaseModelWithContextSupport):
 
     @model_validator(mode="after")
     def validate_job_executables(self) -> Self:  # pylint: disable=E0213
-        def _check_jobs(jobs: list[InstallJobConfig]) -> list[str]:
+        def _check_jobs(jobs: list[InstallJobConfigSubclass]) -> list[str]:
             errors = []
             for job in jobs:
                 if job.executable is None:

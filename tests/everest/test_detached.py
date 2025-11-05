@@ -24,8 +24,9 @@ from ert.dark_storage.client import ConnInfo
 from ert.plugins import ErtRuntimePlugins
 from ert.scheduler.event import FinishedEvent
 from ert.services import StorageService
-from everest.config import EverestConfig, InstallJobConfig
+from everest.config import EverestConfig
 from everest.config.forward_model_config import ForwardModelStepConfig
+from everest.config.install_job_config import InstallForwardModelStepConfig
 from everest.config.server_config import ServerConfig
 from everest.config.simulator_config import SimulatorConfig
 from everest.detached import (
@@ -49,7 +50,7 @@ async def test_https_requests(change_to_tmpdir):
     everest_config = everest_config_with_defaults(config_path="./config.yml")
     everest_config.forward_model.append(ForwardModelStepConfig(job="sleep 5"))
     everest_config.install_jobs.append(
-        InstallJobConfig(name="sleep", executable=f"{which('sleep')}")
+        InstallForwardModelStepConfig(name="sleep", executable=f"{which('sleep')}")
     )
     # start_server() loads config based on config_path, so we need to actually
     # overwrite it
