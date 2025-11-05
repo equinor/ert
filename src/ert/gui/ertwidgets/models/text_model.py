@@ -1,3 +1,5 @@
+from typing_extensions import override
+
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
 
 
@@ -9,6 +11,7 @@ class TextModel(ValueModel):
         self.default_value = default_value
         super().__init__(self.getDefaultValue())
 
+    @override
     def setValue(self, value: str | None) -> None:
         if not value or not value.strip() or value == self.getDefaultValue():
             ValueModel.setValue(self, self.getDefaultValue())

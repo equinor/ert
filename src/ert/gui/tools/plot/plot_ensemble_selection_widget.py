@@ -28,6 +28,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from typing_extensions import override
 
 from .plot_api import EnsembleObject
 
@@ -123,6 +124,7 @@ class EnsembleSelectListWidget(QListWidget):
 
         return list(_iter())
 
+    @override
     def mouseMoveEvent(self, e: QMouseEvent | None) -> None:
         super().mouseMoveEvent(e)
         if e is not None and self.itemAt(e.pos()):
@@ -130,6 +132,7 @@ class EnsembleSelectListWidget(QListWidget):
         else:
             self.setCursor(QCursor(Qt.CursorShape.ArrowCursor))
 
+    @override
     def dropEvent(self, event: QDropEvent | None) -> None:
         super().dropEvent(event)
         self.ensembleSelectionListChanged.emit()
@@ -173,9 +176,11 @@ class CustomItemDelegate(QStyledItemDelegate):
         super().__init__()
         self.swap_pixmap = QIcon("img:reorder.svg").pixmap(QSize(20, 20))
 
+    @override
     def sizeHint(self, option: Any, index: Any) -> QSize:
         return QSize(-1, 30)
 
+    @override
     def paint(
         self, painter: QPainter | None, option: QStyleOptionViewItem, index: QModelIndex
     ) -> None:

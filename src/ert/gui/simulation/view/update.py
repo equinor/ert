@@ -25,6 +25,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from typing_extensions import override
 
 from ert.analysis.event import DataSection
 from ert.ensemble_evaluator import state
@@ -56,6 +57,7 @@ class UpdateLogTable(QTableWidget):
             for j, val in enumerate(row):
                 self.setItem(i, j, QTableWidgetItem(str(val)))
 
+    @override
     def keyPressEvent(self, e: QKeyEvent | None) -> None:
         if e is not None and e.matches(QKeySequence.StandardKey.Copy):
             stream = ""

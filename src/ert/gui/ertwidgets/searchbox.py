@@ -4,6 +4,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtGui import QColor, QFocusEvent, QKeyEvent
 from PyQt6.QtWidgets import QLineEdit
+from typing_extensions import override
 
 
 class SearchBox(QLineEdit):
@@ -55,14 +56,17 @@ class SearchBox(QLineEdit):
         if not self.text():
             self.presentSearch()
 
+    @override
     def focusInEvent(self, a0: QFocusEvent | None) -> None:
         QLineEdit.focusInEvent(self, a0)
         self.enterSearch()
 
+    @override
     def focusOutEvent(self, a0: QFocusEvent | None) -> None:
         QLineEdit.focusOutEvent(self, a0)
         self.exitSearch()
 
+    @override
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         if a0 and a0.key() == Qt.Key.Key_Escape:
             self.clear()

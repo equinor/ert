@@ -21,6 +21,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from typing_extensions import override
 
 from ert.config import ErtConfig, ErtScriptWorkflow
 from ert.gui import is_dark_mode, is_high_contrast_mode
@@ -385,6 +386,7 @@ class ErtMainWindow(QMainWindow):
         self.load_results_tool.setParent(self)
         tools_menu.addAction(self.load_results_tool.getAction())
 
+    @override
     def closeEvent(self, closeEvent: QCloseEvent | None) -> None:
         for plot_window in self._external_plot_windows:
             if plot_window:

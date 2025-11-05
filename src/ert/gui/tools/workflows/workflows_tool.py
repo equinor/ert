@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from PyQt6.QtGui import QIcon
+from typing_extensions import override
 
 from ert.gui.ertwidgets import ClosableDialog
 from ert.gui.tools import Tool
@@ -24,6 +25,7 @@ class WorkflowsTool(Tool):
             enabled,
         )
 
+    @override
     def trigger(self) -> None:
         run_workflow_widget = RunWorkflowWidget(self.config, self.notifier)
         dialog = ClosableDialog("Run workflow", run_workflow_widget, self.parent())  # type: ignore

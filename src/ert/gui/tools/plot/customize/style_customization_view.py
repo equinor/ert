@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING, cast
 
 from PyQt6.QtWidgets import QHBoxLayout
+from typing_extensions import override
 
 from .color_chooser import ColorBox
 from .customization_view import CustomizationView, WidgetProperty
@@ -91,6 +92,7 @@ class StyleCustomizationView(CustomizationView):
                 color_box = self._color_boxes[index]
                 color_box.color = color_tuple
 
+    @override
     def applyCustomization(self, plot_config: "PlotConfig") -> None:
         plot_config.setDefaultStyle(self.default_style)
         plot_config.setHistoryStyle(self.history_style)
@@ -98,6 +100,7 @@ class StyleCustomizationView(CustomizationView):
         plot_config.setObservationsColor(self.observs_color)
         plot_config.setLineColorCycle(self.color_cycle)
 
+    @override
     def revertCustomization(self, plot_config: "PlotConfig") -> None:
         self.default_style = plot_config.defaultStyle()
         self.history_style = plot_config.historyStyle()

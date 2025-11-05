@@ -1,5 +1,7 @@
 from collections.abc import Collection
 
+from typing_extensions import override
+
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
 from ert.validation import ActiveRange, mask_to_rangestring
 
@@ -10,6 +12,7 @@ class ActiveRealizationsModel(ValueModel):
         self.ensemble_size = ensemble_size
         ValueModel.__init__(self, self.default_value)
 
+    @override
     def setValue(self, value: str | None) -> None:
         if not value or not value.strip() or value == self.default_value:
             ValueModel.setValue(self, self.default_value)

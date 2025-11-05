@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from typing_extensions import override
 
 
 class WorkflowDialog(QDialog):
@@ -47,6 +48,7 @@ class WorkflowDialog(QDialog):
     def enableCloseButton(self) -> None:
         self.close_button.setEnabled(True)
 
+    @override
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         # disallow pressing escape to close
         # when close button is not enabled

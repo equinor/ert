@@ -1,6 +1,7 @@
 from PyQt6.QtCore import QObject
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtGui import QIcon
+from typing_extensions import override
 
 from ert.gui.tools import Tool
 
@@ -21,6 +22,7 @@ class EventViewerTool(Tool, QObject):
             self.logging_window.setWindowTitle(f"Event viewer: {config_filename}")
         self.setEnabled(True)
 
+    @override
     def trigger(self) -> None:
         self.logging_window.show()
 

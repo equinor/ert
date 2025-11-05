@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QDialog, QHBoxLayout, QPushButton, QVBoxLayout, QWidget
+from typing_extensions import override
 
 if TYPE_CHECKING:
     from PyQt6.QtGui import QKeyEvent
@@ -42,6 +43,7 @@ class ClosableDialog(QDialog):
     def enableCloseButton(self) -> None:
         self.close_button.setEnabled(True)
 
+    @override
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         if self.close_button.isEnabled() or a0 is None or a0.key() != Qt.Key.Key_Escape:
             QDialog.keyPressEvent(self, a0)

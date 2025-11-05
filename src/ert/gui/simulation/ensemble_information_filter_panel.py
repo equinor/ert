@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import QFormLayout, QLabel, QWidget
+from typing_extensions import override
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
@@ -127,6 +128,7 @@ class EnsembleInformationFilterPanel(ExperimentConfigPanel):
 
         self.notifier.ertChanged.connect(self._update_experiment_name_placeholder)
 
+    @override
     @Slot(QWidget)
     def experimentTypeChanged(self, w: QWidget) -> None:
         if isinstance(w, EnsembleInformationFilterPanel):
@@ -137,6 +139,7 @@ class EnsembleInformationFilterPanel(ExperimentConfigPanel):
             self.notifier.storage.get_unique_experiment_name(ENIF_MODE)
         )
 
+    @override
     def isConfigurationValid(self) -> bool:
         return (
             self._experiment_name_field.isValid()
@@ -144,6 +147,7 @@ class EnsembleInformationFilterPanel(ExperimentConfigPanel):
             and self._active_realizations_field.isValid()
         )
 
+    @override
     def get_experiment_arguments(self) -> Arguments:
         arguments = Arguments(
             mode=ENIF_MODE,

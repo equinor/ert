@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from typing_extensions import override
 
 from ert.gui.ertwidgets import (
     CheckList,
@@ -153,6 +154,7 @@ class ManageExperimentsPanel(QTabWidget):
 
         self.addTab(panel, "Initialize from scratch")
 
+    @override
     def eventFilter(self, a0: QObject | None, a1: QEvent | None) -> bool:
         if a1 is not None and a1.type() == QEvent.Type.Close:
             self.notifier.emitErtChange()

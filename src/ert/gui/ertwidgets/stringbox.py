@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import QLineEdit
+from typing_extensions import override
 
 from .validationsupport import ValidationSupport
 
@@ -101,6 +102,7 @@ class StringBox(QLineEdit):
     def model(self) -> TextModel:
         return self._model
 
+    @override
     def setValidator(self, validator: ArgumentDefinition) -> None:  # type: ignore
         self._validator = validator
 

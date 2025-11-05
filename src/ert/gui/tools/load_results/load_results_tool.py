@@ -2,6 +2,7 @@ import logging
 from typing import Any
 
 from PyQt6.QtGui import QIcon
+from typing_extensions import override
 
 from ert.config import ErtConfig
 from ert.gui.ertnotifier import ErtNotifier
@@ -23,6 +24,7 @@ class LoadResultsTool(Tool):
         self._notifier = notifier
         self._config = config
 
+    @override
     def trigger(self) -> None:
         if self._import_widget is None:
             self._import_widget = LoadResultsPanel(self._config, self._notifier)

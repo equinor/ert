@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QModelIndex, QObject, QSortFilterProxyModel, Qt
+from typing_extensions import override
 
 if TYPE_CHECKING:
     from .data_type_keys_list_model import DataTypeKeysListModel
@@ -21,6 +22,7 @@ class DataTypeProxyModel(QSortFilterProxyModel):
         self.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.setSourceModel(model)
 
+    @override
     def filterAcceptsRow(self, source_row: int, source_parent: QModelIndex) -> bool:
         show = QSortFilterProxyModel.filterAcceptsRow(self, source_row, source_parent)
 
@@ -45,6 +47,7 @@ class DataTypeProxyModel(QSortFilterProxyModel):
 
         return show
 
+    @override
     def sourceModel(self) -> DataTypeKeysListModel:
         return QSortFilterProxyModel.sourceModel(self)  # type: ignore
 

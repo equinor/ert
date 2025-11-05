@@ -269,6 +269,7 @@ class SnapshotModel(QAbstractItemModel):
             return FM_STEP_COLUMN_SIZE
         return 1
 
+    @override
     def rowCount(self, parent: QModelIndex | None = None) -> int:
         if parent is None:
             parent = QModelIndex()

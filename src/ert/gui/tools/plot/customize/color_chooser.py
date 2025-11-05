@@ -3,6 +3,7 @@ from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtGui import QColor, QMouseEvent, QPainter, QPaintEvent
 from PyQt6.QtWidgets import QColorDialog, QFrame
+from typing_extensions import override
 
 
 class ColorBox(QFrame):
@@ -49,6 +50,7 @@ class ColorBox(QFrame):
         self._color = new_color
         self.update()
 
+    @override
     def paintEvent(self, a0: QPaintEvent | None) -> None:
         """Paints the box"""
         painter = QPainter(self)
@@ -69,6 +71,7 @@ class ColorBox(QFrame):
 
         QFrame.paintEvent(self, a0)
 
+    @override
     def mouseReleaseEvent(self, a0: QMouseEvent | None) -> None:
         if a0:
             self.mouseRelease.emit()

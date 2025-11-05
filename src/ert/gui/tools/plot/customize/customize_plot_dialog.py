@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
     QWidget,
     QWidgetAction,
 )
+from typing_extensions import override
 
 from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
 from ert.gui.tools.plot.plottery import PlotConfig, PlotConfigFactory, PlotConfigHistory
@@ -296,6 +297,7 @@ class CustomizePlotDialog(QDialog):
     def currentPlotKeyChanged(self, new_key: str | None) -> None:
         self.current_key = new_key
 
+    @override
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         # Hide when pressing Escape instead of QDialog.keyPressEvent(KeyEscape)
         # which closes the dialog

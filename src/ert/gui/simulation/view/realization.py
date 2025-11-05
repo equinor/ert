@@ -22,6 +22,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from typing_extensions import override
 
 from ert.gui.model.real_list import RealListModel
 from ert.gui.model.snapshot import (
@@ -105,6 +106,7 @@ class RealizationDelegate(QStyledItemDelegate):
         self._color_lightgray = QColor("LightGray").lighter(120)
         self._pen_black = QPen(self._color_black, 2, Qt.PenStyle.SolidLine)
 
+    @override
     def paint(
         self, painter: QPainter | None, option: QStyleOptionViewItem, index: QModelIndex
     ) -> None:
@@ -158,10 +160,12 @@ class RealizationDelegate(QStyledItemDelegate):
 
         painter.restore()
 
+    @override
     def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QSize:
         return self._size
 
-    def eventFilter(self, object: QObject | None, event: QEvent | None) -> bool:  # noqa: A002
+    @override
+    def eventFilter(self, object: QObject | None, event: QEvent | None) -> bool:
         if isinstance(event, QHelpEvent) and event.type() == QEvent.Type.ToolTip:
             mouse_pos = event.pos() + self.adjustment_point_for_job_rect_margin
             parent: RealizationWidget = cast(RealizationWidget, self.parent())
