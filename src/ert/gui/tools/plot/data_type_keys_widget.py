@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from typing_extensions import override
 
 from ert.gui.ertwidgets import SearchBox
 
@@ -29,6 +30,7 @@ class _LegendMarker(QWidget):
 
         self.color = color
 
+    @override
     def paintEvent(self, a0: QPaintEvent | None) -> None:
         painter = QPainter(self)
 

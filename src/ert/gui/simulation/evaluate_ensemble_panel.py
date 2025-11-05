@@ -5,6 +5,7 @@ import numpy as np
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import QFormLayout, QLabel, QWidget
+from typing_extensions import override
 
 from ert.config import ErrorInfo
 from ert.gui.ertnotifier import ErtNotifier
@@ -81,12 +82,14 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
         )
         self._ensemble_selector.currentIndexChanged.connect(self._realizations_from_fs)
 
+    @override
     def isConfigurationValid(self) -> bool:
         return (
             self._active_realizations_field.isValid()
             and self._ensemble_selector.currentIndex() != -1
         )
 
+    @override
     def get_experiment_arguments(self) -> Arguments:
         assert self._ensemble_selector.selected_ensemble is not None
         return Arguments(
@@ -120,6 +123,7 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
                 parent=self,
             ).show()
 
+    @override
     @Slot(QWidget)
     def experimentTypeChanged(self, w: QWidget) -> None:
         if isinstance(w, EvaluateEnsemblePanel):

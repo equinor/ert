@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (
     QProgressBar,
     QVBoxLayout,
 )
+from typing_extensions import override
 
 from ert.ensemble_evaluator.state import ENSEMBLE_STATE_FAILED, REAL_STATE_TO_COLOR
 
@@ -107,5 +108,6 @@ class ProgressWidget(QFrame):
             self.stop_waiting_progress_bar()
         self.repaint_components()
 
+    @override
     def resizeEvent(self, a0: QResizeEvent | None) -> None:
         self.repaint_components()

@@ -1,5 +1,7 @@
 from typing import Any
 
+from typing_extensions import override
+
 from ert.config import AnalysisConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets.models.valuemodel import ValueModel
@@ -18,6 +20,7 @@ class TargetEnsembleModel(ValueModel):
         notifier.ertChanged.connect(self.on_current_ensemble_changed)
         notifier.current_ensemble_changed.connect(self.on_current_ensemble_changed)
 
+    @override
     def setValue(self, value: str | None) -> None:
         """Set a new target ensemble"""
         if value == self.getDefaultValue():

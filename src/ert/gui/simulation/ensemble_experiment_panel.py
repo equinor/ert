@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (
     QLabel,
     QWidget,
 )
+from typing_extensions import override
 
 from ert.config import AnalysisConfig, ParameterConfig
 from ert.gui.ertnotifier import ErtNotifier
@@ -135,6 +136,7 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
 
         self.notifier.ertChanged.connect(self._update_experiment_name_placeholder)
 
+    @override
     @Slot(QWidget)
     def experimentTypeChanged(self, w: QWidget) -> None:
         if isinstance(w, EnsembleExperimentPanel):
@@ -145,6 +147,7 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
             self.notifier.storage.get_unique_experiment_name(ENSEMBLE_EXPERIMENT_MODE)
         )
 
+    @override
     def isConfigurationValid(self) -> bool:
         self.blockSignals(True)
         self._experiment_name_field.validateString()
@@ -156,6 +159,7 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
             and self._ensemble_name_field.isValid()
         )
 
+    @override
     def get_experiment_arguments(self) -> Arguments:
         return Arguments(
             mode=ENSEMBLE_EXPERIMENT_MODE,

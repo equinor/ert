@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
     QToolButton,
     QWidget,
 )
+from typing_extensions import override
 
 from .validationsupport import ValidationSupport
 
@@ -50,6 +51,7 @@ class AutoCompleteLineEdit(QLineEdit):
             i -= 1
         return text_under_cursor
 
+    @override
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         popup = self._completer.popup()
         if (

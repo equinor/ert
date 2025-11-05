@@ -1,5 +1,7 @@
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
+
 from .customization_view import CustomizationView, WidgetProperty
 
 if TYPE_CHECKING:
@@ -57,6 +59,7 @@ class DefaultCustomizationView(CustomizationView):
             "observations", "Observations", "Toggle observations visibility."
         )
 
+    @override
     def applyCustomization(self, plot_config: "PlotConfig") -> None:
         plot_config.setTitle(self.title)
 
@@ -68,6 +71,7 @@ class DefaultCustomizationView(CustomizationView):
         plot_config.setHistoryEnabled(self.history)
         plot_config.setObservationsEnabled(self.observations)
 
+    @override
     def revertCustomization(self, plot_config: "PlotConfig") -> None:
         if not plot_config.isUnnamed():
             self.title = plot_config.title()

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from typing_extensions import override
+
 from ert.gui.ertwidgets import SelectableListModel
 
 if TYPE_CHECKING:
@@ -19,6 +21,7 @@ class FilterableKwListModel(SelectableListModel):
         self._key_defs = key_defs
         self._metadata_filters: dict[str, dict[str, bool]] = {}
 
+    @override
     def getList(self) -> list[str]:
         items = []
         for item in self._key_defs:

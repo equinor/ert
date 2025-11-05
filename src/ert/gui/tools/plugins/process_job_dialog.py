@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from typing_extensions import override
 
 
 class ProcessJobDialog(QDialog):
@@ -84,12 +85,14 @@ class ProcessJobDialog(QDialog):
     def enableCloseButton(self) -> None:
         self.close_button.setEnabled(True)
 
+    @override
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         # disallow pressing escape to close
         # when close button is not enabled
         if self.close_button.isEnabled() or a0 is None or a0.key() != Qt.Key.Key_Escape:
             QDialog.keyPressEvent(self, a0)
 
+    @override
     def closeEvent(self, a0: QCloseEvent | None) -> None:
         if a0 is not None:
             a0.ignore()

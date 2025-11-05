@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from typing_extensions import override
 
 LABEL_ROLE = -3994
 DESCRIPTION_ROLE = -4893
@@ -104,6 +105,7 @@ class _ComboBoxWithDescriptionDelegate(QStyledItemDelegate):
         widget.render(painter, QPoint(), QRegion(), QWidget.RenderFlag.DrawChildren)
         painter.restore()
 
+    @override
     def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QSize:
         label = index.data(LABEL_ROLE)
         description = index.data(DESCRIPTION_ROLE)
@@ -130,6 +132,7 @@ class QComboBoxWithDescription(QComboBox):
         model.setData(index, description, DESCRIPTION_ROLE)
         model.setData(index, group, GROUP_TITLE_ROLE)
 
+    @override
     def sizeHint(self) -> QSize:
         original_size_hint = super().sizeHint()
         new_width = int(original_size_hint.width() + 220)

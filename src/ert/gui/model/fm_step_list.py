@@ -99,6 +99,7 @@ class FMStepListProxyModel(QAbstractProxyModel):
     def columnCount(self, parent: QModelIndex | None = None) -> int:
         return FM_STEP_COLUMN_SIZE
 
+    @override
     def rowCount(self, parent: QModelIndex | None = None) -> int:
         parent = parent or QModelIndex()
         if not parent.isValid():
@@ -127,6 +128,7 @@ class FMStepListProxyModel(QAbstractProxyModel):
             return self.createIndex(row, column, job_index.data(NodeRole))
         return QModelIndex()
 
+    @override
     def mapToSource(self, proxyIndex: QModelIndex) -> QModelIndex:
         if proxyIndex.isValid():
             sm = self.sourceModel()
@@ -138,6 +140,7 @@ class FMStepListProxyModel(QAbstractProxyModel):
                     return sm.index(proxyIndex.row(), proxyIndex.column(), real_index)
         return QModelIndex()
 
+    @override
     def mapFromSource(self, sourceIndex: QModelIndex) -> QModelIndex:
         return (
             self.index(sourceIndex.row(), sourceIndex.column(), QModelIndex())

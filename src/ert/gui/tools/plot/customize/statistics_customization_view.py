@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from PyQt6.QtWidgets import QComboBox, QHBoxLayout
+from typing_extensions import override
 
 from .customization_view import CustomizationView, WidgetProperty
 from .style_chooser import STYLESET_AREA, StyleChooser
@@ -132,6 +133,7 @@ class StatisticsCustomizationView(CustomizationView):
         style.marker = marker_style
         setattr(self, attribute_name, style)
 
+    @override
     def applyCustomization(self, plot_config: PlotConfig) -> None:
         plot_config.setStatisticsStyle("mean", self.mean_style)
         plot_config.setStatisticsStyle("p50", self.p50_style)
@@ -143,6 +145,7 @@ class StatisticsCustomizationView(CustomizationView):
         plot_config.setStandardDeviationFactor(self.std_dev_factor)
         plot_config.setDistributionLineEnabled(self.distribution_lines)
 
+    @override
     def revertCustomization(self, plot_config: PlotConfig) -> None:
         self.mean_style = plot_config.getStatisticsStyle("mean")
         self.p50_style = plot_config.getStatisticsStyle("p50")

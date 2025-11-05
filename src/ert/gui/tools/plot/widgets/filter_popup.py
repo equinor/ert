@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from typing_extensions import override
 
 if TYPE_CHECKING:
     from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
@@ -70,6 +71,7 @@ class FilterPopup(QDialog):
 
         self.__layout.addWidget(check_box)
 
+    @override
     def leaveEvent(self, a0: QEvent | None) -> None:
         self.hide()
         QWidget.leaveEvent(self, a0)

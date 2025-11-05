@@ -28,6 +28,7 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from typing_extensions import override
 
 from ert.config import ErrorInfo, QueueSystem, WarningInfo
 from ert.ensemble_evaluator import (
@@ -175,6 +176,7 @@ class FMStepOverview(QTableView):
             error_textedit.moveCursor(QTextCursor.MoveOperation.Start)
             error_dialog.exec()
 
+    @override
     def mouseMoveEvent(self, e: QMouseEvent | None) -> None:
         if e:
             index = self.indexAt(e.pos())
@@ -648,6 +650,7 @@ class RunDialog(QFrame):
                 assert_never(default)
         self.queue_system.setText(f"Queue system:\n{formatted_queue_system}")
 
+    @override
     def hideEvent(self, event: QHideEvent | None) -> None:
         for file_dialog in self.findChildren(FileDialog):
             file_dialog.close()

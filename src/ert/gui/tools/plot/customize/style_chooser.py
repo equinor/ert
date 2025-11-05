@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import (
     QLayout,
     QWidget,
 )
+from typing_extensions import override
 
 from ert.gui.tools.plot.plottery import PlotStyle
 
@@ -182,6 +183,7 @@ class StyleChooser(QWidget):
         self._style.width = thickness
         self._style.size = size
 
+    @override
     def setStyle(self, style: PlotStyle) -> None:  # type: ignore
         self._style.copyStyleFrom(style)
         self._updateLineStyleAndMarker(

@@ -8,6 +8,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QCheckBox, QFormLayout, QHBoxLayout, QLabel, QWidget
+from typing_extensions import override
 
 from ert.config import ErrorInfo, ParameterConfig
 from ert.gui.ertnotifier import ErtNotifier
@@ -193,6 +194,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
         self.notifier.ertChanged.connect(self._update_experiment_name_placeholder)
 
+    @override
     @Slot(QWidget)
     def experimentTypeChanged(self, w: QWidget) -> None:
         if isinstance(w, MultipleDataAssimilationPanel):
@@ -303,6 +305,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
 
         updateVisualizationOfNormalizedWeights()  # To normalize the default weights
 
+    @override
     def isConfigurationValid(self) -> bool:
         return (
             self._experiment_name_field.isValid()
@@ -312,6 +315,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             and self.weights_valid
         )
 
+    @override
     def get_experiment_arguments(self) -> Arguments:
         return Arguments(
             mode=ES_MDA_MODE,

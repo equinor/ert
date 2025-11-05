@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, cast, no_type_check
 
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QMessageBox, QWidget
+from typing_extensions import override
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig
@@ -31,6 +32,7 @@ class ExportTool(Tool):
         self.config = config
         self.notifier = notifier
 
+    @override
     @no_type_check
     def trigger(self) -> None:
         dialog = ExportDialog(self.config, self.notifier.storage, self.parent())

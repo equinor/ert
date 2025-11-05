@@ -1,6 +1,7 @@
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtGui import QColor, QFocusEvent, QIcon, QKeyEvent, QResizeEvent
 from PyQt6.QtWidgets import QLineEdit, QPushButton, QStyle
+from typing_extensions import override
 
 
 class ClearableLineEdit(QLineEdit):
@@ -32,14 +33,17 @@ class ClearableLineEdit(QLineEdit):
             len(self.text()) > 0 and not self._placeholder_active
         )
 
+    @override
     def sizeHint(self) -> QSize:
         size = QLineEdit.sizeHint(self)
         return QSize(size.width() + self._clear_button.width() + 3, size.height())
 
+    @override
     def minimumSizeHint(self) -> QSize:
         size = QLineEdit.minimumSizeHint(self)
         return QSize(size.width() + self._clear_button.width() + 3, size.height())
 
+    @override
     def resizeEvent(self, a0: QResizeEvent | None) -> None:
         right = self.rect().right()
         style = self.style()
@@ -70,15 +74,18 @@ class ClearableLineEdit(QLineEdit):
             palette.setColor(self.foregroundRole(), self._active_color)
             self.setPalette(palette)
 
+    @override
     def focusInEvent(self, a0: QFocusEvent | None) -> None:
         QLineEdit.focusInEvent(self, a0)
         self.hidePlaceHolder()
 
+    @override
     def focusOutEvent(self, a0: QFocusEvent | None) -> None:
         QLineEdit.focusOutEvent(self, a0)
         if not QLineEdit.text(self):
             self.showPlaceholder()
 
+    @override
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         if a0 is not None and a0.key() == Qt.Key.Key_Escape:
             self.clear()
@@ -87,6 +94,7 @@ class ClearableLineEdit(QLineEdit):
 
         QLineEdit.keyPressEvent(self, a0)
 
+    @override
     def setText(self, a0: str | None) -> None:
         self.hidePlaceHolder()
 
@@ -95,6 +103,7 @@ class ClearableLineEdit(QLineEdit):
         if len(str(a0)) == 0 and not self.hasFocus():
             self.showPlaceholder()
 
+    @override
     def text(self) -> str:
         if self._placeholder_active:
             return ""

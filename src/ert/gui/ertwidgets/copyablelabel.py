@@ -2,6 +2,7 @@ from os import path
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QHBoxLayout, QLabel
+from typing_extensions import override
 
 from .copy_button import CopyButton
 
@@ -62,6 +63,7 @@ class _CopyButton(CopyButton):
         super().__init__()
         self.label = label
 
+    @override
     def copy(self) -> None:
         self.copy_text(
             strip_run_path_magic_keywords(unescape_string(self.label.text()))

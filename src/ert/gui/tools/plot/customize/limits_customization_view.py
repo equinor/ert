@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 from PyQt6.QtGui import QDoubleValidator, QIntValidator
 from PyQt6.QtWidgets import QLabel, QLineEdit, QStackedWidget
+from typing_extensions import override
 
 from ert.gui.tools.plot.plottery import PlotContext, PlotLimits
 from ert.gui.tools.plot.widgets import ClearableLineEdit, CustomDateEdit
@@ -249,8 +250,10 @@ class LimitsCustomizationView(CustomizationView):
         self._limits_widget.switchInputOnX(x_axis_type)
         self._limits_widget.switchInputOnY(y_axis_type)
 
+    @override
     def revertCustomization(self, plot_config: PlotConfig) -> None:
         self._limits_widget.limits = plot_config.limits
 
+    @override
     def applyCustomization(self, plot_config: PlotConfig) -> None:
         plot_config.limits = self._limits_widget.limits

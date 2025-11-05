@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QMenu
+from typing_extensions import override
 
 from ert.gui.tools import Tool
 
@@ -49,6 +50,7 @@ class PluginsTool(Tool):
     def get_menu(self) -> QMenu:
         return self.menu
 
+    @override
     def trigger(self) -> None:
         self.notifier.emitErtChange()  # plugin may have added new cases.
 

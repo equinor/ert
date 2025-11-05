@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QFormLayout, QLabel
+from typing_extensions import override
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import CopyableLabel
@@ -59,5 +60,6 @@ class SingleTestRunPanel(ExperimentConfigPanel):
 
         self.setLayout(layout)
 
+    @override
     def get_experiment_arguments(self) -> Arguments:
         return Arguments(TEST_RUN_MODE, "ensemble", "single_test_run")

@@ -7,6 +7,7 @@ from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import QDialog, QPlainTextEdit, QVBoxLayout
+from typing_extensions import override
 
 from ert.gui.tools.search_bar import SearchBar
 
@@ -78,6 +79,7 @@ class EventViewerPanel(QDialog):
     def val_changed(self, value: str) -> None:
         self.text_box.appendPlainText(value)
 
+    @override
     def closeEvent(self, event: QCloseEvent | None) -> None:
         logger.info("Gui utility: EventViewer tool was used")
         super().closeEvent(event)

@@ -23,6 +23,7 @@ from PyQt6.QtWidgets import (
     QWidget,
     QWidgetAction,
 )
+from typing_extensions import override
 
 from .plot_api import EnsembleObject
 
@@ -79,19 +80,23 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
 
             action.triggered.connect(lambda _, a=action: self.logToolbarUsage(a.text()))
 
+    @override
     def logToolbarUsage(self, action_name: str) -> None:
         logger.info(f"Plotwindow toolbar used: {action_name}")
 
+    @override
     @Slot(bool)
     def showLayerWidget(self, show: bool) -> None:
         self._layer_action.setVisible(show)
 
+    @override
     @Slot()
     def resetLayerWidget(
         self,
     ) -> None:
         self._layer_action.defaultWidget().setCurrentIndex(0)
 
+    @override
     @Slot(int)
     def updateLayerWidget(self, layers: int) -> None:
         if layers != len(self._model.stringList()):
