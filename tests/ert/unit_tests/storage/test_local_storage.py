@@ -958,12 +958,8 @@ def test_that_all_parameters_and_gen_data_consolidation_works(
         experiment = storage.create_experiment(
             responses=[GenDataConfig(keys=["R1", "R2"])],
             parameters=[
-                ExtParamConfig(
-                    name="point.P1", group="point", input_keys=["point.P1", "point.P2"]
-                ),
-                ExtParamConfig(
-                    name="point.P2", group="point", input_keys=["point.P1", "point.P2"]
-                ),
+                ExtParamConfig(name="point.P1", group="point"),
+                ExtParamConfig(name="point.P2", group="point"),
             ],
         )
 

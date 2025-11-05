@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterator, Mapping, MutableMapping
-from dataclasses import field
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
@@ -26,15 +25,9 @@ if TYPE_CHECKING:
 
 
 class ExtParamConfig(ParameterConfig):
-    """Create an ExtParamConfig for @key with the given @input_keys
-
-    @input_keys can be either a list of keys as strings or a dict with
-    keys as strings and a list of suffixes for each key.
-    If a list of strings is given, the order is preserved.
-    """
+    """Create an ExtParamConfig for @key with the given @group"""
 
     type: Literal["everest_parameters"] = "everest_parameters"
-    input_keys: list[str] = field(default_factory=list)
     forward_init: bool = False
     output_file: str = ""
     forward_init_file: str = ""

@@ -318,7 +318,6 @@ class ControlConfig(BaseModel):
             ExtParamConfig(
                 group=self.name,
                 name=control_name,
-                input_keys=self.formatted_control_names,
                 output_file=self.name + ".json",
             )
             for control_name in self.formatted_control_names
