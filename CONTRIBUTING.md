@@ -139,6 +139,23 @@ are subdirectories.
 
 Tests that runtime and memory performance does not degrade.
 
+## Type hints
+
+mypy is used to check type hints of all code in src/. This is to discover
+easily avoidable bugs. A study estimated that about ~15% of bugs can be
+discovered by typechecking (https://rebels.cs.uwaterloo.ca/papers/tse2021_khan.pdf).
+
+The following guidelines should be applied when adding type hints:
+
+1. Prefer not to use the `Any` type when possible. The `Any` type can
+   be convenient, but anything of type `Any` is equivalent to being
+   untyped so essentially not type checked.
+1. Except for dunder methods (`__repr__`, `__eq__` etc.),  overridden methods
+   should be decorated with the `@override` decorator.
+1. Prefer use of `cast` or `assert` (as a type guard) over using the `#type: ignore`
+   to ignore type errors. This is to make the assumption of what types are used
+   explicit.
+
 ## Commits
 
 We strive to keep a consistent and clean git history and all contributions should adhere to the following:
