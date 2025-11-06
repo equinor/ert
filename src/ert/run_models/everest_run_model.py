@@ -239,7 +239,6 @@ class EverestRunModel(RunModel):
     input_constraints: list[InputConstraintConfig]
 
     output_constraints: list[OutputConstraintConfig]
-    constraint_names: list[str]
 
     optimization: OptimizationConfig
     model: ModelConfig
@@ -526,7 +525,6 @@ class EverestRunModel(RunModel):
             simulation_dir=everest_config.simulation_dir,
             keep_run_path=not delete_run_path,
             objective_names=everest_config.objective_names,
-            constraint_names=everest_config.constraint_names,
             objective_functions=everest_config.objective_functions,
             input_constraints=everest_config.input_constraints,
             output_constraints=everest_config.output_constraints,
@@ -1002,7 +1000,7 @@ class EverestRunModel(RunModel):
             )
             constraints = (
                 np.zeros(
-                    (num_all_simulations, len(self.constraint_names)),
+                    (num_all_simulations, len(self.output_constraints)),
                     dtype=np.float64,
                 )
                 if self.output_constraints
@@ -1118,7 +1116,7 @@ class EverestRunModel(RunModel):
         objective_names = [o.name for o in self.objective_functions]
         objectives = np.zeros((ensemble.ensemble_size, len(objective_names)))
 
-        constraint_names = self.constraint_names
+        constraint_names = [c.name for c in self.output_constraints]
         constraints = np.zeros((ensemble.ensemble_size, len(constraint_names)))
 
         if not any(self.active_realizations):
