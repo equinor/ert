@@ -235,7 +235,6 @@ class EverestRunModel(RunModel):
     controls: list[ControlConfig]
 
     objective_functions: list[ObjectiveFunctionConfig]
-    objective_names: list[str]
 
     input_constraints: list[InputConstraintConfig]
 
@@ -998,7 +997,7 @@ class EverestRunModel(RunModel):
             # Nothing to do, there may only have been inactive control vectors:
             num_all_simulations = control_values.shape[0]
             objectives = np.zeros(
-                (num_all_simulations, len(self.objective_names)),
+                (num_all_simulations, len(self.objective_functions)),
                 dtype=np.float64,
             )
             constraints = (
@@ -1116,7 +1115,7 @@ class EverestRunModel(RunModel):
     def _gather_simulation_results(
         self, ensemble: Ensemble
     ) -> tuple[NDArray[np.float64], NDArray[np.float64] | None]:
-        objective_names = self.objective_names
+        objective_names = [o.name for o in self.objective_functions]
         objectives = np.zeros((ensemble.ensemble_size, len(objective_names)))
 
         constraint_names = self.constraint_names
