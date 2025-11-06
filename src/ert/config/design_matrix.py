@@ -25,6 +25,7 @@ class DesignMatrix:
     xls_filename: Path
     design_sheet: str
     default_sheet: str | None
+    priority_source: str = "design_matrix"
 
     def __post_init__(self) -> None:
         try:
@@ -33,6 +34,9 @@ class DesignMatrix:
                 self.design_matrix_df,
                 self.parameter_configurations,
             ) = self.read_and_validate_design_matrix()
+            self.parameter_priority = {
+                cfg.name: self.priority_source for cfg in self.parameter_configurations
+            }
         except (ValueError, AttributeError) as exc:
             raise ConfigValidationError.with_context(
                 f"Error reading design matrix {self.xls_filename}"
@@ -45,7 +49,7 @@ class DesignMatrix:
     def from_config_list(cls, config_list: list[str | dict[str, str]]) -> DesignMatrix:
         filename = Path(cast(str, config_list[0]))
         options = cast(dict[str, str], config_list[1])
-        valid_options = ["DESIGN_SHEET", "DEFAULT_SHEET"]
+        valid_options = ["DESIGN_SHEET", "DEFAULT_SHEET", "PRIORITY"]
         option_errors = [
             ErrorInfo(
                 f"Option {option} is not a valid DESIGN_MATRIX option. "
@@ -59,6 +63,7 @@ class DesignMatrix:
             raise ConfigValidationError.from_collected(option_errors)
         design_sheet = options.get("DESIGN_SHEET", "DesignSheet")
         default_sheet = options.get("DEFAULT_SHEET", None)
+        priority_source = options.get("PRIORITY", DataSource.DESIGN_MATRIX)
         errors = []
         if filename.suffix not in {
             ".xlsx",
@@ -75,6 +80,13 @@ class DesignMatrix:
                     "DESIGN_SHEET and DEFAULT_SHEET can not point to the same sheet."
                 ).set_context(config_list)
             )
+        if priority_source not in {DataSource.DESIGN_MATRIX, DataSource.SAMPLED}:
+            errors.append(
+                ErrorInfo(
+                    f"PRIORITY must be either '{DataSource.DESIGN_MATRIX}'"
+                    f" or '{DataSource.SAMPLED}' priority is '{priority_source}'"
+                ).set_context(config_list)
+            )
         if errors:
             raise ConfigValidationError.from_collected(errors)
         assert design_sheet is not None
@@ -82,6 +94,7 @@ class DesignMatrix:
             xls_filename=filename,
             design_sheet=design_sheet,
             default_sheet=default_sheet,
+            priority_source=priority_source,
         )
 
     def merge_with_other(self, dm_other: DesignMatrix) -> None:
@@ -145,6 +158,7 @@ class DesignMatrix:
             for cfg in dm_other.parameter_configurations
             if cfg.name not in common_keys
         )
+        self.parameter_priority.update(dm_other.parameter_priority)
 
     def merge_with_existing_parameters(
         self, existing_parameters: list[ParameterConfig]
@@ -166,9 +180,24 @@ class DesignMatrix:
 
         for param_cfg in existing_parameters:
             if isinstance(param_cfg, GenKwConfig) and param_cfg.name in design_cfgs:
-                param_cfg.input_source = DataSource.DESIGN_MATRIX
-                param_cfg.update = False
-                param_cfg.distribution = RawSettings()
+                param_cfg.input_source = DataSource(
+                    self.parameter_priority.get(
+                        param_cfg.name, DataSource.DESIGN_MATRIX.value
+                    )
+                )
+                param_cfg.update = (
+                    param_cfg.input_source == DataSource.SAMPLED and param_cfg.update
+                )
+                param_cfg.distribution = (
+                    RawSettings()
+                    if param_cfg.input_source == DataSource.DESIGN_MATRIX
+                    else param_cfg.distribution
+                )
+                param_cfg.group = (
+                    DataSource.DESIGN_MATRIX.value.upper()
+                    if param_cfg.input_source == DataSource.DESIGN_MATRIX
+                    else param_cfg.group
+                )
                 del design_cfgs[param_cfg.name]
             new_param_configs += [param_cfg]
         if design_cfgs.values():

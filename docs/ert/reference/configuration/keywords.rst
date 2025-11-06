@@ -185,7 +185,7 @@ DESIGN_MATRIX
 -------------
 
 DESIGN_MATRIX is used to read and validate parameters given in XLSX-format.
-:code:`DESIGN_MATRIX` supports 1 positional argument, which points to a XLSL file.
+:code:`DESIGN_MATRIX` supports 1 positional argument, which points to a XLSX file.
 
 *Example:*
 
@@ -194,11 +194,11 @@ DESIGN_MATRIX is used to read and validate parameters given in XLSX-format.
         DESIGN_MATRIX poly_design.xlsx
 
 
-Additionally, there are two optional named arguments:
+Additionally, there are three optional named arguments:
 
 ::
 
-        DESIGN_MATRIX <file> DESIGN_SHEET:<name_of_design_sheet> DEFAULT_SHEET:<name_of_default_sheet>
+        DESIGN_MATRIX <file> DESIGN_SHEET:<name_of_design_sheet> DEFAULT_SHEET:<name_of_default_sheet> PRIORITY:<design_matrix|sampled>
 
 where:
 
@@ -206,15 +206,20 @@ where:
 
 2. DEFAULT_SHEET:<name_of_default_sheet> - the name of the :ref:`default_sheet`, which if not present will not be included
 
+3. PRIORITY:<design_matrix|sampled> - specifies which source has priority when merging with :ref:`GEN_KW <gen_kw>` parameters.
+   If set to `design_matrix`, parameters found in the design matrix will override values from :ref:`GEN_KW <gen_kw>`.
+   If set to `sampled`, parameters will be sampled normally overwriting values from :ref:`DESIGN_MATRIX  <design_matrix>`.
+   Default is `design_matrix`.
+
 
 *Example:*
 
 ::
 
-        DESIGN_MATRIX poly_design.xlsx DESIGN_SHEET:DesignSheet DEFAULT_SHEET:DefaultSheet
+        DESIGN_MATRIX poly_design.xlsx DESIGN_SHEET:DesignSheet DEFAULT_SHEET:DefaultSheet PRIORITY:design_matrix
 
 
-The XLSL file must contain a design sheet, where in the columns represents different parameters and rows represent realizations.
+The XLSX file must contain a design sheet, where in the columns represents different parameters and rows represent realizations.
 
 
 *Example of a design sheet:*
@@ -243,7 +248,7 @@ The XLSL file must contain a design sheet, where in the columns represents diffe
      - 3
 
 
-The XLSL file can optionally contain a default sheet, where there are two columns, the first column specifies parameter names and the second
+The XLSX file can optionally contain a default sheet, where there are two columns, the first column specifies parameter names and the second
 default values distributed across all the realizations defined by :ref:`design_sheet`. In the following example the realization 0,1 and 3 will
 contain parameters d and e, where d=0 and e=1 for all of the them.
 
@@ -307,7 +312,7 @@ The combination with :ref:`GEN_KW <gen_kw>` parameters is supported. In case of 
 ::
 
         GEN_KW COEFFS coeff_priors
-        DESIGN_MATRIX poly_design.xlsl DESIGN_SHEET:DesignSheet DEFAULT_SHEET:DefaultSheet
+        DESIGN_MATRIX poly_design.xlsx DESIGN_SHEET:DesignSheet DEFAULT_SHEET:DefaultSheet PRIORITY:design_matrix
 
 
 wherein coeff_priors
@@ -320,20 +325,35 @@ wherein coeff_priors
         f UNIFORM 0 10
 
 
-the :ref:`GEN_KW <gen_kw>` group COEFFS would remain, but the values (for b, c and d) would be read from the design matrix
+The overlapping parameters are b, c and d and the values will read from the design matrix
 and the update will be disabled, while f would be sampled and the update flag will remain.
 In this case the final set of parameters (for example in parameters.txt in real==0) would be:
 ::
 
-        DESIGN_MATRIX:a=1 <- design value
-        COEFFS:b=1 <- design value
-        COEFFS:c=2 <- design value
-        COEFFS:d=0 <- design value
-        DESIGN_MATRIX:e=1 <- design value
+        a=1 <- design value
+        b=1 <- design value
+        c=2 <- design value
+        d=0 <- design value
+        e=1 <- design value
         COEFFS:f=5.7 <- sampled value
 
-So the genkw would keep its name (COEFFS) and the design matrix parameters would be prefixed with DESIGN_MATRIX.
-Note that GEN_KW parameters that are not found in the design matrix will be sampled normally (eg. COEFFS:f).
+So the design matrix parameters would be without the prefix.
+
+In case we specify sampled priority:
+::
+
+        GEN_KW COEFFS coeff_priors
+        DESIGN_MATRIX poly_design.xlsx DESIGN_SHEET:DesignSheet DEFAULT_SHEET:DefaultSheet PRIORITY:sampled
+
+the final set of parameters (for example in parameters.txt in real==0) would be:
+::
+
+        a=1 <- design value
+        COEFFS:b=0.2 <- sampled value
+        COEFFS:c=1.3 <- sampled value
+        COEFFS:d=7.8 <- sampled value
+        e=1 <- design value
+        COEFFS:f=5.7 <- sampled value
 
 .. _design_matrix_notes:
 .. note::

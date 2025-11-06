@@ -80,14 +80,26 @@ def test_merge_multiple_occurrences(
         pl.DataFrame([["a", 1], ["b", 4]], orient="row"),
     )
     design_matrix_1 = DesignMatrix(
-        tmp_path / "design_matrix_1.xlsx", "DesignSheet", "DefaultSheet"
+        tmp_path / "design_matrix_1.xlsx", "DesignSheet", "DefaultSheet", "sampled"
     )
+    assert design_matrix_1.priority_source == "sampled"
+    assert design_matrix_1.parameter_priority == {
+        "a": DataSource.SAMPLED,
+        "b": DataSource.SAMPLED,
+    }
     _create_design_matrix(
         tmp_path / "design_matrix_2.xlsx", design_sheet_pd, default_sheet_pd
     )
     design_matrix_2 = DesignMatrix(
-        tmp_path / "design_matrix_2.xlsx", "DesignSheet", "DefaultSheet"
+        tmp_path / "design_matrix_2.xlsx",
+        "DesignSheet",
+        "DefaultSheet",
+        "design_matrix",
     )
+    assert design_matrix_2.priority_source == "design_matrix"
+    assert set(design_matrix_2.parameter_priority.values()) == {
+        DataSource.DESIGN_MATRIX
+    }
 
     if error_msg:
         with pytest.raises(ValueError, match=error_msg):
@@ -103,53 +115,43 @@ def test_merge_multiple_occurrences(
         np.testing.assert_equal(df["c"], np.array([9, 10, 11.1]))
         np.testing.assert_equal(df["d"], np.array([0, 2, 0]))
 
+        expected_priority = {
+            "a": (
+                DataSource.DESIGN_MATRIX
+                if "a" in design_sheet_pd.columns
+                else DataSource.SAMPLED
+            ),
+            "b": DataSource.SAMPLED,
+            "c": DataSource.DESIGN_MATRIX,
+            "d": DataSource.DESIGN_MATRIX,
+            "e": DataSource.DESIGN_MATRIX,
+        }
+        assert design_matrix_1.parameter_priority == expected_priority
+
 
 @pytest.mark.parametrize(
-    "parameters, num_configs, input_source, group_name",
+    "parameters, priority, num_configs, input_source, group_name",
     [
         pytest.param(
             ["a", "b"],
+            "design_matrix",
             2,
             {"a": DataSource.DESIGN_MATRIX, "b": DataSource.DESIGN_MATRIX},
+            {"a": DESIGN_MATRIX_GROUP, "b": DESIGN_MATRIX_GROUP},
+            id="overlap_priority_design_matrix",
+        ),
+        pytest.param(
+            ["a", "b"],
+            "sampled",
+            2,
+            {"a": DataSource.SAMPLED, "b": DataSource.SAMPLED},
             {"a": "COEFFS", "b": "COEFFS"},
-            id="genkw_replaced",
-        ),
-        pytest.param(
-            ["aa", "bb"],
-            4,
-            {
-                "a": DataSource.DESIGN_MATRIX,
-                "b": DataSource.DESIGN_MATRIX,
-                "aa": DataSource.SAMPLED,
-                "bb": DataSource.SAMPLED,
-            },
-            {
-                "a": DESIGN_MATRIX_GROUP,
-                "b": DESIGN_MATRIX_GROUP,
-                "aa": "COEFFS",
-                "bb": "COEFFS",
-            },
-            id="genkw_added",
-        ),
-        pytest.param(
-            ["a", "bb"],
-            3,
-            {
-                "a": DataSource.DESIGN_MATRIX,
-                "b": DataSource.DESIGN_MATRIX,
-                "bb": DataSource.SAMPLED,
-            },
-            {
-                "a": "COEFFS",
-                "b": DESIGN_MATRIX_GROUP,
-                "bb": "COEFFS",
-            },
-            id="genkw_added_and_replaced",
+            id="overlap_priority_sampled",
         ),
     ],
 )
-def test_read_and_merge_with_existing_parameters(
-    tmp_path, parameters, num_configs, input_source, group_name
+def test_merge_with_existing_parameters_with_custom_priorities(
+    tmp_path, priority, parameters, num_configs, input_source, group_name
 ):
     genkw_configs = [
         GenKwConfig(
@@ -171,7 +173,7 @@ def test_read_and_merge_with_existing_parameters(
     )
     default_sheet_df = pl.DataFrame([["a", 1], ["b", 4]], orient="row")
     _create_design_matrix(design_path, design_matrix_df, default_sheet_df)
-    design_matrix = DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
+    design_matrix = DesignMatrix(design_path, "DesignSheet", "DefaultSheet", priority)
     new_config_parameters = design_matrix.merge_with_existing_parameters(genkw_configs)
     assert len(new_config_parameters) == num_configs
     for config in new_config_parameters:
@@ -180,6 +182,99 @@ def test_read_and_merge_with_existing_parameters(
             f"{config} mismatch in input source"
         )
         assert config.group == group_name[config.name], (
+            f"{config} mismatch in group name"
+        )
+
+
+@pytest.mark.parametrize(
+    "parameters, num_configs, priority_source, res_input_source, res_group_name,",
+    [
+        pytest.param(
+            ["a", "b"],
+            2,
+            "design_matrix",
+            {"a": DataSource.DESIGN_MATRIX, "b": DataSource.DESIGN_MATRIX},
+            {"a": DESIGN_MATRIX_GROUP, "b": DESIGN_MATRIX_GROUP},
+            id="genkw_overlap_design_matrix",
+        ),
+        pytest.param(
+            ["a", "b"],
+            2,
+            "sampled",
+            {"a": DataSource.SAMPLED, "b": DataSource.SAMPLED},
+            {"a": "COEFFS", "b": "COEFFS"},
+            id="genkw_overlap_sampled",
+        ),
+        pytest.param(
+            ["aa", "bb"],
+            4,
+            "design_matrix",
+            {
+                "a": DataSource.DESIGN_MATRIX,
+                "b": DataSource.DESIGN_MATRIX,
+                "aa": DataSource.SAMPLED,
+                "bb": DataSource.SAMPLED,
+            },
+            {
+                "a": DESIGN_MATRIX_GROUP,
+                "b": DESIGN_MATRIX_GROUP,
+                "aa": "COEFFS",
+                "bb": "COEFFS",
+            },
+            id="genkw_added",
+        ),
+        pytest.param(
+            ["a", "bb"],
+            3,
+            "design_matrix",
+            {
+                "a": DataSource.DESIGN_MATRIX,
+                "b": DataSource.DESIGN_MATRIX,
+                "bb": DataSource.SAMPLED,
+            },
+            {
+                "a": DESIGN_MATRIX_GROUP,
+                "b": DESIGN_MATRIX_GROUP,
+                "bb": "COEFFS",
+            },
+            id="genkw_added_and_overlap",
+        ),
+    ],
+)
+def test_read_and_merge_with_existing_parameters(
+    tmp_path, parameters, num_configs, priority_source, res_input_source, res_group_name
+):
+    genkw_configs = [
+        GenKwConfig(
+            name=param,
+            group="COEFFS",
+            distribution={"name": "uniform", "min": 0, "max": 1},
+        )
+        for param in parameters
+    ]
+
+    realizations = [0, 1, 2]
+    design_path = tmp_path / "design_matrix.xlsx"
+    design_matrix_df = pl.DataFrame(
+        {
+            "REAL": realizations,
+            "a": [1, 2, 3],
+            "b": [0, 2, 0],
+        }
+    )
+    default_sheet_df = pl.DataFrame([["a", 1], ["b", 4]], orient="row")
+    _create_design_matrix(design_path, design_matrix_df, default_sheet_df)
+    design_matrix = DesignMatrix(
+        design_path, "DesignSheet", "DefaultSheet", priority_source
+    )
+    new_config_parameters = design_matrix.merge_with_existing_parameters(genkw_configs)
+    assert len(new_config_parameters) == num_configs
+    for config in new_config_parameters:
+        assert config.name in res_input_source
+        assert config.input_source == res_input_source[config.name], (
+            f"{config} mismatch in input source"
+        )
+        assert config.group == res_group_name[config.name], (
             f"{config} mismatch in group name"
         )
 
