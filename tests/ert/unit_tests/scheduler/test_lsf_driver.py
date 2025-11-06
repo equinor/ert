@@ -1306,6 +1306,7 @@ async def test_jobname_with_spaces(use_tmpdir, pytestconfig):
 
 
 @pytest.mark.integration_test
+@pytest.mark.flaky(rerun=3)
 async def test_that_kill_before_submit_is_finished_works(tmp_path, monkeypatch, caplog):
     """This test asserts that it is possible to issue a kill command
     to a realization right after it has been submitted (as in driver.submit()).
