@@ -38,7 +38,7 @@ from .forward_model_step import (
     ForwardModelStepWarning,
 )
 from .gen_data_config import GenDataConfig
-from .gen_kw_config import GenKwConfig
+from .gen_kw_config import DataSource, GenKwConfig
 from .model_config import ModelConfig
 from .parse_arg_types_list import parse_arg_types_list
 from .parsing import (
@@ -1025,11 +1025,30 @@ class ErtConfig(BaseModel):
                 if isinstance(cfg, GenKwConfig) and cfg.name in dm_params
             ]
             if overwrite_params:
-                ConfigWarning.warn(
-                    f"Parameters {overwrite_params} "
-                    "will be overridden by design matrix. This will cause "
-                    "updates to be turned off for these parameters."
-                )
+                param_sampled = [
+                    k
+                    for k in overwrite_params
+                    if analysis_config.design_matrix.parameter_priority[k]
+                    == DataSource.SAMPLED
+                ]
+                param_design = [
+                    k
+                    for k in overwrite_params
+                    if analysis_config.design_matrix.parameter_priority[k]
+                    == DataSource.DESIGN_MATRIX
+                ]
+                if param_sampled:
+                    ConfigWarning.warn(
+                        f"Parameters {param_sampled} "
+                        "are also defined in design matrix, but due to the sampled"
+                        " priority they will remain as such."
+                    )
+                if param_design:
+                    ConfigWarning.warn(
+                        f"Parameters {param_design} "
+                        "will be overridden by design matrix. This will cause "
+                        "updates to be turned off for these parameters."
+                    )
 
             if dm_errors:
                 raise ConfigValidationError.from_collected(dm_errors)
