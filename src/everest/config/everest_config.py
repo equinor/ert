@@ -30,7 +30,7 @@ from pydantic_core.core_schema import ValidationInfo
 from ruamel.yaml import YAML, YAMLError
 
 from ert.base_model_context import BaseModelWithContextSupport, use_runtime_plugins
-from ert.config import ConfigWarning, QueueSystem
+from ert.config import ConfigWarning, EverestObjectivesConfig, QueueSystem
 from ert.plugins import get_site_plugins
 from everest.config.install_template_config import InstallTemplateConfig
 from everest.config.server_config import ServerConfig
@@ -1098,3 +1098,13 @@ to read summary data from forward model, do:
         assert self.server is not None
         assert self.server.queue_system is not None
         return self.server.queue_system.name
+
+    def create_ert_objectives_config(self) -> EverestObjectivesConfig:
+        objective_names = [o.name for o in self.objective_functions]
+        return EverestObjectivesConfig(
+            keys=objective_names,
+            input_files=objective_names,
+            weights=[o.weight for o in self.objective_functions],
+            scales=[o.scale for o in self.objective_functions],
+            objective_types=[o.type for o in self.objective_functions],
+        )

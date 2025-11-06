@@ -298,10 +298,7 @@ class EverestRunModel(RunModel):
 
         response_configs: list[ResponseConfig] = []
 
-        objective_names = [c.name for c in everest_config.objective_functions]
-        response_configs.append(
-            EverestObjectivesConfig(keys=objective_names, input_files=objective_names)
-        )
+        response_configs.append(everest_config.create_response_config())
 
         constraint_names = [c.name for c in everest_config.output_constraints]
 
@@ -556,7 +553,7 @@ class EverestRunModel(RunModel):
     def _transforms(self) -> EverestOptModelTransforms:
         return get_optimization_domain_transforms(
             self.controls,
-            self.objective_functions,
+            self.objectives_config,
             self.input_constraints,
             self.output_constraints,
             self.model,
@@ -682,7 +679,7 @@ class EverestRunModel(RunModel):
         ]
         self._ever_storage.init(
             formatted_control_names=formatted_control_names,
-            objective_functions=self.objective_functions,
+            objective_functions=self.objectives_config,
             output_constraints=self.output_constraints,
             realizations=self.model.realizations,
         )
@@ -748,7 +745,7 @@ class EverestRunModel(RunModel):
     def _create_optimizer(self) -> tuple[BasicOptimizer, list[float]]:
         enopt_config, initial_guesses = everest2ropt(
             self.controls,
-            self.objective_functions,
+            self.objectives_config,
             self.input_constraints,
             self.output_constraints,
             self.optimization,
