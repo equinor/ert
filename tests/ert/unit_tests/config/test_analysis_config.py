@@ -104,7 +104,8 @@ def test_merging_ignores_identical_design_matrices(tmp_path, monkeypatch, caplog
         "DesignMatrix(xls_filename="
         "PosixPath('my_design_matrix.xlsx'), "
         "design_sheet='my_sheet', "
-        "default_sheet='my_default_sheet'), only reading once." in caplog.text
+        "default_sheet='my_default_sheet', "
+        "priority_source='design_matrix'), only reading once." in caplog.text
     )
 
 
@@ -169,6 +170,28 @@ def test_invalid_design_matrix_format_raises_validation_error():
                         {
                             "DESIGN_SHEET": "sheet1",
                             "DEFAULT_SHEET": "sheet2",
+                        },
+                    ],
+                ],
+            }
+        )
+
+
+def test_invalid_design_matrix_priority_setting_raises_validation_error():
+    with pytest.raises(
+        ConfigValidationError,
+        match="PRIORITY must be either 'design_matrix' or 'sampled'",
+    ):
+        AnalysisConfig.from_dict(
+            {
+                ConfigKeys.NUM_REALIZATIONS: 1,
+                ConfigKeys.DESIGN_MATRIX: [
+                    [
+                        "my_matrix.txt",
+                        {
+                            "DESIGN_SHEET": "sheet1",
+                            "DEFAULT_SHEET": "sheet2",
+                            "PRIORITY": "invalid_value",
                         },
                     ],
                 ],
