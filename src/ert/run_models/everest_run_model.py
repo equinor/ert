@@ -232,8 +232,6 @@ class EverestRunModel(RunModel):
 
     parameter_configuration: list[ParameterConfig]
     response_configuration: list[ResponseConfig]
-    ert_templates: list[tuple[str, str]]
-
     controls: list[ControlConfig]
 
     objective_functions: list[ObjectiveFunctionConfig]
@@ -544,7 +542,6 @@ class EverestRunModel(RunModel):
             active_realizations=[],
             parameter_configuration=parameter_configs,
             response_configuration=response_configs,
-            ert_templates=[],  # Everest dont use ert templates
             user_config_file=config_file,
             env_vars=env_vars,
             env_pr_fm_step=env_pr_fm_step,
