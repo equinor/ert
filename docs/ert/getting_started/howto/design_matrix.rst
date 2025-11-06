@@ -10,7 +10,7 @@ contains parameters and their values per realization.
 parameters as `DESIGN2PARAMS`.
 
 If the same parameter name is defined both in the design matrix and in the GEN_KW parameter definition,
-the value from the design matrix takes precedence and the parameter will not be updated by ERT.
+the priority of which values are to be used is defined by optional attribute PRIORITY:<design_matrix|sampled>.
 
 Migration from `DESIGN2PARAMS`
 ------------------------------
@@ -31,7 +31,7 @@ should be replaced with DESIGN_MATRIX as follows:
 
 ::
 
-    DESIGN_MATRIX <CONFIG_PATH>/<DESIGN_MATRIX> DESIGN_SHEET:<DESIGN_SHEET> DEFAULT_SHEET:DefaultValues
+    DESIGN_MATRIX <CONFIG_PATH>/<DESIGN_MATRIX> DESIGN_SHEET:<DESIGN_SHEET> DEFAULT_SHEET:DefaultValues PRIORITY:sampled
 
 Additionally, review the documentation for :ref:`DESIGN_MATRIX <design_matrix>`.
 
