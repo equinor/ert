@@ -299,7 +299,7 @@ class RunModel(BaseModelWithContextSupport, ABC):
             else {}
         )
         usr_queue_options_dict = queue_config.queue_options.model_dump(
-            exclude_unset=True, exclude_defaults=True
+            exclude_unset=True
         )
 
         site_queue_system = str(
