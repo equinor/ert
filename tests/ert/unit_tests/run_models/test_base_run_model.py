@@ -12,9 +12,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from pydantic import ConfigDict
 
-from ert.config import ErtConfig, GenKwConfig, ModelConfig, QueueConfig
+from ert.config import ErtConfig, GenKwConfig, ModelConfig, QueueConfig, QueueSystem
+from ert.config.queue_config import LsfQueueOptions
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
+from ert.plugins import ErtRuntimePlugins
 from ert.run_models.run_model import RunModel, UserCancelled
 
 
@@ -619,3 +621,33 @@ def test_run_model_logs_number_of_parameters(use_tmpdir):
 
     with patch.object(Logger, "info", mock_logging):
         rm.log_at_startup()
+
+
+def test_that_defaulted_user_queue_options_overrides_site_queue_options(use_tmpdir):
+    user_queue_options = LsfQueueOptions(
+        max_running=0,
+        submit_sleep=0,
+        num_cpu=1,
+        realization_memory=0,
+    )
+
+    class DummyValidationInfo:
+        @property
+        def context(self) -> ErtRuntimePlugins:
+            return ErtRuntimePlugins(
+                queue_options=LsfQueueOptions(
+                    max_running=2, submit_sleep=2, num_cpu=2, realization_memory=2
+                )
+            )
+
+    user_queue_config = QueueConfig(
+        queue_system=QueueSystem.LSF, queue_options=user_queue_options
+    )
+    RunModel.inject_site_configuration_queue_options(
+        user_queue_config, info=DummyValidationInfo()
+    )
+
+    assert user_queue_config.queue_options.max_running == 0
+    assert user_queue_config.queue_options.submit_sleep == 0
+    assert user_queue_config.queue_options.num_cpu == 1
+    assert user_queue_config.queue_options.realization_memory == 0
