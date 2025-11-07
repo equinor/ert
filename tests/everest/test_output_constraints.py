@@ -123,7 +123,7 @@ def test_upper_bound_output_constraint_def(tmp_path):
         config.controls,
         config.create_ert_objectives_config(),
         config.input_constraints,
-        config.output_constraints,
+        config.create_ert_output_constraints_config(),
         config.optimization,
         config.model,
         config.environment.random_seed,

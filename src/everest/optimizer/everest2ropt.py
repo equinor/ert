@@ -3,7 +3,7 @@ from typing import Any
 
 from ropt.enums import PerturbationType, VariableType
 
-from ert.config import EverestObjectivesConfig
+from ert.config import EverestConstraintsConfig, EverestObjectivesConfig
 from everest.config import (
     ControlConfig,
     InputConstraintConfig,
@@ -143,13 +143,26 @@ def _parse_input_constraints(
 
 
 def _parse_output_constraints(
-    output_constraints: list[OutputConstraintConfig],
+    output_constraints: EverestConstraintsConfig | None,
 ) -> dict[str, Any]:
     if output_constraints:
-        lower_bounds, upper_bounds = _get_bounds(output_constraints)
         return {
-            "lower_bounds": lower_bounds,
-            "upper_bounds": upper_bounds,
+            "lower_bounds": [
+                target if target is not None else lb
+                for lb, target in zip(
+                    output_constraints.lower_bounds,
+                    output_constraints.targets,
+                    strict=False,
+                )
+            ],
+            "upper_bounds": [
+                target if target is not None else ub
+                for ub, target in zip(
+                    output_constraints.upper_bounds,
+                    output_constraints.targets,
+                    strict=False,
+                )
+            ],
         }
     return {}
 
@@ -251,7 +264,7 @@ def everest2ropt(
     controls: list[ControlConfig],
     objective_functions: EverestObjectivesConfig,
     input_constraints: list[InputConstraintConfig],
-    output_constraints: list[OutputConstraintConfig],
+    output_constraints: EverestConstraintsConfig | None,
     optimization: OptimizationConfig | None,
     model: ModelConfig,
     random_seed: int,
@@ -297,9 +310,9 @@ def everest2ropt(
                 name for config in controls for name in config.formatted_control_names
             ],
             "objective": objective_functions.keys,
-            "nonlinear_constraint": [
-                constraint.name for constraint in output_constraints
-            ],
+            "nonlinear_constraint": output_constraints.keys
+            if output_constraints is not None
+            else [],
             "realization": model.realizations,
         },
     }

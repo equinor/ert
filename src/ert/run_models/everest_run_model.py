@@ -30,6 +30,7 @@ from ropt.transforms import OptModelTransforms
 from typing_extensions import TypedDict
 
 from ert.config import (
+    EverestConstraintsConfig,
     EverestObjectivesConfig,
     GenDataConfig,
     HookRuntime,
@@ -56,7 +57,6 @@ from everest.config import (
     InputConstraintConfig,
     ModelConfig,
     OptimizationConfig,
-    OutputConstraintConfig,
 )
 from everest.config.forward_model_config import SummaryResults
 from everest.everest_storage import EverestStorage
@@ -233,8 +233,6 @@ class EverestRunModel(RunModel):
     controls: list[ControlConfig]
 
     input_constraints: list[InputConstraintConfig]
-
-    output_constraints: list[OutputConstraintConfig]
 
     optimization: OptimizationConfig
     model: ModelConfig
@@ -514,7 +512,6 @@ class EverestRunModel(RunModel):
             objective_names=everest_config.objective_names,
             objective_functions=everest_config.objective_functions,
             input_constraints=everest_config.input_constraints,
-            output_constraints=everest_config.output_constraints,
             optimization=everest_config.optimization,
             model=everest_config.model,
             optimization_output_dir=everest_config.optimization_output_dir,
@@ -545,7 +542,7 @@ class EverestRunModel(RunModel):
             self.controls,
             self.objectives_config,
             self.input_constraints,
-            self.output_constraints,
+            self.output_constraints_config,
             self.model,
             self.optimization.auto_scale,
         )
@@ -640,6 +637,19 @@ class EverestRunModel(RunModel):
             )
 
     @property
+    def output_constraints_config(self) -> EverestConstraintsConfig | None:
+        constraints_config = next(
+            (c for c in self.response_configuration if c.type == "everest_constraints"),
+            None,
+        )
+
+        if constraints_config is None:
+            return None
+
+        assert isinstance(constraints_config, EverestConstraintsConfig)
+        return constraints_config
+
+    @property
     def objectives_config(self) -> EverestObjectivesConfig:
         obj_config = next(
             c for c in self.response_configuration if c.type == "everest_objectives"
@@ -680,7 +690,7 @@ class EverestRunModel(RunModel):
         self._ever_storage.init(
             formatted_control_names=formatted_control_names,
             objective_functions=self.objectives_config,
-            output_constraints=self.output_constraints,
+            output_constraints=self.output_constraints_config,
             realizations=self.model.realizations,
         )
         optimizer.set_results_callback(self._handle_optimizer_results)
@@ -747,7 +757,7 @@ class EverestRunModel(RunModel):
             self.controls,
             self.objectives_config,
             self.input_constraints,
-            self.output_constraints,
+            self.output_constraints_config,
             self.optimization,
             self.model,
             self.random_seed,
@@ -997,10 +1007,10 @@ class EverestRunModel(RunModel):
             )
             constraints = (
                 np.zeros(
-                    (num_all_simulations, len(self.output_constraints)),
+                    (num_all_simulations, len(self.output_constraints_config.keys)),
                     dtype=np.float64,
                 )
-                if self.output_constraints
+                if self.output_constraints_config
                 else None
             )
             sim_ids = np.array([-1] * num_all_simulations, dtype=np.int32)
@@ -1113,7 +1123,11 @@ class EverestRunModel(RunModel):
         objective_names = self.objectives_config.keys
         objectives = np.zeros((ensemble.ensemble_size, len(objective_names)))
 
-        constraint_names = [c.name for c in self.output_constraints]
+        constraint_names = (
+            self.output_constraints_config.keys
+            if self.output_constraints_config is not None
+            else []
+        )
         constraints = np.zeros((ensemble.ensemble_size, len(constraint_names)))
 
         if not any(self.active_realizations):

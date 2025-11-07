@@ -1120,5 +1120,10 @@ to read summary data from forward model, do:
 
         constraint_names = [c.name for c in self.output_constraints]
         return EverestConstraintsConfig(
-            keys=constraint_names, input_files=constraint_names
+            keys=constraint_names,
+            input_files=constraint_names,
+            scales=[c.scale for c in self.output_constraints],
+            targets=[c.target for c in self.output_constraints],
+            upper_bounds=[c.upper_bound for c in self.output_constraints],
+            lower_bounds=[c.lower_bound for c in self.output_constraints],
         )
