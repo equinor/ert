@@ -23,7 +23,6 @@ from pydantic import BaseModel, Field
 
 from ert.config import ErtConfig, ParameterConfig, ResponseConfig
 from ert.shared import __version__
-from ert.storage.migration import to15
 
 from .local_ensemble import LocalEnsemble
 from .local_experiment import LocalExperiment
@@ -506,6 +505,7 @@ class LocalStorage(BaseMode):
             to12,
             to13,
             to14,
+            to15,
         )
 
         try:
