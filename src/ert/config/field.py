@@ -15,10 +15,10 @@ import xtgeo  # type: ignore
 from pydantic import field_serializer
 
 from ert.field_utils import (
-    ErtboxParameters,
     FieldFileFormat,
+    GridDimensions,
     Shape,
-    calculate_ertbox_parameters,
+    calculate_grid_dimensions,
     get_shape,
     read_field,
     read_mask,
@@ -93,7 +93,7 @@ def adjust_graph_for_masking(
 
 class Field(ParameterConfig):
     type: Literal["field"] = "field"
-    ertbox_params: ErtboxParameters
+    grid_dimensions: GridDimensions
     file_format: FieldFileFormat
     output_transformation: str | None
     input_transformation: str | None
@@ -123,7 +123,10 @@ class Field(ParameterConfig):
                 key=self.name,
                 transformation=self.output_transformation,
                 dimensionality=3,
-                userdata={"data_origin": "FIELD", "ertbox_params": self.ertbox_params},
+                userdata={
+                    "data_origin": "FIELD",
+                    "grid_dimensions": self.grid_dimensions,
+                },
             )
         ]
 
@@ -206,7 +209,7 @@ class Field(ParameterConfig):
         try:
             if grid_extension == ".egrid":
                 grid = xtgeo.grid_from_file(grid_file_path)
-                ertbox_params = calculate_ertbox_parameters(grid)
+                grid_dimensions = calculate_grid_dimensions(grid)
             else:
                 dims = get_shape(grid_file_path)
 
@@ -216,7 +219,7 @@ class Field(ParameterConfig):
                         grid_file_path,
                     )
 
-                ertbox_params = ErtboxParameters(dims.nx, dims.ny, dims.nz)
+                grid_dimensions = GridDimensions(dims.nx, dims.ny, dims.nz)
         except Exception as err:
             raise ConfigValidationError.with_context(
                 f"Could not read grid file {grid_file_path}: {err}",
@@ -225,7 +228,7 @@ class Field(ParameterConfig):
 
         return cls(
             name=name,
-            ertbox_params=ertbox_params,
+            grid_dimensions=grid_dimensions,
             file_format=file_format,
             output_transformation=output_transform,
             input_transformation=init_transform,
@@ -240,7 +243,11 @@ class Field(ParameterConfig):
 
     def __len__(self) -> int:
         if self.mask_file is None:
-            return self.ertbox_params.nx * self.ertbox_params.ny * self.ertbox_params.nz
+            return (
+                self.grid_dimensions.nx
+                * self.grid_dimensions.ny
+                * self.grid_dimensions.nz
+            )
 
         # Uses int() to convert to standard python int for mypy
         return int(np.size(self.mask) - np.count_nonzero(self.mask))
@@ -260,9 +267,9 @@ class Field(ParameterConfig):
                             self.name,
                             self.mask,
                             Shape(
-                                self.ertbox_params.nx,
-                                self.ertbox_params.ny,
-                                self.ertbox_params.nz,
+                                self.grid_dimensions.nx,
+                                self.grid_dimensions.ny,
+                                self.grid_dimensions.nz,
                             ),
                         ),
                         self.input_transformation,
@@ -359,21 +366,23 @@ class Field(ParameterConfig):
 
     def load_parameter_graph(self) -> nx.Graph:  # type: ignore
         parameter_graph = create_flattened_cube_graph(
-            px=self.ertbox_params.nx, py=self.ertbox_params.ny, pz=self.ertbox_params.nz
+            px=self.grid_dimensions.nx,
+            py=self.grid_dimensions.ny,
+            pz=self.grid_dimensions.nz,
         )
         return adjust_graph_for_masking(G=parameter_graph, mask=self.mask.flatten())
 
     @property
     def nx(self) -> int:
-        return self.ertbox_params.nx
+        return self.grid_dimensions.nx
 
     @property
     def ny(self) -> int:
-        return self.ertbox_params.ny
+        return self.grid_dimensions.ny
 
     @property
     def nz(self) -> int:
-        return self.ertbox_params.nz
+        return self.grid_dimensions.nz
 
 
 TRANSFORM_FUNCTIONS = {

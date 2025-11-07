@@ -100,7 +100,7 @@ def get_shape(
 
 
 @dataclass(frozen=True)
-class ErtboxParameters:
+class GridDimensions:
     nx: int
     ny: int
     nz: int
@@ -112,20 +112,20 @@ class ErtboxParameters:
     origin: tuple[float, float] | None = None
 
 
-def calculate_ertbox_parameters(
+def calculate_grid_dimensions(
     grid: xtgeo.Grid, left_handed: bool = False
-) -> ErtboxParameters:
-    """Calculate ERTBOX grid parameters from an XTGeo grid.
+) -> GridDimensions:
+    """Calculate grid dimensions from an XTGeo grid.
 
     Extracts geometric parameters including dimensions, cell increments,
-    rotation angle, and origin coordinates needed for ERTBOX.
+    rotation angle, and origin coordinates needed for the grid.
 
     Args:
         grid: XTGeo Grid3D object
         left_handed: If True, use left-handed coordinate system (default: False)
 
     Returns:
-        ErtboxParameters with grid dimensions, increments, rotation, and origin
+        GridDimensions with grid dimensions, increments, rotation, and origin
     """
 
     (nx, ny, nz) = grid.dimensions
@@ -196,7 +196,7 @@ def calculate_ertbox_parameters(
     elif deltax1 < 0:
         angle = (math.atan(deltay1 / deltax1) + math.pi) * 180.0 / math.pi
 
-    return ErtboxParameters(
+    return GridDimensions(
         nx=nx,
         ny=ny,
         nz=nz,

@@ -144,9 +144,9 @@ def test_that_storage_matches(
         # We need to normalize some irrelevant details:
         experiment.parameter_configuration["PORO"].mask_file = ""
 
-        assert experiment.parameter_configuration["PORO"].ertbox_params.nx == 2
-        assert experiment.parameter_configuration["PORO"].ertbox_params.ny == 3
-        assert experiment.parameter_configuration["PORO"].ertbox_params.nz == 4
+        assert experiment.parameter_configuration["PORO"].grid_dimensions.nx == 2
+        assert experiment.parameter_configuration["PORO"].grid_dimensions.ny == 3
+        assert experiment.parameter_configuration["PORO"].grid_dimensions.nz == 4
 
         assert experiment.templates_configuration == [("\nBPR:<BPR>\n", "params.txt")]
         df = ensemble.load_parameters("BPR")
