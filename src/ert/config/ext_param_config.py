@@ -178,6 +178,20 @@ class ExtParamConfig(ParameterConfig):
     output_file: str = ""
     forward_init_file: str = ""
     update: bool = False
+    types: list[Literal["well_control", "generic_control"]]
+    initial_guesses: list[float]
+    control_types: list[Literal["real", "integer"]]
+    enabled: list[bool]
+    min: list[float]
+    max: list[float]
+    perturbation_types: list[Literal["absolute", "relative"]]
+    perturbation_magnitudes: list[float]
+    scaled_ranges: list[tuple[float, float]]
+    samplers: list[SamplerConfig | None]
+
+    # Set up for deprecation, but has to live here until support for the
+    # "dotdash" notation is removed for everest controls via everest config.
+    input_keys_dotdash: list[str] = field(default_factory=list)
 
     def read_from_runpath(
         self, run_path: Path, real_nr: int, iteration: int

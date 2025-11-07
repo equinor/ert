@@ -313,8 +313,68 @@ class ControlConfig(BaseModel):
     )
 
     def to_ert_parameter_config(self) -> ExtParamConfig:
+        types = []
+        initial_guesses = []
+        control_types = []
+        enabled = []
+        mins = []
+        maxs = []
+        perturbation_types = []
+        perturbation_magnitudes = []
+        scaled_ranges = []
+        samplers = []
+
+        def _parse_variable(
+            variable: ControlVariableConfig | ControlVariableGuessListConfig,
+            initial_guess: float | None = None,
+        ) -> None:
+            types.append(self.type)
+            initial_guesses.append(
+                initial_guess
+                if initial_guess is not None
+                else variable.initial_guess
+                if variable.initial_guess is not None
+                else self.initial_guess
+            )
+            control_types.append(self.control_type)
+            enabled.append(
+                variable.enabled if variable.enabled is not None else self.enabled
+            )
+            mins.append(variable.min if variable.min is not None else self.min)
+            maxs.append(variable.max if variable.max is not None else self.max)
+            perturbation_types.append(variable.perturbation_type)
+            perturbation_magnitudes.append(
+                variable.perturbation_magnitude
+                if variable.perturbation_magnitude is not None
+                else self.perturbation_magnitude
+            )
+            scaled_ranges.append(
+                variable.scaled_range
+                if variable.scaled_range is not None
+                else self.scaled_range
+            )
+            samplers.append(variable.sampler or self.sampler)
+
+        for variable in self.variables:
+            if isinstance(variable, ControlVariableConfig):
+                _parse_variable(variable)
+            else:
+                for initial_guess in variable.initial_guess:
+                    _parse_variable(variable, initial_guess=initial_guess)
+
         return ExtParamConfig(
             name=self.name,
             input_keys=self.formatted_control_names,
+            input_keys_dotdash=self.formatted_control_names_dotdash,
             output_file=self.name + ".json",
+            types=types,
+            initial_guesses=initial_guesses,
+            control_types=control_types,
+            enabled=enabled,
+            min=mins,
+            max=maxs,
+            perturbation_types=perturbation_types,
+            perturbation_magnitudes=perturbation_magnitudes,
+            scaled_ranges=scaled_ranges,
+            samplers=samplers,
         )

@@ -242,7 +242,7 @@ def test_that_controls_ordering_is_the_same_for_ropt_and_extparam():
     ever_config_index_wise = everest_config_with_defaults(controls=[index_wise])
 
     ropt_var_wise = everest2ropt(
-        ever_config_var_wise.controls,
+        [c.to_ert_parameter_config() for c in ever_config_var_wise.controls],
         ever_config_var_wise.create_ert_objectives_config(),
         ever_config_var_wise.input_constraints,
         ever_config_var_wise.create_ert_output_constraints_config(),
@@ -253,7 +253,7 @@ def test_that_controls_ordering_is_the_same_for_ropt_and_extparam():
     )
 
     ropt_index_wise = everest2ropt(
-        ever_config_index_wise.controls,
+        [c.to_ert_parameter_config() for c in ever_config_index_wise.controls],
         ever_config_index_wise.create_ert_objectives_config(),
         ever_config_index_wise.input_constraints,
         ever_config_index_wise.create_ert_output_constraints_config(),
@@ -304,7 +304,7 @@ def test_that_controls_ordering_disregards_index():
     ever_config_var_wise = everest_config_with_defaults(controls=[var_wise])
 
     ropt_var_wise = everest2ropt(
-        ever_config_var_wise.controls,
+        [c.to_ert_parameter_config() for c in ever_config_var_wise.controls],
         ever_config_var_wise.create_ert_objectives_config(),
         ever_config_var_wise.input_constraints,
         ever_config_var_wise.create_ert_output_constraints_config(),
@@ -367,7 +367,7 @@ def test_that_setting_initial_guess_in_a_list_is_the_same_as_one_per_index():
     ever_config2 = everest_config_with_defaults(controls=[controls2])
 
     ropt_config1, initial1 = everest2ropt(
-        ever_config1.controls,
+        [c.to_ert_parameter_config() for c in ever_config1.controls],
         ever_config1.create_ert_objectives_config(),
         ever_config1.input_constraints,
         ever_config1.create_ert_output_constraints_config(),
@@ -378,7 +378,7 @@ def test_that_setting_initial_guess_in_a_list_is_the_same_as_one_per_index():
     )
 
     ropt_config2, initial2 = everest2ropt(
-        ever_config2.controls,
+        [c.to_ert_parameter_config() for c in ever_config2.controls],
         ever_config2.create_ert_objectives_config(),
         ever_config2.input_constraints,
         ever_config2.create_ert_output_constraints_config(),

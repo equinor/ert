@@ -120,7 +120,7 @@ def test_upper_bound_output_constraint_def(tmp_path):
     config = EverestConfig.load_file(str(config_file_path))
 
     ropt_conf, _ = everest2ropt(
-        config.controls,
+        [c.to_ert_parameter_config() for c in config.controls],
         config.create_ert_objectives_config(),
         config.input_constraints,
         config.create_ert_output_constraints_config(),
