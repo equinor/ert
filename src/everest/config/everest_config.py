@@ -30,7 +30,12 @@ from pydantic_core.core_schema import ValidationInfo
 from ruamel.yaml import YAML, YAMLError
 
 from ert.base_model_context import BaseModelWithContextSupport, use_runtime_plugins
-from ert.config import ConfigWarning, EverestObjectivesConfig, QueueSystem
+from ert.config import (
+    ConfigWarning,
+    EverestConstraintsConfig,
+    EverestObjectivesConfig,
+    QueueSystem,
+)
 from ert.plugins import get_site_plugins
 from everest.config.install_template_config import InstallTemplateConfig
 from everest.config.server_config import ServerConfig
@@ -1107,4 +1112,13 @@ to read summary data from forward model, do:
             weights=[o.weight for o in self.objective_functions],
             scales=[o.scale for o in self.objective_functions],
             objective_types=[o.type for o in self.objective_functions],
+        )
+
+    def create_ert_output_constraints_config(self) -> EverestConstraintsConfig | None:
+        if len(self.output_constraints) == 0:
+            return None
+
+        constraint_names = [c.name for c in self.output_constraints]
+        return EverestConstraintsConfig(
+            keys=constraint_names, input_files=constraint_names
         )

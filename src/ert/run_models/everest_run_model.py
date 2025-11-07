@@ -30,7 +30,6 @@ from ropt.transforms import OptModelTransforms
 from typing_extensions import TypedDict
 
 from ert.config import (
-    EverestConstraintsConfig,
     EverestObjectivesConfig,
     GenDataConfig,
     HookRuntime,
@@ -297,15 +296,9 @@ class EverestRunModel(RunModel):
 
         response_configs.append(everest_config.create_ert_objectives_config())
 
-        constraint_names = [c.name for c in everest_config.output_constraints]
-
-        if constraint_names:
-            response_configs.append(
-                EverestConstraintsConfig(
-                    keys=constraint_names,
-                    input_files=constraint_names,
-                )
-            )
+        constraints_config = everest_config.create_ert_output_constraints_config()
+        if constraints_config is not None:
+            response_configs.append(constraints_config)
 
         gen_data_keys = [
             fm.results.file_name
