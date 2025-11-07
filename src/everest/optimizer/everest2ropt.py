@@ -3,9 +3,8 @@ from typing import Any
 
 from ropt.enums import PerturbationType, VariableType
 
-from ert.config import EverestObjectivesConfig
+from ert.config import EverestObjectivesConfig, ExtParamConfig
 from everest.config import (
-    ControlConfig,
     InputConstraintConfig,
     ModelConfig,
     OptimizationConfig,
@@ -102,13 +101,13 @@ def _get_bounds(
 
 def _parse_input_constraints(
     input_constraints: list[InputConstraintConfig],
-    controls: list[ControlConfig],
+    controls: list[ExtParamConfig],
 ) -> dict[str, Any]:
     formatted_control_names = [
-        name for config in controls for name in config.formatted_control_names
+        name for config in controls for name in config.input_keys
     ]
     formatted_control_names_dotdash = [
-        name for config in controls for name in config.formatted_control_names_dotdash
+        name for config in controls for name in config.input_keys_dotdash
     ]
 
     def _get_control_index(name: str) -> int:
@@ -248,7 +247,7 @@ def _parse_optimization(
 
 
 def everest2ropt(
-    controls: list[ControlConfig],
+    controls: list[ExtParamConfig],
     objective_functions: EverestObjectivesConfig,
     input_constraints: list[InputConstraintConfig],
     output_constraints: list[OutputConstraintConfig],
@@ -293,9 +292,7 @@ def everest2ropt(
         "realizations": ropt_realizations,
         "optimizer": ropt_optimizer,
         "names": {
-            "variable": [
-                name for config in controls for name in config.formatted_control_names
-            ],
+            "variable": [name for config in controls for name in config.input_keys],
             "objective": objective_functions.keys,
             "nonlinear_constraint": [
                 constraint.name for constraint in output_constraints
