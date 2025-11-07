@@ -35,8 +35,7 @@
     "truncation_max": null,
     "forward_init_file": "data/poro%d.grdecl",
     "output_file": "poro.grdecl",
-    "grid_file": "/home/eivind/Projects/ert/test-data/all_data_types/refcase/CASE.EGRID",
-    "mask_file": ""
+    "grid_file": "/home/eivind/Projects/ert/test-data/all_data_types/refcase/CASE.EGRID"
   },
   "TOP": {
     "type": "surface",

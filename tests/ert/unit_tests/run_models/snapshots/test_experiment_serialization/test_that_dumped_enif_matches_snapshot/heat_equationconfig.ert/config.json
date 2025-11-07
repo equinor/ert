@@ -235,8 +235,7 @@
       "truncation_max": null,
       "forward_init_file": "cond.bgrdecl",
       "output_file": "cond.bgrdecl",
-      "grid_file": "test-data/ert/heat_equation.config.ert/CASE.EGRID",
-      "mask_file": null
+      "grid_file": "test-data/ert/heat_equation.config.ert/CASE.EGRID"
     }
   ],
   "response_configuration": [
