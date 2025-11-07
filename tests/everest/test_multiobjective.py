@@ -58,7 +58,7 @@ def test_multi_objectives2ropt():
         config.controls,
         config.create_ert_objectives_config(),
         config.input_constraints,
-        config.output_constraints,
+        config.create_ert_output_constraints_config(),
         config.optimization,
         config.model,
         config.environment.random_seed,
