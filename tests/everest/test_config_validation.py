@@ -14,7 +14,7 @@ import yaml
 from hypothesis import given
 from pydantic import ValidationError
 
-from ert.config import ConfigValidationError, ConfigWarning
+from ert.config import ConfigValidationError, ConfigWarning, SamplerConfig
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.plugins import get_site_plugins
 from ert.run_models.everest_run_model import EverestRunModel
@@ -27,7 +27,6 @@ from everest.config import (
 from everest.config.control_variable_config import ControlVariableConfig
 from everest.config.everest_config import EverestValidationError
 from everest.config.forward_model_config import ForwardModelStepConfig
-from everest.config.sampler_config import SamplerConfig
 from everest.config.validation_utils import _OVERWRITE_MESSAGE, _RESERVED_WORDS
 from tests.everest.utils import everest_config_with_defaults
 

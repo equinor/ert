@@ -1,3 +1,5 @@
+from ert.config import SamplerConfig
+
 from .control_config import ControlConfig
 from .control_variable_config import (
     ControlVariableConfig,
@@ -15,7 +17,6 @@ from .model_config import ModelConfig
 from .objective_function_config import ObjectiveFunctionConfig
 from .optimization_config import OptimizationConfig
 from .output_constraint_config import OutputConstraintConfig
-from .sampler_config import SamplerConfig
 from .server_config import ServerConfig
 from .simulator_config import SimulatorConfig
 from .well_config import WellConfig

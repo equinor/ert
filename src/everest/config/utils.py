@@ -1,9 +1,10 @@
 from copy import deepcopy
 from typing import Any, Literal
 
+from ert.config import SamplerConfig
+
 from .control_config import ControlConfig
 from .control_variable_config import ControlVariableGuessListConfig
-from .sampler_config import SamplerConfig
 
 
 class FlattenedControls:
