@@ -89,6 +89,11 @@ def test_migration_to_genkw_with_polars_and_design_matrix(
 @pytest.mark.parametrize(
     "ert_version",
     [
+        "15.0.2",
+        "14.6.4",
+        "13.0.5",
+        "12.1.2",
+        "11.1.9",
         "11.1.8",
         "11.0.8",
         "10.3.1",
