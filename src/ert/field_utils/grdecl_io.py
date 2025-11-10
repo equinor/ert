@@ -234,7 +234,7 @@ def import_bgrdecl(
             keyword = str(entry.read_keyword()).strip()
             if keyword == field_name:
                 values = entry.read_array()
-                if not isinstance(values, np.ndarray) and values == resfo.MESS:
+                if isinstance(values, resfo.MessType):
                     raise ValueError(
                         f"{field_name} in {file_path} has MESS type"
                         " and not a real valued field"

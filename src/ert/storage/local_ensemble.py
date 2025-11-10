@@ -1308,7 +1308,7 @@ def _log_grid_contents(
                         arr_len = 8 if kw == "FILEHEAD" else 33
                         arr_printout = (
                             "MESS"
-                            if isinstance(arr, resfo.MESS)
+                            if isinstance(arr, resfo.MessType)
                             else str(arr[0:arr_len])
                         )
                         logger.info(f"{grid_file} {kw} contains {arr_printout}")

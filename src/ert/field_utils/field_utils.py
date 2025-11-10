@@ -26,6 +26,14 @@ class Shape(NamedTuple):
     nz: int
 
 
+def _validate_array(
+    kw: str, filename: _PathLike, vals: npt.NDArray[Any] | resfo.MessType
+) -> npt.NDArray[Any]:
+    if isinstance(vals, resfo.MessType):
+        raise ValueError(f"{kw.strip()} in {filename} has incorrect type MESS")
+    return vals
+
+
 def _make_shape(sequence: npt.NDArray[Any]) -> Shape:
     return Shape(*(int(val) for val in sequence))
 
@@ -44,23 +52,21 @@ def read_mask(
             keyword = str(entry.read_keyword()).strip()
             if actnum is None:
                 if keyword == "COORDS":
-                    coord_array = entry.read_array()
-                    assert isinstance(coord_array, np.ndarray)
+                    coord_array = _validate_array(
+                        "COORDS", grid_path, entry.read_array()
+                    )
                     if coord_array[4]:
                         actnum_coords.append(
                             (coord_array[0], coord_array[1], coord_array[2])
                         )
                 if keyword == "ACTNUM":
-                    actnum = entry.read_array()
-                    assert isinstance(actnum, np.ndarray)
+                    actnum = _validate_array("ACTNUM", grid_path, entry.read_array())
             if shape is None:
                 if keyword == "GRIDHEAD":
-                    arr = entry.read_array()
-                    assert isinstance(arr, np.ndarray)
+                    arr = _validate_array("GRIDHEAD", grid_path, entry.read_array())
                     shape = _make_shape(arr[1:4])
                 elif keyword == "DIMENS":
-                    arr = entry.read_array()
-                    assert isinstance(arr, np.ndarray)
+                    arr = _validate_array("DIMENS", grid_path, entry.read_array())
                     shape = _make_shape(arr[0:3])
 
     # Could possibly read shape from actnum_coords if they were read.
@@ -88,12 +94,10 @@ def get_shape(
         for entry in resfo.lazy_read(f):
             keyword = str(entry.read_keyword()).strip()
             if keyword == "GRIDHEAD":
-                arr = entry.read_array()
-                assert isinstance(arr, np.ndarray)
+                arr = _validate_array("GRIDHEAD", grid_path, entry.read_array())
                 shape = _make_shape(arr[1:4])
             elif keyword == "DIMENS":
-                arr = entry.read_array()
-                assert isinstance(arr, np.ndarray)
+                arr = _validate_array("DIMENS", grid_path, entry.read_array())
                 shape = _make_shape(arr[0:3])
 
     return shape
