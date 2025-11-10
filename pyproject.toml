@@ -142,6 +142,12 @@ package-dir = { "" = "src" }
 platforms = ["all"]
 
 [tool.setuptools.package-data]
+ert = [
+    "gui/resources/**/*",
+    "resources/**/*",
+    "logging/logger.conf",
+    "logging/storage_log.conf",
+]
 everest = ["data/**/*", "*.tmpl", "detached/jobs/everserver"]
 
 
