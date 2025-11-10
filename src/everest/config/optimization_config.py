@@ -4,8 +4,8 @@ from typing import Any, Self
 
 from pydantic import BaseModel, Field, model_validator
 
+from ert.config import get_ropt_plugin_manager
 from everest.config.cvar_config import CVaRConfig
-from everest.optimizer.utils import get_ropt_plugin_manager
 from everest.strings import EVEREST
 
 

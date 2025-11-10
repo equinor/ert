@@ -12,7 +12,8 @@ from pydantic import (
 )
 from ropt.enums import VariableType
 
-from .sampler_config import SamplerConfig
+from ert.config import SamplerConfig
+
 from .validation_utils import no_dots_in_string, valid_range
 
 
