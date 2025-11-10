@@ -62,7 +62,7 @@ dependencies = [
     "pyyaml",
     "pyzmq",
     "requests",
-    "resfo",
+    "resfo>=5.0.0",
     "ropt-dakota>=0.24,<0.25",
     "ropt[pandas]>=0.24,<0.25",
     "ruamel.yaml",
@@ -77,7 +77,7 @@ dependencies = [
     "websockets",
     "xarray",
     "xtgeo >= 3.3.0",
-    "resfo-utilities>=0.2.2",
+    "resfo-utilities>=0.3.0",
 ]
 
 [project.scripts]
@@ -112,7 +112,6 @@ dev = [
     "pytest-xdist",
     "pytest>6",
     "resdata",
-    "resfo",
     "rust-just",
     "scikit-image",
     "sphinx",
@@ -122,7 +121,7 @@ dev = [
     "sphinxcontrib.datatemplates",
     "json-schema-for-humans",
     "xlsxwriter>=3.2.3",
-    "resfo-utilities[testing]>=0.2.2",
+    "resfo-utilities[testing]>=0.3.0",
 ]
 style = ["pre-commit"]
 types = [

@@ -899,7 +899,6 @@ dev = [
     { name = "pytest-timeout" },
     { name = "pytest-xdist" },
     { name = "resdata" },
-    { name = "resfo" },
     { name = "resfo-utilities", extra = ["testing"] },
     { name = "rust-just" },
     { name = "scikit-image" },
@@ -991,10 +990,9 @@ requires-dist = [
     { name = "pyzmq" },
     { name = "requests" },
     { name = "resdata", marker = "extra == 'dev'" },
-    { name = "resfo" },
-    { name = "resfo", marker = "extra == 'dev'" },
-    { name = "resfo-utilities", specifier = ">=0.2.2" },
-    { name = "resfo-utilities", extras = ["testing"], marker = "extra == 'dev'", specifier = ">=0.2.2" },
+    { name = "resfo", specifier = ">=5.0.0" },
+    { name = "resfo-utilities", specifier = ">=0.3.0" },
+    { name = "resfo-utilities", extras = ["testing"], marker = "extra == 'dev'", specifier = ">=0.3.0" },
     { name = "ropt", extras = ["pandas"], specifier = ">=0.24,<0.25" },
     { name = "ropt-dakota", specifier = ">=0.24,<0.25" },
     { name = "ruamel-yaml" },
@@ -3783,19 +3781,20 @@ wheels = [
 
 [[package]]
 name = "resfo"
-version = "4.3.0"
+version = "5.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
+    { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/60/0b/453847d8b015706d3fe353588b04bfb0034430af0ddcc50ef281fd842935/resfo-4.3.0.tar.gz", hash = "sha256:3be7dad6e582468449e4db06a4ea388ac9e379cb6ddea7f7d83fc39902af58bb", size = 30139 }
+sdist = { url = "https://files.pythonhosted.org/packages/03/b6/4e40c2fe8fd788ba26ca5106323d09be5da281174fc4fe1cd5d5ef0251d1/resfo-5.0.0.tar.gz", hash = "sha256:c696d9fff01573cba5bc50044fe11e1df857442d8ca1303bee4e31b2ec3456b3", size = 30847 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f9/54/eb2107088902af8afa3cdbede011e829b65c228bd5a8c1d177c505eaac1a/resfo-4.3.0-py3-none-any.whl", hash = "sha256:bbd4ebc1612f8acc37af54997f46204eefc79c820077a3e9645321212d483082", size = 18534 },
+    { url = "https://files.pythonhosted.org/packages/ad/02/32dc4353f080a43ad978f29ddff6db22275dba7b7ba0eabd81513f941a24/resfo-5.0.0-py3-none-any.whl", hash = "sha256:1f99c65a0f7a58d9bb678402a9a654e4f6f062b2483f5037dc1fada3de763d4f", size = 19527 },
 ]
 
 [[package]]
 name = "resfo-utilities"
-version = "0.2.2"
+version = "0.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "natsort" },
@@ -3803,9 +3802,9 @@ dependencies = [
     { name = "resfo" },
     { name = "scipy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/42/87/41090fe892f7e27abb500d7551c80c04dc10e5e25bc8e96343507ea9a76c/resfo_utilities-0.2.2.tar.gz", hash = "sha256:098e6de3dc34270c41c7d9a7874cc3176112033c6d141fff28ade1a2e8f0c3d0", size = 99827 }
+sdist = { url = "https://files.pythonhosted.org/packages/2f/2d/af8773352d06d34b60afff64df40f25def87682052730a9fc574ec7362fe/resfo_utilities-0.3.0.tar.gz", hash = "sha256:a13e91e8ba7ccb075404f2d59b22b2710019f08a8d6486f2f6347375f9b33c5c", size = 97483 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/79/01/317c57110436c9b0d3edf9f8b9d413ceda3f88da54186a912ed147497100/resfo_utilities-0.2.2-py3-none-any.whl", hash = "sha256:7b9d2bb382970bf5bdce83132de74cab8658f1d8082e15c45849191b23e9c05f", size = 29540 },
+    { url = "https://files.pythonhosted.org/packages/0d/69/7355f83f20d75bce93562e4ba9b59579e77d2289027cb6e9447fd47e85dd/resfo_utilities-0.3.0-py3-none-any.whl", hash = "sha256:a183e17ddc42377920be0ed9b849b82256b1d289296307d6bb38bdef710c70b0", size = 29561 },
 ]
 
 [package.optional-dependencies]
