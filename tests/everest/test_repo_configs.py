@@ -2,8 +2,8 @@ import os
 
 import pytest
 
+from ert.config import get_ropt_plugin_manager
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
-from everest.optimizer.utils import get_ropt_plugin_manager
 
 
 def _get_all_files(folder):

@@ -12,13 +12,12 @@ from typing import (
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
 from ropt.enums import PerturbationType, VariableType
 
-from ert.config import ExtParamConfig
+from ert.config import ExtParamConfig, SamplerConfig
 
 from .control_variable_config import (
     ControlVariableConfig,
     ControlVariableGuessListConfig,
 )
-from .sampler_config import SamplerConfig
 from .validation_utils import (
     control_variables_validation,
     no_dots_in_string,

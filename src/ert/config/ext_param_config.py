@@ -1,14 +1,19 @@
 from __future__ import annotations
 
+import importlib
 import json
+import logging
 from collections.abc import Iterator, Mapping, MutableMapping
 from dataclasses import field
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal
+from textwrap import dedent
+from typing import TYPE_CHECKING, Any, Literal, Self
 
 import networkx as nx
 import numpy as np
 import xarray as xr
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+from ropt.plugins import PluginManager
 
 from ert.substitutions import substitute_runpath_name
 
@@ -22,6 +27,133 @@ if TYPE_CHECKING:
     Number = int | float
     DataType = Mapping[str, Number | Mapping[str, Number]]
     MutableDataType = MutableMapping[str, Number | MutableMapping[str, Number]]
+
+
+def get_ropt_plugin_manager() -> PluginManager:
+    # To check the validity of optimization and sampler backends and their
+    # supported algorithms or methods, an instance of a ropt PluginManager is
+    # needed. Everest also needs a ropt plugin manager at runtime which may add
+    # additional optimization and/or sampler backends. To be sure that these
+    # added backends are detected, all code should use this function to access
+    # the plugin manager. Any optimizer/sampler plugins that need to be added at
+    # runtime should be added in this function.
+    #
+    # Note: backends can also be added via the Python entrypoints mechanism,
+    # these are detected by default and do not need to be added here.
+
+    try:
+        return PluginManager()
+    except Exception as exc:
+        ert_version = importlib.metadata.version("ert")
+        ropt_version = importlib.metadata.version("ropt")
+        msg = (
+            f"Error while initializing ropt:\n\n{exc}.\n\n"
+            "Check the everest installation, there may a be version mismatch.\n"
+            f"  (ERT: {ert_version}, ropt: {ropt_version})\n"
+            "If the everest installation is correct, please report this as a bug."
+        )
+        raise RuntimeError(msg) from exc
+
+
+class SamplerConfig(BaseModel):
+    backend: str | None = Field(
+        default=None,
+        description=dedent(
+            """
+            [Deprecated]
+
+            The correct backend will be inferred by the method. If several backends
+            have a method named `A`, pick a specific backend `B` by putting `B/A` in
+            the `method` field.
+            """
+        ),
+    )
+    method: str = Field(
+        default="norm",
+        description=dedent(
+            """
+            The sampling method or distribution used by the sampler backend.
+
+            The set of available methods depends on the sampler backend used. By
+            default a plugin based on `scipy.stats` is used, implementing the
+            following methods:
+
+            - From Probability Distributions:
+                - `norm`: Samples from a standard normal distribution (mean 0,
+                  standard deviation 1).
+                - `truncnorm`: Samples from a truncated normal distribution
+                  (mean 0, std. dev. 1), truncated to the range `[-1, 1]`.
+                - `uniform`: Samples from a uniform distribution in the range
+                  `[-1, 1]`.
+
+            - From Quasi-Monte Carlo Sequences:
+                - `sobol`: Uses Sobol' sequences.
+                - `halton`: Uses Halton sequences.
+                - `lhs`: Uses Latin Hypercube Sampling.
+
+                Note: QMC samples are generated in the unit hypercube `[0, 1]^d`
+                and then scaled to the hypercube `[-1, 1]^d`.
+            """
+        ),
+    )
+    options: dict[str, Any] | None = Field(
+        default=None,
+        description=dedent(
+            """
+            Specifies a dict of optional parameters for the sampler backend.
+
+            This dict of values is passed unchanged to the selected method in
+            the backend.
+            """
+        ),
+    )
+    shared: bool | None = Field(
+        default=None,
+        description=dedent(
+            """
+            Whether to share perturbations between realizations.
+            """
+        ),
+    )
+    model_config = ConfigDict(extra="forbid")
+
+    @model_validator(mode="after")
+    def validate_backend_and_method(self) -> Self:
+        if self.backend is not None:
+            message = (
+                "sampler.backend is deprecated. "
+                "The correct backend will be inferred by the method. "
+                "If several backends have a method named A, you need to pick "
+                "a specific backend B by putting B/A in sampler.method."
+            )
+            print(message)
+            # Note: Importing EVEREST.everest
+            # leads to circular import, but we still wish to log
+            # from "everest" here as per old behavior.
+            # Can consider logging this as if from ERT,
+            # which is valid if we store SamplerConfig as part of
+            # ExtParam configs.
+            logging.getLogger("everest").warning(message)
+
+        # Update the default for backends that are not scipy:
+        if (
+            self.backend not in {None, "scipy"}
+            and "method" not in self.model_fields_set
+        ):
+            self.method = "default"
+
+        if self.backend is not None:
+            self.method = f"{self.backend}/{self.method}"
+
+        if (
+            get_ropt_plugin_manager().get_plugin_name("sampler", f"{self.method}")
+            is None
+        ):
+            raise ValueError(f"Sampler method '{self.method}' not found")
+
+        self.backend = None
+
+        return self
 
 
 class ExtParamConfig(ParameterConfig):
