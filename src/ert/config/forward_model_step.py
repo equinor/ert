@@ -223,6 +223,13 @@ class ForwardModelStep(BaseModelWithContextSupport):
 
 
 class UserInstalledForwardModelStep(ForwardModelStep):
+    """
+    Represents a forward model step installed by a user via the ERT Config
+    forward model step format provided via the INSTALL_JOB keyword..
+    User-installed forward model steps serialize with their full configuration,
+    unlike site-installed steps which only serialize as references.
+    """
+
     type: Literal["user_installed"] = "user_installed"
 
 
@@ -232,6 +239,13 @@ class _SerializedSiteInstalledForwardModelStep(TypedDict):
 
 
 class SiteInstalledForwardModelStep(ForwardModelStep):
+    """
+    Represents a forward model step installed via external plugins.
+    Instances of this class serialize only as references to the plugin by name,
+    allowing them to dynamically update when plugins change, rather than being
+    locked to a specific executable at serialization time.
+    """
+
     type: Literal["site_installed"] = "site_installed"
 
     @model_serializer(mode="plain")
