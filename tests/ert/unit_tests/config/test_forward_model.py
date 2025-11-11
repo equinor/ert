@@ -1103,3 +1103,23 @@ def test_that_site_and_user_installed_fm_steps_are_serialized_differently(
         "type": "site_installed",
         "name": "SITE_INSTALLED_FM",
     }
+
+
+def test_that_deserializing_site_forward_model_without_site_plugins_raises_error():
+    with pytest.raises(KeyError, match="Trying to find site-installed forward model"):
+        SiteInstalledForwardModelStep.model_validate(
+            {"type": "site_installed", "name": "queue pool's closed"}
+        )
+
+
+def test_that_deserializing_missing_from_site_forward_model_raises_error():
+    with (
+        pytest.raises(
+            KeyError,
+            match=r"Expected forward model step queue pool",
+        ),
+        use_runtime_plugins(ErtRuntimePlugins(installed_forward_model_steps={})),
+    ):
+        SiteInstalledForwardModelStep.model_validate(
+            {"type": "site_installed", "name": "queue pool's closed"}
+        )

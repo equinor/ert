@@ -248,19 +248,21 @@ class SiteInstalledForwardModelStep(ForwardModelStep):
 
         if runtime_plugins is None:
             if set(values.keys()) == {"name", "type"}:
-                raise ValueError(
-                    f"Cannot resolve forward model step {values},"
-                    f"as it expects the forward model {name}"
-                    f"to be installed."
+                msg = (
+                    f"Trying to find site-installed forward model step {name} "
+                    f"without site plugins. This forward model must be loaded "
+                    f"with ERT site plugins available."
                 )
+                raise KeyError(msg)
             return values
 
         if name not in runtime_plugins.installed_forward_model_steps:
-            raise KeyError(
+            msg = (
                 f"Expected forward model step {name} to be installed "
                 f"via plugins, but it was not found. Please check that "
                 f"your python environment has it installed."
             )
+            raise KeyError(msg)
         site_installed_fm = runtime_plugins.installed_forward_model_steps[name]
 
         # Intent: copy the site installed forward model to this instance.
