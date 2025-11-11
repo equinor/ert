@@ -10,26 +10,41 @@ from everest.config import (
     OptimizationConfig,
     OutputConstraintConfig,
 )
-from everest.config.utils import FlattenedControls
+from everest.config.utils import get_samplers
 
 
 def _parse_controls(
-    controls: FlattenedControls, random_seed: int
+    controls: list[ExtParamConfig], random_seed: int
 ) -> tuple[dict[str, Any], list[dict[str, Any]] | None]:
-    control_types = [VariableType[type_.upper()] for type_ in controls.types]
+    control_types = [
+        VariableType[type_.upper()]
+        for control in controls
+        for type_ in control.control_types
+    ]
+    initial_guesses = [
+        initial_guess
+        for control in controls
+        for initial_guess in control.initial_guesses
+    ]
+    samplers, sampler_indices = get_samplers(controls)
     ropt_variables: dict[str, Any] = {
         "types": None if all(item is None for item in control_types) else control_types,
-        "variable_count": len(controls.initial_guesses),
-        "lower_bounds": controls.lower_bounds,
-        "upper_bounds": controls.upper_bounds,
+        "variable_count": len(initial_guesses),
+        "lower_bounds": [min_ for control in controls for min_ in control.min],
+        "upper_bounds": [max_ for control in controls for max_ in control.max],
         "perturbation_types": [
             PerturbationType[perturbation_type.upper()]
-            for perturbation_type in controls.perturbation_types
+            for control in controls
+            for perturbation_type in control.perturbation_types
         ],
-        "perturbation_magnitudes": controls.perturbation_magnitudes,
-        "mask": controls.enabled,
+        "perturbation_magnitudes": [
+            perturbation_magnitude
+            for control in controls
+            for perturbation_magnitude in control.perturbation_magnitudes
+        ],
+        "mask": [enabled for control in controls for enabled in control.enabled],
         "seed": random_seed,
-        "samplers": controls.sampler_indices,
+        "samplers": sampler_indices,
     }
 
     ropt_samplers = [
@@ -40,7 +55,7 @@ def _parse_controls(
             "options": {} if sampler.options is None else sampler.options,
             "shared": False if sampler.shared is None else sampler.shared,
         }
-        for sampler in controls.samplers
+        for sampler in samplers
     ]
 
     return ropt_variables, ropt_samplers
@@ -269,9 +284,7 @@ def everest2ropt(
     random_seed: int,
     optimization_output_dir: str,
 ) -> tuple[dict[str, Any], list[float]]:
-    flattened_controls = FlattenedControls(controls)
-
-    ropt_variables, ropt_samplers = _parse_controls(flattened_controls, random_seed)
+    ropt_variables, ropt_samplers = _parse_controls(controls, random_seed)
     ropt_objectives, ropt_function_estimators = _parse_objectives(objective_functions)
     ropt_linear_constraints = _parse_input_constraints(input_constraints, controls)
     ropt_nonlinear_constraints = _parse_output_constraints(output_constraints)
@@ -326,4 +339,8 @@ def everest2ropt(
     if ropt_samplers:
         ropt_config["samplers"] = ropt_samplers
 
-    return ropt_config, flattened_controls.initial_guesses
+    return ropt_config, [
+        initial_guess
+        for control in controls
+        for initial_guess in control.initial_guesses
+    ]

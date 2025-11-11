@@ -16,7 +16,6 @@ from everest.config import (
     InputConstraintConfig,
     ModelConfig,
 )
-from everest.config.utils import FlattenedControls
 
 
 class EverestOptModelTransforms(TypedDict):
@@ -434,12 +433,15 @@ def get_optimization_domain_transforms(
     model: ModelConfig,
     auto_scale: bool,
 ) -> EverestOptModelTransforms:
-    flattened_controls = FlattenedControls(controls)
     control_scaler = ControlScaler(
-        flattened_controls.lower_bounds,
-        flattened_controls.upper_bounds,
-        flattened_controls.scaled_ranges,
-        flattened_controls.types,
+        [min_ for control in controls for min_ in control.min],
+        [max_ for control in controls for max_ in control.max],
+        [
+            scaled_range
+            for control in controls
+            for scaled_range in control.scaled_ranges
+        ],
+        [type_ for control in controls for type_ in control.control_types],
         auto_scale_input_constraints=auto_scale,
         input_constraint_scales=(
             None
