@@ -250,7 +250,7 @@ class SiteInstalledForwardModelStep(ForwardModelStep):
             if set(values.keys()) == {"name", "type"}:
                 raise ValueError(
                     f"Cannot resolve forward model step {values},"
-                    f"as it expects a the forward model {name}"
+                    f"as it expects the forward model {name}"
                     f"to be installed."
                 )
             return values
