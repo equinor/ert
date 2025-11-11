@@ -1010,7 +1010,7 @@ def test_that_all_required_keywords_in_forward_model_are_validated():
         )
 
 
-def test_that_site_installed_fm_step_takes_executable_from_plugins(
+def test_that_site_fm_step_serializes_plugin_ref_and_deserializes_executable(
     use_tmpdir,
 ):
     class SiteForwardModel(ForwardModelStepPlugin):
@@ -1053,7 +1053,7 @@ def test_that_site_installed_fm_step_takes_executable_from_plugins(
         assert site_fm_with_updated_executable.executable == "custom_echo.sh"
 
 
-def test_that_user_installed_fm_step_serializes_as_executable(
+def test_that_user_fm_step_serializes_has_user_installed_type_and_retains_excecutable(
     use_tmpdir,
 ):
     Path("fm_step").write_text("EXECUTABLE echo\n", encoding="utf-8")
@@ -1072,7 +1072,7 @@ def test_that_user_installed_fm_step_serializes_as_executable(
     assert user_fm.executable == "echo"
 
 
-def test_that_site_and_user_installed_fm_steps_are_serialized_differently(
+def test_that_fm_step_serializes_name_only_for_site_and_full_for_user(
     use_tmpdir,
 ):
     Path("fm_step").write_text("EXECUTABLE echo\n", encoding="utf-8")
