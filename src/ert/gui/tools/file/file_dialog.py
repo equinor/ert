@@ -59,9 +59,13 @@ class FileDialog(QDialog):
         # for moving the actual slider
         scroll_bar = self._view.verticalScrollBar()
         assert scroll_bar is not None
-        scroll_bar.sliderMoved.connect(self._update_cursor)
+        scroll_bar.sliderMoved.connect(
+            self._update_cursor, Qt.ConnectionType.QueuedConnection
+        )  # type: ignore
         # for mouse wheel and keyboard arrows
-        scroll_bar.valueChanged.connect(self._update_cursor)
+        scroll_bar.valueChanged.connect(
+            self._update_cursor, Qt.ConnectionType.QueuedConnection
+        )  # type: ignore
 
         self._view.setFont(QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont))
         self._search_bar = SearchBar(self._view)
