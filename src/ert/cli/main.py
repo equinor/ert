@@ -27,6 +27,7 @@ from ert.namespace import Namespace
 from ert.plugins import ErtRuntimePlugins, get_site_plugins
 from ert.run_models.event import StatusEvents
 from ert.run_models.model_factory import create_model
+from ert.scheduler.event import SchedulerWarningEvent
 from ert.storage import open_storage
 from ert.storage.local_storage import local_storage_set_ert_config
 
@@ -92,7 +93,9 @@ def run_cli(args: Namespace, runtime_plugins: ErtRuntimePlugins | None = None) -
             execute_workflow(ert_config, storage, args.name)
         return
 
-    status_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
+    status_queue: queue.SimpleQueue[StatusEvents | SchedulerWarningEvent] = (
+        queue.SimpleQueue()
+    )
     try:
         with use_runtime_plugins(get_site_plugins()):
             model = create_model(

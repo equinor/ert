@@ -24,6 +24,7 @@ from ert.mode_definitions import (
     MANUAL_UPDATE_MODE,
     TEST_RUN_MODE,
 )
+from ert.scheduler.event import SchedulerWarningEvent
 from ert.validation import ActiveRange
 
 from .ensemble_experiment import EnsembleExperiment
@@ -49,7 +50,7 @@ logger = logging.getLogger(__name__)
 def create_model(
     config: ErtConfig,
     args: Namespace,
-    status_queue: SimpleQueue[StatusEvents],
+    status_queue: SimpleQueue[StatusEvents | SchedulerWarningEvent],
 ) -> RunModel:
     logger.info(
         "Initiating experiment",
@@ -106,7 +107,7 @@ def _merge_parameters(
 def _setup_single_test_run(
     config: ErtConfig,
     args: Namespace,
-    status_queue: SimpleQueue[StatusEvents],
+    status_queue: SimpleQueue[StatusEvents | SchedulerWarningEvent],
 ) -> SingleTestRun:
     experiment_name = (
         "single-test-run" if args.experiment_name is None else args.experiment_name
@@ -165,7 +166,7 @@ def validate_minimum_realizations(
 def _setup_ensemble_experiment(
     config: ErtConfig,
     args: Namespace,
-    status_queue: SimpleQueue[StatusEvents],
+    status_queue: SimpleQueue[StatusEvents | SchedulerWarningEvent],
 ) -> EnsembleExperiment:
     active_realizations = _get_and_validate_active_realizations_list(args, config)
     validate_minimum_realizations(config, active_realizations)
@@ -206,7 +207,7 @@ def _setup_ensemble_experiment(
 def _setup_evaluate_ensemble(
     config: ErtConfig,
     args: Namespace,
-    status_queue: SimpleQueue[StatusEvents],
+    status_queue: SimpleQueue[StatusEvents | SchedulerWarningEvent],
 ) -> EvaluateEnsemble:
     active_realizations = _get_and_validate_active_realizations_list(args, config)
     validate_minimum_realizations(config, active_realizations)
@@ -262,7 +263,7 @@ def _setup_manual_update(
     config: ErtConfig,
     args: Namespace,
     update_settings: ObservationSettings,
-    status_queue: SimpleQueue[StatusEvents],
+    status_queue: SimpleQueue[StatusEvents | SchedulerWarningEvent],
 ) -> ManualUpdate:
     active_realizations = _realizations(args, config.runpath_config.num_realizations)
     validate_minimum_realizations(config, active_realizations.tolist())
@@ -295,7 +296,7 @@ def _setup_ensemble_smoother(
     config: ErtConfig,
     args: Namespace,
     update_settings: ObservationSettings,
-    status_queue: SimpleQueue[StatusEvents],
+    status_queue: SimpleQueue[StatusEvents | SchedulerWarningEvent],
 ) -> EnsembleSmoother:
     active_realizations = _get_and_validate_active_realizations_list(args, config)
     validate_minimum_realizations(config, active_realizations)
@@ -342,7 +343,7 @@ def _setup_ensemble_information_filter(
     config: ErtConfig,
     args: Namespace,
     update_settings: ObservationSettings,
-    status_queue: SimpleQueue[StatusEvents],
+    status_queue: SimpleQueue[StatusEvents | SchedulerWarningEvent],
 ) -> EnsembleInformationFilter:
     active_realizations = _get_and_validate_active_realizations_list(args, config)
     validate_minimum_realizations(config, active_realizations)
@@ -407,7 +408,7 @@ def _setup_multiple_data_assimilation(
     config: ErtConfig,
     args: Namespace,
     update_settings: ObservationSettings,
-    status_queue: SimpleQueue[StatusEvents],
+    status_queue: SimpleQueue[StatusEvents | SchedulerWarningEvent],
 ) -> MultipleDataAssimilation:
     restart_run, prior_ensemble = _determine_restart_info(args)
     active_realizations = _get_and_validate_active_realizations_list(args, config)

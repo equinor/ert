@@ -14,6 +14,7 @@ from pydantic import ValidationError
 from pytest import MonkeyPatch
 
 from _ert.events import (
+    EEEvent,
     EESnapshot,
     EESnapshotUpdate,
     ForwardModelStepFailure,
@@ -50,6 +51,7 @@ from ert.ensemble_evaluator.state import (
     FORWARD_MODEL_STATE_INIT,
 )
 from ert.scheduler import JobState
+from ert.scheduler.event import SchedulerWarningEvent
 from ert.scheduler.job import Job
 from ert.scheduler.scheduler import Scheduler
 
@@ -196,14 +198,13 @@ async def evaluator_to_use_fixture(monkeypatch, make_ee_config):
         pass
 
     monkeypatch.setattr(EnsembleEvaluator, "evaluate", empty_mock_function)
-    event_queue = asyncio.Queue()
+    monkeypatch.setattr(EnsembleEvaluator, "BATCHING_INTERVAL", 0.05)
+    event_queue: asyncio.Queue[EEEvent | SchedulerWarningEvent] = asyncio.Queue()
     evaluator = EnsembleEvaluator(
         ensemble, make_ee_config(use_token=False), Event(), event_queue.put_nowait
     )
-
     evaluator._scheduler.kill_all_jobs = empty_mock_function
     evaluator._scheduler._running.set()
-    evaluator._batching_interval = 0.5  # batching can be faster for tests
     run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
     await evaluator._server_started
     yield (evaluator, event_queue)
@@ -717,3 +718,22 @@ async def test_log_forward_model_steps_with_missing_status_updates(
         f"There could be connectivity issues to evaluator running on port "
         f"{router_port} on host {evaluator_host}"
     ) in caplog.text
+
+
+@pytest.mark.timeout(5)
+@pytest.mark.integration_test
+async def test_evaluator_forwards_scheduler_warning_event_to_run_model(
+    evaluator_to_use,
+):
+    (evaluator, event_queue) = evaluator_to_use
+    warning_event = SchedulerWarningEvent(warning_message="Foo occurred in bar!")
+    await evaluator._events.put(warning_event)
+
+    async def wait_for_warning_event_in_output_queue():
+        nonlocal event_queue
+        while True:
+            event = await event_queue.get()
+            if event is warning_event:
+                break
+
+    await asyncio.wait_for(wait_for_warning_event_in_output_queue(), timeout=5)

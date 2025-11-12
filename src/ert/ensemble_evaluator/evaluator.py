@@ -35,6 +35,7 @@ from _ert.forward_model_runner.fm_dispatch import FORWARD_MODEL_TERMINATED_MSG
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
 from ert.scheduler import create_driver
+from ert.scheduler.event import SchedulerWarningEvent
 from ert.scheduler.scheduler import Scheduler
 from ert.shared.net_utils import get_machine_name
 
@@ -51,7 +52,9 @@ from .state import (
 
 logger = logging.getLogger(__name__)
 
-EVENT_HANDLER = Callable[[list[SnapshotInputEvent]], Awaitable[None]]
+EVENT_HANDLER = Callable[
+    [list[SnapshotInputEvent | SchedulerWarningEvent]], Awaitable[None]
+]
 
 
 class UserCancelled(Exception):
@@ -74,17 +77,19 @@ class EnsembleEvaluator:
         ensemble: Ensemble,
         config: EvaluatorServerConfig,
         end_event: threading.Event,
-        event_handler: Callable[[EEEvent], None] | None = None,
+        event_handler: Callable[[EEEvent | SchedulerWarningEvent], None] | None = None,
     ) -> None:
         self._config: EvaluatorServerConfig = config
         if self._config is None:
             raise ValueError("no config for evaluator")
         self._ensemble: Ensemble = ensemble
 
-        self._events: asyncio.Queue[SnapshotInputEvent] = asyncio.Queue()
-        self._events_to_send: asyncio.Queue[EEEvent | EETerminated | EventSentinel] = (
+        self._events: asyncio.Queue[SnapshotInputEvent | SchedulerWarningEvent] = (
             asyncio.Queue()
         )
+        self._events_to_send: asyncio.Queue[
+            EEEvent | EETerminated | EventSentinel | SchedulerWarningEvent
+        ] = asyncio.Queue()
         self._manifest_queue: asyncio.Queue[Any] = asyncio.Queue()
 
         self._ee_tasks: list[asyncio.Task[None]] = []
@@ -92,7 +97,7 @@ class EnsembleEvaluator:
 
         # batching section
         self._batch_processing_queue: asyncio.Queue[
-            list[tuple[EVENT_HANDLER, SnapshotInputEvent]]
+            list[tuple[EVENT_HANDLER, SnapshotInputEvent | SchedulerWarningEvent]]
         ] = asyncio.Queue()
         self._max_batch_size: int = 500
         self._batching_interval: float = self.BATCHING_INTERVAL
@@ -144,7 +149,10 @@ class EnsembleEvaluator:
                     if not self._evaluation_result.done():
                         self._evaluation_result.set_result(True)
                     return
-
+                elif isinstance(event, SchedulerWarningEvent):
+                    if self._event_handler:
+                        self._event_handler(event)
+                    self._events_to_send.task_done()
                 elif type(event) in {
                     EESnapshot,
                     EESnapshotUpdate,
@@ -222,7 +230,9 @@ class EnsembleEvaluator:
     async def _process_event_buffer(self) -> None:
         while True:
             batch = await self._batch_processing_queue.get()
-            function_to_events_map: dict[EVENT_HANDLER, list[SnapshotInputEvent]] = {}
+            function_to_events_map: dict[
+                EVENT_HANDLER, list[SnapshotInputEvent | SchedulerWarningEvent]
+            ] = {}
             for func, event in batch:
                 if func not in function_to_events_map:
                     function_to_events_map[func] = []
@@ -234,23 +244,28 @@ class EnsembleEvaluator:
             self._batch_processing_queue.task_done()
 
     async def _batch_events_into_buffer(self) -> None:
-        event_handler: dict[type[SnapshotInputEvent], EVENT_HANDLER] = {}
+        event_handler: dict[
+            type[SnapshotInputEvent | SchedulerWarningEvent], EVENT_HANDLER
+        ] = {}
 
         def set_event_handler(
-            event_types: set[type[SnapshotInputEvent]],
+            event_types: set[type[SnapshotInputEvent | SchedulerWarningEvent]],
             func: Any,
         ) -> None:
             for event_type in event_types:
                 event_handler[event_type] = func
 
         set_event_handler(set(get_args(FMEvent | RealizationEvent)), self._fm_handler)
+        set_event_handler({SchedulerWarningEvent}, self._warning_event_handler)
         set_event_handler({EnsembleStarted}, self._started_handler)
         set_event_handler({EnsembleSucceeded}, self._stopped_handler)
         set_event_handler({EnsembleCancelled}, self._cancelled_handler)
         set_event_handler({EnsembleFailed}, self._failed_handler)
 
         while True:
-            batch: list[tuple[EVENT_HANDLER, SnapshotInputEvent]] = []
+            batch: list[
+                tuple[EVENT_HANDLER, SnapshotInputEvent | SchedulerWarningEvent]
+            ] = []
             start_time = asyncio.get_running_loop().time()
             while (
                 len(batch) < self._max_batch_size
@@ -273,6 +288,12 @@ class EnsembleEvaluator:
 
     async def _fm_handler(self, events: Sequence[FMEvent | RealizationEvent]) -> None:
         await self._append_message(self.ensemble.update_snapshot(events))
+
+    async def _warning_event_handler(
+        self, events: Sequence[SchedulerWarningEvent]
+    ) -> None:
+        for event in events:
+            await self._events_to_send.put(event)
 
     async def _started_handler(self, events: Sequence[EnsembleStarted]) -> None:
         if self.ensemble.status != ENSEMBLE_STATE_FAILED:

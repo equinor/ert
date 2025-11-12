@@ -19,6 +19,7 @@ from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator.state import (
     COLOR_FAILED,
     COLOR_FINISHED,
+    COLOR_WARNING,
     FORWARD_MODEL_STATE_FAILURE,
     REAL_STATE_TO_COLOR,
 )
@@ -28,6 +29,7 @@ from ert.run_models.event import (
     RunModelUpdateEndEvent,
     StatusEvents,
 )
+from ert.scheduler.event import SchedulerWarningEvent
 
 Color = tuple[int, int, int]
 
@@ -70,7 +72,7 @@ class Monitor:
 
     def monitor(
         self,
-        event_queue: SimpleQueue[StatusEvents],
+        event_queue: SimpleQueue[StatusEvents | SchedulerWarningEvent],
         output_path: Path | None = None,
     ) -> EndEvent:
         self._start_time = datetime.now()
@@ -96,6 +98,18 @@ class Monitor:
                     | RunModelErrorEvent() as event
                 ):
                     event.write_as_csv(output_path)
+                case SchedulerWarningEvent(warning_message=msg):
+                    formatted_msg = (
+                        "Something unexpected has happened, and ert has not been able "
+                        "to poll the run for updates for some time.\nThis might be "
+                        "resolved by itself, and it does not mean that the run has "
+                        "crashed.\nPlease check the runpath if it seems to still be "
+                        f"running.\nThe last error message was '{msg}'"
+                    )
+                    print(
+                        self._colorize(formatted_msg, color=COLOR_WARNING),
+                        file=self._out,
+                    )
 
     def _print_step_errors(self) -> None:
         failed_steps: dict[str | None, int] = {}
