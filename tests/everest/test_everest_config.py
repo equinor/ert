@@ -4,6 +4,10 @@ from textwrap import dedent
 
 import pytest
 
+from ert.base_model_context import use_runtime_plugins
+from ert.config import LocalQueueOptions
+from ert.config.queue_config import parse_string_to_bytes
+from ert.plugins import ErtRuntimePlugins
 from everest.config import (
     EverestConfig,
     EverestValidationError,
@@ -319,3 +323,41 @@ def test_removed_queue_options_init(queue_system, config_class):
     config = {"queue_system": queue_system}
     with pytest.raises(ValueError, match=f"valid options for {queue_system} are"):
         config_class(**config)
+
+
+def test_that_general_user_queue_options_overrides_site_queue_options():
+    with use_runtime_plugins(
+        ErtRuntimePlugins(
+            queue_options=LocalQueueOptions(realization_memory="10Gb", num_cpu=10)
+        )
+    ):
+        sc = SimulatorConfig.model_validate({"max_memory": "2Gb", "cores_per_node": 2})
+        assert sc.queue_system.realization_memory == parse_string_to_bytes("2Gb")
+        assert sc.queue_system.num_cpu == 2
+
+
+def test_that_general_user_queue_options_overrides_site_queue_options_via_everconf(
+    min_config,
+):
+    with use_runtime_plugins(
+        ErtRuntimePlugins(
+            queue_options=LocalQueueOptions(realization_memory="10Gb", num_cpu=10)
+        )
+    ):
+        ever_config = EverestConfig(
+            **(
+                min_config
+                | {
+                    "simulator": {
+                        "cores_per_node": 2,
+                        "max_memory": "2Gb",
+                    }
+                }
+            )
+        )
+
+        assert (
+            ever_config.simulator.queue_system.realization_memory
+            == parse_string_to_bytes("2Gb")
+        )
+        assert ever_config.simulator.queue_system.num_cpu == 2
