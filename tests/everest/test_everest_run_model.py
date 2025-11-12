@@ -2,7 +2,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 from unittest import mock
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -15,7 +15,7 @@ from ert.config.queue_config import (
     TorqueQueueOptions,
     parse_string_to_bytes,
 )
-from ert.plugins import get_site_plugins
+from ert.plugins import ErtRuntimePlugins, get_site_plugins
 from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 from tests.everest.utils import everest_config_with_defaults
@@ -357,3 +357,41 @@ def test_that_max_memory_none_is_not_passed_to_ert(create_runmodel) -> None:
 def test_that_resubmit_limit_is_set(create_runmodel) -> None:
     runmodel = create_runmodel(simulator={"resubmit_limit": 2})
     assert runmodel.queue_config.max_submit == 3
+
+
+def test_that_general_user_queue_options_overrides_site_queue_options_via_runmodel(
+    min_config,
+):
+    local_queue_options = LocalQueueOptions(realization_memory="1110Gb", num_cpu=10)
+
+    def ErtRuntimePluginsWithCustomQueueOptions(**kwargs):
+        return ErtRuntimePlugins(**(kwargs | {"queue_options": local_queue_options}))
+
+    with (
+        patch(
+            "ert.plugins.plugin_manager.ErtRuntimePlugins",
+            ErtRuntimePluginsWithCustomQueueOptions,
+        ),
+    ):
+        site_plugins = get_site_plugins()
+
+    with use_runtime_plugins(site_plugins):
+        ever_config = EverestConfig(
+            **(
+                min_config
+                | {
+                    "simulator": {
+                        "cores_per_node": 2,
+                        "max_memory": "2Gb",
+                    }
+                }
+            )
+        )
+        run_model = EverestRunModel.create(
+            everest_config=ever_config, runtime_plugins=site_plugins
+        )
+        assert (
+            run_model.queue_config.queue_options.realization_memory
+            == parse_string_to_bytes("2Gb")
+        )
+        assert run_model.queue_config.queue_options.num_cpu == 2
