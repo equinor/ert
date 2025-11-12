@@ -144,7 +144,9 @@ class SimulatorConfig(BaseModelWithContextSupport, extra="forbid"):
 
     @model_validator(mode="before")
     @classmethod
-    def default_local_queue(cls, data: dict[str, Any], info: ValidationInfo) -> Any:
+    def apply_site_or_default_queue_if_no_user_queue(
+        cls, data: dict[str, Any], info: ValidationInfo
+    ) -> Any:
         queue_system = data.get("queue_system")
         if queue_system is None:
             options = None
