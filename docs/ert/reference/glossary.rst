@@ -92,10 +92,7 @@ It is not about being correct, it is about being relevant and coherent.
 
     summary files
         The result of running a reservoir simulator is a number of time vectors
-        which are written to summary files. Ert only supports unified summary
-        files which comes in a pair of files with extension ".UNSMRY" and
-        ".SMSPEC" (or ".FUNSMRY" and ".FSMSPEC" when using formatted output).
-        See `OPM Flow manual`_ section F for details.
+        which are written to summary files. See `OPM Flow manual`_ section F for details.
 
     summary key
         A summary key is a colon separated list of the required properties
