@@ -19,10 +19,15 @@ from typing import (
     get_args,
 )
 
-from .driver import SIGNAL_OFFSET, Driver, FailedSubmit, create_submit_script
+from .driver import (
+    _POLL_PERIOD,
+    SIGNAL_OFFSET,
+    Driver,
+    FailedSubmit,
+    create_submit_script,
+)
 from .event import DriverEvent, FinishedEvent, StartedEvent
 
-_POLL_PERIOD = 2.0  # seconds
 LSF_FAILED_JOB = SIGNAL_OFFSET + 65  # first non signal returncode
 """Return code we use when lsf reports failed jobs"""
 
@@ -257,6 +262,7 @@ class LsfDriver(Driver):
         bkill_cmd: str | None = None,
         bhist_cmd: str | None = None,
         activate_script: str = "",
+        poll_period: float = _POLL_PERIOD,
     ) -> None:
         super().__init__(activate_script)
         self._queue_name = queue_name
@@ -277,7 +283,7 @@ class LsfDriver(Driver):
         self._sleep_time_between_cmd_retries = 3
         self._max_bsub_attempts = 10
 
-        self._poll_period = _POLL_PERIOD
+        self._poll_period = poll_period
 
         self._bhist_cmd = Path(bhist_cmd or shutil.which("bhist") or "bhist")
         self._bhist_cache: dict[str, dict[str, int]] | None = None
