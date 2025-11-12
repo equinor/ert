@@ -19,6 +19,7 @@ class TCPMockZMQServer(MockZMQServer):
         super().__init__(signal)
         # Need to use public IP on some clusters
         self.host = get_ip_address()
+        print(f"Using host address for ZMQ: {self.host}")
         self.port = port_range[0]
         self.min_port = port_range[0]
         self.max_port = port_range[1]
@@ -67,7 +68,7 @@ def create_jobs_json(dispatch_url: str, fm_steps: list[tuple[str, str]]) -> dict
 
 @pytest.mark.integration_test
 @pytest.mark.timeout(120)
-async def test_that_job_submitted_job_sends_start_and_success_events_to_zmq_server(
+async def test_that_submitted_job_sends_start_and_success_events_to_zmq_server(
     pytestconfig, tmp_path
 ):
     if not pytestconfig.getoption("lsf"):
@@ -96,7 +97,7 @@ async def test_that_job_submitted_job_sends_start_and_success_events_to_zmq_serv
 
         driver = LsfDriver()
 
-        fm_dispatch_path = shutil.which("fm_dispatch.py") or "fm_dispatch.py"
+        fm_dispatch_path = shutil.which("fm_dispatch.py")
         await driver.submit(
             0, fm_dispatch_path, str(runpath.absolute()), runpath=runpath
         )
