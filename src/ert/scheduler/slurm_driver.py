@@ -14,7 +14,13 @@ from enum import Enum, auto
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-from .driver import SIGNAL_OFFSET, Driver, FailedSubmit, create_submit_script
+from .driver import (
+    _POLL_PERIOD,
+    SIGNAL_OFFSET,
+    Driver,
+    FailedSubmit,
+    create_submit_script,
+)
 from .event import DriverEvent, FinishedEvent, StartedEvent
 
 SLURM_FAILED_EXIT_CODE_FETCH = SIGNAL_OFFSET + 66
@@ -77,9 +83,10 @@ class SlurmDriver(Driver):
         user: str | None = None,
         queue_name: str | None = None,
         max_runtime: float | None = None,
-        squeue_timeout: float = 2,
+        squeue_timeout: float | None = None,
         project_code: str | None = None,
         activate_script: str = "",
+        poll_period: float = _POLL_PERIOD,
     ) -> None:
         super().__init__(activate_script)
         self._submit_locks: dict[int, asyncio.Lock] = {}
@@ -109,7 +116,11 @@ class SlurmDriver(Driver):
 
         self._sleep_time_between_cmd_retries = 3
         self._sleep_time_between_kills = 30
-        self._poll_period = squeue_timeout
+
+        self._poll_period = (
+            squeue_timeout if squeue_timeout is not None else poll_period
+        )
+
         self._project_code = project_code
 
     def _submit_cmd(

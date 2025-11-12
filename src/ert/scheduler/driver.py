@@ -13,6 +13,8 @@ SIGNAL_OFFSET = 128
 """Bash and other shells add an offset of 128 to the signal
 value when a process exited due to a signal"""
 
+_POLL_PERIOD = 2.0  # default poll period in seconds
+
 
 def create_submit_script(
     runpath: Path, executable: str, args: tuple[str, ...], activate_script: str
@@ -36,6 +38,7 @@ class Driver(ABC):
         self._event_queue: asyncio.Queue[DriverEvent] | None = None
         self._job_error_message_by_iens: dict[int, str] = {}
         self.activate_script = activate_script
+        self._poll_period = _POLL_PERIOD
 
     @property
     def event_queue(self) -> asyncio.Queue[DriverEvent]:

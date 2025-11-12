@@ -10,12 +10,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal, cast, get_type_hints
 
-from .driver import Driver, FailedSubmit, create_submit_script
+from .driver import _POLL_PERIOD, Driver, FailedSubmit, create_submit_script
 from .event import DriverEvent, FinishedEvent, StartedEvent
 
 logger = logging.getLogger(__name__)
 
-_POLL_PERIOD = 2.0  # seconds
 JOB_STATES = [
     "B",  # Begun
     "E",  # Exiting with or without errors
@@ -130,6 +129,7 @@ class OpenPBSDriver(Driver):
         qstat_cmd: str | None = None,
         qdel_cmd: str | None = None,
         activate_script: str = "",
+        poll_period: float = _POLL_PERIOD,
     ) -> None:
         super().__init__(activate_script)
 
@@ -140,7 +140,7 @@ class OpenPBSDriver(Driver):
         self._job_prefix = job_prefix
         self._max_pbs_cmd_attempts = 10
         self._sleep_time_between_cmd_retries = 2
-        self._poll_period = _POLL_PERIOD
+        self._poll_period = poll_period
 
         self._qsub_cmd = Path(qsub_cmd or shutil.which("qsub") or "qsub")
         self._qstat_cmd = Path(qstat_cmd or shutil.which("qstat") or "qstat")

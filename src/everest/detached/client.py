@@ -45,7 +45,7 @@ async def start_server(config: EverestConfig, logging_level: int) -> Driver:
     """
     Start an Everest server running the optimization defined in the config
     """
-    driver = create_driver(config.server.queue_system)  # type: ignore
+    driver = create_driver(config.server.queue_system, poll_period=0.1)  # type: ignore
     try:
         args = [
             "--output-dir",
