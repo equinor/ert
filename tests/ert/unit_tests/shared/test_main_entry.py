@@ -1,12 +1,12 @@
 import logging
 import os
 import sys
+from unittest import mock
 from unittest.mock import MagicMock
 
 import filelock
 import pytest
 
-import ert
 import ert.__main__ as main
 
 
@@ -45,13 +45,15 @@ def test_storage_exception_is_not_unexpected_error(monkeypatch, caplog):
         raise filelock.Timeout
 
     file_lock_mock.acquire = mock_acquire
-    monkeypatch.setattr(ert.storage.local_storage, "FileLock", file_lock_mock)
 
-    monkeypatch.setattr(sys, "argv", ["ert", "test_run", "poly.ert"])
-    with pytest.raises(SystemExit) as exc_info:
+    with (
+        mock.patch("ert.storage.local_storage.FileLock", return_value=file_lock_mock),
+        mock.patch.object(sys, "argv", ["ert", "test_run", "poly.ert"]),
+        pytest.raises(SystemExit) as exc_info,
+    ):
         main.main()
-    assert "ERT crashed unexpectedly" not in str(exc_info.value)
-    assert "Failed to open storage" in str(exc_info.value)
+        assert "ERT crashed unexpectedly" not in str(exc_info.value)
+        assert "Failed to open storage" in str(exc_info.value)
 
 
 def test_non_writable_log_directory_exits_with_message(monkeypatch, use_tmpdir):
