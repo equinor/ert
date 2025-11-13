@@ -43,3 +43,26 @@ in errors during validation of the configuration:
 - Duplicate parameter names in the design matrix
 - Design sheet is empty
 - REAL column must only contain unique, positive integers
+
+Migration from `DESIGN_KW`
+--------------------------
+
+Migration to RUN_TEMPLATE is straightforward.
+The `RUN_TEMPLATE` keyword replaces the `DESIGN_KW` forward model by doing magic string replacements in the file directly, without
+going through a `parameters.txt` file. `RUN_TEMPLATE` also copies the file automatically to run path.
+
+To migrate, replace instances of `DESIGN_KW` in your configuration file with `RUN_TEMPLATE`:
+
+For example
+
+::
+
+    FORWARD_MODEL DESIGN_KW(<template_file>=my_text_file_template.txt, <result_file>=my_text_file.txt)
+
+should be replaced with RUN_TEMPLATE as follows:
+
+::
+
+    RUN_TEMPLATE my_text_file_template.txt my_text_file.txt
+
+Additionally, review the documentation for :ref:`RUN_TEMPLATE <run_template>`.
