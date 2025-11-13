@@ -59,14 +59,11 @@ jobs:
           # --- __init__.py ---
           cat > dummy_site_config/dummy_plugin/__init__.py <<'PYPLUGIN'
           from ert import plugin
-          from ert.plugins.plugin_manager import hook_implementation
           from ert.plugins import ErtRuntimePlugins
           from ert.config.queue_config import LsfQueueOptions
 
-
-          @hook_implementation
           @plugin(name="fmu-site-configuration")
-          def site_configurations(name="dummy-site-configuration"):
+          def site_configurations():
               return ErtRuntimePlugins(
                   queue_options=LsfQueueOptions(
                       lsf_resource="select[cs && x86_64Linux]",
