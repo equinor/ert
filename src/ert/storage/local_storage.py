@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import contextlib
 import json
 import logging
 import os
@@ -114,7 +113,6 @@ class LocalStorage(BaseMode):
             if version < _LOCAL_STORAGE_VERSION and not ignore_migration_check:
                 self._migrate(version)
             self._index = self._load_index()
-            self._ensure_fs_version_exists()
             self._save_index()
         elif version < _LOCAL_STORAGE_VERSION:
             raise RuntimeError(
@@ -269,13 +267,6 @@ class LocalStorage(BaseMode):
         traceback: TracebackType,
     ) -> None:
         self.close()
-
-    @require_write
-    def _ensure_fs_version_exists(self) -> None:
-        # ERT 4 checks that this file exists and if it exists tells the user
-        # that their ERT storage is incompatible
-        with contextlib.suppress(FileExistsError):
-            (self.path / ".fs_version").symlink_to("index.json")
 
     @require_write
     def _acquire_lock(self) -> None:
