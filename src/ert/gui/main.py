@@ -8,6 +8,7 @@ import traceback
 import types
 from collections import Counter
 from importlib.resources import files
+from pathlib import Path
 from signal import SIG_DFL, SIGINT, signal
 
 from opentelemetry.trace import Status, StatusCode
@@ -27,7 +28,7 @@ from ert.gui.tools.event_viewer import (
 )
 from ert.namespace import Namespace
 from ert.plugins import ErtRuntimePlugins, get_site_plugins
-from ert.services import StorageService
+from ert.services import ErtServer
 from ert.storage import ErtStorageException, local_storage_set_ert_config, open_storage
 from ert.trace import trace, tracer
 
@@ -113,7 +114,7 @@ def run_gui(args: Namespace, plugins: ErtRuntimePlugins | None = None) -> int:
             return show_window()
 
         try:
-            with StorageService.init_service(project=os.path.abspath(ens_path)):
+            with ErtServer.init_service(project=Path(ens_path).absolute()):
                 return show_window()
         except PermissionError as pe:
             print(f"Error: {pe}", file=sys.stderr)

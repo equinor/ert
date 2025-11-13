@@ -12,7 +12,7 @@ import yaml
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
 from ert.plugins.plugin_manager import ErtPluginManager
-from ert.services import StorageService
+from ert.services import ErtServer
 from ert.services._base_service import BaseServiceExit
 from ert.storage import ExperimentStatus
 from ert.storage.local_experiment import ExperimentState
@@ -163,11 +163,11 @@ def main() -> None:
             # Starting the server
             server_path = os.path.abspath(ServerConfig.get_session_dir(output_dir))
             status = ""
-            with StorageService.init_service(
-                timeout=240, project=server_path, logging_config=log_file.name
+            with ErtServer.init_service(
+                timeout=240, project=Path(server_path), logging_config=log_file.name
             ) as server:
                 server.fetch_conn_info()
-                with StorageService.session(project=Path(server_path)) as client:
+                with ErtServer.session(project=Path(server_path)) as client:
                     done = False
                     while not done:
                         response = client.get(

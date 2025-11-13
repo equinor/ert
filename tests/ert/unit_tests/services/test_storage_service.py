@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 import pytest
 
-from ert.services import StorageService
+from ert.services import ErtServer
 from ert.services._storage_main import _create_connection_info, _generate_certificate
 from ert.shared import find_available_socket
 from everest.config import ServerConfig
@@ -37,7 +37,7 @@ def test_create_connection_string():
     del os.environ["ERT_STORAGE_CONNECTION_STRING"]
 
 
-def test_that_service_can_be_started_with_existing_conn_info_json(tmp_path):
+def test_that_service_can_be_started_with_existing_conn_info_json(change_to_tmpdir):
     """
     This is a regression test for a bug with the following reproduction steps:
 
@@ -58,15 +58,15 @@ def test_that_service_can_be_started_with_existing_conn_info_json(tmp_path):
         "authtoken": "dummytoken",
     }
 
-    with open(tmp_path / "storage_server.json", mode="w", encoding="utf-8") as f:
+    with open("storage_server.json", mode="w", encoding="utf-8") as f:
         json.dump(connection_info, f)
-    StorageService.connect(project=tmp_path)
+    ErtServer.connect(project=Path(".").absolute())
 
 
 @pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
-@patch("ert.services.StorageService.start_server")
+@patch("ert.services.ErtServer.start_server")
 def test_that_service_can_be_started_with_missing_cert_in_conn_info_json(
-    start_server_mock, tmp_path
+    start_server_mock, change_to_tmpdir
 ):
     """
     This is a regression test for a bug with the following reproduction steps:
@@ -87,31 +87,31 @@ def test_that_service_can_be_started_with_missing_cert_in_conn_info_json(
         ],
         "authtoken": "dummytoken",
     }
-    with open(tmp_path / "storage_server.json", mode="w", encoding="utf-8") as f:
+    with open("storage_server.json", mode="w", encoding="utf-8") as f:
         json.dump(connection_info, f)
-    StorageService.init_service(project=str(tmp_path))
+    ErtServer.init_service(project=Path(".").absolute())
     start_server_mock.assert_called_once()
 
 
-@patch("ert.services.StorageService.start_server")
+@patch("ert.services.ErtServer.start_server")
 def test_that_service_can_be_started_with_empty_conn_info_json(
-    start_server_mock, tmp_path
+    start_server_mock, change_to_tmpdir
 ):
     """An empty file on disk is an erroneous scenario in which we should
     ignore the file on disk and overwrite it by launching a new server"""
-    (tmp_path / "storage_server.json").touch()
-    StorageService.init_service(project=str(tmp_path))
+    Path("storage_server.json").touch()
+    ErtServer.init_service(project=Path(".").absolute())
     start_server_mock.assert_called_once()
 
 
-@patch("ert.services.StorageService.start_server")
+@patch("ert.services.ErtServer.start_server")
 def test_that_service_can_be_started_with_empty_json_content(
-    start_server_mock, tmp_path
+    start_server_mock, change_to_tmpdir
 ):
     """An empty JSON document on disk is an erroneous scenario in which we should
     ignore the file on disk and overwrite it by launching a new server"""
-    (tmp_path / "storage_server.json").write_text("{}", encoding="utf-8")
-    StorageService.init_service(project=str(tmp_path))
+    Path("storage_server.json").write_text("{}", encoding="utf-8")
+    ErtServer.init_service(project=Path(".").absolute())
     start_server_mock.assert_called_once()
 
 
@@ -123,9 +123,9 @@ def test_storage_logging(change_to_tmpdir):
     would log everything twice
     """
 
-    with StorageService.start_server(
+    with ErtServer.start_server(
         verbose=True,
-        project=".",
+        project=Path("."),
         parent_pid=os.getpid(),
     ) as server:
         assert server.wait_until_ready(), "StorageService failed to start"
@@ -208,6 +208,6 @@ def test_that_an_exception_is_raised_if_storage_server_file_has_no_permissions(
     os.chmod(file_path, 0o000)  # no permissions
     try:
         with pytest.raises(PermissionError):
-            StorageService.init_service()
+            ErtServer.init_service(project=Path(".").absolute())
     finally:
         os.chmod(file_path, mode)

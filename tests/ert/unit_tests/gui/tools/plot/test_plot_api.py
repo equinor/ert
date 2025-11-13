@@ -19,7 +19,7 @@ from ert.config.response_config import ResponseMetadata
 from ert.dark_storage import common
 from ert.dark_storage.app import app
 from ert.gui.tools.plot.plot_api import PlotApi, PlotApiKeyDefinition
-from ert.services import StorageService
+from ert.services import ErtServer
 from ert.storage import open_storage
 from tests.ert.unit_tests.gui.tools.plot.conftest import MockResponse
 
@@ -27,7 +27,7 @@ from tests.ert.unit_tests.gui.tools.plot.conftest import MockResponse
 @pytest.fixture(autouse=True)
 def use_testclient(monkeypatch):
     client = TestClient(app)
-    monkeypatch.setattr(StorageService, "session", lambda project: client)
+    monkeypatch.setattr(ErtServer, "session", lambda project: client)
 
     def test_escape(s: str) -> str:
         """
