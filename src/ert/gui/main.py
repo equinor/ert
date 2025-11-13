@@ -27,10 +27,10 @@ from ert.gui.tools.event_viewer import (
 )
 from ert.namespace import Namespace
 from ert.plugins import ErtRuntimePlugins, get_site_plugins
-from ert.services import StorageService
 from ert.storage import ErtStorageException, local_storage_set_ert_config, open_storage
 from ert.trace import trace, tracer
 
+from ..services import StorageService
 from .suggestor import Suggestor
 
 logger = logging.getLogger(__name__)
