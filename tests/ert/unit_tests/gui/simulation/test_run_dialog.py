@@ -38,7 +38,6 @@ from ert.gui.simulation.multiple_data_assimilation_panel import (
 )
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.simulation.view.realization import RealizationWidget
-from ert.gui.suggestor import Suggestor
 from ert.gui.tools.file import FileDialog
 from ert.run_models import (
     EnsembleExperiment,
@@ -47,10 +46,11 @@ from ert.run_models import (
 )
 from ert.scheduler.job import Job
 from tests.ert import SnapshotBuilder
-from tests.ert.ui_tests.gui.conftest import wait_for_attribute, wait_for_child
+from tests.ert.ui_tests.gui.conftest import wait_for_child
 from tests.ert.unit_tests.gui.simulation.test_run_path_dialog import (
     handle_run_path_dialog,
 )
+from tests.ert.utils import wait_until
 
 
 @pytest.fixture
@@ -176,12 +176,12 @@ def test_that_terminating_experiment_shows_a_confirmation_dialog(
         qtbot.mouseClick(run_dialog.kill_button, Qt.MouseButton.LeftButton)
         assert not kill_button.isEnabled()
         assert kill_button.text() == "Terminating"
-    suggestor_termination_window = wait_for_attribute(run_dialog.fail_msg_box, qtbot)
+    wait_until(lambda: run_dialog.fail_msg_box is not None, timeout=5000)
     assert kill_button.text() == "Terminate experiment"
     assert not kill_button.isEnabled()
     assert (
         "Experiment cancelled by user during evaluation"
-        in suggestor_termination_window.findChild(QWidget, name="suggestor_messages")
+        in run_dialog.fail_msg_box.findChild(QWidget, name="suggestor_messages")
         .findChild(QLabel)
         .text()
     )
@@ -626,9 +626,8 @@ def test_that_exception_in_run_model_is_displayed_in_a_suggestor_window_after_si
 
         def assert_failure_in_error_dialog(run_dialog):
             nonlocal handler_done
-            suggestor_termination_window: Suggestor = wait_for_attribute(
-                run_dialog.fail_msg_box, qtbot, timeout=10000
-            )
+            wait_until(lambda: run_dialog.fail_msg_box is not None, timeout=5000)
+            suggestor_termination_window = run_dialog.fail_msg_box
             assert suggestor_termination_window
             text = (
                 suggestor_termination_window.findChild(
