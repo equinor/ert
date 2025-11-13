@@ -19,7 +19,7 @@ from pandas.errors import ParserError
 from resfo_utilities import history_key
 
 from ert.config import ParameterMetadata, ResponseMetadata
-from ert.services import StorageService
+from ert.services import ErtServer
 from ert.storage.realization_storage_state import RealizationStorageState
 
 logger = logging.getLogger(__name__)
@@ -56,7 +56,7 @@ class PlotApi:
 
     @property
     def api_version(self) -> str:
-        with StorageService.session(project=self.ens_path) as client:
+        with ErtServer.session(project=self.ens_path) as client:
             try:
                 response = client.get("/version", timeout=self._timeout)
                 self._check_response(response)
@@ -82,7 +82,7 @@ class PlotApi:
             return self._all_ensembles
 
         self._all_ensembles = []
-        with StorageService.session(project=self.ens_path) as client:
+        with ErtServer.session(project=self.ens_path) as client:
             try:
                 response = client.get("/experiments", timeout=self._timeout)
                 self._check_response(response)
@@ -138,7 +138,7 @@ class PlotApi:
         all_keys: dict[str, PlotApiKeyDefinition] = {}
         all_params = {}
 
-        with StorageService.session(project=self.ens_path) as client:
+        with ErtServer.session(project=self.ens_path) as client:
             response = client.get("/experiments", timeout=self._timeout)
             self._check_response(response)
 
@@ -162,7 +162,7 @@ class PlotApi:
     def responses_api_key_defs(self) -> list[PlotApiKeyDefinition]:
         key_defs: dict[str, PlotApiKeyDefinition] = {}
 
-        with StorageService.session(project=self.ens_path) as client:
+        with ErtServer.session(project=self.ens_path) as client:
             response = client.get("/experiments", timeout=self._timeout)
             self._check_response(response)
 
@@ -224,7 +224,7 @@ class PlotApi:
         response_key: str,
         filter_on: dict[str, Any] | None = None,
     ) -> pd.DataFrame:
-        with StorageService.session(project=self.ens_path) as client:
+        with ErtServer.session(project=self.ens_path) as client:
             response = client.get(
                 f"/ensembles/{ensemble_id}/responses/{PlotApi.escape(response_key)}",
                 headers={"accept": "application/x-parquet"},
@@ -252,7 +252,7 @@ class PlotApi:
                 return df
 
     def data_for_parameter(self, ensemble_id: str, parameter_key: str) -> pd.DataFrame:
-        with StorageService.session(project=self.ens_path) as client:
+        with ErtServer.session(project=self.ens_path) as client:
             parameter = client.get(
                 f"/ensembles/{ensemble_id}/parameters/{PlotApi.escape(parameter_key)}",
                 headers={"accept": "application/x-parquet"},
@@ -294,7 +294,7 @@ class PlotApi:
             assert key_def.response_metadata is not None
             actual_response_key = key_def.response_metadata.response_key
             filter_on = key_def.filter_on
-            with StorageService.session(project=self.ens_path) as client:
+            with ErtServer.session(project=self.ens_path) as client:
                 response = client.get(
                     f"/ensembles/{ensemble.id}/responses/{PlotApi.escape(actual_response_key)}/observations",
                     timeout=self._timeout,
@@ -377,7 +377,7 @@ class PlotApi:
         if not ensemble:
             return np.array([])
 
-        with StorageService.session(project=self.ens_path) as client:
+        with ErtServer.session(project=self.ens_path) as client:
             response = client.get(
                 f"/ensembles/{ensemble.id}/parameters/{PlotApi.escape(key)}/std_dev",
                 params={"z": z},

@@ -25,7 +25,7 @@ from ert.dark_storage.endpoints import ensembles, experiments
 from ert.dark_storage.endpoints.observations import get_observations_for_response
 from ert.dark_storage.endpoints.responses import get_response
 from ert.gui.tools.plot.plot_api import PlotApi
-from ert.services import StorageService
+from ert.services import ErtServer
 from ert.storage import Storage, open_storage
 
 T = TypeVar("T")
@@ -56,7 +56,7 @@ def get_response_autofilter(
 @pytest.fixture(autouse=True)
 def use_testclient(monkeypatch):
     client = TestClient(app)
-    monkeypatch.setattr(StorageService, "session", lambda project: client)
+    monkeypatch.setattr(ErtServer, "session", lambda project: client)
 
     def test_escape(s: str) -> str:
         """
