@@ -2657,3 +2657,23 @@ _________________________________________     _____    ____________________
     with pytest.raises(expected_exception=ConfigValidationError, match=refcase_file):
         config_dict = {ConfigKeys.REFCASE: refcase_file}
         Refcase.from_config_dict(config_dict=config_dict)
+
+
+@pytest.mark.parametrize("misspelled_option", ["DESIGNSHEET", "DEFAULTSHEET"])
+def test_that_invalid_option_name_in_design_matrix_raises_validation_error(
+    misspelled_option,
+    tmp_path,
+):
+    design_matrix_file = tmp_path / "my_design_matrix.xlsx"
+    design_matrix_file.touch()
+    with pytest.raises(
+        ConfigValidationError,
+        match=(
+            f"Option {misspelled_option} is not a valid DESIGN_MATRIX option. "
+            "Valid options are DESIGN_SHEET, DEFAULT_SHEET."
+        ),
+    ):
+        _ = ErtConfig.from_file_contents(
+            "NUM_REALIZATIONS 1\n"
+            f"DESIGN_MATRIX {design_matrix_file} {misspelled_option}:SomeSheet"
+        )
