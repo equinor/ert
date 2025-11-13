@@ -966,6 +966,16 @@ warnings.warn('Foobar')"""
         == "Total progress 100% — Experiment completed."
     )
 
+    # Test that show_warnings_button enables and disables
+    # the suggestor window containing warnings/errors
+    assert run_dialog.fail_msg_box.isVisible()
+    show_warnings_button = run_dialog.show_warnings_button
+    assert show_warnings_button.isEnabled()
+    show_warnings_button.click()
+    assert not run_dialog.fail_msg_box.isVisible()
+    show_warnings_button.click()
+    assert run_dialog.fail_msg_box.isVisible()
+
 
 def test_denied_run_path_warning_dialog_releases_storage_lock(
     qtbot, opened_main_window_poly, use_tmpdir, monkeypatch
