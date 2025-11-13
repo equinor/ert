@@ -45,6 +45,18 @@ class DesignMatrix:
     def from_config_list(cls, config_list: list[str | dict[str, str]]) -> DesignMatrix:
         filename = Path(cast(str, config_list[0]))
         options = cast(dict[str, str], config_list[1])
+        valid_options = ["DESIGN_SHEET", "DEFAULT_SHEET"]
+        option_errors = [
+            ErrorInfo(
+                f"Option {option} is not a valid DESIGN_MATRIX option. "
+                f"Valid options are {', '.join(valid_options)}."
+            ).set_context(config_list)
+            for option in options
+            if option not in valid_options
+        ]
+
+        if option_errors:
+            raise ConfigValidationError.from_collected(option_errors)
         design_sheet = options.get("DESIGN_SHEET", "DesignSheet")
         default_sheet = options.get("DEFAULT_SHEET", None)
         errors = []
