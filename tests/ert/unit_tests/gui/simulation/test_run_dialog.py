@@ -604,7 +604,9 @@ def test_run_dialog_fm_label_show_correct_info(
 
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_exception_in_run_model_is_handled(qtbot: QtBot, use_tmpdir):
+def test_that_exception_in_run_model_is_displayed_in_a_suggestor_window_after_simulation_fails(  # noqa E501
+    qtbot: QtBot, use_tmpdir
+):
     config_file = "minimal_config.ert"
     Path(config_file).write_text("NUM_REALIZATIONS 1", encoding="utf-8")
     args_mock = Mock()
@@ -622,7 +624,7 @@ def test_that_exception_in_run_model_is_handled(qtbot: QtBot, use_tmpdir):
 
         handler_done = False
 
-        def handle_error_dialog(run_dialog):
+        def assert_failure_in_error_dialog(run_dialog):
             nonlocal handler_done
             suggestor_termination_window: Suggestor = wait_for_attribute(
                 run_dialog.fail_msg_box, qtbot, timeout=10000
@@ -648,7 +650,7 @@ def test_that_exception_in_run_model_is_handled(qtbot: QtBot, use_tmpdir):
         qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
         run_dialog = wait_for_child(gui, qtbot, RunDialog)
 
-        QTimer.singleShot(100, lambda: handle_error_dialog(run_dialog))
+        QTimer.singleShot(100, lambda: assert_failure_in_error_dialog(run_dialog))
         qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=100000)
         qtbot.waitUntil(lambda: handler_done, timeout=100000)
 
