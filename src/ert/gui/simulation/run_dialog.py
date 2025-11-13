@@ -268,6 +268,9 @@ class RunDialog(QFrame):
         self.kill_button = QPushButton("Terminate experiment")
         self.rerun_button = QPushButton("Rerun failed simulations")
         self.rerun_button.setEnabled(False)
+        self.show_warnings_button = QPushButton()
+        self.set_show_warning_button_to_initial_state()
+        self.show_warnings_button.clicked.connect(self.toggle_fail_message_box)
 
         size = 20
         spin_movie = QMovie("img:loading.gif")
@@ -311,6 +314,7 @@ class RunDialog(QFrame):
         button_layout = QVBoxLayout()
         button_layout.addWidget(self.kill_button)
         button_layout.addWidget(self.rerun_button)
+        button_layout.addWidget(self.show_warnings_button)
         footer_layout.addLayout(button_layout)
 
         footer_widget_container = QWidget()
@@ -480,6 +484,7 @@ class RunDialog(QFrame):
         if failed:
             self.update_total_progress(1.0, "Failed")
             self._progress_widget.set_all_failed()
+            self.show_warnings_button.setText("Show errors")
         else:
             self.update_total_progress(1.0, "Experiment completed.")
 
@@ -497,6 +502,8 @@ class RunDialog(QFrame):
                 ),
                 parent=self,
             )
+            self.show_warnings_button.setEnabled(True)
+            self.show_warnings_button.setToolTip("")
             self.fail_msg_box.show()
 
         if self.post_simulation_warnings:
@@ -504,6 +511,16 @@ class RunDialog(QFrame):
                 f"Simulation finished with "
                 f"{len(self.post_simulation_warnings)} PostSimulationWarnings"
             )
+
+    def set_show_warning_button_to_initial_state(self) -> None:
+        self.show_warnings_button.setEnabled(False)
+        self.show_warnings_button.setText("Show warnings")
+        self.show_warnings_button.setToolTip("No warnings to show")
+
+    def toggle_fail_message_box(self) -> None:
+        if self.fail_msg_box is None:
+            return
+        self.fail_msg_box.setVisible(not self.fail_msg_box.isVisible())
 
     @Slot()
     def _on_ticker(self) -> None:
@@ -635,6 +652,7 @@ class RunDialog(QFrame):
             self.kill_button.setEnabled(True)
             self._is_rerunning_failed_realizations = True
             self.rerun_failed_realizations_experiment.emit()
+            self.set_show_warning_button_to_initial_state()
 
     def set_queue_system_name(self, queue_system: QueueSystem) -> None:
         match queue_system:
