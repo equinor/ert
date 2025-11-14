@@ -225,7 +225,7 @@ class ForwardModelStep(BaseModelWithContextSupport):
 class UserInstalledForwardModelStep(ForwardModelStep):
     """
     Represents a forward model step installed by a user via the ERT Config
-    forward model step format provided via the INSTALL_JOB keyword..
+    forward model step format provided via the INSTALL_JOB keyword.
     User-installed forward model steps serialize with their full configuration,
     unlike site-installed steps which only serialize as references.
     """
