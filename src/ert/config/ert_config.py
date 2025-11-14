@@ -821,7 +821,7 @@ class ErtConfig(BaseModel):
     def with_plugins(runtime_plugins: ErtRuntimePlugins) -> type[ErtConfig]:
         class ErtConfigWithPlugins(ErtConfig):
             PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[
-                Mapping[str, SiteOrUserForwardModelStep]
+                Mapping[str, SiteInstalledForwardModelStep]
             ] = runtime_plugins.installed_forward_model_steps
             PREINSTALLED_WORKFLOWS = dict(runtime_plugins.installed_workflow_jobs)
             ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = (
