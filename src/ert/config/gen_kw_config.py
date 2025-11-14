@@ -259,15 +259,6 @@ class GenKwConfig(ParameterConfig):
     def group_name(self) -> str:
         return self.group
 
-    def copy_parameters(
-        self,
-        source_ensemble: Ensemble,
-        target_ensemble: Ensemble,
-        realizations: npt.NDArray[np.int_],
-    ) -> None:
-        df = source_ensemble.load_parameters(self.name, realizations)
-        target_ensemble.save_parameters(dataset=df)
-
     def get_priors(self) -> list[PriorDict]:
         dist_json = self.distribution.model_dump(exclude={"name"})
         return [
