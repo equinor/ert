@@ -1010,9 +1010,7 @@ def test_that_all_required_keywords_in_forward_model_are_validated():
         )
 
 
-def test_that_site_fm_step_serializes_plugin_ref_and_deserializes_executable(
-    use_tmpdir,
-):
+def test_that_site_fm_step_serializes_as_reference_to_site_plugin(use_tmpdir):
     class SiteForwardModel(ForwardModelStepPlugin):
         def __init__(self) -> None:
             super().__init__(
@@ -1024,10 +1022,14 @@ def test_that_site_fm_step_serializes_plugin_ref_and_deserializes_executable(
         ErtRuntimePlugins(installed_forward_model_steps={"SITE_FM": SiteForwardModel()})
     ):
         site_fm = SiteForwardModel()
-        # Expect only reference stored, i.e., name
+
         serialized_fm_step = site_fm.model_dump(mode="json")
         assert serialized_fm_step == {"name": "SITE_FM", "type": "site_installed"}
 
+
+def test_that_site_fm_step_deserialization_is_overwritten_by_site_installed_fmsteps(
+    use_tmpdir,
+):
     custom_echo_path = Path("custom_echo.sh")
     custom_echo_path.write_text("#!/bin/bash\necho hello", encoding="utf-8")
     custom_echo_path.chmod(custom_echo_path.stat().st_mode | stat.S_IEXEC)
@@ -1039,6 +1041,9 @@ def test_that_site_fm_step_serializes_plugin_ref_and_deserializes_executable(
                 command=["custom_echo.sh", "helloworld"],
             )
 
+    # Inline the serialized value from the first test
+    serialized_fm_step = {"name": "SITE_FM", "type": "site_installed"}
+
     with use_runtime_plugins(
         ErtRuntimePlugins(
             installed_forward_model_steps={"SITE_FM": SomeUpdatedForwardModel()}
@@ -1047,6 +1052,7 @@ def test_that_site_fm_step_serializes_plugin_ref_and_deserializes_executable(
         site_fm_with_updated_executable = TypeAdapter(
             SiteOrUserForwardModelStep
         ).validate_python(serialized_fm_step)
+
         assert isinstance(
             site_fm_with_updated_executable, SiteInstalledForwardModelStep
         )
