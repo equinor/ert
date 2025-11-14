@@ -9,7 +9,9 @@ from pydantic import (
 )
 
 from ert.base_model_context import BaseModelWithContextSupport
-from ert.config import ForwardModelStep
+from ert.config import (
+    SiteOrUserForwardModelStep,
+)
 
 
 class ForwardModelResult(BaseModelWithContextSupport):
@@ -74,8 +76,8 @@ class ForwardModelStepConfig(BaseModelWithContextSupport):
         return values
 
     def to_ert_forward_model_step(
-        self, installed_fm_steps: dict[str, ForwardModelStep]
-    ) -> ForwardModelStep:
+        self, installed_fm_steps: dict[str, SiteOrUserForwardModelStep]
+    ) -> SiteOrUserForwardModelStep:
         fm_name, *arglist = self.job.split()
         match fm_name:
             # All three reservoir simulator fm_steps map to
