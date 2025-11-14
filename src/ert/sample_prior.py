@@ -33,6 +33,7 @@ def sample_prior(
     parameter_configs = ensemble.experiment.parameter_configuration
     if parameters is None:
         parameters = list(parameter_configs.keys())
+    complete_dataset: pl.DataFrame | None = None
     for parameter in parameters:
         config_node = parameter_configs[parameter]
         if config_node.forward_init:
@@ -75,13 +76,17 @@ def sample_prior(
                 if datasets:
                     dataset = pl.concat(datasets, how="vertical")
 
-            if dataset is not None:
-                ensemble.save_parameters(
-                    dataset=dataset,
-                )
+            if complete_dataset is None:
+                complete_dataset = dataset
+            elif dataset is not None:
+                complete_dataset = complete_dataset.join(dataset, on="realization")
         else:
             for realization_nr in active_realizations:
                 ds = config_node.read_from_runpath(Path(), realization_nr, 0)
                 ensemble.save_parameters(ds, parameter, realization_nr)
 
+    if complete_dataset is not None:
+        ensemble.save_parameters(
+            dataset=complete_dataset,
+        )
     ensemble.refresh_ensemble_state()
