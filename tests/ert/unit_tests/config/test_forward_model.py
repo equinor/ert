@@ -1098,7 +1098,7 @@ def test_that_fm_step_serializes_name_only_for_site_and_full_for_user(
     use_tmpdir,
 ):
     Path("fm_step").write_text(
-        "EXECUTABLE echo\nARLIST ONE TWO THREE", encoding="utf-8"
+        "EXECUTABLE echo\nARGLIST ONE TWO THREE", encoding="utf-8"
     )
     test_config_contents = dedent(
         """
@@ -1126,6 +1126,7 @@ def test_that_fm_step_serializes_name_only_for_site_and_full_for_user(
     assert site_fm.model_dump() == {
         "type": "site_installed",
         "name": "SITE_INSTALLED_FM",
+        "private_args": {"ONE": "1", "TWO": "2", "THREE": "3"},
     }
 
     assert user_fm.private_args == {"ONE": "1", "TWO": "2", "THREE": "3"}
