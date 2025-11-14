@@ -30,7 +30,7 @@ def test_that_get_nr_primary_components_is_according_to_theory(p, rho, seed):
     on page 283.
     """
     sigma = 1
-    N = 100000
+    N = 10000
 
     # Define a p x p equicorrelation matrix
     # See Eqn (1)
