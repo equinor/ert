@@ -68,6 +68,7 @@ class EventSentinel:
 
 class EnsembleEvaluator:
     BATCHING_INTERVAL = 0.5
+    DEFAULT_SLEEP_PERIOD = 0.1
 
     def __init__(
         self,
@@ -191,7 +192,7 @@ class EnsembleEvaluator:
                 await self._signal_cancel()
                 logger.debug("Run model cancelled - during evaluation - cancel sent")
                 self._end_event.clear()
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(self.DEFAULT_SLEEP_PERIOD)
 
     async def _send_terminate_message_to_dispatchers(self) -> None:
         event = TERMINATE_MSG
@@ -264,7 +265,7 @@ class EnsembleEvaluator:
                     batch.append((function, event))
                     self._events.task_done()
                 except asyncio.QueueEmpty:
-                    await asyncio.sleep(0.1)
+                    await asyncio.sleep(self.DEFAULT_SLEEP_PERIOD)
                     continue
             self._complete_batch.set()
             await self._batch_processing_queue.put(batch)
@@ -416,7 +417,7 @@ class EnsembleEvaluator:
             while True:
                 if self._evaluation_result.done():
                     break
-                await asyncio.sleep(0.1)
+                await asyncio.sleep(self.DEFAULT_SLEEP_PERIOD)
             logger.debug("Async server exiting.")
         finally:
             try:
