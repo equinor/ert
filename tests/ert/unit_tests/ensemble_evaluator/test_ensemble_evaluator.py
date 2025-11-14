@@ -475,6 +475,7 @@ async def test_signal_cancel_does_not_cause_evaluator_dispatcher_communication_t
 
 
 @pytest.mark.timeout(15)
+@pytest.mark.integration_test
 async def test_signal_cancel_sends_terminate_message_to_dispatchers(evaluator_to_use):
     (evaluator, _) = evaluator_to_use
     token = evaluator._config.token

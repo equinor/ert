@@ -20,6 +20,18 @@ rapid-tests:
     --timeout=10 --session-timeout=120 \
     -p no:memray
 
+ert-rapid-tests:
+    OMP_NUM_THREADS=1 pytest --dist loadgroup tests/ert/unit_tests \
+    --hypothesis-profile=fast \
+    --benchmark-disable \
+    --ignore=tests/ert/unit_tests/gui \
+    --ignore=tests/ert/unit_tests/dark_storage \
+    --ignore=tests/ert/unit_tests/config/test_transfer_functions.py \
+    --ignore=tests/ert/unit_tests/ensemble_evaluator/test_ensemble_client.py \
+    -m "not (integration_test or flaky or memory_test or limit_memory or creates_tmpdir)" \
+    --session-timeout=10 \
+    -p no:memray
+
 ert-gui-tests:
     pytest {{pytest_args}} --mpl tests/ert/ui_tests/gui
 
