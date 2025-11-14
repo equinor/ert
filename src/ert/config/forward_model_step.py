@@ -236,6 +236,7 @@ class UserInstalledForwardModelStep(ForwardModelStep):
 class _SerializedSiteInstalledForwardModelStep(TypedDict):
     type: Literal["site_installed"]
     name: str
+    private_args: dict[str, str]
 
 
 class SiteInstalledForwardModelStep(ForwardModelStep):
@@ -250,7 +251,11 @@ class SiteInstalledForwardModelStep(ForwardModelStep):
 
     @model_serializer(mode="plain")
     def serialize_model(self) -> _SerializedSiteInstalledForwardModelStep:
-        return {"type": "site_installed", "name": self.name}
+        return {
+            "type": "site_installed",
+            "name": self.name,
+            "private_args": self.private_args,
+        }
 
     @model_validator(mode="before")
     @classmethod
@@ -281,10 +286,14 @@ class SiteInstalledForwardModelStep(ForwardModelStep):
 
         # Intent: copy the site installed forward model to this instance.
         # bypassing the model_serializer
-        return {
+        site_fm_instance = {
             k: getattr(site_installed_fm, k)
             for k in SiteInstalledForwardModelStep.model_fields
         }
+
+        return site_fm_instance | (
+            {"private_args": values["private_args"]} if "private_args" in values else {}
+        )
 
 
 SiteOrUserForwardModelStep = Annotated[

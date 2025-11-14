@@ -1015,16 +1015,23 @@ def test_that_site_fm_step_serializes_as_reference_to_site_plugin(use_tmpdir):
         def __init__(self) -> None:
             super().__init__(
                 name="SITE_FM",
-                command=["echo", "helloworld"],
+                command=["echo", "helloworld", "<ONE>", "<TWO>"],
             )
 
     with use_runtime_plugins(
         ErtRuntimePlugins(installed_forward_model_steps={"SITE_FM": SiteForwardModel()})
     ):
         site_fm = SiteForwardModel()
+        # PS: It is missing private args, this must be added by mutation
+        # as it is the current practice in ert config
+        site_fm.private_args = {"ONE": 1, "TWO": "2"}
 
         serialized_fm_step = site_fm.model_dump(mode="json")
-        assert serialized_fm_step == {"name": "SITE_FM", "type": "site_installed"}
+        assert serialized_fm_step == {
+            "name": "SITE_FM",
+            "type": "site_installed",
+            "private_args": {"ONE": 1, "TWO": "2"},
+        }
 
 
 def test_that_site_fm_step_deserialization_is_overwritten_by_site_installed_fmsteps(
@@ -1038,11 +1045,8 @@ def test_that_site_fm_step_deserialization_is_overwritten_by_site_installed_fmst
         def __init__(self) -> None:
             super().__init__(
                 name="SITE_FM",
-                command=["custom_echo.sh", "helloworld"],
+                command=["custom_echo.sh", "helloworld", "<hello>", "<hi>", "<noop>"],
             )
-
-    # Inline the serialized value from the first test
-    serialized_fm_step = {"name": "SITE_FM", "type": "site_installed"}
 
     with use_runtime_plugins(
         ErtRuntimePlugins(
@@ -1051,23 +1055,33 @@ def test_that_site_fm_step_deserialization_is_overwritten_by_site_installed_fmst
     ):
         site_fm_with_updated_executable = TypeAdapter(
             SiteOrUserForwardModelStep
-        ).validate_python(serialized_fm_step)
+        ).validate_python(
+            {
+                "name": "SITE_FM",
+                "type": "site_installed",
+                "private_args": {"hello": "hi", "hi": "2"},
+            }
+        )
 
         assert isinstance(
             site_fm_with_updated_executable, SiteInstalledForwardModelStep
         )
         assert site_fm_with_updated_executable.executable == "custom_echo.sh"
+        assert site_fm_with_updated_executable.private_args == {
+            "hello": "hi",
+            "hi": "2",
+        }
 
 
 def test_that_user_fm_step_serializes_has_user_installed_type_and_retains_excecutable(
     use_tmpdir,
 ):
-    Path("fm_step").write_text("EXECUTABLE echo\n", encoding="utf-8")
+    Path("fm_step").write_text("EXECUTABLE echo\nARGLIST ARG1 ARG2", encoding="utf-8")
     test_config_contents = dedent(
         """
         NUM_REALIZATIONS 1
         INSTALL_JOB user_fm fm_step
-        FORWARD_MODEL user_fm
+        FORWARD_MODEL user_fm(ARG1=<arg1>,ARG2=<arg2>)
         """
     )
     Path("config.ert").write_text(test_config_contents, encoding="utf-8")
@@ -1076,18 +1090,22 @@ def test_that_user_fm_step_serializes_has_user_installed_type_and_retains_excecu
     user_fm = ert_config.forward_model_steps[0]
     assert user_fm.type == "user_installed"
     assert user_fm.executable == "echo"
+    assert user_fm.arglist == ["ARG1", "ARG2"]
+    assert user_fm.private_args == {"ARG1": "<arg1>", "ARG2": "<arg2>"}
 
 
 def test_that_fm_step_serializes_name_only_for_site_and_full_for_user(
     use_tmpdir,
 ):
-    Path("fm_step").write_text("EXECUTABLE echo\n", encoding="utf-8")
+    Path("fm_step").write_text(
+        "EXECUTABLE echo\nARLIST ONE TWO THREE", encoding="utf-8"
+    )
     test_config_contents = dedent(
         """
         NUM_REALIZATIONS 1
         INSTALL_JOB users_fm fm_step
-        FORWARD_MODEL users_fm
-        FORWARD_MODEL SITE_INSTALLED_FM
+        FORWARD_MODEL users_fm(ONE=1,TWO=2,THREE=3)
+        FORWARD_MODEL SITE_INSTALLED_FM(ONE=1,TWO=2,THREE=3)
         """
     )
     Path("config.ert").write_text(test_config_contents, encoding="utf-8")
@@ -1096,7 +1114,7 @@ def test_that_fm_step_serializes_name_only_for_site_and_full_for_user(
         def __init__(self) -> None:
             super().__init__(
                 name="SITE_INSTALLED_FM",
-                command=["echo", "hello_from_site"],
+                command=["echo", "hello_from_site", "<ONE>", "<TWO>", "<THREE>"],
             )
 
     site_plugins = ErtRuntimePlugins(
@@ -1109,6 +1127,9 @@ def test_that_fm_step_serializes_name_only_for_site_and_full_for_user(
         "type": "site_installed",
         "name": "SITE_INSTALLED_FM",
     }
+
+    assert user_fm.private_args == {"ONE": "1", "TWO": "2", "THREE": "3"}
+    assert user_fm.private_args == site_fm.private_args
 
 
 def test_that_deserializing_site_forward_model_without_site_plugins_raises_error():
