@@ -185,7 +185,7 @@ DESIGN_MATRIX
 -------------
 
 DESIGN_MATRIX is used to read and validate parameters given in XLSX-format.
-:code:`DESIGN_MATRIX` supports 1 positional argument, which points to a XLSL file.
+:code:`DESIGN_MATRIX` supports 1 positional argument, which points to a XLSX file.
 
 *Example:*
 
@@ -219,7 +219,7 @@ where:
         DESIGN_MATRIX poly_design.xlsx DESIGN_SHEET:DesignSheet DEFAULT_SHEET:DefaultSheet PRIORITY:design_matrix
 
 
-The XLSL file must contain a design sheet, where in the columns represents different parameters and rows represent realizations.
+The XLSX file must contain a design sheet, where in the columns represents different parameters and rows represent realizations.
 
 
 *Example of a design sheet:*
@@ -248,7 +248,7 @@ The XLSL file must contain a design sheet, where in the columns represents diffe
      - 3
 
 
-The XLSL file can optionally contain a default sheet, where there are two columns, the first column specifies parameter names and the second
+The XLSX file can optionally contain a default sheet, where there are two columns, the first column specifies parameter names and the second
 default values distributed across all the realizations defined by :ref:`design_sheet`. In the following example the realization 0,1 and 3 will
 contain parameters d and e, where d=0 and e=1 for all of the them.
 
@@ -312,7 +312,7 @@ The combination with :ref:`GEN_KW <gen_kw>` parameters is supported. In case of 
 ::
 
         GEN_KW COEFFS coeff_priors
-        DESIGN_MATRIX poly_design.xlsl DESIGN_SHEET:DesignSheet DEFAULT_SHEET:DefaultSheet PRIORITY:design_matrix
+        DESIGN_MATRIX poly_design.xlsx DESIGN_SHEET:DesignSheet DEFAULT_SHEET:DefaultSheet PRIORITY:design_matrix
 
 
 wherein coeff_priors
@@ -343,7 +343,7 @@ In case we specify sampled priority:
 ::
 
         GEN_KW COEFFS coeff_priors
-        DESIGN_MATRIX poly_design.xlsl DESIGN_SHEET:DesignSheet DEFAULT_SHEET:DefaultSheet PRIORITY:sampled
+        DESIGN_MATRIX poly_design.xlsx DESIGN_SHEET:DesignSheet DEFAULT_SHEET:DefaultSheet PRIORITY:sampled
 
 the final set of parameters (for example in parameters.txt in real==0) would be:
 ::
