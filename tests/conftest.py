@@ -44,9 +44,19 @@ def pytest_collection_modifyitems(config, items):
         fixtures = getattr(item, "fixturenames", ())
         if "qtbot" in fixtures or "qapp" in fixtures or "qtmodeltester" in fixtures:
             item.add_marker("requires_window_manager")
+        if any(
+            f in fixtures
+            for f in [
+                "flaky",
+                "tmpdir",
+                "use_tmpdir",
+                "tmp_path",
+                "tmp_path_factory",
+            ]
+        ):
+            item.add_marker("creates_tmpdir")
 
-    # Override Python's excepthook on all "requires_window_manager" tests
-    for item in items:
+        # Override Python's excepthook on all "requires_window_manager" tests
         if item.get_closest_marker("requires_window_manager"):
             item.fixturenames.append("_qt_excepthook")
             item.fixturenames.append("_qt_add_search_paths")
