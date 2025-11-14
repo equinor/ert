@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 from PyQt6.QtWidgets import QCheckBox
 from pytestqt.qtbot import QtBot
 
@@ -106,3 +108,24 @@ def test_that_active_realizations_selector_validates_with_with_realizations_from
     restart_checkbox.setChecked(False)
     assert realization_selector.text() == "0-19"
     assert panel.isConfigurationValid()
+
+
+def test_multiple_data_assimilation_panel_sets_active_realizations_to_initial_active_realizations_when_restart_run_toggled(  # noqa: E501
+    qtbot,
+):
+    active_realizations = [True, True, False, True, True]
+    active_realizations_string = "0-1, 3-4"
+
+    mock_notifier = MagicMock()
+    mock_notifier.storage.get_unique_experiment_name.return_value = "foo"
+    mda_panel = MultipleDataAssimilationPanel(
+        analysis_config=MagicMock(),
+        parameter_configuration=MagicMock(),
+        run_path="",
+        notifier=mock_notifier,
+        active_realizations=active_realizations,
+        config_num_realization=2,
+    )
+    assert mda_panel._active_realizations_field.text() == active_realizations_string
+    mda_panel.restart_run_toggled()
+    assert mda_panel._active_realizations_field.text() == active_realizations_string
