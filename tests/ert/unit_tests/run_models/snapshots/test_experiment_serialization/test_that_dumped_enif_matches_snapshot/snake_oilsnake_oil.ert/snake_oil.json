@@ -142,6 +142,20 @@
   "random_seed": 1,
   "start_iteration": 0,
   "minimum_required_realizations": 2,
+  "target_ensemble": "helloworld<ITER>",
+  "analysis_settings": {
+    "enkf_truncation": 0.98,
+    "inversion": "SUBSPACE",
+    "localization": false,
+    "localization_correlation_threshold": null
+  },
+  "update_settings": {
+    "outlier_settings": {
+      "alpha": 3.0,
+      "std_cutoff": 1e-6
+    },
+    "auto_scale_observations": []
+  },
   "experiment_name": "dummy",
   "design_matrix": null,
   "parameter_configuration": [
@@ -1827,19 +1841,5 @@
         "std": "Float32"
       }
     }
-  },
-  "target_ensemble": "helloworld<ITER>",
-  "analysis_settings": {
-    "enkf_truncation": 0.98,
-    "inversion": "SUBSPACE",
-    "localization": false,
-    "localization_correlation_threshold": null
-  },
-  "update_settings": {
-    "outlier_settings": {
-      "alpha": 3.0,
-      "std_cutoff": 1e-6
-    },
-    "auto_scale_observations": []
   }
 }
