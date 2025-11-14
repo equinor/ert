@@ -234,7 +234,7 @@ def test_that_forward_model_design2params_is_deprecated():
 
 def test_that_forward_model_design_kw_is_deprecated():
     # Create a mock DESIGN_KW forward model step, since it is not installed
-    mock_design_kw_step = ForwardModelStep(
+    mock_design_kw_step = UserInstalledForwardModelStep(
         name="DESIGN_KW",
         executable="design_kw",
     )
