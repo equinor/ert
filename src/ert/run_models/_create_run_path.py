@@ -19,6 +19,7 @@ from ert.config import (
     ParameterConfig,
     SurfaceConfig,
 )
+from ert.config.design_matrix import DESIGN_MATRIX_GROUP
 from ert.config.ert_config import create_forward_model_json
 from ert.substitutions import Substitutions, substitute_runpath_name
 from ert.utils import log_duration
@@ -54,7 +55,12 @@ def _value_export_txt(
         for key, param_map in values.items():
             for param, value in param_map.items():
                 if isinstance(value, (int | float)):
-                    print(f"{key}:{param} {value:g}", file=f)
+                    if key == DESIGN_MATRIX_GROUP:
+                        print(f"{param} {value:g}", file=f)
+                    else:
+                        print(f"{key}:{param} {value:g}", file=f)
+                elif key == DESIGN_MATRIX_GROUP:
+                    print(f"{param} {value}", file=f)
                 else:
                     print(f"{key}:{param} {value}", file=f)
 
