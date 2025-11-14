@@ -261,7 +261,7 @@ class SiteInstalledForwardModelStep(ForwardModelStep):
         name = values["name"]
 
         if runtime_plugins is None:
-            if set(values.keys()) == {"name", "type"}:
+            if values.get("type") == "site_installed":
                 msg = (
                     f"Trying to find site-installed forward model step {name} "
                     f"without site plugins. This forward model must be loaded "
