@@ -61,10 +61,19 @@ def _copy_unupdated_parameters(
 
     # Copy the non-updated parameter groups from source to target
     # for each active realization
+    complete_df: pl.DataFrame | None = None
     for parameter_group in not_updated_parameter_groups:
-        source_ensemble.experiment.parameter_configuration[
-            parameter_group
-        ].copy_parameters(source_ensemble, target_ensemble, iens_active_index)
+        data = source_ensemble.load_parameters(parameter_group, iens_active_index)
+        if isinstance(data, pl.DataFrame):
+            if complete_df is None:
+                complete_df = data
+            else:
+                complete_df = complete_df.join(data, on="realization")
+        else:
+            target_ensemble.save_parameters(dataset=data)
+
+    if complete_df is not None:
+        target_ensemble.save_parameters(complete_df)
 
 
 def _expand_wildcards(
