@@ -966,3 +966,21 @@ def test_that_file_dialog_close_when_run_dialog_hidden(qtbot: QtBot, run_dialog)
             assert file_dialog.isVisible()
             run_dialog.setVisible(False)
             assert not file_dialog.isVisible()
+
+
+def test_that_run_dialog_clears_warnings_when_rerun(qtbot, monkeypatch):
+    run_dialog = RunDialog(
+        title="test",
+        run_model_api=MagicMock(),
+        event_queue=MagicMock(),
+        notifier=MagicMock(),
+    )
+    assert len(run_dialog.post_simulation_warnings) == 0
+    run_dialog.post_simulation_warnings.append("warning")
+    assert len(run_dialog.post_simulation_warnings) > 0
+
+    monkeypatch.setattr(
+        QMessageBox, "exec", value=lambda _: QMessageBox.StandardButton.Ok
+    )
+    run_dialog.rerun_failed_realizations()
+    assert len(run_dialog.post_simulation_warnings) == 0
