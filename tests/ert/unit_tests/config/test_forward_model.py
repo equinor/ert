@@ -1073,7 +1073,7 @@ def test_that_site_fm_step_deserialization_is_overwritten_by_site_installed_fmst
         }
 
 
-def test_that_user_fm_step_serializes_has_user_installed_type_and_retains_excecutable(
+def test_that_user_installed_fm_step_retains_executable_in_serialization(
     use_tmpdir,
 ):
     Path("fm_step").write_text("EXECUTABLE echo\nARGLIST ARG1 ARG2", encoding="utf-8")
@@ -1140,7 +1140,7 @@ def test_that_deserializing_site_forward_model_without_site_plugins_raises_error
         )
 
 
-def test_that_deserializing_missing_from_site_forward_model_raises_error():
+def test_that_deserializing_site_forward_model_step_not_in_plugins_raises_error():
     with (
         pytest.raises(
             KeyError,

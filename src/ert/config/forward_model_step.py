@@ -242,9 +242,9 @@ class _SerializedSiteInstalledForwardModelStep(TypedDict):
 class SiteInstalledForwardModelStep(ForwardModelStep):
     """
     Represents a forward model step installed via external plugins.
-    Instances of this class serialize only as references to the plugin by name,
-    allowing them to dynamically update when plugins change, rather than being
-    locked to a specific executable at serialization time.
+    Instances of this class serialize only as references to the plugin by name, and
+    the user-provided private_args, allowing them to dynamically update when plugins
+    change, rather than being locked to a specific executable at serialization time.
     """
 
     type: Literal["site_installed"] = "site_installed"
