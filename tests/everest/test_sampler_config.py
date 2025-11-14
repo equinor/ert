@@ -1,6 +1,6 @@
 import pytest
 
-from everest.config import SamplerConfig
+from ert.config import SamplerConfig
 
 
 @pytest.mark.parametrize(

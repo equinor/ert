@@ -13,7 +13,7 @@ from .ert_plugin import ErtPlugin
 from .ert_script import ErtScript
 from .everest_constraints_config import EverestConstraintsConfig
 from .everest_objective_config import EverestObjectivesConfig
-from .ext_param_config import ExtParamConfig
+from .ext_param_config import ExtParamConfig, SamplerConfig, get_ropt_plugin_manager
 from .external_ert_script import ExternalErtScript
 from .field import Field, field_transform
 from .forward_model_step import (
@@ -127,6 +127,7 @@ __all__ = [
     "QueueSystem",
     "ResponseConfig",
     "ResponseMetadata",
+    "SamplerConfig",
     "SummaryConfig",
     "SurfaceConfig",
     "WarningInfo",
@@ -139,6 +140,7 @@ __all__ = [
     "field_transform",
     "fixtures_per_hook",
     "forward_model_step_from_config_contents",
+    "get_ropt_plugin_manager",
     "lint_file",
     "workflow_job_from_file",
 ]

@@ -957,7 +957,22 @@ def test_that_all_parameters_and_gen_data_consolidation_works(
 
         experiment = storage.create_experiment(
             responses=[GenDataConfig(keys=["R1", "R2"])],
-            parameters=[ExtParamConfig(name="point", input_keys=["P1", "P2"])],
+            parameters=[
+                ExtParamConfig(
+                    name="point",
+                    input_keys=["P1", "P2"],
+                    types=["generic_control", "generic_control"],
+                    initial_guesses=[0.1, 0.1],
+                    control_types=["real", "real"],
+                    enabled=[True, True],
+                    min=[0, 0],
+                    max=[10, 10],
+                    perturbation_types=["relative", "relative"],
+                    perturbation_magnitudes=[0.5, 0.5],
+                    scaled_ranges=[[0, 20], [0, 20]],
+                    samplers=[None, None],
+                )
+            ],
         )
 
         ensemble_datas = []
