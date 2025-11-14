@@ -160,6 +160,7 @@ norecursedirs = [
 ]
 markers = [
     "memory_test",
+    "creates_tmpdir",
     "integration_test",
     "out_of_memory",
     "quick_only",
