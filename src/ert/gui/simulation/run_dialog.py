@@ -650,6 +650,7 @@ class RunDialog(QFrame):
         if result == QMessageBox.StandardButton.Ok:
             self.rerun_button.setEnabled(False)
             self.kill_button.setEnabled(True)
+            self.post_simulation_warnings.clear()
             self._is_rerunning_failed_realizations = True
             self.rerun_failed_realizations_experiment.emit()
             self.set_show_warning_button_to_initial_state()
