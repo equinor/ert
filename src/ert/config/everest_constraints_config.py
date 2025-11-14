@@ -27,6 +27,10 @@ class EverestConstraintsConfig(ResponseConfig):
     type: Literal["everest_constraints"] = "everest_constraints"
     name: str = "everest_constraints"
     has_finalized_keys: bool = True
+    targets: list[float | None]
+    scales: list[float | None]
+    upper_bounds: list[float]
+    lower_bounds: list[float]
 
     @property
     def expected_input_files(self) -> list[str]:

@@ -12,8 +12,7 @@ import numpy as np
 import polars as pl
 from ropt.results import FunctionResults, GradientResults, Results
 
-from ert.config import EverestObjectivesConfig
-from everest.config.output_constraint_config import OutputConstraintConfig
+from ert.config import EverestConstraintsConfig, EverestObjectivesConfig
 from everest.strings import EVEREST
 
 logger = logging.getLogger(__name__)
@@ -532,7 +531,7 @@ class EverestStorage:
         self,
         formatted_control_names: list[str],
         objective_functions: EverestObjectivesConfig,
-        output_constraints: list[OutputConstraintConfig] | None,
+        output_constraints: EverestConstraintsConfig | None,
         realizations: list[int],
     ) -> None:
         controls = pl.DataFrame(
@@ -566,13 +565,7 @@ class EverestStorage:
         )
 
         nonlinear_constraints = (
-            pl.DataFrame(
-                {
-                    "constraint_name": [
-                        constraint.name for constraint in output_constraints
-                    ],
-                }
-            )
+            pl.DataFrame({"constraint_name": output_constraints.keys})
             if output_constraints
             else None
         )
