@@ -196,6 +196,8 @@ async def evaluator_to_use_fixture(monkeypatch, make_ee_config):
         pass
 
     monkeypatch.setattr(EnsembleEvaluator, "evaluate", empty_mock_function)
+    monkeypatch.setattr(EnsembleEvaluator, "DEFAULT_SLEEP_PERIOD", 0.05)
+    monkeypatch.setattr(Scheduler, "BATCH_KILLING_INTERVAL", 0)
     event_queue = asyncio.Queue()
     evaluator = EnsembleEvaluator(
         ensemble, make_ee_config(use_token=False), Event(), event_queue.put_nowait
@@ -203,7 +205,7 @@ async def evaluator_to_use_fixture(monkeypatch, make_ee_config):
 
     evaluator._scheduler.kill_all_jobs = empty_mock_function
     evaluator._scheduler._running.set()
-    evaluator._batching_interval = 0.5  # batching can be faster for tests
+    evaluator._batching_interval = 0.05  # batching can be faster for tests
     run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
     await evaluator._server_started
     yield (evaluator, event_queue)
@@ -322,7 +324,6 @@ def test_overspent_cpu_is_logged(
 @pytest.mark.integration_test
 async def test_snapshot_on_resubmit_is_cleared(evaluator_to_use):
     (evaluator, event_queue) = evaluator_to_use
-    evaluator._batching_interval = 0.4
     token = evaluator._config.token
     url = evaluator._config.get_uri()
 
@@ -517,7 +518,9 @@ async def test_signal_cancel_terminates_fm_dispatcher_with_terminate_message(
     )
     config = EvaluatorServerConfig(use_token=False)
     event_queue: asyncio.Queue[EESnapshot | EESnapshotUpdate] = asyncio.Queue()
+    monkeypatch.setattr(EnsembleEvaluator, "DEFAULT_SLEEP_PERIOD", 0.05)
     evaluator = EnsembleEvaluator(ensemble, config, Event(), event_queue.put_nowait)
+    evaluator._batching_interval = 0.05
     run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
     await evaluator._server_started
 
@@ -588,13 +591,15 @@ async def test_signal_cancel_terminates_fm_dispatcher_with_scheduler_as_fallback
     config = EvaluatorServerConfig(use_token=False)
     event_queue: asyncio.Queue[EESnapshot | EESnapshotUpdate] = asyncio.Queue()
     monkeypatch.setattr(Job, "WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL", 0)
+    monkeypatch.setattr(Scheduler, "BATCH_KILLING_INTERVAL", 0)
     monkeypatch.setattr(
         EnsembleEvaluator,
         "_send_terminate_message_to_dispatchers",
         empty_send_terminate_messages,
     )
-
+    monkeypatch.setattr(EnsembleEvaluator, "DEFAULT_SLEEP_PERIOD", 0.05)
     evaluator = EnsembleEvaluator(ensemble, config, Event(), event_queue.put_nowait)
+    evaluator._batching_interval = 0.05
     run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
     await evaluator._server_started
 
