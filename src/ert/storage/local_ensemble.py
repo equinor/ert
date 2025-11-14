@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import os
 import time
@@ -660,10 +661,29 @@ class LocalEnsemble(BaseMode):
         iens_active_index: npt.NDArray[np.int_],
     ) -> None:
         config_node = self.experiment.parameter_configuration[param_group]
+        complete_df: pl.DataFrame | None = None
+        with contextlib.suppress(KeyError):
+            complete_df = self._load_parameters_lazy(SCALAR_FILENAME).collect(
+                engine="streaming"
+            )
         for real, ds in config_node.create_storage_datasets(
             parameters, iens_active_index
         ):
-            self.save_parameters(ds, config_node.name, real)
+            if isinstance(ds, pl.DataFrame):
+                if complete_df is None:
+                    complete_df = ds
+                else:
+                    complete_df = (
+                        complete_df.join(ds, on="realization", how="left")
+                        .unique(subset=["realization"], keep="first")
+                        .sort("realization")
+                    )
+            else:
+                self.save_parameters(ds, config_node.name, real)
+
+        group_path = self.mount_point / f"{_escape_filename(SCALAR_FILENAME)}.parquet"
+        if complete_df is not None:
+            self._storage._to_parquet_transaction(group_path, complete_df)
 
     def load_scalars(
         self, group: str | None = None, realizations: npt.NDArray[np.int_] | None = None
