@@ -29,8 +29,6 @@ def test_with_plugins():
     }
     assert pm.get_forward_model_configuration() == {"FLOW": {"mpipath": "/foo"}}
 
-    assert pm.get_installable_jobs()["job1"] == "dummy/path/job1"
-    assert pm.get_installable_jobs()["job2"] == "dummy/path/job2"
     assert pm._get_config_workflow_jobs()["wf_job1"] == "dummy/path/wf_job1"
     assert pm._get_config_workflow_jobs()["wf_job2"] == "dummy/path/wf_job2"
 
@@ -181,26 +179,6 @@ def test_fm_config_with_wrong_keytype():
 
     with pytest.raises(TypeError, match="foo did not provide dict"):
         ErtPluginManager(plugins=[SomePlugin]).get_forward_model_configuration()
-
-
-def test_job_documentation():
-    pm = ErtPluginManager(plugins=[dummy_plugins])
-    expected = {
-        "job1": {
-            "config_file": "dummy/path/job1",
-            "source_package": "dummy",
-            "source_function_name": "installable_jobs",
-            "description": "job description",
-            "examples": "example 1 and example 2",
-            "category": "test.category.for.job",
-        },
-        "job2": {
-            "config_file": "dummy/path/job2",
-            "source_package": "dummy",
-            "source_function_name": "installable_jobs",
-        },
-    }
-    assert pm.get_documentation_for_jobs() == expected
 
 
 def test_workflows_merge(monkeypatch):

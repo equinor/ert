@@ -180,10 +180,7 @@ class _ErtDocumentation(SphinxDirective):
 
 class ErtForwardModelDocumentation(_ErtDocumentation):
     pm = ErtPluginManager()
-    _JOBS: ClassVar[dict[str, Any]] = {
-        **pm.get_documentation_for_jobs(),
-        **pm.get_documentation_for_forward_model_steps(),
-    }
+    _JOBS: ClassVar[dict[str, Any]] = pm.get_documentation_for_forward_model_steps()
 
     def run(self) -> list[nodes.section]:
         return self._generate_job_documentation_without_title(
