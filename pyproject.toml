@@ -177,7 +177,7 @@ session_timeout = 1800
 timeout_func_only = true # Do not apply timeout to fixtures which can be slow but cached
 
 [tool.setuptools_scm]
-write_to = "src/ert/shared/version.py"
+version_file = "src/ert/shared/version.py"
 # Fallback needed due to https://github.com/dependabot/dependabot-core/issues/12340
 fallback_version = "0.0.0"
 
