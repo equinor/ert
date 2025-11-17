@@ -299,7 +299,7 @@ def _setup_ensemble_smoother(
 ) -> EnsembleSmoother:
     active_realizations = _get_and_validate_active_realizations_list(args, config)
     validate_minimum_realizations(config, active_realizations)
-    if len(active_realizations) < 2:
+    if sum(active_realizations) < 2:
         raise ConfigValidationError(
             "Number of active realizations must be at least 2 for an update step"
         )
@@ -346,7 +346,7 @@ def _setup_ensemble_information_filter(
 ) -> EnsembleInformationFilter:
     active_realizations = _get_and_validate_active_realizations_list(args, config)
     validate_minimum_realizations(config, active_realizations)
-    if len(active_realizations) < 2:
+    if sum(active_realizations) < 2:
         raise ConfigValidationError(
             "Number of active realizations must be at least 2 for an update step"
         )
@@ -412,7 +412,7 @@ def _setup_multiple_data_assimilation(
     restart_run, prior_ensemble = _determine_restart_info(args)
     active_realizations = _get_and_validate_active_realizations_list(args, config)
     validate_minimum_realizations(config, active_realizations)
-    if len(active_realizations) < 2:
+    if sum(active_realizations) < 2:
         raise ConfigValidationError(
             "Number of active realizations must be at least 2 for an update step"
         )
