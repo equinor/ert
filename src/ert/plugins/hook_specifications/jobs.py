@@ -10,15 +10,6 @@ if TYPE_CHECKING:
 
 
 @no_type_check
-@hook_specification
-def installable_jobs() -> PluginResponse[dict[str, str]]:
-    """
-    :return: dict with job names as keys and path to config as value
-    :rtype: PluginResponse with data as dict[str,str]
-    """
-
-
-@no_type_check
 @hook_specification(firstresult=True)
 def job_documentation(job_name: str) -> PluginResponse[dict[str, str] | None]:
     """

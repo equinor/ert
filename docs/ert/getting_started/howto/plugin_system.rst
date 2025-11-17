@@ -44,25 +44,14 @@ A plugin is created with the `ert.plugin` decorator and the function name descri
 
 Forward models
 ~~~~~~~~~~~~~~
-To install forward model steps that you want to have available in ERT you can either
-use the simplified :code:`installable_jobs` function name, or
-:code:`installable_forward_model_steps` which gives a lot more control.
-The individual steps in a forward model were previously called "jobs" in Ert,
-and this is still partly present in the source code.
+To install forward model steps that you want to have available in ERT you can use
+:code:`installable_forward_model_steps`.
 
 .. code-block:: python
 
     from typing import Optional
 
     import ert
-
-
-    @ert.plugin(name="my_plugin")
-    def installable_jobs() -> dict[str, str]:
-        return {
-            "job_name": "/path/to/workflow.config"
-        }
-
 
     class MyForwardModel(ert.ForwardModelStepPlugin):
         def __init__(self):
@@ -104,11 +93,6 @@ throw ``ForwardModelStepValidationError`` to indicate that the configuration of 
 forward model step is invalid (which ert then handles gracefully and presents nicely
 to the user). If you want to show a warning in cases where the configuration cannot be
 validated pre-experiment, you can use the ``ForwardModelStepWarning.warn(...)`` method.
-
-To provide documentation for a forward model step given with
-``installable_jobs``, use the :code:`job_documentation` name. If you are the
-plugin that provided the step with the name :code:`step_name`, then you respond
-with the documentation as specified, else respond with :code:`None`.
 
 .. code-block:: python
 

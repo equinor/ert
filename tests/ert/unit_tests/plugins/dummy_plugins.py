@@ -17,11 +17,6 @@ def forward_model_configuration():
 
 
 @plugin(name="dummy")
-def installable_jobs():
-    return {"job1": "dummy/path/job1", "job2": "dummy/path/job2"}
-
-
-@plugin(name="dummy")
 def installable_workflow_jobs():
     return {"wf_job1": "dummy/path/wf_job1", "wf_job2": "dummy/path/wf_job2"}
 

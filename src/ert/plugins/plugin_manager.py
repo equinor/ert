@@ -5,7 +5,6 @@ import logging
 import warnings
 from argparse import ArgumentParser
 from collections.abc import Callable, Mapping, Sequence
-from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, overload
 
 import pluggy
@@ -21,7 +20,6 @@ from ert.config import (
     LocalQueueOptions,
     WorkflowConfigs,
     WorkflowJob,
-    forward_model_step_from_config_contents,
     workflow_job_from_file,
 )
 from ert.trace import add_span_processor
@@ -251,31 +249,8 @@ class ErtPluginManager(pluggy.PluginManager):
             return merged_dict
         return {k: v[0] for k, v in merged_dict.items()}
 
-    def get_installable_jobs(self) -> Mapping[str, str]:
-        return ErtPluginManager._merge_dicts(self.hook.installable_jobs())
-
     def _get_config_workflow_jobs(self) -> dict[str, str]:
         return ErtPluginManager._merge_dicts(self.hook.installable_workflow_jobs())
-
-    def get_documentation_for_jobs(self) -> dict[str, Any]:
-        job_docs = {
-            k: {
-                "config_file": v[0],
-                "source_package": v[1].plugin_name,
-                "source_function_name": v[1].function_name,
-            }
-            for k, v in ErtPluginManager._merge_dicts(
-                self.hook.installable_jobs(), include_plugin_data=True
-            ).items()
-        }
-        for key, value in job_docs.items():
-            value.update(
-                ErtPluginManager._evaluate_job_doc_hook(
-                    self.hook.job_documentation,
-                    key,
-                )
-            )
-        return job_docs
 
     def get_documentation_for_forward_model_steps(
         self,
@@ -379,12 +354,6 @@ def get_site_plugins(
         if site_configurations
         else {}
     )
-
-    for job_name, job_path in plugin_manager.get_installable_jobs().items():
-        fm_step = forward_model_step_from_config_contents(
-            Path(job_path).read_text(encoding="utf-8"), job_path, job_name
-        )
-        all_forward_model_steps[job_name] = fm_step
 
     all_workflow_jobs: dict[str, WorkflowJob] = dict[str, WorkflowJob](
         plugin_manager.get_ertscript_workflows().get_workflows()

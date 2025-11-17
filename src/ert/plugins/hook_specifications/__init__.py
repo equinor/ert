@@ -5,7 +5,6 @@ from .forward_model_steps import (
 from .help_resources import help_links
 from .jobs import (
     ertscript_workflow,
-    installable_jobs,
     installable_workflow_jobs,
     job_documentation,
     legacy_ertscript_workflow,
@@ -20,7 +19,6 @@ __all__ = [
     "forward_model_configuration",
     "help_links",
     "installable_forward_model_steps",
-    "installable_jobs",
     "installable_workflow_jobs",
     "job_documentation",
     "legacy_ertscript_workflow",
