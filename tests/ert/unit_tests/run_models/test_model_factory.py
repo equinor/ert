@@ -27,6 +27,11 @@ from ert.run_models import (
     create_model,
     model_factory,
 )
+from ert.run_models.model_factory import (
+    _setup_ensemble_information_filter,
+    _setup_ensemble_smoother,
+    _setup_multiple_data_assimilation,
+)
 
 
 @pytest.mark.parametrize(
@@ -340,3 +345,31 @@ def test_evaluate_ensemble_paths(
     base_path = tmp_path / "simulations"
     expected_path = [str(base_path / expected) for expected in expected_path]
     assert set(model.paths) == set(expected_path)
+
+
+@pytest.mark.parametrize(
+    "experiment_setup_method",
+    [
+        _setup_multiple_data_assimilation,
+        _setup_ensemble_information_filter,
+        _setup_ensemble_smoother,
+    ],
+)
+def test_that_setting_up_experiment_with_update_step_raises_config_validation_error_given_less_than_two_active_realizations(  # noqa: E501
+    experiment_setup_method,
+):
+    """This test tests that specifying a single realization to run in an update
+    experiment is not allowed.
+    Though confusing, the active realizations are derived from args.realizations (the
+    ones specified in the gui) and all active realization in the 'config', meaning we
+    are referring to two different active realizations."""
+    args = MagicMock(realizations="0", restart_run=False, prior_ensemble_id="")
+    config = MagicMock()
+    config.active_realizations = [True] * 10
+    config.analysis_config = MagicMock(minimum_required_realizations=1)
+
+    with pytest.raises(
+        ConfigValidationError,
+        match="Number of active realizations must be at least 2 for an update step",
+    ):
+        experiment_setup_method(config, args, MagicMock(), MagicMock())
