@@ -975,6 +975,58 @@ def test_that_plugin_forward_model_unexpected_errors_show_as_warnings():
         )
 
 
+def test_that_plugin_fm_step_raises_validation_error_on_missing_required_argument():
+    class FMThatNeedsABC(ForwardModelStepPlugin):
+        def __init__(self) -> None:
+            super().__init__(
+                name="FMWithAssertionError",
+                command=["echo", "<A>", "<B>", "<C>"],
+                required_keywords=["A", "B", "C"],
+            )
+
+    with pytest.raises(
+        ConfigValidationError,
+        match="Required keyword C not found for forward model step FMThatNeedsABC",
+    ):
+        _ = ErtConfig.with_plugins(
+            ErtRuntimePlugins(
+                installed_forward_model_steps={
+                    "FMThatNeedsABC": FMThatNeedsABC(),
+                }
+            )
+        ).from_file_contents(
+            """
+            NUM_REALIZATIONS  1
+            FORWARD_MODEL FMThatNeedsABC(A=never,B=world,\
+               D=derpyderp)
+            """
+        )
+
+
+def test_that_plugin_fm_step_is_parsed_successfully_with_required_arguments():
+    class FMThatNeedsABC(ForwardModelStepPlugin):
+        def __init__(self) -> None:
+            super().__init__(
+                name="FMWithAssertionError",
+                command=["echo", "<A>", "<B>", "<C>"],
+                required_keywords=["A", "B", "C"],
+            )
+
+    ErtConfig.with_plugins(
+        ErtRuntimePlugins(
+            installed_forward_model_steps={
+                "FMThatNeedsABC": FMThatNeedsABC(),
+            }
+        )
+    ).from_file_contents(
+        """
+        NUM_REALIZATIONS  1
+        FORWARD_MODEL FMThatNeedsABC(A=never,B=world,\
+           C=derpyderp)
+        """
+    )
+
+
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_one_required_keyword_in_forward_model_is_validated():
     Path("step").write_text("EXECUTABLE echo\nREQUIRED MESSAGE", encoding="utf-8")

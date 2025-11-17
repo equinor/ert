@@ -72,6 +72,7 @@ class ForwardModelStepOptions(TypedDict, total=False):
     max_running_minutes: NotRequired[int]
     environment: NotRequired[dict[str, str]]
     default_mapping: NotRequired[dict[str, str]]
+    required_keywords: NotRequired[list[str]]
 
 
 class ForwardModelStepDocumentation(BaseModel):
@@ -221,6 +222,7 @@ class ForwardModelStepPlugin(ForwardModelStep):
         max_running_minutes = kwargs.get("max_running_minutes")
         environment = kwargs.get("environment", {}) or {}
         default_mapping = kwargs.get("default_mapping", {}) or {}
+        required_keywords = kwargs.get("required_keywords", []) or []
 
         super().__init__(
             name=name,
@@ -235,7 +237,7 @@ class ForwardModelStepPlugin(ForwardModelStep):
             max_running_minutes=max_running_minutes,
             min_arg=0,
             max_arg=0,
-            required_keywords=[],
+            required_keywords=required_keywords,
             arg_types=[],
             environment=environment,
             default_mapping=default_mapping,
