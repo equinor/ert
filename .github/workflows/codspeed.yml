@@ -17,7 +17,7 @@ concurrency:
 jobs:
   benchmarks:
     name: Run benchmarks
-    runs-on: ubuntu-latest
+    runs-on: codspeed-macro
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v5
@@ -38,7 +38,7 @@ jobs:
           uv pip install pytest-codspeed
       - uses: CodSpeedHQ/action@v4
         with:
-          mode: instrumentation
+          mode: walltime
           token: ${{ secrets.CODSPEED_TOKEN }}
           run: |
             uv run pytest tests/ert/performance_tests --codspeed --timeout=1200 -m "not memory_test"
