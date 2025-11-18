@@ -24,6 +24,7 @@ classifiers = [
 dynamic = ["version"]
 dependencies = [
     "aiohttp",
+    "anyio",
     "colorama",
     "cryptography",
     "decorator",
@@ -230,7 +231,6 @@ ignore = [
     "PLW1641", # eq-without-hash
     "PLR0904", # too-many-public-methods
     "PLR1702", # too-many-nested-blocks
-    "ASYNC240", # blocking-path-method-in-async-function
 ]
 
 # Allow EN DASH (U+2013)
@@ -245,6 +245,7 @@ allowed-confusables = ["–"]
     "PLW1508", # Invalid type of environment variable default
     "RUF052",  # used-dummy-variable
     "RUF045",  # implicit-class-var-in-dataclass
+    "ASYNC240", # blocking-path-method-in-async-function
 ]
 "src/ert/dark_storage/json_schema/__init__.py" = ["F401"]
 "src/ert/dark_storage/*" = ["RUF029"] # unused-async
