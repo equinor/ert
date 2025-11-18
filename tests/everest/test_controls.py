@@ -267,15 +267,13 @@ def test_that_controls_ordering_is_the_same_for_ropt_and_extparam():
         ropt_var_wise[0]["names"]["variable"] == ropt_index_wise[0]["names"]["variable"]
     )
 
-    assert (
-        ropt_var_wise[0]["names"]["variable"]
-        == index_wise.to_ert_parameter_config().input_keys
-    )
+    assert ropt_var_wise[0]["names"]["variable"] == [
+        param_config.name for param_config in index_wise.to_ert_parameter_config()
+    ]
 
-    assert (
-        index_wise.to_ert_parameter_config().input_keys
-        == var_wise.to_ert_parameter_config().input_keys
-    )
+    assert [
+        param_config.name for param_config in index_wise.to_ert_parameter_config()
+    ] == [param_config.name for param_config in var_wise.to_ert_parameter_config()]
 
 
 def test_that_controls_ordering_disregards_index():
@@ -327,7 +325,9 @@ def test_that_controls_ordering_disregards_index():
     ]
     assert (ropt_var_wise[0]["names"]["variable"]) == expected
 
-    assert var_wise.to_ert_parameter_config().input_keys == expected
+    assert [
+        param_config.name for param_config in var_wise.to_ert_parameter_config()
+    ] == expected
 
 
 def test_that_setting_initial_guess_in_a_list_is_the_same_as_one_per_index():

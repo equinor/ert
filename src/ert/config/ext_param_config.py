@@ -2,17 +2,17 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterator, Mapping, MutableMapping
-from dataclasses import field
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal
 
 import networkx as nx
 import numpy as np
+import polars as pl
 import xarray as xr
 
 from ert.substitutions import substitute_runpath_name
 
-from .parameter_config import ParameterConfig, ParameterMetadata
+from .parameter_config import ParameterCardinality, ParameterConfig, ParameterMetadata
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -25,27 +25,14 @@ if TYPE_CHECKING:
 
 
 class ExtParamConfig(ParameterConfig):
-    """Create an ExtParamConfig for @key with the given @input_keys
-
-    @input_keys can be either a list of keys as strings or a dict with
-    keys as strings and a list of suffixes for each key.
-    If a list of strings is given, the order is preserved.
-    """
-
-    @property
-    def parameter_keys(self) -> list[str]:
-        return self.input_keys
-
-    @property
-    def metadata(self) -> list[ParameterMetadata]:
-        return []
+    """Create an ExtParamConfig for @key with the given @group"""
 
     type: Literal["everest_parameters"] = "everest_parameters"
-    input_keys: list[str] = field(default_factory=list)
     forward_init: bool = False
     output_file: str = ""
     forward_init_file: str = ""
     update: bool = False
+    group: str = ""
 
     def read_from_runpath(
         self, run_path: Path, real_nr: int, iteration: int
@@ -61,17 +48,22 @@ class ExtParamConfig(ParameterConfig):
         Path.mkdir(file_path.parent, exist_ok=True, parents=True)
 
         data: MutableDataType = {}
-        for da in ensemble.load_parameters(self.name, real_nr)["values"]:
-            assert isinstance(da, xr.DataArray)
-            name = str(da.names.values)
+        if file_path.exists():
+            data = json.loads(file_path.read_text())
+        for da in ensemble.load_parameters(self.name, real_nr).drop("realization"):
+            assert isinstance(da, pl.Series)
+            name = da.name
+
+            name = name.split(f"{self.group}.")[1]
+            da_values = da.to_list()
             try:
-                outer, inner = name.split("\0")
+                outer, inner = name.split(".")
 
                 if outer not in data:
                     data[outer] = {}
-                data[outer][inner] = float(da)  # type: ignore
+                data[outer][inner] = float(da_values[0])  # type: ignore
             except ValueError:
-                data[name] = float(da)
+                data[name] = float(da_values[0])
 
         file_path.write_text(json.dumps(data), encoding="utf-8")
 
@@ -79,20 +71,16 @@ class ExtParamConfig(ParameterConfig):
         self,
         from_data: npt.NDArray[np.float64],
         iens_active_index: npt.NDArray[np.int_],
-    ) -> Iterator[tuple[int, xr.Dataset]]:
-        for i, realization in enumerate(iens_active_index):
-            yield (
-                int(realization),
-                xr.Dataset(
-                    {
-                        "values": ("names", from_data[:, i]),
-                        "names": [
-                            x.split(f"{self.name}.")[1].replace(".", "\0")
-                            for x in self.parameter_keys
-                        ],
-                    }
-                ),
-            )
+    ) -> Iterator[tuple[None, pl.DataFrame]]:
+        yield (
+            None,
+            pl.DataFrame(
+                {
+                    "realization": iens_active_index,
+                    self.name: pl.Series(from_data.flatten()),
+                }
+            ),
+        )
 
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
@@ -103,4 +91,20 @@ class ExtParamConfig(ParameterConfig):
         raise NotImplementedError
 
     def __len__(self) -> int:
-        return len(self.input_keys)
+        return 1
+
+    @property
+    def cardinality(self) -> ParameterCardinality:
+        return ParameterCardinality.multiple_configs_per_ensemble_dataset
+
+    @property
+    def group_name(self) -> str:
+        return self.group
+
+    @property
+    def parameter_keys(self) -> list[str]:
+        return [self.name]
+
+    @property
+    def metadata(self) -> list[ParameterMetadata]:
+        return []
