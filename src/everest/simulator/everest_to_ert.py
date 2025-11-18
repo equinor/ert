@@ -1,4 +1,3 @@
-import itertools
 from typing import cast
 
 import everest
@@ -25,27 +24,19 @@ def extract_summary_keys(ever_config: EverestConfig) -> list[str]:
 
     data_keys = everest.simulator.DEFAULT_DATA_SUMMARY_KEYS
     field_keys = everest.simulator.DEFAULT_FIELD_SUMMARY_KEYS
-    well_sum_keys = everest.simulator.DEFAULT_WELL_SUMMARY_KEYS
+    well_keys = [
+        f"{sum_key}:*" for sum_key in everest.simulator.DEFAULT_WELL_SUMMARY_KEYS
+    ]
     deprecated_user_specified_keys = (
         [] if ever_config.export is None else ever_config.export.keywords
     )
 
-    wells = (
-        [
-            variable.name
-            for control in ever_config.controls
-            for variable in control.variables
-            if control.type == "well_control"
-        ]
-        if ever_config.wells is None
-        else [w.name for w in ever_config.wells]
+    return list(
+        set(
+            requested_keys
+            + data_keys
+            + field_keys
+            + well_keys
+            + deprecated_user_specified_keys
+        )
     )
-
-    well_keys = [
-        f"{sum_key}:{wname}"
-        for (sum_key, wname) in itertools.product(well_sum_keys, wells)
-    ]
-
-    all_keys = data_keys + field_keys + well_keys + deprecated_user_specified_keys
-
-    return list(set(all_keys + requested_keys))
