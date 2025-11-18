@@ -1001,6 +1001,9 @@ class EverestStorage:
     def export_dataframes(
         self,
     ) -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
+        if not self.data.batches:
+            return (pl.DataFrame(), pl.DataFrame(), pl.DataFrame())
+
         batch_dfs_to_join = {}  # type: ignore
         realization_dfs_to_join = {}  # type: ignore
         perturbation_dfs_to_join = {}  # type: ignore
