@@ -99,24 +99,17 @@ class DesignMatrix:
         common_keys = set(
             self.design_matrix_df.select(pl.exclude("realization")).columns
         ) & set(dm_other.design_matrix_df.columns)
-        non_identical_cols = set()
         if common_keys:
-            for key in common_keys:
-                if not self.design_matrix_df.select(key).equals(
-                    dm_other.design_matrix_df.select(key)
-                ):
-                    non_identical_cols.add(key)
-            if non_identical_cols:
-                errors.append(
-                    ErrorInfo(
-                        f"Design Matrices '{self.xls_filename.name} "
-                        f"({self.design_sheet} {self.default_sheet or ''})' and "
-                        f"'{dm_other.xls_filename.name} ({dm_other.design_sheet} "
-                        f"{dm_other.default_sheet or ''})' "
-                        "contains non identical columns with the same name: "
-                        f"{non_identical_cols}!"
-                    )
+            errors.append(
+                ErrorInfo(
+                    f"Design Matrices '{self.xls_filename.name} "
+                    f"({self.design_sheet} {self.default_sheet or ''})' and "
+                    f"'{dm_other.xls_filename.name} ({dm_other.design_sheet} "
+                    f"{dm_other.default_sheet or ''})' "
+                    "contains columns with the same name: "
+                    f"{common_keys}!"
                 )
+            )
 
         if errors:
             raise ConfigValidationError.from_collected(errors)
@@ -125,9 +118,7 @@ class DesignMatrix:
             self.design_matrix_df = pl.concat(
                 [
                     self.design_matrix_df,
-                    dm_other.design_matrix_df.select(
-                        pl.exclude([*list(common_keys), "realization"])
-                    ),
+                    dm_other.design_matrix_df.select(pl.exclude(["realization"])),
                 ],
                 how="horizontal",
             )
