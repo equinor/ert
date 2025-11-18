@@ -27,27 +27,14 @@ from tests.ert.conftest import _create_design_matrix
         pytest.param(
             pl.DataFrame(
                 {
-                    "a": [1, 2, 3],
-                    "c": [9, 10, 11.1],
-                    "d": [0, 2, 0],
-                },
-                strict=False,
-            ),
-            pl.DataFrame([["e", 1]], orient="row"),
-            "",
-            id="ok_merge_with_identical_columns",
-        ),
-        pytest.param(
-            pl.DataFrame(
-                {
                     "REAL": [0, 1, 2],
                     "a": [1, 2, 4],
                 }
             ),
             pl.DataFrame([["e", 1]], orient="row"),
             (
-                "Design Matrices .* and .* contains non "
-                r"identical columns with the same name: \{'a'\}!"
+                "Design Matrices .* and .* contains "
+                r"columns with the same name: \{'a'\}!"
             ),
             id="not_unique_keys",
         ),
