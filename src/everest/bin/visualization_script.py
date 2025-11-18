@@ -47,9 +47,10 @@ def _build_args_parser() -> argparse.ArgumentParser:
 def visualization_entry(args: list[str] | None = None) -> None:
     parser = _build_args_parser()
     options = parser.parse_args(args)
+    logger = logging.getLogger(__name__)
     with setup_logging(options):
+        logger.info(f"Starting everviz entrypoint with args {args} in {Path.cwd()}")
         ever_config = options.config
-
         EverestStorage.check_for_deprecated_seba_storage(
             ever_config.optimization_output_dir
         )
@@ -60,9 +61,7 @@ def visualization_entry(args: list[str] | None = None) -> None:
         except ErtStorageException as err:
             if "too old" in str(err):
                 # Open write storage to do a migration
-                logging.getLogger(__name__).info(
-                    "Migrating ERT storage from everviz entrypoint"
-                )
+                logger.info("Migrating ERT storage from everviz entrypoint")
                 open_storage(ever_config.storage_dir, mode="w").close()
 
         storage = EverestStorage(output_dir=Path(ever_config.optimization_output_dir))
