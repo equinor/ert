@@ -223,6 +223,7 @@ ignore = [
     "PLW1641", # eq-without-hash
     "PLR0904", # too-many-public-methods
     "PLR1702", # too-many-nested-blocks
+    "ASYNC240", # blocking-path-method-in-async-function
 ]
 
 # Allow EN DASH (U+2013)
