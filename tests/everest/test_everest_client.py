@@ -12,7 +12,7 @@ import yaml
 from fastapi import FastAPI
 from starlette.responses import Response
 
-from ert.services import StorageService
+from ert.services import ErtServer
 from ert.shared import find_available_socket
 from everest.bin.everest_script import everest_entry
 from everest.config import EverestConfig, ServerConfig
@@ -189,7 +189,7 @@ def test_that_multiple_everest_clients_can_connect_to_server(
     )
 
     everest_main_thread.start()
-    client = StorageService.session(
+    client = ErtServer.session(
         Path(ServerConfig.get_session_dir(ever_config.output_dir))
     )
 

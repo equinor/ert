@@ -154,6 +154,9 @@ class _Proc(threading.Thread):
         """Shutdown the server."""
         self._shutdown.set()
         self.join()
+        with contextlib.suppress(BaseServiceExit):
+            cleanup_service_files(0, None)
+
         return self._childproc.returncode
 
     def _read_conn_info(self, proc: Popen[bytes]) -> str | None:
