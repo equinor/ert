@@ -17,7 +17,6 @@ from PyQt6.QtWidgets import (
 )
 from pytestqt.qtbot import QtBot
 
-import ert
 import ert.run_models
 from ert.config import ErtConfig
 from ert.ensemble_evaluator import state
