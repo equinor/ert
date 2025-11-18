@@ -10,6 +10,9 @@ on:
       test-type:
         type: string
 
+permissions:
+   contents: read
+
 env:
   NO_PROJECT_RES: 1
   UV_FROZEN: true

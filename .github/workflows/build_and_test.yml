@@ -8,6 +8,9 @@ on:
    tags: "*"
  pull_request:
 
+permissions:
+   contents: read
+
 env:
   ERT_SHOW_BACKTRACE: 1   # resdata print on failure https://github.com/equinor/resdata/blob/5fdf0280726a2670161ed536705dc9156aea39be/lib/util/util_abort.cpp#L96
   UV_FROZEN: true         # https://docs.astral.sh/uv/configuration/environment/#uv_frozen

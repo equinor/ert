@@ -7,6 +7,10 @@ on:
         type: string
       test-type:
         type: string
+
+permissions:
+   contents: read
+
 env:
   ERT_SHOW_BACKTRACE: 1
   ERT_PYTEST_ARGS: '--cov=ert --cov=everest --cov=_ert --cov-report=xml:cov_main.xml --junit-xml=junit.xml -o junit_family=legacy -v --durations=25 --benchmark-disable'
