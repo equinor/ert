@@ -27,6 +27,7 @@ from ert.config import (
     ESSettings,
     HookRuntime,
     QueueSystem,
+    RFTConfig,
 )
 from ert.config.ert_config import _split_string_into_sections, create_forward_model_json
 from ert.config.forward_model_step import ForwardModelStep, ForwardModelStepPlugin
@@ -2677,3 +2678,15 @@ def test_that_invalid_option_name_in_design_matrix_raises_validation_error(
             "NUM_REALIZATIONS 1\n"
             f"DESIGN_MATRIX {design_matrix_file} {misspelled_option}:SomeSheet"
         )
+
+
+def test_that_rfts_are_parsed():
+    config = ErtConfig.from_file_contents(
+        """
+        NUM_REALIZATIONS 1
+        ECLBASE BASE
+
+        RFT WELL:NAME DATE:2020-12-13 PROPERTIES:PRESSURE,SWAT
+        """,
+    )
+    assert isinstance(config.ensemble_config.response_configs["rft"], RFTConfig)
