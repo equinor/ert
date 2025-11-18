@@ -4,6 +4,9 @@ on:
       python-version:
         type: string
 
+permissions:
+   contents: read
+
 jobs:
   build-wheels:
     timeout-minutes: 10

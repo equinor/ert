@@ -6,6 +6,9 @@ on:
       python-version:
         type: string
 
+permissions:
+   contents: read
+
 env:
   UV_FROZEN: true
 

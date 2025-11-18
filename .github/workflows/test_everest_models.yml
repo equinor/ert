@@ -6,6 +6,9 @@ name: Test Everest Models
 
 on: [pull_request]
 
+permissions:
+   contents: read
+
 env:
   UV_FROZEN: true
   OMP_NUM_THREADS: 1
