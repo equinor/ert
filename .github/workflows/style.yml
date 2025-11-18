@@ -51,7 +51,11 @@ jobs:
       run: shellcheck -s bash ci/testkomodo.sh
       shell: bash
 
-    - name: Run style check
+    - uses: ./.github/actions/install_dependencies_qt
+      with:
+        os: ubuntu-latest
+
+    - name: Run pre-commit
       if: ${{ always() }}
       run: |
-        SKIP=no-commit-to-branch uv run pre-commit run --all-files --show-diff-on-failure
+        SKIP=no-commit-to-branch uv run pre-commit run --all-files --hook-stage pre-push --show-diff-on-failure
