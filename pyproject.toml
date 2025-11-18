@@ -8,12 +8,11 @@ authors = [{ name = "Equinor ASA", email = "fg_sib-scout@equinor.com" }]
 description = "Ensemble based Reservoir Tool (ERT)"
 requires-python = ">=3.11, <3.14"
 readme = "README.md"
-license = { text = "GPL-3.0" }
+license = "GPL-3.0-only"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Environment :: Other Environment",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Natural Language :: English",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3.11",
