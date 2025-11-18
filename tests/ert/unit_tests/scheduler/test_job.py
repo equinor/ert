@@ -591,7 +591,7 @@ async def test_log_warnings_from_forward_model_can_detect_files_being_created_af
 
     # Mock st_mtime to be infinite
     mock_stat_result = SimpleNamespace(st_mtime=inf)
-    mocker.patch("pathlib.Path.stat", return_value=mock_stat_result)
+    mocker.patch("os.stat", return_value=mock_stat_result)
 
     # Skip reading from file as there is no files to read from
     mocker.patch("pathlib.Path.read_text", return_value="")

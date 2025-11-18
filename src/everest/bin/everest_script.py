@@ -11,6 +11,8 @@ from functools import partial
 from pathlib import Path
 from textwrap import dedent
 
+import anyio
+
 from _ert.threading import ErtThread
 from ert.config import QueueSystem
 from ert.services import StorageService
@@ -193,9 +195,18 @@ async def run_everest(options: argparse.Namespace) -> None:
         job_name = fm_job.split()[0]
         logger.info(f"Everest forward model contains job {job_name}")
 
-    if os.path.exists(options.config.simulation_dir) and any(
-        os.listdir(options.config.simulation_dir)
-    ):
+    async def directory_is_nonempty(path: Path) -> bool:
+        try:
+            async for _ in anyio.Path(path).iterdir():
+                return True
+        except OSError:  # Raised if the directory is empty
+            return False
+        else:
+            return False
+
+    if await anyio.Path(
+        options.config.simulation_dir
+    ).exists() and await directory_is_nonempty(options.config.simulation_dir):
         warn_user_that_runpath_is_nonempty()
     if not options.skip_prompt:
         show_scaled_controls_warning()
