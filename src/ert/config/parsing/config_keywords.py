@@ -42,6 +42,7 @@ class ConfigKeys(StrEnum):
     SETENV = "SETENV"
     STD_CUTOFF = "STD_CUTOFF"
     SUMMARY = "SUMMARY"
+    RFT = "RFT"
     SURFACE = "SURFACE"
     UPDATE_LOG_PATH = "UPDATE_LOG_PATH"
     RANDOM_SEED = "RANDOM_SEED"
