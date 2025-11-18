@@ -46,4 +46,4 @@ jobs:
     - name: Run style check
       if: ${{ always() }}
       run: |
-        SKIP=no-commit-to-branch uv run pre-commit run --all-files --show-diff-on-failure
+        SKIP=no-commit-to-branch uv run pre-commit run --all-files --hook-stage pre-push --show-diff-on-failure
