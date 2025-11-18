@@ -1,7 +1,6 @@
 import os
 import queue
 import string
-import tempfile
 import unittest
 import uuid
 import warnings
@@ -215,12 +214,12 @@ def hooked_workflows(draw):
     return result
 
 
-@st.composite
-def runmodel_args(draw):
+def runmodel_args(draw, tmp_path_factory):
     storage_path = draw(realistic_text())
-    runpath_file = Path(tempfile.mktemp())
-    user_config_file = Path(tempfile.mktemp())
-    log_path = Path(tempfile.mktemp())
+    tmp_path = tmp_path_factory.mktemp("deserializing_ensemble_experiment")
+    (runpath_file := tmp_path / "runpath_file").touch()
+    (user_config_file := tmp_path / "config.ert").touch()
+    (log_path := tmp_path / "log_path").mkdir()
 
     n_realizations = draw(st.integers(min_value=1, max_value=200))
 
@@ -495,16 +494,16 @@ _not_yet_serializable_args = {
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(
-    runmodel_args(),
     initial_ensemble_runmodels(),
+    st.data(),
 )
 def test_that_deserializing_ensemble_experiment_is_the_inverse_of_serializing(
     tmp_path_factory: TempPathFactory,
-    runmodel_args_and_plugins: tuple[dict[str, Any], ErtRuntimePlugins],
     ensemble_experiment_args: dict[str, Any],
+    data,
 ) -> None:
     tmp_path = tmp_path_factory.mktemp("deserializing_ensemble_experiment")
-    baserunmodel_args, runtime_plugins = runmodel_args_and_plugins
+    baserunmodel_args, runtime_plugins = runmodel_args(data.draw, tmp_path_factory)
     note(f"Running in directory {tmp_path}")
     with MonkeyPatch.context() as patch, use_runtime_plugins(runtime_plugins):
         patch.chdir(tmp_path)
@@ -533,15 +532,15 @@ def test_that_deserializing_ensemble_experiment_is_the_inverse_of_serializing(
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
-@given(runmodel_args(), initial_ensemble_runmodels(), update_runmodels())
+@given(initial_ensemble_runmodels(), update_runmodels(), st.data())
 def test_that_deserializing_ensemble_smoother_is_the_inverse_of_serializing(
     tmp_path_factory: TempPathFactory,
-    runmodel_args_and_plugins: tuple[dict[str, Any], ErtRuntimePlugins],
     initial_ensemble_args: dict[str, Any],
     update_runmodel_args: dict[str, Any],
+    data,
 ) -> None:
     tmp_path = tmp_path_factory.mktemp("deserializing_ensemble_smoother")
-    baserunmodel_args, runtime_plugins = runmodel_args_and_plugins
+    baserunmodel_args, runtime_plugins = runmodel_args(data.draw, tmp_path_factory)
     note(f"Running in directory {tmp_path}")
     with MonkeyPatch.context() as patch, use_runtime_plugins(runtime_plugins):
         patch.chdir(tmp_path)
@@ -565,15 +564,15 @@ def test_that_deserializing_ensemble_smoother_is_the_inverse_of_serializing(
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
-@given(runmodel_args(), initial_ensemble_runmodels(), update_runmodels())
+@given(initial_ensemble_runmodels(), update_runmodels(), st.data())
 def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serializing(
     tmp_path_factory: TempPathFactory,
-    runmodel_args_and_plugins: tuple[dict[str, Any], ErtRuntimePlugins],
     initial_ensemble_args: dict[str, Any],
     update_runmodel_args: dict[str, Any],
+    data,
 ) -> None:
     tmp_path = tmp_path_factory.mktemp("deserializing_eif")
-    baserunmodel_args, runtime_plugins = runmodel_args_and_plugins
+    baserunmodel_args, runtime_plugins = runmodel_args(data.draw, tmp_path_factory)
     note(f"Running in directory {tmp_path}")
     with MonkeyPatch.context() as patch, use_runtime_plugins(runtime_plugins):
         patch.chdir(tmp_path)
@@ -596,21 +595,16 @@ def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serial
 
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
-@given(
-    runmodel_args(),
-    initial_ensemble_runmodels(),
-    update_runmodels(),
-    multidass(),
-)
+@given(initial_ensemble_runmodels(), update_runmodels(), multidass(), st.data())
 def test_that_deserializing_esmda_is_the_inverse_of_serializing(
     tmp_path_factory: TempPathFactory,
-    runmodel_args_and_plugins: tuple[dict[str, Any], ErtRuntimePlugins],
     initial_ensemble_args: dict[str, Any],
     update_runmodel_args: dict[str, Any],
     multidass_args: dict[str, Any],
+    data,
 ) -> None:
     tmp_path = tmp_path_factory.mktemp("deserializing_eif")
-    baserunmodel_args, runtime_plugins = runmodel_args_and_plugins
+    baserunmodel_args, runtime_plugins = runmodel_args(data.draw, tmp_path_factory)
     note(f"Running in directory {tmp_path}")
 
     with MonkeyPatch.context() as patch, use_runtime_plugins(runtime_plugins):
