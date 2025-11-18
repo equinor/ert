@@ -43,6 +43,14 @@ jobs:
       run: |
         uv sync --extra style
 
+    - name: Download shellcheck
+      run: |
+        sudo apt-get update
+        sudo apt-get install shellcheck
+    - name: Check testkomodo.sh
+      run: shellcheck -s bash ci/testkomodo.sh
+      shell: bash
+
     - name: Run style check
       if: ${{ always() }}
       run: |
