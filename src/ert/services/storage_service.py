@@ -24,7 +24,6 @@ class StorageService(BaseService):
         conn_info: Mapping[str, Any] | Exception | None = None,
         project: str | None = None,
         verbose: bool = False,
-        traceparent: str | None = "inherit_parent",
         logging_config: str | None = None,
     ) -> None:
         self._url: str | None = None
@@ -36,11 +35,11 @@ class StorageService(BaseService):
             exec_args.append("--verbose")
         if logging_config:
             exec_args.extend(["--logging-config", str(logging_config)])
-        if traceparent:
-            traceparent = (
-                get_traceparent() if traceparent == "inherit_parent" else traceparent
-            )
-            exec_args.extend(["--traceparent", str(traceparent)])
+
+            traceparent = get_traceparent()
+            if traceparent is not None:
+                exec_args.extend(["--traceparent", traceparent])
+
         if parent_pid is not None:
             exec_args.extend(["--parent_pid", str(parent_pid)])
 
