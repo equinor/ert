@@ -1,18 +1,22 @@
+from __future__ import annotations
+
 import contextlib
 import json
 import logging
 import os
 from collections.abc import Sequence
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pandas as pd
 import polars as pl
-from PyQt6.QtWidgets import QCheckBox, QWidget
 
 from ert.config import ErtPlugin
 from ert.plugins import CancelPluginException
 from ert.storage import Storage
+
+if TYPE_CHECKING:
+    from PyQt6.QtWidgets import QWidget
 
 logger = logging.getLogger(__name__)
 
@@ -239,6 +243,10 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         }
         list_edit = ListEditBox(ensemble_with_data_dict)
         list_edit.setObjectName("list_of_ensembles")
+
+        # Lazy load qt outside of gui to allow
+        # running of ert in cli without wm
+        from PyQt6.QtWidgets import QCheckBox  # noqa: PLC0415
 
         drop_const_columns_check = QCheckBox()
         drop_const_columns_check.setChecked(False)
