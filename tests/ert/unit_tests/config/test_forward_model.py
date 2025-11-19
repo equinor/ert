@@ -223,13 +223,13 @@ def test_ert_config_throws_on_missing_forward_model_step(
 
 
 @pytest.mark.integration_test
-def test_that_substitutions_can_be_done_in_job_names():
+def test_that_substitutions_can_be_done_in_job_names(plugins_ert_config):
     """
     Regression test for a usage case involving setting ECL100 or ECL300
     that was broken by changes to forward_model substitutions.
     """
 
-    ert_config = ErtConfig.with_plugins(get_site_plugins()).from_file_contents(
+    ert_config = plugins_ert_config.from_file_contents(
         """
         NUM_REALIZATIONS  1
         DEFINE <ECL100OR300> E100
@@ -242,13 +242,13 @@ def test_that_substitutions_can_be_done_in_job_names():
     assert job.name == "ECLIPSE100"
 
 
-def test_parsing_forward_model_with_double_dash_is_possible():
+def test_parsing_forward_model_with_double_dash_is_possible(plugins_ert_config):
     """This is a regression test, making sure that we can put double dashes in strings.
     The use case is that a file name is utilized that contains two consecutive hyphens,
     which by the ert config parser used to be interpreted as a comment. In the new
     parser this is allowed"""
 
-    res_config = ErtConfig.with_plugins(get_site_plugins()).from_file_contents(
+    res_config = plugins_ert_config.from_file_contents(
         """
         NUM_REALIZATIONS  1
         JOBNAME job_%d--hei
@@ -262,7 +262,9 @@ def test_parsing_forward_model_with_double_dash_is_possible():
     )
 
 
-def test_parsing_forward_model_with_quotes_does_not_introduce_spaces():
+def test_parsing_forward_model_with_quotes_does_not_introduce_spaces(
+    plugins_ert_config,
+):
     """this is a regression test, making sure that we do not by mistake introduce
     spaces while parsing forward model lines that contain quotation marks
 
@@ -271,7 +273,7 @@ def test_parsing_forward_model_with_quotes_does_not_introduce_spaces():
     comment interpretation, quotation marks are used"""
 
     str_with_quotes = """smt/<foo>"/bar"/xx/"t--s.s"/yy/"z/z"/oo"""
-    ert_config = ErtConfig.with_plugins(get_site_plugins()).from_file_contents(
+    ert_config = plugins_ert_config.from_file_contents(
         dedent(
             f"""
             NUM_REALIZATIONS  1
@@ -286,13 +288,13 @@ def test_parsing_forward_model_with_quotes_does_not_introduce_spaces():
     ]
 
 
-def test_that_comments_are_ignored():
+def test_that_comments_are_ignored(plugins_ert_config):
     """This is a regression test, making sure that we can put double dashes in strings.
     The use case is that a file name is utilized that contains two consecutive hyphens,
     which by the ert config parser used to be interpreted as a comment. In the new
     parser this is allowed"""
 
-    res_config = ErtConfig.with_plugins(get_site_plugins()).from_file_contents(
+    res_config = plugins_ert_config.from_file_contents(
         """
         NUM_REALIZATIONS  1
         --comment
@@ -307,12 +309,14 @@ def test_that_comments_are_ignored():
     )
 
 
-def test_that_quotations_in_forward_model_arglist_are_handled_correctly():
+def test_that_quotations_in_forward_model_arglist_are_handled_correctly(
+    plugins_ert_config,
+):
     """This is a regression test, making sure that quoted strings behave consistently.
     They should all result in the same.
     See https://github.com/equinor/ert/issues/2766"""
 
-    res_config = ErtConfig.with_plugins(get_site_plugins()).from_file_contents(
+    res_config = plugins_ert_config.from_file_contents(
         """
         NUM_REALIZATIONS  1
         FORWARD_MODEL COPY_FILE(<FROM>='some, thing', <TO>="some stuff", \
@@ -339,12 +343,12 @@ def test_that_quotations_in_forward_model_arglist_are_handled_correctly():
 
 @pytest.mark.parametrize("quote_mismatched_arg", ['"A', 'A"', '"A""', '"'])
 def test_unmatched_quotes_in_step_arg_gives_config_validation_error(
-    quote_mismatched_arg,
+    quote_mismatched_arg, plugins_ert_config
 ):
     with (
         pytest.raises(ConfigValidationError, match="Did not expect character"),
     ):
-        ErtConfig.with_plugins(get_site_plugins()).from_file_contents(
+        plugins_ert_config.from_file_contents(
             f"""
             NUM_REALIZATIONS 1
             FORWARD_MODEL COPY_FILE(<FROM>={quote_mismatched_arg})
@@ -379,10 +383,15 @@ def test_that_installing_two_forward_model_steps_with_the_same_name_warn():
         _ = ErtConfig.from_file(test_config_file_name)
 
 
+@pytest.fixture(scope="module")
+def plugins_ert_config():
+    return ErtConfig.with_plugins(get_site_plugins())
+
+
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_forward_model_substitution_does_not_warn_about_reaching_max_iterations(
-    caplog,
+    caplog, plugins_ert_config
 ):
     test_config_file_name = "test.ert"
     test_config_contents = dedent(
@@ -393,9 +402,7 @@ def test_that_forward_model_substitution_does_not_warn_about_reaching_max_iterat
     )
     Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
 
-    ert_config = ErtConfig.with_plugins(get_site_plugins()).from_file(
-        test_config_file_name
-    )
+    ert_config = plugins_ert_config.from_file(test_config_file_name)
     with caplog.at_level(logging.WARNING):
         create_forward_model_json(
             context=ert_config.substitutions,
@@ -429,10 +436,9 @@ def test_that_installing_two_forward_model_steps_with_the_same_name_warn_with_di
         _ = ErtConfig.from_file(test_config_file_name)
 
 
-@pytest.mark.integration_test
-def test_that_spaces_in_forward_model_args_are_dropped():
+def test_that_spaces_in_forward_model_args_are_dropped(plugins_ert_config):
     # Intentionally inserted several spaces before comma
-    ert_config = ErtConfig.with_plugins(get_site_plugins()).from_file_contents(
+    ert_config = plugins_ert_config.from_file_contents(
         """
         NUM_REALIZATIONS  1
         FORWARD_MODEL ECLIPSE100(<VERSION>=2024.1                    , <NUM_CPU>=42)
@@ -469,7 +475,7 @@ def test_that_forward_model_with_different_token_kinds_are_added():
 
 
 @pytest.mark.parametrize("eclipse_v", ["ECLIPSE100", "ECLIPSE300"])
-def test_that_eclipse_fm_step_require_explicit_version(eclipse_v):
+def test_that_eclipse_fm_step_require_explicit_version(eclipse_v, plugins_ert_config):
     with (
         pytest.raises(
             ConfigValidationError,
@@ -477,7 +483,7 @@ def test_that_eclipse_fm_step_require_explicit_version(eclipse_v):
             rf" be given a VERSION argument.*",
         ),
     ):
-        _ = ErtConfig.with_plugins(get_site_plugins()).from_file_contents(
+        _ = plugins_ert_config.from_file_contents(
             f"""
             NUM_REALIZATIONS  1
             FORWARD_MODEL {eclipse_v}
@@ -485,29 +491,24 @@ def test_that_eclipse_fm_step_require_explicit_version(eclipse_v):
         )
 
 
-@pytest.mark.integration_test
 @pytest.mark.skipif(shutil.which("eclrun") is None, reason="eclrun is not in $PATH")
 @pytest.mark.parametrize("eclipse_v", ["ECLIPSE100", "ECLIPSE300"])
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_eclipse_fm_step_check_version_availability(eclipse_v):
-    config_file_name = "test.ert"
-    Path(config_file_name).write_text(
-        f"NUM_REALIZATIONS 1\nFORWARD_MODEL {eclipse_v}(<VERSION>=dummy)\n",
-        encoding="utf-8",
-    )
-    with (
-        pytest.raises(
-            ConfigValidationError,
-            match=rf".*Unavailable {eclipse_v} version dummy."
-            rf" Available versions: \[\'20.*",
-        ),
+def test_that_eclipse_fm_step_check_version_availability(eclipse_v, plugins_ert_config):
+    with pytest.raises(
+        ConfigValidationError,
+        match=rf".*Unavailable {eclipse_v} version dummy."
+        rf" Available versions: \[\'20.*",
     ):
-        ErtConfig.with_plugins(get_site_plugins()).from_file(config_file_name)
+        plugins_ert_config.from_file_contents(
+            f"NUM_REALIZATIONS 1\nFORWARD_MODEL {eclipse_v}(<VERSION>=dummy)\n"
+        )
 
 
 @pytest.mark.parametrize("eclipse_v", ["ECLIPSE100", "ECLIPSE300"])
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_we_can_point_to_a_custom_eclrun_when_checking_versions(eclipse_v):
+def test_that_we_can_point_to_a_custom_eclrun_when_checking_versions(
+    eclipse_v, plugins_ert_config
+):
     eclrun_bin = Path("bin/eclrun")
     eclrun_bin.parent.mkdir()
     eclrun_bin.write_text("#!/bin/sh\necho 2036.1 2036.2 2037.1", encoding="utf-8")
@@ -531,75 +532,46 @@ def test_that_we_can_point_to_a_custom_eclrun_when_checking_versions(eclipse_v):
             ),
         ),
     ):
-        ErtConfig.with_plugins(get_site_plugins()).from_file(config_file_name)
+        plugins_ert_config.from_file(config_file_name)
 
 
 @pytest.mark.skipif(shutil.which("eclrun") is not None, reason="eclrun is present")
 @pytest.mark.parametrize("eclipse_v", ["ECLIPSE100", "ECLIPSE300"])
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_no_error_thrown_when_checking_eclipse_version_and_eclrun_is_not_present(
-    eclipse_v,
+    eclipse_v, plugins_ert_config
 ):
-    _ = ErtConfig.with_plugins(get_site_plugins()).from_file_contents(
+    _ = plugins_ert_config.from_file_contents(
         f"NUM_REALIZATIONS 1\nFORWARD_MODEL {eclipse_v}(<VERSION>=1)\n"
     )
 
 
-@pytest.mark.integration_test
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_flow_fm_step_does_not_need_explicit_version():
-    config_file_name = "test.ert"
-    Path(config_file_name).write_text(
-        "NUM_REALIZATIONS 1\nFORWARD_MODEL FLOW\n",
-        encoding="utf-8",
-    )
-    ErtConfig.with_plugins(get_site_plugins()).from_file(config_file_name)
+def test_that_flow_fm_step_does_not_need_explicit_version(plugins_ert_config):
+    plugins_ert_config.from_file_contents("NUM_REALIZATIONS 1\nFORWARD_MODEL FLOW\n")
 
 
-@pytest.mark.integration_test
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_flow_fm_step_always_allow_explicit_default_version():
-    config_file_name = "test.ert"
-    Path(config_file_name).write_text(
-        "NUM_REALIZATIONS 1\nFORWARD_MODEL FLOW(<VERSION>=default)\n",
-        encoding="utf-8",
+def test_that_flow_fm_step_always_allow_explicit_default_version(plugins_ert_config):
+    plugins_ert_config.from_file_contents(
+        "NUM_REALIZATIONS 1\nFORWARD_MODEL FLOW(<VERSION>=default)\n"
     )
-    ErtConfig.with_plugins(get_site_plugins()).from_file(config_file_name)
 
 
 @pytest.mark.integration_test
 @pytest.mark.skipif(shutil.which("flowrun") is None, reason="flowrun is not in $PATH")
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_flow_fm_step_check_version_availability():
-    config_file_name = "test.ert"
-    Path(config_file_name).write_text(
-        "NUM_REALIZATIONS 1\nFORWARD_MODEL FLOW(<VERSION>=dummy)\n",
-        encoding="utf-8",
-    )
-    with (
-        pytest.raises(
-            ConfigValidationError,
-            match=r".*Unavailable Flow version dummy. Available versions: \[\'.*",
-        ),
+def test_that_flow_fm_step_check_version_availability(plugins_ert_config):
+    with pytest.raises(
+        ConfigValidationError,
+        match=r".*Unavailable Flow version dummy. Available versions: \[\'.*",
     ):
-        ErtConfig.with_plugins(get_site_plugins()).from_file(config_file_name)
+        plugins_ert_config.from_file_contents(
+            "NUM_REALIZATIONS 1\nFORWARD_MODEL FLOW(<VERSION>=dummy)\n"
+        )
 
 
-@pytest.mark.integration_test
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_flow_fm_gives_config_warning_on_unknown_options():
-    config_file_name = "test.ert"
-    Path(config_file_name).write_text(
-        "NUM_REALIZATIONS 1\nFORWARD_MODEL FLOW(<DUMMY>=moredummy)\n",
-        encoding="utf-8",
-    )
-    with (
-        pytest.warns(
-            ConfigWarning,
-            match=r".*Unknown option.*Flow: .*DUMMY.*",
-        ),
-    ):
-        ErtConfig.with_plugins(get_site_plugins()).from_file(config_file_name)
+def test_that_flow_fm_gives_config_warning_on_unknown_options(plugins_ert_config):
+    with pytest.warns(ConfigWarning, match=r".*Unknown option.*Flow: .*DUMMY.*"):
+        plugins_ert_config.from_file_contents(
+            "NUM_REALIZATIONS 1\nFORWARD_MODEL FLOW(<DUMMY>=moredummy)\n"
+        )
 
 
 def test_that_plugin_forward_models_are_installed(tmp_path):
