@@ -7,12 +7,9 @@ from polars.datatypes import DataTypeClass
 from pydantic import BaseModel, Field, field_validator
 
 from ert.config import (
-    EverestConstraintsConfig,
-    EverestObjectivesConfig,
     ExtParamConfig,
-    GenDataConfig,
     GenKwConfig,
-    SummaryConfig,
+    KnownResponseTypes,
     SurfaceConfig,
 )
 from ert.config import Field as FieldConfig
@@ -65,12 +62,7 @@ class InitialEnsembleRunModel(RunModel, ABC):
     ]
     response_configuration: list[
         Annotated[
-            (
-                GenDataConfig
-                | SummaryConfig
-                | EverestConstraintsConfig
-                | EverestObjectivesConfig
-            ),
+            KnownResponseTypes,
             Field(discriminator="type"),
         ]
     ]
