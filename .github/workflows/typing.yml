@@ -5,17 +5,13 @@ on:
    branches:
      - main
      - 'version-**'
- pull_request:
+ workflow_call:
 
 permissions:
    contents: read
 
 env:
   UV_FROZEN: true
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   type-checking:
