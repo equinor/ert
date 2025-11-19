@@ -48,7 +48,7 @@ class SchemaItem:
     # if positive, arguments after this count will be concatenated with a " " between
     join_after: PositiveInt | None = None
     # if positive, arguments after this count will be interpreted as options
-    options_after: PositiveInt | Varies | None = None
+    options_after: NonNegativeInt | Varies | None = None
     # if true, will accumulate many values set for key, otherwise each entry will
     # overwrite any previous value set
     multi_occurrence: bool = False
