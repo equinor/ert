@@ -6,7 +6,6 @@ from textwrap import dedent
 import pytest
 import yaml
 
-import everest
 from ert.base_model_context import use_runtime_plugins
 from ert.config import ConfigWarning, SummaryConfig
 from ert.plugins import get_site_plugins
@@ -322,66 +321,6 @@ def test_that_summary_keys_are_passed_through_forward_model_results(
     )
 
     assert {"one", "two", "three"}.issubset(summary_config.keys)
-
-
-def test_that_summary_keys_default_to_expected_keys_according_to_wells(
-    monkeypatch, tmp_path, min_config
-):
-    monkeypatch.chdir(tmp_path)
-    min_config["forward_model"] = [
-        {
-            "job": "eclipse100 CASE.DATA",
-            "results": {
-                "file_name": "CASE",
-                "type": "summary",
-            },
-        }
-    ]
-    min_config["wells"] = [{"name": "OP1"}, {"name": "WI1"}]
-    min_config["controls"] = [
-        {
-            "name": "well_rate",
-            "type": "well_control",
-            "perturbation_magnitude": 0.01,
-            "variables": [
-                {
-                    "name": "OP1",
-                    "index": 1,
-                    "initial_guess": 50,
-                    "min": 10,
-                    "max": 500,
-                },
-                {
-                    "name": "WI1",
-                    "index": 1,
-                    "initial_guess": 250,
-                    "min": 10,
-                    "max": 500,
-                },
-            ],
-        }
-    ]
-
-    site_plugins = get_site_plugins()
-    with use_runtime_plugins(site_plugins):
-        config = EverestConfig(**min_config)
-        runmodel = EverestRunModel.create(
-            config, "exp", "batch", runtime_plugins=site_plugins
-        )
-
-    summary_config = next(
-        r for r in runmodel.response_configuration if isinstance(r, SummaryConfig)
-    )
-
-    data_keys = everest.simulator.DEFAULT_DATA_SUMMARY_KEYS
-    field_keys = everest.simulator.DEFAULT_FIELD_SUMMARY_KEYS
-    well_sum_keys = everest.simulator.DEFAULT_WELL_SUMMARY_KEYS
-
-    expected_defaulted_sum_keys = (
-        ["*"] + data_keys + field_keys + [f"{key}:*" for key in well_sum_keys]
-    )
-
-    assert set(summary_config.keys) == set(expected_defaulted_sum_keys)
 
 
 def test_that_install_data_raises_error_on_missing_copy_file(tmp_path):

@@ -39,9 +39,12 @@ from everest.detached import (
     stop_server,
     wait_for_server_to_stop,
 )
-from everest.simulator import JOB_FAILURE, JOB_RUNNING, JOB_SUCCESS
 from everest.strings import EVEREST, OPT_PROGRESS_ID, SIM_PROGRESS_ID
 from everest.util import makedirs_if_needed
+
+JOB_SUCCESS = "Finished"
+JOB_RUNNING = "Running"
+JOB_FAILURE = "Failed"
 
 
 def cleanup_logging() -> None:
