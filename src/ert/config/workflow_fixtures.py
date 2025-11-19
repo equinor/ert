@@ -6,12 +6,13 @@ import typing
 from dataclasses import dataclass, fields
 from typing import TYPE_CHECKING, Literal
 
-from PyQt6.QtWidgets import QWidget
 from typing_extensions import TypedDict
 
 from ert.config.parsing.hook_runtime import HookRuntime
 
 if TYPE_CHECKING:
+    from PyQt6.QtWidgets import QWidget
+
     from ert.config import ESSettings, ObservationSettings
     from ert.runpaths import Runpaths
     from ert.storage import Ensemble, Storage
