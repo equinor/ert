@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field, model_validator
 from .ext_param_config import ExtParamConfig
 from .field import Field as FieldConfig
 from .gen_kw_config import GenKwConfig
-from .known_response_types import KNOWN_RESPONSE_TYPES, KnownResponseTypes
+from .known_response_types import KNOWN_ERT_RESPONSE_TYPES, KnownErtResponseTypes
 from .parameter_config import ParameterConfig
 from .parsing import ConfigDict, ConfigKeys, ConfigValidationError
 from .response_config import ResponseConfig
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class EnsembleConfig(BaseModel):
-    response_configs: dict[str, KnownResponseTypes] = Field(default_factory=dict)
+    response_configs: dict[str, KnownErtResponseTypes] = Field(default_factory=dict)
     parameter_configs: dict[
         str, GenKwConfig | FieldConfig | SurfaceConfig | ExtParamConfig
     ] = Field(default_factory=dict)
@@ -123,9 +123,9 @@ class EnsembleConfig(BaseModel):
             + [make_field(f) for f in field_list]
         )
         EnsembleConfig._check_for_duplicate_gen_kw_param_names(gen_kw_cfgs)
-        response_configs: list[KnownResponseTypes] = []
+        response_configs: list[KnownErtResponseTypes] = []
 
-        for config_cls in KNOWN_RESPONSE_TYPES:
+        for config_cls in KNOWN_ERT_RESPONSE_TYPES:
             instance = config_cls.from_config_dict(config_dict)
 
             if instance is not None and instance.keys:

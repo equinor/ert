@@ -16,8 +16,6 @@ from pydantic import BaseModel, Field, TypeAdapter
 from surfio import IrapSurface
 
 from ert.config import (
-    EverestConstraintsConfig,
-    EverestObjectivesConfig,
     ExtParamConfig,
     GenKwConfig,
     KnownResponseTypes,
@@ -61,7 +59,7 @@ class _Index(BaseModel):
 
 _responses_adapter = TypeAdapter(  # type: ignore
     Annotated[
-        KnownResponseTypes | EverestConstraintsConfig | EverestObjectivesConfig,
+        KnownResponseTypes,
         Field(discriminator="type"),
     ]
 )

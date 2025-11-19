@@ -46,6 +46,7 @@ from .queue_config import (
     QueueConfig,
 )
 from .response_config import InvalidResponseFile, ResponseConfig, ResponseMetadata
+from .rft_config import RFTConfig
 from .summary_config import SummaryConfig
 from .surface_config import SurfaceConfig
 from .workflow import Workflow
@@ -127,6 +128,7 @@ __all__ = [
     "PriorDict",
     "QueueConfig",
     "QueueSystem",
+    "RFTConfig",
     "ResponseConfig",
     "ResponseMetadata",
     "SummaryConfig",
