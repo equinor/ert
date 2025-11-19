@@ -132,10 +132,18 @@ def _esmda_run(run_experiment, source_root, tmp_path_factory):
 
 
 def _ensemble_experiment_run(
-    run_experiment, source_root, tmp_path_factory, failing_reals
+    run_experiment,
+    source_root,
+    tmp_path_factory,
+    failing_reals: bool,
+    with_templates: bool,
 ):
     path = tmp_path_factory.mktemp("test-data")
     _new_poly_example(source_root, path)
+    if with_templates:
+        (path / "foo.tmpl").write_text("template contents", encoding="utf-8")
+        with (path / "poly.ert").open("a", encoding="utf-8") as f:
+            f.write("RUN_TEMPLATE foo.tmpl foo.txt")
     with (
         pytest.MonkeyPatch.context() as mp,
         _open_main_window(path / "poly.ert") as (
@@ -204,7 +212,13 @@ def ensemble_experiment_has_run(
     tmp_path, monkeypatch, run_experiment, source_root, tmp_path_factory
 ):
     yield from _ensemble_experiment_has_run(
-        tmp_path, monkeypatch, run_experiment, source_root, tmp_path_factory, True
+        tmp_path,
+        monkeypatch,
+        run_experiment,
+        source_root,
+        tmp_path_factory,
+        failing_reals=True,
+        with_templates=False,
     )
 
 
@@ -213,16 +227,28 @@ def ensemble_experiment_has_run_no_failure(
     tmp_path, monkeypatch, run_experiment, source_root, tmp_path_factory
 ):
     yield from _ensemble_experiment_has_run(
-        tmp_path, monkeypatch, run_experiment, source_root, tmp_path_factory, False
+        tmp_path,
+        monkeypatch,
+        run_experiment,
+        source_root,
+        tmp_path_factory,
+        failing_reals=False,
+        with_templates=True,
     )
 
 
 def _ensemble_experiment_has_run(
-    tmp_path, monkeypatch, run_experiment, source_root, tmp_path_factory, failing
+    tmp_path,
+    monkeypatch,
+    run_experiment,
+    source_root,
+    tmp_path_factory,
+    failing_reals,
+    with_templates,
 ):
     monkeypatch.chdir(tmp_path)
     test_files = _ensemble_experiment_run(
-        run_experiment, source_root, tmp_path_factory, failing
+        run_experiment, source_root, tmp_path_factory, failing_reals, with_templates
     )
     shutil.copytree(test_files, tmp_path, dirs_exist_ok=True)
     yield from open_gui_with_config(tmp_path / "poly.ert")
