@@ -92,7 +92,7 @@ class MultipleDataAssimilation(UpdateRunModel, InitialEnsembleRunModel):
                     observations=prior.experiment.observations,
                     simulation_arguments=prior.experiment.metadata,
                     name=f"Restart from {prior.name}",
-                    templates=prior.experiment.templates_configuration,
+                    templates=self.ert_templates,
                 )
             except (KeyError, ValueError) as err:
                 raise ErtRunError(
