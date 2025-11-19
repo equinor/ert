@@ -162,9 +162,9 @@ def test_report_with_failed_reporter_but_finished_jobs():
     with MockZMQServer() as mock_server:
         reporter = Event(
             evaluator_url=mock_server.uri,
-            ack_timeout=0.1,
+            ack_timeout=0.01,
             max_retries=0,
-            finished_event_timeout=0.1,
+            finished_event_timeout=0.01,
         )
         fmstep1 = ForwardModelStep(
             {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
