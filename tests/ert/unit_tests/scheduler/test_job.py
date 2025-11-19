@@ -697,6 +697,7 @@ async def test_killing_job_while_submitting_waits_for_submit_to_be_done(realizat
 
 
 @pytest.mark.timeout(5)
+@pytest.mark.integration_test
 async def test_killing_job_submitting_waits_for_submit_to_be_done_does_not_hang(
     realization, caplog
 ):

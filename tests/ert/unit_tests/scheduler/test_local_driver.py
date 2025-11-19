@@ -53,6 +53,7 @@ async def test_kill_while_running():
 
 
 @pytest.mark.timeout(3)
+@pytest.mark.integration_test
 @pytest.mark.parametrize(
     "sleep_before_killing", [None, 0, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
 )
