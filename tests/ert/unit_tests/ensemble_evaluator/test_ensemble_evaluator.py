@@ -363,19 +363,20 @@ async def test_snapshot_on_resubmit_is_cleared(evaluator_to_use):
         await dispatch.send(dispatcher_event_to_json(event))
         event = await event_queue.get()
         main_snapshot.update_from_event(event)
-        # main_snapshot = EnsembleSnapshot.from_nested_dict(event.snapshot)
-        while not event_queue.empty():
-            event = await event_queue.get()
-            main_snapshot.update_from_event(event)
 
-        assert (
-            main_snapshot.get_fm_step("0", "0").get("status")
-            == FORWARD_MODEL_STATE_FINISHED
-        )
-        assert (
-            main_snapshot.get_fm_step("0", "1").get("status")
-            == FORWARD_MODEL_STATE_FAILURE
-        )
+        async def wait_until_snapshot_complete():
+            nonlocal event_queue, main_snapshot
+            while (
+                main_snapshot.get_fm_step("0", "0").get("status")
+                != FORWARD_MODEL_STATE_FINISHED
+            ) or (
+                main_snapshot.get_fm_step("0", "1").get("status")
+                != FORWARD_MODEL_STATE_FAILURE
+            ):
+                event = await event_queue.get()
+                main_snapshot.update_from_event(event)
+
+        await asyncio.wait_for(wait_until_snapshot_complete(), timeout=5)
         await evaluator._events.put(
             RealizationResubmit(
                 ensemble=evaluator.ensemble.id_,
