@@ -134,6 +134,8 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._active_realizations_field.model.setValueFromMask(  # type: ignore
             active_realizations
         )
+        self._initial_active_realizations = active_realizations
+
         self._ensemble_selector = EnsembleSelector(notifier)
         self._previous_ensemble_realizations_validator = EnsembleRealizationsArgument(
             lambda: self._ensemble_selector.selected_ensemble,
@@ -262,7 +264,9 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             self._active_realizations_field.setValidator(
                 self._new_ensemble_realizations_validator
             )
-            self._active_realizations_field.model.setValue(value="")
+            self._active_realizations_field.model.setValueFromMask(  # type: ignore
+                self._initial_active_realizations
+            )
 
     def _createInputForWeights(self, layout: QFormLayout) -> None:
         relative_iteration_weights_model = ValueModel(self.weights)
