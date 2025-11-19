@@ -58,15 +58,12 @@ from everest.config import (
     ModelConfig,
     OptimizationConfig,
 )
-from everest.config.forward_model_config import SummaryResults
+from everest.config.forward_model_config import ForwardModelStepConfig, SummaryResults
 from everest.everest_storage import EverestStorage
 from everest.optimizer.everest2ropt import everest2ropt
 from everest.optimizer.opt_model_transforms import (
     EverestOptModelTransforms,
     get_optimization_domain_transforms,
-)
-from everest.simulator.everest_to_ert import (
-    extract_summary_keys,
 )
 from everest.strings import EVEREST
 
@@ -318,7 +315,7 @@ class EverestRunModel(RunModel):
             eclbase = summary_fm.results.file_name
             response_configs.append(
                 SummaryConfig(
-                    keys=extract_summary_keys(everest_config), input_files=[eclbase]
+                    keys=_extract_summary_keys(everest_config), input_files=[eclbase]
                 )
             )
         else:
@@ -1164,3 +1161,104 @@ class EverestRunModel(RunModel):
         return os.path.exists(self.simulation_dir) and any(
             os.listdir(self.simulation_dir)
         )
+
+
+def _extract_summary_keys(ever_config: EverestConfig) -> list[str]:
+    DEFAULT_DATA_SUMMARY_KEYS = ["YEAR", "YEARS", "TCPU", "TCPUDAY", "MONTH", "DAY"]
+
+    DEFAULT_FIELD_SUMMARY_KEYS = [
+        "FOPR",
+        "FOPT",
+        "FOIR",
+        "FOIT",
+        "FWPR",
+        "FWPT",
+        "FWIR",
+        "FWIT",
+        "FGPR",
+        "FGPT",
+        "FGIR",
+        "FGIT",
+        "FVPR",
+        "FVPT",
+        "FVIR",
+        "FVIT",
+        "FWCT",
+        "FGOR",
+        "FOIP",
+        "FOIPL",
+        "FOIPG",
+        "FWIP",
+        "FGIP",
+        "FGIPL",
+        "FGIPG",
+        "FPR",
+        "FAQR",
+        "FAQRG",
+        "FAQT",
+        "FAQTG",
+        "FWGR",
+    ]
+
+    DEFAULT_WELL_SUMMARY_KEYS = [
+        "WOPR",
+        "WOPT",
+        "WOIR",
+        "WOIT",
+        "WWPR",
+        "WWPT",
+        "WWIR",
+        "WWIT",
+        "WGPR",
+        "WGPT",
+        "WGIR",
+        "WGIT",
+        "WVPR",
+        "WVPT",
+        "WVIR",
+        "WVIT",
+        "WWCT",
+        "WGOR",
+        "WWGR",
+        "WBHP",
+        "WTHP",
+        "WPI",
+    ]
+
+    DEFAULT_WELL_TARGET_SUMMARY_KEYS = [
+        well_key + "T"
+        for well_key in DEFAULT_WELL_SUMMARY_KEYS
+        if well_key.endswith("R") and well_key != "WGOR"
+    ]
+
+    summary_fms: list[ForwardModelStepConfig] = [
+        fm
+        for fm in ever_config.forward_model
+        if fm.results is not None and fm.results.type == "summary"
+    ]
+
+    if not summary_fms:
+        return []
+
+    smry_results = summary_fms[0].results
+    assert isinstance(smry_results, SummaryResults)
+
+    requested_keys: list[str] = ["*"] if smry_results.keys == "*" else smry_results.keys
+
+    well_keys = [
+        f"{sum_key}:*"
+        for sum_key in DEFAULT_WELL_SUMMARY_KEYS + DEFAULT_WELL_TARGET_SUMMARY_KEYS
+    ]
+    deprecated_user_specified_keys = (
+        [] if ever_config.export is None else ever_config.export.keywords
+    )
+
+    return list(
+        set(
+            requested_keys
+            + DEFAULT_DATA_SUMMARY_KEYS
+            + DEFAULT_FIELD_SUMMARY_KEYS
+            + well_keys
+            + deprecated_user_specified_keys
+        )
+    )

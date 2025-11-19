@@ -1,4 +1,3 @@
-import itertools
 import stat
 from pathlib import Path
 from shutil import which
@@ -7,7 +6,6 @@ from textwrap import dedent
 import pytest
 import yaml
 
-import everest
 from ert.base_model_context import use_runtime_plugins
 from ert.config import ConfigWarning, SummaryConfig
 from ert.plugins import get_site_plugins
@@ -94,7 +92,7 @@ def test_combined_wells_everest_to_ert(tmp_path, monkeypatch, config_yaml):
     smry_config = next(
         r for r in runmodel.response_configuration if isinstance(r, SummaryConfig)
     )
-    assert "WOPR:test" in smry_config.keys
+    assert "WOPR:*" in smry_config.keys
 
 
 @pytest.mark.parametrize(
@@ -127,70 +125,6 @@ def test_install_data_no_init(tmp_path, source, target, symlink, cmd, monkeypatc
 
     matching_fm_step = next(fm for fm in runmodel.forward_model_steps if fm.name == cmd)
     assert matching_fm_step.arglist == [f"./{source}", target]
-
-
-@pytest.mark.integration_test
-@pytest.mark.skip_mac_ci
-@pytest.mark.parametrize("wells_config", [None, [{"name": "default_name"}]])
-def test_summary_default_no_opm(tmp_path, monkeypatch, wells_config):
-    monkeypatch.chdir(tmp_path)
-    everconf = everest_config_with_defaults(
-        wells=wells_config,
-        controls=[
-            {
-                "name": "default_group",
-                "type": "well_control",
-                "initial_guess": 0.5,
-                "perturbation_magnitude": 0.01,
-                "variables": [
-                    {"name": "default_name", "min": 0, "max": 1},
-                ],
-            }
-        ],
-        forward_model=[
-            {
-                "job": "eclipse100 eclipse/model/EgG.DATA --version 2020.2",
-                "results": {
-                    "file_name": "eclipse/model/EGG",
-                    "type": "summary",
-                    "keys": ["*"],
-                },
-            }
-        ],
-    )
-    # Read wells from the config instead of using opm
-    wells = (
-        [
-            variable.name
-            for control in everconf.controls
-            for variable in control.variables
-            if control.type == "well_control"
-        ]
-        if wells_config is None
-        else [w.name for w in everconf.wells]
-    )
-    sum_keys = (
-        list(everest.simulator.DEFAULT_DATA_SUMMARY_KEYS)
-        + list(everest.simulator.DEFAULT_FIELD_SUMMARY_KEYS)
-        + [
-            f"{k}:{w}"
-            for k, w in itertools.product(
-                everest.simulator.DEFAULT_WELL_SUMMARY_KEYS, wells
-            )
-        ]
-    )
-    sum_keys = [list(set(sum_keys))]
-
-    site_plugins = get_site_plugins()
-    with use_runtime_plugins(site_plugins):
-        runmodel = EverestRunModel.create(
-            everconf, "some_exp_name", "batch", runtime_plugins=site_plugins
-        )
-    smry_config = next(
-        r for r in runmodel.response_configuration if isinstance(r, SummaryConfig)
-    )
-
-    assert set(sum_keys[0]) == set(smry_config.keys) - {"*"}
 
 
 def test_workflow_job(tmp_path, monkeypatch):
@@ -387,69 +321,6 @@ def test_that_summary_keys_are_passed_through_forward_model_results(
     )
 
     assert {"one", "two", "three"}.issubset(summary_config.keys)
-
-
-def test_that_summary_keys_default_to_expected_keys_according_to_wells(
-    monkeypatch, tmp_path, min_config
-):
-    monkeypatch.chdir(tmp_path)
-    min_config["forward_model"] = [
-        {
-            "job": "eclipse100 CASE.DATA",
-            "results": {
-                "file_name": "CASE",
-                "type": "summary",
-            },
-        }
-    ]
-    min_config["wells"] = [{"name": "OP1"}, {"name": "WI1"}]
-    min_config["controls"] = [
-        {
-            "name": "well_rate",
-            "type": "well_control",
-            "perturbation_magnitude": 0.01,
-            "variables": [
-                {
-                    "name": "OP1",
-                    "index": 1,
-                    "initial_guess": 50,
-                    "min": 10,
-                    "max": 500,
-                },
-                {
-                    "name": "WI1",
-                    "index": 1,
-                    "initial_guess": 250,
-                    "min": 10,
-                    "max": 500,
-                },
-            ],
-        }
-    ]
-
-    site_plugins = get_site_plugins()
-    with use_runtime_plugins(site_plugins):
-        config = EverestConfig(**min_config)
-        runmodel = EverestRunModel.create(
-            config, "exp", "batch", runtime_plugins=site_plugins
-        )
-
-    summary_config = next(
-        r for r in runmodel.response_configuration if isinstance(r, SummaryConfig)
-    )
-
-    data_keys = everest.simulator.DEFAULT_DATA_SUMMARY_KEYS
-    field_keys = everest.simulator.DEFAULT_FIELD_SUMMARY_KEYS
-    well_sum_keys = everest.simulator.DEFAULT_WELL_SUMMARY_KEYS
-
-    expected_defaulted_sum_keys = (
-        ["*"]
-        + data_keys
-        + field_keys
-        + [":".join(tup) for tup in itertools.product(well_sum_keys, ["OP1", "WI1"])]
-    )
-
-    assert set(summary_config.keys) == set(expected_defaulted_sum_keys)
 
 
 def test_that_install_data_raises_error_on_missing_copy_file(tmp_path):
