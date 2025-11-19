@@ -19,11 +19,10 @@ from ert.config import (
     EverestConstraintsConfig,
     EverestObjectivesConfig,
     ExtParamConfig,
-    GenDataConfig,
     GenKwConfig,
+    KnownResponseTypes,
     ParameterConfig,
     ResponseConfig,
-    SummaryConfig,
     SurfaceConfig,
 )
 from ert.config import Field as FieldConfig
@@ -62,10 +61,7 @@ class _Index(BaseModel):
 
 _responses_adapter = TypeAdapter(  # type: ignore
     Annotated[
-        GenDataConfig
-        | SummaryConfig
-        | EverestConstraintsConfig
-        | EverestObjectivesConfig,
+        KnownResponseTypes | EverestConstraintsConfig | EverestObjectivesConfig,
         Field(discriminator="type"),
     ]
 )
