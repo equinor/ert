@@ -11,11 +11,9 @@ from .response_config import InvalidResponseFile, ResponseConfig, ResponseMetada
 from .responses_index import responses_index
 
 
-class EverestConfigBase(ResponseConfig):
+class EverestResponse(ResponseConfig):
     """Base class for Everest response configurations."""
 
-    type: str
-    name: str
     has_finalized_keys: bool = True
     scales: list[float | None]
 
@@ -94,7 +92,7 @@ class EverestConfigBase(ResponseConfig):
         return combined
 
 
-class EverestConstraintsConfig(EverestConfigBase):
+class EverestConstraintsConfig(EverestResponse):
     type: Literal["everest_constraints"] = "everest_constraints"
     name: str = "everest_constraints"
     targets: list[float | None]
@@ -105,7 +103,7 @@ class EverestConstraintsConfig(EverestConfigBase):
 responses_index.add_response_type(EverestConstraintsConfig)
 
 
-class EverestObjectivesConfig(EverestConfigBase):
+class EverestObjectivesConfig(EverestResponse):
     type: Literal["everest_objectives"] = "everest_objectives"
     name: str = "everest_objectives"
     weights: list[float | None]

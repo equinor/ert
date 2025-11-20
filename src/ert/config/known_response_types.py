@@ -1,4 +1,4 @@
-from .everest_config import EverestConstraintsConfig, EverestObjectivesConfig
+from .everest_response import EverestConstraintsConfig, EverestObjectivesConfig
 from .gen_data_config import GenDataConfig
 from .summary_config import SummaryConfig
 
