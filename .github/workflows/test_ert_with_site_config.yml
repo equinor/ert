@@ -1,6 +1,12 @@
 name: Run ERT tests against dummy site config
 
-on: [ push, pull_request, workflow_dispatch ]
+on:
+ push:
+   branches:
+     - main
+     - 'version-**'
+ workflow_call:
+ workflow_dispatch:
 
 jobs:
   test-against-lsf:

@@ -26,9 +26,13 @@ jobs:
   check-typing:
     uses: ./.github/workflows/typing.yml
 
-  run-codspeed:
+  run-testdata:
     needs: [run-pre-commit, check-typing]
-    uses: ./.github/workflows/codspeed.yml
+    uses: ./.github/workflows/run_ert_test_data_setups.yml
+
+  run-dummy-site-config:
+    needs: [run-pre-commit, check-typing]
+    uses: ./.github/workflows/test_ert_with_site_config.yml
 
   build-wheels:
     needs: [run-pre-commit, check-typing]
@@ -181,10 +185,22 @@ jobs:
       run: |
         uv run just build-ert-docs
 
+  run-codspeed:
+    needs: [build-wheels, test-linux-ert, test-linux-everest, test-slurm, test-ert-with-flow, run-testdata, run-dummy-site-config, docs-ert]
+    uses: ./.github/workflows/codspeed.yml
+
+  test_everest_models:
+    needs: [build-wheels, test-linux-ert, test-linux-everest, test-slurm, test-ert-with-flow, run-testdata, run-dummy-site-config, docs-ert]
+    uses: ./.github/workflows/test_everest_models.yml
+
+  test_semeio:
+    needs: [build-wheels, test-linux-ert, test-linux-everest, test-slurm, test-ert-with-flow, run-testdata, run-dummy-site-config, docs-ert]
+    uses: ./.github/workflows/test_semeio.yml
+
   publish:
     name: Publish to PyPI
     runs-on: ubuntu-latest
-    needs: [build-wheels, test-linux-ert, test-linux-everest, test-mac-main-ert, test-mac-main-everest, docs-ert]
+    needs: [build-wheels, test-linux-ert, test-linux-everest, test-mac-main-ert, test-mac-main-everest, test-slurm, test-ert-with-flow, run-testdata, run-dummy-site-config, docs-ert]
     permissions:
       id-token: write
 

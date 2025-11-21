@@ -5,14 +5,11 @@ on:
    branches:
      - main
      - 'version-**'
- pull_request:
+ workflow_call:
+ workflow_dispatch:
 
 permissions:
    contents: read
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 env:
   ERT_SHOW_BACKTRACE: 1
