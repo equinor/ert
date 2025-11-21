@@ -64,8 +64,6 @@ class LocalStorage(BaseMode):
         self,
         path: str | os.PathLike[str],
         mode: Mode,
-        *,
-        ignore_migration_check: bool = False,
     ) -> None:
         """
         Initializes the LocalStorage instance.
@@ -76,8 +74,6 @@ class LocalStorage(BaseMode):
             The file system path to the storage.
         mode : Mode
             The access mode for the storage (read/write).
-        ignore_migration_check : bool
-            If True, skips migration checks during initialization.
         """
 
         super().__init__(mode)
@@ -110,7 +106,7 @@ class LocalStorage(BaseMode):
             )
         if self.can_write:
             self._acquire_lock()
-            if version < _LOCAL_STORAGE_VERSION and not ignore_migration_check:
+            if version < _LOCAL_STORAGE_VERSION:
                 self._migrate(version)
             self._index = self._load_index()
             self._save_index()
