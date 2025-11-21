@@ -791,3 +791,23 @@ def test_genkw_raises_config_validation_error_from_pydantic_validation_error_giv
     ]
     with pytest.raises(ConfigValidationError):
         GenKwConfig.from_config_list(config_list)
+
+
+def test_that_const_keyword_sets_update_to_false(tmpdir):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        GEN_KW CONST_TEST prior.txt UPDATE:TRUE
+        """
+        )
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("prior.txt", "w", encoding="utf-8") as fh:
+            fh.writelines("CONST_TEST CONST 1")
+
+        ert_config = ErtConfig.from_file("config.ert")
+
+        gen_kw_config = ert_config.ensemble_config.parameter_configs["CONST_TEST"]
+        assert gen_kw_config.update is False
