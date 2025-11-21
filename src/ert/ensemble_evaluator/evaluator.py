@@ -6,6 +6,8 @@ import threading
 import traceback
 from collections import defaultdict
 from collections.abc import Awaitable, Callable, Iterable, Sequence
+from dataclasses import dataclass
+from math import ceil
 from typing import Any, cast, get_args
 
 import zmq.asyncio
@@ -49,6 +51,13 @@ from .state import (
     ENSEMBLE_STATE_STOPPED,
 )
 
+
+@dataclass(order=True)
+class ParallelismViolation:
+    amount: float = 0
+    message: str = ""
+
+
 logger = logging.getLogger(__name__)
 
 EVENT_HANDLER = Callable[[list[SnapshotInputEvent]], Awaitable[None]]
@@ -74,6 +83,7 @@ class EnsembleEvaluator:
     # has misconfigured NUM_CPU in their config.
     ALLOWED_CPU_OVERSPENDING = 1.05
     MINIMUM_WALLTIME_SECONDS = 30  # Information is only polled every 5 sec
+    CPU_OVERSPENDING_WARNING_THRESHOLD = 1.50
 
     def __init__(
         self,
@@ -129,6 +139,7 @@ class EnsembleEvaluator:
             submit_sleep=self.ensemble._queue_config.submit_sleep,
             ens_id=self.ensemble.id_,
         )
+        self.max_parallelism_violation = ParallelismViolation()
 
     async def _publisher(self) -> None:
         heartbeat_interval = 0.1
@@ -657,6 +668,9 @@ class EnsembleEvaluator:
         """Produces a message warning about misconfiguration of NUM_CPU if
         so is detected. Returns an empty string if everything is ok."""
         allowed_overspending = self.ALLOWED_CPU_OVERSPENDING * num_cpu
+        overspending_warning_threshold = (
+            self.CPU_OVERSPENDING_WARNING_THRESHOLD * num_cpu
+        )
 
         start_time = fm_step.get(ids.START_TIME)
 
@@ -680,3 +694,18 @@ class EnsembleEvaluator:
                 f"with wall clock duration {duration:.1f} seconds, a factor of "
                 f"{parallelization_obtained:.2f}, while NUM_CPU was {num_cpu}."
             )
+            if parallelization_obtained > overspending_warning_threshold:
+                warning_msg = (
+                    "Overusage of CPUs detected!\n"
+                    f"Your experiment has used up to {ceil(parallelization_obtained)} "
+                    f"CPUs in step '{fm_step.get(ids.NAME)}', "
+                    f"while the Ert config has only requested {num_cpu}.\n"
+                    f"This means your experiment is consuming more CPU-resources than "
+                    f"requested and will slow down other users experiments.\n"
+                    f"We kindly ask you to set "
+                    f"NUM_CPU={ceil(parallelization_obtained)} in your Ert config."
+                )
+                self.max_parallelism_violation = max(
+                    self.max_parallelism_violation,
+                    ParallelismViolation(parallelization_obtained, warning_msg),
+                )

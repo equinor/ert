@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import concurrent.futures
 import copy
-import dataclasses
 import functools
 import logging
 import os
@@ -12,10 +11,12 @@ import shutil
 import threading
 import traceback
 import uuid
+import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Callable, Generator, MutableSequence
 from contextlib import contextmanager
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Protocol, cast
@@ -47,7 +48,7 @@ from ert.ensemble_evaluator import (
     Realization,
     WarningEvent,
 )
-from ert.ensemble_evaluator.evaluator import UserCancelled
+from ert.ensemble_evaluator.evaluator import ParallelismViolation, UserCancelled
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FAILED,
@@ -142,7 +143,7 @@ class StartSimulationsThreadFn(Protocol):
     ) -> None: ...
 
 
-@dataclasses.dataclass
+@dataclass
 class RunModelAPI:
     experiment_name: str
     supports_rerunning_failed_realizations: bool
@@ -184,6 +185,7 @@ class RunModel(RunModelConfig, ABC):
     _run_paths: Runpaths = PrivateAttr()
     _total_iterations: int = PrivateAttr(default=1)
     _start_iteration: int = PrivateAttr(default=0)
+    _max_parallelism_violation: ParallelismViolation = ParallelismViolation()
 
     def __init__(
         self,
@@ -635,6 +637,10 @@ class RunModel(RunModelConfig, ABC):
         finally:
             await evaluator_task
 
+        self._max_parallelism_violation = max(
+            self._max_parallelism_violation, evaluator.max_parallelism_violation
+        )
+
         logger.debug("tasks complete")
 
         if self._end_event.is_set():
@@ -815,6 +821,17 @@ class RunModel(RunModelConfig, ABC):
             f"Experiment run ended with number of realizations failing: "
             f"{len(starting_realizations) - num_successful_realizations}"
         )
+
+        # 0 means no violation
+        if self._max_parallelism_violation.amount > 0 and isinstance(
+            self._max_parallelism_violation.message, str
+        ):
+            warnings.warn(
+                self._max_parallelism_violation.message,
+                PostSimulationWarning,
+                stacklevel=1,
+            )
+
         self.run_workflows(
             fixtures=PostSimulationFixtures(
                 storage=self._storage,
