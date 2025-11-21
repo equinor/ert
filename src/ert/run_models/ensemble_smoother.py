@@ -14,8 +14,11 @@ from ert.config import (
     ResponseConfig,
 )
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.run_models.initial_ensemble_run_model import InitialEnsembleRunModel
-from ert.run_models.update_run_model import UpdateRunModel
+from ert.run_models.initial_ensemble_run_model import (
+    InitialEnsembleRunModel,
+    InitialEnsembleRunModelConfig,
+)
+from ert.run_models.update_run_model import UpdateRunModel, UpdateRunModelConfig
 from ert.storage import Ensemble
 from ert.trace import tracer
 
@@ -26,7 +29,10 @@ from .run_model import ErtRunError
 logger = logging.getLogger(__name__)
 
 
-class EnsembleSmoother(UpdateRunModel, InitialEnsembleRunModel):
+class EnsembleSmootherConfig(InitialEnsembleRunModelConfig, UpdateRunModelConfig): ...
+
+
+class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmootherConfig):
     _total_iterations: int = PrivateAttr(default=2)
 
     @tracer.start_as_current_span(f"{__name__}.run_experiment")

@@ -13,14 +13,22 @@ from ert.config import (
     ResponseConfig,
 )
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.run_models.initial_ensemble_run_model import InitialEnsembleRunModel
+from ert.run_models.initial_ensemble_run_model import (
+    InitialEnsembleRunModel,
+    InitialEnsembleRunModelConfig,
+)
 from ert.storage import Ensemble
 from ert.trace import tracer
 
 logger = logging.getLogger(__name__)
 
 
-class EnsembleExperiment(InitialEnsembleRunModel):
+class EnsembleExperimentConfig(InitialEnsembleRunModelConfig):
+    target_ensemble: str
+    supports_rerunning_failed_realizations: ClassVar[bool] = True
+
+
+class EnsembleExperiment(InitialEnsembleRunModel, EnsembleExperimentConfig):
     """
     This workflow will create a new experiment and a new ensemble from
     the user configuration.<br>It will never overwrite existing ensembles, and
@@ -28,8 +36,6 @@ class EnsembleExperiment(InitialEnsembleRunModel):
     """
 
     _ensemble_id: UUID | None = PrivateAttr(None)
-    supports_rerunning_failed_realizations: ClassVar[bool] = True
-    target_ensemble: str
 
     @property
     def _ensemble(self) -> Ensemble:

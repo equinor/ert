@@ -23,7 +23,9 @@ from ert.config import (
     ResponseConfig,
     SurfaceConfig,
 )
-from ert.config import Field as FieldConfig
+from ert.config import (
+    Field as FieldConfig,
+)
 from ert.config.parsing.context_values import ContextBoolEncoder
 
 from .mode import BaseMode, Mode, require_write

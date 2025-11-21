@@ -8,7 +8,7 @@ from uuid import UUID
 from pydantic import PrivateAttr
 
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.run_models.update_run_model import UpdateRunModel
+from ert.run_models.update_run_model import UpdateRunModel, UpdateRunModelConfig
 from ert.storage import Ensemble
 
 from ..analysis import smoother_update
@@ -17,9 +17,11 @@ from .run_model import ErtRunError
 logger = logging.getLogger(__name__)
 
 
-class ManualUpdate(UpdateRunModel):
+class ManualUpdateConfig(UpdateRunModelConfig):
     ensemble_id: str
 
+
+class ManualUpdate(UpdateRunModel, ManualUpdateConfig):
     _prior: Ensemble = PrivateAttr()
 
     def model_post_init(self, ctx: Any) -> None:

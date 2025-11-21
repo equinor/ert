@@ -73,7 +73,7 @@ from ..storage import ExperimentState, ExperimentStatus
 from ..storage.local_ensemble import EverestRealizationInfo
 from ..substitutions import Substitutions
 from .event import EverestBatchResultEvent, EverestStatusEvent
-from .run_model import RunModel, StatusEvents
+from .run_model import RunModel, RunModelConfig, StatusEvents
 
 if TYPE_CHECKING:
     from ert.storage import Ensemble, Experiment
@@ -222,7 +222,7 @@ def _get_workflows(
     return res_hooks, res_workflows
 
 
-class EverestRunModel(RunModel):
+class EverestRunModelConfig(RunModelConfig):
     optimization_output_dir: str
     simulation_dir: str
 
@@ -230,13 +230,14 @@ class EverestRunModel(RunModel):
     response_configuration: list[ResponseConfig]
 
     input_constraints: list[InputConstraintConfig]
-
     optimization: OptimizationConfig
     model: ModelConfig
     keep_run_path: bool
     experiment_name: str
     target_ensemble: str
 
+
+class EverestRunModel(RunModel, EverestRunModelConfig):
     _exit_code: EverestExitCode | None = PrivateAttr(default=None)
     _experiment: Experiment | None = PrivateAttr(default=None)
     _eval_server_cfg: EvaluatorServerConfig | None = PrivateAttr(default=None)
