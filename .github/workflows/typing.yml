@@ -42,6 +42,14 @@ jobs:
       run: |
         uv sync --extra dev --extra types
 
+    - id: get-date
+      run: echo "todays_date=$(/bin/date -u '+%Y%m%d')" >> "$GITHUB_ENV"
+
+    - uses: actions/cache@v4
+      with:
+        path: .mypy_cache
+        key: mypy-${{ env.todays_date }}
+
     - run: echo ::add-matcher::.github/mypy-matcher.json
     - name: Run mypy
       run: |
