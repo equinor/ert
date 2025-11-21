@@ -298,13 +298,6 @@ class LocalStorage(BaseMode):
 
         self._save_index()
 
-        if self.can_write:
-            self._release_lock()
-
-    def _release_lock(self) -> None:
-        self._lock.release()
-        (self.path / "storage.lock").unlink(missing_ok=True)
-
     @require_write
     def create_experiment(
         self,
