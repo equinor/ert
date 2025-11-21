@@ -63,6 +63,16 @@ def data_kw_keyword() -> SchemaItem:
     )
 
 
+def rft_keyword() -> SchemaItem:
+    return SchemaItem(
+        kw=ConfigKeys.RFT,
+        required_set=False,
+        multi_occurrence=True,
+        options_after=0,
+        argc_max=None,
+    )
+
+
 def define_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.DEFINE,
@@ -303,6 +313,7 @@ def init_user_config_schema() -> ConfigSchemaDict:
         gen_kw_keyword(),
         gen_data_keyword(),
         summary_keyword(),
+        rft_keyword(),
         surface_keyword(),
         field_keyword(),
         single_arg_keyword(ConfigKeys.ECLBASE),
