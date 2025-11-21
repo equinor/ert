@@ -26,7 +26,7 @@ def raise_system_error(*args, **kwargs):
 @patch("everest.bin.everest_script.start_server")
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch(
-    "ert.services.StorageService.session",
+    "ert.services.ErtServer.session",
     side_effect=[TimeoutError(), MagicMock()],
 )
 @patch("everest.bin.everest_script.start_experiment")
@@ -75,7 +75,7 @@ def test_everest_entry_debug(
 @patch("everest.bin.everest_script.start_server")
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch(
-    "ert.services.StorageService.session",
+    "ert.services.ErtServer.session",
     side_effect=[TimeoutError(), MagicMock()],
 )
 @patch("everest.bin.everest_script.start_experiment")
@@ -108,7 +108,7 @@ def test_everest_entry(
 @patch("everest.bin.everest_script.start_experiment")
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch(
-    "ert.services.StorageService.session",
+    "ert.services.ErtServer.session",
     side_effect=[
         TimeoutError(),
         MagicMock(),
@@ -161,7 +161,7 @@ def test_everest_entry_detached_already_run(
     "everest.bin.monitor_script.get_experiment_status",
     return_value=ExperimentStatus(status=ExperimentState.completed, message=""),
 )
-@patch("ert.services.StorageService.session", side_effect=TimeoutError())
+@patch("ert.services.ErtServer.session", side_effect=TimeoutError())
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 def test_everest_entry_detached_already_run_monitor(
     get_server_context_from_conn_info_mock,
@@ -184,7 +184,7 @@ def test_everest_entry_detached_already_run_monitor(
     session_mock.assert_called_once()
 
 
-@patch("ert.services.StorageService.session")
+@patch("ert.services.ErtServer.session")
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch("everest.bin.everest_script.run_detached_monitor")
 @patch("everest.bin.everest_script.wait_for_server")
@@ -238,7 +238,7 @@ def test_everest_entry_detached_running(
 
 @patch("everest.bin.monitor_script.run_detached_monitor")
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
-@patch("ert.services.StorageService.session")
+@patch("ert.services.ErtServer.session")
 def test_everest_entry_detached_running_monitor(
     session_mock,
     get_server_context_from_conn_info_mock,
@@ -265,7 +265,7 @@ def test_everest_entry_detached_running_monitor(
     return_value=ExperimentStatus(status=ExperimentState.completed),
 )
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
-@patch("ert.services.StorageService.session", side_effect=TimeoutError())
+@patch("ert.services.ErtServer.session", side_effect=TimeoutError())
 def test_everest_entry_monitor_already_run(
     session_mock,
     get_server_context_from_conn_info_mock,
@@ -300,7 +300,7 @@ def mock_ssl(monkeypatch):
 @patch("everest.bin.everest_script.start_experiment")
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch(
-    "ert.services.StorageService.session",
+    "ert.services.ErtServer.session",
     side_effect=[TimeoutError(), MagicMock()],
 )
 def test_exception_raised_when_server_run_fails(
@@ -325,7 +325,7 @@ def test_exception_raised_when_server_run_fails(
     side_effect=raise_system_error,
 )
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
-@patch("ert.services.StorageService.session")
+@patch("ert.services.ErtServer.session")
 def test_exception_raised_when_server_run_fails_monitor(
     session_mock,
     get_server_context_from_conn_info_mock,
@@ -369,7 +369,7 @@ def test_that_run_everest_prints_where_it_runs(
             "everest.bin.everest_script.EverestStorage.check_for_deprecated_seba_storage"
         ),
         patch(
-            "ert.services.StorageService.session",
+            "ert.services.ErtServer.session",
             side_effect=[TimeoutError(), MagicMock()],
         ),
         patch(
