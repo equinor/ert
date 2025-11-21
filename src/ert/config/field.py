@@ -236,7 +236,7 @@ class Field(ParameterConfig):
         )
         return ds
 
-    @log_duration(_logger, custom_name="save_field")
+    @log_duration(_logger, logging.INFO, custom_name="save_field")
     def write_to_runpath(
         self, run_path: Path, real_nr: int, ensemble: Ensemble
     ) -> None:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, Self, cast
@@ -11,6 +12,7 @@ from pydantic import field_serializer
 from surfio import IrapHeader, IrapSurface
 
 from ert.substitutions import substitute_runpath_name
+from ert.utils import log_duration
 
 from ._str_to_bool import str_to_bool
 from .field import create_flattened_cube_graph
@@ -21,6 +23,8 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from ert.storage import Ensemble
+
+_logger = logging.getLogger(__name__)
 
 
 class SurfaceMismatchError(InvalidParameterFile):
@@ -172,6 +176,7 @@ class SurfaceConfig(ParameterConfig):
 
         return da.to_dataset()
 
+    @log_duration(_logger, logging.INFO, custom_name="save_surface")
     def write_to_runpath(
         self, run_path: Path, real_nr: int, ensemble: Ensemble
     ) -> None:
