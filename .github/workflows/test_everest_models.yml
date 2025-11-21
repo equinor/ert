@@ -4,7 +4,13 @@ name: Test Everest Models
 # is compatible with the changes. It is not required to pass
 # before merging, but breakage should be followed by fix in everest-models
 
-on: [pull_request]
+on:
+ push:
+   branches:
+     - main
+     - 'version-**'
+ workflow_call:
+ workflow_dispatch:
 
 permissions:
    contents: read
@@ -12,10 +18,6 @@ permissions:
 env:
   UV_FROZEN: true
   OMP_NUM_THREADS: 1
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
     test-everest-models:
