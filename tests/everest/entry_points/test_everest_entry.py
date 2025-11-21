@@ -365,6 +365,15 @@ def test_that_everest_run_warns_on_nonempty_runpath(change_to_tmpdir):
     existing_runpath.cleanup()
 
 
+def test_that_everest_fails_when_runpath_is_a_file():
+    with tempfile.NamedTemporaryFile() as existing_runpath:
+        Path(existing_runpath.name).touch()
+        with pytest.raises(ValueError, match="is a file"):
+            everest_config_with_defaults(
+                environment={"simulation_folder": existing_runpath.name},
+            )
+
+
 @pytest.mark.parametrize(
     "server_queue_system, simulator_queue_system",
     [
