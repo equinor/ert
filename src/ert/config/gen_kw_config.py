@@ -217,18 +217,7 @@ class GenKwConfig(ParameterConfig):
         real_nr: int,
         ensemble: Ensemble,
     ) -> dict[str, dict[str, float | str]]:
-        df = ensemble.load_parameters(self.name, real_nr, transformed=True).drop(
-            "realization"
-        )
-
-        assert isinstance(df, pl.DataFrame)
-        if not df.width == 1:
-            raise ValueError(
-                f"GEN_KW {self.group_name}:{self.name} should be a single parameter!"
-            )
-
-        data = df.to_dicts()[0]
-        return {self.group_name: data}
+        raise NotImplementedError
 
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
