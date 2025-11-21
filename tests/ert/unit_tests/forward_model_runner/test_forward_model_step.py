@@ -364,8 +364,8 @@ def test_target_file_only_sets_error_if_specified_and_fm_step_succeeded(
         },
         0,
     )
-    fmstep.TARGET_FILE_POLL_PERIOD = 0.1
-
+    fmstep.TARGET_FILE_POLL_PERIOD = 0.05
+    fmstep.sleep_interval = 0.05
     statuses = list(fmstep.run())
 
     assert len(statuses) == 2, "Wrong statuses count"

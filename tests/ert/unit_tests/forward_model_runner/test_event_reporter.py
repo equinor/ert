@@ -208,21 +208,26 @@ def test_report_with_reconnected_reporter_but_finished_jobs():
 
 @pytest.mark.integration_test
 @pytest.mark.parametrize(
-    "mocked_server_signal, expected_message",
+    "mocked_server_signal,ack_timeout, expected_message",
     [
-        pytest.param(4, "No ack for dealer disconnection", id="failed_disconnect"),
-        pytest.param(5, "No ack for dealer connection", id="failed_connect"),
-        pytest.param(1, "Failed to send event", id="failed_to_send_event"),
+        pytest.param(5, 0.01, "No ack for dealer connection", id="failed_connect"),
+        pytest.param(
+            4, 0.25, "No ack for dealer disconnection", id="failed_disconnect"
+        ),
+        pytest.param(1, 0.25, "Failed to send event", id="failed_to_send_event"),
     ],
 )
 def test_event_reporter_does_not_hang_after_failed(
-    mocked_server_signal, expected_message, monkeypatch, caplog
+    mocked_server_signal, ack_timeout, expected_message, monkeypatch, caplog
 ):
     monkeypatch.setattr(
-        "_ert.forward_model_runner.reporting.event.Client.DEFAULT_MAX_RETRIES", 1
+        "_ert.forward_model_runner.reporting.event.Client.DEFAULT_MAX_RETRIES", 0
     )
+
     with MockZMQServer(signal=mocked_server_signal) as mock_server:
-        reporter = Event(evaluator_url=mock_server.uri, ack_timeout=1, max_retries=1)
+        reporter = Event(
+            evaluator_url=mock_server.uri, ack_timeout=ack_timeout, max_retries=0
+        )
         fmstep1 = ForwardModelStep(
             {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
         )
