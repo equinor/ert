@@ -1,4 +1,5 @@
 from collections.abc import Mapping
+from datetime import datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, field_serializer, field_validator
@@ -40,6 +41,11 @@ class FullSnapshotEvent(_UpdateEvent):
 
 class SnapshotUpdateEvent(_UpdateEvent):
     event_type: Literal["SnapshotUpdateEvent"] = "SnapshotUpdateEvent"
+
+
+class StartEvent(BaseModel):
+    event_type: Literal["StartEvent"] = "StartEvent"
+    timestamp: datetime
 
 
 class EndEvent(BaseModel):

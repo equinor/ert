@@ -14,7 +14,7 @@ from pydantic import ConfigDict
 
 from ert.config import ErtConfig, GenKwConfig, ModelConfig, QueueConfig, QueueSystem
 from ert.config.queue_config import LsfQueueOptions
-from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
+from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig, StartEvent
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.plugins import ErtRuntimePlugins
 from ert.run_models.run_model import RunModel, UserCancelled
@@ -71,6 +71,7 @@ def test_status_when_rerunning_on_non_rerunnable_model(use_tmpdir):
     brm.start_simulations_thread(
         EvaluatorServerConfig(use_token=False), rerun_failed_realizations=True
     )
+    assert isinstance(brm._status_queue.get(), StartEvent)
     assert brm._status_queue.get() == EndEvent(
         event_type="EndEvent",
         failed=True,

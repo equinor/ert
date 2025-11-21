@@ -1,6 +1,6 @@
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, call, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pandas as pd
 import pytest
@@ -112,14 +112,6 @@ def mock_set_is_simulation_running():
 
 
 @pytest.fixture
-def mock_get_runtime():
-    mock = MagicMock()
-    with patch("ert.run_models.run_model.RunModel.get_runtime", mock) as _mock:
-        _mock.return_value = 10
-        yield _mock
-
-
-@pytest.fixture
 def mock_set_env_key():
     mock = MagicMock()
     with patch("ert.run_models.run_model.RunModel.set_env_key", mock) as _mock:
@@ -184,15 +176,6 @@ def test_that_terminating_experiment_shows_a_confirmation_dialog(
         .findChild(QLabel)
         .text()
     )
-
-
-@pytest.mark.integration_test
-def test_run_dialog_polls_run_model_for_runtime(
-    qtbot, mock_set_is_simulation_running, mock_get_runtime, run_dialog: RunDialog
-):
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=10000)
-    mock_get_runtime.assert_any_call()
-    mock_set_is_simulation_running.assert_has_calls([call(True), call(False)])
 
 
 @pytest.mark.integration_test
