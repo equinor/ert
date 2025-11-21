@@ -651,7 +651,7 @@ class EnsembleEvaluator:
     ) -> None:
         """Produces a message warning about misconfiguration of NUM_CPU if
         so is detected. Returns an empty string if everything is ok."""
-        allowed_overspending = 1.05
+        allowed_overspending = 1.05 * num_cpu
         minimum_wallclock_time_seconds = 30  # Information is only polled every 5 sec
 
         start_time = fm_step.get(ids.START_TIME)
@@ -667,7 +667,7 @@ class EnsembleEvaluator:
         cpu_seconds = fm_step.get(ids.CPU_SECONDS) or 0.0
         parallelization_obtained = cpu_seconds / duration
         if (
-            parallelization_obtained > num_cpu * allowed_overspending
+            parallelization_obtained > allowed_overspending
             and self.ensemble.queue_system != QueueSystem.LOCAL
         ):
             logger.warning(
