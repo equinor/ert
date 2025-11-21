@@ -76,7 +76,7 @@ jobs:
       if: inputs.test-type == 'doc'
       run: |
         uv pip install git+https://github.com/equinor/everest-models.git
-        uv run sphinx-build -n -v -E -W ./docs/everest ./everest_docs
+        uv run just build-everest-docs
 
 
     - name: Run tests requiring everviz

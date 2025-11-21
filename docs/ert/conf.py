@@ -174,7 +174,10 @@ todo_include_todos = True
 # -- Options for intersphinx extension ---------------------------------------
 
 # Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
+intersphinx_mapping = {
+    # commented out 2025-11-21 as it 500 errors
+    # "python": ("https://docs.python.org/3", None)
+}
 
 # Ignore unresolved references
 nitpick_ignore = [
