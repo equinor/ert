@@ -76,15 +76,18 @@ class LocalStorage(BaseMode):
             The access mode for the storage (read/write).
         """
 
-        super().__init__(mode)
         self.path = Path(path).absolute()
+        super().__init__(mode)
+
+        if mode.can_write:
+            self._acquire_lock()
 
         self._experiments: dict[UUID, LocalExperiment]
         self._ensembles: dict[UUID, LocalEnsemble]
         self._index: _Index
 
         try:
-            version = _storage_version(self.path)
+            self.version = _storage_version(self.path)
         except FileNotFoundError as err:
             # No index json, will have a problem if other components of storage exists
             errors = []
@@ -96,26 +99,34 @@ class LocalStorage(BaseMode):
                 errors.append(f"ensemble path: {self.path / self.ENSEMBLES_PATH}")
             if errors:
                 raise ValueError(f"No index.json, but found: {errors}") from err
-            version = _LOCAL_STORAGE_VERSION
+            self.version = _LOCAL_STORAGE_VERSION
 
-        if version > _LOCAL_STORAGE_VERSION:
+        if self.check_migration_needed():
+            self.perform_migration()
+
+        self.refresh()
+
+    def check_migration_needed(self) -> bool:
+        if self.version > _LOCAL_STORAGE_VERSION:
             raise RuntimeError(
-                f"Cannot open storage '{self.path}': Storage version {version} "
+                f"Cannot open storage '{self.path}': Storage version {self.version} "
                 f"is newer than the current version {_LOCAL_STORAGE_VERSION}, "
                 "upgrade ert to continue, or run with a different ENSPATH"
             )
-        if self.can_write:
-            self._acquire_lock()
-            if version < _LOCAL_STORAGE_VERSION:
-                self._migrate(version)
-            self._index = self._load_index()
-            self._save_index()
-        elif version < _LOCAL_STORAGE_VERSION:
-            raise RuntimeError(
-                f"Cannot open storage '{self.path}' in read-only mode: "
-                f"Storage version {version} is too old. Run ert to initiate migration."
-            )
-        self.refresh()
+
+        return self.version < _LOCAL_STORAGE_VERSION
+
+    def perform_migration(self) -> None:
+        if self.check_migration_needed():
+            if self.can_write:
+                self._migrate(self.version)
+                self._save_index()
+            else:
+                raise RuntimeError(
+                    f"Cannot open storage '{self.path}' in read-only mode: "
+                    f"Storage version {self.version} is too old. "
+                    f"Run ert to initiate migration."
+                )
 
     def refresh(self) -> None:
         """
@@ -278,12 +289,8 @@ class LocalStorage(BaseMode):
 
     def close(self) -> None:
         """
-        Closes the storage, releasing any acquired locks and saving the index.
-
-        This method should be called to cleanly close the storage, especially
-        when it was opened in write mode. Failing to call this method may leave
-        a lock file behind, which would interfere with subsequent access to
-        the storage.
+        Closes the storage and saves the index.
+        This method should be called to cleanly close the storage.
         """
 
         self._ensembles.clear()
