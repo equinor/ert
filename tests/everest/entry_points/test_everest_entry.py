@@ -1,5 +1,6 @@
 import logging
 import os
+import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -342,6 +343,35 @@ def test_exception_raised_when_server_run_fails_monitor(
 
 class ServerStatus:
     pass
+
+
+@patch(
+    "everest.bin.everest_script.warn_user_that_runpath_is_nonempty",
+    side_effect=RuntimeError("runpath is nonempty"),
+)
+def test_that_everest_run_warns_on_nonempty_runpath(change_to_tmpdir):
+    existing_runpath = tempfile.TemporaryDirectory()
+    (Path(existing_runpath.name) / "somefile").touch()
+    assert Path(existing_runpath.name).is_absolute(), (
+        "Warning from everest can only be triggered on absolute paths in config"
+    )
+    everest_config_with_defaults(
+        environment={"simulation_folder": existing_runpath.name},
+    ).dump("config.yml")
+
+    with pytest.raises(RuntimeError, match="runpath is nonempty"):
+        everest_entry(["config.yml"])
+
+    existing_runpath.cleanup()
+
+
+def test_that_everest_fails_when_runpath_is_a_file():
+    with tempfile.NamedTemporaryFile() as existing_runpath:
+        Path(existing_runpath.name).touch()
+        with pytest.raises(ValueError, match="is a file"):
+            everest_config_with_defaults(
+                environment={"simulation_folder": existing_runpath.name},
+            )
 
 
 @pytest.mark.parametrize(

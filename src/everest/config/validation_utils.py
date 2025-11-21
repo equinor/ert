@@ -285,8 +285,7 @@ def check_writeable_path(path_source: str, config_path: Path) -> None:
             if os.access(path, os.W_OK | os.X_OK):
                 break
         elif os.path.isfile(path):
-            # path is a file, cannot create folder
-            raise ValueError(f"File {path} exists, cannot create path {path_source}")
+            raise ValueError(f"{path} is a file, cannot create folders inside it")
         parent = os.path.dirname(path)
         if parent == path:  # ie, if path is root
             break

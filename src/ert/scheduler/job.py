@@ -12,6 +12,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import TYPE_CHECKING, assert_never
 
+import anyio
 from lxml import etree
 from opentelemetry.trace import Status, StatusCode
 
@@ -335,8 +336,12 @@ class Job:
 
         valid_checksums = [info for info in checksum.values() if "error" not in info]
 
-        # Wait for files in checksum
-        while not all(Path(info["path"]).exists() for info in valid_checksums):
+        async def all_paths_exist(paths: list[Path]) -> bool:
+            return all(
+                await asyncio.gather(*[anyio.Path(path).exists() for path in paths])
+            )
+
+        while not await all_paths_exist([info["path"] for info in valid_checksums]):
             if timeout <= 0:
                 break
             timeout -= DISK_SYNCHRONIZATION_POLLING_INTERVAL
@@ -344,17 +349,19 @@ class Job:
             await asyncio.sleep(DISK_SYNCHRONIZATION_POLLING_INTERVAL)
         async with checksum_lock:
             for info in valid_checksums:
-                file_path = Path(info["path"])
+                file_path = anyio.Path(info["path"])
                 expected_md5sum = info.get("md5sum")
-                if file_path.exists() and expected_md5sum:
-                    actual_md5sum = hashlib.md5(file_path.read_bytes()).hexdigest()
+                file_path_exists = await file_path.exists()
+                if file_path_exists and expected_md5sum:
+                    file_bytes = await file_path.read_bytes()
+                    actual_md5sum = hashlib.md5(file_bytes).hexdigest()
                     if expected_md5sum == actual_md5sum:
                         logger.debug(f"File {file_path} checksum successful.")
                     else:
                         logger.warning(
                             f"File {file_path} checksum verification failed."
                         )
-                elif file_path.exists() and expected_md5sum is None:
+                elif file_path_exists and expected_md5sum is None:
                     logger.warning(f"Checksum not received for file {file_path}")
                 else:
                     logger.error(f"Disk synchronization failed for {file_path}")
@@ -506,11 +513,12 @@ async def log_warnings_from_forward_model(
             or "- ERROR - " in line
         )
 
-    async def log_warnings_from_file(  # noqa
+    async def log_warnings_from_file(
         file: Path, iens: int, step: ForwardModelStep, step_idx: int, filetype: str
     ) -> None:
         captured: list[str] = []
-        for line in file.read_text(encoding="utf-8").splitlines():
+        file_text = await anyio.Path(file).read_text(encoding="utf-8")
+        for line in file_text.splitlines():
             if line_contains_warning(line):
                 captured.append(line[:max_length])
 
@@ -527,9 +535,12 @@ async def log_warnings_from_forward_model(
             return 0
         remaining_timeout = _timeout
         for _ in range(_timeout):
-            if not (
-                file_path.exists() and file_path.stat().st_mtime >= job_submission_time
-            ):
+            file_path_exists = await anyio.Path(file_path).exists()
+            if file_path_exists:
+                st_mtime = (await anyio.Path(file_path).stat()).st_mtime
+            else:
+                st_mtime = 0
+            if not (file_path_exists and st_mtime >= job_submission_time):
                 remaining_timeout -= 1
                 await asyncio.sleep(1)
             else:
