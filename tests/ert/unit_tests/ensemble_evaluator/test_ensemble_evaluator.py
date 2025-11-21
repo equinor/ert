@@ -8,8 +8,9 @@ from unittest.mock import MagicMock
 
 import pytest
 import zmq.asyncio
-from hypothesis import given
+from hypothesis import given, settings, HealthCheck
 from hypothesis import strategies as st
+from jedi.common import monkeypatch
 from pydantic import ValidationError
 from pytest import MonkeyPatch
 
@@ -30,6 +31,7 @@ from _ert.forward_model_runner.client import (
     DISCONNECT_MSG,
     Client,
 )
+from ert.config import QueueSystem
 from ert.config.ert_config import ErtConfig
 from ert.config.queue_config import QueueConfig
 from ert.ensemble_evaluator import (
@@ -41,7 +43,7 @@ from ert.ensemble_evaluator import (
 )
 from ert.ensemble_evaluator._ensemble import LegacyEnsemble
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
-from ert.ensemble_evaluator.evaluator import UserCancelled, detect_overspent_cpu
+from ert.ensemble_evaluator.evaluator import UserCancelled
 from ert.ensemble_evaluator.state import (
     ENSEMBLE_STATE_CANCELLED,
     ENSEMBLE_STATE_UNKNOWN,
@@ -52,6 +54,9 @@ from ert.ensemble_evaluator.state import (
 from ert.scheduler import JobState
 from ert.scheduler.job import Job
 from ert.scheduler.scheduler import Scheduler
+from ert.storage import Ensemble
+from ert.warnings import PostSimulationWarning
+from .conftest import make_ee_config_fixture
 
 from .ensemble_evaluator_utils import TestEnsemble
 
@@ -293,6 +298,7 @@ async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
                 break
 
 
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(
     num_cpu=st.integers(min_value=1, max_value=64),
     start=st.datetimes(),
@@ -304,8 +310,16 @@ def test_overspent_cpu_is_logged(
     start: datetime.datetime,
     duration: int,
     cpu_seconds: float,
+    evaluator_to_use,
+    caplog,
+    monkeypatch,
 ):
-    message = detect_overspent_cpu(
+    caplog.set_level(logging.WARNING)
+    evaluator, _ = evaluator_to_use
+
+    monkeypatch.setattr(TestEnsemble, "queue_system", QueueSystem.LSF)
+
+    evaluator.detect_overspent_cpu(
         num_cpu,
         "dummy",
         FMStepSnapshot(
@@ -314,10 +328,13 @@ def test_overspent_cpu_is_logged(
             cpu_seconds=cpu_seconds,
         ),
     )
+
+    message = caplog.text
     if duration > 30 and cpu_seconds / duration > num_cpu * 1.05:
         assert "Misconfigured NUM_CPU" in message
     else:
         assert "NUM_CPU" not in message
+    caplog.clear()
 
 
 @pytest.mark.integration_test
