@@ -6,6 +6,7 @@ import threading
 import traceback
 from collections import defaultdict
 from collections.abc import Awaitable, Callable, Iterable, Sequence
+from math import ceil
 from typing import Any, cast, get_args
 
 import zmq.asyncio
@@ -74,6 +75,7 @@ class EnsembleEvaluator:
     # has misconfigured NUM_CPU in their config.
     ALLOWED_CPU_OVERSPENDING = 1.05
     MINIMUM_WALLTIME_SECONDS = 30  # Information is only polled every 5 sec
+    CPU_OVERSPENDING_WARNING_THRESHOLD = 1.50
 
     def __init__(
         self,
@@ -129,6 +131,8 @@ class EnsembleEvaluator:
             submit_sleep=self.ensemble._queue_config.submit_sleep,
             ens_id=self.ensemble.id_,
         )
+        self.highest_parallelization_obtained: float = 0
+        self.cpu_violation_warnings_msg: str = ""
 
     async def _publisher(self) -> None:
         heartbeat_interval = 0.1
@@ -657,6 +661,9 @@ class EnsembleEvaluator:
         """Produces a message warning about misconfiguration of NUM_CPU if
         so is detected. Returns an empty string if everything is ok."""
         allowed_overspending = self.ALLOWED_CPU_OVERSPENDING * num_cpu
+        overspending_warning_threshold = (
+            self.CPU_OVERSPENDING_WARNING_THRESHOLD * num_cpu
+        )
 
         start_time = fm_step.get(ids.START_TIME)
 
@@ -680,3 +687,18 @@ class EnsembleEvaluator:
                 f"with wall clock duration {duration:.1f} seconds, a factor of "
                 f"{parallelization_obtained:.2f}, while NUM_CPU was {num_cpu}."
             )
+            if (
+                parallelization_obtained > overspending_warning_threshold
+                and parallelization_obtained > self.highest_parallelization_obtained
+            ):
+                self.highest_parallelization_obtained = parallelization_obtained
+                self.cpu_violation_warnings_msg = (
+                    "Over usage of CPUs detected!\n"
+                    f"Your experiment has used up to {ceil(parallelization_obtained)} "
+                    f"CPUs in step '{fm_step.get(ids.NAME)}', "
+                    f"while the Ert config has only requested {num_cpu}.\n"
+                    f"This means your experiment is hogging resources you did not "
+                    f"request.\n"
+                    f"We kindly ask you to set "
+                    f"NUM_CPU={ceil(parallelization_obtained)} in your Ert config."
+                )

@@ -3,6 +3,7 @@ import math
 import os
 import re
 import uuid
+import warnings
 from logging import Logger
 from pathlib import Path
 from queue import SimpleQueue
@@ -18,6 +19,7 @@ from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.plugins import ErtRuntimePlugins
 from ert.run_models.run_model import RunModel, UserCancelled
+from ert.warnings import PostSimulationWarning
 
 
 @pytest.fixture(autouse=True)
@@ -438,6 +440,7 @@ async def test_terminate_in_post_evaluation(evaluator, use_tmpdir):
     async def mocked_run_and_get_successful_realizations() -> list[int]:
         return list(range(5))
 
+    evaluator.return_value.highest_parallelization_obtained = 0
     evaluator().run_and_get_successful_realizations = (
         mocked_run_and_get_successful_realizations
     )
@@ -651,3 +654,63 @@ def test_that_defaulted_user_queue_options_overrides_site_queue_options(use_tmpd
     assert user_queue_config.queue_options.submit_sleep == 0
     assert user_queue_config.queue_options.num_cpu == 1
     assert user_queue_config.queue_options.realization_memory == 0
+
+
+@patch("ert.run_models.run_model.EnsembleEvaluator")
+async def test_run_model_stores_largest_cpu_overspending_from_ensemble_evaluators(
+    evaluator, use_tmpdir
+):
+    async def mocked_run_and_get_successful_realizations() -> list[int]:
+        return list(range(5))
+
+    async def mocked_wait_for_evaluation_result() -> bool:
+        return True
+
+    evaluator().wait_for_evaluation_result = mocked_wait_for_evaluation_result
+    evaluator().run_and_get_successful_realizations = (
+        mocked_run_and_get_successful_realizations
+    )
+
+    brm = create_run_model()
+
+    evaluator.return_value.highest_parallelization_obtained = 0
+    await brm.run_ensemble_evaluator_async(AsyncMock(), AsyncMock(), AsyncMock())
+    assert brm._highest_evaluator_parallelization == 0
+
+    evaluator.return_value.highest_parallelization_obtained = 10
+    await brm.run_ensemble_evaluator_async(AsyncMock(), AsyncMock(), AsyncMock())
+    assert brm._highest_evaluator_parallelization == 10
+
+    evaluator.return_value.highest_parallelization_obtained = 1
+    await brm.run_ensemble_evaluator_async(AsyncMock(), AsyncMock(), AsyncMock())
+    assert brm._highest_evaluator_parallelization == 10
+
+
+@patch("ert.run_models.run_model.EnsembleEvaluator")
+def test_run_model_warns_about_cpu_over_spending_as_post_simulation_warning(
+    evaluator, use_tmpdir, caplog
+):
+    async def mocked_run_and_get_successful_realizations() -> list[int]:
+        return list(range(5))
+
+    async def mocked_wait_for_evaluation_result() -> bool:
+        return True
+
+    evaluator().wait_for_evaluation_result = mocked_wait_for_evaluation_result
+    evaluator().run_and_get_successful_realizations = (
+        mocked_run_and_get_successful_realizations
+    )
+
+    brm = create_run_model()
+    brm.queue_config.queue_system = MagicMock()
+
+    evaluator.return_value.highest_parallelization_obtained = 5
+    evaluator.return_value.cpu_violation_warnings_msg = "FooBar"
+
+    with warnings.catch_warnings(record=True) as W:
+        brm._evaluate_and_postprocess(AsyncMock(), AsyncMock(), AsyncMock())
+        assert any(isinstance(w.message, PostSimulationWarning) for w in W)
+        assert any(
+            evaluator.return_value.cpu_violation_warnings_msg in str(w.message)
+            for w in W
+        )
