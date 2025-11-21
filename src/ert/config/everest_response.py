@@ -11,13 +11,15 @@ from .response_config import InvalidResponseFile, ResponseConfig, ResponseMetada
 from .responses_index import responses_index
 
 
-class EverestObjectivesConfig(ResponseConfig):
-    type: Literal["everest_objectives"] = "everest_objectives"
-    name: str = "everest_objectives"
+class EverestResponse(ResponseConfig):
+    """Base class for Everest response configurations."""
+
     has_finalized_keys: bool = True
-    weights: list[float | None]
     scales: list[float | None]
-    objective_types: list[Literal["mean", "stddev"]]
+
+    @property
+    def primary_key(self) -> list[str]:
+        return []
 
     @property
     def metadata(self) -> list[ResponseMetadata]:
@@ -34,6 +36,10 @@ class EverestObjectivesConfig(ResponseConfig):
     @property
     def expected_input_files(self) -> list[str]:
         return self.input_files
+
+    @property
+    def response_type(self) -> str:
+        return self.name
 
     @classmethod
     def from_config_dict(cls, config_dict: ConfigDict) -> Self:
@@ -52,7 +58,6 @@ class EverestObjectivesConfig(ResponseConfig):
             )
 
         errors = []
-
         run_path_ = Path(run_path)
         datasets_per_name = []
 
@@ -86,13 +91,23 @@ class EverestObjectivesConfig(ResponseConfig):
         combined = pl.concat(datasets_per_name)
         return combined
 
-    @property
-    def response_type(self) -> str:
-        return "everest_objectives"
 
-    @property
-    def primary_key(self) -> list[str]:
-        return []
+class EverestConstraintsConfig(EverestResponse):
+    type: Literal["everest_constraints"] = "everest_constraints"
+    name: str = "everest_constraints"
+    targets: list[float | None]
+    upper_bounds: list[float]
+    lower_bounds: list[float]
+
+
+responses_index.add_response_type(EverestConstraintsConfig)
+
+
+class EverestObjectivesConfig(EverestResponse):
+    type: Literal["everest_objectives"] = "everest_objectives"
+    name: str = "everest_objectives"
+    weights: list[float | None]
+    objective_types: list[Literal["mean", "stddev"]]
 
 
 responses_index.add_response_type(EverestObjectivesConfig)
