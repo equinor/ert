@@ -16,6 +16,7 @@ from ert.config import (
     Field,
     ForwardModelStep,
     GenKwConfig,
+    ParameterCardinality,
     ParameterConfig,
     SurfaceConfig,
 )
@@ -109,16 +110,28 @@ def _generate_parameter_files(
         Returns the union of parameters returned by write_to_runpath for each
         parameter_config.
     """
+    # preload scalar parameters for this realization
+    keys = [
+        p.name
+        for p in parameter_configs
+        if p.cardinality == ParameterCardinality.multiple_configs_per_ensemble_dataset
+    ]
+    scalar_data: dict[str, float | str] = {}
+    if keys:
+        df = fs._load_scalar_keys(keys=keys, realizations=iens, transformed=True)
+        scalar_data = df.to_dicts()[0]
     exports: dict[str, dict[str, float | str]] = {}
-
     for param in parameter_configs:
         # For the first iteration we do not write the parameter
         # to run path, as we expect to read if after the forward
         # model has completed.
         if param.forward_init and iteration == 0:
             continue
-
-        export_values = param.write_to_runpath(Path(run_path), iens, fs)
+        export_values: dict[str, dict[str, float | str]] | None = None
+        if param.name in scalar_data:
+            export_values = {param.group_name: {param.name: scalar_data[param.name]}}
+        else:
+            export_values = param.write_to_runpath(Path(run_path), iens, fs)
         if export_values:
             for group, vals in export_values.items():
                 exports.setdefault(group, {}).update(vals)
