@@ -110,18 +110,12 @@ def _generate_parameter_files(
     """
     exports: dict[str, dict[str, float | str]] = {}
 
-    exported_gen_kw_groups = set()
     for param in parameter_configs:
         # For the first iteration we do not write the parameter
         # to run path, as we expect to read if after the forward
         # model has completed.
         if param.forward_init and iteration == 0:
             continue
-        if isinstance(param, GenKwConfig):
-            if param.group_name in exported_gen_kw_groups:
-                continue
-            else:
-                exported_gen_kw_groups.add(param.group_name)
 
         export_values = param.write_to_runpath(Path(run_path), iens, fs)
         if export_values:
