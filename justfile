@@ -53,10 +53,10 @@ everest-tests:
     pytest -n 4 --benchmark-disable --dist loadgroup {{pytest_args}} tests/everest
 
 build-everest-docs:
-    sphinx-build -n -v -E -W ./docs/everest ./everest_docs
+    sphinx-build -v -E -W ./docs/everest ./everest_docs
 
 build-ert-docs:
-    sphinx-build -n -v -E -W ./docs/ert ./ert_docs
+    sphinx-build -v -E -W ./docs/ert ./ert_docs
 
 build-docs: build-ert-docs build-everest-docs
 
