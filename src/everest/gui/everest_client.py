@@ -128,7 +128,6 @@ class EverestClient:
             supports_rerunning_failed_realizations=False,
             start_simulations_thread=start_fn,
             cancel=self.stop,
-            get_runtime=self.get_runtime,
             has_failed_realizations=lambda: False,
         )
 

@@ -15,6 +15,7 @@ from ert.ensemble_evaluator.event import (
     EndEvent,
     FullSnapshotEvent,
     SnapshotUpdateEvent,
+    StartEvent,
     WarningEvent,
 )
 
@@ -90,16 +91,17 @@ StatusEvents = (
     AnalysisStatusEvent
     | AnalysisTimeEvent
     | EndEvent
-    | EverestStatusEvent
     | EverestBatchResultEvent
+    | EverestStatusEvent
     | FullSnapshotEvent
-    | SnapshotUpdateEvent
+    | RunModelDataEvent
     | RunModelErrorEvent
     | RunModelStatusEvent
     | RunModelTimeEvent
     | RunModelUpdateBeginEvent
-    | RunModelDataEvent
     | RunModelUpdateEndEvent
+    | SnapshotUpdateEvent
+    | StartEvent
     | WarningEvent
 )
 

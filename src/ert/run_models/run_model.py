@@ -69,7 +69,13 @@ from ert.workflow_runner import WorkflowRunner
 
 from ..run_arg import RunArg
 from ._create_run_path import create_run_path
-from .event import EndEvent, FullSnapshotEvent, SnapshotUpdateEvent, StatusEvents
+from .event import (
+    EndEvent,
+    FullSnapshotEvent,
+    SnapshotUpdateEvent,
+    StartEvent,
+    StatusEvents,
+)
 
 if TYPE_CHECKING:
     from ert.plugins import ErtRuntimePlugins
@@ -143,7 +149,6 @@ class RunModelAPI:
     supports_rerunning_failed_realizations: bool
     start_simulations_thread: StartSimulationsThreadFn
     cancel: Callable[[], None]
-    get_runtime: Callable[[], int]
     has_failed_realizations: Callable[[], bool]
 
 
@@ -166,8 +171,6 @@ class RunModel(BaseModelWithContextSupport, ABC):
     supports_rerunning_failed_realizations: ClassVar[bool] = False
 
     # Private attributes initialized in model_post_init
-    _start_time: int | None = PrivateAttr(None)
-    _stop_time: int | None = PrivateAttr(None)
     _initial_realizations_mask: list[bool] = PrivateAttr()
     _completed_realizations_mask: list[bool] = PrivateAttr(default_factory=list)
     _storage: Storage = PrivateAttr()
@@ -212,7 +215,6 @@ class RunModel(BaseModelWithContextSupport, ABC):
     def api(self) -> RunModelAPI:
         return RunModelAPI(
             experiment_name=self.name(),
-            get_runtime=self.get_runtime,
             start_simulations_thread=self.start_simulations_thread,
             has_failed_realizations=self.has_failed_realizations,
             supports_rerunning_failed_realizations=self.supports_rerunning_failed_realizations,
@@ -396,9 +398,9 @@ class RunModel(BaseModelWithContextSupport, ABC):
         def handle_captured_event(message: Warning | str) -> None:
             self.send_event(WarningEvent(msg=str(message)))
 
+        start_time = time.time()
         try:
-            self._start_time = int(time.time())
-            self._stop_time = None
+            self.send_event(StartEvent())
             with (
                 capture_specific_warning(PostSimulationWarning, handle_captured_event),
                 captured_logs(error_messages),
@@ -453,7 +455,6 @@ class RunModel(BaseModelWithContextSupport, ABC):
         finally:
             self._storage.close()
             self._clean_env_context()
-            self._stop_time = int(time.time())
             self.send_event(
                 EndEvent(
                     failed=failed,
@@ -468,6 +469,7 @@ class RunModel(BaseModelWithContextSupport, ABC):
                     ),
                 )
             )
+            logger.info(f"Experiment run finished in: {time.time() - start_time:g}s")
 
     @abstractmethod
     def run_experiment(
@@ -488,13 +490,6 @@ class RunModel(BaseModelWithContextSupport, ABC):
         if traceback is None:
             return f"{exception}\n{msg}"
         return f"{exception}\n{traceback}\n{msg}"
-
-    def get_runtime(self) -> int:
-        if self._start_time is None:
-            return 0
-        elif self._stop_time is None:
-            return round(time.time() - self._start_time)
-        return self._stop_time - self._start_time
 
     def get_current_status(self) -> dict[str, int]:
         status: dict[str, int] = defaultdict(int)
@@ -818,7 +813,6 @@ class RunModel(BaseModelWithContextSupport, ABC):
             f"Experiment run ended with number of realizations failing: "
             f"{len(starting_realizations) - num_successful_realizations}"
         )
-        logger.info(f"Experiment run finished in: {self.get_runtime()}s")
         self.run_workflows(
             fixtures=PostSimulationFixtures(
                 storage=self._storage,

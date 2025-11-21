@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from pathlib import Path
 from queue import SimpleQueue
 from typing import assert_never, cast
@@ -35,6 +36,7 @@ from ert.ensemble_evaluator import (
     EndEvent,
     FullSnapshotEvent,
     SnapshotUpdateEvent,
+    StartEvent,
     WarningEvent,
 )
 from ert.ensemble_evaluator import identifiers as ids
@@ -258,6 +260,7 @@ class RunDialog(QFrame):
         self._fm_step_label.setObjectName("fm_step_label")
         self._fm_step_overview = FMStepOverview(self._snapshot_model, self)
 
+        self._start_time: float | None = None
         self.running_time = QLabel("Running time:\n -")
         self.running_time.setMinimumWidth(150)
         self.queue_system = QLabel("")
@@ -524,9 +527,11 @@ class RunDialog(QFrame):
 
     @Slot()
     def _on_ticker(self) -> None:
-        runtime = self._run_model_api.get_runtime()
-        running_time = f"Running time: {humanize.precisedelta(runtime)}"
-        self.running_time.setText(running_time[0:14] + "\n" + running_time[14:])
+        if self._start_time:
+            humanized_runtime = humanize.precisedelta(
+                time.time() - self._start_time, minimum_unit="seconds", format="%d"
+            )
+            self.running_time.setText(f"Running time:\n{humanized_runtime}")
 
         maximum_memory_usage = self._snapshot_model.root.max_memory_usage
 
@@ -543,6 +548,8 @@ class RunDialog(QFrame):
     def _on_event(self, event: object) -> None:
         model = self._snapshot_model
         match event:
+            case StartEvent():
+                self._start_time = time.time()
             case EndEvent(failed=failed, msg=msg):
                 self.simulation_done.emit(failed, msg)
                 self._ticker.stop()
