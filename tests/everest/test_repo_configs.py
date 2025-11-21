@@ -1,8 +1,8 @@
 import os
 
 import pytest
+from ropt.workflow import find_optimizer_plugin
 
-from ert.config import get_ropt_plugin_manager
 from everest.config_file_loader import yaml_file_to_substituted_config_dict
 
 
@@ -43,9 +43,7 @@ def test_all_repo_configs():
     config_files = [fn for cdir in config_folders for fn in _get_all_files(cdir)]
     config_files = filter(is_config, config_files)
 
-    try:
-        get_ropt_plugin_manager().get_plugin("optimizer", "scipy/default")
-    except ValueError:
+    if find_optimizer_plugin("scipy/default") is None:
         config_files = [f for f in config_files if "scipy" not in f]
 
     config_files = list(config_files)
