@@ -24,7 +24,12 @@ import numpy as np
 from pydantic import PrivateAttr, field_validator
 from pydantic_core.core_schema import ValidationInfo
 
-from _ert.events import EEEvent, EESnapshot, EESnapshotUpdate
+from _ert.events import (
+    EEEvent,
+    EESnapshot,
+    EESnapshotUpdate,
+    EnsembleEvaluationWarningEvent,
+)
 from ert.base_model_context import BaseModelWithContextSupport
 from ert.config import (
     ConfigValidationError,
@@ -564,7 +569,7 @@ class RunModel(BaseModelWithContextSupport, ABC):
 
     def forward_event_from_ee(
         self,
-        event: EEEvent,
+        event: EEEvent | EnsembleEvaluationWarningEvent,
         iteration: int,
     ) -> None:
         if type(event) is EESnapshot:
@@ -609,6 +614,8 @@ class RunModel(BaseModelWithContextSupport, ABC):
                     snapshot=copy.deepcopy(snapshot),
                 )
             )
+        elif type(event) is EnsembleEvaluationWarningEvent:
+            self.send_event(event)
 
     async def run_ensemble_evaluator_async(
         self,
