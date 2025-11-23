@@ -70,6 +70,11 @@ class EnsembleEvaluator:
     BATCHING_INTERVAL = 0.5
     DEFAULT_SLEEP_PERIOD = 0.1
 
+    # These properties help us determine whether the user
+    # has misconfigured NUM_CPU in their config.
+    ALLOWED_CPU_OVERSPENDING = 1.05
+    MINIMUM_WALLTIME_SECONDS = 30  # Information is only polled every 5 sec
+
     def __init__(
         self,
         ensemble: Ensemble,
@@ -651,8 +656,7 @@ class EnsembleEvaluator:
     ) -> None:
         """Produces a message warning about misconfiguration of NUM_CPU if
         so is detected. Returns an empty string if everything is ok."""
-        allowed_overspending = 1.05 * num_cpu
-        minimum_wallclock_time_seconds = 30  # Information is only polled every 5 sec
+        allowed_overspending = self.ALLOWED_CPU_OVERSPENDING * num_cpu
 
         start_time = fm_step.get(ids.START_TIME)
 
@@ -661,7 +665,7 @@ class EnsembleEvaluator:
             return
 
         duration = (end_time - start_time).total_seconds()
-        if duration <= minimum_wallclock_time_seconds:
+        if duration <= self.MINIMUM_WALLTIME_SECONDS:
             return
 
         cpu_seconds = fm_step.get(ids.CPU_SECONDS) or 0.0
