@@ -8,9 +8,8 @@ from unittest.mock import MagicMock
 
 import pytest
 import zmq.asyncio
-from hypothesis import given, settings, HealthCheck
+from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
-from jedi.common import monkeypatch
 from pydantic import ValidationError
 from pytest import MonkeyPatch
 
@@ -54,9 +53,6 @@ from ert.ensemble_evaluator.state import (
 from ert.scheduler import JobState
 from ert.scheduler.job import Job
 from ert.scheduler.scheduler import Scheduler
-from ert.storage import Ensemble
-from ert.warnings import PostSimulationWarning
-from .conftest import make_ee_config_fixture
 
 from .ensemble_evaluator_utils import TestEnsemble
 
@@ -330,7 +326,11 @@ def test_overspent_cpu_is_logged(
     )
 
     message = caplog.text
-    if duration > 30 and cpu_seconds / duration > num_cpu * 1.05:
+    if (
+        duration > EnsembleEvaluator.MINIMUM_WALLTIME_SECONDS
+        and cpu_seconds / duration
+        > num_cpu * EnsembleEvaluator.ALLOWED_CPU_OVERSPENDING
+    ):
         assert "Misconfigured NUM_CPU" in message
     else:
         assert "NUM_CPU" not in message
