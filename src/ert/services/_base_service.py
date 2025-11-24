@@ -1,3 +1,8 @@
+"""
+This file contains a more generic version of "ert services", and
+is scheduled for removal when WebvizErt is removed.
+"""
+
 from __future__ import annotations
 
 import contextlib
