@@ -106,7 +106,7 @@ class RFTConfig(ResponseConfig):
                 for expected in ["WELL", "DATE", "PROPERTIES"]:
                     if expected not in rft:
                         raise ConfigValidationError.with_context(
-                            f"Rft need to specify {expected}.", rft
+                            f"For RFT keyword {expected} must be specified.", rft
                         )
                 well = rft["WELL"]
                 props = [p.strip() for p in rft["PROPERTIES"].split(",")]
