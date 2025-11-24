@@ -37,10 +37,6 @@ class EverestResponse(ResponseConfig):
     def expected_input_files(self) -> list[str]:
         return self.input_files
 
-    @property
-    def response_type(self) -> str:
-        return self.name
-
     @classmethod
     def from_config_dict(cls, config_dict: ConfigDict) -> Self:
         raise NotImplementedError("Should only be directly initialized")

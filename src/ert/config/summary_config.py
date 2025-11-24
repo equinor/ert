@@ -73,10 +73,6 @@ class SummaryConfig(ResponseConfig):
         return df
 
     @property
-    def response_type(self) -> str:
-        return "summary"
-
-    @property
     def primary_key(self) -> list[str]:
         return ["time"]
 

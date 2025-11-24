@@ -1349,7 +1349,7 @@ async def _write_responses_to_storage(
     for config in response_configs:
         try:
             start_time = time.perf_counter()
-            logger.debug(f"Starting to load response: {config.response_type}")
+            logger.debug(f"Starting to load response: {config.type}")
             try:
                 if isinstance(config, SummaryConfig) and realization == 0:
                     _log_grid_contents(
@@ -1364,14 +1364,14 @@ async def _write_responses_to_storage(
                 continue
             await asyncio.sleep(0)
             logger.debug(
-                f"Loaded {config.response_type}",
+                f"Loaded {config.type}",
                 extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
             )
             start_time = time.perf_counter()
-            ensemble.save_response(config.response_type, ds, realization)
+            ensemble.save_response(config.type, ds, realization)
             await asyncio.sleep(0)
             logger.debug(
-                f"Saved {config.response_type} to storage",
+                f"Saved {config.type} to storage",
                 extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
             )
         except Exception as err:

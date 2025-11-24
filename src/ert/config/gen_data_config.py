@@ -217,10 +217,6 @@ class GenDataConfig(ResponseConfig):
         return None, None
 
     @property
-    def response_type(self) -> str:
-        return "gen_data"
-
-    @property
     def primary_key(self) -> list[str]:
         return ["report_step", "index"]
 
