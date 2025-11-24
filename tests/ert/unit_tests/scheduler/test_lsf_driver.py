@@ -91,7 +91,6 @@ def capturing_bsub(monkeypatch, tmp_path):
     )
 
 
-@pytest.mark.integration_test
 @pytest.mark.parametrize(
     "bjobs_script, bhist_script, exit_code",
     [
@@ -254,7 +253,6 @@ async def test_that_realization_memory_parameter_sets_bsub_rusage_option():
     assert "-R rusage[mem=1]" in Path("captured_bsub_args").read_text(encoding="utf-8")
 
 
-@pytest.mark.integration_test
 @pytest.mark.parametrize(
     "bsub_script, expectation",
     [
@@ -325,7 +323,6 @@ async def test_that_when_bsub_has_exit_code_1_its_output_is_in_the_error_message
     )
 
 
-@pytest.mark.integration_test
 @pytest.mark.timeout(10)
 @pytest.mark.parametrize(
     "mocked_iens2jobid, realizations_to_kill, "
@@ -851,7 +848,6 @@ async def test_parse_bhist(bhist_output, expected):
 empty_states = _parse_jobs_dict({})
 
 
-@pytest.mark.integration_test
 @pytest.mark.parametrize(
     "previous_bhist, bhist_output, expected_states",
     [

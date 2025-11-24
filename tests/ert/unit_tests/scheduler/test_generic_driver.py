@@ -155,7 +155,6 @@ async def test_repeated_submit_same_iens(driver: Driver, tmp_path, monkeypatch):
     assert Path("submissionrace").read_text(encoding="utf-8") == "submit2\n"
 
 
-@pytest.mark.integration_test
 @pytest.mark.flaky(reruns=5)
 async def test_kill_actually_kills(driver: Driver, tmp_path, pytestconfig, monkeypatch):
     monkeypatch.chdir(tmp_path)
