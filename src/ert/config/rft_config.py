@@ -61,11 +61,13 @@ class RFTConfig(ResponseConfig):
                     {
                         "response_key": [f"{well}:{time.isoformat()}:{prop}"],
                         "time": [time],
+                        "depth": [fetched[well, time]["DEPTH"]],
                         "values": [vals],
                     }
                 )
                 for (well, time), inner_dict in fetched.items()
                 for prop, vals in inner_dict.items()
+                if prop != "DEPTH"
             ]
         )
 

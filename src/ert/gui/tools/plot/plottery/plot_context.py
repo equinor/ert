@@ -47,6 +47,14 @@ class PlotContext:
         self._y_axis: str | None = None
         self._log_scale = False
 
+    @property
+    def inverted_axes(self) -> bool:
+        return self._plot_config.inverted_axes
+
+    @inverted_axes.setter
+    def inverted_axes(self, value: bool) -> None:
+        self._plot_config.inverted_axes = value
+
     def plotConfig(self) -> PlotConfig:
         return self._plot_config
 
@@ -92,6 +100,12 @@ class PlotContext:
                 f"Axis: '{value}' is not one of: {PlotContext.AXIS_TYPES}"
             )
         self._y_axis = value
+
+    def setXLabel(self, value: str) -> None:
+        self._plot_config.setXLabel(value)
+
+    def setYLabel(self, value: str) -> None:
+        self._plot_config.setYLabel(value)
 
     @property
     def log_scale(self) -> bool:

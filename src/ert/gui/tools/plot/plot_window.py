@@ -335,6 +335,14 @@ class PlotWindow(QMainWindow):
                     handle_exception(e)
                     plot_context.history_data = None
 
+            if (
+                key_def.response_metadata is not None
+                and key_def.response_metadata.response_type == "rft"
+            ):
+                plot_context.setXLabel(key.split(":")[-1])
+                plot_context.setYLabel("TVD")
+                plot_context.inverted_axes = True
+
             for data in ensemble_to_data_map.values():
                 data = data.T
 

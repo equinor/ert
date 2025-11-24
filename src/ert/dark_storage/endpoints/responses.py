@@ -116,7 +116,7 @@ def _extract_response_type_and_key(
 
 def data_for_response(
     ensemble: Ensemble, key: str, filter_on: dict[str, Any] | None = None
-) -> pd.DataFrame:
+) -> pd.DataFrame | pd.Series | None:
     response_key, response_type = _extract_response_type_and_key(
         key, ensemble.experiment.response_key_to_response_type
     )
@@ -133,13 +133,13 @@ def data_for_response(
         return pd.DataFrame()
 
     if response_type == "summary":
-        summary_data = ensemble.load_responses(
+        rft_data = ensemble.load_responses(
             response_key,
             tuple(realizations_with_responses),
         )
 
         df = (
-            summary_data.rename({"time": "Date", "realization": "Realization"})
+            rft_data.rename({"time": "Date", "realization": "Realization"})
             .drop("response_key")
             .to_pandas()
         )
@@ -150,6 +150,20 @@ def data_for_response(
         data = df.unstack(level="Date")
         data.columns = data.columns.droplevel(0)
         return data.astype(float)
+
+    if response_type == "rft":
+        return (
+            ensemble.load_responses(
+                response_key,
+                tuple(realizations_with_responses),
+            )
+            .rename({"realization": "Realization"})
+            .drop(["response_key", "time"])
+            .to_pandas()
+            .set_index(["Realization"])
+            .apply(lambda r: pd.Series(r["values"], index=r["depth"]), axis=1)
+            .reset_index(drop=True)
+        )
 
     if response_type == "gen_data":
         data = ensemble.load_responses(response_key, tuple(realizations_with_responses))
@@ -169,3 +183,4 @@ def data_for_response(
 
         except (ValueError, KeyError, ColumnNotFoundError):
             return pd.DataFrame()
+    return None
