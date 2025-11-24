@@ -7,7 +7,7 @@ import sys
 import threading
 from collections.abc import Mapping
 from inspect import Traceback
-from json.decoder import JSONDecodeError
+from json import JSONDecodeError
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from time import sleep
