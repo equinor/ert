@@ -133,13 +133,13 @@ def data_for_response(
         return pd.DataFrame()
 
     if response_type == "summary":
-        rft_data = ensemble.load_responses(
+        summary_data = ensemble.load_responses(
             response_key,
             tuple(realizations_with_responses),
         )
 
         df = (
-            rft_data.rename({"time": "Date", "realization": "Realization"})
+            summary_data.rename({"time": "Date", "realization": "Realization"})
             .drop("response_key")
             .to_pandas()
         )
