@@ -116,7 +116,7 @@ def _extract_response_type_and_key(
 
 def data_for_response(
     ensemble: Ensemble, key: str, filter_on: dict[str, Any] | None = None
-) -> pd.DataFrame | pd.Series | None:
+) -> pd.DataFrame | pd.Series:
     response_key, response_type = _extract_response_type_and_key(
         key, ensemble.experiment.response_key_to_response_type
     )
@@ -183,4 +183,4 @@ def data_for_response(
 
         except (ValueError, KeyError, ColumnNotFoundError):
             return pd.DataFrame()
-    return None
+    return pd.DataFrame()
