@@ -68,7 +68,6 @@ def test_that_get_nr_primary_components_is_according_to_theory(p, rho, seed):
 
 
 @pytest.mark.parametrize("nr_observations", [4, 7, 12])
-@pytest.mark.integration_test
 def test_that_correlated_and_independent_observations_are_grouped_separately(
     nr_observations,
 ):
@@ -183,7 +182,6 @@ def test_edge_cases_with_few_observations_return_default_values(nr_observations)
         (4, 6),
     ],
 )
-@pytest.mark.integration_test
 def test_main_correctly_separates_distinct_correlation_groups(
     nr_obs_group_a, nr_obs_group_b
 ):
