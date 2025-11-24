@@ -105,6 +105,8 @@ class LocalStorage(BaseMode):
             self.perform_migration()
 
         self.refresh()
+        if mode.can_write:
+            self._save_index()
 
     def check_migration_needed(self) -> bool:
         if self.version > _LOCAL_STORAGE_VERSION:
