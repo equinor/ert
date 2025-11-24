@@ -15,7 +15,7 @@ from .roff_io import export_roff, import_roff
 
 if TYPE_CHECKING:
     import numpy.typing as npt
-    import xtgeo  # type: ignore
+    import xtgeo
 
 _PathLike: TypeAlias = str | os.PathLike[str]
 
