@@ -557,7 +557,7 @@ class LocalStorage(BaseMode):
         Get a unique experiment name
 
         If an experiment with the given name exists an _0 is appended
-        or _n+1 where n is the the largest postfix found for the given experiment name
+        or _n+1 where n is the largest postfix found for the given experiment name
         """
         if not experiment_name:
             return self.get_unique_experiment_name("default")
