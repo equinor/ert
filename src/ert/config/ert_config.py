@@ -779,6 +779,15 @@ class ErtConfig(BaseModel):
             )
         return self
 
+    @model_validator(mode="after")
+    def log_ensemble_config_contents(self) -> Self:
+        all_parameters = self.parameter_configurations_with_design_matrix
+        parameter_type_count = Counter(parameter.type for parameter in all_parameters)
+        logger.info(
+            f"EnsembleConfig contains parameters of type {dict(parameter_type_count)}"
+        )
+        return self
+
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, ErtConfig):
             return False
