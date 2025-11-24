@@ -3,14 +3,14 @@ from __future__ import annotations
 import itertools
 import logging
 import os
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, Self, cast, overload
+from typing import TYPE_CHECKING, Any, Final, Literal, Self, cast, overload
 
 import networkx as nx
 import numpy as np
 import xarray as xr
-import xtgeo  # type: ignore
+import xtgeo
 from pydantic import field_serializer
 
 from ert.field_utils import (
@@ -258,10 +258,14 @@ class Field(ParameterConfig):
         from_data: npt.NDArray[np.float64],
         iens_active_index: npt.NDArray[np.int_],
     ) -> Iterator[tuple[int, xr.Dataset]]:
-        nx, ny, nz = self.ertbox_params.nx, self.ertbox_params.ny, self.ertbox_params.nz
+        dim_nx, dim_ny, dim_nz = (
+            self.ertbox_params.nx,
+            self.ertbox_params.ny,
+            self.ertbox_params.nz,
+        )
 
         for i, realization in enumerate(iens_active_index):
-            values = from_data[:, i].reshape((nx, ny, nz))
+            values = from_data[:, i].reshape((dim_nx, dim_ny, dim_nz))
             ds = xr.Dataset({"values": (["x", "y", "z"], values)})
             yield int(realization), ds
 
@@ -299,7 +303,7 @@ class Field(ParameterConfig):
             fill_value=np.nan,
         )
 
-    def load_parameter_graph(self) -> nx.Graph:  # type: ignore
+    def load_parameter_graph(self) -> nx.Graph[int]:
         parameter_graph = create_flattened_cube_graph(
             px=self.ertbox_params.nx, py=self.ertbox_params.ny, pz=self.ertbox_params.nz
         )
@@ -322,7 +326,7 @@ class Field(ParameterConfig):
         return self.ertbox_params.nz
 
 
-TRANSFORM_FUNCTIONS = {
+TRANSFORM_FUNCTIONS: Final[dict[str, Callable[[Any], Any]]] = {
     "LN": np.log,
     "LOG": np.log,
     "LN0": lambda v: np.log(v + 0.000001),
@@ -353,7 +357,7 @@ def field_transform(
 ) -> npt.NDArray[np.float32] | xr.DataArray:
     if transform_name is None:
         return data
-    return TRANSFORM_FUNCTIONS[transform_name](data)  # type: ignore
+    return TRANSFORM_FUNCTIONS[transform_name](data)
 
 
 def _field_truncate(data: npt.ArrayLike, min_: float | None, max_: float | None) -> Any:

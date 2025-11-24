@@ -770,8 +770,8 @@ def test_genkw_paramgraph_transformfn_node_correspondence():
 
     graph = config.load_parameter_graph()
 
-    data = nx.node_link_data(graph)
-    assert data["links"] == []
+    data = nx.node_link_data(graph, edges="edges")
+    assert data["edges"] == []
 
     assert data["nodes"] == [{"id": 0}]
 
