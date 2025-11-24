@@ -2729,3 +2729,19 @@ def test_that_multiple_rfts_are_parsed():
         "NAME1": {date(2020, 12, 13): ["PRESSURE", "SWAT"]},
         "NAME2": {date(2020, 12, 14): ["SOIL"]},
     }
+
+
+def test_that_rft_properties_can_be_given_with_spaces():
+    config = ErtConfig.from_file_contents(
+        """
+        NUM_REALIZATIONS 1
+        ECLBASE BASE
+
+        RFT WELL:NAME1 DATE:2020-12-13 "PROPERTIES:PRESSURE, SWAT"
+        """,
+    )
+    rft = config.ensemble_config.response_configs["rft"]
+    assert isinstance(rft, RFTConfig)
+    assert rft.data_to_read == {
+        "NAME1": {date(2020, 12, 13): ["PRESSURE", "SWAT"]},
+    }

@@ -109,7 +109,7 @@ class RFTConfig(ResponseConfig):
                             f"Rft need to specify {expected}.", rft
                         )
                 well = rft["WELL"]
-                props = rft["PROPERTIES"].split(",")
+                props = [p.strip() for p in rft["PROPERTIES"].split(",")]
                 time = date.fromisoformat(rft["DATE"])
                 declared_data[well][time] += props
             data_to_read = {
