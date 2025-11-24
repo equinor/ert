@@ -289,19 +289,13 @@ class LocalStorage(BaseMode):
 
     def close(self) -> None:
         """
-        Closes the storage and saves the index.
-        This method should be called to cleanly close the storage.
+        Closes the storage and saves the index
         """
-
         self._ensembles.clear()
         self._experiments.clear()
 
-        if not self.can_write:
-            return
-
-        self._save_index()
-
         if self.can_write:
+            self._save_index()
             self._release_lock()
 
     def _release_lock(self) -> None:
