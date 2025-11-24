@@ -8,12 +8,12 @@ from typing import Any, Literal
 import numpy.typing as npt
 import polars as pl
 from pydantic import Field
-from resfo_utilities import RFTReader
+from resfo_utilities import InvalidRFTError, RFTReader
 
 from ert.substitutions import substitute_runpath_name
 
 from .parsing import ConfigDict, ConfigKeys, ConfigValidationError, ConfigWarning
-from .response_config import ResponseConfig, ResponseMetadata
+from .response_config import InvalidResponseFile, ResponseConfig, ResponseMetadata
 from .responses_index import responses_index
 
 logger = logging.getLogger(__name__)
@@ -44,16 +44,29 @@ class RFTConfig(ResponseConfig):
 
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
         filename = substitute_runpath_name(self.input_files[0], iens, iter_)
+        if filename.lower().endswith(".data"):
+            # For backwards compatability, it is
+            # allowed to give REFCASE and ECLBASE both
+            # with and without .DATA extensions
+            filename = filename[:-5]
         fetched: dict[tuple[str, date], dict[str, npt.NDArray[Any]]] = defaultdict(dict)
-        with RFTReader.open(f"{run_path}/{filename}") as rft:
-            for entry in rft:
-                key = (entry.well, entry.date)
-                to_get = self.data_to_read.get(entry.well, {}).get(entry.date, [])
-                if to_get and "DEPTH" not in to_get:
-                    to_get.append("DEPTH")
-                for t in to_get:
-                    if t in entry:
-                        fetched[key][t] = entry[t]
+        try:
+            with RFTReader.open(f"{run_path}/{filename}") as rft:
+                for entry in rft:
+                    key = (entry.well, entry.date)
+                    to_get = self.data_to_read.get(entry.well, {}).get(entry.date, [])
+                    if to_get and "DEPTH" not in to_get:
+                        to_get.append("DEPTH")
+                    for t in to_get:
+                        if t in entry:
+                            fetched[key][t] = entry[t]
+        except (FileNotFoundError, InvalidRFTError) as err:
+            raise InvalidResponseFile(
+                f"Could not read RFT from {run_path}/{filename}: {err}"
+            ) from err
+
+        if not fetched:
+            return pl.DataFrame()
 
         return pl.concat(
             [
