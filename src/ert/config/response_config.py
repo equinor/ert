@@ -62,13 +62,6 @@ class ResponseConfig(BaseModel):
 
     @property
     @abstractmethod
-    def response_type(self) -> str:
-        """Label to identify what kind of response it is.
-        Must not overlap with that of other response configs."""
-        ...
-
-    @property
-    @abstractmethod
     def primary_key(self) -> list[str]:
         """Primary key of this response data.
         For example 'time' for summary and ['index','report_step'] for gen data"""

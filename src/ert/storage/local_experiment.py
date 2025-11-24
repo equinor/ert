@@ -193,9 +193,7 @@ class LocalExperiment(BaseMode):
 
         response_data = {}
         for response in responses or []:
-            response_data.update(
-                {response.response_type: response.model_dump(mode="json")}
-            )
+            response_data.update({response.type: response.model_dump(mode="json")})
         storage._write_transaction(
             path / cls._responses_file,
             json.dumps(response_data, default=str, indent=2).encode("utf-8"),
@@ -412,7 +410,7 @@ class LocalExperiment(BaseMode):
 
         for data in self.response_info.values():
             response_instance = _responses_adapter.validate_python(data)
-            responses[response_instance.response_type] = response_instance
+            responses[response_instance.type] = response_instance
 
         return responses
 
@@ -445,7 +443,7 @@ class LocalExperiment(BaseMode):
         mapping = {}
         for config in self.response_configuration.values():
             for key in config.keys if config.has_finalized_keys else []:
-                mapping[key] = config.response_type
+                mapping[key] = config.type
 
         return mapping
 
@@ -497,7 +495,7 @@ class LocalExperiment(BaseMode):
             self._path / self._responses_file,
             json.dumps(
                 {
-                    c.response_type: c.model_dump(mode="json")
+                    c.type: c.model_dump(mode="json")
                     for c in responses_configuration.values()
                 },
                 default=str,

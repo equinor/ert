@@ -1601,7 +1601,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         except Exception as e:  # no match in keys
             assume(False)
             raise AssertionError from e
-        storage_ensemble.save_response(summary.response_type, ds, self.iens_to_edit)
+        storage_ensemble.save_response(summary.type, ds, self.iens_to_edit)
 
         model_ensemble.response_values[summary.name] = ds
 

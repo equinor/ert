@@ -71,7 +71,7 @@ def test_data_for_response_gives_mean_for_duplicate_values(tmp_path):
         smspec.to_file(tmp_path / "CASE.SMSPEC")
         unsmry.to_file(tmp_path / "CASE.UNSMRY")
         ds = summary_config.read_from_file(tmp_path, 0, 0)
-        ensemble.save_response(summary_config.response_type, ds, 0)
+        ensemble.save_response(summary_config.type, ds, 0)
         df = data_for_response(ensemble, "NRPPR:WELLNAME")
         assert list(df.columns) == [pd.Timestamp("2014-01-16 05:00:00")]
         assert df[pd.Timestamp("2014-01-16 05:00:00")][0] == pytest.approx(

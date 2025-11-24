@@ -166,8 +166,8 @@ def _manifest_to_json(ensemble: Ensemble, iens: int, iter_: int) -> dict[str, An
     # Add expected response files to manifest
     for response_config in ensemble.experiment.response_configuration.values():
         for input_file in response_config.expected_input_files:
-            manifest[f"{response_config.response_type}_{input_file}"] = (
-                substitute_runpath_name(input_file, iens, iter_)
+            manifest[f"{response_config.type}_{input_file}"] = substitute_runpath_name(
+                input_file, iens, iter_
             )
 
     return manifest
