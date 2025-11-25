@@ -194,7 +194,7 @@ class RunModel(BaseModelWithContextSupport, ABC):
         if _total_iterations is not None:
             self._total_iterations = _total_iterations
 
-        self._highest_evaluator_parallelization: float = 0
+        self._highest_violating_evaluator_parallelization: float = 0
         self._cpu_violation_warning_msg: str = ""
 
     def model_post_init(self, ctx: Any) -> None:
@@ -644,11 +644,12 @@ class RunModel(BaseModelWithContextSupport, ABC):
             await evaluator_task
 
         if (
-            evaluator.highest_parallelization_obtained
-            > self._highest_evaluator_parallelization
+            evaluator.highest_violating_parallelization is not None
+            and evaluator.highest_violating_parallelization
+            > self._highest_violating_evaluator_parallelization
         ):
-            self._highest_evaluator_parallelization = (
-                evaluator.highest_parallelization_obtained
+            self._highest_violating_evaluator_parallelization = (
+                evaluator.highest_violating_parallelization
             )
             self._cpu_violation_warning_msg = evaluator.cpu_violation_warnings_msg
 

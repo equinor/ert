@@ -131,7 +131,7 @@ class EnsembleEvaluator:
             submit_sleep=self.ensemble._queue_config.submit_sleep,
             ens_id=self.ensemble.id_,
         )
-        self.highest_parallelization_obtained: float = 0
+        self.highest_violating_parallelization: float | None = None
         self.cpu_violation_warnings_msg: str = ""
 
     async def _publisher(self) -> None:
@@ -687,11 +687,11 @@ class EnsembleEvaluator:
                 f"with wall clock duration {duration:.1f} seconds, a factor of "
                 f"{parallelization_obtained:.2f}, while NUM_CPU was {num_cpu}."
             )
-            if (
-                parallelization_obtained > overspending_warning_threshold
-                and parallelization_obtained > self.highest_parallelization_obtained
+            if parallelization_obtained > overspending_warning_threshold and (
+                self.highest_violating_parallelization is None
+                or parallelization_obtained > self.highest_violating_parallelization
             ):
-                self.highest_parallelization_obtained = parallelization_obtained
+                self.highest_violating_parallelization = parallelization_obtained
                 self.cpu_violation_warnings_msg = (
                     "Overusage of CPUs detected!\n"
                     f"Your experiment has used up to {ceil(parallelization_obtained)} "

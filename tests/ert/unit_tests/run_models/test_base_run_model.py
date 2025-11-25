@@ -440,7 +440,7 @@ async def test_terminate_in_post_evaluation(evaluator, use_tmpdir):
     async def mocked_run_and_get_successful_realizations() -> list[int]:
         return list(range(5))
 
-    evaluator.return_value.highest_parallelization_obtained = 0
+    evaluator.return_value.highest_violating_parallelization = 0
     evaluator().run_and_get_successful_realizations = (
         mocked_run_and_get_successful_realizations
     )
@@ -673,17 +673,17 @@ async def test_run_model_stores_largest_cpu_overspending_from_ensemble_evaluator
 
     brm = create_run_model()
 
-    evaluator.return_value.highest_parallelization_obtained = 0
+    evaluator.return_value.highest_violating_parallelization = 0
     await brm.run_ensemble_evaluator_async(AsyncMock(), AsyncMock(), AsyncMock())
-    assert brm._highest_evaluator_parallelization == 0
+    assert brm._highest_violating_evaluator_parallelization == 0
 
-    evaluator.return_value.highest_parallelization_obtained = 10
+    evaluator.return_value.highest_violating_parallelization = 10
     await brm.run_ensemble_evaluator_async(AsyncMock(), AsyncMock(), AsyncMock())
-    assert brm._highest_evaluator_parallelization == 10
+    assert brm._highest_violating_evaluator_parallelization == 10
 
-    evaluator.return_value.highest_parallelization_obtained = 1
+    evaluator.return_value.highest_violating_parallelization = 1
     await brm.run_ensemble_evaluator_async(AsyncMock(), AsyncMock(), AsyncMock())
-    assert brm._highest_evaluator_parallelization == 10
+    assert brm._highest_violating_evaluator_parallelization == 10
 
 
 @patch("ert.run_models.run_model.EnsembleEvaluator")
@@ -704,7 +704,7 @@ def test_run_model_warns_about_cpu_over_spending_as_post_simulation_warning(
     brm = create_run_model()
     brm.queue_config.queue_system = MagicMock()
 
-    evaluator.return_value.highest_parallelization_obtained = 5
+    evaluator.return_value.highest_violating_parallelization = 5
     evaluator.return_value.cpu_violation_warnings_msg = "FooBar"
 
     with warnings.catch_warnings(record=True) as W:
