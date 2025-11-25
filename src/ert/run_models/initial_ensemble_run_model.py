@@ -1,4 +1,3 @@
-from abc import ABC
 from typing import Annotated, Any, Literal, Self
 
 import numpy as np
@@ -15,15 +14,16 @@ from ert.config import (
 from ert.config import Field as FieldConfig
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.run_arg import create_run_arguments
-from ert.run_models.run_model import RunModel
+from ert.run_models.run_model import RunModel, RunModelConfig
 from ert.sample_prior import sample_prior
 from ert.storage.local_ensemble import LocalEnsemble
-
 
 # https://github.com/pola-rs/polars/issues/13152#issuecomment-1864600078
 # PS: Serializing/deserializing schema is scheduled to be added to polars core,
 # ref https://github.com/pola-rs/polars/issues/20426
 # then this workaround can be omitted.
+
+
 def str_to_dtype(dtype_str: str) -> pl.DataType:
     dtype = eval(f"pl.{dtype_str}")
     if isinstance(dtype, DataTypeClass):
@@ -51,7 +51,7 @@ class DictEncodedDataFrame(BaseModel):
         )
 
 
-class InitialEnsembleRunModel(RunModel, ABC):
+class InitialEnsembleRunModelConfig(RunModelConfig):
     experiment_name: str
     design_matrix: DictEncodedDataFrame | None
     parameter_configuration: list[
@@ -62,26 +62,35 @@ class InitialEnsembleRunModel(RunModel, ABC):
     ]
     response_configuration: list[
         Annotated[
-            KnownResponseTypes,
+            (KnownResponseTypes),
             Field(discriminator="type"),
         ]
     ]
     ert_templates: list[tuple[str, str]]
-    observations: dict[str, DictEncodedDataFrame] | None
+    observations: dict[str, DictEncodedDataFrame] | None = None
 
     @field_validator("observations", mode="before")
+    @classmethod
     def make_dict_encoded_observations(
-        cls, v: dict[str, pl.DataFrame | DictEncodedDataFrame] | None
+        cls, v: dict[str, pl.DataFrame | DictEncodedDataFrame | dict[str, Any]] | None
     ) -> dict[str, DictEncodedDataFrame] | None:
         if v is None:
             return None
-        return {
-            k: df
-            if isinstance(df, DictEncodedDataFrame)
-            else DictEncodedDataFrame.from_polars(df)
-            for k, df in v.items()
-        }
 
+        encoded = {}
+        for k, df in v.items():
+            match df:
+                case DictEncodedDataFrame():
+                    encoded[k] = df
+                case pl.DataFrame():
+                    encoded[k] = DictEncodedDataFrame.from_polars(df)
+                case dict():
+                    encoded[k] = DictEncodedDataFrame.model_validate(df)
+
+        return encoded
+
+
+class InitialEnsembleRunModel(RunModel, InitialEnsembleRunModelConfig):
     def _sample_and_evaluate_ensemble(
         self,
         evaluator_server_config: EvaluatorServerConfig,

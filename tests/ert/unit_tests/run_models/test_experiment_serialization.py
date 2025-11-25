@@ -58,6 +58,7 @@ from ert.run_models import (
     MultipleDataAssimilation,
     create_model,
 )
+from ert.run_models.multiple_data_assimilation import MultipleDataAssimilationConfig
 from ert.storage import open_storage
 
 
@@ -323,7 +324,6 @@ def runmodel_args(draw, tmp_path_factory):
         "forward_model_steps": forward_model_step_list,
         "substitutions": substitutions,
         "hooked_workflows": hooked_workflows_dict,
-        "status_queue": queue.SimpleQueue(),  # runtime only
     }, runtime_plugins
 
 
@@ -354,7 +354,7 @@ def initial_ensemble_runmodels(draw, min_params: int = 1, max_params: int = 200)
             )
         ),
         "response_configuration": response_configs,
-        "observations": None,
+        "observations": {},
     }
 
 
@@ -391,7 +391,7 @@ def multidass(_):
     return {
         "restart_run": False,
         "prior_ensemble_id": None,
-        "weights": MultipleDataAssimilation.default_weights,
+        "weights": MultipleDataAssimilationConfig.default_weights,
     }
 
 
@@ -505,20 +505,23 @@ def test_that_deserializing_ensemble_experiment_is_the_inverse_of_serializing(
     tmp_path = tmp_path_factory.mktemp("deserializing_ensemble_experiment")
     baserunmodel_args, runtime_plugins = runmodel_args(data.draw, tmp_path_factory)
     note(f"Running in directory {tmp_path}")
-    with MonkeyPatch.context() as patch, use_runtime_plugins(runtime_plugins):
+    with (
+        MonkeyPatch.context() as patch,
+        use_runtime_plugins(runtime_plugins),
+    ):
         patch.chdir(tmp_path)
         warnings.simplefilter("ignore", category=ConfigWarning)
         runmodel = EnsembleExperiment(
             **(
                 baserunmodel_args
                 | ensemble_experiment_args
-                | _not_yet_serializable_args
+                | {"status_queue": queue.SimpleQueue()}
             )
         )
         runmodel._storage.close()
 
         runmodel_from_serialized = EnsembleExperiment.model_validate(
-            runmodel.model_dump(mode="json") | _not_yet_serializable_args
+            runmodel.model_dump(mode="json") | {"status_queue": queue.SimpleQueue()}
         )
 
         assert (
@@ -545,12 +548,17 @@ def test_that_deserializing_ensemble_smoother_is_the_inverse_of_serializing(
     with MonkeyPatch.context() as patch, use_runtime_plugins(runtime_plugins):
         patch.chdir(tmp_path)
         runmodel = EnsembleSmoother(
-            **(baserunmodel_args | initial_ensemble_args | update_runmodel_args)
+            **(
+                baserunmodel_args
+                | initial_ensemble_args
+                | update_runmodel_args
+                | {"status_queue": queue.SimpleQueue()}
+            ),
         )
         runmodel._storage.close()
 
         runmodel_from_serialized = EnsembleSmoother.model_validate(
-            runmodel.model_dump(mode="json") | _not_yet_serializable_args
+            runmodel.model_dump(mode="json") | {"status_queue": queue.SimpleQueue()}
         )
 
         assert (
@@ -577,12 +585,17 @@ def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serial
     with MonkeyPatch.context() as patch, use_runtime_plugins(runtime_plugins):
         patch.chdir(tmp_path)
         runmodel = EnsembleInformationFilter(
-            **(baserunmodel_args | initial_ensemble_args | update_runmodel_args)
+            **(
+                baserunmodel_args
+                | initial_ensemble_args
+                | update_runmodel_args
+                | {"status_queue": queue.SimpleQueue()}
+            ),
         )
         runmodel._storage.close()
 
         runmodel_from_serialized = EnsembleInformationFilter.model_validate(
-            runmodel.model_dump(mode="json") | _not_yet_serializable_args
+            runmodel.model_dump(mode="json") | {"status_queue": queue.SimpleQueue()}
         )
 
         assert (
@@ -616,21 +629,18 @@ def test_that_deserializing_esmda_is_the_inverse_of_serializing(
                 | initial_ensemble_args
                 | update_runmodel_args
                 | multidass_args
-            )
+            ),
+            status_queue=queue.SimpleQueue(),
         )
         runmodel._storage.close()
 
-        dumped = runmodel.model_dump(mode="json") | _not_yet_serializable_args
-
-        runmodel_from_serialized = MultipleDataAssimilation.model_validate(dumped)
-
-        assert (
-            runmodel_from_serialized.env_vars
-            == runtime_plugins.environment_variables | baserunmodel_args["env_vars"]
+        runmodel_from_serialized = MultipleDataAssimilation.model_validate(
+            runmodel.model_dump() | {"status_queue": queue.SimpleQueue()}
         )
-        assert runmodel_from_serialized.model_dump(mode="json") == runmodel.model_dump(
-            mode="json"
-        )
+
+    assert runmodel_from_serialized.model_dump(mode="json") == runmodel.model_dump(
+        mode="json"
+    )
 
 
 def _create_and_verify_runmodel_snapshot(config, snapshot, cli_args, case):

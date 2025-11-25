@@ -25,7 +25,6 @@ from pydantic import PrivateAttr, field_validator
 from pydantic_core.core_schema import ValidationInfo
 
 from _ert.events import EEEvent, EESnapshot, EESnapshotUpdate
-from ert.base_model_context import BaseModelWithContextSupport
 from ert.config import (
     ConfigValidationError,
     DesignMatrix,
@@ -67,6 +66,7 @@ from ert.utils import log_duration
 from ert.warnings import PostSimulationWarning, capture_specific_warning
 from ert.workflow_runner import WorkflowRunner
 
+from ..base_model_context import BaseModelWithContextSupport
 from ..run_arg import RunArg
 from ._create_run_path import create_run_path
 from .event import EndEvent, FullSnapshotEvent, SnapshotUpdateEvent, StatusEvents
@@ -147,7 +147,7 @@ class RunModelAPI:
     has_failed_realizations: Callable[[], bool]
 
 
-class RunModel(BaseModelWithContextSupport, ABC):
+class RunModelConfig(BaseModelWithContextSupport):
     storage_path: str
     runpath_file: Path
     user_config_file: Path
@@ -165,6 +165,8 @@ class RunModel(BaseModelWithContextSupport, ABC):
     minimum_required_realizations: int = 0
     supports_rerunning_failed_realizations: ClassVar[bool] = False
 
+
+class RunModel(RunModelConfig, ABC):
     # Private attributes initialized in model_post_init
     _start_time: int | None = PrivateAttr(None)
     _stop_time: int | None = PrivateAttr(None)
@@ -179,6 +181,7 @@ class RunModel(BaseModelWithContextSupport, ABC):
     _is_rerunning_failed_realizations: bool = PrivateAttr(False)
     _run_paths: Runpaths = PrivateAttr()
     _total_iterations: int = PrivateAttr(default=1)
+    _start_iteration: int = PrivateAttr(default=0)
 
     def __init__(
         self,
@@ -198,14 +201,14 @@ class RunModel(BaseModelWithContextSupport, ABC):
         self._completed_realizations_mask = [False] * len(self.active_realizations)
         self._storage = open_storage(self.storage_path, mode="w")
         self._rng = np.random.default_rng(self.random_seed)
-        self._model_config = self.runpath_config
+        self._start_iteration = self.start_iteration
 
         self._run_paths = Runpaths(
-            jobname_format=self._model_config.jobname_format_string,
-            runpath_format=self._model_config.runpath_format_string,
+            jobname_format=self.runpath_config.jobname_format_string,
+            runpath_format=self.runpath_config.runpath_format_string,
             filename=str(self.runpath_file),
             substitutions=self.substitutions,
-            eclbase=self._model_config.eclbase_format_string,
+            eclbase=self.runpath_config.eclbase_format_string,
         )
 
     @property
@@ -704,7 +707,8 @@ class RunModel(BaseModelWithContextSupport, ABC):
         run_paths = []
         active_realizations = np.where(self.active_realizations)[0]
         for iteration in range(
-            self.start_iteration, self._total_iterations + self.start_iteration
+            self._start_iteration,
+            self._total_iterations + self._start_iteration,
         ):
             run_paths.extend(self._run_paths.get_paths(active_realizations, iteration))
         return run_paths
@@ -772,7 +776,7 @@ class RunModel(BaseModelWithContextSupport, ABC):
             env_pr_fm_step=self.env_pr_fm_step,
             forward_model_steps=self.forward_model_steps,
             substitutions=self.substitutions,
-            parameters_file=self._model_config.gen_kw_export_name,
+            parameters_file=self.runpath_config.gen_kw_export_name,
             runpaths=self._run_paths,
             context_env=self._context_env,
         )

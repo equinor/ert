@@ -74,10 +74,16 @@ class OutputConstraintConfig(BaseModel, extra="forbid"):
     @model_validator(mode="before")
     @classmethod
     def validate_target_or_bounds(cls, values: dict[str, Any]) -> dict[str, Any]:
-        if "target" in values and ("lower_bound" in values or "upper_bound" in values):
+        if (values.get("target") is not None) and (
+            "lower_bound" in values or "upper_bound" in values
+        ):
             raise ValueError("Can not combine target and bounds")
         elif not any(
-            ("target" in values, "lower_bound" in values, "upper_bound" in values)
+            (
+                (values.get("target") is not None),
+                "lower_bound" in values,
+                "upper_bound" in values,
+            )
         ):
             raise ValueError("Must provide target or lower_bound/upper_bound")
         return values
