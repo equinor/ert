@@ -698,7 +698,7 @@ class EnsembleEvaluator:
                     f"CPUs in step '{fm_step.get(ids.NAME)}', "
                     f"while the Ert config has only requested {num_cpu}.\n"
                     f"This means your experiment is consuming more CPU-resources than "
-                    f"requested and will slow down other users experiments\n"
+                    f"requested and will slow down other users experiments.\n"
                     f"We kindly ask you to set "
                     f"NUM_CPU={ceil(parallelization_obtained)} in your Ert config."
                 )
