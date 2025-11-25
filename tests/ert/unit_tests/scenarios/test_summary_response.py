@@ -282,3 +282,44 @@ def test_reading_past_2263_is_ok(ert_config, storage, prior_ensemble):
             "time": datetime(2500, 9, 10, 0, 0),
         },
     ]
+
+
+def test_that_summary_observations_can_be_instantiated_with_coordinates(
+    tmpdir,
+):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        NUM_REALIZATIONS 3
+        ECLBASE ECLIPSE_CASE_%d
+        OBS_CONFIG observations
+        GEN_KW KW_NAME template.txt kw.txt prior.txt
+        RANDOM_SEED 1234
+        """
+        )
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("observations", "w", encoding="utf-8") as fh:
+            obs_config = dedent(
+                """
+                SUMMARY_OBSERVATION FOPR_1
+                {
+                VALUE   = 0.9;
+                ERROR   = 0.05;
+                DATE    = 2014-09-10;
+                KEY     = FOPR;
+                X       = 10;
+                Y       = 10;
+                Z       = 10;
+                };
+                """
+            )
+            fh.writelines(obs_config)
+        with open("template.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+        with open("prior.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD NORMAL 0 1")
+        ert_config = ErtConfig.from_file("config.ert")
+        summary_observations = ert_config.observations["summary"]
+
+        assert all(coordinate in summary_observations for coordinate in ["x", "y", "z"])

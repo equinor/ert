@@ -330,6 +330,9 @@ def _handle_summary_observation(
             "time": pl.Series([date]).dt.cast_time_unit("ms"),
             "observations": pl.Series([value], dtype=pl.Float32),
             "std": pl.Series([std_dev], dtype=pl.Float32),
+            "x": summary_dict.X,
+            "y": summary_dict.Y,
+            "z": summary_dict.Z,
         }
     )
 
