@@ -19,7 +19,7 @@ from ert.gui.tools.plot.plot_window import (
     STD_DEV,
     PlotWindow,
 )
-from ert.services import StorageService
+from ert.services import ErtServer
 from ert.storage import open_storage
 
 from .conftest import get_child, wait_for_child
@@ -62,7 +62,7 @@ def plot_figure(
     open_storage(storage_config.ens_path, mode="r")
     log_handler = GUILogHandler()
     with (
-        StorageService.init_service(
+        ErtServer.init_service(
             project=storage_config.ens_path,
         ),
     ):
@@ -144,7 +144,7 @@ def test_that_all_plotter_filter_boxes_yield_expected_filter_results(
 
     log_handler = GUILogHandler()
     with (
-        StorageService.init_service(
+        ErtServer.init_service(
             project=snake_oil_case_storage.ens_path,
         ),
     ):
