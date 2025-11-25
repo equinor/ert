@@ -101,14 +101,13 @@ class Runpaths:
         with open(self.runpath_list_filename, "w", encoding="utf-8") as filehandle:
             for iteration in iteration_numbers:
                 for realization in realization_numbers:
-                    job_name_or_eclbase = self.substitutions.substitute_real_iter(
+                    real_iter_substituter = self.substitutions.real_iter_substituter(
+                        realization, iteration
+                    )
+                    job_name_or_eclbase = real_iter_substituter.substitute(
                         self._eclbase or self._jobname_format,
-                        realization,
-                        iteration,
                     )
-                    runpath = self.substitutions.substitute_real_iter(
-                        self._runpath_format, realization, iteration
-                    )
+                    runpath = real_iter_substituter.substitute(self._runpath_format)
 
                     filehandle.write(
                         f"{realization:03d}  {runpath}  "

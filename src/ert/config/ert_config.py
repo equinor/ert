@@ -136,6 +136,7 @@ def create_forward_model_json(
         env_pr_fm_step = {}
 
     context_substitutions = Substitutions(context)
+    real_iter_substituter = context_substitutions.real_iter_substituter(iens, itr)
 
     class Substituter:
         def __init__(self, fm_step: ForwardModelStep) -> None:
@@ -149,7 +150,7 @@ def create_forward_model_json(
             )
             self.copy_private_args = Substitutions(
                 {
-                    key: context_substitutions.substitute_real_iter(val, iens, itr)
+                    key: real_iter_substituter.substitute(val)
                     for key, val in fm_step.private_args.items()
                 }
             )
@@ -166,7 +167,7 @@ def create_forward_model_json(
             string = self.copy_private_args.substitute(
                 string, self.substitution_context_hint, 1, warn_max_iter=False
             )
-            return context_substitutions.substitute_real_iter(string, iens, itr)
+            return real_iter_substituter.substitute(string)
 
         def filter_env_dict(self, env_dict: dict[str, str]) -> dict[str, str] | None:
             substituted_dict = {}

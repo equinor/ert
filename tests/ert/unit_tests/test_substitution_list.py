@@ -54,12 +54,15 @@ def test_that_define_and_data_kw_parameters_are_used_as_substitutions():
     assert substitutions["keyD"] == "valD"
 
 
-def test_that_parameters_as_magic_strings_are_substituted():
-    params: dict[str, dict[str, float | str]] = {
-        "GROUP1": {"a": 1.01},
-        "GROUP2": {"b": "value"},
-    }
-    to_substitute = "<a> and <b>"
-    assert (
-        Substitutions.substitute_parameters(to_substitute, params) == "1.01 and value"
-    )
+def test_that_delitem_will_remove_substitution():
+    substitutions = Substitutions({"<keyA>": "valA", "<keyB>": "valB"})
+    assert substitutions.substitute("<keyA><keyB>") == "valAvalB"
+    del substitutions["<keyA>"]
+    assert substitutions.substitute("<keyA><keyB>") == "<keyA>valB"
+
+
+def test_that_setitem_will_add_substitution():
+    substitutions = Substitutions({"<keyA>": "valA", "<keyB>": "valB"})
+    assert substitutions.substitute("<keyA><keyB><keyC>") == "valAvalB<keyC>"
+    substitutions["<keyC>"] = "valC"
+    assert substitutions.substitute("<keyA><keyB><keyC>") == "valAvalBvalC"

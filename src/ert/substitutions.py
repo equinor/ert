@@ -4,6 +4,7 @@ import logging
 import re
 from collections import UserDict
 from collections.abc import Mapping
+from typing import Self
 
 logger = logging.getLogger(__name__)
 _PATTERN = re.compile(r"<[^<>]+>")
@@ -25,31 +26,7 @@ class Substitutions(UserDict[str, str]):
         """
         return _substitute(self, to_substitute, context, max_iterations, warn_max_iter)
 
-    @staticmethod
-    def substitute_parameters(
-        to_substitute: str, parameter_values: Mapping[str, Mapping[str, str | float]]
-    ) -> str:
-        """Applies the substitution '<param_name>' to parameter value
-        Args:
-            parameter_values: Mapping from parameter name to parameter value
-            to_substitute: string to substitute magic strings in
-        Returns:
-            substituted string
-        """
-        for values in parameter_values.values():
-            for param_name, value in values.items():
-                if isinstance(value, (int, float)):
-                    formatted_value = f"{value:.6g}"
-                else:
-                    formatted_value = str(value)
-                to_substitute = to_substitute.replace(
-                    f"<{param_name}>", formatted_value
-                )
-        return to_substitute
-
-    def substitute_real_iter(
-        self, to_substitute: str, realization: int, iteration: int
-    ) -> str:
+    def real_iter_substituter(self, realization: int, iteration: int) -> Self:
         extra_data = {
             "<IENS>": str(realization),
             "<ITER>": str(iteration),
@@ -62,7 +39,14 @@ class Substitutions(UserDict[str, str]):
         if sim_id_key in self:
             extra_data["<SIM_DIR>"] = self[sim_id_key]
 
-        return Substitutions({**self, **extra_data}).substitute(to_substitute)
+        return type(self)({**self, **extra_data})
+
+    def substitute_real_iter(
+        self, to_substitute: str, realization: int, iteration: int
+    ) -> str:
+        return self.real_iter_substituter(realization, iteration).substitute(
+            to_substitute
+        )
 
     def _concise_representation(self) -> str:
         return (
