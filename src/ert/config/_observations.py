@@ -90,10 +90,13 @@ class _SummaryValues:
     name: str
     value: float
     key: str  #: The :term:`summary key` in the summary response
+    location_x: float | None = None
+    location_y: float | None = None
+    location_range: float | None = None
 
 
 @dataclass
-class SummaryObservation(ObservationDate, ObservationError, _SummaryValues):
+class SummaryObservation(ObservationDate, _SummaryValues, ObservationError):
     @classmethod
     def from_obs_dict(cls, directory: str, observation_dict: ObservationDict) -> Self:
         error_mode = ErrorModes.ABS
@@ -101,6 +104,7 @@ class SummaryObservation(ObservationDate, ObservationError, _SummaryValues):
 
         date_dict: ObservationDate = ObservationDate()
         float_values: dict[str, float] = {"ERROR_MIN": 0.1}
+        localization_values: dict[str, float] = {}
         for key, value in observation_dict.items():
             match key:
                 case "type" | "name":
@@ -121,6 +125,12 @@ class SummaryObservation(ObservationDate, ObservationError, _SummaryValues):
                     summary_key = value
                 case "DATE":
                     date_dict.date = value
+                case "LOCATION_X":
+                    localization_values["x"] = validate_float(value, key)
+                case "LOCATION_Y":
+                    localization_values["y"] = validate_float(value, key)
+                case "LOCATION_RANGE":
+                    localization_values["range"] = validate_float(value, key)
                 case _:
                     raise _unknown_key_error(str(key), observation_dict["name"])
         if "VALUE" not in float_values:
@@ -137,6 +147,9 @@ class SummaryObservation(ObservationDate, ObservationError, _SummaryValues):
             error_min=float_values["ERROR_MIN"],
             key=summary_key,
             value=float_values["VALUE"],
+            location_x=localization_values.get("x"),
+            location_y=localization_values.get("y"),
+            location_range=localization_values.get("range"),
             **date_dict.__dict__,
         )
 
