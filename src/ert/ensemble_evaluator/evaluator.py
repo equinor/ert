@@ -693,7 +693,7 @@ class EnsembleEvaluator:
             ):
                 self.highest_parallelization_obtained = parallelization_obtained
                 self.cpu_violation_warnings_msg = (
-                    "Over usage of CPUs detected!\n"
+                    "Overusage of CPUs detected!\n"
                     f"Your experiment has used up to {ceil(parallelization_obtained)} "
                     f"CPUs in step '{fm_step.get(ids.NAME)}', "
                     f"while the Ert config has only requested {num_cpu}.\n"
