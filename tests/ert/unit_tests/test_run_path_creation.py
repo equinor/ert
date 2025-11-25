@@ -19,13 +19,14 @@ from ert.config import (
 )
 from ert.plugins import get_site_plugins
 from ert.run_arg import create_run_arguments
-from ert.run_models._create_run_path import create_run_path
+from ert.run_models._create_run_path import _make_param_substituter, create_run_path
 from ert.runpaths import Runpaths
 from ert.sample_prior import sample_prior
 from ert.storage import (
     RealizationStorageState,
     load_realization_parameters_and_responses,
 )
+from ert.substitutions import Substitutions
 from tests.ert.unit_tests.config.summary_generator import simple_smspec, simple_unsmry
 
 
@@ -1049,3 +1050,16 @@ def test_that_contents_of_gridfile_is_logged(storage, caplog):
         " 'ENDGRID', 'FILEHEAD', 'GRIDHEAD', 'GRIDUNIT', 'ZCORN']",
     ):
         assert any(msg in record.message for record in caplog.records)
+
+
+def test_that_parameters_as_magic_strings_are_substituted():
+    assert (
+        _make_param_substituter(
+            Substitutions(),
+            {
+                "GROUP1": {"a": 1.01},
+                "GROUP2": {"b": "value"},
+            },
+        ).substitute("<a> and <b>")
+        == "1.01 and value"
+    )

@@ -5,6 +5,7 @@ import logging
 import os
 import time
 from collections.abc import Iterable, Mapping
+from copy import deepcopy
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -174,6 +175,21 @@ def _manifest_to_json(ensemble: Ensemble, iens: int, iter_: int) -> dict[str, An
     return manifest
 
 
+def _make_param_substituter(
+    substituter: Substitutions,
+    param_data: Mapping[str, Mapping[str, str | float]],
+) -> Substitutions:
+    param_substituter = deepcopy(substituter)
+    for values in param_data.values():
+        for param_name, value in values.items():
+            if isinstance(value, (int, float)):
+                formatted_value = f"{value:.6g}"
+            else:
+                formatted_value = str(value)
+            param_substituter[f"<{param_name}>"] = formatted_value
+    return param_substituter
+
+
 @log_duration(logger, logging.INFO)
 def create_run_path(
     run_args: list[RunArg],
@@ -211,25 +227,21 @@ def create_run_path(
                 ensemble.iteration,
             )
             timings["generate_parameter_files"] += time.perf_counter() - start_time
+            real_iter_substituter = substituter.real_iter_substituter(
+                run_arg.iens, ensemble.iteration
+            )
+            param_substituter = _make_param_substituter(
+                real_iter_substituter, param_data
+            )
             for (
                 source_file_content,
                 target_file,
             ) in ensemble.experiment.templates_configuration:
                 start_time = time.perf_counter()
-                target_file = substituter.substitute_real_iter(
-                    target_file, run_arg.iens, ensemble.iteration
-                )
-                result = substituter.substitute_real_iter(
-                    source_file_content,
-                    run_arg.iens,
-                    ensemble.iteration,
-                )
+                target_file = real_iter_substituter.substitute(target_file)
                 timings["substitute_real_iter"] += time.perf_counter() - start_time
                 start_time = time.perf_counter()
-                result = substituter.substitute_parameters(
-                    result,
-                    param_data,
-                )
+                result = param_substituter.substitute(source_file_content)
                 timings["substitute_parameters"] += time.perf_counter() - start_time
                 start_time = time.perf_counter()
                 target = run_path / target_file
