@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import fnmatch
 import logging
+import random
+import re
+import string
 from collections import defaultdict
 from datetime import date
 from typing import Any, Literal
@@ -19,11 +23,33 @@ from .responses_index import responses_index
 logger = logging.getLogger(__name__)
 
 
+_ALPHABET = list(set(string.punctuation) - set("_-*"))
+
+
+def _separator() -> str:
+    """Quick 'uuid' used for separator in matching rft keys"""
+    return "".join(random.choices(_ALPHABET, k=8))
+
+
+def _translate(pat: str) -> str:
+    """Translates fnmatch pattern to match anywhere"""
+    return fnmatch.translate(pat).replace("\\z", "").replace("\\Z", "")
+
+
+def _props_matcher(props: list[str]) -> str:
+    """Regex for matching given props _and_ DEPTH"""
+    pattern = f"({'|'.join(_translate(p) for p in props)})"
+    if re.fullmatch(pattern, "DEPTH") is None:
+        return f"({'|'.join(_translate(p) for p in [*props, 'DEPTH'])})"
+    else:
+        return pattern
+
+
 class RFTConfig(ResponseConfig):
     type: Literal["rft"] = "rft"
     name: str = "rft"
     has_finalized_keys: bool = False
-    data_to_read: dict[str, dict[date, list[str]]] = Field(default_factory=dict)
+    data_to_read: dict[str, dict[str, list[str]]] = Field(default_factory=dict)
 
     @property
     def metadata(self) -> list[ResponseMetadata]:
@@ -40,6 +66,12 @@ class RFTConfig(ResponseConfig):
     @property
     def expected_input_files(self) -> list[str]:
         base = self.input_files[0]
+        if base.lower().endswith(".data"):
+            # For backwards compatability, it is
+            # allowed to give REFCASE and ECLBASE both
+            # with and without .DATA extensions
+            base = base[:-5]
+
         return [f"{base}.RFT"]
 
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
@@ -50,16 +82,33 @@ class RFTConfig(ResponseConfig):
             # with and without .DATA extensions
             filename = filename[:-5]
         fetched: dict[tuple[str, date], dict[str, npt.NDArray[Any]]] = defaultdict(dict)
+        # This is a somewhat complicated optimization in order to
+        # support wildcards in well names, dates and properties
+        # A python for loop is too slow so we use a compiled regex
+        # instead
+        sep = _separator()
+        matcher = re.compile(
+            "|".join(
+                "("
+                + re.escape(sep).join(
+                    (
+                        _translate(well),
+                        _translate(time),
+                        _props_matcher(props),
+                    )
+                )
+                + ")"
+                for well, inner_dict in self.data_to_read.items()
+                for time, props in inner_dict.items()
+            )
+        )
         try:
             with RFTReader.open(f"{run_path}/{filename}") as rft:
                 for entry in rft:
-                    key = (entry.well, entry.date)
-                    to_get = self.data_to_read.get(entry.well, {}).get(entry.date, [])
-                    if to_get and "DEPTH" not in to_get:
-                        to_get.append("DEPTH")
-                    for t in to_get:
-                        if t in entry:
-                            fetched[key][t] = entry[t]
+                    for t in entry:
+                        key = f"{entry.well}{sep}{entry.date.isoformat()}{sep}{t}"
+                        if matcher.fullmatch(key) is not None:
+                            fetched[entry.well, entry.date][t] = entry[t]
         except (FileNotFoundError, InvalidRFTError) as err:
             raise InvalidResponseFile(
                 f"Could not read RFT from {run_path}/{filename}: {err}"
@@ -123,7 +172,7 @@ class RFTConfig(ResponseConfig):
                         )
                 well = rft["WELL"]
                 props = [p.strip() for p in rft["PROPERTIES"].split(",")]
-                time = date.fromisoformat(rft["DATE"])
+                time = rft["DATE"]
                 declared_data[well][time] += props
             data_to_read = {
                 well: {time: sorted(set(p)) for time, p in inner_dict.items()}
@@ -131,7 +180,7 @@ class RFTConfig(ResponseConfig):
             }
             keys = sorted(
                 {
-                    f"{well}:{time.isoformat()}:{p}"
+                    f"{well}:{time}:{p}"
                     for well, inner_dict in declared_data.items()
                     for time, props in inner_dict.items()
                     for p in props

@@ -2700,7 +2700,7 @@ def test_that_single_rft_is_parsed():
     assert rft.input_files == ["BASE"]
     assert rft.keys == ["NAME:2020-12-13:PRESSURE", "NAME:2020-12-13:SWAT"]
     assert not rft.has_finalized_keys
-    assert rft.data_to_read == {"NAME": {date(2020, 12, 13): ["PRESSURE", "SWAT"]}}
+    assert rft.data_to_read == {"NAME": {"2020-12-13": ["PRESSURE", "SWAT"]}}
 
 
 def test_that_multiple_rfts_are_parsed():
@@ -2726,8 +2726,8 @@ def test_that_multiple_rfts_are_parsed():
     }
     assert not rft.has_finalized_keys
     assert rft.data_to_read == {
-        "NAME1": {date(2020, 12, 13): ["PRESSURE", "SWAT"]},
-        "NAME2": {date(2020, 12, 14): ["SOIL"]},
+        "NAME1": {"2020-12-13": ["PRESSURE", "SWAT"]},
+        "NAME2": {"2020-12-14": ["SOIL"]},
     }
 
 
@@ -2743,5 +2743,5 @@ def test_that_rft_properties_can_be_given_with_spaces():
     rft = config.ensemble_config.response_configs["rft"]
     assert isinstance(rft, RFTConfig)
     assert rft.data_to_read == {
-        "NAME1": {date(2020, 12, 13): ["PRESSURE", "SWAT"]},
+        "NAME1": {"2020-12-13": ["PRESSURE", "SWAT"]},
     }
