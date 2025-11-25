@@ -340,11 +340,12 @@ def _all_parameters(
 ) -> npt.NDArray[np.float64]:
     """Return all parameters in assimilation problem"""
 
-    param_groups = list(ensemble.experiment.parameter_configuration.keys())
-
+    groups_to_update = [
+        k for k, v in ensemble.experiment.parameter_configuration.items() if v.update
+    ]
     param_arrays = [
         ensemble.load_parameters_numpy(param_group, iens_active_index)
-        for param_group in param_groups
+        for param_group in groups_to_update
     ]
 
     return np.vstack(param_arrays)
