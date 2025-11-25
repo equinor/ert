@@ -96,7 +96,7 @@ class _SummaryValues:
 
 
 @dataclass
-class SummaryObservation(ObservationDate, ObservationError, _SummaryValues):
+class SummaryObservation(ObservationDate, _SummaryValues, ObservationError):
     @classmethod
     def from_obs_dict(cls, directory: str, observation_dict: ObservationDict) -> Self:
         error_mode = ErrorModes.ABS
