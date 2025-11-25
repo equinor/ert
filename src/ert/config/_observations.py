@@ -90,9 +90,9 @@ class _SummaryValues:
     name: str
     value: float
     key: str  #: The :term:`summary key` in the summary response
-    LOC_X: float | None
-    LOC_Y: float | None
-    LOC_RANGE: float | None
+    LOC_X: float | None = None
+    LOC_Y: float | None = None
+    LOC_RANGE: float | None = None
 
 
 @dataclass
