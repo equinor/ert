@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import time
 from collections.abc import Iterable, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
@@ -189,12 +190,18 @@ def create_run_path(
     if context_env is None:
         context_env = {}
     runpaths.set_ert_ensemble(ensemble.name)
-
+    timings = {
+        "generate_parameter_files": 0.0,
+        "substitute_parameters": 0.0,
+        "substitute_real_iter": 0.0,
+        "result_file_to_target": 0.0,
+    }
     substituter = Substitutions(substitutions)
     for run_arg in run_args:
         run_path = Path(run_arg.runpath)
         if run_arg.active:
             run_path.mkdir(parents=True, exist_ok=True)
+            start_time = time.perf_counter()
             param_data = _generate_parameter_files(
                 ensemble.experiment.parameter_configuration.values(),
                 parameters_file,
@@ -203,10 +210,12 @@ def create_run_path(
                 ensemble,
                 ensemble.iteration,
             )
+            timings["generate_parameter_files"] += time.perf_counter() - start_time
             for (
                 source_file_content,
                 target_file,
             ) in ensemble.experiment.templates_configuration:
+                start_time = time.perf_counter()
                 target_file = substituter.substitute_real_iter(
                     target_file, run_arg.iens, ensemble.iteration
                 )
@@ -215,10 +224,14 @@ def create_run_path(
                     run_arg.iens,
                     ensemble.iteration,
                 )
+                timings["substitute_real_iter"] += time.perf_counter() - start_time
+                start_time = time.perf_counter()
                 result = substituter.substitute_parameters(
                     result,
                     param_data,
                 )
+                timings["substitute_parameters"] += time.perf_counter() - start_time
+                start_time = time.perf_counter()
                 target = run_path / target_file
                 if not target.parent.exists():
                     os.makedirs(
@@ -226,10 +239,13 @@ def create_run_path(
                         exist_ok=True,
                     )
                 target.write_text(result)
+                timings["result_file_to_target"] += time.perf_counter() - start_time
 
             path = run_path / "jobs.json"
+            start_time = time.perf_counter()
             _backup_if_existing(path)
-
+            timings["backup_if_existing"] = time.perf_counter() - start_time
+            start_time = time.perf_counter()
             forward_model_output = create_forward_model_json(
                 context=substitutions,
                 forward_model_steps=forward_model_steps,
@@ -246,12 +262,15 @@ def create_run_path(
                     option=orjson.OPT_NON_STR_KEYS | orjson.OPT_INDENT_2,
                 )
             )
+            timings["jobs_to_json"] = time.perf_counter() - start_time
             # Write MANIFEST file to runpath use to avoid NFS sync issues
+            start_time = time.perf_counter()
             data = _manifest_to_json(ensemble, run_arg.iens, run_arg.itr)
             Path(run_path / "manifest.json").write_bytes(
                 orjson.dumps(data, option=orjson.OPT_NON_STR_KEYS | orjson.OPT_INDENT_2)
             )
-
+            timings["manifest_to_json"] = time.perf_counter() - start_time
+    logger.info(f"_create_run_path durations: {timings}")
     runpaths.write_runpath_list(
         [ensemble.iteration], [real.iens for real in run_args if real.active]
     )
