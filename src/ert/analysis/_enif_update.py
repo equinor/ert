@@ -160,10 +160,14 @@ def analysis_EnIF(
         Y=S.T,
         verbose_level=5,
     )
-
+    updated_parameters = [
+        p
+        for p, config in source_ensemble.experiment.parameter_configuration.items()
+        if config.update
+    ]
     # Learn the precision matrix block-sparse over parameter groups
     Prec_u = sp.sparse.csc_matrix((0, 0), dtype=float)
-    for param_group in parameters:
+    for param_group in updated_parameters:
         config_node = source_ensemble.experiment.parameter_configuration[param_group]
         X_local = source_ensemble.load_parameters_numpy(param_group, iens_active_index)
         X_local_scaler = StandardScaler()
@@ -215,7 +219,7 @@ def analysis_EnIF(
 
     # Iterate over parameters to store the updated ensemble
     parameters_updated = 0
-    for param_group in parameters:
+    for param_group in updated_parameters:
         log_msg = f"Storing data for {param_group}.."
         logger.info(log_msg)
         progress_callback(AnalysisStatusEvent(msg=log_msg))
@@ -241,7 +245,7 @@ def analysis_EnIF(
         )
     _copy_unupdated_parameters(
         list(source_ensemble.experiment.parameter_configuration.keys()),
-        parameters,
+        updated_parameters,
         iens_active_index,
         source_ensemble,
         target_ensemble,
