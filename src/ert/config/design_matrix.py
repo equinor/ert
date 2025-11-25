@@ -171,26 +171,33 @@ class DesignMatrix:
 
         for param_cfg in existing_parameters:
             if isinstance(param_cfg, GenKwConfig) and param_cfg.name in design_cfgs:
-                param_cfg.input_source = DataSource(
+                del design_cfgs[param_cfg.name]
+                input_source = DataSource(
                     self.parameter_priority.get(
                         param_cfg.name, DataSource.DESIGN_MATRIX.value
                     )
                 )
-                param_cfg.update = (
-                    param_cfg.input_source == DataSource.SAMPLED and param_cfg.update
-                )
-                param_cfg.distribution = (
-                    RawSettings()
-                    if param_cfg.input_source == DataSource.DESIGN_MATRIX
-                    else param_cfg.distribution
-                )
-                param_cfg.group = (
-                    DataSource.DESIGN_MATRIX.value.upper()
-                    if param_cfg.input_source == DataSource.DESIGN_MATRIX
-                    else param_cfg.group
-                )
-                del design_cfgs[param_cfg.name]
-            new_param_configs += [param_cfg]
+                new_param_configs += [
+                    GenKwConfig(
+                        name=param_cfg.name,
+                        update=(
+                            input_source == DataSource.SAMPLED and param_cfg.update
+                        ),
+                        distribution=(
+                            RawSettings()
+                            if input_source == DataSource.DESIGN_MATRIX
+                            else param_cfg.distribution
+                        ),
+                        group=(
+                            DESIGN_MATRIX_GROUP
+                            if input_source == DataSource.DESIGN_MATRIX
+                            else param_cfg.group
+                        ),
+                        input_source=input_source,
+                    ),
+                ]
+            else:
+                new_param_configs += [param_cfg]
         if design_cfgs.values():
             new_param_configs += list(design_cfgs.values())
         return new_param_configs
