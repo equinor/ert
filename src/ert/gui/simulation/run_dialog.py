@@ -683,13 +683,7 @@ class RunDialog(QFrame):
         msg_box.setObjectName("EnsembleEvaluationWarningBox")
         msg_box.setIcon(QMessageBox.Icon.Warning)
         msg_box.setWindowTitle("Ensemble Evaluation Warning")
-        formatted_msg = (
-            "ert has not been able to update the job status for some time. This might "
-            "be resolved by itself, and it does not mean that the run has crashed.\n"
-            "Please check the runpath if it seems to still be running.\n"
-            f"The last error message was '{msg}'"
-        )
-        msg_box.setText(formatted_msg)
+        msg_box.setText(msg)
         msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
         msg_box.show()
 

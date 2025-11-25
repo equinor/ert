@@ -30,7 +30,6 @@ from _ert.events import (
     EESnapshotUpdate,
     EnsembleEvaluationWarningEvent,
 )
-from ert.base_model_context import BaseModelWithContextSupport
 from ert.config import (
     ConfigValidationError,
     DesignMatrix,
@@ -573,7 +572,7 @@ class RunModel(RunModelConfig, ABC):
 
     def forward_event_from_ee(
         self,
-        event: EEEvent | EnsembleEvaluationWarningEvent,
+        event: EEEvent,
         iteration: int,
     ) -> None:
         if type(event) is EESnapshot:

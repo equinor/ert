@@ -325,8 +325,9 @@ async def test_that_driver_emits_warning_event_when_polling_fails_for_timeout_pe
     # Set the timeout to 0 after getting the first warning message
     driver._polling_timeout_period = 0
     received_event = await asyncio.wait_for(warning_event, timeout=5.0)
-    assert expected_error_msg in received_event.warning_message
 
+    assert expected_error_msg in received_event.warning_message
+    print("WAS HERE!")
     # Reset command so it can finish correctly
     if isinstance(driver, LsfDriver):
         driver._bjobs_cmd = old_poll_cmd

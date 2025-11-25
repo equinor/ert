@@ -443,17 +443,8 @@ class LsfDriver(Driver):
                     logger.error(f"LSF kill failed with: {line}")
 
     async def poll(self) -> None:
-        last_successful_poll = time.time()
-        last_error_message = "unknown error"
-        has_warned_evaluator_of_polling_error = False
         while True:
-            if (
-                last_successful_poll < time.time() - self._polling_timeout_period
-            ) and not has_warned_evaluator_of_polling_error:
-                await self._warn_evaluator_about_polling_difficulties(
-                    last_error_message
-                )
-                has_warned_evaluator_of_polling_error = True
+            await self._warn_evaluator_if_polling_has_failed_for_some_time()
             if not self._jobs.keys():
                 await asyncio.sleep(self._poll_period)
                 continue
@@ -471,7 +462,7 @@ class LsfDriver(Driver):
                 )
             except OSError as e:
                 logger.error(str(e))
-                last_error_message = str(e)
+                self._last_polling_error_message = str(e)
                 await asyncio.sleep(self._poll_period)
                 continue
 
@@ -483,7 +474,7 @@ class LsfDriver(Driver):
                 logger.warning(
                     f"bjobs gave returncode {process.returncode} and error {error_msg}"
                 )
-                last_error_message = error_msg
+                self._last_polling_error_message = error_msg
             bjobs_states = _parse_jobs_dict(parse_bjobs(stdout.decode(errors="ignore")))
             self.update_and_log_exec_hosts(
                 parse_bjobs_exec_hosts(stdout.decode(errors="ignore"))
@@ -515,7 +506,7 @@ class LsfDriver(Driver):
                     "bhist did not give status for job_ids "
                     f"{missing_in_bhist_and_bjobs}, giving up for now."
                 )
-            last_successful_poll = time.time()
+            self._last_successful_poll = time.time()
             await asyncio.sleep(self._poll_period)
 
     async def _process_job_update(self, job_id: str, new_state: AnyJob) -> None:

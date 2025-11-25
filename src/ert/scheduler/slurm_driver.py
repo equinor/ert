@@ -261,17 +261,8 @@ class SlurmDriver(Driver):
             await asyncio.gather(*kill_tasks)
 
     async def poll(self) -> None:
-        last_successful_poll = time.time()
-        last_error_message = "unknown error"
-        has_warned_evaluator_of_polling_error = False
         while True:
-            if (
-                last_successful_poll < time.time() - self._polling_timeout_period
-            ) and not has_warned_evaluator_of_polling_error:
-                await self._warn_evaluator_about_polling_difficulties(
-                    last_error_message
-                )
-                has_warned_evaluator_of_polling_error = True
+            await self._warn_evaluator_if_polling_has_failed_for_some_time()
             if not self._jobs.keys():
                 await asyncio.sleep(self._poll_period)
                 continue
@@ -287,7 +278,7 @@ class SlurmDriver(Driver):
                 )
             except OSError as e:
                 logger.error(str(e))
-                last_error_message = str(e)
+                self._last_polling_error_message = str(e)
                 await asyncio.sleep(self._poll_period)
                 continue
             stdout, stderr = await process.communicate()
@@ -296,7 +287,7 @@ class SlurmDriver(Driver):
                 logger.warning(
                     f"squeue gave returncode {process.returncode} and error {error_msg}"
                 )
-                last_error_message = error_msg
+                self._last_polling_error_message = error_msg
             squeue_states = dict(_parse_squeue_output(stdout.decode(errors="ignore")))
 
             job_ids_found_in_squeue_output = set(squeue_states.keys())
@@ -329,7 +320,7 @@ class SlurmDriver(Driver):
                     "scontrol did not give status for job_ids "
                     f"{missing_in_squeue_and_scontrol}, giving up for now."
                 )
-            last_successful_poll = time.time()
+            self._last_successful_poll = time.time()
             await asyncio.sleep(self._poll_period)
 
     async def _process_job_update(self, job_id: str, new_info: JobInfo) -> None:

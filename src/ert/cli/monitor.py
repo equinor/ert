@@ -99,14 +99,8 @@ class Monitor:
                 ):
                     event.write_as_csv(output_path)
                 case EnsembleEvaluationWarningEvent(warning_message=msg):
-                    formatted_msg = (
-                        "ert has not been able to update the job status for some time."
-                        "\nThis might be resolved by itself, and it does not mean that"
-                        " the run has crashed.\nPlease check the runpath if it seems "
-                        f"to still be running.\nThe last error message was '{msg}'"
-                    )
                     print(
-                        self._colorize(formatted_msg, color=COLOR_WARNING),
+                        self._colorize(msg, color=COLOR_WARNING),
                         file=self._out,
                     )
 

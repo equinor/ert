@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import shlex
+import time
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from pathlib import Path
@@ -43,7 +44,11 @@ class Driver(ABC):
         self._job_error_message_by_iens: dict[int, str] = {}
         self.activate_script = activate_script
         self._poll_period = _POLL_PERIOD
+
         self._polling_timeout_period = Driver.POLLING_TIMEOUT_PERIOD
+        self._last_successful_poll = time.time()
+        self._last_polling_error_message: str | None = None
+        self._has_warned_evaluator_of_polling_error = False
 
     @property
     def event_queue(self) -> asyncio.Queue[DriverEvent]:
@@ -184,15 +189,29 @@ class Driver(ABC):
         logger.error(error_message)
         return False, error_message
 
-    async def _warn_evaluator_about_polling_difficulties(
-        self, last_polling_error_message: str
-    ) -> None:
+    async def _warn_evaluator_if_polling_has_failed_for_some_time(self) -> None:
+        if (
+            (self._last_successful_poll < time.time() - self._polling_timeout_period)
+            and self._last_polling_error_message
+            and not self._has_warned_evaluator_of_polling_error
+        ):
+            await self._warn_evaluator_about_polling_difficulties()
+            self._has_warned_evaluator_of_polling_error = True
+
+    async def _warn_evaluator_about_polling_difficulties(self) -> None:
+        last_polling_error_message = self._last_polling_error_message
         logger = logging.getLogger(__name__)
         logger.warning(
             "Driver has not successfully polled statuses for "
             f"{self._polling_timeout_period}s. The previous error "
             f"was due to '{last_polling_error_message}'"
         )
+        formatted_msg = (
+            "ert has not been able to update the job status for some time. This might "
+            "be resolved by itself, and it does not mean that the run has crashed.\n"
+            "Please check the runpath if it seems to still be running.\n"
+            f"The last error message was '{last_polling_error_message}'"
+        )
         await self.event_queue.put(
-            EnsembleEvaluationWarningEvent(warning_message=last_polling_error_message)
+            EnsembleEvaluationWarningEvent(warning_message=formatted_msg)
         )
