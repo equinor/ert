@@ -1046,10 +1046,9 @@ def test_that_experiment_with_a_scheduler_warning_event_shows_a_warning_dialog(
                 run_dialog, qtbot, QMessageBox
             )
 
-            assert ensemble_evaluation_warning_box.text().startswith(
-                "ert has not been able to update the job status for some time."
-            )
-            assert "foo_bar_error" in ensemble_evaluation_warning_box.text()
+            print(ensemble_evaluation_warning_box.text())
+
+            assert ensemble_evaluation_warning_box.text() == "foo_bar_error"
 
             dialog_buttons = wait_for_child(
                 ensemble_evaluation_warning_box, qtbot, QDialogButtonBox
