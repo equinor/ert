@@ -323,18 +323,23 @@ def _handle_summary_observation(
             "Observation uncertainty must be strictly > 0", summary_key
         ) from None
 
-    return pl.DataFrame(
-        {
-            "response_key": [summary_key],
-            "observation_key": [obs_key],
-            "time": pl.Series([date]).dt.cast_time_unit("ms"),
-            "observations": pl.Series([value], dtype=pl.Float32),
-            "std": pl.Series([std_dev], dtype=pl.Float32),
-            "x": summary_dict.X,
-            "y": summary_dict.Y,
-            "z": summary_dict.Z,
-        }
-    )
+    data_dict = {
+        "response_key": [summary_key],
+        "observation_key": [obs_key],
+        "time": pl.Series([date]).dt.cast_time_unit("ms"),
+        "observations": pl.Series([value], dtype=pl.Float32),
+        "std": pl.Series([std_dev], dtype=pl.Float32),
+    }
+
+    if all(
+        loc_val is not None
+        for loc_val in [summary_dict.LOC_X, summary_dict.LOC_Y, summary_dict.LOC_RANGE]
+    ):
+        data_dict["loc_x"] = summary_dict.LOC_X
+        data_dict["loc_y"] = summary_dict.LOC_Y
+        data_dict["loc_range"] = summary_dict.LOC_RANGE
+
+    return pl.DataFrame(data_dict)
 
 
 def _handle_general_observation(

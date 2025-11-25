@@ -304,13 +304,13 @@ def test_that_summary_observations_can_be_instantiated_with_coordinates(
                 """
                 SUMMARY_OBSERVATION FOPR_1
                 {
-                VALUE   = 0.9;
-                ERROR   = 0.05;
-                DATE    = 2014-09-10;
-                KEY     = FOPR;
-                X       = 10;
-                Y       = 10;
-                Z       = 10;
+                VALUE      = 0.9;
+                ERROR      = 0.05;
+                DATE       = 2014-09-10;
+                KEY        = FOPR;
+                LOC_X      = 10;
+                LOC_Y      = 10;
+                LOC_RANGE  = 10;
                 };
                 """
             )
@@ -322,4 +322,67 @@ def test_that_summary_observations_can_be_instantiated_with_coordinates(
         ert_config = ErtConfig.from_file("config.ert")
         summary_observations = ert_config.observations["summary"]
 
-        assert all(coordinate in summary_observations for coordinate in ["x", "y", "z"])
+        assert all(
+            loc_key in summary_observations.columns
+            and summary_observations[loc_key][0] == 10
+            for loc_key in ["loc_x", "loc_y", "loc_range"]
+        )
+        assert len(summary_observations.columns) == 8
+
+
+@pytest.mark.parametrize(
+    "loc_config_lines",
+    [
+        "",
+        "LOC_X=10;\n",
+        "LOC_Y=10;\n",
+        "LOC_RANGE=10;\n",
+        "LOC_X=10;\nLOC_Y=10;\n",
+        "LOC_Y=10;\nLOC_RANGE=10;\n",
+        "LOC_X=10;\nLOC_RANGE=10;\n",
+    ],
+)
+def test_that_summary_observations_does_not_add_loc_data_in_df_if_any_loc_fields_are_missing(  # noqa: E501
+    tmpdir,
+    loc_config_lines,
+):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        NUM_REALIZATIONS 3
+        ECLBASE ECLIPSE_CASE_%d
+        OBS_CONFIG observations
+        GEN_KW KW_NAME template.txt kw.txt prior.txt
+        RANDOM_SEED 1234
+        """
+        )
+        with open("config.ert", "w", encoding="utf-8") as fh:
+            fh.writelines(config)
+        with open("observations", "w", encoding="utf-8") as fh:
+            obs_config = dedent(
+                """
+                SUMMARY_OBSERVATION FOPR_1
+                {
+                VALUE      = 0.9;
+                ERROR      = 0.05;
+                DATE       = 2014-09-10;
+                KEY        = FOPR;
+                """
+                + loc_config_lines
+                + """
+                };
+                """
+            )
+            fh.writelines(obs_config)
+        with open("template.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+        with open("prior.txt", mode="w", encoding="utf-8") as fh:
+            fh.writelines("MY_KEYWORD NORMAL 0 1")
+        ert_config = ErtConfig.from_file("config.ert")
+        summary_observations = ert_config.observations["summary"]
+
+        assert all(
+            loc_key not in summary_observations.columns
+            for loc_key in ["loc_x", "loc_y", "loc_range"]
+        )
+        assert len(summary_observations.columns) == 5
