@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import os
+from enum import StrEnum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, NamedTuple, TypeAlias
 
@@ -24,6 +25,12 @@ class Shape(NamedTuple):
     nx: int
     ny: int
     nz: int
+
+
+class ScalingFunctions(StrEnum):
+    gaspari_cohn = "gaspari_cohn"
+    gaussian = "gaussian"
+    exponential = "exponential"
 
 
 def _validate_array(
@@ -262,3 +269,220 @@ def save_field(
         export_grdecl(field, output_path, field_name, binary=True)
     else:
         raise ValueError(f"Cannot export, invalid file format: {file_format}")
+
+
+def transform_positions_to_local_field_coordinates(
+    coordsys_origin: tuple[float, float],
+    coordsys_rotation_angle: float,
+    utmx: npt.NDArray[np.float64],
+    utmy: npt.NDArray[np.float64],
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+    """
+    Calculates the coordinates of the input (x,y) positions
+    in local coordinates defined by the local coordinate system.
+    The input coordinates are assumed to be in global (utm) coordinates.
+    The return values are coordinate values in local coordinate system.
+    """
+    # Translate
+    x1 = utmx - coordsys_origin[0]
+    y1 = utmy - coordsys_origin[1]
+    # Rotate
+    # Input angle is the local coordinate systems rotation
+    # anticlockwise relative to global x-axis in degrees
+    rotation_of_ertbox = coordsys_rotation_angle
+    rotation_angle = rotation_of_ertbox * np.pi / 180.0
+    cos_theta = np.cos(rotation_angle)
+    sin_theta = np.sin(rotation_angle)
+    x2 = x1 * cos_theta + y1 * sin_theta
+    y2 = -x1 * sin_theta + y1 * cos_theta
+    return x2, y2
+
+
+def transform_local_ellipse_angle_to_local_coords(
+    coordsys_rotation_angle: float,
+    ellipse_anisotropy_angle: npt.NDArray[np.double],
+) -> npt.NDArray[np.double]:
+    """
+    The input angles for orientation of the localization ellipses
+    are relative to the global (utm) coordinates.
+    The output is the angles relative to the local coordinate system.
+    """
+    # Both angles measured anti-clock from global coordinate systems x-axis in degrees
+    ellipse_anisotropy_transformed = ellipse_anisotropy_angle - coordsys_rotation_angle
+    return ellipse_anisotropy_transformed
+
+
+def localization_scaling_function(
+    distances: npt.NDArray[np.float64],
+    scaling_func: ScalingFunctions = ScalingFunctions.gaspari_cohn,
+) -> npt.NDArray[np.float64]:
+    """
+    Description: Calculate scaling factor to be used as values in
+    RHO matrix in distance-based localization.
+    Take as input array with normalized distances
+    and returns scaling factors.
+
+    :param distances: Array with distances
+    :type distances: npt.NDArray[np.float64]
+    :param scaling_func: Name of the scaling function type
+    :type scaling_func: ScalingFunctions
+    :return: Array with scaling values
+    :rtype: NDArray[float64]
+    """
+    assert isinstance(scaling_func, ScalingFunctions)
+    if scaling_func == ScalingFunctions.gaussian:
+        # Same function as often used for gaussian variograms
+        # Never exact 0. Maybe have a cutoff for normalized distance
+        # equal to 2.5?
+        scaling_factor = np.exp(-3.0 * distances**2)
+    elif scaling_func == ScalingFunctions.exponential:
+        # Same function as often used for exponential variograms
+        # Never exact 0. Maybe have a cutoff for normalized distance
+        # equal to 2.5?
+        scaling_factor = np.exp(-3.0 * distances)
+    else:
+        # "gaspari-cohn"
+        # Commonly used in distance-based localization
+        # Is exact 0 for normalized distance > 2.
+        scaling_factor = distances
+        d2 = distances**2
+        d3 = d2 * distances
+        d4 = d3 * distances
+        d5 = d4 * distances
+        s = -1 / 4 * d5 + 1 / 2 * d4 + 5 / 8 * d3 - 5 / 3 * d2 + 1
+        scaling_factor[distances <= 1] = s[distances <= 1]
+        s = (
+            1 / 12 * d5
+            - 1 / 2 * d4
+            + 5 / 8 * d3
+            + 5 / 3 * d2
+            - 5 * distances
+            + 4
+            - 2 / 3 * 1 / distances
+        )
+        scaling_factor[(distances > 1) & (distances <= 2)] = s[
+            (distances > 1) & (distances <= 2)
+        ]
+        scaling_factor[distances > 2] = 0.0
+
+    return scaling_factor
+
+
+def calc_rho_for_2d_grid_layer(
+    nx: int,
+    ny: int,
+    xinc: float,
+    yinc: float,
+    obs_xpos: npt.NDArray[np.double],
+    obs_ypos: npt.NDArray[np.double],
+    obs_main_range: npt.NDArray[np.double],
+    obs_perp_range: npt.NDArray[np.double],
+    obs_anisotropy_angle: npt.NDArray[np.double],
+    scaling_function: ScalingFunctions = ScalingFunctions.gaspari_cohn,
+) -> npt.NDArray[np.double]:
+    """
+    Description:
+    Calculate scaling values (RHO matrix elements) for a set of observations
+    with associated localization ellipse. The method will first
+    calculate the distances from each observation position to each grid cell
+    center point of all grid cells for a 2D grid.
+    The localization method will only consider lateral distances, and it is
+    therefore sufficient to calculate the distances in 2D.
+    All input observation positions are in the local grid coordinate system
+    to simplify the calculation of the distances.
+    The method loops over all observations and is not optimally
+    implemented with numpy.
+
+    The position: xpos[n], ypos[n] and
+    localization ellipse defined by obs_main_range[n],obs_perp_range[n],
+    obs_anisotropy_angle[n]) refers to observation[n].
+
+    The distance between an observation with index n and a grid cell (i,j) is
+    d[m,n] = dist((xpos_obs[n],ypos_obs[n]),(xpos_field[i,j],ypos_field[i,j]))
+
+    RHO[[m,n] = scaling(d)
+    where m = j + i * ny for left-handed grid index origo and
+          m = (ny - j - 1) + i * ny for right-handed grid index origo
+    Note that since d[m,n] does only depend on observation index n and
+    grid cell index (i,j). The values for RHO is
+    calculated for the combination ((i,j), n) and this covers
+    one grid layer in ertbox grid or a 2D surface grid.
+
+    :param nx: Number of grid cells in x-direction of local coordinate system.
+    :type nx: int
+    :param ny: Number of grid cells in y-direction of local coordinate system.
+    :type ny: int
+    :param xinc: Grid cell size in x-direction.
+    :type xinc: float
+    :param yinc: Grid cell size in y-direction.
+    :type yinc: float
+    :param obs_xpos: Observations x coordinates
+    :type obs_xpos: npt.NDArray[np.double]
+    :param obs_ypos: Observatiopns y coordinates
+    :type obs_ypos: npt.NDArray[np.double]
+    :param obs_main_range: Localization ellipse first range
+    :type obs_main_range: npt.NDArray[np.double]
+    :param obs_perp_range: Localization ellipse second range
+    :type obs_perp_range: npt.NDArray[np.double]
+    :param obs_anisotropy_angle: Localization ellipse orientation
+    :type obs_anisotropy_angle: npt.NDArray[np.double]
+    :param scaling_function: Name of scaling function
+    :type scaling_function: ScalingFunctions
+    :return: Rho matrix values for one layer of the 3D ertbox grid
+    :rtype: NDArray[double]
+    """
+    # Center points of each grid cell in field parameter grid
+    handedness = "right"  # Hard-coded to right-handed grid indexing
+    x_local = (np.arange(nx, dtype=np.float64) + 0.5) * xinc
+    if handedness == "right":
+        # y coordinate descreases from max to min
+        y_local = (np.arange(ny - 1, -1, -1, dtype=np.float64) + 0.5) * yinc
+    else:
+        # y coordinate increases from min to max
+        y_local = (np.arange(ny, dtype=np.float64) + 0.5) * yinc
+    mesh_x_coord, mesh_y_coord = np.meshgrid(x_local, y_local, indexing="ij")
+
+    # Number of observations
+    nobs = len(obs_xpos)
+    assert nobs == len(obs_ypos)
+    assert nobs == len(obs_anisotropy_angle)
+    assert nobs == len(obs_main_range)
+    assert nobs == len(obs_perp_range)
+
+    # Expand grid coordinates to match observations
+    mesh_x_coord_flat = mesh_x_coord.flatten()[:, np.newaxis]  # (nx * ny, 1)
+    mesh_y_coord_flat = mesh_y_coord.flatten()[:, np.newaxis]  # (nx * ny, 1)
+
+    # Observation coordinates and parameters
+    obs_xpos = obs_xpos[np.newaxis, :]  # (1, nobs)
+    obs_ypos = obs_ypos[np.newaxis, :]  # (1, nobs)
+    obs_main_range = obs_main_range[np.newaxis, :]  # (1, nobs)
+    obs_perp_range = obs_perp_range[np.newaxis, :]  # (1, nobs)
+    obs_anisotropy_angle = obs_anisotropy_angle[np.newaxis, :]  # (1, nobs)
+
+    # Compute displacement between grid points and observations
+    dX = mesh_x_coord_flat - obs_xpos  # (nx * ny, nobs)
+    dY = mesh_y_coord_flat - obs_ypos  # (nx * ny, nobs)
+
+    # Compute rotation parameters
+    rotation = obs_anisotropy_angle * np.pi / 180.0  # (1, nobs)
+    cos_angle = np.cos(rotation)  # (1, nobs)
+    sin_angle = np.sin(rotation)  # (1, nobs)
+
+    # Rotate and scale displacements to local coordinate system defined
+    # by the two half axes of the influence ellipse. First coordinate (local x) is in
+    # direction defined by anisotropy angle and local y is perpendicular to that.
+    # Scale the distance by the ranges to get a normalized distance
+    # (with value 1 at the edge of the ellipse)
+    dX_ellipse = (dX * cos_angle + dY * sin_angle) / obs_main_range  # (nx * ny, nobs)
+    dY_ellipse = (-dX * sin_angle + dY * cos_angle) / obs_perp_range  # (nx * ny, nobs)
+
+    # Compute distances in the elliptical coordinate system
+    distances = np.sqrt(dX_ellipse**2 + dY_ellipse**2)  # (nx * ny, nobs)
+
+    # Apply the scaling function
+    rho_one_layer = localization_scaling_function(
+        distances, scaling_func=scaling_function
+    )  # (nx * ny, nobs)
+    rho_2D = rho_one_layer.reshape((nx, ny, nobs))
+    return rho_2D
