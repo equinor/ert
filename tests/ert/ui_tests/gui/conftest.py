@@ -7,13 +7,14 @@ import stat
 import time
 from collections.abc import Iterator
 from contextlib import contextmanager
+from importlib.resources import files
 from pathlib import Path
 from textwrap import dedent
 from typing import TypeVar
 from unittest.mock import MagicMock, Mock
 
 import pytest
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import QDir, Qt, QTimer
 from PyQt6.QtWidgets import (
     QApplication,
     QComboBox,
@@ -44,6 +45,13 @@ from tests.ert.unit_tests.gui.simulation.test_run_path_dialog import (
 )
 
 DEFAULT_NUM_REALIZATIONS = 10
+
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_svg_search_path():
+    QDir.addSearchPath(
+        "img", str(files("ert.gui").joinpath("../../ert/gui/resources/gui/img"))
+    )
 
 
 def open_gui_with_config(config_path) -> Iterator[ErtMainWindow]:
