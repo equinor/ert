@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import math
 import os
-from enum import StrEnum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, NamedTuple, TypeAlias
 
@@ -25,12 +24,6 @@ class Shape(NamedTuple):
     nx: int
     ny: int
     nz: int
-
-
-class ScalingFunctions(StrEnum):
-    gaspari_cohn = "gaspari_cohn"
-    gaussian = "gaussian"
-    exponential = "exponential"
 
 
 def _validate_array(
@@ -300,70 +293,55 @@ def transform_positions_to_local_field_coordinates(
 
 def transform_local_ellipse_angle_to_local_coords(
     coordsys_rotation_angle: float,
-    ellipse_anisotropy_angle: npt.NDArray[np.double],
-) -> npt.NDArray[np.double]:
+    ellipse_anisotropy_angle: npt.NDArray[np.float64],
+) -> npt.NDArray[np.float64]:
     """
     The input angles for orientation of the localization ellipses
     are relative to the global (utm) coordinates.
     The output is the angles relative to the local coordinate system.
     """
     # Both angles measured anti-clock from global coordinate systems x-axis in degrees
-    ellipse_anisotropy_transformed = ellipse_anisotropy_angle - coordsys_rotation_angle
-    return ellipse_anisotropy_transformed
+    return ellipse_anisotropy_angle - coordsys_rotation_angle
 
 
 def localization_scaling_function(
     distances: npt.NDArray[np.float64],
-    scaling_func: ScalingFunctions = ScalingFunctions.gaspari_cohn,
 ) -> npt.NDArray[np.float64]:
     """
     Description: Calculate scaling factor to be used as values in
     RHO matrix in distance-based localization.
     Take as input array with normalized distances
-    and returns scaling factors.
+    and returns scaling factors.Uses the function published by
+    Gaspari and Cohn.
 
     :param distances: Array with distances
     :type distances: npt.NDArray[np.float64]
-    :param scaling_func: Name of the scaling function type
-    :type scaling_func: ScalingFunctions
     :return: Array with scaling values
     :rtype: NDArray[float64]
     """
-    assert isinstance(scaling_func, ScalingFunctions)
-    if scaling_func == ScalingFunctions.gaussian:
-        # Same function as often used for gaussian variograms
-        # Never exact 0. Maybe have a cutoff for normalized distance
-        # equal to 2.5?
-        scaling_factor = np.exp(-3.0 * distances**2)
-    elif scaling_func == ScalingFunctions.exponential:
-        # Same function as often used for exponential variograms
-        # Never exact 0. Maybe have a cutoff for normalized distance
-        # equal to 2.5?
-        scaling_factor = np.exp(-3.0 * distances)
-    else:
-        # "gaspari-cohn"
-        # Commonly used in distance-based localization
-        # Is exact 0 for normalized distance > 2.
-        scaling_factor = distances
-        d2 = distances**2
-        d3 = d2 * distances
-        d4 = d3 * distances
-        d5 = d4 * distances
-        s = -1 / 4 * d5 + 1 / 2 * d4 + 5 / 8 * d3 - 5 / 3 * d2 + 1
-        scaling_factor[distances <= 1] = s[distances <= 1]
-        s = (
-            1 / 12 * d5
-            - 1 / 2 * d4
-            + 5 / 8 * d3
-            + 5 / 3 * d2
-            - 5 * distances
-            + 4
-            - 2 / 3 * 1 / distances
-        )
-        scaling_factor[(distances > 1) & (distances <= 2)] = s[
-            (distances > 1) & (distances <= 2)
-        ]
-        scaling_factor[distances > 2] = 0.0
+    # "gaspari-cohn"
+    # Commonly used in distance-based localization
+    # Is exact 0 for normalized distance > 2.
+    scaling_factor = distances
+    d2 = distances**2
+    d3 = d2 * distances
+    d4 = d3 * distances
+    d5 = d4 * distances
+    s = -1 / 4 * d5 + 1 / 2 * d4 + 5 / 8 * d3 - 5 / 3 * d2 + 1
+    scaling_factor[distances <= 1] = s[distances <= 1]
+    s = (
+        1 / 12 * d5
+        - 1 / 2 * d4
+        + 5 / 8 * d3
+        + 5 / 3 * d2
+        - 5 * distances
+        + 4
+        - 2 / 3 * 1 / distances
+    )
+    scaling_factor[(distances > 1) & (distances <= 2)] = s[
+        (distances > 1) & (distances <= 2)
+    ]
+    scaling_factor[distances > 2] = 0.0
 
     return scaling_factor
 
@@ -373,13 +351,13 @@ def calc_rho_for_2d_grid_layer(
     ny: int,
     xinc: float,
     yinc: float,
-    obs_xpos: npt.NDArray[np.double],
-    obs_ypos: npt.NDArray[np.double],
-    obs_main_range: npt.NDArray[np.double],
-    obs_perp_range: npt.NDArray[np.double],
-    obs_anisotropy_angle: npt.NDArray[np.double],
-    scaling_function: ScalingFunctions = ScalingFunctions.gaspari_cohn,
-) -> npt.NDArray[np.double]:
+    obs_xpos: npt.NDArray[np.float64],
+    obs_ypos: npt.NDArray[np.float64],
+    obs_main_range: npt.NDArray[np.float64],
+    obs_perp_range: npt.NDArray[np.float64],
+    obs_anisotropy_angle: npt.NDArray[np.float64],
+    right_handed_grid_indexing: bool = True,
+) -> npt.NDArray[np.float64]:
     """
     Description:
     Calculate scaling values (RHO matrix elements) for a set of observations
@@ -426,15 +404,12 @@ def calc_rho_for_2d_grid_layer(
     :type obs_perp_range: npt.NDArray[np.double]
     :param obs_anisotropy_angle: Localization ellipse orientation
     :type obs_anisotropy_angle: npt.NDArray[np.double]
-    :param scaling_function: Name of scaling function
-    :type scaling_function: ScalingFunctions
     :return: Rho matrix values for one layer of the 3D ertbox grid
     :rtype: NDArray[double]
     """
     # Center points of each grid cell in field parameter grid
-    handedness = "right"  # Hard-coded to right-handed grid indexing
     x_local = (np.arange(nx, dtype=np.float64) + 0.5) * xinc
-    if handedness == "right":
+    if right_handed_grid_indexing:
         # y coordinate descreases from max to min
         y_local = (np.arange(ny - 1, -1, -1, dtype=np.float64) + 0.5) * yinc
     else:
@@ -448,6 +423,8 @@ def calc_rho_for_2d_grid_layer(
     assert nobs == len(obs_anisotropy_angle)
     assert nobs == len(obs_main_range)
     assert nobs == len(obs_perp_range)
+    assert np.all(obs_main_range > 0.0)
+    assert np.all(obs_perp_range > 0.0)
 
     # Expand grid coordinates to match observations
     mesh_x_coord_flat = mesh_x_coord.flatten()[:, np.newaxis]  # (nx * ny, 1)
@@ -481,8 +458,4 @@ def calc_rho_for_2d_grid_layer(
     distances = np.sqrt(dX_ellipse**2 + dY_ellipse**2)  # (nx * ny, nobs)
 
     # Apply the scaling function
-    rho_one_layer = localization_scaling_function(
-        distances, scaling_func=scaling_function
-    )  # (nx * ny, nobs)
-    rho_2D = rho_one_layer.reshape((nx, ny, nobs))
-    return rho_2D
+    return localization_scaling_function(distances).reshape((nx, ny, nobs))

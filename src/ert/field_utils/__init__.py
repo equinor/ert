@@ -4,7 +4,6 @@ from .field_file_format import FieldFileFormat
 from .field_utils import (
     ErtboxParameters,
     Shape,
-    ScalingFunctions,
     calc_rho_for_2d_grid_layer,
     calculate_ertbox_parameters,
     get_shape,
@@ -20,7 +19,6 @@ __all__ = [
     "ErtboxParameters",
     "FieldFileFormat",
     "Shape",
-    "ScalingFunctions",
     "calc_rho_for_2d_grid_layer",
     "calculate_ertbox_parameters",
     "get_shape",

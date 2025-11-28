@@ -17,10 +17,13 @@ from ert.field_utils import (
     ErtboxParameters,
     FieldFileFormat,
     Shape,
+    calc_rho_for_2d_grid_layer,
     calculate_ertbox_parameters,
     get_shape,
     read_field,
     save_field,
+    transform_local_ellipse_angle_to_local_coords,
+    transform_positions_to_local_field_coordinates,
 )
 from ert.substitutions import substitute_runpath_name
 from ert.utils import log_duration
@@ -324,6 +327,54 @@ class Field(ParameterConfig):
     @property
     def nz(self) -> int:
         return self.ertbox_params.nz
+
+    def calc_rho_for_2d_grid_layer(
+        self,
+        obs_xpos: npt.NDArray[np.float64],
+        obs_ypos: npt.NDArray[np.float64],
+        obs_main_range: npt.NDArray[np.float64],
+        obs_perp_range: npt.NDArray[np.float64],
+        obs_anisotropy_angle: npt.NDArray[np.float64],
+        right_handed_grid_indexing: bool = True,
+    ) -> npt.NDArray[np.float64]:
+        # Can only be used if ertbox coordinate system is defined
+        # assert self.ertbox_params.nx > 0
+        # assert self.ertbox_params.ny > 0
+        assert self.ertbox_params.xinc
+        assert self.ertbox_params.yinc
+
+        return calc_rho_for_2d_grid_layer(
+            self.ertbox_params.nx,
+            self.ertbox_params.ny,
+            self.ertbox_params.xinc,
+            self.ertbox_params.yinc,
+            obs_xpos,
+            obs_ypos,
+            obs_main_range,
+            obs_perp_range,
+            obs_anisotropy_angle,
+            right_handed_grid_indexing=right_handed_grid_indexing,
+        )
+
+    def transform_positions_to_local_field_coordinates(
+        self,
+        utmx: npt.NDArray[np.float64],
+        utmy: npt.NDArray[np.float64],
+    ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+        assert self.ertbox_params.origin is not None
+        assert self.ertbox_params.rotation_angle is not None
+        return transform_positions_to_local_field_coordinates(
+            self.ertbox_params.origin, self.ertbox_params.rotation_angle, utmx, utmy
+        )
+
+    def transform_local_ellipse_angle_to_local_coords(
+        self,
+        ellipse_anisotropy_angle: npt.NDArray[np.float64],
+    ) -> npt.NDArray[np.float64]:
+        assert self.ertbox_params.rotation_angle is not None
+        return transform_local_ellipse_angle_to_local_coords(
+            self.ertbox_params.rotation_angle, ellipse_anisotropy_angle
+        )
 
 
 TRANSFORM_FUNCTIONS: Final[dict[str, Callable[[Any], Any]]] = {

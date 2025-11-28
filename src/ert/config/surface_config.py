@@ -10,6 +10,11 @@ import xarray as xr
 from pydantic import field_serializer
 from surfio import IrapHeader, IrapSurface
 
+from ert.field_utils import (
+    calc_rho_for_2d_grid_layer,
+    transform_local_ellipse_angle_to_local_coords,
+    transform_positions_to_local_field_coordinates,
+)
 from ert.substitutions import substitute_runpath_name
 
 from ._str_to_bool import str_to_bool
@@ -248,3 +253,61 @@ class SurfaceConfig(ParameterConfig):
         this flattening process"""
 
         return create_flattened_cube_graph(px=self.ncol, py=self.nrow, pz=1)
+
+    def calc_rho_for_2d_grid_layer(
+        self,
+        obs_xpos: npt.NDArray[np.float64],
+        obs_ypos: npt.NDArray[np.float64],
+        obs_main_range: npt.NDArray[np.float64],
+        obs_perp_range: npt.NDArray[np.float64],
+        obs_anisotropy_angle: npt.NDArray[np.float64],
+    ) -> npt.NDArray[np.float64]:
+        """
+        Returned array with scaling values for a 2D grid.
+        The returned array dimensions are (nx, ny, nobs)
+        where nobs is the length of all input arrays.
+        """
+        # Assume the coordinate system is not flipped.
+        # This means the right_handed_grid_indexing is False
+        assert self.yflip == 1
+        return calc_rho_for_2d_grid_layer(
+            self.ncol,
+            self.nrow,
+            self.xinc,
+            self.yinc,
+            obs_xpos,
+            obs_ypos,
+            obs_main_range,
+            obs_perp_range,
+            obs_anisotropy_angle,
+            right_handed_grid_indexing=False,
+        )
+
+    def transform_positions_to_local_field_coordinates(
+        self,
+        utmx: npt.NDArray[np.float64],
+        utmy: npt.NDArray[np.float64],
+    ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+        """
+        Transform input coordinates from global to local coordinates.
+        The returned arrays are x-coordinates and y-coordinates in
+        local coordinate system. The dimensions are nobs for both
+        where nobs is length of the input arrays.
+        """
+        return transform_positions_to_local_field_coordinates(
+            (self.xori, self.yori), self.rotation, utmx, utmy
+        )
+
+    def transform_local_ellipse_angle_to_local_coords(
+        self,
+        ellipse_anisotropy_angle: npt.NDArray[np.float64],
+    ) -> npt.NDArray[np.float64]:
+        """
+        The returned array is angle of localization ellipses relative
+        to the local coordinate system. The length of returned array
+        is nobs which is also the length of the input angles relative
+        to global coordinates (utm).
+        """
+        return transform_local_ellipse_angle_to_local_coords(
+            self.rotation, ellipse_anisotropy_angle
+        )
