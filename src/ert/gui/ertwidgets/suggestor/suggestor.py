@@ -145,7 +145,18 @@ class Suggestor(QWidget):
             data_layout.addWidget(self._help_panel(help_links))
         self.__layout.addWidget(data_widget)
 
-        self.__layout.addWidget(self._action_buttons())
+        action_buttons = QWidget(parent=self)
+        action_buttons_layout = QHBoxLayout()
+        action_buttons_layout.insertStretch(-1, -1)
+        action_buttons_layout.setContentsMargins(0, 24, 0, 0)
+
+        if continue_action:
+            action_buttons_layout.addWidget(self._continue_button())
+
+        action_buttons_layout.addWidget(self._close_button())
+
+        action_buttons.setLayout(action_buttons_layout)
+        self.__layout.addWidget(action_buttons)
 
     def _help_panel(self, help_links: dict[str, str]) -> QFrame:
         help_button_frame = QFrame(parent=self)
@@ -204,35 +215,23 @@ class Suggestor(QWidget):
         area_layout.addWidget(self._messages(errors, warnings, deprecations))
         return problem_area
 
-    def _action_buttons(self) -> QWidget:
-        def run_pressed() -> None:
-            assert self._continue_action
-            self._continue_action()
-            self.close()
+    def _continue_button(self) -> QWidget:
+        assert self._continue_action
+        continue_button = QPushButton("Open ERT")
+        continue_button.setStyleSheet(BUTTON_STYLE)
+        continue_button.setObjectName("run_ert_button")
+        continue_button.pressed.connect(self._continue_action)
+        continue_button.pressed.connect(self.close)
+        return continue_button
 
-        buttons = QWidget(parent=self)
-        buttons_layout = QHBoxLayout()
-        buttons_layout.insertStretch(-1, -1)
-        buttons_layout.setContentsMargins(0, 24, 0, 0)
-
-        give_up = QPushButton("Close")
-        give_up.setObjectName("close_button")
-        give_up.setStyleSheet(BUTTON_STYLE)
-        give_up.pressed.connect(self.close)
-
-        if self._continue_action:
-            run = QPushButton("Open ERT")
-            run.setStyleSheet(BUTTON_STYLE)
-            run.setObjectName("run_ert_button")
-            run.pressed.connect(run_pressed)
-            buttons_layout.addWidget(run)
-
-            give_up.setStyleSheet(SECONDARY_BUTTON_STYLE)
-
-        buttons_layout.addWidget(give_up)
-        buttons.setLayout(buttons_layout)
-
-        return buttons
+    def _close_button(self) -> QPushButton:
+        close_button = QPushButton("Close")
+        close_button.setObjectName("close_button")
+        close_button.pressed.connect(self.close)
+        close_button.setStyleSheet(
+            SECONDARY_BUTTON_STYLE if self._continue_action else BUTTON_STYLE
+        )
+        return close_button
 
     def _messages(
         self,
