@@ -241,8 +241,9 @@ async def test_realization_memory_is_propagated_to_driver(realization: Realizati
 
 
 @pytest.mark.asyncio
+@pytest.mark.integration_test
 async def test_when_waiting_for_disk_sync_times_out_an_error_is_logged(
-    realization: Realization, monkeypatch
+    realization: Realization,
 ):
     scheduler = create_scheduler()
     scheduler._manifest_queue = asyncio.Queue()
@@ -697,7 +698,6 @@ async def test_killing_job_while_submitting_waits_for_submit_to_be_done(realizat
 
 
 @pytest.mark.timeout(5)
-@pytest.mark.integration_test
 async def test_killing_job_submitting_waits_for_submit_to_be_done_does_not_hang(
     realization, caplog
 ):
@@ -706,7 +706,7 @@ async def test_killing_job_submitting_waits_for_submit_to_be_done_does_not_hang(
     """
     scheduler = create_scheduler()
     job = Job(scheduler, realization)
-    job.WAIT_PERIOD_FOR_SUBMIT_TO_FINISH = 0.1
+    job.WAIT_PERIOD_FOR_SUBMIT_TO_FINISH = 0.01
     job.WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL = 0
     job._requested_max_submit = 1
     job._was_killed_by_scheduler.set()
