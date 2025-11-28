@@ -694,6 +694,8 @@ def log_observation_keys(
 
 RESERVED_KEYWORDS = ["realization", "IENS", "ITER"]
 
+USER_CONFIG_SCHEMA = init_user_config_schema()
+
 
 class ErtConfig(BaseModel):
     DEFAULT_ENSPATH: ClassVar[str] = "storage"
@@ -1296,7 +1298,7 @@ class ErtConfig(BaseModel):
     @classmethod
     def _read_user_config_contents(cls, user_config: str, file_name: str) -> ConfigDict:
         return parse_contents(
-            user_config, file_name=file_name, schema=init_user_config_schema()
+            user_config, file_name=file_name, schema=USER_CONFIG_SCHEMA
         )
 
     @classmethod
