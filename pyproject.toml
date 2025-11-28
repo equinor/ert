@@ -154,16 +154,15 @@ everest = ["data/**/*", "*.tmpl", "detached/jobs/everserver"]
 
 
 [tool.pytest.ini_options]
-addopts = "-ra --strict-markers"
+addopts = "-ra --strict-markers  --confcutdir=tests"
 norecursedirs = [
     "*.egg",
     ".*",
-    "tests/ert/unit_tests/gui/plottery/baseline",
-    "tests/ert/unit_tests/storage/snapshots",
-    "tests/ert/unit_tests/snapshots",
-    "tests/everest/snapshots",
+    "snapshots",
+    "baseline",
     "tests/everest/test_data",
     "tests/ert/unit_tests/scheduler/bin",
+    "tests/ert/unit_tests/gui/tools/file",
 ]
 markers = [
     "memory_test",
@@ -177,6 +176,7 @@ markers = [
     "slow",
     "skip_mac_ci",
 ]
+test_paths = ["tests"]
 log_cli = "false"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
