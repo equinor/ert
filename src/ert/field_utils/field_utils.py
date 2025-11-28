@@ -423,6 +423,8 @@ def calc_rho_for_2d_grid_layer(
     assert nobs == len(obs_anisotropy_angle)
     assert nobs == len(obs_main_range)
     assert nobs == len(obs_perp_range)
+    assert np.all(obs_main_range > 0.0)
+    assert np.all(obs_perp_range > 0.0)
 
     # Expand grid coordinates to match observations
     mesh_x_coord_flat = mesh_x_coord.flatten()[:, np.newaxis]  # (nx * ny, 1)

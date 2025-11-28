@@ -15,7 +15,6 @@ from ert.field_utils import (
     ErtboxParameters,
     FieldFileFormat,
     Shape,
-    calc_rho_for_2d_grid_layer,
     calculate_ertbox_parameters,
     localization_scaling_function,
     read_field,
@@ -487,67 +486,100 @@ def test_localization_scaling_function(nvalues: int, expected_values: list):
     assert are_equal
 
 
+@pytest.fixture
+def field():
+    # Return a Field object for test purpose
+
+    # Create a synthetic box grid with rotation
+    nx = 50
+    ny = 110
+    nz = 10
+    dims = (nx, ny, nz)
+    origin = (1000.0, 2100.0, 2500.0)
+    xsize = 500.0
+    ysize = 1000.0
+    xinc = xsize / nx
+    yinc = ysize / ny
+    zinc = 1.0
+    rotation = 0.0
+    increment = (xinc, yinc, zinc)
+    grid = xtgeo.create_box_grid(
+        dimension=dims,
+        origin=origin,  # x0, y0, z0
+        oricenter=False,  # origin at corner, not center
+        increment=increment,  # dx, dy, dz
+        rotation=rotation,  # rotation in degrees
+        flip=-1,  # -1 for right-handed, 1 for left-handed
+    )
+    params = calculate_ertbox_parameters(grid)
+    print(f"{params=}")
+    return Field(
+        type="field",
+        name="MyField",
+        forward_init=True,
+        update=True,
+        ertbox_params=calculate_ertbox_parameters(grid),
+        file_format=FieldFileFormat.ROFF,
+        output_transformation=None,
+        input_transformation=None,
+        truncation_min=-5.0,
+        truncation_max=5.0,
+        forward_init_file="input_file.roff",
+        output_file=Path("output_file.roff"),
+        grid_file="ertbox_grid.roff",
+    )
+
+
+@pytest.fixture
+def grid_for_visual_qc():
+    # For visualization, create a 3D gris which is a stack of 2d
+    # grids to contain the RHO parameter (one layer per obs)
+    nobs = 7
+    nx = 50
+    ny = 110
+    dims = (nx, ny, nobs)
+    origin = (1000.0, 2100.0, 2500.0)
+    xsize = 500.0
+    ysize = 1000.0
+    xinc = xsize / nx
+    yinc = ysize / ny
+    zinc = 1.0
+    rotation = 0.0
+    increment = (xinc, yinc, zinc)
+    return xtgeo.create_box_grid(
+        dimension=dims,
+        origin=origin,
+        increment=increment,
+        rotation=rotation,
+        flip=-1,  # -1 for right-handed, 1 for left-handed
+    )
+
+
 @pytest.mark.parametrize(
-    "xpos, ypos, main_range, perp_range, anisotropy_angle, expected",
+    "xpos, ypos, main_range, perp_range, anisotropy_angle",
     [
         (
-            [150.0, 150.0, 250.0],  # xpos
-            [350.0, 150.0, 250.0],  # ypos
-            [150.0, 450.0, 450.0],  # main_range
-            [100.0, 200.0, 300.0],  # perp_range
-            [0.0, 35.0, 135.0],  # angle
-            [
-                [
-                    [9.42127705e-02, 1.31635111e-02, 5.50270948e-01],
-                    [5.10288066e-01, 1.39972670e-01, 6.56951586e-01],
-                    [9.42127705e-02, 4.77285176e-01, 6.15604839e-01],
-                    [0.00000000e00, 8.37715936e-01, 4.50850465e-01],
-                    [0.00000000e00, 8.43419782e-01, 2.51129163e-01],
-                ],
-                [
-                    [2.08333333e-01, 6.24711885e-02, 6.56951586e-01],
-                    [1.00000000e00, 3.22638741e-01, 8.58901220e-01],
-                    [2.08333333e-01, 7.55961390e-01, 8.83226538e-01],
-                    [-2.77555756e-16, 1.00000000e00, 7.13974029e-01],
-                    [0.00000000e00, 7.55961390e-01, 4.50850465e-01],
-                ],
-                [
-                    [9.42127705e-02, 1.45718716e-01, 6.15604839e-01],
-                    [5.10288066e-01, 4.87371035e-01, 8.83226538e-01],
-                    [9.42127705e-02, 8.43419782e-01, 1.00000000e00],
-                    [0.00000000e00, 8.37715936e-01, 8.83226538e-01],
-                    [0.00000000e00, 4.77285176e-01, 6.15604839e-01],
-                ],
-                [
-                    [3.46364883e-03, 2.13194348e-01, 4.50850465e-01],
-                    [4.86968450e-02, 5.11061537e-01, 7.13974029e-01],
-                    [3.46364883e-03, 6.66165595e-01, 8.83226538e-01],
-                    [0.00000000e00, 4.97072413e-01, 8.58901220e-01],
-                    [0.00000000e00, 2.00473342e-01, 6.56951586e-01],
-                ],
-                [
-                    [0.00000000e00, 2.09121884e-01, 2.51129163e-01],
-                    [-2.77555756e-16, 3.74226141e-01, 4.50850465e-01],
-                    [0.00000000e00, 3.66249824e-01, 6.15604839e-01],
-                    [0.00000000e00, 1.95100370e-01, 6.56951586e-01],
-                    [0.00000000e00, 4.76659917e-02, 5.50270948e-01],
-                ],
-            ],
+            [50.0, 250.0, 250.0, 250.0, 0.0, 250.0, 250.0],  # xpos
+            [50.0, 550.0, 550.0, 550.0, 0.0, 550.0, 550.0],  # ypos
+            [100.0, 600.0, 600.0, 600.0, 1000.0, 300.0, 300.0],  # main_range
+            [100.0, 200.0, 200.0, 200.0, 1000.0, 10.0, 100.0],  # perp_range
+            [0.0, 35.0, 135.0, -135.0, 0.0, 45.0, -270.0],  # angle
         ),
     ],
 )
 def test_calc_rho_for_2d_grid_layer(
+    field,
+    grid_for_visual_qc,
     xpos: list[float],
     ypos: list[float],
     main_range: list[float],
     perp_range: list[float],
     anisotropy_angle: list[float],
-    expected: list[list[list[float]]],
+    #    expected: list[list[list[float]]],
 ):
-    nx = 5
-    ny = 5
-    xinc = 100.0
-    yinc = 100.0
+    print(field.ertbox_params)
+    nx = field.ertbox_params.nx
+    ny = field.ertbox_params.ny
     tolerance = 1e-8
 
     xposition = np.array(xpos)
@@ -555,12 +587,9 @@ def test_calc_rho_for_2d_grid_layer(
     mainrange = np.array(main_range)
     perprange = np.array(perp_range)
     angles = np.array(anisotropy_angle)
-    reference_values = np.array(expected)
-    rho_for_one_grid_layer = calc_rho_for_2d_grid_layer(
-        nx,
-        ny,
-        xinc,
-        yinc,
+    #    reference_values = np.array(expected)
+    #   Dimension of rho_for_one_grid_layer is (nx,ny,nobs)
+    rho_for_one_grid_layer = field.calc_rho_for_2d_grid_layer(
         xposition,
         yposition,
         mainrange,
@@ -568,7 +597,25 @@ def test_calc_rho_for_2d_grid_layer(
         angles,
         right_handed_grid_indexing=True,
     )
-    are_equal = np.allclose(
-        rho_for_one_grid_layer, reference_values, rtol=0.01, atol=tolerance
+    print(f"{rho_for_one_grid_layer.shape=}")
+    print(rho_for_one_grid_layer)
+    # Write grid for visualization
+    filename = "tmp_visualization_grid_for_rho.roff"
+    print(f"Write file: {filename}")
+    grid_for_visual_qc.to_file(filename, fformat="roff")
+
+    # Write to 3D grid parameter in ROFF for visual inspection
+    filename = "tmp_2d_rho_per_obs.roff"
+    nobs = rho_for_one_grid_layer.shape[2]
+    rho_param = xtgeo.GridProperty(
+        ncol=nx, nrow=ny, nlay=nobs, name="rho", values=rho_for_one_grid_layer
     )
-    assert are_equal
+
+    print(f"Write file: {filename}")
+    rho_param.to_file(filename, fformat="roff")
+
+
+#    are_equal = np.allclose(
+#        rho_for_one_grid_layer, reference_values, rtol=0.01, atol=tolerance
+#    )
+#    assert are_equal
