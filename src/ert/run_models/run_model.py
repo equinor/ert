@@ -13,6 +13,7 @@ import threading
 import time
 import traceback
 import uuid
+import warnings
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from collections.abc import Callable, Generator, MutableSequence
@@ -195,6 +196,9 @@ class RunModel(RunModelConfig, ABC):
 
         if _total_iterations is not None:
             self._total_iterations = _total_iterations
+
+        self._highest_violating_evaluator_parallelization: float = 0
+        self._cpu_violation_warning_msg: str = ""
 
     def model_post_init(self, ctx: Any) -> None:
         self._initial_realizations_mask = self.active_realizations.copy()
@@ -642,6 +646,16 @@ class RunModel(RunModelConfig, ABC):
         finally:
             await evaluator_task
 
+        if (
+            evaluator.highest_violating_parallelization is not None
+            and evaluator.highest_violating_parallelization
+            > self._highest_violating_evaluator_parallelization
+        ):
+            self._highest_violating_evaluator_parallelization = (
+                evaluator.highest_violating_parallelization
+            )
+            self._cpu_violation_warning_msg = evaluator.cpu_violation_warnings_msg
+
         logger.debug("tasks complete")
 
         if self._end_event.is_set():
@@ -823,6 +837,12 @@ class RunModel(RunModelConfig, ABC):
             f"{len(starting_realizations) - num_successful_realizations}"
         )
         logger.info(f"Experiment run finished in: {self.get_runtime()}s")
+
+        if self._cpu_violation_warning_msg:
+            warnings.warn(
+                self._cpu_violation_warning_msg, PostSimulationWarning, stacklevel=1
+            )
+
         self.run_workflows(
             fixtures=PostSimulationFixtures(
                 storage=self._storage,
