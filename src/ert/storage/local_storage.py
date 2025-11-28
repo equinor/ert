@@ -30,7 +30,7 @@ from .realization_storage_state import RealizationStorageState
 
 logger = logging.getLogger(__name__)
 
-_LOCAL_STORAGE_VERSION = 16
+_LOCAL_STORAGE_VERSION = 17
 
 
 class _Migrations(BaseModel):

@@ -282,3 +282,81 @@ def test_reading_past_2263_is_ok(ert_config, storage, prior_ensemble):
             "time": datetime(2500, 9, 10, 0, 0),
         },
     ]
+
+
+def create_summary_observation(loc_config_lines):
+    config = dedent("""
+    NUM_REALIZATIONS 3
+    ECLBASE ECLIPSE_CASE_%d
+    OBS_CONFIG observations
+    GEN_KW KW_NAME template.txt kw.txt prior.txt
+    RANDOM_SEED 1234
+    """)
+    with open("config.ert", "w", encoding="utf-8") as fh:
+        fh.writelines(config)
+    with open("observations", "w", encoding="utf-8") as fh:
+        obs_config = dedent(
+            """
+            SUMMARY_OBSERVATION FOPR_1
+            {
+            VALUE      = 0.9;
+            ERROR      = 0.05;
+            DATE       = 2014-09-10;
+            KEY        = FOPR;
+            """
+            + loc_config_lines
+            + """
+            };
+            """
+        )
+        fh.writelines(obs_config)
+    with open("template.txt", mode="w", encoding="utf-8") as fh:
+        fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+    with open("prior.txt", mode="w", encoding="utf-8") as fh:
+        fh.writelines("MY_KEYWORD NORMAL 0 1")
+    ert_config = ErtConfig.from_file("config.ert")
+    return ert_config.observations["summary"]
+
+
+def test_that_summary_observations_can_be_instantiated_with_coordinates(
+    tmpdir,
+):
+    with tmpdir.as_cwd():
+        summary_observations = create_summary_observation("""
+        LOC_X=10;
+        LOC_Y=10;
+        LOC_RANGE=10;
+        """)
+
+        assert all(
+            loc_key in summary_observations.columns
+            and summary_observations[loc_key][0] == 10
+            for loc_key in ["loc_x", "loc_y", "loc_range"]
+        )
+        assert len(summary_observations.columns) == 8
+
+
+@pytest.mark.parametrize(
+    "loc_config_lines",
+    [
+        "",
+        "LOC_X=10;\n",
+        "LOC_Y=10;\n",
+        "LOC_RANGE=10;\n",
+        "LOC_X=10;\nLOC_Y=10;\n",
+        "LOC_Y=10;\nLOC_RANGE=10;\n",
+        "LOC_X=10;\nLOC_RANGE=10;\n",
+    ],
+)
+def test_that_summary_observations_does_not_add_loc_data_in_df_if_any_loc_fields_are_missing(  # noqa: E501
+    tmpdir,
+    loc_config_lines,
+):
+    with tmpdir.as_cwd():
+        summary_observations = create_summary_observation(loc_config_lines)
+
+        assert all(
+            loc_key not in summary_observations.columns
+            for loc_key in ["loc_x", "loc_y", "loc_range"]
+        )
+        assert len(summary_observations.columns) == 5
