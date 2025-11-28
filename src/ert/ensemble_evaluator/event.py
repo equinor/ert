@@ -42,6 +42,10 @@ class SnapshotUpdateEvent(_UpdateEvent):
     event_type: Literal["SnapshotUpdateEvent"] = "SnapshotUpdateEvent"
 
 
+class StartEvent(BaseModel):
+    event_type: Literal["StartEvent"] = "StartEvent"
+
+
 class EndEvent(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
     event_type: Literal["EndEvent"] = "EndEvent"
