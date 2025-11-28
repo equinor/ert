@@ -9,6 +9,7 @@ from collections import defaultdict
 from datetime import date
 from typing import Any, Literal
 
+import numpy as np
 import numpy.typing as npt
 import polars as pl
 from pydantic import Field
@@ -108,7 +109,9 @@ class RFTConfig(ResponseConfig):
                     for t in entry:
                         key = f"{entry.well}{sep}{entry.date.isoformat()}{sep}{t}"
                         if matcher.fullmatch(key) is not None:
-                            fetched[entry.well, entry.date][t] = entry[t]
+                            values = entry[t]
+                            if np.isdtype(values.dtype, np.float32):
+                                fetched[entry.well, entry.date][t] = values
         except (FileNotFoundError, InvalidRFTError) as err:
             raise InvalidResponseFile(
                 f"Could not read RFT from {run_path}/{filename}: {err}"

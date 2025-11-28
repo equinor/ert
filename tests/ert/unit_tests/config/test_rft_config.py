@@ -161,3 +161,25 @@ def test_that_reading_from_non_existing_file_raises_invalid_response(tmp_path):
     )
     with pytest.raises(InvalidResponseFile):
         rft_config.read_from_file(tmp_path / "BASE.RFT", 1, 1)
+
+
+def test_that_only_float_arrays_are_read(mocker):
+    mock_rft_file(
+        mocker,
+        "BASE.RFT",
+        [
+            *cell_start(date=(1, 1, 2000), well_name="WELL"),
+            ("PRESSURE", float_arr([100.0, 200.0])),
+            ("HOSTGRID", ["        ", "        "]),
+            ("DEPTH   ", float_arr([20.0, 30.0])),
+        ],
+    )
+
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={"*": {"*": ["*"]}},
+    )
+    data = rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+    assert data["response_key"].to_list() == [
+        "WELL:2000-01-01:PRESSURE",
+    ]
