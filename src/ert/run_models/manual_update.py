@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class ManualUpdate(UpdateRunModel):
     ensemble_id: str
+    ert_templates: list[tuple[str, str]]
 
     _prior: Ensemble = PrivateAttr()
 
@@ -49,7 +50,7 @@ class ManualUpdate(UpdateRunModel):
             observations=prior_experiment.observations,
             simulation_arguments=prior_experiment.metadata,
             name=f"Manual update of {self._prior.name}",
-            templates=self._prior.experiment.templates_configuration,
+            templates=self.ert_templates,
         )
         self.update(
             self._prior,
