@@ -297,7 +297,6 @@ def test_processtree_timer(
     assert timer.total_cpu_seconds() == expected_total_seconds
 
 
-@pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "command, exit_code, expected_error_message, target_file_name",

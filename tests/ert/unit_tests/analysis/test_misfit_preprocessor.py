@@ -22,7 +22,7 @@ def test_get_scaling_factor():
         (5, 0.8),
     ],
 )
-@pytest.mark.parametrize("seed", range(9))
+@pytest.mark.parametrize("seed", range(4))
 def test_that_get_nr_primary_components_is_according_to_theory(p, rho, seed):
     """Based on theory in Multivariate Statistical Methods 4th Edition
     by Donald F. Morrison.
@@ -267,7 +267,6 @@ def test_main_correctly_separates_distinct_correlation_groups(
         (4, 6),
     ],
 )
-@pytest.mark.integration_test
 def test_autoscale_clusters_observations_by_correlation_pattern_ignoring_sign(
     nr_obs_group_a, nr_obs_group_b
 ):

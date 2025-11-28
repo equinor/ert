@@ -153,7 +153,6 @@ async def test_no_config_raises_valueerror():
         )
 
 
-@pytest.mark.integration_test
 @pytest.mark.parametrize(
     ("task, task_name"),
     [
@@ -165,7 +164,7 @@ async def test_when_task_prematurely_ends_raises_exception(
     task, task_name, make_ee_config, monkeypatch
 ):
     async def mock_done_prematurely(message, *args, **kwargs):
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(0.01)
 
     event_queue = asyncio.Queue()
 
@@ -477,7 +476,6 @@ async def test_signal_cancel_does_not_cause_evaluator_dispatcher_communication_t
 
 
 @pytest.mark.timeout(15)
-@pytest.mark.integration_test
 async def test_signal_cancel_sends_terminate_message_to_dispatchers(evaluator_to_use):
     (evaluator, _) = evaluator_to_use
     token = evaluator._config.token

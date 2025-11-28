@@ -223,7 +223,6 @@ def test_ert_config_throws_on_missing_forward_model_step(
             )
 
 
-@pytest.mark.integration_test
 def test_that_substitutions_can_be_done_in_job_names(plugins_ert_config):
     """
     Regression test for a usage case involving setting ECL100 or ECL300
@@ -389,21 +388,15 @@ def plugins_ert_config():
     return ErtConfig.with_plugins(get_site_plugins())
 
 
-@pytest.mark.integration_test
-@pytest.mark.usefixtures("use_tmpdir")
 def test_that_forward_model_substitution_does_not_warn_about_reaching_max_iterations(
     caplog, plugins_ert_config
 ):
-    test_config_file_name = "test.ert"
-    test_config_contents = dedent(
+    ert_config = plugins_ert_config.from_file_contents(
         """
         NUM_REALIZATIONS 1
         FORWARD_MODEL ECLIPSE100(<VERSION>=2020.2)
         """
     )
-    Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
-
-    ert_config = plugins_ert_config.from_file(test_config_file_name)
     with caplog.at_level(logging.WARNING):
         create_forward_model_json(
             context=ert_config.substitutions,
@@ -556,7 +549,6 @@ def test_that_flow_fm_step_always_allow_explicit_default_version(plugins_ert_con
     )
 
 
-@pytest.mark.integration_test
 @pytest.mark.skipif(shutil.which("flowrun") is None, reason="flowrun is not in $PATH")
 def test_that_flow_fm_step_check_version_availability(plugins_ert_config):
     with pytest.raises(
