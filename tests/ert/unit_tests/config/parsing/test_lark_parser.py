@@ -4,9 +4,9 @@ from textwrap import dedent
 
 import pytest
 
+from ert.config.ert_config import USER_CONFIG_SCHEMA
 from ert.config.parsing import (
     ConfigValidationError,
-    init_user_config_schema,
     parse,
     parse_contents,
 )
@@ -29,7 +29,7 @@ def test_that_no_arguments_to_summary_raises_config_validation_error():
             SUMMARY B 2
             """,
             file_name="config.ert",
-            schema=init_user_config_schema(),
+            schema=USER_CONFIG_SCHEMA,
         )
 
 
@@ -40,14 +40,14 @@ def test_that_setenv_does_not_expand_envvar():
         SETENV PATH $PATH:added
         """,
         file_name="config.ert",
-        schema=init_user_config_schema(),
+        schema=USER_CONFIG_SCHEMA,
     )
     assert config["SETENV"] == [["PATH", "$PATH:added"]]
 
 
 def test_that_realisation_is_a_alias_of_realization():
     config = parse_contents(
-        "NUM_REALIZATIONS 1", file_name="config.ert", schema=init_user_config_schema()
+        "NUM_REALIZATIONS 1", file_name="config.ert", schema=USER_CONFIG_SCHEMA
     )
     assert config["NUM_REALIZATIONS"] == 1
 
@@ -59,7 +59,7 @@ def test_that_new_line_can_be_escaped():
                 1
         """,
         file_name="config.ert",
-        schema=init_user_config_schema(),
+        schema=USER_CONFIG_SCHEMA,
     )
     assert config["NUM_REALIZATIONS"] == 1
 
@@ -90,7 +90,7 @@ def test_that_redefine_overwrites_existing_defines_in_subsequent_lines():
         DEFINE C <A>
         """,
         file_name="config.ert",
-        schema=init_user_config_schema(),
+        schema=USER_CONFIG_SCHEMA,
     )
 
     defines = config_dict["DEFINE"]
@@ -118,13 +118,13 @@ def test_that_including_a_non_existing_file_raises_config_validation_error():
             INCLUDE does_not_exists
             """,
             file_name="config.ert",
-            schema=init_user_config_schema(),
+            schema=USER_CONFIG_SCHEMA,
         )
 
 
 def test_that_parsing_a_non_existing_file_raises_config_validation_error():
     with pytest.raises(ConfigValidationError):
-        _ = parse("this/is/not/a/file", schema=init_user_config_schema())
+        _ = parse("this/is/not/a/file", schema=USER_CONFIG_SCHEMA)
 
 
 def test_that_unknown_queue_option_gives_error_message():
@@ -134,7 +134,7 @@ def test_that_unknown_queue_option_gives_error_message():
         _ = parse_contents(
             "QUEUE_OPTION UNKNOWN_QUEUE unsetoption",
             file_name="config.ert",
-            schema=init_user_config_schema(),
+            schema=USER_CONFIG_SCHEMA,
         )
 
 
@@ -152,25 +152,25 @@ def test_that_cyclical_includes_raise_config_validation_error():
     Path(test_include_file_name).write_text(test_include_contents, encoding="utf-8")
 
     with pytest.raises(ConfigValidationError, match=r"Cyclical .*test.ert"):
-        _ = parse(test_config_file_name, schema=init_user_config_schema())
+        _ = parse(test_config_file_name, schema=USER_CONFIG_SCHEMA)
 
     # Test self include raises cyclical include error
     Path(test_config_file_name).write_text(test_config_self_include, encoding="utf-8")
 
     with pytest.raises(ConfigValidationError, match=r"Cyclical .*test.ert->test.ert"):
-        _ = parse(test_config_file_name, schema=init_user_config_schema())
+        _ = parse(test_config_file_name, schema=USER_CONFIG_SCHEMA)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_giving_no_keywords_raises_config_validation_error():
     with pytest.raises(ConfigValidationError, match="must be set"):
-        _ = parse_contents("", file_name="config.ert", schema=init_user_config_schema())
+        _ = parse_contents("", file_name="config.ert", schema=USER_CONFIG_SCHEMA)
 
 
 def test_num_realizations_required_in_config_file():
     with pytest.raises(ConfigValidationError, match=r"NUM_REALIZATIONS must be set.*"):
         _ = parse_contents(
-            "ENSPATH storage", file_name="config.ert", schema=init_user_config_schema()
+            "ENSPATH storage", file_name="config.ert", schema=USER_CONFIG_SCHEMA
         )
 
 
@@ -182,7 +182,7 @@ def test_that_invalid_boolean_values_raises_config_validation_error():
             STOP_LONG_RUNNING NOT_YES
             """,
             file_name="config.ert",
-            schema=init_user_config_schema(),
+            schema=USER_CONFIG_SCHEMA,
         )
 
 
@@ -226,7 +226,7 @@ def test_that_file_without_read_access_raises_config_validation_error(
     ):
         Path(config_file_name).write_text(config_file_contents, encoding="utf-8")
 
-        _ = parse(config_file_name, schema=init_user_config_schema())
+        _ = parse(config_file_name, schema=USER_CONFIG_SCHEMA)
 
 
 def test_that_giving_non_int_values_in_num_realization_raises_config_validation_error():
@@ -236,7 +236,7 @@ def test_that_giving_non_int_values_in_num_realization_raises_config_validation_
             NUM_REALIZATIONS hello
             """,
             file_name="config.ert",
-            schema=init_user_config_schema(),
+            schema=USER_CONFIG_SCHEMA,
         )
 
 
@@ -248,7 +248,7 @@ def test_that_giving_non_float_values_in_enkf_alpha_raises_config_validation_err
             ENKF_ALPHA  hello
             """,
             file_name="config.ert",
-            schema=init_user_config_schema(),
+            schema=USER_CONFIG_SCHEMA,
         )
 
 
@@ -260,7 +260,7 @@ def test_that_giving_too_many_arguments_to_enkf_alpha_raises_config_validation_e
             ENKF_ALPHA 1.0 2.0 3.0
             """,
             file_name="config.ert",
-            schema=init_user_config_schema(),
+            schema=USER_CONFIG_SCHEMA,
         )
 
 
@@ -272,7 +272,7 @@ def test_that_giving_too_few_arguments_to_enkf_alpha_raises_config_validation_er
             ENKF_ALPHA
             """,
             file_name="config.ert",
-            schema=init_user_config_schema(),
+            schema=USER_CONFIG_SCHEMA,
         )
 
 
@@ -284,7 +284,7 @@ def test_that_mismatched_quotes_raises_config_validation_error():
             FORWARD_MODEL poly_eval(<FOO>=""bar")
             """,
             file_name="config.ert",
-            schema=init_user_config_schema(),
+            schema=USER_CONFIG_SCHEMA,
         )
 
 
@@ -295,7 +295,7 @@ def test_that_quotes_can_be_escaped():
         FORWARD_MODEL poly_eval(<FOO>="\\"bar")
         """,
         file_name="config.ert",
-        schema=init_user_config_schema(),
+        schema=USER_CONFIG_SCHEMA,
     )
     assert contents["FORWARD_MODEL"] == [["poly_eval", [["<FOO>", '\\"bar']]]]
 
@@ -308,6 +308,6 @@ def test_that_strings_can_be_empty(empty_string):
         FORWARD_MODEL poly_eval(<FOO>={empty_string})
         """,
         file_name="config.ert",
-        schema=init_user_config_schema(),
+        schema=USER_CONFIG_SCHEMA,
     )
     assert contents["FORWARD_MODEL"] == [["poly_eval", [["<FOO>", ""]]]]

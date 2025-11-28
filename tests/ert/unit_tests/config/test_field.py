@@ -7,9 +7,10 @@ import resfo
 import xtgeo
 
 from ert.config import ConfigValidationError, ConfigWarning, Field
+from ert.config.ert_config import USER_CONFIG_SCHEMA
 from ert.config.field import TRANSFORM_FUNCTIONS
 from ert.config.parameter_config import InvalidParameterFile
-from ert.config.parsing import init_user_config_schema, parse_contents
+from ert.config.parsing import parse_contents
 from ert.field_utils import (
     ErtboxParameters,
     FieldFileFormat,
@@ -144,7 +145,7 @@ def parse_field_line(ertbox_params, egrid_file):
             egrid_file,
             parse_contents(
                 f"NUM_REALIZATIONS 1\nGRID {egrid_file}\n" + field_line,
-                init_user_config_schema(),
+                USER_CONFIG_SCHEMA,
                 "test.ert",
             )["FIELD"][0],
         )
