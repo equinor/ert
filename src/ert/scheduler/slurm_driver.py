@@ -262,6 +262,7 @@ class SlurmDriver(Driver):
 
     async def poll(self) -> None:
         while True:
+            await self._warn_evaluator_if_polling_has_failed_for_some_time()
             if not self._jobs.keys():
                 await asyncio.sleep(self._poll_period)
                 continue
@@ -277,14 +278,16 @@ class SlurmDriver(Driver):
                 )
             except OSError as e:
                 logger.error(str(e))
+                self._last_polling_error_message = str(e)
                 await asyncio.sleep(self._poll_period)
                 continue
             stdout, stderr = await process.communicate()
             if process.returncode:
+                error_msg = stderr.decode()
                 logger.warning(
-                    f"squeue gave returncode {process.returncode} "
-                    f"and error {stderr.decode()}"
+                    f"squeue gave returncode {process.returncode} and error {error_msg}"
                 )
+                self._last_polling_error_message = error_msg
             squeue_states = dict(_parse_squeue_output(stdout.decode(errors="ignore")))
 
             job_ids_found_in_squeue_output = set(squeue_states.keys())
@@ -317,6 +320,7 @@ class SlurmDriver(Driver):
                     "scontrol did not give status for job_ids "
                     f"{missing_in_squeue_and_scontrol}, giving up for now."
                 )
+            self._last_successful_poll = time.time()
             await asyncio.sleep(self._poll_period)
 
     async def _process_job_update(self, job_id: str, new_info: JobInfo) -> None:
