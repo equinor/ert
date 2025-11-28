@@ -156,5 +156,15 @@
     },
     "auto_scale_observations": []
   },
-  "ensemble_id": "00000000-0000-0000-0000-000000000000"
+  "ensemble_id": "00000000-0000-0000-0000-000000000000",
+  "ert_templates": [
+    [
+      "test-data/ert/snake_oil.snake_oil.ert/templates/seed_template.txt",
+      "seed.txt"
+    ],
+    [
+      "test-data/ert/snake_oil.snake_oil.ert/templates/snake_oil_template.txt",
+      "snake_oil_params.txt"
+    ]
+  ]
 }
