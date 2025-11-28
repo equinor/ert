@@ -191,12 +191,14 @@ class PlotWindow(QMainWindow):
             self.addPlotWidget(ENSEMBLE, EnsemblePlot())
             self.addPlotWidget(STATISTICS, StatisticsPlot())
             self.addPlotWidget(MISFITS, MisfitsPlot())
-        self.addPlotWidget(HISTOGRAM, HistogramPlot())
-        self.addPlotWidget(GAUSSIAN_KDE, GaussianKDEPlot())
-        self.addPlotWidget(DISTRIBUTION, DistributionPlot())
-        self.addPlotWidget(CROSS_ENSEMBLE_STATISTICS, CrossEnsembleStatisticsPlot())
-        self.addPlotWidget(STD_DEV, StdDevPlot())
-        self._central_tab.currentChanged.connect(self.currentTabChanged)self.logPlotTabUsage(self._central_tab.tabText(0), default=True)
+
+            self.addPlotWidget(HISTOGRAM, HistogramPlot())
+            self.addPlotWidget(GAUSSIAN_KDE, GaussianKDEPlot())
+            self.addPlotWidget(DISTRIBUTION, DistributionPlot())
+            self.addPlotWidget(CROSS_ENSEMBLE_STATISTICS, CrossEnsembleStatisticsPlot())
+            self.addPlotWidget(STD_DEV, StdDevPlot())
+            self._central_tab.currentChanged.connect(self.currentTabChanged)
+            self.logPlotTabUsage(self._central_tab.tabText(0), default=True)
 
             self._prev_tab_widget_index = -1
             self._current_tab_index = -1
@@ -275,6 +277,7 @@ class PlotWindow(QMainWindow):
                         if key_def.observations:
                             misfits_ens_obj = EnsembleObject(
                                 name=f"{ensemble.name}.misfits",
+                                started_at=ensemble.started_at,
                                 id=ensemble.id,
                                 hidden=ensemble.hidden,
                                 experiment_name=ensemble.experiment_name,
