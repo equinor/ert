@@ -284,43 +284,49 @@ def test_reading_past_2263_is_ok(ert_config, storage, prior_ensemble):
     ]
 
 
+def create_summary_observation(loc_config_lines):
+    config = dedent("""
+    NUM_REALIZATIONS 3
+    ECLBASE ECLIPSE_CASE_%d
+    OBS_CONFIG observations
+    GEN_KW KW_NAME template.txt kw.txt prior.txt
+    RANDOM_SEED 1234
+    """)
+    with open("config.ert", "w", encoding="utf-8") as fh:
+        fh.writelines(config)
+    with open("observations", "w", encoding="utf-8") as fh:
+        obs_config = dedent(
+            """
+            SUMMARY_OBSERVATION FOPR_1
+            {
+            VALUE      = 0.9;
+            ERROR      = 0.05;
+            DATE       = 2014-09-10;
+            KEY        = FOPR;
+            """
+            + loc_config_lines
+            + """
+            };
+            """
+        )
+        fh.writelines(obs_config)
+    with open("template.txt", mode="w", encoding="utf-8") as fh:
+        fh.writelines("MY_KEYWORD <MY_KEYWORD>")
+    with open("prior.txt", mode="w", encoding="utf-8") as fh:
+        fh.writelines("MY_KEYWORD NORMAL 0 1")
+    ert_config = ErtConfig.from_file("config.ert")
+    return ert_config.observations["summary"]
+
+
 def test_that_summary_observations_can_be_instantiated_with_coordinates(
     tmpdir,
 ):
     with tmpdir.as_cwd():
-        config = dedent(
-            """
-        NUM_REALIZATIONS 3
-        ECLBASE ECLIPSE_CASE_%d
-        OBS_CONFIG observations
-        GEN_KW KW_NAME template.txt kw.txt prior.txt
-        RANDOM_SEED 1234
-        """
-        )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("observations", "w", encoding="utf-8") as fh:
-            obs_config = dedent(
-                """
-                SUMMARY_OBSERVATION FOPR_1
-                {
-                VALUE      = 0.9;
-                ERROR      = 0.05;
-                DATE       = 2014-09-10;
-                KEY        = FOPR;
-                LOC_X      = 10;
-                LOC_Y      = 10;
-                LOC_RANGE  = 10;
-                };
-                """
-            )
-            fh.writelines(obs_config)
-        with open("template.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-        with open("prior.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD NORMAL 0 1")
-        ert_config = ErtConfig.from_file("config.ert")
-        summary_observations = ert_config.observations["summary"]
+        summary_observations = create_summary_observation("""
+        LOC_X=10;
+        LOC_Y=10;
+        LOC_RANGE=10;
+        """)
 
         assert all(
             loc_key in summary_observations.columns
@@ -347,39 +353,7 @@ def test_that_summary_observations_does_not_add_loc_data_in_df_if_any_loc_fields
     loc_config_lines,
 ):
     with tmpdir.as_cwd():
-        config = dedent(
-            """
-        NUM_REALIZATIONS 3
-        ECLBASE ECLIPSE_CASE_%d
-        OBS_CONFIG observations
-        GEN_KW KW_NAME template.txt kw.txt prior.txt
-        RANDOM_SEED 1234
-        """
-        )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("observations", "w", encoding="utf-8") as fh:
-            obs_config = dedent(
-                """
-                SUMMARY_OBSERVATION FOPR_1
-                {
-                VALUE      = 0.9;
-                ERROR      = 0.05;
-                DATE       = 2014-09-10;
-                KEY        = FOPR;
-                """
-                + loc_config_lines
-                + """
-                };
-                """
-            )
-            fh.writelines(obs_config)
-        with open("template.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-        with open("prior.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD NORMAL 0 1")
-        ert_config = ErtConfig.from_file("config.ert")
-        summary_observations = ert_config.observations["summary"]
+        summary_observations = create_summary_observation(loc_config_lines)
 
         assert all(
             loc_key not in summary_observations.columns
