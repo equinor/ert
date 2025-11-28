@@ -110,6 +110,7 @@ dev = [
     "pytest-snapshot",
     "pytest-timeout",
     "pytest-xdist",
+    "pytest-durations",
     "pytest>6",
     "resdata",
     "rust-just",
