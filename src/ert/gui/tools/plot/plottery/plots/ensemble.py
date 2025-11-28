@@ -86,9 +86,16 @@ class EnsemblePlot:
         if len(data) == 1 and not style.marker:
             style.marker = "."
 
+        if plot_config.inverted_axes:
+            y = data.to_numpy()
+            x = data.index.to_numpy()
+            axes.yaxis.set_inverted(True)
+        else:
+            x = data.to_numpy()
+            y = data.index.to_numpy()
         lines = axes.plot(
-            data.index.to_numpy(),
-            data.to_numpy(),
+            y,
+            x,
             color=style.color,
             alpha=style.alpha,
             marker=style.marker,

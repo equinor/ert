@@ -27,6 +27,7 @@ from ert.config import (
     ESSettings,
     HookRuntime,
     QueueSystem,
+    RFTConfig,
 )
 from ert.config.ert_config import _split_string_into_sections, create_forward_model_json
 from ert.config.forward_model_step import (
@@ -2680,3 +2681,67 @@ def test_that_invalid_option_name_in_design_matrix_raises_validation_error(
             "NUM_REALIZATIONS 1\n"
             f"DESIGN_MATRIX {design_matrix_file} {misspelled_option}:SomeSheet"
         )
+
+
+def test_that_single_rft_is_parsed():
+    config = ErtConfig.from_file_contents(
+        """
+        NUM_REALIZATIONS 1
+        ECLBASE BASE
+
+        RFT WELL:NAME DATE:2020-12-13 PROPERTIES:PRESSURE,SWAT
+        """,
+    )
+    rft = config.ensemble_config.response_configs["rft"]
+    assert isinstance(rft, RFTConfig)
+    assert rft.type == "rft"
+    assert rft.name == "rft"
+    assert rft.response_type == "rft"
+    assert rft.input_files == ["BASE"]
+    assert rft.keys == ["NAME:2020-12-13:PRESSURE", "NAME:2020-12-13:SWAT"]
+    assert not rft.has_finalized_keys
+    assert rft.data_to_read == {"NAME": {"2020-12-13": ["PRESSURE", "SWAT"]}}
+
+
+def test_that_multiple_rfts_are_parsed():
+    config = ErtConfig.from_file_contents(
+        """
+        NUM_REALIZATIONS 1
+        ECLBASE BASE
+
+        RFT WELL:NAME1 DATE:2020-12-13 PROPERTIES:PRESSURE,SWAT
+        RFT WELL:NAME2 DATE:2020-12-14 PROPERTIES:SOIL
+        """,
+    )
+    rft = config.ensemble_config.response_configs["rft"]
+    assert isinstance(rft, RFTConfig)
+    assert rft.type == "rft"
+    assert rft.name == "rft"
+    assert rft.response_type == "rft"
+    assert rft.input_files == ["BASE"]
+    assert set(rft.keys) == {
+        "NAME1:2020-12-13:PRESSURE",
+        "NAME1:2020-12-13:SWAT",
+        "NAME2:2020-12-14:SOIL",
+    }
+    assert not rft.has_finalized_keys
+    assert rft.data_to_read == {
+        "NAME1": {"2020-12-13": ["PRESSURE", "SWAT"]},
+        "NAME2": {"2020-12-14": ["SOIL"]},
+    }
+
+
+def test_that_rft_properties_can_be_given_with_spaces():
+    config = ErtConfig.from_file_contents(
+        """
+        NUM_REALIZATIONS 1
+        ECLBASE BASE
+
+        RFT WELL:NAME1 DATE:2020-12-13 "PROPERTIES:PRESSURE, SWAT"
+        """,
+    )
+    rft = config.ensemble_config.response_configs["rft"]
+    assert isinstance(rft, RFTConfig)
+    assert rft.data_to_read == {
+        "NAME1": {"2020-12-13": ["PRESSURE", "SWAT"]},
+    }
