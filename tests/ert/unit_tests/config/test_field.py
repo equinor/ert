@@ -14,7 +14,6 @@ from ert.config.parsing import parse_contents
 from ert.field_utils import (
     ErtboxParameters,
     FieldFileFormat,
-    ScalingFunctions,
     Shape,
     calc_rho_for_2d_grid_layer,
     calculate_ertbox_parameters,
@@ -460,11 +459,10 @@ def test_transform_localization_ellipse_angle_to_local_coordinates(
 
 
 @pytest.mark.parametrize(
-    "nvalues, name, expected_values",
+    "nvalues, expected_values",
     [
         (
             10,
-            "gaspari_cohn",
             [
                 1.00000000e00,
                 8.87358513e-01,
@@ -478,106 +476,26 @@ def test_transform_localization_ellipse_angle_to_local_coordinates(
                 0.00000000e00,
             ],
         ),
-        (
-            10,
-            "gaussian",
-            [
-                1.00000000e00,
-                7.93357387e-01,
-                3.96164430e-01,
-                1.24514471e-01,
-                2.46321272e-02,
-                3.06705630e-03,
-                2.40369476e-04,
-                1.18569947e-05,
-                3.68135480e-07,
-                7.19413303e-09,
-            ],
-        ),
-        (
-            10,
-            "exponential",
-            [
-                1.00000000e00,
-                4.34598209e-01,
-                1.88875603e-01,
-                8.20849986e-02,
-                3.56739933e-02,
-                1.55038536e-02,
-                6.73794700e-03,
-                2.92829969e-03,
-                1.27263380e-03,
-                5.53084370e-04,
-            ],
-        ),
     ],
 )
-def test_localization_scaling_function(nvalues: int, name: str, expected_values: list):
+def test_localization_scaling_function(nvalues: int, expected_values: list):
     tolerance = 1e-8
     distances = np.linspace(0, 2.5, num=nvalues, endpoint=True, dtype=np.float64)
-    values = localization_scaling_function(
-        distances, scaling_func=ScalingFunctions(name)
-    )
+    values = localization_scaling_function(distances)
     reference_values = np.array(expected_values, dtype=np.float64)
     are_equal = np.allclose(values, reference_values, rtol=0.01, atol=tolerance)
     assert are_equal
 
 
 @pytest.mark.parametrize(
-    "xpos, ypos, main_range, perp_range, anisotropy_angle, scaling_func, expected",
+    "xpos, ypos, main_range, perp_range, anisotropy_angle, expected",
     [
-        (
-            [50.0, 150.0, 250.0],  # xpos
-            [50.0, 150.0, 250.0],  # ypos
-            [150.0, 150.0, 150.0],  # main_range
-            [100.0, 100.0, 100.0],  # perp_range
-            [0.0, 45.0, 90.0],  # angle
-            "gaussian",
-            [
-                [
-                    [1.42516408e-21, 2.62309377e-12, 2.96639500e-08],
-                    [1.87952882e-12, 7.03873864e-07, 1.61959679e-06],
-                    [6.14421235e-06, 2.47875218e-03, 6.14421235e-06],
-                    [4.97870684e-02, 1.14558844e-01, 1.61959679e-06],
-                    [1.00000000e00, 6.94834512e-02, 2.96639500e-08],
-                ],
-                [
-                    [3.75669174e-22, 3.39826782e-09, 2.40369476e-04],
-                    [4.95438417e-13, 1.72232256e-04, 1.31237287e-02],
-                    [1.61959679e-06, 1.14558844e-01, 4.97870684e-02],
-                    [1.31237287e-02, 1.00000000e00, 1.31237287e-02],
-                    [2.63597138e-01, 1.14558844e-01, 2.40369476e-04],
-                ],
-                [
-                    [6.88062092e-24, 5.77774852e-08, 4.82794999e-03],
-                    [9.07427114e-15, 5.53084370e-04, 2.63597138e-01],
-                    [2.96639500e-08, 6.94834512e-02, 1.00000000e00],
-                    [2.40369476e-04, 1.14558844e-01, 2.63597138e-01],
-                    [4.82794999e-03, 2.47875218e-03, 4.82794999e-03],
-                ],
-                [
-                    [8.75651076e-27, 1.28918995e-08, 2.40369476e-04],
-                    [1.15482242e-17, 2.33091011e-05, 1.31237287e-02],
-                    [3.77513454e-11, 5.53084370e-04, 4.97870684e-02],
-                    [3.05902321e-07, 1.72232256e-04, 1.31237287e-02],
-                    [6.14421235e-06, 7.03873864e-07, 2.40369476e-04],
-                ],
-                [
-                    [7.74311878e-31, 3.77513454e-11, 2.96639500e-08],
-                    [1.02117469e-21, 1.28918995e-08, 1.61959679e-06],
-                    [3.33823780e-15, 5.77774852e-08, 6.14421235e-06],
-                    [2.70500210e-11, 3.39826782e-09, 1.61959679e-06],
-                    [5.43314196e-10, 2.62309377e-12, 2.96639500e-08],
-                ],
-            ],
-        ),
         (
             [150.0, 150.0, 250.0],  # xpos
             [350.0, 150.0, 250.0],  # ypos
             [150.0, 450.0, 450.0],  # main_range
             [100.0, 200.0, 300.0],  # perp_range
             [0.0, 35.0, 135.0],  # angle
-            "gaspari_cohn",
             [
                 [
                     [9.42127705e-02, 1.31635111e-02, 5.50270948e-01],
@@ -624,7 +542,6 @@ def test_calc_rho_for_2d_grid_layer(
     main_range: list[float],
     perp_range: list[float],
     anisotropy_angle: list[float],
-    scaling_func: str,
     expected: list[list[list[float]]],
 ):
     nx = 5
@@ -649,7 +566,7 @@ def test_calc_rho_for_2d_grid_layer(
         mainrange,
         perprange,
         angles,
-        scaling_function=ScalingFunctions(scaling_func),
+        right_handed_grid_indexing=True,
     )
     are_equal = np.allclose(
         rho_for_one_grid_layer, reference_values, rtol=0.01, atol=tolerance
