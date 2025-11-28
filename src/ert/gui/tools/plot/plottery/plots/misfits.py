@@ -51,14 +51,14 @@ class MisfitsPlot:
             .with_columns(pl.col("key_index").cast(pl.String))
             .rename(
                 {
-                    "OBS":"observations",
-                    "STD":"errors",
+                    "OBS": "observations",
+                    "STD": "errors",
                 }
             )
         )
 
         response_data_columnar = {
-            k:pl.from_pandas(v) for k, v in ensemble_to_data_map.items()
+            k: pl.from_pandas(v) for k, v in ensemble_to_data_map.items()
         }
 
         if observation_data_columnar.is_empty():
@@ -73,8 +73,11 @@ class MisfitsPlot:
                     fontsize=12,
                 )
             PlotTools.finalizePlot(
-                plot_context, figure, axes_resp,
-                default_x_label="N/A", default_y_label="N/A"
+                plot_context,
+                figure,
+                axes_resp,
+                default_x_label="N/A",
+                default_y_label="N/A",
             )
             return
 
@@ -115,11 +118,11 @@ class MisfitsPlot:
 
         # Maps for observations (used only in responses plot)
         obs_values = {
-            float(row["key_index"]):float(row["observations"])
+            float(row["key_index"]): float(row["observations"])
             for row in obs.iter_rows(named=True)
         }
         obs_errors = {
-            float(row["key_index"]):float(row["errors"])
+            float(row["key_index"]): float(row["errors"])
             for row in obs.iter_rows(named=True)
         }
 
@@ -141,8 +144,7 @@ class MisfitsPlot:
 
             # NOTE: misfit is now SIGNED, we do NOT take abs()
             misfits_long_eo = (
-                misfits_wide
-                .with_row_count("realization")
+                misfits_wide.with_row_count("realization")
                 .melt(
                     id_vars=["realization"],
                     variable_name="key_index",
@@ -161,9 +163,7 @@ class MisfitsPlot:
             base_to_misfit_name[base_name] = eo.name
 
         misfits_long = (
-            pl.concat(misfits_long_list, how="vertical")
-            if misfits_long_list
-            else None
+            pl.concat(misfits_long_list, how="vertical") if misfits_long_list else None
         )
 
         # ------------------------------------------------------------------
@@ -183,8 +183,7 @@ class MisfitsPlot:
             base_name = eo.name
 
             responses_long_eo = (
-                resp_wide
-                .with_row_count("realization")
+                resp_wide.with_row_count("realization")
                 .melt(
                     id_vars=["realization"],
                     variable_name="key_index",
@@ -213,8 +212,7 @@ class MisfitsPlot:
         base_names = sorted(set(base_to_misfit_name.keys()) | bases_with_responses)
         colours = plt.rcParams["axes.prop_cycle"].by_key()["color"]
         colour_map = {
-            base:colours[i % len(colours)]
-            for i, base in enumerate(base_names)
+            base: colours[i % len(colours)] for i, base in enumerate(base_names)
         }
 
         x_positions = np.arange(len(keys))
@@ -244,7 +242,8 @@ class MisfitsPlot:
                     if x_center == x_positions[0]:
                         legend_handles_mis.append(
                             Line2D(
-                                [], [],
+                                [],
+                                [],
                                 marker="s",
                                 linestyle="None",
                                 color=colour,
@@ -253,8 +252,7 @@ class MisfitsPlot:
                         )
 
                     sub = misfits_long.filter(
-                        (pl.col("ensemble_base") == base)
-                        & (pl.col("key_index") == key)
+                        (pl.col("ensemble_base") == base) & (pl.col("key_index") == key)
                     )
                     mis_vals = sub["misfit"].to_numpy()
                     if mis_vals.size == 0:
@@ -357,8 +355,7 @@ class MisfitsPlot:
                     colour = colour_map.get(base, "C0")
 
                     sub = responses_long.filter(
-                        (pl.col("ensemble_base") == base)
-                        & (pl.col("key_index") == key)
+                        (pl.col("ensemble_base") == base) & (pl.col("key_index") == key)
                     )
                     vals = sub["response"].to_numpy()
                     if vals.size == 0:
