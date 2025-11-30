@@ -16,7 +16,10 @@ from ert.field_utils import (
     FieldFileFormat,
     Shape,
     calculate_ertbox_parameters,
+    localization_scaling_function,
     read_field,
+    transform_local_ellipse_angle_to_local_coords,
+    transform_positions_to_local_field_coordinates,
 )
 from ert.sample_prior import sample_prior
 
@@ -329,7 +332,7 @@ def test_calculate_ertbox_parameters_synthetic_grid(origin, increment, rotation,
         oricenter=False,  # origin at corner, not center
         increment=increment,  # dx, dy, dz
         rotation=rotation,  # rotation in degrees
-        flip=flip,  # 1 for right-handed, -1 for left-handed
+        flip=flip,  # -1 for right-handed, 1 for left-handed
     )
     params = calculate_ertbox_parameters(grid)
 
@@ -374,3 +377,245 @@ def test_calculate_ertbox_parameters_synthetic_grid(origin, increment, rotation,
     assert params.nx == 5
     assert params.ny == 4
     assert params.nz == 3
+
+
+@pytest.mark.parametrize(
+    "origin, rotation, utmx, utmy, expected_x, expected_y",
+    [
+        (
+            (1000.0, 2000.0),
+            0.0,
+            [1100.0, 1300.0, 1500.0],
+            [2000, 2100, 2500],
+            [100.0, 300.0, 500.0],
+            [0.0, 100.0, 500.0],
+        ),
+        (
+            (1000.0, 2000.0),
+            90.0,
+            [1400.0, 1000],
+            [2000.0, 2500.0],
+            [0.0, 500.0],
+            [-400.0, 0.0],
+        ),
+        (
+            (1000.0, 1400.0),
+            180,
+            [500.0, 750.0],
+            [1400.0, 1800.0],
+            [500.0, 250.0],
+            [0.0, -400.0],
+        ),
+        (
+            (1000.0, 1400.0),
+            30,
+            [1100.0, 900.0],
+            [2100.0, 1800.0],
+            [436.60254037844, 113.39745962],
+            [556.217782649, 396.41016151378],
+        ),
+    ],
+)
+def test_transform_positions_to_local_field_coordinates(
+    origin, rotation, utmx, utmy, expected_x, expected_y
+):
+    """Test transformation of position from global to local coordinates."""
+    tolerance = 1e-8
+    xpos = np.array(utmx)
+    ypos = np.array(utmy)
+    x_transf, y_transf = transform_positions_to_local_field_coordinates(
+        origin, rotation, xpos, ypos
+    )
+    print(f"{x_transf=}")
+    print(f"{y_transf=}")
+    reference_x = np.array(expected_x)
+    reference_y = np.array(expected_y)
+    for i in range(len(x_transf)):
+        assert abs(x_transf[i] - reference_x[i]) < tolerance, (
+            f"Expected x_transf[i]={reference_x[i]}, got {x_transf[i]}"
+        )
+        assert abs(y_transf[i] - reference_y[i]) < tolerance, (
+            f"Expected y_transf[i]={reference_y[i]}, got {y_transf[i]}"
+        )
+
+
+@pytest.mark.parametrize(
+    "coordsys_rotation, input_angle, expected_angle",
+    [
+        (0.0, 0.0, 0.0),
+        (45.0, 0.0, -45.0),
+        (75.0, 100.0, 25.0),
+    ],
+)
+def test_transform_localization_ellipse_angle_to_local_coordinates(
+    coordsys_rotation, input_angle, expected_angle
+):
+    tolerance = 1e-8
+    output_angle = transform_local_ellipse_angle_to_local_coords(
+        coordsys_rotation, input_angle
+    )
+    assert abs(output_angle - expected_angle) < tolerance
+
+
+@pytest.mark.parametrize(
+    "nvalues, expected_values",
+    [
+        (
+            10,
+            [
+                1.00000000e00,
+                8.87358513e-01,
+                6.27163457e-01,
+                3.44939558e-01,
+                1.38443214e-01,
+                3.52032546e-02,
+                3.46364883e-03,
+                2.92709888e-06,
+                0.00000000e00,
+                0.00000000e00,
+            ],
+        ),
+    ],
+)
+def test_localization_scaling_function(nvalues: int, expected_values: list):
+    tolerance = 1e-8
+    distances = np.linspace(0, 2.5, num=nvalues, endpoint=True, dtype=np.float64)
+    values = localization_scaling_function(distances)
+    reference_values = np.array(expected_values, dtype=np.float64)
+    are_equal = np.allclose(values, reference_values, rtol=0.01, atol=tolerance)
+    assert are_equal
+
+
+@pytest.fixture
+def field():
+    # Return a Field object for test purpose
+
+    # Create a synthetic box grid with rotation
+    nx = 50
+    ny = 110
+    nz = 10
+    dims = (nx, ny, nz)
+    origin = (1000.0, 2100.0, 2500.0)
+    xsize = 500.0
+    ysize = 1000.0
+    xinc = xsize / nx
+    yinc = ysize / ny
+    zinc = 1.0
+    rotation = 0.0
+    increment = (xinc, yinc, zinc)
+    grid = xtgeo.create_box_grid(
+        dimension=dims,
+        origin=origin,  # x0, y0, z0
+        oricenter=False,  # origin at corner, not center
+        increment=increment,  # dx, dy, dz
+        rotation=rotation,  # rotation in degrees
+        flip=-1,  # -1 for right-handed, 1 for left-handed
+    )
+    params = calculate_ertbox_parameters(grid)
+    print(f"{params=}")
+    return Field(
+        type="field",
+        name="MyField",
+        forward_init=True,
+        update=True,
+        ertbox_params=calculate_ertbox_parameters(grid),
+        file_format=FieldFileFormat.ROFF,
+        output_transformation=None,
+        input_transformation=None,
+        truncation_min=-5.0,
+        truncation_max=5.0,
+        forward_init_file="input_file.roff",
+        output_file=Path("output_file.roff"),
+        grid_file="ertbox_grid.roff",
+    )
+
+
+@pytest.fixture
+def grid_for_visual_qc():
+    # For visualization, create a 3D gris which is a stack of 2d
+    # grids to contain the RHO parameter (one layer per obs)
+    nobs = 7
+    nx = 50
+    ny = 110
+    dims = (nx, ny, nobs)
+    origin = (1000.0, 2100.0, 2500.0)
+    xsize = 500.0
+    ysize = 1000.0
+    xinc = xsize / nx
+    yinc = ysize / ny
+    zinc = 1.0
+    rotation = 0.0
+    increment = (xinc, yinc, zinc)
+    return xtgeo.create_box_grid(
+        dimension=dims,
+        origin=origin,
+        increment=increment,
+        rotation=rotation,
+        flip=-1,  # -1 for right-handed, 1 for left-handed
+    )
+
+
+@pytest.mark.parametrize(
+    "xpos, ypos, main_range, perp_range, anisotropy_angle",
+    [
+        (
+            [50.0, 250.0, 250.0, 250.0, 0.0, 250.0, 250.0],  # xpos
+            [50.0, 550.0, 550.0, 550.0, 0.0, 550.0, 550.0],  # ypos
+            [100.0, 600.0, 600.0, 600.0, 1000.0, 300.0, 300.0],  # main_range
+            [100.0, 200.0, 200.0, 200.0, 1000.0, 10.0, 100.0],  # perp_range
+            [0.0, 35.0, 135.0, -135.0, 0.0, 45.0, -270.0],  # angle
+        ),
+    ],
+)
+def test_calc_rho_for_2d_grid_layer(
+    field,
+    grid_for_visual_qc,
+    xpos: list[float],
+    ypos: list[float],
+    main_range: list[float],
+    perp_range: list[float],
+    anisotropy_angle: list[float],
+    #    expected: list[list[list[float]]],
+):
+    print(field.ertbox_params)
+    nx = field.ertbox_params.nx
+    ny = field.ertbox_params.ny
+    tolerance = 1e-8
+
+    xposition = np.array(xpos)
+    yposition = np.array(ypos)
+    mainrange = np.array(main_range)
+    perprange = np.array(perp_range)
+    angles = np.array(anisotropy_angle)
+    #    reference_values = np.array(expected)
+    #   Dimension of rho_for_one_grid_layer is (nx,ny,nobs)
+    rho_for_one_grid_layer = field.calc_rho_for_2d_grid_layer(
+        xposition,
+        yposition,
+        mainrange,
+        perprange,
+        angles,
+        right_handed_grid_indexing=True,
+    )
+    print(f"{rho_for_one_grid_layer.shape=}")
+    print(rho_for_one_grid_layer)
+    # Write grid for visualization
+    filename = "tmp_visualization_grid_for_rho.roff"
+    print(f"Write file: {filename}")
+    grid_for_visual_qc.to_file(filename, fformat="roff")
+
+    # Write to 3D grid parameter in ROFF for visual inspection
+    filename = "tmp_2d_rho_per_obs.roff"
+    nobs = rho_for_one_grid_layer.shape[2]
+    rho_param = xtgeo.GridProperty(
+        ncol=nx, nrow=ny, nlay=nobs, name="rho", values=rho_for_one_grid_layer
+    )
+
+    print(f"Write file: {filename}")
+    rho_param.to_file(filename, fformat="roff")
+
+
+#    are_equal = np.allclose(
+#        rho_for_one_grid_layer, reference_values, rtol=0.01, atol=tolerance
+#    )
+#    assert are_equal
