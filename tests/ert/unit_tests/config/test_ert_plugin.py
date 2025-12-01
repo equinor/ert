@@ -112,7 +112,7 @@ def test_plugin_with_fixtures_and_enough_arguments():
     )
 
 
-def test_plugin_with_default_arguments(capsys):
+def test_plugin_with_default_arguments():
     class FixturePlugin(ErtPlugin):
         def run(self, ensemble=None):
             return ensemble

@@ -186,7 +186,7 @@ def test_generate_queue_options_no_config():
 )
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_that_server_queue_system_defaults_to_simulator_queue_options(
-    monkeypatch, queue_class, expected_queue_kwargs
+    queue_class, expected_queue_kwargs
 ):
     config = everest_config_with_defaults(
         simulator={"queue_system": expected_queue_kwargs}
@@ -204,7 +204,7 @@ def test_that_server_queue_system_defaults_to_simulator_queue_options(
         {"name": "slurm"},
     ],
 )
-def test_queue_options_site_config(queue_options, use_plugin, monkeypatch, min_config):
+def test_queue_options_site_config(queue_options, use_plugin, min_config):
     plugin_result = "From plugin"
     if "activate_script" in queue_options:
         expected_result = queue_options["activate_script"]
@@ -243,9 +243,7 @@ def test_queue_options_site_config(queue_options, use_plugin, monkeypatch, min_c
         {},
     ],
 )
-def test_simulator_queue_system_site_config(
-    queue_options, use_plugin, monkeypatch, min_config
-):
+def test_simulator_queue_system_site_config(queue_options, use_plugin, min_config):
     if queue_options:
         expected_result = SlurmQueueOptions  # User specified
     elif use_plugin:

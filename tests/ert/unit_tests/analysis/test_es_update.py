@@ -761,7 +761,7 @@ def test_that_autoscaling_applies_to_scaled_errors(storage):
     ],
 )
 def test_compute_observation_statuses(
-    nan_responses, overspread_responses, collapsed_responses, caplog
+    nan_responses, overspread_responses, collapsed_responses
 ):
     alpha = 0.1
     global_std_scaling = 1

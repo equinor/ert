@@ -49,9 +49,7 @@ def handle_run_path_error_dialog(gui: ErtMainWindow, qtbot: QtBot):
 
 
 @pytest.mark.integration_test
-def test_run_path_deleted_error(
-    snake_oil_case_storage: ErtConfig, qtbot: QtBot, mocker
-):
+def test_run_path_deleted_error(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
     snake_oil_case = snake_oil_case_storage
     args_mock = Mock()
     args_mock.config = "snake_oil.ert"

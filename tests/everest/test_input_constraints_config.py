@@ -6,7 +6,7 @@ from everest.config import EverestConfig, InputConstraintConfig, OptimizationCon
 from tests.everest.utils import everest_config_with_defaults
 
 
-def test_input_constraint_control_references(tmp_path, capsys, caplog, monkeypatch):
+def test_input_constraint_control_references(tmp_path, capsys, monkeypatch):
     monkeypatch.chdir(tmp_path)
     controls_config = [
         {
@@ -85,7 +85,7 @@ def test_input_constraint_control_references(tmp_path, capsys, caplog, monkeypat
     assert not capsys.readouterr().out
 
 
-def test_that_auto_scale_and_input_constraints_scale_are_mutually_exclusive(tmp_path):
+def test_that_auto_scale_and_input_constraints_scale_are_mutually_exclusive():
     with pytest.raises(
         ValueError,
         match=(

@@ -160,9 +160,7 @@ def get_record_csv(storage, ensemble_id1, keyword, poly_ran):
 @pytest.mark.filterwarnings(
     "ignore:Config contains a SUMMARY key but no forward model steps"
 )
-def test_direct_dark_performance(
-    benchmark, template_config, monkeypatch, function, keyword
-):
+def test_direct_dark_performance(benchmark, template_config, function, keyword):
     key = {
         "summary": "PSUM1",
         "gen_data": "POLY_RES_1@0",
@@ -194,7 +192,7 @@ def test_direct_dark_performance(
     "keyword", ["summary", "gen_data", "summary_with_obs", "gen_data_with_obs"]
 )
 def test_direct_dark_performance_with_storage(
-    benchmark, template_config, monkeypatch, function, keyword
+    benchmark, template_config, function, keyword
 ):
     key = {
         "summary": "PSUM1",

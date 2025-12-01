@@ -904,7 +904,7 @@ def test_fm_step_config_via_plugin_is_overridden_by_setenv(monkeypatch):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_setenv_will_be_substituted_in_jobs_json(monkeypatch):
+def test_setenv_will_be_substituted_in_jobs_json():
     Path("config.ert").write_text(
         dedent(
             """
@@ -2328,7 +2328,7 @@ def test_queue_options_are_joined_after_option_name():
     ],
 )
 def test_validation_error_on_invalid_parameter_name(
-    invalid_parameter_definition_name, tmp_path, caplog
+    invalid_parameter_definition_name, tmp_path
 ):
     Path(tmp_path / "coeffs_priors").write_text(
         invalid_parameter_definition_name, encoding="utf-8"

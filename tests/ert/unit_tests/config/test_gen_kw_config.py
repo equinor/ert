@@ -274,7 +274,7 @@ def test_that_high_mean_stddev_lognormal_gives_warning():
         )
 
 
-def test_that_very_high_mean_stddev_lognormal_gives_error(tmpdir):
+def test_that_very_high_mean_stddev_lognormal_gives_error():
     mean_log = 3000
     stdev_log = 10
     expected_error = r"Expectation value of the lognormal distribution is too large!.*"

@@ -77,7 +77,7 @@ def _open_main_window(
 
 
 @pytest.fixture
-def open_gui(tmp_path, monkeypatch, run_experiment, tmp_path_factory):
+def open_gui(tmp_path, monkeypatch, run_experiment):
     monkeypatch.chdir(tmp_path)
     with (
         _open_main_window(tmp_path) as (

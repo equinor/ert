@@ -142,9 +142,7 @@ def test_gui_shows_a_warning_and_disables_update_when_there_are_no_observations(
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_gui_shows_a_warning_and_disables_update_when_parameters_are_missing(
-    qapp, tmp_path
-):
+def test_gui_shows_a_warning_and_disables_update_when_parameters_are_missing(qapp):
     with (
         open("poly.ert", encoding="utf-8") as fin,
         open("poly-no-gen-kw.ert", "w", encoding="utf-8") as fout,

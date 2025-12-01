@@ -1139,7 +1139,7 @@ async def test_lsf_info_file_in_runpath(
 
 
 @pytest.mark.integration_test
-async def test_submit_to_named_queue(tmp_path, caplog, job_name, monkeypatch):
+async def test_submit_to_named_queue(tmp_path, job_name, monkeypatch):
     """If the environment variable _ERT_TEST_ALTERNATIVE_QUEUE is defined
     a job will be attempted submitted to that queue.
 

@@ -91,7 +91,7 @@ def test_changing_ensemble(qtbot, notifier, storage):
     assert widget_b.currentData() == str(ensemble_a.id)
 
 
-def test_ensembles_are_sorted_failed_first_then_by_start_time(qtbot, notifier, storage):
+def test_ensembles_are_sorted_failed_first_then_by_start_time(storage):
     ensemble_a = storage.create_experiment().create_ensemble(
         name="default_a", ensemble_size=1
     )

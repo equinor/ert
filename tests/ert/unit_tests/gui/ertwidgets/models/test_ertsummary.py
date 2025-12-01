@@ -8,7 +8,7 @@ from ert.gui.ertwidgets.models.ertsummary import ErtSummary
 
 
 @pytest.fixture
-def mock_ert(monkeypatch):
+def mock_ert():
     ert_mock = MagicMock()
 
     ert_mock.forward_model_step_name_list.return_value = [

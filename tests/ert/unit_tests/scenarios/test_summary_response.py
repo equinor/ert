@@ -223,7 +223,7 @@ def test_that_duplicate_summary_time_steps_does_not_fail(
 
 @pytest.mark.flaky(reruns=5)
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
-def test_that_mismatched_responses_gives_nan_measured_data(ert_config, prior_ensemble):
+def test_that_mismatched_responses_gives_nan_measured_data(prior_ensemble):
     sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size), 123)
 
     response_times = [
@@ -252,7 +252,7 @@ def test_that_mismatched_responses_gives_nan_measured_data(ert_config, prior_ens
 
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
-def test_reading_past_2263_is_ok(ert_config, storage, prior_ensemble):
+def test_reading_past_2263_is_ok(ert_config, prior_ensemble):
     sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size), 123)
 
     create_responses(

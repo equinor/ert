@@ -39,7 +39,7 @@ from tests.everest.utils import everest_config_with_defaults
         ),
     ],
 )
-def test_config_multi_objectives(min_config, config, expectation, tmp_path):
+def test_config_multi_objectives(min_config, config, expectation):
     min_config["objective_functions"] = config
 
     with expectation:

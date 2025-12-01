@@ -63,7 +63,7 @@ def server_script(monkeypatch, tmp_path: Path, request):
 
 
 @pytest.fixture
-def server(monkeypatch, server_script, request):
+def server(server_script, request):
     proc = _DummyService([str(server_script)])
     request.addfinalizer(proc.shutdown)
     proc.start()
