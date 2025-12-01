@@ -1176,7 +1176,7 @@ def test_deprecated_objective_function_auto_normalize():
         ObjectiveFunctionConfig(name="test", auto_normalize=True)
 
 
-def test_that_auto_scale_and_objective_scale_are_mutually_exclusive(tmp_path):
+def test_that_auto_scale_and_objective_scale_are_mutually_exclusive():
     with pytest.raises(
         ValueError,
         match=(

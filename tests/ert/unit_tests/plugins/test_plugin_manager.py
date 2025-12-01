@@ -181,7 +181,7 @@ def test_fm_config_with_wrong_keytype():
         ErtPluginManager(plugins=[SomePlugin]).get_forward_model_configuration()
 
 
-def test_workflows_merge(monkeypatch):
+def test_workflows_merge():
     expected_result = {
         "wf_job1": "dummy/path/wf_job1",
         "wf_job2": "dummy/path/wf_job2",
@@ -252,7 +252,7 @@ def test_that_forward_model_step_is_registered(tmpdir):
         assert pm.forward_model_steps == [DummyFMStep]
 
 
-def test_that_plugin_manager_with_two_site_configurations_raises_error(tmpdir):
+def test_that_plugin_manager_with_two_site_configurations_raises_error():
     class SiteOne:
         @plugin(name="foo")
         def site_configurations():

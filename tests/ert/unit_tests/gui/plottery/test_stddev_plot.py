@@ -11,7 +11,7 @@ from ert.gui.tools.plot.plottery.plots import StdDevPlot
 
 
 @pytest.fixture()
-def plot_context(request):
+def plot_context():
     context = Mock(spec=PlotContext)
     context.ensembles.return_value = [
         EnsembleObject(

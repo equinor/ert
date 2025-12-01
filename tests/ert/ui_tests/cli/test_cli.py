@@ -93,7 +93,7 @@ def test_that_the_cli_raises_exceptions_when_no_weight_provided_for_es_mda():
 
 
 @pytest.mark.usefixtures("copy_snake_oil_field")
-def test_field_init_file_not_readable(monkeypatch):
+def test_field_init_file_not_readable():
     config_file_name = "snake_oil_field.ert"
     field_file_rel_path = "fields/permx0.grdecl"
     os.chmod(field_file_rel_path, 0o000)

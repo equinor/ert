@@ -156,7 +156,7 @@ async def test_repeated_submit_same_iens(driver: Driver, tmp_path, monkeypatch):
 
 
 @pytest.mark.flaky(reruns=5)
-async def test_kill_actually_kills(driver: Driver, tmp_path, pytestconfig, monkeypatch):
+async def test_kill_actually_kills(driver: Driver, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     realizations = {0, 1}
     iens_status = {

@@ -163,7 +163,7 @@ def test_that_site_configuration_forward_models_are_merged_with_other_plugins():
     }
 
 
-def test_that_plugin_context_with_two_site_configurations_raises_error(tmpdir):
+def test_that_plugin_context_with_two_site_configurations_raises_error():
     class SiteOne:
         @plugin(name="foo")
         def site_configurations():

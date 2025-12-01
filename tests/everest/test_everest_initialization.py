@@ -16,7 +16,7 @@ def test_no_config_init():
         EverestRunModel.create("Frozen bananas")
 
 
-def test_site_config_with_substitutions(monkeypatch, change_to_tmpdir):
+def test_site_config_with_substitutions(change_to_tmpdir):
     def runtime_plugins_with_cpu_override(**kwargs):
         return ErtRuntimePlugins(
             **(

@@ -128,7 +128,7 @@ def test_that_saving_empty_responses_fails_nicely(tmp_path):
 
 
 def test_that_local_ensemble_save_parameter_raises_value_error_given_xr_array_dataset(
-    monkeypatch, tmp_path
+    tmp_path,
 ):
     storage = open_storage(tmp_path, mode="w")
     experiment = storage.create_experiment()
@@ -434,13 +434,13 @@ def test_open_storage_write_with_empty_directory(tmp_path, caplog):
     assert len(caplog.messages) == 0
 
 
-def test_open_storage_read_with_empty_directory(tmp_path, caplog):
+def test_open_storage_read_with_empty_directory(tmp_path):
     with open_storage(tmp_path / "storage", mode="r") as storage:
         assert list(storage.ensembles) == []
         assert list(storage.experiments) == []
 
 
-def test_open_storage_nested_dirs(tmp_path, caplog):
+def test_open_storage_nested_dirs(tmp_path):
     with open_storage(tmp_path / "extra_level" / "storage", mode="w") as storage:
         assert storage.path.exists()
 
@@ -453,9 +453,7 @@ def test_open_storage_with_corrupted_storage(tmp_path):
         open_storage(tmp_path / "storage", mode="w")
 
 
-def test_that_open_storage_in_read_mode_with_newer_version_throws_exception(
-    tmp_path, caplog
-):
+def test_that_open_storage_in_read_mode_with_newer_version_throws_exception(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
         storage._index.version = _LOCAL_STORAGE_VERSION + 1
         storage._save_index()
@@ -472,9 +470,7 @@ def test_that_open_storage_in_read_mode_with_newer_version_throws_exception(
         open_storage(tmp_path, mode="r")
 
 
-def test_that_open_storage_in_read_mode_with_older_version_throws_exception(
-    tmp_path, caplog
-):
+def test_that_open_storage_in_read_mode_with_older_version_throws_exception(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
         storage._index.version = _LOCAL_STORAGE_VERSION - 1
         storage._save_index()
@@ -489,9 +485,7 @@ def test_that_open_storage_in_read_mode_with_older_version_throws_exception(
         open_storage(tmp_path, mode="r")
 
 
-def test_that_open_storage_in_write_mode_with_newer_version_throws_exception(
-    tmp_path, caplog
-):
+def test_that_open_storage_in_write_mode_with_newer_version_throws_exception(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
         storage._index.version = _LOCAL_STORAGE_VERSION + 1
         storage._save_index()

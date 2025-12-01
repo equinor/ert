@@ -284,7 +284,7 @@ async def test_when_waiting_for_disk_sync_times_out_an_error_is_logged(
 
 @pytest.mark.asyncio
 async def test_when_files_in_manifest_are_not_created_an_error_is_logged(
-    realization: Realization, monkeypatch
+    realization: Realization,
 ):
     scheduler = create_scheduler()
     scheduler._manifest_queue = asyncio.Queue()
@@ -562,8 +562,8 @@ async def test_deduplication_of_repeated_warnings_from_forward_model(
     assert caplog.text.count(emitted_warning_str) == 1
 
 
-async def test_log_warnings_from_forward_model_can_detect_files_being_created_after_delay(  # noqa
-    realization, mocker, tmpdir
+async def test_log_warnings_from_forward_model_can_detect_files_being_created_after_delay(  # noqa: E501
+    realization, mocker
 ):
     initial_timeout = Job.DEFAULT_FILE_VERIFICATION_TIMEOUT
     delay = 10
@@ -607,7 +607,7 @@ async def test_log_warnings_from_forward_model_can_detect_files_being_created_af
     "method_to_test", ["_verify_checksum", "log_warnings_from_forward_model"]
 )
 async def test_job_logs_timeouts_from_individual_methods(
-    realization, mocker, tmpdir, monkeypatch, caplog, method_to_test
+    realization, mocker, caplog, method_to_test
 ):
     scheduler = create_scheduler()
     scheduler.warnings_extracted = False

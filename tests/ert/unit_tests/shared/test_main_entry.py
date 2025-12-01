@@ -37,7 +37,7 @@ def test_main_logging_argparse(monkeypatch, caplog):
 
 
 @pytest.mark.usefixtures("copy_poly_case")
-def test_storage_exception_is_not_unexpected_error(monkeypatch, caplog):
+def test_storage_exception_is_not_unexpected_error(caplog):
     file_lock_mock = MagicMock()
     caplog.set_level(logging.ERROR)
 

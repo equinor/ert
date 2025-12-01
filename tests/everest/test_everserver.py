@@ -229,7 +229,7 @@ async def test_status_contains_max_runtime_failure(change_to_tmpdir, min_config)
     assert "The run is cancelled due to reaching MAX_RUNTIME" in status.message
 
 
-def test_websocket_no_authentication(monkeypatch, setup_client):
+def test_websocket_no_authentication(setup_client):
     client, _ = setup_client()
     with (
         client.websocket_connect("/experiment_server/events") as websocket,
@@ -239,7 +239,7 @@ def test_websocket_no_authentication(monkeypatch, setup_client):
     assert exception.value.reason == "No authentication"
 
 
-def test_websocket_wrong_password(monkeypatch, setup_client):
+def test_websocket_wrong_password(setup_client):
     client, _ = setup_client()
     credentials = b64encode(b"username:wrong_password").decode()
     with (
@@ -254,7 +254,7 @@ def test_websocket_wrong_password(monkeypatch, setup_client):
 
 
 @pytest.mark.flaky(rerun=3)
-def test_websocket_multiple_connections(monkeypatch, setup_client):
+def test_websocket_multiple_connections(setup_client):
     client, subscribers = setup_client()
     credentials = b64encode(b"username:password").decode()
     with client.websocket_connect(
@@ -270,7 +270,7 @@ def test_websocket_multiple_connections(monkeypatch, setup_client):
     assert event == event_2
 
 
-def test_websocket_multiple_connections_one_fails(monkeypatch, setup_client):
+def test_websocket_multiple_connections_one_fails(setup_client):
     client, subscribers = setup_client()
     credentials = b64encode(b"username:password").decode()
     with (
@@ -286,7 +286,7 @@ def test_websocket_multiple_connections_one_fails(monkeypatch, setup_client):
     assert event == {"event_type": "EndEvent", "failed": False, "msg": "Complete"}
 
 
-def test_websocket_multiple_events_in_queue(monkeypatch, setup_client):
+def test_websocket_multiple_events_in_queue(setup_client):
     @dataclass
     class TestEvent:
         msg: str
@@ -307,7 +307,7 @@ def test_websocket_multiple_events_in_queue(monkeypatch, setup_client):
     assert event_msgs == [jsonable_encoder(e) for e in expected]
 
 
-async def test_websocket_no_events_on_connect(monkeypatch, setup_client):
+async def test_websocket_no_events_on_connect(setup_client):
     events = []
     client, subs = setup_client(events)
     credentials = b64encode(b"username:password").decode()

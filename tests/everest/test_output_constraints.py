@@ -84,7 +84,7 @@ def test_output_constraint_config(config, error):
         )
 
 
-def test_that_auto_scale_and_constraints_scale_are_mutually_exclusive(tmp_path):
+def test_that_auto_scale_and_constraints_scale_are_mutually_exclusive():
     with pytest.raises(
         ValueError,
         match=(
