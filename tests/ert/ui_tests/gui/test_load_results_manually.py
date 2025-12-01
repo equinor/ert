@@ -1,8 +1,7 @@
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import QPushButton
 
-from ert.gui.ertwidgets import ClosableDialog, StringBox, TextBox
-from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
+from ert.gui.ertwidgets import ClosableDialog, EnsembleSelector, StringBox, TextBox
 from ert.gui.tools.load_results import LoadResultsPanel
 
 from .conftest import get_child, wait_for_child

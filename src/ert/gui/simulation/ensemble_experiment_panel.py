@@ -17,6 +17,7 @@ from ert.gui.ertwidgets import (
     CopyableLabel,
     StringBox,
     TextModel,
+    get_parameters_button,
 )
 from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
 from ert.run_models import EnsembleExperiment
@@ -24,7 +25,6 @@ from ert.validation import ExperimentValidation, ProperNameArgument
 from ert.validation.active_range import ActiveRange
 from ert.validation.range_string_argument import RangeSubsetStringArgument
 
-from ..ertwidgets.parameterviewer import get_parameters_button
 from ._design_matrix_panel import DesignMatrixPanel
 from .experiment_config_panel import ExperimentConfigPanel
 

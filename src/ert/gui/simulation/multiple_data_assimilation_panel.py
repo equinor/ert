@@ -22,8 +22,8 @@ from ert.gui.ertwidgets import (
     TargetEnsembleModel,
     TextModel,
     ValueModel,
+    get_parameters_button,
 )
-from ert.gui.ertwidgets.parameterviewer import get_parameters_button
 from ert.mode_definitions import ES_MDA_MODE
 from ert.run_models import MultipleDataAssimilation, MultipleDataAssimilationConfig
 from ert.storage.realization_storage_state import RealizationStorageState

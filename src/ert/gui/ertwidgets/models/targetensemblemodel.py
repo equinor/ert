@@ -4,7 +4,8 @@ from typing_extensions import override
 
 from ert.config import AnalysisConfig
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets.models.valuemodel import ValueModel
+
+from .valuemodel import ValueModel
 
 
 class TargetEnsembleModel(ValueModel):

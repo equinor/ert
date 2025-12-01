@@ -2,7 +2,7 @@ import pytest
 
 from ert.config import GenDataConfig, GenKwConfig
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
+from ert.gui.ertwidgets import EnsembleSelector
 from ert.storage.realization_storage_state import RealizationStorageState
 
 

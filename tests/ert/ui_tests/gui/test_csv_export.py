@@ -8,8 +8,7 @@ import pytest
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import QComboBox, QMessageBox, QWidget
 
-from ert.gui.ertwidgets.listeditbox import ListEditBox
-from ert.gui.ertwidgets.pathchooser import PathChooser
+from ert.gui.ertwidgets import ListEditBox, PathChooser
 from ert.gui.simulation.experiment_panel import EnsembleExperimentPanel, ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.tools.export.export_panel import ExportDialog

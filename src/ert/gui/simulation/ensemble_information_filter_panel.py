@@ -14,6 +14,7 @@ from ert.gui.ertwidgets import (
     StringBox,
     TargetEnsembleModel,
     TextModel,
+    get_parameters_button,
 )
 from ert.mode_definitions import ENIF_MODE
 from ert.run_models import EnsembleInformationFilter
@@ -24,7 +25,6 @@ from ert.validation import (
 from ert.validation.active_range import ActiveRange
 from ert.validation.range_string_argument import RangeSubsetStringArgument
 
-from ..ertwidgets.parameterviewer import get_parameters_button
 from ._design_matrix_panel import DesignMatrixPanel
 from .experiment_config_panel import ExperimentConfigPanel
 

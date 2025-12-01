@@ -4,7 +4,7 @@ import pytest
 
 from ert.config import ErtConfig, Field, GenKwConfig, SurfaceConfig
 from ert.field_utils import ErtboxParameters, FieldFileFormat
-from ert.gui.ertwidgets.models.ertsummary import ErtSummary
+from ert.gui.ertwidgets import ErtSummary
 
 
 @pytest.fixture

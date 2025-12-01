@@ -1,4 +1,4 @@
-from ert.gui.ertwidgets.models.valuemodel import ValueModel
+from .valuemodel import ValueModel
 
 
 class PathModel(ValueModel):

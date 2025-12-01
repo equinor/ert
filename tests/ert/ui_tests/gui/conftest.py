@@ -27,9 +27,7 @@ from pytestqt.qtbot import QtBot
 
 from ert.base_model_context import use_runtime_plugins
 from ert.config import ErtConfig
-from ert.gui.ertwidgets import ClosableDialog
-from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
-from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
+from ert.gui.ertwidgets import ClosableDialog, CreateExperimentDialog, EnsembleSelector
 from ert.gui.main import ErtMainWindow, _setup_main_window, add_gui_log_handler
 from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog

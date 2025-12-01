@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.ertwidgets.models.ertsummary import ErtSummary
+from ert.gui.ertwidgets import ErtSummary
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig
