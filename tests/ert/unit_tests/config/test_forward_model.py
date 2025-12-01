@@ -5,6 +5,7 @@ import shutil
 import stat
 from pathlib import Path
 from textwrap import dedent
+from unittest.mock import patch
 
 import pytest
 from hypothesis import given, settings
@@ -229,14 +230,18 @@ def test_that_substitutions_can_be_done_in_job_names(plugins_ert_config):
     that was broken by changes to forward_model substitutions.
     """
 
-    ert_config = plugins_ert_config.from_file_contents(
-        """
-        NUM_REALIZATIONS  1
-        DEFINE <ECL100OR300> E100
-        FORWARD_MODEL ECLIPS<ECL100OR300>(\
-        <VERSION>=2024.1, <NUM_CPU>=42, <OPTS>="-m")
-        """
-    )
+    with patch(
+        "ert.plugins.hook_implementations.forward_model_steps._available_eclrun_versions",
+        return_value=["2024.1"],
+    ):
+        ert_config = plugins_ert_config.from_file_contents(
+            """
+            NUM_REALIZATIONS  1
+            DEFINE <ECL100OR300> E100
+            FORWARD_MODEL ECLIPS<ECL100OR300>(\
+            <VERSION>=2024.1, <NUM_CPU>=42, <OPTS>="-m")
+            """
+        )
     assert len(ert_config.forward_model_steps) == 1
     job = ert_config.forward_model_steps[0]
     assert job.name == "ECLIPSE100"
@@ -391,12 +396,16 @@ def plugins_ert_config():
 def test_that_forward_model_substitution_does_not_warn_about_reaching_max_iterations(
     caplog, plugins_ert_config
 ):
-    ert_config = plugins_ert_config.from_file_contents(
-        """
-        NUM_REALIZATIONS 1
-        FORWARD_MODEL ECLIPSE100(<VERSION>=2020.2)
-        """
-    )
+    with patch(
+        "ert.plugins.hook_implementations.forward_model_steps._available_eclrun_versions",
+        return_value=["2020.2"],
+    ):
+        ert_config = plugins_ert_config.from_file_contents(
+            """
+            NUM_REALIZATIONS 1
+            FORWARD_MODEL ECLIPSE100(<VERSION>=2020.2)
+            """
+        )
     with caplog.at_level(logging.WARNING):
         create_forward_model_json(
             context=ert_config.substitutions,
@@ -431,13 +440,17 @@ def test_that_installing_two_forward_model_steps_with_the_same_name_warn_with_di
 
 
 def test_that_spaces_in_forward_model_args_are_dropped(plugins_ert_config):
-    # Intentionally inserted several spaces before comma
-    ert_config = plugins_ert_config.from_file_contents(
-        """
+    with patch(
+        "ert.plugins.hook_implementations.forward_model_steps._available_eclrun_versions",
+        return_value=["2024.1"],
+    ):
+        # Intentionally inserted several spaces before comma
+        ert_config = plugins_ert_config.from_file_contents(
+            """
         NUM_REALIZATIONS  1
         FORWARD_MODEL ECLIPSE100(<VERSION>=2024.1                    , <NUM_CPU>=42)
         """
-    )
+        )
     assert len(ert_config.forward_model_steps) == 1
     job = ert_config.forward_model_steps[0]
     assert job.private_args.get("<VERSION>") == "2024.1"
@@ -471,6 +484,10 @@ def test_that_forward_model_with_different_token_kinds_are_added():
 @pytest.mark.parametrize("eclipse_v", ["ECLIPSE100", "ECLIPSE300"])
 def test_that_eclipse_fm_step_require_explicit_version(eclipse_v, plugins_ert_config):
     with (
+        patch(
+            "ert.plugins.hook_implementations.forward_model_steps._available_eclrun_versions",
+            return_value=["2024.1"],
+        ),
         pytest.raises(
             ConfigValidationError,
             match=f".*Forward model step {eclipse_v} must"
@@ -488,10 +505,16 @@ def test_that_eclipse_fm_step_require_explicit_version(eclipse_v, plugins_ert_co
 @pytest.mark.skipif(shutil.which("eclrun") is None, reason="eclrun is not in $PATH")
 @pytest.mark.parametrize("eclipse_v", ["ECLIPSE100", "ECLIPSE300"])
 def test_that_eclipse_fm_step_check_version_availability(eclipse_v, plugins_ert_config):
-    with pytest.raises(
-        ConfigValidationError,
-        match=rf".*Unavailable {eclipse_v} version dummy."
-        rf" Available versions: \[\'20.*",
+    with (
+        patch(
+            "ert.plugins.hook_implementations.forward_model_steps._available_eclrun_versions",
+            return_value=["2024.1"],
+        ),
+        pytest.raises(
+            ConfigValidationError,
+            match=rf".*Unavailable {eclipse_v} version dummy."
+            rf" Available versions: \[\'20.*",
+        ),
     ):
         plugins_ert_config.from_file_contents(
             f"NUM_REALIZATIONS 1\nFORWARD_MODEL {eclipse_v}(<VERSION>=dummy)\n"
