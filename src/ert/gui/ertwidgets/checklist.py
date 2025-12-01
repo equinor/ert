@@ -16,7 +16,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.gui.ertwidgets import SearchBox
+from .searchbox import SearchBox
 
 if TYPE_CHECKING:
     from .models.selectable_list_model import SelectableListModel

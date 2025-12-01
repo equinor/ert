@@ -9,8 +9,10 @@ from PyQt6.QtWidgets import (
 )
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import StringBox, TextModel, ValueModel
 from ert.validation import ExperimentValidation, IntegerArgument, ProperNameArgument
+
+from .models import TextModel, ValueModel
+from .stringbox import StringBox
 
 
 class CreateExperimentDialog(QDialog):

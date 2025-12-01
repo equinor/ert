@@ -6,8 +6,8 @@ from PyQt6.QtCore import QMargins, Qt
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QHBoxLayout, QToolButton, QWidget
 
-from ert.gui.ertwidgets import ClosableDialog
-from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
+from .analysismodulevariablespanel import AnalysisModuleVariablesPanel
+from .closabledialog import ClosableDialog
 
 if TYPE_CHECKING:
     from ert.config import AnalysisModule

@@ -1,32 +1,31 @@
-# isort: skip_file
+from collections.abc import Callable
+from typing import Any
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QCursor
 from PyQt6.QtWidgets import QApplication
-from typing import Any
-from collections.abc import Callable
 
-
-from .closabledialog import ClosableDialog
 from .analysismoduleedit import AnalysisModuleEdit
-from .searchbox import SearchBox
-from .ensembleselector import EnsembleSelector
 from .checklist import CheckList
-from .stringbox import StringBox
-from .textbox import TextBox
-from .listeditbox import ListEditBox
-from .customdialog import CustomDialog
-from .pathchooser import PathChooser
-from .models import (
-    TextModel,
-    ActiveRealizationsModel,
-    TargetEnsembleModel,
-    ValueModel,
-    SelectableListModel,
-    PathModel,
-)
-from .copyablelabel import CopyableLabel
+from .closabledialog import ClosableDialog
 from .copy_button import CopyButton
+from .copyablelabel import CopyableLabel
+from .customdialog import CustomDialog
+from .ensembleselector import EnsembleSelector
+from .listeditbox import ListEditBox
+from .models import (
+    ActiveRealizationsModel,
+    PathModel,
+    SelectableListModel,
+    TargetEnsembleModel,
+    TextModel,
+    ValueModel,
+)
+from .pathchooser import PathChooser
+from .searchbox import SearchBox
+from .stringbox import StringBox
 from .suggestor import Suggestor
+from .textbox import TextBox
 
 
 def showWaitCursorWhileWaiting(func: Callable[..., Any]) -> Callable[..., Any]:
