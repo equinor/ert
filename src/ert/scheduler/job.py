@@ -32,7 +32,7 @@ from ert.storage import (
     RealizationStorageState,
     load_realization_parameters_and_responses,
 )
-from ert.trace import trace, tracer
+from ert.trace import trace
 from ert.warnings import PostSimulationWarning
 
 from .driver import Driver, FailedSubmit
@@ -239,7 +239,6 @@ class Job:
                 f"{method_name} spent {elapsed_time} seconds waiting for files"
             )
 
-    @tracer.start_as_current_span(f"{__name__}.run")
     async def run(
         self,
         sem: asyncio.BoundedSemaphore,
