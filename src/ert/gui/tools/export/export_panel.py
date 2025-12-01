@@ -21,18 +21,22 @@ class ExportDialog(CustomDialog):
     ) -> None:
         self.storage = storage
         description = "The CSV export requires some information before it starts:"
-        super().__init__("export", description, parent)
+        super().__init__("CSV Export", description, parent)
 
         subs_list = ert_config.substitutions
         default_csv_output_path = subs_list.get("<CSV_OUTPUT_PATH>", "output.csv")
         self.output_path_model = PathModel(default_csv_output_path)
         output_path_chooser = PathChooser(self.output_path_model)
+        self.addLabeledOption("Output file", output_path_chooser)
 
-        design_matrix_default = subs_list.get("<DESIGN_MATRIX_PATH>", "")
-        self.design_matrix_path_model = PathModel(
-            design_matrix_default, is_required=False, must_exist=True
-        )
-        design_matrix_path_chooser = PathChooser(self.design_matrix_path_model)
+        self.design_matrix_path_model: PathModel | None = None
+        design_matrix_default = subs_list.get("<DESIGN_MATRIX_PATH>", None)
+        if design_matrix_default:
+            self.design_matrix_path_model = PathModel(
+                design_matrix_default, is_required=False, must_exist=True
+            )
+            design_matrix_path_chooser = PathChooser(self.design_matrix_path_model)
+            self.addLabeledOption("Design matrix", design_matrix_path_chooser)
 
         ensemble_with_data_dict = {
             ensemble.id: ensemble.name
@@ -40,16 +44,13 @@ class ExportDialog(CustomDialog):
             if ensemble.has_data()
         }
         self.list_edit = ListEditBox(ensemble_with_data_dict)
+        self.addLabeledOption("List of ensembles to export", self.list_edit)
 
         self.drop_const_columns_check = QCheckBox()
         self.drop_const_columns_check.setChecked(False)
         self.drop_const_columns_check.setToolTip(
             "If checked, exclude columns whose value is the same for every entry"
         )
-
-        self.addLabeledOption("Output file path", output_path_chooser)
-        self.addLabeledOption("Design matrix path", design_matrix_path_chooser)
-        self.addLabeledOption("List of ensembles to export", self.list_edit)
         self.addLabeledOption("Drop constant columns", self.drop_const_columns_check)
 
         self.addButtons()
@@ -73,6 +74,8 @@ class ExportDialog(CustomDialog):
 
     @property
     def design_matrix_path(self) -> str | None:
+        if self.design_matrix_path_model is None:
+            return None
         path = self.design_matrix_path_model.getPath()
         if not path or not path.strip():
             path = None
