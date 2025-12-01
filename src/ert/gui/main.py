@@ -31,7 +31,7 @@ from ert.services import StorageService
 from ert.storage import ErtStorageException, local_storage_set_ert_config, open_storage
 from ert.trace import trace, tracer
 
-from .suggestor import Suggestor
+from .ertwidgets import Suggestor
 
 logger = logging.getLogger(__name__)
 

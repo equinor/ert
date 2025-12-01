@@ -27,16 +27,15 @@ from xtgeo import RegularSurface
 import ert.gui
 from ert.config import ErtConfig
 from ert.gui.about_dialog import AboutDialog
-from ert.gui.ertwidgets import StringBox
+from ert.gui.ertwidgets import StringBox, Suggestor
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
 from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
 from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
+from ert.gui.ertwidgets.suggestor._suggestor_message import SuggestorMessage
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
 from ert.gui.main_window import SidebarToolButton
 from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
-from ert.gui.suggestor import Suggestor
-from ert.gui.suggestor._suggestor_message import SuggestorMessage
 from ert.gui.tools.event_viewer import add_gui_log_handler
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget

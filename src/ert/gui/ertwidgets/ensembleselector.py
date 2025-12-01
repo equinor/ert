@@ -9,11 +9,11 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtWidgets import QComboBox
 
+from ert.config import ErrorInfo
 from ert.gui.ertnotifier import ErtNotifier
 from ert.storage import RealizationStorageState
 
-from ...config import ErrorInfo
-from ..suggestor import Suggestor
+from .suggestor import Suggestor
 
 if TYPE_CHECKING:
     from ert.storage import Ensemble

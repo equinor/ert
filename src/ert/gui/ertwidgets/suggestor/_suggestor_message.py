@@ -16,7 +16,7 @@ from PyQt6.QtWidgets import (
 
 from ert.gui import is_dark_mode
 
-from ..ertwidgets.copyablelabel import _CopyButton
+from ..copyablelabel import _CopyButton
 from ._colors import (
     BLUE_BACKGROUND,
     BLUE_TEXT,

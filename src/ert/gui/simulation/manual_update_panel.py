@@ -16,10 +16,10 @@ from ert.gui.ertwidgets import (
     CopyableLabel,
     EnsembleSelector,
     StringBox,
+    Suggestor,
     TargetEnsembleModel,
 )
 from ert.gui.simulation.experiment_config_panel import ExperimentConfigPanel
-from ert.gui.suggestor import Suggestor
 from ert.mode_definitions import MANUAL_ENIF_UPDATE_MODE, MANUAL_UPDATE_MODE
 from ert.run_models.manual_update import ManualUpdate
 from ert.storage import Ensemble, RealizationStorageState

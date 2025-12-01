@@ -14,9 +14,9 @@ from ert.gui.ertwidgets import (
     CopyableLabel,
     EnsembleSelector,
     StringBox,
+    Suggestor,
 )
 from ert.gui.simulation.experiment_config_panel import ExperimentConfigPanel
-from ert.gui.suggestor import Suggestor
 from ert.mode_definitions import EVALUATE_ENSEMBLE_MODE
 from ert.run_models.evaluate_ensemble import EvaluateEnsemble
 from ert.storage import RealizationStorageState
