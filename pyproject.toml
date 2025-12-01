@@ -154,7 +154,7 @@ everest = ["data/**/*", "*.tmpl", "detached/jobs/everserver"]
 
 
 [tool.pytest.ini_options]
-addopts = "-ra --strict-markers  --confcutdir=tests"
+addopts = "-ra --strict-markers"
 norecursedirs = [
     "*.egg",
     ".*",
