@@ -24,8 +24,7 @@ from PyQt6.QtWidgets import (
 
 from ert.config import ErrorInfo, ErtConfig
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import Suggestor
-from ert.gui.ertwidgets.create_experiment_dialog import CreateExperimentDialog
+from ert.gui.ertwidgets import CreateExperimentDialog, Suggestor
 from ert.storage import Ensemble, Experiment
 
 from .storage_model import (

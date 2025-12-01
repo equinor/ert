@@ -1,7 +1,6 @@
 from PyQt6.QtCore import Qt
 
-from ert.gui.ertwidgets.checklist import CheckList
-from ert.gui.ertwidgets.models.selectable_list_model import SelectableListModel
+from ert.gui.ertwidgets import CheckList, SelectableListModel
 
 
 def test_checklist(qtbot):

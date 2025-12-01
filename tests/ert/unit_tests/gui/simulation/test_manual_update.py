@@ -3,8 +3,7 @@ from pytestqt.qtbot import QtBot
 
 from ert.config.analysis_config import AnalysisConfig
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets.ensembleselector import EnsembleSelector
-from ert.gui.ertwidgets.stringbox import StringBox
+from ert.gui.ertwidgets import EnsembleSelector, StringBox
 from ert.gui.simulation.manual_update_panel import ManualUpdatePanel
 
 from .conftest import (

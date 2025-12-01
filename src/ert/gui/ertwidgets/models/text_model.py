@@ -1,6 +1,6 @@
 from typing_extensions import override
 
-from ert.gui.ertwidgets.models.valuemodel import ValueModel
+from .valuemodel import ValueModel
 
 
 class TextModel(ValueModel):

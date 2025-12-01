@@ -2,8 +2,9 @@ from collections.abc import Collection
 
 from typing_extensions import override
 
-from ert.gui.ertwidgets.models.valuemodel import ValueModel
 from ert.validation import ActiveRange, mask_to_rangestring
+
+from .valuemodel import ValueModel
 
 
 class ActiveRealizationsModel(ValueModel):
