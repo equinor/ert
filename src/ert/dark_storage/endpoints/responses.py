@@ -160,8 +160,7 @@ def data_for_response(
             .rename({"realization": "Realization"})
             .drop(["response_key", "time"])
             .to_pandas()
-            .set_index(["Realization"])
-            .apply(lambda r: pd.Series(r["values"], index=r["depth"]), axis=1)
+            .pivot(index="Realization", columns="depth", values="values")
             .reset_index(drop=True)
         )
 

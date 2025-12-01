@@ -120,21 +120,26 @@ class RFTConfig(ResponseConfig):
         if not fetched:
             return pl.DataFrame()
 
-        return pl.concat(
-            [
-                pl.DataFrame(
-                    {
-                        "response_key": [f"{well}:{time.isoformat()}:{prop}"],
-                        "time": [time],
-                        "depth": [fetched[well, time]["DEPTH"]],
-                        "values": [vals],
-                    }
-                )
-                for (well, time), inner_dict in fetched.items()
-                for prop, vals in inner_dict.items()
-                if prop != "DEPTH"
-            ]
-        )
+        try:
+            return pl.concat(
+                [
+                    pl.DataFrame(
+                        {
+                            "response_key": [f"{well}:{time.isoformat()}:{prop}"],
+                            "time": [time],
+                            "depth": [fetched[well, time]["DEPTH"]],
+                            "values": [vals],
+                        }
+                    ).explode("depth", "values")
+                    for (well, time), inner_dict in fetched.items()
+                    for prop, vals in inner_dict.items()
+                    if prop != "DEPTH"
+                ]
+            )
+        except KeyError as err:
+            raise InvalidResponseFile(
+                f"Could not find {err.args[0]} in RFTFile {filename}"
+            ) from err
 
     @property
     def response_type(self) -> str:

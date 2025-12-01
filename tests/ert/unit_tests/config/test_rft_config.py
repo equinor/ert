@@ -117,6 +117,8 @@ def test_that_rft_reads_matching_well_and_date(mocker):
     data = rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
     assert data["response_key"].to_list() == [
         "WELL:2000-01-01:PRESSURE",
+        "WELL:2000-01-01:PRESSURE",
+        "WELL:2000-01-01:SWAT",
         "WELL:2000-01-01:SWAT",
     ]
 
@@ -146,10 +148,16 @@ def test_that_rft_config_can_use_wildcard(mocker):
     data = rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
     assert data["response_key"].to_list() == [
         "WELL:2000-01-01:PRESSURE",
+        "WELL:2000-01-01:PRESSURE",
+        "WELL:2000-01-01:SWAT",
         "WELL:2000-01-01:SWAT",
         "WELL:2000-01-01:SGAS",
+        "WELL:2000-01-01:SGAS",
+        "WELL:2000-02-01:PRESSURE",
         "WELL:2000-02-01:PRESSURE",
         "WELL:2000-02-01:SWAT",
+        "WELL:2000-02-01:SWAT",
+        "WELL:2000-02-01:SGAS",
         "WELL:2000-02-01:SGAS",
     ]
 
@@ -180,6 +188,66 @@ def test_that_only_float_arrays_are_read(mocker):
         data_to_read={"*": {"*": ["*"]}},
     )
     data = rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+    assert data["response_key"].to_list() == ["WELL:2000-01-01:PRESSURE"] * 2
+
+
+def test_that_a_well_can_match_no_properties(mocker):
+    mock_rft_file(
+        mocker,
+        "BASE.RFT",
+        [
+            *cell_start(date=(1, 1, 2000), well_name="WELL"),
+            ("PRESSURE", float_arr([100.0, 200.0])),
+            ("DEPTH   ", float_arr([20.0, 30.0])),
+            *cell_start(date=(1, 1, 2000), well_name="WELL2"),
+            ("SWAT    ", float_arr([0.0, 0.1])),
+            ("DEPTH   ", float_arr([20.0, 30.0])),
+        ],
+    )
+
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={"*": {"*": ["SWAT"]}},
+    )
+    data = rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+    assert data["response_key"].to_list() == ["WELL2:2000-01-01:SWAT"] * 2
+
+
+def test_that_missing_depth_raises_invalid_response_file(mocker):
+    mock_rft_file(
+        mocker,
+        "BASE.RFT",
+        [
+            *cell_start(date=(1, 1, 2000), well_name="WELL"),
+            ("PRESSURE", float_arr([100.0, 200.0])),
+        ],
+    )
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={"*": {"*": ["*"]}},
+    )
+    with pytest.raises(InvalidResponseFile):
+        rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+
+
+def test_that_number_of_connections_can_be_different_per_well(mocker):
+    mock_rft_file(
+        mocker,
+        "BASE.RFT",
+        [
+            *cell_start(date=(1, 1, 2000), well_name="WELL"),
+            ("PRESSURE", float_arr([])),
+            ("DEPTH   ", float_arr([])),
+            *cell_start(date=(1, 1, 2000), well_name="WELL2"),
+            ("PRESSURE", float_arr([0.1])),
+            ("DEPTH   ", float_arr([0.1])),
+        ],
+    )
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={"*": {"*": ["*"]}},
+    )
+    data = rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
     assert data["response_key"].to_list() == [
-        "WELL:2000-01-01:PRESSURE",
+        "WELL2:2000-01-01:PRESSURE",
     ]
