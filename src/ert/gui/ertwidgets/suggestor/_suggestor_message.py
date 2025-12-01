@@ -13,10 +13,11 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from typing_extensions import override
 
 from ert.gui import is_dark_mode
 
-from ..copyablelabel import _CopyButton
+from ..copy_button import CopyButton
 from ._colors import (
     BLUE_BACKGROUND,
     BLUE_TEXT,
@@ -31,6 +32,16 @@ def _svg_icon(image_name: str) -> QSvgWidget:
     widget = QSvgWidget(f"img:{image_name}.svg")
     widget.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
     return widget
+
+
+class _CopyButton(CopyButton):
+    def __init__(self, message: str) -> None:
+        super().__init__()
+        self.message = message
+
+    @override
+    def copy(self) -> None:
+        self.copy_text(self.message)
 
 
 class SuggestorMessage(QWidget):
@@ -100,9 +111,7 @@ class SuggestorMessage(QWidget):
         else:
             self._expand_collapse_label = QLabel()
             self._hbox.addWidget(self.lbl, alignment=Qt.AlignmentFlag.AlignTop)
-        self._hbox.addWidget(
-            _CopyButton(QLabel(message)), alignment=Qt.AlignmentFlag.AlignTop
-        )
+        self._hbox.addWidget(_CopyButton(message), alignment=Qt.AlignmentFlag.AlignTop)
 
     def _toggle_expand(self, _link: Any) -> None:
         if self._expanded:
