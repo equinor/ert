@@ -26,6 +26,7 @@ from .models import (
 )
 from .copyablelabel import CopyableLabel
 from .copy_button import CopyButton
+from .suggestor import Suggestor
 
 
 def showWaitCursorWhileWaiting(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -57,6 +58,7 @@ __all__ = [
     "SearchBox",
     "SelectableListModel",
     "StringBox",
+    "Suggestor",
     "TargetEnsembleModel",
     "TextBox",
     "TextModel",

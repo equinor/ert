@@ -39,6 +39,7 @@ from ert.ensemble_evaluator import (
 )
 from ert.ensemble_evaluator import identifiers as ids
 from ert.gui.ertnotifier import ErtNotifier
+from ert.gui.ertwidgets import Suggestor
 from ert.gui.model.fm_step_list import FMStepListProxyModel
 from ert.gui.model.node import IterNode
 from ert.gui.model.real_list import RealListModel
@@ -49,7 +50,6 @@ from ert.gui.model.snapshot import (
     RealIens,
     SnapshotModel,
 )
-from ert.gui.suggestor import Suggestor
 from ert.gui.tools.file import FileDialog
 from ert.run_models import (
     RunModelAPI,
