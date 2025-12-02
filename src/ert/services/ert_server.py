@@ -224,11 +224,13 @@ class ErtServer:
                     and storage_server_path.stat().st_size > 0
                 ):
                     with (path / "storage_server.json").open() as f:
-                        return ErtServer(
-                            storage_path=str(path),
-                            connection_info=json.load(f),
-                            logging_config=logging_config,
-                        )
+                        storage_server_content = json.load(f)
+
+                    return ErtServer(
+                        storage_path=str(path),
+                        connection_info=storage_server_content,
+                        logging_config=logging_config,
+                    )
 
                 sleep(1)
                 t += 1
