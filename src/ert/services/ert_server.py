@@ -54,7 +54,7 @@ class ErtServer:
 
         self._storage_path = storage_path
         self._connection_info: ConnInfo = conn_info
-        self._conn_info_event = threading.Event()
+        self._on_connection_info_received_event = threading.Event()
         self._timeout = timeout
         self._url: str | None = None
 
@@ -82,7 +82,7 @@ class ErtServer:
             if isinstance(conn_info, Mapping) and "urls" not in conn_info:
                 raise KeyError("urls not found in conn_info")
 
-            self._conn_info_event.set()
+            self._on_connection_info_received_event.set()
             self._thread_that_starts_server_process = None
         else:
             self._thread_that_starts_server_process = _Proc(
@@ -278,13 +278,13 @@ class ErtServer:
                 f.flush()
                 os.rename(f.name, path)
 
-        self._conn_info_event.set()
+        self._on_connection_info_received_event.set()
 
     def wait_until_ready(self, timeout: int | None = None) -> bool:
         if timeout is None:
             timeout = self._timeout
 
-        if self._conn_info_event.wait(timeout):
+        if self._on_connection_info_received_event.wait(timeout):
             return not (
                 self._connection_info is None
                 or isinstance(self._connection_info, Exception)
