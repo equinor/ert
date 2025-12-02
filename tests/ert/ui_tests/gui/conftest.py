@@ -4,7 +4,6 @@ import os
 import os.path
 import shutil
 import stat
-import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 from importlib.resources import files
@@ -335,33 +334,6 @@ def runmodel(active_realizations) -> Mock:
     brm.simulation_arguments = {"active_realizations": active_realizations}
     brm.has_failed_realizations = lambda: False
     return brm
-
-
-class MockTracker:
-    def __init__(self, events) -> None:
-        self._events = events
-        self._is_running = True
-
-    def track(self):
-        for event in self._events:
-            if not self._is_running:
-                break
-            time.sleep(0.1)
-            yield event
-
-    def reset(self):
-        pass
-
-    def request_termination(self):
-        self._is_running = False
-
-
-@pytest.fixture
-def mock_tracker():
-    def _make_mock_tracker(events):
-        return MockTracker(events)
-
-    return _make_mock_tracker
 
 
 def load_results_manually(qtbot, gui, ensemble_name="default"):
