@@ -20,13 +20,24 @@ from subprocess import Popen, TimeoutExpired
 from tempfile import NamedTemporaryFile
 from time import sleep
 from types import FrameType
-from typing import TYPE_CHECKING, Any, Generic, Self, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, Self, TypedDict, TypeVar
 
 if TYPE_CHECKING:
     from inspect import Traceback
 
 T = TypeVar("T", bound="BaseService")
-ErtServerConnectionInfo = Mapping[str, Any] | Exception | None
+
+
+class _ErtServerConnectionInfo(TypedDict):
+    urls: list[str]
+    authtoken: str
+    host: str
+    port: str
+    cert: str
+    auth: str
+
+
+ErtServerConnectionInfo = _ErtServerConnectionInfo | Exception | None
 
 
 SERVICE_CONF_PATHS: set[str] = set()
