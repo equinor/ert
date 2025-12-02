@@ -166,7 +166,7 @@ def main() -> None:
             with ErtServer.init_service(
                 timeout=240, project=Path(server_path), logging_config=log_file.name
             ) as server:
-                server.fetch_conn_info()
+                server.fetch_connection_info()
                 with ErtServer.session(project=Path(server_path)) as client:
                     done = False
                     while not done:

@@ -102,7 +102,7 @@ class ErtServer:
         """
         return (
             "__token__",
-            cast(dict[str, Any], self.fetch_conn_info())["authtoken"],
+            cast(dict[str, Any], self.fetch_connection_info())["authtoken"],
         )
 
     @classmethod
@@ -139,8 +139,8 @@ class ErtServer:
         if self._url is not None:
             return self._url
 
-        for url in self.fetch_conn_info()["urls"]:
-            con_info = self.fetch_conn_info()
+        for url in self.fetch_connection_info()["urls"]:
+            con_info = self.fetch_connection_info()
             try:
                 resp = requests.get(
                     f"{url}/healthcheck",
@@ -170,7 +170,7 @@ class ErtServer:
         Start a HTTP transaction with the server
         """
         inst = cls.connect(timeout=timeout, project=project)
-        info = inst.fetch_conn_info()
+        info = inst.fetch_connection_info()
         return Client(
             conn_info=ClientConnInfo(
                 base_url=inst.fetch_url(),
@@ -295,7 +295,7 @@ class ErtServer:
             self.logger.critical(f"startup exceeded defined timeout {timeout}s")
         return False  # Timeout reached
 
-    def fetch_conn_info(self) -> Mapping[str, Any]:
+    def fetch_connection_info(self) -> Mapping[str, Any]:
         is_ready = self.wait_until_ready(self._timeout)
         if isinstance(self._connection_info, Exception):
             raise self._connection_info
