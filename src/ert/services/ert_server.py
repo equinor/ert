@@ -45,7 +45,7 @@ class ErtServer:
         storage_path: str,
         timeout: int = 120,
         parent_pid: int | None = None,
-        conn_info: Mapping[str, Any] | Exception | None = None,
+        connection_info: Mapping[str, Any] | Exception | None = None,
         verbose: bool = False,
         logging_config: str | None = None,  # Only used from everserver
     ) -> None:
@@ -53,7 +53,7 @@ class ErtServer:
             timeout = 120
 
         self._storage_path = storage_path
-        self._connection_info: ErtServerConnectionInfo = conn_info
+        self._connection_info: ErtServerConnectionInfo = connection_info
         self._on_connection_info_received_event = threading.Event()
         self._timeout = timeout
         self._url: str | None = None
@@ -79,7 +79,7 @@ class ErtServer:
             run_storage_main_cmd.append("--verbose")
 
         if self._connection_info is not None:
-            if isinstance(conn_info, Mapping) and "urls" not in conn_info:
+            if isinstance(connection_info, Mapping) and "urls" not in connection_info:
                 raise KeyError("urls not found in conn_info")
 
             self._on_connection_info_received_event.set()
@@ -221,7 +221,7 @@ class ErtServer:
                     with (path / "storage_server.json").open() as f:
                         return ErtServer(
                             storage_path=str(path),
-                            conn_info=json.load(f),
+                            connection_info=json.load(f),
                             logging_config=logging_config,
                         )
 
