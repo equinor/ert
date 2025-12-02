@@ -93,7 +93,7 @@ class _Proc(threading.Thread):
         service_name: str,
         exec_args: Sequence[str],
         timeout: int,
-        set_conn_info: Callable[[ConnInfo], None],
+        on_connection_info_received: Callable[[ConnInfo], None],
         project: Path,
     ) -> None:
         super().__init__()
@@ -103,7 +103,7 @@ class _Proc(threading.Thread):
         self._service_name = service_name
         self._exec_args = exec_args
         self._timeout = timeout
-        self._propagate_connection_info_from_childproc = set_conn_info
+        self._propagate_connection_info_from_childproc = on_connection_info_received
         self._service_config_path = project / f"{self._service_name}_server.json"
 
         fd_read, fd_write = os.pipe()
