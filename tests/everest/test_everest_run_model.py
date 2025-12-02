@@ -200,9 +200,8 @@ def test_that_random_seed_passes_through_create(
 def test_cores_per_node_is_used_over_defaulted_num_cpu(
     create_runmodel: Callable,
 ) -> None:
-    runmodel = create_runmodel(
-        config={"simulator": {"cores_per_node": 88, "queue_system": None}}
-    )
+    with pytest.warns(UserWarning, match="Ignoring cores_per_node as num_cpu was set"):
+        runmodel = create_runmodel(config={"simulator": {"cores_per_node": 88}})
     assert runmodel.queue_config.queue_options.num_cpu == 88
 
 
@@ -375,7 +374,10 @@ def test_that_general_user_queue_options_overrides_site_queue_options_via_runmod
     ):
         site_plugins = get_site_plugins()
 
-    with use_runtime_plugins(site_plugins):
+    with (
+        use_runtime_plugins(site_plugins),
+        pytest.warns(UserWarning, match="Ignoring cores_per_node as num_cpu was set"),
+    ):
         ever_config = EverestConfig(
             **(
                 min_config
