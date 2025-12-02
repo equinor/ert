@@ -81,7 +81,7 @@ class ErtServer:
 
         if self._connection_info is not None:
             if isinstance(connection_info, Mapping) and "urls" not in connection_info:
-                raise KeyError("urls not found in conn_info")
+                raise KeyError("No URLs found in connection info")
 
             self._on_connection_info_received_event.set()
             self._thread_that_starts_server_process = None
