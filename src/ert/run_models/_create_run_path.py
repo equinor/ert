@@ -79,18 +79,18 @@ def _value_export_json(
     if len(values) == 0:
         return
 
-    # Hierarchical
-    json_out: dict[str, float | dict[str, float | str]] = {
-        key: dict(param_map.items()) for key, param_map in values.items()
-    }
+    # parameter file is {param: {"value": value}}
+    json_out: dict[str, dict[str, float | str]] = {}
+    for param_map in values.values():
+        for param, value in param_map.items():
+            json_out[param] = {"value": value}
 
     # Disallow NaN from being written: ERT produces the parameters and the only
     # way for the output to be NaN is if the input is invalid or if the sampling
     # function is buggy. Either way, that would be a bug and we can report it by
     # having json throw an error.
-    json.dump(
-        json_out, path.open("w"), allow_nan=False, indent=0, separators=(", ", " : ")
-    )
+    with path.open("w") as f:
+        json.dump(json_out, f, allow_nan=False, indent=0, separators=(", ", " : "))
 
 
 def _generate_parameter_files(

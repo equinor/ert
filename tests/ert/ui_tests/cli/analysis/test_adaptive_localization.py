@@ -128,7 +128,8 @@ import json
 
 def _load_coeffs(filename):
     with open(filename, encoding="utf-8") as f:
-        return json.load(f)["COEFFS"]
+        raw_json = json.load(f)
+        return {k: v["value"] for k, v in raw_json.items()}
 
 
 def _evaluate(coeffs, x):

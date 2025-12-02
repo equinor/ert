@@ -73,12 +73,10 @@ if __name__ == "__main__":
     rng = np.random.default_rng(iens)
 
     parameters = load_parameters("parameters.json")
-    init_temp_scale = parameters["INIT_TEMP_SCALE"]
-    corr_length = parameters["CORR_LENGTH"]
 
     if iteration == 0:
         cond = sample_prior_conductivity(
-            ensemble_size=1, nx=nx, rng=rng, corr_length=float(corr_length["x"])
+            ensemble_size=1, nx=nx, rng=rng, corr_length=float(parameters["x"]["value"])
         ).reshape(nx, nx)
 
         resfo.write(
@@ -97,7 +95,7 @@ if __name__ == "__main__":
     # Note that this could be avoided if we used an implicit solver.
     dt = dx**2 / (4 * np.max(cond))
 
-    scaled_u_init = u_init * float(init_temp_scale["t"])
+    scaled_u_init = u_init * float(parameters["t"]["value"])
 
     response = heat_equation(scaled_u_init, cond, dx, dt, k_start, k_end, rng)
 

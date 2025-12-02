@@ -34,10 +34,11 @@ def test_rerun_failed_all_realizations(opened_main_window_poly, qtbot):
 
                     def _load_coeffs(filename):
                         with open(filename, encoding="utf-8") as f:
-                            return json.load(f)["COEFFS"]
+                            return json.load(f)
 
                     def _evaluate(coeffs, x):
-                        return coeffs["a"] * x**2 + coeffs["b"] * x + coeffs["c"]
+                        return (coeffs["a"]["value"] * x**2 +
+                                coeffs["b"]["value"] * x + coeffs["c"]["value"])
 
                     if __name__ == "__main__":
                         if {failing_reals}:
@@ -118,10 +119,10 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot, caplog):
 
                     def _load_coeffs(filename):
                         with open(filename, encoding="utf-8") as f:
-                            return json.load(f)["COEFFS"]
+                            return json.load(f)
 
                     def _evaluate(coeffs, x):
-                        return coeffs["a"] * x**2 + coeffs["b"] * x + coeffs["c"]
+                        return coeffs["a"]["value"] * x**2 + coeffs["b"]["value"] * x + coeffs["c"]["value"]
 
                     if __name__ == "__main__":
                         if int(os.getenv("_ERT_REALIZATION_NUMBER")) in {failing_reals!s}:
@@ -286,10 +287,10 @@ def test_rerun_failed_realizations_evaluate_ensemble(
 
                     def _load_coeffs(filename):
                         with open(filename, encoding="utf-8") as f:
-                            return json.load(f)["COEFFS"]
+                            return json.load(f)
 
                     def _evaluate(coeffs, x):
-                        return coeffs["a"] * x**2 + coeffs["b"] * x + coeffs["c"]
+                        return coeffs["a"]["value"] * x**2 + coeffs["b"]["value"] * x + coeffs["c"]["value"]
 
                     if __name__ == "__main__":
                         if int(os.getenv("_ERT_REALIZATION_NUMBER")) in {failing_reals!s}:

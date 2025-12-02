@@ -68,13 +68,11 @@ def test_run_poly_example_with_design_matrix(copy_poly_case_with_design_matrix, 
     with open(real_0_iter_0_parameters_json_path, mode="r+", encoding="utf-8") as fs:
         parameters_contents = json.load(fs)
     assert isinstance(parameters_contents, dict)
-    design_matrix_content = parameters_contents.get("DESIGN_MATRIX")
-    assert isinstance(design_matrix_content, dict)
-    for k, v in design_matrix_content.items():
+    for k, v in parameters_contents.items():
         if k == "category":
-            assert isinstance(v, str)
+            assert isinstance(v["value"], str)
         else:
-            assert isinstance(v, float | int)
+            assert isinstance(v["value"], float | int)
 
 
 @pytest.mark.usefixtures(
@@ -132,10 +130,11 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values):
 
                 def _load_coeffs(filename):
                     with open(filename, encoding="utf-8") as f:
-                        return json.load(f)["DESIGN_MATRIX"]
+                        return json.load(f)
 
                 def _evaluate(coeffs, x):
-                    return coeffs["a"] * x**2 + coeffs["b"] * x + coeffs["c"]
+                    return (coeffs["a"]["value"] * x**2 +
+                            coeffs["b"]["value"] * x + coeffs["c"]["value"])
 
                 if __name__ == "__main__":
                     coeffs = _load_coeffs("parameters.json")
@@ -254,10 +253,11 @@ def test_run_poly_example_with_multiple_design_matrix_instances():
 
                 def _load_coeffs(filename):
                     with open(filename, encoding="utf-8") as f:
-                        return json.load(f)["DESIGN_MATRIX"]
+                        return json.load(f)
 
                 def _evaluate(coeffs, x):
-                    return coeffs["a"] * x**2 + coeffs["b"] * x + coeffs["c"]
+                    return (coeffs["a"]["value"] * x**2 +
+                            coeffs["b"]["value"] * x + coeffs["c"]["value"])
 
                 if __name__ == "__main__":
                     coeffs = _load_coeffs("parameters.json")
@@ -346,8 +346,7 @@ def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
                 def _load_coeffs(filename):
                     with open(filename, encoding="utf-8") as f:
                         params = json.load(f)
-                        params = params["COEFFS_A"] | params["DESIGN_MATRIX"] | params["COEFFS_C"]
-                        return params
+                        return {k: v["value"] for k, v in params.items()}
 
                 def _evaluate(coeffs, x):
                     return coeffs["a"] * x**2 + coeffs["b"] * x + coeffs["c"]
@@ -357,7 +356,7 @@ def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
                     output = [_evaluate(coeffs, x) for x in range(10)]
                     with open("poly.out", "w", encoding="utf-8") as f:
                         f.write("\\n".join(map(str, output)))
-                """  # noqa: E501
+                """
         ),
         encoding="utf-8",
     )
