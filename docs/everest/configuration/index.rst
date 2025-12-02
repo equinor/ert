@@ -42,8 +42,7 @@ The value of a variable can be set in three different ways:
 2. Everest pre-defines the following variables:
 
    ``realization``
-       Evaluates to the string "<GEO_ID>", which is replaced by the realization
-       number during execution of the forward model.
+       Evaluates to the realization ID during execution of the forward model.
 
    ``configpath``
        The fully qualified path to the directory that contains the configuration

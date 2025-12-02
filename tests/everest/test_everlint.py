@@ -414,3 +414,20 @@ to read summary data from forward model, do:
         keys: ['FOPR', 'WOPR']
 """.strip()
     )
+
+
+def test_that_geo_id_is_deprecated(min_config, change_to_tmpdir, caplog, capsys):
+    config = min_config
+    config["forward_model"] = ["step1 <GEO_ID>"]
+
+    with open("config.yml", mode="w", encoding="utf-8") as f:
+        yaml.dump(config, f)
+
+    config_dict = yaml_file_to_substituted_config_dict("config.yml")
+
+    assert config_dict["forward_model"][0] == "step1 <REALIZATION_ID>"
+    assert "Deprecated key <GEO_ID> replaced by <REALIZATION_ID>." in caplog.text
+    assert (
+        r"<GEO_ID> is deprecated, please replace with 'r{{realization}}'."
+        in capsys.readouterr().out
+    )

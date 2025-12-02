@@ -32,9 +32,9 @@ class Substitutions(UserDict[str, str]):
             "<ITER>": str(iteration),
         }
 
-        model_id_key = f"<GEO_ID_{realization}_{iteration}>"
+        model_id_key = f"<REALIZATION_ID_{realization}_{iteration}>"
         if model_id_key in self:
-            extra_data["<GEO_ID>"] = self[model_id_key]
+            extra_data["<REALIZATION_ID>"] = self[model_id_key]
         sim_id_key = f"<SIM_DIR_{realization}_{iteration}>"
         if sim_id_key in self:
             extra_data["<SIM_DIR>"] = self[sim_id_key]

@@ -86,7 +86,7 @@ Each `model_realization` can contain several `simulations` (i.e., forward model
 runs). This is the key difference between the hierarchical data model of EVEREST
 and ERT (Fig 3).
 
-NOTE: `<MODEL_ID>` (or `<GEO_ID>` due to legacy reasons) is
+NOTE: `<MODEL_ID>` (or `<REALIZATION_ID>` due to legacy reasons) is
 inserted (and substituted) in the `run_path` for each `model_realization`.
 
 .. figure:: images/Everest_vs_Ert_01.png

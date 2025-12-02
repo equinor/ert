@@ -67,7 +67,7 @@ def test_get_definitions(tmp_path):
         "eclbase": "eclipse/ECL",
         "numeric_key": 1,
         "bool_key": True,
-        "realization": "<GEO_ID>",
+        "realization": "<REALIZATION_ID>",
     }
 
     assert definitions == expected_definitions

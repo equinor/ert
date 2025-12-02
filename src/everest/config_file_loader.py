@@ -26,7 +26,7 @@ SUBSTITUTION_PATTERN = r"(r\{\{.*?\}\})"
 
 # Jinja vars which should NOT be included in definitions portion of config.
 ERT_CONFIG_TEMPLATES = {
-    "realization": "GEO_ID",
+    "realization": "REALIZATION_ID",
     "runpath_file": "RUNPATH_FILE",
 }
 
@@ -67,7 +67,7 @@ def _get_definitions(
                     f"Internal key {key} specified by user as {defs[key]}. "
                     f"Overriding as {val}"
                 )
-            defs[key] = f"<{val}>"  # ert uses <GEO_ID> as format
+            defs[key] = f"<{val}>"  # ert uses <REALIZATION_ID> as format
     else:
         logging.getLogger(EVEREST).warning("Empty configuration file provided!")
 
@@ -159,6 +159,17 @@ def yaml_file_to_substituted_config_dict(config_path: str) -> dict[str, Any]:
 
     # Replace in definitions
     config = jenv.from_string(txt).render(**definitions)
+
+    # Handle deprecated use of <GEO_ID>:
+    config, count = re.subn(
+        rf"<\s*{re.escape('GEO_ID')}\s*>", "<REALIZATION_ID>", config
+    )
+    if count > 0:
+        message = r"<GEO_ID> is deprecated, please replace with 'r{{realization}}'."
+        print(message)
+        logging.getLogger(EVEREST).warning(
+            "Deprecated key <GEO_ID> replaced by <REALIZATION_ID>."
+        )
 
     # Load the config with definitions again as yaml
     yaml = YAML(typ="safe", pure=True).load(config)

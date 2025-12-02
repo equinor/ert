@@ -173,7 +173,7 @@ def test_substitutions_from_everest_config(
             f"{config_dir}"
             "/custom_output_folder"
             "/the_simulations_dir/"
-            "batch_<ITER>/realization_<GEO_ID>/<SIM_DIR>"
+            "batch_<ITER>/realization_<REALIZATION_ID>/<SIM_DIR>"
         ),
         "<ECL_BASE>": "ECLBASE<IENS>",
         "<ECLBASE>": "ECLBASE<IENS>",
