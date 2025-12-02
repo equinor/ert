@@ -153,7 +153,7 @@ class _Proc(threading.Thread):
             self.logger.exception(e)
 
         finally:
-            self._ensure_delete_conn_info()
+            self._ensure_connection_info_file_is_deleted()
 
     def shutdown(self) -> int:
         """Shutdown the server."""
@@ -172,7 +172,7 @@ class _Proc(threading.Thread):
             # Timeout reached, exit with a failure
             if ready == ([], [], []):
                 self._do_shutdown()
-                self._ensure_delete_conn_info()
+                self._ensure_connection_info_file_is_deleted()
                 return None
 
             x = self._comm_pipe.read(PIPE_BUF)
@@ -196,7 +196,7 @@ class _Proc(threading.Thread):
                     f"waiting for child-process exceeded timeout {self._timeout}s"
                 )
 
-    def _ensure_delete_conn_info(self) -> None:
+    def _ensure_connection_info_file_is_deleted(self) -> None:
         """
         Ensure that the JSON connection information file is deleted
         """
