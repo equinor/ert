@@ -5,7 +5,7 @@ from pathlib import Path
 from pydantic import BaseModel, ValidationError
 
 
-class ConnInfo(BaseModel):
+class ErtClientConnectionInfo(BaseModel):
     base_url: str
     auth_token: str | None = None
     cert: str | bool = False
@@ -17,10 +17,10 @@ ENV_VAR = "ERT_STORAGE_CONNECTION_STRING"
 # that a single client process will only ever want to connect to a single ERT
 # Storage server during its lifetime, so we don't provide an API for managing
 # this cache.
-_CACHED_CONN_INFO: ConnInfo | None = None
+_CACHED_CONN_INFO: ErtClientConnectionInfo | None = None
 
 
-def find_conn_info() -> ConnInfo:
+def find_conn_info() -> ErtClientConnectionInfo:
     """
     The base url and auth token are read from either:
     The file `storage_server.json`, starting from the current working directory
@@ -54,7 +54,7 @@ def find_conn_info() -> ConnInfo:
         raise RuntimeError("No Storage connection configuration found")
 
     try:
-        conn_info = ConnInfo.model_validate_json(conn_str)
+        conn_info = ErtClientConnectionInfo.model_validate_json(conn_str)
     except (json.JSONDecodeError, ValidationError) as e:
         raise RuntimeError("Invalid storage connection configuration") from e
     else:

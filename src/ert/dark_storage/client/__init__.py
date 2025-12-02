@@ -1,4 +1,4 @@
-from ._session import ConnInfo
+from ._session import ErtClientConnectionInfo
 from .client import Client
 
-__all__ = ["Client", "ConnInfo"]
+__all__ = ["Client", "ErtClientConnectionInfo"]

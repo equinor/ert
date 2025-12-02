@@ -20,7 +20,7 @@ from ert.config.queue_config import (
     TorqueQueueOptions,
     activate_script,
 )
-from ert.dark_storage.client import ConnInfo
+from ert.dark_storage.client import ErtClientConnectionInfo
 from ert.plugins import ErtRuntimePlugins
 from ert.scheduler.event import FinishedEvent
 from ert.services import ErtServer
@@ -317,7 +317,7 @@ if __name__ == "__main__":
 
 
 def test_get_that_get_server_info_from_conn_info_converts_values():
-    conn_info = ConnInfo(
+    conn_info = ErtClientConnectionInfo(
         base_url="https://example.com:1234",
         cert="/path/to/cert.pem",
         auth_token="sometoken",
@@ -332,7 +332,7 @@ def test_get_that_get_server_info_from_conn_info_converts_values():
     "conn_info, expected_exception, expected_message",
     [
         (
-            ConnInfo(
+            ErtClientConnectionInfo(
                 base_url="https://example.com:1234",
                 cert="/path/to/cert.pem",
                 auth_token=None,
@@ -341,7 +341,7 @@ def test_get_that_get_server_info_from_conn_info_converts_values():
             "No authentication token found in storage session",
         ),
         (
-            ConnInfo(
+            ErtClientConnectionInfo(
                 base_url="https://example.com:1234",
                 cert=False,
                 auth_token="sometoken",
@@ -350,7 +350,7 @@ def test_get_that_get_server_info_from_conn_info_converts_values():
             "Invalid certificate file in storage session",
         ),
         (
-            ConnInfo(
+            ErtClientConnectionInfo(
                 base_url="https://example.com:1234",
                 cert=True,
                 auth_token="sometoken",
