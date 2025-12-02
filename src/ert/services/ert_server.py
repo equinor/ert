@@ -121,6 +121,7 @@ class ErtServer:
             )
             # Check the server is up and running
             _ = service.fetch_url()
+            return ErtServerContext(service)
         except (TimeoutError, json.JSONDecodeError, KeyError) as e:
             logging.getLogger(__name__).warning(
                 "Failed locating existing storage service due to "
@@ -135,7 +136,6 @@ class ErtServer:
                 f"due to permission issues."
             )
             raise pe
-        return ErtServerContext(service)
 
     def fetch_url(self) -> str:
         """Returns the url. Blocks while the server is starting"""
