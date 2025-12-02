@@ -89,7 +89,7 @@ class ErtServer:
                 service_name="storage",
                 exec_args=run_storage_main_cmd,
                 timeout=120,
-                set_conn_info=self.set_conn_info,
+                on_connection_info_received=self.set_conn_info,
                 project=Path(self._storage_path),
             )
 
