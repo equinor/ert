@@ -12,7 +12,7 @@ from ert.config.queue_config import (
     SlurmQueueOptions,
     TorqueQueueOptions,
 )
-from ert.dark_storage.client import ConnInfo
+from ert.dark_storage.client import ErtClientConnectionInfo
 
 from ..strings import (
     CERTIFICATE_DIR,
@@ -71,9 +71,9 @@ class ServerConfig(BaseModel):
 
     @staticmethod
     def get_server_context_from_conn_info(
-        conn_info: ConnInfo,
+        conn_info: ErtClientConnectionInfo,
     ) -> tuple[str, str, tuple[str, str]]:
-        """Get server connection context information from a storage_service ConnInfo.
+        """Get server connection context information from a ErtClientConnectionInfo.
 
         Returns a tuple containing the server URL, certificate file path,
         and authentication credentials.
@@ -83,7 +83,7 @@ class ServerConfig(BaseModel):
         This should be refactored to use the ERT Storage Client class directly instead.
 
         Args:
-            conn_info: An instance of the storage_service client ConnInfo
+            conn_info: An instance of the ErtClientConnectionInfo
 
         Returns:
             tuple: A tuple containing:

@@ -14,8 +14,7 @@ from typing import Any, cast
 
 import requests
 
-from ert.dark_storage.client import Client
-from ert.dark_storage.client import ConnInfo as ClientConnInfo
+from ert.dark_storage.client import Client, ErtClientConnectionInfo
 from ert.services._base_service import ErtServerConnectionInfo, _Proc
 from ert.trace import get_traceparent
 
@@ -172,7 +171,7 @@ class ErtServer:
         inst = cls.connect(timeout=timeout, project=project)
         info = inst.fetch_connection_info()
         return Client(
-            conn_info=ClientConnInfo(
+            conn_info=ErtClientConnectionInfo(
                 base_url=inst.fetch_url(),
                 auth_token=inst.fetch_auth()[1],
                 cert=info["cert"],

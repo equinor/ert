@@ -3,7 +3,7 @@ import ssl
 import httpx
 from httpx_retries import Retry, RetryTransport
 
-from ._session import ConnInfo, find_conn_info
+from ._session import ErtClientConnectionInfo, find_conn_info
 
 
 class Client(httpx.Client):
@@ -14,7 +14,7 @@ class Client(httpx.Client):
     Stores 'conn_info' to bridge the gap to the Everest client setup
     """
 
-    def __init__(self, conn_info: ConnInfo | None = None) -> None:
+    def __init__(self, conn_info: ErtClientConnectionInfo | None = None) -> None:
         if conn_info is None:
             conn_info = find_conn_info()
 
