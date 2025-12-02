@@ -16,7 +16,7 @@ import requests
 
 from ert.dark_storage.client import Client
 from ert.dark_storage.client import ConnInfo as ClientConnInfo
-from ert.services._base_service import ConnInfo, _Proc
+from ert.services._base_service import ErtServerConnectionInfo, _Proc
 from ert.trace import get_traceparent
 
 
@@ -53,7 +53,7 @@ class ErtServer:
             timeout = 120
 
         self._storage_path = storage_path
-        self._connection_info: ConnInfo = conn_info
+        self._connection_info: ErtServerConnectionInfo = conn_info
         self._on_connection_info_received_event = threading.Event()
         self._timeout = timeout
         self._url: str | None = None
@@ -258,7 +258,9 @@ class ErtServer:
             obj._thread_that_starts_server_process.start()
         return ErtServerContext(obj)
 
-    def on_connection_info_received_from_server_process(self, info: ConnInfo) -> None:
+    def on_connection_info_received_from_server_process(
+        self, info: ErtServerConnectionInfo
+    ) -> None:
         if self._connection_info is not None:
             raise ValueError("Connection information already set")
         if info is None:
