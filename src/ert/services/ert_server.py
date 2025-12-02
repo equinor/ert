@@ -59,6 +59,15 @@ class ErtServer:
         self._timeout = timeout
         self._url: str | None = None
 
+        if self._connection_info is not None:
+            # This means that server is already running
+            if isinstance(connection_info, Mapping) and "urls" not in connection_info:
+                raise KeyError("No URLs found in connection info")
+
+            self._on_connection_info_received_event.set()
+            self._thread_that_starts_server_process = None
+            return
+
         run_storage_main_cmd = [
             sys.executable,
             str(Path(__file__).parent / "_storage_main.py"),
@@ -79,20 +88,13 @@ class ErtServer:
         if verbose:
             run_storage_main_cmd.append("--verbose")
 
-        if self._connection_info is not None:
-            if isinstance(connection_info, Mapping) and "urls" not in connection_info:
-                raise KeyError("No URLs found in connection info")
-
-            self._on_connection_info_received_event.set()
-            self._thread_that_starts_server_process = None
-        else:
-            self._thread_that_starts_server_process = _Proc(
-                service_name="storage",
-                exec_args=run_storage_main_cmd,
-                timeout=120,
-                on_connection_info_received=self.on_connection_info_received_from_server_process,
-                project=Path(self._storage_path),
-            )
+        self._thread_that_starts_server_process = _Proc(
+            service_name="storage",
+            exec_args=run_storage_main_cmd,
+            timeout=120,
+            on_connection_info_received=self.on_connection_info_received_from_server_process,
+            project=Path(self._storage_path),
+        )
 
     def fetch_auth(self) -> tuple[str, Any]:
         """
