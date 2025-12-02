@@ -218,7 +218,11 @@ class ErtServer:
                 timeout = 240
             t = -1
             while t < timeout:
-                if (path / "storage_server.json").exists():
+                storage_server_path = path / "storage_server.json"
+                if (
+                    storage_server_path.exists()
+                    and storage_server_path.stat().st_size > 0
+                ):
                     with (path / "storage_server.json").open() as f:
                         return ErtServer(
                             storage_path=str(path),
