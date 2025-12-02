@@ -124,7 +124,7 @@ class _Proc(threading.Thread):
         os.close(fd_write)
 
     def run(self) -> None:
-        comm = self._read_conn_info(self._childproc)
+        comm = self._read_connection_info_from_process(self._childproc)
 
         if comm is None:
             self._propagate_connection_info_from_childproc(TimeoutError())
@@ -162,7 +162,7 @@ class _Proc(threading.Thread):
 
         return self._childproc.returncode
 
-    def _read_conn_info(self, proc: Popen[bytes]) -> str | None:
+    def _read_connection_info_from_process(self, proc: Popen[bytes]) -> str | None:
         comm_buf = io.StringIO()
         first_iter = True
         while first_iter or proc.poll() is None:
