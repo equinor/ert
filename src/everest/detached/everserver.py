@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 def _configure_loggers(
-    detached_dir: Path, log_dir: Path, logging_level: int, output_file: str | None
+    log_dir: Path, logging_level: int, output_file: str | None
 ) -> None:
     def make_handler_config(path: Path, log_level: int) -> dict[str, Any]:
         makedirs_if_needed(str(path.parent))
@@ -46,7 +46,7 @@ def _configure_loggers(
         "version": 1,
         "handlers": {
             "endpoint_log": make_handler_config(
-                detached_dir / "endpoint.log", logging_level
+                log_dir / "everserver.log", logging_level
             ),
             "everest_log": make_handler_config(log_dir / "everest.log", logging_level),
             "forward_models_log": make_handler_config(
@@ -151,7 +151,6 @@ def main() -> None:
     ):
         try:
             _configure_loggers(
-                detached_dir=Path(ServerConfig.get_detached_node_dir(output_dir)),
                 log_dir=Path(output_dir) / OPTIMIZATION_LOG_DIR,
                 logging_level=options.logging_level,
                 output_file=log_file.name,

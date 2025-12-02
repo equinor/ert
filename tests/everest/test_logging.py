@@ -6,10 +6,7 @@ import yaml
 
 from everest.bin.main import start_everest
 from everest.bin.utils import cleanup_logging
-from everest.config import (
-    EverestConfig,
-    ServerConfig,
-)
+from everest.config import EverestConfig
 from everest.config.forward_model_config import ForwardModelStepConfig
 from everest.config.install_job_config import InstallForwardModelStepConfig
 
@@ -50,8 +47,7 @@ def test_logging_setup(copy_math_func_test_data_to_tmp):
 
     everest_output_path = os.path.join(os.getcwd(), "everest_output")
     everest_logs_dir_path = everest_config.log_dir
-    detached_node_dir = ServerConfig.get_detached_node_dir(everest_config.output_dir)
-    endpoint_log_path = os.path.join(detached_node_dir, "endpoint.log")
+    everserver_log_path = os.path.join(everest_logs_dir_path, "everserver.log")
     everest_log_path = os.path.join(everest_logs_dir_path, "everest.log")
     forward_model_log_path = os.path.join(everest_logs_dir_path, "forward_models.log")
 
@@ -59,7 +55,7 @@ def test_logging_setup(copy_math_func_test_data_to_tmp):
     assert os.path.exists(everest_logs_dir_path)
     assert os.path.exists(forward_model_log_path)
     assert os.path.exists(everest_log_path)
-    assert os.path.exists(endpoint_log_path)
+    assert os.path.exists(everserver_log_path)
 
     assert "everest.detached.everserver INFO: Output directory:" in Path(
         everest_log_path
@@ -68,7 +64,7 @@ def test_logging_setup(copy_math_func_test_data_to_tmp):
         forward_model_log_path
     ).read_text(encoding="utf-8")
 
-    endpoint_logs = Path(endpoint_log_path).read_text(encoding="utf-8")
+    endpoint_logs = Path(everserver_log_path).read_text(encoding="utf-8")
     # Avoid cases where optimization finished before we get a chance to check that
     # the everest server has started
     if endpoint_logs:

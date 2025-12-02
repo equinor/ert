@@ -14,12 +14,7 @@ from ert.config.queue_config import (
 )
 from ert.dark_storage.client import ErtClientConnectionInfo
 
-from ..strings import (
-    CERTIFICATE_DIR,
-    DETACHED_NODE_DIR,
-    HOSTFILE_NAME,
-    SESSION_DIR,
-)
+from ..strings import CERTIFICATE_DIR, HOSTFILE_NAME, SESSION_DIR
 from .simulator_config import check_removed_config
 
 
@@ -116,10 +111,6 @@ class ServerConfig(BaseModel):
         return data
 
     @staticmethod
-    def get_detached_node_dir(output_dir: str) -> str:
-        return os.path.join(os.path.abspath(output_dir), DETACHED_NODE_DIR)
-
-    @staticmethod
     def get_hostfile_path(output_dir: str) -> str:
         return os.path.join(ServerConfig.get_session_dir(output_dir), HOSTFILE_NAME)
 
@@ -127,7 +118,7 @@ class ServerConfig(BaseModel):
     def get_session_dir(output_dir: str) -> str:
         """Return path to the session directory containing information about the
         certificates and host information"""
-        return os.path.join(ServerConfig.get_detached_node_dir(output_dir), SESSION_DIR)
+        return os.path.join(os.path.abspath(output_dir), SESSION_DIR)
 
     @staticmethod
     def get_certificate_dir(output_dir: str) -> str:
