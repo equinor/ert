@@ -89,7 +89,7 @@ class ErtServer:
                 service_name="storage",
                 exec_args=run_storage_main_cmd,
                 timeout=120,
-                on_connection_info_received=self.set_conn_info,
+                on_connection_info_received=self.on_connection_info_received_from_server_process,
                 project=Path(self._storage_path),
             )
 
@@ -258,7 +258,7 @@ class ErtServer:
             obj._thread_that_starts_server_process.start()
         return ErtServerContext(obj)
 
-    def set_conn_info(self, info: ConnInfo) -> None:
+    def on_connection_info_received_from_server_process(self, info: ConnInfo) -> None:
         if self._connection_info is not None:
             raise ValueError("Connection information already set")
         if info is None:
