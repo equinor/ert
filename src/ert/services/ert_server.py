@@ -53,7 +53,7 @@ class ErtServer:
             timeout = 120
 
         self._storage_path = storage_path
-        self._conn_info: ConnInfo = conn_info
+        self._connection_info: ConnInfo = conn_info
         self._conn_info_event = threading.Event()
         self._timeout = timeout
         self._url: str | None = None
@@ -78,7 +78,7 @@ class ErtServer:
         if verbose:
             run_storage_main_cmd.append("--verbose")
 
-        if self._conn_info is not None:
+        if self._connection_info is not None:
             if isinstance(conn_info, Mapping) and "urls" not in conn_info:
                 raise KeyError("urls not found in conn_info")
 
@@ -259,11 +259,11 @@ class ErtServer:
         return ErtServerContext(obj)
 
     def set_conn_info(self, info: ConnInfo) -> None:
-        if self._conn_info is not None:
+        if self._connection_info is not None:
             raise ValueError("Connection information already set")
         if info is None:
             raise ValueError
-        self._conn_info = info
+        self._connection_info = info
 
         if self._storage_path is not None:
             if not Path(self._storage_path).exists():
@@ -286,21 +286,22 @@ class ErtServer:
 
         if self._conn_info_event.wait(timeout):
             return not (
-                self._conn_info is None or isinstance(self._conn_info, Exception)
+                self._connection_info is None
+                or isinstance(self._connection_info, Exception)
             )
-        if isinstance(self._conn_info, TimeoutError):
+        if isinstance(self._connection_info, TimeoutError):
             self.logger.critical(f"startup exceeded defined timeout {timeout}s")
         return False  # Timeout reached
 
     def fetch_conn_info(self) -> Mapping[str, Any]:
         is_ready = self.wait_until_ready(self._timeout)
-        if isinstance(self._conn_info, Exception):
-            raise self._conn_info
+        if isinstance(self._connection_info, Exception):
+            raise self._connection_info
         if not is_ready:
             raise TimeoutError
-        if self._conn_info is None:
+        if self._connection_info is None:
             raise ValueError("conn_info is None")
-        return self._conn_info
+        return self._connection_info
 
     def wait(self) -> None:
         if self._thread_that_starts_server_process is not None:
