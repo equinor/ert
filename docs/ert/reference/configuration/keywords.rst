@@ -1296,9 +1296,7 @@ runpath called: ``parameters.json``.
 
 
         {
-        "ID" : {
-        "A" : 0.88,
-        },
+        "A" : {"value" : 0.88},
         }
 
 
@@ -1312,7 +1310,7 @@ This can then be used in a forward model, an example from python below:
     if __name__ == "__main__":
         with open("parameters.json", encoding="utf-8") as f:
             parameters = json.load(f)
-        # parameters is a dict with {"ID": {"A": <value>}}
+        # parameters is a dict with {"A": {"value": <value>}}
 
 
 

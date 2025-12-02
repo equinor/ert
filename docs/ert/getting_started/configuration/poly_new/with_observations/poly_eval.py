@@ -3,11 +3,11 @@ import json
 from pathlib import Path
 
 with open("parameters.json", encoding="utf-8") as f:
-    coeffs = json.load(f)["COEFFS"]
+    coeffs = json.load(f)
 
 
 def evaluate(coeffs, x):
-    return coeffs["a"] * x**2 + coeffs["b"] * x + coeffs["c"]
+    return coeffs["a"]["value"] * x**2 + coeffs["b"]["value"] * x + coeffs["c"]["value"]
 
 
 output = [evaluate(coeffs, x) for x in range(10)]

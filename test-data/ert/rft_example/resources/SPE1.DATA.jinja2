@@ -96,17 +96,17 @@ TOPS
 	100*8325 /
 
 PORO
-    300*{{parameters.FIELD_PROPERTIES.POROSITY}} /
+    300*{{parameters.POROSITY.value}} /
 
 PERMX
-	100*500 100*{{100 * parameters.FIELD_PROPERTIES.X_MID_PERMEABILITY}} 100*200 /
+	100*500 100*{{100 * parameters.X_MID_PERMEABILITY.value}} 100*200 /
 
 PERMY
 -- Equal to PERMX
 	100*500 100*50 100*200 /
 
 PERMZ
-	100*500 100*{{100 * parameters.FIELD_PROPERTIES.Z_MID_PERMEABILITY}} 100*200 /
+	100*500 100*{{100 * parameters.Z_MID_PERMEABILITY.value}} 100*200 /
 ECHO
 
 PROPS
@@ -273,7 +273,7 @@ EQUIL
 -- Item 9: Set to 0 as this is the only value supported by OPM
 
 -- Item #: 1 2    3    4 5    6 7 8 9
-	8400 {{parameters.FIELD_PROPERTIES.EQL_PRESSURE}} 8450 0 8300 0 1 0 0 /
+	8400 {{parameters.EQL_PRESSURE.value}} 8450 0 8300 0 1 0 0 /
 
 RSVD
 -- Dissolved GOR is initially constant with depth through the reservoir.

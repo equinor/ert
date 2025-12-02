@@ -378,11 +378,9 @@ This should return something similar to:
 .. code-block:: json
 
     {
-        "COEFFS" : {
-        "a" : 0.7974556153339885,
-        "b" : 1.400852435132108,
-        "c" : 1.9495650072493478
-        }
+        "a" : {"value" : 0.7974556153339885},
+        "b" : {"value" : 1.400852435132108},
+        "c" : {"value" : 1.9495650072493478}
     }
 
 2. **Inspecting the results**: Each simulation generated a unique file named ``poly.out`` reflecting the varying outcomes.

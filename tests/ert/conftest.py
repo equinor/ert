@@ -236,10 +236,11 @@ def copy_poly_case_with_design_matrix(copy_case):
 
                     def _load_coeffs(filename):
                         with open(filename, encoding="utf-8") as f:
-                            return json.load(f)["DESIGN_MATRIX"]
+                            return json.load(f)
 
                     def _evaluate(coeffs, x):
-                        return coeffs["a"] * x**2 + coeffs["b"] * x + coeffs["c"]
+                        return (coeffs["a"]["value"] * x**2 +
+                                coeffs["b"]["value"] * x + coeffs["c"]["value"])
 
                     if __name__ == "__main__":
                         coeffs = _load_coeffs("parameters.json")
