@@ -190,12 +190,10 @@ class ErtServer:
             return -1
 
         self.__class__._instance = None
-        proc, self._thread_that_starts_server_process = (
-            self._thread_that_starts_server_process,
-            None,
-        )
+        error_code = self._thread_that_starts_server_process.shutdown()
+        self._thread_that_starts_server_process = None
 
-        return proc.shutdown()
+        return error_code
 
     @classmethod
     def connect(
