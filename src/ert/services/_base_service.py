@@ -28,16 +28,13 @@ if TYPE_CHECKING:
 T = TypeVar("T", bound="BaseService")
 
 
-class _ErtServerConnectionInfo(TypedDict):
+class ErtServerConnectionInfo(TypedDict):
     urls: list[str]
     authtoken: str
     host: str
     port: str
     cert: str
     auth: str
-
-
-ErtServerConnectionInfo = _ErtServerConnectionInfo | Exception | None
 
 
 SERVICE_CONF_PATHS: set[str] = set()
@@ -104,7 +101,9 @@ class _Proc(threading.Thread):
         service_name: str,
         exec_args: Sequence[str],
         timeout: int,
-        on_connection_info_received: Callable[[ErtServerConnectionInfo], None],
+        on_connection_info_received: Callable[
+            [ErtServerConnectionInfo | Exception | None], None
+        ],
         project: Path,
     ) -> None:
         super().__init__()
@@ -141,7 +140,7 @@ class _Proc(threading.Thread):
             self._propagate_connection_info_from_childproc(TimeoutError())
             return  # _read_conn_info() has already cleaned up in this case
 
-        conn_info: ErtServerConnectionInfo = None
+        conn_info: ErtServerConnectionInfo | Exception | None = None
         try:
             conn_info = json.loads(comm)
         except json.JSONDecodeError:
@@ -258,14 +257,14 @@ class BaseService:
         self,
         exec_args: Sequence[str] = (),
         timeout: int = 120,
-        conn_info: ErtServerConnectionInfo = None,
+        conn_info: ErtServerConnectionInfo | Exception | None = None,
         project: str | None = None,
     ) -> None:
         self._exec_args = exec_args
         self._timeout = timeout
 
         self._proc: _Proc | None = None
-        self._conn_info: ErtServerConnectionInfo = conn_info
+        self._conn_info: ErtServerConnectionInfo | Exception | None = conn_info
         self._conn_info_event = threading.Event()
         self._project = Path(project) if project is not None else Path.cwd()
 
@@ -330,7 +329,7 @@ class BaseService:
         if self._proc is not None:
             self._proc.join()
 
-    def set_conn_info(self, info: ErtServerConnectionInfo) -> None:
+    def set_conn_info(self, info: ErtServerConnectionInfo | Exception | None) -> None:
         if self._conn_info is not None:
             raise ValueError("Connection information already set")
         if info is None:
