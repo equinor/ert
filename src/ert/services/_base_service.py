@@ -103,7 +103,7 @@ class _Proc(threading.Thread):
         self._service_name = service_name
         self._exec_args = exec_args
         self._timeout = timeout
-        self._set_conn_info = set_conn_info
+        self._propagate_connection_info_from_childproc = set_conn_info
         self._service_config_path = project / f"{self._service_name}_server.json"
 
         fd_read, fd_write = os.pipe()
@@ -127,7 +127,7 @@ class _Proc(threading.Thread):
         comm = self._read_conn_info(self._childproc)
 
         if comm is None:
-            self._set_conn_info(TimeoutError())
+            self._propagate_connection_info_from_childproc(TimeoutError())
             return  # _read_conn_info() has already cleaned up in this case
 
         conn_info: ConnInfo = None
@@ -139,7 +139,7 @@ class _Proc(threading.Thread):
             conn_info = exc
 
         try:
-            self._set_conn_info(conn_info)
+            self._propagate_connection_info_from_childproc(conn_info)
 
             while True:
                 if self._childproc.poll() is not None:
