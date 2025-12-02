@@ -2,9 +2,7 @@ from __future__ import annotations
 
 import fnmatch
 import logging
-import random
 import re
-import string
 from collections import defaultdict
 from datetime import date
 from typing import Any, Literal
@@ -24,12 +22,7 @@ from .responses_index import responses_index
 logger = logging.getLogger(__name__)
 
 
-_ALPHABET = list(set(string.punctuation) - set("_-*"))
-
-
-def _separator() -> str:
-    """Quick 'uuid' used for separator in matching rft keys"""
-    return "".join(random.choices(_ALPHABET, k=8))
+_SEP = "\x31"
 
 
 def _translate(pat: str) -> str:
@@ -68,7 +61,7 @@ class RFTConfig(ResponseConfig):
     def expected_input_files(self) -> list[str]:
         base = self.input_files[0]
         if base.lower().endswith(".data"):
-            # For backwards compatability, it is
+            # For backwards compatibility, it is
             # allowed to give REFCASE and ECLBASE both
             # with and without .DATA extensions
             base = base[:-5]
@@ -78,7 +71,7 @@ class RFTConfig(ResponseConfig):
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
         filename = substitute_runpath_name(self.input_files[0], iens, iter_)
         if filename.lower().endswith(".data"):
-            # For backwards compatability, it is
+            # For backwards compatibility, it is
             # allowed to give REFCASE and ECLBASE both
             # with and without .DATA extensions
             filename = filename[:-5]
@@ -87,11 +80,19 @@ class RFTConfig(ResponseConfig):
         # support wildcards in well names, dates and properties
         # A python for loop is too slow so we use a compiled regex
         # instead
-        sep = _separator()
+        if not self.data_to_read:
+            return pl.DataFrame(
+                {
+                    "response_key": [],
+                    "time": [],
+                    "depth": [],
+                    "values": [],
+                }
+            )
         matcher = re.compile(
             "|".join(
                 "("
-                + re.escape(sep).join(
+                + re.escape(_SEP).join(
                     (
                         _translate(well),
                         _translate(time),
@@ -107,7 +108,7 @@ class RFTConfig(ResponseConfig):
             with RFTReader.open(f"{run_path}/{filename}") as rft:
                 for entry in rft:
                     for t in entry:
-                        key = f"{entry.well}{sep}{entry.date.isoformat()}{sep}{t}"
+                        key = f"{entry.well}{_SEP}{entry.date.isoformat()}{_SEP}{t}"
                         if matcher.fullmatch(key) is not None:
                             values = entry[t]
                             if np.isdtype(values.dtype, np.float32):
@@ -118,7 +119,14 @@ class RFTConfig(ResponseConfig):
             ) from err
 
         if not fetched:
-            return pl.DataFrame()
+            return pl.DataFrame(
+                {
+                    "response_key": [],
+                    "time": [],
+                    "depth": [],
+                    "values": [],
+                }
+            )
 
         try:
             return pl.concat(

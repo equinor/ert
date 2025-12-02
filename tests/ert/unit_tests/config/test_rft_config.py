@@ -54,20 +54,6 @@ def cell_start(date=(1, 1, 2000), ijks=((1, 1, 1), (2, 1, 2)), *args, **kwargs):
     ]
 
 
-def plt_fields():
-    return [
-        ("CONWRAT ", float_arr([2.0, 3.0])),
-        ("CONGRAT ", float_arr([2.0, 3.0])),
-        ("CONORAT ", float_arr([2.0, 3.0])),
-        ("CONDEPTH", float_arr([2.0, 3.0])),
-        ("CONVTUB ", float_arr([2.0, 3.0])),
-        ("CONOTUB ", float_arr([2.0, 3.0])),
-        ("CONGTUB ", float_arr([2.0, 3.0])),
-        ("CONWTUB ", float_arr([2.0, 3.0])),
-        ("CONPRES ", float_arr([0.0, 0.0])),
-    ]
-
-
 original_open = open
 
 
@@ -79,6 +65,7 @@ def mock_rft_file(mocker, filename, contents):
     def mock_open(*args, **kwargs):
         path = args[0] if args else kwargs.get("file")
         if path is not None and str(path).endswith(filename):
+            buffer.seek(0)
             return buffer
         else:
             return original_open(*args, **kwargs)

@@ -342,6 +342,10 @@ class PlotWindow(QMainWindow):
                 plot_context.setXLabel(key.split(":")[-1])
                 plot_context.setYLabel("TVD")
                 plot_context.inverted_axes = True
+                for ekey, data in list(ensemble_to_data_map.items()):
+                    ensemble_to_data_map[ekey] = data.interpolate(
+                        method="linear", axis="columns"
+                    )
 
             for data in ensemble_to_data_map.values():
                 data = data.T
