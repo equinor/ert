@@ -15,7 +15,7 @@ from ert.config.forward_model_step import (
 
 
 def _is_dir_all_model(source: str, model_realizations: list[int]) -> bool:
-    """Expands <GEO_ID> for all realizations and if:
+    """Expands <REALIZATION_ID> for all realizations and if:
     - all are directories, returns True,
     - all are files, returns False,
     - some are non-existing, raises an AssertionError
@@ -23,7 +23,7 @@ def _is_dir_all_model(source: str, model_realizations: list[int]) -> bool:
 
     is_dir = []
     for model_realization in model_realizations:
-        model_source = source.replace("<GEO_ID>", str(model_realization))
+        model_source = source.replace("<REALIZATION_ID>", str(model_realization))
         if not os.path.exists(model_source):
             msg = (
                 "Expected source to exist for data installation, "

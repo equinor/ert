@@ -329,7 +329,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
             runpath_format_string=str(
                 Path(everest_config.simulation_dir)
                 / "batch_<ITER>"
-                / "realization_<GEO_ID>"
+                / "realization_<REALIZATION_ID>"
                 / "<SIM_DIR>"
             ),
             eclbase_format_string=eclbase
@@ -1076,7 +1076,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         for sim_id, (model_realization, perturbation) in enumerate(
             zip(sim_to_model_realization, sim_to_perturbation, strict=True)
         ):
-            substitutions[f"<GEO_ID_{sim_id}_{ensemble.iteration}>"] = str(
+            substitutions[f"<REALIZATION_ID_{sim_id}_{ensemble.iteration}>"] = str(
                 int(model_realization)
             )
             if perturbation >= 0:

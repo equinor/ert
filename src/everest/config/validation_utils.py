@@ -72,15 +72,15 @@ class InstallDataContext:
                 source = item.source
                 target = item.target
 
-            if "<GEO_ID>" not in source:
+            if "<REALIZATION_ID>" not in source:
                 self._set_symlink(source, target, None)
 
         return self
 
     def _set_symlink(self, source: str, target: str, realization: int | None) -> None:
         if realization is not None:
-            source = source.replace("<GEO_ID>", str(realization))
-            target = target.replace("<GEO_ID>", str(realization))
+            source = source.replace("<REALIZATION_ID>", str(realization))
+            target = target.replace("<REALIZATION_ID>", str(realization))
 
         tmp_target = Path(self._temp_dir.name) / Path(target)
         if tmp_target.exists():
@@ -101,7 +101,7 @@ class InstallDataContext:
 
     def add_links_for_realization(self, realization: int) -> None:
         for data in self._install_data:
-            if data.source is not None and "<GEO_ID>" in data.source:
+            if data.source is not None and "<REALIZATION_ID>" in data.source:
                 self._set_symlink(data.source, data.target, realization)
 
     def __exit__(self, exc_type: Any, exc_value: Any, exc_tb: Any) -> None:
@@ -242,8 +242,8 @@ def as_abs_path(path: str, config_dir: str) -> str:
 
 
 def expand_model_id_paths(path_source: str, realizations: list[int]) -> list[str]:
-    if "<GEO_ID>" in path_source:
-        return [path_source.replace("<GEO_ID>", str(r)) for r in realizations]
+    if "<REALIZATION_ID>" in path_source:
+        return [path_source.replace("<REALIZATION_ID>", str(r)) for r in realizations]
     return [path_source]
 
 
@@ -251,7 +251,8 @@ def check_path_exists(
     path_source: str, config_path: Path | None, realizations: list[int]
 ) -> None:
     """Check if the given path exists. If the given path contains <CONFIG_PATH>
-    or GEO_ID they will be expanded and all instances of expanded paths need to exist.
+    or REALIZATION_ID they will be expanded and all instances of expanded paths
+    need to exist.
     """
     if not isinstance(path_source, str):
         raise ValueError(

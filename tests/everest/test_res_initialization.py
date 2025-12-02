@@ -340,12 +340,12 @@ def test_that_install_data_raises_error_on_missing_copy_file(tmp_path):
 
 def test_that_install_data_raises_error_on_missing_copy_directory(tmp_path):
     config_directory = tmp_path / "config_dir"
-    source_directory = config_directory / "<GEO_ID>"
+    source_directory = config_directory / "<REALIZATION_ID>"
     realizations = [0, 1, 2]
 
     for realization in realizations:
         realization_dir = source_directory.with_name(
-            source_directory.name.replace("<GEO_ID>", str(realization))
+            source_directory.name.replace("<REALIZATION_ID>", str(realization))
         )
         realization_dir.mkdir(parents=True)
 

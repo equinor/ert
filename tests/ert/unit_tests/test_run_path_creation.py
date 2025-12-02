@@ -562,7 +562,7 @@ def test_that_deprecated_runpath_substitution_remain_valid(make_run_path):
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize("itr", [0, 1, 2, 17])
 def test_write_runpath_file(storage, itr):
-    runpath_fmt = "simulations/<GEO_ID>/realization-<IENS>/iter-<ITER>"
+    runpath_fmt = "simulations/<REALIZATION_ID>/realization-<IENS>/iter-<ITER>"
     runpath_list_path = "a_file_name"
     ert_config = ErtConfig.from_file_contents(
         dedent(
@@ -585,7 +585,7 @@ def test_write_runpath_file(storage, itr):
     mask[13] = False
     global_substitutions = ert_config.substitutions
     for i in range(num_realizations):
-        global_substitutions[f"<GEO_ID_{i}_{itr}>"] = str(10 * i)
+        global_substitutions[f"<REALIZATION_ID_{i}_{itr}>"] = str(10 * i)
     run_path = Runpaths.from_config(ert_config)
     sample_prior(prior_ensemble, [i for i, active in enumerate(mask) if active], 123)
     run_args = create_run_arguments(
@@ -615,7 +615,7 @@ def test_write_runpath_file(storage, itr):
     exp_runpaths = [
         runpath_fmt.replace("<ITER>", str(itr))
         .replace("<IENS>", str(run_arg.iens))
-        .replace("<GEO_ID>", str(10 * run_arg.iens))
+        .replace("<REALIZATION_ID>", str(10 * run_arg.iens))
         for run_arg in run_args
         if run_arg.active
     ]
