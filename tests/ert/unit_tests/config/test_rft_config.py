@@ -177,10 +177,10 @@ def test_that_number_of_connections_can_be_different_per_well(mocker):
         mocker,
         "BASE.RFT",
         [
-            *cell_start(date=(1, 1, 2000), well_name="WELL"),
+            *cell_start(date=(1, 1, 2000), well_name="WELL", ijks=[]),
             ("PRESSURE", float_arr([])),
             ("DEPTH   ", float_arr([])),
-            *cell_start(date=(1, 1, 2000), well_name="WELL2"),
+            *cell_start(date=(1, 1, 2000), well_name="WELL2", ijks=[(0, 0, 0)]),
             ("PRESSURE", float_arr([0.1])),
             ("DEPTH   ", float_arr([0.1])),
         ],

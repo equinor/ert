@@ -43,7 +43,11 @@ def rft_config(tmp_path: Path):
         resfo.write(
             rft_file,
             [
-                *cell_start(date=(1, 1, 2000), well_name="WELL"),
+                *cell_start(
+                    date=(1, 1, 2000),
+                    well_name="WELL",
+                    ijks=[(i, i, i) for i in range(50)],
+                ),
                 ("PRESSURE", np.sin(depth)),
                 ("DEPTH   ", depth + offset),
             ],
