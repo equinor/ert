@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from matplotlib.lines import Line2D
@@ -126,10 +126,18 @@ def _plotPercentiles(
     axes: Axes, plot_config: PlotConfig, data: DataFrame, ensemble_label: str
 ) -> None:
     style = plot_config.getStatisticsStyle("mean")
+    if plot_config.depth_y_axis:
+        axes.yaxis.set_inverted(True)
+
+    def xy_order(x: Any, y: Any) -> tuple[Any, Any]:
+        if plot_config.depth_y_axis:
+            return (y, x)
+        else:
+            return (x, y)
+
     if style.isVisible():
         axes.plot(
-            data.index.values,
-            data["Mean"].values,
+            *xy_order(data.index.values, data["Mean"].values),
             alpha=style.alpha,
             linestyle=style.line_style,
             color=style.color,
@@ -141,8 +149,7 @@ def _plotPercentiles(
     style = plot_config.getStatisticsStyle("p50")
     if style.isVisible():
         axes.plot(
-            data.index.values,
-            data["p50"].values,
+            *xy_order(data.index.values, data["p50"].values),
             alpha=style.alpha,
             linestyle=style.line_style,
             color=style.color,
@@ -153,7 +160,13 @@ def _plotPercentiles(
 
     style = plot_config.getStatisticsStyle("std")
     _plotPercentile(
-        axes, style, data.index.values, data["std+"].values, data["std-"].values, 0.5
+        axes,
+        style,
+        data.index.values,
+        data["std+"].values,
+        data["std-"].values,
+        0.5,
+        plot_config.depth_y_axis,
     )
 
     style = plot_config.getStatisticsStyle("min-max")
@@ -164,16 +177,29 @@ def _plotPercentiles(
         data["Maximum"].values,
         data["Minimum"].values,
         0.5,
+        plot_config.depth_y_axis,
     )
 
     style = plot_config.getStatisticsStyle("p10-p90")
     _plotPercentile(
-        axes, style, data.index.values, data["p90"].values, data["p10"].values, 0.5
+        axes,
+        style,
+        data.index.values,
+        data["p90"].values,
+        data["p10"].values,
+        0.5,
+        plot_config.depth_y_axis,
     )
 
     style = plot_config.getStatisticsStyle("p33-p67")
     _plotPercentile(
-        axes, style, data.index.values, data["p67"].values, data["p33"].values, 0.5
+        axes,
+        style,
+        data.index.values,
+        data["p67"].values,
+        data["p33"].values,
+        0.5,
+        plot_config.depth_y_axis,
     )
 
 
@@ -184,24 +210,39 @@ def _plotPercentile(
     top_line_data: npt.ArrayLike,
     bottom_line_data: npt.ArrayLike,
     alpha_multiplier: float,
+    inverted: bool = False,
 ) -> None:
     alpha = style.alpha
     line_style = style.line_style
     color = style.color
     marker = style.marker
 
+    def xy_order(x: Any, y: Any) -> tuple[Any, Any]:
+        if inverted:
+            return (y, x)
+        else:
+            return (x, y)
+
     if line_style == "#":
-        axes.fill_between(
-            index_values,
-            bottom_line_data,
-            top_line_data,
-            alpha=alpha * alpha_multiplier,
-            color=color,
-        )
+        if inverted:
+            axes.fill_betweenx(
+                index_values,
+                bottom_line_data,
+                top_line_data,
+                alpha=alpha * alpha_multiplier,
+                color=color,
+            )
+        else:
+            axes.fill_between(
+                index_values,
+                bottom_line_data,
+                top_line_data,
+                alpha=alpha * alpha_multiplier,
+                color=color,
+            )
     elif style.isVisible():
         axes.plot(
-            index_values,
-            bottom_line_data,
+            *xy_order(index_values, bottom_line_data),
             alpha=alpha,
             linestyle=line_style,
             color=color,
@@ -210,8 +251,7 @@ def _plotPercentile(
             markersize=style.size,
         )
         axes.plot(
-            index_values,
-            top_line_data,
+            *xy_order(index_values, top_line_data),
             alpha=alpha,
             linestyle=line_style,
             color=color,

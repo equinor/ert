@@ -241,7 +241,10 @@ class PlotApi:
             try:
                 df.columns = pd.to_datetime(df.columns, format="%Y-%m-%d %H:%M:%S")
             except (ParserError, ValueError):
-                df.columns = [int(s) for s in df.columns]
+                try:
+                    df.columns = [int(s) for s in df.columns]
+                except ValueError:
+                    df.columns = [float(s) for s in df.columns]
 
             try:
                 return df.astype(float)

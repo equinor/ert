@@ -47,6 +47,14 @@ class PlotContext:
         self._y_axis: str | None = None
         self._log_scale = False
 
+    @property
+    def depth_y_axis(self) -> bool:
+        return self._plot_config.depth_y_axis
+
+    @depth_y_axis.setter
+    def depth_y_axis(self, value: bool) -> None:
+        self._plot_config.depth_y_axis = value
+
     def plotConfig(self) -> PlotConfig:
         return self._plot_config
 
@@ -92,6 +100,12 @@ class PlotContext:
                 f"Axis: '{value}' is not one of: {PlotContext.AXIS_TYPES}"
             )
         self._y_axis = value
+
+    def setXLabel(self, value: str) -> None:
+        self._plot_config.setXLabel(value)
+
+    def setYLabel(self, value: str) -> None:
+        self._plot_config.setYLabel(value)
 
     @property
     def log_scale(self) -> bool:
