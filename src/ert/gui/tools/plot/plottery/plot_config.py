@@ -88,7 +88,7 @@ class PlotConfig:
 
         self._std_dev_factor = 1  # sigma 1 is default std dev
 
-        self.inverted_axes = False
+        self.depth_y_axis = False
 
     def getNumberOfColors(self) -> int:
         return len(self._line_color_cycle_colors)

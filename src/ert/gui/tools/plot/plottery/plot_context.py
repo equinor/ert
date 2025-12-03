@@ -48,12 +48,12 @@ class PlotContext:
         self._log_scale = False
 
     @property
-    def inverted_axes(self) -> bool:
-        return self._plot_config.inverted_axes
+    def depth_y_axis(self) -> bool:
+        return self._plot_config.depth_y_axis
 
-    @inverted_axes.setter
-    def inverted_axes(self, value: bool) -> None:
-        self._plot_config.inverted_axes = value
+    @depth_y_axis.setter
+    def depth_y_axis(self, value: bool) -> None:
+        self._plot_config.depth_y_axis = value
 
     def plotConfig(self) -> PlotConfig:
         return self._plot_config
