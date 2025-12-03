@@ -43,7 +43,7 @@ class RFTConfig(ResponseConfig):
     @property
     def expected_input_files(self) -> list[str]:
         base = self.input_files[0]
-        if base.lower().endswith(".data"):
+        if base.upper().endswith(".DATA"):
             # For backwards compatibility, it is
             # allowed to give REFCASE and ECLBASE both
             # with and without .DATA extensions
@@ -53,7 +53,7 @@ class RFTConfig(ResponseConfig):
 
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
         filename = substitute_runpath_name(self.input_files[0], iens, iter_)
-        if filename.lower().endswith(".data"):
+        if filename.upper().endswith(".DATA"):
             # For backwards compatibility, it is
             # allowed to give REFCASE and ECLBASE both
             # with and without .DATA extensions
