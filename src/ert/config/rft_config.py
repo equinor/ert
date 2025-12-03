@@ -22,23 +22,6 @@ from .responses_index import responses_index
 logger = logging.getLogger(__name__)
 
 
-_SEP = "\x31"
-
-
-def _translate(pat: str) -> str:
-    """Translates fnmatch pattern to match anywhere"""
-    return fnmatch.translate(pat).replace("\\z", "").replace("\\Z", "")
-
-
-def _props_matcher(props: list[str]) -> str:
-    """Regex for matching given props _and_ DEPTH"""
-    pattern = f"({'|'.join(_translate(p) for p in props)})"
-    if re.fullmatch(pattern, "DEPTH") is None:
-        return f"({'|'.join(_translate(p) for p in [*props, 'DEPTH'])})"
-    else:
-        return pattern
-
-
 class RFTConfig(ResponseConfig):
     type: Literal["rft"] = "rft"
     name: str = "rft"
@@ -94,10 +77,25 @@ class RFTConfig(ResponseConfig):
                     "values": [],
                 }
             )
+
+        sep = "\x31"
+
+        def _translate(pat: str) -> str:
+            """Translates fnmatch pattern to match anywhere"""
+            return fnmatch.translate(pat).replace("\\z", "").replace("\\Z", "")
+
+        def _props_matcher(props: list[str]) -> str:
+            """Regex for matching given props _and_ DEPTH"""
+            pattern = f"({'|'.join(_translate(p) for p in props)})"
+            if re.fullmatch(pattern, "DEPTH") is None:
+                return f"({'|'.join(_translate(p) for p in [*props, 'DEPTH'])})"
+            else:
+                return pattern
+
         matcher = re.compile(
             "|".join(
                 "("
-                + re.escape(_SEP).join(
+                + re.escape(sep).join(
                     (
                         _translate(well),
                         _translate(time),
@@ -116,7 +114,7 @@ class RFTConfig(ResponseConfig):
                     date = entry.date
                     well = entry.well
                     for rft_property in entry:
-                        key = f"{well}{_SEP}{date}{_SEP}{rft_property}"
+                        key = f"{well}{sep}{date}{sep}{rft_property}"
                         if matcher.fullmatch(key) is not None:
                             values = entry[rft_property]
                             if np.isdtype(values.dtype, np.float32):
