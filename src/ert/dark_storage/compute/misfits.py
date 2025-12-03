@@ -5,17 +5,18 @@ import numpy.typing as npt
 import pandas as pd
 
 
-def _calculate_misfit(
+def _calculate_signed_chi_squared_misfit(
     obs_value: npt.NDArray[np.float64],
     response_value: npt.NDArray[np.float64],
     obs_std: npt.NDArray[np.float64],
 ) -> list[float]:
-    difference = response_value - obs_value
-    misfit = (difference / obs_std) ** 2
-    return (misfit * np.sign(difference)).tolist()
+    """The signed version is intended for visualization. For data assimiliation one
+    would normally use the normal chi-square"""
+    residual = response_value - obs_value
+    return (np.sign(residual) * residual * residual / (obs_std * obs_std)).tolist()
 
 
-def calculate_misfits_from_pandas(
+def calculate_signed_chi_squared_misfits(
     reponses_dict: Mapping[int, pd.DataFrame],
     observation: pd.DataFrame,
     summary_misfits: bool = False,
@@ -26,7 +27,7 @@ def calculate_misfits_from_pandas(
     """
     misfits_dict = {}
     for realization_index in reponses_dict:
-        misfits_dict[realization_index] = _calculate_misfit(
+        misfits_dict[realization_index] = _calculate_signed_chi_squared_misfit(
             observation["values"],
             reponses_dict[realization_index].loc[:, observation.index].values.flatten(),
             observation["errors"],
