@@ -18,8 +18,14 @@ if TYPE_CHECKING:
 
 class MisfitsPlot:
     """
-    A plotter for visualizing misfits between simulated responses and observations.
-    Supports 'Univariate' (boxplots over time/index) and 'Summary' (histogram of all misfits) modes.
+    Visualize signed misfits between simulated responses and observations.
+
+    Layout:
+        - 2 x N grid of subplots, where N is number of observation indices.
+        - Each column corresponds to one observation:
+            * Top: boxplots of misfits per ensemble.
+            * Bottom: jittered scatter of misfits per ensemble.
+        - All subplots share the same y-axis range.
     """
 
     def __init__(self) -> None:
@@ -40,12 +46,11 @@ class MisfitsPlot:
         from matplotlib.lines import Line2D
 
         config = plot_context.plotConfig()
-        axes_misfit = figure.add_subplot(2, 1, 1)
-        axes_resp = figure.add_subplot(2, 1, 2, sharex=axes_misfit)
-        response_key = plot_context.key()
         misfit_plot_mode = config.getMisfitsPlotMode()
 
-        # columns: "STD", "OBS", "key_index"
+        # ------------------------------------------------------------------
+        # Observation metadata: expect columns "STD", "OBS", "key_index"
+        # ------------------------------------------------------------------
         observation_data_columnar = (
             pl.from_pandas(observation_data.T)
             .with_columns(pl.col("key_index").cast(pl.String))
@@ -62,28 +67,25 @@ class MisfitsPlot:
         }
 
         if observation_data_columnar.is_empty():
-            for ax in (axes_misfit, axes_resp):
-                ax.text(
-                    0.5,
-                    0.5,
-                    "No observations available for this key.",
-                    horizontalalignment="center",
-                    verticalalignment="center",
-                    transform=ax.transAxes,
-                    fontsize=12,
-                )
+            ax = figure.add_subplot(1, 1, 1)
+            ax.text(
+                0.5,
+                0.5,
+                "No observations available for this key.",
+                horizontalalignment="center",
+                verticalalignment="center",
+                transform=ax.transAxes,
+                fontsize=12,
+            )
             PlotTools.finalizePlot(
                 plot_context,
                 figure,
-                axes_resp,
-                default_x_label="N/A",
-                default_y_label="N/A",
+                ax,
+                default_x_label="",
+                default_y_label="",
             )
             return
 
-        # ------------------------------------------------------------------
-        # Observation metadata, with numeric key_index for alignment / ticks
-        # ------------------------------------------------------------------
         obs = observation_data_columnar.with_columns(
             pl.col("key_index").cast(pl.Float64)
         )
@@ -97,34 +99,26 @@ class MisfitsPlot:
         )
 
         if not keys:
-            for ax in (axes_misfit, axes_resp):
-                ax.text(
-                    0.5,
-                    0.5,
-                    "No matching observation indices.",
-                    horizontalalignment="center",
-                    verticalalignment="center",
-                    transform=ax.transAxes,
-                    fontsize=12,
-                )
-            PlotTools.finalizePlot(
-                plot_context,
-                figure,
-                axes_resp,
-                default_x_label="Observation index",
-                default_y_label="Absolute misfit",
+            ax = figure.add_subplot(1, 1, 1)
+            ax.text(
+                0.5,
+                0.5,
+                "No matching observation indices.",
+                horizontalalignment="center",
+                verticalalignment="center",
+                transform=ax.transAxes,
+                fontsize=12,
             )
             return
 
-        # Maps for observations (used only in responses plot)
-        obs_values = {
-            float(row["key_index"]): float(row["observations"])
-            for row in obs.iter_rows(named=True)
-        }
-        obs_errors = {
-            float(row["key_index"]): float(row["errors"])
-            for row in obs.iter_rows(named=True)
-        }
+        # Try to detect a time-like column for summary mode labelling.
+        time_col = None
+        if misfit_plot_mode != "Univariate":
+            for c in observation_data_columnar.columns:
+                lc = c.lower()
+                if lc in ("time", "date", "datetime", "timestep", "obs_time"):
+                    time_col = c
+                    break
 
         # ------------------------------------------------------------------
         # Collect misfit ensembles (name endswith ".misfits")
@@ -142,7 +136,6 @@ class MisfitsPlot:
 
             base_name = eo.name.removesuffix(".misfits")
 
-            # NOTE: misfit is now SIGNED, we do NOT take abs()
             misfits_long_eo = (
                 misfits_wide.with_row_count("realization")
                 .melt(
@@ -152,7 +145,7 @@ class MisfitsPlot:
                 )
                 .with_columns(
                     pl.col("key_index").cast(pl.Float64),
-                    pl.col("misfit"),  # keep signed value
+                    pl.col("misfit"),  # signed misfit
                     pl.lit(eo.name).alias("ensemble_name"),
                     pl.lit(base_name).alias("ensemble_base"),
                 )
@@ -166,247 +159,312 @@ class MisfitsPlot:
             pl.concat(misfits_long_list, how="vertical") if misfits_long_list else None
         )
 
-        # ------------------------------------------------------------------
-        # Collect response ensembles (everything NOT ".misfits")
-        # ------------------------------------------------------------------
-        responses_long_list: list[pl.DataFrame] = []
-        bases_with_responses: set[str] = set()
-
-        for eo, df in response_data_columnar.items():
-            if eo.name.endswith(".misfits"):
-                continue
-
-            resp_wide = df
-            if "Unnamed: 0" in resp_wide.columns:
-                resp_wide = resp_wide.drop("Unnamed: 0")
-
-            base_name = eo.name
-
-            responses_long_eo = (
-                resp_wide.with_row_count("realization")
-                .melt(
-                    id_vars=["realization"],
-                    variable_name="key_index",
-                    value_name="response",
-                )
-                .with_columns(
-                    pl.col("key_index").cast(pl.Float64),
-                    pl.lit(eo.name).alias("ensemble_name"),
-                    pl.lit(base_name).alias("ensemble_base"),
-                )
-                .filter(pl.col("key_index").is_in(keys))
+        if misfits_long is None or misfits_long.height == 0:
+            ax = figure.add_subplot(1, 1, 1)
+            ax.text(
+                0.5,
+                0.5,
+                "No misfit data available.",
+                horizontalalignment="center",
+                verticalalignment="center",
+                transform=ax.transAxes,
+                fontsize=12,
             )
-
-            responses_long_list.append(responses_long_eo)
-            bases_with_responses.add(base_name)
-
-        responses_long = (
-            pl.concat(responses_long_list, how="vertical")
-            if responses_long_list
-            else None
-        )
+            return
 
         # ------------------------------------------------------------------
-        # Shared base-name ordering & colour map (SAME for both rows)
+        # Shared base-name ordering & colour map
         # ------------------------------------------------------------------
-        base_names = sorted(set(base_to_misfit_name.keys()) | bases_with_responses)
+        base_names = sorted(base_to_misfit_name.keys())
         colours = plt.rcParams["axes.prop_cycle"].by_key()["color"]
         colour_map = {
             base: colours[i % len(colours)] for i, base in enumerate(base_names)
         }
 
-        x_positions = np.arange(len(keys))
+        # Global symmetric y-limits across ALL axes
+        global_min = float(misfits_long["misfit"].min())
+        global_max = float(misfits_long["misfit"].max())
+        max_abs = max(abs(global_min), abs(global_max)) or 1.0
+        y_min = -1.05 * max_abs
+        y_max = 1.05 * max_abs
 
         # ------------------------------------------------------------------
-        # TOP ROW: signed misfits (boxplots per base ensemble)
+        # Create small-multiples layout: 2 rows, len(keys) columns
+        # Share y across the whole grid for interactive sync
         # ------------------------------------------------------------------
-        legend_handles_mis: list[Line2D] = []
-        global_mis_min = None
-        global_mis_max = None
+        n_keys = len(keys)
+        axes_top: list = []
+        axes_bottom: list = []
 
-        if misfits_long is not None and base_names:
-            group_width = 0.9
-            slot_width = group_width / len(base_names)
-            box_width = slot_width * 0.75
+        ref_axis = None
 
-            for x_center, key in zip(x_positions, keys):
-                group_left = x_center - group_width / 2.0
-
-                for i, base in enumerate(base_names):
-                    if base not in base_to_misfit_name:
-                        continue  # this base has no misfit ensemble
-
-                    colour = colour_map.get(base, "C0")
-                    ens_name = base_to_misfit_name[base]
-
-                    if x_center == x_positions[0]:
-                        legend_handles_mis.append(
-                            Line2D(
-                                [],
-                                [],
-                                marker="s",
-                                linestyle="None",
-                                color=colour,
-                                label=ens_name,
-                            )
-                        )
-
-                    sub = misfits_long.filter(
-                        (pl.col("ensemble_base") == base) & (pl.col("key_index") == key)
-                    )
-                    mis_vals = sub["misfit"].to_numpy()
-                    if mis_vals.size == 0:
-                        continue
-
-                    # Track global min/max for symmetric y-axis around 0
-                    local_min = float(np.min(mis_vals))
-                    local_max = float(np.max(mis_vals))
-                    if global_mis_min is None:
-                        global_mis_min = local_min
-                        global_mis_max = local_max
-                    else:
-                        global_mis_min = min(global_mis_min, local_min)
-                        global_mis_max = max(global_mis_max, local_max)
-
-                    box_center = group_left + slot_width * (i + 0.5)
-
-                    bp = axes_misfit.boxplot(
-                        mis_vals,
-                        positions=[box_center],
-                        vert=True,
-                        widths=box_width,
-                        patch_artist=True,
-                        manage_ticks=False,
-                        showfliers=False,
-                    )
-
-                    for box in bp["boxes"]:
-                        box.set_facecolor(colour)
-                        box.set_alpha(0.35)
-
-                    for element in ["whiskers", "caps", "medians"]:
-                        for artist in bp[element]:
-                            artist.set_color(colour)
-                            artist.set_alpha(0.8)
-
-                    mean_misfit = float(np.mean(mis_vals))
-                    axes_misfit.plot(
-                        [box_center],
-                        [mean_misfit],
-                        marker="o",
-                        markersize=5,
-                        color=colour,
-                    )
-
-            # Symmetric y-axis around 0
-            if global_mis_min is not None and global_mis_max is not None:
-                max_abs = max(abs(global_mis_min), abs(global_mis_max))
-                axes_misfit.set_ylim(-1.05 * max_abs, 1.05 * max_abs)
-
-            axes_misfit.axhline(0.0, color="black", linewidth=0.8, alpha=0.7)
-            axes_misfit.set_ylabel("Misfit")
-            axes_misfit.grid(True, axis="y", linestyle=":", alpha=0.4)
-
-            if legend_handles_mis:
-                axes_misfit.legend(
-                    handles=legend_handles_mis,
-                    title="Ensemble (misfits)",
-                    loc="upper right",
+        for i in range(n_keys):
+            if i == 0:
+                ax_top = figure.add_subplot(2, n_keys, 1)
+                ax_bottom = figure.add_subplot(
+                    2, n_keys, n_keys + 1, sharex=ax_top, sharey=ax_top
                 )
-        else:
-            axes_misfit.axhline(0.0, color="black", linewidth=0.8, alpha=0.7)
-            axes_misfit.set_ylabel("Misfit")
-            axes_misfit.grid(True, axis="y", linestyle=":", alpha=0.4)
-
-        # ------------------------------------------------------------------
-        # BOTTOM ROW: responses as dot columns + compact obs dot+errorbar
-        # ------------------------------------------------------------------
-        if responses_long is not None:
-            group_width_resp = 0.9
-            if base_names:
-                slot_width_resp = group_width_resp / len(base_names)
-                jitter_halfwidth = slot_width_resp * 0.35
+                ref_axis = ax_top
             else:
-                slot_width_resp = 0.0
-                jitter_halfwidth = 0.0
+                ax_top = figure.add_subplot(2, n_keys, i + 1, sharey=ref_axis)
+                ax_bottom = figure.add_subplot(
+                    2,
+                    n_keys,
+                    n_keys + i + 1,
+                    sharex=axes_top[0],
+                    sharey=ref_axis,
+                )
 
-            for x_center, key in zip(x_positions, keys):
-                group_left = x_center - group_width_resp / 2.0
+            axes_top.append(ax_top)
+            axes_bottom.append(ax_bottom)
 
-                # Observation as a single dot with vertical error bar
-                if (key in obs_values) and (key in obs_errors):
-                    y_obs = obs_values[key]
-                    y_err = obs_errors[key]
-                    axes_resp.errorbar(
-                        x_center,
-                        y_obs,
-                        yerr=y_err,
-                        fmt="o",
-                        color="black",
-                        markersize=4,
-                        capsize=3,
-                        elinewidth=1.0,
-                        alpha=0.9,
-                        zorder=4,
-                    )
+        # ------------------------------------------------------------------
+        # TOP ROW: boxplots per ensemble, per observation index
+        # ------------------------------------------------------------------
+        legend_handles: list[Line2D] = []
 
-                # Per-base response dots, same left-right order as misfit boxes
-                for i, base in enumerate(base_names):
-                    colour = colour_map.get(base, "C0")
-
-                    sub = responses_long.filter(
-                        (pl.col("ensemble_base") == base) & (pl.col("key_index") == key)
-                    )
-                    vals = sub["response"].to_numpy()
-                    if vals.size == 0:
-                        continue
-
-                    slot_center = group_left + slot_width_resp * (i + 0.5)
-                    jitter = (np.random.rand(len(vals)) - 0.5) * 2.0 * jitter_halfwidth
-
-                    axes_resp.scatter(
-                        slot_center + jitter,
-                        vals,
-                        s=8,
-                        alpha=0.6,
-                        color=colour,
-                    )
-
-            # Vertical separators between observation indices (full height, NOT at ticks)
-            if len(x_positions) > 1:
-                separator_positions = x_positions[:-1] + 0.5  # 0.5, 1.5, 2.5, ...
-                for x_sep in separator_positions:
-                    axes_resp.axvline(
-                        x_sep,
-                        color="lightgrey",
-                        linestyle="--",
-                        linewidth=0.8,
-                        alpha=0.8,
-                        zorder=0,  # keep behind dots & error bars
-                    )
-
-            axes_resp.set_xlabel("Observation index")
-            axes_resp.set_ylabel("Response")
-            axes_resp.grid(True, axis="y", linestyle=":", alpha=0.4)
+        if base_names:
+            x_positions_local = np.arange(len(base_names))
+            box_width = 0.6
         else:
-            axes_resp.set_xlabel("Observation index")
-            axes_resp.set_ylabel("Response")
-            axes_resp.grid(True, axis="y", linestyle=":", alpha=0.4)
+            x_positions_local = np.array([0.0])
+            box_width = 0.5
 
-        # Remove vertical spines so they don't appear at ticks
-        for ax in (axes_misfit, axes_resp):
-            ax.spines["left"].set_visible(False)
-            ax.spines["right"].set_visible(False)
+        for col_idx, key in enumerate(keys):
+            ax = axes_top[col_idx]
 
-        # Shared x-ticks / labels
-        axes_resp.set_xticks(x_positions)
-        axes_resp.set_xticklabels([f"{int(k)}" for k in keys])
-        axes_resp.tick_params(axis="x", which="both", length=0)
-        axes_resp.grid(False)
-        PlotTools.finalizePlot(
-            plot_context,
-            figure,
-            axes_resp,
-            default_x_label="Observation index",
-            default_y_label="Response",
+            for i, base in enumerate(base_names):
+                colour = colour_map.get(base, "C0")
+                ens_name = base_to_misfit_name[base]
+
+                sub = misfits_long.filter(
+                    (pl.col("ensemble_base") == base) & (pl.col("key_index") == key)
+                )
+                mis_vals = sub["misfit"].to_numpy()
+                if mis_vals.size == 0:
+                    continue
+
+                x_center = i
+                pos = [x_center]
+
+                bp = ax.boxplot(
+                    mis_vals,
+                    positions=pos,
+                    vert=True,
+                    widths=box_width,
+                    patch_artist=True,
+                    manage_ticks=False,
+                    showfliers=False,
+                )
+
+                for box in bp["boxes"]:
+                    box.set_facecolor(colour)
+                    box.set_alpha(0.35)
+
+                for element in ["whiskers", "caps", "medians"]:
+                    for artist in bp[element]:
+                        artist.set_color(colour)
+                        artist.set_alpha(0.8)
+
+                mean_misfit = float(np.mean(mis_vals))
+                ax.plot(
+                    [x_center],
+                    [mean_misfit],
+                    marker="o",
+                    markersize=4,
+                    color=colour,
+                )
+
+                # Build legend handles from first column only
+                if col_idx == 0:
+                    legend_handles.append(
+                        Line2D(
+                            [],
+                            [],
+                            marker="s",
+                            linestyle="None",
+                            color=colour,
+                            label=ens_name,
+                        )
+                    )
+
+            ax.axhline(0.0, color="black", linewidth=0.8, alpha=0.7)
+            ax.set_ylim(y_min, y_max)
+            ax.grid(True, axis="y", linestyle=":", alpha=0.4)
+            ax.set_xticks(x_positions_local)
+            ax.set_xticklabels([])  # no category labels, only bottom xlabel
+
+        # ------------------------------------------------------------------
+        # BOTTOM ROW: jittered scatter per ensemble, per observation index
+        # ------------------------------------------------------------------
+        jitter_halfwidth = 0.35 if base_names else 0.0
+
+        for col_idx, key in enumerate(keys):
+            ax = axes_bottom[col_idx]
+
+            for i, base in enumerate(base_names):
+                colour = colour_map.get(base, "C0")
+
+                sub = misfits_long.filter(
+                    (pl.col("ensemble_base") == base) & (pl.col("key_index") == key)
+                )
+                vals = sub["misfit"].to_numpy()
+                if vals.size == 0:
+                    continue
+
+                x_center = i
+                if jitter_halfwidth > 0:
+                    jitter = (np.random.rand(len(vals)) - 0.5) * 2.0 * jitter_halfwidth
+                else:
+                    jitter = np.zeros_like(vals)
+
+                ax.scatter(
+                    x_center + jitter,
+                    vals,
+                    s=8,
+                    alpha=0.6,
+                    color=colour,
+                )
+
+            ax.axhline(0.0, color="black", linewidth=0.8, alpha=0.7)
+            ax.set_ylim(y_min, y_max)
+            ax.grid(True, axis="y", linestyle=":", alpha=0.4)
+            ax.set_xticks(x_positions_local)
+            ax.set_xticklabels([])
+
+        # ------------------------------------------------------------------
+        # Legend (above all plots, not covering any subplot)
+        # ------------------------------------------------------------------
+        if legend_handles:
+            figure.legend(
+                handles=legend_handles,
+                loc="upper center",
+                bbox_to_anchor=(0.5, 0.93),  # LOWER than before
+                ncol=min(len(legend_handles), 4),
+            )
+
+        # ------------------------------------------------------------------
+        # Let PlotTools handle main styling / title, then move title to suptitle
+        # ------------------------------------------------------------------
+        # PlotTools.finalizePlot(
+        #     plot_context,
+        #     figure,
+        #     axes_bottom[0],
+        # )
+
+        # Use whatever title finalizePlot set on the reference axis as a figure title.
+        ref_title = axes_bottom[0].get_title()
+        if ref_title:
+            figure.suptitle(ref_title)
+            for ax in (*axes_top, *axes_bottom):
+                ax.set_title("")
+
+        # ------------------------------------------------------------------
+        # Styling: ticks, spines, y-labels
+        #   - No vertical tick marks.
+        #   - Only outer spines visible (no spines between charts).
+        #   - y-label only on bottom-left subplot.
+        # ------------------------------------------------------------------
+        for row_idx, (ax_top, ax_bottom) in enumerate(zip(axes_top, axes_bottom)):
+            # No vertical tick marks on any x-axis
+            ax_top.tick_params(axis="x", which="both", length=0)
+            ax_bottom.tick_params(axis="x", which="both", length=0)
+
+        # --- Spine logic: clean minimal outer frame ---
+        for col_idx, (ax_top, ax_bottom) in enumerate(zip(axes_top, axes_bottom)):
+            # 1) Hide ALL spines on both axes first
+            for ax in (ax_top, ax_bottom):
+                ax.spines["left"].set_visible(False)
+                ax.spines["right"].set_visible(False)
+                ax.spines["top"].set_visible(False)
+                ax.spines["bottom"].set_visible(False)
+
+            # 2) Show left spine only on the leftmost column
+            if col_idx == 0:
+                ax_top.spines["left"].set_visible(True)
+                ax_bottom.spines["left"].set_visible(True)
+
+            # 3) Show bottom spine only on the bottom row (ax_bottom)
+            ax_bottom.spines["bottom"].set_visible(True)
+
+        # y-axis labels: only bottom-left
+        for ax in axes_top:
+            ax.set_ylabel("")
+        for ax in axes_bottom:
+            ax.set_ylabel("")
+        if axes_bottom:
+            axes_bottom[0].set_ylabel("Misfit")
+
+        # --- Y tick + label visibility ---
+        for col_idx, (ax_top, ax_bottom) in enumerate(zip(axes_top, axes_bottom)):
+            if col_idx == 0:
+                # LEFTMOST COLUMN → show ticks + labels
+                ax_top.tick_params(
+                    axis="y",
+                    which="both",
+                    left=True,
+                    right=False,
+                    labelleft=True,
+                    labelright=False,
+                )
+                ax_bottom.tick_params(
+                    axis="y",
+                    which="both",
+                    left=True,
+                    right=False,
+                    labelleft=True,
+                    labelright=False,
+                )
+            else:
+                # ALL OTHER COLUMNS → hide ticks + labels entirely
+                ax_top.tick_params(
+                    axis="y",
+                    which="both",
+                    left=False,
+                    right=False,
+                    labelleft=False,
+                    labelright=False,
+                )
+                ax_bottom.tick_params(
+                    axis="y",
+                    which="both",
+                    left=False,
+                    right=False,
+                    labelleft=False,
+                    labelright=False,
+                )
+
+        axes_top[0].set_ylabel("χ²")
+        axes_bottom[0].set_ylabel("χ²")
+        # ------------------------------------------------------------------
+        # Column labels at the bottom: "index=..." or "time=..."
+        # ------------------------------------------------------------------
+        for col_idx, key in enumerate(keys):
+            ax = axes_bottom[col_idx]
+
+            if misfit_plot_mode == "Univariate":
+                label = f"index={int(key)}"
+            else:
+                label = None
+                if time_col is not None:
+                    sub_obs = obs.filter(pl.col("key_index") == key)
+                    if sub_obs.height > 0:
+                        t_val = sub_obs.select(time_col).to_series()[0]
+                        label = f"time={t_val}"
+                if label is None:
+                    label = f"time={key}"
+
+            ax.set_xlabel(label)
+
+        for ax in axes_top + axes_bottom:
+            # Set opacity of all tick labels
+            for label in ax.get_yticklabels():
+                label.set_alpha(0.7)
+            for label in ax.get_xticklabels():
+                label.set_alpha(0.7)
+
+        # Final layout, leaving room for legend and suptitle
+        figure.tight_layout(rect=(0.02, 0.02, 0.98, 0.88))
+        figure.suptitle(
+            plot_context.key() + " (Signed Chi-squared)", fontsize=14, y=0.98
         )
