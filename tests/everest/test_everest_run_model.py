@@ -304,10 +304,10 @@ def test_that_site_config_queue_options_do_not_override_user_queue_config(
 
     site_plugins = get_site_plugins()
     with use_runtime_plugins(site_plugins):
-        config = EverestRunModel.create(
+        run_model = EverestRunModel.create(
             ever_config, "some_exp_name", "batch", runtime_plugins=site_plugins
         )
-        assert config.queue_system == "local"
+        assert run_model.queue_config.queue_system == "local"
 
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")

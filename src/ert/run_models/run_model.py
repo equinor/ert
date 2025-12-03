@@ -36,7 +36,6 @@ from ert.config import (
     PostSimulationFixtures,
     PreSimulationFixtures,
     QueueConfig,
-    QueueSystem,
     Workflow,
     create_workflow_fixtures_from_hooked,
 )
@@ -334,10 +333,6 @@ class RunModel(RunModelConfig, ABC):
 
     def send_event(self, event: StatusEvents) -> None:
         self._status_queue.put(event)
-
-    @property
-    def queue_system(self) -> QueueSystem:
-        return self.queue_config.queue_system
 
     @property
     def ensemble_size(self) -> int:
