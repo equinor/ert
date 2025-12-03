@@ -130,26 +130,38 @@ class RFTConfig(ResponseConfig):
                 }
             )
 
-        try:
-            return pl.concat(
-                [
-                    pl.DataFrame(
-                        {
-                            "response_key": [f"{well}:{time.isoformat()}:{prop}"],
-                            "time": [time],
-                            "depth": [fetched[well, time]["DEPTH"]],
-                            "values": [vals],
-                        }
-                    ).explode("depth", "values")
-                    for (well, time), inner_dict in fetched.items()
-                    for prop, vals in inner_dict.items()
-                    if prop != "DEPTH"
-                ]
+        dfs = []
+
+        for (well, time), inner_dict in fetched.items():
+            wide = pl.DataFrame(
+                {k: pl.Series(v.astype("<f4")) for k, v in inner_dict.items()}
             )
-        except KeyError as err:
-            raise InvalidResponseFile(
-                f"Could not find {err.args[0]} in RFTFile {filename}"
-            ) from err
+
+            if wide.columns == ["DEPTH"]:
+                continue
+
+            if "DEPTH" not in wide.columns:
+                raise InvalidResponseFile(f"Could not find DEPTH in RFTFile {filename}")
+
+            # Unpivot all columns except DEPTH
+            long = wide.unpivot(
+                index="DEPTH",  # keep depth as column
+                # turn other prop values into response_key col
+                variable_name="response_key",
+                value_name="values",  # put values in own column
+            ).rename({"DEPTH": "depth"})
+
+            # Add wellname prefix to response_keys
+            long = long.with_columns(
+                (pl.lit(f"{well}:{time.isoformat()}:") + pl.col("response_key")).alias(
+                    "response_key"
+                ),
+                pl.lit(time).alias("time"),
+            )
+
+            dfs.append(long.select("response_key", "time", "depth", "values"))
+
+        return pl.concat(dfs)
 
     @property
     def response_type(self) -> str:
