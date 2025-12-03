@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+import datetime
 import fnmatch
 import logging
 import re
 from collections import defaultdict
-from datetime import date
 from typing import Literal
 
 import numpy as np
@@ -75,11 +75,11 @@ class RFTConfig(ResponseConfig):
             # allowed to give REFCASE and ECLBASE both
             # with and without .DATA extensions
             filename = filename[:-5]
-        fetched: dict[tuple[str, date], dict[str, npt.NDArray[np.float32]]] = (
+        fetched: dict[tuple[str, datetime.date], dict[str, npt.NDArray[np.float32]]] = (
             defaultdict(dict)
         )
         location: dict[
-            tuple[str, date], np.ndarray[tuple[int, int], np.dtype[np.int32]]
+            tuple[str, datetime.date], np.ndarray[tuple[int, int], np.dtype[np.int32]]
         ] = {}
         # This is a somewhat complicated optimization in order to
         # support wildcards in well names, dates and properties
@@ -113,14 +113,16 @@ class RFTConfig(ResponseConfig):
             with RFTReader.open(f"{run_path}/{filename}") as rft:
                 for entry in rft:
                     added_location = False
-                    for t in entry:
-                        key = f"{entry.well}{_SEP}{entry.date.isoformat()}{_SEP}{t}"
+                    date = entry.date
+                    well = entry.well
+                    for rft_property in entry:
+                        key = f"{well}{_SEP}{date}{_SEP}{rft_property}"
                         if matcher.fullmatch(key) is not None:
-                            values = entry[t]
+                            values = entry[rft_property]
                             if np.isdtype(values.dtype, np.float32):
-                                fetched[entry.well, entry.date][t] = values
+                                fetched[well, date][rft_property] = values
                                 if not added_location:
-                                    location[entry.well, entry.date] = entry.connections
+                                    location[well, date] = entry.connections
                                     added_location = True
         except (FileNotFoundError, InvalidRFTError) as err:
             raise InvalidResponseFile(
@@ -190,7 +192,7 @@ class RFTConfig(ResponseConfig):
                     "steps known to generate rft files"
                 )
 
-            declared_data: dict[str, dict[date, list[str]]] = defaultdict(
+            declared_data: dict[str, dict[datetime.date, list[str]]] = defaultdict(
                 lambda: defaultdict(list)
             )
             for rft in rfts:
