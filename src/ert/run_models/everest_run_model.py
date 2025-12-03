@@ -371,7 +371,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         # Only take into account site queue options
         # if and only if they exist and are of same type as user
         # specified queue system
-        applied_site_queue_options = (
+        site_queue_options_to_apply = (
             runtime_plugins.queue_options.model_dump(exclude_unset=True)
             if (
                 runtime_plugins is not None
@@ -382,7 +382,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
             else {}
         )
 
-        queue_options_dict = applied_site_queue_options | queue_options_from_everconfig
+        queue_options_dict = site_queue_options_to_apply | queue_options_from_everconfig
 
         queue_options = KnownQueueOptionsAdapter.validate_python(queue_options_dict)
 
