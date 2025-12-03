@@ -158,7 +158,7 @@ def data_for_response(
                 tuple(realizations_with_responses),
             )
             .rename({"realization": "Realization"})
-            .drop(["response_key", "time"])
+            .select(["Realization", "depth", "values"])
             .to_pandas()
             .pivot(index="Realization", columns="depth", values="values")
             .reset_index(drop=True)
