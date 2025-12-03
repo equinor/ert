@@ -31,7 +31,6 @@ from ert.gui.find_ert_info import find_ert_info
 from ert.gui.simulation import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.tools.event_viewer import EventViewerTool, GUILogHandler
-from ert.gui.tools.export import ExportTool
 from ert.gui.tools.load_results import LoadResultsTool
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.plot.plot_window import PlotWindow
@@ -373,10 +372,6 @@ class ErtMainWindow(QMainWindow):
             self._event_viewer_tool.setParent(self)
             tools_menu.addAction(self._event_viewer_tool.getAction())
             self.close_signal.connect(self._event_viewer_tool.close_wnd)
-
-        self.export_tool = ExportTool(self.ert_config, self.notifier)
-        self.export_tool.setParent(self)
-        tools_menu.addAction(self.export_tool.getAction())
 
         self.workflows_tool = WorkflowsTool(self.ert_config, self.notifier)
         self.workflows_tool.setParent(self)
