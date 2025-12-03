@@ -5,7 +5,7 @@ import logging
 import re
 from collections import defaultdict
 from datetime import date
-from typing import Any, Literal
+from typing import Literal
 
 import numpy as np
 import numpy.typing as npt
@@ -75,7 +75,9 @@ class RFTConfig(ResponseConfig):
             # allowed to give REFCASE and ECLBASE both
             # with and without .DATA extensions
             filename = filename[:-5]
-        fetched: dict[tuple[str, date], dict[str, npt.NDArray[Any]]] = defaultdict(dict)
+        fetched: dict[tuple[str, date], dict[str, npt.NDArray[np.float32]]] = (
+            defaultdict(dict)
+        )
         location: dict[
             tuple[str, date], np.ndarray[tuple[int, int], np.dtype[np.int32]]
         ] = {}
