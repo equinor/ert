@@ -187,7 +187,7 @@ class RFTConfig(ResponseConfig):
             if not simulation_step_exists:
                 ConfigWarning.warn(
                     "Config contains a RFT key but no forward model "
-                    "steps known to generate rft files"
+                    "step known to generate rft files"
                 )
 
             declared_data: dict[str, dict[datetime.date, list[str]]] = defaultdict(
