@@ -219,11 +219,13 @@ def test_update_lowers_generalized_variance_or_deactivates_observations(
                 # other errors are discussed here:
                 # https://github.com/equinor/ert/issues/9581
                 # https://github.com/equinor/ert/issues/9585
+                # in case of CONST distribution update is set to FALSE
                 assert (
                     "No active observations" in se
                     or "Matrix is singular" in se
                     or "math domain error" in se
                     or "math range error" in se
+                    or "All parameters are set to UPDATE:FALSE" in se
                 )
 
         if any("Ill-conditioned matrix" not in str(w.message) for w in all_warnings):
