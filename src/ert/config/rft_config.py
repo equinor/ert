@@ -61,9 +61,6 @@ class RFTConfig(ResponseConfig):
         fetched: dict[tuple[str, datetime.date], dict[str, npt.NDArray[np.float32]]] = (
             defaultdict(dict)
         )
-        location: dict[
-            tuple[str, datetime.date], np.ndarray[tuple[int, int], np.dtype[np.int32]]
-        ] = {}
         # This is a somewhat complicated optimization in order to
         # support wildcards in well names, dates and properties
         # A python for loop is too slow so we use a compiled regex
@@ -110,7 +107,6 @@ class RFTConfig(ResponseConfig):
         try:
             with RFTReader.open(f"{run_path}/{filename}") as rft:
                 for entry in rft:
-                    added_location = False
                     date = entry.date
                     well = entry.well
                     for rft_property in entry:
@@ -119,9 +115,6 @@ class RFTConfig(ResponseConfig):
                             values = entry[rft_property]
                             if np.isdtype(values.dtype, np.float32):
                                 fetched[well, date][rft_property] = values
-                                if not added_location:
-                                    location[well, date] = entry.connections
-                                    added_location = True
         except (FileNotFoundError, InvalidRFTError) as err:
             raise InvalidResponseFile(
                 f"Could not read RFT from {run_path}/{filename}: {err}"
@@ -144,14 +137,10 @@ class RFTConfig(ResponseConfig):
                         {
                             "response_key": [f"{well}:{time.isoformat()}:{prop}"],
                             "time": [time],
-                            "property": [prop],
                             "depth": [fetched[well, time]["DEPTH"]],
-                            "grid_i": [location[well, time][:, 0]],
-                            "grid_j": [location[well, time][:, 1]],
-                            "grid_k": [location[well, time][:, 2]],
                             "values": [vals],
                         }
-                    ).explode("depth", "values", "grid_i", "grid_j", "grid_k")
+                    ).explode("depth", "values")
                     for (well, time), inner_dict in fetched.items()
                     for prop, vals in inner_dict.items()
                     if prop != "DEPTH"
