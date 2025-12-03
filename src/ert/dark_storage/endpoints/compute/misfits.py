@@ -10,7 +10,7 @@ from fastapi.responses import Response
 
 from ert.dark_storage import exceptions as exc
 from ert.dark_storage.common import get_storage
-from ert.dark_storage.compute.misfits import calculate_misfits_from_pandas
+from ert.dark_storage.compute.misfits import calculate_signed_chi_squared_misfits
 from ert.dark_storage.endpoints.observations import (
     _get_observations,
 )
@@ -80,7 +80,7 @@ async def get_response_misfits(
         index=[parse_index(x) for x in o["x_axis"]],
     )
     try:
-        result_df = calculate_misfits_from_pandas(
+        result_df = calculate_signed_chi_squared_misfits(
             response_dict, observation_df, summary_misfits
         )
     except Exception as misfits_exc:
