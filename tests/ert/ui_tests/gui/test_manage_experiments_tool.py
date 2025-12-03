@@ -6,12 +6,13 @@ import numpy as np
 import polars as pl
 import pytest
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QPushButton, QTextEdit
+from PyQt6.QtWidgets import QApplication, QFrame, QPushButton, QTableWidget, QTextEdit
 
 from ert.config import ErtConfig, SummaryConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_info_widget import (
+    ExportParametersDialog,
     _EnsembleWidget,
     _EnsembleWidgetTabs,
     _ExperimentWidget,
@@ -547,3 +548,74 @@ def test_realization_view(
         "BPR_555_PERSISTENCE - PARAMETERS_LOADED",
         "BPR_138_PERSISTENCE - PARAMETERS_LOADED",
     } == set(realization_widget._parameter_text_edit.toPlainText().strip().splitlines())
+
+
+def test_parameters_pane(
+    qtbot, snake_oil_case_storage: ErtConfig, snake_oil_storage: Storage
+):
+    config = snake_oil_case_storage
+    storage = snake_oil_storage
+
+    notifier = ErtNotifier()
+    notifier.set_storage(str(storage.path))
+
+    tool = ManageExperimentsPanel(
+        config, notifier, config.runpath_config.num_realizations
+    )
+
+    storage_widget = tool.findChild(StorageWidget)
+    storage_widget._tree_view.expandAll()
+    model_index = storage_widget._tree_view.model().index(
+        0, 0, storage_widget._tree_view.model().index(0, 0)
+    )
+    storage_widget._tree_view.setCurrentIndex(model_index)
+    assert (
+        tool._storage_info_widget._content_layout.currentIndex()
+        == _WidgetType.ENSEMBLE_WIDGET
+    )
+    ensemble_widget = tool._storage_info_widget._content_layout.currentWidget()
+    ensemble_widget._tab_widget.setCurrentIndex(_EnsembleWidgetTabs.PARAMETERS_TAB)
+
+    assert isinstance(ensemble_widget._tab_widget.currentWidget(), QFrame)
+
+    parameters_frame = ensemble_widget._tab_widget.currentWidget()
+    assert parameters_frame.findChild(QPushButton) is not None
+    assert parameters_frame.findChild(QTableWidget) is not None
+
+    model = parameters_frame.findChild(QTableWidget).model()
+    assert model.rowCount() == 5, "The Snake oil test case should have 5 realizations"
+    assert model.columnCount() == 11, (
+        "The Snake oil test case should have 11 parameters"
+    )
+
+
+def test_export_parameters_button(
+    qtbot, snake_oil_case_storage: ErtConfig, snake_oil_storage: Storage
+):
+    config = snake_oil_case_storage
+    storage = snake_oil_storage
+
+    notifier = ErtNotifier()
+    notifier.set_storage(str(storage.path))
+
+    tool = ManageExperimentsPanel(
+        config, notifier, config.runpath_config.num_realizations
+    )
+
+    storage_widget = tool.findChild(StorageWidget)
+    storage_widget._tree_view.expandAll()
+    model_index = storage_widget._tree_view.model().index(
+        0, 0, storage_widget._tree_view.model().index(0, 0)
+    )
+    storage_widget._tree_view.setCurrentIndex(model_index)
+    assert (
+        tool._storage_info_widget._content_layout.currentIndex()
+        == _WidgetType.ENSEMBLE_WIDGET
+    )
+    ensemble_widget = tool._storage_info_widget._content_layout.currentWidget()
+    ensemble_widget._tab_widget.setCurrentIndex(_EnsembleWidgetTabs.PARAMETERS_TAB)
+    assert isinstance(ensemble_widget._tab_widget.currentWidget(), QFrame)
+
+    parameters_frame = ensemble_widget._tab_widget.currentWidget()
+    parameters_frame.findChild(QPushButton).click()
+    assert isinstance(QApplication.activeModalWidget(), ExportParametersDialog)

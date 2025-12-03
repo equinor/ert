@@ -12,7 +12,10 @@ from PyQt6.QtWidgets import (
     QFrame,
     QHBoxLayout,
     QLabel,
+    QPushButton,
     QStackedLayout,
+    QTableWidget,
+    QTableWidgetItem,
     QTabWidget,
     QTextEdit,
     QTreeWidget,
@@ -22,6 +25,8 @@ from PyQt6.QtWidgets import (
 )
 
 from ert.storage import Ensemble, Experiment, RealizationStorageState
+
+from .export_parameters_dialog import ExportParametersDialog
 
 
 class _WidgetType(IntEnum):
@@ -42,6 +47,7 @@ class _EnsembleWidgetTabs(IntEnum):
     ENSEMBLE_TAB = 0
     STATE_TAB = 1
     OBSERVATIONS_TAB = 2
+    PARAMETERS_TAB = 3
 
 
 class _ExperimentWidget(QWidget):
@@ -126,12 +132,15 @@ class _EnsembleWidget(QWidget):
 
         info_frame.setLayout(info_layout)
 
+        state_frame = QFrame()
+        state_layout = QHBoxLayout()
         self._state_text_edit = QTextEdit()
         self._state_text_edit.setReadOnly(True)
         self._state_text_edit.setObjectName("ensemble_state_text")
+        state_layout.addWidget(self._state_text_edit)
+        state_frame.setLayout(state_layout)
 
         observations_frame = QFrame()
-
         self._observations_tree_widget = QTreeWidget(self)
         self._observations_tree_widget.currentItemChanged.connect(
             self._currentItemChanged
@@ -151,15 +160,28 @@ class _EnsembleWidget(QWidget):
         observations_layout.addWidget(self._canvas)
         observations_frame.setLayout(observations_layout)
 
+        parameters_frame = QFrame()
+        parameters_layout = QVBoxLayout()
+        self._parameters_table = QTableWidget()
+        vertical_header = self._parameters_table.verticalHeader()
+        assert vertical_header is not None
+        vertical_header.setVisible(False)
+        parameters_layout.addWidget(self._parameters_table)
+        self._export_button = QPushButton("Export...")
+        self._export_button.clicked.connect(self.onClickExportParameters)
+        parameters_layout.addWidget(self._export_button)
+        parameters_frame.setLayout(parameters_layout)
+
         self._tab_widget = QTabWidget()
         self._tab_widget.insertTab(
             _EnsembleWidgetTabs.ENSEMBLE_TAB, info_frame, "Ensemble"
         )
-        self._tab_widget.insertTab(
-            _EnsembleWidgetTabs.STATE_TAB, self._state_text_edit, "State"
-        )
+        self._tab_widget.insertTab(_EnsembleWidgetTabs.STATE_TAB, state_frame, "State")
         self._tab_widget.insertTab(
             _EnsembleWidgetTabs.OBSERVATIONS_TAB, observations_frame, "Observations"
+        )
+        self._tab_widget.insertTab(
+            _EnsembleWidgetTabs.PARAMETERS_TAB, parameters_frame, "Parameters"
         )
         self._tab_widget.currentChanged.connect(self._currentTabChanged)
 
@@ -356,12 +378,29 @@ class _EnsembleWidget(QWidget):
                         0, Qt.SortOrder.AscendingOrder
                     )
 
-        for i in range(self._observations_tree_widget.topLevelItemCount()):
-            item = self._observations_tree_widget.topLevelItem(i)
-            assert item is not None
-            if item.childCount() > 0:
-                self._observations_tree_widget.setCurrentItem(item.child(0))
-                break
+            for i in range(self._observations_tree_widget.topLevelItemCount()):
+                item = self._observations_tree_widget.topLevelItem(i)
+                assert item is not None
+                if item.childCount() > 0:
+                    self._observations_tree_widget.setCurrentItem(item.child(0))
+                    break
+
+        elif index == _EnsembleWidgetTabs.PARAMETERS_TAB:
+            assert self._ensemble is not None
+
+            parameters_df = self._ensemble.load_all_scalar_keys(transformed=True)
+
+            self._parameters_table.setRowCount(len(parameters_df))
+            self._parameters_table.setColumnCount(len(parameters_df.columns))
+            self._parameters_table.setHorizontalHeaderLabels(parameters_df.columns)
+
+            for row_idx in range(len(parameters_df)):
+                for col_idx, col_name in enumerate(parameters_df.columns):
+                    value = parameters_df[col_name][row_idx]
+                    table_widget_item = QTableWidgetItem(str(value))
+                    self._parameters_table.setItem(row_idx, col_idx, table_widget_item)
+
+            self._parameters_table.resizeColumnsToContents()
 
     @Slot(Ensemble)
     def setEnsemble(self, ensemble: Ensemble) -> None:
@@ -371,6 +410,12 @@ class _EnsembleWidget(QWidget):
         self._uuid_label.setText(f"UUID: {ensemble.id!s}")
 
         self._tab_widget.setCurrentIndex(0)
+
+    @Slot()
+    def onClickExportParameters(self) -> None:
+        assert self._ensemble is not None
+        export_dialog = ExportParametersDialog(self._ensemble, self)
+        export_dialog.show()
 
 
 class _RealizationWidget(QWidget):

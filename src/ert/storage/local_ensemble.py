@@ -562,6 +562,15 @@ class LocalEnsemble(BaseMode):
         df = pl.scan_parquet(group_path)
         return df
 
+    def load_all_scalar_keys(self, transformed: bool = False) -> pl.DataFrame:
+        try:
+            return self._load_scalar_keys(
+                keys=self.experiment.parameter_keys,
+                transformed=transformed,
+            )
+        except KeyError:
+            return pl.DataFrame([[np.nan] * len(self.experiment.parameter_keys)])
+
     def _load_scalar_keys(
         self,
         keys: list[str],
