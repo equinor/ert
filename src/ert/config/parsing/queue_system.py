@@ -23,3 +23,12 @@ class QueueSystem(StrEnum):
     @staticmethod
     def ert_config_case() -> str:
         return "upper"
+
+    @property
+    def formatted_name(self) -> str:
+        return {
+            self.LSF: "LSF",
+            self.LOCAL: "Local",
+            self.TORQUE: "Torque/OpenPBS",
+            self.SLURM: "Slurm",
+        }[self]
