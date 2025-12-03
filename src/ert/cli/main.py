@@ -93,12 +93,16 @@ def run_cli(args: Namespace, runtime_plugins: ErtRuntimePlugins | None = None) -
         return
 
     status_queue: queue.SimpleQueue[StatusEvents] = queue.SimpleQueue()
+    using_local_queuesystem: bool = True
     try:
         with use_runtime_plugins(get_site_plugins()):
             model = create_model(
                 ert_config,
                 args,
                 status_queue,
+            )
+            using_local_queuesystem = (
+                model.queue_config.queue_system == QueueSystem.LOCAL
             )
     except ValueError as e:
         raise ErtCliError(f"{args.mode} was not valid, failed with: {e}") from e
@@ -116,17 +120,16 @@ def run_cli(args: Namespace, runtime_plugins: ErtRuntimePlugins | None = None) -
             f"and DESIGN_MATRIX ({model.active_realizations.count(True)})"
         )
 
-    if args.port_range is None and model.queue_system == QueueSystem.LOCAL:
+    if args.port_range is None and using_local_queuesystem:
         # This is within the range for ephemeral ports as defined by
         # most unix flavors https://en.wikipedia.org/wiki/Ephemeral_port
         args.port_range = range(49152, 51819)
 
-    use_ipc_protocol = model.queue_system == QueueSystem.LOCAL
     evaluator_server_config = EvaluatorServerConfig(
         port_range=None
         if args.port_range is None
         else (min(args.port_range), max(args.port_range) + 1),
-        use_ipc_protocol=use_ipc_protocol,
+        use_ipc_protocol=using_local_queuesystem,
     )
 
     if model.check_if_runpath_exists():
