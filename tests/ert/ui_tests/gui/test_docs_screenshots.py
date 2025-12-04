@@ -95,13 +95,6 @@ PNGS_TESTED_FOR_CHANGE = [
     "docs/ert/getting_started/configuration/poly_new/with_more_observations/coeff_b.png",
 ]
 
-SKIP_MESSAGE = """Skipping this test because no fonts could be found by qt.
-
-This is a problem on the github runners using ubuntu-latest.
-It has been verified that fonts are present in the system by calling fc-list,
-but qt are not able to detect these fonts for some reason.
-"""
-
 FIXED_RANDOM_SEED = 11223344
 
 COEFF_A_PNG_THRESHOLD = 0.999
@@ -305,9 +298,6 @@ def test_that_poly_new_minimal_screenshots_are_up_to_date(
     example_folder = "docs/ert/getting_started/configuration/poly_new/minimal"
     gui = open_gui_with_docs_example(tmp_path, source_root, example_folder, "poly.ert")
 
-    if not gui.available_fonts:
-        pytest.skip(SKIP_MESSAGE)
-
     gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
     gui_evaluator.compare_img_with_gui("ert.png", ERT_PNG_THRESHOLD)
 
@@ -338,9 +328,6 @@ def test_that_poly_new_with_simple_script_screenshots_are_up_to_date(
 
     gui = open_gui_with_docs_example(tmp_path, source_root, example_folder, "poly.ert")
 
-    if not gui.available_fonts:
-        pytest.skip(SKIP_MESSAGE)
-
     clean_up_diplayed_runpath(gui)
 
     gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
@@ -363,9 +350,6 @@ def test_that_poly_new_with_results_screenshots_are_up_to_date(
     gui = open_gui_with_docs_example(
         tmp_path, source_root, example_folder, "poly.ert", FIXED_RANDOM_SEED
     )
-
-    if not gui.available_fonts:
-        pytest.skip(SKIP_MESSAGE)
 
     run_experiment(qtbot, EnsembleExperiment, gui)
     open_storage(gui.ert_config.ens_path, mode="w")
@@ -401,9 +385,6 @@ def test_that_poly_new_with_observations_screenshots_are_up_to_date(
     gui = open_gui_with_docs_example(
         tmp_path, source_root, example_folder, "poly_final.ert", FIXED_RANDOM_SEED
     )
-
-    if not gui.available_fonts:
-        pytest.skip(SKIP_MESSAGE)
 
     run_experiment(qtbot, EnsembleSmoother, gui)
     open_storage(gui.ert_config.ens_path, mode="w")
@@ -456,9 +437,6 @@ def test_that_poly_new_with_more_observations_screenshots_are_up_to_date(
     gui = open_gui_with_docs_example(
         tmp_path, source_root, example_folder, "poly_final.ert", FIXED_RANDOM_SEED
     )
-
-    if not gui.available_fonts:
-        pytest.skip(SKIP_MESSAGE)
 
     run_experiment(qtbot, EnsembleSmoother, gui)
     open_storage(gui.ert_config.ens_path, mode="w")
