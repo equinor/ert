@@ -268,10 +268,8 @@ def run_experiment_fixture(request):
         with contextlib.suppress(FileNotFoundError):
             shutil.rmtree("poly_out")
         # Select correct experiment in the simulation panel
-        experiment_panel = gui.findChild(ExperimentPanel)
-        assert isinstance(experiment_panel, ExperimentPanel)
-        simulation_mode_combo = experiment_panel.findChild(QComboBox)
-        assert isinstance(simulation_mode_combo, QComboBox)
+        experiment_panel = get_child(gui, ExperimentPanel)
+        simulation_mode_combo = get_child(experiment_panel, QComboBox)
         simulation_mode_combo.setCurrentText(experiment_mode.display_name())
         simulation_settings = experiment_panel._experiment_widgets[
             experiment_panel.get_current_experiment_type()
@@ -280,7 +278,7 @@ def run_experiment_fixture(request):
             simulation_settings._ensemble_name_field.setText("iter-0")
 
         # Click start simulation and agree to the message
-        run_experiment = experiment_panel.findChild(QWidget, name="run_experiment")
+        run_experiment = get_child(experiment_panel, QWidget, name="run_experiment")
 
         def handle_dialog():
             QTimer.singleShot(
@@ -389,10 +387,11 @@ def add_experiment_in_manage_experiment_dialog(
 def add_experiment_manually(
     qtbot, gui, experiment_name="My_experiment", ensemble_name="default"
 ):
-    button_manage_experiments = gui.findChild(QToolButton, "button_Manage_experiments")
-    assert button_manage_experiments
+    button_manage_experiments = get_child(
+        gui, QToolButton, name="button_Manage_experiments"
+    )
     qtbot.mouseClick(button_manage_experiments, Qt.MouseButton.LeftButton)
-    experiments_panel = gui.findChild(ManageExperimentsPanel)
+    experiments_panel = get_child(gui, ManageExperimentsPanel)
 
     # Open the create new experiment tab
     experiments_panel.setCurrentIndex(0)

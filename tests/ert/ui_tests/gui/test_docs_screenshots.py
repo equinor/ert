@@ -25,7 +25,7 @@ from tests.ert.unit_tests.gui.simulation.test_run_path_dialog import (
     handle_run_path_dialog,
 )
 
-from .conftest import wait_for_child
+from .conftest import get_child, wait_for_child
 
 # List of png files under docs that are either:
 #  - not screenshots of the gui
@@ -116,16 +116,13 @@ SIMULATIONS_PNG_THRESHOLD = 0.999
 
 def run_experiment(qtbot, experiment_mode, gui, click_done=True):
     # Select correct experiment in the simulation panel
-    experiment_panel = gui.findChild(ExperimentPanel)
-    assert isinstance(experiment_panel, ExperimentPanel)
-
-    simulation_mode_combo = experiment_panel.findChild(QComboBox)
-    assert isinstance(simulation_mode_combo, QComboBox)
+    experiment_panel = get_child(gui, ExperimentPanel)
+    simulation_mode_combo = get_child(experiment_panel, QComboBox)
 
     simulation_mode_combo.setCurrentText(experiment_mode.display_name())
 
     # Click start simulation and agree to the message
-    run_experiment = experiment_panel.findChild(QWidget, name="run_experiment")
+    run_experiment = get_child(experiment_panel, QWidget, name="run_experiment")
 
     def handle_dialog():
         QTimer.singleShot(
@@ -253,13 +250,10 @@ def set_data_type_selection_index(data_type_widget, index):
 
 
 def clean_up_diplayed_runpath(gui: QWidget):
-    experiment_panel = gui.findChild(ExperimentPanel)
-    assert isinstance(experiment_panel, ExperimentPanel)
+    experiment_panel = get_child(gui, ExperimentPanel)
+    single_test_run_panel = get_child(experiment_panel, SingleTestRunPanel)
+    runpath_label = get_child(single_test_run_panel, CopyableLabel)
 
-    single_test_run_panel = experiment_panel.findChild(SingleTestRunPanel)
-    assert isinstance(single_test_run_panel, SingleTestRunPanel)
-
-    runpath_label = single_test_run_panel.findChild(CopyableLabel)
     current_directory = os.getcwd()
     label_text = runpath_label.label.text()
     runpath_label.label.setText(label_text.replace(current_directory, "&lt;cwd&gt;"))
@@ -320,8 +314,7 @@ def test_that_poly_new_minimal_screenshots_are_up_to_date(
     run_experiment(qtbot, EnsembleExperiment, gui)
 
     # Set static values for running time to not trigger false gui change detection
-    run_dialog = gui.findChild(RunDialog)
-    assert isinstance(run_dialog, RunDialog)
+    run_dialog = get_child(gui, RunDialog)
     run_dialog._run_model_api.get_runtime = lambda: 2
     run_dialog._on_ticker()
 
@@ -381,8 +374,7 @@ def test_that_poly_new_with_results_screenshots_are_up_to_date(
     with StorageService.init_service(
         project=os.path.abspath(gui.ert_config.ens_path),
     ):
-        button_plot_tool = gui.findChild(QToolButton, "button_Create_plot")
-        assert button_plot_tool
+        button_plot_tool = get_child(gui, QToolButton, name="button_Create_plot")
         qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
 
         gui_evaluator.compare_img_with_gui("poly_plot.png", POLY_PLOT_PNG_THRESHOLD)
@@ -420,8 +412,7 @@ def test_that_poly_new_with_observations_screenshots_are_up_to_date(
     with StorageService.init_service(
         project=os.path.abspath(gui.ert_config.ens_path),
     ):
-        button_plot_tool = gui.findChild(QToolButton, "button_Create_plot")
-        assert button_plot_tool
+        button_plot_tool = get_child(gui, QToolButton, name="button_Create_plot")
         qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
 
         ensemble_selector_widget = wait_for_child(gui, qtbot, EnsembleSelectionWidget)
@@ -476,8 +467,7 @@ def test_that_poly_new_with_more_observations_screenshots_are_up_to_date(
     with StorageService.init_service(
         project=os.path.abspath(gui.ert_config.ens_path),
     ):
-        button_plot_tool = gui.findChild(QToolButton, "button_Create_plot")
-        assert button_plot_tool
+        button_plot_tool = get_child(gui, QToolButton, name="button_Create_plot")
         qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
 
         ensemble_selector_widget = wait_for_child(gui, qtbot, EnsembleSelectionWidget)
