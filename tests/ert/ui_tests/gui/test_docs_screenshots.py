@@ -383,7 +383,7 @@ def test_that_poly_new_with_results_screenshots_are_up_to_date(
 
         gui_evaluator.compare_img_with_gui("poly_plot.png", POLY_PLOT_PNG_THRESHOLD)
 
-        data_type_widget = wait_for_child(gui, qtbot, DataTypeKeysWidget, "Data types")
+        data_type_widget = wait_for_child(gui, qtbot, DataTypeKeysWidget)
         set_data_type_selection_index(data_type_widget, 1)
 
         gui_evaluator.compare_img_with_gui("plots.png", PLOTS_PNG_THRESHOLD)
@@ -420,9 +420,7 @@ def test_that_poly_new_with_observations_screenshots_are_up_to_date(
         assert button_plot_tool
         qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
 
-        ensemble_selector_widget = wait_for_child(
-            gui, qtbot, EnsembleSelectionWidget, "Plot ensemble"
-        )
+        ensemble_selector_widget = wait_for_child(gui, qtbot, EnsembleSelectionWidget)
 
         selected_ensembles = ensemble_selector_widget._selected_ensembles
 
@@ -434,7 +432,7 @@ def test_that_poly_new_with_observations_screenshots_are_up_to_date(
 
         gui_evaluator.compare_img_with_gui("plot_obs.png", PLOT_OBS_PNG_THRESHOLD)
 
-        data_type_widget = wait_for_child(gui, qtbot, DataTypeKeysWidget, "Data types")
+        data_type_widget = wait_for_child(gui, qtbot, DataTypeKeysWidget)
 
         for index, img, threshold in [
             (1, "coeff_a.png", COEFF_A_PNG_THRESHOLD),
@@ -478,9 +476,7 @@ def test_that_poly_new_with_more_observations_screenshots_are_up_to_date(
         assert button_plot_tool
         qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
 
-        ensemble_selector_widget = wait_for_child(
-            gui, qtbot, EnsembleSelectionWidget, "Plot ensemble"
-        )
+        ensemble_selector_widget = wait_for_child(gui, qtbot, EnsembleSelectionWidget)
 
         selected_ensembles = ensemble_selector_widget._selected_ensembles
         for index in range(selected_ensembles.count()):
@@ -489,7 +485,7 @@ def test_that_poly_new_with_more_observations_screenshots_are_up_to_date(
                 selected_ensembles.slot_toggle_plot(item)
         selected_ensembles.ensembleSelectionListChanged.emit()
 
-        data_type_widget = wait_for_child(gui, qtbot, DataTypeKeysWidget, "Data types")
+        data_type_widget = wait_for_child(gui, qtbot, DataTypeKeysWidget)
         set_data_type_selection_index(data_type_widget, 2)
 
         gui_evaluator.compare_img_with_gui("coeff_b.png", COEFF_B_PNG_THRESHOLD)
