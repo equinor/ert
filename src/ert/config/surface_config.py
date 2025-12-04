@@ -10,6 +10,11 @@ import xarray as xr
 from pydantic import field_serializer
 from surfio import IrapHeader, IrapSurface
 
+from ert.field_utils import (
+    calc_rho_for_2d_grid_layer,
+    transform_local_ellipse_angle_to_local_coords,
+    transform_positions_to_local_field_coordinates,
+)
 from ert.substitutions import substitute_runpath_name
 
 from ._str_to_bool import str_to_bool
@@ -248,3 +253,55 @@ class SurfaceConfig(ParameterConfig):
         this flattening process"""
 
         return create_flattened_cube_graph(px=self.ncol, py=self.nrow, pz=1)
+
+    def calc_rho_for_2d_grid_layer(
+        self,
+        obs_xpos: npt.NDArray[np.float64],
+        obs_ypos: npt.NDArray[np.float64],
+        obs_main_range: npt.NDArray[np.float64],
+        obs_perp_range: npt.NDArray[np.float64],
+        obs_anisotropy_angle: npt.NDArray[np.float64],
+    ) -> npt.NDArray[np.float64]:
+        """Function to calculate scaling values to be used in the RHO matrix
+        for distance-based localization.
+
+        Args:
+            obs_xpos: x-coordinates in global coordinates of observations
+            obs_ypos: y-coordinates in global coordinates of observations
+            obs_main_range: Size of influence ellipse main principal direction.
+            obs_perp_range: Size of influence ellipse second principal direction.
+            obs_anisotropy_angle: Rotation angle anticlock wise of main principal
+              direction of influence ellipse relative to global coordinate
+              system's x-axis.
+
+        Returns:
+            Scaling values (elements of the RHO matrix) as a numpy array
+              of shape=(nx,ny,nobservations)
+
+        """
+        # Transform observation positions to local surface coordinates
+        xpos, ypos = transform_positions_to_local_field_coordinates(
+            (self.xori, self.yori), self.rotation, obs_xpos, obs_ypos
+        )
+        # Transform ellipse orientation to local surface coordinates
+        rotation_angle_of_localization_ellipse = (
+            transform_local_ellipse_angle_to_local_coords(
+                self.rotation, obs_anisotropy_angle
+            )
+        )
+
+        # Assume the coordinate system is not flipped.
+        # This means the right_handed_grid_indexing is False
+        assert self.yflip == 1
+        return calc_rho_for_2d_grid_layer(
+            self.ncol,
+            self.nrow,
+            self.xinc,
+            self.yinc,
+            xpos,
+            ypos,
+            obs_main_range,
+            obs_perp_range,
+            rotation_angle_of_localization_ellipse,
+            right_handed_grid_indexing=False,
+        )
