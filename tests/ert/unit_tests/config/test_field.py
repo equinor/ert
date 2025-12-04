@@ -329,7 +329,7 @@ def test_calculate_ertbox_parameters_synthetic_grid(origin, increment, rotation,
         oricenter=False,  # origin at corner, not center
         increment=increment,  # dx, dy, dz
         rotation=rotation,  # rotation in degrees
-        flip=flip,  # 1 for right-handed, -1 for left-handed
+        flip=flip,  # -1 for right-handed, 1 for left-handed
     )
     params = calculate_ertbox_parameters(grid)
 
@@ -374,3 +374,129 @@ def test_calculate_ertbox_parameters_synthetic_grid(origin, increment, rotation,
     assert params.nx == 5
     assert params.ny == 4
     assert params.nz == 3
+
+
+@pytest.fixture
+def field_with_ertbox_params():
+    # Return a Field object for test purpose
+    # Define parameters for the grid (ertbox parameters)
+    nx = 50
+    ny = 110
+    nz = 10
+    # Lower left corner of the grid when not rotated
+    origin = (1000.0, 1000.0)
+    xsize = 500.0
+    ysize = 1100.0
+    xinc = xsize / nx
+    yinc = ysize / ny
+    rotation = 0.0
+
+    params = ErtboxParameters(
+        nx=nx,
+        ny=ny,
+        nz=nz,
+        xlength=xsize,
+        ylength=ysize,
+        xinc=xinc,
+        yinc=yinc,
+        rotation_angle=rotation,
+        origin=origin,
+    )
+
+    write_roff_param = False
+    if write_roff_param:
+        # Construct a grid for visualization of the RHO parameter
+        # The grid has one layer per observation and will be used
+        # to visualize the RHO parameter for one layer for
+        # multiple observations.
+
+        # Use right-handed grid indexing with j index (for y coordinate)
+        # decreasing from ny-1 to 0. This means that the grid with xtgeo
+        # must be constructed with flip=-1 and the y-coordinate for origin
+        # must be upper left corner.
+        nobs = 7
+        origin_grid = (origin[0], origin[1] + ysize, 0.0)
+        ertbox_grid = xtgeo.create_box_grid(
+            dimension=(nx, ny, nobs),
+            origin=origin_grid,
+            increment=(xinc, yinc, 1.0),
+            rotation=rotation,
+            flip=-1,  # -1 for right-handed, 1 for left-handed
+        )
+        filename = "tmp_ertbox_grid_for_visualization_of_rho.roff"
+        ertbox_grid.to_file(filename, fformat="roff")
+
+    return Field(
+        type="field",
+        name="MyField",
+        forward_init=True,
+        update=True,
+        ertbox_params=params,
+        file_format=FieldFileFormat.ROFF,
+        output_transformation=None,
+        input_transformation=None,
+        truncation_min=-5.0,
+        truncation_max=5.0,
+        forward_init_file="input_file.roff",
+        output_file=Path("output_file.roff"),
+        grid_file="ertbox_grid.roff",
+    )
+
+
+@pytest.mark.parametrize(
+    "xpos, ypos, main_range, perp_range, anisotropy_angle",
+    [
+        (
+            [1050.0, 1250.0, 1250.0, 1250.0, 1000.0, 1250.0, 1250.0],  # xpos
+            [1150.0, 1650.0, 1650.0, 1650.0, 1100.0, 1650.0, 1650.0],  # ypos
+            [100.0, 600.0, 600.0, 600.0, 1000.0, 300.0, 300.0],  # main_range
+            [100.0, 200.0, 200.0, 200.0, 1000.0, 10.0, 100.0],  # perp_range
+            [0.0, 35.0, 135.0, -135.0, 0.0, 45.0, -270.0],  # angle
+        ),
+    ],
+)
+def test_calc_rho_for_2d_grid_layer(
+    snapshot,
+    field_with_ertbox_params,
+    xpos: list[float],
+    ypos: list[float],
+    main_range: list[float],
+    perp_range: list[float],
+    anisotropy_angle: list[float],
+):
+    write_roff_param = False
+    nx = field_with_ertbox_params.ertbox_params.nx
+    ny = field_with_ertbox_params.ertbox_params.ny
+
+    xposition = np.array(xpos)
+    yposition = np.array(ypos)
+    mainrange = np.array(main_range)
+    perprange = np.array(perp_range)
+    angles = np.array(anisotropy_angle)
+
+    #   Dimension of rho_for_one_grid_layer is (nx,ny,nobs)
+    rho_for_one_grid_layer = field_with_ertbox_params.calc_rho_for_2d_grid_layer(
+        xposition,
+        yposition,
+        mainrange,
+        perprange,
+        angles,
+        right_handed_grid_indexing=True,
+    )
+    # Ensure -0 and +0 will be 0
+    rho_for_one_grid_layer = np.where(
+        rho_for_one_grid_layer == 0, 0.0, rho_for_one_grid_layer
+    )
+
+    snapshot.assert_match(
+        str(rho_for_one_grid_layer) + "\n", "testdata_rho_for_one_grid_layer.txt"
+    )
+    if write_roff_param:
+        # Write to 3D grid parameter in ROFF for visual inspection
+        filename = "tmp_2d_rho_per_obs.roff"
+        nobs = rho_for_one_grid_layer.shape[2]
+        rho_param = xtgeo.GridProperty(
+            ncol=nx, nrow=ny, nlay=nobs, name="rho", values=rho_for_one_grid_layer
+        )
+        print(f"Write file: {filename}")
+        rho_param.to_file(filename, fformat="roff")
