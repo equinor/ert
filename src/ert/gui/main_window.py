@@ -9,7 +9,7 @@ from pathlib import Path
 from PyQt6.QtCore import QCoreApplication, QEvent, QSize, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtGui import QAction, QCloseEvent, QCursor, QFontDatabase, QIcon, QMouseEvent
+from PyQt6.QtGui import QAction, QCloseEvent, QCursor, QIcon, QMouseEvent
 from PyQt6.QtWidgets import (
     QButtonGroup,
     QFrame,
@@ -96,7 +96,6 @@ class ErtMainWindow(QMainWindow):
         log_handler: GUILogHandler | None = None,
     ) -> None:
         QMainWindow.__init__(self)
-        self.available_fonts = QFontDatabase.families()
         self.notifier = ErtNotifier()
         self.plugins_tool: PluginsTool | None = None
         self.ert_config = ert_config
