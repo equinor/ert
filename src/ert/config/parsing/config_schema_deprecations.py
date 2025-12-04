@@ -217,15 +217,4 @@ deprecated_keywords_list = [
         ),
         check=lambda line: line[0] == "DESIGN2PARAMS",
     ),
-    DeprecationInfo(
-        keyword="FORWARD_MODEL",
-        message=(
-            "FORWARD_MODEL DESIGN_KW will be replaced with RUN_TEMPLATE. "
-            "DESIGN2PARAMS has been replaced by DESIGN_MATRIX, so the "
-            "parameters are already available for magic string replacement "
-            "with the RUN_TEMPLATE keyword. Please use this format: "
-            "'RUN_TEMPLATE my_text_file_template.txt my_text_output_file.txt'"
-        ),
-        check=lambda line: line[0] == "DESIGN_KW",
-    ),
 ]
