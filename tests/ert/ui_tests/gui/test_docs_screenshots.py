@@ -298,11 +298,15 @@ def test_that_poly_new_minimal_screenshots_are_up_to_date(
     monkeypatch,
     qtbot,
     source_root,
+    mocker,
 ):
     monkeypatch.chdir(tmp_path)
 
     # Set static values for disk space to not trigger false gui change detection
     monkeypatch.setattr(DiskSpaceWidget, "_get_status", lambda self: (50, "100 GB"))
+    mocker.patch(
+        "ert.gui.simulation.run_dialog.get_mount_directory", return_value=Path("/")
+    )
 
     example_folder = "docs/ert/getting_started/configuration/poly_new/minimal"
     gui = open_gui_with_docs_example(tmp_path, source_root, example_folder, "poly.ert")
