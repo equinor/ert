@@ -722,3 +722,39 @@ async def test_log_forward_model_steps_with_missing_status_updates(
         f"There could be connectivity issues to evaluator running on port "
         f"{router_port} on host {evaluator_host}"
     ) in caplog.text
+
+
+@pytest.mark.timeout(5)
+async def test_that_evaluator_listen_for_messages_exits_if_socket_has_been_closed(
+    make_ee_config, caplog
+):
+    """This tests that the function will log the error message and
+    exit if the zmq socket has been closed. This is a regression test
+    after it previously logged the same error message 400_000 times before
+    being cancelled manually.
+    """
+    evaluator = EnsembleEvaluator(
+        TestEnsemble(0, 2, 2, id_="0"),
+        make_ee_config(),
+        end_event=Event(),
+    )
+    server_task = asyncio.create_task(evaluator._server())
+    publisher_task = asyncio.create_task(evaluator._publisher())
+    evaluator._server_done.set()  # This will in turn close the zmq socket
+    evaluator._complete_batch.set()
+    await server_task
+    listening_task = asyncio.create_task(evaluator.listen_for_messages())
+    await asyncio.wait_for(
+        listening_task, timeout=2
+    )  # The socket is closed, so this should exit quickly
+    await publisher_task
+    assert (
+        len(
+            [
+                message
+                for message in caplog.messages
+                if "Evaluator receiver closed" in message
+            ]
+        )
+        == 1
+    ), "The warning message should only be logged once"
