@@ -383,6 +383,7 @@ class EnsembleEvaluator:
                     logger.warning(
                         "Evaluator receiver closed, no new messages are received"
                     )
+                    return  # The socket is closed, and we won't re-establish it.
                 else:
                     logger.error(f"Unexpected error when listening to messages: {e}")
             except asyncio.CancelledError:
