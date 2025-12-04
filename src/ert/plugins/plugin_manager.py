@@ -338,6 +338,7 @@ class ErtRuntimePlugins(BaseModel):
     environment_variables: Mapping[str, str] = Field(default_factory=dict)
     env_pr_fm_step: Mapping[str, Mapping[str, Any]] = Field(default_factory=dict)
     help_links: dict[str, str] = Field(default_factory=dict)
+    prioritize_private_ip_address: bool = False
 
 
 def get_site_plugins(
@@ -386,6 +387,9 @@ def get_site_plugins(
         ),
         env_pr_fm_step=plugin_manager.get_forward_model_configuration(),
         help_links=plugin_manager.get_help_links(),
+        prioritize_private_ip_address=site_configurations.prioritize_private_ip_address
+        if site_configurations
+        else False,
     )
 
     return runtime_plugins

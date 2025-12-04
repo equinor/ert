@@ -52,6 +52,7 @@ def get_machine_name() -> str:
 def find_available_socket(
     host: str | None = None,
     port_range: range = range(51820, 51840 + 1),
+    prioritize_private_ip_address: bool = False,
 ) -> socket.socket:
     """
     The default and recommended approach here is to return a bound socket to the
@@ -73,7 +74,9 @@ def find_available_socket(
 
     See e.g. implementation and comments in EvaluatorServerConfig
     """
-    current_host = host if host is not None else get_ip_address()
+    current_host = (
+        host if host is not None else get_ip_address(prioritize_private_ip_address)
+    )
 
     if port_range.start == port_range.stop:
         ports = list(range(port_range.start, port_range.stop + 1))
