@@ -15,7 +15,7 @@ from typing_extensions import TypedDict
 
 from ._str_to_bool import str_to_bool
 from .distribution import DISTRIBUTION_CLASSES, DistributionSettings, get_distribution
-from .parameter_config import ParameterCardinality, ParameterConfig, ParameterMetadata
+from .parameter_config import ParameterCardinality, ParameterConfig
 from .parsing import ConfigValidationError, ConfigWarning
 
 if TYPE_CHECKING:
@@ -53,6 +53,7 @@ class DataSource(StrEnum):
 
 class GenKwConfig(ParameterConfig):
     type: Literal["gen_kw"] = "gen_kw"
+    dimensionality: Literal[1] = 1
     distribution: DistributionSettings
     forward_init: bool = False
     update: bool = True
@@ -72,17 +73,6 @@ class GenKwConfig(ParameterConfig):
     @property
     def cardinality(self) -> ParameterCardinality:
         return ParameterCardinality.multiple_configs_per_ensemble_dataset
-
-    @property
-    def metadata(self) -> list[ParameterMetadata]:
-        return [
-            ParameterMetadata(
-                key=f"{self.group}:{self.name}",
-                transformation=self.distribution.name.upper(),
-                dimensionality=1,
-                userdata={"data_origin": "GEN_KW"},
-            )
-        ]
 
     @classmethod
     def templates_from_config(
