@@ -158,9 +158,14 @@ def _start_initial_gui_window(
     storage_path = None
     if ert_config is not None:
         try:
-            # Open write to initialize the storage,so that
-            # dark storage can be mounted onto it
-            open_storage(ert_config.ens_path, mode="w").close()
+            storage = open_storage(ert_config.ens_path, mode="r")
+            should_migrate = storage.check_migration_needed()
+            storage.close()
+
+            if should_migrate:
+                # Open write to initialize the storage,so that
+                # dark storage can be mounted onto it
+                open_storage(ert_config.ens_path, mode="w").close()
             storage_path = ert_config.ens_path
         except ErtStorageException as err:
             validation_messages.errors.append(
