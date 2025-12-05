@@ -202,6 +202,54 @@ def test_api_summary_snapshot_missing_batch(snapshot, cached_example):
     )
 
 
+@pytest.mark.integration_test
+@pytest.mark.xdist_group("math_func/config_minimal.yml")
+def test_api_summary_snapshot_with_differing_columns_per_batch(
+    snapshot, cached_example
+):
+    config_path, config_file, _, _ = cached_example("math_func/config_minimal.yml")
+    config = EverestConfig.load_file(Path(config_path) / config_file)
+
+    with open_storage(config.storage_dir, mode="w") as storage:
+        # Save some summary data to each ensemble
+        experiment = next(storage.experiments)
+
+        response_config = experiment.response_configuration
+        response_config["summary"] = SummaryConfig(keys=["*"])
+
+        experiment._storage._write_transaction(
+            experiment._path / experiment._responses_file,
+            json.dumps(
+                {c.type: c.model_dump(mode="json") for c in response_config.values()},
+                default=str,
+                indent=2,
+            ).encode("utf-8"),
+        )
+
+        smry_data = pl.DataFrame(
+            {
+                "response_key": ["FOPR", "FOPR", "WOPR", "WOPR", "FOPT", "FOPT"],
+                "time": pl.Series(
+                    [datetime(2000, 1, 1), datetime(2000, 1, 2)] * 3
+                ).dt.cast_time_unit("ms"),
+                "values": pl.Series([0.2, 0.2, 1.0, 1.1, 3.3, 3.3], dtype=pl.Float32),
+            }
+        )
+        for ens in experiment.ensembles:
+            for real in range(ens.ensemble_size):
+                ens.save_response("summary", smry_data.clone(), real)
+            # Remove WOPR from all but the first ensemble, triggering
+            # more expensive concatenation operation
+            smry_data = smry_data.filter(~(pl.col("response_key") == "WOPR"))
+
+    api = EverestDataAPI(config)
+    dicts = api.summary_values(batches=[0, 1, 2, 3]).to_dicts()
+    snapshot.assert_match(
+        orjson.dumps(dicts, option=orjson.OPT_INDENT_2).decode("utf-8").strip() + "\n",
+        "snapshot.json",
+    )
+
+
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
 @pytest.mark.integration_test
 def test_that_summary_returns_empty_df_when_missing_data(cached_example):
