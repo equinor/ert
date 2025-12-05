@@ -34,3 +34,5 @@ class Exporter:
         )
         if export_job_runner.hasFailed():
             raise UserWarning(f"Failed to execute {self.export_job.name}\n{user_warn}")
+
+        logger.info("Gui utility: Export data tool was used successfully")

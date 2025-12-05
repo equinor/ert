@@ -225,7 +225,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
         description = (
             "The GEN_DATA RFT CSV export requires some information before it starts:"
         )
-        dialog = CustomDialog("Robust CSV Export", description, parent)
+        dialog = CustomDialog(self.getName(), description, parent)
 
         output_path_model = PathModel("output.csv")
         output_path_chooser = PathChooser(output_path_model)
@@ -255,7 +255,7 @@ class GenDataRFTCSVExportJob(ErtPlugin):
             "If checked, exclude columns whose value is the same for every entry"
         )
 
-        dialog.addLabeledOption("Output file path", output_path_chooser)
+        dialog.addLabeledOption("Output file", output_path_chooser)
         dialog.addLabeledOption("Trajectory file", trajectory_chooser)
         dialog.addLabeledOption("List of ensembles to export", list_edit)
         dialog.addLabeledOption("Drop constant columns", drop_const_columns_check)

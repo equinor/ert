@@ -75,7 +75,7 @@ class PluginRunner:
 
             dialog.show()
         except CancelPluginException:
-            print("Plugin cancelled before execution!")
+            pass
 
     def __runWorkflowJob(
         self, arguments: list[Any] | None, fixtures: WorkflowFixtures
