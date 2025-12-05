@@ -130,6 +130,7 @@ def run_cli(args: Namespace, runtime_plugins: ErtRuntimePlugins | None = None) -
         if args.port_range is None
         else (min(args.port_range), max(args.port_range) + 1),
         use_ipc_protocol=using_local_queuesystem,
+        prioritize_private_ip_address=ert_config.prioritize_private_ip_address,
     )
 
     if model.check_if_runpath_exists():
