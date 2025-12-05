@@ -762,7 +762,13 @@ RUN_TEMPLATE
 
 
 ``RUN_TEMPLATE`` can be used to copy files to the run path while doing magic string
-replacement in the file content and the file name.
+replacement in the file content and the file name. All the scalar parameters
+(provided as :ref:`GEN_KW <gen_kw>` or :ref:`DESIGN_MATRIX <design_matrix>`) are automatically
+available as magic strings.
+
+.. note::
+        In case of GEN_KW prior file contains `a UNIFORM 0 1`, the magic strings is <a>.
+        In case DESIGN_MATRIX contains column `SENSNAME` the magic string is <SENSNAME>.
 
 *Example:*
 
