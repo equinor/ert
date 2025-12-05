@@ -364,9 +364,7 @@ class ExperimentPanel(QWidget):
             run_path=Path(self.config.runpath_config.runpath_format_string),
             storage_path=self._notifier.storage.path,
         )
-        self._dialog.queue_system.setText(
-            f"Queue system:\n{model.queue_config.queue_system.formatted_name}"
-        )
+        self._dialog.set_queue_system_name(model.queue_config.queue_system)
         self.experiment_started.emit(self._dialog)
         self._simulation_done = False
         self.run_button.setEnabled(self._simulation_done)
