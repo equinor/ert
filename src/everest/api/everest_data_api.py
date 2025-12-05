@@ -224,6 +224,8 @@ class EverestDataAPI:
         assert self._config.storage_dir
         storage = open_storage(self._config.storage_dir, "r")
         experiment = next(storage.experiments)
+        identical_columns_in_all_batches: bool = True
+        summary_columns: list[str] | None = None
         for batch_id in batches:
             try:
                 ensemble = experiment.get_ensemble_by_name(f"batch_{batch_id}")
@@ -238,6 +240,10 @@ class EverestDataAPI:
                 summary = summary.pivot(
                     on="response_key", index=["realization", "time"], sort_columns=True
                 )
+                if summary_columns is None:
+                    summary_columns = summary.columns
+                identical_columns_in_all_batches &= summary_columns == summary.columns
+
                 # The 'Realization' column exported by ert are
                 # the 'simulations' of everest.
                 summary = summary.rename({"time": "date", "realization": "simulation"})
@@ -265,7 +271,14 @@ class EverestDataAPI:
 
                 data_frames.append(summary)
         storage.close()
-        return pl.concat(data_frames) if data_frames else pl.DataFrame()
+        return (
+            pl.concat(
+                data_frames,
+                how="vertical" if identical_columns_in_all_batches else "diagonal",
+            )
+            if data_frames
+            else pl.DataFrame()
+        )
 
     @property
     def output_folder(self) -> str:

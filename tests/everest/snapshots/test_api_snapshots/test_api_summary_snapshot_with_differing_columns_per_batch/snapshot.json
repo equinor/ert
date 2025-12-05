@@ -1,0 +1,74 @@
+[
+  {
+    "simulation": 0,
+    "date": "2000-01-01T00:00:00",
+    "FOPR": 0.20000000298023224,
+    "FOPT": 3.299999952316284,
+    "batch": 0,
+    "realization": 0,
+    "WOPR": null
+  },
+  {
+    "simulation": 0,
+    "date": "2000-01-02T00:00:00",
+    "FOPR": 0.20000000298023224,
+    "FOPT": 3.299999952316284,
+    "batch": 0,
+    "realization": 0,
+    "WOPR": null
+  },
+  {
+    "simulation": 0,
+    "date": "2000-01-01T00:00:00",
+    "FOPR": 0.20000000298023224,
+    "FOPT": 3.299999952316284,
+    "batch": 1,
+    "realization": 0,
+    "WOPR": null
+  },
+  {
+    "simulation": 0,
+    "date": "2000-01-02T00:00:00",
+    "FOPR": 0.20000000298023224,
+    "FOPT": 3.299999952316284,
+    "batch": 1,
+    "realization": 0,
+    "WOPR": null
+  },
+  {
+    "simulation": 0,
+    "date": "2000-01-01T00:00:00",
+    "FOPR": 0.20000000298023224,
+    "FOPT": 3.299999952316284,
+    "batch": 2,
+    "realization": 0,
+    "WOPR": null
+  },
+  {
+    "simulation": 0,
+    "date": "2000-01-02T00:00:00",
+    "FOPR": 0.20000000298023224,
+    "FOPT": 3.299999952316284,
+    "batch": 2,
+    "realization": 0,
+    "WOPR": null
+  },
+  {
+    "simulation": 0,
+    "date": "2000-01-01T00:00:00",
+    "FOPR": 0.20000000298023224,
+    "FOPT": 3.299999952316284,
+    "batch": 3,
+    "realization": null,
+    "WOPR": 1.0
+  },
+  {
+    "simulation": 0,
+    "date": "2000-01-02T00:00:00",
+    "FOPR": 0.20000000298023224,
+    "FOPT": 3.299999952316284,
+    "batch": 3,
+    "realization": null,
+    "WOPR": 1.100000023841858
+  }
+]
