@@ -53,6 +53,7 @@ class DataSource(StrEnum):
 
 class GenKwConfig(ParameterConfig):
     type: Literal["gen_kw"] = "gen_kw"
+    dimensionality: Literal[1] = 1
     distribution: DistributionSettings
     forward_init: bool = False
     update: bool = True

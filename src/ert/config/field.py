@@ -67,6 +67,7 @@ def create_flattened_cube_graph(px: int, py: int, pz: int) -> nx.Graph[int]:
 
 class Field(ParameterConfig):
     type: Literal["field"] = "field"
+    dimensionality: Literal[3] = 3
     ertbox_params: ErtboxParameters
     file_format: FieldFileFormat
     output_transformation: str | None

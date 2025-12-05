@@ -65,7 +65,7 @@ def get_experiment_by_id(
         priors=create_priors(experiment),
         userdata={},
         parameters={
-            group: [m.model_dump() for m in config.metadata]
+            group: [config.model_dump()]
             for group, config in experiment.parameter_configuration.items()
         },
         responses={
