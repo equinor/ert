@@ -22,6 +22,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ert.config.field import Field
 from ert.dark_storage.common import get_storage_api_version
 from ert.gui.ertwidgets import CopyButton, showWaitCursorWhileWaiting
 from ert.services._base_service import ServerBootFail
@@ -270,12 +271,12 @@ class PlotWindow(QMainWindow):
                             filter_on=key_def.filter_on,
                         )
                     elif (
-                        key_def.parameter_metadata is not None
-                        and "GEN_KW" in key_def.metadata["data_origin"]
+                        key_def.parameter is not None
+                        and key_def.parameter.type == "gen_kw"
                     ):
                         ensemble_to_data_map[ensemble] = self._api.data_for_parameter(
                             ensemble_id=ensemble.id,
-                            parameter_key=key_def.parameter_metadata.key,
+                            parameter_key=key_def.parameter.name,
                         )
                 except BaseException as e:
                     handle_exception(e)
@@ -290,10 +291,10 @@ class PlotWindow(QMainWindow):
                     handle_exception(e)
 
             std_dev_images: dict[str, npt.NDArray[np.float32]] = {}
-            if "FIELD" in key_def.metadata["data_origin"]:
-                plot_widget.showLayerWidget.emit(True)
 
-                layers = key_def.metadata["ertbox_params"]["nz"]
+            if isinstance(key_def.parameter, Field):
+                plot_widget.showLayerWidget.emit(True)
+                layers = key_def.parameter.ertbox_params.nz
                 plot_widget.updateLayerWidget.emit(layers)
 
                 if layer is None:

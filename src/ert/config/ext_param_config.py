@@ -17,7 +17,7 @@ from ropt.workflow import find_sampler_plugin
 
 from ert.substitutions import substitute_runpath_name
 
-from .parameter_config import ParameterConfig, ParameterMetadata
+from .parameter_config import ParameterConfig
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -153,10 +153,6 @@ class ExtParamConfig(ParameterConfig):
     @property
     def parameter_keys(self) -> list[str]:
         return self.input_keys
-
-    @property
-    def metadata(self) -> list[ParameterMetadata]:
-        return []
 
     type: Literal["everest_parameters"] = "everest_parameters"
     input_keys: list[str] = field(default_factory=list)

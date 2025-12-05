@@ -335,7 +335,7 @@ def test_plotter_on_all_snake_oil_responses_time(api_and_snake_oil_storage, benc
         for key_info in key_infos_params:
             for ensemble in all_ensembles:
                 api.data_for_parameter(
-                    ensemble_id=ensemble.id, parameter_key=key_info.key
+                    ensemble_id=ensemble.id, parameter_key=key_info.parameter.name
                 )
 
         for key_info in key_infos_responses:

@@ -19,7 +19,7 @@ from ert.substitutions import substitute_runpath_name
 
 from ._str_to_bool import str_to_bool
 from .field import create_flattened_cube_graph
-from .parameter_config import InvalidParameterFile, ParameterConfig, ParameterMetadata
+from .parameter_config import InvalidParameterFile, ParameterConfig
 from .parsing import ConfigValidationError, ErrorInfo
 
 if TYPE_CHECKING:
@@ -51,6 +51,7 @@ class SurfaceMismatchError(InvalidParameterFile):
 
 class SurfaceConfig(ParameterConfig):
     type: Literal["surface"] = "surface"
+    dimensionality: Literal[2] = 2
     ncol: int
     nrow: int
     xori: float
@@ -74,21 +75,6 @@ class SurfaceConfig(ParameterConfig):
     @property
     def parameter_keys(self) -> list[str]:
         return []
-
-    @property
-    def metadata(self) -> list[ParameterMetadata]:
-        return [
-            ParameterMetadata(
-                key=self.name,
-                dimensionality=2,
-                transformation=None,
-                userdata={
-                    "data_origin": "SURFACE",
-                    "nx": self.ncol,
-                    "ny": self.nrow,
-                },
-            )
-        ]
 
     @classmethod
     def from_config_list(cls, config_list: list[str | dict[str, str]]) -> Self:

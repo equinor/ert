@@ -150,6 +150,9 @@ def test_that_storage_matches(
         assert experiment.parameter_configuration["PORO"].ertbox_params.nx == 2
         assert experiment.parameter_configuration["PORO"].ertbox_params.ny == 3
         assert experiment.parameter_configuration["PORO"].ertbox_params.nz == 4
+        assert experiment.parameter_configuration["PORO"].dimensionality == 3
+        assert experiment.parameter_configuration["BPR"].dimensionality == 1
+        assert experiment.parameter_configuration["TOP"].dimensionality == 2
 
         assert experiment.templates_configuration == [("\nBPR:<BPR>\n", "params.txt")]
         df = ensemble.load_parameters("BPR")

@@ -14,7 +14,6 @@ from resfo_utilities import history_key
 from starlette.testclient import TestClient
 
 from ert.config import GenKwConfig, SummaryConfig
-from ert.config.parameter_config import ParameterMetadata
 from ert.config.response_config import ResponseMetadata
 from ert.dark_storage import common
 from ert.dark_storage.app import app
@@ -56,7 +55,7 @@ def test_key_def_structure(api):
         "key": "FOPR",
         "metadata": {"data_origin": "summary"},
         "observations": True,
-        "parameter_metadata": None,
+        "parameter": None,
         "response_metadata": ResponseMetadata(
             response_type="summary",
             response_key="FOPR",
@@ -73,7 +72,7 @@ def test_key_def_structure(api):
         "key": "BPR:1,3,8",
         "metadata": {"data_origin": "summary"},
         "observations": False,
-        "parameter_metadata": None,
+        "parameter": None,
         "response_metadata": ResponseMetadata(
             response_type="summary",
             response_key="BPR:1,3,8",
@@ -86,17 +85,23 @@ def test_key_def_structure(api):
     bpr_parameter = next(
         x for x in key_defs if x.key == "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE"
     )
+
     bpr_parameter_expected = {
         "dimensionality": 1,
         "index_type": None,
         "key": "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",
-        "metadata": {"data_origin": "GEN_KW"},
+        "metadata": {"data_origin": "gen_kw"},
         "observations": False,
-        "parameter_metadata": ParameterMetadata(
-            key="SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",
-            transformation="NORMAL",
-            dimensionality=1,
-            userdata={"data_origin": "GEN_KW"},
+        "parameter": GenKwConfig.model_validate(
+            {
+                "name": "BPR_138_PERSISTENCE",
+                "forward_init": False,
+                "update": True,
+                "dimensionality": 1,
+                "distribution": {"name": "uniform", "min": 0.2, "max": 0.7},
+                "group": "SNAKE_OIL_PARAM",
+                "input_source": "sampled",
+            }
         ),
         "response_metadata": None,
     }
@@ -143,9 +148,9 @@ def test_all_data_type_keys(api):
             "FOPR",
             "SNAKE_OIL_WPR_DIFF@199",
             "SNAKE_OIL_PARAM:BPR_138_PERSISTENCE",
+            "SNAKE_OIL_PARAM:I_AM_A_PARAM",
             "SNAKE_OIL_PARAM:OP1_DIVERGENCE_SCALE",
             "WOPPER",
-            "I_AM_A_PARAM",
         ]
     )
 
@@ -297,9 +302,7 @@ def test_plot_api_handles_empty_gen_kw(api_and_storage):
             }
         ),
     )
-    assert api.data_for_parameter(
-        str(ensemble.id), key + ":" + name
-    ).to_csv() == dedent(
+    assert api.data_for_parameter(str(ensemble.id), name).to_csv() == dedent(
         """\
         Realization,0
         1,0.1
@@ -348,7 +351,7 @@ def test_plot_api_handles_colons_in_parameter_keys(api_and_storage):
             }
         ),
     )
-    test = api.data_for_parameter(str(ensemble.id), "group:subgroup:1:2:2")
+    test = api.data_for_parameter(str(ensemble.id), "subgroup:1:2:2")
     assert test.to_numpy() == np.array([[10]])
 
 
