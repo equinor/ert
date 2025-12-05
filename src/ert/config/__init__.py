@@ -31,7 +31,7 @@ from .gen_kw_config import DataSource, GenKwConfig, PriorDict
 from .known_response_types import KnownResponseTypes
 from .lint_file import lint_file
 from .model_config import ModelConfig
-from .parameter_config import ParameterCardinality, ParameterConfig, ParameterMetadata
+from .parameter_config import ParameterCardinality, ParameterConfig
 from .parsing import (
     ConfigValidationError,
     ConfigWarning,
@@ -119,7 +119,6 @@ __all__ = [
     "OutlierSettings",
     "ParameterCardinality",
     "ParameterConfig",
-    "ParameterMetadata",
     "PostExperimentFixtures",
     "PostSimulationFixtures",
     "PostUpdateFixtures",

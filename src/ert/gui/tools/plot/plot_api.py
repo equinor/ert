@@ -18,8 +18,9 @@ from pandas.api.types import is_numeric_dtype
 from pandas.errors import ParserError
 from resfo_utilities import history_key
 
-from ert.config import ParameterMetadata, ResponseMetadata
+from ert.config import ParameterConfig, ResponseMetadata
 from ert.services import ErtServer
+from ert.storage.local_experiment import _parameters_adapter as parameter_config_adapter
 from ert.storage.realization_storage_state import RealizationStorageState
 
 logger = logging.getLogger(__name__)
@@ -44,7 +45,7 @@ class PlotApiKeyDefinition(NamedTuple):
     dimensionality: int
     metadata: dict[Any, Any]
     filter_on: dict[Any, Any] | None = None
-    parameter_metadata: ParameterMetadata | None = None
+    parameter: ParameterConfig | None = None
     response_metadata: ResponseMetadata | None = None
 
 
@@ -145,14 +146,18 @@ class PlotApi:
             for experiment in response.json():
                 for param_metadatas in experiment["parameters"].values():
                     for metadata in param_metadatas:
-                        param_key = metadata["key"]
+                        param_cfg = parameter_config_adapter.validate_python(metadata)
+                        if group := metadata.get("group"):
+                            param_key = f"{group}:{metadata['name']}"
+                        else:
+                            param_key = metadata["name"]
                         all_keys[param_key] = PlotApiKeyDefinition(
                             key=param_key,
                             index_type=None,
                             observations=False,
                             dimensionality=metadata["dimensionality"],
-                            metadata=metadata["userdata"],
-                            parameter_metadata=ParameterMetadata(**metadata),
+                            metadata={"data_origin": metadata["type"]},
+                            parameter=param_cfg,
                         )
                         all_params[param_key] = all_keys[param_key]
 

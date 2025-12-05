@@ -113,27 +113,11 @@ def get_parameter_std_dev(
     return Response(content=buffer.getvalue(), media_type="application/octet-stream")
 
 
-def _extract_parameter_group_and_key(key: str) -> tuple[str, str] | tuple[None, None]:
-    key = key.removeprefix("LOG10_")
-    if ":" not in key:
-        # Assume all incoming keys are in format group:key for now
-        return None, None
-
-    param_group, param_key = key.split(":", maxsplit=1)
-    return param_group, param_key
-
-
 def data_for_parameter(ensemble: Ensemble, key: str) -> pd.DataFrame:
-    group, _ = _extract_parameter_group_and_key(key)
-    if group is None:
-        logger.warning(
-            f"Parameter with key '{key}' does not have a group, "
-            "fetching data for all parameters"
-        )
     try:
-        df = ensemble.load_scalars(group)
+        df = ensemble.load_scalar_keys([key], transformed=True)
         if df.is_empty():
-            logger.warning(f"No data found for parameter '{group}:{key}'")
+            logger.warning(f"No data found for parameter '{key}'")
             return pd.DataFrame()
     except KeyError as e:
         logger.error(e)

@@ -5,7 +5,7 @@ from collections.abc import Callable, Iterator
 from enum import StrEnum, auto
 from hashlib import sha256
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING
 
 import networkx as nx
 import numpy as np
@@ -39,13 +39,6 @@ class ParameterCardinality(StrEnum):
     one_config_per_realization_dataset = auto()
 
 
-class ParameterMetadata(BaseModel):
-    key: str
-    transformation: str | None
-    dimensionality: Literal[1, 2, 3] = 1
-    userdata: dict[str, Any]
-
-
 class ParameterConfig(BaseModel):
     type: str
     name: str
@@ -57,14 +50,6 @@ class ParameterConfig(BaseModel):
     def parameter_keys(self) -> list[str]:
         """
         Returns a list of parameter keys within this parameter group
-        """
-
-    @property
-    @abstractmethod
-    def metadata(self) -> list[ParameterMetadata]:
-        """
-        Returns metadata describing this parameter
-
         """
 
     @abstractmethod

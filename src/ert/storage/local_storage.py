@@ -504,6 +504,7 @@ class LocalStorage(BaseMode):
             to16,
             to17,
             to18,
+            to19,
         )
 
         try:
@@ -551,6 +552,7 @@ class LocalStorage(BaseMode):
                     15: to16,
                     16: to17,
                     17: to18,
+                    18: to19,
                 }
                 for from_version in range(version, _LOCAL_STORAGE_VERSION):
                     migrations[from_version].migrate(self.path)

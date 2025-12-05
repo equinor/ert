@@ -4,6 +4,7 @@
     "name": "BPR",
     "forward_init": false,
     "update": true,
+    "dimensionality": 1,
     "distribution": {
       "name": "normal",
       "mean": 0.0,
@@ -17,6 +18,7 @@
     "name": "PORO",
     "forward_init": false,
     "update": true,
+    "dimensionality": 3,
     "ertbox_params": {
       "nx": 2,
       "ny": 3,
@@ -42,6 +44,7 @@
     "name": "TOP",
     "forward_init": false,
     "update": true,
+    "dimensionality": 2,
     "ncol": 2,
     "nrow": 3,
     "xori": 0.0,

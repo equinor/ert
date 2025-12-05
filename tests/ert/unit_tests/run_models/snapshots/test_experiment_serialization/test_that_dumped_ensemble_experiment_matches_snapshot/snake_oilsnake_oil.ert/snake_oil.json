@@ -150,6 +150,7 @@
       "name": "OP1_PERSISTENCE",
       "forward_init": false,
       "update": true,
+      "dimensionality": 1,
       "distribution": {
         "name": "uniform",
         "min": 0.01,
@@ -163,6 +164,7 @@
       "name": "OP1_OCTAVES",
       "forward_init": false,
       "update": true,
+      "dimensionality": 1,
       "distribution": {
         "name": "uniform",
         "min": 3.0,
@@ -176,6 +178,7 @@
       "name": "OP1_DIVERGENCE_SCALE",
       "forward_init": false,
       "update": true,
+      "dimensionality": 1,
       "distribution": {
         "name": "uniform",
         "min": 0.25,
@@ -189,6 +192,7 @@
       "name": "OP1_OFFSET",
       "forward_init": false,
       "update": true,
+      "dimensionality": 1,
       "distribution": {
         "name": "uniform",
         "min": -0.1,
@@ -202,6 +206,7 @@
       "name": "OP2_PERSISTENCE",
       "forward_init": false,
       "update": true,
+      "dimensionality": 1,
       "distribution": {
         "name": "uniform",
         "min": 0.1,
@@ -215,6 +220,7 @@
       "name": "OP2_OCTAVES",
       "forward_init": false,
       "update": true,
+      "dimensionality": 1,
       "distribution": {
         "name": "uniform",
         "min": 5.0,
@@ -228,6 +234,7 @@
       "name": "OP2_DIVERGENCE_SCALE",
       "forward_init": false,
       "update": true,
+      "dimensionality": 1,
       "distribution": {
         "name": "uniform",
         "min": 0.5,
@@ -241,6 +248,7 @@
       "name": "OP2_OFFSET",
       "forward_init": false,
       "update": true,
+      "dimensionality": 1,
       "distribution": {
         "name": "uniform",
         "min": -0.2,
@@ -254,6 +262,7 @@
       "name": "BPR_555_PERSISTENCE",
       "forward_init": false,
       "update": true,
+      "dimensionality": 1,
       "distribution": {
         "name": "uniform",
         "min": 0.1,
@@ -267,6 +276,7 @@
       "name": "BPR_138_PERSISTENCE",
       "forward_init": false,
       "update": true,
+      "dimensionality": 1,
       "distribution": {
         "name": "uniform",
         "min": 0.2,

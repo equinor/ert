@@ -570,6 +570,9 @@ class LocalEnsemble(BaseMode):
     ) -> pl.DataFrame:
         if keys is None:
             keys = self.experiment.parameter_keys
+        elif set(keys) - set(self.experiment.parameter_keys):
+            missing = set(keys) - set(self.experiment.parameter_keys)
+            raise KeyError(f"Parameters not registered to the experiment: {missing}")
 
         df_lazy = self._load_parameters_lazy(SCALAR_FILENAME)
         df_lazy = df_lazy.select(["realization", *keys])

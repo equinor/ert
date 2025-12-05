@@ -188,26 +188,50 @@ def test_get_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
     assert experiment_json["parameters"] == {
         "a": [
             {
-                "key": "COEFFS:a",
-                "transformation": "UNIFORM",
                 "dimensionality": 1,
-                "userdata": {"data_origin": "GEN_KW"},
+                "distribution": {
+                    "max": 1.0,
+                    "min": 0.0,
+                    "name": "uniform",
+                },
+                "forward_init": False,
+                "group": "COEFFS",
+                "input_source": "sampled",
+                "name": "a",
+                "type": "gen_kw",
+                "update": True,
             }
         ],
         "b": [
             {
-                "key": "COEFFS:b",
-                "transformation": "UNIFORM",
                 "dimensionality": 1,
-                "userdata": {"data_origin": "GEN_KW"},
+                "distribution": {
+                    "max": 2.0,
+                    "min": 0.0,
+                    "name": "uniform",
+                },
+                "forward_init": False,
+                "group": "COEFFS",
+                "input_source": "sampled",
+                "name": "b",
+                "type": "gen_kw",
+                "update": True,
             }
         ],
         "c": [
             {
-                "key": "COEFFS:c",
-                "transformation": "UNIFORM",
                 "dimensionality": 1,
-                "userdata": {"data_origin": "GEN_KW"},
+                "distribution": {
+                    "max": 5.0,
+                    "min": 0.0,
+                    "name": "uniform",
+                },
+                "forward_init": False,
+                "group": "COEFFS",
+                "input_source": "sampled",
+                "name": "c",
+                "type": "gen_kw",
+                "update": True,
             }
         ],
     }
@@ -281,9 +305,9 @@ def test_misfit_endpoint(poly_example_tmp_dir, dark_storage_client):
 @pytest.mark.parametrize(
     "coeffs",
     [
-        "COEFFS:a",
-        "COEFFS:b",
-        "COEFFS:c",
+        "a",
+        "b",
+        "c",
     ],
 )
 def test_get_coeffs_records(poly_example_tmp_dir, dark_storage_client, coeffs):
