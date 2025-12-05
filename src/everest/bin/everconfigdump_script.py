@@ -2,8 +2,11 @@
 
 import argparse
 import sys
+from enum import StrEnum
 
 from ruamel.yaml import YAML
+from ruamel.yaml.nodes import ScalarNode
+from ruamel.yaml.representer import Representer
 
 from everest.config import EverestConfig
 
@@ -32,6 +35,11 @@ def config_dump_entry(args: list[str] | None = None) -> None:
     yaml = YAML(typ="safe", pure=True)
     yaml.indent = 2
     yaml.default_flow_style = False
+
+    def strenum_representer(dumper: Representer, data: StrEnum) -> ScalarNode:
+        return dumper.represent_str(data.value)
+
+    yaml.representer.add_multi_representer(StrEnum, strenum_representer)
     yaml.dump(config.to_dict(), sys.stdout)
 
 
