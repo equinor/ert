@@ -59,14 +59,6 @@ class ParameterConfig(BaseModel):
         Returns a list of parameter keys within this parameter group
         """
 
-    @property
-    @abstractmethod
-    def metadata(self) -> list[ParameterMetadata]:
-        """
-        Returns metadata describing this parameter
-
-        """
-
     @abstractmethod
     def __len__(self) -> int:
         """Number of parameters"""

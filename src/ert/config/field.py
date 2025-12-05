@@ -26,7 +26,7 @@ from ert.substitutions import substitute_runpath_name
 from ert.utils import log_duration
 
 from ._str_to_bool import str_to_bool
-from .parameter_config import ParameterConfig, ParameterMetadata
+from .parameter_config import ParameterConfig
 from .parsing import ConfigValidationError, ConfigWarning
 
 if TYPE_CHECKING:
@@ -84,17 +84,6 @@ class Field(ParameterConfig):
     @property
     def parameter_keys(self) -> list[str]:
         return []
-
-    @property
-    def metadata(self) -> list[ParameterMetadata]:
-        return [
-            ParameterMetadata(
-                key=self.name,
-                transformation=self.output_transformation,
-                dimensionality=3,
-                userdata={"data_origin": "FIELD", "ertbox_params": self.ertbox_params},
-            )
-        ]
 
     @classmethod
     def from_config_list(
