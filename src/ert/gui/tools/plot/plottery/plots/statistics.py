@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 class StatisticsPlot:
     def __init__(self) -> None:
         self.dimensionality = 2
+        self.requires_observations = False
 
     @staticmethod
     def plot(
@@ -44,7 +45,10 @@ class StatisticsPlot:
             plot_context.ensembles_color_indexes(),
             strict=False,
         ):
+            if ensemble.name.endswith(".misfits"):
+                continue
             config.setCurrentColor(color_index)
+
             data = data.T
             if not data.empty:
                 if data.index.inferred_type != "datetime64":

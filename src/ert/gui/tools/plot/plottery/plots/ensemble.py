@@ -22,6 +22,7 @@ if TYPE_CHECKING:
 class EnsemblePlot:
     def __init__(self) -> None:
         self.dimensionality = 2
+        self.requires_observations = False
 
     def plot(
         self,
@@ -43,6 +44,8 @@ class EnsemblePlot:
             plot_context.ensembles_color_indexes(),
             strict=False,
         ):
+            if ensemble.name.endswith(".misfits"):
+                continue
             data = data.T
 
             if not data.empty:
