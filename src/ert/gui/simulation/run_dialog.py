@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 from pathlib import Path
 from queue import SimpleQueue
-from typing import cast
+from typing import assert_never, cast
 
 import humanize
 from PyQt6.QtCore import QModelIndex, QSize, Qt, QThread, QTimer
@@ -31,7 +31,7 @@ from PyQt6.QtWidgets import (
 )
 from typing_extensions import override
 
-from ert.config import ErrorInfo, WarningInfo
+from ert.config import ErrorInfo, QueueSystem, WarningInfo
 from ert.ensemble_evaluator import (
     EndEvent,
     FullSnapshotEvent,
@@ -661,6 +661,20 @@ class RunDialog(QFrame):
             self._is_rerunning_failed_realizations = True
             self.rerun_failed_realizations_experiment.emit()
             self.set_show_warning_button_to_initial_state()
+
+    def set_queue_system_name(self, queue_system: QueueSystem) -> None:
+        match queue_system:
+            case QueueSystem.LSF:
+                formatted_queue_system = "LSF"
+            case QueueSystem.LOCAL:
+                formatted_queue_system = "Local"
+            case QueueSystem.TORQUE:
+                formatted_queue_system = "Torque/OpenPBS"
+            case QueueSystem.SLURM:
+                formatted_queue_system = "Slurm"
+            case default:
+                assert_never(default)
+        self.queue_system.setText(f"Queue system:\n{formatted_queue_system}")
 
     @override
     def hideEvent(self, event: QHideEvent | None) -> None:
