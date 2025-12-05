@@ -34,6 +34,7 @@ if TYPE_CHECKING:
 
 
 DEFAULT_TIME_DELTA = timedelta(seconds=30)
+DEFAULT_LOCATION_RANGE_M = 3000
 
 
 def create_observation_dataframes(
@@ -286,6 +287,40 @@ def _get_restart(
         ) from err
 
 
+def _has_localization(summary_dict: SummaryObservation) -> bool:
+    return any(
+        [
+            summary_dict.location_x is not None,
+            summary_dict.location_y is not None,
+            summary_dict.location_range is not None,
+        ]
+    )
+
+
+def _validate_localization_values(summary_dict: SummaryObservation) -> None:
+    """The user must provide LOCATION_X and LOCATION_Y to use localization, while
+    unprovided LOCATION_RANGE should default to some value.
+    """
+
+    loc_values = {
+        "LOCATION_X": summary_dict.location_x,
+        "LOCATION_Y": summary_dict.location_y,
+        "LOCATION_RANGE": summary_dict.location_range,
+    }
+    loc_values = {k: v for k, v in loc_values.items() if v is not None}
+
+    if any(coordinate not in loc_values for coordinate in ["LOCATION_X", "LOCATION_Y"]):
+        provided_loc_values_string = ", ".join(key.upper() for key in loc_values)
+        raise ObservationConfigError.with_context(
+            f"Localization for observation {summary_dict.name} is misconfigured.\n"
+            f"Only {provided_loc_values_string} were provided. To enable "
+            f"localization for an observation, ensure that both LOCATION_X and "
+            f"LOCATION_Y are defined - or remove LOCATION keywords to disable "
+            f"localization.",
+            summary_dict,
+        )
+
+
 def _handle_summary_observation(
     summary_dict: SummaryObservation,
     obs_key: str,
@@ -323,15 +358,23 @@ def _handle_summary_observation(
             "Observation uncertainty must be strictly > 0", summary_key
         ) from None
 
-    return pl.DataFrame(
-        {
-            "response_key": [summary_key],
-            "observation_key": [obs_key],
-            "time": pl.Series([date]).dt.cast_time_unit("ms"),
-            "observations": pl.Series([value], dtype=pl.Float32),
-            "std": pl.Series([std_dev], dtype=pl.Float32),
-        }
-    )
+    data_dict = {
+        "response_key": [summary_key],
+        "observation_key": [obs_key],
+        "time": pl.Series([date]).dt.cast_time_unit("ms"),
+        "observations": pl.Series([value], dtype=pl.Float32),
+        "std": pl.Series([std_dev], dtype=pl.Float32),
+    }
+
+    if _has_localization(summary_dict):
+        _validate_localization_values(summary_dict)
+        data_dict["location_x"] = summary_dict.location_x
+        data_dict["location_y"] = summary_dict.location_y
+        data_dict["location_range"] = (
+            summary_dict.location_range or DEFAULT_LOCATION_RANGE_M
+        )
+
+    return pl.DataFrame(data_dict)
 
 
 def _handle_general_observation(
