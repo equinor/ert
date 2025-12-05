@@ -2,6 +2,7 @@ import logging
 import os
 from argparse import ArgumentParser
 from copy import copy
+from enum import StrEnum
 from itertools import chain
 from pathlib import Path
 from sys import float_info
@@ -28,6 +29,8 @@ from pydantic.json_schema import SkipJsonSchema
 from pydantic_core import ErrorDetails
 from pydantic_core.core_schema import ValidationInfo
 from ruamel.yaml import YAML, YAMLError
+from ruamel.yaml.nodes import ScalarNode
+from ruamel.yaml.representer import Representer
 
 from ert.base_model_context import BaseModelWithContextSupport, use_runtime_plugins
 from ert.config import (
@@ -1098,6 +1101,12 @@ to read summary data from forward model, do:
         yaml = YAML(typ="safe", pure=True) if safe_and_pure else YAML()
         yaml.indent(mapping=2, sequence=4, offset=2)
         yaml.preserve_quotes = True
+
+        def strenum_representer(dumper: Representer, data: StrEnum) -> ScalarNode:
+            return dumper.represent_str(data.value)
+
+        yaml.representer.add_multi_representer(StrEnum, strenum_representer)
+
         yaml.default_flow_style = False
         yaml.dump(config, output_file)
 

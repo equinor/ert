@@ -51,7 +51,6 @@ class QueueOptions(
     BaseModelWithContextSupport,
     validate_assignment=True,
     extra="forbid",
-    use_enum_values=True,
     validate_default=True,
 ):
     name: QueueSystem
