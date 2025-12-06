@@ -32,6 +32,7 @@ dependencies = [
     "fastapi",
     "fastexcel>=0.14.0", # extra dependency for polars (excel)
     "filelock",
+    "gaussianfft==1.1.2",
     "graphite-maps",
     "httpx",
     "httpx-retries",
@@ -92,6 +93,7 @@ Repository = "https://github.com/equinor/ert"
 [project.optional-dependencies]
 dev = [
     "furo",
+    "gaussianfft==1.1.2",
     "hypothesis!=6.102.0,!=6.112.3,>=6.85",
     "jsonpath_ng",
     "jupyter",

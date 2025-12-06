@@ -2,24 +2,20 @@ from __future__ import annotations
 
 import functools
 import logging
+import os
 import re
 import time
 import warnings
 from collections.abc import Callable, Iterable, Sequence
-from typing import (
-    TYPE_CHECKING,
-    Generic,
-    Self,
-    TextIO,
-    TypeVar,
-)
+from functools import wraps
+from typing import TYPE_CHECKING, Any, Generic, Self, TextIO, TypeVar
 
 import iterative_ensemble_smoother as ies
 import numpy as np
 import polars as pl
 import psutil
 import scipy
-from iterative_ensemble_smoother.experimental import AdaptiveESMDA
+from iterative_ensemble_smoother.experimental import AdaptiveESMDA, DistanceESMDA
 
 from ert.config import (
     ESSettings,
@@ -175,6 +171,101 @@ def _calculate_adaptive_batch_size(num_params: int, num_obs: int) -> int:
         ),
         num_params,
     )
+
+
+def calc_max_number_of_layers_per_batch_for_distance_localization(
+    nx: int,
+    ny: int,
+    nz: int,
+    num_obs: int,
+    nreal: int,
+    bytes_per_float: int = 8,  # float64 as default here
+) -> int:
+    """Calculate number of layers from a 3D field parameter that can be updated
+    within available memory. Distance-based localization requires two large matrices
+    the Kalman gain matrix K and the localization scaling matrix RHO, both have size
+    equal to number of field parameter values times number of observations.
+    Therefore, a batching algorithm is used where only a subset of parameters
+    is used when calculating the Schur product of RHO and K matrix in the update
+    algorithm. This function calculates number of batches and
+    number of grid layers of field parameter values that can fit
+    into the available memory for one batch accounting for a safety margin.
+
+    The available memory is checked using the `psutil` library, which provides
+    information about system memory usage.
+    From `psutil` documentation:
+    - available:
+        the memory that can be given instantly to processes without the
+        system going into swap.
+        This is calculated by summing different memory values depending
+        on the platform and it is supposed to be used to monitor actual
+        memory usage in a cross platform fashion.
+
+    Args:
+        nx: grid size in I-direction (local x-axis direction)
+        ny: grid size in J-direction (local y-axis direction)
+        nz: grid size in K-direction (number of layers)
+        num_obs: Number of observations
+        nreal: Number of realizations
+        bytes_per_float: Is 4 or 8
+
+    Returns:
+        Max number of layers that can be updated in one batch to
+        avoid memory problems.
+
+    """
+
+    memory_safety_factor = 0.8
+    num_params = nx * ny * nz
+    num_param_per_layer = nx * ny
+
+    # Rough estimate of necessary number of float variables
+    sum_floats = 0
+    sum_floats += num_params * num_obs  # K matrix before Schur product
+    sum_floats += num_params * num_obs  # RHO matrix
+    sum_floats += num_params * num_obs  # K matrix after Schur product
+    sum_floats += int(num_params * nreal * 2.5)  # X_prior, X_prior_batch, M_delta
+    sum_floats += int(num_params * nreal * 1.5)  # X_post and X_post_batch
+    sum_floats += num_obs * nreal * 2  # D matrix and internal matrices
+    sum_floats += num_obs * nreal * 2  # Y matrix and internal matrices
+
+    # Check available memory
+    available_memory_in_bytes = psutil.virtual_memory().available * memory_safety_factor
+
+    # Required memory
+    total_required_memory_per_field_param = sum_floats * bytes_per_float
+
+    # Minimum number of batches
+    min_number_of_batches = int(
+        np.ceil(total_required_memory_per_field_param / available_memory_in_bytes)
+    )
+
+    max_nlayer_per_batch = int(nz / min_number_of_batches)
+
+    if max_nlayer_per_batch == 0:
+        # Batch size cannot be less than 1 layer
+        memory_one_batch = num_param_per_layer * bytes_per_float
+        raise MemoryError(
+            "The required memory to update one grid layer or one 2D surface is "
+            "larger than available memory.\n"
+            "Cannot split the update into batch size less than one complete "
+            "grid layer for 3D field or one surface for 2D fields."
+            f"Required memory for one batch is about: {memory_one_batch / 10**9} GB\n"
+            f"Available memory is about: {available_memory_in_bytes / 10**9} GB"
+        )
+
+    log_msg = (
+        "Calculate batch size for updating of field parameter:\n"
+        f" Number of parameters in field param: {num_params}\n"
+        f" Required number of floats to update one field parameter: {sum_floats}\n"
+        " Available memory per field param update: "
+        f"{available_memory_in_bytes / 10**9} GB\n"
+        " Required memory total to update a field parameter: "
+        f"{total_required_memory_per_field_param / 10**9} GB\n"
+        f" Number of layers in one batch: {max_nlayer_per_batch}"
+    )
+    logger.info(log_msg)
+    return max_nlayer_per_batch
 
 
 def analysis_ES(
@@ -502,3 +593,205 @@ def smoother_update(
         )
     )
     return smoother_snapshot
+
+
+def memory_usage_decorator(
+    enabled: bool = True,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        @wraps(func)
+        def wrapper(*args, **kwargs) -> Any:  # type: ignore
+            if enabled:
+                # Get process ID of the current Python process
+                process = psutil.Process(os.getpid())
+
+                # Memory usage before the function call
+                mem_before = process.memory_info().rss / 1024 / 1024  # Convert to MB
+                print(f"Memory before calling '{func.__name__}': {mem_before:.2f} MB")
+                start_time = time.perf_counter()
+            # Call the target function
+            result = func(*args, **kwargs)
+
+            if enabled:
+                end_time = time.perf_counter()
+                # Memory usage after the function call
+                mem_after = process.memory_info().rss / 1024 / 1024  # Convert to MB
+                print(f"Memory after calling '{func.__name__}': {mem_after:.2f} MB")
+                print(f"Run time used: {(end_time - start_time):.4f} seconds")
+            return result
+
+        return wrapper
+
+    return decorator
+
+
+@memory_usage_decorator(enabled=False)
+def update_3D_field_with_distance_esmda(
+    distance_based_esmda_smoother: DistanceESMDA,
+    field_param_name: str,
+    X_prior: npt.NDArray[np.float64],
+    Y: npt.NDArray[np.float64],
+    rho_2D: npt.NDArray[np.float64],
+    nx: int,
+    ny: int,
+    nz: int,
+    reshape_to_3D_per_realization: bool = False,
+    min_nbatch: int = 1,
+) -> npt.NDArray[np.float64]:
+    """
+    Calculate posterior update with distance-based ESMDA for one 3D parameter
+    The RHO for one layer of the 3D field parameter is input.
+    This is copied to all other layers of RHO in each batch of grid parameter
+    layers since only lateral distance is used when calculating distances.
+    Result is posterior parameter matrices of field parameters for one field.
+
+    Args:
+        distance_based_esmda_smooter: Object of DistanceESMDA class initialized for use
+        field_param_name: Name of 3D parameter
+        X_prior: Matrix with prior realizations of all field parameters,
+                 shape=(nparameters, nrealizations)
+        Y: Matrix with response values for each observations for each realization,
+                 shape=(nobservations, nrealizations)
+        rho_2D: RHO matrix elements for one 3D grid layer with size (nx, ny),
+                 shape=(nx,ny,nobservations)
+        nx, ny, nz: Dimensions of the 3D grid filled with a 3D field parameter.
+        reshape_to_3D_per_realization: Is set to True if output field is reshaped to 3D
+                  per realization.
+        min_nbatch: Minimum number of batches the field parameter is split into.
+                  Default is 1. Usually number of batches will be calculated based
+                  on available memory and the size of the field parameters,
+                  number of observations and realizations. The actual number of
+                  batches will be max(min_nbatch, min_number_of_batches_required).
+
+    Results:
+        X_post: Posterior ensemble of field parameters,
+          shape=(nx*ny*nz, nrealizations) if not reshaped and
+          shape=(nx,ny,nz,nrealizaions) if reshaped to 3D per realization
+    """
+    nparam_per_layer = nx * ny
+    nparam = nparam_per_layer * nz
+    nreal = X_prior.shape[1]
+    assert X_prior.shape[0] == nparam, (
+        f"Mismatch between X_prior dimension {X_prior.shape[0]} and nparam {nparam}"
+    )
+
+    X_prior_3D = X_prior.reshape(nx, ny, nz, nreal)
+    # No update if no observations or responses
+    if Y is None or Y.shape[0] == 0:
+        # No update of the field parameters
+        # Check if it necessary to make a copy or can we only return X_prior?
+        if reshape_to_3D_per_realization:
+            return X_prior_3D.copy()
+        return X_prior.copy()
+
+    nobs = Y.shape[0]
+    assert Y.shape[1] == nreal, (
+        f"Mismatch between X_prior dimension {Y.shape[1]} and nreal {nreal}"
+    )
+
+    log_msg = f"Calculate Distance-based ESMDA update for {field_param_name} "
+    log_msg += f"with {nparam} parameters"
+    logger.info(log_msg)
+
+    # Check memory constraints and calculate how many grid layers of
+    # field parameters is possible to update on one batch
+    max_nlayers_per_batch = (
+        calc_max_number_of_layers_per_batch_for_distance_localization(
+            nx, ny, nz, nobs, nreal, bytes_per_float=8
+        )
+    )  # Use float64
+    nlayer_per_batch = min(max_nlayers_per_batch, nz)
+    nbatch = int(nz / nlayer_per_batch)
+
+    log_msg = "Minimum number of batches required due to "
+    log_msg += f"limited memory constraints: {nbatch}"
+    logger.info(log_msg)
+
+    # Number of batches is defined by available memory and wanted number of batches
+    # Usually one should have as few batches as possible but sufficient to
+    # be able to update a batch with the memory available.
+    # It is possible to explicit require more batches than the minimum
+    # number required by the memory constraint. Main use case for this
+    # is probably only for unit testing to avoid having unit tests running
+    # slow due to very big size of the field, the number of observations and
+    # and number of realizations.
+    nbatch = max(min_nbatch, nbatch)
+    nlayer_per_batch = int(nz / nbatch)
+    nparam_in_batch = (
+        nparam_per_layer * nlayer_per_batch
+    )  # For full sized batch of layers
+
+    nlayer_last_batch = nz - nbatch * nlayer_per_batch
+    if nlayer_last_batch > 0:
+        log_msg = f"Number of batches to update {field_param_name} is {nbatch + 1}"
+        logger.info(log_msg)
+    else:
+        log_msg = f"Number of batches to update {field_param_name} is {nbatch}"
+        logger.info(log_msg)
+
+    X_prior_3D = X_prior.reshape(nx, ny, nz, nreal)
+
+    # Initialize the X_post_3D
+    X_post_3D = X_prior_3D.copy()
+    for batch_number in range(nbatch):
+        start_layer_number = batch_number * nlayer_per_batch
+        end_layer_number = start_layer_number + nlayer_per_batch
+        log_msg = (
+            f"Batch number: {batch_number}\n"
+            f"start layer : {start_layer_number}\n"
+            f"end layer   : {end_layer_number - 1}"
+        )
+        logger.info(log_msg)
+
+        X_batch = X_prior_3D[:, :, start_layer_number:end_layer_number, :].reshape(
+            (nparam_in_batch, nreal)
+        )
+
+        # Copy rho calculated from one layer of 3D parameter into all layers for
+        # current batch of layers.
+        # Size of rho batch: (nx,ny,nlayer_per_batch,nobs)
+        rho_3D_batch = np.zeros((nx, ny, nlayer_per_batch, nobs), dtype=np.float64)
+        rho_3D_batch[:, :, :, :] = rho_2D[:, :, np.newaxis, :]
+        rho_batch = rho_3D_batch.reshape((nparam_in_batch, nobs))
+
+        log_msg = f"Assimilate batch number {batch_number}"
+        logger.info(log_msg)
+        X_post_batch = distance_based_esmda_smoother.assimilate_batch(
+            X_batch=X_batch, Y=Y, rho_batch=rho_batch
+        )
+        X_post_3D[:, :, start_layer_number:end_layer_number, :] = X_post_batch.reshape(
+            nx, ny, nlayer_per_batch, nreal
+        )
+
+    if nlayer_last_batch > 0:
+        batch_number = nbatch
+        start_layer_number = batch_number * nlayer_per_batch
+        end_layer_number = start_layer_number + nlayer_last_batch
+        nparam_in_last_batch = nparam_per_layer * nlayer_last_batch
+        log_msg = f"Batch number: {batch_number}\n"
+        log_msg += f"start layer : {start_layer_number}\n"
+        log_msg += f"end layer   : {end_layer_number - 1}"
+        logger.info(log_msg)
+
+        X_batch = X_prior_3D[:, :, start_layer_number:end_layer_number, :].reshape(
+            (nparam_in_last_batch, nreal)
+        )
+
+        rho_3D_batch = np.zeros((nx, ny, nlayer_last_batch, nobs), dtype=np.float64)
+        # Copy rho calculated from one layer of 3D parameter into all layers for
+        # current batch of layers
+        rho_3D_batch[:, :, :, :] = rho_2D[:, :, np.newaxis, :]
+        rho_batch = rho_3D_batch.reshape((nparam_in_last_batch, nobs))
+
+        log_msg = f"Assimilate batch number {batch_number}"
+        logger.info(log_msg)
+        X_post_batch = distance_based_esmda_smoother.assimilate_batch(
+            X_batch=X_batch, Y=Y, rho_batch=rho_batch
+        )
+        X_post_3D[:, :, start_layer_number:end_layer_number, :] = X_post_batch.reshape(
+            nx, ny, nlayer_last_batch, nreal
+        )
+    if reshape_to_3D_per_realization:
+        return X_post_3D
+    else:
+        return X_post_3D.reshape(nparam, nreal)

@@ -357,3 +357,108 @@ class ErtAnalysisError(Exception):
 
 def noop_progress_callback(_: AnalysisEvent) -> None:
     pass
+
+
+def define_active_matrix_for_initial_ensemble(
+    X_matrix: npt.NDArray[np.float64],
+    X_active: npt.NDArray[np.bool] | None = None,
+    min_real: int = 10,
+) -> tuple[npt.NDArray[np.bool], npt.NDArray[np.bool], int]:
+    """Create the X_active matrix or update it if it already exists.
+    Uses two criteria to deactivate field parameters (mark them as not updatable)
+    Criteria 1: If ensemble standard devation is 0 (all realizations are equal),
+    the field parameter can not be updated and must be deactivated.
+    Criteria 2: If a field parameter has both active and inactive realizations
+    set the field parameter inactive if number of realizations is below a minimum.
+
+    Args:
+        X_matrix -  Ensemble of field parameters. Shape = (nparam, nreal)
+        X_active -  Same size as X_matrix and contains True for field parameters
+                    and realizations where the field parameter is active
+                    and False if not active.
+        min_real -  Minimum number of active realizations for the field parameter to
+                    be defined as updatable.
+    Returns:
+        X_active matrix - created if input X_active is None
+                    or updated if X_active input exists.
+        updatable_field_params - Bool array with True for active field parameter
+                    and False for inactive.
+        number_of updatable_field_params  - Number of active parameters
+
+    """
+    assert X_matrix is not None
+    nparam = X_matrix.shape[0]
+    nreal = X_matrix.shape[1]
+
+    if X_active is None:
+        # Initialized to active for all field parameters for all realizations
+        X_active = np.full((nparam, nreal), True, dtype=np.bool)
+
+    print(f"{X_active.shape=}")
+    # Check critera 1: Has some field parameters 0 ensemble std?
+    X_std = X_matrix.std(axis=1)
+    non_updatable = X_std == 0
+
+    if np.sum(non_updatable) > 0:
+        # Some field parameters have 0 variance
+        X_active[non_updatable, :] = False
+
+    # Check criteria 2: Has sufficient number of realizations?
+    params_with_too_few_realizations = X_active.sum(axis=1) < min_real
+    X_active[params_with_too_few_realizations, :] = False
+    updatable_field_params = np.sum(X_active, axis=1) >= min_real
+    number_of_updatable_params = np.sum(updatable_field_params)
+    return X_active, updatable_field_params, number_of_updatable_params
+
+
+def adjust_inactive_field_values_to_match_average_of_active_field_values(
+    X_matrix: npt.NDArray[np.float64],
+    X_active: npt.NDArray[np.bool],
+) -> npt.NDArray[np.float64]:
+    """This function will modify the ensemble of field parameters in X_matrix
+    and return a modified version. The purpose is to ensure that field parameter
+    realizations that are inactive don't contribute to the ensemble average
+    which is taken over all field parameter realizations (both active and inactive)
+    in the DistanceESMDA assimilate algorithm. This is done by calculating
+    the ensemble average over the active realizations and
+    assign the average value to the field parameter realizations defined as inactive.
+
+
+    The steps in the algorithm is then:
+    - Calculate average over the ensemble of the active (used) field parameter
+      values for each individual field parameter.
+    - For each field parameter having some active realizations, assign the
+      ensemble average to the realizations that are defined as inactive.
+    - For field parameters that are inactive for all realizations, do nothing.
+
+
+    Args:
+        X_matrix - Input ensemble of field parameters, shape = (nparam, nreal)
+        X_active - Input matrix defining which field parameter is active
+                   or inactive for each realization, shape = (nparam, nreal)
+    Returns:
+        Modified X_matrix
+
+    """
+    assert X_matrix is not None
+    assert X_active is not None
+
+    inactive = ~X_active
+    # Safely compute the ensemble mean (row-wise mean) for active entries only
+    active_real_per_field_param = np.sum(X_active, axis=1, keepdims=True)
+
+    # Avoid division by zero by setting mean to 0
+    # if there are no active realizations for a field parameter
+    active_real_per_field_param[active_real_per_field_param == 0] = 1
+    X_mean = np.zeros(X_matrix.shape, dtype=np.float64)
+    X_mean[:, :] = (
+        np.sum(X_matrix * X_active, axis=1, keepdims=True) / active_real_per_field_param
+    )
+
+    # Replace field parameters with some inactive realizations
+    # with the average value over the active realizations.
+    # Field parameters that are inactive are set to 0
+    X_matrix[inactive] = X_mean[inactive]
+
+    # Return the modified matrix
+    return X_matrix

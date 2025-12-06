@@ -1,12 +1,20 @@
 from contextlib import ExitStack as does_not_raise
 from unittest.mock import patch
 
+import gaussianfft as grf
 import numpy as np
 import polars as pl
 import pytest
+from iterative_ensemble_smoother.experimental import DistanceESMDA
+from numpy import typing as npt
+from numpy.testing import assert_allclose
 from tabulate import tabulate
 
 from ert.analysis import ErtAnalysisError, ObservationStatus, smoother_update
+from ert.analysis._es_update import (
+    calc_max_number_of_layers_per_batch_for_distance_localization,
+    update_3D_field_with_distance_esmda,
+)
 from ert.analysis._update_commons import (
     _compute_observation_statuses,
     _OutlierColumns,
@@ -20,6 +28,7 @@ from ert.config import (
     ObservationSettings,
     OutlierSettings,
 )
+from ert.field_utils import calc_rho_for_2d_grid_layer
 from ert.storage import Ensemble, open_storage
 
 
@@ -1162,3 +1171,554 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
     assert len(
         posterior_ens.load_parameters("PARAMETER")["realization"]
     ) == active_realizations.count(True)
+
+
+@pytest.mark.parametrize(
+    ("nx", "ny", "nz", "num_obs", "nreal", "bytes_per_float"),
+    [
+        (
+            100,
+            100,
+            50,
+            100,
+            100,
+            8,
+        ),
+        (
+            100,
+            100,
+            100,
+            1000,
+            100,
+            4,
+        ),
+        (
+            750,
+            650,
+            500,
+            1000,
+            100,
+            4,
+        ),
+        (
+            100,
+            100,
+            100,
+            10000,
+            100,
+            4,
+        ),
+        (
+            100,
+            100,
+            100,
+            10000,
+            500,
+            8,
+        ),
+        (
+            250,
+            350,
+            500,
+            1000,
+            500,
+            4,
+        ),
+    ],
+)
+def test_calc_max_number_of_layers_per_batch_for_distance_localization(
+    nx: int,
+    ny: int,
+    nz: int,
+    num_obs: int,
+    nreal: int,
+    bytes_per_float: int,
+) -> None:
+    # Test for function that estimate max number of grid layers with field parameters
+    # that can be update in one update. No expected number of layers can be defined
+    # in advance since this depends on the available memory of the computer that run
+    # the test.
+    max_nlayer_per_batch = (
+        calc_max_number_of_layers_per_batch_for_distance_localization(
+            nx, ny, nz, num_obs, nreal, bytes_per_float=bytes_per_float
+        )
+    )
+
+    memory_used = max_nlayer_per_batch * nx * ny * num_obs * 2 * bytes_per_float / 10**9
+    if max_nlayer_per_batch == nz:
+        print(f"\nAll {nz} grid layers can be updated in one batch.")
+    else:
+        print(
+            f"\nMax number of layers per batch: {max_nlayer_per_batch}. "
+            f"Total number of layers: {nz}"
+        )
+    print(f"Memory per batch used for RHO and K matrix: {memory_used} GB")
+
+
+def draw_3D_field(
+    mean: float,
+    stdev: float,
+    xinc: float,
+    yinc: float,
+    zinc: float,
+    nx: int,
+    ny: int,
+    nz: int,
+    nreal: int,
+    main_corr_range: float,
+    perp_corr_range: float,
+    vert_corr_range: float,
+    start_seed: int = 42,
+    corr_func_name: str = "matern32",
+    power: float = 1.9,
+    azimuth: float = 0.0,
+    dip: float = 0.0,
+    write_progress: bool = False,
+    use_4_byte_float: bool = False,
+) -> npt.NDArray[np.float64]:
+    # Draw prior ensemble of 3D field. Ensemble size is nreal
+    # Returns prior ensemble drawn and covariance matrix
+
+    # Initialize start seed
+    grf.seed(start_seed)
+
+    # Define spatial correlation function for gaussian fields
+    # to be simulated.
+    if corr_func_name == "general_exponential":
+        variogram = grf.variogram(
+            corr_func_name,
+            main_corr_range,
+            perp_corr_range,
+            vert_corr_range,
+            azimuth,
+            dip,
+            power,
+        )
+    else:
+        variogram = grf.variogram(
+            corr_func_name,
+            main_corr_range,
+            perp_corr_range,
+            vert_corr_range,
+            azimuth,
+            dip,
+        )
+
+    nparam = nx * ny * nz
+    if use_4_byte_float:
+        X_prior = np.zeros((nparam, nreal), dtype=np.float32)
+    else:
+        X_prior = np.zeros((nparam, nreal), dtype=np.float64)
+    # Flatten 3D array in F order
+    for real_number in range(nreal):
+        if write_progress and real_number % 10 == 0:
+            print(f"  Sim real nr: {real_number}")
+        field_values = grf.simulate(variogram, nx, xinc, ny, yinc, nz, zinc)
+        X_prior[:, real_number] = (
+            field_values.reshape((nx, ny, nz), order="F").flatten(order="C") * stdev
+            + mean
+        )
+
+    return X_prior
+
+
+@pytest.mark.parametrize(
+    (
+        "nx",
+        "ny",
+        "nz",
+        "nobs",
+        "nreal",
+        "field_mean",
+        "field_std",
+        "rel_corr_length",
+        "obs_err_std",
+        "rel_localization_range",
+        "case_with_some_zero_variance_field_params",
+        "seed",
+        "name",
+    ),
+    [
+        (
+            3,
+            4,
+            5,
+            1,
+            100,
+            0.0,
+            1.0,
+            0.2,
+            0.001,
+            0.2,
+            False,
+            9984356,
+            "case1",
+        ),
+        (
+            5,
+            4,
+            3,
+            0,
+            100,
+            0.0,
+            1.0,
+            0.1,
+            0.01,
+            0.1,
+            False,
+            123456,
+            "case2",
+        ),
+        (
+            5,
+            4,
+            3,
+            3,
+            100,
+            0.0,
+            1.0,
+            0.1,
+            0.01,
+            0.1,
+            True,
+            8765,
+            "case3",
+        ),
+        (
+            3,
+            5,
+            1,
+            1,
+            100,
+            0.0,
+            1.0,
+            0.3,
+            0.001,
+            0.3,
+            False,
+            9984356,
+            "case4",
+        ),
+        (
+            3,
+            5,
+            1,
+            1,
+            100,
+            0.0,
+            1.0,
+            0.3,
+            0.001,
+            0.3,
+            True,
+            9984356,
+            "case5",
+        ),
+    ],
+)
+def test_update_3D_field_with_distance_esmda(
+    snapshot,
+    nx: int,
+    ny: int,
+    nz: int,
+    nobs: int,
+    nreal: int,
+    field_mean: float,
+    field_std: float,
+    rel_corr_length: float,
+    obs_err_std: float,
+    rel_localization_range: float,
+    case_with_some_zero_variance_field_params: bool,
+    seed: int,
+    name: str,
+):
+    # This test function check 'update_3D_field_with_distance_esmda_unoptimal'
+    #
+    # The field parameter is assumed to belong to a box grid (ertbox grid)
+    # with specified nx,ny,nz and grid increments xinc,yinc,zinc
+    # The observation position is assumed to be within the same coordinate
+    # system as the grid. The grid cell center point coordinates are
+    # x[i,j,k] = xinc * (i + 0.5)  i=0,.. nx-1
+    # y[i,j,k] = yinc * (j + 0.5)  j=0,.. ny-1
+    # z[i,j,k] = zinc * (k + 0.5)  k=0,.. nz-1
+    # Z coordinate is not used when calculating RHO matrix, but is used here
+    # to define observation values.
+    field_param_name = "Field_" + name
+    right_handed_grid_indexing = True  # Default is True
+    write_obs = False
+    xinc = 50.0
+    yinc = 50.0
+    zinc = 1.0
+    xlength = xinc * nx
+    ylength = yinc * ny
+    zlength = zinc * nz
+    corr_range = max(xlength, ylength) * rel_corr_length
+    vert_range = zlength * rel_corr_length
+
+    # Draw prior gaussian fields with spatial correlations
+    # X_prior[param_number,real_number] where param_number
+    # is flatten indec for C-index ordered 3D field (nx,ny,nz)
+    corr_func_name = "gaussian"
+    X_prior = draw_3D_field(
+        field_mean,
+        field_std,
+        xinc,
+        yinc,
+        zinc,
+        nx,
+        ny,
+        nz,
+        nreal,
+        corr_range,
+        corr_range,
+        vert_range,
+        seed,
+        corr_func_name=corr_func_name,
+    )
+
+    X_prior_3D = X_prior.reshape((nx, ny, nz, nreal))
+
+    nparam = nx * ny * nz
+
+    rng = np.random.default_rng(seed)
+    # Draw some observation values (Use same seed every time)
+    observations = rng.normal(loc=0.5, scale=0.05, size=nobs)
+
+    # Choose some observation values, errors and positions
+    # Draw some position of the observations, ensure no observations at same position
+    # since the response values are equal to field values (only one response variable).
+    # Multiple response values can have same position.
+
+    # Draw i index, j_index, k_index for grid cell to be used as observed.
+    if nobs == 1:
+        obs_xpos = np.array([(nx / 2) * xinc])
+        obs_ypos = np.array([(ny / 2) * yinc])
+        obs_zpos = np.array([(nz / 2) * zinc])
+        i_indices = np.array([int(nx / 2)])
+        j_indices = np.array([int(ny / 2)])
+        k_indices = np.array([int(nz / 2)])
+        unique_obs_indices = k_indices + j_indices * nz + i_indices * nz * ny
+    else:
+        if nobs > nparam:
+            raise ValueError(
+                "Cannot draw more observations than number of parameters in the field"
+            )
+        unique_obs_indices = rng.choice(range(nparam), size=nobs, replace=False)
+        unique_obs_indices = np.sort(unique_obs_indices)
+        i_indices = (unique_obs_indices // (nz * ny)).astype(int)
+        j_indices = ((unique_obs_indices % (nz * ny)) // nz).astype(int)
+        k_indices = (unique_obs_indices % nz).astype(int)
+        if right_handed_grid_indexing:
+            # Right-handed grid indexing
+            obs_ypos = ((ny - j_indices - 1) + 0.5) * yinc
+        else:
+            obs_ypos = (j_indices + 0.5) * yinc
+
+        obs_xpos = (i_indices + 0.5) * xinc
+        obs_zpos = (k_indices + 0.5) * zinc
+
+    # Set observation error
+    obs_var_vector = np.zeros(nobs, dtype=np.float64)
+    obs_var_vector[:] = obs_err_std**2
+
+    # Choose localization range around each obs
+    typical_field_size = min(xlength, ylength)
+    obs_main_range = np.zeros(nobs, dtype=np.float64)
+    obs_main_range[:] = typical_field_size * rel_localization_range
+    obs_perp_range = np.zeros(nobs, dtype=np.float64)
+    obs_perp_range[:] = typical_field_size * rel_localization_range
+    obs_anisotropy_angle = np.zeros(nobs, dtype=np.float64)
+
+    if write_obs:
+        print("Observations:")
+        for i in range(nobs):
+            print(
+                f"({obs_xpos[i]}, {obs_ypos[i]}, {obs_zpos[i]})  "
+                f"Value: {observations[i]}  Error: {obs_err_std}  "
+                f"Range: {obs_main_range[i]}"
+            )
+
+    # Calculate rho_for one layer
+    rho_2D = calc_rho_for_2d_grid_layer(
+        nx,
+        ny,
+        xinc,
+        yinc,
+        obs_xpos,
+        obs_ypos,
+        obs_main_range,
+        obs_perp_range,
+        obs_anisotropy_angle,
+        right_handed_grid_indexing=right_handed_grid_indexing,
+    )
+    # Set responses for each observation equal to the X_prior for simplicity
+    # (Forward model is identity Y = X in observation points + small random noise)
+    # Note cannot have observations with response with 0 variance
+    add_response_variability = rng.normal(loc=0, scale=0.01, size=(nreal, nobs))
+    Y = X_prior_3D[i_indices, j_indices, k_indices, :] + add_response_variability.T
+
+    if case_with_some_zero_variance_field_params:
+        # Set same field value in all realizations for selected grid cells
+        # They should not be updated since the ensemble variance is 0 for those
+        # values. The selected grid cells must not be selected as observed.
+        nconst_values = int(
+            0.1 * nparam
+        )  # Choose a portion of field values to be constant
+        unique_indices_const = rng.choice(
+            range(nparam), size=nconst_values, replace=False
+        )
+        print(f"Number of selected grid indices: {len(unique_indices_const)}")
+        # Reject indices corresponding to observed grid cells
+        unique_indices_const = np.setdiff1d(unique_indices_const, unique_obs_indices)
+        # Usually inactive cell values can be set to 0 for all realizations,
+        # but choose something else here for visualization purpose
+        X_prior[unique_indices_const, :] = 10.0
+        print(f"Number of field values with 0 variance: {len(unique_indices_const)}")
+
+    # Initialize Distance based localization object
+    alpha = np.array([1.0])
+    dl_smoother = DistanceESMDA(
+        covariance=obs_var_vector, observations=observations, alpha=alpha, seed=rng
+    )
+
+    # Call the function to be tested here
+    # Note that no field values with 0 variance is removed
+    # from the update calculation in this function,
+    # but that is ok since there will be no change of
+    # field parameters with 0 variance anyway.
+    X_post_3D = update_3D_field_with_distance_esmda(
+        dl_smoother,
+        field_param_name,
+        X_prior,
+        Y,
+        rho_2D,
+        nx,
+        ny,
+        nz,
+        reshape_to_3D_per_realization=True,
+    )
+
+    # Mean and stdev over ensemble of field parameters
+    X_prior_mean_3D = X_prior_3D.mean(axis=3)
+    X_post_mean_3D = X_post_3D.mean(axis=3)
+    X_prior_stdev_3D = X_prior_3D.std(axis=3)
+    X_post_stdev_3D = X_post_3D.std(axis=3)
+    # Difference between post and prior mean and stdev
+    X_diff_mean_3D = X_post_mean_3D - X_prior_mean_3D
+    X_diff_stdev_3D = X_post_stdev_3D - X_prior_stdev_3D
+
+    snapshot.assert_match(str(X_diff_mean_3D) + "\n", "X_diff_mean_3D.txt")
+    snapshot.assert_match(str(X_diff_stdev_3D) + "\n", "X_diff_stdev_3D.txt")
+
+
+class MockDistanceESMDA:
+    # Is used instead of DistanceESMDA in some tests
+    # where the purpose of the test is to check the batch splitting
+    # and verify that the batch splitting put the parameters back into
+    # a result that has correct order of the parameter values.
+    def __init__(
+        self,
+        covariance,
+        observations,
+        alpha,
+        seed,
+    ) -> None:
+        assert covariance is not None
+        assert observations is not None
+        assert alpha is not None
+        assert seed is not None
+
+    def assimilate_batch(self, X_batch, Y, rho_batch):
+        # The assimilate function should return the input
+        assert Y is not None
+        assert rho_batch is not None
+        return X_batch
+
+
+@pytest.mark.parametrize(
+    ("nx", "ny", "nz", "nobs", "nreal", "min_nbatch"),
+    [
+        (
+            10,
+            15,
+            100,
+            10,
+            100,
+            4,
+        ),
+        (
+            10,
+            15,
+            100,
+            10,
+            10,
+            1,
+        ),
+        (
+            100,
+            150,
+            1,
+            10,
+            100,
+            1,
+        ),
+        (
+            100,
+            150,
+            1,
+            0,
+            100,
+            1,
+        ),
+        # (
+        #     412,
+        #     714,
+        #     51,
+        #     1500,
+        #     100,
+        #     1,
+        # ),
+    ],
+)
+def test_batch_handling_for_update_3D_field_with_distance_esmda(
+    nx: int,
+    ny: int,
+    nz: int,
+    nobs: int,
+    nreal: int,
+    min_nbatch: int,
+):
+    # This test function checks only the batch split part of the
+    # function 'update_3D_field_with_distance_esmda_unoptimal'
+    #
+    nparam = nx * ny * nz
+    X_prior = np.arange(nparam * nreal, dtype=np.float64).reshape(nparam, nreal)
+    observations = np.zeros(nobs, dtype=np.float64)
+    obs_var_vector = np.zeros(nobs, dtype=np.float64)
+    Y = np.zeros((nobs, nreal), dtype=np.float64)
+    rho_2D = np.zeros((nx, ny, nobs), dtype=np.float64)
+
+    # Initialize Distance based localization object using the mock version
+    # that does not change any values
+    alpha = np.array([1.0])
+    dl_smoother = MockDistanceESMDA(
+        covariance=obs_var_vector, observations=observations, alpha=alpha, seed=42
+    )
+
+    # No update will be done here and the only thing to happen
+    # is that input X_prior is returned
+    X_post = update_3D_field_with_distance_esmda(
+        dl_smoother,
+        "dummy",
+        X_prior,
+        Y,
+        rho_2D,
+        nx,
+        ny,
+        nz,
+        min_nbatch=min_nbatch,
+    )
+
+    # Check that X_prior = X_post
+    assert X_prior.shape == X_post.shape
+    assert_allclose(X_prior, X_post)
