@@ -3,7 +3,6 @@ import argparse
 import asyncio
 import json
 import logging
-import os
 import signal
 import socket
 import threading
@@ -212,10 +211,10 @@ async def run_everest(options: argparse.Namespace) -> None:
         show_scaled_controls_warning()
 
     try:
-        output_dir = options.config.output_dir
-        config_file = options.config.config_file
-        save_config_path = os.path.join(output_dir, config_file)
-        options.config.dump(save_config_path)
+        output_dir = Path(options.config.output_dir)
+        options.config.write_to_file(
+            output_dir / options.config.config_file, drop_config_path=True
+        )
     except (OSError, LookupError) as e:
         logger.error(f"Failed to save optimization config: {e}")
 

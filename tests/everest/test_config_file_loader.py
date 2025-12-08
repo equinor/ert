@@ -15,7 +15,7 @@ def test_load_yaml(tmp_path):
 
     initial_config = everest_config_with_defaults(definitions={})
 
-    initial_config.dump(str(config_file_path))
+    initial_config.write_to_file(config_file_path)
 
     loaded_config = EverestConfig.load_file(str(config_file_path))
 
@@ -31,7 +31,7 @@ def test_load_yaml_preprocess(tmp_path):
         environment={"simulation_folder": "simulations_r{{ os.USER }}"}
     )
 
-    initial_config.dump(str(config_file))
+    initial_config.write_to_file(config_file)
 
     config = EverestConfig.load_file(str(config_file))
 
@@ -50,7 +50,7 @@ def test_get_definitions(tmp_path):
 
     config_file = tmp_path / "config.yml"
 
-    initial_config.dump(str(config_file))
+    initial_config.write_to_file(config_file)
 
     config = loader.load_yaml(config_file)
     definitions = loader._get_definitions(
@@ -78,7 +78,7 @@ def test_load_config_as_yaml(tmp_path):
 
     initial_config = everest_config_with_defaults(definitions={"case": "MINIMAL_CASE"})
 
-    initial_config.dump(str(config_file))
+    initial_config.write_to_file(config_file)
 
     assert EverestConfig.load_file(str(config_file)) is not None
 
@@ -94,7 +94,7 @@ def test_configpath_in_defs(tmp_path, monkeypatch):
     config_file_path = tmp_path / "config.yml"
 
     config = everest_config_with_defaults(definitions=definitions_for_yaml_creation)
-    config.dump(config_file_path)
+    config.write_to_file(config_file_path)
 
     loaded_config = EverestConfig.load_file(str(config_file_path))
 
@@ -128,7 +128,7 @@ def test_dependent_definitions(tmp_path, monkeypatch):
     )
 
     config_file_path = tmp_path / "config.yml"
-    initial_config_object.dump(str(config_file_path))
+    initial_config_object.write_to_file(config_file_path)
 
     loaded_config = EverestConfig.load_file(str(config_file_path))
 
@@ -156,7 +156,7 @@ def test_dependent_definitions_value_error(tmp_path):
     initial_config_object = everest_config_with_defaults(
         definitions=definitions_with_circular_dependency
     )
-    initial_config_object.dump(str(config_file_path))
+    initial_config_object.write_to_file(config_file_path)
 
     with pytest.raises(ValueError):
         EverestConfig.load_file(str(config_file_path))

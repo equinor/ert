@@ -22,7 +22,7 @@ def test_constraints_init(tmp_path):
 
     config_file_path = tmp_path / "mocked_output_constraints.yml"
 
-    initial_everest_config.dump(str(config_file_path))
+    initial_everest_config.write_to_file(str(config_file_path))
 
     loaded_everest_config = EverestConfig.load_file(str(config_file_path))
 
@@ -115,7 +115,7 @@ def test_upper_bound_output_constraint_def(tmp_path):
     )
 
     config_file_path = tmp_path / "test_config.yml"
-    initial_config.dump(str(config_file_path))
+    initial_config.write_to_file(config_file_path)
 
     config = EverestConfig.load_file(str(config_file_path))
 
