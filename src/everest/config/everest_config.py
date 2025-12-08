@@ -2,7 +2,6 @@ import logging
 import os
 from argparse import ArgumentParser
 from copy import copy
-from io import StringIO
 from itertools import chain
 from pathlib import Path
 from sys import float_info
@@ -1081,22 +1080,13 @@ to read summary data from forward model, do:
         except ValueError as e:
             parser.error(f"Loading config file <{config_path}> failed with: {e}")
 
-    def dump(self, fname: str | None = None) -> str | None:
-        """Write a config dict to file or return it if fname is None."""
+    def dump(self, fname: str) -> None:
         stripped_conf = self.to_dict()
-
         del stripped_conf["config_path"]
 
         yaml = YAML(typ="safe", pure=True)
         yaml.default_flow_style = False
-        if fname is None:
-            with StringIO() as sio:
-                yaml.dump(stripped_conf, sio)
-                return sio.getvalue()
-
         yaml.dump(stripped_conf, Path(fname))
-
-        return None
 
     @property
     def server_queue_system(self) -> QueueSystem:
