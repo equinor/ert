@@ -11,7 +11,6 @@ import polars as pl
 import pytest
 import resfo
 import xtgeo
-from polars import Float32
 
 from ert.analysis import smoother_update
 from ert.config import ErtConfig, ESSettings, ObservationSettings
@@ -82,6 +81,10 @@ def _compare_ensemble_params(
     expected = pl.read_csv(reference_path)
     if actual.shape != expected.shape:
         raise ValueError("DataFrames must have the same shape")
+    if set(actual.columns) != set(expected.columns):
+        raise ValueError("DataFrames must have the same columns")
+    # To avoid depending on the ordering of the columns
+    expected = expected.select(actual.columns)
 
     actual_numbers = actual.drop(index_columns)
     expected_numbers = expected.drop(index_columns)
@@ -97,9 +100,10 @@ def _compare_ensemble_params(
                     lambda x: 0.0
                     if abs(x) < outlier_threshold
                     else (abs(x) - outlier_threshold),
-                    return_dtype=Float32,
                 )
-            ).alias(c)
+            )
+            .cast(pl.Float32)
+            .alias(c)
             for c in columns
         ]
     )
@@ -110,8 +114,8 @@ def _compare_ensemble_params(
             pl.concat_list(columns)
             .map_elements(
                 lambda row: sum(1 for x in row if x != 0.0) / len(row),
-                return_dtype=Float32,
             )
+            .cast(pl.Float32)
             .alias("outlier_percentage")
         ]
     )["outlier_percentage"]
@@ -119,7 +123,8 @@ def _compare_ensemble_params(
     max_deviance = truncated_df.select(
         [
             pl.concat_list(columns)
-            .map_elements(lambda row: max(x for x in row), return_dtype=Float32)
+            .map_elements(lambda row: max(x for x in row))
+            .cast(pl.Float32)
             .alias("max_deviance")
         ]
     )["max_deviance"]
