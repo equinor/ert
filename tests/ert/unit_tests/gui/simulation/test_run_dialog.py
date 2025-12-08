@@ -632,8 +632,18 @@ def test_that_exception_in_run_model_is_displayed_in_a_suggestor_window_after_si
         run_dialog = wait_for_child(gui, qtbot, RunDialog)
 
         QTimer.singleShot(100, lambda: assert_failure_in_error_dialog(run_dialog))
-        qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=100000)
-        qtbot.waitUntil(lambda: handler_done, timeout=100000)
+        # Capturing exceptions in order to catch an assertion error
+        # from assert_failure_in_error_dialog and stop waiting
+        with qtbot.captureExceptions() as exceptions:
+            qtbot.waitUntil(
+                lambda: run_dialog.is_simulation_done() is True or bool(exceptions),
+                timeout=100000,
+            )
+            qtbot.waitUntil(lambda: handler_done or bool(exceptions), timeout=100000)
+        if exceptions:
+            raise AssertionError(
+                f"Exception(s) happened in Qt event loop: {exceptions}"
+            )
 
 
 @pytest.mark.integration_test
