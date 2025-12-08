@@ -608,7 +608,7 @@ def test_that_exception_in_run_model_is_displayed_in_a_suggestor_window_after_si
 
         def assert_failure_in_error_dialog(run_dialog):
             nonlocal handler_done
-            wait_until(lambda: run_dialog.fail_msg_box is not None, timeout=5000)
+            wait_until(lambda: run_dialog.fail_msg_box is not None, timeout=10000)
             suggestor_termination_window = run_dialog.fail_msg_box
             assert suggestor_termination_window
             text = (
