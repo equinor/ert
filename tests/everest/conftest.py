@@ -114,7 +114,7 @@ def setup_minimal_everest_case(tmp_path) -> AbstractContextManager[str]:
                 }
             )
             Path("config.yml").touch()
-            config.dump("config.yml")
+            config.write_to_file("config.yml")
 
             yield "config.yml"
         finally:

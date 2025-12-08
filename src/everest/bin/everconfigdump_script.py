@@ -3,8 +3,6 @@
 import argparse
 import sys
 
-from ruamel.yaml import YAML
-
 from everest.config import EverestConfig
 
 
@@ -26,13 +24,7 @@ def _build_args_parser() -> argparse.ArgumentParser:
 def config_dump_entry(args: list[str] | None = None) -> None:
     parser = _build_args_parser()
     options = parser.parse_args(args)
-
-    config = EverestConfig.load_file(options.config_file)
-
-    yaml = YAML(typ="safe", pure=True)
-    yaml.indent = 2
-    yaml.default_flow_style = False
-    yaml.dump(config.to_dict(), sys.stdout)
+    EverestConfig.load_file(options.config_file).write_to_file(sys.stdout)
 
 
 if __name__ == "__main__":

@@ -54,7 +54,7 @@ async def test_https_requests(change_to_tmpdir):
     )
     # start_server() loads config based on config_path, so we need to actually
     # overwrite it
-    everest_config.dump("config.yml")
+    everest_config.write_to_file("config.yml")
 
     makedirs_if_needed(everest_config.output_dir, roll_if_exists=True)
     await start_server(everest_config, logging_level=logging.INFO)
@@ -289,7 +289,7 @@ async def test_starting_not_in_folder(tmp_path, monkeypatch):
     os.makedirs(tmp_path / "new_folder")
     monkeypatch.chdir(tmp_path / "new_folder")
     everest_config = everest_config_with_defaults()
-    everest_config.dump("minimal_config.yml")
+    everest_config.write_to_file("minimal_config.yml")
     config_dict = {
         **everest_config.model_dump(exclude_none=True),
         "config_path": str(Path("minimal_config.yml").absolute()),

@@ -99,7 +99,7 @@ def test_everest_entry_monitor_already_run(cached_example):
 
 @pytest.mark.integration_test
 def test_everest_entry_monitor_not_run(change_to_tmpdir):
-    everest_config_with_defaults().dump("config.yml")
+    everest_config_with_defaults().write_to_file("config.yml")
     with capture_streams() as (out, _):
         start_everest(["everest", "monitor", "config.yml"])
     assert "The optimization has not run yet." in out.getvalue()

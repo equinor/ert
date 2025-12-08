@@ -11,6 +11,7 @@ from typing import (
     Any,
     Optional,
     Self,
+    TextIO,
     TypeVar,
     no_type_check,
 )
@@ -1080,13 +1081,25 @@ to read summary data from forward model, do:
         except ValueError as e:
             parser.error(f"Loading config file <{config_path}> failed with: {e}")
 
-    def dump(self, fname: str) -> None:
-        stripped_conf = self.to_dict()
-        del stripped_conf["config_path"]
+    def write_to_file(
+        self, output_file: str | Path | TextIO, drop_config_path: bool = False
+    ) -> None:
+        dictconf = self.to_dict()
+        if drop_config_path:
+            del dictconf["config_path"]
+        if isinstance(output_file, str):
+            output_file = Path(output_file)
+        self.write_dict_to_file(dictconf, output_file)
 
-        yaml = YAML(typ="safe", pure=True)
+    @staticmethod
+    def write_dict_to_file(
+        config: dict[str, Any], output_file: Path | TextIO, safe_and_pure: bool = True
+    ) -> None:
+        yaml = YAML(typ="safe", pure=True) if safe_and_pure else YAML()
+        yaml.indent(mapping=2, sequence=4, offset=2)
+        yaml.preserve_quotes = True
         yaml.default_flow_style = False
-        yaml.dump(stripped_conf, Path(fname))
+        yaml.dump(config, output_file)
 
     @property
     def server_queue_system(self) -> QueueSystem:

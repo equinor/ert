@@ -45,7 +45,7 @@ def test_everest_entry_debug(
 
     Path("config.yml").touch()
     config = everest_config_with_defaults(config_path="./config.yml")
-    config.dump("config.yml")
+    config.write_to_file("config.yml")
 
     # Need to deactivate the logging.config.dictConfig() statement in the entry
     # point for the caplog fixture to be able to catch logs:
@@ -93,7 +93,7 @@ def test_everest_entry(
 
     Path("config.yml").touch()
     config = everest_config_with_defaults(config_path="./config.yml")
-    config.dump("config.yml")
+    config.write_to_file("config.yml")
     everest_entry(["config.yml", "--skip"])
     start_server_mock.assert_called_once()
     wait_for_server_mock.assert_called_once()
@@ -132,7 +132,7 @@ def test_everest_entry_detached_already_run(
 
     Path("config.yml").touch()
     config = everest_config_with_defaults(config_path="./config.yml")
-    config.dump("config.yml")
+    config.write_to_file("config.yml")
 
     # start a new run
     everest_entry(["config.yml", "--skip-prompt"])
@@ -175,7 +175,7 @@ def test_everest_entry_detached_already_run_monitor(
 
     Path("config.yml").touch()
     config = everest_config_with_defaults(config_path="./config.yml")
-    config.dump("config.yml")
+    config.write_to_file("config.yml")
 
     # optimization already run, notify the user
     monitor_entry(["config.yml"])
@@ -206,7 +206,7 @@ def test_everest_entry_detached_running(
 
     Path("config.yml").touch()
     config = everest_config_with_defaults(config_path="./config.yml")
-    config.dump("config.yml")
+    config.write_to_file("config.yml")
 
     # can't start a new run if one is already running
     with capture_streams() as (out, _):
@@ -250,7 +250,7 @@ def test_everest_entry_detached_running_monitor(
 
     Path("config.yml").touch()
     config = everest_config_with_defaults(config_path="./config.yml")
-    config.dump("config.yml")
+    config.write_to_file("config.yml")
 
     # Attach to a running optimization.
     with capture_streams():
@@ -276,7 +276,7 @@ def test_everest_entry_monitor_already_run(
 ):
     Path("config.yml").touch()
     config = everest_config_with_defaults(config_path="./config.yml")
-    config.dump("config.yml")
+    config.write_to_file("config.yml")
 
     with capture_streams() as (out, _):
         monitor_entry(["config.yml"])
@@ -315,7 +315,7 @@ def test_exception_raised_when_server_run_fails(
 ):
     Path("config.yml").touch()
     config = everest_config_with_defaults(config_path="./config.yml")
-    config.dump("config.yml")
+    config.write_to_file("config.yml")
 
     with pytest.raises(SystemError, match="Reality was ripped to shreds!"):
         everest_entry(["config.yml", "--skip-prompt"])
@@ -335,7 +335,7 @@ def test_exception_raised_when_server_run_fails_monitor(
 ):
     Path("config.yml").touch()
     config = everest_config_with_defaults(config_path="./config.yml")
-    config.dump("config.yml")
+    config.write_to_file("config.yml")
 
     with pytest.raises(SystemError, match="Reality was ripped to shreds!"):
         monitor_entry(["config.yml"])
@@ -358,7 +358,7 @@ def test_that_everest_run_warns_on_nonempty_runpath(change_to_tmpdir):
     )
     everest_config_with_defaults(
         environment={"simulation_folder": existing_runpath.name},
-    ).dump("config.yml")
+    ).write_to_file("config.yml")
 
     with pytest.raises(RuntimeError, match="runpath is nonempty"):
         everest_entry(["config.yml"])
@@ -394,7 +394,7 @@ def test_that_run_everest_prints_where_it_runs(
     everest_config_with_defaults(
         simulator={"queue_system": {"name": simulator_queue_system}},
         server={"queue_system": {"name": server_queue_system}},
-    ).dump("config.yml")
+    ).write_to_file("config.yml")
 
     with (
         patch(

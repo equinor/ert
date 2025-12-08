@@ -5,8 +5,6 @@ from pathlib import Path
 from textwrap import dedent
 from typing import Any
 
-from ruamel.yaml import YAML
-
 from everest.bin.utils import setup_logging
 from everest.config import EverestConfig
 from everest.config_file_loader import load_yaml
@@ -139,10 +137,9 @@ def config_branch_entry(args: list[str] | None = None) -> None:
             conf_controls=yml_config["controls"], opt_controls=opt_controls
         )
 
-        yaml = YAML()
-        yaml.indent(mapping=2, sequence=4, offset=2)
-        yaml.preserve_quotes = True
-        yaml.dump(yml_config, Path(options.output_config))
+        EverestConfig.write_dict_to_file(
+            yml_config, Path(options.output_config), safe_and_pure=False
+        )
         print(f"New config file {options.output_config} created.")
 
 

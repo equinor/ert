@@ -39,7 +39,7 @@ def test_save_running_config(_, _1, _2, _3, _4, _5, change_to_tmpdir):
     config = everest_config_with_defaults(
         config_path="./config.yml", environment={"random_seed": 12345}
     )
-    config.dump("config.yml")
+    config.write_to_file("config.yml")
 
     everest_entry(["config.yml", "--skip-prompt"])
     saved_config_path = os.path.join(config.output_dir, "config.yml")
