@@ -3,15 +3,16 @@ from __future__ import annotations
 import datetime
 import fnmatch
 import logging
+import os
 import re
 from collections import defaultdict
-from typing import Literal
+from typing import IO, Any, Literal
 
 import numpy as np
 import numpy.typing as npt
 import polars as pl
 from pydantic import Field
-from resfo_utilities import InvalidRFTError, RFTReader
+from resfo_utilities import CornerpointGrid, InvalidRFTError, RFTReader
 
 from ert.substitutions import substitute_runpath_name
 
@@ -27,6 +28,7 @@ class RFTConfig(ResponseConfig):
     name: str = "rft"
     has_finalized_keys: bool = False
     data_to_read: dict[str, dict[str, list[str]]] = Field(default_factory=dict)
+    locations: list[tuple[float, float, float]] = Field(default_factory=list)
 
     @property
     def metadata(self) -> list[ResponseMetadata]:
@@ -51,6 +53,20 @@ class RFTConfig(ResponseConfig):
 
         return [f"{base}.RFT"]
 
+    def _find_indices(
+        self, egrid_file: str | os.PathLike[str] | IO[Any]
+    ) -> dict[tuple[int, int, int] | None, set[tuple[float, float, float]]]:
+        indices = defaultdict(set)
+        for a, b in zip(
+            CornerpointGrid.read_egrid(egrid_file).find_cell_containing_point(
+                self.locations
+            ),
+            self.locations,
+            strict=True,
+        ):
+            indices[a].add(b)
+        return indices
+
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
         filename = substitute_runpath_name(self.input_files[0], iens, iter_)
         if filename.upper().endswith(".DATA"):
@@ -58,9 +74,20 @@ class RFTConfig(ResponseConfig):
             # allowed to give REFCASE and ECLBASE both
             # with and without .DATA extensions
             filename = filename[:-5]
+        grid_filename = f"{run_path}/{filename}"
+        if grid_filename.upper().endswith(".RFT"):
+            grid_filename = grid_filename[:-4]
+        grid_filename += ".EGRID"
         fetched: dict[tuple[str, datetime.date], dict[str, npt.NDArray[np.float32]]] = (
             defaultdict(dict)
         )
+        indices = {}
+        if self.locations:
+            indices = self._find_indices(grid_filename)
+        if None in indices:
+            raise InvalidResponseFile(
+                f"Did not find grid coordinate for location(s) {indices[None]}"
+            )
         # This is a somewhat complicated optimization in order to
         # support wildcards in well names, dates and properties
         # A python for loop is too slow so we use a compiled regex
@@ -72,6 +99,7 @@ class RFTConfig(ResponseConfig):
                     "time": [],
                     "depth": [],
                     "values": [],
+                    "location": [],
                 }
             )
 
@@ -104,6 +132,7 @@ class RFTConfig(ResponseConfig):
                 for time, props in inner_dict.items()
             )
         )
+        locations = {}
         try:
             with RFTReader.open(f"{run_path}/{filename}") as rft:
                 for entry in rft:
@@ -112,6 +141,12 @@ class RFTConfig(ResponseConfig):
                     for rft_property in entry:
                         key = f"{well}{sep}{date}{sep}{rft_property}"
                         if matcher.fullmatch(key) is not None:
+                            locations[well, date, rft_property] = [
+                                next(
+                                    iter(indices.get(tuple(c), [None]))
+                                )  # TODO: fix this cludge
+                                for c in entry.connections
+                            ]
                             values = entry[rft_property]
                             if np.isdtype(values.dtype, np.float32):
                                 fetched[well, date][rft_property] = values
@@ -127,41 +162,33 @@ class RFTConfig(ResponseConfig):
                     "time": [],
                     "depth": [],
                     "values": [],
+                    "location": [],
                 }
             )
 
-        dfs = []
-
-        for (well, time), inner_dict in fetched.items():
-            wide = pl.DataFrame(
-                {k: pl.Series(v.astype("<f4")) for k, v in inner_dict.items()}
+        try:
+            return pl.concat(
+                [
+                    pl.DataFrame(
+                        {
+                            "response_key": [f"{well}:{time.isoformat()}:{prop}"],
+                            "time": [time],
+                            "depth": [fetched[well, time]["DEPTH"]],
+                            "values": [vals],
+                            "location": [
+                                locations.get((well, time, prop), [None] * len(vals))
+                            ],
+                        }
+                    ).explode("depth", "values", "location")
+                    for (well, time), inner_dict in fetched.items()
+                    for prop, vals in inner_dict.items()
+                    if prop != "DEPTH"
+                ]
             )
-
-            if wide.columns == ["DEPTH"]:
-                continue
-
-            if "DEPTH" not in wide.columns:
-                raise InvalidResponseFile(f"Could not find DEPTH in RFTFile {filename}")
-
-            # Unpivot all columns except DEPTH
-            long = wide.unpivot(
-                index="DEPTH",  # keep depth as column
-                # turn other prop values into response_key col
-                variable_name="response_key",
-                value_name="values",  # put values in own column
-            ).rename({"DEPTH": "depth"})
-
-            # Add wellname prefix to response_keys
-            long = long.with_columns(
-                (pl.lit(f"{well}:{time.isoformat()}:") + pl.col("response_key")).alias(
-                    "response_key"
-                ),
-                pl.lit(time).alias("time"),
-            )
-
-            dfs.append(long.select("response_key", "time", "depth", "values"))
-
-        return pl.concat(dfs)
+        except KeyError as err:
+            raise InvalidResponseFile(
+                f"Could not find {err.args[0]} in RFTFile {filename}"
+            ) from err
 
     @property
     def response_type(self) -> str:
@@ -169,7 +196,7 @@ class RFTConfig(ResponseConfig):
 
     @property
     def primary_key(self) -> list[str]:
-        return []
+        return ["locations"]
 
     @classmethod
     def from_config_dict(cls, config_dict: ConfigDict) -> RFTConfig | None:

@@ -4,8 +4,10 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import hypothesis.strategies as st
+import polars as pl
 import pytest
 from hypothesis import assume, given
+from polars.testing import assert_frame_equal
 from pytest import MonkeyPatch, TempPathFactory
 from resdata.summary import Summary
 from resfo_utilities.testing import summaries
@@ -264,6 +266,48 @@ def test_that_summary_observations_can_use_restart_for_index_if_time_map_is_give
         }
     ).observations["summary"]
     assert list(observations["time"]) == [datetime.fromisoformat(time_map[restart])]
+
+
+def test_that_rft_config_is_created_from_observations():
+    ert_config = ErtConfig.from_dict(
+        {
+            "ECLBASE": "ECLIPSE_CASE",
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    {
+                        "type": ObservationType.RFT,
+                        "name": "NAME",
+                        "WELL": "well",
+                        "VALUE": "700",
+                        "ERROR": "0.1",
+                        "DATE": "2013-03-31",
+                        "PROPERTY": "PRESSURE",
+                        "NORTH": 71.0,
+                        "EAST": 30.0,
+                        "TVD": 2000,
+                    }
+                ],
+            ),
+        }
+    )
+
+    observations = ert_config.observations["rft"]
+    assert_frame_equal(
+        observations,
+        pl.DataFrame(
+            {
+                "response_key": "well:2013-03-31:PRESSURE",
+                "observation_key": "NAME",
+                "location": [[30.0, 71.0, 2000.0]],
+                "observations": pl.Series([700.0], dtype=pl.Float32),
+                "std": pl.Series([0.1], dtype=pl.Float32),
+            }
+        ),
+    )
+    rft_config = ert_config.ensemble_config.response_configs["rft"]
+    assert rft_config.data_to_read == {"well": {"2013-03-31": ["PRESSURE"]}}
+    assert rft_config.locations == [(30.0, 71.0, 2000.0)]
 
 
 def test_that_the_date_keyword_sets_the_summary_index_without_time_map_or_refcase():

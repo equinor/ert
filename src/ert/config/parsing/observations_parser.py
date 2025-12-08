@@ -18,6 +18,7 @@ class ObservationType(StrEnum):
     HISTORY = "HISTORY_OBSERVATION"
     SUMMARY = "SUMMARY_OBSERVATION"
     GENERAL = "GENERAL_OBSERVATION"
+    RFT = "RFT_OBSERVATION"
 
 
 ObservationDict = dict[str, Any]
@@ -92,7 +93,7 @@ def parse_observations(content: str, filename: str) -> list[ObservationDict]:
             ), ["TYPE"]:
                 message = (
                     f"Unknown observation type '{unexpected_token}', "
-                    f"expected either 'GENERAL_OBSERVATION', "
+                    f"expected either 'RFT_OBSERVATION', 'GENERAL_OBSERVATION', "
                     f"'SUMMARY_OBSERVATION' or 'HISTORY_OBSERVATION'."
                 )
             case UnexpectedToken(token=unexpected_char, expected=allowed_chars), _:
@@ -122,7 +123,7 @@ observations_parser = Lark(
     r"""
     start: observation*
     ?observation: type OBSERVATION_NAME object? ";"
-    TYPE: "HISTORY_OBSERVATION" | "SUMMARY_OBSERVATION" | "GENERAL_OBSERVATION"
+    TYPE: "HISTORY_OBSERVATION" | "SUMMARY_OBSERVATION" | "GENERAL_OBSERVATION" | "RFT_OBSERVATION"
     type: TYPE
     ?value: object
           | STRING

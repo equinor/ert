@@ -85,6 +85,30 @@ def test_parse_observations():
     ]
 
 
+def test_parse_rft_observations():
+    assert parse_observations(
+        """
+        RFT_OBSERVATION NAME
+        {
+            VALUE    = 700;
+            ERROR    = 0.1;
+            DATE     = 2010-03-31;
+            PROPERTY = PRESSURE;
+        };
+    """,
+        "",
+    ) == [
+        {
+            "type": ObservationType.RFT,
+            "name": "NAME",
+            "VALUE": "700",
+            "ERROR": "0.1",
+            "DATE": "2010-03-31",
+            "PROPERTY": "PRESSURE",
+        },
+    ]
+
+
 def test_that_missing_assignment_in_observation_body_shows_informative_error_message():
     expected_match = (
         r"Line 5 \(Column 4-5\): Expected assignment to property 'A'. Got '}' instead."

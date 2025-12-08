@@ -9,6 +9,7 @@ from hypothesis import given
 from ert.config._observations import (
     GeneralObservation,
     HistoryObservation,
+    RFTObservation,
     Segment,
     SummaryObservation,
     make_observations,
@@ -122,6 +123,38 @@ def test_make_observations():
                 ),
             ],
         ),
+    ]
+
+
+def test_rft_observation_declaration():
+    assert make_observations(
+        "",
+        [
+            {
+                "type": ObservationType.RFT,
+                "name": "NAME",
+                "WELL": "well",
+                "VALUE": "700",
+                "ERROR": "0.1",
+                "DATE": "2013-03-31",
+                "PROPERTY": "PRESSURE",
+                "NORTH": 71.0,
+                "EAST": 30.0,
+                "TVD": 2000,
+            }
+        ],
+    ) == [
+        RFTObservation(
+            name="NAME",
+            well="well",
+            date="2013-03-31",
+            value=700.0,
+            error=0.1,
+            property="PRESSURE",
+            north=71.0,
+            east=30.0,
+            tvd=2000.0,
+        )
     ]
 
 
