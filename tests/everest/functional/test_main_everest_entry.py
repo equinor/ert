@@ -42,6 +42,14 @@ def test_everest_main_entry_bad_command():
     assert "Run everest <command> --help for more information on a command" in lines
 
 
+@pytest.mark.xdist_group("math_func/config_minimal.yml")
+def test_everest_entry_render(cached_example):
+    _, config_file, _, _ = cached_example("math_func/config_minimal.yml")
+    with capture_streams() as (out, _):
+        start_everest(["everest", "render", config_file])
+    assert YAML().load(out.getvalue()), "rendered output to stdout was not yaml"
+
+
 @pytest.mark.skip_mac_ci
 @pytest.mark.integration_test
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
