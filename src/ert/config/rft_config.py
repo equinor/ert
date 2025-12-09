@@ -142,9 +142,7 @@ class RFTConfig(ResponseConfig):
                         key = f"{well}{sep}{date}{sep}{rft_property}"
                         if matcher.fullmatch(key) is not None:
                             locations[well, date, rft_property] = [
-                                next(
-                                    iter(indices.get(tuple(c), [None]))
-                                )  # TODO: fix this cludge
+                                list(indices.get(tuple(c), [None]))
                                 for c in entry.connections
                             ]
                             values = entry[rft_property]
@@ -179,7 +177,9 @@ class RFTConfig(ResponseConfig):
                                 locations.get((well, time, prop), [None] * len(vals))
                             ],
                         }
-                    ).explode("depth", "values", "location")
+                    )
+                    .explode("depth", "values", "location")
+                    .explode("location")
                     for (well, time), inner_dict in fetched.items()
                     for prop, vals in inner_dict.items()
                     if prop != "DEPTH"

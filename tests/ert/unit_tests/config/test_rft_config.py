@@ -255,3 +255,55 @@ def test_that_locations_are_found(mock_resfo_file):
         "WELL2:2000-01-01:PRESSURE",
     ]
     assert data["location"].to_list() == [[1.0, 1.0, 1.0]]
+
+
+def test_that_multiple_locations_in_the_same_cell_creates_multiple_rows(
+    mock_resfo_file,
+):
+    coord = np.array(
+        [
+            [0, 0, 0, 0, 0, 100],
+            [50, 0, 0, 50, 0, 100],
+            [100, 0, 0, 100, 0, 100],
+            [0, 50, 0, 0, 50, 100],
+            [50, 50, 0, 50, 50, 100],
+            [100, 50, 0, 100, 50, 100],
+            [0, 100, 0, 0, 100, 100],
+            [50, 100, 0, 50, 100, 100],
+            [100, 100, 0, 100, 100, 100],
+        ],
+        dtype=">f4",
+    )
+
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.EGRID",
+        [
+            ("FILEHEAD", pad_to([3, 2007, 0, 0, 0, 0, 1], 100)),
+            ("MAPAXES ", np.array([0.0, 1.0, 0.0, 0.0, 1.0, 0.0], dtype=">f4")),
+            ("GRIDUNIT", np.array([b"METRES  ", b"        "], dtype="|S8")),
+            ("GRIDHEAD", pad_to([1, 2, 2, 2], 100)),
+            ("COORD   ", coord.ravel()),
+            ("ZCORN   ", np.array([0.0] * 16 + [50] * 32 + [100] * 16, dtype=">f4")),
+            ("ACTNUM  ", np.ones((8,), dtype=">i4")),
+            ("ENDGRID ", np.array([], dtype=">i4")),
+        ],
+    )
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.RFT",
+        [
+            *cell_start(date=(1, 1, 2000), well_name="WELL2", ijks=[(0, 0, 0)]),
+            ("PRESSURE", float_arr([0.1])),
+            ("DEPTH   ", float_arr([0.1])),
+        ],
+    )
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={"*": {"*": ["*"]}},
+        locations=[(1.0, 1.0, 1.0), (2.0, 2.0, 2.0)],
+    )
+    data = rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+    assert data["response_key"].to_list() == [
+        "WELL2:2000-01-01:PRESSURE",
+        "WELL2:2000-01-01:PRESSURE",
+    ]
+    assert data["location"].to_list() == [[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]
