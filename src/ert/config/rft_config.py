@@ -143,7 +143,12 @@ class RFTConfig(ResponseConfig):
                         if matcher.fullmatch(key) is not None:
                             values = entry[rft_property]
                             locations[well, date] = [
-                                list(indices.get(tuple(c), [(None, None, None)]))
+                                list(
+                                    indices.get(
+                                        (c[0] - 1, c[1] - 1, c[2] - 1),
+                                        [(None, None, None)],
+                                    )
+                                )
                                 for c in entry.connections
                             ]
                             if np.isdtype(values.dtype, np.float32):

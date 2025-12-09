@@ -5,6 +5,6 @@ RFT_OBSERVATION rft_obs {
     VALUE=3800;
     ERROR=10;
     TVD=8370;
-    EAST=1000;
-    NORTH=1000;
+    EAST=9500;
+    NORTH=9500;
 };
