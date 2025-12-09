@@ -323,7 +323,11 @@ class PlotApi:
                         int(obs["x_axis"][0])
                         key_index = [int(v) for v in obs["x_axis"]]
                     except ValueError:
-                        key_index = [pd.Timestamp(v) for v in obs["x_axis"]]
+                        try:
+                            float(obs["x_axis"][0])
+                            key_index = [float(v) for v in obs["x_axis"]]
+                        except ValueError:
+                            key_index = [pd.Timestamp(v) for v in obs["x_axis"]]
 
                     observations_dfs.append(
                         pd.DataFrame(

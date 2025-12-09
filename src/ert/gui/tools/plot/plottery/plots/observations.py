@@ -27,7 +27,10 @@ def plotObservations(
 
 
 def _plotObservations(
-    axes: Axes, plot_config: PlotConfig, data: DataFrame, value_column: str
+    axes: Axes,
+    plot_config: PlotConfig,
+    data: DataFrame,
+    value_column: str,
 ) -> None:
     """
     Observations are always plotted on top. z-order set to 1000
@@ -46,11 +49,22 @@ def _plotObservations(
     # line style set to 'off' toggles errorbar visibility
     if not style.line_style:
         style.width = 0
+    if plot_config.depth_y_axis:
+        errorbar_data = {
+            "x": data.loc["OBS"].values,
+            "y": data.loc["key_index"].values,
+            "xerr": data.loc["STD"].values,
+        }
+        axes.yaxis.set_inverted(True)
+    else:
+        errorbar_data = {
+            "x": data.loc["key_index"].values,
+            "y": data.loc["OBS"].values,
+            "yerr": data.loc["STD"].values,
+        }
 
     axes.errorbar(
-        x=data.loc["key_index"].values,
-        y=data.loc["OBS"].values,
-        yerr=data.loc["STD"].values,
+        **errorbar_data,
         fmt=style.line_style,
         ecolor=style.color,
         color=style.color,
