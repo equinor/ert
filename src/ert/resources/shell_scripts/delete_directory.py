@@ -48,8 +48,8 @@ def delete_directory(path: str) -> None:
                     for file in files:
                         delete_file(os.path.join(root, file))
 
-                    for _dir in dirs:
-                        delete_empty_directory(os.path.join(root, _dir))
+                    for dir_ in dirs:
+                        delete_empty_directory(os.path.join(root, dir_))
 
         else:
             raise OSError(f"Entry:'{path}' is not a directory")

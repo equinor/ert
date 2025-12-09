@@ -136,13 +136,13 @@ def _get_observations(
         df = df.with_columns(pl.Series(name="x_axis", values=df.map_rows(x_axis_fn)))
         df = df.sort("x_axis")
 
-        for obs_key, _obs_df in df.group_by("name"):
+        for obs_key, obs_df in df.group_by("name"):
             observations.append(
                 {
                     "name": obs_key[0],
-                    "values": _obs_df["values"].to_list(),
-                    "errors": _obs_df["errors"].to_list(),
-                    "x_axis": _obs_df["x_axis"].to_list(),
+                    "values": obs_df["values"].to_list(),
+                    "errors": obs_df["errors"].to_list(),
+                    "x_axis": obs_df["x_axis"].to_list(),
                 }
             )
 

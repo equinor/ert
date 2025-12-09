@@ -478,11 +478,11 @@ class QueueConfig(BaseModelWithContextSupport):
 
         # validate all queue options for the unselected queues
         # and show a warning
-        for _queue_system in QueueSystem:
-            if _queue_system != selected_queue_system:
+        for queue_system in QueueSystem:
+            if queue_system != selected_queue_system:
                 _ = QueueOptions.create_queue_options(
-                    _queue_system,
-                    grouped_queue_options[_queue_system],
+                    queue_system,
+                    grouped_queue_options[queue_system],
                     False,
                 )
 

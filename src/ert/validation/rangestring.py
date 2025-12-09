@@ -66,11 +66,11 @@ def rangestring_to_mask(rangestring: str, length: int) -> list[bool]:
         # An empty string means no active indecies. Note that an
         # IndexRange-typed instance being None means the opposite
         return mask
-    for _range in rangestring.split(","):
-        if "-" in _range:
-            if len(_range.strip().split("-")) != 2:
-                raise ValueError(f"Wrong range syntax {_range}")
-            start, end = map(int, _range.strip().split("-"))
+    for range_ in rangestring.split(","):
+        if "-" in range_:
+            if len(range_.strip().split("-")) != 2:
+                raise ValueError(f"Wrong range syntax {range_}")
+            start, end = map(int, range_.strip().split("-"))
             if end < start:
                 raise ValueError(f"Range {start}-{end} has invalid direction")
             if end + 1 > length:
@@ -78,12 +78,12 @@ def rangestring_to_mask(rangestring: str, length: int) -> list[bool]:
                     f"Range endpoint {end} is beyond the mask length {length}"
                 )
             mask[start : end + 1] = [True] * (end + 1 - start)
-        elif _range:
-            if int(_range) + 1 > length:
+        elif range_:
+            if int(range_) + 1 > length:
                 raise ValueError(
-                    f"Realization index {_range} is beyond the mask length {length}"
+                    f"Realization index {range_} is beyond the mask length {length}"
                 )
-            mask[int(_range)] = True
+            mask[int(range_)] = True
     return mask
 
 
@@ -102,14 +102,14 @@ def rangestring_to_list(rangestring: str) -> list[int]:
     result: set[int] = set()
     if not rangestring:
         return []
-    for _range in rangestring.split(","):
-        if "-" in _range:
-            if len(_range.strip().split("-")) != 2:
-                raise ValueError(f"Wrong range syntax {_range}")
-            start, end = map(int, _range.strip().split("-"))
+    for range_ in rangestring.split(","):
+        if "-" in range_:
+            if len(range_.strip().split("-")) != 2:
+                raise ValueError(f"Wrong range syntax {range_}")
+            start, end = map(int, range_.strip().split("-"))
             if end < start:
                 raise ValueError(f"Range {start}-{end} has invalid direction")
             result.update(range(start, end + 1))
-        elif _range:
-            result.add(int(_range))
+        elif range_:
+            result.add(int(range_))
     return list(result)
