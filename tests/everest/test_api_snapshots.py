@@ -1,6 +1,6 @@
 import json
 import shutil
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -135,7 +135,7 @@ def test_api_summary_snapshot(config_file, snapshot, cached_example):
             {
                 "response_key": ["FOPR", "FOPR", "WOPR", "WOPR", "FOPT", "FOPT"],
                 "time": pl.Series(
-                    [datetime(2000, 1, 1) + timedelta(days=i) for i in range(6)]
+                    [datetime(2000, 1, 1), datetime(2000, 1, 2)] * 3
                 ).dt.cast_time_unit("ms"),
                 "values": pl.Series([0.2, 0.2, 1.0, 1.1, 3.3, 3.3], dtype=pl.Float32),
             }
@@ -181,7 +181,7 @@ def test_api_summary_snapshot_missing_batch(snapshot, cached_example):
             {
                 "response_key": ["FOPR", "FOPR", "WOPR", "WOPR", "FOPT", "FOPT"],
                 "time": pl.Series(
-                    [datetime(2000, 1, 1) + timedelta(days=i) for i in range(6)]
+                    [datetime(2000, 1, 1), datetime(2000, 1, 2)] * 3
                 ).dt.cast_time_unit("ms"),
                 "values": pl.Series([0.2, 0.2, 1.0, 1.1, 3.3, 3.3], dtype=pl.Float32),
             }
