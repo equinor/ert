@@ -189,9 +189,9 @@ class _EnsembleWidget(QWidget):
 
         response_type, obs_for_type = next(
             (
-                (response_type, _df)
-                for response_type, _df in observations_dict.items()
-                if observation_key in _df["observation_key"]
+                (response_type, df)
+                for response_type, df in observations_dict.items()
+                if observation_key in df["observation_key"]
             ),
             (None, None),
         )
@@ -418,14 +418,14 @@ class _RealizationWidget(QWidget):
         )
 
         html = "<table>"
-        for name, _response_state in ensemble.get_response_state(realization).items():
-            html += f"<tr><td>{name} - {_response_state.name}</td></tr>"
+        for name, response_state in ensemble.get_response_state(realization).items():
+            html += f"<tr><td>{name} - {response_state.name}</td></tr>"
         html += "</table>"
         self._response_text_edit.setHtml(html)
 
         html = "<table>"
-        for name, _param_state in ensemble.get_parameter_state(realization).items():
-            html += f"<tr><td>{name} - {_param_state.name}</td></tr>"
+        for name, param_state in ensemble.get_parameter_state(realization).items():
+            html += f"<tr><td>{name} - {param_state.name}</td></tr>"
         html += "</table>"
         self._parameter_text_edit.setHtml(html)
 

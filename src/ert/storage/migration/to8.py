@@ -138,14 +138,14 @@ def _migrate_observations_to_grouped_parquet(path: Path) -> None:
 
         for response_type in ["gen_data", "summary"]:
             infos = [
-                _info for _info in obs_ds_infos if _info.response_type == response_type
+                info_ for info_ in obs_ds_infos if info_.response_type == response_type
             ]
             if len(infos) > 0:
-                concatd_df = pl.concat([_info.polars_df for _info in infos])
+                concatd_df = pl.concat([info_.polars_df for info_ in infos])
                 concatd_df.write_parquet(experiment / "observations" / response_type)
 
-                for _info in infos:
-                    os.remove(_info.original_ds_path)
+                for info_ in infos:
+                    os.remove(info_.original_ds_path)
 
 
 def migrate(path: Path) -> None:

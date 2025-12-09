@@ -47,19 +47,19 @@ class ActiveRange:
             raise ValueError(
                 f"Only digits, commas, dashes and spaces are allowed, got {rangestring}"
             )
-        for _range in rangestring.split(","):
-            if "-" in _range:
-                if len(_range.split("-")) != 2:
-                    raise ValueError(f"Invalid range specified, got {_range}")
-                realization_bounds = _range.split("-")
+        for range_ in rangestring.split(","):
+            if "-" in range_:
+                if len(range_.split("-")) != 2:
+                    raise ValueError(f"Invalid range specified, got {range_}")
+                realization_bounds = range_.split("-")
                 start = int(realization_bounds[0])
                 end = int(realization_bounds[1])
                 if end < start:
                     raise ValueError(
-                        f"Invalid direction in range specified, got {_range}"
+                        f"Invalid direction in range specified, got {range_}"
                     )
             else:
-                int(_range)
+                int(range_)
         return rangestring
 
     @classmethod

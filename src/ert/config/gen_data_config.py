@@ -210,8 +210,8 @@ class GenDataConfig(ResponseConfig):
         return combined
 
     def get_args_for_key(self, key: str) -> tuple[str | None, list[int] | None]:
-        for i, _key in enumerate(self.keys):
-            if key == _key:
+        for i, key_ in enumerate(self.keys):
+            if key == key_:
                 return self.input_files[i], self.report_steps_list[i]
 
         return None, None

@@ -87,8 +87,8 @@ class SummaryConfig(ResponseConfig):
             fm_steps = config_dict.get(ConfigKeys.FORWARD_MODEL, [])
             names = [fm_step[0] for fm_step in fm_steps]
             simulation_step_exists = any(
-                any(sim in _name.lower() for sim in ["eclipse", "flow"])
-                for _name in names
+                any(sim in name.lower() for sim in ["eclipse", "flow"])
+                for name in names
             )
             if not simulation_step_exists:
                 ConfigWarning.warn(

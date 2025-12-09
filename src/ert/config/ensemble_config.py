@@ -143,13 +143,13 @@ class EnsembleConfig(BaseModel):
             return self.parameter_configs[key]
         elif key in self.response_configs:
             return self.response_configs[key]
-        elif _config := next(
+        elif config := next(
             (c for c in self.response_configs.values() if key in c.keys), None
         ):
             # Only hit by blockfs migration
             # returns the same config for one call per
             # response type. Is later deduped before saving to json
-            return _config
+            return config
         else:
             raise KeyError(f"The key:{key} is not in the ensemble configuration")
 
