@@ -141,11 +141,11 @@ class RFTConfig(ResponseConfig):
                     for rft_property in entry:
                         key = f"{well}{sep}{date}{sep}{rft_property}"
                         if matcher.fullmatch(key) is not None:
-                            locations[well, date, rft_property] = [
-                                list(indices.get(tuple(c), [None]))
+                            values = entry[rft_property]
+                            locations[well, date] = [
+                                list(indices.get(tuple(c), [(None, None, None)]))
                                 for c in entry.connections
                             ]
-                            values = entry[rft_property]
                             if np.isdtype(values.dtype, np.float32):
                                 fetched[well, date][rft_property] = values
         except (FileNotFoundError, InvalidRFTError) as err:
@@ -165,7 +165,7 @@ class RFTConfig(ResponseConfig):
             )
 
         try:
-            return pl.concat(
+            df = pl.concat(
                 [
                     pl.DataFrame(
                         {
@@ -173,9 +173,16 @@ class RFTConfig(ResponseConfig):
                             "time": [time],
                             "depth": [fetched[well, time]["DEPTH"]],
                             "values": [vals],
-                            "location": [
-                                locations.get((well, time, prop), [None] * len(vals))
-                            ],
+                            "location": pl.Series(
+                                [
+                                    locations.get(
+                                        (well, time), [(None, None, None)] * len(vals)
+                                    )
+                                ],
+                                dtype=pl.Array(
+                                    pl.List(pl.Array(pl.Float32, 3)), len(vals)
+                                ),
+                            ),
                         }
                     )
                     .explode("depth", "values", "location")
@@ -190,13 +197,19 @@ class RFTConfig(ResponseConfig):
                 f"Could not find {err.args[0]} in RFTFile {filename}"
             ) from err
 
+        return df.with_columns(
+            east=pl.col("location").arr.get(0),
+            north=pl.col("location").arr.get(1),
+            tvd=pl.col("location").arr.get(2),
+        )
+
     @property
     def response_type(self) -> str:
         return "rft"
 
     @property
     def primary_key(self) -> list[str]:
-        return ["locations"]
+        return ["east", "north", "tvd"]
 
     @classmethod
     def from_config_dict(cls, config_dict: ConfigDict) -> RFTConfig | None:
