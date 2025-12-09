@@ -7,6 +7,7 @@ from textwrap import dedent
 
 import numpy as np
 import orjson
+import polars as pl
 import pytest
 import xtgeo
 
@@ -20,6 +21,7 @@ from ert.config import (
 from ert.plugins import get_site_plugins
 from ert.run_arg import create_run_arguments
 from ert.run_models._create_run_path import _make_param_substituter, create_run_path
+from ert.run_models.model_factory import _merge_parameters
 from ert.runpaths import Runpaths
 from ert.sample_prior import sample_prior
 from ert.storage import (
@@ -27,6 +29,7 @@ from ert.storage import (
     load_realization_parameters_and_responses,
 )
 from ert.substitutions import Substitutions
+from tests.ert.conftest import _create_design_matrix
 from tests.ert.unit_tests.config.summary_generator import simple_smspec, simple_unsmry
 
 
@@ -1059,7 +1062,81 @@ def test_that_parameters_as_magic_strings_are_substituted():
             {
                 "GROUP1": {"a": 1.01},
                 "GROUP2": {"b": "value"},
+                "GROUP3": {"c": 4213131313},
             },
-        ).substitute("<a> and <b>")
-        == "1.01 and value"
+        ).substitute("<a> and <b> and <c>")
+        == "1.01 and value and 4213131313"
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_design_matrix_scalars_are_not_exported_with_scientific_notation(
+    run_args, storage
+):
+    """
+    This is a regression test to make sure that the integers will remain full
+    numbers in parameters.txt, paramaters.json, and template files, when
+    exporting values from the design matrix.
+    """
+    design_matrix_filename = "dm.xlsx"
+    some_integer = 4294912121
+    design_sheet = pl.DataFrame({"REAL": [0], "my_value": [some_integer]})
+    _create_design_matrix(design_matrix_filename, design_sheet)
+
+    run_template_file_name = "my_file.tmpl"
+    run_template_output_file_name = "my_file.txt"
+    Path(run_template_file_name).write_text("my_value is <my_value>", encoding="utf-8")
+
+    config = ErtConfig.from_file_contents(
+        "NUM_REALIZATIONS 1\n"
+        f"DESIGN_MATRIX {design_matrix_filename} DESIGN_SHEET:DesignSheet\n"
+        f"RUN_TEMPLATE {run_template_file_name} {run_template_output_file_name}"
+    )
+
+    _, design_matrix = _merge_parameters(
+        config.analysis_config.design_matrix,
+        config.ensemble_config.parameter_configuration,
+    )
+    experiment_id = storage.create_experiment(
+        parameters=config.parameter_configurations_with_design_matrix,
+        templates=config.ert_templates,
+    )
+    prior_ensemble = storage.create_ensemble(
+        experiment_id, name="prior", ensemble_size=1
+    )
+    sample_prior(prior_ensemble, [0], 123, design_matrix_df=design_matrix.to_polars())
+    runargs = run_args(config, prior_ensemble, 1)
+    runpaths = Runpaths.from_config(config)
+    create_run_path(
+        run_args=runargs,
+        ensemble=prior_ensemble,
+        user_config_file=config.user_config_file,
+        forward_model_steps=config.forward_model_steps,
+        env_vars=config.env_vars,
+        env_pr_fm_step=config.env_pr_fm_step,
+        substitutions=config.substitutions,
+        parameters_file="parameters",
+        runpaths=runpaths,
+    )
+
+    experiment_path = Path("simulations/realization-0/iter-0")
+    assert experiment_path.exists()
+
+    parameters_text = experiment_path / "parameters.txt"
+    assert parameters_text.exists()
+    assert (
+        parameters_text.read_text(encoding="utf-8").strip()
+        == f"my_value {some_integer}"
+    )
+
+    parameters_json = experiment_path / "parameters.json"
+    assert parameters_json.exists()
+    assert orjson.loads(parameters_json.read_text(encoding="utf-8")) == {
+        "my_value": {"value": some_integer}
+    }
+
+    run_template_output = experiment_path / run_template_output_file_name
+    assert run_template_output.exists()
+    assert (
+        run_template_output.read_text(encoding="utf-8") == f"my_value is {some_integer}"
     )
