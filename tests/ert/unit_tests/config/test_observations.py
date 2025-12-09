@@ -299,7 +299,9 @@ def test_that_rft_config_is_created_from_observations():
             {
                 "response_key": "well:2013-03-31:PRESSURE",
                 "observation_key": "NAME",
-                "location": [[30.0, 71.0, 2000.0]],
+                "east": pl.Series([30.0], dtype=pl.Float32),
+                "north": pl.Series([71.0], dtype=pl.Float32),
+                "tvd": pl.Series([2000.0], dtype=pl.Float32),
                 "observations": pl.Series([700.0], dtype=pl.Float32),
                 "std": pl.Series([0.1], dtype=pl.Float32),
             }

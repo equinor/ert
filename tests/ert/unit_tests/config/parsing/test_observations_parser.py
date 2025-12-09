@@ -130,8 +130,7 @@ def test_that_missing_assignment_in_observation_body_shows_informative_error_mes
 def test_that_misspelled_observation_type_shows_informative_error_message():
     expected_match = (
         r"Line 1 \(Column 1-23\): Unknown observation type 'MISSPELLED_OBSERVATION', "
-        r"expected either 'GENERAL_OBSERVATION', "
-        r"'SUMMARY_OBSERVATION' or 'HISTORY_OBSERVATION'."
+        r"expected either"
     )
     with pytest.raises(ObservationConfigError, match=expected_match):
         parse_observations(

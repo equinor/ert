@@ -123,7 +123,10 @@ observations_parser = Lark(
     r"""
     start: observation*
     ?observation: type OBSERVATION_NAME object? ";"
-    TYPE: "HISTORY_OBSERVATION" | "SUMMARY_OBSERVATION" | "GENERAL_OBSERVATION" | "RFT_OBSERVATION"
+    TYPE: "HISTORY_OBSERVATION"
+      | "SUMMARY_OBSERVATION"
+      | "GENERAL_OBSERVATION"
+      | "RFT_OBSERVATION"
     type: TYPE
     ?value: object
           | STRING
