@@ -14,6 +14,13 @@ def migrate_realization_errors_json_content(
         4: "responses_loaded",
         8: "failure_in_current",
         16: "failure_in_parent",
+        # To cover cases  who ran with storage version 16
+        # and StrEnum _RealizationStorageState
+        "undefined": "undefined",
+        "parameters_loaded": "parameters_loaded",
+        "responses_loaded": "responses_loaded",
+        "failure_in_current": "failure_in_current",
+        "failure_in_parent": "failure_in_parent",
     }
     return error_json | {"type": int_to_str[error_json["type"]]}
 
