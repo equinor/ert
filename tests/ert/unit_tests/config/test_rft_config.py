@@ -205,7 +205,9 @@ def test_that_number_of_connections_can_be_different_per_well(mock_resfo_file):
 
 
 def pad_to(lst: list[int], target_len: int):
-    return np.pad(lst, (0, target_len - len(lst)), mode="constant")
+    return np.pad(
+        np.array(lst, dtype=np.int32), (0, target_len - len(lst)), mode="constant"
+    )
 
 
 def test_that_locations_are_found(mock_resfo_file):
@@ -240,7 +242,7 @@ def test_that_locations_are_found(mock_resfo_file):
     mock_resfo_file(
         "/tmp/does_not_exist/BASE.RFT",
         [
-            *cell_start(date=(1, 1, 2000), well_name="WELL2", ijks=[(0, 0, 0)]),
+            *cell_start(date=(1, 1, 2000), well_name="WELL2", ijks=[(1, 1, 1)]),
             ("PRESSURE", float_arr([0.1])),
             ("DEPTH   ", float_arr([0.1])),
         ],
@@ -254,7 +256,9 @@ def test_that_locations_are_found(mock_resfo_file):
     assert data["response_key"].to_list() == [
         "WELL2:2000-01-01:PRESSURE",
     ]
-    assert data["location"].to_list() == [[1.0, 1.0, 1.0]]
+    assert data["north"].to_list() == [1.0]
+    assert data["east"].to_list() == [1.0]
+    assert data["tvd"].to_list() == [1.0]
 
 
 def test_that_multiple_locations_in_the_same_cell_creates_multiple_rows(
@@ -291,7 +295,7 @@ def test_that_multiple_locations_in_the_same_cell_creates_multiple_rows(
     mock_resfo_file(
         "/tmp/does_not_exist/BASE.RFT",
         [
-            *cell_start(date=(1, 1, 2000), well_name="WELL2", ijks=[(0, 0, 0)]),
+            *cell_start(date=(1, 1, 2000), well_name="WELL2", ijks=[(1, 1, 1)]),
             ("PRESSURE", float_arr([0.1])),
             ("DEPTH   ", float_arr([0.1])),
         ],
@@ -306,4 +310,6 @@ def test_that_multiple_locations_in_the_same_cell_creates_multiple_rows(
         "WELL2:2000-01-01:PRESSURE",
         "WELL2:2000-01-01:PRESSURE",
     ]
-    assert data["location"].to_list() == [[1.0, 1.0, 1.0], [2.0, 2.0, 2.0]]
+    assert data["north"].to_list() == [1.0, 2.0]
+    assert data["east"].to_list() == [1.0, 2.0]
+    assert data["tvd"].to_list() == [1.0, 2.0]
