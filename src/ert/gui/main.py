@@ -163,7 +163,7 @@ def _start_initial_gui_window(
             storage.close()
 
             if should_migrate:
-                # Open write to initialize the storage,so that
+                # Open in write mode to initialize the storage, so that
                 # dark storage can be mounted onto it
                 open_storage(ert_config.ens_path, mode="w").close()
             storage_path = ert_config.ens_path
