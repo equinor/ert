@@ -747,6 +747,7 @@ class ErtConfig(BaseModel):
                 and "rft" not in self.ensemble_config.response_configs
             ):
                 self.ensemble_config.response_configs["rft"] = RFTConfig(
+                    input_files=[self.runpath_config.eclbase_format_string],
                     data_to_read={},
                     locations=[],
                 )
@@ -1145,6 +1146,7 @@ class ErtConfig(BaseModel):
             )
             if has_rft_observations and "rft" not in ensemble_config.response_configs:
                 ensemble_config.response_configs["rft"] = RFTConfig(
+                    input_files=[eclbase],
                     data_to_read={},
                     locations=[],
                 )

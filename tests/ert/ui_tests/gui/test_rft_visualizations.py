@@ -89,7 +89,6 @@ def rft_config(tmp_path: Path):
             "ENSPATH": str(tmp_path / "storage"),
             "RUNPATH": str(tmp_path / "run_path/realization-<IENS>"),
             "ECLBASE": "BASE",
-            "RFT": [{"WELL": "*", "DATE": "*", "PROPERTIES": "*"}],
             "OBS_CONFIG": (
                 "obs_config",
                 [
