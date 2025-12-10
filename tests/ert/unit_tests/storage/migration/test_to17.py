@@ -130,3 +130,48 @@ def test_realizations_with_missing_error_json(use_tmpdir):
             else:
                 contents = json.loads(error_file.read_text(encoding="utf-8"))
                 assert contents["type"] == _error_str
+
+
+def test_that_realization_storage_state_migration_works_when_already_strenum(
+    use_tmpdir,
+):
+    ensembles = ["ensemble_1", "ensemble_2", "ensemble_3"]
+
+    for ensemble in ensembles:
+        ensemble_path = Path(f"ensembles/{ensemble}")
+        ensemble_path.mkdir(parents=True, exist_ok=True)
+
+        for realization, _error_int, _error_str in [
+            (0, "undefined", "undefined"),
+            (1, "parameters_loaded", "parameters_loaded"),
+            (2, "responses_loaded", "responses_loaded"),
+            (3, "failure_in_current", "failure_in_current"),
+            (4, "failure_in_parent", "failure_in_parent"),
+        ]:
+            real_dir = ensemble_path / f"realization-{realization}"
+            real_dir.mkdir()
+            (real_dir / "error.json").write_text(
+                json.dumps(
+                    {
+                        "type": _error_int,
+                        "message": f"Realization {realization} in {ensemble} failed.",
+                        "time": datetime.now().isoformat(),
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+    migrate(Path("."))
+
+    for ensemble in ensembles:
+        ensemble_path = Path(f"ensembles/{ensemble}")
+        for realization, _error_str in [
+            (0, "undefined"),
+            (1, "parameters_loaded"),
+            (2, "responses_loaded"),
+            (3, "failure_in_current"),
+            (4, "failure_in_parent"),
+        ]:
+            error_file = ensemble_path / f"realization-{realization}/error.json"
+            contents = json.loads(error_file.read_text(encoding="utf-8"))
+            assert contents["type"] == _error_str
