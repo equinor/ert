@@ -160,6 +160,7 @@ def data_for_response(
             )
             .rename({"realization": "Realization"})
             .select(["Realization", "depth", "values"])
+            .unique()
             .to_pandas()
             .pivot(index="Realization", columns="depth", values="values")
             .reset_index(drop=True)

@@ -206,7 +206,7 @@ class RFTConfig(ResponseConfig):
             east=pl.col("location").arr.get(0),
             north=pl.col("location").arr.get(1),
             tvd=pl.col("location").arr.get(2),
-        )
+        ).drop("location")
 
     @property
     def response_type(self) -> str:
