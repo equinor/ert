@@ -158,9 +158,8 @@ def _start_initial_gui_window(
     storage_path = None
     if ert_config is not None:
         try:
-            storage = open_storage(ert_config.ens_path, mode="r")
-            should_migrate = storage.check_migration_needed()
-            storage.close()
+            with open_storage(ert_config.ens_path) as read_storage:
+                should_migrate = read_storage.check_migration_needed()
 
             if should_migrate:
                 # Open in write mode to initialize the storage, so that
