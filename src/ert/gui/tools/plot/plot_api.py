@@ -318,6 +318,7 @@ class PlotApi:
                         f"ensemble_name={ensemble.name}, e={e}"
                     ) from e
 
+                key_index: list[int | float | pd.Timestamp]
                 for obs in observations:
                     try:
                         int(obs["x_axis"][0])
