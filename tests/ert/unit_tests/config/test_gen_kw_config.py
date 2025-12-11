@@ -153,14 +153,30 @@ number_regex = r"[-+]?(?:\d*\.\d+|\d+)"
     "distribution, expect_log, parameters_regex",
     [
         ("NORMAL 0 1", False, r"KW_NAME:MY_KEYWORD " + number_regex),
-        ("LOGNORMAL 0 1", True, r"KW_NAME:MY_KEYWORD " + number_regex + r"\n"),
+        (
+            "LOGNORMAL 0 1",
+            True,
+            r"KW_NAME:MY_KEYWORD "
+            + number_regex
+            + r"\n"
+            + r"LOG10_KW_NAME:MY_KEYWORD "
+            + number_regex,
+        ),
         ("UNIFORM 0 1", False, r"KW_NAME:MY_KEYWORD " + number_regex),
         (
             "TRUNCATED_NORMAL 1 0.25 0 10",
             False,
             r"KW_NAME:MY_KEYWORD " + number_regex,
         ),
-        ("LOGUNIF 0.0001 1", True, r"KW_NAME:MY_KEYWORD " + number_regex),
+        (
+            "LOGUNIF 0.0001 1",
+            True,
+            r"KW_NAME:MY_KEYWORD "
+            + number_regex
+            + r"\n"
+            + r"LOG10_KW_NAME:MY_KEYWORD "
+            + number_regex,
+        ),
         ("CONST 1.0", False, "KW_NAME:MY_KEYWORD 1\n"),
         ("DUNIF 5 1 5", False, r"KW_NAME:MY_KEYWORD " + number_regex),
         ("ERRF 1 2 0.1 0.1", False, r"KW_NAME:MY_KEYWORD " + number_regex),
