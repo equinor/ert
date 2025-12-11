@@ -430,6 +430,11 @@ def test_that_manual_update_from_migrated_storage_works(
 @pytest.mark.parametrize(
     "ert_version",
     [
+        "15.0.2",
+        "14.6.4",
+        "13.0.5",
+        "12.1.2",
+        "11.1.9",
         "11.1.8",
         "10.3.1",
         "10.0.3",
