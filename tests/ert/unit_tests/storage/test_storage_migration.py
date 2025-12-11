@@ -336,6 +336,11 @@ def test_that_migrate_blockfs_creates_backup_folder(tmp_path, caplog):
 @pytest.mark.parametrize(
     "ert_version",
     [
+        "15.0.2",
+        "14.6.4",
+        "13.0.5",
+        "12.1.2",
+        "11.1.9",
         "10.3.1",
     ],
 )
