@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import os
@@ -12,7 +13,7 @@ import pytest
 from ert.analysis import ErtAnalysisError, smoother_update
 from ert.config import ErtConfig, ESSettings, ObservationSettings
 from ert.plugins import get_site_plugins
-from ert.storage import open_storage
+from ert.storage import RealizationStorageState, open_storage
 from ert.storage.local_storage import (
     _LOCAL_STORAGE_VERSION,
     local_storage_set_ert_config,
@@ -469,3 +470,87 @@ def test_migrate_storage_with_no_responses(
     local_storage_set_ert_config(ert_config)
 
     open_storage(f"storage-{ert_version}", "w")
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("copy_shared")
+@pytest.mark.parametrize(
+    "ert_version",
+    [
+        "15.0.2",
+        "14.6.4",
+        "13.0.5",
+        "12.1.2",
+        "11.1.9",
+        "11.1.8",
+        "10.3.1",
+        "10.0.3",
+        "9.0.17",
+    ],
+)
+def test_that_storages_with_failed_realizations_are_migrated_without_errors(
+    tmp_path,
+    block_storage_path,
+    monkeypatch,
+    ert_version,
+):
+    storage_path = tmp_path / "all_data_types" / f"storage-{ert_version}"
+    shutil.copytree(
+        block_storage_path / f"all_data_types/storage-{ert_version}",
+        storage_path,
+    )
+    monkeypatch.chdir(tmp_path / "all_data_types")
+
+    # Inject a failed realization
+    ensembles_dir = Path(f"storage-{ert_version}/ensembles")
+    # There are no missing reals, so we assume the index corresponds
+    # to the real nr
+    realization_dirs = sorted(ensembles_dir.glob("*/realization-*"))
+
+    # Add failures to some of them
+    failures = [
+        (i, failure_json, realization_state)
+        for i, failure_json, realization_state in [
+            (
+                0,
+                {
+                    "type": 1,
+                    "message": "this is undefined",
+                    "time": datetime.datetime(2000, 1, 5).isoformat(),
+                },
+                RealizationStorageState.UNDEFINED,
+            ),
+            (
+                3,
+                {
+                    "type": 8,
+                    "message": "this is failure",
+                    "time": datetime.datetime(2000, 1, 5).isoformat(),
+                },
+                RealizationStorageState.FAILURE_IN_CURRENT,
+            ),
+            (
+                8,
+                {
+                    "type": 16,
+                    "message": "this is parent failure",
+                    "time": datetime.datetime(2000, 1, 5).isoformat(),
+                },
+                RealizationStorageState.FAILURE_IN_PARENT,
+            ),
+        ]
+    ]
+
+    for i, failure_json, _ in failures:
+        (realization_dirs[i] / "error.json").write_text(json.dumps(failure_json))
+
+    ert_config = ErtConfig.with_plugins(get_site_plugins()).from_file("config.ert")
+
+    local_storage_set_ert_config(ert_config)
+
+    with open_storage(f"storage-{ert_version}", "w") as storage:
+        ensemble = next(storage.ensembles)
+        realization_states = ensemble.get_ensemble_state()
+        for i, _, realization_state in failures:
+            assert realization_state in realization_states[i]
+            assert ensemble.get_failure(i).type == realization_state
