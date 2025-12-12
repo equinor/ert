@@ -11,14 +11,14 @@ from ert.gui.model.snapshot import NodeRole, SnapshotModel
 from .gui_models_utils import finish_snapshot
 
 
-def test_using_qt_model_tester(qtmodeltester, full_snapshot):
+def test_using_qt_model_tester(full_snapshot):
     source_model = SnapshotModel()
 
     model = RealListModel(None, 0)
     model.setSourceModel(source_model)
 
-    reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Warning
-    tester = qt_api.QtTest.QAbstractItemModelTester(  # noqa: F841, prevent GAC
+    reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Fatal
+    tester = qt_api.QtTest.QAbstractItemModelTester(  # noqa: F841, prevent GC
         model, reporting_mode
     )
 
@@ -29,8 +29,6 @@ def test_using_qt_model_tester(qtmodeltester, full_snapshot):
     source_model._update_snapshot(SnapshotModel.prerender(snapshot), "0")
     source_model._update_snapshot(SnapshotModel.prerender(snapshot), "1")
 
-    qtmodeltester.check(model, force_py=True)
-
 
 def test_change_iter(full_snapshot):
     source_model = SnapshotModel()
@@ -38,7 +36,7 @@ def test_change_iter(full_snapshot):
     model = RealListModel(None, 0)
     model.setSourceModel(source_model)
 
-    reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Warning
+    reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Fatal
     tester = qt_api.QtTest.QAbstractItemModelTester(  # noqa: F841, prevent GC
         model, reporting_mode
     )

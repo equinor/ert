@@ -20,12 +20,15 @@ else:
 
 def is_high_contrast_mode() -> bool:
     app = cast(QWidget, QApplication.instance())
-    return app.palette().color(QPalette.ColorRole.Window).lightness() > 245
+    return (
+        app is not None
+        and app.palette().color(QPalette.ColorRole.Window).lightness() > 245
+    )
 
 
 def is_dark_mode() -> bool:
     app = cast(QWidget, QApplication.instance())
-    return app.palette().base().color().value() < 70
+    return app is not None and app.palette().base().color().value() < 70
 
 
 __version__ = ert.shared.__version__
