@@ -64,8 +64,6 @@ class LocalStorage(BaseMode):
         self,
         path: str | os.PathLike[str],
         mode: Mode,
-        *,
-        ignore_migration_check: bool = False,
     ) -> None:
         """
         Initializes the LocalStorage instance.
@@ -76,19 +74,20 @@ class LocalStorage(BaseMode):
             The file system path to the storage.
         mode : Mode
             The access mode for the storage (read/write).
-        ignore_migration_check : bool
-            If True, skips migration checks during initialization.
         """
 
-        super().__init__(mode)
         self.path = Path(path).absolute()
+        super().__init__(mode)
+
+        if mode.can_write:
+            self._acquire_lock()
 
         self._experiments: dict[UUID, LocalExperiment]
         self._ensembles: dict[UUID, LocalEnsemble]
         self._index: _Index
 
         try:
-            version = _storage_version(self.path)
+            self.version = _storage_version(self.path)
         except FileNotFoundError as err:
             # No index json, will have a problem if other components of storage exists
             errors = []
@@ -100,26 +99,36 @@ class LocalStorage(BaseMode):
                 errors.append(f"ensemble path: {self.path / self.ENSEMBLES_PATH}")
             if errors:
                 raise ValueError(f"No index.json, but found: {errors}") from err
-            version = _LOCAL_STORAGE_VERSION
+            self.version = _LOCAL_STORAGE_VERSION
 
-        if version > _LOCAL_STORAGE_VERSION:
+        if self.check_migration_needed():
+            self.perform_migration()
+
+        self.refresh()
+        if mode.can_write:
+            self._save_index()
+
+    def check_migration_needed(self) -> bool:
+        if self.version > _LOCAL_STORAGE_VERSION:
             raise RuntimeError(
-                f"Cannot open storage '{self.path}': Storage version {version} "
+                f"Cannot open storage '{self.path}': Storage version {self.version} "
                 f"is newer than the current version {_LOCAL_STORAGE_VERSION}, "
                 "upgrade ert to continue, or run with a different ENSPATH"
             )
-        if self.can_write:
-            self._acquire_lock()
-            if version < _LOCAL_STORAGE_VERSION and not ignore_migration_check:
-                self._migrate(version)
-            self._index = self._load_index()
-            self._save_index()
-        elif version < _LOCAL_STORAGE_VERSION:
-            raise RuntimeError(
-                f"Cannot open storage '{self.path}' in read-only mode: "
-                f"Storage version {version} is too old. Run ert to initiate migration."
-            )
-        self.refresh()
+
+        return self.version < _LOCAL_STORAGE_VERSION
+
+    def perform_migration(self) -> None:
+        if self.check_migration_needed():
+            if self.can_write:
+                self._migrate(self.version)
+                self._save_index()
+            else:
+                raise RuntimeError(
+                    f"Cannot open storage '{self.path}' in read-only mode: "
+                    f"Storage version {self.version} is too old. "
+                    f"Run ert to initiate migration."
+                )
 
     def refresh(self) -> None:
         """
@@ -283,22 +292,16 @@ class LocalStorage(BaseMode):
     def close(self) -> None:
         """
         Closes the storage, releasing any acquired locks and saving the index.
-
         This method should be called to cleanly close the storage, especially
         when it was opened in write mode. Failing to call this method may leave
         a lock file behind, which would interfere with subsequent access to
         the storage.
         """
-
         self._ensembles.clear()
         self._experiments.clear()
 
-        if not self.can_write:
-            return
-
-        self._save_index()
-
         if self.can_write:
+            self._save_index()
             self._release_lock()
 
     def _release_lock(self) -> None:
@@ -564,7 +567,7 @@ class LocalStorage(BaseMode):
         Get a unique experiment name
 
         If an experiment with the given name exists an _0 is appended
-        or _n+1 where n is the the largest postfix found for the given experiment name
+        or _n+1 where n is the largest postfix found for the given experiment name
         """
         if not experiment_name:
             return self.get_unique_experiment_name("default")
