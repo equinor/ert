@@ -11,7 +11,6 @@ import pytest
 from ert.services import ErtServer
 from ert.services._storage_main import _create_connection_info, _generate_certificate
 from ert.shared import find_available_socket
-from everest.config import ServerConfig
 
 
 @pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
@@ -148,7 +147,7 @@ def test_storage_logging(change_to_tmpdir):
 @pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
 @pytest.mark.integration_test
 def test_certificate_generation(change_to_tmpdir):
-    cert, key, pw = _generate_certificate(ServerConfig.get_certificate_dir("output"))
+    cert, key, pw = _generate_certificate(".")
 
     # check that files are written
     assert os.path.exists(cert)
@@ -166,9 +165,7 @@ def test_certificate_generation_handles_long_machine_names(change_to_tmpdir):
         "ert.shared.get_machine_name",
         return_value="A" * 67,
     ):
-        cert, key, pw = _generate_certificate(
-            ServerConfig.get_certificate_dir("output")
-        )
+        cert, key, pw = _generate_certificate(".")
 
     # check that files are written
     assert os.path.exists(cert)
@@ -185,7 +182,7 @@ def test_that_server_hosts_exists_as_san_in_certificate(change_to_tmpdir):
     auth_token = "very_secret_token"
     sock = find_available_socket()
 
-    cert_path, _, _ = _generate_certificate(ServerConfig.get_certificate_dir("output"))
+    cert_path, _, _ = _generate_certificate(".")
 
     conn_info = _create_connection_info(sock, auth_token, cert_path)
     # check certificate is readable
