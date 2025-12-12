@@ -56,6 +56,12 @@ from ert.scheduler.scheduler import Scheduler
 from .ensemble_evaluator_utils import TestEnsemble
 
 
+@pytest.fixture(autouse=True)
+def reduce_ee_sleeps(monkeypatch):
+    monkeypatch.setattr(EnsembleEvaluator, "DEFAULT_SLEEP_PERIOD", 0.05)
+    monkeypatch.setattr(EnsembleEvaluator, "BATCHING_INTERVAL", 0.05)
+
+
 @pytest.mark.parametrize(
     "task, error_msg",
     [
@@ -96,9 +102,7 @@ async def test_evaluator_raises_on_invalid_dispatch_event(make_ee_config):
         await evaluator.handle_dispatch(b"dispatcher-1", b"This is not an event!!")
 
 
-async def test_evaluator_handles_dispatchers_connected(
-    make_ee_config,
-):
+async def test_evaluator_handles_dispatchers_connected(make_ee_config):
     evaluator = EnsembleEvaluator(
         TestEnsemble(0, 2, 2, id_="0"),
         make_ee_config(),
@@ -195,7 +199,6 @@ async def evaluator_to_use_fixture(monkeypatch, make_ee_config):
         pass
 
     monkeypatch.setattr(EnsembleEvaluator, "evaluate", empty_mock_function)
-    monkeypatch.setattr(EnsembleEvaluator, "DEFAULT_SLEEP_PERIOD", 0.05)
     monkeypatch.setattr(Scheduler, "BATCH_KILLING_INTERVAL", 0)
     event_queue = asyncio.Queue()
     evaluator = EnsembleEvaluator(
@@ -518,9 +521,7 @@ async def test_signal_cancel_terminates_fm_dispatcher_with_terminate_message(
     )
     config = EvaluatorServerConfig(use_token=False)
     event_queue: asyncio.Queue[EESnapshot | EESnapshotUpdate] = asyncio.Queue()
-    monkeypatch.setattr(EnsembleEvaluator, "DEFAULT_SLEEP_PERIOD", 0.05)
     evaluator = EnsembleEvaluator(ensemble, config, Event(), event_queue.put_nowait)
-    evaluator._batching_interval = 0.05
     run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
     await evaluator._server_started
 
@@ -597,9 +598,7 @@ async def test_signal_cancel_terminates_fm_dispatcher_with_scheduler_as_fallback
         "_send_terminate_message_to_dispatchers",
         empty_send_terminate_messages,
     )
-    monkeypatch.setattr(EnsembleEvaluator, "DEFAULT_SLEEP_PERIOD", 0.05)
     evaluator = EnsembleEvaluator(ensemble, config, Event(), event_queue.put_nowait)
-    evaluator._batching_interval = 0.05
     run_task = asyncio.create_task(evaluator.run_and_get_successful_realizations())
     await evaluator._server_started
 

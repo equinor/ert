@@ -318,7 +318,7 @@ async def test_that_qsub_will_retry_and_fail(
     qsub_path.chmod(qsub_path.stat().st_mode | stat.S_IEXEC)
     driver = OpenPBSDriver()
     driver._max_pbs_cmd_attempts = 2
-    driver._sleep_time_between_cmd_retries = 0.2
+    driver._sleep_time_between_cmd_retries = 0.01
     match_str = (
         f'failed after 2 attempts with exit code {exit_code}.*error: "{error_msg}"'
         if exit_code != 199
@@ -364,7 +364,7 @@ async def test_that_qsub_will_retry_and_succeed(
     driver = OpenPBSDriver()
     driver._poll_period = 0.01
     driver._max_pbs_cmd_attempts = 2
-    driver._sleep_time_between_cmd_retries = 0.2
+    driver._sleep_time_between_cmd_retries = 0.01
     await driver.submit(0, "sleep 10")
 
 
@@ -402,7 +402,7 @@ async def test_that_qdel_will_retry_and_succeed(
     qdel_path.chmod(qdel_path.stat().st_mode | stat.S_IEXEC)
     driver = OpenPBSDriver()
     driver._max_pbs_cmd_attempts = 2
-    driver._sleep_time_between_cmd_retries = 0.2
+    driver._sleep_time_between_cmd_retries = 0.01
     driver._iens2jobid[0] = str(111)
     driver._iens2jobid[1] = str(222)
     await driver.kill([0, 1])
@@ -490,7 +490,7 @@ async def test_that_openpbs_driver_ignores_qstat_flakiness(
     caplog.set_level(logging.DEBUG)
     create_mock_flaky_qstat(error_message_to_output=text_to_ignore)
     driver = OpenPBSDriver()
-    driver._poll_period = 0.1
+    driver._poll_period = 0.01
     await driver.submit(0, "sleep")
 
     with contextlib.suppress(TypeError):
