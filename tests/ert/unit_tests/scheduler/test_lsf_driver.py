@@ -430,7 +430,7 @@ async def test_kill(
 
             if "-s SIGKILL" in bkill_args_file_content:
                 break
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.01)
 
     if expected_logged_error:
         assert expected_logged_error in caplog.text
