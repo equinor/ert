@@ -1,6 +1,4 @@
-import json
 import os
-from pathlib import Path
 from textwrap import dedent
 from typing import Any
 
@@ -14,7 +12,7 @@ from ert.config.queue_config import (
 )
 from ert.dark_storage.client import ErtClientConnectionInfo
 
-from ..strings import CERTIFICATE_DIR, HOSTFILE_NAME, SESSION_DIR
+from ..strings import SESSION_DIR
 from .simulator_config import check_removed_config
 
 
@@ -55,16 +53,6 @@ class ServerConfig(BaseModel):
         return data
 
     @staticmethod
-    def get_server_url(output_dir: str) -> str:
-        """Return the url of the server.
-
-        If server_info are given, the url is generated using that info. Otherwise
-        server information are retrieved from the hostfile
-        """
-        server_info = ServerConfig.get_server_info(output_dir)
-        return f"https://{server_info['host']}:{server_info['port']}/experiment_server"
-
-    @staticmethod
     def get_server_context_from_conn_info(
         conn_info: ErtClientConnectionInfo,
     ) -> tuple[str, str, tuple[str, str]]:
@@ -98,29 +86,7 @@ class ServerConfig(BaseModel):
         return url, cert_file, auth
 
     @staticmethod
-    def get_server_info(output_dir: str) -> dict[str, Any]:
-        """Load server information from the hostfile"""
-        host_file_path = Path(ServerConfig.get_hostfile_path(output_dir))
-        if not host_file_path.exists():
-            return {"host": None, "port": None, "cert": None, "auth": None}
-
-        data = json.loads(host_file_path.read_text(encoding="utf-8"))
-
-        if not all(k in data for k in ("host", "port", "cert", "auth")):
-            raise RuntimeError("Malformed hostfile")
-        return data
-
-    @staticmethod
-    def get_hostfile_path(output_dir: str) -> str:
-        return os.path.join(ServerConfig.get_session_dir(output_dir), HOSTFILE_NAME)
-
-    @staticmethod
     def get_session_dir(output_dir: str) -> str:
         """Return path to the session directory containing information about the
         certificates and host information"""
         return os.path.join(os.path.abspath(output_dir), SESSION_DIR)
-
-    @staticmethod
-    def get_certificate_dir(output_dir: str) -> str:
-        """Return the path to certificate folder"""
-        return os.path.join(ServerConfig.get_session_dir(output_dir), CERTIFICATE_DIR)
