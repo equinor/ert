@@ -11,22 +11,19 @@ from .gui_models_utils import finish_snapshot
 
 @pytest.mark.integration_test
 @pytest.mark.skip_mac_ci  # slow
-def test_using_qt_model_tester(qtmodeltester, full_snapshot):
+def test_using_qt_model_tester(full_snapshot):
     model = SnapshotModel()
 
-    reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Warning
+    reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Fatal
     tester = qt_api.QtTest.QAbstractItemModelTester(  # noqa: F841, prevent GC
         model, reporting_mode
     )
 
     model._add_snapshot(SnapshotModel.prerender(full_snapshot), "0")
     model._add_snapshot(SnapshotModel.prerender(full_snapshot), "1")
-
     snapshot = finish_snapshot(SnapshotModel.prerender(full_snapshot))
     model._update_snapshot(SnapshotModel.prerender(snapshot), "0")
     model._update_snapshot(SnapshotModel.prerender(snapshot), "1")
-
-    qtmodeltester.check(model, force_py=True)
 
 
 def test_realization_sort_order(full_snapshot):

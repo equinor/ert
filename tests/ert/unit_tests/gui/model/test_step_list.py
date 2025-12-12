@@ -23,14 +23,14 @@ def _id_to_col(identifier):
     return FM_STEP_COLUMNS.index(identifier)
 
 
-def test_using_qt_model_tester(qtmodeltester, full_snapshot):
+def test_using_qt_model_tester(full_snapshot):
     snapshot = finish_snapshot(full_snapshot)
     source_model = SnapshotModel()
 
     model = FMStepListProxyModel(None, 0, 0)
     model.setSourceModel(source_model)
 
-    reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Warning
+    reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Fatal
     tester = qt_api.QtTest.QAbstractItemModelTester(  # noqa: F841, prevent GC
         model, reporting_mode
     )
@@ -41,8 +41,6 @@ def test_using_qt_model_tester(qtmodeltester, full_snapshot):
     source_model._update_snapshot(SnapshotModel.prerender(snapshot), "0")
     source_model._update_snapshot(SnapshotModel.prerender(snapshot), "1")
 
-    qtmodeltester.check(model, force_py=True)
-
 
 @pytest.mark.requires_window_manager
 def test_changes(full_snapshot):
@@ -51,7 +49,7 @@ def test_changes(full_snapshot):
     model = FMStepListProxyModel(None, 0, 0)
     model.setSourceModel(source_model)
 
-    reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Warning
+    reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Fatal
     tester = qt_api.QtTest.QAbstractItemModelTester(  # noqa: F841, prevent GC
         model, reporting_mode
     )
@@ -90,7 +88,7 @@ def test_duration(mock_datetime, timezone, full_snapshot):
     model = FMStepListProxyModel(None, 0, 0)
     model.setSourceModel(source_model)
 
-    reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Warning
+    reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Fatal
     tester = qt_api.QtTest.QAbstractItemModelTester(  # noqa: F841, prevent GC
         model, reporting_mode
     )
@@ -136,8 +134,10 @@ def test_no_cross_talk(full_snapshot):
     model = FMStepListProxyModel(None, 0, 0)
     model.setSourceModel(source_model)
 
-    reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Warning
-    qt_api.QtTest.QAbstractItemModelTester(model, reporting_mode)
+    reporting_mode = qt_api.QtTest.QAbstractItemModelTester.FailureReportingMode.Fatal
+    tester = qt_api.QtTest.QAbstractItemModelTester(  # noqa: F841, prevent GC
+        model, reporting_mode
+    )
 
     source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), "0")
     source_model._add_snapshot(SnapshotModel.prerender(full_snapshot), "1")
