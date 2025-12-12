@@ -4,7 +4,7 @@ RFT_OBSERVATION rft_obs {
     PROPERTY=PRESSURE;
     VALUE=3800;
     ERROR=10;
-    TVD=8370;
+    TVD=8400;
     EAST=9500;
     NORTH=9500;
 };

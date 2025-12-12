@@ -75,6 +75,11 @@ jobs:
         uv run ert ensemble_experiment --disable-monitoring flow.ert
         popd
 
+    - name: Run update with rft observations
+      run: |
+        set -e
+        uv run pytest tests/ert/ui_tests/cli/test_update_with_rft_observations.py
+
     - name: Run Everest on an example configuration with flow
       run: |
         pushd test-data/everest/eightcells/everest/model
