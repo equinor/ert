@@ -1,7 +1,6 @@
 import logging
 from datetime import datetime
 from pathlib import Path
-from textwrap import dedent
 
 import numpy as np
 import polars as pl
@@ -21,9 +20,7 @@ from ert.storage.local_ensemble import (
 @pytest.fixture()
 def setup_case(storage, use_tmpdir, run_args):
     def func(config_text):
-        Path("config.ert").write_text(config_text, encoding="utf-8")
-
-        ert_config = ErtConfig.from_file("config.ert")
+        ert_config = ErtConfig.from_file_contents(config_text)
         prior_ensemble = storage.create_ensemble(
             storage.create_experiment(
                 responses=ert_config.ensemble_config.response_configuration
@@ -98,7 +95,7 @@ def test_load_forward_model(snake_oil_default_storage):
     "summary_configuration, expected",
     [
         pytest.param(
-            None,
+            "",
             (1, None),
             id=(
                 "Checking that we are able to successfully load "
@@ -121,21 +118,18 @@ def test_load_forward_model(snake_oil_default_storage):
 def test_load_forward_model_summary(
     summary_configuration, storage, expected, caplog, run_args
 ):
-    config_text = dedent(
-        """
-        NUM_REALIZATIONS 1
-        ECLBASE SNAKE_OIL_FIELD
-        REFCASE SNAKE_OIL_FIELD
-        """
-    )
-    if summary_configuration:
-        config_text += summary_configuration
-    Path("config.ert").write_text(config_text, encoding="utf-8")
     # Create refcase
     ecl_sum = run_simulator(1, datetime(2014, 9, 10))
     ecl_sum.fwrite()
 
-    ert_config = ErtConfig.from_file("config.ert")
+    ert_config = ErtConfig.from_file_contents(
+        f"""
+        NUM_REALIZATIONS 1
+        ECLBASE SNAKE_OIL_FIELD
+        REFCASE SNAKE_OIL_FIELD
+        {summary_configuration}
+        """
+    )
     experiment_id = storage.create_experiment(
         responses=ert_config.ensemble_config.response_configuration
     )
@@ -165,14 +159,12 @@ def test_load_forward_model_summary(
 
 
 def test_load_forward_model_gen_data(setup_case):
-    config_text = dedent(
-        """
-    NUM_REALIZATIONS 1
-    GEN_DATA RESPONSE RESULT_FILE:response_%d.out REPORT_STEPS:0,1
+    prior_ensemble = setup_case(
+        """\
+        NUM_REALIZATIONS 1
+        GEN_DATA RESPONSE RESULT_FILE:response_%d.out REPORT_STEPS:0,1
         """
     )
-
-    prior_ensemble = setup_case(config_text)
     run_path = Path("simulations/realization-0/iter-0/")
     (run_path / "response_0.out").write_text(
         "\n".join(["1", "2", "3"]), encoding="utf-8"
@@ -191,13 +183,12 @@ def test_load_forward_model_gen_data(setup_case):
 
 
 def test_single_valued_gen_data_with_active_info_is_loaded(setup_case):
-    config_text = dedent(
-        """
-    NUM_REALIZATIONS 1
-    GEN_DATA RESPONSE RESULT_FILE:response_%d.out REPORT_STEPS:0
+    prior_ensemble = setup_case(
+        """\
+        NUM_REALIZATIONS 1
+        GEN_DATA RESPONSE RESULT_FILE:response_%d.out REPORT_STEPS:0
         """
     )
-    prior_ensemble = setup_case(config_text)
 
     run_path = Path("simulations/realization-0/iter-0/")
     (run_path / "response_0.out").write_text("\n".join(["1"]), encoding="utf-8")
@@ -209,13 +200,12 @@ def test_single_valued_gen_data_with_active_info_is_loaded(setup_case):
 
 
 def test_that_all_deactivated_values_are_loaded(setup_case):
-    config_text = dedent(
-        """
-    NUM_REALIZATIONS 1
-    GEN_DATA RESPONSE RESULT_FILE:response_%d.out REPORT_STEPS:0
+    prior_ensemble = setup_case(
+        """\
+        NUM_REALIZATIONS 1
+        GEN_DATA RESPONSE RESULT_FILE:response_%d.out REPORT_STEPS:0
         """
     )
-    prior_ensemble = setup_case(config_text)
 
     run_path = Path("simulations/realization-0/iter-0/")
     (run_path / "response_0.out").write_text("\n".join(["-1"]), encoding="utf-8")
@@ -229,15 +219,12 @@ def test_that_all_deactivated_values_are_loaded(setup_case):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_loading_gen_data_without_restart(storage, run_args):
-    config_text = dedent(
-        """
-    NUM_REALIZATIONS 1
-    GEN_DATA RESPONSE RESULT_FILE:response.out
+    ert_config = ErtConfig.from_file_contents(
+        """\
+        NUM_REALIZATIONS 1
+        GEN_DATA RESPONSE RESULT_FILE:response.out
         """
     )
-    Path("config.ert").write_text(config_text, encoding="utf-8")
-
-    ert_config = ErtConfig.from_file("config.ert")
     prior_ensemble = storage.create_ensemble(
         storage.create_experiment(
             responses=ert_config.ensemble_config.response_configuration
