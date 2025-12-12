@@ -12,6 +12,7 @@ import warnings
 from collections.abc import Callable, Sequence
 from datetime import datetime, timedelta
 from enum import Enum, auto
+from functools import lru_cache
 
 import numpy as np
 import numpy.typing as npt
@@ -83,29 +84,30 @@ class DateUnit(Enum):
         raise InvalidResponseFile(f"Unknown date unit {val}")
 
 
+@lru_cache
 def _fetch_keys_to_matcher(fetch_keys: Sequence[str]) -> Callable[[str], bool]:
     """
     Transform the list of keys (with * used as repeated wildcard) into
     a matcher.
 
-    >>> match = _fetch_keys_to_matcher([""])
+    >>> match = _fetch_keys_to_matcher(("",))
     >>> match("FOPR")
     False
 
-    >>> match = _fetch_keys_to_matcher(["*"])
+    >>> match = _fetch_keys_to_matcher(("*",))
     >>> match("FOPR"), match("FO*")
     (True, True)
 
 
-    >>> match = _fetch_keys_to_matcher(["F*PR"])
+    >>> match = _fetch_keys_to_matcher(("F*PR",))
     >>> match("WOPR"), match("FOPR"), match("FGPR"), match("SOIL")
     (False, True, True, False)
 
-    >>> match = _fetch_keys_to_matcher(["WGOR:*"])
+    >>> match = _fetch_keys_to_matcher(("WGOR:*",))
     >>> match("FOPR"), match("WGOR:OP1"), match("WGOR:OP2"), match("WGOR")
     (False, True, True, False)
 
-    >>> match = _fetch_keys_to_matcher(["FOPR", "FGPR"])
+    >>> match = _fetch_keys_to_matcher(("FOPR", "FGPR"))
     >>> match("FOPR"), match("FGPR"), match("WGOR:OP2"), match("WGOR")
     (True, True, False, False)
     """
@@ -138,7 +140,7 @@ def _read_spec(
     date_index = None
     date_unit_str = None
 
-    should_load_key = _fetch_keys_to_matcher(fetch_keys)
+    should_load_key = _fetch_keys_to_matcher(tuple(fetch_keys))
 
     for i, kw in enumerate(keywords):
         try:
