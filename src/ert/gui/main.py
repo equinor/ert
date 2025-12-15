@@ -29,7 +29,12 @@ from ert.gui.tools.event_viewer import (
 from ert.namespace import Namespace
 from ert.plugins import ErtRuntimePlugins, get_site_plugins
 from ert.services import ErtServer
-from ert.storage import ErtStorageException, local_storage_set_ert_config, open_storage
+from ert.storage import (
+    ErtStorageException,
+    LocalStorage,
+    local_storage_set_ert_config,
+    open_storage,
+)
 from ert.trace import trace, tracer
 
 from .ertwidgets import Suggestor
@@ -158,10 +163,7 @@ def _start_initial_gui_window(
     storage_path = None
     if ert_config is not None:
         try:
-            with open_storage(ert_config.ens_path) as read_storage:
-                should_migrate = read_storage.check_migration_needed()
-
-            if should_migrate:
+            if LocalStorage.check_migration_needed(Path(ert_config.ens_path)):
                 # Open in write mode to initialize the storage, so that
                 # dark storage can be mounted onto it
                 open_storage(ert_config.ens_path, mode="w").close()
