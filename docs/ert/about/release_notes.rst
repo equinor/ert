@@ -27,6 +27,33 @@
 Highlighted changes
 ===================
 
+Version 18.0
+------------
+
+Format change of parameters.json
+################################
+
+We’ve changed the format of the parameters.json file located in the runpath of each
+realization. The groups have been dropped, so that all parameters are now at the
+top level. For example, the old format:
+
+.. code-block:: text
+
+  {"COEFFS" : {"a":  0.88}}
+
+
+is now:
+
+.. code-block:: text
+
+  {"a" : {"value" : 0.88}}
+
+
+.. note::
+    This has impact on TEMPLATE_RENDER forward model, which when used with
+    parameters.json needs to be adjusted:
+    from `{{my_input.COEFFS.a}}` to `{{my_input.a.value}}`.
+
 Version 16.0
 ------------
 
