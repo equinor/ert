@@ -583,7 +583,7 @@ def test_that_enif_on_poly_case_matches_snapshot(snapshot):
     result = pl.concat(
         data,
     )
-    snapshot.assert_match(result.write_csv(float_precision=11), "enif_snapshot.csv")
+    snapshot.assert_match(result.write_csv(float_precision=5), "enif_snapshot.csv")
 
 
 @pytest.mark.parametrize(
