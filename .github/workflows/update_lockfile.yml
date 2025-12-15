@@ -35,7 +35,7 @@ jobs:
           echo "\`\`\`" >> uv_output.md
 
       - name: Create pull request
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.LOCKFILE_UPDATE_TOKEN }}
           commit-message: Update uv lockfile
