@@ -1,6 +1,8 @@
 import contextlib
 import json
+from collections.abc import Callable
 from enum import IntEnum
+from pathlib import Path
 
 import polars as pl
 import seaborn as sns
@@ -9,11 +11,18 @@ from matplotlib.backends.backend_qt5agg import FigureCanvas  # type: ignore
 from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
+from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
+    QBoxLayout,
+    QButtonGroup,
     QFrame,
     QHBoxLayout,
     QLabel,
+    QLayout,
+    QLineEdit,
     QPushButton,
+    QRadioButton,
+    QSizePolicy,
     QStackedLayout,
     QTableWidget,
     QTableWidgetItem,
@@ -25,6 +34,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ert.plugins.hook_implementations.workflows import ExportMisfitDataJob
 from ert.storage import Ensemble, Experiment, RealizationStorageState
 
 from .export_parameters_dialog import ExportParametersDialog
@@ -42,6 +52,7 @@ class _ExperimentWidgetTabs(IntEnum):
     OBSERVATIONS_TAB = 1
     PARAMETERS_TAB = 2
     RESPONSES_TAB = 3
+    EXPORT_MISFIT_TAB = 4
 
 
 class _EnsembleWidgetTabs(IntEnum):
@@ -49,6 +60,7 @@ class _EnsembleWidgetTabs(IntEnum):
     STATE_TAB = 1
     OBSERVATIONS_TAB = 2
     PARAMETERS_TAB = 3
+    EXPORT_MISFIT_TAB = 4
 
 
 class _ExperimentWidget(QWidget):
@@ -93,6 +105,12 @@ class _ExperimentWidget(QWidget):
         tab_widget.insertTab(
             _ExperimentWidgetTabs.RESPONSES_TAB, self._responses_text_edit, "Responses"
         )
+        self._export_misfit_widget = ExportMisfitWidget()
+        tab_widget.insertTab(
+            _ExperimentWidgetTabs.EXPORT_MISFIT_TAB,
+            self._export_misfit_widget,
+            "Export Misfit",
+        )
 
         layout = QVBoxLayout()
         layout.addWidget(tab_widget)
@@ -102,6 +120,7 @@ class _ExperimentWidget(QWidget):
     @Slot(Experiment)
     def setExperiment(self, experiment: Experiment) -> None:
         self._experiment = experiment
+        self._export_misfit_widget.set_experiment(experiment)
 
         self._name_label.setText(f"Name: {experiment.name!s}")
         self._uuid_label.setText(f"UUID: {experiment.id!s}")
@@ -183,6 +202,11 @@ class _EnsembleWidget(QWidget):
         )
         self._tab_widget.insertTab(
             _EnsembleWidgetTabs.PARAMETERS_TAB, parameters_frame, "Parameters"
+        )
+        self._tab_widget.insertTab(
+            _ExperimentWidgetTabs.EXPORT_MISFIT_TAB,
+            QWidget(),
+            "Export Misfit",
         )
         self._tab_widget.currentChanged.connect(self._currentTabChanged)
 
@@ -523,3 +547,143 @@ class StorageInfoWidget(QWidget):
     def setRealization(self, ensemble: Ensemble, realization: int) -> None:
         self._content_layout.setCurrentIndex(_WidgetType.REALIZATION_WIDGET)
         self._realization_widget.setRealization(ensemble, realization)
+
+
+def group_radio_buttons(layout: QLayout) -> QButtonGroup:
+    format_button_group: QButtonGroup = QButtonGroup()
+
+    for i in range(layout.count()):
+        item = layout.itemAt(i)
+
+        if item is not None:
+            widget = item.widget()
+            if isinstance(widget, QRadioButton):
+                format_button_group.addButton(widget)
+    return format_button_group
+
+
+class SectionTitle(QLabel):
+    def __init__(self, text: str, font_size: int = 14) -> None:
+        QLabel.__init__(self, text)
+        title_font = QFont()
+        title_font.setBold(True)
+        title_font.setPixelSize(font_size)
+        self.setFont(title_font)
+
+
+class ExportFormatSection(QVBoxLayout):
+    def __init__(self) -> None:
+        QVBoxLayout.__init__(self)
+        self.addWidget(SectionTitle("Export format"))
+        button_layout = QHBoxLayout()
+        csv_button = QRadioButton("csv")
+        csv_button.setChecked(True)
+        button_layout.addWidget(csv_button)
+        button_layout.addWidget(QRadioButton("hdf"))
+        self.addLayout(button_layout)
+
+
+class FileSection(QVBoxLayout):
+    LINE_WIDTH = 200
+    DEFAULT_FILE_EXTENSION = ".csv"
+
+    def __init__(self, save_action: Callable[[str], None]) -> None:
+        super().__init__()
+        self.addWidget(SectionTitle("Save to file"))
+
+        text_layout = QHBoxLayout()
+        text_layout.addWidget(QLabel("File name:"))
+        self.text_field = QLineEdit()
+        self.text_field.setFixedWidth(self.LINE_WIDTH)
+        self.text_field.setText("misfit_data")
+        text_layout.addWidget(self.text_field)
+
+        self.file_extension = QLabel(self.DEFAULT_FILE_EXTENSION)
+        text_layout.addWidget(self.file_extension)
+
+        self.save_button = QPushButton("Save")
+        self.save_button.pressed.connect(lambda: save_action(self.text_field.text()))
+        text_layout.addWidget(self.save_button)
+
+        self.addLayout(text_layout)
+
+
+class ExportMisfitWidget(QWidget):
+    def __init__(self) -> None:
+        QWidget.__init__(self)
+        self._experiment: Experiment | None = None
+
+        main_layout = QVBoxLayout()
+        main_layout.addStretch()
+        main_layout.addWidget(SectionTitle("Misfit", font_size=20))
+
+        self._export_format_section = ExportFormatSection()
+        main_layout.addLayout(self._export_format_section)
+
+        self._file_format_button_group: QButtonGroup = group_radio_buttons(
+            self._export_format_section.findChild(QHBoxLayout)
+        )
+
+        self._file_section: FileSection = FileSection(self.save_file)
+        self._file_format_button_group.buttonClicked.connect(
+            lambda: self._file_section.file_extension.setText(
+                f".{self.get_selected_file_extension()}"
+            )
+        )
+        self._file_format_button_group.buttonClicked.connect(self.validate_filename)
+        self._file_section.text_field.textChanged.connect(self.validate_filename)
+        self._file_section.save_button.clicked.connect(self.validate_filename)
+        self.validate_filename()
+
+        main_layout.addLayout(self._file_section)
+
+        main_layout.setSpacing(5)
+
+        self.recursively_style_layout(main_layout)
+        self.setLayout(main_layout)
+
+    def set_experiment(self, experiment: Experiment) -> None:
+        self._experiment = experiment
+
+    def get_file_name(self) -> str:
+        return (
+            f"{self._file_section.text_field.text()}"
+            f"."
+            f"{self.get_selected_file_extension()}"
+        )
+
+    def validate_filename(self) -> None:
+        file_name = self.get_file_name()
+        if Path(file_name).is_file():
+            self._file_section.save_button.setDisabled(True)
+            self._file_section.save_button.setToolTip(f"'{file_name}' already exists!")
+        else:
+            self._file_section.save_button.setDisabled(False)
+            self._file_section.save_button.setToolTip("")
+
+    def recursively_style_layout(self, layout: QBoxLayout) -> None:
+        """Recursively set the style of the layout, styling children
+        QLayouts and QWidgets"""
+        for widget in layout.findChildren(QWidget):
+            widget.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+        for child_layout in layout.findChildren(QBoxLayout):
+            self.recursively_style_layout(child_layout)
+        layout.setSpacing(5)
+        if isinstance(layout, QHBoxLayout):
+            layout.addStretch()
+
+    def get_selected_file_extension(self) -> str:
+        if checked_button := self._file_format_button_group.checkedButton():
+            return checked_button.text()
+        return ""
+
+    def save_file(self, file_name: str) -> None:
+        if file_name is None or self._experiment is None:
+            return
+
+        selected_file_format = self.get_selected_file_extension()
+
+        file_name = f"{file_name}.{selected_file_format}"
+        for ensemble in self._experiment.ensembles:
+            ExportMisfitDataJob().run(ensemble, workflow_args=[file_name])
+        print(f"Saved to {file_name}!")

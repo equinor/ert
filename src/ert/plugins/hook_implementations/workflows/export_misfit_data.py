@@ -38,4 +38,15 @@ class ExportMisfitDataJob(ErtScript):
             raise StorageError("No responses loaded")
         misfit.columns = pd.Index([val.split(":")[1] for val in misfit.columns])
         misfit = misfit.drop("TOTAL", axis=1)
-        misfit.to_hdf(target_file, key="misfit", mode="w")
+
+        file_extension = target_file.split(".")[-1]
+        if file_extension == "hdf":
+            misfit.to_hdf(target_file, key="misfit", mode="w")
+        elif file_extension == "csv":
+            misfit.to_csv(target_file)
+        else:
+            raise ValueError(
+                f"Could not save misfit data to '{target_file}'.\n"
+                f"Unsupported format: {file_extension}, "
+                f"must either be '.csv' or '.hdf'."
+            )
