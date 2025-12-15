@@ -110,7 +110,6 @@ class LocalStorage(BaseMode):
                 )
             else:
                 self._migrate(self.version)
-                self._save_index()
 
         self.refresh()
         if mode.can_write:
