@@ -1032,25 +1032,17 @@ def test_that_run_dialog_clears_warnings_when_rerun(qtbot, monkeypatch):
 def test_that_experiment_with_a_scheduler_warning_event_shows_a_warning_dialog(
     events, event_queue, qtbot: QtBot, run_dialog: RunDialog
 ):
-    with qtbot.waitSignal(run_dialog.simulation_done, timeout=10000):
+    ensemble_evaluation_warning_box = wait_for_child(run_dialog, qtbot, QMessageBox)
 
-        def handle_dialog():
-            ensemble_evaluation_warning_box = wait_for_child(
-                run_dialog, qtbot, QMessageBox
-            )
+    assert ensemble_evaluation_warning_box.text() == "foo_bar_error"
+    dialog_buttons = wait_for_child(
+        ensemble_evaluation_warning_box, qtbot, QDialogButtonBox
+    ).buttons()
+    assert (
+        ensemble_evaluation_warning_box.objectName() == "EnsembleEvaluationWarningBox"
+    )
+    yes_button = next(b for b in dialog_buttons if "OK" in b.text())
+    qtbot.mouseClick(yes_button, Qt.MouseButton.LeftButton)
 
-            assert ensemble_evaluation_warning_box.text() == "foo_bar_error"
-
-            dialog_buttons = wait_for_child(
-                ensemble_evaluation_warning_box, qtbot, QDialogButtonBox
-            ).buttons()
-            assert (
-                ensemble_evaluation_warning_box.objectName()
-                == "EnsembleEvaluationWarningBox"
-            )
-            yes_button = next(b for b in dialog_buttons if "OK" in b.text())
-            qtbot.mouseClick(yes_button, Qt.MouseButton.LeftButton)
-
-        handle_dialog()
-
+    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=10000)
     assert run_dialog is not None
