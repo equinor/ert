@@ -157,6 +157,8 @@ def test_that_terminating_experiment_shows_a_confirmation_dialog(
     monkeypatch.setattr(Job, "WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL", 0)
     kill_button = run_dialog.kill_button
     with qtbot.waitSignal(run_dialog.simulation_done, timeout=10000):
+        # Wait for ensemble to start evaluating before cancelling
+        _ = wait_for_child(run_dialog, qtbot, RealizationWidget)
 
         def handle_dialog():
             terminate_dialog = wait_for_child(run_dialog, qtbot, QMessageBox)
