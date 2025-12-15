@@ -101,34 +101,36 @@ class LocalStorage(BaseMode):
                 raise ValueError(f"No index.json, but found: {errors}") from err
             self.version = _LOCAL_STORAGE_VERSION
 
-        if self.check_migration_needed():
-            self.perform_migration()
-
-        self.refresh()
-        if mode.can_write:
-            self._save_index()
-
-    def check_migration_needed(self) -> bool:
-        if self.version > _LOCAL_STORAGE_VERSION:
-            raise RuntimeError(
-                f"Cannot open storage '{self.path}': Storage version {self.version} "
-                f"is newer than the current version {_LOCAL_STORAGE_VERSION}, "
-                "upgrade ert to continue, or run with a different ENSPATH"
-            )
-
-        return self.version < _LOCAL_STORAGE_VERSION
-
-    def perform_migration(self) -> None:
-        if self.check_migration_needed():
-            if self.can_write:
-                self._migrate(self.version)
-                self._save_index()
-            else:
+        if self.check_migration_needed(Path(self.path)):
+            if not self.can_write:
                 raise RuntimeError(
                     f"Cannot open storage '{self.path}' in read-only mode: "
                     f"Storage version {self.version} is too old. "
                     f"Run ert to initiate migration."
                 )
+            else:
+                self._migrate(self.version)
+                self._save_index()
+
+        self.refresh()
+        if mode.can_write:
+            self._save_index()
+
+    @staticmethod
+    def check_migration_needed(storage_dir: Path) -> bool:
+        try:
+            version = _storage_version(storage_dir)
+        except FileNotFoundError:
+            version = _LOCAL_STORAGE_VERSION
+
+        if version > _LOCAL_STORAGE_VERSION:
+            raise RuntimeError(
+                f"Cannot open storage '{storage_dir.absolute()}': Storage version "
+                f"{version} is newer than the current version {_LOCAL_STORAGE_VERSION}"
+                f", upgrade ert to continue, or run with a different ENSPATH"
+            )
+
+        return version < _LOCAL_STORAGE_VERSION
 
     def refresh(self) -> None:
         """
