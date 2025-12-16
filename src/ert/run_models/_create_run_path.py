@@ -61,10 +61,7 @@ def _value_export_txt(
             for param, value in param_map.items():
                 if isinstance(value, (int | float)):
                     if key == DESIGN_MATRIX_GROUP:
-                        if isinstance(value, float):
-                            print(f"{param} {value:g}", file=f)
-                        else:
-                            print(f"{param} {value}", file=f)
+                        print(f"{param} {value}", file=f)
                     else:
                         print(f"{key}:{param} {value:g}", file=f)
                 elif key == DESIGN_MATRIX_GROUP:
@@ -206,11 +203,7 @@ def _make_param_substituter(
     param_substituter = deepcopy(substituter)
     for values in param_data.values():
         for param_name, value in values.items():
-            formatted_value = (
-                f"{value:.6g}" if isinstance(value, (float)) else str(value)
-            )
-
-            param_substituter[f"<{param_name}>"] = formatted_value
+            param_substituter[f"<{param_name}>"] = str(value)
     return param_substituter
 
 

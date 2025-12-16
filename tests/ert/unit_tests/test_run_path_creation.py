@@ -1074,18 +1074,22 @@ def test_design_matrix_scalars_are_not_exported_with_scientific_notation(
     run_args, storage
 ):
     """
-    This is a regression test to make sure that the integers will remain full
+    This is a regression test to make sure that the integers and floats will remain full
     numbers in parameters.txt, paramaters.json, and template files, when
     exporting values from the design matrix.
     """
     design_matrix_filename = "dm.xlsx"
-    some_integer = 4294912121
-    design_sheet = pl.DataFrame({"REAL": [0], "my_value": [some_integer]})
+
+    design_sheet = pl.DataFrame(
+        {"REAL": [0], "my_big_value": [4294912121], "my_small_value": [1.0000000000272]}
+    )
     _create_design_matrix(design_matrix_filename, design_sheet)
 
     run_template_file_name = "my_file.tmpl"
     run_template_output_file_name = "my_file.txt"
-    Path(run_template_file_name).write_text("my_value is <my_value>", encoding="utf-8")
+    Path(run_template_file_name).write_text(
+        "big is <my_big_value>\nsmall is <my_small_value>", encoding="utf-8"
+    )
 
     config = ErtConfig.from_file_contents(
         "NUM_REALIZATIONS 1\n"
@@ -1126,17 +1130,18 @@ def test_design_matrix_scalars_are_not_exported_with_scientific_notation(
     assert parameters_text.exists()
     assert (
         parameters_text.read_text(encoding="utf-8").strip()
-        == f"my_value {some_integer}"
+        == "my_big_value 4294912121\nmy_small_value 1.0000000000272"
     )
 
     parameters_json = experiment_path / "parameters.json"
     assert parameters_json.exists()
-    assert orjson.loads(parameters_json.read_text(encoding="utf-8")) == {
-        "my_value": {"value": some_integer}
-    }
+    parameters_json_dict = orjson.loads(parameters_json.read_text(encoding="utf-8"))
+    assert str(parameters_json_dict["my_big_value"]["value"]) == "4294912121"
+    assert str(parameters_json_dict["my_small_value"]["value"]) == "1.0000000000272"
 
     run_template_output = experiment_path / run_template_output_file_name
     assert run_template_output.exists()
     assert (
-        run_template_output.read_text(encoding="utf-8") == f"my_value is {some_integer}"
+        run_template_output.read_text(encoding="utf-8")
+        == "big is 4294912121\nsmall is 1.0000000000272"
     )
