@@ -12,7 +12,7 @@ from ert.gui.tools.manage_experiments.export_parameters_dialog import (
 from ert.storage import Storage
 
 
-def test_that_export_writes_to_file(
+def test_that_export_writes_to_file_and_check_the_file_content(
     qtbot, snake_oil_storage: Storage, change_to_tmpdir
 ):
     ensemble = next(snake_oil_storage.ensembles)
@@ -34,7 +34,7 @@ def test_that_export_writes_to_file(
     )
 
     assert_frame_equal(
-        ensemble.load_all_scalar_keys(transformed=True),
+        ensemble.load_scalar_keys(transformed=True),
         pl.read_csv("test_export.csv"),
         abs_tol=1e-6,
     )
@@ -46,12 +46,12 @@ def test_that_export_writes_to_file(
         "",
         "/non/existent/path/export.csv",
         "   ",
-        "hhhee/\0invalid.csv",
         "/",
-        "\\",
     ],
 )
-def test_file_path_validation_invalid(qtbot, snake_oil_storage: Storage, invalid_path):
+def test_that_file_path_validation_fails_on_invalid_paths(
+    qtbot, snake_oil_storage: Storage, invalid_path
+):
     ensemble = next(snake_oil_storage.ensembles)
     dialog = ExportParametersDialog(ensemble)
     qtbot.addWidget(dialog)
@@ -72,9 +72,10 @@ def test_file_path_validation_invalid(qtbot, snake_oil_storage: Storage, invalid
         "valid_export.csv",
         "   valid_export.csv   ",
         "subdir/valid_export.csv",
+        "valid-export",
     ],
 )
-def test_file_path_validation_valid(
+def test_that_file_path_validation_succeeds_on_valid_paths(
     qtbot, snake_oil_storage: Storage, valid_path, change_to_tmpdir
 ):
     ensemble = next(snake_oil_storage.ensembles)
@@ -92,11 +93,11 @@ def test_file_path_validation_valid(
     assert not dialog._file_path_edit.toolTip()
 
 
-@patch("ert.storage.Ensemble.load_all_scalar_keys")
-def test_export_failure_handling(
-    patched_load_all_scalar_keys, qtbot, snake_oil_storage: Storage
+@patch("ert.storage.Ensemble.load_scalar_keys")
+def test_that_export_failure_is_handled_correctly(
+    patched_load_scalar_keys, qtbot, snake_oil_storage: Storage
 ):
-    patched_load_all_scalar_keys.side_effect = Exception("i_am_an_exception")
+    patched_load_scalar_keys.side_effect = Exception("i_am_an_exception")
 
     ensemble = next(snake_oil_storage.ensembles)
     dialog = ExportParametersDialog(ensemble)

@@ -1,3 +1,4 @@
+import contextlib
 from pathlib import Path
 from typing import cast
 
@@ -74,7 +75,7 @@ class ExportParametersDialog(QDialog):
         output_file: str = self._file_path_edit.text().strip()
         try:
             self._export_button.setEnabled(False)
-            parameters_df = self._ensemble.load_all_scalar_keys(transformed=True)
+            parameters_df = self._ensemble.load_scalar_keys(transformed=True)
             parameters_df.write_csv(output_file, float_precision=6)
             self._export_text_area.insertPlainText(
                 f"Ensemble parameters exported to: {output_file}\n"
@@ -84,9 +85,6 @@ class ExportParametersDialog(QDialog):
                 "<span style='color: red;'>"
                 f"Error exporting ensemble parameters: {e!s}"
                 "</span><br>"
-            )
-            self._export_text_area.insertPlainText(
-                f"Error exporting ensemble parameters: {e!s}\n"
             )
         finally:
             self._export_button.setEnabled(True)
@@ -113,19 +111,17 @@ class ExportParametersDialog(QDialog):
             self._file_path_edit.setToolTip("")
             self._export_button.setEnabled(True)
 
-        file_path = self._file_path_edit.text().strip()
-        if not file_path or file_path.endswith(("/", "\\")):
+        path = Path(self._file_path_edit.text().strip())
+        if path.is_dir():
             _set_invalid()
             return
 
-        try:
-            path = Path(file_path)
-            if path.parent.exists() and path.parent.is_dir():
+        with contextlib.suppress(Exception):
+            if path.parent.is_dir():
                 _set_valid()
                 return
-            _set_invalid()
-        except (ValueError, OSError):
-            _set_invalid()
+
+        _set_invalid()
 
     @Slot()
     def browse_file(self) -> None:

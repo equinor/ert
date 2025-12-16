@@ -1,3 +1,4 @@
+import contextlib
 import json
 from enum import IntEnum
 
@@ -388,19 +389,25 @@ class _EnsembleWidget(QWidget):
         elif index == _EnsembleWidgetTabs.PARAMETERS_TAB:
             assert self._ensemble is not None
 
-            parameters_df = self._ensemble.load_all_scalar_keys(transformed=True)
+            df: pl.DataFrame = pl.DataFrame()
+            with contextlib.suppress(Exception):
+                df = self._ensemble.load_scalar_keys(transformed=True)
 
-            self._parameters_table.setRowCount(len(parameters_df))
-            self._parameters_table.setColumnCount(len(parameters_df.columns))
-            self._parameters_table.setHorizontalHeaderLabels(parameters_df.columns)
+            table = self._parameters_table
 
-            for row_idx in range(len(parameters_df)):
-                for col_idx, col_name in enumerate(parameters_df.columns):
-                    value = parameters_df[col_name][row_idx]
-                    table_widget_item = QTableWidgetItem(str(value))
-                    self._parameters_table.setItem(row_idx, col_idx, table_widget_item)
+            table.setUpdatesEnabled(False)
+            table.setSortingEnabled(False)
+            table.setRowCount(df.height)
+            table.setColumnCount(df.width)
+            table.setHorizontalHeaderLabels(df.columns)
 
-            self._parameters_table.resizeColumnsToContents()
+            rows = df.rows()
+            for r, row in enumerate(rows):
+                for c, v in enumerate(row):
+                    table.setItem(r, c, QTableWidgetItem("" if v is None else str(v)))
+
+            table.resizeColumnsToContents()
+            table.setUpdatesEnabled(True)
 
     @Slot(Ensemble)
     def setEnsemble(self, ensemble: Ensemble) -> None:

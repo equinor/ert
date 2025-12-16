@@ -126,7 +126,7 @@ def _generate_parameter_files(
     ]
     scalar_data: dict[str, float | str] = {}
     if keys:
-        df = fs._load_scalar_keys(keys=keys, realizations=iens, transformed=True)
+        df = fs.load_scalar_keys(keys=keys, realizations=iens, transformed=True)
         scalar_data = df.to_dicts()[0]
     exports: dict[str, dict[str, float | str]] = {}
     for param in parameter_configs:

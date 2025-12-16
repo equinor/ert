@@ -562,21 +562,15 @@ class LocalEnsemble(BaseMode):
         df = pl.scan_parquet(group_path)
         return df
 
-    def load_all_scalar_keys(self, transformed: bool = False) -> pl.DataFrame:
-        try:
-            return self._load_scalar_keys(
-                keys=self.experiment.parameter_keys,
-                transformed=transformed,
-            )
-        except KeyError:
-            return pl.DataFrame([[np.nan] * len(self.experiment.parameter_keys)])
-
-    def _load_scalar_keys(
+    def load_scalar_keys(
         self,
-        keys: list[str],
+        keys: list[str] | None = None,
         realizations: int | npt.NDArray[np.int_] | None = None,
         transformed: bool = False,
     ) -> pl.DataFrame:
+        if keys is None:
+            keys = self.experiment.parameter_keys
+
         df_lazy = self._load_parameters_lazy(SCALAR_FILENAME)
         df_lazy = df_lazy.select(["realization", *keys])
         if realizations is not None:
@@ -629,7 +623,7 @@ class LocalEnsemble(BaseMode):
         cardinality = next(cfg.cardinality for cfg in cfgs)
 
         if cardinality == ParameterCardinality.multiple_configs_per_ensemble_dataset:
-            return self._load_scalar_keys(
+            return self.load_scalar_keys(
                 [cfg.name for cfg in cfgs], realizations, transformed
             )
         return self._load_dataset(
@@ -656,7 +650,7 @@ class LocalEnsemble(BaseMode):
         ]
         if keys:
             return (
-                self._load_scalar_keys(keys, realizations)
+                self.load_scalar_keys(keys, realizations)
                 .drop("realization")
                 .to_numpy()
                 .T.copy()

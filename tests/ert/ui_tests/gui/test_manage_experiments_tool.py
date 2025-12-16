@@ -550,7 +550,7 @@ def test_realization_view(
     } == set(realization_widget._parameter_text_edit.toPlainText().strip().splitlines())
 
 
-def test_parameters_pane(
+def test_that_parameters_pane_is_populated_correctly(
     qtbot, snake_oil_case_storage: ErtConfig, snake_oil_storage: Storage
 ):
     config = snake_oil_case_storage
@@ -589,7 +589,7 @@ def test_parameters_pane(
     )
 
 
-def test_export_parameters_button(
+def test_that_export_parameters_button_opens_the_export_dialog(
     qtbot, snake_oil_case_storage: ErtConfig, snake_oil_storage: Storage
 ):
     config = snake_oil_case_storage
