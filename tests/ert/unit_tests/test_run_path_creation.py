@@ -20,7 +20,11 @@ from ert.config import (
 )
 from ert.plugins import get_site_plugins
 from ert.run_arg import create_run_arguments
-from ert.run_models._create_run_path import _make_param_substituter, create_run_path
+from ert.run_models._create_run_path import (
+    _conditionally_format_float,
+    _make_param_substituter,
+    create_run_path,
+)
 from ert.run_models.model_factory import _merge_parameters
 from ert.runpaths import Runpaths
 from ert.sample_prior import sample_prior
@@ -1145,3 +1149,19 @@ def test_design_matrix_scalars_are_not_exported_with_scientific_notation(
         run_template_output.read_text(encoding="utf-8")
         == "big is 4294912121\nsmall is 1.000000"
     )
+
+
+@pytest.mark.parametrize(
+    "input_float, expected_string",
+    [
+        (10, "10"),
+        (10.0, "10"),
+        (0.10, "0.1"),
+        (0.101, "0.101"),
+        (12.1111114, "12.111111"),
+        (0.100100100, "0.1001"),
+        (0.100100900, "0.100101"),
+    ],
+)
+def test_run_path_parameters_format_floats_correctly(input_float, expected_string):
+    assert _conditionally_format_float(input_float) == expected_string

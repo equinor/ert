@@ -37,6 +37,15 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def _conditionally_format_float(num: float) -> str:
+    str_num = str(num)
+    if "." not in str_num:
+        return str_num
+    float_parts = str_num.split(".")
+    formatted_str = f"{num:.6f}" if len(float_parts[1]) >= 6 else str(num)
+    return formatted_str.rstrip("0").rstrip(".")
+
+
 def _backup_if_existing(path: Path) -> None:
     if not path.exists():
         return
@@ -66,9 +75,12 @@ def _value_export_txt(
                         print(f"{key}:{param} {value}", file=f)
                 elif isinstance(value, (float)):
                     if key == DESIGN_MATRIX_GROUP:
-                        print(f"{param} {value:.6f}", file=f)
+                        print(f"{param} {_conditionally_format_float(value)}", file=f)
                     else:
-                        print(f"{key}:{param} {value:.6f}", file=f)
+                        print(
+                            f"{key}:{param} {_conditionally_format_float(value)}",
+                            file=f,
+                        )
                 elif key == DESIGN_MATRIX_GROUP:
                     print(f"{param} {value}", file=f)
                 else:
@@ -208,7 +220,11 @@ def _make_param_substituter(
     param_substituter = deepcopy(substituter)
     for values in param_data.values():
         for param_name, value in values.items():
-            formatted_value = f"{value:.6f}" if isinstance(value, float) else str(value)
+            formatted_value = (
+                _conditionally_format_float(value)
+                if isinstance(value, float)
+                else str(value)
+            )
             param_substituter[f"<{param_name}>"] = formatted_value
     return param_substituter
 
