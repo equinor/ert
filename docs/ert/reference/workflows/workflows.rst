@@ -71,7 +71,6 @@ state of the experiment that is running:
         def run(
             self,
             workflow_args: List,
-            ert_config: ErtConfig,
             ensemble: Ensemble,
             storage: Storage,
         ):
