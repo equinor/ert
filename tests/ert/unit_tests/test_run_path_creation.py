@@ -1130,7 +1130,7 @@ def test_design_matrix_scalars_are_not_exported_with_scientific_notation(
     assert parameters_text.exists()
     assert (
         parameters_text.read_text(encoding="utf-8").strip()
-        == "my_big_value 4294912121\nmy_small_value 1.0000000000272"
+        == "my_big_value 4294912121\nmy_small_value 1.000000"
     )
 
     parameters_json = experiment_path / "parameters.json"
@@ -1143,5 +1143,5 @@ def test_design_matrix_scalars_are_not_exported_with_scientific_notation(
     assert run_template_output.exists()
     assert (
         run_template_output.read_text(encoding="utf-8")
-        == "big is 4294912121\nsmall is 1.0000000000272"
+        == "big is 4294912121\nsmall is 1.000000"
     )
