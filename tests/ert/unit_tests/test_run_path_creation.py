@@ -1085,7 +1085,7 @@ def test_design_matrix_scalars_are_not_exported_with_scientific_notation(
     design_matrix_filename = "dm.xlsx"
 
     design_sheet = pl.DataFrame(
-        {"REAL": [0], "my_big_value": [4294912121], "my_small_value": [1.0000000000272]}
+        {"REAL": [0], "my_big_value": [4294912121], "my_small_value": [1.00000377]}
     )
     _create_design_matrix(design_matrix_filename, design_sheet)
 
@@ -1134,20 +1134,20 @@ def test_design_matrix_scalars_are_not_exported_with_scientific_notation(
     assert parameters_text.exists()
     assert (
         parameters_text.read_text(encoding="utf-8").strip()
-        == "my_big_value 4294912121\nmy_small_value 1.000000"
+        == "my_big_value 4294912121\nmy_small_value 1.000004"
     )
 
     parameters_json = experiment_path / "parameters.json"
     assert parameters_json.exists()
     parameters_json_dict = orjson.loads(parameters_json.read_text(encoding="utf-8"))
     assert str(parameters_json_dict["my_big_value"]["value"]) == "4294912121"
-    assert str(parameters_json_dict["my_small_value"]["value"]) == "1.0000000000272"
+    assert str(parameters_json_dict["my_small_value"]["value"]) == "1.00000377"
 
     run_template_output = experiment_path / run_template_output_file_name
     assert run_template_output.exists()
     assert (
         run_template_output.read_text(encoding="utf-8")
-        == "big is 4294912121\nsmall is 1.000000"
+        == "big is 4294912121\nsmall is 1.000004"
     )
 
 
