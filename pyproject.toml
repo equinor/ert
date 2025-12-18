@@ -196,27 +196,36 @@ line-length = 88
 [tool.ruff.lint]
 select = [
     "A",     # flake8-builtins
+    "AIR",
     "ANN204", # return type special methods
     "ASYNC", # flake8-async
     "B",     # flake-8-bugbear
     "C4",    # flake8-comprehensions
+    "DJ",
     "E",     # pycodestyle
     "F",     # pyflakes
+    "FA",
     "FURB",  # refurb
     "G",     # logging-format
     "I",     # isort
     "ICN",   # flake8-import-conventions
+    "INT",
     "LOG",   # logging
     "NPY",   # numpy specific rules
     "PIE",   # flake8-pie
     "PL",    # pylint
+    "PLE",
+    "Q",
+    "RSE",
     "RSE",   # flake8-raise
     "RUF",   # ruff specific rules
     "SIM",   # flake-8-simplify
+    "SLOT",
     "TRY203",
     "TRY300",
     "UP",    # pyupgrade
     "W",     # pycodestyle
+    "YTT"
 ]
 preview = true
 ignore = [
