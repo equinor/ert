@@ -38,8 +38,6 @@ run_ert_with_opm() {
 }
 
 
-
-
 # Run everest eightcells test on the cluster
 run_everest_eightcells_test() {
 
@@ -92,7 +90,47 @@ run_everest_eightcells_test() {
     return $STATUS
 }
 
+run_ert-zmq-lsf_test () {
+    set -e
+    if [[ "$CI_RUNNER_LABEL" == "azure" ]]; then
+        echo "Don't run ert-zmq-lsf test on azure"
+        return 0
+    elif [[ "$CI_RUNNER_LABEL" == "onprem" ]]; then
+        RUNNER_ROOT="/scratch/oompf/ert_zmq_lsf_tests"
+    else
+        echo "Unsupported runner label: $CI_RUNNER_LABEL"
+        return 1
+    fi
 
+    rm -rf "$RUNNER_ROOT"
+    mkdir -p "$RUNNER_ROOT"
+    run_path=$(mktemp -d -p "$RUNNER_ROOT")
+    chmod ugo+rx "$run_path"
+
+    pushd "$run_path"
+
+    # Need to create a komodoenv on a network mapped drive for LSF etc.
+    # shellcheck source=/dev/null
+    source "${_KOMODO_ROOT}"/"${_FULL_RELEASE_NAME}"/enable
+    komodoenv --root "${_KOMODO_ROOT}" -r "${_FULL_RELEASE_NAME}" --no-update --force test-kenv
+    # shellcheck source=/dev/null
+    source test-kenv/enable
+    check_queue "$CI_RUNNER_LABEL"
+
+    # Install the package
+    pip install --upgrade pip
+    pip install "${CI_SOURCE_ROOT}"[dev]
+
+    # Run the tests
+    mkdir -p pytest-tmp
+    basetemp="pytests-tmp"
+
+    echo "Created basetemp directory at: $basetemp"
+    pytest -vvs --lsf --basetemp="$basetemp" "${CI_TEST_ROOT}"/tests/ert/unit_tests/forward_model_runner/test_fm_dispatch_with_lsf.py
+    return_code_ert_zmq_lsf_tests=$?
+    rm -rf ${RUNNER_ROOT} || true
+    return $return_code_ert_zmq_lsf_tests
+}
 
 start_tests() {
     export NO_PROXY=localhost,127.0.0.1
@@ -131,6 +169,9 @@ start_tests() {
       return_code_ert_scheduler_tests=$?
       rm -rf "$basetemp" || true
       return $return_code_ert_scheduler_tests
+    elif [ "$CI_SUBSYSTEM_TEST" == "ert-zmq-lsf" ]; then
+      run_ert-zmq-lsf_test
+      return $?
     elif [ "$CI_SUBSYSTEM_TEST" == "opm-integration" ]; then
       run_ert_with_opm
       return $?
@@ -142,6 +183,6 @@ start_tests() {
     else
       echo "Error: Variable $CI_SUBSYSTEM_TEST did not match any testable subsystem"
     fi
-    echo "Possible subsystems are: ert, everest, everest-eightcells, ert-limit-memory, ert-queue-system, opm-integration"
+    echo "Possible subsystems are: ert, everest, everest-eightcells, ert-limit-memory, ert-queue-system, ert-zmq-lsf, opm-integration"
     return 1
 }
