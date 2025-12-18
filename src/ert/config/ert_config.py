@@ -25,6 +25,7 @@ from ._design_matrix_validator import DesignMatrixValidator
 from ._observations import (
     HistoryObservation,
     Observation,
+    RFTObservation,
     SummaryObservation,
     make_observations,
 )
@@ -62,6 +63,7 @@ from .parsing import (
 from .parsing.observations_parser import ObservationDict
 from .queue_config import KnownQueueOptions, QueueConfig
 from .refcase import Refcase
+from .rft_config import RFTConfig
 from .workflow import Workflow
 from .workflow_fixtures import fixtures_per_hook
 from .workflow_job import (
@@ -737,12 +739,28 @@ class ErtConfig(BaseModel):
     @property
     def observations(self) -> dict[str, pl.DataFrame]:
         if self._observations is None:
+            has_rft_observations = any(
+                isinstance(o, RFTObservation) for o in self.observation_declarations
+            )
+            if (
+                has_rft_observations
+                and "rft" not in self.ensemble_config.response_configs
+            ):
+                self.ensemble_config.response_configs["rft"] = RFTConfig(
+                    input_files=[self.runpath_config.eclbase_format_string],
+                    data_to_read={},
+                    locations=[],
+                )
             computed = create_observation_dataframes(
                 self.observation_declarations,
                 self.refcase,
                 cast(
                     GenDataConfig | None,
                     self.ensemble_config.response_configs.get("gen_data", None),
+                ),
+                cast(
+                    RFTConfig | None,
+                    self.ensemble_config.response_configs.get("rft", None),
                 ),
                 self.time_map,
                 self.history_source,
@@ -1123,12 +1141,25 @@ class ErtConfig(BaseModel):
             # The observations are created here because create_observation_dataframes
             # will perform additonal validation which needs the context in
             # obs_configs which is stripped by pydantic
+            has_rft_observations = any(
+                isinstance(o, RFTObservation) for o in obs_configs
+            )
+            if has_rft_observations and "rft" not in ensemble_config.response_configs:
+                ensemble_config.response_configs["rft"] = RFTConfig(
+                    input_files=[eclbase],
+                    data_to_read={},
+                    locations=[],
+                )
             cls_config._observations = create_observation_dataframes(
                 obs_configs,
                 refcase,
                 cast(
                     GenDataConfig | None,
                     ensemble_config.response_configs.get("gen_data", None),
+                ),
+                cast(
+                    RFTConfig | None,
+                    ensemble_config.response_configs.get("rft", None),
                 ),
                 time_map,
                 history_source,

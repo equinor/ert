@@ -96,6 +96,7 @@ async def get_response(
 response_to_pandas_x_axis_fns: dict[str, Callable[[tuple[Any, ...]], Any]] = {
     "summary": lambda t: pd.Timestamp(t[2]).isoformat(),
     "gen_data": lambda t: str(t[3]),
+    "rft": lambda t: str(t[4]),
 }
 
 
@@ -159,6 +160,7 @@ def data_for_response(
             )
             .rename({"realization": "Realization"})
             .select(["Realization", "depth", "values"])
+            .unique()
             .to_pandas()
             .pivot(index="Realization", columns="depth", values="values")
             .reset_index(drop=True)

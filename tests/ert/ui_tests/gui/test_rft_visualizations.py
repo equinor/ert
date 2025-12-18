@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import QToolButton
 from pytestqt.qtbot import QtBot
 
 from ert.config import ErtConfig
+from ert.config.parsing.observations_parser import ObservationType
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
 from ert.gui.tools.plot.plot_ensemble_selection_widget import (
@@ -31,6 +32,35 @@ from .conftest import (
 )
 
 
+def pad_to(lst: list[int], target_len: int):
+    return np.pad(lst, (0, target_len - len(lst)), mode="constant")
+
+
+def write_egrid(path: Path):
+    resfo.write(
+        path,
+        [
+            ("FILEHEAD", pad_to([3, 2007, 0, 0, 0, 0, 1], 100)),
+            ("MAPAXES ", np.array([0.0, 1.0, 0.0, 0.0, 1.0, 0.0], dtype=">f4")),
+            ("GRIDUNIT", np.array([b"METRES  ", b"        "], dtype="|S8")),
+            ("GRIDHEAD", pad_to([1, 1, 1, 1], 100)),
+            (
+                "COORD   ",
+                np.array(
+                    [
+                        [[[0, 0, 0], [0, 0, 10]], [[0, 1, 0], [0, 1, 10]]],
+                        [[[1, 0, 0], [1, 0, 10]], [[1, 1, 0], [1, 1, 10]]],
+                    ],
+                    dtype=">f4",
+                ).ravel(),
+            ),
+            ("ZCORN   ", np.array([0, 0, 0, 0, 10, 10, 10, 10], dtype=">f4")),
+            ("ACTNUM  ", np.ones((8,), dtype=">i4")),
+            ("ENDGRID ", np.array([], dtype=">i4")),
+        ],
+    )
+
+
 @pytest.fixture
 def rft_config(tmp_path: Path):
     num_realizations = 2
@@ -40,6 +70,7 @@ def rft_config(tmp_path: Path):
         rft_file = runpath / "BASE.RFT"
         offset = i / 2
         depth = np.linspace(0, 2 * np.pi, dtype=np.float32)
+        write_egrid(runpath / "BASE.EGRID")
         resfo.write(
             rft_file,
             [
@@ -52,14 +83,31 @@ def rft_config(tmp_path: Path):
                 ("DEPTH   ", depth + offset),
             ],
         )
-    return ErtConfig.from_file_contents(
-        f"""
-            NUM_REALIZATIONS {num_realizations}
-            ECLBASE BASE
-            RFT WELL:* DATE:* PROPERTIES:*
-            ENSPATH {tmp_path}/storage
-            RUNPATH {tmp_path}/run_path/realization-<IENS>
-            """
+    return ErtConfig.from_dict(
+        {
+            "NUM_REALIZATIONS": num_realizations,
+            "ENSPATH": str(tmp_path / "storage"),
+            "RUNPATH": str(tmp_path / "run_path/realization-<IENS>"),
+            "ECLBASE": "BASE",
+            "OBS_CONFIG": (
+                "obs_config",
+                [
+                    {
+                        "type": ObservationType.RFT,
+                        "name": f"name{i}",
+                        "WELL": "WELL",
+                        "VALUE": 1 / (i + 1),
+                        "ERROR": "0.1",
+                        "DATE": "2000-01-01",
+                        "PROPERTY": "PRESSURE",
+                        "NORTH": 0.5,
+                        "EAST": 0.5,
+                        "TVD": 0.5 * i,
+                    }
+                    for i in range(1, 13)
+                ],
+            ),
+        }
     )
 
 

@@ -318,12 +318,17 @@ class PlotApi:
                         f"ensemble_name={ensemble.name}, e={e}"
                     ) from e
 
+                key_index: list[int | float | pd.Timestamp]
                 for obs in observations:
                     try:
                         int(obs["x_axis"][0])
                         key_index = [int(v) for v in obs["x_axis"]]
                     except ValueError:
-                        key_index = [pd.Timestamp(v) for v in obs["x_axis"]]
+                        try:
+                            float(obs["x_axis"][0])
+                            key_index = [float(v) for v in obs["x_axis"]]
+                        except ValueError:
+                            key_index = [pd.Timestamp(v) for v in obs["x_axis"]]
 
                     observations_dfs.append(
                         pd.DataFrame(

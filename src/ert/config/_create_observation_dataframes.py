@@ -18,6 +18,7 @@ from ._observations import (
     Observation,
     ObservationDate,
     ObservationError,
+    RFTObservation,
     SummaryObservation,
 )
 from .gen_data_config import GenDataConfig
@@ -28,6 +29,7 @@ from .parsing import (
     ObservationConfigError,
 )
 from .refcase import Refcase
+from .rft_config import RFTConfig
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -41,6 +43,7 @@ def create_observation_dataframes(
     observations: Sequence[Observation],
     refcase: Refcase | None,
     gen_data_config: GenDataConfig | None,
+    rft_config: RFTConfig | None,
     time_map: list[datetime] | None,
     history: HistorySource,
 ) -> dict[str, pl.DataFrame]:
@@ -56,7 +59,6 @@ def create_observation_dataframes(
     config_errors: list[ErrorInfo] = []
     grouped: dict[str, list[pl.DataFrame]] = defaultdict(list)
     for obs in observations:
-        obs_name = obs.name
         try:
             match obs:
                 case HistoryObservation():
@@ -64,7 +66,7 @@ def create_observation_dataframes(
                         _handle_history_observation(
                             refcase,
                             obs,
-                            obs_name,
+                            obs.name,
                             history,
                             time_len,
                         )
@@ -73,7 +75,7 @@ def create_observation_dataframes(
                     grouped["summary"].append(
                         _handle_summary_observation(
                             obs,
-                            obs_name,
+                            obs.name,
                             obs_time_list,
                             bool(refcase),
                         )
@@ -83,11 +85,18 @@ def create_observation_dataframes(
                         _handle_general_observation(
                             gen_data_config,
                             obs,
-                            obs_name,
+                            obs.name,
                             obs_time_list,
                             bool(refcase),
                         )
                     )
+                case RFTObservation():
+                    if rft_config is None:
+                        raise TypeError(
+                            "create_observation_dataframes requires "
+                            "rft_config is not None when using RFTObservation"
+                        )
+                    grouped["rft"].append(_handle_rft_observation(rft_config, obs))
                 case default:
                     assert_never(default)
         except ObservationConfigError as err:
@@ -507,5 +516,45 @@ def _handle_general_observation(
             "index": pl.Series(indices, dtype=pl.UInt16),
             "observations": pl.Series(values, dtype=pl.Float32),
             "std": pl.Series(stds, dtype=pl.Float32),
+        }
+    )
+
+
+def _handle_rft_observation(
+    rft_config: RFTConfig,
+    rft_observation: RFTObservation,
+) -> pl.DataFrame:
+    location = (rft_observation.east, rft_observation.north, rft_observation.tvd)
+    if location not in rft_config.locations:
+        rft_config.locations.append(location)
+
+    data_to_read = rft_config.data_to_read
+    if rft_observation.well not in data_to_read:
+        rft_config.data_to_read[rft_observation.well] = {}
+
+    well_dict = data_to_read[rft_observation.well]
+    if rft_observation.date not in well_dict:
+        well_dict[rft_observation.date] = []
+
+    property_list = well_dict[rft_observation.date]
+    if rft_observation.property not in property_list:
+        property_list.append(rft_observation.property)
+
+    if rft_observation.error <= 0.0:
+        raise ObservationConfigError.with_context(
+            "Observation uncertainty must be strictly > 0", rft_observation.well
+        )
+
+    return pl.DataFrame(
+        {
+            "response_key": ":".join(
+                [rft_observation.well, rft_observation.date, rft_observation.property]
+            ),
+            "observation_key": rft_observation.name,
+            "east": pl.Series([location[0]], dtype=pl.Float32),
+            "north": pl.Series([location[1]], dtype=pl.Float32),
+            "tvd": pl.Series([location[2]], dtype=pl.Float32),
+            "observations": pl.Series([rft_observation.value], dtype=pl.Float32),
+            "std": pl.Series([rft_observation.error], dtype=pl.Float32),
         }
     )

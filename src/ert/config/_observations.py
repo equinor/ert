@@ -214,12 +214,88 @@ class GeneralObservation(ObservationDate, _GeneralObservation):
         return output
 
 
-Observation = HistoryObservation | SummaryObservation | GeneralObservation
+@dataclass
+class RFTObservation:
+    name: str
+    well: str
+    date: str
+    property: str
+    value: float
+    error: float
+    north: float
+    east: float
+    tvd: float
+
+    @classmethod
+    def from_obs_dict(cls, directory: str, observation_dict: ObservationDict) -> Self:
+        well = None
+        observed_property = None
+        observed_value = None
+        error = None
+        date = None
+        north = None
+        east = None
+        tvd = None
+        for key, value in observation_dict.items():
+            match key:
+                case "type" | "name":
+                    pass
+                case "WELL":
+                    well = value
+                case "PROPERTY":
+                    observed_property = value
+                case "VALUE":
+                    observed_value = validate_float(value, key)
+                case "ERROR":
+                    error = validate_float(value, key)
+                case "DATE":
+                    date = value
+                case "NORTH":
+                    north = validate_float(value, key)
+                case "EAST":
+                    east = validate_float(value, key)
+                case "TVD":
+                    tvd = validate_float(value, key)
+                case _:
+                    raise _unknown_key_error(str(key), observation_dict["name"])
+        if well is None:
+            raise _missing_value_error(observation_dict["name"], "WELL")
+        if observed_value is None:
+            raise _missing_value_error(observation_dict["name"], "VALUE")
+        if observed_property is None:
+            raise _missing_value_error(observation_dict["name"], "PROPERTY")
+        if error is None:
+            raise _missing_value_error(observation_dict["name"], "ERROR")
+        if date is None:
+            raise _missing_value_error(observation_dict["name"], "DATE")
+        if north is None:
+            raise _missing_value_error(observation_dict["name"], "NORTH")
+        if east is None:
+            raise _missing_value_error(observation_dict["name"], "EAST")
+        if tvd is None:
+            raise _missing_value_error(observation_dict["name"], "TVD")
+        return cls(
+            observation_dict["name"],
+            well,
+            date,
+            observed_property,
+            observed_value,
+            error,
+            north,
+            east,
+            tvd,
+        )
+
+
+Observation = (
+    HistoryObservation | SummaryObservation | GeneralObservation | RFTObservation
+)
 
 _TYPE_TO_CLASS: dict[ObservationType, type[Observation]] = {
     ObservationType.HISTORY: HistoryObservation,
     ObservationType.SUMMARY: SummaryObservation,
     ObservationType.GENERAL: GeneralObservation,
+    ObservationType.RFT: RFTObservation,
 }
 
 
