@@ -6,7 +6,7 @@ import time
 import uuid
 from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 
 import zmq
 import zmq.asyncio
@@ -98,7 +98,7 @@ class MockZMQServer:
         asyncio.set_event_loop(self.loop)
         self.loop.run_until_complete(self.mock_zmq_server())
 
-    def __enter__(self) -> MockZMQServer:
+    def __enter__(self) -> Self:
         self.loop = asyncio.new_event_loop()
         self.thread = ErtThread(target=self.start_event_loop)
         self.thread.start()
@@ -110,7 +110,7 @@ class MockZMQServer:
         self.thread.join()
         self.loop.close()
 
-    async def __aenter__(self) -> MockZMQServer:
+    async def __aenter__(self) -> Self:
         self.server_task = asyncio.create_task(self.mock_zmq_server())
         return self
 

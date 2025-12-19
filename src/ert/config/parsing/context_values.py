@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from json import JSONEncoder
-from typing import Any, TypeVar, no_type_check
+from typing import Any, Self, TypeVar, no_type_check
 
 from .file_context_token import FileContextToken
 
@@ -37,7 +37,7 @@ class ContextBool:
 
 
 class ContextInt(int):
-    def __new__(cls, val: int, token: FileContextToken) -> ContextInt:
+    def __new__(cls, val: int, token: FileContextToken) -> Self:
         obj = super().__new__(cls, val)
         obj.token = token
         return obj
@@ -50,7 +50,7 @@ class ContextInt(int):
 
 
 class ContextFloat(float):
-    def __new__(cls, val: float, token: FileContextToken) -> ContextFloat:
+    def __new__(cls, val: float, token: FileContextToken) -> Self:
         obj = super().__new__(cls, val)
         obj.token = token
         return obj
