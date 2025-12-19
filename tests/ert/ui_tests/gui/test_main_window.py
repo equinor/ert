@@ -647,9 +647,9 @@ def test_that_a_failing_job_shows_error_message_with_context(
 def test_that_gui_plotter_works_when_no_data(qtbot, monkeypatch, use_tmpdir):
     monkeypatch.setattr(PlotApi, "get_all_ensembles", lambda _: [])
     config_file = "minimal_config.ert"
-    with open(config_file, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write("ENSPATH storage")
+    Path(config_file).write_text(
+        "NUM_REALIZATIONS 1\nENSPATH storage\nQUEUE_SYSTEM LOCAL", encoding="utf-8"
+    )
 
     args_mock = Mock()
     args_mock.config = config_file
@@ -682,9 +682,9 @@ def test_that_gui_plotter_works_when_no_data(qtbot, monkeypatch, use_tmpdir):
 def test_right_click_plot_button_opens_external_plotter(qtbot, use_tmpdir, monkeypatch):
     monkeypatch.setattr(PlotApi, "get_all_ensembles", lambda _: [])
     config_file = "minimal_config.ert"
-    with open(config_file, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1\n")
-        f.write("ENSPATH storage")
+    Path(config_file).write_text(
+        "NUM_REALIZATIONS 1\nENSPATH storage\nQUEUE_SYSTEM LOCAL", encoding="utf-8"
+    )
 
     # Open up storage to create it, so that dark storage can be mounted onto it
     # Not creating will result in dark storage hanging/lagging
