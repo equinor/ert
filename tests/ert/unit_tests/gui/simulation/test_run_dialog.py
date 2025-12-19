@@ -126,7 +126,9 @@ def run_dialog(qtbot: QtBot, use_tmpdir, mock_set_env_key, monkeypatch):
     monkeypatch.setattr(
         "ert.ensemble_evaluator.EnsembleEvaluator.BATCHING_INTERVAL", 0.01
     )
-    Path(config_file).write_text("NUM_REALIZATIONS 1", encoding="utf-8")
+    Path(config_file).write_text(
+        "NUM_REALIZATIONS 1\nQUEUE_SYSTEM LOCAL", encoding="utf-8"
+    )
     args_mock = Mock()
     args_mock.config = config_file
     ert_config = ErtConfig.from_file(config_file)
@@ -591,7 +593,9 @@ def test_that_exception_in_run_model_is_displayed_in_a_suggestor_window_after_si
     qtbot: QtBot, use_tmpdir
 ):
     config_file = "minimal_config.ert"
-    Path(config_file).write_text("NUM_REALIZATIONS 1", encoding="utf-8")
+    Path(config_file).write_text(
+        "NUM_REALIZATIONS 1\nQUEUE_SYSTEM LOCAL", encoding="utf-8"
+    )
     args_mock = Mock()
     args_mock.config = config_file
 
@@ -733,10 +737,13 @@ def test_that_design_matrix_show_parameters_button_is_visible(
         design_matrix_df.to_excel(xl_write, index=False, sheet_name="DesignSheet")
 
     config_file = "minimal_config.ert"
-    with open(config_file, "w", encoding="utf-8") as f:
-        f.write("NUM_REALIZATIONS 1")
-        if design_matrix_entry:
-            f.write(f"\nDESIGN_MATRIX {xls_filename}")
+    design_matrix_config = (
+        f"\nDESIGN_MATRIX {xls_filename}" if design_matrix_entry else ""
+    )
+    Path(config_file).write_text(
+        "NUM_REALIZATIONS 1\nQUEUE_SYSTEM LOCAL" + design_matrix_config,
+        encoding="utf-8",
+    )
 
     args_mock = Mock()
     args_mock.config = config_file
@@ -915,9 +922,14 @@ def test_that_ert_chooses_minimum_realization_with_design_matrix(
     config_num_realizations = 10
     expected_num_realizations = min(dm_realizations, config_num_realizations)
     config_file = "minimal_config.ert"
-    with open(config_file, "w", encoding="utf-8") as f:
-        f.write(f"NUM_REALIZATIONS {config_num_realizations}")
-        f.write(f"\nDESIGN_MATRIX {xls_filename}")
+    Path(config_file).write_text(
+        (
+            f"NUM_REALIZATIONS {config_num_realizations}\n"
+            f"DESIGN_MATRIX {xls_filename}\n"
+            "QUEUE_SYSTEM LOCAL"
+        ),
+        encoding="utf-8",
+    )
 
     args_mock = Mock()
     args_mock.config = config_file
