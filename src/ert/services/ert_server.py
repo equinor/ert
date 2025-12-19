@@ -5,8 +5,8 @@ import logging
 import os
 import sys
 import threading
+import types
 from collections.abc import Mapping
-from inspect import Traceback
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from time import sleep
@@ -28,9 +28,9 @@ class ErtServerContext:
 
     def __exit__(
         self,
-        exc_type: type[BaseException],
-        exc_value: BaseException,
-        traceback: Traceback,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: types.TracebackType | None,
     ) -> bool:
         self._service.shutdown()
         return exc_type is None

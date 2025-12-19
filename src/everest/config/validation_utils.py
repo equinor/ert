@@ -1,6 +1,7 @@
 import errno
 import os
 import tempfile
+import types
 from collections import Counter
 from collections.abc import Sequence
 from pathlib import Path
@@ -104,7 +105,12 @@ class InstallDataContext:
             if data.source is not None and "<REALIZATION_ID>" in data.source:
                 self._set_symlink(data.source, data.target, realization)
 
-    def __exit__(self, exc_type: Any, exc_value: Any, exc_tb: Any) -> None:
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        exc_tb: types.TracebackType | None,
+    ) -> None:
         if self._temp_dir:
             self._temp_dir.cleanup()
         os.chdir(self._cwd)
