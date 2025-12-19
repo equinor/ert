@@ -215,6 +215,7 @@ select = [
     "PIE",   # flake8-pie
     "PL",    # pylint
     "PLE",
+    "PYI",
     "Q",
     "RSE",
     "RSE",   # flake8-raise
