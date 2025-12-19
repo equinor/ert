@@ -126,7 +126,7 @@ def extract_errors_from_file(path: str) -> list[str]:
     return re.findall(r"(Error \w+.*)", Path(path).read_text(encoding="utf-8"))
 
 
-def wait_for_server(client: Client, timeout: int | float) -> None:
+def wait_for_server(client: Client, timeout: float) -> None:
     """
     Waits until the everest server has started. Polls every second
     for server availability until timeout (measured in seconds).

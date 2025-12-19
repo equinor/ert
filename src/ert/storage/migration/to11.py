@@ -44,7 +44,7 @@ def migrate(path: Path) -> None:
                         array = ds.isel(realizations=0, drop=True)["values"]
                         realization = int(real_dir.name.split("-")[1])
 
-                        def parse_value(value: float | int | str) -> float | int | str:
+                        def parse_value(value: float | str) -> float | int | str:
                             if isinstance(value, float | int):
                                 return value
                             try:
