@@ -83,7 +83,12 @@ def create_responses(prior_ensemble, response_times):
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_reading_matching_time_is_ok(ert_config, storage, prior_ensemble):
-    sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size), 123)
+    sample_prior(
+        prior_ensemble,
+        range(prior_ensemble.ensemble_size),
+        123,
+        prior_ensemble.ensemble_size,
+    )
 
     create_responses(
         prior_ensemble,
@@ -110,7 +115,12 @@ def test_that_reading_matching_time_is_ok(ert_config, storage, prior_ensemble):
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_mismatched_responses_give_error(ert_config, storage, prior_ensemble):
-    sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size), 123)
+    sample_prior(
+        prior_ensemble,
+        range(prior_ensemble.ensemble_size),
+        123,
+        prior_ensemble.ensemble_size,
+    )
 
     response_times = [
         [datetime(2014, 9, 9)],
@@ -144,7 +154,12 @@ def test_that_different_length_is_ok_as_long_as_observation_time_exists(
     storage,
     prior_ensemble,
 ):
-    sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size), 123)
+    sample_prior(
+        prior_ensemble,
+        range(prior_ensemble.ensemble_size),
+        123,
+        prior_ensemble.ensemble_size,
+    )
     response_times = [
         [datetime(2014, 9, 9)],
         [datetime(2014, 9, 9)],
@@ -193,7 +208,12 @@ def test_that_duplicate_summary_time_steps_does_not_fail(
     storage,
     prior_ensemble,
 ):
-    sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size), 123)
+    sample_prior(
+        prior_ensemble,
+        range(prior_ensemble.ensemble_size),
+        123,
+        prior_ensemble.ensemble_size,
+    )
     response_times = [
         [datetime(2014, 9, 9)],
         [datetime(2014, 9, 9)],
@@ -224,7 +244,12 @@ def test_that_duplicate_summary_time_steps_does_not_fail(
 @pytest.mark.flaky(reruns=5)
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_mismatched_responses_gives_nan_measured_data(prior_ensemble):
-    sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size), 123)
+    sample_prior(
+        prior_ensemble,
+        range(prior_ensemble.ensemble_size),
+        123,
+        prior_ensemble.ensemble_size,
+    )
 
     response_times = [
         [datetime(2014, 9, 9)],
@@ -253,7 +278,12 @@ def test_that_mismatched_responses_gives_nan_measured_data(prior_ensemble):
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_reading_past_2263_is_ok(ert_config, prior_ensemble):
-    sample_prior(prior_ensemble, range(prior_ensemble.ensemble_size), 123)
+    sample_prior(
+        prior_ensemble,
+        range(prior_ensemble.ensemble_size),
+        123,
+        prior_ensemble.ensemble_size,
+    )
 
     create_responses(
         prior_ensemble,
