@@ -94,6 +94,7 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values):
                 "REAL": list(range(num_realizations)),
                 "a": a_values,
                 "category": 5 * ["cat1"] + 5 * ["cat2"],
+                "big_integer": [1e10 + i for i in range(num_realizations)],
             }
         ),
         pl.DataFrame(default_values, orient="row"),
@@ -117,10 +118,11 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values):
         encoding="utf-8",
     )
 
-    # This adds a dummy category parameter to COEFFS GENKW
-    # which will be overridden by the design matrix catagorical entries
+    # This adds a dummy category and big_numbers parameter to COEFFS GENKW
+    # which will be overridden by the design matrix entries
     with open("coeff_priors", "a", encoding="utf-8") as f:
-        f.write("category UNIFORM 0 1")
+        f.write("category UNIFORM 0 1\n")
+        f.write("big_numbers UNIFORM 0 1\n")
 
     Path("poly_eval.py").write_text(
         dedent(
@@ -153,6 +155,7 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values):
                 b: <b>
                 c: <c>
                 category: <category>
+                big_integer: <big_integer>
                 """
         ),
         encoding="utf-8",
@@ -185,6 +188,9 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values):
         np.testing.assert_array_equal(
             params["category"].to_list(), 5 * ["cat1"] + 5 * ["cat2"]
         )
+        np.testing.assert_array_equal(
+            params["big_integer"].to_list(), [1e10 + i for i in range(10)]
+        )
         np.testing.assert_array_equal(params["b"].to_list(), 10 * [1])
         np.testing.assert_array_equal(params["c"].to_list(), 10 * [2])
     with open("poly_out/realization-0/iter-0/my_output", encoding="utf-8") as f:
@@ -193,12 +199,14 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values):
         assert output[1] == "b: 1"
         assert output[2] == "c: 2"
         assert output[3] == "category: cat1"
+        assert output[4] == "big_integer: 10000000000"
     with open("poly_out/realization-5/iter-0/my_output", encoding="utf-8") as f:
         output = [line.strip() for line in f]
         assert output[0] == "a: 5"
         assert output[1] == "b: 1"
         assert output[2] == "c: 2"
         assert output[3] == "category: cat2"
+        assert output[4] == "big_integer: 10000000005"
 
 
 @pytest.mark.usefixtures(
