@@ -21,6 +21,7 @@ def sample_prior(
     ensemble: Ensemble,
     active_realizations: Iterable[int],
     random_seed: int,
+    num_realizations: int,
     parameters: list[str] | None = None,
     design_matrix_df: pl.DataFrame | None = None,
 ) -> None:
@@ -70,6 +71,7 @@ def sample_prior(
                         config_node,
                         realization_nr,
                         random_seed=random_seed,
+                        num_realizations=num_realizations,
                     )
                     for realization_nr in active_realizations
                 ]
