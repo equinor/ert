@@ -567,15 +567,15 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
             "--color-always",
             action="store_true",
             help="Force coloring of monitor output, which is automatically"
-            + " disabled if the output stream is not a terminal.",
+            " disabled if the output stream is not a terminal.",
             default=False,
         )
         cli_parser.add_argument(
             "--disable-monitoring",
             action="store_true",
             help="Monitoring will continuously print the status of the realisations"
-            + " classified into Waiting, Pending, Running, Failed, Finished"
-            + " and Unknown.",
+            " classified into Waiting, Pending, Running, Failed, Finished"
+            " and Unknown.",
             default=False,
         )
         cli_parser.add_argument(

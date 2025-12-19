@@ -49,16 +49,16 @@ dual_input = "{{ well_drill_north.PROD1 }} vs {{ well_drill_south.PROD1 }}"
 
 multiple_input_template = (
     "FILENAME\n"
-    + "F1 {{parameters.key1.subkey1}}\n"
-    + "OTH {{second.key1.subkey2}}\n"
-    + "OTH_TEST {{third.key1.subkey1}}"
+    "F1 {{parameters.key1.subkey1}}\n"
+    "OTH {{second.key1.subkey2}}\n"
+    "OTH_TEST {{third.key1.subkey1}}"
 )
 
 multiple_input_template_no_param = (
     "FILENAME\n"
-    + "F1 {{not_the_standard_parameters.key1.subkey1}}\n"
-    + "OTH {{second.key1.subkey2}}\n"
-    + "OTH_TEST {{third.key1.subkey1}}"
+    "F1 {{not_the_standard_parameters.key1.subkey1}}\n"
+    "OTH {{second.key1.subkey2}}\n"
+    "OTH_TEST {{third.key1.subkey1}}"
 )
 
 default_parameters = {

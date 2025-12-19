@@ -78,8 +78,8 @@ def test_that_reading_summaries_returns_the_contents_of_the_file(
         (b"1", b"1", "Failed to read summary file"),
         (
             b"\x00\x00\x00\x10FOOOOOOO\x00\x00\x00\x01"
-            + b"INTE"
-            + b"\x00\x00\x00\x10"
+            b"INTE"
+            b"\x00\x00\x00\x10"
             + (4).to_bytes(4, signed=True, byteorder="big")
             + b"\x00" * 4,
             b"",
@@ -87,8 +87,8 @@ def test_that_reading_summaries_returns_the_contents_of_the_file(
         ),
         (
             b"\x00\x00\x00\x10STARTDAT\x00\x00\x00\x01"
-            + b"INTE"
-            + b"\x00\x00\x00\x10"
+            b"INTE"
+            b"\x00\x00\x00\x10"
             + (4).to_bytes(4, signed=True, byteorder="big")
             + b"\x00" * 4
             + (4).to_bytes(4, signed=True, byteorder="big"),

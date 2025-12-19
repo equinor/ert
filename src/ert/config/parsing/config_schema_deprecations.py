@@ -39,9 +39,9 @@ deprecated_keywords_list = [
             keyword=kw,
             message=partial(
                 lambda line, kw: f"Using {kw} with substitution strings "
-                + "that are not of the form '<KEY>' is deprecated. "
-                + f"Please change {line[0]} to "
-                + f"<{line[0].replace('<', '').replace('>', '')}>",
+                "that are not of the form '<KEY>' is deprecated. "
+                f"Please change {line[0]} to "
+                f"<{line[0].replace('<', '').replace('>', '')}>",
                 kw=kw,
             ),
             check=lambda line: not DeprecationInfo.is_angle_bracketed(str(line[0])),
