@@ -19,14 +19,13 @@ logger = logging.getLogger(__name__)
 
 class SummaryConfig(ResponseConfig):
     type: Literal["summary"] = "summary"
-    name: str = "summary"
     has_finalized_keys: bool = False
 
     @property
     def metadata(self) -> list[ResponseMetadata]:
         return [
             ResponseMetadata(
-                response_type=self.name,
+                response_type=self.type,
                 response_key=response_key,
                 filter_on=None,
                 finalized=self.has_finalized_keys,

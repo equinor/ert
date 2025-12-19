@@ -132,7 +132,7 @@ class EnsembleConfig(BaseModel):
                 response_configs.append(instance)
 
         return cls(
-            response_configs={response.name: response for response in response_configs},
+            response_configs={response.type: response for response in response_configs},
             parameter_configs={
                 parameter.name: parameter for parameter in parameter_configs
             },
