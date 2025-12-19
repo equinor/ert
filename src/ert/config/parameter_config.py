@@ -165,8 +165,7 @@ class ParameterConfig(BaseModel):
         rng.standard_normal(realization)
 
         # Latin hypercube sampling
-        sampler = sp.stats.qmc.LatinHypercube(num_realizations, rng=rng)
-        quantile = sampler.random(1)
-        lhs_value = sp.stats.norm(0, 1).ppf(quantile[0][realization])
-
+        sampler = sp.stats.qmc.LatinHypercube(1, rng=rng)
+        quantile = sampler.random(num_realizations)
+        lhs_value = sp.stats.norm(0, 1).ppf(quantile[realization][0])
         return np.array([lhs_value])
