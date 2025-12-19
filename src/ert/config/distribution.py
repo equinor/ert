@@ -17,7 +17,7 @@ class TransSettingsValidation(BaseModel):
     model_config = {"extra": "forbid"}
 
     @classmethod
-    def create(cls: type[T], *args: Any, **kwargs: Any) -> T:
+    def create(cls, *args: Any, **kwargs: Any) -> Self:
         return cls(*args, **kwargs)
 
     @classmethod
