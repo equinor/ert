@@ -173,7 +173,11 @@ class PlotWidget(QWidget):
         self._figure.clear()
 
     def _sync_log_checkbox(self) -> None:
-        if type(self._plotter).__name__ == "HistogramPlot":
+        if type(self._plotter).__name__ in {
+            "HistogramPlot",
+            "DistributionPlot",
+            "GaussianKDEPlot",
+        }:
             self._log_checkbox.setVisible(True)
         else:
             self._log_checkbox.setVisible(False)
