@@ -30,7 +30,7 @@ from .realization_storage_state import RealizationStorageState
 
 logger = logging.getLogger(__name__)
 
-_LOCAL_STORAGE_VERSION = 20
+_LOCAL_STORAGE_VERSION = 21
 
 
 class _Migrations(BaseModel):
@@ -506,6 +506,7 @@ class LocalStorage(BaseMode):
             to18,
             to19,
             to20,
+            to21,
         )
 
         try:
@@ -555,6 +556,7 @@ class LocalStorage(BaseMode):
                     17: to18,
                     18: to19,
                     19: to20,
+                    20: to21,
                 }
                 for from_version in range(version, _LOCAL_STORAGE_VERSION):
                     migrations[from_version].migrate(self.path)
