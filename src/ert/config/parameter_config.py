@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 import networkx as nx
 import numpy as np
 import polars as pl
+import scipy as sp
 import xarray as xr
 from pydantic import BaseModel
 
@@ -127,9 +128,7 @@ class ParameterConfig(BaseModel):
         return lambda x: x
 
     def sample_value(
-        self,
-        global_seed: str,
-        realization: int,
+        self, global_seed: str, realization: int, num_realizations: int
     ) -> npt.NDArray[np.double]:
         """
         Generate a sample value for each key in a parameter group.
@@ -165,6 +164,9 @@ class ParameterConfig(BaseModel):
         # Advance the RNG state to the realization point
         rng.standard_normal(realization)
 
-        # Generate a single sample
-        value = rng.standard_normal(1)
-        return np.array([value[0]])
+        # Latin hypercube sampling
+        sampler = sp.stats.qmc.LatinHypercube(num_realizations, rng=rng)
+        quantile = sampler.random(1)
+        lhs_value = sp.stats.norm(0, 1).ppf(quantile[0][realization])
+
+        return np.array([lhs_value])

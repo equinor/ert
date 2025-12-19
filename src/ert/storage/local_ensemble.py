@@ -739,10 +739,10 @@ class LocalEnsemble(BaseMode):
         parameter: ParameterConfig,
         real_nr: int,
         random_seed: int,
+        num_realizations: int,
     ) -> pl.DataFrame:
         parameter_value = parameter.sample_value(
-            str(random_seed),
-            real_nr,
+            str(random_seed), real_nr, num_realizations=num_realizations
         )
 
         parameter_dict = {parameter.name: parameter_value[0]}
