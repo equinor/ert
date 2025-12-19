@@ -286,7 +286,9 @@ def test_that_sampling_is_fixed_from_name(
         with open("template.txt", "w", encoding="utf-8") as fh:
             fh.writelines(template)
         fs = storage.create_ensemble(
-            storage.create_experiment(parameters=scalars),
+            storage.create_experiment(
+                experiment_config={"parameter_configuration": scalars}
+            ),
             name="prior",
             ensemble_size=num_realisations,
         )
@@ -348,7 +350,11 @@ def test_that_sub_sample_maintains_order(tmpdir, storage, mask, expected):
 
         fs = storage.create_ensemble(
             storage.create_experiment(
-                ert_config.ensemble_config.parameter_configuration
+                experiment_config={
+                    "parameter_configuration": (
+                        ert_config.ensemble_config.parameter_configuration
+                    )
+                }
             ),
             name="prior",
             ensemble_size=5,

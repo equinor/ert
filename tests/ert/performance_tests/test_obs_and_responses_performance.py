@@ -396,12 +396,14 @@ def setup_benchmark(tmp_path, request):
 
     with open_storage(tmp_path / "storage", mode="w") as storage:
         experiment = storage.create_experiment(
-            responses=[info.gen_data_config, info.summary_config],
-            parameters=info.gen_kw_configs,
-            observations={
-                "gen_data": info.gen_data_observations,
-                "summary": info.summary_observations,
-            },
+            experiment_config={
+                "response_configuration": [info.gen_data_config, info.summary_config],
+                "parameter_configuration": info.gen_kw_configs,
+                "observations": {
+                    "field_obs_set": info.observation_config,
+                    "summary_obs_set": info.summary_observation_config,
+                },
+            }
         )
         ens = experiment.create_ensemble(
             ensemble_size=config.num_realizations, name="BobKaareJohnny"
@@ -476,13 +478,16 @@ def setup_es_benchmark(tmp_path, request):
 
     with open_storage(tmp_path / "storage", mode="w") as storage:
         experiment = storage.create_experiment(
-            responses=[info.gen_data_config, info.summary_config],
-            parameters=info.gen_kw_configs,
-            observations={
-                "gen_data": info.gen_data_observations,
-                "summary": info.summary_observations,
-            },
+            experiment_config={
+                "response_configuration": [info.gen_data_config, info.summary_config],
+                "parameter_configuration": info.gen_kw_configs,
+                "observations": {
+                    "field_obs_set": info.observation_config,
+                    "summary_obs_set": info.summary_observation_config,
+                },
+            }
         )
+
         prior = experiment.create_ensemble(
             ensemble_size=config.num_realizations, name="BobKaareJohnny", iteration=0
         )

@@ -427,9 +427,13 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
         corr_length = prior.load_parameters("CORR_LENGTH")
 
         new_experiment = storage.create_experiment(
-            parameters=config.ensemble_config.parameter_configuration,
-            responses=config.ensemble_config.response_configuration,
-            observations=config.observations,
+            experiment_config={
+                "parameter_configuration": (
+                    config.ensemble_config.parameter_configuration
+                ),
+                "response_configuration": config.ensemble_config.response_configuration,
+                "observations": config.observations,
+            },
             name="exp-zero-var",
         )
         new_prior = storage.create_ensemble(
