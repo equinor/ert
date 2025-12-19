@@ -1,4 +1,4 @@
-from collections import namedtuple
+from typing import NamedTuple
 
 import numpy as np
 
@@ -18,7 +18,11 @@ u_init[:, 5:7, 5:7] = 100
 # Resolution in the x-direction (nothing to worry about really)
 dx = 1
 
-Coordinate = namedtuple("Coordinate", ["x", "y"])
+
+class Coordinate(NamedTuple):
+    x: int
+    y: int
+
 
 obs_coordinates = [
     Coordinate(5, 3),
