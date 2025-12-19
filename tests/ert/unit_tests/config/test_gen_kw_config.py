@@ -177,6 +177,7 @@ number_regex = r"[-+]?(?:\d*\.\d+|\d+)"
             + r"LOG10_KW_NAME:MY_KEYWORD "
             + number_regex,
         ),
+        ("CONST 1.54", False, "KW_NAME:MY_KEYWORD 1.54\n"),
         ("CONST 1.0", False, "KW_NAME:MY_KEYWORD 1\n"),
         ("DUNIF 5 1 5", False, r"KW_NAME:MY_KEYWORD " + number_regex),
         ("ERRF 1 2 0.1 0.1", False, r"KW_NAME:MY_KEYWORD " + number_regex),
