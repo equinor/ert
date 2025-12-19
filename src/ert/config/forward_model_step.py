@@ -101,15 +101,18 @@ class ForwardModelStepDocumentation(BaseModel):
     source_function_name: str = Field(default="ert")
     description: str = Field(default="No description")
     examples: str = Field(default="No examples")
-    category: (
-        Literal[
-            "utility.file_system",
-            "simulators.reservoir",
-            "modelling.reservoir",
-            "utility.templating",
-        ]
-        | str
-    ) = Field(default="Uncategorized")
+    category: Annotated[
+        str,
+        Field(
+            default="Uncategorized",
+            examples=[
+                "utility.file_system",
+                "simulators.reservoir",
+                "modelling.reservoir",
+                "utility.templating",
+            ],
+        ),
+    ]
 
 
 class ForwardModelStep(BaseModelWithContextSupport):
