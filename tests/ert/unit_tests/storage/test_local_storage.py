@@ -607,7 +607,6 @@ response_configs = st.lists(
         ),
         st.builds(
             SummaryConfig,
-            name=st.just("summary"),
             input_files=st.lists(
                 st.text(
                     alphabet=st.characters(
@@ -620,7 +619,7 @@ response_configs = st.lists(
             keys=st.lists(summary_selectors, min_size=1),
         ),
     ),
-    unique_by=lambda x: x.name,
+    unique_by=lambda x: x.type,
     min_size=1,
 )
 
@@ -1584,7 +1583,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         summary_configs = [p for p in responses if isinstance(p, SummaryConfig)]
         assume(summary_configs)
         summary = summary_configs[0]
-        assume(summary.name not in model_ensemble.response_values)
+        assume(summary.type not in model_ensemble.response_values)
         smspec, unsmry = summary_data
         smspec.to_file(self.tmpdir + f"/{summary.input_files[0]}.SMSPEC")
         unsmry.to_file(self.tmpdir + f"/{summary.input_files[0]}.UNSMRY")
@@ -1596,13 +1595,13 @@ class StatefulStorageTest(RuleBasedStateMachine):
             raise AssertionError from e
         storage_ensemble.save_response(summary.type, ds, self.iens_to_edit)
 
-        model_ensemble.response_values[summary.name] = ds
+        model_ensemble.response_values[summary.type] = ds
 
         model_experiment = self.model[storage_experiment.id]
         response_keys = set(ds["response_key"].unique())
 
         model_smry_config = next(
-            config for config in model_experiment.responses if config.name == "summary"
+            config for config in model_experiment.responses if config.type == "summary"
         )
 
         if not model_smry_config.has_finalized_keys:

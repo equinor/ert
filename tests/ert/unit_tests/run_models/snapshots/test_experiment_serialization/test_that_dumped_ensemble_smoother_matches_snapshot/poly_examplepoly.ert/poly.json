@@ -233,7 +233,6 @@
   "response_configuration": [
     {
       "type": "gen_data",
-      "name": "gen_data",
       "input_files": [
         "poly.out"
       ],

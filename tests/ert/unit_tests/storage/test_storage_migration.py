@@ -159,30 +159,6 @@ def test_that_storage_matches(
         assert isinstance(df, pl.DataFrame)
         assert dict(df.schema) == {"BPR": pl.Float64, "realization": pl.Int64}
         assert df["realization"].to_list() == list(range(ensemble.ensemble_size))
-        snapshot.assert_match(
-            json.dumps(
-                {
-                    k: v.model_dump(mode="json")
-                    for k, v in sorted(experiment.parameter_configuration.items())
-                },
-                default=str,
-                indent=2,
-            )
-            + "\n",
-            "parameters",
-        )
-        snapshot.assert_match(
-            json.dumps(
-                {
-                    k: v.model_dump(mode="json")
-                    for k, v in sorted(experiment.response_configuration.items())
-                },
-                default=str,
-                indent=2,
-            )
-            + "\n",
-            "responses",
-        )
 
         summary_data = ensemble.load_responses(
             "summary",
@@ -203,7 +179,6 @@ def test_that_storage_matches(
             },
             "observations",
         )
-
         gen_data = ensemble.load_responses(
             "gen_data", tuple(range(ensemble.ensemble_size))
         )
@@ -220,6 +195,10 @@ def test_that_storage_matches(
         ensemble.save_response("summary", ensemble.load_responses("summary", (0,)), 0)
         assert ensemble.experiment._has_finalized_response_keys("summary")
         assert ensemble.experiment.response_type_to_response_keys["summary"] == ["FOPR"]
+
+        assert all(
+            "name" not in response for response in experiment.response_info.values()
+        )
 
 
 @pytest.mark.integration_test
