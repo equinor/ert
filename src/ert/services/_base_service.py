@@ -278,7 +278,7 @@ class BaseService:
             )
 
     @classmethod
-    def start_server(cls: type[T], *args: Any, **kwargs: Any) -> _Context[T]:
+    def start_server(cls, *args: Any, **kwargs: Any) -> _Context[Self]:
         if cls._instance is not None:
             raise RuntimeError("Server already running")
         cls._instance = obj = cls(*args, **kwargs)
