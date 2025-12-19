@@ -1,6 +1,6 @@
 import json
 from datetime import datetime
-from typing import Any
+from typing import Annotated, Any
 from uuid import UUID
 
 import pandas as pd
@@ -36,7 +36,9 @@ async def get_response_misfits(
     response_name: str,
     realization_index: int | None = None,
     summary_misfits: bool = False,
-    filter_on: str | None = Query(None, description="JSON string with filters"),
+    filter_on: Annotated[
+        str | None, Query(description="JSON string with filters")
+    ] = None,
 ) -> Response:
     ensemble = storage.get_ensemble(ensemble_id)
     dataframe = data_for_response(

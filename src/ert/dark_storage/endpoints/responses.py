@@ -45,7 +45,9 @@ async def get_response(
     storage: Storage = DEFAULT_STORAGE,
     ensemble_id: UUID,
     response_key: str,
-    filter_on: str | None = Query(None, description="JSON string with filters"),
+    filter_on: Annotated[
+        str | None, Query(description="JSON string with filters")
+    ] = None,
     accept: Annotated[str | None, Header()] = None,
 ) -> Response:
     try:

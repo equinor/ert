@@ -1,7 +1,7 @@
 import json
 import logging
 import operator
-from typing import Any
+from typing import Annotated, Any
 from urllib.parse import unquote
 from uuid import UUID, uuid4
 
@@ -57,7 +57,9 @@ async def get_observations_for_response(
     storage: Storage = DEFAULT_STORAGE,
     ensemble_id: UUID,
     response_key: str,
-    filter_on: str | None = Query(None, description="JSON string with filters"),
+    filter_on: Annotated[
+        str | None, Query(description="JSON string with filters")
+    ] = None,
 ) -> list[js.ObservationOut]:
     response_key = unquote(response_key)
     try:

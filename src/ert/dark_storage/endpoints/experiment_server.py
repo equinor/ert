@@ -9,6 +9,7 @@ import traceback
 import uuid
 from base64 import b64decode
 from queue import SimpleQueue
+from typing import Annotated
 
 from fastapi import (
     APIRouter,
@@ -153,7 +154,7 @@ def _log(request: Request) -> None:
 
 @router.get("/")
 def get_status(
-    request: Request, credentials: HTTPBasicCredentials = Depends(security)
+    request: Request, credentials: Annotated[HTTPBasicCredentials, Depends(security)]
 ) -> PlainTextResponse:
     _log(request)
     _check_user(credentials)
@@ -162,7 +163,7 @@ def get_status(
 
 @router.get("/status")
 def experiment_status(
-    request: Request, credentials: HTTPBasicCredentials = Depends(security)
+    request: Request, credentials: Annotated[HTTPBasicCredentials, Depends(security)]
 ) -> ExperimentStatus:
     _log(request)
     _check_user(credentials)
@@ -171,7 +172,7 @@ def experiment_status(
 
 @router.post("/" + EverEndpoints.stop)
 def stop(
-    request: Request, credentials: HTTPBasicCredentials = Depends(security)
+    request: Request, credentials: Annotated[HTTPBasicCredentials, Depends(security)]
 ) -> Response:
     _log(request)
     _check_user(credentials)
@@ -185,7 +186,7 @@ def stop(
 async def start_experiment(
     request: Request,
     background_tasks: BackgroundTasks,
-    credentials: HTTPBasicCredentials = Depends(security),
+    credentials: Annotated[HTTPBasicCredentials, Depends(security)],
 ) -> Response:
     _log(request)
     _check_user(credentials)
@@ -218,7 +219,7 @@ async def start_experiment(
 
 @router.get("/" + EverEndpoints.config_path)
 async def config_path(
-    request: Request, credentials: HTTPBasicCredentials = Depends(security)
+    request: Request, credentials: Annotated[HTTPBasicCredentials, Depends(security)]
 ) -> JSONResponse:
     _log(request)
     _check_user(credentials)
@@ -237,7 +238,7 @@ async def config_path(
 
 @router.get("/" + EverEndpoints.start_time)
 async def start_time(
-    request: Request, credentials: HTTPBasicCredentials = Depends(security)
+    request: Request, credentials: Annotated[HTTPBasicCredentials, Depends(security)]
 ) -> Response:
     _log(request)
     _check_user(credentials)
