@@ -223,6 +223,7 @@
         "POLY_RES"
       ],
       "has_finalized_keys": true,
+      "name": "gen_data",
       "report_steps_list": [
         null
       ]
