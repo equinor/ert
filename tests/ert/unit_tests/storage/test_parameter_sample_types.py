@@ -301,7 +301,12 @@ def test_that_sampling_is_fixed_from_name(
             name="prior",
             ensemble_size=num_realisations,
         )
-        sample_prior(fs, range(num_realisations), random_seed=1234)
+        sample_prior(
+            fs,
+            range(num_realisations),
+            random_seed=1234,
+            num_realizations=num_realisations,
+        )
 
         key_hash = sha256(b"1234" + b"KW_NAME:MY_KEYWORD")
         seed = np.frombuffer(key_hash.digest(), dtype="uint32")
@@ -365,7 +370,10 @@ def test_that_sub_sample_maintains_order(tmpdir, storage, mask, expected):
             ensemble_size=5,
         )
         sample_prior(
-            fs, [i for i, active in enumerate(mask) if active], random_seed=1234
+            fs,
+            [i for i, active in enumerate(mask) if active],
+            random_seed=1234,
+            num_realizations=5,
         )
 
         df = fs.load_parameters("KW_NAME")

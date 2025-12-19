@@ -981,6 +981,7 @@ def test_sample_parameter_with_design_matrix(tmp_path, reals, expect_error):
                     ensemble,
                     reals,
                     random_seed=123,
+                    num_realizations=ensemble_size,
                     parameters=[
                         param.name for param in design_matrix.parameter_configurations
                     ],
@@ -991,6 +992,7 @@ def test_sample_parameter_with_design_matrix(tmp_path, reals, expect_error):
                 ensemble,
                 reals,
                 random_seed=123,
+                num_realizations=ensemble_size,
                 parameters=[
                     param.name for param in design_matrix.parameter_configurations
                 ],
@@ -1037,7 +1039,12 @@ def test_load_gen_kw_not_sorted(storage, tmpdir, snapshot):
             experiment_id, name="default", ensemble_size=ensemble_size
         )
 
-        sample_prior(ensemble, range(ensemble_size), random_seed=1234)
+        sample_prior(
+            ensemble,
+            range(ensemble_size),
+            random_seed=1234,
+            num_realizations=ensemble_size,
+        )
         data = ensemble.load_scalars()
         snapshot.assert_match(data.write_csv(float_precision=12), "gen_kw_unsorted")
 
