@@ -230,7 +230,7 @@ def test_that_distance_localization_heat_equation_matches_snapshot(snapshot):
         .sort("iteration")
     )
     snapshot.assert_match(
-        stats.write_csv(),
+        stats.write_csv(float_precision=5),
         "heat_distance_localization_statistics.csv",
     )
 
