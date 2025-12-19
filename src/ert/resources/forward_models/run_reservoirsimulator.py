@@ -8,10 +8,9 @@ import subprocess
 import sys
 import time
 from argparse import ArgumentParser
-from collections import namedtuple
 from pathlib import Path
 from random import random
-from typing import Literal, get_args
+from typing import Literal, NamedTuple, get_args
 
 import resfo
 
@@ -43,7 +42,13 @@ class EclError(RuntimeError):
 
 
 Simulators = Literal["flow", "eclipse", "e300"]
-EclipseResult = namedtuple("EclipseResult", "errors bugs")
+
+
+class EclipseResult(NamedTuple):
+    errors: int
+    bugs: int
+
+
 body_sub_pattern = r"(\s^\s@.+$)*"
 date_sub_pattern = r"\s+AT TIME\s+(?P<Days>\d+\.\d+)\s+DAYS\s+\((?P<Date>(.+)):\s*$"
 error_pattern_e100 = (
