@@ -229,6 +229,22 @@ def test_that_file_without_read_access_raises_config_validation_error(
         _ = parse(config_file_name, schema=USER_CONFIG_SCHEMA)
 
 
+@pytest.mark.parametrize(
+    "keyword",
+    ["GRID", "DATA_FILE"],
+)
+def test_keyword_value_not_a_file_raises_config_validation_error(keyword):
+    with pytest.raises(ConfigValidationError, match=f"{keyword} .* is not a file"):
+        _ = parse_contents(
+            f"""
+            NUM_REALIZATIONS 1
+            {keyword} ./ -- This is a folder, not a file.
+            """,
+            file_name="config.ert",
+            schema=USER_CONFIG_SCHEMA,
+        )
+
+
 def test_that_giving_non_int_values_in_num_realization_raises_config_validation_error():
     with pytest.raises(ConfigValidationError, match="integer"):
         _ = parse_contents(
