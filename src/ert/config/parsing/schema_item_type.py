@@ -9,6 +9,7 @@ class SchemaItemType(StrEnum):
     POSITIVE_FLOAT = "POSITIVE_FLOAT"
     PATH = "PATH"
     EXISTING_PATH = "EXISTING_PATH"
+    EXISTING_FILE = "EXISTING_FILE"
     # EXISTING_PATH_INLINE is a directive to the
     # schema validation to inline the contents of
     # the file.

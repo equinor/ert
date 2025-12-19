@@ -155,9 +155,9 @@ class SchemaItem:
                         f"value as argument {index + 1!r}",
                         token,
                     )
-
             case (
                 SchemaItemType.PATH
+                | SchemaItemType.EXISTING_FILE
                 | SchemaItemType.EXISTING_PATH
                 | SchemaItemType.EXISTING_PATH_INLINE
             ):
@@ -166,10 +166,14 @@ class SchemaItem:
                     path = os.path.normpath(
                         os.path.join(os.path.dirname(token.filename), token)
                     )
-                if val_type in {
-                    SchemaItemType.EXISTING_PATH,
-                    SchemaItemType.EXISTING_PATH_INLINE,
-                }:
+                if val_type != SchemaItemType.PATH:
+                    if val_type == SchemaItemType.EXISTING_FILE and not os.path.isfile(
+                        str(path)
+                    ):
+                        raise ConfigValidationError.with_context(
+                            f"{self.kw} {token} is not a file.",
+                            token,
+                        )
                     if not os.path.exists(str(path)):
                         err = f'Cannot find file or directory "{token.value}". '
                         if path != token:
@@ -343,8 +347,8 @@ def path_keyword(keyword: str) -> SchemaItem:
     return SchemaItem(kw=keyword, type_map=[SchemaItemType.PATH])
 
 
-def existing_path_keyword(keyword: str) -> SchemaItem:
-    return SchemaItem(kw=keyword, type_map=[SchemaItemType.EXISTING_PATH])
+def existing_file_keyword(keyword: str) -> SchemaItem:
+    return SchemaItem(kw=keyword, type_map=[SchemaItemType.EXISTING_FILE])
 
 
 def existing_path_inline_keyword(
