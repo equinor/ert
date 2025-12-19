@@ -303,7 +303,6 @@
   "response_configuration": [
     {
       "type": "summary",
-      "name": "summary",
       "input_files": [
         "SNAKE_OIL_FIELD"
       ],
@@ -316,7 +315,6 @@
     },
     {
       "type": "gen_data",
-      "name": "gen_data",
       "input_files": [
         "snake_oil_opr_diff_%d.txt",
         "snake_oil_wpr_diff_%d.txt",

@@ -31,7 +31,6 @@ class ResponseMetadata(BaseModel):
 
 class ResponseConfig(BaseModel):
     type: str
-    name: str
     input_files: list[str] = Field(default_factory=list)
     keys: list[str] = Field(default_factory=list)
     has_finalized_keys: bool = False
