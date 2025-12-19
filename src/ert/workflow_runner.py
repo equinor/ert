@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import types
 from concurrent import futures
 from concurrent.futures import Future
 from typing import Any, Self
@@ -127,7 +128,7 @@ class WorkflowRunner:
         self,
         exc_type: type[BaseException] | None,
         exc_value: BaseException | None,
-        traceback: Any,
+        traceback: types.TracebackType | None,
     ) -> None:
         self.wait()
 

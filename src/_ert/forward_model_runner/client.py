@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import types
 import uuid
-from typing import Any, Self
+from typing import Self
 
 import zmq
 import zmq.asyncio
@@ -67,7 +68,10 @@ class Client:
         return self
 
     async def __aexit__(
-        self, exc_type: Any, exc_value: Any, exc_traceback: Any
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        exc_traceback: types.TracebackType | None,
     ) -> None:
         try:
             await self.send(DISCONNECT_MSG)

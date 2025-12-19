@@ -12,6 +12,7 @@ import os
 import signal
 import sys
 import threading
+import types
 from collections.abc import Callable, Mapping, Sequence
 from logging import Logger, getLogger
 from pathlib import Path
@@ -23,7 +24,7 @@ from types import FrameType
 from typing import TYPE_CHECKING, Any, Generic, Self, TypedDict, TypeVar
 
 if TYPE_CHECKING:
-    from inspect import Traceback
+    pass
 
 T = TypeVar("T", bound="BaseService")
 
@@ -87,9 +88,9 @@ class _Context(Generic[T]):
 
     def __exit__(
         self,
-        exc_type: type[BaseException],
-        exc_value: BaseException,
-        traceback: Traceback,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: types.TracebackType | None,
     ) -> bool:
         self._service.shutdown()
         return exc_type is None
