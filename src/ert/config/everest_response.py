@@ -25,7 +25,7 @@ class EverestResponse(ResponseConfig):
     def metadata(self) -> list[ResponseMetadata]:
         return [
             ResponseMetadata(
-                response_type=self.name,
+                response_type=self.type,
                 response_key=response_key,
                 finalized=self.has_finalized_keys,
                 filter_on=None,
@@ -76,12 +76,12 @@ class EverestResponse(ResponseConfig):
             if all(isinstance(err, FileNotFoundError) for err in errors):
                 raise FileNotFoundError(
                     "Could not find one or more files/directories while reading "
-                    f"{self.name}: {','.join([str(err) for err in errors])}"
+                    f"{self.type}: {','.join([str(err) for err in errors])}"
                 )
             else:
                 raise InvalidResponseFile(
                     "Error reading "
-                    f"{self.name}, errors: {','.join([str(err) for err in errors])}"
+                    f"{self.type}, errors: {','.join([str(err) for err in errors])}"
                 )
 
         combined = pl.concat(datasets_per_name)
@@ -90,7 +90,6 @@ class EverestResponse(ResponseConfig):
 
 class EverestConstraintsConfig(EverestResponse):
     type: Literal["everest_constraints"] = "everest_constraints"
-    name: str = "everest_constraints"
     targets: list[float | None]
     upper_bounds: list[float]
     lower_bounds: list[float]
@@ -101,7 +100,6 @@ responses_index.add_response_type(EverestConstraintsConfig)
 
 class EverestObjectivesConfig(EverestResponse):
     type: Literal["everest_objectives"] = "everest_objectives"
-    name: str = "everest_objectives"
     weights: list[float | None]
     objective_types: list[Literal["mean", "stddev"]]
 
