@@ -201,7 +201,7 @@ class ControlVariableConfig(_ControlVariable):
     def __hash__(self) -> int:
         return hash(self.name) + hash(self.index)
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         return (
             isinstance(other, self.__class__)
             and other.name == self.name
@@ -234,7 +234,7 @@ class ControlVariableGuessListConfig(_ControlVariable):
     def __hash__(self) -> int:
         return hash(self.name)
 
-    def __eq__(self, other: Any) -> bool:
+    def __eq__(self, other: object) -> bool:
         return isinstance(other, self.__class__) and other.name == self.name
 
     @property
