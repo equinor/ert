@@ -12,7 +12,7 @@ class FileContextToken(Token):
 
     filename: str
 
-    def __new__(cls, token: Token, filename: str) -> FileContextToken:
+    def __new__(cls, token: Token, filename: str) -> FileContextToken:  # noqa: PYI034
         inst = super().__new__(
             cls,
             token.type,
