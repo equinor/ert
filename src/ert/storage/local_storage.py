@@ -12,7 +12,7 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile
 from textwrap import dedent
 from types import TracebackType
-from typing import Any
+from typing import Any, Self
 from uuid import UUID, uuid4
 
 import polars as pl
@@ -267,7 +267,7 @@ class LocalStorage(BaseMode):
     def _swap_path(self) -> Path:
         return self.path / self.SWAP_PATH
 
-    def __enter__(self) -> LocalStorage:
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(
