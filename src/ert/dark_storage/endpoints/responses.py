@@ -164,7 +164,7 @@ def data_for_response(
             .select(["Realization", "depth", "values"])
             .unique()
             .to_pandas()
-            .pivot(index="Realization", columns="depth", values="values")
+            .pivot_table(index="Realization", columns="depth", values="values")
             .reset_index(drop=True)
         )
 
