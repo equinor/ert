@@ -28,36 +28,47 @@ def storage(tmp_path):
     "config_str, expect_forward_init, expect_num_loaded, error",
     [
         (
-            "SURFACE MY_PARAM OUTPUT_FILE:surf.irap   INIT_FILES:surf%d.irap   "
-            "BASE_SURFACE:surf0.irap",
+            (
+                "SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:surf%d.irap "
+                "BASE_SURFACE:surf0.irap"
+            ),
             False,
             1,
             "",
         ),
         (
-            "SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:../../../surf%d.irap "
-            "BASE_SURFACE:surf0.irap FORWARD_INIT:True",
+            (
+                "SURFACE MY_PARAM OUTPUT_FILE:surf.irap "
+                "INIT_FILES:../../../surf%d.irap "
+                "BASE_SURFACE:surf0.irap FORWARD_INIT:True"
+            ),
             True,
             1,
             "",
         ),
         (
-            "SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:../../../surf.irap "
-            "BASE_SURFACE:surf0.irap FORWARD_INIT:True",
+            (
+                "SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:../../../surf.irap "
+                "BASE_SURFACE:surf0.irap FORWARD_INIT:True"
+            ),
             True,
             1,
             "",
         ),
         (
-            "SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:surf%d.irap "
-            "BASE_SURFACE:surf0.irap FORWARD_INIT:True",
+            (
+                "SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:surf%d.irap "
+                "BASE_SURFACE:surf0.irap FORWARD_INIT:True"
+            ),
             True,
             0,
             "Failed to initialize parameter 'MY_PARAM' in file surf0.irap",
         ),
         (
-            "SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:surf.irap "
-            "BASE_SURFACE:surf0.irap FORWARD_INIT:True",
+            (
+                "SURFACE MY_PARAM OUTPUT_FILE:surf.irap INIT_FILES:surf.irap "
+                "BASE_SURFACE:surf0.irap FORWARD_INIT:True"
+            ),
             True,
             0,
             "Failed to initialize parameter 'MY_PARAM' in file surf.irap",

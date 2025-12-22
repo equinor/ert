@@ -616,14 +616,18 @@ async def test_that_runtime_error_is_thrown_when_bsub_does_not_eventually_succee
         (255, 'Error near "select" : duplicate section. Job not submitted.'),
         (
             255,
-            "Error in select section: Expected number, string, "
-            'name, or "(" but found end of section. Job not submitted.',
+            (
+                "Error in select section: Expected number, string, "
+                'name, or "(" but found end of section. Job not submitted.'
+            ),
         ),
         (
             255,
-            "Error with <select[rhel < 8 && cs & x86_64Linux] rusage[mem=50]>:"
-            " '&' cannot be used in the resource requirement section. "
-            "Job not submitted.",
+            (
+                "Error with <select[rhel < 8 && cs & x86_64Linux] rusage[mem=50]>:"
+                " '&' cannot be used in the resource requirement section. "
+                "Job not submitted."
+            ),
         ),
         (255, "Error in rusage section. Job not submitted."),
     ],

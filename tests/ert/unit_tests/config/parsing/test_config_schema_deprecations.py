@@ -139,21 +139,27 @@ def test_that_a_deprecation_message_is_shown_when_the_update_settings_keyword_is
         ("<KEY1> x1", None),
         (
             "A B",
-            "Using .* with substitution strings that are not of the form "
-            "'<KEY>' is deprecated. "
-            "Please change A to <A>",
+            (
+                "Using .* with substitution strings that are not of the form "
+                "'<KEY>' is deprecated. "
+                "Please change A to <A>"
+            ),
         ),
         (
             "<A<B>> C",
-            "Using .* with substitution strings that are not of the form "
-            "'<KEY>' is deprecated. "
-            "Please change <A<B>> to <AB>",
+            (
+                "Using .* with substitution strings that are not of the form "
+                "'<KEY>' is deprecated. "
+                "Please change <A<B>> to <AB>"
+            ),
         ),
         (
             "<A><B> C",
-            "Using .* with substitution strings that are not of the "
-            "form '<KEY>' is deprecated. "
-            "Please change <A><B> to <AB>",
+            (
+                "Using .* with substitution strings that are not of the "
+                "form '<KEY>' is deprecated. "
+                "Please change <A><B> to <AB>"
+            ),
         ),
     ],
 )

@@ -1046,8 +1046,10 @@ def test_that_contents_of_gridfile_is_logged(storage, caplog):
     for msg in (
         "CASE.EGRID FILEHEAD contains",
         "CASE.EGRID GRIDHEAD contains",
-        "CASE.EGRID contained keywords ['COORD',"
-        " 'ENDGRID', 'FILEHEAD', 'GRIDHEAD', 'GRIDUNIT', 'ZCORN']",
+        (
+            "CASE.EGRID contained keywords ['COORD',"
+            " 'ENDGRID', 'FILEHEAD', 'GRIDHEAD', 'GRIDUNIT', 'ZCORN']"
+        ),
     ):
         assert any(msg in record.message for record in caplog.records)
 

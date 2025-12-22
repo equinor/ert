@@ -174,8 +174,11 @@ def test_failed_jobs_monitor(
     expected = [
         "===================== Running forward models (Batch #0) ======================\n",  # noqa: E501
         "  Waiting: 0 | Pending: 0 | Running: 0 | Finished: 0 | Failed: 1\n",
-        "  fm_step_0: 1/0/1 | Failed: 1"
-        "  fm_step_0: Failed: The run is cancelled due to reaching MAX_RUNTIME, realizations: 1\n",  # noqa: E501
+        (
+            "  fm_step_0: 1/0/1 | Failed: 1"
+            "  fm_step_0: Failed: "
+            "The run is cancelled due to reaching MAX_RUNTIME, realizations: 1\n"
+        ),
     ]
     # Ignore whitespace
     output = captured.out.translate({ord(c): None for c in string.whitespace})

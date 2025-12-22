@@ -422,14 +422,18 @@ async def test_log_info_from_garbled_exit_file(caplog):
         ("UserWarning: No metadata, skipping file", True),
         ("PerformanceWarning: DataFrame is highly fragmented.", True),  # Pandas
         (
-            "2025-02-12 20:20:25,876 - "
-            "semeio.forward_models.design2params.design2params"
-            " - WARNING - Design matrix contains empty cells",
+            (
+                "2025-02-12 20:20:25,876 - "
+                "semeio.forward_models.design2params.design2params"
+                " - WARNING - Design matrix contains empty cells"
+            ),
             True,
         ),
         (
-            "2025-02-12 21:38:06,992:WARNING:fmu.sumo.uploader:"
-            "Metadata upload status error exception",
+            (
+                "2025-02-12 21:38:06,992:WARNING:fmu.sumo.uploader:"
+                "Metadata upload status error exception"
+            ),
             True,
         ),
         (
