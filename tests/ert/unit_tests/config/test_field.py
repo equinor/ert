@@ -186,8 +186,10 @@ def test_file_format_is_gotten_from_the_output_file(parse_field_line, ext):
     [
         (
             "",
-            r"Line 3.*Missing extension for field output file 'param',"
-            r".*'ROFF_BINARY', 'ROFF_ASCII', 'ROFF', 'GRDECL', 'BGRDECL'",
+            (
+                r"Line 3.*Missing extension for field output file 'param',"
+                r".*'ROFF_BINARY', 'ROFF_ASCII', 'ROFF', 'GRDECL', 'BGRDECL'"
+            ),
         ),
         (".wrong", r"Line 3.*Unknown file format for output file: '.wrong'"),
     ],

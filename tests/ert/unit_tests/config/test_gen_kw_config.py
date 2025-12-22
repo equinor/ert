@@ -313,8 +313,10 @@ def test_that_very_high_mean_stddev_lognormal_gives_error():
         ("MYNAME LOGNORMAL 0 1", None),
         (
             "MYNAME TRUNCATED_NORMAL 0 1 3 2",
-            "Minimum 3.0 must be strictly less than the maximum"
-            " 2.0 for truncated_normal distribution",
+            (
+                "Minimum 3.0 must be strictly less than the maximum"
+                " 2.0 for truncated_normal distribution"
+            ),
         ),
         ("MYNAME TRUNCATED_NORMAL 0 1 2 3", None),
         ("MYNAME TRIANGULAR 0 1 2", None),
@@ -326,14 +328,18 @@ def test_that_very_high_mean_stddev_lognormal_gives_error():
         ),
         (
             "MYNAME DUNIF 0 2 1",
-            "Minimum 2.0 must be strictly less than the maximum"
-            " 1.0 for duniform distribution",
+            (
+                "Minimum 2.0 must be strictly less than the maximum"
+                " 1.0 for duniform distribution"
+            ),
         ),
         ("MYNAME ERRF 0 1 2 3", None),
         (
             "MYNAME ERRF 3 2 1 1",
-            "Minimum 3.0 must be strictly less than the maximum"
-            " 2.0 for errf distribution",
+            (
+                "Minimum 3.0 must be strictly less than the maximum"
+                " 2.0 for errf distribution"
+            ),
         ),
         (
             "MYNAME ERRF 3 2 1 -1",
@@ -345,8 +351,10 @@ def test_that_very_high_mean_stddev_lognormal_gives_error():
         ("MYNAME RAW", None),
         (
             "MYNAME UNIFORM 0 1 2",
-            "Incorrect number of values: \\['0', '1', '2'\\], "
-            "provided for variable MYNAME with distribution UNIFORM.",
+            (
+                "Incorrect number of values: \\['0', '1', '2'\\], "
+                "provided for variable MYNAME with distribution UNIFORM."
+            ),
         ),
         (
             "MYNAME RANDOM 0 1",
@@ -356,8 +364,10 @@ def test_that_very_high_mean_stddev_lognormal_gives_error():
         ("MYNAME DERRF 100 -14 -2.544545 10E5 10E+5", None),
         (
             "MYNAME CONST no-number",
-            "Unable to convert 'no-number' to float number for "
-            "variable MYNAME with distribution CONST.",
+            (
+                "Unable to convert 'no-number' to float number for "
+                "variable MYNAME with distribution CONST."
+            ),
         ),
         ("MYNAME      CONST    0", None),  # spaces
         ("MYNAME\t\t\tCONST\t\t0", None),  # tabs
@@ -667,8 +677,10 @@ def test_validation_triangular_distribution(
             "3",
             "-1",
             "2",
-            "NBINS 0.0 must be a positive integer larger than 1 for "
-            "DERRF distributed parameter MY_KEYWORD",
+            (
+                "NBINS 0.0 must be a positive integer larger than 1 for "
+                "DERRF distributed parameter MY_KEYWORD"
+            ),
         ),
         (
             "DERRF",
@@ -677,8 +689,10 @@ def test_validation_triangular_distribution(
             "3",
             "-1",
             "2",
-            "NBINS -5.0 must be a positive integer larger than 1 for "
-            "DERRF distributed parameter MY_KEYWORD",
+            (
+                "NBINS -5.0 must be a positive integer larger than 1 for "
+                "DERRF distributed parameter MY_KEYWORD"
+            ),
         ),
         (
             "DERRF",
@@ -687,8 +701,10 @@ def test_validation_triangular_distribution(
             "3",
             "-1",
             "2",
-            "NBINS 1.5 must be a positive integer larger than 1 for "
-            "DERRF distributed parameter MY_KEYWORD",
+            (
+                "NBINS 1.5 must be a positive integer larger than 1 for "
+                "DERRF distributed parameter MY_KEYWORD"
+            ),
         ),
         (
             "DERRF",
@@ -697,8 +713,10 @@ def test_validation_triangular_distribution(
             "-1",
             "-1",
             "2",
-            "The minimum 3.0 must be less than the maximum -1.0 for "
-            "DERRF distributed parameter MY_KEYWORD",
+            (
+                "The minimum 3.0 must be less than the maximum -1.0 for "
+                "DERRF distributed parameter MY_KEYWORD"
+            ),
         ),
         (
             "DERRF",
@@ -707,8 +725,10 @@ def test_validation_triangular_distribution(
             "1",
             "-1",
             "2",
-            "The minimum 1.0 must be less than the maximum 1.0 for "
-            "DERRF distributed parameter MY_KEYWORD",
+            (
+                "The minimum 1.0 must be less than the maximum 1.0 for "
+                "DERRF distributed parameter MY_KEYWORD"
+            ),
         ),
         (
             "DERRF",
@@ -717,8 +737,10 @@ def test_validation_triangular_distribution(
             "3",
             "-1",
             "0",
-            "The width 0.0 must be greater than 0 for "
-            "DERRF distributed parameter MY_KEYWORD",
+            (
+                "The width 0.0 must be greater than 0 for "
+                "DERRF distributed parameter MY_KEYWORD"
+            ),
         ),
         (
             "DERRF",
@@ -727,8 +749,10 @@ def test_validation_triangular_distribution(
             "3",
             "-1",
             "-2",
-            "The width -2.0 must be greater than 0 for "
-            "DERRF distributed parameter MY_KEYWORD",
+            (
+                "The width -2.0 must be greater than 0 for "
+                "DERRF distributed parameter MY_KEYWORD"
+            ),
         ),
         (
             "DERRF",

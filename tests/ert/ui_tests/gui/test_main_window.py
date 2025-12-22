@@ -76,10 +76,12 @@ from .conftest import (
     "config, expected_message_types",
     [
         (
-            "NUM_REALIZATIONS 1\n"
-            "INSTALL_JOB job job\n"
-            "INSTALL_JOB job job\n"
-            "FORWARD_MODEL not_installed\n",
+            (
+                "NUM_REALIZATIONS 1\n"
+                "INSTALL_JOB job job\n"
+                "INSTALL_JOB job job\n"
+                "FORWARD_MODEL not_installed\n"
+            ),
             ["Error", "Warning"],
         ),
         ("NUM_REALIZATIONS you_cant_do_this\n", ["Error"]),
