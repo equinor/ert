@@ -540,8 +540,6 @@ class EverestStorage:
             }
         )
 
-        # TODO: The weight and normalization keys are only used by the everest api,
-        # with everviz. They should be removed in the long run.
         weights = np.fromiter(
             (
                 1.0 if weight is None else weight
