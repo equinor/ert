@@ -186,7 +186,7 @@ def test_that_control_variables_not_matching_any_well_name_is_invalid(min_config
         everest_config_with_defaults(**(min_config | {"wells": [{"name": "a"}]}))
 
 
-def test_that_controls_ordering_is_the_same_for_ropt_and_extparam():
+def test_that_controls_ordering_is_the_same_for_ropt_and_everest_control():
     index_wise = ControlConfig(
         name="well_priorities",
         type="well_control",

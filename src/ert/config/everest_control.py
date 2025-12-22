@@ -106,7 +106,7 @@ class SamplerConfig(BaseModel):
             # from "everest" here as per old behavior.
             # Can consider logging this as if from ERT,
             # which is valid if we store SamplerConfig as part of
-            # ExtParam configs.
+            # EverestControl configs.
             logging.getLogger("everest").warning(message)
 
         # Update the default for backends that are not scipy:
@@ -142,17 +142,13 @@ class SamplerConfig(BaseModel):
         return self
 
 
-class ExtParamConfig(ParameterConfig):
-    """Create an ExtParamConfig for @key with the given @input_keys
+class EverestControl(ParameterConfig):
+    """Create an EverestControl for @key with the given @input_keys
 
     @input_keys can be either a list of keys as strings or a dict with
     keys as strings and a list of suffixes for each key.
     If a list of strings is given, the order is preserved.
     """
-
-    @property
-    def parameter_keys(self) -> list[str]:
-        return self.input_keys
 
     type: Literal["everest_parameters"] = "everest_parameters"
     input_keys: list[str] = field(default_factory=list)
@@ -174,6 +170,10 @@ class ExtParamConfig(ParameterConfig):
     # Set up for deprecation, but has to live here until support for the
     # "dotdash" notation is removed for everest controls via everest config.
     input_keys_dotdash: list[str] = field(default_factory=list)
+
+    @property
+    def parameter_keys(self) -> list[str]:
+        return self.input_keys
 
     def read_from_runpath(
         self, run_path: Path, real_nr: int, iteration: int

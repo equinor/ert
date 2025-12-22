@@ -6,7 +6,7 @@ from polars.datatypes import DataTypeClass
 from pydantic import BaseModel, Field, field_validator
 
 from ert.config import (
-    ExtParamConfig,
+    EverestControl,
     GenKwConfig,
     KnownResponseTypes,
     SurfaceConfig,
@@ -56,7 +56,7 @@ class InitialEnsembleRunModelConfig(RunModelConfig):
     design_matrix: DictEncodedDataFrame | None
     parameter_configuration: list[
         Annotated[
-            (GenKwConfig | SurfaceConfig | FieldConfig | ExtParamConfig),
+            (GenKwConfig | SurfaceConfig | FieldConfig | EverestControl),
             Field(discriminator="type"),
         ]
     ]
