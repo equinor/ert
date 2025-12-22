@@ -953,7 +953,7 @@ class LocalEnsemble(BaseMode):
         data = self.load_parameters(parameter_group)
         if isinstance(data, pl.DataFrame):
             return data.drop("realization").std().to_numpy().reshape(-1)
-        return data.std("realizations")["values"].values
+        return data.std("realizations")["values"].to_numpy()
 
     def get_parameter_state(
         self, realization: int
