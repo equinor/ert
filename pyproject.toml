@@ -207,6 +207,7 @@ select = [
     "F",     # pyflakes
     "FA",
     "FAST",
+    "FIX",
     "FURB",  # refurb
     "G",     # logging-format
     "I",     # isort
@@ -225,6 +226,7 @@ select = [
     "RUF",   # ruff specific rules
     "SIM",   # flake-8-simplify
     "SLOT",
+    "TD",
     "TRY203",
     "TRY300",
     "UP",    # pyupgrade
