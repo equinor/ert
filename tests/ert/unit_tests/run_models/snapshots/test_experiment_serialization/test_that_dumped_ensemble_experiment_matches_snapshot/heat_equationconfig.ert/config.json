@@ -241,7 +241,6 @@
   "response_configuration": [
     {
       "type": "gen_data",
-      "name": "gen_data",
       "input_files": [
         "gen_data_%d.out"
       ],
@@ -249,6 +248,7 @@
         "MY_RESPONSE"
       ],
       "has_finalized_keys": true,
+      "name": "gen_data",
       "report_steps_list": [
         [
           10,

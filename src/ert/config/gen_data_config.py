@@ -21,7 +21,6 @@ from .responses_index import responses_index
 
 class GenDataConfig(ResponseConfig):
     type: Literal["gen_data"] = "gen_data"
-    name: str = "gen_data"
     report_steps_list: list[list[int] | None] = Field(default_factory=list)
     has_finalized_keys: bool = True
 
@@ -29,7 +28,7 @@ class GenDataConfig(ResponseConfig):
     def metadata(self) -> list[ResponseMetadata]:
         return [
             ResponseMetadata(
-                response_type=self.name,
+                response_type=self.type,
                 response_key=response_key,
                 finalized=self.has_finalized_keys,
                 filter_on={"report_step": report_steps}
@@ -198,12 +197,12 @@ class GenDataConfig(ResponseConfig):
             if all(isinstance(err, FileNotFoundError) for err in errors):
                 raise FileNotFoundError(
                     "Could not find one or more files/directories while reading "
-                    f"GEN_DATA {self.name}: {','.join([str(err) for err in errors])}"
+                    f"GEN_DATA {self.type}: {','.join([str(err) for err in errors])}"
                 )
             else:
                 raise InvalidResponseFile(
                     "Error reading GEN_DATA "
-                    f"{self.name}, errors: {','.join([str(err) for err in errors])}"
+                    f"{self.type}, errors: {','.join([str(err) for err in errors])}"
                 )
 
         combined = pl.concat(datasets_per_name)
