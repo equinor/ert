@@ -123,8 +123,7 @@ class CSVExportJob(ErtScript):
                 # Reset index to make 'Realization' a regular column
                 ensemble_data = ensemble_data.reset_index()
 
-                ensemble_data = pd.merge(
-                    ensemble_data,
+                ensemble_data = ensemble_data.merge(
                     pivoted_summary,
                     on="Realization",
                     how="left",
