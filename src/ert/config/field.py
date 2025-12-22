@@ -280,7 +280,7 @@ class Field(ParameterConfig):
         ensemble_size = len(ds.realizations)
         da = xr.DataArray(
             [
-                np.ma.MaskedArray(data=d).compressed()  # type: ignore
+                np.ma.MaskedArray(data=d).compressed()
                 for d in ds["values"].values.reshape(ensemble_size, -1)
             ]
         )
@@ -294,7 +294,7 @@ class Field(ParameterConfig):
     def _transform_data(
         self, data_array: xr.DataArray
     ) -> np.ma.MaskedArray[Any, np.dtype[np.float32]]:
-        return np.ma.MaskedArray(  # type: ignore
+        return np.ma.MaskedArray(
             _field_truncate(
                 field_transform(
                     data_array,

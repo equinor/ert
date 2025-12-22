@@ -238,7 +238,7 @@ def read_field(
         ext = path.suffix
         raise ValueError(f'Could not read {field_path}. Unrecognized suffix "{ext}"')
 
-    return np.ma.MaskedArray(data=values, fill_value=np.nan)  # type: ignore
+    return np.ma.MaskedArray(data=values, fill_value=np.nan)
 
 
 def save_field(
