@@ -141,12 +141,13 @@ class MeasuredData:
 
         # Pandas differentiates vs int and str keys.
         # Legacy-wise we use int keys for realizations
-        pddf.rename(
-            columns={str(k): int(k) for k in active_realizations},
-            inplace=True,
+        pddf = (
+            pddf.rename(
+                columns={str(k): int(k) for k in active_realizations},
+            )
+            .set_index(["observation_key", "key_index"])
+            .transpose()
         )
-
-        pddf = pddf.set_index(["observation_key", "key_index"]).transpose()
 
         return pddf
 
