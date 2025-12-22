@@ -29,7 +29,10 @@ def calculate_signed_chi_squared_misfits(
     for realization_index in reponses_dict:
         misfits_dict[realization_index] = _calculate_signed_chi_squared_misfit(
             observation["values"],
-            reponses_dict[realization_index].loc[:, observation.index].values.flatten(),
+            reponses_dict[realization_index]
+            .loc[:, observation.index]
+            .to_numpy()
+            .flatten(),
             observation["errors"],
         )
 
