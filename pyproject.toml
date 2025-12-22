@@ -216,6 +216,7 @@ select = [
     "ISC",
     "LOG",   # logging
     "NPY",   # numpy specific rules
+    "PD",
     "PIE",   # flake8-pie
     "PL",    # pylint
     "PLE",
