@@ -103,7 +103,7 @@ def get_record_observations(storage, ensemble_id, keyword: str, poly_ran):
             assert len(obs) == num_summary_obs
             assert np.isclose(obs[0].errors[0], 0.1)
             assert obs[0].x_axis[0].startswith("2010-01-02T00:00:00")
-            assert np.isclose(obs[0].values[0], 2.6357)
+            assert np.isclose(obs[0].values[0], 2.6357)  # noqa: PD011
             assert len(obs[0].errors) == 1
             assert len(obs[0].x_axis) == 1
             assert len(obs[0].values) == 1

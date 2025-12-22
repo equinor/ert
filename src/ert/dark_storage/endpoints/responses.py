@@ -177,7 +177,7 @@ def data_for_response(
             assert "report_step" in filter_on
             report_step = int(filter_on["report_step"])
             vals = data.filter(pl.col("report_step").eq(report_step))
-            pivoted = vals.drop("response_key", "report_step").pivot(
+            pivoted = vals.drop("response_key", "report_step").pivot(  # noqa: PD010
                 on="index", values="values"
             )
             data = pivoted.to_pandas().set_index("realization")
