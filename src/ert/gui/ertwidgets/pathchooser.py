@@ -83,7 +83,6 @@ class PathChooser(QWidget):
             if self._model.pathMustExist():
                 valid = False
                 message = PathChooser.PATH_DOES_NOT_EXIST_MSG
-            # todo: check if new (non-existing) file has directory or file format?
         elif path_exists:
             if self._model.pathMustBeExecutable() and is_file and not is_executable:
                 valid = False
@@ -122,8 +121,6 @@ class PathChooser(QWidget):
 
     def selectPath(self) -> None:
         """Pops up the 'select a file/directory' dialog"""
-        # todo: This probably needs some reworking to work properly with
-        # different scenarios... (file + dir)
         self._editing = True
         current_directory = self.getPath()
 
