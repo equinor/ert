@@ -612,7 +612,6 @@ def test_create_mask_from_failed_realizations_returns_initial_active_realization
     assert failed_realization_mask == initial_active_realizations
 
 
-# TODO remove this test?
 def test_run_model_logs_number_of_parameters(use_tmpdir):
     parameters = GenKwConfig(
         distribution={"name": "normal", "mean": 0, "std": 1},
