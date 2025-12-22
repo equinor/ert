@@ -23,7 +23,7 @@ def export_roff(
     binary: bool,
 ) -> None:
     dimensions = data.shape
-    data = np.flip(data, -1).ravel()  # type: ignore
+    data = np.flip(data, -1).ravel()
     data = data.astype(np.float32).filled(RMS_UNDEFINED_FLOAT)  # type: ignore
     if not np.isfinite(data).all():
         raise ValueError(
