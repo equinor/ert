@@ -33,6 +33,11 @@ class GaussianKDEPlot:
         plotGaussianKDE(figure, plot_context, ensemble_to_data_map, observation_data)
 
 
+def _array_is_constant(data: pd.Series | pd.DataFrame) -> bool:
+    array = data.to_numpy()
+    return array.shape[0] == 0 or (array[0] == array).all()
+
+
 def plotGaussianKDE(
     figure: Figure,
     plot_context: PlotContext,
@@ -55,7 +60,7 @@ def plotGaussianKDE(
         if data.empty:
             continue
         data = data[0]
-        if data.nunique() > 1:
+        if not _array_is_constant(data):
             _plotGaussianKDE(
                 axes, config, data, f"{ensemble.experiment_name} : {ensemble.name}"
             )
