@@ -950,7 +950,7 @@ class LocalEnsemble(BaseMode):
         data = self.load_parameters(parameter_group)
         if isinstance(data, pl.DataFrame):
             return data.drop("realization").std().to_numpy().reshape(-1)
-        return data.std("realizations")["values"].values
+        return data.std("realizations")["values"].to_numpy()
 
     def get_parameter_state(
         self, realization: int
@@ -1051,7 +1051,7 @@ class LocalEnsemble(BaseMode):
                                 pl.col(col).is_in(observed_values.implode())
                             )
 
-                    pivoted = responses.collect(engine="streaming").pivot(
+                    pivoted = responses.collect(engine="streaming").pivot(  # noqa: PD010
                         on="realization",
                         index=["response_key", *response_cls.primary_key],
                         values="values",
@@ -1227,7 +1227,7 @@ class LocalEnsemble(BaseMode):
             how="horizontal",
         )
 
-        responses_wide = responses["realization", "response_key", "values"].pivot(
+        responses_wide = responses["realization", "response_key", "values"].pivot(  # noqa: PD010
             on="response_key", values="values"
         )
 
