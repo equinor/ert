@@ -4,6 +4,7 @@ from unittest.mock import patch
 import numpy as np
 import polars as pl
 import pytest
+from numpy.testing import assert_allclose
 from tabulate import tabulate
 
 from ert.analysis import ErtAnalysisError, ObservationStatus, smoother_update
@@ -11,6 +12,7 @@ from ert.analysis._update_commons import (
     _compute_observation_statuses,
     _OutlierColumns,
     _preprocess_observations_and_responses,
+    adjust_inactive_field_values_to_match_average_of_active_field_values,
 )
 from ert.analysis.event import AnalysisCompleteEvent, AnalysisErrorEvent
 from ert.config import (
@@ -1157,3 +1159,93 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
     assert len(
         posterior_ens.load_parameters("PARAMETER")["realization"]
     ) == active_realizations.count(True)
+
+
+@pytest.mark.parametrize(
+    "X_matrix, active_matrix, min_real, X_matrix_modified, X_active_modified",
+    [
+        (
+            # X_matrix shape=(nparam, nreal)
+            [
+                [1.0, 1.2, 0.9, -0.1, 0.3],
+                [10.1, 8.9, 13.0, 15.2, 11.8],
+                [191.0, 165.0, 0, 188.0, 210.0],
+                [0, 1765.0, 0, 1951.0, 2010.0],
+                [0, 0, 0, 0, 0],
+                [75.0, 0, 96.0, 0, 0],
+                [1.0, 2.0, 3.0, 4.0, 5.0],
+            ],
+            # active_matrix shape=(nparam, nreal)
+            [
+                [1, 1, 1, 1, 1],
+                [1, 1, 1, 1, 1],
+                [1, 1, 0, 1, 1],
+                [0, 1, 0, 1, 1],
+                [0, 0, 0, 0, 0],
+                [1, 0, 1, 0, 0],
+                [0, 0, 1, 0, 0],
+            ],
+            # minimum realizations
+            3,
+            # X_matrix_modified (expected result)
+            [
+                [1.0, 1.2, 0.9, -0.1, 0.3],
+                [10.1, 8.9, 13.0, 15.2, 11.8],
+                [191.0, 165.0, 188.5, 188.0, 210.0],
+                [1908.66666666, 1765.0, 1908.6666666, 1951.0, 2010.0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+            ],
+            # X_active_modified (expected result)
+            [
+                [1, 1, 1, 1, 1],
+                [1, 1, 1, 1, 1],
+                [1, 1, 0, 1, 1],
+                [0, 1, 0, 1, 1],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0],
+            ],
+        ),
+    ],
+)
+def test_adjust_inactive_field_values_to_match_average_of_active_field_values(
+    X_matrix, active_matrix, min_real, X_matrix_modified, X_active_modified
+):
+    X = np.array(X_matrix, dtype=np.float64)
+    active = np.array(active_matrix, dtype=np.bool)
+    X_modified_reference = np.array(X_matrix_modified, dtype=np.float64)
+    X_active_reference = np.array(X_active_modified, dtype=np.bool)
+    X_modified, X_active_modified = (
+        adjust_inactive_field_values_to_match_average_of_active_field_values(
+            X, active, min_real
+        )
+    )
+    assert_allclose(X_modified, X_modified_reference)
+    assert_allclose(X_active_modified, X_active_reference)
+
+    # Now check that the average over active realizations for each field parameter
+    # for the unmodified X_matrix is equal to the average over ALL realizations
+    # for each field parameter from the X_matrix_modified having std > 0
+    # This check will verify that the modifications done does not change the mean
+    # if all realizations is used for the modified X_matrix. It also checks that
+    # field parameters with too few realizations to be updatable will get 0 std
+    # for the ensemble. Since 0 std over ensemble is a criteriea for not updating
+    # the parameter, these field parameters will not be updated in the ES update
+    # algorithms.
+    X_mean_after = X_modified.mean(axis=1)
+    X_std_after = X_modified.std(axis=1)
+
+    # Use criteria for which field parameters are updatable
+    X_mean_updatable_after = X_mean_after[X_std_after > 0]
+
+    # Select field parameters with enough realizations
+    row_active_counts = np.sum(active, axis=1)
+    # Avoid division by zero by setting invalid rows to 0 temporarily
+    row_active_counts[row_active_counts == 0] = 1
+    X_mean_before = np.sum(X * active, axis=1) / row_active_counts
+    X_mean_updatable_before = X_mean_before[row_active_counts >= min_real]
+
+    assert X_mean_updatable_after.shape == X_mean_updatable_before.shape
+    assert_allclose(X_mean_updatable_before, X_mean_updatable_after)
