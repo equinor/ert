@@ -5,6 +5,7 @@ import logging
 import math
 import os
 import time
+from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from copy import deepcopy
 from datetime import UTC, datetime
@@ -102,7 +103,7 @@ def _generate_parameter_files(
     iens: int,
     fs: Ensemble,
     iteration: int,
-) -> Mapping[str, Mapping[str, float | str]]:
+) -> tuple[Mapping[str, Mapping[str, float | str]], Mapping[str, float]]:
     """
     Generate parameter files that are placed in each runtime directory for
     forward-model jobs to consume.
@@ -117,8 +118,9 @@ def _generate_parameter_files(
         fs: Ensemble from which to load parameter data
 
     Returns:
-        Returns the union of parameters returned by write_to_runpath for each
-        parameter_config.
+        Returns a tuple containing: the union of parameters returned by
+        write_to_runpath for each parameter_config, and a dict with
+        timings/durations for each parameter type.
     """
     # preload scalar parameters for this realization
     keys = [
@@ -126,18 +128,23 @@ def _generate_parameter_files(
         for p in parameter_configs
         if p.cardinality == ParameterCardinality.multiple_configs_per_ensemble_dataset
     ]
+    export_timings: defaultdict[str, float] = defaultdict(float)
     scalar_data: dict[str, float | str] = {}
     if keys:
+        start_time = time.perf_counter()
         df = fs._load_scalar_keys(keys=keys, realizations=iens, transformed=True)
         scalar_data = df.to_dicts()[0]
+        export_timings["load_scalar_keys"] = time.perf_counter() - start_time
     exports: dict[str, dict[str, float | str]] = {}
     log_exports: dict[str, dict[str, float | str]] = {}
+
     for param in parameter_configs:
         # For the first iteration we do not write the parameter
         # to run path, as we expect to read if after the forward
         # model has completed.
         if param.forward_init and iteration == 0:
             continue
+        start_time = time.perf_counter()
         export_values: dict[str, dict[str, float | str]] | None = None
         log_export_values: dict[str, dict[str, float | str]] | None = {}
         if param.name in scalar_data:
@@ -164,11 +171,15 @@ def _generate_parameter_files(
         if log_export_values:
             for group, vals in log_export_values.items():
                 log_exports.setdefault(group, {}).update(vals)
+        export_timings[param.type] += time.perf_counter() - start_time
         continue
-
+    start_time = time.perf_counter()
     _value_export_txt(run_path, export_base_name, exports | log_exports)
+    export_timings["value_export_txt"] = time.perf_counter() - start_time
+    start_time = time.perf_counter()
     _value_export_json(run_path, export_base_name, exports)
-    return exports
+    export_timings["value_export_json"] = time.perf_counter() - start_time
+    return (exports, dict(export_timings))
 
 
 def _manifest_to_json(ensemble: Ensemble, iens: int, iter_: int) -> dict[str, Any]:
@@ -239,7 +250,7 @@ def create_run_path(
         if run_arg.active:
             run_path.mkdir(parents=True, exist_ok=True)
             start_time = time.perf_counter()
-            param_data = _generate_parameter_files(
+            (param_data, detailed_parameter_timings) = _generate_parameter_files(
                 ensemble.experiment.parameter_configuration.values(),
                 parameters_file,
                 run_path,
@@ -247,6 +258,11 @@ def create_run_path(
                 ensemble,
                 ensemble.iteration,
             )
+            for parameter_type, duration in detailed_parameter_timings.items():
+                if parameter_type not in timings:
+                    timings[parameter_type] = 0.0
+                timings[parameter_type] += duration
+
             timings["generate_parameter_files"] += time.perf_counter() - start_time
             real_iter_substituter = substituter.real_iter_substituter(
                 run_arg.iens, ensemble.iteration
