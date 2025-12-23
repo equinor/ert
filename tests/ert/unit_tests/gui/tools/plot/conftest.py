@@ -62,19 +62,6 @@ def mocked_requests_get(*args, **kwargs):
     parameter_df.to_parquet(parameter_stream)
     parameter_parquet_data = parameter_stream.getvalue()
 
-    gen_data = {
-        "0": [0.1, 0.2, 0.3],
-        "1": [0.1, 0.2, 0.3],
-        "2": [0.1, 0.2, 0.3],
-        "3": [0.1, 0.2, 0.3],
-        "4": [0.1, 0.2, 0.3],
-        "5": [0.1, 0.2, 0.3],
-    }
-    gen_df = pd.DataFrame(gen_data)
-    gen_stream = io.BytesIO()
-    gen_df.to_parquet(gen_stream)
-    gen_parquet_data = gen_stream.getvalue()
-
     history_data = {
         "0": [1.0, 0.2, 1.0, 1.0, 1.0],
         "1": [1.1, 0.2, 1.1, 1.1, 1.1],
@@ -132,84 +119,6 @@ def mocked_requests_get(*args, **kwargs):
     }
 
     observations = {
-        "/ensembles/ens_id_5/responses/WOPR%25253AOP1/observations": [
-            {
-                "name": "WOPR_OP1_108",
-                "errors": [0.07500000298023224],
-                "values": [0.30000001192092896],
-                "x_axis": ["2012-12-15T00:00:00"],
-            },
-            {
-                "name": "WOPR_OP1_144",
-                "errors": [0.03500000014901161],
-                "values": [0.20000000298023224],
-                "x_axis": ["2013-12-10T00:00:00"],
-            },
-            {
-                "name": "WOPR_OP1_190",
-                "errors": [0.009999999776482582],
-                "values": [0.014999999664723873],
-                "x_axis": ["2015-03-15T00:00:00"],
-            },
-            {
-                "name": "WOPR_OP1_36",
-                "errors": [0.07000000029802322],
-                "values": [0.699999988079071],
-                "x_axis": ["2010-12-26T00:00:00"],
-            },
-            {
-                "name": "WOPR_OP1_72",
-                "errors": [0.05000000074505806],
-                "values": [0.5],
-                "x_axis": ["2011-12-21T00:00:00"],
-            },
-            {
-                "name": "WOPR_OP1_9",
-                "errors": [0.05000000074505806],
-                "values": [0.10000000149011612],
-                "x_axis": ["2010-03-31T00:00:00"],
-            },
-        ],
-        "/ensembles/ens_id_3/responses/WOPR:OP1/observations": [
-            {
-                "name": "WOPR:OP1",
-                "errors": [0.05, 0.07],
-                "values": [0.1, 0.7],
-                "x_axis": ["2010-03-31T00:00:00", "2010-12-26T00:00:00"],
-            }
-        ],
-        "/ensembles/ens_id_4/responses/WOPR:OP1/observations": [
-            {
-                "name": "WOPR:OP1",
-                "errors": [0.05, 0.07],
-                "values": [0.1, 0.7],
-                "x_axis": ["2010-03-31T00:00:00", "2010-12-26T00:00:00"],
-            }
-        ],
-        "/ensembles/ens_id_3/responses/SNAKE_OIL_WPR_DIFF@199/observations": [
-            {
-                "name": "SNAKE_OIL_WPR_DIFF",
-                "errors": [0.05, 0.07, 0.05],
-                "values": [0.1, 0.7, 0.5],
-                "x_axis": [
-                    "2010-03-31T00:00:00",
-                    "2010-12-26T00:00:00",
-                    "2011-12-21T00:00:00",
-                ],
-            }
-        ],
-        "/ensembles/ens_id_4/responses/SNAKE_OIL_WPR_DIFF@199/observations": [
-            {
-                "name": "WOPR:OP1",
-                "errors": [0.05, 0.07, 0.05],
-                "values": [0.1, 0.7, 0.5],
-                "x_axis": [
-                    "2010-03-31T00:00:00",
-                    "2010-12-26T00:00:00",
-                    "2011-12-21T00:00:00",
-                ],
-            }
-        ],
         "/ensembles/ens_id_3/responses/FOPR/observations": [
             {
                 "name": "FOPR",
@@ -258,69 +167,12 @@ def mocked_requests_get(*args, **kwargs):
         ],
     }
 
-    responses = {
-        "/ensembles/ens_id_1/responses": {
-            "BPR:1,3,8": {
-                "name": "BPR:1,3,8",
-                "id": "id_1",
-                "userdata": {"data_origin": "Summary"},
-                "has_observations": False,
-            },
-            "FOPR": {
-                "name": "FOPR",
-                "id": "id_999",
-                "userdata": {"data_origin": "Summary"},
-                "has_observations": True,
-            },
-            "SNAKE_OIL_WPR_DIFF@199": {
-                "id": "id_88",
-                "name": "SNAKE_OIL_WPR_DIFF@199",
-                "userdata": {"data_origin": "GEN_DATA"},
-                "has_observations": False,
-            },
-        },
-        "/ensembles/ens_id_3/responses": {
-            "BPR:1,3,8": {
-                "name": "BPR:1,3,8",
-                "id": "id_111111",
-                "userdata": {"data_origin": "Summary"},
-                "has_observations": False,
-            },
-            "WOPPER": {
-                "name": "WOPPER",
-                "id": "id_999",
-                "userdata": {"data_origin": "Summary"},
-                "has_observations": False,
-            },
-        },
-        "/ensembles/ens_id_5/responses": {
-            "WOPPER": {
-                "name": "WOPPER",
-                "id": "id_999",
-                "userdata": {"data_origin": "Summary"},
-                "has_observations": False,
-            },
-        },
-    }
-
-    ensembles = {
-        "/experiments/exp_1/ensembles": [
-            {"id": "ens_id_1", "userdata": {"name": "ensemble_1"}, "size": 25},
-            {"id": "ens_id_3", "userdata": {"name": "default_0"}, "size": 99},
-            {"id": "ens_id_5", "userdata": {"name": "default_manyobs"}, "size": 25},
-        ]
-    }
-
     records = {
         "/ensembles/ens_id_3/responses/FOPR": summary_parquet_data,
         "/ensembles/ens_id_3/responses/BPR%25253A1%25252C3%25252C8": summary_parquet_data,  # noqa
         (
             "/ensembles/ens_id_3/parameters/SNAKE_OIL_PARAM%25253ABPR_138_PERSISTENCE"
         ): parameter_parquet_data,
-        (
-            "/ensembles/ens_id_3/parameters/SNAKE_OIL_PARAM%25253AOP1_DIVERGENCE_SCALE"
-        ): parameter_parquet_data,
-        "/ensembles/ens_id_3/responses/SNAKE_OIL_WPR_DIFF@199": gen_parquet_data,
         "/ensembles/ens_id_3/responses/FOPRH": history_parquet_data,
     }
 
@@ -408,23 +260,9 @@ def mocked_requests_get(*args, **kwargs):
             "userdata": {},
         }
     ]
-
-    if args[0] in ensemble:
-        return MockResponse(ensemble[args[0]], 200)
-    elif args[0] in observations:
-        return MockResponse(
-            observations[args[0]],
-            200,
-        )
-    elif args[0] in ensembles:
-        return MockResponse(ensembles[args[0]], 200)
-    elif args[0] in parameters:
-        return MockResponse(parameters[args[0]], 200)
-    elif args[0] in responses:
-        return MockResponse(responses[args[0]], 200)
-    elif args[0] in records:
-        return MockResponse(records[args[0]], 200)
-    elif "/experiments" in args[0]:
-        return MockResponse(experiments, 200)
-
+    available_responses = (
+        ensemble | observations | parameters | records | {"/experiments": experiments}
+    )
+    if available_response := available_responses.get(args[0]):
+        return MockResponse(available_response, 200)
     return MockResponse(None, 404, text="{'details': 'Not found'}", url=args[0])
