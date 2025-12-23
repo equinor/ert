@@ -150,8 +150,9 @@ def data_for_response(
         # This performs the same aggragation by mean of duplicate values
         # as in ert/analysis/_es_update.py
         df = df.groupby(["Date", "Realization"]).mean()
-        data = df.unstack(level="Date")
-        data.columns = data.columns.droplevel(0)
+        data = df.reset_index().pivot_table(
+            index="Realization", columns="Date", values=df.columns[0]
+        )
         return data.astype(float)
 
     if response_type == "rft":
