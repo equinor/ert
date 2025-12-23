@@ -150,6 +150,7 @@ def run_dialog(qtbot: QtBot, use_tmpdir, mock_set_env_key, monkeypatch):
     yield run_dialog
 
 
+@pytest.mark.timeout(10)
 @pytest.mark.integration_test
 def test_that_terminating_experiment_shows_a_confirmation_dialog(
     qtbot: QtBot, run_dialog: RunDialog, monkeypatch
@@ -994,6 +995,7 @@ def test_that_run_dialog_clears_warnings_when_rerun(qtbot, monkeypatch):
     assert len(run_dialog.post_simulation_warnings) == 0
 
 
+@pytest.mark.timeout(10)
 @pytest.mark.integration_test
 @pytest.mark.parametrize(
     "events",
