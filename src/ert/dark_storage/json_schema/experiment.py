@@ -24,6 +24,6 @@ class ExperimentOut(_Experiment):
     ensemble_ids: list[UUID]
     priors: Mapping[str, dict[str, Any]]
     userdata: Mapping[str, Any]
-    parameters: Mapping[str, list[dict[str, Any]]]
+    parameters: Mapping[str, dict[str, Any]]
     responses: Mapping[str, list[dict[str, Any]]]
     observations: Mapping[str, dict[str, list[str]]]
