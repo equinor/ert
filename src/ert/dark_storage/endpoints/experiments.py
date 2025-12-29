@@ -29,7 +29,7 @@ def get_experiments(
             priors=create_priors(experiment),
             userdata={},
             parameters={
-                group: [config.model_dump()]
+                group: config.model_dump()
                 for group, config in experiment.parameter_configuration.items()
                 if not isinstance(config, SurfaceConfig)
             },
