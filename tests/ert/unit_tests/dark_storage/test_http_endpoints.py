@@ -186,54 +186,48 @@ def test_get_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
     experiment_json = resp.json()[0]
 
     assert experiment_json["parameters"] == {
-        "a": [
-            {
-                "dimensionality": 1,
-                "distribution": {
-                    "max": 1.0,
-                    "min": 0.0,
-                    "name": "uniform",
-                },
-                "forward_init": False,
-                "group": "COEFFS",
-                "input_source": "sampled",
-                "name": "a",
-                "type": "gen_kw",
-                "update": True,
-            }
-        ],
-        "b": [
-            {
-                "dimensionality": 1,
-                "distribution": {
-                    "max": 2.0,
-                    "min": 0.0,
-                    "name": "uniform",
-                },
-                "forward_init": False,
-                "group": "COEFFS",
-                "input_source": "sampled",
-                "name": "b",
-                "type": "gen_kw",
-                "update": True,
-            }
-        ],
-        "c": [
-            {
-                "dimensionality": 1,
-                "distribution": {
-                    "max": 5.0,
-                    "min": 0.0,
-                    "name": "uniform",
-                },
-                "forward_init": False,
-                "group": "COEFFS",
-                "input_source": "sampled",
-                "name": "c",
-                "type": "gen_kw",
-                "update": True,
-            }
-        ],
+        "a": {
+            "dimensionality": 1,
+            "distribution": {
+                "max": 1.0,
+                "min": 0.0,
+                "name": "uniform",
+            },
+            "forward_init": False,
+            "group": "COEFFS",
+            "input_source": "sampled",
+            "name": "a",
+            "type": "gen_kw",
+            "update": True,
+        },
+        "b": {
+            "dimensionality": 1,
+            "distribution": {
+                "max": 2.0,
+                "min": 0.0,
+                "name": "uniform",
+            },
+            "forward_init": False,
+            "group": "COEFFS",
+            "input_source": "sampled",
+            "name": "b",
+            "type": "gen_kw",
+            "update": True,
+        },
+        "c": {
+            "dimensionality": 1,
+            "distribution": {
+                "max": 5.0,
+                "min": 0.0,
+                "name": "uniform",
+            },
+            "forward_init": False,
+            "group": "COEFFS",
+            "input_source": "sampled",
+            "name": "c",
+            "type": "gen_kw",
+            "update": True,
+        },
     }
 
 
