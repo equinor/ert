@@ -709,6 +709,7 @@ class ErtConfig(BaseModel):
     QUEUE_OPTIONS: ClassVar[KnownQueueOptions | None] = None
     RESERVED_KEYWORDS: ClassVar[list[str]] = RESERVED_KEYWORDS
     ENV_VARS: ClassVar[dict[str, str]] = {}
+    PRIORITIZE_PRIVATE_IP_ADDRESS: ClassVar[bool] = False
 
     substitutions: dict[str, str] = Field(default_factory=dict)
     ensemble_config: EnsembleConfig = Field(default_factory=EnsembleConfig)
@@ -723,6 +724,7 @@ class ErtConfig(BaseModel):
         default_factory=lambda: defaultdict(lambda: cast(list[Workflow], []))
     )
     runpath_file: Path = Path(DEFAULT_RUNPATH_FILE)
+    prioritize_private_ip_address: bool = False
 
     ert_templates: list[tuple[str, str]] = Field(default_factory=list)
 
@@ -858,6 +860,9 @@ class ErtConfig(BaseModel):
             )
             ENV_VARS = dict(runtime_plugins.environment_variables)
             QUEUE_OPTIONS = runtime_plugins.queue_options
+            PRIORITIZE_PRIVATE_IP_ADDRESS = (
+                runtime_plugins.prioritize_private_ip_address
+            )
 
         ErtConfigWithPlugins.model_rebuild()
         assert issubclass(ErtConfigWithPlugins, ErtConfig)
@@ -1110,6 +1115,19 @@ class ErtConfig(BaseModel):
             user_configured_.add(key)
             env_vars[key] = substituter.substitute(val)
 
+        prioritize_private_ip_address: bool = cls.PRIORITIZE_PRIVATE_IP_ADDRESS
+        if ConfigKeys.PRIORITIZE_PRIVATE_IP_ADDRESS in config_dict:
+            user_prioritize_private_ip_address = bool(
+                config_dict[ConfigKeys.PRIORITIZE_PRIVATE_IP_ADDRESS]
+            )
+            if prioritize_private_ip_address != user_prioritize_private_ip_address:
+                logger.warning(
+                    "PRIORITIZE_PRIVATE_IP_ADDRESS was overwritten by user: "
+                    f"{prioritize_private_ip_address} -> "
+                    f"{user_prioritize_private_ip_address}"
+                )
+                prioritize_private_ip_address = user_prioritize_private_ip_address
+
         try:
             refcase = Refcase.from_config_dict(config_dict)
             cls_config = cls(
@@ -1136,6 +1154,7 @@ class ErtConfig(BaseModel):
                 time_map=time_map,
                 history_source=history_source,
                 refcase=refcase,
+                prioritize_private_ip_address=prioritize_private_ip_address,
             )
 
             # The observations are created here because create_observation_dataframes
