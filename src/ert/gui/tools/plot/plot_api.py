@@ -144,22 +144,21 @@ class PlotApi:
             self._check_response(response)
 
             for experiment in response.json():
-                for param_metadatas in experiment["parameters"].values():
-                    for metadata in param_metadatas:
-                        param_cfg = parameter_config_adapter.validate_python(metadata)
-                        if group := metadata.get("group"):
-                            param_key = f"{group}:{metadata['name']}"
-                        else:
-                            param_key = metadata["name"]
-                        all_keys[param_key] = PlotApiKeyDefinition(
-                            key=param_key,
-                            index_type=None,
-                            observations=False,
-                            dimensionality=metadata["dimensionality"],
-                            metadata={"data_origin": metadata["type"]},
-                            parameter=param_cfg,
-                        )
-                        all_params[param_key] = all_keys[param_key]
+                for metadata in experiment["parameters"].values():
+                    param_cfg = parameter_config_adapter.validate_python(metadata)
+                    if group := metadata.get("group"):
+                        param_key = f"{group}:{metadata['name']}"
+                    else:
+                        param_key = metadata["name"]
+                    all_keys[param_key] = PlotApiKeyDefinition(
+                        key=param_key,
+                        index_type=None,
+                        observations=False,
+                        dimensionality=metadata["dimensionality"],
+                        metadata={"data_origin": metadata["type"]},
+                        parameter=param_cfg,
+                    )
+                    all_params[param_key] = all_keys[param_key]
 
         return list(all_keys.values())
 
