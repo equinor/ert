@@ -141,7 +141,7 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
                 real,
             )
 
-        sample_prior(source, realizations, 42, ens_config.parameters)
+        sample_prior(source, realizations, 42, len(realizations), ens_config.parameters)
 
         storage.create_ensemble(
             source.experiment_id,
