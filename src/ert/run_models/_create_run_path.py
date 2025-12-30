@@ -15,7 +15,7 @@ import orjson
 
 from _ert.utils import file_safe_timestamp
 from ert.config import (
-    ExtParamConfig,
+    EverestControl,
     Field,
     ForwardModelStep,
     GenKwConfig,
@@ -177,7 +177,7 @@ def _manifest_to_json(ensemble: Ensemble, iens: int, iter_: int) -> dict[str, An
     for param_config in ensemble.experiment.parameter_configuration.values():
         assert isinstance(
             param_config,
-            ExtParamConfig | GenKwConfig | Field | SurfaceConfig,
+            EverestControl | GenKwConfig | Field | SurfaceConfig,
         )
         if param_config.forward_init and ensemble.iteration == 0:
             assert not isinstance(param_config, GenKwConfig)

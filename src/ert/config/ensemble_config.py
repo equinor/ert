@@ -7,7 +7,7 @@ from typing import Self
 
 from pydantic import BaseModel, Field, model_validator
 
-from .ext_param_config import ExtParamConfig
+from .everest_control import EverestControl
 from .field import Field as FieldConfig
 from .gen_kw_config import GenKwConfig
 from .known_response_types import KNOWN_ERT_RESPONSE_TYPES, KnownErtResponseTypes
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class EnsembleConfig(BaseModel):
     response_configs: dict[str, KnownErtResponseTypes] = Field(default_factory=dict)
     parameter_configs: dict[
-        str, GenKwConfig | FieldConfig | SurfaceConfig | ExtParamConfig
+        str, GenKwConfig | FieldConfig | SurfaceConfig | EverestControl
     ] = Field(default_factory=dict)
 
     @model_validator(mode="after")

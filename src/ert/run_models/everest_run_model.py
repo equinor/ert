@@ -31,8 +31,8 @@ from typing_extensions import TypedDict
 
 from ert.config import (
     EverestConstraintsConfig,
+    EverestControl,
     EverestObjectivesConfig,
-    ExtParamConfig,
     GenDataConfig,
     HookRuntime,
     KnownQueueOptionsAdapter,
@@ -535,14 +535,14 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         )
 
     @property
-    def ext_param_configs(self) -> list[ExtParamConfig]:
+    def ext_param_configs(self) -> list[EverestControl]:
         ext_params = [
             c for c in self.parameter_configuration if c.type == "everest_parameters"
         ]
 
-        # There will and must always be one extparam config for an
+        # There will and must always be one EverestControl config for an
         # Everest optimization.
-        return cast(list[ExtParamConfig], ext_params)
+        return cast(list[EverestControl], ext_params)
 
     @cached_property
     def _transforms(self) -> EverestOptModelTransforms:
@@ -762,7 +762,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
 
     def _create_optimizer(self) -> tuple[BasicOptimizer, list[float]]:
         enopt_config, initial_guesses = everest2ropt(
-            cast(list[ExtParamConfig], self.parameter_configuration),
+            cast(list[EverestControl], self.parameter_configuration),
             self.objectives_config,
             self.input_constraints,
             self.output_constraints_config,

@@ -11,8 +11,8 @@ from .ensemble_config import EnsembleConfig
 from .ert_config import ErtConfig, forward_model_step_from_config_contents
 from .ert_plugin import ErtPlugin
 from .ert_script import ErtScript
+from .everest_control import EverestControl, SamplerConfig
 from .everest_response import EverestConstraintsConfig, EverestObjectivesConfig
-from .ext_param_config import ExtParamConfig, SamplerConfig
 from .external_ert_script import ExternalErtScript
 from .field import Field, field_transform
 from .forward_model_step import (
@@ -90,9 +90,9 @@ __all__ = [
     "ErtScript",
     "ErtScriptWorkflow",
     "EverestConstraintsConfig",
+    "EverestControl",
     "EverestObjectivesConfig",
     "ExecutableWorkflow",
-    "ExtParamConfig",
     "ExternalErtScript",
     "Field",
     "ForwardModelStep",
