@@ -357,3 +357,103 @@ class ErtAnalysisError(Exception):
 
 def noop_progress_callback(_: AnalysisEvent) -> None:
     pass
+
+
+def adjust_inactive_field_values_to_match_average_of_active_field_values(
+    X_matrix: npt.NDArray[np.float64],
+    X_active: npt.NDArray[np.bool],
+    min_real: int = 10,
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.bool]]:
+    """This function will modify the ensemble of field parameters in X_matrix
+    and return a modified version. The purpose is to avoid the workaround step when
+    generating the realizations of field parameters where field parameters in ertbox
+    that is not used in the geomodel grid zone must be filled with some sensible values
+    anyway since ERT requires that all grid cells in ertbox grid is assumed to contain
+    sensible values for all realizations.
+
+    The update algorithm in ERT should be implemented such that it removes
+    all field parameters with 0 variance from the update and only keep the value
+    unchanged.
+
+    For field parameters in ertbox grid that is NOT USED IN ANY realizations
+    by the geogrid, the field parameter values should be set to a constant
+    to ensure the variance is 0 such that it is removed from being updated.
+    For field parameters in ertbox grid that is NOT USED IN ALL realizations
+    by the geogrid, but only for some realizations, the unused field parameters
+    should be modified and set to the average value of those realizations
+    where the field parameter is used In the geomodel grid. This ensures that the
+    calculation of the ensemble mean in the update algorithm will give the value
+    that is equal to the average over the realizations where it is used in the geomodel.
+    This ensures that no infill values in the ertbox grid for the field parameter values
+    will have any effect on the ensemble average.
+
+    If there are grid cells with field parameters which is used for only very few
+    realizations in the geomodel grid (e.g. <= 10), the estimated mean value has
+    low confidence. In this case it can be better to avoid updating the field
+    parameter. To avoid updating the field parameter in this case, ensure that
+    it has 0 variance so that it is removed from the field parameters that
+    is to be updated. Therefore, in this case assign the ensemble average value to
+    all realizations, not only those that does not have this field parameter as
+    active in the geomodel but all realizations.
+
+    The steps in the algorithm is then:
+    - Calculate average over the ensemble of the active (used) field parameter
+      values for each individual field parameter.
+    - For each grid cell (i,j,k) in ertbox, check number of active realizations
+      and depending on the number (if it is larger than or less than min_real)
+      either assign the ensemble mean value to all realizations where the field
+      parameter is inactive or assign the ensemble mean value to all realizations.
+
+    Args:
+        X_matrix - Input ensemble of field parameters, shape = (nparam, nreal)
+        X_active - Input matrix defining which field parameter is active
+            or inactive for each realization, shape = (nparam, nreal)
+        min_real - Integer which is a lower limit of number of realization
+            where it is acceptable to do any update. If number of realizations
+            with active field parameter in an ertbox grid cell (i,j,k)
+            is less than min_real, the ensemble for this field parameter will
+            be set to a constant value to ensure 0 variance so that it is
+            not updated.
+    Returns:
+        Modified X_matrix - Modified to ensure that ensemble average is not
+            affected by values correponding to inactive realizations and that
+            field parameters with very few realizations are not updated by
+            setting a constant value in all realizations to ensure 0 variance.
+        Modified X_active matrix where field parameters with few realizations
+            are defined as inactive (which means not updatable)
+
+    """
+
+    # Create the inactive mask
+    inactive_matrix = ~X_active
+
+    # Safely compute the row-wise mean for active entries only
+    row_active_counts = np.sum(
+        X_active, axis=1, keepdims=True
+    )  # Count active entries per row
+
+    # Avoid division by zero by setting invalid rows to 0 temporarily
+    row_active_counts[row_active_counts == 0] = 1
+    X_mean = np.zeros(X_matrix.shape, dtype=np.float64)
+    X_mean[:, :] = (
+        np.sum(X_matrix * X_active, axis=1, keepdims=True) / row_active_counts
+    )
+
+    # Replace inactive values with the row mean
+    X_matrix_modified = X_matrix.copy()
+    X_matrix_modified[inactive_matrix] = X_mean[inactive_matrix]
+
+    # Count the number of active realizations per row
+    number_of_active_realizations_per_field_param = X_active.sum(axis=1)
+
+    # Handle rows with fewer than min_real active realizations
+    rows_to_replace = number_of_active_realizations_per_field_param < min_real
+
+    # For rows where number of active realizations is less than min_real
+    # set the field values to a constant , e.g. 0
+    X_matrix_modified[rows_to_replace, :] = 0
+    X_active_modified = X_active.copy()
+    X_active_modified[rows_to_replace, :] = False
+
+    # Return the modified matrix
+    return X_matrix_modified, X_active_modified
