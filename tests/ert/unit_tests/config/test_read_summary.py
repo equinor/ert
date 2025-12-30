@@ -71,6 +71,7 @@ def test_that_reading_summaries_returns_the_contents_of_the_file(
         assert [s.ministeps[-1].params[index] for s in unsmry.steps] == pytest.approx(d)
 
 
+@pytest.mark.filterwarnings("ignore:SMSPEC did not contain num_keyword")
 @pytest.mark.parametrize(
     "spec_contents, smry_contents, error_message",
     [
@@ -127,6 +128,7 @@ def test_mess_values_in_summary_files_raises_informative_errors(tmp_path):
         read_summary(str(tmp_path / "test"), ["*"])
 
 
+@pytest.mark.filterwarnings("ignore:SMSPEC did not contain num_keyword")
 def test_empty_keywords_in_summary_files_raises_informative_errors(tmp_path):
     resfo.write(
         tmp_path / "test.SMSPEC",
@@ -142,6 +144,7 @@ def test_empty_keywords_in_summary_files_raises_informative_errors(tmp_path):
         read_summary(str(tmp_path / "test"), ["*"])
 
 
+@pytest.mark.filterwarnings("ignore:SMSPEC did not contain num_keyword")
 def test_missing_names_keywords_in_summary_files_raises_informative_errors(
     tmp_path,
 ):
@@ -161,6 +164,7 @@ def test_missing_names_keywords_in_summary_files_raises_informative_errors(
         read_summary(str(tmp_path / "test"), ["*"])
 
 
+@pytest.mark.filterwarnings("ignore:SMSPEC did not contain num_keyword")
 def test_unknown_date_unit_in_summary_files_raises_informative_errors(
     tmp_path,
 ):
@@ -181,6 +185,7 @@ def test_unknown_date_unit_in_summary_files_raises_informative_errors(
         read_summary(str(tmp_path / "test"), ["*"])
 
 
+@pytest.mark.filterwarnings("ignore:SMSPEC did not contain num_keyword")
 def test_missing_units_in_summary_files_raises_an_informative_error(
     tmp_path,
 ):
@@ -200,6 +205,7 @@ def test_missing_units_in_summary_files_raises_an_informative_error(
         read_summary(str(tmp_path / "test"), ["*"])
 
 
+@pytest.mark.filterwarnings("ignore:SMSPEC did not contain num_keyword")
 def test_missing_date_units_in_summary_files_raises_an_informative_error(
     tmp_path,
 ):
@@ -220,6 +226,7 @@ def test_missing_date_units_in_summary_files_raises_an_informative_error(
         read_summary(str(tmp_path / "test"), ["*"])
 
 
+@pytest.mark.filterwarnings("ignore:SMSPEC did not contain num_keyword")
 def test_missing_time_keyword_in_summary_files_raises_an_informative_error(
     tmp_path,
 ):

@@ -104,6 +104,7 @@ def create_summary_observation(loc_config_lines):
     return ert_config.observations["summary"]
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
 def test_that_summary_observations_can_be_instantiated_with_localization(
     tmpdir,
 ):
@@ -123,6 +124,7 @@ def test_that_summary_observations_can_be_instantiated_with_localization(
         assert len(summary_observations.columns) == 8
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
 def test_that_summary_observations_without_location_range_gets_defaulted(
     tmpdir,
 ):
@@ -147,6 +149,7 @@ def test_that_summary_observations_without_location_range_gets_defaulted(
         "LOCATION_X=10;\nLOCATION_RANGE=10;\n",
     ],
 )
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
 def test_that_summary_observations_raises_config_validation_error_when_loc_x_or_loc_y_are_undefined_given_any_loc_key(  # noqa: E501
     tmpdir,
     loc_config_lines,
