@@ -15,13 +15,14 @@ if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
-    from ert.gui.tools.plot.plot_api import EnsembleObject
+    from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApiKeyDefinition
     from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
 
 
 class EnsemblePlot:
     def __init__(self) -> None:
         self.dimensionality = 2
+        self.requires_observations = False
 
     def plot(
         self,
@@ -30,6 +31,7 @@ class EnsemblePlot:
         ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
+        key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         config = plot_context.plotConfig()
         axes = figure.add_subplot(111)

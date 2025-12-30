@@ -10,13 +10,14 @@ from matplotlib.figure import Figure
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 if TYPE_CHECKING:
-    from ert.gui.tools.plot.plot_api import EnsembleObject
+    from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApiKeyDefinition
     from ert.gui.tools.plot.plottery import PlotContext
 
 
 class StdDevPlot:
     def __init__(self) -> None:
         self.dimensionality = 3
+        self.requires_observations = False
 
     def plot(
         self,
@@ -25,6 +26,7 @@ class StdDevPlot:
         ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
         std_dev_data: dict[str, npt.NDArray[np.float32]],
+        key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         ensemble_count = len(plot_context.ensembles())
         layer = plot_context.layer

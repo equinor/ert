@@ -8,7 +8,7 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle
 from typing_extensions import TypedDict
 
-from ert.gui.tools.plot.plot_api import EnsembleObject
+from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApiKeyDefinition
 
 from .plot_tools import ConditionalAxisFormatter, PlotTools
 
@@ -37,6 +37,7 @@ class CcsData(TypedDict):
 class CrossEnsembleStatisticsPlot:
     def __init__(self) -> None:
         self.dimensionality = 1
+        self.requires_observations = False
 
     @staticmethod
     def plot(
@@ -45,6 +46,7 @@ class CrossEnsembleStatisticsPlot:
         ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
+        key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         plotCrossEnsembleStatistics(
             figure, plot_context, ensemble_to_data_map, observation_data
