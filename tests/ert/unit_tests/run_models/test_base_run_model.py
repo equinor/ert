@@ -8,7 +8,7 @@ from logging import Logger
 from pathlib import Path
 from queue import SimpleQueue
 from types import MethodType
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 from pydantic import ConfigDict
@@ -681,15 +681,15 @@ async def test_run_model_stores_largest_cpu_overspending_from_ensemble_evaluator
     brm = create_run_model()
 
     evaluator.return_value.max_parallelism_violation = ParallelismViolation(0, "")
-    await brm.run_ensemble_evaluator_async(AsyncMock(), AsyncMock(), AsyncMock())
+    await brm.run_ensemble_evaluator_async(AsyncMock(), Mock(), AsyncMock())
     assert brm._max_parallelism_violation.amount == 0
 
     evaluator.return_value.max_parallelism_violation = ParallelismViolation(10, "")
-    await brm.run_ensemble_evaluator_async(AsyncMock(), AsyncMock(), AsyncMock())
+    await brm.run_ensemble_evaluator_async(AsyncMock(), Mock(), AsyncMock())
     assert brm._max_parallelism_violation.amount == 10
 
     evaluator.return_value.max_parallelism_violation = ParallelismViolation(1, "")
-    await brm.run_ensemble_evaluator_async(AsyncMock(), AsyncMock(), AsyncMock())
+    await brm.run_ensemble_evaluator_async(AsyncMock(), Mock(), AsyncMock())
     assert brm._max_parallelism_violation.amount == 10
 
 
