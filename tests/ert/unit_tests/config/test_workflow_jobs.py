@@ -211,7 +211,11 @@ class SomeScript(ErtScript):
             )
         }
     )
-    ert_config = ErtConfig.with_plugins(site_plugins).from_file("config.ert")
+    with pytest.warns(
+        ConfigWarning,
+        match="Deprecated keywords, SCRIPT and INTERNAL",
+    ):
+        ert_config = ErtConfig.with_plugins(site_plugins).from_file("config.ert")
     workflow = ert_config.workflows["DUMMY_WORKFLOW"]
     workflow_jobs = [wfj[0] for wfj in workflow.cmd_list]
     assert [job.type for job in workflow_jobs] == [
