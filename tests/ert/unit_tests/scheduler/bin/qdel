@@ -27,7 +27,9 @@ for jobid in "$@"; do
         continue
     fi
     pid=$(cat "${jobdir}/${jobid}.pid")
-    kill $pid
+    if kill -0 $pid 2>/dev/null; then
+        kill $pid
+    fi
     done
 if [ "$found_error" = true ]; then
     exit 1

@@ -14,6 +14,7 @@ from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from ert.cli.main import ErtCliError
+from ert.ensemble_evaluator.evaluator import EnsembleEvaluator
 from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
 from ert.scheduler.openpbs_driver import (
     JOB_STATES,
@@ -31,6 +32,7 @@ from ert.scheduler.openpbs_driver import (
     _create_job_class,
     _parse_jobs_dict,
 )
+from ert.scheduler.scheduler import Scheduler
 from tests.ert.ui_tests.cli.run_cli import run_cli
 from tests.ert.utils import poll
 
@@ -600,6 +602,8 @@ def test_openpbs_driver_with_poly_example_failing_submit_fails_ert_and_propagate
 def test_openpbs_driver_with_poly_example_failing_poll_fails_ert_and_propagates_exception_to_user(  # noqa: E501
     monkeypatch, caplog, queue_name_config
 ):
+    monkeypatch.setattr(EnsembleEvaluator, "BATCHING_INTERVAL", 0.05)
+    monkeypatch.setattr(Scheduler, "BATCH_KILLING_INTERVAL", 0.01)
     monkeypatch.setattr(
         OpenPBSDriver, "poll", partial(mock_failure, "Status polling failed")
     )
