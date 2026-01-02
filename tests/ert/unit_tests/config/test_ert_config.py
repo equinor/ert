@@ -410,6 +410,7 @@ def test_that_subst_list_is_given_default_runpath_file():
 
 @pytest.mark.integration_test
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
+@pytest.mark.filterwarnings("ignore:An Eclipse style grid with vertical ZCORN")  # xtgeo
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @settings(max_examples=10)
 @given(config_generators())
@@ -428,6 +429,7 @@ def test_that_creating_ert_config_from_dict_is_same_as_from_file(
 
 @pytest.mark.integration_test
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
+@pytest.mark.filterwarnings("ignore:An Eclipse style grid with vertical ZCORN")  # xtgeo
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @settings(max_examples=20)
 @given(config_generators())
@@ -447,6 +449,7 @@ def test_that_ert_config_has_valid_schema():
 
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
+@pytest.mark.filterwarnings("ignore:An Eclipse style grid with vertical ZCORN")  # xtgeo
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.integration_test
 @settings(max_examples=10)
@@ -1780,7 +1783,11 @@ def test_that_local_config_overrides_site_config():
 
 
 def test_warning_raised_when_summary_key_and_no_simulation_job_present():
-    with warnings.catch_warnings(record=True) as all_warnings:
+    with pytest.warns(
+        ConfigWarning,
+        match="Config contains a SUMMARY key but no forward model "
+        "steps known to generate summary files",
+    ):
         ErtConfig.from_dict(
             {
                 "SUMMARY": ["*"],
@@ -1789,16 +1796,6 @@ def test_warning_raised_when_summary_key_and_no_simulation_job_present():
                 "FORWARD_MODEL": [["name"]],
             }
         )
-
-    assert any(
-        str(w.message)
-        == (
-            "Config contains a SUMMARY key but no forward model "
-            "steps known to generate summary files"
-        )
-        for w in all_warnings
-        if isinstance(w.message, ConfigWarning)
-    )
 
 
 @pytest.mark.parametrize(
@@ -2024,12 +2021,15 @@ def test_design2params_also_validates_design_matrix(tmp_path, caplog, monkeypatc
         "PREINSTALLED_FORWARD_MODEL_STEPS",
         {"DESIGN2PARAMS": mock_design2params},
     )
-    ErtConfig.from_file_contents(
-        f"""\
-            NUM_REALIZATIONS 1
-            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file}, \\
-                <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)"""
-    )
+    with pytest.warns(
+        ConfigWarning, match="DESIGN2PARAMS will be replaced with DESIGN_MATRIX"
+    ):
+        ErtConfig.from_file_contents(
+            f"""\
+                NUM_REALIZATIONS 1
+                FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file}, \\
+                    <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)"""
+        )
     assert "DESIGN_MATRIX validation of DESIGN2PARAMS" in caplog.text
 
 
@@ -2063,15 +2063,18 @@ def test_two_design2params_validates_design_matrix_merging(
         "PREINSTALLED_FORWARD_MODEL_STEPS",
         {"DESIGN2PARAMS": mock_design2params},
     )
-    ErtConfig.from_file_contents(
-        f"""\
-            NUM_REALIZATIONS 1
-            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file}, \\
-                <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
-            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file2}, \\
-                <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
-            """
-    )
+    with pytest.warns(
+        ConfigWarning, match="DESIGN2PARAMS will be replaced with DESIGN_MATRIX"
+    ):
+        ErtConfig.from_file_contents(
+            f"""\
+                NUM_REALIZATIONS 1
+                FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file}, \\
+                    <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
+                FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file2}, \\
+                    <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
+                """
+        )
     assert (
         "Design matrix merging would have failed due to: "
         f"Design Matrices '{design_matrix_file.name} (DesignSheet DefaultSheet)' "
@@ -2121,17 +2124,20 @@ def test_three_design2params_validates_design_matrix_merging(
         "PREINSTALLED_FORWARD_MODEL_STEPS",
         {"DESIGN2PARAMS": mock_design2params},
     )
-    ErtConfig.from_file_contents(
-        f"""\
-            NUM_REALIZATIONS 1
-            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file}, \\
-                <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
-            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file2}, \\
-                <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
-            FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file3}, \\
-                <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
-            """
-    )
+    with pytest.warns(
+        ConfigWarning, match="DESIGN2PARAMS will be replaced with DESIGN_MATRIX"
+    ):
+        ErtConfig.from_file_contents(
+            f"""\
+                NUM_REALIZATIONS 1
+                FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file}, \\
+                    <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
+                FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file2}, \\
+                    <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
+                FORWARD_MODEL DESIGN2PARAMS(<xls_filename>={design_matrix_file3}, \\
+                    <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
+                """
+        )
     assert (
         "Design matrix merging would have failed due to: Design Matrices "
         f"'{design_matrix_file.name} (DesignSheet DefaultSheet)' "
@@ -2684,14 +2690,17 @@ def test_that_invalid_option_name_in_design_matrix_raises_validation_error(
 
 
 def test_that_single_rft_is_parsed():
-    config = ErtConfig.from_file_contents(
-        """
-        NUM_REALIZATIONS 1
-        ECLBASE BASE
+    with pytest.warns(
+        ConfigWarning, match="Config contains a RFT key but no forward model"
+    ):
+        config = ErtConfig.from_file_contents(
+            """
+            NUM_REALIZATIONS 1
+            ECLBASE BASE
 
-        RFT WELL:NAME DATE:2020-12-13 PROPERTIES:PRESSURE,SWAT
-        """,
-    )
+            RFT WELL:NAME DATE:2020-12-13 PROPERTIES:PRESSURE,SWAT
+            """,
+        )
     rft = config.ensemble_config.response_configs["rft"]
     assert isinstance(rft, RFTConfig)
     assert rft.type == "rft"
@@ -2704,15 +2713,18 @@ def test_that_single_rft_is_parsed():
 
 
 def test_that_multiple_rfts_are_parsed():
-    config = ErtConfig.from_file_contents(
-        """
-        NUM_REALIZATIONS 1
-        ECLBASE BASE
+    with pytest.warns(
+        ConfigWarning, match="Config contains a RFT key but no forward model"
+    ):
+        config = ErtConfig.from_file_contents(
+            """
+            NUM_REALIZATIONS 1
+            ECLBASE BASE
 
-        RFT WELL:NAME1 DATE:2020-12-13 PROPERTIES:PRESSURE,SWAT
-        RFT WELL:NAME2 DATE:2020-12-14 PROPERTIES:SOIL
-        """,
-    )
+            RFT WELL:NAME1 DATE:2020-12-13 PROPERTIES:PRESSURE,SWAT
+            RFT WELL:NAME2 DATE:2020-12-14 PROPERTIES:SOIL
+            """,
+        )
     rft = config.ensemble_config.response_configs["rft"]
     assert isinstance(rft, RFTConfig)
     assert rft.type == "rft"
@@ -2732,14 +2744,17 @@ def test_that_multiple_rfts_are_parsed():
 
 
 def test_that_rft_properties_can_be_given_with_spaces():
-    config = ErtConfig.from_file_contents(
-        """
-        NUM_REALIZATIONS 1
-        ECLBASE BASE
+    with pytest.warns(
+        ConfigWarning, match="Config contains a RFT key but no forward model"
+    ):
+        config = ErtConfig.from_file_contents(
+            """
+            NUM_REALIZATIONS 1
+            ECLBASE BASE
 
-        RFT WELL:NAME1 DATE:2020-12-13 "PROPERTIES:PRESSURE, SWAT"
-        """,
-    )
+            RFT WELL:NAME1 DATE:2020-12-13 "PROPERTIES:PRESSURE, SWAT"
+            """,
+        )
     rft = config.ensemble_config.response_configs["rft"]
     assert isinstance(rft, RFTConfig)
     assert rft.data_to_read == {

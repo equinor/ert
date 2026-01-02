@@ -176,7 +176,6 @@ markers = [
     "slow",
     "skip_mac_ci",
 ]
-test_paths = ["tests"]
 log_cli = "false"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"

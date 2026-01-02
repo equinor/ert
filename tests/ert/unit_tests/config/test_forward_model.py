@@ -201,6 +201,7 @@ def test_forward_model_arglist_with_weird_characters():
 
 @pytest.mark.integration_test
 @pytest.mark.filterwarnings("ignore:MIN_REALIZATIONS")
+@pytest.mark.filterwarnings("ignore:An Eclipse style grid with vertical ZCORN")  # xtgeo
 @pytest.mark.filterwarnings(
     "ignore:Config contains a SUMMARY key but no forward model steps"
 )
@@ -1061,13 +1062,13 @@ def test_that_site_fm_step_serializes_as_reference_to_site_plugin(use_tmpdir):
         site_fm = SiteForwardModel()
         # PS: It is missing private args, this must be added by mutation
         # as it is the current practice in ert config
-        site_fm.private_args = {"ONE": 1, "TWO": "2"}
+        site_fm.private_args = {"ONE": "1", "TWO": "2"}
 
         serialized_fm_step = site_fm.model_dump(mode="json")
         assert serialized_fm_step == {
             "name": "SITE_FM",
             "type": "site_installed",
-            "private_args": {"ONE": 1, "TWO": "2"},
+            "private_args": {"ONE": "1", "TWO": "2"},
         }
 
 
