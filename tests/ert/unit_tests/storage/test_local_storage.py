@@ -513,6 +513,7 @@ def test_ensemble_no_parameters(storage):
     )
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 def test_get_unique_experiment_name(snake_oil_storage):
     with patch(
         "ert.storage.local_storage.LocalStorage.experiments", new_callable=PropertyMock
