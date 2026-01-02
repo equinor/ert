@@ -150,8 +150,9 @@ def data_for_response(
         # This performs the same aggragation by mean of duplicate values
         # as in ert/analysis/_es_update.py
         df = df.groupby(["Date", "Realization"]).mean()
-        data = df.unstack(level="Date")
-        data.columns = data.columns.droplevel(0)
+        data = df.reset_index().pivot_table(
+            index="Realization", columns="Date", values=df.columns[0]
+        )
         return data.astype(float)
 
     if response_type == "rft":
@@ -164,7 +165,7 @@ def data_for_response(
             .select(["Realization", "depth", "values"])
             .unique()
             .to_pandas()
-            .pivot(index="Realization", columns="depth", values="values")
+            .pivot_table(index="Realization", columns="depth", values="values")
             .reset_index(drop=True)
         )
 
@@ -176,7 +177,7 @@ def data_for_response(
             assert "report_step" in filter_on
             report_step = int(filter_on["report_step"])
             vals = data.filter(pl.col("report_step").eq(report_step))
-            pivoted = vals.drop("response_key", "report_step").pivot(
+            pivoted = vals.drop("response_key", "report_step").pivot(  # noqa: PD010
                 on="index", values="values"
             )
             data = pivoted.to_pandas().set_index("realization")

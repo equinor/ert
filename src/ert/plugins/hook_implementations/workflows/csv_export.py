@@ -111,7 +111,7 @@ class CSVExportJob(ErtScript):
                 summary_data = pl.DataFrame({})
 
             if not summary_data.is_empty():
-                pivoted_summary = summary_data.pivot(
+                pivoted_summary = summary_data.pivot(  # noqa: PD010
                     index=["realization", "time"], on="response_key", values="values"
                 ).to_pandas()
 
@@ -123,8 +123,7 @@ class CSVExportJob(ErtScript):
                 # Reset index to make 'Realization' a regular column
                 ensemble_data = ensemble_data.reset_index()
 
-                ensemble_data = pd.merge(
-                    ensemble_data,
+                ensemble_data = ensemble_data.merge(
                     pivoted_summary,
                     on="Realization",
                     how="left",

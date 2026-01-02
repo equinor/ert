@@ -51,16 +51,16 @@ def _plotObservations(
         style.width = 0
     if plot_config.depth_y_axis:
         errorbar_data = {
-            "x": data.loc["OBS"].values,
-            "y": data.loc["key_index"].values,
-            "xerr": data.loc["STD"].values,
+            "x": data.loc["OBS"].to_numpy(),
+            "y": data.loc["key_index"].to_numpy(),
+            "xerr": data.loc["STD"].to_numpy(),
         }
         axes.yaxis.set_inverted(True)
     else:
         errorbar_data = {
-            "x": data.loc["key_index"].values,
-            "y": data.loc["OBS"].values,
-            "yerr": data.loc["STD"].values,
+            "x": data.loc["key_index"].to_numpy(),
+            "y": data.loc["OBS"].to_numpy(),
+            "yerr": data.loc["STD"].to_numpy(),
         }
 
     axes.errorbar(
