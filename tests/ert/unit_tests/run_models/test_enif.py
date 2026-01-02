@@ -5,7 +5,7 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from ert.config import ErtConfig
+from ert.config import ConfigWarning, ErtConfig
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.mode_definitions import (
     ENIF_MODE,
@@ -44,7 +44,10 @@ def test_that_enif_update_does_not_update_design_matrix_parameters(
         fh.write("DESIGN_MATRIX poly_design.xlsx\n")
 
     evaluator_server_config = EvaluatorServerConfig()
-    ert_config_with_dm = ErtConfig.from_file("poly.ert")
+    with pytest.warns(
+        ConfigWarning, match=r"Parameters .* will be overridden by design matrix"
+    ):
+        ert_config_with_dm = ErtConfig.from_file("poly.ert")
 
     enif_with_dm = create_model(
         ert_config_with_dm,
