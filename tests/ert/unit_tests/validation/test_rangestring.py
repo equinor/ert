@@ -62,7 +62,7 @@ def test_rangestring_to_mask(rangestring, length, expected_mask):
     ],
 )
 def test_rangestring_to_mask_errors(rangestring, length):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         rangestring_to_mask(rangestring, length)
 
 
@@ -87,5 +87,5 @@ def test_rangestring_to_list(rangestring, expected):
     ["a", "*", "-", "0-", "-1", "0-a", "0-1-2", "0--1", "1-0", "0-2.2"],
 )
 def test_rangestring_to_list_errors(rangestring):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         rangestring_to_list(rangestring)

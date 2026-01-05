@@ -20,5 +20,5 @@ def test_weights(weights, expected):
 
 
 def test_invalid_weights():
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Warning: cannot parse weight error"):
         mda.parse_weights("2, error, 2, 2")
