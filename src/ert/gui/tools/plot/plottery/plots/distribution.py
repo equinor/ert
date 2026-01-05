@@ -80,6 +80,9 @@ def plotDistribution(
     )
     config.setLegendEnabled(False)
 
+    if plot_context.log_scale:
+        axes.set_yscale("log")
+
     PlotTools.finalizePlot(
         plot_context, figure, axes, default_x_label="Ensemble", default_y_label="Value"
     )

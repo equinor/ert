@@ -60,6 +60,9 @@ def plotGaussianKDE(
                 axes, config, data, f"{ensemble.experiment_name} : {ensemble.name}"
             )
 
+    if plot_context.log_scale:
+        axes.set_xscale("log")
+
     PlotTools.finalizePlot(
         plot_context, figure, axes, default_x_label="Value", default_y_label="Density"
     )
