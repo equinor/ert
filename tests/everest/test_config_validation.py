@@ -1082,8 +1082,8 @@ def test_load_file_with_errors(capsys):
 
     Path("config_minimal_error.yml").write_text(content, encoding="utf-8")
 
+    parser = ArgumentParser(prog="test")
     with pytest.raises(SystemExit):
-        parser = ArgumentParser(prog="test")
         EverestConfig.load_file_with_argparser("config_minimal_error.yml", parser)
 
     captured = capsys.readouterr()
@@ -1204,8 +1204,8 @@ def test_load_file_undefined_substitutions(min_config, change_to_tmpdir, capsys)
     with open("config.yml", mode="w", encoding="utf-8") as f:
         yaml.dump(config, f)
 
+    parser = ArgumentParser(prog="test")
     with pytest.raises(SystemExit):
-        parser = ArgumentParser(prog="test")
         EverestConfig.load_file_with_argparser("config.yml", parser)
 
     captured = capsys.readouterr()

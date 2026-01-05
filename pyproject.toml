@@ -220,6 +220,7 @@ select = [
     "PL",    # pylint
     "PLE",
     "PT011",
+    "PT012",
     "PT017",
     "PYI",
     "Q",

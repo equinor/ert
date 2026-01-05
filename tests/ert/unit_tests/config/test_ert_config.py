@@ -2660,8 +2660,7 @@ _________________________________________     _____    ____________________
     with open(refcase_file + ".SMSPEC", "w+", encoding="utf-8") as refcase_file_handler:
         refcase_file_handler.write(refcase_file_content)
     with pytest.raises(expected_exception=ConfigValidationError, match=refcase_file):
-        config_dict = {ConfigKeys.REFCASE: refcase_file}
-        Refcase.from_config_dict(config_dict=config_dict)
+        Refcase.from_config_dict(config_dict={ConfigKeys.REFCASE: refcase_file})
 
 
 @pytest.mark.parametrize("misspelled_option", ["DESIGNSHEET", "DEFAULTSHEET"])

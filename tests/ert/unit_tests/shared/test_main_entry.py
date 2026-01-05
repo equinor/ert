@@ -52,8 +52,8 @@ def test_storage_exception_is_not_unexpected_error(caplog):
         pytest.raises(SystemExit) as exc_info,
     ):
         main.main()
-        assert "ERT crashed unexpectedly" not in str(exc_info.value)
-        assert "Failed to open storage" in str(exc_info.value)
+    assert "ERT crashed unexpectedly" not in str(exc_info.value)
+    assert "Failed to open storage" in str(exc_info.value)
 
 
 def test_non_writable_log_directory_exits_with_message(monkeypatch, use_tmpdir):

@@ -81,14 +81,12 @@ def test_that_loading_non_existing_experiment_throws(tmp_path):
 
 
 def test_that_loading_non_existing_ensemble_throws(tmp_path):
-    with (
-        open_storage(tmp_path, mode="w") as storage,
-        pytest.raises(
-            KeyError, match="Ensemble with name 'non-existing-ensemble' not found"
-        ),
-    ):
+    with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment(name="test-experiment")
-        experiment.get_ensemble_by_name("non-existing-ensemble")
+        with pytest.raises(
+            KeyError, match="Ensemble with name 'non-existing-ensemble' not found"
+        ):
+            experiment.get_ensemble_by_name("non-existing-ensemble")
 
 
 def test_that_saving_empty_responses_fails_nicely(tmp_path):
@@ -1166,12 +1164,12 @@ def test_gen_kw_collector(snake_oil_default_storage, snapshot):
     snapshot.assert_match(data.write_csv(float_precision=6), "gen_kw_collector_3.csv")
 
     non_existing_realization_index = 150
-    with pytest.raises((IndexError, KeyError)):
+    with pytest.raises(IndexError):
         data: pl.DataFrame = snake_oil_default_storage.load_scalars(
             "SNAKE_OIL_PARAM",
             realizations=[non_existing_realization_index],
         )
-        data = data["SNAKE_OIL_PARAM:OP1_PERSISTENCE"]
+    data = data["SNAKE_OIL_PARAM:OP1_PERSISTENCE"]
 
 
 def test_keyword_type_checks(snake_oil_default_storage):
@@ -1297,27 +1295,25 @@ def test_that_permission_error_is_logged_in_load_ensembles(snake_oil_storage, ca
     try:
         with caplog.at_level(logging.ERROR), pytest.raises(PermissionError):
             snake_oil_storage._load_ensembles()
-            assert (
-                f"Permission error when loading ensemble from path: {ensemble._path}."
-                in caplog.records[0].message
-            )
-            assert len(snake_oil_storage._ensembles) == 0
+        assert (
+            f"Permission error when loading ensemble from path: {ensemble._path}."
+            in caplog.records[0].message
+        )
+        assert len(snake_oil_storage._ensembles) == 0
     finally:
         Path(ensemble._path).chmod(0o755)  # restore permissions
 
 
 def test_that_permission_error_is_logged_in_load_index(snake_oil_storage, caplog):
-    old_index = snake_oil_storage._index
     index_path = Path(snake_oil_storage.path / "index.json")
     index_path.chmod(0o000)  # no permissions
     try:
         with caplog.at_level(logging.ERROR), pytest.raises(PermissionError):
-            index = snake_oil_storage._load_index()
-            assert index == old_index
-            assert (
-                f"Permission error when loading index from path: {index_path}."
-                in caplog.records[0].message
-            )
+            snake_oil_storage._load_index()
+        assert (
+            f"Permission error when loading index from path: {index_path}."
+            in caplog.records[0].message
+        )
     finally:
         index_path.chmod(0o744)  # restore permissions
 
