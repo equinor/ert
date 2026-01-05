@@ -96,7 +96,6 @@ def test_status_when_rerunning_on_non_rerunnable_model(use_tmpdir):
         ([False]),
         ([False, True]),
         ([True, True]),
-        ([False, True]),
     ],
 )
 def test_active_realizations(initials, use_tmpdir):

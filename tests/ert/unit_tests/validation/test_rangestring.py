@@ -76,7 +76,6 @@ def test_rangestring_to_mask_errors(rangestring, length):
         ("0-1, 4, 3-5", [0, 1, 3, 4, 5]),
         ("1,2,3", [1, 2, 3]),
         ("1, 3-5 ,2", [1, 2, 3, 4, 5]),
-        ("1, 3-5 ,2", [1, 2, 3, 4, 5]),
     ],
 )
 def test_rangestring_to_list(rangestring, expected):

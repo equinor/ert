@@ -1017,11 +1017,6 @@ def test_that_having_observations_on_starting_date_errors(tmpdir):
             1000,
             "Segment FIRST_YEAR out of bounds",
         ),
-        (
-            1,
-            1000,
-            "Segment FIRST_YEAR out of bounds",
-        ),
     ],
 )
 def test_that_out_of_bounds_segments_are_truncated(tmpdir, start, stop, message):

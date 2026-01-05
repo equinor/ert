@@ -33,7 +33,6 @@ def test_default_log_capture(log_level, expect_propagation, caplog):
     [
         logging.DEBUG,
         logging.INFO,
-        logging.INFO,
         logging.ERROR,
         logging.CRITICAL,
     ],
