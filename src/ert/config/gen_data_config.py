@@ -198,7 +198,7 @@ class GenDataConfig(ResponseConfig):
             if all(isinstance(err, FileNotFoundError) for err in errors):
                 raise FileNotFoundError(
                     "Could not find one or more files/directories while reading "
-                    f"GEN_DATA {self.name}: {','.join([str(err) for err in errors])}"
+                    f"GEN_DATA: {','.join([str(err) for err in errors])}"
                 )
             else:
                 raise InvalidResponseFile(
