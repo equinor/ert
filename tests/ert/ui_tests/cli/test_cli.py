@@ -697,7 +697,7 @@ def test_failing_step_cli_error_message():
         run_cli(TEST_RUN_MODE, "--disable-monitoring", "poly.ert")
     except ErtCliError as error:
         for substring in expected_substrings:
-            assert substring in f"{error}"
+            assert substring in f"{error}"  # noqa: PT017
     else:
         pytest.fail(msg="Expected run cli to raise ErtCliError!")
 

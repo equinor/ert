@@ -430,13 +430,12 @@ def test_copy_directory_reports_multiple_errors():
     Path(somedir).mkdir()
     os.symlink("/not_existing", some_symlink)
     os.symlink("/not_existing", some_other_symlink)
-    try:
+    with pytest.raises(OSError, match="No such file or directory") as exc_info:
         copy_directory(somedir, "copydir")
-        raise AssertionError("copy_directory should raise")
-    except OSError as err:
-        # (The order of occurence of the filenames in the string is non-deterministic)
-        assert some_symlink in str(err)
-        assert some_other_symlink in str(err)
+
+    # (The order of occurence of the filenames in the string is non-deterministic)
+    assert some_symlink in str(exc_info.value)
+    assert some_other_symlink in str(exc_info.value)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
