@@ -17,10 +17,10 @@ from typing import Literal
 import cwrap
 import hypothesis.strategies as st
 import numpy as np
+import pytest
 import xtgeo
 from hypothesis import given, note, settings
 from hypothesis.extra.numpy import arrays
-from pytest import MonkeyPatch, TempPathFactory, mark
 from resdata import ResDataType
 from resdata.grid import GridGenerator
 from resdata.resfile import ResdataKW
@@ -425,18 +425,18 @@ class SurfaceParameter(Parameter):
         max_size=3,
     ),
 )
-@mark.skip_mac_ci  # test is slow
+@pytest.mark.skip_mac_ci  # test is slow
 def test_that_parameters_are_placed_in_the_runpath_as_expected(
     io_source: IoProvider,
     grid_format: Literal["grid", "egrid"],
     summary,
-    tmp_path_factory: TempPathFactory,
+    tmp_path_factory: pytest.TempPathFactory,
     num_realizations: int,
     parameters: list[Parameter],
 ):
     tmp_path = tmp_path_factory.mktemp("parameter_example")
     note(f"Running in directory {tmp_path}")
-    with MonkeyPatch.context() as patch:
+    with pytest.MonkeyPatch.context() as patch:
         patch.chdir(tmp_path)
         GRID_NAME = "GRID"
         contents = config_contents.format(

@@ -12,7 +12,6 @@ from typing import Any
 import pytest
 from hypothesis import HealthCheck, given, note, settings
 from hypothesis import strategies as st
-from pytest import MonkeyPatch, TempPathFactory
 
 from ert.base_model_context import use_runtime_plugins
 from ert.config import (
@@ -498,7 +497,7 @@ _not_yet_serializable_args = {
     st.data(),
 )
 def test_that_deserializing_ensemble_experiment_is_the_inverse_of_serializing(
-    tmp_path_factory: TempPathFactory,
+    tmp_path_factory: pytest.TempPathFactory,
     ensemble_experiment_args: dict[str, Any],
     data,
 ) -> None:
@@ -506,7 +505,7 @@ def test_that_deserializing_ensemble_experiment_is_the_inverse_of_serializing(
     baserunmodel_args, runtime_plugins = runmodel_args(data.draw, tmp_path_factory)
     note(f"Running in directory {tmp_path}")
     with (
-        MonkeyPatch.context() as patch,
+        pytest.MonkeyPatch.context() as patch,
         use_runtime_plugins(runtime_plugins),
     ):
         patch.chdir(tmp_path)
@@ -537,7 +536,7 @@ def test_that_deserializing_ensemble_experiment_is_the_inverse_of_serializing(
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(initial_ensemble_runmodels(), update_runmodels(), st.data())
 def test_that_deserializing_ensemble_smoother_is_the_inverse_of_serializing(
-    tmp_path_factory: TempPathFactory,
+    tmp_path_factory: pytest.TempPathFactory,
     initial_ensemble_args: dict[str, Any],
     update_runmodel_args: dict[str, Any],
     data,
@@ -545,7 +544,7 @@ def test_that_deserializing_ensemble_smoother_is_the_inverse_of_serializing(
     tmp_path = tmp_path_factory.mktemp("deserializing_ensemble_smoother")
     baserunmodel_args, runtime_plugins = runmodel_args(data.draw, tmp_path_factory)
     note(f"Running in directory {tmp_path}")
-    with MonkeyPatch.context() as patch, use_runtime_plugins(runtime_plugins):
+    with pytest.MonkeyPatch.context() as patch, use_runtime_plugins(runtime_plugins):
         patch.chdir(tmp_path)
         runmodel = EnsembleSmoother(
             **(
@@ -574,7 +573,7 @@ def test_that_deserializing_ensemble_smoother_is_the_inverse_of_serializing(
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(initial_ensemble_runmodels(), update_runmodels(), st.data())
 def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serializing(
-    tmp_path_factory: TempPathFactory,
+    tmp_path_factory: pytest.TempPathFactory,
     initial_ensemble_args: dict[str, Any],
     update_runmodel_args: dict[str, Any],
     data,
@@ -582,7 +581,7 @@ def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serial
     tmp_path = tmp_path_factory.mktemp("deserializing_eif")
     baserunmodel_args, runtime_plugins = runmodel_args(data.draw, tmp_path_factory)
     note(f"Running in directory {tmp_path}")
-    with MonkeyPatch.context() as patch, use_runtime_plugins(runtime_plugins):
+    with pytest.MonkeyPatch.context() as patch, use_runtime_plugins(runtime_plugins):
         patch.chdir(tmp_path)
         runmodel = EnsembleInformationFilter(
             **(
@@ -610,7 +609,7 @@ def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serial
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @given(initial_ensemble_runmodels(), update_runmodels(), multidass(), st.data())
 def test_that_deserializing_esmda_is_the_inverse_of_serializing(
-    tmp_path_factory: TempPathFactory,
+    tmp_path_factory: pytest.TempPathFactory,
     initial_ensemble_args: dict[str, Any],
     update_runmodel_args: dict[str, Any],
     multidass_args: dict[str, Any],
@@ -620,7 +619,7 @@ def test_that_deserializing_esmda_is_the_inverse_of_serializing(
     baserunmodel_args, runtime_plugins = runmodel_args(data.draw, tmp_path_factory)
     note(f"Running in directory {tmp_path}")
 
-    with MonkeyPatch.context() as patch, use_runtime_plugins(runtime_plugins):
+    with pytest.MonkeyPatch.context() as patch, use_runtime_plugins(runtime_plugins):
         patch.chdir(tmp_path)
 
         runmodel = MultipleDataAssimilation(

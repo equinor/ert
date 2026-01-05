@@ -11,7 +11,6 @@ import zmq.asyncio
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 from pydantic import ValidationError
-from pytest import MonkeyPatch
 
 from _ert.events import (
     EESnapshot,
@@ -592,7 +591,7 @@ async def test_signal_cancel_terminates_fm_dispatcher_with_terminate_message(
 @pytest.mark.timeout(10)
 @pytest.mark.integration_test
 async def test_signal_cancel_terminates_fm_dispatcher_with_scheduler_as_fallback(
-    tmpdir, monkeypatch: MonkeyPatch, make_ensemble, caplog
+    tmpdir, monkeypatch: pytest.MonkeyPatch, make_ensemble, caplog
 ):
     caplog.set_level(logging.INFO)
     send_terminate_was_called = asyncio.Event()
@@ -677,7 +676,7 @@ async def test_queue_config_properties_propagated_to_scheduler_from_ensemble(
 
 
 async def test_log_forward_model_steps_with_missing_status_updates(
-    monkeypatch: MonkeyPatch, tmpdir, caplog, make_ensemble
+    monkeypatch: pytest.MonkeyPatch, tmpdir, caplog, make_ensemble
 ):
     mocked_config = MagicMock(spec=ErtConfig)
     num_reals = 11

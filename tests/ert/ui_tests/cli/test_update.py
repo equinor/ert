@@ -7,8 +7,8 @@ from pathlib import Path
 
 import hypothesis.strategies as st
 import numpy as np
+import pytest
 from hypothesis import given, note, settings
-from pytest import MonkeyPatch, TempPathFactory
 
 from ert.cli.main import ErtCliError
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
@@ -128,7 +128,7 @@ POLY_EVAL = "EXECUTABLE poly_eval.py"
     data=st.data(),
 )
 def test_update_lowers_generalized_variance_or_deactivates_observations(
-    tmp_path_factory: TempPathFactory,
+    tmp_path_factory: pytest.TempPathFactory,
     num_realizations: int,
     num_points: int,
     distributions: list[tuple[str, list[float]]],
@@ -161,7 +161,7 @@ def test_update_lowers_generalized_variance_or_deactivates_observations(
 
     tmp_path = tmp_path_factory.mktemp("parameter_example")
     note(f"Running in directory {tmp_path}")
-    with MonkeyPatch.context() as patch:
+    with pytest.MonkeyPatch.context() as patch:
         patch.chdir(tmp_path)
         contents = config_contents.format(
             num_realizations=num_realizations,
