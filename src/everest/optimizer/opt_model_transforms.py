@@ -11,7 +11,7 @@ from ropt.transforms.base import (
     VariableTransform,
 )
 
-from ert.config import EverestConstraintsConfig, EverestObjectivesConfig, ExtParamConfig
+from ert.config import EverestConstraintsConfig, EverestControl, EverestObjectivesConfig
 from everest.config import (
     InputConstraintConfig,
     ModelConfig,
@@ -426,7 +426,7 @@ class ConstraintScaler(NonLinearConstraintTransform):
 
 
 def get_optimization_domain_transforms(
-    controls: list[ExtParamConfig],
+    controls: list[EverestControl],
     objectives: EverestObjectivesConfig,
     input_constraints: list[InputConstraintConfig] | None,
     output_constraints: EverestConstraintsConfig | None,

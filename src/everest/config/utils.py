@@ -1,8 +1,8 @@
-from ert.config import ExtParamConfig, SamplerConfig
+from ert.config import EverestControl, SamplerConfig
 
 
 def get_samplers(
-    controls: list[ExtParamConfig],
+    controls: list[EverestControl],
 ) -> tuple[list[SamplerConfig | None], list[int]]:
     """
     Create a list of unique samplers, and a list mapping variable index

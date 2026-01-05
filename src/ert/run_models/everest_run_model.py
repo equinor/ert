@@ -31,8 +31,8 @@ from typing_extensions import TypedDict
 
 from ert.config import (
     EverestConstraintsConfig,
+    EverestControl,
     EverestObjectivesConfig,
-    ExtParamConfig,
     GenDataConfig,
     HookRuntime,
     KnownQueueOptionsAdapter,
@@ -535,19 +535,19 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         )
 
     @property
-    def ext_param_configs(self) -> list[ExtParamConfig]:
-        ext_params = [
+    def _everest_control_configs(self) -> list[EverestControl]:
+        controls = [
             c for c in self.parameter_configuration if c.type == "everest_parameters"
         ]
 
-        # There will and must always be one extparam config for an
+        # There will and must always be one EverestControl config for an
         # Everest optimization.
-        return cast(list[ExtParamConfig], ext_params)
+        return cast(list[EverestControl], controls)
 
     @cached_property
     def _transforms(self) -> EverestOptModelTransforms:
         return get_optimization_domain_transforms(
-            self.ext_param_configs,
+            self._everest_control_configs,
             self.objectives_config,
             self.input_constraints,
             self.output_constraints_config,
@@ -693,7 +693,9 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         )
 
         formatted_control_names = [
-            name for config in self.ext_param_configs for name in config.input_keys
+            name
+            for config in self._everest_control_configs
+            for name in config.input_keys
         ]
         self._ever_storage.init(
             formatted_control_names=formatted_control_names,
@@ -762,7 +764,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
 
     def _create_optimizer(self) -> tuple[BasicOptimizer, list[float]]:
         enopt_config, initial_guesses = everest2ropt(
-            cast(list[ExtParamConfig], self.parameter_configuration),
+            cast(list[EverestControl], self.parameter_configuration),
             self.objectives_config,
             self.input_constraints,
             self.output_constraints_config,
@@ -832,13 +834,13 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         for sim_id in range(sim_to_control_vector.shape[0]):
             sim_controls = sim_to_control_vector[sim_id]
             offset = 0
-            for ext_param_config in self.ext_param_configs:
-                n_param_keys = len(ext_param_config.parameter_keys)
+            for control_config in self._everest_control_configs:
+                n_param_keys = len(control_config.parameter_keys)
 
                 # Save controls to ensemble
                 ensemble.save_parameters_numpy(
                     sim_controls[offset : (offset + n_param_keys)].reshape(-1, 1),
-                    ext_param_config.name,
+                    control_config.name,
                     np.array([sim_id]),
                 )
                 offset += n_param_keys

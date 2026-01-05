@@ -3,7 +3,7 @@ from typing import Any
 
 from ropt.enums import PerturbationType, VariableType
 
-from ert.config import EverestConstraintsConfig, EverestObjectivesConfig, ExtParamConfig
+from ert.config import EverestConstraintsConfig, EverestControl, EverestObjectivesConfig
 from everest.config import (
     InputConstraintConfig,
     ModelConfig,
@@ -14,7 +14,7 @@ from everest.config.utils import get_samplers
 
 
 def _parse_controls(
-    controls: list[ExtParamConfig], random_seed: int
+    controls: list[EverestControl], random_seed: int
 ) -> tuple[dict[str, Any], list[dict[str, Any]] | None]:
     control_types = [
         VariableType[type_.upper()]
@@ -116,7 +116,7 @@ def _get_bounds(
 
 def _parse_input_constraints(
     input_constraints: list[InputConstraintConfig],
-    controls: list[ExtParamConfig],
+    controls: list[EverestControl],
 ) -> dict[str, Any]:
     formatted_control_names = [
         name for config in controls for name in config.input_keys
@@ -275,7 +275,7 @@ def _parse_optimization(
 
 
 def everest2ropt(
-    controls: list[ExtParamConfig],
+    controls: list[EverestControl],
     objective_functions: EverestObjectivesConfig,
     input_constraints: list[InputConstraintConfig],
     output_constraints: EverestConstraintsConfig | None,

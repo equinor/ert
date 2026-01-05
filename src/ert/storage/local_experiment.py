@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field, TypeAdapter
 from surfio import IrapSurface
 
 from ert.config import (
-    ExtParamConfig,
+    EverestControl,
     GenKwConfig,
     KnownResponseTypes,
     ParameterConfig,
@@ -66,7 +66,7 @@ _responses_adapter = TypeAdapter(  # type: ignore
 
 _parameters_adapter = TypeAdapter(  # type: ignore
     Annotated[
-        (GenKwConfig | SurfaceConfig | FieldConfig | ExtParamConfig),
+        (GenKwConfig | SurfaceConfig | FieldConfig | EverestControl),
         Field(discriminator="type"),
     ]
 )

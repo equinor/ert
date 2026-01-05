@@ -12,7 +12,7 @@ from typing import (
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
 from ropt.enums import PerturbationType, VariableType
 
-from ert.config import ExtParamConfig, SamplerConfig
+from ert.config import EverestControl, SamplerConfig
 
 from .control_variable_config import (
     ControlVariableConfig,
@@ -312,7 +312,7 @@ class ControlConfig(BaseModel):
         extra="forbid",
     )
 
-    def to_ert_parameter_config(self) -> ExtParamConfig:
+    def to_ert_parameter_config(self) -> EverestControl:
         types = []
         initial_guesses = []
         control_types = []
@@ -362,7 +362,7 @@ class ControlConfig(BaseModel):
                 for initial_guess in variable.initial_guess:
                     _parse_variable(variable, initial_guess=initial_guess)
 
-        return ExtParamConfig(
+        return EverestControl(
             name=self.name,
             input_keys=self.formatted_control_names,
             input_keys_dotdash=self.formatted_control_names_dotdash,

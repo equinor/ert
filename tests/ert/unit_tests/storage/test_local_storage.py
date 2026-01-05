@@ -27,7 +27,7 @@ from resfo_utilities.testing import summaries, summary_variables
 from ert.config import (
     DesignMatrix,
     ErtConfig,
-    ExtParamConfig,
+    EverestControl,
     Field,
     GenDataConfig,
     GenKwConfig,
@@ -951,7 +951,7 @@ def test_that_all_parameters_and_gen_data_consolidation_works(
         experiment = storage.create_experiment(
             responses=[GenDataConfig(keys=["R1", "R2"])],
             parameters=[
-                ExtParamConfig(
+                EverestControl(
                     name="point",
                     input_keys=["P1", "P2"],
                     types=["generic_control", "generic_control"],
