@@ -4,7 +4,6 @@ from argparse import ArgumentParser
 
 import pytest
 from py import path
-from pytest import fixture
 
 from ert.__main__ import ert_parser
 from ert.cli.main import run_cli
@@ -40,7 +39,7 @@ cases_to_run = [
 ]
 
 
-@fixture(
+@pytest.fixture(
     scope="session",
     params=[
         pytest.param(

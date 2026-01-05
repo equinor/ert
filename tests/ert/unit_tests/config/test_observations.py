@@ -8,7 +8,6 @@ import polars as pl
 import pytest
 from hypothesis import assume, given
 from polars.testing import assert_frame_equal
-from pytest import MonkeyPatch, TempPathFactory
 from resdata.summary import Summary
 from resfo_utilities.testing import summaries
 
@@ -198,9 +197,9 @@ def test_that_using_summary_observations_without_eclbase_shows_user_error():
     data=st.data(),
 )
 def test_that_summary_observations_can_use_restart_for_index_if_refcase_is_given(
-    tmp_path_factory: TempPathFactory, summary, value, data
+    tmp_path_factory: pytest.TempPathFactory, summary, value, data
 ):
-    with MonkeyPatch.context() as patch:
+    with pytest.MonkeyPatch.context() as patch:
         patch.chdir(tmp_path_factory.mktemp("history_observation_values_are_fetched"))
         smspec, unsmry = summary
         restart = data.draw(st.integers(min_value=1, max_value=len(unsmry.steps)))
@@ -395,9 +394,9 @@ def test_that_the_date_keyword_sets_the_general_index_by_looking_up_time_map():
 @given(summary=summaries(), data=st.data())
 @pytest.mark.integration_test
 def test_that_the_date_keyword_sets_the_report_step_by_looking_up_refcase(
-    tmp_path_factory: TempPathFactory, summary, data
+    tmp_path_factory: pytest.TempPathFactory, summary, data
 ):
-    with MonkeyPatch.context() as patch:
+    with pytest.MonkeyPatch.context() as patch:
         patch.chdir(tmp_path_factory.mktemp("history_observation_values_are_fetched"))
         smspec, unsmry = summary
         smspec.to_file("ECLIPSE_CASE.SMSPEC")
@@ -1070,9 +1069,9 @@ def test_that_out_of_bounds_segments_are_truncated(tmpdir, start, stop, message)
     summary=summaries(summary_keys=st.just(["FOPR", "FOPRH"])),
 )
 def test_that_history_observations_values_are_fetched_from_refcase(
-    tmp_path_factory: TempPathFactory, summary, with_ext, std
+    tmp_path_factory: pytest.TempPathFactory, summary, with_ext, std
 ):
-    with MonkeyPatch.context() as patch:
+    with pytest.MonkeyPatch.context() as patch:
         patch.chdir(tmp_path_factory.mktemp("history_observation_values_are_fetched"))
         smspec, unsmry = summary
         smspec.to_file("ECLIPSE_CASE.SMSPEC")
