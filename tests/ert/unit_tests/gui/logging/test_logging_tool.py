@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.parametrize(
-    "log_func, expected",
+    ("log_func", "expected"),
     [
         (logger.debug, ""),
         (logger.info, "INFO     Writing some text"),

@@ -7,7 +7,7 @@ from ert.ensemble_evaluator._ensemble import _EnsembleStateTracker
 
 
 @pytest.mark.parametrize(
-    "transition, allowed",
+    ("transition", "allowed"),
     [
         ([state.ENSEMBLE_STATE_STARTED, state.ENSEMBLE_STATE_STOPPED], True),
         ([state.ENSEMBLE_STATE_STARTED, state.ENSEMBLE_STATE_FAILED], True),

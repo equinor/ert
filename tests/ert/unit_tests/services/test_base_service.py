@@ -248,7 +248,9 @@ def test_singleton_connect_early(server_script, tmp_path):
     assert not (tmp_path / "dummy_server.json").exists()
 
 
-@pytest.mark.parametrize("script,should_exist", [("storage", True), ("foobar", False)])
+@pytest.mark.parametrize(
+    ("script", "should_exist"), [("storage", True), ("foobar", False)]
+)
 def test_local_exec_args(script, should_exist):
     exec_args = local_exec_args(script)
     assert len(exec_args) == 2

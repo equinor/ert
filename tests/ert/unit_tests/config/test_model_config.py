@@ -28,7 +28,7 @@ def test_suggested_deprecated_model_config_run_path():
 
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.parametrize(
-    "extra_config, expected",
+    ("extra_config", "expected"),
     [
         pytest.param(
             {"ECLBASE": "ECLBASE%d", "JOBNAME": "JOBNAME%d"},
@@ -58,7 +58,7 @@ def test_model_config_jobname_and_eclbase(extra_config, expected):
 
 
 @pytest.mark.parametrize(
-    "total_space, used_space, to_warn, expected_warning",
+    ("total_space", "used_space", "to_warn", "expected_warning"),
     [
         pytest.param(
             10 * 1000**4,  # 10 TB

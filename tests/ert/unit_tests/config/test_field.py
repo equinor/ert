@@ -182,7 +182,7 @@ def test_file_format_is_gotten_from_the_output_file(parse_field_line, ext):
 
 
 @pytest.mark.parametrize(
-    "ext, expected",
+    ("ext", "expected"),
     [
         (
             "",
@@ -312,7 +312,7 @@ def test_that_read_field_raises_grid_field_mismatch_error_given_different_sized_
 
 
 @pytest.mark.parametrize(
-    "origin, increment, rotation, flip",
+    ("origin", "increment", "rotation", "flip"),
     [
         ((1000.0, 2000.0, 1000.0), (100.0, 150.0, 10.0), 90, 1),
         ((1000.0, 2000.0, 1000.0), (100.0, 150.0, 10.0), 45, -1),
@@ -446,7 +446,7 @@ def field_with_ertbox_params():
 
 
 @pytest.mark.parametrize(
-    "xpos, ypos, main_range, perp_range, anisotropy_angle",
+    ("xpos", "ypos", "main_range", "perp_range", "anisotropy_angle"),
     [
         (
             [1050.0, 1250.0, 1250.0, 1250.0, 1000.0, 1250.0, 1250.0],  # xpos

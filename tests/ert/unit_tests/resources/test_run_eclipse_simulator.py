@@ -333,7 +333,7 @@ def test_mpi_is_working_without_run_reservoirsimulator_knowing_it(source_root):
 
 
 @pytest.mark.parametrize(
-    "paths_to_touch, basepath, expectation",
+    ("paths_to_touch", "basepath", "expectation"),
     [
         ([], "SPE1", None),
         (["SPE1.UNSMRY"], "SPE1", "SPE1.UNSMRY"),
@@ -824,7 +824,7 @@ _DUMMY_SLAVE_STARTED_MESSAGE = """\
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.requires_eclipse
 @pytest.mark.parametrize(
-    "prt_error, expected_error_list",
+    ("prt_error", "expected_error_list"),
     [
         (
             _DUMMY_ERROR_MESSAGE_E100,

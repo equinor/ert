@@ -152,7 +152,7 @@ def test_that_unknown_jobs_gives_error():
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
-    "config, expectation",
+    ("config", "expectation"),
     [
         (
             "WORKFLOW",
@@ -172,7 +172,7 @@ def test_that_unknown_jobs_gives_error():
         ),
     ],
 )
-@pytest.mark.parametrize("min_args, max_args", [(1, 2), (None, None)])
+@pytest.mark.parametrize(("min_args", "max_args"), [(1, 2), (None, None)])
 def test_args_validation(config, expectation, min_args, max_args):
     Path("workflow").write_text(config, encoding="utf-8")
     if min_args is None and max_args is None:

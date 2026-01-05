@@ -96,7 +96,7 @@ def test_combined_wells_everest_to_ert(tmp_path, monkeypatch, config_yaml):
 
 
 @pytest.mark.parametrize(
-    "source, target, symlink, cmd",
+    ("source", "target", "symlink", "cmd"),
     [
         ("source_file", "target_file", True, "symlink"),
         ("source_file", "target_file", False, "copy_file"),

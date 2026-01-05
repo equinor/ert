@@ -73,7 +73,7 @@ from .conftest import (
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
-    "config, expected_message_types",
+    ("config", "expected_message_types"),
     [
         (
             (
@@ -793,7 +793,7 @@ def test_that_the_help_menu_contains_the_about_dialog(qtbot):
 
 
 @pytest.mark.parametrize(
-    "exp_type, panel_name",
+    ("exp_type", "panel_name"),
     [
         (EnsembleExperiment, "Ensemble_experiment_panel"),
         (EnsembleSmoother, "ensemble_smoother_panel"),

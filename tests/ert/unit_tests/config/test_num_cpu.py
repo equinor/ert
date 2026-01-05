@@ -110,7 +110,7 @@ def test_that_num_cpu_from_data_file_is_used_if_config_num_cpu_is_not_set(
 
 
 @pytest.mark.parametrize(
-    "num_cpu_value, error_msg",
+    ("num_cpu_value", "error_msg"),
     [
         (-1, "must have a positive integer value as argument"),
         (0, "must have a positive integer value as argument"),

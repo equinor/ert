@@ -87,7 +87,7 @@ def test_runner_cannot_find_mixed_case_decks():
 
 @pytest.mark.usefixtures("mocked_eclrun")
 @pytest.mark.parametrize(
-    "data_path, expected",
+    ("data_path", "expected"),
     [
         ("DECK.DATA", "DECK"),
         ("foo/DECK.DATA", "DECK"),

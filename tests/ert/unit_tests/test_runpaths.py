@@ -4,7 +4,7 @@ from ert.runpaths import Runpaths
 
 
 @pytest.mark.parametrize(
-    "job_format, runpath_format, expected_contents",
+    ("job_format", "runpath_format", "expected_contents"),
     [
         (
             "job<IENS>",

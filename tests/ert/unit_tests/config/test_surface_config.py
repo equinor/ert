@@ -163,7 +163,7 @@ def test_surface_without_base_surface_gives_config_error():
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
-    "forward_init_option, expected_forward_init",
+    ("forward_init_option", "expected_forward_init"),
     [({"FORWARD_INIT": "False"}, False), ({"FORWARD_INIT": "True"}, True), ({}, False)],
 )
 def test_config_file_line_sets_the_corresponding_properties(
@@ -224,7 +224,7 @@ def test_invalid_surface_files_gives_config_error():
 
 
 @pytest.mark.parametrize(
-    "shape,expected_nodes,expected_links",
+    ("shape", "expected_nodes", "expected_links"),
     [
         ((0, 0), [], []),
         ((1, 0), [], []),
@@ -375,7 +375,7 @@ def surface_for_dl():
 
 
 @pytest.mark.parametrize(
-    "xpos, ypos, main_range, perp_range, anisotropy_angle",
+    ("xpos", "ypos", "main_range", "perp_range", "anisotropy_angle"),
     [
         (
             [1050.0, 1250.0, 1250.0, 1250.0, 1000.0, 1500.0, 1000.0],  # xpos

@@ -53,7 +53,7 @@ def test_extra_key(min_config):
 
 
 @pytest.mark.parametrize(
-    "extra_config, expected",
+    ("extra_config", "expected"),
     [
         ({"objective_functions": [{}]}, "Field required"),
         (
@@ -169,7 +169,7 @@ def test_invalid_subconfig(extra_config, min_config, expected):
 
 
 @pytest.mark.parametrize(
-    "link, source, target",
+    ("link", "source", "target"),
     [
         (True, "test_dir", "../test"),
         (False, "test_dir", "../test"),
@@ -204,7 +204,7 @@ def test_empty_list(min_config):
 
 
 @pytest.mark.parametrize(
-    "value, valid",
+    ("value", "valid"),
     [
         (True, True),
         (False, True),
@@ -324,7 +324,7 @@ def test_that_control_variable_name_contains_dot_is_linted(min_config):
 
 
 @pytest.mark.parametrize(
-    "target, expected",
+    ("target", "expected"),
     [
         (
             "r{{key1 }}/model/r{{key2}}.txt",

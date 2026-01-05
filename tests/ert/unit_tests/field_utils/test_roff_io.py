@@ -65,7 +65,7 @@ def test_that_outputting_masked_results_in_rms_undefined(dtype):
     name=st.text(ascii_letters, min_size=1),
 )
 @pytest.mark.parametrize(
-    "is_binary, buffer_constructor", [(True, BytesIO), (False, StringIO)]
+    ("is_binary", "buffer_constructor"), [(True, BytesIO), (False, StringIO)]
 )
 def test_that_export_and_import_are_inverses(
     is_binary, buffer_constructor, array, name
@@ -210,7 +210,9 @@ def test_that_undefined_values_are_masked():
     assert values[0, 0, 0] is np.ma.masked
 
 
-@pytest.mark.parametrize("name, expected", [("parameter1", 1.0), ("parameter2", 2.0)])
+@pytest.mark.parametrize(
+    ("name", "expected"), [("parameter1", 1.0), ("parameter2", 2.0)]
+)
 def test_that_correct_named_parameter_is_fetched(name, expected):
     content = dedent(
         """roff-asc
@@ -240,7 +242,9 @@ def test_that_correct_named_parameter_is_fetched(name, expected):
     assert values[0, 0, 0] == expected
 
 
-@pytest.mark.parametrize("name, expected", [("parameter1", 1.0), ("parameter2", 2.0)])
+@pytest.mark.parametrize(
+    ("name", "expected"), [("parameter1", 1.0), ("parameter2", 2.0)]
+)
 def test_that_correct_named_parameter_is_fetched_when_name_comes_last(name, expected):
     content = dedent(
         """roff-asc

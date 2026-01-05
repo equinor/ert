@@ -278,7 +278,7 @@ def test_makedirs(monkeypatch, tmp_path):
 
 
 @pytest.mark.parametrize(
-    "snapshots, expected_total_seconds",
+    ("snapshots", "expected_total_seconds"),
     [
         ([{}], 0.0),
         ([{"1": 1.1}], 1.1),
@@ -299,7 +299,7 @@ def test_processtree_timer(
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
-    "command, exit_code, expected_error_message, target_file_name",
+    ("command", "exit_code", "expected_error_message", "target_file_name"),
     [
         pytest.param(
             "touch some_file; exit 0",

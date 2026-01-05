@@ -134,7 +134,7 @@ def test_that_a_deprecation_message_is_shown_when_the_update_settings_keyword_is
 
 @pytest.mark.parametrize("definer", ["DEFINE", "DATA_KW"])
 @pytest.mark.parametrize(
-    "definition, expected",
+    ("definition", "expected"),
     [
         ("<KEY1> x1", None),
         (

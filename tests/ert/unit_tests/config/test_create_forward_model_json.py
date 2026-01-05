@@ -416,7 +416,7 @@ def test_that_env_vars_with_surrounded_by_brackets_are_ommitted_from_Jobs_json(
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
-    "job, forward_model, expected_args",
+    ("job", "forward_model", "expected_args"),
     [
         pytest.param(
             dedent(
@@ -677,7 +677,7 @@ def test_that_private_over_global_args_does_not_give_logging_message_for_argpass
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
-    "job, forward_model, expected_args",
+    ("job", "forward_model", "expected_args"),
     [
         pytest.param(
             dedent(

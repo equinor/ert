@@ -41,7 +41,7 @@ def test_optimization_config_options_unknown_options_error():
 
 
 @pytest.mark.parametrize(
-    "backend, algorithm, expected",
+    ("backend", "algorithm", "expected"),
     [
         (None, None, "optpp_q_newton"),
         ("dakota", None, "dakota/optpp_q_newton"),
@@ -64,7 +64,7 @@ def test_optimization_config_backend_and_algorithm(backend, algorithm, expected)
 
 
 @pytest.mark.parametrize(
-    "backend, algorithm, expected",
+    ("backend", "algorithm", "expected"),
     [
         (None, "foo", "Optimizer algorithm 'foo' not found"),
         (None, "default", "Cannot specify 'default' method without a plugin name"),

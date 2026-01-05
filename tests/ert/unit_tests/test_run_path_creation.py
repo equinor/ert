@@ -291,7 +291,7 @@ def test_that_substitutions_created_with_the_define_keyword_is_substituted_in_te
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
-    "key, expected",
+    ("key", "expected"),
     [
         ("<DATE>", datetime.date(datetime.today()).isoformat()),
         ("<NUM_CPU>", "1"),
@@ -325,7 +325,7 @@ def test_that_pre_defines_are_substituted_templates(key, expected, make_run_path
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
-    "ecl_base, expected_file",
+    ("ecl_base", "expected_file"),
     [
         ("MY_ECL_BASE", "MY_ECL_BASE.DATA"),
         ("relative/path/MY_ECL_BASE", "relative/path/MY_ECL_BASE.DATA"),
@@ -357,7 +357,7 @@ def test_that_using_eclbase_as_a_runtemplate_target_produces_data_file_in_runpat
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
-    "key, expected",
+    ("key", "expected"),
     [
         ("<DATE>", datetime.date(datetime.today()).isoformat()),
         ("<NUM_CPU>", "1"),
@@ -490,7 +490,7 @@ def test_that_sampling_prior_makes_initialized_fs(storage):
 
 
 @pytest.mark.parametrize(
-    "eclipse_data, expected_cpus",
+    ("eclipse_data", "expected_cpus"),
     [
         ("PARALLEL 4 /", 4),
         pytest.param(
@@ -653,7 +653,7 @@ def test_assert_export(make_run_path):
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
-    "append,numcpu",
+    ("append", "numcpu"),
     [
         ("", 1),  # Default is 1
         ("NUM_CPU 2\n", 2),
@@ -684,7 +684,7 @@ def test_num_cpu_subst(append, numcpu, make_run_path):
     "value placeholders.*:ert.config.ConfigWarning"
 )
 @pytest.mark.parametrize(
-    "iens_placeholder, iter_placeholder", [("%d", "%d"), ("<IENS>", "<ITER>")]
+    ("iens_placeholder", "iter_placeholder"), [("%d", "%d"), ("<IENS>", "<ITER>")]
 )
 def test_that_iens_and_iter_in_runpaths_are_substituted_with_corresponding_indices(
     tmpdir, iens_placeholder, iter_placeholder

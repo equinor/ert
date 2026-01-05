@@ -139,7 +139,7 @@ def test_that_workflow_run_modes_can_be_selected(run_mode):
 
 
 @pytest.mark.parametrize(
-    "config_content, expected",
+    ("config_content", "expected"),
     [
         pytest.param("--Comment", "", id="Line comment"),
         pytest.param(" --Comment", "", id="Line comment with whitespace"),
@@ -491,7 +491,7 @@ def test_default_ens_path():
 
 
 @pytest.mark.parametrize(
-    "max_running_value, expected_error",
+    ("max_running_value", "expected_error"),
     [
         (100, None),
         (-1, "Input should be greater than or equal to 0"),
@@ -1252,7 +1252,7 @@ def test_that_included_files_uses_paths_relative_to_itself():
     assert ert_config.forward_model_steps[0].name == "FM"
 
 
-@pytest.mark.parametrize("val, expected", [("TrUe", True), ("FaLsE", False)])
+@pytest.mark.parametrize(("val", "expected"), [("TrUe", True), ("FaLsE", False)])
 def test_that_boolean_values_can_be_any_case(val, expected):
     ert_config = ErtConfig.from_file_contents(
         dedent(
@@ -1517,7 +1517,7 @@ def test_validate_no_logs_when_overwriting_with_same_value(caplog):
 
 
 @pytest.mark.parametrize(
-    "obsolete_analysis_keyword,error_msg",
+    ("obsolete_analysis_keyword", "error_msg"),
     [
         ("USE_EE", "Keyword USE_EE has been replaced"),
         ("USE_GE", "Keyword USE_GE has been replaced"),
@@ -2607,7 +2607,7 @@ def test_ert_config_construct_refcase():
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
-    "existing_suffix, expected_suffix",
+    ("existing_suffix", "expected_suffix"),
     [
         pytest.param(
             "UNSMRY",

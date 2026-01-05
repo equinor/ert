@@ -735,7 +735,7 @@ def test_write_transaction_overwrites(tmp_path):
 
 
 @pytest.mark.parametrize(
-    "perturb_observations, perturb_responses",
+    ("perturb_observations", "perturb_responses"),
     [
         pytest.param(
             False,
@@ -933,7 +933,7 @@ _ensemble_realization_infos = [
 
 
 @pytest.mark.parametrize(
-    "ensemble_realization_infos, failed_realizations_per_batch",
+    ("ensemble_realization_infos", "failed_realizations_per_batch"),
     [
         (_ensemble_realization_infos, {}),
         (_ensemble_realization_infos, {0: {0}, 1: {3}, 2: {0, 1, 4}}),
@@ -1038,7 +1038,7 @@ def test_that_all_parameters_and_gen_data_consolidation_works(
 
 
 @pytest.mark.parametrize(
-    "reals, expect_error",
+    ("reals", "expect_error"),
     [
         pytest.param(
             list(range(10)),

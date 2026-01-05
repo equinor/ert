@@ -6,7 +6,7 @@ from ert.gui.ertwidgets import Suggestor
 
 
 @pytest.mark.parametrize(
-    "errors, expected_num",
+    ("errors", "expected_num"),
     [
         ([ErrorInfo("msg_1")], 1),
         ([ErrorInfo("msg_1"), ErrorInfo("msg_2")], 2),

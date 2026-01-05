@@ -114,7 +114,7 @@ def test_detached_mode_config_base(min_config, monkeypatch, tmp_path):
 
 
 @pytest.mark.parametrize(
-    "queue_system, cores",
+    ("queue_system", "cores"),
     [
         ("lsf", 2),
         ("slurm", 4),
@@ -143,7 +143,7 @@ def test_detached_mode_config_error():
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
-    "config_kwargs, expected_result",
+    ("config_kwargs", "expected_result"),
     [
         ({"simulator": {"queue_system": {"name": "lsf"}}}, "lsf"),
         (
@@ -171,7 +171,7 @@ def test_generate_queue_options_no_config():
 
 
 @pytest.mark.parametrize(
-    "queue_class, expected_queue_kwargs",
+    ("queue_class", "expected_queue_kwargs"),
     [
         (
             SlurmQueueOptions,
@@ -334,7 +334,7 @@ def test_get_that_get_server_info_from_conn_info_converts_values():
 
 
 @pytest.mark.parametrize(
-    "conn_info, expected_exception, expected_message",
+    ("conn_info", "expected_exception", "expected_message"),
     [
         (
             ErtClientConnectionInfo(

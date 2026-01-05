@@ -376,7 +376,7 @@ def test_that_everest_fails_when_runpath_is_a_file():
 
 
 @pytest.mark.parametrize(
-    "server_queue_system, simulator_queue_system",
+    ("server_queue_system", "simulator_queue_system"),
     [
         (QueueSystem.LSF, QueueSystem.LSF),
         (QueueSystem.SLURM, QueueSystem.LSF),

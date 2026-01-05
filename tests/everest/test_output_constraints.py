@@ -42,7 +42,7 @@ def test_constraints_init(tmp_path):
 
 
 @pytest.mark.parametrize(
-    "config, error",
+    ("config", "error"),
     [
         (
             [

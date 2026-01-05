@@ -74,7 +74,7 @@ def test_gen_obs_and_summary(create_measured_data):
 
 
 @pytest.mark.parametrize(
-    "obs_key, expected_msg",
+    ("obs_key", "expected_msg"),
     [
         ("FOPR", r"Observations: FOPR not in experiment"),
         ("WPR_DIFF_1", "Observations: WPR_DIFF_1 not in experiment"),

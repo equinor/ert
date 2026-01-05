@@ -6,7 +6,7 @@ from tests.everest.utils import everest_config_with_defaults
 
 
 @pytest.mark.parametrize(
-    "config, expectation",
+    ("config", "expectation"),
     [
         (
             [{"name": "c1", "weight": 1.0}, {"name": "c2"}],

@@ -141,7 +141,7 @@ def test_that_when_history_source_is_simulated_the_summary_vector_is_used():
 
 
 @pytest.mark.parametrize(
-    "datestring, errors",
+    ("datestring", "errors"),
     [
         pytest.param("02.01.2020", True),
         pytest.param("02.1.2020", True),
@@ -872,7 +872,7 @@ def run_sim(start_date, keys=None, values=None, days=None):
 
 
 @pytest.mark.parametrize(
-    "time_map_statement, time_map_creator",
+    ("time_map_statement", "time_map_creator"),
     [
         ({"REFCASE": "ECLIPSE_CASE"}, lambda: run_sim(datetime(2014, 9, 10))),
         (
@@ -882,7 +882,7 @@ def run_sim(start_date, keys=None, values=None, days=None):
     ],
 )
 @pytest.mark.parametrize(
-    "time_unit, time_delta, expectation",
+    ("time_unit", "time_delta", "expectation"),
     [
         pytest.param(
             "DAYS", 1.000347222, does_not_raise(), id="30 seconds offset from 1 day"
@@ -995,7 +995,7 @@ def test_that_having_observations_on_starting_date_errors(tmpdir):
     ":ert.config.ConfigWarning"
 )
 @pytest.mark.parametrize(
-    "start, stop, message",
+    ("start", "stop", "message"),
     [
         (
             100,

@@ -25,7 +25,7 @@ def storage(tmp_path):
 
 
 @pytest.mark.parametrize(
-    "config_str, expect_forward_init, expect_num_loaded, error",
+    ("config_str", "expect_forward_init", "expect_num_loaded", "error"),
     [
         (
             (
@@ -143,7 +143,7 @@ def test_surface_param(
 
 
 @pytest.mark.parametrize(
-    "check_random_seed, expectation",
+    ("check_random_seed", "expectation"),
     [
         pytest.param(
             True,
@@ -242,7 +242,7 @@ def test_that_first_three_parameters_sampled_snapshot(tmpdir, storage):
     [4, 5, 10],
 )
 @pytest.mark.parametrize(
-    "template, scalars",
+    ("template", "scalars"),
     [
         (
             "MY_KEYWORD <MY_KEYWORD>\nMY_SECOND_KEYWORD <MY_SECOND_KEYWORD>",
@@ -312,7 +312,7 @@ def test_that_sampling_is_fixed_from_name(
 
 
 @pytest.mark.parametrize(
-    "mask, expected",
+    ("mask", "expected"),
     [
         pytest.param(
             [True] * 5,
@@ -375,7 +375,7 @@ def test_that_sub_sample_maintains_order(tmpdir, storage, mask, expected):
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
-    "config_str, expected",
+    ("config_str", "expected"),
     [
         (
             "GEN_KW KW_NAME prior.txt\nRANDOM_SEED 1234",
@@ -411,7 +411,7 @@ def write_file(fname, contents):
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
-    "config_str, expected, extra_files, expectation",
+    ("config_str", "expected", "extra_files", "expectation"),
     [
         (
             "GEN_KW KW_NAME template.txt kw.txt prior.txt\nRANDOM_SEED 1234",
@@ -450,7 +450,7 @@ def test_gen_kw(storage, tmpdir, config_str, expected, extra_files, expectation)
 
 
 @pytest.mark.parametrize(
-    "active_reals, expectation",
+    ("active_reals", "expectation"),
     [
         (
             [False, False],
@@ -486,7 +486,7 @@ def test_gen_kw_missing_in_storage(storage, tmpdir, active_reals, expectation):
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
-    "config_str, expected, extra_files",
+    ("config_str", "expected", "extra_files"),
     [
         pytest.param(
             "GEN_KW KW_NAME template.txt kw.txt prior.txt",
@@ -542,7 +542,7 @@ def test_gen_kw_templating(
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
-    "relpath, err_msg",
+    ("relpath", "err_msg"),
     [
         ("somepath/", ""),
         # This test was added to show current behaviour for Ert.

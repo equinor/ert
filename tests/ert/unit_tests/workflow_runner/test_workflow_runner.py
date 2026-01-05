@@ -97,7 +97,7 @@ def test_run_internal_script():
 
 
 @pytest.mark.parametrize(
-    "config, expected_result",
+    ("config", "expected_result"),
     [
         (["INTERNAL FALSE"], "FALSE has no effect"),
         (["SCRIPT script.py"], "SCRIPT has no effect"),

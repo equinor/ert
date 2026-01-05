@@ -64,8 +64,12 @@ def check_expression(original, path_expression, expected: list[str], msg_start):
 @pytest.mark.usefixtures("copy_poly_case")
 @pytest.mark.parametrize(
     (
-        "extra_config, extra_poly_eval, cmd_line_arguments,"
-        "num_successful,num_iters,assert_present_in_snapshot"
+        "extra_config",
+        "extra_poly_eval",
+        "cmd_line_arguments",
+        "num_successful",
+        "num_iters",
+        "assert_present_in_snapshot",
     ),
     [
         pytest.param(
@@ -236,7 +240,7 @@ def test_tracking(
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case")
 @pytest.mark.parametrize(
-    ("mode, cmd_line_arguments"),
+    ("mode", "cmd_line_arguments"),
     [
         pytest.param(
             TEST_RUN_MODE,
@@ -306,7 +310,7 @@ def test_setting_env_context_during_run(
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("copy_poly_case")
 @pytest.mark.parametrize(
-    ("mode, cmd_line_arguments"),
+    ("mode", "cmd_line_arguments"),
     [
         pytest.param(
             ENSEMBLE_SMOOTHER_MODE,

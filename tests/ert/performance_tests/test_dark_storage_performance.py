@@ -246,7 +246,7 @@ def api_and_snake_oil_storage(snake_oil_case_storage, monkeypatch):
 
 @pytest.mark.memory_test
 @pytest.mark.parametrize(
-    "num_reals, num_dates, num_keys, max_memory_mb",
+    ("num_reals", "num_dates", "num_keys", "max_memory_mb"),
     [  # Tested 24.11.22 on macbook pro M1 max
         # (xr = tested on previous ert using xarray to store responses)
         (1, 100, 100, 2000),  # 790MiB local, xr: 791, MiB

@@ -4,7 +4,7 @@ from ert.validation import ActiveRange
 
 
 @pytest.mark.parametrize(
-    "rangestring, length, expected_mask",
+    ("rangestring", "length", "expected_mask"),
     [
         ("", 0, []),
         ("", 1, [False]),
@@ -29,7 +29,7 @@ def test_rangestring_to_mask(rangestring, length, expected_mask):
 
 
 @pytest.mark.parametrize(
-    "rangestring, length",
+    ("rangestring", "length"),
     [
         ("a", 0),
         ("*", 0),
@@ -51,7 +51,7 @@ def test_rangestring_to_mask_errors(rangestring, length):
 
 
 @pytest.mark.parametrize(
-    "mask, rangestring, length, expected_mask, expected_rangestring",
+    ("mask", "rangestring", "length", "expected_mask", "expected_rangestring"),
     [
         ([True, False], None, None, [True, False], "0"),
         ([True, False], None, 2, [True, False], "0"),
@@ -67,7 +67,7 @@ def test_activerange(mask, rangestring, length, expected_mask, expected_rangestr
 
 
 @pytest.mark.parametrize(
-    "mask, rangestring, length",
+    ("mask", "rangestring", "length"),
     [
         (None, None, None),
         (None, "0-1", None),

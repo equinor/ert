@@ -85,7 +85,7 @@ def test_general_queue_options_properties_pass_through_create(
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
-    "config, config_class",
+    ("config", "config_class"),
     [
         (
             {
@@ -222,7 +222,7 @@ def test_cores_per_node_is_ignored_num_cpu_is_set(
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
-    "config, config_class",
+    ("config", "config_class"),
     [
         (
             {
