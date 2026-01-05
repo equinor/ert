@@ -41,7 +41,7 @@ def capturing_sbatch(monkeypatch, tmp_path):
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
-    "sbatch_script, scontrol_script, sacct_script, exit_code",
+    ("sbatch_script", "scontrol_script", "sacct_script", "exit_code"),
     [
         pytest.param("echo 0", 'echo "JobState=COMPLETED ExitCode=0:0"', "false", 0),
         pytest.param("echo 0", "false", 'echo "COMPLETED|0:0"', 0),
@@ -198,7 +198,7 @@ async def test_driver_will_ignore_max_runtime_less_than_1_seconds(float_seconds)
 
 
 @pytest.mark.parametrize(
-    "seconds, expected_format",
+    ("seconds", "expected_format"),
     [
         (1, "0:00:01"),
         (1.9, "0:00:01"),
@@ -213,7 +213,7 @@ async def test_max_runtime_formatting_samples(seconds, expected_format):
 
 
 @pytest.mark.parametrize(
-    "sbatch_script, expectation",
+    ("sbatch_script", "expectation"),
     [
         pytest.param(
             "echo '444'",
@@ -439,7 +439,7 @@ async def test_kill_before_submit_is_finished(
     )
 
 
-@pytest.mark.parametrize("cmd, exit_code", [("true", 0), ("false", 1)])
+@pytest.mark.parametrize(("cmd", "exit_code"), [("true", 0), ("false", 1)])
 async def test_slurm_uses_sacct(
     monkeypatch, tmp_path, caplog, cmd, exit_code, pytestconfig
 ):

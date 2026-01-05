@@ -9,7 +9,7 @@ from tests.ert.conftest import _create_design_matrix
 
 
 @pytest.mark.parametrize(
-    "design_sheet_pd, default_sheet_pd, error_msg",
+    ("design_sheet_pd", "default_sheet_pd", "error_msg"),
     [
         pytest.param(
             pl.DataFrame(
@@ -117,7 +117,7 @@ def test_merge_multiple_occurrences(
 
 
 @pytest.mark.parametrize(
-    "parameters, priority, num_configs, input_source, group_name",
+    ("parameters", "priority", "num_configs", "input_source", "group_name"),
     [
         pytest.param(
             ["a", "b"],
@@ -174,7 +174,13 @@ def test_merge_with_existing_parameters_with_custom_priorities(
 
 
 @pytest.mark.parametrize(
-    "parameters, num_configs, priority_source, res_input_source, res_group_name,",
+    (
+        "parameters",
+        "num_configs",
+        "priority_source",
+        "res_input_source",
+        "res_group_name",
+    ),
     [
         pytest.param(
             ["a", "b"],
@@ -288,7 +294,7 @@ def test_reading_design_matrix(tmp_path):
 
 
 @pytest.mark.parametrize(
-    "real_column, error_msg",
+    ("real_column", "error_msg"),
     [
         pytest.param(
             [0, 1, 1],
@@ -326,7 +332,7 @@ def test_reading_design_matrix_validate_reals(tmp_path, real_column, error_msg):
 
 
 @pytest.mark.parametrize(
-    "column_names, error_msg",
+    ("column_names", "error_msg"),
     [
         pytest.param(
             ["a", "b", "a"],
@@ -378,7 +384,7 @@ def test_reading_design_matrix_validate_headers(tmp_path, column_names, error_ms
 
 
 @pytest.mark.parametrize(
-    "values, error_msg",
+    ("values", "error_msg"),
     [
         pytest.param(
             [0, None, 1],
@@ -416,7 +422,7 @@ def test_reading_design_matrix_validate_cells(tmp_path, values, error_msg):
 
 
 @pytest.mark.parametrize(
-    "data, error_msg",
+    ("data", "error_msg"),
     [
         pytest.param(
             [["one"], ["b"], ["d"]],

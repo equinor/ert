@@ -92,7 +92,7 @@ def capturing_bsub(monkeypatch, tmp_path):
 
 
 @pytest.mark.parametrize(
-    "bjobs_script, bhist_script, exit_code",
+    ("bjobs_script", "bhist_script", "exit_code"),
     [
         pytest.param("echo 129", "echo Exited with exit code 130", 129),
         pytest.param(
@@ -254,7 +254,7 @@ async def test_that_realization_memory_parameter_sets_bsub_rusage_option():
 
 
 @pytest.mark.parametrize(
-    "bsub_script, expectation",
+    ("bsub_script", "expectation"),
     [
         pytest.param(
             "echo 'Job <444> is submitted to default queue'",
@@ -325,8 +325,14 @@ async def test_that_when_bsub_has_exit_code_1_its_output_is_in_the_error_message
 
 @pytest.mark.timeout(10)
 @pytest.mark.parametrize(
-    "mocked_iens2jobid, realizations_to_kill, "
-    "bkill_returncode, bkill_stdout, bkill_stderr, expected_logged_error",
+    (
+        "mocked_iens2jobid",
+        "realizations_to_kill",
+        "bkill_returncode",
+        "bkill_stdout",
+        "bkill_stderr",
+        "expected_logged_error",
+    ),
     [
         pytest.param(
             {"1": "11"},
@@ -449,7 +455,7 @@ def test_parse_bjobs_gives_empty_result_on_random_input(some_text):
 
 
 @pytest.mark.parametrize(
-    "bjobs_output, expected",
+    ("bjobs_output", "expected"),
     [
         pytest.param(
             "1^RUN^-",
@@ -469,7 +475,7 @@ def test_parse_bjobs_happy_path(bjobs_output, expected):
 
 
 @pytest.mark.parametrize(
-    "bjobs_output, expected",
+    ("bjobs_output", "expected"),
     [
         pytest.param(
             "1^RUN^abc-comp01",
@@ -519,7 +525,7 @@ def test_parse_bjobs_invalid_state_is_logged(caplog):
 
 @pytest.mark.integration_test
 @pytest.mark.parametrize(
-    "bjobs_script, expectation",
+    ("bjobs_script", "expectation"),
     [
         pytest.param(
             "echo '1^DONE^-'; exit 0",
@@ -581,7 +587,7 @@ async def test_faulty_bjobs(monkeypatch, tmp_path, bjobs_script, expectation):
 
 
 @pytest.mark.parametrize(
-    ("exit_code, error_msg"),
+    ("exit_code", "error_msg"),
     [
         (FLAKY_SSH_RETURNCODE, ""),
         (199, "Not recognized"),
@@ -607,7 +613,7 @@ async def test_that_runtime_error_is_thrown_when_bsub_does_not_eventually_succee
 
 
 @pytest.mark.parametrize(
-    "exit_code, error_msg",
+    ("exit_code", "error_msg"),
     [
         # All these have been manually obtained on the command line by
         # perturbing the command arguments to bsub:
@@ -647,7 +653,7 @@ async def test_that_bsub_is_not_retried_for_unrecoverable_errors(
 
 
 @pytest.mark.parametrize(
-    ("exit_code, error_msg"),
+    ("exit_code", "error_msg"),
     [
         (FLAKY_SSH_RETURNCODE, ""),
         (FLAKY_SSH_RETURNCODE, "Request from non-LSF host rejected"),
@@ -678,7 +684,7 @@ async def test_that_when_bsub_only_fails_once_it_is_retried_and_succeeds(
 
 
 @pytest.mark.parametrize(
-    "resource_requirement, exclude_hosts, realization_memory, expected_string",
+    ("resource_requirement", "exclude_hosts", "realization_memory", "expected_string"),
     [
         pytest.param(None, None, None, "", id="None input"),
         pytest.param(None, None, 0, "", id="zero_realization_memory_is_None"),
@@ -810,7 +816,7 @@ def test_build_resource_requirement_string(
 
 
 @pytest.mark.parametrize(
-    "bhist_output, expected",
+    ("bhist_output", "expected"),
     [
         pytest.param(
             "Summary of time in seconds spent in various states:\n"
@@ -853,7 +859,7 @@ empty_states = _parse_jobs_dict({})
 
 
 @pytest.mark.parametrize(
-    "previous_bhist, bhist_output, expected_states",
+    ("previous_bhist", "bhist_output", "expected_states"),
     [
         pytest.param("", "", empty_states, id="no-input-output"),
         pytest.param("", "1 x x 3 x 5", empty_states, id="no-cache-no-output"),
@@ -913,7 +919,7 @@ async def test_poll_once_by_bhist(
 
 
 @pytest.mark.parametrize(
-    "required_cache_age, expected_states",
+    ("required_cache_age", "expected_states"),
     [
         pytest.param(10, empty_states, id="no_output_for_fresh_cache"),
         pytest.param(
@@ -966,7 +972,7 @@ async def test_kill_does_not_log_error_on_accepted_bkill_outputs(
 
 
 @pytest.mark.parametrize(
-    "time_submitted_modifier, expected_result",
+    ("time_submitted_modifier", "expected_result"),
     [
         pytest.param(
             -1.0,

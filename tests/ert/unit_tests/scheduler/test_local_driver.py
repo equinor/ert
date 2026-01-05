@@ -107,7 +107,7 @@ async def test_kill_unresponsive_process(monkeypatch, tmp_path):
 
 
 @pytest.mark.integration_test
-@pytest.mark.parametrize("cmd,returncode", [("true", 0), ("false", 1)])
+@pytest.mark.parametrize(("cmd", "returncode"), [("true", 0), ("false", 1)])
 async def test_kill_when_job_completed(cmd, returncode, use_tmpdir):
     driver = LocalDriver()
 

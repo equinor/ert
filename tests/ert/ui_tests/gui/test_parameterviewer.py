@@ -165,7 +165,7 @@ def test_that_collapse_expand_happens_when_button_clicked(viewer, qtbot):
 
 
 @pytest.mark.parametrize(
-    "filter_value,expected_update_values",
+    ("filter_value", "expected_update_values"),
     [
         ("Updatable", [True]),
         ("Non-updatable", [False]),

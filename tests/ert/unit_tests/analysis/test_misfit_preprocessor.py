@@ -15,7 +15,7 @@ def test_get_scaling_factor():
 
 
 @pytest.mark.parametrize(
-    "p, rho",
+    ("p", "rho"),
     [
         (4, 0.3),
         (10, 0.1),
@@ -175,7 +175,7 @@ def test_edge_cases_with_few_observations_return_default_values(nr_observations)
 
 
 @pytest.mark.parametrize(
-    "nr_obs_group_a, nr_obs_group_b",
+    ("nr_obs_group_a", "nr_obs_group_b"),
     [
         (3, 2),
         (5, 5),
@@ -260,7 +260,7 @@ def test_main_correctly_separates_distinct_correlation_groups(
 
 
 @pytest.mark.parametrize(
-    "nr_obs_group_a, nr_obs_group_b",
+    ("nr_obs_group_a", "nr_obs_group_b"),
     [
         (3, 2),
         (5, 5),

@@ -6,7 +6,7 @@ from ert.gui.summarypanel import SummaryPanel
 
 
 @pytest.mark.parametrize(
-    "strings, expected",
+    ("strings", "expected"),
     [
         ([], []),
         ([""], [("", 1)]),

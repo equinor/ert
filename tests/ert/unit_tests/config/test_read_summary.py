@@ -73,7 +73,7 @@ def test_that_reading_summaries_returns_the_contents_of_the_file(
 
 @pytest.mark.filterwarnings("ignore:SMSPEC did not contain num_keyword")
 @pytest.mark.parametrize(
-    "spec_contents, smry_contents, error_message",
+    ("spec_contents", "smry_contents", "error_message"),
     [
         (b"", b"", "Keyword startdat missing"),
         (b"1", b"1", "Failed to read summary file"),

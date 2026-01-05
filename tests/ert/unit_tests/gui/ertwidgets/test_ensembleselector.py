@@ -110,7 +110,7 @@ def test_ensembles_are_sorted_failed_first_then_by_start_time(storage):
 
 
 @pytest.mark.parametrize(
-    "flag, expected",
+    ("flag", "expected"),
     [
         (True, ["my-experiment : child"]),
         (False, ["my-experiment : child", "my-experiment : parent"]),

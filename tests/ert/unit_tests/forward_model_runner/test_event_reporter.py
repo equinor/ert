@@ -208,7 +208,7 @@ def test_report_with_reconnected_reporter_but_finished_jobs():
 
 @pytest.mark.integration_test
 @pytest.mark.parametrize(
-    "mocked_server_signal,ack_timeout, expected_message",
+    ("mocked_server_signal", "ack_timeout", "expected_message"),
     [
         pytest.param(5, 0.01, "No ack for dealer connection", id="failed_connect"),
         pytest.param(

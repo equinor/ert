@@ -30,7 +30,7 @@ def test_that_turning_on_localization_is_saved(panel_with_localization_on):
 
 
 @pytest.mark.parametrize(
-    "ensemble_size, expected",
+    ("ensemble_size", "expected"),
     [
         (1, 1),
         (8, 1),

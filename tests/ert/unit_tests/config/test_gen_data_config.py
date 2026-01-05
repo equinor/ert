@@ -16,7 +16,7 @@ from ert.config import (
 
 
 @pytest.mark.parametrize(
-    "name, report_steps",
+    ("name", "report_steps"),
     [
         ("ORDERED_RESULTS", [1, 2, 3, 4]),
         ("UNORDERED_RESULTS", [5, 2, 3, 7, 1]),

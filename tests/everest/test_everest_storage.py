@@ -66,7 +66,7 @@ def test_csv_export(config_file, cached_example, snapshot):
 
 @pytest.mark.integration_test
 @pytest.mark.parametrize(
-    "config_file, responses, objectives, constraints, gen_data_only",
+    ("config_file", "responses", "objectives", "constraints", "gen_data_only"),
     [
         pytest.param(
             "config_advanced.yml",

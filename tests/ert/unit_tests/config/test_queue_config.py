@@ -88,7 +88,7 @@ def test_that_the_first_argument_to_queue_option_must_be_a_known_queue_system(
 
 
 @pytest.mark.parametrize(
-    "queue_system, invalid_option",
+    ("queue_system", "invalid_option"),
     [(QueueSystem.LOCAL, "BSUB_CMD"), (QueueSystem.TORQUE, "BOGUS")],
 )
 def test_that_the_second_argument_to_queue_option_must_be_a_known_option_for_the_system(
@@ -126,7 +126,7 @@ def test_supported_memory_units_to_realization_memory(
 
 
 @pytest.mark.parametrize(
-    "memory_spec, expected_bytes",
+    ("memory_spec", "expected_bytes"),
     [
         ("1", 1),
         ("1b", 1),
@@ -153,7 +153,7 @@ def test_realization_memory_unit_support(memory_spec: str, expected_bytes: int):
 
 
 @pytest.mark.parametrize(
-    "invalid_memory_spec, error_message",
+    ("invalid_memory_spec", "error_message"),
     [
         ("-1", "Negative memory does not make sense"),
         ("'      -2'", "Negative memory does not make sense"),
@@ -258,7 +258,7 @@ def test_that_user_given_queue_settings_overwrites_site_config(
 
 
 @pytest.mark.parametrize(
-    "queue_system, queue_system_option",
+    ("queue_system", "queue_system_option"),
     [("LSF", "LSF_QUEUE"), ("SLURM", "SQUEUE")],
 )
 def test_initializing_empty_config_queue_options_resets_to_default_value(
@@ -279,7 +279,7 @@ def test_initializing_empty_config_queue_options_resets_to_default_value(
 
 
 @pytest.mark.parametrize(
-    "queue_system, queue_option, queue_value, err_msg",
+    ("queue_system", "queue_option", "queue_value", "err_msg"),
     [
         ("SLURM", "SQUEUE_TIMEOUT", "5a", "should be a valid number"),
     ],
@@ -339,7 +339,7 @@ def test_multiple_max_submit_keywords():
 
 
 @pytest.mark.parametrize(
-    "max_submit_value, error_msg",
+    ("max_submit_value", "error_msg"),
     [
         (-1, "must have a positive integer value as argument"),
         (0, "must have a positive integer value as argument"),
@@ -354,7 +354,7 @@ def test_wrong_max_submit_raises_validation_error(max_submit_value, error_msg):
 
 
 @pytest.mark.parametrize(
-    "key, value",
+    ("key", "value"),
     [
         ("MAX_RUNNING", -50),
         ("SUBMIT_SLEEP", -4.2),
@@ -398,7 +398,7 @@ def test_driver_initialization_from_defaults(queue_system):
 
 
 @pytest.mark.parametrize(
-    "venv, expected", [("my_env", "source my_env/bin/activate"), (None, "")]
+    ("venv", "expected"), [("my_env", "source my_env/bin/activate"), (None, "")]
 )
 def test_default_activate_script_generation(expected, monkeypatch, venv):
     if venv:
@@ -410,7 +410,7 @@ def test_default_activate_script_generation(expected, monkeypatch, venv):
 
 
 @pytest.mark.parametrize(
-    "env, expected",
+    ("env", "expected"),
     [
         ("my_env", 'eval "$(conda shell.bash hook)" && conda activate my_env'),
     ],
@@ -423,7 +423,7 @@ def test_conda_activate_script_generation(expected, monkeypatch, env):
 
 
 @pytest.mark.parametrize(
-    "env, expected",
+    ("env", "expected"),
     [("my_env", "source my_env/bin/activate")],
 )
 def test_multiple_activate_script_generation(expected, monkeypatch, env):

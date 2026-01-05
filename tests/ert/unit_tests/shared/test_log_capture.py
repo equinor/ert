@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.parametrize(
-    "log_level, expect_propagation",
+    ("log_level", "expect_propagation"),
     [
         (logger.debug, False),
         (logger.info, False),
@@ -38,7 +38,7 @@ def test_default_log_capture(log_level, expect_propagation, caplog):
     ],
 )
 @pytest.mark.parametrize(
-    "log_func, corresponding_level",
+    ("log_func", "corresponding_level"),
     [
         (logger.debug, logging.DEBUG),
         (logger.info, logging.INFO),

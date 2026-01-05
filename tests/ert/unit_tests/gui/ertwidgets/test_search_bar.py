@@ -7,7 +7,7 @@ from ert.gui.tools.search_bar import SearchBar
 
 
 @pytest.mark.parametrize(
-    "text, search",
+    ("text", "search"),
     [
         pytest.param(
             "Testing search functionality.",

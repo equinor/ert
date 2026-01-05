@@ -204,7 +204,7 @@ def test_large_snapshot(
 
 
 @pytest.mark.parametrize(
-    "events,tab_widget_count",
+    ("events", "tab_widget_count"),
     [
         pytest.param(
             [
@@ -396,7 +396,7 @@ def test_run_dialog(events, event_queue, tab_widget_count, qtbot: QtBot, run_dia
 
 
 @pytest.mark.parametrize(
-    "events,tab_widget_count",
+    ("events", "tab_widget_count"),
     [
         pytest.param(
             [
@@ -490,7 +490,7 @@ def test_run_dialog_memory_usage_showing(
 
 
 @pytest.mark.parametrize(
-    "events, tab_widget_count, expected_host_info",
+    ("events", "tab_widget_count", "expected_host_info"),
     [
         pytest.param(
             [
@@ -801,7 +801,7 @@ def test_that_design_matrix_show_parameters_button_is_visible(
 
 
 @pytest.mark.parametrize(
-    "events,tab_widget_count",
+    ("events", "tab_widget_count"),
     [
         pytest.param(
             [
@@ -894,7 +894,7 @@ def test_forward_model_overview_label_selected_on_tab_change(
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
-    "experiment_mode, experiment_mode_panel, dm_realizations",
+    ("experiment_mode", "experiment_mode_panel", "dm_realizations"),
     [
         (EnsembleExperiment, EnsembleExperimentPanel, 5),
         (EnsembleExperiment, EnsembleExperimentPanel, 15),

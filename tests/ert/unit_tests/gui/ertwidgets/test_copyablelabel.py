@@ -34,7 +34,7 @@ def test_copy_clickbtn(qtbot, label_testcase):
 
 
 @pytest.mark.parametrize(
-    "run_path, expected",
+    ("run_path", "expected"),
     [
         ("", "/"),
         ("///", "/"),

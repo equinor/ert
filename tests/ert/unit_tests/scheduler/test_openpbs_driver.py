@@ -183,7 +183,7 @@ async def test_cluster_label():
 
 @pytest.mark.integration_test
 @pytest.mark.parametrize(
-    "qstat_script, started_expected",
+    ("qstat_script", "started_expected"),
     [
         pytest.param(
             f"echo '{QSTAT_HEADER}';printf '{QSTAT_HEADER_FORMAT}' "
@@ -300,7 +300,7 @@ async def test_full_resource_string(realization_memory, num_cpu, cluster_label):
 
 
 @pytest.mark.parametrize(
-    ("exit_code, error_msg"),
+    ("exit_code", "error_msg"),
     [
         (QSUB_INVALID_CREDENTIAL, "Invalid credential"),
         (QSUB_PREMATURE_END_OF_MESSAGE, "Premature end of message"),
@@ -331,7 +331,7 @@ async def test_that_qsub_will_retry_and_fail(
 
 
 @pytest.mark.parametrize(
-    ("exit_code, error_msg"),
+    ("exit_code", "error_msg"),
     [
         (QSUB_INVALID_CREDENTIAL, "Invalid credential"),
         (QSUB_PREMATURE_END_OF_MESSAGE, "Premature end of message"),
@@ -371,7 +371,7 @@ async def test_that_qsub_will_retry_and_succeed(
 
 
 @pytest.mark.parametrize(
-    ("exit_code, error_msg"),
+    ("exit_code", "error_msg"),
     [
         (QDEL_JOB_HAS_FINISHED, "Job has finished\nJob has finished"),
         (QDEL_REQUEST_INVALID, "Request invalid for state of job"),

@@ -4,7 +4,7 @@ from ert.config.parsing._option_dict import parse_variable_options
 
 
 @pytest.mark.parametrize(
-    "input_config, expected",
+    ("input_config", "expected"),
     [
         (
             [["NAME", "template.txt", "kw.txt", "prior.txt"], 4],

@@ -4,7 +4,7 @@ from ert.validation import mask_to_rangestring, rangestring_to_list, rangestring
 
 
 @pytest.mark.parametrize(
-    "mask, expected_string",
+    ("mask", "expected_string"),
     [
         ([], ""),
         ([True], "0"),
@@ -26,7 +26,7 @@ def test_mask_to_rangestring(mask, expected_string):
 
 
 @pytest.mark.parametrize(
-    "rangestring, length, expected_mask",
+    ("rangestring", "length", "expected_mask"),
     [
         ("", 0, []),
         ("", 1, [False]),
@@ -47,7 +47,7 @@ def test_rangestring_to_mask(rangestring, length, expected_mask):
 
 
 @pytest.mark.parametrize(
-    "rangestring, length",
+    ("rangestring", "length"),
     [
         ("a", 0),
         ("*", 0),
@@ -67,7 +67,7 @@ def test_rangestring_to_mask_errors(rangestring, length):
 
 
 @pytest.mark.parametrize(
-    "rangestring, expected",
+    ("rangestring", "expected"),
     [
         ("0-1", [0, 1]),
         ("0-3", [0, 1, 2, 3]),

@@ -312,7 +312,7 @@ def test_retry_of_jobs_json_file_read(tmp_path, monkeypatch, caplog):
 
 
 @pytest.mark.parametrize(
-    "is_interactive_run, ens_id",
+    ("is_interactive_run", "ens_id"),
     [(False, None), (False, "1234"), (True, None), (True, "1234")],
 )
 def test_setup_reporters(is_interactive_run, ens_id):

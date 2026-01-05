@@ -107,7 +107,7 @@ async def test_submitted_job_is_cancelled(realization, mock_event):
 
 
 @pytest.mark.parametrize(
-    "return_code, max_submit, load_result, expected_final_event",
+    ("return_code", "max_submit", "load_result", "expected_final_event"),
     [
         (0, 1, LoadResult.success(), JobState.COMPLETED),
         (1, 1, LoadResult.success(), JobState.FAILED),
@@ -414,7 +414,7 @@ async def test_log_info_from_garbled_exit_file(caplog):
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
-    "emitted_warning_str, should_be_captured",
+    ("emitted_warning_str", "should_be_captured"),
     [
         ("FutureWarning: Feature XYZ is deprecated", True),
         ("DeprecationWarning: Feature XYZ is deprecated", True),

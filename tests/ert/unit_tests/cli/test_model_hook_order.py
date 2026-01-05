@@ -68,7 +68,7 @@ def patch_run_model(monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "cls, extra_args, expected_call_order",
+    ("cls", "extra_args", "expected_call_order"),
     [
         (
             MultipleDataAssimilation,

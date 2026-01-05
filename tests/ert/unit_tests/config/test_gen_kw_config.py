@@ -29,7 +29,7 @@ def test_short_definition_raises_config_error(tmp_path):
 
 
 @pytest.mark.parametrize(
-    "spec, expected",
+    ("spec", "expected"),
     [
         (
             {"name": "KEY1", "distribution": {"name": "normal", "mean": 0, "std": 1}},
@@ -150,7 +150,7 @@ number_regex = r"[-+]?(?:\d*\.\d+|\d+)"
 
 
 @pytest.mark.parametrize(
-    "distribution, expect_log, parameters_regex",
+    ("distribution", "expect_log", "parameters_regex"),
     [
         ("NORMAL 0 1", False, r"KW_NAME:MY_KEYWORD " + number_regex),
         (
@@ -233,7 +233,7 @@ def test_gen_kw_is_log_or_not(
 
 
 @pytest.mark.parametrize(
-    "distribution, mean, std, error",
+    ("distribution", "mean", "std", "error"),
     [
         ("LOGNORMAL", "0", "1", None),
         ("LOGNORMAL", "-1", "1", None),
@@ -307,7 +307,7 @@ def test_that_very_high_mean_stddev_lognormal_gives_error():
 
 
 @pytest.mark.parametrize(
-    "params, error",
+    ("params", "error"),
     [
         ("MYNAME NORMAL 0 1", None),
         ("MYNAME LOGNORMAL 0 1", None),
@@ -392,7 +392,7 @@ def test_gen_kw_params_parsing(tmpdir, params, error):
 
 
 @pytest.mark.parametrize(
-    "params, xinput, expected",
+    ("params", "xinput", "expected"),
     [
         ("MYNAME TRIANGULAR 0 0.5 1.0", -1.0, 0.28165160565089725209),
         ("MYNAME TRIANGULAR 0 0.5 1.0", 0.0, 0.50000000000000000000),
@@ -573,7 +573,7 @@ def test_suggestion_on_empty_parameter_file():
 
 
 @pytest.mark.parametrize(
-    "distribution, minimum, maximum, error",
+    ("distribution", "minimum", "maximum", "error"),
     [
         ("UNIFORM", "0", "1", None),
         (
@@ -613,7 +613,7 @@ def test_validation_unif_distribution(tmpdir, distribution, minimum, maximum, er
 
 
 @pytest.mark.parametrize(
-    "distribution, minimum, mode, maximum, error",
+    ("distribution", "minimum", "mode", "maximum", "error"),
     [
         ("TRIANGULAR", "0", "2", "3", None),
         (
@@ -665,7 +665,7 @@ def test_validation_triangular_distribution(
 
 
 @pytest.mark.parametrize(
-    "distribution, nbins, minimum, maximum, skew, width, error",
+    ("distribution", "nbins", "minimum", "maximum", "skew", "width", "error"),
     [
         ("DERRF", "10", "-1", "3", "-1", "2", None),
         ("DERRF", "100", "-10", "10", "0", "1", None),

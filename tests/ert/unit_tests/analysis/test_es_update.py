@@ -130,7 +130,7 @@ def test_update_report_with_exception_in_analysis_ES(
 
 @pytest.mark.integration_test
 @pytest.mark.parametrize(
-    "update_settings, num_overspread, num_collapsed, num_nan, num_active",
+    ("update_settings", "num_overspread", "num_collapsed", "num_nan", "num_active"),
     [
         (
             ObservationSettings(outlier_settings=OutlierSettings(alpha=0.1)),
@@ -504,7 +504,7 @@ def test_update_snapshot(
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
-    "alpha, expected, expectation",
+    ("alpha", "expected", "expectation"),
     [
         pytest.param(
             0.001,
@@ -750,7 +750,7 @@ def test_that_autoscaling_applies_to_scaled_errors(storage):
 
 
 @pytest.mark.parametrize(
-    "nan_responses,overspread_responses,collapsed_responses",
+    ("nan_responses", "overspread_responses", "collapsed_responses"),
     [
         pytest.param(set(), set(), set(), id="all ok"),
         pytest.param({0}, set(), set(), id="one nan response"),

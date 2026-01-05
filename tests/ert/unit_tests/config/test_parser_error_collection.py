@@ -227,7 +227,7 @@ def test_that_disallowed_argument_is_located_1fn():
 
 
 @pytest.mark.parametrize(
-    "contents, expected_errors",
+    ("contents", "expected_errors"),
     [
         (
             dedent(
@@ -469,7 +469,7 @@ def test_queue_option_max_running_non_int():
 
 
 @pytest.mark.parametrize(
-    "contents, expected_errors",
+    ("contents", "expected_errors"),
     [
         (
             dedent(
@@ -895,7 +895,7 @@ QUEUE_OPTION LOCAL MAX_RUNNING ert
 
 
 @pytest.mark.parametrize(
-    "contents, expected_errors",
+    ("contents", "expected_errors"),
     [
         (
             """

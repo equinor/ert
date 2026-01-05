@@ -120,7 +120,7 @@ def test_merging_ignores_identical_design_matrices(tmp_path, monkeypatch, caplog
     "than NUM_REALIZATIONS.*:ert.config.ConfigWarning"
 )
 @pytest.mark.parametrize(
-    "num_realization, min_realizations, expected_min_real",
+    ("num_realization", "min_realizations", "expected_min_real"),
     [
         (80, "10%", 8),
         (5, "2%", 1),
@@ -217,7 +217,7 @@ def test_invalid_min_realization_percentage_raises_config_validation_error():
 
 
 @pytest.mark.parametrize(
-    "value, expected", [("100%", 50), ("+34", 34), ("-1", -1), ("50.5%", 26)]
+    ("value", "expected"), [("100%", 50), ("+34", 34), ("-1", -1), ("50.5%", 26)]
 )
 def test_valid_min_realization(value, expected):
     assert (
@@ -338,7 +338,7 @@ def test_num_realizations_0_means_all():
 
 
 @pytest.mark.parametrize(
-    "config, expected",
+    ("config", "expected"),
     [
         ("exact", "EXACT"),
         ("0", "EXACT"),
@@ -386,7 +386,7 @@ def test_incorrect_variable_inversion(config):
 
 
 @pytest.mark.parametrize(
-    "config, expected",
+    ("config", "expected"),
     [
         ([["OBSERVATIONS", "AUTO_SCALE", "OBS_*"]], [["OBS_*"]]),
         ([["OBSERVATIONS", "AUTO_SCALE", "ONE,TWO"]], [["ONE", "TWO"]]),
@@ -409,7 +409,7 @@ def test_misfit_configuration(config, expected):
 
 
 @pytest.mark.parametrize(
-    "config, expectation",
+    ("config", "expectation"),
     [
         (
             [["OBSERVATIONS", "SAUTO_SCALE", "OBS_*"]],

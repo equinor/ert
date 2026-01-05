@@ -92,7 +92,7 @@ def test_load_forward_model(snake_oil_default_storage):
 
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
-    "summary_configuration, expected",
+    ("summary_configuration", "expected"),
     [
         pytest.param(
             "",

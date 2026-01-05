@@ -17,7 +17,7 @@ from ert.ensemble_evaluator.snapshot import (
 
 
 @pytest.mark.parametrize(
-    "ensemble_size, forward_models, memory_reports",
+    ("ensemble_size", "forward_models", "memory_reports"),
     [
         (10, 10, 1),
         (100, 10, 1),

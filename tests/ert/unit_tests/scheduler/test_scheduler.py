@@ -502,7 +502,7 @@ async def test_that_long_running_jobs_were_stopped(
 @pytest.mark.integration_test
 @pytest.mark.flaky(reruns=5)
 @pytest.mark.parametrize(
-    "submit_sleep, iens_stride, realization_runtime",
+    ("submit_sleep", "iens_stride", "realization_runtime"),
     [(0, 1, 0.1), (0.1, 1, 0.1), (0.1, 1, 0), (0.1, 2, 0)],
 )
 async def test_submit_sleep(
@@ -548,7 +548,7 @@ async def test_submit_sleep(
 @pytest.mark.integration_test
 @pytest.mark.flaky(reruns=5)
 @pytest.mark.parametrize(
-    "submit_sleep, realization_max_runtime, max_running",
+    ("submit_sleep", "realization_max_runtime", "max_running"),
     [
         (0.15, 0.10, 1),
         (0.15, 0.10, 10),

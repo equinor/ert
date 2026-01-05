@@ -4,7 +4,7 @@ from ert.config import SamplerConfig
 
 
 @pytest.mark.parametrize(
-    "backend, method, expected",
+    ("backend", "method", "expected"),
     [
         (None, "norm", "norm"),
         ("scipy", None, "scipy/norm"),
@@ -23,7 +23,7 @@ def test_sampler_config_backend_and_method(backend, method, expected):
 
 
 @pytest.mark.parametrize(
-    "backend, method, expected",
+    ("backend", "method", "expected"),
     [
         (None, "foo", "Sampler method 'foo' not found"),
         (None, "default", "Cannot specify 'default' method without a plugin name"),

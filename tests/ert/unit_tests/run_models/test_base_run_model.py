@@ -105,7 +105,7 @@ def test_active_realizations(initials, use_tmpdir):
 
 
 @pytest.mark.parametrize(
-    "initials, completed, any_failed, failures",
+    ("initials", "completed", "any_failed", "failures"),
     [
         ([True], [False], True, [True]),
         ([False], [False], False, [False]),
@@ -126,8 +126,13 @@ def test_failed_realizations(initials, completed, any_failed, failures, use_tmpd
 
 
 @pytest.mark.parametrize(
-    "run_path, number_of_iterations, start_iteration, "
-    "active_realizations_mask, expected",
+    (
+        "run_path",
+        "number_of_iterations",
+        "start_iteration",
+        "active_realizations_mask",
+        "expected",
+    ),
     [
         ("out/realization-%d/iter-%d", 4, 2, [True, True, True, True], False),
         ("out/realization-%d/iter-%d", 4, 1, [True, True, True, True], True),
@@ -159,7 +164,7 @@ def test_check_if_runpath_exists_with_substitutions(
 
 
 @pytest.mark.parametrize(
-    "active_realizations_mask, expected_number",
+    ("active_realizations_mask", "expected_number"),
     [
         ([True, True, True, True], 2),
         ([False, False, True, True], 0),
@@ -244,7 +249,7 @@ def test_num_cpu_is_propagated_from_config_to_ensemble(run_args, use_tmpdir):
 
 
 @pytest.mark.parametrize(
-    "real_status_dict, expected_result",
+    ("real_status_dict", "expected_result"),
     [
         pytest.param(
             {"0": "Finished", "1": "Finished", "2": "Finished"},
@@ -288,8 +293,12 @@ def test_get_current_status(
 
 
 @pytest.mark.parametrize(
-    "initial_active_realizations, new_active_realizations, "
-    "real_status_dict, expected_result",
+    (
+        "initial_active_realizations",
+        "new_active_realizations",
+        "real_status_dict",
+        "expected_result",
+    ),
     [
         pytest.param(
             [True, True, True],
@@ -397,7 +406,7 @@ def test_get_current_status_for_new_iteration_when_realization_failed_in_previou
 
 
 @pytest.mark.parametrize(
-    "new_active_realizations, was_rerun, expected_result",
+    ("new_active_realizations", "was_rerun", "expected_result"),
     [
         pytest.param(
             [False, False, False, True, False],
@@ -468,8 +477,13 @@ async def test_terminate_in_post_evaluation(evaluator, use_tmpdir):
 
 
 @pytest.mark.parametrize(
-    "real_status_dict, current_iteration, start_iteration,"
-    " total_iterations, expected_result",
+    (
+        "real_status_dict",
+        "current_iteration",
+        "start_iteration",
+        "total_iterations",
+        "expected_result",
+    ),
     [
         pytest.param(
             {"0": "Finished", "1": "Running", "2": "Failed"},
@@ -563,7 +577,7 @@ def test_progress_calculations(
 
 
 @pytest.mark.parametrize(
-    "active_mask, expected",
+    ("active_mask", "expected"),
     [
         ([True, True, True, True], True),
         ([False, False, True, False], False),

@@ -24,8 +24,18 @@ def test_localization_scaling_function(snapshot, nvalues):
 
 
 @pytest.mark.parametrize(
-    "nx, ny,xinc,yinc,obs_xpos, obs_ypos,obs_main_range, "
-    "obs_perp_range,obs_angles,right_handed",
+    (
+        "nx",
+        "ny",
+        "xinc",
+        "yinc",
+        "obs_xpos",
+        "obs_ypos",
+        "obs_main_range",
+        "obs_perp_range",
+        "obs_angles",
+        "right_handed",
+    ),
     [
         (
             10,
@@ -75,7 +85,7 @@ def test_calc_rho_for_2d_grid_layer(
 
 
 @pytest.mark.parametrize(
-    "coordsys_rotation, ellipse_anisotropy_angle, expected",
+    ("coordsys_rotation", "ellipse_anisotropy_angle", "expected"),
     [
         (0.0, [45.0, -165.0], [45.0, -165.0]),
         (120.0, [-135.0, 175.0], [-255.0, 55.0]),
@@ -94,7 +104,14 @@ def test_transform_local_ellipse_angle_to_local_coords(
 
 
 @pytest.mark.parametrize(
-    "coordsys_origin, coordsys_rotation, utmx, utmy, expected_x, expected_y",
+    (
+        "coordsys_origin",
+        "coordsys_rotation",
+        "utmx",
+        "utmy",
+        "expected_x",
+        "expected_y",
+    ),
     [
         (
             (0.0, 0.0),

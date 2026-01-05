@@ -4,7 +4,7 @@ from ert.config import ErtConfig
 
 
 @pytest.mark.parametrize(
-    "defines, expected",
+    ("defines", "expected"),
     [
         pytest.param(
             """

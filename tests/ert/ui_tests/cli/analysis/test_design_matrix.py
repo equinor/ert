@@ -298,7 +298,7 @@ def test_run_poly_example_with_multiple_design_matrix_instances():
     "copy_poly_case", "use_site_configurations_with_no_queue_options"
 )
 @pytest.mark.parametrize(
-    "experiment_mode, ensemble_name, iterations",
+    ("experiment_mode", "ensemble_name", "iterations"),
     [
         (ES_MDA_MODE, "default_", 4),
         (ENSEMBLE_SMOOTHER_MODE, "iter-", 2),
@@ -482,7 +482,7 @@ def test_design_matrix_on_esmda_fail_without_updateable_parameters(
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
-    "realizations_in_design_matrix, expected_message_format",
+    ("realizations_in_design_matrix", "expected_message_format"),
     [
         pytest.param(
             5,
@@ -544,7 +544,7 @@ def test_run_poly_example_with_different_realization_count_chooses_smaller_and_w
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize(
-    "specified_realizations, intersected_realizations_count",
+    ("specified_realizations", "intersected_realizations_count"),
     [
         pytest.param(
             "--realizations=3-6",

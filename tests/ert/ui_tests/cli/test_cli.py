@@ -587,7 +587,7 @@ def test_that_enif_on_poly_case_matches_snapshot(snapshot):
 
 
 @pytest.mark.parametrize(
-    "mode, target",
+    ("mode", "target"),
     [
         pytest.param(
             ENSEMBLE_SMOOTHER_MODE, "target_%d", id=f"{ENSEMBLE_SMOOTHER_MODE}"
@@ -632,7 +632,7 @@ def test_cli_test_run(mock_cli_run):
 
 @pytest.mark.usefixtures("copy_poly_case")
 @pytest.mark.parametrize(
-    "prior_mask,reals_rerun_option",
+    ("prior_mask", "reals_rerun_option"),
     [
         pytest.param(range(5), "0-4", id="All realisations first, subset second run"),
         pytest.param(

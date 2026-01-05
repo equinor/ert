@@ -218,7 +218,7 @@ def test_setup_multiple_data_assimilation(tmp_path):
 
 
 @pytest.mark.parametrize(
-    "restart_from_iteration, expected_path",
+    ("restart_from_iteration", "expected_path"),
     [
         (
             0,
@@ -303,7 +303,7 @@ def test_num_realizations_specified_incorrectly_raises(analysis_mode):
 
 
 @pytest.mark.parametrize(
-    "ensemble_iteration, expected_path",
+    ("ensemble_iteration", "expected_path"),
     [
         (0, ["realization-0/iter-0"]),
         (1, ["realization-0/iter-1"]),

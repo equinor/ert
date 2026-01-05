@@ -8,7 +8,7 @@ from everest.config import EverestConfig, WellConfig
 
 
 @pytest.mark.parametrize(
-    "config, expectation",
+    ("config", "expectation"),
     [
         (
             {"unexpected_key": 7, "name": "well_well"},

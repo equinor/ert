@@ -114,7 +114,7 @@ def test_snapshot_model_data_intact_on_full_update(full_snapshot, fail_snapshot)
 
 
 @pytest.mark.parametrize(
-    "has_exec_hosts, expected_value",
+    ("has_exec_hosts", "expected_value"),
     [
         pytest.param(
             True,

@@ -4,7 +4,7 @@ from ert.shared._doc_utils.ert_jobs import _ErtDocumentation
 
 
 @pytest.mark.parametrize(
-    "test_input, expected_length",
+    ("test_input", "expected_length"),
     [
         (
             {"JOB1": {}},
@@ -37,7 +37,7 @@ def test_divide_into_categories_lower_case_job():
 
 
 @pytest.mark.parametrize(
-    "test_input, expected_category, expected_sub_category",
+    ("test_input", "expected_category", "expected_sub_category"),
     [
         (
             {
@@ -75,7 +75,7 @@ def test_divide_into_categories_main_category(
 
 
 @pytest.mark.parametrize(
-    "test_input, expected_source_package",
+    ("test_input", "expected_source_package"),
     [
         (
             {

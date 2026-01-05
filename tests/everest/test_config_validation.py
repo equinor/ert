@@ -90,7 +90,7 @@ def test_that_invalid_queue_system_errors():
 
 
 @pytest.mark.parametrize(
-    ["cores", "expected_error"], [(0, False), (-1, True), (1, False)]
+    ("cores", "expected_error"), [(0, False), (-1, True), (1, False)]
 )
 def test_that_cores_errors_only_on_lt_eq0(cores, expected_error):
     expectation = (
@@ -105,7 +105,7 @@ def test_that_cores_errors_only_on_lt_eq0(cores, expected_error):
 
 
 @pytest.mark.parametrize(
-    ["cores", "expected_error"], [(0, True), (-1, True), (1, False)]
+    ("cores", "expected_error"), [(0, True), (-1, True), (1, False)]
 )
 def test_that_cores_per_node_errors_only_on_lt0(cores, expected_error):
     expectation = (
@@ -187,7 +187,7 @@ def test_that_scaled_range_is_valid_range():
 
 
 @pytest.mark.parametrize(
-    "variables, count",
+    ("variables", "count"),
     [
         pytest.param(
             [
@@ -248,7 +248,7 @@ def test_that_invalid_control_initial_guess_outside_bounds(
 
 
 @pytest.mark.parametrize(
-    "variables, unique_key",
+    ("variables", "unique_key"),
     [
         pytest.param(
             [
@@ -343,7 +343,7 @@ def test_that_duplicate_output_constraint_names_raise_error():
 
 
 @pytest.mark.parametrize(
-    "constraint, expectation",
+    ("constraint", "expectation"),
     [
         (
             {
@@ -382,7 +382,7 @@ def test_that_variable_name_does_not_contain_dots():
 
 
 @pytest.mark.parametrize(
-    ["index_val", "expected_error"], [(0, False), (-1, True), (1, False)]
+    ("index_val", "expected_error"), [(0, False), (-1, True), (1, False)]
 )
 def test_that_variable_index_is_non_negative(index_val, expected_error):
     if expected_error:
@@ -395,7 +395,7 @@ def test_that_variable_index_is_non_negative(index_val, expected_error):
 
 
 @pytest.mark.parametrize(
-    ["perturbation", "expected_error"], [(0.0, True), (-1.0, True), (0.1, False)]
+    ("perturbation", "expected_error"), [(0.0, True), (-1.0, True), (0.1, False)]
 )
 def test_that_variable_perturbation_is_positive(perturbation, expected_error):
     if expected_error:
@@ -471,7 +471,7 @@ def test_that_min_realizations_success_is_nonnegative():
 
 
 @pytest.mark.parametrize(
-    ["target", "link"],
+    ("target", "link"),
     [
         (".", True),
         ("./", True),
@@ -496,7 +496,7 @@ def test_that_install_data_allows_runpath_root_as_target(
 
 
 @pytest.mark.parametrize(
-    "install_data, expected_error_msg",
+    ("install_data", "expected_error_msg"),
     [
         (
             {"source": "/", "link": True, "target": "bar.json"},
@@ -673,10 +673,10 @@ def test_that_install_data_with_inline_data_generates_a_file(
 
 
 @pytest.mark.parametrize(
-    ["install_keyword"],
+    "install_keyword",
     [
-        ("install_jobs",),
-        ("install_workflow_jobs",),
+        "install_jobs",
+        "install_workflow_jobs",
     ],
 )
 def test_that_either_source_or_executable_is_provided(install_keyword):
@@ -691,10 +691,10 @@ def test_that_either_source_or_executable_is_provided(install_keyword):
 
 
 @pytest.mark.parametrize(
-    ["install_keyword"],
+    "install_keyword",
     [
-        ("install_jobs",),
-        ("install_workflow_jobs",),
+        "install_jobs",
+        "install_workflow_jobs",
     ],
 )
 def test_that_non_existing_install_job_errors_deprecated(
@@ -713,10 +713,10 @@ def test_that_non_existing_install_job_errors_deprecated(
 
 
 @pytest.mark.parametrize(
-    ["install_keyword"],
+    "install_keyword",
     [
-        ("install_jobs",),
-        ("install_workflow_jobs",),
+        "install_jobs",
+        "install_workflow_jobs",
     ],
 )
 def test_that_existing_install_job_with_malformed_executable_errors_deprecated(
@@ -757,10 +757,10 @@ def test_that_existing_install_job_with_malformed_executable_errors_deprecated(
 
 
 @pytest.mark.parametrize(
-    ["install_keyword"],
+    "install_keyword",
     [
-        ("install_jobs",),
-        ("install_workflow_jobs",),
+        "install_jobs",
+        "install_workflow_jobs",
     ],
 )
 def test_that_existing_install_job_with_non_executable_executable_errors_deprecated(
@@ -798,10 +798,10 @@ def test_that_existing_install_job_with_non_executable_executable_errors_depreca
 
 
 @pytest.mark.parametrize(
-    ["install_keyword"],
+    "install_keyword",
     [
-        ("install_jobs",),
-        ("install_workflow_jobs",),
+        "install_jobs",
+        "install_workflow_jobs",
     ],
 )
 def test_that_existing_install_job_with_non_executable_executable_errors(
@@ -828,10 +828,10 @@ def test_that_existing_install_job_with_non_executable_executable_errors(
 
 
 @pytest.mark.parametrize(
-    ["install_keyword"],
+    "install_keyword",
     [
-        ("install_jobs",),
-        ("install_workflow_jobs",),
+        "install_jobs",
+        "install_workflow_jobs",
     ],
 )
 def test_that_existing_install_job_with_non_existing_executable_errors_deprecated(
@@ -865,10 +865,10 @@ def test_that_existing_install_job_with_non_existing_executable_errors_deprecate
 
 
 @pytest.mark.parametrize(
-    ["install_keyword"],
+    "install_keyword",
     [
-        ("install_jobs",),
-        ("install_workflow_jobs",),
+        "install_jobs",
+        "install_workflow_jobs",
     ],
 )
 def test_that_existing_install_job_with_non_existing_executable_errors(
@@ -891,7 +891,7 @@ def test_that_existing_install_job_with_non_existing_executable_errors(
 
 
 @pytest.mark.parametrize(
-    ["value", "expect_error"],
+    ("value", "expect_error"),
     [
         (0.0, True),
         (-1.0, True),
@@ -941,7 +941,7 @@ def test_that_objective_function_weight_defined_for_all_or_no_function():
 
 
 @pytest.mark.parametrize(
-    ["values", "expect_error"],
+    ("values", "expect_error"),
     [
         ([0.0, 0.0], True),
         ([0.0, -1.0], True),
@@ -1107,7 +1107,7 @@ def test_load_file_with_errors(capsys):
 
 
 @pytest.mark.parametrize(
-    ["controls", "objectives", "error_msg"],
+    ("controls", "objectives", "error_msg"),
     [
         (
             [],
@@ -1216,7 +1216,7 @@ def test_load_file_undefined_substitutions(min_config, change_to_tmpdir, capsys)
 
 
 @pytest.mark.parametrize(
-    "key, value",
+    ("key", "value"),
     [
         ("csv_output_filepath", "something"),
         ("csv_output_filepath", ""),
@@ -1360,7 +1360,7 @@ def test_ambiguous_max_memory_vs_realization_memory_is_detected():
 
 
 @pytest.mark.parametrize(
-    "max_memory, realization_memory, expected",
+    ("max_memory", "realization_memory", "expected"),
     [
         (None, 0, 0),
         (0, 0, 0),
@@ -1382,7 +1382,7 @@ def test_that_max_memory_propagates_to_realization_memory(
 
 
 @pytest.mark.parametrize(
-    "realization_memory, expected",
+    ("realization_memory", "expected"),
     [
         ("1Gb", 1073741824),
         ("2Kb", 2048),
@@ -1399,7 +1399,7 @@ def test_parsing_of_realization_memory(realization_memory, expected) -> None:
 
 
 @pytest.mark.parametrize(
-    "invalid_memory_spec, error_message",
+    ("invalid_memory_spec", "error_message"),
     [
         ("-1", "Negative memory does not make sense"),
         ("      -2", "Negative memory does not make sense"),

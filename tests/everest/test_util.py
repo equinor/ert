@@ -91,7 +91,7 @@ def test_makedirs_roll_existing(change_to_tmpdir):
 
 
 @pytest.mark.parametrize(
-    "user_reply, existing_value, result",
+    ("user_reply", "existing_value", "result"),
     [
         ("Y", True, False),
         ("y", True, False),
@@ -122,7 +122,7 @@ def test_show_scaled_controls_warning_user_info_file_present(
 
 
 @pytest.mark.parametrize(
-    "user_reply, result",
+    ("user_reply", "result"),
     [
         ("Y", False),
         ("y", False),
@@ -156,7 +156,7 @@ def test_show_scaled_controls_warning_no_user_info_file_present(
 
 
 @pytest.mark.parametrize(
-    "user_reply, result",
+    ("user_reply", "result"),
     [
         ("Y", False),
         ("y", False),
@@ -220,7 +220,7 @@ def test_show_scaled_controls_warning_error_writing_user_info(
 
 
 @pytest.mark.parametrize(
-    "user_reply, existing_value, result",
+    ("user_reply", "existing_value", "result"),
     [
         ("Y", True, False),
         ("y", True, False),

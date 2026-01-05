@@ -155,7 +155,7 @@ def test_argparse_exec_workflow():
 
 
 @pytest.mark.parametrize(
-    "flag_val,expected_value", [("--verbose", True), (None, False)]
+    ("flag_val", "expected_value"), [("--verbose", True), (None, False)]
 )
 def test_verbose_flag(flag_val, expected_value):
     args = [TEST_RUN_MODE, " path/to/config.ert"]
@@ -190,7 +190,7 @@ def test_version_mocked(capsys, monkeypatch):
 
 
 @pytest.mark.parametrize(
-    "port_input,expected_range",
+    ("port_input", "expected_range"),
     [("10-20", range(10, 21)), ("0-65535", range(65536)), ("1-1", range(1, 2))],
 )
 def test_argparse_valid_port_range(port_input, expected_range):

@@ -41,7 +41,7 @@ def test_disk_space_widget(qtbot):
 
 
 @pytest.mark.parametrize(
-    "mount_path, mount_type",
+    ("mount_path", "mount_type"),
     [
         ("/tmp", MountType.RUNPATH),
         ("/usr", MountType.STORAGE),
