@@ -24,6 +24,10 @@ def test_read_mode():
         match="This operation requires write access, but we only have read access",
     ):
         obj.raises_unless_write()
+    with pytest.raises(
+        ModeError,
+        match="This operation requires write access, but we only have read access",
+    ):
         obj.concat_if_write("foo", "bar")
 
 

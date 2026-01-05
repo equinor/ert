@@ -1,4 +1,3 @@
-import logging
 import os
 import signal
 import sys
@@ -129,11 +128,10 @@ time.sleep(30)
 sys.exit(2)
 """
 )
-def test_not_respond(server, caplog):
+def test_not_respond(server):
     server._timeout = 1
-    with pytest.raises(TimeoutError), caplog.at_level(logging.CRITICAL):
+    with pytest.raises(TimeoutError):
         server.fetch_conn_info()
-        assert "startup exceeded defined timeout" in caplog.text
     assert server.shutdown() == -signal.SIGTERM
 
 

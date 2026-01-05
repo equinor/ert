@@ -544,8 +544,7 @@ async def test_that_kill_does_not_log_error_for_finished_realization(
 
 def test_create_job_class_raises_error_on_invalid_state():
     with pytest.raises(TypeError, match=r"Invalid job state"):
-        invalid_job_dict = {"job_state": "foobar"}
-        _create_job_class(invalid_job_dict)
+        _create_job_class({"job_state": "foobar"})
 
 
 @pytest.mark.usefixtures("capturing_qsub")

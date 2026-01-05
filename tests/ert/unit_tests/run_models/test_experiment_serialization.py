@@ -932,8 +932,7 @@ def test_that_ertscript_wf_job_deserialization_raises_error_if_uninstalled(
             " to be installed",
         ),
     ):
-        deserialized_workflow_job = ErtScriptWorkflow.model_validate(serialized_job)
-        assert deserialized_workflow_job == ertscript_workflow_job
+        ErtScriptWorkflow.model_validate(serialized_job)
 
 
 def test_that_workflow_with_ertscript_serializes_ertscript_by_name(

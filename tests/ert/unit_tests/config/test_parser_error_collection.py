@@ -122,7 +122,7 @@ def assert_that_config_leads_to_error(
         {config_filename: config_file_contents, **(expected_error.other_files or {})}
     )
 
-    with pytest.raises(ConfigValidationError) as caught_error:
+    with pytest.raises(ConfigValidationError) as caught_error:  # noqa: PT012
         ErtConfig.from_file(config_filename)
         # If the ert config did not raise any errors
         # we manually raise an "empty" error to make

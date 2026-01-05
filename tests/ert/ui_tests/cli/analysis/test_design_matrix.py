@@ -469,12 +469,8 @@ def test_design_matrix_on_esmda_fail_without_updateable_parameters(
             ErtCliError,
             match="No parameters to update as all parameters were set to update:false!",
         ),
-        warnings.catch_warnings(),
+        pytest.warns(ConfigWarning, match=r"Parameters .* will be overridden"),
     ):
-        warnings.simplefilter("ignore", category=ConfigWarning)
-        # Expected warning:
-        # ConfigWarning: Parameters {'c', 'a', 'b'} from GEN_KW
-        # group 'COEFFS' will be overridden
         run_cli(
             experiment_mode,
             "--disable-monitoring",

@@ -220,12 +220,11 @@ def test_that_file_without_read_access_raises_config_validation_error(
 
     touch(template_file)
     os.chmod(template_file, 0o000)  # Remove permissions
+    Path(config_file_name).write_text(config_file_contents, encoding="utf-8")
     with pytest.raises(
         ConfigValidationError,
         match=f'{template_file}" is not readable; please check read access.',
     ):
-        Path(config_file_name).write_text(config_file_contents, encoding="utf-8")
-
         _ = parse(config_file_name, schema=USER_CONFIG_SCHEMA)
 
 
