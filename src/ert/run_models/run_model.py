@@ -63,6 +63,7 @@ from ert.mode_definitions import MODULE_MODE
 from ert.runpaths import Runpaths
 from ert.storage import (
     Ensemble,
+    LocalStorage,
     Storage,
     open_storage,
 )
@@ -208,6 +209,10 @@ class RunModel(RunModelConfig, ABC):
     def model_post_init(self, ctx: Any) -> None:
         self._initial_realizations_mask = self.active_realizations.copy()
         self._completed_realizations_mask = [False] * len(self.active_realizations)
+
+        if LocalStorage.check_migration_needed(Path(self.storage_path)):
+            LocalStorage.perform_migration(Path(self.storage_path))
+
         self._storage = open_storage(self.storage_path, mode="w")
         self._rng = np.random.default_rng(self.random_seed)
         self._start_iteration = self.start_iteration

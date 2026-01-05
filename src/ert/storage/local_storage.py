@@ -20,6 +20,7 @@ import xarray as xr
 from filelock import FileLock, Timeout
 from pydantic import BaseModel, Field
 
+import ert.storage
 from ert.config import ErtConfig, ParameterConfig, ResponseConfig
 from ert.shared import __version__
 
@@ -64,6 +65,7 @@ class LocalStorage(BaseMode):
         self,
         path: str | os.PathLike[str],
         mode: Mode,
+        stage_for_migration: bool = False,
     ) -> None:
         """
         Initializes the LocalStorage instance.
@@ -74,6 +76,8 @@ class LocalStorage(BaseMode):
             The file system path to the storage.
         mode : Mode
             The access mode for the storage (read/write).
+        stage_for_migration : bool
+            Whether to avoid reloading storage to allow migration
         """
 
         self.path = Path(path).absolute()
@@ -82,9 +86,9 @@ class LocalStorage(BaseMode):
         if mode.can_write:
             self._acquire_lock()
 
-        self._experiments: dict[UUID, LocalExperiment]
-        self._ensembles: dict[UUID, LocalEnsemble]
-        self._index: _Index
+        self._experiments: dict[UUID, LocalExperiment] = {}
+        self._ensembles: dict[UUID, LocalEnsemble] = {}
+        self._index: _Index = _Index()
 
         try:
             self.version = _storage_version(self.path)
@@ -101,19 +105,18 @@ class LocalStorage(BaseMode):
                 raise ValueError(f"No index.json, but found: {errors}") from err
             self.version = _LOCAL_STORAGE_VERSION
 
-        if self.check_migration_needed(Path(self.path)):
-            if not self.can_write:
-                raise RuntimeError(
-                    f"Cannot open storage '{self.path}' in read-only mode: "
-                    f"Storage version {self.version} is too old. "
-                    f"Run ert to initiate migration."
-                )
-            else:
-                self._migrate(self.version)
+        if self.check_migration_needed(Path(self.path)) and not self.can_write:
+            raise RuntimeError(
+                f"Cannot open storage '{self.path}' in read-only mode: "
+                f"Storage version {self.version} is too old. "
+                f"Run ert to initiate migration."
+            )
 
-        self.refresh()
-        if mode.can_write:
-            self._save_index()
+        if not stage_for_migration:
+            self.refresh()
+
+            if mode.can_write:
+                self._save_index()
 
     @staticmethod
     def check_migration_needed(storage_dir: Path) -> bool:
@@ -123,13 +126,20 @@ class LocalStorage(BaseMode):
             version = _LOCAL_STORAGE_VERSION
 
         if version > _LOCAL_STORAGE_VERSION:
-            raise RuntimeError(
+            raise ert.storage.ErtStorageException(
                 f"Cannot open storage '{storage_dir.absolute()}': Storage version "
                 f"{version} is newer than the current version {_LOCAL_STORAGE_VERSION}"
                 f", upgrade ert to continue, or run with a different ENSPATH"
             )
 
         return version < _LOCAL_STORAGE_VERSION
+
+    @staticmethod
+    def perform_migration(path: Path) -> None:
+        if LocalStorage.check_migration_needed(path):
+            with LocalStorage(path, Mode("w"), True) as storage:
+                storage._migrate(storage.version)
+                storage.refresh()
 
     def refresh(self) -> None:
         """

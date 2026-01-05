@@ -33,7 +33,6 @@ from ert.storage import (
     ErtStorageException,
     LocalStorage,
     local_storage_set_ert_config,
-    open_storage,
 )
 from ert.trace import trace, tracer
 
@@ -164,9 +163,7 @@ def _start_initial_gui_window(
     if ert_config is not None:
         try:
             if LocalStorage.check_migration_needed(Path(ert_config.ens_path)):
-                # Open in write mode to initialize the storage, so that
-                # dark storage can be mounted onto it
-                open_storage(ert_config.ens_path, mode="w").close()
+                LocalStorage.perform_migration(Path(ert_config.ens_path))
             storage_path = ert_config.ens_path
         except ErtStorageException as err:
             validation_messages.errors.append(

@@ -39,6 +39,8 @@ class ErtStoragePermissionError(ErtStorageException):
 def open_storage(
     path: str | os.PathLike[str], mode: ModeLiteral | Mode = "r"
 ) -> Storage:
+    _ = LocalStorage.check_migration_needed(Path(path))
+
     try:
         return LocalStorage(Path(path), Mode(mode))
     except PermissionError as err:
