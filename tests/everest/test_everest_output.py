@@ -32,7 +32,15 @@ def test_that_one_experiment_creates_one_ensemble_per_batch(cached_example):
 @patch("everest.bin.everest_script.wait_for_server")
 @patch("everest.bin.everest_script.start_server")
 @patch("everest.bin.everest_script.start_experiment")
-def test_save_running_config(_, _1, _2, _3, _4, _5, change_to_tmpdir):
+def test_save_running_config(
+    mock_start_experiment,
+    mock_start_server,
+    mock_wait_for_server,
+    mock_run_detached_monitor,
+    mock_get_server_context,
+    mock_start_session,
+    change_to_tmpdir,
+):
     """Test everest detached, when an optimization has already run"""
 
     Path("config.yml").touch()
