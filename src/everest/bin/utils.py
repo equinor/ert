@@ -379,7 +379,8 @@ class _DetachedMonitor:
     def _get_jobs_status(snapshot: EnsembleSnapshot) -> list[JobProgress]:
         job_progress = {}
         for (realization, job_idx), job in snapshot.get_all_fm_steps().items():
-            assert "name" in job and job["name"] is not None, "job name is missing"
+            assert "name" in job, "job name is missing"
+            assert job["name"] is not None, "job name is None"
             name = job["name"]
             if job_idx not in job_progress:
                 job_progress[job_idx] = JobProgress(name=name)
