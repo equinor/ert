@@ -62,6 +62,18 @@ def test_analysis_config_from_file_is_same_as_from_dict(monkeypatch, tmp_path):
     )
 
 
+def test_design_matrix_keyword_with_no_args_gives_validation_error():
+    with pytest.raises(ConfigValidationError, match="DESIGN_MATRIX must have at least"):
+        ErtConfig.from_file_contents(
+            dedent(
+                """
+                NUM_REALIZATIONS 1
+                DESIGN_MATRIX
+                """
+            )
+        )
+
+
 def test_merging_ignores_identical_design_matrices(tmp_path, monkeypatch, caplog):
     caplog.set_level(logging.WARNING)
     with pd.ExcelWriter(tmp_path / "my_design_matrix.xlsx") as xl_write:

@@ -315,6 +315,8 @@ class SchemaItem:
         self, line: Sequence[FileContextToken]
     ) -> Sequence[FileContextToken | dict[FileContextToken, FileContextToken]]:
         n = self.options_after
+        if not line:
+            return []
         if isinstance(n, Varies):
             args, kwargs = parse_variable_options(list(line), n.max_positionals)
             return [*args, kwargs]  # type: ignore
