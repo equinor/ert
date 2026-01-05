@@ -45,7 +45,7 @@ from ert.storage import (
     RealizationStorageState,
     open_storage,
 )
-from ert.storage.local_storage import _LOCAL_STORAGE_VERSION
+from ert.storage.local_storage import _LOCAL_STORAGE_VERSION, LocalStorage
 from ert.storage.mode import ModeError
 from tests.ert.grid_generator import xtgeo_box_grids
 
@@ -498,6 +498,19 @@ def test_that_open_storage_in_write_mode_with_newer_version_throws_exception(tmp
         ),
     ):
         open_storage(tmp_path, mode="w")
+
+
+def test_that_storage_migration_detected_and_completed(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        storage._index.version = _LOCAL_STORAGE_VERSION - 1
+        storage._save_index()
+
+    assert LocalStorage.check_migration_needed(tmp_path)
+    LocalStorage.perform_migration(tmp_path)
+    assert not LocalStorage.check_migration_needed(tmp_path)
+
+    with open_storage(tmp_path / "storage", mode="w") as storage:
+        assert storage.version == _LOCAL_STORAGE_VERSION
 
 
 def test_ensemble_no_parameters(storage):

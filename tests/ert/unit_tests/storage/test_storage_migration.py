@@ -16,6 +16,7 @@ from ert.plugins import get_site_plugins
 from ert.storage import RealizationStorageState, open_storage
 from ert.storage.local_storage import (
     _LOCAL_STORAGE_VERSION,
+    LocalStorage,
     local_storage_set_ert_config,
 )
 from tests.ert.ui_tests.cli.run_cli import run_cli
@@ -56,7 +57,11 @@ def test_migration_to_genkw_with_polars_and_design_matrix(
     # we need to make a dummy ert config to open storage
     local_storage_set_ert_config(ErtConfig.from_file_contents("NUM_REALIZATIONS 1\n"))
     storage_path = copy_shared_design / f"version-{ert_version}"
-    with open_storage(storage_path, "w") as storage:
+
+    if LocalStorage.check_migration_needed(Path(storage_path)):
+        LocalStorage.perform_migration(Path(storage_path))
+
+    with open_storage(Path(storage_path), "w") as storage:
         experiments = list(storage.experiments)
         assert len(experiments) == 1
         experiment = experiments[0]
@@ -122,7 +127,12 @@ def test_that_storage_matches(
     local_storage_set_ert_config(ert_config)
     # To make sure all tests run against the same snapshot
     snapshot.snapshot_dir = snapshot.snapshot_dir.parent
-    with open_storage(f"storage-{ert_version}", "w") as storage:
+
+    storage_path = Path(f"storage-{ert_version}")
+    if LocalStorage.check_migration_needed(storage_path):
+        LocalStorage.perform_migration(storage_path)
+
+    with open_storage(storage_path, "w") as storage:
         experiments = list(storage.experiments)
         assert len(experiments) == 1
         experiment = experiments[0]
@@ -251,7 +261,11 @@ def test_that_storage_works_with_missing_parameters_and_responses(
     local_storage_set_ert_config(ert_config)
     # To make sure all tests run against the same snapshot
     snapshot.snapshot_dir = snapshot.snapshot_dir.parent
-    with open_storage(f"storage-{ert_version}", "w") as storage:
+
+    if LocalStorage.check_migration_needed(Path(storage_path)):
+        LocalStorage.perform_migration(Path(storage_path))
+
+    with open_storage(Path(storage_path), "w") as storage:
         experiments = list(storage.experiments)
         assert len(experiments) == 1
         experiment = experiments[0]
@@ -338,7 +352,12 @@ def test_that_manual_update_from_migrated_storage_works(
     local_storage_set_ert_config(ert_config)
     # To make sure all tests run against the same snapshot
     snapshot.snapshot_dir = snapshot.snapshot_dir.parent
-    with open_storage(f"storage-{ert_version}", "w") as storage:
+
+    storage_path = Path(f"storage-{ert_version}")
+    if LocalStorage.check_migration_needed(storage_path):
+        LocalStorage.perform_migration(storage_path)
+
+    with open_storage(storage_path, "w") as storage:
         experiments = list(storage.experiments)
         assert len(experiments) == 1
         experiment = experiments[0]
@@ -455,7 +474,10 @@ def test_migrate_storage_with_no_responses(
 
     local_storage_set_ert_config(ert_config)
 
-    open_storage(f"storage-{ert_version}", "w")
+    if LocalStorage.check_migration_needed(Path(storage_path)):
+        LocalStorage.perform_migration(Path(storage_path))
+
+    open_storage(Path(storage_path), "w")
 
 
 @pytest.mark.integration_test
@@ -534,7 +556,10 @@ def test_that_storages_with_failed_realizations_are_migrated_without_errors(
 
     local_storage_set_ert_config(ert_config)
 
-    with open_storage(f"storage-{ert_version}", "w") as storage:
+    if LocalStorage.check_migration_needed(Path(storage_path)):
+        LocalStorage.perform_migration(Path(storage_path))
+
+    with open_storage(Path(storage_path), "w") as storage:
         ensemble = next(storage.ensembles)
         realization_states = ensemble.get_ensemble_state()
         for i, _, realization_state in failures:

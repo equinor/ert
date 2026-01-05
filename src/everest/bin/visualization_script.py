@@ -5,7 +5,7 @@ from functools import partial
 from pathlib import Path
 from textwrap import dedent
 
-from ert.storage import ErtStorageException, open_storage
+from ert.storage import LocalStorage
 from everest.api import EverestDataAPI
 from everest.bin.utils import setup_logging
 from everest.config import EverestConfig
@@ -53,14 +53,9 @@ def visualization_entry(args: list[str] | None = None) -> None:
             ever_config.optimization_output_dir
         )
 
-        try:
-            # If successful, no need to migrate
-            open_storage(ever_config.storage_dir, mode="r").close()
-        except ErtStorageException as err:
-            if "too old" in str(err):
-                # Open write storage to do a migration
-                logger.info("Migrating ERT storage from everviz entrypoint")
-                open_storage(ever_config.storage_dir, mode="w").close()
+        if LocalStorage.check_migration_needed(Path(ever_config.storage_dir)):
+            logger.info("Migrating ERT storage from everviz entrypoint")
+            LocalStorage.perform_migration(Path(ever_config.storage_dir))
 
         storage = EverestStorage(output_dir=Path(ever_config.optimization_output_dir))
         storage.read_from_output_dir()
