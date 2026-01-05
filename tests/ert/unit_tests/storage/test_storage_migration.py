@@ -21,7 +21,7 @@ from ert.storage.local_storage import (
 from tests.ert.ui_tests.cli.run_cli import run_cli
 
 
-@pytest.fixture()
+@pytest.fixture
 def copy_shared(tmp_path, block_storage_path):
     for input_dir in ["data", "refcase"]:
         shutil.copytree(
@@ -35,7 +35,7 @@ def copy_shared(tmp_path, block_storage_path):
         )
 
 
-@pytest.fixture()
+@pytest.fixture
 def copy_shared_design(tmp_path, block_storage_path):
     shutil.copytree(
         block_storage_path / "design_poly",

@@ -23,7 +23,7 @@ run_reservoirsimulator = import_from_location(
 FLOW_VERSION = "default"
 
 
-@pytest.fixture()
+@pytest.fixture
 def eightcells(use_tmpdir, source_root):
     shutil.copy(
         source_root / "test-data/ert/eclipse/EIGHTCELLS.DATA", "EIGHTCELLS.DATA"

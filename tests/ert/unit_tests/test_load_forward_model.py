@@ -17,7 +17,7 @@ from ert.storage.local_ensemble import (
 )
 
 
-@pytest.fixture()
+@pytest.fixture
 def setup_case(storage, use_tmpdir, run_args):
     def func(config_text):
         ert_config = ErtConfig.from_file_contents(config_text)

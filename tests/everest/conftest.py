@@ -256,7 +256,7 @@ def cached_example(pytestconfig):
     return run_config
 
 
-@pytest.fixture()
+@pytest.fixture
 def mock_server(monkeypatch):
     monkeypatch.setattr(everserver, "_configure_loggers", MagicMock())
     monkeypatch.setattr(everserver, "_generate_authentication", MagicMock())
@@ -268,7 +268,7 @@ def mock_server(monkeypatch):
     monkeypatch.setattr(everserver, "_everserver_thread", MagicMock())
 
 
-@pytest.fixture()
+@pytest.fixture
 def use_site_configurations_with_lsf_queue_options():
     """
     Mimic site config

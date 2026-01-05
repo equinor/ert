@@ -125,12 +125,12 @@ def fixture_setup_case(tmp_path_factory, source_root, monkeypatch):
     yield copy_case
 
 
-@pytest.fixture()
+@pytest.fixture
 def poly_case(setup_case):
     return setup_case("poly_example", "poly.ert")
 
 
-@pytest.fixture()
+@pytest.fixture
 def snake_oil_case_storage(copy_snake_oil_case_storage):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=ConfigWarning)
@@ -138,7 +138,7 @@ def snake_oil_case_storage(copy_snake_oil_case_storage):
         return ErtConfig.from_file("snake_oil.ert")
 
 
-@pytest.fixture()
+@pytest.fixture
 def symlinked_snake_oil_case_storage(symlink_snake_oil_case_storage):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=ConfigWarning)
@@ -146,27 +146,27 @@ def symlinked_snake_oil_case_storage(symlink_snake_oil_case_storage):
         return ErtConfig.from_file("snake_oil.ert")
 
 
-@pytest.fixture()
+@pytest.fixture
 def symlinked_heat_equation_storage_es(symlink_heat_equation_storage_es):
     return ErtConfig.from_file("config.ert")
 
 
-@pytest.fixture()
+@pytest.fixture
 def symlinked_heat_equation_storage_esmda(symlink_heat_equation_storage_esmda):
     return ErtConfig.from_file("config.ert")
 
 
-@pytest.fixture()
+@pytest.fixture
 def symlinked_heat_equation_storage_enif(symlink_heat_equation_storage_enif):
     return ErtConfig.from_file("config.ert")
 
 
-@pytest.fixture()
+@pytest.fixture
 def snake_oil_case(setup_case):
     return setup_case("snake_oil", "snake_oil.ert")
 
 
-@pytest.fixture()
+@pytest.fixture
 def minimum_case(use_tmpdir):
     Path("minimum_config").write_text("NUM_REALIZATIONS 1", encoding="utf-8")
     return ErtConfig.from_file("minimum_config")
@@ -195,14 +195,14 @@ def _create_design_matrix(filename, design_sheet_df, default_sheet_df=None):
             )
 
 
-@pytest.fixture()
+@pytest.fixture
 def copy_poly_case(copy_case):
     copy_case("poly_example")
     with open("poly.ert", "a", encoding="utf-8") as fh:
         fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
 
 
-@pytest.fixture()
+@pytest.fixture
 def copy_poly_case_with_design_matrix(copy_case):
     def _create_poly_design_case(design_dict, default_list):
         copy_case("poly_example")
@@ -263,21 +263,21 @@ def copy_poly_case_with_design_matrix(copy_case):
     return _create_poly_design_case
 
 
-@pytest.fixture()
+@pytest.fixture
 def copy_snake_oil_field(copy_case):
     copy_case("snake_oil_field")
     with open("snake_oil_field.ert", "a", encoding="utf-8") as fh:
         fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
 
 
-@pytest.fixture()
+@pytest.fixture
 def copy_snake_oil_case(copy_case):
     copy_case("snake_oil")
     with open("snake_oil.ert", "a", encoding="utf-8") as fh:
         fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
 
 
-@pytest.fixture()
+@pytest.fixture
 def copy_heat_equation(copy_case):
     copy_case("heat_equation")
     with open("config.ert", "a", encoding="utf-8") as fh:
@@ -296,7 +296,7 @@ def fixture_copy_snake_oil_case_storage(_shared_snake_oil_case, tmp_path, monkey
     monkeypatch.chdir("test_data")
 
 
-@pytest.fixture()
+@pytest.fixture
 def symlink_snake_oil_case_storage(_shared_snake_oil_case, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     os.symlink(_shared_snake_oil_case, "test_data")
@@ -328,12 +328,12 @@ def symlink_heat_equation_storage_enif(
     monkeypatch.chdir("heat_equation_enif")
 
 
-@pytest.fixture()
+@pytest.fixture
 def copy_minimum_case(copy_case):
     copy_case("simple_config")
 
 
-@pytest.fixture()
+@pytest.fixture
 def use_tmpdir(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
 

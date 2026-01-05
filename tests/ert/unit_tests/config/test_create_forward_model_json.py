@@ -15,7 +15,7 @@ from ert.config.ert_config import (
 )
 
 
-@pytest.fixture()
+@pytest.fixture
 def context():
     return {"<RUNPATH>": "./"}
 

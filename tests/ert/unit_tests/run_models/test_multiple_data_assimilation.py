@@ -5,7 +5,7 @@ from ert.run_models import MultipleDataAssimilation as mda
 
 
 @pytest.mark.parametrize(
-    "weights, expected",
+    ("weights", "expected"),
     [
         ("2, 2, 2, 2", [4] * 4),
         ("1, 2, 4, ", [1.75, 3.5, 7.0]),
