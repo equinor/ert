@@ -5,57 +5,24 @@ is scheduled for removal when WebvizErt is removed.
 
 from __future__ import annotations
 
-import contextlib
-import io
 import json
 import os
-import signal
 import sys
 import threading
 import types
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from logging import Logger, getLogger
 from pathlib import Path
-from select import PIPE_BUF, select
-from subprocess import Popen, TimeoutExpired
 from tempfile import NamedTemporaryFile
 from time import sleep
-from types import FrameType
-from typing import TYPE_CHECKING, Any, Generic, Self, TypedDict, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, Self, TypeVar
+
+from ert.services.ert_server import ErtServerConnectionInfo, _Proc
 
 if TYPE_CHECKING:
     pass
 
 T = TypeVar("T", bound="BaseService")
-
-
-class ErtServerConnectionInfo(TypedDict):
-    urls: list[str]
-    authtoken: str
-    host: str
-    port: str
-    cert: str
-    auth: str
-
-
-SERVICE_CONF_PATHS: set[str] = set()
-
-
-class BaseServiceExit(OSError):
-    pass
-
-
-def cleanup_service_files(signum: int, frame: FrameType | None) -> None:
-    for file_path in SERVICE_CONF_PATHS:
-        file = Path(file_path)
-        if file.exists():
-            file.unlink()
-    raise BaseServiceExit(f"Signal {signum} received.")
-
-
-if threading.current_thread() is threading.main_thread():
-    signal.signal(signal.SIGTERM, cleanup_service_files)
-    signal.signal(signal.SIGINT, cleanup_service_files)
 
 
 def local_exec_args(script_args: str | list[str]) -> list[str]:
@@ -94,134 +61,6 @@ class _Context(Generic[T]):
     ) -> bool:
         self._service.shutdown()
         return exc_type is None
-
-
-class _Proc(threading.Thread):
-    def __init__(
-        self,
-        service_name: str,
-        exec_args: Sequence[str],
-        timeout: int,
-        on_connection_info_received: Callable[
-            [ErtServerConnectionInfo | Exception | None], None
-        ],
-        project: Path,
-    ) -> None:
-        super().__init__()
-
-        self._shutdown = threading.Event()
-
-        self._service_name = service_name
-        self._exec_args = exec_args
-        self._timeout = timeout
-        self._propagate_connection_info_from_childproc = on_connection_info_received
-        self._service_config_path = project / f"{self._service_name}_server.json"
-
-        fd_read, fd_write = os.pipe()
-        self._comm_pipe = os.fdopen(fd_read)
-
-        env = os.environ.copy()
-        env["ERT_COMM_FD"] = str(fd_write)
-
-        SERVICE_CONF_PATHS.add(str(self._service_config_path))
-
-        # The process is waited for in _do_shutdown()
-        self._childproc = Popen(
-            self._exec_args,
-            pass_fds=(fd_write,),
-            env=env,
-            close_fds=True,
-        )
-        os.close(fd_write)
-
-    def run(self) -> None:
-        comm = self._read_connection_info_from_process(self._childproc)
-
-        if comm is None:
-            self._propagate_connection_info_from_childproc(TimeoutError())
-            return  # _read_conn_info() has already cleaned up in this case
-
-        conn_info: ErtServerConnectionInfo | Exception | None = None
-        try:
-            conn_info = json.loads(comm)
-        except json.JSONDecodeError:
-            conn_info = ServerBootFail()
-        except Exception as exc:
-            conn_info = exc
-
-        try:
-            self._propagate_connection_info_from_childproc(conn_info)
-
-            while True:
-                if self._childproc.poll() is not None:
-                    break
-                if self._shutdown.wait(1):
-                    self._do_shutdown()
-                    break
-
-        except Exception as e:
-            print(str(e))
-            self.logger.exception(e)
-
-        finally:
-            self._ensure_connection_info_file_is_deleted()
-
-    def shutdown(self) -> int:
-        """Shutdown the server."""
-        self._shutdown.set()
-        self.join()
-
-        return self._childproc.returncode
-
-    def _read_connection_info_from_process(self, proc: Popen[bytes]) -> str | None:
-        comm_buf = io.StringIO()
-        first_iter = True
-        while first_iter or proc.poll() is None:
-            first_iter = False
-            ready = select([self._comm_pipe], [], [], self._timeout)
-
-            # Timeout reached, exit with a failure
-            if ready == ([], [], []):
-                self._do_shutdown()
-                self._ensure_connection_info_file_is_deleted()
-                return None
-
-            x = self._comm_pipe.read(PIPE_BUF)
-            if not x:  # EOF
-                break
-            comm_buf.write(x)
-        return comm_buf.getvalue()
-
-    def _do_shutdown(self) -> None:
-        if self._childproc is None:
-            return
-        try:
-            self._childproc.terminate()
-            self._childproc.wait(10)  # Give it 10s to shut down cleanly..
-        except TimeoutExpired:
-            try:
-                self._childproc.kill()  # ... then kick it harder...
-                self._childproc.wait(self._timeout)  # ... and wait again
-            except TimeoutExpired:
-                self.logger.error(
-                    f"waiting for child-process exceeded timeout {self._timeout}s"
-                )
-
-    def _ensure_connection_info_file_is_deleted(self) -> None:
-        """
-        Ensure that the JSON connection information file is deleted
-        """
-        with contextlib.suppress(OSError):
-            if self._service_config_path.exists():
-                self._service_config_path.unlink()
-
-    @property
-    def logger(self) -> Logger:
-        return getLogger(f"ert.shared.{self._service_name}")
-
-
-class ServerBootFail(RuntimeError):
-    pass
 
 
 class BaseService:

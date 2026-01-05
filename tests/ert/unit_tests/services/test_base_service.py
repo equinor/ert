@@ -9,11 +9,13 @@ from textwrap import dedent
 import pytest
 
 from ert.services._base_service import (
-    SERVICE_CONF_PATHS,
     BaseService,
+    local_exec_args,
+)
+from ert.services.ert_server import (
+    SERVICE_CONF_PATHS,
     ServerBootFail,
     cleanup_service_files,
-    local_exec_args,
 )
 
 

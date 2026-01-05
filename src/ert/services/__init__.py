@@ -1,4 +1,4 @@
-from .ert_server import ErtServer
+from .ert_server import BaseServiceExit, ErtServer, ServerBootFail
 from .webviz_ert_service import WebvizErt
 
-__all__ = ["ErtServer", "WebvizErt"]
+__all__ = ["BaseServiceExit", "ErtServer", "ServerBootFail", "WebvizErt"]
