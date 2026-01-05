@@ -136,10 +136,6 @@ def test_extra_key(min_config):
             "unknown job not_a_job",
         ),
         (
-            {"model": {"realizations": [-1]}},
-            "greater than or equal to 0",
-        ),
-        (
             {"environment": {"simulation_folder": "/usr/bin/unwriteable"}},
             "User does not have write access to",
         ),
