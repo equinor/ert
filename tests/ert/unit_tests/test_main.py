@@ -166,10 +166,9 @@ def test_verbose_flag(flag_val, expected_value):
 
 
 def test_version_valid_Version(capsys):
-    try:
+    with pytest.raises(SystemExit) as exc_info:
         ert_parser(None, ["--version"])
-    except SystemExit as e:
-        assert e.code == 0
+    assert exc_info.value.code == 0
 
     ert_version, _ = capsys.readouterr()
     ert_version = ert_version.rstrip("\n")
@@ -180,10 +179,9 @@ def test_version_valid_Version(capsys):
 def test_version_mocked(capsys, monkeypatch):
     monkeypatch.setattr(ert.shared, "__version__", "1.0.3")
 
-    try:
+    with pytest.raises(SystemExit) as exc_info:
         ert_parser(None, ["--version"])
-    except SystemExit as e:
-        assert e.code == 0
+    assert exc_info.value.code == 0
 
     ert_version, _ = capsys.readouterr()
     ert_version = ert_version.rstrip("\n")
