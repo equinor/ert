@@ -374,26 +374,26 @@ def test_that_general_user_queue_options_overrides_site_queue_options_via_runmod
     ):
         site_plugins = get_site_plugins()
 
+    ever_config = EverestConfig(
+        **(
+            min_config
+            | {
+                "simulator": {
+                    "cores_per_node": 2,
+                    "max_memory": "2Gb",
+                }
+            }
+        )
+    )
     with (
         use_runtime_plugins(site_plugins),
         pytest.warns(UserWarning, match="Ignoring cores_per_node as num_cpu was set"),
     ):
-        ever_config = EverestConfig(
-            **(
-                min_config
-                | {
-                    "simulator": {
-                        "cores_per_node": 2,
-                        "max_memory": "2Gb",
-                    }
-                }
-            )
-        )
         run_model = EverestRunModel.create(
             everest_config=ever_config, runtime_plugins=site_plugins
         )
-        assert (
-            run_model.queue_config.queue_options.realization_memory
-            == parse_string_to_bytes("2Gb")
-        )
-        assert run_model.queue_config.queue_options.num_cpu == 2
+    assert (
+        run_model.queue_config.queue_options.realization_memory
+        == parse_string_to_bytes("2Gb")
+    )
+    assert run_model.queue_config.queue_options.num_cpu == 2

@@ -1058,7 +1058,7 @@ def test_that_workflows_with_errors_are_not_loaded():
         " It will not be loaded: .*WFJAB is not recognized",
     ):
         ert_config = ErtConfig.from_file(test_config_file_name)
-        assert "wf" not in ert_config.workflows
+    assert "wf" not in ert_config.workflows
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -1142,7 +1142,7 @@ def test_that_failing_to_load_ert_script_with_errors_fails_gracefully(load_state
         pytest.warns(ConfigWarning, match="Deprecated keywords, SCRIPT and INTERNAL"),
     ):
         ert_config = ErtConfig.from_file(test_config_file_name)
-        assert "wf" not in ert_config.workflows
+    assert "wf" not in ert_config.workflows
 
 
 def test_that_define_statements_with_less_than_one_argument_raises_error():
