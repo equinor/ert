@@ -97,7 +97,7 @@ def mock_server(monkeypatch):
     "everest.detached.everserver._configure_loggers",
     side_effect=configure_everserver_logger,
 )
-def test_configure_logger_failure(_, change_to_tmpdir, caplog):
+def test_configure_logger_failure(mock_configure_loggers, change_to_tmpdir, caplog):
     with caplog.at_level(logging.ERROR):
         everserver.main()
     assert "Configuring logger failed" in caplog.records[0].getMessage()
@@ -108,7 +108,7 @@ def test_configure_logger_failure(_, change_to_tmpdir, caplog):
 @pytest.mark.xdist_group(name="starts_everest")
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
 @patch("everest.detached.everserver._configure_loggers")
-async def test_status_exception(_, change_to_tmpdir, min_config):
+async def test_status_exception(mock_configure_loggers, change_to_tmpdir, min_config):
     min_config["simulator"] = {"queue_system": {"name": "local"}}
     config = EverestConfig(**min_config)
 
