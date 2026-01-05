@@ -189,8 +189,8 @@ def test_large_snapshot(
     event_queue_large_snapshot,
     qtbot: QtBot,
     run_dialog: RunDialog,
-    timeout_per_iter=5000,
 ):
+    timeout_per_iter = 5000
     qtbot.waitUntil(
         lambda: run_dialog._total_progress_bar.value() == 100,
         timeout=timeout_per_iter * 3,
