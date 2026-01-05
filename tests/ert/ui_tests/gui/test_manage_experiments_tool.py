@@ -12,7 +12,7 @@ from ert.config import ErtConfig, SummaryConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_info_widget import (
-    ExportParametersDialog,
+    ExportDialog,
     _EnsembleWidget,
     _EnsembleWidgetTabs,
     _ExperimentWidget,
@@ -618,4 +618,4 @@ def test_that_export_parameters_button_opens_the_export_dialog(
 
     parameters_frame = ensemble_widget._tab_widget.currentWidget()
     parameters_frame.findChild(QPushButton).click()
-    assert isinstance(QApplication.activeModalWidget(), ExportParametersDialog)
+    assert isinstance(QApplication.activeModalWidget(), ExportDialog)

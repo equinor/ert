@@ -24,16 +24,21 @@ from PyQt6.QtWidgets import (
 from ert.storage import Ensemble
 
 
-class ExportParametersDialog(QDialog):
-    """Dialog for exporting ensemble parameters to a CSV file."""
+class ExportDialog(QDialog):
+    """Base dialog for exporting ensemble-related data to files."""
 
-    def __init__(self, ensemble: Ensemble, parent: QWidget | None = None) -> None:
+    def __init__(
+        self,
+        ensemble: Ensemble,
+        window_title: str = "Export data",
+        parent: QWidget | None = None,
+    ) -> None:
         QDialog.__init__(self, parent)
         self._ensemble = ensemble
+        self.setWindowTitle(window_title)
 
         self.setWindowFlags(Qt.WindowType.Dialog)
         self.setModal(True)
-        self.setWindowTitle("Export ensemble")
         self.setMinimumWidth(450)
         self.setMinimumHeight(200)
 
@@ -70,21 +75,16 @@ class ExportParametersDialog(QDialog):
 
     @Slot()
     def export(self) -> None:
-        """Export the ensemble parameters to the specified file."""
         self._export_text_area.insertPlainText("Exporting...\n")
-        output_file: str = self._file_path_edit.text().strip()
         try:
+            output_file: str = self._file_path_edit.text().strip()
             self._export_button.setEnabled(False)
             parameters_df = self._ensemble.load_scalar_keys(transformed=True)
             parameters_df.write_csv(output_file, float_precision=6)
-            self._export_text_area.insertPlainText(
-                f"Ensemble parameters exported to: {output_file}\n"
-            )
+            self._export_text_area.insertPlainText(f"Data exported to: {output_file}\n")
         except Exception as e:
             self._export_text_area.insertHtml(
-                "<span style='color: red;'>"
-                f"Error exporting ensemble parameters: {e!s}"
-                "</span><br>"
+                f"<span style='color: red;'>Could not export data: {e!s}</span><br>"
             )
         finally:
             self._export_button.setEnabled(True)
