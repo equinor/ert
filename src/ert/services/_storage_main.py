@@ -30,7 +30,7 @@ from uvicorn.supervisors import ChangeReload
 
 from ert.logging import STORAGE_LOG_CONFIG
 from ert.plugins import setup_site_logging
-from ert.services._base_service import BaseServiceExit
+from ert.services import BaseServiceExit
 from ert.shared import __file__ as ert_shared_path
 from ert.shared import find_available_socket, get_machine_name
 from ert.trace import tracer

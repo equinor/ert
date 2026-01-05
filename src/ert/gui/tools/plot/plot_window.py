@@ -25,7 +25,7 @@ from PyQt6.QtWidgets import (
 from ert.config.field import Field
 from ert.dark_storage.common import get_storage_api_version
 from ert.gui.ertwidgets import CopyButton, showWaitCursorWhileWaiting
-from ert.services._base_service import ServerBootFail
+from ert.services import ServerBootFail
 from ert.utils import log_duration
 
 from .customize import PlotCustomizer
