@@ -29,7 +29,7 @@ def mocked_files(mocker):
 
     mocker.patch("builtins.open", mock_open)
 
-    yield mocked_files
+    return mocked_files
 
 
 @pytest.fixture

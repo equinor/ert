@@ -436,7 +436,7 @@ def create_mock_flaky_qstat(monkeypatch, tmp_path):
     bin_path.mkdir()
     monkeypatch.chdir(bin_path)
     monkeypatch.setenv("PATH", f"{bin_path}:{os.environ['PATH']}")
-    yield _mock_flaky_qstat
+    return _mock_flaky_qstat
 
 
 def _mock_flaky_qstat(error_message_to_output: str):

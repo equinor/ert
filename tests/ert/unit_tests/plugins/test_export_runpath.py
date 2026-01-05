@@ -12,7 +12,7 @@ from ert.runpaths import Runpaths
 def snake_oil_export_runpath_job(setup_case):
     setup_case("snake_oil", "snake_oil.ert")
     plugin = ExportRunpathJob()
-    yield plugin
+    return plugin
 
 
 @dataclass

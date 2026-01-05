@@ -64,4 +64,4 @@ def run_args():
             ensemble,
         )
 
-    yield func
+    return func

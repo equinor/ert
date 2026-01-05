@@ -30,7 +30,7 @@ from tests.everest.utils import MIN_CONFIG, get_optimal_result, relpath
 
 @pytest.fixture
 def min_config():
-    yield yaml.safe_load(MIN_CONFIG)
+    return yaml.safe_load(MIN_CONFIG)
 
 
 @pytest.fixture(scope="session")

@@ -89,7 +89,7 @@ def mock_server(monkeypatch):
         server_patch.session.return_value.__enter__.return_value = client_mock
         monkeypatch.setattr("everest.detached.everserver.ErtServer", server_patch)
 
-    yield func
+    return func
 
 
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])

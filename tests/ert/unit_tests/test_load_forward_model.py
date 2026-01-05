@@ -41,7 +41,7 @@ def setup_case(storage, use_tmpdir, run_args):
         )
         return prior_ensemble
 
-    yield func
+    return func
 
 
 def run_simulator(time_step_count, start_date) -> Summary:

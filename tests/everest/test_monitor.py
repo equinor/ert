@@ -74,7 +74,7 @@ def full_snapshot_event():
         },
         iteration=0,
     )
-    yield json.dumps(jsonable_encoder(event))
+    return json.dumps(jsonable_encoder(event))
 
 
 @pytest.fixture
@@ -99,7 +99,7 @@ def snapshot_update_event():
         status_count={"Finished": 1, "Running": 0, "Unknown": 0},
         iteration=0,
     )
-    yield json.dumps(jsonable_encoder(event))
+    return json.dumps(jsonable_encoder(event))
 
 
 @pytest.fixture
@@ -125,7 +125,7 @@ def snapshot_update_failure_event():
         status_count={"Finished": 0, "Running": 0, "Unknown": 0, "Failed": 1},
         iteration=0,
     )
-    yield json.dumps(jsonable_encoder(event))
+    return json.dumps(jsonable_encoder(event))
 
 
 @pytest.fixture
@@ -151,7 +151,7 @@ def snapshot_update_event_with_fm_message():
         status_count={"Finished": 1, "Running": 0, "Unknown": 0},
         iteration=0,
     )
-    yield json.dumps(jsonable_encoder(event))
+    return json.dumps(jsonable_encoder(event))
 
 
 @pytest.mark.integration_test

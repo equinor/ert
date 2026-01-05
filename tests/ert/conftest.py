@@ -96,7 +96,6 @@ def fixture_source_root():
 def class_source_root(request, source_root):
     request.cls.SOURCE_ROOT = source_root
     request.cls.TESTDATA_ROOT = source_root / "test-data" / "ert"
-    yield
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -122,7 +121,7 @@ def fixture_setup_case(tmp_path_factory, source_root, monkeypatch):
         monkeypatch.chdir(tmp_path / "test_data")
         return ErtConfig.from_file(config_file)
 
-    yield copy_case
+    return copy_case
 
 
 @pytest.fixture
@@ -183,7 +182,7 @@ def fixture_copy_case(tmp_path_factory, source_root, monkeypatch):
         )
         monkeypatch.chdir(tmp_path / "test_data")
 
-    yield _copy_case
+    return _copy_case
 
 
 def _create_design_matrix(filename, design_sheet_df, default_sheet_df=None):
@@ -432,7 +431,7 @@ def _shared_snake_oil_case(request, monkeypatch, source_root):
     else:
         monkeypatch.chdir("test_data")
 
-    yield os.getcwd()
+    return os.getcwd()
 
 
 @pytest.fixture
@@ -450,7 +449,7 @@ def _shared_heat_equation_es(request, monkeypatch, source_root):
     else:
         monkeypatch.chdir("test_data")
 
-    yield os.getcwd()
+    return os.getcwd()
 
 
 @pytest.fixture
@@ -468,7 +467,7 @@ def _shared_heat_equation_esmda(request, monkeypatch, source_root):
     else:
         monkeypatch.chdir("test_data")
 
-    yield os.getcwd()
+    return os.getcwd()
 
 
 @pytest.fixture
@@ -486,7 +485,7 @@ def _shared_heat_equation_enif(request, monkeypatch, source_root):
     else:
         monkeypatch.chdir("test_data")
 
-    yield os.getcwd()
+    return os.getcwd()
 
 
 @pytest.fixture
