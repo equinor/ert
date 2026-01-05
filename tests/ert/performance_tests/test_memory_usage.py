@@ -43,7 +43,7 @@ def poly_template(monkeypatch):
         update_steps=1,
     )
     monkeypatch.chdir(folder)
-    yield folder
+    return folder
 
 
 @pytest.mark.memory_test

@@ -38,7 +38,6 @@ def e100_env(monkeypatch):
         .items()
     ):
         monkeypatch.setenv(var, value)
-    yield
 
 
 @pytest.mark.integration_test

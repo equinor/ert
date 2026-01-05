@@ -84,7 +84,7 @@ def mock_ert():
         ert_mock.ensemble_config.parameter_configs.values()
     )
 
-    yield ert_mock
+    return ert_mock
 
 
 def test_getForwardModels(mock_ert):

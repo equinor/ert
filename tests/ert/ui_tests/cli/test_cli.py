@@ -511,7 +511,7 @@ def fixture_mock_cli_run(monkeypatch):
     monkeypatch.setattr(threading.Thread, "start", mocked_thread_start)
     monkeypatch.setattr(threading.Thread, "join", mocked_thread_join)
     monkeypatch.setattr(ert.cli.monitor.Monitor, "monitor", mocked_monitor)
-    yield mocked_monitor, mocked_thread_join, mocked_thread_start
+    return mocked_monitor, mocked_thread_join, mocked_thread_start
 
 
 @pytest.mark.usefixtures("copy_poly_case")

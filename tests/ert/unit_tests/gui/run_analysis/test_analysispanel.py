@@ -19,7 +19,7 @@ def panel_with_localization_on(qtbot: QtBot):
         qtbot.mouseClick(check_box, Qt.MouseButton.LeftButton)
         return settings, widget
 
-    yield func
+    return func
 
 
 def test_that_turning_on_localization_is_saved(panel_with_localization_on):

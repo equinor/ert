@@ -32,7 +32,7 @@ def plugin_manager() -> Iterator[Callable[..., MockPluginManager]]:
                 pm.register(plugin)
         return pm
 
-    yield register_plugin_hooks
+    return register_plugin_hooks
 
 
 def test_multiple_plugins(plugin_manager):

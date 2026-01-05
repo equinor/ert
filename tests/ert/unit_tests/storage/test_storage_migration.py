@@ -41,7 +41,7 @@ def copy_shared_design(tmp_path, block_storage_path):
         block_storage_path / "design_poly",
         tmp_path / "design_poly",
     )
-    yield tmp_path / "design_poly"
+    return tmp_path / "design_poly"
 
 
 @pytest.mark.parametrize(

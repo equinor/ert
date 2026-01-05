@@ -147,7 +147,7 @@ def run_dialog(qtbot: QtBot, use_tmpdir, mock_set_env_key, monkeypatch):
     qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
     run_dialog = gui.findChild(RunDialog)
     assert run_dialog
-    yield run_dialog
+    return run_dialog
 
 
 @pytest.mark.timeout(10)
