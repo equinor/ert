@@ -109,14 +109,14 @@ async def test_submitted_job_is_cancelled(realization, mock_event):
 @pytest.mark.parametrize(
     "return_code, max_submit, load_result, expected_final_event",
     [
-        [0, 1, LoadResult.success(), JobState.COMPLETED],
-        [1, 1, LoadResult.success(), JobState.FAILED],
-        [0, 1, LoadResult.failure(""), JobState.FAILED],
-        [1, 1, LoadResult.failure(""), JobState.FAILED],
-        [0, 2, LoadResult.success(), JobState.COMPLETED],
-        [1, 2, LoadResult.success(), JobState.FAILED],
-        [0, 2, LoadResult.failure(""), JobState.FAILED],
-        [1, 2, LoadResult.failure(""), JobState.FAILED],
+        (0, 1, LoadResult.success(), JobState.COMPLETED),
+        (1, 1, LoadResult.success(), JobState.FAILED),
+        (0, 1, LoadResult.failure(""), JobState.FAILED),
+        (1, 1, LoadResult.failure(""), JobState.FAILED),
+        (0, 2, LoadResult.success(), JobState.COMPLETED),
+        (1, 2, LoadResult.success(), JobState.FAILED),
+        (0, 2, LoadResult.failure(""), JobState.FAILED),
+        (1, 2, LoadResult.failure(""), JobState.FAILED),
     ],
 )
 @pytest.mark.asyncio

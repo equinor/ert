@@ -384,7 +384,7 @@ def test_invalid_queue_option_value_raises_validation_error(key, value):
 
 @pytest.mark.parametrize(
     "queue_system",
-    (QueueSystem.LSF, QueueSystem.TORQUE, QueueSystem.LOCAL, QueueSystem.SLURM),
+    [QueueSystem.LSF, QueueSystem.TORQUE, QueueSystem.LOCAL, QueueSystem.SLURM],
 )
 def test_driver_initialization_from_defaults(queue_system):
     if queue_system == QueueSystem.LSF:

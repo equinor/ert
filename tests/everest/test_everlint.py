@@ -15,12 +15,12 @@ from tests.everest.utils import everest_config_with_defaults
 
 @pytest.mark.parametrize(
     "required_key",
-    (
+    [
         "objective_functions",
         "controls",
         # "model", # This is not actually optional
         "config_path",
-    ),
+    ],
 )
 def test_missing_key(required_key, min_config):
     del min_config[required_key]
@@ -32,7 +32,7 @@ def test_missing_key(required_key, min_config):
 
 @pytest.mark.parametrize(
     "optional_key",
-    (
+    [
         "output_constraints",
         "input_constraints",
         "install_jobs",
@@ -40,7 +40,7 @@ def test_missing_key(required_key, min_config):
         "forward_model",
         "simulator",
         "definitions",
-    ),
+    ],
 )
 def test_optional_keys(optional_key, min_config):
     assert optional_key not in min_config
@@ -326,15 +326,15 @@ def test_that_control_variable_name_contains_dot_is_linted(min_config):
 @pytest.mark.parametrize(
     "target, expected",
     [
-        [
+        (
             "r{{key1 }}/model/r{{key2}}.txt",
             r"The following keys are missing: \['r\{\{key1 \}\}', 'r\{\{key2\}\}'\]",
-        ],
-        [
+        ),
+        (
             "r{{ key1}}/model/file.txt",
             r"The following key is missing: \['r\{\{ key1\}\}'\]",
-        ],
-        ["model/file.txt", ""],
+        ),
+        ("model/file.txt", ""),
     ],
 )
 def test_undefined_substitution(min_config, change_to_tmpdir, target, expected):

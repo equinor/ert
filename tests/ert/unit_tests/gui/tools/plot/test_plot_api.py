@@ -508,7 +508,7 @@ def test_that_response_key_has_observation_when_only_one_experiment_has_observat
         )
 
 
-@pytest.mark.parametrize("well_name", ("46/3-7s", "FOPR"))
+@pytest.mark.parametrize("well_name", ["46/3-7s", "FOPR"])
 def test_that_response_keys_do_not_match_keys_that_are_substrings(
     api_and_storage, well_name
 ):
