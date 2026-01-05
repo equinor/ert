@@ -52,7 +52,7 @@ def test_argparse_exec_ensemble_experiment_valid_case():
 
 
 def test_argparse_exec_ensemble_experiment_current_case():
-    with pytest.warns(UserWarning):
+    with pytest.warns(UserWarning, match="current-case is deprecated"):
         parsed = ert_parser(
             None,
             [
