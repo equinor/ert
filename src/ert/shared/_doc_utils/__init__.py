@@ -8,12 +8,14 @@ from docutils.statemachine import StringList
 from sphinx.util.nodes import nested_parse_with_titles
 
 
-def _parse_raw_rst(rst_string: str, node: nodes.Node, state: Any) -> None:
+def _parse_raw_rst(rst_string: str, node: nodes.Element, state: Any) -> None:
     string_list = docutils.statemachine.StringList(list(rst_string.split("\n")))
     _parse_string_list(string_list, node, state)
 
 
-def _parse_string_list(string_list: StringList, node: nodes.Node, state: Any) -> None:
+def _parse_string_list(
+    string_list: StringList, node: nodes.Element, state: Any
+) -> None:
     nested_parse_with_titles(state, string_list, node)
 
 
