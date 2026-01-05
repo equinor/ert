@@ -326,12 +326,12 @@ def test_that_pre_defines_are_substituted_templates(key, expected, make_run_path
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "ecl_base, expected_file",
-    (
+    [
         ("MY_ECL_BASE", "MY_ECL_BASE.DATA"),
         ("relative/path/MY_ECL_BASE", "relative/path/MY_ECL_BASE.DATA"),
         ("MY_ECL_BASE%d", "MY_ECL_BASE0.DATA"),
         ("MY_ECL_BASE<IENS>", "MY_ECL_BASE0.DATA"),
-    ),
+    ],
 )
 @pytest.mark.filterwarnings("ignore:Use DATA_FILE instead of RUN_TEMPLATE")
 def test_that_using_eclbase_as_a_runtemplate_target_produces_data_file_in_runpath(

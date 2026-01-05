@@ -188,7 +188,7 @@ def test_that_scaled_range_is_valid_range():
 
 @pytest.mark.parametrize(
     "variables, count",
-    (
+    [
         pytest.param(
             [
                 {  # upper bound (max)
@@ -219,7 +219,7 @@ def test_that_scaled_range_is_valid_range():
             1,
             id="vector",
         ),
-    ),
+    ],
 )
 def test_that_invalid_control_initial_guess_outside_bounds(
     variables: list[dict[str, Any]], count: int
@@ -249,7 +249,7 @@ def test_that_invalid_control_initial_guess_outside_bounds(
 
 @pytest.mark.parametrize(
     "variables, unique_key",
-    (
+    [
         pytest.param(
             [
                 {"name": "w00", "initial_guess": 0.05},
@@ -274,7 +274,7 @@ def test_that_invalid_control_initial_guess_outside_bounds(
             "name",
             id="vector",
         ),
-    ),
+    ],
 )
 def test_that_invalid_control_unique_entry(variables, unique_key):
     with pytest.raises(ValueError, match=f"(.*)`{unique_key}` must be unique"):
@@ -1218,22 +1218,22 @@ def test_load_file_undefined_substitutions(min_config, change_to_tmpdir, capsys)
 @pytest.mark.parametrize(
     "key, value",
     [
-        ["csv_output_filepath", "something"],
-        ["csv_output_filepath", ""],
-        ["csv_output_filepath", None],
-        ["discard_gradient", True],
-        ["discard_gradient", None],
-        ["discard_gradient", "None"],
-        ["discard_rejected", True],
-        ["discard_rejected", None],
-        ["discard_rejected", "None"],
-        ["skip_export", True],
-        ["skip_export", None],
-        ["skip_export", "None"],
-        ["batches", [0]],
-        ["batches", []],
-        ["batches", None],
-        ["batches", "None"],
+        ("csv_output_filepath", "something"),
+        ("csv_output_filepath", ""),
+        ("csv_output_filepath", None),
+        ("discard_gradient", True),
+        ("discard_gradient", None),
+        ("discard_gradient", "None"),
+        ("discard_rejected", True),
+        ("discard_rejected", None),
+        ("discard_rejected", "None"),
+        ("skip_export", True),
+        ("skip_export", None),
+        ("skip_export", "None"),
+        ("batches", [0]),
+        ("batches", []),
+        ("batches", None),
+        ("batches", "None"),
     ],
 )
 def test_export_deprecated_keys(key, value, min_config, change_to_tmpdir):

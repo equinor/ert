@@ -220,7 +220,7 @@ def test_setup_multiple_data_assimilation(tmp_path):
 @pytest.mark.parametrize(
     "restart_from_iteration, expected_path",
     [
-        [
+        (
             0,
             [
                 "realization-0/iter-1",
@@ -230,8 +230,8 @@ def test_setup_multiple_data_assimilation(tmp_path):
                 "realization-1/iter-2",
                 "realization-1/iter-3",
             ],
-        ],
-        [
+        ),
+        (
             1,
             [
                 "realization-0/iter-2",
@@ -239,9 +239,9 @@ def test_setup_multiple_data_assimilation(tmp_path):
                 "realization-1/iter-2",
                 "realization-1/iter-3",
             ],
-        ],
-        [2, ["realization-0/iter-3", "realization-1/iter-3"]],
-        [3, []],
+        ),
+        (2, ["realization-0/iter-3", "realization-1/iter-3"]),
+        (3, []),
     ],
 )
 def test_multiple_data_assimilation_restart_paths(
@@ -305,10 +305,10 @@ def test_num_realizations_specified_incorrectly_raises(analysis_mode):
 @pytest.mark.parametrize(
     "ensemble_iteration, expected_path",
     [
-        [0, ["realization-0/iter-0"]],
-        [1, ["realization-0/iter-1"]],
-        [2, ["realization-0/iter-2"]],
-        [100, ["realization-0/iter-100"]],
+        (0, ["realization-0/iter-0"]),
+        (1, ["realization-0/iter-1"]),
+        (2, ["realization-0/iter-2"]),
+        (100, ["realization-0/iter-100"]),
     ],
 )
 def test_evaluate_ensemble_paths(

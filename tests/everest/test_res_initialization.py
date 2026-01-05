@@ -98,9 +98,9 @@ def test_combined_wells_everest_to_ert(tmp_path, monkeypatch, config_yaml):
 @pytest.mark.parametrize(
     "source, target, symlink, cmd",
     [
-        ["source_file", "target_file", True, "symlink"],
-        ["source_file", "target_file", False, "copy_file"],
-        ["source_folder", "target_folder", False, "copy_directory"],
+        ("source_file", "target_file", True, "symlink"),
+        ("source_file", "target_file", False, "copy_file"),
+        ("source_folder", "target_folder", False, "copy_directory"),
     ],
 )
 def test_install_data_no_init(tmp_path, source, target, symlink, cmd, monkeypatch):

@@ -87,7 +87,7 @@ def test_general_queue_options_properties_pass_through_create(
 @pytest.mark.parametrize(
     "config, config_class",
     [
-        [
+        (
             {
                 "name": "local",
                 "max_running": 0,
@@ -96,8 +96,8 @@ def test_general_queue_options_properties_pass_through_create(
                 "activate_script": "activate_script",
             },
             LocalQueueOptions,
-        ],
-        [
+        ),
+        (
             {
                 "name": "torque",
                 "qsub_cmd": "qsub",
@@ -109,8 +109,8 @@ def test_general_queue_options_properties_pass_through_create(
                 "keep_qsub_output": False,
             },
             TorqueQueueOptions,
-        ],
-        [
+        ),
+        (
             {
                 "name": "slurm",
                 "sbatch": "sbatch",
@@ -125,8 +125,8 @@ def test_general_queue_options_properties_pass_through_create(
                 "max_runtime": 10,
             },
             SlurmQueueOptions,
-        ],
-        [
+        ),
+        (
             {
                 "name": "lsf",
                 "bhist_cmd": "bhist",
@@ -138,7 +138,7 @@ def test_general_queue_options_properties_pass_through_create(
                 "lsf_resource": "some_resource",
             },
             LsfQueueOptions,
-        ],
+        ),
     ],
 )
 def test_queue_options_properties_pass_through_create(
@@ -224,7 +224,7 @@ def test_cores_per_node_is_ignored_num_cpu_is_set(
 @pytest.mark.parametrize(
     "config, config_class",
     [
-        [
+        (
             {
                 "name": "local",
                 "max_running": 0,
@@ -233,8 +233,8 @@ def test_cores_per_node_is_ignored_num_cpu_is_set(
                 "activate_script": "activate_script",
             },
             LocalQueueOptions,
-        ],
-        [
+        ),
+        (
             {
                 "name": "torque",
                 "qsub_cmd": "qsub",
@@ -246,8 +246,8 @@ def test_cores_per_node_is_ignored_num_cpu_is_set(
                 "keep_qsub_output": False,
             },
             TorqueQueueOptions,
-        ],
-        [
+        ),
+        (
             {
                 "name": "slurm",
                 "sbatch": "sbatch",
@@ -262,8 +262,8 @@ def test_cores_per_node_is_ignored_num_cpu_is_set(
                 "max_runtime": 10,
             },
             SlurmQueueOptions,
-        ],
-        [
+        ),
+        (
             {
                 "name": "lsf",
                 "bhist_cmd": "bhist",
@@ -275,7 +275,7 @@ def test_cores_per_node_is_ignored_num_cpu_is_set(
                 "lsf_resource": "",
             },
             LsfQueueOptions,
-        ],
+        ),
     ],
 )
 def test_everest_to_ert_queue_config(config, config_class, create_runmodel):

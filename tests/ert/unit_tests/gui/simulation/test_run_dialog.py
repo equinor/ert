@@ -723,7 +723,7 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "design_matrix_entry",
-    (True, False),
+    [True, False],
 )
 @pytest.mark.filterwarnings("ignore:NUM_REALIZATIONS")
 def test_that_design_matrix_show_parameters_button_is_visible(

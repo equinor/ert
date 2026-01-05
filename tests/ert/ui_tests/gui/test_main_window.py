@@ -794,12 +794,12 @@ def test_that_the_help_menu_contains_the_about_dialog(qtbot):
 
 @pytest.mark.parametrize(
     "exp_type, panel_name",
-    (
+    [
         (EnsembleExperiment, "Ensemble_experiment_panel"),
         (EnsembleSmoother, "ensemble_smoother_panel"),
         (EnsembleInformationFilter, "enif_panel"),
         (MultipleDataAssimilation, "ES_MDA_panel"),
-    ),
+    ],
 )
 def test_that_the_run_experiment_button_is_disabled_when_the_experiment_name_is_invalid(
     opened_main_window_poly, qtbot, exp_type, panel_name
