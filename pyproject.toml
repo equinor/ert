@@ -219,9 +219,7 @@ select = [
     "PIE",   # flake8-pie
     "PL",    # pylint
     "PLE",
-    "PT011",
-    "PT012",
-    "PT017",
+    "PT",    # pytest
     "PYI",
     "Q",
     "RSE",
