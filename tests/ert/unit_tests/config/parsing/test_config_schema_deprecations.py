@@ -220,6 +220,10 @@ def test_that_forward_model_design2params_is_deprecated():
         executable="design2params",
     )
 
+    config = (
+        "FORWARD_MODEL DESIGN2PARAMS(<xls_filename>=poly_design.xslx, "
+        "<designsheet>=TheDesignSheet, <defaultssheet>=TheDefaultsSheet)"
+    )
     with (
         patch(
             "ert.config.ert_config.installed_forward_model_steps_from_dict",
@@ -231,10 +235,6 @@ def test_that_forward_model_design2params_is_deprecated():
             "Note that validation of DESIGN_MATRIX is more strict, missing values.*",
         ),
     ):
-        config = (
-            "FORWARD_MODEL DESIGN2PARAMS(<xls_filename>=poly_design.xslx, "
-            "<designsheet>=TheDesignSheet, <defaultssheet>=TheDefaultsSheet)"
-        )
         ErtConfig.from_file_contents(f"NUM_REALIZATIONS 1\n{config}")
 
 
@@ -245,6 +245,10 @@ def test_that_forward_model_design_kw_is_deprecated():
         executable="design_kw",
     )
 
+    config = (
+        "FORWARD_MODEL DESIGN_KW(<template_file>=template.tmpl, "
+        "<result_file>=output.txt)"
+    )
     with (
         patch(
             "ert.config.ert_config.installed_forward_model_steps_from_dict",
@@ -255,8 +259,4 @@ def test_that_forward_model_design_kw_is_deprecated():
             match="FORWARD_MODEL DESIGN_KW will be replaced with RUN_TEMPLATE.",
         ),
     ):
-        config = (
-            "FORWARD_MODEL DESIGN_KW(<template_file>=template.tmpl, "
-            "<result_file>=output.txt)"
-        )
         ErtConfig.from_file_contents(f"NUM_REALIZATIONS 1\n{config}")
