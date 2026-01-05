@@ -27,7 +27,7 @@ from PyQt6.QtWidgets import (
 
 from ert.storage import Ensemble, Experiment, RealizationStorageState
 
-from .export_parameters_dialog import ExportParametersDialog
+from .export_parameters_dialog import ExportDialog
 
 
 class _WidgetType(IntEnum):
@@ -421,7 +421,9 @@ class _EnsembleWidget(QWidget):
     @Slot()
     def onClickExportParameters(self) -> None:
         assert self._ensemble is not None
-        export_dialog = ExportParametersDialog(self._ensemble, self)
+        export_dialog = ExportDialog(
+            self._ensemble, window_title="Export parameters", parent=self
+        )
         export_dialog.show()
 
 

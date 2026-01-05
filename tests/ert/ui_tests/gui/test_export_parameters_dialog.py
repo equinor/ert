@@ -6,9 +6,7 @@ import pytest
 from polars.testing import assert_frame_equal
 from PyQt6.QtGui import QColor
 
-from ert.gui.tools.manage_experiments.export_parameters_dialog import (
-    ExportParametersDialog,
-)
+from ert.gui.tools.manage_experiments.export_parameters_dialog import ExportDialog
 from ert.storage import Storage
 
 
@@ -16,7 +14,7 @@ def test_that_exported_csv_contains_the_provided_dataframe_values(
     qtbot, snake_oil_storage: Storage, change_to_tmpdir
 ):
     ensemble = next(snake_oil_storage.ensembles)
-    dialog = ExportParametersDialog(ensemble)
+    dialog = ExportDialog(ensemble)
     qtbot.addWidget(dialog)
     dialog.show()
 
@@ -28,10 +26,7 @@ def test_that_exported_csv_contains_the_provided_dataframe_values(
     assert dialog._export_button.isEnabled() is True
 
     dialog.export()
-    assert (
-        "Ensemble parameters exported to: test_export.csv"
-        in dialog._export_text_area.toPlainText()
-    )
+    assert "Data exported to: test_export.csv" in dialog._export_text_area.toPlainText()
 
     assert_frame_equal(
         ensemble.load_scalar_keys(transformed=True),
@@ -40,7 +35,7 @@ def test_that_exported_csv_contains_the_provided_dataframe_values(
     )
 
 
-def assert_invalidation_in_dialog(dialog: ExportParametersDialog, expected_error: str):
+def assert_invalidation_in_dialog(dialog: ExportDialog, expected_error: str):
     assert dialog._export_button.isEnabled() is False
     palette = dialog._file_path_edit.palette()
     assert palette.color(palette.ColorRole.Text) == QColor("red")
@@ -51,7 +46,7 @@ def test_that_file_path_is_invalidated_given_empty_path(
     qtbot, snake_oil_storage: Storage
 ):
     ensemble = next(snake_oil_storage.ensembles)
-    dialog = ExportParametersDialog(ensemble)
+    dialog = ExportDialog(ensemble)
     qtbot.addWidget(dialog)
 
     empty_path = ""
@@ -72,7 +67,7 @@ def test_that_file_path_validation_fails_on_non_existing_path(
 ):
     ensemble = next(snake_oil_storage.ensembles)
 
-    dialog = ExportParametersDialog(ensemble)
+    dialog = ExportDialog(ensemble)
     qtbot.addWidget(dialog)
 
     non_existing_path = "/non/existent/path/export.csv"
@@ -87,7 +82,7 @@ def test_that_non_existent_directory_path_shows_invalid_file_path_error(
 ):
     ensemble = next(snake_oil_storage.ensembles)
 
-    dialog = ExportParametersDialog(ensemble)
+    dialog = ExportDialog(ensemble)
     qtbot.addWidget(dialog)
 
     existing_directory = "/"
@@ -112,7 +107,7 @@ def test_that_file_path_validation_succeeds_on_valid_paths(
     qtbot, snake_oil_storage: Storage, valid_path, change_to_tmpdir
 ):
     ensemble = next(snake_oil_storage.ensembles)
-    dialog = ExportParametersDialog(ensemble)
+    dialog = ExportDialog(ensemble)
     qtbot.addWidget(dialog)
     dialog.show()
 
@@ -133,13 +128,13 @@ def test_that_export_shows_error_message_when_csv_write_raises_exception(
     patched_load_scalar_keys.side_effect = Exception("i_am_an_exception")
 
     ensemble = next(snake_oil_storage.ensembles)
-    dialog = ExportParametersDialog(ensemble)
+    dialog = ExportDialog(ensemble)
     qtbot.addWidget(dialog)
     dialog.show()
 
     dialog._file_path_edit.setText("test_export.csv")
     dialog.export()
     assert (
-        "Error exporting ensemble parameters: i_am_an_exception"
+        "Could not export data: i_am_an_exception"
         in dialog._export_text_area.toPlainText()
     )
