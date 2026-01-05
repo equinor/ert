@@ -10,7 +10,7 @@ from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
 from ert.gui.tools.plot.plottery.plots import StdDevPlot
 
 
-@pytest.fixture()
+@pytest.fixture
 def plot_context():
     context = Mock(spec=PlotContext)
     context.ensembles.return_value = [

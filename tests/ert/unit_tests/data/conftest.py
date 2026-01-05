@@ -3,7 +3,7 @@ from unittest.mock import Mock
 import pytest
 
 
-@pytest.fixture()
+@pytest.fixture
 def facade():
     obs_mock = Mock()
     obs_mock.data_key = "test_data_key"

@@ -567,7 +567,7 @@ def mock_openpbs(pytestconfig, monkeypatch, tmp_path):
     mock_bin(monkeypatch, tmp_path)
 
 
-@pytest.fixture()
+@pytest.fixture
 def queue_name_config():
     if queue_name := os.getenv("_ERT_TESTS_DEFAULT_QUEUE_NAME"):
         return f"\nQUEUE_OPTION TORQUE QUEUE {queue_name}"

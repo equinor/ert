@@ -42,7 +42,7 @@ def poly_example_tmp_dir_shared(
     return poly_dir
 
 
-@pytest.fixture()
+@pytest.fixture
 def poly_example_tmp_dir(poly_example_tmp_dir_shared):
     with poly_example_tmp_dir_shared.as_cwd():
         yield

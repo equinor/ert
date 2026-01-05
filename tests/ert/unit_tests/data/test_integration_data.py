@@ -10,7 +10,7 @@ from ert.libres_facade import LibresFacade
 from ert.storage import open_storage
 
 
-@pytest.fixture()
+@pytest.fixture
 def facade_snake_oil(snake_oil_case_storage):
     yield LibresFacade(snake_oil_case_storage)
 

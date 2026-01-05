@@ -129,7 +129,7 @@ def env_save():
     assert len(set_xor) == 0, f"Detected differences in environment: {set_xor}"
 
 
-@pytest.fixture()
+@pytest.fixture
 def use_site_configurations_with_no_queue_options():
     def ErtRuntimePluginsWithNoQueueOptions(**kwargs):
         return ErtRuntimePlugins(**(kwargs | {"queue_options": None}))

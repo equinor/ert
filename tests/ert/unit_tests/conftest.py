@@ -22,7 +22,7 @@ def ensure_bin_in_path():
     os.environ["PATH"] = exec_path + ":" + path
 
 
-@pytest.fixture()
+@pytest.fixture
 def snake_oil_field_example(setup_case):
     return setup_case("snake_oil_field", "snake_oil_field.ert")
 

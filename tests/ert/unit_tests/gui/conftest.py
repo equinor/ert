@@ -112,7 +112,7 @@ def fail_snapshot() -> EnsembleSnapshot:
     return snapshot
 
 
-@pytest.fixture()
+@pytest.fixture
 def large_snapshot() -> EnsembleSnapshot:
     builder = SnapshotBuilder()
     for i in range(150):
