@@ -63,12 +63,11 @@ def server_script(monkeypatch, tmp_path: Path, request):
 
 
 @pytest.fixture
-def server(server_script, request):
+def server(server_script):
     proc = _DummyService([str(server_script)])
-    request.addfinalizer(proc.shutdown)
     proc.start()
-
     yield proc
+    proc.shutdown()
 
 
 @pytest.mark.script("")
