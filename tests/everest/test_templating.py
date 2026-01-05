@@ -86,13 +86,13 @@ def test_render_invalid(change_to_tmpdir):
     with pytest.raises(jinja2.exceptions.UndefinedError):
         render(None, template_file, wells_out)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"Input file: .* does not exist"):
         render(2 * prod_in, template_file, wells_out)
 
     with pytest.raises(TypeError):
         render(prod_in, None, wells_out)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"Template file: .* does not exist"):
         render(prod_in, template_file + "nogo", wells_out)
 
     with pytest.raises(TypeError):

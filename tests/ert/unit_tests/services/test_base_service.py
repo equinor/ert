@@ -280,7 +280,7 @@ def test_cleanup_service_files(tmpdir):
         assert webviz_service_file.exists()
         SERVICE_CONF_PATHS.add(tmpdir / webviz_service_file)
 
-        with pytest.raises(OSError):
+        with pytest.raises(OSError, match="Signal 99 received"):
             cleanup_service_files(signum=99, frame=None)
 
         assert not storage_service_file.exists()

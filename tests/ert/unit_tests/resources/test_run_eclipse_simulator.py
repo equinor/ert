@@ -360,7 +360,7 @@ def test_find_unsmry(paths_to_touch, basepath, expectation):
         Path(path).parent.mkdir(parents=True, exist_ok=True)
         Path(path).touch()
     if expectation == "ValueError":
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Ambiguous reference to unsmry"):
             run_reservoirsimulator.find_unsmry(Path(basepath))
     elif expectation is None:
         assert run_reservoirsimulator.find_unsmry(Path(basepath)) is None

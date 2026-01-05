@@ -158,7 +158,7 @@ def test_dependent_definitions_value_error(tmp_path):
     )
     initial_config_object.write_to_file(config_file_path)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Circular dependencies in definitions"):
         EverestConfig.load_file(str(config_file_path))
 
 

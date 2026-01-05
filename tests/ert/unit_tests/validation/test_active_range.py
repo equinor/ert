@@ -44,7 +44,7 @@ def test_rangestring_to_mask(rangestring, length, expected_mask):
     ],
 )
 def test_rangestring_to_mask_errors(rangestring, length):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         # At least one of these two must fail for the test dataset:
         ActiveRange.validate_rangestring(rangestring)
         ActiveRange.validate_rangestring_vs_length(rangestring, length)
@@ -78,5 +78,5 @@ def test_activerange(mask, rangestring, length, expected_mask, expected_rangestr
     ],
 )
 def test_activerange_initerrors(mask, rangestring, length):
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         ActiveRange(mask=mask, rangestring=rangestring, length=length)

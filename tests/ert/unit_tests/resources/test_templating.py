@@ -82,7 +82,7 @@ def test_render_invalid():
         render_template(None, "template_file", wells_out)
 
     # file not found
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"Input file.* does not exist"):
         render_template(2 * prod_in, "template_file", wells_out)
 
     # no template file
@@ -90,7 +90,7 @@ def test_render_invalid():
         render_template(prod_in, None, wells_out)
 
     # templatefile not found
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match=r"Template file.* does not exist"):
         render_template(prod_in, "template_file" + "nogo", wells_out)
 
     # no output file

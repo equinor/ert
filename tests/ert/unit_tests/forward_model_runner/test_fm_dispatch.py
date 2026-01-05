@@ -262,14 +262,14 @@ def test_fm_dispatch_run_subset_specified_as_parameter():
 
 
 def test_no_jobs_json_file_raises_IOError(tmp_path):
-    with pytest.raises(IOError):
+    with pytest.raises(IOError, match=r"No such file or directory: 'jobs.json'"):
         fm_dispatch(["script.py", str(tmp_path)])
 
 
 def test_invalid_jobs_json_raises_OSError(tmp_path):
     (tmp_path / FORWARD_MODEL_DESCRIPTION_FILE).write_text("not json")
 
-    with pytest.raises(OSError):
+    with pytest.raises(OSError, match="fm_dispatch failed to load JSON-file"):
         fm_dispatch(["script.py", str(tmp_path)])
 
 

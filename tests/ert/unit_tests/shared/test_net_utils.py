@@ -110,7 +110,7 @@ def test_that_find_available_socket_ipv6_binds_local():
 
 def test_that_find_available_socket_raises_on_invalid_ipv6_host():
     invalid_host = "0:0:0:0:0:0:0:2"
-    with pytest.raises(OSError):
+    with pytest.raises(OSError, match="Unknown `OSError` while binding port"):
         find_available_socket(invalid_host)
 
 
