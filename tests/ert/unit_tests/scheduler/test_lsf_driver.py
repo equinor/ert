@@ -1208,7 +1208,8 @@ async def test_submit_with_num_cpu(pytestconfig, job_name):
     stdout, stderr = await process.communicate()
     stdout_no_whitespaces = re.sub(r"\s+", "", stdout.decode())
     matches = re.search(r".*([0-9]+)ProcessorsRequested.*", stdout_no_whitespaces)
-    assert matches and matches[1] == str(num_cpu), (
+    assert matches
+    assert matches[1] == str(num_cpu), (
         f"Could not verify processor allocation from stdout: {stdout}, stderr: {stderr}"
     )
 

@@ -264,33 +264,27 @@ def test_that_control_group_name_contains_dot_is_linted(min_config):
     min_config["controls"][0]["name"] = "my.name"
 
     lint = EverestConfig.lint_config_dict(min_config)
-    assert (
-        len(lint) == 1
-        and lint[0]["loc"] == ("controls", 0, "name")
-        and lint[0]["type"] == "value_error"
-    )
+    assert len(lint) == 1
+    assert lint[0]["loc"] == ("controls", 0, "name")
+    assert lint[0]["type"] == "value_error"
 
 
 def test_that_missing_variables_field_in_control_group_is_linted(min_config):
     min_config["controls"][0].pop("variables")
 
     lint = EverestConfig.lint_config_dict(min_config)
-    assert (
-        len(lint) == 1
-        and lint[0]["loc"] == ("controls", 0, "variables")
-        and lint[0]["type"] == "missing"
-    )
+    assert len(lint) == 1
+    assert lint[0]["loc"] == ("controls", 0, "variables")
+    assert lint[0]["type"] == "missing"
 
 
 def test_that_invalid_type_for_control_group_item_is_linted(min_config):
     min_config["controls"][0] = "my vars"  # Modify the item at index 0
 
     lint = EverestConfig.lint_config_dict(min_config)
-    assert (
-        len(lint) == 1
-        and lint[0]["loc"] == ("controls", 0)
-        and lint[0]["type"] == "model_type"
-    )
+    assert len(lint) == 1
+    assert lint[0]["loc"] == ("controls", 0)
+    assert lint[0]["type"] == "model_type"
 
 
 def test_that_missing_name_in_control_variable_is_linted(min_config):

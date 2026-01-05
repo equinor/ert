@@ -1506,22 +1506,17 @@ def test_validate_no_logs_when_overwriting_with_same_value(caplog):
         )
 
     assert (
-        (
-            "Private arg '<VAR3>':'5' chosen over global '55' "
-            "in forward model step step_name"
-        )
-        in caplog.text
-        and (
-            "Private arg '<VAR1>':'10' chosen over global '10' "
-            "in forward model step step_name"
-        )
-        not in caplog.text
-        and (
-            "Private arg '<VAR2>':'20' chosen over global '20' "
-            "in forward model step step_name"
-        )
-        not in caplog.text
-    )
+        "Private arg '<VAR3>':'5' chosen over global '55' "
+        "in forward model step step_name"
+    ) in caplog.text
+    assert (
+        "Private arg '<VAR1>':'10' chosen over global '10' "
+        "in forward model step step_name"
+    ) not in caplog.text
+    assert (
+        "Private arg '<VAR2>':'20' chosen over global '20' "
+        "in forward model step step_name"
+    ) not in caplog.text
 
 
 @pytest.mark.parametrize(

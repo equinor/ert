@@ -85,4 +85,5 @@ def test_progress_state_color_order(qtbot):
 
     for i in range(len(expected_color_order)):
         item = progress_widget._horizontal_layout.itemAt(i).widget()
-        assert isinstance(item, QLabel) and expected_color_order[i] in item.objectName()
+        assert isinstance(item, QLabel)
+        assert expected_color_order[i] in item.objectName()

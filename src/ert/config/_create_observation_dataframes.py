@@ -469,10 +469,8 @@ def _handle_general_observation(
         stds = file_values[1::2]
 
     else:
-        assert (
-            general_observation.value is not None
-            and general_observation.error is not None
-        )
+        assert general_observation.value is not None
+        assert general_observation.error is not None
         values = np.array([general_observation.value])
         stds = np.array([general_observation.error])
 
