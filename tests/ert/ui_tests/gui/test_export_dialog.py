@@ -3,18 +3,18 @@ from unittest.mock import patch
 
 import polars as pl
 import pytest
+from polars import DataFrame
 from polars.testing import assert_frame_equal
 from PyQt6.QtGui import QColor
 
 from ert.gui.tools.manage_experiments.export_dialog import ExportDialog
-from ert.storage import Storage
 
 
 def test_that_exported_csv_contains_the_provided_dataframe_values(
-    qtbot, snake_oil_storage: Storage, change_to_tmpdir
+    qtbot, change_to_tmpdir
 ):
-    ensemble = next(snake_oil_storage.ensembles)
-    dialog = ExportDialog(ensemble)
+    parameter_df = DataFrame({"a": 1, "b": 2})
+    dialog = ExportDialog(parameter_df)
     qtbot.addWidget(dialog)
     dialog.show()
 
@@ -29,7 +29,7 @@ def test_that_exported_csv_contains_the_provided_dataframe_values(
     assert "Data exported to: test_export.csv" in dialog._export_text_area.toPlainText()
 
     assert_frame_equal(
-        ensemble.load_scalar_keys(transformed=True),
+        parameter_df,
         pl.read_csv("test_export.csv"),
         abs_tol=1e-6,
     )
@@ -42,11 +42,8 @@ def assert_invalidation_in_dialog(dialog: ExportDialog, expected_error: str):
     assert dialog._file_path_edit.toolTip() == expected_error
 
 
-def test_that_file_path_is_invalidated_given_empty_path(
-    qtbot, snake_oil_storage: Storage
-):
-    ensemble = next(snake_oil_storage.ensembles)
-    dialog = ExportDialog(ensemble)
+def test_that_file_path_is_invalidated_given_empty_path(qtbot):
+    dialog = ExportDialog(DataFrame())
     qtbot.addWidget(dialog)
 
     empty_path = ""
@@ -62,12 +59,8 @@ def test_that_file_path_is_invalidated_given_empty_path(
     assert_invalidation_in_dialog(dialog, expected_error="No filename provided")
 
 
-def test_that_file_path_validation_fails_on_non_existing_path(
-    qtbot, snake_oil_storage: Storage
-):
-    ensemble = next(snake_oil_storage.ensembles)
-
-    dialog = ExportDialog(ensemble)
+def test_that_file_path_validation_fails_on_non_existing_path(qtbot):
+    dialog = ExportDialog(DataFrame())
     qtbot.addWidget(dialog)
 
     non_existing_path = "/non/existent/path/export.csv"
@@ -77,12 +70,8 @@ def test_that_file_path_validation_fails_on_non_existing_path(
     assert_invalidation_in_dialog(dialog, expected_error="Invalid file path")
 
 
-def test_that_non_existent_directory_path_shows_invalid_file_path_error(
-    qtbot, snake_oil_storage: Storage
-):
-    ensemble = next(snake_oil_storage.ensembles)
-
-    dialog = ExportDialog(ensemble)
+def test_that_non_existent_directory_path_shows_invalid_file_path_error(qtbot):
+    dialog = ExportDialog(DataFrame())
     qtbot.addWidget(dialog)
 
     existing_directory = "/"
@@ -104,10 +93,9 @@ def test_that_non_existent_directory_path_shows_invalid_file_path_error(
     ],
 )
 def test_that_file_path_validation_succeeds_on_valid_paths(
-    qtbot, snake_oil_storage: Storage, valid_path, change_to_tmpdir
+    qtbot, valid_path, change_to_tmpdir
 ):
-    ensemble = next(snake_oil_storage.ensembles)
-    dialog = ExportDialog(ensemble)
+    dialog = ExportDialog(DataFrame())
     qtbot.addWidget(dialog)
     dialog.show()
 
@@ -121,14 +109,13 @@ def test_that_file_path_validation_succeeds_on_valid_paths(
     assert not dialog._file_path_edit.toolTip()
 
 
-@patch("ert.storage.Ensemble.load_scalar_keys")
+@patch("polars.DataFrame.write_csv")
 def test_that_export_shows_error_message_when_csv_write_raises_exception(
-    patched_load_scalar_keys, qtbot, snake_oil_storage: Storage
+    patched_write_csv, qtbot
 ):
-    patched_load_scalar_keys.side_effect = Exception("i_am_an_exception")
+    patched_write_csv.side_effect = Exception("i_am_an_exception")
 
-    ensemble = next(snake_oil_storage.ensembles)
-    dialog = ExportDialog(ensemble)
+    dialog = ExportDialog(DataFrame())
     qtbot.addWidget(dialog)
     dialog.show()
 
