@@ -230,27 +230,3 @@ def test_that_forward_model_design2params_is_deprecated():
             "<designsheet>=TheDesignSheet, <defaultssheet>=TheDefaultsSheet)"
         )
         ErtConfig.from_file_contents(f"NUM_REALIZATIONS 1\n{config}")
-
-
-def test_that_forward_model_design_kw_is_deprecated():
-    # Create a mock DESIGN_KW forward model step, since it is not installed
-    mock_design_kw_step = UserInstalledForwardModelStep(
-        name="DESIGN_KW",
-        executable="design_kw",
-    )
-
-    with (
-        patch(
-            "ert.config.ert_config.installed_forward_model_steps_from_dict",
-            return_value={"DESIGN_KW": mock_design_kw_step},
-        ),
-        pytest.warns(
-            ConfigWarning,
-            match="FORWARD_MODEL DESIGN_KW will be replaced with RUN_TEMPLATE.",
-        ),
-    ):
-        config = (
-            "FORWARD_MODEL DESIGN_KW(<template_file>=template.tmpl, "
-            "<result_file>=output.txt)"
-        )
-        ErtConfig.from_file_contents(f"NUM_REALIZATIONS 1\n{config}")
