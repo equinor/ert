@@ -37,25 +37,34 @@ class SchemaItem:
 
     # The minimum number of arguments
     argc_min: NonNegativeInt = 1
+
     # The maximum number of arguments: None means no upper limit
     argc_max: NonNegativeInt | None = 1
+
     # A list of types for the items. Set along with argc_minmax()
     type_map: list[SchemaItemType | EnumType | None] = Field(default_factory=list)
+
     # A list of item's which must also be set (if this item is set). (can be NULL)
     required_children: list[str] = Field(default_factory=list)
+
     # Information about the deprecation if deprecated
     deprecation_info: list[DeprecationInfo] = Field(default_factory=list)
+
     # if positive, arguments after this count will be concatenated with a " " between
     join_after: PositiveInt | None = None
+
     # if positive, arguments after this count will be interpreted as options
     options_after: NonNegativeInt | Varies | None = None
+
     # if true, will accumulate many values set for key, otherwise each entry will
     # overwrite any previous value set
     multi_occurrence: bool = False
+
     # Only applies to SchemaItemType.EXISTING_PATH_INLINE where
     # the contents is then parsed
     parser: Callable[[str, str], Any] = lambda x, y: y
     expand_envvar: bool = True
+
     # Index of tokens to do substitution from until end
     substitute_from: NonNegativeInt = 1
     required_set: bool = False
