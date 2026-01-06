@@ -58,13 +58,13 @@ def test_that_file_path_is_invalidated_given_empty_path(
     dialog._file_path_edit.setText(empty_path)
     dialog.validate_file()
 
-    assert_invalidation_in_dialog(dialog, expected_error="Invalid file path")
+    assert_invalidation_in_dialog(dialog, expected_error="No filename provided")
 
     long_empty_path = "   "
     dialog._file_path_edit.setText(long_empty_path)
     dialog.validate_file()
 
-    assert_invalidation_in_dialog(dialog, expected_error="Invalid file path")
+    assert_invalidation_in_dialog(dialog, expected_error="No filename provided")
 
 
 def test_that_file_path_validation_fails_on_non_existing_path(
@@ -94,7 +94,9 @@ def test_that_non_existent_directory_path_shows_invalid_file_path_error(
     dialog._file_path_edit.setText(existing_directory)
     dialog.validate_file()
 
-    assert_invalidation_in_dialog(dialog, expected_error="Invalid file path")
+    assert_invalidation_in_dialog(
+        dialog, expected_error="'/' is an existing directory."
+    )
 
 
 @pytest.mark.parametrize(
