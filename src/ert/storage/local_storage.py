@@ -536,7 +536,7 @@ class LocalStorage(BaseMode):
 
                 self._index = self._load_index()
 
-                logger.info("storage backed up for version less than 6")
+                logger.info("Storage backed up for version less than 5")
                 print(self._legacy_storage_migration_message(bkup_path, "14.6.*"))
                 return None
             elif version < _LOCAL_STORAGE_VERSION:
