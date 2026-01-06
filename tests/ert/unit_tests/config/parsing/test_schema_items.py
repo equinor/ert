@@ -25,6 +25,16 @@ def test_that_schema_argc_max_raises_on_too_many_arguments():
         parse_contents("OPTIONS foo bar", schema, "dummy_filename")
 
 
+def test_that_schema_options_cannot_be_repeated():
+    schema = ConfigSchemaDict(
+        OPTIONS=SchemaItem(kw="OPTIONS", argc_max=1, options_after=0)
+    )
+    with pytest.raises(
+        ConfigValidationError, match="Option foo occured multiple times"
+    ):
+        parse_contents("OPTIONS foo:bar foo:com", schema, "dummy_filename")
+
+
 def test_that_a_schema_item_can_contain_only_options():
     all_options_item = SchemaItem(
         kw="OPTIONS",
