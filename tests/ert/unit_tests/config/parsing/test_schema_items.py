@@ -19,6 +19,12 @@ def test_that_schema_argc_min_one_with_options_after_raises_on_zero_arguments():
         parse_contents("OPTIONS", schema, "dummy_filename")
 
 
+def test_that_schema_argc_max_raises_on_too_many_arguments():
+    schema = ConfigSchemaDict(OPTIONS=SchemaItem(kw="OPTIONS", argc_max=1))
+    with pytest.raises(ConfigValidationError, match="must have maximum 1 arguments"):
+        parse_contents("OPTIONS foo bar", schema, "dummy_filename")
+
+
 def test_that_a_schema_item_can_contain_only_options():
     all_options_item = SchemaItem(
         kw="OPTIONS",
