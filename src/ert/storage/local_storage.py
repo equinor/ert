@@ -113,7 +113,7 @@ class LocalStorage(BaseMode):
             )
 
         if not stage_for_migration:
-            self.refresh()
+            self.reload()
 
             if mode.can_write:
                 self._save_index()
@@ -139,9 +139,9 @@ class LocalStorage(BaseMode):
         if LocalStorage.check_migration_needed(path):
             with LocalStorage(path, Mode("w"), True) as storage:
                 storage._migrate(storage.version)
-                storage.refresh()
+                storage.reload()
 
-    def refresh(self) -> None:
+    def reload(self) -> None:
         """
         Reloads the index, experiments, and ensembles from the storage.
 
