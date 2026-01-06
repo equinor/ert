@@ -55,10 +55,14 @@ def option_dict(option_list: Sequence[str], offset: int) -> dict[str, str]:
                 result[key] = val
             else:
                 raise ConfigValidationError.with_context(
-                    f"Invalid argument {option_pair!r}", option_pair
+                    "Option argument should be of the form 'key':'value', "
+                    f"got {option_pair!r}",
+                    option_pair,
                 )
         else:
             raise ConfigValidationError.with_context(
-                f"Invalid argument {option_pair!r}", option_pair
+                "Option argument should be of the form 'key':'value', "
+                f"got {option_pair!r}",
+                option_pair,
             )
     return result
