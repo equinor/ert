@@ -2,6 +2,7 @@ import contextlib
 from pathlib import Path
 from typing import cast
 
+import polars as pl
 from PyQt6.QtCore import (
     Qt,
 )
@@ -21,20 +22,18 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.storage import Ensemble
-
 
 class ExportDialog(QDialog):
     """Base dialog for exporting ensemble-related data to files."""
 
     def __init__(
         self,
-        ensemble: Ensemble,
+        export_data: pl.DataFrame,
         window_title: str = "Export data",
         parent: QWidget | None = None,
     ) -> None:
         QDialog.__init__(self, parent)
-        self._ensemble = ensemble
+        self._export_data = export_data
         self.setWindowTitle(window_title)
 
         self.setWindowFlags(Qt.WindowType.Dialog)
@@ -79,8 +78,7 @@ class ExportDialog(QDialog):
         try:
             output_file: str = self._file_path_edit.text().strip()
             self._export_button.setEnabled(False)
-            parameters_df = self._ensemble.load_scalar_keys(transformed=True)
-            parameters_df.write_csv(output_file, float_precision=6)
+            self._export_data.write_csv(output_file, float_precision=6)
             self._export_text_area.insertPlainText(f"Data exported to: {output_file}\n")
         except Exception as e:
             self._export_text_area.insertHtml(

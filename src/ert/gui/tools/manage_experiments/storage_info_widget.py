@@ -421,8 +421,9 @@ class _EnsembleWidget(QWidget):
     @Slot()
     def onClickExportParameters(self) -> None:
         assert self._ensemble is not None
+        parameters_df = self._ensemble.load_scalar_keys(transformed=True)
         export_dialog = ExportDialog(
-            self._ensemble, window_title="Export parameters", parent=self
+            parameters_df, window_title="Export parameters", parent=self
         )
         export_dialog.show()
 
