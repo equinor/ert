@@ -27,7 +27,7 @@ from PyQt6.QtWidgets import (
 
 from ert.storage import Ensemble, Experiment, RealizationStorageState
 
-from .export_parameters_dialog import ExportDialog
+from .export_dialog import ExportDialog
 
 
 class _WidgetType(IntEnum):
