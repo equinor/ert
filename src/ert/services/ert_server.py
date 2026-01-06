@@ -179,6 +179,10 @@ class _Proc(threading.Thread):
         return logging.getLogger("ert.shared.storage")
 
 
+_ERT_SERVER_CONNECTION_INFO_FILE = "storage_server.json"
+_ERT_SERVER_EXECUTABLE_FILE = str(Path(__file__).parent / "_storage_main.py")
+
+
 class ErtServerContext:
     def __init__(self, service: ErtServer) -> None:
         self._service = service
@@ -230,7 +234,7 @@ class ErtServer:
 
         run_storage_main_cmd = [
             sys.executable,
-            str(Path(__file__).parent / "_storage_main.py"),
+            _ERT_SERVER_EXECUTABLE_FILE,
             "--project",
             storage_path,
         ]
@@ -378,12 +382,12 @@ class ErtServer:
                 timeout = 240
             t = -1
             while t < timeout:
-                storage_server_path = path / "storage_server.json"
+                storage_server_path = path / _ERT_SERVER_CONNECTION_INFO_FILE
                 if (
                     storage_server_path.exists()
                     and storage_server_path.stat().st_size > 0
                 ):
-                    with (path / "storage_server.json").open() as f:
+                    with (path / _ERT_SERVER_CONNECTION_INFO_FILE).open() as f:
                         storage_server_content = json.load(f)
 
                     return ErtServer(
@@ -437,9 +441,9 @@ class ErtServer:
         if self._storage_path is not None:
             if not Path(self._storage_path).exists():
                 raise RuntimeError(f"No storage exists at : {self._storage_path}")
-            path = f"{self._storage_path}/storage_server.json"
+            path = f"{self._storage_path}/{_ERT_SERVER_CONNECTION_INFO_FILE}"
         else:
-            path = "storage_server.json"
+            path = _ERT_SERVER_CONNECTION_INFO_FILE
 
         if isinstance(info, Mapping):
             with NamedTemporaryFile(dir=f"{self._storage_path}", delete=False) as f:
