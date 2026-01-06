@@ -80,16 +80,29 @@ def run_webviz_ert(args: Namespace, _: ErtRuntimePlugins | None = None) -> None:
     # only use the base name of the config file path
     kwargs["ert_config"] = os.path.basename(args.config)
     kwargs["project"] = os.path.abspath(ens_path)
+
+    yellow = "\x1b[33m"
+    green = "\x1b[32m"
+    bold = "\x1b[1m"
+    reset = "\x1b[0m"
+
     try:
         with ErtServer.init_service(project=Path(ens_path).absolute()) as storage:
             storage.wait_until_ready()
             print(
-                """
-    -----------------------------------------------------------
+                f"""
+    ---------------------------------------------------------------
+
+    {yellow}{bold}Webviz-ERT is deprecated and will be removed in the near future{reset}
+
+    {green}{bold}Plotting capabilities provided by Webviz-ERT are now available
+    using the ERT plotter{reset}
+
+    ---------------------------------------------------------------
 
     Starting up Webviz-ERT. This might take more than a minute.
 
-    -----------------------------------------------------------
+    ---------------------------------------------------------------
     """
             )
             webviz_kwargs = {
