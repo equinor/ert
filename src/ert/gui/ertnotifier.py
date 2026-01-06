@@ -74,7 +74,7 @@ class ErtNotifier(QObject):
     @Slot()
     def emitErtChange(self) -> None:
         if self._storage is not None:
-            self._storage.refresh()
+            self._storage.reload()
 
         self.ertChanged.emit()
 

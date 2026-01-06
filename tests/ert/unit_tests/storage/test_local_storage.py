@@ -359,7 +359,7 @@ def test_open_with_no_permissions(tmp_path):
         os.chmod(path, mode)  # restore permissions
 
 
-def test_refresh(tmp_path):
+def test_reload(tmp_path):
     with open_storage(tmp_path, mode="w") as accessor:
         experiment_id = accessor.create_experiment()
         with open_storage(tmp_path, mode="r") as reader:
@@ -369,8 +369,8 @@ def test_refresh(tmp_path):
             # Reader does not know about the newly created ensemble
             assert _ensembles(accessor) != _ensembles(reader)
 
-            reader.refresh()
-            # Reader knows about it after the refresh
+            reader.reload()
+            # Reader knows about it after the reload
             assert _ensembles(accessor) == _ensembles(reader)
 
 
@@ -384,7 +384,7 @@ def test_that_reader_storage_reads_most_recent_response_configs(tmp_path):
     )
     ens: LocalEnsemble = exp.create_ensemble(ensemble_size=10, name="uniq_ens")
 
-    reader.refresh()
+    reader.reload()
     read_exp = reader.get_experiment_by_name("uniq")
     assert read_exp.id == exp.id
 
@@ -426,7 +426,7 @@ def test_open_storage_write_with_empty_directory(tmp_path, caplog):
         _ = storage.create_experiment()
         assert len(list(storage.experiments)) == 1
 
-    storage.refresh()
+    storage.reload()
     assert len(list(storage.experiments)) == 0
 
     assert len(caplog.messages) == 0

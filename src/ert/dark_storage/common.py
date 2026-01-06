@@ -28,7 +28,7 @@ def get_storage() -> Storage:
         except ErtStorageException as err:
             logger.exception(f"Error accessing storage: {err!s}")
             raise InternalServerError("Error accessing storage") from None
-    _storage.refresh()
+    _storage.reload()
     return _storage
 
 
