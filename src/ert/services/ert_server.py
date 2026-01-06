@@ -251,7 +251,7 @@ class ErtServer:
         self._thread_that_starts_server_process = _Proc(
             service_name="storage",
             exec_args=run_storage_main_cmd,
-            timeout=120,
+            timeout=timeout,
             on_connection_info_received=self.on_connection_info_received_from_server_process,
             project=Path(self._storage_path),
         )
