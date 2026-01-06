@@ -7,6 +7,7 @@ import seaborn as sns
 import yaml
 from matplotlib.backends.backend_qt5agg import FigureCanvas  # type: ignore
 from matplotlib.figure import Figure
+from polars import DataFrame
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import (
@@ -25,6 +26,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ert import LibresFacade
 from ert.storage import Ensemble, Experiment, RealizationStorageState
 
 from .export_dialog import ExportDialog
@@ -49,6 +51,7 @@ class _EnsembleWidgetTabs(IntEnum):
     STATE_TAB = 1
     OBSERVATIONS_TAB = 2
     PARAMETERS_TAB = 3
+    MISFIT_TAB = 4
 
 
 class _ExperimentWidget(QWidget):
@@ -161,17 +164,21 @@ class _EnsembleWidget(QWidget):
         observations_layout.addWidget(self._canvas)
         observations_frame.setLayout(observations_layout)
 
-        parameters_frame = QFrame()
-        parameters_layout = QVBoxLayout()
         self._parameters_table = QTableWidget()
-        vertical_header = self._parameters_table.verticalHeader()
-        assert vertical_header is not None
-        vertical_header.setVisible(False)
-        parameters_layout.addWidget(self._parameters_table)
-        self._export_button = QPushButton("Export...")
-        self._export_button.clicked.connect(self.onClickExportParameters)
-        parameters_layout.addWidget(self._export_button)
-        parameters_frame.setLayout(parameters_layout)
+        self._export_params_button = QPushButton("Export...")
+        self._export_params_button.clicked.connect(self.onClickExportParameters)
+
+        parameters_frame = self.create_export_frame(
+            self._parameters_table, self._export_params_button
+        )
+
+        self._misfit_table = QTableWidget()
+        self._export_misfit_button = QPushButton("Export...")
+        self._export_misfit_button.clicked.connect(self.onClickExportMisfit)
+
+        misfit_frame = self.create_export_frame(
+            self._misfit_table, self._export_misfit_button
+        )
 
         self._tab_widget = QTabWidget()
         self._tab_widget.insertTab(
@@ -184,12 +191,26 @@ class _EnsembleWidget(QWidget):
         self._tab_widget.insertTab(
             _EnsembleWidgetTabs.PARAMETERS_TAB, parameters_frame, "Parameters"
         )
+        self._tab_widget.insertTab(
+            _EnsembleWidgetTabs.MISFIT_TAB, misfit_frame, "Misfit"
+        )
         self._tab_widget.currentChanged.connect(self._currentTabChanged)
 
         layout = QVBoxLayout()
         layout.addWidget(self._tab_widget)
 
         self.setLayout(layout)
+
+    def create_export_frame(self, table: QTableWidget, button: QPushButton) -> QFrame:
+        export_frame = QFrame()
+        export_layout = QVBoxLayout()
+        vertical_header = table.verticalHeader()
+        assert vertical_header is not None
+        vertical_header.setVisible(False)
+        export_layout.addWidget(table)
+        export_layout.addWidget(button)
+        export_frame.setLayout(export_layout)
+        return export_frame
 
     def _currentItemChanged(
         self, selected: QTreeWidgetItem, _: QTreeWidgetItem
@@ -386,14 +407,24 @@ class _EnsembleWidget(QWidget):
                     self._observations_tree_widget.setCurrentItem(item.child(0))
                     break
 
-        elif index == _EnsembleWidgetTabs.PARAMETERS_TAB:
+        elif index in {
+            _EnsembleWidgetTabs.PARAMETERS_TAB,
+            _EnsembleWidgetTabs.MISFIT_TAB,
+        }:
             assert self._ensemble is not None
 
             df: pl.DataFrame = pl.DataFrame()
             with contextlib.suppress(Exception):
-                df = self._ensemble.load_scalar_keys(transformed=True)
+                if index == _EnsembleWidgetTabs.PARAMETERS_TAB:
+                    df = self._ensemble.load_scalar_keys(transformed=True)
+                else:
+                    df = self.get_misfit_df()
 
-            table = self._parameters_table
+            table = (
+                self._parameters_table
+                if index == _EnsembleWidgetTabs.PARAMETERS_TAB
+                else self._misfit_table
+            )
 
             table.setUpdatesEnabled(False)
             table.setSortingEnabled(False)
@@ -409,6 +440,14 @@ class _EnsembleWidget(QWidget):
             table.resizeColumnsToContents()
             table.setUpdatesEnabled(True)
 
+    def get_misfit_df(self) -> DataFrame:
+        assert self._ensemble is not None
+        df = LibresFacade.load_all_misfit_data(self._ensemble)
+        realization_column = pl.Series(df.index)
+        df = pl.from_pandas(df)
+        df.insert_column(0, realization_column)
+        return df
+
     @Slot(Ensemble)
     def setEnsemble(self, ensemble: Ensemble) -> None:
         self._ensemble = ensemble
@@ -417,6 +456,13 @@ class _EnsembleWidget(QWidget):
         self._uuid_label.setText(f"UUID: {ensemble.id!s}")
 
         self._tab_widget.setCurrentIndex(0)
+
+    @Slot()
+    def onClickExportMisfit(self) -> None:
+        assert self._ensemble is not None
+        misfit_df = self.get_misfit_df()
+        export_dialog = ExportDialog(misfit_df, "Export misfit", parent=self)
+        export_dialog.show()
 
     @Slot()
     def onClickExportParameters(self) -> None:
