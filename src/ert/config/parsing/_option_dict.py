@@ -48,6 +48,10 @@ def option_dict(option_list: Sequence[str], offset: int) -> dict[str, str]:
         if len(option_pair.split(":")) == 2:
             key, val = option_pair.split(":")
             if val and key:
+                if key in result:
+                    raise ConfigValidationError.with_context(
+                        f"Option {key} occured multiple times.", option_pair
+                    )
                 result[key] = val
             else:
                 raise ConfigValidationError.with_context(
