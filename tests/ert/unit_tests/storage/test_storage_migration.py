@@ -271,46 +271,40 @@ def test_that_storage_works_with_missing_parameters_and_responses(
 
 @pytest.mark.integration_test
 def test_that_migrate_blockfs_creates_backup_folder(tmp_path, caplog):
-    with open(tmp_path / "config.ert", mode="w", encoding="utf-8") as f:
-        f.writelines(["NUM_REALIZATIONS 1\n", "ENSPATH", str(tmp_path / "storage")])
+    storage_path = tmp_path / "storage"
+    storage_ensembles = storage_path / "ensembles"
+    storage_experiments = storage_path / "experiments"
+    storage_backup = storage_path / "_blockfs_backup"
 
-    os.makedirs(tmp_path / "storage")
-    with open(tmp_path / "storage" / "index.json", "w+", encoding="utf-8") as f:
+    with open(tmp_path / "config.ert", mode="w", encoding="utf-8") as f:
+        f.writelines(["NUM_REALIZATIONS 1\n", "ENSPATH", str(storage_path)])
+
+    for d in (storage_path, storage_ensembles, storage_experiments):
+        os.makedirs(d, exist_ok=True)
+
+    with open(storage_path / "index.json", "w+", encoding="utf-8") as f:
         f.write("""{"version": 0}""")
 
-    os.makedirs(tmp_path / "storage" / "experiments")
-    os.makedirs(tmp_path / "storage" / "ensembles")
-
-    Path(tmp_path / "storage" / "experiments" / "exp_dummy.txt").write_text(
-        "", encoding="utf-8"
-    )
-    Path(tmp_path / "storage" / "ensembles" / "ens_dummy.txt").write_text(
-        "", encoding="utf-8"
-    )
+    Path(storage_experiments / "exp_dummy.txt").write_text("", encoding="utf-8")
+    Path(storage_ensembles / "ens_dummy.txt").write_text("", encoding="utf-8")
 
     with caplog.at_level(level=logging.INFO):
         run_cli("test_run", str(tmp_path / "config.ert"))
 
-    assert (tmp_path / "storage" / "_blockfs_backup").exists()
+    assert storage_backup.exists()
     assert "Blockfs storage backed up" in caplog.messages
 
-    with open(tmp_path / "storage" / "index.json", encoding="utf-8") as f:
+    with open(storage_path / "index.json", encoding="utf-8") as f:
         index = json.load(f)
         assert index["version"] == _LOCAL_STORAGE_VERSION
         assert index["migrations"] == []
 
-    with open(
-        tmp_path / "storage" / "_blockfs_backup" / "index.json", encoding="utf-8"
-    ) as f:
+    with open(storage_backup / "index.json", encoding="utf-8") as f:
         index = json.load(f)
         assert index["version"] == 0
 
-    assert (
-        tmp_path / "storage" / "_blockfs_backup" / "experiments" / "exp_dummy.txt"
-    ).exists()
-    assert (
-        tmp_path / "storage" / "_blockfs_backup" / "ensembles" / "ens_dummy.txt"
-    ).exists()
+    assert (storage_backup / "experiments" / "exp_dummy.txt").exists()
+    assert (storage_backup / "ensembles" / "ens_dummy.txt").exists()
 
 
 @pytest.mark.integration_test
