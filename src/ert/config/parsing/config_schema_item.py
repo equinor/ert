@@ -50,13 +50,13 @@ class SchemaItem:
     # Information about the deprecation if deprecated
     deprecation_info: list[DeprecationInfo] = Field(default_factory=list)
 
-    # if positive, arguments after this count will be concatenated with a " " between
+    # If positive, arguments after this count will be concatenated with a " " between
     join_after: PositiveInt | None = None
 
-    # if positive, arguments after this count will be interpreted as options
+    # If positive, arguments after this count will be interpreted as options
     options_after: NonNegativeInt | Varies | None = None
 
-    # if true, will accumulate many values set for key, otherwise each entry will
+    # If true, will accumulate many values set for key, otherwise each entry will
     # overwrite any previous value set
     multi_occurrence: bool = False
 
