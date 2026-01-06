@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import os
+import traceback
 from pathlib import Path
 
+from .dict_encoded_dataframe import DictEncodedDataFrame
 from .local_ensemble import LocalEnsemble, load_realization_parameters_and_responses
 from .local_experiment import ExperimentState, ExperimentStatus, LocalExperiment
 from .local_storage import LocalStorage, local_storage_set_ert_config
@@ -49,12 +51,14 @@ def open_storage(
             f"{path} with mode: '{mode}'. Error: {err}"
         ) from err
     except Exception as err:
+        traceback.print_tb(err.__traceback__)
         raise ErtStorageException(
             f"Failed to open storage: {path} with error: {err}"
         ) from err
 
 
 __all__ = [
+    "DictEncodedDataFrame",
     "Ensemble",
     "Experiment",
     "ExperimentState",

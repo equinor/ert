@@ -10,6 +10,7 @@ from scipy.ndimage import gaussian_filter
 from ert.analysis import smoother_update
 from ert.config import ESSettings, Field, GenDataConfig, ObservationSettings
 from ert.field_utils import Shape
+from ert.storage import DictEncodedDataFrame
 
 
 def test_and_benchmark_adaptive_localization_with_fields(
@@ -105,9 +106,11 @@ def test_and_benchmark_adaptive_localization_with_fields(
     )
 
     experiment = storage.create_experiment(
-        parameters=[config],
-        responses=[resp],
-        observations={"gen_data": obs},
+        experiment_config={
+            "parameter_configuration": [config],
+            "response_configuration": [resp],
+            "observations": {"gen_data": DictEncodedDataFrame.from_polars(obs)},
+        }
     )
 
     prior_ensemble = storage.create_ensemble(
