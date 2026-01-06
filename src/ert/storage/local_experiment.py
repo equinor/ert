@@ -24,7 +24,10 @@ from ert.config import (
     SurfaceConfig,
 )
 from ert.config import Field as FieldConfig
-from ert.config.parsing.context_values import ContextBoolEncoder
+from ert.config._create_observation_dataframes import (
+    create_observation_dataframes,
+)
+from ert.config._observations import Observation
 
 from .mode import BaseMode, Mode, require_write
 
@@ -54,6 +57,7 @@ class _Index(BaseModel):
     # from a different experiment. For example, a manual update
     # is a separate experiment from the one that created the prior.
     ensembles: list[UUID]
+    experiment: dict[str, Any] = {}
     status: ExperimentStatus | None = Field(default=None)
 
 
@@ -80,9 +84,6 @@ class LocalExperiment(BaseMode):
     arguments. Provides methods to create and access associated ensembles.
     """
 
-    _parameter_file = Path("parameter.json")
-    _responses_file = Path("responses.json")
-    _metadata_file = Path("metadata.json")
     _templates_file = Path("templates.json")
     _index_file = Path("index.json")
 
@@ -118,63 +119,21 @@ class LocalExperiment(BaseMode):
         storage: LocalStorage,
         uuid: UUID,
         path: Path,
-        *,
-        parameters: list[ParameterConfig] | None = None,
-        responses: list[ResponseConfig] | None = None,
-        observations: dict[str, pl.DataFrame] | None = None,
-        simulation_arguments: dict[Any, Any] | None = None,
+        experiment_config: dict[str, Any],
         name: str | None = None,
-        templates: list[tuple[str, str]] | None = None,
     ) -> LocalExperiment:
-        """
-        Create a new LocalExperiment and store its configuration data.
-
-        Parameters
-        ----------
-        storage : LocalStorage
-            Storage instance for experiment creation.
-        uuid : UUID
-            Unique identifier for the new experiment.
-        path : Path
-            File system path for storing experiment data.
-        parameters : list of ParameterConfig, optional
-            List of parameter configurations.
-        responses : list of ResponseConfig, optional
-            List of response configurations.
-        observations : dict of str to encoded observation datasets, optional
-            Observations dictionary.
-        simulation_arguments : SimulationArguments, optional
-            Simulation arguments for the experiment.
-        name : str, optional
-            Experiment name. Defaults to current date if None.
-        templates : list of tuple[str, str], optional
-            Run templates for the experiment. Defaults to None.
-
-        Returns
-        -------
-        local_experiment : LocalExperiment
-            Instance of the newly created experiment.
-        """
         if name is None:
             name = datetime.today().isoformat()
 
         storage._write_transaction(
             path / cls._index_file,
-            _Index(id=uuid, name=name, ensembles=[])
+            _Index(id=uuid, name=name, ensembles=[], experiment=experiment_config)
             .model_dump_json(indent=2, exclude_none=True)
             .encode("utf-8"),
         )
 
-        parameter_data = {}
-        for parameter in parameters or []:
-            parameter.save_experiment_data(path)
-            parameter_data.update({parameter.name: parameter.model_dump(mode="json")})
-        storage._write_transaction(
-            path / cls._parameter_file,
-            json.dumps(parameter_data, indent=2).encode("utf-8"),
-        )
-
-        if templates:
+        templates = experiment_config.get("ert_templates")
+        if templates is not None:
             templates_path = path / "templates"
             templates_path.mkdir(parents=True, exist_ok=True)
             templates_abs: list[tuple[str, str]] = []
@@ -191,27 +150,29 @@ class LocalExperiment(BaseMode):
                 json.dumps(templates_abs).encode("utf-8"),
             )
 
-        response_data = {}
-        for response in responses or []:
-            response_data.update({response.type: response.model_dump(mode="json")})
-        storage._write_transaction(
-            path / cls._responses_file,
-            json.dumps(response_data, default=str, indent=2).encode("utf-8"),
-        )
-
-        if observations:
+        observation_declarations = experiment_config.get("observations")
+        if observation_declarations:
             output_path = path / "observations"
-            output_path.mkdir()
-            for response_type, dataset in observations.items():
-                storage._to_parquet_transaction(
-                    output_path / f"{response_type}", dataset
-                )
+            output_path.mkdir(parents=True, exist_ok=True)
 
-        simulation_data = simulation_arguments or {}
-        storage._write_transaction(
-            path / cls._metadata_file,
-            json.dumps(simulation_data, cls=ContextBoolEncoder).encode("utf-8"),
-        )
+            responses_list = experiment_config.get("response_configuration", [])
+            rft_config_json = next(
+                (r for r in responses_list if r.get("type") == "rft"), None
+            )
+            rft_config = (
+                _responses_adapter.validate_python(rft_config_json)
+                if rft_config_json is not None
+                else None
+            )
+
+            obs_adapter = TypeAdapter(Observation)  # type: ignore
+            obs_objs: list[Observation] = []
+            for od in observation_declarations:
+                obs_objs.append(obs_adapter.validate_python(od))
+
+            datasets = create_observation_dataframes(obs_objs, rft_config)
+            for response_type, df in datasets.items():
+                storage._to_parquet_transaction(output_path / response_type, df)
 
         return cls(storage, path, Mode.WRITE)
 
@@ -286,15 +247,9 @@ class LocalExperiment(BaseMode):
         raise KeyError(f"Ensemble with name '{name}' not found")
 
     @property
-    def metadata(self) -> dict[str, Any]:
-        path = self.mount_point / self._metadata_file
-        if not path.exists():
-            raise ValueError(f"{self._metadata_file!s} does not exist")
-        return json.loads(path.read_text(encoding="utf-8"))
-
-    @property
     def relative_weights(self) -> str:
-        return self.metadata.get("weights", "")
+        assert self.experiment_config is not None
+        return self.experiment_config.get("weights", "")
 
     @property
     def name(self) -> str:
@@ -324,9 +279,8 @@ class LocalExperiment(BaseMode):
 
     @property
     def parameter_info(self) -> dict[str, Any]:
-        return json.loads(
-            (self.mount_point / self._parameter_file).read_text(encoding="utf-8")
-        )
+        parameters_list = self.experiment_config.get("parameter_configuration", [])
+        return {parameter["name"]: parameter for parameter in parameters_list}
 
     @property
     def templates_configuration(self) -> list[tuple[str, str]]:
@@ -348,9 +302,8 @@ class LocalExperiment(BaseMode):
 
     @property
     def response_info(self) -> dict[str, Any]:
-        return json.loads(
-            (self.mount_point / self._responses_file).read_text(encoding="utf-8")
-        )
+        responses_list = self.experiment_config.get("response_configuration", [])
+        return {response["type"]: response for response in responses_list}
 
     def get_surface(self, name: str) -> IrapSurface:
         """
@@ -420,10 +373,50 @@ class LocalExperiment(BaseMode):
 
     @cached_property
     def observations(self) -> dict[str, pl.DataFrame]:
-        observations = sorted(self.mount_point.glob("observations/*"))
+        obs_dir = self.mount_point / "observations"
+
+        if obs_dir.exists():
+            datasets: dict[str, pl.DataFrame] = {}
+            for p in obs_dir.iterdir():
+                if not p.is_file():
+                    continue
+                try:
+                    df = pl.read_parquet(p)
+                except Exception:
+                    continue
+                datasets[p.stem] = df
+            return datasets
+
+        serialized_observations = self.experiment_config.get("observations", None)
+        if not serialized_observations:
+            return {}
+
+        output_path = self.mount_point / "observations"
+        output_path.mkdir(parents=True, exist_ok=True)
+
+        rft_cfg = None
+        try:
+            responses_list = self.experiment_config.get("response_configuration", [])
+            for r in responses_list:
+                if r.get("type") == "rft":
+                    rft_cfg = _responses_adapter.validate_python(r)
+                    break
+        except Exception:
+            rft_cfg = None
+
+        obs_adapter = TypeAdapter(Observation)  # type: ignore
+        obs_objs: list[Observation] = []
+        for od in serialized_observations:
+            obs_objs.append(obs_adapter.validate_python(od))
+
+        datasets = create_observation_dataframes(obs_objs, rft_cfg)
+        for response_type, df in datasets.items():
+            self._storage._to_parquet_transaction(output_path / response_type, df)
+
         return {
-            observation.name: pl.read_parquet(f"{observation}")
-            for observation in observations
+            p.stem: pl.read_parquet(p)
+            for p in (self.mount_point / "observations").iterdir()
+            if p.is_file()
         }
 
     @cached_property
@@ -489,18 +482,22 @@ class LocalExperiment(BaseMode):
             )
 
         config = responses_configuration[response_type]
+
         config.keys = sorted(response_keys)
         config.has_finalized_keys = True
+
+        response_index = next(
+            i
+            for i, c in enumerate(self.experiment_config["response_configuration"])
+            if c["type"] == response_type
+        )
+        self.experiment_config["response_configuration"][response_index] = (
+            config.model_dump(mode="json")
+        )
+
         self._storage._write_transaction(
-            self._path / self._responses_file,
-            json.dumps(
-                {
-                    c.type: c.model_dump(mode="json")
-                    for c in responses_configuration.values()
-                },
-                default=str,
-                indent=2,
-            ).encode("utf-8"),
+            self._path / self._index_file,
+            self._index.model_dump_json(indent=2).encode("utf-8"),
         )
 
         if self.response_key_to_response_type is not None:
@@ -508,3 +505,7 @@ class LocalExperiment(BaseMode):
 
         if self.response_type_to_response_keys is not None:
             del self.response_type_to_response_keys
+
+    @property
+    def experiment_config(self) -> dict[str, Any]:
+        return self._index.experiment

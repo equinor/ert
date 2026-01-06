@@ -2,16 +2,14 @@ from __future__ import annotations
 
 import functools
 import logging
-from typing import Any, ClassVar, cast
+from typing import Any, ClassVar
 from uuid import UUID
 
 from pydantic import PrivateAttr
 
 from ert.config import (
-    ParameterConfig,
     PostExperimentFixtures,
     PreExperimentFixtures,
-    ResponseConfig,
 )
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.initial_ensemble_run_model import (
@@ -97,12 +95,8 @@ class MultipleDataAssimilation(
                         f"restart iteration = {prior.iteration + 1}"
                     )
                 target_experiment = self._storage.create_experiment(
-                    parameters=list(prior.experiment.parameter_configuration.values()),
-                    responses=list(prior.experiment.response_configuration.values()),
-                    observations=prior.experiment.observations,
-                    simulation_arguments=prior.experiment.metadata,
+                    experiment_config=self.model_dump(mode="json"),
                     name=f"Restart from {prior.name}",
-                    templates=self.ert_templates,
                 )
 
             except (KeyError, ValueError) as err:
@@ -113,14 +107,9 @@ class MultipleDataAssimilation(
             self.run_workflows(
                 fixtures=PreExperimentFixtures(random_seed=self.random_seed),
             )
-            sim_args = {"weights": self.weights}
             experiment_storage = self._storage.create_experiment(
-                parameters=cast(list[ParameterConfig], self.parameter_configuration),
-                observations=self.observation_dataframes(),
-                responses=cast(list[ResponseConfig], self.response_configuration),
+                experiment_config=self.model_dump(mode="json"),
                 name=self.experiment_name,
-                templates=self.ert_templates,
-                simulation_arguments=sim_args,
             )
 
             prior = self._storage.create_ensemble(

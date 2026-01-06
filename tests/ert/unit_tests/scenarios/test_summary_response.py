@@ -11,7 +11,6 @@ from resdata.summary import Summary
 
 from ert.analysis import ErtAnalysisError, smoother_update
 from ert.config import ErtConfig, ESSettings, ObservationSettings
-from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.data import MeasuredData
 from ert.sample_prior import sample_prior
 from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
@@ -20,11 +19,20 @@ from ert.storage.local_ensemble import load_parameters_and_responses_from_runpat
 @pytest.fixture
 def prior_ensemble(storage, ert_config):
     return storage.create_experiment(
-        parameters=ert_config.ensemble_config.parameter_configuration,
-        responses=ert_config.ensemble_config.response_configuration,
-        observations=create_observation_dataframes(
-            ert_config.observation_declarations, None
-        ),
+        name="prior",
+        experiment_config={
+            "parameter_configuration": [
+                pc.model_dump(mode="json")
+                for pc in ert_config.ensemble_config.parameter_configuration
+            ],
+            "response_configuration": [
+                rc.model_dump(mode="json")
+                for rc in ert_config.ensemble_config.response_configuration
+            ],
+            "observations": [
+                od.model_dump(mode="json") for od in ert_config.observation_declarations
+            ],
+        },
     ).create_ensemble(ensemble_size=3, name="prior")
 
 

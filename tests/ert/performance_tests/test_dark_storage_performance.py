@@ -284,14 +284,15 @@ def test_plot_api_big_summary_memory_usage(
     )
 
     experiment = storage.create_experiment(
-        parameters=[],
-        responses=[
-            SummaryConfig(
-                name="summary",
-                input_files=["CASE.UNSMRY", "CASE.SMSPEC"],
-                keys=keys_df,
-            )
-        ],
+        experiment_config={
+            "response_configuration": [
+                SummaryConfig(
+                    name="summary",
+                    input_files=["CASE.UNSMRY", "CASE.SMSPEC"],
+                    keys=keys_df,
+                ).model_dump(mode="json")
+            ]
+        },
     )
 
     ensemble = experiment.create_ensemble(ensemble_size=num_reals, name="bigboi")

@@ -1,9 +1,7 @@
-import datetime
 import shutil
 from pathlib import Path
 
 import numpy as np
-import polars as pl
 import pytest
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
@@ -16,7 +14,6 @@ from PyQt6.QtWidgets import (
 )
 
 from ert.config import ErtConfig, SummaryConfig
-from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_info_widget import (
@@ -28,7 +25,11 @@ from ert.gui.tools.manage_experiments.storage_info_widget import (
     _WidgetType,
 )
 from ert.gui.tools.manage_experiments.storage_widget import StorageWidget
-from ert.storage import RealizationStorageState, Storage, open_storage
+from ert.storage import (
+    RealizationStorageState,
+    Storage,
+    open_storage,
+)
 from tests.ert.ui_tests.cli.analysis.test_adaptive_localization import (
     run_cli_ES_with_case,
 )
@@ -55,10 +56,18 @@ def test_design_matrix_in_manage_experiments_panel(
 
     with notifier.write_storage() as storage:
         storage.create_experiment(
-            parameters=list(
-                config.analysis_config.design_matrix.parameter_configurations
-            ),
-            responses=config.ensemble_config.response_configuration,
+            experiment_config={
+                "parameter_configuration": [
+                    pc.model_dump(mode="json")
+                    for pc in (
+                        config.analysis_config.design_matrix.parameter_configurations
+                    )
+                ],
+                "response_configuration": [
+                    rc.model_dump(mode="json")
+                    for rc in config.ensemble_config.response_configuration
+                ],
+            },
             name="my-experiment",
         ).create_ensemble(
             ensemble_size=config.runpath_config.num_realizations,
@@ -123,8 +132,16 @@ def test_init_prior(qtbot):
 
     with notifier.write_storage() as storage:
         ensemble = storage.create_experiment(
-            parameters=config.ensemble_config.parameter_configuration,
-            responses=config.ensemble_config.response_configuration,
+            experiment_config={
+                "parameter_configuration": [
+                    pc.model_dump(mode="json")
+                    for pc in config.ensemble_config.parameter_configuration
+                ],
+                "response_configuration": [
+                    rc.model_dump(mode="json")
+                    for rc in config.ensemble_config.response_configuration
+                ],
+            },
             name="my-experiment",
         ).create_ensemble(
             ensemble_size=config.runpath_config.num_realizations,
@@ -158,14 +175,24 @@ def test_that_init_updates_the_info_tab(qtbot):
     config = ErtConfig.from_file("poly.ert")
     notifier = ErtNotifier()
     notifier.set_storage(config.ens_path)
+    ensemble_config = config.ensemble_config
 
     with notifier.write_storage() as storage:
         ensemble = storage.create_experiment(
-            parameters=config.ensemble_config.parameter_configuration,
-            responses=config.ensemble_config.response_configuration,
-            observations=create_observation_dataframes(
-                config.observation_declarations, None
-            ),
+            experiment_config={
+                "parameter_configuration": [
+                    pc.model_dump(mode="json")
+                    for pc in ensemble_config.parameter_configuration
+                ],
+                "response_configuration": [
+                    rc.model_dump(mode="json")
+                    for rc in ensemble_config.response_configuration
+                ],
+                "observations": [
+                    od.model_dump(mode="json") for od in config.observation_declarations
+                ],
+                "ert_templates": config.ert_templates,
+            },
             name="my-experiment",
         ).create_ensemble(
             ensemble_size=config.runpath_config.num_realizations, name="default"
@@ -452,25 +479,25 @@ def test_ensemble_observations_view_on_empty_ensemble(qtbot):
 
     with notifier.write_storage() as storage:
         notifier.set_storage(str(storage.path))
-        storage.create_experiment(
-            responses=[SummaryConfig(keys=["*"])],
-            observations={
-                "summary": pl.DataFrame(
-                    pl.DataFrame(
-                        {
-                            "response_key": ["FOPR"],
-                            "observation_key": ["O4"],
-                            "time": pl.Series(
-                                [datetime.datetime(2000, 1, 1)],
-                                dtype=pl.Datetime("ms"),
-                            ),
-                            "observations": pl.Series([10.2], dtype=pl.Float32),
-                            "std": pl.Series([0.1], dtype=pl.Float32),
-                        }
-                    )
-                ),
-            },
-        ).create_ensemble(
+        exp = storage.create_experiment(
+            experiment_config={
+                "response_configuration": [
+                    SummaryConfig(keys=["*"]).model_dump(mode="json")
+                ],
+                "observations": [
+                    {
+                        "type": "summary_observation",
+                        "name": "O4",
+                        "key": "FOPR",
+                        "date": "2000-01-01",
+                        "value": 10.2,
+                        "error": 0.1,
+                    }
+                ],
+            }
+        )
+
+        exp.create_ensemble(
             name="test", ensemble_size=config.runpath_config.num_realizations
         )
 

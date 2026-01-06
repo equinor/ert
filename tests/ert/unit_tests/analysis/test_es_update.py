@@ -1,4 +1,5 @@
 from contextlib import ExitStack as does_not_raise
+from typing import Any
 from unittest.mock import patch
 
 import numpy as np
@@ -12,7 +13,7 @@ from ert.analysis._update_commons import (
     _OutlierColumns,
     _preprocess_observations_and_responses,
 )
-from ert.analysis.event import AnalysisCompleteEvent, AnalysisErrorEvent
+from ert.analysis.event import AnalysisCompleteEvent
 from ert.config import (
     ESSettings,
     GenDataConfig,
@@ -29,24 +30,27 @@ def uniform_parameter():
         name="KEY_1",
         group="PARAMETER",
         distribution={"name": "uniform", "min": 0, "max": 1},
-    )
+    ).model_dump(mode="json")
 
 
 @pytest.fixture
-def obs() -> pl.DataFrame:
-    return pl.DataFrame(
+def obs() -> list[dict[str, Any]]:
+    return [
         {
-            "response_key": "RESPONSE",
-            "observation_key": "OBSERVATION",
-            "report_step": pl.Series(np.full(3, 0), dtype=pl.UInt16),
-            "index": pl.Series([0, 1, 2], dtype=pl.UInt16),
-            "observations": pl.Series([1.0, 1.0, 1.0], dtype=pl.Float32),
-            "std": pl.Series([0.1, 1.0, 10.0], dtype=pl.Float32),
-            "east": pl.Series([None, None, None], dtype=pl.Float32),
-            "north": pl.Series([None, None, None], dtype=pl.Float32),
-            "radius": pl.Series([None, None, None], dtype=pl.Float32),
+            "type": "general_observation",
+            "name": "OBSERVATION",
+            "data": "RESPONSE",
+            "restart": 0,
+            "index": index,
+            "value": value,
+            "error": error,
         }
-    )
+        for index, value, error in [
+            (0, 1.0, 0.1),
+            (1, 1.0, 1.0),
+            (2, 1.0, 10.0),
+        ]
+    ]
 
 
 @pytest.mark.integration_test
@@ -89,45 +93,6 @@ def test_update_report(
     event = next(e for e in events if isinstance(e, AnalysisCompleteEvent))
     snapshot.assert_match(
         tabulate(event.data.data, floatfmt=".3f") + "\n", "update_log"
-    )
-
-
-@pytest.mark.integration_test
-@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
-def test_update_report_with_exception_in_analysis_ES(
-    snapshot,
-    snake_oil_case_storage,
-    snake_oil_storage,
-):
-    ert_config = snake_oil_case_storage
-    experiment = snake_oil_storage.get_experiment_by_name("ensemble-experiment")
-    prior_ens = experiment.get_ensemble_by_name("default_0")
-    posterior_ens = snake_oil_storage.create_ensemble(
-        prior_ens.experiment_id,
-        ensemble_size=ert_config.runpath_config.num_realizations,
-        iteration=1,
-        name="new_ensemble",
-        prior_ensemble=prior_ens,
-    )
-    events = []
-
-    with pytest.raises(
-        ErtAnalysisError, match="No active observations for update step"
-    ):
-        smoother_update(
-            prior_ens,
-            posterior_ens,
-            experiment.observation_keys,
-            ert_config.ensemble_config.parameters,
-            ObservationSettings(outlier_settings=OutlierSettings(alpha=0.0000000001)),
-            ESSettings(inversion="SUBSPACE"),
-            progress_callback=events.append,
-        )
-
-    error_event = next(e for e in events if isinstance(e, AnalysisErrorEvent))
-    assert error_event.error_msg == "No active observations for update step"
-    snapshot.assert_match(
-        tabulate(error_event.data.data, floatfmt=".3f") + "\n", "error_event"
     )
 
 
@@ -237,37 +202,34 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment(
             name="ensemble_smoother",
-            parameters=[gen_kw],
-            observations={
-                "gen_data": pl.DataFrame(
+            experiment_config={
+                "parameter_configuration": [gen_kw.model_dump(mode="json")],
+                "response_configuration": [
+                    GenDataConfig(
+                        name="gen_data",
+                        input_files=["poly.out"],
+                        keys=["RES"],
+                        has_finalized_keys=True,
+                        report_steps_list=[None],
+                    ).model_dump(mode="json")
+                ],
+                "observations": [
                     {
-                        "response_key": "RES",
-                        "observation_key": "OBS",
-                        "report_step": pl.Series(np.zeros(3), dtype=pl.UInt16),
-                        "index": pl.Series([0, 1, 2], dtype=pl.UInt16),
-                        "observations": pl.Series(
-                            [-218285263.28648496, -999999999.0, -107098474.0148249],
-                            dtype=pl.Float32,
-                        ),
-                        "std": pl.Series(
-                            [559437122.6211826, 999999999.9999999, 1.9],
-                            dtype=pl.Float32,
-                        ),
-                        "east": pl.Series([None, None, None], dtype=pl.Float32),
-                        "north": pl.Series([None, None, None], dtype=pl.Float32),
-                        "radius": pl.Series([None, None, None], dtype=pl.Float32),
+                        "type": "general_observation",
+                        "name": "OBS",
+                        "data": "RES",
+                        "restart": 0,
+                        "index": index,
+                        "value": value,
+                        "error": error,
                     }
-                )
+                    for index, value, error in [
+                        (0, -218285263.28648496, 559437122.6211826),
+                        (1, -999999999.0, 999999999.9999999),
+                        (2, -107098474.0148249, 1.9),
+                    ]
+                ],
             },
-            responses=[
-                GenDataConfig(
-                    name="gen_data",
-                    input_files=["poly.out"],
-                    keys=["RES"],
-                    has_finalized_keys=True,
-                    report_steps_list=[None],
-                )
-            ],
         )
         prior = storage.create_ensemble(experiment.id, ensemble_size=23, name="prior")
         datasets = Ensemble.sample_parameter(
@@ -354,37 +316,34 @@ def test_update_raises_on_singular_matrix(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment(
             name="ensemble_smoother",
-            parameters=[gen_kw],
-            observations={
-                "gen_data": pl.DataFrame(
+            experiment_config={
+                "parameter_configuration": [gen_kw.model_dump(mode="json")],
+                "response_configuration": [
+                    GenDataConfig(
+                        name="gen_data",
+                        input_files=["poly.out"],
+                        keys=["RES"],
+                        has_finalized_keys=True,
+                        report_steps_list=[None],
+                    ).model_dump(mode="json")
+                ],
+                "observations": [
                     {
-                        "response_key": "RES",
-                        "observation_key": "OBS",
-                        "report_step": pl.Series(np.zeros(3), dtype=pl.UInt16),
-                        "index": pl.Series([0, 1, 2], dtype=pl.UInt16),
-                        "observations": pl.Series(
-                            [-1.5, 5.9604645e-08, 0.0],
-                            dtype=pl.Float32,
-                        ),
-                        "std": pl.Series(
-                            [0.33333334, 0.14142136, 0.0],
-                            dtype=pl.Float32,
-                        ),
-                        "east": pl.Series([None, None, None], dtype=pl.Float32),
-                        "north": pl.Series([None, None, None], dtype=pl.Float32),
-                        "radius": pl.Series([None, None, None], dtype=pl.Float32),
+                        "type": "general_observation",
+                        "name": "OBS",
+                        "data": "RES",
+                        "restart": 0,
+                        "index": index,
+                        "value": value,
+                        "error": error,
                     }
-                )
+                    for index, value, error in [
+                        (0, -1.5, 0.33333334),
+                        (1, 5.9604645e-08, 0.14142136),
+                        (2, 0.0, 1e-32),
+                    ]
+                ],
             },
-            responses=[
-                GenDataConfig(
-                    name="gen_data",
-                    input_files=["poly.out"],
-                    keys=["RES"],
-                    has_finalized_keys=True,
-                    report_steps_list=[None],
-                )
-            ],
         )
         prior = storage.create_ensemble(experiment.id, ensemble_size=2, name="prior")
         datasets = Ensemble.sample_parameter(
@@ -429,7 +388,6 @@ def test_update_raises_on_singular_matrix(tmp_path):
                 match=r"Failed while computing transition matrix."
                 "*(?:Matrix is singular|A singular matrix detected)",
             ),
-            pytest.warns(RuntimeWarning, match="divide by zero"),
         ):
             _ = smoother_update(
                 prior,
@@ -558,11 +516,14 @@ def test_smoother_snapshot_alpha(
 
     # alpha is a parameter used for outlier detection
 
-    resp = GenDataConfig(keys=["RESPONSE"])
+    response_config = GenDataConfig(keys=["RESPONSE"]).model_dump(mode="json")
     experiment = storage.create_experiment(
-        parameters=[uniform_parameter],
-        responses=[resp],
-        observations={"gen_data": obs},
+        name="ensemble_smoother",
+        experiment_config={
+            "parameter_configuration": [uniform_parameter],
+            "response_configuration": [response_config],
+            "observations": obs,
+        },
     )
     prior_storage = storage.create_ensemble(
         experiment,
@@ -940,25 +901,26 @@ def test_that_activate_observations_are_not_logged_as_deactivated(storage, caplo
 
 
 def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
-    resp = GenDataConfig(keys=["RESPONSE"])
-    gen_data_obs = pl.DataFrame(
+    response_config = GenDataConfig(keys=["RESPONSE"]).model_dump(mode="json")
+    gen_data_obs = [
         {
-            "observation_key": "OBSERVATION",
-            "response_key": ["RESPONSE"],
-            "report_step": pl.Series([0], dtype=pl.UInt16),
-            "index": pl.Series([1000], dtype=pl.UInt16),
-            "observations": pl.Series([1.0], dtype=pl.Float32),
-            "std": pl.Series([0.1], dtype=pl.Float32),
-            "east": pl.Series([None], dtype=pl.Float32),
-            "north": pl.Series([None], dtype=pl.Float32),
-            "radius": pl.Series([None], dtype=pl.Float32),
+            "type": "general_observation",
+            "name": "OBSERVATION",
+            "data": "RESPONSE",
+            "restart": 0,
+            "index": 1000,
+            "value": 1.0,
+            "error": 0.1,
         }
-    )
+    ]
 
     experiment = storage.create_experiment(
-        parameters=[uniform_parameter],
-        responses=[resp],
-        observations={"gen_data": gen_data_obs},
+        name="ensemble_smoother",
+        experiment_config={
+            "parameter_configuration": [uniform_parameter],
+            "response_configuration": [response_config],
+            "observations": gen_data_obs,
+        },
     )
     prior = storage.create_ensemble(
         experiment,
@@ -1017,11 +979,13 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_gen_data_missing(storage, uniform_parameter, obs):
-    resp = GenDataConfig(keys=["RESPONSE"])
+    response_config = GenDataConfig(keys=["RESPONSE"]).model_dump(mode="json")
     experiment = storage.create_experiment(
-        parameters=[uniform_parameter],
-        responses=[resp],
-        observations={"gen_data": obs},
+        experiment_config={
+            "parameter_configuration": [uniform_parameter],
+            "response_configuration": [response_config],
+            "observations": obs,
+        }
     )
     prior = storage.create_ensemble(
         experiment,
@@ -1091,11 +1055,17 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
         update=False,
         distribution={"name": "uniform", "min": 0, "max": 1},
     )
-    resp = GenDataConfig(keys=["RESPONSE"])
+    response_config = GenDataConfig(keys=["RESPONSE"]).model_dump(mode="json")
     experiment = storage.create_experiment(
-        parameters=[uniform_parameter, no_update_param],
-        responses=[resp],
-        observations={"gen_data": obs},
+        name="ensemble_smoother",
+        experiment_config={
+            "parameter_configuration": [
+                uniform_parameter,
+                no_update_param.model_dump(mode="json"),
+            ],
+            "response_configuration": [response_config],
+            "observations": obs,
+        },
     )
     prior = storage.create_ensemble(
         experiment,

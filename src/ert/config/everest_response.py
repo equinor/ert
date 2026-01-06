@@ -79,8 +79,8 @@ class EverestResponse(ResponseConfig):
 class EverestConstraintsConfig(EverestResponse):
     type: Literal["everest_constraints"] = "everest_constraints"
     targets: list[float | None]
-    upper_bounds: list[float]
-    lower_bounds: list[float]
+    upper_bounds: list[float | None]
+    lower_bounds: list[float | None]
 
 
 responses_index.add_response_type(EverestConstraintsConfig)

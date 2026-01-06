@@ -10,23 +10,25 @@ def test_that_load_scalar_keys_loads_all_parameters(tmp_path):
     """Test that load_scalar_keys loads all scalar parameters when keys=None."""
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment(
-            parameters=[
-                GenKwConfig(
-                    name="param1",
-                    group="group1",
-                    distribution={"name": "uniform", "min": 0, "max": 1},
-                ),
-                GenKwConfig(
-                    name="param2",
-                    group="group1",
-                    distribution={"name": "uniform", "min": 0, "max": 1},
-                ),
-                GenKwConfig(
-                    name="param3",
-                    group="group2",
-                    distribution={"name": "normal", "mean": 0, "std": 1},
-                ),
-            ]
+            experiment_config={
+                "parameter_configuration": [
+                    GenKwConfig(
+                        name="param1",
+                        group="group1",
+                        distribution={"name": "uniform", "min": 0, "max": 1},
+                    ).model_dump(mode="json"),
+                    GenKwConfig(
+                        name="param2",
+                        group="group1",
+                        distribution={"name": "uniform", "min": 0, "max": 1},
+                    ).model_dump(mode="json"),
+                    GenKwConfig(
+                        name="param3",
+                        group="group2",
+                        distribution={"name": "normal", "mean": 0, "std": 1},
+                    ).model_dump(mode="json"),
+                ]
+            }
         )
         ensemble = storage.create_ensemble(experiment.id, ensemble_size=5, name="test")
 
@@ -56,23 +58,25 @@ def test_that_load_scalar_keys_loads_specific_parameters(tmp_path):
     """Test that load_scalar_keys loads only specified parameters."""
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment(
-            parameters=[
-                GenKwConfig(
-                    name="param1",
-                    group="group1",
-                    distribution={"name": "uniform", "min": 0, "max": 1},
-                ),
-                GenKwConfig(
-                    name="param2",
-                    group="group1",
-                    distribution={"name": "uniform", "min": 0, "max": 1},
-                ),
-                GenKwConfig(
-                    name="param3",
-                    group="group2",
-                    distribution={"name": "normal", "mean": 0, "std": 1},
-                ),
-            ]
+            experiment_config={
+                "parameter_configuration": [
+                    GenKwConfig(
+                        name="param1",
+                        group="group1",
+                        distribution={"name": "uniform", "min": 0, "max": 1},
+                    ).model_dump(mode="json"),
+                    GenKwConfig(
+                        name="param2",
+                        group="group1",
+                        distribution={"name": "uniform", "min": 0, "max": 1},
+                    ).model_dump(mode="json"),
+                    GenKwConfig(
+                        name="param3",
+                        group="group2",
+                        distribution={"name": "normal", "mean": 0, "std": 1},
+                    ).model_dump(mode="json"),
+                ]
+            }
         )
         ensemble = storage.create_ensemble(experiment.id, ensemble_size=5, name="test")
 
@@ -100,13 +104,15 @@ def test_that_load_scalar_keys_filters_by_realizations(tmp_path):
     """Test that load_scalar_keys filters by specified realizations."""
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment(
-            parameters=[
-                GenKwConfig(
-                    name="param1",
-                    group="group1",
-                    distribution={"name": "uniform", "min": 0, "max": 1},
-                ),
-            ]
+            experiment_config={
+                "parameter_configuration": [
+                    GenKwConfig(
+                        name="param1",
+                        group="group1",
+                        distribution={"name": "uniform", "min": 0, "max": 1},
+                    ).model_dump(mode="json"),
+                ]
+            }
         )
         ensemble = storage.create_ensemble(experiment.id, ensemble_size=5, name="test")
 
@@ -130,13 +136,15 @@ def test_that_load_scalar_keys_raises_key_error_for_missing_parameters(tmp_path)
     """Test that load_scalar_keys raises KeyError for non-existent parameters."""
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment(
-            parameters=[
-                GenKwConfig(
-                    name="param1",
-                    group="group1",
-                    distribution={"name": "uniform", "min": 0, "max": 1},
-                ),
-            ]
+            experiment_config={
+                "parameter_configuration": [
+                    GenKwConfig(
+                        name="param1",
+                        group="group1",
+                        distribution={"name": "uniform", "min": 0, "max": 1},
+                    ).model_dump(mode="json"),
+                ]
+            }
         )
         ensemble = storage.create_ensemble(experiment.id, ensemble_size=5, name="test")
 
@@ -148,13 +156,15 @@ def test_that_load_scalar_keys_raises_key_error_for_unregistered_parameters(tmp_
     """Test that load_scalar_keys raises KeyError for parameters not in experiment."""
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment(
-            parameters=[
-                GenKwConfig(
-                    name="param1",
-                    group="group1",
-                    distribution={"name": "uniform", "min": 0, "max": 1},
-                ),
-            ]
+            experiment_config={
+                "parameter_configuration": [
+                    GenKwConfig(
+                        name="param1",
+                        group="group1",
+                        distribution={"name": "uniform", "min": 0, "max": 1},
+                    ).model_dump(mode="json"),
+                ]
+            }
         )
         ensemble = storage.create_ensemble(experiment.id, ensemble_size=5, name="test")
 
@@ -178,13 +188,15 @@ def test_that_load_scalar_keys_raises_index_error_for_missing_realizations(tmp_p
     """Test that load_scalar_keys raises IndexError when no matching realizations."""
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment(
-            parameters=[
-                GenKwConfig(
-                    name="param1",
-                    group="group1",
-                    distribution={"name": "uniform", "min": 0, "max": 1},
-                ),
-            ]
+            experiment_config={
+                "parameter_configuration": [
+                    GenKwConfig(
+                        name="param1",
+                        group="group1",
+                        distribution={"name": "uniform", "min": 0, "max": 1},
+                    ).model_dump(mode="json"),
+                ]
+            }
         )
         ensemble = storage.create_ensemble(experiment.id, ensemble_size=5, name="test")
 

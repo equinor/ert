@@ -41,7 +41,12 @@ def test_load_summary_response_restart_not_zero(
         ert_config = ErtConfig.from_file("config.ert")
 
         experiment_id = storage.create_experiment(
-            responses=ert_config.ensemble_config.response_configuration
+            experiment_config={
+                "response_configuration": [
+                    rc.model_dump(mode="json")
+                    for rc in ert_config.ensemble_config.response_configuration
+                ]
+            },
         )
         ensemble = storage.create_ensemble(
             experiment_id,

@@ -208,7 +208,11 @@ def test_gen_kw_is_log_or_not(
         gen_kw_config = ert_config.ensemble_config.parameter_configs["MY_KEYWORD"]
         assert isinstance(gen_kw_config, GenKwConfig)
         experiment_id = storage.create_experiment(
-            parameters=ert_config.ensemble_config.parameter_configuration
+            experiment_config={
+                "parameter_configuration": (
+                    ert_config.ensemble_config.parameter_configuration
+                )
+            }
         )
         prior_ensemble = storage.create_ensemble(
             experiment_id, name="prior", ensemble_size=1
