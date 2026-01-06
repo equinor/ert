@@ -105,6 +105,7 @@ def run_webviz_ert(args: Namespace, _: ErtRuntimePlugins | None = None) -> None:
     ---------------------------------------------------------------
     """
             )
+            logger.info("Show Webviz-ert deprecation warning")
             webviz_kwargs = {
                 "experimental_mode": args.experimental_mode,
                 "verbose": args.verbose,
