@@ -269,12 +269,12 @@ def test_the_user_gets_a_warning_about_input_transform_usage(parse_field_line):
 @pytest.mark.parametrize(
     "invalid_argument", ["doesnthavecolon", "colonafter:", ":colonbefore"]
 )
-def test_invalid_argument_gives_a_user_error_message(
+def test_invalid_keyvalue_gives_a_user_error_message(
     parse_field_line, invalid_argument
 ):
     with pytest.raises(
         ConfigValidationError,
-        match=f"Line 3.*Invalid argument '{invalid_argument}'",
+        match=f"Line 3.*Option argument should be .* '{invalid_argument}'",
     ):
         _ = parse_field_line(
             f"FIELD f parameter out.roff INIT_FILES:file.init {invalid_argument}"

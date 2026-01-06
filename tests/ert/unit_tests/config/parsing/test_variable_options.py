@@ -29,7 +29,10 @@ def test_parse_config(input_config, expected):
 
 
 def test_that_positional_arguments_must_come_before_named_arguments():
-    with pytest.raises(ValueError, match="Invalid argument 'positional'"):
+    with pytest.raises(
+        ValueError,
+        match="Option argument should be of the form 'key':'value', got 'positional'",
+    ):
         parse_variable_options(
             [
                 "NAME",
