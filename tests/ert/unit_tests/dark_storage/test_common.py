@@ -29,9 +29,7 @@ def test_data_for_response_gives_mean_for_duplicate_values(tmp_path):
     with open_storage(tmp_path / "storage", mode="w") as storage:
         summary_config = SummaryConfig(name="summary", input_files=["CASE"], keys=["*"])
         experiment = storage.create_experiment(
-            observations={},
-            parameters=[],
-            responses=[summary_config],
+            experiment_config={"response_configuration": [summary_config]},
         )
         ensemble = experiment.create_ensemble(name="ensemble", ensemble_size=1)
         unsmry = Unsmry(
@@ -84,7 +82,9 @@ def test_data_for_response_doesnt_mistake_history_for_response(tmp_path):
         summary_config = SummaryConfig(
             name="summary", input_files=["CASE"], keys=["FGPR"]
         )
-        experiment = storage.create_experiment(responses=[summary_config])
+        experiment = storage.create_experiment(
+            experiment_config={"response_configuration": [summary_config]}
+        )
         ensemble = experiment.create_ensemble(name="ensemble", ensemble_size=1)
         ensemble.save_response(
             "summary",
@@ -109,9 +109,7 @@ def test_data_for_response_returns_empty_gen_data_config(tmp_path):
     with open_storage(tmp_path / "storage", mode="w") as storage:
         gen_data_config = GenDataConfig(keys=["response"])
         experiment = storage.create_experiment(
-            observations={},
-            parameters=[],
-            responses=[gen_data_config],
+            experiment_config={"response_configuration": [gen_data_config]},
         )
         ensemble = experiment.create_ensemble(name="ensemble", ensemble_size=1)
 

@@ -20,17 +20,18 @@ import xarray as xr
 from filelock import FileLock, Timeout
 from pydantic import BaseModel, Field
 
-from ert.config import ErtConfig, ParameterConfig, ResponseConfig
+from ert.config import ErtConfig
 from ert.shared import __version__
 
 from .local_ensemble import LocalEnsemble
 from .local_experiment import LocalExperiment
+from .migration import to20
 from .mode import BaseMode, Mode, require_write
 from .realization_storage_state import RealizationStorageState
 
 logger = logging.getLogger(__name__)
 
-_LOCAL_STORAGE_VERSION = 21
+_LOCAL_STORAGE_VERSION = 22
 
 
 class _Migrations(BaseModel):
@@ -312,12 +313,8 @@ class LocalStorage(BaseMode):
     @require_write
     def create_experiment(
         self,
-        parameters: list[ParameterConfig] | None = None,
-        responses: list[ResponseConfig] | None = None,
-        observations: dict[str, pl.DataFrame] | None = None,
-        simulation_arguments: dict[Any, Any] | None = None,
+        experiment_config: dict[str, Any] | None = None,
         name: str | None = None,
-        templates: list[tuple[str, str]] | None = None,
     ) -> LocalExperiment:
         """
         Creates a new experiment in the storage.
@@ -342,6 +339,8 @@ class LocalStorage(BaseMode):
         local_experiment : LocalExperiment
             The newly created experiment.
         """
+        if experiment_config is None:
+            experiment_config = {}
 
         exp_id = uuid4()
         path = self._experiment_path(exp_id)
@@ -351,12 +350,8 @@ class LocalStorage(BaseMode):
             self,
             exp_id,
             path,
-            parameters=parameters,
-            responses=responses,
-            observations=observations,
-            simulation_arguments=simulation_arguments,
+            experiment_config=experiment_config,
             name=name,
-            templates=templates,
         )
 
         self._experiments[exp.id] = exp
@@ -505,8 +500,8 @@ class LocalStorage(BaseMode):
             to17,
             to18,
             to19,
-            to20,
             to21,
+            to22,
         )
 
         try:
@@ -557,6 +552,7 @@ class LocalStorage(BaseMode):
                     18: to19,
                     19: to20,
                     20: to21,
+                    21: to22,
                 }
                 for from_version in range(version, _LOCAL_STORAGE_VERSION):
                     migrations[from_version].migrate(self.path)

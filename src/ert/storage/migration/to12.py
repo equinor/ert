@@ -71,3 +71,7 @@ def migrate(path: Path) -> None:
                 config.pop("refcase")
 
             new_json[key] = config
+
+        (experiment / "responses.json").write_text(  # Need to be separate migration ...
+            json.dumps(new_json, indent=2), encoding="utf-8"
+        )

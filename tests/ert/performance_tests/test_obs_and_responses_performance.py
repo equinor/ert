@@ -18,6 +18,7 @@ from ert.config import (
 )
 from ert.sample_prior import sample_prior
 from ert.storage import open_storage
+from ert.storage.migration.to22 import DictEncodedDataFrame
 
 _rng = np.random.default_rng(0)
 
@@ -396,12 +397,18 @@ def setup_benchmark(tmp_path, request):
 
     with open_storage(tmp_path / "storage", mode="w") as storage:
         experiment = storage.create_experiment(
-            responses=[info.gen_data_config, info.summary_config],
-            parameters=info.gen_kw_configs,
-            observations={
-                "gen_data": info.gen_data_observations,
-                "summary": info.summary_observations,
-            },
+            experiment_config={
+                "response_configuration": [info.gen_data_config, info.summary_config],
+                "parameter_configuration": info.gen_kw_configs,
+                "observations": {
+                    "gen_data": DictEncodedDataFrame.from_polars(
+                        info.gen_data_observations
+                    ),
+                    "summary": DictEncodedDataFrame.from_polars(
+                        info.summary_observations
+                    ),
+                },
+            }
         )
         ens = experiment.create_ensemble(
             ensemble_size=config.num_realizations, name="BobKaareJohnny"
@@ -476,13 +483,20 @@ def setup_es_benchmark(tmp_path, request):
 
     with open_storage(tmp_path / "storage", mode="w") as storage:
         experiment = storage.create_experiment(
-            responses=[info.gen_data_config, info.summary_config],
-            parameters=info.gen_kw_configs,
-            observations={
-                "gen_data": info.gen_data_observations,
-                "summary": info.summary_observations,
-            },
+            experiment_config={
+                "response_configuration": [info.gen_data_config, info.summary_config],
+                "parameter_configuration": info.gen_kw_configs,
+                "observations": {
+                    "gen_data": DictEncodedDataFrame.from_polars(
+                        info.gen_data_observations
+                    ),
+                    "summary": DictEncodedDataFrame.from_polars(
+                        info.summary_observations
+                    ),
+                },
+            }
         )
+
         prior = experiment.create_ensemble(
             ensemble_size=config.num_realizations, name="BobKaareJohnny", iteration=0
         )

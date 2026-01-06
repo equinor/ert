@@ -13,15 +13,24 @@ from ert.analysis import ErtAnalysisError, smoother_update
 from ert.config import ErtConfig, ESSettings, ObservationSettings
 from ert.data import MeasuredData
 from ert.sample_prior import sample_prior
+from ert.storage import DictEncodedDataFrame
 from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
 
 
 @pytest.fixture
 def prior_ensemble(storage, ert_config):
     return storage.create_experiment(
-        parameters=ert_config.ensemble_config.parameter_configuration,
-        responses=ert_config.ensemble_config.response_configuration,
-        observations=ert_config.observations,
+        name="prior",
+        experiment_config={
+            "parameter_configuration": (
+                ert_config.ensemble_config.parameter_configuration
+            ),
+            "response_configuration": ert_config.ensemble_config.response_configuration,
+            "observations": {
+                response_type: DictEncodedDataFrame.from_polars(df)
+                for response_type, df in ert_config.observations.items()
+            },
+        },
     ).create_ensemble(ensemble_size=3, name="prior")
 
 
