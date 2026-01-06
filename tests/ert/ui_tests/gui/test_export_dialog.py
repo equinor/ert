@@ -6,7 +6,7 @@ import pytest
 from polars.testing import assert_frame_equal
 from PyQt6.QtGui import QColor
 
-from ert.gui.tools.manage_experiments.export_parameters_dialog import ExportDialog
+from ert.gui.tools.manage_experiments.export_dialog import ExportDialog
 from ert.storage import Storage
 
 
