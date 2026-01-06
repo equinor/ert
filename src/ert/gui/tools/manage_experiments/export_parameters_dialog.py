@@ -97,11 +97,12 @@ class ExportParametersDialog(QDialog):
     def validate_file(self) -> None:
         """Validation to check if the file path is not empty or invalid."""
 
-        def _set_invalid() -> None:
+        def _set_invalid(tooltip_text: str = "Invalid file path") -> None:
             palette = self._file_path_edit.palette()
             palette.setColor(QPalette.ColorRole.Text, QColor("red"))
             self._file_path_edit.setPalette(palette)
-            self._file_path_edit.setToolTip("Invalid file path")
+            self._file_path_edit.setToolTip(tooltip_text)
+            self._export_button.setToolTip(tooltip_text)
             self._export_button.setEnabled(False)
 
         def _set_valid() -> None:
@@ -109,11 +110,16 @@ class ExportParametersDialog(QDialog):
             palette.setColor(QPalette.ColorRole.Text, QColor("black"))
             self._file_path_edit.setPalette(palette)
             self._file_path_edit.setToolTip("")
+            self._export_button.setToolTip("")
             self._export_button.setEnabled(True)
 
         path = Path(self._file_path_edit.text().strip())
+        if str(path) in {"", "."}:
+            _set_invalid(tooltip_text="No filename provided")
+            return
+
         if path.is_dir():
-            _set_invalid()
+            _set_invalid(tooltip_text=f"'{path!s}' is an existing directory.")
             return
 
         with contextlib.suppress(Exception):
