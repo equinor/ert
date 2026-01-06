@@ -263,13 +263,13 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
             ],
         )
         prior = storage.create_ensemble(experiment.id, ensemble_size=23, name="prior")
-        datasets = [
-            Ensemble.sample_parameter(
-                gen_kw, realization_nr, random_seed=1234, num_realizations=23
-            )
-            for realization_nr in range(prior.ensemble_size)
-        ]
-        prior.save_parameters(pl.concat(datasets, how="vertical"))
+        datasets = Ensemble.sample_parameter(
+            gen_kw,
+            list(range(prior.ensemble_size)),
+            random_seed=1234,
+            num_realizations=23,
+        )
+        prior.save_parameters(datasets)
 
         prior.save_response(
             "gen_data",
@@ -377,13 +377,11 @@ def test_update_raises_on_singular_matrix(tmp_path):
             ],
         )
         prior = storage.create_ensemble(experiment.id, ensemble_size=2, name="prior")
-        datasets = [
-            Ensemble.sample_parameter(
-                gen_kw, realization_nr, random_seed=1234, num_realizations=2
-            )
-            for realization_nr in range(prior.ensemble_size)
-        ]
-        prior.save_parameters(pl.concat(datasets, how="vertical"))
+        datasets = Ensemble.sample_parameter(
+            gen_kw, [0, 1], random_seed=1234, num_realizations=2
+        )
+
+        prior.save_parameters(datasets)
 
         for i, v in enumerate(
             [
