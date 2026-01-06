@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import json
 import os
-import sys
 import threading
 import types
 from collections.abc import Mapping, Sequence
@@ -23,27 +22,6 @@ if TYPE_CHECKING:
     pass
 
 T = TypeVar("T", bound="BaseService")
-
-
-def local_exec_args(script_args: str | list[str]) -> list[str]:
-    """
-    Convenience function that returns the exec_args for executing a Python
-    script in the directory of '_base_service.py'.
-
-    This is done instead of using 'python -m [module path]' due to the '-m' flag
-    adding the user's current working directory to sys.path. Executing a Python
-    script by itself will add the directory of the script rather than the
-    current working directory, thus we avoid accidentally importing user's
-    directories that just happen to have the same names as the ones we use.
-    """
-    if isinstance(script_args, str):
-        script = script_args
-        rest: list[str] = []
-    else:
-        script = script_args[0]
-        rest = script_args[1:]
-    script = f"_{script}_main.py"
-    return [sys.executable, str(Path(__file__).parent / script), *rest]
 
 
 class _Context(Generic[T]):

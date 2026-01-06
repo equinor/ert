@@ -1,3 +1,4 @@
+import importlib
 import os
 import signal
 import sys
@@ -9,9 +10,6 @@ from textwrap import dedent
 import pytest
 
 from ert.services import ert_server
-from ert.services._base_service import (
-    local_exec_args,
-)
 from ert.services.ert_server import (
     _ERT_SERVER_CONNECTION_INFO_FILE,
     SERVICE_CONF_PATHS,
@@ -19,6 +17,35 @@ from ert.services.ert_server import (
     ServerBootFail,
     cleanup_service_files,
 )
+
+
+def local_exec_args(script_args: str | list[str]) -> list[str]:
+    """
+    Convenience function that returns the exec_args for executing a Python
+    script in the directory of '_base_service.py'.
+
+    This is done instead of using 'python -m [module path]' due to the '-m' flag
+    adding the user's current working directory to sys.path. Executing a Python
+    script by itself will add the directory of the script rather than the
+    current working directory, thus we avoid accidentally importing user's
+    directories that just happen to have the same names as the ones we use.
+    """
+    if isinstance(script_args, str):
+        script = script_args
+        rest: list[str] = []
+    else:
+        script = script_args[0]
+        rest = script_args[1:]
+    script = f"_{script}_main.py"
+
+    services_spec = importlib.util.find_spec("ert.services")
+    if services_spec is None or services_spec.origin is None:
+        raise RuntimeError("Cannot find module ert.services")
+
+    # PS: origin points to the __init__.py file
+    services_folder = Path(services_spec.origin).parent
+
+    return [sys.executable, str(services_folder / script), *rest]
 
 
 class _DummyService(ErtServer):
