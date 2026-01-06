@@ -18,9 +18,15 @@ def create_runpath(
     ert_config = ErtConfig.from_file(config)
 
     if ensemble is None:
+        parameter_config = [
+            pc.model_dump(mode="json")
+            for pc in ert_config.ensemble_config.parameter_configuration
+        ]
         experiment_id = storage.create_experiment(
-            ert_config.ensemble_config.parameter_configuration,
-            templates=ert_config.ert_templates,
+            experiment_config={
+                "parameter_configuration": parameter_config,
+                "ert_templates": ert_config.ert_templates,
+            }
         )
         ensemble = storage.create_ensemble(
             experiment_id,

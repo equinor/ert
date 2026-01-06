@@ -34,8 +34,11 @@ from ert.config import (
     SummaryConfig,
     SurfaceConfig,
 )
+from ert.config._create_observation_dataframes import create_observation_dataframes
+from ert.config._observations import GeneralObservation
 from ert.config.design_matrix import DESIGN_MATRIX_GROUP
 from ert.dark_storage.common import ErtStoragePermissionError
+from ert.field_utils import ErtboxParameters
 from ert.sample_prior import sample_prior
 from ert.storage import (
     ErtStorageException,
@@ -58,9 +61,6 @@ def test_create_experiment(tmp_path):
 
         experiment_path = Path(storage.path / "experiments" / str(experiment.id))
         assert experiment_path.exists()
-
-        assert (experiment_path / experiment._parameter_file).exists()
-        assert (experiment_path / experiment._responses_file).exists()
 
         with open(experiment_path / "index.json", encoding="utf-8") as f:
             index = json.load(f)
@@ -142,7 +142,13 @@ def test_that_local_ensemble_save_parameter_raises_value_error_given_xr_array_da
 def test_that_saving_response_updates_configs(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment(
-            responses=[SummaryConfig(keys=["*", "FOPR"], input_files=["not_relevant"])]
+            experiment_config={
+                "response_configuration": [
+                    SummaryConfig(
+                        keys=["*", "FOPR"], input_files=["not_relevant"]
+                    ).model_dump(mode="json")
+                ]
+            }
         )
         ensemble = storage.create_ensemble(
             experiment, ensemble_size=1, iteration=0, name="prior"
@@ -198,7 +204,11 @@ def test_that_saving_arbitrary_parameter_dataframe_fails(tmp_path):
             name="KEY_1",
             distribution={"name": "uniform", "min": 0, "max": 1},
         )
-        experiment = storage.create_experiment(parameters=[uniform_parameter])
+        experiment = storage.create_experiment(
+            experiment_config={
+                "parameter_configuration": [uniform_parameter.model_dump(mode="json")]
+            }
+        )
         prior = storage.create_ensemble(
             experiment, ensemble_size=1, iteration=0, name="prior"
         )
@@ -280,7 +290,9 @@ def test_that_loading_parameter_via_response_api_fails(tmp_path):
     )
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment(
-            parameters=[uniform_parameter],
+            experiment_config={
+                "parameter_configuration": [uniform_parameter.model_dump(mode="json")]
+            },
         )
         prior = storage.create_ensemble(
             experiment,
@@ -377,7 +389,13 @@ def test_that_reader_storage_reads_most_recent_response_configs(tmp_path):
     writer = open_storage(tmp_path, mode="w")
 
     exp = writer.create_experiment(
-        responses=[SummaryConfig(keys=["*", "FOPR"], input_files=["not_relevant"])],
+        experiment_config={
+            "response_configuration": [
+                SummaryConfig(
+                    keys=["*", "FOPR"], input_files=["not_relevant"]
+                ).model_dump(mode="json")
+            ]
+        },
         name="uniq",
     )
     ens: LocalEnsemble = exp.create_ensemble(ensemble_size=10, name="uniq_ens")
@@ -404,6 +422,8 @@ def test_that_reader_storage_reads_most_recent_response_configs(tmp_path):
     assert read_smry_config.keys == ["*", "FOPR"]
     assert not read_smry_config.has_finalized_keys
 
+    reader.reload()
+    read_exp = reader.get_experiment_by_name("uniq")
     read_smry_config = read_exp.response_configuration["summary"]
     assert read_smry_config.keys == ["FOPR", "FOPT", "WOPR"]
     assert read_smry_config.has_finalized_keys
@@ -600,7 +620,18 @@ parameter_configs = st.lists(
             update=st.booleans(),
             distribution=st.just({"name": "uniform", "min": 0, "max": 1}),
         ),
-        st.builds(SurfaceConfig, name=words),
+        st.builds(
+            SurfaceConfig,
+            name=words,
+            ncol=st.integers(min_value=1),
+            nrow=st.integers(min_value=1),
+            xori=st.floats(allow_infinity=False, allow_nan=False),
+            yori=st.floats(allow_infinity=False, allow_nan=False),
+            xinc=st.floats(allow_infinity=False, allow_nan=False),
+            yinc=st.floats(allow_infinity=False, allow_nan=False),
+            rotation=st.floats(allow_infinity=False, allow_nan=False),
+            yflip=st.sampled_from([-1, 1]),
+        ),
     ),
     unique_by=lambda x: x.name,
     min_size=1,
@@ -641,26 +672,22 @@ def vectors(elements, size):
     return st.lists(elements, min_size=size, max_size=size)
 
 
-observations = (
-    st.integers(min_value=0, max_value=10)
-    .flatmap(
-        lambda num_observations: st.fixed_dictionaries(
-            {
-                "observation_key": vectors(words, num_observations),
-                "response_key": vectors(words, num_observations),
-                "report_step": vectors(
-                    st.integers(min_value=1, max_value=10000), num_observations
-                ),
-                "index": vectors(
-                    st.integers(min_value=1, max_value=10000), num_observations
-                ),
-                "observations": vectors(st.floats(width=32), num_observations),
-                "std": vectors(st.floats(width=32), num_observations),
-            }
-        ),
-    )
-    .map(lambda df: {"gen_data": pl.DataFrame(df)})
+general_observations = st.builds(
+    GeneralObservation,
+    name=words,
+    data=words,
+    restart=st.integers(min_value=1, max_value=10000),
+    index=st.integers(min_value=1, max_value=10000),
+    value=st.floats(allow_nan=False, allow_infinity=False),
+    error=st.floats(allow_nan=False, allow_infinity=False, min_value=0.001),
 )
+
+observations = st.lists(
+    general_observations,
+    min_size=0,
+    max_size=10,
+)
+
 
 small_ints = st.integers(min_value=1, max_value=10)
 
@@ -675,12 +702,12 @@ def fields(draw, egrid, num_fields=small_ints) -> list[Field]:
         draw(
             st.builds(
                 Field,
+                ertbox_params=st.builds(
+                    ErtboxParameters, nx=st.just(nx), ny=st.just(ny), nz=st.just(nz)
+                ),
                 name=st.just(f"Field{i}"),
                 file_format=st.just("roff_binary"),
                 grid_file=st.just(grid_file),
-                nx=st.just(nx),
-                ny=st.just(ny),
-                nz=st.just(nz),
                 output_file=st.just(Path(f"field{i}.roff")),
             )
         )
@@ -771,31 +798,27 @@ def test_asof_joining_summary(tmp_path, perturb_observations, perturb_responses)
         response_keys = ["FOPR", "FOPT_OP1", "FOPR:OP3", "FLAP", "F*"]
         obs_keys = [f"o_{k}" for k in response_keys]
         times = [datetime(2000, 1, 1, 1, 0)] * len(response_keys)
-        summary_observations = pl.DataFrame(
+        summary_observations = [
             {
-                "observation_key": obs_keys,
-                "response_key": response_keys,
-                "time": pl.Series(
-                    times,
-                    dtype=pl.Datetime("ms"),
-                ),
-                "observations": pl.Series(
-                    [1] * len(response_keys),
-                    dtype=pl.Float32,
-                ),
-                "std": pl.Series(
-                    [0.1] * len(response_keys),
-                    dtype=pl.Float32,
-                ),
-                "north": pl.Series([None] * len(response_keys), dtype=pl.Float32),
-                "east": pl.Series([None] * len(response_keys), dtype=pl.Float32),
-                "radius": pl.Series([None] * len(response_keys), dtype=pl.Float32),
+                "type": "summary_observation",
+                "name": obs_keys[i],
+                "key": response_keys[i],
+                "date": times[i].date().isoformat(),
+                "value": 1.0,
+                "error": 0.1,
             }
-        )
+            for i in range(len(response_keys))
+        ]
 
         experiment = storage.create_experiment(
-            responses=[SummaryConfig(keys=["*"], input_files=["not_relevant"])],
-            observations={"summary": summary_observations},
+            experiment_config={
+                "response_configuration": [
+                    SummaryConfig(keys=["*"], input_files=["not_relevant"]).model_dump(
+                        mode="json"
+                    )
+                ],
+                "observations": summary_observations,
+            }
         )
 
         ensemble = storage.create_ensemble(
@@ -832,8 +855,9 @@ def test_asof_joining_summary(tmp_path, perturb_observations, perturb_responses)
             ensemble.save_response("summary", perturbed_summary, 0)
 
         if perturb_observations:
-            perturbed_observations = summary_observations.with_columns(
-                pl.when(pl.arange(0, summary_observations.height) % 2 != 0)
+            summary_obs_df = experiment.observations["summary"]
+            perturbed_observations = summary_obs_df.with_columns(
+                pl.when(pl.arange(0, summary_obs_df.height) % 2 != 0)
                 .then(pl.col("time") + pl.duration(milliseconds=rng.random() * 500))
                 .otherwise(
                     pl.col("time") - pl.duration(milliseconds=rng.random() * 500)
@@ -856,9 +880,7 @@ def test_asof_joining_summary(tmp_path, perturb_observations, perturb_responses)
 
 def test_saving_everest_metadata_to_ensemble(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
-        experiment = storage.create_experiment(
-            responses=[],
-        )
+        experiment = storage.create_experiment()
 
         ensemble = storage.create_ensemble(
             experiment, ensemble_size=10, iteration=0, name="prior"
@@ -973,7 +995,12 @@ def test_sample_parameter_with_design_matrix(tmp_path, reals, expect_error):
     design_matrix = DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
     with open_storage(tmp_path / "storage", mode="w") as storage:
         experiment_id = storage.create_experiment(
-            parameters=list(design_matrix.parameter_configurations)
+            experiment_config={
+                "parameter_configuration": [
+                    pc.model_dump(mode="json")
+                    for pc in design_matrix.parameter_configurations
+                ]
+            }
         )
         ensemble = storage.create_ensemble(
             experiment_id, name="default", ensemble_size=ensemble_size
@@ -1035,7 +1062,11 @@ def test_load_gen_kw_not_sorted(storage, tmpdir, snapshot):
         ert_config = ErtConfig.from_file("config.ert")
 
         experiment_id = storage.create_experiment(
-            parameters=ert_config.ensemble_config.parameter_configuration
+            experiment_config={
+                "parameter_configuration": (
+                    ert_config.ensemble_config.parameter_configuration
+                )
+            }
         )
         ensemble_size = 10
         ensemble = storage.create_ensemble(
@@ -1154,7 +1185,11 @@ def test_set_failure_will_not_recreate_ensemble_directory(storage):
 def test_save_response_will_create_realization_directory(storage):
     # Given a fresh ensemble storage with no realizations
     dummy_ensemble = storage.create_experiment(
-        responses=[SummaryConfig(keys=["DUMMY"])]
+        experiment_config={
+            "response_configuration": [
+                SummaryConfig(keys=["DUMMY"]).model_dump(mode="json")
+            ]
+        }
     ).create_ensemble(name="dummy", ensemble_size=1)
     assert dummy_ensemble._path.exists(), "Assumptions for test has changed"
     assert not (dummy_ensemble._path / "realization-0").exists()
@@ -1243,7 +1278,11 @@ def test_that_multiple_save_parameters_numpy_calls_overwrite_previous_values(tmp
     gen_kw_parameter = GenKwConfig(
         name="some_param", distribution={"name": "normal", "mean": 10, "std": 0.1}
     )
-    exp = writer.create_experiment(parameters=[gen_kw_parameter])
+    exp = writer.create_experiment(
+        experiment_config={
+            "parameter_configuration": [gen_kw_parameter.model_dump(mode="json")],
+        }
+    )
     num_reals = 5
     parameter_data_0 = np.array([0.0] * num_reals)
     parameter_data_1 = np.array([1.1] * num_reals)
@@ -1373,14 +1412,20 @@ class StatefulStorageTest(RuleBasedStateMachine):
         obs,
     ):
         experiment_id = self.storage.create_experiment(
-            parameters=parameters,
-            responses=responses,
-            observations=obs,
+            experiment_config={
+                "parameter_configuration": [
+                    p.model_dump(mode="json") for p in parameters
+                ],
+                "response_configuration": [
+                    r.model_dump(mode="json") for r in responses
+                ],
+                "observations": obs,
+            }
         ).id
         model_experiment = Experiment(experiment_id)
         model_experiment.parameters = parameters
         model_experiment.responses = responses
-        model_experiment.observations = obs
+        model_experiment.observations = create_observation_dataframes(obs, None)
 
         # Ensure that there is at least one ensemble in the experiment
         # to avoid https://github.com/equinor/ert/issues/7040

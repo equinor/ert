@@ -45,9 +45,9 @@ def test_runpath_roundtrip(tmp_path, storage, surface):
         base_surface_path="base_surface",
         update=True,
     )
-    ensemble = storage.create_experiment(parameters=[config]).create_ensemble(
-        name="text", ensemble_size=1
-    )
+    ensemble = storage.create_experiment(
+        experiment_config={"parameter_configuration": [config]}
+    ).create_ensemble(name="text", ensemble_size=1)
     surface.to_file(tmp_path / "input_0", fformat="irap_ascii")
 
     # run_path -> storage

@@ -23,7 +23,12 @@ def setup_case(storage, use_tmpdir, run_args):
         ert_config = ErtConfig.from_file_contents(config_text)
         prior_ensemble = storage.create_ensemble(
             storage.create_experiment(
-                responses=ert_config.ensemble_config.response_configuration
+                experiment_config={
+                    "response_configuration": [
+                        rc.model_dump(mode="json")
+                        for rc in ert_config.ensemble_config.response_configuration
+                    ],
+                }
             ),
             name="prior",
             ensemble_size=ert_config.runpath_config.num_realizations,
@@ -131,7 +136,12 @@ def test_load_forward_model_summary(
         """
     )
     experiment_id = storage.create_experiment(
-        responses=ert_config.ensemble_config.response_configuration
+        experiment_config={
+            "response_configuration": [
+                rc.model_dump(mode="json")
+                for rc in ert_config.ensemble_config.response_configuration
+            ]
+        }
     )
     prior_ensemble = storage.create_ensemble(
         experiment_id, name="prior", ensemble_size=100
@@ -221,7 +231,12 @@ def test_loading_gen_data_without_restart(storage, run_args):
     )
     prior_ensemble = storage.create_ensemble(
         storage.create_experiment(
-            responses=ert_config.ensemble_config.response_configuration
+            experiment_config={
+                "response_configuration": [
+                    rc.model_dump(mode="json")
+                    for rc in ert_config.ensemble_config.response_configuration
+                ],
+            }
         ),
         name="prior",
         ensemble_size=ert_config.runpath_config.num_realizations,
@@ -290,7 +305,12 @@ def test_loading_from_any_available_iter(storage, run_args, itr):
     )
     prior_ensemble = storage.create_ensemble(
         storage.create_experiment(
-            responses=ert_config.ensemble_config.response_configuration
+            experiment_config={
+                "response_configuration": [
+                    rc.model_dump(mode="json")
+                    for rc in ert_config.ensemble_config.response_configuration
+                ],
+            }
         ),
         name="prior",
         ensemble_size=ert_config.runpath_config.num_realizations,

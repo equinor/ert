@@ -114,9 +114,20 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
             ert_config.observation_declarations, None
         )
         experiment_id = storage.create_experiment(
-            parameters=ens_config.parameter_configuration,
-            responses=ens_config.response_configuration,
-            observations=observations,
+            experiment_config={
+                "parameter_configuration": [
+                    pc.model_dump(mode="json")
+                    for pc in ens_config.parameter_configuration
+                ],
+                "response_configuration": [
+                    rc.model_dump(mode="json")
+                    for rc in ens_config.response_configuration
+                ],
+                "observations": [
+                    od.model_dump(mode="json")
+                    for od in ert_config.observation_declarations
+                ],
+            },
             name="test-experiment",
         )
         source = storage.create_ensemble(experiment_id, name="prior", ensemble_size=100)

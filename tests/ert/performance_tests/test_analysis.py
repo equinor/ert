@@ -74,20 +74,19 @@ def test_and_benchmark_adaptive_localization_with_fields(
     grid = xtgeo.create_box_grid(dimension=(shape.nx, shape.ny, shape.nz))
     grid.to_file("MY_EGRID.EGRID", "egrid")
 
-    resp = GenDataConfig(keys=["RESPONSE"])
-    obs = pl.DataFrame(
+    response_config = GenDataConfig(keys=["RESPONSE"])
+    obs = [
         {
-            "response_key": "RESPONSE",
-            "observation_key": "OBSERVATION",
-            "report_step": 0,
-            "index": np.arange(len(observations)),
-            "observations": observations,
-            "std": observation_noise,
-            "east": pl.Series([None] * len(observations), dtype=pl.Float32),
-            "north": pl.Series([None] * len(observations), dtype=pl.Float32),
-            "radius": pl.Series([None] * len(observations), dtype=pl.Float32),
+            "type": "general_observation",
+            "name": "OBSERVATION",
+            "data": "RESPONSE",
+            "restart": 0,
+            "index": i,
+            "value": float(observations[i]),
+            "error": 1.0,
         }
-    )
+        for i in range(len(observations))
+    ]
 
     param_group = "PARAM_FIELD"
 
@@ -105,9 +104,11 @@ def test_and_benchmark_adaptive_localization_with_fields(
     )
 
     experiment = storage.create_experiment(
-        parameters=[config],
-        responses=[resp],
-        observations={"gen_data": obs},
+        experiment_config={
+            "parameter_configuration": [config.model_dump(mode="json")],
+            "response_configuration": [response_config.model_dump(mode="json")],
+            "observations": obs,
+        }
     )
 
     prior_ensemble = storage.create_ensemble(

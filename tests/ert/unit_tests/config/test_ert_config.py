@@ -436,7 +436,7 @@ def test_that_ert_config_is_serializable(tmp_path_factory, config_generator):
         ert_config = ErtConfig.from_dict(
             config_values.to_config_dict("config.ert", os.getcwd())
         )
-        config_json = json.loads(RootModel[ErtConfig](ert_config).model_dump_json())
+        config_json = RootModel[ErtConfig](ert_config).model_dump(mode="json")
         from_json = ErtConfig(**config_json)
         assert from_json == ert_config
 

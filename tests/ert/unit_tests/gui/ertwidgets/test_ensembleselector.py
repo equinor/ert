@@ -120,7 +120,11 @@ def test_show_only_no_parent(
     qtbot, notifier, storage, uniform_parameter, response, flag, expected
 ):
     experiment = storage.create_experiment(
-        parameters=[uniform_parameter], responses=[response], name="my-experiment"
+        experiment_config={
+            "parameter_configuration": [uniform_parameter.model_dump(mode="json")],
+            "response_configuration": [response.model_dump(mode="json")],
+        },
+        name="my-experiment",
     )
     ensemble = experiment.create_ensemble(name="parent", ensemble_size=1)
     experiment.create_ensemble(name="child", ensemble_size=1, prior_ensemble=ensemble)

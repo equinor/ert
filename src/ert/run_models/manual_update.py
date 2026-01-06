@@ -46,13 +46,19 @@ class ManualUpdate(UpdateRunModel, ManualUpdateConfig):
         self.set_env_key("_ERT_EXPERIMENT_ID", str(prior_experiment.id))
         self.set_env_key("_ERT_ENSEMBLE_ID", str(self._prior.id))
 
+        experiment_config = self.model_dump(mode="json") | {
+            "parameter_configuration": prior_experiment.experiment_config[
+                "parameter_configuration"
+            ],
+            "response_configuration": prior_experiment.experiment_config[
+                "response_configuration"
+            ],
+            "observations": prior_experiment.experiment_config["observations"],
+        }
+
         target_experiment = self._storage.create_experiment(
-            parameters=list(prior_experiment.parameter_configuration.values()),
-            responses=list(prior_experiment.response_configuration.values()),
-            observations=prior_experiment.observations,
-            simulation_arguments=prior_experiment.metadata,
+            experiment_config=experiment_config,
             name=f"Manual update of {self._prior.name}",
-            templates=self.ert_templates,
         )
         self.update(
             self._prior,

@@ -78,7 +78,11 @@ def test_that_create_run_path_overwrites_symlinks_by_file(
 ):
     ert_config = snake_oil_field_example
     experiment_id = storage.create_experiment(
-        parameters=ert_config.ensemble_config.parameter_configuration
+        experiment_config={
+            "parameter_configuration": (
+                ert_config.ensemble_config.parameter_configuration
+            )
+        },
     )
     prior_ensemble = storage.create_ensemble(
         experiment_id,
@@ -149,8 +153,12 @@ ENSPATH storage
 def make_run_path(run_args, storage):
     def func(ert_config):
         experiment_id = storage.create_experiment(
-            parameters=ert_config.ensemble_config.parameter_configuration,
-            templates=ert_config.ert_templates,
+            experiment_config={
+                "parameter_configuration": (
+                    ert_config.ensemble_config.parameter_configuration
+                ),
+                "ert_templates": ert_config.ert_templates,
+            },
         )
         prior_ensemble = storage.create_ensemble(
             experiment_id, name="prior", ensemble_size=1
@@ -238,7 +246,9 @@ def test_that_run_template_replace_symlink_does_not_write_to_source(
             """
         )
     )
-    prior_ensemble = prior_ensemble_args(templates=ert_config.ert_templates)
+    prior_ensemble = prior_ensemble_args(
+        experiment_config={"ert_templates": ert_config.ert_templates}
+    )
     run_arg = run_args(ert_config, prior_ensemble)
     run_path = Path(run_arg[0].runpath)
     os.makedirs(run_path)
@@ -464,7 +474,11 @@ def test_that_sampling_prior_makes_initialized_fs(storage):
 
     prior_ensemble = storage.create_ensemble(
         storage.create_experiment(
-            parameters=ert_config.ensemble_config.parameter_configuration
+            experiment_config={
+                "parameter_configuration": (
+                    ert_config.ensemble_config.parameter_configuration
+                ),
+            },
         ),
         name="prior",
         ensemble_size=ert_config.runpath_config.num_realizations,
@@ -576,7 +590,11 @@ def test_write_runpath_file(storage, itr):
     )
     num_realizations = ert_config.runpath_config.num_realizations
     experiment_id = storage.create_experiment(
-        parameters=ert_config.ensemble_config.parameter_configuration
+        experiment_config={
+            "parameter_configuration": (
+                ert_config.ensemble_config.parameter_configuration
+            )
+        },
     )
     prior_ensemble = storage.create_ensemble(
         experiment_id, name="prior", ensemble_size=num_realizations, iteration=itr
@@ -914,8 +932,10 @@ def test_when_manifest_files_are_written_loading_succeeds(storage, itr):
     )
 
     experiment_id = storage.create_experiment(
-        parameters=config.ensemble_config.parameter_configuration,
-        responses=config.ensemble_config.response_configuration,
+        experiment_config={
+            "parameter_configuration": config.ensemble_config.parameter_configuration,
+            "response_configuration": config.ensemble_config.response_configuration,
+        },
     )
     prior_ensemble = storage.create_ensemble(
         experiment_id, name="prior", ensemble_size=num_realizations, iteration=itr
@@ -1009,8 +1029,10 @@ def test_that_contents_of_gridfile_is_logged(storage, caplog):
     )
 
     experiment_id = storage.create_experiment(
-        parameters=config.ensemble_config.parameter_configuration,
-        responses=config.ensemble_config.response_configuration,
+        experiment_config={
+            "parameter_configuration": config.ensemble_config.parameter_configuration,
+            "response_configuration": config.ensemble_config.response_configuration,
+        },
     )
     prior_ensemble = storage.create_ensemble(
         experiment_id, name="prior", ensemble_size=num_realizations, iteration=0

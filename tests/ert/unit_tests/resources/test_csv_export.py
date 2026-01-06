@@ -26,12 +26,11 @@ def test_that_csv_export_matches_snapshot(monkeypatch, tmp_path, snapshot):
 
     with open_storage(tmp_path / "storage", mode="w") as storage:
         experiment = storage.create_experiment(
-            responses=[info.gen_data_config, info.summary_config],
-            parameters=info.gen_kw_configs,
-            observations={
-                "gen_data": info.gen_data_observations,
-                "summary": info.summary_observations,
-            },
+            experiment_config={
+                "response_configuration": [info.gen_data_config, info.summary_config],
+                "parameter_configuration": info.gen_kw_configs,
+                "observations": info.gen_data_observations + info.summary_observations,
+            }
         )
         ens = experiment.create_ensemble(
             ensemble_size=num_realizations, name="BobKaareJohnny"

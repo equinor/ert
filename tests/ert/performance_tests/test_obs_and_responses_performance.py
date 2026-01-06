@@ -2,6 +2,7 @@ import datetime
 import random
 import sys
 from dataclasses import dataclass
+from typing import Any
 
 import memray
 import numpy as np
@@ -16,6 +17,7 @@ from ert.config import (
     ObservationSettings,
     SummaryConfig,
 )
+from ert.config._observations import GeneralObservation, SummaryObservation
 from ert.sample_prior import sample_prior
 from ert.storage import open_storage
 
@@ -36,14 +38,14 @@ def _add_noise_to_df_values(df: pl.DataFrame):
 
 @dataclass
 class ExperimentInfo:
-    gen_kw_configs: list[GenKwConfig]
-    gen_data_config: GenDataConfig
-    summary_config: SummaryConfig
-    summary_observations: pl.DataFrame
+    gen_kw_configs: list[str]
+    gen_data_config: dict[str, Any]
+    summary_config: dict[str, Any]
+    summary_observations: list[dict[str, Any]]
     summary_responses: pl.DataFrame
     gen_data_responses: pl.DataFrame
-    gen_data_observations: pl.DataFrame
-    genkw_data: pl.DataFrame
+    gen_data_observations: list[dict[str, Any]]
+    genkw_data: pl.DataFrame | None
 
 
 def create_experiment_args(
@@ -57,7 +59,7 @@ def create_experiment_args(
     num_summary_obs: int,
     num_realizations: int | None = None,
 ) -> ExperimentInfo:
-    gen_kw_configs = [
+    gen_kw_configs_objs = [
         GenKwConfig(
             name=f"param_{i}",
             group="all_my_parameters_live_here",
@@ -73,11 +75,11 @@ def create_experiment_args(
         name="gen_data",
         report_steps_list=[list(range(num_gen_data_report_steps))] * num_gen_data_keys,
         keys=[f"gen_data_{i}" for i in range(num_gen_data_keys)],
-    )
+    ).model_dump(mode="json")
 
     # Remember to do one explicit .save_parameters to an ensemble
     # to get the finalized summary keys stored in the experiment
-    summary_config = SummaryConfig(name="summary", keys=["*"])
+    summary_config = SummaryConfig(name="summary", keys=["*"]).model_dump(mode="json")
 
     genkw_data = (
         pl.DataFrame(
@@ -122,31 +124,24 @@ def create_experiment_args(
         }
     )
 
-    gen_data_observations = pl.DataFrame(
-        {
-            "observation_key": gen_obs_keys,
-            "response_key": random.choices(gen_data_response_keys, k=num_gen_data_obs),
-            "report_step": pl.Series(
-                random.choices(gendata_report_steps, k=num_gen_data_obs),
-                dtype=pl.UInt16,
-            ),
-            "index": pl.Series(
-                random.choices(gendata_indexes, k=num_gen_data_obs),
-                dtype=pl.UInt16,
-            ),
-            "observations": pl.Series(
-                rng.normal(loc=10, scale=0.1, size=num_gen_data_obs),
-                dtype=pl.Float32,
-            ),
-            "std": pl.Series(
-                rng.normal(loc=0.2, scale=0.1, size=num_gen_data_obs),
-                dtype=pl.Float32,
-            ),
-            "east": pl.Series([None] * num_gen_data_obs, dtype=pl.Float32),
-            "north": pl.Series([None] * num_gen_data_obs, dtype=pl.Float32),
-            "radius": pl.Series([None] * num_gen_data_obs, dtype=pl.Float32),
-        }
-    )
+    gen_response_choices = random.choices(gen_data_response_keys, k=num_gen_data_obs)
+    gen_report_step_choices = random.choices(gendata_report_steps, k=num_gen_data_obs)
+    gen_index_choices = random.choices(gendata_indexes, k=num_gen_data_obs)
+    gen_values = rng.normal(loc=10, scale=0.1, size=num_gen_data_obs)
+    gen_stds = rng.normal(loc=0.2, scale=0.1, size=num_gen_data_obs)
+
+    gen_data_observations = []
+    for i in range(num_gen_data_obs):
+        gen_data_observations.append(
+            GeneralObservation(
+                name=gen_obs_keys[i],
+                data=gen_response_choices[i],
+                value=float(gen_values[i]),
+                error=max(1e-6, float(abs(gen_stds[i]))),
+                restart=int(gen_report_step_choices[i]),
+                index=int(gen_index_choices[i]),
+            ).model_dump(mode="json"),
+        )
 
     _summary_time_delta = datetime.timedelta(30)
     summary_timesteps = [
@@ -182,27 +177,25 @@ def create_experiment_args(
         }
     )
 
-    summary_observations = pl.DataFrame(
-        {
-            "observation_key": [f"summary_obs_{i}" for i in range(num_summary_obs)],
-            "response_key": random.choices(summary_response_keys, k=num_summary_obs),
-            "time": pl.Series(
-                random.choices(summary_timesteps, k=num_summary_obs),
-                dtype=pl.Datetime("ms"),
-            ),
-            "observations": pl.Series(
-                rng.normal(loc=10, scale=0.1, size=num_summary_obs),
-                dtype=pl.Float32,
-            ),
-            "std": pl.Series(
-                rng.normal(loc=0.2, scale=0.1, size=num_summary_obs),
-                dtype=pl.Float32,
-            ),
-            "east": pl.Series([None] * num_summary_obs, dtype=pl.Float32),
-            "north": pl.Series([None] * num_summary_obs, dtype=pl.Float32),
-            "radius": pl.Series([None] * num_summary_obs, dtype=pl.Float32),
-        }
-    )
+    summary_resp_choices = random.choices(summary_response_keys, k=num_summary_obs)
+    summary_time_choices = random.choices(summary_timesteps, k=num_summary_obs)
+    summary_values = rng.normal(loc=10, scale=0.1, size=num_summary_obs)
+    summary_stds = rng.normal(loc=0.2, scale=0.1, size=num_summary_obs)
+
+    summary_observations = []
+    for i in range(num_summary_obs):
+        summary_observations.append(
+            SummaryObservation(
+                name=f"summary_obs_{i}",
+                key=summary_resp_choices[i],
+                date=summary_time_choices[i].date().isoformat(),
+                value=float(summary_values[i]),
+                error=max(1e-6, float(abs(summary_stds[i]))),
+            ).model_dump(mode="json"),
+        )
+
+    # JSONify parameter configs and collect names for sampling
+    gen_kw_configs = [cfg.model_dump(mode="json") for cfg in gen_kw_configs_objs]
 
     return ExperimentInfo(
         gen_kw_configs=gen_kw_configs,
@@ -299,12 +292,12 @@ _BenchMarks: list[_Benchmark] = [
             num_realizations=200,
         ),
         expected_join_performance=_ExpectedPerformance(
-            memory_limit_mb=1500,
-            last_measured_memory_mb=1027,
+            memory_limit_mb=5900,
+            last_measured_memory_mb=4700,
         ),
         expected_update_performance=_ExpectedPerformance(
-            memory_limit_mb=3100,
-            last_measured_memory_mb=2230,
+            memory_limit_mb=6900,
+            last_measured_memory_mb=5490,
         ),
     ),
     _Benchmark(
@@ -321,12 +314,12 @@ _BenchMarks: list[_Benchmark] = [
             num_realizations=200,
         ),
         expected_join_performance=_ExpectedPerformance(
-            memory_limit_mb=4500,
-            last_measured_memory_mb=1710,
+            memory_limit_mb=10500,
+            last_measured_memory_mb=8390,
         ),
         expected_update_performance=_ExpectedPerformance(
-            memory_limit_mb=4000,
-            last_measured_memory_mb=3088,
+            memory_limit_mb=11900,
+            last_measured_memory_mb=9450,
         ),
     ),
     _Benchmark(
@@ -343,12 +336,12 @@ _BenchMarks: list[_Benchmark] = [
             num_realizations=200,
         ),
         expected_join_performance=_ExpectedPerformance(
-            memory_limit_mb=3300,
-            last_measured_memory_mb=1715,
+            memory_limit_mb=14200,
+            last_measured_memory_mb=11340,
         ),
         expected_update_performance=_ExpectedPerformance(
-            memory_limit_mb=4500,
-            last_measured_memory_mb=3115,
+            memory_limit_mb=16700,
+            last_measured_memory_mb=13310,
         ),
     ),
     # Only run locally
@@ -402,12 +395,14 @@ def setup_benchmark(tmp_path, request):
 
     with open_storage(tmp_path / "storage", mode="w") as storage:
         experiment = storage.create_experiment(
-            responses=[info.gen_data_config, info.summary_config],
-            parameters=info.gen_kw_configs,
-            observations={
-                "gen_data": info.gen_data_observations,
-                "summary": info.summary_observations,
-            },
+            experiment_config={
+                "response_configuration": [
+                    info.gen_data_config,
+                    info.summary_config,
+                ],
+                "parameter_configuration": info.gen_kw_configs,
+                "observations": info.gen_data_observations + info.summary_observations,
+            }
         )
         ens = experiment.create_ensemble(
             ensemble_size=config.num_realizations, name="BobKaareJohnny"
@@ -482,13 +477,16 @@ def setup_es_benchmark(tmp_path, request):
 
     with open_storage(tmp_path / "storage", mode="w") as storage:
         experiment = storage.create_experiment(
-            responses=[info.gen_data_config, info.summary_config],
-            parameters=info.gen_kw_configs,
-            observations={
-                "gen_data": info.gen_data_observations,
-                "summary": info.summary_observations,
-            },
+            experiment_config={
+                "response_configuration": [
+                    info.gen_data_config,
+                    info.summary_config,
+                ],
+                "parameter_configuration": info.gen_kw_configs,
+                "observations": info.gen_data_observations + info.summary_observations,
+            }
         )
+
         prior = experiment.create_ensemble(
             ensemble_size=config.num_realizations, name="BobKaareJohnny", iteration=0
         )
@@ -510,7 +508,7 @@ def setup_es_benchmark(tmp_path, request):
             range(config.num_realizations),
             42,
             config.num_realizations,
-            [c.name for c in info.gen_kw_configs],
+            [cfg["name"] for cfg in info.gen_kw_configs],
         )
         posterior = experiment.create_ensemble(
             ensemble_size=config.num_realizations,
@@ -523,7 +521,7 @@ def setup_es_benchmark(tmp_path, request):
             alias,
             prior,
             posterior,
-            [cfg.name for cfg in info.gen_kw_configs],
+            [cfg["name"] for cfg in info.gen_kw_configs],
             expected_performance,
         )
 

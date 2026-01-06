@@ -22,8 +22,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.config import ErrorInfo, ErtConfig, RFTConfig
-from ert.config._create_observation_dataframes import create_observation_dataframes
+from ert.config import ErrorInfo, ErtConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import CreateExperimentDialog, Suggestor
 from ert.storage import Ensemble, Experiment
@@ -170,26 +169,29 @@ class StorageWidget(QWidget):
         if create_experiment_dialog.exec():
             try:
                 with self._notifier.write_storage() as storage:
-                    response_configs = (
+                    parameter_configuration = (
+                        self._ert_config.parameter_configurations_with_design_matrix
+                    )
+                    response_configuration = (
                         self._ert_config.ensemble_config.response_configuration
                     )
-
-                    rft_config = next(
-                        (r for r in response_configs if r.type == "rft"),
-                        None,
-                    )
-                    if rft_config is not None:
-                        rft_config = cast(RFTConfig, rft_config)
-
                     ensemble = storage.create_experiment(
-                        parameters=self._ert_config.parameter_configurations_with_design_matrix,
-                        responses=response_configs,
-                        observations=create_observation_dataframes(
-                            observations=self._ert_config.observation_declarations,
-                            rft_config=rft_config,
-                        ),
+                        experiment_config={
+                            "parameter_configuration": [
+                                c.model_dump(mode="json")
+                                for c in parameter_configuration
+                            ],
+                            "response_configuration": [
+                                c.model_dump(mode="json")
+                                for c in response_configuration
+                            ],
+                            "observations": [
+                                d.model_dump(mode="json")
+                                for d in self._ert_config.observation_declarations
+                            ],
+                            "ert_templates": self._ert_config.ert_templates,
+                        },
                         name=create_experiment_dialog.experiment_name,
-                        templates=self._ert_config.ert_templates,
                     ).create_ensemble(
                         name=create_experiment_dialog.ensemble_name,
                         ensemble_size=self._ensemble_size,
