@@ -6,7 +6,6 @@ from fastapi import APIRouter, Body, Depends, HTTPException
 from ert.config import SurfaceConfig
 from ert.dark_storage import json_schema as js
 from ert.dark_storage.common import get_storage
-from ert.shared.storage.extraction import create_priors
 from ert.storage import Storage
 
 router = APIRouter(tags=["experiment"])
@@ -26,7 +25,6 @@ def get_experiments(
             id=experiment.id,
             name=experiment.name,
             ensemble_ids=[ens.id for ens in experiment.ensembles],
-            priors=create_priors(experiment),
             userdata={},
             parameters={
                 group: config.model_dump()
@@ -62,7 +60,6 @@ def get_experiment_by_id(
         name=experiment.name,
         id=experiment.id,
         ensemble_ids=[ens.id for ens in experiment.ensembles],
-        priors=create_priors(experiment),
         userdata={},
         parameters={
             group: config.model_dump()

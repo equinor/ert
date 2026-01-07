@@ -260,7 +260,7 @@ def _join_terminate_thread(terminate_on_parent_death_thread: threading.Thread) -
         logger = logging.getLogger("ert.shared.storage.info")
         logger.info(
             "Got BaseServiceExit while joining terminate thread, "
-            "as expected from _base_service.py"
+            "as expected from ert_server.py"
         )
 
 
