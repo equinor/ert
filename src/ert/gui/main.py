@@ -14,7 +14,7 @@ from signal import SIG_DFL, SIGINT, signal
 from opentelemetry.trace import Status, StatusCode
 from PyQt6.QtCore import QDir
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QApplication, QWidget
+from PyQt6.QtWidgets import QApplication, QMessageBox, QWidget
 
 from ert.config import (
     ErrorInfo,
@@ -29,11 +29,13 @@ from ert.gui.tools.event_viewer import (
 from ert.namespace import Namespace
 from ert.plugins import ErtRuntimePlugins, get_site_plugins
 from ert.services import ErtServer
+from ert.shared import __version__
 from ert.storage import (
     ErtStorageException,
     LocalStorage,
     local_storage_set_ert_config,
 )
+from ert.storage.local_storage import _LOCAL_STORAGE_VERSION, _storage_version
 from ert.trace import trace, tracer
 
 from .ertwidgets import Suggestor
@@ -163,6 +165,29 @@ def _start_initial_gui_window(
     if ert_config is not None:
         try:
             if LocalStorage.check_migration_needed(Path(ert_config.ens_path)):
+                storage_version = _storage_version(Path(ert_config.ens_path))
+                current_version = _LOCAL_STORAGE_VERSION
+
+                migrate_dialog = QMessageBox.warning(
+                    None,
+                    f"Migrate storage to version {current_version}?",
+                    f"Ert storage is version {storage_version} and needs to be migrated"
+                    f" to version {current_version} to be able to continue\n\n"
+                    f"After migration, this storage can only be opened with Ert"
+                    f" version {__version__} or newer\n\n"
+                    "Do you wish to continue migrating storage?\n",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                )
+
+                if migrate_dialog == QMessageBox.StandardButton.Yes:
+                    logger.info(
+                        f"Migrating from version {storage_version} to"
+                        f" version {current_version}"
+                    )
+                else:
+                    logger.info("Storage migration cancelled by user")
+                    os._exit(0)
+
                 LocalStorage.perform_migration(Path(ert_config.ens_path))
             storage_path = ert_config.ens_path
         except ErtStorageException as err:
