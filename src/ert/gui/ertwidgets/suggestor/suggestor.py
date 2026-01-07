@@ -19,9 +19,11 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+from typing_extensions import override
 
 from ert.gui import is_dark_mode
 
+from .. import CopyButton
 from ._colors import BLUE_TEXT
 from ._suggestor_message import SuggestorMessage
 
@@ -105,6 +107,32 @@ QPushButton:hover {{
 """
 
 
+class _CopyAllButton(CopyButton):
+    def __init__(
+        self,
+        errors: list[ErrorInfo],
+        warnings: list[WarningInfo],
+        deprecations: list[WarningInfo],
+    ) -> None:
+        super().__init__()
+        self.setText(" Copy all messages")
+        self.all_messages = "\n\n".join(
+            [
+                f"{info.message}" + (f"\n{info.location()}" if info.location() else "")
+                for info in (errors + warnings + deprecations)
+            ]
+        )
+        self.setStyleSheet(SECONDARY_BUTTON_STYLE)
+
+    @override
+    def copy(self) -> None:
+        logger.info(
+            "Copy all button in Suggestor used. "
+            f"Copied {len(self.all_messages)} characters"
+        )
+        self.copy_text(self.all_messages)
+
+
 class Suggestor(QWidget):
     def __init__(
         self,
@@ -147,8 +175,14 @@ class Suggestor(QWidget):
 
         action_buttons = QWidget(parent=self)
         action_buttons_layout = QHBoxLayout()
-        action_buttons_layout.insertStretch(-1, -1)
         action_buttons_layout.setContentsMargins(0, 24, 0, 0)
+
+        if any([errors, warnings, deprecations]):
+            action_buttons_layout.addWidget(
+                _CopyAllButton(errors, warnings, deprecations)
+            )
+
+        action_buttons_layout.addStretch()
 
         if continue_action:
             action_buttons_layout.addWidget(self._continue_button())
