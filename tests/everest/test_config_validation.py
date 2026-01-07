@@ -292,6 +292,84 @@ def test_that_invalid_control_unique_entry(variables, unique_key):
         )
 
 
+def test_that_perturbation_magnitude_is_required_when_one_variables_does_not_set_it():
+    with pytest.raises(
+        ValueError,
+        match=r"A default perturbation_magnitude for all variables must be set",
+    ):
+        everest_config_with_defaults(
+            controls=[
+                {
+                    "name": "group_0",
+                    "type": "well_control",
+                    "min": 0,
+                    "max": 1,
+                    "initial_guess": 0,
+                    "variables": [
+                        {"name": "w00"},
+                        {"name": "w01", "perturbation_magnitude": 0.01},
+                    ],
+                }
+            ]
+        )
+
+
+def test_that_perturbation_magnitude_is_required():
+    with pytest.raises(
+        ValueError,
+        match=r"A default perturbation_magnitude for all variables must be set",
+    ):
+        everest_config_with_defaults(
+            controls=[
+                {
+                    "name": "group_0",
+                    "type": "well_control",
+                    "min": 0,
+                    "max": 1,
+                    "initial_guess": 0,
+                    "variables": [
+                        {"name": "w00"},
+                    ],
+                }
+            ]
+        )
+
+
+def test_that_perturbation_magnitude_can_be_set_per_variable():
+    everest_config_with_defaults(
+        controls=[
+            {
+                "name": "group_0",
+                "type": "well_control",
+                "min": 0,
+                "max": 1,
+                "initial_guess": 0,
+                "variables": [
+                    {"name": "w00", "perturbation_magnitude": 0.01},
+                ],
+            }
+        ]
+    )
+
+
+def test_that_perturbation_magnitude_can_be_set_for_all_variables():
+    everest_config_with_defaults(
+        controls=[
+            {
+                "name": "group_0",
+                "type": "well_control",
+                "min": 0,
+                "max": 1,
+                "initial_guess": 0,
+                "perturbation_magnitude": 0.01,
+                "variables": [
+                    {"name": "w00"},
+                ],
+            }
+        ]
+    )
+
+
 def test_that_invalid_control_undefined_fields():
     with pytest.raises(
         ValueError,
