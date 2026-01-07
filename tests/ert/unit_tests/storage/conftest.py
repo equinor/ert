@@ -1,7 +1,5 @@
 import pytest
 
-from ert.shared.storage import extraction
-
 
 @pytest.fixture
 def client(monkeypatch, ert_storage_client):
@@ -10,7 +8,6 @@ def client(monkeypatch, ert_storage_client):
         def session():
             return ert_storage_client
 
-    monkeypatch.setattr(extraction, "ErtServer", MockStorageService)
     monkeypatch.setenv("ERT_STORAGE_NO_TOKEN", "ON")
 
     # Store a list of experiment IDs that exist in the database, in case the

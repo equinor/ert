@@ -36,7 +36,7 @@ from ert.mode_definitions import (
 from ert.namespace import Namespace
 from ert.plugins import ErtRuntimePlugins, get_site_plugins, setup_site_logging
 from ert.run_models.multiple_data_assimilation import MultipleDataAssimilationConfig
-from ert.services import ErtServer, WebvizErt
+from ert.services import ErtServer
 from ert.services._storage_main import add_parser_options as ert_api_add_parser_options
 from ert.shared.status.utils import get_ert_memory_usage
 from ert.storage import ErtStorageException, ErtStoragePermissionError
@@ -63,67 +63,24 @@ def run_ert_storage(args: Namespace, _: ErtRuntimePlugins | None = None) -> None
 
 
 def run_webviz_ert(args: Namespace, _: ErtRuntimePlugins | None = None) -> None:
-    try:
-        import webviz_ert  # type: ignore  # noqa
-    except ImportError as err:
-        raise ValueError(
-            "Running `ert vis` requires that webviz_ert is installed"
-        ) from err
-
-    kwargs: dict[str, Any] = {"verbose": args.verbose}
-    ert_config = ErtConfig.with_plugins(get_site_plugins()).from_file(args.config)
-
-    os.chdir(ert_config.config_path)
-    ens_path = ert_config.ens_path
-
-    # Changing current working directory means we need to
-    # only use the base name of the config file path
-    kwargs["ert_config"] = os.path.basename(args.config)
-    kwargs["project"] = os.path.abspath(ens_path)
-
     yellow = "\x1b[33m"
     green = "\x1b[32m"
     bold = "\x1b[1m"
     reset = "\x1b[0m"
 
-    try:
-        with ErtServer.init_service(project=Path(ens_path).absolute()) as storage:
-            storage.wait_until_ready()
-            print(
-                f"""
+    print(
+        f"""
     ---------------------------------------------------------------
 
-    {yellow}{bold}Webviz-ERT is deprecated and will be removed in the near future{reset}
+    {yellow}{bold}Webviz-ERT is removed.
 
     {green}{bold}Plotting capabilities provided by Webviz-ERT are now available
     using the ERT plotter{reset}
 
     ---------------------------------------------------------------
-
-    Starting up Webviz-ERT. This might take more than a minute.
-
-    ---------------------------------------------------------------
     """
-            )
-            logger.info("Show Webviz-ert deprecation warning")
-            webviz_kwargs = {
-                "experimental_mode": args.experimental_mode,
-                "verbose": args.verbose,
-                "title": kwargs.get("ert_config", "ERT - Visualization tool"),
-                "project": kwargs.get("project", os.getcwd()),
-            }
-            with WebvizErt.start_server(**webviz_kwargs) as webviz_ert_server:
-                webviz_ert_server.wait()
-    except PermissionError as pe:
-        print(f"Error: {pe}", file=sys.stderr)
-        print(
-            "Cannot start or connect to storage service due to permission issues.",
-            file=sys.stderr,
-        )
-        print(
-            "This is most likely due to another user starting ERT using this storage",
-            file=sys.stderr,
-        )
+    )
+    logger.info("Show Webviz-ert removal warning")
 
 
 def strip_error_message_and_raise_exception(validated: ValidationStatus) -> None:
@@ -316,19 +273,6 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
     )
     ert_api_parser.set_defaults(func=run_ert_storage)
     ert_api_add_parser_options(ert_api_parser)
-
-    ert_vis_parser = subparsers.add_parser(
-        "vis",
-        description="Launch webviz-driven visualization tool.",
-    )
-    ert_vis_parser.set_defaults(func=run_webviz_ert)
-    ert_vis_parser.add_argument("--name", "-n", type=str, default="Webviz-ERT")
-    ert_vis_parser.add_argument(
-        "--experimental-mode",
-        action="store_true",
-        help="Feature flag for enabling experimental plugins",
-    )
-    ert_api_add_parser_options(ert_vis_parser)  # ert vis shares args with ert api
 
     # test_run_parser
     test_run_description = f"Run '{TEST_RUN_MODE}' in cli"

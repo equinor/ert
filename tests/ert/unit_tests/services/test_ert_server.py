@@ -22,7 +22,7 @@ from ert.services.ert_server import (
 def local_exec_args(script_args: str | list[str]) -> list[str]:
     """
     Convenience function that returns the exec_args for executing a Python
-    script in the directory of '_base_service.py'.
+    script in the directory of old '_base_service.py'.
 
     This is done instead of using 'python -m [module path]' due to the '-m' flag
     adding the user's current working directory to sys.path. Executing a Python
