@@ -38,8 +38,10 @@ from ert.config import (
 )
 from ert.config.design_matrix import DESIGN_MATRIX_GROUP
 from ert.dark_storage.common import ErtStoragePermissionError
+from ert.field_utils import ErtboxParameters
 from ert.sample_prior import sample_prior
 from ert.storage import (
+    DictEncodedDataFrame,
     ErtStorageException,
     LocalEnsemble,
     RealizationStorageState,
@@ -60,9 +62,6 @@ def test_create_experiment(tmp_path):
 
         experiment_path = Path(storage.path / "experiments" / str(experiment.id))
         assert experiment_path.exists()
-
-        assert (experiment_path / experiment._parameter_file).exists()
-        assert (experiment_path / experiment._responses_file).exists()
 
         with open(experiment_path / "index.json", encoding="utf-8") as f:
             index = json.load(f)
@@ -144,7 +143,11 @@ def test_that_local_ensemble_save_parameter_raises_value_error_given_xr_array_da
 def test_that_saving_response_updates_configs(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment(
-            responses=[SummaryConfig(keys=["*", "FOPR"], input_files=["not_relevant"])]
+            experiment_config={
+                "response_configuration": [
+                    SummaryConfig(keys=["*", "FOPR"], input_files=["not_relevant"])
+                ]
+            }
         )
         ensemble = storage.create_ensemble(
             experiment, ensemble_size=1, iteration=0, name="prior"
@@ -200,7 +203,9 @@ def test_that_saving_arbitrary_parameter_dataframe_fails(tmp_path):
             name="KEY_1",
             distribution={"name": "uniform", "min": 0, "max": 1},
         )
-        experiment = storage.create_experiment(parameters=[uniform_parameter])
+        experiment = storage.create_experiment(
+            experiment_config={"parameter_configuration": [uniform_parameter]}
+        )
         prior = storage.create_ensemble(
             experiment, ensemble_size=1, iteration=0, name="prior"
         )
@@ -282,7 +287,7 @@ def test_that_loading_parameter_via_response_api_fails(tmp_path):
     )
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment(
-            parameters=[uniform_parameter],
+            experiment_config={"parameter_configuration": [uniform_parameter]},
         )
         prior = storage.create_ensemble(
             experiment,
@@ -379,7 +384,11 @@ def test_that_reader_storage_reads_most_recent_response_configs(tmp_path):
     writer = open_storage(tmp_path, mode="w")
 
     exp = writer.create_experiment(
-        responses=[SummaryConfig(keys=["*", "FOPR"], input_files=["not_relevant"])],
+        experiment_config={
+            "response_configuration": [
+                SummaryConfig(keys=["*", "FOPR"], input_files=["not_relevant"])
+            ]
+        },
         name="uniq",
     )
     ens: LocalEnsemble = exp.create_ensemble(ensemble_size=10, name="uniq_ens")
@@ -589,7 +598,18 @@ parameter_configs = st.lists(
             update=st.booleans(),
             distribution=st.just({"name": "uniform", "min": 0, "max": 1}),
         ),
-        st.builds(SurfaceConfig, name=words),
+        st.builds(
+            SurfaceConfig,
+            name=words,
+            ncol=st.integers(min_value=1),
+            nrow=st.integers(min_value=1),
+            xori=st.floats(allow_infinity=False, allow_nan=False),
+            yori=st.floats(allow_infinity=False, allow_nan=False),
+            xinc=st.floats(allow_infinity=False, allow_nan=False),
+            yinc=st.floats(allow_infinity=False, allow_nan=False),
+            rotation=st.floats(allow_infinity=False, allow_nan=False),
+            yflip=st.sampled_from([-1, 1]),
+        ),
     ),
     unique_by=lambda x: x.name,
     min_size=1,
@@ -643,8 +663,14 @@ observations = (
                 "index": vectors(
                     st.integers(min_value=1, max_value=10000), num_observations
                 ),
-                "observations": vectors(st.floats(width=32), num_observations),
-                "std": vectors(st.floats(width=32), num_observations),
+                "observations": vectors(
+                    st.floats(width=32, allow_nan=False, allow_infinity=False),
+                    num_observations,
+                ),
+                "std": vectors(
+                    st.floats(width=32, allow_nan=False, allow_infinity=False),
+                    num_observations,
+                ),
             }
         ),
     )
@@ -664,12 +690,12 @@ def fields(draw, egrid, num_fields=small_ints) -> list[Field]:
         draw(
             st.builds(
                 Field,
+                ertbox_params=st.builds(
+                    ErtboxParameters, nx=st.just(nx), ny=st.just(ny), nz=st.just(nz)
+                ),
                 name=st.just(f"Field{i}"),
                 file_format=st.just("roff_binary"),
                 grid_file=st.just(grid_file),
-                nx=st.just(nx),
-                ny=st.just(ny),
-                nz=st.just(nz),
                 output_file=st.just(Path(f"field{i}.roff")),
             )
         )
@@ -780,8 +806,14 @@ def test_asof_joining_summary(tmp_path, perturb_observations, perturb_responses)
         )
 
         experiment = storage.create_experiment(
-            responses=[SummaryConfig(keys=["*"], input_files=["not_relevant"])],
-            observations={"summary": summary_observations},
+            experiment_config={
+                "response_configuration": [
+                    SummaryConfig(keys=["*"], input_files=["not_relevant"])
+                ],
+                "observations": {
+                    "summary": DictEncodedDataFrame.from_polars(summary_observations)
+                },
+            }
         )
 
         ensemble = storage.create_ensemble(
@@ -842,9 +874,7 @@ def test_asof_joining_summary(tmp_path, perturb_observations, perturb_responses)
 
 def test_saving_everest_metadata_to_ensemble(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
-        experiment = storage.create_experiment(
-            responses=[],
-        )
+        experiment = storage.create_experiment()
 
         ensemble = storage.create_ensemble(
             experiment, ensemble_size=10, iteration=0, name="prior"
@@ -948,23 +978,26 @@ def test_that_all_parameters_and_gen_data_consolidation_works(
         response_keys = ["R1", "R2"]
 
         experiment = storage.create_experiment(
-            responses=[GenDataConfig(keys=["R1", "R2"])],
-            parameters=[
-                EverestControl(
-                    name="point",
-                    input_keys=["P1", "P2"],
-                    types=["generic_control", "generic_control"],
-                    initial_guesses=[0.1, 0.1],
-                    control_types=["real", "real"],
-                    enabled=[True, True],
-                    min=[0, 0],
-                    max=[10, 10],
-                    perturbation_types=["relative", "relative"],
-                    perturbation_magnitudes=[0.5, 0.5],
-                    scaled_ranges=[[0, 20], [0, 20]],
-                    samplers=[None, None],
-                )
-            ],
+            name="test-experiment",
+            experiment_config={
+                "parameter_configuration": [
+                    EverestControl(
+                        name="point",
+                        input_keys=["P1", "P2"],
+                        types=["generic_control", "generic_control"],
+                        initial_guesses=[0.1, 0.1],
+                        control_types=["real", "real"],
+                        enabled=[True, True],
+                        min=[0, 0],
+                        max=[10, 10],
+                        perturbation_types=["relative", "relative"],
+                        perturbation_magnitudes=[0.5, 0.5],
+                        scaled_ranges=[[0, 20], [0, 20]],
+                        samplers=[None, None],
+                    )
+                ],
+                "response_configuration": [GenDataConfig(keys=["R1", "R2"])],
+            },
         )
 
         ensemble_datas = []
@@ -1064,7 +1097,9 @@ def test_sample_parameter_with_design_matrix(tmp_path, reals, expect_error):
     design_matrix = DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
     with open_storage(tmp_path / "storage", mode="w") as storage:
         experiment_id = storage.create_experiment(
-            parameters=list(design_matrix.parameter_configurations)
+            experiment_config={
+                "parameter_configuration": list(design_matrix.parameter_configurations)
+            }
         )
         ensemble = storage.create_ensemble(
             experiment_id, name="default", ensemble_size=ensemble_size
@@ -1124,7 +1159,11 @@ def test_load_gen_kw_not_sorted(storage, tmpdir, snapshot):
         ert_config = ErtConfig.from_file("config.ert")
 
         experiment_id = storage.create_experiment(
-            parameters=ert_config.ensemble_config.parameter_configuration
+            experiment_config={
+                "parameter_configuration": (
+                    ert_config.ensemble_config.parameter_configuration
+                )
+            }
         )
         ensemble_size = 10
         ensemble = storage.create_ensemble(
@@ -1238,7 +1277,7 @@ def test_set_failure_will_not_recreate_ensemble_directory(storage):
 def test_save_response_will_create_realization_directory(storage):
     # Given a fresh ensemble storage with no realizations
     dummy_ensemble = storage.create_experiment(
-        responses=[SummaryConfig(keys=["DUMMY"])]
+        experiment_config={"response_configuration": [SummaryConfig(keys=["DUMMY"])]}
     ).create_ensemble(name="dummy", ensemble_size=1)
     assert dummy_ensemble._path.exists(), "Assumptions for test has changed"
     assert not (dummy_ensemble._path / "realization-0").exists()
@@ -1426,9 +1465,13 @@ class StatefulStorageTest(RuleBasedStateMachine):
         obs,
     ):
         experiment_id = self.storage.create_experiment(
-            parameters=parameters,
-            responses=responses,
-            observations=obs,
+            experiment_config={
+                "parameter_configuration": parameters,
+                "response_configuration": responses,
+                "observations": {
+                    k: DictEncodedDataFrame.from_polars(v) for k, v in obs.items()
+                },
+            }
         ).id
         model_experiment = Experiment(experiment_id)
         model_experiment.parameters = parameters

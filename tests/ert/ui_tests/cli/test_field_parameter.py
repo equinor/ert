@@ -17,6 +17,7 @@ from ert.analysis import smoother_update
 from ert.config import ErtConfig, ESSettings, ObservationSettings
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.storage import open_storage
+from ert.storage.migration.to22 import DictEncodedDataFrame
 
 from .run_cli import run_cli
 
@@ -427,9 +428,16 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
         corr_length = prior.load_parameters("CORR_LENGTH")
 
         new_experiment = storage.create_experiment(
-            parameters=config.ensemble_config.parameter_configuration,
-            responses=config.ensemble_config.response_configuration,
-            observations=config.observations,
+            experiment_config={
+                "parameter_configuration": (
+                    config.ensemble_config.parameter_configuration
+                ),
+                "response_configuration": config.ensemble_config.response_configuration,
+                "observations": {
+                    response_type: DictEncodedDataFrame.from_polars(observations)
+                    for response_type, observations in config.observations.items()
+                },
+            },
             name="exp-zero-var",
         )
         new_prior = storage.create_ensemble(

@@ -17,7 +17,7 @@ from ert.analysis import enif_update, smoother_update
 from ert.config import ErtConfig, ESSettings, ObservationSettings
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.sample_prior import sample_prior
-from ert.storage import open_storage
+from ert.storage import DictEncodedDataFrame, open_storage
 from tests.ert.performance_tests.performance_utils import make_poly_example
 from tests.ert.ui_tests.cli.run_cli import run_cli
 
@@ -106,9 +106,14 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
     with open_storage(path, mode="w") as storage:
         ens_config = ert_config.ensemble_config
         experiment_id = storage.create_experiment(
-            parameters=ens_config.parameter_configuration,
-            responses=ens_config.response_configuration,
-            observations=ert_config.observations,
+            experiment_config={
+                "parameter_configuration": ens_config.parameter_configuration,
+                "response_configuration": ens_config.response_configuration,
+                "observations": {
+                    response_type: DictEncodedDataFrame.from_polars(df)
+                    for response_type, df in ert_config.observations.items()
+                },
+            },
             name="test-experiment",
         )
         source = storage.create_ensemble(experiment_id, name="prior", ensemble_size=100)

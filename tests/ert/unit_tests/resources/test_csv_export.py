@@ -3,7 +3,7 @@ import json
 import polars as pl
 
 from ert.plugins.hook_implementations.workflows.csv_export import CSVExportJob
-from ert.storage import open_storage
+from ert.storage import DictEncodedDataFrame, open_storage
 from tests.ert.performance_tests.test_obs_and_responses_performance import (
     create_experiment_args,
 )
@@ -26,12 +26,18 @@ def test_that_csv_export_matches_snapshot(monkeypatch, tmp_path, snapshot):
 
     with open_storage(tmp_path / "storage", mode="w") as storage:
         experiment = storage.create_experiment(
-            responses=[info.gen_data_config, info.summary_config],
-            parameters=info.gen_kw_configs,
-            observations={
-                "gen_data": info.gen_data_observations,
-                "summary": info.summary_observations,
-            },
+            experiment_config={
+                "response_configuration": [info.gen_data_config, info.summary_config],
+                "parameter_configuration": info.gen_kw_configs,
+                "observations": {
+                    "gen_data": DictEncodedDataFrame.from_polars(
+                        info.gen_data_observations
+                    ),
+                    "summary": DictEncodedDataFrame.from_polars(
+                        info.summary_observations
+                    ),
+                },
+            }
         )
         ens = experiment.create_ensemble(
             ensemble_size=num_realizations, name="BobKaareJohnny"

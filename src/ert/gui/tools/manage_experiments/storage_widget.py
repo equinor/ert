@@ -169,12 +169,20 @@ class StorageWidget(QWidget):
         if create_experiment_dialog.exec():
             try:
                 with self._notifier.write_storage() as storage:
+                    parameter_configuration = (
+                        self._ert_config.parameter_configurations_with_design_matrix
+                    )
+                    response_configuration = (
+                        self._ert_config.ensemble_config.response_configuration,
+                    )
                     ensemble = storage.create_experiment(
-                        parameters=self._ert_config.parameter_configurations_with_design_matrix,
-                        responses=self._ert_config.ensemble_config.response_configuration,
-                        observations=self._ert_config.observations,
+                        experiment_config={
+                            "parameter_configuration": parameter_configuration,
+                            "response_configuration": response_configuration,
+                            "observations": self._ert_config.observations,
+                            "ert_templates": self._ert_config.ert_templates,
+                        },
                         name=create_experiment_dialog.experiment_name,
-                        templates=self._ert_config.ert_templates,
                     ).create_ensemble(
                         name=create_experiment_dialog.ensemble_name,
                         ensemble_size=self._ensemble_size,

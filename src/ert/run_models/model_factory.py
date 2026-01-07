@@ -27,6 +27,7 @@ from ert.mode_definitions import (
 )
 from ert.validation import ActiveRange
 
+from ..storage import DictEncodedDataFrame
 from .ensemble_experiment import EnsembleExperiment, EnsembleExperimentConfig
 from .ensemble_information_filter import (
     EnsembleInformationFilter,
@@ -34,7 +35,6 @@ from .ensemble_information_filter import (
 )
 from .ensemble_smoother import EnsembleSmoother, EnsembleSmootherConfig
 from .evaluate_ensemble import EvaluateEnsemble, EvaluateEnsembleConfig
-from .initial_ensemble_run_model import DictEncodedDataFrame
 from .manual_update import ManualUpdate, ManualUpdateConfig
 from .manual_update_enif import ManualUpdateEnIF
 from .multiple_data_assimilation import (
