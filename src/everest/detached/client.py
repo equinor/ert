@@ -81,7 +81,7 @@ def stop_server(
     for retry in range(retries):
         try:
             url, cert, auth = server_context
-            stop_endpoint = "/".join([url, EverEndpoints.stop])
+            stop_endpoint = f"{url}/{EverEndpoints.stop}"
             response = requests.post(
                 stop_endpoint,
                 verify=cert,
@@ -105,7 +105,7 @@ def start_experiment(
     for retry in range(retries):
         try:
             url, cert, auth = server_context
-            start_endpoint = "/".join([url, EverEndpoints.start_experiment])
+            start_endpoint = f"{url}/{EverEndpoints.start_experiment}"
             response = requests.post(
                 start_endpoint,
                 verify=cert,

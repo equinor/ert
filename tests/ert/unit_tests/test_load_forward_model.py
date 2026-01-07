@@ -166,15 +166,9 @@ def test_load_forward_model_gen_data(setup_case):
         """
     )
     run_path = Path("simulations/realization-0/iter-0/")
-    (run_path / "response_0.out").write_text(
-        "\n".join(["1", "2", "3"]), encoding="utf-8"
-    )
-    (run_path / "response_1.out").write_text(
-        "\n".join(["4", "5", "5"]), encoding="utf-8"
-    )
-    (run_path / "response_0.out_active").write_text(
-        "\n".join(["1", "0", "1"]), encoding="utf-8"
-    )
+    (run_path / "response_0.out").write_text("1\n2\n3", encoding="utf-8")
+    (run_path / "response_1.out").write_text("4\n5\n5", encoding="utf-8")
+    (run_path / "response_0.out_active").write_text("1\n0\n1", encoding="utf-8")
 
     load_parameters_and_responses_from_runpath(str(run_path), prior_ensemble, [0])
     df = prior_ensemble.load_responses("gen_data", (0,))
@@ -191,8 +185,8 @@ def test_single_valued_gen_data_with_active_info_is_loaded(setup_case):
     )
 
     run_path = Path("simulations/realization-0/iter-0/")
-    (run_path / "response_0.out").write_text("\n".join(["1"]), encoding="utf-8")
-    (run_path / "response_0.out_active").write_text("\n".join(["1"]), encoding="utf-8")
+    (run_path / "response_0.out").write_text("1", encoding="utf-8")
+    (run_path / "response_0.out_active").write_text("1", encoding="utf-8")
 
     load_parameters_and_responses_from_runpath(str(run_path), prior_ensemble, [0])
     df = prior_ensemble.load_responses("RESPONSE", (0,))
@@ -208,8 +202,8 @@ def test_that_all_deactivated_values_are_loaded(setup_case):
     )
 
     run_path = Path("simulations/realization-0/iter-0/")
-    (run_path / "response_0.out").write_text("\n".join(["-1"]), encoding="utf-8")
-    (run_path / "response_0.out_active").write_text("\n".join(["0"]), encoding="utf-8")
+    (run_path / "response_0.out").write_text("-1", encoding="utf-8")
+    (run_path / "response_0.out_active").write_text("0", encoding="utf-8")
 
     load_parameters_and_responses_from_runpath(str(run_path), prior_ensemble, [0])
     response = prior_ensemble.load_responses("RESPONSE", (0,))
@@ -245,10 +239,8 @@ def test_loading_gen_data_without_restart(storage, run_args):
         runpaths=Runpaths.from_config(ert_config),
     )
     run_path = Path("simulations/realization-0/iter-0/")
-    (run_path / "response.out").write_text("\n".join(["1", "2", "3"]), encoding="utf-8")
-    (run_path / "response.out_active").write_text(
-        "\n".join(["1", "0", "1"]), encoding="utf-8"
-    )
+    (run_path / "response.out").write_text("1\n2\n3", encoding="utf-8")
+    (run_path / "response.out_active").write_text("1\n0\n1", encoding="utf-8")
 
     load_parameters_and_responses_from_runpath(str(run_path), prior_ensemble, [0])
     df = prior_ensemble.load_responses("RESPONSE", (0,))
@@ -317,10 +309,8 @@ def test_loading_from_any_available_iter(storage, run_args, itr):
         runpaths=Runpaths.from_config(ert_config),
     )
     run_path = Path(f"simulations/realization-0/iter-{itr if itr is not None else 0}/")
-    (run_path / "response.out").write_text("\n".join(["1", "2", "3"]), encoding="utf-8")
-    (run_path / "response.out_active").write_text(
-        "\n".join(["1", "0", "1"]), encoding="utf-8"
-    )
+    (run_path / "response.out").write_text("1\n2\n3", encoding="utf-8")
+    (run_path / "response.out_active").write_text("1\n0\n1", encoding="utf-8")
 
     run_path_format = str(
         Path(

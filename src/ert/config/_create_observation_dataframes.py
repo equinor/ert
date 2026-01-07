@@ -545,8 +545,10 @@ def _handle_rft_observation(
 
     return pl.DataFrame(
         {
-            "response_key": ":".join(
-                [rft_observation.well, rft_observation.date, rft_observation.property]
+            "response_key": (
+                f"{rft_observation.well}:"
+                f"{rft_observation.date}:"
+                f"{rft_observation.property}"
             ),
             "observation_key": rft_observation.name,
             "east": pl.Series([location[0]], dtype=pl.Float32),

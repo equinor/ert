@@ -44,7 +44,7 @@ class EverestClient:
 
     def _http_get(self, endpoint: EverEndpoints) -> requests.Response:
         return requests.get(
-            "/".join([self._url, endpoint]),
+            f"{self._url}/{endpoint}",
             verify=self._cert,
             auth=(self._username, self._password),
             proxies={"http": None, "https": None},  # type: ignore
@@ -52,7 +52,7 @@ class EverestClient:
 
     def _http_post(self, endpoint: EverEndpoints) -> requests.Response:
         return requests.post(
-            "/".join([self._url, endpoint]),
+            f"{self._url}/{endpoint}",
             verify=self._cert,
             auth=(self._username, self._password),
             proxies={"http": None, "https": None},  # type: ignore
