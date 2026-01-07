@@ -19,8 +19,9 @@ def test_exception_can_be_caught():
     # Using ErtThread throws an exception on the main thread so that pytest can
     # catch it.
     thread = ErtThread(target=watch_out_im_gonna_throw)
-    thread.start()
-    with pytest.raises(ErtThreadError, match="I threw") as e:
+    with pytest.raises(ErtThreadError, match="I threw") as e:  # noqa: PT012
+        # Whichever of these that raises varies:
+        thread.start()
         thread.join()
 
     assert "Traceback (most recent call last):" in str(e)
@@ -36,8 +37,9 @@ def test_exception_are_logged_with_traceback(caplog):
     # Using ErtThread throws an exception on the main thread so that pytest can
     # catch it.
     thread = ErtThread(target=watch_out_im_gonna_throw)
-    thread.start()
-    with pytest.raises(ErtThreadError):
+    with pytest.raises(ErtThreadError):  # noqa: PT012
+        # Whichever of these that raises varies:
+        thread.start()
         thread.join()
     assert "Traceback (most recent call last):" in caplog.messages[0]
     assert " line 9, in watch_out_im_gonna_throw" in caplog.messages[0]
