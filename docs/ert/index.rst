@@ -50,6 +50,7 @@ To understand the theoretical foundations of ensemble-based methods, head over t
    :caption: Theory
 
    theory/ensemble_based_methods
+   theory/gentle_introduction_to_history_matching
 
 .. toctree::
    :hidden:
