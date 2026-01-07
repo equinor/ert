@@ -1,4 +1,5 @@
 import os
+import textwrap
 from contextlib import ExitStack as does_not_raise
 from pathlib import Path
 
@@ -96,16 +97,13 @@ def test_that_multiple_workflow_jobs_are_ordered_correctly(order):
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_redefine_in_workflow_overwrites_in_subsequent_lines():
     Path("workflow").write_text(
-        "\n".join(
-            [
-                "DEFINE <A> 1",
-                "foo <A>",
-                "bar <A>",
-                "DEFINE <A> 3",
-                "foo <A>",
-                "baz <A>",
-            ]
-        ),
+        textwrap.dedent("""
+            DEFINE <A> 1
+            foo <A>
+            bar <A>
+            DEFINE <A> 3
+            foo <A>
+            baz <A>"""),
         encoding="utf-8",
     )
 
@@ -131,12 +129,7 @@ def test_that_redefine_in_workflow_overwrites_in_subsequent_lines():
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_unknown_jobs_gives_error():
     Path("workflow").write_text(
-        "\n".join(
-            [
-                "boo <A>",
-                "kingboo <A>",
-            ]
-        ),
+        "boo <A>\nkingboo <A>",
         encoding="utf-8",
     )
 

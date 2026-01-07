@@ -207,6 +207,7 @@ select = [
     "FA",
     "FAST",
     "FIX",
+    "FLY",
     "FURB",  # refurb
     "G",     # logging-format
     "I",     # isort
