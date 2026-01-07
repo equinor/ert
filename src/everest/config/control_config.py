@@ -166,7 +166,8 @@ class ControlConfig(BaseModel):
             """
         ),
     )
-    perturbation_magnitude: float = Field(
+    perturbation_magnitude: float | None = Field(
+        default=None,
         description=dedent(
             """
             The magnitude of the perturbation of all control variables in the
@@ -185,6 +186,8 @@ class ControlConfig(BaseModel):
               and `min` fields.
 
             This default value can be overridden at the variable level.
+
+            This field is required unless it is explicitly set for all variables.
             """
         ),
     )
@@ -246,6 +249,19 @@ class ControlConfig(BaseModel):
                 "auto_scale is deprecated for everest controls, and is on by default."
             )
         return values
+
+    @model_validator(mode="after")
+    def validate_perturbation_magnitude(self) -> Self:
+        if self.perturbation_magnitude is None and any(
+            variable
+            for variable in self.variables
+            if variable.perturbation_magnitude is None
+        ):
+            raise ValueError(
+                "A default perturbation_magnitude for all variables must be set "
+                "when not all variables define it explicitly."
+            )
+        return self
 
     @model_validator(mode="after")
     def validate_variables(self) -> Self:
