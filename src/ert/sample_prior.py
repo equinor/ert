@@ -66,17 +66,21 @@ def sample_prior(
                     f"Sampling parameter {config_node.name} "
                     f"for realizations {active_realizations}"
                 )
-                complete_dataset = Ensemble.sample_parameter(
+                dataset = Ensemble.sample_parameter(
                     config_node,
                     list(active_realizations),
                     random_seed=random_seed,
                     num_realizations=num_realizations,
                 )
-
-                realizations_series = pl.Series(
-                    "realization", list(active_realizations)
+                dataset = dataset.select(["realization", config_node.name]).sort(
+                    "realization"
                 )
-                complete_dataset = complete_dataset.with_columns(realizations_series)
+
+                if complete_dataset is None:
+                    complete_dataset = dataset
+                else:
+                    complete_dataset = complete_dataset.join(dataset, on="realization")
+
         else:
             for realization_nr in active_realizations:
                 ds = config_node.read_from_runpath(Path(), realization_nr, 0)

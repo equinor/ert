@@ -740,10 +740,13 @@ class LocalEnsemble(BaseMode):
             str(random_seed), active_realizations, num_realizations=num_realizations
         )
 
-        return pl.DataFrame(
+        parameters = pl.DataFrame(
             {parameter.name: parameter_values},
             schema={parameter.name: pl.Float64},
         )
+        realizations_series = pl.Series("realization", list(active_realizations))
+
+        return parameters.with_columns(realizations_series)
 
     def load_responses(self, key: str, realizations: tuple[int, ...]) -> pl.DataFrame:
         """Load responses for key and realizations into xarray Dataset.
