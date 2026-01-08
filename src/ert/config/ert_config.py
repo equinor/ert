@@ -1150,7 +1150,7 @@ class ErtConfig(BaseModel):
                     data_to_read={},
                     locations=[],
                 )
-            cls_config._observations = create_observation_dataframes(
+            create_observation_dataframes(
                 obs_configs,
                 refcase,
                 cast(
