@@ -326,7 +326,9 @@ test_cases_prioritze_private = [
 ]
 
 
-@pytest.mark.parametrize("mock_psutils_if_addrs,expected", test_cases_prioritze_private)
+@pytest.mark.parametrize(
+    ("mock_psutils_if_addrs", "expected"), test_cases_prioritze_private
+)
 def test_that_get_ip_address_prioritizes_private_when_told(
     mock_psutils_if_addrs, expected
 ):
@@ -375,8 +377,7 @@ test_cases_default_prioritize_public = [
 
 
 @pytest.mark.parametrize(
-    "mock_psutils_if_addrs,expected",
-    test_cases_default_prioritize_public,
+    ("mock_psutils_if_addrs", "expected"), test_cases_default_prioritize_public
 )
 def test_that_get_ip_address_prioritizes_public_by_default(
     mock_psutils_if_addrs, expected
