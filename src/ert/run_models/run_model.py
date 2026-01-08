@@ -838,6 +838,10 @@ class RunModel(RunModelConfig, ABC):
         if self._max_parallelism_violation.amount > 0 and isinstance(
             self._max_parallelism_violation.message, str
         ):
+            logger.info(
+                "Warning displayed to user for NUM_CPU misconfiguration:\n"
+                f"{self._max_parallelism_violation.message}"
+            )
             warnings.warn(
                 self._max_parallelism_violation.message,
                 PostSimulationWarning,
