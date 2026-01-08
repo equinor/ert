@@ -27,7 +27,7 @@ from ert.gui.tools.event_viewer import (
     add_gui_log_handler,
 )
 from ert.namespace import Namespace
-from ert.plugins import ErtRuntimePlugins, get_site_plugins
+from ert.plugins import get_site_plugins
 from ert.services import ErtServer
 from ert.shared import __version__
 from ert.storage import (
@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 
 
 @tracer.start_as_current_span("ert.application.gui")
-def run_gui(args: Namespace, plugins: ErtRuntimePlugins | None = None) -> int:
+def run_gui(args: Namespace) -> int:
     span = trace.get_current_span()
     # Replace Python's exception handler for SIGINT with the system default.
     #
@@ -105,7 +105,7 @@ def run_gui(args: Namespace, plugins: ErtRuntimePlugins | None = None) -> int:
     app.setWindowIcon(QIcon("img:ert_icon.svg"))
 
     with add_gui_log_handler() as log_handler:
-        window, ens_path = _start_initial_gui_window(args, log_handler, plugins)
+        window, ens_path = _start_initial_gui_window(args, log_handler)
 
         def show_window() -> int:
             window.show()
@@ -139,7 +139,6 @@ def run_gui(args: Namespace, plugins: ErtRuntimePlugins | None = None) -> int:
 def _start_initial_gui_window(
     args: Namespace,
     log_handler: GUILogHandler,
-    runtime_plugins: ErtRuntimePlugins | None = None,
 ) -> tuple[QWidget, str | None]:
     # Create logger inside function to make sure all handlers have been added to
     # the root-logger.
@@ -153,12 +152,9 @@ def _start_initial_gui_window(
         # the config file to be the base name of the original config
         args.config = os.path.basename(args.config)
 
-        if runtime_plugins is not None:
-            ert_config = ErtConfig.with_plugins(runtime_plugins).from_file(args.config)
-        else:
-            ert_config = ErtConfig.with_plugins(get_site_plugins()).from_file(
-                args.config
-            )
+        runtime_plugins = get_site_plugins()
+        ert_config = ErtConfig.with_plugins(runtime_plugins).from_file(args.config)
+
         local_storage_set_ert_config(ert_config)
 
     storage_path = None
@@ -226,9 +222,7 @@ def _start_initial_gui_window(
         logger.info(f"Warning shown in gui '{msg}'")
 
     assert storage_path is not None
-    main_window = _setup_main_window(
-        ert_config, args, log_handler, storage_path, runtime_plugins
-    )
+    main_window = _setup_main_window(ert_config, args, log_handler, storage_path)
 
     if validation_messages.warnings or validation_messages.deprecations:
 
@@ -266,10 +260,9 @@ def _setup_main_window(
     args: Namespace,
     log_handler: GUILogHandler,
     storage_path: str,
-    runtime_plugins: ErtRuntimePlugins | None = None,
 ) -> ErtMainWindow:
     # window reference must be kept until app.exec returns:
-    window = ErtMainWindow(args.config, ert_config, runtime_plugins, log_handler)
+    window = ErtMainWindow(args.config, ert_config, log_handler)
     window.notifier.set_storage(storage_path)
     window.post_init()
     window.adjustSize()

@@ -31,7 +31,7 @@ from ert.field_utils.field_file_format import ROFF_FORMATS
 from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
 from tests.ert.grid_generator import xtgeo_box_grids
 
-from .run_cli import run_cli_with_pm
+from .run_cli import run_cli
 
 names = st.text(
     min_size=1,
@@ -457,9 +457,7 @@ def test_that_parameters_are_placed_in_the_runpath_as_expected(
         smspec.to_file("ECLBASE.SMSPEC")
         unsmry.to_file("ECLBASE.UNSMRY")
 
-        run_cli_with_pm(
-            [ENSEMBLE_EXPERIMENT_MODE, "--disable-monitoring", "config.ert"]
-        )
+        run_cli(ENSEMBLE_EXPERIMENT_MODE, "--disable-monitoring", "config.ert")
 
         mask = np.logical_not(
             np.array(io_source.actnum).reshape(io_source.dims, order="F")
