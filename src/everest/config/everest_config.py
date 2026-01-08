@@ -191,18 +191,18 @@ class EverestConfig(BaseModelWithContextSupport):
             ```yaml
             controls:
               - name: point
-                  type: generic_control
-                  min: -1.0
+                type: generic_control
+                min: -1.0
+                max: 1.0
+                initial_guess: 0.1
+                perturbation_magnitude: 0.001
+                variables:
+                - name: x
+                  initial_guess: 0.5
+                - name: y
+                  min: 0.0
                   max: 1.0
-                  initial_guess: 0.1
-                  perturbation_magnitude: 0.001
-                  variables:
-                    - name: x
-                      initial_guess: 0.5
-                    - name: y
-                      min: 0.0
-                      max: 1.0
-                    - name: z
+                - name: z
             ```
 
             This defines a group of controls names `point`, with variables `x`,
@@ -224,17 +224,17 @@ class EverestConfig(BaseModelWithContextSupport):
             ```yaml
             controls:
               - name: point
-                  max: 1.0
-                  min: -1.0
-                  initial_guess: 0.25
-                  type: generic_control
-                  variables:
-                    - name: x
-                      index: 1
-                    - name: x
-                      index: 2
-                    - name: x
-                      index: 3
+                max: 1.0
+                min: -1.0
+                initial_guess: 0.25
+                type: generic_control
+                variables:
+                  - name: x
+                    index: 1
+                  - name: x
+                    index: 2
+                  - name: x
+                    index: 3
             ```
 
             This defines three variables `point.x.1`, `point.x.2` and
@@ -250,12 +250,12 @@ class EverestConfig(BaseModelWithContextSupport):
             ```yaml
             controls:
               - name: point
-                  max: 1.0
-                  min: -1.0
-                  type: generic_control
-                  variables:
-                    - name: x
-                      initial_guess: [0.25, 0.25, 0.25]
+                max: 1.0
+                min: -1.0
+                type: generic_control
+                variables:
+                  - name: x
+                    initial_guess: [0.25, 0.25, 0.25]
             ```
         """
         ),
