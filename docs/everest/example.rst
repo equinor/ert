@@ -4,19 +4,19 @@
 Example
 *******
 
-In this section we will go through the setup and running of a simple everest optimization case.
+In this section we will go through the setup and running of a simple Everest optimization case.
 
 Problem definition
 ##################
 
-The optimization problem we will solve using everest will be to minimize the distance between an initial 3D point
+The optimization problem we will solve using Everest will be to minimize the distance between an initial 3D point
 and another given target 3D point.
 
 Everest config
 ##################
 
 The main element an Everest optimization experiment requires is a configuration file. Everest supports the `YAML <https://en.wikipedia.org/wiki/YAML>`_
-format for the configuration file. The configuration file is build up of multiple sections and next we will go through it section
+format for the configuration file. The configuration file is built up of multiple sections and next we will go through it section
 by section.
 
 Creating the optimization folder::
@@ -320,7 +320,7 @@ distance3d.py::
 
 More information about creating custom jobs can be found in the :ref:`cha_creating_custom_jobs` section
 
-Running everest
+Running Everest
 ###############
 
 Now we have all the components needed to start the optimization experiment,
