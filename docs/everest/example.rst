@@ -4,12 +4,12 @@
 Example
 *******
 
-In this section we will go through the setup and running of a simple everest optimisation case.
+In this section we will go through the setup and running of a simple Everest optimisation case.
 
 Problem definition
 ##################
 
-The optimisation problem we will solve using everest will be to minimize the distance between an initial 3D point
+The optimisation problem we will solve using Everest will be to minimize the distance between an initial 3D point
 and another given target 3D point.
 
 Everest config
@@ -320,7 +320,7 @@ distance3d.py::
 
 More information about creating custom jobs can be found in the :ref:`cha_creating_custom_jobs` section
 
-Running everest
+Running Everest
 ###############
 
 Now we have all the components needed to start the optimisation experiment,
