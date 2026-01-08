@@ -224,6 +224,7 @@ class EverestConfig(BaseModelWithContextSupport):
                 max: 1.0
                 min: -1.0
                 initial_guess: 0.25
+                perturbation_magnitude: 0.001
                 type: generic_control
                 variables:
                   - name: x
@@ -249,6 +250,7 @@ class EverestConfig(BaseModelWithContextSupport):
               - name: point
                 max: 1.0
                 min: -1.0
+                perturbation_magnitude: 0.001
                 type: generic_control
                 variables:
                   - name: x
