@@ -56,7 +56,7 @@ dependencies = [
     "psutil",
     "pyarrow", # extra dependency for pandas (parquet)
     "pydantic > 2",
-    "pyqt6!=6.10.0",
+    "pyqt6 < 6.10.0",  # rhel8 https://www.riverbankcomputing.com/pipermail/pyqt/2025-October/046342.html
     "python-dateutil",
     "python-multipart", # extra dependency for fastapi
     "pyyaml",
