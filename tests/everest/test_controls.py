@@ -1,4 +1,7 @@
+import re
+
 import pytest
+import yaml
 from pydantic import ValidationError
 
 from ert.config import ConfigWarning
@@ -398,3 +401,24 @@ def test_that_setting_initial_guess_in_a_list_is_the_same_as_one_per_index():
         "mask",
     ]:
         assert ropt_config1["variables"][key] == ropt_config2["variables"][key]
+
+
+def get_yaml_examples_from_pydantic_model_field_description(
+    model: type[EverestConfig],
+) -> dict[str, list[str]]:
+    examples = {}
+    for field_name, field_info in model.model_fields.items():
+        if field_info.description:
+            examples[field_name] = re.findall(
+                r"```yaml\n(.*?)\n```", field_info.description, re.DOTALL
+            )
+    return examples
+
+
+@pytest.mark.parametrize(
+    "yaml_example",
+    get_yaml_examples_from_pydantic_model_field_description(EverestConfig)["controls"],
+)
+def test_controls_documentation_has_valid_examples(yaml_example, min_config):
+    partial_config = yaml.safe_load(yaml_example)
+    EverestConfig(**(min_config | partial_config))
