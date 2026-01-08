@@ -17,7 +17,7 @@ Everest
 
 The objectives (what to optimize) can, for example, be the Net Present Value (NPV), the recovery factor, or carbon emissions. The controls (what to adjust in order to optimize the objective) can, for example, be the drilling order of the wells and production and/or injection rates (drainage strategy). Additionally, constraints on these controls can be handled both within Everest and/or in flow simulator.
 
-The primary goal of the Everest tool is to find an "optimal" strategies by utilizing an ensemble of reservoir models (e.g., an ensemble of geologically-consistent models). This will help make robust decisions about drilling schedule or drainage strategy in an efficient and assisted manner.
+The primary goal of the Everest tool is to find an "optimal" strategy by utilizing an ensemble of reservoir models (e.g., an ensemble of geologically-consistent models). This will help make robust decisions about drilling schedule or drainage strategy in an efficient and assisted manner.
 
 To this end, an optimization problem is formulated and solved by the *Ensemble Optimization* (EnOpt) method described here: :ref:`en-opt-label`.
 
