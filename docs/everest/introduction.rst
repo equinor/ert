@@ -9,7 +9,7 @@ Background and motivation
 
 Everest is a tool, which uses ensembles of models to deliver a robust optimization.
 
-While the result of an data assimilation process is an ensemble of models, the result of the robust optimization process is one optimal strategy, for example for well order or drainage strategy. With this optimised strategy we can, e.g., maximize net present value (NPV) with respect to the geological uncertainty in the models. Note that Everest is a generic tool that can be applied to other optimisation problems (also outside the domain of Oil & Gas).
+While the result of a data assimilation process is an ensemble of models, the result of the robust optimization process is one optimal strategy, for example for well order or drainage strategy. With this optimised strategy we can, e.g., maximize net present value (NPV) with respect to the geological uncertainty in the models. Note that Everest is a generic tool that can be applied to other optimisation problems (also outside the domain of Oil & Gas).
 
 
 Everest
