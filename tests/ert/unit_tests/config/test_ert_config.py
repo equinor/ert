@@ -1653,10 +1653,10 @@ def test_that_multiple_errors_are_shown_when_validating_observation_config():
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 def test_that_multiple_errors_are_shown_when_generating_observations():
     injected_errors = {
-        7: "    RESTART = 0;",
-        15: "    DATE    = 2010-01-01;",
-        31: "    DATE    = 2009-12-15;",
-        39: "    DATE    = 2010-12-10;",
+        5: "    RESTART = 0;",
+        13: "    DATE    = 2010-01-01;",
+        29: "    DATE    = 2009-12-15;",
+        37: "    DATE    = 2010-12-10;",
     }
     with fileinput.input("observations/observations.txt", inplace=True) as fin:
         for line_number, line in enumerate(fin, 1):
@@ -1669,10 +1669,10 @@ def test_that_multiple_errors_are_shown_when_generating_observations():
         _ = ErtConfig.from_file("snake_oil.ert")
 
     expected_errors = [
-        r"Line 3 \(Column 21-31\): It is unfortunately not possible",
-        r"Line 11 \(Column 21-32\): It is unfortunately not possible",
-        r"Line 27 \(Column 21-33\): Could not find 2009-12-15.*for.*WOPR_OP1_108",
-        r"Line 35 \(Column 21-33\): Could not find 2010-12-10.*for.*WOPR_OP1_144",
+        r"Line 1 \(Column 21-31\): It is unfortunately not possible",
+        r"Line 9 \(Column 21-32\): It is unfortunately not possible",
+        r"Line 25 \(Column 21-33\): Could not find 2009-12-15.*for.*WOPR_OP1_108",
+        r"Line 33 \(Column 21-33\): Could not find 2010-12-10.*for.*WOPR_OP1_144",
     ]
 
     for error in expected_errors:

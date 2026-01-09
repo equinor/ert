@@ -42,7 +42,6 @@ from ert.config.queue_config import (
 
 from .observations_generator import (
     GeneralObservation,
-    HistoryObservation,
     Observation,
     SummaryObservation,
     as_obs_config_content,
@@ -455,9 +454,7 @@ def ert_config_values(draw, use_eclbase=booleans):
             start_date=first_date,
         )
     )
-    need_eclbase = any(
-        isinstance(val, HistoryObservation | SummaryObservation) for val in obs
-    )
+    need_eclbase = any(isinstance(val, SummaryObservation) for val in obs)
     use_eclbase = draw(use_eclbase) if not need_eclbase else True
     dates = _observation_dates(obs, first_date)
     time_diffs = [d - first_date for d in dates]

@@ -134,26 +134,26 @@ def test_update_report_with_exception_in_analysis_ES(
     [
         (
             ObservationSettings(outlier_settings=OutlierSettings(alpha=0.1)),
-            169,
+            7,
             0,
             0,
-            41,
+            3,
         ),
         (
             ObservationSettings(outlier_settings=OutlierSettings(std_cutoff=0.1)),
             0,
-            73,
+            5,
             0,
-            137,
+            5,
         ),
         (
             ObservationSettings(
                 outlier_settings=OutlierSettings(alpha=0.1, std_cutoff=0.1)
             ),
-            113,
-            73,
+            4,
+            5,
             0,
-            24,
+            1,
         ),
     ],
 )
@@ -448,16 +448,16 @@ def test_update_snapshot(
     snapshots are correct, they are just documenting the current behavior.
     """
     expected_gen_kw = [
-        1.7365584618531105,
-        -0.819068074727709,
-        -1.6628460358849138,
-        -1.269803440396085,
-        -0.06688718485326725,
-        0.5544021609832737,
-        -2.904293766981197,
-        1.6866443742416257,
-        -1.6783511959093573,
-        1.3081213916230614,
+        1.5869770740293538,
+        -1.2858229761122726,
+        0.31621936646972615,
+        -0.12117331187441233,
+        1.3057131194491232,
+        0.23965692836139654,
+        -1.7937542514825984,
+        -1.315438880757677,
+        -1.6935613741775457,
+        0.9271222095664071,
     ]
     ert_config = snake_oil_case_storage
 
