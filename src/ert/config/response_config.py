@@ -14,11 +14,12 @@ class InvalidResponseFile(Exception):
     """
 
 
-class ResponseMetadata(BaseModel):
-    response_type: str
-    response_key: str
-    finalized: bool
-    filter_on: dict[str, list[Any]] | None = Field(
+class ResponseConfig(BaseModel):
+    type: str
+    input_files: list[str] = Field(default_factory=list)
+    keys: list[str] = Field(default_factory=list)
+    has_finalized_keys: bool = False
+    filter_on: dict[str, dict[str, list[Any]]] | None = Field(
         default=None,
         description="""
     Holds information about which columns the response can be filtered on.
@@ -27,21 +28,7 @@ class ResponseMetadata(BaseModel):
     [0, 199, 299].
     """,
     )
-
-
-class ResponseConfig(BaseModel):
-    type: str
-    input_files: list[str] = Field(default_factory=list)
-    keys: list[str] = Field(default_factory=list)
-    has_finalized_keys: bool = False
-
-    @property
-    @abstractmethod
-    def metadata(self) -> list[ResponseMetadata]:
-        """
-        Returns metadata describing this response
-
-        """
+    finalized: bool = False
 
     @abstractmethod
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:

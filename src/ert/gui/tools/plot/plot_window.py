@@ -267,12 +267,15 @@ class PlotWindow(QMainWindow):
             ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame] = {}
             for ensemble in selected_ensembles:
                 try:
-                    if key_def.response_metadata is not None:
-                        ensemble_to_data_map[ensemble] = self._api.data_for_response(
-                            ensemble_id=ensemble.id,
-                            response_key=key_def.response_metadata.response_key,
-                            filter_on=key_def.filter_on,
-                        )
+                    if key_def.response is not None:
+                        for low_key in key_def.response.keys:
+                            ensemble_to_data_map[ensemble] = (
+                                self._api.data_for_response(
+                                    ensemble_id=ensemble.id,
+                                    response_key=low_key,
+                                    filter_on=key_def.filter_on,
+                                )
+                            )
                     elif (
                         key_def.parameter is not None
                         and key_def.parameter.type == "gen_kw"
@@ -290,6 +293,7 @@ class PlotWindow(QMainWindow):
                     observations = self._api.observations_for_key(
                         [ensembles.id for ensembles in selected_ensembles], key
                     )
+                    assert observations is not None
                 except BaseException as e:
                     handle_exception(e)
 
@@ -339,10 +343,7 @@ class PlotWindow(QMainWindow):
                     handle_exception(e)
                     plot_context.history_data = None
 
-            if (
-                key_def.response_metadata is not None
-                and key_def.response_metadata.response_type == "rft"
-            ):
+            if key_def.response is not None and key_def.response.type == "rft":
                 plot_context.setXLabel(key.split(":")[-1])
                 plot_context.setYLabel("TVD")
                 plot_context.depth_y_axis = True
