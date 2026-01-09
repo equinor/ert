@@ -12,8 +12,6 @@ from ert.config.parsing.observations_parser import (
 def test_parse_observations():
     assert parse_observations(
         """
-        HISTORY_OBSERVATION FOPR;
-
         SUMMARY_OBSERVATION WOPR_OP1_9
         {
             VALUE   = 0.1;
@@ -35,23 +33,10 @@ def test_parse_observations():
            INDEX_FILE = wpr_diff_idx.txt;
            DATE       = 2015-06-13;  -- (RESTART = 199)
            OBS_FILE   = wpr_diff_obs.txt;
-        };
-
-        HISTORY_OBSERVATION  FWPR
-        {
-           ERROR      = 0.1;
-
-           SEGMENT SEG
-           {
-              START = 1;
-              STOP  = 0;
-              ERROR = 0.25;
-           };
         };--comment
     """,
         "",
     ) == [
-        {"type": ObservationType.HISTORY, "name": "FOPR"},
         {
             "type": ObservationType.SUMMARY,
             "name": "WOPR_OP1_9",
@@ -75,12 +60,6 @@ def test_parse_observations():
             "INDEX_FILE": "wpr_diff_idx.txt",
             "DATE": "2015-06-13",
             "OBS_FILE": "wpr_diff_obs.txt",
-        },
-        {
-            "type": ObservationType.HISTORY,
-            "name": "FWPR",
-            "ERROR": "0.1",
-            "segments": [("SEG", {"START": "1", "STOP": "0", "ERROR": "0.25"})],
         },
     ]
 
@@ -173,7 +152,7 @@ def test_that_repeated_comments_are_ignored():
     ) == [({"type": ObservationType.SUMMARY, "name": "FOPR"})]
 
 
-@pytest.mark.parametrize("observation_type", ["HISTORY", "GENERAL", "SUMMARY"])
+@pytest.mark.parametrize("observation_type", ["GENERAL", "SUMMARY"])
 def test_that_duplicate_keys_results_in_error_message_with_location(observation_type):
     with pytest.raises(
         ObservationConfigError,

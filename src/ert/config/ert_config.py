@@ -23,7 +23,6 @@ from ert.substitutions import Substitutions
 from ._create_observation_dataframes import create_observation_dataframes
 from ._design_matrix_validator import DesignMatrixValidator
 from ._observations import (
-    HistoryObservation,
     Observation,
     RFTObservation,
     SummaryObservation,
@@ -52,7 +51,6 @@ from .parsing import (
     ConfigWarning,
     ErrorInfo,
     ForwardModelStepKeys,
-    HistorySource,
     HookRuntime,
     ObservationConfigError,
     init_forward_model_schema,
@@ -732,7 +730,6 @@ class ErtConfig(BaseModel):
     config_path: str = Field(init=False, default="")
     observation_declarations: list[Observation] = Field(default_factory=list)
     time_map: list[datetime] | None = None
-    history_source: HistorySource = HistorySource.REFCASE_HISTORY
     refcase: Refcase | None = None
     _observations: dict[str, pl.DataFrame] | None = PrivateAttr(None)
 
@@ -763,7 +760,6 @@ class ErtConfig(BaseModel):
                     self.ensemble_config.response_configs.get("rft", None),
                 ),
                 self.time_map,
-                self.history_source,
             )
             self._observations = computed
             return computed
@@ -1016,7 +1012,7 @@ class ErtConfig(BaseModel):
                 summary_obs = {
                     obs.key
                     for obs in obs_configs
-                    if isinstance(obs, HistoryObservation | SummaryObservation)
+                    if isinstance(obs, SummaryObservation)
                 }
                 if summary_obs:
                     summary_keys = ErtConfig._read_summary_keys(config_dict)
@@ -1086,10 +1082,6 @@ class ErtConfig(BaseModel):
 
         env_vars = {}
         substituter = Substitutions(substitutions)
-        history_source = config_dict.get(
-            ConfigKeys.HISTORY_SOURCE, HistorySource.REFCASE_HISTORY
-        )
-
         # Insert env vars from plugins/site config
         for key, val in cls.ENV_VARS.items():
             env_vars[key] = substituter.substitute(val)
@@ -1134,7 +1126,6 @@ class ErtConfig(BaseModel):
                 user_config_file=config_file_path,
                 observation_declarations=list(obs_configs),
                 time_map=time_map,
-                history_source=history_source,
                 refcase=refcase,
             )
 
@@ -1162,7 +1153,6 @@ class ErtConfig(BaseModel):
                     ensemble_config.response_configs.get("rft", None),
                 ),
                 time_map,
-                history_source,
             )
         except PydanticValidationError as err:
             raise ConfigValidationError.from_pydantic(err) from err

@@ -94,52 +94,6 @@ def make_refcase_observations(
     ).observations
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_when_history_source_is_history_the_history_summary_vector_is_used():
-    observations = make_refcase_observations(
-        [
-            {
-                "type": ObservationType.HISTORY,
-                "name": "FOPR",
-            }
-        ],
-        extra_config={"HISTORY_SOURCE": "REFCASE_HISTORY"},
-        parse=False,
-    )
-    assert list(observations["summary"]["observations"]) == [FOPRH_VALUE]
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_the_key_of_an_history_observation_must_be_in_the_refcase():
-    with pytest.raises(
-        ConfigValidationError, match="Key 'MISSINGH' is not present in refcase"
-    ):
-        make_refcase_observations(
-            [
-                {
-                    "type": ObservationType.HISTORY,
-                    "name": "MISSING",
-                }
-            ],
-            parse=False,
-        )
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_when_history_source_is_simulated_the_summary_vector_is_used():
-    observations = make_refcase_observations(
-        [
-            {
-                "type": ObservationType.HISTORY,
-                "name": "FOPR",
-            }
-        ],
-        extra_config={"HISTORY_SOURCE": "REFCASE_SIMULATED"},
-        parse=False,
-    )
-    assert list(observations["summary"]["observations"]) == [FOPR_VALUE]
-
-
 @pytest.mark.parametrize(
     ("datestring", "errors"),
     [
@@ -480,46 +434,6 @@ def test_that_computed_error_must_be_greater_than_zero_in_summary_observations()
         )
 
 
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_absolute_error_must_be_greater_than_zero_in_history_observations():
-    with pytest.raises(
-        ConfigValidationError, match=r"must be given a positive value|strictly > 0"
-    ):
-        make_refcase_observations(
-            [
-                {
-                    "type": ObservationType.HISTORY,
-                    "name": "FOPR",
-                    "ERROR": "0.0",
-                    "ERROR_MIN": "0.0",
-                }
-            ],
-            parse=False,
-        )
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_computed_error_must_be_greater_than_zero_in_history_observations():
-    with pytest.raises(
-        ConfigValidationError, match=r"must be given a positive value|strictly > 0"
-    ):
-        make_refcase_observations(
-            [
-                {
-                    "type": ObservationType.HISTORY,
-                    "name": "FOPR",
-                    "ERROR": "1.0",
-                    "ERROR_MODE": "REL",
-                }
-            ],
-            summary_values={
-                "FOPR": FOPR_VALUE,
-                "FOPRH": 0,  # ERROR becomes zero when mode is REL
-            },
-            parse=False,
-        )
-
-
 @pytest.mark.parametrize("std", [-1.0, 0, 0.0])
 def test_that_error_must_be_greater_than_zero_in_general_observations(std):
     with pytest.raises(
@@ -608,22 +522,6 @@ def test_that_empty_observations_file_causes_exception():
         match="Empty observations file",
     ):
         ErtConfig.from_dict({"OBS_CONFIG": ("obs_conf", "")})
-
-
-def test_that_having_no_refcase_but_history_observations_causes_exception():
-    with pytest.raises(
-        expected_exception=ConfigValidationError,
-        match="REFCASE is required for HISTORY_OBSERVATION",
-    ):
-        ErtConfig.from_dict(
-            {
-                "ECLBASE": "my_name%d",
-                "OBS_CONFIG": (
-                    "obsconf",
-                    [{"type": ObservationType.HISTORY, "name": "FOPR"}],
-                ),
-            }
-        )
 
 
 def test_that_index_list_is_read(tmpdir):
@@ -989,118 +887,6 @@ def test_that_having_observations_on_starting_date_errors(tmpdir):
             )
 
 
-@pytest.mark.filterwarnings(
-    r"ignore:.*Segment [^\s]+ "
-    "((does not contain any time steps)|(out of bounds)|(start after stop)).*"
-    ":ert.config.ConfigWarning"
-)
-@pytest.mark.parametrize(
-    ("start", "stop", "message"),
-    [
-        (
-            100,
-            10,
-            "Segment FIRST_YEAR start after stop",
-        ),
-        (
-            50,
-            100,
-            "does not contain any time steps",
-        ),
-        (
-            -1,
-            1,
-            "Segment FIRST_YEAR out of bounds",
-        ),
-        (
-            1,
-            1000,
-            "Segment FIRST_YEAR out of bounds",
-        ),
-    ],
-)
-def test_that_out_of_bounds_segments_are_truncated(tmpdir, start, stop, message):
-    with tmpdir.as_cwd():
-        run_sim(
-            datetime(2014, 9, 10),
-            [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
-        )
-
-        with pytest.warns(ConfigWarning, match=message):
-            ErtConfig.from_dict(
-                {
-                    "ECLBASE": "ECLIPSE_CASE",
-                    "REFCASE": "ECLIPSE_CASE",
-                    "OBS_CONFIG": (
-                        "obsconf",
-                        [
-                            {
-                                "type": ObservationType.HISTORY,
-                                "name": "FOPR",
-                                "ERROR": "0.20",
-                                "ERROR_MODE": "RELMIN",
-                                "ERROR_MIN": "100",
-                                "segments": [
-                                    (
-                                        "FIRST_YEAR",
-                                        {
-                                            "START": start,
-                                            "STOP": stop,
-                                            "ERROR": "0.50",
-                                            "ERROR_MODE": "REL",
-                                        },
-                                    )
-                                ],
-                            }
-                        ],
-                    ),
-                }
-            )
-
-
-@given(
-    std=st.floats(min_value=0.1, max_value=1.0e3),
-    with_ext=st.booleans(),
-    summary=summaries(summary_keys=st.just(["FOPR", "FOPRH"])),
-)
-def test_that_history_observations_values_are_fetched_from_refcase(
-    tmp_path_factory: pytest.TempPathFactory, summary, with_ext, std
-):
-    with pytest.MonkeyPatch.context() as patch:
-        patch.chdir(tmp_path_factory.mktemp("history_observation_values_are_fetched"))
-        smspec, unsmry = summary
-        smspec.to_file("ECLIPSE_CASE.SMSPEC")
-        unsmry.to_file("ECLIPSE_CASE.UNSMRY")
-
-        observations = ErtConfig.from_dict(
-            {
-                "ECLBASE": "ECLIPSE_CASE",
-                "REFCASE": f"ECLIPSE_CASE{'.DATA' if with_ext else ''}",
-                "OBS_CONFIG": (
-                    "obsconf",
-                    [
-                        {
-                            "type": ObservationType.HISTORY,
-                            "name": "FOPR",
-                            "ERROR": str(std),
-                            "ERROR_MODE": "ABS",
-                        }
-                    ],
-                ),
-            }
-        ).observations["summary"]
-
-        steps = len(unsmry.steps)
-        assert list(observations["response_key"]) == ["FOPR"] * steps
-        assert list(observations["observations"]) == pytest.approx(
-            [
-                s.ministeps[-1].params[smspec.keywords.index("FOPRH")]
-                for s in unsmry.steps
-            ]
-        )
-        assert list(observations["std"]) == pytest.approx([std] * steps)
-
-
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_obs_file_must_have_the_same_number_of_lines_as_the_index_file():
     Path("obs_idx.txt").write_text(
@@ -1224,53 +1010,6 @@ def test_that_general_observation_restart_must_match_gen_data_report_step():
         )
 
 
-def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
-    with tmpdir.as_cwd():
-        run_sim(
-            datetime(2014, 9, 10),
-            [
-                (k, "SM3/DAY", None)
-                for k in ["FOPR", "FWPR", "FOPRH", "FWPRH", "FGPR", "FGPRH"]
-            ],
-            {"FOPRH": 20, "FGPRH": 15, "FWPRH": 25},
-        )
-
-        observations = ErtConfig.from_dict(
-            {
-                "ECLBASE": "ECLIPSE_CASE",
-                "REFCASE": "ECLIPSE_CASE",
-                "OBS_CONFIG": (
-                    "obsconf",
-                    [
-                        {
-                            "type": ObservationType.HISTORY,
-                            "name": "FOPR",
-                            "ERROR": "0.20",
-                            "ERROR_MODE": "ABS",
-                        },
-                        {
-                            "type": ObservationType.HISTORY,
-                            "name": "FGPR",
-                            "ERROR": "0.1",
-                            "ERROR_MODE": "REL",
-                        },
-                        {
-                            "type": ObservationType.HISTORY,
-                            "name": "FWPR",
-                            "ERROR": "0.1",
-                            "ERROR_MODE": "RELMIN",
-                            "ERROR_MIN": "10000",
-                        },
-                    ],
-                ),
-            }
-        ).observations["summary"]
-
-        assert list(observations["response_key"]) == ["FGPR", "FOPR", "FWPR"]
-        assert list(observations["observations"]) == pytest.approx([15, 20, 25])
-        assert list(observations["std"]) == pytest.approx([1.5, 0.2, 10000])
-
-
 def test_that_duplicate_observation_names_are_invalid():
     with pytest.raises(ConfigValidationError, match="Duplicate observation name FOPR"):
         make_observations(
@@ -1297,47 +1036,6 @@ def test_that_duplicate_observation_names_are_invalid():
         )
 
 
-def test_that_segment_defaults_are_applied(tmpdir):
-    with tmpdir.as_cwd():
-        run_sim(
-            datetime(2014, 9, 10),
-            [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
-            days=range(10),
-        )
-
-        observations = ErtConfig.from_dict(
-            {
-                "ECLBASE": "ECLIPSE_CASE",
-                "REFCASE": "ECLIPSE_CASE",
-                "OBS_CONFIG": (
-                    "obsconf",
-                    [
-                        {
-                            "type": ObservationType.HISTORY,
-                            "name": "FOPR",
-                            "ERROR": "1.0",
-                            "segments": [
-                                (
-                                    "SEG",
-                                    {
-                                        "START": "5",
-                                        "STOP": "10",
-                                        "ERROR": "0.05",
-                                    },
-                                )
-                            ],
-                        }
-                    ],
-                ),
-            }
-        ).observations["summary"]
-
-        # default error_min is 0.1
-        # default error method is RELMIN
-        # default error is 0.1
-        assert list(observations["std"]) == pytest.approx([1.0] * 5 + [0.1] * 5)
-
-
 def test_that_summary_default_error_min_is_applied():
     observations = make_observations(
         [
@@ -1355,112 +1053,6 @@ def test_that_summary_default_error_min_is_applied():
     )
     # default error_min is 0.1
     assert list(observations["summary"]["std"]) == pytest.approx([0.1])
-
-
-def test_that_start_must_be_set_in_a_segment():
-    with pytest.raises(ConfigValidationError, match='Missing item "START"'):
-        make_observations("""
-            HISTORY_OBSERVATION  FOPR {
-               ERROR      = 0.1;
-
-               SEGMENT SEG
-               {
-                  STOP  = 1;
-                  ERROR = 0.50;
-               };
-            };
-        """)
-
-
-def test_that_stop_must_be_set_in_a_segment():
-    with pytest.raises(ConfigValidationError, match='Missing item "STOP"'):
-        make_observations("""
-            HISTORY_OBSERVATION FOPR {
-               ERROR      = 0.1;
-
-               SEGMENT SEG {
-                  START  = 1;
-                  ERROR = 0.50;
-               };
-            };
-        """)
-
-
-def test_that_stop_must_be_given_integer_value():
-    with pytest.raises(ConfigValidationError, match=r'Failed to validate "3\.2"'):
-        make_observations("""
-            HISTORY_OBSERVATION FOPR {
-               ERROR      = 0.1;
-
-               SEGMENT SEG
-               {
-                  START = 0;
-                  STOP  = 3.2;
-                  ERROR = 0.50;
-               };
-            };
-        """)
-
-
-def test_that_start_must_be_given_integer_value():
-    with pytest.raises(ConfigValidationError, match=r'Failed to validate "1\.1"'):
-        make_observations("""
-            HISTORY_OBSERVATION FOPR {
-               ERROR      = 0.1;
-
-               SEGMENT SEG
-               {
-                  START = 1.1;
-                  STOP  = 0;
-                  ERROR = 0.50;
-               };
-            };
-        """)
-
-
-def test_that_error_must_be_positive_in_a_segment():
-    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
-        make_observations("""
-            HISTORY_OBSERVATION  FOPR {
-               ERROR      = 0.1;
-               SEGMENT SEG {
-                  START = 1;
-                  STOP  = 0;
-                  ERROR = -1;
-               };
-            };
-        """)
-
-
-def test_that_error_min_must_be_positive_in_a_segment():
-    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
-        make_observations("""
-            HISTORY_OBSERVATION FOPR {
-               ERROR      = 0.1;
-               SEGMENT SEG {
-                  START = 1;
-                  STOP  = 0;
-                  ERROR = 0.1;
-                  ERROR_MIN = -1;
-               };
-            };
-        """)
-
-
-def test_that_error_mode_must_be_one_of_rel_abs_relmin_in_a_segment():
-    with pytest.raises(ConfigValidationError, match='Failed to validate "NOT_ABS"'):
-        make_observations("""
-            HISTORY_OBSERVATION FOPR {
-               ERROR      = 0.1;
-               SEGMENT SEG
-               {
-                  START = 1;
-                  STOP  = 0;
-                  ERROR = 0.1;
-                  ERROR_MODE = NOT_ABS;
-               };
-            };
-        """)
 
 
 def test_that_restart_must_be_positive_in_a_summary_observation():
@@ -1498,38 +1090,6 @@ def test_that_data_must_be_set_in_general_observation():
                ERROR_MIN  = 0.1;
             };
         """)
-
-
-def test_that_error_must_be_a_positive_number_in_history_observation():
-    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
-        make_observations("HISTORY_OBSERVATION FOPR { ERROR = -1;};")
-
-
-def test_that_error_min_must_be_a_positive_number_in_history_observation():
-    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
-        make_observations("""
-            HISTORY_OBSERVATION FOPR {
-                ERROR_MODE=RELMIN;
-                ERROR_MIN = -1;
-                ERROR=1.0;
-            };
-        """)
-
-
-def test_that_error_mode_must_be_one_of_rel_abs_relmin_in_history_observation():
-    with pytest.raises(ConfigValidationError, match='Failed to validate "NOT_ABS"'):
-        make_observations("""
-            HISTORY_OBSERVATION  FOPR {
-                ERROR_MODE = NOT_ABS;
-                ERROR=1.0;
-            };
-        """)
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_history_observations_can_omit_body():
-    obs = make_refcase_observations("HISTORY_OBSERVATION  FOPR;")
-    assert list(obs["summary"]["response_key"]) == ["FOPR"]
 
 
 def test_that_error_min_must_be_a_positive_number_in_summary_observation():
@@ -1677,26 +1237,12 @@ def test_that_error_must_be_set_in_summary_observation():
 
 @pytest.mark.parametrize(
     "observation_type",
-    ["HISTORY_OBSERVATION", "SUMMARY_OBSERVATION", "GENERAL_OBSERVATION"],
+    ["SUMMARY_OBSERVATION", "GENERAL_OBSERVATION"],
 )
 @pytest.mark.parametrize("unknown_key", ["SMERROR", "name", "type", "segments"])
 def test_that_setting_an_unknown_key_is_not_valid(observation_type, unknown_key):
     with pytest.raises(ConfigValidationError, match=f"Unknown {unknown_key}"):
         make_observations(f"{observation_type} FOPR {{{unknown_key}=0.1;DATA=key;}};")
-
-
-@pytest.mark.parametrize("unknown_key", ["SMERROR", "name", "type", "segments"])
-def test_that_setting_an_unknown_key_in_a_segment_is_not_valid(unknown_key):
-    with pytest.raises(ConfigValidationError, match=f"Unknown {unknown_key}"):
-        make_observations(f"""
-            HISTORY_OBSERVATION FOPR {{
-                SEGMENT FIRST_YEAR {{
-                    START = 1;
-                    STOP = 2;
-                    {unknown_key} = 0.02;
-                }};
-            }};
-        """)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -1711,14 +1257,6 @@ def test_ert_config_logs_observation_types_and_keywords(caplog):
         ERROR = 0.1;
         RESTART = 1;
     };
-    HISTORY_OBSERVATION FWPR;
-    HISTORY_OBSERVATION FOPR {
-        SEGMENT FIRST_YEAR {
-            START = 1;
-            STOP = 2;
-            ERROR = 0.02;
-        };
-    };
     SUMMARY_OBSERVATION SUMOP {
         VALUE = 1;
         ERROR = 0.1;
@@ -1729,15 +1267,9 @@ def test_ert_config_logs_observation_types_and_keywords(caplog):
     with caplog.at_level(logging.INFO):
         make_refcase_observations(
             obs_config_contents,
-            summary_values={"FOPR": 1, "FOPRH": 2, "FWPR": 3, "FWPRH": 4},
+            summary_values={"FOPR": 1, "FWPR": 3},
         )
     assert "Count of observation types" in caplog.text
-    assert (
-        "'GENERAL_OBSERVATION': 1, 'HISTORY_OBSERVATION': 2, 'SUMMARY_OBSERVATION': 1"
-        in caplog.text
-    )
+    assert "'GENERAL_OBSERVATION': 1, 'SUMMARY_OBSERVATION': 1" in caplog.text
     assert "Count of observation keywords" in caplog.text
-    assert (
-        "'VALUE': 2, 'DATA': 1, 'ERROR': 2, 'RESTART': 2, 'SEGMENT': 1, 'KEY': 1"
-        in caplog.text
-    )
+    assert "'VALUE': 2, 'DATA': 1, 'ERROR': 2, 'RESTART': 2, 'KEY': 1" in caplog.text
