@@ -49,9 +49,7 @@ class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmoother
 
         experiment_storage = self._storage.create_experiment(
             parameters=cast(list[ParameterConfig], self.parameter_configuration),
-            observations={k: v.to_polars() for k, v in self.observations.items()}
-            if self.observations is not None
-            else None,
+            observations=self.create_observation_dataframes(),
             responses=cast(list[ResponseConfig], self.response_configuration),
             name=self.experiment_name,
             templates=self.ert_templates,

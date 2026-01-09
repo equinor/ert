@@ -1,10 +1,11 @@
 import os
 from collections import Counter
 from collections.abc import Sequence
-from dataclasses import dataclass
 from enum import StrEnum
 from itertools import starmap
-from typing import Any, Self
+from typing import Annotated, Any, Literal, Self
+
+from pydantic import BaseModel, Field, TypeAdapter
 
 from .parsing import (
     ErrorInfo,
@@ -20,22 +21,20 @@ class ErrorModes(StrEnum):
     RELMIN = "RELMIN"
 
 
-@dataclass
-class ObservationError:
+class ObservationError(BaseModel):
     error_mode: ErrorModes
     error: float
     error_min: float
 
 
-@dataclass
 class Segment(ObservationError):
     name: str
     start: int
     stop: int
 
 
-@dataclass
 class HistoryObservation(ObservationError):
+    type: Literal["history_observation"] = "history_observation"
     name: str
     segments: list[Segment]
 
@@ -68,34 +67,39 @@ class HistoryObservation(ObservationError):
                 case _:
                     raise _unknown_key_error(str(key), observation_dict["name"])
 
-        return cls(
+        instance = cls(
             name=observation_dict["name"],
             error_mode=error_mode,
             error=error,
             error_min=error_min,
             segments=segments,
         )
+        # Bypass pydantic discarding context
+        # only relevant for ERT config surfacing validation errors
+        # irrelevant for runmodels etc.
+        instance.name = observation_dict["name"]
+        return instance
 
 
-@dataclass
-class ObservationDate:
+class ObservationDate(BaseModel):
     days: float | None = None
     hours: float | None = None
     date: str | None = None
     restart: int | None = None
+    model_config = {"arbitrary_types_allowed": True}
 
 
-@dataclass
-class _SummaryValues:
+class _SummaryValues(BaseModel):
+    type: Literal["summary_observation"] = "summary_observation"
     name: str
     value: float
     key: str  #: The :term:`summary key` in the summary response
     location_x: float | None = None
     location_y: float | None = None
     location_range: float | None = None
+    model_config = {"arbitrary_types_allowed": True}
 
 
-@dataclass
 class SummaryObservation(ObservationDate, _SummaryValues, ObservationError):
     @classmethod
     def from_obs_dict(cls, directory: str, observation_dict: ObservationDict) -> Self:
@@ -140,7 +144,7 @@ class SummaryObservation(ObservationDate, _SummaryValues, ObservationError):
         if "ERROR" not in float_values:
             raise _missing_value_error(observation_dict["name"], "ERROR")
 
-        return cls(
+        instance = cls(
             name=observation_dict["name"],
             error_mode=error_mode,
             error=float_values["ERROR"],
@@ -152,10 +156,15 @@ class SummaryObservation(ObservationDate, _SummaryValues, ObservationError):
             location_range=localization_values.get("range"),
             **date_dict.__dict__,
         )
+        # Bypass pydantic discarding context
+        # only relevant for ERT config surfacing validation errors
+        # irrelevant for runmodels etc.
+        instance.name = observation_dict["name"]
+        return instance
 
 
-@dataclass
-class _GeneralObservation:
+class _GeneralObservation(BaseModel):
+    type: Literal["general_observation"] = "general_observation"
     name: str
     data: str
     value: float | None = None
@@ -163,9 +172,9 @@ class _GeneralObservation:
     index_list: str | None = None
     index_file: str | None = None
     obs_file: str | None = None
+    model_config = {"arbitrary_types_allowed": True}
 
 
-@dataclass
 class GeneralObservation(ObservationDate, _GeneralObservation):
     @classmethod
     def from_obs_dict(cls, directory: str, observation_dict: ObservationDict) -> Self:
@@ -211,11 +220,15 @@ class GeneralObservation(ObservationDate, _GeneralObservation):
                 f" VALUE = {output.value}, ERROR must also be given.",
                 observation_dict["name"],
             )
+        # Bypass pydantic discarding context
+        # only relevant for ERT config surfacing validation errors
+        # irrelevant for runmodels etc.
+        output.name = observation_dict["name"]
         return output
 
 
-@dataclass
-class RFTObservation:
+class RFTObservation(BaseModel):
+    type: Literal["rft_observation"] = "rft_observation"
     name: str
     well: str
     date: str
@@ -225,6 +238,7 @@ class RFTObservation:
     north: float
     east: float
     tvd: float
+    model_config = {"arbitrary_types_allowed": True}
 
     @classmethod
     def from_obs_dict(cls, directory: str, observation_dict: ObservationDict) -> Self:
@@ -274,22 +288,30 @@ class RFTObservation:
             raise _missing_value_error(observation_dict["name"], "EAST")
         if tvd is None:
             raise _missing_value_error(observation_dict["name"], "TVD")
-        return cls(
-            observation_dict["name"],
-            well,
-            date,
-            observed_property,
-            observed_value,
-            error,
-            north,
-            east,
-            tvd,
+        instance = cls(
+            name=observation_dict["name"],
+            well=well,
+            date=date,
+            property=observed_property,
+            value=observed_value,
+            error=error,
+            north=north,
+            east=east,
+            tvd=tvd,
         )
+        # Bypass pydantic discarding context
+        # only relevant for ERT config surfacing validation errors
+        # irrelevant for runmodels etc.
+        instance.name = observation_dict["name"]
+        return instance
 
 
-Observation = (
-    HistoryObservation | SummaryObservation | GeneralObservation | RFTObservation
-)
+Observation = Annotated[
+    (HistoryObservation | SummaryObservation | GeneralObservation | RFTObservation),
+    Field(discriminator="type"),
+]
+
+ObservationAdapter: TypeAdapter[Observation] = TypeAdapter(Observation)
 
 _TYPE_TO_CLASS: dict[ObservationType, type[Observation]] = {
     ObservationType.HISTORY: HistoryObservation,

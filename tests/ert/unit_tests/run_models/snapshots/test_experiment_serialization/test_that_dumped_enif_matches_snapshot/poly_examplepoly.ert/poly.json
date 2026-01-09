@@ -246,59 +246,23 @@
     }
   ],
   "ert_templates": [],
-  "observations": {
-    "gen_data": {
-      "type": "dicts",
-      "data": [
-        {
-          "response_key": "POLY_RES",
-          "observation_key": "POLY_OBS",
-          "report_step": 0,
-          "index": 0,
-          "observations": 2.145704984664917,
-          "std": 0.6000000238418579
-        },
-        {
-          "response_key": "POLY_RES",
-          "observation_key": "POLY_OBS",
-          "report_step": 0,
-          "index": 2,
-          "observations": 8.769219398498535,
-          "std": 1.399999976158142
-        },
-        {
-          "response_key": "POLY_RES",
-          "observation_key": "POLY_OBS",
-          "report_step": 0,
-          "index": 4,
-          "observations": 12.388014793395996,
-          "std": 3.0
-        },
-        {
-          "response_key": "POLY_RES",
-          "observation_key": "POLY_OBS",
-          "report_step": 0,
-          "index": 6,
-          "observations": 25.6004638671875,
-          "std": 5.400000095367432
-        },
-        {
-          "response_key": "POLY_RES",
-          "observation_key": "POLY_OBS",
-          "report_step": 0,
-          "index": 8,
-          "observations": 42.352046966552734,
-          "std": 8.600000381469727
-        }
-      ],
-      "datatypes": {
-        "response_key": "String",
-        "observation_key": "String",
-        "report_step": "UInt16",
-        "index": "UInt16",
-        "observations": "Float32",
-        "std": "Float32"
-      }
+  "observations": [
+    {
+      "type": "general_observation",
+      "name": "POLY_OBS",
+      "data": "POLY_RES",
+      "value": null,
+      "error": null,
+      "index_list": "0,2,4,6,8",
+      "index_file": null,
+      "obs_file": "test-data/ert/poly_example.poly.ert/poly_obs_data.txt",
+      "days": null,
+      "hours": null,
+      "date": null,
+      "restart": null
     }
-  }
+  ],
+  "time_map": null,
+  "history_source": "REFCASE_HISTORY",
+  "refcase": null
 }
