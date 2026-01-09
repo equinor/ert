@@ -688,6 +688,14 @@ def log_observation_keys(
         if key not in {"name", "type"}
     )
 
+    if "HISTORY_OBSERVATION" in observation_type_counts:
+        msg = (
+            "HISTORY_OBSERVATION is deprecated and will be removed. "
+            "Please use SUMMARY_OBSERVATION instead."
+        )
+        ConfigWarning.warn(msg)
+        logger.warning(msg)
+
     logger.info(
         f"Count of observation types:\n\t{dict(observation_type_counts)}\n"
         f"Count of observation keywords:\n\t{dict(observation_keyword_counts)}"
