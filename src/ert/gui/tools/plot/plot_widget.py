@@ -153,6 +153,7 @@ class PlotWidget(QWidget):
         # only for histogram plot see _sync_log_checkbox
         self._log_checkbox.setVisible(False)
         self._log_checkbox.setToolTip("Toggle data domain to log scale and back")
+        self._log_checkbox.clicked.connect(self.logLogScaleButtonUsage)
 
         log_checkbox_row = QHBoxLayout()
         log_checkbox_row.addWidget(self._log_checkbox)
@@ -187,6 +188,10 @@ class PlotWidget(QWidget):
     @property
     def name(self) -> str:
         return self._name
+
+    def logLogScaleButtonUsage(self) -> None:
+        logger.info(f"Plotwidget utility used: 'Log scale button' in tab '{self.name}'")
+        self._log_checkbox.clicked.disconnect()  # Log only once
 
     def updatePlot(
         self,
