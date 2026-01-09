@@ -265,6 +265,21 @@
         "MY_RESPONSE"
       ],
       "has_finalized_keys": true,
+      "filter_on": {
+        "MY_RESPONSE": {
+          "report_step": [
+            10,
+            71,
+            132,
+            193,
+            255,
+            316,
+            377,
+            438
+          ]
+        }
+      },
+      "finalized": true,
       "report_steps_list": [
         [
           10,

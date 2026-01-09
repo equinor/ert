@@ -297,7 +297,9 @@
         "FOPR",
         "WOPR:OP1"
       ],
-      "has_finalized_keys": false
+      "has_finalized_keys": false,
+      "filter_on": null,
+      "finalized": false
     },
     {
       "type": "gen_data",
@@ -312,6 +314,24 @@
         "SNAKE_OIL_GPR_DIFF"
       ],
       "has_finalized_keys": true,
+      "filter_on": {
+        "SNAKE_OIL_OPR_DIFF": {
+          "report_step": [
+            199
+          ]
+        },
+        "SNAKE_OIL_WPR_DIFF": {
+          "report_step": [
+            199
+          ]
+        },
+        "SNAKE_OIL_GPR_DIFF": {
+          "report_step": [
+            199
+          ]
+        }
+      },
+      "finalized": true,
       "report_steps_list": [
         [
           199

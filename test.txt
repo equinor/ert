@@ -1,0 +1,1 @@
+old_mylist=[ResponseMetadata(response_type='gen_data', response_key='POLY_RES', finalized=True, filter_on={'report_step': [0]})]
