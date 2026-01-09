@@ -359,6 +359,9 @@ class ExperimentPanel(QWidget):
                     if msg_box_res == QMessageBox.StandardButton.No:
                         return
                 QApplication.restoreOverrideCursor()
+        self.configuration_summary.log_summary(
+            args.mode, model.get_number_of_active_realizations()
+        )
 
         self._dialog = RunDialog(
             f"Experiment - {self._config_file} {find_ert_info()}",
