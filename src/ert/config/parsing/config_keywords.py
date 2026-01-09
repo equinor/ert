@@ -57,7 +57,6 @@ class ConfigKeys(StrEnum):
     REALIZATION_MEMORY = "REALIZATION_MEMORY"
     SUBMIT_SLEEP = "SUBMIT_SLEEP"
     MAX_RUNNING = "MAX_RUNNING"
-    PRIORITIZE_PRIVATE_IP_ADDRESS = "PRIORITIZE_PRIVATE_IP_ADDRESS"
 
     def __repr__(self) -> str:
         return f"{self.value!r}"
