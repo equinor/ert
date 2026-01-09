@@ -237,28 +237,8 @@ class RunModel(BaseModelWithContextSupport, ABC):
             for key, value in self.__dict__.items()
             if key not in keys_to_drop
         }
-        settings_summary = {
-            "run_model": self.name(),
-            "num_realizations": self.runpath_config.num_realizations,
-            "num_active_realizations": self.active_realizations.count(True),
-            "num_parameters": (
-                sum(
-                    len(param_config.parameter_keys)
-                    for param_config in self.parameter_configuration
-                )
-                if hasattr(self, "parameter_configuration")
-                else "NA"
-            ),
-            "localization": getattr(
-                settings_dict.get("analysis_settings", {}), "localization", "NA"
-            ),
-        }
 
-        logger.info(
-            f"Running '{self.name()}'\n\n"
-            f"Settings summary: {settings_summary}\n\n"
-            f"Settings: {settings_dict}"
-        )
+        logger.info(f"Running '{self.name()}'\n\nSettings: {settings_dict}")
 
     @field_validator("env_vars", mode="after")
     @classmethod
