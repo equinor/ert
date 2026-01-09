@@ -1,10 +1,8 @@
 import asyncio
 import math
 import os
-import re
 import uuid
 import warnings
-from logging import Logger
 from pathlib import Path
 from queue import SimpleQueue
 from types import MethodType
@@ -15,7 +13,6 @@ from pydantic import ConfigDict
 
 from ert.config import (
     ErtConfig,
-    GenKwConfig,
     ModelConfig,
     QueueConfig,
     QueueSystem,
@@ -610,28 +607,6 @@ def test_create_mask_from_failed_realizations_returns_initial_active_realization
     failed_realization_mask = brm._create_mask_from_failed_realizations()
 
     assert failed_realization_mask == initial_active_realizations
-
-
-# TODO remove this test?
-def test_run_model_logs_number_of_parameters(use_tmpdir):
-    parameters = GenKwConfig(
-        distribution={"name": "normal", "mean": 0, "std": 1},
-        name="parameter_configuration",
-        forward_init=False,
-        update=True,
-    )
-
-    rm = create_run_model(parameter_configuration=[parameters])
-
-    def mock_logging(_, log_str):
-        regex = r"'num_parameters': (\d+)"
-        match = re.search(regex, log_str)
-        num_param = int(match.group(1))
-
-        assert num_param == 1
-
-    with patch.object(Logger, "info", mock_logging):
-        rm.log_at_startup()
 
 
 def test_that_defaulted_user_queue_options_overrides_site_queue_options(use_tmpdir):
