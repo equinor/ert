@@ -18,9 +18,11 @@ from pandas.api.types import is_numeric_dtype
 from pandas.errors import ParserError
 from resfo_utilities import history_key
 
-from ert.config import ParameterConfig, ResponseMetadata
+from ert.config import ParameterConfig
+from ert.config.ensemble_config import ResponseConfig
 from ert.services import ErtServer
 from ert.storage.local_experiment import _parameters_adapter as parameter_config_adapter
+from ert.storage.local_experiment import _responses_adapter as response_config_adapter
 from ert.storage.realization_storage_state import RealizationStorageState
 
 logger = logging.getLogger(__name__)
@@ -46,7 +48,7 @@ class PlotApiKeyDefinition(NamedTuple):
     metadata: dict[Any, Any]
     filter_on: dict[Any, Any] | None = None
     parameter: ParameterConfig | None = None
-    response_metadata: ResponseMetadata | None = None
+    response: ResponseConfig | None = None
 
 
 class PlotApi:
@@ -180,45 +182,53 @@ class PlotApi:
                     "responses"
                 ].items():
                     for metadata in response_metadatas:
-                        key = metadata["response_key"]
-                        has_obs = (
-                            response_type in experiment["observations"]
-                            and key in experiment["observations"][response_type]
-                        )
-                        if metadata["filter_on"]:
-                            # Only assume one filter_on, this code is to be
-                            # considered a bit "temp".
-                            # In general, we could create a dropdown per
-                            # filter_on on the frontend side
-                            for filter_key, values in metadata["filter_on"].items():
-                                for v in values:
-                                    subkey = f"{key}@{v}"
-                                    update_keydef(
-                                        PlotApiKeyDefinition(
-                                            key=subkey,
-                                            index_type="VALUE",
-                                            observations=has_obs,
-                                            dimensionality=2,
-                                            metadata={
-                                                "data_origin": response_type,
-                                            },
-                                            filter_on={filter_key: v},
-                                            response_metadata=ResponseMetadata(
-                                                **metadata
-                                            ),
-                                        )
-                                    )
-                        else:
-                            update_keydef(
-                                PlotApiKeyDefinition(
-                                    key=key,
-                                    index_type="VALUE",
-                                    observations=has_obs,
-                                    dimensionality=2,
-                                    metadata={"data_origin": response_type},
-                                    response_metadata=ResponseMetadata(**metadata),
-                                )
+                        keys = metadata.get("keys", [])
+                        for key in keys:
+                            has_obs = (
+                                response_type in experiment["observations"]
+                                and key in experiment["observations"][response_type]
                             )
+                            if (response_filters := metadata.get("filter_on", {})) and (
+                                filter_for_key := response_filters.get(key)
+                            ):
+                                # Only assume one filter_on, this code is to be
+                                # considered a bit "temp".
+                                # In general, we could create a dropdown per
+                                # filter_on on the frontend side
+                                response_config = (
+                                    response_config_adapter.validate_python(metadata)
+                                )
+                                for filter_key, values in filter_for_key.items():
+                                    for v in values:
+                                        filter_on = {filter_key: v}
+                                        subkey = f"{key}@{v}"
+                                        update_keydef(
+                                            PlotApiKeyDefinition(
+                                                key=subkey,
+                                                index_type="VALUE",
+                                                observations=has_obs,
+                                                dimensionality=2,
+                                                metadata={
+                                                    "data_origin": response_type,
+                                                },
+                                                filter_on=filter_on,
+                                                response=response_config,
+                                            )
+                                        )
+                            else:
+                                response_config = (
+                                    response_config_adapter.validate_python(metadata)
+                                )
+                                update_keydef(
+                                    PlotApiKeyDefinition(
+                                        key=key,
+                                        index_type="VALUE",
+                                        observations=has_obs,
+                                        dimensionality=2,
+                                        metadata={"data_origin": response_type},
+                                        response=response_config,
+                                    )
+                                )
 
         return list(key_defs.values())
 
@@ -294,13 +304,13 @@ class PlotApi:
             )
             if not key_def:
                 raise httpx.RequestError(f"Response key {key_def} not found")
-
-            assert key_def.response_metadata is not None
-            actual_response_key = key_def.response_metadata.response_key
+            if "@" in key:
+                key = key.split("@", maxsplit=1)[0]
+            assert key_def.response is not None
             filter_on = key_def.filter_on
             with ErtServer.session(project=self.ens_path) as client:
                 response = client.get(
-                    f"/ensembles/{ensemble.id}/responses/{PlotApi.escape(actual_response_key)}/observations",
+                    f"/ensembles/{ensemble.id}/responses/{PlotApi.escape(key)}/observations",
                     timeout=self._timeout,
                     params={"filter_on": json.dumps(filter_on)}
                     if filter_on is not None

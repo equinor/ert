@@ -14,7 +14,6 @@ from .parsing import ConfigDict, ConfigValidationError, ConfigWarning, ErrorInfo
 from .response_config import (
     InvalidResponseFile,
     ResponseConfig,
-    ResponseMetadata,
 )
 from .responses_index import responses_index
 
@@ -23,22 +22,7 @@ class GenDataConfig(ResponseConfig):
     type: Literal["gen_data"] = "gen_data"
     report_steps_list: list[list[int] | None] = Field(default_factory=list)
     has_finalized_keys: bool = True
-
-    @property
-    def metadata(self) -> list[ResponseMetadata]:
-        return [
-            ResponseMetadata(
-                response_type=self.type,
-                response_key=response_key,
-                finalized=self.has_finalized_keys,
-                filter_on={"report_step": report_steps}
-                if report_steps is not None
-                else {"report_step": [0]},
-            )
-            for response_key, report_steps in zip(
-                self.keys, self.report_steps_list, strict=False
-            )
-        ]
+    finalized: bool = True
 
     def model_post_init(self, ctx: Any) -> None:
         if len(self.report_steps_list) == 0:
@@ -47,6 +31,14 @@ class GenDataConfig(ResponseConfig):
             for report_steps in self.report_steps_list:
                 if report_steps is not None:
                     report_steps.sort()
+        if self.filter_on is None:
+            self.filter_on = {}
+        for response_key, report_steps in zip(
+            self.keys, self.report_steps_list, strict=False
+        ):
+            self.filter_on[response_key] = {
+                "report_step": report_steps if report_steps is not None else [0]
+            }
 
     @property
     def expected_input_files(self) -> list[str]:

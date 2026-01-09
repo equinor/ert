@@ -240,6 +240,14 @@
         "POLY_RES"
       ],
       "has_finalized_keys": true,
+      "filter_on": {
+        "POLY_RES": {
+          "report_step": [
+            0
+          ]
+        }
+      },
+      "finalized": true,
       "report_steps_list": [
         null
       ]
