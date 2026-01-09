@@ -2754,3 +2754,51 @@ def test_that_rft_properties_can_be_given_with_spaces():
     assert rft.data_to_read == {
         "NAME1": {"2020-12-13": ["PRESSURE", "SWAT"]},
     }
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_history_observation_deprecation_warning(caplog, monkeypatch):
+    """
+    Tests that a warning is issued when a config with HISTORY_OBSERVATION is parsed.
+    """
+    mock_refcase = Refcase(
+        start_date=datetime(2020, 1, 1),
+        keys=["FOPRH"],
+        dates=[datetime(2020, 1, 1)],
+        values=[[1.0]],
+    )
+    monkeypatch.setattr(
+        "ert.config.ert_config.Refcase.from_config_dict",
+        MagicMock(return_value=mock_refcase),
+    )
+
+    config_path = Path("config.ert")
+    obs_path = Path("observations")
+
+    config_path.write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            OBS_CONFIG observations
+            ECLBASE the_base
+            REFCASE the_case
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    obs_path.write_text(
+        dedent(
+            """
+            HISTORY_OBSERVATION FOPR {};
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with caplog.at_level(logging.WARNING):
+        ErtConfig.from_file(str(config_path))
+        assert (
+            "HISTORY_OBSERVATION is deprecated and will be removed. "
+            "Please use SUMMARY_OBSERVATION instead."
+        ) in caplog.text
