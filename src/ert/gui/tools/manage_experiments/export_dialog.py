@@ -1,4 +1,5 @@
 import contextlib
+import logging
 from pathlib import Path
 from typing import cast
 
@@ -21,6 +22,8 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ExportDialog(QDialog):
@@ -85,6 +88,7 @@ class ExportDialog(QDialog):
                 f"<span style='color: red;'>Could not export data: {e!s}</span><br>"
             )
         finally:
+            logger.info(f"Export dialog used: '{self.windowTitle()}'")
             self._export_button.setEnabled(True)
 
     @Slot()
