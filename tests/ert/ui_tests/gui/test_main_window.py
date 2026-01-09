@@ -1,4 +1,5 @@
 import contextlib
+import logging
 import os
 import shutil
 import stat
@@ -1016,3 +1017,50 @@ def test_denied_run_path_warning_dialog_releases_storage_lock(
 
     # Assert the storage lock has been unlocked
     assert not run_experiment_panel._model._storage._lock.is_locked
+
+
+def test_that_summary_of_experiment_is_logged_when_running_poly_example_with_design_matrix(  # noqa: E501
+    qtbot,
+    copy_poly_case_with_design_matrix,
+    caplog,
+):
+    caplog.set_level(logging.INFO)
+
+    num_realizations = 5
+    a_values = list(range(num_realizations))
+    design_dict = {
+        "REAL": list(range(num_realizations)),
+        "a": a_values,
+    }
+    default_list = [["b", 1], ["c", 2]]
+    copy_poly_case_with_design_matrix(design_dict, default_list)
+
+    args = Mock()
+    args.config = "poly.ert"
+
+    with add_gui_log_handler() as log_handler:
+        gui, *_ = ert.gui.main._start_initial_gui_window(args, log_handler)
+        qtbot.addWidget(gui)
+
+        experiment_panel = wait_for_child(gui, qtbot, ExperimentPanel)
+        qtbot.wait_until(lambda: not experiment_panel.isHidden(), timeout=5000)
+
+        @contextlib.contextmanager
+        def mock_run_dialog():
+            """Mocking run dialog and catching exceptions shaves off 2 seconds for this
+            test, taking about 0.5 sec as a result"""
+            original_init = RunDialog.__init__
+            RunDialog.__init__ = Mock(return_value=None)
+            try:
+                yield
+            finally:
+                RunDialog.__init__ = original_init
+
+        with contextlib.suppress(Exception), mock_run_dialog():
+            experiment_panel.run_experiment()
+
+        assert "Experiment summary:" in caplog.text
+        assert "Runmodel: test_run" in caplog.text
+        assert "Realizations: 1" in caplog.text
+        assert "Parameters: 3" in caplog.text
+        assert "Observations: 5" in caplog.text

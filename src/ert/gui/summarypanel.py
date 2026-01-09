@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import Qt
@@ -17,6 +18,8 @@ from ert.gui.ertwidgets.models.ertsummary import ErtSummary
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig
+
+logger = logging.getLogger(__name__)
 
 
 class SummaryTemplate:
@@ -122,6 +125,22 @@ class SummaryPanel(QFrame):
         layout.addStretch(1)
 
         self._layout.addLayout(layout)
+
+    def log_summary(self, run_model: str, num_realizations: int) -> None:
+        summary = ErtSummary(self.config)
+
+        observations = summary.getObservations()
+        observations_count = sum(e["count"] for e in observations)
+
+        _, parameter_count = summary.get_parameters()
+
+        logger.info(
+            f"Experiment summary:\n"
+            f"Runmodel: {run_model}\n"
+            f"Realizations: {num_realizations}\n"
+            f"Parameters: {parameter_count}\n"
+            f"Observations: {observations_count}"
+        )
 
     @staticmethod
     def _runlength_encode_list(strings: list[str]) -> list[tuple[str, int]]:
