@@ -1115,19 +1115,6 @@ class ErtConfig(BaseModel):
             user_configured_.add(key)
             env_vars[key] = substituter.substitute(val)
 
-        prioritize_private_ip_address: bool = cls.PRIORITIZE_PRIVATE_IP_ADDRESS
-        if ConfigKeys.PRIORITIZE_PRIVATE_IP_ADDRESS in config_dict:
-            user_prioritize_private_ip_address = bool(
-                config_dict[ConfigKeys.PRIORITIZE_PRIVATE_IP_ADDRESS]
-            )
-            if prioritize_private_ip_address != user_prioritize_private_ip_address:
-                logger.warning(
-                    "PRIORITIZE_PRIVATE_IP_ADDRESS was overwritten by user: "
-                    f"{prioritize_private_ip_address} -> "
-                    f"{user_prioritize_private_ip_address}"
-                )
-                prioritize_private_ip_address = user_prioritize_private_ip_address
-
         try:
             refcase = Refcase.from_config_dict(config_dict)
             cls_config = cls(
@@ -1154,7 +1141,7 @@ class ErtConfig(BaseModel):
                 time_map=time_map,
                 history_source=history_source,
                 refcase=refcase,
-                prioritize_private_ip_address=prioritize_private_ip_address,
+                prioritize_private_ip_address=cls.PRIORITIZE_PRIVATE_IP_ADDRESS,
             )
 
             # The observations are created here because create_observation_dataframes
