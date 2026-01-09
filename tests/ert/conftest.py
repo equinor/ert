@@ -223,6 +223,7 @@ def copy_poly_case_with_design_matrix(copy_case):
                     DESIGN_MATRIX poly_design.xlsx DEFAULT_SHEET:DefaultSheet
                     INSTALL_JOB poly_eval POLY_EVAL
                     FORWARD_MODEL poly_eval
+                    OBS_CONFIG observations
                     """
             ),
             encoding="utf-8",
