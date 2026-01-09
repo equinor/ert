@@ -26,7 +26,10 @@ def test_that_one_experiment_creates_one_ensemble_per_batch(cached_example):
         assert ensemble_names == set(batches)
 
 
-@patch("ert.services.ErtServer.session", side_effect=[TimeoutError(), MagicMock()])
+@patch(
+    "ert.services.ErtServerConnection.session",
+    side_effect=[TimeoutError(), MagicMock()],
+)
 @patch("everest.config.ServerConfig.get_server_context_from_conn_info")
 @patch("everest.bin.everest_script.run_detached_monitor")
 @patch("everest.bin.everest_script.wait_for_server")

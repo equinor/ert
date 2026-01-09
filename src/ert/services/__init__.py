@@ -1,3 +1,3 @@
-from .ert_server import BaseServiceExit, ErtServer, ServerBootFail
+from .ert_server import BaseServiceExit, ErtServerConnection, ServerBootFail
 
-__all__ = ["BaseServiceExit", "ErtServer", "ServerBootFail"]
+__all__ = ["BaseServiceExit", "ErtServerConnection", "ServerBootFail"]

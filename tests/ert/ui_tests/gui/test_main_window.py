@@ -58,7 +58,7 @@ from ert.run_models import (
     MultipleDataAssimilation,
     SingleTestRun,
 )
-from ert.services import ErtServer
+from ert.services import ErtServerConnection
 from ert.storage import open_storage
 
 from ...unit_tests.gui.simulation.test_run_path_dialog import handle_run_path_dialog
@@ -295,7 +295,7 @@ def test_that_the_plot_window_contains_the_expected_elements(
 ):
     gui = esmda_has_run
     open_storage(gui.ert_config.ens_path, mode="r")
-    with ErtServer.init_service(
+    with ErtServerConnection.init_service(
         project=os.path.abspath(gui.ert_config.ens_path),
     ):
         expected_ensembles = [
@@ -661,7 +661,7 @@ def test_that_gui_plotter_works_when_no_data(qtbot, monkeypatch, use_tmpdir):
     # Not creating will result in dark storage hanging/lagging
     open_storage(ert_config.ens_path, mode="r")
 
-    with ErtServer.init_service(
+    with ErtServerConnection.init_service(
         project=os.path.abspath(ert_config.ens_path),
     ):
         gui = _setup_main_window(
@@ -696,7 +696,7 @@ def test_right_click_plot_button_opens_external_plotter(qtbot, use_tmpdir, monke
     args_mock = Mock()
     args_mock.config = config_file
     ert_config = ErtConfig.from_file(config_file)
-    with ErtServer.init_service(
+    with ErtServerConnection.init_service(
         project=os.path.abspath(ert_config.ens_path),
     ):
         gui = _setup_main_window(

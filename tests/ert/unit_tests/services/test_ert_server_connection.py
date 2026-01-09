@@ -13,7 +13,7 @@ from ert.services import ert_server
 from ert.services.ert_server import (
     _ERT_SERVER_CONNECTION_INFO_FILE,
     SERVICE_CONF_PATHS,
-    ErtServer,
+    ErtServerConnection,
     ServerBootFail,
     cleanup_service_files,
 )
@@ -48,7 +48,7 @@ def local_exec_args(script_args: str | list[str]) -> list[str]:
     return [sys.executable, str(services_folder / script), *rest]
 
 
-class _DummyService(ErtServer):
+class _DummyService(ErtServerConnection):
     service_name = "dummy"
 
     def __init__(self, *args, **kwargs) -> None:

@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import (
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.simulation.run_dialog import RunDialog
 from ert.plugins import ErtPluginManager
-from ert.services import ErtServer
+from ert.services import ErtServerConnection
 from everest.config import ServerConfig
 from everest.detached import wait_for_server
 from everest.gui.everest_client import EverestClient
@@ -43,7 +43,7 @@ class EverestMainWindow(QMainWindow):
         self.setCentralWidget(self.central_widget)
 
     def run(self) -> None:
-        storage_client = ErtServer.session(
+        storage_client = ErtServerConnection.session(
             Path(ServerConfig.get_session_dir(self.output_dir))
         )
         wait_for_server(storage_client, 60)
