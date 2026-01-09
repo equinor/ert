@@ -100,7 +100,7 @@ Optimisation definition
 
 everest_config.yml::
 
-    optimisation:
+    optimization:
       algorithm: optpp_q_newton
       convergence_tolerance: 0.005
 
@@ -196,7 +196,7 @@ everest_config.yml::
 
     environment:
       simulation_folder: sim_output
-      output_folder: everest_optimisation
+      output_folder: everest_optimization
       random_seed: 999
 
 **Details**
@@ -230,7 +230,7 @@ everest_config.yml::
       -
         name: distance
 
-    optimisation:
+    optimization:
       algorithm: optpp_q_newton
       convergence_tolerance: 0.005
 
@@ -249,7 +249,7 @@ everest_config.yml::
 
     environment:
       simulation_folder: sim_output
-      output_folder: everest_optimisation
+      output_folder: everest_optimization
       random_seed: 999
 
 More information regarding all the available section options and additional sections not covered in the current example
@@ -331,7 +331,7 @@ which can be done using the following command::
 
 A successful run should provide the following information in the console::
 
-    ===================================    Optimisation progress     ===================================
+    ===================================    Optimization progress     ===================================
     objective_history
       [-0.75, -0.741387, -3.0771e-06, -3.52973e-05, -1.9738e-06]
     control_history
