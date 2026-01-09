@@ -1,3 +1,4 @@
+import importlib
 import os
 import signal
 import sys
@@ -8,25 +9,55 @@ from textwrap import dedent
 
 import pytest
 
-from ert.services._base_service import (
+from ert.services import ert_server
+from ert.services.ert_server import (
+    _ERT_SERVER_CONNECTION_INFO_FILE,
     SERVICE_CONF_PATHS,
-    BaseService,
+    ErtServer,
     ServerBootFail,
     cleanup_service_files,
-    local_exec_args,
 )
 
 
-class _DummyService(BaseService):
+def local_exec_args(script_args: str | list[str]) -> list[str]:
+    """
+    Convenience function that returns the exec_args for executing a Python
+    script in the directory of '_base_service.py'.
+
+    This is done instead of using 'python -m [module path]' due to the '-m' flag
+    adding the user's current working directory to sys.path. Executing a Python
+    script by itself will add the directory of the script rather than the
+    current working directory, thus we avoid accidentally importing user's
+    directories that just happen to have the same names as the ones we use.
+    """
+    if isinstance(script_args, str):
+        script = script_args
+        rest: list[str] = []
+    else:
+        script = script_args[0]
+        rest = script_args[1:]
+    script = f"_{script}_main.py"
+
+    services_spec = importlib.util.find_spec("ert.services")
+    if services_spec is None or services_spec.origin is None:
+        raise RuntimeError("Cannot find module ert.services")
+
+    # PS: origin points to the __init__.py file
+    services_folder = Path(services_spec.origin).parent
+
+    return [sys.executable, str(services_folder / script), *rest]
+
+
+class _DummyService(ErtServer):
     service_name = "dummy"
 
-    def __init__(self, exec_args, *args, **kwargs) -> None:
-        super().__init__(exec_args=exec_args, timeout=10, *args, **kwargs)  # noqa: B026
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **({"storage_path": ".", "timeout": 10} | kwargs))
 
     def start(self):
         """Helper function for non-singleton testing"""
-        assert self._proc is not None
-        self._proc.start()
+        assert self._thread_that_starts_server_process is not None
+        self._thread_that_starts_server_process.start()
 
     def join(self):
         """Helper function for non-singleton testing"""
@@ -62,8 +93,9 @@ def server_script(monkeypatch, tmp_path: Path, request):
 
 
 @pytest.fixture
-def server(server_script):
-    proc = _DummyService([str(server_script)])
+def server(monkeypatch, server_script):
+    monkeypatch.setattr(ert_server, "_ERT_SERVER_EXECUTABLE_FILE", server_script)
+    proc = _DummyService()
     proc.start()
     yield proc
     proc.shutdown()
@@ -93,8 +125,8 @@ os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
 """
 )
 def test_info_slow(server):
-    # fetch_conn_info() should block until this value is available
-    assert server.fetch_conn_info() == {"authtoken": "test123", "urls": ["url"]}
+    # fetch_connection_info() should block until this value is available
+    assert server.fetch_connection_info() == {"authtoken": "test123", "urls": ["url"]}
 
 
 @pytest.mark.script(
@@ -104,7 +136,7 @@ os.write(fd, b"This isn't valid json (I hope)")
 )
 def test_authtoken_wrong_json(server):
     with pytest.raises(ServerBootFail):
-        server.fetch_conn_info()
+        server.fetch_connection_info()
 
 
 @pytest.mark.script(
@@ -116,9 +148,9 @@ sys.exit(1)
 """
 )
 def test_long_lived(server, tmp_path):
-    assert server.fetch_conn_info() == {"authtoken": "test123", "urls": ["url"]}
+    assert server.fetch_connection_info() == {"authtoken": "test123", "urls": ["url"]}
     assert server.shutdown() == -signal.SIGTERM
-    assert not (tmp_path / "dummy_server.json").exists()
+    assert not (tmp_path / _ERT_SERVER_CONNECTION_INFO_FILE).exists()
 
 
 @pytest.mark.integration_test
@@ -131,7 +163,7 @@ sys.exit(2)
 def test_not_respond(server):
     server._timeout = 1
     with pytest.raises(TimeoutError):
-        server.fetch_conn_info()
+        server.fetch_connection_info()
     assert server.shutdown() == -signal.SIGTERM
 
 
@@ -142,7 +174,7 @@ sys.exit(1)
 )
 def test_authtoken_fail(server):
     with pytest.raises(ServerBootFail):
-        server.fetch_conn_info()
+        server.fetch_connection_info()
 
 
 @pytest.mark.script(
@@ -153,9 +185,9 @@ time.sleep(10)  # Wait for the test to read the JSON file
 """
 )
 def test_json_created(server):
-    server.fetch_conn_info()  # wait for it to start
+    server.fetch_connection_info()  # wait for it to start
 
-    assert Path("dummy_server.json").read_text(encoding="utf-8")
+    assert Path(_ERT_SERVER_CONNECTION_INFO_FILE).read_text(encoding="utf-8")
 
 
 @pytest.mark.integration_test
@@ -170,10 +202,10 @@ def test_json_deleted(server):
     _BaseService is responsible for deleting the JSON file after the
     subprocess is finished running.
     """
-    server.fetch_conn_info()  # wait for it to start
+    server.fetch_connection_info()  # wait for it to start
     time.sleep(2)  # ensure subprocess is done before calling shutdown()
 
-    assert not os.path.exists("dummy_server.json")
+    assert not os.path.exists(_ERT_SERVER_CONNECTION_INFO_FILE)
 
 
 @pytest.mark.script(
@@ -183,12 +215,13 @@ os.close(fd)
 time.sleep(10) # ensure "server" doesn't exit before test
 """
 )
-def test_singleton_start(server_script, tmp_path):
-    with _DummyService.start_server(exec_args=[str(server_script)]) as service:
+def test_singleton_start(monkeypatch, server_script, tmp_path):
+    monkeypatch.setattr(ert_server, "_ERT_SERVER_EXECUTABLE_FILE", server_script)
+    with _DummyService.start_server(".", timeout=10) as service:
         assert service.wait_until_ready()
-        assert (tmp_path / "dummy_server.json").exists()
+        assert (tmp_path / _ERT_SERVER_CONNECTION_INFO_FILE).exists()
 
-    assert not (tmp_path / "dummy_server.json").exists()
+    assert not (tmp_path / _ERT_SERVER_CONNECTION_INFO_FILE).exists()
 
 
 @pytest.mark.integration_test
@@ -199,8 +232,9 @@ os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
 os.close(fd)
 """
 )
-def test_singleton_connect(tmp_path, server_script):
-    with _DummyService.start_server(exec_args=[str(server_script)]) as server:
+def test_singleton_connect(monkeypatch, tmp_path, server_script):
+    monkeypatch.setattr(ert_server, "_ERT_SERVER_EXECUTABLE_FILE", server_script)
+    with _DummyService().start_server(".", timeout=10) as server:
         client = _DummyService.connect(project=tmp_path, timeout=30)
         assert server is client
 
@@ -213,7 +247,7 @@ os.close(fd)
 time.sleep(10) # ensure "server" doesn't exit before test
 """
 )
-def test_singleton_connect_early(server_script, tmp_path):
+def test_singleton_connect_early(server_script, tmp_path, monkeypatch):
     """
     Tests that a connection can be attempted even if it's started _before_
     the server exists
@@ -236,16 +270,17 @@ def test_singleton_connect_early(server_script, tmp_path):
     client_thread.start()
 
     start_event.wait()  # Client thread has started
-    with _DummyService.start_server(exec_args=[str(server_script)]) as server:
+    monkeypatch.setattr(ert_server, "_ERT_SERVER_EXECUTABLE_FILE", server_script)
+    with _DummyService.start_server(".") as server:
         ready_event.wait()  # Client thread has connected to server
         assert not getattr(client_thread, "exception", None), (
             f"Exception from connect: {client_thread.exception}"
         )
         client = client_thread.client
         assert client is not server
-        assert client.fetch_conn_info() == server.fetch_conn_info()
+        assert client.fetch_connection_info() == server.fetch_connection_info()
 
-    assert not (tmp_path / "dummy_server.json").exists()
+    assert not (tmp_path / _ERT_SERVER_CONNECTION_INFO_FILE).exists()
 
 
 @pytest.mark.parametrize(

@@ -13,7 +13,7 @@ from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapProp
 
 from ert.plugins.plugin_manager import ErtPluginManager
 from ert.services import ErtServer
-from ert.services._base_service import BaseServiceExit
+from ert.services.ert_server import BaseServiceExit
 from ert.storage import ExperimentStatus
 from ert.storage.local_experiment import ExperimentState
 from ert.trace import tracer
