@@ -16,7 +16,7 @@ Everest config
 ##################
 
 The main element an Everest optimisation experiment requires is a configuration file. Everest supports the `YAML <https://en.wikipedia.org/wiki/YAML>`_
-format for the configuration file. The configuration file is build up of multiple sections and next we will go through it section
+format for the configuration file. The configuration file is built up of multiple sections and next we will go through it section
 by section.
 
 Creating the optimisation folder::
