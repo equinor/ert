@@ -127,13 +127,6 @@ def hook_workflow_keyword() -> SchemaItem:
     )
 
 
-def prioritize_private_ip_address_keyword() -> SchemaItem:
-    return SchemaItem(
-        kw=ConfigKeys.PRIORITIZE_PRIVATE_IP_ADDRESS,
-        type_map=[SchemaItemType.BOOL],
-    )
-
-
 def set_env_keyword() -> SchemaItem:
     # You can set environment variables which will be applied to the run-time
     # environment.
@@ -358,7 +351,6 @@ def init_user_config_schema() -> ConfigSchemaDict:
         install_job_keyword(),
         install_job_directory_keyword(),
         hook_workflow_keyword(),
-        prioritize_private_ip_address_keyword(),
     ]:
         schema[item.kw] = item
         if item.kw in ConfigAliases:
