@@ -92,6 +92,7 @@ Repository = "https://github.com/equinor/ert"
 [project.optional-dependencies]
 dev = [
     "furo",
+    "gaussianfft",
     "hypothesis!=6.102.0,!=6.112.3,>=6.85",
     "jsonpath_ng",
     "jupyter",
