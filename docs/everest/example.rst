@@ -4,20 +4,22 @@
 Example
 *******
 
-In this section we will go through the setup and running of a simple Everest optimization case.
+In this section we will go through the setup and running of a simple Everest optimization
+case.
 
 Problem definition
 ##################
 
-The optimization problem we will solve using Everest will be to minimize the distance between an initial 3D point
-and another given target 3D point.
+The optimization problem we will solve using Everest will be to minimize the distance
+between an initial 3D point and another given target 3D point.
 
 Everest config
 ##################
 
-The main element an Everest optimization experiment requires is a configuration file. Everest supports the `YAML <https://en.wikipedia.org/wiki/YAML>`_
-format for the configuration file. The configuration file is built up of multiple sections and next we will go through it section
-by section.
+The main element an Everest optimization experiment requires is a configuration file.
+Everest supports the `YAML <https://en.wikipedia.org/wiki/YAML>`_ format for the
+configuration file. The configuration file is built up of multiple sections and next we
+will go through it section by section.
 
 Creating the optimization folder::
 
@@ -77,11 +79,12 @@ everest_config.yml::
             min: -1.0
             max: 1.0
 
-``perturbation_magnitude`` controls the size of perturbations (standard deviation of a normal distribution) of controls used to approximate the gradient.
-The value depends on the type of control and magnitude of the variables.
-For continuous controls smaller values should give a better gradient,
-whilst for more discrete controls larger values should give a better
-result. However, this is a balance as too large or too small values also cause issues.
+``perturbation_magnitude`` controls the size of perturbations (standard deviation of a
+normal distribution) of controls used to approximate the gradient. The value depends on
+the type of control and magnitude of the variables. For continuous controls smaller values
+should give a better gradient, whilst for more discrete controls larger values should give
+a better result. However, this is a balance as too large or too small values also cause
+issues.
 
 ``variables``: list of control variables.
 
@@ -107,17 +110,18 @@ everest_config.yml::
 **Details**
 
 ``algorithm``: the algorithm used for the optimization
-currently supported algorithms: optpp_q_newton, conmin_mfd, conmin_frcg, mesh_adaptive_search.
+currently supported algorithms: optpp_q_newton, conmin_mfd, conmin_frcg,
+mesh_adaptive_search.
 
 ``convergence_tolerance``: provides a real value for controlling the termination of
-iteration.  In most cases, it is a relative convergence tolerance for the
-objective function; i.e., if the change in the objective function between
-successive iterations divided by the previous objective function is less than
-the amount specified by convergence_tolerance, then this convergence criterion is satisfied on the
-current iteration. Since no progress may be made on one iteration followed by significant progress
-on a subsequent iteration, some libraries require that the convergence tolerance
-be satisfied on two or more consecutive iterations prior to termination of
-iteration (from the Dakota Manual.)
+iteration. In most cases, it is a relative convergence tolerance for the objective
+function; i.e., if the change in the objective function between successive iterations
+divided by the previous objective function is less than the amount specified by
+convergence_tolerance, then this convergence criterion is satisfied on the current
+iteration. Since no progress may be made on one iteration followed by significant progress
+on a subsequent iteration, some libraries require that the convergence tolerance be
+satisfied on two or more consecutive iterations prior to termination of iteration (from
+the Dakota Manual.)
 
 Install jobs definition
 -----------------------
@@ -132,7 +136,8 @@ everest_config.yml::
 
 **Details**
 
-The custom job can be *installed* by adding information regarding it in the **install_jobs** section. Each custom job entry will contain:
+The custom job can be *installed* by adding information regarding it in the
+**install_jobs** section. Each custom job entry will contain:
 
 ``name``: the name the job, the same name will be used in the forward model section.
 
@@ -149,8 +154,8 @@ everest_config.yml::
 
 **Details**
 
-``realizations``: list of realizations to use in optimization ensemble. Typically, this is a
-list [0, 1, ..., n-1] of all realizations in the ensemble.
+``realizations``: list of realizations to use in optimization ensemble. Typically, this is
+a list [0, 1, ..., n-1] of all realizations in the ensemble.
 
 Forward model definition
 ------------------------
@@ -162,11 +167,12 @@ everest_config.yml::
 
 **Details**
 
-``distance3d``: the name of the custom job installed in the ``install_jobs`` section of the config file.
-The job name is followed by named arguments the job is designed to accept.
+``distance3d``: the name of the custom job installed in the ``install_jobs`` section of
+the config file. The job name is followed by named arguments the job is designed to
+accept.
 
-``point.json``: file generated by the Everest optimization experiment. It contains the list of control variables with
-the values used for the current forward model evaluation.
+``point.json``: file generated by the Everest optimization experiment. It contains the
+list of control variables with the values used for the current forward model evaluation.
 
 Example::
 
@@ -176,8 +182,8 @@ Example::
     "z" : 0
     }
 
-Everest creates the file with the name ``point.json`` because we have added to the ``controls`` section the control with
-the name ``point``.
+Everest creates the file with the name ``point.json`` because we have added to the
+``controls`` section the control with the name ``point``.
 
 ``distance``: file required for the optimization experiment
 to succeed.
@@ -187,7 +193,8 @@ One of the jobs in the forward model needs to create the file ``distance``.
 ``distance`` needs to contain the value for the objective function
 evaluation.
 
-The files needs to be called ``distance`` because we have defined the objective function named ``distance``.
+The files needs to be called ``distance`` because we have defined the objective function
+named ``distance``.
 
 Optimization environment definition
 -----------------------------------
@@ -252,14 +259,14 @@ everest_config.yml::
       output_folder: everest_optimization
       random_seed: 999
 
-More information regarding all the available section options and additional sections not covered in the current example
-can be found in :ref:`cha_config` section
+More information regarding all the available section options and additional sections not
+covered in the current example can be found in :ref:`cha_config` section
 
 Creating the custom job
 #######################
 
-Before we are able to start the optimization experiment we need to create the script for the custom job
-``distance3d`` used in the forward model.
+Before we are able to start the optimization experiment we need to create the script for
+the custom job ``distance3d`` used in the forward model.
 
 Creating the folders and files::
 
@@ -268,8 +275,8 @@ Creating the folders and files::
     ~/everest_example/jobs$: touch distance3d.py
     ~/everest_example/jobs$: chmod a+x distance3d.py
 
-``chmod +x distance3d.py``: command is used to change the access permissions for the file ``distance3d.py``, such that execution of the file is
-allowed.
+``chmod +x distance3d.py``: command is used to change the access permissions for the file
+``distance3d.py``, such that execution of the file is allowed.
 
 distance3d.py::
 
@@ -318,13 +325,14 @@ distance3d.py::
     if __name__ == "__main__":
         main(sys.argv[1:])
 
-More information about creating custom jobs can be found in the :ref:`cha_creating_custom_jobs` section
+More information about creating custom jobs can be found in the
+:ref:`cha_creating_custom_jobs` section
 
 Running Everest
 ###############
 
-Now we have all the components needed to start the optimization experiment,
-which can be done using the following command::
+Now we have all the components needed to start the optimization experiment, which can be
+done using the following command::
 
     ~/everest_example$: everest run everest_config.yml
 
