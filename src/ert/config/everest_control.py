@@ -18,7 +18,7 @@ from ropt.workflow import find_sampler_plugin
 
 from ert.substitutions import substitute_runpath_name
 
-from .parameter_config import ParameterConfig
+from .parameter_config import ParameterCardinality, ParameterConfig
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -176,6 +176,10 @@ class EverestControl(ParameterConfig):
     def parameter_keys(self) -> list[str]:
         return self.input_keys
 
+    @property
+    def cardinality(self) -> ParameterCardinality:
+        return ParameterCardinality.multiple_configs_per_ensemble_dataset
+
     def read_from_runpath(
         self, run_path: Path, real_nr: int, iteration: int
     ) -> xr.Dataset:
@@ -220,12 +224,15 @@ class EverestControl(ParameterConfig):
         self,
         from_data: npt.NDArray[np.float64],
         iens_active_index: npt.NDArray[np.int_],
-    ) -> Iterator[tuple[int | None, pl.DataFrame, str | None]]:
-        data = [[j, *from_data[:, i]] for i, j in enumerate(iens_active_index)]
+    ) -> Iterator[tuple[int | None, pl.DataFrame]]:
         df = pl.DataFrame(
-            data,
+            from_data,
             strict=False,
-            schema=["realization", *self.parameter_keys],
+            schema=self.parameter_keys,
             orient="row",
         )
-        yield None, df, self.type
+        df = df.with_columns(pl.Series("realization", iens_active_index)).select(
+            ["realization", *self.parameter_keys]
+        )
+
+        yield None, df

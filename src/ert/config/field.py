@@ -250,7 +250,7 @@ class Field(ParameterConfig):
         self,
         from_data: npt.NDArray[np.float64],
         iens_active_index: npt.NDArray[np.int_],
-    ) -> Iterator[tuple[int, xr.Dataset, str | None]]:
+    ) -> Iterator[tuple[int, xr.Dataset]]:
         dim_nx, dim_ny, dim_nz = (
             self.ertbox_params.nx,
             self.ertbox_params.ny,
@@ -260,7 +260,7 @@ class Field(ParameterConfig):
         for i, realization in enumerate(iens_active_index):
             values = from_data[:, i].reshape((dim_nx, dim_ny, dim_nz))
             ds = xr.Dataset({"values": (["x", "y", "z"], values)})
-            yield int(realization), ds, None
+            yield int(realization), ds
 
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
