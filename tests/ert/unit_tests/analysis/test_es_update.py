@@ -422,7 +422,8 @@ def test_update_raises_on_singular_matrix(tmp_path):
         with (
             pytest.raises(
                 ErtAnalysisError,
-                match=r"Failed while computing transition matrix.* Matrix is singular",
+                match=r"Failed while computing transition matrix."
+                "*(?:Matrix is singular|A singular matrix detected)",
             ),
             pytest.warns(RuntimeWarning, match="divide by zero"),
         ):
