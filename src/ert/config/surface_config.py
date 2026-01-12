@@ -196,7 +196,7 @@ class SurfaceConfig(ParameterConfig):
         self,
         from_data: npt.NDArray[np.float64],
         iens_active_index: npt.NDArray[np.int_],
-    ) -> Iterator[tuple[int, xr.Dataset]]:
+    ) -> Iterator[tuple[int, xr.Dataset, str | None]]:
         for i, realization in enumerate(iens_active_index):
             surface_parameters = from_data[:, i]
             surface_size = surface_parameters.size
@@ -220,7 +220,7 @@ class SurfaceConfig(ParameterConfig):
                     )
                 }
             )
-            yield int(realization), ds
+            yield int(realization), ds, None
 
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
