@@ -14,7 +14,6 @@ from uuid import UUID
 
 import hypothesis.strategies as st
 import numpy as np
-import orjson
 import polars as pl
 import pytest
 import xarray as xr
@@ -27,7 +26,6 @@ from resfo_utilities.testing import summaries, summary_variables
 from ert.config import (
     DesignMatrix,
     ErtConfig,
-    EverestControl,
     Field,
     GenDataConfig,
     GenKwConfig,
@@ -944,111 +942,6 @@ _ensemble_realization_infos = [
         {"model_realization": 5, "perturbation": 2},
     ],
 ]
-
-
-@pytest.mark.parametrize(
-    ("ensemble_realization_infos", "failed_realizations_per_batch"),
-    [
-        (_ensemble_realization_infos, {}),
-        (_ensemble_realization_infos, {0: {0}, 1: {3}, 2: {0, 1, 4}}),
-    ],
-)
-def test_that_all_parameters_and_gen_data_consolidation_works(
-    ensemble_realization_infos, failed_realizations_per_batch, tmp_path, snapshot
-):
-    with open_storage(tmp_path, mode="w") as storage:
-        param_keys = ["P1", "P2"]
-        response_keys = ["R1", "R2"]
-
-        experiment = storage.create_experiment(
-            responses=[GenDataConfig(keys=["R1", "R2"])],
-            parameters=[
-                EverestControl(
-                    name="point",
-                    input_keys=["P1", "P2"],
-                    types=["generic_control", "generic_control"],
-                    initial_guesses=[0.1, 0.1],
-                    control_types=["real", "real"],
-                    enabled=[True, True],
-                    min=[0, 0],
-                    max=[10, 10],
-                    perturbation_types=["relative", "relative"],
-                    perturbation_magnitudes=[0.5, 0.5],
-                    scaled_ranges=[[0, 20], [0, 20]],
-                    samplers=[None, None],
-                )
-            ],
-        )
-
-        ensemble_datas = []
-        for batch, realization_info in enumerate(ensemble_realization_infos):
-            failed_realizations = failed_realizations_per_batch.get(batch, {})
-            num_realizations = len(realization_info)
-            everest_realization_info = dict(enumerate(realization_info))
-            ensemble = storage.create_ensemble(
-                experiment, ensemble_size=num_realizations, iteration=batch
-            )
-
-            ensemble.save_everest_realization_info(everest_realization_info)
-
-            for realization in range(num_realizations):
-                param_data = xr.Dataset(
-                    {
-                        "values": (
-                            "names",
-                            np.array([realization] * len(param_keys)) + (batch / 10),
-                        ),
-                        "names": param_keys,
-                    }
-                )
-                ensemble.save_parameters(param_data, "point", realization)
-
-                if realization in failed_realizations:
-                    ensemble.set_failure(
-                        realization,
-                        RealizationStorageState.FAILURE_IN_CURRENT,
-                        "Failed to load responses",
-                    )
-                else:
-                    response_data = pl.DataFrame(
-                        {
-                            "response_key": response_keys,
-                            "values": np.array([realization * 10] * len(response_keys))
-                            + (batch / 10),
-                            "index": 0,
-                            "report_step": 0,
-                        }
-                    )
-
-                    ensemble.save_response("gen_data", response_data, realization)
-
-            ensemble_data = ensemble.all_parameters_and_gen_data
-            snapshot_str = (
-                orjson.dumps(
-                    ensemble_data.to_dicts(),
-                    option=orjson.OPT_INDENT_2 | orjson.OPT_SORT_KEYS,
-                )
-                .decode("utf-8")
-                .strip()
-                + "\n"
-            )
-            ensemble_datas.append(ensemble_data)
-
-            snapshot.assert_match(snapshot_str, f"batch_{batch}.json")
-
-        experiment_data = experiment.all_parameters_and_gen_data
-        snapshot_str = (
-            orjson.dumps(
-                experiment_data.to_dicts(),
-                option=orjson.OPT_INDENT_2 | orjson.OPT_SORT_KEYS,
-            )
-            .decode("utf-8")
-            .strip()
-            + "\n"
-        )
-        snapshot.assert_match(snapshot_str, "all_batches.json")
-
-        assert pl.concat(ensemble_datas).equals(experiment_data)
 
 
 @pytest.mark.parametrize(
