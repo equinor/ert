@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Literal, Self, cast, overload
 
 import networkx as nx
 import numpy as np
+import numpy.typing as npt
 import polars as pl
 import xarray as xr
 from pydantic import ValidationError
@@ -248,7 +249,7 @@ class GenKwConfig(ParameterConfig):
             }
         ]
 
-    def transform_data(self) -> Callable[[float], float]:
+    def transform_data(self) -> Callable[[npt.ArrayLike], npt.ArrayLike]:
         return self.distribution.transform
 
     @classmethod
