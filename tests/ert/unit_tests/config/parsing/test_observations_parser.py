@@ -88,23 +88,33 @@ def test_parse_observations():
 def test_parse_rft_observations():
     assert parse_observations(
         """
-        RFT_OBSERVATION NAME
+        RFT_OBSERVATION NAME1
         {
             VALUE    = 700;
             ERROR    = 0.1;
             DATE     = 2010-03-31;
             PROPERTY = PRESSURE;
         };
+
+        RFT_OBSERVATION NAME2
+        {
+            CSV    = rft_observations.csv;
+        };
     """,
         "",
     ) == [
         {
             "type": ObservationType.RFT,
-            "name": "NAME",
+            "name": "NAME1",
             "VALUE": "700",
             "ERROR": "0.1",
             "DATE": "2010-03-31",
             "PROPERTY": "PRESSURE",
+        },
+        {
+            "type": ObservationType.RFT,
+            "name": "NAME2",
+            "CSV": "rft_observations.csv",
         },
     ]
 
@@ -115,14 +125,16 @@ def test_that_missing_assignment_in_observation_body_shows_informative_error_mes
     )
     with pytest.raises(ObservationConfigError, match=expected_match):
         parse_observations(
-            content=dedent("""\
+            content=dedent(
+                """\
                 GENERAL_OBSERVATION POLY_OBS_0 {
                    DATA       = POLY_RES;
                    INDEX_LIST = 0,2,4,6,8;
                    OBS_FILE   = poly_obs_data.txt;
                    A
                 };
-            """),
+            """
+            ),
             filename="",
         )
 
@@ -134,13 +146,15 @@ def test_that_misspelled_observation_type_shows_informative_error_message():
     )
     with pytest.raises(ObservationConfigError, match=expected_match):
         parse_observations(
-            content=dedent("""\
+            content=dedent(
+                """\
                 MISSPELLED_OBSERVATION POLY_OBS_0 {
                    DATA       = POLY_RES;
                    INDEX_LIST = 0,2,4,6,8;
                    OBS_FILE   = poly_obs_data.txt;
                 };
-            """),
+            """
+            ),
             filename="",
         )
 
@@ -152,13 +166,15 @@ def test_that_invalid_start_of_observation_body_symbol_show_informative_error_me
     )
     with pytest.raises(ObservationConfigError, match=expected_match):
         parse_observations(
-            content=dedent("""\
+            content=dedent(
+                """\
                 GENERAL_OBSERVATION POLY_OBS_0 (
                    DATA       = POLY_RES;
                    INDEX_LIST = 0,2,4,6,8;
                    OBS_FILE   = poly_obs_data.txt;
                 };
-            """),
+            """
+            ),
             filename="",
         )
 
@@ -170,7 +186,7 @@ def test_that_repeated_comments_are_ignored():
                         FOPR;
             """,
         "",
-    ) == [({"type": ObservationType.SUMMARY, "name": "FOPR"})]
+    ) == [{"type": ObservationType.SUMMARY, "name": "FOPR"}]
 
 
 @pytest.mark.parametrize("observation_type", ["HISTORY", "GENERAL", "SUMMARY"])
