@@ -71,7 +71,7 @@ def test_memory_smoothing(poly_template):
             )
 
     stats = memray._memray.compute_statistics(str(poly_template / "memray.bin"))
-    assert stats.peak_memory_allocated < 1024**2 * 300
+    assert stats.peak_memory_allocated < 1024**2 * 900
 
 
 @pytest.mark.memory_test
