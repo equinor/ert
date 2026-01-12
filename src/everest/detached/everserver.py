@@ -17,6 +17,7 @@ from ert.services._base_service import BaseServiceExit
 from ert.storage import ExperimentStatus
 from ert.storage.local_experiment import ExperimentState
 from ert.trace import tracer
+from ert.utils import makedirs_if_needed
 from everest.config import ServerConfig
 from everest.strings import (
     DEFAULT_LOGGING_FORMAT,
@@ -25,7 +26,7 @@ from everest.strings import (
     EXPERIMENT_SERVER,
     OPTIMIZATION_LOG_DIR,
 )
-from everest.util import makedirs_if_needed, version_info
+from everest.util import version_info
 
 logger = logging.getLogger(__name__)
 

@@ -24,6 +24,7 @@ from ert.dark_storage.client import ErtClientConnectionInfo
 from ert.plugins import ErtRuntimePlugins
 from ert.scheduler.event import FinishedEvent
 from ert.services import ErtServer
+from ert.utils import makedirs_if_needed
 from everest.config import EverestConfig
 from everest.config.forward_model_config import ForwardModelStepConfig
 from everest.config.install_job_config import InstallForwardModelStepConfig
@@ -37,7 +38,6 @@ from everest.detached import (
     wait_for_server,
     wait_for_server_to_stop,
 )
-from everest.util import makedirs_if_needed
 from tests.everest.utils import everest_config_with_defaults
 
 
