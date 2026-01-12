@@ -508,19 +508,3 @@ class LocalExperiment(BaseMode):
 
         if self.response_type_to_response_keys is not None:
             del self.response_type_to_response_keys
-
-    @property
-    def all_parameters_and_gen_data(self) -> pl.DataFrame | None:
-        if not self.ensembles:
-            return None
-
-        ensemble_dfs = [
-            e.all_parameters_and_gen_data
-            for e in self.ensembles
-            if e.all_parameters_and_gen_data is not None
-        ]
-
-        if not ensemble_dfs:
-            return None
-
-        return pl.concat(ensemble_dfs)

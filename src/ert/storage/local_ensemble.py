@@ -15,7 +15,6 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 import numpy as np
-import pandas as pd
 import polars as pl
 import resfo
 import xarray as xr
@@ -1054,7 +1053,7 @@ class LocalEnsemble(BaseMode):
                                 pl.col(col).is_in(observed_values.implode())
                             )
 
-                    pivoted = responses.collect(engine="streaming").pivot(  # noqa: PD010
+                    pivoted = responses.collect(engine="streaming").pivot(
                         on="realization",
                         index=["response_key", *response_cls.primary_key],
                         values="values",
@@ -1178,98 +1177,6 @@ class LocalEnsemble(BaseMode):
         self._storage._write_transaction(
             self._path / "index.json", self._index.model_dump_json().encode("utf-8")
         )
-
-    @property
-    def all_parameters_and_gen_data(self) -> pl.DataFrame | None:
-        """
-        Only for Everest wrt objectives/constraints,
-        disregards summary data and primary key values
-        """
-        param_dfs = []
-        for param_group in self.experiment.parameter_configuration:
-            params_pd = self.load_parameters(param_group)["values"].to_pandas()
-
-            assert isinstance(params_pd, pd.DataFrame)
-            params_pd = params_pd.reset_index()
-            param_df = pl.from_pandas(params_pd)
-
-            param_columns = [c for c in param_df.columns if c != "realizations"]
-            param_df = param_df.rename(
-                {
-                    **{
-                        c: param_group + "." + c.replace("\0", ".")
-                        for c in param_columns
-                    },
-                    "realizations": "realization",
-                }
-            )
-            param_df = param_df.cast(
-                {
-                    "realization": pl.UInt16,
-                    **{c: pl.Float64 for c in param_df.columns if c != "realization"},
-                }
-            )
-            param_dfs.append(param_df)
-
-        responses = self.load_responses(
-            "gen_data", tuple(self.get_realization_list_with_responses())
-        )
-
-        if responses is None:
-            return pl.concat(param_dfs)
-
-        params_wide = pl.concat(
-            [
-                (
-                    pdf.sort("realization").drop("realization")
-                    if i > 0
-                    else pdf.sort("realization")
-                )
-                for i, pdf in enumerate(param_dfs)
-            ],
-            how="horizontal",
-        )
-
-        responses_wide = responses["realization", "response_key", "values"].pivot(  # noqa: PD010
-            on="response_key", values="values"
-        )
-
-        # If responses are missing for some realizations, this _left_ join will
-        # put null (polars) which maps to nan when doing .to_numpy() into the
-        # response columns for those realizations
-        params_and_responses = params_wide.join(
-            responses_wide, on="realization", how="left"
-        ).with_columns(pl.lit(self.iteration).alias("batch"))
-
-        assert self.everest_realization_info is not None
-
-        model_realization_mapping = {
-            k: v["model_realization"] for k, v in self.everest_realization_info.items()
-        }
-        perturbation_mapping = {
-            k: v["perturbation"] for k, v in self.everest_realization_info.items()
-        }
-
-        params_and_responses = params_and_responses.with_columns(
-            pl.col("realization")
-            .replace(model_realization_mapping)
-            .alias("model_realization"),
-            pl.col("realization")
-            .cast(pl.Int32)
-            .replace(perturbation_mapping)
-            .alias("perturbation"),
-        )
-
-        column_order = [
-            "batch",
-            "model_realization",
-            "perturbation",
-            "realization",
-            *[c for c in responses_wide.columns if c != "realization"],
-            *[c for c in params_wide.columns if c != "realization"],
-        ]
-
-        return params_and_responses[column_order]
 
 
 async def _read_parameters(
