@@ -223,7 +223,7 @@ class GenKwConfig(ParameterConfig):
         self,
         from_data: npt.NDArray[np.float64],
         iens_active_index: npt.NDArray[np.int_],
-    ) -> Iterator[tuple[int | None, pl.DataFrame]]:
+    ) -> Iterator[tuple[int | None, pl.DataFrame, str | None]]:
         yield (
             None,
             pl.DataFrame(
@@ -232,6 +232,7 @@ class GenKwConfig(ParameterConfig):
                     self.name: pl.Series(from_data.flatten()),
                 }
             ),
+            self.type,
         )
 
     @property

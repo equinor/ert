@@ -11,7 +11,7 @@ from datetime import datetime
 from functools import cache, cached_property, lru_cache
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 from uuid import UUID
 
 import numpy as np
@@ -22,6 +22,7 @@ from pydantic import BaseModel
 from typing_extensions import TypedDict
 
 from ert.config import ParameterCardinality, ParameterConfig, SummaryConfig
+from ert.config.everest_control import EverestControl
 from ert.config.response_config import InvalidResponseFile
 from ert.substitutions import substitute_runpath_name
 
@@ -624,6 +625,12 @@ class LocalEnsemble(BaseMode):
         # if group refers to a group name, we expect the same cardinality
         cardinality = next(cfg.cardinality for cfg in cfgs)
 
+        if len(cfgs) == 1 and cfgs[0].type == "everest_parameters":
+            everest_control = cast(EverestControl, cfgs[0])
+            return self.load_scalar_keys(
+                everest_control.input_keys, realizations, transformed
+            )
+
         if cardinality == ParameterCardinality.multiple_configs_per_ensemble_dataset:
             return self.load_scalar_keys(
                 [cfg.name for cfg in cfgs], realizations, transformed
@@ -671,12 +678,27 @@ class LocalEnsemble(BaseMode):
             complete_df = self._load_parameters_lazy(SCALAR_FILENAME).collect(
                 engine="streaming"
             )
-        for real, ds in config_node.create_storage_datasets(
+        for real, ds, config_type in config_node.create_storage_datasets(
             parameters, iens_active_index
         ):
             if isinstance(ds, pl.DataFrame):
                 if complete_df is None:
                     complete_df = ds
+                elif config_type == "everest_parameters":
+                    assert len(iens_active_index) == 1
+
+                    i = iens_active_index[0]
+                    if i in complete_df["realization"].to_list():
+                        if all(e in complete_df.columns for e in ds.columns):
+                            complete_df = complete_df.update(ds, on="realization")
+                        else:
+                            complete_df = (
+                                complete_df.join(ds, on="realization", how="left")
+                                .unique(subset=["realization"], keep="first")
+                                .sort("realization")
+                            )
+                    else:
+                        complete_df = pl.concat([complete_df, ds], how="align")
                 else:
                     complete_df = complete_df.drop(
                         [c for c in ds.columns if c != "realization"], strict=False
