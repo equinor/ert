@@ -16,6 +16,7 @@ from _ert.threading import ErtThread
 from ert.config import QueueSystem
 from ert.services import ErtServer
 from ert.storage.local_experiment import ExperimentState
+from ert.utils import makedirs_if_needed
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import (
     start_experiment,
@@ -24,7 +25,6 @@ from everest.detached import (
 )
 from everest.everest_storage import EverestStorage
 from everest.util import (
-    makedirs_if_needed,
     version_info,
     warn_user_that_runpath_is_nonempty,
 )

@@ -34,7 +34,7 @@ from ert.shared import __file__ as ert_shared_path
 from ert.shared import find_available_socket, get_machine_name
 from ert.shared.storage.command import add_parser_options
 from ert.trace import tracer
-from everest.util import makedirs_if_needed
+from ert.utils import makedirs_if_needed
 
 DARK_STORAGE_APP = "ert.dark_storage.app:app"
 

@@ -31,6 +31,7 @@ from ert.storage import (
     ExperimentStatus,
     open_storage,
 )
+from ert.utils import makedirs_if_needed
 from everest.config import EverestConfig
 from everest.config.server_config import ServerConfig
 from everest.detached import (
@@ -40,7 +41,6 @@ from everest.detached import (
     wait_for_server_to_stop,
 )
 from everest.strings import EVEREST, OPT_PROGRESS_ID, SIM_PROGRESS_ID
-from everest.util import makedirs_if_needed
 
 JOB_SUCCESS = "Finished"
 JOB_RUNNING = "Running"

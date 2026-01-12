@@ -9,8 +9,8 @@ from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.plugins import get_site_plugins
 from ert.run_models.everest_run_model import EverestRunModel
 from ert.storage import open_storage
+from ert.utils import makedirs_if_needed
 from everest.config import EverestConfig
-from everest.util import makedirs_if_needed
 from tests.everest.utils import get_optimal_result
 
 CONFIG_FILE_MULTIOBJ = "config_multiobj.yml"
