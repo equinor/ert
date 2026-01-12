@@ -212,44 +212,25 @@ class ErtServerConnection:
         verbose: bool = False,
         logging_config: str | None = None,  # Only used from everserver
     ) -> None:
-        if connection_info is not None:
-            self._init_from_existing_connection(storage_path, connection_info, timeout)
-        else:
-            self._init_with_new_server(
-                storage_path, timeout, parent_pid, verbose, logging_config
-            )
-
-    def _init_from_existing_connection(
-        self,
-        storage_path: str,
-        connection_info: ErtServerConnectionInfo | Exception,
-        timeout: int,
-    ) -> None:
-        """Initialize with existing connection info (server already running)"""
-        if isinstance(connection_info, Mapping) and "urls" not in connection_info:
-            raise KeyError("No URLs found in connection info")
+        if timeout is None:
+            timeout = 120
 
         self._storage_path = storage_path
-        self._connection_info: ErtServerConnectionInfo | Exception = connection_info
-        self._timeout = timeout
+        self._connection_info: ErtServerConnectionInfo | Exception | None = (
+            connection_info
+        )
         self._on_connection_info_received_event = threading.Event()
-        self._url = None
-
-        self._on_connection_info_received_event.set()
-
-    def _init_with_new_server(
-        self,
-        storage_path: str,
-        timeout: int,
-        parent_pid: int | None,
-        verbose: bool,
-        logging_config: str | None,
-    ) -> None:
-        self._storage_path = storage_path
-        self._connection_info = None
         self._timeout = timeout
-        self._url = None
-        self._on_connection_info_received_event = threading.Event()
+        self._url: str | None = None
+
+        if self._connection_info is not None:
+            # This means that server is already running
+            if isinstance(connection_info, Mapping) and "urls" not in connection_info:
+                raise KeyError("No URLs found in connection info")
+
+            self._on_connection_info_received_event.set()
+            self._thread_that_starts_server_process = None
+            return
 
         run_storage_main_cmd = [
             sys.executable,
