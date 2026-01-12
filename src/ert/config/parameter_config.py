@@ -87,7 +87,7 @@ class ParameterConfig(BaseModel):
         self,
         from_data: npt.NDArray[np.float64],
         iens_active_index: npt.NDArray[np.int_],
-    ) -> Iterator[tuple[int | None, pl.DataFrame | xr.Dataset, str | None]]:
+    ) -> Iterator[tuple[int | None, pl.DataFrame | xr.Dataset]]:
         """
         Iterates over realization. It creates an xarray Dataset
         or polars DataFrame from the numpy data
