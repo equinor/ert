@@ -110,7 +110,9 @@ def create_observation_dataframes(
     for name, dfs in grouped.items():
         non_empty_dfs = [df for df in dfs if not df.is_empty()]
         if len(non_empty_dfs) > 0:
-            ds = pl.concat(non_empty_dfs).sort("observation_key")
+            ds = pl.concat(non_empty_dfs, how="vertical_relaxed").sort(
+                "observation_key"
+            )
             if "time" in ds:
                 ds = ds.sort(by="time")
 

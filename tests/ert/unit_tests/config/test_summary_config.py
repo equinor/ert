@@ -72,7 +72,9 @@ def test_that_read_file_does_not_raise_unexpected_exceptions_on_missing_director
         ).read_from_file(str(tmp_path / "DOES_NOT_EXIST"), 1, 0)
 
 
-def create_summary_observation(loc_config_lines):
+def create_summary_observation(
+    obs_config_content,
+):
     config = dedent(
         """
     NUM_REALIZATIONS 3
@@ -82,20 +84,7 @@ def create_summary_observation(loc_config_lines):
     RANDOM_SEED 1234
     """
     )
-    obs_config = dedent(
-        """
-        SUMMARY_OBSERVATION FOPR_1
-        {
-        VALUE      = 0.9;
-        ERROR      = 0.05;
-        DATE       = 2014-09-10;
-        KEY        = FOPR;
-        """
-        + loc_config_lines
-        + """
-        };
-        """
-    )
+    obs_config = dedent(obs_config_content)
     Path("config.ert").write_text(config, encoding="utf-8")
     Path("observations").write_text(obs_config, encoding="utf-8")
     Path("template.txt").write_text("MY_KEYWORD <MY_KEYWORD>", encoding="utf-8")
@@ -136,7 +125,7 @@ def test_that_summary_observations_can_be_instantiated_with_localization(
 
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
-def test_that_summary_observations_without_location_range_gets_defaulted(
+def test_that_summary_observations_with_location_without_location_range_gets_location_range_defaulted(  # noqa: E501
     tmpdir,
 ):
     with tmpdir.as_cwd():
@@ -186,11 +175,11 @@ def test_that_summary_observations_without_location_keywords_gets_location_keywo
 @pytest.mark.parametrize(
     "loc_config_lines",
     [
-        "EAST=10;\n",
-        "NORTH=10;\n",
-        "RANGE=10;\n",
-        "NORTH=10;\nRANGE=10;\n",
-        "EAST=10;\nRANGE=10;\n",
+        "EAST = 10;\n",
+        "NORTH = 10;\n",
+        "RANGE = 10;\n",
+        "NORTH = 10;\nRANGE = 10;\n",
+        "EAST = 10;\nRANGE = 10;\n",
     ],
 )
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
@@ -205,8 +194,21 @@ def test_that_summary_observations_raises_config_validation_error_when_loc_x_or_
         f"Only {', '.join(matches)} were provided.",
         "ensure that both EAST and NORTH are defined",
     ]
+    obs_config_content = (
+        """
+        SUMMARY_OBSERVATION FOPR_1
+        {
+            VALUE      = 0.9;
+            ERROR      = 0.05;
+            DATE       = 2014-09-10;
+            KEY        = FOPR;"""
+        + loc_config_lines
+        + """
+        };
+        """
+    )
     with pytest.raises(ConfigValidationError) as e, tmpdir.as_cwd():
-        create_summary_observation(loc_config_lines)
+        create_summary_observation(obs_config_content)
     for msg in expected_err_msgs:
         assert msg in str(e.value)
 
