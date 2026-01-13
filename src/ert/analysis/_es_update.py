@@ -387,11 +387,7 @@ def analysis_ES(
                 non_zero_variance_mask
             ] @ T.astype(param_ensemble_array.dtype)
 
-        log_msg = f"Storing data for {param_group}.."
-        logger.info(log_msg)
-        progress_callback(AnalysisStatusEvent(msg=log_msg))
         start = time.time()
-
         target_ensemble.save_parameters_numpy(
             param_ensemble_array, param_group, iens_active_index
         )
