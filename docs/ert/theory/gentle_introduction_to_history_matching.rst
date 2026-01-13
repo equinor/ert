@@ -77,7 +77,7 @@ Assisted History Matching (AHM)
 
 The process of manually guessing parameters-values, running simulators and checking results can be automated.
 
-We start by generating many different guesses for the parameters, illustrated by a stack of 2D grids in the figure.
+We start by generating many alternative guesses for the parameters, illustrated by a stack of 2D grids in the figure.
 This set of guesses is called an **ensemble** and each member of an ensemble is called a **realization**.
 The number of realizations is the **ensemble size** and usually denoted by :math:`N`.
 Note the change in notation between manual history matching and AHM:
@@ -85,15 +85,21 @@ Note the change in notation between manual history matching and AHM:
 The additional index :math:`j` refers to the realization number: each realization :math:`j` is a different draw (sample) from the same prior distribution, giving its own value :math:`x_{i,j}` in each grid-cell :math:`i`.
 Once the ensemble is ready, we run the simulator once for each realization.
 
-The scatter plots illustrate results if we ran 3 realizations.
-At each time-step, there are 3 simulated values (blue dots) and one observed value (black dot).
-The simulated values at :math:`w_1` seem to cover the observed values, meaning that there are simulated values both above and below the observed values.
-However, the simulated values at :math:`w_2` are all above the observed values.
-This is an example of poor **coverage** and is a sign that our choice of parameter values is not good.
-If the simulated values are all above the observed values, our model is fundamentally biased.
-This should be fixed before history matching.
+The scatter plots illustrate the case where we ran 3 realizations.
+At each time-step we then have 3 simulated values (blue dots) and one observed value (black dot).
 
-At a high level, AHM uses the information from all these simulated values and observed values in order to automatically generate a new ensemble of parameters that are better estimates of the true values.
+At :math:`w_1` the simulated values span the observation: some are above and some are below.
+This suggests little systematic bias at that well.
+At :math:`w_2`, however, all simulated values are below the observation, which indicates a bias.
+
+Large and systematic differences between simulated and observed values mean that the update algorithm must change the prior a lot to obtain a good match.
+In history matching, we generally prefer the smallest change to the prior that still gives an acceptable data match, because the update does not guarantee that the posterior models are geologically plausible.
+We don't want a model that fits the observations but that does not make geological sense.
+
+For this reason it is better if geologists and reservoir engineers build a prior ensemble whose simulated responses already span the observations.
+When the ensemble covers the observations in this way, we say it has good **coverage**.
+
+At a high level, AHM combines these simulated values and observations to generate an updated ensemble of parameters that better explains the data.
 
 Before we dig deeper, we need to briefly talk about uncertainty.
 
