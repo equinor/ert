@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 import pytest
 
-from ert.services import ErtServer
+from ert.services import ErtServerConnection
 from ert.services._storage_main import _create_connection_info, _generate_certificate
 from ert.shared import find_available_socket
 
@@ -59,11 +59,11 @@ def test_that_service_can_be_started_with_existing_conn_info_json(change_to_tmpd
 
     with open("storage_server.json", mode="w", encoding="utf-8") as f:
         json.dump(connection_info, f)
-    ErtServer.connect(project=Path(".").absolute())
+    ErtServerConnection.connect(project=Path(".").absolute())
 
 
 @pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
-@patch("ert.services.ErtServer.start_server")
+@patch("ert.services.ErtServerConnection.start_server")
 def test_that_service_can_be_started_with_missing_cert_in_conn_info_json(
     start_server_mock, change_to_tmpdir
 ):
@@ -88,29 +88,29 @@ def test_that_service_can_be_started_with_missing_cert_in_conn_info_json(
     }
     with open("storage_server.json", mode="w", encoding="utf-8") as f:
         json.dump(connection_info, f)
-    ErtServer.init_service(project=Path(".").absolute())
+    ErtServerConnection.init_service(project=Path(".").absolute())
     start_server_mock.assert_called_once()
 
 
-@patch("ert.services.ErtServer.start_server")
+@patch("ert.services.ErtServerConnection.start_server")
 def test_that_service_can_be_started_with_empty_conn_info_json(
     start_server_mock, change_to_tmpdir
 ):
     """An empty file on disk is an erroneous scenario in which we should
     ignore the file on disk and overwrite it by launching a new server"""
     Path("storage_server.json").touch()
-    ErtServer.init_service(project=Path(".").absolute())
+    ErtServerConnection.init_service(project=Path(".").absolute())
     start_server_mock.assert_called_once()
 
 
-@patch("ert.services.ErtServer.start_server")
+@patch("ert.services.ErtServerConnection.start_server")
 def test_that_service_can_be_started_with_empty_json_content(
     start_server_mock, change_to_tmpdir
 ):
     """An empty JSON document on disk is an erroneous scenario in which we should
     ignore the file on disk and overwrite it by launching a new server"""
     Path("storage_server.json").write_text("{}", encoding="utf-8")
-    ErtServer.init_service(project=Path(".").absolute())
+    ErtServerConnection.init_service(project=Path(".").absolute())
     start_server_mock.assert_called_once()
 
 
@@ -122,7 +122,7 @@ def test_storage_logging(change_to_tmpdir):
     would log everything twice
     """
 
-    with ErtServer.start_server(
+    with ErtServerConnection.start_server(
         verbose=True,
         project=Path("."),
         parent_pid=os.getpid(),
@@ -205,6 +205,6 @@ def test_that_an_exception_is_raised_if_storage_server_file_has_no_permissions(
     os.chmod(file_path, 0o000)  # no permissions
     try:
         with pytest.raises(PermissionError):
-            ErtServer.init_service(project=Path(".").absolute())
+            ErtServerConnection.init_service(project=Path(".").absolute())
     finally:
         os.chmod(file_path, mode)

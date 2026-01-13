@@ -15,7 +15,7 @@ import ert
 from ert.dark_storage.app import app
 from ert.ensemble_evaluator import EndEvent
 from ert.scheduler.event import FinishedEvent
-from ert.services import ErtServer
+from ert.services import ErtServerConnection
 from ert.storage import ExperimentState
 from everest.bin.utils import get_experiment_status
 from everest.config import EverestConfig, ServerConfig
@@ -64,7 +64,9 @@ async def wait_for_server_to_complete(config):
                 return
 
     driver = await start_server(config, logging.DEBUG)
-    client = ErtServer.session(Path(ServerConfig.get_session_dir(config.output_dir)))
+    client = ErtServerConnection.session(
+        Path(ServerConfig.get_session_dir(config.output_dir))
+    )
     wait_for_server(client, 120)
     start_experiment(
         server_context=ServerConfig.get_server_context_from_conn_info(client.conn_info),
@@ -87,7 +89,9 @@ def mock_server(monkeypatch):
         response_mock.json.return_value = {"status": status, "message": message}
         client_mock.get.return_value = response_mock
         server_patch.session.return_value.__enter__.return_value = client_mock
-        monkeypatch.setattr("everest.detached.everserver.ErtServer", server_patch)
+        monkeypatch.setattr(
+            "everest.detached.everserver.ErtServerConnection", server_patch
+        )
 
     return func
 

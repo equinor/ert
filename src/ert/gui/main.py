@@ -28,7 +28,7 @@ from ert.gui.tools.event_viewer import (
 )
 from ert.namespace import Namespace
 from ert.plugins import ErtRuntimePlugins, get_site_plugins
-from ert.services import ErtServer
+from ert.services import ErtServerConnection
 from ert.shared import __version__
 from ert.storage import (
     ErtStorageException,
@@ -120,7 +120,7 @@ def run_gui(args: Namespace, plugins: ErtRuntimePlugins | None = None) -> int:
             return show_window()
 
         try:
-            with ErtServer.init_service(project=Path(ens_path).absolute()):
+            with ErtServerConnection.init_service(project=Path(ens_path).absolute()):
                 return show_window()
         except PermissionError as pe:
             print(f"Error: {pe}", file=sys.stderr)

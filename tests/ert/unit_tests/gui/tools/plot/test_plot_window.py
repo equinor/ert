@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import QApplication, QLabel, QPushButton
 from pytestqt.qtbot import QtBot
 
 from ert.gui.tools.plot.plot_window import PlotWindow, create_error_dialog
-from ert.services import ErtServer
+from ert.services import ErtServerConnection
 
 
 def test_pressing_copy_button_in_error_dialog(qtbot: QtBot):
@@ -29,7 +29,7 @@ def test_warning_is_visible_on_incompatible_plot_api_version(
         "ert.gui.tools.plot.plot_api.PlotApi.api_version", mock_get_data
     )
 
-    with ErtServer.init_service(project=tmp_path):
+    with ErtServerConnection.init_service(project=tmp_path):
         pw = PlotWindow("", tmp_path, None)
         qtbot.addWidget(pw)
         pw.show()
