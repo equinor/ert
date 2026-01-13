@@ -15,7 +15,12 @@ from pydantic import ValidationError
 from typing_extensions import TypedDict
 
 from ._str_to_bool import str_to_bool
-from .distribution import DISTRIBUTION_CLASSES, DistributionSettings, get_distribution
+from .distribution import (
+    DISTRIBUTION_CLASSES,
+    DistributionSettings,
+    FloatOrArray,
+    get_distribution,
+)
 from .parameter_config import ParameterCardinality, ParameterConfig
 from .parsing import ConfigValidationError, ConfigWarning
 
@@ -249,7 +254,7 @@ class GenKwConfig(ParameterConfig):
             }
         ]
 
-    def transform_data(self) -> Callable[[npt.ArrayLike], npt.ArrayLike]:
+    def transform_data(self) -> Callable[[FloatOrArray], FloatOrArray]:
         return self.distribution.transform
 
     @classmethod

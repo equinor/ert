@@ -6,7 +6,7 @@ import logging
 import os
 import time
 from collections import Counter
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from datetime import datetime
 from functools import cache, cached_property, lru_cache
 from multiprocessing.pool import ThreadPool
@@ -611,10 +611,10 @@ class LocalEnsemble(BaseMode):
                             self.experiment.parameter_configuration[key]
                         )
 
-            def make_transformer(col: str):
-                transform = self.experiment.parameter_configuration[
-                    col
-                ].transform_data()
+            def make_transformer(
+                col: ParameterConfig,
+            ) -> Callable[[pl.Series], pl.Series]:
+                transform = col.transform_data()
                 return lambda s: pl.Series(transform(s.to_numpy()))
 
             df = df.with_columns(

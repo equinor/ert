@@ -14,6 +14,8 @@ import polars as pl
 import xarray as xr
 from pydantic import BaseModel
 
+from .distribution import FloatOrArray
+
 if TYPE_CHECKING:
     import numpy.typing as npt
 
@@ -124,7 +126,9 @@ class ParameterConfig(BaseModel):
     def group_name(self) -> str:
         return self.name
 
-    def transform_data(self) -> Callable[[npt.ArrayLike], npt.ArrayLike]:
+    def transform_data(
+        self,
+    ) -> Callable[[FloatOrArray], FloatOrArray]:
         return lambda x: x
 
     def sample_values(

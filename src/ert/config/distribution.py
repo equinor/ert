@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import Annotated, Any, Literal, Self, TypeVar
+from typing import Annotated, Any, Literal, Self, TypeAlias, TypeVar
 
 import numpy as np
 import numpy.typing as npt
@@ -11,6 +11,7 @@ from scipy.stats import norm
 from .parsing import ConfigValidationError, ConfigWarning, ErrorInfo
 
 T = TypeVar("T", bound="TransSettingsValidation")
+FloatOrArray: TypeAlias = float | npt.NDArray[np.floating[Any]]
 
 
 class TransSettingsValidation(BaseModel):
@@ -43,7 +44,7 @@ class UnifSettings(TransSettingsValidation):
             )
         return self
 
-    def transform(self, x: npt.ArrayLike) -> npt.ArrayLike:
+    def transform(self, x: FloatOrArray) -> FloatOrArray:
         y = norm.cdf(x)
         return y * (self.max - self.min) + self.min
 
@@ -62,7 +63,7 @@ class LogUnifSettings(TransSettingsValidation):
             )
         return self
 
-    def transform(self, x: npt.ArrayLike) -> npt.ArrayLike:
+    def transform(self, x: FloatOrArray) -> FloatOrArray:
         log_min, log_max = np.log(self.min), np.log(self.max)
         tmp = norm.cdf(x)
         return np.exp(log_min + tmp * (log_max - log_min))
@@ -95,7 +96,7 @@ class DUnifSettings(TransSettingsValidation):
             raise ConfigValidationError.from_collected(errors)
         return self
 
-    def transform(self, x: npt.ArrayLike) -> npt.ArrayLike:
+    def transform(self, x: FloatOrArray) -> FloatOrArray:
         y = norm.cdf(x)
         return (np.floor(y * self.steps) / (self.steps - 1)) * (
             self.max - self.min
@@ -114,7 +115,7 @@ class NormalSettings(TransSettingsValidation):
             raise ConfigValidationError(f"Negative STD {value} for normal distribution")
         return value
 
-    def transform(self, x: npt.ArrayLike) -> npt.ArrayLike:
+    def transform(self, x: FloatOrArray) -> FloatOrArray:
         return x * self.std + self.mean
 
 
@@ -134,6 +135,9 @@ class LogNormalSettings(TransSettingsValidation):
 
     @model_validator(mode="after")
     def valid_transformed(self) -> Self:
+        # If expected value exp(mu + 0.5 sigma^2) is too large, warn the user
+        # 100000 is chosen from input from expert when considering permeability
+        # If the expected value overflows, issue an error, as this is definitely wrong
         expected_value = np.exp(self.mean + 0.5 * self.std**2)
         if np.isinf(expected_value):
             raise ConfigValidationError(
@@ -160,7 +164,7 @@ class LogNormalSettings(TransSettingsValidation):
             )
         return self
 
-    def transform(self, x: npt.ArrayLike) -> npt.ArrayLike:
+    def transform(self, x: FloatOrArray) -> FloatOrArray:
         return np.exp(x * self.std + self.mean)
 
 
@@ -189,7 +193,7 @@ class TruncNormalSettings(TransSettingsValidation):
             )
         return self
 
-    def transform(self, x: npt.ArrayLike) -> npt.ArrayLike:
+    def transform(self, x: FloatOrArray) -> FloatOrArray:
         y = x * self.std + self.mean
         return np.clip(y, self.min, self.max)
 
@@ -197,7 +201,7 @@ class TruncNormalSettings(TransSettingsValidation):
 class RawSettings(TransSettingsValidation):
     name: Literal["raw"] = "raw"
 
-    def transform(self, x: npt.ArrayLike) -> npt.ArrayLike:
+    def transform(self, x: FloatOrArray) -> FloatOrArray:
         return x
 
 
@@ -205,7 +209,7 @@ class ConstSettings(TransSettingsValidation):
     name: Literal["const"] = "const"
     value: float = 0.0
 
-    def transform(self, x: npt.ArrayLike) -> npt.ArrayLike:
+    def transform(self, x: FloatOrArray) -> FloatOrArray:
         return np.full_like(x, self.value)
 
 
@@ -236,7 +240,7 @@ class TriangularSettings(TransSettingsValidation):
             raise ConfigValidationError.from_collected(errors)
         return self
 
-    def transform(self, x: npt.ArrayLike) -> npt.ArrayLike:
+    def transform(self, x: FloatOrArray) -> FloatOrArray:
         inv_norm_left = (self.max - self.min) * (self.mode - self.min)
         inv_norm_right = (self.max - self.min) * (self.max - self.mode)
         ymode = (self.mode - self.min) / (self.max - self.min)
@@ -274,7 +278,7 @@ class ErrfSettings(TransSettingsValidation):
             )
         return self
 
-    def transform(self, x: npt.ArrayLike) -> npt.ArrayLike:
+    def transform(self, x: FloatOrArray) -> FloatOrArray:
         y = norm(loc=0, scale=self.width).cdf(x + self.skewness)
         if np.any(np.isnan(y)):
             raise ValueError(
@@ -322,7 +326,7 @@ class DerrfSettings(TransSettingsValidation):
             raise ConfigValidationError.from_collected(errors)
         return self
 
-    def transform(self, x: npt.ArrayLike) -> npt.ArrayLike:
+    def transform(self, x: FloatOrArray) -> FloatOrArray:
         q_values = np.linspace(start=0, stop=1, num=int(self.steps))
         q_checks = np.linspace(start=0, stop=1, num=int(self.steps + 1))[1:]
         y = norm(loc=0, scale=self.width).cdf(x + self.skewness)
