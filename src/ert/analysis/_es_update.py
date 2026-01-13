@@ -441,6 +441,9 @@ def smoother_update(
         with warnings.catch_warnings():
             original_showwarning = warnings.showwarning
 
+            LIMIT_ILL_CONDITIONED_WARNING = 1000
+            illconditioned_warn_counter = 0
+
             def log_warning(
                 message: Warning | str,
                 category: type[Warning],
@@ -449,9 +452,15 @@ def smoother_update(
                 file: TextIO | None = None,
                 line: str | None = None,
             ) -> None:
-                logger.warning(
-                    f"{category.__name__}: {message} (from {filename}:{lineno})"
-                )
+                nonlocal illconditioned_warn_counter
+
+                if str(message).startswith("LinAlgWarning: Ill-conditioned matrix"):
+                    illconditioned_warn_counter += 1
+
+                if illconditioned_warn_counter < LIMIT_ILL_CONDITIONED_WARNING:
+                    logger.warning(
+                        f"{category.__name__}: {message} (from {filename}:{lineno})"
+                    )
                 original_showwarning(
                     message, category, filename, lineno, file=file, line=line
                 )
