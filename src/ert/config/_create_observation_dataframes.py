@@ -110,7 +110,9 @@ def create_observation_dataframes(
     for name, dfs in grouped.items():
         non_empty_dfs = [df for df in dfs if not df.is_empty()]
         if len(non_empty_dfs) > 0:
-            ds = pl.concat(non_empty_dfs).sort("observation_key")
+            ds = pl.concat(non_empty_dfs, how="vertical_relaxed").sort(
+                "observation_key"
+            )
             if "time" in ds:
                 ds = ds.sort(by="time")
 
@@ -205,6 +207,9 @@ def _handle_history_observation(
             "time": dates_series,
             "observations": pl.Series(values, dtype=pl.Float32),
             "std": pl.Series(std_dev, dtype=pl.Float32),
+            "location_x": None,
+            "location_y": None,
+            "location_range": None,
         }
     )
 
@@ -370,23 +375,27 @@ def _handle_summary_observation(
             "Observation uncertainty must be strictly > 0", summary_key
         ) from None
 
-    data_dict = {
-        "response_key": [summary_key],
-        "observation_key": [obs_key],
-        "time": pl.Series([date]).dt.cast_time_unit("ms"),
-        "observations": pl.Series([value], dtype=pl.Float32),
-        "std": pl.Series([std_dev], dtype=pl.Float32),
-    }
-
     if _has_localization(summary_dict):
         _validate_localization_values(summary_dict)
-        data_dict["location_x"] = summary_dict.location_x
-        data_dict["location_y"] = summary_dict.location_y
-        data_dict["location_range"] = (
-            summary_dict.location_range or DEFAULT_LOCATION_RANGE_M
-        )
 
-    return pl.DataFrame(data_dict)
+    location_range = (
+        summary_dict.location_range or DEFAULT_LOCATION_RANGE_M
+        if _has_localization(summary_dict)
+        else None
+    )
+
+    return pl.DataFrame(
+        {
+            "response_key": [summary_key],
+            "observation_key": [obs_key],
+            "time": pl.Series([date]).dt.cast_time_unit("ms"),
+            "observations": pl.Series([value], dtype=pl.Float32),
+            "std": pl.Series([std_dev], dtype=pl.Float32),
+            "location_x": pl.Series([summary_dict.location_x], dtype=pl.Float32),
+            "location_y": pl.Series([summary_dict.location_y], dtype=pl.Float32),
+            "location_range": pl.Series([location_range], dtype=pl.Float32),
+        }
+    )
 
 
 def _handle_general_observation(

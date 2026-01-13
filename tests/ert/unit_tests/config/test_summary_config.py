@@ -5,6 +5,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import hypothesis.strategies as st
+import polars as pl
 import pytest
 from hypothesis import given, settings
 from resfo_utilities.testing import summaries
@@ -71,7 +72,9 @@ def test_that_read_file_does_not_raise_unexpected_exceptions_on_missing_director
         ).read_from_file(str(tmp_path / "DOES_NOT_EXIST"), 1, 0)
 
 
-def create_summary_observation(loc_config_lines):
+def create_summary_observation(
+    obs_config_content,
+):
     config = dedent(
         """
     NUM_REALIZATIONS 3
@@ -81,20 +84,7 @@ def create_summary_observation(loc_config_lines):
     RANDOM_SEED 1234
     """
     )
-    obs_config = dedent(
-        """
-        SUMMARY_OBSERVATION FOPR_1
-        {
-        VALUE      = 0.9;
-        ERROR      = 0.05;
-        DATE       = 2014-09-10;
-        KEY        = FOPR;
-        """
-        + loc_config_lines
-        + """
-        };
-        """
-    )
+    obs_config = dedent(obs_config_content)
     Path("config.ert").write_text(config, encoding="utf-8")
     Path("observations").write_text(obs_config, encoding="utf-8")
     Path("template.txt").write_text("MY_KEYWORD <MY_KEYWORD>", encoding="utf-8")
@@ -111,9 +101,16 @@ def test_that_summary_observations_can_be_instantiated_with_localization(
     with tmpdir.as_cwd():
         summary_observations = create_summary_observation(
             """
-            LOCATION_X=10;
-            LOCATION_Y=10;
-            LOCATION_RANGE=10;
+            SUMMARY_OBSERVATION FOPR_1
+            {
+                VALUE      = 0.9;
+                ERROR      = 0.05;
+                DATE       = 2014-09-10;
+                KEY        = FOPR;
+                LOCATION_X = 10;
+                LOCATION_Y = 10;
+                LOCATION_RANGE = 10;
+            };
             """
         )
         assert all(
@@ -122,31 +119,67 @@ def test_that_summary_observations_can_be_instantiated_with_localization(
             for loc_key in ["location_x", "location_y", "location_range"]
         )
         assert len(summary_observations.columns) == 8
+        assert summary_observations["location_x"].dtype == pl.Float32
+        assert summary_observations["location_y"].dtype == pl.Float32
+        assert summary_observations["location_range"].dtype == pl.Float32
 
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
-def test_that_summary_observations_without_location_range_gets_defaulted(
+def test_that_summary_observations_with_location_without_location_range_gets_location_range_defaulted(  # noqa: E501
     tmpdir,
 ):
     with tmpdir.as_cwd():
         summary_observations = create_summary_observation(
             """
-            LOCATION_X=10;
-            LOCATION_Y=10;
+            SUMMARY_OBSERVATION FOPR_1
+            {
+                VALUE      = 0.9;
+                ERROR      = 0.05;
+                DATE       = 2014-09-10;
+                KEY        = FOPR;
+                LOCATION_X = 10;
+                LOCATION_Y = 10;
+            };
             """
         )
         assert "location_range" in summary_observations.columns
         assert summary_observations["location_range"][0] == DEFAULT_LOCATION_RANGE_M
+        assert summary_observations["location_range"].dtype == pl.Float32
+
+
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
+def test_that_summary_observations_without_location_keywords_gets_location_keywords_defaulted_to_none(  # noqa: E501
+    tmpdir,
+):
+    with tmpdir.as_cwd():
+        summary_observations = create_summary_observation(
+            """
+            SUMMARY_OBSERVATION FOPR_1
+            {
+                VALUE      = 0.9;
+                ERROR      = 0.05;
+                DATE       = 2014-09-10;
+                KEY        = FOPR;
+            };
+            """
+        )
+        assert "location_range" in summary_observations.columns
+        assert summary_observations["location_x"][0] is None
+        assert summary_observations["location_x"].dtype == pl.Float32
+        assert summary_observations["location_y"][0] is None
+        assert summary_observations["location_y"].dtype == pl.Float32
+        assert summary_observations["location_range"][0] is None
+        assert summary_observations["location_range"].dtype == pl.Float32
 
 
 @pytest.mark.parametrize(
     "loc_config_lines",
     [
-        "LOCATION_X=10;\n",
-        "LOCATION_Y=10;\n",
-        "LOCATION_RANGE=10;\n",
-        "LOCATION_Y=10;\nLOCATION_RANGE=10;\n",
-        "LOCATION_X=10;\nLOCATION_RANGE=10;\n",
+        "LOCATION_X = 10;\n",
+        "LOCATION_Y = 10;\n",
+        "LOCATION_RANGE = 10;\n",
+        "LOCATION_Y = 10;\nLOCATION_RANGE = 10;\n",
+        "LOCATION_X = 10;\nLOCATION_RANGE = 10;\n",
     ],
 )
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
@@ -161,7 +194,62 @@ def test_that_summary_observations_raises_config_validation_error_when_loc_x_or_
         f"Only {', '.join(matches)} were provided.",
         "ensure that both LOCATION_X and LOCATION_Y are defined",
     ]
+    obs_config_content = (
+        """
+        SUMMARY_OBSERVATION FOPR_1
+        {
+            VALUE      = 0.9;
+            ERROR      = 0.05;
+            DATE       = 2014-09-10;
+            KEY        = FOPR;"""
+        + loc_config_lines
+        + """
+        };
+        """
+    )
     with pytest.raises(ConfigValidationError) as e, tmpdir.as_cwd():
-        create_summary_observation(loc_config_lines)
+        create_summary_observation(obs_config_content)
     for msg in expected_err_msgs:
         assert msg in str(e.value)
+
+
+def test_that_localized_summary_obs_can_exist_with_summary_observations_without_localization(  # noqa: E501
+    tmpdir, copy_snake_oil_case
+):
+    with tmpdir.as_cwd():
+        df = create_summary_observation(
+            """
+            SUMMARY_OBSERVATION FOPR_1
+            {
+                VALUE      = 0.9;
+                ERROR      = 0.05;
+                DATE       = 2014-09-10;
+                KEY        = FOPR;
+                LOCATION_X = 10;
+                LOCATION_Y = 10;
+            };
+            SUMMARY_OBSERVATION FOPR_2
+            {
+                VALUE      = 0.9;
+                ERROR      = 0.05;
+                DATE       = 2014-09-10;
+                KEY        = FOPR;
+            };
+            """,
+        )
+        assert len(df.columns) == 8
+        assert df.row(0)[-3:] == (10, 10, DEFAULT_LOCATION_RANGE_M)
+        assert df.row(1)[-3:] == (None, None, None)
+
+
+@pytest.mark.usefixtures("copy_snake_oil_case")
+def test_that_adding_one_localized_observation_to_snake_oil_case_can_be_internalized():
+    obs_content = Path("observations/observations.txt").read_text(encoding="utf-8")
+    obs_lines = obs_content.split("\n")
+    observation_index = obs_lines.index("SUMMARY_OBSERVATION WOPR_OP1_36")
+    obs_lines.insert(observation_index + 2, "    LOCATION_X = 10;")
+    obs_lines.insert(observation_index + 3, "    LOCATION_Y = 10;")
+    obs_lines.insert(observation_index + 3, "    LOCATION_RANGE = 10.5;")
+    new_obs_content = "\n".join(obs_lines)
+    Path("observations/observations.txt").write_text(new_obs_content, encoding="utf-8")
+    ErtConfig.from_file("snake_oil.ert")
