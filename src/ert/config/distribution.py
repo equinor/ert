@@ -134,9 +134,8 @@ class LogNormalSettings(TransSettingsValidation):
 
     @model_validator(mode="after")
     def valid_transformed(self) -> Self:
-        try:
-            expected_value = np.exp(self.mean + 0.5 * self.std**2)
-        except OverflowError as e:
+        expected_value = np.exp(self.mean + 0.5 * self.std**2)
+        if np.isinf(expected_value):
             raise ConfigValidationError(
                 "Expectation value of the lognormal distribution is too large! "
                 "These are the specified parameters:\n\n"
@@ -145,7 +144,7 @@ class LogNormalSettings(TransSettingsValidation):
                 "Remember that the input parameters for keyword "
                 "LOGNORMAL are the mean and standard deviation of the natural "
                 "logarithm of your parameter data.",
-            ) from e
+            )
 
         if expected_value > 100000:
             ConfigWarning.warn(
