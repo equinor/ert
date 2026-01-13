@@ -17,8 +17,8 @@ from ert.config import GenKwConfig, SummaryConfig
 from ert.config.response_config import ResponseMetadata
 from ert.dark_storage import common
 from ert.dark_storage.app import app
+from ert.gui.tools.plot import plot_api
 from ert.gui.tools.plot.plot_api import PlotApi, PlotApiKeyDefinition
-from ert.services import ErtServer
 from ert.storage import open_storage
 from tests.ert.unit_tests.gui.tools.plot.conftest import MockResponse
 
@@ -26,7 +26,7 @@ from tests.ert.unit_tests.gui.tools.plot.conftest import MockResponse
 @pytest.fixture(autouse=True)
 def use_testclient(monkeypatch):
     client = TestClient(app)
-    monkeypatch.setattr(ErtServer, "session", lambda project: client)
+    monkeypatch.setattr(plot_api, "create_ertserver_client", lambda project: client)
 
     def test_escape(s: str) -> str:
         """
@@ -46,7 +46,7 @@ def use_testclient(monkeypatch):
     client.get = get_without_timeout
 
 
-def test_key_def_structure(api):
+def test_key_def_structure(api: PlotApi):
     key_defs = api.parameters_api_key_defs + api.responses_api_key_defs
     fopr = next(x for x in key_defs if x.key == "FOPR")
     fopr_expected = {

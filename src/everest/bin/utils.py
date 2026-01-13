@@ -26,7 +26,7 @@ from ert.ensemble_evaluator import (
 from ert.ensemble_evaluator.event import EndEvent
 from ert.logging import LOGGING_CONFIG
 from ert.plugins.plugin_manager import ErtPluginManager
-from ert.services import ErtServer
+from ert.services import create_ertserver_client
 from ert.storage import (
     ExperimentStatus,
     open_storage,
@@ -106,7 +106,7 @@ def handle_keyboard_interrupt(signum: int, _: Any, options: argparse.Namespace) 
             "The optimization will be stopped and the program will exit..."
         )
         try:
-            client = ErtServer.session(
+            client = create_ertserver_client(
                 Path(ServerConfig.get_session_dir(options.config.output_dir))
             )
             server_context = ServerConfig.get_server_context_from_conn_info(
