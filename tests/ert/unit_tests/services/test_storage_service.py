@@ -19,7 +19,7 @@ def test_create_connection_string():
     authtoken = "very_secret_token"
     sock = find_available_socket()
 
-    _create_connection_info(sock, authtoken, "path/to/cert")
+    _create_connection_info(sock, authtoken, Path("path/to/cert"))
 
     assert "ERT_STORAGE_CONNECTION_STRING" in os.environ
     connection_string = json.loads(os.environ["ERT_STORAGE_CONNECTION_STRING"])
@@ -147,11 +147,11 @@ def test_storage_logging(change_to_tmpdir):
 @pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
 @pytest.mark.integration_test
 def test_certificate_generation(change_to_tmpdir):
-    cert, key, pw = _generate_certificate(".")
+    cert, key, pw = _generate_certificate(Path())
 
     # check that files are written
-    assert os.path.exists(cert)
-    assert os.path.exists(key)
+    assert cert.exists()
+    assert key.exists()
 
     # check certificate is readable
     ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
@@ -165,11 +165,11 @@ def test_certificate_generation_handles_long_machine_names(change_to_tmpdir):
         "ert.shared.get_machine_name",
         return_value="A" * 67,
     ):
-        cert, key, pw = _generate_certificate(".")
+        cert, key, pw = _generate_certificate(Path())
 
     # check that files are written
-    assert os.path.exists(cert)
-    assert os.path.exists(key)
+    assert cert.exists()
+    assert key.exists()
 
     # check certificate is readable
     ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
@@ -182,7 +182,7 @@ def test_that_server_hosts_exists_as_san_in_certificate(change_to_tmpdir):
     auth_token = "very_secret_token"
     sock = find_available_socket()
 
-    cert_path, _, _ = _generate_certificate(".")
+    cert_path, _, _ = _generate_certificate(Path())
 
     conn_info = _create_connection_info(sock, auth_token, cert_path)
     # check certificate is readable

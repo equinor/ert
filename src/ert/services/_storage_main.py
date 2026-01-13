@@ -82,7 +82,7 @@ def _get_host_list() -> list[str]:
 
 
 def _create_connection_info(
-    sock: socket.socket, authtoken: str, cert: str | os.PathLike[str]
+    sock: socket.socket, authtoken: str, cert: str | os.PathLike[str] | Path
 ) -> dict[str, Any]:
     connection_info = {
         "urls": [
@@ -91,7 +91,7 @@ def _create_connection_info(
         "authtoken": authtoken,
         "host": get_machine_name(),
         "port": sock.getsockname()[1],
-        "cert": cert,
+        "cert": str(cert),
         "auth": authtoken,
     }
 
@@ -102,14 +102,17 @@ def _create_connection_info(
     return connection_info
 
 
-def _generate_certificate(cert_folder: str) -> tuple[str, str, bytes]:
+def _generate_certificate(cert_folder: Path) -> tuple[Path, Path, bytes]:
     """Generate a private key and a certificate signed with it
 
     Both the certificate and the key are written to files in the folder given
     by `get_certificate_dir(config)`. The key is encrypted before being
     stored.
-    Returns the path to the certificate file, the path to the key file, and
-    the password used for encrypting the key
+
+    Returns a 3-tuple with
+        * Certificate file path
+        * Key file path
+        * Password used for encrypting the key
     """
     # Generate private key
     key = rsa.generate_private_key(
@@ -149,12 +152,12 @@ def _generate_certificate(cert_folder: str) -> tuple[str, str, bytes]:
     )
 
     # Write certificate and key to disk
-    makedirs_if_needed(cert_folder)
-    cert_path = os.path.join(cert_folder, dns_name + ".crt")
-    Path(cert_path).write_bytes(cert.public_bytes(serialization.Encoding.PEM))
-    key_path = os.path.join(cert_folder, dns_name + ".key")
+    makedirs_if_needed(str(cert_folder))
+    cert_path = cert_folder / f"{dns_name}.crt"
+    cert_path.write_bytes(cert.public_bytes(serialization.Encoding.PEM))
+    key_path = cert_folder / f"{dns_name}.key"
     pw = bytes(os.urandom(28))
-    Path(key_path).write_bytes(
+    key_path.write_bytes(
         key.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.TraditionalOpenSSL,
@@ -184,16 +187,16 @@ def run_server(
 
     config_args: dict[str, Any] = {}
     if args.debug or debug:
-        config_args.update(reload=True, reload_dirs=[os.path.dirname(ert_shared_path)])
+        config_args.update(reload=True, reload_dirs=[Path(ert_shared_path).parent])
         os.environ["ERT_STORAGE_DEBUG"] = "1"
 
-    sock = find_available_socket(
+    sock: socket.socket = find_available_socket(
         host=get_machine_name(), port_range=range(51850, 51870 + 1)
     )
 
     # Appropriated from uvicorn.main:run
     os.environ["ERT_STORAGE_NO_TOKEN"] = "1"
-    os.environ["ERT_STORAGE_ENS_PATH"] = os.path.abspath(args.project)
+    os.environ["ERT_STORAGE_ENS_PATH"] = str(args.project.absolute())
     config = (
         # uvicorn.Config() resets the logging config (overriding additional
         # handlers added to loggers like e.g. the ert_azurelogger handler
@@ -265,9 +268,7 @@ def main() -> None:
     args = parse_args()
     authentication = _generate_authentication()
     os.environ["ERT_STORAGE_TOKEN"] = authentication
-    cert_path, key_path, key_pw = _generate_certificate(
-        os.path.join(args.project, "cert")
-    )
+    cert_path, key_path, key_pw = _generate_certificate(args.project / "cert")
     config_args: dict[str, Any] = {
         "ssl_keyfile": key_path,
         "ssl_certfile": cert_path,
@@ -283,7 +284,7 @@ def main() -> None:
     warnings.filterwarnings("ignore", category=DeprecationWarning)
 
     if args.debug:
-        config_args.update(reload=True, reload_dirs=[os.path.dirname(ert_shared_path)])
+        config_args.update(reload=True, reload_dirs=[Path(ert_shared_path).parent])
 
     # Need to run uvicorn.Config before entering the ErtPluginContext because
     # uvicorn.Config overrides the configuration of existing loggers, thus removing
@@ -327,9 +328,9 @@ def add_parser_options(ap: ArgumentParser) -> None:
     ap.add_argument(
         "--project",
         "-p",
-        type=str,
+        type=Path,
         help="Path to directory in which to create storage_server.json",
-        default=os.getcwd(),
+        default=Path.cwd(),
     )
     ap.add_argument(
         "--traceparent",
