@@ -326,12 +326,13 @@ def analysis_ES(
         logger.info(log_msg)
         progress_callback(AnalysisStatusEvent(msg=log_msg))
 
-        log_msg = (
-            f"There are {(~non_zero_variance_mask).sum()} parameters with 0 variance "
-            f"that will not be updated."
-        )
-        logger.info(log_msg)
-        progress_callback(AnalysisStatusEvent(msg=log_msg))
+        if (param_count := (~non_zero_variance_mask).sum()) > 0:
+            log_msg = (
+                f"There are {param_count} parameters with 0 variance "
+                f"that will not be updated."
+            )
+            logger.info(log_msg)
+            progress_callback(AnalysisStatusEvent(msg=log_msg))
 
         if module.localization:
             config_node = source_ensemble.experiment.parameter_configuration[
