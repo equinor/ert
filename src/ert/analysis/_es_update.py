@@ -322,10 +322,6 @@ def analysis_ES(
         logger.info(log_msg)
         progress_callback(AnalysisStatusEvent(msg=log_msg))
 
-        log_msg = f"There are {num_obs} responses and {ensemble_size} realizations."
-        logger.info(log_msg)
-        progress_callback(AnalysisStatusEvent(msg=log_msg))
-
         if (param_count := (~non_zero_variance_mask).sum()) > 0:
             log_msg = (
                 f"There are {param_count} parameters with 0 variance "
@@ -382,6 +378,10 @@ def analysis_ES(
             )
 
         else:
+            log_msg = f"There are {num_obs} responses and {ensemble_size} realizations."
+            logger.info(log_msg)
+            progress_callback(AnalysisStatusEvent(msg=log_msg))
+
             # In-place multiplication is not yet supported, therefore avoiding @=
             param_ensemble_array[non_zero_variance_mask] = param_ensemble_array[  # noqa: PLR6104
                 non_zero_variance_mask
