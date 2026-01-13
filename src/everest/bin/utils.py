@@ -54,7 +54,7 @@ def cleanup_logging() -> None:
 @contextmanager
 def setup_logging(options: argparse.Namespace) -> Generator[None, None, None]:
     if isinstance(options.config, EverestConfig):
-        makedirs_if_needed(options.config.output_dir, roll_if_exists=False)
+        makedirs_if_needed(Path(options.config.output_dir), roll_if_exists=False)
         log_dir = Path(options.config.output_dir) / "logs"
     else:
         # `everest branch` gives a tuple object here.
