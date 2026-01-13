@@ -17,6 +17,7 @@ Tiny single-layer reservoir
 
 Imagine a tiny reservoir with a single layer with two wells, :math:`w_1` and :math:`w_2`.
 At both wells we can measure things like pressure, temperature, rates etc. which we call the **observations**.
+Note that sensors are not error-free, so observations include measurement uncertainty.
 Data that are only measured at wells are called **production data**.
 There are other types of data as well, such as **seismic data** that allows us to measure properties of the reservoir at locations between wells, but let's just focus on production data for now.
 
@@ -76,11 +77,12 @@ Assisted History Matching (AHM)
 
 The process of manually guessing parameters-values, running simulators and checking results can be automated.
 
-We start by generating many different guesses for the parameters.
+We start by generating many different guesses for the parameters, illustrated by a stack of 2D grids in the figure.
 This set of guesses is called an **ensemble** and each member of an ensemble is called a **realization**.
-The number of realizations is the **ensemble size** which is usually denoted by :math:`N`.
-Note the change between manual history matching and AHM: :math:`x_i \sim \mathcal{N}(\mu_j, \sigma_j^2)`.
-The addition of the subscript :math:`j` means that every realization uses a different mean :math:`\mu_j` and a different variance :math:`\sigma_j^2`.
+The number of realizations is the **ensemble size** and usually denoted by :math:`N`.
+Note the change in notation between manual history matching and AHM:
+:math:`x_{i,j} \sim \mathcal{N}(\mu, \sigma^2)`.
+The additional index :math:`j` refers to the realization number: each realization :math:`j` is a different draw (sample) from the same prior distribution, giving its own value :math:`x_{i,j}` in each grid-cell :math:`i`.
 Once the ensemble is ready, we run the simulator once for each realization.
 
 The scatter plots illustrate results if we ran 3 realizations.
