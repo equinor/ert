@@ -13,6 +13,7 @@ import sys
 import threading
 import time
 import warnings
+from argparse import ArgumentParser
 from base64 import b64encode
 from pathlib import Path
 from typing import Any
@@ -32,7 +33,6 @@ from ert.plugins import setup_site_logging
 from ert.services._base_service import BaseServiceExit
 from ert.shared import __file__ as ert_shared_path
 from ert.shared import find_available_socket, get_machine_name
-from ert.shared.storage.command import add_parser_options
 from ert.trace import tracer
 from ert.utils import makedirs_if_needed
 
@@ -315,6 +315,42 @@ def main() -> None:
         finally:
             stopped.set()
             _join_terminate_thread(terminate_on_parent_death_thread)
+
+
+def add_parser_options(ap: ArgumentParser) -> None:
+    ap.add_argument(
+        "config",
+        type=str,
+        help=("ERT config file to start the server from "),
+        nargs="?",  # optional
+    )
+    ap.add_argument(
+        "--project",
+        "-p",
+        type=str,
+        help="Path to directory in which to create storage_server.json",
+        default=os.getcwd(),
+    )
+    ap.add_argument(
+        "--traceparent",
+        type=str,
+        help="Trace parent id to be used by the storage root span",
+        default=None,
+    )
+    ap.add_argument(
+        "--parent_pid",
+        type=int,
+        help="The parent process id",
+        default=os.getppid(),
+    )
+    ap.add_argument(
+        "--host", type=str, default=os.environ.get("ERT_STORAGE_HOST", "127.0.0.1")
+    )
+    ap.add_argument("--logging-config", type=str, default=None)
+    ap.add_argument(
+        "--verbose", action="store_true", help="Show verbose output.", default=False
+    )
+    ap.add_argument("--debug", action="store_true", default=False)
 
 
 if __name__ == "__main__":
