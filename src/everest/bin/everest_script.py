@@ -48,7 +48,7 @@ def everest_entry(args: list[str] | None = None) -> None:
 
     options = parser.parse_args(args)
 
-    makedirs_if_needed(options.config.output_dir, roll_if_exists=True)
+    makedirs_if_needed(Path(options.config.output_dir), roll_if_exists=True)
     with setup_logging(options):
         logger.info(version_info())
 

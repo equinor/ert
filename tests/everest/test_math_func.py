@@ -105,7 +105,7 @@ def test_remove_run_path(copy_math_func_test_data_to_tmp):
     ), "Simulation folder should not be there, something went wrong!"
 
     # Manually rolling the output folder between two runs
-    makedirs_if_needed(config.output_dir, roll_if_exists=True)
+    makedirs_if_needed(Path(config.output_dir), roll_if_exists=True)
 
     config.simulator.delete_run_path = False
     site_plugins = get_site_plugins()

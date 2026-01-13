@@ -35,7 +35,7 @@ def _configure_loggers(
     log_dir: Path, logging_level: int, output_file: str | None
 ) -> None:
     def make_handler_config(path: Path, log_level: int) -> dict[str, Any]:
-        makedirs_if_needed(str(path.parent))
+        makedirs_if_needed(path.parent)
         return {
             "class": "logging.FileHandler",
             "formatter": "default",

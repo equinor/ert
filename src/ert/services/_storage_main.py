@@ -152,7 +152,7 @@ def _generate_certificate(cert_folder: Path) -> tuple[Path, Path, bytes]:
     )
 
     # Write certificate and key to disk
-    makedirs_if_needed(str(cert_folder))
+    makedirs_if_needed(cert_folder)
     cert_path = cert_folder / f"{dns_name}.crt"
     cert_path.write_bytes(cert.public_bytes(serialization.Encoding.PEM))
     key_path = cert_folder / f"{dns_name}.key"
