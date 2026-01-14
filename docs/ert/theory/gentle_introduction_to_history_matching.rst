@@ -529,8 +529,8 @@ For every parameter:
 - Calculate the distance between the parameter and every well.
 - Only use responses from wells that are less than :math:`r` away.
 
-One way to think of the difference between distance based,- and adaptive localization is that adaptive localization uses correlation as a measure of distance,
-while distance based localization uses euclidean distance (think actual meters) as a measure of distance.
+One way to think of the difference between distance based,- and adaptive localization is that adaptive localization uses correlations to decide which parameters to update,
+while distance based localization uses euclidean distance to decide which parameters to update.
 
 Deciding on the radius of influence is more art than science, but there exist reasonable rules of thumb.
 Distance based localization produces updated parameters that suffer less from spurious correlations and that the geologist think look more realistic than those achieved using adaptive localization.
