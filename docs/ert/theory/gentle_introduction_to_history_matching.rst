@@ -516,7 +516,7 @@ Distance based localization
 
 .. figure:: images/intro_distance_based_localization.png
 
-Distance based localization is considered the industry standard way of dealing with spurious correlations.
+Distance based localization is another way of dealing with spurious correlations, and it is considered the industry standard for doing so.
 The above figure shows the by now familiar 2D reservoir with wells :math:`w_1` and :math:`w_2`.
 We draw a circle around each well with radius :math:`r`, and call this radius the **radius of influence**.
 The idea behind distance based localization is that only parameters within a well's radius of influence will be updated by observations from that well.
