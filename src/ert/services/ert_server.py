@@ -34,7 +34,7 @@ class ErtServerConnectionInfo(TypedDict):
     auth: str
 
 
-class BaseServiceExit(OSError):
+class ErtServerExit(OSError):
     pass
 
 
@@ -43,7 +43,7 @@ def cleanup_service_files(signum: int, frame: types.FrameType | None) -> None:
         file = Path(file_path)
         if file.exists():
             file.unlink()
-    raise BaseServiceExit(f"Signal {signum} received.")
+    raise ErtServerExit(f"Signal {signum} received.")
 
 
 if threading.current_thread() is threading.main_thread():
