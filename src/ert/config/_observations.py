@@ -250,7 +250,7 @@ class RFTObservation:
             filename = os.path.join(directory, filename)
         if not os.path.exists(filename):
             raise ObservationConfigError.with_context(
-                "The following keywords did not resolve to a valid path:\n CSV",
+                f"The CSV file ({filename}) does not exist or is not accessible.",
                 filename,
             )
         csv_file = pd.read_csv(filename)
