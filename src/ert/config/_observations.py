@@ -6,6 +6,8 @@ from enum import StrEnum
 from itertools import starmap
 from typing import Any, Self
 
+import pandas as pd
+
 from .parsing import (
     ErrorInfo,
     ObservationConfigError,
@@ -48,7 +50,9 @@ class HistoryObservation(ObservationError):
         return self.name
 
     @classmethod
-    def from_obs_dict(cls, directory: str, observation_dict: ObservationDict) -> Self:
+    def from_obs_dict(
+        cls, directory: str, observation_dict: ObservationDict
+    ) -> list[Self]:
         error_mode = ErrorModes.RELMIN
         error = 0.1
         error_min = 0.1
@@ -68,13 +72,15 @@ class HistoryObservation(ObservationError):
                 case _:
                     raise _unknown_key_error(str(key), observation_dict["name"])
 
-        return cls(
-            name=observation_dict["name"],
-            error_mode=error_mode,
-            error=error,
-            error_min=error_min,
-            segments=segments,
-        )
+        return [
+            cls(
+                name=observation_dict["name"],
+                error_mode=error_mode,
+                error=error,
+                error_min=error_min,
+                segments=segments,
+            )
+        ]
 
 
 @dataclass
@@ -98,7 +104,9 @@ class _SummaryValues:
 @dataclass
 class SummaryObservation(ObservationDate, _SummaryValues, ObservationError):
     @classmethod
-    def from_obs_dict(cls, directory: str, observation_dict: ObservationDict) -> Self:
+    def from_obs_dict(
+        cls, directory: str, observation_dict: ObservationDict
+    ) -> list[Self]:
         error_mode = ErrorModes.ABS
         summary_key = None
 
@@ -140,18 +148,20 @@ class SummaryObservation(ObservationDate, _SummaryValues, ObservationError):
         if "ERROR" not in float_values:
             raise _missing_value_error(observation_dict["name"], "ERROR")
 
-        return cls(
-            name=observation_dict["name"],
-            error_mode=error_mode,
-            error=float_values["ERROR"],
-            error_min=float_values["ERROR_MIN"],
-            key=summary_key,
-            value=float_values["VALUE"],
-            location_x=localization_values.get("x"),
-            location_y=localization_values.get("y"),
-            location_range=localization_values.get("range"),
-            **date_dict.__dict__,
-        )
+        return [
+            cls(
+                name=observation_dict["name"],
+                error_mode=error_mode,
+                error=float_values["ERROR"],
+                error_min=float_values["ERROR_MIN"],
+                key=summary_key,
+                value=float_values["VALUE"],
+                location_x=localization_values.get("x"),
+                location_y=localization_values.get("y"),
+                location_range=localization_values.get("range"),
+                **date_dict.__dict__,
+            )
+        ]
 
 
 @dataclass
@@ -168,7 +178,9 @@ class _GeneralObservation:
 @dataclass
 class GeneralObservation(ObservationDate, _GeneralObservation):
     @classmethod
-    def from_obs_dict(cls, directory: str, observation_dict: ObservationDict) -> Self:
+    def from_obs_dict(
+        cls, directory: str, observation_dict: ObservationDict
+    ) -> list[Self]:
         try:
             data = observation_dict["DATA"]
         except KeyError as err:
@@ -211,7 +223,7 @@ class GeneralObservation(ObservationDate, _GeneralObservation):
                 f" VALUE = {output.value}, ERROR must also be given.",
                 observation_dict["name"],
             )
-        return output
+        return [output]
 
 
 @dataclass
@@ -227,7 +239,63 @@ class RFTObservation:
     tvd: float
 
     @classmethod
-    def from_obs_dict(cls, directory: str, observation_dict: ObservationDict) -> Self:
+    def from_csv(
+        cls,
+        directory: str,
+        observation_dict: ObservationDict,
+        filename: str,
+        observed_property: str = "PRESSURE",
+    ) -> list[Self]:
+        if not os.path.isabs(filename):
+            filename = os.path.join(directory, filename)
+        if not os.path.exists(filename):
+            raise ObservationConfigError.with_context(
+                f"The CSV file ({filename}) does not exist or is not accessible.",
+                filename,
+            )
+        csv_file = pd.read_csv(
+            filename,
+            encoding="utf-8",
+            on_bad_lines="error",
+        )
+
+        required_columns = {
+            "WELL_NAME",
+            "DATE",
+            observed_property,
+            "ERROR",
+            "NORTH",
+            "EAST",
+            "TVD",
+        }
+        missing_required_columns = required_columns - set(csv_file.keys())
+        if missing_required_columns:
+            raise ObservationConfigError.with_context(
+                f"The rft observations file {filename} is missing required column(s) "
+                f"{', '.join(sorted(missing_required_columns))}.",
+                filename,
+            )
+
+        return [
+            cls(
+                f"{observation_dict['name']}[{row.Index}]",
+                str(row.WELL_NAME),
+                str(row.DATE),
+                observed_property,
+                validate_float(str(getattr(row, observed_property)), observed_property),
+                validate_float(str(row.ERROR), "ERROR"),
+                validate_float(str(row.NORTH), "NORTH"),
+                validate_float(str(row.EAST), "EAST"),
+                validate_float(str(row.TVD), "TVD"),
+            )
+            for row in csv_file.itertuples(index=True)
+        ]
+
+    @classmethod
+    def from_obs_dict(
+        cls, directory: str, observation_dict: ObservationDict
+    ) -> list[Self]:
+        csv_filename = None
         well = None
         observed_property = None
         observed_value = None
@@ -256,8 +324,17 @@ class RFTObservation:
                     east = validate_float(value, key)
                 case "TVD":
                     tvd = validate_float(value, key)
+                case "CSV":
+                    csv_filename = value
                 case _:
                     raise _unknown_key_error(str(key), observation_dict["name"])
+        if csv_filename is not None:
+            return cls.from_csv(
+                directory,
+                observation_dict,
+                csv_filename,
+                observed_property or "PRESSURE",
+            )
         if well is None:
             raise _missing_value_error(observation_dict["name"], "WELL")
         if observed_value is None:
@@ -274,17 +351,19 @@ class RFTObservation:
             raise _missing_value_error(observation_dict["name"], "EAST")
         if tvd is None:
             raise _missing_value_error(observation_dict["name"], "TVD")
-        return cls(
-            observation_dict["name"],
-            well,
-            date,
-            observed_property,
-            observed_value,
-            error,
-            north,
-            east,
-            tvd,
-        )
+        return [
+            cls(
+                observation_dict["name"],
+                well,
+                date,
+                observed_property,
+                observed_value,
+                error,
+                north,
+                east,
+                tvd,
+            )
+        ]
 
 
 Observation = (
@@ -313,7 +392,7 @@ def make_observations(
     error_list: list[ErrorInfo] = []
     for obs_dict in observation_dicts:
         try:
-            result.append(
+            result.extend(
                 _TYPE_TO_CLASS[obs_dict["type"]].from_obs_dict(directory, obs_dict)
             )
         except KeyError as err:

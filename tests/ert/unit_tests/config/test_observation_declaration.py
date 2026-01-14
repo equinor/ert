@@ -1,6 +1,7 @@
 import os
 from contextlib import suppress
 from pathlib import Path
+from textwrap import dedent
 
 import hypothesis.extra.lark as stlark
 import pytest
@@ -159,6 +160,218 @@ def test_rft_observation_declaration():
             tvd=2000.0,
         )
     ]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_rft_observation_csv_declaration():
+    Path("rft_observations.csv").write_text(
+        dedent(
+            """
+            WELL_NAME,DATE,MD,ZONE,PRESSURE,ERROR,TVD,NORTH,EAST,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str
+            WELL1,2013-03-31,2500,zone1,294.0,10,2000.0,71.0,30.0,123,1,zone1
+            WELL2,2013-04-30,2600,zone2,295.0,11,2100.0,72.0,31.0,124,2,zone2
+            """
+        ),
+        encoding="utf8",
+    )
+    assert make_observations(
+        "",
+        [
+            {
+                "type": ObservationType.RFT,
+                "name": "NAME",
+                "CSV": "rft_observations.csv",
+            }
+        ],
+    ) == [
+        RFTObservation(
+            name="NAME[0]",
+            well="WELL1",
+            date="2013-03-31",
+            value=294.0,
+            error=10.0,
+            property="PRESSURE",
+            north=71.0,
+            east=30.0,
+            tvd=2000.0,
+        ),
+        RFTObservation(
+            name="NAME[1]",
+            well="WELL2",
+            date="2013-04-30",
+            value=295.0,
+            error=11.0,
+            property="PRESSURE",
+            north=72.0,
+            east=31.0,
+            tvd=2100.0,
+        ),
+    ]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_rft_observations_from_csv_with_no_rows_after_header_returns_empty_list():
+    Path("rft_observations.csv").write_text(
+        "WELL_NAME,DATE,MD,ZONE,PRESSURE,ERROR,TVD,NORTH,EAST,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str",
+        encoding="utf8",
+    )
+    assert (
+        make_observations(
+            "",
+            [
+                {
+                    "type": ObservationType.RFT,
+                    "name": "NAME",
+                    "CSV": "rft_observations.csv",
+                }
+            ],
+        )
+        == []
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_invalid_numeric_values_in_rft_observations_csv_raises_error():
+    Path("rft_observations.csv").write_text(
+        dedent(
+            """
+            WELL_NAME,DATE,MD,ZONE,PRESSURE,ERROR,TVD,NORTH,EAST,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str
+            WELL1,2013-03-31,2500,zone1,invalid_value,invalid_value,2000.0,71.0,30.0,123,1,zone1
+            """
+        ),
+        encoding="utf8",
+    )
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            "",
+            [
+                {
+                    "type": ObservationType.RFT,
+                    "name": "NAME",
+                    "CSV": "rft_observations.csv",
+                }
+            ],
+        )
+
+    assert (
+        'Could not convert invalid_value to float. Failed to validate "invalid_value"'
+        in str(err.value)
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_non_existent_rft_observations_csv_file_raises_error():
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            "",
+            [
+                {
+                    "type": ObservationType.RFT,
+                    "name": "NAME",
+                    "CSV": "rft_observations.csv",
+                }
+            ],
+        )
+
+    assert (
+        "The CSV file (rft_observations.csv) does not exist or is not accessible."
+        in str(err.value)
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_property_can_be_specified_for_rft_observation_csv_declaration():
+    Path("rft_observations.csv").write_text(
+        dedent(
+            """
+            WELL_NAME,DATE,MD,ZONE,SWAT,ERROR,TVD,NORTH,EAST,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str
+            WELL1,2013-03-31,2500,zone1,0.3,10,2000.0,71.0,30.0,123,1,zone1
+            """
+        ),
+        encoding="utf8",
+    )
+    assert make_observations(
+        "",
+        [
+            {
+                "type": ObservationType.RFT,
+                "name": "NAME",
+                "CSV": "rft_observations.csv",
+                "PROPERTY": "SWAT",
+            }
+        ],
+    ) == [
+        RFTObservation(
+            name="NAME[0]",
+            well="WELL1",
+            date="2013-03-31",
+            value=0.3,
+            error=10.0,
+            property="SWAT",
+            north=71.0,
+            east=30.0,
+            tvd=2000.0,
+        )
+    ]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_missing_user_specified_property_raises_error():
+    Path("rft_observations.csv").write_text(
+        dedent(
+            """
+            WELL_NAME,DATE,MD,ZONE,PRESSURE,ERROR,TVD,NORTH,EAST,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str
+            WELL1,2013-03-31,2500,zone1,0.3,10,2000.0,71.0,30.0,123,1,zone1
+            """
+        ),
+        encoding="utf8",
+    )
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            "",
+            [
+                {
+                    "type": ObservationType.RFT,
+                    "name": "NAME",
+                    "CSV": "rft_observations.csv",
+                    "PROPERTY": "SWAT",
+                }
+            ],
+        )
+
+    assert (
+        "rft observations file rft_observations.csv is missing required column(s) SWAT"
+        in str(err.value)
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_missing_columns_in_rft_observations_file_raises_error():
+    Path("rft_observations.csv").write_text(
+        dedent(
+            """
+            WELL,DAY,MD,ZONE,PRESSURE,ERR,Z,X,Y,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str
+            WELL1,2013-03-31,2500,zone1,294.0,10,2000.0,71.0,30.0,123,1,zone1
+            """
+        ),
+        encoding="utf8",
+    )
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            "",
+            [
+                {
+                    "type": ObservationType.RFT,
+                    "name": "NAME",
+                    "CSV": "rft_observations.csv",
+                }
+            ],
+        )
+
+    assert (
+        "The rft observations file rft_observations.csv is missing required column(s)"
+        " DATE, EAST, ERROR, NORTH, TVD, WELL_NAME." in str(err.value)
+    )
 
 
 def test_that_multiple_segments_are_collected():
