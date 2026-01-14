@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import fnmatch
 import re
-import warnings
 from collections.abc import Callable, Sequence
 from datetime import datetime, timedelta
 from enum import Enum, auto
@@ -158,10 +157,10 @@ def _read_spec(
             if kw.summary_variable == "TIME":
                 date_index = i
                 date_unit_str = kw.unit
-        except InvalidSummaryKeyError as err:
-            warnings.warn(
-                f"Found {err} in summary specification, key not loaded", stacklevel=2
-            )
+        except InvalidSummaryKeyError:
+            # InvalidSummaryKeyError will happen under normal conditions when
+            # the the number of wells set for WELLDIMS in the .DATA file is
+            # larger than the number of declared wells/groups/etc. These are skipped.
             continue
 
         if should_load_key(key):
