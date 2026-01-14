@@ -503,14 +503,13 @@ In reality though, we might have millions of parameters so this assumption does 
 To summarize, Adaptive Localization can reduce the effects of spurious correlations, but it is a heuristic method with known weaknesses.
 The main weaknesses are that:
 
+- Large spurious correlations can survive thresholding and still drive updates.
 - Real but weak correlations may be removed.
 - Hard thresholding (clamping weak correlations to zero) can produce spatially noisy updates. This can sometimes be mitigated by smoothing.
 
-It's not all bad though.
-It is relatively easy to understand and easy to use as it can be turned on at the click of a button.
-The only input it needs is the correlation threshold.
-The method will also make it more obvious that including lots of parameters via fields and surfaces is perhaps not necessary,
-as it will not update most parameters anyway, since the correlations between most parameters and most responses are very low.
+That said, adaptive localization has some practical benefits.
+It is relatively easy to understand, and it can be enabled with minimal configuration.
+In practice, the only tunable input is the correlation threshold.
 
 Distance based localization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
