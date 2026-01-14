@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import functools
 import logging
+import re
 import time
 import warnings
 from collections.abc import Callable, Iterable, Sequence
@@ -441,6 +442,9 @@ def smoother_update(
         with warnings.catch_warnings():
             original_showwarning = warnings.showwarning
 
+            ILL_CONDITIONED_RE = re.compile(
+                r"^LinAlgWarning:.*ill[- ]?conditioned\s+matrix", re.IGNORECASE
+            )
             LIMIT_ILL_CONDITIONED_WARNING = 1000
             illconditioned_warn_counter = 0
 
@@ -454,7 +458,7 @@ def smoother_update(
             ) -> None:
                 nonlocal illconditioned_warn_counter
 
-                if str(message).startswith("LinAlgWarning: Ill-conditioned matrix"):
+                if ILL_CONDITIONED_RE.search(str(message)):
                     illconditioned_warn_counter += 1
 
                 if illconditioned_warn_counter < LIMIT_ILL_CONDITIONED_WARNING:
