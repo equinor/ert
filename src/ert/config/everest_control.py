@@ -208,17 +208,15 @@ class EverestControl(ParameterConfig):
         df = ensemble.load_parameters(self.name, real_nr)
         assert isinstance(df, pl.DataFrame)
         df = df.drop("realization")
-        df = df.rename(
-            {col: col.replace(f"{self.name}.", "", 1) for col in df.columns}
-        )
+        df = df.rename({col: col.replace(f"{self.name}.", "", 1) for col in df.columns})
         for c in df.columns:
             if "." in c:
                 top_key, sub_key = c.split(".", 1)
                 if top_key not in data:
                     data[top_key] = {}
-                data[top_key][sub_key] = df[c].to_list()[0]
+                data[top_key][sub_key] = df[c].item()
             else:
-                data[c] = df[c].to_list()[0]
+                data[c] = df[c].item()
 
         file_path.write_text(json.dumps(data), encoding="utf-8")
 
