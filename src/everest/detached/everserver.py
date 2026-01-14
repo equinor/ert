@@ -13,7 +13,7 @@ from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapProp
 
 from ert.plugins.plugin_manager import ErtPluginManager
 from ert.services import ErtServer
-from ert.services.ert_server import BaseServiceExit
+from ert.services.ert_server import ErtServerExit
 from ert.storage import ExperimentStatus
 from ert.storage.local_experiment import ExperimentState
 from ert.trace import tracer
@@ -179,7 +179,7 @@ def main() -> None:
                             ExperimentState.running,
                         }
                         time.sleep(0.5)
-        except BaseServiceExit:
+        except ErtServerExit:
             # Server exit, happens on normal shutdown and keyboard interrupt
             logging.getLogger(EVERSERVER).info("Everserver stopped by user")
         except Exception as e:

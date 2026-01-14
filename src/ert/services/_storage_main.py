@@ -30,7 +30,7 @@ from uvicorn.supervisors import ChangeReload
 
 from ert.logging import STORAGE_LOG_CONFIG
 from ert.plugins import setup_site_logging
-from ert.services import BaseServiceExit
+from ert.services import ErtServerExit
 from ert.shared import __file__ as ert_shared_path
 from ert.shared import find_available_socket, get_machine_name
 from ert.trace import tracer
@@ -256,7 +256,7 @@ def _join_terminate_thread(terminate_on_parent_death_thread: threading.Thread) -
     """Join the terminate thread, handling BaseServiceExit (which is used by Everest)"""
     try:
         terminate_on_parent_death_thread.join()
-    except BaseServiceExit:
+    except ErtServerExit:
         logger = logging.getLogger("ert.shared.storage.info")
         logger.info(
             "Got BaseServiceExit while joining terminate thread, "
@@ -311,7 +311,7 @@ def main() -> None:
             logger.info("Starting dark storage")
             logger.info(f"Started dark storage with parent {args.parent_pid}")
             run_server(args, debug=False, uvicorn_config=uvicorn_config)
-        except (SystemExit, BaseServiceExit):
+        except (SystemExit, ErtServerExit):
             logger.info("Stopping dark storage")
         finally:
             stopped.set()
