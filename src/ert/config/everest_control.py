@@ -208,7 +208,9 @@ class EverestControl(ParameterConfig):
         df = ensemble.load_parameters(self.name, real_nr)
         assert isinstance(df, pl.DataFrame)
         df = df.drop("realization")
-        df.columns = [e.replace(f"{self.name}.", "", 1) for e in df.columns]
+        df = df.rename(
+            {col: col.replace(f"{self.name}.", "", 1) for col in df.columns}
+        )
         for c in df.columns:
             if "." in c:
                 top_key, sub_key = c.split(".", 1)
