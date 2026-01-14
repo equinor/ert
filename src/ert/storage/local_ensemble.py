@@ -16,7 +16,6 @@ from uuid import UUID
 
 import numpy as np
 import polars as pl
-import polars.selectors as cs
 import resfo
 import xarray as xr
 from pydantic import BaseModel
@@ -576,18 +575,18 @@ class LocalEnsemble(BaseMode):
             keys = self.experiment.parameter_keys
 
         df_lazy = self._load_parameters_lazy(SCALAR_FILENAME)
-        matches = [
-            key
-            for key in keys
-            if any(key in item for item in df_lazy.collect_schema().names())
-        ]
+        names = df_lazy.collect_schema().names()
+        matches = [key for key in keys if any(key in item for item in names)]
         if len(matches) != len(keys):
             missing = set(keys) - set(matches)
             raise KeyError(f"Parameters not registered to the experiment: {missing}")
 
-        df_lazy_filtered = df_lazy.select(
-            ["realization", *[cs.starts_with(key) for key in keys]]
-        )
+        parameter_keys = [
+            key
+            for e in keys
+            for key in self.experiment.parameter_configuration[e].parameter_keys
+        ]
+        df_lazy_filtered = df_lazy.select(["realization", *parameter_keys])
 
         if realizations is not None:
             if isinstance(realizations, int):
