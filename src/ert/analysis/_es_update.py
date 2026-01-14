@@ -461,9 +461,9 @@ def smoother_update(
                     logger.warning(
                         f"{category.__name__}: {message} (from {filename}:{lineno})"
                     )
-                original_showwarning(
-                    message, category, filename, lineno, file=file, line=line
-                )
+                    original_showwarning(
+                        message, category, filename, lineno, file=file, line=line
+                    )
 
             warnings.showwarning = log_warning
             analysis_ES(
