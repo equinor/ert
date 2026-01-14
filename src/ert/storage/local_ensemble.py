@@ -606,7 +606,7 @@ class LocalEnsemble(BaseMode):
                 for col in df.columns:
                     if col == "realization":
                         continue
-                    if col.startswith(f"{key}"):
+                    if col.startswith(key):
                         tmp_configuration[col] = (
                             self.experiment.parameter_configuration[key]
                         )
