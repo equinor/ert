@@ -1,3 +1,4 @@
+from ._observations import Observation, ObservationAdapter
 from .analysis_config import (
     AnalysisConfig,
     ObservationGroups,
@@ -113,6 +114,8 @@ __all__ = [
     "LegacyWorkflowConfigs",
     "LocalQueueOptions",
     "ModelConfig",
+    "Observation",
+    "ObservationAdapter",
     "ObservationGroups",
     "ObservationSettings",
     "ObservationType",
