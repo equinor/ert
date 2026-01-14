@@ -28,14 +28,6 @@ def create_measured_data(snake_oil_case_storage, snake_oil_default_storage):
 
 
 @pytest.mark.integration_test
-def test_history_obs(create_measured_data):
-    fopr = create_measured_data(["FOPR"])
-    fopr.remove_inactive_observations()
-
-    assert fopr.data.shape == (7, 200)
-
-
-@pytest.mark.integration_test
 def test_summary_obs(create_measured_data):
     summary_obs = create_measured_data(["WOPR_OP1_72"])
     summary_obs.remove_inactive_observations()

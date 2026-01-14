@@ -15,7 +15,6 @@ class ObservationConfigError(ConfigValidationError):
 
 
 class ObservationType(StrEnum):
-    HISTORY = "HISTORY_OBSERVATION"
     SUMMARY = "SUMMARY_OBSERVATION"
     GENERAL = "GENERAL_OBSERVATION"
     RFT = "RFT_OBSERVATION"
@@ -123,8 +122,7 @@ observations_parser = Lark(
     r"""
     start: observation*
     ?observation: type OBSERVATION_NAME object? ";"
-    TYPE: "HISTORY_OBSERVATION"
-      | "SUMMARY_OBSERVATION"
+    TYPE: "SUMMARY_OBSERVATION"
       | "GENERAL_OBSERVATION"
       | "RFT_OBSERVATION"
     type: TYPE

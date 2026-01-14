@@ -8,9 +8,7 @@ from hypothesis import given
 
 from ert.config._observations import (
     GeneralObservation,
-    HistoryObservation,
     RFTObservation,
-    Segment,
     SummaryObservation,
     make_observations,
 )
@@ -44,7 +42,6 @@ def test_make_observations():
     assert make_observations(
         "",
         [
-            ({"type": ObservationType.HISTORY, "name": "FOPR"}),
             {
                 "type": ObservationType.SUMMARY,
                 "name": "WOPR_OP1_9",
@@ -69,21 +66,8 @@ def test_make_observations():
                 "DATE": "2015-06-13",
                 "OBS_FILE": "wpr_diff_obs.txt",
             },
-            {
-                "type": ObservationType.HISTORY,
-                "name": "FWPR",
-                "ERROR": "0.1",
-                "segments": [("SEG", {"START": "1", "STOP": "0", "ERROR": "0.25"})],
-            },
         ],
     ) == [
-        HistoryObservation(
-            name="FOPR",
-            error_mode="RELMIN",
-            error=0.1,
-            error_min=0.1,
-            segments=[],
-        ),
         SummaryObservation(
             name="WOPR_OP1_9",
             error_mode="ABS",
@@ -109,22 +93,6 @@ def test_make_observations():
             index_file="wpr_diff_idx.txt",
             date="2015-06-13",
             obs_file="wpr_diff_obs.txt",
-        ),
-        HistoryObservation(
-            name="FWPR",
-            error_mode="RELMIN",
-            error=0.1,
-            error_min=0.1,
-            segments=[
-                Segment(
-                    name="SEG",
-                    start=1,
-                    stop=0,
-                    error_mode="RELMIN",
-                    error=0.25,
-                    error_min=0.1,
-                ),
-            ],
         ),
     ]
 
@@ -159,35 +127,3 @@ def test_rft_observation_declaration():
             tvd=2000.0,
         )
     ]
-
-
-def test_that_multiple_segments_are_collected():
-    observations = make_and_parse_observations(
-        """
-  HISTORY_OBSERVATION GWIR:FIELD
-  {
-     ERROR       = 0.20;
-     ERROR_MODE  = RELMIN;
-     ERROR_MIN   = 100;
-
-     SEGMENT FIRST_YEAR
-     {
-        START = 0;
-        STOP  = 10;
-        ERROR = 0.50;
-        ERROR_MODE = REL;
-     };
-
-     SEGMENT SECOND_YEAR
-     {
-        START      = 11;
-        STOP       = 20;
-        ERROR      = 1000;
-        ERROR_MODE = ABS;
-     };
-  };
-            """,
-        "",
-    )
-
-    assert len(observations[0].segments) == 2
