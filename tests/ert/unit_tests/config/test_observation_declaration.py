@@ -210,6 +210,76 @@ def test_rft_observation_csv_declaration():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_that_rft_observations_from_csv_with_no_rows_after_header_returns_empty_list():
+    Path("rft_observations.csv").write_text(
+        "WELL_NAME,DATE,MD,ZONE,PRESSURE,ERROR,TVD,NORTH,EAST,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str",
+        encoding="utf8",
+    )
+    assert (
+        make_observations(
+            "",
+            [
+                {
+                    "type": ObservationType.RFT,
+                    "name": "NAME",
+                    "CSV": "rft_observations.csv",
+                }
+            ],
+        )
+        == []
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_invalid_numeric_values_in_rft_observations_csv_raises_error():
+    Path("rft_observations.csv").write_text(
+        dedent(
+            """
+            WELL_NAME,DATE,MD,ZONE,PRESSURE,ERROR,TVD,NORTH,EAST,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str
+            WELL1,2013-03-31,2500,zone1,invalid_value,invalid_value,2000.0,71.0,30.0,123,1,zone1
+            """
+        ),
+        encoding="utf8",
+    )
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            "",
+            [
+                {
+                    "type": ObservationType.RFT,
+                    "name": "NAME",
+                    "CSV": "rft_observations.csv",
+                }
+            ],
+        )
+
+    assert (
+        'Could not convert invalid_value to float. Failed to validate "invalid_value"'
+        in str(err.value)
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_non_existent_rft_observations_csv_file_raises_error():
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            "",
+            [
+                {
+                    "type": ObservationType.RFT,
+                    "name": "NAME",
+                    "CSV": "rft_observations.csv",
+                }
+            ],
+        )
+
+    assert (
+        "The CSV file (rft_observations.csv) does not exist or is not accessible."
+        in str(err.value)
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_that_property_can_be_specified_for_rft_observation_csv_declaration():
     Path("rft_observations.csv").write_text(
         dedent(
