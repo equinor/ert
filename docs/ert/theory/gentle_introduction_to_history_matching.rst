@@ -452,25 +452,45 @@ Adaptive Localization
 
 .. figure:: images/intro_adaptive_localization.png
 
-Adaptive Localization is an ad-hoc attempt to reduce the effects of spurious correlations.
+Adaptive Localization is a heuristic attempt to reduce the effects of spurious correlations.
 
 The algorithm is as follows:
 
 For every parameter:
 
 - Calculate the correlation between the parameter and every response.
-- If the correlation between the parameter and a response is "low", set it to 0.0. This means that this particular response will not be used to update this specific parameter.
+- If the correlation between the parameter and a response is "low", set it to 0.0. That response is then ignored when updating that specific parameter.
+
+The upper right scatter plot has ``SCALAR_i`` on the x-axis and ``P, T, Q, ...`` on the y-axis.
+``SCALAR_i`` indicates an arbitrary scalar parameter, and ``P, T, Q, ...`` indicates an arbitrary response (pressure, temperature, rate, etc.).
+Each green dot is one realization, plotted as the pair (parameter value, simulated response).
+Here the points form a diffuse cloud with no clear trend, which indicates little to no correlation between the parameter and the response.
+In other words, changing ``SCALAR_i`` does not produce a systematic change in the response.
+The correlation coefficient is therefore small, :math:`\rho=0.05`.
+With adaptive localization, this correlation is treated as insignificant and the corresponding response is effectively ignored when updating ``SCALAR_i``.
+
+The middle scatter plot has ``FIELD_ijk`` on the x-axis and ``P, T, Q, ...`` on the y-axis.
+``FIELD_ijk`` refers to a single grid cell at location ``(i, j, k)``.
+As before, each green dot corresponds to one realization, plotted as (parameter value, simulated response).
+Here the points show a clear trend: as ``FIELD_ijk`` changes, the response changes in a systematic way.
+This indicates a strong correlation, :math:`\rho=0.8`.
+Adaptive localization will therefore allow this response to contribute to the update of ``FIELD_ijk``.
+
+Remember that adaptive localization computes correlations between *every* parameter and *every* response.
+Since a field can have millions of cells, this can be computationally expensive.
+
+The bottom-right plot shows a similar relationship, but with a negative correlation.
+Here we consider surface parameters, ``SURFACE_ij``, instead of field parameters.
 
 Deciding on when a correlation is high enough or significant is tricky.
 In ``ert``, we say that a correlation is considered significant if it is above :math:`\frac{3}{\sqrt{N}}`.
-This threshold is based on some pretty strong assumptions that rarely hold in practice, but it's perhaps better than nothing.
+This threshold relies on assumptions that rarely hold in practice, but it is perhaps better than doing nothing.
 
 What would happen if we apply this threshold to the correlation matrix we calculated using 50 samples from :math:`\mathbf{X} \sim \mathcal{N}(\mathbf{0}, \mathbf{I})`?
-Since :math:`\frac{3}{\sqrt(50)} = 0.42`, this method would set all off-diagonal elements to 0.0 which is what we want.
-The method sets all elements under the threshold to 0.0, and since the highest off-diagonal element of the correlation matrix is 0.4, all of them would be set to zero.
-Note that this does not hold in general.
-If we draw new samples from the distribution, we might get correlations higher than 0.42 and they would not be set to zero.
-But it would still be better than nothing.
+Since :math:`\frac{3}{\sqrt{50}} = 0.42`, adaptive localization would set all off-diagonal elements to 0.0 which is what we want.
+The method sets all elements under the threshold to 0.0.
+Since the highest off-diagonal element in our example is 0.4, all off-diagonal elements would be set to zero.
+This is not guaranteed in general: a different random draw might produce an off-diagonal element above 0.42.
 
 .. figure:: images/intro_corr_p_5_N_50.png
 
@@ -480,17 +500,17 @@ The threshold can be derived by starting with two random variables that are inde
 In this case, it can be shown that the threshold gets rid of 99.7 percent of spurious correlations.
 In reality though, we might have millions of parameters so this assumption does not hold at all, and neither does the result of removing 99.7 percent of spurious correlations.
 
-To summarize, Adaptive Localization will reduce the effects of spurious correlations, but it is an ad-hoc method without a strong theoretical foundation and has known weaknesses.
-The perhaps main weaknesses are that:
+To summarize, Adaptive Localization can reduce the effects of spurious correlations, but it is a heuristic method with known weaknesses.
+The main weaknesses are that:
 
-- Real but weak correlations might be removed.
-- Clamping weak correlations to zero gives noisy updates which do not look good in the eyes of geologists. This could perhaps be fixed by smoothing out the results.
+- Real but weak correlations may be removed.
+- Hard thresholding (clamping weak correlations to zero) can produce spatially noisy updates. This can sometimes be mitigated by smoothing.
 
 It's not all bad though.
 It is relatively easy to understand and easy to use as it can be turned on at the click of a button.
 The only input it needs is the correlation threshold.
 The method will also make it more obvious that including lots of parameters via fields and surfaces is perhaps not necessary,
-as it will not update most of the parameters anyway, since the correlations between most parameters and most responses is very low.
+as it will not update most parameters anyway, since the correlations between most parameters and most responses are very low.
 
 Distance based localization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
