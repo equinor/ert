@@ -122,21 +122,28 @@ Updating
 
 Here's what we have done so far:
 
-1. Generate an ensemble of parameter guesses by sampling from the normal distribution
-2. Run Eclipse to get responses
+1. Generated an ensemble of parameter guesses by sampling from the normal distribution
+2. Ran Eclipse to get responses
 3. Specified observations with errors
 
-That's all we need to do an **update**, which is a function we run to get a new ensemble of parameter guesses.
-The new parameter estimates are hopefully better guesses than the ones we started with.
+That's all we need to do an **update**.
+From a programmers perspective, an update is just a function we run to get a new ensemble of parameter guesses.
+These new parameter estimates are hopefully better guesses than the ones we started with.
 
 Let's introduce some math notation.
 
-:math:`X \in \mathbb{R}^{p \times N}` is a common way of defining a matrix :math:`\mathbf{X}` that consist of real-numbers (think floats) and that has :math:`p` rows (number of parameters) and :math:`N` columns (number of realizations or samples).
-Similarly, :math:`Y \in \mathbb{R}^{m \times N}` specifies a response matrix :math:`\mathbf{Y}` with :math:`m` rows (number of responses = number of observations) and :math:`N` columns.
-Note that both :math:`\mathbf{d}` and :math:`\mathbf{\epsilon}` have :math:`m` rows but only 1 column.
-The reason for this will have to wait a bit.
+:math:`\mathbf{X} \in \mathbb{R}^{p \times N}` is a common way of defining a matrix :math:`\mathbf{X}` that consist of real-numbers (think floats),
+and that has :math:`p` rows (number of parameters) and :math:`N` columns (number of realizations or samples).
 
-The final part is a piece of pseudo-code that calls a function ``ensemble_smoother`` to generate a new ensemble :math:`\mathbf{X}_{updated}`:
+:math:`\mathbf{Y} \in \mathbb{R}^{m \times N}` specifies a response matrix :math:`\mathbf{Y}` with :math:`m` rows and :math:`N` columns.
+The number of responses must equal the number of observations.
+
+Note that both :math:`\mathbf{d}` (observations) and :math:`\mathbf{\epsilon}` (observation errors) have :math:`m` rows but only 1 column.
+In order for the dimensions of matrices to match, we need to somehow create a matrix with :math:`N` columns from the single column of observations :math:`\mathbf{d}`.
+The resulting :math:`m` by :math:`N` matrix :math:`\mathbf{D}` is called **perturbed observations**, and we'll have more to say about it later.
+For now, we'll just assume the update function knows how to deal with this.
+
+We can now pass these as inputs to the function ``ensemble_smoother`` to generate a new ensemble :math:`\mathbf{X}_{updated}`:
 
 .. math::
 
@@ -146,10 +153,29 @@ It is quite common to call the input to ``ensemble_smoother`` :math:`\mathbf{X}`
 The terms prior and posterior are commonly used in Bayesian statistics, from which ensemble smoother equations draw their theoretical foundation.
 
 With the knowledge you have gained so far, you are ready to make use of the ``iterative_ensemble_smoother`` Python package to do history matching!
-This is the same code that ert uses.
+This is the same code that ``ert`` uses.
 
-What is the result of updating?
-What is the difference between prior and posterior?
+The API is slightly different from the ``ensemble_smoother`` function shown above.
+Instead, the package exposes a class called ``ESMDA`` with a method called ``assimilate``.
+
+You instantiate ``ESMDA`` with a :math:`m` by 1 array ``observations`` and a :math:`m` by 1 array ``covariance``.
+In our math notation, ``observations`` corresponds to :math:`\mathbf{d}` and ``covariance`` corresponds to :math:`\mathbf{\epsilon}`.
+
+``ESMDA`` stands for Ensemble Smoother Multiple Data Assimilation.
+For now, it is enough to know that setting ``alpha=1`` makes ``ESMDA`` perform a single Ensemble Smoother (``ES``) update.
+Once the class is instantiated, we pass :math:`\mathbf{X}` and :math:`\mathbf{Y}` to ``assimilate`` to get the posterior :math:`\mathbf{X}_{updated}`.
+
+.. code-block:: python
+
+   from iterative_ensemble_smoother.esmda import ESMDA
+
+   smoother = ESMDA(covariance, observations, alpha=1)
+   X_updated = smoother.assimilate(X, Y)
+
+Some natural questions to as are:
+
+- How do the updated parameters differ from the prior?
+- Has the data match improved?
 
 Results of updating
 ~~~~~~~~~~~~~~~~~~~
@@ -158,8 +184,8 @@ Results of updating
 
 Let's think about the update somewhat more concretely by focusing on a single parameter from a single grid-cell; grid-cell :math:`x_2` and porosity.
 
-The upper-left figure shows the distribution of :math:`x_2` and its true value.
-The true value is in practice unknown unless we run synthetic experiments, but we are in theory-land here so everything is possible.
+The upper-left figure shows the distribution of porisity at grid-cell :math:`x_2` and its true value.
+The true value is in practice unknowable unless we run synthetic experiments, but we are in theory-land here so everything is possible.
 
 The lower-left figure shows that before updating, the simulated (blue) values cover the observed (black) values and have a rather large spread or variance.
 After updating, we get the situation shown in the upper and lower right figures.
