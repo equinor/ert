@@ -129,7 +129,7 @@ def test_mess_values_in_summary_files_raises_informative_errors(tmp_path):
 
 
 @pytest.mark.filterwarnings("ignore:SMSPEC did not contain num_keyword")
-def test_empty_keywords_in_summary_files_raises_informative_errors(tmp_path):
+def test_empty_keywords_in_summary_files_are_ignored(tmp_path):
     resfo.write(
         tmp_path / "test.SMSPEC",
         [
@@ -139,15 +139,36 @@ def test_empty_keywords_in_summary_files_raises_informative_errors(tmp_path):
         ],
     )
     (tmp_path / "test.UNSMRY").write_bytes(b"")
-
-    with pytest.warns(match="Got empty summary keyword"):
-        read_summary(str(tmp_path / "test"), ["*"])
+    (_, keys, _, _) = read_summary(str(tmp_path / "test"), ["*"])
+    assert keys == ["TIME"]
 
 
 @pytest.mark.filterwarnings("ignore:SMSPEC did not contain num_keyword")
-def test_missing_names_keywords_in_summary_files_raises_informative_errors(
-    tmp_path,
-):
+def test_that_well_keywords_with_dummy_names_are_ignored(tmp_path):
+    """
+    In the .DATA file the number of wells is
+    declared before use in WELLDIMS. This means that
+    the file can declare that there should be 20 wells but
+    then only 1 well is actually created. With some simulators,
+    this means that the summary file will have e.g. WOPR for 20 wells
+    but for 20-1=19 of those, the name will be set to ':+:+:+:+'
+    and all values will be 0.0. This should be skipped.
+    """
+    resfo.write(
+        tmp_path / "test.SMSPEC",
+        [
+            ("STARTDAT", array("i", [31, 12, 2012, 00])),
+            ("KEYWORDS", ["TIME    ", "WOPR     "]),
+            ("NAME    ", [":+:+:+:+"] * 2),
+            ("UNITS   ", ["DAYS    "]),
+        ],
+    )
+    (tmp_path / "test.UNSMRY").write_bytes(b"")
+    (_, keys, _, _) = read_summary(str(tmp_path / "test"), ["*"])
+    assert keys == ["TIME"]
+
+
+def test_that_smspec_without_num_keyword_warns(tmp_path):
     resfo.write(
         tmp_path / "test.SMSPEC",
         [
@@ -158,9 +179,7 @@ def test_missing_names_keywords_in_summary_files_raises_informative_errors(
     )
     (tmp_path / "test.UNSMRY").write_bytes(b"")
 
-    with pytest.warns(
-        match="Found block keyword without dimens in summary specification",
-    ):
+    with pytest.warns(match="SMSPEC did not contain num_keyword"):
         read_summary(str(tmp_path / "test"), ["*"])
 
 
