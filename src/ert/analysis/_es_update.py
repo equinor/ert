@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import functools
 import logging
+import re
 import time
 import warnings
 from collections.abc import Callable, Iterable, Sequence
@@ -441,6 +442,12 @@ def smoother_update(
         with warnings.catch_warnings():
             original_showwarning = warnings.showwarning
 
+            ILL_CONDITIONED_RE = re.compile(
+                r"^LinAlgWarning:.*ill[- ]?conditioned\s+matrix", re.IGNORECASE
+            )
+            LIMIT_ILL_CONDITIONED_WARNING = 1000
+            illconditioned_warn_counter = 0
+
             def log_warning(
                 message: Warning | str,
                 category: type[Warning],
@@ -449,12 +456,18 @@ def smoother_update(
                 file: TextIO | None = None,
                 line: str | None = None,
             ) -> None:
-                logger.warning(
-                    f"{category.__name__}: {message} (from {filename}:{lineno})"
-                )
-                original_showwarning(
-                    message, category, filename, lineno, file=file, line=line
-                )
+                nonlocal illconditioned_warn_counter
+
+                if ILL_CONDITIONED_RE.search(str(message)):
+                    illconditioned_warn_counter += 1
+
+                if illconditioned_warn_counter < LIMIT_ILL_CONDITIONED_WARNING:
+                    logger.warning(
+                        f"{category.__name__}: {message} (from {filename}:{lineno})"
+                    )
+                    original_showwarning(
+                        message, category, filename, lineno, file=file, line=line
+                    )
 
             warnings.showwarning = log_warning
             analysis_ES(
