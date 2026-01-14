@@ -271,7 +271,7 @@ class RFTObservation:
         missing_required_columns = required_columns - set(csv_file.keys())
         if missing_required_columns:
             raise ObservationConfigError.with_context(
-                f"The rft observations file {filename} is missing required columns "
+                f"The rft observations file {filename} is missing required column(s) "
                 f"{', '.join(sorted(missing_required_columns))}.",
                 filename,
             )

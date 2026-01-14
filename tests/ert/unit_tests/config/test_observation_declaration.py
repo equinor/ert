@@ -316,6 +316,36 @@ def test_that_property_can_be_specified_for_rft_observation_csv_declaration():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_that_missing_user_specified_property_raises_error():
+    Path("rft_observations.csv").write_text(
+        dedent(
+            """
+            WELL_NAME,DATE,MD,ZONE,PRESSURE,ERROR,TVD,NORTH,EAST,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str
+            WELL1,2013-03-31,2500,zone1,0.3,10,2000.0,71.0,30.0,123,1,zone1
+            """
+        ),
+        encoding="utf8",
+    )
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            "",
+            [
+                {
+                    "type": ObservationType.RFT,
+                    "name": "NAME",
+                    "CSV": "rft_observations.csv",
+                    "PROPERTY": "SWAT",
+                }
+            ],
+        )
+
+    assert (
+        "rft observations file rft_observations.csv is missing required column(s) SWAT"
+        in str(err.value)
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_that_missing_columns_in_rft_observations_file_raises_error():
     Path("rft_observations.csv").write_text(
         dedent(
@@ -339,7 +369,7 @@ def test_that_missing_columns_in_rft_observations_file_raises_error():
         )
 
     assert (
-        "The rft observations file rft_observations.csv is missing required columns"
+        "The rft observations file rft_observations.csv is missing required column(s)"
         " DATE, EAST, ERROR, NORTH, TVD, WELL_NAME." in str(err.value)
     )
 
