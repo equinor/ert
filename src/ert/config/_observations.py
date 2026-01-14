@@ -253,7 +253,11 @@ class RFTObservation:
                 f"The CSV file ({filename}) does not exist or is not accessible.",
                 filename,
             )
-        csv_file = pd.read_csv(filename)
+        csv_file = pd.read_csv(
+            filename,
+            encoding="utf-8",
+            on_bad_lines="error",
+        )
 
         required_columns = {
             "WELL_NAME",
