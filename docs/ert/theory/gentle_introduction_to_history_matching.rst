@@ -172,7 +172,7 @@ Once the class is instantiated, we pass :math:`\mathbf{X}` and :math:`\mathbf{Y}
    smoother = ESMDA(covariance, observations, alpha=1)
    X_updated = smoother.assimilate(X, Y)
 
-Some natural questions to as are:
+Some natural questions to ask are:
 
 - How do the updated parameters differ from the prior?
 - Has the data match improved?
@@ -184,7 +184,7 @@ Results of updating
 
 Let's think about the update somewhat more concretely by focusing on a single parameter from a single grid-cell; grid-cell :math:`x_2` and porosity.
 
-The upper-left figure shows the distribution of porisity at grid-cell :math:`x_2` and its true value.
+The upper-left figure shows the distribution of porosity at grid-cell :math:`x_2` and its true value.
 The true value is in practice unknowable unless we run synthetic experiments, but we are in theory-land here so everything is possible.
 
 The lower-left figure shows that before updating, the simulated (blue) values cover the observed (black) values and have a rather large spread or variance.
@@ -225,10 +225,10 @@ Define the relationship between the parameters :math:`\mathbf{x}` and responses 
 .. math::
    \mathbf{y} = g(\mathbf{x})
 
-The actual observations :math:`\mathbf{d}` are contaminated by additive noise :math:`\boldsymbol{\epsilon}`:
+The actual observations :math:`\mathbf{d}` are contaminated by additive noise :math:`\mathbf{\epsilon}`:
 
 .. math::
-   \mathbf{d} = \mathbf{y} + \boldsymbol{\epsilon}
+   \mathbf{d} = \mathbf{y} + \mathbf{\epsilon}
 
 Apply Bayes' Theorem:
 
@@ -247,9 +247,9 @@ Assume the observation errors are Gaussian with covariance matrix :math:`\mathbf
 
 .. math::
 
-   \boldsymbol{\epsilon} \sim \mathcal{N}(0, \mathbf{R})
+   \mathbf{\epsilon} \sim \mathcal{N}(\mathbf{0}, \mathbf{R})
 
-Since :math:`\mathbf{d} = g(\mathbf{x}) + \boldsymbol{\epsilon}`, the conditional distribution is
+Since :math:`\mathbf{d} = g(\mathbf{x}) + \mathbf{\epsilon}`, the conditional distribution is
 
 .. math::
 
@@ -324,7 +324,7 @@ Field,- and surface parameters refer to properties that vary spatially throughou
 
 One column of the parameter matrix can contain all the different types of parameters.
 We flatten fields and surfaces into a 1D vector to fit them into that column.
-The parameter matrix can end up begin too big to keep in computer memory, so we do some tricks when implementing it in production code.
+The parameter matrix can end up being too big to keep in computer memory, so we do some tricks when implementing it in production code.
 Specifically, in ``ert``, we update one parameter group at a time, where a **parameter group** is one surface, one field or one scalar.
 
 For example, we update porosity, write the results to disk, then update permeability, write to disk, etc.
@@ -391,7 +391,7 @@ Lots of parameters with few samples lead to what are often referred to **spuriou
 
 The denominator :math:`N-1` makes the sample cross-covariance an unbiased estimator, a detail we don't need to consider any further.
 
-So, we can say that the strength of the update if proportional to the cross-covariance between parameters and responses, other things being equal.
+So, we can say that the strength of the update is proportional to the cross-covariance between parameters and responses, other things being equal.
 
 Response Covariance
 ~~~~~~~~~~~~~~~~~~~
@@ -451,7 +451,7 @@ The initial formulation by Evensen re-used the vector :math:`\mathbf{d}` multipl
 Intuitively that makes sense, at least to me, but it turns out to be statistically wrong in that it leads to a posterior variance that's too low.
 A too low posterior variance means that we are more confident than we should be.
 
-The fix introduced by Burgers perturbs :math:`\mathbf{d}` by a small :math:`\epsilon \sim \mathcal{N}(0, \mathbf{R})` to create the matrix :math:`\mathbf{D}`.
+The fix introduced by Burgers perturbs :math:`\mathbf{d}` by a small :math:`\epsilon \sim \mathcal{N}(\mathbf{0}, \mathbf{R})` to create the matrix :math:`\mathbf{D}`.
 This fixes the bug and we don't really have to think about it that much more.
 
 Innovation
@@ -464,7 +464,7 @@ Also recall that :math:`\mathbf{D}` has :math:`N` columns because we have pertur
 
 Looking at the equation, if the innovation is large, the update strength will be large as well, other things being equal.
 
-In order words, the strength of the update is proportional to the innovation.
+In other words, the strength of the update is proportional to the innovation.
 
 If the prior parameters yield responses that perfectly match observations, the innovation will vanish and the posterior will equal the prior.
 
@@ -475,10 +475,10 @@ Finally, let's discuss the **innovation covariance**:
 
 .. math::
 
-   \left( \frac{\mathbf{Y}_c \mathbf{Y}_c}{N - 1} + \mathbf{R} \right)^{-1}
+   \left( \frac{\mathbf{Y}_c \mathbf{Y}_c^T}{N - 1} + \mathbf{R} \right)^{-1}
 
-* If :math:`\frac{\mathbf{Y}_c \mathbf{Y}_c}{N - 1}` is large it means there's high forecast uncertainty and we should trust observations more.
-* If :math:`\frac{\mathbf{Y}_c \mathbf{Y}_c}{N - 1}` is small it means there's low forecast uncertainty and we should trust forecast more.
+* If :math:`\frac{\mathbf{Y}_c \mathbf{Y}_c^T}{N - 1}` is large it means there's high forecast uncertainty and we should trust observations more.
+* If :math:`\frac{\mathbf{Y}_c \mathbf{Y}_c^T}{N - 1}` is small it means there's low forecast uncertainty and we should trust forecast more.
 
 So, the update strength is proportional to the cross-covariance between parameters and responses, inverse proportional to the innovation covariance and proportional to the innovation.
 
@@ -605,7 +605,7 @@ For every parameter:
 - Only use responses from wells that are less than :math:`r` away.
 
 One way to think of the difference between distance based,- and adaptive localization is that adaptive localization uses correlations to decide which parameters to update,
-while distance based localization uses euclidean distance to decide which parameters to update.
+while distance based localization uses Euclidean distance to decide which parameters to update.
 
 Deciding on the radius of influence is more art than science, but there exist reasonable rules of thumb.
 Distance based localization produces updated parameters that suffer less from spurious correlations and that the geologist think look more realistic than those achieved using adaptive localization.
@@ -618,11 +618,11 @@ iterative_ensemble_smoother
 
 .. figure:: images/intro_ies.png
 
-The actual implementation of the ensembles smoother algorithm that ``ert`` uses is in the open source ``iterative_ensemble_smoother`` Python package.
+The actual implementation of the ensemble smoother algorithm that ``ert`` uses is in the open source ``iterative_ensemble_smoother`` Python package.
 
 ``ert`` uses ``ES-MDA`` by default, which stands for Ensemble Smoother - Multiple Data Assimilation.
 It turns out that, since :math:`g(.)` is non-linear, it is helpful to run multiple iterations of the ensemble smoother.
-Similar to how it is useful to run multiple iterations of Newtons method when trying to find the minima of a function.
+Similar to how it is useful to run multiple iterations of Newton's method when trying to find the minima of a function.
 It's OK if you don't know what I mean by this.
 
 The following figure is a graphical representation of ES-MDA that you'll find in the literature.
@@ -630,7 +630,7 @@ The y-axis indicates either a simulation / forecast, or an update.
 The x-axis is time, starting from 0.
 Every simulation starts from time 0, which is before any wells were drilled into the reservoir.
 
-We start of by running the forward model, or simulation from time 0 to the current time.
+We start off by running the forward model, or simulation from time 0 to the current time.
 This is represented by the top horizontal, black line in the figure.
 
 At certain points along this line we have measurements from real world sensors.
@@ -640,7 +640,7 @@ This is all handled by ``ert``.
 We are ready to do an update step after the first simulation run has completed.
 Doing an update step means running the ensemble smoother equation.
 There's a trick to ES-MDA though.
-Before each update step, it scales the observation errors by a factor :math:``\sqrt{\alpha_1}`` that is larger than 1.
+Before each update step, it scales the observation errors by a factor :math:`\sqrt{\alpha_1}` that is larger than 1.
 This weakens the update.
 The idea is that multiple weaker updates are better than a single large update.
 
