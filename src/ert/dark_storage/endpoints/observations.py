@@ -84,6 +84,7 @@ async def get_observations_for_response(
         ensemble.experiment,
         obs_keys,
         json.loads(filter_on) if filter_on is not None else None,
+        requested_response_type=response_type,
     )
     if not obss:
         return []
@@ -107,10 +108,17 @@ def _get_observations(
     experiment: Experiment,
     observation_keys: list[str] | None = None,
     filter_on: dict[str, Any] | None = None,
+    requested_response_type: str | None = None,
 ) -> list[dict[str, Any]]:
     observations = []
 
-    for response_type, df in experiment.observations.items():
+    for stored_response_type, df in experiment.observations.items():
+        if (
+            requested_response_type is not None
+            and stored_response_type != requested_response_type
+        ):
+            continue
+
         if observation_keys is not None:
             df = df.filter(pl.col("observation_key").is_in(observation_keys))
 
@@ -127,7 +135,7 @@ def _get_observations(
         if df.is_empty():
             continue
 
-        x_axis_fn = response_to_pandas_x_axis_fns[response_type]
+        x_axis_fn = response_to_pandas_x_axis_fns[stored_response_type]
         df = df.rename(
             {
                 "observation_key": "name",
