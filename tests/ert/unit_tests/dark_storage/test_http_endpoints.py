@@ -74,14 +74,17 @@ def test_get_responses_with_observations(poly_example_tmp_dir, dark_storage_clie
 
     assert experiment_json["observations"] == {"gen_data": {"POLY_RES": ["POLY_OBS"]}}
     assert experiment_json["responses"] == {
-        "gen_data": [
-            {
-                "response_type": "gen_data",
-                "response_key": "POLY_RES",
-                "filter_on": {"report_step": [0]},
-                "finalized": True,
-            }
-        ]
+        "gen_data": {
+            "type": "gen_data",
+            "keys": ["POLY_RES"],
+            "has_finalized_keys": True,
+            "input_files": [
+                "poly.out",
+            ],
+            "report_steps_list": [
+                None,
+            ],
+        }
     }
 
 
@@ -142,14 +145,16 @@ def test_get_summary_response(
     copy_snake_oil_case_storage, dark_storage_client_snake_oil
 ):
     resp: Response = dark_storage_client_snake_oil.get("/experiments")
-    experiment_json = resp.json()
+    experiments_json = resp.json()
 
-    assert len(experiment_json) == 1
+    experiment_json = next(
+        e for e in experiments_json if e.get("name") == "ensemble-experiment"
+    )
 
     # ensemble_experiment, so only 1 ensemble
-    assert len(experiment_json[0]["ensemble_ids"]) == 1
+    assert len(experiment_json["ensemble_ids"]) == 1
 
-    ensemble_id = experiment_json[0]["ensemble_ids"][0]
+    ensemble_id = experiment_json["ensemble_ids"][0]
 
     resp_ensemble: Response = dark_storage_client_snake_oil.get(
         f"/ensembles/{ensemble_id}"

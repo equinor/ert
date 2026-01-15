@@ -14,34 +14,11 @@ class InvalidResponseFile(Exception):
     """
 
 
-class ResponseMetadata(BaseModel):
-    response_type: str
-    response_key: str
-    finalized: bool
-    filter_on: dict[str, list[Any]] | None = Field(
-        default=None,
-        description="""
-    Holds information about which columns the response can be filtered on.
-    For example, for gen data, { "report_step": [0, 199, 299] } indicates
-    that we can filter the response by report step with the potential values
-    [0, 199, 299].
-    """,
-    )
-
-
 class ResponseConfig(BaseModel):
     type: str
     input_files: list[str] = Field(default_factory=list)
     keys: list[str] = Field(default_factory=list)
     has_finalized_keys: bool = False
-
-    @property
-    @abstractmethod
-    def metadata(self) -> list[ResponseMetadata]:
-        """
-        Returns metadata describing this response
-
-        """
 
     @abstractmethod
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
@@ -76,3 +53,8 @@ class ResponseConfig(BaseModel):
     def display_column(cls, value: Any, column_name: str) -> str:
         """Formats a value to a user-friendly displayable format."""
         return str(value)
+
+    @property
+    def filter_on(self) -> dict[str, dict[str, list[int]]] | None:
+        """Optional filters for this response."""
+        return None
