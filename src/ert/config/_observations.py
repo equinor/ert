@@ -1,5 +1,4 @@
 import os
-from collections import Counter
 from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum
@@ -324,23 +323,7 @@ def make_observations(
     if error_list:
         raise ObservationConfigError.from_collected(error_list)
 
-    _validate_unique_names(result)
     return result
-
-
-def _validate_unique_names(
-    observations: Sequence[Observation],
-) -> None:
-    names_counter = Counter(d.name for d in observations)
-    duplicate_names = [n for n, c in names_counter.items() if c > 1]
-    errors = [
-        ErrorInfo(
-            f"Duplicate observation name {n}",
-        ).set_context(n)
-        for n in duplicate_names
-    ]
-    if errors:
-        raise ObservationConfigError.from_collected(errors)
 
 
 def _validate_segment_dict(name_token: str, inp: dict[str, Any]) -> Segment:
