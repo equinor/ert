@@ -28,6 +28,19 @@ def test_report_step_list_is_ordered(name: str, report_steps: list[int]):
     assert gdc.report_steps_list[0] == sorted(report_steps)
 
 
+def test_that_filter_on_property_maps_report_steps_to_each_key():
+    report_steps_0 = [0, 3, 6, 9]
+    report_steps_1 = [1, 4, 7, 10]
+    report_steps_2 = [2, 5, 8, 11]
+    gdc = GenDataConfig(
+        keys=["key_0", "key_1", "key_2"],
+        report_steps_list=[report_steps_0, report_steps_1, report_steps_2],
+    )
+    assert gdc.filter_on["key_0"]["report_step"] == sorted(report_steps_0)
+    assert gdc.filter_on["key_1"]["report_step"] == sorted(report_steps_1)
+    assert gdc.filter_on["key_2"]["report_step"] == sorted(report_steps_2)
+
+
 def test_gen_data_default_report_step():
     gen_data_default_step = GenDataConfig(keys=["name"])
     assert not gen_data_default_step.report_steps_list[0][0]

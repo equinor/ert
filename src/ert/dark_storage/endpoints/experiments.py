@@ -32,7 +32,7 @@ def get_experiments(
                 if not isinstance(config, SurfaceConfig)
             },
             responses={
-                response_type: [m.model_dump() for m in config.metadata]
+                response_type: config.model_dump()
                 for response_type, config in experiment.response_configuration.items()
             },
             observations=experiment.response_key_to_observation_key,
@@ -66,7 +66,7 @@ def get_experiment_by_id(
             for group, config in experiment.parameter_configuration.items()
         },
         responses={
-            response_type: [m.model_dump() for m in config.metadata]
+            response_type: config.model_dump()
             for response_type, config in experiment.response_configuration.items()
         },
         observations=experiment.response_key_to_observation_key,

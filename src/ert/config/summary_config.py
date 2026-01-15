@@ -11,7 +11,7 @@ from ert.substitutions import substitute_runpath_name
 from ._read_summary import read_summary
 from .parsing import ConfigDict, ConfigKeys
 from .parsing.config_errors import ConfigValidationError, ConfigWarning
-from .response_config import InvalidResponseFile, ResponseConfig, ResponseMetadata
+from .response_config import InvalidResponseFile, ResponseConfig
 from .responses_index import responses_index
 
 logger = logging.getLogger(__name__)
@@ -20,18 +20,6 @@ logger = logging.getLogger(__name__)
 class SummaryConfig(ResponseConfig):
     type: Literal["summary"] = "summary"
     has_finalized_keys: bool = False
-
-    @property
-    def metadata(self) -> list[ResponseMetadata]:
-        return [
-            ResponseMetadata(
-                response_type=self.type,
-                response_key=response_key,
-                filter_on=None,
-                finalized=self.has_finalized_keys,
-            )
-            for response_key in self.keys
-        ]
 
     @property
     def expected_input_files(self) -> list[str]:

@@ -47,7 +47,7 @@ from .queue_config import (
     LocalQueueOptions,
     QueueConfig,
 )
-from .response_config import InvalidResponseFile, ResponseConfig, ResponseMetadata
+from .response_config import InvalidResponseFile, ResponseConfig
 from .rft_config import RFTConfig
 from .summary_config import SummaryConfig
 from .surface_config import SurfaceConfig
@@ -131,7 +131,6 @@ __all__ = [
     "QueueSystem",
     "RFTConfig",
     "ResponseConfig",
-    "ResponseMetadata",
     "SamplerConfig",
     "SiteInstalledForwardModelStep",
     "SiteOrUserForwardModelStep",

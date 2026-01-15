@@ -14,7 +14,6 @@ from resfo_utilities import history_key
 from starlette.testclient import TestClient
 
 from ert.config import GenKwConfig, SummaryConfig
-from ert.config.response_config import ResponseMetadata
 from ert.dark_storage import common
 from ert.dark_storage.app import app
 from ert.gui.tools.plot import plot_api
@@ -56,11 +55,9 @@ def test_key_def_structure(api: PlotApi):
         "metadata": {"data_origin": "summary"},
         "observations": True,
         "parameter": None,
-        "response_metadata": ResponseMetadata(
-            response_type="summary",
-            response_key="FOPR",
-            filter_on={},
-            finalized=True,
+        "response": SummaryConfig(
+            keys=["FOPR", "BPR:1,3,8", "WOPPER"],
+            has_finalized_keys=True,
         ),
     }
     assert fopr == PlotApiKeyDefinition(**fopr_expected)
@@ -73,11 +70,9 @@ def test_key_def_structure(api: PlotApi):
         "metadata": {"data_origin": "summary"},
         "observations": False,
         "parameter": None,
-        "response_metadata": ResponseMetadata(
-            response_type="summary",
-            response_key="BPR:1,3,8",
-            filter_on={},
-            finalized=True,
+        "response": SummaryConfig(
+            keys=["BPR:1,3,8", "FOPR", "WOPPER"],
+            has_finalized_keys=True,
         ),
     }
     assert bpr == PlotApiKeyDefinition(**bpr_expected)
@@ -103,7 +98,7 @@ def test_key_def_structure(api: PlotApi):
                 "input_source": "sampled",
             }
         ),
-        "response_metadata": None,
+        "response": None,
     }
     assert bpr_parameter == PlotApiKeyDefinition(**bpr_parameter_expected)
 
