@@ -216,7 +216,16 @@ The likelihood tells us how probable the observed data are for a given choice of
 That is a mouthful, and don't worry if it does not make complete sense.
 You do not have to be able to derive the equation to build an intuitive understanding of it.
 
-The following figure shows an outline of a derivation which you can safely skip.
+The following outlines derivation of the ensemble smoother equation which can safely be skipped.
+
+The ES equation is the Kalman (Gaussian) update written in ensemble form. The usual assumptions are:
+
+- **Gaussian prior:** the prior is represented by an ensemble (using sample mean/covariances).
+- **Additive, unbiased Gaussian observation noise:** :math:`\mathbf{d} = g(\mathbf{x}) + \boldsymbol{\epsilon}`, with :math:`\boldsymbol{\epsilon} \sim \mathcal{N}(\mathbf{0}, \mathbf{R})` (often :math:`\mathbf{R}` is taken diagonal).
+   This is what makes the likelihood a clean, centered quadratic in the residual with known covariance :math:`\mathbf{R}`.
+- **Linear or locally linearizable forward map:** :math:`g(\mathbf{x}) = \mathbf{H}\mathbf{x}` (or a linearization around the ensemble).
+   If :math:`g` is truly linear, the update is exact for the linear-Gaussian case; “locally linearizable” means we treat a nonlinear simulator as approximately linear over the ensemble spread.
+- **Sample covariance approximation:** :math:`\mathbf{\Sigma_{xy}}` and :math:`\mathbf{\Sigma_{yy}}` are estimated from a finite ensemble (hence sampling noise/spurious correlations).
 
 **Problem setup:**
 
@@ -401,8 +410,12 @@ Response Covariance
 Similar to the cross-covariance between parameters and responses but here we instead calculate the covariance between all responses.
 
 Note that :math:`\mathbf{Y}_c\mathbf{Y}_c^T` is being inverted in the equation as it is inside of :math:`()^{-1}` together with :math:`\mathbf{R}`.
-A wrong but useful way to think about inversion is like division.
-Just as dividing by a large number gives a small result, having a huge covariance :math:`\mathbf{Y}_c\mathbf{Y}_c^T` (lots of uncertainty/spread) results in a weaker update.
+A wrong but perhaps useful way to think about inversion is like division.
+Just as dividing by a large number gives a small result, a larger response covariance
+:math:`\mathbf{\Sigma}_{yy} = \frac{\mathbf{Y}_c\mathbf{Y}_c^T}{N-1}` tends to weaken the update if the cross-covariance
+:math:`\mathbf{\Sigma}_{xy}` and the innovation are kept fixed, because it appears inside
+:math:`(\mathbf{\Sigma}_{yy} + \mathbf{R})^{-1}`.
+In practice, forecast uncertainty and cross-covariance often grow together, so don't take the "inverse is like division" analogy too far.
 
 So if many responses covary the update will be weaker than if they all were independent.
 This makes sense if you think in terms on information.
