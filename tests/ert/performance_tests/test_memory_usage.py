@@ -1,3 +1,4 @@
+import datetime
 import os
 import stat
 import sys
@@ -13,9 +14,11 @@ import py
 import pytest
 import xtgeo
 
+from ert.__main__ import run_convert_observations
 from ert.analysis import enif_update, smoother_update
 from ert.config import ErtConfig, ESSettings, ObservationSettings
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
+from ert.namespace import Namespace
 from ert.sample_prior import sample_prior
 from ert.storage import open_storage
 from tests.ert.performance_tests.performance_utils import make_poly_example
@@ -43,6 +46,7 @@ def poly_template(monkeypatch):
         update_steps=1,
     )
     monkeypatch.chdir(folder)
+    run_convert_observations(Namespace(config=str(folder / "poly.ert")))
     return folder
 
 
@@ -129,7 +133,14 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
 
             source.save_response("gen_data", pl.concat(gendatas), real)
 
-            obs_time_list = ert_config.refcase.all_dates
+            # Corresponds to refcase previously used in this test
+            refcase_start = datetime.datetime(2010, 1, 1)
+            refcase_end = datetime.datetime(2010, 4, 11)
+
+            obs_time_list = [
+                refcase_start + datetime.timedelta(days=i)
+                for i in range((refcase_end - refcase_start).days + 1)
+            ]
 
             summary_keys = ert_config.observations["summary"]["response_key"].unique(
                 maintain_order=True

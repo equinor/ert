@@ -8,11 +8,10 @@ from hypothesis import assume
 from ert.config._observations import (
     ErrorModes,
     GeneralObservation,
-    HistoryObservation,
     Observation,
-    Segment,
     SummaryObservation,
 )
+from ert.config.observation_config_migrations import Segment
 
 
 def class_name(o: Observation):
@@ -20,8 +19,6 @@ def class_name(o: Observation):
         return "SEGMENT"
     if isinstance(o, GeneralObservation):
         return "GENERAL_OBSERVATION"
-    if isinstance(o, HistoryObservation):
-        return "HISTORY_OBSERVATION"
     if isinstance(o, SummaryObservation):
         return "SUMMARY_OBSERVATION"
 
@@ -81,9 +78,7 @@ time_types = st.sampled_from(["date", "days", "restart", "hours"])
 
 
 @st.composite
-def summary_observations(
-    draw, summary_keys, std_cutoff, names, datetimes, time_types=time_types
-):
+def summary_observations(draw, summary_keys, std_cutoff, names, datetimes):
     kws = {
         "name": draw(names),
         "key": draw(summary_keys),
@@ -125,14 +120,9 @@ def summary_observations(
             )
         )
 
-    time_type = draw(time_types)
-    if time_type == "date":
-        _datetime = draw(datetimes)
-        kws["date"] = _datetime.date().isoformat()
-    if time_type in {"days", "hours"}:
-        kws[time_type] = draw(st.floats(min_value=1, max_value=3000))
-    if time_type == "restart":
-        kws[time_type] = draw(st.integers(min_value=1, max_value=10))
+    _datetime = draw(datetimes)
+    kws["date"] = _datetime.date().isoformat()
+
     return SummaryObservation(**kws)
 
 
@@ -146,9 +136,6 @@ def observations(draw, ensemble_keys, summary_keys, std_cutoff, start_date):
     )
     seen = set()
     unique_names = names.filter(lambda x: x not in seen).map(lambda x: seen.add(x) or x)
-    unique_summary_names = summary_keys.filter(lambda x: x not in seen).map(
-        lambda x: seen.add(x) or x
-    )
     datetimes = st.datetimes(
         max_value=start_date + datetime.timedelta(days=200_000),  # ~ 300 years
         min_value=start_date + datetime.timedelta(days=1),
@@ -159,52 +146,10 @@ def observations(draw, ensemble_keys, summary_keys, std_cutoff, start_date):
             general_observations(ensemble_keys, std_cutoff, unique_names)
         )
     if summary_keys is not None:
-        observation_generators.extend(
-            (
-                summary_observations(summary_keys, std_cutoff, unique_names, datetimes),
-                st.builds(
-                    HistoryObservation,
-                    error=st.floats(
-                        min_value=std_cutoff,
-                        max_value=1e20,
-                        allow_nan=False,
-                        allow_infinity=False,
-                    ),
-                    error_min=st.floats(
-                        min_value=0.0,
-                        max_value=1e20,
-                        allow_nan=False,
-                        allow_infinity=False,
-                        exclude_min=True,
-                    ),
-                    segments=st.lists(
-                        st.builds(
-                            Segment,
-                            name=names,
-                            start=st.integers(min_value=1, max_value=10),
-                            stop=st.integers(min_value=1, max_value=10),
-                            error=st.floats(
-                                min_value=0.01,
-                                max_value=1e20,
-                                allow_nan=False,
-                                allow_infinity=False,
-                                exclude_min=True,
-                            ),
-                            error_min=st.floats(
-                                min_value=0.0,
-                                max_value=1e20,
-                                allow_nan=False,
-                                allow_infinity=False,
-                                exclude_min=True,
-                            ),
-                        ),
-                        max_size=2,
-                        unique_by=lambda s: s.name,
-                    ),
-                    name=unique_summary_names,
-                ),
-            )
+        observation_generators.append(
+            summary_observations(summary_keys, std_cutoff, unique_names, datetimes),
         )
+
     return draw(
         st.lists(
             st.one_of(*observation_generators),

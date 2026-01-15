@@ -23,11 +23,6 @@ to this observation file is declared in the main ERT config file using the
 The observation file is a plain text file, and is in essence built around three
 different classes of observations using the associated keywords:
 
- - :ref:`HISTORY_OBSERVATION <history_observation>`: For time series of
-   observations for which the observed values can be extracted from the
-   :term:`summary files` of the :ref:`refcase`. Used for easy / quick
-   configuration of production rates and fractions.
-
  - :ref:`SUMMARY_OBSERVATION <summary_observation>`: For explicitly giving
    scalar observation values for responses that can be extracted from a
    reservoir simulator :term:`summary files`. Examples are rates from separator
@@ -120,70 +115,13 @@ Here are two examples:
     KEY      = GOPR:NESS;
  };
 
-
-.. _history_observation:
-
-HISTORY_OBSERVATION keyword
----------------------------
-
-The keyword HISTORY_OBSERVATION is used to condition on observations fetched
-from the :ref:`refcase`. The keyword is typically used to condition
-on production and injection rates for groups and wells, as well as bottom hole
-and tubing head pressures. An observation entered with the HISTORY_OBSERVATION
-keyword will be active at all report steps where data for the observation can
-be found.
-
-In its simplest form, a history observation is created as follows::
-
-   HISTORY_OBSERVATION WOPR:P1;
-
-This will condition on ``WOPR`` in well P1 using a default observation
-error.
-
-By default, this will not extract the simulated values for the vector ``WOPR:P1``
-from :ref:`refcase`, but rather the corresponding history values: ``WOPRH:P1``
-(see `OPM Flow manual`_ table 11.4 "Fifth Character"). This can changed to
-fetch ``WOPR:P1`` instead with the :ref:`history_source` keyword.
-
-In general, a :term:`summary key` is given following the
-HISTORY_OBSERVATION keyword, e.g. to condition on variable VAR in well or group
-WGNAME, use::
-
-   HISTORY_OBSERVATION VAR:WGNAME;
-
-Note that there must be a colon ":" between VAR and WGNAME and that
-the statement shall end with a semi-colon ";". Thus, to condition on
-WOPR, WWCT and WGOR in well C-17, and for the GOPR for the whole
-field, one would add the following to the observation configuration:
-
-.. code-block:: none
-
- HISTORY_OBSERVATION WOPR:C-17;
- HISTORY_OBSERVATION WWCT:C-17;
- HISTORY_OBSERVATION WGOR:C-17;
-
- HISTORY_OBSERVATION GOPR:FIELD;
-
-The default observation error is the sum between a relative error of 10% to
-the measurement and a minimum error of 0.10, which is equivalent to:
-
-.. code-block:: none
-
- HISTORY_OBSERVATION GWIR:FIELD
- {
-    ERROR       = 0.10;
-    ERROR_MODE  = RELMIN;
-    ERROR_MIN   = 0.10;
- };
-
 .. _error_modes:
 
 Error modes for summary observations
 ------------------------------------
 
 The item ERROR_MODE can take three different values: ABS, REL or RELMIN.
-The default error mode for the :ref:`HISTORY_OBSERVATION <history_observation>`
-keyword is RELMIN, while the default for the :ref:`SUMMARY_OBSERVATION <summary_observation>`
+The default error mode for the :ref:`SUMMARY_OBSERVATION <summary_observation>`
 keyword is ABS.
 
 The default value for `ERROR_MIN` is 0.1.
@@ -203,14 +141,15 @@ the updating process. Therefore, it is important to have consistency
 between setting up the errors and the degree of uncertainty in an
 observation.
 
-The default error mode and values can be changed as follows, the examples
-show only HISTORY_OBSERVATION, but the configurtion is identical for
-SUMMARY_OBSERVATION:
+The default error mode and values can be changed as follows:
 
 .. code-block:: none
 
- HISTORY_OBSERVATION GOPR:FIELD
+  SUMMARY_OBSERVATION GOPR_FIELD_OBS_NAME
  {
+    VALUE      = 0.9;
+    DATE       = 2014-09-10;
+    KEY        = GOPR:FIELD;
     ERROR       = 1000;
     ERROR_MODE  = ABS;
  };
@@ -228,8 +167,11 @@ observation uncertainity:
 
 .. code-block:: none
 
- HISTORY_OBSERVATION GWIR:FIELD
+ SUMMARY_OBSERVATION GWIR_FIELD_OBS_NAME
  {
+    VALUE      = 0.9;
+    DATE       = 2014-09-10;
+    KEY        = GWIR:FIELD;
     ERROR       = 0.20;
     ERROR_MODE  = REL;
  };
@@ -240,8 +182,11 @@ keyword ERROR_MIN:
 
 .. code-block:: none
 
- HISTORY_OBSERVATION GWIR:FIELD
+ SUMMARY_OBSERVATION GWIR_FIELD_OBS_NAME
  {
+    VALUE      = 0.9;
+    DATE       = 2014-09-10;
+    KEY        = GWIR:FIELD;
     ERROR       = 0.20;
     ERROR_MODE  = RELMIN;
     ERROR_MIN   = 100;
@@ -253,45 +198,6 @@ for example water production rates.
 Note that the configuration parser does not treat carriage return
 different from space. Thus, the following statement is equivalent to
 the previous:
-
-.. code-block:: none
-
- HISTORY_OBSERVATION GWIR:FIELD { ERROR = 0.20; ERROR_MODE = RELMIN; ERROR_MIN = 100; };
-
-To change the observation error for a HISTORY_OBSERVATION for one or
-more segments of the historic period, you can use the SEGMENT
-keyword. For example:
-
-.. code-block:: none
-
-  HISTORY_OBSERVATION GWIR:FIELD
-  {
-     ERROR       = 0.20;
-     ERROR_MODE  = RELMIN;
-     ERROR_MIN   = 100;
-
-     SEGMENT FIRST_YEAR
-     {
-        START = 0;
-        STOP  = 10;
-        ERROR = 0.50;
-        ERROR_MODE = REL;
-     };
-
-     SEGMENT SECOND_YEAR
-     {
-        START      = 11;
-        STOP       = 20;
-        ERROR      = 1000;
-        ERROR_MODE = ABS;
-     };
-  };
-
-The items START and STOP set the start and stop of the segment in
-terms of ECLIPSE restart steps. The keywords ERROR, ERROR_MODE and
-ERROR_MIN behave like before. If the segments overlap, they are
-computed in alphabetical order.
-
 
 .. _general_observation:
 

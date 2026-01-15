@@ -1,24 +1,20 @@
-import fileinput
 import json
 import logging
 import os
 import os.path
-import re
 import stat
 import warnings
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import MagicMock
 
 import polars as pl
 import pytest
-import xtgeo
 from hypothesis import HealthCheck, assume, given, settings
 from hypothesis import strategies as st
 from lark import Token
 from pydantic import RootModel, TypeAdapter
-from resdata.summary import Summary
 
 from ert import ErtScript, ErtScriptWorkflow
 from ert.config import (
@@ -1588,32 +1584,6 @@ def test_that_context_types_are_json_serializable():
     assert isinstance(r["context_list"], list)
 
 
-def test_no_timemap_or_refcase_provides_clear_error():
-    with pytest.raises(
-        ConfigValidationError,
-        match="Missing REFCASE or TIME_MAP for observations: GDO",
-    ):
-        ErtConfig.from_dict(
-            {
-                "GEN_DATA": [["GD", {"RESULT_FILE": "%d", "REPORT_STEPS": "1"}]],
-                "OBS_CONFIG": (
-                    "obs_config",
-                    [
-                        {
-                            "type": ObservationType.GENERAL,
-                            "name": "GDO",
-                            "DATA": "GD",
-                            "INDEX_LIST": "0",
-                            "DATE": "2015-06-13",
-                            "VALUE": "0.0",
-                            "ERROR": "0.1",
-                        }
-                    ],
-                ),
-            }
-        )
-
-
 def test_that_multiple_errors_are_shown_when_validating_observation_config():
     with pytest.raises(ConfigValidationError) as err:
         ErtConfig.from_dict(
@@ -1647,36 +1617,6 @@ def test_that_multiple_errors_are_shown_when_validating_observation_config():
 
     for error in expected_errors:
         assert error in str(err.value)
-
-
-@pytest.mark.usefixtures("copy_snake_oil_case")
-@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
-def test_that_multiple_errors_are_shown_when_generating_observations():
-    injected_errors = {
-        7: "    RESTART = 0;",
-        15: "    DATE    = 2010-01-01;",
-        31: "    DATE    = 2009-12-15;",
-        39: "    DATE    = 2010-12-10;",
-    }
-    with fileinput.input("observations/observations.txt", inplace=True) as fin:
-        for line_number, line in enumerate(fin, 1):
-            if line_number in injected_errors:
-                print(injected_errors[line_number])
-                continue
-            print(line, end="")
-
-    with pytest.raises(ConfigValidationError) as err:
-        _ = ErtConfig.from_file("snake_oil.ert")
-
-    expected_errors = [
-        r"Line 3 \(Column 21-31\): It is unfortunately not possible",
-        r"Line 11 \(Column 21-32\): It is unfortunately not possible",
-        r"Line 27 \(Column 21-33\): Could not find 2009-12-15.*for.*WOPR_OP1_108",
-        r"Line 35 \(Column 21-33\): Could not find 2010-12-10.*for.*WOPR_OP1_144",
-    ]
-
-    for error in expected_errors:
-        assert re.search(error, str(err.value))
 
 
 def test_job_name_with_slash_fails_validation():
@@ -2412,29 +2352,6 @@ def test_that_the_eclbase_keyword_sets_the_eclbase_substitution(eclbase_substitu
     )
 
 
-@pytest.mark.filterwarnings("ignore:.*Config contains a SUMMARY key.*")
-def test_that_time_map_or_refcase_is_present_if_restart_is_used_for_summary_observation():  # noqa E501
-    with pytest.raises(ConfigValidationError, match="either TIME_MAP or REFCASE"):
-        ErtConfig.from_dict(
-            {
-                "ECLBASE": "ECLIPSE_CASE",
-                "OBS_CONFIG": (
-                    "obsconf",
-                    [
-                        {
-                            "type": ObservationType.SUMMARY,
-                            "name": "FOPR",
-                            "KEY": "FOPR",
-                            "RESTART": "1",
-                            "VALUE": "1.0",
-                            "ERROR": "0.1",
-                        }
-                    ],
-                ),
-            }
-        )
-
-
 def test_that_user_envvars_overrides_site_envvars():
     config = ErtConfig.with_plugins(
         ErtRuntimePlugins(
@@ -2595,23 +2512,6 @@ def test_that_user_forward_models_overwrite_site_forward_models(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_ert_config_construct_refcase():
-    refcase_file = "REFCASE_NAME"
-    xtgeo.create_box_grid(dimension=(10, 10, 1)).to_file("CASE.EGRID", "egrid")
-    summary = Summary.writer("REFCASE_NAME", datetime(2014, 9, 10), 3, 3, 3)
-    summary.add_variable("FOPR", unit="SM3/DAY")
-    t_step = summary.add_t_step(1, sim_days=10)
-    t_step["FOPR"] = 10
-    summary.fwrite()
-    ert_config = ErtConfig.from_dict(
-        {
-            ConfigKeys.REFCASE: refcase_file,
-        }
-    )
-    assert ert_config.refcase is not None
-
-
-@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     ("existing_suffix", "expected_suffix"),
     [
@@ -2757,21 +2657,7 @@ def test_that_rft_properties_can_be_given_with_spaces():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_history_observation_deprecation_warning(caplog, monkeypatch):
-    """
-    Tests that a warning is issued when a config with HISTORY_OBSERVATION is parsed.
-    """
-    mock_refcase = Refcase(
-        start_date=datetime(2020, 1, 1),
-        keys=["FOPRH"],
-        dates=[datetime(2020, 1, 1)],
-        values=[[1.0]],
-    )
-    monkeypatch.setattr(
-        "ert.config.ert_config.Refcase.from_config_dict",
-        MagicMock(return_value=mock_refcase),
-    )
-
+def test_history_observation_removal_error(caplog, monkeypatch):
     config_path = Path("config.ert")
     obs_path = Path("observations")
 
@@ -2780,8 +2666,6 @@ def test_history_observation_deprecation_warning(caplog, monkeypatch):
             """
             NUM_REALIZATIONS 1
             OBS_CONFIG observations
-            ECLBASE the_base
-            REFCASE the_case
             """
         ),
         encoding="utf-8",
@@ -2796,9 +2680,9 @@ def test_history_observation_deprecation_warning(caplog, monkeypatch):
         encoding="utf-8",
     )
 
-    with caplog.at_level(logging.WARNING):
+    with pytest.raises(
+        ConfigValidationError,
+        match="HISTORY_OBSERVATION is deprecated, and "
+        "must be specified as SUMMARY_OBSERVATION",
+    ):
         ErtConfig.from_file(str(config_path))
-        assert (
-            "HISTORY_OBSERVATION is deprecated and will be removed. "
-            "Please use SUMMARY_OBSERVATION instead."
-        ) in caplog.text

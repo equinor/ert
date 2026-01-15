@@ -432,8 +432,7 @@ multiple vectors:
    SUMMARY  FOPT FOPR  FWPR
    SUMMARY  GGPR:NORTH GOPR:SOUTH
 
-If you in the observation use the ``SUMMARY_OBSERVATION`` or
-``HISTORY_OBSERVATION`` keyword to compare simulations and observations for a
+If you in the observation use the ``SUMMARY_OBSERVATION`` to compare simulations and observations for a
 particular summary vector you need to add this vector after SUMMARY in the ERT
 configuration to have it plotted.
 
