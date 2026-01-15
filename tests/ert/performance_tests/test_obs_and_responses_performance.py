@@ -503,6 +503,7 @@ def setup_es_benchmark(tmp_path, request):
             prior,
             range(config.num_realizations),
             42,
+            config.num_realizations,
             [c.name for c in info.gen_kw_configs],
         )
         posterior = experiment.create_ensemble(
