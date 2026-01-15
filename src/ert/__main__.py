@@ -8,10 +8,12 @@ import multiprocessing
 import os
 import re
 import resource
+import shutil
 import sys
 import warnings
 from argparse import ArgumentParser, ArgumentTypeError
 from collections.abc import Sequence
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 from uuid import UUID
@@ -24,6 +26,9 @@ from _ert.threading import set_signal_handler
 from ert.base_model_context import use_runtime_plugins
 from ert.cli.main import ErtCliError, run_cli
 from ert.config import ConfigValidationError, ErtConfig, lint_file
+from ert.config.observation_config_migrations import (
+    remove_refcase_and_time_map_dependence_from_obs_config,
+)
 from ert.logging import LOGGING_CONFIG
 from ert.mode_definitions import (
     ENIF_MODE,
@@ -51,6 +56,66 @@ from ert.validation import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def run_convert_observations(
+    args: Namespace, _: ErtRuntimePlugins | None = None
+) -> None:
+    changes = remove_refcase_and_time_map_dependence_from_obs_config(args.config)
+
+    if changes is None or changes.is_empty():
+        logger.info("convert_observations did not make any changes")
+        print(
+            "No observations dependent on TIME_MAP / REFCASE found, you can "
+            "safely remove TIME_MAP / REFCASE and the "
+            "corresponding files from ERT config."
+        )
+        return
+
+    obs_config_to_edit_path = changes.obs_config_path + ".updated"
+    print(
+        f"Making copy of obs config "
+        f"@ {changes.obs_config_path} -> {obs_config_to_edit_path}"
+    )
+
+    shutil.copy(changes.obs_config_path, obs_config_to_edit_path)
+    print(f"Applying change to obs config @ {obs_config_to_edit_path}...")
+    changes.apply_to_file(Path(obs_config_to_edit_path))
+    convert_observations_trace = ""
+    for history_change in changes.history_changes:
+        convert_observations_trace += (
+            f"History obs {history_change.source_observation.name} "
+            f"-> {len(history_change.summary_obs_declarations)} summary observations\n"
+        )
+
+    for gen_obs_change in changes.general_obs_changes:
+        convert_observations_trace += (
+            f"General obs {gen_obs_change.source_observation.name}, changing "
+            f"DATE {gen_obs_change.source_observation.date} "
+            f"to RESTART={gen_obs_change.restart}\n"
+        )
+    for summary_change in changes.summary_obs_changes:
+        convert_observations_trace += (
+            f"Summary obs {summary_change.source_observation.name}, changing "
+            f"RESTART {summary_change.source_observation.restart} "
+            f"to DATE={summary_change.date}\n"
+        )
+
+    logger.info(f"convert_observations trace: \n {convert_observations_trace}")
+    print(convert_observations_trace)
+
+    os.rename(
+        changes.obs_config_path,
+        f"{changes.obs_config_path}-{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.old",
+    )
+    os.rename(obs_config_to_edit_path, changes.obs_config_path)
+    msg = (
+        f"Observation changes applied to {changes.obs_config_path}. The old "
+        f"observations file is now at {changes.obs_config_path}.old and can be "
+        f"safely deleted if the new one works."
+    )
+    print(msg)
+    logger.info(msg)
 
 
 def run_ert_storage(args: Namespace, _: ErtRuntimePlugins | None = None) -> None:
@@ -506,6 +571,28 @@ def get_ert_parser(parser: ArgumentParser | None = None) -> ArgumentParser:
     workflow_parser.add_argument(help="Name of workflow", dest="name")
     workflow_parser.add_argument(
         "--ensemble", help="Which ensemble to use", default=None
+    )
+
+    # convert_observations_parser
+    convert_obs_parser = subparsers.add_parser(
+        "convert_observations",
+        help=(
+            "Convert HISTORY_OBSERVATION to SUMMARY_OBSERVATION and "
+            "remove REFCASE and TIME_MAP from ERT config."
+        ),
+        description=(
+            "Convert HISTORY_OBSERVATION to SUMMARY_OBSERVATION, "
+            "and embed REFCASE and TIME_MAP into observations"
+        ),
+    )
+    convert_obs_parser.set_defaults(func=run_convert_observations)
+    convert_obs_parser.add_argument(
+        "config",
+        type=valid_file,
+        help="Path to ERT config file",
+    )
+    convert_obs_parser.add_argument(
+        "--verbose", action="store_true", help="Show verbose output.", default=False
     )
 
     # Common arguments/defaults for all non-gui modes

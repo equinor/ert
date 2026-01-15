@@ -1,26 +1,29 @@
 import os
 from contextlib import suppress
+from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
 
 import hypothesis.extra.lark as stlark
 import pytest
 from hypothesis import given
+from resdata.summary import Summary
 
+from ert.__main__ import run_convert_observations
 from ert.config._observations import (
     GeneralObservation,
-    HistoryObservation,
     RFTObservation,
-    Segment,
     SummaryObservation,
     make_observations,
 )
+from ert.config.observation_config_migrations import HistoryObservation
 from ert.config.parsing import parse_observations
 from ert.config.parsing.observations_parser import (
     ObservationConfigError,
     ObservationType,
     observations_parser,
 )
+from ert.namespace import Namespace
 
 observation_contents = stlark.from_lark(observations_parser)
 
@@ -42,92 +45,123 @@ def test_parsing_contents_succeeds_or_gives_config_error(contents):
 def test_make_observations():
     Path("wpr_diff_idx.txt").write_text("", encoding="utf8")
     Path("wpr_diff_obs.txt").write_text("", encoding="utf8")
-    assert make_observations(
-        "",
-        [
-            ({"type": ObservationType.HISTORY, "name": "FOPR"}),
-            {
-                "type": ObservationType.SUMMARY,
-                "name": "WOPR_OP1_9",
-                "VALUE": "0.1",
-                "ERROR": "0.05",
-                "DATE": "2010-03-31",
-                "KEY": "WOPR:OP1",
-            },
-            {
-                "type": ObservationType.GENERAL,
-                "name": "WPR_DIFF_1",
-                "DATA": "SNAKE_OIL_WPR_DIFF",
-                "INDEX_LIST": "400,800,1200,1800",
-                "DATE": "2015-06-13",
-                "OBS_FILE": "wpr_diff_obs.txt",
-            },
-            {
-                "type": ObservationType.GENERAL,
-                "name": "WPR_DIFF_2",
-                "DATA": "SNAKE_OIL_WPR_DIFF",
-                "INDEX_FILE": "wpr_diff_idx.txt",
-                "DATE": "2015-06-13",
-                "OBS_FILE": "wpr_diff_obs.txt",
-            },
-            {
-                "type": ObservationType.HISTORY,
-                "name": "FWPR",
-                "ERROR": "0.1",
-                "segments": [("SEG", {"START": "1", "STOP": "0", "ERROR": "0.25"})],
-            },
-        ],
-    ) == [
-        HistoryObservation(
-            name="FOPR",
-            error_mode="RELMIN",
-            error=0.1,
-            error_min=0.1,
-            segments=[],
-        ),
-        SummaryObservation(
-            name="WOPR_OP1_9",
-            error_mode="ABS",
-            error=0.05,
-            error_min=0.1,
-            key="WOPR:OP1",
-            value=0.1,
-            date="2010-03-31",
-            location_x=None,
-            location_y=None,
-            location_range=None,
-        ),
-        GeneralObservation(
-            name="WPR_DIFF_1",
-            data="SNAKE_OIL_WPR_DIFF",
-            index_list="400,800,1200,1800",
-            date="2015-06-13",
-            obs_file="wpr_diff_obs.txt",
-        ),
-        GeneralObservation(
-            name="WPR_DIFF_2",
-            data="SNAKE_OIL_WPR_DIFF",
-            index_file="wpr_diff_idx.txt",
-            date="2015-06-13",
-            obs_file="wpr_diff_obs.txt",
-        ),
-        HistoryObservation(
-            name="FWPR",
-            error_mode="RELMIN",
-            error=0.1,
-            error_min=0.1,
-            segments=[
-                Segment(
-                    name="SEG",
-                    start=1,
-                    stop=0,
-                    error_mode="RELMIN",
-                    error=0.25,
-                    error_min=0.1,
-                ),
-            ],
-        ),
-    ]
+
+    obs_config_contents = dedent(
+        """
+        HISTORY_OBSERVATION FOPR {};
+
+        SUMMARY_OBSERVATION WOPR_OP1_9 {
+            VALUE = 0.1;
+            ERROR = 0.05;
+            DATE = 2010-03-31;
+            KEY = WOPR:OP1;
+        };
+
+        GENERAL_OBSERVATION WPR_DIFF_1 {
+            DATA = SNAKE_OIL_WPR_DIFF;
+            INDEX_LIST = 400,800,1200,1800;
+            DATE = 2015-06-13;
+            OBS_FILE = wpr_diff_obs.txt;
+        };
+
+        GENERAL_OBSERVATION WPR_DIFF_2 {
+            DATA = SNAKE_OIL_WPR_DIFF;
+            INDEX_FILE = wpr_diff_idx.txt;
+            DATE = 2015-06-13;
+            OBS_FILE = wpr_diff_obs.txt;
+        };
+
+        HISTORY_OBSERVATION FWPR {
+            ERROR = 0.1;
+            SEGMENT SEG {
+                START = 1;
+                STOP = 0;
+                ERROR = 0.25;
+            };
+        };
+        """
+    )
+
+    Path("obs_config").write_text(obs_config_contents, encoding="utf8")
+
+    # Create a simple refcase so the migration can read history values
+    summary = Summary.writer("MY_REFCASE", datetime(2000, 1, 1), 10, 10, 10)
+    summary.add_variable("FOPR", unit="SM3/DAY")
+    summary.add_variable("FOPRH", unit="SM3/DAY")
+    summary.add_variable("FWPR", unit="SM3/DAY")
+    summary.add_variable("FWPRH", unit="SM3/DAY")
+
+    # Create two timesteps: the explicit dates used in the test
+    start_date = datetime(2010, 3, 31)
+    # overwrite writer start date by recreating with desired start
+    summary = Summary.writer("MY_REFCASE", start_date, 10, 10, 10)
+    summary.add_variable("FOPR", unit="SM3/DAY")
+    summary.add_variable("FOPRH", unit="SM3/DAY")
+    summary.add_variable("FWPR", unit="SM3/DAY")
+    summary.add_variable("FWPRH", unit="SM3/DAY")
+
+    # first step: start_date (2010-03-31)
+    t0 = summary.addTStep(1, sim_days=0)
+    t0["FOPR"] = 1
+    t0["FOPRH"] = 2
+    t0["FWPR"] = 3
+    t0["FWPRH"] = 4
+
+    # second step: 2015-06-13
+    second_date = datetime(2015, 6, 13)
+    days_between = (second_date - start_date).days
+    t1 = summary.addTStep(1, sim_days=days_between)
+    t1["FOPR"] = 1
+    t1["FOPRH"] = 2
+    t1["FWPR"] = 3
+    t1["FWPRH"] = 4
+
+    summary.fwrite()
+
+    config_content = dedent(
+        """
+        NUM_REALIZATIONS 1
+        ECLBASE BASEBASEBASE
+        REFCASE MY_REFCASE
+        SUMMARY *
+        GEN_DATA GEN RESULT_FILE:gen%%d.txt REPORT_STEPS:1
+        OBS_CONFIG obs_config
+        """
+    )
+    Path("config.ert").write_text(config_content, encoding="utf8")
+
+    run_convert_observations(Namespace(config="config.ert"))
+
+    # Re-parse the migrated obs_config and build the observation objects
+    migrated_contents = Path("obs_config").read_text(encoding="utf8")
+    parsed = parse_observations(migrated_contents, "obs_config")
+    observations = make_observations(os.path.dirname("obs_config"), parsed)
+
+    # Validate migrated observations contain expected entries and values
+    names = [getattr(o, "name", None) for o in observations]
+    assert "WOPR_OP1_9" in names
+    assert "WPR_DIFF_1" in names
+    assert "WPR_DIFF_2" in names
+    assert "FOPR" in names
+    assert "FWPR" in names
+
+    # Check specific properties
+    wopr = next(o for o in observations if getattr(o, "name", None) == "WOPR_OP1_9")
+    assert isinstance(wopr, SummaryObservation)
+    assert wopr.value == 0.1
+    assert wopr.key == "WOPR:OP1"
+    assert wopr.date == "2010-03-31"
+
+    wpr1 = next(o for o in observations if getattr(o, "name", None) == "WPR_DIFF_1")
+    assert isinstance(wpr1, GeneralObservation)
+    # Migration converts DATE -> RESTART, so accept either a date string or a restart
+    assert wpr1.restart == 1
+    assert wpr1.obs_file.endswith("wpr_diff_obs.txt")
+
+    wpr2 = next(o for o in observations if getattr(o, "name", None) == "WPR_DIFF_2")
+    assert isinstance(wpr2, GeneralObservation)
+    assert wpr2.restart == 1
+    assert wpr2.obs_file.endswith("wpr_diff_obs.txt")
 
 
 def test_rft_observation_declaration():
@@ -374,33 +408,35 @@ def test_that_missing_columns_in_rft_observations_file_raises_error():
     )
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_that_multiple_segments_are_collected():
-    observations = make_and_parse_observations(
-        """
-  HISTORY_OBSERVATION GWIR:FIELD
-  {
-     ERROR       = 0.20;
-     ERROR_MODE  = RELMIN;
-     ERROR_MIN   = 100;
+    obs_config_str = """
+      HISTORY_OBSERVATION GWIR:FIELD
+      {
+         ERROR       = 0.20;
+         ERROR_MODE  = RELMIN;
+         ERROR_MIN   = 100;
 
-     SEGMENT FIRST_YEAR
-     {
-        START = 0;
-        STOP  = 10;
-        ERROR = 0.50;
-        ERROR_MODE = REL;
-     };
+         SEGMENT FIRST_YEAR
+         {
+            START = 0;
+            STOP  = 10;
+            ERROR = 0.50;
+            ERROR_MODE = REL;
+         };
 
-     SEGMENT SECOND_YEAR
-     {
-        START      = 11;
-        STOP       = 20;
-        ERROR      = 1000;
-        ERROR_MODE = ABS;
-     };
-  };
-            """,
-        "",
-    )
+         SEGMENT SECOND_YEAR
+         {
+            START      = 11;
+            STOP       = 20;
+            ERROR      = 1000;
+            ERROR_MODE = ABS;
+         };
+      };
+    """
+
+    Path("obs_config.txt").write_text(obs_config_str, encoding="utf8")
+    parsed_obs_dict = parse_observations(obs_config_str, "obs_config.txt")
+    observations = HistoryObservation.from_obs_dict("", parsed_obs_dict[0])
 
     assert len(observations[0].segments) == 2

@@ -39,7 +39,6 @@ Keyword name                                                            Required
 :ref:`GEN_DATA <gen_data>`                                              NO                                                                      Specify a general type of data created/updated by the forward model
 :ref:`GEN_KW <gen_kw>`                                                  NO                                                                      Add a scalar parameter
 :ref:`GRID <grid>`                                                      NO                                                                      Provide an ECLIPSE grid for the reservoir model
-:ref:`HISTORY_SOURCE <history_source>`                                  NO                                      REFCASE_HISTORY                 Source used for historical values
 :ref:`HOOK_WORKFLOW <hook_workflow>`                                    NO                                                                      Install a workflow to be run automatically
 :ref:`INCLUDE <include>`                                                NO                                                                      Include contents from another ert config
 :ref:`INSTALL_JOB <install_job>`                                        NO                                                                      Install a job for use in a forward model
@@ -60,7 +59,6 @@ Keyword name                                                            Required
 :ref:`QUEUE_OPTION <queue_option>`                                      NO                                                                      Set options for an ERT queue system
 :ref:`QUEUE_SYSTEM <queue_system>`                                      NO                                      LOCAL_DRIVER                    System used for running simulation jobs
 :ref:`REALIZATION_MEMORY <realization_memory>`                          NO                                                                      Set the expected memory requirements for a realization
-:ref:`REFCASE <refcase>`                                                NO                                                                      Reference case used for observations and plotting (See HISTORY_SOURCE and SUMMARY)
 :ref:`RUNPATH <runpath>`                                                NO                                      realization-<IENS>/iter-<ITER>  Directory to run simulations; simulations/realization-<IENS>/iter-<ITER>
 :ref:`RUNPATH_FILE <runpath_file>`                                      NO                                      .ert_runpath_list               Name of file with path for all forward models that ERT has run. To be used by user defined scripts to find the realizations
 :ref:`RUN_TEMPLATE <run_template>`                                      NO                                                                      Install arbitrary files in the runpath directory
@@ -69,7 +67,6 @@ Keyword name                                                            Required
 :ref:`SUBMIT_SLEEP  <submit_sleep>`                                     NO                                      0.0                             Determines for how long in seconds the system will sleep between submitting jobs.
 :ref:`SUMMARY  <summary>`                                               NO                                                                      Add summary vectors for internalization
 :ref:`SURFACE <surface>`                                                NO                                                                      Surface parameter read from RMS IRAP file
-:ref:`TIME_MAP  <time_map>`                                             NO                                                                      Ability to manually enter a list of dates to establish report step <-> dates mapping
 :ref:`UPDATE_LOG_PATH  <update_log_path>`                               NO                                      update_log                      Summary of the update steps are stored in this directory
 :ref:`WORKFLOW_JOB_DIRECTORY  <workflow_job_directory>`                 NO                                                                      Directory containing workflow jobs
 =====================================================================   ======================================  ==============================  ==============================================================================================================================================
@@ -554,83 +551,6 @@ ENSPATH is set to "storage".
 
 The ENSPATH keyword is optional.
 
-
-.. _history_source:
-
-HISTORY_SOURCE
---------------
-
-In the observation configuration file you can enter
-observations with the keyword HISTORY_OBSERVATION; this means
-that ERT will extract observed values from the model
-historical summary vectors of the reference case. What source
-to use for the  historical values can be controlled with the
-HISTORY_SOURCE keyword. The different possible values for the
-HISTORY_SOURCE keyword are:
-
-
-REFCASE_HISTORY
-        This is the default value for HISTORY_SOURCE,
-        ERT will fetch the historical values from the *xxxH*
-        keywords in the refcase summary, e.g. observations of
-        WGOR:OP_1 is based the WGORH:OP_1 vector from the
-        refcase summary.
-
-REFCASE_SIMULATED
-        In this case the historical values are based on the
-        simulated values from the refcase, this is mostly relevant when you want
-        compare with another case which serves as 'the truth'.
-
-When setting HISTORY_SOURCE to either REFCASE_SIMULATED or REFCASE_HISTORY you
-must also set the REFCASE variable to point to the ECLIPSE data file in an
-existing reference case (should be created with the same schedule file as you
-are using now).
-
-*Example:*
-
-::
-
-        -- Use historic data from reference case
-        HISTORY_SOURCE  REFCASE_HISTORY
-        REFCASE         /somefolder/ECLIPSE.DATA
-
-The HISTORY_SOURCE keyword is optional.
-
-.. _refcase:
-
-REFCASE
--------
-
-The REFCASE key is used to provide ERT an existing ECLIPSE simulation
-from which it can read various information at startup. The intention is
-to ease the configuration needs for the user. Functionality provided with the
-refcase:
-
-* extract observed values from the refcase using the
-  :ref:`HISTORY_OBSERVATION <HISTORY_OBSERVATION>` and
-  :ref:`HISTORY_SOURCE <HISTORY_SOURCE>` keys.
-
-
-The REFCASE keyword should point to an existing ECLIPSE simulation;
-ert will then look up and load the corresponding summary results.
-
-*Example:*
-
-::
-
-        -- The REFCASE keyword points to the datafile of an existing ECLIPSE simulation.
-        REFCASE /path/to/somewhere/SIM_01_BASE.DATA
-
-
-The refcase is used when loading HISTORY_OBSERVATION and in some scenarios when using SUMMARY_OBSERVATION.
-With HISTORY_OBSERVATION the values are read directly from the REFCASE. When using
-SUMMARY_OBSERVATION the REFCASE is not strictly required. If using DATE in the observation
-configuration the REFCASE can be omitted, and the observation will be compared with the summary
-response configured with ECLBASE. If REFCASE is provided it will validated that the DATE
-exists in the REFCASE, and if there is a mismatch a configuration error will be raised.
-If using HOURS, DAYS, or RESTART in the observation configuration, the REFCASE is required and will
-be used to look up the date of the observation in the REFCASE.
-
 .. _install_job:
 
 INSTALL_JOB
@@ -683,9 +603,6 @@ OBS_CONFIG
 The OBS_CONFIG key should point to a file defining observations and associated
 uncertainties. The file should be in plain text and formatted according to the
 guidelines given in :ref:`Creating an observation file for use with ERT<Configuring_observations_for_ERT>`.
-
-If you include HISTORY_OBSERVATION in the observation file, you must
-provide a reference Eclipse case through the REFCASE keyword.
 
 *Example:*
 
@@ -1793,35 +1710,6 @@ the internals of ERT and/or ECLIPSE may
 be required to fully understand their effect. Moreover, many of these keywords
 are defined in the site configuration, and thus optional to set for the user,
 but required when installing ERT at a new site.
-
-.. _time_map:
-
-TIME_MAP
---------
-
-Normally the mapping between report steps and true dates is inferred by
-ERT indirectly by loading the ECLIPSE summary files. In cases where you
-do not have any ECLIPSE summary files you can use the TIME_MAP keyword
-to specify a file with dates which are used to establish this mapping.
-This is only needed in cases where GEN_OBSERVATION is used with the
-DATE keyword, or cases with SUMMARY observations without REFCASE.
-
-*Example:*
-
-::
-
-        -- Load a list of dates from external file: "time_map.txt"
-        TIME_MAP time_map.txt
-
-The format of the TIME_MAP file should just be a list of dates formatted as
-YYYY-MM-DD. The example file below has four dates:
-
-::
-
-        2000-01-01
-        2000-07-01
-        2001-01-01
-        2001-07-01
 
 .. _keywords_related_to_running_the_forward_model:
 

@@ -1,11 +1,11 @@
 import hashlib
 import json
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 
 import pytest
 from py import path
 
-from ert.__main__ import ert_parser
+from ert.__main__ import ert_parser, run_convert_observations
 from ert.cli.main import run_cli
 from ert.mode_definitions import ENSEMBLE_EXPERIMENT_MODE
 
@@ -75,6 +75,7 @@ def template_config(request, source_root, tmp_path_factory):
     else:
         poly_folder = make_poly_template(template_dir, source_root, **params)
         params["folder"] = poly_folder
+        run_convert_observations(Namespace(config=str(poly_folder / "poly.ert")))
 
         with poly_folder.as_cwd():
             parser = ArgumentParser(prog="test_main")

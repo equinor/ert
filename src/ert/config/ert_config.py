@@ -7,7 +7,6 @@ import pprint
 import re
 from collections import Counter, defaultdict
 from collections.abc import Mapping
-from datetime import datetime
 from functools import cached_property
 from os import path
 from pathlib import Path
@@ -23,7 +22,6 @@ from ert.substitutions import Substitutions
 from ._create_observation_dataframes import create_observation_dataframes
 from ._design_matrix_validator import DesignMatrixValidator
 from ._observations import (
-    HistoryObservation,
     Observation,
     RFTObservation,
     SummaryObservation,
@@ -52,7 +50,6 @@ from .parsing import (
     ConfigWarning,
     ErrorInfo,
     ForwardModelStepKeys,
-    HistorySource,
     HookRuntime,
     ObservationConfigError,
     init_forward_model_schema,
@@ -62,7 +59,6 @@ from .parsing import (
 )
 from .parsing.observations_parser import ObservationDict
 from .queue_config import KnownQueueOptions, QueueConfig
-from .refcase import Refcase
 from .rft_config import RFTConfig
 from .workflow import Workflow
 from .workflow_fixtures import fixtures_per_hook
@@ -102,23 +98,6 @@ def _seed_sequence(seed: int | None) -> int:
         int_seed = seed
     assert isinstance(int_seed, int)
     return int_seed
-
-
-def _read_time_map(file_contents: str) -> list[datetime]:
-    def str_to_datetime(date_str: str) -> datetime:
-        try:
-            return datetime.fromisoformat(date_str)
-        except ValueError:
-            logger.warning(
-                "DD/MM/YYYY date format is deprecated"
-                ", please use ISO date format YYYY-MM-DD."
-            )
-            return datetime.strptime(date_str, "%d/%m/%Y")
-
-    dates = []
-    for line in file_contents.splitlines():
-        dates.append(str_to_datetime(line.strip()))
-    return dates
 
 
 def create_forward_model_json(
@@ -688,14 +667,6 @@ def log_observation_keys(
         if key not in {"name", "type"}
     )
 
-    if "HISTORY_OBSERVATION" in observation_type_counts:
-        msg = (
-            "HISTORY_OBSERVATION is deprecated and will be removed. "
-            "Please use SUMMARY_OBSERVATION instead."
-        )
-        ConfigWarning.warn(msg)
-        logger.warning(msg)
-
     logger.info(
         f"Count of observation types:\n\t{dict(observation_type_counts)}\n"
         f"Count of observation keywords:\n\t{dict(observation_keyword_counts)}"
@@ -741,9 +712,6 @@ class ErtConfig(BaseModel):
     user_config_file: str = "no_config"
     config_path: str = Field(init=False, default="")
     observation_declarations: list[Observation] = Field(default_factory=list)
-    time_map: list[datetime] | None = None
-    history_source: HistorySource = HistorySource.REFCASE_HISTORY
-    refcase: Refcase | None = None
     _observations: dict[str, pl.DataFrame] | None = PrivateAttr(None)
 
     @property
@@ -763,7 +731,6 @@ class ErtConfig(BaseModel):
                 )
             computed = create_observation_dataframes(
                 self.observation_declarations,
-                self.refcase,
                 cast(
                     GenDataConfig | None,
                     self.ensemble_config.response_configs.get("gen_data", None),
@@ -772,8 +739,6 @@ class ErtConfig(BaseModel):
                     RFTConfig | None,
                     self.ensemble_config.response_configs.get("rft", None),
                 ),
-                self.time_map,
-                self.history_source,
             )
             self._observations = computed
             return computed
@@ -1029,7 +994,7 @@ class ErtConfig(BaseModel):
                 summary_obs = {
                     obs.key
                     for obs in obs_configs
-                    if isinstance(obs, HistoryObservation | SummaryObservation)
+                    if isinstance(obs, SummaryObservation)
                 }
                 if summary_obs:
                     summary_keys = ErtConfig._read_summary_keys(config_dict)
@@ -1037,16 +1002,6 @@ class ErtConfig(BaseModel):
                         [key] for key in summary_obs if key not in summary_keys
                     ]
             ensemble_config = EnsembleConfig.from_dict(config_dict=config_dict)
-            time_map = None
-            if time_map_args := config_dict.get(ConfigKeys.TIME_MAP):
-                time_map_file, time_map_contents = time_map_args
-                try:
-                    time_map = _read_time_map(time_map_contents)
-                except ValueError as err:
-                    raise ConfigValidationError.with_context(
-                        f"Could not read timemap file {time_map_file}: {err}",
-                        time_map_file,
-                    ) from err
         except ConfigValidationError as err:
             errors.append(err)
         except PydanticValidationError as err:
@@ -1099,9 +1054,6 @@ class ErtConfig(BaseModel):
 
         env_vars = {}
         substituter = Substitutions(substitutions)
-        history_source = config_dict.get(
-            ConfigKeys.HISTORY_SOURCE, HistorySource.REFCASE_HISTORY
-        )
 
         # Insert env vars from plugins/site config
         for key, val in cls.ENV_VARS.items():
@@ -1137,7 +1089,6 @@ class ErtConfig(BaseModel):
                 prioritize_private_ip_address = user_prioritize_private_ip_address
 
         try:
-            refcase = Refcase.from_config_dict(config_dict)
             cls_config = cls(
                 substitutions=substitutions,
                 ensemble_config=ensemble_config,
@@ -1159,9 +1110,6 @@ class ErtConfig(BaseModel):
                 runpath_config=model_config,
                 user_config_file=config_file_path,
                 observation_declarations=list(obs_configs),
-                time_map=time_map,
-                history_source=history_source,
-                refcase=refcase,
                 prioritize_private_ip_address=prioritize_private_ip_address,
             )
 
@@ -1179,7 +1127,6 @@ class ErtConfig(BaseModel):
                 )
             cls_config._observations = create_observation_dataframes(
                 obs_configs,
-                refcase,
                 cast(
                     GenDataConfig | None,
                     ensemble_config.response_configs.get("gen_data", None),
@@ -1188,8 +1135,6 @@ class ErtConfig(BaseModel):
                     RFTConfig | None,
                     ensemble_config.response_configs.get("rft", None),
                 ),
-                time_map,
-                history_source,
             )
         except PydanticValidationError as err:
             raise ConfigValidationError.from_pydantic(err) from err
