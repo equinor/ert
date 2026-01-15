@@ -223,9 +223,12 @@ class _EnsembleWidget(QWidget):
             return
 
         observation_key = selected.data(1, Qt.ItemDataRole.DisplayRole)
-        if not observation_key:
+        parent = selected.parent()
+
+        if not observation_key or not parent:
             return
 
+        response_type = parent.data(0, Qt.ItemDataRole.UserRole)
         observation_label = selected.data(0, Qt.ItemDataRole.DisplayRole)
         assert self._ensemble is not None
         observations_dict = self._ensemble.experiment.observations
@@ -235,17 +238,7 @@ class _EnsembleWidget(QWidget):
         ax.set_title(observation_key)
         ax.grid(True)
 
-        response_type, obs_for_type = next(
-            (
-                (response_type, df)
-                for response_type, df in observations_dict.items()
-                if observation_key in df["observation_key"]
-            ),
-            (None, None),
-        )
-
-        assert response_type is not None
-        assert obs_for_type is not None
+        obs_for_type = observations_dict[response_type]
 
         response_config = self._ensemble.experiment.response_configuration[
             response_type
@@ -377,14 +370,23 @@ class _EnsembleWidget(QWidget):
                     .to_numpy()
                 ):
                     match_list = self._observations_tree_widget.findItems(
-                        response_key, Qt.MatchFlag.MatchExactly
+                        response_key, Qt.MatchFlag.MatchExactly, 0
                     )
-                    if len(match_list) == 0:
+
+                    root = next(
+                        (
+                            item
+                            for item in match_list
+                            if item.data(0, Qt.ItemDataRole.UserRole) == response_type
+                        ),
+                        None,
+                    )
+
+                    if root is None:
                         root = QTreeWidgetItem(
                             self._observations_tree_widget, [response_key]
                         )
-                    else:
-                        root = match_list[0]
+                        root.setData(0, Qt.ItemDataRole.UserRole, response_type)
 
                     obs_ds = obs_ds_for_type.filter(
                         pl.col("observation_key").eq(obs_key)
@@ -400,9 +402,7 @@ class _EnsembleWidget(QWidget):
                             ],
                         )
 
-                    self._observations_tree_widget.sortItems(
-                        0, Qt.SortOrder.AscendingOrder
-                    )
+            self._observations_tree_widget.sortItems(0, Qt.SortOrder.AscendingOrder)
 
             for i in range(self._observations_tree_widget.topLevelItemCount()):
                 item = self._observations_tree_widget.topLevelItem(i)
