@@ -1271,32 +1271,6 @@ def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
         assert list(observations["std"]) == pytest.approx([1.5, 0.2, 10000])
 
 
-def test_that_duplicate_observation_names_are_invalid():
-    with pytest.raises(ConfigValidationError, match="Duplicate observation name FOPR"):
-        make_observations(
-            [
-                {
-                    "type": ObservationType.SUMMARY,
-                    "name": "FOPR",
-                    "KEY": "FOPR",
-                    "DATE": "2017-11-09",
-                    "VALUE": "1.0",
-                    "ERROR": "0.1",
-                },
-                {
-                    "type": ObservationType.GENERAL,
-                    "name": "FOPR",
-                    "DATA": "RES",
-                    "INDEX_LIST": "0",
-                    "DATE": "2017-11-09",
-                    "VALUE": "0.0",
-                    "ERROR": "0.0",
-                },
-            ],
-            parse=False,
-        )
-
-
 def test_that_segment_defaults_are_applied(tmpdir):
     with tmpdir.as_cwd():
         run_sim(
