@@ -20,7 +20,6 @@ from resfo_utilities.testing import (
     Date,
     EGrid,
     Smspec,
-    Unsmry,
     egrids,
     smspecs,
     summary_variables,
@@ -29,7 +28,6 @@ from resfo_utilities.testing import (
 from ert.config.field import TRANSFORM_FUNCTIONS
 from ert.config.parsing import (
     ConfigKeys,
-    HistorySource,
     QueueSystem,
     parse_observations,
 )
@@ -42,13 +40,11 @@ from ert.config.queue_config import (
 
 from .observations_generator import (
     GeneralObservation,
-    HistoryObservation,
     Observation,
     SummaryObservation,
     as_obs_config_content,
     observations,
 )
-from .summary_generator import unsmrys
 
 # Exclude SCRIPT because it is used as folder-name in
 # generate_files_and_dict
@@ -290,10 +286,7 @@ class ErtConfigValues:
     jobname: str | None
     runpath: str
     enspath: str
-    time_map: tuple[str, str]
     obs_config: str
-    history_source: HistorySource
-    refcase: str
     gen_kw_export_name: str
     field: list[tuple[str, str, str, dict[str, str]]]
     gen_data: list[tuple[str, dict[str, str]]]
@@ -308,8 +301,6 @@ class ErtConfigValues:
     random_seed: int
     setenv: list[tuple[str, str]]
     observations: list[Observation]
-    refcase_smspec: Smspec
-    refcase_unsmry: Unsmry
     egrid: EGrid
 
     def to_config_dict(self, config_file, cwd, all_defines=True):
@@ -332,7 +323,6 @@ class ErtConfigValues:
             ConfigKeys.GRID: self.grid_file,
             ConfigKeys.RUNPATH: self.runpath,
             ConfigKeys.ENSPATH: self.enspath,
-            ConfigKeys.TIME_MAP: self.time_map,
             ConfigKeys.OBS_CONFIG: (
                 self.obs_config,
                 parse_observations(
@@ -340,8 +330,6 @@ class ErtConfigValues:
                     config_file,
                 ),
             ),
-            ConfigKeys.HISTORY_SOURCE: self.history_source,
-            ConfigKeys.REFCASE: self.refcase,
             ConfigKeys.GEN_KW_EXPORT_NAME: self.gen_kw_export_name,
             ConfigKeys.FIELD: self.field,
             ConfigKeys.GEN_DATA: self.gen_data,
@@ -455,21 +443,9 @@ def ert_config_values(draw, use_eclbase=booleans):
             start_date=first_date,
         )
     )
-    need_eclbase = any(
-        isinstance(val, HistoryObservation | SummaryObservation) for val in obs
-    )
+    need_eclbase = any(isinstance(val, SummaryObservation) for val in obs)
     use_eclbase = draw(use_eclbase) if not need_eclbase else True
-    dates = _observation_dates(obs, first_date)
-    time_diffs = [d - first_date for d in dates]
-    time_diff_floats = [diff.total_seconds() / (3600 * 24) for diff in time_diffs]
-    unsmry = draw(
-        unsmrys(
-            len(sum_keys),
-            report_steps=st.just(list(range(1, len(dates) + 1))),
-            mini_steps=st.just(list(range(len(dates) + 1))),
-            days=st.just(time_diff_floats),
-        )
-    )
+
     return draw(
         st.builds(
             ErtConfigValues,
@@ -503,13 +479,7 @@ def ert_config_values(draw, use_eclbase=booleans):
             ),
             runpath=st.just("runpath-" + draw(format_runpath_file_name)),
             enspath=st.just(draw(words) + ".enspath"),
-            time_map=st.tuples(
-                st.builds(lambda fn: fn + ".timemap", file_names),
-                st.just("\n".join(dt.date().isoformat() for dt in dates)),
-            ),
             obs_config=st.just("obs-config-" + draw(file_names)),
-            history_source=st.just(HistorySource.REFCASE_SIMULATED),
-            refcase=st.just("refcase/" + draw(file_names)),
             gen_kw_export_name=st.just("gen-kw-export-name-" + draw(file_names)),
             field=small_list(
                 st.tuples(
@@ -547,8 +517,6 @@ def ert_config_values(draw, use_eclbase=booleans):
             random_seed=st.integers(),
             setenv=small_list(st.tuples(words, words)),
             observations=st.just(obs),
-            refcase_smspec=st.just(smspec),
-            refcase_unsmry=st.just(unsmry),
             egrid=egrids,
         )
     )
@@ -654,7 +622,6 @@ def config_generators(draw, use_eclbase=booleans):
     should_exist_files.extend(
         [
             config_values.data_file,
-            config_values.time_map[0],
             config_values.obs_config,
         ]
     )
@@ -731,17 +698,7 @@ def config_generators(draw, use_eclbase=booleans):
                     encoding="utf-8",
                 )
 
-            summary_basename = os.path.splitext(
-                os.path.basename(config_values.refcase)
-            )[0]
-            with contextlib.suppress(FileExistsError):
-                os.mkdir("./refcase")
-            config_values.refcase_smspec.to_file(f"./refcase/{summary_basename}.SMSPEC")
-            config_values.refcase_unsmry.to_file(f"./refcase/{summary_basename}.UNSMRY")
             config_values.egrid.to_file(config_values.grid_file)
-            Path(config_values.time_map[0]).write_text(
-                config_values.time_map[1], encoding="utf-8"
-            )
 
             if config_file_name is not None:
                 to_config_file(config_file_name, config_values)
@@ -813,7 +770,7 @@ def to_config_file(filename, config_values):
                     + (f" {setting[2]}\n" if len(setting) == 3 else "\n")
                     for setting in keyword_value
                 )
-            elif keyword in {ConfigKeys.TIME_MAP, ConfigKeys.OBS_CONFIG}:
+            elif keyword == ConfigKeys.OBS_CONFIG:
                 config.write(f"{keyword} {keyword_value[0]}\n")
             elif keyword == ConfigKeys.INSTALL_JOB:
                 config.writelines(

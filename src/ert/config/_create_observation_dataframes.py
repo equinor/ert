@@ -3,18 +3,17 @@ from __future__ import annotations
 from collections import defaultdict
 from collections.abc import Sequence
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, Any, assert_never
+from typing import Any, assert_never
 
 import numpy as np
 import polars as pl
-from resfo_utilities import history_key
+from numpy import typing as npt
 
 from ert.validation import rangestring_to_list
 
 from ._observations import (
     ErrorModes,
     GeneralObservation,
-    HistoryObservation,
     Observation,
     ObservationDate,
     ObservationError,
@@ -25,59 +24,31 @@ from .gen_data_config import GenDataConfig
 from .parsing import (
     ConfigWarning,
     ErrorInfo,
-    HistorySource,
     ObservationConfigError,
 )
-from .refcase import Refcase
 from .rft_config import RFTConfig
 
-if TYPE_CHECKING:
-    import numpy.typing as npt
-
-
-DEFAULT_TIME_DELTA = timedelta(seconds=30)
 DEFAULT_LOCATION_RANGE_M = 3000
 
 
 def create_observation_dataframes(
     observations: Sequence[Observation],
-    refcase: Refcase | None,
     gen_data_config: GenDataConfig | None,
     rft_config: RFTConfig | None,
-    time_map: list[datetime] | None,
-    history: HistorySource,
 ) -> dict[str, pl.DataFrame]:
     if not observations:
         return {}
-    obs_time_list: list[datetime] = []
-    if refcase is not None:
-        obs_time_list = refcase.all_dates
-    elif time_map is not None:
-        obs_time_list = time_map
 
-    time_len = len(obs_time_list)
     config_errors: list[ErrorInfo] = []
     grouped: dict[str, list[pl.DataFrame]] = defaultdict(list)
     for obs in observations:
         try:
             match obs:
-                case HistoryObservation():
-                    grouped["summary"].append(
-                        _handle_history_observation(
-                            refcase,
-                            obs,
-                            obs.name,
-                            history,
-                            time_len,
-                        )
-                    )
                 case SummaryObservation():
                     grouped["summary"].append(
                         _handle_summary_observation(
                             obs,
                             obs.name,
-                            obs_time_list,
-                            bool(refcase),
                         )
                     )
                 case GeneralObservation():
@@ -86,8 +57,6 @@ def create_observation_dataframes(
                             gen_data_config,
                             obs,
                             obs.name,
-                            obs_time_list,
-                            bool(refcase),
                         )
                     )
                 case RFTObservation():
@@ -116,97 +85,6 @@ def create_observation_dataframes(
 
             datasets[name] = ds
     return datasets
-
-
-def _handle_error_mode(
-    values: npt.ArrayLike,
-    error_dict: ObservationError,
-) -> npt.NDArray[np.double]:
-    values = np.asarray(values)
-    error_mode = error_dict.error_mode
-    error_min = error_dict.error_min
-    error = error_dict.error
-    match error_mode:
-        case ErrorModes.ABS:
-            return np.full(values.shape, error)
-        case ErrorModes.REL:
-            return np.abs(values) * error
-        case ErrorModes.RELMIN:
-            return np.maximum(np.abs(values) * error, np.full(values.shape, error_min))
-        case default:
-            assert_never(default)
-
-
-def _handle_history_observation(
-    refcase: Refcase | None,
-    history_observation: HistoryObservation,
-    summary_key: str,
-    history_type: HistorySource,
-    time_len: int,
-) -> pl.DataFrame:
-    if refcase is None:
-        raise ObservationConfigError.with_context(
-            "REFCASE is required for HISTORY_OBSERVATION", summary_key
-        )
-
-    if history_type == HistorySource.REFCASE_HISTORY:
-        local_key = history_key(summary_key)
-    else:
-        local_key = summary_key
-    if local_key not in refcase.keys:
-        raise ObservationConfigError.with_context(
-            f"Key {local_key!r} is not present in refcase", summary_key
-        )
-    values = refcase.values[refcase.keys.index(local_key)]
-    std_dev = _handle_error_mode(values, history_observation)
-    for segment in history_observation.segments:
-        start = segment.start
-        stop = segment.stop
-        if start < 0:
-            ConfigWarning.warn(
-                f"Segment {segment.name} out of bounds."
-                " Truncating start of segment to 0.",
-                segment.name,
-            )
-            start = 0
-        if stop >= time_len:
-            ConfigWarning.warn(
-                f"Segment {segment.name} out of bounds. Truncating"
-                f" end of segment to {time_len - 1}.",
-                segment.name,
-            )
-            stop = time_len - 1
-        if start > stop:
-            ConfigWarning.warn(
-                f"Segment {segment.name} start after stop. Truncating"
-                f" end of segment to {start}.",
-                segment.name,
-            )
-            stop = start
-        if np.size(std_dev[start:stop]) == 0:
-            ConfigWarning.warn(
-                f"Segment {segment.name} does not"
-                " contain any time steps. The interval "
-                f"[{start}, {stop}) does not intersect with steps in the"
-                "time map.",
-                segment.name,
-            )
-        std_dev[start:stop] = _handle_error_mode(values[start:stop], segment)
-    dates_series = pl.Series(refcase.dates).dt.cast_time_unit("ms")
-    if (std_dev <= 0).any():
-        raise ObservationConfigError.with_context(
-            "Observation uncertainty must be strictly > 0", summary_key
-        ) from None
-
-    return pl.DataFrame(
-        {
-            "response_key": summary_key,
-            "observation_key": summary_key,
-            "time": dates_series,
-            "observations": pl.Series(values, dtype=pl.Float32),
-            "std": pl.Series(std_dev, dtype=pl.Float32),
-        }
-    )
 
 
 def _get_time(
@@ -241,59 +119,6 @@ def _parse_date(date_str: str) -> datetime:
                 date_str,
             )
             return date
-
-
-def _find_nearest(
-    time_map: list[datetime],
-    time: datetime,
-    threshold: timedelta = DEFAULT_TIME_DELTA,
-) -> int:
-    nearest_index = -1
-    nearest_diff = None
-    for i, t in enumerate(time_map):
-        diff = abs(time - t)
-        if diff < threshold and (nearest_diff is None or nearest_diff > diff):
-            nearest_diff = diff
-            nearest_index = i
-    if nearest_diff is None:
-        raise IndexError(f"{time} is not in the time map")
-    return nearest_index
-
-
-def _get_restart(
-    date_dict: ObservationDate,
-    obs_name: str,
-    time_map: list[datetime],
-    has_refcase: bool,
-) -> int:
-    if date_dict.restart is not None:
-        return date_dict.restart
-    if not time_map:
-        raise ObservationConfigError.with_context(
-            f"Missing REFCASE or TIME_MAP for observations: {obs_name}",
-            obs_name,
-        )
-
-    time, date_str = _get_time(date_dict, time_map[0], context=obs_name)
-
-    try:
-        return _find_nearest(time_map, time)
-    except IndexError as err:
-        raise ObservationConfigError.with_context(
-            f"Could not find {time} ({date_str}) in "
-            f"the time map for observations {obs_name}. "
-            + (
-                "The time map is set from the REFCASE keyword. Either "
-                "the REFCASE has an incorrect/missing date, or the observation "
-                "is given an incorrect date.)"
-                if has_refcase
-                else "(The time map is set from the TIME_MAP "
-                "keyword. Either the time map file has an "
-                "incorrect/missing date, or the observation is given an "
-                "incorrect date."
-            ),
-            obs_name,
-        ) from err
 
 
 def _has_localization(summary_dict: SummaryObservation) -> bool:
@@ -336,35 +161,24 @@ def _validate_localization_values(summary_dict: SummaryObservation) -> None:
 def _handle_summary_observation(
     summary_dict: SummaryObservation,
     obs_key: str,
-    time_map: list[datetime],
-    has_refcase: bool,
 ) -> pl.DataFrame:
     summary_key = summary_dict.key
     value = summary_dict.value
     std_dev = float(_handle_error_mode(np.array(value), summary_dict))
 
-    if summary_dict.restart and not (time_map or has_refcase):
+    if summary_dict.restart is not None:
         raise ObservationConfigError.with_context(
-            "Keyword 'RESTART' requires either TIME_MAP or REFCASE", context=obs_key
+            (
+                "Keyword 'RESTART' is deprecated, please use DATE instead. Run"
+                " ert convert_observations <ert_config.ert> to convert your "
+                "observations automatically"
+            ),
+            context=obs_key,
         )
 
-    if summary_dict.date is not None and not time_map:
-        # We special case when the user has provided date in SUMMARY_OBS
-        # and not REFCASE or time_map so that we don't change current behavior.
-        date = _parse_date(summary_dict.date)
-        restart = None
-    else:
-        restart = _get_restart(summary_dict, obs_key, time_map, has_refcase)
-        date = time_map[restart]
+    assert summary_dict.date is not None
+    date = _parse_date(summary_dict.date)
 
-    if restart == 0:
-        raise ObservationConfigError.with_context(
-            "It is unfortunately not possible to use summary "
-            "observations from the start of the simulation. "
-            f"Problem with observation {obs_key}"
-            f"{' at ' + str(_get_time(summary_dict, time_map[0], obs_key)) if summary_dict.restart is None else ''}",  # noqa: E501
-            obs_key,
-        )
     if std_dev <= 0:
         raise ObservationConfigError.with_context(
             "Observation uncertainty must be strictly > 0", summary_key
@@ -393,20 +207,17 @@ def _handle_general_observation(
     gen_data_config: GenDataConfig | None,
     general_observation: GeneralObservation,
     obs_key: str,
-    time_map: list[datetime],
-    has_refcase: bool,
 ) -> pl.DataFrame:
     response_key = general_observation.data
-
-    if all(
-        getattr(general_observation, key) is None
-        for key in ["restart", "date", "days", "hours"]
-    ):
-        # The user has not provided RESTART or DATE, this is legal
-        # for GEN_DATA, so we default it to None
-        restart = None
-    else:
-        restart = _get_restart(general_observation, obs_key, time_map, has_refcase)
+    if general_observation.date is not None:
+        raise ObservationConfigError.with_context(
+            (
+                "GENERAL_OBSERVATION must use RESTART to specify report step."
+                "Please run ert convert_observations <your_ert_config.ert> to migrate "
+                "the observation config to use the correct format"
+            ),
+            obs_key,
+        )
 
     if gen_data_config is None or response_key not in gen_data_config.keys:
         raise ObservationConfigError.with_context(
@@ -415,7 +226,7 @@ def _handle_general_observation(
             response_key,
         )
     assert isinstance(gen_data_config, GenDataConfig)
-
+    restart = general_observation.restart
     _, report_steps = gen_data_config.get_args_for_key(response_key)
 
     response_report_steps = [] if report_steps is None else report_steps
@@ -558,3 +369,22 @@ def _handle_rft_observation(
             "std": pl.Series([rft_observation.error], dtype=pl.Float32),
         }
     )
+
+
+def _handle_error_mode(
+    values: npt.ArrayLike,
+    error_dict: ObservationError,
+) -> npt.NDArray[np.double]:
+    values = np.asarray(values)
+    error_mode = error_dict.error_mode
+    error_min = error_dict.error_min
+    error = error_dict.error
+    match error_mode:
+        case ErrorModes.ABS:
+            return np.full(values.shape, error)
+        case ErrorModes.REL:
+            return np.abs(values) * error
+        case ErrorModes.RELMIN:
+            return np.maximum(np.abs(values) * error, np.full(values.shape, error_min))
+        case default:
+            assert_never(default)

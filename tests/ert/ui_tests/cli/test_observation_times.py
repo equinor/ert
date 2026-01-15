@@ -55,7 +55,6 @@ observation_times = st.dates(
                     std_cutoff=10.0,
                     names=st.just("FOPR_OBSERVATION"),
                     datetimes=st.just(observation_time),
-                    time_types=st.just("date"),
                 ),
             }
         )
