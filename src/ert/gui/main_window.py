@@ -116,8 +116,10 @@ class ErtMainWindow(QMainWindow):
 
         if is_dark_mode():
             self.side_frame.setStyleSheet("background-color: rgb(64, 64, 64);")
+            logger.info("Running Ert with dark mode")
         else:
             self.side_frame.setStyleSheet("background-color: lightgray;")
+            logger.info("Running Ert with light mode")
 
         if is_high_contrast_mode():
             msg_box = QMessageBox()
