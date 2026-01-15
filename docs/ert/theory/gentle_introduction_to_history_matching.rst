@@ -217,12 +217,88 @@ That is a mouthful, and don't worry if it does not make complete sense.
 You do not have to be able to derive the equation to build an intuitive understanding of it.
 
 The following figure shows an outline of a derivation which you can safely skip.
-In essence, you start with Bayes' Theorem and assume that both the prior and likelihood are Gaussian.
-Multiplying these two Gaussians gives another Gaussian (after some algebra), and you end up with the Ensemble Smoother equations.
-Note that the assumption of a Gaussian likelihood is a strong assumption given that :math:`g(.)` is non-linear.
-That's enough derivation though!
 
-.. figure:: images/intro_bayes_derivation.png
+**Problem setup:**
+
+Define the relationship between the parameters :math:`\mathbf{x}` and responses :math:`\mathbf{y}` through :math:`g`:
+
+.. math::
+   \mathbf{y} = g(\mathbf{x})
+
+The actual observations :math:`\mathbf{d}` are contaminated by additive noise :math:`\boldsymbol{\epsilon}`:
+
+.. math::
+   \mathbf{d} = \mathbf{y} + \boldsymbol{\epsilon}
+
+Apply Bayes' Theorem:
+
+.. math::
+   f(\mathbf{x}\mid\mathbf{d}) \propto f(\mathbf{x})f(\mathbf{d}\mid g(\mathbf{x}))
+
+**Assume Gaussian Prior:**
+
+Assume :math:`\mathbf{x}` to be Gaussian with mean :math:`\mathbf{x}_f` and covariance matrix :math:`\mathbf{\Sigma}_{xx}`:
+
+.. math::
+   f(\mathbf{x}) \sim \exp\left(-\frac{1}{2}(\mathbf{x}-\mathbf{x}_f)^T \mathbf{\Sigma}_{xx}^{-1} (\mathbf{x}-\mathbf{x}_f)\right)
+
+**Assume Gaussian Likelihood:**
+Assume the observation errors are Gaussian with covariance matrix :math:`\mathbf{R}`:
+
+.. math::
+
+   \boldsymbol{\epsilon} \sim \mathcal{N}(0, \mathbf{R})
+
+Since :math:`\mathbf{d} = g(\mathbf{x}) + \boldsymbol{\epsilon}`, the conditional distribution is
+
+.. math::
+
+   \mathbf{d}\mid \mathbf{x} \sim \mathcal{N}(g(\mathbf{x}), \mathbf{R})
+
+and the likelihood can be written as
+
+.. math::
+
+   f(\mathbf{d}\mid \mathbf{x}) \propto \exp\left(-\frac{1}{2}(\mathbf{d}-g(\mathbf{x}))^T \mathbf{R}^{-1} (\mathbf{d}-g(\mathbf{x}))\right)
+
+To obtain the standard closed-form Kalman update, we additionally assume that the observation operator is linear:
+
+.. math::
+
+   g(\mathbf{x}) = \mathbf{H}\mathbf{x}
+
+In that case the likelihood becomes
+
+.. math::
+
+   f(\mathbf{d}\mid \mathbf{x}) \propto \exp\left(-\frac{1}{2}(\mathbf{H}\mathbf{x}-\mathbf{d})^T \mathbf{R}^{-1} (\mathbf{H}\mathbf{x}-\mathbf{d})\right)
+
+**Cost function:**
+
+Define the cost function :math:`J(\mathbf{x})` as the negative-log of the posterior PDF:
+
+.. math::
+   J(\mathbf{x}) = \frac{1}{2}(\mathbf{x}-\mathbf{x}_f)^T \mathbf{\Sigma}_{xx}^{-1} (\mathbf{x}-\mathbf{x}_f) + \frac{1}{2}(\mathbf{H}\mathbf{x}-\mathbf{d})^T \mathbf{R}^{-1} (\mathbf{H}\mathbf{x}-\mathbf{d})
+
+Find the state :math:`\mathbf{x}` that minimizes the cost function by setting the gradient with respect to :math:`\mathbf{x}` to zero:
+
+.. math::
+   \nabla J(\mathbf{x}) = \mathbf{\Sigma}_{xx}^{-1}(\mathbf{x}-\mathbf{x}_f) + \mathbf{H}^T \mathbf{R}^{-1}(\mathbf{H}\mathbf{x}-\mathbf{d}) = 0
+
+Solving the equation above for :math:`\mathbf{x}` gives the standard Kalman Filter update equation:
+
+.. math::
+
+   \mathbf{x} = \mathbf{x}_f + \left(\mathbf{\Sigma}_{xx}^{-1} + \mathbf{H}^T \mathbf{R}^{-1} \mathbf{H}\right)^{-1} \mathbf{H}^T \mathbf{R}^{-1} (\mathbf{d} - \mathbf{H}\mathbf{x}_f)
+
+**Woodbury:**
+
+Use the Woodbury matrix identity to rewrite the update to avoid computing the inverse of the high-dimensional background covariance matrix :math:`\mathbf{\Sigma}_{xx}^{-1}`.
+Expressing the result using sample covariances from an ensemble leads to the Ensemble Smoother equation.
+
+.. math::
+
+   \mathbf{X}_a = \mathbf{X}_f + \mathbf{\Sigma}_{xy} (\mathbf{\Sigma}_{yy} + \mathbf{R})^{-1} (\mathbf{D} - \mathbf{Y})
 
 Parameter matrix
 ~~~~~~~~~~~~~~~~
