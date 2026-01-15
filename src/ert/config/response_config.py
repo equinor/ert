@@ -14,34 +14,11 @@ class InvalidResponseFile(Exception):
     """
 
 
-class ResponseMetadata(BaseModel):
-    response_type: str
-    response_key: str
-    finalized: bool
-    filter_on: dict[str, list[Any]] | None = Field(
-        default=None,
-        description="""
-    Holds information about which columns the response can be filtered on.
-    For example, for gen data, { "report_step": [0, 199, 299] } indicates
-    that we can filter the response by report step with the potential values
-    [0, 199, 299].
-    """,
-    )
-
-
 class ResponseConfig(BaseModel):
     type: str
     input_files: list[str] = Field(default_factory=list)
     keys: list[str] = Field(default_factory=list)
     has_finalized_keys: bool = False
-
-    @property
-    @abstractmethod
-    def metadata(self) -> list[ResponseMetadata]:
-        """
-        Returns metadata describing this response
-
-        """
 
     @abstractmethod
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
@@ -76,3 +53,33 @@ class ResponseConfig(BaseModel):
     def display_column(cls, value: Any, column_name: str) -> str:
         """Formats a value to a user-friendly displayable format."""
         return str(value)
+
+    @property
+    def filter_on(self) -> dict[str, dict[str, list[int]]] | None:
+        """Describe optional server-side filtering for this response.
+
+        Some responses contain an additional *discrete* dimension which is stored as a
+        column in the response dataset. When
+        present, ERT can expose that dimension as a selectable filter in clients.
+
+        This property returns the *available* filter values per response key.
+        It is primarily consumed by the plotting UI/API layer which:
+
+        - Expands a single response key into multiple virtual keys (e.g. ``KEY@42``)
+            for each selectable value.
+        - Calls the REST endpoints with a query parameter ``filter_on`` containing a
+            JSON object mapping *filter column* to the selected value.
+
+        Contract:
+                - Return ``None`` when the response does not support filtering.
+                - Otherwise return a mapping of:
+
+                    ``{response_key: {filter_column_name: [allowed_values...]}}``
+
+                - ``filter_column_name`` must match a column name in the stored response
+                    data (and therefore be understood by the API endpoint that loads the
+                    data).
+                - ``allowed_values`` should be sorted and represent the complete set of
+                    values the server can handle for that key.
+        """
+        return None

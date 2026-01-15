@@ -76,10 +76,15 @@ def test_get_responses_with_observations(poly_example_tmp_dir, dark_storage_clie
     assert experiment_json["responses"] == {
         "gen_data": [
             {
-                "response_type": "gen_data",
-                "response_key": "POLY_RES",
-                "filter_on": {"report_step": [0]},
-                "finalized": True,
+                "type": "gen_data",
+                "keys": ["POLY_RES"],
+                "has_finalized_keys": True,
+                "input_files": [
+                    "poly.out",
+                ],
+                "report_steps_list": [
+                    None,
+                ],
             }
         ]
     }

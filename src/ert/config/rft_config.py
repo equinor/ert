@@ -17,7 +17,7 @@ from resfo_utilities import CornerpointGrid, InvalidRFTError, RFTReader
 from ert.substitutions import substitute_runpath_name
 
 from .parsing import ConfigDict, ConfigKeys, ConfigValidationError, ConfigWarning
-from .response_config import InvalidResponseFile, ResponseConfig, ResponseMetadata
+from .response_config import InvalidResponseFile, ResponseConfig
 from .responses_index import responses_index
 
 logger = logging.getLogger(__name__)
@@ -29,18 +29,6 @@ class RFTConfig(ResponseConfig):
     has_finalized_keys: bool = False
     data_to_read: dict[str, dict[str, list[str]]] = Field(default_factory=dict)
     locations: list[tuple[float, float, float]] = Field(default_factory=list)
-
-    @property
-    def metadata(self) -> list[ResponseMetadata]:
-        return [
-            ResponseMetadata(
-                response_type=self.name,
-                response_key=response_key,
-                filter_on=None,
-                finalized=self.has_finalized_keys,
-            )
-            for response_key in self.keys
-        ]
 
     @property
     def expected_input_files(self) -> list[str]:

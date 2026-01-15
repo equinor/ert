@@ -342,7 +342,7 @@ def test_plotter_on_all_snake_oil_responses_time(api_and_snake_oil_storage, benc
             for ensemble in all_ensembles:
                 api.data_for_response(
                     ensemble_id=ensemble.id,
-                    response_key=key_info.response_metadata.response_key,
+                    response_key=key_info.key,
                     filter_on=key_info.filter_on,
                 )
 
@@ -356,7 +356,7 @@ def test_plotter_on_all_snake_oil_responses_time(api_and_snake_oil_storage, benc
             if not (str(key_info.key).endswith("H") or "H:" in str(key_info.key)):
                 with contextlib.suppress(RequestError, TimeoutError):
                     api.history_data(
-                        key_info.response_metadata.response_key,
+                        key_info.key,
                         [e.id for e in all_ensembles],
                         filter_on=key_info.filter_on,
                     )
@@ -376,7 +376,7 @@ def test_plotter_on_all_snake_oil_responses_memory(api_and_snake_oil_storage):
             for ensemble in all_ensembles:
                 api.data_for_response(
                     ensemble_id=ensemble.id,
-                    response_key=key_info.response_metadata.response_key,
+                    response_key=key_info.key,
                     filter_on=key_info.filter_on,
                 )
 
@@ -390,7 +390,7 @@ def test_plotter_on_all_snake_oil_responses_memory(api_and_snake_oil_storage):
             if not (str(key_info.key).endswith("H") or "H:" in str(key_info.key)):
                 with contextlib.suppress(RequestError, TimeoutError):
                     api.history_data(
-                        key_info.response_metadata.response_key,
+                        key_info.key,
                         [e.id for e in all_ensembles],
                         filter_on=key_info.filter_on,
                     )

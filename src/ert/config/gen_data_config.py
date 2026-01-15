@@ -14,7 +14,6 @@ from .parsing import ConfigDict, ConfigValidationError, ConfigWarning, ErrorInfo
 from .response_config import (
     InvalidResponseFile,
     ResponseConfig,
-    ResponseMetadata,
 )
 from .responses_index import responses_index
 
@@ -24,22 +23,6 @@ class GenDataConfig(ResponseConfig):
     report_steps_list: list[list[int] | None] = Field(default_factory=list)
     has_finalized_keys: bool = True
 
-    @property
-    def metadata(self) -> list[ResponseMetadata]:
-        return [
-            ResponseMetadata(
-                response_type=self.type,
-                response_key=response_key,
-                finalized=self.has_finalized_keys,
-                filter_on={"report_step": report_steps}
-                if report_steps is not None
-                else {"report_step": [0]},
-            )
-            for response_key, report_steps in zip(
-                self.keys, self.report_steps_list, strict=False
-            )
-        ]
-
     def model_post_init(self, ctx: Any) -> None:
         if len(self.report_steps_list) == 0:
             self.report_steps_list = [[0] for _ in self.keys]
@@ -47,6 +30,33 @@ class GenDataConfig(ResponseConfig):
             for report_steps in self.report_steps_list:
                 if report_steps is not None:
                     report_steps.sort()
+
+    @property
+    def filter_on(self) -> dict[str, dict[str, list[int]]] | None:
+        """Expose ``report_step`` as a discrete filter for ``GEN_DATA`` keys.
+
+        ``GEN_DATA`` responses may be produced for multiple report steps. The stored
+        response data includes a ``report_step`` column.
+        By returning this mapping, clients (notably the plotting UI/API) can:
+
+        - Enumerate available report steps for each configured response key.
+        - Present each step as a separate selectable series.
+        - Fetch data/observations via the REST API using
+        ``filter_on={"report_step": N}``.
+
+        The allowed report steps come from ``REPORT_STEPS`` in the configuration.
+        When no ``REPORT_STEPS`` are provided for a key (or a single file without
+        ``%d`` is used), the key is treated as having a single report step ``0``.
+
+        Returns:
+            Mapping ``{response_key: {"report_step": [steps...]}}``.
+        """
+        return {
+            response_key: {"report_step": report_steps or [0]}
+            for response_key, report_steps in zip(
+                self.keys, self.report_steps_list, strict=False
+            )
+        }
 
     @property
     def expected_input_files(self) -> list[str]:

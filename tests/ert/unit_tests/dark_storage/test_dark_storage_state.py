@@ -66,9 +66,10 @@ class DarkStorageStateTest(StatefulStorageTest):
         )
 
         response_keys_in_experiment = [
-            metadata["response_key"]
-            for metadatas in experiment["responses"].values()
-            for metadata in metadatas
+            key
+            for response in experiment["responses"].values()
+            for metadata in response
+            for key in metadata["keys"]
         ]
 
         response_keys_in_ens = {
