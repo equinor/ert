@@ -126,10 +126,8 @@ class ParameterConfig(BaseModel):
     def transform_data(self) -> Callable[[float], float]:
         return lambda x: x
 
-    def sample_value(
-        self,
-        global_seed: str,
-        realization: int,
+    def sample_values(
+        self, global_seed: str, active_realizations: list[int], num_realizations: int
     ) -> npt.NDArray[np.double]:
         """
         Generate a sample value for each key in a parameter group.
@@ -162,9 +160,7 @@ class ParameterConfig(BaseModel):
         seed = np.frombuffer(key_hash.digest(), dtype="uint32")
         rng = np.random.default_rng(seed)
 
-        # Advance the RNG state to the realization point
-        rng.standard_normal(realization)
-
-        # Generate a single sample
-        value = rng.standard_normal(1)
-        return np.array([value[0]])
+        # Generate samples for all active realizations
+        all_values = rng.standard_normal(num_realizations)
+        idx = np.asarray(active_realizations, dtype=int)
+        return all_values[idx]
