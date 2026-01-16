@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import logging
 from typing import (
     TYPE_CHECKING,
@@ -95,9 +96,24 @@ class ForwardModelStepOptions(TypedDict, total=False):
     required_keywords: NotRequired[list[str]]
 
 
+def _get_source_package() -> str:
+    """Return the top-level package name of the calling forward model step.
+
+    Finds the documentation() call (stack[2]) under the forward model step class
+    and return its parent module
+    """
+    stack = inspect.stack()
+    if len(stack) > 2:
+        caller_frame = stack[2]
+        caller_module = inspect.getmodule(caller_frame.frame)
+        if caller_module:
+            return caller_module.__name__.split(".")[0]
+    return "not found"
+
+
 class ForwardModelStepDocumentation(BaseModel):
     config_file: str | None = Field(default=None)
-    source_package: str = Field(default="ert")
+    source_package: str = Field(default_factory=_get_source_package)
     source_function_name: str = Field(default="ert")
     description: str = Field(default="No description")
     examples: str = Field(default="No examples")
