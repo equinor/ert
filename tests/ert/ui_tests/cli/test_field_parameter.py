@@ -11,7 +11,6 @@ import polars as pl
 import pytest
 import resfo
 import xtgeo
-from polars import Float32
 
 from ert.analysis import smoother_update
 from ert.config import ErtConfig, ESSettings, ObservationSettings
@@ -82,6 +81,9 @@ def _compare_ensemble_params(
     expected = pl.read_csv(reference_path)
     if actual.shape != expected.shape:
         raise ValueError("DataFrames must have the same shape")
+    if set(actual.columns) != set(expected.columns):
+        raise ValueError("DataFrames must have the same columns")
+    expected = expected.select(actual.columns)
 
     actual_numbers = actual.drop(index_columns)
     expected_numbers = expected.drop(index_columns)
@@ -92,36 +94,24 @@ def _compare_ensemble_params(
     # Truncate small differences to zero
     truncated_df = diff_df.select(
         [
-            (
-                pl.col(c).map_elements(
-                    lambda x: 0.0
-                    if abs(x) < outlier_threshold
-                    else (abs(x) - outlier_threshold),
-                    return_dtype=Float32,
-                )
-            ).alias(c)
+            pl.when(pl.col(c).abs() < outlier_threshold)
+            .then(0.0)
+            .otherwise(pl.col(c).abs() - outlier_threshold)
+            .cast(pl.Float32)
+            .alias(c)
             for c in columns
         ]
     )
 
     # Compute per-row percentage of non-zero (i.e., outlier) values
     outlier_percentage = truncated_df.select(
-        [
-            pl.concat_list(columns)
-            .map_elements(
-                lambda row: sum(1 for x in row if x != 0.0) / len(row),
-                return_dtype=Float32,
-            )
-            .alias("outlier_percentage")
-        ]
+        (pl.sum_horizontal(pl.col(c) != 0.0 for c in columns) / len(columns))
+        .cast(pl.Float32)
+        .alias("outlier_percentage")
     )["outlier_percentage"]
 
     max_deviance = truncated_df.select(
-        [
-            pl.concat_list(columns)
-            .map_elements(lambda row: max(x for x in row), return_dtype=Float32)
-            .alias("max_deviance")
-        ]
+        pl.max_horizontal(columns).cast(pl.Float32).alias("max_deviance")
     )["max_deviance"]
 
     unacceptable_n_outliers = (outlier_percentage > outlier_percentage_max).any()
