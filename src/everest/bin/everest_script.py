@@ -14,7 +14,7 @@ import anyio
 
 from _ert.threading import ErtThread
 from ert.config import QueueSystem
-from ert.services import ErtServer
+from ert.services import create_ertserver_client
 from ert.storage.local_experiment import ExperimentState
 from ert.utils import makedirs_if_needed
 from everest.config import EverestConfig, ServerConfig
@@ -169,7 +169,7 @@ async def run_everest(options: argparse.Namespace) -> None:
     )
 
     try:
-        ErtServer.session(
+        create_ertserver_client(
             Path(ServerConfig.get_session_dir(options.config.output_dir)), timeout=1
         )
         server_running = True
@@ -233,7 +233,7 @@ async def run_everest(options: argparse.Namespace) -> None:
 
     print("Waiting for server ...")
     logger.debug("Waiting for response from everserver")
-    client = ErtServer.session(
+    client = create_ertserver_client(
         Path(ServerConfig.get_session_dir(options.config.output_dir))
     )
     wait_for_server(client, timeout=600)

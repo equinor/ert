@@ -7,8 +7,8 @@ from unittest.mock import MagicMock
 import pandas as pd
 import pytest
 
+from ert.gui.tools.plot import plot_api
 from ert.gui.tools.plot.plot_api import PlotApi
-from ert.services import ErtServer
 
 
 class MockResponse:
@@ -35,7 +35,7 @@ def api(tmpdir, source_root, monkeypatch):
     def session(project: str):
         yield MagicMock(get=mocked_requests_get)
 
-    monkeypatch.setattr(ErtServer, "session", session)
+    monkeypatch.setattr(plot_api, "create_ertserver_client", session)
 
     with tmpdir.as_cwd():
         test_data_root = source_root / "test-data" / "ert"

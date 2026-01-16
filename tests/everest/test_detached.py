@@ -23,7 +23,7 @@ from ert.config.queue_config import (
 from ert.dark_storage.client import ErtClientConnectionInfo
 from ert.plugins import ErtRuntimePlugins
 from ert.scheduler.event import FinishedEvent
-from ert.services import ErtServer
+from ert.services import create_ertserver_client
 from ert.utils import makedirs_if_needed
 from everest.config import EverestConfig
 from everest.config.forward_model_config import ForwardModelStepConfig
@@ -59,7 +59,7 @@ async def test_https_requests(change_to_tmpdir):
     makedirs_if_needed(Path(everest_config.output_dir), roll_if_exists=True)
     await start_server(everest_config, logging_level=logging.INFO)
 
-    session = ErtServer.session(
+    session = create_ertserver_client(
         Path(ServerConfig.get_session_dir(everest_config.output_dir)), 240
     )
     wait_for_server(session, 240)

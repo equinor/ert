@@ -12,8 +12,7 @@ import yaml
 from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
 from ert.plugins.plugin_manager import ErtPluginManager
-from ert.services import ErtServer
-from ert.services.ert_server import ErtServerExit
+from ert.services import ErtServer, ErtServerExit, create_ertserver_client
 from ert.storage import ExperimentStatus
 from ert.storage.local_experiment import ExperimentState
 from ert.trace import tracer
@@ -167,7 +166,7 @@ def main() -> None:
                 timeout=240, project=Path(server_path), logging_config=log_file.name
             ) as server:
                 server.fetch_connection_info()
-                with ErtServer.session(project=Path(server_path)) as client:
+                with create_ertserver_client(Path(server_path)) as client:
                     done = False
                     while not done:
                         response = client.get(

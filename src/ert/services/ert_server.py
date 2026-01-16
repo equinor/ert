@@ -331,21 +331,6 @@ class ErtServer:
             "None of the URLs provided for the ert storage server worked."
         )
 
-    @classmethod
-    def session(cls, project: os.PathLike[str], timeout: int | None = None) -> Client:
-        """
-        Start a HTTP transaction with the server
-        """
-        inst = cls.connect(timeout=timeout, project=project)
-        info = inst.fetch_connection_info()
-        return Client(
-            conn_info=ErtClientConnectionInfo(
-                base_url=inst.fetch_url(),
-                auth_token=inst.fetch_auth()[1],
-                cert=info["cert"],
-            )
-        )
-
     @property
     def logger(self) -> logging.Logger:
         return logging.getLogger("ert.shared.storage")
@@ -479,3 +464,16 @@ class ErtServer:
     def wait(self) -> None:
         if self._thread_that_starts_server_process is not None:
             self._thread_that_starts_server_process.join()
+
+
+def create_ertserver_client(project: Path, timeout: int | None = None) -> Client:
+    """Read connection info from file in path and create HTTP client."""
+    connection = ErtServer.connect(timeout=timeout, project=project)
+    info = connection.fetch_connection_info()
+    return Client(
+        conn_info=ErtClientConnectionInfo(
+            base_url=connection.fetch_url(),
+            auth_token=connection.fetch_auth()[1],
+            cert=info["cert"],
+        )
+    )

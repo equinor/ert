@@ -7,7 +7,7 @@ from functools import partial
 from pathlib import Path
 from textwrap import dedent
 
-from ert.services import ErtServer
+from ert.services import create_ertserver_client
 from ert.storage import ErtStorageException, ExperimentState
 from everest.config import EverestConfig, ServerConfig
 from everest.everest_storage import EverestStorage
@@ -82,7 +82,7 @@ def _build_args_parser() -> argparse.ArgumentParser:
 def monitor_everest(options: argparse.Namespace) -> None:
     config: EverestConfig = options.config
     try:
-        with ErtServer.session(
+        with create_ertserver_client(
             Path(ServerConfig.get_session_dir(config.output_dir)), timeout=1
         ) as client:
             server_context = ServerConfig.get_server_context_from_conn_info(

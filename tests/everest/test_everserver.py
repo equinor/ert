@@ -15,7 +15,7 @@ import ert
 from ert.dark_storage.app import app
 from ert.ensemble_evaluator import EndEvent
 from ert.scheduler.event import FinishedEvent
-from ert.services import ErtServer
+from ert.services import create_ertserver_client
 from ert.storage import ExperimentState
 from everest.bin.utils import get_experiment_status
 from everest.config import EverestConfig, ServerConfig
@@ -64,7 +64,9 @@ async def wait_for_server_to_complete(config):
                 return
 
     driver = await start_server(config, logging.DEBUG)
-    client = ErtServer.session(Path(ServerConfig.get_session_dir(config.output_dir)))
+    client = create_ertserver_client(
+        Path(ServerConfig.get_session_dir(config.output_dir))
+    )
     wait_for_server(client, 120)
     start_experiment(
         server_context=ServerConfig.get_server_context_from_conn_info(client.conn_info),
