@@ -737,20 +737,21 @@ class LocalEnsemble(BaseMode):
     @staticmethod
     def sample_parameter(
         parameter: ParameterConfig,
-        real_nr: int,
+        active_realizations: list[int],
         random_seed: int,
+        num_realizations: int,
     ) -> pl.DataFrame:
-        parameter_value = parameter.sample_value(
-            str(random_seed),
-            real_nr,
+        parameter_values = parameter.sample_values(
+            str(random_seed), active_realizations, num_realizations=num_realizations
         )
 
-        parameter_dict = {parameter.name: parameter_value[0]}
-        parameter_dict["realization"] = real_nr
-        return pl.DataFrame(
-            parameter_dict,
-            schema={parameter.name: pl.Float64, "realization": pl.Int64},
+        parameters = pl.DataFrame(
+            {parameter.name: parameter_values},
+            schema={parameter.name: pl.Float64},
         )
+        realizations_series = pl.Series("realization", list(active_realizations))
+
+        return parameters.with_columns(realizations_series)
 
     def load_responses(self, key: str, realizations: tuple[int, ...]) -> pl.DataFrame:
         """Load responses for key and realizations into xarray Dataset.

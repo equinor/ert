@@ -213,7 +213,7 @@ def test_gen_kw_is_log_or_not(
         prior_ensemble = storage.create_ensemble(
             experiment_id, name="prior", ensemble_size=1
         )
-        sample_prior(prior_ensemble, [0], 123)
+        sample_prior(prior_ensemble, [0], 123, 1)
         create_run_path(
             run_args=run_args(ert_config, prior_ensemble),
             ensemble=prior_ensemble,

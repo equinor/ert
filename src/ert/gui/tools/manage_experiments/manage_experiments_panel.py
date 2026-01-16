@@ -123,6 +123,7 @@ class ManageExperimentsPanel(QTabWidget):
                     active_realizations=active_realizations,
                     parameters=parameters,
                     random_seed=self.ert_config.random_seed,
+                    num_realizations=self.ert_config.runpath_config.num_realizations,
                     design_matrix_df=(
                         self.ert_config.analysis_config.design_matrix.design_matrix_df
                         if self.ert_config.analysis_config.design_matrix

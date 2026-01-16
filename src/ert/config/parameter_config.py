@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 import networkx as nx
 import numpy as np
 import polars as pl
+import scipy as sp
 import xarray as xr
 from pydantic import BaseModel
 
@@ -126,45 +127,46 @@ class ParameterConfig(BaseModel):
     def transform_data(self) -> Callable[[float], float]:
         return lambda x: x
 
-    def sample_value(
-        self,
-        global_seed: str,
-        realization: int,
+    def sample_values(
+        self, global_seed: str, active_realizations: list[int], num_realizations: int
     ) -> npt.NDArray[np.double]:
         """
-        Generate a sample value for each key in a parameter group.
+        Generate reproducible standard-normal samples for active realizations.
 
-        The sampling is reproducible and dependent on a global seed combined
-        with the parameter group name and individual key names. The 'realization'
-        parameter determines the specific sample point from the distribution for each
-        parameter.
+        For this parameter (identified by self.group_name and self.name), a stratified
+        sampling of size `num_realizations` is constructed using an RNG
+        seeded from `global_seed` and the parameter name. The entries at the
+        indices specified by `active_realizations` are then mapped through the
+        inverse CDF of the standard normal distribution and returned.
 
         Parameters:
         - global_seed (str): A global seed string used for RNG seed generation to ensure
         reproducibility across runs.
-        - realization (int): An integer used to advance the RNG to a specific point in
-        its sequence, effectively selecting the 'realization'-th sample from the
-        distribution.
+        - active_realizations (list[int]): indices of the realizations
+        to select from the stratified sampling vector; each must satisfy
+        0 <= i < num_realizations.
+        - num_realizations (int): Total number of realizations to generate in the
+        stratified sampling design.
 
         Returns:
-        - npt.NDArray[np.double]: An array of sample values, one for each key in the
-        provided list.
+        - npt.NDArray[np.double]: Array of shape (len(active_realizations),
+        containing sample values, one for each `active_realization`.
 
-        Note:
-        The method uses SHA-256 for hash generation and numpy's default random number
-        generator for sampling. The RNG state is advanced to the 'realization' point
-        before generating a single sample, enhancing efficiency by avoiding the
-        generation of large, unused sample sets.
+        Notes:
+        - Sampling uses scipy.stats.qmc.LatinHypercube with d=1 to produce quantiles
+        in (0, 1), which are transformed via scipy.stats.norm.ppf, this corresponds
+        to stratified sampling of normal distributions.
+        - The result is deterministic for fixed inputs; changing `global_seed`,
+        the parameter, or `num_realizations` changes the design, while
+        `active_realizations` only selects a subset of it.
         """
         key_hash = sha256(
             global_seed.encode("utf-8") + f"{self.group_name}:{self.name}".encode()
         )
         seed = np.frombuffer(key_hash.digest(), dtype="uint32")
         rng = np.random.default_rng(seed)
+        sampler = sp.stats.qmc.LatinHypercube(d=1, rng=rng)
+        quantiles = sampler.random(num_realizations)[:, 0]
+        idx = np.asarray(active_realizations, dtype=int)
 
-        # Advance the RNG state to the realization point
-        rng.standard_normal(realization)
-
-        # Generate a single sample
-        value = rng.standard_normal(1)
-        return np.array([value[0]])
+        return sp.stats.norm.ppf(quantiles[idx])
