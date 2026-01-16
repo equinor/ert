@@ -102,6 +102,13 @@ class _SummaryValues:
 
 
 @dataclass
+class _Localization:
+    north: float | None
+    east: float | None
+    influence_range: float | None
+
+
+@dataclass
 class SummaryObservation(ObservationDate, _SummaryValues, ObservationError):
     @classmethod
     def from_obs_dict(
