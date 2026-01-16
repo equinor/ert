@@ -29,7 +29,6 @@ from ert.gui.tools.event_viewer import (
 from ert.namespace import Namespace
 from ert.plugins import ErtRuntimePlugins, get_site_plugins
 from ert.services import ErtServer
-from ert.shared import __version__
 from ert.storage import (
     ErtStorageException,
     LocalStorage,
@@ -172,9 +171,10 @@ def _start_initial_gui_window(
                     None,
                     f"Migrate storage to version {current_version}?",
                     f"Ert storage is version {storage_version} and needs to be migrated"
-                    f" to version {current_version} to be able to continue\n\n"
-                    f"After migration, this storage can only be opened with Ert"
-                    f" version {__version__} or newer\n\n"
+                    f" to version {current_version} to be compatible with the current"
+                    f" version of Ert\n\n"
+                    f"After migration, this storage can only be opened with current or"
+                    f" later versions of Ert\n\n"
                     "Do you wish to continue migrating storage?\n",
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 )
