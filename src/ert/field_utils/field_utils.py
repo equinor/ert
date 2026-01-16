@@ -104,7 +104,7 @@ def get_shape(
 
 
 @dataclass(frozen=True)
-class ErtboxParameters:
+class GridGeometry:
     nx: int
     ny: int
     nz: int
@@ -116,20 +116,20 @@ class ErtboxParameters:
     origin: tuple[float, float] | None = None
 
 
-def calculate_ertbox_parameters(
+def calculate_grid_geometry(
     grid: xtgeo.Grid, left_handed: bool = False
-) -> ErtboxParameters:
-    """Calculate ERTBOX grid parameters from an XTGeo grid.
+) -> GridGeometry:
+    """Calculate grid geometry from an XTGeo grid.
 
     Extracts geometric parameters including dimensions, cell increments,
-    rotation angle, and origin coordinates needed for ERTBOX.
+    rotation angle, and origin coordinates needed for the grid.
 
     Args:
         grid: XTGeo Grid3D object
         left_handed: If True, use left-handed coordinate system (default: False)
 
     Returns:
-        ErtboxParameters with grid dimensions, increments, rotation, and origin
+        GridGeometry with grid dimensions, increments, rotation, and origin
     """
 
     (nx, ny, nz) = grid.dimensions
@@ -200,7 +200,7 @@ def calculate_ertbox_parameters(
     elif deltax1 < 0:
         angle = (math.atan(deltay1 / deltax1) + math.pi) * 180.0 / math.pi
 
-    return ErtboxParameters(
+    return GridGeometry(
         nx=nx,
         ny=ny,
         nz=nz,
@@ -289,8 +289,8 @@ def transform_positions_to_local_field_coordinates(
     # Rotate
     # Input angle is the local coordinate systems rotation
     # anticlockwise relative to global x-axis in degrees
-    rotation_of_ertbox = coordsys_rotation_angle
-    rotation_angle = np.deg2rad(rotation_of_ertbox)
+    rotation_of_grid = coordsys_rotation_angle
+    rotation_angle = np.deg2rad(rotation_of_grid)
     cos_theta = np.cos(rotation_angle)
     sin_theta = np.sin(rotation_angle)
     x2 = x1 * cos_theta + y1 * sin_theta
@@ -392,7 +392,7 @@ def calc_rho_for_2d_grid_layer(
     Note that since d[m,n] does only depend on observation index n and
     grid cell index (i,j). The values for RHO is
     calculated for the combination ((i,j), n) and this covers
-    one grid layer in ertbox grid or a 2D surface grid.
+    one grid layer in grid or a 2D surface grid.
 
     Args:
         nx: Number of grid cells in x-direction of local coordinate system.
@@ -407,7 +407,7 @@ def calc_rho_for_2d_grid_layer(
         to local coordinate system in degrees
 
     Returns:
-        Rho matrix values for one layer of the 3D ertbox grid or for a 2D surface grid.
+        Rho matrix values for one layer of the 3D grid or for a 2D surface grid.
     """
     # Center points of each grid cell in field parameter grid
     x_local = (np.arange(nx, dtype=np.float64) + 0.5) * xinc

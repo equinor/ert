@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from .field_file_format import FieldFileFormat
 from .field_utils import (
-    ErtboxParameters,
+    GridGeometry,
     Shape,
     calc_rho_for_2d_grid_layer,
-    calculate_ertbox_parameters,
+    calculate_grid_geometry,
     get_shape,
     localization_scaling_function,
     read_field,
@@ -16,11 +16,11 @@ from .field_utils import (
 )
 
 __all__ = [
-    "ErtboxParameters",
     "FieldFileFormat",
+    "GridGeometry",
     "Shape",
     "calc_rho_for_2d_grid_layer",
-    "calculate_ertbox_parameters",
+    "calculate_grid_geometry",
     "get_shape",
     "localization_scaling_function",
     "read_field",
