@@ -96,9 +96,6 @@ class _SummaryValues:
     name: str
     value: float
     key: str  #: The :term:`summary key` in the summary response
-    location_x: float | None = None
-    location_y: float | None = None
-    location_range: float | None = None
 
 
 @dataclass
@@ -109,7 +106,9 @@ class _Localization:
 
 
 @dataclass
-class SummaryObservation(ObservationDate, _SummaryValues, ObservationError):
+class SummaryObservation(
+    ObservationDate, _SummaryValues, _Localization, ObservationError
+):
     @classmethod
     def from_obs_dict(
         cls, directory: str, observation_dict: ObservationDict
@@ -140,11 +139,11 @@ class SummaryObservation(ObservationDate, _SummaryValues, ObservationError):
                     summary_key = value
                 case "DATE":
                     date_dict.date = value
-                case "LOCATION_X":
-                    localization_values["x"] = validate_float(value, key)
-                case "LOCATION_Y":
-                    localization_values["y"] = validate_float(value, key)
-                case "LOCATION_RANGE":
+                case "EAST":
+                    localization_values["east"] = validate_float(value, key)
+                case "NORTH":
+                    localization_values["north"] = validate_float(value, key)
+                case "RANGE":
                     localization_values["range"] = validate_float(value, key)
                 case _:
                     raise _unknown_key_error(str(key), observation_dict["name"])
@@ -163,9 +162,9 @@ class SummaryObservation(ObservationDate, _SummaryValues, ObservationError):
                 error_min=float_values["ERROR_MIN"],
                 key=summary_key,
                 value=float_values["VALUE"],
-                location_x=localization_values.get("x"),
-                location_y=localization_values.get("y"),
-                location_range=localization_values.get("range"),
+                east=localization_values.get("east"),
+                north=localization_values.get("north"),
+                range=localization_values.get("range"),
                 **date_dict.__dict__,
             )
         ]

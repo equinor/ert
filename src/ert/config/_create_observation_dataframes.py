@@ -205,6 +205,9 @@ def _handle_history_observation(
             "time": dates_series,
             "observations": pl.Series(values, dtype=pl.Float32),
             "std": pl.Series(std_dev, dtype=pl.Float32),
+            "east": None,
+            "north": None,
+            "range": None,
         }
     )
 
@@ -299,24 +302,24 @@ def _get_restart(
 def _has_localization(summary_dict: SummaryObservation) -> bool:
     return any(
         [
-            summary_dict.location_x is not None,
-            summary_dict.location_y is not None,
-            summary_dict.location_range is not None,
+            summary_dict.east is not None,
+            summary_dict.north is not None,
+            summary_dict.range is not None,
         ]
     )
 
 
 def _validate_localization_values(summary_dict: SummaryObservation) -> None:
-    """The user must provide LOCATION_X and LOCATION_Y to use localization, while
+    """The user must provide EAST and NORTH to use localization, while
     unprovided LOCATION_RANGE should default to some value.
 
-    This method assumes the summary dict contains at least one LOCATION key.
+    This method assumes the summary dict contains at least one localization key.
     """
-    if summary_dict.location_x is None or summary_dict.location_y is None:
+    if summary_dict.east is None or summary_dict.north is None:
         loc_values = {
-            "LOCATION_X": summary_dict.location_x,
-            "LOCATION_Y": summary_dict.location_y,
-            "LOCATION_RANGE": summary_dict.location_range,
+            "EAST": summary_dict.east,
+            "NORTH": summary_dict.north,
+            "RANGE": summary_dict.range,
         }
         provided_loc_values = {k: v for k, v in loc_values.items() if v is not None}
 
@@ -326,9 +329,9 @@ def _validate_localization_values(summary_dict: SummaryObservation) -> None:
         raise ObservationConfigError.with_context(
             f"Localization for observation {summary_dict.name} is misconfigured.\n"
             f"Only {provided_loc_values_string} were provided. To enable "
-            f"localization for an observation, ensure that both LOCATION_X and "
-            f"LOCATION_Y are defined - or remove LOCATION keywords to disable "
-            f"localization.",
+            f"localization for an observation, ensure that both EAST and "
+            f"NORTH are defined - or remove localization keywords (EAST, NORTH, RANGE)"
+            f" to disable localization.",
             summary_dict,
         )
 
@@ -370,23 +373,27 @@ def _handle_summary_observation(
             "Observation uncertainty must be strictly > 0", summary_key
         ) from None
 
-    data_dict = {
-        "response_key": [summary_key],
-        "observation_key": [obs_key],
-        "time": pl.Series([date]).dt.cast_time_unit("ms"),
-        "observations": pl.Series([value], dtype=pl.Float32),
-        "std": pl.Series([std_dev], dtype=pl.Float32),
-    }
-
     if _has_localization(summary_dict):
         _validate_localization_values(summary_dict)
-        data_dict["location_x"] = summary_dict.location_x
-        data_dict["location_y"] = summary_dict.location_y
-        data_dict["location_range"] = (
-            summary_dict.location_range or DEFAULT_LOCATION_RANGE_M
-        )
 
-    return pl.DataFrame(data_dict)
+    influence_range = (
+        summary_dict.range or DEFAULT_LOCATION_RANGE_M
+        if _has_localization(summary_dict)
+        else None
+    )
+
+    return pl.DataFrame(
+        {
+            "response_key": [summary_key],
+            "observation_key": [obs_key],
+            "time": pl.Series([date]).dt.cast_time_unit("ms"),
+            "observations": pl.Series([value], dtype=pl.Float32),
+            "std": pl.Series([std_dev], dtype=pl.Float32),
+            "east": pl.Series([summary_dict.east], dtype=pl.Float32),
+            "north": pl.Series([summary_dict.north], dtype=pl.Float32),
+            "range": pl.Series([influence_range], dtype=pl.Float32),
+        }
+    )
 
 
 def _handle_general_observation(

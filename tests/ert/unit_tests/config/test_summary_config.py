@@ -5,6 +5,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import hypothesis.strategies as st
+import polars as pl
 import pytest
 from hypothesis import given, settings
 from resfo_utilities.testing import summaries
@@ -111,17 +112,27 @@ def test_that_summary_observations_can_be_instantiated_with_localization(
     with tmpdir.as_cwd():
         summary_observations = create_summary_observation(
             """
-            LOCATION_X=10;
-            LOCATION_Y=10;
-            LOCATION_RANGE=10;
+            SUMMARY_OBSERVATION FOPR_1
+            {
+                VALUE      = 0.9;
+                ERROR      = 0.05;
+                DATE       = 2014-09-10;
+                KEY        = FOPR;
+                EAST = 10;
+                NORTH = 10;
+                RANGE = 10;
+            };
             """
         )
         assert all(
             loc_key in summary_observations.columns
             and summary_observations[loc_key][0] == 10
-            for loc_key in ["location_x", "location_y", "location_range"]
+            for loc_key in ["east", "north", "range"]
         )
         assert len(summary_observations.columns) == 8
+        assert summary_observations["east"].dtype == pl.Float32
+        assert summary_observations["north"].dtype == pl.Float32
+        assert summary_observations["range"].dtype == pl.Float32
 
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
@@ -131,22 +142,55 @@ def test_that_summary_observations_without_location_range_gets_defaulted(
     with tmpdir.as_cwd():
         summary_observations = create_summary_observation(
             """
-            LOCATION_X=10;
-            LOCATION_Y=10;
+            SUMMARY_OBSERVATION FOPR_1
+            {
+                VALUE      = 0.9;
+                ERROR      = 0.05;
+                DATE       = 2014-09-10;
+                KEY        = FOPR;
+                EAST = 10;
+                NORTH = 10;
+            };
             """
         )
-        assert "location_range" in summary_observations.columns
-        assert summary_observations["location_range"][0] == DEFAULT_LOCATION_RANGE_M
+        assert "range" in summary_observations.columns
+        assert summary_observations["range"][0] == DEFAULT_LOCATION_RANGE_M
+        assert summary_observations["range"].dtype == pl.Float32
+
+
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
+def test_that_summary_observations_without_location_keywords_gets_location_keywords_defaulted_to_none(  # noqa: E501
+    tmpdir,
+):
+    with tmpdir.as_cwd():
+        summary_observations = create_summary_observation(
+            """
+            SUMMARY_OBSERVATION FOPR_1
+            {
+                VALUE      = 0.9;
+                ERROR      = 0.05;
+                DATE       = 2014-09-10;
+                KEY        = FOPR;
+            };
+            """
+        )
+        assert "range" in summary_observations.columns
+        assert summary_observations["east"][0] is None
+        assert summary_observations["east"].dtype == pl.Float32
+        assert summary_observations["north"][0] is None
+        assert summary_observations["north"].dtype == pl.Float32
+        assert summary_observations["range"][0] is None
+        assert summary_observations["range"].dtype == pl.Float32
 
 
 @pytest.mark.parametrize(
     "loc_config_lines",
     [
-        "LOCATION_X=10;\n",
-        "LOCATION_Y=10;\n",
-        "LOCATION_RANGE=10;\n",
-        "LOCATION_Y=10;\nLOCATION_RANGE=10;\n",
-        "LOCATION_X=10;\nLOCATION_RANGE=10;\n",
+        "EAST=10;\n",
+        "NORTH=10;\n",
+        "RANGE=10;\n",
+        "NORTH=10;\nRANGE=10;\n",
+        "EAST=10;\nRANGE=10;\n",
     ],
 )
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
@@ -154,14 +198,56 @@ def test_that_summary_observations_raises_config_validation_error_when_loc_x_or_
     tmpdir,
     loc_config_lines,
 ):
-    location_pattern = r"LOCATION_[a-zA-Z]*"
+    location_pattern = r"\b(EAST|NORTH|RANGE)\b"
     matches = re.findall(location_pattern, loc_config_lines)
     expected_err_msgs = [
         "Localization for observation FOPR_1 is misconfigured.",
         f"Only {', '.join(matches)} were provided.",
-        "ensure that both LOCATION_X and LOCATION_Y are defined",
+        "ensure that both EAST and NORTH are defined",
     ]
     with pytest.raises(ConfigValidationError) as e, tmpdir.as_cwd():
         create_summary_observation(loc_config_lines)
     for msg in expected_err_msgs:
         assert msg in str(e.value)
+
+
+def test_that_localized_summary_obs_can_exist_with_summary_observations_without_localization(  # noqa: E501
+    tmpdir, copy_snake_oil_case
+):
+    with tmpdir.as_cwd():
+        df = create_summary_observation(
+            """
+            SUMMARY_OBSERVATION FOPR_1
+            {
+                VALUE      = 0.9;
+                ERROR      = 0.05;
+                DATE       = 2014-09-10;
+                KEY        = FOPR;
+                EAST = 10;
+                NORTH = 10;
+            };
+            SUMMARY_OBSERVATION FOPR_2
+            {
+                VALUE      = 0.9;
+                ERROR      = 0.05;
+                DATE       = 2014-09-10;
+                KEY        = FOPR;
+            };
+            """,
+        )
+        assert len(df.columns) == 8
+        assert df.row(0)[-3:] == (10, 10, DEFAULT_LOCATION_RANGE_M)
+        assert df.row(1)[-3:] == (None, None, None)
+
+
+@pytest.mark.usefixtures("copy_snake_oil_case")
+def test_that_adding_one_localized_observation_to_snake_oil_case_can_be_internalized():
+    obs_content = Path("observations/observations.txt").read_text(encoding="utf-8")
+    obs_lines = obs_content.split("\n")
+    observation_index = obs_lines.index("SUMMARY_OBSERVATION WOPR_OP1_36")
+    obs_lines.insert(observation_index + 2, "    EAST = 10;")
+    obs_lines.insert(observation_index + 3, "    NORTH = 10;")
+    obs_lines.insert(observation_index + 3, "    RANGE = 10.5;")
+    new_obs_content = "\n".join(obs_lines)
+    Path("observations/observations.txt").write_text(new_obs_content, encoding="utf-8")
+    ErtConfig.from_file("snake_oil.ert")
