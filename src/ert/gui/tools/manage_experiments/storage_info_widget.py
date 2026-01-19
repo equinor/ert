@@ -256,8 +256,8 @@ class _EnsembleWidget(QWidget):
                 df[x_axis_col]
                 .map_elements(
                     lambda x: response_config.display_column(x, x_axis_col),
-                    return_dtype=pl.String,
                 )
+                .cast(pl.String)
                 .alias("temp")
             ).filter(pl.col("temp").eq(observation_label))[
                 [x for x in df.columns if x != "temp"]

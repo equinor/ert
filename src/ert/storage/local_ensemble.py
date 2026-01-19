@@ -591,8 +591,8 @@ class LocalEnsemble(BaseMode):
                     pl.col(col)
                     .map_elements(
                         self.experiment.parameter_configuration[col].transform_data(),
-                        return_dtype=df[col].dtype,
                     )
+                    .cast(df[col].dtype)
                     .alias(col)
                     for col in df.columns
                     if col != "realization"
