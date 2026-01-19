@@ -67,6 +67,8 @@ class HistoryObservation(ObservationError):
                     error_min = validate_positive_float(value, key)
                 case "ERROR_MODE":
                     error_mode = validate_error_mode(value)
+                case "LOCALIZATION":
+                    breakpoint()
                 case "segments":
                     segments = list(starmap(_validate_segment_dict, value))
                 case _:
@@ -133,12 +135,10 @@ class SummaryObservation(ObservationDate, _SummaryValues, ObservationError):
                     summary_key = value
                 case "DATE":
                     date_dict.date = value
-                case "LOCATION_X":
-                    localization_values["x"] = validate_float(value, key)
-                case "LOCATION_Y":
-                    localization_values["y"] = validate_float(value, key)
-                case "LOCATION_RANGE":
-                    localization_values["range"] = validate_float(value, key)
+                case "LOCALIZATION":
+                    localization_values["x"] = validate_float(value["NORTH"], key)
+                    localization_values["y"] = validate_float(value["EAST"], key)
+                    localization_values["range"] = validate_float(value["radius"], key)
                 case _:
                     raise _unknown_key_error(str(key), observation_dict["name"])
         if "VALUE" not in float_values:
