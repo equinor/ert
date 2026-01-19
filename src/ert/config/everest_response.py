@@ -7,7 +7,7 @@ import polars as pl
 from ert.substitutions import substitute_runpath_name
 
 from .parsing import ConfigDict
-from .response_config import InvalidResponseFile, ResponseConfig, ResponseMetadata
+from .response_config import InvalidResponseFile, ResponseConfig
 from .responses_index import responses_index
 
 
@@ -20,18 +20,6 @@ class EverestResponse(ResponseConfig):
     @property
     def primary_key(self) -> list[str]:
         return []
-
-    @property
-    def metadata(self) -> list[ResponseMetadata]:
-        return [
-            ResponseMetadata(
-                response_type=self.type,
-                response_key=response_key,
-                finalized=self.has_finalized_keys,
-                filter_on=None,
-            )
-            for response_key in self.keys
-        ]
 
     @property
     def expected_input_files(self) -> list[str]:

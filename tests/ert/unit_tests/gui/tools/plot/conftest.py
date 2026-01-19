@@ -223,30 +223,29 @@ def mocked_requests_get(*args, **kwargs):
             "responses": {
                 "summary": [
                     {
-                        "response_type": "summary",
-                        "response_key": "BPR:1,3,8",
-                        "filter_on": {},
-                        "finalized": True,
+                        "type": "summary",
+                        "keys": ["BPR:1,3,8"],
+                        "has_finalized_keys": True,
                     },
                     {
-                        "response_type": "summary",
-                        "response_key": "FOPR",
-                        "filter_on": {},
-                        "finalized": True,
+                        "type": "summary",
+                        "keys": ["FOPR"],
+                        "has_finalized_keys": True,
                     },
                     {
-                        "response_type": "summary",
-                        "response_key": "WOPPER",
-                        "filter_on": {},
-                        "finalized": True,
+                        "type": "summary",
+                        "keys": ["WOPPER"],
+                        "has_finalized_keys": True,
                     },
                 ],
                 "gen_data": [
                     {
-                        "response_type": "gen_data",
-                        "response_key": "SNAKE_OIL_WPR_DIFF",
-                        "filter_on": {"report_steps": [199]},
-                        "finalized": True,
+                        "type": "gen_data",
+                        "keys": ["SNAKE_OIL_WPR_DIFF"],
+                        "report_steps_list": [
+                            [199],
+                        ],
+                        "has_finalized_keys": True,
                     }
                 ],
             },
