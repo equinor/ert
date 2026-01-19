@@ -15,7 +15,7 @@ from ert.config import (
     InvalidResponseFile,
     SummaryConfig,
 )
-from ert.config._create_observation_dataframes import DEFAULT_LOCATION_RANGE_M
+from ert.config._create_observation_dataframes import DEFAULT_INFLUENCE_RANGE_M
 
 
 @settings(max_examples=10)
@@ -71,7 +71,7 @@ def test_that_read_file_does_not_raise_unexpected_exceptions_on_missing_director
         ).read_from_file(str(tmp_path / "DOES_NOT_EXIST"), 1, 0)
 
 
-def create_summary_observation(loc_config_lines):
+def create_summary_observation(obs_content):
     config = dedent(
         """
     NUM_REALIZATIONS 3
@@ -81,22 +81,9 @@ def create_summary_observation(loc_config_lines):
     RANDOM_SEED 1234
     """
     )
-    obs_config = dedent(
-        """
-        SUMMARY_OBSERVATION FOPR_1
-        {
-        VALUE      = 0.9;
-        ERROR      = 0.05;
-        DATE       = 2014-09-10;
-        KEY        = FOPR;
-        """
-        + loc_config_lines
-        + """
-        };
-        """
-    )
+
     Path("config.ert").write_text(config, encoding="utf-8")
-    Path("observations").write_text(obs_config, encoding="utf-8")
+    Path("observations").write_text(dedent(obs_content), encoding="utf-8")
     Path("template.txt").write_text("MY_KEYWORD <MY_KEYWORD>", encoding="utf-8")
     Path("prior.txt").write_text("MY_KEYWORD NORMAL 0 1", encoding="utf-8")
 
@@ -111,42 +98,78 @@ def test_that_summary_observations_can_be_instantiated_with_localization(
     with tmpdir.as_cwd():
         summary_observations = create_summary_observation(
             """
-            LOCATION_X=10;
-            LOCATION_Y=10;
-            LOCATION_RANGE=10;
+            SUMMARY_OBSERVATION FOPR_1
+            {
+                VALUE      = 0.9;
+                ERROR      = 0.05;
+                DATE       = 2014-09-10;
+                KEY        = FOPR;
+                EAST = 10;
+                NORTH = 10;
+                INFLUENCE_RANGE = 10;
+            };
             """
         )
         assert all(
             loc_key in summary_observations.columns
             and summary_observations[loc_key][0] == 10
-            for loc_key in ["location_x", "location_y", "location_range"]
+            for loc_key in ["east", "north", "influence_range"]
         )
         assert len(summary_observations.columns) == 8
 
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
-def test_that_summary_observations_without_location_range_gets_defaulted(
+def test_that_summary_observations_without_location_keywords_gets_location_keywords_defaulted_to_none(  # noqa: E501
     tmpdir,
 ):
     with tmpdir.as_cwd():
         summary_observations = create_summary_observation(
             """
-            LOCATION_X=10;
-            LOCATION_Y=10;
+            SUMMARY_OBSERVATION FOPR_1
+            {
+                VALUE      = 0.9;
+                ERROR      = 0.05;
+                DATE       = 2014-09-10;
+                KEY        = FOPR;
+            };
             """
         )
-        assert "location_range" in summary_observations.columns
-        assert summary_observations["location_range"][0] == DEFAULT_LOCATION_RANGE_M
+        assert "influence_range" in summary_observations.columns
+        assert summary_observations["east"][0] is None
+        assert summary_observations["north"][0] is None
+        assert summary_observations["influence_range"][0] is None
+
+
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
+def test_that_summary_observations_without_influence_range_gets_defaulted(
+    tmpdir,
+):
+    with tmpdir.as_cwd():
+        summary_observations = create_summary_observation(
+            """
+            SUMMARY_OBSERVATION FOPR_1
+            {
+                VALUE      = 0.9;
+                ERROR      = 0.05;
+                DATE       = 2014-09-10;
+                KEY        = FOPR;
+                EAST = 10;
+                NORTH = 10;
+            };
+            """
+        )
+        assert "influence_range" in summary_observations.columns
+        assert summary_observations["influence_range"][0] == DEFAULT_INFLUENCE_RANGE_M
 
 
 @pytest.mark.parametrize(
     "loc_config_lines",
     [
-        "LOCATION_X=10;\n",
-        "LOCATION_Y=10;\n",
-        "LOCATION_RANGE=10;\n",
-        "LOCATION_Y=10;\nLOCATION_RANGE=10;\n",
-        "LOCATION_X=10;\nLOCATION_RANGE=10;\n",
+        "EAST=10;\n",
+        "NORTH=10;\n",
+        "INFLUENCE_RANGE=10;\n",
+        "NORTH=10;\nINFLUENCE_RANGE=10;\n",
+        "EAST=10;\nINFLUENCE_RANGE=10;\n",
     ],
 )
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
@@ -154,14 +177,28 @@ def test_that_summary_observations_raises_config_validation_error_when_loc_x_or_
     tmpdir,
     loc_config_lines,
 ):
-    location_pattern = r"LOCATION_[a-zA-Z]*"
+    location_pattern = r"\b(EAST|NORTH|INFLUENCE_RANGE)\b"
     matches = re.findall(location_pattern, loc_config_lines)
     expected_err_msgs = [
         "Localization for observation FOPR_1 is misconfigured.",
         f"Only {', '.join(matches)} were provided.",
-        "ensure that both LOCATION_X and LOCATION_Y are defined",
+        "ensure that both EAST and NORTH are defined",
     ]
+    obs_config_content = (
+        """
+    SUMMARY_OBSERVATION FOPR_1
+    {
+        VALUE      = 0.9;
+        ERROR      = 0.05;
+        DATE       = 2014-09-10;
+        KEY        = FOPR;
+        """
+        + loc_config_lines
+        + """
+    };
+    """
+    )
     with pytest.raises(ConfigValidationError) as e, tmpdir.as_cwd():
-        create_summary_observation(loc_config_lines)
+        create_summary_observation(obs_config_content)
     for msg in expected_err_msgs:
         assert msg in str(e.value)

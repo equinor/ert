@@ -36,7 +36,7 @@ if TYPE_CHECKING:
 
 
 DEFAULT_TIME_DELTA = timedelta(seconds=30)
-DEFAULT_LOCATION_RANGE_M = 3000
+DEFAULT_INFLUENCE_RANGE_M = 3000
 
 
 def create_observation_dataframes(
@@ -299,24 +299,24 @@ def _get_restart(
 def _has_localization(summary_dict: SummaryObservation) -> bool:
     return any(
         [
-            summary_dict.location_x is not None,
-            summary_dict.location_y is not None,
-            summary_dict.location_range is not None,
+            summary_dict.east is not None,
+            summary_dict.north is not None,
+            summary_dict.influence_range is not None,
         ]
     )
 
 
 def _validate_localization_values(summary_dict: SummaryObservation) -> None:
-    """The user must provide LOCATION_X and LOCATION_Y to use localization, while
-    unprovided LOCATION_RANGE should default to some value.
+    """The user must provide EAST and NORTH to use localization, while
+    unprovided INFLUENCE_RANGE should default to some value.
 
-    This method assumes the summary dict contains at least one LOCATION key.
+    This method assumes the summary dict contains at least one localization key.
     """
-    if summary_dict.location_x is None or summary_dict.location_y is None:
+    if summary_dict.east is None or summary_dict.north is None:
         loc_values = {
-            "LOCATION_X": summary_dict.location_x,
-            "LOCATION_Y": summary_dict.location_y,
-            "LOCATION_RANGE": summary_dict.location_range,
+            "EAST": summary_dict.east,
+            "NORTH": summary_dict.north,
+            "INFLUENCE_RANGE": summary_dict.influence_range,
         }
         provided_loc_values = {k: v for k, v in loc_values.items() if v is not None}
 
@@ -326,9 +326,9 @@ def _validate_localization_values(summary_dict: SummaryObservation) -> None:
         raise ObservationConfigError.with_context(
             f"Localization for observation {summary_dict.name} is misconfigured.\n"
             f"Only {provided_loc_values_string} were provided. To enable "
-            f"localization for an observation, ensure that both LOCATION_X and "
-            f"LOCATION_Y are defined - or remove LOCATION keywords to disable "
-            f"localization.",
+            f"localization for an observation, ensure that both EAST and "
+            f"NORTH are defined - or remove localization keywords (EAST, NORTH, "
+            f"INFLUENCE_RANGE) to disable localization.",
             summary_dict,
         )
 
@@ -370,6 +370,9 @@ def _handle_summary_observation(
             "Observation uncertainty must be strictly > 0", summary_key
         ) from None
 
+    if _has_localization(summary_dict):
+        _validate_localization_values(summary_dict)
+
     data_dict = {
         "response_key": [summary_key],
         "observation_key": [obs_key],
@@ -380,10 +383,10 @@ def _handle_summary_observation(
 
     if _has_localization(summary_dict):
         _validate_localization_values(summary_dict)
-        data_dict["location_x"] = summary_dict.location_x
-        data_dict["location_y"] = summary_dict.location_y
-        data_dict["location_range"] = (
-            summary_dict.location_range or DEFAULT_LOCATION_RANGE_M
+        data_dict["east"] = summary_dict.east
+        data_dict["north"] = summary_dict.north
+        data_dict["infuence_range"] = (
+            summary_dict.influence_range or DEFAULT_INFLUENCE_RANGE_M
         )
 
     return pl.DataFrame(data_dict)
