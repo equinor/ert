@@ -215,23 +215,19 @@ def _plotHistogram(
     )  # creates rectangle patch for legend use.'
 
 
-def _histogramLogBins(
-    bin_count: int, minimum: float, maximum: float
-) -> npt.NDArray[np.floating[Any]]:
+def _histogramLogBins(effective_bin_count, minimum, maximum):
+    # FIX START: Handle non-positive values for log scale
+    if minimum <= 0:
+        # If max is also <= 0, log scale is impossible. 
+        # We can fallback to a small epsilon or handle it gracefully.
+        # Here we clamp minimum to a small positive value (1e-10) to prevent the crash.
+        if maximum > 0:
+            minimum = 1e-10
+        else:
+            # If both min and max are <= 0, we cannot return log bins.
+            # Returning None or raising a clearer error is safer than crashing.
+            raise ValueError("Cannot compute log bins: all data values are <= 0")
+    # FIX END
+
     minimum = log10(float(minimum))
     maximum = log10(float(maximum))
-
-    min_value = floor(minimum)
-    max_value = ceil(maximum)
-
-    log_bin_count = max_value - min_value
-
-    if log_bin_count < bin_count:
-        next_bin_count = log_bin_count * 2
-
-        if bin_count - log_bin_count > next_bin_count - bin_count:
-            log_bin_count = next_bin_count
-        else:
-            log_bin_count = bin_count
-
-    return 10 ** np.linspace(minimum, maximum, log_bin_count)
