@@ -353,9 +353,9 @@ def _handle_summary_observation(
             "time": pl.Series([date]).dt.cast_time_unit("ms"),
             "observations": pl.Series([value], dtype=pl.Float32),
             "std": pl.Series([std_dev], dtype=pl.Float32),
-            "location_x": summary_dict.location_x,
-            "location_y": summary_dict.location_y,
-            "location_range": location_range,
+            "location_x": pl.Series([summary_dict.location_x], dtype=pl.Float32),
+            "location_y": pl.Series([summary_dict.location_y], dtype=pl.Float32),
+            "location_range": pl.Series([location_range], dtype=pl.Float32),
         }
     )
 
