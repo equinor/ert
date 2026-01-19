@@ -373,23 +373,24 @@ def _handle_summary_observation(
     if _has_localization(summary_dict):
         _validate_localization_values(summary_dict)
 
-    data_dict = {
-        "response_key": [summary_key],
-        "observation_key": [obs_key],
-        "time": pl.Series([date]).dt.cast_time_unit("ms"),
-        "observations": pl.Series([value], dtype=pl.Float32),
-        "std": pl.Series([std_dev], dtype=pl.Float32),
-    }
+    influence_range = (
+        summary_dict.influence_range or DEFAULT_INFLUENCE_RANGE_M
+        if _has_localization(summary_dict)
+        else None
+    )
 
-    if _has_localization(summary_dict):
-        _validate_localization_values(summary_dict)
-        data_dict["east"] = summary_dict.east
-        data_dict["north"] = summary_dict.north
-        data_dict["infuence_range"] = (
-            summary_dict.influence_range or DEFAULT_INFLUENCE_RANGE_M
-        )
-
-    return pl.DataFrame(data_dict)
+    return pl.DataFrame(
+        {
+            "response_key": [summary_key],
+            "observation_key": [obs_key],
+            "time": pl.Series([date]).dt.cast_time_unit("ms"),
+            "observations": pl.Series([value], dtype=pl.Float32),
+            "std": pl.Series([std_dev], dtype=pl.Float32),
+            "east": summary_dict.east,
+            "north": summary_dict.north,
+            "influence_range": influence_range,
+        }
+    )
 
 
 def _handle_general_observation(

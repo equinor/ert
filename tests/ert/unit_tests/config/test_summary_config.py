@@ -202,3 +202,32 @@ def test_that_summary_observations_raises_config_validation_error_when_loc_x_or_
         create_summary_observation(obs_config_content)
     for msg in expected_err_msgs:
         assert msg in str(e.value)
+
+
+def test_that_localized_summary_obs_can_exist_with_summary_observations_without_localization(  # noqa: E501
+    tmpdir, copy_snake_oil_case
+):
+    with tmpdir.as_cwd():
+        df = create_summary_observation(
+            """
+            SUMMARY_OBSERVATION FOPR_1
+            {
+                VALUE      = 0.9;
+                ERROR      = 0.05;
+                DATE       = 2014-09-10;
+                KEY        = FOPR;
+                EAST = 10;
+                NORTH = 10;
+            };
+            SUMMARY_OBSERVATION FOPR_2
+            {
+                VALUE      = 0.9;
+                ERROR      = 0.05;
+                DATE       = 2014-09-10;
+                KEY        = FOPR;
+            };
+            """,
+        )
+        assert len(df.columns) == 8
+        assert df.row(0)[-3:] == (10, 10, DEFAULT_INFLUENCE_RANGE_M)
+        assert df.row(1)[-3:] == (None, None, None)
