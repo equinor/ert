@@ -87,6 +87,25 @@ def create_observation_dataframes(
     return datasets
 
 
+def _handle_error_mode(
+    values: npt.ArrayLike,
+    error_dict: ObservationError,
+) -> npt.NDArray[np.double]:
+    values = np.asarray(values)
+    error_mode = error_dict.error_mode
+    error_min = error_dict.error_min
+    error = error_dict.error
+    match error_mode:
+        case ErrorModes.ABS:
+            return np.full(values.shape, error)
+        case ErrorModes.REL:
+            return np.abs(values) * error
+        case ErrorModes.RELMIN:
+            return np.maximum(np.abs(values) * error, np.full(values.shape, error_min))
+        case default:
+            assert_never(default)
+
+
 def _get_time(
     date_dict: ObservationDate, start_time: datetime, context: Any = None
 ) -> tuple[datetime, str]:
@@ -369,22 +388,3 @@ def _handle_rft_observation(
             "std": pl.Series([rft_observation.error], dtype=pl.Float32),
         }
     )
-
-
-def _handle_error_mode(
-    values: npt.ArrayLike,
-    error_dict: ObservationError,
-) -> npt.NDArray[np.double]:
-    values = np.asarray(values)
-    error_mode = error_dict.error_mode
-    error_min = error_dict.error_min
-    error = error_dict.error
-    match error_mode:
-        case ErrorModes.ABS:
-            return np.full(values.shape, error)
-        case ErrorModes.REL:
-            return np.abs(values) * error
-        case ErrorModes.RELMIN:
-            return np.maximum(np.abs(values) * error, np.full(values.shape, error_min))
-        case default:
-            assert_never(default)
