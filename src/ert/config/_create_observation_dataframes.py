@@ -205,6 +205,9 @@ def _handle_history_observation(
             "time": dates_series,
             "observations": pl.Series(values, dtype=pl.Float32),
             "std": pl.Series(std_dev, dtype=pl.Float32),
+            "location_x": pl.Series([None] * len(values), dtype=pl.Float32),
+            "location_y": pl.Series([None] * len(values), dtype=pl.Float32),
+            "location_range": pl.Series([None] * len(values), dtype=pl.Float32),
         }
     )
 
@@ -337,22 +340,24 @@ def _handle_summary_observation(
             "Observation uncertainty must be strictly > 0", summary_key
         ) from None
 
-    data_dict = {
-        "response_key": [summary_key],
-        "observation_key": [obs_key],
-        "time": pl.Series([date]).dt.cast_time_unit("ms"),
-        "observations": pl.Series([value], dtype=pl.Float32),
-        "std": pl.Series([std_dev], dtype=pl.Float32),
-    }
+    location_range = (
+        summary_dict.location_range or DEFAULT_LOCATION_RANGE_M
+        if _has_localization(summary_dict)
+        else None
+    )
 
-    if _has_localization(summary_dict):
-        data_dict["location_x"] = summary_dict.location_x
-        data_dict["location_y"] = summary_dict.location_y
-        data_dict["location_range"] = (
-            summary_dict.location_range or DEFAULT_LOCATION_RANGE_M
-        )
-
-    return pl.DataFrame(data_dict)
+    return pl.DataFrame(
+        {
+            "response_key": [summary_key],
+            "observation_key": [obs_key],
+            "time": pl.Series([date]).dt.cast_time_unit("ms"),
+            "observations": pl.Series([value], dtype=pl.Float32),
+            "std": pl.Series([std_dev], dtype=pl.Float32),
+            "location_x": summary_dict.location_x,
+            "location_y": summary_dict.location_y,
+            "location_range": location_range,
+        }
+    )
 
 
 def _handle_general_observation(
