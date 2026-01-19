@@ -846,6 +846,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "fastexcel" },
     { name = "filelock" },
+    { name = "gaussianfft" },
     { name = "graphite-maps" },
     { name = "httpx" },
     { name = "httpx-retries" },
@@ -897,6 +898,7 @@ dependencies = [
 [package.optional-dependencies]
 dev = [
     { name = "furo" },
+    { name = "gaussianfft" },
     { name = "hypothesis" },
     { name = "json-schema-for-humans" },
     { name = "jsonpath-ng" },
@@ -959,6 +961,8 @@ requires-dist = [
     { name = "fastexcel", specifier = ">=0.14.0" },
     { name = "filelock" },
     { name = "furo", marker = "extra == 'dev'" },
+    { name = "gaussianfft", specifier = "==1.1.2" },
+    { name = "gaussianfft", marker = "extra == 'dev'", specifier = "==1.1.2" },
     { name = "graphite-maps" },
     { name = "httpx" },
     { name = "httpx-retries" },
@@ -1245,6 +1249,25 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ec/20/5f5ad4da6a5a27c80f2ed2ee9aee3f9e36c66e56e21c00fde467b2f8f88f/furo-2025.12.19.tar.gz", hash = "sha256:188d1f942037d8b37cd3985b955839fea62baa1730087dc29d157677c857e2a7", size = 1661473, upload-time = "2025-12-19T17:34:40.889Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f4/b2/50e9b292b5cac13e9e81272c7171301abc753a60460d21505b606e15cf21/furo-2025.12.19-py3-none-any.whl", hash = "sha256:bb0ead5309f9500130665a26bee87693c41ce4dbdff864dbfb6b0dae4673d24f", size = 339262, upload-time = "2025-12-19T17:34:38.905Z" },
+]
+
+[[package]]
+name = "gaussianfft"
+version = "1.1.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/62/41/61ae9960a2868cd667dbe8dc7f47b80a7479510103879d1f1389b97a0c2c/gaussianfft-1.1.2.tar.gz", hash = "sha256:2ff2a44aac79b9168c96d52985b16d54c89bf6015ef39bf511fe12f5160953ba", size = 421556, upload-time = "2024-03-12T15:23:09.164Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c5/4e/20929d21923c2ade493a54a09f2951d8968643698557ec6bce754ece02c5/gaussianfft-1.1.2-cp311-cp311-macosx_11_0_x86_64.whl", hash = "sha256:ae5dd05d08f152f856d75a33fa088e3900e1eeedc496c8b5f97d4e2464472be7", size = 15231675, upload-time = "2024-03-12T15:22:25.678Z" },
+    { url = "https://files.pythonhosted.org/packages/91/78/89f86530dac3e50372b7c2bb2b62bbb6cb89bfc59f4d319420fced760ad4/gaussianfft-1.1.2-cp311-cp311-macosx_14_0_arm64.whl", hash = "sha256:bbe50f37fd0f0271b3b83fbf68b405831083474bb051ac6e45fe8e4d693b387d", size = 669279, upload-time = "2024-03-12T15:22:28.445Z" },
+    { url = "https://files.pythonhosted.org/packages/71/1b/8881be60d6db7ab046df738a6a9ea1a2bfa00f205e6e91c195d93e9047a8/gaussianfft-1.1.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a59c459d0759751f5a819ad34e4f712402bfbe7814c8dba3c4d61053bdc5c403", size = 12817426, upload-time = "2024-03-12T15:22:30.418Z" },
+    { url = "https://files.pythonhosted.org/packages/61/8d/909324905e945481beaa93ca8e8402ae2b19ab042bf1b32c9108bc61f283/gaussianfft-1.1.2-cp311-cp311-manylinux_2_17_x86_64.whl", hash = "sha256:aa872c0a51b5fdea392b1702b5e72c706e3f4f1f2cb2d31381a607ed532ea76d", size = 12752190, upload-time = "2024-03-12T15:22:33.145Z" },
+    { url = "https://files.pythonhosted.org/packages/00/86/fc96863e87fe92636e08c1d09200c9911b418fb6d5c2fe8d4e59b04b6f86/gaussianfft-1.1.2-cp312-cp312-macosx_11_0_x86_64.whl", hash = "sha256:a5dc350d7273c35d7827dc55b30fa922cec9b69cd352fd5dfd3927cf3a3191fe", size = 15229398, upload-time = "2024-03-12T15:22:35.385Z" },
+    { url = "https://files.pythonhosted.org/packages/0b/a4/e911d0586d531c75dc6861ea2e1bd916f52676c56c00b0c7b78cd39c26d7/gaussianfft-1.1.2-cp312-cp312-macosx_14_0_arm64.whl", hash = "sha256:8cd3189021ee6d6aaeaab868aa9e3e1ff5f503708378adbaf45cb3bb85bede5a", size = 668095, upload-time = "2024-03-12T15:22:38.869Z" },
+    { url = "https://files.pythonhosted.org/packages/26/e8/3f8ffbc47e706786f710225cd8cd34dc2d32c378ad1bc7e1d35d8033b37b/gaussianfft-1.1.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0914ea4eb47b98092c4bb41d992352cf66e4803a3c36429d2e27e493d7e51a96", size = 12817171, upload-time = "2024-03-12T15:22:40.32Z" },
+    { url = "https://files.pythonhosted.org/packages/18/2b/1e636581580e03f26cf9cc42c46851dddd4981654c13bed8a600c80421f6/gaussianfft-1.1.2-cp312-cp312-manylinux_2_17_x86_64.whl", hash = "sha256:5be4c6adf818ea2a226326864edf4e9aae22c6549f94bda6b63affae95a5ac46", size = 12751907, upload-time = "2024-03-12T15:22:43.209Z" },
 ]
 
 [[package]]
