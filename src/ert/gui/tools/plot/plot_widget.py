@@ -164,6 +164,7 @@ class PlotWidget(QWidget):
         vbox.addSpacing(8)
         self.setLayout(vbox)
 
+        self._negative_values_in_data = False
         self._dirty = True
         self._active = False
         self.resetPlot()
@@ -176,11 +177,15 @@ class PlotWidget(QWidget):
         self._figure.clear()
 
     def _sync_log_checkbox(self) -> None:
-        if type(self._plotter).__name__ in {
-            "HistogramPlot",
-            "DistributionPlot",
-            "GaussianKDEPlot",
-        }:
+        if (
+            type(self._plotter).__name__
+            in {
+                "HistogramPlot",
+                "DistributionPlot",
+                "GaussianKDEPlot",
+            }
+            and self._negative_values_in_data is False
+        ):
             self._log_checkbox.setVisible(True)
         else:
             self._log_checkbox.setVisible(False)
@@ -203,8 +208,11 @@ class PlotWidget(QWidget):
     ) -> None:
         self.resetPlot()
         try:
+            self._sync_log_checkbox()
             plot_context.log_scale = (
-                self._log_checkbox.isVisible() and self._log_checkbox.isChecked()
+                self._log_checkbox.isVisible()
+                and self._log_checkbox.isChecked()
+                and self._negative_values_in_data is False
             )
             self._plotter.plot(
                 self._figure,
@@ -215,7 +223,6 @@ class PlotWidget(QWidget):
                 key_def,
             )
             self._canvas.draw()
-            self._sync_log_checkbox()
         except Exception as e:
             exc_type, _, exc_tb = sys.exc_info()
             sys.stderr.write("-" * 80 + "\n")
