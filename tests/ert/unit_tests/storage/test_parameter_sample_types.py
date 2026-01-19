@@ -8,7 +8,7 @@ from textwrap import dedent
 import numpy as np
 import polars as pl
 import pytest
-from resdata.geometry import Surface
+from xtgeo import RegularSurface, surface_from_file
 
 from ert.config import ConfigValidationError, ErtConfig, GenKwConfig
 from ert.sample_prior import sample_prior
@@ -84,6 +84,7 @@ def test_surface_param(
     error,
     caplog,
 ):
+    values = [[0.0, 1.0], [2.0, 3.0]]
     with tmpdir.as_cwd():
         config = dedent(
             """
@@ -92,13 +93,18 @@ def test_surface_param(
         """
         )
         config += config_str
-        expect_surface = Surface(
-            nx=2, ny=2, xinc=1, yinc=1, xstart=1, ystart=1, angle=0
+        expect_surface = RegularSurface(
+            ncol=2,
+            nrow=2,
+            xinc=1.0,
+            yinc=1.0,
+            xori=1.0,
+            yori=1,
+            rotation=0.0,
+            values=values,
         )
-        for i in range(4):
-            expect_surface[i] = float(i)
-        expect_surface.write("surf.irap")
-        expect_surface.write("surf0.irap")
+        expect_surface.to_file("surf.irap", fformat="irap_ascii")
+        expect_surface.to_file("surf0.irap", fformat="irap_ascii")
 
         with open("config.ert", mode="w", encoding="utf-8") as fh:
             fh.writelines(config)
@@ -126,15 +132,16 @@ def test_surface_param(
                 fs._index.iteration = 1
                 create_runpath(storage, "config.ert", ensemble=fs)
             expected_iter = 1 if expect_forward_init else 0
-            actual_surface = Surface(
-                f"simulations/realization-0/iter-{expected_iter}/surf.irap"
+            actual_surface = surface_from_file(
+                f"simulations/realization-0/iter-{expected_iter}/surf.irap",
+                fformat="irap_ascii",
             )
-            assert actual_surface == expect_surface
+            assert actual_surface.compare_topology(expect_surface)
+            assert actual_surface.values.tolist() == values
 
         # Assert that the data has been internalised to storage
         if expect_num_loaded > 0:
-            arr = fs.load_parameters("MY_PARAM", 0)["values"].values.T
-            assert arr.flatten().tolist() == [0.0, 1.0, 2.0, 3.0]
+            assert fs.load_parameters("MY_PARAM", 0)["values"].values.tolist() == values
         else:
             with pytest.raises(
                 KeyError, match="No dataset 'MY_PARAM' in storage for realization 0"
