@@ -231,3 +231,16 @@ def test_that_localized_summary_obs_can_exist_with_summary_observations_without_
         assert len(df.columns) == 8
         assert df.row(0)[-3:] == (10, 10, DEFAULT_INFLUENCE_RANGE_M)
         assert df.row(1)[-3:] == (None, None, None)
+
+
+@pytest.mark.usefixtures("copy_snake_oil_case")
+def test_that_adding_one_localized_observation_to_snake_oil_case_can_be_internalized():
+    obs_content = Path("observations/observations.txt").read_text(encoding="utf-8")
+    obs_lines = obs_content.split("\n")
+    observation_index = obs_lines.index("SUMMARY_OBSERVATION WOPR_OP1_36")
+    obs_lines.insert(observation_index + 2, "    EAST = 10;")
+    obs_lines.insert(observation_index + 3, "    NORTH = 10;")
+    obs_lines.insert(observation_index + 3, "    INFLUENCE_RANGE = 10.5;")
+    new_obs_content = "\n".join(obs_lines)
+    Path("observations/observations.txt").write_text(new_obs_content, encoding="utf-8")
+    ErtConfig.from_file("snake_oil.ert")
