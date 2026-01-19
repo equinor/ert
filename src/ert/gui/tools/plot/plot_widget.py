@@ -193,7 +193,7 @@ class PlotWidget(QWidget):
         logger.info(f"Plotwidget utility used: 'Log scale button' in tab '{self.name}'")
         self._log_checkbox.clicked.disconnect()  # Log only once
 
-    def updatePlot(
+   def updatePlot(
         self,
         plot_context: "PlotContext",
         ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
@@ -202,6 +202,36 @@ class PlotWidget(QWidget):
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         self.resetPlot()
+        
+        # --- FIX START: Disable Log Scale if data contains non-positive values ---
+        has_non_positive = False
+        
+        # Check simulation data
+        for df in ensemble_to_data_map.values():
+            if not df.empty:
+                # Check numeric columns for values <= 0
+                numeric_df = df.select_dtypes(include=[np.number])
+                if not numeric_df.empty and numeric_df.min().min() <= 0:
+                    has_non_positive = True
+                    break
+        
+        # Check observation data (if not already found bad data)
+        if not has_non_positive and not observations.empty:
+             numeric_obs = observations.select_dtypes(include=[np.number])
+             if not numeric_obs.empty and numeric_obs.min().min() <= 0:
+                 has_non_positive = True
+
+        # Apply UI logic
+        if has_non_positive:
+            if self._log_checkbox.isChecked():
+                self._log_checkbox.setChecked(False)  # Uncheck to prevent crash
+            self._log_checkbox.setEnabled(False)      # Gray out the button
+            self._log_checkbox.setToolTip("Log scale disabled: Data contains values <= 0")
+        else:
+            self._log_checkbox.setEnabled(True)       # Re-enable if data is safe
+            self._log_checkbox.setToolTip("Toggle data domain to log scale and back")
+        # --- FIX END ---
+
         try:
             plot_context.log_scale = (
                 self._log_checkbox.isVisible() and self._log_checkbox.isChecked()
