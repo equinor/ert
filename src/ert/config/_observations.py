@@ -103,7 +103,7 @@ class SummaryObservation(ObservationDate, _SummaryValues, ObservationError):
 
         date_dict: ObservationDate = ObservationDate()
         float_values: dict[str, float] = {"ERROR_MIN": 0.1}
-        localization_values: dict[str, float] = {}
+        localization_values: dict[str, float | None] = {}
         for key, value in observation_dict.items():
             match key:
                 case "type" | "name":
@@ -124,12 +124,15 @@ class SummaryObservation(ObservationDate, _SummaryValues, ObservationError):
                     summary_key = value
                 case "DATE":
                     date_dict.date = value
-                case "LOCATION_X":
-                    localization_values["x"] = validate_float(value, key)
-                case "LOCATION_Y":
-                    localization_values["y"] = validate_float(value, key)
-                case "LOCATION_RANGE":
-                    localization_values["range"] = validate_float(value, key)
+                case "LOCALIZATION":
+                    validate_localization(value, observation_dict["name"])
+                    localization_values["x"] = validate_float(value["EAST"], key)
+                    localization_values["y"] = validate_float(value["NORTH"], key)
+                    localization_values["range"] = (
+                        validate_float(value["RADIUS"], key)
+                        if "RADIUS" in value
+                        else None
+                    )
                 case _:
                     raise _unknown_key_error(str(key), observation_dict["name"])
         if "VALUE" not in float_values:
@@ -396,6 +399,19 @@ def validate_positive_float(val: str, key: str) -> float:
             val,
         )
     return v
+
+
+def validate_localization(val: dict[str, Any], obs_name: str) -> None:
+    errors = []
+    if "EAST" not in val:
+        errors.append(_missing_value_error(f"LOCALIZATION for {obs_name}", "EAST"))
+    if "NORTH" not in val:
+        errors.append(_missing_value_error(f"LOCALIZATION for {obs_name}", "NORTH"))
+    for key in val:
+        if key not in {"EAST", "NORTH", "RADIUS"}:
+            errors.append(_unknown_key_error(key, f"LOCALIZATION for {obs_name}"))
+    if errors:
+        raise ObservationConfigError.from_collected(errors)
 
 
 def validate_positive_int(val: str, key: str) -> int:
