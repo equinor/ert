@@ -284,6 +284,15 @@ class PlotWindow(QMainWindow):
                 except BaseException as e:
                     handle_exception(e)
 
+            negative_values_in_data = False
+            if key_def.parameter is not None and key_def.parameter.type == "gen_kw":
+                for data in ensemble_to_data_map.values():
+                    data = data.T
+                    if data.le(0).any().any():
+                        negative_values_in_data = True
+                        break
+
+            plot_widget._negative_values_in_data = negative_values_in_data
             observations = None
             if key_def.observations and selected_ensembles:
                 try:
