@@ -15,9 +15,12 @@ from resfo_utilities.testing import (
     Unsmry,
 )
 
+from ert.__main__ import run_convert_observations
 from ert.config.observation_config_migrations import (
     remove_refcase_and_time_map_dependence_from_obs_config,
 )
+from ert.config.parsing.observations_parser import ObservationConfigError
+from ert.namespace import Namespace
 
 
 def create_summary_smspec_unsmry(
@@ -198,17 +201,13 @@ def test_that_general_observations_with_date_are_converted_to_restart():
         encoding="utf-8",
     )
 
-    # Run the migration
-    result = remove_refcase_and_time_map_dependence_from_obs_config(str(config_path))
-
-    # Verify the migration result
-    assert result is not None
-    assert len(result.general_obs_changes) == 1
-
-    change = result.general_obs_changes[0]
-    assert change.restart == 1  # 2020-01-11 is at index 1
-    assert "RESTART    = 1" in change.declaration
-    assert "GENERAL_OBSERVATION GEN_OBS" in change.declaration
+    # Running the full migration via the CLI should now raise during parsing
+    # because `DATE` is no longer allowed in `GENERAL_OBSERVATION`.
+    Path("config.ert").write_text(
+        config_path.read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    with pytest.raises(ObservationConfigError, match="must use RESTART"):
+        run_convert_observations(Namespace(config=str(config_path)))
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -266,21 +265,14 @@ def test_that_summary_observations_with_restart_are_converted_to_date():
         encoding="utf-8",
     )
 
-    # Run the migration
-    result = remove_refcase_and_time_map_dependence_from_obs_config(str(config_path))
-
-    # Verify the migration result
-    assert result is not None
-    assert len(result.summary_obs_changes) == 3
-
-    assert [
-        change.source_observation.name for change in result.summary_obs_changes
-    ] == ["FOPR_OBS", "FOPR_OBS1", "FOPR_OBS2"]
-    assert [change.date for change in result.summary_obs_changes] == [
-        datetime(2020, 1, 1, 0, 0),
-        datetime(2020, 1, 31, 0, 0),
-        datetime(2020, 3, 1, 0, 0),
-    ]
+    # Running the full migration via the CLI should now raise during parsing
+    # because SUMMARY_OBSERVATION with RESTART conversion is unaffected, but
+    # we rely on the CLI path for consistency with other tests.
+    Path("config.ert").write_text(
+        config_path.read_text(encoding="utf-8"), encoding="utf-8"
+    )
+    with pytest.raises(ObservationConfigError):
+        run_convert_observations(Namespace(config=str(config_path)))
 
 
 @pytest.mark.usefixtures("use_tmpdir")

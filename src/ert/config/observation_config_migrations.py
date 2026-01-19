@@ -349,18 +349,21 @@ def remove_refcase_and_time_map_dependence_from_obs_config(
         for obs in HistoryObservation.from_obs_dict("", obs_dict)
     ]
 
+    genobs_deprecated_keys = {"DATE", "DAYS", "HOURS"}
     general_observations: list[GeneralObservation] = [
         obs
         for obs_dict in obs_config_entries
-        if obs_dict.get("type") == "GENERAL_OBSERVATION" and "DATE" in obs_dict
+        if obs_dict.get("type") == "GENERAL_OBSERVATION"
+        and (len(genobs_deprecated_keys.intersection(set(obs_dict))) > 0)
         for obs in GeneralObservation.from_obs_dict(str(config_dir), obs_dict)
     ]
 
+    summary_deprecated_keys = {"RESTART", "DAYS", "HOURS"}
     summary_observations: list[SummaryObservation] = [
         obs
         for obs_dict in obs_config_entries
         if obs_dict.get("type") == "SUMMARY_OBSERVATION"
-        and (len({"RESTART", "DAYS", "HOURS"}.intersection(set(obs_dict))) > 0)
+        and (len(summary_deprecated_keys.intersection(set(obs_dict))) > 0)
         for obs in SummaryObservation.from_obs_dict(str(config_dir), obs_dict)
     ]
     # Process history observations, which generate summary observation declarations

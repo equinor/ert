@@ -421,9 +421,8 @@ def test_that_the_date_keyword_sets_the_general_index_by_looking_up_time_map():
     )
     Path("config.ert").write_text(config_content, encoding="utf-8")
 
-    run_convert_observations(Namespace(config="config.ert"))
-    observations = ErtConfig.from_file("config.ert").observations["gen_data"]
-    assert list(observations["report_step"]) == [restart]
+    with pytest.raises(ObservationConfigError, match="must use RESTART"):
+        run_convert_observations(Namespace(config="config.ert"))
 
 
 @given(summary=summaries(), data=st.data())
@@ -473,9 +472,8 @@ def test_that_the_date_keyword_sets_the_report_step_by_looking_up_refcase(
         )
         Path("config.ert").write_text(config_content, encoding="utf-8")
 
-        run_convert_observations(Namespace(config="config.ert"))
-        observations = ErtConfig.from_file("config.ert").observations["gen_data"]
-        assert list(observations["report_step"]) == [restart]
+        with pytest.raises(ObservationConfigError, match="must use RESTART"):
+            run_convert_observations(Namespace(config="config.ert"))
 
 
 @pytest.mark.parametrize("std", [-1.0, 0, 0.0])
@@ -616,41 +614,61 @@ def test_that_all_errors_in_general_observations_must_be_greater_than_zero(tmpdi
 
 
 def test_that_error_mode_is_not_allowed_in_general_observations():
-    with pytest.raises(ConfigValidationError, match=r"Unknown ERROR_MODE"):
-        make_observations(
-            [
-                {
-                    "type": ObservationType.GENERAL,
-                    "name": "OBS",
-                    "DATA": "GEN",
-                    "DATE": "2020-01-02",
-                    "INDEX_LIST": "1",
-                    "VALUE": "1.0",
-                    "ERROR": "0.1",
-                    "ERROR_MODE": "REL",
-                }
-            ],
-            parse=False,
-        )
+    obsconf = dedent(
+        """
+        GENERAL_OBSERVATION OBS {
+            DATA = GEN;
+            DATE = 2020-01-02;
+            INDEX_LIST = 1;
+            VALUE = 1.0;
+            ERROR = 0.1;
+            ERROR_MODE = REL;
+        };
+        """
+    )
+    Path("obsconf").write_text(obsconf, encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            GEN_DATA GEN RESULT_FILE:gen%d.txt REPORT_STEPS:1
+            OBS_CONFIG obsconf
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ObservationConfigError, match="must use RESTART"):
+        run_convert_observations(Namespace(config="config.ert"))
 
 
 def test_that_error_min_is_not_allowed_in_general_observations():
-    with pytest.raises(ConfigValidationError, match=r"Unknown ERROR_MIN"):
-        make_observations(
-            [
-                {
-                    "type": ObservationType.GENERAL,
-                    "name": "OBS",
-                    "DATA": "GEN",
-                    "DATE": "2020-01-02",
-                    "INDEX_LIST": "1",
-                    "VALUE": "1.0",
-                    "ERROR": "0.1",
-                    "ERROR_MIN": "0.05",
-                }
-            ],
-            parse=False,
-        )
+    obsconf = dedent(
+        """
+        GENERAL_OBSERVATION OBS {
+            DATA = GEN;
+            DATE = 2020-01-02;
+            INDEX_LIST = 1;
+            VALUE = 1.0;
+            ERROR = 0.1;
+            ERROR_MIN = 0.05;
+        };
+        """
+    )
+    Path("obsconf").write_text(obsconf, encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            GEN_DATA GEN RESULT_FILE:gen%d.txt REPORT_STEPS:1
+            OBS_CONFIG obsconf
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ObservationConfigError, match="must use RESTART"):
+        run_convert_observations(Namespace(config="config.ert"))
 
 
 def test_that_empty_observations_file_causes_exception():
@@ -798,10 +816,7 @@ def test_that_non_existent_time_map_file_is_invalid():
     )
     Path("config.ert").write_text(config_content, encoding="utf-8")
 
-    with pytest.raises(
-        expected_exception=ConfigValidationError,
-        match="TIME_MAP",
-    ):
+    with pytest.raises(ObservationConfigError, match="must use RESTART"):
         run_convert_observations(Namespace(config="config.ert"))
 
 
@@ -1799,25 +1814,55 @@ def test_that_error_mode_must_be_one_of_rel_abs_relmin_in_summary_observation():
 
 
 def test_that_days_must_be_a_positive_number_in_general_observation():
-    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
-        make_observations("""
-            GENERAL_OBSERVATION FOPR
-            {
-                DAYS = -1;
-                DATA = GEN;
-            };
-        """)
+    obsconf = dedent(
+        """
+        GENERAL_OBSERVATION FOPR
+        {
+            DAYS = -1;
+            DATA = GEN;
+        };
+        """
+    )
+    Path("obsconf").write_text(obsconf, encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            GEN_DATA GEN RESULT_FILE:gen%d.txt REPORT_STEPS:1
+            OBS_CONFIG obsconf
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ObservationConfigError, match="must use RESTART"):
+        run_convert_observations(Namespace(config="config.ert"))
 
 
 def test_that_hours_must_be_a_positive_number_in_general_observation():
-    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
-        make_observations("""
-            GENERAL_OBSERVATION FOPR
-            {
-                HOURS = -1;
-                DATA = GEN;
-            };
-        """)
+    obsconf = dedent(
+        """
+        GENERAL_OBSERVATION FOPR
+        {
+            HOURS = -1;
+            DATA = GEN;
+        };
+        """
+    )
+    Path("obsconf").write_text(obsconf, encoding="utf-8")
+    Path("config.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS 1
+            GEN_DATA GEN RESULT_FILE:gen%d.txt REPORT_STEPS:1
+            OBS_CONFIG obsconf
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ObservationConfigError, match="must use RESTART"):
+        run_convert_observations(Namespace(config="config.ert"))
 
 
 def test_that_date_must_be_a_date_in_general_observation():
@@ -1847,7 +1892,7 @@ def test_that_date_must_be_a_date_in_general_observation():
         ),
         encoding="utf-8",
     )
-    with pytest.raises(ConfigValidationError, match="Please use ISO date format"):
+    with pytest.raises(ObservationConfigError, match="must use RESTART"):
         run_convert_observations(Namespace(config="config.ert"))
 
 

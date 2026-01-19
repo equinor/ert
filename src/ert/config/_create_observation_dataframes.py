@@ -228,16 +228,6 @@ def _handle_general_observation(
     obs_key: str,
 ) -> pl.DataFrame:
     response_key = general_observation.data
-    if general_observation.date is not None:
-        raise ObservationConfigError.with_context(
-            (
-                "GENERAL_OBSERVATION must use RESTART to specify report step."
-                "Please run ert convert_observations <your_ert_config.ert> to migrate "
-                "the observation config to use the correct format"
-            ),
-            obs_key,
-        )
-
     if gen_data_config is None or response_key not in gen_data_config.keys:
         raise ObservationConfigError.with_context(
             f"Problem with GENERAL_OBSERVATION {obs_key}:"

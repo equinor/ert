@@ -122,10 +122,11 @@ class _GeneralObservation:
     index_list: str | None = None
     index_file: str | None = None
     obs_file: str | None = None
+    restart: int | None = None
 
 
 @dataclass
-class GeneralObservation(ObservationDate, _GeneralObservation):
+class GeneralObservation(_GeneralObservation):
     @classmethod
     def from_obs_dict(
         cls, directory: str, observation_dict: ObservationDict
@@ -144,12 +145,22 @@ class GeneralObservation(ObservationDate, _GeneralObservation):
                     output.restart = validate_positive_int(value, key)
                 case "VALUE":
                     output.value = validate_float(value, key)
-                case "ERROR" | "DAYS" | "HOURS":
+                case "ERROR":
                     setattr(
                         output, str(key).lower(), validate_positive_float(value, key)
                     )
-                case "DATE" | "INDEX_LIST":
-                    setattr(output, str(key).lower(), value)
+                case "DATE" | "DAYS" | "HOURS":
+                    raise ObservationConfigError.with_context(
+                        (
+                            "GENERAL_OBSERVATION must use RESTART to specify "
+                            "report step. Please run ert convert_observations "
+                            "<your_ert_config.ert> to migrate the observation config "
+                            "to use the correct format"
+                        ),
+                        key,
+                    )
+                case "INDEX_LIST":
+                    output.index_list = value
                 case "OBS_FILE" | "INDEX_FILE":
                     assert not isinstance(key, tuple)
                     filename = value
