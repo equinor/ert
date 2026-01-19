@@ -138,6 +138,7 @@ observations_parser = Lark(
     PARAMETER_NAME : CHAR+
     object : "{" [(declaration";")*] "}"
     ?declaration: "SEGMENT" STRING object -> segment
+                | "LOCALIZATION" object -> localization
                 | pair
     pair   : PARAMETER_NAME "=" value
 
@@ -192,6 +193,11 @@ class TreeToObservations(Transformer[FileContextToken, list[ObservationDict]]):
     @no_type_check
     def segment(tree):
         return (("SEGMENT", tree[0]), tree[1])
+
+    @staticmethod
+    @no_type_check
+    def localization(tree):
+        return ("LOCALIZATION", tree[0])
 
     @staticmethod
     @no_type_check
