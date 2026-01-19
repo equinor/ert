@@ -43,7 +43,7 @@ def ert_rft_setup(tmp_path):
             """
             GENERAL_OBSERVATION RFT_OBS {
                DATA       = RFT_DATA;
-               DATE       = 3001-09-01; -- The final odyssey
+               RESTART    = 0;
                VALUE      = 42.0;
                ERROR      = 0.69420;
             };

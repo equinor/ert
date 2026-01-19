@@ -1,9 +1,10 @@
+from __future__ import annotations
+
+import logging
 import os
-from collections import Counter
 from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum
-from itertools import starmap
 from typing import Any, Self
 
 import pandas as pd
@@ -15,72 +16,13 @@ from .parsing import (
     ObservationType,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class ErrorModes(StrEnum):
     REL = "REL"
     ABS = "ABS"
     RELMIN = "RELMIN"
-
-
-@dataclass
-class ObservationError:
-    error_mode: ErrorModes
-    error: float
-    error_min: float
-
-
-@dataclass
-class Segment(ObservationError):
-    name: str
-    start: int
-    stop: int
-
-
-@dataclass
-class HistoryObservation(ObservationError):
-    name: str
-    segments: list[Segment]
-
-    @property
-    def key(self) -> str:
-        """The :term:`summary key` to be fetched from :ref:`refcase`."""
-        # For history observations the key is also the name, ie.
-        # "HISTORY_OBSERVATION FOPR" means to add the values from
-        # the summary vector FOPRH in refcase as observations.
-        return self.name
-
-    @classmethod
-    def from_obs_dict(
-        cls, directory: str, observation_dict: ObservationDict
-    ) -> list[Self]:
-        error_mode = ErrorModes.RELMIN
-        error = 0.1
-        error_min = 0.1
-        segments = []
-        for key, value in observation_dict.items():
-            match key:
-                case "type" | "name":
-                    pass
-                case "ERROR":
-                    error = validate_positive_float(value, key)
-                case "ERROR_MIN":
-                    error_min = validate_positive_float(value, key)
-                case "ERROR_MODE":
-                    error_mode = validate_error_mode(value)
-                case "segments":
-                    segments = list(starmap(_validate_segment_dict, value))
-                case _:
-                    raise _unknown_key_error(str(key), observation_dict["name"])
-
-        return [
-            cls(
-                name=observation_dict["name"],
-                error_mode=error_mode,
-                error=error,
-                error_min=error_min,
-                segments=segments,
-            )
-        ]
 
 
 @dataclass
@@ -99,6 +41,13 @@ class _SummaryValues:
     location_x: float | None = None
     location_y: float | None = None
     location_range: float | None = None
+
+
+@dataclass
+class ObservationError:
+    error_mode: ErrorModes
+    error: float
+    error_min: float
 
 
 @dataclass
@@ -173,10 +122,11 @@ class _GeneralObservation:
     index_list: str | None = None
     index_file: str | None = None
     obs_file: str | None = None
+    restart: int | None = None
 
 
 @dataclass
-class GeneralObservation(ObservationDate, _GeneralObservation):
+class GeneralObservation(_GeneralObservation):
     @classmethod
     def from_obs_dict(
         cls, directory: str, observation_dict: ObservationDict
@@ -195,12 +145,22 @@ class GeneralObservation(ObservationDate, _GeneralObservation):
                     output.restart = validate_positive_int(value, key)
                 case "VALUE":
                     output.value = validate_float(value, key)
-                case "ERROR" | "DAYS" | "HOURS":
+                case "ERROR":
                     setattr(
                         output, str(key).lower(), validate_positive_float(value, key)
                     )
-                case "DATE" | "INDEX_LIST":
-                    setattr(output, str(key).lower(), value)
+                case "DATE" | "DAYS" | "HOURS":
+                    raise ObservationConfigError.with_context(
+                        (
+                            "GENERAL_OBSERVATION must use RESTART to specify "
+                            "report step. Please run ert convert_observations "
+                            "<your_ert_config.ert> to migrate the observation config "
+                            "to use the correct format"
+                        ),
+                        key,
+                    )
+                case "INDEX_LIST":
+                    output.index_list = value
                 case "OBS_FILE" | "INDEX_FILE":
                     assert not isinstance(key, tuple)
                     filename = value
@@ -223,6 +183,7 @@ class GeneralObservation(ObservationDate, _GeneralObservation):
                 f" VALUE = {output.value}, ERROR must also be given.",
                 observation_dict["name"],
             )
+
         return [output]
 
 
@@ -366,12 +327,9 @@ class RFTObservation:
         ]
 
 
-Observation = (
-    HistoryObservation | SummaryObservation | GeneralObservation | RFTObservation
-)
+Observation = SummaryObservation | GeneralObservation | RFTObservation
 
 _TYPE_TO_CLASS: dict[ObservationType, type[Observation]] = {
-    ObservationType.HISTORY: HistoryObservation,
     ObservationType.SUMMARY: SummaryObservation,
     ObservationType.GENERAL: GeneralObservation,
     ObservationType.RFT: RFTObservation,
@@ -389,8 +347,18 @@ def make_observations(
         inp: The collection of statements to validate.
     """
     result: list[Observation] = []
-    error_list: list[ErrorInfo] = []
+    error_list: list[ErrorInfo | ObservationConfigError] = []
     for obs_dict in observation_dicts:
+        if obs_dict["type"] == ObservationType.HISTORY:
+            msg = (
+                "HISTORY_OBSERVATION is deprecated, and must be specified "
+                "as SUMMARY_OBSERVATION. Run"
+                " ert convert_observations <ert_config.ert> to convert your "
+                "observations automatically"
+            )
+            logger.error(msg)
+            error_list.append(ObservationConfigError(msg))
+            continue
         try:
             result.extend(
                 _TYPE_TO_CLASS[obs_dict["type"]].from_obs_dict(directory, obs_dict)
@@ -403,58 +371,7 @@ def make_observations(
     if error_list:
         raise ObservationConfigError.from_collected(error_list)
 
-    _validate_unique_names(result)
     return result
-
-
-def _validate_unique_names(
-    observations: Sequence[Observation],
-) -> None:
-    names_counter = Counter(d.name for d in observations)
-    duplicate_names = [n for n, c in names_counter.items() if c > 1]
-    errors = [
-        ErrorInfo(
-            f"Duplicate observation name {n}",
-        ).set_context(n)
-        for n in duplicate_names
-    ]
-    if errors:
-        raise ObservationConfigError.from_collected(errors)
-
-
-def _validate_segment_dict(name_token: str, inp: dict[str, Any]) -> Segment:
-    start = None
-    stop = None
-    error_mode = ErrorModes.RELMIN
-    error = 0.1
-    error_min = 0.1
-    for key, value in inp.items():
-        match key:
-            case "START":
-                start = validate_int(value, key)
-            case "STOP":
-                stop = validate_int(value, key)
-            case "ERROR":
-                error = validate_positive_float(value, key)
-            case "ERROR_MIN":
-                error_min = validate_positive_float(value, key)
-            case "ERROR_MODE":
-                error_mode = validate_error_mode(value)
-            case _:
-                raise _unknown_key_error(key, name_token)
-
-    if start is None:
-        raise _missing_value_error(name_token, "START")
-    if stop is None:
-        raise _missing_value_error(name_token, "STOP")
-    return Segment(
-        name=name_token,
-        start=start,
-        stop=stop,
-        error_mode=error_mode,
-        error=error,
-        error_min=error_min,
-    )
 
 
 def validate_error_mode(inp: str) -> ErrorModes:
