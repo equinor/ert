@@ -1,4 +1,5 @@
 import os
+import re
 from contextlib import suppress
 from pathlib import Path
 from textwrap import dedent
@@ -157,6 +158,24 @@ def test_that_summary_observations_raises_error_when_east_or_north_are_undefined
     tmpdir,
     loc_config_lines,
 ):
+    missing_keywords = {"NORTH", "EAST"} - set(
+        re.findall(r"EAST|NORTH", loc_config_lines)
+    )
+
     with pytest.raises(ConfigValidationError) as e, tmpdir.as_cwd():
         create_summary_observation("LOCALIZATION {" + loc_config_lines + "};")
-    assert "Unexpected type in observations" in str(e.value)
+    for kw in missing_keywords:
+        assert f'Missing item "{kw}" in LOCALIZATION for FOPR_1' in str(e.value)
+
+
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
+def test_that_summary_observations_raises_error_given_unknown_localization_key(
+    tmpdir,
+):
+    with (
+        pytest.raises(
+            ConfigValidationError, match="Unknown FOO in LOCALIZATION for FOPR_1"
+        ),
+        tmpdir.as_cwd(),
+    ):
+        create_summary_observation("LOCALIZATION {FOO = BAZ;};")

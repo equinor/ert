@@ -134,6 +134,7 @@ class SummaryObservation(ObservationDate, _SummaryValues, ObservationError):
                 case "DATE":
                     date_dict.date = value
                 case "LOCALIZATION":
+                    validate_localization(value, observation_dict["name"])
                     localization_values["x"] = validate_float(value["EAST"], key)
                     localization_values["y"] = validate_float(value["NORTH"], key)
                     localization_values["range"] = (
@@ -494,6 +495,19 @@ def validate_positive_float(val: str, key: str) -> float:
             val,
         )
     return v
+
+
+def validate_localization(val: dict[str, Any], obs_name: str) -> None:
+    errors = []
+    if "EAST" not in val:
+        errors.append(_missing_value_error(f"LOCALIZATION for {obs_name}", "EAST"))
+    if "NORTH" not in val:
+        errors.append(_missing_value_error(f"LOCALIZATION for {obs_name}", "NORTH"))
+    for key in val:
+        if key not in {"EAST", "NORTH", "RADIUS"}:
+            errors.append(_unknown_key_error(key, f"LOCALIZATION for {obs_name}"))
+    if errors:
+        raise ObservationConfigError.from_collected(errors)
 
 
 def validate_positive_int(val: str, key: str) -> int:
