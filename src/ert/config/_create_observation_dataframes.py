@@ -207,9 +207,9 @@ def _handle_history_observation(
             "time": dates_series,
             "observations": pl.Series(values, dtype=pl.Float32),
             "std": pl.Series(std_dev, dtype=pl.Float32),
-            "east": None,
-            "north": None,
-            "influence_range": None,
+            "east": pl.Series([None] * len(values), dtype=pl.Float32),
+            "north": pl.Series([None] * len(values), dtype=pl.Float32),
+            "influence_range": pl.Series([None] * len(values), dtype=pl.Float32),
         }
     )
 
@@ -391,9 +391,9 @@ def _handle_summary_observation(
             "time": pl.Series([date]).dt.cast_time_unit("ms"),
             "observations": pl.Series([value], dtype=pl.Float32),
             "std": pl.Series([std_dev], dtype=pl.Float32),
-            "east": summary_dict.east,
-            "north": summary_dict.north,
-            "influence_range": influence_range,
+            "east": pl.Series([summary_dict.east], dtype=pl.Float32),
+            "north": pl.Series([summary_dict.north], dtype=pl.Float32),
+            "influence_range": pl.Series([influence_range], dtype=pl.Float32),
         }
     )
 

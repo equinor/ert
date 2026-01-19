@@ -5,6 +5,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import hypothesis.strategies as st
+import polars as pl
 import pytest
 from hypothesis import given, settings
 from resfo_utilities.testing import summaries
@@ -116,6 +117,9 @@ def test_that_summary_observations_can_be_instantiated_with_localization(
             for loc_key in ["east", "north", "influence_range"]
         )
         assert len(summary_observations.columns) == 8
+        assert summary_observations["east"].dtype == pl.Float32
+        assert summary_observations["north"].dtype == pl.Float32
+        assert summary_observations["range"].dtype == pl.Float32
 
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
@@ -136,8 +140,11 @@ def test_that_summary_observations_without_location_keywords_gets_location_keywo
         )
         assert "influence_range" in summary_observations.columns
         assert summary_observations["east"][0] is None
+        assert summary_observations["east"].dtype == pl.Float32
         assert summary_observations["north"][0] is None
+        assert summary_observations["north"].dtype == pl.Float32
         assert summary_observations["influence_range"][0] is None
+        assert summary_observations["range"].dtype == pl.Float32
 
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
