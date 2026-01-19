@@ -56,30 +56,11 @@ class ResponseConfig(BaseModel):
 
     @property
     def filter_on(self) -> dict[str, dict[str, list[int]]] | None:
-        """Describe optional server-side filtering for this response.
+        """Optional discrete-dimension filters for this response.
 
-        Some responses contain an additional *discrete* dimension which is stored as a
-        column in the response dataset. When
-        present, ERT can expose that dimension as a selectable filter in clients.
+        Return ``None`` if filtering is not supported.
 
-        This property returns the *available* filter values per response key.
-        It is primarily consumed by the plotting UI/API layer which:
-
-        - Expands a single response key into multiple virtual keys (e.g. ``KEY@42``)
-            for each selectable value.
-        - Calls the REST endpoints with a query parameter ``filter_on`` containing a
-            JSON object mapping *filter column* to the selected value.
-
-        Contract:
-                - Return ``None`` when the response does not support filtering.
-                - Otherwise return a mapping of:
-
-                    ``{response_key: {filter_column_name: [allowed_values...]}}``
-
-                - ``filter_column_name`` must match a column name in the stored response
-                    data (and therefore be understood by the API endpoint that loads the
-                    data).
-                - ``allowed_values`` should be sorted and represent the complete set of
-                    values the server can handle for that key.
+        Otherwise return ``{response_key: {column_name: [allowed_values...]}}`` where
+        ``column_name`` is a column in the stored response data.
         """
         return None

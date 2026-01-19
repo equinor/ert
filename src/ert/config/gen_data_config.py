@@ -32,24 +32,11 @@ class GenDataConfig(ResponseConfig):
                     report_steps.sort()
 
     @property
-    def filter_on(self) -> dict[str, dict[str, list[int]]] | None:
-        """Expose ``report_step`` as a discrete filter for ``GEN_DATA`` keys.
+    def filter_on(self) -> dict[str, dict[str, list[int]]]:
+        """Discrete-dimension filters for this response.
 
-        ``GEN_DATA`` responses may be produced for multiple report steps. The stored
-        response data includes a ``report_step`` column.
-        By returning this mapping, clients (notably the plotting UI/API) can:
-
-        - Enumerate available report steps for each configured response key.
-        - Present each step as a separate selectable series.
-        - Fetch data/observations via the REST API using
-        ``filter_on={"report_step": N}``.
-
-        The allowed report steps come from ``REPORT_STEPS`` in the configuration.
-        When no ``REPORT_STEPS`` are provided for a key (or a single file without
-        ``%d`` is used), the key is treated as having a single report step ``0``.
-
-        Returns:
-            Mapping ``{response_key: {"report_step": [steps...]}}``.
+        For ``GEN_DATA`` this is always supported: return
+        ``{response_key: {"report_step": [allowed_steps...]}}``.
         """
         return {
             response_key: {"report_step": report_steps or [0]}
