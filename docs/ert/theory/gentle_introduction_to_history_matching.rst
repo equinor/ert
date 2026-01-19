@@ -216,98 +216,7 @@ The likelihood tells us how probable the observed data are for a given choice of
 That is a mouthful, and don't worry if it does not make complete sense.
 You do not have to be able to derive the equation to build an intuitive understanding of it.
 
-The following outlines derivation of the ensemble smoother equation which can safely be skipped.
-
-The ES equation is the Kalman (Gaussian) update written in ensemble form. The usual assumptions are:
-
-- **Gaussian prior:** the prior is represented by an ensemble (using sample mean/covariances).
-- **Additive, unbiased Gaussian observation noise:** :math:`\mathbf{d} = g(\mathbf{x}) + \boldsymbol{\epsilon}`, with :math:`\boldsymbol{\epsilon} \sim \mathcal{N}(\mathbf{0}, \mathbf{R})` (often :math:`\mathbf{R}` is taken diagonal).
-   This is what makes the likelihood a clean, centered quadratic in the residual with known covariance :math:`\mathbf{R}`.
-- **Linear or locally linearizable forward map:** :math:`g(\mathbf{x}) = \mathbf{H}\mathbf{x}` (or a linearization around the ensemble).
-   If :math:`g` is truly linear, the update is exact for the linear-Gaussian case; “locally linearizable” means we treat a nonlinear simulator as approximately linear over the ensemble spread.
-- **Sample covariance approximation:** :math:`\mathbf{\Sigma_{xy}}` and :math:`\mathbf{\Sigma_{yy}}` are estimated from a finite ensemble (hence sampling noise/spurious correlations).
-
-**Problem setup:**
-
-Define the relationship between the parameters :math:`\mathbf{x}` and responses :math:`\mathbf{y}` through :math:`g`:
-
-.. math::
-   \mathbf{y} = g(\mathbf{x})
-
-The actual observations :math:`\mathbf{d}` are contaminated by additive noise :math:`\mathbf{\epsilon}`:
-
-.. math::
-   \mathbf{d} = \mathbf{y} + \mathbf{\epsilon}
-
-Apply Bayes' Theorem:
-
-.. math::
-   f(\mathbf{x}\mid\mathbf{d}) \propto f(\mathbf{x})f(\mathbf{d}\mid g(\mathbf{x}))
-
-**Assume Gaussian Prior:**
-
-Assume :math:`\mathbf{x}` to be Gaussian with mean :math:`\mathbf{x}_f` and covariance matrix :math:`\mathbf{\Sigma}_{xx}`:
-
-.. math::
-   f(\mathbf{x}) \sim \exp\left(-\frac{1}{2}(\mathbf{x}-\mathbf{x}_f)^T \mathbf{\Sigma}_{xx}^{-1} (\mathbf{x}-\mathbf{x}_f)\right)
-
-**Assume Gaussian Likelihood:**
-Assume the observation errors are Gaussian with covariance matrix :math:`\mathbf{R}`:
-
-.. math::
-
-   \mathbf{\epsilon} \sim \mathcal{N}(\mathbf{0}, \mathbf{R})
-
-Since :math:`\mathbf{d} = g(\mathbf{x}) + \mathbf{\epsilon}`, the conditional distribution is
-
-.. math::
-
-   \mathbf{d}\mid \mathbf{x} \sim \mathcal{N}(g(\mathbf{x}), \mathbf{R})
-
-and the likelihood can be written as
-
-.. math::
-
-   f(\mathbf{d}\mid \mathbf{x}) \propto \exp\left(-\frac{1}{2}(\mathbf{d}-g(\mathbf{x}))^T \mathbf{R}^{-1} (\mathbf{d}-g(\mathbf{x}))\right)
-
-To obtain the standard closed-form Kalman update, we additionally assume that the observation operator is linear:
-
-.. math::
-
-   g(\mathbf{x}) = \mathbf{H}\mathbf{x}
-
-In that case the likelihood becomes
-
-.. math::
-
-   f(\mathbf{d}\mid \mathbf{x}) \propto \exp\left(-\frac{1}{2}(\mathbf{H}\mathbf{x}-\mathbf{d})^T \mathbf{R}^{-1} (\mathbf{H}\mathbf{x}-\mathbf{d})\right)
-
-**Cost function:**
-
-Define the cost function :math:`J(\mathbf{x})` as the negative-log of the posterior PDF:
-
-.. math::
-   J(\mathbf{x}) = \frac{1}{2}(\mathbf{x}-\mathbf{x}_f)^T \mathbf{\Sigma}_{xx}^{-1} (\mathbf{x}-\mathbf{x}_f) + \frac{1}{2}(\mathbf{H}\mathbf{x}-\mathbf{d})^T \mathbf{R}^{-1} (\mathbf{H}\mathbf{x}-\mathbf{d})
-
-Find the state :math:`\mathbf{x}` that minimizes the cost function by setting the gradient with respect to :math:`\mathbf{x}` to zero:
-
-.. math::
-   \nabla J(\mathbf{x}) = \mathbf{\Sigma}_{xx}^{-1}(\mathbf{x}-\mathbf{x}_f) + \mathbf{H}^T \mathbf{R}^{-1}(\mathbf{H}\mathbf{x}-\mathbf{d}) = 0
-
-Solving the equation above for :math:`\mathbf{x}` gives the standard Kalman Filter update equation:
-
-.. math::
-
-   \mathbf{x} = \mathbf{x}_f + \left(\mathbf{\Sigma}_{xx}^{-1} + \mathbf{H}^T \mathbf{R}^{-1} \mathbf{H}\right)^{-1} \mathbf{H}^T \mathbf{R}^{-1} (\mathbf{d} - \mathbf{H}\mathbf{x}_f)
-
-**Woodbury:**
-
-Use the Woodbury matrix identity to rewrite the update to avoid computing the inverse of the high-dimensional background covariance matrix :math:`\mathbf{\Sigma}_{xx}^{-1}`.
-Expressing the result using sample covariances from an ensemble leads to the Ensemble Smoother equation.
-
-.. math::
-
-   \mathbf{X}_a = \mathbf{X}_f + \mathbf{\Sigma}_{xy} (\mathbf{\Sigma}_{yy} + \mathbf{R})^{-1} (\mathbf{D} - \mathbf{Y})
+For an outline of a derivation of the ensemble smoother equation, see the :ref:`Appendix <appendix_ensemble_smoother_derivation>`.
 
 Parameter matrix
 ~~~~~~~~~~~~~~~~
@@ -673,3 +582,101 @@ Note that ES is just a single step of ES-MDA with the scaling factor set to 1.0.
 Historically, the algorithms were part of ``ert`` and written in ``C``.
 We first rewrote them to ``C++`` using the ``Eigen`` linear algebra library and eventually to Python using ``numpy``.
 Funnily, the ``numpy`` implementation turned out much faster due to our lacking skills in writing good ``Eigen`` code.
+
+
+.. _appendix_ensemble_smoother_derivation:
+
+Appendix: Derivation of the ensemble smoother equation
+-------------------------------------------------------
+
+The ES equation is the Kalman (Gaussian) update written in ensemble form. The usual assumptions are:
+
+- **Gaussian prior:** the prior is represented by an ensemble (using sample mean/covariances).
+- **Additive, unbiased Gaussian observation noise:** :math:`\mathbf{d} = g(\mathbf{x}) + \boldsymbol{\epsilon}`, with :math:`\boldsymbol{\epsilon} \sim \mathcal{N}(\mathbf{0}, \mathbf{R})` (often :math:`\mathbf{R}` is taken diagonal).
+   This is what makes the likelihood a clean, centered quadratic in the residual with known covariance :math:`\mathbf{R}`.
+- **Linear or locally linearizable forward map:** :math:`g(\mathbf{x}) = \mathbf{H}\mathbf{x}` (or a linearization around the ensemble).
+   If :math:`g` is truly linear, the update is exact for the linear-Gaussian case; “locally linearizable” means we treat a nonlinear simulator as approximately linear over the ensemble spread.
+- **Sample covariance approximation:** :math:`\mathbf{\Sigma_{xy}}` and :math:`\mathbf{\Sigma_{yy}}` are estimated from a finite ensemble (hence sampling noise/spurious correlations).
+
+**Problem setup:**
+
+Define the relationship between the parameters :math:`\mathbf{x}` and responses :math:`\mathbf{y}` through :math:`g`:
+
+.. math::
+   \mathbf{y} = g(\mathbf{x})
+
+The actual observations :math:`\mathbf{d}` are contaminated by additive noise :math:`\mathbf{\epsilon}`:
+
+.. math::
+   \mathbf{d} = \mathbf{y} + \mathbf{\epsilon}
+
+Apply Bayes' Theorem:
+
+.. math::
+   f(\mathbf{x}\mid\mathbf{d}) \propto f(\mathbf{x})f(\mathbf{d}\mid g(\mathbf{x}))
+
+**Assume Gaussian Prior:**
+
+Assume :math:`\mathbf{x}` to be Gaussian with mean :math:`\mathbf{x}_f` and covariance matrix :math:`\mathbf{\Sigma}_{xx}`:
+
+.. math::
+   f(\mathbf{x}) \sim \exp\left(-\frac{1}{2}(\mathbf{x}-\mathbf{x}_f)^T \mathbf{\Sigma}_{xx}^{-1} (\mathbf{x}-\mathbf{x}_f)\right)
+
+**Assume Gaussian Likelihood:**
+
+Assume the observation errors are Gaussian with covariance matrix :math:`\mathbf{R}`:
+
+.. math::
+
+   \mathbf{\epsilon} \sim \mathcal{N}(\mathbf{0}, \mathbf{R})
+
+Since :math:`\mathbf{d} = g(\mathbf{x}) + \mathbf{\epsilon}`, the conditional distribution is
+
+.. math::
+
+   \mathbf{d}\mid \mathbf{x} \sim \mathcal{N}(g(\mathbf{x}), \mathbf{R})
+
+and the likelihood can be written as
+
+.. math::
+
+   f(\mathbf{d}\mid \mathbf{x}) \propto \exp\left(-\frac{1}{2}(\mathbf{d}-g(\mathbf{x}))^T \mathbf{R}^{-1} (\mathbf{d}-g(\mathbf{x}))\right)
+
+To obtain the standard closed-form Kalman update, we additionally assume that the observation operator is linear:
+
+.. math::
+
+   g(\mathbf{x}) = \mathbf{H}\mathbf{x}
+
+In that case the likelihood becomes
+
+.. math::
+
+   f(\mathbf{d}\mid \mathbf{x}) \propto \exp\left(-\frac{1}{2}(\mathbf{H}\mathbf{x}-\mathbf{d})^T \mathbf{R}^{-1} (\mathbf{H}\mathbf{x}-\mathbf{d})\right)
+
+**Cost function:**
+
+Define the cost function :math:`J(\mathbf{x})` as the negative-log of the posterior PDF:
+
+.. math::
+   J(\mathbf{x}) = \frac{1}{2}(\mathbf{x}-\mathbf{x}_f)^T \mathbf{\Sigma}_{xx}^{-1} (\mathbf{x}-\mathbf{x}_f) + \frac{1}{2}(\mathbf{H}\mathbf{x}-\mathbf{d})^T \mathbf{R}^{-1} (\mathbf{H}\mathbf{x}-\mathbf{d})
+
+Find the state :math:`\mathbf{x}` that minimizes the cost function by setting the gradient with respect to :math:`\mathbf{x}` to zero:
+
+.. math::
+   \nabla J(\mathbf{x}) = \mathbf{\Sigma}_{xx}^{-1}(\mathbf{x}-\mathbf{x}_f) + \mathbf{H}^T \mathbf{R}^{-1}(\mathbf{H}\mathbf{x}-\mathbf{d}) = 0
+
+Solving the equation above for :math:`\mathbf{x}` gives the standard Kalman Filter update equation:
+
+.. math::
+
+   \mathbf{x} = \mathbf{x}_f + \left(\mathbf{\Sigma}_{xx}^{-1} + \mathbf{H}^T \mathbf{R}^{-1} \mathbf{H}\right)^{-1} \mathbf{H}^T \mathbf{R}^{-1} (\mathbf{d} - \mathbf{H}\mathbf{x}_f)
+
+**Woodbury:**
+
+Use the Woodbury matrix identity to rewrite the update to avoid computing the inverse of the high-dimensional background covariance matrix :math:`\mathbf{\Sigma}_{xx}^{-1}`.
+Expressing the result using sample covariances from an ensemble leads to the Ensemble Smoother equation.
+
+.. math::
+
+   \mathbf{X}_a = \mathbf{X}_f + \mathbf{\Sigma}_{xy} (\mathbf{\Sigma}_{yy} + \mathbf{R})^{-1} (\mathbf{D} - \mathbf{Y})
