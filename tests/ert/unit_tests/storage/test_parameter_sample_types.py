@@ -86,13 +86,6 @@ def test_surface_param(
 ):
     values = [[0.0, 1.0], [2.0, 3.0]]
     with tmpdir.as_cwd():
-        config = dedent(
-            """
-        JOBNAME my_name%d
-        NUM_REALIZATIONS 1
-        """
-        )
-        config += config_str
         expect_surface = RegularSurface(
             ncol=2,
             nrow=2,
@@ -107,7 +100,7 @@ def test_surface_param(
         expect_surface.to_file("surf0.irap", fformat="irap_ascii")
 
         with open("config.ert", mode="w", encoding="utf-8") as fh:
-            fh.writelines(config)
+            fh.writelines(f"NUM_REALIZATIONS 1\n{config_str}\n")
         ensemble_config, fs = create_runpath(storage, "config.ert")
         assert ensemble_config["MY_PARAM"].forward_init is expect_forward_init
         # We try to load the parameters from the forward model, this would fail if
