@@ -297,40 +297,7 @@ def _get_restart(
 
 
 def _has_localization(summary_dict: SummaryObservation) -> bool:
-    return any(
-        [
-            summary_dict.location_x is not None,
-            summary_dict.location_y is not None,
-            summary_dict.location_range is not None,
-        ]
-    )
-
-
-def _validate_localization_values(summary_dict: SummaryObservation) -> None:
-    """The user must provide LOCATION_X and LOCATION_Y to use localization, while
-    unprovided LOCATION_RANGE should default to some value.
-
-    This method assumes the summary dict contains at least one LOCATION key.
-    """
-    if summary_dict.location_x is None or summary_dict.location_y is None:
-        loc_values = {
-            "LOCATION_X": summary_dict.location_x,
-            "LOCATION_Y": summary_dict.location_y,
-            "LOCATION_RANGE": summary_dict.location_range,
-        }
-        provided_loc_values = {k: v for k, v in loc_values.items() if v is not None}
-
-        provided_loc_values_string = ", ".join(
-            key.upper() for key in provided_loc_values
-        )
-        raise ObservationConfigError.with_context(
-            f"Localization for observation {summary_dict.name} is misconfigured.\n"
-            f"Only {provided_loc_values_string} were provided. To enable "
-            f"localization for an observation, ensure that both LOCATION_X and "
-            f"LOCATION_Y are defined - or remove LOCATION keywords to disable "
-            f"localization.",
-            summary_dict,
-        )
+    return summary_dict.location_x is not None and summary_dict.location_y is not None
 
 
 def _handle_summary_observation(
@@ -379,7 +346,6 @@ def _handle_summary_observation(
     }
 
     if _has_localization(summary_dict):
-        _validate_localization_values(summary_dict)
         data_dict["location_x"] = summary_dict.location_x
         data_dict["location_y"] = summary_dict.location_y
         data_dict["location_range"] = (

@@ -1,5 +1,4 @@
 import os
-import re
 from contextlib import suppress
 from pathlib import Path
 from textwrap import dedent
@@ -111,9 +110,11 @@ def test_that_summary_observations_can_be_instantiated_with_localization(
     with tmpdir.as_cwd():
         summary_observations = create_summary_observation(
             """
-            LOCATION_X=10;
-            LOCATION_Y=10;
-            LOCATION_RANGE=10;
+            LOCALIZATION {
+                EAST   = 10;
+                NORTH  = 10;
+                RADIUS = 10;
+            };
             """
         )
         assert all(
@@ -125,14 +126,16 @@ def test_that_summary_observations_can_be_instantiated_with_localization(
 
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
-def test_that_summary_observations_without_location_range_gets_defaulted(
+def test_that_summary_observations_without_radius_gets_defaulted(
     tmpdir,
 ):
     with tmpdir.as_cwd():
         summary_observations = create_summary_observation(
             """
-            LOCATION_X=10;
-            LOCATION_Y=10;
+            LOCALIZATION {
+                EAST   = 10;
+                NORTH  = 10;
+            };
             """
         )
         assert "location_range" in summary_observations.columns
@@ -142,26 +145,18 @@ def test_that_summary_observations_without_location_range_gets_defaulted(
 @pytest.mark.parametrize(
     "loc_config_lines",
     [
-        "LOCATION_X=10;\n",
-        "LOCATION_Y=10;\n",
-        "LOCATION_RANGE=10;\n",
-        "LOCATION_Y=10;\nLOCATION_RANGE=10;\n",
-        "LOCATION_X=10;\nLOCATION_RANGE=10;\n",
+        "EAST=10;\n",
+        "NORTH=10;\n",
+        "RADIUS=10;\n",
+        "NORTH=10;\nRADIUS=10;\n",
+        "EAST=10;\nRADIUS=10;\n",
     ],
 )
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
-def test_that_summary_observations_raises_config_validation_error_when_loc_x_or_loc_y_are_undefined_given_any_loc_key(  # noqa: E501
+def test_that_summary_observations_raises_error_when_east_or_north_are_undefined_given_localization_object(  # noqa: E501
     tmpdir,
     loc_config_lines,
 ):
-    location_pattern = r"LOCATION_[a-zA-Z]*"
-    matches = re.findall(location_pattern, loc_config_lines)
-    expected_err_msgs = [
-        "Localization for observation FOPR_1 is misconfigured.",
-        f"Only {', '.join(matches)} were provided.",
-        "ensure that both LOCATION_X and LOCATION_Y are defined",
-    ]
     with pytest.raises(ConfigValidationError) as e, tmpdir.as_cwd():
-        create_summary_observation(loc_config_lines)
-    for msg in expected_err_msgs:
-        assert msg in str(e.value)
+        create_summary_observation("LOCALIZATION {" + loc_config_lines + "};")
+    assert "Unexpected type in observations" in str(e.value)
