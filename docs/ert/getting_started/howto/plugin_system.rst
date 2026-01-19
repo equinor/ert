@@ -258,7 +258,7 @@ Minimal example to log to a new file:
 
 Site configuration
 ~~~~~~~~~~~~~~~~~~~~~
-Ert can be configured by plugins through
+Ert can have some global options set by plugins through
 the `ert.plugins.hook_specifications.site_config.site_configurations` hook.
 
 Minimal example to have all ERT instances use the LSF queue system, unless
