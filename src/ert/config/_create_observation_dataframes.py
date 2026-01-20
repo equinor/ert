@@ -95,11 +95,6 @@ def _handle_summary_observation(
     std_dev = summary_dict.error
     date = datetime.datetime.fromisoformat(summary_dict.date)
 
-    if std_dev <= 0:
-        raise ObservationConfigError.with_context(
-            "Observation uncertainty must be strictly > 0", summary_key
-        ) from None
-
     location_range = (
         summary_dict.location_range or DEFAULT_LOCATION_RANGE_M
         if _has_localization(summary_dict)
