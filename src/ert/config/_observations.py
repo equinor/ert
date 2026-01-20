@@ -3,11 +3,11 @@ from __future__ import annotations
 import logging
 import os
 from collections.abc import Sequence
-from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any, Self
+from typing import Annotated, Any, Literal, Self
 
 import pandas as pd
+from pydantic import BaseModel, Field
 
 from .parsing import (
     ErrorInfo,
@@ -25,8 +25,8 @@ class ErrorModes(StrEnum):
     RELMIN = "RELMIN"
 
 
-@dataclass
-class _SummaryValues:
+class _SummaryValues(BaseModel):
+    type: Literal["summary_observation"] = "summary_observation"
     name: str
     value: float
     key: str  #: The :term:`summary key` in the summary response
@@ -36,14 +36,12 @@ class _SummaryValues:
     location_range: float | None = None
 
 
-@dataclass
-class ObservationError:
+class ObservationError(BaseModel):
     error_mode: ErrorModes
     error: float
     error_min: float
 
 
-@dataclass
 class SummaryObservation(_SummaryValues, ObservationError):
     @classmethod
     def from_obs_dict(
@@ -99,24 +97,28 @@ class SummaryObservation(_SummaryValues, ObservationError):
             raise _missing_value_error(observation_dict["name"], "ERROR")
 
         assert date is not None
-        return [
-            cls(
-                name=observation_dict["name"],
-                error_mode=error_mode,
-                error=float_values["ERROR"],
-                error_min=float_values["ERROR_MIN"],
-                key=summary_key,
-                value=float_values["VALUE"],
-                location_x=localization_values.get("x"),
-                location_y=localization_values.get("y"),
-                location_range=localization_values.get("range"),
-                date=date,
-            )
-        ]
+        instance = cls(
+            name=observation_dict["name"],
+            error_mode=error_mode,
+            error=float_values["ERROR"],
+            error_min=float_values["ERROR_MIN"],
+            key=summary_key,
+            value=float_values["VALUE"],
+            location_x=localization_values.get("x"),
+            location_y=localization_values.get("y"),
+            location_range=localization_values.get("range"),
+            date=date,
+        )
+        # Bypass pydantic discarding context
+        # only relevant for ERT config surfacing validation errors
+        # irrelevant for runmodels etc.
+        instance.name = observation_dict["name"]
+
+        return [instance]
 
 
-@dataclass
-class _GeneralObservation:
+class _GeneralObservation(BaseModel):
+    type: Literal["general_observation"] = "general_observation"
     name: str
     data: str
     value: float | None = None
@@ -127,7 +129,6 @@ class _GeneralObservation:
     restart: int | None = None
 
 
-@dataclass
 class GeneralObservation(_GeneralObservation):
     @classmethod
     def from_obs_dict(
@@ -186,11 +187,16 @@ class GeneralObservation(_GeneralObservation):
                 observation_dict["name"],
             )
 
+        # Bypass pydantic discarding context
+        # only relevant for ERT config surfacing validation errors
+        # irrelevant for runmodels etc.
+        output.name = observation_dict["name"]
+
         return [output]
 
 
-@dataclass
-class RFTObservation:
+class RFTObservation(BaseModel):
+    type: Literal["rft_observation"] = "rft_observation"
     name: str
     well: str
     date: str
@@ -241,15 +247,17 @@ class RFTObservation:
 
         return [
             cls(
-                f"{observation_dict['name']}[{row.Index}]",
-                str(row.WELL_NAME),
-                str(row.DATE),
-                observed_property,
-                validate_float(str(getattr(row, observed_property)), observed_property),
-                validate_float(str(row.ERROR), "ERROR"),
-                validate_float(str(row.NORTH), "NORTH"),
-                validate_float(str(row.EAST), "EAST"),
-                validate_float(str(row.TVD), "TVD"),
+                name=f"{observation_dict['name']}[{row.Index}]",
+                well=str(row.WELL_NAME),
+                date=str(row.DATE),
+                property=observed_property,
+                value=validate_float(
+                    str(getattr(row, observed_property)), observed_property
+                ),
+                error=validate_float(str(row.ERROR), "ERROR"),
+                north=validate_float(str(row.NORTH), "NORTH"),
+                east=validate_float(str(row.EAST), "EAST"),
+                tvd=validate_float(str(row.TVD), "TVD"),
             )
             for row in csv_file.itertuples(index=True)
         ]
@@ -314,22 +322,31 @@ class RFTObservation:
             raise _missing_value_error(observation_dict["name"], "EAST")
         if tvd is None:
             raise _missing_value_error(observation_dict["name"], "TVD")
-        return [
-            cls(
-                observation_dict["name"],
-                well,
-                date,
-                observed_property,
-                observed_value,
-                error,
-                north,
-                east,
-                tvd,
-            )
-        ]
+
+        instance = cls(
+            name=observation_dict["name"],
+            well=well,
+            property=observed_property,
+            value=observed_value,
+            error=error,
+            date=date,
+            north=north,
+            east=east,
+            tvd=tvd,
+        )
+
+        # Bypass pydantic discarding context
+        # only relevant for ERT config surfacing validation errors
+        # irrelevant for runmodels etc.
+        instance.name = observation_dict["name"]
+
+        return [instance]
 
 
-Observation = SummaryObservation | GeneralObservation | RFTObservation
+Observation = Annotated[
+    (SummaryObservation | GeneralObservation | RFTObservation),
+    Field(discriminator="type"),
+]
 
 _TYPE_TO_CLASS: dict[ObservationType, type[Observation]] = {
     ObservationType.SUMMARY: SummaryObservation,
