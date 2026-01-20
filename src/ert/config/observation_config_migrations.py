@@ -5,19 +5,18 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from itertools import starmap
 from pathlib import Path
-from typing import Any, Self, cast
+from typing import Any, Self, assert_never, cast
 
 import numpy as np
+import numpy.typing as npt
 import polars as pl
 from resfo_utilities import history_key
 
 from ._create_observation_dataframes import (
-    _handle_error_mode,
     _parse_date,
 )
 from ._observations import (
     ErrorModes,
-    ObservationError,
     _missing_value_error,
     _unknown_key_error,
     validate_error_mode,
@@ -37,6 +36,13 @@ from .parsing.config_errors import ConfigValidationError, ConfigWarning
 from .refcase import Refcase
 
 DEFAULT_TIME_DELTA = timedelta(seconds=30)
+
+
+@dataclass
+class ObservationError:
+    error_mode: ErrorModes
+    error: float
+    error_min: float
 
 
 @dataclass
@@ -701,6 +707,25 @@ def _get_restart(
         ) from err
 
 
+def _legacy_handle_error_mode(
+    values: npt.ArrayLike,
+    error_dict: ObservationError,
+) -> npt.NDArray[np.double]:
+    values = np.asarray(values)
+    error_mode = error_dict.error_mode
+    error_min = error_dict.error_min
+    error = error_dict.error
+    match error_mode:
+        case ErrorModes.ABS:
+            return np.full(values.shape, error)
+        case ErrorModes.REL:
+            return np.abs(values) * error
+        case ErrorModes.RELMIN:
+            return np.maximum(np.abs(values) * error, np.full(values.shape, error_min))
+        case default:
+            assert_never(default)
+
+
 def _handle_history_observation(
     refcase: Refcase | None,
     history_observation: HistoryObservation,
@@ -722,7 +747,7 @@ def _handle_history_observation(
             f"Key {local_key!r} is not present in refcase", summary_key
         )
     values = refcase.values[refcase.keys.index(local_key)]
-    std_dev = _handle_error_mode(values, history_observation)
+    std_dev = _legacy_handle_error_mode(values, history_observation)
     for segment in history_observation.segments:
         start = segment.start
         stop = segment.stop
@@ -755,7 +780,7 @@ def _handle_history_observation(
                 "time map.",
                 segment.name,
             )
-        std_dev[start:stop] = _handle_error_mode(values[start:stop], segment)
+        std_dev[start:stop] = _legacy_handle_error_mode(values[start:stop], segment)
     dates_series = pl.Series(refcase.dates).dt.cast_time_unit("ms")
     if (std_dev <= 0).any():
         raise ObservationConfigError.with_context(

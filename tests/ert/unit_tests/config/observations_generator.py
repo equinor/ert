@@ -1,9 +1,9 @@
 import datetime
-from dataclasses import fields
 from enum import Enum
 
 import hypothesis.strategies as st
 from hypothesis import assume
+from pydantic import BaseModel
 
 from ert.config._observations import (
     ErrorModes,
@@ -26,22 +26,25 @@ def class_name(o: Observation):
 def as_obs_config_content(observation: Observation) -> str:
     result = f"{class_name(observation)} {observation.name}"
     result += " { "
-    for f in fields(observation):
-        if f.name == "name":
+    for f_name in observation.model_fields:
+        if f_name in {"name", "type"}:
             continue
-        val = getattr(observation, f.name)
+
+        val = getattr(observation, f_name)  # <-- get actual value
+
         if val is None or val == []:
             continue
         if isinstance(val, Enum):
-            result += f"{f.name.upper()} = {val.name}; "
-        elif isinstance(val, float | str | int):
-            result += f"{f.name.upper()} = {val}; "
-        elif isinstance(val, Observation):
-            result += str(val)
+            result += f"{f_name.upper()} = {val.name}; "
+        elif isinstance(val, (float, str, int)):
+            result += f"{f_name.upper()} = {val}; "
+        elif isinstance(val, BaseModel):
+            result += as_obs_config_content(val)  # or str(val)
         elif isinstance(val, list):
             result += f"{' '.join([as_obs_config_content(v) for v in val])}"
         else:
-            raise AssertionError
+            raise AssertionError(f"Unexpected field type: {type(val)}")
+
     result += " };"
     return result
 
