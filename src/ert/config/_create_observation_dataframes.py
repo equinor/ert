@@ -144,16 +144,6 @@ def _handle_general_observation(
     restart = 0 if restart is None else restart
 
     if (
-        general_observation.value is None
-        and general_observation.error is None
-        and general_observation.obs_file is None
-    ):
-        raise ObservationConfigError.with_context(
-            "GENERAL_OBSERVATION must contain either VALUE and ERROR or OBS_FILE",
-            context=obs_key,
-        )
-
-    if (
         general_observation.value is not None
         and general_observation.error is not None
         and general_observation.obs_file is not None
