@@ -134,6 +134,12 @@ class SummaryObservation(_SummaryValues):
                     error = np.maximum(np.abs(value) * input_error, error_min)
                 case default:
                     assert_never(default)
+
+        if error <= 0:
+            raise ObservationConfigError.with_context(
+                "Observation uncertainty must be strictly > 0", summary_key
+            ) from None
+
         instance = cls(
             name=observation_dict["name"],
             error=error,
