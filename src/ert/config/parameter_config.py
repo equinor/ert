@@ -138,13 +138,11 @@ class ParameterConfig(BaseModel):
         indices specified by `active_realizations` are then returned.
 
         Parameters:
-        - global_seed (str): A global seed string used for RNG seed generation to ensure
-        reproducibility across runs.
+        - global_seed (str): A global seed string used for RNG seed generation to
+        ensure reproducibility across runs.
         - active_realizations (list[int]): indices of the realizations
-        to select from the stratified sampling vector; each must satisfy
-        0 <= i < num_realizations.
-        - num_realizations (int): Total number of realizations to generate the
-        reproducible sampling.
+        to select from the sampling vector; each must satisfy 0 <= i < num_realizations.
+        - num_realizations (int): Total number of realizations.
 
         Returns:
         - npt.NDArray[np.double]: Array of shape (len(active_realizations),
