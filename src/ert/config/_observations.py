@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 from collections.abc import Sequence
+from datetime import datetime
 from enum import StrEnum
 from typing import Annotated, Any, Literal, Self
 
@@ -10,6 +11,7 @@ import pandas as pd
 from pydantic import BaseModel, Field
 
 from .parsing import (
+    ConfigWarning,
     ErrorInfo,
     ObservationConfigError,
     ObservationDict,
@@ -40,6 +42,26 @@ class ObservationError(BaseModel):
     error_mode: ErrorModes
     error: float
     error_min: float
+
+
+def _parse_date(date_str: str) -> datetime:
+    try:
+        return datetime.fromisoformat(date_str)
+    except ValueError:
+        try:
+            date = datetime.strptime(date_str, "%d/%m/%Y")
+        except ValueError as err:
+            raise ObservationConfigError.with_context(
+                f"Unsupported date format {date_str}. Please use ISO date format",
+                date_str,
+            ) from err
+        else:
+            ConfigWarning.warn(
+                f"Deprecated time format {date_str}."
+                " Please use ISO date format YYYY-MM-DD",
+                date_str,
+            )
+            return date
 
 
 class SummaryObservation(_SummaryValues, ObservationError):
@@ -97,6 +119,9 @@ class SummaryObservation(_SummaryValues, ObservationError):
             raise _missing_value_error(observation_dict["name"], "ERROR")
 
         assert date is not None
+        # Raise errors if the date is off
+        parsed_date: datetime = _parse_date(date)
+        standardized_date = parsed_date.date().isoformat()
         instance = cls(
             name=observation_dict["name"],
             error_mode=error_mode,
@@ -107,7 +132,7 @@ class SummaryObservation(_SummaryValues, ObservationError):
             location_x=localization_values.get("x"),
             location_y=localization_values.get("y"),
             location_range=localization_values.get("range"),
-            date=date,
+            date=standardized_date,
         )
         # Bypass pydantic discarding context
         # only relevant for ERT config surfacing validation errors
