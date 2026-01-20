@@ -271,12 +271,20 @@ def export_grdecl(
     if binary:
         resfo.write(file_path, [(param_name.ljust(8), values.astype(np.float32))])
     else:
+        n = len(values)
+        pad = (6 - n % 6) % 6
+        if pad:
+            values = np.pad(values, (0, pad), constant_values=0.0)
+        reshaped = values.reshape(-1, 6)
         with open(file_path, "w", encoding="utf-8") as fh:
             fh.write(param_name + "\n")
-            for i, v in enumerate(values):
-                fh.write(" ")
-                fh.write(f"{v:3e}")
-                if i % 6 == 5:
-                    fh.write("\n")
-
-            fh.write(" /\n")
+            np.savetxt(
+                fh,
+                reshaped,
+                fmt="%3e",
+                delimiter=" ",
+                newline="\n ",
+                header="",
+                footer="",
+            )
+            fh.write("\n /\n")
