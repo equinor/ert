@@ -3,11 +3,14 @@ from contextlib import ExitStack as does_not_raise
 from datetime import datetime, timedelta
 from pathlib import Path
 from textwrap import dedent
+from unittest.mock import MagicMock
 
 import hypothesis.strategies as st
+import numpy as np
 import polars as pl
 import pytest
 from hypothesis import assume, given
+from polars import Float32
 from polars.testing import assert_frame_equal
 from resdata.summary import Summary
 from resfo_utilities.testing import summaries
@@ -24,6 +27,7 @@ from ert.config.parsing.observations_parser import (
     ObservationType,
 )
 from ert.namespace import Namespace
+from ert.storage import LocalEnsemble
 
 pytestmark = pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 
@@ -2145,3 +2149,61 @@ def test_that_general_observations_are_instantiated_with_localization_attributes
     assert gen_obs["location_x"].dtype == pl.Float32
     assert gen_obs["location_y"].dtype == pl.Float32
     assert gen_obs["location_range"].dtype == pl.Float32
+
+
+def test_that_get_observations_and_responses_can_concat_localized_summary_obs_and_gen_obs(  # noqa: E501
+    tmp_path,
+):
+    def mock_local_ensemble():
+        ens = MagicMock()
+        ens.experiment.observation_keys = ["FOPR"]
+        ens.experiment.observations = {
+            "gen_data": pl.DataFrame(
+                {
+                    "response_key": "FOPR",
+                    "observation_key": "FOPR",
+                    "report_step": 10,
+                    "index": 0,
+                    "observations": 0.05,
+                    "std": 0.01,
+                    "location_x": pl.Series([None], dtype=Float32),
+                    "location_y": pl.Series([None], dtype=Float32),
+                    "location_range": pl.Series([None], dtype=Float32),
+                },
+            ),
+            "summary": pl.DataFrame(
+                {
+                    "response_key": "FOPR",
+                    "observation_key": "FOPR",
+                    "time": 10,
+                    "observations": 0.05,
+                    "std": 0.01,
+                    "location_x": pl.Series([1], dtype=Float32),
+                    "location_y": pl.Series([2], dtype=Float32),
+                    "location_range": pl.Series([3], dtype=Float32),
+                },
+            ),
+        }
+        gen_data_mock = MagicMock()
+        gen_data_mock.primary_key = ["report_step", "index"]
+        summary_mock = MagicMock()
+        summary_mock.primary_key = ["time"]
+        ens.experiment.response_configuration = {
+            "gen_data": gen_data_mock,
+            "summary": summary_mock,
+        }
+        return ens
+
+    obs_and_responses = LocalEnsemble.get_observations_and_responses(
+        mock_local_ensemble(), ["FOPR"], np.zeros(1)
+    )
+
+    assert "location_x" in obs_and_responses.columns
+    assert obs_and_responses["location_x"].dtype == pl.Float32
+    assert obs_and_responses["location_x"].to_list() == [None, 1]
+    assert "location_y" in obs_and_responses.columns
+    assert obs_and_responses["location_y"].dtype == pl.Float32
+    assert obs_and_responses["location_y"].to_list() == [None, 2]
+    assert "location_range" in obs_and_responses.columns
+    assert obs_and_responses["location_range"].dtype == pl.Float32
+    assert obs_and_responses["location_range"].to_list() == [None, 3]
