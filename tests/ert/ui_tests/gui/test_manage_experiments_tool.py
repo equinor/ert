@@ -288,24 +288,23 @@ def test_ensemble_view(
 
     ensemble_widget._tab_widget.setCurrentIndex(_EnsembleWidgetTabs.OBSERVATIONS_TAB)
     ensemble_widget._observations_tree_widget.expandAll()
-    assert ensemble_widget._observations_tree_widget.topLevelItemCount() == 3
-    assert ensemble_widget._observations_tree_widget.topLevelItem(0).childCount() == 200
-    assert ensemble_widget._observations_tree_widget.topLevelItem(1).childCount() == 4
-    assert ensemble_widget._observations_tree_widget.topLevelItem(2).childCount() == 6
+    assert ensemble_widget._observations_tree_widget.topLevelItemCount() == 2
+    assert ensemble_widget._observations_tree_widget.topLevelItem(0).childCount() == 4
+    assert ensemble_widget._observations_tree_widget.topLevelItem(1).childCount() == 6
 
     # simulate clicking some different entries in observation list
     ensemble_widget._observations_tree_widget.currentItemChanged.emit(
         ensemble_widget._observations_tree_widget.topLevelItem(0).child(10), None
     )
-    assert ensemble_widget._figure.get_axes()[0].get_title() == "FOPR"
+    assert ensemble_widget._figure.get_axes()[0].get_title() == "WPR_DIFF_1"
 
     ensemble_widget._observations_tree_widget.currentItemChanged.emit(
         ensemble_widget._observations_tree_widget.topLevelItem(1).child(2), None
     )
-    assert ensemble_widget._figure.get_axes()[0].get_title() == "WPR_DIFF_1"
+    assert ensemble_widget._figure.get_axes()[0].get_title() == "WOPR_OP1_72"
 
     ensemble_widget._observations_tree_widget.currentItemChanged.emit(
-        ensemble_widget._observations_tree_widget.topLevelItem(2).child(3), None
+        ensemble_widget._observations_tree_widget.topLevelItem(1).child(3), None
     )
     assert ensemble_widget._figure.get_axes()[0].get_title() == "WOPR_OP1_108"
 
