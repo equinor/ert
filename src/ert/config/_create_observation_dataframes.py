@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import datetime
 from collections import defaultdict
 from collections.abc import Sequence
-from datetime import datetime
 from typing import assert_never
 
 import numpy as np
@@ -21,7 +21,6 @@ from ._observations import (
 )
 from .gen_data_config import GenDataConfig
 from .parsing import (
-    ConfigWarning,
     ErrorInfo,
     ObservationConfigError,
 )
@@ -105,26 +104,6 @@ def _handle_error_mode(
             assert_never(default)
 
 
-def _parse_date(date_str: str) -> datetime:
-    try:
-        return datetime.fromisoformat(date_str)
-    except ValueError:
-        try:
-            date = datetime.strptime(date_str, "%d/%m/%Y")
-        except ValueError as err:
-            raise ObservationConfigError.with_context(
-                f"Unsupported date format {date_str}. Please use ISO date format",
-                date_str,
-            ) from err
-        else:
-            ConfigWarning.warn(
-                f"Deprecated time format {date_str}."
-                " Please use ISO date format YYYY-MM-DD",
-                date_str,
-            )
-            return date
-
-
 def _has_localization(summary_dict: SummaryObservation) -> bool:
     return summary_dict.location_x is not None and summary_dict.location_y is not None
 
@@ -136,7 +115,7 @@ def _handle_summary_observation(
     summary_key = summary_dict.key
     value = summary_dict.value
     std_dev = float(_handle_error_mode(np.array(value), summary_dict))
-    date = _parse_date(summary_dict.date)
+    date = datetime.datetime.fromisoformat(summary_dict.date)
 
     if std_dev <= 0:
         raise ObservationConfigError.with_context(

@@ -12,12 +12,10 @@ import numpy.typing as npt
 import polars as pl
 from resfo_utilities import history_key
 
-from ._create_observation_dataframes import (
-    _parse_date,
-)
 from ._observations import (
     ErrorModes,
     _missing_value_error,
+    _parse_date,
     _unknown_key_error,
     validate_error_mode,
     validate_float,
