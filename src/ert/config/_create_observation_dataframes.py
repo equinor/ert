@@ -275,6 +275,11 @@ def _handle_general_observation(
             "index": pl.Series(indices, dtype=pl.UInt16),
             "observations": pl.Series(values, dtype=pl.Float32),
             "std": pl.Series(stds, dtype=pl.Float32),
+            # Location attributes will always be None for general observations, but are
+            # necessary to concatenate with other observation dataframes.
+            "location_x": pl.Series([None] * len(values), dtype=pl.Float32),
+            "location_y": pl.Series([None] * len(values), dtype=pl.Float32),
+            "location_range": pl.Series([None] * len(values), dtype=pl.Float32),
         }
     )
 

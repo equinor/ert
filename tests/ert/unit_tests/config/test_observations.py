@@ -2127,3 +2127,21 @@ def test_ert_config_logs_observation_types_and_keywords(caplog):
     assert "DATA" in caplog.text
     assert "ERROR" in caplog.text
     assert "RESTART" in caplog.text
+
+
+def test_that_general_observations_are_instantiated_with_localization_attributes():
+    obs_config_contents = """
+        GENERAL_OBSERVATION OBS1 {
+            VALUE = 1;
+            DATA = GEN;
+            ERROR = 0.1;
+            RESTART = 1;
+        };"""
+
+    gen_obs = make_observations(obs_config_contents)["gen_data"]
+    assert "location_x" in gen_obs.columns
+    assert "location_y" in gen_obs.columns
+    assert "location_range" in gen_obs.columns
+    assert gen_obs["location_x"].dtype == pl.Float32
+    assert gen_obs["location_y"].dtype == pl.Float32
+    assert gen_obs["location_range"].dtype == pl.Float32
