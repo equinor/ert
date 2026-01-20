@@ -6,7 +6,7 @@ import logging
 import os
 import time
 from collections import Counter
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from datetime import datetime
 from functools import cache, cached_property, lru_cache
 from multiprocessing.pool import ThreadPool
@@ -531,7 +531,7 @@ class LocalEnsemble(BaseMode):
         group: str,
         realizations: int | np.int64 | npt.NDArray[np.int_],
     ) -> xr.Dataset:
-        if isinstance(realizations, int | np.int64):
+        if isinstance(realizations, (int, np.integer)):
             return self._load_single_dataset(group, int(realizations)).isel(
                 realizations=0, drop=True
             )
@@ -586,13 +586,17 @@ class LocalEnsemble(BaseMode):
             )
 
         if transformed:
+
+            def make_transformer(col: str) -> Callable[[pl.Series], pl.Series]:
+                transform = self.experiment.parameter_configuration[
+                    col
+                ].transform_data()
+                return lambda s: pl.Series(transform(s.to_numpy()))
+
             df = df.with_columns(
                 [
                     pl.col(col)
-                    .map_elements(
-                        self.experiment.parameter_configuration[col].transform_data(),
-                        return_dtype=df[col].dtype,
-                    )
+                    .map_batches(make_transformer(col), return_dtype=df[col].dtype)
                     .alias(col)
                     for col in df.columns
                     if col != "realization"

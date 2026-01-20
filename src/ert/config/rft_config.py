@@ -194,7 +194,7 @@ class RFTConfig(ResponseConfig):
                     .explode("location")
                     for (well, time), inner_dict in fetched.items()
                     for prop, vals in inner_dict.items()
-                    if prop != "DEPTH"
+                    if prop != "DEPTH" and len(vals) > 0
                 ]
             )
         except KeyError as err:
