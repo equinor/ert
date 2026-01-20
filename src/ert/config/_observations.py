@@ -228,6 +228,12 @@ class GeneralObservation(_GeneralObservation):
                 observation_dict["name"],
             )
 
+        if output.value is None and output.error is None and output.obs_file is None:
+            raise ObservationConfigError.with_context(
+                "GENERAL_OBSERVATION must contain either VALUE and ERROR or OBS_FILE",
+                context=observation_dict["name"],
+            )
+
         # Bypass pydantic discarding context
         # only relevant for ERT config surfacing validation errors
         # irrelevant for runmodels etc.
