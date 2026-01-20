@@ -2,6 +2,7 @@
 Contains code that was used to generate files expected by ert.
 """
 
+import datetime
 from collections.abc import Callable
 from pathlib import Path
 from textwrap import dedent
@@ -13,6 +14,7 @@ import resfo
 import xtgeo
 from definition import Coordinate, obs_coordinates, obs_times
 from heat_equation import heat_equation, sample_prior_conductivity
+from pydantic.dataclasses import dataclass
 
 # Some seeds produce priors that yield poor results.
 # Worth playing around with.
@@ -92,6 +94,85 @@ def generate_priors():
         )
 
 
+START_DATE = datetime.date(2010, 1, 1)
+
+RADIUS = 50
+
+INPUT_DIR = Path(".")  # change if files live elsewhere
+INPUT_PATTERN = "obs_{t}.txt"  # e.g. obs_10.txt
+OUTPUT_FILE = Path("observations_loc.txt")
+
+
+@dataclass
+class Obs:
+    value: float
+    error: float
+
+
+def read_obs_file(path: Path) -> list[Obs]:
+    """
+    Reads lines formatted as: "<value> <error>"
+    Returns list[Obs] in the same order as in the file.
+    """
+    if not path.exists():
+        raise FileNotFoundError(f"Missing observation file: {path}")
+
+    out: list[Obs] = []
+    for lineno, raw in enumerate(
+        path.read_text(encoding="utf-8").splitlines(), start=1
+    ):
+        line = raw.strip()
+        if not line:
+            continue
+        parts = line.split()
+        if len(parts) != 2:
+            raise ValueError(
+                f"{path}:{lineno}: expected 2 columns, got {len(parts)}: {raw!r}"
+            )
+        v, e = map(float, parts)
+        out.append(Obs(v, e))
+    return out
+
+
+def timestep_to_date(t: int) -> datetime.date:
+    return START_DATE + datetime.timedelta(days=int(t))
+
+
+def create_summary_observations():
+    obs_by_timestep: dict[int, list[Obs]] = {}
+    for t in obs_times:
+        p = INPUT_DIR / INPUT_PATTERN.format(t=t)
+        rows = read_obs_file(p)
+        obs_by_timestep[t] = rows
+
+    # Write output
+    with OUTPUT_FILE.open("w", encoding="utf-8") as f:
+        for t in obs_times:
+            obs_date = timestep_to_date(t)
+            rows = obs_by_timestep[t]
+
+            for i, coord in enumerate(obs_coordinates):
+                value = rows[i].value
+                error = rows[i].error
+
+                f.write(
+                    f"""SUMMARY_OBSERVATION HEAT_{coord.x}_{coord.y}_{t}
+{{
+    VALUE   = {value:.16e};
+    ERROR   = {error:.16e};
+    DATE    = {obs_date:%Y-%m-%d};
+    KEY     = HEAT_{coord.x}_{coord.y};
+    LOCALIZATION {{
+        EAST = {coord.x};
+        NORTH = {10.0 + coord.y};
+        RADIUS = {RADIUS};
+    }};
+}};
+
+"""
+                )
+
+
 if __name__ == "__main__":
     create_egrid_file()
 
@@ -146,3 +227,4 @@ if __name__ == "__main__":
         )
 
     generate_priors()
+    create_summary_observations()
