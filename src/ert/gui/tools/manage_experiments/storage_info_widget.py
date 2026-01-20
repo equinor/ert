@@ -11,6 +11,7 @@ from polars import DataFrame
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import (
+    QAbstractItemView,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -165,6 +166,9 @@ class _EnsembleWidget(QWidget):
         observations_frame.setLayout(observations_layout)
 
         self._parameters_table = QTableWidget()
+        self._parameters_table.setEditTriggers(
+            QAbstractItemView.EditTrigger.NoEditTriggers
+        )
         self._export_params_button = QPushButton("Export...")
         self._export_params_button.clicked.connect(self.onClickExportParameters)
 
