@@ -1,2 +1,2 @@
-,response_key,observation_key,time,observations,std
-0,RWPR,FWPR,1996-01-02,0.1,0.05
+,response_key,observation_key,time,observations,std,location_x,location_y,location_range
+0,RWPR,FWPR,1996-01-02,0.1,0.05,,,

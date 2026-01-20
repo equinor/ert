@@ -5,6 +5,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import hypothesis.strategies as st
+import polars as pl
 import pytest
 from hypothesis import given, settings
 from resfo_utilities.testing import summaries
@@ -179,3 +180,40 @@ def test_that_summary_observations_raises_error_given_unknown_localization_key(
         tmpdir.as_cwd(),
     ):
         create_summary_observation("LOCALIZATION {FOO = BAZ;};")
+
+
+@pytest.mark.usefixtures("copy_snake_oil_case")
+def test_that_adding_one_localized_observation_to_snake_oil_case_can_be_internalized():
+    obs_content = Path("observations/observations.txt").read_text(encoding="utf-8")
+    obs_lines = obs_content.split("\n")
+    observation_index = obs_lines.index("SUMMARY_OBSERVATION WOPR_OP1_36")
+    localization_lines = [
+        "LOCALIZATION {",
+        "  EAST = 1;",
+        "  NORTH = 2;",
+        "  RADIUS = 3;",
+        " };",
+    ]
+    for i, line in enumerate(localization_lines):
+        obs_lines.insert(observation_index + 2 + i, line)
+    new_obs_content = "\n".join(obs_lines)
+    Path("observations/observations.txt").write_text(new_obs_content, encoding="utf-8")
+    summary = ErtConfig.from_file("snake_oil.ert").observations["summary"]
+    assert summary["location_x"].dtype == pl.Float32
+    assert summary["location_y"].dtype == pl.Float32
+    assert summary["location_range"].dtype == pl.Float32
+
+    localized_entry = summary.filter(
+        pl.col("observation_key").str.contains("WOPR_OP1_36")
+    )
+    assert localized_entry["location_x"].to_list() == [1]
+    assert localized_entry["location_y"].to_list() == [2]
+    assert localized_entry["location_range"].to_list() == [3]
+
+
+def test_that_defaulted_summary_obs_values_have_type_float32(tmpdir):
+    with tmpdir.as_cwd():
+        summary_observations = create_summary_observation(loc_config_lines="")
+    assert summary_observations["location_x"].dtype == pl.Float32
+    assert summary_observations["location_y"].dtype == pl.Float32
+    assert summary_observations["location_range"].dtype == pl.Float32
