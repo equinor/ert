@@ -224,15 +224,12 @@ class EverestControl(ParameterConfig):
         self,
         from_data: npt.NDArray[np.float64],
         iens_active_index: npt.NDArray[np.int_],
-    ) -> Iterator[tuple[int | None, pl.DataFrame]]:
+    ) -> Iterator[tuple[None, pl.DataFrame]]:
         df = pl.DataFrame(
-            from_data,
+            {
+                "realization": iens_active_index,
+                **{k: from_data[:, i] for i, k in enumerate(self.parameter_keys)},
+            },
             strict=False,
-            schema=self.parameter_keys,
-            orient="row",
         )
-        df = df.with_columns(pl.Series("realization", iens_active_index)).select(
-            ["realization", *self.parameter_keys]
-        )
-
         yield None, df
