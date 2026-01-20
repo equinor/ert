@@ -7,15 +7,12 @@ from typing import assert_never
 
 import numpy as np
 import polars as pl
-from numpy import typing as npt
 
 from ert.validation import rangestring_to_list
 
 from ._observations import (
-    ErrorModes,
     GeneralObservation,
     Observation,
-    ObservationError,
     RFTObservation,
     SummaryObservation,
 )
@@ -85,25 +82,6 @@ def create_observation_dataframes(
     return datasets
 
 
-def _handle_error_mode(
-    values: npt.ArrayLike,
-    error_dict: ObservationError,
-) -> npt.NDArray[np.double]:
-    values = np.asarray(values)
-    error_mode = error_dict.error_mode
-    error_min = error_dict.error_min
-    error = error_dict.error
-    match error_mode:
-        case ErrorModes.ABS:
-            return np.full(values.shape, error)
-        case ErrorModes.REL:
-            return np.abs(values) * error
-        case ErrorModes.RELMIN:
-            return np.maximum(np.abs(values) * error, np.full(values.shape, error_min))
-        case default:
-            assert_never(default)
-
-
 def _has_localization(summary_dict: SummaryObservation) -> bool:
     return summary_dict.location_x is not None and summary_dict.location_y is not None
 
@@ -114,7 +92,7 @@ def _handle_summary_observation(
 ) -> pl.DataFrame:
     summary_key = summary_dict.key
     value = summary_dict.value
-    std_dev = float(_handle_error_mode(np.array(value), summary_dict))
+    std_dev = summary_dict.error
     date = datetime.datetime.fromisoformat(summary_dict.date)
 
     if std_dev <= 0:
