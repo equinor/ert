@@ -12,6 +12,7 @@ updates:
       interval: "weekly"
     allow:
       - dependency-type: "all"
+    versioning-strategy: "lockfile-only"
     groups:
       all-deps:
         patterns:
