@@ -6,7 +6,14 @@ import numpy as np
 import polars as pl
 import pytest
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QFrame, QPushButton, QTableWidget, QTextEdit
+from PyQt6.QtWidgets import (
+    QAbstractItemView,
+    QApplication,
+    QFrame,
+    QPushButton,
+    QTableWidget,
+    QTextEdit,
+)
 
 from ert.config import ErtConfig, SummaryConfig
 from ert.gui.ertnotifier import ErtNotifier
@@ -587,6 +594,9 @@ def test_that_parameters_pane_is_populated_correctly(
     assert model.columnCount() == 11, (
         "The Snake oil test case should have 11 parameters"
     )
+
+    triggers = parameters_frame.findChild(QTableWidget).editTriggers()
+    assert triggers == QAbstractItemView.EditTrigger.NoEditTriggers
 
 
 def test_that_export_parameters_button_opens_the_export_dialog(
