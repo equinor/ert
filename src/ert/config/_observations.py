@@ -5,8 +5,9 @@ import os
 from collections.abc import Sequence
 from datetime import datetime
 from enum import StrEnum
-from typing import Annotated, Any, Literal, Self
+from typing import Annotated, Any, Literal, Self, assert_never
 
+import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Field
 
@@ -31,17 +32,12 @@ class _SummaryValues(BaseModel):
     type: Literal["summary_observation"] = "summary_observation"
     name: str
     value: float
+    error: float
     key: str  #: The :term:`summary key` in the summary response
     date: str
     location_x: float | None = None
     location_y: float | None = None
     location_range: float | None = None
-
-
-class ObservationError(BaseModel):
-    error_mode: ErrorModes
-    error: float
-    error_min: float
 
 
 def _parse_date(date_str: str) -> datetime:
@@ -64,7 +60,7 @@ def _parse_date(date_str: str) -> datetime:
             return date
 
 
-class SummaryObservation(_SummaryValues, ObservationError):
+class SummaryObservation(_SummaryValues):
     @classmethod
     def from_obs_dict(
         cls, directory: str, observation_dict: ObservationDict
@@ -122,13 +118,27 @@ class SummaryObservation(_SummaryValues, ObservationError):
         # Raise errors if the date is off
         parsed_date: datetime = _parse_date(date)
         standardized_date = parsed_date.date().isoformat()
+
+        value = float_values["VALUE"]
+        input_error = float_values["ERROR"]
+        error_min = float_values["ERROR_MIN"]
+
+        error = input_error
+        if error_mode is not None:
+            match error_mode:
+                case ErrorModes.ABS:
+                    error = np.abs(input_error)
+                case ErrorModes.REL:
+                    error = np.abs(value) * input_error
+                case ErrorModes.RELMIN:
+                    error = np.maximum(np.abs(value) * input_error, error_min)
+                case default:
+                    assert_never(default)
         instance = cls(
             name=observation_dict["name"],
-            error_mode=error_mode,
-            error=float_values["ERROR"],
-            error_min=float_values["ERROR_MIN"],
+            error=error,
             key=summary_key,
-            value=float_values["VALUE"],
+            value=value,
             location_x=localization_values.get("x"),
             location_y=localization_values.get("y"),
             location_range=localization_values.get("range"),
