@@ -358,9 +358,9 @@
           "time": "2010-03-31T00:00:00",
           "observations": 0.10000000149011612,
           "std": 0.05000000074505806,
-          "location_x": null,
-          "location_y": null,
-          "location_range": null
+          "east": null,
+          "north": null,
+          "radius": null
         },
         {
           "response_key": "WOPR:OP1",
@@ -368,9 +368,9 @@
           "time": "2010-12-26T00:00:00",
           "observations": 0.699999988079071,
           "std": 0.07000000029802322,
-          "location_x": null,
-          "location_y": null,
-          "location_range": null
+          "east": null,
+          "north": null,
+          "radius": null
         },
         {
           "response_key": "WOPR:OP1",
@@ -378,9 +378,9 @@
           "time": "2011-12-21T00:00:00",
           "observations": 0.5,
           "std": 0.05000000074505806,
-          "location_x": null,
-          "location_y": null,
-          "location_range": null
+          "east": null,
+          "north": null,
+          "radius": null
         },
         {
           "response_key": "WOPR:OP1",
@@ -388,9 +388,9 @@
           "time": "2012-12-15T00:00:00",
           "observations": 0.30000001192092896,
           "std": 0.07500000298023224,
-          "location_x": null,
-          "location_y": null,
-          "location_range": null
+          "east": null,
+          "north": null,
+          "radius": null
         },
         {
           "response_key": "WOPR:OP1",
@@ -398,9 +398,9 @@
           "time": "2013-12-10T00:00:00",
           "observations": 0.20000000298023224,
           "std": 0.03500000014901161,
-          "location_x": null,
-          "location_y": null,
-          "location_range": null
+          "east": null,
+          "north": null,
+          "radius": null
         },
         {
           "response_key": "WOPR:OP1",
@@ -408,9 +408,9 @@
           "time": "2015-03-15T00:00:00",
           "observations": 0.014999999664723873,
           "std": 0.009999999776482582,
-          "location_x": null,
-          "location_y": null,
-          "location_range": null
+          "east": null,
+          "north": null,
+          "radius": null
         }
       ],
       "datatypes": {
@@ -419,9 +419,9 @@
         "time": "Datetime(time_unit='ms', time_zone=None)",
         "observations": "Float32",
         "std": "Float32",
-        "location_x": "Float32",
-        "location_y": "Float32",
-        "location_range": "Float32"
+        "east": "Float32",
+        "north": "Float32",
+        "radius": "Float32"
       }
     },
     "gen_data": {
@@ -433,7 +433,10 @@
           "report_step": 199,
           "index": 400,
           "observations": 0.0,
-          "std": 0.10000000149011612
+          "std": 0.10000000149011612,
+          "east": null,
+          "north": null,
+          "radius": null
         },
         {
           "response_key": "SNAKE_OIL_WPR_DIFF",
@@ -441,7 +444,10 @@
           "report_step": 199,
           "index": 800,
           "observations": 0.10000000149011612,
-          "std": 0.20000000298023224
+          "std": 0.20000000298023224,
+          "east": null,
+          "north": null,
+          "radius": null
         },
         {
           "response_key": "SNAKE_OIL_WPR_DIFF",
@@ -449,7 +455,10 @@
           "report_step": 199,
           "index": 1200,
           "observations": 0.20000000298023224,
-          "std": 0.15000000596046448
+          "std": 0.15000000596046448,
+          "east": null,
+          "north": null,
+          "radius": null
         },
         {
           "response_key": "SNAKE_OIL_WPR_DIFF",
@@ -457,7 +466,10 @@
           "report_step": 199,
           "index": 1800,
           "observations": 0.0,
-          "std": 0.05000000074505806
+          "std": 0.05000000074505806,
+          "east": null,
+          "north": null,
+          "radius": null
         }
       ],
       "datatypes": {
@@ -466,7 +478,10 @@
         "report_step": "UInt16",
         "index": "UInt16",
         "observations": "Float32",
-        "std": "Float32"
+        "std": "Float32",
+        "east": "Float32",
+        "north": "Float32",
+        "radius": "Float32"
       }
     }
   },
