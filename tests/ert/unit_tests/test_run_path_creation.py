@@ -98,6 +98,7 @@ def test_that_create_run_path_overwrites_symlinks_by_file(
         prior_ensemble,
         range(prior_ensemble.ensemble_size),
         random_seed=ert_config.random_seed,
+        num_realizations=prior_ensemble.ensemble_size,
     )
     create_run_path(
         run_args=run_args,
@@ -154,7 +155,7 @@ def make_run_path(run_args, storage):
         prior_ensemble = storage.create_ensemble(
             experiment_id, name="prior", ensemble_size=1
         )
-        sample_prior(prior_ensemble, [0], 123)
+        sample_prior(prior_ensemble, [0], 123, 1)
         runargs = run_args(ert_config, prior_ensemble, 1)
         runpaths = Runpaths.from_config(ert_config)
         create_run_path(
@@ -477,7 +478,7 @@ def test_that_sampling_prior_makes_initialized_fs(storage):
         RealizationStorageState.PARAMETERS_LOADED
         not in prior_ensemble.get_ensemble_state()[1]
     )
-    sample_prior(prior_ensemble, [0], 123)
+    sample_prior(prior_ensemble, [0], 123, 1)
     # Realization 0 state now contains PARAMETERS_LOADED
     assert (
         RealizationStorageState.PARAMETERS_LOADED
@@ -587,7 +588,12 @@ def test_write_runpath_file(storage, itr):
     for i in range(num_realizations):
         global_substitutions[f"<REALIZATION_ID_{i}_{itr}>"] = str(10 * i)
     run_path = Runpaths.from_config(ert_config)
-    sample_prior(prior_ensemble, [i for i, active in enumerate(mask) if active], 123)
+    sample_prior(
+        prior_ensemble,
+        [i for i, active in enumerate(mask) if active],
+        123,
+        num_realizations,
+    )
     run_args = create_run_arguments(
         run_path,
         [True, True],
@@ -918,7 +924,7 @@ def test_when_manifest_files_are_written_loading_succeeds(storage, itr):
     run_paths = Runpaths.from_config(config)
 
     if itr == 0:
-        sample_prior(prior_ensemble, range(num_realizations), 123)
+        sample_prior(prior_ensemble, range(num_realizations), 123, num_realizations)
     else:
         save_zeros(prior_ensemble, num_realizations, dim_size=dim_size)
 
@@ -1010,7 +1016,7 @@ def test_that_contents_of_gridfile_is_logged(storage, caplog):
         experiment_id, name="prior", ensemble_size=num_realizations, iteration=0
     )
     run_paths = Runpaths.from_config(config)
-    sample_prior(prior_ensemble, range(num_realizations), 123)
+    sample_prior(prior_ensemble, range(num_realizations), 123, num_realizations)
     run_args = create_run_arguments(
         run_paths,
         [True] * num_realizations,

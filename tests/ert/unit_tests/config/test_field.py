@@ -34,7 +34,7 @@ def test_write_to_runpath_produces_the_transformed_field_in_storage(
         experiment_id, name="prior", ensemble_size=5
     )
     active_realizations = [0, 3, 4]
-    sample_prior(prior_ensemble, active_realizations, 123)
+    sample_prior(prior_ensemble, active_realizations, 123, 5)
     permx_field = ensemble_config["PERMX"]
     assert (permx_field.nx, permx_field.ny, permx_field.nz) == (10, 10, 5)
     assert permx_field.truncation_min is None
