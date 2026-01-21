@@ -729,7 +729,7 @@ class ErtConfig(BaseModel):
                     data_to_read={},
                     locations=[],
                 )
-            computed = create_observation_dataframes(
+            self._observations = create_observation_dataframes(
                 self.observation_declarations,
                 cast(
                     GenDataConfig | None,
@@ -740,8 +740,6 @@ class ErtConfig(BaseModel):
                     self.ensemble_config.response_configs.get("rft", None),
                 ),
             )
-            self._observations = computed
-            return computed
         return self._observations
 
     @model_validator(mode="after")
