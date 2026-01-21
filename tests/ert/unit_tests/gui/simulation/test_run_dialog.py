@@ -25,6 +25,7 @@ from ert.ensemble_evaluator.event import (
     EndEvent,
     FullSnapshotEvent,
     SnapshotUpdateEvent,
+    WarningEvent,
 )
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.gui.simulation.ensemble_experiment_panel import (
@@ -977,21 +978,31 @@ def test_that_file_dialog_close_when_run_dialog_hidden(qtbot: QtBot, run_dialog)
             assert not file_dialog.isVisible()
 
 
-def test_that_run_dialog_clears_warnings_when_rerun(qtbot, monkeypatch):
-    run_dialog = RunDialog(
-        title="test",
-        run_model_api=MagicMock(),
-        event_queue=MagicMock(),
-        notifier=MagicMock(),
-    )
-    assert len(run_dialog.post_simulation_warnings) == 0
-    run_dialog.post_simulation_warnings.append("warning")
+@pytest.mark.integration_test
+@pytest.mark.parametrize(
+    ("events"),
+    [
+        pytest.param(
+            [
+                WarningEvent(msg="warning"),
+                EndEvent(failed=True, msg="Failed"),
+            ],
+            id="one warning issued",
+        ),
+    ],
+)
+def test_that_run_dialog_clears_warnings_when_rerun(
+    events, event_queue, qtbot, monkeypatch, run_dialog
+):
+    qtbot.wait_until(run_dialog.is_simulation_done, timeout=5000)
     assert len(run_dialog.post_simulation_warnings) > 0
 
     monkeypatch.setattr(
         QMessageBox, "exec", value=lambda _: QMessageBox.StandardButton.Ok
     )
     run_dialog.rerun_failed_realizations()
+    qtbot.wait_until(run_dialog.is_simulation_done, timeout=5000)
+
     assert len(run_dialog.post_simulation_warnings) == 0
 
 
