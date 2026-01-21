@@ -38,6 +38,7 @@ def create_runpath(
         ensemble,
         [i for i, active in enumerate(active_mask) if active],
         random_seed=ert_config.random_seed,
+        num_realizations=ert_config.runpath_config.num_realizations,
     )
     create_run_path(
         run_args=run_args,

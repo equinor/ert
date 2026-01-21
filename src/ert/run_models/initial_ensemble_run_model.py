@@ -101,6 +101,7 @@ class InitialEnsembleRunModel(RunModel, InitialEnsembleRunModelConfig):
             np.where(self.active_realizations)[0],
             parameters=[param.name for param in self.parameter_configuration],
             random_seed=self.random_seed,
+            num_realizations=self.runpath_config.num_realizations,
             design_matrix_df=self.design_matrix.to_polars()
             if self.design_matrix is not None
             else None,
