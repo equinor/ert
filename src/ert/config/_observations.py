@@ -124,16 +124,15 @@ class SummaryObservation(_SummaryValues):
         error_min = float_values["ERROR_MIN"]
 
         error = input_error
-        if error_mode is not None:
-            match error_mode:
-                case ErrorModes.ABS:
-                    error = np.abs(input_error)
-                case ErrorModes.REL:
-                    error = np.abs(value) * input_error
-                case ErrorModes.RELMIN:
-                    error = np.maximum(np.abs(value) * input_error, error_min)
-                case default:
-                    assert_never(default)
+        match error_mode:
+            case ErrorModes.ABS:
+                error = np.abs(input_error)
+            case ErrorModes.REL:
+                error = np.abs(value) * input_error
+            case ErrorModes.RELMIN:
+                error = np.maximum(np.abs(value) * input_error, error_min)
+            case default:
+                assert_never(default)
 
         if error <= 0:
             raise ObservationConfigError.with_context(
