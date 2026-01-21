@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import operator
 import os
 from collections.abc import Iterator
@@ -257,6 +258,9 @@ def import_bgrdecl(
     raise ValueError(f"Did not find field parameter {field_name} in {file_path}")
 
 
+_BUFFER_SIZE = 2**28  # 268.435456 megabytes
+
+
 def export_grdecl(
     values: np.ma.MaskedArray[Any, np.dtype[np.float32]] | npt.NDArray[np.float32],
     file_path: str | os.PathLike[str],
@@ -271,12 +275,25 @@ def export_grdecl(
     if binary:
         resfo.write(file_path, [(param_name.ljust(8), values.astype(np.float32))])
     else:
-        with open(file_path, "w", encoding="utf-8") as fh:
-            fh.write(param_name + "\n")
-            for i, v in enumerate(values):
-                fh.write(" ")
-                fh.write(f"{v:3e}")
-                if i % 6 == 5:
-                    fh.write("\n")
+        length = values.shape[0]
+        per_line = 6
+        iters = 5
+        per_iter = per_line * iters
+        fmt = " ".join(["%3e"] * per_line)
+        fmt = "\n".join([fmt] * iters) + "\n"
+        with (
+            open(file_path, "wb+", 0) as fh,
+            io.BufferedWriter(fh, _BUFFER_SIZE) as bw,
+            io.TextIOWrapper(bw, write_through=True, encoding="utf-8") as tw,
+        ):
+            tw.write(param_name + "\n")
+            i = 0
+            while i + per_iter <= length:
+                tw.write(fmt % tuple(values[i : i + per_iter]))
+                i += per_iter
 
-            fh.write(" /\n")
+            for j, v in enumerate(values[length - (length % per_iter) :]):
+                tw.write(f" {v:3e}")
+                if j % 6 == 5:
+                    tw.write("\n")
+            tw.write(" /\n")
