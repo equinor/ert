@@ -76,7 +76,9 @@ class SummaryObservation(_SummaryValues):
                 case "type" | "name":
                     pass
                 case "ERROR" | "ERROR_MIN":
-                    float_values[str(key)] = validate_positive_float(value, key)
+                    float_values[str(key)] = validate_positive_float(
+                        value, key, strictly_positive=True
+                    )
                 case "DAYS" | "HOURS" | "RESTART":
                     raise ObservationConfigError.with_context(
                         (
@@ -126,18 +128,21 @@ class SummaryObservation(_SummaryValues):
         error = input_error
         match error_mode:
             case ErrorModes.ABS:
-                error = np.abs(input_error)
+                error = validate_positive_float(
+                    np.abs(input_error), summary_key, strictly_positive=True
+                )
             case ErrorModes.REL:
-                error = np.abs(value) * input_error
+                error = validate_positive_float(
+                    np.abs(value) * input_error, summary_key, strictly_positive=True
+                )
             case ErrorModes.RELMIN:
-                error = np.maximum(np.abs(value) * input_error, error_min)
+                error = validate_positive_float(
+                    np.maximum(np.abs(value) * input_error, error_min),
+                    summary_key,
+                    strictly_positive=True,
+                )
             case default:
                 assert_never(default)
-
-        if error <= 0:
-            raise ObservationConfigError.with_context(
-                "Observation uncertainty must be strictly > 0", summary_key
-            ) from None
 
         instance = cls(
             name=observation_dict["name"],
@@ -190,7 +195,9 @@ class GeneralObservation(_GeneralObservation):
                     output.value = validate_float(value, key)
                 case "ERROR":
                     setattr(
-                        output, str(key).lower(), validate_positive_float(value, key)
+                        output,
+                        str(key).lower(),
+                        validate_positive_float(value, key, strictly_positive=True),
                     )
                 case "DATE" | "DAYS" | "HOURS":
                     raise ObservationConfigError.with_context(
@@ -465,12 +472,15 @@ def validate_int(val: str, key: str) -> int:
         raise _conversion_error(key, val, "int") from err
 
 
-def validate_positive_float(val: str, key: str) -> float:
+def validate_positive_float(
+    val: str, key: str, strictly_positive: bool = False
+) -> float:
     v = validate_float(val, key)
-    if v < 0:
+    if v < 0 or (v <= 0 and strictly_positive):
         raise ObservationConfigError.with_context(
             f'Failed to validate "{val}" in {key}={val}.'
-            f" {key} must be given a positive value.",
+            f" {key} must be given a "
+            f"{'strictly ' if strictly_positive else ''}positive value.",
             val,
         )
     return v

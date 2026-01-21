@@ -490,7 +490,7 @@ def test_that_the_date_keyword_sets_the_report_step_by_looking_up_refcase(
 @pytest.mark.parametrize("std", [-1.0, 0, 0.0])
 def test_that_error_must_be_greater_than_zero_in_summary_observations(std):
     with pytest.raises(
-        ConfigValidationError, match=r"must be given a positive value|strictly > 0"
+        ConfigValidationError, match=r"must be given a strictly positive value"
     ):
         make_observations(
             [
@@ -509,7 +509,8 @@ def test_that_error_must_be_greater_than_zero_in_summary_observations(std):
 
 def test_that_computed_error_must_be_greater_than_zero_in_summary_observations():
     with pytest.raises(
-        ConfigValidationError, match=r"must be given a positive value|strictly > 0"
+        ConfigValidationError,
+        match=r"must be given a strictly positive value",
     ):
         make_observations(
             [
@@ -555,7 +556,7 @@ def test_that_absolute_error_must_be_greater_than_zero_in_history_observations()
     Path("config.ert").write_text(config_content, encoding="utf-8")
 
     with pytest.raises(
-        ConfigValidationError, match=r"must be given a positive value|strictly > 0"
+        ConfigValidationError, match=r"must be given a strictly positive value"
     ):
         run_convert_observations(Namespace(config="config.ert"))
 
@@ -563,7 +564,7 @@ def test_that_absolute_error_must_be_greater_than_zero_in_history_observations()
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_computed_error_must_be_greater_than_zero_in_history_observations():
     with pytest.raises(
-        ConfigValidationError, match=r"must be given a positive value|strictly > 0"
+        ConfigValidationError, match=r"must be given a strictly positive value"
     ):
         make_refcase_observations(
             """
@@ -583,7 +584,7 @@ def test_that_computed_error_must_be_greater_than_zero_in_history_observations()
 @pytest.mark.parametrize("std", [-1.0, 0, 0.0])
 def test_that_error_must_be_greater_than_zero_in_general_observations(std):
     with pytest.raises(
-        ConfigValidationError, match=r"must be given a positive value|strictly > 0"
+        ConfigValidationError, match=r"must be given a strictly positive value"
     ):
         make_observations(
             [
