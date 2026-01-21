@@ -8,6 +8,7 @@ from PyQt6.QtCore import QSize
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QLineEdit, QToolButton, QWidget
 
+from .. import is_dark_mode
 from .validationsupport import ValidationSupport
 
 if TYPE_CHECKING:
@@ -107,7 +108,14 @@ class PathChooser(QWidget):
 
         validity_type = ValidationSupport.WARNING
 
-        color = ValidationSupport.ERROR_COLOR if not valid else self.valid_color
+        if is_dark_mode():
+            color = (
+                ValidationSupport.DARKMODE_ERROR_COLOR
+                if not valid
+                else self.valid_color
+            )
+        else:
+            color = ValidationSupport.ERROR_COLOR if not valid else self.valid_color
 
         self._validation_support.setValidationMessage(message, validity_type)
         self._path_line.setToolTip(message)

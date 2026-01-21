@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
 )
 from typing_extensions import override
 
+from .. import is_dark_mode
 from .validationsupport import ValidationSupport
 
 
@@ -164,7 +165,14 @@ class ListEditBox(QWidget):
                     break
 
         validity_type = ValidationSupport.WARNING
-        color = ValidationSupport.ERROR_COLOR if not valid else self._valid_color
+        if is_dark_mode():
+            color = (
+                ValidationSupport.DARKMODE_ERROR_COLOR
+                if not valid
+                else self._valid_color
+            )
+        else:
+            color = ValidationSupport.ERROR_COLOR if not valid else self._valid_color
         self._validation_support.setValidationMessage(message, validity_type)
         self._list_edit_line.setToolTip(message)
         palette.setColor(self._list_edit_line.backgroundRole(), color)

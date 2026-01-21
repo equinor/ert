@@ -6,6 +6,7 @@ from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import QLineEdit
 from typing_extensions import override
 
+from .. import is_dark_mode
 from .validationsupport import ValidationSupport
 
 if TYPE_CHECKING:
@@ -65,9 +66,16 @@ class StringBox(QLineEdit):
 
                 palette = QPalette()
                 if not status:
-                    palette.setColor(
-                        self.backgroundRole(), ValidationSupport.ERROR_COLOR
-                    )
+                    if is_dark_mode():
+                        palette.setColor(
+                            self.backgroundRole(),
+                            ValidationSupport.DARKMODE_ERROR_COLOR,
+                        )
+                    else:
+                        palette.setColor(
+                            self.backgroundRole(),
+                            ValidationSupport.ERROR_COLOR,
+                        )
                     self.setPalette(palette)
                     self._validation.setValidationMessage(
                         str(status), ValidationSupport.EXCLAMATION

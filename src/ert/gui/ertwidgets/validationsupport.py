@@ -8,6 +8,8 @@ from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtGui import QColor, QEnterEvent
 from PyQt6.QtWidgets import QFrame, QLabel, QSizePolicy, QVBoxLayout, QWidget
 
+from ert.gui import is_dark_mode
+
 if TYPE_CHECKING:
     from PyQt6.QtCore import QEvent
     from PyQt6.QtGui import QHideEvent
@@ -18,6 +20,15 @@ class ErrorPopup(QWidget):
         "<html>"
         "<table style='background-color: #ffdfdf;'width='100%%'>"
         "<tr><td style='font-weight: bold; padding-left: 5px;'>Warning:</td></tr>"
+        "%s"
+        "</table>"
+        "</html>"
+    )
+
+    darkmode_error_template = (
+        "<html>"
+        "<table style='background-color: #b03941;'width='100%%'>"
+        "<tr><td style='font-weight: bold; padding-left: 0px;'>Warning:</td></tr>"
         "%s"
         "</table>"
         "</html>"
@@ -46,7 +57,13 @@ class ErrorPopup(QWidget):
     def presentError(self, widget: QWidget, error: str) -> None:
         assert isinstance(widget, QWidget)
 
-        self._error_widget.setText(ErrorPopup.error_template % html.escape(error))
+        if is_dark_mode():
+            self._error_widget.setText(
+                self.darkmode_error_template % html.escape(error)
+            )
+        else:
+            self._error_widget.setText(self.error_template % html.escape(error))
+
         self.show()
 
         size_hint = self.sizeHint()
@@ -63,6 +80,7 @@ class ErrorPopup(QWidget):
 class ValidationSupport(QObject):
     STRONG_ERROR_COLOR = QColor(255, 215, 215)
     ERROR_COLOR = QColor(255, 235, 235)
+    DARKMODE_ERROR_COLOR = QColor(176, 57, 64)
     INVALID_COLOR = QColor(235, 235, 255)
 
     WARNING = "warning"
