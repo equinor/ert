@@ -142,7 +142,8 @@ class ParameterConfig(BaseModel):
         ensure reproducibility across runs.
         - active_realizations (list[int]): indices of the realizations
         to select from the sampling vector; each must satisfy 0 <= i < num_realizations.
-        - num_realizations (int): Total number of realizations.
+        - num_realizations (int): Total number of realizations. Assures stable sampling
+        for a given global_seed regardless of currently active realizations.
 
         Returns:
         - npt.NDArray[np.double]: Array of shape (len(active_realizations),
