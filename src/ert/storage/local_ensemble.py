@@ -679,6 +679,9 @@ class LocalEnsemble(BaseMode):
                 if complete_df is None:
                     complete_df = ds
                 else:
+                    complete_df = complete_df.drop(
+                        [c for c in ds.columns if c != "realization"], strict=False
+                    )
                     complete_df = (
                         complete_df.join(ds, on="realization", how="left")
                         .unique(subset=["realization"], keep="first")
