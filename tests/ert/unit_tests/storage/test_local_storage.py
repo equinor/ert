@@ -1224,6 +1224,37 @@ def test_that_permission_error_is_logged_in_load_index(snake_oil_storage, caplog
         index_path.chmod(0o744)  # restore permissions
 
 
+def test_that_multiple_save_parameters_numpy_calls_overwrite_previous_values(tmp_path):
+    """This test is to ensure that updating parameters in local ensemble does not
+    raise duplicate column errors when saving with numpy arrays multiple times, and
+    instead overwrites the previous values as expected.
+    """
+    writer = open_storage(tmp_path, mode="w")
+    gen_kw_parameter = GenKwConfig(
+        name="some_param", distribution={"name": "normal", "mean": 10, "std": 0.1}
+    )
+    exp = writer.create_experiment(parameters=[gen_kw_parameter])
+    num_reals = 5
+    parameter_data_0 = np.array([0.0] * num_reals)
+    parameter_data_1 = np.array([1.1] * num_reals)
+    parameter_data_2 = np.array([2.2] * num_reals)
+    ens: LocalEnsemble = exp.create_ensemble(ensemble_size=num_reals, name="uniq_ens")
+    iens_active_index = np.array(range(num_reals))
+    ens.save_parameters_numpy(
+        parameter_data_0, gen_kw_parameter.name, iens_active_index
+    )
+    ens.save_parameters_numpy(
+        parameter_data_1, gen_kw_parameter.name, iens_active_index
+    )
+    ens.save_parameters_numpy(
+        parameter_data_2, gen_kw_parameter.name, iens_active_index
+    )
+    saved_ens = ens.load_scalar_keys([gen_kw_parameter.name]).to_dict()[
+        gen_kw_parameter.name
+    ]
+    assert saved_ens.to_list() == [2.2 for _ in range(num_reals)]
+
+
 @dataclass
 class Ensemble:
     uuid: UUID
