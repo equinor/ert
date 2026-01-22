@@ -960,7 +960,7 @@ def test_that_giving_both_index_file_and_index_list_raises_an_exception(tmpdir):
                         "INDEX_FILE": "obs_idx.txt",
                         "RESTART": "1",
                         "VALUE": "0.0",
-                        "ERROR": "0.0",
+                        "ERROR": "0.1",
                     }
                 ],
                 parse=False,
