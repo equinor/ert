@@ -7,6 +7,7 @@ import pprint
 import re
 from collections import Counter, defaultdict
 from collections.abc import Mapping
+from dataclasses import dataclass
 from functools import cached_property
 from os import path
 from pathlib import Path
@@ -87,19 +88,23 @@ ECL_BASE_DEPRECATION_MSG = (
 )
 
 
-def _seed_sequence(seed: int | None) -> int:
-    # Set up RNG
-    if seed is None:
+@dataclass
+class RandomSeedGenerator:
+    user_defined_seed: int | None = None
+
+    @property
+    def seed(self) -> int:
+        if self.user_defined_seed is not None:
+            return self.user_defined_seed
+
         int_seed = SeedSequence().entropy
         logger.info(
             "To repeat this experiment, "
             "add the following random seed to your config file:\n"
             f"RANDOM_SEED {int_seed}"
         )
-    else:
-        int_seed = seed
-    assert isinstance(int_seed, int)
-    return int_seed
+        assert isinstance(int_seed, int)
+        return int_seed
 
 
 def create_forward_model_json(
@@ -695,7 +700,6 @@ class ErtConfig(BaseModel):
     ensemble_config: EnsembleConfig = Field(default_factory=EnsembleConfig)
     ens_path: str = DEFAULT_ENSPATH
     env_vars: dict[str, str] = Field(default_factory=dict)
-    random_seed: int = Field(default_factory=lambda: _seed_sequence(None))
     analysis_config: AnalysisConfig = Field(default_factory=AnalysisConfig)
     queue_config: QueueConfig = Field(default_factory=QueueConfig)
     workflow_jobs: dict[str, WorkflowJob] = Field(default_factory=dict)
@@ -713,6 +717,9 @@ class ErtConfig(BaseModel):
     config_path: str = Field(init=False, default="")
     observation_declarations: list[Observation] = Field(default_factory=list)
     zonemap: Path | None = None
+    random_seed_generator: RandomSeedGenerator = Field(
+        default_factory=RandomSeedGenerator
+    )
 
     @model_validator(mode="after")
     def set_fields(self) -> Self:
@@ -1072,7 +1079,6 @@ class ErtConfig(BaseModel):
                 ensemble_config=ensemble_config,
                 ens_path=config_dict.get(ConfigKeys.ENSPATH, ErtConfig.DEFAULT_ENSPATH),
                 env_vars=env_vars,
-                random_seed=_seed_sequence(config_dict.get(ConfigKeys.RANDOM_SEED)),
                 analysis_config=analysis_config,
                 queue_config=queue_config,
                 workflow_jobs=workflow_jobs,
@@ -1127,6 +1133,11 @@ class ErtConfig(BaseModel):
                 obs_configs,
                 cast(RFTConfig | None, ensemble_config.response_configs.get("rft")),
             )
+
+            cls_config.random_seed_generator.user_defined_seed = config_dict.get(
+                ConfigKeys.RANDOM_SEED
+            )
+
         except PydanticValidationError as err:
             raise ConfigValidationError.from_pydantic(err) from err
         return cls_config
@@ -1326,6 +1337,14 @@ class ErtConfig(BaseModel):
     @property
     def env_pr_fm_step(self) -> dict[str, dict[str, Any]]:
         return self.ENV_PR_FM_STEP
+
+    @property
+    def random_seed(self) -> int:
+        return self.random_seed_generator.seed
+
+    @random_seed.setter
+    def random_seed(self, value: int | None) -> None:
+        self.random_seed_generator.user_defined_seed = value
 
 
 def _split_string_into_sections(string: str, section_length: int) -> list[str]:
