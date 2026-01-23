@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Self, cast, overload
 
 import polars as pl
 from numpy.random import SeedSequence
-from pydantic import BaseModel, Field, PrivateAttr, model_validator
+from pydantic import BaseModel, Field, PrivateAttr, computed_field, model_validator
 from pydantic import ValidationError as PydanticValidationError
 
 from ert.substitutions import Substitutions
@@ -694,7 +694,6 @@ class ErtConfig(BaseModel):
     ensemble_config: EnsembleConfig = Field(default_factory=EnsembleConfig)
     ens_path: str = DEFAULT_ENSPATH
     env_vars: dict[str, str] = Field(default_factory=dict)
-    random_seed: int = Field(default_factory=lambda: _seed_sequence(None))
     analysis_config: AnalysisConfig = Field(default_factory=AnalysisConfig)
     queue_config: QueueConfig = Field(default_factory=QueueConfig)
     workflow_jobs: dict[str, WorkflowJob] = Field(default_factory=dict)
@@ -713,6 +712,8 @@ class ErtConfig(BaseModel):
     config_path: str = Field(init=False, default="")
     observation_declarations: list[Observation] = Field(default_factory=list)
     _observations: dict[str, pl.DataFrame] | None = PrivateAttr(None)
+    _user_defined_random_seed: int | None = PrivateAttr(default=None)
+    _random_seed: int = PrivateAttr(default_factory=lambda: _seed_sequence(None))
 
     @property
     def observations(self) -> dict[str, pl.DataFrame]:
@@ -741,6 +742,20 @@ class ErtConfig(BaseModel):
                 ),
             )
         return self._observations
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def random_seed(self) -> int:
+        return self._random_seed
+
+    @random_seed.setter
+    def random_seed(self, value: int) -> None:
+        self._user_defined_random_seed = value
+        self._random_seed = value
+        logger.info(f"Applying user defined random seed:\nRANDOM_SEED {value}")
+
+    def advance_random_seed(self) -> None:
+        self._random_seed = _seed_sequence(self._user_defined_random_seed)
 
     @model_validator(mode="after")
     def set_fields(self) -> Self:
@@ -1092,7 +1107,6 @@ class ErtConfig(BaseModel):
                 ensemble_config=ensemble_config,
                 ens_path=config_dict.get(ConfigKeys.ENSPATH, ErtConfig.DEFAULT_ENSPATH),
                 env_vars=env_vars,
-                random_seed=_seed_sequence(config_dict.get(ConfigKeys.RANDOM_SEED)),
                 analysis_config=analysis_config,
                 queue_config=queue_config,
                 workflow_jobs=workflow_jobs,
@@ -1134,6 +1148,12 @@ class ErtConfig(BaseModel):
                     ensemble_config.response_configs.get("rft", None),
                 ),
             )
+
+            cls_config._user_defined_random_seed = config_dict.get(
+                ConfigKeys.RANDOM_SEED
+            )
+            if cls_config._user_defined_random_seed is not None:
+                cls_config.random_seed = cls_config._user_defined_random_seed
         except PydanticValidationError as err:
             raise ConfigValidationError.from_pydantic(err) from err
         return cls_config
