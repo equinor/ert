@@ -7,7 +7,7 @@ from textwrap import dedent
 import hypothesis.strategies as st
 import polars as pl
 import pytest
-from hypothesis import assume, given
+from hypothesis import assume, given, reproduce_failure
 from polars.testing import assert_frame_equal
 from resdata.summary import Summary
 from resfo_utilities.testing import summaries
@@ -433,6 +433,10 @@ def test_that_the_date_keyword_sets_the_general_index_by_looking_up_time_map():
 
 
 @given(summary=summaries(), data=st.data())
+@reproduce_failure(
+    "6.131.0",
+    b"AXicY3RkcGRgcGK/4MgIhAwwyMAA5gNFOhxhgBHOBCth1LD/wAAGjBoODHDW4g44q/0/CADVPYDJ2l+Asw5AtTiyw80hj+GIcIgjEwAGyyNh",
+)
 @pytest.mark.integration_test
 def test_that_the_date_keyword_sets_the_report_step_by_looking_up_refcase(
     tmp_path_factory: pytest.TempPathFactory, summary, data
