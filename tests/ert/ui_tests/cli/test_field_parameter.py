@@ -1,4 +1,5 @@
 import logging
+import math
 import os
 import stat
 import warnings
@@ -136,7 +137,7 @@ def _compare_ensemble_params(
 
     def round_and_cast_(df: pl.DataFrame) -> pl.DataFrame:
         return df.cast(_schema).with_columns(
-            pl.col(pl.Float64).round(int(1 / outlier_threshold))
+            pl.col(pl.Float64).round(int(-math.log10(outlier_threshold)))
         )
 
     if update_snapshot and not round_and_cast_(actual).equals(
