@@ -48,7 +48,7 @@ jobs:
 
     - name: Install ert
       run: |
-        uv sync --extra dev
+        uv sync --group dev
 
     - name: Install and setup slurm
       run: |

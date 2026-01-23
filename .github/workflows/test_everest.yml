@@ -60,7 +60,7 @@ jobs:
 
     - name: Install Everest and dependencies
       run: |
-        uv sync --extra dev
+        uv sync --group dev
 
     - name: Run Tests Linux
       if: ${{ inputs.test-type == 'test' && runner.os != 'macOS'}}

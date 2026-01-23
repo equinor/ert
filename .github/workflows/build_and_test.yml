@@ -179,7 +179,7 @@ jobs:
 
     - name: Install ert
       run: |
-        uv sync --extra dev
+        uv sync --group dev
 
     - name: Test docs
       run: |

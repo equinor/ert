@@ -83,7 +83,7 @@ jobs:
 
           # Install the dummy package
           source .venv/bin/activate
-          uv sync --extra dev
+          uv sync --group dev
           uv pip install ./dummy_site_config
 
       - name: Rapid tests

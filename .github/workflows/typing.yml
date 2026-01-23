@@ -40,7 +40,7 @@ jobs:
 
     - name: Install ERT and dependencies
       run: |
-        uv sync --extra dev --extra types
+        uv sync --group dev --group types
 
     - id: get-date
       run: echo "todays_date=$(/bin/date -u '+%Y%m%d')" >> "$GITHUB_ENV"
