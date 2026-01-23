@@ -31,7 +31,7 @@ MIN_CONFIG = dedent(
 
 def everest_config_with_defaults(**kwargs) -> EverestConfig:
     """
-    Creates an Everest config with default values. Useful for initializing a config
+    Creates an EVEREST config with default values. Useful for initializing a config
     without having to provide empty defaults.
     """
     return EverestConfig.with_plugins(yaml.safe_load(MIN_CONFIG) | {**kwargs})  # type: ignore

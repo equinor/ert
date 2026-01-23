@@ -80,7 +80,7 @@ jobs:
         set -e
         uv run pytest tests/ert/ui_tests/cli/test_update_with_rft_observations.py
 
-    - name: Run Everest on an example configuration with flow
+    - name: Run EVEREST on an example configuration with flow
       run: |
         pushd test-data/everest/eightcells/everest/model
         yq eval '.model.realizations = [0, 1]' -i config.yml

@@ -65,7 +65,7 @@ class ControlConfig(BaseModel):
 
             Only two allowed control types are accepted:
 
-            * `"well_control"`: Standard built-in Everest control type designed
+            * `"well_control"`: Standard built-in EVEREST control type designed
               for field optimization
             * `"generic_control"`: Enables the user to define controls types to
               be employed for customized optimization jobs.

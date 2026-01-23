@@ -82,7 +82,7 @@ run_everest_eightcells_test() {
     popd || exit 1
 
     if [ $STATUS -ne 0 ]; then
-        echo "Everest eightcells test failed. Running everest kill"
+        echo "EVEREST eightcells test failed. Running everest kill"
         everest kill "$CONFIG"
     fi
 

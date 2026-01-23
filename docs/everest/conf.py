@@ -25,7 +25,7 @@ sys.path.append(os.path.abspath("_ext"))
 
 # -- Project information -----------------------------------------------------
 
-project = "Everest"
+project = "EVEREST"
 copyright = "2024, Equinor & TNO"  # noqa: A001
 author = "Equinor & TNO"
 
@@ -173,7 +173,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "Everest.tex", "Everest Documentation", "Equinor \\& TNO", "manual"),
+    (master_doc, "EVEREST.tex", "EVEREST Documentation", "Equinor \\& TNO", "manual"),
 ]
 
 
@@ -181,7 +181,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "everest", "Everest Documentation", [author], 1)]
+man_pages = [(master_doc, "everest", "EVEREST Documentation", [author], 1)]
 
 
 # -- Options for Texinfo output ----------------------------------------------
@@ -192,10 +192,10 @@ man_pages = [(master_doc, "everest", "Everest Documentation", [author], 1)]
 texinfo_documents = [
     (
         master_doc,
-        "Everest",
-        "Everest Documentation",
+        "EVEREST",
+        "EVEREST Documentation",
         author,
-        "Everest",
+        "EVEREST",
         "One line description of project.",
         "Miscellaneous",
     ),

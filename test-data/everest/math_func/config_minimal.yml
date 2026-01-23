@@ -19,7 +19,7 @@ objective_functions:
 optimization:
   algorithm: optpp_q_newton
   convergence_tolerance: 0.001
-  max_batch_num: 4  # Remove this to let Everest converge
+  max_batch_num: 4  # Remove this to let EVEREST converge
   constraint_tolerance: 0.1  # To test that it is ignored.
 
 

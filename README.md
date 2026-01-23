@@ -31,13 +31,13 @@ ert --help
 
 For examples and help with configuration, see the [ert Documentation](https://ert.readthedocs.io/en/latest/getting_started/configuration/poly_new/guide.html#configuration-guide).
 
-# Everest™
+# EVEREST™
 
 <h1 align="center">
 <img src="https://raw.githubusercontent.com/equinor/ert/main/src/everest/assets/everest_logo.svg" width="300">
 </h1>
 
-The primary goal of the Everest tool is to find *optimal* well
+The primary goal of the EVEREST tool is to find *optimal* well
 planning and production strategies by utilizing an ensemble of
 reservoir models (e.g., an ensemble of geologically-consistent models).
 This will enable robust decisions about drilling schedule and well

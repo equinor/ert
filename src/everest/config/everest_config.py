@@ -277,10 +277,10 @@ class EverestConfig(BaseModelWithContextSupport):
             """
             Optimizer options.
 
-            Ensemble-based optimization in Everest is handled internally by the
+            Ensemble-based optimization in EVEREST is handled internally by the
             `ropt` library for robust optimization, which in turn uses a plugin
             mechanism to provide multiple low-level optimization backends. By
-            default Everest includes backends based on the Dakota optimization
+            default EVEREST includes backends based on the Dakota optimization
             package and on the SciPy package.
 
             Many of the optimization options in this section are handled by
@@ -467,7 +467,7 @@ class EverestConfig(BaseModelWithContextSupport):
         default_factory=ServerConfig,
         description=dedent(
             """
-            Defines Everest server settings, i.e., which queue system, queue
+            Defines EVEREST server settings, i.e., which queue system, queue
             name and queue options are used for the everest server. This makes
             it possible to reduce the resource requirements for the server that
             tend to be low compared with the forward models. This may prevent

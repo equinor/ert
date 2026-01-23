@@ -69,7 +69,7 @@ def test_everest_entry_run(cached_example):
         start_everest(["everest", "run", config_file, "--skip-prompt"])
 
     assert (
-        "Everest run finished with: Maximum number of batches reached" in out.getvalue()
+        "EVEREST run finished with: Maximum number of batches reached" in out.getvalue()
     )
 
     config = EverestConfig.load_file(config_file)

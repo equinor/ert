@@ -20,11 +20,11 @@ estimation during optimization. These are described in section:
 :ref:`cha_sampling_backends`.
 
 Optimization algorithms are selected by name, by setting the ``algorithm`` field
-in the ``optimization`` section of the Everest configuration file. Everest will
+in the ``optimization`` section of the EVEREST configuration file. EVEREST will
 find the correct backend from the name of the algorithm. In the unlikely case
 that multiple backends are installed that provide the same algorithm, it is
 possible to specify the backend by name, by setting the ``algorithm`` field to a
 value of the form ``backend-name/algorithm-name``, i.e. by pre-fixing the
 algorithm name with the backend name, separated by a slash. Sampling methods are
 selected in similar fashion, using the ``method`` field in the ``sampler``
-sections of the Everest configuration file.
+sections of the EVEREST configuration file.

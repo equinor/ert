@@ -23,16 +23,16 @@ the configuration file:
     - job-name <arguments>
 
 These jobs are executed in the order they are specified, and exchange data via
-files. Before starting a new batch of forward model jobs, Everest writes an
+files. Before starting a new batch of forward model jobs, EVEREST writes an
 input file containing the current control values and copies other user-specified
 input files to the location in the file system where the forward model jobs will
 run. Jobs can produce output files that serve as inputs for jobs that are
 started later. Finally, the outputs of the forward model (objective and
-constraint values) are saved, read by Everest and send back to the optimizer.
+constraint values) are saved, read by EVEREST and send back to the optimizer.
 
-Forward model jobs are command line applications that are run by the Everest job
+Forward model jobs are command line applications that are run by the EVEREST job
 scheduler. A few built-in jobs are provided, which are described in the section
-:ref:`cha_builtin_forward_model_jobs`. The Everest installation is generally
+:ref:`cha_builtin_forward_model_jobs`. The EVEREST installation is generally
 providing additional forward models via its plugin system, such as those
 described in :ref:`cha_everest_models`. The user can also add their own forward
 models using the mechanism described in :ref:`cha_creating_custom_jobs`.

@@ -136,11 +136,11 @@ class EverestClient:
             response = self._http_post(EverEndpoints.stop)
 
             if response.status_code == 200:
-                logger.info("Cancelled experiment from Everest")
+                logger.info("Cancelled experiment from EVEREST")
                 print("Successfully cancelled experiment")
             else:
                 logger.error(
-                    f"Failed to cancel Everest experiment: "
+                    f"Failed to cancel EVEREST experiment: "
                     f"POST @ {self._url}/{EverEndpoints.stop}, "
                     f"server responded with status {response.status_code}: "
                     f"{HTTPStatus(response.status_code).phrase}"
@@ -149,14 +149,14 @@ class EverestClient:
 
         except requests.exceptions.ConnectionError as e:
             logger.error(
-                "Connection error when cancelling Everest "
+                "Connection error when cancelling EVEREST "
                 f"experiment: {''.join(traceback.format_exception(e))}"
             )
             print("Failed to cancel experiment")
 
         except HTTPError as e:
             logger.error(
-                "HTTP error when cancelling Everest "
+                "HTTP error when cancelling EVEREST "
                 f"experiment: {''.join(traceback.format_exception(e))}"
             )
             print("Failed to cancel experiment")

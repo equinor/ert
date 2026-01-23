@@ -882,7 +882,7 @@ def test_that_saving_partial_everest_realization_info_raises_error(tmp_path):
 
         with pytest.raises(
             ValueError,
-            match=r"Everest realization info must describe all realizations.*[0, 2].*",
+            match=r"EVEREST realization info must describe all realizations.*[0, 2].*",
         ):
             ensemble.save_everest_realization_info({0: {}, 2: {}})
 

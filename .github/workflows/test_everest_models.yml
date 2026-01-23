@@ -1,4 +1,4 @@
-name: Test Everest Models
+name: Test EVEREST Models
 
 # This job checks whether current main of everest-models
 # is compatible with the changes. It is not required to pass
