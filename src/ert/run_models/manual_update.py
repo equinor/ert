@@ -5,13 +5,15 @@ import logging
 from typing import Any
 from uuid import UUID
 
-from pydantic import PrivateAttr
+import polars as pl
+from pydantic import PrivateAttr, field_validator
 
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.update_run_model import UpdateRunModel, UpdateRunModelConfig
 from ert.storage import Ensemble
 
 from ..analysis import smoother_update
+from .initial_ensemble_run_model import DictEncodedDataFrame, InitialEnsembleRunModel
 from .run_model import ErtRunError
 
 logger = logging.getLogger(__name__)
@@ -20,6 +22,14 @@ logger = logging.getLogger(__name__)
 class ManualUpdateConfig(UpdateRunModelConfig):
     ensemble_id: str
     ert_templates: list[tuple[str, str]]
+    observations: dict[str, DictEncodedDataFrame] | None = None
+
+    @field_validator("observations", mode="before")
+    @classmethod
+    def make_dict_encoded_observations(
+        cls, v: dict[str, pl.DataFrame | DictEncodedDataFrame | dict[str, Any]] | None
+    ) -> dict[str, DictEncodedDataFrame] | None:
+        return InitialEnsembleRunModel.make_dict_encoded_observations(v)
 
 
 class ManualUpdate(UpdateRunModel, ManualUpdateConfig):

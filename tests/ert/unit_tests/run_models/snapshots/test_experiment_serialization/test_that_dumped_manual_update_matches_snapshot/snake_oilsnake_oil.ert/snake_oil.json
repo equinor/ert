@@ -166,5 +166,2127 @@
       "test-data/ert/snake_oil.snake_oil.ert/templates/snake_oil_template.txt",
       "snake_oil_params.txt"
     ]
-  ]
+  ],
+  "observations": {
+    "summary": {
+      "type": "dicts",
+      "data": [
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-01-10T00:00:00",
+          "observations": 0.0016968873096629977,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-01-20T00:00:00",
+          "observations": 0.007549144793301821,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-01-30T00:00:00",
+          "observations": 0.017537245526909828,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-02-09T00:00:00",
+          "observations": 0.03158785030245781,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-02-19T00:00:00",
+          "observations": 0.04960281774401665,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-03-01T00:00:00",
+          "observations": 0.07146798074245453,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-03-11T00:00:00",
+          "observations": 0.09703561663627625,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-03-21T00:00:00",
+          "observations": 0.12614504992961884,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-03-31T00:00:00",
+          "observations": 0.1586153209209442,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "WOPR:OP1",
+          "observation_key": "WOPR_OP1_9",
+          "time": "2010-03-31T00:00:00",
+          "observations": 0.10000000149011612,
+          "std": 0.05000000074505806,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-04-10T00:00:00",
+          "observations": 0.1942545473575592,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-04-20T00:00:00",
+          "observations": 0.23281694948673248,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-04-30T00:00:00",
+          "observations": 0.27404671907424927,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-05-10T00:00:00",
+          "observations": 0.3176907002925873,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-05-20T00:00:00",
+          "observations": 0.3634442389011383,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-05-30T00:00:00",
+          "observations": 0.4109863340854645,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-06-09T00:00:00",
+          "observations": 0.46002548933029175,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-06-19T00:00:00",
+          "observations": 0.5102593302726746,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-06-29T00:00:00",
+          "observations": 0.5614363551139832,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-07-09T00:00:00",
+          "observations": 0.6133571267127991,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-07-19T00:00:00",
+          "observations": 0.6655344367027283,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-07-29T00:00:00",
+          "observations": 0.7178515791893005,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-08-08T00:00:00",
+          "observations": 0.7704011797904968,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-08-18T00:00:00",
+          "observations": 0.8226962685585022,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-08-28T00:00:00",
+          "observations": 0.8746448755264282,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-09-07T00:00:00",
+          "observations": 0.9261661171913147,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-09-17T00:00:00",
+          "observations": 0.977008044719696,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-09-27T00:00:00",
+          "observations": 1.0266836881637573,
+          "std": 0.10266836732625961,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-10-07T00:00:00",
+          "observations": 1.0750459432601929,
+          "std": 0.10750459134578705,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-10-17T00:00:00",
+          "observations": 1.12155020236969,
+          "std": 0.112155020236969,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-10-27T00:00:00",
+          "observations": 1.1657692193984985,
+          "std": 0.11657692492008209,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-11-06T00:00:00",
+          "observations": 1.207544207572937,
+          "std": 0.1207544207572937,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-11-16T00:00:00",
+          "observations": 1.2470088005065918,
+          "std": 0.1247008815407753,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-11-26T00:00:00",
+          "observations": 1.2835049629211426,
+          "std": 0.12835049629211426,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-12-06T00:00:00",
+          "observations": 1.3167047500610352,
+          "std": 0.13167047500610352,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-12-16T00:00:00",
+          "observations": 1.346083641052246,
+          "std": 0.13460835814476013,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2010-12-26T00:00:00",
+          "observations": 1.3711466789245605,
+          "std": 0.13711467385292053,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "WOPR:OP1",
+          "observation_key": "WOPR_OP1_36",
+          "time": "2010-12-26T00:00:00",
+          "observations": 0.699999988079071,
+          "std": 0.07000000029802322,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-01-05T00:00:00",
+          "observations": 1.3915883302688599,
+          "std": 0.13915883004665375,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-01-15T00:00:00",
+          "observations": 1.4073505401611328,
+          "std": 0.14073505997657776,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-01-25T00:00:00",
+          "observations": 1.4176363945007324,
+          "std": 0.14176364243030548,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-02-04T00:00:00",
+          "observations": 1.4222338199615479,
+          "std": 0.14222338795661926,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-02-14T00:00:00",
+          "observations": 1.4235652685165405,
+          "std": 0.1423565298318863,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-02-24T00:00:00",
+          "observations": 1.4251763820648193,
+          "std": 0.14251764118671417,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-03-06T00:00:00",
+          "observations": 1.4272525310516357,
+          "std": 0.14272525906562805,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-03-16T00:00:00",
+          "observations": 1.4300298690795898,
+          "std": 0.14300298690795898,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-03-26T00:00:00",
+          "observations": 1.4334416389465332,
+          "std": 0.14334416389465332,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-04-05T00:00:00",
+          "observations": 1.43769371509552,
+          "std": 0.14376936852931976,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-04-15T00:00:00",
+          "observations": 1.4429181814193726,
+          "std": 0.14429181814193726,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-04-25T00:00:00",
+          "observations": 1.4488641023635864,
+          "std": 0.14488640427589417,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-05-05T00:00:00",
+          "observations": 1.4547947645187378,
+          "std": 0.1454794704914093,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-05-15T00:00:00",
+          "observations": 1.4603124856948853,
+          "std": 0.1460312455892563,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-05-25T00:00:00",
+          "observations": 1.465605616569519,
+          "std": 0.14656056463718414,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-06-04T00:00:00",
+          "observations": 1.4704256057739258,
+          "std": 0.14704255759716034,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-06-14T00:00:00",
+          "observations": 1.4741872549057007,
+          "std": 0.14741872251033783,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-06-24T00:00:00",
+          "observations": 1.4752846956253052,
+          "std": 0.14752846956253052,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-07-04T00:00:00",
+          "observations": 1.4738245010375977,
+          "std": 0.147382453083992,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-07-14T00:00:00",
+          "observations": 1.4694164991378784,
+          "std": 0.1469416469335556,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-07-24T00:00:00",
+          "observations": 1.4611896276474,
+          "std": 0.14611896872520447,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-08-03T00:00:00",
+          "observations": 1.4494869709014893,
+          "std": 0.14494869112968445,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-08-13T00:00:00",
+          "observations": 1.4363856315612793,
+          "std": 0.14363856613636017,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-08-23T00:00:00",
+          "observations": 1.4213961362838745,
+          "std": 0.14213961362838745,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-09-02T00:00:00",
+          "observations": 1.4026654958724976,
+          "std": 0.140266552567482,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-09-12T00:00:00",
+          "observations": 1.3793243169784546,
+          "std": 0.1379324346780777,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-09-22T00:00:00",
+          "observations": 1.3527154922485352,
+          "std": 0.13527154922485352,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-10-02T00:00:00",
+          "observations": 1.3241467475891113,
+          "std": 0.13241466879844666,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-10-12T00:00:00",
+          "observations": 1.296581506729126,
+          "std": 0.12965814769268036,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-10-22T00:00:00",
+          "observations": 1.270460844039917,
+          "std": 0.12704607844352722,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-11-01T00:00:00",
+          "observations": 1.2434195280075073,
+          "std": 0.1243419498205185,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-11-11T00:00:00",
+          "observations": 1.2160032987594604,
+          "std": 0.12160032987594604,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-11-21T00:00:00",
+          "observations": 1.1891443729400635,
+          "std": 0.11891444027423859,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-12-01T00:00:00",
+          "observations": 1.161468505859375,
+          "std": 0.11614684760570526,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-12-11T00:00:00",
+          "observations": 1.1344152688980103,
+          "std": 0.11344152688980103,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-12-21T00:00:00",
+          "observations": 1.111630916595459,
+          "std": 0.11116309463977814,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "WOPR:OP1",
+          "observation_key": "WOPR_OP1_72",
+          "time": "2011-12-21T00:00:00",
+          "observations": 0.5,
+          "std": 0.05000000074505806,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2011-12-31T00:00:00",
+          "observations": 1.0911470651626587,
+          "std": 0.10911470651626587,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-01-10T00:00:00",
+          "observations": 1.071900486946106,
+          "std": 0.10719005018472672,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-01-20T00:00:00",
+          "observations": 1.0527071952819824,
+          "std": 0.10527072101831436,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-01-30T00:00:00",
+          "observations": 1.0326411724090576,
+          "std": 0.10326411575078964,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-02-09T00:00:00",
+          "observations": 1.0128751993179321,
+          "std": 0.10128752142190933,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-02-19T00:00:00",
+          "observations": 0.9945804476737976,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-02-29T00:00:00",
+          "observations": 0.975469708442688,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-03-10T00:00:00",
+          "observations": 0.9557305574417114,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-03-20T00:00:00",
+          "observations": 0.9363316893577576,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-03-30T00:00:00",
+          "observations": 0.9158328175544739,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-04-09T00:00:00",
+          "observations": 0.8928252458572388,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-04-19T00:00:00",
+          "observations": 0.8686985969543457,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-04-29T00:00:00",
+          "observations": 0.8423308730125427,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-05-09T00:00:00",
+          "observations": 0.8124594688415527,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-05-19T00:00:00",
+          "observations": 0.7789327502250671,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-05-29T00:00:00",
+          "observations": 0.7419267892837524,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-06-08T00:00:00",
+          "observations": 0.7024903893470764,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-06-18T00:00:00",
+          "observations": 0.661297619342804,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-06-28T00:00:00",
+          "observations": 0.6193501949310303,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-07-08T00:00:00",
+          "observations": 0.5782303810119629,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-07-18T00:00:00",
+          "observations": 0.5396573543548584,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-07-28T00:00:00",
+          "observations": 0.5051060914993286,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-08-07T00:00:00",
+          "observations": 0.47489526867866516,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-08-17T00:00:00",
+          "observations": 0.4502047300338745,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-08-27T00:00:00",
+          "observations": 0.43144863843917847,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-09-06T00:00:00",
+          "observations": 0.4186316132545471,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-09-16T00:00:00",
+          "observations": 0.410041481256485,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-09-26T00:00:00",
+          "observations": 0.40574684739112854,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-10-06T00:00:00",
+          "observations": 0.40424859523773193,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-10-16T00:00:00",
+          "observations": 0.3991520404815674,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-10-26T00:00:00",
+          "observations": 0.3887236714363098,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-11-05T00:00:00",
+          "observations": 0.37419527769088745,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-11-15T00:00:00",
+          "observations": 0.3551763594150543,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-11-25T00:00:00",
+          "observations": 0.331745445728302,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-12-05T00:00:00",
+          "observations": 0.30616295337677,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-12-15T00:00:00",
+          "observations": 0.28151485323905945,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "WOPR:OP1",
+          "observation_key": "WOPR_OP1_108",
+          "time": "2012-12-15T00:00:00",
+          "observations": 0.30000001192092896,
+          "std": 0.07500000298023224,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2012-12-25T00:00:00",
+          "observations": 0.26365551352500916,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-01-04T00:00:00",
+          "observations": 0.24812838435173035,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-01-14T00:00:00",
+          "observations": 0.23326681554317474,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-01-24T00:00:00",
+          "observations": 0.21852639317512512,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-02-03T00:00:00",
+          "observations": 0.20469489693641663,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-02-13T00:00:00",
+          "observations": 0.19195015728473663,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-02-23T00:00:00",
+          "observations": 0.17977432906627655,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-03-05T00:00:00",
+          "observations": 0.16876085102558136,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-03-15T00:00:00",
+          "observations": 0.15952761471271515,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-03-25T00:00:00",
+          "observations": 0.15166985988616943,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-04-04T00:00:00",
+          "observations": 0.14568953216075897,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-04-14T00:00:00",
+          "observations": 0.14111457765102386,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-04-24T00:00:00",
+          "observations": 0.13730789721012115,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-05-04T00:00:00",
+          "observations": 0.13369180262088776,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-05-14T00:00:00",
+          "observations": 0.1301889419555664,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-05-24T00:00:00",
+          "observations": 0.12653681635856628,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-06-03T00:00:00",
+          "observations": 0.12283045053482056,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-06-13T00:00:00",
+          "observations": 0.11926789581775665,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-06-23T00:00:00",
+          "observations": 0.11993221193552017,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-07-03T00:00:00",
+          "observations": 0.12808072566986084,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-07-13T00:00:00",
+          "observations": 0.1359952986240387,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-07-23T00:00:00",
+          "observations": 0.1433563381433487,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-08-02T00:00:00",
+          "observations": 0.14990629255771637,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-08-12T00:00:00",
+          "observations": 0.1549033373594284,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-08-22T00:00:00",
+          "observations": 0.15908613801002502,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-09-01T00:00:00",
+          "observations": 0.16274403035640717,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-09-11T00:00:00",
+          "observations": 0.16555064916610718,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-09-21T00:00:00",
+          "observations": 0.1669514924287796,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-10-01T00:00:00",
+          "observations": 0.16719110310077667,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-10-11T00:00:00",
+          "observations": 0.1661362498998642,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-10-21T00:00:00",
+          "observations": 0.16499200463294983,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-10-31T00:00:00",
+          "observations": 0.16432030498981476,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-11-10T00:00:00",
+          "observations": 0.165121391415596,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-11-20T00:00:00",
+          "observations": 0.169014111161232,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-11-30T00:00:00",
+          "observations": 0.17592155933380127,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-12-10T00:00:00",
+          "observations": 0.18565155565738678,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "WOPR:OP1",
+          "observation_key": "WOPR_OP1_144",
+          "time": "2013-12-10T00:00:00",
+          "observations": 0.20000000298023224,
+          "std": 0.03500000014901161,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-12-20T00:00:00",
+          "observations": 0.19735679030418396,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2013-12-30T00:00:00",
+          "observations": 0.2105773389339447,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-01-09T00:00:00",
+          "observations": 0.2247595340013504,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-01-19T00:00:00",
+          "observations": 0.23917199671268463,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-01-29T00:00:00",
+          "observations": 0.2524295449256897,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-02-08T00:00:00",
+          "observations": 0.2640857398509979,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-02-18T00:00:00",
+          "observations": 0.2746853232383728,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-02-28T00:00:00",
+          "observations": 0.2849123775959015,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-03-10T00:00:00",
+          "observations": 0.2945040166378021,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-03-20T00:00:00",
+          "observations": 0.3027935326099396,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-03-30T00:00:00",
+          "observations": 0.30875587463378906,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-04-09T00:00:00",
+          "observations": 0.3120051324367523,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-04-19T00:00:00",
+          "observations": 0.31252342462539673,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-04-29T00:00:00",
+          "observations": 0.3097202479839325,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-05-09T00:00:00",
+          "observations": 0.3039141893386841,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-05-19T00:00:00",
+          "observations": 0.2956465780735016,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-05-29T00:00:00",
+          "observations": 0.28585320711135864,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-06-08T00:00:00",
+          "observations": 0.2753968834877014,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-06-18T00:00:00",
+          "observations": 0.2641619145870209,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-06-28T00:00:00",
+          "observations": 0.2527305483818054,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-07-08T00:00:00",
+          "observations": 0.24120257794857025,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-07-18T00:00:00",
+          "observations": 0.22952820360660553,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-07-28T00:00:00",
+          "observations": 0.21775572001934052,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-08-07T00:00:00",
+          "observations": 0.20688839256763458,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-08-17T00:00:00",
+          "observations": 0.19651590287685394,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-08-27T00:00:00",
+          "observations": 0.18688032031059265,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-09-06T00:00:00",
+          "observations": 0.17763660848140717,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-09-16T00:00:00",
+          "observations": 0.1682787537574768,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-09-26T00:00:00",
+          "observations": 0.1587630957365036,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-10-06T00:00:00",
+          "observations": 0.14956273138523102,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-10-16T00:00:00",
+          "observations": 0.14119677245616913,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-10-26T00:00:00",
+          "observations": 0.13354657590389252,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-11-05T00:00:00",
+          "observations": 0.12660714983940125,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-11-15T00:00:00",
+          "observations": 0.12049901485443115,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-11-25T00:00:00",
+          "observations": 0.11532926559448242,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-12-05T00:00:00",
+          "observations": 0.11091870814561844,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-12-15T00:00:00",
+          "observations": 0.10653064399957657,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2014-12-25T00:00:00",
+          "observations": 0.10148541629314423,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2015-01-04T00:00:00",
+          "observations": 0.09563612192869186,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2015-01-14T00:00:00",
+          "observations": 0.0887933000922203,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2015-01-24T00:00:00",
+          "observations": 0.08123061805963516,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2015-02-03T00:00:00",
+          "observations": 0.0733993723988533,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2015-02-13T00:00:00",
+          "observations": 0.0654938817024231,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2015-02-23T00:00:00",
+          "observations": 0.05767139419913292,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2015-03-05T00:00:00",
+          "observations": 0.05034296214580536,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2015-03-15T00:00:00",
+          "observations": 0.04377567023038864,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "WOPR:OP1",
+          "observation_key": "WOPR_OP1_190",
+          "time": "2015-03-15T00:00:00",
+          "observations": 0.014999999664723873,
+          "std": 0.009999999776482582,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2015-03-25T00:00:00",
+          "observations": 0.03793442249298096,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2015-04-04T00:00:00",
+          "observations": 0.032930485904216766,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2015-04-14T00:00:00",
+          "observations": 0.02895224094390869,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2015-04-24T00:00:00",
+          "observations": 0.025974156334996223,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2015-05-04T00:00:00",
+          "observations": 0.023769771680235863,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2015-05-14T00:00:00",
+          "observations": 0.022172002121806145,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2015-05-24T00:00:00",
+          "observations": 0.021033743396401405,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2015-06-03T00:00:00",
+          "observations": 0.020261472091078758,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2015-06-13T00:00:00",
+          "observations": 0.019794177263975143,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        },
+        {
+          "response_key": "FOPR",
+          "observation_key": "FOPR",
+          "time": "2015-06-23T00:00:00",
+          "observations": 0.01961757428944111,
+          "std": 0.10000000149011612,
+          "location_x": null,
+          "location_y": null,
+          "location_range": null
+        }
+      ],
+      "datatypes": {
+        "response_key": "String",
+        "observation_key": "String",
+        "time": "Datetime(time_unit='ms', time_zone=None)",
+        "observations": "Float32",
+        "std": "Float32",
+        "location_x": "Float32",
+        "location_y": "Float32",
+        "location_range": "Float32"
+      }
+    },
+    "gen_data": {
+      "type": "dicts",
+      "data": [
+        {
+          "response_key": "SNAKE_OIL_WPR_DIFF",
+          "observation_key": "WPR_DIFF_1",
+          "report_step": 199,
+          "index": 400,
+          "observations": 0.0,
+          "std": 0.10000000149011612
+        },
+        {
+          "response_key": "SNAKE_OIL_WPR_DIFF",
+          "observation_key": "WPR_DIFF_1",
+          "report_step": 199,
+          "index": 800,
+          "observations": 0.10000000149011612,
+          "std": 0.20000000298023224
+        },
+        {
+          "response_key": "SNAKE_OIL_WPR_DIFF",
+          "observation_key": "WPR_DIFF_1",
+          "report_step": 199,
+          "index": 1200,
+          "observations": 0.20000000298023224,
+          "std": 0.15000000596046448
+        },
+        {
+          "response_key": "SNAKE_OIL_WPR_DIFF",
+          "observation_key": "WPR_DIFF_1",
+          "report_step": 199,
+          "index": 1800,
+          "observations": 0.0,
+          "std": 0.05000000074505806
+        }
+      ],
+      "datatypes": {
+        "response_key": "String",
+        "observation_key": "String",
+        "report_step": "UInt16",
+        "index": "UInt16",
+        "observations": "Float32",
+        "std": "Float32"
+      }
+    }
+  }
 }
