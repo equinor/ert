@@ -334,142 +334,121 @@
       "snake_oil_params.txt"
     ]
   ],
-  "observations": {
-    "summary": {
-      "type": "dicts",
-      "data": [
-        {
-          "response_key": "WOPR:OP1",
-          "observation_key": "WOPR_OP1_9",
-          "time": "2010-03-31T00:00:00",
-          "observations": 0.10000000149011612,
-          "std": 0.05000000074505806,
-          "east": null,
-          "north": null,
-          "radius": null
-        },
-        {
-          "response_key": "WOPR:OP1",
-          "observation_key": "WOPR_OP1_36",
-          "time": "2010-12-26T00:00:00",
-          "observations": 0.699999988079071,
-          "std": 0.07000000029802322,
-          "east": null,
-          "north": null,
-          "radius": null
-        },
-        {
-          "response_key": "WOPR:OP1",
-          "observation_key": "WOPR_OP1_72",
-          "time": "2011-12-21T00:00:00",
-          "observations": 0.5,
-          "std": 0.05000000074505806,
-          "east": null,
-          "north": null,
-          "radius": null
-        },
-        {
-          "response_key": "WOPR:OP1",
-          "observation_key": "WOPR_OP1_108",
-          "time": "2012-12-15T00:00:00",
-          "observations": 0.30000001192092896,
-          "std": 0.07500000298023224,
-          "east": null,
-          "north": null,
-          "radius": null
-        },
-        {
-          "response_key": "WOPR:OP1",
-          "observation_key": "WOPR_OP1_144",
-          "time": "2013-12-10T00:00:00",
-          "observations": 0.20000000298023224,
-          "std": 0.03500000014901161,
-          "east": null,
-          "north": null,
-          "radius": null
-        },
-        {
-          "response_key": "WOPR:OP1",
-          "observation_key": "WOPR_OP1_190",
-          "time": "2015-03-15T00:00:00",
-          "observations": 0.014999999664723873,
-          "std": 0.009999999776482582,
-          "east": null,
-          "north": null,
-          "radius": null
-        }
-      ],
-      "datatypes": {
-        "response_key": "String",
-        "observation_key": "String",
-        "time": "Datetime(time_unit='ms', time_zone=None)",
-        "observations": "Float32",
-        "std": "Float32",
-        "east": "Float32",
-        "north": "Float32",
-        "radius": "Float32"
-      }
+  "observations": [
+    {
+      "type": "summary_observation",
+      "name": "WOPR_OP1_9",
+      "value": 0.1,
+      "error": 0.05,
+      "key": "WOPR:OP1",
+      "date": "2010-03-31",
+      "east": null,
+      "north": null,
+      "radius": null
     },
-    "gen_data": {
-      "type": "dicts",
-      "data": [
-        {
-          "response_key": "SNAKE_OIL_WPR_DIFF",
-          "observation_key": "WPR_DIFF_1",
-          "report_step": 199,
-          "index": 400,
-          "observations": 0.0,
-          "std": 0.10000000149011612,
-          "east": null,
-          "north": null,
-          "radius": null
-        },
-        {
-          "response_key": "SNAKE_OIL_WPR_DIFF",
-          "observation_key": "WPR_DIFF_1",
-          "report_step": 199,
-          "index": 800,
-          "observations": 0.10000000149011612,
-          "std": 0.20000000298023224,
-          "east": null,
-          "north": null,
-          "radius": null
-        },
-        {
-          "response_key": "SNAKE_OIL_WPR_DIFF",
-          "observation_key": "WPR_DIFF_1",
-          "report_step": 199,
-          "index": 1200,
-          "observations": 0.20000000298023224,
-          "std": 0.15000000596046448,
-          "east": null,
-          "north": null,
-          "radius": null
-        },
-        {
-          "response_key": "SNAKE_OIL_WPR_DIFF",
-          "observation_key": "WPR_DIFF_1",
-          "report_step": 199,
-          "index": 1800,
-          "observations": 0.0,
-          "std": 0.05000000074505806,
-          "east": null,
-          "north": null,
-          "radius": null
-        }
-      ],
-      "datatypes": {
-        "response_key": "String",
-        "observation_key": "String",
-        "report_step": "UInt16",
-        "index": "UInt16",
-        "observations": "Float32",
-        "std": "Float32",
-        "east": "Float32",
-        "north": "Float32",
-        "radius": "Float32"
-      }
+    {
+      "type": "summary_observation",
+      "name": "WOPR_OP1_36",
+      "value": 0.7,
+      "error": 0.07,
+      "key": "WOPR:OP1",
+      "date": "2010-12-26",
+      "east": null,
+      "north": null,
+      "radius": null
+    },
+    {
+      "type": "summary_observation",
+      "name": "WOPR_OP1_72",
+      "value": 0.5,
+      "error": 0.05,
+      "key": "WOPR:OP1",
+      "date": "2011-12-21",
+      "east": null,
+      "north": null,
+      "radius": null
+    },
+    {
+      "type": "summary_observation",
+      "name": "WOPR_OP1_108",
+      "value": 0.3,
+      "error": 0.075,
+      "key": "WOPR:OP1",
+      "date": "2012-12-15",
+      "east": null,
+      "north": null,
+      "radius": null
+    },
+    {
+      "type": "summary_observation",
+      "name": "WOPR_OP1_144",
+      "value": 0.2,
+      "error": 0.035,
+      "key": "WOPR:OP1",
+      "date": "2013-12-10",
+      "east": null,
+      "north": null,
+      "radius": null
+    },
+    {
+      "type": "summary_observation",
+      "name": "WOPR_OP1_190",
+      "value": 0.015,
+      "error": 0.01,
+      "key": "WOPR:OP1",
+      "date": "2015-03-15",
+      "east": null,
+      "north": null,
+      "radius": null
+    },
+    {
+      "type": "general_observation",
+      "name": "WPR_DIFF_1",
+      "data": "SNAKE_OIL_WPR_DIFF",
+      "value": 0.0,
+      "error": 0.1,
+      "restart": 199,
+      "index": 400,
+      "east": null,
+      "north": null,
+      "radius": null
+    },
+    {
+      "type": "general_observation",
+      "name": "WPR_DIFF_1",
+      "data": "SNAKE_OIL_WPR_DIFF",
+      "value": 0.1,
+      "error": 0.2,
+      "restart": 199,
+      "index": 800,
+      "east": null,
+      "north": null,
+      "radius": null
+    },
+    {
+      "type": "general_observation",
+      "name": "WPR_DIFF_1",
+      "data": "SNAKE_OIL_WPR_DIFF",
+      "value": 0.2,
+      "error": 0.15,
+      "restart": 199,
+      "index": 1200,
+      "east": null,
+      "north": null,
+      "radius": null
+    },
+    {
+      "type": "general_observation",
+      "name": "WPR_DIFF_1",
+      "data": "SNAKE_OIL_WPR_DIFF",
+      "value": 0.0,
+      "error": 0.05,
+      "restart": 199,
+      "index": 1800,
+      "east": null,
+      "north": null,
+      "radius": null
     }
-  },
+  ],
   "target_ensemble": "the_experiment"
 }

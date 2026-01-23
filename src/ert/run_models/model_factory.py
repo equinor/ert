@@ -153,7 +153,7 @@ def _setup_single_test_run(
         log_path=config.analysis_config.log_path,
         storage_path=config.ens_path,
         queue_config=config.queue_config.create_local_copy(),
-        observations=config.observations,
+        observations=config.observation_declarations,
     )
 
     return SingleTestRun(
@@ -212,7 +212,7 @@ def _setup_ensemble_experiment(
         log_path=config.analysis_config.log_path,
         storage_path=config.ens_path,
         queue_config=config.queue_config,
-        observations=config.observations,
+        observations=config.observation_declarations,
     )
 
     return EnsembleExperiment(
@@ -305,7 +305,7 @@ def _setup_manual_update(
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
         ert_templates=config.ert_templates,
-        observations=config.observations,
+        observations=config.observation_declarations,
     )
     return ManualUpdate(**runmodel_config.model_dump(), status_queue=status_queue)
 
@@ -343,7 +343,7 @@ def _setup_manual_update_enif(
         substitutions=config.substitutions,
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
-        observations=config.observations,
+        observations=config.observation_declarations,
     )
 
 
@@ -389,7 +389,7 @@ def _setup_ensemble_smoother(
         substitutions=config.substitutions,
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
-        observations=config.observations,
+        observations=config.observation_declarations,
     )
     return EnsembleSmoother(**runmodel_config.model_dump(), status_queue=status_queue)
 
@@ -435,7 +435,7 @@ def _setup_ensemble_information_filter(
         substitutions=config.substitutions,
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
-        observations=config.observations,
+        observations=config.observation_declarations,
     )
     return EnsembleInformationFilter(
         **runmodel_config.model_dump(), status_queue=status_queue
@@ -507,7 +507,7 @@ def _setup_multiple_data_assimilation(
         substitutions=config.substitutions,
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
-        observations=config.observations,
+        observations=config.observation_declarations,
     )
     return MultipleDataAssimilation(
         **runmodel_config.model_dump(), status_queue=status_queue
