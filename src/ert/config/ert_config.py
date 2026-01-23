@@ -1127,17 +1127,6 @@ class ErtConfig(BaseModel):
                     locations=[],
                     zonemap=cls_config.zonemap,
                 )
-            cls_config._observations = create_observation_dataframes(
-                obs_configs,
-                cast(
-                    GenDataConfig | None,
-                    ensemble_config.response_configs.get("gen_data", None),
-                ),
-                cast(
-                    RFTConfig | None,
-                    ensemble_config.response_configs.get("rft", None),
-                ),
-            )
         except PydanticValidationError as err:
             raise ConfigValidationError.from_pydantic(err) from err
         return cls_config
