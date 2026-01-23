@@ -13,7 +13,7 @@ copy_test_files() {
 }
 
 install_test_dependencies() {
-    pip install ".[dev]"
+    pip install --group dev
 }
 
 run_ert_with_opm() {
@@ -36,9 +36,6 @@ run_ert_with_opm() {
     popd || exit 1
     return "$STATUS"
 }
-
-
-
 
 # Run everest eightcells test on the cluster
 run_everest_eightcells_test() {
@@ -91,8 +88,6 @@ run_everest_eightcells_test() {
 
     return $STATUS
 }
-
-
 
 start_tests() {
     export NO_PROXY=localhost,127.0.0.1

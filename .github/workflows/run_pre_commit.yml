@@ -40,7 +40,7 @@ jobs:
 
     - name: Install ERT with style dependencies
       run: |
-        uv sync --extra style
+        uv sync --group style
 
     - name: Download shellcheck
       run: |

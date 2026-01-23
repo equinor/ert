@@ -59,7 +59,7 @@ Once uv is installed, you can get a development environment by running:
 ```sh
 git clone https://github.com/equinor/ert
 cd ert
-uv sync --all-extras
+uv sync --all-groups
 ```
 
 ### Test setup

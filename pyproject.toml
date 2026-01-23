@@ -89,7 +89,7 @@ everserver = "everest.detached.everserver:main"
 [project.urls]
 Repository = "https://github.com/equinor/ert"
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "furo",
     "hypothesis!=6.102.0,!=6.112.3,>=6.85",

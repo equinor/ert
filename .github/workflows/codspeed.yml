@@ -33,7 +33,7 @@ jobs:
           enable-cache: true
           python-version: '3.12'
       - run: |
-          uv sync --extra dev
+          uv sync --group dev
           uv pip uninstall pytest-benchmark
           uv pip install pytest-codspeed
       - uses: CodSpeedHQ/action@v4
