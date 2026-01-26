@@ -11,6 +11,8 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Field
 
+from ert.config.parsing.config_errors import ConfigWarning
+
 from .parsing import (
     ConfigWarning,
     ErrorInfo,
@@ -298,22 +300,38 @@ class RFTObservation(BaseModel):
                 filename,
             )
 
-        return [
-            cls(
-                name=f"{observation_dict['name']}[{row.Index}]",
-                well=str(row.WELL_NAME),
-                date=str(row.DATE),
-                property=observed_property,
-                value=validate_float(
-                    str(getattr(row, observed_property)), observed_property
-                ),
-                error=validate_float(str(row.ERROR), "ERROR"),
-                north=validate_float(str(row.NORTH), "NORTH"),
-                east=validate_float(str(row.EAST), "EAST"),
-                tvd=validate_float(str(row.TVD), "TVD"),
+        rft_observations = []
+        for row in csv_file.itertuples(index=True):
+            value = validate_float(
+                str(getattr(row, observed_property)), observed_property
             )
-            for row in csv_file.itertuples(index=True)
-        ]
+            error = validate_float(str(row.ERROR), "ERROR")
+            # A value of -1 and error of 0 is used by fmu.tools.rms create_rft_ertobs to
+            # indicate missing data. If encountered in an rft observations csv file
+            # it should be skipped.
+            if value == -1 and error == 0:
+                ConfigWarning.warn(
+                    (
+                        f"Value=-1 and error=0 detected for well {row.WELL_NAME} "
+                        f"at date {row.DATE} in {filename}. The row will be ignored"
+                    ),
+                    filename,
+                )
+            else:
+                rft_observations.append(
+                    cls(
+                        name=f"{observation_dict['name']}[{row.Index}]",
+                        well=str(row.WELL_NAME),
+                        date=str(row.DATE),
+                        property=observed_property,
+                        value=value,
+                        error=error,
+                        north=validate_float(str(row.NORTH), "NORTH"),
+                        east=validate_float(str(row.EAST), "EAST"),
+                        tvd=validate_float(str(row.TVD), "TVD"),
+                    )
+                )
+        return rft_observations
 
     @classmethod
     def from_obs_dict(

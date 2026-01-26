@@ -18,6 +18,7 @@ from ert.config._observations import (
 )
 from ert.config.observation_config_migrations import HistoryObservation
 from ert.config.parsing import parse_observations
+from ert.config.parsing.config_errors import ConfigWarning
 from ert.config.parsing.observations_parser import (
     ObservationConfigError,
     ObservationType,
@@ -262,6 +263,51 @@ def test_that_rft_observations_from_csv_with_no_rows_after_header_returns_empty_
         )
         == []
     )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_observation_type_rft_is_compatible_with_create_rft_ertobs_handling_of_missing_data():  # noqa: E501
+    """A value of -1 and error of 0 is used by fmu.tools.rms create_rft_ertobs to
+    indicate missing data. If encountered in an rft observations csv file
+    it should be skipped and create a user warning.
+    """
+    Path("rft_observations.csv").write_text(
+        dedent(
+            """
+            WELL_NAME,DATE,MD,ZONE,PRESSURE,ERROR,TVD,NORTH,EAST,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str
+            WELL1,2013-03-31,2500,zone1,-1,0,2000.0,71.0,30.0,123,1,zone1
+            WELL1,2013-04-30,2500,zone1,295,10,2000.0,71.0,30.0,123,1,zone1
+            """
+        ),
+        encoding="utf8",
+    )
+    with pytest.warns(
+        ConfigWarning,
+        match="Value=-1 and error=0 detected for well WELL1 at date 2013-03-31",
+    ):
+        observations = make_observations(
+            "",
+            [
+                {
+                    "type": ObservationType.RFT,
+                    "name": "NAME",
+                    "CSV": "rft_observations.csv",
+                }
+            ],
+        )
+    assert observations == [
+        RFTObservation(
+            name="NAME[1]",
+            well="WELL1",
+            date="2013-04-30",
+            value=295.0,
+            error=10.0,
+            property="PRESSURE",
+            north=71.0,
+            east=30.0,
+            tvd=2000.0,
+        )
+    ]
 
 
 @pytest.mark.usefixtures("use_tmpdir")
