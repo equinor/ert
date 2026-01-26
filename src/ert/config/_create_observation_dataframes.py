@@ -5,10 +5,7 @@ from collections import defaultdict
 from collections.abc import Sequence
 from typing import assert_never
 
-import numpy as np
 import polars as pl
-
-from ert.validation import rangestring_to_list
 
 from ._observations import (
     GeneralObservation,
@@ -132,96 +129,29 @@ def _handle_general_observation(
     _, report_steps = gen_data_config.get_args_for_key(response_key)
 
     response_report_steps = [] if report_steps is None else report_steps
-    if (restart is None and response_report_steps) or (
-        restart is not None and restart not in response_report_steps
-    ):
+    if response_report_steps and restart not in response_report_steps:
         raise ObservationConfigError.with_context(
             f"The GEN_DATA node:{response_key} is not configured to load from"
             f" report step:{restart} for the observation:{obs_key}",
             response_key,
         )
 
-    restart = 0 if restart is None else restart
-
-    if (
-        general_observation.value is not None
-        and general_observation.error is not None
-        and general_observation.obs_file is not None
-    ):
-        raise ObservationConfigError.with_context(
-            "GENERAL_OBSERVATION cannot contain both VALUE/ERROR and OBS_FILE",
-            context=general_observation.obs_file,
-        )
-
-    if general_observation.obs_file is not None:
-        try:
-            file_values = np.loadtxt(
-                general_observation.obs_file, delimiter=None
-            ).ravel()
-        except ValueError as err:
-            raise ObservationConfigError.with_context(
-                f"Failed to read OBS_FILE {general_observation.obs_file}: {err}",
-                general_observation.obs_file,
-            ) from err
-        if len(file_values) % 2 != 0:
-            raise ObservationConfigError.with_context(
-                "Expected even number of values in GENERAL_OBSERVATION",
-                general_observation.obs_file,
-            )
-        values = file_values[::2]
-        stds = file_values[1::2]
-
-    else:
-        assert general_observation.value is not None
-        assert general_observation.error is not None
-        values = np.array([general_observation.value])
-        stds = np.array([general_observation.error])
-
-    index_list = general_observation.index_list
-    index_file = general_observation.index_file
-    if index_list is not None and index_file is not None:
-        raise ObservationConfigError.with_context(
-            f"GENERAL_OBSERVATION {obs_key} has both INDEX_FILE and INDEX_LIST.",
-            obs_key,
-        )
-    if index_file is not None:
-        indices = np.loadtxt(index_file, delimiter=None, dtype=np.int32).ravel()
-    elif index_list is not None:
-        indices = np.array(sorted(rangestring_to_list(index_list)), dtype=np.int32)
-    else:
-        indices = np.arange(len(values), dtype=np.int32)
-
-    if len({len(stds), len(values), len(indices)}) != 1:
-        raise ObservationConfigError.with_context(
-            f"Values ({values}), error ({stds}) and "
-            f"index list ({indices}) must be of equal length",
-            (
-                general_observation.obs_file
-                if general_observation.obs_file is not None
-                else ""
-            ),
-        )
-
-    if np.any(stds <= 0):
+    if general_observation.error <= 0:
         raise ObservationConfigError.with_context(
             "Observation uncertainty must be strictly > 0", obs_key
         )
+
     return pl.DataFrame(
         {
-            "response_key": response_key,
-            "observation_key": obs_key,
-            "report_step": pl.Series(
-                np.full(len(indices), restart),
-                dtype=pl.UInt16,
-            ),
-            "index": pl.Series(indices, dtype=pl.UInt16),
-            "observations": pl.Series(values, dtype=pl.Float32),
-            "std": pl.Series(stds, dtype=pl.Float32),
-            # Location attributes will always be None for general observations, but are
-            # necessary to concatenate with other observation dataframes.
-            "east": pl.Series([None] * len(values), dtype=pl.Float32),
-            "north": pl.Series([None] * len(values), dtype=pl.Float32),
-            "radius": pl.Series([None] * len(values), dtype=pl.Float32),
+            "response_key": [response_key],
+            "observation_key": [general_observation.name],
+            "report_step": pl.Series([restart], dtype=pl.UInt16),
+            "index": pl.Series([general_observation.index], dtype=pl.UInt16),
+            "observations": pl.Series([general_observation.value], dtype=pl.Float32),
+            "std": pl.Series([general_observation.error], dtype=pl.Float32),
+            "east": pl.Series([general_observation.east], dtype=pl.Float32),
+            "north": pl.Series([general_observation.north], dtype=pl.Float32),
+            "radius": pl.Series([general_observation.radius], dtype=pl.Float32),
         }
     )
 

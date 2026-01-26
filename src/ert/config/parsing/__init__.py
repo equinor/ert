@@ -36,7 +36,6 @@ __all__ = [
     "ObservationConfigError",
     "ObservationDict",
     "ObservationType",
-    "ObservationType",
     "QueueSystem",
     "SchemaItemType",
     "WarningInfo",
