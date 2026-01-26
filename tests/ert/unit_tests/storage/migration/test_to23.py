@@ -10,7 +10,7 @@ new_localization_keywords = ["east", "north", "radius"]
 
 class ObsType(StrEnum):
     SUMMARY = "summary"
-    GEN_OBS = "gen_obs"
+    GEN_OBS = "gen_data"
     RFT = "rft"
 
 
@@ -86,7 +86,7 @@ def old_gen_obs_dict() -> dict:
 
 
 def test_that_localization_columns_are_added_to_old_gen_obs_dataframes(use_tmpdir):
-    result_df = migrate_old_obs(old_gen_obs_dict(), "gen_data")
+    result_df = migrate_old_obs(old_gen_obs_dict(), ObsType.GEN_OBS)
 
     for kw in new_localization_keywords:
         assert result_df[kw].to_list() == [None, None]
