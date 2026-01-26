@@ -27,7 +27,7 @@ def as_obs_config_content(observation: Observation) -> str:
     result = f"{class_name(observation)} {observation.name}"
     result += " { "
     for f_name in observation.model_fields:
-        if f_name in {"name", "type"}:
+        if f_name in {"name", "type", "index"}:
             continue
 
         val = getattr(observation, f_name)  # <-- get actual value
@@ -57,20 +57,11 @@ def general_observations(draw, ensemble_keys, std_cutoff, names):
         "error": draw(
             st.floats(min_value=std_cutoff, allow_nan=False, allow_infinity=False)
         ),
+        "index": 0,
+        "restart": 0,
+        "value": draw(st.floats(allow_nan=False, allow_infinity=False)),
     }
-    val_type = draw(st.sampled_from(["value", "obs_file"]))
-    if val_type == "value":
-        kws["value"] = draw(st.floats(allow_nan=False, allow_infinity=False))
-    if val_type == "obs_file":
-        kws["obs_file"] = draw(names)
-        kws["error"] = None
 
-    # We only generate restart=0 and no other time type
-    # ("date", "days", "restart", "hours") because it
-    # needs to match with a GEN_DATA report_step field
-    # which we also generate so that 0 is always a
-    # report_step
-    kws["restart"] = 0
     return GeneralObservation(**kws)
 
 

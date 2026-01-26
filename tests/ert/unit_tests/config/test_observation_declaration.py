@@ -43,8 +43,10 @@ def test_parsing_contents_succeeds_or_gives_config_error(contents):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_make_observations():
-    Path("wpr_diff_idx.txt").write_text("", encoding="utf8")
-    Path("wpr_diff_obs.txt").write_text("", encoding="utf8")
+    Path("wpr_diff_idx.txt").write_text("400\n800\n1200\n1800\n", encoding="utf8")
+    Path("wpr_diff_obs.txt").write_text(
+        "1.1 0.1\n2.2 0.2\n3.3 0.3\n4.4 0.4\n", encoding="utf8"
+    )
 
     obs_config_contents = dedent(
         """
@@ -156,12 +158,12 @@ def test_make_observations():
     assert isinstance(wpr1, GeneralObservation)
     # Migration converts DATE -> RESTART, so accept either a date string or a restart
     assert wpr1.restart == 1
-    assert wpr1.obs_file.endswith("wpr_diff_obs.txt")
+    assert wpr1.data == "SNAKE_OIL_WPR_DIFF"
 
     wpr2 = next(o for o in observations if getattr(o, "name", None) == "WPR_DIFF_2")
     assert isinstance(wpr2, GeneralObservation)
     assert wpr2.restart == 1
-    assert wpr2.obs_file.endswith("wpr_diff_obs.txt")
+    assert wpr2.data == "SNAKE_OIL_WPR_DIFF"
 
 
 def test_rft_observation_declaration():

@@ -791,7 +791,7 @@ def test_that_index_file_is_read(tmpdir):
 def test_that_non_existent_obs_file_is_invalid():
     with pytest.raises(
         expected_exception=ConfigValidationError,
-        match="did not resolve to a valid path:\n OBS_FILE",
+        match="did not resolve to a valid path",
     ):
         make_observations(
             [
@@ -1209,15 +1209,12 @@ def test_that_obs_file_must_have_the_same_number_of_lines_as_the_index_file():
     Path("obs_data.txt").write_text(
         "\n".join(f"{float(i)} 0.1" for i in range(5)), encoding="utf-8"
     )
+
     with pytest.raises(ConfigValidationError, match="must be of equal length"):
         ErtConfig.from_dict(
             {
-                "GEN_DATA": [
-                    [
-                        "RES",
-                        {"RESULT_FILE": "out"},
-                    ]
-                ],
+                "NUM_REALIZATIONS": 2,
+                "GEN_DATA": [["RES", {"RESULT_FILE": "out"}]],
                 "OBS_CONFIG": (
                     "obsconf",
                     [
@@ -1240,6 +1237,7 @@ def test_that_obs_file_must_have_the_same_number_of_lines_as_the_length_of_index
     with tmpdir.as_cwd():
         with open("obs_data.txt", "w", encoding="utf-8") as fh:
             fh.writelines(f"{float(i)} 0.1\n" for i in range(5))
+
         with pytest.raises(ConfigValidationError, match="must be of equal length"):
             ErtConfig.from_dict(
                 {
@@ -1265,6 +1263,7 @@ def test_that_obs_file_must_have_the_same_number_of_lines_as_the_length_of_index
             )
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 def test_that_general_observations_data_must_match_a_gen_datas_name():
     with pytest.raises(
         ConfigValidationError,
@@ -1924,6 +1923,7 @@ def test_that_value_must_be_a_number_in_general_observation():
         make_observations("""
             GENERAL_OBSERVATION FOPR
             {
+                ERROR = 0;
                 VALUE = exactly_1;
                 DATA = GEN;
             };

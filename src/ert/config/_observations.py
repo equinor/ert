@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Field
 
+from ..validation import rangestring_to_list
 from .parsing import (
     ConfigWarning,
     ErrorInfo,
@@ -144,7 +145,7 @@ class SummaryObservation(_SummaryValues):
             case default:
                 assert_never(default)
 
-        instance = cls(
+        obs_instance = cls(
             name=observation_dict["name"],
             error=error,
             key=summary_key,
@@ -157,21 +158,22 @@ class SummaryObservation(_SummaryValues):
         # Bypass pydantic discarding context
         # only relevant for ERT config surfacing validation errors
         # irrelevant for runmodels etc.
-        instance.name = observation_dict["name"]
+        obs_instance.name = observation_dict["name"]
 
-        return [instance]
+        return [obs_instance]
 
 
 class _GeneralObservation(BaseModel):
     type: Literal["general_observation"] = "general_observation"
     name: str
     data: str
-    value: float | None = None
-    error: float | None = None
-    index_list: str | None = None
-    index_file: str | None = None
-    obs_file: str | None = None
-    restart: int | None = None
+    value: float
+    error: float
+    restart: int
+    index: int
+    east: float | None = None
+    north: float | None = None
+    radius: float | None = None
 
 
 class GeneralObservation(_GeneralObservation):
@@ -201,26 +203,8 @@ class GeneralObservation(_GeneralObservation):
 
         extra = set(observation_dict.keys()) - allowed
         if extra:
-            # Raise on first unknown key to match previous behavior
             raise _unknown_key_error(str(next(iter(extra))), observation_dict["name"])
 
-        restart = (
-            validate_positive_int(observation_dict["RESTART"], "RESTART")
-            if "RESTART" in observation_dict
-            else None
-        )
-        value = (
-            validate_float(observation_dict["VALUE"], "VALUE")
-            if "VALUE" in observation_dict
-            else None
-        )
-        error = (
-            validate_positive_float(
-                observation_dict["ERROR"], "ERROR", strictly_positive=True
-            )
-            if "ERROR" in observation_dict
-            else None
-        )
         if any(k in observation_dict for k in ("DATE", "DAYS", "HOURS")):
             bad_key = next(
                 k for k in ("DATE", "DAYS", "HOURS") if k in observation_dict
@@ -235,65 +219,119 @@ class GeneralObservation(_GeneralObservation):
                 bad_key,
             )
 
-        index_list = observation_dict.get("INDEX_LIST")
-
-        index_file = None
-        obs_file = None
-        if "INDEX_FILE" in observation_dict:
-            filename = observation_dict["INDEX_FILE"]
-            if not os.path.isabs(filename):
-                filename = os.path.join(directory, filename)
-            if not os.path.exists(filename):
-                raise ObservationConfigError.with_context(
-                    "The following keywords did not resolve to a "
-                    "valid path:\n INDEX_FILE",
-                    observation_dict["INDEX_FILE"],
-                )
-            index_file = filename
-
-        if "OBS_FILE" in observation_dict:
-            filename = observation_dict["OBS_FILE"]
-            if not os.path.isabs(filename):
-                filename = os.path.join(directory, filename)
-            if not os.path.exists(filename):
-                raise ObservationConfigError.with_context(
-                    "The following keywords did not resolve to "
-                    "a valid path:\n OBS_FILE",
-                    observation_dict["OBS_FILE"],
-                )
-            obs_file = filename
-
-        # Validate combined rules
-        if value is not None and error is None:
+        if "OBS_FILE" in observation_dict and (
+            "VALUE" in observation_dict or "ERROR" in observation_dict
+        ):
             raise ObservationConfigError.with_context(
-                f"For GENERAL_OBSERVATION {observation_dict['name']}, with"
-                f" VALUE = {value}, ERROR must also be given.",
+                "GENERAL_OBSERVATION cannot contain both VALUE/ERROR and OBS_FILE",
                 observation_dict["name"],
             )
 
-        if value is None and error is None and obs_file is None:
+        if "INDEX_FILE" in observation_dict and "INDEX_LIST" in observation_dict:
             raise ObservationConfigError.with_context(
-                "GENERAL_OBSERVATION must contain either VALUE and ERROR or OBS_FILE",
-                context=observation_dict["name"],
+                (
+                    "GENERAL_OBSERVATION "
+                    f"{observation_dict['name']} has both INDEX_FILE and INDEX_LIST."
+                ),
+                observation_dict["name"],
             )
 
-        instance = cls(
-            name=observation_dict["name"],
-            data=data,
-            value=value,
-            error=error,
-            index_list=index_list,
-            index_file=index_file,
-            obs_file=obs_file,
-            restart=restart,
+        restart = (
+            validate_positive_int(observation_dict["RESTART"], "RESTART")
+            if "RESTART" in observation_dict
+            else 0
         )
 
-        # Bypass pydantic discarding context
-        # only relevant for ERT config surfacing validation errors
-        # irrelevant for runmodels etc.
-        instance.name = observation_dict["name"]
+        if "OBS_FILE" not in observation_dict:
+            if "VALUE" in observation_dict and "ERROR" not in observation_dict:
+                raise ObservationConfigError.with_context(
+                    f"For GENERAL_OBSERVATION {observation_dict['name']}, with"
+                    f" VALUE = {observation_dict['VALUE']}, ERROR must also be given.",
+                    observation_dict["name"],
+                )
 
-        return [instance]
+            if "VALUE" not in observation_dict and "ERROR" not in observation_dict:
+                raise ObservationConfigError.with_context(
+                    "GENERAL_OBSERVATION must contain either VALUE "
+                    "and ERROR or OBS_FILE",
+                    context=observation_dict["name"],
+                )
+
+            obs_instance = cls(
+                name=observation_dict["name"],
+                data=data,
+                value=validate_float(observation_dict["VALUE"], "VALUE"),
+                error=validate_positive_float(
+                    observation_dict["ERROR"], "ERROR", strictly_positive=True
+                ),
+                restart=restart,
+                index=0,
+            )
+            # Bypass pydantic discarding context
+            # only relevant for ERT config surfacing validation errors
+            # irrelevant for runmodels etc.
+            obs_instance.name = observation_dict["name"]
+            return [obs_instance]
+
+        obs_filename = _resolve_path(directory, observation_dict["OBS_FILE"])
+        try:
+            file_values = np.loadtxt(obs_filename, delimiter=None).ravel()
+        except ValueError as err:
+            raise ObservationConfigError.with_context(
+                f"Failed to read OBS_FILE {obs_filename}: {err}", obs_filename
+            ) from err
+        if len(file_values) % 2 != 0:
+            raise ObservationConfigError.with_context(
+                "Expected even number of values in GENERAL_OBSERVATION",
+                obs_filename,
+            )
+        values = file_values[::2]
+        stds = file_values[1::2]
+
+        if "INDEX_FILE" in observation_dict:
+            idx_file = _resolve_path(directory, observation_dict["INDEX_FILE"])
+            indices = np.loadtxt(idx_file, delimiter=None, dtype=np.int32).ravel()
+        elif "INDEX_LIST" in observation_dict:
+            indices = np.array(
+                sorted(rangestring_to_list(observation_dict["INDEX_LIST"])),
+                dtype=np.int32,
+            )
+        else:
+            indices = np.arange(len(values), dtype=np.int32)
+
+        if len({len(stds), len(values), len(indices)}) != 1:
+            raise ObservationConfigError.with_context(
+                (
+                    "Values ("
+                    f"{values}), error ({stds}) and index list ({indices}) "
+                    "must be of equal length"
+                ),
+                observation_dict["name"],
+            )
+
+        if np.any(stds <= 0):
+            raise ObservationConfigError.with_context(
+                "Observation uncertainty must be strictly > 0",
+                observation_dict["name"],
+            )
+
+        obs_instances: list[Self] = []
+        for _pos, (val, std, idx) in enumerate(zip(values, stds, indices, strict=True)):
+            # index should reflect the index provided by INDEX_FILE / INDEX_LIST
+            inst = cls(
+                name=observation_dict["name"],
+                data=data,
+                value=float(val),
+                error=float(std),
+                restart=restart,
+                index=int(idx),
+            )
+            # Bypass pydantic discarding context
+            # only relevant for ERT config surfacing validation errors
+            # irrelevant for runmodels etc.
+            inst.name = observation_dict["name"]
+            obs_instances.append(inst)
+        return obs_instances
 
 
 class RFTObservation(BaseModel):
@@ -448,7 +486,7 @@ class RFTObservation(BaseModel):
         if tvd is None:
             raise _missing_value_error(observation_dict["name"], "TVD")
 
-        instance = cls(
+        obs_instance = cls(
             name=observation_dict["name"],
             well=well,
             property=observed_property,
@@ -463,9 +501,9 @@ class RFTObservation(BaseModel):
         # Bypass pydantic discarding context
         # only relevant for ERT config surfacing validation errors
         # irrelevant for runmodels etc.
-        instance.name = observation_dict["name"]
+        obs_instance.name = observation_dict["name"]
 
-        return [instance]
+        return [obs_instance]
 
 
 Observation = Annotated[
@@ -589,6 +627,17 @@ def _missing_value_error(name_token: str, value_key: str) -> ObservationConfigEr
     return ObservationConfigError.with_context(
         f'Missing item "{value_key}" in {name_token}', name_token
     )
+
+
+def _resolve_path(directory: str, filename: str) -> str:
+    if not os.path.isabs(filename):
+        filename = os.path.join(directory, filename)
+    if not os.path.exists(filename):
+        raise ObservationConfigError.with_context(
+            f"The following keywords did not resolve to a valid path:\n {filename}",
+            filename,
+        )
+    return filename
 
 
 def _conversion_error(token: str, value: Any, type_name: str) -> ObservationConfigError:
