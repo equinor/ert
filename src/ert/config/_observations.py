@@ -312,8 +312,9 @@ class RFTObservation(BaseModel):
             if value == -1 and error == 0:
                 ConfigWarning.warn(
                     (
-                        f"Value=-1 and error=0 detected for well {row.WELL_NAME} "
-                        f"at date {row.DATE} in {filename}. The row will be ignored"
+                        "Invalid value=-1 and error=0 detected for well "
+                        f"{row.WELL_NAME} at date {row.DATE} in {filename}. "
+                        "The observation at that date will be ignored."
                     ),
                     filename,
                 )

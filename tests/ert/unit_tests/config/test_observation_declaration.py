@@ -283,7 +283,7 @@ def test_that_observation_type_rft_is_compatible_with_create_rft_ertobs_handling
     )
     with pytest.warns(
         ConfigWarning,
-        match="Value=-1 and error=0 detected for well WELL1 at date 2013-03-31",
+        match="Invalid value=-1 and error=0 detected for well WELL1 at date 2013-03-31",
     ):
         observations = make_observations(
             "",
