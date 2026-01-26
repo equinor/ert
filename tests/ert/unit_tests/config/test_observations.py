@@ -321,6 +321,7 @@ def test_that_rft_config_is_created_from_observations():
                 "tvd": pl.Series([2000.0], dtype=pl.Float32),
                 "observations": pl.Series([700.0], dtype=pl.Float32),
                 "std": pl.Series([0.1], dtype=pl.Float32),
+                "radius": pl.Series([None], dtype=pl.Float32),
             }
         ),
     )
@@ -2128,3 +2129,19 @@ def test_ert_config_logs_observation_types_and_keywords(caplog):
     assert "DATA" in caplog.text
     assert "ERROR" in caplog.text
     assert "RESTART" in caplog.text
+
+
+def test_that_general_observations_are_instantiated_with_localization_attributes():
+    obs_config_contents = """
+        GENERAL_OBSERVATION OBS1 {
+            VALUE = 1;
+            DATA = GEN;
+            ERROR = 0.1;
+            RESTART = 1;
+        };"""
+
+    gen_obs = make_observations(obs_config_contents)["gen_data"]
+    for loc_kw in ["east", "north", "radius"]:
+        assert loc_kw in gen_obs.columns
+        assert gen_obs[loc_kw].dtype == pl.Float32
+        assert gen_obs[loc_kw].to_list() == [None]

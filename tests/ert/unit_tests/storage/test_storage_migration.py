@@ -377,6 +377,9 @@ def test_that_manual_update_from_migrated_storage_works(
             ("report_step", pl.UInt16),
             ("response_key", pl.String),
             ("std", pl.Float32),
+            ("east", pl.Float32),
+            ("north", pl.Float32),
+            ("radius", pl.Float32),
         }
 
         assert set(experiment.observations["summary"].schema.items()) == {
@@ -385,9 +388,9 @@ def test_that_manual_update_from_migrated_storage_works(
             ("response_key", pl.String),
             ("std", pl.Float32),
             ("time", pl.Datetime(time_unit="ms")),
-            ("location_x", pl.Float32),
-            ("location_y", pl.Float32),
-            ("location_range", pl.Float32),
+            ("east", pl.Float32),
+            ("north", pl.Float32),
+            ("radius", pl.Float32),
         }
 
         prior_gendata = prior_ens.load_responses(
