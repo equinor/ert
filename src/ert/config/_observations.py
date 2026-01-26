@@ -184,68 +184,116 @@ class GeneralObservation(_GeneralObservation):
         except KeyError as err:
             raise _missing_value_error(observation_dict["name"], "DATA") from err
 
-        output = cls(name=observation_dict["name"], data=data)
-        for key, value in observation_dict.items():
-            match key:
-                case "type" | "name":
-                    pass
-                case "RESTART":
-                    output.restart = validate_positive_int(value, key)
-                case "VALUE":
-                    output.value = validate_float(value, key)
-                case "ERROR":
-                    setattr(
-                        output,
-                        str(key).lower(),
-                        validate_positive_float(value, key, strictly_positive=True),
-                    )
-                case "DATE" | "DAYS" | "HOURS":
-                    raise ObservationConfigError.with_context(
-                        (
-                            "GENERAL_OBSERVATION must use RESTART to specify "
-                            "report step. Please run:\n ert convert_observations "
-                            "<your_ert_config.ert>\nto migrate the observation config "
-                            "to use the correct format."
-                        ),
-                        key,
-                    )
-                case "INDEX_LIST":
-                    output.index_list = value
-                case "OBS_FILE" | "INDEX_FILE":
-                    assert not isinstance(key, tuple)
-                    filename = value
-                    if not os.path.isabs(filename):
-                        filename = os.path.join(directory, filename)
-                    if not os.path.exists(filename):
-                        raise ObservationConfigError.with_context(
-                            "The following keywords did not"
-                            f" resolve to a valid path:\n {key}",
-                            value,
-                        )
-                    setattr(output, str(key).lower(), filename)
-                case "DATA":
-                    output.data = value
-                case _:
-                    raise _unknown_key_error(str(key), observation_dict["name"])
-        if output.value is not None and output.error is None:
+        allowed = {
+            "type",
+            "name",
+            "RESTART",
+            "VALUE",
+            "ERROR",
+            "DATE",
+            "DAYS",
+            "HOURS",
+            "INDEX_LIST",
+            "OBS_FILE",
+            "INDEX_FILE",
+            "DATA",
+        }
+
+        extra = set(observation_dict.keys()) - allowed
+        if extra:
+            # Raise on first unknown key to match previous behavior
+            raise _unknown_key_error(str(next(iter(extra))), observation_dict["name"])
+
+        restart = (
+            validate_positive_int(observation_dict["RESTART"], "RESTART")
+            if "RESTART" in observation_dict
+            else None
+        )
+        value = (
+            validate_float(observation_dict["VALUE"], "VALUE")
+            if "VALUE" in observation_dict
+            else None
+        )
+        error = (
+            validate_positive_float(
+                observation_dict["ERROR"], "ERROR", strictly_positive=True
+            )
+            if "ERROR" in observation_dict
+            else None
+        )
+        if any(k in observation_dict for k in ("DATE", "DAYS", "HOURS")):
+            bad_key = next(
+                k for k in ("DATE", "DAYS", "HOURS") if k in observation_dict
+            )
+            raise ObservationConfigError.with_context(
+                (
+                    "GENERAL_OBSERVATION must use RESTART to specify "
+                    "report step. Please run:\n ert convert_observations "
+                    "<your_ert_config.ert>\nto migrate the observation config "
+                    "to use the correct format."
+                ),
+                bad_key,
+            )
+
+        index_list = observation_dict.get("INDEX_LIST")
+
+        index_file = None
+        obs_file = None
+        if "INDEX_FILE" in observation_dict:
+            filename = observation_dict["INDEX_FILE"]
+            if not os.path.isabs(filename):
+                filename = os.path.join(directory, filename)
+            if not os.path.exists(filename):
+                raise ObservationConfigError.with_context(
+                    "The following keywords did not resolve to a "
+                    "valid path:\n INDEX_FILE",
+                    observation_dict["INDEX_FILE"],
+                )
+            index_file = filename
+
+        if "OBS_FILE" in observation_dict:
+            filename = observation_dict["OBS_FILE"]
+            if not os.path.isabs(filename):
+                filename = os.path.join(directory, filename)
+            if not os.path.exists(filename):
+                raise ObservationConfigError.with_context(
+                    "The following keywords did not resolve to "
+                    "a valid path:\n OBS_FILE",
+                    observation_dict["OBS_FILE"],
+                )
+            obs_file = filename
+
+        # Validate combined rules
+        if value is not None and error is None:
             raise ObservationConfigError.with_context(
                 f"For GENERAL_OBSERVATION {observation_dict['name']}, with"
-                f" VALUE = {output.value}, ERROR must also be given.",
+                f" VALUE = {value}, ERROR must also be given.",
                 observation_dict["name"],
             )
 
-        if output.value is None and output.error is None and output.obs_file is None:
+        if value is None and error is None and obs_file is None:
             raise ObservationConfigError.with_context(
                 "GENERAL_OBSERVATION must contain either VALUE and ERROR or OBS_FILE",
                 context=observation_dict["name"],
             )
 
+        instance = cls(
+            name=observation_dict["name"],
+            data=data,
+            value=value,
+            error=error,
+            index_list=index_list,
+            index_file=index_file,
+            obs_file=obs_file,
+            restart=restart,
+        )
+
         # Bypass pydantic discarding context
         # only relevant for ERT config surfacing validation errors
         # irrelevant for runmodels etc.
-        output.name = observation_dict["name"]
+        instance.name = observation_dict["name"]
 
-        return [output]
+        return [instance]
 
 
 class RFTObservation(BaseModel):
