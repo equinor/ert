@@ -242,7 +242,10 @@
           "report_step": 0,
           "index": 0,
           "observations": 2.145704984664917,
-          "std": 0.6000000238418579
+          "std": 0.6000000238418579,
+          "east": null,
+          "north": null,
+          "radius": null
         },
         {
           "response_key": "POLY_RES",
@@ -250,7 +253,10 @@
           "report_step": 0,
           "index": 2,
           "observations": 8.769219398498535,
-          "std": 1.399999976158142
+          "std": 1.399999976158142,
+          "east": null,
+          "north": null,
+          "radius": null
         },
         {
           "response_key": "POLY_RES",
@@ -258,7 +264,10 @@
           "report_step": 0,
           "index": 4,
           "observations": 12.388014793395996,
-          "std": 3.0
+          "std": 3.0,
+          "east": null,
+          "north": null,
+          "radius": null
         },
         {
           "response_key": "POLY_RES",
@@ -266,7 +275,10 @@
           "report_step": 0,
           "index": 6,
           "observations": 25.6004638671875,
-          "std": 5.400000095367432
+          "std": 5.400000095367432,
+          "east": null,
+          "north": null,
+          "radius": null
         },
         {
           "response_key": "POLY_RES",
@@ -274,7 +286,10 @@
           "report_step": 0,
           "index": 8,
           "observations": 42.352046966552734,
-          "std": 8.600000381469727
+          "std": 8.600000381469727,
+          "east": null,
+          "north": null,
+          "radius": null
         }
       ],
       "datatypes": {
@@ -283,7 +298,10 @@
         "report_step": "UInt16",
         "index": "UInt16",
         "observations": "Float32",
-        "std": "Float32"
+        "std": "Float32",
+        "east": "Float32",
+        "north": "Float32",
+        "radius": "Float32"
       }
     }
   },
