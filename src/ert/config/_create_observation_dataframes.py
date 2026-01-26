@@ -36,7 +36,7 @@ if TYPE_CHECKING:
 
 
 DEFAULT_TIME_DELTA = timedelta(seconds=30)
-DEFAULT_LOCATION_RANGE_M = 3000
+DEFAULT_LOCALIZATION_RADIUS = 3000
 
 
 def create_observation_dataframes(
@@ -205,9 +205,9 @@ def _handle_history_observation(
             "time": dates_series,
             "observations": pl.Series(values, dtype=pl.Float32),
             "std": pl.Series(std_dev, dtype=pl.Float32),
-            "location_x": pl.Series([None] * len(values), dtype=pl.Float32),
-            "location_y": pl.Series([None] * len(values), dtype=pl.Float32),
-            "location_range": pl.Series([None] * len(values), dtype=pl.Float32),
+            "east": pl.Series([None] * len(values), dtype=pl.Float32),
+            "north": pl.Series([None] * len(values), dtype=pl.Float32),
+            "radius": pl.Series([None] * len(values), dtype=pl.Float32),
         }
     )
 
@@ -300,7 +300,7 @@ def _get_restart(
 
 
 def _has_localization(summary_dict: SummaryObservation) -> bool:
-    return summary_dict.location_x is not None and summary_dict.location_y is not None
+    return summary_dict.east is not None and summary_dict.north is not None
 
 
 def _handle_summary_observation(
@@ -340,8 +340,8 @@ def _handle_summary_observation(
             "Observation uncertainty must be strictly > 0", summary_key
         ) from None
 
-    location_range = (
-        summary_dict.location_range or DEFAULT_LOCATION_RANGE_M
+    localization_radius = (
+        summary_dict.radius or DEFAULT_LOCALIZATION_RADIUS
         if _has_localization(summary_dict)
         else None
     )
@@ -353,9 +353,9 @@ def _handle_summary_observation(
             "time": pl.Series([date]).dt.cast_time_unit("ms"),
             "observations": pl.Series([value], dtype=pl.Float32),
             "std": pl.Series([std_dev], dtype=pl.Float32),
-            "location_x": pl.Series([summary_dict.location_x], dtype=pl.Float32),
-            "location_y": pl.Series([summary_dict.location_y], dtype=pl.Float32),
-            "location_range": pl.Series([location_range], dtype=pl.Float32),
+            "east": pl.Series([summary_dict.east], dtype=pl.Float32),
+            "north": pl.Series([summary_dict.north], dtype=pl.Float32),
+            "radius": pl.Series([localization_radius], dtype=pl.Float32),
         }
     )
 
@@ -485,6 +485,11 @@ def _handle_general_observation(
             "index": pl.Series(indices, dtype=pl.UInt16),
             "observations": pl.Series(values, dtype=pl.Float32),
             "std": pl.Series(stds, dtype=pl.Float32),
+            # Location attributes will always be None for general observations, but are
+            # necessary to concatenate with other observation dataframes.
+            "east": pl.Series([None] * len(values), dtype=pl.Float32),
+            "north": pl.Series([None] * len(values), dtype=pl.Float32),
+            "radius": pl.Series([None] * len(values), dtype=pl.Float32),
         }
     )
 
@@ -527,5 +532,6 @@ def _handle_rft_observation(
             "tvd": pl.Series([location[2]], dtype=pl.Float32),
             "observations": pl.Series([rft_observation.value], dtype=pl.Float32),
             "std": pl.Series([rft_observation.error], dtype=pl.Float32),
+            "radius": pl.Series([None], dtype=pl.Float32),
         }
     )

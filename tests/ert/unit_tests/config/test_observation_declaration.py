@@ -92,9 +92,9 @@ def test_make_observations():
             key="WOPR:OP1",
             value=0.1,
             date="2010-03-31",
-            location_x=None,
-            location_y=None,
-            location_range=None,
+            east=None,
+            north=None,
+            radius=None,
         ),
         GeneralObservation(
             name="WPR_DIFF_1",

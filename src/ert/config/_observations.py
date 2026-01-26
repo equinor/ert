@@ -89,9 +89,9 @@ class _SummaryValues:
     name: str
     value: float
     key: str  #: The :term:`summary key` in the summary response
-    location_x: float | None = None
-    location_y: float | None = None
-    location_range: float | None = None
+    east: float | None = None
+    north: float | None = None
+    radius: float | None = None
 
 
 @dataclass
@@ -126,9 +126,9 @@ class SummaryObservation(ObservationDate, _SummaryValues, ObservationError):
                     date_dict.date = value
                 case "LOCALIZATION":
                     validate_localization(value, observation_dict["name"])
-                    localization_values["x"] = validate_float(value["EAST"], key)
-                    localization_values["y"] = validate_float(value["NORTH"], key)
-                    localization_values["range"] = (
+                    localization_values["east"] = validate_float(value["EAST"], key)
+                    localization_values["north"] = validate_float(value["NORTH"], key)
+                    localization_values["radius"] = (
                         validate_float(value["RADIUS"], key)
                         if "RADIUS" in value
                         else None
@@ -149,9 +149,9 @@ class SummaryObservation(ObservationDate, _SummaryValues, ObservationError):
             error_min=float_values["ERROR_MIN"],
             key=summary_key,
             value=float_values["VALUE"],
-            location_x=localization_values.get("x"),
-            location_y=localization_values.get("y"),
-            location_range=localization_values.get("range"),
+            east=localization_values.get("east"),
+            north=localization_values.get("north"),
+            radius=localization_values.get("radius"),
             **date_dict.__dict__,
         )
 
