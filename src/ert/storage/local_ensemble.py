@@ -21,8 +21,12 @@ import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import TypedDict
 
-from ert.config import ParameterCardinality, ParameterConfig, SummaryConfig
-from ert.config.response_config import InvalidResponseFile
+from ert.config import (
+    InvalidResponseFile,
+    ParameterCardinality,
+    ParameterConfig,
+    SummaryConfig,
+)
 from ert.substitutions import substitute_runpath_name
 
 from .load_status import LoadResult
@@ -569,28 +573,49 @@ class LocalEnsemble(BaseMode):
     ) -> pl.DataFrame:
         if keys is None:
             keys = self.experiment.parameter_keys
-        elif set(keys) - set(self.experiment.parameter_keys):
-            missing = set(keys) - set(self.experiment.parameter_keys)
-            raise KeyError(f"Parameters not registered to the experiment: {missing}")
 
         df_lazy = self._load_parameters_lazy(SCALAR_FILENAME)
-        df_lazy = df_lazy.select(["realization", *keys])
+        names = df_lazy.collect_schema().names()
+        matches = [key for key in keys if any(key in item for item in names)]
+        if len(matches) != len(keys):
+            missing = set(keys) - set(matches)
+            raise KeyError(f"Parameters not registered to the experiment: {missing}")
+
+        parameter_keys = [
+            key
+            for e in keys
+            for key in self.experiment.parameter_configuration[e].parameter_keys
+        ]
+        df_lazy_filtered = df_lazy.select(["realization", *parameter_keys])
+
         if realizations is not None:
             if isinstance(realizations, int):
                 realizations = np.array([realizations])
-            df_lazy = df_lazy.filter(pl.col("realization").is_in(realizations))
-        df = df_lazy.collect(engine="streaming")
+            df_lazy_filtered = df_lazy_filtered.filter(
+                pl.col("realization").is_in(realizations)
+            )
+        df = df_lazy_filtered.collect(engine="streaming")
         if df.is_empty():
             raise IndexError(
                 f"No matching realizations {realizations} found for {keys}"
             )
 
         if transformed:
+            tmp_configuration: dict[str, ParameterConfig] = {}
+            for key in keys:
+                for col in df.columns:
+                    if col == "realization":
+                        continue
+                    if col.startswith(key):
+                        tmp_configuration[col] = (
+                            self.experiment.parameter_configuration[key]
+                        )
+
             df = df.with_columns(
                 [
                     pl.col(col)
                     .map_elements(
-                        self.experiment.parameter_configuration[col].transform_data(),
+                        tmp_configuration[col].transform_data(),
                     )
                     .cast(df[col].dtype)
                     .alias(col)
@@ -617,13 +642,11 @@ class LocalEnsemble(BaseMode):
             for p in self.experiment.parameter_configuration.values()
             if group in {p.name, p.group_name}
         ]
-
         if not cfgs:
             raise KeyError(f"{group} is not registered to the experiment.")
 
         # if group refers to a group name, we expect the same cardinality
         cardinality = next(cfg.cardinality for cfg in cfgs)
-
         if cardinality == ParameterCardinality.multiple_configs_per_ensemble_dataset:
             return self.load_scalar_keys(
                 [cfg.name for cfg in cfgs], realizations, transformed
