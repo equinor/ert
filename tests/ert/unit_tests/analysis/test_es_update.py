@@ -42,6 +42,9 @@ def obs() -> pl.DataFrame:
             "index": pl.Series([0, 1, 2], dtype=pl.UInt16),
             "observations": pl.Series([1.0, 1.0, 1.0], dtype=pl.Float32),
             "std": pl.Series([0.1, 1.0, 10.0], dtype=pl.Float32),
+            "east": pl.Series([None, None, None], dtype=pl.Float32),
+            "north": pl.Series([None, None, None], dtype=pl.Float32),
+            "radius": pl.Series([None, None, None], dtype=pl.Float32),
         }
     )
 
@@ -250,6 +253,9 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
                             [559437122.6211826, 999999999.9999999, 1.9],
                             dtype=pl.Float32,
                         ),
+                        "east": pl.Series([None, None, None], dtype=pl.Float32),
+                        "north": pl.Series([None, None, None], dtype=pl.Float32),
+                        "radius": pl.Series([None, None, None], dtype=pl.Float32),
                     }
                 )
             },
@@ -364,6 +370,9 @@ def test_update_raises_on_singular_matrix(tmp_path):
                             [0.33333334, 0.14142136, 0.0],
                             dtype=pl.Float32,
                         ),
+                        "east": pl.Series([None, None, None], dtype=pl.Float32),
+                        "north": pl.Series([None, None, None], dtype=pl.Float32),
+                        "radius": pl.Series([None, None, None], dtype=pl.Float32),
                     }
                 )
             },
@@ -940,6 +949,9 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
             "index": pl.Series([1000], dtype=pl.UInt16),
             "observations": pl.Series([1.0], dtype=pl.Float32),
             "std": pl.Series([0.1], dtype=pl.Float32),
+            "east": pl.Series([None], dtype=pl.Float32),
+            "north": pl.Series([None], dtype=pl.Float32),
+            "radius": pl.Series([None], dtype=pl.Float32),
         }
     )
 

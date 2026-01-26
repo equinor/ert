@@ -142,6 +142,9 @@ def create_experiment_args(
                 rng.normal(loc=0.2, scale=0.1, size=num_gen_data_obs),
                 dtype=pl.Float32,
             ),
+            "east": pl.Series([None] * num_gen_data_obs, dtype=pl.Float32),
+            "north": pl.Series([None] * num_gen_data_obs, dtype=pl.Float32),
+            "radius": pl.Series([None] * num_gen_data_obs, dtype=pl.Float32),
         }
     )
 
@@ -195,6 +198,9 @@ def create_experiment_args(
                 rng.normal(loc=0.2, scale=0.1, size=num_summary_obs),
                 dtype=pl.Float32,
             ),
+            "east": pl.Series([None] * num_summary_obs, dtype=pl.Float32),
+            "north": pl.Series([None] * num_summary_obs, dtype=pl.Float32),
+            "radius": pl.Series([None] * num_summary_obs, dtype=pl.Float32),
         }
     )
 
