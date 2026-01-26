@@ -83,6 +83,9 @@ def test_and_benchmark_adaptive_localization_with_fields(
             "index": np.arange(len(observations)),
             "observations": observations,
             "std": observation_noise,
+            "east": pl.Series([None] * len(observations), dtype=pl.Float32),
+            "north": pl.Series([None] * len(observations), dtype=pl.Float32),
+            "radius": pl.Series([None] * len(observations), dtype=pl.Float32),
         }
     )
 

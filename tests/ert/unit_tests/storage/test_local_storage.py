@@ -789,6 +789,9 @@ def test_asof_joining_summary(tmp_path, perturb_observations, perturb_responses)
                     [0.1] * len(response_keys),
                     dtype=pl.Float32,
                 ),
+                "north": pl.Series([None] * len(response_keys), dtype=pl.Float32),
+                "east": pl.Series([None] * len(response_keys), dtype=pl.Float32),
+                "radius": pl.Series([None] * len(response_keys), dtype=pl.Float32),
             }
         )
 
