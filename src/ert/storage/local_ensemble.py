@@ -1152,6 +1152,9 @@ class LocalEnsemble(BaseMode):
                                 "observation_key",
                                 "observations",
                                 "std",
+                                "east",
+                                "north",
+                                "radius",
                             ]
                         )
 
