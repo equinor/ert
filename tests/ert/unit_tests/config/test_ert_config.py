@@ -2686,3 +2686,17 @@ def test_history_observation_removal_error(caplog, monkeypatch):
         "must be specified as SUMMARY_OBSERVATION",
     ):
         ErtConfig.from_file(str(config_path))
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_zone_map_is_read_from_file():
+    Path("zone_map.txt").write_text("1 zone1\n", encoding="utf-8")
+    config = ErtConfig.from_file_contents(
+        """
+        NUM_REALIZATIONS 1
+        ECLBASE BASE
+
+        ZONEMAP zone_map.txt
+        """,
+    )
+    assert config.zonemap == {1: ["zone1"]}
