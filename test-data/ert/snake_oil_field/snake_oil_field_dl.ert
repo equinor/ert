@@ -15,7 +15,7 @@ SUMMARY *
 HISTORY_SOURCE REFCASE_HISTORY
 REFCASE refcase/SNAKE_OIL_FIELD
 
-OBS_CONFIG observations/observations.txt
+OBS_CONFIG observations/observations_loc.txt
 
 INSTALL_JOB SNAKE_OIL_SIMULATOR forward_models/SNAKE_OIL_SIMULATOR
 INSTALL_JOB SNAKE_OIL_NPV forward_models/SNAKE_OIL_NPV

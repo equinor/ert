@@ -4,6 +4,11 @@ SUMMARY_OBSERVATION WOPR_OP1_9
     ERROR   = 0.05;
     DATE    = 2010-03-31;  -- (RESTART = 9)
     KEY     = WOPR:OP1;
+    LOCALIZATION {
+        EAST = 5;
+        NORTH = 15;
+        RADIUS = 4;
+    };
 };
 
 SUMMARY_OBSERVATION WOPR_OP1_36
@@ -12,6 +17,11 @@ SUMMARY_OBSERVATION WOPR_OP1_36
     ERROR   = 0.07;
     DATE    = 2010-12-26;  -- (RESTART = 36)
     KEY     = WOPR:OP1;
+    LOCALIZATION {
+        EAST = 5;
+        NORTH = 15;
+        RADIUS = 4;
+    };
 };
 
 SUMMARY_OBSERVATION WOPR_OP1_72
@@ -20,6 +30,11 @@ SUMMARY_OBSERVATION WOPR_OP1_72
     ERROR   = 0.05;
     DATE    = 2011-12-21;  -- (RESTART = 72)
     KEY     = WOPR:OP1;
+    LOCALIZATION {
+        EAST = 5;
+        NORTH = 15;
+        RADIUS = 4;
+    };
 };
 
 SUMMARY_OBSERVATION WOPR_OP1_108
@@ -28,6 +43,11 @@ SUMMARY_OBSERVATION WOPR_OP1_108
     ERROR   = 0.075;
     DATE    = 2012-12-15; -- (RESTART = 108)
     KEY     = WOPR:OP1;
+    LOCALIZATION {
+        EAST = 5;
+        NORTH = 15;
+        RADIUS = 4;
+    };
 };
 
 SUMMARY_OBSERVATION WOPR_OP1_144
@@ -36,6 +56,11 @@ SUMMARY_OBSERVATION WOPR_OP1_144
     ERROR   = 0.035;
     DATE    = 2013-12-10;  -- (RESTART = 144)
     KEY     = WOPR:OP1;
+    LOCALIZATION {
+        EAST = 5;
+        NORTH = 15;
+        RADIUS = 4;
+    };
 };
 
 SUMMARY_OBSERVATION WOPR_OP1_190
@@ -44,6 +69,11 @@ SUMMARY_OBSERVATION WOPR_OP1_190
     ERROR   = 0.01;
     DATE    = 2015-03-15;  -- (RESTART = 190)
     KEY     = WOPR:OP1;
+    LOCALIZATION {
+        EAST = 5;
+        NORTH = 15;
+        RADIUS = 4;
+    };
 };
 
 GENERAL_OBSERVATION WPR_DIFF_1 {
