@@ -1099,6 +1099,11 @@ class LocalEnsemble(BaseMode):
                             on=["response_key", *response_cls.primary_key],
                         )
 
+                    # Do not drop primary keys which
+                    # overlap with localization attributes
+                    primary_keys_to_drop = set(response_cls.primary_key).difference(
+                        {"north", "east", "radius"}
+                    )
                     joined = (
                         joined.with_columns(
                             pl.concat_str(
@@ -1108,7 +1113,7 @@ class LocalEnsemble(BaseMode):
                                 # Avoid potential collisions w/ primary key
                             )
                         )
-                        .drop(response_cls.primary_key)
+                        .drop(primary_keys_to_drop)
                         .rename({"__tmp_index_key__": "index"})
                     )
 
