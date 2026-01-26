@@ -168,6 +168,7 @@ markers = [
     "memory_test",
     "creates_tmpdir",
     "integration_test",
+    "snapshot_test",
     "out_of_memory",
     "quick_only",
     "requires_eclipse",
