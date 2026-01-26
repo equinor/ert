@@ -173,7 +173,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, "EVEREST.tex", "EVEREST Documentation", "Equinor \\& TNO", "manual"),
+    (master_doc, "everest.tex", "EVEREST Documentation", "Equinor \\& TNO", "manual"),
 ]
 
 
@@ -192,10 +192,10 @@ man_pages = [(master_doc, "everest", "EVEREST Documentation", [author], 1)]
 texinfo_documents = [
     (
         master_doc,
-        "EVEREST",
+        "everest",
         "EVEREST Documentation",
         author,
-        "EVEREST",
+        "everest",
         "One line description of project.",
         "Miscellaneous",
     ),
