@@ -129,6 +129,7 @@ def test_update_report_with_exception_in_analysis_ES(
 
 
 @pytest.mark.integration_test
+@pytest.mark.snapshot_test
 @pytest.mark.parametrize(
     ("update_settings", "num_overspread", "num_collapsed", "num_nan", "num_active"),
     [
@@ -432,6 +433,7 @@ def test_update_raises_on_singular_matrix(tmp_path):
             )
 
 
+@pytest.mark.snapshot_test
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 @pytest.mark.integration_test
 def test_update_snapshot(
@@ -497,6 +499,7 @@ def test_update_snapshot(
     assert target_gen_kw == pytest.approx(expected_gen_kw, abs=1e-5)
 
 
+@pytest.mark.snapshot_test
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     ("alpha", "expected", "expectation"),

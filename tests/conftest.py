@@ -63,6 +63,9 @@ def pytest_collection_modifyitems(config, items):
         ):
             item.add_marker(pytest.mark.skip("Requires eclipse"))
 
+        if "snapshot" in getattr(item, "fixturenames", ()):
+            item.add_marker(pytest.mark.snapshot_test)
+
     if os.environ.get("ERT_TESTS_RUN_ON_MAC_CI"):
         for item in items:
             if "skip_mac_ci" in item.keywords:
