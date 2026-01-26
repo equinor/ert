@@ -18,7 +18,6 @@ from ert.config._observations import (
 )
 from ert.config.observation_config_migrations import HistoryObservation
 from ert.config.parsing import parse_observations
-from ert.config.parsing.config_errors import ConfigWarning
 from ert.config.parsing.observations_parser import (
     ObservationConfigError,
     ObservationType,
@@ -277,15 +276,13 @@ def test_that_observation_type_rft_is_compatible_with_create_rft_ertobs_handling
             WELL_NAME,DATE,MD,ZONE,PRESSURE,ERROR,TVD,NORTH,EAST,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str
             WELL1,2013-03-31,2500,zone1,-1,0,2000.0,71.0,30.0,123,1,zone1
             WELL1,2013-04-30,2500,zone1,295,10,2000.0,71.0,30.0,123,1,zone1
+            WELL2,2014-03-31,2500,zone1,-1,0,2000.0,71.0,30.0,123,1,zone1
             """
         ),
         encoding="utf8",
     )
-    with pytest.warns(
-        ConfigWarning,
-        match="Invalid value=-1 and error=0 detected for well WELL1 at date 2013-03-31",
-    ):
-        observations = make_observations(
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
             "",
             [
                 {
@@ -295,19 +292,14 @@ def test_that_observation_type_rft_is_compatible_with_create_rft_ertobs_handling
                 }
             ],
         )
-    assert observations == [
-        RFTObservation(
-            name="NAME[1]",
-            well="WELL1",
-            date="2013-04-30",
-            value=295.0,
-            error=10.0,
-            property="PRESSURE",
-            north=71.0,
-            east=30.0,
-            tvd=2000.0,
-        )
-    ]
+    assert dedent(
+        """
+            Invalid value=-1 and error=0 detected in rft_observations.csv for well(s):
+             - WELL1 at date 2013-03-31
+             - WELL2 at date 2014-03-31
+            The invalid observation(s) must be removed from the file.
+            """
+    ).strip() in str(err.value)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
