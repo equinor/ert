@@ -105,6 +105,7 @@ def _generate_parameter_files(
     iens: int,
     fs: Ensemble,
     iteration: int,
+    scalar_data: Mapping[str, float | str] = {},
 ) -> tuple[Mapping[str, Mapping[str, float | str]], Mapping[str, float]]:
     """
     Generate parameter files that are placed in each runtime directory for
@@ -124,19 +125,7 @@ def _generate_parameter_files(
         write_to_runpath for each parameter_config, and a dict with
         timings/durations for each parameter type.
     """
-    # preload scalar parameters for this realization
-    keys = [
-        p.name
-        for p in parameter_configs
-        if p.cardinality == ParameterCardinality.multiple_configs_per_ensemble_dataset
-    ]
     export_timings: defaultdict[str, float] = defaultdict(float)
-    scalar_data: dict[str, float | str] = {}
-    if keys:
-        start_time = time.perf_counter()
-        df = fs.load_scalar_keys(keys=keys, realizations=iens, transformed=True)
-        scalar_data = df.to_dicts()[0]
-        export_timings["load_scalar_keys"] = time.perf_counter() - start_time
 
     exports: dict[str, dict[str, float | str]] = {}
     log_exports: dict[str, dict[str, float | str]] = {}
@@ -256,11 +245,37 @@ def create_run_path(
         "result_file_to_target": 0.0,
     }
     substituter = Substitutions(substitutions)
+
+    # Preload scalar parameters once and reuse across realizations.
+    scalar_keys = [
+        p.name
+        for p in ensemble.experiment.parameter_configuration.values()
+        if p.cardinality == ParameterCardinality.multiple_configs_per_ensemble_dataset
+        and not (p.forward_init and ensemble.iteration == 0)
+    ]
+    scalar_data_by_realization: dict[int, dict[str, float | str]] = {}
+    if scalar_keys:
+        start_time = time.perf_counter()
+        scalar_df = ensemble.load_scalar_keys(
+            keys=scalar_keys,
+            realizations=None,
+            transformed=True,
+        )
+        scalar_data_by_realization = {
+            int(row["realization"]): {
+                k: v for k, v in row.items() if k != "realization"
+            }
+            for row in scalar_df.to_dicts()
+        }
+        timings["load_scalar_keys"] = time.perf_counter() - start_time
+
     for run_arg in run_args:
         run_path = Path(run_arg.runpath)
         if run_arg.active:
             run_path.mkdir(parents=True, exist_ok=True)
             start_time = time.perf_counter()
+            scalar_data = scalar_data_by_realization.get(run_arg.iens, {})
+
             (param_data, detailed_parameter_timings) = _generate_parameter_files(
                 ensemble.experiment.parameter_configuration.values(),
                 parameters_file,
@@ -268,6 +283,7 @@ def create_run_path(
                 run_arg.iens,
                 ensemble,
                 ensemble.iteration,
+                scalar_data=scalar_data,
             )
             for parameter_type, duration in detailed_parameter_timings.items():
                 if parameter_type not in timings:

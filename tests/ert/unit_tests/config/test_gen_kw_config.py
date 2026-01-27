@@ -4,6 +4,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import networkx as nx
+import numpy as np
 import pytest
 from lark import Token
 
@@ -457,7 +458,10 @@ def test_gen_kw_trans_func(tmpdir, params, xinput, expected):
             update=False,
             distribution=GenKwConfig._parse_distribution(name, dist_name, values),
         )
-        assert abs(cfg.distribution.transform(xinput) - expected) < 10**-15
+        out = float(
+            cfg.distribution.transform_numpy(np.asarray([xinput], dtype=np.float64))[0]
+        )
+        assert abs(out - expected) < 10**-15
 
 
 def test_gen_kw_objects_equal(tmpdir):

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
 from enum import StrEnum, auto
 from hashlib import sha256
 from pathlib import Path
@@ -123,8 +123,17 @@ class ParameterConfig(BaseModel):
     def group_name(self) -> str | None:
         return self.name
 
-    def transform_data(self) -> Callable[[float], float]:
-        return lambda x: x
+    def transform_numpy(self, x: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+        return x
+
+    def transform_series(self, series: pl.Series) -> pl.Series:
+        in_dtype = series.dtype
+        if not in_dtype.is_numeric():
+            return series
+
+        x = np.asarray(series.to_numpy(), dtype=np.float64)
+        out = self.transform_numpy(x)
+        return pl.Series(out).cast(in_dtype)
 
     def sample_values(
         self, global_seed: str, active_realizations: list[int], num_realizations: int
