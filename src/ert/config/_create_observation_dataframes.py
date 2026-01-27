@@ -13,7 +13,6 @@ from ._observations import (
     RFTObservation,
     SummaryObservation,
 )
-from .gen_data_config import GenDataConfig
 from .parsing import (
     ErrorInfo,
     ObservationConfigError,
@@ -25,7 +24,6 @@ DEFAULT_LOCALIZATION_RADIUS = 3000
 
 def create_observation_dataframes(
     observations: Sequence[Observation],
-    gen_data_config: GenDataConfig | None,
     rft_config: RFTConfig | None,
 ) -> dict[str, pl.DataFrame]:
     if not observations:
@@ -46,7 +44,6 @@ def create_observation_dataframes(
                 case GeneralObservation():
                     grouped["gen_data"].append(
                         _handle_general_observation(
-                            gen_data_config,
                             obs,
                             obs.name,
                         )
@@ -113,28 +110,11 @@ def _handle_summary_observation(
 
 
 def _handle_general_observation(
-    gen_data_config: GenDataConfig | None,
     general_observation: GeneralObservation,
     obs_key: str,
 ) -> pl.DataFrame:
     response_key = general_observation.data
-    if gen_data_config is None or response_key not in gen_data_config.keys:
-        raise ObservationConfigError.with_context(
-            f"Problem with GENERAL_OBSERVATION {obs_key}:"
-            f" No GEN_DATA with name {response_key!r} found",
-            response_key,
-        )
-    assert isinstance(gen_data_config, GenDataConfig)
     restart = general_observation.restart
-    _, report_steps = gen_data_config.get_args_for_key(response_key)
-
-    response_report_steps = [] if report_steps is None else report_steps
-    if response_report_steps and restart not in response_report_steps:
-        raise ObservationConfigError.with_context(
-            f"The GEN_DATA node:{response_key} is not configured to load from"
-            f" report step:{restart} for the observation:{obs_key}",
-            response_key,
-        )
 
     if general_observation.error <= 0:
         raise ObservationConfigError.with_context(
