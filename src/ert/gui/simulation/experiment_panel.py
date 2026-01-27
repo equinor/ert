@@ -184,7 +184,7 @@ class ExperimentPanel(QWidget):
 
         experiment_type_valid = any(
             p.update for p in config.ensemble_config.parameter_configs.values()
-        ) and bool(config.observations)
+        ) and bool(config.observation_declarations)
 
         self.addExperimentConfigPanel(
             MultipleDataAssimilationPanel(
