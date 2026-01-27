@@ -43,6 +43,7 @@ def test_everest_main_entry_bad_command():
 
 
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
+@pytest.mark.integration_test
 def test_everest_entry_render(cached_example):
     _, config_file, _, _ = cached_example("math_func/config_minimal.yml")
     with capture_streams() as (out, _):
