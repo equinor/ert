@@ -706,6 +706,6 @@ def test_run_model_warns_about_cpu_over_spending_as_post_simulation_warning(
     )
 
     with warnings.catch_warnings(record=True) as W:
-        brm._evaluate_and_postprocess(AsyncMock(), AsyncMock(), AsyncMock())
+        brm._evaluate_and_postprocess(MagicMock(), MagicMock(), MagicMock())
         assert any(isinstance(w.message, PostSimulationWarning) for w in W)
         assert any(expected_msg in str(w.message) for w in W)

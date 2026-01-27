@@ -614,9 +614,7 @@ class LocalEnsemble(BaseMode):
             df = df.with_columns(
                 [
                     pl.col(col)
-                    .map_elements(
-                        tmp_configuration[col].transform_data(),
-                    )
+                    .map_batches(tmp_configuration[col].transform_series)
                     .cast(df[col].dtype)
                     .alias(col)
                     for col in df.columns
