@@ -121,20 +121,20 @@ def test_divide_into_categories_job_source(test_input, expected_source_package):
 
 
 @pytest.mark.parametrize("fm_step", ErtPluginManager().forward_model_steps)
-def test_that_forward_model_step_documentation_defaults_to_plugins_source_package(
+def test_that_forward_model_step_documentation_source_package_matches_the_actual_source_package(  # noqa: E501
     fm_step,
 ):
     # The test assumes that repr(fm_step) returns a string on format:
     # "<class 'fully.qualified.class.name'>"
     match_qualified_class_name = re.match(r"\<class '(.*?)'>", repr(fm_step))
     assert match_qualified_class_name, "Could not get qualified class name from fm_step"
-    qualified_class_name = match_qualified_class_name[1]
+    qualified_class_name: str = match_qualified_class_name[1]
 
-    source_package = qualified_class_name.split(".")[0]
     documentation = fm_step.documentation()
 
     if documentation:
-        assert documentation.source_package == source_package, (
-            f"{qualified_class_name} documentation reports source_package="
-            f"{documentation.source_package}, expected {source_package}"
+        assert qualified_class_name.startswith(documentation.source_package), (
+            f"Documentation mismatch in {fm_step!r} "
+            f"source_package ('{documentation.source_package}') does not match "
+            f"the start of the full qualified path ('{qualified_class_name}')."
         )
