@@ -324,17 +324,6 @@ def active_realizations_fixture() -> Mock:
     return active_reals
 
 
-@pytest.fixture
-def runmodel(active_realizations) -> Mock:
-    brm = Mock()
-    brm.get_runtime = Mock(return_value=100)
-    brm.format_error = Mock(return_value="")
-    brm.supports_rerunning_failed_realizations = True
-    brm.simulation_arguments = {"active_realizations": active_realizations}
-    brm.has_failed_realizations = lambda: False
-    return brm
-
-
 def load_results_manually(qtbot, gui, ensemble_name="default"):
     def handle_load_results_dialog():
         dialog = wait_for_child(gui, qtbot, ClosableDialog)

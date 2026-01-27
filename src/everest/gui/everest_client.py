@@ -62,12 +62,6 @@ class EverestClient:
     def config(self) -> dict[str, str]:
         return self._http_get(EverEndpoints.config_path).json()
 
-    def get_runtime(self) -> int:
-        if self._start_time is None:
-            self._start_time = int(self._http_get(EverEndpoints.start_time).text)
-
-        return int(time.time()) - self._start_time
-
     @property
     def credentials(self) -> str:
         return b64encode(f"{self._username}:{self._password}".encode()).decode()

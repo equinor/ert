@@ -326,8 +326,8 @@ def test_that_poly_new_minimal_screenshots_are_up_to_date(
 
     # Set static values for running time to not trigger false gui change detection
     run_dialog = get_child(gui, RunDialog)
-    run_dialog._run_model_api.get_runtime = lambda: 2
     run_dialog._on_ticker()
+    run_dialog.running_time.setText("Running time:\n2 seconds")
 
     gui_evaluator.compare_img_with_gui("simulations.png", SIMULATIONS_PNG_THRESHOLD)
 
