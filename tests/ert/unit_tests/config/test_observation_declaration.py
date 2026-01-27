@@ -265,6 +265,44 @@ def test_that_rft_observations_from_csv_with_no_rows_after_header_returns_empty_
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_that_observation_type_rft_is_compatible_with_create_rft_ertobs_handling_of_missing_data():  # noqa: E501
+    """A value of -1 and error of 0 is used by fmu.tools.rms create_rft_ertobs to
+    indicate missing data. If encountered in an rft observations csv file
+    it should be skipped and create a user warning.
+    """
+    Path("rft_observations.csv").write_text(
+        dedent(
+            """
+            WELL_NAME,DATE,MD,ZONE,PRESSURE,ERROR,TVD,NORTH,EAST,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str
+            WELL1,2013-03-31,2500,zone1,-1,0,2000.0,71.0,30.0,123,1,zone1
+            WELL1,2013-04-30,2500,zone1,295,10,2000.0,71.0,30.0,123,1,zone1
+            WELL2,2014-03-31,2500,zone1,-1,0,2000.0,71.0,30.0,123,1,zone1
+            """
+        ),
+        encoding="utf8",
+    )
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            "",
+            [
+                {
+                    "type": ObservationType.RFT,
+                    "name": "NAME",
+                    "CSV": "rft_observations.csv",
+                }
+            ],
+        )
+    assert dedent(
+        """
+            Invalid value=-1 and error=0 detected in rft_observations.csv for well(s):
+             - WELL1 at date 2013-03-31
+             - WELL2 at date 2014-03-31
+            The invalid observation(s) must be removed from the file.
+            """
+    ).strip() in str(err.value)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_that_invalid_numeric_values_in_rft_observations_csv_raises_error():
     Path("rft_observations.csv").write_text(
         dedent(
