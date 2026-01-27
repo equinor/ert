@@ -324,9 +324,12 @@ def test_that_poly_new_minimal_screenshots_are_up_to_date(
 
     run_experiment(qtbot, EnsembleExperiment, gui)
 
-    # Set static values for running time to not trigger false gui change detection
+    # Set static values for dynamic labels to not trigger false gui change detection
     run_dialog = get_child(gui, RunDialog)
     run_dialog._on_ticker()
+    run_dialog._experiment_name_label.setText(
+        "Ensemble experiment : 2026-01-01T00:00:00+00:00"
+    )
     run_dialog.running_time.setText("Running time:\n2 seconds")
 
     gui_evaluator.compare_img_with_gui("simulations.png", SIMULATIONS_PNG_THRESHOLD)

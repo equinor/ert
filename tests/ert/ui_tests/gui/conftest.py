@@ -268,6 +268,10 @@ def run_experiment_fixture(request):
         qtbot = QtBot(request)
         with contextlib.suppress(FileNotFoundError):
             shutil.rmtree("poly_out")
+
+        button = gui.findChild(QToolButton, "button_Start_simulation")
+        qtbot.mouseClick(button, Qt.MouseButton.LeftButton)
+
         # Select correct experiment in the simulation panel
         experiment_panel = get_child(gui, ExperimentPanel)
         simulation_mode_combo = get_child(experiment_panel, QComboBox)
@@ -297,7 +301,8 @@ def run_experiment_fixture(request):
         if click_done:
             # The Run dialog opens, click show details and wait until done appears
             # then click it
-            run_dialog = wait_for_child(gui, qtbot, RunDialog, timeout=10000)
+            qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=10000)
+            run_dialog = get_children(gui, RunDialog)[-1]
             qtbot.waitUntil(
                 lambda: run_dialog.is_simulation_done() is True, timeout=200000
             )
@@ -308,10 +313,12 @@ def run_experiment_fixture(request):
             realization_widget = run_dialog._tab_widget.currentWidget()
             assert isinstance(realization_widget, RealizationWidget)
             list_model = realization_widget._real_view.model()
-            assert (
-                list_model.rowCount()
-                == experiment_panel.config.runpath_config.num_realizations
+            expected_num_realizations = (
+                experiment_panel.config.runpath_config.num_realizations
             )
+            if experiment_mode.name() == "Single realization test-run":
+                expected_num_realizations = 1
+            assert list_model.rowCount() == expected_num_realizations
 
     return func
 

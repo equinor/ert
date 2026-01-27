@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import datetime
 import functools
 import logging
 import webbrowser
@@ -235,14 +234,16 @@ class ErtMainWindow(QMainWindow):
             widget.setVisible(False)
 
         run_dialog.setParent(self)
-        date_time: str = datetime.datetime.now(datetime.UTC).isoformat(
-            timespec="seconds"
-        )
-        experiment_type = run_dialog._run_model_api.experiment_name
-        simulation_id = experiment_type + " : " + date_time
+        simulation_id = run_dialog.property("experiment_name")
         self.central_panels_map[simulation_id] = run_dialog
         self.run_dialog_counter += 1
         self.central_layout.addWidget(run_dialog)
+
+        def mark_action_bold(menu: QMenu, action_to_mark: QAction) -> None:
+            for action in menu.actions():
+                font = action.font()
+                font.setBold(action is action_to_mark)
+                action.setFont(font)
 
         def add_sim_run_option(simulation_id: str) -> None:
             menu = self.results_button.menu()
@@ -251,11 +252,13 @@ class ErtMainWindow(QMainWindow):
                 act = QAction(text=simulation_id, parent=menu)
                 act.setProperty("index", simulation_id)
                 act.triggered.connect(self.select_central_widget)
+                act.triggered.connect(lambda _: mark_action_bold(menu, act))
 
                 if action_list:
                     menu.insertAction(action_list[0], act)
                 else:
                     menu.addAction(act)
+                mark_action_bold(menu, menu.actions()[0])
 
         if self.run_dialog_counter == 2:
             # swap from button to menu selection

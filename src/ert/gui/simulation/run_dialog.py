@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from queue import SimpleQueue
 from typing import cast
@@ -244,6 +244,15 @@ class RunDialog(QFrame):
             self,
         )
 
+        date_time: str = datetime.now(UTC).isoformat(timespec="seconds")
+        experiment_type = self._run_model_api.experiment_name
+        simulation_id = experiment_type + " : " + date_time
+
+        self._experiment_name_label = QLabel(self)
+        self._experiment_name_label.setText(simulation_id)
+        self._experiment_name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setProperty("experiment_name", simulation_id)
+
         self._total_progress_bar = QProgressBar(self)
         self._total_progress_bar.setRange(0, 100)
         self._total_progress_bar.setTextVisible(False)
@@ -325,6 +334,7 @@ class RunDialog(QFrame):
         footer_widget_container.setLayout(footer_layout)
 
         layout = QVBoxLayout()
+        layout.addWidget(self._experiment_name_label)
         layout.addWidget(self._total_progress_label)
         layout.addWidget(self._total_progress_bar)
         layout.addWidget(self._iteration_progress_label)

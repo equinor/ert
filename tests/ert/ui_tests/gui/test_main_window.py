@@ -905,6 +905,71 @@ def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
         find_and_check_selected("button_Simulation_status", True)
 
 
+def test_that_visible_experiment_label_matches_bold_simulation_menu_action(
+    opened_main_window_poly, qtbot, run_experiment
+):
+    gui = opened_main_window_poly
+
+    runs = {}
+    actions = {}
+    titles = []
+
+    def retrieve_latest_dialog_title(expected_dialogs_number):
+        run_dialogs = get_children(gui, RunDialog)
+        assert len(run_dialogs) == expected_dialogs_number
+        latest_run_dialog = run_dialogs[-1]
+        latest_run_title = latest_run_dialog._experiment_name_label.text()
+        # all titles should be different because run_experiment fixture takes >1s
+        assert latest_run_title not in titles
+        titles.append(latest_run_title)
+        runs[latest_run_title] = latest_run_dialog
+
+    def retrieve_existing_menu_actions(expected_actions_number):
+        simulation_status_menu = gui.findChild(
+            SidebarToolButton, "button_Simulation_status"
+        ).menu()
+        assert len(simulation_status_menu.actions()) == expected_actions_number
+        for action in simulation_status_menu.actions():
+            actions[action.text()] = action
+
+    def verify_only_latest_run_is_marked_bold_and_dialog_visible_on_new_experiment():
+        for title in titles[:-1]:
+            assert not actions[title].font().bold()
+            assert runs[title].isHidden()
+
+        latest_run_title = titles[-1]
+        assert actions[latest_run_title].font().bold()
+        assert not runs[latest_run_title].isHidden()
+
+    def verify_clicking_on_action_changes_bold_action_and_visible_dialog():
+        first_run_title = titles[0]
+        first_run_dialog = runs[first_run_title]
+
+        latest_run_title = titles[-1]
+        currently_active_dialog = runs[latest_run_title]
+
+        first_run_action = actions[first_run_title]
+        first_run_action.trigger()
+        qtbot.wait_until(currently_active_dialog.isHidden, timeout=5000)
+        assert not first_run_dialog.isHidden()
+        assert actions[first_run_title].font().bold()
+
+    run_experiment(SingleTestRun, gui)
+    retrieve_latest_dialog_title(1)
+
+    run_experiment(SingleTestRun, gui)
+    retrieve_latest_dialog_title(2)
+    retrieve_existing_menu_actions(2)
+    verify_only_latest_run_is_marked_bold_and_dialog_visible_on_new_experiment()
+    verify_clicking_on_action_changes_bold_action_and_visible_dialog()
+
+    run_experiment(SingleTestRun, gui)
+    retrieve_latest_dialog_title(3)
+    retrieve_existing_menu_actions(3)
+    verify_only_latest_run_is_marked_bold_and_dialog_visible_on_new_experiment()
+    verify_clicking_on_action_changes_bold_action_and_visible_dialog()
+
+
 def test_warnings_from_forward_model_are_propagated_to_ert_main_window_post_simulation(
     qtbot, opened_main_window_poly, use_tmpdir
 ):
