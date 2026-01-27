@@ -117,7 +117,7 @@ def test_shutdown_after_finish(server):
     server.shutdown()
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.script(
     """\
 time.sleep(0.5)
@@ -153,7 +153,7 @@ def test_long_lived(server, tmp_path):
     assert not (tmp_path / _ERT_SERVER_CONNECTION_INFO_FILE).exists()
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.script(
     """\
 time.sleep(30)
@@ -190,7 +190,7 @@ def test_json_created(server):
     assert Path(_ERT_SERVER_CONNECTION_INFO_FILE).read_text(encoding="utf-8")
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.script(
     """\
 os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
@@ -246,7 +246,7 @@ def test_that_connect_logs_permission_error(tmp_path, caplog):
     )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.script(
     """\
 os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')

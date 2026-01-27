@@ -15,7 +15,7 @@ from ert.shared import find_available_socket
 
 
 @pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_create_connection_string():
     authtoken = "very_secret_token"
     sock = find_available_socket()
@@ -154,7 +154,7 @@ def test_that_service_can_be_started_with_empty_json_content(
 
 
 @pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_storage_logging(change_to_tmpdir):
     """
     This is a regression test for a bug where the storage service
@@ -184,7 +184,7 @@ def test_storage_logging(change_to_tmpdir):
 
 
 @pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_certificate_generation(change_to_tmpdir):
     cert, key, pw = _generate_certificate(Path())
 
@@ -198,7 +198,7 @@ def test_certificate_generation(change_to_tmpdir):
 
 
 @pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_certificate_generation_handles_long_machine_names(change_to_tmpdir):
     with patch(
         "ert.shared.get_machine_name",
@@ -216,7 +216,7 @@ def test_certificate_generation_handles_long_machine_names(change_to_tmpdir):
 
 
 @pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_that_server_hosts_exists_as_san_in_certificate(change_to_tmpdir):
     auth_token = "very_secret_token"
     sock = find_available_socket()

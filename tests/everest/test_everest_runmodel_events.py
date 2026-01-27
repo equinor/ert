@@ -18,7 +18,7 @@ def round_floats(obj, decimals=6):
     return obj
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "config_file",
     [

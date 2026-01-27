@@ -1858,4 +1858,4 @@ def test_that_breakthrough_observations_and_responses_are_joined_in_endpoint(tmp
         assert obs_and_responses["0"].to_list() == [-1.5]
 
 
-TestStorage = pytest.mark.integration_test(StatefulStorageTest.TestCase)
+TestStorage = pytest.mark.slow(StatefulStorageTest.TestCase)
