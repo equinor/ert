@@ -105,11 +105,6 @@ class InitialEnsembleRunModel(RunModel, InitialEnsembleRunModelConfig):
         if self.observations is None:
             return {}
 
-        gen_data_config = next(
-            (r for r in self.response_configuration if r.type == "gen_data"),
-            None,
-        )
-
         rft_config = next(
             (r for r in self.response_configuration if r.type == "rft"),
             None,
@@ -117,6 +112,5 @@ class InitialEnsembleRunModel(RunModel, InitialEnsembleRunModelConfig):
 
         return create_observation_dataframes(
             observations=self.observations,
-            gen_data_config=gen_data_config,
             rft_config=rft_config,
         )

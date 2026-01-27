@@ -22,6 +22,7 @@ from ert.substitutions import Substitutions
 from ._create_observation_dataframes import create_observation_dataframes
 from ._design_matrix_validator import DesignMatrixValidator
 from ._observations import (
+    GeneralObservation,
     Observation,
     RFTObservation,
     SummaryObservation,
@@ -732,10 +733,6 @@ class ErtConfig(BaseModel):
             self._observations = create_observation_dataframes(
                 self.observation_declarations,
                 cast(
-                    GenDataConfig | None,
-                    self.ensemble_config.response_configs.get("gen_data", None),
-                ),
-                cast(
                     RFTConfig | None,
                     self.ensemble_config.response_configs.get("rft", None),
                 ),
@@ -793,6 +790,46 @@ class ErtConfig(BaseModel):
         logger.info(
             f"EnsembleConfig contains parameters of type {dict(parameter_type_count)}"
         )
+        return self
+
+    @model_validator(mode="after")
+    def validate_observations_against_responses(self) -> Self:
+        gen_data_config = cast(
+            GenDataConfig | None,
+            self.ensemble_config.response_configs.get("gen_data", None),
+        )
+
+        errors: list[ErrorInfo] = []
+        for obs in self.observation_declarations:
+            if isinstance(obs, GeneralObservation):
+                response_key = obs.data
+                if gen_data_config is None or response_key not in gen_data_config.keys:
+                    errors.append(
+                        ErrorInfo(
+                            message=(
+                                f"Problem with GENERAL_OBSERVATION {obs.name}:"
+                                f" No GEN_DATA with name {response_key!r} found"
+                            )
+                        ).set_context(response_key)
+                    )
+                    continue
+                assert isinstance(gen_data_config, GenDataConfig)
+                _, report_steps = gen_data_config.get_args_for_key(response_key)
+                response_report_steps = [] if report_steps is None else report_steps
+                if response_report_steps and obs.restart not in response_report_steps:
+                    errors.append(
+                        ErrorInfo(
+                            message=(
+                                f"The GEN_DATA node:{response_key} is not configured "
+                                f"to load from report step:{obs.restart} for the "
+                                f"observation:{obs.name}"
+                            )
+                        ).set_context(response_key)
+                    )
+
+        if errors:
+            raise ConfigValidationError.from_collected(errors)
+
         return self
 
     def __eq__(self, other: object) -> bool:
@@ -1085,6 +1122,8 @@ class ErtConfig(BaseModel):
                     f"{user_prioritize_private_ip_address}"
                 )
                 prioritize_private_ip_address = user_prioritize_private_ip_address
+        if errors:
+            raise ObservationConfigError.from_collected(errors)
 
         try:
             cls_config = cls(
@@ -1123,6 +1162,7 @@ class ErtConfig(BaseModel):
                     data_to_read={},
                     locations=[],
                 )
+
         except PydanticValidationError as err:
             raise ConfigValidationError.from_pydantic(err) from err
         return cls_config

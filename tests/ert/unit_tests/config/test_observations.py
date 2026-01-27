@@ -1,5 +1,4 @@
 import logging
-import queue
 from contextlib import ExitStack as does_not_raise
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -24,9 +23,7 @@ from ert.config.parsing.observations_parser import (
     ObservationConfigError,
     ObservationType,
 )
-from ert.mode_definitions import ENIF_MODE
 from ert.namespace import Namespace
-from ert.run_models import create_model
 
 pytestmark = pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 
@@ -1266,86 +1263,66 @@ def test_that_obs_file_must_have_the_same_number_of_lines_as_the_length_of_index
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_general_observations_data_must_match_a_gen_datas_name():
-    ert_config = ErtConfig.from_dict(
-        {
-            "NUM_REALIZATIONS": 2,
-            "GEN_DATA": [["OTHER", {"RESULT_FILE": "out"}]],
-            "OBS_CONFIG": (
-                "obsconf",
-                [
-                    {
-                        "type": ObservationType.GENERAL,
-                        "name": "OBS",
-                        "DATA": "RES",
-                        "INDEX_LIST": "0,2,4,6,8",
-                        "RESTART": "0",
-                        "VALUE": "1",
-                        "ERROR": "1",
-                    }
-                ],
-            ),
-        }
-    )
-
-    runmodel = create_model(
-        ert_config,
-        args=Namespace(
-            mode=ENIF_MODE, experiment_name="obs_mismatch", target_ensemble="ens_%d"
-        ),
-        status_queue=queue.SimpleQueue(),
-    )
-
     with pytest.raises(
         ConfigValidationError,
         match="No GEN_DATA with name 'RES' found",
     ):
-        runmodel.observation_dataframes()
+        ErtConfig.from_dict(
+            {
+                "NUM_REALIZATIONS": 2,
+                "GEN_DATA": [["OTHER", {"RESULT_FILE": "out"}]],
+                "OBS_CONFIG": (
+                    "obsconf",
+                    [
+                        {
+                            "type": ObservationType.GENERAL,
+                            "name": "OBS",
+                            "DATA": "RES",
+                            "INDEX_LIST": "0,2,4,6,8",
+                            "RESTART": "0",
+                            "VALUE": "1",
+                            "ERROR": "1",
+                        }
+                    ],
+                ),
+            }
+        )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_general_observation_restart_must_match_gen_data_report_step():
-    ert_config = ErtConfig.from_dict(
-        {
-            "NUM_REALIZATIONS": 2,
-            "GEN_DATA": [
-                [
-                    "RES",
-                    {
-                        "REPORT_STEPS": "1",
-                        "RESULT_FILE": "file%d",
-                    },
-                ]
-            ],
-            "OBS_CONFIG": (
-                "obsconf",
-                [
-                    {
-                        "type": ObservationType.GENERAL,
-                        "name": "OBS",
-                        "DATA": "RES",
-                        "INDEX_LIST": "0,2,4,6,8",
-                        "RESTART": "0",
-                        "VALUE": "1",
-                        "ERROR": "1",
-                    }
-                ],
-            ),
-        }
-    )
-
-    runmodel = create_model(
-        ert_config,
-        args=Namespace(
-            mode=ENIF_MODE, experiment_name="obs_mismatch", target_ensemble="ens_%d"
-        ),
-        status_queue=queue.SimpleQueue(),
-    )
-
     with pytest.raises(
         ConfigValidationError,
         match="is not configured to load from report step",
     ):
-        runmodel.observation_dataframes()
+        ErtConfig.from_dict(
+            {
+                "NUM_REALIZATIONS": 2,
+                "GEN_DATA": [
+                    [
+                        "RES",
+                        {
+                            "REPORT_STEPS": "1",
+                            "RESULT_FILE": "file%d",
+                        },
+                    ]
+                ],
+                "OBS_CONFIG": (
+                    "obsconf",
+                    [
+                        {
+                            "type": ObservationType.GENERAL,
+                            "name": "OBS",
+                            "DATA": "RES",
+                            "INDEX_LIST": "0,2,4,6,8",
+                            "RESTART": "0",
+                            "VALUE": "1",
+                            "ERROR": "1",
+                        }
+                    ],
+                ),
+            }
+        )
 
 
 def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
