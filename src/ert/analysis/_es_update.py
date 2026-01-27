@@ -363,7 +363,7 @@ def analysis_ES(
                 param_ensemble_array[non_zero_variance_mask] @= T.astype(
                     param_ensemble_array.dtype
                 )
-            elif isinstance(param_cfg, SurfaceConfig):
+            elif isinstance(param_cfg, Field | SurfaceConfig):
                 rho_matrix = param_cfg.calc_rho_for_2d_grid_layer(
                     obs_xpos=obs_xpos,
                     obs_ypos=obs_ypos,
@@ -377,23 +377,43 @@ def analysis_ES(
                     X_prior=param_ensemble_array,
                     Y=S_with_loc,
                     rho_input=rho_matrix,
-                )
-            elif isinstance(param_cfg, Field):
-                rho_matrix = param_cfg.calc_rho_for_2d_grid_layer(
-                    obs_xpos=obs_xpos,
-                    obs_ypos=obs_ypos,
-                    obs_main_range=obs_main_range,
-                    obs_perp_range=obs_main_range,
-                    obs_anisotropy_angle=np.zeros_like(
-                        obs_main_range, dtype=np.float64
+                    nz=(
+                        1
+                        if isinstance(param_cfg, SurfaceConfig)
+                        else param_cfg.ertbox_params.nz
                     ),
                 )
-                param_ensemble_array = smoother_distance_es.update_params(
-                    X_prior=param_ensemble_array,
-                    Y=S_with_loc,
-                    rho_input=rho_matrix,
-                    nz=param_cfg.ertbox_params.nz,
-                )
+            # elif isinstance(param_cfg, SurfaceConfig):
+            #     rho_matrix = param_cfg.calc_rho_for_2d_grid_layer(
+            #         obs_xpos=obs_xpos,
+            #         obs_ypos=obs_ypos,
+            #         obs_main_range=obs_main_range,
+            #         obs_perp_range=obs_main_range,
+            #         obs_anisotropy_angle=np.zeros_like(
+            #             obs_main_range, dtype=np.float64
+            #         ),
+            #     )
+            #     param_ensemble_array = smoother_distance_es.update_params(
+            #         X_prior=param_ensemble_array,
+            #         Y=S_with_loc,
+            #         rho_input=rho_matrix,
+            #     )
+            # elif isinstance(param_cfg, Field):
+            #     rho_matrix = param_cfg.calc_rho_for_2d_grid_layer(
+            #         obs_xpos=obs_xpos,
+            #         obs_ypos=obs_ypos,
+            #         obs_main_range=obs_main_range,
+            #         obs_perp_range=obs_main_range,
+            #         obs_anisotropy_angle=np.zeros_like(
+            #             obs_main_range, dtype=np.float64
+            #         ),
+            #     )
+            #     param_ensemble_array = smoother_distance_es.update_params(
+            #         X_prior=param_ensemble_array,
+            #         Y=S_with_loc,
+            #         rho_input=rho_matrix,
+            #         nz=param_cfg.ertbox_params.nz,
+            #     )
 
         elif module.localization:
             config_node = source_ensemble.experiment.parameter_configuration[
