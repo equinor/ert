@@ -251,6 +251,12 @@ class GenKwConfig(ParameterConfig):
     def transform_data(self) -> Callable[[float], float]:
         return self.distribution.transform
 
+    def transform_series(self, series: pl.Series) -> pl.Series:
+        in_dtype = series.dtype
+        x = series.to_numpy()
+        out = self.distribution.transform_numpy(x)
+        return pl.Series(out).cast(in_dtype)
+
     @classmethod
     def _parse_distribution(
         cls, param_name: str, dist_name: str, values: list[str]

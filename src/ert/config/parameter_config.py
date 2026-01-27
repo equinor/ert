@@ -126,6 +126,15 @@ class ParameterConfig(BaseModel):
     def transform_data(self) -> Callable[[float], float]:
         return lambda x: x
 
+    def transform_series(self, series: pl.Series) -> pl.Series:
+        """Transform a Polars Series of parameter values.
+
+        Default implementation preserves existing behavior by applying
+        :meth:`transform_data` element-wise.
+        """
+
+        return series.map_elements(self.transform_data()).cast(series.dtype)
+
     def sample_values(
         self, global_seed: str, active_realizations: list[int], num_realizations: int
     ) -> npt.NDArray[np.double]:

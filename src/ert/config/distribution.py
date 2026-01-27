@@ -6,6 +6,7 @@ from typing import Annotated, Any, Literal, Self, TypeVar
 
 import numpy as np
 from pydantic import BaseModel, Field, field_validator, model_validator
+from scipy.special import ndtr
 from scipy.stats import norm
 
 from .parsing import ConfigValidationError, ConfigWarning, ErrorInfo
@@ -15,6 +16,9 @@ T = TypeVar("T", bound="TransSettingsValidation")
 
 class TransSettingsValidation(BaseModel):
     model_config = {"extra": "forbid"}
+
+    def transform(self, x: float) -> float:
+        raise NotImplementedError
 
     @classmethod
     def create(cls, *args: Any, **kwargs: Any) -> Self:
@@ -27,6 +31,13 @@ class TransSettingsValidation(BaseModel):
             for name, field in cls.model_fields.items()
             if field.is_required() or (field.default is not None and name != "name")
         ]
+
+    def transform_numpy(self, x: np.ndarray) -> np.ndarray:
+        """Apply `transform` element-wise to an array.
+
+        Uses ``numpy.vectorize`` (behavior-preserving but can be slow).
+        """
+        return np.vectorize(self.transform, otypes=[float])(x)
 
 
 class UnifSettings(TransSettingsValidation):
@@ -45,6 +56,10 @@ class UnifSettings(TransSettingsValidation):
 
     def transform(self, x: float) -> float:
         y = float(norm.cdf(x))
+        return y * (self.max - self.min) + self.min
+
+    def transform_numpy(self, x: np.ndarray) -> np.ndarray:
+        y = ndtr(x)
         return y * (self.max - self.min) + self.min
 
 
@@ -67,6 +82,12 @@ class LogUnifSettings(TransSettingsValidation):
         tmp = norm.cdf(x)
         # Shift according to max / min
         return math.exp(log_min + tmp * (log_max - log_min))
+
+    def transform_numpy(self, x: np.ndarray) -> np.ndarray:
+        y = ndtr(x)
+        log_min = np.log(self.min)
+        log_max = np.log(self.max)
+        return np.exp(log_min + y * (log_max - log_min))
 
 
 class DUnifSettings(TransSettingsValidation):
@@ -102,6 +123,12 @@ class DUnifSettings(TransSettingsValidation):
             self.max - self.min
         ) + self.min
 
+    def transform_numpy(self, x: np.ndarray) -> np.ndarray:
+        y = ndtr(x)
+        return (np.floor(y * self.steps) / (self.steps - 1)) * (
+            self.max - self.min
+        ) + self.min
+
 
 class NormalSettings(TransSettingsValidation):
     name: Literal["normal"] = "normal"
@@ -116,6 +143,9 @@ class NormalSettings(TransSettingsValidation):
         return value
 
     def transform(self, x: float) -> float:
+        return x * self.std + self.mean
+
+    def transform_numpy(self, x: np.ndarray) -> np.ndarray:
         return x * self.std + self.mean
 
 
@@ -168,6 +198,9 @@ class LogNormalSettings(TransSettingsValidation):
     def transform(self, x: float) -> float:
         return math.exp(x * self.std + self.mean)
 
+    def transform_numpy(self, x: np.ndarray) -> np.ndarray:
+        return np.exp(x * self.std + self.mean)
+
 
 class TruncNormalSettings(TransSettingsValidation):
     name: Literal["truncated_normal"] = "truncated_normal"
@@ -198,11 +231,17 @@ class TruncNormalSettings(TransSettingsValidation):
         y = x * self.std + self.mean
         return max(min(y, self.max), self.min)  # clamp
 
+    def transform_numpy(self, x: np.ndarray) -> np.ndarray:
+        return np.clip(x * self.std + self.mean, self.min, self.max)
+
 
 class RawSettings(TransSettingsValidation):
     name: Literal["raw"] = "raw"
 
     def transform(self, x: float) -> float:
+        return x
+
+    def transform_numpy(self, x: np.ndarray) -> np.ndarray:
         return x
 
 
@@ -212,6 +251,9 @@ class ConstSettings(TransSettingsValidation):
 
     def transform(self, _: float) -> float:
         return self.value
+
+    def transform_numpy(self, x: np.ndarray) -> np.ndarray:
+        return np.full_like(x, self.value, dtype=np.float64)
 
 
 class TriangularSettings(TransSettingsValidation):
@@ -252,6 +294,16 @@ class TriangularSettings(TransSettingsValidation):
         else:
             return self.max - math.sqrt((1 - y) * inv_norm_right)
 
+    def transform_numpy(self, x: np.ndarray) -> np.ndarray:
+        y = ndtr(x)
+        inv_norm_left = (self.max - self.min) * (self.mode - self.min)
+        inv_norm_right = (self.max - self.min) * (self.max - self.mode)
+        ymode = (self.mode - self.min) / (self.max - self.min)
+
+        left = self.min + np.sqrt(y * inv_norm_left)
+        right = self.max - np.sqrt((1.0 - y) * inv_norm_right)
+        return np.where(y < ymode, left, right)
+
 
 class ErrfSettings(TransSettingsValidation):
     name: Literal["errf"] = "errf"
@@ -285,6 +337,11 @@ class ErrfSettings(TransSettingsValidation):
                 "Output is nan, likely from triplet (x, skewness, width) "
                 "leading to low/high-probability in normal CDF."
             )
+        return self.min + y * (self.max - self.min)
+
+    def transform_numpy(self, x: np.ndarray) -> np.ndarray:
+        # CDF of N(0, width) at (x + skewness)
+        y = ndtr((x + self.skewness) / self.width)
         return self.min + y * (self.max - self.min)
 
 
@@ -347,6 +404,20 @@ class DerrfSettings(TransSettingsValidation):
                 "trans_derrf returns nan, check that input arguments are reasonable"
             )
         return float(result)
+
+    def transform_numpy(self, x: np.ndarray) -> np.ndarray:
+        # Vectorized equivalent of DerrfSettings.transform
+        y = ndtr((x + self.skewness) / self.width)
+
+        q_values = np.linspace(start=0.0, stop=1.0, num=int(self.steps))
+        q_checks = np.linspace(start=0.0, stop=1.0, num=int(self.steps + 1))[1:]
+
+        # Equivalent to np.digitize(y, q_checks, right=True) for y in [0,1]
+        bin_index = np.searchsorted(q_checks, y, side="left")
+        y_binned = q_values[bin_index]
+
+        result = self.min + y_binned * (self.max - self.min)
+        return np.clip(result, self.min, self.max)
 
 
 DistributionSettings = Annotated[
