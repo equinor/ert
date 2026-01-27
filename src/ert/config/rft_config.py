@@ -5,8 +5,9 @@ import fnmatch
 import logging
 import os
 import re
+import warnings
 from collections import defaultdict
-from typing import IO, Any, Literal
+from typing import IO, Any, Literal, TypeAlias
 
 import numpy as np
 import numpy.typing as npt
@@ -15,6 +16,7 @@ from pydantic import Field
 from resfo_utilities import CornerpointGrid, InvalidRFTError, RFTReader
 
 from ert.substitutions import substitute_runpath_name
+from ert.warnings import PostSimulationWarning
 
 from .parsing import ConfigDict, ConfigKeys, ConfigValidationError, ConfigWarning
 from .response_config import InvalidResponseFile, ResponseConfig
@@ -23,12 +25,18 @@ from .responses_index import responses_index
 logger = logging.getLogger(__name__)
 
 
+Point: TypeAlias = tuple[float, float, float]
+GridIndex: TypeAlias = tuple[int, int, int]
+ZoneName: TypeAlias = str
+
+
 class RFTConfig(ResponseConfig):
     type: Literal["rft"] = "rft"
     name: str = "rft"
     has_finalized_keys: bool = False
     data_to_read: dict[str, dict[str, list[str]]] = Field(default_factory=dict)
-    locations: list[tuple[float, float, float]] = Field(default_factory=list)
+    locations: list[Point | tuple[Point, ZoneName]] = Field(default_factory=list)
+    zonemap: dict[int, list[ZoneName]] = Field(default_factory=dict)
 
     @property
     def expected_input_files(self) -> list[str]:
@@ -43,17 +51,45 @@ class RFTConfig(ResponseConfig):
 
     def _find_indices(
         self, egrid_file: str | os.PathLike[str] | IO[Any]
-    ) -> dict[tuple[int, int, int] | None, set[tuple[float, float, float]]]:
+    ) -> dict[GridIndex | None, set[Point | tuple[Point, ZoneName]]]:
         indices = defaultdict(set)
         for a, b in zip(
             CornerpointGrid.read_egrid(egrid_file).find_cell_containing_point(
-                self.locations
+                [loc[0] if isinstance(loc[1], str) else loc for loc in self.locations]
             ),
             self.locations,
             strict=True,
         ):
             indices[a].add(b)
         return indices
+
+    def _filter_zones(
+        self,
+        indices: dict[GridIndex | None, set[Point | tuple[Point, ZoneName]]],
+        iens: int,
+        iter_: int,
+    ) -> dict[GridIndex | None, set[Point]]:
+        for idx, locs in indices.items():
+            if idx is not None:
+                for loc in list(locs):
+                    if isinstance(loc[1], str):
+                        zone = loc[1]
+                        # zonemap is 1-indexed so +1
+                        if zone not in self.zonemap.get(idx[-1] + 1, []):
+                            warnings.warn(
+                                PostSimulationWarning(
+                                    f"An RFT observation with location {loc[0]}, "
+                                    f"in iteration {iter_}, realization {iens} did "
+                                    f"not match expected zone {zone}. The observation "
+                                    "was deactivated",
+                                ),
+                                stacklevel=2,
+                            )
+                            locs.remove(loc)
+        return {
+            k: {v[0] if isinstance(v[1], str) else v for v in vs}
+            for k, vs in indices.items()
+        }
 
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
         filename = substitute_runpath_name(self.input_files[0], iens, iter_)
@@ -71,7 +107,7 @@ class RFTConfig(ResponseConfig):
         )
         indices = {}
         if self.locations:
-            indices = self._find_indices(grid_filename)
+            indices = self._filter_zones(self._find_indices(grid_filename), iens, iter_)
         if None in indices:
             raise InvalidResponseFile(
                 f"Did not find grid coordinate for location(s) {indices[None]}"
@@ -255,6 +291,7 @@ class RFTConfig(ResponseConfig):
                 input_files=[eclbase.replace("%d", "<IENS>")],
                 keys=keys,
                 data_to_read=data_to_read,
+                zonemap=config_dict.get(ConfigKeys.ZONEMAP, ("", {}))[1],
             )
 
         return None

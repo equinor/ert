@@ -729,6 +729,7 @@ class ErtConfig(BaseModel):
                     input_files=[self.runpath_config.eclbase_format_string],
                     data_to_read={},
                     locations=[],
+                    zonemap=self.zonemap,
                 )
             self._observations = create_observation_dataframes(
                 self.observation_declarations,
@@ -1124,6 +1125,7 @@ class ErtConfig(BaseModel):
                     input_files=[eclbase],
                     data_to_read={},
                     locations=[],
+                    zonemap=cls_config.zonemap,
                 )
             cls_config._observations = create_observation_dataframes(
                 obs_configs,

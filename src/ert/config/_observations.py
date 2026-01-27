@@ -259,6 +259,7 @@ class RFTObservation(BaseModel):
     north: float
     east: float
     tvd: float
+    zone: str | None = None
 
     @classmethod
     def from_csv(
@@ -313,6 +314,7 @@ class RFTObservation(BaseModel):
                 north=validate_float(str(row.NORTH), "NORTH"),
                 east=validate_float(str(row.EAST), "EAST"),
                 tvd=validate_float(str(row.TVD), "TVD"),
+                zone=row.ZONE if "ZONE" in csv_file else None,
             )
             # A value of -1 and error of 0 is used by fmu.tools.rms create_rft_ertobs to
             # indicate missing data. If encountered in an rft observations csv file
@@ -352,6 +354,7 @@ class RFTObservation(BaseModel):
         north = None
         east = None
         tvd = None
+        zone = None
         for key, value in observation_dict.items():
             match key:
                 case "type" | "name":
@@ -374,6 +377,8 @@ class RFTObservation(BaseModel):
                     tvd = validate_float(value, key)
                 case "CSV":
                     csv_filename = value
+                case "ZONE":
+                    zone = value
                 case _:
                     raise _unknown_key_error(str(key), observation_dict["name"])
         if csv_filename is not None:
@@ -410,6 +415,7 @@ class RFTObservation(BaseModel):
             north=north,
             east=east,
             tvd=tvd,
+            zone=zone,
         )
 
         # Bypass pydantic discarding context
