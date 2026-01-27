@@ -22,7 +22,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.config import ErrorInfo, ErtConfig
+from ert.config import ErrorInfo, ErtConfig, GenDataConfig, RFTConfig
+from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import CreateExperimentDialog, Suggestor
 from ert.storage import Ensemble, Experiment
@@ -169,10 +170,32 @@ class StorageWidget(QWidget):
         if create_experiment_dialog.exec():
             try:
                 with self._notifier.write_storage() as storage:
+                    response_configs = (
+                        self._ert_config.ensemble_config.response_configuration
+                    )
+                    gen_data_config = next(
+                        (r for r in response_configs if r.type == "gen_data"),
+                        None,
+                    )
+
+                    if gen_data_config is not None:
+                        gen_data_config = cast(GenDataConfig, gen_data_config)
+
+                    rft_config = next(
+                        (r for r in response_configs if r.type == "rft"),
+                        None,
+                    )
+                    if rft_config is not None:
+                        rft_config = cast(RFTConfig, rft_config)
+
                     ensemble = storage.create_experiment(
                         parameters=self._ert_config.parameter_configurations_with_design_matrix,
-                        responses=self._ert_config.ensemble_config.response_configuration,
-                        observations=self._ert_config.observations,
+                        responses=response_configs,
+                        observations=create_observation_dataframes(
+                            observations=self._ert_config.observation_declarations,
+                            gen_data_config=gen_data_config,
+                            rft_config=rft_config,
+                        ),
                         name=create_experiment_dialog.experiment_name,
                         templates=self._ert_config.ert_templates,
                     ).create_ensemble(
