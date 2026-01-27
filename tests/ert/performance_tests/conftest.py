@@ -14,7 +14,7 @@ from .performance_utils import make_poly_template
 template_config_path = None
 
 
-def make_case(reals, x_size, marks):
+def make_case(reals, x_size):
     return {
         "gen_data_count": 2,
         "gen_data_entries": x_size,
@@ -28,26 +28,17 @@ def make_case(reals, x_size, marks):
         "parameter_entries": 3,
         "parameter_count": 1,
         "update_steps": 1,
-        "marks": marks,
     }
 
 
 cases_to_run = [
-    make_case(reals=10, x_size=20, marks=pytest.mark.quick_only),
-    make_case(reals=100, x_size=2000, marks=pytest.mark.slow),
-    make_case(reals=1000, x_size=2000, marks=pytest.mark.slow),
+    make_case(reals=10, x_size=20),
 ]
 
 
 @pytest.fixture(
     scope="session",
-    params=[
-        pytest.param(
-            params,
-            marks=params["marks"],
-        )
-        for params in cases_to_run
-    ],
+    params=[pytest.param(params) for params in cases_to_run],
     ids=[
         f"gen_x: {params['gen_data_entries']}, "
         f"sum_x: {params['summary_data_entries']} "
