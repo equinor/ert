@@ -42,7 +42,6 @@ def pytest_collection_modifyitems(config, items):
         if any(
             f in fixtures
             for f in [
-                "flaky",
                 "tmpdir",
                 "use_tmpdir",
                 "tmp_path",
@@ -50,6 +49,12 @@ def pytest_collection_modifyitems(config, items):
             ]
         ):
             item.add_marker("creates_tmpdir")
+
+        if any(f in fixtures for f in ["flaky", "skip_mac_ci"]):
+            item.add_marker("unreliable")
+
+        if any(f in fixtures for f in ["memory_test", "limit_memory"]):
+            item.add_marker("unreliable")
 
         # Override Python's excepthook on all "requires_window_manager" tests
         if item.get_closest_marker("requires_window_manager"):

@@ -51,7 +51,7 @@ def test_everest_entry_render(cached_example):
 
 
 @pytest.mark.skip_mac_ci
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_everest_entry_run(cached_example):
@@ -88,7 +88,7 @@ def test_everest_entry_run(cached_example):
     assert experiment_status.status == ExperimentState.completed
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
 def test_everest_entry_monitor_already_run(cached_example):
     _, config_file, _, _ = cached_example("math_func/config_minimal.yml")
@@ -97,7 +97,7 @@ def test_everest_entry_monitor_already_run(cached_example):
     assert "Optimization already completed." in out.getvalue()
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_everest_entry_monitor_not_run(change_to_tmpdir):
     everest_config_with_defaults().write_to_file("config.yml")
     with capture_streams() as (out, _):
@@ -106,7 +106,7 @@ def test_everest_entry_monitor_not_run(change_to_tmpdir):
 
 
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_everest_main_lint_entry(cached_example):
     # Setup command line arguments
     _, config_file, _, _ = cached_example("math_func/config_minimal.yml")
@@ -142,7 +142,7 @@ line: 2, column: 18. controls -> 0 -> initial_guess
 @pytest.mark.skip_mac_ci
 @pytest.mark.flaky(reruns=3)
 @pytest.mark.timeout(60)
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.xdist_group(name="starts_everest")
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_that_keyboard_interrupt_stops_optimization_with_a_graceful_shutdown(

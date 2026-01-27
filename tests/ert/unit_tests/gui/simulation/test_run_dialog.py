@@ -151,7 +151,7 @@ def run_dialog(qtbot: QtBot, use_tmpdir, mock_set_env_key, monkeypatch):
 
 
 @pytest.mark.timeout(10)
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_that_terminating_experiment_shows_a_confirmation_dialog(
     qtbot: QtBot, run_dialog: RunDialog, monkeypatch
 ):
@@ -184,7 +184,7 @@ def test_that_terminating_experiment_shows_a_confirmation_dialog(
     )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_large_snapshot(
     event_queue_large_snapshot,
     qtbot: QtBot,
@@ -590,7 +590,7 @@ def test_run_dialog_fm_label_show_correct_info(
     )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_exception_in_run_model_is_displayed_in_a_suggestor_window_after_simulation_fails(  # noqa E501
     qtbot: QtBot, use_tmpdir
@@ -654,7 +654,7 @@ def test_that_exception_in_run_model_is_displayed_in_a_suggestor_window_after_si
             )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_that_stdout_and_stderr_buttons_react_to_file_content(
     snake_oil_case_storage: ErtConfig, qtbot: QtBot
 ):
@@ -719,7 +719,7 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
     file_dialog.close()
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     "design_matrix_entry",
@@ -891,7 +891,7 @@ def test_forward_model_overview_label_selected_on_tab_change(
     assert "Realization id 1 in iteration 1" in fm_step_label.text()
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.parametrize(
     ("experiment_mode", "experiment_mode_panel", "dm_realizations"),
@@ -961,7 +961,7 @@ def test_that_ert_chooses_minimum_realization_with_design_matrix(
     )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_that_file_dialog_close_when_run_dialog_hidden(qtbot: QtBot, run_dialog):
     with qtbot.waitSignal(run_dialog.simulation_done, timeout=10000):
         assert not run_dialog.findChild(FileDialog)  # No file dialog from fixture setup
@@ -996,7 +996,7 @@ def test_that_run_dialog_clears_warnings_when_rerun(qtbot, monkeypatch):
 
 
 @pytest.mark.timeout(10)
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "events",
     [

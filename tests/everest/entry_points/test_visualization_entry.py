@@ -19,7 +19,7 @@ class MockPluginManager(pluggy.PluginManager):
         self.register(hook_impl)
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.xdist_group("math_func/config_advanced.yml")
 @patch("everest.bin.visualization_script.EverestPluginManager", MockPluginManager)
 def test_expected_message_when_no_visualisation_plugin_is_installed(cached_example):
@@ -30,7 +30,7 @@ def test_expected_message_when_no_visualisation_plugin_is_installed(cached_examp
 
 
 @skipif_no_everviz
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
 @patch("subprocess.call")
 def test_that_everviz_can_setup_everviz_config(mock_call, cached_example):

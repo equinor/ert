@@ -24,7 +24,7 @@ def test_pressing_copy_button_in_error_dialog(qtbot: QtBot):
     assert QApplication.clipboard().text() == "world"
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_warning_is_visible_on_incompatible_plot_api_version(
     qtbot: QtBot, tmp_path, monkeypatch, use_tmpdir
 ):
@@ -45,7 +45,7 @@ def test_warning_is_visible_on_incompatible_plot_api_version(
         assert label.text().startswith("<b>Plot API version mismatch detected")
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_that_plotting_gen_kw_parameter_with_negative_values_hides_log_scale_checkbox(
     qtbot: QtBot, monkeypatch
 ):

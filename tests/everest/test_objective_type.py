@@ -8,7 +8,7 @@ from everest.config import EverestConfig
 from tests.everest.utils import get_optimal_result
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_objective_type(copy_math_func_test_data_to_tmp):
     # Arrange

@@ -92,7 +92,7 @@ def test_migration_to_genkw_with_polars_and_design_matrix(
         )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("copy_shared")
 @pytest.mark.parametrize(
     "ert_version",
@@ -214,7 +214,7 @@ def test_that_storage_matches(
         )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("copy_shared")
 @pytest.mark.parametrize(
     "ert_version",
@@ -287,7 +287,7 @@ def test_that_storage_works_with_missing_parameters_and_responses(
             ensembles[0].load_responses("GEN", (0,))
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_that_migrate_blockfs_creates_backup_folder(tmp_path, caplog):
     storage_path = tmp_path / "storage"
     storage_ensembles = storage_path / "ensembles"
@@ -325,7 +325,7 @@ def test_that_migrate_blockfs_creates_backup_folder(tmp_path, caplog):
     assert (storage_backup / "ensembles" / "ens_dummy.txt").exists()
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("copy_shared")
 @pytest.mark.parametrize(
     "ert_version",
@@ -436,7 +436,7 @@ def test_that_manual_update_from_migrated_storage_works(
             )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("copy_shared")
 @pytest.mark.parametrize(
     "ert_version",
@@ -492,7 +492,7 @@ def test_migrate_storage_with_no_responses(
     open_storage(Path(storage_path), "w")
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("copy_shared")
 @pytest.mark.parametrize(
     "ert_version",

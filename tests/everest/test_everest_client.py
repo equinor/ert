@@ -84,7 +84,7 @@ def client_server_mock() -> tuple[FastAPI, threading.Thread, EverestClient]:
         server_thread.join()
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.flaky(rerun=2)
 def test_that_stop_invokes_correct_endpoint(
     caplog, client_server_mock: tuple[FastAPI, threading.Thread, EverestClient]
@@ -105,7 +105,7 @@ def test_that_stop_invokes_correct_endpoint(
     server_thread.should_exit = True
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_that_stop_errors_on_non_ok_httpcode(
     caplog, client_server_mock: tuple[FastAPI, threading.Thread, EverestClient]
 ):
@@ -142,7 +142,7 @@ def test_that_stop_errors_on_server_down(
     )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_that_stop_errors_on_server_up_but_endpoint_down(
     caplog, client_server_mock: tuple[FastAPI, threading.Thread, EverestClient]
 ):
@@ -160,7 +160,7 @@ def test_that_stop_errors_on_server_up_but_endpoint_down(
 
 
 @pytest.mark.skip_mac_ci
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
 @pytest.mark.flaky(rerun=3)
 @pytest.mark.skipif(

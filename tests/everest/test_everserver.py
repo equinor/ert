@@ -106,7 +106,7 @@ def test_configure_logger_failure(mock_configure_loggers, change_to_tmpdir, capl
 
 
 @pytest.mark.skip_mac_ci
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.xdist_group(name="starts_everest")
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
 @patch("everest.detached.everserver._configure_loggers")
@@ -123,7 +123,7 @@ async def test_status_exception(mock_configure_loggers, change_to_tmpdir, min_co
 
 
 @pytest.mark.skip_mac_ci
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.xdist_group(name="starts_everest")
 @pytest.mark.timeout(240)
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
@@ -152,7 +152,7 @@ async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
 
 
 @pytest.mark.skip_mac_ci
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.xdist_group(name="starts_everest")
 @pytest.mark.timeout(240)
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
@@ -181,7 +181,7 @@ async def test_status_too_few_realizations_succeeded(copy_math_func_test_data_to
 
 
 @pytest.mark.skip_mac_ci
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.xdist_group(name="starts_everest")
 @pytest.mark.timeout(240)
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])
@@ -207,7 +207,7 @@ async def test_status_all_realizations_failed(copy_math_func_test_data_to_tmp):
 
 
 @pytest.mark.skip_mac_ci
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.xdist_group(name="starts_everest")
 @pytest.mark.timeout(240)
 @patch("sys.argv", ["name", "--output-dir", "everest_output"])

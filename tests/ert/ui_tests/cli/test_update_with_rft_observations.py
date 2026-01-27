@@ -13,7 +13,7 @@ from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from .run_cli import run_cli
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.skipif(not shutil.which("flow"), reason="flow not available")
 def test_that_rft_example_with_rft_observation_keyword_yelds_same_result_as_gendata_rft(
     use_tmpdir, source_root, snapshot, request

@@ -41,7 +41,7 @@ from everest.detached import (
 from tests.everest.utils import everest_config_with_defaults
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.skip_mac_ci
 @pytest.mark.xdist_group(name="starts_everest")
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
@@ -274,7 +274,7 @@ def test_simulator_queue_system_site_config(queue_options, use_plugin, min_confi
 
 
 @pytest.mark.timeout(5)  # Simulation might not finish
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.xdist_group(name="starts_everest")
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 async def test_starting_not_in_folder(tmp_path, monkeypatch):
