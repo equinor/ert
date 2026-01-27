@@ -228,6 +228,7 @@ def test_rft_observation_csv_declaration():
             north=71.0,
             east=30.0,
             tvd=2000.0,
+            zone="zone1",
         ),
         RFTObservation(
             name="NAME[1]",
@@ -239,6 +240,7 @@ def test_rft_observation_csv_declaration():
             north=72.0,
             east=31.0,
             tvd=2100.0,
+            zone="zone2",
         ),
     ]
 
@@ -383,6 +385,7 @@ def test_that_property_can_be_specified_for_rft_observation_csv_declaration():
             north=71.0,
             east=30.0,
             tvd=2000.0,
+            zone="zone1",
         )
     ]
 
