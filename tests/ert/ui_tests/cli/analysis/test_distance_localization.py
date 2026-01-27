@@ -39,7 +39,7 @@ def assert_variance_in_field(
 
 @pytest.mark.timeout(600)
 @pytest.mark.usefixtures("copy_snake_oil_field")
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_that_distance_localization_works_with_a_single_observation():
     with Path("snake_oil_field.ert").open("r+", encoding="utf-8") as f:
         lines = f.readlines()
@@ -77,7 +77,7 @@ def test_that_distance_localization_works_with_a_single_observation():
 
 @pytest.mark.timeout(600)
 @pytest.mark.usefixtures("copy_heat_equation")
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_that_distance_localization_runs_on_heat_equation():
     with Path("config.ert").open(encoding="utf-8") as fh:
         lines = fh.readlines()

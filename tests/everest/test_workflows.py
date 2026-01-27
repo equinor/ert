@@ -13,7 +13,7 @@ from ert.run_models.everest_run_model import EverestRunModel
 from everest.config import EverestConfig
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.parametrize("test_deprecated", [True, False])
 def test_workflow_will_run_during_experiment(
     min_config, test_deprecated, tmp_path, monkeypatch

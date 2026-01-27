@@ -16,7 +16,6 @@ from ert.config import (
 from ert.config.parsing import ConfigKeys, ConfigWarning
 
 
-@pytest.mark.integration_test
 def test_analysis_config_from_file_is_same_as_from_dict(monkeypatch, tmp_path):
     with pd.ExcelWriter(tmp_path / "my_design_matrix.xlsx") as xl_write:
         design_matrix_df = pd.DataFrame(

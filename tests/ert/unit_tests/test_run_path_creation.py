@@ -87,7 +87,7 @@ def test_that_job_name_in_run_arg_is_the_jobname_from_the_config_with_iens_subst
     ]
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 @pytest.mark.filterwarnings("ignore:EGrid file given with numres")
 async def test_that_create_run_path_overwrites_symlinks_by_file(
@@ -1184,7 +1184,7 @@ async def test_that_create_run_path_emits_expected_events(prior_ensemble) -> Non
     assert isinstance(events[-1], FinishedTotalRunPathCreationEvent)
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.timeout(10)
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_generate_parameter_files_raises_when_end_event_is_set(storage):
@@ -1229,7 +1229,7 @@ def test_that_generate_parameter_files_raises_when_end_event_is_set(storage):
     timer.cancel()
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.timeout(10)
 @pytest.mark.usefixtures("use_tmpdir")
 async def test_that_create_run_path_raises_when_end_event_is_set(run_args, storage):

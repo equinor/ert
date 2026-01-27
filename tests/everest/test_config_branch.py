@@ -10,7 +10,7 @@ from everest.config import EverestConfig
 from everest.config_file_loader import load_yaml
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.xdist_group("math_func/config_advanced.yml")
 def test_get_controls_for_batch(cached_example):
     config_dir, config_file, _, _ = cached_example("math_func/config_advanced.yml")
@@ -39,7 +39,7 @@ def test_get_controls_for_batch(cached_example):
     )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.xdist_group("math_func/config_advanced.yml")
 def test_update_controls_initial_guess(cached_example):
     config_path, config_file, _, _ = cached_example("math_func/config_advanced.yml")

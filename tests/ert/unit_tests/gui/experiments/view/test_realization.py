@@ -51,7 +51,7 @@ class MockDelegate(QStyledItemDelegate):
         return self._size
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_delegate_drawing_count(small_snapshot, qtbot):
     it = 0
     widget = RealizationWidget(it)
@@ -80,7 +80,7 @@ def test_delegate_drawing_count(small_snapshot, qtbot):
         )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_selection_success(large_snapshot, qtbot):
     it = 0
     widget = RealizationWidget(it)
@@ -119,7 +119,7 @@ def test_selection_success(large_snapshot, qtbot):
         )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_realization_hover_yields_tooltip(full_snapshot, qtbot):
     it = 0
     widget = RealizationWidget(it)

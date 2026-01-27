@@ -10,7 +10,7 @@ from tests.everest.utils import get_optimal_result
 CONFIG_FILE_ADVANCED = "config_advanced.yml"
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_fix_control(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file(CONFIG_FILE_ADVANCED)

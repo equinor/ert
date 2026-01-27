@@ -9,7 +9,7 @@ from requests import Response
 from ert.dark_storage.common import get_storage_api_version
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_get_experiment(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     answer_json = resp.json()
@@ -19,7 +19,7 @@ def test_get_experiment(poly_example_tmp_dir, dark_storage_client):
     assert "name" in answer_json[0]
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_get_storage_api_version(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/version")
     answer_json = resp.json()
@@ -33,7 +33,7 @@ def test_get_storage_api_version(poly_example_tmp_dir, dark_storage_client):
     )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_get_ensemble(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()
@@ -50,7 +50,7 @@ def test_get_ensemble(poly_example_tmp_dir, dark_storage_client):
     assert ensemble_json["userdata"]["experiment_name"] == experiment_json[0]["name"]
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_get_responses_with_observations(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()[0]
@@ -71,7 +71,7 @@ def test_get_responses_with_observations(poly_example_tmp_dir, dark_storage_clie
     }
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_get_response(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()
@@ -123,7 +123,7 @@ def test_get_response(poly_example_tmp_dir, dark_storage_client):
     assert len(record_df1.index) == 3
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_get_summary_response(
     copy_snake_oil_case_storage, dark_storage_client_snake_oil
 ):
@@ -167,7 +167,7 @@ def test_get_summary_response(
     assert len(record_df.index) == 5
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_get_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()[0]
@@ -218,7 +218,7 @@ def test_get_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
     }
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_get_experiment_observations(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()
@@ -239,7 +239,7 @@ def test_get_experiment_observations(poly_example_tmp_dir, dark_storage_client):
     assert response_json[0]["radius"] == 5 * [None]
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_that_heat_equation_get_observations_with_locations(
     symlink_heat_equation_storage_es, dark_storage_client_heat_equation
 ):
@@ -266,7 +266,7 @@ def test_that_heat_equation_get_observations_with_locations(
     assert obs["radius"] == [3]
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_get_record_observations(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     answer_json = resp.json()
@@ -286,7 +286,7 @@ def test_get_record_observations(poly_example_tmp_dir, dark_storage_client):
     assert response_json[0]["north"] == 5 * [None]
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "coeffs",
     [

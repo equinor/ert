@@ -61,7 +61,7 @@ def small_snapshot() -> EnsembleSnapshot:
     return snapshot
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.skip_mac_ci  # slow
 def test_using_qt_model_tester(small_snapshot):
     model = SnapshotModel()

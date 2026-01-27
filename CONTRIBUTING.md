@@ -116,17 +116,11 @@ However, sometimes it is best to split those up:
 
 ## Test categories
 
-Tests that are in the `tests/ert/unit_tests` directory and are
-not marked with `integration_test` are meant to be exceptionally
-fast and reliable. This is so that one can run those while
-iterating on the code. This means special care has to
-be made when placing tests here.
-
-### Integration tests
-
-By "integration test" we simply mean unit tests that did not quite
-cut it, either because they are too slow, too unreliable, have difficult
-to understand error messages, etc.
+Tests that are in the `tests/ert/unit_tests` directory and are not marked with
+`slow`, `unreliable`, or `high_utilization` are meant to be exceptionally fast,
+reliable and use a limited amount of resources. This is so that one can run
+those while iterating on the code. This means special care has to be made when
+placing tests here.
 
 ### UI tests
 

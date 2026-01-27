@@ -445,7 +445,7 @@ def test_that_get_rft_observations_and_responses_order_is_row_index_within_well(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-@pytest.mark.integration_test
+@pytest.mark.slow
 @given(
     response_values=st.lists(
         st.floats(allow_infinity=False, allow_nan=False, width=32), min_size=1

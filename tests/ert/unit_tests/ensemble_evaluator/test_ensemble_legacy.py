@@ -11,7 +11,7 @@ from ert.scheduler import job
 from ert.scheduler.job import Job
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.timeout(60)
 @pytest.mark.asyncio
 async def test_run_legacy_ensemble(
@@ -39,7 +39,7 @@ async def test_run_legacy_ensemble(
             assert os.path.isfile(f"real_{i}/status.txt")
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.timeout(30)
 @pytest.mark.usefixtures("use_tmpdir")
 async def test_run_and_cancel_legacy_ensemble(

@@ -89,7 +89,7 @@ def job_dict(
     }
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_custom_setsid")
 def test_that_all_subprocesses_of_a_job_are_cleaned_up_on_fm_dispatch_termination(
     tmp_path: Path,
@@ -135,7 +135,7 @@ def test_that_all_subprocesses_of_a_job_are_cleaned_up_on_fm_dispatch_terminatio
     os.wait()  # allow os to clean up zombie processes
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_tmpdir")
 def test_memory_profile_is_logged_as_csv(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
@@ -178,7 +178,7 @@ def test_memory_profile_is_logged_as_csv(
     assert (mem_df["rss"] >= 0).all()  # 0 has been observed
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_custom_setsid")
 def test_that_a_subset_of_jobs_to_run_can_be_specified_as_cmdline_arguments(
     tmp_path: Path,
@@ -382,7 +382,7 @@ async def wait_for_msg(zmq_server, msg_type: str) -> None:
 
 
 @pytest.mark.timeout(30)
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_custom_setsid")
 async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_sigterm(
     sleep_executable: str,
@@ -424,7 +424,7 @@ async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_sigterm(
 
 
 @pytest.mark.timeout(30)
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_custom_setsid")
 async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_terminate_msg(
     sleep_executable: str,

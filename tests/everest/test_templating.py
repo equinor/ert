@@ -149,7 +149,7 @@ def test_render_multiple_input(change_to_tmpdir):
     assert Path(wells_out).read_text(encoding="utf-8").splitlines() == ["0.2 vs 0.8"]
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_install_template(change_to_tmpdir):
     YAML(typ="safe", pure=True).dump(CONFIG, Path("config.yml"))
@@ -195,7 +195,7 @@ def test_well_order_template(change_to_tmpdir):
         assert well_order[order[idx]] <= well_order[order[idx + 1]]
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.parametrize("test", ["install_templates", "template_render"])
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_user_specified_data_n_template(copy_math_func_test_data_to_tmp, test):

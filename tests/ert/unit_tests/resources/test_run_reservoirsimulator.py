@@ -117,7 +117,7 @@ def test_await_completed_summary_file_will_return_asap():
 
 
 @pytest.mark.flaky(reruns=5)
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_tmpdir")
 def test_await_completed_summary_file_will_wait_for_slow_smry():
     # This is a timing test, and has inherent flakiness:

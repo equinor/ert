@@ -15,7 +15,7 @@ from ert.run_models.ensemble_experiment import EnsembleExperiment
 from tests.ert.handle_run_path_dialog import handle_run_path_dialog
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_run_path_deleted_error(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
     snake_oil_case = snake_oil_case_storage
     args_mock = Mock()
@@ -60,7 +60,7 @@ def test_run_path_deleted_error(snake_oil_case_storage: ErtConfig, qtbot: QtBot)
     assert dummy_file.exists()
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_run_path_is_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
     snake_oil_case = snake_oil_case_storage
     args_mock = Mock()
@@ -103,7 +103,7 @@ def test_run_path_is_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
     assert not dummy_file.exists()
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_run_path_is_not_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
     snake_oil_case = snake_oil_case_storage
     args_mock = Mock()

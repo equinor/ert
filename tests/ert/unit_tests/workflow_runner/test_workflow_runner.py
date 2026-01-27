@@ -178,7 +178,7 @@ def test_workflow_run():
     assert Path("dump2").read_text(encoding="utf-8") == "dump_text_2"
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
 def test_workflow_thread_cancel_ert_script():
@@ -216,7 +216,7 @@ def test_workflow_thread_cancel_ert_script():
     assert not Path("wait_finished_2").exists()
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
 def test_workflow_thread_cancel_external():
@@ -274,7 +274,7 @@ def test_workflow_failed_job():
         assert workflow_runner.exception() is not None
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
 def test_workflow_success():

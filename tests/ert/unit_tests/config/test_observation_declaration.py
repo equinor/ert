@@ -35,7 +35,7 @@ def make_and_parse_observations(contents, filename):
     )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @given(observation_contents)
 def test_parsing_contents_succeeds_or_gives_config_error(contents):
     with suppress(ObservationConfigError):

@@ -110,5 +110,5 @@ class DarkStorageStateTest(StatefulStorageTest):
 
 
 TestDarkStorage = pytest.mark.skip_mac_ci(
-    pytest.mark.integration_test(DarkStorageStateTest.TestCase)
+    pytest.mark.slow(DarkStorageStateTest.TestCase)
 )

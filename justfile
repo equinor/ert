@@ -16,7 +16,7 @@ rapid-tests:
     OMP_NUM_THREADS=1 pytest -n auto --dist loadgroup tests/ert/unit_tests tests/everest \
     --hypothesis-profile=fast \
     --benchmark-disable \
-    -m "not (integration_test or flaky or memory_test or limit_memory)" \
+    -m "not (slow or unreliable or high_utilization)" \
     --timeout=10 --session-timeout=120 \
     -p no:memray
 
@@ -27,7 +27,7 @@ ert-rapid-tests:
     --ignore=tests/ert/unit_tests/dark_storage \
     --ignore=tests/ert/unit_tests/config/test_transfer_functions.py \
     --ignore=tests/ert/unit_tests/ensemble_evaluator/test_ensemble_client.py \
-    -m "not (integration_test or flaky or memory_test or limit_memory or creates_tmpdir)" \
+    -m "not (slow or unreliable or high_utilization or creates_tmpdir)" \
     -p no:memray -p no:doctest -p no:benchmark -p no:mpl -p no:cov -p no:pytest-qt
 
 continuous_tests:
