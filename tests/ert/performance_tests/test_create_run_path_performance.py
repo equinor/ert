@@ -71,7 +71,14 @@ def test_create_run_path_load_scalar_keys_performance(
     ]
 
     with open_storage(storage_path, mode="w") as storage:
-        exp = storage.create_experiment(parameters=parameter_configs, name="perf-exp")
+        exp = storage.create_experiment(
+            experiment_config={
+                "parameter_configs": [
+                    pc.model_dump(mode="json") for pc in parameter_configs
+                ]
+            },
+            name="perf-exp",
+        )
         ensemble = exp.create_ensemble(ensemble_size=reals, name="default")
 
         rng = np.random.default_rng(42)
