@@ -1,6 +1,7 @@
 from pathlib import Path
 from textwrap import dedent
 
+import numpy as np
 import pytest
 
 from ert.config import ErtConfig
@@ -65,11 +66,11 @@ def test_that_distance_localization_works_with_a_single_observation():
 
     poro_prior = ens_prior.load_parameters("PORO")
     poro_posterior = ens_posterior.load_parameters("PORO")
+    prior_var = poro_prior.var(dim="realizations", ddof=1)["values"]
+    post_var = poro_posterior.var(dim="realizations", ddof=1)["values"]
 
-    prior_mean = poro_prior["values"].mean(dim="realizations")
-    posterior_mean = poro_posterior["values"].mean(dim="realizations")
-    delta_mean = posterior_mean - prior_mean
-    obs_col_update = delta_mean.sel(x=5, y=5)  # location of observation
-    obs_update_obs = obs_col_update.mean(dim="z")
-    obs_update_global = delta_mean.mean(dim="z").mean(dim="y").mean(dim="x")
-    assert obs_update_obs > obs_update_global
+    np.testing.assert_array_less(post_var.values, prior_var.values)
+    np.testing.assert_array_less(
+        post_var.sel(x=5, y=5).values, prior_var.sel(x=5, y=5).values
+    )
+    np.testing.assert_equal(post_var.sel(x=5, y=5).values, post_var.max().values)
