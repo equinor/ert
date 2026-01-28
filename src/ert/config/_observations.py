@@ -512,8 +512,78 @@ class RFTObservation(BaseModel):
         return [obs_instance]
 
 
+class BreakthroughObservation(BaseModel):
+    type: Literal["breakthrough"] = "breakthrough"
+    name: str
+    response_key: str
+    date: datetime
+    error: float
+    threshold: float
+    north: float | None
+    east: float | None
+    radius: float | None
+
+    @classmethod
+    def from_obs_dict(cls, directory: str, obs_dict: ObservationDict) -> list[Self]:
+        response_key = None
+        date = None
+        error = None
+        threshold = None
+        localization_dict: dict[str, float | None] = {}
+        for key, value in obs_dict.items():
+            match key:
+                case "type" | "name":
+                    pass
+                case "KEY":
+                    response_key = value
+                case "DATE":
+                    date = value
+                case "ERROR":
+                    error = validate_float(value, key)
+                case "THRESHOLD":
+                    threshold = validate_float(value, key)
+                case "LOCALIZATION":
+                    validate_localization(value, obs_dict["name"])
+                    localization_dict["east"] = validate_float(value["EAST"], key)
+                    localization_dict["north"] = validate_float(value["NORTH"], key)
+                    localization_dict["radius"] = (
+                        validate_float(value["RADIUS"], key)
+                        if "RADIUS" in value
+                        else None
+                    )
+                case _:
+                    raise _unknown_key_error(str(key), value)
+
+        if response_key is None:
+            raise _missing_value_error(obs_dict["name"], "KEY")
+        if date is None:
+            raise _missing_value_error(obs_dict["name"], "DATE")
+        if error is None:
+            raise _missing_value_error(obs_dict["name"], "ERROR")
+        if threshold is None:
+            raise _missing_value_error(obs_dict["name"], "THRESHOLD")
+
+        return [
+            cls(
+                name=obs_dict["name"],
+                response_key=response_key,
+                date=date,
+                error=error,
+                threshold=threshold,
+                north=localization_dict.get("north"),
+                east=localization_dict.get("east"),
+                radius=localization_dict.get("radius"),
+            )
+        ]
+
+
 Observation = Annotated[
-    (SummaryObservation | GeneralObservation | RFTObservation),
+    (
+        SummaryObservation
+        | GeneralObservation
+        | RFTObservation
+        | BreakthroughObservation
+    ),
     Field(discriminator="type"),
 ]
 
