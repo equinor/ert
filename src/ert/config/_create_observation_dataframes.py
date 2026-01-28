@@ -11,6 +11,7 @@ import polars as pl
 from ert.validation import rangestring_to_list
 
 from ._observations import (
+    BreakthroughObservation,
     GeneralObservation,
     Observation,
     RFTObservation,
@@ -61,6 +62,8 @@ def create_observation_dataframes(
                             "rft_config is not None when using RFTObservation"
                         )
                     grouped["rft"].append(_handle_rft_observation(rft_config, obs))
+                case BreakthroughObservation():
+                    pass
                 case default:
                     assert_never(default)
         except ObservationConfigError as err:
