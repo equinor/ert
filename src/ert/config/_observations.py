@@ -591,6 +591,7 @@ _TYPE_TO_CLASS: dict[ObservationType, type[Observation]] = {
     ObservationType.SUMMARY: SummaryObservation,
     ObservationType.GENERAL: GeneralObservation,
     ObservationType.RFT: RFTObservation,
+    ObservationType.BREAKTHROUGH: BreakthroughObservation,
 }
 
 
