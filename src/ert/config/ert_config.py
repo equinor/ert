@@ -110,6 +110,7 @@ def create_forward_model_json(
     env_vars: dict[str, str] | None = None,
     env_pr_fm_step: dict[str, dict[str, Any]] | None = None,
     skip_pre_experiment_validation: bool = False,
+    max_runtime: int | None = None,
 ) -> ForwardModelJSON:
     if env_vars is None:
         env_vars = {}
@@ -250,6 +251,7 @@ def create_forward_model_json(
         "jobList": job_list,
         "run_id": run_id,
         "ert_pid": str(os.getpid()),
+        "max_runtime": max_runtime,
     }
 
 

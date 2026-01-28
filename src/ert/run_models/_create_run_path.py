@@ -240,6 +240,7 @@ def create_run_path(
     parameters_file: str,
     runpaths: Runpaths,
     context_env: dict[str, str] | None = None,
+    max_runtime: int | None = None,
 ) -> None:
     if context_env is None:
         context_env = {}
@@ -310,6 +311,7 @@ def create_run_path(
                 run_id=run_arg.run_id,
                 iens=run_arg.iens,
                 itr=ensemble.iteration,
+                max_runtime=max_runtime,
             )
             Path(run_path / "jobs.json").write_bytes(
                 orjson.dumps(

@@ -293,6 +293,8 @@ class Job:
                 await self._send(JobState.FAILED)
 
     async def _max_runtime_task(self) -> None:
+        # This is also done on the fm_dispatch side of Ert as a backup in case
+        # Ert crashes while the job is still running on the cluster
         assert self.real.max_runtime is not None
         await asyncio.sleep(self.real.max_runtime)
         timeout_event = RealizationTimeout(
