@@ -1331,6 +1331,9 @@ async def _write_responses_to_storage(
                 exc_info=err,
             )
             continue
+        # for config in ensemble.experiment.derived_response_configuration.values():
+        #     ds = config.calculate(ensemble)
+        #     ensemble.save_response(config.type, ds, realization)
 
     if errors:
         return LoadResult.failure("\n".join(errors))
