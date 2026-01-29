@@ -9,7 +9,7 @@ from everest.config_file_loader import load_yaml
 from everest.everest_storage import EverestStorage
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
 def test_config_branch_entry(cached_example):
     path, _, _, _ = cached_example("math_func/config_minimal.yml")
@@ -47,7 +47,7 @@ def test_config_branch_entry(cached_example):
     assert new_controls_initial_guesses == control_values
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
 def test_config_branch_preserves_config_section_order(cached_example):
     path, _, _, _ = cached_example("math_func/config_minimal.yml")

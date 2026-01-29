@@ -49,7 +49,7 @@ def obs() -> pl.DataFrame:
     )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "misfit_preprocess", [[["*"]], [], [["FOPR"]], [["FOPR"], ["WOPR_OP1_1*"]]]
 )
@@ -92,7 +92,7 @@ def test_update_report(
     )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
 def test_update_report_with_exception_in_analysis_ES(
     snapshot,
@@ -131,7 +131,7 @@ def test_update_report_with_exception_in_analysis_ES(
     )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.snapshot_test
 @pytest.mark.parametrize(
     ("update_settings", "num_overspread", "num_collapsed", "num_nan", "num_active"),
@@ -444,7 +444,7 @@ def test_update_raises_on_singular_matrix(tmp_path):
 
 @pytest.mark.snapshot_test
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward")
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_update_snapshot(
     snake_oil_case_storage,
     snake_oil_storage,
@@ -623,7 +623,7 @@ def test_smoother_snapshot_alpha(
         )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_update_only_using_subset_observations(
     snake_oil_case_storage, snake_oil_storage, snapshot
 ):

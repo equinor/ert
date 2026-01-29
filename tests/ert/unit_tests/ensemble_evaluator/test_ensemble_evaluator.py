@@ -216,7 +216,7 @@ async def evaluator_to_use_fixture(monkeypatch, make_ee_config):
     await run_task
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.timeout(20)
 async def test_restarted_jobs_do_not_have_error_msgs(evaluator_to_use):
     (evaluator, event_queue) = evaluator_to_use
@@ -340,7 +340,7 @@ def test_overspent_cpu_is_logged(
     caplog.clear()
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 async def test_snapshot_on_resubmit_is_cleared(evaluator_to_use):
     (evaluator, event_queue) = evaluator_to_use
     token = evaluator._config.token
@@ -416,7 +416,7 @@ async def test_snapshot_on_resubmit_is_cleared(evaluator_to_use):
         )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 async def test_signal_cancel_does_not_cause_evaluator_dispatcher_communication_to_hang(
     evaluator_to_use, monkeypatch
 ):
@@ -519,7 +519,7 @@ async def test_signal_cancel_sends_terminate_message_to_dispatchers(evaluator_to
 
 
 @pytest.mark.timeout(10)
-@pytest.mark.integration_test
+@pytest.mark.slow
 async def test_signal_cancel_terminates_fm_dispatcher_with_terminate_message(
     tmpdir, monkeypatch, make_ensemble, caplog
 ):
@@ -589,7 +589,7 @@ async def test_signal_cancel_terminates_fm_dispatcher_with_terminate_message(
 
 
 @pytest.mark.timeout(10)
-@pytest.mark.integration_test
+@pytest.mark.slow
 async def test_signal_cancel_terminates_fm_dispatcher_with_scheduler_as_fallback(
     tmpdir, monkeypatch: pytest.MonkeyPatch, make_ensemble, caplog
 ):
@@ -777,7 +777,7 @@ async def test_that_evaluator_listen_for_messages_exits_if_socket_has_been_close
 
 
 @pytest.mark.timeout(5)
-@pytest.mark.integration_test
+@pytest.mark.slow
 async def test_evaluator_forwards_scheduler_warning(
     evaluator_to_use,
 ):

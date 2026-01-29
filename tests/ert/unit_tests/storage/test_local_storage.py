@@ -1738,4 +1738,4 @@ class StatefulStorageTest(RuleBasedStateMachine):
             shutil.rmtree(self.tmpdir)
 
 
-TestStorage = pytest.mark.integration_test(StatefulStorageTest.TestCase)
+TestStorage = pytest.mark.slow(StatefulStorageTest.TestCase)

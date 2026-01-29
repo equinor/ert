@@ -13,7 +13,7 @@ from everest.config.install_job_config import InstallForwardModelStepConfig
 
 @pytest.mark.skip_mac_ci
 @pytest.mark.timeout(240)  # Simulation might not finish
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.xdist_group(name="starts_everest")
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_logging_setup(copy_math_func_test_data_to_tmp):

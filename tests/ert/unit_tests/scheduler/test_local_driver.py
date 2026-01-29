@@ -53,7 +53,7 @@ async def test_kill_while_running():
 
 
 @pytest.mark.timeout(3)
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "sleep_before_killing", [None, 0, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1]
 )
@@ -73,7 +73,7 @@ async def test_kill_before_running(sleep_before_killing):
 
 
 @pytest.mark.timeout(10)
-@pytest.mark.integration_test
+@pytest.mark.slow
 async def test_kill_unresponsive_process(monkeypatch, tmp_path):
     # Reduce timeout to something more appropriate for a test
     monkeypatch.setattr(local_driver, "_TERMINATE_TIMEOUT", 0.1)
@@ -106,7 +106,7 @@ async def test_kill_unresponsive_process(monkeypatch, tmp_path):
     )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.parametrize(("cmd", "returncode"), [("true", 0), ("false", 1)])
 async def test_kill_when_job_completed(cmd, returncode, use_tmpdir):
     driver = LocalDriver()

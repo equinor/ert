@@ -314,7 +314,7 @@ def generate_random_text(size):
 
 
 @pytest.mark.parametrize("tail_chars_to_read", [(5), (50), (500), (700)])
-@pytest.mark.integration_test
+@pytest.mark.slow
 async def test_slurm_can_retrieve_stdout_and_stderr(
     job_name, tail_chars_to_read, use_tmpdir
 ):
@@ -338,7 +338,7 @@ async def test_slurm_can_retrieve_stdout_and_stderr(
     assert stdout_txt[-min(tail_chars_to_read, num_written_characters) + 2 :] in message
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 async def test_submit_to_named_queue(tmp_path, job_name, monkeypatch):
     """If the environment variable _ERT_TEST_ALTERNATIVE_QUEUE is defined
     a job will be attempted submitted to that queue.
@@ -383,7 +383,7 @@ async def test_submit_with_num_cpu(pytestconfig, job_name, use_tmpdir):
     assert Path("test").read_text(encoding="utf-8") == "test\n"
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.flaky(reruns=4)
 async def test_kill_before_submit_is_finished(
     monkeypatch, caplog, pytestconfig, request, tmp_path

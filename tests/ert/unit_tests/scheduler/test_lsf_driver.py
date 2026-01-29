@@ -116,7 +116,7 @@ async def test_exit_codes(
     assert await driver._get_exit_code("0") == exit_code
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @given(
     jobstate_sequence=st.lists(st.sampled_from(JobState.__args__), min_size=1),
     exit_code=st.integers(min_value=1, max_value=254),
@@ -523,7 +523,7 @@ def test_parse_bjobs_invalid_state_is_logged(caplog):
     assert "Unknown state FOO" in caplog.text
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.parametrize(
     ("bjobs_script", "expectation"),
     [
@@ -1022,7 +1022,7 @@ def not_found_bjobs(monkeypatch, tmp_path):
     )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 async def test_bjobs_exec_host_logs_only_once(use_tmpdir, job_name, caplog):
     caplog.set_level(logging.DEBUG)
     driver = LsfDriver()
@@ -1037,7 +1037,7 @@ async def test_bjobs_exec_host_logs_only_once(use_tmpdir, job_name, caplog):
     assert caplog.text.count("was assigned to host:") == 1
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 async def test_lsf_stdout_file(use_tmpdir, job_name):
     driver = LsfDriver()
     driver._poll_period = 0.01
@@ -1053,7 +1053,7 @@ async def test_lsf_stdout_file(use_tmpdir, job_name):
     assert "yay" in lsf_stdout
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 async def test_lsf_dumps_stderr_to_file(use_tmpdir, job_name):
     driver = LsfDriver()
     driver._poll_period = 0.01
@@ -1075,7 +1075,7 @@ def generate_random_text(size):
     return "".join(random.choice(letters) for i in range(size))
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.parametrize("tail_chars_to_read", [(5), (50), (500), (700)])
 async def test_lsf_can_retrieve_stdout_and_stderr(
     use_tmpdir, job_name, tail_chars_to_read
@@ -1100,7 +1100,7 @@ async def test_lsf_can_retrieve_stdout_and_stderr(
     assert stdout_txt[-min(tail_chars_to_read, num_written_characters) + 2 :] in message
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 async def test_lsf_cannot_retrieve_stdout_and_stderr(use_tmpdir, job_name):
     driver = LsfDriver()
     driver._poll_period = 0.01
@@ -1121,7 +1121,7 @@ async def test_lsf_cannot_retrieve_stdout_and_stderr(use_tmpdir, job_name):
     assert "LSF-stdout:\nNo output file" in message
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.parametrize("explicit_runpath", [(True), (False)])
 async def test_lsf_info_file_in_runpath(
     explicit_runpath, tmp_path, job_name, monkeypatch
@@ -1148,7 +1148,7 @@ async def test_lsf_info_file_in_runpath(
     ).keys() == {"job_id"}
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 async def test_submit_to_named_queue(tmp_path, job_name, monkeypatch):
     """If the environment variable _ERT_TEST_ALTERNATIVE_QUEUE is defined
     a job will be attempted submitted to that queue.
@@ -1164,7 +1164,7 @@ async def test_submit_to_named_queue(tmp_path, job_name, monkeypatch):
     assert (tmp_path / "test").read_text(encoding="utf-8") == "test\n"
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_tmpdir")
 async def test_submit_with_resource_requirement(job_name):
     resource_requirement = "select[cs && x86_64Linux]"
@@ -1229,7 +1229,7 @@ async def test_submit_with_num_cpu_with_bsub_capture():
     assert "-n 4" in Path("captured_bsub_args").read_text(encoding="utf-8")
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_tmpdir")
 async def test_submit_with_realization_memory(pytestconfig, job_name):
     if not pytestconfig.getoption("lsf"):
@@ -1261,7 +1261,7 @@ async def test_submit_with_realization_memory(pytestconfig, job_name):
     assert Path("test").read_text(encoding="utf-8") == "test\n"
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 async def test_polling_bhist_fallback(not_found_bjobs, caplog, job_name):
     caplog.set_level(logging.DEBUG)
     driver = LsfDriver()
@@ -1312,7 +1312,7 @@ async def test_jobname_with_spaces(use_tmpdir, pytestconfig):
     await poll(driver, {0})
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.flaky(rerun=3)
 async def test_that_kill_before_submit_is_finished_works(tmp_path, monkeypatch, caplog):
     """This test asserts that it is possible to issue a kill command

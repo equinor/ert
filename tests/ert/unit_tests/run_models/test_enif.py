@@ -15,7 +15,7 @@ from ert.storage import open_storage
 from tests.ert.conftest import _create_design_matrix
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_that_enif_update_does_not_update_design_matrix_parameters(
     copy_case,
 ):

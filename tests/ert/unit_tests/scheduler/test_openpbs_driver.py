@@ -181,7 +181,7 @@ async def test_cluster_label():
     assert "-l foobar" in Path("captured_qsub_args").read_text(encoding="utf-8")
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.parametrize(
     ("qstat_script", "started_expected"),
     [
@@ -577,7 +577,7 @@ async def mock_failure(message, *args, **kwargs):
     raise RuntimeError(message)
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("copy_poly_case")
 def test_openpbs_driver_with_poly_example_failing_submit_fails_ert_and_propagates_exception_to_user(  # noqa: E501
     monkeypatch, caplog, queue_name_config
@@ -596,7 +596,7 @@ def test_openpbs_driver_with_poly_example_failing_submit_fails_ert_and_propagate
     assert "RuntimeError: Submit job failed" in caplog.text
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("copy_poly_case")
 def test_openpbs_driver_with_poly_example_failing_poll_fails_ert_and_propagates_exception_to_user(  # noqa: E501
     monkeypatch, caplog, queue_name_config

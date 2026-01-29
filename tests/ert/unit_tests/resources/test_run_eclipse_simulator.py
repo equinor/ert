@@ -40,7 +40,7 @@ def e100_env(monkeypatch):
         monkeypatch.setenv(var, value)
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_tmpdir", "e100_env")
 @pytest.mark.requires_eclipse
 def test_run_eclipseX00_can_run_eclipse_and_verify(source_root):
@@ -67,7 +67,7 @@ def test_run_eclipseX00_can_run_eclipse_and_verify(source_root):
     )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_tmpdir", "e100_env")
 @pytest.mark.requires_eclipse
 def test_ecl100_binary_can_handle_extra_dots_in_casename(source_root):
@@ -91,7 +91,7 @@ def test_ecl100_binary_can_handle_extra_dots_in_casename(source_root):
     assert len(erun.parse_errors()) == 0
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_run_reservoirsimulator_argparse_api(source_root):
@@ -106,7 +106,7 @@ def test_run_reservoirsimulator_argparse_api(source_root):
     assert Path("EIGHTCELLS.OK").exists()
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_run_reservorsimulator_on_parallel_deck(source_root):
@@ -120,7 +120,7 @@ def test_run_reservorsimulator_on_parallel_deck(source_root):
     assert Path("SPE1.OK").exists()
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_run_reservoirsimulator_ignores_unrelated_summary_files(source_root):
@@ -137,7 +137,7 @@ def test_run_reservoirsimulator_ignores_unrelated_summary_files(source_root):
     assert Path("EIGHTCELLS.OK").exists()
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_run_reservoirsimulator_when_unsmry_is_ambiguous_with_mpi(source_root):
@@ -153,7 +153,7 @@ def test_run_reservoirsimulator_when_unsmry_is_ambiguous_with_mpi(source_root):
     assert Path("SPE1.OK").exists()
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_run_reservoirsimulator_reports_successful_runs_with_nosim(source_root):
@@ -169,7 +169,7 @@ def test_run_reservoirsimulator_reports_successful_runs_with_nosim(source_root):
     assert not Path("EIGHTCELLS.UNSMRY").exists()
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_run_reservoirsimulator_on_nosim_with_existing_unsmry_file(source_root):
@@ -205,7 +205,7 @@ def test_await_completed_summary_file_does_not_time_out_on_nosim_with_mpi(source
     # license checkout takes.
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_run_reservoirsimulator_on_nosim_with_mpi_and_existing_unsmry_file(source_root):
@@ -227,7 +227,7 @@ def test_run_reservoirsimulator_on_nosim_with_mpi_and_existing_unsmry_file(sourc
     assert Path("SPE1.OK").exists()
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_run_eclipseX00_will_raise_on_deck_errors(source_root):
@@ -242,7 +242,7 @@ def test_run_eclipseX00_will_raise_on_deck_errors(source_root):
         erun.run_eclipseX00()
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_failed_run_gives_nonzero_returncode_and_exception(monkeypatch):
@@ -264,7 +264,7 @@ def test_failed_run_gives_nonzero_returncode_and_exception(monkeypatch):
         erun.run_eclipseX00()
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_failing_eclipse_gives_system_exit(monkeypatch):
@@ -282,7 +282,7 @@ def test_failing_eclipse_gives_system_exit(monkeypatch):
         )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_run_reservoirsimulator_ignores_errors_in_deck_when_requested(source_root):
@@ -295,7 +295,7 @@ def test_run_reservoirsimulator_ignores_errors_in_deck_when_requested(source_roo
     )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_flag_needed_to_produce_hdf5_output_with_ecl100(source_root):
@@ -309,7 +309,7 @@ def test_flag_needed_to_produce_hdf5_output_with_ecl100(source_root):
     assert Path("EIGHTCELLS.h5").exists()
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.requires_eclipse
 @pytest.mark.usefixtures("use_tmpdir", "e100_env")
 def test_mpi_is_working_without_run_reservoirsimulator_knowing_it(source_root):
@@ -368,7 +368,7 @@ def test_find_unsmry(paths_to_touch, basepath, expectation):
         assert str(run_reservoirsimulator.find_unsmry(Path(basepath))) == expectation
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_tmpdir")
 def test_await_completed_summary_file_will_timeout_on_missing_smry():
     assert (
@@ -380,7 +380,7 @@ def test_await_completed_summary_file_will_timeout_on_missing_smry():
     )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_tmpdir")
 def test_await_completed_summary_file_will_return_asap():
     resfo.write("FOO.UNSMRY", [("INTEHEAD", np.array([1], dtype=np.int32))])
@@ -395,7 +395,7 @@ def test_await_completed_summary_file_will_return_asap():
 
 
 @pytest.mark.flaky(reruns=5)
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_tmpdir")
 def test_await_completed_summary_file_will_wait_for_slow_smry():
     # This is a timing test, and has inherent flakiness:

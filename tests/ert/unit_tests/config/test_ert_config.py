@@ -404,7 +404,7 @@ def test_that_subst_list_is_given_default_runpath_file():
     ] == os.path.abspath(ErtConfig.DEFAULT_RUNPATH_FILE)
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.filterwarnings("ignore:An Eclipse style grid with vertical ZCORN")  # xtgeo
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
@@ -423,7 +423,7 @@ def test_that_creating_ert_config_from_dict_is_same_as_from_file(
         assert config_from_dict == config_from_file
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.filterwarnings("ignore:An Eclipse style grid with vertical ZCORN")  # xtgeo
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
@@ -447,7 +447,7 @@ def test_that_ert_config_has_valid_schema():
 @pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
 @pytest.mark.filterwarnings("ignore:An Eclipse style grid with vertical ZCORN")  # xtgeo
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
-@pytest.mark.integration_test
+@pytest.mark.slow
 @settings(max_examples=10)
 @given(config_generators())
 def test_that_parsing_ert_config_result_in_expected_values(
@@ -728,7 +728,7 @@ def test_that_unknown_hooked_job_gives_config_validation_error():
         )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.filterwarnings("ignore:MIN_REALIZATIONS")
 @settings(max_examples=10)
@@ -761,7 +761,7 @@ def test_that_include_statements_with_multiple_values_raises_error():
         )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @pytest.mark.usefixtures("use_tmpdir")
 @given(anystring=st.text())

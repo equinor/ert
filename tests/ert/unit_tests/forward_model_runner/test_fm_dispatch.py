@@ -51,7 +51,7 @@ def use_custom_setsid(use_tmpdir):
     os.chmod("setsid", 0o755)
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_custom_setsid")
 def test_terminate_steps():
     # Executes itself recursively and sleeps for 100 seconds
@@ -121,7 +121,7 @@ else:
     os.wait()  # allow os to clean up zombie processes
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_tmpdir")
 def test_memory_profile_is_logged_as_csv(monkeypatch):
     """This tests that a csv is produced and has basic validity.
@@ -164,7 +164,7 @@ def test_memory_profile_is_logged_as_csv(monkeypatch):
     assert (mem_df["rss"] >= 0).all()  # 0 has been observed
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_custom_setsid")
 def test_fm_dispatch_run_subset_specified_as_parameter():
     Path("dummy_executable").write_text(
@@ -406,7 +406,7 @@ def test_report_all_messages_drops_reporter_on_error():
 
 
 @pytest.mark.timeout(30)
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_custom_setsid")
 async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_sigterm():
     Path("dummy_executable").write_text(
@@ -466,7 +466,7 @@ time.sleep(180)""",
 
 
 @pytest.mark.timeout(30)
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_custom_setsid")
 async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_terminate_msg():
     Path("dummy_executable").write_text(

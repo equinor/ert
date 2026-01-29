@@ -53,7 +53,7 @@ def driver(request, pytestconfig, monkeypatch, tmp_path):
     return class_(queue_name=queue_name)
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 async def test_submit(driver: Driver, tmp_path, job_name, monkeypatch):
     monkeypatch.chdir(tmp_path)
     driver._poll_period = 0.01
@@ -63,7 +63,7 @@ async def test_submit(driver: Driver, tmp_path, job_name, monkeypatch):
     assert (tmp_path / "test").read_text(encoding="utf-8") == "test\n"
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 async def test_submit_something_that_fails(
     driver: Driver, tmp_path, job_name, monkeypatch
 ):
@@ -93,7 +93,7 @@ async def test_submit_something_that_fails(
     assert finished_called
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 async def test_kill_gives_correct_state(driver: Driver, use_tmpdir, request):
     aborted_called = False
     driver._poll_period = 0.01
@@ -129,7 +129,7 @@ async def test_kill_gives_correct_state(driver: Driver, use_tmpdir, request):
     assert aborted_called
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.flaky(reruns=10)
 async def test_repeated_submit_same_iens(driver: Driver, tmp_path, monkeypatch):
     """Submits are allowed to be repeated for the same iens, and are to be
@@ -200,7 +200,7 @@ async def test_kill_actually_kills(driver: Driver, tmp_path, monkeypatch):
         )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 async def test_num_cpu_sets_env_variables(
     driver: Driver, tmp_path, job_name, monkeypatch
 ):
@@ -269,7 +269,7 @@ async def test_poll_ignores_filenotfounderror(driver: Driver, caplog):
     assert "/usr/bin/foo" in str(caplog.text)
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 async def test_that_driver_emits_warning_event_when_polling_fails_for_timeout_period(
     driver: Driver, tmp_path, job_name, monkeypatch, caplog
 ):

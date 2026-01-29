@@ -241,7 +241,7 @@ async def test_realization_memory_is_propagated_to_driver(realization: Realizati
 
 
 @pytest.mark.asyncio
-@pytest.mark.integration_test
+@pytest.mark.slow
 async def test_when_waiting_for_disk_sync_times_out_an_error_is_logged(
     realization: Realization,
 ):

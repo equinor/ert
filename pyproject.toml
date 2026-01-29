@@ -167,14 +167,14 @@ norecursedirs = [
 markers = [
     "memory_test",
     "creates_tmpdir",
-    "integration_test",
     "snapshot_test",
     "out_of_memory",
-    "quick_only",
     "requires_eclipse",
     "requires_window_manager",
     "script",
     "slow",
+    "unreliable",
+    "high_utilization",
     "skip_mac_ci",
 ]
 log_cli = "false"

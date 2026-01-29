@@ -70,7 +70,7 @@ def test_that_job_name_in_run_arg_is_the_jobname_from_the_config_with_iens_subst
     ]
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
 @pytest.mark.filterwarnings("ignore:EGrid file given with numres")
 def test_that_create_run_path_overwrites_symlinks_by_file(

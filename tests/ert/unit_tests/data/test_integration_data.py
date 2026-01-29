@@ -27,7 +27,7 @@ def create_measured_data(snake_oil_case_storage, snake_oil_default_storage):
     return func
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_summary_obs(create_measured_data):
     summary_obs = create_measured_data(["WOPR_OP1_72"])
     summary_obs.remove_inactive_observations()
@@ -38,7 +38,7 @@ def test_summary_obs(create_measured_data):
     )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_gen_obs(create_measured_data):
     df = create_measured_data(["WPR_DIFF_1"])
     df.remove_inactive_observations()
@@ -49,7 +49,7 @@ def test_gen_obs(create_measured_data):
     )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_gen_obs_and_summary(create_measured_data):
     df = create_measured_data(["WPR_DIFF_1", "WOPR_OP1_9"])
     df.remove_inactive_observations()
@@ -119,7 +119,7 @@ def create_general_observation():
     return observations
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_all_measured_snapshot(snapshot, snake_oil_storage, create_measured_data):
     """
     While there is no guarantee that this snapshot is 100% correct, it does represent
@@ -133,7 +133,7 @@ def test_all_measured_snapshot(snapshot, snake_oil_storage, create_measured_data
     )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_that_measured_data_gives_error_on_missing_response(snake_oil_case_storage):
     with open_storage(snake_oil_case_storage.ens_path, mode="w") as storage:
         experiment = storage.get_experiment_by_name("ensemble-experiment")

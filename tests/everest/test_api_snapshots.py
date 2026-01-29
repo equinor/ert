@@ -46,7 +46,7 @@ def make_api_snapshot(api) -> dict[str, Any]:
     return api_json
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "config_file",
     [
@@ -90,7 +90,7 @@ def test_api_snapshots(config_file, snapshot, cached_example):
     snapshot.assert_match(snapshot_str, "snapshot.json")
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.parametrize(
     "config_file",
     [
@@ -149,7 +149,7 @@ def test_api_summary_snapshot(config_file, snapshot, cached_example):
     )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
 def test_api_summary_snapshot_missing_batch(snapshot, cached_example):
     config_path, config_file, _, _ = cached_example("math_func/config_minimal.yml")
@@ -196,7 +196,7 @@ def test_api_summary_snapshot_missing_batch(snapshot, cached_example):
     )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
 def test_api_summary_snapshot_with_differing_columns_per_batch(
     snapshot, cached_example
@@ -245,7 +245,7 @@ def test_api_summary_snapshot_with_differing_columns_per_batch(
 
 
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_that_summary_returns_empty_df_when_missing_data(cached_example):
     config_path, config_file, _, _ = cached_example("math_func/config_minimal.yml")
 
