@@ -17,13 +17,10 @@ from ert.field_utils import (
     ErtboxParameters,
     FieldFileFormat,
     Shape,
-    calc_rho_for_2d_grid_layer,
     calculate_ertbox_parameters,
     get_shape,
     read_field,
     save_field,
-    transform_local_ellipse_angle_to_local_coords,
-    transform_positions_to_local_field_coordinates,
 )
 from ert.substitutions import substitute_runpath_name
 from ert.utils import log_duration
@@ -317,75 +314,6 @@ class Field(ParameterConfig):
     @property
     def nz(self) -> int:
         return self.ertbox_params.nz
-
-    def calc_rho_for_2d_grid_layer(
-        self,
-        obs_xpos: npt.NDArray[np.float64],
-        obs_ypos: npt.NDArray[np.float64],
-        obs_main_range: npt.NDArray[np.float64],
-        obs_perp_range: npt.NDArray[np.float64],
-        obs_anisotropy_angle: npt.NDArray[np.float64],
-        right_handed_grid_indexing: bool = True,
-    ) -> npt.NDArray[np.float64]:
-        """Function to calculate scaling values to be used in the RHO matrix
-        for distance-based localization.
-
-        Args:
-            obs_xpos: x-coordinates in global coordinates of observations
-            obs_ypos: y-coordinates in global coordinates of observations
-            obs_main_range: Size of influence ellipse main principal direction.
-            obs_perp_range: Size of influence ellipse second principal direction.
-            obs_anisotropy_angle: Rotation angle anticlock wise of main principal
-              direction of influence ellipse relative to global coordinate
-              system's x-axis.
-            right_handed_grid_indexing: When this is True the field parameters
-              grid index order counts J-index down from ny-1 to 0.
-              If the value is False, the grid index order is to count J index
-              from 0 to ny-1. As standard for 3D field parameters,
-              the grid index order follows the right_handed grid indexing.
-
-        Returns:
-            Scaling values (elements of the RHO matrix) as a numpy array
-              of shape=(nx,ny,nobservations)
-
-        """
-        # Can only be used if ertbox coordinate system is defined
-        assert self.ertbox_params.xinc is not None, (
-            "Parameter for grid resolution must be defined"
-        )
-        assert self.ertbox_params.yinc is not None, (
-            "Parameter for grid resolution must be defined"
-        )
-        assert self.ertbox_params.origin is not None, (
-            "Parameter for grid origin must be defined"
-        )
-        assert self.ertbox_params.rotation_angle is not None, (
-            "Parameter for grid rotation must be defined"
-        )
-        # Transform positions of observations into local coordinates
-        xpos, ypos = transform_positions_to_local_field_coordinates(
-            self.ertbox_params.origin,
-            self.ertbox_params.rotation_angle,
-            obs_xpos,
-            obs_ypos,
-        )
-        # Transform localization ellipse orientation to local coordinates
-        ellipse_rotation = transform_local_ellipse_angle_to_local_coords(
-            self.ertbox_params.rotation_angle, obs_anisotropy_angle
-        )
-
-        return calc_rho_for_2d_grid_layer(
-            self.ertbox_params.nx,
-            self.ertbox_params.ny,
-            self.ertbox_params.xinc,
-            self.ertbox_params.yinc,
-            xpos,
-            ypos,
-            obs_main_range,
-            obs_perp_range,
-            ellipse_rotation,
-            right_handed_grid_indexing=right_handed_grid_indexing,
-        )
 
 
 TRANSFORM_FUNCTIONS: Final[dict[str, Callable[[Any], Any]]] = {

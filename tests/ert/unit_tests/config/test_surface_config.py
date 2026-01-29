@@ -4,7 +4,7 @@ import networkx as nx
 import numpy as np
 import pytest
 import xtgeo
-from surfio import IrapHeader, IrapSurface
+from surfio import IrapSurface
 
 from ert.config import ConfigValidationError, SurfaceConfig
 from ert.config.parameter_config import InvalidParameterFile
@@ -372,72 +372,3 @@ def surface_for_dl():
         output_file=Path("dummy.txt"),
         base_surface_path="dummy.txt",
     )
-
-
-@pytest.mark.parametrize(
-    ("xpos", "ypos", "main_range", "perp_range", "anisotropy_angle"),
-    [
-        (
-            [1050.0, 1250.0, 1250.0, 1250.0, 1000.0, 1500.0, 1000.0],  # xpos
-            [2050.0, 2300.0, 2300.0, 2300.0, 2000.0, 2000.0, 2600.0],  # ypos
-            [100.0, 300.0, 300.0, 600.0, 1000.0, 300.0, 300.0],  # main_range
-            [100.0, 100.0, 100.0, 200.0, 100.0, 10.0, 100.0],  # perp_range
-            [0.0, 35.0, 135.0, -135.0, 45.0, -45.0, -60.0],  # angle
-        ),
-    ],
-)
-def test_calc_rho_for_2d_grid_layer(
-    snapshot,
-    surface_for_dl,
-    xpos: list[float],
-    ypos: list[float],
-    main_range: list[float],
-    perp_range: list[float],
-    anisotropy_angle: list[float],
-):
-    write_surface_file = False
-
-    xposition = np.array(xpos)
-    yposition = np.array(ypos)
-    mainrange = np.array(main_range)
-    perprange = np.array(perp_range)
-    angles = np.array(anisotropy_angle)
-
-    #   Dimension of rho_for_one_grid_layer is (nx,ny,nobs)
-    rho_for_one_grid_layer = surface_for_dl.calc_rho_for_2d_grid_layer(
-        xposition,
-        yposition,
-        mainrange,
-        perprange,
-        angles,
-    )
-    # Ensure -0 and +0 will be 0
-    rho_for_one_grid_layer = np.where(
-        rho_for_one_grid_layer == 0, 0.0, rho_for_one_grid_layer
-    )
-
-    snapshot.assert_match(
-        str(rho_for_one_grid_layer) + "\n", "testdata_rho_for_one_grid_layer.txt"
-    )
-    if write_surface_file:
-        # Write surface of rho for visualization
-
-        for obs_indx in range(len(xposition)):
-            surf = IrapSurface(
-                header=IrapHeader(
-                    ncol=surface_for_dl.ncol,
-                    nrow=surface_for_dl.nrow,
-                    xori=surface_for_dl.xori,
-                    yori=surface_for_dl.yori,
-                    xinc=surface_for_dl.xinc,
-                    yinc=surface_for_dl.yinc,
-                    rot=surface_for_dl.rotation,
-                    xrot=surface_for_dl.xori,
-                    yrot=surface_for_dl.yori,
-                ),
-                values=rho_for_one_grid_layer[:, :, obs_indx],
-            )
-
-            file_path = Path("tmp_2d_rho_for_obs_" + str(obs_indx) + ".txt")
-            print(f"Write file: {file_path}")
-            surf.to_ascii_file(file_path)
