@@ -49,6 +49,9 @@ class ESSettings(BaseModel):
             title="Adaptive localization correlation threshold",
         ),
     ] = None
+    distance_localization: Annotated[
+        bool, Field(title="Distance-based localization")
+    ] = False
 
     def correlation_threshold(self, ensemble_size: int) -> float:
         """Decides whether to use user-defined or default threshold.

@@ -6,25 +6,26 @@ import re
 import time
 import warnings
 from collections.abc import Callable, Iterable, Sequence
-from typing import (
-    TYPE_CHECKING,
-    Generic,
-    Self,
-    TextIO,
-    TypeVar,
-)
+from typing import TYPE_CHECKING, Generic, Self, TextIO, TypeVar
 
 import iterative_ensemble_smoother as ies
 import numpy as np
 import polars as pl
 import psutil
 import scipy
-from iterative_ensemble_smoother.experimental import AdaptiveESMDA
+from iterative_ensemble_smoother.experimental import AdaptiveESMDA, DistanceESMDA
+from iterative_ensemble_smoother.utils import (
+    calc_rho_for_2d_grid_layer,
+    transform_local_ellipse_angle_to_local_coords,
+    transform_positions_to_local_field_coordinates,
+)
 
 from ert.config import (
     ESSettings,
+    Field,
     GenKwConfig,
     ObservationSettings,
+    SurfaceConfig,
 )
 
 from ._update_commons import (
@@ -42,10 +43,7 @@ from .event import (
     AnalysisTimeEvent,
     DataSection,
 )
-from .snapshots import (
-    ObservationStatus,
-    SmootherSnapshot,
-)
+from .snapshots import ObservationStatus, SmootherSnapshot
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -258,7 +256,34 @@ def analysis_ES(
     )
     truncation = module.enkf_truncation
 
-    if module.localization:
+    obs_xpos: npt.NDArray[np.float64] | None = None
+    obs_ypos: npt.NDArray[np.float64] | None = None
+    obs_main_range: npt.NDArray[np.float64] | None = None
+    S_with_loc: npt.NDArray[np.float64] | None = None
+    smoother_distance_es: DistanceESMDA | None = None
+    if module.distance_localization:
+        # get observations with location
+        has_location = (
+            filtered_data["east"].is_not_null() & filtered_data["north"].is_not_null()
+        ).to_numpy()
+
+        obs_values_with_loc = filtered_data["observations"].to_numpy()[has_location]
+        obs_errors_with_loc = filtered_data[_OutlierColumns.scaled_std].to_numpy()[
+            has_location
+        ]
+        obs_xpos = filtered_data["east"].to_numpy()[has_location]
+        obs_ypos = filtered_data["north"].to_numpy()[has_location]
+        obs_main_range = filtered_data["radius"].to_numpy()[has_location]
+        S_with_loc = S[has_location, :]
+
+        smoother_distance_es = DistanceESMDA(
+            covariance=obs_errors_with_loc**2,
+            observations=obs_values_with_loc,
+            alpha=1,
+            seed=rng,
+        )
+        T = smoother_es.compute_transition_matrix(Y=S, alpha=1.0, truncation=truncation)
+    elif module.localization:
         smoother_adaptive_es = AdaptiveESMDA(
             covariance=observation_errors**2,
             observations=observation_values,
@@ -331,7 +356,97 @@ def analysis_ES(
             logger.info(log_msg)
             progress_callback(AnalysisStatusEvent(msg=log_msg))
 
-        if module.localization:
+        if module.distance_localization:
+            assert obs_xpos is not None
+            assert obs_ypos is not None
+            assert obs_main_range is not None
+            assert smoother_distance_es is not None
+            assert S_with_loc is not None
+
+            param_cfg = source_ensemble.experiment.parameter_configuration[param_group]
+            if isinstance(param_cfg, GenKwConfig):
+                param_ensemble_array[non_zero_variance_mask] @= T.astype(
+                    param_ensemble_array.dtype
+                )
+            elif isinstance(param_cfg, Field):
+                assert param_cfg.ertbox_params.xinc is not None, (
+                    "Parameter for grid resolution must be defined"
+                )
+                assert param_cfg.ertbox_params.yinc is not None, (
+                    "Parameter for grid resolution must be defined"
+                )
+                assert param_cfg.ertbox_params.origin is not None, (
+                    "Parameter for grid origin must be defined"
+                )
+                assert param_cfg.ertbox_params.rotation_angle is not None, (
+                    "Parameter for grid rotation must be defined"
+                )
+                xpos, ypos = transform_positions_to_local_field_coordinates(
+                    param_cfg.ertbox_params.origin,
+                    param_cfg.ertbox_params.rotation_angle,
+                    obs_xpos,
+                    obs_ypos,
+                )
+                ellipse_rotation = transform_local_ellipse_angle_to_local_coords(
+                    param_cfg.ertbox_params.rotation_angle,
+                    np.zeros_like(obs_main_range, dtype=np.float64),
+                )
+                rho_matrix = calc_rho_for_2d_grid_layer(
+                    param_cfg.ertbox_params.nx,
+                    param_cfg.ertbox_params.ny,
+                    param_cfg.ertbox_params.xinc,
+                    param_cfg.ertbox_params.yinc,
+                    xpos,
+                    ypos,
+                    obs_main_range,
+                    obs_main_range,
+                    ellipse_rotation,
+                    right_handed_grid_indexing=True,
+                )
+                param_ensemble_array = smoother_distance_es.update_params(
+                    X_prior=param_ensemble_array,
+                    Y=S_with_loc,
+                    rho_input=rho_matrix,
+                    nz=(
+                        1
+                        if isinstance(param_cfg, SurfaceConfig)
+                        else param_cfg.ertbox_params.nz
+                    ),
+                )
+            elif isinstance(param_cfg, SurfaceConfig):
+                xpos, ypos = transform_positions_to_local_field_coordinates(
+                    (param_cfg.xori, param_cfg.yori),
+                    param_cfg.rotation,
+                    obs_xpos,
+                    obs_ypos,
+                )
+                # Transform ellipse orientation to local surface coordinates
+                rotation_angle_of_localization_ellipse = (
+                    transform_local_ellipse_angle_to_local_coords(
+                        param_cfg.rotation,
+                        np.zeros_like(obs_main_range, dtype=np.float64),
+                    )
+                )
+                assert param_cfg.yflip == 1
+                rho_matrix = calc_rho_for_2d_grid_layer(
+                    param_cfg.ncol,
+                    param_cfg.nrow,
+                    param_cfg.xinc,
+                    param_cfg.yinc,
+                    xpos,
+                    ypos,
+                    obs_main_range,
+                    obs_main_range,
+                    rotation_angle_of_localization_ellipse,
+                    right_handed_grid_indexing=False,
+                )
+                param_ensemble_array = smoother_distance_es.update_params(
+                    X_prior=param_ensemble_array,
+                    Y=S_with_loc,
+                    rho_input=rho_matrix,
+                )
+
+        elif module.localization:
             config_node = source_ensemble.experiment.parameter_configuration[
                 param_group
             ]
@@ -384,9 +499,9 @@ def analysis_ES(
             progress_callback(AnalysisStatusEvent(msg=log_msg))
 
             # In-place multiplication is not yet supported, therefore avoiding @=
-            param_ensemble_array[non_zero_variance_mask] = param_ensemble_array[  # noqa: PLR6104
-                non_zero_variance_mask
-            ] @ T.astype(param_ensemble_array.dtype)
+            param_ensemble_array[non_zero_variance_mask] @= T.astype(
+                param_ensemble_array.dtype
+            )
 
         start = time.time()
         target_ensemble.save_parameters_numpy(
