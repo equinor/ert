@@ -38,7 +38,7 @@ jobs:
           uv pip install pytest-codspeed
       - uses: CodSpeedHQ/action@v4
         with:
-          mode: instrumentation
+          mode: simulation
           token: ${{ secrets.CODSPEED_TOKEN }}
           run: |
             uv run pytest tests/ert/performance_tests --codspeed --timeout=1200 -m "not memory_test"
