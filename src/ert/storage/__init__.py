@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import traceback
 from pathlib import Path
 
 from .dict_encoded_dataframe import DictEncodedDataFrame
@@ -52,7 +51,6 @@ def open_storage(
             f"{path} with mode: '{mode}'. Error: {err}"
         ) from err
     except Exception as err:
-        traceback.print_tb(err.__traceback__)
         raise ErtStorageException(
             f"Failed to open storage: {path} with error: {err}"
         ) from err
