@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from typing import Dict, List, Any
-
 import datetime
+from typing import Any
+
 import polars as pl
 
 
@@ -33,12 +33,14 @@ def _to_iso_date(value: Any) -> str:
         return str(value)
 
 
-def dataframe_to_declarations(group_name: str, df: pl.DataFrame) -> List[Dict[str, Any]]:
+def dataframe_to_declarations(
+    group_name: str, df: pl.DataFrame
+) -> list[dict[str, Any]]:
     """Convert a single observation DataFrame into a flat list of pydantic-style declarations.
 
     The output dicts follow the `Observation` pydantic models in `ert.config._observations`.
     """
-    decls: List[Dict[str, Any]] = []
+    decls: list[dict[str, Any]] = []
     for row in df.iter_rows(named=True):
         row = dict(row)
 
@@ -54,8 +56,12 @@ def dataframe_to_declarations(group_name: str, df: pl.DataFrame) -> List[Dict[st
                     "value": float(row.get("observations")),
                     "error": float(row.get("std")),
                     "east": None if row.get("east") is None else float(row.get("east")),
-                    "north": None if row.get("north") is None else float(row.get("north")),
-                    "radius": None if row.get("radius") is None else float(row.get("radius")),
+                    "north": None
+                    if row.get("north") is None
+                    else float(row.get("north")),
+                    "radius": None
+                    if row.get("radius") is None
+                    else float(row.get("radius")),
                 }
             )
             continue
@@ -72,14 +78,22 @@ def dataframe_to_declarations(group_name: str, df: pl.DataFrame) -> List[Dict[st
                     "restart": int(row.get("report_step", 0) or 0),
                     "index": int(row.get("index", 0) or 0),
                     "east": None if row.get("east") is None else float(row.get("east")),
-                    "north": None if row.get("north") is None else float(row.get("north")),
-                    "radius": None if row.get("radius") is None else float(row.get("radius")),
+                    "north": None
+                    if row.get("north") is None
+                    else float(row.get("north")),
+                    "radius": None
+                    if row.get("radius") is None
+                    else float(row.get("radius")),
                 }
             )
             continue
 
         # RFT observations: response_key is usually "WELL:DATE:PROPERTY"
-        if "tvd" in row or "well" in row or ("response_key" in row and ":" in str(row.get("response_key", ""))):
+        if (
+            "tvd" in row
+            or "well" in row
+            or ("response_key" in row and ":" in str(row.get("response_key", "")))
+        ):
             resp = str(row.get("response_key", ""))
             try:
                 well, date_str, prop = resp.split(":", 2)
@@ -96,7 +110,9 @@ def dataframe_to_declarations(group_name: str, df: pl.DataFrame) -> List[Dict[st
                     "property": prop,
                     "value": float(row.get("observations")),
                     "error": float(row.get("std")),
-                    "north": None if row.get("north") is None else float(row.get("north")),
+                    "north": None
+                    if row.get("north") is None
+                    else float(row.get("north")),
                     "east": None if row.get("east") is None else float(row.get("east")),
                     "tvd": None if row.get("tvd") is None else float(row.get("tvd")),
                 }
@@ -119,9 +135,9 @@ def dataframe_to_declarations(group_name: str, df: pl.DataFrame) -> List[Dict[st
     return decls
 
 
-def dataframes_to_declarations(dfs: Dict[str, pl.DataFrame]) -> List[Dict[str, Any]]:
+def dataframes_to_declarations(dfs: dict[str, pl.DataFrame]) -> list[dict[str, Any]]:
     """Convert a mapping of observation group -> DataFrame into a flat list of declarations."""
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for name, df in dfs.items():
         out.extend(dataframe_to_declarations(name, df))
     return out

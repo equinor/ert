@@ -3,8 +3,6 @@ import datetime as _datetime
 import random
 import sys
 from dataclasses import dataclass
-
-# Inlined observation helpers (originally in ert.storage.observation_helpers)
 from typing import Any
 
 import memray
@@ -20,6 +18,7 @@ from ert.config import (
     ObservationSettings,
     SummaryConfig,
 )
+from ert.config._observations import GeneralObservation, SummaryObservation
 from ert.sample_prior import sample_prior
 from ert.storage import open_storage
 
@@ -47,102 +46,6 @@ def _to_iso_date(value: Any) -> str:
         return str(value)
 
 
-def dataframe_to_declarations(
-    group_name: str, df: pl.DataFrame
-) -> list[dict[str, Any]]:
-    decls: list[dict[str, Any]] = []
-    for row in df.iter_rows(named=True):
-        row = dict(row)
-        if "time" in row and "response_key" in row:
-            date = _to_iso_date(row.get("time"))
-            decls.append(
-                {
-                    "type": "summary_observation",
-                    "name": row.get("observation_key") or group_name,
-                    "key": row.get("response_key"),
-                    "date": date,
-                    "value": float(row.get("observations")),
-                    "error": float(row.get("std")),
-                    "east": None if row.get("east") is None else float(row.get("east")),
-                    "north": None
-                    if row.get("north") is None
-                    else float(row.get("north")),
-                    "radius": None
-                    if row.get("radius") is None
-                    else float(row.get("radius")),
-                }
-            )
-            continue
-        if "index" in row or "report_step" in row:
-            decls.append(
-                {
-                    "type": "general_observation",
-                    "name": row.get("observation_key") or group_name,
-                    "data": row.get("response_key"),
-                    "value": float(row.get("observations")),
-                    "error": float(row.get("std")),
-                    "restart": int(row.get("report_step", 0) or 0),
-                    "index": int(row.get("index", 0) or 0),
-                    "east": None if row.get("east") is None else float(row.get("east")),
-                    "north": None
-                    if row.get("north") is None
-                    else float(row.get("north")),
-                    "radius": None
-                    if row.get("radius") is None
-                    else float(row.get("radius")),
-                }
-            )
-            continue
-        if (
-            "tvd" in row
-            or "well" in row
-            or ("response_key" in row and ":" in str(row.get("response_key", "")))
-        ):
-            resp = str(row.get("response_key", ""))
-            try:
-                well, date_str, prop = resp.split(":", 2)
-            except Exception:
-                well = row.get("well") or group_name
-                date_str = _to_iso_date(row.get("time") or row.get("date"))
-                prop = row.get("property") or "PRESSURE"
-            decls.append(
-                {
-                    "type": "rft_observation",
-                    "name": row.get("observation_key") or group_name,
-                    "well": well,
-                    "date": date_str,
-                    "property": prop,
-                    "value": float(row.get("observations")),
-                    "error": float(row.get("std")),
-                    "north": None
-                    if row.get("north") is None
-                    else float(row.get("north")),
-                    "east": None if row.get("east") is None else float(row.get("east")),
-                    "tvd": None if row.get("tvd") is None else float(row.get("tvd")),
-                }
-            )
-            continue
-        decls.append(
-            {
-                "type": "general_observation",
-                "name": group_name,
-                "data": row.get("response_key") or "",
-                "value": float(row.get("observations", 0.0) or 0.0),
-                "error": float(row.get("std", 1.0) or 1.0),
-                "restart": int(row.get("report_step", 0) or 0),
-                "index": int(row.get("index", 0) or 0),
-            }
-        )
-    return decls
-
-
-def dataframes_to_declarations(dfs: dict[str, pl.DataFrame]) -> list[dict[str, Any]]:
-    out: list[dict[str, Any]] = []
-    for name, df in dfs.items():
-        out.extend(dataframe_to_declarations(name, df))
-    return out
-
-
 _rng = np.random.default_rng(0)
 
 
@@ -163,11 +66,11 @@ class ExperimentInfo:
     gen_kw_configs: list[GenKwConfig]
     gen_data_config: GenDataConfig
     summary_config: SummaryConfig
-    summary_observations: pl.DataFrame
+    summary_observations: list[SummaryObservation]
     summary_responses: pl.DataFrame
     gen_data_responses: pl.DataFrame
-    gen_data_observations: pl.DataFrame
-    genkw_data: pl.DataFrame
+    gen_data_observations: list[GeneralObservation]
+    genkw_data: pl.DataFrame | None
 
 
 def create_experiment_args(
@@ -246,31 +149,18 @@ def create_experiment_args(
         }
     )
 
-    gen_data_observations = pl.DataFrame(
-        {
-            "observation_key": gen_obs_keys,
-            "response_key": random.choices(gen_data_response_keys, k=num_gen_data_obs),
-            "report_step": pl.Series(
-                random.choices(gendata_report_steps, k=num_gen_data_obs),
-                dtype=pl.UInt16,
-            ),
-            "index": pl.Series(
-                random.choices(gendata_indexes, k=num_gen_data_obs),
-                dtype=pl.UInt16,
-            ),
-            "observations": pl.Series(
-                rng.normal(loc=10, scale=0.1, size=num_gen_data_obs),
-                dtype=pl.Float32,
-            ),
-            "std": pl.Series(
-                rng.normal(loc=0.2, scale=0.1, size=num_gen_data_obs),
-                dtype=pl.Float32,
-            ),
-            "east": pl.Series([None] * num_gen_data_obs, dtype=pl.Float32),
-            "north": pl.Series([None] * num_gen_data_obs, dtype=pl.Float32),
-            "radius": pl.Series([None] * num_gen_data_obs, dtype=pl.Float32),
-        }
-    )
+    gen_data_observations = []
+    for i in range(num_gen_data_obs):
+        gen_data_observations.append(
+            GeneralObservation(
+                name=gen_obs_keys[i],
+                data=random.choice(gen_data_response_keys),
+                value=float(rng.normal(loc=10, scale=0.1)),
+                error=max(1e-6, float(abs(rng.normal(loc=0.2, scale=0.1)))),
+                restart=int(random.choice(gendata_report_steps)),
+                index=int(random.choice(gendata_indexes)),
+            )
+        )
 
     _summary_time_delta = datetime.timedelta(30)
     summary_timesteps = [
@@ -306,27 +196,17 @@ def create_experiment_args(
         }
     )
 
-    summary_observations = pl.DataFrame(
-        {
-            "observation_key": [f"summary_obs_{i}" for i in range(num_summary_obs)],
-            "response_key": random.choices(summary_response_keys, k=num_summary_obs),
-            "time": pl.Series(
-                random.choices(summary_timesteps, k=num_summary_obs),
-                dtype=pl.Datetime("ms"),
-            ),
-            "observations": pl.Series(
-                rng.normal(loc=10, scale=0.1, size=num_summary_obs),
-                dtype=pl.Float32,
-            ),
-            "std": pl.Series(
-                rng.normal(loc=0.2, scale=0.1, size=num_summary_obs),
-                dtype=pl.Float32,
-            ),
-            "east": pl.Series([None] * num_summary_obs, dtype=pl.Float32),
-            "north": pl.Series([None] * num_summary_obs, dtype=pl.Float32),
-            "radius": pl.Series([None] * num_summary_obs, dtype=pl.Float32),
-        }
-    )
+    summary_observations = []
+    for i in range(num_summary_obs):
+        summary_observations.append(
+            SummaryObservation(
+                name=f"summary_obs_{i}",
+                key=random.choice(summary_response_keys),
+                date=_to_iso_date(random.choice(summary_timesteps)),
+                value=float(rng.normal(loc=10, scale=0.1)),
+                error=max(1e-6, float(abs(rng.normal(loc=0.2, scale=0.1)))),
+            )
+        )
 
     return ExperimentInfo(
         gen_kw_configs=gen_kw_configs,
@@ -529,12 +409,7 @@ def setup_benchmark(tmp_path, request):
             experiment_config={
                 "response_configuration": [info.gen_data_config, info.summary_config],
                 "parameter_configuration": info.gen_kw_configs,
-                "observations": dataframes_to_declarations(
-                    {
-                        "gen_data": info.gen_data_observations,
-                        "summary": info.summary_observations,
-                    }
-                ),
+                "observations": info.gen_data_observations + info.summary_observations,
             }
         )
         ens = experiment.create_ensemble(
@@ -613,12 +488,7 @@ def setup_es_benchmark(tmp_path, request):
             experiment_config={
                 "response_configuration": [info.gen_data_config, info.summary_config],
                 "parameter_configuration": info.gen_kw_configs,
-                "observations": dataframes_to_declarations(
-                    {
-                        "gen_data": info.gen_data_observations,
-                        "summary": info.summary_observations,
-                    }
-                ),
+                "observations": info.gen_data_observations + info.summary_observations,
             }
         )
 

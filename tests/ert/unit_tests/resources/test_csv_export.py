@@ -36,57 +36,7 @@ def _to_iso_date(value: Any) -> str:
         return str(value)
 
 
-def dataframe_to_declarations(
-    group_name: str, df: pl.DataFrame
-) -> list[dict[str, Any]]:
-    decls: list[dict[str, Any]] = []
-    for row in df.iter_rows(named=True):
-        row = dict(row)
-        if "time" in row and "response_key" in row:
-            date = _to_iso_date(row.get("time"))
-            decls.append(
-                {
-                    "type": "summary_observation",
-                    "name": row.get("observation_key") or group_name,
-                    "key": row.get("response_key"),
-                    "date": date,
-                    "value": float(row.get("observations")),
-                    "error": float(row.get("std")),
-                }
-            )
-            continue
-        if "index" in row or "report_step" in row:
-            decls.append(
-                {
-                    "type": "general_observation",
-                    "name": row.get("observation_key") or group_name,
-                    "data": row.get("response_key"),
-                    "value": float(row.get("observations")),
-                    "error": float(row.get("std")),
-                    "restart": int(row.get("report_step", 0) or 0),
-                    "index": int(row.get("index", 0) or 0),
-                }
-            )
-            continue
-        decls.append(
-            {
-                "type": "general_observation",
-                "name": group_name,
-                "data": row.get("response_key") or "",
-                "value": float(row.get("observations", 0.0) or 0.0),
-                "error": float(row.get("std", 1.0) or 1.0),
-                "restart": int(row.get("report_step", 0) or 0),
-                "index": int(row.get("index", 0) or 0),
-            }
-        )
-    return decls
-
-
-def dataframes_to_declarations(dfs: dict[str, pl.DataFrame]) -> list[dict[str, Any]]:
-    out: list[dict[str, Any]] = []
-    for name, df in dfs.items():
-        out.extend(dataframe_to_declarations(name, df))
-    return out
+# Observations are provided by `create_experiment_args` as declaration lists
 
 
 def test_that_csv_export_matches_snapshot(monkeypatch, tmp_path, snapshot):
@@ -109,12 +59,7 @@ def test_that_csv_export_matches_snapshot(monkeypatch, tmp_path, snapshot):
             experiment_config={
                 "response_configuration": [info.gen_data_config, info.summary_config],
                 "parameter_configuration": info.gen_kw_configs,
-                "observations": dataframes_to_declarations(
-                    {
-                        "gen_data": info.gen_data_observations,
-                        "summary": info.summary_observations,
-                    }
-                ),
+                "observations": info.gen_data_observations + info.summary_observations,
             }
         )
         ens = experiment.create_ensemble(
