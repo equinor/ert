@@ -14,6 +14,11 @@ import polars as pl
 import psutil
 import scipy
 from iterative_ensemble_smoother.experimental import AdaptiveESMDA, DistanceESMDA
+from iterative_ensemble_smoother.utils import (
+    calc_rho_for_2d_grid_layer,
+    transform_local_ellipse_angle_to_local_coords,
+    transform_positions_to_local_field_coordinates,
+)
 
 from ert.config import (
     ESSettings,
@@ -363,15 +368,40 @@ def analysis_ES(
                 param_ensemble_array[non_zero_variance_mask] @= T.astype(
                     param_ensemble_array.dtype
                 )
-            elif isinstance(param_cfg, Field | SurfaceConfig):
-                rho_matrix = param_cfg.calc_rho_for_2d_grid_layer(
-                    obs_xpos=obs_xpos,
-                    obs_ypos=obs_ypos,
-                    obs_main_range=obs_main_range,
-                    obs_perp_range=obs_main_range,
-                    obs_anisotropy_angle=np.zeros_like(
-                        obs_main_range, dtype=np.float64
-                    ),
+            elif isinstance(param_cfg, Field):
+                assert param_cfg.ertbox_params.xinc is not None, (
+                    "Parameter for grid resolution must be defined"
+                )
+                assert param_cfg.ertbox_params.yinc is not None, (
+                    "Parameter for grid resolution must be defined"
+                )
+                assert param_cfg.ertbox_params.origin is not None, (
+                    "Parameter for grid origin must be defined"
+                )
+                assert param_cfg.ertbox_params.rotation_angle is not None, (
+                    "Parameter for grid rotation must be defined"
+                )
+                xpos, ypos = transform_positions_to_local_field_coordinates(
+                    param_cfg.ertbox_params.origin,
+                    param_cfg.ertbox_params.rotation_angle,
+                    obs_xpos,
+                    obs_ypos,
+                )
+                ellipse_rotation = transform_local_ellipse_angle_to_local_coords(
+                    param_cfg.ertbox_params.rotation_angle,
+                    np.zeros_like(obs_main_range, dtype=np.float64),
+                )
+                rho_matrix = calc_rho_for_2d_grid_layer(
+                    param_cfg.ertbox_params.nx,
+                    param_cfg.ertbox_params.ny,
+                    param_cfg.ertbox_params.xinc,
+                    param_cfg.ertbox_params.yinc,
+                    xpos,
+                    ypos,
+                    obs_main_range,
+                    obs_main_range,
+                    ellipse_rotation,
+                    right_handed_grid_indexing=True,
                 )
                 param_ensemble_array = smoother_distance_es.update_params(
                     X_prior=param_ensemble_array,
@@ -383,37 +413,38 @@ def analysis_ES(
                         else param_cfg.ertbox_params.nz
                     ),
                 )
-            # elif isinstance(param_cfg, SurfaceConfig):
-            #     rho_matrix = param_cfg.calc_rho_for_2d_grid_layer(
-            #         obs_xpos=obs_xpos,
-            #         obs_ypos=obs_ypos,
-            #         obs_main_range=obs_main_range,
-            #         obs_perp_range=obs_main_range,
-            #         obs_anisotropy_angle=np.zeros_like(
-            #             obs_main_range, dtype=np.float64
-            #         ),
-            #     )
-            #     param_ensemble_array = smoother_distance_es.update_params(
-            #         X_prior=param_ensemble_array,
-            #         Y=S_with_loc,
-            #         rho_input=rho_matrix,
-            #     )
-            # elif isinstance(param_cfg, Field):
-            #     rho_matrix = param_cfg.calc_rho_for_2d_grid_layer(
-            #         obs_xpos=obs_xpos,
-            #         obs_ypos=obs_ypos,
-            #         obs_main_range=obs_main_range,
-            #         obs_perp_range=obs_main_range,
-            #         obs_anisotropy_angle=np.zeros_like(
-            #             obs_main_range, dtype=np.float64
-            #         ),
-            #     )
-            #     param_ensemble_array = smoother_distance_es.update_params(
-            #         X_prior=param_ensemble_array,
-            #         Y=S_with_loc,
-            #         rho_input=rho_matrix,
-            #         nz=param_cfg.ertbox_params.nz,
-            #     )
+            elif isinstance(param_cfg, SurfaceConfig):
+                xpos, ypos = transform_positions_to_local_field_coordinates(
+                    (param_cfg.xori, param_cfg.yori),
+                    param_cfg.rotation,
+                    obs_xpos,
+                    obs_ypos,
+                )
+                # Transform ellipse orientation to local surface coordinates
+                rotation_angle_of_localization_ellipse = (
+                    transform_local_ellipse_angle_to_local_coords(
+                        param_cfg.rotation,
+                        np.zeros_like(obs_main_range, dtype=np.float64),
+                    )
+                )
+                assert param_cfg.yflip == 1
+                rho_matrix = calc_rho_for_2d_grid_layer(
+                    param_cfg.ncol,
+                    param_cfg.nrow,
+                    param_cfg.xinc,
+                    param_cfg.yinc,
+                    xpos,
+                    ypos,
+                    obs_main_range,
+                    obs_main_range,
+                    rotation_angle_of_localization_ellipse,
+                    right_handed_grid_indexing=False,
+                )
+                param_ensemble_array = smoother_distance_es.update_params(
+                    X_prior=param_ensemble_array,
+                    Y=S_with_loc,
+                    rho_input=rho_matrix,
+                )
 
         elif module.localization:
             config_node = source_ensemble.experiment.parameter_configuration[
