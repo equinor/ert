@@ -5,6 +5,7 @@ import logging
 import os
 import signal
 import sys
+import threading
 import time
 from collections.abc import Generator, Iterable
 from datetime import datetime
@@ -31,6 +32,7 @@ if TYPE_CHECKING:
         dispatch_url: str | None
         ee_token: str | None
         experiment_id: str | None
+        max_runtime: int | None
 
 
 # This is incorrecty named, but is kept to avoid a breaking change.
@@ -225,7 +227,43 @@ def fm_dispatch(args: list[str]) -> None:
         _stop_reporters_and_sigkill(reporters, exited_event)
 
     signal.signal(signal.SIGTERM, sigterm_handler)
+
+    max_runtime_thread: threading.Thread | None = None
+    stop_max_runtime_thread_event = threading.Event()
+
+    max_runtime_seconds_raw = fm_description.get("max_runtime")
+    if max_runtime_seconds_raw is not None:
+        max_runtime_seconds = float(max_runtime_seconds_raw)
+
+        if max_runtime_seconds > 0:
+
+            def max_runtime_watcher() -> None:
+                deadline = time.monotonic() + max_runtime_seconds
+                while True:
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        logger.error(
+                            f"Maximum runtime of {max_runtime_seconds} seconds "
+                            f"exceeded; sending SIGTERM to stop forward model.",
+                        )
+                        os.kill(os.getpid(), signal.SIGTERM)
+                        return
+
+                    if stop_max_runtime_thread_event.wait(timeout=min(1.0, remaining)):
+                        return
+
+            max_runtime_thread = threading.Thread(
+                target=max_runtime_watcher,
+                name="max_runtime_watcher",
+                daemon=True,
+            )
+            max_runtime_thread.start()
+
     _report_all_messages(fm_runner.run(parsed_args.steps), reporters)
+
+    if max_runtime_thread is not None:
+        stop_max_runtime_thread_event.set()
+        max_runtime_thread.join(timeout=10)
 
 
 def main() -> None:
