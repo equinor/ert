@@ -1,7 +1,9 @@
 import datetime
+import datetime as _datetime
 import random
 import sys
 from dataclasses import dataclass
+from typing import Any
 
 import memray
 import numpy as np
@@ -16,8 +18,33 @@ from ert.config import (
     ObservationSettings,
     SummaryConfig,
 )
+from ert.config._observations import GeneralObservation, SummaryObservation
 from ert.sample_prior import sample_prior
 from ert.storage import open_storage
+
+
+def _to_iso_date(value: Any) -> str:
+    if value is None:
+        return ""
+    if hasattr(value, "isoformat"):
+        try:
+            return value.date().isoformat()
+        except Exception:
+            return value.isoformat()
+    try:
+        import pandas as pd
+
+        if isinstance(value, pd.Timestamp):
+            return value.date().isoformat()
+    except Exception:
+        pass
+    try:
+        ms = int(value)
+        dt = _datetime.datetime.fromtimestamp(ms / 1000.0)
+        return dt.date().isoformat()
+    except Exception:
+        return str(value)
+
 
 _rng = np.random.default_rng(0)
 
@@ -39,11 +66,11 @@ class ExperimentInfo:
     gen_kw_configs: list[GenKwConfig]
     gen_data_config: GenDataConfig
     summary_config: SummaryConfig
-    summary_observations: pl.DataFrame
+    summary_observations: list[SummaryObservation]
     summary_responses: pl.DataFrame
     gen_data_responses: pl.DataFrame
-    gen_data_observations: pl.DataFrame
-    genkw_data: pl.DataFrame
+    gen_data_observations: list[GeneralObservation]
+    genkw_data: pl.DataFrame | None
 
 
 def create_experiment_args(
@@ -122,31 +149,18 @@ def create_experiment_args(
         }
     )
 
-    gen_data_observations = pl.DataFrame(
-        {
-            "observation_key": gen_obs_keys,
-            "response_key": random.choices(gen_data_response_keys, k=num_gen_data_obs),
-            "report_step": pl.Series(
-                random.choices(gendata_report_steps, k=num_gen_data_obs),
-                dtype=pl.UInt16,
-            ),
-            "index": pl.Series(
-                random.choices(gendata_indexes, k=num_gen_data_obs),
-                dtype=pl.UInt16,
-            ),
-            "observations": pl.Series(
-                rng.normal(loc=10, scale=0.1, size=num_gen_data_obs),
-                dtype=pl.Float32,
-            ),
-            "std": pl.Series(
-                rng.normal(loc=0.2, scale=0.1, size=num_gen_data_obs),
-                dtype=pl.Float32,
-            ),
-            "east": pl.Series([None] * num_gen_data_obs, dtype=pl.Float32),
-            "north": pl.Series([None] * num_gen_data_obs, dtype=pl.Float32),
-            "radius": pl.Series([None] * num_gen_data_obs, dtype=pl.Float32),
-        }
-    )
+    gen_data_observations = []
+    for i in range(num_gen_data_obs):
+        gen_data_observations.append(
+            GeneralObservation(
+                name=gen_obs_keys[i],
+                data=random.choice(gen_data_response_keys),
+                value=float(rng.normal(loc=10, scale=0.1)),
+                error=max(1e-6, float(abs(rng.normal(loc=0.2, scale=0.1)))),
+                restart=int(random.choice(gendata_report_steps)),
+                index=int(random.choice(gendata_indexes)),
+            )
+        )
 
     _summary_time_delta = datetime.timedelta(30)
     summary_timesteps = [
@@ -182,27 +196,17 @@ def create_experiment_args(
         }
     )
 
-    summary_observations = pl.DataFrame(
-        {
-            "observation_key": [f"summary_obs_{i}" for i in range(num_summary_obs)],
-            "response_key": random.choices(summary_response_keys, k=num_summary_obs),
-            "time": pl.Series(
-                random.choices(summary_timesteps, k=num_summary_obs),
-                dtype=pl.Datetime("ms"),
-            ),
-            "observations": pl.Series(
-                rng.normal(loc=10, scale=0.1, size=num_summary_obs),
-                dtype=pl.Float32,
-            ),
-            "std": pl.Series(
-                rng.normal(loc=0.2, scale=0.1, size=num_summary_obs),
-                dtype=pl.Float32,
-            ),
-            "east": pl.Series([None] * num_summary_obs, dtype=pl.Float32),
-            "north": pl.Series([None] * num_summary_obs, dtype=pl.Float32),
-            "radius": pl.Series([None] * num_summary_obs, dtype=pl.Float32),
-        }
-    )
+    summary_observations = []
+    for i in range(num_summary_obs):
+        summary_observations.append(
+            SummaryObservation(
+                name=f"summary_obs_{i}",
+                key=random.choice(summary_response_keys),
+                date=_to_iso_date(random.choice(summary_timesteps)),
+                value=float(rng.normal(loc=10, scale=0.1)),
+                error=max(1e-6, float(abs(rng.normal(loc=0.2, scale=0.1)))),
+            )
+        )
 
     return ExperimentInfo(
         gen_kw_configs=gen_kw_configs,
@@ -402,12 +406,11 @@ def setup_benchmark(tmp_path, request):
 
     with open_storage(tmp_path / "storage", mode="w") as storage:
         experiment = storage.create_experiment(
-            responses=[info.gen_data_config, info.summary_config],
-            parameters=info.gen_kw_configs,
-            observations={
-                "gen_data": info.gen_data_observations,
-                "summary": info.summary_observations,
-            },
+            experiment_config={
+                "response_configuration": [info.gen_data_config, info.summary_config],
+                "parameter_configuration": info.gen_kw_configs,
+                "observations": info.gen_data_observations + info.summary_observations,
+            }
         )
         ens = experiment.create_ensemble(
             ensemble_size=config.num_realizations, name="BobKaareJohnny"
@@ -482,13 +485,13 @@ def setup_es_benchmark(tmp_path, request):
 
     with open_storage(tmp_path / "storage", mode="w") as storage:
         experiment = storage.create_experiment(
-            responses=[info.gen_data_config, info.summary_config],
-            parameters=info.gen_kw_configs,
-            observations={
-                "gen_data": info.gen_data_observations,
-                "summary": info.summary_observations,
-            },
+            experiment_config={
+                "response_configuration": [info.gen_data_config, info.summary_config],
+                "parameter_configuration": info.gen_kw_configs,
+                "observations": info.gen_data_observations + info.summary_observations,
+            }
         )
+
         prior = experiment.create_ensemble(
             ensemble_size=config.num_realizations, name="BobKaareJohnny", iteration=0
         )

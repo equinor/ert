@@ -1,6 +1,10 @@
 import datetime
+import datetime as _datetime
 import shutil
 from pathlib import Path
+
+# Inlined observation helpers (originally in ert.storage.observation_helpers)
+from typing import Any
 
 import numpy as np
 import polars as pl
@@ -27,12 +31,92 @@ from ert.gui.tools.manage_experiments.storage_info_widget import (
     _WidgetType,
 )
 from ert.gui.tools.manage_experiments.storage_widget import StorageWidget
-from ert.storage import RealizationStorageState, Storage, open_storage
+from ert.storage import (
+    RealizationStorageState,
+    Storage,
+    open_storage,
+)
 from tests.ert.ui_tests.cli.analysis.test_adaptive_localization import (
     run_cli_ES_with_case,
 )
 
 from .conftest import add_experiment_in_manage_experiment_dialog
+
+
+def _to_iso_date(value: Any) -> str:
+    if value is None:
+        return ""
+    if hasattr(value, "isoformat"):
+        try:
+            return value.date().isoformat()
+        except Exception:
+            return value.isoformat()
+    try:
+        import pandas as pd
+
+        if isinstance(value, pd.Timestamp):
+            return value.date().isoformat()
+    except Exception:
+        pass
+    try:
+        ms = int(value)
+        dt = _datetime.datetime.fromtimestamp(ms / 1000.0)
+        return dt.date().isoformat()
+    except Exception:
+        return str(value)
+
+
+def dataframe_to_declarations(
+    group_name: str, df: pl.DataFrame
+) -> list[dict[str, Any]]:
+    decls: list[dict[str, Any]] = []
+    for row in df.iter_rows(named=True):
+        row = dict(row)
+        if "time" in row and "response_key" in row:
+            date = _to_iso_date(row.get("time"))
+            decls.append(
+                {
+                    "type": "summary_observation",
+                    "name": row.get("observation_key") or group_name,
+                    "key": row.get("response_key"),
+                    "date": date,
+                    "value": float(row.get("observations")),
+                    "error": float(row.get("std")),
+                }
+            )
+            continue
+        if "index" in row or "report_step" in row:
+            decls.append(
+                {
+                    "type": "general_observation",
+                    "name": row.get("observation_key") or group_name,
+                    "data": row.get("response_key"),
+                    "value": float(row.get("observations")),
+                    "error": float(row.get("std")),
+                    "restart": int(row.get("report_step", 0) or 0),
+                    "index": int(row.get("index", 0) or 0),
+                }
+            )
+            continue
+        decls.append(
+            {
+                "type": "general_observation",
+                "name": group_name,
+                "data": row.get("response_key") or "",
+                "value": float(row.get("observations", 0.0) or 0.0),
+                "error": float(row.get("std", 1.0) or 1.0),
+                "restart": int(row.get("report_step", 0) or 0),
+                "index": int(row.get("index", 0) or 0),
+            }
+        )
+    return decls
+
+
+def dataframes_to_declarations(dfs: dict[str, pl.DataFrame]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for name, df in dfs.items():
+        out.extend(dataframe_to_declarations(name, df))
+    return out
 
 
 def test_design_matrix_in_manage_experiments_panel(
@@ -54,10 +138,12 @@ def test_design_matrix_in_manage_experiments_panel(
 
     with notifier.write_storage() as storage:
         storage.create_experiment(
-            parameters=list(
-                config.analysis_config.design_matrix.parameter_configurations
-            ),
-            responses=config.ensemble_config.response_configuration,
+            experiment_config={
+                "parameter_configuration": list(
+                    config.analysis_config.design_matrix.parameter_configurations
+                ),
+                "response_configuration": config.ensemble_config.response_configuration,
+            },
             name="my-experiment",
         ).create_ensemble(
             ensemble_size=config.runpath_config.num_realizations,
@@ -122,8 +208,12 @@ def test_init_prior(qtbot):
 
     with notifier.write_storage() as storage:
         ensemble = storage.create_experiment(
-            parameters=config.ensemble_config.parameter_configuration,
-            responses=config.ensemble_config.response_configuration,
+            experiment_config={
+                "parameter_configuration": (
+                    config.ensemble_config.parameter_configuration
+                ),
+                "response_configuration": config.ensemble_config.response_configuration,
+            },
             name="my-experiment",
         ).create_ensemble(
             ensemble_size=config.runpath_config.num_realizations,
@@ -157,12 +247,16 @@ def test_that_init_updates_the_info_tab(qtbot):
     config = ErtConfig.from_file("poly.ert")
     notifier = ErtNotifier()
     notifier.set_storage(config.ens_path)
+    ensemble_config = config.ensemble_config
 
     with notifier.write_storage() as storage:
         ensemble = storage.create_experiment(
-            parameters=config.ensemble_config.parameter_configuration,
-            responses=config.ensemble_config.response_configuration,
-            observations=config.observations,
+            experiment_config={
+                "parameter_configuration": ensemble_config.parameter_configuration,
+                "response_configuration": ensemble_config.response_configuration,
+                "observations": config.observation_declarations,
+                "ert_templates": config.ert_templates,
+            },
             name="my-experiment",
         ).create_ensemble(
             ensemble_size=config.runpath_config.num_realizations, name="default"
@@ -449,25 +543,29 @@ def test_ensemble_observations_view_on_empty_ensemble(qtbot):
 
     with notifier.write_storage() as storage:
         notifier.set_storage(str(storage.path))
-        storage.create_experiment(
-            responses=[SummaryConfig(keys=["*"])],
-            observations={
-                "summary": pl.DataFrame(
-                    pl.DataFrame(
-                        {
-                            "response_key": ["FOPR"],
-                            "observation_key": ["O4"],
-                            "time": pl.Series(
-                                [datetime.datetime(2000, 1, 1)],
-                                dtype=pl.Datetime("ms"),
-                            ),
-                            "observations": pl.Series([10.2], dtype=pl.Float32),
-                            "std": pl.Series([0.1], dtype=pl.Float32),
-                        }
-                    )
+        exp = storage.create_experiment(
+            experiment_config={
+                "response_configuration": [SummaryConfig(keys=["*"])],
+                "observations": dataframes_to_declarations(
+                    {
+                        "summary": pl.DataFrame(
+                            {
+                                "response_key": ["FOPR"],
+                                "observation_key": ["O4"],
+                                "time": pl.Series(
+                                    [datetime.datetime(2000, 1, 1)],
+                                    dtype=pl.Datetime("ms"),
+                                ),
+                                "observations": pl.Series([10.2], dtype=pl.Float32),
+                                "std": pl.Series([0.1], dtype=pl.Float32),
+                            }
+                        )
+                    }
                 ),
-            },
-        ).create_ensemble(
+            }
+        )
+
+        exp.create_ensemble(
             name="test", ensemble_size=config.runpath_config.num_realizations
         )
 

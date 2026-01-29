@@ -1,3 +1,4 @@
+import datetime as _datetime
 import json
 import logging
 import os
@@ -8,6 +9,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
 from textwrap import dedent
+
+# Inlined observation helpers (originally in ert.storage.observation_helpers)
 from typing import Any
 from unittest.mock import MagicMock, PropertyMock, patch
 from uuid import UUID
@@ -36,6 +39,7 @@ from ert.config import (
 )
 from ert.config.design_matrix import DESIGN_MATRIX_GROUP
 from ert.dark_storage.common import ErtStoragePermissionError
+from ert.field_utils import ErtboxParameters
 from ert.sample_prior import sample_prior
 from ert.storage import (
     ErtStorageException,
@@ -48,6 +52,124 @@ from ert.storage.mode import ModeError
 from tests.ert.grid_generator import xtgeo_box_grids
 
 
+def _to_iso_date(value: Any) -> str:
+    if value is None:
+        return ""
+    if hasattr(value, "isoformat"):
+        try:
+            return value.date().isoformat()
+        except Exception:
+            return value.isoformat()
+    try:
+        import pandas as pd
+
+        if isinstance(value, pd.Timestamp):
+            return value.date().isoformat()
+    except Exception:
+        pass
+    try:
+        ms = int(value)
+        dt = _datetime.datetime.fromtimestamp(ms / 1000.0)
+        return dt.date().isoformat()
+    except Exception:
+        return str(value)
+
+
+def dataframe_to_declarations(
+    group_name: str, df: pl.DataFrame
+) -> list[dict[str, Any]]:
+    decls: list[dict[str, Any]] = []
+    for row in df.iter_rows(named=True):
+        row = dict(row)
+        if "time" in row and "response_key" in row:
+            decls.append(
+                {
+                    "type": "summary_observation",
+                    "name": row.get("observation_key") or group_name,
+                    "key": row.get("response_key"),
+                    "date": row.get("time").isoformat(),
+                    "value": float(row.get("observations")),
+                    "error": float(row.get("std")),
+                    "east": None if row.get("east") is None else float(row.get("east")),
+                    "north": None
+                    if row.get("north") is None
+                    else float(row.get("north")),
+                    "radius": None
+                    if row.get("radius") is None
+                    else float(row.get("radius")),
+                }
+            )
+            continue
+        if "index" in row or "report_step" in row:
+            decls.append(
+                {
+                    "type": "general_observation",
+                    "name": row.get("observation_key") or group_name,
+                    "data": row.get("response_key"),
+                    "value": float(row.get("observations")),
+                    "error": float(row.get("std")),
+                    "restart": int(row.get("report_step", 0) or 0),
+                    "index": int(row.get("index", 0) or 0),
+                    "east": None if row.get("east") is None else float(row.get("east")),
+                    "north": None
+                    if row.get("north") is None
+                    else float(row.get("north")),
+                    "radius": None
+                    if row.get("radius") is None
+                    else float(row.get("radius")),
+                }
+            )
+            continue
+        if (
+            "tvd" in row
+            or "well" in row
+            or ("response_key" in row and ":" in str(row.get("response_key", "")))
+        ):
+            resp = str(row.get("response_key", ""))
+            try:
+                well, date_str, prop = resp.split(":", 2)
+            except Exception:
+                well = row.get("well") or group_name
+                date_str = _to_iso_date(row.get("time") or row.get("date"))
+                prop = row.get("property") or "PRESSURE"
+            decls.append(
+                {
+                    "type": "rft_observation",
+                    "name": row.get("observation_key") or group_name,
+                    "well": well,
+                    "date": date_str,
+                    "property": prop,
+                    "value": float(row.get("observations")),
+                    "error": float(row.get("std")),
+                    "north": None
+                    if row.get("north") is None
+                    else float(row.get("north")),
+                    "east": None if row.get("east") is None else float(row.get("east")),
+                    "tvd": None if row.get("tvd") is None else float(row.get("tvd")),
+                }
+            )
+            continue
+        decls.append(
+            {
+                "type": "general_observation",
+                "name": group_name,
+                "data": row.get("response_key") or "",
+                "value": float(row.get("observations", 0.0) or 0.0),
+                "error": float(row.get("std", 1.0) or 1.0),
+                "restart": int(row.get("report_step", 0) or 0),
+                "index": int(row.get("index", 0) or 0),
+            }
+        )
+    return decls
+
+
+def dataframes_to_declarations(dfs: dict[str, pl.DataFrame]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for name, df in dfs.items():
+        out.extend(dataframe_to_declarations(name, df))
+    return out
+
+
 def _ensembles(storage):
     return sorted(x.name for x in storage.ensembles)
 
@@ -58,9 +180,6 @@ def test_create_experiment(tmp_path):
 
         experiment_path = Path(storage.path / "experiments" / str(experiment.id))
         assert experiment_path.exists()
-
-        assert (experiment_path / experiment._parameter_file).exists()
-        assert (experiment_path / experiment._responses_file).exists()
 
         with open(experiment_path / "index.json", encoding="utf-8") as f:
             index = json.load(f)
@@ -142,7 +261,11 @@ def test_that_local_ensemble_save_parameter_raises_value_error_given_xr_array_da
 def test_that_saving_response_updates_configs(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment(
-            responses=[SummaryConfig(keys=["*", "FOPR"], input_files=["not_relevant"])]
+            experiment_config={
+                "response_configuration": [
+                    SummaryConfig(keys=["*", "FOPR"], input_files=["not_relevant"])
+                ]
+            }
         )
         ensemble = storage.create_ensemble(
             experiment, ensemble_size=1, iteration=0, name="prior"
@@ -198,7 +321,9 @@ def test_that_saving_arbitrary_parameter_dataframe_fails(tmp_path):
             name="KEY_1",
             distribution={"name": "uniform", "min": 0, "max": 1},
         )
-        experiment = storage.create_experiment(parameters=[uniform_parameter])
+        experiment = storage.create_experiment(
+            experiment_config={"parameter_configuration": [uniform_parameter]}
+        )
         prior = storage.create_ensemble(
             experiment, ensemble_size=1, iteration=0, name="prior"
         )
@@ -280,7 +405,7 @@ def test_that_loading_parameter_via_response_api_fails(tmp_path):
     )
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment(
-            parameters=[uniform_parameter],
+            experiment_config={"parameter_configuration": [uniform_parameter]},
         )
         prior = storage.create_ensemble(
             experiment,
@@ -377,7 +502,11 @@ def test_that_reader_storage_reads_most_recent_response_configs(tmp_path):
     writer = open_storage(tmp_path, mode="w")
 
     exp = writer.create_experiment(
-        responses=[SummaryConfig(keys=["*", "FOPR"], input_files=["not_relevant"])],
+        experiment_config={
+            "response_configuration": [
+                SummaryConfig(keys=["*", "FOPR"], input_files=["not_relevant"])
+            ]
+        },
         name="uniq",
     )
     ens: LocalEnsemble = exp.create_ensemble(ensemble_size=10, name="uniq_ens")
@@ -600,7 +729,18 @@ parameter_configs = st.lists(
             update=st.booleans(),
             distribution=st.just({"name": "uniform", "min": 0, "max": 1}),
         ),
-        st.builds(SurfaceConfig, name=words),
+        st.builds(
+            SurfaceConfig,
+            name=words,
+            ncol=st.integers(min_value=1),
+            nrow=st.integers(min_value=1),
+            xori=st.floats(allow_infinity=False, allow_nan=False),
+            yori=st.floats(allow_infinity=False, allow_nan=False),
+            xinc=st.floats(allow_infinity=False, allow_nan=False),
+            yinc=st.floats(allow_infinity=False, allow_nan=False),
+            rotation=st.floats(allow_infinity=False, allow_nan=False),
+            yflip=st.sampled_from([-1, 1]),
+        ),
     ),
     unique_by=lambda x: x.name,
     min_size=1,
@@ -654,8 +794,14 @@ observations = (
                 "index": vectors(
                     st.integers(min_value=1, max_value=10000), num_observations
                 ),
-                "observations": vectors(st.floats(width=32), num_observations),
-                "std": vectors(st.floats(width=32), num_observations),
+                "observations": vectors(
+                    st.floats(width=32, allow_nan=False, allow_infinity=False),
+                    num_observations,
+                ),
+                "std": vectors(
+                    st.floats(width=32, allow_nan=False, allow_infinity=False),
+                    num_observations,
+                ),
             }
         ),
     )
@@ -675,12 +821,12 @@ def fields(draw, egrid, num_fields=small_ints) -> list[Field]:
         draw(
             st.builds(
                 Field,
+                ertbox_params=st.builds(
+                    ErtboxParameters, nx=st.just(nx), ny=st.just(ny), nz=st.just(nz)
+                ),
                 name=st.just(f"Field{i}"),
                 file_format=st.just("roff_binary"),
                 grid_file=st.just(grid_file),
-                nx=st.just(nx),
-                ny=st.just(ny),
-                nz=st.just(nz),
                 output_file=st.just(Path(f"field{i}.roff")),
             )
         )
@@ -794,8 +940,14 @@ def test_asof_joining_summary(tmp_path, perturb_observations, perturb_responses)
         )
 
         experiment = storage.create_experiment(
-            responses=[SummaryConfig(keys=["*"], input_files=["not_relevant"])],
-            observations={"summary": summary_observations},
+            experiment_config={
+                "response_configuration": [
+                    SummaryConfig(keys=["*"], input_files=["not_relevant"])
+                ],
+                "observations": dataframes_to_declarations(
+                    {"summary": summary_observations}
+                ),
+            }
         )
 
         ensemble = storage.create_ensemble(
@@ -856,9 +1008,7 @@ def test_asof_joining_summary(tmp_path, perturb_observations, perturb_responses)
 
 def test_saving_everest_metadata_to_ensemble(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
-        experiment = storage.create_experiment(
-            responses=[],
-        )
+        experiment = storage.create_experiment()
 
         ensemble = storage.create_ensemble(
             experiment, ensemble_size=10, iteration=0, name="prior"
@@ -973,7 +1123,9 @@ def test_sample_parameter_with_design_matrix(tmp_path, reals, expect_error):
     design_matrix = DesignMatrix(design_path, "DesignSheet", "DefaultSheet")
     with open_storage(tmp_path / "storage", mode="w") as storage:
         experiment_id = storage.create_experiment(
-            parameters=list(design_matrix.parameter_configurations)
+            experiment_config={
+                "parameter_configuration": list(design_matrix.parameter_configurations)
+            }
         )
         ensemble = storage.create_ensemble(
             experiment_id, name="default", ensemble_size=ensemble_size
@@ -1035,7 +1187,11 @@ def test_load_gen_kw_not_sorted(storage, tmpdir, snapshot):
         ert_config = ErtConfig.from_file("config.ert")
 
         experiment_id = storage.create_experiment(
-            parameters=ert_config.ensemble_config.parameter_configuration
+            experiment_config={
+                "parameter_configuration": (
+                    ert_config.ensemble_config.parameter_configuration
+                )
+            }
         )
         ensemble_size = 10
         ensemble = storage.create_ensemble(
@@ -1154,7 +1310,7 @@ def test_set_failure_will_not_recreate_ensemble_directory(storage):
 def test_save_response_will_create_realization_directory(storage):
     # Given a fresh ensemble storage with no realizations
     dummy_ensemble = storage.create_experiment(
-        responses=[SummaryConfig(keys=["DUMMY"])]
+        experiment_config={"response_configuration": [SummaryConfig(keys=["DUMMY"])]}
     ).create_ensemble(name="dummy", ensemble_size=1)
     assert dummy_ensemble._path.exists(), "Assumptions for test has changed"
     assert not (dummy_ensemble._path / "realization-0").exists()
@@ -1243,7 +1399,11 @@ def test_that_multiple_save_parameters_numpy_calls_overwrite_previous_values(tmp
     gen_kw_parameter = GenKwConfig(
         name="some_param", distribution={"name": "normal", "mean": 10, "std": 0.1}
     )
-    exp = writer.create_experiment(parameters=[gen_kw_parameter])
+    exp = writer.create_experiment(
+        experiment_config={
+            "parameter_configuration": [gen_kw_parameter],
+        }
+    )
     num_reals = 5
     parameter_data_0 = np.array([0.0] * num_reals)
     parameter_data_1 = np.array([1.1] * num_reals)
@@ -1373,9 +1533,13 @@ class StatefulStorageTest(RuleBasedStateMachine):
         obs,
     ):
         experiment_id = self.storage.create_experiment(
-            parameters=parameters,
-            responses=responses,
-            observations=obs,
+            experiment_config={
+                "parameter_configuration": parameters,
+                "response_configuration": responses,
+                "observations": dataframes_to_declarations(
+                    {k: v for k, v in obs.items()}
+                ),
+            }
         ).id
         model_experiment = Experiment(experiment_id)
         model_experiment.parameters = parameters

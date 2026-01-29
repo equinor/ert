@@ -3,10 +3,12 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from .dict_encoded_dataframe import DictEncodedDataFrame
 from .local_ensemble import LocalEnsemble, load_realization_parameters_and_responses
 from .local_experiment import ExperimentState, ExperimentStatus, LocalExperiment
 from .local_storage import LocalStorage, local_storage_set_ert_config
 from .mode import Mode, ModeLiteral
+from .observation_helpers import dataframes_to_declarations
 from .realization_storage_state import RealizationStorageState
 
 # Alias types. The Local* variants are meant to co-exist with Remote* classes
@@ -55,6 +57,7 @@ def open_storage(
 
 
 __all__ = [
+    "DictEncodedDataFrame",
     "Ensemble",
     "Experiment",
     "ExperimentState",
@@ -62,6 +65,7 @@ __all__ = [
     "Mode",
     "RealizationStorageState",
     "Storage",
+    "dataframes_to_declarations",
     "load_realization_parameters_and_responses",
     "local_storage_set_ert_config",
     "open_storage",

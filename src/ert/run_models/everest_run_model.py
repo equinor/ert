@@ -17,11 +17,11 @@ from enum import IntEnum, auto
 from functools import cached_property
 from pathlib import Path
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, Protocol, cast
+from typing import TYPE_CHECKING, Annotated, Any, Protocol
 
 import numpy as np
 from numpy.typing import NDArray
-from pydantic import PrivateAttr, ValidationError
+from pydantic import Field, PrivateAttr, TypeAdapter, ValidationError
 from ropt.enums import ExitCode as RoptExitCode
 from ropt.evaluator import EvaluatorContext, EvaluatorResult
 from ropt.results import FunctionResults, Results
@@ -36,7 +36,6 @@ from ert.config import (
     GenDataConfig,
     HookRuntime,
     KnownQueueOptionsAdapter,
-    ParameterConfig,
     QueueConfig,
     ResponseConfig,
     SummaryConfig,
@@ -222,12 +221,24 @@ def _get_workflows(
     return res_hooks, res_workflows
 
 
+EverestResponseTypes = (
+    EverestObjectivesConfig | EverestConstraintsConfig | SummaryConfig | GenDataConfig
+)
+
+EverestResponseTypesAdapter = TypeAdapter(  # type: ignore
+    Annotated[
+        EverestResponseTypes,
+        Field(discriminator="type"),
+    ]
+)
+
+
 class EverestRunModelConfig(RunModelConfig):
     optimization_output_dir: str
     simulation_dir: str
 
-    parameter_configuration: list[ParameterConfig]
-    response_configuration: list[ResponseConfig]
+    parameter_configuration: list[EverestControl]
+    response_configuration: list[EverestResponseTypes]
 
     input_constraints: list[InputConstraintConfig]
     optimization: OptimizationConfig
@@ -542,7 +553,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
 
         # There will and must always be one EverestControl config for an
         # Everest optimization.
-        return cast(list[EverestControl], controls)
+        return controls
 
     @cached_property
     def _transforms(self) -> EverestOptModelTransforms:
@@ -676,9 +687,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         self._eval_server_cfg = evaluator_server_config
 
         self._experiment = self._experiment or self._storage.create_experiment(
-            name=self.experiment_name,
-            parameters=self.parameter_configuration,
-            responses=self.response_configuration,
+            name=self.experiment_name, experiment_config=self.model_dump(mode="json")
         )
 
         self._experiment.status = ExperimentStatus(
@@ -764,7 +773,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
 
     def _create_optimizer(self) -> tuple[BasicOptimizer, list[float]]:
         enopt_config, initial_guesses = everest2ropt(
-            cast(list[EverestControl], self.parameter_configuration),
+            self.parameter_configuration,
             self.objectives_config,
             self.input_constraints,
             self.output_constraints_config,
