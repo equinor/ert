@@ -227,7 +227,18 @@ def pad_to(lst: list[int], target_len: int):
     )
 
 
-def test_that_locations_are_found(mock_resfo_file):
+@pytest.fixture
+def egrid():
+    """EGrid file contents with three layers.
+
+    The grid is regular with DX and DY = 50, 2 cells
+    per direction.
+
+    First layer depth is from 0.0 to 1.0
+    Second layer depth is from 1.0 to 2.0
+    Third layer depth is from 2.0 to 3.0
+
+    """
     coord = np.array(
         [
             [0, 0, 0, 0, 0, 100],
@@ -242,19 +253,25 @@ def test_that_locations_are_found(mock_resfo_file):
         ],
         dtype=">f4",
     )
+    return [
+        ("FILEHEAD", pad_to([3, 2007, 0, 0, 0, 0, 1], 100)),
+        ("MAPAXES ", np.array([0.0, 1.0, 0.0, 0.0, 1.0, 0.0], dtype=">f4")),
+        ("GRIDUNIT", np.array([b"METRES  ", b"        "], dtype="|S8")),
+        ("GRIDHEAD", pad_to([1, 2, 2, 3], 100)),
+        ("COORD   ", coord.ravel()),
+        (
+            "ZCORN   ",
+            np.array([0.0] * 16 + [1.0] * 32 + [2.0] * 32 + [3.0] * 16, dtype=">f4"),
+        ),
+        ("ACTNUM  ", np.ones((8,), dtype=">i4")),
+        ("ENDGRID ", np.array([], dtype=">i4")),
+    ]
 
+
+def test_that_locations_are_found(mock_resfo_file, egrid):
     mock_resfo_file(
         "/tmp/does_not_exist/BASE.EGRID",
-        [
-            ("FILEHEAD", pad_to([3, 2007, 0, 0, 0, 0, 1], 100)),
-            ("MAPAXES ", np.array([0.0, 1.0, 0.0, 0.0, 1.0, 0.0], dtype=">f4")),
-            ("GRIDUNIT", np.array([b"METRES  ", b"        "], dtype="|S8")),
-            ("GRIDHEAD", pad_to([1, 2, 2, 2], 100)),
-            ("COORD   ", coord.ravel()),
-            ("ZCORN   ", np.array([0.0] * 16 + [50] * 32 + [100] * 16, dtype=">f4")),
-            ("ACTNUM  ", np.ones((8,), dtype=">i4")),
-            ("ENDGRID ", np.array([], dtype=">i4")),
-        ],
+        egrid,
     )
     mock_resfo_file(
         "/tmp/does_not_exist/BASE.RFT",
@@ -279,40 +296,16 @@ def test_that_locations_are_found(mock_resfo_file):
 
 
 def test_that_multiple_locations_in_the_same_cell_creates_multiple_rows(
-    mock_resfo_file,
+    mock_resfo_file, egrid
 ):
-    coord = np.array(
-        [
-            [0, 0, 0, 0, 0, 100],
-            [50, 0, 0, 50, 0, 100],
-            [100, 0, 0, 100, 0, 100],
-            [0, 50, 0, 0, 50, 100],
-            [50, 50, 0, 50, 50, 100],
-            [100, 50, 0, 100, 50, 100],
-            [0, 100, 0, 0, 100, 100],
-            [50, 100, 0, 50, 100, 100],
-            [100, 100, 0, 100, 100, 100],
-        ],
-        dtype=">f4",
-    )
-
     mock_resfo_file(
         "/tmp/does_not_exist/BASE.EGRID",
-        [
-            ("FILEHEAD", pad_to([3, 2007, 0, 0, 0, 0, 1], 100)),
-            ("MAPAXES ", np.array([0.0, 1.0, 0.0, 0.0, 1.0, 0.0], dtype=">f4")),
-            ("GRIDUNIT", np.array([b"METRES  ", b"        "], dtype="|S8")),
-            ("GRIDHEAD", pad_to([1, 2, 2, 2], 100)),
-            ("COORD   ", coord.ravel()),
-            ("ZCORN   ", np.array([0.0] * 16 + [50] * 32 + [100] * 16, dtype=">f4")),
-            ("ACTNUM  ", np.ones((8,), dtype=">i4")),
-            ("ENDGRID ", np.array([], dtype=">i4")),
-        ],
+        egrid,
     )
     mock_resfo_file(
         "/tmp/does_not_exist/BASE.RFT",
         [
-            *cell_start(date=(1, 1, 2000), well_name="WELL2", ijks=[(1, 1, 1)]),
+            *cell_start(date=(1, 1, 2000), well_name="WELL2", ijks=[(1, 1, 2)]),
             ("PRESSURE", float_arr([0.1])),
             ("DEPTH   ", float_arr([0.1])),
         ],
@@ -320,16 +313,16 @@ def test_that_multiple_locations_in_the_same_cell_creates_multiple_rows(
     rft_config = RFTConfig(
         input_files=["BASE.RFT"],
         data_to_read={"*": {"*": ["*"]}},
-        locations=[(1.0, 1.0, 1.0), (2.0, 2.0, 2.0)],
+        locations=[(1.25, 1.25, 1.25), (1.5, 1.5, 1.5)],
     )
     data = rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
     assert data["response_key"].to_list() == [
         "WELL2:2000-01-01:PRESSURE",
         "WELL2:2000-01-01:PRESSURE",
     ]
-    assert data["north"].to_list() == [1.0, 2.0]
-    assert data["east"].to_list() == [1.0, 2.0]
-    assert data["tvd"].to_list() == [1.0, 2.0]
+    assert sorted(data["north"].to_list()) == [1.25, 1.5]
+    assert sorted(data["east"].to_list()) == [1.25, 1.5]
+    assert sorted(data["tvd"].to_list()) == [1.25, 1.5]
 
 
 def test_that_handle_rft_observations_adds_radius_column_to_dataframe():
@@ -356,22 +349,8 @@ def test_that_handle_rft_observations_adds_radius_column_to_dataframe():
 
 
 def test_that_if_an_rft_observation_is_outside_the_zone_then_it_is_deactivated(
-    mock_resfo_file,
+    mock_resfo_file, egrid
 ):
-    coord = np.array(
-        [
-            [0, 0, 0, 0, 0, 100],
-            [50, 0, 0, 50, 0, 100],
-            [100, 0, 0, 100, 0, 100],
-            [0, 50, 0, 0, 50, 100],
-            [50, 50, 0, 50, 50, 100],
-            [100, 50, 0, 100, 50, 100],
-            [0, 100, 0, 0, 100, 100],
-            [50, 100, 0, 50, 100, 100],
-            [100, 100, 0, 100, 100, 100],
-        ],
-        dtype=">f4",
-    )
     config = ErtConfig.from_dict(
         {
             "ZONEMAP": ("zonemap.txt", {1: ["zone1"], 200: ["zone2"]}),
@@ -397,16 +376,7 @@ def test_that_if_an_rft_observation_is_outside_the_zone_then_it_is_deactivated(
     )
     mock_resfo_file(
         "/tmp/does_not_exist/ECLBASE1.EGRID",
-        [
-            ("FILEHEAD", pad_to([3, 2007, 0, 0, 0, 0, 1], 100)),
-            ("MAPAXES ", np.array([0.0, 1.0, 0.0, 0.0, 1.0, 0.0], dtype=">f4")),
-            ("GRIDUNIT", np.array([b"METRES  ", b"        "], dtype="|S8")),
-            ("GRIDHEAD", pad_to([1, 2, 2, 2], 100)),
-            ("COORD   ", coord.ravel()),
-            ("ZCORN   ", np.array([0.0] * 16 + [50] * 32 + [100] * 16, dtype=">f4")),
-            ("ACTNUM  ", np.ones((8,), dtype=">i4")),
-            ("ENDGRID ", np.array([], dtype=">i4")),
-        ],
+        egrid,
     )
     mock_resfo_file(
         "/tmp/does_not_exist/ECLBASE1.RFT",
@@ -420,3 +390,109 @@ def test_that_if_an_rft_observation_is_outside_the_zone_then_it_is_deactivated(
         config.ensemble_config.response_configs["rft"].read_from_file(
             "/tmp/does_not_exist", 1, 1
         )
+
+
+@pytest.mark.parametrize(
+    ("point", "expected_values"),
+    [
+        (
+            (1.0, 1.0, 0.5),
+            [
+                (0.0, 1.0, 1.0, 0.5, "zone1"),
+                (1.0, None, None, None, None),
+                (2.0, None, None, None, None),
+            ],
+        ),
+        (
+            (1.0, 1.0, 1.5),
+            [
+                (0.0, None, None, None, None),
+                (1.0, 1.0, 1.0, 1.5, "zone1"),
+                (1.0, 1.0, 1.0, 1.5, "zone2"),
+                (2.0, None, None, None, None),
+            ],
+        ),
+        (
+            (1.0, 1.0, 2.5),
+            [
+                (0.0, None, None, None, None),
+                (1.0, None, None, None, None),
+                (2.0, 1.0, 1.0, 2.5, "zone2"),
+            ],
+        ),
+    ],
+)
+def test_that_zone_is_correctly_disabled_for_oberlapping_zones(
+    mock_resfo_file, point, expected_values, egrid
+):
+    config = ErtConfig.from_dict(
+        {
+            "ZONEMAP": (
+                "zonemap.txt",
+                {1: ["zone1"], 2: ["zone1", "zone2"], 3: ["zone2"]},
+            ),
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    {
+                        "type": ObservationType.RFT,
+                        "name": "NAME",
+                        "WELL": "WELL",
+                        "VALUE": "700",
+                        "ERROR": "0.1",
+                        "DATE": "2000-01-01",
+                        "PROPERTY": "PRESSURE",
+                        "NORTH": point[0],
+                        "EAST": point[1],
+                        "TVD": point[2],
+                        "ZONE": "zone1",
+                    },
+                    {
+                        "type": ObservationType.RFT,
+                        "name": "NAME",
+                        "WELL": "WELL",
+                        "VALUE": "700",
+                        "ERROR": "0.1",
+                        "DATE": "2000-01-01",
+                        "PROPERTY": "PRESSURE",
+                        "NORTH": point[0],
+                        "EAST": point[1],
+                        "TVD": point[2],
+                        "ZONE": "zone2",
+                    },
+                ],
+            ),
+        }
+    )
+    mock_resfo_file(
+        "/tmp/does_not_exist/ECLBASE1.EGRID",
+        egrid,
+    )
+    mock_resfo_file(
+        "/tmp/does_not_exist/ECLBASE1.RFT",
+        [
+            *cell_start(
+                date=(1, 1, 2000),
+                well_name="WELL",
+                ijks=[(1, 1, 1), (1, 1, 2), (1, 1, 3)],
+            ),
+            ("PRESSURE", float_arr([0.0, 1.0, 2.0])),
+            ("DEPTH   ", float_arr([0.0, 1.0, 2.0])),
+        ],
+    )
+    res = config.ensemble_config.response_configs["rft"].read_from_file(
+        "/tmp/does_not_exist", 1, 1
+    )
+    assert (
+        sorted(
+            zip(
+                res["values"].to_list(),
+                res["east"].to_list(),
+                res["north"].to_list(),
+                res["tvd"].to_list(),
+                res["zone"].to_list(),
+                strict=True,
+            )
+        )
+        == expected_values
+    )

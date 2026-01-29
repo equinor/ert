@@ -68,7 +68,7 @@ class RFTConfig(ResponseConfig):
         indices: dict[GridIndex | None, set[Point | tuple[Point, ZoneName]]],
         iens: int,
         iter_: int,
-    ) -> dict[GridIndex | None, set[Point]]:
+    ) -> dict[GridIndex | None, set[tuple[Point, ZoneName | None]]]:
         for idx, locs in indices.items():
             if idx is not None:
                 for loc in list(locs):
@@ -87,7 +87,7 @@ class RFTConfig(ResponseConfig):
                             )
                             locs.remove(loc)
         return {
-            k: {v[0] if isinstance(v[1], str) else v for v in vs}
+            k: {v if isinstance(v[1], str) else (v, None) for v in vs}
             for k, vs in indices.items()
         }
 
@@ -124,6 +124,7 @@ class RFTConfig(ResponseConfig):
                     "depth": [],
                     "values": [],
                     "location": [],
+                    "zone": [],
                 }
             )
 
@@ -170,7 +171,7 @@ class RFTConfig(ResponseConfig):
                                 list(
                                     indices.get(
                                         (c[0] - 1, c[1] - 1, c[2] - 1),
-                                        [(None, None, None)],
+                                        [((None, None, None), None)],
                                     )
                                 )
                                 for c in entry.connections
@@ -190,6 +191,7 @@ class RFTConfig(ResponseConfig):
                     "depth": [],
                     "values": [],
                     "location": [],
+                    "zone": [],
                 }
             )
 
@@ -204,18 +206,34 @@ class RFTConfig(ResponseConfig):
                             "values": [vals],
                             "location": pl.Series(
                                 [
-                                    locations.get(
-                                        (well, time), [(None, None, None)] * len(vals)
-                                    )
+                                    [
+                                        [loc[0] for loc in locs]
+                                        for locs in locations.get(
+                                            (well, time),
+                                            [[((None, None, None), None)]] * len(vals),
+                                        )
+                                    ]
                                 ],
                                 dtype=pl.Array(
                                     pl.List(pl.Array(pl.Float32, 3)), len(vals)
                                 ),
                             ),
+                            "zone": pl.Series(
+                                [
+                                    [
+                                        [loc[1] for loc in locs]
+                                        for locs in locations.get(
+                                            (well, time),
+                                            [[((None, None, None), None)]] * len(vals),
+                                        )
+                                    ]
+                                ],
+                                dtype=pl.Array(pl.List(pl.String), len(vals)),
+                            ),
                         }
                     )
-                    .explode("depth", "values", "location")
-                    .explode("location")
+                    .explode("depth", "values", "location", "zone")
+                    .explode("location", "zone")
                     for (well, time), inner_dict in fetched.items()
                     for prop, vals in inner_dict.items()
                     if prop != "DEPTH" and len(vals) > 0
@@ -238,7 +256,7 @@ class RFTConfig(ResponseConfig):
 
     @property
     def primary_key(self) -> list[str]:
-        return ["east", "north", "tvd"]
+        return ["east", "north", "tvd", "zone"]
 
     @classmethod
     def from_config_dict(cls, config_dict: ConfigDict) -> RFTConfig | None:
