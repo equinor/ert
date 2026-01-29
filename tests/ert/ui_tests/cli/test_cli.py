@@ -676,7 +676,7 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
             "COEFFS", np.arange(num_realizations)
         )
         np.testing.assert_array_equal(parameter_values, prior_values)
-    assert len([msg for msg in caplog.messages if "RANDOM_SEED" in msg]) == 1
+    assert len([msg for msg in caplog.messages if "RANDOM_SEED" in msg]) == 2
 
 
 @pytest.mark.usefixtures("copy_poly_case")

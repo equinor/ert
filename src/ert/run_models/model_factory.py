@@ -191,6 +191,7 @@ def _setup_ensemble_experiment(
         parameter_configs=config.ensemble_config.parameter_configuration,
     )
 
+    config.advance_random_seed()
     runmodel_config = EnsembleExperimentConfig(
         random_seed=config.random_seed,
         runpath_file=config.runpath_file,
