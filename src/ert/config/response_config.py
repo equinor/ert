@@ -14,27 +14,10 @@ class InvalidResponseFile(Exception):
     """
 
 
-class ResponseConfig(BaseModel):
+class ResponseBaseClass(BaseModel):
     type: str
-    input_files: list[str] = Field(default_factory=list)
     keys: list[str] = Field(default_factory=list)
     has_finalized_keys: bool = False
-
-    @abstractmethod
-    def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
-        """Reads the data for the response from run_path.
-
-        Raises:
-            FileNotFoundError: when one of the input_files for the
-                response is missing.
-            InvalidResponseFile: when one of the input_files is
-                invalid
-        """
-
-    @property
-    @abstractmethod
-    def expected_input_files(self) -> list[str]:
-        """Returns a list of filenames expected to be produced by the forward model"""
 
     @property
     @abstractmethod
@@ -58,3 +41,29 @@ class ResponseConfig(BaseModel):
     def filter_on(self) -> dict[str, dict[str, list[int]]] | None:
         """Optional filters for this response."""
         return None
+
+
+class ResponseConfig(ResponseBaseClass):
+    input_files: list[str] = Field(default_factory=list)
+
+    @abstractmethod
+    def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
+        """Reads the data for the response from run_path.
+
+        Raises:
+            FileNotFoundError: when one of the input_files for the
+                response is missing.
+            InvalidResponseFile: when one of the input_files is
+                invalid
+        """
+
+    @property
+    @abstractmethod
+    def expected_input_files(self) -> list[str]:
+        """Returns a list of filenames expected to be produced by the forward model"""
+
+
+class DerivedResponseConfig(ResponseBaseClass):
+    @abstractmethod
+    def derive_from_storage(self):
+        """TODO"""
