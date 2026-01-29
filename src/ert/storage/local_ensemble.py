@@ -1077,7 +1077,9 @@ class LocalEnsemble(BaseMode):
                     for col, observed_values in observed_cols.items():
                         if col != "time":
                             responses = responses.filter(
-                                pl.col(col).is_in(observed_values.implode())
+                                pl.col(col).is_in(
+                                    observed_values.implode(), nulls_equal=True
+                                )
                             )
 
                     pivoted = responses.collect(engine="streaming").pivot(
@@ -1120,6 +1122,7 @@ class LocalEnsemble(BaseMode):
                             pivoted,
                             how="left",
                             on=["response_key", *response_cls.primary_key],
+                            nulls_equal=True,
                         )
 
                     # Do not drop primary keys which

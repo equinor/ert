@@ -188,6 +188,7 @@ def _handle_rft_observation(
             "east": pl.Series([location[0]], dtype=pl.Float32),
             "north": pl.Series([location[1]], dtype=pl.Float32),
             "tvd": pl.Series([location[2]], dtype=pl.Float32),
+            "zone": pl.Series([rft_observation.zone], dtype=pl.String),
             "observations": pl.Series([rft_observation.value], dtype=pl.Float32),
             "std": pl.Series([rft_observation.error], dtype=pl.Float32),
             "radius": pl.Series([None], dtype=pl.Float32),
