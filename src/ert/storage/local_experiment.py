@@ -433,25 +433,15 @@ class LocalExperiment(BaseMode):
         except Exception:
             rft_cfg = None
 
-        # serialized_observations is expected as a list of pydantic-style
-        # observation dicts matching the Observation models. Convert each dict
-        # to an Observation instance and create dataframes.
         obs_adapter = TypeAdapter(Observation)  # type: ignore
         obs_objs: list[Observation] = []
         for od in serialized_observations:
-            try:
-                obs_obj = obs_adapter.validate_python(od)
-            except Exception:
-                # skip invalid declarations
-                continue
-            obs_objs.append(obs_obj)
+            obs_objs.append(obs_adapter.validate_python(od))
 
         datasets = create_observation_dataframes(obs_objs, rft_cfg)
         for response_type, df in datasets.items():
-            # write parquet transactionally
             self._storage._to_parquet_transaction(output_path / response_type, df)
 
-        # Return the datasets we just materialized
         return {
             p.stem: pl.read_parquet(p)
             for p in (self.mount_point / "observations").iterdir()
