@@ -27,9 +27,6 @@ class TransSettingsValidation(BaseModel):
             if field.is_required() or (field.default is not None and name != "name")
         ]
 
-    def transform_numpy(self, x: np.ndarray) -> np.ndarray:
-        raise NotImplementedError
-
 
 class UnifSettings(TransSettingsValidation):
     name: Literal["uniform"] = "uniform"
