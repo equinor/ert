@@ -541,7 +541,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         ]
 
         # There will and must always be one EverestControl config for an
-        # Everest optimization.
+        # EVEREST optimization.
         return cast(list[EverestControl], controls)
 
     @cached_property
@@ -588,7 +588,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         error_messages: MutableSequence[str] = []
         traceback_str: str | None = None
         try:
-            logger.debug("Starting Everest simulations thread")
+            logger.debug("Starting EVEREST simulations thread")
             self.run_experiment(evaluator_server_config)
         except Exception as e:
             failed = True
@@ -663,7 +663,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
             c for c in self.response_configuration if c.type == "everest_objectives"
         )
         # There will and must always be one objectives config for an
-        # Everest optimization.
+        # EVEREST optimization.
         assert isinstance(obj_config, EverestObjectivesConfig)
         return obj_config
 
@@ -759,7 +759,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
             self._experiment.status = experiment_status
 
         logger.debug(
-            f"Everest experiment finished with exit code {self._exit_code.name}"
+            f"EVEREST experiment finished with exit code {self._exit_code.name}"
         )
 
     def _create_optimizer(self) -> tuple[BasicOptimizer, list[float]]:

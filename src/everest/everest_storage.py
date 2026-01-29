@@ -427,7 +427,7 @@ class EverestStorage:
         """
         scaled_cols = [c for c in df.columns if c.lower().startswith("scaled")]
         if len(scaled_cols) > 0:
-            raise ValueError("Scaled columns should not be stored into Everest storage")
+            raise ValueError("Scaled columns should not be stored into EVEREST storage")
 
         # Keys are ROPT column keys
         # values are corresponding column keys we present to the user
@@ -938,7 +938,7 @@ class EverestStorage:
             self.data.batches.append(batch_data)
 
     def on_optimization_finished(self) -> None:
-        logger.debug("Storing final results Everest storage")
+        logger.debug("Storing final results EVEREST storage")
 
         # This a somewhat arbitrary threshold, this should be a user choice
         # during visualization:

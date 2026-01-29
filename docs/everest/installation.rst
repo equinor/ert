@@ -3,7 +3,7 @@
 Installation
 ************
 
-Follow these instructions to install Everest on your system:
+Follow these instructions to install EVEREST on your system:
 
 Using pip (Recommended for General Users)
 -----------------------------------------
@@ -21,7 +21,7 @@ If you want to build and install the latest development version, follow the inst
 
 For Equinor Employees (Using Komodo Release)
 --------------------------------------------
-If you work at Equinor, Everest should be available after sourcing a Komodo release. Run the following command:
+If you work at Equinor, EVEREST should be available after sourcing a Komodo release. Run the following command:
 
 .. code-block:: bash
 

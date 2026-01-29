@@ -253,7 +253,7 @@ def terminate_on_parent_death(
 
 
 def _join_terminate_thread(terminate_on_parent_death_thread: threading.Thread) -> None:
-    """Join the terminate thread, handling BaseServiceExit (which is used by Everest)"""
+    """Join the terminate thread, handling BaseServiceExit (which is used by EVEREST)"""
     try:
         terminate_on_parent_death_thread.join()
     except ErtServerExit:

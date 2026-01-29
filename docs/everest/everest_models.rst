@@ -1,10 +1,10 @@
 .. _cha_everest_models:
 
 **************
-Everest models
+EVEREST models
 **************
 
-The ``everest-models`` plugin for Everest adds a number of forward model jobs
+The ``everest-models`` plugin for EVEREST adds a number of forward model jobs
 for devising optimal field development and reservoir management strategies. It
 can be found here: `<https://github.com/equinor/everest-models>`_.
 

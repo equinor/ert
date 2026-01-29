@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 async def start_server(config: EverestConfig, logging_level: int) -> Driver:
     """
-    Start an Everest server running the optimization defined in the config
+    Start an EVEREST server running the optimization defined in the config
     """
     driver = create_driver(config.server.queue_system, poll_period=0.1)  # type: ignore
     try:
@@ -211,7 +211,7 @@ def start_monitor(
     polling_interval: float = 0.1,
 ) -> None:
     """
-    Checks status on Everest server and calls callback when status changes
+    Checks status on EVEREST server and calls callback when status changes
 
     Monitoring stops when the server stops answering.
     """

@@ -23,7 +23,7 @@ class EnvironmentConfig(BaseModel, extra="forbid"):
         default="everest_output",
         description=dedent(
             """
-            Folder for Everest output.
+            Folder for EVEREST output.
             """
         ),
     )
@@ -31,7 +31,7 @@ class EnvironmentConfig(BaseModel, extra="forbid"):
         default="info",
         description=dedent(
             """
-            Defines the verbosity of logs output by Everest.
+            Defines the verbosity of logs output by EVEREST.
 
             The default log level is `info`. The supported log levels are:
 

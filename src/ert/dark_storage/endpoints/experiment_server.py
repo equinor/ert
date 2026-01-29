@@ -158,7 +158,7 @@ def get_status(
 ) -> PlainTextResponse:
     _log(request)
     _check_user(credentials)
-    return PlainTextResponse("Everest is running")
+    return PlainTextResponse("EVEREST is running")
 
 
 @router.get("/status")
@@ -179,7 +179,7 @@ def stop(
     shared_data.status = ExperimentStatus(
         message="Server stopped by user", status=ExperimentState.stopped
     )
-    return Response("Raise STOP flag succeeded. Everest initiates shutdown..", 200)
+    return Response("Raise STOP flag succeeded. EVEREST initiates shutdown..", 200)
 
 
 @router.post("/" + EverEndpoints.start_experiment)
@@ -206,7 +206,7 @@ async def start_experiment(
             # Assume client and server is always in the same timezone
             # so disregard timestamps
             shared_data.start_time_unix = int(time.time())
-            return Response("Everest experiment started")
+            return Response("EVEREST experiment started")
         except Exception as e:
             shared_data.status = ExperimentStatus(
                 status=ExperimentState.failed,
@@ -214,7 +214,7 @@ async def start_experiment(
             )
             logging.getLogger(EXPERIMENT_SERVER).exception(e)
             return Response(f"Could not start experiment: {e!s}", status_code=501)
-    return Response("Everest experiment is running")
+    return Response("EVEREST experiment is running")
 
 
 @router.get("/" + EverEndpoints.config_path)
