@@ -48,6 +48,13 @@ def test_parse_observations():
               ERROR = 0.25;
            };
         };--comment
+
+        BREAKTHROUGH_OBSERVATION BRT {
+           KEY=WWCT:OP_1;
+           DATE=2012-10-01;
+           ERROR=3;
+           THRESHOLD=0.1;
+        };
     """,
         "",
     ) == [
@@ -81,6 +88,14 @@ def test_parse_observations():
             "name": "FWPR",
             "ERROR": "0.1",
             "segments": [("SEG", {"START": "1", "STOP": "0", "ERROR": "0.25"})],
+        },
+        {
+            "type": ObservationType.BREAKTHROUGH,
+            "name": "BRT",
+            "KEY": "WWCT:OP_1",
+            "DATE": "2012-10-01",
+            "ERROR": "3",
+            "THRESHOLD": "0.1",
         },
     ]
 
@@ -207,3 +222,28 @@ def test_that_duplicate_keys_results_in_error_message_with_location(observation_
             """,
             "",
         )
+
+
+def test_that_breakthrough_observations_can_be_parsed_with_localization():
+    breakthrough_obs = parse_observations(
+        content=dedent(
+            """\
+            BREAKTHROUGH_OBSERVATION BRT {
+               KEY=WWCT:OP_1;
+               DATE=2012-10-01;
+               ERROR=3;
+               THRESHOLD=0.1;
+               LOCALIZATION {
+                  EAST=10;
+                  NORTH=20;
+                  RADIUS=2500;
+               };
+            };
+        """
+        ),
+        filename="",
+    ).pop()
+    assert "LOCALIZATION" in breakthrough_obs
+    assert breakthrough_obs["LOCALIZATION"]["EAST"] == "10"
+    assert breakthrough_obs["LOCALIZATION"]["NORTH"] == "20"
+    assert breakthrough_obs["LOCALIZATION"]["RADIUS"] == "2500"

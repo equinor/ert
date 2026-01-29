@@ -19,6 +19,7 @@ class ObservationType(StrEnum):
     SUMMARY = "SUMMARY_OBSERVATION"
     GENERAL = "GENERAL_OBSERVATION"
     RFT = "RFT_OBSERVATION"
+    BREAKTHROUGH = "BREAKTHROUGH_OBSERVATION"
 
 
 ObservationDict = dict[str, Any]
@@ -127,6 +128,7 @@ observations_parser = Lark(
       | "SUMMARY_OBSERVATION"
       | "GENERAL_OBSERVATION"
       | "RFT_OBSERVATION"
+      | "BREAKTHROUGH_OBSERVATION"
     type: TYPE
     ?value: object
           | STRING

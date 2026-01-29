@@ -8,6 +8,7 @@ from typing import assert_never
 import polars as pl
 
 from ._observations import (
+    BreakthroughObservation,
     GeneralObservation,
     Observation,
     RFTObservation,
@@ -55,6 +56,12 @@ def create_observation_dataframes(
                             "rft_config is not None when using RFTObservation"
                         )
                     grouped["rft"].append(_handle_rft_observation(rft_config, obs))
+                case BreakthroughObservation():
+                    grouped["breakthrough"].append(
+                        _handle_breakthrough_observation(
+                            obs,
+                        )
+                    )
                 case default:
                     assert_never(default)
         except ObservationConfigError as err:
@@ -184,5 +191,23 @@ def _handle_rft_observation(
             "observations": pl.Series([rft_observation.value], dtype=pl.Float32),
             "std": pl.Series([rft_observation.error], dtype=pl.Float32),
             "radius": pl.Series([None], dtype=pl.Float32),
+        }
+    )
+
+
+def _handle_breakthrough_observation(
+    obs_config: BreakthroughObservation,
+) -> pl.DataFrame:
+    return pl.DataFrame(
+        {
+            "observation_key": obs_config.name,
+            "response_key": (
+                f"BREAKTHROUGH:{obs_config.response_key}:{obs_config.threshold}"
+            ),
+            "observations": obs_config.date.isoformat(),
+            "std": pl.Series([obs_config.error], dtype=pl.Float32),
+            "east": pl.Series([obs_config.east], dtype=pl.Float32),
+            "north": pl.Series([obs_config.north], dtype=pl.Float32),
+            "radius": pl.Series([obs_config.radius], dtype=pl.Float32),
         }
     )

@@ -11,6 +11,7 @@ from resdata.summary import Summary
 
 from ert.__main__ import run_convert_observations
 from ert.config._observations import (
+    BreakthroughObservation,
     GeneralObservation,
     RFTObservation,
     SummaryObservation,
@@ -483,3 +484,78 @@ def test_that_multiple_segments_are_collected():
     observations = HistoryObservation.from_obs_dict("", parsed_obs_dict[0])
 
     assert len(observations[0].segments) == 2
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_breakthrough_observation_can_be_instantiated_from_config():
+    obs_config_str = """
+      BREAKTHROUGH_OBSERVATION name {
+        KEY=WWCT:OP_1;
+        DATE=2012-10-01;
+        ERROR=3; -- days
+        THRESHOLD=0.1;
+      };
+    """
+
+    Path("obs_config.txt").write_text(obs_config_str, encoding="utf8")
+    parsed_obs_dict = parse_observations(obs_config_str, "obs_config.txt")
+    brt_obs = BreakthroughObservation.from_obs_dict("", parsed_obs_dict[0]).pop()
+    assert brt_obs.type == "breakthrough"
+    assert brt_obs.name == "name"
+    assert brt_obs.response_key == "WWCT:OP_1"
+    assert brt_obs.date == datetime.fromisoformat("2012-10-01")
+    assert brt_obs.error == 3
+    assert brt_obs.threshold == 0.1
+    assert brt_obs.east is None
+    assert brt_obs.north is None
+    assert brt_obs.radius is None
+
+
+@pytest.mark.parametrize("missing_keyword", ["KEY", "DATE", "ERROR", "THRESHOLD"])
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_breakthrough_observation_raises_error_when_missing_required_keyword(
+    missing_keyword,
+):
+    obs_config_str = """
+      BREAKTHROUGH_OBSERVATION BRT_OBS {
+        KEY=WWCT:OP_1;
+        DATE=2012-10-01;
+        ERROR=3; -- days
+        THRESHOLD=0.1;
+      };
+    """
+    obs_config_lines = obs_config_str.splitlines()
+    obs_config_lines.pop(
+        next(i for i, line in enumerate(obs_config_lines) if missing_keyword in line)
+    )
+    obs_config_str = "\n".join(obs_config_lines)
+    Path("obs_config.txt").write_text(obs_config_str, encoding="utf8")
+    parsed_obs_dict = parse_observations(obs_config_str, "obs_config.txt")
+    with pytest.raises(
+        ObservationConfigError, match=f'Missing item "{missing_keyword}" in BRT_OBS'
+    ):
+        BreakthroughObservation.from_obs_dict("", parsed_obs_dict[0])
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_breakthrough_observation_can_be_instantiated_with_localization():
+    obs_config_str = """
+      BREAKTHROUGH_OBSERVATION name {
+        KEY=WWCT:OP_1;
+        DATE=2012-10-01;
+        ERROR=3; -- days
+        THRESHOLD=0.1;
+        LOCALIZATION {
+           EAST=10;
+           NORTH=20;
+           RADIUS=2500;
+        };
+      };
+    """
+
+    Path("obs_config.txt").write_text(obs_config_str, encoding="utf8")
+    parsed_obs_dict = parse_observations(obs_config_str, "obs_config.txt")
+    brt_obs = BreakthroughObservation.from_obs_dict("", parsed_obs_dict[0]).pop()
+    assert brt_obs.east == 10
+    assert brt_obs.north == 20
+    assert brt_obs.radius == 2500
