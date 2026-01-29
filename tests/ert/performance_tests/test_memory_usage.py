@@ -1,4 +1,5 @@
 import datetime
+import datetime as _datetime
 import os
 import stat
 import sys
@@ -6,6 +7,9 @@ import tempfile
 from multiprocessing import Process
 from pathlib import Path
 from textwrap import dedent
+
+# Inlined observation helpers (originally in ert.storage.observation_helpers)
+from typing import Any
 
 import memray
 import numpy as np
@@ -20,7 +24,128 @@ from ert.config import ErtConfig, ESSettings, ObservationSettings
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.namespace import Namespace
 from ert.sample_prior import sample_prior
-from ert.storage import DictEncodedDataFrame, open_storage
+from ert.storage import open_storage
+
+
+def _to_iso_date(value: Any) -> str:
+    if value is None:
+        return ""
+    if hasattr(value, "isoformat"):
+        try:
+            return value.date().isoformat()
+        except Exception:
+            return value.isoformat()
+    try:
+        import pandas as pd
+
+        if isinstance(value, pd.Timestamp):
+            return value.date().isoformat()
+    except Exception:
+        pass
+    try:
+        ms = int(value)
+        dt = _datetime.datetime.fromtimestamp(ms / 1000.0)
+        return dt.date().isoformat()
+    except Exception:
+        return str(value)
+
+
+def dataframe_to_declarations(
+    group_name: str, df: pl.DataFrame
+) -> list[dict[str, Any]]:
+    decls: list[dict[str, Any]] = []
+    for row in df.iter_rows(named=True):
+        row = dict(row)
+        if "time" in row and "response_key" in row:
+            date = _to_iso_date(row.get("time"))
+            decls.append(
+                {
+                    "type": "summary_observation",
+                    "name": row.get("observation_key") or group_name,
+                    "key": row.get("response_key"),
+                    "date": date,
+                    "value": float(row.get("observations")),
+                    "error": float(row.get("std")),
+                    "east": None if row.get("east") is None else float(row.get("east")),
+                    "north": None
+                    if row.get("north") is None
+                    else float(row.get("north")),
+                    "radius": None
+                    if row.get("radius") is None
+                    else float(row.get("radius")),
+                }
+            )
+            continue
+        if "index" in row or "report_step" in row:
+            decls.append(
+                {
+                    "type": "general_observation",
+                    "name": row.get("observation_key") or group_name,
+                    "data": row.get("response_key"),
+                    "value": float(row.get("observations")),
+                    "error": float(row.get("std")),
+                    "restart": int(row.get("report_step", 0) or 0),
+                    "index": int(row.get("index", 0) or 0),
+                    "east": None if row.get("east") is None else float(row.get("east")),
+                    "north": None
+                    if row.get("north") is None
+                    else float(row.get("north")),
+                    "radius": None
+                    if row.get("radius") is None
+                    else float(row.get("radius")),
+                }
+            )
+            continue
+        if (
+            "tvd" in row
+            or "well" in row
+            or ("response_key" in row and ":" in str(row.get("response_key", "")))
+        ):
+            resp = str(row.get("response_key", ""))
+            try:
+                well, date_str, prop = resp.split(":", 2)
+            except Exception:
+                well = row.get("well") or group_name
+                date_str = _to_iso_date(row.get("time") or row.get("date"))
+                prop = row.get("property") or "PRESSURE"
+            decls.append(
+                {
+                    "type": "rft_observation",
+                    "name": row.get("observation_key") or group_name,
+                    "well": well,
+                    "date": date_str,
+                    "property": prop,
+                    "value": float(row.get("observations")),
+                    "error": float(row.get("std")),
+                    "north": None
+                    if row.get("north") is None
+                    else float(row.get("north")),
+                    "east": None if row.get("east") is None else float(row.get("east")),
+                    "tvd": None if row.get("tvd") is None else float(row.get("tvd")),
+                }
+            )
+            continue
+        decls.append(
+            {
+                "type": "general_observation",
+                "name": group_name,
+                "data": row.get("response_key") or "",
+                "value": float(row.get("observations", 0.0) or 0.0),
+                "error": float(row.get("std", 1.0) or 1.0),
+                "restart": int(row.get("report_step", 0) or 0),
+                "index": int(row.get("index", 0) or 0),
+            }
+        )
+    return decls
+
+
+def dataframes_to_declarations(dfs: dict[str, pl.DataFrame]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for name, df in dfs.items():
+        out.extend(dataframe_to_declarations(name, df))
+    return out
+
+
 from tests.ert.performance_tests.performance_utils import make_poly_example
 from tests.ert.ui_tests.cli.run_cli import run_cli
 
@@ -113,10 +238,12 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
             experiment_config={
                 "parameter_configuration": ens_config.parameter_configuration,
                 "response_configuration": ens_config.response_configuration,
-                "observations": {
-                    response_type: DictEncodedDataFrame.from_polars(df)
-                    for response_type, df in ert_config.observations.items()
-                },
+                "observations": dataframes_to_declarations(
+                    {
+                        response_type: df
+                        for response_type, df in ert_config.observations.items()
+                    }
+                ),
             },
             name="test-experiment",
         )

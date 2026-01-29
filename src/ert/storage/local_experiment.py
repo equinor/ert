@@ -24,7 +24,10 @@ from ert.config import (
     SurfaceConfig,
 )
 from ert.config import Field as FieldConfig
-from ert.storage import DictEncodedDataFrame
+from ert.config._create_observation_dataframes import (
+    create_observation_dataframes,
+)
+from ert.config._observations import Observation
 
 from .mode import BaseMode, Mode, require_write
 
@@ -152,15 +155,6 @@ class LocalExperiment(BaseMode):
             .encode("utf-8"),
         )
 
-        # parameter_data = {}
-        # for parameter in parameters or []:
-        #    parameter.save_experiment_data(path)
-        #    parameter_data.update({parameter.name: parameter.model_dump(mode="json")})
-        # storage._write_transaction(
-        #    path / cls._parameter_file,
-        #    json.dumps(parameter_data, indent=2).encode("utf-8"),
-        # )
-
         templates = experiment_config.get("ert_templates")
         if templates is not None:
             templates_path = path / "templates"
@@ -179,20 +173,30 @@ class LocalExperiment(BaseMode):
                 json.dumps(templates_abs).encode("utf-8"),
             )
 
-        # response_data = {}
-        # for response in responses or []:
-        #    response_data.update({response.type: response.model_dump(mode="json")})
-        # storage._write_transaction(
-        #    path / cls._responses_file,
-        #    json.dumps(response_data, default=str, indent=2).encode("utf-8"),
-        # )
-        # if observations:
-        #    output_path = path / "observations"
-        #    output_path.mkdir()
-        #    for response_type, dataset in observations.items():
-        #        storage._to_parquet_transaction(
-        #            output_path / f"{response_type}", dataset
-        #        )
+        observation_declarations = experiment_config.get("observations")
+        if observation_declarations:
+            output_path = path / "observations"
+            output_path.mkdir(parents=True, exist_ok=True)
+
+            rft_config = None
+            try:
+                responses_list = experiment_config.get("response_configuration", [])
+                for r in responses_list:
+                    if r.get("type") == "rft":
+                        rft_config = _responses_adapter.validate_python(r)
+                        break
+            except Exception:
+                rft_config = None
+
+            obs_adapter = TypeAdapter(Observation)  # type: ignore
+            obs_objs: list[Observation] = []
+            for od in observation_declarations:
+                obs_objs.append(obs_adapter.validate_python(od))
+
+            datasets = create_observation_dataframes(obs_objs, rft_config)
+            for response_type, df in datasets.items():
+                storage._to_parquet_transaction(output_path / response_type, df)
+
         return cls(storage, path, Mode.WRITE)
 
     @require_write
@@ -392,13 +396,66 @@ class LocalExperiment(BaseMode):
 
     @cached_property
     def observations(self) -> dict[str, pl.DataFrame]:
+        obs_dir = self.mount_point / "observations"
+
+        # If parquet files exist, read them and return dataframes.
+        if obs_dir.exists():
+            datasets: dict[str, pl.DataFrame] = {}
+            for p in obs_dir.iterdir():
+                if not p.is_file():
+                    continue
+                try:
+                    df = pl.read_parquet(p)
+                except Exception:
+                    continue
+                datasets[p.stem] = df
+            return datasets
+
+        # No parquet files exist. If the serialized experiment contains
+        # observation declarations, materialize them now and write parquets.
+        serialized_observations = self.experiment_config.get("observations", None)
+        if not serialized_observations:
+            return {}
+
+        # serialized_observations expected to be a list of observation dicts
+        # (same format as ErtConfig.observation_declarations).
+        output_path = self.mount_point / "observations"
+        output_path.mkdir(parents=True, exist_ok=True)
+
+        # Prepare RFT config if present in response_configuration
+        rft_cfg = None
+        try:
+            responses_list = self.experiment_config.get("response_configuration", [])
+            for r in responses_list:
+                if r.get("type") == "rft":
+                    rft_cfg = _responses_adapter.validate_python(r)
+                    break
+        except Exception:
+            rft_cfg = None
+
+        # serialized_observations is expected as a list of pydantic-style
+        # observation dicts matching the Observation models. Convert each dict
+        # to an Observation instance and create dataframes.
+        obs_adapter = TypeAdapter(Observation)  # type: ignore
+        obs_objs: list[Observation] = []
+        for od in serialized_observations:
+            try:
+                obs_obj = obs_adapter.validate_python(od)
+            except Exception:
+                # skip invalid declarations
+                continue
+            obs_objs.append(obs_obj)
+
+        datasets = create_observation_dataframes(obs_objs, rft_cfg)
+        for response_type, df in datasets.items():
+            # write parquet transactionally
+            self._storage._to_parquet_transaction(output_path / response_type, df)
+
+        # Return the datasets we just materialized
         return {
-            response_type: DictEncodedDataFrame.model_validate(
-                encoded_observations
-            ).to_polars()
-            for response_type, encoded_observations in self.experiment_config.get(
-                "observations", {}
-            ).items()
+            p.stem: pl.read_parquet(p)
+            for p in (self.mount_point / "observations").iterdir()
+            if p.is_file()
         }
 
     @cached_property

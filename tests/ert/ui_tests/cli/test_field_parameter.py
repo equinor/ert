@@ -17,7 +17,6 @@ from ert.analysis import smoother_update
 from ert.config import ErtConfig, ESSettings, ObservationSettings
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.storage import open_storage
-from ert.storage.migration.to24 import DictEncodedDataFrame
 
 from .run_cli import run_cli
 
@@ -433,16 +432,15 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
         init_temp_scale = prior.load_parameters("INIT_TEMP_SCALE")
         corr_length = prior.load_parameters("CORR_LENGTH")
 
+        obs_decls = config.observation_declarations
+
         new_experiment = storage.create_experiment(
             experiment_config={
                 "parameter_configuration": (
                     config.ensemble_config.parameter_configuration
                 ),
                 "response_configuration": config.ensemble_config.response_configuration,
-                "observations": {
-                    response_type: DictEncodedDataFrame.from_polars(observations)
-                    for response_type, observations in config.observations.items()
-                },
+                "observations": obs_decls,
             },
             name="exp-zero-var",
         )

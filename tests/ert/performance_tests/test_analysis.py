@@ -1,4 +1,8 @@
+import datetime as _datetime
 from functools import partial
+
+# Inlined observation helpers (originally in ert.storage.observation_helpers)
+from typing import Any
 
 import numpy as np
 import polars as pl
@@ -10,7 +14,125 @@ from scipy.ndimage import gaussian_filter
 from ert.analysis import smoother_update
 from ert.config import ESSettings, Field, GenDataConfig, ObservationSettings
 from ert.field_utils import Shape
-from ert.storage import DictEncodedDataFrame
+
+
+def _to_iso_date(value: Any) -> str:
+    if value is None:
+        return ""
+    if hasattr(value, "isoformat"):
+        try:
+            return value.date().isoformat()
+        except Exception:
+            return value.isoformat()
+    try:
+        import pandas as pd
+
+        if isinstance(value, pd.Timestamp):
+            return value.date().isoformat()
+    except Exception:
+        pass
+    try:
+        ms = int(value)
+        dt = _datetime.datetime.fromtimestamp(ms / 1000.0)
+        return dt.date().isoformat()
+    except Exception:
+        return str(value)
+
+
+def dataframe_to_declarations(
+    group_name: str, df: pl.DataFrame
+) -> list[dict[str, Any]]:
+    decls: list[dict[str, Any]] = []
+    for row in df.iter_rows(named=True):
+        row = dict(row)
+        if "time" in row and "response_key" in row:
+            date = _to_iso_date(row.get("time"))
+            decls.append(
+                {
+                    "type": "summary_observation",
+                    "name": row.get("observation_key") or group_name,
+                    "key": row.get("response_key"),
+                    "date": date,
+                    "value": float(row.get("observations")),
+                    "error": float(row.get("std")),
+                    "east": None if row.get("east") is None else float(row.get("east")),
+                    "north": None
+                    if row.get("north") is None
+                    else float(row.get("north")),
+                    "radius": None
+                    if row.get("radius") is None
+                    else float(row.get("radius")),
+                }
+            )
+            continue
+        if "index" in row or "report_step" in row:
+            decls.append(
+                {
+                    "type": "general_observation",
+                    "name": row.get("observation_key") or group_name,
+                    "data": row.get("response_key"),
+                    "value": float(row.get("observations")),
+                    "error": float(row.get("std")),
+                    "restart": int(row.get("report_step", 0) or 0),
+                    "index": int(row.get("index", 0) or 0),
+                    "east": None if row.get("east") is None else float(row.get("east")),
+                    "north": None
+                    if row.get("north") is None
+                    else float(row.get("north")),
+                    "radius": None
+                    if row.get("radius") is None
+                    else float(row.get("radius")),
+                }
+            )
+            continue
+        if (
+            "tvd" in row
+            or "well" in row
+            or ("response_key" in row and ":" in str(row.get("response_key", "")))
+        ):
+            resp = str(row.get("response_key", ""))
+            try:
+                well, date_str, prop = resp.split(":", 2)
+            except Exception:
+                well = row.get("well") or group_name
+                date_str = _to_iso_date(row.get("time") or row.get("date"))
+                prop = row.get("property") or "PRESSURE"
+            decls.append(
+                {
+                    "type": "rft_observation",
+                    "name": row.get("observation_key") or group_name,
+                    "well": well,
+                    "date": date_str,
+                    "property": prop,
+                    "value": float(row.get("observations")),
+                    "error": float(row.get("std")),
+                    "north": None
+                    if row.get("north") is None
+                    else float(row.get("north")),
+                    "east": None if row.get("east") is None else float(row.get("east")),
+                    "tvd": None if row.get("tvd") is None else float(row.get("tvd")),
+                }
+            )
+            continue
+        decls.append(
+            {
+                "type": "general_observation",
+                "name": group_name,
+                "data": row.get("response_key") or "",
+                "value": float(row.get("observations", 0.0) or 0.0),
+                "error": float(row.get("std", 1.0) or 1.0),
+                "restart": int(row.get("report_step", 0) or 0),
+                "index": int(row.get("index", 0) or 0),
+            }
+        )
+    return decls
+
+
+def dataframes_to_declarations(dfs: dict[str, pl.DataFrame]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for name, df in dfs.items():
+        out.extend(dataframe_to_declarations(name, df))
+    return out
 
 
 def test_and_benchmark_adaptive_localization_with_fields(
@@ -109,7 +231,7 @@ def test_and_benchmark_adaptive_localization_with_fields(
         experiment_config={
             "parameter_configuration": [config],
             "response_configuration": [resp],
-            "observations": {"gen_data": DictEncodedDataFrame.from_polars(obs)},
+            "observations": dataframes_to_declarations({"gen_data": obs}),
         }
     )
 

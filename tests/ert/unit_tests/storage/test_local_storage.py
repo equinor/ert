@@ -1,3 +1,4 @@
+import datetime as _datetime
 import json
 import logging
 import os
@@ -8,6 +9,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
 from textwrap import dedent
+
+# Inlined observation helpers (originally in ert.storage.observation_helpers)
 from typing import Any
 from unittest.mock import MagicMock, PropertyMock, patch
 from uuid import UUID
@@ -39,7 +42,6 @@ from ert.dark_storage.common import ErtStoragePermissionError
 from ert.field_utils import ErtboxParameters
 from ert.sample_prior import sample_prior
 from ert.storage import (
-    DictEncodedDataFrame,
     ErtStorageException,
     LocalEnsemble,
     RealizationStorageState,
@@ -48,6 +50,124 @@ from ert.storage import (
 from ert.storage.local_storage import _LOCAL_STORAGE_VERSION, LocalStorage
 from ert.storage.mode import ModeError
 from tests.ert.grid_generator import xtgeo_box_grids
+
+
+def _to_iso_date(value: Any) -> str:
+    if value is None:
+        return ""
+    if hasattr(value, "isoformat"):
+        try:
+            return value.date().isoformat()
+        except Exception:
+            return value.isoformat()
+    try:
+        import pandas as pd
+
+        if isinstance(value, pd.Timestamp):
+            return value.date().isoformat()
+    except Exception:
+        pass
+    try:
+        ms = int(value)
+        dt = _datetime.datetime.fromtimestamp(ms / 1000.0)
+        return dt.date().isoformat()
+    except Exception:
+        return str(value)
+
+
+def dataframe_to_declarations(
+    group_name: str, df: pl.DataFrame
+) -> list[dict[str, Any]]:
+    decls: list[dict[str, Any]] = []
+    for row in df.iter_rows(named=True):
+        row = dict(row)
+        if "time" in row and "response_key" in row:
+            decls.append(
+                {
+                    "type": "summary_observation",
+                    "name": row.get("observation_key") or group_name,
+                    "key": row.get("response_key"),
+                    "date": row.get("time").isoformat(),
+                    "value": float(row.get("observations")),
+                    "error": float(row.get("std")),
+                    "east": None if row.get("east") is None else float(row.get("east")),
+                    "north": None
+                    if row.get("north") is None
+                    else float(row.get("north")),
+                    "radius": None
+                    if row.get("radius") is None
+                    else float(row.get("radius")),
+                }
+            )
+            continue
+        if "index" in row or "report_step" in row:
+            decls.append(
+                {
+                    "type": "general_observation",
+                    "name": row.get("observation_key") or group_name,
+                    "data": row.get("response_key"),
+                    "value": float(row.get("observations")),
+                    "error": float(row.get("std")),
+                    "restart": int(row.get("report_step", 0) or 0),
+                    "index": int(row.get("index", 0) or 0),
+                    "east": None if row.get("east") is None else float(row.get("east")),
+                    "north": None
+                    if row.get("north") is None
+                    else float(row.get("north")),
+                    "radius": None
+                    if row.get("radius") is None
+                    else float(row.get("radius")),
+                }
+            )
+            continue
+        if (
+            "tvd" in row
+            or "well" in row
+            or ("response_key" in row and ":" in str(row.get("response_key", "")))
+        ):
+            resp = str(row.get("response_key", ""))
+            try:
+                well, date_str, prop = resp.split(":", 2)
+            except Exception:
+                well = row.get("well") or group_name
+                date_str = _to_iso_date(row.get("time") or row.get("date"))
+                prop = row.get("property") or "PRESSURE"
+            decls.append(
+                {
+                    "type": "rft_observation",
+                    "name": row.get("observation_key") or group_name,
+                    "well": well,
+                    "date": date_str,
+                    "property": prop,
+                    "value": float(row.get("observations")),
+                    "error": float(row.get("std")),
+                    "north": None
+                    if row.get("north") is None
+                    else float(row.get("north")),
+                    "east": None if row.get("east") is None else float(row.get("east")),
+                    "tvd": None if row.get("tvd") is None else float(row.get("tvd")),
+                }
+            )
+            continue
+        decls.append(
+            {
+                "type": "general_observation",
+                "name": group_name,
+                "data": row.get("response_key") or "",
+                "value": float(row.get("observations", 0.0) or 0.0),
+                "error": float(row.get("std", 1.0) or 1.0),
+                "restart": int(row.get("report_step", 0) or 0),
+                "index": int(row.get("index", 0) or 0),
+            }
+        )
+    return decls
+
+
+def dataframes_to_declarations(dfs: dict[str, pl.DataFrame]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for name, df in dfs.items():
+        out.extend(dataframe_to_declarations(name, df))
+    return out
 
 
 def _ensembles(storage):
@@ -824,9 +944,9 @@ def test_asof_joining_summary(tmp_path, perturb_observations, perturb_responses)
                 "response_configuration": [
                     SummaryConfig(keys=["*"], input_files=["not_relevant"])
                 ],
-                "observations": {
-                    "summary": DictEncodedDataFrame.from_polars(summary_observations)
-                },
+                "observations": dataframes_to_declarations(
+                    {"summary": summary_observations}
+                ),
             }
         )
 
@@ -1279,7 +1399,11 @@ def test_that_multiple_save_parameters_numpy_calls_overwrite_previous_values(tmp
     gen_kw_parameter = GenKwConfig(
         name="some_param", distribution={"name": "normal", "mean": 10, "std": 0.1}
     )
-    exp = writer.create_experiment(parameters=[gen_kw_parameter])
+    exp = writer.create_experiment(
+        experiment_config={
+            "parameter_configuration": [gen_kw_parameter],
+        }
+    )
     num_reals = 5
     parameter_data_0 = np.array([0.0] * num_reals)
     parameter_data_1 = np.array([1.1] * num_reals)
@@ -1412,9 +1536,9 @@ class StatefulStorageTest(RuleBasedStateMachine):
             experiment_config={
                 "parameter_configuration": parameters,
                 "response_configuration": responses,
-                "observations": {
-                    k: DictEncodedDataFrame.from_polars(v) for k, v in obs.items()
-                },
+                "observations": dataframes_to_declarations(
+                    {k: v for k, v in obs.items()}
+                ),
             }
         ).id
         model_experiment = Experiment(experiment_id)

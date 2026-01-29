@@ -13,12 +13,45 @@ from ert.analysis import ErtAnalysisError, smoother_update
 from ert.config import ErtConfig, ESSettings, ObservationSettings
 from ert.data import MeasuredData
 from ert.sample_prior import sample_prior
-from ert.storage import DictEncodedDataFrame
 from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
 
 
 @pytest.fixture
 def prior_ensemble(storage, ert_config):
+    obs_decls = []
+    for name, df in {
+        response_type: df for response_type, df in ert_config.observations.items()
+    }.items():
+        for row in df.iter_rows(named=True):
+            r = dict(row)
+            if "time" in r and "response_key" in r:
+                try:
+                    date_iso = r.get("time").date().isoformat()
+                except Exception:
+                    date_iso = str(r.get("time"))
+                obs_decls.append(
+                    {
+                        "type": "summary_observation",
+                        "name": r.get("observation_key") or name,
+                        "key": r.get("response_key"),
+                        "date": date_iso,
+                        "value": float(r.get("observations")),
+                        "error": float(r.get("std")),
+                    }
+                )
+            else:
+                obs_decls.append(
+                    {
+                        "type": "general_observation",
+                        "name": name,
+                        "data": r.get("response_key") or "",
+                        "value": float(r.get("observations", 0.0) or 0.0),
+                        "error": float(r.get("std", 1.0) or 1.0),
+                        "restart": int(r.get("report_step", 0) or 0),
+                        "index": int(r.get("index", 0) or 0),
+                    }
+                )
+
     return storage.create_experiment(
         name="prior",
         experiment_config={
@@ -26,10 +59,7 @@ def prior_ensemble(storage, ert_config):
                 ert_config.ensemble_config.parameter_configuration
             ),
             "response_configuration": ert_config.ensemble_config.response_configuration,
-            "observations": {
-                response_type: DictEncodedDataFrame.from_polars(df)
-                for response_type, df in ert_config.observations.items()
-            },
+            "observations": obs_decls,
         },
     ).create_ensemble(ensemble_size=3, name="prior")
 

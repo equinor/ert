@@ -173,13 +173,16 @@ class StorageWidget(QWidget):
                         self._ert_config.parameter_configurations_with_design_matrix
                     )
                     response_configuration = (
-                        self._ert_config.ensemble_config.response_configuration,
+                        self._ert_config.ensemble_config.response_configuration
                     )
                     ensemble = storage.create_experiment(
                         experiment_config={
-                            "parameter_configuration": parameter_configuration,
-                            "response_configuration": response_configuration,
-                            "observations": self._ert_config.observation_declarations,
+                            "parameter_configuration": parameter_configuration.model_dump_json(),
+                            "response_configuration": response_configuration.model_dump_json(),
+                            "observations": [
+                                d.model_dump(mode="json")
+                                for d in self._ert_config.observation_declarations
+                            ],
                             "ert_templates": self._ert_config.ert_templates,
                         },
                         name=create_experiment_dialog.experiment_name,

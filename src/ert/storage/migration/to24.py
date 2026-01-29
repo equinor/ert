@@ -1,72 +1,13 @@
 import json
 import shutil
 from pathlib import Path
-from typing import Any, Literal, Self
 
 import polars as pl
-from polars.datatypes import DataTypeClass
-from pydantic import BaseModel
 
 info = (
     "Move parameters.json, responses.json, observations contents to be in "
     "experiment index.json .experiment field"
 )
-
-# https://github.com/pola-rs/polars/issues/13152#issuecomment-1864600078
-# PS: Serializing/deserializing schema is scheduled to be added to polars core,
-# ref https://github.com/pola-rs/polars/issues/20426
-# then this workaround can be omitted.
-
-
-def str_to_dtype(dtype_str: str) -> pl.DataType:
-    dtype = eval(f"pl.{dtype_str}")
-    if isinstance(dtype, DataTypeClass):
-        dtype = dtype()
-    return dtype
-
-
-class DictEncodedDataFrame(BaseModel):
-    type: Literal["dicts"]
-    data: list[dict[str, Any]]
-    datatypes: dict[str, str]
-
-    @classmethod
-    def from_polars(cls, data: pl.DataFrame) -> Self:
-        str_schema = {k: str(dtype) for k, dtype in data.schema.items()}
-        return cls(type="dicts", data=data.to_dicts(), datatypes=str_schema)
-
-    def to_polars(self) -> pl.DataFrame:
-        final_schema = {
-            col: str_to_dtype(dtype_str) for col, dtype_str in self.datatypes.items()
-        }
-
-        # For the initial read, any column destined to be a date or datetime
-        # is read as a string (Utf8) to handle parsing. Others are read directly.
-        read_schema = {
-            col: pl.Utf8 if dtype.base_type() in {pl.Date, pl.Datetime} else dtype
-            for col, dtype in final_schema.items()
-        }
-
-        df = pl.from_dicts(self.data, schema=read_schema, infer_schema_length=28)
-
-        # Build a list of expressions to parse the string columns into their
-        # proper date/datetime types.
-        date_casts = [
-            pl.col(col).str.to_datetime(
-                time_unit=dtype.time_unit,  # type: ignore
-                time_zone=dtype.time_zone,  # type: ignore
-            )
-            if dtype == pl.Datetime
-            else pl.col(col).str.to_date()
-            for col, dtype in final_schema.items()
-            if dtype.base_type() in {pl.Date, pl.Datetime}
-        ]
-
-        # Apply the casting expressions if any were generated.
-        if date_casts:
-            df = df.with_columns(date_casts)
-
-        return df
 
 
 def migrate_parameters_responses_and_observations_into_experiment_index(
@@ -91,16 +32,68 @@ def migrate_parameters_responses_and_observations_into_experiment_index(
 
         # PS: This may be super slow for large observation datasets
         # Revisit later and consider keeping the files
-        observations_dict = {}
+        # Convert existing parquet observation files into a flat list of
+        # observation declarations (one declaration per row). This will be
+        # stored in experiment_json["observations"].
+        observations_list: list[dict[str, object]] = []
         if (experiment_path / "observations").exists():
             for path_to_obs_file in (experiment_path / "observations").glob("*"):
-                encoded_obs = DictEncodedDataFrame.from_polars(
-                    pl.read_parquet(path_to_obs_file)
-                ).model_dump(mode="json")
                 response_type = path_to_obs_file.stem
-                observations_dict[response_type] = encoded_obs
+                df = pl.read_parquet(path_to_obs_file)
+                for row in df.to_dicts():
+                    if response_type == "summary":
+                        # Expect columns: response_key, observation_key, time, observations, std, east, north, radius
+                        time_val = row.get("time")
+                        date_str = (
+                            time_val.date().isoformat()
+                            if hasattr(time_val, "date")
+                            else str(time_val)
+                        )
+                        decl = {
+                            "type": "summary_observation",
+                            "name": row.get("observation_key"),
+                            "value": float(row.get("observations"))
+                            if row.get("observations") is not None
+                            else None,
+                            "error": float(row.get("std"))
+                            if row.get("std") is not None
+                            else None,
+                            "key": row.get("response_key"),
+                            "date": date_str,
+                        }
+                        # localization
+                        if row.get("east") is not None or row.get("north") is not None:
+                            localization = {}
+                            if row.get("east") is not None:
+                                localization["east"] = float(row.get("east"))
+                            if row.get("north") is not None:
+                                localization["north"] = float(row.get("north"))
+                            if row.get("radius") is not None:
+                                localization["radius"] = float(row.get("radius"))
+                            decl.update(localization)
+                        observations_list.append(decl)
+                    elif response_type == "gen_data":
+                        # Expect columns: response_key, observation_key, report_step, index, observations, std
+                        decl = {
+                            "type": "general_observation",
+                            "name": row.get("observation_key"),
+                            "data": row.get("response_key"),
+                            "value": float(row.get("observations"))
+                            if row.get("observations") is not None
+                            else None,
+                            "error": float(row.get("std"))
+                            if row.get("std") is not None
+                            else None,
+                            "restart": int(row.get("report_step"))
+                            if row.get("report_step") is not None
+                            else 0,
+                            "index": int(row.get("index"))
+                            if row.get("index") is not None
+                            else 0,
+                        }
+                        observations_list.append(decl)
 
-            experiment_json["observations"] = observations_dict
+            experiment_json["observations"] = observations_list
 
         with open(experiment_path / "index.json", encoding="utf-8") as fin:
             index_json = json.load(fin)

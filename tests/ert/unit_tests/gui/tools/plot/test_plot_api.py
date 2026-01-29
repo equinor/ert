@@ -1,7 +1,11 @@
+import datetime as _datetime
 import gc
 import unittest
 from datetime import date, datetime
 from textwrap import dedent
+
+# Inlined observation helpers (originally in ert.storage.observation_helpers)
+from typing import Any
 from urllib.parse import quote
 
 import httpx
@@ -18,8 +22,127 @@ from ert.dark_storage import common
 from ert.dark_storage.app import app
 from ert.gui.tools.plot import plot_api
 from ert.gui.tools.plot.plot_api import PlotApi, PlotApiKeyDefinition
-from ert.storage import DictEncodedDataFrame, open_storage
+from ert.storage import open_storage
 from tests.ert.unit_tests.gui.tools.plot.conftest import MockResponse
+
+
+def _to_iso_date(value: Any) -> str:
+    if value is None:
+        return ""
+    if hasattr(value, "isoformat"):
+        try:
+            return value.date().isoformat()
+        except Exception:
+            return value.isoformat()
+    try:
+        import pandas as pd
+
+        if isinstance(value, pd.Timestamp):
+            return value.date().isoformat()
+    except Exception:
+        pass
+    try:
+        ms = int(value)
+        dt = _datetime.datetime.fromtimestamp(ms / 1000.0)
+        return dt.date().isoformat()
+    except Exception:
+        return str(value)
+
+
+def dataframe_to_declarations(
+    group_name: str, df: pl.DataFrame
+) -> list[dict[str, Any]]:
+    decls: list[dict[str, Any]] = []
+    for row in df.iter_rows(named=True):
+        row = dict(row)
+        if "time" in row and "response_key" in row:
+            date = _to_iso_date(row.get("time"))
+            decls.append(
+                {
+                    "type": "summary_observation",
+                    "name": row.get("observation_key") or group_name,
+                    "key": row.get("response_key"),
+                    "date": date,
+                    "value": float(row.get("observations")),
+                    "error": float(row.get("std")),
+                    "east": None if row.get("east") is None else float(row.get("east")),
+                    "north": None
+                    if row.get("north") is None
+                    else float(row.get("north")),
+                    "radius": None
+                    if row.get("radius") is None
+                    else float(row.get("radius")),
+                }
+            )
+            continue
+        if "index" in row or "report_step" in row:
+            decls.append(
+                {
+                    "type": "general_observation",
+                    "name": row.get("observation_key") or group_name,
+                    "data": row.get("response_key"),
+                    "value": float(row.get("observations")),
+                    "error": float(row.get("std")),
+                    "restart": int(row.get("report_step", 0) or 0),
+                    "index": int(row.get("index", 0) or 0),
+                    "east": None if row.get("east") is None else float(row.get("east")),
+                    "north": None
+                    if row.get("north") is None
+                    else float(row.get("north")),
+                    "radius": None
+                    if row.get("radius") is None
+                    else float(row.get("radius")),
+                }
+            )
+            continue
+        if (
+            "tvd" in row
+            or "well" in row
+            or ("response_key" in row and ":" in str(row.get("response_key", "")))
+        ):
+            resp = str(row.get("response_key", ""))
+            try:
+                well, date_str, prop = resp.split(":", 2)
+            except Exception:
+                well = row.get("well") or group_name
+                date_str = _to_iso_date(row.get("time") or row.get("date"))
+                prop = row.get("property") or "PRESSURE"
+            decls.append(
+                {
+                    "type": "rft_observation",
+                    "name": row.get("observation_key") or group_name,
+                    "well": well,
+                    "date": date_str,
+                    "property": prop,
+                    "value": float(row.get("observations")),
+                    "error": float(row.get("std")),
+                    "north": None
+                    if row.get("north") is None
+                    else float(row.get("north")),
+                    "east": None if row.get("east") is None else float(row.get("east")),
+                    "tvd": None if row.get("tvd") is None else float(row.get("tvd")),
+                }
+            )
+            continue
+        decls.append(
+            {
+                "type": "general_observation",
+                "name": group_name,
+                "data": row.get("response_key") or "",
+                "value": float(row.get("observations", 0.0) or 0.0),
+                "error": float(row.get("std", 1.0) or 1.0),
+                "restart": int(row.get("report_step", 0) or 0),
+                "index": int(row.get("index", 0) or 0),
+            }
+        )
+    return decls
+
+
+def dataframes_to_declarations(dfs: dict[str, pl.DataFrame]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for name, df in dfs.items():
+        out.extend(dataframe_to_declarations(name, df))
+    return out
 
 
 @pytest.fixture(autouse=True)
@@ -231,9 +354,9 @@ def test_plot_api_handles_urlescape(api_and_storage):
                 )
             ],
             "ert_templates": {},
-            "observations": {
-                "summary": DictEncodedDataFrame.from_polars(
-                    pl.DataFrame(
+            "observations": dataframes_to_declarations(
+                {
+                    "summary": pl.DataFrame(
                         {
                             "response_key": key,
                             "observation_key": "sumobs",
@@ -242,8 +365,8 @@ def test_plot_api_handles_urlescape(api_and_storage):
                             "std": pl.Series([1.0], dtype=pl.Float32),
                         }
                     )
-                )
-            },
+                }
+            ),
         }
     )
     ensemble = experiment.create_ensemble(ensemble_size=1, name="ensemble")
@@ -380,9 +503,9 @@ def test_that_multiple_observations_are_parsed_correctly(api_and_storage):
                 )
             ],
             "ert_templates": {},
-            "observations": {
-                "summary": DictEncodedDataFrame.from_polars(
-                    pl.DataFrame(
+            "observations": dataframes_to_declarations(
+                {
+                    "summary": pl.DataFrame(
                         {
                             "observation_key": [f"WOPR:OP1_o{i}" for i in range(6)],
                             "response_key": ["WOPR:OP1"] * 6,
@@ -396,8 +519,8 @@ def test_that_multiple_observations_are_parsed_correctly(api_and_storage):
                             "std": [0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
                         }
                     )
-                )
-            },
+                }
+            ),
         }
     )
     ens = experiment.create_ensemble(ensemble_size=1, name="ensemble")
@@ -472,9 +595,9 @@ def test_that_response_key_has_observation_when_only_one_experiment_has_observat
                 )
             ],
             "ert_templates": {},
-            "observations": {
-                "summary": DictEncodedDataFrame.from_polars(
-                    pl.DataFrame(
+            "observations": dataframes_to_declarations(
+                {
+                    "summary": pl.DataFrame(
                         {
                             "response_key": "FOPR",
                             "observation_key": "sumobs",
@@ -483,8 +606,8 @@ def test_that_response_key_has_observation_when_only_one_experiment_has_observat
                             "std": pl.Series([1.0], dtype=pl.Float32),
                         }
                     )
-                )
-            },
+                }
+            ),
         }
     )
 
@@ -563,9 +686,9 @@ def test_that_response_keys_do_not_match_keys_that_are_substrings(
                 )
             ],
             "ert_templates": {},
-            "observations": {
-                "summary": DictEncodedDataFrame.from_polars(
-                    pl.DataFrame(
+            "observations": dataframes_to_declarations(
+                {
+                    "summary": pl.DataFrame(
                         {
                             "observation_key": [key, history_key(key), "FOPR"],
                             "response_key": [key, history_key(key), "FOPR"],
@@ -574,8 +697,8 @@ def test_that_response_keys_do_not_match_keys_that_are_substrings(
                             "std": [0.1, 0.1, 0.2],
                         }
                     )
-                )
-            },
+                }
+            ),
         }
     )
     ensemble = experiment.create_ensemble(ensemble_size=1, name="ensemble")
