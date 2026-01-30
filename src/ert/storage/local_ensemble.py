@@ -1018,11 +1018,17 @@ class LocalEnsemble(BaseMode):
         iens_active_index: npt.NDArray[np.int_],
     ) -> pl.DataFrame:
         """Fetches and aligns selected observations with their
-        corresponding simulated responses from an ensemble."""
+        corresponding simulated responses from an ensemble.
+
+        The returned DataFrame includes an "index" column containing a
+        comma-separated string of the response type's primary key values:
+        - Summary: "2024-01-15 00:00:00" (time)
+        - GenData: "0, 42" (report_step, index)
+        - RFT: "123.5, 456.7, 2500.0, ZONE_A" (east, north, tvd, zone)
+        """
         known_observations = self.experiment.observation_keys
-        unknown_observations = [
-            obs for obs in selected_observations if obs not in known_observations
-        ]
+
+        unknown_observations = set(selected_observations) - set(known_observations)
 
         if unknown_observations:
             raise KeyError(
@@ -1048,13 +1054,7 @@ class LocalEnsemble(BaseMode):
                     .filter(
                         pl.col("observation_key").is_in(list(selected_observations))
                     )
-                    .with_columns(
-                        [
-                            pl.col("response_key")
-                            .cast(pl.Categorical)
-                            .alias("response_key")
-                        ]
-                    )
+                    .with_columns([pl.col("response_key").cast(pl.Categorical)])
                 )
 
                 observed_cols = {
@@ -1062,21 +1062,15 @@ class LocalEnsemble(BaseMode):
                     for k in ["response_key", *response_cls.primary_key]
                 }
 
-                reals = iens_active_index.tolist()
-                reals.sort()
-                # too much memory to do it all at once, go per realization
+                reals = np.sort(iens_active_index).tolist()
+
+                # Load and join one realization at a time to reduce peak memory usage
                 first_columns: pl.DataFrame | None = None
                 realization_columns: list[pl.DataFrame] = []
                 for real in reals:
                     responses = self._load_responses_lazy(
                         response_type, (real,)
-                    ).with_columns(
-                        [
-                            pl.col("response_key")
-                            .cast(pl.Categorical)
-                            .alias("response_key")
-                        ]
-                    )
+                    ).with_columns([pl.col("response_key").cast(pl.Categorical)])
 
                     # Filter out responses without observations
                     for col, observed_values in observed_cols.items():
