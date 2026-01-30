@@ -15,6 +15,7 @@ import xtgeo
 
 from ert.analysis import smoother_update
 from ert.config import ErtConfig, ESSettings, ObservationSettings
+from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.storage import open_storage
 
@@ -435,7 +436,9 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
         new_experiment = storage.create_experiment(
             parameters=config.ensemble_config.parameter_configuration,
             responses=config.ensemble_config.response_configuration,
-            observations=config.observations,
+            observations=create_observation_dataframes(
+                config.observation_declarations, None
+            ),
             name="exp-zero-var",
         )
         new_prior = storage.create_ensemble(

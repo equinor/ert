@@ -11,6 +11,7 @@ from resdata.summary import Summary
 
 from ert.analysis import ErtAnalysisError, smoother_update
 from ert.config import ErtConfig, ESSettings, ObservationSettings
+from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.data import MeasuredData
 from ert.sample_prior import sample_prior
 from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
@@ -21,7 +22,9 @@ def prior_ensemble(storage, ert_config):
     return storage.create_experiment(
         parameters=ert_config.ensemble_config.parameter_configuration,
         responses=ert_config.ensemble_config.response_configuration,
-        observations=ert_config.observations,
+        observations=create_observation_dataframes(
+            ert_config.observation_declarations, None
+        ),
     ).create_ensemble(ensemble_size=3, name="prior")
 
 
