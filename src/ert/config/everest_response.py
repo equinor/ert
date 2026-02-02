@@ -7,7 +7,7 @@ import polars as pl
 from ert.substitutions import substitute_runpath_name
 
 from .parsing import ConfigDict
-from .response_config import InvalidResponseFile, ResponseConfig
+from .response_config import InvalidResponseFile, ResponseConfig, ResponseType
 from .responses_index import responses_index
 
 
@@ -16,10 +16,6 @@ class EverestResponse(ResponseConfig):
 
     has_finalized_keys: bool = True
     scales: list[float | None]
-
-    @property
-    def primary_key(self) -> list[str]:
-        return []
 
     @property
     def expected_input_files(self) -> list[str]:
@@ -77,7 +73,7 @@ class EverestResponse(ResponseConfig):
 
 
 class EverestConstraintsConfig(EverestResponse):
-    type: Literal["everest_constraints"] = "everest_constraints"
+    type: Literal[ResponseType.everest_constraints] = ResponseType.everest_constraints
     targets: list[float | None]
     upper_bounds: list[float]
     lower_bounds: list[float]
@@ -87,7 +83,7 @@ responses_index.add_response_type(EverestConstraintsConfig)
 
 
 class EverestObjectivesConfig(EverestResponse):
-    type: Literal["everest_objectives"] = "everest_objectives"
+    type: Literal[ResponseType.everest_objectives] = ResponseType.everest_objectives
     weights: list[float | None]
     objective_types: list[Literal["mean", "stddev"]]
 

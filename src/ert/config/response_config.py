@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from enum import StrEnum
 from typing import Any, Self
 
 import polars as pl
@@ -14,8 +15,27 @@ class InvalidResponseFile(Exception):
     """
 
 
+class ResponseType(StrEnum):
+    summary = "summary"
+    gen_data = "gen_data"
+    rft = "rft"
+    breakthrough = "breakthrough"
+    everest_constraints = "everest_constraints"
+    everest_objectives = "everest_objectives"
+
+
+response_primary_keys = {
+    ResponseType.gen_data: ["report_step", "index"],
+    ResponseType.summary: ["time"],
+    ResponseType.rft: ["east", "north", "tvd"],
+    ResponseType.breakthrough: ["threshold"],
+    ResponseType.everest_constraints: [],
+    ResponseType.everest_objectives: [],
+}
+
+
 class ResponseConfig(BaseModel):
-    type: str
+    type: ResponseType
     input_files: list[str] = Field(default_factory=list)
     keys: list[str] = Field(default_factory=list)
     has_finalized_keys: bool = False
@@ -37,10 +57,8 @@ class ResponseConfig(BaseModel):
         """Returns a list of filenames expected to be produced by the forward model"""
 
     @property
-    @abstractmethod
     def primary_key(self) -> list[str]:
-        """Primary key of this response data.
-        For example 'time' for summary and ['index','report_step'] for gen data"""
+        return response_primary_keys[self.type]
 
     @classmethod
     @abstractmethod

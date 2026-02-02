@@ -12,6 +12,7 @@ from fastapi import APIRouter, Body, Depends, Header, HTTPException, Query, stat
 from fastapi.responses import Response
 from polars.exceptions import ColumnNotFoundError
 
+from ert.config.response_config import ResponseType
 from ert.dark_storage.common import get_storage
 from ert.storage import Ensemble, Storage
 
@@ -103,7 +104,7 @@ response_to_pandas_x_axis_fns: dict[str, Callable[[tuple[Any, ...]], Any]] = {
 
 
 def _extract_response_type_and_key(
-    key: str, response_key_to_response_type: dict[str, str]
+    key: str, response_key_to_response_type: dict[str, ResponseType]
 ) -> tuple[str, str] | tuple[None, None]:
     # Only allow exact matches.
     response_key = key if key in response_key_to_response_type else None

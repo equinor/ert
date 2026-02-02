@@ -10,6 +10,7 @@ from ert.config import (
     GenKwConfig,
     KnownResponseTypes,
     Observation,
+    RFTConfig,
     SurfaceConfig,
 )
 from ert.config import Field as FieldConfig
@@ -106,7 +107,7 @@ class InitialEnsembleRunModel(RunModel, InitialEnsembleRunModelConfig):
             return {}
 
         rft_config = next(
-            (r for r in self.response_configuration if r.type == "rft"),
+            (r for r in self.response_configuration if isinstance(r, RFTConfig)),
             None,
         )
 
