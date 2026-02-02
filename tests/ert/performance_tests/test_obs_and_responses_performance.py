@@ -1,9 +1,9 @@
 import datetime
 import random
 import sys
+import tracemalloc
 from dataclasses import dataclass
 
-import memray
 import numpy as np
 import polars as pl
 import pytest
@@ -246,7 +246,7 @@ class _UpdatePerfTestConfig:
 @dataclass
 class _ExpectedPerformance:
     memory_limit_mb: float
-    last_measured_memory_mb: float | None = None  # For bookkeeping
+    last_used_peak_memory_mb: float | None = None  # For bookkeeping
 
 
 @dataclass
@@ -277,12 +277,12 @@ _BenchMarks: list[_Benchmark] = [
             num_realizations=2,
         ),
         expected_join_performance=_ExpectedPerformance(
-            memory_limit_mb=100,
-            last_measured_memory_mb=17,
+            last_used_peak_memory_mb=0.07,
+            memory_limit_mb=5,
         ),
         expected_update_performance=_ExpectedPerformance(
-            last_measured_memory_mb=7.13,
-            memory_limit_mb=100,
+            last_used_peak_memory_mb=0.28,  # EnIF 0.28 ES 0.2
+            memory_limit_mb=5,
         ),
     ),
     _Benchmark(
@@ -299,12 +299,12 @@ _BenchMarks: list[_Benchmark] = [
             num_realizations=200,
         ),
         expected_join_performance=_ExpectedPerformance(
-            memory_limit_mb=1500,
-            last_measured_memory_mb=1027,
+            last_used_peak_memory_mb=0.95,
+            memory_limit_mb=10,
         ),
         expected_update_performance=_ExpectedPerformance(
-            memory_limit_mb=3100,
-            last_measured_memory_mb=2230,
+            last_used_peak_memory_mb=88,
+            memory_limit_mb=150,  # EnIF 88, ES 44
         ),
     ),
     _Benchmark(
@@ -321,12 +321,12 @@ _BenchMarks: list[_Benchmark] = [
             num_realizations=200,
         ),
         expected_join_performance=_ExpectedPerformance(
-            memory_limit_mb=4500,
-            last_measured_memory_mb=1710,
+            last_used_peak_memory_mb=2.07,
+            memory_limit_mb=10,
         ),
         expected_update_performance=_ExpectedPerformance(
-            memory_limit_mb=4000,
-            last_measured_memory_mb=3088,
+            last_used_peak_memory_mb=101,  # EnIF 101, ES 51
+            memory_limit_mb=150,
         ),
     ),
     _Benchmark(
@@ -342,13 +342,15 @@ _BenchMarks: list[_Benchmark] = [
             num_summary_obs=5000,
             num_realizations=200,
         ),
+        # Join is mostly purely polars, lots of lazy load / streaming via parquet files
+        # so this is expected
         expected_join_performance=_ExpectedPerformance(
-            memory_limit_mb=3300,
-            last_measured_memory_mb=1715,
+            last_used_peak_memory_mb=2.07,
+            memory_limit_mb=10,
         ),
         expected_update_performance=_ExpectedPerformance(
-            memory_limit_mb=4500,
-            last_measured_memory_mb=3115,
+            last_used_peak_memory_mb=535,  # EnIF 535, ES 253
+            memory_limit_mb=1000,
         ),
     ),
     # Only run locally
@@ -435,11 +437,15 @@ def test_memory_performance_of_joining_observations_and_responses(
 ):
     _, ens, observation_keys, mask, expected_performance = setup_benchmark
 
-    with memray.Tracker(tmp_path / "memray.bin"):
-        ens.get_observations_and_responses(observation_keys, mask)
+    tracemalloc.start()
+    tracemalloc.reset_peak()
 
-    stats = memray._memray.compute_statistics(str(tmp_path / "memray.bin"))
-    mem_usage_mb = stats.total_memory_allocated / (1024**2)
+    ens.get_observations_and_responses(observation_keys, mask)
+
+    _, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+
+    mem_usage_mb = peak / (1024**2)
     assert mem_usage_mb < expected_performance.memory_limit_mb
 
 
@@ -534,18 +540,23 @@ def setup_es_benchmark(tmp_path, request):
 )
 def test_memory_performance_of_doing_es_update(setup_es_benchmark, tmp_path):
     _, prior, posterior, gen_kw_names, expected_performance = setup_es_benchmark
-    with memray.Tracker(tmp_path / "memray.bin"):
-        smoother_update(
-            prior,
-            posterior,
-            prior.experiment.observation_keys,
-            gen_kw_names,
-            ObservationSettings(),
-            ESSettings(),
-        )
 
-    stats = memray._memray.compute_statistics(str(tmp_path / "memray.bin"))
-    mem_usage_mb = stats.total_memory_allocated / (1024**2)
+    tracemalloc.start()
+    tracemalloc.reset_peak()
+
+    smoother_update(
+        prior,
+        posterior,
+        prior.experiment.observation_keys,
+        gen_kw_names,
+        ObservationSettings(),
+        ESSettings(),
+    )
+
+    _, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+
+    mem_usage_mb = peak / (1024**2)
     assert mem_usage_mb < expected_performance.memory_limit_mb
 
 
@@ -574,17 +585,22 @@ def test_speed_performance_of_doing_es_update(setup_es_benchmark, benchmark):
 )
 def test_memory_performance_of_doing_enif_update(setup_es_benchmark, tmp_path):
     _, prior, posterior, gen_kw_names, expected_performance = setup_es_benchmark
-    with memray.Tracker(tmp_path / "memray.bin"):
-        enif_update(
-            prior,
-            posterior,
-            prior.experiment.observation_keys,
-            gen_kw_names,
-            12345,
-        )
 
-    stats = memray._memray.compute_statistics(str(tmp_path / "memray.bin"))
-    mem_usage_mb = stats.total_memory_allocated / (1024**2)
+    tracemalloc.start()
+    tracemalloc.reset_peak()
+
+    enif_update(
+        prior,
+        posterior,
+        prior.experiment.observation_keys,
+        gen_kw_names,
+        12345,
+    )
+
+    _, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+
+    mem_usage_mb = peak / (1024**2)
     assert mem_usage_mb < expected_performance.memory_limit_mb
 
 
