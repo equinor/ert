@@ -7,7 +7,7 @@ import os
 import re
 import warnings
 from collections import defaultdict
-from typing import IO, Any, Literal, TypeAlias
+from typing import IO, Any, TypeAlias
 
 import numpy as np
 import numpy.typing as npt
@@ -19,7 +19,7 @@ from ert.substitutions import substitute_runpath_name
 from ert.warnings import PostSimulationWarning
 
 from .parsing import ConfigDict, ConfigKeys, ConfigValidationError, ConfigWarning
-from .response_config import InvalidResponseFile, ResponseConfig
+from .response_config import InvalidResponseFile, ResponseConfig, ResponseType
 from .responses_index import responses_index
 
 logger = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ ZoneName: TypeAlias = str
 
 
 class RFTConfig(ResponseConfig):
-    type: Literal["rft"] = "rft"
+    type: ResponseType = ResponseType.rft
     name: str = "rft"
     has_finalized_keys: bool = False
     data_to_read: dict[str, dict[str, list[str]]] = Field(default_factory=dict)
@@ -235,10 +235,6 @@ class RFTConfig(ResponseConfig):
     @property
     def response_type(self) -> str:
         return "rft"
-
-    @property
-    def primary_key(self) -> list[str]:
-        return ["east", "north", "tvd"]
 
     @classmethod
     def from_config_dict(cls, config_dict: ConfigDict) -> RFTConfig | None:
