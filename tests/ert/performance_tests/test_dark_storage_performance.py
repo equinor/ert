@@ -3,14 +3,13 @@ import contextlib
 import gc
 import io
 import json
-import os
+import tracemalloc
 from collections.abc import Awaitable
 from datetime import datetime, timedelta
 from typing import TypeVar
 from urllib.parse import quote
 from uuid import UUID
 
-import memray
 import numpy as np
 import pandas as pd
 import polars as pl
@@ -249,14 +248,13 @@ def api_and_snake_oil_storage(snake_oil_case_storage, monkeypatch):
     ("num_reals", "num_dates", "num_keys", "max_memory_mb"),
     [  # Tested 24.11.22 on macbook pro M1 max
         # (xr = tested on previous ert using xarray to store responses)
-        (1, 100, 100, 2000),  # 790MiB local, xr: 791, MiB
-        (1000, 100, 100, 3000),  # 809MiB local, 879MiB linux-3.11, xr: 1107MiB
+        (1, 100, 100, 2),  # 0.47mb local
+        (1000, 100, 100, 20),  # 12mb local
         # (Cases below are more realistic at up to 200realizations)
         # Not to be run these on GHA runners
-        # (2000, 100, 100, 1950),
-        #   1607MiB local, 1716MiB linux3.12, 1863 on linux3.11, xr: 2186MiB
-        # (2, 5803, 11787, 5500),  # 4657MiB local, xr: 10115MiB
-        # (10, 5803, 11787, 13500),  # 10036MiB local, 12803MiB mac-3.12, xr: 46715MiB
+        # (2000, 100, 100, 30), # 24mb local
+        # (2, 5803, 11787, 30),  #  23mb local
+        # (10, 5803, 11787, 30),  # 23mb local
     ],
 )
 @pytest.mark.flaky(reruns=2)
@@ -298,30 +296,32 @@ def test_plot_api_big_summary_memory_usage(
     for real in range(ensemble.ensemble_size):
         ensemble.save_response("summary", big_summary.clone(), real)
 
-    with memray.Tracker("memray.bin", follow_fork=True, native_traces=True):
-        # Initialize plotter window
-        response_keys = {k.key for k in api.responses_api_key_defs}
-        all_ensembles = [e.id for e in api.get_all_ensembles()]
-        assert set(keys_df.to_list()) == set(response_keys)
+    tracemalloc.start()
+    tracemalloc.reset_peak()
 
-        # call updatePlot()
-        ensemble_to_data_map: dict[str, pd.DataFrame] = {}
-        sample_key = keys_df.sample(1).item()
-        for ensemble in all_ensembles:
-            ensemble_to_data_map[ensemble] = api.data_for_response(ensemble, sample_key)
+    # Initialize plotter window
+    response_keys = {k.key for k in api.responses_api_key_defs}
+    all_ensembles = [e.id for e in api.get_all_ensembles()]
+    assert set(keys_df.to_list()) == set(response_keys)
 
-        for ensemble in all_ensembles:
-            data = ensemble_to_data_map[ensemble]
+    # call updatePlot()
+    ensemble_to_data_map: dict[str, pd.DataFrame] = {}
+    sample_key = keys_df.sample(1).item()
+    for ensemble in all_ensembles:
+        ensemble_to_data_map[ensemble] = api.data_for_response(ensemble, sample_key)
 
-            # Transpose it twice as done in plotter
-            # (should ideally be avoided)
-            _ = data.T
-            _ = data.T
+    for ensemble in all_ensembles:
+        data = ensemble_to_data_map[ensemble]
 
-    stats = memray._memray.compute_statistics("memray.bin")
-    os.remove("memray.bin")
-    total_memory_usage = stats.total_memory_allocated / (1024**2)
-    assert total_memory_usage < max_memory_mb
+        # Transpose it twice as done in plotter
+        # (should ideally be avoided)
+        _ = data.T
+        _ = data.T
+
+    _, peak_memory_bytes = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    peak_memory_mb = peak_memory_bytes / (1024**2)
+    assert peak_memory_mb < max_memory_mb
 
 
 def test_plotter_on_all_snake_oil_responses_time(api_and_snake_oil_storage, benchmark):
@@ -368,38 +368,38 @@ def test_plotter_on_all_snake_oil_responses_time(api_and_snake_oil_storage, benc
 def test_plotter_on_all_snake_oil_responses_memory(api_and_snake_oil_storage):
     api, _ = api_and_snake_oil_storage
 
-    with memray.Tracker("memray.bin", follow_fork=True, native_traces=True):
-        key_infos = api.responses_api_key_defs
-        all_ensembles = api.get_all_ensembles()
-        # Cycle through all ensembles and get all responses
-        for key_info in key_infos:
-            for ensemble in all_ensembles:
-                api.data_for_response(
-                    ensemble_id=ensemble.id,
-                    response_key=key_info.key,
+    tracemalloc.start()
+    tracemalloc.reset_peak()
+
+    key_infos = api.responses_api_key_defs
+    all_ensembles = api.get_all_ensembles()
+    # Cycle through all ensembles and get all responses
+    for key_info in key_infos:
+        for ensemble in all_ensembles:
+            api.data_for_response(
+                ensemble_id=ensemble.id,
+                response_key=key_info.key,
+                filter_on=key_info.filter_on,
+            )
+
+        if key_info.observations:
+            with contextlib.suppress(RequestError, TimeoutError):
+                api.observations_for_key(
+                    [ens.id for ens in all_ensembles], key_info.key
+                )
+
+        # Note: Does not test for fields
+        if not (str(key_info.key).endswith("H") or "H:" in str(key_info.key)):
+            with contextlib.suppress(RequestError, TimeoutError):
+                api.history_data(
+                    key_info.key,
+                    [e.id for e in all_ensembles],
                     filter_on=key_info.filter_on,
                 )
 
-            if key_info.observations:
-                with contextlib.suppress(RequestError, TimeoutError):
-                    api.observations_for_key(
-                        [ens.id for ens in all_ensembles], key_info.key
-                    )
+    _, peak_memory_bytes = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    peak_memory_mb = peak_memory_bytes / (1024**2)
 
-            # Note: Does not test for fields
-            if not (str(key_info.key).endswith("H") or "H:" in str(key_info.key)):
-                with contextlib.suppress(RequestError, TimeoutError):
-                    api.history_data(
-                        key_info.key,
-                        [e.id for e in all_ensembles],
-                        filter_on=key_info.filter_on,
-                    )
-
-    stats = memray._memray.compute_statistics("memray.bin")
-    os.remove("memray.bin")
-    total_memory_mb = stats.total_memory_allocated / (1024**2)
-    peak_memory_mb = stats.peak_memory_allocated / (1024**2)
-
-    # thresholds are set to about 1.5x local memory used
-    assert total_memory_mb < 5000
-    assert peak_memory_mb < 1500
+    # Measured to 8.5 locally
+    assert peak_memory_mb < 15
