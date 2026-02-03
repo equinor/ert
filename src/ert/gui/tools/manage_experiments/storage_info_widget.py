@@ -7,6 +7,7 @@ import seaborn as sns
 import yaml
 from matplotlib.backends.backend_qt5agg import FigureCanvas  # type: ignore
 from matplotlib.figure import Figure
+from pandas.errors import PerformanceWarning
 from polars import DataFrame
 from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
@@ -29,6 +30,7 @@ from PyQt6.QtWidgets import (
 
 from ert import LibresFacade
 from ert.storage import Ensemble, Experiment, RealizationStorageState
+from ert.warnings import capture_specific_warning
 
 from .export_dialog import ExportDialog
 
@@ -446,7 +448,8 @@ class _EnsembleWidget(QWidget):
 
     def get_misfit_df(self) -> DataFrame:
         assert self._ensemble is not None
-        df = LibresFacade.load_all_misfit_data(self._ensemble)
+        with capture_specific_warning(PerformanceWarning):
+            df = LibresFacade.load_all_misfit_data(self._ensemble)
         realization_column = pl.Series(df.index)
         df = pl.from_pandas(df)
         df.insert_column(0, realization_column)
