@@ -317,9 +317,10 @@ class ExperimentRunner:
             simulation_future = loop.run_in_executor(
                 None,
                 lambda: run_model.start_simulations_thread(
-                    EvaluatorServerConfig()
-                    if run_model.queue_config.queue_system == QueueSystem.LOCAL
-                    else EvaluatorServerConfig(use_ipc_protocol=False)
+                    EvaluatorServerConfig(
+                        use_ipc_protocol=run_model.queue_config.queue_system
+                        == QueueSystem.LOCAL,
+                    )
                 ),
             )
             while True:

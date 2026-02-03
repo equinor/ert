@@ -55,9 +55,13 @@ def create_md_table(kv: dict[str, str], output: str) -> str:
 
 
 def get_simulation_thread(
-    model: Any, rerun_failed_realizations: bool = False, use_ipc_protocol: bool = False
+    model: Any,
+    rerun_failed_realizations: bool = False,
+    use_ipc_protocol: bool = False,
 ) -> ErtThread:
-    evaluator_server_config = EvaluatorServerConfig(use_ipc_protocol=use_ipc_protocol)
+    evaluator_server_config = EvaluatorServerConfig(
+        use_ipc_protocol=use_ipc_protocol,
+    )
 
     def run() -> None:
         model.api.start_simulations_thread(
