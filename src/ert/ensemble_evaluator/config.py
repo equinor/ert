@@ -27,7 +27,6 @@ class EvaluatorServerConfig:
         use_token: bool = True,
         host: str | None = None,
         use_ipc_protocol: bool = True,
-        prioritize_private_ip_address: bool = False,
     ) -> None:
         self.host: str | None = host
         self.router_port: int | None = None
@@ -51,7 +50,7 @@ class EvaluatorServerConfig:
         if use_ipc_protocol:
             self.uri = f"ipc:///tmp/socket-{uuid.uuid4().hex[:8]}"
         elif self.host is None:
-            self.host = get_ip_address(prioritize_private_ip_address)
+            self.host = get_ip_address()
 
         if use_token:
             self.server_public_key, self.server_secret_key = zmq.curve_keypair()

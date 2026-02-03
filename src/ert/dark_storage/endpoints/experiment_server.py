@@ -317,11 +317,9 @@ class ExperimentRunner:
             simulation_future = loop.run_in_executor(
                 None,
                 lambda: run_model.start_simulations_thread(
-                    EvaluatorServerConfig(
-                        use_ipc_protocol=run_model.queue_config.queue_system
-                        == QueueSystem.LOCAL,
-                        prioritize_private_ip_address=site_plugins.prioritize_private_ip_address,
-                    )
+                    EvaluatorServerConfig()
+                    if run_model.queue_config.queue_system == QueueSystem.LOCAL
+                    else EvaluatorServerConfig(use_ipc_protocol=False)
                 ),
             )
             while True:

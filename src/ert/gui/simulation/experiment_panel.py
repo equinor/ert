@@ -55,15 +55,9 @@ def create_md_table(kv: dict[str, str], output: str) -> str:
 
 
 def get_simulation_thread(
-    model: Any,
-    rerun_failed_realizations: bool = False,
-    use_ipc_protocol: bool = False,
-    prioritize_private_ip_address: bool = False,
+    model: Any, rerun_failed_realizations: bool = False, use_ipc_protocol: bool = False
 ) -> ErtThread:
-    evaluator_server_config = EvaluatorServerConfig(
-        use_ipc_protocol=use_ipc_protocol,
-        prioritize_private_ip_address=prioritize_private_ip_address,
-    )
+    evaluator_server_config = EvaluatorServerConfig(use_ipc_protocol=use_ipc_protocol)
 
     def run() -> None:
         model.api.start_simulations_thread(
@@ -387,7 +381,6 @@ class ExperimentPanel(QWidget):
                 rerun_failed_realizations,
                 use_ipc_protocol=self.config.queue_config.queue_system
                 == QueueSystem.LOCAL,
-                prioritize_private_ip_address=self.config.prioritize_private_ip_address,
             )
             self._dialog.setup_event_monitoring(rerun_failed_realizations)
             simulation_thread.start()
