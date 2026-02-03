@@ -123,7 +123,9 @@ class RFTConfig(ResponseConfig):
                     "time": [],
                     "depth": [],
                     "values": [],
-                    "location": [],
+                    "east": [],
+                    "north": [],
+                    "tvd": [],
                     "zone": [],
                 }
             )
@@ -190,7 +192,9 @@ class RFTConfig(ResponseConfig):
                     "time": [],
                     "depth": [],
                     "values": [],
-                    "location": [],
+                    "east": [],
+                    "north": [],
+                    "tvd": [],
                     "zone": [],
                 }
             )
