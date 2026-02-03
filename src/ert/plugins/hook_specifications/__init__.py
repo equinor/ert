@@ -10,6 +10,7 @@ from .jobs import (
     legacy_ertscript_workflow,
 )
 from .logging import add_log_handle_to_root, add_span_processor
+from .net_utils import get_ip_address
 from .site_config import site_configurations
 
 __all__ = [
@@ -17,6 +18,7 @@ __all__ = [
     "add_span_processor",
     "ertscript_workflow",
     "forward_model_configuration",
+    "get_ip_address",
     "help_links",
     "installable_forward_model_steps",
     "installable_workflow_jobs",

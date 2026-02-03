@@ -8,7 +8,7 @@ import ert.plugins.hook_implementations
 from ert.plugins import ErtPluginManager, ErtRuntimePlugins, plugin
 from ert.trace import trace, tracer
 from tests.ert.unit_tests.plugins import dummy_plugins
-from tests.ert.unit_tests.plugins.dummy_plugins import DummyFMStep
+from tests.ert.unit_tests.plugins.dummy_plugins import PLUGIN_IP_ADDRESS, DummyFMStep
 
 
 def test_no_plugins():
@@ -265,3 +265,16 @@ def test_that_plugin_manager_with_two_site_configurations_raises_error():
 
     with pytest.raises(ValueError, match="Only one site configuration is allowed"):
         ErtPluginManager(plugins=[SiteOne, SiteTwo]).get_site_configurations()
+
+
+def test_get_ip_address(monkeypatch, tmpdir):
+    default_ip_address = "10.10.10.10"
+    monkeypatch.setattr(
+        "ert.shared.net_utils.get_ip_address", lambda: default_ip_address
+    )
+    with tmpdir.as_cwd():
+        pm = ErtPluginManager(plugins=[dummy_plugins])
+        default_plugin = ErtPluginManager(plugins=[])
+        assert default_plugin.get_ip_address() != pm.get_ip_address()
+        assert default_plugin.get_ip_address() == default_ip_address
+        assert pm.get_ip_address() == PLUGIN_IP_ADDRESS

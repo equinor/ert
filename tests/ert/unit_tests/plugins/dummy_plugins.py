@@ -93,3 +93,11 @@ class DummyFMStep(ForwardModelStepPlugin):
 @plugin(name="dummy")
 def installable_forward_model_steps():
     return [DummyFMStep]
+
+
+PLUGIN_IP_ADDRESS = "1.0.0.127"
+
+
+@plugin(name="dummy")
+def get_ip_address():
+    return PLUGIN_IP_ADDRESS
