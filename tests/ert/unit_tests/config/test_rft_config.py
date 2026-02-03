@@ -60,10 +60,52 @@ def mock_resfo_file(mocked_files):
     return inner
 
 
+def test_that_rfts_primary_key_is_east_north_tvd_and_zone():
+    assert set(
+        RFTConfig(
+            input_files=["BASE.RFT"],
+            data_to_read={"*": {"*": ["*"]}},
+        ).primary_key
+    ) == {"east", "north", "tvd", "zone"}
+
+
 def test_that_rft_with_no_matching_well_and_dates_returns_empty_frame(mock_resfo_file):
     mock_resfo_file("/tmp/does_not_exist/BASE.RFT", [])
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={"No such well": {"2000-01-01": ["PRESSURE", "SWAT"]}},
+    )
+    df = rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+
+    assert df.is_empty()
+    assert set(df.columns) == {
+        "response_key",
+        "time",
+        "depth",
+        "values",
+        "east",
+        "north",
+        "tvd",
+        "zone",
+    }
+
+
+def test_that_rft_with_empty_data_to_read_returns_empty_df(mock_resfo_file):
+    mock_resfo_file("/tmp/does_not_exist/BASE.RFT", [])
     rft_config = RFTConfig(input_files=["BASE.RFT"], data_to_read={})
-    assert rft_config.read_from_file("/tmp/does_not_exist", 1, 1).is_empty()
+    df = rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+
+    assert df.is_empty()
+    assert set(df.columns) == {
+        "response_key",
+        "time",
+        "depth",
+        "values",
+        "east",
+        "north",
+        "tvd",
+        "zone",
+    }
 
 
 def test_that_rft_reads_matching_well_and_date(mock_resfo_file):
