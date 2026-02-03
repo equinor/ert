@@ -1,7 +1,7 @@
 import os
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Literal, Self, cast
+from typing import Any, Self, cast
 
 import numpy as np
 import polars as pl
@@ -14,12 +14,13 @@ from .parsing import ConfigDict, ConfigValidationError, ConfigWarning, ErrorInfo
 from .response_config import (
     InvalidResponseFile,
     ResponseConfig,
+    ResponseType,
 )
 from .responses_index import responses_index
 
 
 class GenDataConfig(ResponseConfig):
-    type: Literal["gen_data"] = "gen_data"
+    type: ResponseType = ResponseType.gen_data
     report_steps_list: list[list[int] | None] = Field(default_factory=list)
     has_finalized_keys: bool = True
 
@@ -211,10 +212,6 @@ class GenDataConfig(ResponseConfig):
                 return self.input_files[i], self.report_steps_list[i]
 
         return None, None
-
-    @property
-    def primary_key(self) -> list[str]:
-        return ["report_step", "index"]
 
 
 responses_index.add_response_type(GenDataConfig)

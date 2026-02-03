@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Literal
+from typing import Any
 
 import polars as pl
 from pydantic import field_validator
@@ -11,14 +11,14 @@ from ert.substitutions import substitute_runpath_name
 from ._read_summary import read_summary
 from .parsing import ConfigDict, ConfigKeys
 from .parsing.config_errors import ConfigValidationError, ConfigWarning
-from .response_config import InvalidResponseFile, ResponseConfig
+from .response_config import InvalidResponseFile, ResponseConfig, ResponseType
 from .responses_index import responses_index
 
 logger = logging.getLogger(__name__)
 
 
 class SummaryConfig(ResponseConfig):
-    type: Literal["summary"] = "summary"
+    type: ResponseType = ResponseType.summary
     has_finalized_keys: bool = False
 
     @property
@@ -58,10 +58,6 @@ class SummaryConfig(ResponseConfig):
         df = df.explode("values", "time")
         df = df.sort(by=["time"])
         return df
-
-    @property
-    def primary_key(self) -> list[str]:
-        return ["time"]
 
     @classmethod
     def from_config_dict(cls, config_dict: ConfigDict) -> SummaryConfig | None:

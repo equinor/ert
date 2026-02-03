@@ -26,6 +26,7 @@ from ert.config import (
 from ert.config import Field as FieldConfig
 from ert.config.parsing.context_values import ContextBoolEncoder
 
+from ..config.response_config import ResponseType
 from .mode import BaseMode, Mode, require_write
 
 if TYPE_CHECKING:
@@ -439,7 +440,7 @@ class LocalExperiment(BaseMode):
         return sorted(keys)
 
     @cached_property
-    def response_key_to_response_type(self) -> dict[str, str]:
+    def response_key_to_response_type(self) -> dict[str, ResponseType]:
         mapping = {}
         for config in self.response_configuration.values():
             for key in config.keys if config.has_finalized_keys else []:

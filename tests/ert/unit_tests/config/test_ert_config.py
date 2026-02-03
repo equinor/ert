@@ -2700,3 +2700,48 @@ def test_that_zone_map_is_read_from_file():
         """,
     )
     assert config.zonemap == {1: ["zone1"]}
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_breakthrough_observations_can_be_internalized_in_ert_config():
+    obs_path = Path("observations")
+
+    obs_path.write_text(
+        dedent(
+            """
+            BREAKTHROUGH_OBSERVATION BRT_OBS {
+              KEY=WWCT:OP_1;
+              DATE=2012-10-01;
+              ERROR=3; -- days
+              THRESHOLD=0.1;
+              LOCALIZATION {
+                EAST=10;
+                NORTH=20;
+                RADIUS=2500;
+              };
+            };
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    config = ErtConfig.from_file_contents(
+        """
+        NUM_REALIZATIONS 1
+
+        OBS_CONFIG observations
+        """,
+    )
+
+    breakthrough_observations = config.observations["breakthrough"]
+    assert breakthrough_observations["observation_key"].to_list() == ["BRT_OBS"]
+    assert breakthrough_observations["response_key"].to_list() == [
+        "BREAKTHROUGH:WWCT:OP_1:0.1"
+    ]
+    assert breakthrough_observations["observations"].to_list() == [
+        "2012-10-01T00:00:00"
+    ]
+    assert breakthrough_observations["std"].to_list() == [3]
+    assert breakthrough_observations["east"].to_list() == [10]
+    assert breakthrough_observations["north"].to_list() == [20]
+    assert breakthrough_observations["radius"].to_list() == [2500]
