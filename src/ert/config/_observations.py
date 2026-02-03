@@ -71,7 +71,7 @@ class SummaryObservation(_SummaryValues):
 
         date: str | None = None
         float_values: dict[str, float] = {"ERROR_MIN": 0.1}
-        localization_values: dict[str, float | None] = {}
+        localization_dict: dict[LOCALIZATION_KEYS, float | None] = {}
         for key, value in observation_dict.items():
             match key:
                 case "type" | "name":
@@ -101,13 +101,7 @@ class SummaryObservation(_SummaryValues):
                     date = value
                 case "LOCALIZATION":
                     validate_localization(value, observation_dict["name"])
-                    localization_values["east"] = validate_float(value["EAST"], key)
-                    localization_values["north"] = validate_float(value["NORTH"], key)
-                    localization_values["radius"] = (
-                        validate_float(value["RADIUS"], key)
-                        if "RADIUS" in value
-                        else None
-                    )
+                    extract_localization_values(localization_dict, value, key)
                 case _:
                     raise _unknown_key_error(str(key), observation_dict["name"])
         if "VALUE" not in float_values:
@@ -150,9 +144,9 @@ class SummaryObservation(_SummaryValues):
             error=error,
             key=summary_key,
             value=value,
-            east=localization_values.get("east"),
-            north=localization_values.get("north"),
-            radius=localization_values.get("radius"),
+            east=localization_dict.get("east"),
+            north=localization_dict.get("north"),
+            radius=localization_dict.get("radius"),
             date=standardized_date,
         )
         # Bypass pydantic discarding context
@@ -529,7 +523,7 @@ class BreakthroughObservation(BaseModel):
         date = None
         error = None
         threshold = None
-        localization_dict: dict[str, float | None] = {}
+        localization_dict: dict[LOCALIZATION_KEYS, float | None] = {}
         for key, value in obs_dict.items():
             match key:
                 case "type" | "name":
@@ -544,13 +538,7 @@ class BreakthroughObservation(BaseModel):
                     threshold = validate_float(value, key)
                 case "LOCALIZATION":
                     validate_localization(value, obs_dict["name"])
-                    localization_dict["east"] = validate_float(value["EAST"], key)
-                    localization_dict["north"] = validate_float(value["NORTH"], key)
-                    localization_dict["radius"] = (
-                        validate_float(value["RADIUS"], key)
-                        if "RADIUS" in value
-                        else None
-                    )
+                    extract_localization_values(localization_dict, value, key)
                 case _:
                     raise _unknown_key_error(str(key), value)
 
@@ -592,6 +580,8 @@ _TYPE_TO_CLASS: dict[ObservationType, type[Observation]] = {
     ObservationType.GENERAL: GeneralObservation,
     ObservationType.RFT: RFTObservation,
 }
+
+LOCALIZATION_KEYS = Literal["east", "north", "radius"]
 
 
 def make_observations(
@@ -683,6 +673,16 @@ def validate_localization(val: dict[str, Any], obs_name: str) -> None:
             errors.append(_unknown_key_error(key, f"LOCALIZATION for {obs_name}"))
     if errors:
         raise ObservationConfigError.from_collected(errors)
+
+
+def extract_localization_values(
+    localization_dict: dict[LOCALIZATION_KEYS, float | None], value: Any, key: str
+) -> None:
+    localization_dict["east"] = validate_float(value["EAST"], key)
+    localization_dict["north"] = validate_float(value["NORTH"], key)
+    localization_dict["radius"] = (
+        validate_float(value["RADIUS"], key) if "RADIUS" in value else None
+    )
 
 
 def validate_positive_int(val: str, key: str) -> int:
