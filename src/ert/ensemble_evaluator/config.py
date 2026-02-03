@@ -4,7 +4,7 @@ import warnings
 
 import zmq
 
-from ert.shared import get_ip_address
+from ert.plugins.plugin_manager import get_ip_address
 from ert.shared import get_machine_name as ert_shared_get_machine_name
 from ert.shared.constants import PORT_RANGE
 
