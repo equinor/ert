@@ -1,7 +1,7 @@
 import datetime
 import random
 import sys
-import tracemalloc
+import time
 from dataclasses import dataclass
 
 import numpy as np
@@ -18,6 +18,7 @@ from ert.config import (
 )
 from ert.sample_prior import sample_prior
 from ert.storage import open_storage
+from tests.ert.performance_tests.performance_utils import PeakMemoryTracker
 
 _rng = np.random.default_rng(0)
 
@@ -246,7 +247,7 @@ class _UpdatePerfTestConfig:
 @dataclass
 class _ExpectedPerformance:
     memory_limit_mb: float
-    last_used_peak_memory_mb: float | None = None  # For bookkeeping
+    last_measured_memory_mb: float | None = None  # For bookkeeping
 
 
 @dataclass
@@ -321,12 +322,12 @@ _BenchMarks: list[_Benchmark] = [
             num_realizations=200,
         ),
         expected_join_performance=_ExpectedPerformance(
-            last_used_peak_memory_mb=2.07,
-            memory_limit_mb=10,
+            memory_limit_mb=1,
+            last_measured_memory_mb=1710,
         ),
         expected_update_performance=_ExpectedPerformance(
-            last_used_peak_memory_mb=101,  # EnIF 101, ES 51
-            memory_limit_mb=150,
+            memory_limit_mb=1,
+            last_measured_memory_mb=185,
         ),
     ),
     _Benchmark(
@@ -342,15 +343,13 @@ _BenchMarks: list[_Benchmark] = [
             num_summary_obs=5000,
             num_realizations=200,
         ),
-        # Join is mostly purely polars, lots of lazy load / streaming via parquet files
-        # so this is expected
         expected_join_performance=_ExpectedPerformance(
-            last_used_peak_memory_mb=2.07,
-            memory_limit_mb=10,
+            memory_limit_mb=1,
+            last_measured_memory_mb=1715,
         ),
         expected_update_performance=_ExpectedPerformance(
-            last_used_peak_memory_mb=535,  # EnIF 535, ES 253
-            memory_limit_mb=1000,
+            memory_limit_mb=1,
+            last_measured_memory_mb=784,
         ),
     ),
     # Only run locally
@@ -437,13 +436,10 @@ def test_memory_performance_of_joining_observations_and_responses(
 ):
     _, ens, observation_keys, mask, expected_performance = setup_benchmark
 
-    tracemalloc.start()
-    tracemalloc.reset_peak()
-
+    tracker = PeakMemoryTracker()
+    tracker.start()
     ens.get_observations_and_responses(observation_keys, mask)
-
-    _, peak = tracemalloc.get_traced_memory()
-    tracemalloc.stop()
+    peak = tracker.stop()
 
     mem_usage_mb = peak / (1024**2)
     assert mem_usage_mb < expected_performance.memory_limit_mb
@@ -540,10 +536,8 @@ def setup_es_benchmark(tmp_path, request):
 )
 def test_memory_performance_of_doing_es_update(setup_es_benchmark, tmp_path):
     _, prior, posterior, gen_kw_names, expected_performance = setup_es_benchmark
-
-    tracemalloc.start()
-    tracemalloc.reset_peak()
-
+    tracker = PeakMemoryTracker()
+    tracker.start()
     smoother_update(
         prior,
         posterior,
@@ -552,9 +546,7 @@ def test_memory_performance_of_doing_es_update(setup_es_benchmark, tmp_path):
         ObservationSettings(),
         ESSettings(),
     )
-
-    _, peak = tracemalloc.get_traced_memory()
-    tracemalloc.stop()
+    peak = tracker.stop()
 
     mem_usage_mb = peak / (1024**2)
     assert mem_usage_mb < expected_performance.memory_limit_mb
@@ -584,11 +576,9 @@ def test_speed_performance_of_doing_es_update(setup_es_benchmark, benchmark):
     sys.platform.startswith("darwin"), reason="Currently failing on mac"
 )
 def test_memory_performance_of_doing_enif_update(setup_es_benchmark, tmp_path):
+    tracker = PeakMemoryTracker()
     _, prior, posterior, gen_kw_names, expected_performance = setup_es_benchmark
-
-    tracemalloc.start()
-    tracemalloc.reset_peak()
-
+    tracker.start()
     enif_update(
         prior,
         posterior,
@@ -596,12 +586,10 @@ def test_memory_performance_of_doing_enif_update(setup_es_benchmark, tmp_path):
         gen_kw_names,
         12345,
     )
+    tracker.stop()
+    time.sleep(1)
 
-    _, peak = tracemalloc.get_traced_memory()
-    tracemalloc.stop()
-
-    mem_usage_mb = peak / (1024**2)
-    assert mem_usage_mb < expected_performance.memory_limit_mb
+    assert tracker.peak_memory_rss_mb < expected_performance.memory_limit_mb
 
 
 def test_speed_performance_of_doing_enif_update(setup_es_benchmark, benchmark):

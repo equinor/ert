@@ -4,9 +4,12 @@ import os
 import shutil
 import sys
 import tempfile
+import threading
+import time
 from pathlib import Path
 
 import numpy as np
+import psutil
 import py
 import resfo
 from jinja2 import Environment, FileSystemLoader
@@ -180,3 +183,37 @@ if __name__ == "__main__":
         update_steps=1,
     )
     print(folder)
+
+
+class PeakMemoryTracker:
+    def __init__(self, interval=1 / 120) -> None:
+        self.interval = interval
+        self.max_rss = 0
+        self.running = False
+        self.thread = None
+        self._process = psutil.Process()
+        self.baseline_rss = 0
+
+    def start(self):
+        self.running = True
+        self.baseline_rss = self._process.memory_info().rss
+        self.max_rss = self.baseline_rss
+        self.thread = threading.Thread(target=self._monitor)
+        self.thread.daemon = True
+        self.thread.start()
+
+    def stop(self):
+        self.running = False
+        if self.thread:
+            self.thread.join()
+        return self.max_rss
+
+    @property
+    def peak_memory_rss_mb(self):
+        return (self.max_rss - self.baseline_rss) / (1024**2)
+
+    def _monitor(self):
+        while self.running:
+            current = self._process.memory_info().rss
+            self.max_rss = max(self.max_rss, current)
+            time.sleep(self.interval)
