@@ -273,7 +273,7 @@ class EnsembleSnapshot:
 
     def update_from_realization_event(
         self, event: RealizationEvent, source_snapshot: EnsembleSnapshot
-    ):
+    ) -> None:
         timestamp = event.time
         status = _FM_TYPE_EVENT_TO_STATUS[type(event)]
         start_time = None
@@ -368,14 +368,14 @@ class EnsembleSnapshot:
     def update_from_fm_event(
         self,
         event: FMEvent,
-    ):
+    ) -> None:
         timestamp = event.time
         status = _FM_TYPE_EVENT_TO_STATUS[type(event)]
         start_time = None
         end_time = None
         error = None
 
-        fm_data = {}
+        fm_data: FMStepSnapshot = {}
 
         match event:
             case ForwardModelStepStart():
@@ -394,16 +394,15 @@ class EnsembleSnapshot:
                 end_time = convert_iso8601_to_datetime(timestamp)
                 error = event.error_msg or ""
 
-        fm = _filter_nones(
-            FMStepSnapshot(
-                status=status,
-                index=event.fm_step,
-                start_time=start_time,
-                end_time=end_time,
-                error=error,
-                **fm_data,
-            )
+        fm = FMStepSnapshot(
+            status=status,
+            index=event.fm_step,
+            start_time=start_time,
+            end_time=end_time,
+            error=error,
         )
+        fm.update(fm_data)
+        fm = _filter_nones(fm)
 
         self.update_fm_step(
             event.real,
@@ -427,11 +426,9 @@ class EnsembleSnapshot:
 
         match event:
             case realization_event if isinstance(realization_event, RealizationEvent):
-                event = cast(RealizationEvent, event)
-                self.update_from_realization_event(event, source_snapshot)
+                self.update_from_realization_event(realization_event, source_snapshot)
             case fm_event if isinstance(fm_event, FMEvent):
-                event = cast(FMEvent, event)
-                self.update_from_fm_event(event)
+                self.update_from_fm_event(fm_event)
             case ensemble_event if isinstance(ensemble_event, EnsembleEvent):
                 if not isinstance(ensemble_event, EnsembleEvaluationWarning):
                     self._ensemble_state = _ENSEMBLE_TYPE_EVENT_TO_STATUS[
