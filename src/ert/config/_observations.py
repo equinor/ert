@@ -553,7 +553,7 @@ class RFTObservation(BaseModel):
 class BreakthroughObservation(BaseModel):
     type: Literal["breakthrough"] = "breakthrough"
     name: str
-    response_key: str
+    key: str
     date: datetime
     error: float
     threshold: float
@@ -563,7 +563,7 @@ class BreakthroughObservation(BaseModel):
 
     @classmethod
     def from_obs_dict(cls, directory: str, obs_dict: ObservationDict) -> list[Self]:
-        response_key = None
+        summary_key = None
         date = None
         error = None
         threshold = None
@@ -573,7 +573,7 @@ class BreakthroughObservation(BaseModel):
                 case "type" | "name":
                     pass
                 case "KEY":
-                    response_key = value
+                    summary_key = value
                 case "DATE":
                     date = value
                 case "ERROR":
@@ -586,7 +586,7 @@ class BreakthroughObservation(BaseModel):
                 case _:
                     raise _unknown_key_error(str(key), value)
 
-        if response_key is None:
+        if summary_key is None:
             raise _missing_value_error(obs_dict["name"], "KEY")
         if date is None:
             raise _missing_value_error(obs_dict["name"], "DATE")
@@ -598,7 +598,7 @@ class BreakthroughObservation(BaseModel):
         return [
             cls(
                 name=obs_dict["name"],
-                response_key=response_key,
+                key=summary_key,
                 date=date,
                 error=error,
                 threshold=threshold,
