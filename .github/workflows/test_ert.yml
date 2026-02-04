@@ -85,8 +85,8 @@ jobs:
         touch storage
         chmod 000 storage
         uv run just ert-unit-tests
-        ERT_PYTEST_ARGS='--cov=ert --cov=everest --cov=_ert --cov-report=xml:cov_docs.xml --junit-xml=junit.xml -o junit_family=legacy -v --durations=25 --benchmark-disable' uv run just ert-doc-tests
-        ERT_PYTEST_ARGS='--cov=ert --cov=everest --cov=_ert --cov-report=xml:cov_mem.xml --junit-xml=junit.xml -o junit_family=legacy -v --durations=25 --benchmark-disable' uv run just ert-memory-tests
+        ERT_PYTEST_ARGS='--cov=ert --cov=everest --cov=_ert --cov-report=xml:cov_docs.xml --junit-xml=junit-doc.xml -o junit_family=legacy -v --durations=25 --benchmark-disable' uv run just ert-doc-tests
+        ERT_PYTEST_ARGS='--cov=ert --cov=everest --cov=_ert --cov-report=xml:cov_mem.xml --junit-xml=junit-mem.xml -o junit_family=legacy -v --durations=25 --benchmark-disable' uv run just ert-memory-tests
         chmod 700 storage
         rm storage
 
@@ -116,7 +116,7 @@ jobs:
       if: ${{ !cancelled() }}
       continue-on-error: true
       with:
-        paths: junit.xml
+        paths: junit*.xml
 
     - name: Upload test results to Codecov
       if: ${{ !cancelled() }}
@@ -133,7 +133,7 @@ jobs:
         # Remove things we have generated on purpose:
         ls -la
         rm -rf .coverage
-        rm -f coverage.xml cov_main.xml cov_docs.xml cov_mem.xml junit.xml
+        rm -f coverage.xml cov_main.xml cov_docs.xml cov_mem.xml junit*.xml
         rm -f ert.*.whl
         rm -f codecov.SHA*
         rm -f codecov
