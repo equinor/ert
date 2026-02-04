@@ -293,34 +293,92 @@ class EnsembleSnapshot:
             exec_hosts = event.exec_hosts
             message = None
 
-            if e_type is RealizationRunning:
-                start_time = convert_iso8601_to_datetime(timestamp)
-            elif e_type in {
-                RealizationSuccess,
-                RealizationFailed,
-                RealizationTimeout,
-                RealizationStoppedLongRunning,
-            }:
-                end_time = convert_iso8601_to_datetime(timestamp)
-            if type(event) is RealizationFailed:
-                message = event.message
-                # Mark remaining forward model steps that will never run as cancelled
-                for fm_step_id, fm_step in source_snapshot.get_fm_steps_for_real(
-                    event.real
-                ).items():
-                    if fm_step["status"] == state.FORWARD_MODEL_STATE_INIT:
-                        fm_idx = (event.real, fm_step_id)
-                        if fm_idx not in self._fm_step_snapshots:
-                            self._fm_step_snapshots[fm_idx] = FMStepSnapshot()
+            match event:
+                case RealizationRunning():
+                    start_time = convert_iso8601_to_datetime(timestamp)
+                case RealizationSuccess():
+                    end_time = convert_iso8601_to_datetime(timestamp)
+                case RealizationFailed():
+                    end_time = convert_iso8601_to_datetime(timestamp)
+                    message = event.message
+                    # Mark remaining forward model steps that will never run
+                    # as cancelled
+                    for fm_step_id, fm_step in source_snapshot.get_fm_steps_for_real(
+                        event.real
+                    ).items():
+                        if fm_step.get(ids.STATUS) == state.FORWARD_MODEL_STATE_INIT:
+                            fm_idx = (event.real, fm_step_id)
+                            if fm_idx not in self._fm_step_snapshots:
+                                self._fm_step_snapshots[fm_idx] = FMStepSnapshot()
+                            if (
+                                self._fm_step_snapshots[fm_idx].get(
+                                    "status", state.FORWARD_MODEL_STATE_INIT
+                                )
+                                == state.FORWARD_MODEL_STATE_INIT
+                            ):
+                                self._fm_step_snapshots[fm_idx]["status"] = (
+                                    state.FORWARD_MODEL_STATE_CANCELLED
+                                )
+                case RealizationTimeout():
+                    end_time = convert_iso8601_to_datetime(timestamp)
+                    for (
+                        fm_step_id,
+                        fm_step,
+                    ) in source_snapshot.get_fm_steps_for_real(event.real).items():
                         if (
-                            self._fm_step_snapshots[fm_idx].get(
-                                "status", state.FORWARD_MODEL_STATE_INIT
-                            )
-                            == state.FORWARD_MODEL_STATE_INIT
+                            fm_step.get(ids.STATUS)
+                            != state.FORWARD_MODEL_STATE_FINISHED
                         ):
-                            self._fm_step_snapshots[fm_idx]["status"] = (
-                                state.FORWARD_MODEL_STATE_CANCELLED
+                            fm_idx = (event.real, fm_step_id)
+                            if fm_idx not in source_snapshot._fm_step_snapshots:
+                                self._fm_step_snapshots[fm_idx] = FMStepSnapshot()
+                            self._fm_step_snapshots[fm_idx].update(
+                                FMStepSnapshot(
+                                    status=state.FORWARD_MODEL_STATE_FAILURE,
+                                    end_time=end_time,
+                                    error="The run is cancelled due to "
+                                    "reaching MAX_RUNTIME",
+                                )
                             )
+                case RealizationStoppedLongRunning():
+                    end_time = convert_iso8601_to_datetime(timestamp)
+                    for (
+                        fm_step_id,
+                        fm_step,
+                    ) in source_snapshot.get_fm_steps_for_real(event.real).items():
+                        if (
+                            fm_step.get(ids.STATUS)
+                            != state.FORWARD_MODEL_STATE_FINISHED
+                        ):
+                            fm_idx = (event.real, fm_step_id)
+                            if fm_idx not in source_snapshot._fm_step_snapshots:
+                                self._fm_step_snapshots[fm_idx] = FMStepSnapshot()
+                            self._fm_step_snapshots[fm_idx].update(
+                                FMStepSnapshot(
+                                    status=state.FORWARD_MODEL_STATE_FAILURE,
+                                    end_time=end_time,
+                                    error="The run is cancelled due to "
+                                    "excessive runtime, 25% more than the average "
+                                    "runtime (check keyword STOP_LONG_RUNNING)",
+                                )
+                            )
+                case RealizationResubmit():
+                    for fm_step_id in source_snapshot.get_fm_steps_for_real(event.real):
+                        fm_idx = (event.real, fm_step_id)
+                        self._fm_step_snapshots[fm_idx].update(
+                            FMStepSnapshot(
+                                status=state.FORWARD_MODEL_STATE_INIT,
+                                start_time=None,
+                                end_time=None,
+                                current_memory_usage=None,
+                                max_memory_usage=None,
+                                cpu_seconds=None,
+                                error=None,
+                                stdout=None,
+                                stderr=None,
+                            )
+                        )
+
             self.update_realization(
                 event.real,
                 status,
@@ -330,74 +388,31 @@ class EnsembleSnapshot:
                 message,
             )
 
-            if e_type is RealizationTimeout:
-                for (
-                    fm_step_id,
-                    fm_step,
-                ) in source_snapshot.get_fm_steps_for_real(event.real).items():
-                    if fm_step.get(ids.STATUS) != state.FORWARD_MODEL_STATE_FINISHED:
-                        fm_idx = (event.real, fm_step_id)
-                        if fm_idx not in source_snapshot._fm_step_snapshots:
-                            self._fm_step_snapshots[fm_idx] = FMStepSnapshot()
-                        self._fm_step_snapshots[fm_idx].update(
-                            FMStepSnapshot(
-                                status=state.FORWARD_MODEL_STATE_FAILURE,
-                                end_time=end_time,
-                                error="The run is cancelled due to "
-                                "reaching MAX_RUNTIME",
-                            )
-                        )
-            elif e_type is RealizationStoppedLongRunning:
-                for (
-                    fm_step_id,
-                    fm_step,
-                ) in source_snapshot.get_fm_steps_for_real(event.real).items():
-                    if fm_step.get(ids.STATUS) != state.FORWARD_MODEL_STATE_FINISHED:
-                        fm_idx = (event.real, fm_step_id)
-                        if fm_idx not in source_snapshot._fm_step_snapshots:
-                            self._fm_step_snapshots[fm_idx] = FMStepSnapshot()
-                        self._fm_step_snapshots[fm_idx].update(
-                            FMStepSnapshot(
-                                status=state.FORWARD_MODEL_STATE_FAILURE,
-                                end_time=end_time,
-                                error="The run is cancelled due to "
-                                "excessive runtime, 25% more than the average "
-                                "runtime (check keyword STOP_LONG_RUNNING)",
-                            )
-                        )
-            elif e_type is RealizationResubmit:
-                for fm_step_id in source_snapshot.get_fm_steps_for_real(event.real):
-                    fm_idx = (event.real, fm_step_id)
-                    self._fm_step_snapshots[fm_idx].update(
-                        FMStepSnapshot(
-                            status=state.FORWARD_MODEL_STATE_INIT,
-                            start_time=None,
-                            end_time=None,
-                            current_memory_usage=None,
-                            max_memory_usage=None,
-                            cpu_seconds=None,
-                            error=None,
-                            stdout=None,
-                            stderr=None,
-                        )
-                    )
-
         elif e_type in get_args(FMEvent):
             event = cast(FMEvent, event)
             status = _FM_TYPE_EVENT_TO_STATUS[type(event)]
             start_time = None
             end_time = None
             error = None
-            if e_type is ForwardModelStepStart:
-                start_time = convert_iso8601_to_datetime(timestamp)
-            elif e_type in {ForwardModelStepSuccess, ForwardModelStepFailure}:
-                end_time = convert_iso8601_to_datetime(timestamp)
 
-                if type(event) is ForwardModelStepFailure:
-                    error = event.error_msg or ""
-                else:
+            fm_data = {}
+
+            match event:
+                case ForwardModelStepStart():
+                    start_time = convert_iso8601_to_datetime(timestamp)
+                    fm_data["stdout"] = event.std_out
+                    fm_data["stderr"] = event.std_err
+                case ForwardModelStepRunning():
+                    fm_data["current_memory_usage"] = event.current_memory_usage
+                    fm_data["max_memory_usage"] = event.max_memory_usage
+                    fm_data["cpu_seconds"] = event.cpu_seconds
+                case ForwardModelStepSuccess():
+                    end_time = convert_iso8601_to_datetime(timestamp)
                     # Make sure error msg from previous failed run is replaced
                     error = ""
+                case ForwardModelStepFailure():
+                    end_time = convert_iso8601_to_datetime(timestamp)
+                    error = event.error_msg or ""
 
             fm = _filter_nones(
                 FMStepSnapshot(
@@ -406,16 +421,9 @@ class EnsembleSnapshot:
                     start_time=start_time,
                     end_time=end_time,
                     error=error,
+                    **fm_data,
                 )
             )
-
-            if type(event) is ForwardModelStepRunning:
-                fm["current_memory_usage"] = event.current_memory_usage
-                fm["max_memory_usage"] = event.max_memory_usage
-                fm["cpu_seconds"] = event.cpu_seconds
-            if type(event) is ForwardModelStepStart:
-                fm["stdout"] = event.std_out
-                fm["stderr"] = event.std_err
 
             self.update_fm_step(
                 event.real,
