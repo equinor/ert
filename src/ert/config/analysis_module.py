@@ -30,6 +30,18 @@ es_description = """
         U, w, V.T = svd(D_delta) then we assume that U @ U.T = I.
     """
 
+loc_description = """
+    The default adaptive localization correlation threshold
+    is computed as 3/sqrt(ensemble_size), where ensemble_size
+    is the number of active realizations in the ensemble.
+
+    You can override this value by setting a custom threshold here or in the config.
+    """
+
+cust_loc_thresh_description = """
+    Adaptive localization correlation threshold:
+    """
+
 
 class ESSettings(BaseModel):
     model_config = ConfigDict(extra="forbid", validate_assignment=True)
@@ -40,13 +52,16 @@ class ESSettings(BaseModel):
     inversion: Annotated[
         InversionTypeES, Field(title="Inversion algorithm", description=es_description)
     ] = "EXACT"
-    localization: Annotated[bool, Field(title="Adaptive localization")] = False
+    localization: Annotated[
+        bool, Field(title="Enable adaptive localization", description=loc_description)
+    ] = False
     localization_correlation_threshold: Annotated[
         float | None,
         Field(
             ge=0.0,
             le=1.0,
-            title="Adaptive localization correlation threshold",
+            title="Custom adaptive localization correlation threshold",
+            description=cust_loc_thresh_description,
         ),
     ] = None
     distance_localization: Annotated[

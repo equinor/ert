@@ -26,6 +26,7 @@ class AnalysisModuleEdit(QWidget):
         layout = QHBoxLayout()
 
         variables_popup_button = QToolButton()
+        variables_popup_button.setObjectName("analysis_variables_popup_button")
         variables_popup_button.setIcon(QIcon("img:edit.svg"))
         variables_popup_button.clicked.connect(self.showVariablesPopup)
         variables_popup_button.setMaximumSize(20, 20)

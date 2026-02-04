@@ -1,6 +1,15 @@
+import math
 from unittest.mock import MagicMock
 
-from PyQt6.QtWidgets import QCheckBox
+import pytest
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtWidgets import (
+    QApplication,
+    QCheckBox,
+    QDialog,
+    QDoubleSpinBox,
+    QToolButton,
+)
 from pytestqt.qtbot import QtBot
 
 from ert.config import EnsembleConfig
@@ -128,3 +137,57 @@ def test_multiple_data_assimilation_panel_sets_active_realizations_to_initial_ac
     assert mda_panel._active_realizations_field.text() == active_realizations_string
     mda_panel.restart_run_toggled()
     assert mda_panel._active_realizations_field.text() == active_realizations_string
+
+
+def _open_and_capture_threshold(panel, qtbot):
+    captured_value = None
+
+    def inspect_and_close_dialog() -> None:
+        nonlocal captured_value
+        dialog = QApplication.activeModalWidget()
+        if isinstance(dialog, QDialog) and dialog.windowTitle() == "Edit variables":
+            spinner = dialog.findChild(QDoubleSpinBox, name="localization_threshold")
+            if spinner is not None:
+                captured_value = spinner.value()
+            dialog.accept()
+
+    QTimer.singleShot(500, inspect_and_close_dialog)
+
+    button = panel.findChild(QToolButton, "analysis_variables_popup_button")
+    qtbot.mouseClick(button, Qt.MouseButton.LeftButton)
+
+    assert captured_value is not None
+    return captured_value
+
+
+@pytest.mark.parametrize(
+    ("active_realizations", "expected_threshold"),
+    [
+        ([True], 1.0),
+        ([True, False, True, True, True, True, True, True], 1),
+        (
+            [False, True, True] * 5,
+            3 / math.sqrt(10),
+        ),
+        ([True, False] * 200, 3 / math.sqrt(200)),
+    ],
+)
+def test_analysis_module_edit_threshold_matches_expected_from_ensemble_size_via_ui(
+    qtbot: QtBot, active_realizations, expected_threshold
+) -> None:
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+
+    panel = MultipleDataAssimilationPanel(
+        analysis_config=AnalysisConfig(minimum_required_realizations=1),
+        parameter_configuration=EnsembleConfig().parameter_configuration,
+        run_path="",
+        notifier=notifier,
+        active_realizations=active_realizations,
+        config_num_realization=len(active_realizations),
+    )
+    qtbot.addWidget(panel)
+
+    observed_threshold = _open_and_capture_threshold(panel, qtbot)
+
+    assert observed_threshold == pytest.approx(expected_threshold)
