@@ -517,7 +517,7 @@ def test_that_breakthrough_observation_can_be_instantiated_from_config():
     brt_obs = BreakthroughObservation.from_obs_dict("", parsed_obs_dict[0]).pop()
     assert brt_obs.type == "breakthrough"
     assert brt_obs.name == "name"
-    assert brt_obs.response_key == "WWCT:OP_1"
+    assert brt_obs.key == "WWCT:OP_1"
     assert brt_obs.date == datetime.fromisoformat("2012-10-01")
     assert brt_obs.error == 3
     assert brt_obs.threshold == 0.1
