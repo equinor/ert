@@ -25,6 +25,7 @@ from ert.config import (
     QueueSystem,
     RFTConfig,
 )
+from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.config.ert_config import _split_string_into_sections, create_forward_model_json
 from ert.config.forward_model_step import (
     ForwardModelStepPlugin,
@@ -2733,7 +2734,9 @@ def test_that_breakthrough_observations_can_be_internalized_in_ert_config():
         """,
     )
 
-    breakthrough_observations = config.observations["breakthrough"]
+    breakthrough_observations = create_observation_dataframes(
+        config.observation_declarations, None
+    )["breakthrough"]
     assert breakthrough_observations["observation_key"].to_list() == ["BRT_OBS"]
     assert breakthrough_observations["response_key"].to_list() == [
         "BREAKTHROUGH:WWCT:OP_1:0.1"

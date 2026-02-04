@@ -12,14 +12,13 @@ from os import path
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Self, cast, overload
 
-import polars as pl
 from numpy.random import SeedSequence
-from pydantic import BaseModel, Field, PrivateAttr, model_validator
+from pydantic import BaseModel, Field, model_validator
 from pydantic import ValidationError as PydanticValidationError
 
+from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.substitutions import Substitutions
 
-from ._create_observation_dataframes import create_observation_dataframes
 from ._design_matrix_validator import DesignMatrixValidator
 from ._observations import (
     GeneralObservation,
@@ -714,32 +713,6 @@ class ErtConfig(BaseModel):
     config_path: str = Field(init=False, default="")
     observation_declarations: list[Observation] = Field(default_factory=list)
     zonemap: dict[int, list[str]] = Field(default_factory=dict)
-    _observations: dict[str, pl.DataFrame] | None = PrivateAttr(None)
-
-    @property
-    def observations(self) -> dict[str, pl.DataFrame]:
-        if self._observations is None:
-            has_rft_observations = any(
-                isinstance(o, RFTObservation) for o in self.observation_declarations
-            )
-            if (
-                has_rft_observations
-                and "rft" not in self.ensemble_config.response_configs
-            ):
-                self.ensemble_config.response_configs["rft"] = RFTConfig(
-                    input_files=[self.runpath_config.eclbase_format_string],
-                    data_to_read={},
-                    locations=[],
-                    zonemap=self.zonemap,
-                )
-            self._observations = create_observation_dataframes(
-                self.observation_declarations,
-                cast(
-                    RFTConfig | None,
-                    self.ensemble_config.response_configs.get("rft", None),
-                ),
-            )
-        return self._observations
 
     @model_validator(mode="after")
     def set_fields(self) -> Self:
@@ -833,28 +806,6 @@ class ErtConfig(BaseModel):
             raise ConfigValidationError.from_collected(errors)
 
         return self
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, ErtConfig):
-            return False
-
-        for attr in vars(self):
-            if attr == "observations":
-                if self.observations.keys() != other.observations.keys():
-                    return False
-
-                if not all(
-                    self.observations[k].equals(other.observations[k])
-                    for k in self.observations
-                ):
-                    return False
-
-                continue
-
-            if getattr(self, attr) != getattr(other, attr):
-                return False
-
-        return True
 
     @staticmethod
     def with_plugins(runtime_plugins: ErtRuntimePlugins) -> type[ErtConfig]:
@@ -1157,12 +1108,10 @@ class ErtConfig(BaseModel):
 
             # PS:
             # This mutates the rft config and is necessary for the moment
-            cls_config._observations = create_observation_dataframes(
+            # Consider changing this pattern
+            _ = create_observation_dataframes(
                 obs_configs,
-                cast(
-                    RFTConfig | None,
-                    ensemble_config.response_configs.get("rft", None),
-                ),
+                cast(RFTConfig | None, ensemble_config.response_configs.get("rft")),
             )
         except PydanticValidationError as err:
             raise ConfigValidationError.from_pydantic(err) from err

@@ -16,7 +16,10 @@ from ert.config import (
     InvalidResponseFile,
     SummaryConfig,
 )
-from ert.config._create_observation_dataframes import DEFAULT_LOCALIZATION_RADIUS
+from ert.config._create_observation_dataframes import (
+    DEFAULT_LOCALIZATION_RADIUS,
+    create_observation_dataframes,
+)
 
 
 @settings(max_examples=10)
@@ -102,7 +105,9 @@ def create_summary_observation(loc_config_lines):
     Path("prior.txt").write_text("MY_KEYWORD NORMAL 0 1", encoding="utf-8")
 
     ert_config = ErtConfig.from_file("config.ert")
-    return ert_config.observations["summary"]
+    return create_observation_dataframes(ert_config.observation_declarations, None)[
+        "summary"
+    ]
 
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
@@ -198,7 +203,9 @@ def test_that_adding_one_localized_observation_to_snake_oil_case_can_be_internal
         obs_lines.insert(observation_index + 2 + i, line)
     new_obs_content = "\n".join(obs_lines)
     Path("observations/observations.txt").write_text(new_obs_content, encoding="utf-8")
-    summary = ErtConfig.from_file("snake_oil.ert").observations["summary"]
+    summary = create_observation_dataframes(
+        ErtConfig.from_file("snake_oil.ert").observation_declarations, None
+    )["summary"]
     assert summary["east"].dtype == pl.Float32
     assert summary["north"].dtype == pl.Float32
     assert summary["radius"].dtype == pl.Float32

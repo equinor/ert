@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
 )
 
 from ert.config import ErtConfig, SummaryConfig
+from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_info_widget import (
@@ -162,7 +163,9 @@ def test_that_init_updates_the_info_tab(qtbot):
         ensemble = storage.create_experiment(
             parameters=config.ensemble_config.parameter_configuration,
             responses=config.ensemble_config.response_configuration,
-            observations=config.observations,
+            observations=create_observation_dataframes(
+                config.observation_declarations, None
+            ),
             name="my-experiment",
         ).create_ensemble(
             ensemble_size=config.runpath_config.num_realizations, name="default"

@@ -17,6 +17,7 @@ import xtgeo
 from ert.__main__ import run_convert_observations
 from ert.analysis import enif_update, smoother_update
 from ert.config import ErtConfig, ESSettings, ObservationSettings
+from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.namespace import Namespace
 from ert.sample_prior import sample_prior
@@ -109,10 +110,13 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
     path = Path(poly_template) / "ensembles"
     with open_storage(path, mode="w") as storage:
         ens_config = ert_config.ensemble_config
+        observations = create_observation_dataframes(
+            ert_config.observation_declarations, None
+        )
         experiment_id = storage.create_experiment(
             parameters=ens_config.parameter_configuration,
             responses=ens_config.response_configuration,
-            observations=ert_config.observations,
+            observations=observations,
             name="test-experiment",
         )
         source = storage.create_ensemble(experiment_id, name="prior", ensemble_size=100)
@@ -120,7 +124,7 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
         realizations = list(range(ert_config.runpath_config.num_realizations))
         for real in realizations:
             gendatas = []
-            gen_obs = ert_config.observations["gen_data"]
+            gen_obs = observations["gen_data"]
             for response_key, df in gen_obs.group_by("response_key"):
                 gendata_df = make_gen_data(df["index"].max() + 1)
                 gendata_df = gendata_df.insert_column(
@@ -142,7 +146,7 @@ def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
                 for i in range((refcase_end - refcase_start).days + 1)
             ]
 
-            summary_keys = ert_config.observations["summary"]["response_key"].unique(
+            summary_keys = observations["summary"]["response_key"].unique(
                 maintain_order=True
             )
 
