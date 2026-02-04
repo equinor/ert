@@ -566,6 +566,33 @@ async def test_deduplication_of_repeated_warnings_from_forward_model(
     assert caplog.text.count(emitted_warning_str) == 1
 
 
+@pytest.mark.filterwarnings("ignore:FutureWarning")
+@pytest.mark.parametrize("log_count_cap", [-10, -1, 0, 1, 3])
+@pytest.mark.usefixtures("use_tmpdir")
+async def test_excessive_warnings_from_fm_step_can_be_capped(
+    realization, caplog, mocker, log_count_cap
+):
+    # Mock asyncio.sleep to fast-forward time
+    mocker.patch("asyncio.sleep")
+    start_time = time.time()
+    Path(realization.run_arg.runpath).mkdir()
+    (Path(realization.run_arg.runpath) / "foo.stdout.0").write_text(
+        "\n".join([f"FutureWarning: {idx}" for idx in range(100)]),
+        encoding="utf-8",
+    )
+    realization.fm_steps = [
+        ForwardModelStep(
+            name="foo",
+            executable="foo",
+            stdout_file="foo.stdout",
+        )
+    ]
+    await log_warnings_from_forward_model(
+        realization, start_time - 1, max_logged_warnings=log_count_cap
+    )
+    assert caplog.text.count("FutureWarning") == max(0, log_count_cap)
+
+
 async def test_log_warnings_from_forward_model_can_detect_files_being_created_after_delay(  # noqa: E501
     realization, mocker
 ):
