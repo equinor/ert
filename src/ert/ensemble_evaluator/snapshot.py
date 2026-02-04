@@ -4,7 +4,7 @@ import logging
 from collections import Counter, defaultdict
 from collections.abc import Mapping
 from datetime import datetime
-from typing import Any, TypeVar, cast, get_args
+from typing import Any, TypeVar, cast
 
 from typing_extensions import TypedDict
 
@@ -271,44 +271,30 @@ class EnsembleSnapshot:
         )
         return self
 
-    def update_from_event(
-        self,
-        event: RealizationEvent
-        | FMEvent
-        | EnsembleEvent
-        | EESnapshotUpdate
-        | EESnapshot,
-        source_snapshot: EnsembleSnapshot | None = None,
-    ) -> EnsembleSnapshot:
-        e_type = type(event)
+    def update_from_realization_event(
+        self, event: RealizationEvent, source_snapshot: EnsembleSnapshot
+    ) -> None:
         timestamp = event.time
+        status = _FM_TYPE_EVENT_TO_STATUS[type(event)]
+        start_time = None
+        end_time = None
+        exec_hosts = event.exec_hosts
+        message = None
 
-        if source_snapshot is None:
-            source_snapshot = EnsembleSnapshot()
-        if e_type in get_args(RealizationEvent):
-            event = cast(RealizationEvent, event)
-            status = _FM_TYPE_EVENT_TO_STATUS[type(event)]
-            start_time = None
-            end_time = None
-            exec_hosts = event.exec_hosts
-            message = None
-
-            if e_type is RealizationRunning:
+        match event:
+            case RealizationRunning():
                 start_time = convert_iso8601_to_datetime(timestamp)
-            elif e_type in {
-                RealizationSuccess,
-                RealizationFailed,
-                RealizationTimeout,
-                RealizationStoppedLongRunning,
-            }:
+            case RealizationSuccess():
                 end_time = convert_iso8601_to_datetime(timestamp)
-            if type(event) is RealizationFailed:
+            case RealizationFailed():
+                end_time = convert_iso8601_to_datetime(timestamp)
                 message = event.message
-                # Mark remaining forward model steps that will never run as cancelled
+                # Mark remaining forward model steps that will never run
+                # as cancelled
                 for fm_step_id, fm_step in source_snapshot.get_fm_steps_for_real(
                     event.real
                 ).items():
-                    if fm_step["status"] == state.FORWARD_MODEL_STATE_INIT:
+                    if fm_step.get(ids.STATUS) == state.FORWARD_MODEL_STATE_INIT:
                         fm_idx = (event.real, fm_step_id)
                         if fm_idx not in self._fm_step_snapshots:
                             self._fm_step_snapshots[fm_idx] = FMStepSnapshot()
@@ -321,16 +307,8 @@ class EnsembleSnapshot:
                             self._fm_step_snapshots[fm_idx]["status"] = (
                                 state.FORWARD_MODEL_STATE_CANCELLED
                             )
-            self.update_realization(
-                event.real,
-                status,
-                start_time,
-                end_time,
-                exec_hosts,
-                message,
-            )
-
-            if e_type is RealizationTimeout:
+            case RealizationTimeout():
+                end_time = convert_iso8601_to_datetime(timestamp)
                 for (
                     fm_step_id,
                     fm_step,
@@ -347,7 +325,8 @@ class EnsembleSnapshot:
                                 "reaching MAX_RUNTIME",
                             )
                         )
-            elif e_type is RealizationStoppedLongRunning:
+            case RealizationStoppedLongRunning():
+                end_time = convert_iso8601_to_datetime(timestamp)
                 for (
                     fm_step_id,
                     fm_step,
@@ -365,7 +344,7 @@ class EnsembleSnapshot:
                                 "runtime (check keyword STOP_LONG_RUNNING)",
                             )
                         )
-            elif e_type is RealizationResubmit:
+            case RealizationResubmit():
                 for fm_step_id in source_snapshot.get_fm_steps_for_real(event.real):
                     fm_idx = (event.real, fm_step_id)
                     self._fm_step_snapshots[fm_idx].update(
@@ -382,57 +361,81 @@ class EnsembleSnapshot:
                         )
                     )
 
-        elif e_type in get_args(FMEvent):
-            event = cast(FMEvent, event)
-            status = _FM_TYPE_EVENT_TO_STATUS[type(event)]
-            start_time = None
-            end_time = None
-            error = None
-            if e_type is ForwardModelStepStart:
+        self.update_realization(
+            event.real, status, start_time, end_time, exec_hosts, message
+        )
+
+    def update_from_fm_event(
+        self,
+        event: FMEvent,
+    ) -> None:
+        timestamp = event.time
+        status = _FM_TYPE_EVENT_TO_STATUS[type(event)]
+        start_time = None
+        end_time = None
+        error = None
+
+        fm_data: FMStepSnapshot = {}
+
+        match event:
+            case ForwardModelStepStart():
                 start_time = convert_iso8601_to_datetime(timestamp)
-            elif e_type in {ForwardModelStepSuccess, ForwardModelStepFailure}:
+                fm_data["stdout"] = event.std_out
+                fm_data["stderr"] = event.std_err
+            case ForwardModelStepRunning():
+                fm_data["current_memory_usage"] = event.current_memory_usage
+                fm_data["max_memory_usage"] = event.max_memory_usage
+                fm_data["cpu_seconds"] = event.cpu_seconds
+            case ForwardModelStepSuccess():
                 end_time = convert_iso8601_to_datetime(timestamp)
+                # Make sure error msg from previous failed run is replaced
+                error = ""
+            case ForwardModelStepFailure():
+                end_time = convert_iso8601_to_datetime(timestamp)
+                error = event.error_msg or ""
 
-                if type(event) is ForwardModelStepFailure:
-                    error = event.error_msg or ""
-                else:
-                    # Make sure error msg from previous failed run is replaced
-                    error = ""
+        fm = FMStepSnapshot(
+            status=status,
+            index=event.fm_step,
+            start_time=start_time,
+            end_time=end_time,
+            error=error,
+        )
+        fm.update(fm_data)
+        fm = _filter_nones(fm)
 
-            fm = _filter_nones(
-                FMStepSnapshot(
-                    status=status,
-                    index=event.fm_step,
-                    start_time=start_time,
-                    end_time=end_time,
-                    error=error,
-                )
-            )
+        self.update_fm_step(event.real, event.fm_step, fm)
 
-            if type(event) is ForwardModelStepRunning:
-                fm["current_memory_usage"] = event.current_memory_usage
-                fm["max_memory_usage"] = event.max_memory_usage
-                fm["cpu_seconds"] = event.cpu_seconds
-            if type(event) is ForwardModelStepStart:
-                fm["stdout"] = event.std_out
-                fm["stderr"] = event.std_err
+    def update_from_event(
+        self,
+        event: RealizationEvent
+        | FMEvent
+        | EnsembleEvent
+        | EESnapshotUpdate
+        | EESnapshot,
+        source_snapshot: EnsembleSnapshot | None = None,
+    ) -> EnsembleSnapshot:
+        e_type = type(event)
 
-            self.update_fm_step(
-                event.real,
-                event.fm_step,
-                fm,
-            )
+        if source_snapshot is None:
+            source_snapshot = EnsembleSnapshot()
 
-        elif e_type in get_args(EnsembleEvent):
-            event = cast(EnsembleEvent, event)
-            if not isinstance(event, EnsembleEvaluationWarning):
-                self._ensemble_state = _ENSEMBLE_TYPE_EVENT_TO_STATUS[type(event)]
-        elif type(event) is EESnapshotUpdate:
-            self.merge_snapshot(EnsembleSnapshot.from_nested_dict(event.snapshot))
-        elif type(event) is EESnapshot:
-            return EnsembleSnapshot.from_nested_dict(event.snapshot)
-        else:
-            raise ValueError(f"Unknown type: {e_type}")
+        match event:
+            case realization_event if isinstance(realization_event, RealizationEvent):
+                self.update_from_realization_event(realization_event, source_snapshot)
+            case fm_event if isinstance(fm_event, FMEvent):
+                self.update_from_fm_event(fm_event)
+            case ensemble_event if isinstance(ensemble_event, EnsembleEvent):
+                if not isinstance(ensemble_event, EnsembleEvaluationWarning):
+                    self._ensemble_state = _ENSEMBLE_TYPE_EVENT_TO_STATUS[
+                        type(ensemble_event)
+                    ]
+            case EESnapshotUpdate():
+                self.merge_snapshot(EnsembleSnapshot.from_nested_dict(event.snapshot))
+            case EESnapshot():
+                return EnsembleSnapshot.from_nested_dict(event.snapshot)
+            case _:
+                raise ValueError(f"Unknown type: {e_type}")
         return self
 
     def update_fm_step(
