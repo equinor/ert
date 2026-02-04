@@ -143,22 +143,10 @@ def test_that_storage_matches(
         assert len(ensembles) == 1
         ensemble = ensembles[0]
 
-        response_config = experiment.response_configuration
-
         assert all(
             "has_finalized_keys" in config
             for config in experiment.response_info.values()
         )
-
-        with open(
-            experiment._path / experiment._responses_file, "w", encoding="utf-8"
-        ) as f:
-            json.dump(
-                {k: v.model_dump(mode="json") for k, v in response_config.items()},
-                f,
-                default=str,
-                indent=2,
-            )
 
         assert experiment.parameter_configuration["PORO"].ertbox_params.nx == 2
         assert experiment.parameter_configuration["PORO"].ertbox_params.ny == 3
