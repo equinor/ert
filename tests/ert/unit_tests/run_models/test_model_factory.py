@@ -169,6 +169,57 @@ def test_setup_ensemble_experiment(tmp_path):
     assert model.active_realizations == [True] * 100
 
 
+def test_setup_ensemble_experiment_creates_different_random_seeds(tmp_path_factory):
+    random_seeds = set()
+    ert_config = ErtConfig.from_file_contents("NUM_REALIZATIONS 1")
+    for _ in range(3):
+        ert_config.ens_path = str(tmp_path_factory.mktemp("different_random_seeds"))
+        model = model_factory._setup_ensemble_experiment(
+            ert_config,
+            Namespace(
+                realizations=None,
+                iter_num=1,
+                current_ensemble="default",
+                target_ensemble=None,
+                experiment_name="ensemble_experiment",
+            ),
+            queue.SimpleQueue(),
+        )
+        assert isinstance(model, EnsembleExperiment)
+        random_seeds.add(model.random_seed)
+
+    assert len(random_seeds) > 1
+
+
+def test_setup_ensemble_experiment_preserves_user_defined_random_seed(
+    tmp_path_factory,
+):
+    expected = 1
+    ert_config = ErtConfig.from_file_contents(
+        f"NUM_REALIZATIONS 1\nRANDOM_SEED {expected}"
+    )
+
+    random_seeds = set()
+    for _ in range(2):
+        ert_config.ens_path = str(tmp_path_factory.mktemp("user_defined_random_seeds"))
+        model = model_factory._setup_ensemble_experiment(
+            ert_config,
+            Namespace(
+                realizations=None,
+                iter_num=1,
+                current_ensemble="default",
+                target_ensemble=None,
+                experiment_name="ensemble_experiment",
+            ),
+            queue.SimpleQueue(),
+        )
+        assert isinstance(model, EnsembleExperiment)
+        random_seeds.add(model.random_seed)
+
+    assert len(random_seeds) == 1
+    assert random_seeds.pop() == expected
+
+
 @pytest.mark.filterwarnings("ignore:MIN_REALIZATIONS")
 def test_setup_ensemble_smoother(tmp_path):
     model = model_factory._setup_ensemble_smoother(
