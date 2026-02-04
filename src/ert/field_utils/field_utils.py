@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import math
 import os
+from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, NamedTuple, TypeAlias
 
 import numpy as np
 import resfo
-from pydantic.dataclasses import dataclass
 
 from .field_file_format import ROFF_FORMATS, FieldFileFormat
 from .grdecl_io import export_grdecl, import_bgrdecl, import_grdecl
