@@ -482,6 +482,7 @@ async def log_warnings_from_forward_model(
     real: Realization,
     job_submission_time: float,
     timeout_seconds: int = Job.DEFAULT_FILE_VERIFICATION_TIMEOUT,
+    max_logged_warnings: int = 200,
 ) -> int:
     """Parse all stdout and stderr files from running the forward model
     for anything that looks like a Warning, and log it.
@@ -513,11 +514,19 @@ async def log_warnings_from_forward_model(
         )
 
     async def log_warnings_from_file(
-        file: Path, iens: int, step: ForwardModelStep, step_idx: int, filetype: str
-    ) -> None:
+        file: Path,
+        iens: int,
+        step: ForwardModelStep,
+        step_idx: int,
+        filetype: str,
+        max_warnings_to_log: int,
+    ) -> int:
+        """Returns how many times a warning was logged"""
         captured: list[str] = []
         file_text = await anyio.Path(file).read_text(encoding="utf-8")
         for line in file_text.splitlines():
+            if len(captured) >= max_warnings_to_log:
+                break
             if line_contains_warning(line):
                 captured.append(line[:max_length])
 
@@ -528,6 +537,7 @@ async def log_warnings_from_forward_model(
             )
             warnings.warn(warning_msg, PostSimulationWarning, stacklevel=2)
             logger.warning(warning_msg)
+        return len(captured)
 
     async def wait_for_file(file_path: Path, _timeout: int) -> int:
         if _timeout <= 0:
@@ -546,6 +556,7 @@ async def log_warnings_from_forward_model(
                 break
         return remaining_timeout
 
+    log_count = 0
     with suppress(KeyError):
         runpath = Path(real.run_arg.runpath)
         for step_idx, step in enumerate(real.fm_steps):
@@ -560,8 +571,13 @@ async def log_warnings_from_forward_model(
                     if timeout_seconds <= 0:
                         break
 
-                    await log_warnings_from_file(
-                        std_path, real.iens, step, step_idx, file_type
+                    log_count += await log_warnings_from_file(
+                        std_path,
+                        real.iens,
+                        step,
+                        step_idx,
+                        file_type,
+                        max_logged_warnings - log_count,
                     )
             if timeout_seconds <= 0:
                 break
