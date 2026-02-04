@@ -138,7 +138,7 @@ def test_that_rft_reads_matching_well_and_date(mock_resfo_file):
     ]
 
 
-def test_that_rft_config_can_use_wildcard(mock_resfo_file):
+def test_that_rft_config_wildcards_matches_any_well_date_and_property(mock_resfo_file):
     mock_resfo_file(
         "/tmp/does_not_exist/BASE.RFT",
         [
@@ -310,7 +310,9 @@ def egrid():
     ]
 
 
-def test_that_locations_are_found(mock_resfo_file, egrid):
+def test_that_locations_are_found_in_corresponding_grid_and_added_to_response_dataframe(
+    mock_resfo_file, egrid
+):
     mock_resfo_file(
         "/tmp/does_not_exist/BASE.EGRID",
         egrid,
@@ -437,15 +439,16 @@ def test_that_if_an_rft_observation_is_outside_the_zone_then_it_is_deactivated(
 @pytest.mark.parametrize(
     ("point", "expected_values"),
     [
-        (
+        pytest.param(
             (1.0, 1.0, 0.5),
             [
                 (0.0, 1.0, 1.0, 0.5, "zone1"),
                 (1.0, None, None, None, None),
                 (2.0, None, None, None, None),
             ],
+            id="Point only in the zone of first observation",
         ),
-        (
+        pytest.param(
             (1.0, 1.0, 1.5),
             [
                 (0.0, None, None, None, None),
@@ -453,18 +456,20 @@ def test_that_if_an_rft_observation_is_outside_the_zone_then_it_is_deactivated(
                 (1.0, 1.0, 1.0, 1.5, "zone2"),
                 (2.0, None, None, None, None),
             ],
+            id="Point in the zone of both observations",
         ),
-        (
+        pytest.param(
             (1.0, 1.0, 2.5),
             [
                 (0.0, None, None, None, None),
                 (1.0, None, None, None, None),
                 (2.0, 1.0, 1.0, 2.5, "zone2"),
             ],
+            id="Point only in the zone of second observation",
         ),
     ],
 )
-def test_that_zone_is_correctly_disabled_for_oberlapping_zones(
+def test_that_same_point_observations_with_different_zone_are_disabled_independently(
     mock_resfo_file, point, expected_values, egrid
 ):
     config = ErtConfig.from_dict(
@@ -538,3 +543,79 @@ def test_that_zone_is_correctly_disabled_for_oberlapping_zones(
         )
         == expected_values
     )
+
+
+def test_that_observation_without_zones_are_not_disabled_by_zone_check(
+    mock_resfo_file, egrid
+):
+    config = ErtConfig.from_dict(
+        {
+            "ZONEMAP": (
+                "zonemap.txt",
+                {1: ["zone1"], 2: ["zone1", "zone2"], 3: ["zone2"]},
+            ),
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    {
+                        "type": ObservationType.RFT,
+                        "name": "NAME",
+                        "WELL": "WELL",
+                        "VALUE": "700",
+                        "ERROR": "0.1",
+                        "DATE": "2000-01-01",
+                        "PROPERTY": "PRESSURE",
+                        "NORTH": 1.0,
+                        "EAST": 1.0,
+                        "TVD": 0.5,
+                    },
+                    {
+                        "type": ObservationType.RFT,
+                        "name": "NAME",
+                        "WELL": "WELL",
+                        "VALUE": "700",
+                        "ERROR": "0.1",
+                        "DATE": "2000-01-01",
+                        "PROPERTY": "PRESSURE",
+                        "NORTH": 1.0,
+                        "EAST": 1.0,
+                        "TVD": 0.5,
+                        "ZONE": "zone2",
+                    },
+                ],
+            ),
+        }
+    )
+    mock_resfo_file(
+        "/tmp/does_not_exist/ECLBASE1.EGRID",
+        egrid,
+    )
+    mock_resfo_file(
+        "/tmp/does_not_exist/ECLBASE1.RFT",
+        [
+            *cell_start(
+                date=(1, 1, 2000),
+                well_name="WELL",
+                ijks=[(1, 1, 1), (1, 1, 2), (1, 1, 3)],
+            ),
+            ("PRESSURE", float_arr([0.0, 1.0, 2.0])),
+            ("DEPTH   ", float_arr([0.0, 1.0, 2.0])),
+        ],
+    )
+    res = config.ensemble_config.response_configs["rft"].read_from_file(
+        "/tmp/does_not_exist", 1, 1
+    )
+    assert sorted(
+        zip(
+            res["values"].to_list(),
+            res["east"].to_list(),
+            res["north"].to_list(),
+            res["tvd"].to_list(),
+            res["zone"].to_list(),
+            strict=True,
+        )
+    ) == [
+        (0.0, 1.0, 1.0, 0.5, None),
+        (1.0, None, None, None, None),
+        (2.0, None, None, None, None),
+    ]

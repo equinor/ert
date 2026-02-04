@@ -7,7 +7,8 @@ import os
 import re
 import warnings
 from collections import defaultdict
-from typing import IO, Any, Literal, TypeAlias
+from dataclasses import dataclass
+from typing import IO, Any, Literal, TypeAlias, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -25,18 +26,59 @@ from .responses_index import responses_index
 logger = logging.getLogger(__name__)
 
 
+# A Point in UTM/TVD coordinates
 Point: TypeAlias = tuple[float, float, float]
+# Index to a cell in a grid
 GridIndex: TypeAlias = tuple[int, int, int]
 ZoneName: TypeAlias = str
+WellName: TypeAlias = str
+DateString: TypeAlias = str
+RFTProperty: TypeAlias = str
+
+
+@dataclass(frozen=True)
+class _ZonedPoint:
+    """A point optionally constrained to be in a given zone."""
+
+    point: tuple[float | None, float | None, float | None] = (None, None, None)
+    zone_name: ZoneName | None = None
+
+    def has_zone(self) -> bool:
+        return self.zone_name is not None
 
 
 class RFTConfig(ResponseConfig):
+    """:term:`RFT` response from a :term:`reservoir simulator`.
+
+    RFTConfig is the configuration of responses in the <RUNPATH>/<ECLBASE>.RFT
+    file which may be generated from a reservoir simulator forward model step.
+
+    The file contains values for grid cells along a wellpath (see RFTReader for
+    details). RFTConfig will match the values against the given :term:`UTM`/:term:`TVD`
+    locations.
+
+    Parameters:
+        data_to_read: dictionary of the values that should be read from the rft file.
+        loations: list of optionally zone constrained points that the rft values should
+            be labeled with.
+        zonemap: The mapping from grid layer index to zone name.
+    """
+
     type: Literal["rft"] = "rft"
     name: str = "rft"
     has_finalized_keys: bool = False
-    data_to_read: dict[str, dict[str, list[str]]] = Field(default_factory=dict)
+    data_to_read: dict[WellName, dict[DateString, list[RFTProperty]]] = Field(
+        default_factory=dict
+    )
     locations: list[Point | tuple[Point, ZoneName]] = Field(default_factory=list)
     zonemap: dict[int, list[ZoneName]] = Field(default_factory=dict)
+
+    @property
+    def _zoned_locations(self) -> list[_ZonedPoint]:
+        return [
+            _ZonedPoint(*p) if isinstance(p[1], ZoneName) else _ZonedPoint(p)
+            for p in self.locations
+        ]
 
     @property
     def expected_input_files(self) -> list[str]:
@@ -51,13 +93,13 @@ class RFTConfig(ResponseConfig):
 
     def _find_indices(
         self, egrid_file: str | os.PathLike[str] | IO[Any]
-    ) -> dict[GridIndex | None, set[Point | tuple[Point, ZoneName]]]:
+    ) -> dict[GridIndex | None, set[_ZonedPoint]]:
         indices = defaultdict(set)
         for a, b in zip(
             CornerpointGrid.read_egrid(egrid_file).find_cell_containing_point(
-                [loc[0] if isinstance(loc[1], str) else loc for loc in self.locations]
+                [cast(Point, loc.point) for loc in self._zoned_locations]
             ),
-            self.locations,
+            self._zoned_locations,
             strict=True,
         ):
             indices[a].add(b)
@@ -65,20 +107,20 @@ class RFTConfig(ResponseConfig):
 
     def _filter_zones(
         self,
-        indices: dict[GridIndex | None, set[Point | tuple[Point, ZoneName]]],
+        indices: dict[GridIndex | None, set[_ZonedPoint]],
         iens: int,
         iter_: int,
-    ) -> dict[GridIndex | None, set[tuple[Point, ZoneName | None]]]:
+    ) -> dict[GridIndex | None, set[_ZonedPoint]]:
         for idx, locs in indices.items():
             if idx is not None:
                 for loc in list(locs):
-                    if isinstance(loc[1], str):
-                        zone = loc[1]
+                    if loc.has_zone():
+                        zone = cast(ZoneName, loc.zone_name)
                         # zonemap is 1-indexed so +1
                         if zone not in self.zonemap.get(idx[-1] + 1, []):
                             warnings.warn(
                                 PostSimulationWarning(
-                                    f"An RFT observation with location {loc[0]}, "
+                                    f"An RFT observation with location {loc.point}, "
                                     f"in iteration {iter_}, realization {iens} did "
                                     f"not match expected zone {zone}. The observation "
                                     "was deactivated",
@@ -86,12 +128,21 @@ class RFTConfig(ResponseConfig):
                                 stacklevel=2,
                             )
                             locs.remove(loc)
-        return {
-            k: {v if isinstance(v[1], str) else (v, None) for v in vs}
-            for k, vs in indices.items()
-        }
+        return indices
 
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
+        """Reads the RFT values from <RUNPATH>/<ECLBASE>.RFT
+
+        Also labels those values by which optionally zone constrained point
+        it belongs to.
+
+        The columns east, north, tvd is none when the value does not belong to
+        any point, otherwise it is the x,y,z values of that point. If the point
+        is constrained to be in a certain zone then the zone column is also populated.
+
+        Points which were constrained to be in a given zone, but were not contained
+        in that zone, is not labeled, and instead a warning is emitted.
+        """
         filename = substitute_runpath_name(self.input_files[0], iens, iter_)
         if filename.upper().endswith(".DATA"):
             # For backwards compatibility, it is
@@ -102,9 +153,9 @@ class RFTConfig(ResponseConfig):
         if grid_filename.upper().endswith(".RFT"):
             grid_filename = grid_filename[:-4]
         grid_filename += ".EGRID"
-        fetched: dict[tuple[str, datetime.date], dict[str, npt.NDArray[np.float32]]] = (
-            defaultdict(dict)
-        )
+        fetched: dict[
+            tuple[WellName, datetime.date], dict[RFTProperty, npt.NDArray[np.float32]]
+        ] = defaultdict(dict)
         indices = {}
         if self.locations:
             indices = self._filter_zones(self._find_indices(grid_filename), iens, iter_)
@@ -173,7 +224,7 @@ class RFTConfig(ResponseConfig):
                                 list(
                                     indices.get(
                                         (c[0] - 1, c[1] - 1, c[2] - 1),
-                                        [((None, None, None), None)],
+                                        [_ZonedPoint()],
                                     )
                                 )
                                 for c in entry.connections
@@ -211,10 +262,10 @@ class RFTConfig(ResponseConfig):
                             "location": pl.Series(
                                 [
                                     [
-                                        [loc[0] for loc in locs]
+                                        [loc.point for loc in locs]
                                         for locs in locations.get(
                                             (well, time),
-                                            [[((None, None, None), None)]] * len(vals),
+                                            [[_ZonedPoint()]] * len(vals),
                                         )
                                     ]
                                 ],
@@ -225,10 +276,10 @@ class RFTConfig(ResponseConfig):
                             "zone": pl.Series(
                                 [
                                     [
-                                        [loc[1] for loc in locs]
+                                        [loc.zone_name for loc in locs]
                                         for locs in locations.get(
                                             (well, time),
-                                            [[((None, None, None), None)]] * len(vals),
+                                            [[_ZonedPoint()]] * len(vals),
                                         )
                                     ]
                                 ],
@@ -282,8 +333,8 @@ class RFTConfig(ResponseConfig):
                     "step known to generate rft files"
                 )
 
-            declared_data: dict[str, dict[datetime.date, list[str]]] = defaultdict(
-                lambda: defaultdict(list)
+            declared_data: dict[WellName, dict[datetime.date, list[RFTProperty]]] = (
+                defaultdict(lambda: defaultdict(list))
             )
             for rft in rfts:
                 for expected in ["WELL", "DATE", "PROPERTIES"]:
