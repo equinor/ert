@@ -72,16 +72,12 @@ class EverestDataAPI:
 
     @property
     def control_names(self) -> list[str]:
-        assert self._ever_storage.controls is not None
-        return sorted(self._ever_storage.controls["control_name"].unique().to_list())
+        return self._ever_storage.control_names
 
     @property
     def control_values(self) -> list[dict[str, Any]]:
-        all_control_names = (
-            self._ever_storage.controls["control_name"].to_list()
-            if self._ever_storage.controls is not None
-            else []
-        )
+        all_control_names = self._ever_storage.control_names
+
         new = []
         for batch in self._ever_storage.batches_with_function_results:
             for controls_dict in batch.realization_controls.to_dicts():
