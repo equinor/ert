@@ -1450,49 +1450,14 @@ def test_that_summary_default_error_min_is_applied():
 
 
 @pytest.mark.parametrize(
-    "segment_property",
-    ["START", "STOP"],
-)
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_property_must_be_set_in_a_segment(segment_property):
-    all_items = {"START", "STOP"}
-    other_item = (all_items - {segment_property}).pop()
-
-    obsconf = dedent(
-        f"""
-        HISTORY_OBSERVATION FOPR {{
-           ERROR      = 0.1;
-           SEGMENT SEG {{
-              {other_item} = 1;
-              ERROR = 0.50;
-           }};
-        }};
-    """
-    )
-    Path("obsconf").write_text(obsconf, encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            ECLBASE ECLIPSE_CASE
-            OBS_CONFIG obsconf
-            """
-        ),
-        encoding="utf-8",
-    )
-    with pytest.raises(
-        ConfigValidationError, match=f'Missing item "{segment_property}"'
-    ):
-        run_convert_observations(Namespace(config="config.ert"))
-
-
-@pytest.mark.parametrize(
     ("segment_property", "value", "error_msg"),
     [
         ("ERROR", "-1", 'Failed to validate "-1"'),
         ("ERROR_MIN", "-1", 'Failed to validate "-1"'),
         ("START", "1.1", "Could not convert 1.1 to int"),
         ("STOP", "1.1", "Could not convert 1.1 to int"),
+        ("START", "1", 'Missing item "STOP"'),
+        ("STOP", "1", 'Missing item "START"'),
         ("ERROR_MODE", "NOT_ABS", 'Failed to validate "NOT_ABS"'),
     ],
 )
