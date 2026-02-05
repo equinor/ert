@@ -33,6 +33,10 @@ different classes of observations using the associated keywords:
    of just about anything. Examples: 4D seismic, results from non ECLIPSE
    compatible simulators, etc.
 
+ - :ref:`RFT_OBSERVATION <rft_observation>`: For loading RFT observations
+   from a reservoir simulator rft file. Examples are pressure and saturation
+   values.
+
 
 Please note that observations and datatypes are quite tightly linked together.
 Before reading this you should have a firm grasp of the dynamic data types
@@ -351,3 +355,90 @@ expect the forward model to create a file rft_BH67_20 in each
 realization directory.
 
 .. _OPM Flow manual: https://opm-project.org/wp-content/uploads/2023/06/OPM_Flow_Reference_Manual_2023-04_Rev-0_Reduced.pdf
+
+
+.. _rft_observation:
+
+RFT_OBSERVATION keyword
+-----------------------
+
+The keyword RFT_OBSERVATION can be used to condition on observations for which simulated values are
+in the RFT files with basename defined by :ref:`eclbase` produced by each :term:`realisation`,
+e.g. pressure and saturation values.
+
+A typical RFT observation is created as follows:
+
+.. code-block:: none
+
+   RFT_OBSERVATION rft_obs {
+      WELL=PROD;
+      DATE=2015-02-01;
+      PROPERTY=PRESSURE;
+      VALUE=3800;
+      ERROR=10;
+      TVD=8400;
+      EAST=9500;
+      NORTH=9500;
+   };
+
+This will create an observation of pressure in well PROD on 1st of February 2015.
+The location of the measurement is given by the TVD, EAST and NORTH values,
+where TVD is the true vertical depth below sea level, and EAST and NORTH are the coordinates
+in the horizontal plane. The observed pressure value was 3800 with an observation error of 10.
+Any property available in the RFT file can be used, e.g. PRESSURE, SWAT, SGAS, etc.
+The error is given as an absolute value.
+
+An RFT_OBSERVATION can alternatively be created by referring to an observation csv file containing
+multiple observations.
+
+In its simplest form this will look as follows:
+
+.. code-block:: none
+
+   RFT_OBSERVATION rft_obs {
+      CSV=path/to/observation_file.csv;
+   };
+
+This will then default to look for PRESSURE values in the csv file.
+If another property is required, this can be specified by adding the PROPERTY keyword, e.g:
+
+.. code-block:: none
+
+   RFT_OBSERVATION rft_obs {
+      CSV=path/to/observation_file.csv;
+      PROPERTY=SWAT;
+   };
+
+The csv file needs to have the following columns as a minimum:
+   - WELL_NAME
+   - DATE
+   - ERROR
+   - NORTH
+   - EAST
+   - TVD
+
+In addition the required property column needs to be present, e.g. PRESSURE (used by default) or SWAT, etc.
+
+An optional ZONE column can be included to validate that observations are in the expected geological zones
+when used with :ref:`ZONEMAP <zonemap>`.
+
+An example of such a csv could look like this:
+
+.. code-block:: none
+
+   "WELL_NAME", "DATE", "ZONE", "PRESSURE", "ERROR", "TVD", "NORTH", "EAST"
+   "WELL1", "2013-03-31", "zone1", "3700", "10", "2000.0", "71.0", "30.0"
+   "WELL1", "2013-04-30", "zone1", "3800", "10", "2000.0", "71.0", "30.0"
+   "WELL2", "2014-03-31", "zone1", "3900", "10", "2000.0", "73.0", "33.0"
+
+
+Using zones with RFT observations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When an RFT observation includes a ZONE identifier (either in the CSV file or specified directly),
+ERT will validate that the measurement location falls within the expected geological zone defined
+in the :ref:`ZONEMAP <zonemap>`. This provides an additional quality check to ensure observations
+are correctly associated with reservoir zones.
+
+If a zone is specified but no ZONEMAP is provided, or if the observation location doesn't match
+the expected zone, the observation will be deactivated with a warning during the simulation.
