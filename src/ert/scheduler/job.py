@@ -581,4 +581,8 @@ async def log_warnings_from_forward_model(
                     )
             if timeout_seconds <= 0:
                 break
+    if log_count >= max_logged_warnings:
+        logger.warning(
+            "Reached maximum number of forward model step warnings to extract"
+        )
     return timeout_seconds
