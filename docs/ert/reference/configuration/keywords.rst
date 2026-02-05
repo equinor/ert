@@ -58,6 +58,7 @@ Keyword name                                                            Required
 :ref:`QUEUE_OPTION <queue_option>`                                      NO                                                                      Set options for an ERT queue system
 :ref:`QUEUE_SYSTEM <queue_system>`                                      NO                                      LOCAL_DRIVER                    System used for running simulation jobs
 :ref:`REALIZATION_MEMORY <realization_memory>`                          NO                                                                      Set the expected memory requirements for a realization
+:ref:`RFT <rft>`                                                        NO                                                                      Specify which RFT data to load from simulator output
 :ref:`RUNPATH <runpath>`                                                NO                                      realization-<IENS>/iter-<ITER>  Directory to run simulations; simulations/realization-<IENS>/iter-<ITER>
 :ref:`RUNPATH_FILE <runpath_file>`                                      NO                                      .ert_runpath_list               Name of file with path for all forward models that ERT has run. To be used by user defined scripts to find the realizations
 :ref:`RUN_TEMPLATE <run_template>`                                      NO                                                                      Install arbitrary files in the runpath directory
@@ -1477,6 +1478,55 @@ the corresponding :term:`summary key` matches the pattern.
     Properties added using the SUMMARY keyword are only
     diagnostic. I.e. they have no effect on the sensitivity analysis or
     history match.
+
+.. _rft:
+
+RFT
+---
+
+The RFT keyword is used to specify which :term:`RFT` (Repeat Formation Tester)
+data should be loaded from the simulator's RFT output files. This keyword tells
+ERT which wells, dates, and properties to read from the RFT files produced by
+the forward model.
+
+The RFT keyword requires three pieces of information specified using keyword arguments:
+
+- **WELL**: The name of the well to read RFT data from
+- **DATE**: The date when the RFT measurement was taken (ISO format: YYYY-MM-DD)
+- **PROPERTIES**: Comma-separated list of properties to load (e.g., PRESSURE, SWAT, SGAS, SOIL)
+
+The RFT files are read from the location specified by :ref:`ECLBASE <eclbase>`.
+For example, if ``ECLBASE`` is set to ``MY_FIELD``, ERT will look for the file
+``MY_FIELD.RFT`` in each realization's runpath.
+
+*Example:*
+
+::
+
+        -- Load pressure and water saturation from well PROD_01 on two dates
+        RFT WELL:PROD_01 DATE:2015-03-15 PROPERTIES:PRESSURE,SWAT
+        RFT WELL:PROD_01 DATE:2015-06-20 PROPERTIES:PRESSURE,SWAT
+
+        -- Load pressure from multiple wells
+        RFT WELL:INJ_01 DATE:2015-01-01 PROPERTIES:PRESSURE
+        RFT WELL:INJ_02 DATE:2015-01-01 PROPERTIES:PRESSURE
+
+The RFT keyword can be repeated multiple times to specify different wells, dates,
+and properties. This allows ERT to load the simulated RFT data that can be compared
+with :ref:`RFT_OBSERVATION <rft_observation>` entries in your observation file.
+
+**Wildcard support:**
+
+The RFT keyword supports wildcards (``*``) in well names, dates, and properties,
+allowing you to load data for multiple wells or properties at once:
+
+::
+
+        -- Load pressure from all wells on a specific date
+        RFT WELL:* DATE:2015-03-15 PROPERTIES:PRESSURE
+
+        -- Load all properties for a specific well and date
+        RFT WELL:PROD_01 DATE:2015-03-15 PROPERTIES:*
 
 .. _analysis_module:
 
