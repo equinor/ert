@@ -69,6 +69,7 @@ Keyword name                                                            Required
 :ref:`SURFACE <surface>`                                                NO                                                                      Surface parameter read from RMS IRAP file
 :ref:`UPDATE_LOG_PATH  <update_log_path>`                               NO                                      update_log                      Summary of the update steps are stored in this directory
 :ref:`WORKFLOW_JOB_DIRECTORY  <workflow_job_directory>`                 NO                                                                      Directory containing workflow jobs
+:ref:`ZONEMAP <zonemap>`                                                NO                                                                      Map grid layers to geological zone names for RFT validation
 =====================================================================   ======================================  ==============================  ==============================================================================================================================================
 
 
@@ -1916,6 +1917,43 @@ should be job configuration files. The jobs loaded in this way will
 all get the name of the file as the name of the job. The
 :code:`WORKFLOW_JOB_DIRECTORY` keyword will *not* load configuration
 files recursively.
+
+.. _zonemap:
+
+ZONEMAP
+-------
+
+The ZONEMAP keyword specifies a file that maps simulation grid layers (K indices)
+to geological zone names. This is primarily used to validate :ref:`RFT_OBSERVATION <rft_observation>`
+locations to ensure that observations fall within the expected geological zones.
+
+The zonemap file format is simple: each line contains a K-layer index (1-indexed)
+followed by one or more zone names that apply to that layer:
+
+::
+
+    -- Format: K_layer zone1 [zone2 ...]
+    1  TopZone
+    2  TopZone
+    3  MiddleZone
+    4  MiddleZone
+    5  BottomZone
+    6  BottomZone
+
+*Example usage:*
+
+::
+
+        ZONEMAP my_zones.txt
+
+When RFT observations include a ZONE specification (either in the CSV file or
+directly in the observation), ERT will validate that the observation's grid
+location matches the expected zone from the ZONEMAP. If an observation is
+located in a different zone than specified, it will be deactivated with a warning.
+
+.. note::
+    Grid layers are 1-indexed in the ZONEMAP file. Multiple zone names can be
+    specified for a single layer if it spans multiple geological zones.
 
 Manipulating the environment variables
 --------------------------------------
