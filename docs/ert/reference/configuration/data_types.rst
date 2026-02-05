@@ -452,7 +452,7 @@ group.
 RFT data
 ^^^^^^^^
 
-:term:`RFT` (Repeat Formation Tester) data represents measurements or simulated
+:term:`RFT` data represents measurements or simulated
 values of formation properties such as pressure and saturation at specific
 locations within wells. These measurements are typically taken at discrete depth
 points and specific times during the reservoir's production history.
