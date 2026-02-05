@@ -38,15 +38,7 @@ class EverestDataAPI:
 
     @property
     def output_constraint_names(self) -> list[str]:
-        return (
-            sorted(
-                self._ever_storage.nonlinear_constraints["constraint_name"]
-                .unique()
-                .to_list()
-            )
-            if self._ever_storage.nonlinear_constraints is not None
-            else []
-        )
+        return self._ever_storage.nonlinear_constraints
 
     @property
     def realizations(self) -> list[int]:

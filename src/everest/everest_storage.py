@@ -323,8 +323,12 @@ class EverestStorage:
         return pl.read_parquet(self.experiment._path / "objective_functions.parquet")
 
     @property
-    def nonlinear_constraints(self) -> pl.DataFrame | None:
-        return try_read_df(self.experiment._path / "nonlinear_constraints.parquet")
+    def nonlinear_constraints(self) -> list[str]:
+        constraints = self.experiment.response_configuration.get("everest_constraints")
+        if constraints is None:
+            return []
+
+        return constraints.keys
 
     @property
     def realization_weights(self) -> pl.DataFrame | None:
