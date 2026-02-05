@@ -149,8 +149,8 @@ def _generate_parameter_files(
             continue
         start_time = time.perf_counter()
 
-        export_values: dict[str, dict[str, float | str]] | None = {}
-        log_export_values: dict[str, dict[str, float | str]] | None = {}
+        export_values: dict[str, dict[str, float | str]] | None = None
+        log_export_values: dict[str, dict[str, float | str]] = {}
 
         if param.name in scalar_data:
             scalar_value = scalar_data[param.name]
@@ -172,11 +172,11 @@ def _generate_parameter_files(
             export_values = param.write_to_runpath(Path(run_path), iens, fs)
 
         if export_values:
-            for key, value in export_values.items():
-                exports.setdefault(key, {}).update(value)
+            for group, vals in export_values.items():
+                exports.setdefault(group, {}).update(vals)
         if log_export_values:
-            for key, value in log_export_values.items():
-                log_exports.setdefault(key, {}).update(value)
+            for group, vals in log_export_values.items():
+                log_exports.setdefault(group, {}).update(vals)
 
         export_timings[param.type] += time.perf_counter() - start_time
         continue
