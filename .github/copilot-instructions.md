@@ -10,7 +10,7 @@ Focus on: correctness, clarity, reliability, and maintainability.
 - [ ] Test names follow the `test_that_<behavior_or_condition>` specification style.
 - [ ] Test names clearly state the expected behavior or invariant (they answer: “What is correct behavior?”).
 - [ ] Test names avoid vague terms: `works`, `correctly`, `as_expected`, `are_handled`, `handles`, `success`, `failure`, etc.
-- [ ] Unit tests in `tests/ert/unit_tests` (not marked `integration_test`) are fast, reliable, and produce clear error messages.
+- [ ] Unit tests in `tests/ert/unit_tests` (not marked `slow`, `unreliable` or `high_utilization`) are fast, reliable, and produce clear error messages.
 - [ ] UI tests (in `tests/ert/ui_tests`) describe user-visible interactions and outcomes.
 - [ ] Each commit performs one atomic, logically isolated change.
 - [ ] Commit messages follow the prescribed format and explain the *what* and *why*, not the detailed *how*.
@@ -81,15 +81,10 @@ Prefer: `test_that_double_comments_are_ignored`
 (NOTE: If the PR contains any of the vague forms above, recommend renaming.)
 
 ### 2.4 Fast, Reliable Unit Tests
-Tests in `tests/ert/unit_tests` not marked `integration_test` MUST:
+Tests in `tests/ert/unit_tests` not marked `slow`, `unreliable` or `high_utilization` MUST:
 - Execute quickly (aim: sub-second or minimal dependency overhead).
 - Have deterministic outcomes (no flaky timing, random seeds un-fixed, or external service reliance).
 - Produce clear, concise assertion failure messages.
-
-Definition of “integration_test” marker: Use it only when a test is slow,
-interacts with external systems/resources, involves complex multi-component
-orchestration, or commonly yields opaque errors. If a test fails any of the
-fast/reliable criteria, ensure it is marked appropriately or refactored.
 
 ### 2.5 UI Tests
 Tests in `tests/ert/ui_tests` SHOULD:

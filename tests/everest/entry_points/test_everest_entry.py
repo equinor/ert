@@ -353,7 +353,7 @@ class ServerStatus:
     "everest.bin.everest_script.warn_user_that_runpath_is_nonempty",
     side_effect=RuntimeError("runpath is nonempty"),
 )
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_that_everest_run_warns_on_nonempty_runpath(change_to_tmpdir):
     existing_runpath = tempfile.TemporaryDirectory()
     (Path(existing_runpath.name) / "somefile").touch()
@@ -391,7 +391,7 @@ def test_that_everest_fails_when_runpath_is_a_file():
         (QueueSystem.LOCAL, QueueSystem.LOCAL),
     ],
 )
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_that_run_everest_prints_where_it_runs(
     server_queue_system, simulator_queue_system, capsys, change_to_tmpdir
 ):

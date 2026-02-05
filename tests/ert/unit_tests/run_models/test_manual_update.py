@@ -15,7 +15,7 @@ from ert.run_models import create_model
 from ert.storage import open_storage
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.parametrize("mode", [MANUAL_UPDATE_MODE, MANUAL_ENIF_UPDATE_MODE])
 def test_that_manual_update_from_ensemble_experiment_supports_all_update_modes(
     copy_poly_case, mode

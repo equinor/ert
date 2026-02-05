@@ -18,7 +18,7 @@ CONFIG_FILE_ADVANCED = "config_advanced.yml"
 
 
 @pytest.mark.xdist_group("math_func/config_multiobj.yml")
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_math_func_multiobj(cached_example):
     config_path, config_file, _, _ = cached_example("math_func/config_multiobj.yml")
 
@@ -38,7 +38,7 @@ def test_math_func_multiobj(cached_example):
 
 
 @pytest.mark.xdist_group("math_func/config_advanced.yml")
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_math_func_advanced(cached_example):
     config_path, config_file, _, _ = cached_example("math_func/config_advanced.yml")
 
@@ -67,7 +67,7 @@ def test_math_func_advanced(cached_example):
     assert expected_opt == pytest.approx(result.total_objective, abs=0.001)
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_remove_run_path(copy_math_func_test_data_to_tmp):
     with open("config_minimal.yml", encoding="utf-8") as file:
@@ -129,7 +129,7 @@ def test_remove_run_path(copy_math_func_test_data_to_tmp):
     ), "Simulation folder should be there, something went wrong and was removed"
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_math_func_auto_scaled_controls(copy_math_func_test_data_to_tmp):
     # Arrange
@@ -174,7 +174,7 @@ def test_math_func_auto_scaled_controls(copy_math_func_test_data_to_tmp):
     assert expected_dist == pytest.approx(optim, abs=0.05)
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_math_func_auto_scaled_objectives(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file("config_multiobj.yml")
@@ -206,7 +206,7 @@ def test_math_func_auto_scaled_objectives(copy_math_func_test_data_to_tmp):
     assert optim1 == pytest.approx(optim2, abs=0.001)
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_math_func_auto_scaled_constraints(copy_math_func_test_data_to_tmp):
     config = EverestConfig.load_file("config_advanced.yml")
@@ -239,7 +239,7 @@ def test_math_func_auto_scaled_constraints(copy_math_func_test_data_to_tmp):
 
 
 @pytest.mark.xdist_group("math_func/config_advanced.yml")
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_ensemble_creation(cached_example):
     cached_example("math_func/config_advanced.yml")
     with open_storage("everest_output/simulation_results", "r") as storage:
@@ -247,7 +247,7 @@ def test_ensemble_creation(cached_example):
         assert sorted(ensemble.iteration for ensemble in ensembles) == sorted(range(5))
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_that_math_func_violating_output_constraints_has_no_result(
     copy_math_func_test_data_to_tmp,
@@ -271,7 +271,7 @@ def test_that_math_func_violating_output_constraints_has_no_result(
     assert optimal_result is None  # No feasible result
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_that_math_func_violating_output_constraints_has_a_result(
     copy_math_func_test_data_to_tmp,
@@ -295,7 +295,7 @@ def test_that_math_func_violating_output_constraints_has_a_result(
     assert optimal_result is not None  # Feasible result
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_that_math_func_violating_input_constraints_has_no_result(
     copy_math_func_test_data_to_tmp,
@@ -319,7 +319,7 @@ def test_that_math_func_violating_input_constraints_has_no_result(
     assert optimal_result is None  # No feasible result
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_that_math_func_violating_input_constraints_has_a_result(
     copy_math_func_test_data_to_tmp,

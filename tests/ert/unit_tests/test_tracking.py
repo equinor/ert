@@ -60,7 +60,7 @@ def check_expression(original, path_expression, expected: list[str], msg_start):
     assert match_found, f"{msg_start} Nothing matched {path_expression}"
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("copy_poly_case")
 @pytest.mark.parametrize(
     (
@@ -237,7 +237,7 @@ def test_tracking(
                 )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("copy_poly_case")
 @pytest.mark.parametrize(
     ("mode", "cmd_line_arguments"),
@@ -307,7 +307,7 @@ def test_setting_env_context_during_run(
         assert key not in os.environ
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.usefixtures("copy_poly_case")
 @pytest.mark.parametrize(
     ("mode", "cmd_line_arguments"),

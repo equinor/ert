@@ -25,7 +25,7 @@ from ert.config._create_observation_dataframes import (
 @settings(max_examples=10)
 @given(summaries(summary_keys=st.just(["WOPR:OP1"])))
 @pytest.mark.usefixtures("use_tmpdir")
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_reading_empty_summaries_raises(wopr_summary):
     smspec, unsmry = wopr_summary
     smspec.to_file("CASE.SMSPEC")

@@ -199,7 +199,7 @@ async def test_that_max_submit_is_not_reached_on_success(realization, mock_drive
     assert retries == 1
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.timeout(10)
 @pytest.mark.flaky(rerun=3)
 async def test_max_runtime(realization, mock_driver, caplog):
@@ -227,7 +227,7 @@ async def test_max_runtime(realization, mock_driver, caplog):
     assert "Realization 0 stopped due to MAX_RUNTIME=1 seconds" in caplog.text
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 async def test_no_resubmit_on_max_runtime_kill(realization, mock_driver):
     retries = 0
 
@@ -290,7 +290,7 @@ async def test_max_running(max_running, mock_driver, storage, tmp_path):
         assert max_running_observed == ensemble_size
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.timeout(6)
 async def test_max_runtime_while_killing(realization, mock_driver):
     wait_started = asyncio.Event()
@@ -499,7 +499,7 @@ async def test_that_long_running_jobs_were_stopped(
     )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.flaky(reruns=5)
 @pytest.mark.parametrize(
     ("submit_sleep", "iens_stride", "realization_runtime"),
@@ -545,7 +545,7 @@ async def test_submit_sleep(
     assert max(deltas) <= submit_sleep + 0.1
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.flaky(reruns=5)
 @pytest.mark.parametrize(
     ("submit_sleep", "realization_max_runtime", "max_running"),

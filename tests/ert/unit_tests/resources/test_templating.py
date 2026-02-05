@@ -194,7 +194,7 @@ def test_no_parameters_json():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_template_executable():
     Path("template").write_text(
         "FILENAME\nF1 {{parameters.key1.subkey1}}\nF2 {{other.key1.subkey1}}",

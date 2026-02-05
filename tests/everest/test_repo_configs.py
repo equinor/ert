@@ -14,7 +14,7 @@ def _get_all_files(folder):
     ]
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_all_repo_configs():
     repo_dir = os.path.join(os.path.dirname(__file__), "..")
     repo_dir = os.path.realpath(repo_dir)

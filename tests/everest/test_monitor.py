@@ -154,7 +154,7 @@ def snapshot_update_event_with_fm_message():
     return json.dumps(jsonable_encoder(event))
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_failed_jobs_monitor(
     monkeypatch, full_snapshot_event, snapshot_update_failure_event, capsys
 ):
@@ -187,7 +187,7 @@ def test_failed_jobs_monitor(
     )
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_monitor(monkeypatch, full_snapshot_event, snapshot_update_event, capsys):
     server_mock = MagicMock()
     connection_mock = MagicMock(spec=ClientConnection)
@@ -217,7 +217,7 @@ def test_monitor(monkeypatch, full_snapshot_event, snapshot_update_event, capsys
     ).translate({ord(c): None for c in string.whitespace})
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_forward_model_message_reaches_the_cli(
     monkeypatch, full_snapshot_event, snapshot_update_event_with_fm_message, capsys
 ):

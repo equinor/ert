@@ -268,7 +268,7 @@ def test_socket_can_not_rebind_if_open(unused_tcp_port):
         find_available_socket(port_range=port_range, host="127.0.0.1")
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_socket_can_not_rebind_immediately_after_close_if_used(unused_tcp_port):
     """
     1. the original socket is obtained

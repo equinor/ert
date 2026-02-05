@@ -474,7 +474,7 @@ def test_that_the_date_keyword_sets_the_general_index_by_looking_up_time_map():
 
 
 @given(summary=summaries(), data=st.data())
-@pytest.mark.integration_test
+@pytest.mark.slow
 def test_that_the_date_keyword_sets_the_report_step_by_looking_up_refcase(
     tmp_path_factory: pytest.TempPathFactory, summary, data
 ):

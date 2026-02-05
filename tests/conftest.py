@@ -8,9 +8,6 @@ from ert.plugins import ErtRuntimePlugins
 
 def pytest_addoption(parser):
     parser.addoption(
-        "--runslow", action="store_true", default=False, help="run slow tests"
-    )
-    parser.addoption(
         "--eclipse-simulator",
         action="store_true",
         default=False,
@@ -47,7 +44,6 @@ def pytest_collection_modifyitems(config, items):
         if any(
             f in fixtures
             for f in [
-                "flaky",
                 "tmpdir",
                 "use_tmpdir",
                 "tmp_path",
@@ -55,6 +51,12 @@ def pytest_collection_modifyitems(config, items):
             ]
         ):
             item.add_marker("creates_tmpdir")
+
+        if any(f in fixtures for f in ["flaky", "skip_mac_ci"]):
+            item.add_marker("unreliable")
+
+        if any(f in fixtures for f in ["memory_test", "limit_memory"]):
+            item.add_marker("unreliable")
 
         # Override Python's excepthook on all "requires_window_manager" tests
         if item.get_closest_marker("requires_window_manager"):
@@ -72,20 +74,6 @@ def pytest_collection_modifyitems(config, items):
         for item in items:
             if "skip_mac_ci" in item.keywords:
                 item.add_marker(pytest.mark.skip(reason="Skipped on mac ci"))
-
-    if config.getoption("--runslow"):
-        # --runslow given in cli: do not skip slow tests
-        skip_quick = pytest.mark.skip(
-            reason="skipping quick performance tests on --runslow"
-        )
-        for item in items:
-            if "quick_only" in item.keywords:
-                item.add_marker(skip_quick)
-    else:
-        skip_slow = pytest.mark.skip(reason="need --runslow option to run")
-        for item in items:
-            if "slow" in item.keywords:
-                item.add_marker(skip_slow)
 
 
 @pytest.fixture(autouse=True)

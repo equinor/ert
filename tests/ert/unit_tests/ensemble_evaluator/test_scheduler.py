@@ -15,7 +15,7 @@ from ert.scheduler.job import Job
 from ert.scheduler.scheduler import Scheduler
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 @pytest.mark.timeout(60)
 async def test_scheduler_receives_checksum_and_waits_for_disk_sync(
     tmpdir, make_ensemble, monkeypatch, caplog

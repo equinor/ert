@@ -29,7 +29,7 @@ async def test_successful_sending():
         assert msg in mock_server.messages
 
 
-@pytest.mark.integration_test
+@pytest.mark.slow
 async def test_retry():
     client_connection_error_set = False
     messages = ["test_1", "test_2", "test_3"]
