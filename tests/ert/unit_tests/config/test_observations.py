@@ -1458,13 +1458,14 @@ def test_that_summary_default_error_min_is_applied():
         ("STOP", "1.1", "Could not convert 1.1 to int"),
         ("START", "1", 'Missing item "STOP"'),
         ("STOP", "1", 'Missing item "START"'),
-        ("ERROR_MODE", "NOT_ABS", 'Failed to validate "NOT_ABS"'),
+        ("SMERROR", "0.02", "Unknown SMERROR"),
+        ("name", "0.02", "Unknown name"),
+        ("type", "0.02", "Unknown type"),
+        ("segments", "0.02", "Unknown segments"),
     ],
 )
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_property_must_be_positive_in_a_segment(
-    segment_property, value, error_msg
-):
+def test_that_properties_are_valid_in_a_segment(segment_property, value, error_msg):
     obsconf = dedent(
         f"""
         HISTORY_OBSERVATION FOPR {{
@@ -1823,35 +1824,6 @@ def test_that_setting_an_unknown_key_is_not_valid(observation_type, unknown_key)
             ert_config_from_parser(
                 f"{observation_type} FOPR {{{unknown_key}=0.1;DATA=key;}};"
             )
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-@pytest.mark.parametrize("unknown_key", ["SMERROR", "name", "type", "segments"])
-def test_that_setting_an_unknown_key_in_a_segment_is_not_valid(unknown_key):
-    obsconf = dedent(
-        f"""
-        HISTORY_OBSERVATION FOPR {{
-            SEGMENT FIRST_YEAR {{
-                START = 1;
-                STOP = 2;
-                {unknown_key} = 0.02;
-            }};
-        }};
-        """
-    )
-    Path("obsconf").write_text(obsconf, encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            ECLBASE ECLIPSE_CASE
-            OBS_CONFIG obsconf
-            """
-        ),
-        encoding="utf-8",
-    )
-    with pytest.raises(ConfigValidationError, match=f"Unknown {unknown_key}"):
-        run_convert_observations(Namespace(config="config.ert"))
 
 
 @pytest.mark.usefixtures("use_tmpdir")
