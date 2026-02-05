@@ -664,18 +664,22 @@ def test_that_all_errors_in_general_observations_must_be_greater_than_zero(tmpdi
             )
 
 
+@pytest.mark.parametrize(
+    "error_type",
+    ["ERROR_MODE = REL", "ERROR_MIN = 0.05"],
+)
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_error_mode_is_not_allowed_in_general_observations():
+def test_that_error_types_are_not_allowed_in_general_observations(error_type):
     obsconf = dedent(
-        """
-        GENERAL_OBSERVATION OBS {
+        f"""
+        GENERAL_OBSERVATION OBS {{
             DATA = GEN;
             DATE = 2020-01-02;
             INDEX_LIST = 1;
             VALUE = 1.0;
             ERROR = 0.1;
-            ERROR_MODE = REL;
-        };
+            {error_type};
+        }};
         """
     )
     Path("obsconf").write_text(obsconf, encoding="utf-8")
@@ -690,37 +694,7 @@ def test_that_error_mode_is_not_allowed_in_general_observations():
         encoding="utf-8",
     )
 
-    with pytest.raises(ConfigValidationError, match=r"Unknown ERROR_MODE"):
-        run_convert_observations(Namespace(config="config.ert"))
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_error_min_is_not_allowed_in_general_observations():
-    obsconf = dedent(
-        """
-        GENERAL_OBSERVATION OBS {
-            DATA = GEN;
-            DATE = 2020-01-02;
-            INDEX_LIST = 1;
-            VALUE = 1.0;
-            ERROR = 0.1;
-            ERROR_MIN = 0.05;
-        };
-        """
-    )
-    Path("obsconf").write_text(obsconf, encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            GEN_DATA GEN RESULT_FILE:gen%d.txt REPORT_STEPS:1
-            OBS_CONFIG obsconf
-            """
-        ),
-        encoding="utf-8",
-    )
-
-    with pytest.raises(ConfigValidationError, match=r"Unknown ERROR_MIN"):
+    with pytest.raises(ConfigValidationError, match=r"Unknown ERROR_*"):
         run_convert_observations(Namespace(config="config.ert"))
 
 
