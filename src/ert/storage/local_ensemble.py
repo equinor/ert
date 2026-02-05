@@ -1034,7 +1034,10 @@ class LocalEnsemble(BaseMode):
             for (
                 response_type,
                 response_cls,
-            ) in self.experiment.response_configuration.items():
+            ) in (
+                self.experiment.response_configuration
+                | self.experiment.derived_response_configuration
+            ).items():
                 if response_type not in observations_by_type:
                     continue
 
@@ -1334,6 +1337,10 @@ async def _write_responses_to_storage(
                 exc_info=err,
             )
             continue
+
+    for config in ensemble.experiment.derived_response_configuration.values():
+        ds = config.derive_from_storage(ensemble.iteration, realization, ensemble)
+        ensemble.save_response(config.type, ds, realization)
 
     if errors:
         return LoadResult.failure("\n".join(errors))

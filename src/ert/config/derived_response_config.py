@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from typing import Any
 
 import polars as pl
 from pydantic import BaseModel, Field
@@ -13,7 +14,7 @@ class DerivedResponseConfig(BaseModel):
         self,
         iter_: int,
         real: int,
-        # ensemble: LocalEnsemble
+        ensemble: Any,
     ) -> pl.DataFrame:
         """Derives response DataFrame from existing files in storage"""
 

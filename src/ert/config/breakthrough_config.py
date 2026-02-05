@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
 import polars as pl
 from pydantic import Field
@@ -23,8 +23,36 @@ class BreakthroughConfig(DerivedResponseConfig):
     def expected_input_files(self) -> list[str]:
         return []
 
-    def derive_from_storage(self) -> pl.DataFrame:
-        return pl.DataFrame()
+    def derive_from_storage(
+        self, iter: int, realization: int, ensemble: Any
+    ) -> pl.DataFrame:
+        breakthrough_times = []
+        for key, threshold in zip(self.keys, self.thresholds, strict=True):
+            response_df = ensemble.load_responses(key, [realization])
+            times = response_df["time"].to_list()
+            values = response_df["values"].to_list()
+
+            breakthrough_times.append(
+                next(
+                    (
+                        time
+                        for time, value in zip(times, values, strict=True)
+                        if value > threshold
+                    ),
+                    None,
+                )
+            )
+        print(breakthrough_times)
+
+        primary_keys = [
+            f"{key}:{threshold}" for key, threshold in zip(self.keys, self.thresholds)
+        ]
+        return pl.DataFrame(
+            {
+                "response_key": primary_keys,
+                "values": breakthrough_times,
+            }
+        )
 
     @property
     def primary_key(self) -> list[str]:

@@ -14,6 +14,7 @@ from ._observations import (
     RFTObservation,
     SummaryObservation,
 )
+from .breakthrough_config import BreakthroughConfig
 from .parsing import (
     ErrorInfo,
     ObservationConfigError,
@@ -26,6 +27,7 @@ DEFAULT_LOCALIZATION_RADIUS = 3000
 def create_observation_dataframes(
     observations: Sequence[Observation],
     rft_config: RFTConfig | None,
+    breakthrough_config: BreakthroughConfig | None,
 ) -> dict[str, pl.DataFrame]:
     if not observations:
         return {}
@@ -57,8 +59,15 @@ def create_observation_dataframes(
                         )
                     grouped["rft"].append(_handle_rft_observation(rft_config, obs))
                 case BreakthroughObservation():
+                    if breakthrough_config is None:
+                        raise TypeError(
+                            "create_observation_dataframes requires "
+                            "breakthrough_config is not None when using "
+                            "BreakthroughObservation"
+                        )
                     grouped["breakthrough"].append(
                         _handle_breakthrough_observation(
+                            breakthrough_config,
                             obs,
                         )
                     )
@@ -197,12 +206,14 @@ def _handle_rft_observation(
 
 
 def _handle_breakthrough_observation(
+    response_config: BreakthroughConfig,
     obs_config: BreakthroughObservation,
 ) -> pl.DataFrame:
+    response_config.to_derive(obs_config.key, obs_config.threshold)
     return pl.DataFrame(
         {
             "observation_key": obs_config.name,
-            "response_key": (f"BREAKTHROUGH:{obs_config.key}:{obs_config.threshold}"),
+            "response_key": f"{obs_config.key}:{obs_config.threshold}",
             "time": obs_config.date.isoformat(),
             "observations": obs_config.date.isoformat(),
             "std": pl.Series([obs_config.error], dtype=pl.Float32),

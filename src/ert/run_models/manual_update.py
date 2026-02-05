@@ -12,6 +12,8 @@ from ert.run_models.update_run_model import UpdateRunModel, UpdateRunModelConfig
 from ert.storage import Ensemble
 
 from ..analysis import smoother_update
+from ..config import ResponseConfig
+from ..config.derived_response_config import DerivedResponseConfig
 from .run_model import ErtRunError
 
 logger = logging.getLogger(__name__)
