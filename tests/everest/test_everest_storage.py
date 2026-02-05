@@ -34,11 +34,6 @@ def test_csv_export(config_file, cached_example, snapshot):
         storage_path=config.storage_dir,
     )
     ever_storage.init(
-        formatted_control_names=[
-            name
-            for control_config in config.controls
-            for name in control_config.formatted_control_names
-        ],
         objective_functions=config.create_ert_objectives_config(),
         output_constraints=config.create_ert_output_constraints_config(),
         realizations=config.model.realizations,
