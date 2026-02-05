@@ -720,8 +720,6 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         )
 
         self._ever_storage.init(
-            objective_functions=self.objectives_config,
-            output_constraints=self.output_constraints_config,
             realizations=self.model.realizations,
         )
         optimizer.set_results_callback(self._handle_optimizer_results)
