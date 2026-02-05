@@ -1492,20 +1492,25 @@ def test_that_summary_default_error_min_is_applied():
     assert list(observations["summary"]["std"]) == pytest.approx([0.1])
 
 
+@pytest.mark.parametrize(
+    "segment_property",
+    ["START", "STOP"],
+)
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_start_must_be_set_in_a_segment():
-    obsconf = dedent(
-        """
-        HISTORY_OBSERVATION  FOPR {
-           ERROR      = 0.1;
+def test_that_property_must_be_set_in_a_segment(segment_property):
+    all_items = {"START", "STOP"}
+    other_item = (all_items - {segment_property}).pop()
 
-           SEGMENT SEG
-           {
-              STOP  = 1;
+    obsconf = dedent(
+        f"""
+        HISTORY_OBSERVATION FOPR {{
+           ERROR      = 0.1;
+           SEGMENT SEG {{
+              {other_item} = 1;
               ERROR = 0.50;
-           };
-        };
-        """
+           }};
+        }};
+    """
     )
     Path("obsconf").write_text(obsconf, encoding="utf-8")
     Path("config.ert").write_text(
@@ -1518,36 +1523,9 @@ def test_that_start_must_be_set_in_a_segment():
         ),
         encoding="utf-8",
     )
-    with pytest.raises(ConfigValidationError, match='Missing item "START"'):
-        run_convert_observations(Namespace(config="config.ert"))
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_stop_must_be_set_in_a_segment():
-    obsconf = dedent(
-        """
-        HISTORY_OBSERVATION FOPR {
-           ERROR      = 0.1;
-
-           SEGMENT SEG {
-              START  = 1;
-              ERROR = 0.50;
-           };
-        };
-        """
-    )
-    Path("obsconf").write_text(obsconf, encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            ECLBASE ECLIPSE_CASE
-            OBS_CONFIG obsconf
-            """
-        ),
-        encoding="utf-8",
-    )
-    with pytest.raises(ConfigValidationError, match='Missing item "STOP"'):
+    with pytest.raises(
+        ConfigValidationError, match=f'Missing item "{segment_property}"'
+    ):
         run_convert_observations(Namespace(config="config.ert"))
 
 
