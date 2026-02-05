@@ -273,7 +273,6 @@ class EverestStorage:
 
         self._storage = storage
         self._experiment_id = experiment_id
-        self.batches: list[BatchStorageData] = []
 
     @property
     def experiment(self) -> LocalExperiment:
@@ -363,19 +362,6 @@ class EverestStorage:
             mapping[int(d["simulation_id"])] = int(d["realization"])
 
         return mapping
-
-    @staticmethod
-    def read_batches(ensembles: list[LocalEnsemble]) -> list[BatchStorageData]:
-        batches = []
-        for ens in ensembles:
-            batches.append(
-                BatchStorageData(
-                    path=ens._path,
-                )
-            )
-
-        batches.sort(key=lambda b: b.batch_id)
-        return batches
 
     @property
     def is_empty(self) -> bool:
@@ -486,8 +472,12 @@ class EverestStorage:
                 "ert[everest] version <= 12.1.2"
             )
 
-    def read_from_output_dir(self) -> None:
-        self.batches = self.read_batches(list(self.experiment.ensembles))
+    @property
+    def batches(self) -> list[BatchStorageData]:
+        return [
+            BatchStorageData(ens._path)
+            for ens in sorted(self.experiment.ensembles, key=lambda ens: ens.iteration)
+        ]
 
     def init(
         self,

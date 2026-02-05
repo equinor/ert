@@ -15,7 +15,6 @@ class EverestDataAPI:
         self._config = config
         assert config.storage_dir.exists()
         self._ever_storage = EverestStorage.from_storage_path(config.storage_dir)
-        self._ever_storage.read_from_output_dir()
 
     @property
     def batches(self) -> list[int]:

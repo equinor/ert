@@ -148,7 +148,6 @@ async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
     assert status.status == ExperimentState.completed
     assert status.message == "Maximum number of batches reached."
     storage = EverestStorage.from_storage_path(config.storage_dir)
-    storage.read_from_output_dir()
 
     # Check that there is only one batch.
     assert {b.batch_id for b in storage.batches} == {0}
