@@ -55,7 +55,6 @@ Keyword name                                                            Required
 :ref:`NUM_CPU <num_cpu>`                                                NO                                      1                               Set the number of CPUs. Intepretation varies depending on context
 :ref:`NUM_REALIZATIONS <num_realizations>`                              YES                                                                     Set the number of reservoir realizations to use
 :ref:`OBS_CONFIG <obs_config>`                                          NO                                                                      File specifying observations with uncertainties
-:ref:`PRIORITIZE_PRIVATE_IP_ADDRESS <prioritize_private_ip_address>`    NO                                      FALSE                           Prioritize using a private IP address over public IP address for communicating with jobs running on the cluster.
 :ref:`QUEUE_OPTION <queue_option>`                                      NO                                                                      Set options for an ERT queue system
 :ref:`QUEUE_SYSTEM <queue_system>`                                      NO                                      LOCAL_DRIVER                    System used for running simulation jobs
 :ref:`REALIZATION_MEMORY <realization_memory>`                          NO                                                                      Set the expected memory requirements for a realization
@@ -613,27 +612,6 @@ guidelines given in :ref:`Creating an observation file for use with ERT<Configur
 
 The OBS_CONFIG keyword is optional, but for your own convenience, it is
 strongly recommended to provide an observation file.
-
-.. _prioritize_private_ip_address:
-
-PRIORITIZE_PRIVATE_IP_ADDRESS
------------------------------
-
-The PRIORITIZE_PRIVATE_IP_ADDRESS key is used to specify if the IP address
-picked by Ert to communicate with jobs running on the cluster should be
-private or public. Some network setups require private IP for communication
-between Ert and forward models. This defaults to FALSE, therefore
-using the public IP address of the machine running Ert.
-
-*Example:*
-
-::
-
-        -- Have Ert use the private IP address of the machine running Ert
-        PRIORITIZE_PRIVATE_IP_ADDRESS TRUE
-
-The PRIORITIZE_PRIVATE_IP_ADDRESS key is optional.
-
 
 .. _runpath:
 
