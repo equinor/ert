@@ -9,6 +9,7 @@ from _ert.events import (
     ForwardModelStepSuccess,
     dispatcher_event_from_json,
 )
+from _ert.forward_model_runner.client import ClientConnectionError
 from _ert.forward_model_runner.forward_model_step import ForwardModelStep
 from _ert.forward_model_runner.reporting import Event
 from _ert.forward_model_runner.reporting.message import (
@@ -20,7 +21,7 @@ from _ert.forward_model_runner.reporting.message import (
     Start,
 )
 from _ert.forward_model_runner.reporting.statemachine import TransitionError
-from tests.ert.utils import MockZMQServer
+from tests.ert.utils import MockZMQServer, MockZMQServerSignal
 
 
 def test_report_with_successful_start_message_argument():
@@ -216,11 +217,24 @@ def test_report_with_reconnected_reporter_but_finished_jobs():
 @pytest.mark.parametrize(
     ("mocked_server_signal", "ack_timeout", "expected_message"),
     [
-        pytest.param(5, 0.01, "No ack for dealer connection", id="failed_connect"),
         pytest.param(
-            4, 0.25, "No ack for dealer disconnection", id="failed_disconnect"
+            MockZMQServerSignal.ACK_NOTHING,
+            0.10,
+            "No ack for dealer connection",
+            id="failed_connect",
         ),
-        pytest.param(1, 0.25, "Failed to send event", id="failed_to_send_event"),
+        pytest.param(
+            MockZMQServerSignal.NORMAL_OPERATION_BUT_FAIL_ACK_DISCONNECT,
+            0.10,
+            "No ack for dealer disconnection",
+            id="failed_disconnect",
+        ),
+        pytest.param(
+            MockZMQServerSignal.FAIL_ACK_BUT_STORE_EVENTS,
+            0.10,
+            "Failed to send event",
+            id="failed_to_send_event",
+        ),
     ],
 )
 def test_event_reporter_does_not_hang_after_failed(
@@ -239,11 +253,19 @@ def test_event_reporter_does_not_hang_after_failed(
         )
 
         reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
-        reporter.report(Start(fmstep1))
-        reporter.report(Finish())
+        if mocked_server_signal == MockZMQServerSignal.FAIL_ACK_BUT_STORE_EVENTS:
+            reporter.report(Start(fmstep1))
+        elif (
+            mocked_server_signal
+            == MockZMQServerSignal.NORMAL_OPERATION_BUT_FAIL_ACK_DISCONNECT
+        ):
+            reporter.report(Finish())
 
         reporter._event_publisher_thread.join(timeout=10)
         assert not reporter._event_publisher_thread.is_alive(), (
             "Event publisher thread is hanging"
+        )
+        assert isinstance(reporter._reporter_exception, ClientConnectionError), (
+            "Expected ClientConnectionError in event publisher thread"
         )
     assert expected_message in caplog.text
