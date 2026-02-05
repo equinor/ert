@@ -34,7 +34,7 @@ different classes of observations using the associated keywords:
    compatible simulators, etc.
 
  - :ref:`RFT_OBSERVATION <rft_observation>`: For loading RFT observations
-   from a reservoir simulator rft file. Examples are pressure and saturation
+   from a reservoir simulator RFT file. Examples are pressure and saturation
    values.
 
 
@@ -409,7 +409,7 @@ If another property is required, this can be specified by adding the PROPERTY ke
       PROPERTY=SWAT;
    };
 
-The csv file needs to have the following columns as a minimum:
+The CSV file needs to have the following columns as a minimum:
    - WELL_NAME
    - DATE
    - ERROR
@@ -422,7 +422,7 @@ In addition the required property column needs to be present, e.g. PRESSURE (use
 An optional ZONE column can be included to validate that observations are in the expected geological zones
 when used with :ref:`ZONEMAP <zonemap>`.
 
-An example of such a csv could look like this:
+An example of such a CSV could look like this:
 
 .. code-block:: none
 
