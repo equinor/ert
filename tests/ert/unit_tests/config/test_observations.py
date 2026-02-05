@@ -752,8 +752,17 @@ def test_that_having_no_refcase_but_history_observations_causes_exception():
         run_convert_observations(Namespace(config="config.ert"))
 
 
-def test_that_index_list_is_read(tmpdir):
+@pytest.mark.parametrize(
+    ("indices_type", "indices_value"),
+    [
+        ("INDEX_LIST", "0,2,4,6,8"),
+        ("INDEX_FILE", "obs_idx.txt"),
+    ],
+)
+def test_that_indices_from_file_and_list_are_read(tmpdir, indices_type, indices_value):
     with tmpdir.as_cwd():
+        if indices_type == "INDEX_FILE":
+            Path("obs_idx.txt").write_text("0\n2\n4\n6\n8", encoding="utf-8")
         Path("obs_data.txt").write_text(
             "\n".join(f"{float(i)} 0.1" for i in range(5)), encoding="utf-8"
         )
@@ -764,7 +773,7 @@ def test_that_index_list_is_read(tmpdir):
                     "type": ObservationType.GENERAL,
                     "name": "OBS",
                     "DATA": "GEN",
-                    "INDEX_LIST": "0,2,4,6,8",
+                    f"{indices_type}": f"{indices_value}",
                     "RESTART": "1",
                     "OBS_FILE": "obs_data.txt",
                 }
@@ -806,32 +815,6 @@ def test_that_invalid_time_map_file_raises_config_validation_error():
 
     with pytest.raises(ConfigValidationError, match="Could not read timemap file"):
         run_convert_observations(Namespace(config="config.ert"))
-
-
-def test_that_index_file_is_read(tmpdir):
-    with tmpdir.as_cwd():
-        Path("obs_idx.txt").write_text("0\n2\n4\n6\n8", encoding="utf-8")
-        Path("obs_data.txt").write_text(
-            "\n".join(f"{float(i)} 0.1\n" for i in range(5)), encoding="utf-8"
-        )
-        obs = make_observations(
-            "",
-            [
-                {
-                    "type": ObservationType.GENERAL,
-                    "name": "OBS",
-                    "DATA": "GEN",
-                    "RESTART": "1",
-                    "INDEX_FILE": "obs_idx.txt",
-                    "OBS_FILE": "obs_data.txt",
-                }
-            ],
-        )
-        observations = create_observation_dataframes(
-            observations=obs,
-            rft_config=None,
-        )
-        assert list(observations["gen_data"]["index"]) == [0, 2, 4, 6, 8]
 
 
 def test_that_non_existent_obs_file_is_invalid():
