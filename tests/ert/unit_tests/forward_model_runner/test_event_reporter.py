@@ -9,6 +9,7 @@ from _ert.events import (
     ForwardModelStepSuccess,
     dispatcher_event_from_json,
 )
+from _ert.forward_model_runner.client import ClientConnectionError
 from _ert.forward_model_runner.forward_model_step import ForwardModelStep
 from _ert.forward_model_runner.reporting import Event
 from _ert.forward_model_runner.reporting.message import (
@@ -212,9 +213,9 @@ def test_report_with_reconnected_reporter_but_finished_jobs():
     [
         pytest.param(5, 0.01, "No ack for dealer connection", id="failed_connect"),
         pytest.param(
-            4, 0.25, "No ack for dealer disconnection", id="failed_disconnect"
+            4, 0.01, "No ack for dealer disconnection", id="failed_disconnect"
         ),
-        pytest.param(1, 0.25, "Failed to send event", id="failed_to_send_event"),
+        pytest.param(1, 0.01, "Failed to send event", id="failed_to_send_event"),
     ],
 )
 def test_event_reporter_does_not_hang_after_failed(
@@ -233,11 +234,15 @@ def test_event_reporter_does_not_hang_after_failed(
         )
 
         reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
-        reporter.report(Start(fmstep1))
-        reporter.report(Finish())
+        if mocked_server_signal != 5:
+            reporter.report(Start(fmstep1))
+            reporter.report(Finish())
 
         reporter._event_publisher_thread.join(timeout=10)
         assert not reporter._event_publisher_thread.is_alive(), (
             "Event publisher thread is hanging"
+        )
+        assert isinstance(reporter._reporter_exception, ClientConnectionError), (
+            "Expected ClientConnectionError in event publisher thread"
         )
     assert expected_message in caplog.text
