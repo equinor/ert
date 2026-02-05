@@ -12,7 +12,7 @@ from .responses_index import responses_index
 
 
 class EverestResponse(ResponseConfig):
-    """Base class for Everest response configurations."""
+    """Base class for EVEREST response configurations."""
 
     has_finalized_keys: bool = True
     scales: list[float | None]

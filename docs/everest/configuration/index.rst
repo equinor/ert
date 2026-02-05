@@ -1,7 +1,7 @@
 .. _cha_config:
 
 *********************
-Everest configuration
+EVEREST configuration
 *********************
 
 .. toctree::
@@ -9,7 +9,7 @@ Everest configuration
 
     reference
 
-Everest is configured via a yaml file, using a set of pre-defined keywords that
+EVEREST is configured via a yaml file, using a set of pre-defined keywords that
 are described in more detail in the section :ref:`cha_config_reference`.
 
 .. _config_variables:
@@ -17,7 +17,7 @@ are described in more detail in the section :ref:`cha_config_reference`.
 Configuration variables
 -----------------------
 
-In addition to the standard yaml syntax, Everest also supports variables that
+In addition to the standard yaml syntax, EVEREST also supports variables that
 are replaced with their value when referred in the following way:
 ``r{{variable}}``. For instance in the following snippet, the variable ``tol``
 is replaced by its value:
@@ -39,7 +39,7 @@ The value of a variable can be set in three different ways:
        definitions:
            tol: 0.0001
 
-2. Everest pre-defines the following variables:
+2. EVEREST pre-defines the following variables:
 
    ``realization``
        Evaluates to the realization ID during execution of the forward model.
@@ -58,7 +58,7 @@ The value of a variable can be set in three different ways:
 
    These variables do not need to be defined by the user, although their values
    can be overridden in the ``definitions`` section. However, this is not
-   recommended for the ``realization`` entry, and Everest will produce a warning
+   recommended for the ``realization`` entry, and EVEREST will produce a warning
    when this is attempted.
 
 3. Variables with a name of the form ``os.ENVIRONMENT_VARIABLE_NAME`` can be
@@ -68,7 +68,7 @@ The value of a variable can be set in three different ways:
 
 .. note::
     Variables are a distinct feature from the yaml keywords defined in section
-    :ref:`cha_config_reference`. The final yaml file used by Everest is produced
+    :ref:`cha_config_reference`. The final yaml file used by EVEREST is produced
     by pre-processing the config file to replace all variables with their value.
     It is possible to define variables that have the same name as a keyword, but
     this should be done sparingly to avoid confusion.

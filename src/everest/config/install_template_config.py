@@ -44,7 +44,7 @@ class InstallTemplateConfig(BaseModel, extra="forbid"):
         fm_step_instance = copy.deepcopy(installed_fm_steps.get("template_render"))
         if fm_step_instance is None:
             raise KeyError(
-                "Using install_templates in Everest requires the "
+                "Using install_templates in EVEREST requires the "
                 "ERT forward model: template_render to be installed. "
                 "It was not found in the installed forward model steps: "
                 + (", ".join(installed_fm_steps.keys()))

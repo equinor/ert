@@ -61,8 +61,8 @@ class ServerConfig(BaseModel):
         Returns a tuple containing the server URL, certificate file path,
         and authentication credentials.
         NOTE: This function is to temporarily bridge the gap between ERT storage client
-        and the Everest clients setup + requesting.
-        Currently Everest client side uses the get_server_context and requests directly.
+        and the EVEREST clients setup + requesting.
+        Currently EVEREST client side uses the get_server_context and requests directly.
         This should be refactored to use the ERT Storage Client class directly instead.
 
         Args:

@@ -1,5 +1,5 @@
 """
-This is the main Everest module.
+This is the main EVEREST module.
 
 """
 

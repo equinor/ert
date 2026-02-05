@@ -4,21 +4,21 @@
 Development
 ***********
 
-In this section Everest development decisions are documented.
+In this section EVEREST development decisions are documented.
 
 
 Architecture
 ============
 
-The everest application is split into two components, a server component and a
+The EVEREST application is split into two components, a server component and a
 client component.
 
 .. figure:: images/architecture_design.png
     :align: center
     :width: 700px
-    :alt: Everest architecture
+    :alt: EVEREST architecture
 
-    Everest architecture
+    EVEREST architecture
 
 Every time an optimization instance is ran by a user, the client component of the
 application spawns an instance of the server component, which is started either on a
@@ -30,7 +30,7 @@ Communication between the two components is done via an HTTP API.
 
 Server HTTP API
 ===============
-The Everest server component supports the following HTTP requests API. The Everest
+The EVEREST server component supports the following HTTP requests API. The EVEREST
 server component was designed as an internal component that will be available as
 long as the optimization process is running.
 
@@ -53,7 +53,7 @@ long as the optimization process is running.
      - Optimization progress information
    * - POST
      - '/stop'
-     - Signal everest optimization run termination. It will be called by the client when the optimization needs to be terminated in the middle of the run
+     - Signal EVEREST optimization run termination. It will be called by the client when the optimization needs to be terminated in the middle of the run
 
 
 EVEREST vs. ERT data models

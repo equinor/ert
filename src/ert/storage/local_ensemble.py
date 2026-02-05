@@ -1186,7 +1186,7 @@ class LocalEnsemble(BaseMode):
     ) -> None:
         if len(realization_info) != self.ensemble_size:
             raise ValueError(
-                "Everest realization info must describe "
+                "EVEREST realization info must describe "
                 "all realizations in the ensemble, got information "
                 f"for realizations [{', '.join(map(str, realization_info))}]"
             )

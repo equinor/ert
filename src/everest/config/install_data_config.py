@@ -134,7 +134,7 @@ class InstallDataConfig(BaseModel):
 
         def _missing_fm_msg(fm_name: str) -> str:
             return (
-                f"Using install_data in Everest requires the "
+                f"Using install_data in EVEREST requires the "
                 f"ERT forward model: {fm_name} to be installed. "
                 f"It was not found in the installed forward model steps: "
                 + (", ".join(installed_fm_steps.keys()))

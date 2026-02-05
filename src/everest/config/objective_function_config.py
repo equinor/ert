@@ -27,7 +27,7 @@ class ObjectiveFunctionConfig(BaseModel, extra="forbid"):
             The weight determines the importance of an objective function relative
             to the other objective functions.
 
-            Everest optimizes the weighted sum of all objectives. The weights of
+            EVEREST optimizes the weighted sum of all objectives. The weights of
             all objectives are normalized to a total value of one by dividing
             them by their sum. Weights may be zero or negative, but should add
             up to a positive value.

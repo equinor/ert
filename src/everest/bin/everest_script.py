@@ -192,7 +192,7 @@ async def run_everest(options: argparse.Namespace) -> None:
     logger.info(json.dumps(config_dict, sort_keys=True, indent=2))
     for fm_job in options.config.forward_model_step_commands:
         job_name = fm_job.split()[0]
-        logger.info(f"Everest forward model contains job {job_name}")
+        logger.info(f"EVEREST forward model contains job {job_name}")
 
     async def directory_is_nonempty(path: Path) -> bool:
         try:
@@ -237,7 +237,7 @@ async def run_everest(options: argparse.Namespace) -> None:
         Path(ServerConfig.get_session_dir(options.config.output_dir))
     )
     wait_for_server(client, timeout=600)
-    print("Everest server found!")
+    print("EVEREST server found!")
     logger.info("Got response from everserver. Starting experiment")
 
     start_experiment(
@@ -253,7 +253,7 @@ async def run_everest(options: argparse.Namespace) -> None:
             target=run_empty_detached_monitor
             if options.disable_monitoring
             else run_detached_monitor,
-            name="Everest CLI monitor thread",
+            name="EVEREST CLI monitor thread",
             args=[ServerConfig.get_server_context_from_conn_info(client.conn_info)],
             daemon=True,
         )
@@ -276,12 +276,12 @@ async def run_everest(options: argparse.Namespace) -> None:
     msg: str = ""
     experiment_status = get_experiment_status(options.config.storage_dir)
     if experiment_status and experiment_status.status == ExperimentState.failed:
-        msg = f"Everest run failed with: {experiment_status.message or 'Unknown error'}"
+        msg = f"EVEREST run failed with: {experiment_status.message or 'Unknown error'}"
         logger.error(msg)
         raise SystemExit(msg)
     if experiment_status:
         msg = (
-            "Everest run finished with: "
+            "EVEREST run finished with: "
             f"{experiment_status.message or 'Experiment completed successfully'}"
         )
         logger.info(msg)

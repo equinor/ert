@@ -32,7 +32,7 @@ Ruleset
 * Since migrations cannot be undone, each storage migration should (if possible) be exhaustively tested with unit tests, ref `test_to12.py`, `test_to13.py`, ...
 * Add storage migration script toward new version
 * Update ert-testdata with storage content from previous ERT tag
-* ERT storage changes pertaining to Everest (storage of everest-specific parameter / response configs) must be migrated and kept up-to-date with the latest ERT version, as they are set to be exposed through the GUI (plotting, experiment inspection).
+* ERT storage changes pertaining to EVEREST (storage of EVEREST-specific parameter / response configs) must be migrated and kept up-to-date with the latest ERT version, as they are set to be exposed through the GUI (plotting, experiment inspection).
 * Storage migrations should not rely on / import any ERT internals, avoid using `local_storage_get_ert_config`. Reason: Storage migrations are meant to be final, and using ERT code effectively prevents us from modifying the ERT code it uses, as it would also modify the migration.
 
 References

@@ -16,11 +16,11 @@ def version_info() -> str:
 
 def warn_user_that_runpath_is_nonempty() -> None:
     print(
-        "Everest is running in an existing runpath.\n\n"
+        "EVEREST is running in an existing runpath.\n\n"
         "Please be aware of the following:\n"
         "- Previously generated results "
         "might be overwritten.\n"
         "- Previously generated files might "
         "be used if not configured correctly.\n"
     )
-    logging.getLogger(EVEREST).warning("Everest is running in an existing runpath")
+    logging.getLogger(EVEREST).warning("EVEREST is running in an existing runpath")

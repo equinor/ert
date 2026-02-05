@@ -49,22 +49,22 @@ This will produce an output file with the content:
 Reservoir simulators (Flow & Eclipse)
 -------------------------------------
 
-Everest supports built-in forward model steps for running common reservoir simulators
+EVEREST supports built-in forward model steps for running common reservoir simulators
 in optimization workflows related to subsurface activities.
 This includes **OPM Flow**, **Eclipse100**, and **Eclipse300**.
 
 .. note::
 
-    Everest does not include the simulators themselves. Any use of simulators **OPM Flow**,
+    EVEREST does not include the simulators themselves. Any use of simulators **OPM Flow**,
     **Eclipse100**, or **Eclipse300**, requires respective installation of that simulator
-    available in your environment. Everest interfaces with these simulators but does not
+    available in your environment. EVEREST interfaces with these simulators but does not
     bundle or install them. Ensure they are accessible via your system's ``$PATH``
     or configured appropriately in your environment.
 
 Supported simulator jobs
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-You can specify the following simulator jobs in your Everest configuration:
+You can specify the following simulator jobs in your EVEREST configuration:
 
 - ``flow`` — runs OPM Flow.
 - ``eclipse100`` — runs Eclipse 100 (i.e., ``eclipse``).
@@ -78,7 +78,7 @@ arguments are interpreted and which simulator is launched.
 Flow usage
 ~~~~~~~~~~
 
-Everest will run the Flow simulator using either the ``flow`` binary or a wrapper script
+EVEREST will run the Flow simulator using either the ``flow`` binary or a wrapper script
 called ``flowrun``, depending on what is available in the user's environment (``$PATH``).
 
 - If ``flowrun`` is found, it takes precedence and enables additional features such as:
@@ -87,7 +87,7 @@ called ``flowrun``, depending on what is available in the user's environment (``
   - parallel execution (``--np``, ``--threads``)
   - default flags (e.g., ``--enable-esmry=true``)
 
-- If only ``flow`` is available, Everest will invoke it directly with the provided arguments.
+- If only ``flow`` is available, EVEREST will invoke it directly with the provided arguments.
 
 You can check which binary is used by running ``which flowrun`` or ``which flow`` in your terminal.
 
@@ -120,10 +120,10 @@ This runs Flow with 8 MPI ranks, each using 4 OpenMP threads. The version ``stab
 Manual MPI launch (without flowrun wrapper)
 """""""""""""""""""""""""""""""""""""""""""
 
-If your environment does **not** include a ``flowrun`` wrapper, Everest will invoke the ``flow`` binary directly.
-In this case, Everest does **not** insert ``mpirun`` or manage parallel execution.
+If your environment does **not** include a ``flowrun`` wrapper, EVEREST will invoke the ``flow`` binary directly.
+In this case, EVEREST does **not** insert ``mpirun`` or manage parallel execution.
 You must handle MPI launching manually by including ``mpirun`` in the job line and install ``mpirun``
-as a custom forward model job in Everest via the ``install_jobs`` section.
+as a custom forward model job in EVEREST via the ``install_jobs`` section.
 
 .. code-block:: yaml
 
@@ -141,7 +141,7 @@ as a custom forward model job in Everest via the ``install_jobs`` section.
 
 This example:
 
-- Installs ``mpirun`` as a custom job in Everest
+- Installs ``mpirun`` as a custom job in EVEREST
   - NOTE: executable (path) should point to the ``mpirun`` binary in your environment (check ``which mpirun``)
 - Launches Flow with ``mpirun -np 8`` (8 MPI ranks)
 - Sets 4 OpenMP threads per rank using Flow's native flag ``--threads-per-process=4``
