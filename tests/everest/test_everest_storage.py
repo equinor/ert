@@ -43,7 +43,6 @@ def test_csv_export(config_file, cached_example, snapshot):
         output_constraints=config.create_ert_output_constraints_config(),
         realizations=config.model.realizations,
     )
-    ever_storage.read_from_output_dir()
     combined_df, pert_real_df, batch_df = ever_storage.export_dataframes()
 
     def _sort_df(df: pl.DataFrame) -> pl.DataFrame:
