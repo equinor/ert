@@ -1645,36 +1645,16 @@ def test_that_data_must_be_set_in_general_observation():
         """)
 
 
+@pytest.mark.parametrize(
+    "error_variant",
+    ["ERROR", "ERROR_MIN"],
+)
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_error_must_be_a_positive_number_in_history_observation():
-    obsconf = "HISTORY_OBSERVATION FOPR { ERROR = -1;};"
-    Path("obsconf").write_text(obsconf, encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            ECLBASE BASEBASEBASE
-            OBS_CONFIG obsconf
-            """
-        ),
-        encoding="utf-8",
-    )
+def test_that_error_variants_must_be_a_positive_number_in_history_observation(
+    error_variant,
+):
+    obsconf = f"""HISTORY_OBSERVATION FOPR {{ {error_variant} = -1; }};"""
 
-    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
-        run_convert_observations(Namespace(config="config.ert"))
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_error_min_must_be_a_positive_number_in_history_observation():
-    obsconf = dedent(
-        """
-        HISTORY_OBSERVATION FOPR {
-            ERROR_MODE=RELMIN;
-            ERROR_MIN = -1;
-            ERROR=1.0;
-        };
-        """
-    )
     Path("obsconf").write_text(obsconf, encoding="utf-8")
     Path("config.ert").write_text(
         dedent(
