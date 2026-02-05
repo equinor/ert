@@ -431,6 +431,13 @@ An example of such a csv could look like this:
    "WELL1", "2013-04-30", "zone1", "3800", "10", "2000.0", "71.0", "30.0"
    "WELL2", "2014-03-31", "zone1", "3900", "10", "2000.0", "73.0", "33.0"
 
+.. note::
+   Such a CSV file can be produced by running fmu.tools.rms.create_rft_ertobs
+   within RMS (https://equinor.github.io/fmu-tools/create_rft_ertobs.html). If
+   given a CSV file with MD instead of TVD, NORTH, EAST coordinates the function
+   will interpolate MD to TVD, NORTH, EAST along well paths, and will output
+   a csv file compatible with ERT.
+
 
 Using zones with RFT observations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
