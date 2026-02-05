@@ -1493,6 +1493,7 @@ def test_that_property_must_be_set_in_a_segment(segment_property):
         ("ERROR_MIN", "-1", 'Failed to validate "-1"'),
         ("START", "1.1", "Could not convert 1.1 to int"),
         ("STOP", "1.1", "Could not convert 1.1 to int"),
+        ("ERROR_MODE", "NOT_ABS", 'Failed to validate "NOT_ABS"'),
     ],
 )
 @pytest.mark.usefixtures("use_tmpdir")
@@ -1502,7 +1503,7 @@ def test_that_property_must_be_positive_in_a_segment(
     obsconf = dedent(
         f"""
         HISTORY_OBSERVATION FOPR {{
-           ERROR      = 0.1;
+           ERROR = 0.1;
            SEGMENT SEG {{
               {segment_property} = {value};
            }};
@@ -1522,37 +1523,6 @@ def test_that_property_must_be_positive_in_a_segment(
         encoding="utf-8",
     )
     with pytest.raises(ConfigValidationError, match=error_msg):
-        run_convert_observations(Namespace(config="config.ert"))
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_error_mode_must_be_one_of_rel_abs_relmin_in_a_segment():
-    obsconf = dedent(
-        """
-        HISTORY_OBSERVATION FOPR {
-           ERROR      = 0.1;
-           SEGMENT SEG
-           {
-              START = 1;
-              STOP  = 0;
-              ERROR = 0.1;
-              ERROR_MODE = NOT_ABS;
-           };
-        };
-    """
-    )
-    Path("obsconf").write_text(obsconf, encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            ECLBASE ECLIPSE_CASE
-            OBS_CONFIG obsconf
-            """
-        ),
-        encoding="utf-8",
-    )
-    with pytest.raises(ConfigValidationError, match='Failed to validate "NOT_ABS"'):
         run_convert_observations(Namespace(config="config.ert"))
 
 
