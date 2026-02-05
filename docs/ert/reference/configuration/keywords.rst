@@ -1485,10 +1485,9 @@ the corresponding :term:`summary key` matches the pattern.
 RFT
 ---
 
-The RFT keyword is used to specify which :term:`RFT` (Repeat Formation Tester)
-data should be loaded from the simulator's RFT output files. This keyword tells
-ERT which wells, dates, and properties to read from the RFT files produced by
-the forward model.
+The RFT keyword is used to specify which :term:`RFT` data should be loaded from
+the simulator's RFT output files. This keyword tells ERT which wells, dates,
+and properties to read from the RFT files produced by the forward model.
 
 The RFT keyword requires three pieces of information specified using keyword arguments:
 
