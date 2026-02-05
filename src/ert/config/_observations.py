@@ -329,6 +329,12 @@ class GeneralObservation(_GeneralObservation):
 
 
 class RFTObservation(BaseModel):
+    """Represents an RFT (Repeat Formation Tester) observation.
+
+    RFT observations are used to condition on pressure, saturation, or other
+    properties measured at specific well locations and times.
+    """
+
     type: Literal["rft_observation"] = "rft_observation"
     name: str
     well: str
@@ -349,6 +355,26 @@ class RFTObservation(BaseModel):
         filename: str,
         observed_property: str = "PRESSURE",
     ) -> list[Self]:
+        """Create RFT observations from a CSV file.
+
+        The CSV file must contain the following columns: WELL_NAME, DATE,
+        ERROR, NORTH, EAST, TVD, and a column for the observed property
+        (e.g., PRESSURE, SWAT). An optional ZONE column may also be present.
+
+        Args:
+            directory: Base directory for resolving relative file paths.
+            observation_dict: Dictionary containing the observation configuration.
+            filename: Path to the CSV file containing RFT observations.
+            observed_property: Property to observe (default: PRESSURE).
+
+        Returns:
+            List of RFTObservation instances created from the CSV file.
+
+        Raises:
+            ObservationConfigError: If the file is missing, inaccessible,
+                lacks required columns, or contains invalid observation values
+                (value=-1 and error=0).
+        """
         if not os.path.isabs(filename):
             filename = os.path.join(directory, filename)
         if not os.path.exists(filename):
@@ -425,6 +451,24 @@ class RFTObservation(BaseModel):
     def from_obs_dict(
         cls, directory: str, observation_dict: ObservationDict
     ) -> list[Self]:
+        """Create RFT observations from an observation dictionary.
+
+        Supports two modes:
+        1. CSV mode: Load observations from a CSV file specified by the CSV key.
+        2. Direct mode: Create a single observation from individual keys
+           (WELL, PROPERTY, VALUE, ERROR, DATE, NORTH, EAST, TVD, ZONE).
+
+        Args:
+            directory: Base directory for resolving relative file paths.
+            observation_dict: Dictionary containing the observation configuration.
+
+        Returns:
+            List of RFTObservation instances. Returns multiple observations when
+            loading from CSV, or a single observation when using direct mode.
+
+        Raises:
+            ObservationConfigError: If required keys are missing or invalid.
+        """
         csv_filename = None
         well = None
         observed_property = None
