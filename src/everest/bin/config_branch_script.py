@@ -65,7 +65,6 @@ def _build_args_parser() -> argparse.ArgumentParser:
 
 def opt_controls_by_batch(optimization_dir: Path, batch: int) -> dict[str, Any] | None:
     storage = EverestStorage.from_storage_path(optimization_dir)
-    storage.read_from_output_dir()
 
     assert storage is not None
     assert storage.controls is not None

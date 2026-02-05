@@ -33,7 +33,6 @@ def test_config_branch_entry(cached_example):
 
     config = EverestConfig.load_file(Path(config_path) / config_file)
     storage = EverestStorage.from_storage_path(config.storage_dir)
-    storage.read_from_output_dir()
 
     new_controls_initial_guesses = {
         var["initial_guess"] for var in new_controls[0]["variables"]
@@ -82,7 +81,6 @@ def test_config_branch_preserves_config_section_order(cached_example):
 
     config = EverestConfig.load_file(Path(config_path) / config_file)
     storage = EverestStorage.from_storage_path(config.storage_dir)
-    storage.read_from_output_dir()
     control_names = storage.controls["control_name"]
     batch_1_info = next(b for b in storage.batches if b.batch_id == 1)
     realization_control_vals = batch_1_info.realization_controls.select(
