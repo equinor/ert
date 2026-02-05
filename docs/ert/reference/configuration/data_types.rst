@@ -469,10 +469,20 @@ For example, if your configuration specifies::
 
     ECLBASE MY_FIELD
 
-The simulator will generate files such as:
+The simulator should generate files such as:
   - ``MY_FIELD.RFT`` - Binary RFT file
   - ``MY_FIELD.SMSPEC`` - Summary specification file
   - ``MY_FIELD.UNSMRY`` - Summary data file
+
+Ert will expect the ``MY_FIELD.RFT`` to be produced by the reservoir simulator when
+either :ref:`rft observations <rft_observation>` or :ref:`rft responses <rft>`
+is used. When the :ref:`SUMMARY <summary>` keyword is used, ert expects ``MY_FIELD.SMSPEC``
+and ``MY_FIELD.UNSMRY`` to be produced by the reservoir simulator.
+
+For the OPM simulator, the keywords ``WRFT`` and ``WRFTPLT`` enables output of
+the RFT file.
+
+
 
 Working with RFT observations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
