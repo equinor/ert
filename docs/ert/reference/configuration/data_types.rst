@@ -449,6 +449,66 @@ for all wells, all field related vectors and all group vectors from the ``NORTH`
 group.
 
 
+RFT data
+^^^^^^^^
+
+:term:`RFT` (Repeat Formation Tester) data represents measurements or simulated
+values of formation properties such as pressure and saturation at specific
+locations within wells. These measurements are typically taken at discrete depth
+points and specific times during the reservoir's production history.
+
+Understanding RFT files
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Reservoir simulators (e.g., ECLIPSE, OPM Flow) can generate RFT files that
+contain simulated pressure, saturation, and other formation properties at well
+measurement locations. These files are produced alongside summary files and use
+the same basename specified by the :ref:`ECLBASE <eclbase>` keyword.
+
+For example, if your configuration specifies::
+
+    ECLBASE MY_FIELD
+
+The simulator will generate files such as:
+  - ``MY_FIELD.RFT`` - Binary RFT file
+  - ``MY_FIELD.SMSPEC`` - Summary specification file
+  - ``MY_FIELD.UNSMRY`` - Summary data file
+
+Working with RFT observations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+RFT data is loaded into ERT automatically when you define :ref:`RFT_OBSERVATION <rft_observation>`
+entries in your observation configuration file. ERT reads the RFT files generated
+by your forward model and extracts the simulated values at the locations
+(specified by NORTH, EAST, and :term:`TVD` coordinates) and times (DATE) defined
+in your observations.
+
+Each RFT observation specifies:
+  - **WELL**: The name of the well where the measurement was taken
+  - **DATE**: The date of the measurement in ISO format (YYYY-MM-DD)
+  - **PROPERTY**: The property being measured (e.g., PRESSURE, SWAT, SGAS)
+  - **VALUE**: The observed value
+  - **ERROR**: The measurement uncertainty
+  - **TVD**: True vertical depth below sea level
+  - **NORTH** and **EAST**: Horizontal coordinates of the measurement location
+
+Example observation configuration::
+
+   RFT_OBSERVATION prod_rft_2015 {
+      WELL=PROD_01;
+      DATE=2015-06-15;
+      PROPERTY=PRESSURE;
+      VALUE=3850;
+      ERROR=25;
+      TVD=2150.5;
+      EAST=456789.2;
+      NORTH=6789012.3;
+   };
+
+For loading multiple RFT observations from a CSV file, see the
+:ref:`RFT_OBSERVATION <rft_observation>` documentation.
+
+
 General data: ``GEN_DATA``
 --------------------------
 
