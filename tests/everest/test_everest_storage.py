@@ -33,9 +33,6 @@ def test_csv_export(config_file, cached_example, snapshot):
     ever_storage = EverestStorage.from_storage_path(
         storage_path=config.storage_dir,
     )
-    ever_storage.init(
-        realizations=config.model.realizations,
-    )
     combined_df, pert_real_df, batch_df = ever_storage.export_dataframes()
 
     def _sort_df(df: pl.DataFrame) -> pl.DataFrame:

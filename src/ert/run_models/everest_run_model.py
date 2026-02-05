@@ -253,7 +253,6 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
     _experiment: Experiment | None = PrivateAttr(default=None)
     _eval_server_cfg: EvaluatorServerConfig | None = PrivateAttr(default=None)
     _batch_id: int = PrivateAttr(default=0)
-    _ever_storage: EverestStorage | None = PrivateAttr(default=None)
 
     def __init__(self, **data: Any) -> None:
         super().__init__(**data)
@@ -630,10 +629,9 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
             )
 
     def _handle_optimizer_results(self, results: tuple[Results, ...]) -> None:
-        assert self._ever_storage is not None
         assert self._experiment is not None
 
-        batch_dataframes = self._ever_storage.unpack_ropt_results(results)
+        batch_dataframes = EverestStorage.unpack_ropt_results(results)
 
         for batch_id, batch_dict in batch_dataframes.items():
             target_ensemble = self._experiment.get_ensemble_by_name(f"batch_{batch_id}")
@@ -651,9 +649,9 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
 
         for r in results:
             storage_batches = (
-                self._ever_storage.batches_with_function_results
+                self._experiment.batches_with_function_results
                 if isinstance(r, FunctionResults)
-                else self._ever_storage.batches_with_gradient_results
+                else self._experiment.batches_with_gradient_results
             )
             batch_data = next(
                 (b for b in storage_batches if b.batch_id == r.batch_id),
@@ -715,26 +713,19 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
 
         # ROPT expects this folder to exist wrt stdout/stderr redirect files
         Path(self.optimization_output_dir).mkdir(exist_ok=True)
-        self._ever_storage = EverestStorage(
-            storage=self._storage, experiment_id=self._experiment.id
-        )
-
-        self._ever_storage.init(
-            realizations=self.model.realizations,
-        )
         optimizer.set_results_callback(self._handle_optimizer_results)
 
         # Run the optimization:
         optimizer_exit_code = optimizer.run(initial_guesses)
 
         # Store some final results.
-        self._ever_storage.on_optimization_finished()
+        self._experiment.on_optimization_finished()
         if (
             optimizer_exit_code is not RoptExitCode.UNKNOWN
             and optimizer_exit_code is not RoptExitCode.TOO_FEW_REALIZATIONS
             and optimizer_exit_code is not RoptExitCode.USER_ABORT
         ):
-            self._ever_storage.export_everest_opt_results_to_csv()
+            self._experiment.export_everest_opt_results_to_csv()
 
         experiment_status = None
         if self._exit_code is None:

@@ -34,7 +34,11 @@ class EverestDataAPI:
 
     @property
     def output_constraint_names(self) -> list[str]:
-        return self._ever_storage.nonlinear_constraints
+        constraints_config = self._ever_storage.output_constraints
+        if not constraints_config:
+            return []
+
+        return constraints_config.keys
 
     @property
     def realizations(self) -> list[int]:
@@ -60,11 +64,11 @@ class EverestDataAPI:
 
     @property
     def control_names(self) -> list[str]:
-        return self._ever_storage.control_names
+        return self._ever_storage.parameter_keys
 
     @property
     def control_values(self) -> list[dict[str, Any]]:
-        all_control_names = self._ever_storage.control_names
+        all_control_names = self._ever_storage.parameter_keys
 
         new = []
         for batch in self._ever_storage.batches_with_function_results:
@@ -134,7 +138,7 @@ class EverestDataAPI:
         assert objectives is not None
 
         for name, weight, scale in zip(
-            objectives.keys, objectives.scales, objectives.weights, strict=False
+            objectives.keys, objectives.weights, objectives.scales, strict=False
         ):
             batch_datas = batch_datas.with_columns(pl.col(name) * weight / scale)
         columns = [
@@ -222,9 +226,14 @@ class EverestDataAPI:
                     pl.Series("batch", [batch_id] * summary.shape[0])
                 )
 
-                model_realization_map = (
-                    self._ever_storage.simulation_to_model_realization_map(batch_id)
-                )
+                ensemble = self._ever_storage.get_ensemble_by_name(f"batch_{batch_id}")
+                realization_info = ensemble._index.everest_realization_info
+                assert realization_info is not None
+
+                model_realization_map = {
+                    realization: info["model_realization"]
+                    for realization, info in realization_info.items()
+                }
                 realizations = pl.Series(
                     "realization",
                     [
