@@ -57,7 +57,7 @@ class GenKwConfig(ParameterConfig):
     distribution: DistributionSettings
     forward_init: bool = False
     update: bool = True
-    group: str = "DEFAULT"
+    group: str | None = None
     input_source: DataSource = DataSource.SAMPLED
 
     def __contains__(self, item: str) -> bool:
@@ -73,6 +73,10 @@ class GenKwConfig(ParameterConfig):
     @property
     def cardinality(self) -> ParameterCardinality:
         return ParameterCardinality.multiple_configs_per_ensemble_dataset
+
+    @property
+    def group_name(self) -> str | None:
+        return self.group
 
     @classmethod
     def templates_from_config(
@@ -233,10 +237,6 @@ class GenKwConfig(ParameterConfig):
                 }
             ),
         )
-
-    @property
-    def group_name(self) -> str:
-        return self.group
 
     def get_priors(self) -> list[PriorDict]:
         dist_json = self.distribution.model_dump(exclude={"name"})

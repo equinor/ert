@@ -137,6 +137,7 @@ def _generate_parameter_files(
         df = fs.load_scalar_keys(keys=keys, realizations=iens, transformed=True)
         scalar_data = df.to_dicts()[0]
         export_timings["load_scalar_keys"] = time.perf_counter() - start_time
+
     exports: dict[str, dict[str, float | str]] = {}
     log_exports: dict[str, dict[str, float | str]] = {}
 
@@ -147,19 +148,21 @@ def _generate_parameter_files(
         if param.forward_init and iteration == 0:
             continue
         start_time = time.perf_counter()
-        export_values: dict[str, dict[str, float | str]] | None = None
+
+        export_values: dict[str, dict[str, float | str]] | None = {}
         log_export_values: dict[str, dict[str, float | str]] | None = {}
+
         if param.name in scalar_data:
             scalar_value = scalar_data[param.name]
-            export_values = {param.group_name: {param.name: scalar_value}}
+            group_name = param.group_name or param.name
+            export_values = {group_name: {param.name: scalar_value}}
+
             if isinstance(param, GenKwConfig) and isinstance(
                 param.distribution, (LogNormalSettings, LogUnifSettings)
             ):
                 if isinstance(scalar_value, float) and scalar_value > 0:
                     log_value = math.log10(scalar_value)
-                    log_export_values = {
-                        f"LOG10_{param.group_name}": {param.name: log_value}
-                    }
+                    log_export_values = {f"LOG10_{group_name}": {param.name: log_value}}
                 else:
                     logger.warning(
                         "Could not export the log10 value of "
@@ -167,12 +170,14 @@ def _generate_parameter_files(
                     )
         else:
             export_values = param.write_to_runpath(Path(run_path), iens, fs)
+
         if export_values:
-            for group, vals in export_values.items():
-                exports.setdefault(group, {}).update(vals)
+            for key, value in export_values.items():
+                exports.setdefault(key, {}).update(value)
         if log_export_values:
-            for group, vals in log_export_values.items():
-                log_exports.setdefault(group, {}).update(vals)
+            for key, value in log_export_values.items():
+                log_exports.setdefault(key, {}).update(value)
+
         export_timings[param.type] += time.perf_counter() - start_time
         continue
     start_time = time.perf_counter()
