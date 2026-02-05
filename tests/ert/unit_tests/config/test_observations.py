@@ -1891,42 +1891,20 @@ def test_that_error_mode_must_be_one_of_rel_abs_relmin_in_summary_observation():
         """)
 
 
+@pytest.mark.parametrize(
+    "general_property",
+    ["DAYS", "HOURS"],
+)
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_days_must_be_a_positive_number_in_general_observation():
+def test_that_property_must_be_a_positive_number_in_general_observation(
+    general_property,
+):
     obsconf = dedent(
-        """
-        GENERAL_OBSERVATION FOPR
-        {
-            DAYS = -1;
+        f"""
+        GENERAL_OBSERVATION FOPR {{
+            {general_property} = -1;
             DATA = GEN;
-        };
-        """
-    )
-    Path("obsconf").write_text(obsconf, encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            GEN_DATA GEN RESULT_FILE:gen%d.txt REPORT_STEPS:1
-            OBS_CONFIG obsconf
-            """
-        ),
-        encoding="utf-8",
-    )
-
-    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
-        run_convert_observations(Namespace(config="config.ert"))
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_hours_must_be_a_positive_number_in_general_observation():
-    obsconf = dedent(
-        """
-        GENERAL_OBSERVATION FOPR
-        {
-            HOURS = -1;
-            DATA = GEN;
-        };
+        }};
         """
     )
     Path("obsconf").write_text(obsconf, encoding="utf-8")
