@@ -6,6 +6,7 @@ import zmq
 
 from ert.shared import get_ip_address
 from ert.shared import get_machine_name as ert_shared_get_machine_name
+from ert.shared.constants import PORT_RANGE
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ def get_machine_name() -> str:
 class EvaluatorServerConfig:
     def __init__(
         self,
-        port_range: tuple[int, int] | None = None,
+        port_range: tuple[int, int] | None = PORT_RANGE,
         use_token: bool = True,
         host: str | None = None,
         use_ipc_protocol: bool = True,
@@ -36,7 +37,8 @@ class EvaluatorServerConfig:
         self.use_ipc_protocol: bool = use_ipc_protocol
 
         if port_range is None:
-            port_range = (51820, 51840 + 1)
+            port_range = PORT_RANGE
+
         else:
             if port_range[0] > port_range[1]:
                 raise ValueError("Minimum port in range is higher than maximum port")
