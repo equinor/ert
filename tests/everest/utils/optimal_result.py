@@ -15,11 +15,11 @@ class OptimalResult:
 
 
 def get_optimal_result(output_dir: str) -> OptimalResult | None:
-    storage = EverestStorage.from_storage_path(Path(output_dir))
+    experiment = EverestStorage.from_storage_path(Path(output_dir))
 
     matching_batches = [
         b
-        for b in storage.batches_with_function_results
+        for b in experiment.batches_with_function_results
         if not b.batch_objectives.is_empty() and b.is_improvement
     ]
 
@@ -38,7 +38,7 @@ def get_optimal_result(output_dir: str) -> OptimalResult | None:
             ]
         ).to_dicts()[0]
 
-        storage.close()
+        experiment._storage.close()
 
         return OptimalResult(
             batch=batch.batch_id,
@@ -48,4 +48,5 @@ def get_optimal_result(output_dir: str) -> OptimalResult | None:
             ).item(),
         )
 
+    experiment._storage.close()
     return None

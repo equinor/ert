@@ -179,22 +179,22 @@
     {
       "accepted": 1,
       "batch": 0,
-      "distance_p": -1.0,
-      "distance_q": -19.0,
+      "distance_p": -0.5625,
+      "distance_q": -1.1875,
       "objective": -2.08333333
     },
     {
       "accepted": 1,
       "batch": 1,
-      "distance_p": -1.02086131,
-      "distance_q": -18.81455994,
+      "distance_p": -0.57423449,
+      "distance_q": -1.17591,
       "objective": -2.07831065
     },
     {
       "accepted": 1,
       "batch": 2,
-      "distance_p": -0.6770467,
-      "distance_q": -17.90715981,
+      "distance_p": -0.38083877,
+      "distance_q": -1.11919749,
       "objective": -1.83078667
     }
   ]
