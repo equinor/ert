@@ -67,8 +67,6 @@ def opt_controls_by_batch(optimization_dir: Path, batch: int) -> dict[str, Any] 
     storage = EverestStorage.from_storage_path(optimization_dir)
 
     assert storage is not None
-    assert storage.controls is not None
-    control_names = storage.controls["control_name"]
     function_batch = next(
         (b for b in storage.batches_with_function_results if b.batch_id == batch),
         None,
@@ -78,7 +76,7 @@ def opt_controls_by_batch(optimization_dir: Path, batch: int) -> dict[str, Any] 
         # All model realizations should have the same unperturbed control values per
         # batch hence it does not matter which realization we select the controls for
         return function_batch.realization_controls.select(
-            control_names.to_list()
+            storage.control_names
         ).to_dicts()[0]
 
     return None
