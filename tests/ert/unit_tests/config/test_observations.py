@@ -2000,40 +2000,20 @@ def test_that_error_must_be_set_in_general_observation():
         """)
 
 
+@pytest.mark.parametrize(
+    "summary_property",
+    ["DAYS", "HOURS"],
+)
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_days_must_be_a_positive_number_in_summary_observation():
+def test_that_property_must_be_a_positive_number_in_summary_observation(
+    summary_property,
+):
     obsconf = dedent(
-        """
-        SUMMARY_OBSERVATION FOPR {
-            DAYS = -1;
+        f"""
+        SUMMARY_OBSERVATION FOPR {{
+            {summary_property} = -1;
             KEY = FOPR;
-        };
-        """
-    )
-    Path("obs.conf").write_text(obsconf, encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            ECLBASE ECLIPSE_CASE
-            OBS_CONFIG obs.conf
-            """
-        ),
-        encoding="utf-8",
-    )
-
-    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
-        run_convert_observations(Namespace(config="config.ert"))
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_hours_must_be_a_positive_number_in_summary_observation():
-    obsconf = dedent(
-        """
-        SUMMARY_OBSERVATION FOPR {
-            HOURS = -1;
-            KEY = FOPR;
-        };
+        }};
         """
     )
     Path("obs.conf").write_text(obsconf, encoding="utf-8")
