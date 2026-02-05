@@ -60,7 +60,6 @@ def visualization_entry(args: list[str] | None = None) -> None:
         storage = EverestStorage.from_storage_path(
             storage_path=ever_config.storage_dir,
         )
-        storage.read_from_output_dir()
 
         if storage.is_empty:
             print(
