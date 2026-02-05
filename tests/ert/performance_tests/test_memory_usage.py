@@ -7,7 +7,6 @@ from multiprocessing import Process
 from pathlib import Path
 from textwrap import dedent
 
-import memray
 import numpy as np
 import polars as pl
 import py
@@ -22,7 +21,10 @@ from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.namespace import Namespace
 from ert.sample_prior import sample_prior
 from ert.storage import open_storage
-from tests.ert.performance_tests.performance_utils import make_poly_example
+from tests.ert.performance_tests.performance_utils import (
+    PeakMemoryTracker,
+    make_poly_example,
+)
 from tests.ert.ui_tests.cli.run_cli import run_cli
 
 
@@ -65,18 +67,19 @@ def test_memory_smoothing(poly_template):
             name="posterior",
             prior_ensemble=prior_ens,
         )
-        with memray.Tracker(poly_template / "memray.bin"):
-            smoother_update(
-                prior_ens,
-                posterior_ens,
-                list(experiment.observation_keys),
-                list(ert_config.ensemble_config.parameters),
-                ObservationSettings(),
-                ESSettings(),
-            )
+        tracker = PeakMemoryTracker()
+        tracker.start()
+        smoother_update(
+            prior_ens,
+            posterior_ens,
+            list(experiment.observation_keys),
+            list(ert_config.ensemble_config.parameters),
+            ObservationSettings(),
+            ESSettings(),
+        )
+        peak = tracker.stop()
 
-    stats = memray._memray.compute_statistics(str(poly_template / "memray.bin"))
-    assert stats.peak_memory_allocated < 1024**2 * 900
+    assert peak < 1024**2 * 900
 
 
 @pytest.mark.memory_test
@@ -93,17 +96,18 @@ def test_memory_enif_update(poly_template):
             name="posterior",
             prior_ensemble=prior_ens,
         )
-        with memray.Tracker(poly_template / "memray.bin"):
-            enif_update(
-                prior_ens,
-                posterior_ens,
-                list(experiment.observation_keys),
-                list(ert_config.ensemble_config.parameters),
-                1234567,
-            )
+        tracker = PeakMemoryTracker()
+        tracker.start()
+        enif_update(
+            prior_ens,
+            posterior_ens,
+            list(experiment.observation_keys),
+            list(ert_config.ensemble_config.parameters),
+            1234567,
+        )
+        peak = tracker.stop()
 
-    stats = memray._memray.compute_statistics(str(poly_template / "memray.bin"))
-    assert stats.peak_memory_allocated < 1024**2 * 1000  # Uses around 850mb
+    assert peak < 1024**2 * 1000  # Uses around 850mb
 
 
 def fill_storage_with_data(poly_template: Path, ert_config: ErtConfig) -> None:
