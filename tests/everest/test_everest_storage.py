@@ -34,8 +34,6 @@ def test_csv_export(config_file, cached_example, snapshot):
         storage_path=config.storage_dir,
     )
     ever_storage.init(
-        objective_functions=config.create_ert_objectives_config(),
-        output_constraints=config.create_ert_output_constraints_config(),
         realizations=config.model.realizations,
     )
     combined_df, pert_real_df, batch_df = ever_storage.export_dataframes()
