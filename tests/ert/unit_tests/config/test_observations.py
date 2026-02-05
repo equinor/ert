@@ -1582,16 +1582,25 @@ def test_that_error_mode_must_be_one_of_rel_abs_relmin_in_a_segment():
         run_convert_observations(Namespace(config="config.ert"))
 
 
+@pytest.mark.parametrize(
+    ("restart_value", "error_msg"),
+    [
+        ("minus_one", 'Failed to validate "minus_one"'),
+        ("-1", 'Failed to validate "-1"'),
+    ],
+)
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_restart_must_be_positive_in_a_summary_observation():
+def test_that_restart_cannot_be_non_positive_in_summary_observation(
+    restart_value, error_msg
+):
     obsconf = dedent(
-        """
-        SUMMARY_OBSERVATION FOPR {
-            RESTART = -1;
+        f"""
+        SUMMARY_OBSERVATION FOPR {{
+            RESTART = {restart_value};
             KEY = FOPR;
             VALUE = 1.0;
             ERROR = 0.1;
-        };
+        }};
         """
     )
     Path("obs.conf").write_text(obsconf, encoding="utf-8")
@@ -1605,34 +1614,7 @@ def test_that_restart_must_be_positive_in_a_summary_observation():
     )
     Path("config.ert").write_text(config_content, encoding="utf-8")
 
-    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
-        run_convert_observations(Namespace(config="config.ert"))
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_restart_must_be_a_number_in_summary_observation():
-    obsconf = dedent(
-        """
-        SUMMARY_OBSERVATION FOPR {
-            RESTART = minus_one;
-            KEY = FOPR;
-            VALUE = 1.0;
-            ERROR = 0.1;
-        };
-        """
-    )
-    Path("obs.conf").write_text(obsconf, encoding="utf-8")
-    Path("time_map.txt").write_text("2020-01-01\n2020-01-02\n", encoding="utf-8")
-    config_content = dedent(
-        """
-        NUM_REALIZATIONS 1
-        TIME_MAP time_map.txt
-        OBS_CONFIG obs.conf
-        """
-    )
-    Path("config.ert").write_text(config_content, encoding="utf-8")
-
-    with pytest.raises(ConfigValidationError, match='Failed to validate "minus_one"'):
+    with pytest.raises(ConfigValidationError, match=error_msg):
         run_convert_observations(Namespace(config="config.ert"))
 
 
