@@ -203,6 +203,7 @@ def _handle_breakthrough_observation(
         {
             "observation_key": obs_config.name,
             "response_key": (f"BREAKTHROUGH:{obs_config.key}:{obs_config.threshold}"),
+            "time": obs_config.date.isoformat(),
             "observations": obs_config.date.isoformat(),
             "std": pl.Series([obs_config.error], dtype=pl.Float32),
             "east": pl.Series([obs_config.east], dtype=pl.Float32),
