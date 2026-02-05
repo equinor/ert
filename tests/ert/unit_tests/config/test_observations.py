@@ -1487,22 +1487,29 @@ def test_that_property_must_be_set_in_a_segment(segment_property):
 
 
 @pytest.mark.parametrize(
-    "segment_property",
-    ["START", "STOP"],
+    ("segment_property", "value", "error_msg"),
+    [
+        ("ERROR", "-1", 'Failed to validate "-1"'),
+        ("ERROR_MIN", "-1", 'Failed to validate "-1"'),
+        ("START", "1.1", "Could not convert 1.1 to int"),
+        ("STOP", "1.1", "Could not convert 1.1 to int"),
+    ],
 )
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_start_stop_property_must_be_given_integer_value(segment_property):
+def test_that_property_must_be_positive_in_a_segment(
+    segment_property, value, error_msg
+):
     obsconf = dedent(
         f"""
         HISTORY_OBSERVATION FOPR {{
            ERROR      = 0.1;
            SEGMENT SEG {{
-              {segment_property} = 1.1;
-              ERROR = 0.50;
+              {segment_property} = {value};
            }};
         }};
     """
     )
+
     Path("obsconf").write_text(obsconf, encoding="utf-8")
     Path("config.ert").write_text(
         dedent(
@@ -1514,40 +1521,7 @@ def test_that_start_stop_property_must_be_given_integer_value(segment_property):
         ),
         encoding="utf-8",
     )
-    with pytest.raises(ObservationConfigError, match=r"Could not convert 1.1 to int"):
-        run_convert_observations(Namespace(config="config.ert"))
-
-
-@pytest.mark.parametrize(
-    "segment_property",
-    ["ERROR", "ERROR_MIN"],
-)
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_property_must_be_positive_in_a_segment(segment_property):
-    obsconf = dedent(
-        f"""
-        HISTORY_OBSERVATION FOPR {{
-           ERROR      = 0.1;
-           SEGMENT SEG {{
-              START = 1;
-              STOP  = 0;
-              {segment_property} = -1;
-           }};
-        }};
-    """
-    )
-    Path("obsconf").write_text(obsconf, encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            ECLBASE ECLIPSE_CASE
-            OBS_CONFIG obsconf
-            """
-        ),
-        encoding="utf-8",
-    )
-    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
+    with pytest.raises(ConfigValidationError, match=error_msg):
         run_convert_observations(Namespace(config="config.ert"))
 
 
