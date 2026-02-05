@@ -1551,20 +1551,21 @@ def test_that_stop_must_be_set_in_a_segment():
         run_convert_observations(Namespace(config="config.ert"))
 
 
+@pytest.mark.parametrize(
+    "segment_property",
+    ["START", "STOP"],
+)
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_stop_must_be_given_integer_value():
+def test_that_start_stop_property_must_be_given_integer_value(segment_property):
     obsconf = dedent(
-        """
-        HISTORY_OBSERVATION FOPR {
+        f"""
+        HISTORY_OBSERVATION FOPR {{
            ERROR      = 0.1;
-
-           SEGMENT SEG
-           {
-              START = 0;
-              STOP  = 3.2;
+           SEGMENT SEG {{
+              {segment_property} = 1.1;
               ERROR = 0.50;
-           };
-        };
+           }};
+        }};
     """
     )
     Path("obsconf").write_text(obsconf, encoding="utf-8")
@@ -1578,38 +1579,7 @@ def test_that_stop_must_be_given_integer_value():
         ),
         encoding="utf-8",
     )
-    with pytest.raises(ConfigValidationError, match=r'Failed to validate "3\.2"'):
-        run_convert_observations(Namespace(config="config.ert"))
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_start_must_be_given_integer_value():
-    obsconf = dedent(
-        """
-        HISTORY_OBSERVATION FOPR {
-           ERROR      = 0.1;
-
-           SEGMENT SEG
-           {
-              START = 1.1;
-              STOP  = 0;
-              ERROR = 0.50;
-           };
-        };
-    """
-    )
-    Path("obsconf").write_text(obsconf, encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            ECLBASE ECLIPSE_CASE
-            OBS_CONFIG obsconf
-            """
-        ),
-        encoding="utf-8",
-    )
-    with pytest.raises(ObservationConfigError, match=r"Failed to validate"):
+    with pytest.raises(ObservationConfigError, match=r"Could not convert 1.1 to int"):
         run_convert_observations(Namespace(config="config.ert"))
 
 
