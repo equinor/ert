@@ -679,18 +679,22 @@ def test_that_all_errors_in_general_observations_must_be_greater_than_zero(tmpdi
             )
 
 
+@pytest.mark.parametrize(
+    "error_type",
+    ["ERROR_MODE = REL", "ERROR_MIN = 0.05"],
+)
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_error_mode_is_not_allowed_in_general_observations():
+def test_that_error_types_are_not_allowed_in_general_observations(error_type):
     obsconf = dedent(
-        """
-        GENERAL_OBSERVATION OBS {
+        f"""
+        GENERAL_OBSERVATION OBS {{
             DATA = GEN;
             DATE = 2020-01-02;
             INDEX_LIST = 1;
             VALUE = 1.0;
             ERROR = 0.1;
-            ERROR_MODE = REL;
-        };
+            {error_type};
+        }};
         """
     )
     Path("obsconf").write_text(obsconf, encoding="utf-8")
@@ -705,37 +709,7 @@ def test_that_error_mode_is_not_allowed_in_general_observations():
         encoding="utf-8",
     )
 
-    with pytest.raises(ConfigValidationError, match=r"Unknown ERROR_MODE"):
-        run_convert_observations(Namespace(config="config.ert"))
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_error_min_is_not_allowed_in_general_observations():
-    obsconf = dedent(
-        """
-        GENERAL_OBSERVATION OBS {
-            DATA = GEN;
-            DATE = 2020-01-02;
-            INDEX_LIST = 1;
-            VALUE = 1.0;
-            ERROR = 0.1;
-            ERROR_MIN = 0.05;
-        };
-        """
-    )
-    Path("obsconf").write_text(obsconf, encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            GEN_DATA GEN RESULT_FILE:gen%d.txt REPORT_STEPS:1
-            OBS_CONFIG obsconf
-            """
-        ),
-        encoding="utf-8",
-    )
-
-    with pytest.raises(ConfigValidationError, match=r"Unknown ERROR_MIN"):
+    with pytest.raises(ConfigValidationError, match=r"Unknown ERROR_*"):
         run_convert_observations(Namespace(config="config.ert"))
 
 
@@ -767,8 +741,17 @@ def test_that_having_no_refcase_but_history_observations_causes_exception():
         run_convert_observations(Namespace(config="config.ert"))
 
 
-def test_that_index_list_is_read(tmpdir):
+@pytest.mark.parametrize(
+    ("indices_type", "indices_value"),
+    [
+        ("INDEX_LIST", "0,2,4,6,8"),
+        ("INDEX_FILE", "obs_idx.txt"),
+    ],
+)
+def test_that_indices_from_file_and_list_are_read(tmpdir, indices_type, indices_value):
     with tmpdir.as_cwd():
+        if indices_type == "INDEX_FILE":
+            Path("obs_idx.txt").write_text("0\n2\n4\n6\n8", encoding="utf-8")
         Path("obs_data.txt").write_text(
             "\n".join(f"{float(i)} 0.1" for i in range(5)), encoding="utf-8"
         )
@@ -779,7 +762,7 @@ def test_that_index_list_is_read(tmpdir):
                     "type": ObservationType.GENERAL,
                     "name": "OBS",
                     "DATA": "GEN",
-                    "INDEX_LIST": "0,2,4,6,8",
+                    f"{indices_type}": f"{indices_value}",
                     "RESTART": "1",
                     "OBS_FILE": "obs_data.txt",
                 }
@@ -821,32 +804,6 @@ def test_that_invalid_time_map_file_raises_config_validation_error():
 
     with pytest.raises(ConfigValidationError, match="Could not read timemap file"):
         run_convert_observations(Namespace(config="config.ert"))
-
-
-def test_that_index_file_is_read(tmpdir):
-    with tmpdir.as_cwd():
-        Path("obs_idx.txt").write_text("0\n2\n4\n6\n8", encoding="utf-8")
-        Path("obs_data.txt").write_text(
-            "\n".join(f"{float(i)} 0.1\n" for i in range(5)), encoding="utf-8"
-        )
-        obs = make_observations(
-            "",
-            [
-                {
-                    "type": ObservationType.GENERAL,
-                    "name": "OBS",
-                    "DATA": "GEN",
-                    "RESTART": "1",
-                    "INDEX_FILE": "obs_idx.txt",
-                    "OBS_FILE": "obs_data.txt",
-                }
-            ],
-        )
-        observations = create_observation_dataframes(
-            observations=obs,
-            rft_config=None,
-        )
-        assert list(observations["gen_data"]["index"]) == [0, 2, 4, 6, 8]
 
 
 def test_that_non_existent_obs_file_is_invalid():
@@ -1507,81 +1464,34 @@ def test_that_summary_default_error_min_is_applied():
     assert list(observations["summary"]["std"]) == pytest.approx([0.1])
 
 
+@pytest.mark.parametrize(
+    ("segment_property", "value", "error_msg"),
+    [
+        ("ERROR", "-1", 'Failed to validate "-1"'),
+        ("ERROR_MIN", "-1", 'Failed to validate "-1"'),
+        ("START", "1.1", "Could not convert 1.1 to int"),
+        ("STOP", "1.1", "Could not convert 1.1 to int"),
+        ("START", "1", 'Missing item "STOP"'),
+        ("STOP", "1", 'Missing item "START"'),
+        ("SMERROR", "0.02", "Unknown SMERROR"),
+        ("name", "0.02", "Unknown name"),
+        ("type", "0.02", "Unknown type"),
+        ("segments", "0.02", "Unknown segments"),
+    ],
+)
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_start_must_be_set_in_a_segment():
+def test_that_properties_are_valid_in_a_segment(segment_property, value, error_msg):
     obsconf = dedent(
-        """
-        HISTORY_OBSERVATION  FOPR {
-           ERROR      = 0.1;
-
-           SEGMENT SEG
-           {
-              STOP  = 1;
-              ERROR = 0.50;
-           };
-        };
-        """
-    )
-    Path("obsconf").write_text(obsconf, encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            ECLBASE ECLIPSE_CASE
-            OBS_CONFIG obsconf
-            """
-        ),
-        encoding="utf-8",
-    )
-    with pytest.raises(ConfigValidationError, match='Missing item "START"'):
-        run_convert_observations(Namespace(config="config.ert"))
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_stop_must_be_set_in_a_segment():
-    obsconf = dedent(
-        """
-        HISTORY_OBSERVATION FOPR {
-           ERROR      = 0.1;
-
-           SEGMENT SEG {
-              START  = 1;
-              ERROR = 0.50;
-           };
-        };
-        """
-    )
-    Path("obsconf").write_text(obsconf, encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            ECLBASE ECLIPSE_CASE
-            OBS_CONFIG obsconf
-            """
-        ),
-        encoding="utf-8",
-    )
-    with pytest.raises(ConfigValidationError, match='Missing item "STOP"'):
-        run_convert_observations(Namespace(config="config.ert"))
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_stop_must_be_given_integer_value():
-    obsconf = dedent(
-        """
-        HISTORY_OBSERVATION FOPR {
-           ERROR      = 0.1;
-
-           SEGMENT SEG
-           {
-              START = 0;
-              STOP  = 3.2;
-              ERROR = 0.50;
-           };
-        };
+        f"""
+        HISTORY_OBSERVATION FOPR {{
+           ERROR = 0.1;
+           SEGMENT SEG {{
+              {segment_property} = {value};
+           }};
+        }};
     """
     )
+
     Path("obsconf").write_text(obsconf, encoding="utf-8")
     Path("config.ert").write_text(
         dedent(
@@ -1593,141 +1503,29 @@ def test_that_stop_must_be_given_integer_value():
         ),
         encoding="utf-8",
     )
-    with pytest.raises(ConfigValidationError, match=r'Failed to validate "3\.2"'):
+    with pytest.raises(ConfigValidationError, match=error_msg):
         run_convert_observations(Namespace(config="config.ert"))
 
 
+@pytest.mark.parametrize(
+    ("restart_value", "error_msg"),
+    [
+        ("minus_one", 'Failed to validate "minus_one"'),
+        ("-1", 'Failed to validate "-1"'),
+    ],
+)
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_start_must_be_given_integer_value():
+def test_that_restart_cannot_be_non_positive_in_summary_observation(
+    restart_value, error_msg
+):
     obsconf = dedent(
-        """
-        HISTORY_OBSERVATION FOPR {
-           ERROR      = 0.1;
-
-           SEGMENT SEG
-           {
-              START = 1.1;
-              STOP  = 0;
-              ERROR = 0.50;
-           };
-        };
-    """
-    )
-    Path("obsconf").write_text(obsconf, encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            ECLBASE ECLIPSE_CASE
-            OBS_CONFIG obsconf
-            """
-        ),
-        encoding="utf-8",
-    )
-    with pytest.raises(ObservationConfigError, match=r"Failed to validate"):
-        run_convert_observations(Namespace(config="config.ert"))
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_error_must_be_positive_in_a_segment():
-    obsconf = dedent(
-        """
-        HISTORY_OBSERVATION  FOPR {
-           ERROR      = 0.1;
-           SEGMENT SEG {
-              START = 1;
-              STOP  = 0;
-              ERROR = -1;
-           };
-        };
-    """
-    )
-    Path("obsconf").write_text(obsconf, encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            ECLBASE ECLIPSE_CASE
-            OBS_CONFIG obsconf
-            """
-        ),
-        encoding="utf-8",
-    )
-    with pytest.raises(ObservationConfigError, match="Failed to validate"):
-        run_convert_observations(Namespace(config="config.ert"))
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_error_min_must_be_positive_in_a_segment():
-    obsconf = dedent(
-        """
-        HISTORY_OBSERVATION FOPR {
-           ERROR      = 0.1;
-           SEGMENT SEG {
-              START = 1;
-              STOP  = 0;
-              ERROR = 0.1;
-              ERROR_MIN = -1;
-           };
-        };
-    """
-    )
-    Path("obsconf").write_text(obsconf, encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            ECLBASE ECLIPSE_CASE
-            OBS_CONFIG obsconf
-            """
-        ),
-        encoding="utf-8",
-    )
-    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
-        run_convert_observations(Namespace(config="config.ert"))
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_error_mode_must_be_one_of_rel_abs_relmin_in_a_segment():
-    obsconf = dedent(
-        """
-        HISTORY_OBSERVATION FOPR {
-           ERROR      = 0.1;
-           SEGMENT SEG
-           {
-              START = 1;
-              STOP  = 0;
-              ERROR = 0.1;
-              ERROR_MODE = NOT_ABS;
-           };
-        };
-    """
-    )
-    Path("obsconf").write_text(obsconf, encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            ECLBASE ECLIPSE_CASE
-            OBS_CONFIG obsconf
-            """
-        ),
-        encoding="utf-8",
-    )
-    with pytest.raises(ConfigValidationError, match='Failed to validate "NOT_ABS"'):
-        run_convert_observations(Namespace(config="config.ert"))
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_restart_must_be_positive_in_a_summary_observation():
-    obsconf = dedent(
-        """
-        SUMMARY_OBSERVATION FOPR {
-            RESTART = -1;
+        f"""
+        SUMMARY_OBSERVATION FOPR {{
+            RESTART = {restart_value};
             KEY = FOPR;
             VALUE = 1.0;
             ERROR = 0.1;
-        };
+        }};
         """
     )
     Path("obs.conf").write_text(obsconf, encoding="utf-8")
@@ -1741,34 +1539,7 @@ def test_that_restart_must_be_positive_in_a_summary_observation():
     )
     Path("config.ert").write_text(config_content, encoding="utf-8")
 
-    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
-        run_convert_observations(Namespace(config="config.ert"))
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_restart_must_be_a_number_in_summary_observation():
-    obsconf = dedent(
-        """
-        SUMMARY_OBSERVATION FOPR {
-            RESTART = minus_one;
-            KEY = FOPR;
-            VALUE = 1.0;
-            ERROR = 0.1;
-        };
-        """
-    )
-    Path("obs.conf").write_text(obsconf, encoding="utf-8")
-    Path("time_map.txt").write_text("2020-01-01\n2020-01-02\n", encoding="utf-8")
-    config_content = dedent(
-        """
-        NUM_REALIZATIONS 1
-        TIME_MAP time_map.txt
-        OBS_CONFIG obs.conf
-        """
-    )
-    Path("config.ert").write_text(config_content, encoding="utf-8")
-
-    with pytest.raises(ConfigValidationError, match='Failed to validate "minus_one"'):
+    with pytest.raises(ConfigValidationError, match=error_msg):
         run_convert_observations(Namespace(config="config.ert"))
 
 
@@ -1799,36 +1570,16 @@ def test_that_data_must_be_set_in_general_observation():
         """)
 
 
+@pytest.mark.parametrize(
+    "error_variant",
+    ["ERROR", "ERROR_MIN"],
+)
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_error_must_be_a_positive_number_in_history_observation():
-    obsconf = "HISTORY_OBSERVATION FOPR { ERROR = -1;};"
-    Path("obsconf").write_text(obsconf, encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            ECLBASE BASEBASEBASE
-            OBS_CONFIG obsconf
-            """
-        ),
-        encoding="utf-8",
-    )
+def test_that_error_variants_must_be_a_positive_number_in_history_observation(
+    error_variant,
+):
+    obsconf = f"""HISTORY_OBSERVATION FOPR {{ {error_variant} = -1; }};"""
 
-    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
-        run_convert_observations(Namespace(config="config.ert"))
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_error_min_must_be_a_positive_number_in_history_observation():
-    obsconf = dedent(
-        """
-        HISTORY_OBSERVATION FOPR {
-            ERROR_MODE=RELMIN;
-            ERROR_MIN = -1;
-            ERROR=1.0;
-        };
-        """
-    )
     Path("obsconf").write_text(obsconf, encoding="utf-8")
     Path("config.ert").write_text(
         dedent(
@@ -1906,42 +1657,20 @@ def test_that_error_mode_must_be_one_of_rel_abs_relmin_in_summary_observation():
         """)
 
 
+@pytest.mark.parametrize(
+    "general_property",
+    ["DAYS", "HOURS"],
+)
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_days_must_be_a_positive_number_in_general_observation():
+def test_that_property_must_be_a_positive_number_in_general_observation(
+    general_property,
+):
     obsconf = dedent(
-        """
-        GENERAL_OBSERVATION FOPR
-        {
-            DAYS = -1;
+        f"""
+        GENERAL_OBSERVATION FOPR {{
+            {general_property} = -1;
             DATA = GEN;
-        };
-        """
-    )
-    Path("obsconf").write_text(obsconf, encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            GEN_DATA GEN RESULT_FILE:gen%d.txt REPORT_STEPS:1
-            OBS_CONFIG obsconf
-            """
-        ),
-        encoding="utf-8",
-    )
-
-    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
-        run_convert_observations(Namespace(config="config.ert"))
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_hours_must_be_a_positive_number_in_general_observation():
-    obsconf = dedent(
-        """
-        GENERAL_OBSERVATION FOPR
-        {
-            HOURS = -1;
-            DATA = GEN;
-        };
+        }};
         """
     )
     Path("obsconf").write_text(obsconf, encoding="utf-8")
@@ -2015,40 +1744,20 @@ def test_that_error_must_be_set_in_general_observation():
         """)
 
 
+@pytest.mark.parametrize(
+    "summary_property",
+    ["DAYS", "HOURS"],
+)
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_days_must_be_a_positive_number_in_summary_observation():
+def test_that_property_must_be_a_positive_number_in_summary_observation(
+    summary_property,
+):
     obsconf = dedent(
-        """
-        SUMMARY_OBSERVATION FOPR {
-            DAYS = -1;
+        f"""
+        SUMMARY_OBSERVATION FOPR {{
+            {summary_property} = -1;
             KEY = FOPR;
-        };
-        """
-    )
-    Path("obs.conf").write_text(obsconf, encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            ECLBASE ECLIPSE_CASE
-            OBS_CONFIG obs.conf
-            """
-        ),
-        encoding="utf-8",
-    )
-
-    with pytest.raises(ConfigValidationError, match='Failed to validate "-1"'):
-        run_convert_observations(Namespace(config="config.ert"))
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-def test_that_hours_must_be_a_positive_number_in_summary_observation():
-    obsconf = dedent(
-        """
-        SUMMARY_OBSERVATION FOPR {
-            HOURS = -1;
-            KEY = FOPR;
-        };
+        }};
         """
     )
     Path("obs.conf").write_text(obsconf, encoding="utf-8")
@@ -2130,35 +1839,6 @@ def test_that_setting_an_unknown_key_is_not_valid(observation_type, unknown_key)
             ert_config_from_parser(
                 f"{observation_type} FOPR {{{unknown_key}=0.1;DATA=key;}};"
             )
-
-
-@pytest.mark.usefixtures("use_tmpdir")
-@pytest.mark.parametrize("unknown_key", ["SMERROR", "name", "type", "segments"])
-def test_that_setting_an_unknown_key_in_a_segment_is_not_valid(unknown_key):
-    obsconf = dedent(
-        f"""
-        HISTORY_OBSERVATION FOPR {{
-            SEGMENT FIRST_YEAR {{
-                START = 1;
-                STOP = 2;
-                {unknown_key} = 0.02;
-            }};
-        }};
-        """
-    )
-    Path("obsconf").write_text(obsconf, encoding="utf-8")
-    Path("config.ert").write_text(
-        dedent(
-            """
-            NUM_REALIZATIONS 1
-            ECLBASE ECLIPSE_CASE
-            OBS_CONFIG obsconf
-            """
-        ),
-        encoding="utf-8",
-    )
-    with pytest.raises(ConfigValidationError, match=f"Unknown {unknown_key}"):
-        run_convert_observations(Namespace(config="config.ert"))
 
 
 @pytest.mark.usefixtures("use_tmpdir")
