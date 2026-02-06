@@ -120,7 +120,7 @@ class ParameterConfig(BaseModel):
         pass
 
     @property
-    def group_name(self) -> str:
+    def group_name(self) -> str | None:
         return self.name
 
     def transform_data(self) -> Callable[[float], float]:
