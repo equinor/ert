@@ -5,9 +5,9 @@ SUMMARY_OBSERVATION HEAT_5_3_10
     DATE    = 2010-01-11;
     KEY     = HEAT_5_3;
     LOCALIZATION {
-        EAST = 5;
-        NORTH = 13.0;
-        RADIUS = 50;
+        EAST = 4.5;
+        NORTH = 12.5;
+        RADIUS = 3;
     };
 };
 
@@ -18,9 +18,9 @@ SUMMARY_OBSERVATION HEAT_3_5_10
     DATE    = 2010-01-11;
     KEY     = HEAT_3_5;
     LOCALIZATION {
-        EAST = 3;
-        NORTH = 15.0;
-        RADIUS = 50;
+        EAST = 2.5;
+        NORTH = 14.5;
+        RADIUS = 3;
     };
 };
 
@@ -31,9 +31,9 @@ SUMMARY_OBSERVATION HEAT_5_7_10
     DATE    = 2010-01-11;
     KEY     = HEAT_5_7;
     LOCALIZATION {
-        EAST = 5;
-        NORTH = 17.0;
-        RADIUS = 50;
+        EAST = 4.5;
+        NORTH = 16.5;
+        RADIUS = 3;
     };
 };
 
@@ -44,9 +44,9 @@ SUMMARY_OBSERVATION HEAT_7_5_10
     DATE    = 2010-01-11;
     KEY     = HEAT_7_5;
     LOCALIZATION {
-        EAST = 7;
-        NORTH = 15.0;
-        RADIUS = 50;
+        EAST = 6.5;
+        NORTH = 14.5;
+        RADIUS = 3;
     };
 };
 
@@ -57,9 +57,9 @@ SUMMARY_OBSERVATION HEAT_2_2_10
     DATE    = 2010-01-11;
     KEY     = HEAT_2_2;
     LOCALIZATION {
-        EAST = 2;
-        NORTH = 12.0;
-        RADIUS = 50;
+        EAST = 1.5;
+        NORTH = 11.5;
+        RADIUS = 3;
     };
 };
 
@@ -70,9 +70,9 @@ SUMMARY_OBSERVATION HEAT_7_2_10
     DATE    = 2010-01-11;
     KEY     = HEAT_7_2;
     LOCALIZATION {
-        EAST = 7;
-        NORTH = 12.0;
-        RADIUS = 50;
+        EAST = 6.5;
+        NORTH = 11.5;
+        RADIUS = 3;
     };
 };
 
@@ -83,9 +83,9 @@ SUMMARY_OBSERVATION HEAT_5_3_71
     DATE    = 2010-03-13;
     KEY     = HEAT_5_3;
     LOCALIZATION {
-        EAST = 5;
-        NORTH = 13.0;
-        RADIUS = 50;
+        EAST = 4.5;
+        NORTH = 12.5;
+        RADIUS = 3;
     };
 };
 
@@ -96,9 +96,9 @@ SUMMARY_OBSERVATION HEAT_3_5_71
     DATE    = 2010-03-13;
     KEY     = HEAT_3_5;
     LOCALIZATION {
-        EAST = 3;
-        NORTH = 15.0;
-        RADIUS = 50;
+        EAST = 2.5;
+        NORTH = 14.5;
+        RADIUS = 3;
     };
 };
 
@@ -109,9 +109,9 @@ SUMMARY_OBSERVATION HEAT_5_7_71
     DATE    = 2010-03-13;
     KEY     = HEAT_5_7;
     LOCALIZATION {
-        EAST = 5;
-        NORTH = 17.0;
-        RADIUS = 50;
+        EAST = 4.5;
+        NORTH = 16.5;
+        RADIUS = 3;
     };
 };
 
@@ -122,9 +122,9 @@ SUMMARY_OBSERVATION HEAT_7_5_71
     DATE    = 2010-03-13;
     KEY     = HEAT_7_5;
     LOCALIZATION {
-        EAST = 7;
-        NORTH = 15.0;
-        RADIUS = 50;
+        EAST = 6.5;
+        NORTH = 14.5;
+        RADIUS = 3;
     };
 };
 
@@ -135,9 +135,9 @@ SUMMARY_OBSERVATION HEAT_2_2_71
     DATE    = 2010-03-13;
     KEY     = HEAT_2_2;
     LOCALIZATION {
-        EAST = 2;
-        NORTH = 12.0;
-        RADIUS = 50;
+        EAST = 1.5;
+        NORTH = 11.5;
+        RADIUS = 3;
     };
 };
 
@@ -148,9 +148,9 @@ SUMMARY_OBSERVATION HEAT_7_2_71
     DATE    = 2010-03-13;
     KEY     = HEAT_7_2;
     LOCALIZATION {
-        EAST = 7;
-        NORTH = 12.0;
-        RADIUS = 50;
+        EAST = 6.5;
+        NORTH = 11.5;
+        RADIUS = 3;
     };
 };
 
@@ -161,9 +161,9 @@ SUMMARY_OBSERVATION HEAT_5_3_132
     DATE    = 2010-05-13;
     KEY     = HEAT_5_3;
     LOCALIZATION {
-        EAST = 5;
-        NORTH = 13.0;
-        RADIUS = 50;
+        EAST = 4.5;
+        NORTH = 12.5;
+        RADIUS = 3;
     };
 };
 
@@ -174,9 +174,9 @@ SUMMARY_OBSERVATION HEAT_3_5_132
     DATE    = 2010-05-13;
     KEY     = HEAT_3_5;
     LOCALIZATION {
-        EAST = 3;
-        NORTH = 15.0;
-        RADIUS = 50;
+        EAST = 2.5;
+        NORTH = 14.5;
+        RADIUS = 3;
     };
 };
 
@@ -187,9 +187,9 @@ SUMMARY_OBSERVATION HEAT_5_7_132
     DATE    = 2010-05-13;
     KEY     = HEAT_5_7;
     LOCALIZATION {
-        EAST = 5;
-        NORTH = 17.0;
-        RADIUS = 50;
+        EAST = 4.5;
+        NORTH = 16.5;
+        RADIUS = 3;
     };
 };
 
@@ -200,9 +200,9 @@ SUMMARY_OBSERVATION HEAT_7_5_132
     DATE    = 2010-05-13;
     KEY     = HEAT_7_5;
     LOCALIZATION {
-        EAST = 7;
-        NORTH = 15.0;
-        RADIUS = 50;
+        EAST = 6.5;
+        NORTH = 14.5;
+        RADIUS = 3;
     };
 };
 
@@ -213,9 +213,9 @@ SUMMARY_OBSERVATION HEAT_2_2_132
     DATE    = 2010-05-13;
     KEY     = HEAT_2_2;
     LOCALIZATION {
-        EAST = 2;
-        NORTH = 12.0;
-        RADIUS = 50;
+        EAST = 1.5;
+        NORTH = 11.5;
+        RADIUS = 3;
     };
 };
 
@@ -226,9 +226,9 @@ SUMMARY_OBSERVATION HEAT_7_2_132
     DATE    = 2010-05-13;
     KEY     = HEAT_7_2;
     LOCALIZATION {
-        EAST = 7;
-        NORTH = 12.0;
-        RADIUS = 50;
+        EAST = 6.5;
+        NORTH = 11.5;
+        RADIUS = 3;
     };
 };
 
@@ -239,9 +239,9 @@ SUMMARY_OBSERVATION HEAT_5_3_193
     DATE    = 2010-07-13;
     KEY     = HEAT_5_3;
     LOCALIZATION {
-        EAST = 5;
-        NORTH = 13.0;
-        RADIUS = 50;
+        EAST = 4.5;
+        NORTH = 12.5;
+        RADIUS = 3;
     };
 };
 
@@ -252,9 +252,9 @@ SUMMARY_OBSERVATION HEAT_3_5_193
     DATE    = 2010-07-13;
     KEY     = HEAT_3_5;
     LOCALIZATION {
-        EAST = 3;
-        NORTH = 15.0;
-        RADIUS = 50;
+        EAST = 2.5;
+        NORTH = 14.5;
+        RADIUS = 3;
     };
 };
 
@@ -265,9 +265,9 @@ SUMMARY_OBSERVATION HEAT_5_7_193
     DATE    = 2010-07-13;
     KEY     = HEAT_5_7;
     LOCALIZATION {
-        EAST = 5;
-        NORTH = 17.0;
-        RADIUS = 50;
+        EAST = 4.5;
+        NORTH = 16.5;
+        RADIUS = 3;
     };
 };
 
@@ -278,9 +278,9 @@ SUMMARY_OBSERVATION HEAT_7_5_193
     DATE    = 2010-07-13;
     KEY     = HEAT_7_5;
     LOCALIZATION {
-        EAST = 7;
-        NORTH = 15.0;
-        RADIUS = 50;
+        EAST = 6.5;
+        NORTH = 14.5;
+        RADIUS = 3;
     };
 };
 
@@ -291,9 +291,9 @@ SUMMARY_OBSERVATION HEAT_2_2_193
     DATE    = 2010-07-13;
     KEY     = HEAT_2_2;
     LOCALIZATION {
-        EAST = 2;
-        NORTH = 12.0;
-        RADIUS = 50;
+        EAST = 1.5;
+        NORTH = 11.5;
+        RADIUS = 3;
     };
 };
 
@@ -304,9 +304,9 @@ SUMMARY_OBSERVATION HEAT_7_2_193
     DATE    = 2010-07-13;
     KEY     = HEAT_7_2;
     LOCALIZATION {
-        EAST = 7;
-        NORTH = 12.0;
-        RADIUS = 50;
+        EAST = 6.5;
+        NORTH = 11.5;
+        RADIUS = 3;
     };
 };
 
@@ -317,9 +317,9 @@ SUMMARY_OBSERVATION HEAT_5_3_255
     DATE    = 2010-09-13;
     KEY     = HEAT_5_3;
     LOCALIZATION {
-        EAST = 5;
-        NORTH = 13.0;
-        RADIUS = 50;
+        EAST = 4.5;
+        NORTH = 12.5;
+        RADIUS = 3;
     };
 };
 
@@ -330,9 +330,9 @@ SUMMARY_OBSERVATION HEAT_3_5_255
     DATE    = 2010-09-13;
     KEY     = HEAT_3_5;
     LOCALIZATION {
-        EAST = 3;
-        NORTH = 15.0;
-        RADIUS = 50;
+        EAST = 2.5;
+        NORTH = 14.5;
+        RADIUS = 3;
     };
 };
 
@@ -343,9 +343,9 @@ SUMMARY_OBSERVATION HEAT_5_7_255
     DATE    = 2010-09-13;
     KEY     = HEAT_5_7;
     LOCALIZATION {
-        EAST = 5;
-        NORTH = 17.0;
-        RADIUS = 50;
+        EAST = 4.5;
+        NORTH = 16.5;
+        RADIUS = 3;
     };
 };
 
@@ -356,9 +356,9 @@ SUMMARY_OBSERVATION HEAT_7_5_255
     DATE    = 2010-09-13;
     KEY     = HEAT_7_5;
     LOCALIZATION {
-        EAST = 7;
-        NORTH = 15.0;
-        RADIUS = 50;
+        EAST = 6.5;
+        NORTH = 14.5;
+        RADIUS = 3;
     };
 };
 
@@ -369,9 +369,9 @@ SUMMARY_OBSERVATION HEAT_2_2_255
     DATE    = 2010-09-13;
     KEY     = HEAT_2_2;
     LOCALIZATION {
-        EAST = 2;
-        NORTH = 12.0;
-        RADIUS = 50;
+        EAST = 1.5;
+        NORTH = 11.5;
+        RADIUS = 3;
     };
 };
 
@@ -382,9 +382,9 @@ SUMMARY_OBSERVATION HEAT_7_2_255
     DATE    = 2010-09-13;
     KEY     = HEAT_7_2;
     LOCALIZATION {
-        EAST = 7;
-        NORTH = 12.0;
-        RADIUS = 50;
+        EAST = 6.5;
+        NORTH = 11.5;
+        RADIUS = 3;
     };
 };
 
@@ -395,9 +395,9 @@ SUMMARY_OBSERVATION HEAT_5_3_316
     DATE    = 2010-11-13;
     KEY     = HEAT_5_3;
     LOCALIZATION {
-        EAST = 5;
-        NORTH = 13.0;
-        RADIUS = 50;
+        EAST = 4.5;
+        NORTH = 12.5;
+        RADIUS = 3;
     };
 };
 
@@ -408,9 +408,9 @@ SUMMARY_OBSERVATION HEAT_3_5_316
     DATE    = 2010-11-13;
     KEY     = HEAT_3_5;
     LOCALIZATION {
-        EAST = 3;
-        NORTH = 15.0;
-        RADIUS = 50;
+        EAST = 2.5;
+        NORTH = 14.5;
+        RADIUS = 3;
     };
 };
 
@@ -421,9 +421,9 @@ SUMMARY_OBSERVATION HEAT_5_7_316
     DATE    = 2010-11-13;
     KEY     = HEAT_5_7;
     LOCALIZATION {
-        EAST = 5;
-        NORTH = 17.0;
-        RADIUS = 50;
+        EAST = 4.5;
+        NORTH = 16.5;
+        RADIUS = 3;
     };
 };
 
@@ -434,9 +434,9 @@ SUMMARY_OBSERVATION HEAT_7_5_316
     DATE    = 2010-11-13;
     KEY     = HEAT_7_5;
     LOCALIZATION {
-        EAST = 7;
-        NORTH = 15.0;
-        RADIUS = 50;
+        EAST = 6.5;
+        NORTH = 14.5;
+        RADIUS = 3;
     };
 };
 
@@ -447,9 +447,9 @@ SUMMARY_OBSERVATION HEAT_2_2_316
     DATE    = 2010-11-13;
     KEY     = HEAT_2_2;
     LOCALIZATION {
-        EAST = 2;
-        NORTH = 12.0;
-        RADIUS = 50;
+        EAST = 1.5;
+        NORTH = 11.5;
+        RADIUS = 3;
     };
 };
 
@@ -460,9 +460,9 @@ SUMMARY_OBSERVATION HEAT_7_2_316
     DATE    = 2010-11-13;
     KEY     = HEAT_7_2;
     LOCALIZATION {
-        EAST = 7;
-        NORTH = 12.0;
-        RADIUS = 50;
+        EAST = 6.5;
+        NORTH = 11.5;
+        RADIUS = 3;
     };
 };
 
@@ -473,9 +473,9 @@ SUMMARY_OBSERVATION HEAT_5_3_377
     DATE    = 2011-01-13;
     KEY     = HEAT_5_3;
     LOCALIZATION {
-        EAST = 5;
-        NORTH = 13.0;
-        RADIUS = 50;
+        EAST = 4.5;
+        NORTH = 12.5;
+        RADIUS = 3;
     };
 };
 
@@ -486,9 +486,9 @@ SUMMARY_OBSERVATION HEAT_3_5_377
     DATE    = 2011-01-13;
     KEY     = HEAT_3_5;
     LOCALIZATION {
-        EAST = 3;
-        NORTH = 15.0;
-        RADIUS = 50;
+        EAST = 2.5;
+        NORTH = 14.5;
+        RADIUS = 3;
     };
 };
 
@@ -499,9 +499,9 @@ SUMMARY_OBSERVATION HEAT_5_7_377
     DATE    = 2011-01-13;
     KEY     = HEAT_5_7;
     LOCALIZATION {
-        EAST = 5;
-        NORTH = 17.0;
-        RADIUS = 50;
+        EAST = 4.5;
+        NORTH = 16.5;
+        RADIUS = 3;
     };
 };
 
@@ -512,9 +512,9 @@ SUMMARY_OBSERVATION HEAT_7_5_377
     DATE    = 2011-01-13;
     KEY     = HEAT_7_5;
     LOCALIZATION {
-        EAST = 7;
-        NORTH = 15.0;
-        RADIUS = 50;
+        EAST = 6.5;
+        NORTH = 14.5;
+        RADIUS = 3;
     };
 };
 
@@ -525,9 +525,9 @@ SUMMARY_OBSERVATION HEAT_2_2_377
     DATE    = 2011-01-13;
     KEY     = HEAT_2_2;
     LOCALIZATION {
-        EAST = 2;
-        NORTH = 12.0;
-        RADIUS = 50;
+        EAST = 1.5;
+        NORTH = 11.5;
+        RADIUS = 3;
     };
 };
 
@@ -538,9 +538,9 @@ SUMMARY_OBSERVATION HEAT_7_2_377
     DATE    = 2011-01-13;
     KEY     = HEAT_7_2;
     LOCALIZATION {
-        EAST = 7;
-        NORTH = 12.0;
-        RADIUS = 50;
+        EAST = 6.5;
+        NORTH = 11.5;
+        RADIUS = 3;
     };
 };
 
@@ -551,9 +551,9 @@ SUMMARY_OBSERVATION HEAT_5_3_438
     DATE    = 2011-03-15;
     KEY     = HEAT_5_3;
     LOCALIZATION {
-        EAST = 5;
-        NORTH = 13.0;
-        RADIUS = 50;
+        EAST = 4.5;
+        NORTH = 12.5;
+        RADIUS = 3;
     };
 };
 
@@ -564,9 +564,9 @@ SUMMARY_OBSERVATION HEAT_3_5_438
     DATE    = 2011-03-15;
     KEY     = HEAT_3_5;
     LOCALIZATION {
-        EAST = 3;
-        NORTH = 15.0;
-        RADIUS = 50;
+        EAST = 2.5;
+        NORTH = 14.5;
+        RADIUS = 3;
     };
 };
 
@@ -577,9 +577,9 @@ SUMMARY_OBSERVATION HEAT_5_7_438
     DATE    = 2011-03-15;
     KEY     = HEAT_5_7;
     LOCALIZATION {
-        EAST = 5;
-        NORTH = 17.0;
-        RADIUS = 50;
+        EAST = 4.5;
+        NORTH = 16.5;
+        RADIUS = 3;
     };
 };
 
@@ -590,9 +590,9 @@ SUMMARY_OBSERVATION HEAT_7_5_438
     DATE    = 2011-03-15;
     KEY     = HEAT_7_5;
     LOCALIZATION {
-        EAST = 7;
-        NORTH = 15.0;
-        RADIUS = 50;
+        EAST = 6.5;
+        NORTH = 14.5;
+        RADIUS = 3;
     };
 };
 
@@ -603,9 +603,9 @@ SUMMARY_OBSERVATION HEAT_2_2_438
     DATE    = 2011-03-15;
     KEY     = HEAT_2_2;
     LOCALIZATION {
-        EAST = 2;
-        NORTH = 12.0;
-        RADIUS = 50;
+        EAST = 1.5;
+        NORTH = 11.5;
+        RADIUS = 3;
     };
 };
 
@@ -616,8 +616,8 @@ SUMMARY_OBSERVATION HEAT_7_2_438
     DATE    = 2011-03-15;
     KEY     = HEAT_7_2;
     LOCALIZATION {
-        EAST = 7;
-        NORTH = 12.0;
-        RADIUS = 50;
+        EAST = 6.5;
+        NORTH = 11.5;
+        RADIUS = 3;
     };
 };
