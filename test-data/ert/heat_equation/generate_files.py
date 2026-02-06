@@ -96,7 +96,7 @@ def generate_priors():
 
 START_DATE = datetime.date(2010, 1, 1)
 
-RADIUS = 50
+RADIUS = 3
 
 INPUT_DIR = Path(".")  # change if files live elsewhere
 INPUT_PATTERN = "obs_{t}.txt"  # e.g. obs_10.txt
@@ -163,8 +163,8 @@ def create_summary_observations():
     DATE    = {obs_date:%Y-%m-%d};
     KEY     = HEAT_{coord.x}_{coord.y};
     LOCALIZATION {{
-        EAST = {coord.x};
-        NORTH = {10.0 + coord.y};
+        EAST = {coord.x - 0.5};
+        NORTH = {9.5 + coord.y};
         RADIUS = {RADIUS};
     }};
 }};
