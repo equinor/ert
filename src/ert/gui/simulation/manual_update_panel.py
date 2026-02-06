@@ -162,8 +162,12 @@ class ManualUpdatePanel(ExperimentConfigPanel):
                 self._number_of_realizations_label.setText(
                     f"<b>{ensemble.ensemble_size}</b>"
                 )
-                self._analysis_module_edit.ensemble_size = ensemble.ensemble_size
-                self._analysis_module_edit.setEnabled(bool(ensemble.ensemble_size))
+                # only use active realizations for setting threshold
+                active_realizations_size = sum(
+                    self._active_realizations_model.getActiveRealizationsMask()
+                )
+                self._analysis_module_edit.ensemble_size = active_realizations_size
+                self._analysis_module_edit.setEnabled(bool(active_realizations_size))
         except OSError as err:
             logger.error(str(err))
             Suggestor(

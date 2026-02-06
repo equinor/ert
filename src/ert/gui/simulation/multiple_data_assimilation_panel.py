@@ -119,7 +119,10 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self._createInputForWeights(layout)
 
         self._analysis_module_edit = AnalysisModuleEdit(
-            analysis_config.es_settings, len(active_realizations)
+            analysis_config.es_settings,
+            sum(
+                active_realizations
+            ),  # only use active realizations for setting threshold
         )
         layout.addRow("Analysis module:", self._analysis_module_edit)
         self._active_realizations_field = StringBox(
