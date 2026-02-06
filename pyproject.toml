@@ -181,7 +181,7 @@ log_cli = "false"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 timeout = 360
-session_timeout = 3000
+session_timeout = 1800
 timeout_func_only = true # Do not apply timeout to fixtures which can be slow but cached
 
 [tool.setuptools_scm]

@@ -41,4 +41,4 @@ jobs:
           mode: simulation
           token: ${{ secrets.CODSPEED_TOKEN }}
           run: |
-            uv run pytest tests/ert/performance_tests --codspeed --timeout=3000 -m "not memory_test"
+            uv run pytest tests/ert/performance_tests --codspeed --timeout=1200 -m "not memory_test"
