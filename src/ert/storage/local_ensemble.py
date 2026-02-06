@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import json
 import logging
 import os
 import time
@@ -11,7 +12,7 @@ from datetime import datetime
 from functools import cache, cached_property, lru_cache
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 from uuid import UUID
 
 import numpy as np
@@ -50,6 +51,21 @@ class EverestRealizationInfo(TypedDict):
 SCALAR_FILENAME = "SCALAR"
 
 
+class BatchDataframes(TypedDict, total=False):
+    realization_controls: pl.DataFrame | None
+    batch_objectives: pl.DataFrame | None
+    realization_objectives: pl.DataFrame | None
+    batch_constraints: pl.DataFrame | None
+    realization_constraints: pl.DataFrame | None
+    batch_bound_constraint_violations: pl.DataFrame | None
+    batch_input_constraint_violations: pl.DataFrame | None
+    batch_output_constraint_violations: pl.DataFrame | None
+    batch_objective_gradient: pl.DataFrame | None
+    perturbation_objectives: pl.DataFrame | None
+    batch_constraint_gradient: pl.DataFrame | None
+    perturbation_constraints: pl.DataFrame | None
+
+
 class _Index(BaseModel):
     id: UUID
     experiment_id: UUID
@@ -78,6 +94,21 @@ class LocalEnsemble(BaseMode):
     Manages multiple realizations of experiments, including different sets of
     parameters and responses.
     """
+
+    BATCH_DATAFRAMES: ClassVar[list[str]] = [
+        "realization_controls",
+        "batch_objectives",
+        "realization_objectives",
+        "batch_constraints",
+        "realization_constraints",
+        "batch_bound_constraint_violations",
+        "batch_input_constraint_violations",
+        "batch_output_constraint_violations",
+        "batch_objective_gradient",
+        "perturbation_objectives",
+        "batch_constraint_gradient",
+        "perturbation_constraints",
+    ]
 
     def __init__(
         self,
@@ -1215,6 +1246,26 @@ class LocalEnsemble(BaseMode):
         self._storage._write_transaction(
             self._path / "index.json", self._index.model_dump_json().encode("utf-8")
         )
+
+    def save_batch_dataframes(self, dataframes: BatchDataframes) -> None:
+        for df_name in self.BATCH_DATAFRAMES:
+            df = dataframes.get(df_name)
+            if isinstance(df, pl.DataFrame):
+                df.write_parquet(self._path / f"{df_name}.parquet")
+
+    def save_batch_metadata(self, is_improvement: bool) -> None:
+        with open(
+            self._path / "batch.json",
+            "w+",
+            encoding="utf-8",
+        ) as f:
+            json.dump(
+                {
+                    "batch_id": self.iteration,
+                    "is_improvement": is_improvement,
+                },
+                f,
+            )
 
 
 async def _read_parameters(

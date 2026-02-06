@@ -17,7 +17,7 @@ from enum import IntEnum, auto
 from functools import cached_property
 from pathlib import Path
 from types import TracebackType
-from typing import TYPE_CHECKING, Annotated, Any, Protocol
+from typing import TYPE_CHECKING, Annotated, Any, Protocol, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -253,7 +253,6 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
     _experiment: Experiment | None = PrivateAttr(default=None)
     _eval_server_cfg: EvaluatorServerConfig | None = PrivateAttr(default=None)
     _batch_id: int = PrivateAttr(default=0)
-    _ever_storage: EverestStorage | None = PrivateAttr(default=None)
 
     def __init__(self, **data: Any) -> None:
         super().__init__(**data)
@@ -539,7 +538,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
             forward_model_steps=forward_model_steps,
             substitutions=substitutions,
             hooked_workflows=hooked_workflows,
-            storage_path=everest_config.storage_dir,
+            storage_path=str(everest_config.storage_dir),
             queue_config=queue_config,
             status_queue=status_queue,
             optimization_callback=optimization_callback,
@@ -630,19 +629,51 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
             )
 
     def _handle_optimizer_results(self, results: tuple[Results, ...]) -> None:
-        assert self._ever_storage is not None
-        self._ever_storage.on_batch_evaluation_finished(results)
+        assert self._experiment is not None
+
+        batch_dataframes = EverestStorage.unpack_ropt_results(results)
+
+        for batch_id, batch_dict in batch_dataframes.items():
+            target_ensemble = self._experiment.get_ensemble_by_name(f"batch_{batch_id}")
+            target_ensemble.save_batch_dataframes(dataframes=batch_dict)
+
+            with open(
+                target_ensemble._path / "batch.json",
+                "w+",
+                encoding="utf-8",
+            ) as f:
+                json.dump(
+                    {
+                        "batch_id": batch_id,
+                        "is_improvement": False,
+                    },
+                    f,
+                )
 
         for r in results:
             storage_batches = (
-                self._ever_storage.data.batches_with_function_results
+                self._experiment.batches_with_function_results
                 if isinstance(r, FunctionResults)
-                else self._ever_storage.data.batches_with_gradient_results
+                else self._experiment.batches_with_gradient_results
             )
             batch_data = next(
                 (b for b in storage_batches if b.batch_id == r.batch_id),
                 None,
             )
+
+            batch_id = cast(int, r.batch_id)
+            target_ensemble = self._experiment.get_ensemble_by_name(f"batch_{batch_id}")
+
+            (target_ensemble._path / "batch.json").write_text(
+                json.dumps(
+                    {
+                        "batch_id": batch_id,
+                        "is_improvement": False,
+                    },
+                ),
+                encoding="utf-8",
+            )
+            # -----------------------
 
             self.send_event(
                 EverestBatchResultEvent(
@@ -697,34 +728,21 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         # Initialize the ropt optimizer:
         optimizer, initial_guesses = self._create_optimizer()
 
-        self._ever_storage = EverestStorage(
-            output_dir=Path(self.optimization_output_dir),
-        )
-
-        formatted_control_names = [
-            name
-            for config in self._everest_control_configs
-            for name in config.input_keys
-        ]
-        self._ever_storage.init(
-            formatted_control_names=formatted_control_names,
-            objective_functions=self.objectives_config,
-            output_constraints=self.output_constraints_config,
-            realizations=self.model.realizations,
-        )
+        # ROPT expects this folder to exist wrt stdout/stderr redirect files
+        Path(self.optimization_output_dir).mkdir(exist_ok=True)
         optimizer.set_results_callback(self._handle_optimizer_results)
 
         # Run the optimization:
         optimizer_exit_code = optimizer.run(initial_guesses)
 
         # Store some final results.
-        self._ever_storage.on_optimization_finished()
+        self._experiment.on_optimization_finished()
         if (
             optimizer_exit_code is not RoptExitCode.UNKNOWN
             and optimizer_exit_code is not RoptExitCode.TOO_FEW_REALIZATIONS
             and optimizer_exit_code is not RoptExitCode.USER_ABORT
         ):
-            self._ever_storage.export_everest_opt_results_to_csv()
+            self._experiment.export_everest_opt_results_to_csv()
 
         experiment_status = None
         if self._exit_code is None:
@@ -782,6 +800,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
             self.random_seed,
             self.optimization_output_dir,
         )
+
         transforms = (
             OptModelTransforms(
                 variables=self._transforms["control_scaler"],

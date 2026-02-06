@@ -232,91 +232,91 @@
       "batch": 0,
       "function": "distance",
       "realization": 0,
-      "scale": 1.0,
+      "scale": null,
       "simulation": 0,
       "value": -6.1875,
-      "weight": 1.0
+      "weight": null
     },
     {
       "batch": 0,
       "function": "distance",
       "realization": 2,
-      "scale": 1.0,
+      "scale": null,
       "simulation": 1,
       "value": -0.1875,
-      "weight": 1.0
+      "weight": null
     },
     {
       "batch": 1,
       "function": "distance",
       "realization": 0,
-      "scale": 1.0,
+      "scale": null,
       "simulation": 0,
       "value": -5.88601017,
-      "weight": 1.0
+      "weight": null
     },
     {
       "batch": 1,
       "function": "distance",
       "realization": 2,
-      "scale": 1.0,
+      "scale": null,
       "simulation": 1,
       "value": -0.29586101,
-      "weight": 1.0
+      "weight": null
     },
     {
       "batch": 2,
       "function": "distance",
       "realization": 0,
-      "scale": 1.0,
+      "scale": null,
       "simulation": 0,
       "value": -5.69400978,
-      "weight": 1.0
+      "weight": null
     },
     {
       "batch": 2,
       "function": "distance",
       "realization": 2,
-      "scale": 1.0,
+      "scale": null,
       "simulation": 1,
       "value": -0.416361,
-      "weight": 1.0
+      "weight": null
     },
     {
       "batch": 3,
       "function": "distance",
       "realization": 0,
-      "scale": 1.0,
+      "scale": null,
       "simulation": 0,
       "value": -5.42675018,
-      "weight": 1.0
+      "weight": null
     },
     {
       "batch": 3,
       "function": "distance",
       "realization": 2,
-      "scale": 1.0,
+      "scale": null,
       "simulation": 1,
       "value": -0.35657999,
-      "weight": 1.0
+      "weight": null
     },
     {
       "batch": 4,
       "function": "distance",
       "realization": 0,
-      "scale": 1.0,
+      "scale": null,
       "simulation": 0,
       "value": -5.02416992,
-      "weight": 1.0
+      "weight": null
     },
     {
       "batch": 4,
       "function": "distance",
       "realization": 2,
-      "scale": 1.0,
+      "scale": null,
       "simulation": 1,
       "value": -0.37772301,
-      "weight": 1.0
+      "weight": null
     }
   ],
   "optimal_result_json": {
@@ -343,26 +343,31 @@
     {
       "accepted": 1,
       "batch": 0,
+      "distance": null,
       "objective": -1.6875
     },
     {
       "accepted": 0,
       "batch": 1,
+      "distance": null,
       "objective": -1.6933983
     },
     {
       "accepted": 0,
       "batch": 2,
+      "distance": null,
       "objective": -1.7357732
     },
     {
       "accepted": 1,
       "batch": 3,
+      "distance": null,
       "objective": -1.62412254
     },
     {
       "accepted": 1,
       "batch": 4,
+      "distance": null,
       "objective": -1.53933474
     }
   ]

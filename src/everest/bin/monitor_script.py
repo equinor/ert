@@ -91,7 +91,7 @@ def monitor_everest(options: argparse.Namespace) -> None:
             run_detached_monitor(server_context=server_context)
 
             try:
-                experiment_status = get_experiment_status(config.storage_dir)
+                experiment_status = get_experiment_status(str(config.storage_dir))
                 if (
                     experiment_status
                     and experiment_status.status == ExperimentState.failed
@@ -107,7 +107,7 @@ def monitor_everest(options: argparse.Namespace) -> None:
 
     except TimeoutError:
         try:
-            experiment_status = get_experiment_status(config.storage_dir)
+            experiment_status = get_experiment_status(str(config.storage_dir))
             if (
                 experiment_status is None
                 or experiment_status.status == ExperimentState.never_run

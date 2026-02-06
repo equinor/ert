@@ -220,7 +220,7 @@ def cached_example(pytestconfig):
 
             result_path = my_tmpdir / "everest"
 
-            optimal_result = get_optimal_result(config.optimization_output_dir)
+            optimal_result = get_optimal_result(config.storage_dir)
             optimal_result_json = {
                 "batch": optimal_result.batch,
                 "controls": optimal_result.controls,

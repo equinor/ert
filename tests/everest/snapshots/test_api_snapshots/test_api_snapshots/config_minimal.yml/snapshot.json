@@ -88,28 +88,28 @@
       "batch": 0,
       "function": "distance",
       "realization": 0,
-      "scale": 1.0,
+      "scale": null,
       "simulation": 0,
       "value": -0.47999999,
-      "weight": 1.0
+      "weight": null
     },
     {
       "batch": 1,
       "function": "distance",
       "realization": 0,
-      "scale": 1.0,
+      "scale": null,
       "simulation": 0,
       "value": -0.48021799,
-      "weight": 1.0
+      "weight": null
     },
     {
       "batch": 2,
       "function": "distance",
       "realization": 0,
-      "scale": 1.0,
+      "scale": null,
       "simulation": 0,
       "value": -2.2e-7,
-      "weight": 1.0
+      "weight": null
     }
   ],
   "optimal_result_json": {
@@ -132,16 +132,19 @@
     {
       "accepted": 1,
       "batch": 0,
+      "distance": null,
       "objective": -0.47999999
     },
     {
       "accepted": 0,
       "batch": 1,
+      "distance": null,
       "objective": -0.48021799
     },
     {
       "accepted": 1,
       "batch": 2,
+      "distance": null,
       "objective": -2.2e-7
     }
   ]

@@ -74,7 +74,7 @@ def test_everest_entry_run(cached_example):
     )
 
     config = EverestConfig.load_file(config_file)
-    optimal = get_optimal_result(config.optimization_output_dir)
+    optimal = get_optimal_result(config.storage_dir)
     assert optimal.controls["point.x"] == pytest.approx(0.5, abs=0.05)
     assert optimal.controls["point.y"] == pytest.approx(0.5, abs=0.05)
     assert optimal.controls["point.z"] == pytest.approx(0.5, abs=0.05)

@@ -57,18 +57,19 @@ def visualization_entry(args: list[str] | None = None) -> None:
             logger.info("Migrating ERT storage from everviz entrypoint")
             LocalStorage.perform_migration(Path(ever_config.storage_dir))
 
-        storage = EverestStorage(output_dir=Path(ever_config.optimization_output_dir))
-        storage.read_from_output_dir()
+        storage = EverestStorage.from_storage_path(
+            storage_path=ever_config.storage_dir,
+        )
 
-        if storage.is_empty:
-            print(
-                f"No data found in storage at {storage._output_dir}."
-                " Please try again later"
-            )
-            return
+    if not storage.batches_with_function_results:
+        print(
+            f"No data found in storage at {storage._storage.path}. "
+            f"Please try again later"
+        )
+        return
 
-        pm = EverestPluginManager()
-        pm.hook.visualize_data(api=EverestDataAPI(options.config))
+    pm = EverestPluginManager()
+    pm.hook.visualize_data(api=EverestDataAPI(options.config))
 
 
 if __name__ == "__main__":
