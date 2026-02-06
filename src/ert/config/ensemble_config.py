@@ -7,9 +7,14 @@ from typing import Self
 
 from pydantic import BaseModel, Field, model_validator
 
+from .breakthrough_config import BreakthroughConfig
 from .everest_control import EverestControl
 from .field import Field as FieldConfig
 from .gen_kw_config import GenKwConfig
+from .known_derived_response_types import (
+    KNOWN_DERIVED_ERT_RESPONSE_TYPES,
+    KnownDerivedResponseTypes,
+)
 from .known_response_types import KNOWN_ERT_RESPONSE_TYPES, KnownErtResponseTypes
 from .parameter_config import ParameterConfig
 from .parsing import ConfigDict, ConfigKeys, ConfigValidationError
@@ -21,6 +26,9 @@ logger = logging.getLogger(__name__)
 
 class EnsembleConfig(BaseModel):
     response_configs: dict[str, KnownErtResponseTypes] = Field(default_factory=dict)
+    derived_response_configs: dict[str, KnownDerivedResponseTypes] = Field(
+        default_factory=dict
+    )
     parameter_configs: dict[
         str, GenKwConfig | FieldConfig | SurfaceConfig | EverestControl
     ] = Field(default_factory=dict)
@@ -131,8 +139,15 @@ class EnsembleConfig(BaseModel):
             if instance is not None and instance.keys:
                 response_configs.append(instance)
 
+        derived_response_configs: list[KnownDerivedResponseTypes] = []
+        for config_cls in KNOWN_DERIVED_ERT_RESPONSE_TYPES:
+            derived_response_configs.append(config_cls.from_config_dict(config_dict))
+
         return cls(
             response_configs={response.type: response for response in response_configs},
+            derived_response_configs={
+                response.type: response for response in derived_response_configs
+            },
             parameter_configs={
                 parameter.name: parameter for parameter in parameter_configs
             },
@@ -190,3 +205,7 @@ class EnsembleConfig(BaseModel):
     @property
     def response_configuration(self) -> list[ResponseConfig]:
         return list(self.response_configs.values())
+
+    @property
+    def derived_response_configuration(self) -> list[BreakthroughConfig]:
+        return list(self.derived_response_configs.values())

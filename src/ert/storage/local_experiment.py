@@ -29,6 +29,8 @@ from ert.config._create_observation_dataframes import (
 )
 from ert.config._observations import Observation
 
+from ..config.derived_response_config import DerivedResponseConfig
+from ..config.known_derived_response_types import KnownDerivedResponseTypes
 from .mode import BaseMode, Mode, require_write
 
 if TYPE_CHECKING:
@@ -63,7 +65,7 @@ class _Index(BaseModel):
 
 _responses_adapter = TypeAdapter(  # type: ignore
     Annotated[
-        KnownResponseTypes,
+        KnownResponseTypes | KnownDerivedResponseTypes,
         Field(discriminator="type"),
     ]
 )
@@ -165,12 +167,26 @@ class LocalExperiment(BaseMode):
                 else None
             )
 
+            derived_responses = experiment_config.get(
+                "derived_response_configuration", []
+            )
+            breakthrough_config_json = next(
+                (r for r in derived_responses if r.get("type") == "breakthrough"), None
+            )
+            breakthrough_config = (
+                _responses_adapter.validate_python(breakthrough_config_json)
+                if breakthrough_config_json is not None
+                else None
+            )
+
             obs_adapter = TypeAdapter(Observation)  # type: ignore
             obs_objs: list[Observation] = []
             for od in observation_declarations:
                 obs_objs.append(obs_adapter.validate_python(od))
 
-            datasets = create_observation_dataframes(obs_objs, rft_config)
+            datasets = create_observation_dataframes(
+                obs_objs, rft_config, breakthrough_config
+            )
             for response_type, df in datasets.items():
                 storage._to_parquet_transaction(output_path / response_type, df)
 
@@ -305,6 +321,13 @@ class LocalExperiment(BaseMode):
         responses_list = self.experiment_config.get("response_configuration", [])
         return {response["type"]: response for response in responses_list}
 
+    @property
+    def derived_response_info(self) -> dict[str, Any]:
+        responses_list = self.experiment_config.get(
+            "derived_response_configuration", []
+        )
+        return {response["type"]: response for response in responses_list}
+
     def get_surface(self, name: str) -> IrapSurface:
         """
         Retrieve a geological surface by name.
@@ -358,7 +381,9 @@ class LocalExperiment(BaseMode):
         }
 
     @property
-    def response_configuration(self) -> dict[str, ResponseConfig]:
+    def response_configuration(
+        self,
+    ) -> dict[str, ResponseConfig | DerivedResponseConfig]:
         responses = {}
 
         for data in self.response_info.values():
@@ -366,6 +391,18 @@ class LocalExperiment(BaseMode):
             responses[response_instance.type] = response_instance
 
         return responses
+
+    @property
+    def derived_response_configuration(
+        self,
+    ) -> dict[str, ResponseConfig | DerivedResponseConfig]:
+        derived_responses = {}
+
+        for data in self.derived_response_info.values():
+            response_instance = _responses_adapter.validate_python(data)
+            derived_responses[response_instance.type] = response_instance
+
+        return derived_responses
 
     @cached_property
     def update_parameters(self) -> list[str]:
@@ -434,7 +471,9 @@ class LocalExperiment(BaseMode):
     @cached_property
     def response_key_to_response_type(self) -> dict[str, str]:
         mapping = {}
-        for config in self.response_configuration.values():
+        for config in (
+            self.response_configuration | self.derived_response_configuration
+        ).values():
             for key in config.keys if config.has_finalized_keys else []:
                 mapping[key] = config.type
 
@@ -456,7 +495,9 @@ class LocalExperiment(BaseMode):
         return result
 
     def _has_finalized_response_keys(self, response_type: str) -> bool:
-        responses_configuration = self.response_configuration
+        responses_configuration = (
+            self.response_configuration | self.derived_response_configuration
+        )
         if response_type not in responses_configuration:
             raise KeyError(
                 f"Response type {response_type} does not "
@@ -474,7 +515,9 @@ class LocalExperiment(BaseMode):
         that the response config saved in this storage has keys corresponding
         to the actual received responses.
         """
-        responses_configuration = self.response_configuration
+        responses_configuration = (
+            self.response_configuration | self.derived_response_configuration
+        )
         if response_type not in responses_configuration:
             raise KeyError(
                 f"Response type {response_type} does not "

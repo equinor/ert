@@ -14,6 +14,7 @@ from ert.config import (
 )
 from ert.config import Field as FieldConfig
 from ert.config._create_observation_dataframes import create_observation_dataframes
+from ert.config.known_derived_response_types import KnownDerivedResponseTypes
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.run_arg import create_run_arguments
 from ert.run_models.run_model import RunModel, RunModelConfig
@@ -68,6 +69,12 @@ class InitialEnsembleRunModelConfig(RunModelConfig):
             Field(discriminator="type"),
         ]
     ]
+    derived_response_configuration: list[
+        Annotated[
+            (KnownDerivedResponseTypes),
+            Field(discriminator="type"),
+        ]
+    ]
     ert_templates: list[tuple[str, str]]
     observations: list[Observation] | None = None
 
@@ -110,7 +117,16 @@ class InitialEnsembleRunModel(RunModel, InitialEnsembleRunModelConfig):
             None,
         )
 
+        breakthrough_config = next(
+            (
+                r
+                for r in self.derived_response_configuration
+                if r.type == "breakthrough"
+            ),
+        )
+
         return create_observation_dataframes(
             observations=self.observations,
             rft_config=rft_config,
+            breakthrough_config=breakthrough_config,
         )

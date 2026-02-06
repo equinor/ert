@@ -3,3 +3,9 @@ GENERAL_OBSERVATION POLY_OBS {
    INDEX_LIST = 0,2,4,6,8;
    OBS_FILE   = poly_obs_data.txt;
 };
+BREAKTHROUGH_OBSERVATION name {
+    KEY=WWCT:OP_1;
+    DATE=2012-10-01;
+    ERROR=3; -- days
+    THRESHOLD=0.1;
+  };

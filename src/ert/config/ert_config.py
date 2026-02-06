@@ -21,6 +21,7 @@ from ert.substitutions import Substitutions
 
 from ._design_matrix_validator import DesignMatrixValidator
 from ._observations import (
+    BreakthroughObservation,
     GeneralObservation,
     Observation,
     RFTObservation,
@@ -28,6 +29,7 @@ from ._observations import (
     make_observations,
 )
 from .analysis_config import AnalysisConfig
+from .breakthrough_config import BreakthroughConfig
 from .ensemble_config import EnsembleConfig
 from .forward_model_step import (
     ForwardModelJSON,
@@ -974,15 +976,15 @@ class ErtConfig(BaseModel):
 
         try:
             if obs_configs:
-                summary_obs = {
+                obs_summary_keys = {
                     obs.key
                     for obs in obs_configs
-                    if isinstance(obs, SummaryObservation)
+                    if isinstance(obs, SummaryObservation | BreakthroughObservation)
                 }
-                if summary_obs:
+                if obs_summary_keys:
                     summary_keys = ErtConfig._read_summary_keys(config_dict)
                     config_dict[ConfigKeys.SUMMARY] = [summary_keys] + [
-                        [key] for key in summary_obs if key not in summary_keys
+                        [key] for key in obs_summary_keys if key not in summary_keys
                     ]
             ensemble_config = EnsembleConfig.from_dict(config_dict=config_dict)
         except ConfigValidationError as err:
@@ -1106,6 +1108,10 @@ class ErtConfig(BaseModel):
             _ = create_observation_dataframes(
                 obs_configs,
                 cast(RFTConfig | None, ensemble_config.response_configs.get("rft")),
+                cast(
+                    BreakthroughConfig | None,
+                    ensemble_config.derived_response_configs.get("breakthrough"),
+                ),
             )
         except PydanticValidationError as err:
             raise ConfigValidationError.from_pydantic(err) from err
