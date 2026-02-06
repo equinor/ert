@@ -19,10 +19,10 @@ def test_and_benchmark_adaptive_localization_with_fields(
 
     rng = np.random.default_rng(42)
 
-    num_grid_cells = 500
+    num_grid_cells = 250
     num_parameters = num_grid_cells * num_grid_cells
-    num_observations = 50
-    num_ensemble = 25
+    num_observations = 10
+    num_ensemble = 20
 
     # Create a tridiagonal matrix that maps responses to parameters.
     # Being tridiagonal, it ensures that each response is influenced
@@ -83,7 +83,7 @@ def test_and_benchmark_adaptive_localization_with_fields(
             "restart": 0,
             "index": i,
             "value": float(observations[i]),
-            "error": 1.0,
+            "error": abs(observation_noise[i]),
         }
         for i in range(len(observations))
     ]
