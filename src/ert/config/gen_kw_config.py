@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
 from enum import StrEnum
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, Self, cast, overload
@@ -248,8 +248,8 @@ class GenKwConfig(ParameterConfig):
             }
         ]
 
-    def transform_data(self) -> Callable[[float], float]:
-        return self.distribution.transform
+    def transform_numpy(self, x: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+        return self.distribution.transform_numpy(x)
 
     @classmethod
     def _parse_distribution(
