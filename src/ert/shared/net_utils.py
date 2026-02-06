@@ -5,6 +5,8 @@ from functools import lru_cache
 
 from dns import exception, resolver, reversename
 
+from ert.shared.constants import PORT_RANGE
+
 
 class PortAlreadyInUseException(Exception):
     pass
@@ -49,7 +51,7 @@ def get_machine_name() -> str:
 
 def find_available_socket(
     host: str | None = None,
-    port_range: range = range(51820, 51840 + 1),
+    port_range: range = range(PORT_RANGE[0], PORT_RANGE[1]),
 ) -> socket.socket:
     """
     The default and recommended approach here is to return a bound socket to the
