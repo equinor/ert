@@ -338,7 +338,7 @@ class ExperimentRunner:
 
                 if isinstance(item, EndEvent):
                     # Wait for subscribers to receive final events
-                    for sub in shared_data.subscribers.values():
+                    for sub in list(shared_data.subscribers.values()):
                         await sub.is_done()
                     break
             await simulation_future
