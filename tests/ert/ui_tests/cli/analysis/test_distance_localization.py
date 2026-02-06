@@ -1,16 +1,18 @@
 from pathlib import Path
 from textwrap import dedent
 
+import numpy as np
 import pytest
 
 from ert.config import ErtConfig
-from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
+from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE, ES_MDA_MODE
 from ert.storage import open_storage
 from tests.ert.ui_tests.cli.run_cli import run_cli
 
 
 @pytest.mark.timeout(600)
 @pytest.mark.usefixtures("copy_snake_oil_field")
+@pytest.mark.integration_test
 def test_that_distance_localization_works_with_a_single_observation():
     set_distance_localization = dedent(
         """
@@ -75,3 +77,60 @@ def test_that_distance_localization_works_with_a_single_observation():
     assert bool((diff > 0).all()), (
         f"Expected variance reduction, got min(prior-post)={diff.min().item()}"
     )
+
+
+@pytest.mark.timeout(600)
+@pytest.mark.usefixtures("copy_heat_equation")
+@pytest.mark.integration_test
+def test_that_distance_localization_runs_on_heat_equation():
+    with open("config.ert", encoding="utf-8") as fh:
+        lines = fh.readlines()
+
+    filtered_lines = [
+        line for line in lines if not line.lstrip().startswith("ANALYSIS_SET_VAR")
+    ]
+    filtered_lines.append(
+        dedent(
+            """
+            ANALYSIS_SET_VAR STD_ENKF DISTANCE_LOCALIZATION True\n
+            """
+        )
+    )
+    with open("config.ert", "w", encoding="utf-8") as fh:
+        fh.writelines(filtered_lines)
+
+    run_cli(
+        ES_MDA_MODE,
+        "--disable-monitoring",
+        "config.ert",
+        "--experiment-name",
+        "heat-dl",
+    )
+
+    config = ErtConfig.from_file("config.ert")
+    with open_storage(config.ens_path) as storage:
+        experiment = storage.get_experiment_by_name("heat-dl")
+        prior = experiment.get_ensemble_by_name("default_0")
+        posterior = experiment.get_ensemble_by_name("default_3")
+
+        param_config = config.ensemble_config.parameter_configs["COND"]
+
+        prior_result = prior.load_parameters("COND")["values"]
+        prior_covariance = np.cov(
+            prior_result.values.reshape(
+                prior.ensemble_size, param_config.nx * param_config.ny * param_config.nz
+            ),
+            rowvar=False,
+        )
+
+        posterior_result = posterior.load_parameters("COND")["values"]
+        posterior_covariance = np.cov(
+            posterior_result.values.reshape(
+                posterior.ensemble_size,
+                param_config.nx * param_config.ny * param_config.nz,
+            ),
+            rowvar=False,
+        )
+
+        # Check that generalized variance is reduced by update step.
+        assert np.trace(prior_covariance) > np.trace(posterior_covariance)
