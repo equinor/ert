@@ -296,7 +296,7 @@ def analysis_ES(
             ensemble_size=ensemble_size, alpha=1.0
         )
     if module.localization is False:
-        # in case if distance lolalization we still
+        # in case of distance localization we still
         # need to update the scalars
         # Compute transition matrix so that
         # X_posterior = X_prior @ T
