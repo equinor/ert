@@ -170,7 +170,6 @@ if __name__ == "__main__":
         with open(f"gen_data_{time_step}.out", "w", encoding="utf-8") as f:
             f.writelines(f"{response[time_step][i]}\n" for i in index)
 
-    response_key = "FHEAT"
     time_map = []
     start_date = datetime.date(2010, 1, 1)
 
@@ -191,7 +190,5 @@ if __name__ == "__main__":
         time_step_in_days=1,
     )
 
-    # smspec.to_file("HEAT.FSMSPEC", file_format=resfo.Format.FORMATTED)
-    # unsmry.to_file("HEAT.FUNSMRY", file_format=resfo.Format.FORMATTED)
     smspec.to_file("HEAT.SMSPEC")
     unsmry.to_file("HEAT.UNSMRY")
