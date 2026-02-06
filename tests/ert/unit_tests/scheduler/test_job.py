@@ -570,7 +570,7 @@ async def test_deduplication_of_repeated_warnings_from_forward_model(
     assert "Reached maximum number" not in caplog.text
 
 
-@pytest.mark.filterwarnings("ignore:FutureWarning")
+@pytest.mark.filterwarnings("ignore:.*FutureWarning.*")
 @pytest.mark.parametrize("log_count_cap", [-10, -1, 0, 1, 3])
 @pytest.mark.usefixtures("use_tmpdir")
 async def test_excessive_warnings_from_fm_step_can_be_capped(
