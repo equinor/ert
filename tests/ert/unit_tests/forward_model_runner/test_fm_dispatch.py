@@ -7,6 +7,8 @@ import os
 import signal
 import stat
 import sys
+import threading
+import time
 from pathlib import Path
 from subprocess import Popen
 from textwrap import dedent
@@ -358,6 +360,41 @@ def test_fm_dispatch_kills_itself_after_unsuccessful_step():
 
         fm_dispatch(["script.py"])
 
+        mock_killpg.assert_called_with(17, signal.SIGKILL)
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_fm_dispatch_kills_itself_after_max_runtime_expires():
+    with (
+        patch("_ert.forward_model_runner.fm_dispatch.os.killpg") as mock_killpg,
+        patch("_ert.forward_model_runner.fm_dispatch.os.getpgid") as mock_getpgid,
+        patch(
+            "_ert.forward_model_runner.fm_dispatch.ForwardModelRunner"
+        ) as mock_runner,
+    ):
+        run_finished = threading.Event()
+
+        def mock_run(_):
+            time.sleep(4)
+            run_finished.set()
+            raise RuntimeError("Should not reach here")
+
+        mock_runner.return_value.run = mock_run
+        mock_getpgid.return_value = 17
+        mock_killpg.side_effect = SystemExit
+        Path("jobs.json").write_text(
+            json.dumps(
+                {
+                    "ens_id": "_id_",
+                    "max_runtime": 0.1,
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        with pytest.raises(SystemExit):
+            fm_dispatch(["script.py"])
+        assert not run_finished.is_set()
         mock_killpg.assert_called_with(17, signal.SIGKILL)
 
 

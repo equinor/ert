@@ -699,6 +699,7 @@ def test_run_model_warns_about_cpu_over_spending_as_post_simulation_warning(
 
     brm = create_run_model()
     brm.queue_config.queue_system = MagicMock()
+    brm.queue_config.max_runtime = None
 
     expected_msg = "FooBar"
     evaluator.return_value.max_parallelism_violation = ParallelismViolation(

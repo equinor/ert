@@ -378,3 +378,4 @@ class ForwardModelJSON(TypedDict):
     jobList: list[ForwardModelStepJSON]
     run_id: str | None
     ert_pid: str
+    max_runtime: int | None

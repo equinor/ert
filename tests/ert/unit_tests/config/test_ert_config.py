@@ -2748,3 +2748,22 @@ def test_that_breakthrough_observations_can_be_internalized_in_ert_config():
     assert breakthrough_observations["east"].to_list() == [10]
     assert breakthrough_observations["north"].to_list() == [20]
     assert breakthrough_observations["radius"].to_list() == [2500]
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_max_runtime_is_written_to_jobs_json():
+    ert_config = ErtConfig.from_dict(
+        {
+            "MAX_RUNTIME": -1,
+        }
+    )
+    step_json = create_forward_model_json(
+        context=ert_config.substitutions,
+        forward_model_steps=ert_config.forward_model_steps,
+        env_vars=ert_config.env_vars,
+        env_pr_fm_step=ert_config.env_pr_fm_step,
+        run_id=None,
+        max_runtime=ert_config.queue_config.max_runtime,
+    )
+    assert step_json["max_runtime"] == -1

@@ -770,6 +770,7 @@ class RunModel(RunModelConfig, ABC):
             parameters_file=self.runpath_config.gen_kw_export_name,
             runpaths=self._run_paths,
             context_env=self._context_env,
+            max_runtime=self.queue_config.max_runtime,
         )
 
         self.run_workflows(
