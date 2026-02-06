@@ -1,16 +1,17 @@
 from __future__ import annotations
 
-import math
 import warnings
-from typing import Annotated, Any, Literal, Self, TypeVar
+from typing import Annotated, Any, Literal, Self, TypeAlias, TypeVar
 
 import numpy as np
+import numpy.typing as npt
 from pydantic import BaseModel, Field, field_validator, model_validator
 from scipy.stats import norm
 
 from .parsing import ConfigValidationError, ConfigWarning, ErrorInfo
 
 T = TypeVar("T", bound="TransSettingsValidation")
+FloatOrArray: TypeAlias = float | npt.NDArray[np.floating[Any]]
 
 
 class TransSettingsValidation(BaseModel):
@@ -43,8 +44,8 @@ class UnifSettings(TransSettingsValidation):
             )
         return self
 
-    def transform(self, x: float) -> float:
-        y = float(norm.cdf(x))
+    def transform(self, x: FloatOrArray) -> FloatOrArray:
+        y = norm.cdf(x)
         return y * (self.max - self.min) + self.min
 
 
@@ -62,11 +63,10 @@ class LogUnifSettings(TransSettingsValidation):
             )
         return self
 
-    def transform(self, x: float) -> float:
-        log_min, log_max = math.log(self.min), math.log(self.max)
+    def transform(self, x: FloatOrArray) -> FloatOrArray:
+        log_min, log_max = np.log(self.min), np.log(self.max)
         tmp = norm.cdf(x)
-        # Shift according to max / min
-        return math.exp(log_min + tmp * (log_max - log_min))
+        return np.exp(log_min + tmp * (log_max - log_min))
 
 
 class DUnifSettings(TransSettingsValidation):
@@ -96,9 +96,9 @@ class DUnifSettings(TransSettingsValidation):
             raise ConfigValidationError.from_collected(errors)
         return self
 
-    def transform(self, x: float) -> float:
+    def transform(self, x: FloatOrArray) -> FloatOrArray:
         y = norm.cdf(x)
-        return (math.floor(y * self.steps) / (self.steps - 1)) * (
+        return (np.floor(y * self.steps) / (self.steps - 1)) * (
             self.max - self.min
         ) + self.min
 
@@ -115,7 +115,7 @@ class NormalSettings(TransSettingsValidation):
             raise ConfigValidationError(f"Negative STD {value} for normal distribution")
         return value
 
-    def transform(self, x: float) -> float:
+    def transform(self, x: FloatOrArray) -> FloatOrArray:
         return x * self.std + self.mean
 
 
@@ -138,9 +138,8 @@ class LogNormalSettings(TransSettingsValidation):
         # If expected value exp(mu + 0.5 sigma^2) is too large, warn the user
         # 100000 is chosen from input from expert when considering permeability
         # If the expected value overflows, issue an error, as this is definitely wrong
-        try:
-            expected_value = math.exp(self.mean + 0.5 * self.std**2)
-        except OverflowError as e:
+        expected_value = np.exp(self.mean + 0.5 * self.std**2)
+        if np.isinf(expected_value):
             raise ConfigValidationError(
                 "Expectation value of the lognormal distribution is too large! "
                 "These are the specified parameters:\n\n"
@@ -149,7 +148,7 @@ class LogNormalSettings(TransSettingsValidation):
                 "Remember that the input parameters for keyword "
                 "LOGNORMAL are the mean and standard deviation of the natural "
                 "logarithm of your parameter data.",
-            ) from e
+            )
 
         if expected_value > 100000:
             ConfigWarning.warn(
@@ -165,8 +164,8 @@ class LogNormalSettings(TransSettingsValidation):
             )
         return self
 
-    def transform(self, x: float) -> float:
-        return math.exp(x * self.std + self.mean)
+    def transform(self, x: FloatOrArray) -> FloatOrArray:
+        return np.exp(x * self.std + self.mean)
 
 
 class TruncNormalSettings(TransSettingsValidation):
@@ -194,15 +193,15 @@ class TruncNormalSettings(TransSettingsValidation):
             )
         return self
 
-    def transform(self, x: float) -> float:
+    def transform(self, x: FloatOrArray) -> FloatOrArray:
         y = x * self.std + self.mean
-        return max(min(y, self.max), self.min)  # clamp
+        return np.clip(y, self.min, self.max)
 
 
 class RawSettings(TransSettingsValidation):
     name: Literal["raw"] = "raw"
 
-    def transform(self, x: float) -> float:
+    def transform(self, x: FloatOrArray) -> FloatOrArray:
         return x
 
 
@@ -210,8 +209,8 @@ class ConstSettings(TransSettingsValidation):
     name: Literal["const"] = "const"
     value: float = 0.0
 
-    def transform(self, _: float) -> float:
-        return self.value
+    def transform(self, x: FloatOrArray) -> FloatOrArray:
+        return np.full_like(x, self.value)
 
 
 class TriangularSettings(TransSettingsValidation):
@@ -241,16 +240,17 @@ class TriangularSettings(TransSettingsValidation):
             raise ConfigValidationError.from_collected(errors)
         return self
 
-    def transform(self, x: float) -> float:
+    def transform(self, x: FloatOrArray) -> FloatOrArray:
         inv_norm_left = (self.max - self.min) * (self.mode - self.min)
         inv_norm_right = (self.max - self.min) * (self.max - self.mode)
         ymode = (self.mode - self.min) / (self.max - self.min)
         y = norm.cdf(x)
 
-        if y < ymode:
-            return self.min + math.sqrt(y * inv_norm_left)
-        else:
-            return self.max - math.sqrt((1 - y) * inv_norm_right)
+        return np.where(
+            y < ymode,
+            self.min + np.sqrt(y * inv_norm_left),
+            self.max - np.sqrt((1 - y) * inv_norm_right),
+        )
 
 
 class ErrfSettings(TransSettingsValidation):
@@ -278,9 +278,9 @@ class ErrfSettings(TransSettingsValidation):
             )
         return self
 
-    def transform(self, x: float) -> float:
+    def transform(self, x: FloatOrArray) -> FloatOrArray:
         y = norm(loc=0, scale=self.width).cdf(x + self.skewness)
-        if np.isnan(y):
+        if np.any(np.isnan(y)):
             raise ValueError(
                 "Output is nan, likely from triplet (x, skewness, width) "
                 "leading to low/high-probability in normal CDF."
@@ -326,27 +326,26 @@ class DerrfSettings(TransSettingsValidation):
             raise ConfigValidationError.from_collected(errors)
         return self
 
-    def transform(self, x: float) -> float:
+    def transform(self, x: FloatOrArray) -> FloatOrArray:
         q_values = np.linspace(start=0, stop=1, num=int(self.steps))
         q_checks = np.linspace(start=0, stop=1, num=int(self.steps + 1))[1:]
-        y = ErrfSettings(
-            min=0, max=1, skewness=self.skewness, width=self.width
-        ).transform(x)
-        bin_index = np.digitize(y, q_checks, right=True)
-        y_binned = q_values[bin_index]
+        y = norm(loc=0, scale=self.width).cdf(x + self.skewness)
+        bin_indices = np.digitize(y, q_checks, right=True)
+        y_binned = q_values[bin_indices]
         result = self.min + y_binned * (self.max - self.min)
-        if result > self.max or result < self.min:
+
+        if np.any((result > self.max) | (result < self.min)):
             warnings.warn(
                 "trans_derff suffered from catastrophic"
                 " loss of precision, clamping to min,max",
                 stacklevel=1,
             )
-            return np.clip(result, self.min, self.max)
-        if np.isnan(result):
+            result = np.clip(result, self.min, self.max)
+        if np.any(np.isnan(result)):
             raise ValueError(
                 "trans_derrf returns nan, check that input arguments are reasonable"
             )
-        return float(result)
+        return result
 
 
 DistributionSettings = Annotated[

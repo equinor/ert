@@ -8,13 +8,19 @@ from typing import TYPE_CHECKING, Literal, Self, cast, overload
 
 import networkx as nx
 import numpy as np
+import numpy.typing as npt
 import polars as pl
 import xarray as xr
 from pydantic import ValidationError
 from typing_extensions import TypedDict
 
 from ._str_to_bool import str_to_bool
-from .distribution import DISTRIBUTION_CLASSES, DistributionSettings, get_distribution
+from .distribution import (
+    DISTRIBUTION_CLASSES,
+    DistributionSettings,
+    FloatOrArray,
+    get_distribution,
+)
 from .parameter_config import ParameterCardinality, ParameterConfig
 from .parsing import ConfigValidationError, ConfigWarning
 
@@ -248,7 +254,7 @@ class GenKwConfig(ParameterConfig):
             }
         ]
 
-    def transform_data(self) -> Callable[[float], float]:
+    def transform_data(self) -> Callable[[FloatOrArray], FloatOrArray]:
         return self.distribution.transform
 
     @classmethod
