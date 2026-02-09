@@ -193,12 +193,15 @@ def _handle_rft_observation(
 def _handle_breakthrough_observation(
     obs_config: BreakthroughObservation,
 ) -> pl.DataFrame:
+    error_hours = obs_config.error * 24
     return pl.DataFrame(
         {
             "observation_key": obs_config.name,
-            "response_key": (f"BREAKTHROUGH:{obs_config.key}:{obs_config.threshold}"),
-            "observations": obs_config.date.isoformat(),
-            "std": pl.Series([obs_config.error], dtype=pl.Float32),
+            "response_key": f"BREAKTHROUGH:{obs_config.key}",
+            "time": pl.Series([obs_config.date]).dt.cast_time_unit("ms"),
+            "observations": pl.Series([0], dtype=pl.Float32),
+            "threshold": obs_config.threshold,
+            "std": pl.Series([error_hours], dtype=pl.Float32),
             "east": pl.Series([obs_config.east], dtype=pl.Float32),
             "north": pl.Series([obs_config.north], dtype=pl.Float32),
             "radius": pl.Series([obs_config.radius], dtype=pl.Float32),
