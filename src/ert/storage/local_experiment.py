@@ -16,8 +16,10 @@ from pydantic import BaseModel, Field, TypeAdapter
 from surfio import IrapSurface
 
 from ert.config import (
+    DerivedResponseConfig,
     EverestControl,
     GenKwConfig,
+    KnownDerivedResponseTypes,
     KnownResponseTypes,
     ParameterConfig,
     ResponseConfig,
@@ -63,7 +65,7 @@ class _Index(BaseModel):
 
 _responses_adapter = TypeAdapter(  # type: ignore
     Annotated[
-        KnownResponseTypes,
+        KnownResponseTypes | KnownDerivedResponseTypes,
         Field(discriminator="type"),
     ]
 )
@@ -305,6 +307,13 @@ class LocalExperiment(BaseMode):
         responses_list = self.experiment_config.get("response_configuration", [])
         return {response["type"]: response for response in responses_list}
 
+    @property
+    def derived_response_info(self) -> dict[str, Any]:
+        responses_list = self.experiment_config.get(
+            "derived_response_configuration", []
+        )
+        return {response["type"]: response for response in responses_list}
+
     def get_surface(self, name: str) -> IrapSurface:
         """
         Retrieve a geological surface by name.
@@ -358,7 +367,9 @@ class LocalExperiment(BaseMode):
         }
 
     @property
-    def response_configuration(self) -> dict[str, ResponseConfig]:
+    def response_configuration(
+        self,
+    ) -> dict[str, ResponseConfig]:
         responses = {}
 
         for data in self.response_info.values():
@@ -366,6 +377,18 @@ class LocalExperiment(BaseMode):
             responses[response_instance.type] = response_instance
 
         return responses
+
+    @property
+    def derived_response_configuration(
+        self,
+    ) -> dict[str, DerivedResponseConfig]:
+        derived_responses = {}
+
+        for data in self.derived_response_info.values():
+            response_instance = _responses_adapter.validate_python(data)
+            derived_responses[response_instance.type] = response_instance
+
+        return derived_responses
 
     @cached_property
     def update_parameters(self) -> list[str]:
@@ -434,7 +457,9 @@ class LocalExperiment(BaseMode):
     @cached_property
     def response_key_to_response_type(self) -> dict[str, str]:
         mapping = {}
-        for config in self.response_configuration.values():
+        for config in (
+            self.response_configuration | self.derived_response_configuration
+        ).values():
             for key in config.keys if config.has_finalized_keys else []:
                 mapping[key] = config.type
 
@@ -456,7 +481,9 @@ class LocalExperiment(BaseMode):
         return result
 
     def _has_finalized_response_keys(self, response_type: str) -> bool:
-        responses_configuration = self.response_configuration
+        responses_configuration = (
+            self.response_configuration | self.derived_response_configuration
+        )
         if response_type not in responses_configuration:
             raise KeyError(
                 f"Response type {response_type} does not "
@@ -474,7 +501,9 @@ class LocalExperiment(BaseMode):
         that the response config saved in this storage has keys corresponding
         to the actual received responses.
         """
-        responses_configuration = self.response_configuration
+        responses_configuration = (
+            self.response_configuration | self.derived_response_configuration
+        )
         if response_type not in responses_configuration:
             raise KeyError(
                 f"Response type {response_type} does not "

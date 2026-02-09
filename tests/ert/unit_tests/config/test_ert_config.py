@@ -2729,13 +2729,14 @@ def test_that_breakthrough_observations_can_be_internalized_in_ert_config():
     config = ErtConfig.from_file_contents(
         """
         NUM_REALIZATIONS 1
-
+        ECLBASE FOO
         OBS_CONFIG observations
         """,
     )
 
     breakthrough_observations = create_observation_dataframes(
-        config.observation_declarations, None
+        config.observation_declarations,
+        None,
     )["breakthrough"]
     assert breakthrough_observations["observation_key"].to_list() == ["BRT_OBS"]
     assert breakthrough_observations["response_key"].to_list() == [
