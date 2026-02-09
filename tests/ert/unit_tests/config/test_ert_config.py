@@ -2739,12 +2739,10 @@ def test_that_breakthrough_observations_can_be_internalized_in_ert_config():
     )["breakthrough"]
     assert breakthrough_observations["observation_key"].to_list() == ["BRT_OBS"]
     assert breakthrough_observations["response_key"].to_list() == [
-        "BREAKTHROUGH:WWCT:OP_1:0.1"
+        "BREAKTHROUGH:WWCT:OP_1"
     ]
-    assert breakthrough_observations["observations"].to_list() == [
-        "2012-10-01T00:00:00"
-    ]
-    assert breakthrough_observations["std"].to_list() == [3]
+    assert breakthrough_observations["observations"].to_list() == [0]
+    assert breakthrough_observations["std"].to_list() == [72]
     assert breakthrough_observations["east"].to_list() == [10]
     assert breakthrough_observations["north"].to_list() == [20]
     assert breakthrough_observations["radius"].to_list() == [2500]
