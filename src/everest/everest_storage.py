@@ -541,10 +541,7 @@ class EverestStorage:
         )
 
         weights = np.fromiter(
-            (
-                1.0 if weight is None else weight
-                for weight in objective_functions.weights
-            ),
+            objective_functions.weights,
             dtype=np.float64,
         )
 
@@ -553,10 +550,7 @@ class EverestStorage:
                 "objective_name": objective_functions.keys,
                 "weight": pl.Series(weights / sum(weights), dtype=pl.Float64),
                 "scale": pl.Series(
-                    [
-                        1.0 if scale is None else scale
-                        for scale in objective_functions.scales
-                    ],
+                    objective_functions.scales,
                     dtype=pl.Float64,
                 ),
             }

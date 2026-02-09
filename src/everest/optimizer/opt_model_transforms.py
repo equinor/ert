@@ -461,19 +461,15 @@ def get_optimization_domain_transforms(
 
     objective_scaler = ObjectiveScaler(
         auto_scale=auto_scale,
-        scales=[1.0 if scale is None else scale for scale in objectives.scales],
+        scales=objectives.scales,
         realization_weights=realization_weights,
-        objective_weights=[
-            1.0 if weight is None else weight for weight in objectives.weights
-        ],
+        objective_weights=objectives.weights,
     )
 
     constraint_scaler = (
         ConstraintScaler(
             auto_scale=auto_scale,
-            scales=[
-                1.0 if scale is None else scale for scale in output_constraints.scales
-            ],
+            scales=output_constraints.scales,
             realization_weights=realization_weights,
         )
         if output_constraints
