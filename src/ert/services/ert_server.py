@@ -212,9 +212,6 @@ class ErtServer:
         verbose: bool = False,
         logging_config: str | None = None,  # Only used from everserver
     ) -> None:
-        if timeout is None:
-            timeout = 120
-
         self._storage_path = storage_path
         self._connection_info: ErtServerConnectionInfo | Exception | None = (
             connection_info
