@@ -279,6 +279,7 @@
       ]
     }
   ],
+  "derived_response_configuration": [],
   "ert_templates": [],
   "observations": [
     {

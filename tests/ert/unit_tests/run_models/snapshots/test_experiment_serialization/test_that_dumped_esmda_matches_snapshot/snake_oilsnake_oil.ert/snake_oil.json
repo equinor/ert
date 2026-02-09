@@ -338,6 +338,7 @@
       ]
     }
   ],
+  "derived_response_configuration": [],
   "ert_templates": [
     [
       "test-data/ert/snake_oil.snake_oil.ert/templates/seed_template.txt",

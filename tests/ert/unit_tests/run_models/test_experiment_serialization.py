@@ -353,6 +353,7 @@ def initial_ensemble_runmodels(draw, min_params: int = 1, max_params: int = 200)
             )
         ),
         "response_configuration": response_configs,
+        "derived_response_configuration": [],
         "observations": [],
     }
 

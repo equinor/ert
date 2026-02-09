@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from ert.config import (
     EverestControl,
     GenKwConfig,
+    KnownDerivedResponseTypes,
     KnownResponseTypes,
     Observation,
     SurfaceConfig,
@@ -65,6 +66,12 @@ class InitialEnsembleRunModelConfig(RunModelConfig):
     response_configuration: list[
         Annotated[
             (KnownResponseTypes),
+            Field(discriminator="type"),
+        ]
+    ]
+    derived_response_configuration: list[
+        Annotated[
+            (KnownDerivedResponseTypes),
             Field(discriminator="type"),
         ]
     ]

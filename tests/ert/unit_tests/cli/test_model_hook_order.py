@@ -131,6 +131,7 @@ def test_hook_call_order(monkeypatch, use_tmpdir, cls, extra_args, expected_call
         design_matrix=None,
         parameter_configuration=[],
         response_configuration=[],
+        derived_response_configuration=[],
         ert_templates=MagicMock(),
         user_config_file=MagicMock(spec=Path),
         env_vars=MagicMock(spec=dict),

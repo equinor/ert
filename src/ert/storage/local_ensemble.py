@@ -820,7 +820,11 @@ class LocalEnsemble(BaseMode):
         """
 
         select_key = False
-        if key in self.experiment.response_configuration:
+        if (
+            key
+            in self.experiment.response_configuration
+            | self.experiment.derived_response_configuration
+        ):
             response_type = key
         elif key not in self.experiment.response_key_to_response_type:
             raise ValueError(f"{key} is not a response")
@@ -1032,7 +1036,10 @@ class LocalEnsemble(BaseMode):
             for (
                 response_type,
                 response_cls,
-            ) in self.experiment.response_configuration.items():
+            ) in (
+                self.experiment.response_configuration
+                | self.experiment.derived_response_configuration
+            ).items():
                 if response_type not in observations_by_type:
                     continue
 
@@ -1332,6 +1339,10 @@ async def _write_responses_to_storage(
                 exc_info=err,
             )
             continue
+
+    for config_ in ensemble.experiment.derived_response_configuration.values():
+        ds = config_.derive_from_storage(ensemble.iteration, realization, ensemble)
+        ensemble.save_response(config_.type, ds, realization)
 
     if errors:
         return LoadResult.failure("\n".join(errors))

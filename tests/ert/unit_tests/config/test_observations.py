@@ -4,11 +4,13 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from textwrap import dedent
 from typing import cast
+from unittest.mock import MagicMock
 
 import hypothesis.strategies as st
 import polars as pl
 import pytest
 from hypothesis import assume, given
+from pandas import DataFrame
 from polars.testing import assert_frame_equal
 from resdata.summary import Summary
 from resfo_utilities.testing import summaries
@@ -1895,9 +1897,211 @@ def test_that_general_observations_are_instantiated_with_localization_attributes
         };"""
     ert_config = ert_config_from_parser(obs_config_contents)
     gen_obs = create_observation_dataframes(
-        observations=ert_config.observation_declarations, rft_config=None
+        observations=ert_config.observation_declarations,
+        rft_config=None,
     )["gen_data"]
     for loc_kw in ["east", "north", "radius"]:
         assert loc_kw in gen_obs.columns
         assert gen_obs[loc_kw].dtype == pl.Float32
         assert gen_obs[loc_kw].to_list() == [None]
+
+
+def obs_config_with_breakthrough_obs():
+    return {"OBS_CONFIG": (None, [{"type": "BREAKTHROUGH_OBSERVATION"}])}
+
+
+def test_that_breakthrough_observation_error_is_converted_to_hours():
+    error_days = 3
+    obs_config_contents = (
+        """
+        BREAKTHROUGH_OBSERVATION name {
+        KEY=WWCT:OP_1;
+        DATE=2012-10-01;
+        """
+        f"ERROR={error_days};"
+        """
+        THRESHOLD=0.1;
+      };"""
+    )
+    ert_config = ert_config_from_parser(obs_config_contents)
+    brt_obs = create_observation_dataframes(
+        observations=ert_config.observation_declarations,
+        rft_config=None,
+    )["breakthrough"]
+    assert brt_obs["std"].to_list() == [error_days * 24]
+
+
+def test_that_breakthrough_observations_df_have_obs_value_zero():
+    """This test ensures that the observed value is converted
+    from a datetime to 0 as this will be the relative value
+    to responses, which value will be hours from observed date."""
+    obs_config_contents = """
+        BREAKTHROUGH_OBSERVATION name {
+        KEY=WWCT:OP_1;
+        DATE=2012-10-01;
+        ERROR=3;
+        THRESHOLD=0.1;
+      };"""
+    ert_config = ert_config_from_parser(obs_config_contents)
+    brt_obs = create_observation_dataframes(
+        observations=ert_config.observation_declarations,
+        rft_config=None,
+    )["breakthrough"]
+    assert brt_obs["observations"].to_list() == [0]
+
+
+def test_that_breakthrough_observations_appends_to_breakthrough_config_responses():
+    keys = ["WWCT:OP_1", "WWCT:OP_2"]
+    dates = ["2012-10-01", "2013-01-01"]
+    thresholds = [0.1, 0.2]
+    obs_config_contents = f"""
+        BREAKTHROUGH_OBSERVATION brt1 {{
+            KEY={keys[0]};
+            DATE={dates[0]};
+            ERROR=3;
+            THRESHOLD={thresholds[0]};
+          }};
+        BREAKTHROUGH_OBSERVATION brt2 {{
+            KEY={keys[1]};
+            DATE={dates[1]};
+            ERROR=3;
+            THRESHOLD={thresholds[1]};
+          }};"""
+    ert_config = ert_config_from_parser(obs_config_contents)
+    create_observation_dataframes(
+        observations=ert_config.observation_declarations,
+        rft_config=None,
+    )
+    breakthrough_config = ert_config.ensemble_config.derived_response_configs[
+        "breakthrough"
+    ]
+    assert breakthrough_config.keys == [f"BREAKTHROUGH:{key}" for key in keys]
+    assert breakthrough_config.thresholds == thresholds
+    assert breakthrough_config.observed_dates == [
+        datetime.fromisoformat(date) for date in dates
+    ]
+
+
+def test_that_breakthrough_responses_are_derived_from_summary():
+    key = "WWCT:OP_1"
+    date = "2012-12-01"
+    threshold = 0.2
+    obs_config_contents = f"""
+            BREAKTHROUGH_OBSERVATION brt1 {{
+                KEY={key};
+                DATE={date};
+                ERROR=3;
+                THRESHOLD={threshold};
+              }};"""
+    ert_config = ert_config_from_parser(obs_config_contents)
+    create_observation_dataframes(
+        observations=ert_config.observation_declarations,
+        rft_config=None,
+    )
+
+    ensemble_mock = MagicMock()
+    breakthrough_date = "2012-12-02"
+    date_times = [
+        datetime.fromisoformat(date)
+        for date in ["2012-06-01", breakthrough_date, "2013-06-01"]
+    ]
+    summary_values = {
+        "time": date_times,
+        "values": [0.1, 0.2, 0.3],
+    }
+    ensemble_mock.load_responses.return_value = DataFrame(summary_values)
+    breakthrough_config = ert_config.ensemble_config.derived_response_configs[
+        "breakthrough"
+    ]
+    response_df = breakthrough_config.derive_from_storage(0, 0, ensemble_mock)
+
+    assert response_df["response_key"].to_list() == [f"BREAKTHROUGH:{key}"]
+    assert response_df["threshold"].to_list() == [threshold]
+    assert response_df["time"].to_list() == [datetime.fromisoformat(breakthrough_date)]
+    assert response_df["values"].to_list() == [24]
+
+
+def test_that_unreachable_breakthrough_thresholds_has_none_response():
+    key = "WWCT:OP_1"
+    threshold = 0.8
+    obs_config_contents = f"""
+            BREAKTHROUGH_OBSERVATION brt1 {{
+                KEY={key};
+                DATE=2012-12-01;
+                ERROR=3;
+                THRESHOLD={threshold};
+              }};"""
+    ert_config = ert_config_from_parser(obs_config_contents)
+    create_observation_dataframes(
+        observations=ert_config.observation_declarations,
+        rft_config=None,
+    )
+
+    ensemble_mock = MagicMock()
+    date_times = [
+        datetime.fromisoformat(date)
+        for date in ["2012-06-01", "2012-12-02", "2013-06-01"]
+    ]
+    summary_values = {
+        "time": date_times,
+        "values": [0.1, 0.2, 0.3],
+    }
+    ensemble_mock.load_responses.return_value = DataFrame(summary_values)
+    breakthrough_config = ert_config.ensemble_config.derived_response_configs[
+        "breakthrough"
+    ]
+    response_df = breakthrough_config.derive_from_storage(0, 0, ensemble_mock)
+
+    assert response_df["response_key"].to_list() == [f"BREAKTHROUGH:{key}"]
+    assert response_df["threshold"].to_list() == [threshold]
+    assert response_df["time"].to_list() == [None]
+    assert response_df["values"].to_list() == [None]
+
+
+def test_that_combined_reachable_and_unreachable_breakthrough_thresholds_are_turned_into_responses():  # noqa: E501
+    keys = ["WWCT:OP_1", "WWCT:OP_2"]
+    dates = ["2012-12-01", "2012-12-02"]
+    thresholds = [0.2, 0.8]
+    obs_config_contents = f"""
+            BREAKTHROUGH_OBSERVATION brt1 {{
+                KEY={keys[0]};
+                DATE={dates[0]};
+                ERROR=3;
+                THRESHOLD={thresholds[0]};
+              }};
+            BREAKTHROUGH_OBSERVATION brt1 {{
+                KEY={keys[1]};
+                DATE={dates[1]};
+                ERROR=3;
+                THRESHOLD={thresholds[1]};
+              }};"""
+    ert_config = ert_config_from_parser(obs_config_contents)
+    create_observation_dataframes(
+        observations=ert_config.observation_declarations,
+        rft_config=None,
+    )
+
+    ensemble_mock = MagicMock()
+    breakthrough_date = "2012-12-02"
+    date_times = [
+        datetime.fromisoformat(date)
+        for date in ["2012-06-01", breakthrough_date, "2013-06-01"]
+    ]
+    summary_values = {
+        "time": date_times,
+        "values": [0.1, 0.2, 0.3],
+    }
+    ensemble_mock.load_responses.return_value = DataFrame(summary_values)
+    response_df = ert_config.ensemble_config.derived_response_configs[
+        "breakthrough"
+    ].derive_from_storage(0, 0, ensemble_mock)
+
+    assert response_df["response_key"].to_list() == [
+        f"BREAKTHROUGH:{key}" for key in keys
+    ]
+    assert response_df["threshold"].to_list() == thresholds
+    assert response_df["time"].to_list() == [
+        datetime.fromisoformat(breakthrough_date),
+        None,
+    ]
+    assert response_df["values"].to_list() == [24, None]
