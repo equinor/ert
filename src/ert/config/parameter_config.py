@@ -9,9 +9,12 @@ from typing import TYPE_CHECKING
 
 import networkx as nx
 import numpy as np
+import numpy.typing as npt
 import polars as pl
 import xarray as xr
 from pydantic import BaseModel
+
+from .distribution import FloatOrArray
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -123,7 +126,9 @@ class ParameterConfig(BaseModel):
     def group_name(self) -> str | None:
         return self.name
 
-    def transform_data(self) -> Callable[[float], float]:
+    def transform_data(
+        self,
+    ) -> Callable[[FloatOrArray], FloatOrArray]:
         return lambda x: x
 
     def sample_values(

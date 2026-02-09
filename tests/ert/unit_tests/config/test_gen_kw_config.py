@@ -295,6 +295,7 @@ def test_that_high_mean_stddev_lognormal_gives_warning():
         )
 
 
+@pytest.mark.filterwarnings("ignore:overflow encountered:RuntimeWarning")
 def test_that_very_high_mean_stddev_lognormal_gives_error():
     mean_log = 3000
     stdev_log = 10
