@@ -15,7 +15,7 @@ class EverestResponse(ResponseConfig):
     """Base class for Everest response configurations."""
 
     has_finalized_keys: bool = True
-    scales: list[float | None]
+    scales: list[float]
 
     @property
     def primary_key(self) -> list[str]:
@@ -88,7 +88,7 @@ responses_index.add_response_type(EverestConstraintsConfig)
 
 class EverestObjectivesConfig(EverestResponse):
     type: Literal["everest_objectives"] = "everest_objectives"
-    weights: list[float | None]
+    weights: list[float]
     objective_types: list[Literal["mean", "stddev"]]
 
 
