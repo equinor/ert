@@ -24,7 +24,10 @@ class ErtSummary:
         for config in self.ert_config.parameter_configurations_with_design_matrix:
             match config:
                 case GenKwConfig(name=key):
-                    genkw_groups[config.group_name] += 1
+                    if config.group_name:
+                        genkw_groups[config.group_name] += 1
+                    else:
+                        genkw_groups["gen_kw"] += 1
                     count += 1
                 case Field(name=key, nx=nx, ny=ny, nz=nz):
                     parameters.append(f"{key} ({nx}, {ny}, {nz})")

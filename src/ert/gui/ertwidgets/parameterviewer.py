@@ -79,7 +79,10 @@ class ParametersViewer(QDialog):
             self.parameter_nodes.append(parameter_node)
             QTreeWidgetItem(parameter_node, [f"Update: {parameter.update}"])
             QTreeWidgetItem(parameter_node, [f"Forward Init: {parameter.forward_init}"])
-            QTreeWidgetItem(parameter_node, [f"Group: {parameter.group_name.upper()}"])
+            if parameter.group_name:
+                QTreeWidgetItem(
+                    parameter_node, [f"Group: {parameter.group_name.upper()}"]
+                )
             if hasattr(parameter, "input_source"):
                 QTreeWidgetItem(parameter_node, [f"Source: {parameter.input_source}"])
 
