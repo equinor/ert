@@ -1123,8 +1123,14 @@ to read summary data from forward model, do:
         return EverestObjectivesConfig(
             keys=objective_names,
             input_files=objective_names,
-            weights=[o.weight for o in self.objective_functions],
-            scales=[o.scale for o in self.objective_functions],
+            weights=[
+                o.weight if o.weight is not None else 1.0
+                for o in self.objective_functions
+            ],
+            scales=[
+                o.scale if o.scale is not None else 1.0
+                for o in self.objective_functions
+            ],
             objective_types=[o.type for o in self.objective_functions],
         )
 
@@ -1136,7 +1142,9 @@ to read summary data from forward model, do:
         return EverestConstraintsConfig(
             keys=constraint_names,
             input_files=constraint_names,
-            scales=[c.scale for c in self.output_constraints],
+            scales=[
+                c.scale if c.scale is not None else 1.0 for c in self.output_constraints
+            ],
             targets=[c.target for c in self.output_constraints],
             upper_bounds=[c.upper_bound for c in self.output_constraints],
             lower_bounds=[c.lower_bound for c in self.output_constraints],
