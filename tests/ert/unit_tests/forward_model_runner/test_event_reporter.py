@@ -170,7 +170,9 @@ def test_report_with_failed_reporter_but_finished_jobs():
             {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
         )
 
-        mock_server.signal(1)  # prevent router to receive messages
+        mock_server.signal(
+            MockZMQServerSignal.FAIL_ACK_AND_DISCARD_EVENTS
+        )  # prevent router to receive messages
         reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=100, rss=10)))
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=1100, rss=10)))
@@ -193,12 +195,16 @@ def test_report_with_reconnected_reporter_but_finished_jobs():
             {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
         )
 
-        mock_server.signal(1)  # prevent router to receive messages
+        mock_server.signal(
+            MockZMQServerSignal.FAIL_ACK_AND_DISCARD_EVENTS
+        )  # prevent router to receive messages
         reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=100, rss=10)))
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=1100, rss=10)))
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=1100, rss=10)))
-        mock_server.signal(0)  # enable router to receive messages
+        mock_server.signal(
+            MockZMQServerSignal.NORMAL_OPERATION_DISCARD_CONNECT_DISCONNECT
+        )  # enable router to receive messages
         reporter.report(Finish())
         if reporter._event_publisher_thread.is_alive():
             reporter._event_publisher_thread.join()
