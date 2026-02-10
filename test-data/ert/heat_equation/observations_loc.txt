@@ -1,0 +1,623 @@
+SUMMARY_OBSERVATION HEAT_5_3_10
+{
+    VALUE   = 5.6442828897434590e-06;
+    ERROR   = 3.0797309729674035e-07;
+    DATE    = 2010-01-11;
+    KEY     = HEAT_5_3;
+    LOCALIZATION {
+        EAST = 4.5;
+        NORTH = 12.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_3_5_10
+{
+    VALUE   = 4.1410349136204966e-01;
+    ERROR   = 2.0194884392101521e-02;
+    DATE    = 2010-01-11;
+    KEY     = HEAT_3_5;
+    LOCALIZATION {
+        EAST = 2.5;
+        NORTH = 14.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_5_7_10
+{
+    VALUE   = 3.6679650460477555e+00;
+    ERROR   = 1.6482328265484603e-01;
+    DATE    = 2010-01-11;
+    KEY     = HEAT_5_7;
+    LOCALIZATION {
+        EAST = 4.5;
+        NORTH = 16.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_7_5_10
+{
+    VALUE   = 1.6248260778957736e+01;
+    ERROR   = 7.7119866908049706e-01;
+    DATE    = 2010-01-11;
+    KEY     = HEAT_7_5;
+    LOCALIZATION {
+        EAST = 6.5;
+        NORTH = 14.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_2_2_10
+{
+    VALUE   = 1.7635921858307926e+00;
+    ERROR   = 8.7033494800395017e-02;
+    DATE    = 2010-01-11;
+    KEY     = HEAT_2_2;
+    LOCALIZATION {
+        EAST = 1.5;
+        NORTH = 11.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_7_2_10
+{
+    VALUE   = 2.2164467871281918e+01;
+    ERROR   = 1.1721378322138845e+00;
+    DATE    = 2010-01-11;
+    KEY     = HEAT_7_2;
+    LOCALIZATION {
+        EAST = 6.5;
+        NORTH = 11.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_5_3_71
+{
+    VALUE   = 1.2972441043782323e-01;
+    ERROR   = 6.4594680521833639e-03;
+    DATE    = 2010-03-13;
+    KEY     = HEAT_5_3;
+    LOCALIZATION {
+        EAST = 4.5;
+        NORTH = 12.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_3_5_71
+{
+    VALUE   = 3.4099513667661805e+00;
+    ERROR   = 1.6236736528767978e-01;
+    DATE    = 2010-03-13;
+    KEY     = HEAT_3_5;
+    LOCALIZATION {
+        EAST = 2.5;
+        NORTH = 14.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_5_7_71
+{
+    VALUE   = 4.7514742060978206e+00;
+    ERROR   = 2.3566933480970273e-01;
+    DATE    = 2010-03-13;
+    KEY     = HEAT_5_7;
+    LOCALIZATION {
+        EAST = 4.5;
+        NORTH = 16.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_7_5_71
+{
+    VALUE   = 7.7930579508733491e+00;
+    ERROR   = 3.6514142639997482e-01;
+    DATE    = 2010-03-13;
+    KEY     = HEAT_7_5;
+    LOCALIZATION {
+        EAST = 6.5;
+        NORTH = 14.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_2_2_71
+{
+    VALUE   = 2.0595838022042554e+00;
+    ERROR   = 9.8258188254156179e-02;
+    DATE    = 2010-03-13;
+    KEY     = HEAT_2_2;
+    LOCALIZATION {
+        EAST = 1.5;
+        NORTH = 11.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_7_2_71
+{
+    VALUE   = 4.5148165903937105e+00;
+    ERROR   = 2.4168886166635467e-01;
+    DATE    = 2010-03-13;
+    KEY     = HEAT_7_2;
+    LOCALIZATION {
+        EAST = 6.5;
+        NORTH = 11.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_5_3_132
+{
+    VALUE   = 4.4779702572836078e-01;
+    ERROR   = 2.2178937644425165e-02;
+    DATE    = 2010-05-13;
+    KEY     = HEAT_5_3;
+    LOCALIZATION {
+        EAST = 4.5;
+        NORTH = 12.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_3_5_132
+{
+    VALUE   = 3.2485754516456353e+00;
+    ERROR   = 1.5681634616617338e-01;
+    DATE    = 2010-05-13;
+    KEY     = HEAT_3_5;
+    LOCALIZATION {
+        EAST = 2.5;
+        NORTH = 14.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_5_7_132
+{
+    VALUE   = 2.7605044704044870e+00;
+    ERROR   = 1.3250138129474226e-01;
+    DATE    = 2010-05-13;
+    KEY     = HEAT_5_7;
+    LOCALIZATION {
+        EAST = 4.5;
+        NORTH = 16.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_7_5_132
+{
+    VALUE   = 3.3842521446297189e+00;
+    ERROR   = 1.6395530224186733e-01;
+    DATE    = 2010-05-13;
+    KEY     = HEAT_7_5;
+    LOCALIZATION {
+        EAST = 6.5;
+        NORTH = 14.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_2_2_132
+{
+    VALUE   = 9.6959850993182184e-01;
+    ERROR   = 4.8023268663850351e-02;
+    DATE    = 2010-05-13;
+    KEY     = HEAT_2_2;
+    LOCALIZATION {
+        EAST = 1.5;
+        NORTH = 11.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_7_2_132
+{
+    VALUE   = 2.0614711879999206e+00;
+    ERROR   = 9.8925364300105831e-02;
+    DATE    = 2010-05-13;
+    KEY     = HEAT_7_2;
+    LOCALIZATION {
+        EAST = 6.5;
+        NORTH = 11.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_5_3_193
+{
+    VALUE   = 5.9581342943315196e-01;
+    ERROR   = 3.0256941755902378e-02;
+    DATE    = 2010-07-13;
+    KEY     = HEAT_5_3;
+    LOCALIZATION {
+        EAST = 4.5;
+        NORTH = 12.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_3_5_193
+{
+    VALUE   = 2.4593591603184297e+00;
+    ERROR   = 1.2647358189700139e-01;
+    DATE    = 2010-07-13;
+    KEY     = HEAT_3_5;
+    LOCALIZATION {
+        EAST = 2.5;
+        NORTH = 14.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_5_7_193
+{
+    VALUE   = 1.5710086332394404e+00;
+    ERROR   = 8.5288706297881378e-02;
+    DATE    = 2010-07-13;
+    KEY     = HEAT_5_7;
+    LOCALIZATION {
+        EAST = 4.5;
+        NORTH = 16.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_7_5_193
+{
+    VALUE   = 1.6568063803444704e+00;
+    ERROR   = 9.1293628991466882e-02;
+    DATE    = 2010-07-13;
+    KEY     = HEAT_7_5;
+    LOCALIZATION {
+        EAST = 6.5;
+        NORTH = 14.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_2_2_193
+{
+    VALUE   = 5.9324083950560769e-01;
+    ERROR   = 2.9074626754802144e-02;
+    DATE    = 2010-07-13;
+    KEY     = HEAT_2_2;
+    LOCALIZATION {
+        EAST = 1.5;
+        NORTH = 11.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_7_2_193
+{
+    VALUE   = 1.2126053149815141e+00;
+    ERROR   = 5.4819993684583956e-02;
+    DATE    = 2010-07-13;
+    KEY     = HEAT_7_2;
+    LOCALIZATION {
+        EAST = 6.5;
+        NORTH = 11.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_5_3_255
+{
+    VALUE   = 6.2273073742376783e-01;
+    ERROR   = 3.0970706784676307e-02;
+    DATE    = 2010-09-13;
+    KEY     = HEAT_5_3;
+    LOCALIZATION {
+        EAST = 4.5;
+        NORTH = 12.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_3_5_255
+{
+    VALUE   = 1.9783727462126097e+00;
+    ERROR   = 9.8647945023221884e-02;
+    DATE    = 2010-09-13;
+    KEY     = HEAT_3_5;
+    LOCALIZATION {
+        EAST = 2.5;
+        NORTH = 14.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_5_7_255
+{
+    VALUE   = 1.2544246608214866e+00;
+    ERROR   = 5.9704412978212329e-02;
+    DATE    = 2010-09-13;
+    KEY     = HEAT_5_7;
+    LOCALIZATION {
+        EAST = 4.5;
+        NORTH = 16.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_7_5_255
+{
+    VALUE   = 1.1879846428598850e+00;
+    ERROR   = 5.7891275403980813e-02;
+    DATE    = 2010-09-13;
+    KEY     = HEAT_7_5;
+    LOCALIZATION {
+        EAST = 6.5;
+        NORTH = 14.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_2_2_255
+{
+    VALUE   = 3.5755049482433771e-01;
+    ERROR   = 1.9673050795625729e-02;
+    DATE    = 2010-09-13;
+    KEY     = HEAT_2_2;
+    LOCALIZATION {
+        EAST = 1.5;
+        NORTH = 11.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_7_2_255
+{
+    VALUE   = 7.0093432414929691e-01;
+    ERROR   = 3.5133799611521452e-02;
+    DATE    = 2010-09-13;
+    KEY     = HEAT_7_2;
+    LOCALIZATION {
+        EAST = 6.5;
+        NORTH = 11.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_5_3_316
+{
+    VALUE   = 5.5246143505654255e-01;
+    ERROR   = 2.8125076404619670e-02;
+    DATE    = 2010-11-13;
+    KEY     = HEAT_5_3;
+    LOCALIZATION {
+        EAST = 4.5;
+        NORTH = 12.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_3_5_316
+{
+    VALUE   = 1.4124126377502266e+00;
+    ERROR   = 7.7175312206809912e-02;
+    DATE    = 2010-11-13;
+    KEY     = HEAT_3_5;
+    LOCALIZATION {
+        EAST = 2.5;
+        NORTH = 14.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_5_7_316
+{
+    VALUE   = 9.1993072782908525e-01;
+    ERROR   = 4.4394199111647201e-02;
+    DATE    = 2010-11-13;
+    KEY     = HEAT_5_7;
+    LOCALIZATION {
+        EAST = 4.5;
+        NORTH = 16.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_7_5_316
+{
+    VALUE   = 7.6041100440128451e-01;
+    ERROR   = 4.0243854531136547e-02;
+    DATE    = 2010-11-13;
+    KEY     = HEAT_7_5;
+    LOCALIZATION {
+        EAST = 6.5;
+        NORTH = 14.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_2_2_316
+{
+    VALUE   = 2.8338478246502108e-01;
+    ERROR   = 1.4347799635834511e-02;
+    DATE    = 2010-11-13;
+    KEY     = HEAT_2_2;
+    LOCALIZATION {
+        EAST = 1.5;
+        NORTH = 11.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_7_2_316
+{
+    VALUE   = 5.0294660848674255e-01;
+    ERROR   = 2.4744371002718448e-02;
+    DATE    = 2010-11-13;
+    KEY     = HEAT_7_2;
+    LOCALIZATION {
+        EAST = 6.5;
+        NORTH = 11.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_5_3_377
+{
+    VALUE   = 5.1459133717902028e-01;
+    ERROR   = 2.4116728327437234e-02;
+    DATE    = 2011-01-13;
+    KEY     = HEAT_5_3;
+    LOCALIZATION {
+        EAST = 4.5;
+        NORTH = 12.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_3_5_377
+{
+    VALUE   = 1.2130120794893580e+00;
+    ERROR   = 6.0585586613394575e-02;
+    DATE    = 2011-01-13;
+    KEY     = HEAT_3_5;
+    LOCALIZATION {
+        EAST = 2.5;
+        NORTH = 14.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_5_7_377
+{
+    VALUE   = 6.6124655554111922e-01;
+    ERROR   = 3.4056140513330571e-02;
+    DATE    = 2011-01-13;
+    KEY     = HEAT_5_7;
+    LOCALIZATION {
+        EAST = 4.5;
+        NORTH = 16.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_7_5_377
+{
+    VALUE   = 6.0181317834607961e-01;
+    ERROR   = 2.9445994400827704e-02;
+    DATE    = 2011-01-13;
+    KEY     = HEAT_7_5;
+    LOCALIZATION {
+        EAST = 6.5;
+        NORTH = 14.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_2_2_377
+{
+    VALUE   = 2.3849281866525479e-01;
+    ERROR   = 1.0882878725424976e-02;
+    DATE    = 2011-01-13;
+    KEY     = HEAT_2_2;
+    LOCALIZATION {
+        EAST = 1.5;
+        NORTH = 11.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_7_2_377
+{
+    VALUE   = 3.5652866446516912e-01;
+    ERROR   = 1.8328942602034343e-02;
+    DATE    = 2011-01-13;
+    KEY     = HEAT_7_2;
+    LOCALIZATION {
+        EAST = 6.5;
+        NORTH = 11.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_5_3_438
+{
+    VALUE   = 3.9953767756737957e-01;
+    ERROR   = 2.0053305021042030e-02;
+    DATE    = 2011-03-15;
+    KEY     = HEAT_5_3;
+    LOCALIZATION {
+        EAST = 4.5;
+        NORTH = 12.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_3_5_438
+{
+    VALUE   = 9.2958986970773039e-01;
+    ERROR   = 4.7709727922498953e-02;
+    DATE    = 2011-03-15;
+    KEY     = HEAT_3_5;
+    LOCALIZATION {
+        EAST = 2.5;
+        NORTH = 14.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_5_7_438
+{
+    VALUE   = 5.4970943848652332e-01;
+    ERROR   = 2.6578037416630687e-02;
+    DATE    = 2011-03-15;
+    KEY     = HEAT_5_7;
+    LOCALIZATION {
+        EAST = 4.5;
+        NORTH = 16.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_7_5_438
+{
+    VALUE   = 4.4804794155095373e-01;
+    ERROR   = 2.2226512076224701e-02;
+    DATE    = 2011-03-15;
+    KEY     = HEAT_7_5;
+    LOCALIZATION {
+        EAST = 6.5;
+        NORTH = 14.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_2_2_438
+{
+    VALUE   = 1.7204797615890524e-01;
+    ERROR   = 8.4376087524536281e-03;
+    DATE    = 2011-03-15;
+    KEY     = HEAT_2_2;
+    LOCALIZATION {
+        EAST = 1.5;
+        NORTH = 11.5;
+        RADIUS = 3;
+    };
+};
+
+SUMMARY_OBSERVATION HEAT_7_2_438
+{
+    VALUE   = 2.7582807045768343e-01;
+    ERROR   = 1.3980361434718072e-02;
+    DATE    = 2011-03-15;
+    KEY     = HEAT_7_2;
+    LOCALIZATION {
+        EAST = 6.5;
+        NORTH = 11.5;
+        RADIUS = 3;
+    };
+};
