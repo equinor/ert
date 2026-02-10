@@ -131,6 +131,7 @@ class OpenPBSDriver(Driver):
         qdel_cmd: str | None = None,
         activate_script: str = "",
         poll_period: float = _POLL_PERIOD,
+        max_runtime: int | None = None,
     ) -> None:
         super().__init__(activate_script)
 
@@ -142,6 +143,11 @@ class OpenPBSDriver(Driver):
         self._max_pbs_cmd_attempts = 10
         self._sleep_time_between_cmd_retries = 2
         self._poll_period = poll_period
+        self._max_runtime = (
+            str(max_runtime + Driver._MAX_RUNTIME_QUEUE_SYSTEM_PADDING_SECONDS)
+            if (max_runtime is not None and max_runtime > 0)
+            else None
+        )
 
         self._qsub_cmd = Path(qsub_cmd or shutil.which("qsub") or "qsub")
         self._qstat_cmd = Path(qstat_cmd or shutil.which("qstat") or "qstat")
@@ -154,7 +160,10 @@ class OpenPBSDriver(Driver):
         self._finished_iens: set[int] = set()
 
     def _build_resource_string(
-        self, num_cpu: int = 1, realization_memory: int = 0
+        self,
+        num_cpu: int = 1,
+        realization_memory: int = 0,
+        max_runtime: str | None = None,
     ) -> list[str]:
         resource_specifiers: list[str] = []
 
@@ -168,6 +177,9 @@ class OpenPBSDriver(Driver):
 
         if self._cluster_label is not None:
             resource_specifiers += [f"{self._cluster_label}"]
+
+        if max_runtime is not None:
+            resource_specifiers += [f"walltime={max_runtime}"]
 
         cli_args = []
         for resource_string in resource_specifiers:
@@ -206,7 +218,9 @@ class OpenPBSDriver(Driver):
             *arg_project_code,
             *arg_keep_qsub_output,
             *self._build_resource_string(
-                num_cpu=num_cpu or 1, realization_memory=realization_memory or 0
+                num_cpu=num_cpu or 1,
+                realization_memory=realization_memory or 0,
+                max_runtime=self._max_runtime,
             ),
         ]
         logger.debug(f"Submitting to PBS with command {shlex.join(qsub_with_args)}")

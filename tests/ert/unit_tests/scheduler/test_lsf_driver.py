@@ -1223,6 +1223,19 @@ async def test_submit_with_num_cpu(pytestconfig, job_name):
 
 
 @pytest.mark.usefixtures("capturing_bsub")
+async def test_that_submit_will_propagate_padded_max_runtime():
+    MAX_RUNTIME = 120
+    driver = LsfDriver(max_runtime=MAX_RUNTIME)
+    await driver.submit(0, "sleep")
+    formatted_max_runtime = (
+        MAX_RUNTIME + driver._MAX_RUNTIME_QUEUE_SYSTEM_PADDING_SECONDS
+    ) // 60
+    assert f"-W {formatted_max_runtime}" in Path("captured_bsub_args").read_text(
+        encoding="utf-8"
+    )
+
+
+@pytest.mark.usefixtures("capturing_bsub")
 async def test_submit_with_num_cpu_with_bsub_capture():
     driver = LsfDriver()
     await driver.submit(0, "sleep", num_cpu=4)
@@ -1259,6 +1272,38 @@ async def test_submit_with_realization_memory(pytestconfig, job_name):
     assert "rusage[mem=1]" in stdout.decode(encoding="utf-8")
 
     assert Path("test").read_text(encoding="utf-8") == "test\n"
+
+
+@pytest.mark.integration_test
+@pytest.mark.timeout(300)
+@pytest.mark.usefixtures("use_tmpdir")
+async def test_that_queue_system_can_kill_before_scheduler_with_negative_padding(
+    pytestconfig, job_name, monkeypatch
+):
+    if not pytestconfig.getoption("lsf"):
+        pytest.skip("Mocked LSF driver does not support max runtime option")
+    monkeypatch.setattr(
+        "ert.scheduler.driver.Driver._MAX_RUNTIME_QUEUE_SYSTEM_PADDING_SECONDS", -280
+    )
+    driver = LsfDriver(max_runtime=280)
+    await driver.submit(0, "sh", "-c", "sleep 600", name=job_name)
+    job_id = driver._iens2jobid[0]
+    await asyncio.wait_for(poll(driver, {0}), timeout=240)
+    process = await asyncio.create_subprocess_exec(
+        "bhist",
+        "-l",
+        job_id,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    stdout, _stderr = await process.communicate()
+    stdout_no_whitespaces = re.sub(
+        r"\s+", " ", stdout.decode(encoding="utf-8", errors="ignore")
+    )
+
+    # This means the job was killed by LSF immediately when it started running,
+    # which is what we set as the max_runtime when submitting the job
+    assert "RUNLIMIT 0.0 min" in stdout_no_whitespaces
 
 
 @pytest.mark.integration_test
