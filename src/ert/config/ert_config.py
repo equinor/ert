@@ -710,7 +710,7 @@ class ErtConfig(BaseModel):
     user_config_file: str = "no_config"
     config_path: str = Field(init=False, default="")
     observation_declarations: list[Observation] = Field(default_factory=list)
-    zonemap: dict[int, list[str]] = Field(default_factory=dict)
+    zonemap: Path | None = None
 
     @model_validator(mode="after")
     def set_fields(self) -> Self:
@@ -1083,7 +1083,7 @@ class ErtConfig(BaseModel):
                 runpath_config=model_config,
                 user_config_file=config_file_path,
                 observation_declarations=list(obs_configs),
-                zonemap=config_dict.get(ConfigKeys.ZONEMAP, ("", {}))[1],
+                zonemap=config_dict.get(ConfigKeys.ZONEMAP),
             )
 
             # The observations are created here because create_observation_dataframes

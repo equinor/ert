@@ -1,5 +1,6 @@
+import io
 import os
-from io import BytesIO
+from io import BytesIO, StringIO
 
 import numpy as np
 import polars as pl
@@ -13,11 +14,12 @@ from ert.config import (
 )
 from ert.config._create_observation_dataframes import _handle_rft_observation
 from ert.config._observations import RFTObservation
-from ert.config.parsing import ObservationType
+from ert.config.parsing import ConfigValidationError, ObservationType
 from ert.warnings import PostSimulationWarning
 from tests.ert.rft_generator import cell_start, float_arr
 
 original_open = open
+original_io_open = io.open
 original_stat = os.stat
 
 
@@ -35,6 +37,16 @@ def mocked_files(mocker):
         else:
             return original_open(*args, **kwargs)
 
+    def mock_io_open(*args, **kwargs):
+        nonlocal mocked_files
+        path = args[0] if args else kwargs.get("file")
+        buffer = mocked_files.get(str(path))
+        if buffer is not None:
+            buffer.seek(0)
+            return buffer
+        else:
+            return original_io_open(*args, **kwargs)
+
     def mock_stat(*args, **kwargs):
         nonlocal mocked_files
         path = args[0] if args else kwargs.get("path")
@@ -44,6 +56,7 @@ def mocked_files(mocker):
             return original_stat(*args, **kwargs)
 
     mocker.patch("builtins.open", mock_open)
+    mocker.patch("io.open", mock_io_open)
     mocker.patch("os.stat", mock_stat)
 
     return mocked_files
@@ -393,11 +406,12 @@ def test_that_handle_rft_observations_adds_radius_column_to_dataframe():
 
 
 def test_that_if_an_rft_observation_is_outside_the_zone_then_it_is_deactivated(
-    mock_resfo_file, egrid
+    mock_resfo_file, egrid, mocked_files
 ):
+    mocked_files["/tmp/does_not_exist/zonemap.txt"] = StringIO("1 zone1\n200 zone2\n")
     config = ErtConfig.from_dict(
         {
-            "ZONEMAP": ("zonemap.txt", {1: ["zone1"], 200: ["zone2"]}),
+            "ZONEMAP": "zonemap.txt",
             "OBS_CONFIG": (
                 "obsconf",
                 [
@@ -470,14 +484,14 @@ def test_that_if_an_rft_observation_is_outside_the_zone_then_it_is_deactivated(
     ],
 )
 def test_that_same_point_observations_with_different_zone_are_disabled_independently(
-    mock_resfo_file, point, expected_values, egrid
+    mock_resfo_file, point, expected_values, egrid, mocked_files
 ):
+    mocked_files["/tmp/does_not_exist/zonemap.txt"] = StringIO(
+        "1 zone1\n2 zone1 zone2\n3 zone2"
+    )
     config = ErtConfig.from_dict(
         {
-            "ZONEMAP": (
-                "zonemap.txt",
-                {1: ["zone1"], 2: ["zone1", "zone2"], 3: ["zone2"]},
-            ),
+            "ZONEMAP": "zonemap.txt",
             "OBS_CONFIG": (
                 "obsconf",
                 [
@@ -546,14 +560,14 @@ def test_that_same_point_observations_with_different_zone_are_disabled_independe
 
 
 def test_that_observation_without_zones_are_not_disabled_by_zone_check(
-    mock_resfo_file, egrid
+    mock_resfo_file, egrid, mocked_files
 ):
+    mocked_files["/tmp/does_not_exist/zonemap.txt"] = StringIO(
+        "1 zone1\n2 zone1 zone2\n3 zone2"
+    )
     config = ErtConfig.from_dict(
         {
-            "ZONEMAP": (
-                "zonemap.txt",
-                {1: ["zone1"], 2: ["zone1", "zone2"], 3: ["zone2"]},
-            ),
+            "ZONEMAP": "zonemap.txt",
             "OBS_CONFIG": (
                 "obsconf",
                 [
@@ -619,3 +633,42 @@ def test_that_observation_without_zones_are_not_disabled_by_zone_check(
         (1.0, None, None, None, None),
         (2.0, None, None, None, None),
     ]
+
+
+def test_that_when_the_zonemap_is_an_absolute_path_then_the_runpath_is_not_prepended(
+    mocked_files,
+):
+    mocked_files["/tmp/does_not_exist/zonemap.txt"] = StringIO(
+        "this_is_an_invalid_zonemap zone1"
+    )
+
+    config = ErtConfig.from_dict(
+        {
+            "ZONEMAP": "/tmp/does_not_exist/zonemap.txt",
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    {
+                        "type": ObservationType.RFT,
+                        "name": "NAME",
+                        "WELL": "WELL",
+                        "VALUE": "700",
+                        "ERROR": "0.1",
+                        "DATE": "2000-01-01",
+                        "PROPERTY": "PRESSURE",
+                        "NORTH": 1.0,
+                        "EAST": 1.0,
+                        "TVD": 0.5,
+                        "ZONE": "zone2",
+                    },
+                ],
+            ),
+        }
+    )
+    with pytest.raises(
+        ConfigValidationError,
+        match="must be an integer, was this_is_an_invalid_zonemap",
+    ):
+        config.ensemble_config.response_configs["rft"].read_from_file(
+            "/tmp/does_not_exist", 1, 1
+        )
