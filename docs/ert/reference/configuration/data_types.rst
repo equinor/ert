@@ -33,7 +33,7 @@ For detailed description and examples on how to use the ``GEN_KW`` keyword, see 
 The algorithms used for updating parameters expect normally distributed variables.
 ERT supports other types of distributions by transforming normal variables as outlined next.
 
-  1. ERT samples a random variable ``x ~ N(0,1)`` - before outputing to the
+  1. ERT samples a random variable ``x ~ N(0,1)`` - before outputting to the
      forward model this is *transformed* to ``y ~ F(Y)`` where the
      distribution ``F(Y)`` is the correct prior distribution.
 
