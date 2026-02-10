@@ -43,12 +43,11 @@ def test_parsing_contents_succeeds_or_gives_config_error(contents):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_make_observations():
+def test_that_make_observations_migrates_observations():
     Path("wpr_diff_idx.txt").write_text("400\n800\n1200\n1800\n", encoding="utf8")
     Path("wpr_diff_obs.txt").write_text(
         "1.1 0.1\n2.2 0.2\n3.3 0.3\n4.4 0.4\n", encoding="utf8"
     )
-
     obs_config_contents = dedent(
         """
         HISTORY_OBSERVATION FOPR {};
@@ -56,8 +55,15 @@ def test_make_observations():
         SUMMARY_OBSERVATION WOPR_OP1_9 {
             VALUE = 0.1;
             ERROR = 0.05;
-            DATE = 2010-03-31;
+            RESTART = 0;
             KEY = WOPR:OP1;
+        };
+
+        SUMMARY_OBSERVATION WOPR_OP2_7 {
+            VALUE = 0.2;
+            ERROR = 0.05;
+            RESTART = 1;
+            KEY = WOPR:OP2;
         };
 
         GENERAL_OBSERVATION WPR_DIFF_1 {
@@ -143,6 +149,7 @@ def test_make_observations():
     # Validate migrated observations contain expected entries and values
     names = [getattr(o, "name", None) for o in observations]
     assert "WOPR_OP1_9" in names
+    assert "WOPR_OP2_7" in names
     assert "WPR_DIFF_1" in names
     assert "WPR_DIFF_2" in names
     assert "FOPR" in names
@@ -153,7 +160,15 @@ def test_make_observations():
     assert isinstance(wopr, SummaryObservation)
     assert wopr.value == 0.1
     assert wopr.key == "WOPR:OP1"
+    # Migration converts RESTART 0 -> start date
     assert wopr.date == "2010-03-31"
+
+    wopr = next(o for o in observations if getattr(o, "name", None) == "WOPR_OP2_7")
+    assert isinstance(wopr, SummaryObservation)
+    assert wopr.value == 0.2
+    assert wopr.key == "WOPR:OP2"
+    # Migration converts RESTART 1 -> second date
+    assert wopr.date == "2015-06-13"
 
     wpr1 = next(o for o in observations if getattr(o, "name", None) == "WPR_DIFF_1")
     assert isinstance(wpr1, GeneralObservation)
