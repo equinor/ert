@@ -33,4 +33,6 @@ obs_coordinates = [
     Coordinate(7, 2),
 ]
 
+summary_names = [f"HEAT_{coord.x}_{coord.y}" for coord in obs_coordinates]
+
 obs_times = np.linspace(10, k_end, 8, endpoint=False, dtype=int)

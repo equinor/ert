@@ -2,9 +2,9 @@
 Contains code that was used to generate files expected by ert.
 """
 
+import datetime
 from collections.abc import Callable
 from pathlib import Path
-from textwrap import dedent
 
 import numpy as np
 import numpy.typing as npt
@@ -18,11 +18,12 @@ from heat_equation import heat_equation, sample_prior_conductivity
 # Worth playing around with.
 rng = np.random.default_rng(1234)
 
+NCOL = 10
+NROW = 10
+NLAY = 1
+
 
 def create_egrid_file():
-    NCOL = 10
-    NROW = 10
-    NLAY = 1
     grid = xtgeo.create_box_grid(dimension=(NCOL, NROW, NLAY))
     grid.to_file("CASE.EGRID", "egrid")
 
@@ -92,6 +93,45 @@ def generate_priors():
         )
 
 
+START_DATE = datetime.date(2010, 1, 1)
+RADIUS = 3
+
+
+def create_summary_observations(df_obs: pd.DataFrame):
+    # This includes locations to be stored
+    # grid is right hand; hence starting at (0,Ny)->(Nx,2*Ny)
+    # observations are centered in the middle of the cell; -(0.5,0.5)
+    # radius is set to 3
+
+    observations_loc_file = "observations_loc.txt"
+    with Path(observations_loc_file).open("w", encoding="utf-8") as f:
+        for t in obs_times:
+            obs_date = START_DATE + datetime.timedelta(days=int(t))
+
+            for coord in obs_coordinates:
+                idx = (int(t), int(coord.x), int(coord.y))
+                row = df_obs.loc[idx]
+                value = float(row["value"])
+                error = float(row["sd"])
+
+                f.write(
+                    f"""SUMMARY_OBSERVATION HEAT_{coord.x}_{coord.y}_{t}
+{{
+    VALUE   = {value:.16e};
+    ERROR   = {error:.16e};
+    DATE    = {obs_date:%Y-%m-%d};
+    KEY     = HEAT_{coord.x}_{coord.y};
+    LOCALIZATION {{
+        EAST = {coord.x - 0.5};
+        NORTH = {NROW + coord.y - 0.5};
+        RADIUS = {RADIUS};
+    }};
+}};
+
+"""
+                )
+
+
 if __name__ == "__main__":
     create_egrid_file()
 
@@ -126,23 +166,5 @@ if __name__ == "__main__":
         obs_coordinates, obs_times, u_t, lambda value: abs(0.05 * value)
     )
 
-    with open("observations", "w", encoding="utf-8") as fout:
-        fout.writelines(
-            dedent(
-                f"""
-            GENERAL_OBSERVATION MY_OBS_{obs_time} {{
-                DATA       = MY_RESPONSE;
-                RESTART    = {obs_time};
-                OBS_FILE   = obs_{obs_time}.txt;
-            }};"""
-            )
-            for obs_time in obs_times
-        )
-
-    for obs_time in obs_times:
-        df = d.iloc[d.index.get_level_values("k") == obs_time]
-        Path(f"obs_{obs_time}.txt").write_text(
-            df.sort_index().to_csv(header=False, index=False, sep=" "), encoding="utf-8"
-        )
-
     generate_priors()
+    create_summary_observations(d)
