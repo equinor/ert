@@ -175,7 +175,8 @@
     "enkf_truncation": 0.98,
     "inversion": "EXACT",
     "localization": false,
-    "localization_correlation_threshold": null
+    "localization_correlation_threshold": null,
+    "distance_localization": false
   },
   "update_settings": {
     "outlier_settings": {
