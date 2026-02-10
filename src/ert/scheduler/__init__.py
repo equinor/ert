@@ -19,17 +19,25 @@ if TYPE_CHECKING:
 
 
 def create_driver(
-    queue_options: QueueOptions, poll_period: float = _POLL_PERIOD
+    queue_options: QueueOptions,
+    poll_period: float = _POLL_PERIOD,
+    max_runtime: int | None = None,
 ) -> Driver:
     match queue_options.name:
         case QueueSystem.LOCAL:
             return LocalDriver()
         case QueueSystem.TORQUE:
             return OpenPBSDriver(
-                **queue_options.driver_options, poll_period=poll_period
+                **queue_options.driver_options,
+                poll_period=poll_period,
+                max_runtime=max_runtime,
             )
         case QueueSystem.LSF:
-            return LsfDriver(**queue_options.driver_options, poll_period=poll_period)
+            return LsfDriver(
+                **queue_options.driver_options,
+                poll_period=poll_period,
+                max_runtime=max_runtime,
+            )
         case QueueSystem.SLURM:
             return SlurmDriver(
                 **dict(

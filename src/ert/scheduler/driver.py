@@ -38,6 +38,7 @@ class Driver(ABC):
     """Adapter for the HPC cluster."""
 
     POLLING_TIMEOUT_PERIOD = 600
+    _MAX_RUNTIME_QUEUE_SYSTEM_PADDING_SECONDS = 600
 
     def __init__(self, activate_script: str = "") -> None:
         self._event_queue: asyncio.Queue[DriverEvent] | None = None
