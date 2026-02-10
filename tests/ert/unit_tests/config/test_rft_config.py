@@ -672,3 +672,42 @@ def test_that_when_the_zonemap_is_an_absolute_path_then_the_runpath_is_not_prepe
         config.ensemble_config.response_configs["rft"].read_from_file(
             "/tmp/does_not_exist", 1, 1
         )
+
+
+def test_that_missing_egrid_with_locations_raises_invalid_response_file(
+    mock_resfo_file,
+):
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.RFT",
+        [
+            *cell_start(date=(1, 1, 2000), well_name="WELL", ijks=[(1, 1, 1)]),
+            ("PRESSURE", float_arr([100.0])),
+            ("DEPTH   ", float_arr([20.0])),
+        ],
+    )
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={"*": {"*": ["PRESSURE"]}},
+        locations=[(1.0, 1.0, 1.0)],
+    )
+
+    with pytest.raises(InvalidResponseFile):
+        rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+
+
+def test_that_missing_egrid_without_locations_is_ignored(mock_resfo_file):
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.RFT",
+        [
+            *cell_start(date=(1, 1, 2000), well_name="WELL", ijks=[(1, 1, 1)]),
+            ("PRESSURE", float_arr([100.0])),
+            ("DEPTH   ", float_arr([20.0])),
+        ],
+    )
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={"*": {"*": ["PRESSURE"]}},
+    )
+
+    data = rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+    assert data["response_key"].to_list() == ["WELL:2000-01-01:PRESSURE"]

@@ -16,7 +16,12 @@ import numpy as np
 import numpy.typing as npt
 import polars as pl
 from pydantic import Field
-from resfo_utilities import CornerpointGrid, InvalidRFTError, RFTReader
+from resfo_utilities import (
+    CornerpointGrid,
+    InvalidEgridFileError,
+    InvalidRFTError,
+    RFTReader,
+)
 
 from ert.substitutions import substitute_runpath_name
 from ert.warnings import PostSimulationWarning
@@ -102,9 +107,15 @@ class RFTConfig(ResponseConfig):
     def _find_indices(
         self, egrid_file: str | os.PathLike[str] | IO[Any]
     ) -> dict[GridIndex | None, set[_ZonedPoint]]:
-        indices = defaultdict(set)
+        indices: dict[GridIndex | None, set[_ZonedPoint]] = defaultdict(set)
+        if not self._zoned_locations:
+            return indices
+        try:
+            grid = CornerpointGrid.read_egrid(egrid_file)
+        except (OSError, InvalidEgridFileError) as err:
+            raise InvalidResponseFile(f"Could not read grid file: {err}") from err
         for a, b in zip(
-            CornerpointGrid.read_egrid(egrid_file).find_cell_containing_point(
+            grid.find_cell_containing_point(
                 [cast(Point, loc.point) for loc in self._zoned_locations]
             ),
             self._zoned_locations,
