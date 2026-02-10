@@ -11,8 +11,8 @@
   "runpath_config": {
     "num_realizations": 100,
     "runpath_format_string": "simulations/realization-<IENS>/iter-<ITER>",
-    "jobname_format_string": "<CONFIG_FILE>-<IENS>",
-    "eclbase_format_string": "ECLBASE<IENS>",
+    "jobname_format_string": "HEAT",
+    "eclbase_format_string": "HEAT",
     "gen_kw_export_name": "parameters"
   },
   "queue_config": {
@@ -69,8 +69,8 @@
     "<CONFIG_FILE>": "config.ert",
     "<RUNPATH_FILE>": "test-data/ert/heat_equation.config.ert/.ert_runpath_list",
     "<RUNPATH>": "simulations/realization-<IENS>/iter-<ITER>",
-    "<ECL_BASE>": "ECLBASE<IENS>",
-    "<ECLBASE>": "ECLBASE<IENS>",
+    "<ECL_BASE>": "HEAT",
+    "<ECLBASE>": "HEAT",
     "<NUM_CPU>": "1"
   },
   "hooked_workflows": {},

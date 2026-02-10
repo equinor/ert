@@ -464,10 +464,10 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
         # Note that we ideally should generate new responses by running the
         # heat equation with the modified prior where parts of the field
         # are given a constant value.
-        responses = prior.load_responses("gen_data", tuple(range(prior.ensemble_size)))
+        responses = prior.load_responses("summary", tuple(range(prior.ensemble_size)))
         for realization in range(prior.ensemble_size):
             df = responses.filter(pl.col("realization") == realization)
-            new_prior.save_response("gen_data", df, realization)
+            new_prior.save_response("summary", df, realization)
 
         new_posterior = storage.create_ensemble(
             new_experiment,
