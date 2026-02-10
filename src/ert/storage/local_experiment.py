@@ -9,7 +9,7 @@ from datetime import datetime
 from enum import StrEnum, auto
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Any, TypedDict, cast
+from typing import TYPE_CHECKING, Annotated, Any, cast
 from uuid import UUID
 
 import numpy as np
@@ -561,31 +561,20 @@ class LocalExperiment(BaseMode):
         return cast(EverestConstraintsConfig, constraints_config)
 
     @property
-    def batches(self) -> list[BatchStorageData]:
-        return [
-            BatchStorageData(ens._path)
-            for ens in sorted(self.ensembles, key=lambda ens: ens.iteration)
-        ]
+    def everest_ensembles(self) -> list[LocalEnsemble]:
+        return sorted(self.ensembles, key=lambda ens: ens.iteration)
 
     @property
-    def batches_with_function_results(
+    def everest_ensembles_with_function_results(
         self,
-    ) -> list[FunctionBatchStorageData]:
-        return [
-            FunctionBatchStorageData(b._ensemble_path)
-            for b in self.batches
-            if b.has_function_results
-        ]
+    ) -> list[LocalEnsemble]:
+        return [b for b in self.everest_ensembles if b.has_function_results]
 
     @property
-    def batches_with_gradient_results(
+    def everest_ensembles_with_gradient_results(
         self,
-    ) -> list[GradientBatchStorageData]:
-        return [
-            GradientBatchStorageData(b._ensemble_path)
-            for b in self.batches
-            if b.has_gradient_results
-        ]
+    ) -> list[LocalEnsemble]:
+        return [b for b in self.everest_ensembles if b.has_gradient_results]
 
     def on_optimization_finished(self) -> None:
         logger.debug("Storing final results Everest storage")
@@ -595,13 +584,14 @@ class LocalExperiment(BaseMode):
         CONSTRAINT_TOL = 1e-6
 
         max_total_objective = -np.inf
-        for b in self.batches_with_function_results:
-            total_objective = b.batch_objectives["total_objective_value"].item()
+        for ensemble in self.everest_ensembles_with_function_results:
+            assert ensemble.batch_objectives is not None
+            total_objective = ensemble.batch_objectives["total_objective_value"].item()
             bound_constraint_violation = (
                 0.0
-                if b.batch_bound_constraint_violations is None
+                if ensemble.batch_bound_constraint_violations is None
                 else (
-                    b.batch_bound_constraint_violations.drop("batch_id")
+                    ensemble.batch_bound_constraint_violations.drop("batch_id")
                     .to_numpy()
                     .min()
                     .item()
@@ -609,9 +599,9 @@ class LocalExperiment(BaseMode):
             )
             input_constraint_violation = (
                 0.0
-                if b.batch_input_constraint_violations is None
+                if ensemble.batch_input_constraint_violations is None
                 else (
-                    b.batch_input_constraint_violations.drop("batch_id")
+                    ensemble.batch_input_constraint_violations.drop("batch_id")
                     .to_numpy()
                     .min()
                     .item()
@@ -619,9 +609,9 @@ class LocalExperiment(BaseMode):
             )
             output_constraint_violation = (
                 0.0
-                if b.batch_output_constraint_violations is None
+                if ensemble.batch_output_constraint_violations is None
                 else (
-                    b.batch_output_constraint_violations.drop("batch_id")
+                    ensemble.batch_output_constraint_violations.drop("batch_id")
                     .to_numpy()
                     .min()
                     .item()
@@ -636,20 +626,20 @@ class LocalExperiment(BaseMode):
                 < CONSTRAINT_TOL
                 and total_objective > max_total_objective
             ):
-                b.write_metadata(is_improvement=True)
+                ensemble.write_metadata(is_improvement=True)
                 max_total_objective = total_objective
 
     def export_dataframes(
         self,
     ) -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
-        if not self.batches:
+        if not self.ensembles:
             return (pl.DataFrame(), pl.DataFrame(), pl.DataFrame())
 
         batch_dfs_to_join = {}  # type: ignore
         realization_dfs_to_join = {}  # type: ignore
         perturbation_dfs_to_join = {}  # type: ignore
 
-        batch_ids = [b.batch_id for b in self.batches]
+        batch_ids = [b.iteration for b in self.ensembles]
         all_controls = self.parameter_keys
 
         def _try_append_df(
@@ -659,7 +649,7 @@ class LocalExperiment(BaseMode):
         ) -> None:
             if df is not None:
                 if batch_id not in target:  # type: ignore
-                    target[batch.batch_id] = []  # type: ignore
+                    target[batch_id] = []  # type: ignore
                 target[batch_id].append(df)  # type: ignore
 
         def try_append_batch_dfs(batch_id: int, *dfs: pl.DataFrame | None) -> None:
@@ -676,7 +666,11 @@ class LocalExperiment(BaseMode):
             batch_id: int, *dfs: pl.DataFrame | None
         ) -> None:
             for df_ in dfs:
-                _try_append_df(batch_id, df_, perturbation_dfs_to_join)
+                _try_append_df(
+                    batch_id,
+                    df_.drop("simulation_id") if df_ is not None else df_,
+                    perturbation_dfs_to_join,
+                )
 
         def pivot_gradient(df: pl.DataFrame) -> pl.DataFrame:
             pivoted_ = df.pivot(on="control_name", index="batch_id", separator=" wrt ")
@@ -688,38 +682,51 @@ class LocalExperiment(BaseMode):
                 }
             )
 
-        for batch in self.batches:
-            if not batch.has_data:
+        for ens in self.ensembles:
+            if not ens.has_data():
                 continue
 
             try_append_perturbation_dfs(
-                batch.batch_id,
-                batch.perturbation_objectives,
-                batch.perturbation_constraints,
+                ens.iteration,
+                ens.perturbation_objectives,
+                ens.perturbation_constraints,
             )
 
             try_append_realization_dfs(
-                batch.batch_id,
-                batch.realization_objectives,
-                batch.realization_controls,
-                batch.realization_constraints,
+                ens.iteration,
+                ens.realization_objectives,
+                ens.realization_controls,
+                ens.realization_constraints,
             )
 
-            if batch.batch_objective_gradient is not None:
+            try_append_perturbation_dfs(
+                ens.iteration,
+                ens.perturbation_controls,
+                ens.perturbation_constraints,
+            )
+
+            try_append_realization_dfs(
+                ens.iteration,
+                ens.realization_controls,
+                ens.realization_controls,
+                ens.realization_constraints,
+            )
+
+            if ens.batch_objective_gradient is not None:
                 try_append_batch_dfs(
-                    batch.batch_id, pivot_gradient(batch.batch_objective_gradient)
+                    ens.iteration, pivot_gradient(ens.batch_objective_gradient)
                 )
 
-            if batch.batch_constraint_gradient is not None:
+            if ens.batch_constraint_gradient is not None:
                 try_append_batch_dfs(
-                    batch.batch_id,
-                    pivot_gradient(batch.batch_constraint_gradient),
+                    ens.iteration,
+                    pivot_gradient(ens.batch_constraint_gradient),
                 )
 
             try_append_batch_dfs(
-                batch.batch_id,
-                batch.batch_objectives,
-                batch.batch_constraints,
+                ens.iteration,
+                ens.batch_objectives,
+                ens.batch_constraints,
             )
 
         def _join_by_batch(
@@ -820,231 +827,3 @@ class LocalExperiment(BaseMode):
         combined_df, _, _ = self.export_dataframes()
         combined_df.write_csv(full_path)
         return full_path
-
-
-class BatchStorageData:
-    def __init__(self, path: Path) -> None:
-        self._ensemble_path = path
-
-    @property
-    def has_data(self) -> bool:
-        return any(
-            (self._ensemble_path / f"{df_name}.parquet").exists()
-            for df_name in LocalEnsemble.BATCH_DATAFRAMES
-        )
-
-    @property
-    def has_function_results(self) -> bool:
-        return any(
-            (self._ensemble_path / f"{df_name}.parquet").exists()
-            for df_name in _FunctionResults.__annotations__
-        )
-
-    @property
-    def has_gradient_results(self) -> bool:
-        return any(
-            (self._ensemble_path / f"{df_name}.parquet").exists()
-            for df_name in _GradientResults.__annotations__
-        )
-
-    @staticmethod
-    def _read_df_if_exists(path: Path) -> pl.DataFrame | None:
-        if path.exists():
-            return pl.read_parquet(path)
-        return None
-
-    @property
-    def realization_controls(self) -> pl.DataFrame | None:
-        return self._read_df_if_exists(
-            self._ensemble_path / "realization_controls.parquet"
-        )
-
-    @property
-    def batch_objectives(self) -> pl.DataFrame | None:
-        return self._read_df_if_exists(self._ensemble_path / "batch_objectives.parquet")
-
-    @property
-    def realization_objectives(self) -> pl.DataFrame | None:
-        return self._read_df_if_exists(
-            self._ensemble_path / "realization_objectives.parquet"
-        )
-
-    @property
-    def batch_constraints(self) -> pl.DataFrame | None:
-        return self._read_df_if_exists(
-            self._ensemble_path / "batch_constraints.parquet"
-        )
-
-    @property
-    def realization_constraints(self) -> pl.DataFrame | None:
-        return self._read_df_if_exists(
-            self._ensemble_path / "realization_constraints.parquet"
-        )
-
-    @property
-    def batch_bound_constraint_violations(self) -> pl.DataFrame | None:
-        return self._read_df_if_exists(
-            self._ensemble_path / "batch_bound_constraint_violations.parquet"
-        )
-
-    @property
-    def batch_input_constraint_violations(self) -> pl.DataFrame | None:
-        return self._read_df_if_exists(
-            self._ensemble_path / "batch_input_constraint_violations.parquet"
-        )
-
-    @property
-    def batch_output_constraint_violations(self) -> pl.DataFrame | None:
-        return self._read_df_if_exists(
-            self._ensemble_path / "batch_output_constraint_violations.parquet"
-        )
-
-    @property
-    def batch_objective_gradient(self) -> pl.DataFrame | None:
-        return self._read_df_if_exists(
-            self._ensemble_path / "batch_objective_gradient.parquet"
-        )
-
-    @property
-    def perturbation_objectives(self) -> pl.DataFrame | None:
-        return self._read_df_if_exists(
-            self._ensemble_path / "perturbation_objectives.parquet"
-        )
-
-    @property
-    def batch_constraint_gradient(self) -> pl.DataFrame | None:
-        return self._read_df_if_exists(
-            self._ensemble_path / "batch_constraint_gradient.parquet"
-        )
-
-    @property
-    def perturbation_constraints(self) -> pl.DataFrame | None:
-        return self._read_df_if_exists(
-            self._ensemble_path / "perturbation_constraints.parquet"
-        )
-
-    @cached_property
-    def is_improvement(self) -> bool:
-        info = json.loads(
-            (self._ensemble_path / "batch.json").read_text(encoding="utf-8")
-        )
-        return bool(info["is_improvement"])
-
-    @cached_property
-    def batch_id(self) -> bool:
-        info = json.loads(
-            (self._ensemble_path / "batch.json").read_text(encoding="utf-8")
-        )
-        return info["batch_id"]
-
-    def write_metadata(self, is_improvement: bool) -> None:
-        # Clear the cached prop for the new value to take place
-        if "is_improvement" in self.__dict__:
-            del self.is_improvement
-
-        info = json.loads(
-            (self._ensemble_path / "batch.json").read_text(encoding="utf-8")
-        )
-        info["is_improvement"] = is_improvement
-        (self._ensemble_path / "batch.json").write_text(
-            json.dumps(info), encoding="utf-8"
-        )
-
-
-class FunctionBatchStorageData(BatchStorageData):
-    @property
-    def realization_controls(self) -> pl.DataFrame:
-        df = super().realization_controls
-        assert df is not None
-        return df
-
-    @property
-    def batch_objectives(self) -> pl.DataFrame:
-        df = super().batch_objectives
-        assert df is not None
-        return df
-
-    @property
-    def realization_objectives(self) -> pl.DataFrame:
-        df = super().realization_objectives
-        assert df is not None
-        return df
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "controls": self.realization_controls.drop(
-                "batch_id", "realization", "simulation_id"
-            ).to_dicts()[0],
-            "objectives": self.batch_objectives.drop(
-                "batch_id", "total_objective_value"
-            ).to_dicts()[0],
-            "total_objective_value": self.batch_objectives[
-                "total_objective_value"
-            ].item(),
-            "realization_objectives": self.realization_objectives.drop(
-                "batch_id"
-            ).to_dicts(),
-        }
-
-
-class GradientBatchStorageData(BatchStorageData):
-    @property
-    def perturbation_objectives(self) -> pl.DataFrame:
-        df = super().perturbation_objectives
-        assert df is not None
-        return df
-
-    def to_dict(self) -> dict[str, Any]:
-        objective_gradient = (
-            self.batch_objective_gradient.drop("batch_id")
-            .sort("control_name")
-            .to_dicts()
-            if self.batch_objective_gradient is not None
-            else None
-        )
-
-        perturbation_objectives = (
-            self.perturbation_objectives.drop("batch_id")
-            .sort("realization", "perturbation")
-            .to_dicts()
-        )
-        constraint_gradient_dicts = (
-            self.batch_constraint_gradient.drop("batch_id")
-            .sort("control_name")
-            .to_dicts()
-            if self.batch_constraint_gradient is not None
-            else None
-        )
-
-        perturbation_gradient_dicts = (
-            self.perturbation_constraints.drop("batch_id")
-            .sort("realization", "perturbation")
-            .to_dicts()
-            if self.perturbation_constraints is not None
-            else None
-        )
-
-        return {
-            "objective_gradient_values": objective_gradient,
-            "perturbation_objectives": perturbation_objectives,
-            "constraint_gradient": constraint_gradient_dicts,
-            "perturbation_constraints": perturbation_gradient_dicts,
-        }
-
-
-class _FunctionResults(TypedDict):
-    realization_controls: pl.DataFrame
-    batch_objectives: pl.DataFrame
-    realization_objectives: pl.DataFrame
-    batch_constraints: pl.DataFrame | None
-    realization_constraints: pl.DataFrame | None
-    batch_bound_constraint_violations: pl.DataFrame | None
-    batch_input_constraint_violations: pl.DataFrame | None
-    batch_output_constraint_violations: pl.DataFrame | None
-
-
-class _GradientResults(TypedDict):
-    batch_objective_gradient: pl.DataFrame | None
-    perturbation_objectives: pl.DataFrame | None
-    batch_constraint_gradient: pl.DataFrame | None
-    perturbation_constraints: pl.DataFrame | None

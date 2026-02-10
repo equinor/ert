@@ -17,6 +17,7 @@
       "result_type": "FunctionResult",
       "results": {
         "controls": {
+          "batch_id": 0,
           "point.x": 0.0,
           "point.y": 0.0,
           "point.z": 0.0
@@ -42,7 +43,6 @@
       "everest_event": "OPTIMIZATION_RESULT",
       "result_type": "GradientResult",
       "results": {
-        "constraint_gradient": null,
         "objective_gradient_values": [
           {
             "control_name": "point.x",
@@ -66,52 +66,41 @@
             "distance_q.total": 1.004598
           }
         ],
-        "perturbation_constraints": null,
         "perturbation_objectives": [
           {
             "distance_p": -0.768321,
             "distance_q": -4.77908,
             "perturbation": 0,
-            "point.x": 0.007656,
-            "point.y": -0.004966,
-            "point.z": -0.020507,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 1
           },
           {
             "distance_p": -0.749978,
             "distance_q": -4.7708,
             "perturbation": 1,
-            "point.x": -0.000062,
-            "point.y": 0.005267,
-            "point.z": -0.005128,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 2
           },
           {
             "distance_p": -0.75531,
             "distance_q": -4.7157,
             "perturbation": 2,
-            "point.x": -0.002939,
-            "point.y": -0.006964,
-            "point.z": 0.004672,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 3
           },
           {
             "distance_p": -0.74171,
             "distance_q": -4.75369,
             "perturbation": 3,
-            "point.x": -0.011459,
-            "point.y": 0.014455,
-            "point.z": 0.005667,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 4
           },
           {
             "distance_p": -0.733388,
             "distance_q": -4.73379,
             "perturbation": 4,
-            "point.x": 0.001289,
-            "point.y": -0.001189,
-            "point.z": 0.016798,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 5
           }
         ]
       }
@@ -133,6 +122,7 @@
       "result_type": "FunctionResult",
       "results": {
         "controls": {
+          "batch_id": 1,
           "point.x": -0.004202,
           "point.y": -0.011298,
           "point.z": 1.0
@@ -169,6 +159,7 @@
       "result_type": "FunctionResult",
       "results": {
         "controls": {
+          "batch_id": 2,
           "point.x": -0.002101,
           "point.y": -0.005648,
           "point.z": 0.499928

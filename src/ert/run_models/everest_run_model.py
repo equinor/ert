@@ -644,15 +644,97 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
             )
 
         for r in results:
-            storage_batches = (
-                self._experiment.batches_with_function_results
+            batches = (
+                self._experiment.everest_ensembles_with_function_results
                 if isinstance(r, FunctionResults)
-                else self._experiment.batches_with_gradient_results
+                else self._experiment.everest_ensembles_with_gradient_results
             )
-            batch_data = next(
-                (b for b in storage_batches if b.batch_id == r.batch_id),
-                None,
-            )
+            ens = next((ens for ens in batches if ens.iteration == r.batch_id), None)
+            if ens is None:
+                continue
+
+            results_dict: dict[str, Any] | None = None
+            if isinstance(r, FunctionResults):
+                results_dict = {}
+                if ens.realization_controls is not None:
+                    results_dict |= {
+                        "controls": ens.realization_controls.drop(
+                            "realization", "simulation_id"
+                        ).to_dicts()[0],
+                    }
+
+                if ens.realization_objectives is not None:
+                    results_dict |= {
+                        "realization_objectives": ens.realization_objectives.drop(
+                            "batch_id"
+                        ).to_dicts()
+                    }
+
+                if ens.batch_objectives is not None:
+                    results_dict |= {
+                        "objectives": ens.batch_objectives.drop(
+                            "batch_id", "total_objective_value"
+                        ).to_dicts()[0],
+                        "total_objective_value": ens.batch_objectives[
+                            "total_objective_value"
+                        ].item(),
+                    }
+
+                if ens.realization_constraints is not None:
+                    results_dict |= {
+                        "realization_constraints": ens.realization_constraints.drop(
+                            "batch_id"
+                        ).to_dicts()
+                    }
+            else:
+                results_dict = {}
+                objective_gradient = (
+                    ens.batch_objective_gradient.drop("batch_id")
+                    .sort("control_name")
+                    .to_dicts()
+                    if ens.batch_objective_gradient is not None
+                    else None
+                )
+
+                if objective_gradient is not None:
+                    results_dict |= {"objective_gradient_values": objective_gradient}
+
+                perturbation_objectives = (
+                    (
+                        ens.perturbation_objectives.drop("batch_id")
+                        .sort("realization", "perturbation")
+                        .to_dicts()
+                    )
+                    if ens.perturbation_objectives is not None
+                    else None
+                )
+
+                if perturbation_objectives is not None:
+                    results_dict |= {"perturbation_objectives": perturbation_objectives}
+
+                constraint_gradient_dicts = (
+                    ens.batch_constraint_gradient.drop("batch_id")
+                    .sort("control_name")
+                    .to_dicts()
+                    if ens.batch_constraint_gradient is not None
+                    else None
+                )
+
+                if constraint_gradient_dicts is not None:
+                    results_dict |= {"constraint_gradient": constraint_gradient_dicts}
+
+                perturbation_gradient_dicts = (
+                    ens.perturbation_constraints.drop("batch_id")
+                    .sort("realization", "perturbation")
+                    .to_dicts()
+                    if ens.perturbation_constraints is not None
+                    else None
+                )
+
+                if perturbation_gradient_dicts is not None:
+                    results_dict |= {
+                        "perturbation_constraints": perturbation_gradient_dicts
+                    }
 
             self.send_event(
                 EverestBatchResultEvent(
@@ -661,7 +743,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
                     result_type="FunctionResult"
                     if isinstance(r, FunctionResults)
                     else "GradientResult",
-                    results=batch_data.to_dict() if batch_data else None,
+                    results=results_dict,
                 )
             )
 

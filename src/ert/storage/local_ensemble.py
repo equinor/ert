@@ -12,7 +12,7 @@ from datetime import datetime
 from functools import cache, cached_property, lru_cache
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 import numpy as np
@@ -52,18 +52,13 @@ SCALAR_FILENAME = "SCALAR"
 
 
 class BatchDataframes(TypedDict, total=False):
-    realization_controls: pl.DataFrame | None
     batch_objectives: pl.DataFrame | None
-    realization_objectives: pl.DataFrame | None
     batch_constraints: pl.DataFrame | None
-    realization_constraints: pl.DataFrame | None
     batch_bound_constraint_violations: pl.DataFrame | None
     batch_input_constraint_violations: pl.DataFrame | None
     batch_output_constraint_violations: pl.DataFrame | None
     batch_objective_gradient: pl.DataFrame | None
-    perturbation_objectives: pl.DataFrame | None
     batch_constraint_gradient: pl.DataFrame | None
-    perturbation_constraints: pl.DataFrame | None
 
 
 class _Index(BaseModel):
@@ -94,21 +89,6 @@ class LocalEnsemble(BaseMode):
     Manages multiple realizations of experiments, including different sets of
     parameters and responses.
     """
-
-    BATCH_DATAFRAMES: ClassVar[list[str]] = [
-        "realization_controls",
-        "batch_objectives",
-        "realization_objectives",
-        "batch_constraints",
-        "realization_constraints",
-        "batch_bound_constraint_violations",
-        "batch_input_constraint_violations",
-        "batch_output_constraint_violations",
-        "batch_objective_gradient",
-        "perturbation_objectives",
-        "batch_constraint_gradient",
-        "perturbation_constraints",
-    ]
 
     def __init__(
         self,
@@ -1247,8 +1227,7 @@ class LocalEnsemble(BaseMode):
         )
 
     def save_batch_dataframes(self, dataframes: BatchDataframes) -> None:
-        for df_name in self.BATCH_DATAFRAMES:
-            df = dataframes.get(df_name)
+        for df_name, df in dataframes.items():
             if isinstance(df, pl.DataFrame):
                 df.write_parquet(self._path / f"{df_name}.parquet")
 
@@ -1265,6 +1244,326 @@ class LocalEnsemble(BaseMode):
                 },
                 f,
             )
+
+    @property
+    def has_function_results(self) -> bool:
+        return (self._path / "batch_objectives.parquet").exists()
+
+    @property
+    def has_gradient_results(self) -> bool:
+        if self._index.everest_realization_info is None:
+            return False
+
+        return any(
+            info["perturbation"] != -1 for _, info in self.simulations_with_responses
+        )
+
+    @staticmethod
+    def _read_df_if_exists(path: Path) -> pl.DataFrame | None:
+        if path.exists():
+            return pl.read_parquet(path)
+        return None
+
+    @property
+    def realization_controls(self) -> pl.DataFrame | None:
+        simulations = [
+            (ert_realization, info["model_realization"])
+            for ert_realization, info in self.simulations
+            if info["perturbation"] == -1
+        ]
+
+        if not simulations:
+            return None
+
+        dfs: list[pl.DataFrame] = []
+        for param_group in self.experiment.parameter_configuration:
+            data = self.load_parameters(
+                param_group,
+                realizations=np.array(
+                    [ert_realization for ert_realization, _ in simulations]
+                ),
+            )
+            assert isinstance(data, pl.DataFrame)
+            dfs.append(data)
+
+        if not dfs:
+            return None
+
+        result = dfs[0]
+        for df in dfs[1:]:
+            result = result.join(df, on="realization", how="left")
+
+        header_columns = ["batch_id", "realization", "simulation_id"]
+        return (
+            result.rename({"realization": "simulation_id"})
+            .join(
+                pl.DataFrame(
+                    list(zip(*simulations, strict=True)),
+                    schema=["simulation_id", "realization"],
+                ),
+                on="simulation_id",
+            )
+            .with_columns(pl.lit(self.iteration, dtype=pl.UInt32).alias("batch_id"))
+            .select(
+                pl.col(header_columns),
+                pl.exclude(header_columns),
+            )
+        )
+
+    @property
+    def perturbation_controls(self) -> pl.DataFrame | None:
+        simulations = [
+            (ert_realization, info["model_realization"], info["perturbation"])
+            for ert_realization, info in self.simulations
+            if info["perturbation"] != -1
+        ]
+
+        if not simulations:
+            return None
+
+        dfs: list[pl.DataFrame] = []
+        for param_group in self.experiment.parameter_configuration:
+            data = self.load_parameters(
+                param_group,
+                realizations=np.array(
+                    [ert_realization for ert_realization, _, _ in simulations]
+                ),
+            )
+            assert isinstance(data, pl.DataFrame)
+            dfs.append(data)
+
+        if not dfs:
+            return None
+
+        result = dfs[0]
+        for df in dfs[1:]:
+            result = result.join(df, on="realization", how="left")
+
+        header_columns = ["batch_id", "realization", "simulation_id", "perturbation"]
+        return (
+            result.rename({"realization": "simulation_id"})
+            .join(
+                pl.DataFrame(
+                    list(zip(*simulations, strict=True)),
+                    schema=["simulation_id", "realization", "perturbation"],
+                ),
+                on="simulation_id",
+            )
+            .with_columns(pl.lit(self.iteration, dtype=pl.UInt32).alias("batch_id"))
+            .select(
+                pl.col(header_columns),
+                pl.exclude(header_columns),
+            )
+        )
+
+    @property
+    def batch_objectives(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(self._path / "batch_objectives.parquet")
+
+    @property
+    def realization_objectives(self) -> pl.DataFrame | None:
+        simulations = [
+            (ert_realization, info["model_realization"])
+            for ert_realization, info in self.simulations_with_responses
+            if info["perturbation"] == -1
+        ]
+
+        if not simulations:
+            return None
+
+        header_columns = ["batch_id", "realization", "simulation_id"]
+        return (
+            self.load_responses(
+                "everest_objectives",
+                tuple(sorted([ert_realization for ert_realization, _ in simulations])),
+            )
+            .pivot(on="response_key", values="values")
+            .rename({"realization": "simulation_id"})
+            .join(
+                pl.DataFrame(
+                    list(zip(*simulations, strict=True)),
+                    schema=["simulation_id", "realization"],
+                ),
+                on="simulation_id",
+            )
+            .with_columns(pl.lit(self.iteration, dtype=pl.UInt32).alias("batch_id"))
+            .select(
+                pl.col(header_columns),
+                pl.exclude(header_columns),
+            )
+        )
+
+    @property
+    def batch_constraints(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(self._path / "batch_constraints.parquet")
+
+    @property
+    def realization_constraints(self) -> pl.DataFrame | None:
+        simulations = [
+            (ert_realization, info["model_realization"])
+            for ert_realization, info in self.simulations_with_responses
+            if info["perturbation"] == -1
+        ]
+
+        if (
+            not simulations
+            or "everest_constraints" not in self.experiment.response_configuration
+        ):
+            return None
+
+        header_columns = ["batch_id", "realization", "simulation_id"]
+        return (
+            self.load_responses(
+                "everest_constraints",
+                tuple(sorted([ert_realization for ert_realization, _ in simulations])),
+            )
+            .pivot(on="response_key", values="values")
+            .rename({"realization": "simulation_id"})
+            .join(
+                pl.DataFrame(
+                    list(zip(*simulations, strict=True)),
+                    schema=["simulation_id", "realization"],
+                ),
+                on="simulation_id",
+            )
+            .with_columns(pl.lit(self.iteration, dtype=pl.UInt32).alias("batch_id"))
+            .select(
+                pl.col(header_columns),
+                pl.exclude(header_columns),
+            )
+        )
+
+    @property
+    def batch_bound_constraint_violations(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(
+            self._path / "batch_bound_constraint_violations.parquet"
+        )
+
+    @property
+    def batch_input_constraint_violations(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(
+            self._path / "batch_input_constraint_violations.parquet"
+        )
+
+    @property
+    def batch_output_constraint_violations(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(
+            self._path / "batch_output_constraint_violations.parquet"
+        )
+
+    @property
+    def batch_objective_gradient(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(self._path / "batch_objective_gradient.parquet")
+
+    @property
+    def simulations(self) -> list[tuple[int, EverestRealizationInfo]]:
+        everest_realization_info = self._index.everest_realization_info
+        assert everest_realization_info is not None
+
+        return [
+            (ert_realization, info)
+            for ert_realization, info in everest_realization_info.items()
+        ]
+
+    @property
+    def simulations_with_responses(self) -> list[tuple[int, EverestRealizationInfo]]:
+        realizations_with_responses = self.get_realization_list_with_responses()
+        return [
+            (sim_id, info)
+            for sim_id, info in self.simulations
+            if sim_id in realizations_with_responses
+        ]
+
+    @property
+    def perturbation_objectives(self) -> pl.DataFrame | None:
+        simulations = [
+            (ert_realization, info["model_realization"], info["perturbation"])
+            for ert_realization, info in self.simulations_with_responses
+            if info["perturbation"] != -1
+        ]
+
+        if not simulations:
+            return None
+
+        header_columns = ["batch_id", "realization", "simulation_id", "perturbation"]
+        return (
+            self.load_responses(
+                "everest_objectives",
+                tuple(
+                    sorted([ert_realization for ert_realization, _, _ in simulations])
+                ),
+            )
+            .pivot(on="response_key", values="values")
+            .rename({"realization": "simulation_id"})
+            .join(
+                pl.DataFrame(
+                    list(zip(*simulations, strict=True)),
+                    schema=["simulation_id", "realization", "perturbation"],
+                ),
+                on="simulation_id",
+            )
+            .with_columns(pl.lit(self.iteration, dtype=pl.UInt32).alias("batch_id"))
+            .select(
+                pl.col(header_columns),
+                pl.exclude(header_columns),
+            )
+        )
+
+    @property
+    def batch_constraint_gradient(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(self._path / "batch_constraint_gradient.parquet")
+
+    @property
+    def perturbation_constraints(self) -> pl.DataFrame | None:
+        simulations = [
+            (ert_realization, info["model_realization"], info["perturbation"])
+            for ert_realization, info in self.simulations_with_responses
+            if info["perturbation"] != -1
+        ]
+
+        if (
+            not simulations
+            or "everest_constraints" not in self.experiment.response_configuration
+        ):
+            return None
+
+        header_columns = ["batch_id", "realization", "simulation_id", "perturbation"]
+        return (
+            self.load_responses(
+                "everest_constraints",
+                tuple(
+                    sorted([ert_realization for ert_realization, _, _ in simulations])
+                ),
+            )
+            .pivot(on="response_key", values="values")
+            .rename({"realization": "simulation_id"})
+            .join(
+                pl.DataFrame(
+                    list(zip(*simulations, strict=True)),
+                    schema=["simulation_id", "realization", "perturbation"],
+                ),
+                on="simulation_id",
+            )
+            .with_columns(pl.lit(self.iteration, dtype=pl.UInt32).alias("batch_id"))
+            .select(
+                pl.col(header_columns),
+                pl.exclude(header_columns),
+            )
+        )
+
+    @cached_property
+    def is_improvement(self) -> bool:
+        info = json.loads((self._path / "batch.json").read_text(encoding="utf-8"))
+        return bool(info["is_improvement"])
+
+    def write_metadata(self, is_improvement: bool) -> None:
+        # Clear the cached prop for the new value to take place
+        if "is_improvement" in self.__dict__:
+            del self.is_improvement
+
+        info = json.loads((self._path / "batch.json").read_text(encoding="utf-8"))
+        info["is_improvement"] = is_improvement
+        (self._path / "batch.json").write_text(json.dumps(info), encoding="utf-8")
 
 
 async def _read_parameters(

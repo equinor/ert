@@ -61,7 +61,7 @@ def visualization_entry(args: list[str] | None = None) -> None:
             storage_path=ever_config.storage_dir,
         )
 
-        if not storage.batches_with_function_results:
+        if not storage.everest_ensembles_with_function_results:
             print(
                 f"No data found in storage at {storage._storage.path}. "
                 f"Please try again later"
