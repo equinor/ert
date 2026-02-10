@@ -711,3 +711,56 @@ def test_that_missing_egrid_without_locations_is_ignored(mock_resfo_file):
 
     data = rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
     assert data["response_key"].to_list() == ["WELL:2000-01-01:PRESSURE"]
+
+
+def test_that_zone_with_multiple_layers_produces_single_matching_row(
+    mock_resfo_file, egrid, mocked_files
+):
+    mocked_files["/tmp/does_not_exist/zonemap.txt"] = StringIO(
+        "1 zone1\n2 zone1\n3 zone3\n"
+    )
+    config = ErtConfig.from_dict(
+        {
+            "ZONEMAP": "zonemap.txt",
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    {
+                        "type": ObservationType.RFT,
+                        "name": "NAME",
+                        "WELL": "WELL",
+                        "VALUE": "700",
+                        "ERROR": "0.1",
+                        "DATE": "2000-01-01",
+                        "PROPERTY": "PRESSURE",
+                        "NORTH": 1.0,
+                        "EAST": 1.0,
+                        "TVD": 1.5,
+                        "ZONE": "zone1",
+                    }
+                ],
+            ),
+        }
+    )
+
+    mock_resfo_file(
+        "/tmp/does_not_exist/ECLBASE1.EGRID",
+        egrid,
+    )
+    mock_resfo_file(
+        "/tmp/does_not_exist/ECLBASE1.RFT",
+        [
+            *cell_start(
+                date=(1, 1, 2000),
+                well_name="WELL",
+                ijks=[(1, 1, 1), (1, 1, 2), (1, 1, 3)],
+            ),
+            ("PRESSURE", float_arr([0.0, 1.0, 2.0])),
+            ("DEPTH   ", float_arr([0.0, 1.0, 2.0])),
+        ],
+    )
+
+    res = config.ensemble_config.response_configs["rft"].read_from_file(
+        "/tmp/does_not_exist", 1, 1
+    )
+    assert res["zone"].to_list().count("zone1") == 1
