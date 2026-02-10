@@ -764,3 +764,86 @@ def test_that_zone_with_multiple_layers_produces_single_matching_row(
         "/tmp/does_not_exist", 1, 1
     )
     assert res["zone"].to_list().count("zone1") == 1
+
+
+def test_that_non_matching_wells_are_ignored_silently(mock_resfo_file):
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.RFT",
+        [
+            *cell_start(date=(1, 1, 2000), well_name="WELL_MATCH"),
+            ("PRESSURE", float_arr([100.0, 200.0])),
+            ("DEPTH   ", float_arr([20.0, 30.0])),
+            *cell_start(date=(1, 1, 2000), well_name="WELL_OTHER"),
+            ("PRESSURE", float_arr([300.0, 400.0])),
+            ("DEPTH   ", float_arr([40.0, 50.0])),
+        ],
+    )
+
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={"WELL_MATCH": {"2000-01-01": ["PRESSURE"]}},
+    )
+
+    data = rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+    assert data["response_key"].to_list() == [
+        "WELL_MATCH:2000-01-01:PRESSURE",
+        "WELL_MATCH:2000-01-01:PRESSURE",
+    ]
+
+
+def test_that_wildcard_well_with_specific_date_matches_all_wells(mock_resfo_file):
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.RFT",
+        [
+            *cell_start(date=(1, 1, 2000), well_name="WELL1", ijks=((1, 1, 1),)),
+            ("PRESSURE", float_arr([100.0])),
+            ("DEPTH   ", float_arr([20.0])),
+            *cell_start(date=(1, 2, 2000), well_name="WELL1", ijks=((1, 1, 1),)),
+            ("PRESSURE", float_arr([101.0])),
+            ("DEPTH   ", float_arr([21.0])),
+            *cell_start(date=(1, 1, 2000), well_name="WELL2", ijks=((1, 1, 1),)),
+            ("PRESSURE", float_arr([200.0])),
+            ("DEPTH   ", float_arr([30.0])),
+        ],
+    )
+
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={"*": {"2000-01-01": ["PRESSURE"]}},
+    )
+
+    data = rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+    assert data["response_key"].to_list() == [
+        "WELL1:2000-01-01:PRESSURE",
+        "WELL2:2000-01-01:PRESSURE",
+    ]
+
+
+def test_that_specific_well_with_wildcard_property_reads_all_float_arrays(
+    mock_resfo_file,
+):
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.RFT",
+        [
+            *cell_start(date=(1, 1, 2000), well_name="WELL", ijks=((1, 1, 1),)),
+            ("PRESSURE", float_arr([100.0])),
+            ("SWAT    ", float_arr([0.1])),
+            ("SGAS    ", float_arr([0.2])),
+            ("HOSTGRID", ["        "]),
+            ("DEPTH   ", float_arr([20.0])),
+        ],
+    )
+
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={"WELL": {"2000-01-01": ["*"]}},
+    )
+
+    data = rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+    assert sorted(data["response_key"].to_list()) == sorted(
+        [
+            "WELL:2000-01-01:PRESSURE",
+            "WELL:2000-01-01:SWAT",
+            "WELL:2000-01-01:SGAS",
+        ]
+    )
