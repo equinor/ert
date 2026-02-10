@@ -209,7 +209,7 @@ To assign a log uniform distribution ranging from 0.00001 to 1 to a variable:
 
 Notes
 ~~~~~
-The log uniform distribution is useful when modeling positve variables that are heavily skewed towards a boundary.
+The log uniform distribution is useful when modeling positive variables that are heavily skewed towards a boundary.
 
 CONST: Dirac Delta Distribution
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
