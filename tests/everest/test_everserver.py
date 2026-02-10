@@ -150,7 +150,7 @@ async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
     storage = EverestStorage.from_storage_path(config.storage_dir)
 
     # Check that there is only one batch.
-    assert {b.batch_id for b in storage.batches} == {0}
+    assert {b.iteration for b in storage.ensembles} == {0}
 
 
 @pytest.mark.skip_mac_ci

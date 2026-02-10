@@ -17,6 +17,7 @@
       "result_type": "FunctionResult",
       "results": {
         "controls": {
+          "batch_id": 0,
           "point.x": 0.1,
           "point.y": 0.1,
           "point.z": 0.1
@@ -40,7 +41,6 @@
       "everest_event": "OPTIMIZATION_RESULT",
       "result_type": "GradientResult",
       "results": {
-        "constraint_gradient": null,
         "objective_gradient_values": [
           {
             "control_name": "point.x",
@@ -58,47 +58,36 @@
             "distance.total": 0.799338
           }
         ],
-        "perturbation_constraints": null,
         "perturbation_objectives": [
           {
             "distance": -0.480058,
             "perturbation": 0,
-            "point.x": 0.099011,
-            "point.y": 0.099632,
-            "point.z": 0.101288,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 1
           },
           {
             "distance": -0.478648,
             "perturbation": 1,
-            "point.x": 0.100194,
-            "point.y": 0.10092,
-            "point.z": 0.100577,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 2
           },
           {
             "distance": -0.48033,
             "perturbation": 2,
-            "point.x": 0.099364,
-            "point.y": 0.100542,
-            "point.z": 0.099683,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 3
           },
           {
             "distance": -0.481403,
             "perturbation": 3,
-            "point.x": 0.099678,
-            "point.y": 0.100097,
-            "point.z": 0.098474,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 4
           },
           {
             "distance": -0.478786,
             "perturbation": 4,
-            "point.x": 0.101192,
-            "point.y": 0.099329,
-            "point.z": 0.101,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 5
           }
         ]
       }
@@ -120,6 +109,7 @@
       "result_type": "FunctionResult",
       "results": {
         "controls": {
+          "batch_id": 1,
           "point.x": 0.900386,
           "point.y": 0.900548,
           "point.z": 0.899338
@@ -154,6 +144,7 @@
       "result_type": "FunctionResult",
       "results": {
         "controls": {
+          "batch_id": 2,
           "point.x": 0.500148,
           "point.y": 0.500228,
           "point.z": 0.499624
@@ -187,7 +178,6 @@
       "everest_event": "OPTIMIZATION_RESULT",
       "result_type": "GradientResult",
       "results": {
-        "constraint_gradient": null,
         "objective_gradient_values": [
           {
             "control_name": "point.x",
@@ -205,47 +195,36 @@
             "distance.total": 0.002055
           }
         ],
-        "perturbation_constraints": null,
         "perturbation_objectives": [
           {
             "distance": -4e-6,
             "perturbation": 0,
-            "point.x": 0.500284,
-            "point.y": 0.50176,
-            "point.z": 0.498964,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 0
           },
           {
             "distance": -7e-6,
             "perturbation": 1,
-            "point.x": 0.499836,
-            "point.y": 0.500566,
-            "point.z": 0.497416,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 1
           },
           {
             "distance": -5e-6,
             "perturbation": 2,
-            "point.x": 0.500976,
-            "point.y": 0.50177,
-            "point.z": 0.50075,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 2
           },
           {
             "distance": -2e-6,
             "perturbation": 3,
-            "point.x": 0.500903,
-            "point.y": 0.500082,
-            "point.z": 0.500906,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 3
           },
           {
             "distance": -2e-6,
             "perturbation": 4,
-            "point.x": 0.501222,
-            "point.y": 0.500621,
-            "point.z": 0.499629,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 4
           }
         ]
       }

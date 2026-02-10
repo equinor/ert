@@ -18,14 +18,14 @@ def get_optimal_result(output_dir: str) -> OptimalResult | None:
     experiment = EverestStorage.from_storage_path(Path(output_dir))
 
     matching_batches = [
-        b
-        for b in experiment.batches_with_function_results
-        if not b.batch_objectives.is_empty() and b.is_improvement
+        ens
+        for ens in experiment.everest_ensembles_with_function_results
+        if not ens.batch_objectives.is_empty() and ens.is_improvement
     ]
 
     if matching_batches:
         matching_batches.sort(
-            key=lambda b: -b.batch_objectives.select(
+            key=lambda item: -item.batch_objectives.select(
                 pl.col("total_objective_value").sample(n=1)
             ).item()
         )
@@ -41,7 +41,7 @@ def get_optimal_result(output_dir: str) -> OptimalResult | None:
         experiment._storage.close()
 
         return OptimalResult(
-            batch=batch.batch_id,
+            batch=batch.iteration,
             controls=controls_dict,
             total_objective=batch.batch_objectives.select(
                 pl.col("total_objective_value")

@@ -19,13 +19,16 @@ class EverestDataAPI:
     @property
     def batches(self) -> list[int]:
         return sorted(
-            b.batch_id for b in self._ever_storage.batches_with_function_results
+            ensemble.iteration
+            for ensemble in self._ever_storage.everest_ensembles_with_function_results
         )
 
     @property
     def accepted_batches(self) -> list[int]:
         return sorted(
-            b.batch_id for b in self._ever_storage.batches if b.is_improvement
+            ensemble.iteration
+            for ensemble in self._ever_storage.everest_ensembles
+            if ensemble.is_improvement
         )
 
     @property
@@ -42,25 +45,31 @@ class EverestDataAPI:
 
     @property
     def realizations(self) -> list[int]:
-        if not self._ever_storage.batches_with_function_results:
+        if not self._ever_storage.everest_ensembles_with_function_results:
             return []
-        return sorted(
-            self._ever_storage.batches_with_function_results[0]
-            .realization_objectives["realization"]
-            .unique()
-            .to_list()
+
+        realization_objectives = (
+            self._ever_storage.everest_ensembles_with_function_results[
+                0
+            ].realization_objectives
         )
+
+        assert realization_objectives is not None
+        return sorted(realization_objectives["realization"].unique().to_list())
 
     @property
     def simulations(self) -> list[int]:
-        if not self._ever_storage.batches_with_function_results:
+        if not self._ever_storage.everest_ensembles_with_function_results:
             return []
-        return sorted(
-            self._ever_storage.batches_with_function_results[0]
-            .realization_objectives["simulation_id"]
-            .unique()
-            .to_list()
+
+        realization_objectives = (
+            self._ever_storage.everest_ensembles_with_function_results[
+                0
+            ].realization_objectives
         )
+
+        assert realization_objectives is not None
+        return sorted(realization_objectives["simulation_id"].unique().to_list())
 
     @property
     def control_names(self) -> list[str]:
@@ -71,13 +80,14 @@ class EverestDataAPI:
         all_control_names = self._ever_storage.parameter_keys
 
         new = []
-        for batch in self._ever_storage.batches_with_function_results:
-            for controls_dict in batch.realization_controls.to_dicts():
+        for ensemble in self._ever_storage.everest_ensembles_with_function_results:
+            assert ensemble.realization_controls is not None
+            for controls_dict in ensemble.realization_controls.to_dicts():
                 for name in all_control_names:
                     new.append(
                         {
                             "control": name,
-                            "batch": batch.batch_id,
+                            "batch": ensemble.iteration,
                             "value": controls_dict[name],
                         }
                     )
@@ -89,11 +99,12 @@ class EverestDataAPI:
         obj_values = []
 
         objectives = self._ever_storage.objective_functions
-        for b in self._ever_storage.batches_with_function_results:
+        for ensemble in self._ever_storage.everest_ensembles_with_function_results:
+            assert ensemble.realization_objectives is not None
             for (
                 model_realization,
                 simulation_id,
-            ), df in b.realization_objectives.sort(
+            ), df in ensemble.realization_objectives.sort(
                 ["realization", "simulation_id"]
             ).group_by(["realization", "simulation_id"], maintain_order=True):
                 for key, scale, weight in zip(
@@ -103,7 +114,7 @@ class EverestDataAPI:
                     if obj_value is None:
                         logger.error(
                             f"Objective {key} has no value for "
-                            f"batch {b.batch_id}, "
+                            f"batch {ensemble.iteration}, "
                             f"model realization {model_realization},"
                             f"simulation id {simulation_id}. "
                             f"Columns in dataframe: {', '.join(df.columns)}"
@@ -112,7 +123,7 @@ class EverestDataAPI:
 
                     obj_values.append(
                         {
-                            "batch": int(b.batch_id),
+                            "batch": int(ensemble.iteration),
                             "realization": int(model_realization),
                             "simulation": int(simulation_id),
                             "function": key,
@@ -128,10 +139,11 @@ class EverestDataAPI:
     def single_objective_values(self) -> list[dict[str, Any]]:
         batch_datas = pl.concat(
             [
-                b.batch_objectives.select(
-                    c for c in b.batch_objectives.columns if c != "merit_value"
-                ).with_columns(pl.lit(1 if b.is_improvement else 0).alias("accepted"))
-                for b in self._ever_storage.batches_with_function_results
+                ens.batch_objectives.select(
+                    c for c in ens.batch_objectives.columns if c != "merit_value"
+                ).with_columns(pl.lit(1 if ens.is_improvement else 0).alias("accepted"))
+                for ens in self._ever_storage.everest_ensembles_with_function_results
+                if ens.batch_objectives is not None  # <-- skip None
             ]
         )
         objectives = self._ever_storage.objective_functions
@@ -159,10 +171,10 @@ class EverestDataAPI:
     @property
     def gradient_values(self) -> list[dict[str, Any]]:
         all_batch_data = [
-            b.batch_objective_gradient
-            for b in self._ever_storage.batches_with_gradient_results
-            if b.batch_objective_gradient is not None
-            and b.is_improvement  # Note: This part might not be sensible
+            ensemble.batch_objective_gradient
+            for ensemble in self._ever_storage.everest_ensembles_with_gradient_results
+            if ensemble.batch_objective_gradient is not None
+            and ensemble.is_improvement  # Note: This part might not be sensible
         ]
         if not all_batch_data:
             return []

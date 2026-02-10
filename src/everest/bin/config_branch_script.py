@@ -68,11 +68,15 @@ def opt_controls_by_batch(optimization_dir: Path, batch: int) -> dict[str, Any] 
 
     assert storage is not None
     function_batch = next(
-        (b for b in storage.batches_with_function_results if b.batch_id == batch),
+        (
+            b
+            for b in storage.everest_ensembles_with_function_results
+            if b.batch_id == batch
+        ),
         None,
     )
 
-    if function_batch:
+    if function_batch and function_batch.realization_controls is not None:
         # All model realizations should have the same unperturbed control values per
         # batch hence it does not matter which realization we select the controls for
         return function_batch.realization_controls.select(

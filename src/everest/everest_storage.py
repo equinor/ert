@@ -11,7 +11,6 @@ from ropt.results import FunctionResults, GradientResults, Results
 
 from ert.storage import LocalExperiment, open_storage
 from ert.storage.local_ensemble import BatchDataframes
-from ert.storage.local_experiment import _FunctionResults, _GradientResults
 from everest.strings import EVEREST
 
 logger = logging.getLogger(__name__)
@@ -19,6 +18,19 @@ logger = logging.getLogger(__name__)
 
 class OptimizationDataframes(TypedDict, total=False):
     realization_weights: pl.DataFrame | None
+
+
+class _FunctionResults(TypedDict):
+    batch_objectives: pl.DataFrame
+    batch_constraints: pl.DataFrame | None
+    batch_bound_constraint_violations: pl.DataFrame | None
+    batch_input_constraint_violations: pl.DataFrame | None
+    batch_output_constraint_violations: pl.DataFrame | None
+
+
+class _GradientResults(TypedDict):
+    batch_objective_gradient: pl.DataFrame | None
+    batch_constraint_gradient: pl.DataFrame | None
 
 
 class EverestStorage:
@@ -144,21 +156,8 @@ class EverestStorage:
         # We could select only objective values,
         # but we select all to also get the constraint values (if they exist)
         logger.debug("Storing function results")
-        realization_objectives = cls._ropt_to_df(
-            results,
-            "evaluations",
-            values=["objectives", "evaluation_info.sim_ids"],
-            select=["batch_id", "realization", "objective"],
-        )
 
         if results.functions is not None and results.functions.constraints is not None:
-            realization_constraints = cls._ropt_to_df(
-                results,
-                "evaluations",
-                values=["constraints", "evaluation_info.sim_ids"],
-                select=["batch_id", "realization", "nonlinear_constraint"],
-            )
-
             batch_constraints = cls._ropt_to_df(
                 results,
                 "functions",
@@ -172,13 +171,8 @@ class EverestStorage:
                     "constraint_value",
                 ],
             )
-
-            realization_constraints = realization_constraints.pivot(
-                values=["constraint_value"], on="constraint_name"
-            )
         else:
             batch_constraints = None
-            realization_constraints = None
 
         batch_objectives = cls._ropt_to_df(
             results,
@@ -186,20 +180,6 @@ class EverestStorage:
             values=["objectives", "weighted_objective"],
             select=["batch_id", "objective"],
         )
-
-        realization_controls = cls._ropt_to_df(
-            results,
-            "evaluations",
-            values=["variables", "evaluation_info.sim_ids"],
-            select=["batch_id", "variable", "realization"],
-        )
-
-        realization_controls = realization_controls.pivot(
-            on="control_name",
-            values=["control_value"],
-            separator=":",
-        )
-
         batch_objectives = batch_objectives.pivot(
             on="objective_name",
             values=["objective_value"],
@@ -253,22 +233,9 @@ class EverestStorage:
                     )
                 )
 
-        realization_objectives = realization_objectives.pivot(
-            on="objective_name",
-            values="objective_value",
-            index=[
-                "batch_id",
-                "realization",
-                "simulation_id",
-            ],
-        )
-
         return {
-            "realization_controls": realization_controls,
             "batch_objectives": batch_objectives,
-            "realization_objectives": realization_objectives,
             "batch_constraints": batch_constraints,
-            "realization_constraints": realization_constraints,
             "batch_bound_constraint_violations": batch_bound_constraint_violations,
             "batch_input_constraint_violations": batch_input_constraint_violations,
             "batch_output_constraint_violations": batch_output_constraint_violations,
@@ -280,24 +247,6 @@ class EverestStorage:
         have_perturbed_constraints = (
             results.evaluations.perturbed_constraints is not None
         )
-        perturbation_objectives = cls._ropt_to_df(
-            results,
-            "evaluations",
-            values=(
-                [
-                    "variables",
-                    "perturbed_variables",
-                    "perturbed_objectives",
-                    "evaluation_info.sim_ids",
-                ]
-                + (["perturbed_constraints"] if have_perturbed_constraints else [])
-            ),
-            select=(
-                ["batch_id", "variable", "realization", "perturbation", "objective"]
-                + (["nonlinear_constraint"] if have_perturbed_constraints else [])
-            ),
-        )
-
         if results.gradients is not None:
             have_constraints = results.gradients.constraints is not None
             batch_objective_gradient = cls._ropt_to_df(
@@ -316,23 +265,6 @@ class EverestStorage:
             batch_objective_gradient = None
 
         if have_perturbed_constraints:
-            perturbation_constraints = (
-                perturbation_objectives[
-                    "batch_id",
-                    "realization",
-                    "perturbation",
-                    "control_name",
-                    "perturbed_control_value",
-                    *[
-                        c
-                        for c in perturbation_objectives.columns
-                        if "constraint" in c.lower()
-                    ],
-                ]
-                .pivot(on="constraint_name", values=["perturbed_constraint_value"])
-                .pivot(on="control_name", values="perturbed_control_value")
-            )
-
             if batch_objective_gradient is not None:
                 batch_constraint_gradient = batch_objective_gradient[
                     "batch_id",
@@ -359,28 +291,8 @@ class EverestStorage:
             else:
                 batch_constraint_gradient = None
 
-            perturbation_objectives = perturbation_objectives.drop(
-                [
-                    c
-                    for c in perturbation_objectives.columns
-                    if "constraint" in c.lower()
-                ]
-            ).unique()
         else:
             batch_constraint_gradient = None
-            perturbation_constraints = None
-
-        perturbation_objectives = perturbation_objectives.drop(
-            "simulation_id", "control_value"
-        )
-
-        perturbation_objectives = perturbation_objectives.pivot(
-            on="objective_name", values="perturbed_objective_value"
-        )
-
-        perturbation_objectives = perturbation_objectives.pivot(
-            on="control_name", values="perturbed_control_value"
-        )
 
         if batch_objective_gradient is not None:
             objective_names = (
@@ -402,9 +314,7 @@ class EverestStorage:
 
         return {
             "batch_objective_gradient": batch_objective_gradient,
-            "perturbation_objectives": perturbation_objectives,
             "batch_constraint_gradient": batch_constraint_gradient,
-            "perturbation_constraints": perturbation_constraints,
         }
 
     @classmethod
@@ -449,11 +359,8 @@ class EverestStorage:
         batch_dataframes: dict[int, BatchDataframes] = {}
         for batch_id, batch_dict in batch_dicts.items():
             batch_dataframes[batch_id] = {
-                "realization_controls": batch_dict.get("realization_controls"),
                 "batch_objectives": batch_dict.get("batch_objectives"),
-                "realization_objectives": batch_dict.get("realization_objectives"),
                 "batch_constraints": batch_dict.get("batch_constraints"),
-                "realization_constraints": batch_dict.get("realization_constraints"),
                 "batch_bound_constraint_violations": batch_dict.get(
                     "batch_bound_constraint_violations"
                 ),
@@ -464,11 +371,9 @@ class EverestStorage:
                     "batch_output_constraint_violations"
                 ),
                 "batch_objective_gradient": batch_dict.get("batch_objective_gradient"),
-                "perturbation_objectives": batch_dict.get("perturbation_objectives"),
                 "batch_constraint_gradient": batch_dict.get(
                     "batch_constraint_gradient"
                 ),
-                "perturbation_constraints": batch_dict.get("perturbation_constraints"),
             }
 
         return batch_dataframes
