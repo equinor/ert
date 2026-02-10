@@ -149,8 +149,11 @@ class SlurmDriver(Driver):
         if self._exclude_hosts:
             sbatch_with_args.append(f"--exclude={self._exclude_hosts}")
         if self._max_runtime and int(self._max_runtime):
+            total_max_runtime = (
+                self._max_runtime + Driver._MAX_RUNTIME_QUEUE_SYSTEM_PADDING
+            )
             sbatch_with_args.append(
-                f"--time={_seconds_to_slurm_time_format(self._max_runtime)}"
+                f"--time={_seconds_to_slurm_time_format(total_max_runtime)}"
             )
         if self._queue_name:
             sbatch_with_args.append(f"--partition={self._queue_name}")

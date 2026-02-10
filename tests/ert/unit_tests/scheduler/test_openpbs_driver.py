@@ -557,6 +557,17 @@ async def test_submit_project_code():
     )
 
 
+@pytest.mark.usefixtures("capturing_qsub")
+async def test_that_submit_with_qsub_capture_uses_max_runtime():
+    MAX_RUNTIME = 120
+    driver = OpenPBSDriver(max_runtime=MAX_RUNTIME)
+    await driver.submit(0, "sleep")
+    assert (
+        f" -l walltime={MAX_RUNTIME + driver._MAX_RUNTIME_QUEUE_SYSTEM_PADDING}"
+        in Path("captured_qsub_args").read_text(encoding="utf-8")
+    )
+
+
 @pytest.fixture(autouse=True)
 def mock_openpbs(pytestconfig, monkeypatch, tmp_path):
     if pytestconfig.getoption("openpbs"):

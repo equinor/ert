@@ -1223,6 +1223,19 @@ async def test_submit_with_num_cpu(pytestconfig, job_name):
 
 
 @pytest.mark.usefixtures("capturing_bsub")
+async def test_that_submit_with_bsub_capture_uses_max_runtime():
+    MAX_RUNTIME = 120
+    driver = LsfDriver(max_runtime=MAX_RUNTIME)
+    await driver.submit(0, "sleep")
+    formatted_max_runtime = (
+        MAX_RUNTIME + driver._MAX_RUNTIME_QUEUE_SYSTEM_PADDING
+    ) // 60
+    assert f"-W {formatted_max_runtime}" in Path("captured_bsub_args").read_text(
+        encoding="utf-8"
+    )
+
+
+@pytest.mark.usefixtures("capturing_bsub")
 async def test_submit_with_num_cpu_with_bsub_capture():
     driver = LsfDriver()
     await driver.submit(0, "sleep", num_cpu=4)
