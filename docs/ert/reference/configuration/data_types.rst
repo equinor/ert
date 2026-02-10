@@ -341,7 +341,7 @@ Parameters
   - ``SKEWNESS > 0``: Shifts the distribution towards the right.
 - **WIDTH**: The shape of the distribution.
 
-  - ``WIDTH close to zero, for exampe 0.01``: Generates a uniform distribution.
+  - ``WIDTH close to zero, for example 0.01``: Generates a uniform distribution.
   - ``WIDTH > 1``: Leads to a unimodal, peaked distribution.
   - ``WIDTH < 1``: Forms a bimodal distribution with peaks.
 
