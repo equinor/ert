@@ -530,7 +530,7 @@ EnKF heritage
 -------------
 
 With regards to the datatypes in ERT this is a part of the application where the
-EnKF heritage shows through quite clearly, the datetypes offered by ERT would
+EnKF heritage shows through quite clearly, the datatypes offered by ERT would
 probably be different if ERT was made for Ensemble Smoother from the outset.
 Pecularites of EnKF heritage include:
 
