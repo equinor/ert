@@ -1945,6 +1945,10 @@ followed by one or more zone names that apply to that layer:
 
         ZONEMAP my_zones.txt
 
+The file my_zones.txt should be located in the runpath in the above example. In
+general, when the ZONEMAP is set to a relative path then it is interpreted as relative
+to the runpath, otherwise it should be located at the absolute path.
+
 When RFT observations include a ZONE specification (either in the CSV file or
 directly in the observation), ERT will validate that the observation's grid
 location matches the expected zone from the ZONEMAP. If an observation is

@@ -148,14 +148,8 @@ def _handle_rft_observation(
     rft_observation: RFTObservation,
 ) -> pl.DataFrame:
     location = (rft_observation.east, rft_observation.north, rft_observation.tvd)
-    zones = {zone for zones in rft_config.zonemap.values() for zone in zones}
     if location not in rft_config.locations:
         if (zone := rft_observation.zone) is not None:
-            if zone not in zones:
-                raise ObservationConfigError(
-                    f"The RFT_OBSERVATION {rft_observation.name} was given "
-                    f"zone {zone} but no such zone exists in the ZONEMAP."
-                )
             rft_config.locations.append((location, zone))
         else:
             rft_config.locations.append(location)

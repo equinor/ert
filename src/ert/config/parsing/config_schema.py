@@ -1,4 +1,3 @@
-from ._parse_zonemap import parse_zonemap
 from .config_dict import ConfigDict
 from .config_keywords import ConfigKeys
 from .config_schema_deprecations import deprecated_keywords_list
@@ -334,7 +333,7 @@ def init_user_config_schema() -> ConfigSchemaDict:
         existing_path_inline_keyword(
             ConfigKeys.OBS_CONFIG, parser=lambda f, c: parse_observations(c, f)
         ),
-        existing_path_inline_keyword(ConfigKeys.ZONEMAP, parser=parse_zonemap),
+        string_keyword(ConfigKeys.ZONEMAP),
         existing_path_inline_keyword(ConfigKeys.TIME_MAP),
         single_arg_keyword(ConfigKeys.GEN_KW_EXPORT_NAME),
         history_source_keyword(),

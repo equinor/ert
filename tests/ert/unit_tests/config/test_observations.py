@@ -338,33 +338,6 @@ def test_that_rft_config_is_created_from_observations():
     assert rft_config.locations == [(30.0, 71.0, 2000.0)]
 
 
-def test_that_rft_observations_with_unknown_zones_errors():
-    with pytest.raises(ConfigValidationError, match="no such zone"):
-        ErtConfig.from_dict(
-            {
-                "ECLBASE": "ECLIPSE_CASE",
-                "OBS_CONFIG": (
-                    "obsconf",
-                    [
-                        {
-                            "type": ObservationType.RFT,
-                            "name": "NAME",
-                            "WELL": "well",
-                            "VALUE": "700",
-                            "ERROR": "0.1",
-                            "DATE": "2013-03-31",
-                            "PROPERTY": "PRESSURE",
-                            "NORTH": 71.0,
-                            "EAST": 30.0,
-                            "TVD": 2000,
-                            "ZONE": "zone1",  # There is no such zone (no zonemap)
-                        }
-                    ],
-                ),
-            }
-        )
-
-
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_the_date_keyword_sets_the_summary_index_without_time_map_or_refcase():
     date = "2020-01-01"

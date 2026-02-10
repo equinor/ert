@@ -7,7 +7,9 @@ import os
 import re
 import warnings
 from collections import defaultdict
+from collections.abc import Container, Mapping
 from dataclasses import dataclass
+from pathlib import Path
 from typing import IO, Any, Literal, TypeAlias, cast
 
 import numpy as np
@@ -19,7 +21,13 @@ from resfo_utilities import CornerpointGrid, InvalidRFTError, RFTReader
 from ert.substitutions import substitute_runpath_name
 from ert.warnings import PostSimulationWarning
 
-from .parsing import ConfigDict, ConfigKeys, ConfigValidationError, ConfigWarning
+from .parsing import (
+    ConfigDict,
+    ConfigKeys,
+    ConfigValidationError,
+    ConfigWarning,
+    parse_zonemap,
+)
 from .response_config import InvalidResponseFile, ResponseConfig
 from .responses_index import responses_index
 
@@ -71,7 +79,7 @@ class RFTConfig(ResponseConfig):
         default_factory=dict
     )
     locations: list[Point | tuple[Point, ZoneName]] = Field(default_factory=list)
-    zonemap: dict[int, list[ZoneName]] = Field(default_factory=dict)
+    zonemap: Path | None = None
 
     @property
     def _zoned_locations(self) -> list[_ZonedPoint]:
@@ -110,6 +118,7 @@ class RFTConfig(ResponseConfig):
         indices: dict[GridIndex | None, set[_ZonedPoint]],
         iens: int,
         iter_: int,
+        zonemap: Mapping[int, Container[str]],
     ) -> dict[GridIndex | None, set[_ZonedPoint]]:
         for idx, locs in indices.items():
             if idx is not None:
@@ -117,7 +126,7 @@ class RFTConfig(ResponseConfig):
                     if loc.has_zone():
                         zone = cast(ZoneName, loc.zone_name)
                         # zonemap is 1-indexed so +1
-                        if zone not in self.zonemap.get(idx[-1] + 1, []):
+                        if zone not in zonemap.get(idx[-1] + 1, []):
                             warnings.warn(
                                 PostSimulationWarning(
                                     f"An RFT observation with location {loc.point}, "
@@ -144,6 +153,15 @@ class RFTConfig(ResponseConfig):
         in that zone, is not labeled, and instead a warning is emitted.
         """
         filename = substitute_runpath_name(self.input_files[0], iens, iter_)
+        if self.zonemap:
+            zonemap_filename = Path(
+                substitute_runpath_name(str(self.zonemap), iens, iter_)
+            )
+            if not self.zonemap.is_absolute():
+                zonemap_filename = Path(run_path) / zonemap_filename
+            zonemap = parse_zonemap(str(zonemap_filename), zonemap_filename.read_text())
+        else:
+            zonemap = {}
         if filename.upper().endswith(".DATA"):
             # For backwards compatibility, it is
             # allowed to give REFCASE and ECLBASE both
@@ -158,7 +176,9 @@ class RFTConfig(ResponseConfig):
         ] = defaultdict(dict)
         indices = {}
         if self.locations:
-            indices = self._filter_zones(self._find_indices(grid_filename), iens, iter_)
+            indices = self._filter_zones(
+                self._find_indices(grid_filename), iens, iter_, zonemap
+            )
         if None in indices:
             raise InvalidResponseFile(
                 f"Did not find grid coordinate for location(s) {indices[None]}"
@@ -364,7 +384,7 @@ class RFTConfig(ResponseConfig):
                 input_files=[eclbase.replace("%d", "<IENS>")],
                 keys=keys,
                 data_to_read=data_to_read,
-                zonemap=config_dict.get(ConfigKeys.ZONEMAP, ("", {}))[1],
+                zonemap=config_dict.get(ConfigKeys.ZONEMAP),
             )
 
         return None

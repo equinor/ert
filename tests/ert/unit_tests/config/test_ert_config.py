@@ -2690,17 +2690,17 @@ def test_history_observation_removal_error(caplog, monkeypatch):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_zone_map_is_read_from_file():
+def test_that_zone_map_can_be_set_per_realization():
     Path("zone_map.txt").write_text("1 zone1\n", encoding="utf-8")
     config = ErtConfig.from_file_contents(
         """
         NUM_REALIZATIONS 1
         ECLBASE BASE
 
-        ZONEMAP zone_map.txt
+        ZONEMAP <RUNPATH>/rms/output/zone/layer_zone_table.txt
         """,
     )
-    assert config.zonemap == {1: ["zone1"]}
+    assert str(config.zonemap) == "<RUNPATH>/rms/output/zone/layer_zone_table.txt"
 
 
 @pytest.mark.usefixtures("use_tmpdir")
