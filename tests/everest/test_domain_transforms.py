@@ -251,6 +251,23 @@ def test_that_objective_auto_scaling_with_zero_objectives_fails(ever_config):
         transforms["objective_scaler"].calculate_auto_scales(np.zeros((2, 2)), [0, 1])
 
 
+def test_that_infinite_objectives_are_converted_to_nan(ever_config):
+    transforms = get_optimization_domain_transforms(
+        [c.to_ert_parameter_config() for c in ever_config.controls],
+        ever_config.create_ert_objectives_config(),
+        ever_config.input_constraints,
+        ever_config.create_ert_output_constraints_config(),
+        ever_config.model,
+        False,
+    )
+    transforms["objective_scaler"].calculate_auto_scales([4.0, 1.0], [0, 1])
+    assert np.all(
+        np.isnan(
+            transforms["objective_scaler"].to_optimizer(np.asarray([-np.inf, np.inf]))
+        )
+    )
+
+
 def test_output_constraint_no_scaling(ever_config):
     transforms = get_optimization_domain_transforms(
         [c.to_ert_parameter_config() for c in ever_config.controls],
@@ -339,3 +356,20 @@ def test_that_output_constraint_auto_scaling_with_zero_constraints_fails(ever_co
         match="Auto-scaling of the constraints failed to estimate a positive scale",
     ):
         transforms["constraint_scaler"].calculate_auto_scales(np.zeros((2, 2)), [0, 1])
+
+
+def test_that_infinite_output_constraints_are_converted_to_nan(ever_config):
+    transforms = get_optimization_domain_transforms(
+        [c.to_ert_parameter_config() for c in ever_config.controls],
+        ever_config.create_ert_objectives_config(),
+        ever_config.input_constraints,
+        ever_config.create_ert_output_constraints_config(),
+        ever_config.model,
+        False,
+    )
+    transforms["constraint_scaler"].calculate_auto_scales([2.0, 1.0], [0, 1])
+    assert np.all(
+        np.isnan(
+            transforms["constraint_scaler"].to_optimizer(np.asarray([-np.inf, np.inf]))
+        )
+    )
