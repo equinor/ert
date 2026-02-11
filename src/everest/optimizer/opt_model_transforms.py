@@ -262,13 +262,16 @@ class ObjectiveScaler(ObjectiveTransform):
     def to_optimizer(self, objectives: NDArray[np.float64]) -> NDArray[np.float64]:
         """Transform objectives to optimizer space.
 
+        Infinite values are converted  to Nan, which causes the corresponding
+        realization to be treated as failed.
+
         Args:
             objectives: The objectives to transform.
 
         Returns:
             The negative of the scaled objectives.
         """
-        return -objectives / self._scales
+        return np.where(np.isfinite(objectives), -objectives / self._scales, np.nan)
 
     def from_optimizer(self, objectives: NDArray[np.float64]) -> NDArray[np.float64]:
         """Transform objectives to user space.
@@ -357,13 +360,16 @@ class ConstraintScaler(NonLinearConstraintTransform):
     def to_optimizer(self, constraints: NDArray[np.float64]) -> NDArray[np.float64]:
         """Transform constraints to optimizer space.
 
+        Infinite values are converted  to Nan, which causes the corresponding
+        realization to be treated as failed.
+
         Args:
             constraints: The constraints to transform.
 
         Returns:
             The scaled constraints.
         """
-        return constraints / self._scales
+        return np.where(np.isfinite(constraints), constraints / self._scales, np.nan)
 
     def from_optimizer(self, constraints: NDArray[np.float64]) -> NDArray[np.float64]:
         """Transform constraints to user space.
