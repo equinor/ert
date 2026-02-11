@@ -62,9 +62,9 @@ class PlotApi:
     def api_version(self) -> str:
         with create_ertserver_client(self.ens_path) as client:
             try:
-                response = client.get("/version", timeout=self._timeout)
-                self._check_response(response)
-                api_version = str(response.json())
+                http_response = client.get("/version", timeout=self._timeout)
+                self._check_http_response(http_response)
+                api_version = str(http_response.json())
             except Exception as exc:
                 logger.exception(exc)
                 raise exc
@@ -88,16 +88,16 @@ class PlotApi:
         self._all_ensembles = []
         with create_ertserver_client(self.ens_path) as client:
             try:
-                response = client.get("/experiments", timeout=self._timeout)
-                self._check_response(response)
-                experiments = response.json()
+                http_response = client.get("/experiments", timeout=self._timeout)
+                self._check_http_response(http_response)
+                experiments = http_response.json()
                 for experiment in experiments:
                     for ensemble_id in experiment["ensemble_ids"]:
-                        response = client.get(
+                        http_response = client.get(
                             f"/ensembles/{ensemble_id}", timeout=self._timeout
                         )
-                        self._check_response(response)
-                        response_json: dict[str, Any] = response.json()
+                        self._check_http_response(http_response)
+                        response_json: dict[str, Any] = http_response.json()
                         ensemble_name: str = response_json["userdata"]["name"]
                         experiment_name: str = response_json["userdata"][
                             "experiment_name"
@@ -128,13 +128,13 @@ class PlotApi:
                 return self._all_ensembles
 
     @staticmethod
-    def _check_response(response: httpx._models.Response) -> None:
-        if response.status_code == httpx.codes.UNAUTHORIZED:
-            raise httpx.RequestError(message=f"{response.text}")
-        if response.status_code != httpx.codes.OK:
+    def _check_http_response(http_response: httpx._models.Response) -> None:
+        if http_response.status_code == httpx.codes.UNAUTHORIZED:
+            raise httpx.RequestError(message=f"{http_response.text}")
+        if http_response.status_code != httpx.codes.OK:
             raise httpx.RequestError(
                 f" Please report this error and try restarting the application."
-                f"{response.text} from url: {response.url}."
+                f"{http_response.text} from url: {http_response.url}."
             )
 
     @cached_property
@@ -143,10 +143,10 @@ class PlotApi:
         all_params = {}
 
         with create_ertserver_client(self.ens_path) as client:
-            response = client.get("/experiments", timeout=self._timeout)
-            self._check_response(response)
+            http_response = client.get("/experiments", timeout=self._timeout)
+            self._check_http_response(http_response)
 
-            for experiment in response.json():
+            for experiment in http_response.json():
                 for metadata in experiment["parameters"].values():
                     param_cfg = parameter_config_adapter.validate_python(metadata)
                     if group := metadata.get("group"):
@@ -170,15 +170,15 @@ class PlotApi:
         key_defs: dict[str, PlotApiKeyDefinition] = {}
 
         with create_ertserver_client(self.ens_path) as client:
-            response = client.get("/experiments", timeout=self._timeout)
-            self._check_response(response)
+            http_response = client.get("/experiments", timeout=self._timeout)
+            self._check_http_response(http_response)
 
             def update_keydef(plot_key_def: PlotApiKeyDefinition) -> None:
                 # Only replace existing key definition if the new has observations
                 if plot_key_def.key not in key_defs or plot_key_def.observations:
                     key_defs[plot_key_def.key] = plot_key_def
 
-            for experiment in response.json():
+            for experiment in http_response.json():
                 for response_type, metadata in experiment["responses"].items():
                     response_config: KnownResponseTypes = (
                         response_config_adapter.validate_python(metadata)
@@ -236,7 +236,7 @@ class PlotApi:
         if "@" in response_key:
             response_key = response_key.split("@", maxsplit=1)[0]
         with create_ertserver_client(self.ens_path) as client:
-            response = client.get(
+            http_response = client.get(
                 f"/ensembles/{ensemble_id}/responses/{PlotApi.escape(response_key)}",
                 headers={"accept": "application/x-parquet"},
                 params={"filter_on": json.dumps(filter_on)}
@@ -244,9 +244,9 @@ class PlotApi:
                 else None,
                 timeout=self._timeout,
             )
-            self._check_response(response)
+            self._check_http_response(http_response)
 
-            stream = io.BytesIO(response.content)
+            stream = io.BytesIO(http_response.content)
             df = pd.read_parquet(stream)
 
             try:
@@ -269,7 +269,7 @@ class PlotApi:
                 headers={"accept": "application/x-parquet"},
                 timeout=self._timeout,
             )
-            self._check_response(parameter)
+            self._check_http_response(parameter)
 
             stream = io.BytesIO(parameter.content)
             df = pd.read_parquet(stream)
@@ -307,17 +307,17 @@ class PlotApi:
                 actual_response_key = key.split("@", maxsplit=1)[0]
             filter_on = key_def.filter_on
             with create_ertserver_client(self.ens_path) as client:
-                response = client.get(
+                http_response = client.get(
                     f"/ensembles/{ensemble.id}/responses/{PlotApi.escape(actual_response_key)}/observations",
                     timeout=self._timeout,
                     params={"filter_on": json.dumps(filter_on)}
                     if filter_on is not None
                     else None,
                 )
-                self._check_response(response)
+                self._check_http_response(http_response)
 
                 try:
-                    observations = response.json()
+                    observations = http_response.json()
                     observations_dfs = []
                     if not observations:
                         continue
@@ -395,14 +395,14 @@ class PlotApi:
             return np.array([])
 
         with create_ertserver_client(self.ens_path) as client:
-            response = client.get(
+            http_response = client.get(
                 f"/ensembles/{ensemble.id}/parameters/{PlotApi.escape(key)}/std_dev",
                 params={"z": z},
                 timeout=self._timeout,
             )
 
-            if response.status_code == 200:
+            if http_response.status_code == 200:
                 # Deserialize the numpy array
-                return np.load(io.BytesIO(response.content))
+                return np.load(io.BytesIO(http_response.content))
             else:
                 return np.array([])
