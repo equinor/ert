@@ -9,5 +9,5 @@ __all__ = [
     "ErtServerController",
     "ErtServerExit",
     "ServerBootFail",
-    "create_ertserver_client"
+    "create_ertserver_client",
 ]
