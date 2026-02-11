@@ -208,7 +208,7 @@ class IoProvider:
             xinc=1.0,
             yinc=1.0,
             values=values,
-        ).to_file(file_name, fformat="irap_ascii")
+        ).to_file(file_name, fformat="irap_binary")
 
 
 class Transform(Enum):
@@ -399,7 +399,7 @@ class SurfaceParameter(Parameter):
             np.testing.assert_allclose(
                 xtgeo.surface_from_file(
                     path / self.filename,
-                    "irap_ascii",
+                    "irap_binary",
                 ).values,
                 values,
                 atol=5e-5,

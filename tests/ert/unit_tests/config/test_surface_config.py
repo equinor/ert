@@ -51,7 +51,7 @@ def test_runpath_roundtrip(tmp_path, storage, surface):
     ensemble = storage.create_experiment(
         experiment_config={"parameter_configuration": [config]}
     ).create_ensemble(name="text", ensemble_size=1)
-    surface.to_file(tmp_path / "input_0", fformat="irap_ascii")
+    surface.to_file(tmp_path / "input_0", fformat="irap_binary")
 
     # run_path -> storage
     ds = config.read_from_runpath(tmp_path, 0, 0)
@@ -62,11 +62,11 @@ def test_runpath_roundtrip(tmp_path, storage, surface):
     config.write_to_runpath(tmp_path, 0, ensemble)
 
     # compare contents
-    # Data is saved as 'irap_ascii', which means that we only keep 6 significant digits
+    # Data is saved as 'irap_binary', which means that we only keep 6 significant digits
     actual_surface = xtgeo.surface_from_file(
-        tmp_path / "output", fformat="irap_ascii", dtype=np.float32
+        tmp_path / "output", fformat="irap_binary", dtype=np.float32
     )
-    actual_surface_surfio = IrapSurface.from_ascii_file(tmp_path / "output")
+    actual_surface_surfio = IrapSurface.from_binary_file(tmp_path / "output")
 
     np.testing.assert_allclose(
         actual_surface.values, surface.values, rtol=0, atol=1e-06
@@ -182,7 +182,7 @@ def test_config_file_line_sets_the_corresponding_properties(
         rotation=8.0,
         yflip=-1,
         values=[1.0] * 6,
-    ).to_file("base_surface.irap", fformat="irap_ascii")
+    ).to_file("base_surface.irap", fformat="irap_binary")
     surface_config = SurfaceConfig.from_config_list(
         [
             "TOP",
