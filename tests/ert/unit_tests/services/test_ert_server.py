@@ -225,6 +225,19 @@ def test_singleton_start(monkeypatch, server_script, tmp_path):
     assert not (tmp_path / _ERT_SERVER_CONNECTION_INFO_FILE).exists()
 
 
+@pytest.mark.script(
+    """\
+time.sleep(1)
+os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
+os.close(fd)
+"""
+)
+def test_that_connect_raises_permission_error(tmp_path):
+    tmp_path.chmod(0o000)
+    with pytest.raises(PermissionError):
+        connect(project=tmp_path, timeout=30)
+
+
 @pytest.mark.integration_test
 @pytest.mark.script(
     """\
