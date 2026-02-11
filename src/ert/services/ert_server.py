@@ -184,10 +184,10 @@ _ERT_SERVER_EXECUTABLE_FILE = str(Path(__file__).parent / "_storage_main.py")
 
 
 class ErtServerContext:
-    def __init__(self, service: ErtServer) -> None:
+    def __init__(self, service: ErtServerController) -> None:
         self._service = service
 
-    def __enter__(self) -> ErtServer:
+    def __enter__(self) -> ErtServerController:
         return self._service
 
     def __exit__(
@@ -200,8 +200,8 @@ class ErtServerContext:
         return exc_type is None
 
 
-class ErtServer:
-    _instance: ErtServer | None = None
+class ErtServerController:
+    _instance: ErtServerController | None = None
 
     def __init__(
         self,
@@ -350,7 +350,7 @@ class ErtServer:
         project: os.PathLike[str],
         timeout: int | None = None,
         logging_config: str | None = None,
-    ) -> ErtServer:
+    ) -> ErtServerController:
         if cls._instance is not None:
             cls._instance.wait_until_ready()
             assert isinstance(cls._instance, cls)
@@ -372,7 +372,7 @@ class ErtServer:
                     with (path / _ERT_SERVER_CONNECTION_INFO_FILE).open() as f:
                         storage_server_content = json.load(f)
 
-                    return ErtServer(
+                    return ErtServerController(
                         storage_path=str(path),
                         connection_info=storage_server_content,
                         logging_config=logging_config,
@@ -465,7 +465,7 @@ class ErtServer:
 
 def create_ertserver_client(project: Path, timeout: int | None = None) -> Client:
     """Read connection info from file in path and create HTTP client."""
-    connection = ErtServer.connect(timeout=timeout, project=project)
+    connection = ErtServerController.connect(timeout=timeout, project=project)
     info = connection.fetch_connection_info()
     return Client(
         conn_info=ErtClientConnectionInfo(
