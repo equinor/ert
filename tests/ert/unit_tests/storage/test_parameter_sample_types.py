@@ -96,8 +96,8 @@ def test_surface_param(
             rotation=0.0,
             values=values,
         )
-        expect_surface.to_file("surf.irap", fformat="irap_ascii")
-        expect_surface.to_file("surf0.irap", fformat="irap_ascii")
+        expect_surface.to_file("surf.irap", fformat="irap_binary")
+        expect_surface.to_file("surf0.irap", fformat="irap_binary")
 
         with open("config.ert", mode="w", encoding="utf-8") as fh:
             fh.writelines(f"NUM_REALIZATIONS 1\n{config_str}\n")
@@ -127,7 +127,7 @@ def test_surface_param(
             expected_iter = 1 if expect_forward_init else 0
             actual_surface = surface_from_file(
                 f"simulations/realization-0/iter-{expected_iter}/surf.irap",
-                fformat="irap_ascii",
+                fformat="irap_binary",
             )
             assert actual_surface.compare_topology(expect_surface)
             assert actual_surface.values.tolist() == values

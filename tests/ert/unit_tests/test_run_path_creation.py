@@ -885,11 +885,11 @@ def test_when_manifest_files_are_written_loading_succeeds(storage, itr):
     grid.to_file("GRID.EGRID", fformat="egrid")
     Path("base.irap").write_text("", encoding="utf-8")
     xtgeo.RegularSurface(ncol=dim_size, nrow=dim_size, xinc=1, yinc=1).to_file(
-        "base.irap", fformat="irap_ascii"
+        "base.irap", fformat="irap_binary"
     )
     for i in range(num_realizations):
         xtgeo.RegularSurface(ncol=dim_size, nrow=dim_size, xinc=1, yinc=1).to_file(
-            f"{i}init{i}0.irap", fformat="irap_ascii"
+            f"{i}init{i}0.irap", fformat="irap_binary"
         )
         xtgeo.GridProperty(
             ncol=2,
@@ -996,7 +996,7 @@ def test_when_manifest_files_are_written_loading_succeeds(storage, itr):
                 ).to_file(file, fformat="roff")
             elif file.endswith("irap"):
                 xtgeo.RegularSurface(ncol=2, nrow=3, xinc=1, yinc=1).to_file(
-                    file, fformat="irap_ascii"
+                    file, fformat="irap_binary"
                 )
             elif file.endswith("UNSMRY"):
                 simple_unsmry().to_file(file)

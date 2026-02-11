@@ -279,7 +279,7 @@ def test_that_ert_changes_to_config_directory(qtbot):
     surf = RegularSurface(
         ncol=nx, nrow=ny, xinc=1.0, yinc=1.0, values=rng.standard_normal(size=(nx, ny))
     )
-    surf.to_file("surface/surf_init_0.irap", fformat="irap_ascii")
+    surf.to_file("surface/surf_init_0.irap", fformat="irap_binary")
 
     args = Mock()
     os.chdir("..")
