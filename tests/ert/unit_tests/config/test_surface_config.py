@@ -1,13 +1,16 @@
+import logging
+import warnings
 from pathlib import Path
 
 import networkx as nx
 import numpy as np
 import pytest
 import xtgeo
-from surfio import IrapSurface
+from surfio import IrapHeader, IrapSurface
 
-from ert.config import ConfigValidationError, SurfaceConfig
+from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, SurfaceConfig
 from ert.config.parameter_config import InvalidParameterFile
+from ert.config.surface_config import ASCII_SURFACE_WARNING_MESSAGE, SurfaceFileFormat
 
 
 @pytest.fixture
@@ -28,7 +31,8 @@ def surface():
     )
 
 
-def test_runpath_roundtrip(tmp_path, storage, surface):
+@pytest.mark.parametrize("use_ascii_surface", [True, False])
+def test_runpath_roundtrip(tmp_path, storage, surface, use_ascii_surface, caplog):
     config = SurfaceConfig(
         name="some_name",
         forward_init=True,
@@ -48,7 +52,11 @@ def test_runpath_roundtrip(tmp_path, storage, surface):
     ensemble = storage.create_experiment(
         experiment_config={"parameter_configuration": [config]}
     ).create_ensemble(name="text", ensemble_size=1)
-    surface.to_file(tmp_path / "input_0", fformat="irap_ascii")
+    if use_ascii_surface:
+        surface.to_file(tmp_path / "input_0", fformat="irap_ascii")
+        config._file_format = SurfaceFileFormat.ASCII
+    else:
+        surface.to_file(tmp_path / "input_0", fformat="irap_binary")
 
     # run_path -> storage
     ds = config.read_from_runpath(tmp_path, 0, 0)
@@ -59,11 +67,17 @@ def test_runpath_roundtrip(tmp_path, storage, surface):
     config.write_to_runpath(tmp_path, 0, ensemble)
 
     # compare contents
-    # Data is saved as 'irap_ascii', which means that we only keep 6 significant digits
+    # Data is saved as 'irap_binary/ascii', which means
+    # that we only keep 6 significant digits
     actual_surface = xtgeo.surface_from_file(
-        tmp_path / "output", fformat="irap_ascii", dtype=np.float32
+        tmp_path / "output",
+        fformat="irap_binary" if not use_ascii_surface else "irap_ascii",
+        dtype=np.float32,
     )
-    actual_surface_surfio = IrapSurface.from_ascii_file(tmp_path / "output")
+    if use_ascii_surface:
+        actual_surface_surfio = IrapSurface.from_ascii_file(tmp_path / "output")
+    else:
+        actual_surface_surfio = IrapSurface.from_binary_file(tmp_path / "output")
 
     np.testing.assert_allclose(
         actual_surface.values, surface.values, rtol=0, atol=1e-06
@@ -179,7 +193,7 @@ def test_config_file_line_sets_the_corresponding_properties(
         rotation=8.0,
         yflip=-1,
         values=[1.0] * 6,
-    ).to_file("base_surface.irap", fformat="irap_ascii")
+    ).to_file("base_surface.irap", fformat="irap_binary")
     surface_config = SurfaceConfig.from_config_list(
         [
             "TOP",
@@ -372,3 +386,44 @@ def surface_for_dl():
         output_file=Path("dummy.txt"),
         base_surface_path="dummy.txt",
     )
+
+
+@pytest.mark.parametrize("is_ascii_surface", [True, False])
+def test_that_ert_warns_if_ascii_surface_is_used(tmp_path, is_ascii_surface, caplog):
+    base_surface_path = tmp_path / "basesurf.irap"
+    surf = IrapSurface(
+        header=IrapHeader(
+            ncol=2,
+            nrow=3,
+            xori=4.0,
+            yori=5.0,
+            xinc=6.0,
+            yinc=7.0,
+            rot=8.0,
+            xrot=4.0,
+            yrot=5.0,
+        ),
+        values=np.ones((2, 3), dtype=np.float32),
+    )
+    if is_ascii_surface:
+        surf.to_ascii_file(base_surface_path)
+    else:
+        surf.to_binary_file(base_surface_path)
+
+    config_contents = (
+        "NUM_REALIZATIONS 1\n"
+        "SURFACE TOP INIT_FILES:%dtest.irap OUTPUT_FILE:surf.irap "
+        f"BASE_SURFACE:{base_surface_path} FORWARD_INIT:False "
+    )
+
+    if is_ascii_surface:
+        with pytest.warns(ConfigWarning, match=ASCII_SURFACE_WARNING_MESSAGE):
+            ErtConfig.from_file_contents(config_contents)
+    else:
+        caplog.set_level(logging.INFO)
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            warnings.simplefilter("always")
+            ErtConfig.from_file_contents(config_contents)
+            assert caught_warnings == []
+
+        assert "Loaded surface in binary format" in caplog.text

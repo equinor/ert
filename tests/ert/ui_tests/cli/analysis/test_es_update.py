@@ -97,7 +97,7 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert():
         surf = RegularSurface(
             ncol=nx, nrow=ny, xinc=1.0, yinc=1.0, values=sample_prior(nx, ny)
         )
-        surf.to_file(f"surface/surf_init_{i}.irap", fformat="irap_ascii")
+        surf.to_file(f"surface/surf_init_{i}.irap", fformat="irap_binary")
 
     # Single observation with a large ERROR to make sure the udpate is minimal.
     obs = """
@@ -129,7 +129,7 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert():
     surf_prior = ens_prior.load_parameters("TOP", list(range(ensemble_size)))["values"]
     for i in range(ensemble_size):
         prior_init = surface_from_file(
-            f"surface/surf_init_{i}.irap", fformat="irap_ascii", dtype=np.float32
+            f"surface/surf_init_{i}.irap", fformat="irap_binary", dtype=np.float32
         )
         np.testing.assert_array_equal(surf_prior[i], prior_init.values.data)
 
