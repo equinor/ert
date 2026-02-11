@@ -16,6 +16,7 @@ from ert.services.ert_server import (
     ErtServerController,
     ServerBootFail,
     cleanup_service_files,
+    connect,
 )
 
 
@@ -227,21 +228,6 @@ def test_singleton_start(monkeypatch, server_script, tmp_path):
 @pytest.mark.integration_test
 @pytest.mark.script(
     """\
-time.sleep(1)
-os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
-os.close(fd)
-"""
-)
-def test_singleton_connect(monkeypatch, tmp_path, server_script):
-    monkeypatch.setattr(ert_server, "_ERT_SERVER_EXECUTABLE_FILE", server_script)
-    with _DummyService().start_server(".", timeout=10) as server:
-        client = _DummyService.connect(project=tmp_path, timeout=30)
-        assert server is client
-
-
-@pytest.mark.integration_test
-@pytest.mark.script(
-    """\
 os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
 os.close(fd)
 time.sleep(10) # ensure "server" doesn't exit before test
@@ -261,7 +247,7 @@ def test_singleton_connect_early(server_script, tmp_path, monkeypatch):
         def run(self):
             start_event.set()
             try:
-                self.client = _DummyService.connect(project=tmp_path, timeout=30)
+                self.client = connect(project=tmp_path, timeout=30)
             except Exception as ex:
                 self.exception = ex
             ready_event.set()

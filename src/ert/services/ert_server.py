@@ -277,7 +277,7 @@ class ErtServerController:
         logging_config: str | None = None,
     ) -> ErtServerContext:
         try:
-            service = cls.connect(
+            service = connect(
                 project=project or Path.cwd(), timeout=0, logging_config=logging_config
             )
             # Check the server is up and running
@@ -342,52 +342,6 @@ class ErtServerController:
         self._thread_that_starts_server_process = None
 
         return error_code
-
-    @classmethod
-    def connect(
-        cls,
-        *,
-        project: os.PathLike[str],
-        timeout: int | None = None,
-        logging_config: str | None = None,
-    ) -> ErtServerController:
-        if cls._instance is not None:
-            cls._instance.wait_until_ready()
-            assert isinstance(cls._instance, cls)
-            return cls._instance
-
-        path = Path(project)
-
-        # Wait for storage_server.json file to appear
-        try:
-            if timeout is None:
-                timeout = 240
-            t = -1
-            while t < timeout:
-                storage_server_path = path / _ERT_SERVER_CONNECTION_INFO_FILE
-                if (
-                    storage_server_path.exists()
-                    and storage_server_path.stat().st_size > 0
-                ):
-                    with (path / _ERT_SERVER_CONNECTION_INFO_FILE).open() as f:
-                        storage_server_content = json.load(f)
-
-                    return ErtServerController(
-                        storage_path=str(path),
-                        connection_info=storage_server_content,
-                        logging_config=logging_config,
-                    )
-
-                sleep(1)
-                t += 1
-
-            raise TimeoutError("Server not started")
-        except PermissionError as pe:
-            logging.getLogger(__name__).error(
-                f"{type(pe).__name__}: {pe}, cannot connect to ert server service "
-                f"due to permission issues."
-            )
-            raise pe
 
     @classmethod
     def start_server(
@@ -465,7 +419,7 @@ class ErtServerController:
 
 def create_ertserver_client(project: Path, timeout: int | None = None) -> Client:
     """Read connection info from file in path and create HTTP client."""
-    connection = ErtServerController.connect(timeout=timeout, project=project)
+    connection = connect(timeout=timeout, project=project)
     info = connection.fetch_connection_info()
     return Client(
         conn_info=ErtClientConnectionInfo(
@@ -474,3 +428,41 @@ def create_ertserver_client(project: Path, timeout: int | None = None) -> Client
             cert=info["cert"],
         )
     )
+
+
+def connect(
+    *,
+    project: os.PathLike[str],
+    timeout: int | None = None,
+    logging_config: str | None = None,
+) -> ErtServerController:
+    """Connect to an existing server, or start one if it doesn't exist."""
+    path = Path(project)
+
+    # Wait for storage_server.json file to appear
+    try:
+        if timeout is None:
+            timeout = 240
+        t = -1
+        while t < timeout:
+            storage_server_path = path / _ERT_SERVER_CONNECTION_INFO_FILE
+            if storage_server_path.exists() and storage_server_path.stat().st_size > 0:
+                with (path / _ERT_SERVER_CONNECTION_INFO_FILE).open() as f:
+                    storage_server_content = json.load(f)
+
+                return ErtServerController(
+                    storage_path=str(path),
+                    connection_info=storage_server_content,
+                    logging_config=logging_config,
+                )
+
+            sleep(1)
+            t += 1
+
+        raise TimeoutError("Server not started")
+    except PermissionError as pe:
+        logging.getLogger(__name__).error(
+            f"{type(pe).__name__}: {pe}, cannot connect to ert server service "
+            f"due to permission issues."
+        )
+        raise pe
