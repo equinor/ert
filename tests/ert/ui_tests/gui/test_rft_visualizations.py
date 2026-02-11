@@ -20,7 +20,7 @@ from ert.gui.tools.plot.plot_window import (
     STATISTICS,
     PlotWindow,
 )
-from ert.services import ErtServer
+from ert.services import ErtServerController
 from ert.storage import open_storage
 from tests.ert.rft_generator import cell_start
 
@@ -123,7 +123,7 @@ def plot_figure(qtbot: QtBot, request, rft_config: ErtConfig):
     open_storage(rft_config.ens_path, mode="r")
     log_handler = GUILogHandler()
     with (
-        ErtServer.init_service(
+        ErtServerController.init_service(
             project=rft_config.ens_path,
         ),
     ):

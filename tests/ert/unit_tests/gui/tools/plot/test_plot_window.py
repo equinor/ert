@@ -11,7 +11,7 @@ from ert.config.gen_kw_config import GenKwConfig
 from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApi, PlotApiKeyDefinition
 from ert.gui.tools.plot.plot_widget import PlotWidget
 from ert.gui.tools.plot.plot_window import PlotWindow, create_error_dialog
-from ert.services import ErtServer
+from ert.services import ErtServerController
 
 
 def test_pressing_copy_button_in_error_dialog(qtbot: QtBot):
@@ -34,7 +34,7 @@ def test_warning_is_visible_on_incompatible_plot_api_version(
         "ert.gui.tools.plot.plot_api.PlotApi.api_version", mock_get_data
     )
 
-    with ErtServer.init_service(project=tmp_path):
+    with ErtServerController.init_service(project=tmp_path):
         pw = PlotWindow("", tmp_path, None)
         qtbot.addWidget(pw)
         pw.show()
