@@ -1,15 +1,18 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterator
+from enum import StrEnum
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, Self, cast
 
 import networkx as nx
 import numpy as np
 import xarray as xr
-from pydantic import field_serializer
+from pydantic import PrivateAttr, field_serializer
 from surfio import IrapHeader, IrapSurface
 
+from ert.config.parsing.config_errors import ConfigWarning
 from ert.substitutions import substitute_runpath_name
 
 from ._str_to_bool import str_to_bool
@@ -44,6 +47,22 @@ class SurfaceMismatchError(InvalidParameterFile):
         super().__init__(msg)
 
 
+ASCII_SURFACE_WARNING_MESSAGE = (
+    "The default format for surfaces is changing from ASCII "
+    "to binary, but Ert will temporarily still support ASCII surfaces. Binary "
+    "surfaces are recommended, as it is faster to write and read from runpath. "
+    "Forward model steps still importing/exporting surfaces in "
+    "ASCII format need to be updated"
+)
+
+logger = logging.getLogger(__name__)
+
+
+class SurfaceFileFormat(StrEnum):
+    ASCII = "ascii"
+    BINARY = "binary"
+
+
 class SurfaceConfig(ParameterConfig):
     type: Literal["surface"] = "surface"
     dimensionality: Literal[2] = 2
@@ -58,6 +77,8 @@ class SurfaceConfig(ParameterConfig):
     forward_init_file: str
     output_file: Path
     base_surface_path: str
+
+    _file_format: SurfaceFileFormat = PrivateAttr(default=SurfaceFileFormat.BINARY)
 
     @field_serializer("output_file")
     def serialize_output_file(self, output_file: Path) -> str:
@@ -110,14 +131,22 @@ class SurfaceConfig(ParameterConfig):
         assert init_file is not None
         assert out_file is not None
         assert base_surface is not None
+        file_format = SurfaceFileFormat.BINARY
         try:
-            surf = IrapSurface.from_ascii_file(Path(base_surface))
+            try:
+                surf = IrapSurface.from_binary_file(Path(base_surface))
+                logger.info("Loaded surface in binary format")
+            except Exception:
+                surf = IrapSurface.from_ascii_file(Path(base_surface))
+                logger.info("Loaded surface in ascii format")
+                ConfigWarning.warn(ASCII_SURFACE_WARNING_MESSAGE)
+                file_format = SurfaceFileFormat.ASCII
             yflip = -1 if surf.header.yinc < 0 else 1
         except Exception as err:
             raise ConfigValidationError.with_context(
                 f"Could not load surface {base_surface!r}", config_list
             ) from err
-        return cls(
+        instance = cls(
             ncol=surf.header.ncol,
             nrow=surf.header.nrow,
             xori=surf.header.xori,
@@ -133,6 +162,8 @@ class SurfaceConfig(ParameterConfig):
             base_surface_path=base_surface,
             update=update_parameter,
         )
+        instance._file_format = file_format
+        return instance
 
     def __len__(self) -> int:
         return self.ncol * self.nrow
@@ -148,8 +179,10 @@ class SurfaceConfig(ParameterConfig):
                 f"'{self.name}' in file {file_name}: "
                 "File not found\n"
             )
-        surface = IrapSurface.from_ascii_file(file_path)
-
+        if self._file_format == SurfaceFileFormat.ASCII:
+            surface = IrapSurface.from_ascii_file(file_path)
+        else:
+            surface = IrapSurface.from_binary_file(file_path)
         da = xr.DataArray(
             surface.values,
             name="values",
@@ -185,7 +218,10 @@ class SurfaceConfig(ParameterConfig):
             str(self.output_file), real_nr, ensemble.iteration
         )
         file_path.parent.mkdir(exist_ok=True, parents=True)
-        surf.to_ascii_file(file_path)
+        if self._file_format == SurfaceFileFormat.ASCII:
+            surf.to_ascii_file(file_path)
+        else:
+            surf.to_binary_file(file_path)
 
     def create_storage_datasets(
         self,

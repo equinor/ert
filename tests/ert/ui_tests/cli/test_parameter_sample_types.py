@@ -41,7 +41,7 @@ FORWARD_MODEL poly_eval
             values=6 * [0.0],
             rotation=1,
         )
-        base_surface.to_file("surf.irap", fformat="irap_ascii")
+        base_surface.to_file("surf.irap", fformat="irap_binary")
 
         Path("forward_model").write_text(
             """#!/usr/bin/env python
@@ -61,9 +61,9 @@ if __name__ == "__main__":
                                     yinc=1,
                                     rotation=0,
                                     values=values)
-        surf.to_file("surf.irap", fformat="irap_ascii")
+        surf.to_file("surf.irap", fformat="irap_binary")
 
-    surf_fs = xtgeo.surface_from_file("surf.irap", fformat="irap_ascii",
+    surf_fs = xtgeo.surface_from_file("surf.irap", fformat="irap_binary",
                                     dtype=np.float32)
     a, b, c, *_ = surf_fs.values.data.ravel()
 
@@ -142,7 +142,7 @@ if __name__ == "__main__":
         realizations_to_test = rng.choice(range(ensemble_size), size=2, replace=False)
         surf = xtgeo.surface_from_file(
             f"simulations/realization-{realizations_to_test[0]}/iter-1/surf.irap",
-            fformat="irap_ascii",
+            fformat="irap_binary",
             dtype=np.float32,
         )
 
@@ -157,7 +157,7 @@ if __name__ == "__main__":
 
         surf2 = xtgeo.surface_from_file(
             f"simulations/realization-{realizations_to_test[1]}/iter-1/surf.irap",
-            fformat="irap_ascii",
+            fformat="irap_binary",
             dtype=np.float32,
         )
 
