@@ -1,13 +1,16 @@
+import logging
+import warnings
 from pathlib import Path
 
 import networkx as nx
 import numpy as np
 import pytest
 import xtgeo
-from surfio import IrapSurface
+from surfio import IrapHeader, IrapSurface
 
-from ert.config import ConfigValidationError, SurfaceConfig
+from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, SurfaceConfig
 from ert.config.parameter_config import InvalidParameterFile
+from ert.config.surface_config import ASCII_SURFACE_WARNING_MESSAGE
 
 
 @pytest.fixture
@@ -372,3 +375,44 @@ def surface_for_dl():
         output_file=Path("dummy.txt"),
         base_surface_path="dummy.txt",
     )
+
+
+@pytest.mark.parametrize("is_ascii_surface", [True, False])
+def test_that_ert_warns_if_ascii_surface_is_used(tmp_path, is_ascii_surface, caplog):
+    base_surface_path = tmp_path / "basesurf.irap"
+    surf = IrapSurface(
+        header=IrapHeader(
+            ncol=2,
+            nrow=3,
+            xori=4.0,
+            yori=5.0,
+            xinc=6.0,
+            yinc=7.0,
+            rot=8.0,
+            xrot=4.0,
+            yrot=5.0,
+        ),
+        values=np.ones((2, 3), dtype=np.float32),
+    )
+    if is_ascii_surface:
+        surf.to_ascii_file(base_surface_path)
+    else:
+        surf.to_binary_file(base_surface_path)
+
+    config_contents = (
+        "NUM_REALIZATIONS 1\n"
+        "SURFACE TOP INIT_FILES:%dtest.irap OUTPUT_FILE:surf.irap "
+        f"BASE_SURFACE:{base_surface_path} FORWARD_INIT:False "
+    )
+
+    if is_ascii_surface:
+        with pytest.warns(ConfigWarning, match=ASCII_SURFACE_WARNING_MESSAGE):
+            ErtConfig.from_file_contents(config_contents)
+    else:
+        caplog.set_level(logging.INFO)
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            warnings.simplefilter("always")
+            ErtConfig.from_file_contents(config_contents)
+            assert caught_warnings == []
+
+        assert "Loaded surface in binary format" in caplog.text
