@@ -364,7 +364,10 @@ def analysis_ES(
             assert smoother_distance_es is not None
             assert S_with_loc is not None
 
-            if isinstance(param_cfg, Field):
+            if (
+                isinstance(param_cfg, Field)
+                and param_cfg.ertbox_params.origin is not None
+            ):
                 start = time.time()
                 log_msg = (
                     f"Running distance localization on Field "
@@ -410,7 +413,7 @@ def analysis_ES(
                 )
                 # right_handed - this needs to be retrieved from the grid
                 param_ensemble_array = smoother_distance_es.update_params(
-                    X_prior=param_ensemble_array,
+                    X=param_ensemble_array,
                     Y=S_with_loc,
                     rho_input=rho_matrix,
                     nz=param_cfg.ertbox_params.nz,
@@ -453,7 +456,7 @@ def analysis_ES(
                     right_handed_grid_indexing=False,
                 )
                 param_ensemble_array = smoother_distance_es.update_params(
-                    X_prior=param_ensemble_array,
+                    X=param_ensemble_array,
                     Y=S_with_loc,
                     rho_input=rho_matrix,
                 )
