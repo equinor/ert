@@ -434,8 +434,8 @@ def get_optimization_domain_transforms(
     auto_scale: bool,
 ) -> EverestOptModelTransforms:
     control_scaler = ControlScaler(
-        [control.min_value for control in controls],
-        [control.max_value for control in controls],
+        [control.min for control in controls],
+        [control.max for control in controls],
         [control.scaled_range for control in controls],
         [control.variable_type for control in controls],
         auto_scale_input_constraints=auto_scale,

@@ -24,8 +24,8 @@ def _parse_controls(
     ropt_variables: dict[str, Any] = {
         "types": None if all(item is None for item in control_types) else control_types,
         "variable_count": len(initial_guesses),
-        "lower_bounds": [control.min_value for control in controls],
-        "upper_bounds": [control.max_value for control in controls],
+        "lower_bounds": [control.min for control in controls],
+        "upper_bounds": [control.max for control in controls],
         "perturbation_types": [
             PerturbationType[control.perturbation_type.upper()] for control in controls
         ],

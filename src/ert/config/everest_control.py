@@ -157,8 +157,8 @@ class EverestControl(ParameterConfig):
     initial_guess: float
     variable_type: Literal["real", "integer"]
     enabled: bool
-    min_value: float
-    max_value: float
+    min: float
+    max: float
     perturbation_type: Literal["absolute", "relative"]
     perturbation_magnitude: float
     scaled_range: tuple[float, float]

@@ -369,8 +369,8 @@ class ControlConfig(BaseModel):
                     enabled=variable.enabled
                     if variable.enabled is not None
                     else self.enabled,
-                    min_value=variable.min if variable.min is not None else self.min,
-                    max_value=variable.max if variable.max is not None else self.max,
+                    min=variable.min if variable.min is not None else self.min,
+                    max=variable.max if variable.max is not None else self.max,
                     perturbation_type=variable.perturbation_type,
                     perturbation_magnitude=(
                         variable.perturbation_magnitude
