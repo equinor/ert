@@ -27,7 +27,9 @@ class EverestDataAPI:
     def accepted_batches(self) -> list[int]:
         return sorted(
             ensemble.iteration
-            for ensemble in self._ever_storage.everest_ensembles
+            for ensemble in sorted(
+                self._ever_storage.ensembles, key=lambda ens: ens.iteration
+            )
             if ensemble.is_improvement
         )
 
