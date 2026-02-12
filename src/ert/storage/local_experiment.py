@@ -561,20 +561,24 @@ class LocalExperiment(BaseMode):
         return cast(EverestConstraintsConfig, constraints_config)
 
     @property
-    def everest_ensembles(self) -> list[LocalEnsemble]:
-        return sorted(self.ensembles, key=lambda ens: ens.iteration)
-
-    @property
     def everest_ensembles_with_function_results(
         self,
     ) -> list[LocalEnsemble]:
-        return [b for b in self.everest_ensembles if b.has_function_results]
+        return [
+            b
+            for b in sorted(self.ensembles, key=lambda ens: ens.iteration)
+            if b.has_function_results
+        ]
 
     @property
     def everest_ensembles_with_gradient_results(
         self,
     ) -> list[LocalEnsemble]:
-        return [b for b in self.everest_ensembles if b.has_gradient_results]
+        return [
+            b
+            for b in sorted(self.ensembles, key=lambda ens: ens.iteration)
+            if b.has_gradient_results
+        ]
 
     def on_optimization_finished(self) -> None:
         logger.debug("Storing final results Everest storage")
