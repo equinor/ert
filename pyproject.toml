@@ -36,7 +36,7 @@ dependencies = [
     "httpx",
     "httpx-retries",
     "humanize",
-    "iterative_ensemble_smoother>=0.5.1",
+    "iterative_ensemble_smoother>=0.6.0",
     "jinja2 >= 2.10",
     "lark",
     "lxml",

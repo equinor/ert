@@ -958,7 +958,7 @@ requires-dist = [
     { name = "httpx" },
     { name = "httpx-retries" },
     { name = "humanize" },
-    { name = "iterative-ensemble-smoother", specifier = ">=0.5.1" },
+    { name = "iterative-ensemble-smoother", specifier = ">=0.6.0" },
     { name = "jinja2", specifier = ">=2.10" },
     { name = "lark" },
     { name = "lxml" },
@@ -1614,7 +1614,7 @@ wheels = [
 
 [[package]]
 name = "iterative-ensemble-smoother"
-version = "0.5.1"
+version = "0.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "joblib" },
@@ -1622,9 +1622,9 @@ dependencies = [
     { name = "psutil" },
     { name = "scipy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/bc/27/2f81efeaa8651cae83f5917da7a5745e4304fa50111bdec73729e9d6bbbd/iterative_ensemble_smoother-0.5.1.tar.gz", hash = "sha256:e8dafd9d83d6596570382970c5081256edc0e7da830a68f53b8cabbdfea03d8f", size = 103038, upload-time = "2026-01-29T09:45:00.801Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/25/88/1ca4be3aec9fb4781425c73e769c54025c6b5e69cebbae5541376f47ea22/iterative_ensemble_smoother-0.6.0.tar.gz", hash = "sha256:5eb9e4827398ca2fb22409abe1bbc214ad1a89a0e448b01cbb163d17f19ea9a4", size = 178947, upload-time = "2026-02-12T15:05:05.803Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/52/46/6e0417901a344606604d4bc905387790e1c8c7a0a8626df333c0ba988dca/iterative_ensemble_smoother-0.5.1-py3-none-any.whl", hash = "sha256:ee80270c8f3b2ffacf2954a6afa24df3d014555bc409400be9164eac090f00ef", size = 49841, upload-time = "2026-01-29T09:44:59.03Z" },
+    { url = "https://files.pythonhosted.org/packages/d9/fd/9a396ac6fffc1c14303d3647d6ba43beab207f3c1be3c66fa016b6f8dee1/iterative_ensemble_smoother-0.6.0-py3-none-any.whl", hash = "sha256:f0674dc555526b74bd58b199edf1ea69168d4613491d9237e620c8c7af10aa43", size = 49511, upload-time = "2026-02-12T15:05:04.416Z" },
 ]
 
 [[package]]
