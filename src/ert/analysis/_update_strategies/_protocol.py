@@ -1,0 +1,216 @@
+"""Protocol and data classes for parameter update strategies."""
+
+from __future__ import annotations
+
+import time
+from collections.abc import Callable, Sequence
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Generic, Protocol, Self, TypeVar
+
+import numpy as np
+import numpy.typing as npt
+
+from ert.analysis.event import AnalysisEvent, AnalysisTimeEvent
+
+if TYPE_CHECKING:
+    from ert.config import ESSettings, ParameterConfig
+    from ert.storage import Ensemble
+
+
+T = TypeVar("T")
+
+
+class TimedIterator(Generic[T]):
+    """Iterator wrapper that reports progress timing via callback.
+
+    Wraps a Sequence and provides single-pass iteration with progress
+    reporting. Also exposes __len__ and __getitem__ to structurally
+    satisfy the Sequence protocol expected by iterative_ensemble_smoother's
+    progress_callback type hint.
+
+    Parameters
+    ----------
+    iterable : Sequence[T]
+        The underlying sequence to iterate over.
+    callback : Callable[[AnalysisEvent], None]
+        Callback function to report progress events.
+
+    Attributes
+    ----------
+    SEND_FREQUENCY : float
+        Minimum seconds between progress updates (default 1.0).
+    """
+
+    SEND_FREQUENCY = 1.0  # seconds
+
+    def __init__(
+        self, iterable: Sequence[T], callback: Callable[[AnalysisEvent], None]
+    ) -> None:
+        self._start_time = time.perf_counter()
+        self._iterable = iterable
+        self._callback = callback
+        self._index = 0
+        self._last_send_time = 0.0
+
+    def __len__(self) -> int:
+        return len(self._iterable)
+
+    def __getitem__(self, index: int) -> T:
+        return self._iterable[index]
+
+    def __iter__(self) -> Self:
+        return self
+
+    def __next__(self) -> T:
+        try:
+            result = self._iterable[self._index]
+        except IndexError as e:
+            raise StopIteration from e
+
+        if self._index != 0:
+            elapsed_time = time.perf_counter() - self._start_time
+            estimated_remaining_time = (elapsed_time / (self._index)) * (
+                len(self._iterable) - self._index
+            )
+            if elapsed_time - self._last_send_time > self.SEND_FREQUENCY:
+                self._callback(
+                    AnalysisTimeEvent(
+                        remaining_time=estimated_remaining_time,
+                        elapsed_time=elapsed_time,
+                    )
+                )
+                self._last_send_time = elapsed_time
+
+        self._index += 1
+        return result
+
+
+@dataclass
+class UpdateContext:
+    """Shared data needed by all update strategies.
+
+    This encapsulates all the common data required during parameter updates,
+    including response matrices, observation data, and ensemble information.
+    """
+
+    responses: npt.NDArray[np.float64]
+    """Response matrix (num_obs x ensemble_size)."""
+
+    observation_values: npt.NDArray[np.float64]
+    """Observation values."""
+
+    observation_errors: npt.NDArray[np.float64]
+    """Scaled observation errors (standard deviations)."""
+
+    ensemble_size: int
+    """Number of active realizations."""
+
+    iens_active_index: npt.NDArray[np.int_]
+    """Indices of active realizations."""
+
+    rng: np.random.Generator
+    """Random number generator for reproducibility."""
+
+    progress_callback: Callable[[AnalysisEvent], None]
+    """Callback to report progress events."""
+
+    settings: ESSettings
+    """ES analysis settings."""
+
+    source_ensemble: Ensemble
+    """Source ensemble for reading parameters."""
+
+
+@dataclass
+class ObservationLocations:
+    """Observation location data for distance-based localization methods.
+
+    Contains coordinates and correlation ranges for observations that have
+    spatial location information. All arrays are filtered to only include
+    observations that have valid location data.
+    """
+
+    xpos: npt.NDArray[np.float64]
+    """X coordinates of observations (easting)."""
+
+    ypos: npt.NDArray[np.float64]
+    """Y coordinates of observations (northing)."""
+
+    main_range: npt.NDArray[np.float64]
+    """Correlation range (radius) for each observation."""
+
+    responses_with_loc: npt.NDArray[np.float64]
+    """Response matrix filtered to observations with locations."""
+
+    observation_values: npt.NDArray[np.float64]
+    """Observation values filtered to observations with locations."""
+
+    observation_errors: npt.NDArray[np.float64]
+    """Scaled observation errors filtered to observations with locations."""
+
+
+class UpdateStrategy(Protocol):
+    """Protocol for parameter update strategies.
+
+    Each strategy implements a specific algorithm for updating ensemble
+    parameters based on observations. Strategies are selected based on
+    the parameter type and ES settings.
+    """
+
+    def initialize(self, context: UpdateContext) -> None:
+        """One-time setup for the strategy.
+
+        Called once before processing any parameter groups. Use this to
+        compute shared matrices or initialize smoothers.
+
+        Parameters
+        ----------
+        context : UpdateContext
+            Shared update context with observations and settings.
+        """
+        ...
+
+    def can_handle(self, param_config: ParameterConfig) -> bool:
+        """Check whether this strategy can handle the given parameter type.
+
+        Parameters
+        ----------
+        param_config : ParameterConfig
+            Configuration for the parameter to be updated.
+
+        Returns
+        -------
+        bool
+            True if this strategy should be used for the parameter.
+        """
+        ...
+
+    def update(
+        self,
+        param_group: str,
+        param_ensemble: npt.NDArray[np.float64],
+        param_config: ParameterConfig,
+        non_zero_variance_mask: npt.NDArray[np.bool_],
+        context: UpdateContext,
+    ) -> npt.NDArray[np.float64]:
+        """Update parameters using this strategy's algorithm.
+
+        Parameters
+        ----------
+        param_group : str
+            Name of the parameter group.
+        param_ensemble : npt.NDArray[np.float64]
+            Parameter ensemble array (num_params x ensemble_size).
+        param_config : ParameterConfig
+            Configuration for this parameter type.
+        non_zero_variance_mask : npt.NDArray[np.bool_]
+            Boolean mask for parameters with non-zero variance.
+        context : UpdateContext
+            Shared update context.
+
+        Returns
+        -------
+        npt.NDArray[np.float64]
+            Updated parameter ensemble array.
+        """
+        ...
