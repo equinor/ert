@@ -767,7 +767,6 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
 
     def _update_ensemble_improvement_flags(self) -> None:
         assert self._experiment is not None
-        logger.debug("Storing final results Everest storage")
 
         # This a somewhat arbitrary threshold, this should be a user choice
         # during visualization:
