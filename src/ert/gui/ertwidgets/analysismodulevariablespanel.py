@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLayout,
+    QVBoxLayout,
     QWidget,
 )
 
@@ -61,25 +62,54 @@ class AnalysisModuleVariablesPanel(QWidget):
         layout.addRow("Singular value truncation", self.truncation_spinner)
 
         layout.addRow(self.create_horizontal_line())
-        layout.addRow(QLabel("[EXPERIMENTAL]"))
+        layout.addRow(QLabel("Localization"))
+
+        loc_options = AnalysisModule.model_fields["localization"]
+        layout.addRow(QLabel(loc_options.description))
 
         localization_frame = QFrame()
-        localization_frame.setLayout(QHBoxLayout())
-        lf_layout = cast(QLayout, localization_frame.layout())
-        lf_layout.setContentsMargins(0, 0, 0, 0)
+        localization_frame.setLayout(QVBoxLayout())
+        main_loc_layout = cast(QLayout, localization_frame.layout())
+        main_loc_layout.setContentsMargins(0, 0, 0, 0)
 
-        metadata = AnalysisModule.model_fields["localization_correlation_threshold"]
-        local_checkbox = QCheckBox(metadata.title)
-        local_checkbox.setObjectName("localization")
-        local_checkbox.clicked.connect(
+        row1_frame = QFrame()
+        row1_layout = QHBoxLayout()
+        row1_frame.setLayout(row1_layout)
+        row1_layout.setContentsMargins(0, 0, 0, 0)
+
+        localization_metadata = AnalysisModule.model_fields["localization"]
+        localization_checkbox = QCheckBox(localization_metadata.title)
+        localization_checkbox.setObjectName("localization")
+        localization_checkbox.clicked.connect(
             partial(
                 self.valueChangedCheckBox,
                 "localization",
-                local_checkbox,
+                localization_checkbox,
             )
         )
+        localization_checkbox.setChecked(analysis_module.localization)
+
+        row1_layout.addWidget(localization_checkbox)
+        row1_layout.addStretch(1)
+        main_loc_layout.addWidget(row1_frame)
+
+        row2_frame = QFrame()
+        row2_layout = QHBoxLayout()
+        row2_frame.setLayout(row2_layout)
+        row2_layout.setContentsMargins(0, 0, 0, 0)
+
         var_name = "localization_correlation_threshold"
         metadata = AnalysisModule.model_fields[var_name]
+        custom_local_threshold_checkbox = QCheckBox(metadata.title)
+        custom_local_threshold_checkbox.setObjectName("custom_localization_threshold")
+        custom_local_threshold_checkbox.clicked.connect(
+            partial(
+                self.valueChangedCheckBox,
+                "custom_localization_threshold",
+                custom_local_threshold_checkbox,
+            )
+        )
+
         self.local_spinner = self.createDoubleSpinBox(
             var_name,
             analysis_module.correlation_threshold(ensemble_size),
@@ -88,14 +118,25 @@ class AnalysisModuleVariablesPanel(QWidget):
             0.1,
         )
         self.local_spinner.setObjectName("localization_threshold")
-        self.local_spinner.setEnabled(local_checkbox.isChecked())
+        self.local_spinner.setEnabled(custom_local_threshold_checkbox.isChecked())
 
-        lf_layout.addWidget(local_checkbox)
-        lf_layout.addWidget(self.local_spinner)
+        row2_layout.addWidget(custom_local_threshold_checkbox)
+        row2_layout.addWidget(self.local_spinner)
+        row2_layout.addStretch(1)
+        main_loc_layout.addWidget(row2_frame)
+
+        localization_checkbox.stateChanged.connect(
+            custom_local_threshold_checkbox.setEnabled
+        )
+        custom_local_threshold_checkbox.stateChanged.connect(
+            self.local_spinner.setEnabled
+        )
+        custom_local_threshold_checkbox.setChecked(
+            analysis_module.custom_localization_threshold
+        )
+        custom_local_threshold_checkbox.setEnabled(analysis_module.localization)
+
         layout.addRow(localization_frame)
-
-        local_checkbox.stateChanged.connect(self.local_spinner.setEnabled)
-        local_checkbox.setChecked(analysis_module.localization)
 
         self.setLayout(layout)
         self.blockSignals(False)

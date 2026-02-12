@@ -185,6 +185,7 @@
     "enkf_truncation": 0.98,
     "inversion": "EXACT",
     "localization": true,
+    "custom_localization_threshold": true,
     "localization_correlation_threshold": 0.1
   },
   "update_settings": {
