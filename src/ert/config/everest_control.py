@@ -197,7 +197,7 @@ class EverestControl(ParameterConfig):
 
     def write_to_runpath(
         self, run_path: Path, real_nr: int, ensemble: Ensemble
-    ) -> dict[str, dict[str, float]] | None:
+    ) -> dict[str, dict[str, float | str]] | None:
         """Load this control's parameter value.
 
         Returns a dict suitable for aggregation with other controls in the same group.
