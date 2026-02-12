@@ -14,13 +14,13 @@ class EverestDataAPI:
     def __init__(self, config: EverestConfig, filter_out_gradient: bool = True) -> None:
         self._config = config
         assert config.storage_dir.exists()
-        self._ever_storage = EverestStorage.from_storage_path(config.storage_dir)
+        self._experiment = EverestStorage.get_everest_experiment(config.storage_dir)
 
     @property
     def batches(self) -> list[int]:
         return sorted(
             ensemble.iteration
-            for ensemble in self._ever_storage.ensembles_with_function_results
+            for ensemble in self._experiment.ensembles_with_function_results
         )
 
     @property
@@ -28,18 +28,18 @@ class EverestDataAPI:
         return sorted(
             ensemble.iteration
             for ensemble in sorted(
-                self._ever_storage.ensembles, key=lambda ens: ens.iteration
+                self._experiment.ensembles, key=lambda ens: ens.iteration
             )
             if ensemble.is_improvement
         )
 
     @property
     def objective_function_names(self) -> list[str]:
-        return self._ever_storage.objective_functions.keys
+        return self._experiment.objective_functions.keys
 
     @property
     def output_constraint_names(self) -> list[str]:
-        constraints_config = self._ever_storage.output_constraints
+        constraints_config = self._experiment.output_constraints
         if not constraints_config:
             return []
 
@@ -47,10 +47,10 @@ class EverestDataAPI:
 
     @property
     def realizations(self) -> list[int]:
-        if not self._ever_storage.ensembles_with_function_results:
+        if not self._experiment.ensembles_with_function_results:
             return []
 
-        realization_objectives = self._ever_storage.ensembles_with_function_results[
+        realization_objectives = self._experiment.ensembles_with_function_results[
             0
         ].realization_objectives
 
@@ -59,10 +59,10 @@ class EverestDataAPI:
 
     @property
     def simulations(self) -> list[int]:
-        if not self._ever_storage.ensembles_with_function_results:
+        if not self._experiment.ensembles_with_function_results:
             return []
 
-        realization_objectives = self._ever_storage.ensembles_with_function_results[
+        realization_objectives = self._experiment.ensembles_with_function_results[
             0
         ].realization_objectives
 
@@ -71,14 +71,14 @@ class EverestDataAPI:
 
     @property
     def control_names(self) -> list[str]:
-        return self._ever_storage.parameter_keys
+        return self._experiment.parameter_keys
 
     @property
     def control_values(self) -> list[dict[str, Any]]:
-        all_control_names = self._ever_storage.parameter_keys
+        all_control_names = self._experiment.parameter_keys
 
         new = []
-        for ensemble in self._ever_storage.ensembles_with_function_results:
+        for ensemble in self._experiment.ensembles_with_function_results:
             assert ensemble.realization_controls is not None
             for controls_dict in ensemble.realization_controls.to_dicts():
                 for name in all_control_names:
@@ -96,8 +96,8 @@ class EverestDataAPI:
     def objective_values(self) -> list[dict[str, Any]]:
         obj_values = []
 
-        objectives = self._ever_storage.objective_functions
-        for ensemble in self._ever_storage.ensembles_with_function_results:
+        objectives = self._experiment.objective_functions
+        for ensemble in self._experiment.ensembles_with_function_results:
             assert ensemble.realization_objectives is not None
             for (
                 model_realization,
@@ -140,11 +140,11 @@ class EverestDataAPI:
                 ens.batch_objectives.select(
                     c for c in ens.batch_objectives.columns if c != "merit_value"
                 ).with_columns(pl.lit(1 if ens.is_improvement else 0).alias("accepted"))
-                for ens in self._ever_storage.ensembles_with_function_results
+                for ens in self._experiment.ensembles_with_function_results
                 if ens.batch_objectives is not None  # <-- skip None
             ]
         )
-        objectives = self._ever_storage.objective_functions
+        objectives = self._experiment.objective_functions
         assert objectives is not None
 
         for name, weight, scale in zip(
@@ -170,7 +170,7 @@ class EverestDataAPI:
     def gradient_values(self) -> list[dict[str, Any]]:
         all_batch_data = [
             ensemble.batch_objective_gradient
-            for ensemble in self._ever_storage.ensembles_with_gradient_results
+            for ensemble in self._experiment.ensembles_with_gradient_results
             if ensemble.batch_objective_gradient is not None
             and ensemble.is_improvement  # Note: This part might not be sensible
         ]
@@ -236,7 +236,7 @@ class EverestDataAPI:
                     pl.Series("batch", [batch_id] * summary.shape[0])
                 )
 
-                ensemble = self._ever_storage.get_ensemble_by_name(f"batch_{batch_id}")
+                ensemble = self._experiment.get_ensemble_by_name(f"batch_{batch_id}")
                 realization_info = ensemble._index.everest_realization_info
                 assert realization_info is not None
 
@@ -271,4 +271,4 @@ class EverestDataAPI:
 
     @property
     def everest_csv(self) -> str:
-        return str(self._ever_storage.export_everest_opt_results_to_csv())
+        return str(self._experiment.export_everest_opt_results_to_csv())

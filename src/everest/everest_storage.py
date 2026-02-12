@@ -35,7 +35,7 @@ class _GradientResults(TypedDict):
 
 class EverestStorage:
     @classmethod
-    def from_storage_path(cls, storage_path: Path) -> LocalExperiment:
+    def get_everest_experiment(cls, storage_path: Path) -> LocalExperiment:
         """
         Creates everest storage from a storage path. Note: This
         requires there to be at least one initialized batch/ensemble

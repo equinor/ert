@@ -30,10 +30,10 @@ def test_csv_export(config_file, cached_example, snapshot):
     config_path, config_file, _, _ = cached_example(f"math_func/{config_file}")
     config = EverestConfig.load_file(Path(config_path) / config_file)
 
-    ever_storage = EverestStorage.from_storage_path(
+    experiment = EverestStorage.get_everest_experiment(
         storage_path=config.storage_dir,
     )
-    combined_df, pert_real_df, batch_df = ever_storage.export_dataframes()
+    combined_df, pert_real_df, batch_df = experiment.export_dataframes()
 
     def _sort_df(df: pl.DataFrame) -> pl.DataFrame:
         df_ = df.select(df.columns)
