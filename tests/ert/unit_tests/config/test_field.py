@@ -30,7 +30,10 @@ def test_write_to_runpath_produces_the_transformed_field_in_storage(
     ensemble_config = snake_oil_field_example.ensemble_config
     experiment_id = storage.create_experiment(
         experiment_config={
-            "parameter_configuration": ensemble_config.parameter_configuration
+            "parameter_configuration": [
+                cfg.model_dump(mode="json")
+                for cfg in ensemble_config.parameter_configuration
+            ]
         }
     )
     prior_ensemble = storage.create_ensemble(

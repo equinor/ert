@@ -191,7 +191,7 @@ class StorageWidget(QWidget):
                                 for d in self._ert_config.observation_declarations
                             ],
                             "ert_templates": self._ert_config.ert_templates,
-                            "experiment_type": ExperimentType.MANUAL,
+                            "experiment_type": ExperimentType.MANUAL.value,
                         },
                         name=create_experiment_dialog.experiment_name,
                     ).create_ensemble(

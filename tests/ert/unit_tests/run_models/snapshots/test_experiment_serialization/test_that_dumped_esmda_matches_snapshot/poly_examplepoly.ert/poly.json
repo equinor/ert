@@ -310,8 +310,8 @@
       "radius": null
     }
   ],
+  "experiment_type": "Multiple Data Assimilation",
   "restart_run": false,
   "prior_ensemble_id": null,
-  "weights": "4, 2, 1",
-  "experiment_type": "Multiple Data Assimilation"
+  "weights": "4, 2, 1"
 }

@@ -46,7 +46,7 @@ def test_runpath_roundtrip(tmp_path, storage, surface):
         update=True,
     )
     ensemble = storage.create_experiment(
-        experiment_config={"parameter_configuration": [config]}
+        experiment_config={"parameter_configuration": [config.model_dump(mode="json")]},
     ).create_ensemble(name="text", ensemble_size=1)
     surface.to_file(tmp_path / "input_0", fformat="irap_ascii")
 
