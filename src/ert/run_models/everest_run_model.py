@@ -649,9 +649,9 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
 
         for r in results:
             batches = (
-                self._experiment.everest_ensembles_with_function_results
+                self._experiment.ensembles_with_function_results
                 if isinstance(r, FunctionResults)
-                else self._experiment.everest_ensembles_with_gradient_results
+                else self._experiment.ensembles_with_gradient_results
             )
             ens = next((ens for ens in batches if ens.iteration == r.batch_id), None)
             if ens is None:

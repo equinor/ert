@@ -20,7 +20,7 @@ class EverestDataAPI:
     def batches(self) -> list[int]:
         return sorted(
             ensemble.iteration
-            for ensemble in self._ever_storage.everest_ensembles_with_function_results
+            for ensemble in self._ever_storage.ensembles_with_function_results
         )
 
     @property
@@ -47,28 +47,24 @@ class EverestDataAPI:
 
     @property
     def realizations(self) -> list[int]:
-        if not self._ever_storage.everest_ensembles_with_function_results:
+        if not self._ever_storage.ensembles_with_function_results:
             return []
 
-        realization_objectives = (
-            self._ever_storage.everest_ensembles_with_function_results[
-                0
-            ].realization_objectives
-        )
+        realization_objectives = self._ever_storage.ensembles_with_function_results[
+            0
+        ].realization_objectives
 
         assert realization_objectives is not None
         return sorted(realization_objectives["realization"].unique().to_list())
 
     @property
     def simulations(self) -> list[int]:
-        if not self._ever_storage.everest_ensembles_with_function_results:
+        if not self._ever_storage.ensembles_with_function_results:
             return []
 
-        realization_objectives = (
-            self._ever_storage.everest_ensembles_with_function_results[
-                0
-            ].realization_objectives
-        )
+        realization_objectives = self._ever_storage.ensembles_with_function_results[
+            0
+        ].realization_objectives
 
         assert realization_objectives is not None
         return sorted(realization_objectives["simulation_id"].unique().to_list())
@@ -82,7 +78,7 @@ class EverestDataAPI:
         all_control_names = self._ever_storage.parameter_keys
 
         new = []
-        for ensemble in self._ever_storage.everest_ensembles_with_function_results:
+        for ensemble in self._ever_storage.ensembles_with_function_results:
             assert ensemble.realization_controls is not None
             for controls_dict in ensemble.realization_controls.to_dicts():
                 for name in all_control_names:
@@ -101,7 +97,7 @@ class EverestDataAPI:
         obj_values = []
 
         objectives = self._ever_storage.objective_functions
-        for ensemble in self._ever_storage.everest_ensembles_with_function_results:
+        for ensemble in self._ever_storage.ensembles_with_function_results:
             assert ensemble.realization_objectives is not None
             for (
                 model_realization,
@@ -144,7 +140,7 @@ class EverestDataAPI:
                 ens.batch_objectives.select(
                     c for c in ens.batch_objectives.columns if c != "merit_value"
                 ).with_columns(pl.lit(1 if ens.is_improvement else 0).alias("accepted"))
-                for ens in self._ever_storage.everest_ensembles_with_function_results
+                for ens in self._ever_storage.ensembles_with_function_results
                 if ens.batch_objectives is not None  # <-- skip None
             ]
         )
@@ -174,7 +170,7 @@ class EverestDataAPI:
     def gradient_values(self) -> list[dict[str, Any]]:
         all_batch_data = [
             ensemble.batch_objective_gradient
-            for ensemble in self._ever_storage.everest_ensembles_with_gradient_results
+            for ensemble in self._ever_storage.ensembles_with_gradient_results
             if ensemble.batch_objective_gradient is not None
             and ensemble.is_improvement  # Note: This part might not be sensible
         ]
