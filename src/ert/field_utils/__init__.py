@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from .field_file_format import FieldFileFormat
 from .field_utils import (
+    CoordinateSystem,
     ErtboxParameters,
     Shape,
     calculate_ertbox_parameters,
@@ -15,6 +16,7 @@ from .field_utils import (
 )
 
 __all__ = [
+    "CoordinateSystem",
     "ErtboxParameters",
     "FieldFileFormat",
     "Shape",

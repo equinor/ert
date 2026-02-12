@@ -140,7 +140,7 @@ def calculate_ertbox_parameters(grid: xtgeo.Grid) -> ErtboxParameters:
     corner_indices = []
     coordinate_system = (
         CoordinateSystem.RIGHT_HANDED
-        if grid.ijk_handedness == "Right"
+        if grid.ijk_handedness == "right"
         else CoordinateSystem.LEFT_HANDED
     )
 

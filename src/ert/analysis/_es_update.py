@@ -24,10 +24,10 @@ from ert.config import (
     SurfaceConfig,
 )
 from ert.field_utils import (
+    CoordinateSystem,
     transform_local_ellipse_angle_to_local_coords,
     transform_positions_to_local_field_coordinates,
 )
-from ert.field_utils.field_utils import CoordinateSystem
 
 from ._update_commons import (
     ErtAnalysisError,
