@@ -49,7 +49,8 @@ class SurfaceMismatchError(InvalidParameterFile):
 
 ASCII_SURFACE_WARNING_MESSAGE = (
     "From this release, the default format for surfaces is changing from ASCII "
-    "to binary, but it will temporarily still support ASCII surfaces"
+    "to binary, but it will temporarily still support ASCII surfaces. Binary "
+    "surfaces are recommended as it is faster to write and read from runpath."
 )
 
 logger = logging.getLogger(__name__)

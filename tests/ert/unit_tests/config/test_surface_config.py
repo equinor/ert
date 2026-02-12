@@ -10,7 +10,7 @@ from surfio import IrapHeader, IrapSurface
 
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, SurfaceConfig
 from ert.config.parameter_config import InvalidParameterFile
-from ert.config.surface_config import ASCII_SURFACE_WARNING_MESSAGE
+from ert.config.surface_config import ASCII_SURFACE_WARNING_MESSAGE, SurfaceFileFormat
 
 
 @pytest.fixture
@@ -31,7 +31,8 @@ def surface():
     )
 
 
-def test_runpath_roundtrip(tmp_path, storage, surface):
+@pytest.mark.parametrize("use_ascii_surface", [True, False])
+def test_runpath_roundtrip(tmp_path, storage, surface, use_ascii_surface, caplog):
     config = SurfaceConfig(
         name="some_name",
         forward_init=True,
@@ -51,7 +52,11 @@ def test_runpath_roundtrip(tmp_path, storage, surface):
     ensemble = storage.create_experiment(
         experiment_config={"parameter_configuration": [config]}
     ).create_ensemble(name="text", ensemble_size=1)
-    surface.to_file(tmp_path / "input_0", fformat="irap_binary")
+    if use_ascii_surface:
+        surface.to_file(tmp_path / "input_0", fformat="irap_ascii")
+        config._file_format = SurfaceFileFormat.ASCII
+    else:
+        surface.to_file(tmp_path / "input_0", fformat="irap_binary")
 
     # run_path -> storage
     ds = config.read_from_runpath(tmp_path, 0, 0)
@@ -62,11 +67,17 @@ def test_runpath_roundtrip(tmp_path, storage, surface):
     config.write_to_runpath(tmp_path, 0, ensemble)
 
     # compare contents
-    # Data is saved as 'irap_binary', which means that we only keep 6 significant digits
+    # Data is saved as 'irap_binary/ascii', which means
+    # that we only keep 6 significant digits
     actual_surface = xtgeo.surface_from_file(
-        tmp_path / "output", fformat="irap_binary", dtype=np.float32
+        tmp_path / "output",
+        fformat="irap_binary" if not use_ascii_surface else "irap_ascii",
+        dtype=np.float32,
     )
-    actual_surface_surfio = IrapSurface.from_binary_file(tmp_path / "output")
+    if use_ascii_surface:
+        actual_surface_surfio = IrapSurface.from_ascii_file(tmp_path / "output")
+    else:
+        actual_surface_surfio = IrapSurface.from_binary_file(tmp_path / "output")
 
     np.testing.assert_allclose(
         actual_surface.values, surface.values, rtol=0, atol=1e-06
