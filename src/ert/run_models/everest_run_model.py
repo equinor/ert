@@ -765,6 +765,60 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         assert isinstance(obj_config, EverestObjectivesConfig)
         return obj_config
 
+    def on_optimization_finished(self) -> None:
+        assert self._experiment is not None
+        logger.debug("Storing final results Everest storage")
+
+        # This a somewhat arbitrary threshold, this should be a user choice
+        # during visualization:
+        CONSTRAINT_TOL = 1e-6
+
+        max_total_objective = -np.inf
+        for ensemble in self._experiment.ensembles_with_function_results:
+            assert ensemble.batch_objectives is not None
+            total_objective = ensemble.batch_objectives["total_objective_value"].item()
+            bound_constraint_violation = (
+                0.0
+                if ensemble.batch_bound_constraint_violations is None
+                else (
+                    ensemble.batch_bound_constraint_violations.drop("batch_id")
+                    .to_numpy()
+                    .min()
+                    .item()
+                )
+            )
+            input_constraint_violation = (
+                0.0
+                if ensemble.batch_input_constraint_violations is None
+                else (
+                    ensemble.batch_input_constraint_violations.drop("batch_id")
+                    .to_numpy()
+                    .min()
+                    .item()
+                )
+            )
+            output_constraint_violation = (
+                0.0
+                if ensemble.batch_output_constraint_violations is None
+                else (
+                    ensemble.batch_output_constraint_violations.drop("batch_id")
+                    .to_numpy()
+                    .min()
+                    .item()
+                )
+            )
+            if (
+                max(
+                    bound_constraint_violation,
+                    input_constraint_violation,
+                    output_constraint_violation,
+                )
+                < CONSTRAINT_TOL
+                and total_objective > max_total_objective
+            ):
+                ensemble.write_metadata(is_improvement=True)
+                max_total_objective = total_objective
+
     def run_experiment(
         self,
         evaluator_server_config: EvaluatorServerConfig,
@@ -792,7 +846,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         optimizer_exit_code = optimizer.run(initial_guesses)
 
         # Store some final results.
-        self._experiment.on_optimization_finished()
+        self.on_optimization_finished()
         if (
             optimizer_exit_code is not RoptExitCode.UNKNOWN
             and optimizer_exit_code is not RoptExitCode.TOO_FEW_REALIZATIONS
