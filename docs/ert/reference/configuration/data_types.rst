@@ -525,25 +525,3 @@ General data: ``GEN_DATA``
 The ``GEN_DATA`` keyword is used to load text files which have been generated
 by the forward model.
 For detailed description and examples see :ref:`here <gen_data>`.
-
-EnKF heritage
--------------
-
-With regards to the datatypes in ERT this is a part of the application where the
-EnKF heritage shows through quite clearly, the datatypes offered by ERT would
-probably be different if ERT was made for Ensemble Smoother from the outset.
-Peculiarities of EnKF heritage include:
-
-1. The `FIELD` implementation can behave both as a dynamic quantity, i.e.
-   pressure and saturation, and static property like porosity. In ERT it is
-   currently *only used* as a parameter.
-
-2. The parameter types have an internal pseudo time dependence corresponding to
-   the "update time" induced by the EnKF scheme. This pseudo time dependence is
-   not directly exposed to the user, but it is still part of the implementation
-   and e.g. when writing plugins which work with parameter data managed by ERT
-   you must relate to it.
-
-3. The time dependence of the `GEN_DATA` implementation. This is just too
-   complex, there have been numerous problems with people who configure the
-   `GEN_DATA` keywords incorrectly.
