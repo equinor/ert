@@ -130,7 +130,7 @@ def _generate_parameter_files(
 
     exports: dict[str, dict[str, float | str]] = {}
     log_exports: dict[str, dict[str, float | str]] = {}
-    
+
     # Group EverestControls by output_file for aggregated JSON writing
     everest_controls_by_file: dict[str, list[EverestControl]] = defaultdict(list)
 
@@ -178,7 +178,7 @@ def _generate_parameter_files(
 
         export_timings[param.type] += time.perf_counter() - start_time
         continue
-    
+
     # Write aggregated EverestControl JSON files
     start_time = time.perf_counter()
     for output_file, controls in everest_controls_by_file.items():
@@ -186,18 +186,22 @@ def _generate_parameter_files(
             output_file, iens, iteration
         )
         file_path.parent.mkdir(exist_ok=True, parents=True)
-        
+
         # Aggregate all controls in this group
         data: dict[str, Any] = {}
         for control in controls:
             df = fs.load_parameters(control.name, iens)
             assert isinstance(df, pl.DataFrame)
             value = df[control.input_key].item()
-            
+
             # Build nested structure
             # Remove group prefix to get the local key
-            key_without_group = control.input_key.replace(f"{control.group}.", "", 1) if control.group else control.input_key
-            
+            key_without_group = (
+                control.input_key.replace(f"{control.group}.", "", 1)
+                if control.group
+                else control.input_key
+            )
+
             if "." in key_without_group:
                 parts = key_without_group.split(".")
                 current = data
@@ -208,12 +212,12 @@ def _generate_parameter_files(
                 current[parts[-1]] = value
             else:
                 data[key_without_group] = value
-        
+
         file_path.write_text(json.dumps(data), encoding="utf-8")
-    
+
     if everest_controls_by_file:
         export_timings["everest_parameters"] += time.perf_counter() - start_time
-    
+
     start_time = time.perf_counter()
     _value_export_txt(run_path, export_base_name, exports | log_exports)
     export_timings["value_export_txt"] = time.perf_counter() - start_time

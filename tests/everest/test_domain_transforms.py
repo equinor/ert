@@ -105,7 +105,9 @@ def test_transforms_controls_input_constraint_scaling(ever_config, scaling):
         ever_config.optimization_output_dir,
     )
 
-    controls = [ctrl for c in ever_config.controls for ctrl in c.to_ert_parameter_config()]
+    controls = [
+        ctrl for c in ever_config.controls for ctrl in c.to_ert_parameter_config()
+    ]
     min_values = np.asarray(ropt_config["variables"]["lower_bounds"])
     max_values = np.asarray(ropt_config["variables"]["upper_bounds"])
     min_values[1] = -1.0

@@ -245,7 +245,11 @@ def test_that_controls_ordering_is_the_same_for_ropt_and_everest_control():
     ever_config_index_wise = everest_config_with_defaults(controls=[index_wise])
 
     ropt_var_wise = everest2ropt(
-        [ctrl for c in ever_config_var_wise.controls for ctrl in c.to_ert_parameter_config()],
+        [
+            ctrl
+            for c in ever_config_var_wise.controls
+            for ctrl in c.to_ert_parameter_config()
+        ],
         ever_config_var_wise.create_ert_objectives_config(),
         ever_config_var_wise.input_constraints,
         ever_config_var_wise.create_ert_output_constraints_config(),
@@ -256,7 +260,11 @@ def test_that_controls_ordering_is_the_same_for_ropt_and_everest_control():
     )
 
     ropt_index_wise = everest2ropt(
-        [ctrl for c in ever_config_index_wise.controls for ctrl in c.to_ert_parameter_config()],
+        [
+            ctrl
+            for c in ever_config_index_wise.controls
+            for ctrl in c.to_ert_parameter_config()
+        ],
         ever_config_index_wise.create_ert_objectives_config(),
         ever_config_index_wise.input_constraints,
         ever_config_index_wise.create_ert_output_constraints_config(),
@@ -270,15 +278,13 @@ def test_that_controls_ordering_is_the_same_for_ropt_and_everest_control():
         ropt_var_wise[0]["names"]["variable"] == ropt_index_wise[0]["names"]["variable"]
     )
 
-    assert (
-        ropt_var_wise[0]["names"]["variable"]
-        == [ctrl.input_key for ctrl in index_wise.to_ert_parameter_config()]
-    )
+    assert ropt_var_wise[0]["names"]["variable"] == [
+        ctrl.input_key for ctrl in index_wise.to_ert_parameter_config()
+    ]
 
-    assert (
-        [ctrl.input_key for ctrl in index_wise.to_ert_parameter_config()]
-        == [ctrl.input_key for ctrl in var_wise.to_ert_parameter_config()]
-    )
+    assert [ctrl.input_key for ctrl in index_wise.to_ert_parameter_config()] == [
+        ctrl.input_key for ctrl in var_wise.to_ert_parameter_config()
+    ]
 
 
 def test_that_controls_ordering_disregards_index():
@@ -307,7 +313,11 @@ def test_that_controls_ordering_disregards_index():
     ever_config_var_wise = everest_config_with_defaults(controls=[var_wise])
 
     ropt_var_wise = everest2ropt(
-        [ctrl for c in ever_config_var_wise.controls for ctrl in c.to_ert_parameter_config()],
+        [
+            ctrl
+            for c in ever_config_var_wise.controls
+            for ctrl in c.to_ert_parameter_config()
+        ],
         ever_config_var_wise.create_ert_objectives_config(),
         ever_config_var_wise.input_constraints,
         ever_config_var_wise.create_ert_output_constraints_config(),

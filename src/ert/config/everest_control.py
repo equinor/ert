@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 import importlib
-import json
 import logging
 from collections.abc import Iterator, Mapping, MutableMapping
-from dataclasses import field
 from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Literal, Self
@@ -15,8 +13,6 @@ import polars as pl
 import xarray as xr
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from ropt.workflow import find_sampler_plugin
-
-from ert.substitutions import substitute_runpath_name
 
 from .parameter_config import ParameterCardinality, ParameterConfig
 
@@ -160,7 +156,7 @@ class EverestControl(ParameterConfig):
     control_type_: Literal["well_control", "generic_control"]
     initial_guess: float
     variable_type: Literal["real", "integer"]
-    is_enabled: bool
+    enabled: bool
     min_value: float
     max_value: float
     perturbation_type: Literal["absolute", "relative"]
@@ -217,8 +213,11 @@ class EverestControl(ParameterConfig):
         # Return in a format that can be aggregated
         # The key structure supports nested keys like "point.x" -> {"x": value}
         # or "point.0.x" -> {"0": {"x": value}}
-        key_without_group = self.input_key.replace(f"{self.group}.", "", 1) if self.group else self.input_key
-
+        key_without_group = (
+            self.input_key.replace(f"{self.group}.", "", 1)
+            if self.group
+            else self.input_key
+        )
         return {self.group or self.name: {key_without_group: value}}
 
     def create_storage_datasets(

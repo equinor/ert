@@ -17,8 +17,7 @@ def _parse_controls(
     controls: list[EverestControl], random_seed: int
 ) -> tuple[dict[str, Any], list[dict[str, Any]] | None]:
     control_types = [
-        VariableType[control.variable_type.upper()]
-        for control in controls
+        VariableType[control.variable_type.upper()] for control in controls
     ]
     initial_guesses = [control.initial_guess for control in controls]
     samplers, sampler_indices = get_samplers(controls)
@@ -28,13 +27,12 @@ def _parse_controls(
         "lower_bounds": [control.min_value for control in controls],
         "upper_bounds": [control.max_value for control in controls],
         "perturbation_types": [
-            PerturbationType[control.perturbation_type.upper()]
-            for control in controls
+            PerturbationType[control.perturbation_type.upper()] for control in controls
         ],
         "perturbation_magnitudes": [
             control.perturbation_magnitude for control in controls
         ],
-        "mask": [control.is_enabled for control in controls],
+        "mask": [control.enabled for control in controls],
         "seed": random_seed,
         "samplers": sampler_indices,
     }

@@ -21,7 +21,7 @@ def test_that_write_to_runpath_writes_json_with_correct_structure(tmp_path):
             control_type_="generic_control",
             initial_guess=0.1,
             variable_type="real",
-            is_enabled=True,
+            enabled=True,
             min_value=-1.0,
             max_value=1.0,
             perturbation_type="absolute",
@@ -37,7 +37,7 @@ def test_that_write_to_runpath_writes_json_with_correct_structure(tmp_path):
             control_type_="generic_control",
             initial_guess=0.1,
             variable_type="real",
-            is_enabled=True,
+            enabled=True,
             min_value=-1.0,
             max_value=1.0,
             perturbation_type="absolute",
@@ -53,7 +53,7 @@ def test_that_write_to_runpath_writes_json_with_correct_structure(tmp_path):
             control_type_="generic_control",
             initial_guess=0.1,
             variable_type="real",
-            is_enabled=True,
+            enabled=True,
             min_value=-1.0,
             max_value=1.0,
             perturbation_type="absolute",
@@ -65,7 +65,7 @@ def test_that_write_to_runpath_writes_json_with_correct_structure(tmp_path):
 
     mock_ensemble = MagicMock()
     mock_ensemble.iteration = 0
-    
+
     # Create separate DataFrames for each control
     mock_ensemble.load_parameters.side_effect = [
         pl.DataFrame({"realization": [5], "point.x": [1.5]}),
@@ -74,16 +74,20 @@ def test_that_write_to_runpath_writes_json_with_correct_structure(tmp_path):
     ]
 
     run_path = tmp_path / "runpath" / "realization-5"
-    
+
     # Simulate the aggregated file writing from _generate_parameter_files
     run_path.mkdir(parents=True)
     data: dict[str, Any] = {}
     for control in controls:
         df = mock_ensemble.load_parameters(control.name, 5)
         value = df[control.input_key].item()
-        key_without_group = control.input_key.replace(f"{control.group}.", "", 1) if control.group else control.input_key
+        key_without_group = (
+            control.input_key.replace(f"{control.group}.", "", 1)
+            if control.group
+            else control.input_key
+        )
         data[key_without_group] = value
-    
+
     output_file = run_path / "point.json"
     output_file.write_text(json.dumps(data), encoding="utf-8")
 
@@ -107,7 +111,7 @@ def test_that_write_to_runpath_writes_json_with_correct_structure_for_nested_con
             control_type_="generic_control",
             initial_guess=0.1,
             variable_type="real",
-            is_enabled=True,
+            enabled=True,
             min_value=-1.0,
             max_value=1.0,
             perturbation_type="absolute",
@@ -123,7 +127,7 @@ def test_that_write_to_runpath_writes_json_with_correct_structure_for_nested_con
             control_type_="generic_control",
             initial_guess=0.1,
             variable_type="real",
-            is_enabled=True,
+            enabled=True,
             min_value=-1.0,
             max_value=1.0,
             perturbation_type="absolute",
@@ -139,7 +143,7 @@ def test_that_write_to_runpath_writes_json_with_correct_structure_for_nested_con
             control_type_="generic_control",
             initial_guess=0.1,
             variable_type="real",
-            is_enabled=True,
+            enabled=True,
             min_value=-1.0,
             max_value=1.0,
             perturbation_type="absolute",
@@ -151,7 +155,7 @@ def test_that_write_to_runpath_writes_json_with_correct_structure_for_nested_con
 
     mock_ensemble = MagicMock()
     mock_ensemble.iteration = 0
-    
+
     # Create separate DataFrames for each control
     mock_ensemble.load_parameters.side_effect = [
         pl.DataFrame({"realization": [5], "point.x.0": [1.5]}),
@@ -161,14 +165,18 @@ def test_that_write_to_runpath_writes_json_with_correct_structure_for_nested_con
 
     run_path = tmp_path / "runpath" / "realization-5"
     run_path.mkdir(parents=True)
-    
+
     # Simulate the aggregated file writing from _generate_parameter_files
     data: dict[str, Any] = {}
     for control in controls:
         df = mock_ensemble.load_parameters(control.name, 5)
         value = df[control.input_key].item()
-        key_without_group = control.input_key.replace(f"{control.group}.", "", 1) if control.group else control.input_key
-        
+        key_without_group = (
+            control.input_key.replace(f"{control.group}.", "", 1)
+            if control.group
+            else control.input_key
+        )
+
         if "." in key_without_group:
             parts = key_without_group.split(".")
             current = data
@@ -179,7 +187,7 @@ def test_that_write_to_runpath_writes_json_with_correct_structure_for_nested_con
             current[parts[-1]] = value
         else:
             data[key_without_group] = value
-    
+
     output_file = run_path / "point.json"
     output_file.write_text(json.dumps(data), encoding="utf-8")
 
@@ -196,7 +204,7 @@ def test_that_create_storage_datasets_returns_dataframe_with_correct_schema():
         control_type_="generic_control",
         initial_guess=0.1,
         variable_type="real",
-        is_enabled=True,
+        enabled=True,
         min_value=-1.0,
         max_value=1.0,
         perturbation_type="absolute",
@@ -226,7 +234,7 @@ def test_that_create_storage_datasets_preserves_data_values():
         control_type_="generic_control",
         initial_guess=0.1,
         variable_type="real",
-        is_enabled=True,
+        enabled=True,
         min_value=-1.0,
         max_value=1.0,
         perturbation_type="absolute",
@@ -253,7 +261,7 @@ def test_that_create_storage_datasets_handles_nested_parameter_keys():
         control_type_="generic_control",
         initial_guess=0.1,
         variable_type="real",
-        is_enabled=True,
+        enabled=True,
         min_value=-1.0,
         max_value=1.0,
         perturbation_type="absolute",

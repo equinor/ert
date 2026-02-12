@@ -330,14 +330,14 @@ class ControlConfig(BaseModel):
 
     def to_ert_parameter_config(self) -> list[EverestControl]:
         """Convert this control group to a list of EverestControl objects.
-        
+
         Each variable in the control group becomes its own EverestControl object,
         allowing each to map to a single scalar value.
         """
         controls: list[EverestControl] = []
         formatted_names = self.formatted_control_names
         formatted_names_dotdash = self.formatted_control_names_dotdash
-        
+
         idx = 0
         for variable in self.variables:
             num_entries = (
@@ -345,7 +345,7 @@ class ControlConfig(BaseModel):
                 if isinstance(variable, ControlVariableGuessListConfig)
                 else 1
             )
-            
+
             for i in range(num_entries):
                 initial_guess_value = (
                     variable.initial_guess[i]
@@ -356,7 +356,7 @@ class ControlConfig(BaseModel):
                         else self.initial_guess
                     )
                 )
-                
+
                 control = EverestControl(
                     name=formatted_names[idx],
                     input_key=formatted_names[idx],
@@ -366,7 +366,9 @@ class ControlConfig(BaseModel):
                     control_type_=self.type,
                     initial_guess=initial_guess_value,
                     variable_type=self.control_type,
-                    is_enabled=variable.enabled if variable.enabled is not None else self.enabled,
+                    enabled=variable.enabled
+                    if variable.enabled is not None
+                    else self.enabled,
                     min_value=variable.min if variable.min is not None else self.min,
                     max_value=variable.max if variable.max is not None else self.max,
                     perturbation_type=variable.perturbation_type,
@@ -384,5 +386,5 @@ class ControlConfig(BaseModel):
                 )
                 controls.append(control)
                 idx += 1
-        
+
         return controls
