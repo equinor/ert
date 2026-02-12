@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QEvent, QObject, Qt
@@ -21,6 +22,8 @@ from ert.gui.ertwidgets import (
     showWaitCursorWhileWaiting,
 )
 from ert.sample_prior import sample_prior
+from ert.storage import Ensemble
+from ert.storage.realization_storage_state import RealizationStorageState
 
 from .storage_info_widget import StorageInfoWidget
 from .storage_widget import StorageWidget
@@ -79,7 +82,25 @@ class ManageExperimentsPanel(QTabWidget):
 
         ensemble_layout = QHBoxLayout()
         ensemble_label = QLabel("Target ensemble:")
-        ensemble_selector = EnsembleSelector(self.notifier, show_only_undefined=True)
+
+        def show_only_undefined_filter(
+            ensembles: Iterable[Ensemble],
+        ) -> Iterable[Ensemble]:
+            return (
+                ensemble
+                for ensemble in ensembles
+                if all(
+                    RealizationStorageState.UNDEFINED in e
+                    for e in ensemble.get_ensemble_state()
+                )
+            )
+
+        # only show initialized ensembles
+        filters: list[Callable[[Iterable[Ensemble]], Iterable[Ensemble]]] = [
+            show_only_undefined_filter
+        ]
+
+        ensemble_selector = EnsembleSelector(self.notifier, filters=filters)
         ensemble_selector.setMinimumWidth(300)
         ensemble_layout.addWidget(ensemble_label)
         ensemble_layout.addWidget(ensemble_selector)

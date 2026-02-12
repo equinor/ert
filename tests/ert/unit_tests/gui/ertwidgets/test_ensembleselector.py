@@ -110,28 +110,49 @@ def test_ensembles_are_sorted_failed_first_then_by_start_time(storage):
 
 
 @pytest.mark.parametrize(
-    ("flag", "expected"),
+    ("filters", "expected_ensembles_count"),
     [
-        (True, ["my-experiment : child"]),
-        (False, ["my-experiment : child", "my-experiment : parent"]),
+        pytest.param(
+            None,
+            3,
+            id="filters are None",
+        ),
+        pytest.param(
+            [],
+            3,
+            id="filters are empty",
+        ),
+        pytest.param(
+            [
+                lambda ensembles: (e for e in ensembles if e.name == "b"),
+                lambda ensembles: (e for e in ensembles if e.name == "c"),
+            ],
+            2,
+            id="independent filters",
+        ),
+        pytest.param(
+            [
+                lambda ensembles: (e for e in ensembles if e.name == "a"),
+                lambda ensembles: (e for e in ensembles if e.parent is None),
+            ],
+            1,
+            id="duplicating filters",
+        ),
     ],
 )
-def test_show_only_no_parent(
-    qtbot, notifier, storage, uniform_parameter, response, flag, expected
+def test_that_filters_are_applied(
+    qtbot, notifier, storage, filters, expected_ensembles_count
 ):
-    experiment = storage.create_experiment(
-        experiment_config={
-            "parameter_configuration": [uniform_parameter.model_dump(mode="json")],
-            "response_configuration": [response.model_dump(mode="json")],
-        },
-        name="my-experiment",
+    ensemble_a = storage.create_experiment().create_ensemble(name="a", ensemble_size=1)
+    ensemble_b = storage.create_experiment().create_ensemble(
+        name="b", ensemble_size=1, prior_ensemble=ensemble_a
     )
-    ensemble = experiment.create_ensemble(name="parent", ensemble_size=1)
-    experiment.create_ensemble(name="child", ensemble_size=1, prior_ensemble=ensemble)
+    storage.create_experiment().create_ensemble(
+        name="c", ensemble_size=1, prior_ensemble=ensemble_b
+    )
 
     notifier.set_storage(str(storage.path))
-    notifier.set_current_ensemble_id(ensemble.id)
 
-    widget = EnsembleSelector(notifier, show_only_no_children=flag)
+    widget = EnsembleSelector(notifier, filters=filters)
     qtbot.addWidget(widget)
-    assert [widget.itemText(i) for i in range(widget.count())] == expected
+    assert widget.count() == expected_ensembles_count
