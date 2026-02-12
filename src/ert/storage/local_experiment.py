@@ -561,7 +561,7 @@ class LocalExperiment(BaseMode):
         return cast(EverestConstraintsConfig, constraints_config)
 
     @property
-    def everest_ensembles_with_function_results(
+    def ensembles_with_function_results(
         self,
     ) -> list[LocalEnsemble]:
         return [
@@ -571,7 +571,7 @@ class LocalExperiment(BaseMode):
         ]
 
     @property
-    def everest_ensembles_with_gradient_results(
+    def ensembles_with_gradient_results(
         self,
     ) -> list[LocalEnsemble]:
         return [
@@ -588,7 +588,7 @@ class LocalExperiment(BaseMode):
         CONSTRAINT_TOL = 1e-6
 
         max_total_objective = -np.inf
-        for ensemble in self.everest_ensembles_with_function_results:
+        for ensemble in self.ensembles_with_function_results:
             assert ensemble.batch_objectives is not None
             total_objective = ensemble.batch_objectives["total_objective_value"].item()
             bound_constraint_violation = (

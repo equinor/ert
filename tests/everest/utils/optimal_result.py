@@ -19,7 +19,7 @@ def get_optimal_result(output_dir: str) -> OptimalResult | None:
 
     matching_batches = [
         ens
-        for ens in experiment.everest_ensembles_with_function_results
+        for ens in experiment.ensembles_with_function_results
         if not ens.batch_objectives.is_empty() and ens.is_improvement
     ]
 
