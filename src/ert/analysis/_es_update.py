@@ -27,6 +27,7 @@ from ert.field_utils import (
     transform_local_ellipse_angle_to_local_coords,
     transform_positions_to_local_field_coordinates,
 )
+from ert.field_utils.field_utils import CoordinateSystem
 
 from ._update_commons import (
     ErtAnalysisError,
@@ -372,6 +373,11 @@ def analysis_ES(
                     f"{obs_xpos.shape[0]} observations, {ensemble_size} realizations "
                 )
                 logger.info(log_msg)
+
+                if param_cfg.ertbox_params.coordinate_system is None:
+                    logger.warning("Coordinate system is not defined, do not update")
+                    continue
+
                 assert param_cfg.ertbox_params.xinc is not None, (
                     "Parameter for grid resolution must be defined"
                 )
@@ -406,7 +412,8 @@ def analysis_ES(
                     obs_main_range,
                     obs_main_range,
                     ellipse_rotation,
-                    right_handed_grid_indexing=True,
+                    param_cfg.ertbox_params.coordinate_system
+                    == CoordinateSystem.RIGHT_HANDED,
                 )
                 # right_handed - this needs to be retrieved from the grid
                 param_ensemble_array = smoother_distance_es.update_params(
