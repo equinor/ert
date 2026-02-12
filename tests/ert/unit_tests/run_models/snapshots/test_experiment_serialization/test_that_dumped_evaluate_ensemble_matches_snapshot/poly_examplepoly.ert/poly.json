@@ -170,5 +170,6 @@
   "random_seed": 1,
   "start_iteration": 0,
   "minimum_required_realizations": 1,
+  "type": "evaluate_ensemble",
   "ensemble_id": "00000000-0000-0000-0000-000000000000"
 }

@@ -309,5 +309,6 @@
       "north": null,
       "radius": null
     }
-  ]
+  ],
+  "type": "ensemble_information_filter"
 }

@@ -12,7 +12,7 @@ from ..analysis import enif_update
 logger = logging.getLogger(__name__)
 
 
-class EnsembleInformationFilter(EnsembleSmoother, EnsembleInformationFilterConfig):
+class EnsembleInformationFilter(EnsembleInformationFilterConfig, EnsembleSmoother):
     def update_ensemble_parameters(
         self, prior: Ensemble, posterior: Ensemble, weight: float
     ) -> None:

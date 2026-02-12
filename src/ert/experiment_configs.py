@@ -179,7 +179,9 @@ class MultipleDataAssimilationConfig(
     weights: str
 
 
-class SingleTestRunConfig(EnsembleExperimentConfig):
+class SingleTestRunConfig(InitialEnsembleRunModelConfig):
     type: Literal["single_test_run"] = "single_test_run"
+    target_ensemble: str
+    supports_rerunning_failed_realizations: ClassVar[bool] = True
     active_realizations: list[bool] = Field(default_factory=lambda: [True])
     minimum_required_realizations: int = 1

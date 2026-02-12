@@ -804,5 +804,6 @@
       "north": 11.5,
       "radius": 3.0
     }
-  ]
+  ],
+  "type": "ensemble_information_filter"
 }

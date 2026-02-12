@@ -6,7 +6,7 @@ from ert.run_models import EnsembleExperiment
 SINGLE_TEST_RUN_GROUP = "Forward model evaluation"
 
 
-class SingleTestRun(EnsembleExperiment, SingleTestRunConfig):
+class SingleTestRun(SingleTestRunConfig, EnsembleExperiment):
     """
     Single test is equivalent to EnsembleExperiment, in that it
     samples the prior and evaluates it.<br>There are two key differences:<br>
