@@ -761,7 +761,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         assert isinstance(obj_config, EverestObjectivesConfig)
         return obj_config
 
-    def on_optimization_finished(self) -> None:
+    def _update_ensemble_improvement_flags(self) -> None:
         assert self._experiment is not None
         logger.debug("Storing final results Everest storage")
 
@@ -842,7 +842,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         optimizer_exit_code = optimizer.run(initial_guesses)
 
         # Store some final results.
-        self.on_optimization_finished()
+        self._update_ensemble_improvement_flags()
         if (
             optimizer_exit_code is not RoptExitCode.UNKNOWN
             and optimizer_exit_code is not RoptExitCode.TOO_FEW_REALIZATIONS
