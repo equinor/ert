@@ -27,6 +27,7 @@ from ert.config import (
     ParameterConfig,
     SummaryConfig,
 )
+from ert.exceptions import StorageError
 from ert.substitutions import substitute_runpath_name
 
 from .load_status import LoadResult
@@ -1179,74 +1180,79 @@ class LocalEnsemble(BaseMode):
 
     def get_rft_observations_and_responses(
         self,
-        selected_observations: Iterable[str],
-        iens_active_index: npt.NDArray[np.int_],
     ) -> pl.DataFrame:
         """Fetches and aligns selected RFT observations with their
         corresponding simulated responses from an ensemble.
 
         Includes i, j, k grid cell indices from the responses in the output.
         """
-        known_observations = self.experiment.observation_keys
-        unknown_observations = [
-            obs for obs in selected_observations if obs not in known_observations
-        ]
 
-        if unknown_observations:
-            raise KeyError(
-                f"Observations: {', '.join(unknown_observations)} not in experiment"
-            )
-
-        observations_by_type = self.experiment.observations
-
-        if "rft" not in observations_by_type:
-            raise KeyError("No RFT observations found in experiment")
+        # Get RFT observation keys from the experiment
+        rft_observations = self.experiment.observations.get("rft")
+        if rft_observations is None or rft_observations.is_empty():
+            raise StorageError("No RFT observations found in experiment")
 
         if "rft" not in self.experiment.response_configuration:
             raise KeyError("No RFT response configuration found in experiment")
 
+        # Get realizations that have responses
+        realisations = self.get_realization_list_with_responses()
+        if len(realisations) == 0:
+            raise StorageError("No realizations with responses found")
+
         response_cls = self.experiment.response_configuration["rft"]
 
-        observations_for_type = (
-            observations_by_type["rft"]
-            .filter(pl.col("observation_key").is_in(list(selected_observations)))
-            .with_columns(
-                [pl.col("response_key").cast(pl.Categorical).alias("response_key")]
-            )
+        observations_for_type = rft_observations.with_columns(
+            [
+                pl.col("response_key")
+                .str.extract(r"^([^:]+:[^:]+)")
+                .cast(pl.Categorical)
+                .alias("well_and_date"),
+                pl.col("response_key").str.extract(r"^([^:]+)").alias("well"),
+                pl.col("response_key").str.extract(r"^[^:]+:([^:]+)").alias("date"),
+            ]
         )
 
         observed_cols = {
             k: observations_for_type[k].unique()
-            for k in ["response_key", *response_cls.primary_key]
+            for k in ["well_and_date", *response_cls.primary_key]
         }
 
-        reals = iens_active_index.tolist()
-        reals.sort()
+        realisations.sort()
 
         first_columns: pl.DataFrame | None = None
         realization_columns: list[pl.DataFrame] = []
 
-        for real in reals:
+        for real in realisations:
             responses = self.load_responses("rft", (real,)).with_columns(
-                [pl.col("response_key").cast(pl.Categorical).alias("response_key")]
+                [
+                    pl.col("response_key")
+                    .str.extract(r"^([^:]+:[^:]+)")
+                    .cast(pl.Categorical)
+                    .alias("well_and_date"),
+                    pl.col("response_key").str.extract(r":([^:]+)$").alias("property"),
+                ]
             )
 
             # Filter out responses without observations
             for col, observed_values in observed_cols.items():
-                if col == "response_key":
-                    pass
-                else:
-                    responses = responses.filter(
-                        pl.col(col).is_in(observed_values.implode(), nulls_equal=True)
-                    )
+                responses = responses.filter(
+                    pl.col(col).is_in(observed_values.implode(), nulls_equal=True)
+                )
 
             # Include i, j, k in the pivot index so they are preserved
-            pivot_index = ["response_key", *response_cls.primary_key, "i", "j", "k"]
+            pivot_index = [
+                "well_and_date",
+                "realization",
+                *response_cls.primary_key,
+                "i",
+                "j",
+                "k",
+            ]
             pivoted = responses.pivot(
-                on="realization",
+                on="property",
                 index=pivot_index,
                 values="values",
-                aggregate_function="mean",
             )
 
             if pivoted.is_empty():
@@ -1267,25 +1273,36 @@ class LocalEnsemble(BaseMode):
                 joined = observations_for_type.join(
                     pivoted,
                     how="left",
-                    on=["response_key", *response_cls.primary_key],
+                    on=["well_and_date", *response_cls.primary_key],
                     nulls_equal=True,
                 )
 
             if first_columns is None:
-                # Keep all columns except the realization column
-                non_realization_cols = [
-                    col for col in joined.columns if col != str(real)
-                ]
-                first_columns = joined.select(non_realization_cols)
+                first_columns = joined.select(
+                    [
+                        "well_and_date",
+                        "well",
+                        "date",
+                        "observations",
+                        "std",
+                        "east",
+                        "north",
+                        "tvd",
+                        "zone",
+                        "i",
+                        "j",
+                        "k",
+                    ]
+                )
 
-            realization_columns.append(joined.select(str(real)))
+            realization_columns.append(
+                joined.select(["realization", *responses["property"].to_list()])
+            )
 
         if first_columns is None:
             raise KeyError("No realizations had responses for the RFT observations")
 
-        return pl.concat(
-            [first_columns, *realization_columns], how="horizontal"
-        ).with_columns(pl.col("response_key").cast(pl.String).alias("response_key"))
+        return pl.concat([first_columns, *realization_columns], how="horizontal")
 
     @property
     def everest_realization_info(self) -> dict[int, EverestRealizationInfo] | None:

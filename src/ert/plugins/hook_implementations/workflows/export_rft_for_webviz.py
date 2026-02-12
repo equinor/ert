@@ -3,10 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-import numpy as np
-
 from ert import ErtScript
-from ert.exceptions import StorageError
 
 if TYPE_CHECKING:
     from ert.storage import Ensemble
@@ -33,23 +30,8 @@ class ExportWebvizRFTJob(ErtScript):
             else workflow_args[0]
         )
 
-        # Get RFT observation keys from the experiment
-        rft_observations = ensemble.experiment.observations.get("rft")
-        if rft_observations is None or rft_observations.is_empty():
-            raise StorageError("No RFT observations found in experiment")
-
-        rft_observation_keys = rft_observations["observation_key"].unique().to_list()
-
-        # Get realizations that have responses
-        realizations = ensemble.get_realization_list_with_responses()
-        if len(realizations) == 0:
-            raise StorageError("No realizations with responses found")
-
         # Fetch observations aligned with responses
-        observations_and_responses = ensemble.get_observations_and_responses(
-            selected_observations=rft_observation_keys,
-            iens_active_index=np.array(realizations),
-        )
+        observations_and_responses = ensemble.get_rft_observations_and_responses()
 
         # Write to CSV, creating parent directories if needed
         Path(target_file).parent.mkdir(parents=True, exist_ok=True)
