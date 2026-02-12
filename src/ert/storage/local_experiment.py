@@ -52,6 +52,19 @@ class ExperimentState(StrEnum):
     never_run = auto()
 
 
+class ExperimentType(StrEnum):
+    UNDEFINED = "Undefined"
+    SINGLE_TEST_RUN = "Single Test Run"
+    ENSEMBLE_EXPERIMENT = "Ensemble Experiment"
+    EVALUATE_ENSEMBLE = "Evaluate Ensemble"
+    ES_MDA = "Multiple Data Assimilation"
+    ENSEMBLE_SMOOTHER = "Ensemble Smoother"
+    ENSEMBLE_INFORMATION_FILTER = "Ensemble Information Filter"
+    MANUAL_UPDATE = "Manual Update"
+    MANUAL = "Manual"
+    EVEREST = "Everest"
+
+
 class ExperimentStatus(BaseModel):
     message: str = Field(default="")
     status: ExperimentState = Field(default=ExperimentState.pending)
@@ -265,6 +278,11 @@ class LocalExperiment(BaseMode):
     @property
     def id(self) -> UUID:
         return self._index.id
+
+    @property
+    def experiment_type(self) -> ExperimentType:
+        assert self.experiment_config is not None
+        return self.experiment_config.get("experiment_type", ExperimentType.UNDEFINED)
 
     @property
     def status(self) -> ExperimentStatus | None:
