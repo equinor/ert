@@ -1541,7 +1541,7 @@ class LocalEnsemble(BaseMode):
     def is_improvement(self) -> bool:
         return bool(self._index.is_improvement)
 
-    def write_metadata(self, is_improvement: bool) -> None:
+    def update_improvement_flag(self, is_improvement: bool) -> None:
         # Clear the cached prop for the new value to take place
         if "is_improvement" in self.__dict__:
             del self.is_improvement
