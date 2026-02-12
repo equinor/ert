@@ -12,7 +12,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any, cast
 from uuid import UUID
 
-import numpy as np
 import polars as pl
 from pydantic import BaseModel, Field, TypeAdapter
 from surfio import IrapSurface
@@ -579,59 +578,6 @@ class LocalExperiment(BaseMode):
             for b in sorted(self.ensembles, key=lambda ens: ens.iteration)
             if b.has_gradient_results
         ]
-
-    def on_optimization_finished(self) -> None:
-        logger.debug("Storing final results Everest storage")
-
-        # This a somewhat arbitrary threshold, this should be a user choice
-        # during visualization:
-        CONSTRAINT_TOL = 1e-6
-
-        max_total_objective = -np.inf
-        for ensemble in self.ensembles_with_function_results:
-            assert ensemble.batch_objectives is not None
-            total_objective = ensemble.batch_objectives["total_objective_value"].item()
-            bound_constraint_violation = (
-                0.0
-                if ensemble.batch_bound_constraint_violations is None
-                else (
-                    ensemble.batch_bound_constraint_violations.drop("batch_id")
-                    .to_numpy()
-                    .min()
-                    .item()
-                )
-            )
-            input_constraint_violation = (
-                0.0
-                if ensemble.batch_input_constraint_violations is None
-                else (
-                    ensemble.batch_input_constraint_violations.drop("batch_id")
-                    .to_numpy()
-                    .min()
-                    .item()
-                )
-            )
-            output_constraint_violation = (
-                0.0
-                if ensemble.batch_output_constraint_violations is None
-                else (
-                    ensemble.batch_output_constraint_violations.drop("batch_id")
-                    .to_numpy()
-                    .min()
-                    .item()
-                )
-            )
-            if (
-                max(
-                    bound_constraint_violation,
-                    input_constraint_violation,
-                    output_constraint_violation,
-                )
-                < CONSTRAINT_TOL
-                and total_objective > max_total_objective
-            ):
-                ensemble.write_metadata(is_improvement=True)
-                max_total_objective = total_objective
 
     def export_dataframes(
         self,
