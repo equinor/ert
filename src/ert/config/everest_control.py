@@ -152,6 +152,7 @@ class EverestControl(ParameterConfig):
     """
 
     type: Literal["everest_parameters"] = "everest_parameters"
+    dimensionality: Literal[1] = 1
     input_keys: list[str] = field(default_factory=list)
     forward_init: bool = False
     output_file: str = ""
