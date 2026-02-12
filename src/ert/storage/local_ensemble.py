@@ -1537,15 +1537,11 @@ class LocalEnsemble(BaseMode):
             )
         )
 
-    @cached_property
+    @property
     def is_improvement(self) -> bool:
         return bool(self._index.is_improvement)
 
     def update_improvement_flag(self, is_improvement: bool) -> None:
-        # Clear the cached prop for the new value to take place
-        if "is_improvement" in self.__dict__:
-            del self.is_improvement
-
         self._index.is_improvement = is_improvement
         self._storage._write_transaction(
             self._path / "index.json",
