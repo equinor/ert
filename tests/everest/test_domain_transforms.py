@@ -113,10 +113,11 @@ def test_transforms_controls_input_constraint_scaling(ever_config, scaling):
     min_values[1] = -1.0
     max_values[1] = 1.0
     for idx in range(3):
-        controls[0].min[idx] = min_values[idx]
-        controls[0].max[idx] = max_values[idx]
+        controls[idx].min = min_values[idx]
+        controls[idx].max = max_values[idx]
 
-    controls[0].scaled_ranges = [[0.3, 0.7]] * len(controls[0].scaled_ranges)
+    for control in controls:
+        control.scaled_range = [0.3, 0.7]
 
     transforms = get_optimization_domain_transforms(
         controls,
