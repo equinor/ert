@@ -1296,7 +1296,9 @@ class LocalEnsemble(BaseMode):
                 )
 
             realization_columns.append(
-                joined.select(["realization", *responses["property"].to_list()])
+                joined.select(
+                    ["realization", *responses["property"].unique().to_list()]
+                )
             )
 
         if first_columns is None:
