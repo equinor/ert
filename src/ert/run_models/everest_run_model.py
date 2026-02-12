@@ -547,13 +547,9 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
 
     @property
     def _everest_control_configs(self) -> list[EverestControl]:
-        controls = [
+        return [
             c for c in self.parameter_configuration if c.type == "everest_parameters"
         ]
-
-        # There will and must always be one EverestControl config for an
-        # Everest optimization.
-        return controls
 
     @cached_property
     def _transforms(self) -> EverestOptModelTransforms:
