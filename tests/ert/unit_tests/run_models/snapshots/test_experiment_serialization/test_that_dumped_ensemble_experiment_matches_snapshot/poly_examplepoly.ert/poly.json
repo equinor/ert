@@ -295,5 +295,6 @@
       "radius": null
     }
   ],
-  "target_ensemble": "the_experiment"
+  "target_ensemble": "the_experiment",
+  "experiment_type": "Ensemble Experiment"
 }

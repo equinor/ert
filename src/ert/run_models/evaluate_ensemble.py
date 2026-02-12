@@ -7,6 +7,7 @@ from uuid import UUID
 import numpy as np
 
 from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.storage.local_experiment import ExperimentType
 from ert.trace import tracer
 
 from ..run_arg import create_run_arguments
@@ -69,3 +70,7 @@ class EvaluateEnsemble(RunModel, EvaluateEnsembleConfig):
     @classmethod
     def description(cls) -> str:
         return "Use existing parameters → evaluate"
+
+    @classmethod
+    def _experiment_type(cls) -> ExperimentType:
+        return ExperimentType.EVALUATE

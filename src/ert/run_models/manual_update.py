@@ -10,6 +10,7 @@ from pydantic import PrivateAttr
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.update_run_model import UpdateRunModel, UpdateRunModelConfig
 from ert.storage import Ensemble
+from ert.storage.local_experiment import ExperimentType
 
 from ..analysis import smoother_update
 from .run_model import ErtRunError
@@ -93,6 +94,10 @@ class ManualUpdate(UpdateRunModel, ManualUpdateConfig):
     @classmethod
     def description(cls) -> str:
         return "Load parameters and responses from existing → update"
+
+    @classmethod
+    def _experiment_type(cls) -> ExperimentType:
+        return ExperimentType.MANUAL_UPDATE
 
     def check_if_runpath_exists(self) -> bool:
         # Will not run a forward model, so does not create files on runpath

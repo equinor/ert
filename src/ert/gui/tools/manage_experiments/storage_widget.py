@@ -26,6 +26,7 @@ from ert.config import ErrorInfo, ErtConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import CreateExperimentDialog, Suggestor
 from ert.storage import Ensemble, Experiment
+from ert.storage.local_experiment import ExperimentType
 
 from .storage_model import (
     EnsembleModel,
@@ -190,6 +191,7 @@ class StorageWidget(QWidget):
                                 for d in self._ert_config.observation_declarations
                             ],
                             "ert_templates": self._ert_config.ert_templates,
+                            "experiment_type": ExperimentType.MANUAL,
                         },
                         name=create_experiment_dialog.experiment_name,
                     ).create_ensemble(
