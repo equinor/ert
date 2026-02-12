@@ -19,23 +19,6 @@ controls:
         initial_guess: 250
         min: 10
         max: 500
-  -
-    name: group_rate
-    type: generic_control
-    perturbation_magnitude: 50
-    variables:
-      -
-        name: OP1
-        index: 1
-        initial_guess: 50
-        min: 10
-        max: 500
-      -
-        name: WI1
-        index: 1
-        initial_guess: 250
-        min: 10
-        max: 500
 
 objective_functions:
   - name: rf
