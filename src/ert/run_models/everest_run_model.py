@@ -632,16 +632,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         for batch_id, batch_dict in batch_dataframes.items():
             target_ensemble = self._experiment.get_ensemble_by_name(f"batch_{batch_id}")
             target_ensemble.save_batch_dataframes(dataframes=batch_dict)
-
-            (target_ensemble._path / "batch.json").write_text(
-                json.dumps(
-                    {
-                        "batch_id": batch_id,
-                        "is_improvement": False,
-                    },
-                ),
-                encoding="utf-8",
-            )
+            target_ensemble.write_metadata(is_improvement=False)
 
         for r in results:
             batches = (

@@ -68,7 +68,7 @@ def opt_controls_by_batch(optimization_dir: Path, batch: int) -> dict[str, Any] 
 
     assert storage is not None
     function_batch = next(
-        (b for b in storage.ensembles_with_function_results if b.batch_id == batch),
+        (b for b in storage.ensembles_with_function_results if b.iteration == batch),
         None,
     )
 
