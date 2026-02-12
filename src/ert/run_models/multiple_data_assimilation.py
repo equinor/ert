@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import functools
 import logging
-from typing import Any, ClassVar
+from typing import Any
 from uuid import UUID
 
 from pydantic import PrivateAttr
@@ -12,11 +12,11 @@ from ert.config import (
     PreExperimentFixtures,
 )
 from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.experiment_configs import MultipleDataAssimilationConfig
 from ert.run_models.initial_ensemble_run_model import (
     InitialEnsembleRunModel,
-    InitialEnsembleRunModelConfig,
 )
-from ert.run_models.update_run_model import UpdateRunModel, UpdateRunModelConfig
+from ert.run_models.update_run_model import UpdateRunModel
 from ert.storage import Ensemble
 from ert.trace import tracer
 
@@ -27,15 +27,6 @@ from .run_model import ErtRunError
 logger = logging.getLogger(__name__)
 
 MULTIPLE_DATA_ASSIMILATION_GROUP = "Parameter update"
-
-
-class MultipleDataAssimilationConfig(
-    InitialEnsembleRunModelConfig, UpdateRunModelConfig
-):
-    default_weights: ClassVar[str] = "4, 2, 1"
-    restart_run: bool
-    prior_ensemble_id: str | None
-    weights: str
 
 
 class MultipleDataAssimilation(

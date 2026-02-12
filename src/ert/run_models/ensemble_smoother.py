@@ -11,11 +11,11 @@ from ert.config import (
     PreExperimentFixtures,
 )
 from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.experiment_configs import EnsembleSmootherConfig
 from ert.run_models.initial_ensemble_run_model import (
     InitialEnsembleRunModel,
-    InitialEnsembleRunModelConfig,
 )
-from ert.run_models.update_run_model import UpdateRunModel, UpdateRunModelConfig
+from ert.run_models.update_run_model import UpdateRunModel
 from ert.storage import Ensemble
 from ert.trace import tracer
 
@@ -24,9 +24,6 @@ from ..run_arg import create_run_arguments
 from .run_model import ErtRunError
 
 logger = logging.getLogger(__name__)
-
-
-class EnsembleSmootherConfig(InitialEnsembleRunModelConfig, UpdateRunModelConfig): ...
 
 
 class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmootherConfig):

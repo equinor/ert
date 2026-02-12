@@ -1,16 +1,9 @@
 from __future__ import annotations
 
-from pydantic import Field
-
+from ert.experiment_configs import SingleTestRunConfig
 from ert.run_models import EnsembleExperiment
-from ert.run_models.ensemble_experiment import EnsembleExperimentConfig
 
 SINGLE_TEST_RUN_GROUP = "Forward model evaluation"
-
-
-class SingleTestRunConfig(EnsembleExperimentConfig):
-    active_realizations: list[bool] = Field(default_factory=lambda: [True])
-    minimum_required_realizations: int = 1
 
 
 class SingleTestRun(EnsembleExperiment, SingleTestRunConfig):

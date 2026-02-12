@@ -19,7 +19,7 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Protocol, cast
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import numpy as np
 from pydantic import PrivateAttr, field_validator
@@ -34,15 +34,12 @@ from _ert.events import (
 from ert.config import (
     ConfigValidationError,
     DesignMatrix,
-    ForwardModelStep,
     HookedWorkflowFixtures,
-    HookRuntime,
     ModelConfig,
     ParameterConfig,
     PostSimulationFixtures,
     PreSimulationFixtures,
     QueueConfig,
-    Workflow,
     create_workflow_fixtures_from_hooked,
 )
 from ert.config.queue_config import KnownQueueOptionsAdapter
@@ -59,6 +56,7 @@ from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FAILED,
     REALIZATION_STATE_FINISHED,
 )
+from ert.experiment_configs import RunModelConfig
 from ert.mode_definitions import MODULE_MODE
 from ert.runpaths import Runpaths
 from ert.storage import (
@@ -72,7 +70,6 @@ from ert.utils import log_duration
 from ert.warnings import PostSimulationWarning, capture_specific_warning
 from ert.workflow_runner import WorkflowRunner
 
-from ..base_model_context import BaseModelWithContextSupport
 from ..run_arg import RunArg
 from ._create_run_path import create_run_path
 from .event import (
@@ -156,25 +153,6 @@ class RunModelAPI:
     start_simulations_thread: StartSimulationsThreadFn
     cancel: Callable[[], None]
     has_failed_realizations: Callable[[], bool]
-
-
-class RunModelConfig(BaseModelWithContextSupport):
-    storage_path: str
-    runpath_file: Path
-    user_config_file: Path
-    env_vars: dict[str, str]
-    env_pr_fm_step: dict[str, dict[str, Any]]
-    runpath_config: ModelConfig
-    queue_config: QueueConfig
-    forward_model_steps: list[ForwardModelStep]
-    substitutions: dict[str, str]
-    hooked_workflows: defaultdict[HookRuntime, list[Workflow]]
-    active_realizations: list[bool]
-    log_path: Path
-    random_seed: int
-    start_iteration: int = 0
-    minimum_required_realizations: int = 0
-    supports_rerunning_failed_realizations: ClassVar[bool] = False
 
 
 class RunModel(RunModelConfig, ABC):
