@@ -204,7 +204,7 @@ def test_field_param_update_using_heat_equation_enif_snapshot(
 
         result = pl.concat(data)
         result = result.sort(["iteration", "realizations", "x", "y", "z"])
-        result = result.pivot(on=["realizations"], values="values", sort_columns=True)
+        result = result.pivot(on=["realizations"], values="values")
 
         _compare_ensemble_params(
             actual=result,
