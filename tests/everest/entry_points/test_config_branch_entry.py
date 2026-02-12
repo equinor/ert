@@ -32,14 +32,14 @@ def test_config_branch_entry(cached_example):
     assert len(new_controls[0]["variables"]) == len(old_controls[0]["variables"])
 
     config = EverestConfig.load_file(Path(config_path) / config_file)
-    storage = EverestStorage.from_storage_path(config.storage_dir)
+    experiment = EverestStorage.get_everest_experiment(config.storage_dir)
 
     new_controls_initial_guesses = {
         var["initial_guess"] for var in new_controls[0]["variables"]
     }
 
-    control_names = storage.parameter_keys
-    batch_1_info = next(b for b in storage.ensembles if b.iteration == 1)
+    control_names = experiment.parameter_keys
+    batch_1_info = next(b for b in experiment.ensembles if b.iteration == 1)
     realization_control_vals = batch_1_info.realization_controls.select(
         *control_names
     ).to_dicts()[0]
@@ -80,9 +80,9 @@ def test_config_branch_preserves_config_section_order(cached_example):
     assert "-initial_guess:0.1" in diff_lines
 
     config = EverestConfig.load_file(Path(config_path) / config_file)
-    storage = EverestStorage.from_storage_path(config.storage_dir)
-    control_names = storage.parameter_keys
-    batch_1_info = next(b for b in storage.ensembles if b.iteration == 1)
+    experiment = EverestStorage.get_everest_experiment(config.storage_dir)
+    control_names = experiment.parameter_keys
+    batch_1_info = next(b for b in experiment.ensembles if b.iteration == 1)
     realization_control_vals = batch_1_info.realization_controls.select(
         *control_names
     ).to_dicts()[0]

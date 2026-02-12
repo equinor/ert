@@ -57,13 +57,13 @@ def visualization_entry(args: list[str] | None = None) -> None:
             logger.info("Migrating ERT storage from everviz entrypoint")
             LocalStorage.perform_migration(Path(ever_config.storage_dir))
 
-        storage = EverestStorage.from_storage_path(
+        experiment = EverestStorage.get_everest_experiment(
             storage_path=ever_config.storage_dir,
         )
 
-        if not storage.ensembles_with_function_results:
+        if not experiment.ensembles_with_function_results:
             print(
-                f"No data found in storage at {storage._storage.path}. "
+                f"No data found in storage at {experiment._storage.path}. "
                 f"Please try again later"
             )
             return
