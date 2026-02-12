@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
-import json
 import logging
 import os
 import time
@@ -70,6 +69,7 @@ class _Index(BaseModel):
     prior_ensemble_id: UUID | None
     started_at: datetime
     everest_realization_info: dict[int, EverestRealizationInfo] | None = None
+    is_improvement: bool | None = None
 
 
 class _Failure(BaseModel):
@@ -1231,20 +1231,6 @@ class LocalEnsemble(BaseMode):
             if isinstance(df, pl.DataFrame):
                 df.write_parquet(self._path / f"{df_name}.parquet")
 
-    def save_batch_metadata(self, is_improvement: bool) -> None:
-        with open(
-            self._path / "batch.json",
-            "w+",
-            encoding="utf-8",
-        ) as f:
-            json.dump(
-                {
-                    "batch_id": self.iteration,
-                    "is_improvement": is_improvement,
-                },
-                f,
-            )
-
     @property
     def has_function_results(self) -> bool:
         return (self._path / "batch_objectives.parquet").exists()
@@ -1553,17 +1539,18 @@ class LocalEnsemble(BaseMode):
 
     @cached_property
     def is_improvement(self) -> bool:
-        info = json.loads((self._path / "batch.json").read_text(encoding="utf-8"))
-        return bool(info["is_improvement"])
+        return bool(self._index.is_improvement)
 
     def write_metadata(self, is_improvement: bool) -> None:
         # Clear the cached prop for the new value to take place
         if "is_improvement" in self.__dict__:
             del self.is_improvement
 
-        info = json.loads((self._path / "batch.json").read_text(encoding="utf-8"))
-        info["is_improvement"] = is_improvement
-        (self._path / "batch.json").write_text(json.dumps(info), encoding="utf-8")
+        self._index.is_improvement = is_improvement
+        self._storage._write_transaction(
+            self._path / "index.json",
+            self._index.model_dump_json(indent=2).encode("utf-8"),
+        )
 
 
 async def _read_parameters(
