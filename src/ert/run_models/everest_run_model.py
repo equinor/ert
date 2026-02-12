@@ -295,7 +295,9 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         )
 
         parameter_configs = [
-            control.to_ert_parameter_config() for control in everest_config.controls
+            ert_control
+            for control in everest_config.controls
+            for ert_control in control.to_ert_parameter_config()
         ]
 
         response_configs: list[ResponseConfig] = []

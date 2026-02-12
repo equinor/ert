@@ -144,38 +144,40 @@ class SamplerConfig(BaseModel):
 
 
 class EverestControl(ParameterConfig):
-    """Create an EverestControl for @key with the given @input_keys
+    """Create an EverestControl for a single control variable.
 
-    @input_keys can be either a list of keys as strings or a dict with
-    keys as strings and a list of suffixes for each key.
-    If a list of strings is given, the order is preserved.
+    Each EverestControl represents one scalar value. Multiple controls can
+    share the same group name to indicate they belong to the same logical group.
     """
 
     type: Literal["everest_parameters"] = "everest_parameters"
     dimensionality: Literal[1] = 1
-    input_keys: list[str] = field(default_factory=list)
+    input_key: str
     forward_init: bool = False
     output_file: str = ""
     forward_init_file: str = ""
     update: bool = False
-    types: list[Literal["well_control", "generic_control"]]
-    initial_guesses: list[float]
-    control_types: list[Literal["real", "integer"]]
-    enabled: list[bool]
-    min: list[float]
-    max: list[float]
-    perturbation_types: list[Literal["absolute", "relative"]]
-    perturbation_magnitudes: list[float]
-    scaled_ranges: list[tuple[float, float]]
-    samplers: list[SamplerConfig | None]
+    control_type_: Literal["well_control", "generic_control"]
+    initial_guess: float
+    variable_type: Literal["real", "integer"]
+    is_enabled: bool
+    min_value: float
+    max_value: float
+    perturbation_type: Literal["absolute", "relative"]
+    perturbation_magnitude: float
+    scaled_range: tuple[float, float]
+    sampler: SamplerConfig | None
+
+    # Optional reference to the control group this variable belongs to
+    group: str | None = None
 
     # Set up for deprecation, but has to live here until support for the
     # "dotdash" notation is removed for everest controls via everest config.
-    input_keys_dotdash: list[str] = field(default_factory=list)
+    input_key_dotdash: str = ""
 
     @property
     def parameter_keys(self) -> list[str]:
-        return self.input_keys
+        return [self.input_key]
 
     @property
     def cardinality(self) -> ParameterCardinality:
@@ -195,31 +197,29 @@ class EverestControl(ParameterConfig):
         raise NotImplementedError
 
     def __len__(self) -> int:
-        return len(self.input_keys)
+        return 1
 
     def write_to_runpath(
         self, run_path: Path, real_nr: int, ensemble: Ensemble
-    ) -> None:
-        file_path: Path = run_path / substitute_runpath_name(
-            self.output_file, real_nr, ensemble.iteration
-        )
-        Path.mkdir(file_path.parent, exist_ok=True, parents=True)
+    ) -> dict[str, dict[str, float]] | None:
+        """Load this control's parameter value.
 
-        data: dict[str, Any] = {}
+        Returns a dict suitable for aggregation with other controls in the same group.
+        The actual file writing is handled at a higher level after all controls in
+        a group have been collected.
+        """
         df = ensemble.load_parameters(self.name, real_nr)
         assert isinstance(df, pl.DataFrame)
-        df = df.drop("realization")
-        df = df.rename({col: col.replace(f"{self.name}.", "", 1) for col in df.columns})
-        for c in df.columns:
-            if "." in c:
-                top_key, sub_key = c.split(".", 1)
-                if top_key not in data:
-                    data[top_key] = {}
-                data[top_key][sub_key] = df[c].item()
-            else:
-                data[c] = df[c].item()
 
-        file_path.write_text(json.dumps(data), encoding="utf-8")
+        # Extract the single value for this control
+        value = df[self.input_key].item()
+
+        # Return in a format that can be aggregated
+        # The key structure supports nested keys like "point.x" -> {"x": value}
+        # or "point.0.x" -> {"0": {"x": value}}
+        key_without_group = self.input_key.replace(f"{self.group}.", "", 1) if self.group else self.input_key
+
+        return {self.group or self.name: {key_without_group: value}}
 
     def create_storage_datasets(
         self,
@@ -229,7 +229,7 @@ class EverestControl(ParameterConfig):
         df = pl.DataFrame(
             {
                 "realization": iens_active_index,
-                **{k: from_data[:, i] for i, k in enumerate(self.parameter_keys)},
+                self.input_key: pl.Series(from_data.flatten()),
             },
             strict=False,
         )

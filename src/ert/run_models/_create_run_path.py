@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import orjson
+import polars as pl
 
 from _ert.utils import file_safe_timestamp
 from ert.config import (
@@ -129,6 +130,9 @@ def _generate_parameter_files(
 
     exports: dict[str, dict[str, float | str]] = {}
     log_exports: dict[str, dict[str, float | str]] = {}
+    
+    # Group EverestControls by output_file for aggregated JSON writing
+    everest_controls_by_file: dict[str, list[EverestControl]] = defaultdict(list)
 
     for param in parameter_configs:
         # For the first iteration we do not write the parameter
@@ -157,6 +161,11 @@ def _generate_parameter_files(
                         "Could not export the log10 value of "
                         f"{scalar_value} as it is invalid"
                     )
+        elif isinstance(param, EverestControl):
+            # Collect EverestControls for later aggregated writing
+            everest_controls_by_file[param.output_file].append(param)
+            export_timings[param.type] += time.perf_counter() - start_time
+            continue
         else:
             export_values = param.write_to_runpath(Path(run_path), iens, fs)
 
@@ -169,6 +178,42 @@ def _generate_parameter_files(
 
         export_timings[param.type] += time.perf_counter() - start_time
         continue
+    
+    # Write aggregated EverestControl JSON files
+    start_time = time.perf_counter()
+    for output_file, controls in everest_controls_by_file.items():
+        file_path: Path = Path(run_path) / substitute_runpath_name(
+            output_file, iens, iteration
+        )
+        file_path.parent.mkdir(exist_ok=True, parents=True)
+        
+        # Aggregate all controls in this group
+        data: dict[str, Any] = {}
+        for control in controls:
+            df = fs.load_parameters(control.name, iens)
+            assert isinstance(df, pl.DataFrame)
+            value = df[control.input_key].item()
+            
+            # Build nested structure
+            # Remove group prefix to get the local key
+            key_without_group = control.input_key.replace(f"{control.group}.", "", 1) if control.group else control.input_key
+            
+            if "." in key_without_group:
+                parts = key_without_group.split(".")
+                current = data
+                for part in parts[:-1]:
+                    if part not in current:
+                        current[part] = {}
+                    current = current[part]
+                current[parts[-1]] = value
+            else:
+                data[key_without_group] = value
+        
+        file_path.write_text(json.dumps(data), encoding="utf-8")
+    
+    if everest_controls_by_file:
+        export_timings["everest_parameters"] += time.perf_counter() - start_time
+    
     start_time = time.perf_counter()
     _value_export_txt(run_path, export_base_name, exports | log_exports)
     export_timings["value_export_txt"] = time.perf_counter() - start_time

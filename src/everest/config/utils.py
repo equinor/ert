@@ -9,9 +9,7 @@ def get_samplers(
     to sampler index. I.e., this points each control variable to
     a sampler by index.
     """
-    flattened_samplers = [
-        sampler for control in controls for sampler in control.samplers
-    ]
+    flattened_samplers = [control.sampler for control in controls]
     unique_samplers: list[SamplerConfig | None] = []
     variable_to_unique_sampler_index: list[int] = []
     for sampler in flattened_samplers:
