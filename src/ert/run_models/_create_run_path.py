@@ -145,7 +145,12 @@ def _generate_parameter_files(
         export_values: dict[str, dict[str, float | str]] | None = None
         log_export_values: dict[str, dict[str, float | str]] = {}
 
-        if param.name in scalar_data:
+        if isinstance(param, EverestControl):
+            # Collect EverestControls for later aggregated writing
+            everest_controls_by_file[param.output_file].append(param)
+            export_timings[param.type] += time.perf_counter() - start_time
+            continue
+        elif param.name in scalar_data:
             scalar_value = scalar_data[param.name]
             group_name = param.group_name or param.name
             export_values = {group_name: {param.name: scalar_value}}
@@ -161,11 +166,6 @@ def _generate_parameter_files(
                         "Could not export the log10 value of "
                         f"{scalar_value} as it is invalid"
                     )
-        elif isinstance(param, EverestControl):
-            # Collect EverestControls for later aggregated writing
-            everest_controls_by_file[param.output_file].append(param)
-            export_timings[param.type] += time.perf_counter() - start_time
-            continue
         else:
             export_values = param.write_to_runpath(Path(run_path), iens, fs)
 
