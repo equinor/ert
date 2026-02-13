@@ -148,7 +148,6 @@ def _generate_parameter_files(
         if isinstance(param, EverestControl):
             # Collect EverestControls for later aggregated writing
             everest_controls_by_file[param.output_file].append(param)
-            export_timings[param.type] += time.perf_counter() - start_time
             continue
         elif param.name in scalar_data:
             scalar_value = scalar_data[param.name]
@@ -196,11 +195,7 @@ def _generate_parameter_files(
 
             # Build nested structure
             # Remove group prefix to get the local key
-            key_without_group = (
-                control.input_key.replace(f"{control.group}.", "", 1)
-                if control.group
-                else control.input_key
-            )
+            key_without_group = control.input_key.replace(f"{control.group}.", "", 1)
 
             if "." in key_without_group:
                 parts = key_without_group.split(".")
@@ -213,7 +208,7 @@ def _generate_parameter_files(
             else:
                 data[key_without_group] = value
 
-        file_path.write_text(json.dumps(data), encoding="utf-8")
+        file_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
     if everest_controls_by_file:
         export_timings["everest_parameters"] += time.perf_counter() - start_time
