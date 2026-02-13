@@ -292,6 +292,9 @@ class PlotApi:
             stream = io.BytesIO(parameter.content)
             df = pd.read_parquet(stream)
 
+            if "batch_id" in df.columns and "realization" in df.columns:
+                return df
+
             try:
                 df.columns = pd.to_datetime(df.columns, format="%Y-%m-%d %H:%M:%S")
             except (ParserError, ValueError):
