@@ -1220,7 +1220,6 @@ class LocalEnsemble(BaseMode):
 
         realisations.sort()
 
-        first_columns: pl.DataFrame | None = None
         realization_columns: list[pl.DataFrame] = []
 
         for real in realisations:
@@ -1277,8 +1276,8 @@ class LocalEnsemble(BaseMode):
                     nulls_equal=True,
                 )
 
-            if first_columns is None:
-                first_columns = joined.select(
+            realization_columns.append(
+                joined.select(
                     [
                         "well_and_date",
                         "well",
@@ -1292,19 +1291,13 @@ class LocalEnsemble(BaseMode):
                         "i",
                         "j",
                         "k",
+                        "realization",
+                        *responses["property"].unique().sort().to_list(),
                     ]
-                )
-
-            realization_columns.append(
-                joined.select(
-                    ["realization", *responses["property"].unique().to_list()]
                 )
             )
 
-        if first_columns is None:
-            raise KeyError("No realizations had responses for the RFT observations")
-
-        return pl.concat([first_columns, *realization_columns], how="horizontal")
+        return pl.concat(realization_columns, how="vertical")
 
     @property
     def everest_realization_info(self) -> dict[int, EverestRealizationInfo] | None:
