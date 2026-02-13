@@ -43,6 +43,7 @@ def test_parsing_contents_succeeds_or_gives_config_error(contents):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:.*Segment SEG does not contain any time steps")
 def test_that_make_observations_migrates_observations():
     Path("wpr_diff_idx.txt").write_text("400\n800\n1200\n1800\n", encoding="utf8")
     Path("wpr_diff_obs.txt").write_text(
@@ -84,7 +85,7 @@ def test_that_make_observations_migrates_observations():
             ERROR = 0.1;
             SEGMENT SEG {
                 START = 1;
-                STOP = 0;
+                STOP = 1;
                 ERROR = 0.25;
             };
         };
