@@ -16,33 +16,21 @@ from everest.config.utils import get_samplers
 def _parse_controls(
     controls: list[EverestControl], random_seed: int
 ) -> tuple[dict[str, Any], list[dict[str, Any]] | None]:
-    control_types = [
-        VariableType[type_.upper()]
-        for control in controls
-        for type_ in control.control_types
-    ]
-    initial_guesses = [
-        initial_guess
-        for control in controls
-        for initial_guess in control.initial_guesses
-    ]
+    control_types = [VariableType[control.control_type.upper()] for control in controls]
+    initial_guesses = [control.initial_guess for control in controls]
     samplers, sampler_indices = get_samplers(controls)
     ropt_variables: dict[str, Any] = {
         "types": None if all(item is None for item in control_types) else control_types,
         "variable_count": len(initial_guesses),
-        "lower_bounds": [min_ for control in controls for min_ in control.min],
-        "upper_bounds": [max_ for control in controls for max_ in control.max],
+        "lower_bounds": [control.min for control in controls],
+        "upper_bounds": [control.max for control in controls],
         "perturbation_types": [
-            PerturbationType[perturbation_type.upper()]
-            for control in controls
-            for perturbation_type in control.perturbation_types
+            PerturbationType[control.perturbation_type.upper()] for control in controls
         ],
         "perturbation_magnitudes": [
-            perturbation_magnitude
-            for control in controls
-            for perturbation_magnitude in control.perturbation_magnitudes
+            control.perturbation_magnitude for control in controls
         ],
-        "mask": [enabled for control in controls for enabled in control.enabled],
+        "mask": [control.enabled for control in controls],
         "seed": random_seed,
         "samplers": sampler_indices,
     }
@@ -118,11 +106,9 @@ def _parse_input_constraints(
     input_constraints: list[InputConstraintConfig],
     controls: list[EverestControl],
 ) -> dict[str, Any]:
-    formatted_control_names = [
-        name for config in controls for name in config.input_keys
-    ]
+    formatted_control_names = [control.input_key for control in controls]
     formatted_control_names_dotdash = [
-        name for config in controls for name in config.input_keys_dotdash
+        control.input_key_dotdash for control in controls
     ]
 
     def _get_control_index(name: str) -> int:
@@ -319,7 +305,7 @@ def everest2ropt(
         "realizations": ropt_realizations,
         "optimizer": ropt_optimizer,
         "names": {
-            "variable": [name for config in controls for name in config.input_keys],
+            "variable": [control.input_key for control in controls],
             "objective": objective_functions.keys,
             "nonlinear_constraint": output_constraints.keys
             if output_constraints is not None
@@ -340,8 +326,4 @@ def everest2ropt(
     if ropt_samplers:
         ropt_config["samplers"] = ropt_samplers
 
-    return ropt_config, [
-        initial_guess
-        for control in controls
-        for initial_guess in control.initial_guesses
-    ]
+    return ropt_config, [control.initial_guess for control in controls]

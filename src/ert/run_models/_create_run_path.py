@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import orjson
+import polars as pl
 
 from _ert.utils import file_safe_timestamp
 from ert.config import (
@@ -140,6 +141,9 @@ def _generate_parameter_files(
     exports: dict[str, dict[str, float | str]] = {}
     log_exports: dict[str, dict[str, float | str]] = {}
 
+    # Group EverestControls by output_file for aggregated JSON writing
+    everest_controls_by_file: dict[str, list[EverestControl]] = defaultdict(list)
+
     for param in parameter_configs:
         # For the first iteration we do not write the parameter
         # to run path, as we expect to read if after the forward
@@ -148,8 +152,12 @@ def _generate_parameter_files(
             continue
         start_time = time.perf_counter()
         export_values: dict[str, dict[str, float | str]] | None = None
-        log_export_values: dict[str, dict[str, float | str]] | None = {}
-        if param.name in scalar_data:
+        log_export_values: dict[str, dict[str, float | str]] = {}
+
+        if isinstance(param, EverestControl):
+            everest_controls_by_file[param.output_file].append(param)
+            continue
+        elif param.name in scalar_data:
             scalar_value = scalar_data[param.name]
             export_values = {param.group_name: {param.name: scalar_value}}
             if isinstance(param, GenKwConfig) and isinstance(
@@ -175,6 +183,39 @@ def _generate_parameter_files(
                 log_exports.setdefault(group, {}).update(vals)
         export_timings[param.type] += time.perf_counter() - start_time
         continue
+
+    # Write aggregated EverestControl JSON files
+    start_time = time.perf_counter()
+    for output_file, controls in everest_controls_by_file.items():
+        file_path: Path = Path(run_path) / substitute_runpath_name(
+            output_file, iens, iteration
+        )
+        file_path.parent.mkdir(exist_ok=True, parents=True)
+
+        data: dict[str, Any] = {}
+        for control in controls:
+            df = fs.load_parameters(control.name, iens)
+            assert isinstance(df, pl.DataFrame)
+            value = df[control.input_key].item()
+
+            key_without_group = control.input_key.replace(f"{control.group}.", "", 1)
+
+            if "." in key_without_group:
+                parts = key_without_group.split(".")
+                current = data
+                for part in parts[:-1]:
+                    if part not in current:
+                        current[part] = {}
+                    current = current[part]
+                current[parts[-1]] = value
+            else:
+                data[key_without_group] = value
+
+        file_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+    if everest_controls_by_file:
+        export_timings["everest_parameters"] += time.perf_counter() - start_time
+
     start_time = time.perf_counter()
     _value_export_txt(run_path, export_base_name, exports | log_exports)
     export_timings["value_export_txt"] = time.perf_counter() - start_time

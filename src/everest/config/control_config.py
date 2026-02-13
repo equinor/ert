@@ -328,69 +328,63 @@ class ControlConfig(BaseModel):
         extra="forbid",
     )
 
-    def to_ert_parameter_config(self) -> EverestControl:
-        types = []
-        initial_guesses = []
-        control_types = []
-        enabled = []
-        mins = []
-        maxs = []
-        perturbation_types = []
-        perturbation_magnitudes = []
-        scaled_ranges = []
-        samplers = []
+    def to_ert_parameter_config(self) -> list[EverestControl]:
+        """Convert this control group to a list of EverestControl objects.
 
-        def _parse_variable(
-            variable: ControlVariableConfig | ControlVariableGuessListConfig,
-            initial_guess: float | None = None,
-        ) -> None:
-            types.append(self.type)
-            initial_guesses.append(
-                initial_guess
-                if initial_guess is not None
-                else variable.initial_guess
-                if variable.initial_guess is not None
-                else self.initial_guess
-            )
-            control_types.append(self.control_type)
-            enabled.append(
-                variable.enabled if variable.enabled is not None else self.enabled
-            )
-            mins.append(variable.min if variable.min is not None else self.min)
-            maxs.append(variable.max if variable.max is not None else self.max)
-            perturbation_types.append(variable.perturbation_type)
-            perturbation_magnitudes.append(
-                variable.perturbation_magnitude
-                if variable.perturbation_magnitude is not None
-                else self.perturbation_magnitude
-            )
-            scaled_ranges.append(
-                variable.scaled_range
-                if variable.scaled_range is not None
-                else self.scaled_range
-            )
-            samplers.append(variable.sampler or self.sampler)
+        Each variable in the control group becomes its own EverestControl object,
+        allowing each to map to a single scalar value.
+        """
+        controls: list[EverestControl] = []
+        formatted_names = self.formatted_control_names
+        formatted_names_dotdash = self.formatted_control_names_dotdash
 
+        idx = 0
         for variable in self.variables:
-            if isinstance(variable, ControlVariableConfig):
-                _parse_variable(variable)
-            else:
-                for initial_guess in variable.initial_guess:
-                    _parse_variable(variable, initial_guess=initial_guess)
+            num_entries = (
+                len(variable.initial_guess)
+                if isinstance(variable, ControlVariableGuessListConfig)
+                else 1
+            )
 
-        return EverestControl(
-            name=self.name,
-            input_keys=self.formatted_control_names,
-            input_keys_dotdash=self.formatted_control_names_dotdash,
-            output_file=self.name + ".json",
-            types=types,
-            initial_guesses=initial_guesses,
-            control_types=control_types,
-            enabled=enabled,
-            min=mins,
-            max=maxs,
-            perturbation_types=perturbation_types,
-            perturbation_magnitudes=perturbation_magnitudes,
-            scaled_ranges=scaled_ranges,
-            samplers=samplers,
-        )
+            for i in range(num_entries):
+                initial_guess_value = (
+                    variable.initial_guess[i]
+                    if isinstance(variable, ControlVariableGuessListConfig)
+                    else (
+                        variable.initial_guess
+                        if variable.initial_guess is not None
+                        else self.initial_guess
+                    )
+                )
+
+                control = EverestControl(
+                    name=formatted_names[idx],
+                    input_key=formatted_names[idx],
+                    input_key_dotdash=formatted_names_dotdash[idx],
+                    output_file=self.name + ".json",
+                    group=self.name,
+                    control_type_=self.type,
+                    initial_guess=initial_guess_value,
+                    control_type=self.control_type,
+                    enabled=variable.enabled
+                    if variable.enabled is not None
+                    else self.enabled,
+                    min=variable.min if variable.min is not None else self.min,
+                    max=variable.max if variable.max is not None else self.max,
+                    perturbation_type=variable.perturbation_type,
+                    perturbation_magnitude=(
+                        variable.perturbation_magnitude
+                        if variable.perturbation_magnitude is not None
+                        else self.perturbation_magnitude
+                    ),
+                    scaled_range=(
+                        variable.scaled_range
+                        if variable.scaled_range is not None
+                        else self.scaled_range
+                    ),
+                    sampler=variable.sampler or self.sampler,
+                )
+                controls.append(control)
+                idx += 1
+
+        return controls
