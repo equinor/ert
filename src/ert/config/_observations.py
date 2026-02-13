@@ -345,6 +345,7 @@ class RFTObservation(BaseModel):
     north: float
     east: float
     tvd: float
+    md: float | None = None
     zone: str | None = None
 
     @classmethod
@@ -420,7 +421,8 @@ class RFTObservation(BaseModel):
                 north=validate_float(str(row.NORTH), "NORTH"),
                 east=validate_float(str(row.EAST), "EAST"),
                 tvd=validate_float(str(row.TVD), "TVD"),
-                zone=row.ZONE if "ZONE" in csv_file else None,
+                md=validate_float(str(row.MD), "MD") if "MD" in csv_file else None,
+                zone=str(row.ZONE) if "ZONE" in csv_file else None,
             )
             # A value of -1 and error of 0 is used by fmu.tools.rms create_rft_ertobs to
             # indicate missing data. If encountered in an rft observations csv file
@@ -456,7 +458,7 @@ class RFTObservation(BaseModel):
         Supports two modes:
         1. CSV mode: Load observations from a CSV file specified by the CSV key.
         2. Direct mode: Create a single observation from individual keys
-           (WELL, PROPERTY, VALUE, ERROR, DATE, NORTH, EAST, TVD, ZONE).
+           (WELL, PROPERTY, VALUE, ERROR, DATE, NORTH, EAST, TVD, MD, ZONE).
 
         Args:
             directory: Base directory for resolving relative file paths.
@@ -478,6 +480,7 @@ class RFTObservation(BaseModel):
         north = None
         east = None
         tvd = None
+        md = None
         zone = None
         for key, value in observation_dict.items():
             match key:
@@ -503,6 +506,8 @@ class RFTObservation(BaseModel):
                     csv_filename = value
                 case "ZONE":
                     zone = value
+                case "MD":
+                    md = validate_float(value, key)
                 case _:
                     raise _unknown_key_error(str(key), observation_dict["name"])
         if csv_filename is not None:
@@ -528,7 +533,6 @@ class RFTObservation(BaseModel):
             raise _missing_value_error(observation_dict["name"], "EAST")
         if tvd is None:
             raise _missing_value_error(observation_dict["name"], "TVD")
-
         obs_instance = cls(
             name=observation_dict["name"],
             well=well,
@@ -539,6 +543,7 @@ class RFTObservation(BaseModel):
             north=north,
             east=east,
             tvd=tvd,
+            md=md,
             zone=zone,
         )
 
