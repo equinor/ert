@@ -163,9 +163,7 @@ class EverestControl(ParameterConfig):
     perturbation_magnitude: float
     scaled_range: tuple[float, float]
     sampler: SamplerConfig | None
-
-    # Optional reference to the control group this variable belongs to
-    group: str | None = None
+    group: str
 
     # Set up for deprecation, but has to live here until support for the
     # "dotdash" notation is removed for everest controls via everest config.
