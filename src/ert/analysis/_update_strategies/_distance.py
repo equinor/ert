@@ -186,7 +186,7 @@ class DistanceLocalizationFieldUpdate(_DistanceLocalizationBase):
         )
 
         return smoother.update_params(
-            X_prior=param_ensemble,
+            X=param_ensemble,
             Y=self._obs_loc.responses_with_loc,
             rho_input=rho_matrix,
             nz=ertbox.nz,
@@ -241,7 +241,7 @@ class DistanceLocalizationSurfaceUpdate(_DistanceLocalizationBase):
         )
 
         return smoother.update_params(
-            X_prior=param_ensemble,
+            X=param_ensemble,
             Y=self._obs_loc.responses_with_loc,
             rho_input=rho_matrix,
         )
