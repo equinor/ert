@@ -18,6 +18,7 @@ from ert.run_models.initial_ensemble_run_model import (
 )
 from ert.run_models.update_run_model import UpdateRunModel, UpdateRunModelConfig
 from ert.storage import Ensemble
+from ert.storage.local_experiment import ExperimentType
 from ert.trace import tracer
 
 from ..analysis import smoother_update
@@ -219,3 +220,7 @@ class MultipleDataAssimilation(
     @classmethod
     def group(cls) -> str | None:
         return MULTIPLE_DATA_ASSIMILATION_GROUP
+
+    @classmethod
+    def _experiment_type(cls) -> ExperimentType:
+        return ExperimentType.ES_MDA

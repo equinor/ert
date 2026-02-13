@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from typing import TYPE_CHECKING
 from uuid import UUID
 
@@ -22,30 +22,38 @@ logger = logging.getLogger(__name__)
 
 
 class EnsembleSelector(QComboBox):
+    """A combo box for selecting an ensemble from the storage.
+    Parameters
+    ----------
+    notifier: ErtNotifier
+    update_ert: bool, optional
+        If True, changing the selection in this combo box will update the
+        current ensemble in ERT.
+    filters: list of callables, optional
+        A list of "or" filter functions to apply to the ensemble list. If
+        provided, only ensembles that pass at least one filter will be shown.
+        Default is None, which means no filtering is applied.
+    """
+
     ensemble_populated = Signal()
 
     def __init__(
         self,
         notifier: ErtNotifier,
         update_ert: bool = True,
-        show_only_undefined: bool = False,
-        show_only_no_children: bool = False,
-        show_only_with_response_data: bool = False,
+        filters: list[Callable[[Iterable[Ensemble]], Iterable[Ensemble]]] | None = None,
     ) -> None:
         super().__init__()
         self.notifier = notifier
 
         # If true current ensemble of ert will be changed
         self._update_ert = update_ert
-        # only show initialized ensembles
-        self._show_only_undefined = show_only_undefined
-        # If True, we filter out any ensembles which have children
-        # One use case is if a user wants to rerun because of failures
-        # not related to parameterization. We can allow that, but only
-        # if the ensemble has not been used in an update, as that would
-        # invalidate the result
-        self._show_only_no_children = show_only_no_children
-        self._show_only_with_response_data = show_only_with_response_data
+
+        if filters is None:
+            self._or_filters = []
+        else:
+            self._or_filters = filters
+
         self.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
 
         self.setEnabled(False)
@@ -108,28 +116,17 @@ class EnsembleSelector(QComboBox):
         self.ensemble_populated.emit()
 
     def _ensemble_list(self) -> Iterable[Ensemble]:
-        if self._show_only_undefined:
-            ensembles = (
-                ensemble
-                for ensemble in self.notifier.storage.ensembles
-                if all(
-                    RealizationStorageState.UNDEFINED in e
-                    for e in ensemble.get_ensemble_state()
-                )
-            )
-        else:
-            ensembles = self.notifier.storage.ensembles
-        ensemble_list = list(ensembles)
-        if self._show_only_no_children:
-            parents = [
-                ens.parent for ens in self.notifier.storage.ensembles if ens.parent
-            ]
-            ensemble_list = [val for val in ensemble_list if val.id not in parents]
-        if self._show_only_with_response_data:
-            ensemble_list = [
-                ensemble for ensemble in ensemble_list if ensemble.has_data()
-            ]
-        return self.sort_ensembles(ensemble_list)
+        if not self._or_filters:
+            return self.sort_ensembles(self.notifier.storage.ensembles)
+
+        all_ensembles = list(self.notifier.storage.ensembles)
+        filtered_ensembles = []
+
+        for filter_func in self._or_filters:
+            filtered_ensembles.extend(list(filter_func(all_ensembles)))
+
+        unique_filtered_ensembles = list(dict.fromkeys(filtered_ensembles))
+        return self.sort_ensembles(unique_filtered_ensembles)
 
     @classmethod
     def sort_ensembles(cls, ensemble_list: Iterable[Ensemble]) -> Iterable[Ensemble]:

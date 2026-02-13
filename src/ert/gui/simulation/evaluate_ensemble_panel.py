@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 
 import numpy as np
@@ -19,7 +20,7 @@ from ert.gui.ertwidgets import (
 from ert.gui.simulation.experiment_config_panel import ExperimentConfigPanel
 from ert.mode_definitions import EVALUATE_ENSEMBLE_MODE
 from ert.run_models.evaluate_ensemble import EvaluateEnsemble
-from ert.storage import RealizationStorageState
+from ert.storage import Ensemble, RealizationStorageState
 from ert.validation import EnsembleRealizationsArgument
 
 logger = logging.getLogger(__name__)
@@ -43,7 +44,24 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
         lab.setWordWrap(True)
         lab.setAlignment(Qt.AlignmentFlag.AlignLeft)
         layout.addRow(lab)
-        self._ensemble_selector = EnsembleSelector(notifier, show_only_no_children=True)
+
+        def show_only_no_children_filter(
+            ensembles: Iterable[Ensemble],
+        ) -> Iterable[Ensemble]:
+            parents = [
+                ens.parent for ens in self.notifier.storage.ensembles if ens.parent
+            ]
+            return (ensemble for ensemble in ensembles if ensemble.id not in parents)
+
+        # Filter out any ensembles which have children.
+        # One use case is if a user wants to rerun because of failures
+        # not related to parameterization. We can allow that, but only
+        # if the ensemble has not been used in an update, as that would
+        # invalidate the result
+        filters: list[Callable[[Iterable[Ensemble]], Iterable[Ensemble]]] = [
+            show_only_no_children_filter
+        ]
+        self._ensemble_selector = EnsembleSelector(notifier, filters=filters)
         layout.addRow("Ensemble:", self._ensemble_selector)
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)

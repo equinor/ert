@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from typing import cast
 
@@ -62,9 +63,15 @@ class ManualUpdatePanel(ExperimentConfigPanel):
 
         layout.addRow("Update method:", self._update_method_dropdown)
 
-        self._ensemble_selector = EnsembleSelector(
-            notifier, show_only_with_response_data=True
-        )
+        def show_only_with_response_data_filter(
+            ensembles: Iterable[Ensemble],
+        ) -> Iterable[Ensemble]:
+            return (ensemble for ensemble in ensembles if ensemble.has_data())
+
+        filters: list[Callable[[Iterable[Ensemble]], Iterable[Ensemble]]] = [
+            show_only_with_response_data_filter
+        ]
+        self._ensemble_selector = EnsembleSelector(notifier, filters=filters)
         layout.addRow("Ensemble:", self._ensemble_selector)
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)

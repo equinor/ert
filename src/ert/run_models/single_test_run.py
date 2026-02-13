@@ -4,6 +4,7 @@ from pydantic import Field
 
 from ert.run_models import EnsembleExperiment
 from ert.run_models.ensemble_experiment import EnsembleExperimentConfig
+from ert.storage.local_experiment import ExperimentType
 
 SINGLE_TEST_RUN_GROUP = "Forward model evaluation"
 
@@ -32,3 +33,7 @@ class SingleTestRun(EnsembleExperiment, SingleTestRunConfig):
     @classmethod
     def group(cls) -> str | None:
         return SINGLE_TEST_RUN_GROUP
+
+    @classmethod
+    def _experiment_type(cls) -> ExperimentType:
+        return ExperimentType.TEST

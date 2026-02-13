@@ -21,7 +21,7 @@ from ert.trace import tracer
 
 from ..analysis import smoother_update
 from ..run_arg import create_run_arguments
-from .run_model import ErtRunError
+from .run_model import ErtRunError, ExperimentType
 
 logger = logging.getLogger(__name__)
 
@@ -108,3 +108,7 @@ class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmoother
     @classmethod
     def description(cls) -> str:
         return "Sample parameters → evaluate → update → evaluate"
+
+    @classmethod
+    def _experiment_type(cls) -> ExperimentType:
+        return ExperimentType.ES

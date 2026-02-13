@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -26,6 +27,7 @@ from ert.gui.ertwidgets import (
 )
 from ert.mode_definitions import ES_MDA_MODE
 from ert.run_models import MultipleDataAssimilation, MultipleDataAssimilationConfig
+from ert.storage.local_experiment import ExperimentType
 from ert.storage.realization_storage_state import RealizationStorageState
 from ert.validation import (
     ExperimentValidation,
@@ -40,8 +42,11 @@ from ._design_matrix_panel import DesignMatrixPanel
 from .experiment_config_panel import ExperimentConfigPanel
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from ert.config import AnalysisConfig
     from ert.gui.ertwidgets import ValueModel
+    from ert.storage import Ensemble
 logger = logging.getLogger(__name__)
 
 
@@ -137,7 +142,38 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         )
         self._initial_active_realizations = active_realizations
 
-        self._ensemble_selector = EnsembleSelector(notifier)
+        def get_ensembles_that_are_not_last_es_mda_iteration(
+            ensembles: Iterable[Ensemble],
+        ) -> Iterable[Ensemble]:
+            """
+            Only leafs of ES-MDA experiment are eligible for restart. Easiest
+            way to get those is to compare ensemble iteration with total number
+            of ES-MDA iterations."""
+            return (
+                ensemble
+                for ensemble in ensembles
+                if ensemble.relative_weights
+                and ensemble.iteration < ensemble.relative_weights.count(",") + 1
+            )
+
+        def get_ensembles_of_ensemble_type(
+            ensembles: Iterable[Ensemble],
+        ) -> Iterable[Ensemble]:
+            """Ensemble type, which consists just from one iteration, is always
+            eligible for MDA "restart". Used to spare some computing time if
+            users decide to run ES-MDA based on Ensemble results."""
+            return (
+                ensemble
+                for ensemble in ensembles
+                if ensemble.experiment.experiment_type == ExperimentType.ENSEMBLE
+            )
+
+        filters: list[Callable[[Iterable[Ensemble]], Iterable[Ensemble]]] = [
+            get_ensembles_that_are_not_last_es_mda_iteration,
+            get_ensembles_of_ensemble_type,
+        ]
+
+        self._ensemble_selector = EnsembleSelector(notifier, filters=filters)
         self._previous_ensemble_realizations_validator = EnsembleRealizationsArgument(
             lambda: self._ensemble_selector.selected_ensemble,
             required_realization_storage_states=[

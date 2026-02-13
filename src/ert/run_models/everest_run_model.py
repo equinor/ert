@@ -51,6 +51,7 @@ from ert.config.parsing import ConfigWarning
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.plugins import ErtRuntimePlugins
 from ert.runpaths import Runpaths
+from ert.storage.local_experiment import ExperimentType
 from everest.config import (
     ControlConfig,
     EverestConfig,
@@ -570,6 +571,10 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
     @classmethod
     def description(cls) -> str:
         return "Run batches "
+
+    @classmethod
+    def _experiment_type(cls) -> ExperimentType:
+        return ExperimentType.EVEREST
 
     @property
     def exit_code(self) -> EverestExitCode | None:

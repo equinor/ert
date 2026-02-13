@@ -22,7 +22,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Protocol, cast
 
 import numpy as np
-from pydantic import PrivateAttr, field_validator
+from pydantic import (
+    PrivateAttr,
+    computed_field,
+    field_validator,
+)
 from pydantic_core.core_schema import ValidationInfo
 
 from _ert.events import (
@@ -67,6 +71,7 @@ from ert.storage import (
     Storage,
     open_storage,
 )
+from ert.storage.local_experiment import ExperimentType
 from ert.trace import tracer
 from ert.utils import log_duration
 from ert.warnings import PostSimulationWarning, capture_specific_warning
@@ -322,6 +327,15 @@ class RunModel(RunModelConfig, ABC):
         override it
         """
         return None
+
+    @classmethod
+    @abstractmethod
+    def _experiment_type(cls) -> ExperimentType: ...
+
+    @computed_field(return_type=str)  # type: ignore[prop-decorator]
+    @property
+    def experiment_type(self) -> ExperimentType:
+        return self.__class__._experiment_type()
 
     def send_event(self, event: StatusEvents) -> None:
         self._status_queue.put(event)
