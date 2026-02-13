@@ -1200,8 +1200,6 @@ class LocalEnsemble(BaseMode):
         if len(realisations) == 0:
             raise StorageError("No realizations with responses found")
 
-        response_cls = self.experiment.response_configuration["rft"]
-
         observations_for_type = rft_observations.with_columns(
             [
                 pl.col("response_key")
@@ -1215,7 +1213,7 @@ class LocalEnsemble(BaseMode):
 
         observed_cols = {
             k: observations_for_type[k].unique()
-            for k in ["well_and_date", *response_cls.primary_key]
+            for k in ["well_and_date", "east", "north", "tvd"]
         }
 
         realisations.sort()
@@ -1229,10 +1227,13 @@ class LocalEnsemble(BaseMode):
                     .str.extract(r"^([^:]+:[^:]+)")
                     .cast(pl.Categorical)
                     .alias("well_and_date"),
-                    pl.col("response_key").str.extract(r":([^:]+)$").alias("property"),
+                    pl.col("response_key")
+                    .str.extract(r":([^:]+)$")
+                    .str.to_lowercase()
+                    .alias("property"),
                 ]
             )
-
+            responses = responses.rename({"zone": "response_zone"})
             # Filter out responses without observations
             for col, observed_values in observed_cols.items():
                 responses = responses.filter(
@@ -1243,7 +1244,10 @@ class LocalEnsemble(BaseMode):
             pivot_index = [
                 "well_and_date",
                 "realization",
-                *response_cls.primary_key,
+                "response_zone",
+                "east",
+                "north",
+                "tvd",
                 "i",
                 "j",
                 "k",
@@ -1254,37 +1258,72 @@ class LocalEnsemble(BaseMode):
                 values="values",
             )
 
+            # Add pressure, sgas, swat columns if not already present
+            for col in ["pressure", "sgas", "swat"]:
+                if col not in pivoted.columns:
+                    pivoted = pivoted.with_columns(
+                        pl.lit(None).cast(pl.Float32).alias(col)
+                    )
+
+            pivoted = pivoted.with_columns(
+                pl.col("pressure").is_not_null().alias("is_active")
+            )
+
             joined = observations_for_type.join(
                 pivoted,
                 how="left",
-                on=["well_and_date", *response_cls.primary_key],
+                on=["well_and_date", "east", "north", "tvd"],
                 nulls_equal=True,
+            )
+
+            joined = joined.with_columns(
+                [
+                    pl.col("zone")
+                    .eq_missing(pl.col("response_zone"))
+                    .alias("valid_zone"),
+                    (1 - pl.col("sgas") - pl.col("swat")).alias("soil"),
+                ]
             )
 
             realization_columns.append(
                 joined.select(
                     [
-                        "well_and_date",
-                        "well",
-                        "date",
                         "order",
-                        "observations",
-                        "std",
                         "east",
                         "north",
-                        "tvd",
                         "md",
+                        "tvd",
                         "zone",
+                        "pressure",
+                        "swat",
+                        "sgas",
+                        "soil",
+                        "valid_zone",
+                        "is_active",
                         "i",
                         "j",
                         "k",
+                        "well",
+                        "date",
                         "realization",
-                        *responses["property"].unique().sort().to_list(),
+                        "observations",
+                        "std",
                     ]
                 )
             )
 
-        return pl.concat(realization_columns, how="vertical")
+        return pl.concat(realization_columns, how="vertical").rename(
+            {
+                "east": "utm_x",
+                "north": "utm_y",
+                "md": "measured_depth",
+                "tvd": "true_vertical_depth",
+                "date": "time",
+                "realization": "report_step",
+                "observations": "observed",
+                "std": "error",
+            }
+        )
 
     @property
     def everest_realization_info(self) -> dict[int, EverestRealizationInfo] | None:
