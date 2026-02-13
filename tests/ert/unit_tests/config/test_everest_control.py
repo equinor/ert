@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import json
-from typing import Any
 from unittest.mock import MagicMock
 
 import numpy as np
 import polars as pl
 
 from ert.config import EverestControl
+from ert.run_models._create_run_path import _generate_parameter_files
 
 
 def test_that_write_to_runpath_writes_json_with_correct_structure(tmp_path):
@@ -43,19 +43,21 @@ def test_that_write_to_runpath_writes_json_with_correct_structure(tmp_path):
     run_path = tmp_path / "runpath" / "realization-5"
 
     run_path.mkdir(parents=True)
-    data: dict[str, Any] = {}
-    for control in controls:
-        df = mock_ensemble.load_parameters(control.name, 5)
-        value = df[control.input_key].item()
-        key_without_group = (
-            control.input_key.replace(f"{control.group}.", "", 1)
-            if control.group
-            else control.input_key
-        )
-        data[key_without_group] = value
+
+    _generate_parameter_files(
+        parameter_configs=controls,
+        export_base_name="parameters",
+        run_path=run_path,
+        iens=5,
+        fs=mock_ensemble,
+        iteration=0,
+    )
 
     output_file = run_path / "point.json"
-    output_file.write_text(json.dumps(data), encoding="utf-8")
+    output_file.write_text(
+        json.dumps(json.loads(output_file.read_text()), sort_keys=True),
+        encoding="utf-8",
+    )  # Normalize for comparison if needed, or rely on dict equality
 
     assert output_file.exists()
     result_data = json.loads(output_file.read_text())
@@ -97,30 +99,16 @@ def test_that_write_to_runpath_writes_json_with_correct_structure_for_nested_con
     run_path = tmp_path / "runpath" / "realization-5"
     run_path.mkdir(parents=True)
 
-    data: dict[str, Any] = {}
-    for control in controls:
-        df = mock_ensemble.load_parameters(control.name, 5)
-        value = df[control.input_key].item()
-        key_without_group = (
-            control.input_key.replace(f"{control.group}.", "", 1)
-            if control.group
-            else control.input_key
-        )
-
-        if "." in key_without_group:
-            parts = key_without_group.split(".")
-            current = data
-            for part in parts[:-1]:
-                if part not in current:
-                    current[part] = {}
-                current = current[part]
-            current[parts[-1]] = value
-        else:
-            data[key_without_group] = value
+    _generate_parameter_files(
+        parameter_configs=controls,
+        export_base_name="parameters",
+        run_path=run_path,
+        iens=5,
+        fs=mock_ensemble,
+        iteration=0,
+    )
 
     output_file = run_path / "point.json"
-    output_file.write_text(json.dumps(data), encoding="utf-8")
-
     assert output_file.exists()
     result_data = json.loads(output_file.read_text())
     assert result_data == {"x": {"0": 1.5, "1": 2.5, "2": 3.5}}
