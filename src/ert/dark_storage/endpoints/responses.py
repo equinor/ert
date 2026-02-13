@@ -187,4 +187,21 @@ def data_for_response(
 
         except (ValueError, KeyError, ColumnNotFoundError):
             return pd.DataFrame()
+
+    if response_type in {"everest_objectives", "everest_constraints"}:
+        df = None
+        if response_type == "everest_objectives":
+            df = getattr(ensemble, "realization_objectives", None)
+        elif response_type == "everest_constraints":
+            df = getattr(ensemble, "realization_constraints", None)
+
+        if df is None:
+            return pd.DataFrame()
+
+        if response_key not in df.columns:
+            return pd.DataFrame()
+
+        columns = ["batch_id", "realization", response_key]
+        return df.select(columns).to_pandas()
+
     return pd.DataFrame()

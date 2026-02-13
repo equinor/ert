@@ -32,6 +32,9 @@ if TYPE_CHECKING:
     from .plottery.plots.cesp import CrossEnsembleStatisticsPlot
     from .plottery.plots.distribution import DistributionPlot
     from .plottery.plots.ensemble import EnsemblePlot
+    from .plottery.plots.everest_objectives_over_iteration_plot import (
+        EverestObjectivesOverIterationPlot,
+    )
     from .plottery.plots.gaussian_kde import GaussianKDEPlot
     from .plottery.plots.histogram import HistogramPlot
     from .plottery.plots.misfits import MisfitsPlot
@@ -123,6 +126,7 @@ class PlotWidget(QWidget):
             "DistributionPlot",
             "CrossEnsembleStatisticsPlot",
             "StdDevPlot",
+            "EverestObjectivesOverIterationPlot",
             "MisfitsPlot",
         ],
         parent: QWidget | None = None,

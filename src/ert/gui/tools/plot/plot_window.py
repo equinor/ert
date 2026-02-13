@@ -38,6 +38,7 @@ from .plottery.plots import (
     CrossEnsembleStatisticsPlot,
     DistributionPlot,
     EnsemblePlot,
+    EverestObjectivesOverIterationPlot,
     GaussianKDEPlot,
     HistogramPlot,
     MisfitsPlot,
@@ -53,6 +54,8 @@ HISTOGRAM = "Histogram"
 STATISTICS = "Statistics"
 STD_DEV = "Std Dev"
 MISFITS = "Misfits"
+EVEREST_PLOT = "ResponsesOverTime"
+EVEREST_CONTROLS_PLOT = "ControlsOverTime"
 
 RESPONSE_DEFAULT = 0
 GEN_KW_DEFAULT = 3
@@ -197,6 +200,10 @@ class PlotWindow(QMainWindow):
             self.addPlotWidget(DISTRIBUTION, DistributionPlot())
             self.addPlotWidget(CROSS_ENSEMBLE_STATISTICS, CrossEnsembleStatisticsPlot())
             self.addPlotWidget(STD_DEV, StdDevPlot())
+            self.addPlotWidget(
+                EVEREST_CONTROLS_PLOT, EverestObjectivesOverIterationPlot()
+            )
+            self.addPlotWidget(EVEREST_PLOT, EverestObjectivesOverIterationPlot())
             self._central_tab.currentChanged.connect(self.currentTabChanged)
             self.logPlotTabUsage(self._central_tab.tabText(0), default=True)
 
@@ -260,7 +267,20 @@ class PlotWindow(QMainWindow):
 
         plot_widget = cast(PlotWidget, self._central_tab.currentWidget())
 
-        if plot_widget._plotter.dimensionality == key_def.dimensionality:
+        dimensionality_check = False
+        is_everest_control = (
+            key_def.parameter is not None
+            and key_def.parameter.type == "everest_parameters"
+        )
+        if plot_widget.name == EVEREST_PLOT or (
+            plot_widget.name == EVEREST_CONTROLS_PLOT and is_everest_control
+        ):
+            dimensionality_check = True
+
+        if (
+            plot_widget._plotter.dimensionality == key_def.dimensionality
+            or dimensionality_check
+        ):
             selected_ensembles = (
                 self._ensemble_selection_widget.get_selected_ensembles()
             )
@@ -276,6 +296,9 @@ class PlotWindow(QMainWindow):
                     elif (
                         key_def.parameter is not None
                         and key_def.parameter.type == "gen_kw"
+                    ) or (
+                        key_def.parameter is not None
+                        and key_def.parameter.type == "everest_parameters"
                     ):
                         ensemble_to_data_map[ensemble] = self._api.data_for_parameter(
                             ensemble_id=ensemble.id,
@@ -449,6 +472,34 @@ class PlotWindow(QMainWindow):
             and (key_def.observations or not widget._plotter.requires_observations)
         ]
 
+        is_everest = key_def.metadata.get("data_origin") in {
+            "everest_objectives",
+            "everest_constraints",
+        }
+        everest_widget = next(
+            (w for w in self._plot_widgets if w.name == EVEREST_PLOT), None
+        )
+
+        if everest_widget:
+            if is_everest:
+                available_widgets = [everest_widget]
+            elif everest_widget in available_widgets:
+                available_widgets.remove(everest_widget)
+
+        is_everest_control = (
+            key_def.parameter is not None
+            and key_def.parameter.type == "everest_parameters"
+        )
+        everest_control_widget = next(
+            (w for w in self._plot_widgets if w.name == EVEREST_CONTROLS_PLOT), None
+        )
+
+        if everest_control_widget:
+            if is_everest_control:
+                available_widgets = [everest_control_widget]
+            elif everest_control_widget in available_widgets:
+                available_widgets.remove(everest_control_widget)
+
         # Enabling/disabling tab triggers the
         # currentTabChanged event which also triggers
         # the updatePlot, which is slow and redundant.
@@ -472,6 +523,9 @@ class PlotWindow(QMainWindow):
                 self._prev_tab_widget_index_map[key_def.dimensionality]
             )
             self._current_tab_index = -1
+
+        if current_widget not in available_widgets and available_widgets:
+            current_widget = available_widgets[0]
 
         self._central_tab.setCurrentWidget(current_widget)
         self._central_tab.currentChanged.connect(self.currentTabChanged)
