@@ -146,7 +146,6 @@ def _generate_parameter_files(
         log_export_values: dict[str, dict[str, float | str]] = {}
 
         if isinstance(param, EverestControl):
-            # Collect EverestControls for later aggregated writing
             everest_controls_by_file[param.output_file].append(param)
             continue
         elif param.name in scalar_data:
@@ -186,15 +185,12 @@ def _generate_parameter_files(
         )
         file_path.parent.mkdir(exist_ok=True, parents=True)
 
-        # Aggregate all controls in this group
         data: dict[str, Any] = {}
         for control in controls:
             df = fs.load_parameters(control.name, iens)
             assert isinstance(df, pl.DataFrame)
             value = df[control.input_key].item()
 
-            # Build nested structure
-            # Remove group prefix to get the local key
             key_without_group = control.input_key.replace(f"{control.group}.", "", 1)
 
             if "." in key_without_group:
