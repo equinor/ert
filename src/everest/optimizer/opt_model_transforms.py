@@ -437,7 +437,7 @@ def get_optimization_domain_transforms(
         [control.min for control in controls],
         [control.max for control in controls],
         [control.scaled_range for control in controls],
-        [control.variable_type for control in controls],
+        [control.control_type for control in controls],
         auto_scale_input_constraints=auto_scale,
         input_constraint_scales=(
             None

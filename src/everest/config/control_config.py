@@ -365,7 +365,7 @@ class ControlConfig(BaseModel):
                     group=self.name,
                     control_type_=self.type,
                     initial_guess=initial_guess_value,
-                    variable_type=self.control_type,
+                    control_type=self.control_type,
                     enabled=variable.enabled
                     if variable.enabled is not None
                     else self.enabled,

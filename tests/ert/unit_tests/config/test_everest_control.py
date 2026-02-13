@@ -20,7 +20,7 @@ def test_that_write_to_runpath_writes_json_with_correct_structure(tmp_path):
             group="point",
             control_type_="generic_control",
             initial_guess=0.1,
-            variable_type="real",
+            control_type="real",
             enabled=True,
             min=-1.0,
             max=1.0,
@@ -36,7 +36,7 @@ def test_that_write_to_runpath_writes_json_with_correct_structure(tmp_path):
             group="point",
             control_type_="generic_control",
             initial_guess=0.1,
-            variable_type="real",
+            control_type="real",
             enabled=True,
             min=-1.0,
             max=1.0,
@@ -52,7 +52,7 @@ def test_that_write_to_runpath_writes_json_with_correct_structure(tmp_path):
             group="point",
             control_type_="generic_control",
             initial_guess=0.1,
-            variable_type="real",
+            control_type="real",
             enabled=True,
             min=-1.0,
             max=1.0,
@@ -110,7 +110,7 @@ def test_that_write_to_runpath_writes_json_with_correct_structure_for_nested_con
             group="point",
             control_type_="generic_control",
             initial_guess=0.1,
-            variable_type="real",
+            control_type="real",
             enabled=True,
             min=-1.0,
             max=1.0,
@@ -126,7 +126,7 @@ def test_that_write_to_runpath_writes_json_with_correct_structure_for_nested_con
             group="point",
             control_type_="generic_control",
             initial_guess=0.1,
-            variable_type="real",
+            control_type="real",
             enabled=True,
             min=-1.0,
             max=1.0,
@@ -142,7 +142,7 @@ def test_that_write_to_runpath_writes_json_with_correct_structure_for_nested_con
             group="point",
             control_type_="generic_control",
             initial_guess=0.1,
-            variable_type="real",
+            control_type="real",
             enabled=True,
             min=-1.0,
             max=1.0,
@@ -203,7 +203,7 @@ def test_that_create_storage_datasets_returns_dataframe_with_correct_schema():
         output_file="point.json",
         control_type_="generic_control",
         initial_guess=0.1,
-        variable_type="real",
+        control_type="real",
         enabled=True,
         min=-1.0,
         max=1.0,
@@ -211,6 +211,7 @@ def test_that_create_storage_datasets_returns_dataframe_with_correct_schema():
         perturbation_magnitude=0.1,
         scaled_range=(-1.0, 1.0),
         sampler=None,
+        group="point",
     )
 
     from_data = np.array([[1.0], [4.0]])
@@ -233,7 +234,7 @@ def test_that_create_storage_datasets_preserves_data_values():
         output_file="point.json",
         control_type_="generic_control",
         initial_guess=0.1,
-        variable_type="real",
+        control_type="real",
         enabled=True,
         min=-1.0,
         max=1.0,
@@ -241,6 +242,7 @@ def test_that_create_storage_datasets_preserves_data_values():
         perturbation_magnitude=0.1,
         scaled_range=(-1.0, 1.0),
         sampler=None,
+        group="point",
     )
 
     from_data = np.array([[10.5], [30.7], [50.1]])
@@ -260,7 +262,7 @@ def test_that_create_storage_datasets_handles_nested_parameter_keys():
         output_file="point.json",
         control_type_="generic_control",
         initial_guess=0.1,
-        variable_type="real",
+        control_type="real",
         enabled=True,
         min=-1.0,
         max=1.0,
@@ -268,6 +270,7 @@ def test_that_create_storage_datasets_handles_nested_parameter_keys():
         perturbation_magnitude=0.1,
         scaled_range=(-1.0, 1.0),
         sampler=None,
+        group="point",
     )
 
     from_data = np.array([[1.0], [5.0]])

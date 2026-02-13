@@ -155,7 +155,7 @@ class EverestControl(ParameterConfig):
     update: bool = False
     control_type_: Literal["well_control", "generic_control"]
     initial_guess: float
-    variable_type: Literal["real", "integer"]
+    control_type: Literal["real", "integer"]
     enabled: bool
     min: float
     max: float

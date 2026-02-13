@@ -16,9 +16,7 @@ from everest.config.utils import get_samplers
 def _parse_controls(
     controls: list[EverestControl], random_seed: int
 ) -> tuple[dict[str, Any], list[dict[str, Any]] | None]:
-    control_types = [
-        VariableType[control.variable_type.upper()] for control in controls
-    ]
+    control_types = [VariableType[control.control_type.upper()] for control in controls]
     initial_guesses = [control.initial_guess for control in controls]
     samplers, sampler_indices = get_samplers(controls)
     ropt_variables: dict[str, Any] = {

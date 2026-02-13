@@ -49,7 +49,7 @@ def migrate_everest_control_format(path: Path) -> None:
                             "name": input_key,
                             "control_type_": param["types"][i],
                             "initial_guess": param["initial_guesses"][i],
-                            "variable_type": param["control_types"][i],
+                            "control_type": param["control_types"][i],
                             "enabled": param["enabled"][i],
                             "min": param["min"][i],
                             "max": param["max"][i],
