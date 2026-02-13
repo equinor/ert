@@ -2,7 +2,6 @@ import asyncio
 import datetime
 import logging
 import uuid
-from functools import partial
 from threading import Event
 from unittest.mock import MagicMock
 
@@ -83,10 +82,13 @@ async def test_when_task_fails_evaluator_raises_exception(
         end_event=Event(),
     )
 
+    async def task_that_fails(*args, **kwargs):
+        return await mock_failure(error_msg, *args, **kwargs)
+
     monkeypatch.setattr(
         EnsembleEvaluator,
         task,
-        partial(mock_failure, error_msg),
+        task_that_fails,
     )
     with pytest.raises(RuntimeError, match=error_msg):
         await evaluator.run_and_get_successful_realizations()

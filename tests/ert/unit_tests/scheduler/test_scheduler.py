@@ -599,7 +599,11 @@ async def mock_failure(message, *args, **kwargs):
 @pytest.mark.timeout(5)
 async def test_that_driver_poll_exceptions_are_propagated(mock_driver, realization):
     driver = mock_driver()
-    driver.poll = partial(mock_failure, "Status polling failed")
+
+    async def poll_that_fails(*args, **kwargs):
+        return await mock_failure("Status polling failed", *args, **kwargs)
+
+    driver.poll = poll_that_fails
     sch = scheduler.Scheduler(driver, [realization])
     sch.BATCH_KILLING_INTERVAL = 0.1
     with pytest.raises(RuntimeError, match="Status polling failed"):
@@ -611,7 +615,11 @@ async def test_that_publisher_exceptions_are_propagated(
     mock_driver, realization, monkeypatch
 ):
     driver = mock_driver()
-    monkeypatch.setattr(asyncio.Queue, "get", partial(mock_failure, "Publisher failed"))
+
+    async def get_that_fails(*args, **kwargs):
+        return await mock_failure("Publisher failed", *args, **kwargs)
+
+    monkeypatch.setattr(asyncio.Queue, "get", get_that_fails)
     sch = scheduler.Scheduler(driver, [realization])
     sch.BATCH_KILLING_INTERVAL = 0.1
     with pytest.raises(RuntimeError, match="Publisher failed"):

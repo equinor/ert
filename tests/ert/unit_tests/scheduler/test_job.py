@@ -143,7 +143,12 @@ async def test_job_run_sends_expected_events(
     scheduler.driver._job_error_message_by_iens = {}
 
     job = Job(scheduler, realization)
-    job._verify_checksum = partial(job._verify_checksum, timeout=0)
+    original_verify_checksum = job._verify_checksum
+
+    async def verify_checksum_with_timeout(lock, _timeout=0):
+        return await original_verify_checksum(lock, timeout=_timeout)
+
+    job._verify_checksum = verify_checksum_with_timeout
     job.started.set()
 
     job_run_task = asyncio.create_task(
