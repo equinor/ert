@@ -196,27 +196,7 @@ class EverestControl(ParameterConfig):
     def write_to_runpath(
         self, run_path: Path, real_nr: int, ensemble: Ensemble
     ) -> dict[str, dict[str, float | str]] | None:
-        """Load this control's parameter value.
-
-        Returns a dict suitable for aggregation with other controls in the same group.
-        The actual file writing is handled at a higher level after all controls in
-        a group have been collected.
-        """
-        df = ensemble.load_parameters(self.name, real_nr)
-        assert isinstance(df, pl.DataFrame)
-
-        # Extract the single value for this control
-        value = df[self.input_key].item()
-
-        # Return in a format that can be aggregated
-        # The key structure supports nested keys like "point.x" -> {"x": value}
-        # or "point.0.x" -> {"0": {"x": value}}
-        key_without_group = (
-            self.input_key.replace(f"{self.group}.", "", 1)
-            if self.group
-            else self.input_key
-        )
-        return {self.group or self.name: {key_without_group: value}}
+        raise NotImplementedError
 
     def create_storage_datasets(
         self,
