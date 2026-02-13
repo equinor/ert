@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import enum
 import time
 import uuid
 from collections.abc import Callable
@@ -73,17 +74,19 @@ def wait_until(func, interval=0.5, timeout=30):
     )
 
 
+class MockZMQServerSignal(enum.Enum):
+    NORMAL_OPERATION_DISCARD_CONNECT_DISCONNECT = 0
+    FAIL_ACK_AND_DISCARD_EVENTS = 1
+    FAIL_ACK_BUT_STORE_EVENTS = 2
+    NORMAL_OPERATION_STORE_CONNECT_DISCONNECT = 3
+    NORMAL_OPERATION_BUT_FAIL_ACK_DISCONNECT = 4
+    ACK_NOTHING = 5
+
+
 class MockZMQServer:
-    def __init__(self, signal=0) -> None:
-        """Mock ZMQ server for testing
-        signal = 0: normal operation, receive messages but don't store CONNECT
-                    and DISCONNECT messages
-        signal = 1: don't send ACK and don't receive messages
-        signal = 2: don't send ACK, but receive messages
-        signal = 3: normal operation, and store CONNECT and DISCONNECT messages
-        signal = 4: same as signal = 3, but do not ACK DISCONNECT messages.
-        signal = 5: don't respond to anything.
-        """
+    def __init__(
+        self, signal=MockZMQServerSignal.NORMAL_OPERATION_DISCARD_CONNECT_DISCONNECT
+    ) -> None:
         self.messages = []
         self.value = signal
         self.loop = None
@@ -135,7 +138,7 @@ class MockZMQServer:
             self.router_socket.close()
             zmq_context.term()
 
-    def signal(self, value):
+    def signal(self, value: MockZMQServerSignal):
         self.value = value
 
     async def do_heartbeat(self):
@@ -150,11 +153,19 @@ class MockZMQServer:
         while True:
             try:
                 dealer, __, frame = await self.router_socket.recv_multipart()
-                if self.value == 5:
+                if self.value == MockZMQServerSignal.ACK_NOTHING:
                     continue
                 if (
-                    self.value in {0, 2} and frame not in {CONNECT_MSG, DISCONNECT_MSG}
-                ) or self.value in {3, 4}:
+                    self.value
+                    in {
+                        MockZMQServerSignal.NORMAL_OPERATION_DISCARD_CONNECT_DISCONNECT,
+                        MockZMQServerSignal.FAIL_ACK_BUT_STORE_EVENTS,
+                    }
+                    and frame not in {CONNECT_MSG, DISCONNECT_MSG}
+                ) or self.value in {
+                    MockZMQServerSignal.NORMAL_OPERATION_STORE_CONNECT_DISCONNECT,
+                    MockZMQServerSignal.NORMAL_OPERATION_BUT_FAIL_ACK_DISCONNECT,
+                }:
                     self.messages.append(frame.decode("utf-8"))
                 if frame == CONNECT_MSG:
                     self.dealers.add(dealer)
@@ -164,9 +175,16 @@ class MockZMQServer:
                     self.dealers.discard(dealer)
                     if not self.dealers:
                         self.no_dealers.set()
-                    if self.value != 4:
+                    if (
+                        self.value
+                        != MockZMQServerSignal.NORMAL_OPERATION_BUT_FAIL_ACK_DISCONNECT
+                    ):
                         await self.router_socket.send_multipart([dealer, b"", ACK_MSG])
-                elif self.value in {0, 3, 4}:
+                elif self.value in {
+                    MockZMQServerSignal.NORMAL_OPERATION_DISCARD_CONNECT_DISCONNECT,
+                    MockZMQServerSignal.NORMAL_OPERATION_STORE_CONNECT_DISCONNECT,
+                    MockZMQServerSignal.NORMAL_OPERATION_BUT_FAIL_ACK_DISCONNECT,
+                }:
                     await self.router_socket.send_multipart([dealer, b"", ACK_MSG])
             except asyncio.CancelledError:
                 break

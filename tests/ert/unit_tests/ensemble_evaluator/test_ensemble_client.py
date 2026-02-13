@@ -4,7 +4,7 @@ import pytest
 
 import _ert.forward_model_runner.client
 from _ert.forward_model_runner.client import Client, ClientConnectionError
-from tests.ert.utils import MockZMQServer
+from tests.ert.utils import MockZMQServer, MockZMQServerSignal
 
 
 async def test_invalid_server(monkeypatch):
@@ -34,7 +34,9 @@ async def test_retry():
     client_connection_error_set = False
     messages = ["test_1", "test_2", "test_3"]
     async with (
-        MockZMQServer(signal=2) as mock_server,
+        MockZMQServer(
+            signal=MockZMQServerSignal.FAIL_ACK_BUT_STORE_EVENTS
+        ) as mock_server,
         Client(mock_server.uri, ack_timeout=0.5) as client,
     ):
         for message in messages:
@@ -42,7 +44,9 @@ async def test_retry():
                 await client.send(message, retries=1)
             except ClientConnectionError:
                 client_connection_error_set = True
-                mock_server.signal(0)
+                mock_server.signal(
+                    MockZMQServerSignal.NORMAL_OPERATION_DISCARD_CONNECT_DISCONNECT
+                )
     assert client_connection_error_set
     assert mock_server.messages.count("test_1") == 2
     assert mock_server.messages.count("test_2") == 1
@@ -50,7 +54,9 @@ async def test_retry():
 
 
 async def test_reconnect_when_missing_heartbeat(monkeypatch):
-    async with MockZMQServer(signal=3) as mock_server:
+    async with MockZMQServer(
+        signal=MockZMQServerSignal.NORMAL_OPERATION_STORE_CONNECT_DISCONNECT
+    ) as mock_server:
         monkeypatch.setattr(_ert.forward_model_runner.client, "HEARTBEAT_TIMEOUT", 0.01)
         async with Client(mock_server.uri) as client:
             await client.send("start", retries=1)

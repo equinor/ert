@@ -1,4 +1,6 @@
 import os
+import time
+from contextlib import suppress
 
 import pytest
 
@@ -9,6 +11,7 @@ from _ert.events import (
     ForwardModelStepSuccess,
     dispatcher_event_from_json,
 )
+from _ert.forward_model_runner.client import ClientConnectionError
 from _ert.forward_model_runner.forward_model_step import ForwardModelStep
 from _ert.forward_model_runner.reporting import Event
 from _ert.forward_model_runner.reporting.message import (
@@ -20,7 +23,7 @@ from _ert.forward_model_runner.reporting.message import (
     Start,
 )
 from _ert.forward_model_runner.reporting.statemachine import TransitionError
-from tests.ert.utils import MockZMQServer
+from tests.ert.utils import MockZMQServer, MockZMQServerSignal
 
 
 def test_report_with_successful_start_message_argument():
@@ -170,7 +173,9 @@ def test_report_with_failed_reporter_but_finished_jobs():
             {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
         )
 
-        mock_server.signal(1)  # prevent router to receive messages
+        mock_server.signal(
+            MockZMQServerSignal.FAIL_ACK_AND_DISCARD_EVENTS
+        )  # prevent router to receive messages
         reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=100, rss=10)))
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=1100, rss=10)))
@@ -193,12 +198,16 @@ def test_report_with_reconnected_reporter_but_finished_jobs():
             {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
         )
 
-        mock_server.signal(1)  # prevent router to receive messages
+        mock_server.signal(
+            MockZMQServerSignal.FAIL_ACK_AND_DISCARD_EVENTS
+        )  # prevent router to receive messages
         reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=100, rss=10)))
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=1100, rss=10)))
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=1100, rss=10)))
-        mock_server.signal(0)  # enable router to receive messages
+        mock_server.signal(
+            MockZMQServerSignal.NORMAL_OPERATION_DISCARD_CONNECT_DISCONNECT
+        )  # enable router to receive messages
         reporter.report(Finish())
         if reporter._event_publisher_thread.is_alive():
             reporter._event_publisher_thread.join()
@@ -210,11 +219,24 @@ def test_report_with_reconnected_reporter_but_finished_jobs():
 @pytest.mark.parametrize(
     ("mocked_server_signal", "ack_timeout", "expected_message"),
     [
-        pytest.param(5, 0.01, "No ack for dealer connection", id="failed_connect"),
         pytest.param(
-            4, 0.25, "No ack for dealer disconnection", id="failed_disconnect"
+            MockZMQServerSignal.ACK_NOTHING,
+            0.10,
+            "No ack for dealer connection",
+            id="failed_connect",
         ),
-        pytest.param(1, 0.25, "Failed to send event", id="failed_to_send_event"),
+        pytest.param(
+            MockZMQServerSignal.NORMAL_OPERATION_BUT_FAIL_ACK_DISCONNECT,
+            0.10,
+            "No ack for dealer disconnection",
+            id="failed_disconnect",
+        ),
+        pytest.param(
+            MockZMQServerSignal.FAIL_ACK_BUT_STORE_EVENTS,
+            0.10,
+            "Failed to send event",
+            id="failed_to_send_event",
+        ),
     ],
 )
 def test_event_reporter_does_not_hang_after_failed(
@@ -233,11 +255,53 @@ def test_event_reporter_does_not_hang_after_failed(
         )
 
         reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
-        reporter.report(Start(fmstep1))
-        reporter.report(Finish())
+        # The reporter will raise this error if the previous event has already been
+        # processed and failed, but we are not interested in this error in this test.
+        with suppress(ClientConnectionError):
+            reporter.report(Start(fmstep1))
+            reporter.report(Finish())
 
         reporter._event_publisher_thread.join(timeout=10)
         assert not reporter._event_publisher_thread.is_alive(), (
             "Event publisher thread is hanging"
         )
+        assert isinstance(reporter._reporter_exception, ClientConnectionError), (
+            "Expected ClientConnectionError in event publisher thread"
+        )
     assert expected_message in caplog.text
+
+
+@pytest.mark.integration_test
+def test_that_event_reporter_raises_exception_on_following_report_after_connection_failure(  # noqa: E501
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        "_ert.forward_model_runner.reporting.event.Client.DEFAULT_MAX_RETRIES", 0
+    )
+    reporter = Event(
+        evaluator_url="ipc:///no_server_running_here:1337",
+        ack_timeout=0.01,
+        max_retries=0,
+    )
+    fmstep1 = ForwardModelStep(
+        {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
+    )
+
+    reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
+    # The reporter will raise this error if the previous event has
+    # already been processed and sending failed
+    for _ in range(100):
+        if reporter._reporter_exception is not None:
+            break
+        time.sleep(0.05)
+    else:
+        raise AssertionError(
+            "ClientConnectionError was not set in reporter after connection failure"
+        )
+    with pytest.raises(ClientConnectionError, match=r"Failed to send b'CONNECT'"):
+        reporter.report(Start(fmstep1))
+
+    reporter._event_publisher_thread.join(timeout=10)
+    assert not reporter._event_publisher_thread.is_alive(), (
+        "Event publisher thread is hanging"
+    )
