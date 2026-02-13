@@ -3,6 +3,7 @@ import contextlib
 import json
 import logging
 import os
+import re
 import shlex
 import stat
 from functools import partial
@@ -557,6 +558,17 @@ async def test_submit_project_code():
     )
 
 
+@pytest.mark.usefixtures("capturing_qsub")
+async def test_that_submit_with_qsub_capture_uses_max_runtime():
+    MAX_RUNTIME = 120
+    driver = OpenPBSDriver(max_runtime=MAX_RUNTIME)
+    await driver.submit(0, "sleep")
+    assert (
+        f" -l walltime={MAX_RUNTIME + driver._MAX_RUNTIME_QUEUE_SYSTEM_PADDING}"
+        in Path("captured_qsub_args").read_text(encoding="utf-8")
+    )
+
+
 @pytest.fixture(autouse=True)
 def mock_openpbs(pytestconfig, monkeypatch, tmp_path):
     if pytestconfig.getoption("openpbs"):
@@ -615,3 +627,35 @@ def test_openpbs_driver_with_poly_example_failing_poll_fails_ert_and_propagates_
             "poly.ert",
         )
     assert "RuntimeError: Status polling failed" in caplog.text
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("use_tmpdir")
+async def test_that_queue_system_max_runtime_kills_job(
+    pytestconfig, job_name, monkeypatch
+):
+    if not pytestconfig.getoption("openpbs"):
+        pytest.skip("Mocked LSF driver does not support max runtime option")
+    monkeypatch.setattr(
+        "ert.scheduler.driver.Driver._MAX_RUNTIME_QUEUE_SYSTEM_PADDING", -60
+    )
+    queue_name = os.getenv("_ERT_TESTS_DEFAULT_QUEUE_NAME")
+    driver = OpenPBSDriver(max_runtime=60, queue_name=queue_name)
+    await driver.submit(0, "sh", "-c", "sleep 80", name=job_name)
+    job_id = driver._iens2jobid[0]
+    await asyncio.wait_for(poll(driver, {0}), timeout=30)
+    process = await asyncio.create_subprocess_exec(
+        "qstat",
+        "-Efx",
+        "-Fjson",
+        job_id,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    stdout, _stderr = await process.communicate()
+    stdout = stdout.decode(encoding="utf-8", errors="ignore")
+    assert (
+        "exceeded resource walltime"
+        in stdout
+    )
+    assert '"walltime":"00:00:00"' in stdout
