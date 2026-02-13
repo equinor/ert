@@ -188,6 +188,7 @@ def test_that_summary_observations_raises_error_given_unknown_localization_key(
 
 
 @pytest.mark.usefixtures("copy_snake_oil_case")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
 def test_that_adding_one_localized_observation_to_snake_oil_case_can_be_internalized():
     obs_content = Path("observations/observations.txt").read_text(encoding="utf-8")
     obs_lines = obs_content.split("\n")
@@ -218,6 +219,7 @@ def test_that_adding_one_localized_observation_to_snake_oil_case_can_be_internal
     assert localized_entry["radius"].to_list() == [3]
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
 def test_that_defaulted_summary_obs_values_have_type_float32(tmpdir):
     with tmpdir.as_cwd():
         summary_observations = create_summary_observation(loc_config_lines="")
