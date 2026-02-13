@@ -104,32 +104,24 @@ class AdaptiveLocalizationUpdate:
     by applying correlation thresholds during the update. Parameters are
     processed in batches to manage memory usage.
 
+    Parameters
+    ----------
+    context : UpdateContext
+        Shared update context with observations and settings.
+
     Attributes
     ----------
-    _smoother : AdaptiveESMDA | None
+    _smoother : AdaptiveESMDA
         The adaptive ESMDA smoother instance.
-    _cov_YY : npt.NDArray[np.float64] | None
+    _cov_YY : npt.NDArray[np.float64]
         Pre-computed response covariance matrix.
-    _D : npt.NDArray[np.float64] | None
+    _D : npt.NDArray[np.float64]
         Perturbed observations matrix.
     _num_obs : int
         Number of observations.
     """
 
-    def __init__(self) -> None:
-        self._smoother: AdaptiveESMDA | None = None
-        self._cov_YY: npt.NDArray[np.float64] | None = None
-        self._D: npt.NDArray[np.float64] | None = None
-        self._num_obs: int = 0
-
-    def initialize(self, context: UpdateContext) -> None:
-        """Initialize the adaptive smoother and pre-compute matrices.
-
-        Parameters
-        ----------
-        context : UpdateContext
-            Shared update context with observations and settings.
-        """
+    def __init__(self, context: UpdateContext) -> None:
         self._smoother = AdaptiveESMDA(
             covariance=context.observation_errors**2,
             observations=context.observation_values,
@@ -189,14 +181,7 @@ class AdaptiveLocalizationUpdate:
         npt.NDArray[np.float64]
             Updated parameter ensemble array.
 
-        Raises
-        ------
-        RuntimeError
-            If strategy not initialized.
         """
-        if self._smoother is None or self._cov_YY is None or self._D is None:
-            raise RuntimeError("Strategy not initialized. Call initialize() first.")
-
         num_params = param_ensemble.shape[0]
         batch_size = _calculate_adaptive_batch_size(num_params, self._num_obs)
         batches = _split_by_batchsize(np.arange(0, num_params), batch_size)

@@ -41,20 +41,14 @@ class _DistanceLocalizationBase(abc.ABC):
     ----------
     observation_locations : ObservationLocations
         Pre-computed observation locations and ranges.
+    context : UpdateContext
+        Shared context containing observation data and settings.
     """
 
-    def __init__(self, observation_locations: ObservationLocations) -> None:
+    def __init__(
+        self, observation_locations: ObservationLocations, context: UpdateContext
+    ) -> None:
         self._obs_loc = observation_locations
-        self._smoother: DistanceESMDA | None = None
-
-    def initialize(self, context: UpdateContext) -> None:
-        """Initialize the distance-based smoother.
-
-        Parameters
-        ----------
-        context : UpdateContext
-            Shared context containing observation data and settings.
-        """
         self._smoother = DistanceESMDA(
             covariance=self._obs_loc.observation_errors**2,
             observations=self._obs_loc.observation_values,
@@ -118,14 +112,7 @@ class _DistanceLocalizationBase(abc.ABC):
         npt.NDArray[np.float64]
             Updated parameter ensemble.
 
-        Raises
-        ------
-        RuntimeError
-            If strategy was not initialized.
         """
-        if self._smoother is None:
-            raise RuntimeError("Strategy not initialized. Call initialize() first.")
-
         param_type = type(param_config).__name__
         start = time.time()
         log_msg = (

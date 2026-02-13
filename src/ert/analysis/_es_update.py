@@ -161,11 +161,7 @@ def perform_ensemble_update(
             filtered_data, responses, observation_values, observation_errors
         )
 
-    strategies = factory.create_strategies()
-
-    # Initialize all strategies
-    for strategy in strategies:
-        strategy.initialize(context)
+    strategies = factory.create_strategies(context)
 
     # Update each parameter group
     for param_group in parameters:
