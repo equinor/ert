@@ -12,13 +12,12 @@ from ert.analysis.event import (
     AnalysisTimeEvent,
 )
 from ert.config import (
-    ESSettings,
     HookRuntime,
-    ObservationSettings,
     PostUpdateFixtures,
     PreFirstUpdateFixtures,
     PreUpdateFixtures,
 )
+from ert.experiment_configs import UpdateRunModelConfig
 from ert.run_models.event import (
     RunModelDataEvent,
     RunModelErrorEvent,
@@ -27,14 +26,8 @@ from ert.run_models.event import (
     RunModelUpdateBeginEvent,
     RunModelUpdateEndEvent,
 )
-from ert.run_models.run_model import ErtRunError, RunModel, RunModelConfig
+from ert.run_models.run_model import ErtRunError, RunModel
 from ert.storage import Ensemble, LocalExperiment
-
-
-class UpdateRunModelConfig(RunModelConfig):
-    target_ensemble: str
-    analysis_settings: ESSettings
-    update_settings: ObservationSettings
 
 
 class UpdateRunModel(RunModel, UpdateRunModelConfig):

@@ -29,6 +29,7 @@ from ert.config import ConfigValidationError, ErtConfig, lint_file
 from ert.config.observation_config_migrations import (
     remove_refcase_and_time_map_dependence_from_obs_config,
 )
+from ert.experiment_configs import MultipleDataAssimilationConfig
 from ert.logging import LOGGING_CONFIG
 from ert.mode_definitions import (
     ENIF_MODE,
@@ -40,7 +41,6 @@ from ert.mode_definitions import (
 )
 from ert.namespace import Namespace
 from ert.plugins import ErtRuntimePlugins, get_site_plugins, setup_site_logging
-from ert.run_models.multiple_data_assimilation import MultipleDataAssimilationConfig
 from ert.services import ErtServer
 from ert.services._storage_main import add_parser_options as ert_api_add_parser_options
 from ert.shared.status.utils import get_ert_memory_usage

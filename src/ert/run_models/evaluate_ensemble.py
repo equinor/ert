@@ -1,23 +1,19 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, ClassVar
+from typing import Any
 from uuid import UUID
 
 import numpy as np
 
 from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.experiment_configs import EvaluateEnsembleConfig
 from ert.trace import tracer
 
 from ..run_arg import create_run_arguments
-from .run_model import RunModel, RunModelConfig
+from .run_model import RunModel
 
 logger = logging.getLogger(__name__)
-
-
-class EvaluateEnsembleConfig(RunModelConfig):
-    ensemble_id: str
-    supports_rerunning_failed_realizations: ClassVar[bool] = True
 
 
 class EvaluateEnsemble(RunModel, EvaluateEnsembleConfig):
