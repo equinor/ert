@@ -32,19 +32,14 @@ def test_that_migration_splits_everest_control(tmp_path):
     }
 
     other_param = {"type": "gen_kw", "name": "P1", "distribution": {"name": "uniform"}}
-
     experiment_data = {"parameter_configuration": [old_everest_control, other_param]}
-
     index_data = {"id": "exp-id", "experiment": experiment_data}
-
     (exp_path / "index.json").write_text(json.dumps(index_data), encoding="utf-8")
 
     migrate(root)
 
     updated_index = json.loads((exp_path / "index.json").read_text(encoding="utf-8"))
-
     new_params = updated_index["experiment"]["parameter_configuration"]
-
     assert len(new_params) == 3
 
     # Migration should only touch everest controls
