@@ -1063,6 +1063,9 @@ class ErtConfig(BaseModel):
         if errors:
             raise ObservationConfigError.from_collected(errors)
 
+        zonemap = config_dict.get(ConfigKeys.ZONEMAP)
+        if zonemap:
+            zonemap = substituter.substitute(zonemap)
         try:
             cls_config = cls(
                 substitutions=substitutions,
@@ -1085,7 +1088,7 @@ class ErtConfig(BaseModel):
                 runpath_config=model_config,
                 user_config_file=config_file_path,
                 observation_declarations=list(obs_configs),
-                zonemap=config_dict.get(ConfigKeys.ZONEMAP),
+                zonemap=zonemap,
             )
 
             # The observations are created here because create_observation_dataframes
