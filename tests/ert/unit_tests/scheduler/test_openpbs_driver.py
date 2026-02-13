@@ -3,6 +3,7 @@ import contextlib
 import json
 import logging
 import os
+import re
 import shlex
 import stat
 from functools import partial
@@ -626,3 +627,34 @@ def test_openpbs_driver_with_poly_example_failing_poll_fails_ert_and_propagates_
             "poly.ert",
         )
     assert "RuntimeError: Status polling failed" in caplog.text
+
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("use_tmpdir")
+async def test_that_queue_system_max_runtime_kills_job(
+    pytestconfig, job_name, monkeypatch
+):
+    if not pytestconfig.getoption("lsf"):
+        pytest.skip("Mocked LSF driver does not support max runtime option")
+    monkeypatch.setattr(
+        "ert.scheduler.driver.Driver._MAX_RUNTIME_QUEUE_SYSTEM_PADDING", -40
+    )
+    driver = OpenPBSDriver(max_runtime=40)
+    await driver.submit(0, "sh", "-c", "sleep 30", name=job_name)
+    job_id = driver._iens2jobid[0]
+    await asyncio.wait_for(poll(driver, {0}), timeout=20)
+    process = await asyncio.create_subprocess_exec(
+        "qstat",
+        "-f",
+        job_id,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    stdout, _stderr = await process.communicate()
+    stdout_no_whitespaces = re.sub(
+        r"\s+", " ", stdout.decode(encoding="utf-8", errors="ignore")
+    )
+    assert (
+        "TERM_RUNLIMIT: job killed after reaching LSF run time limit; RUNLIMIT 0.0 min"
+        in stdout_no_whitespaces
+    )

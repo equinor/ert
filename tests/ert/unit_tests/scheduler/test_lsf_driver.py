@@ -1275,6 +1275,37 @@ async def test_submit_with_realization_memory(pytestconfig, job_name):
 
 
 @pytest.mark.integration_test
+@pytest.mark.usefixtures("use_tmpdir")
+async def test_that_queue_system_max_runtime_kills_job(
+    pytestconfig, job_name, monkeypatch
+):
+    if not pytestconfig.getoption("lsf"):
+        pytest.skip("Mocked LSF driver does not support max runtime option")
+    monkeypatch.setattr(
+        "ert.scheduler.driver.Driver._MAX_RUNTIME_QUEUE_SYSTEM_PADDING", -40
+    )
+    driver = LsfDriver(max_runtime=40)
+    await driver.submit(0, "sh", "-c", "sleep 30", name=job_name)
+    job_id = driver._iens2jobid[0]
+    await asyncio.wait_for(poll(driver, {0}), timeout=20)
+    process = await asyncio.create_subprocess_exec(
+        "bhist",
+        "-l",
+        job_id,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    stdout, _stderr = await process.communicate()
+    stdout_no_whitespaces = re.sub(
+        r"\s+", " ", stdout.decode(encoding="utf-8", errors="ignore")
+    )
+    assert (
+        "TERM_RUNLIMIT: job killed after reaching LSF run time limit; RUNLIMIT 0.0 min"
+        in stdout_no_whitespaces
+    )
+
+
+@pytest.mark.integration_test
 async def test_polling_bhist_fallback(not_found_bjobs, caplog, job_name):
     caplog.set_level(logging.DEBUG)
     driver = LsfDriver()
