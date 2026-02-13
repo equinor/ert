@@ -1,4 +1,6 @@
 import os
+import time
+from contextlib import suppress
 
 import pytest
 
@@ -253,12 +255,10 @@ def test_event_reporter_does_not_hang_after_failed(
         )
 
         reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
-        if mocked_server_signal == MockZMQServerSignal.FAIL_ACK_BUT_STORE_EVENTS:
+        # The reporter will raise this error if the previous event has already been
+        # processed and failed, but we are not interested in this error in this test.
+        with suppress(ClientConnectionError):
             reporter.report(Start(fmstep1))
-        elif (
-            mocked_server_signal
-            == MockZMQServerSignal.NORMAL_OPERATION_BUT_FAIL_ACK_DISCONNECT
-        ):
             reporter.report(Finish())
 
         reporter._event_publisher_thread.join(timeout=10)
@@ -269,3 +269,39 @@ def test_event_reporter_does_not_hang_after_failed(
             "Expected ClientConnectionError in event publisher thread"
         )
     assert expected_message in caplog.text
+
+
+@pytest.mark.integration_test
+def test_that_event_reporter_raises_exception_on_following_report_after_connection_failure(  # noqa: E501
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        "_ert.forward_model_runner.reporting.event.Client.DEFAULT_MAX_RETRIES", 0
+    )
+    reporter = Event(
+        evaluator_url="ipc:///no_server_running_here:1337",
+        ack_timeout=0.01,
+        max_retries=0,
+    )
+    fmstep1 = ForwardModelStep(
+        {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
+    )
+
+    reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
+    # The reporter will raise this error if the previous event has
+    # already been processed and sending failed
+    for _ in range(100):
+        if reporter._reporter_exception is not None:
+            break
+        time.sleep(0.05)
+    else:
+        raise AssertionError(
+            "ClientConnectionError was not set in reporter after connection failure"
+        )
+    with pytest.raises(ClientConnectionError, match=r"Failed to send b'CONNECT'"):
+        reporter.report(Start(fmstep1))
+
+    reporter._event_publisher_thread.join(timeout=10)
+    assert not reporter._event_publisher_thread.is_alive(), (
+        "Event publisher thread is hanging"
+    )
