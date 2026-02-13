@@ -233,6 +233,14 @@ class PlotApi:
         response_key: str,
         filter_on: dict[str, Any] | None = None,
     ) -> pd.DataFrame:
+        key_def = next(
+            (k for k in self.responses_api_key_defs if k.key == response_key), None
+        )
+        is_everest = key_def is not None and key_def.metadata.get("data_origin") in {
+            "everest_objectives",
+            "everest_constraints",
+        }
+
         if "@" in response_key:
             response_key = response_key.split("@", maxsplit=1)[0]
         with create_ertserver_client(self.ens_path) as client:
@@ -248,6 +256,16 @@ class PlotApi:
 
             stream = io.BytesIO(http_response.content)
             df = pd.read_parquet(stream)
+
+            if is_everest:
+                if "batch_id" in df.columns:
+                    df["batch_id"] = df["batch_id"].astype(int)
+                if "realization" in df.columns:
+                    df["realization"] = df["realization"].astype(int)
+                for col in df.columns:
+                    if col not in {"batch_id", "realization"}:
+                        df[col] = df[col].astype(float)
+                return df
 
             try:
                 df.columns = pd.to_datetime(df.columns, format="%Y-%m-%d %H:%M:%S")

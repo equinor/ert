@@ -38,6 +38,7 @@ from .plottery.plots import (
     CrossEnsembleStatisticsPlot,
     DistributionPlot,
     EnsemblePlot,
+    EverestObjectivesOverIterationPlot,
     GaussianKDEPlot,
     HistogramPlot,
     MisfitsPlot,
@@ -53,6 +54,7 @@ HISTOGRAM = "Histogram"
 STATISTICS = "Statistics"
 STD_DEV = "Std Dev"
 MISFITS = "Misfits"
+EVEREST_PLOT = "ResponsesOverTime"
 
 RESPONSE_DEFAULT = 0
 GEN_KW_DEFAULT = 3
@@ -197,6 +199,7 @@ class PlotWindow(QMainWindow):
             self.addPlotWidget(DISTRIBUTION, DistributionPlot())
             self.addPlotWidget(CROSS_ENSEMBLE_STATISTICS, CrossEnsembleStatisticsPlot())
             self.addPlotWidget(STD_DEV, StdDevPlot())
+            self.addPlotWidget(EVEREST_PLOT, EverestObjectivesOverIterationPlot())
             self._central_tab.currentChanged.connect(self.currentTabChanged)
             self.logPlotTabUsage(self._central_tab.tabText(0), default=True)
 
@@ -448,6 +451,20 @@ class PlotWindow(QMainWindow):
             if widget._plotter.dimensionality == key_def.dimensionality
             and (key_def.observations or not widget._plotter.requires_observations)
         ]
+
+        is_everest = key_def.metadata.get("data_origin") in {
+            "everest_objectives",
+            "everest_constraints",
+        }
+        everest_widget = next(
+            (w for w in self._plot_widgets if w.name == EVEREST_PLOT), None
+        )
+
+        if everest_widget:
+            if is_everest:
+                available_widgets = [everest_widget]
+            elif everest_widget in available_widgets:
+                available_widgets.remove(everest_widget)
 
         # Enabling/disabling tab triggers the
         # currentTabChanged event which also triggers
