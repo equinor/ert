@@ -157,19 +157,6 @@ class UpdateStrategy(Protocol):
     the parameter type and ES settings.
     """
 
-    def initialize(self, context: UpdateContext) -> None:
-        """One-time setup for the strategy.
-
-        Called once before processing any parameter groups. Use this to
-        compute shared matrices or initialize smoothers.
-
-        Parameters
-        ----------
-        context : UpdateContext
-            Shared update context with observations and settings.
-        """
-        ...
-
     def can_handle(self, param_config: ParameterConfig) -> bool:
         """Check whether this strategy can handle the given parameter type.
 

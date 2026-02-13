@@ -36,33 +36,25 @@ class StandardESUpdate:
     ----------
     smoother_snapshot : SmootherSnapshot
         Snapshot object for error reporting.
+    context : UpdateContext
+        Shared update context with observations and settings.
 
     Attributes
     ----------
-    _T : npt.NDArray[np.float64] | None
+    _T : npt.NDArray[np.float64]
         The computed transition matrix.
+
+    Raises
+    ------
+    ErtAnalysisError
+        If computing the transition matrix fails due to singular matrix.
     """
 
-    def __init__(self, smoother_snapshot: SmootherSnapshot) -> None:
+    def __init__(
+        self, smoother_snapshot: SmootherSnapshot, context: UpdateContext
+    ) -> None:
         self._smoother_snapshot = smoother_snapshot
-        self._T: npt.NDArray[np.float64] | None = None
 
-    def initialize(self, context: UpdateContext) -> None:
-        """Compute the transition matrix.
-
-        This computes T = (I + K @ H) where K is the Kalman gain matrix.
-        The identity is added to the diagonal for efficient computation.
-
-        Parameters
-        ----------
-        context : UpdateContext
-            Shared update context with observations and settings.
-
-        Raises
-        ------
-        ErtAnalysisError
-            If computing the transition matrix fails due to singular matrix.
-        """
         smoother = ies.ESMDA(
             covariance=context.observation_errors**2,
             observations=context.observation_values,
@@ -72,7 +64,7 @@ class StandardESUpdate:
         )
 
         try:
-            self._T = smoother.compute_transition_matrix(
+            self._T: npt.NDArray[np.float64] = smoother.compute_transition_matrix(
                 Y=context.responses,
                 alpha=1.0,
                 truncation=context.settings.enkf_truncation,
@@ -143,14 +135,7 @@ class StandardESUpdate:
         npt.NDArray[np.float64]
             Updated parameter ensemble array.
 
-        Raises
-        ------
-        RuntimeError
-            If strategy not initialized.
         """
-        if self._T is None:
-            raise RuntimeError("Strategy not initialized. Call initialize() first.")
-
         num_obs = len(context.observation_values)
         log_msg = (
             f"There are {num_obs} responses and {context.ensemble_size} realizations."

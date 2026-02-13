@@ -13,7 +13,7 @@ from ._distance import (
     DistanceLocalizationFieldUpdate,
     DistanceLocalizationSurfaceUpdate,
 )
-from ._protocol import ObservationLocations, UpdateStrategy
+from ._protocol import ObservationLocations, UpdateContext, UpdateStrategy
 from ._standard import StandardESUpdate
 
 if TYPE_CHECKING:
@@ -101,8 +101,15 @@ class UpdateStrategyFactory:
 
         return self._obs_locations
 
-    def create_strategies(self) -> list[UpdateStrategy]:
+    def create_strategies(self, context: UpdateContext) -> list[UpdateStrategy]:
         """Create all strategies needed based on current settings.
+
+        Strategies are fully initialized and ready to use after creation.
+
+        Parameters
+        ----------
+        context : UpdateContext
+            Shared update context with observations and settings.
 
         Returns
         -------
@@ -128,19 +135,19 @@ class UpdateStrategyFactory:
             # GenKw uses standard update even with distance localization
             strategies.extend(
                 [
-                    DistanceLocalizationFieldUpdate(self._obs_locations),
-                    DistanceLocalizationSurfaceUpdate(self._obs_locations),
-                    StandardESUpdate(self._smoother_snapshot),
+                    DistanceLocalizationFieldUpdate(self._obs_locations, context),
+                    DistanceLocalizationSurfaceUpdate(self._obs_locations, context),
+                    StandardESUpdate(self._smoother_snapshot, context),
                 ]
             )
 
         elif self._settings.localization:
             # Adaptive localization for all parameter types
-            strategies.append(AdaptiveLocalizationUpdate())
+            strategies.append(AdaptiveLocalizationUpdate(context))
 
         else:
             # Standard ES update without localization
-            strategies.append(StandardESUpdate(self._smoother_snapshot))
+            strategies.append(StandardESUpdate(self._smoother_snapshot, context))
 
         return strategies
 
