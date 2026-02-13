@@ -18,7 +18,7 @@ from ert.gui.simulation.view.disk_space_widget import DiskSpaceWidget
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
 from ert.gui.tools.plot.plot_ensemble_selection_widget import EnsembleSelectionWidget
 from ert.run_models import EnsembleExperiment, EnsembleSmoother
-from ert.services import ErtServer
+from ert.services import ErtServerController
 from ert.storage import open_storage
 from tests.ert.ui_tests.gui.conftest import open_gui_with_config
 from tests.ert.unit_tests.gui.simulation.test_run_path_dialog import (
@@ -379,7 +379,7 @@ def test_that_poly_new_with_results_screenshots_are_up_to_date(
     open_storage(gui.ert_config.ens_path, mode="w")
     gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
 
-    with ErtServer.init_service(
+    with ErtServerController.init_service(
         project=os.path.abspath(gui.ert_config.ens_path),
     ):
         button_plot_tool = get_child(gui, QToolButton, name="button_Create_plot")
@@ -414,7 +414,7 @@ def test_that_poly_new_with_observations_screenshots_are_up_to_date(
     open_storage(gui.ert_config.ens_path, mode="w")
     gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
 
-    with ErtServer.init_service(
+    with ErtServerController.init_service(
         project=os.path.abspath(gui.ert_config.ens_path),
     ):
         button_plot_tool = get_child(gui, QToolButton, name="button_Create_plot")
@@ -466,7 +466,7 @@ def test_that_poly_new_with_more_observations_screenshots_are_up_to_date(
     open_storage(gui.ert_config.ens_path, mode="w")
     gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
 
-    with ErtServer.init_service(
+    with ErtServerController.init_service(
         project=os.path.abspath(gui.ert_config.ens_path),
     ):
         button_plot_tool = get_child(gui, QToolButton, name="button_Create_plot")
