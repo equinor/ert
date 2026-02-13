@@ -65,7 +65,7 @@ def ever_config() -> EverestConfig:
 
 def test_tutorial_everest2ropt(ever_config):
     ropt_config, _ = everest2ropt(
-        [c.to_ert_parameter_config() for c in ever_config.controls],
+        [ctrl for c in ever_config.controls for ctrl in c.to_ert_parameter_config()],
         ever_config.create_ert_objectives_config(),
         ever_config.input_constraints,
         ever_config.create_ert_output_constraints_config(),
@@ -83,7 +83,7 @@ def test_everest2ropt_controls(ever_config):
     controls = ever_config.controls
     assert len(controls) == 1
     ropt_config, _ = everest2ropt(
-        [c.to_ert_parameter_config() for c in ever_config.controls],
+        [ctrl for c in ever_config.controls for ctrl in c.to_ert_parameter_config()],
         ever_config.create_ert_objectives_config(),
         ever_config.input_constraints,
         ever_config.create_ert_output_constraints_config(),
@@ -100,7 +100,7 @@ def test_everest2ropt_controls_input_constraint(ever_config):
     input_constraints_ever_config = ever_config.input_constraints
     assert len(input_constraints_ever_config) == 2
     ropt_config, _ = everest2ropt(
-        [c.to_ert_parameter_config() for c in ever_config.controls],
+        [ctrl for c in ever_config.controls for ctrl in c.to_ert_parameter_config()],
         ever_config.create_ert_objectives_config(),
         ever_config.input_constraints,
         ever_config.create_ert_output_constraints_config(),
@@ -118,7 +118,7 @@ def test_everest2ropt_controls_input_constraint(ever_config):
 
 def test_everest2ropt_controls_optimizer_setting(ever_config):
     ropt_config, _ = everest2ropt(
-        [c.to_ert_parameter_config() for c in ever_config.controls],
+        [ctrl for c in ever_config.controls for ctrl in c.to_ert_parameter_config()],
         ever_config.create_ert_objectives_config(),
         ever_config.input_constraints,
         ever_config.create_ert_output_constraints_config(),
@@ -134,7 +134,7 @@ def test_everest2ropt_controls_optimizer_setting(ever_config):
 
 def test_everest2ropt_constraints(ever_config):
     ropt_config, _ = everest2ropt(
-        [c.to_ert_parameter_config() for c in ever_config.controls],
+        [ctrl for c in ever_config.controls for ctrl in c.to_ert_parameter_config()],
         ever_config.create_ert_objectives_config(),
         ever_config.input_constraints,
         ever_config.create_ert_output_constraints_config(),
@@ -149,7 +149,7 @@ def test_everest2ropt_constraints(ever_config):
 def test_everest2ropt_backend_options(ever_config):
     ever_config.optimization.options = ["test = 1"]
     ropt_config, _ = everest2ropt(
-        [c.to_ert_parameter_config() for c in ever_config.controls],
+        [ctrl for c in ever_config.controls for ctrl in c.to_ert_parameter_config()],
         ever_config.create_ert_objectives_config(),
         ever_config.input_constraints,
         ever_config.create_ert_output_constraints_config(),
@@ -162,7 +162,7 @@ def test_everest2ropt_backend_options(ever_config):
 
     ever_config.optimization.backend_options = {"test": "5"}  # should be disregarded
     ropt_config, _ = everest2ropt(
-        [c.to_ert_parameter_config() for c in ever_config.controls],
+        [ctrl for c in ever_config.controls for ctrl in c.to_ert_parameter_config()],
         ever_config.create_ert_objectives_config(),
         ever_config.input_constraints,
         ever_config.create_ert_output_constraints_config(),
@@ -175,7 +175,7 @@ def test_everest2ropt_backend_options(ever_config):
 
     ever_config.optimization.options = None
     ropt_config, _ = everest2ropt(
-        [c.to_ert_parameter_config() for c in ever_config.controls],
+        [ctrl for c in ever_config.controls for ctrl in c.to_ert_parameter_config()],
         ever_config.create_ert_objectives_config(),
         ever_config.input_constraints,
         ever_config.create_ert_output_constraints_config(),
@@ -188,7 +188,7 @@ def test_everest2ropt_backend_options(ever_config):
 
     ever_config.optimization.options = ["hey", "a=b", "c 100"]
     ropt_config, _ = everest2ropt(
-        [c.to_ert_parameter_config() for c in ever_config.controls],
+        [ctrl for c in ever_config.controls for ctrl in c.to_ert_parameter_config()],
         ever_config.create_ert_objectives_config(),
         ever_config.input_constraints,
         ever_config.create_ert_output_constraints_config(),
@@ -202,7 +202,7 @@ def test_everest2ropt_backend_options(ever_config):
 
 def test_everest2ropt_samplers(ever_config):
     ropt_config, _ = everest2ropt(
-        [c.to_ert_parameter_config() for c in ever_config.controls],
+        [ctrl for c in ever_config.controls for ctrl in c.to_ert_parameter_config()],
         ever_config.create_ert_objectives_config(),
         ever_config.input_constraints,
         ever_config.create_ert_output_constraints_config(),
@@ -244,7 +244,7 @@ def test_everest2ropt_cvar(ever_config):
 
     config = EverestConfig.model_validate(config_dict)
     ropt_config, _ = everest2ropt(
-        [c.to_ert_parameter_config() for c in config.controls],
+        [ctrl for c in config.controls for ctrl in c.to_ert_parameter_config()],
         config.create_ert_objectives_config(),
         config.input_constraints,
         config.create_ert_output_constraints_config(),
@@ -267,7 +267,7 @@ def test_everest2ropt_cvar(ever_config):
 
     config = EverestConfig.model_validate(config_dict)
     ropt_config, _ = everest2ropt(
-        [c.to_ert_parameter_config() for c in config.controls],
+        [ctrl for c in config.controls for ctrl in c.to_ert_parameter_config()],
         config.create_ert_objectives_config(),
         config.input_constraints,
         config.create_ert_output_constraints_config(),
@@ -286,7 +286,7 @@ def test_everest2ropt_cvar(ever_config):
 def test_everest2ropt_arbitrary_backend_options(ever_config):
     ever_config.optimization.backend_options = {"a": [1]}
     ropt_config, _ = everest2ropt(
-        [c.to_ert_parameter_config() for c in ever_config.controls],
+        [ctrl for c in ever_config.controls for ctrl in c.to_ert_parameter_config()],
         ever_config.create_ert_objectives_config(),
         ever_config.input_constraints,
         ever_config.create_ert_output_constraints_config(),
@@ -303,7 +303,7 @@ def test_everest2ropt_default_algorithm_name(min_config):
     config = EverestConfig(**min_config)
     assert not min_config.get("optimization")
     ropt_config, _ = everest2ropt(
-        [c.to_ert_parameter_config() for c in config.controls],
+        [ctrl for c in config.controls for ctrl in c.to_ert_parameter_config()],
         config.create_ert_objectives_config(),
         config.input_constraints,
         config.create_ert_output_constraints_config(),
@@ -323,7 +323,7 @@ def test_everest2ropt_snapshot(case, snapshot):
         relpath(f"../../test-data/everest/math_func/{case}")
     )
     ropt_config_dict, _ = everest2ropt(
-        [c.to_ert_parameter_config() for c in config.controls],
+        [ctrl for c in config.controls for ctrl in c.to_ert_parameter_config()],
         config.create_ert_objectives_config(),
         config.input_constraints,
         config.create_ert_output_constraints_config(),

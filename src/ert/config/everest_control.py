@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 import importlib
-import json
 import logging
 from collections.abc import Iterator, Mapping, MutableMapping
-from dataclasses import field
 from pathlib import Path
 from textwrap import dedent
 from typing import TYPE_CHECKING, Any, Literal, Self
@@ -15,8 +13,6 @@ import polars as pl
 import xarray as xr
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from ropt.workflow import find_sampler_plugin
-
-from ert.substitutions import substitute_runpath_name
 
 from .parameter_config import ParameterCardinality, ParameterConfig
 
@@ -144,38 +140,38 @@ class SamplerConfig(BaseModel):
 
 
 class EverestControl(ParameterConfig):
-    """Create an EverestControl for @key with the given @input_keys
+    """Create an EverestControl for a single control variable.
 
-    @input_keys can be either a list of keys as strings or a dict with
-    keys as strings and a list of suffixes for each key.
-    If a list of strings is given, the order is preserved.
+    Each EverestControl represents one scalar value. Multiple controls can
+    share the same group name to indicate they belong to the same logical group.
     """
 
     type: Literal["everest_parameters"] = "everest_parameters"
     dimensionality: Literal[1] = 1
-    input_keys: list[str] = field(default_factory=list)
+    input_key: str
     forward_init: bool = False
     output_file: str = ""
     forward_init_file: str = ""
     update: bool = False
-    types: list[Literal["well_control", "generic_control"]]
-    initial_guesses: list[float]
-    control_types: list[Literal["real", "integer"]]
-    enabled: list[bool]
-    min: list[float]
-    max: list[float]
-    perturbation_types: list[Literal["absolute", "relative"]]
-    perturbation_magnitudes: list[float]
-    scaled_ranges: list[tuple[float, float]]
-    samplers: list[SamplerConfig | None]
+    control_type_: Literal["well_control", "generic_control"]
+    initial_guess: float
+    control_type: Literal["real", "integer"]
+    enabled: bool
+    min: float
+    max: float
+    perturbation_type: Literal["absolute", "relative"]
+    perturbation_magnitude: float
+    scaled_range: tuple[float, float]
+    sampler: SamplerConfig | None
+    group: str
 
     # Set up for deprecation, but has to live here until support for the
     # "dotdash" notation is removed for everest controls via everest config.
-    input_keys_dotdash: list[str] = field(default_factory=list)
+    input_key_dotdash: str = ""
 
     @property
     def parameter_keys(self) -> list[str]:
-        return self.input_keys
+        return [self.input_key]
 
     @property
     def cardinality(self) -> ParameterCardinality:
@@ -195,31 +191,12 @@ class EverestControl(ParameterConfig):
         raise NotImplementedError
 
     def __len__(self) -> int:
-        return len(self.input_keys)
+        return 1
 
     def write_to_runpath(
         self, run_path: Path, real_nr: int, ensemble: Ensemble
-    ) -> None:
-        file_path: Path = run_path / substitute_runpath_name(
-            self.output_file, real_nr, ensemble.iteration
-        )
-        Path.mkdir(file_path.parent, exist_ok=True, parents=True)
-
-        data: dict[str, Any] = {}
-        df = ensemble.load_parameters(self.name, real_nr)
-        assert isinstance(df, pl.DataFrame)
-        df = df.drop("realization")
-        df = df.rename({col: col.replace(f"{self.name}.", "", 1) for col in df.columns})
-        for c in df.columns:
-            if "." in c:
-                top_key, sub_key = c.split(".", 1)
-                if top_key not in data:
-                    data[top_key] = {}
-                data[top_key][sub_key] = df[c].item()
-            else:
-                data[c] = df[c].item()
-
-        file_path.write_text(json.dumps(data), encoding="utf-8")
+    ) -> dict[str, dict[str, float | str]] | None:
+        raise NotImplementedError
 
     def create_storage_datasets(
         self,
@@ -229,7 +206,7 @@ class EverestControl(ParameterConfig):
         df = pl.DataFrame(
             {
                 "realization": iens_active_index,
-                **{k: from_data[:, i] for i, k in enumerate(self.parameter_keys)},
+                self.input_key: pl.Series(from_data.flatten()),
             },
             strict=False,
         )
