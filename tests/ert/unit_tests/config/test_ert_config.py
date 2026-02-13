@@ -2697,10 +2697,14 @@ def test_that_zone_map_can_be_set_per_realization():
         NUM_REALIZATIONS 1
         ECLBASE BASE
 
+        RUNPATH /realizations-<REAL>/iter-<ITER>
         ZONEMAP <RUNPATH>/rms/output/zone/layer_zone_table.txt
         """,
     )
-    assert str(config.zonemap) == "<RUNPATH>/rms/output/zone/layer_zone_table.txt"
+    assert (
+        str(config.zonemap)
+        == "/realizations-<REAL>/iter-<ITER>/rms/output/zone/layer_zone_table.txt"
+    )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
