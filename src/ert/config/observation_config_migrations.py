@@ -778,7 +778,7 @@ def _handle_history_observation(
             ConfigWarning.warn(
                 f"Segment {segment.name} does not"
                 " contain any time steps. The interval "
-                f"[{start}, {stop}) does not intersect with steps in the"
+                f"[{start}, {stop}) does not intersect with steps in the "
                 "time map.",
                 segment.name,
             )
