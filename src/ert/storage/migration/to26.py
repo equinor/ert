@@ -29,16 +29,16 @@ def migrate_everest_control_format(path: Path) -> None:
                 modified = True
 
                 common_fields = {
-                    "forward_init": param.get("forward_init", False),
-                    "output_file": param.get("output_file", ""),
-                    "forward_init_file": param.get("forward_init_file", ""),
-                    "update": param.get("update", False),
+                    "forward_init": False,
+                    "output_file": param["output_file"],
+                    "forward_init_file": "",
+                    "update": False,
                     "type": "everest_parameters",
                     "dimensionality": 1,
                 }
 
-                group_name = param.get("name")
-                input_keys = param.get("input_keys", [])
+                group_name = param["name"]
+                input_keys = param["input_keys"]
 
                 for i, input_key in enumerate(input_keys):
                     new_params_config.append(
@@ -59,11 +59,7 @@ def migrate_everest_control_format(path: Path) -> None:
                             ],
                             "scaled_range": param["scaled_ranges"][i],
                             "sampler": param["samplers"][i],
-                            "input_key_dotdash": (
-                                param.get("input_keys_dotdash", [])[i]
-                                if i < len(param.get("input_keys_dotdash", []))
-                                else ""
-                            ),
+                            "input_key_dotdash": param["input_keys_dotdash"][i],
                         }
                     )
             else:
