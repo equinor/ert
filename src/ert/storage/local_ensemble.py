@@ -1297,6 +1297,7 @@ class LocalEnsemble(BaseMode):
                     .eq_missing(pl.col("response_zone"))
                     .alias("valid_zone"),
                     (1 - pl.col("sgas") - pl.col("swat")).alias("soil"),
+                    pl.col("is_active").fill_null(False),
                 )
                 .select(output_columns)
             )
