@@ -2704,6 +2704,7 @@ def test_that_zone_map_can_be_set_per_realization():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
 def test_that_breakthrough_observations_can_be_internalized_in_ert_config():
     obs_path = Path("observations")
 
