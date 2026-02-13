@@ -1181,13 +1181,13 @@ class LocalEnsemble(BaseMode):
     def get_rft_observations_and_responses(
         self,
     ) -> pl.DataFrame:
-        """Fetches and aligns selected RFT observations with their
-        corresponding simulated responses from an ensemble.
+        """Fetches and aligns RFT observations with their corresponding
+        simulated responses from an ensemble.
 
-        Includes i, j, k grid cell indices from the responses in the output.
+        Returns a DataFrame with observation/response data using
+        column names equal to the ones used by the subscript forward model
+        MERGE_RFT_ERTOBS, and compatible with the webviz-subsurface RftPlotter.
         """
-
-        # Get RFT observation keys from the experiment
         rft_observations = self.experiment.observations.get("rft")
         if rft_observations is None or rft_observations.is_empty():
             raise StorageError("No RFT observations found in experiment")
@@ -1195,34 +1195,63 @@ class LocalEnsemble(BaseMode):
         if "rft" not in self.experiment.response_configuration:
             raise KeyError("No RFT response configuration found in experiment")
 
-        # Get realizations that have responses
-        realisations = self.get_realization_list_with_responses()
-        if len(realisations) == 0:
+        realizations = self.get_realization_list_with_responses()
+        if not realizations:
             raise StorageError("No realizations with responses found")
 
-        observations_for_type = rft_observations.with_columns(
-            [
-                pl.col("response_key")
-                .str.extract(r"^([^:]+:[^:]+)")
-                .cast(pl.Categorical)
-                .alias("well_and_date"),
-                pl.col("response_key").str.extract(r"^([^:]+)").alias("well"),
-                pl.col("response_key").str.extract(r"^[^:]+:([^:]+)").alias("date"),
-            ]
+        observations = rft_observations.with_columns(
+            pl.col("response_key")
+            .str.extract(r"^([^:]+:[^:]+)")
+            .cast(pl.Categorical)
+            .alias("well_and_date"),
+            pl.col("response_key").str.extract(r"^([^:]+)").alias("well"),
+            pl.col("response_key").str.extract(r"^[^:]+:([^:]+)").alias("date"),
         ).with_columns(pl.int_range(pl.len()).over("well").alias("order"))
 
-        observed_cols = {
-            k: observations_for_type[k].unique()
-            for k in ["well_and_date", "east", "north", "tvd"]
-        }
+        join_keys = ["well_and_date", "east", "north", "tvd"]
+        observed_values = {k: observations[k].unique() for k in join_keys}
 
-        realisations.sort()
+        pivot_index = [
+            "well_and_date",
+            "realization",
+            "response_zone",
+            "east",
+            "north",
+            "tvd",
+            "i",
+            "j",
+            "k",
+        ]
 
-        realization_columns: list[pl.DataFrame] = []
+        output_columns = [
+            "order",
+            "east",
+            "north",
+            "md",
+            "tvd",
+            "zone",
+            "pressure",
+            "swat",
+            "sgas",
+            "soil",
+            "valid_zone",
+            "is_active",
+            "i",
+            "j",
+            "k",
+            "well",
+            "date",
+            "realization",
+            "observations",
+            "std",
+        ]
 
-        for real in realisations:
-            responses = self.load_responses("rft", (real,)).with_columns(
-                [
+        result_frames: list[pl.DataFrame] = []
+
+        for real in sorted(realizations):
+            responses = (
+                self.load_responses("rft", (real,))
+                .with_columns(
                     pl.col("response_key")
                     .str.extract(r"^([^:]+:[^:]+)")
                     .cast(pl.Categorical)
@@ -1231,34 +1260,21 @@ class LocalEnsemble(BaseMode):
                     .str.extract(r":([^:]+)$")
                     .str.to_lowercase()
                     .alias("property"),
-                ]
+                )
+                .rename({"zone": "response_zone"})
             )
-            responses = responses.rename({"zone": "response_zone"})
-            # Filter out responses without observations
-            for col, observed_values in observed_cols.items():
+
+            for col, values in observed_values.items():
                 responses = responses.filter(
-                    pl.col(col).is_in(observed_values.implode(), nulls_equal=True)
+                    pl.col(col).is_in(values.implode(), nulls_equal=True)
                 )
 
-            # Include i, j, k in the pivot index so they are preserved
-            pivot_index = [
-                "well_and_date",
-                "realization",
-                "response_zone",
-                "east",
-                "north",
-                "tvd",
-                "i",
-                "j",
-                "k",
-            ]
             pivoted = responses.pivot(
                 on="property",
                 index=pivot_index,
                 values="values",
             )
 
-            # Add pressure, sgas, swat columns if not already present
             for col in ["pressure", "sgas", "swat"]:
                 if col not in pivoted.columns:
                     pivoted = pivoted.with_columns(
@@ -1269,50 +1285,25 @@ class LocalEnsemble(BaseMode):
                 pl.col("pressure").is_not_null().alias("is_active")
             )
 
-            joined = observations_for_type.join(
-                pivoted,
-                how="left",
-                on=["well_and_date", "east", "north", "tvd"],
-                nulls_equal=True,
-            )
-
-            joined = joined.with_columns(
-                [
+            joined = (
+                observations.join(
+                    pivoted,
+                    how="left",
+                    on=join_keys,
+                    nulls_equal=True,
+                )
+                .with_columns(
                     pl.col("zone")
                     .eq_missing(pl.col("response_zone"))
                     .alias("valid_zone"),
                     (1 - pl.col("sgas") - pl.col("swat")).alias("soil"),
-                ]
-            )
-
-            realization_columns.append(
-                joined.select(
-                    [
-                        "order",
-                        "east",
-                        "north",
-                        "md",
-                        "tvd",
-                        "zone",
-                        "pressure",
-                        "swat",
-                        "sgas",
-                        "soil",
-                        "valid_zone",
-                        "is_active",
-                        "i",
-                        "j",
-                        "k",
-                        "well",
-                        "date",
-                        "realization",
-                        "observations",
-                        "std",
-                    ]
                 )
+                .select(output_columns)
             )
 
-        return pl.concat(realization_columns, how="vertical").rename(
+            result_frames.append(joined)
+
+        return pl.concat(result_frames, how="vertical").rename(
             {
                 "east": "utm_x",
                 "north": "utm_y",
