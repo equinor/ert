@@ -222,7 +222,7 @@ class RunModel(RunModelConfig, ABC):
             runpath_format=self.runpath_config.runpath_format_string,
             filename=str(self.runpath_file),
             substitutions=self.substitutions,
-            eclbase=self.runpath_config.eclbase_format_string,
+            eclbase=self.runpath_config.summary_file_base_name,
         )
 
     @property

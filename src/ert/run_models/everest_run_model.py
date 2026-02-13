@@ -419,12 +419,18 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         substitutions = {
             "<RUNPATH_FILE>": str(runpath_file),
             "<RUNPATH>": runpath_config.runpath_format_string,
-            "<ECL_BASE>": runpath_config.eclbase_format_string,
-            "<ECLBASE>": runpath_config.eclbase_format_string,
             "<NUM_CPU>": str(queue_config.queue_options.num_cpu),
             "<CONFIG_PATH>": everest_config.config_directory,
             "<CONFIG_FILE>": Path(everest_config.config_file).stem,
         }
+
+        if runpath_config.summary_file_base_name:
+            substitutions.update(
+                {
+                    "<ECL_BASE>": runpath_config.summary_file_base_name,
+                    "<ECLBASE>": runpath_config.summary_file_base_name,
+                }
+            )
 
         for datafile, data in _get_internal_files(everest_config).items():
             datafile.parent.mkdir(exist_ok=True, parents=True)
@@ -1229,7 +1235,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
             runpath_format=self.runpath_config.runpath_format_string,
             filename=str(self.runpath_file),
             substitutions=substitutions,
-            eclbase=self.runpath_config.eclbase_format_string,
+            eclbase=self.runpath_config.summary_file_base_name,
         )
         return create_run_arguments(
             run_paths,

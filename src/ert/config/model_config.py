@@ -35,7 +35,7 @@ class ModelConfig(BaseModel):
     num_realizations: int = 1
     runpath_format_string: str = DEFAULT_RUNPATH
     jobname_format_string: str = DEFAULT_JOBNAME_FORMAT
-    eclbase_format_string: str = DEFAULT_ECLBASE_FORMAT
+    summary_file_base_name: str | None = None
     gen_kw_export_name: str = DEFAULT_GEN_KW_EXPORT_NAME
 
     @field_validator("runpath_format_string", mode="before")
@@ -96,10 +96,12 @@ class ModelConfig(BaseModel):
             )
         return result
 
-    @field_validator("eclbase_format_string", mode="before")
+    @field_validator("summary_file_base_name", mode="before")
     @classmethod
-    def transform(cls, eclbase_format_string: str) -> str:
-        return _replace_runpath_format(eclbase_format_string)
+    def transform(cls, summary_file_base_name: str | None) -> str | None:
+        if summary_file_base_name is None:
+            return None
+        return _replace_runpath_format(summary_file_base_name)
 
     @classmethod
     def from_dict(cls, config_dict: ConfigDict) -> ModelConfig:
