@@ -67,7 +67,7 @@ def migrate_everest_control_format(path: Path) -> None:
 
         if modified:
             experiment_data["parameter_configuration"] = new_params_config
-            index_file.write_text(json.dumps(index_data), encoding="utf-8")
+            index_file.write_text(json.dumps(index_data, indent=2), encoding="utf-8")
 
 
 def migrate(path: Path) -> None:
