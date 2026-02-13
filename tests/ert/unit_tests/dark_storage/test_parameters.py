@@ -6,6 +6,7 @@ from ert.storage import open_storage
 
 
 @pytest.mark.integration_test
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
 def test_that_asking_for_non_existent_key_doesnt_raise(
     symlinked_heat_equation_storage_es,
 ):
@@ -18,6 +19,7 @@ def test_that_asking_for_non_existent_key_doesnt_raise(
 
 
 @pytest.mark.integration_test
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
 def test_that_asking_for_existing_key_with_group_returns_data(
     symlinked_heat_equation_storage_es,
 ):
