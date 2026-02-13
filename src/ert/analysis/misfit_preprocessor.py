@@ -131,10 +131,14 @@ def main(
         A scaling factor for the observation errors is then calculated as the square
         root of the ratio of the number of observations in the cluster to the number
         of principal components. The specific formula used is not a standard approach,
-        but may nevertheless be reasonable. The ratio of observations to principal
-        components is somewhat analogous to degress of freedom in statistical analyses.
-        Scaling by a function of this ratio could be seen as an attempt
-        to adjust for the effective sample size.
+        but may nevertheless be reasonable. If N responses are perfectly correlated,
+        the number of principal components will be 1, resulting in a scaling factor
+        of sqrt(N). According to statistical theory, this is the correct scaling factor
+        to use when N responses are perfectly correlated, as it ensures the accumulated
+        weight (precision) of the N copies equals that of a single independent
+        observation. The term sqrt(N/N_eff), where N_eff is the number of principal
+        components (effective independent samples), can be interpreted as an
+        adjustment for the effective sample size.
 
     Parameters:
     -----------
