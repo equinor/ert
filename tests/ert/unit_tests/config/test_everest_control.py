@@ -11,11 +11,10 @@ from ert.config import EverestControl
 
 
 def test_that_write_to_runpath_writes_json_with_correct_structure(tmp_path):
-    # Create three separate controls (refactored structure)
     controls = [
         EverestControl(
-            name="point.x",
-            input_key="point.x",
+            name=f"point.{coord}",
+            input_key=f"point.{coord}",
             output_file="point.json",
             group="point",
             control_type_="generic_control",
@@ -28,39 +27,8 @@ def test_that_write_to_runpath_writes_json_with_correct_structure(tmp_path):
             perturbation_magnitude=0.1,
             scaled_range=(-1.0, 1.0),
             sampler=None,
-        ),
-        EverestControl(
-            name="point.y",
-            input_key="point.y",
-            output_file="point.json",
-            group="point",
-            control_type_="generic_control",
-            initial_guess=0.1,
-            control_type="real",
-            enabled=True,
-            min=-1.0,
-            max=1.0,
-            perturbation_type="absolute",
-            perturbation_magnitude=0.1,
-            scaled_range=(-1.0, 1.0),
-            sampler=None,
-        ),
-        EverestControl(
-            name="point.z",
-            input_key="point.z",
-            output_file="point.json",
-            group="point",
-            control_type_="generic_control",
-            initial_guess=0.1,
-            control_type="real",
-            enabled=True,
-            min=-1.0,
-            max=1.0,
-            perturbation_type="absolute",
-            perturbation_magnitude=0.1,
-            scaled_range=(-1.0, 1.0),
-            sampler=None,
-        ),
+        )
+        for coord in ["x", "y", "z"]
     ]
 
     mock_ensemble = MagicMock()
