@@ -49,7 +49,7 @@ def _observation_row_to_declaration(
 def migrate_parameters_responses_and_observations_into_experiment_index(
     path: Path,
 ) -> None:
-    for exp_path in path.glob("experiments/*"):
+    for exp_path in sorted(path.glob("experiments/*")):
         if not exp_path.is_dir():
             continue
 
@@ -67,7 +67,7 @@ def migrate_parameters_responses_and_observations_into_experiment_index(
 
         obs_dir = exp_path / "observations"
         if obs_dir.exists():
-            for obs_file in obs_dir.glob("*"):
+            for obs_file in sorted(obs_dir.glob("*")):
                 df = pl.read_parquet(obs_file)
                 experiment_json["observations"].extend(
                     [
