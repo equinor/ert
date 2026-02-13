@@ -34,7 +34,6 @@ def test_that_write_to_runpath_writes_json_with_correct_structure(tmp_path):
     mock_ensemble = MagicMock()
     mock_ensemble.iteration = 0
 
-    # Create separate DataFrames for each control
     mock_ensemble.load_parameters.side_effect = [
         pl.DataFrame({"realization": [5], "point.x": [1.5]}),
         pl.DataFrame({"realization": [5], "point.y": [2.5]}),
