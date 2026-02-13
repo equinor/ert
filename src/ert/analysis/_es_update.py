@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import functools
 import logging
 import re
 import time
@@ -324,12 +323,6 @@ def analysis_ES(
         # Add identity in place for fast computation
         np.fill_diagonal(T, T.diagonal() + 1)
 
-    def correlation_callback(
-        cross_correlations_of_batch: npt.NDArray[np.float64],
-        cross_correlations_accumulator: list[npt.NDArray[np.float64]],
-    ) -> None:
-        cross_correlations_accumulator.append(cross_correlations_of_batch)
-
     for param_group in parameters:
         param_cfg = source_ensemble.experiment.parameter_configuration[param_group]
         param_ensemble_array = source_ensemble.load_parameters_numpy(
@@ -465,9 +458,6 @@ def analysis_ES(
                     f"in {(time.time() - start) / 60} minutes"
                 )
         elif module.localization:
-            config_node = source_ensemble.experiment.parameter_configuration[
-                param_group
-            ]
             num_params = param_ensemble_array.shape[0]
             batch_size = _calculate_adaptive_batch_size(num_params, num_obs)
             batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
@@ -481,17 +471,9 @@ def analysis_ES(
             progress_callback(AnalysisStatusEvent(msg=log_msg))
 
             start = time.time()
-            cross_correlations: list[npt.NDArray[np.float64]] = []
             for param_batch_idx in batches:
                 update_idx = param_batch_idx[non_zero_variance_mask[param_batch_idx]]
                 X_local = param_ensemble_array[update_idx, :]
-                if isinstance(config_node, GenKwConfig):
-                    correlation_batch_callback = functools.partial(
-                        correlation_callback,
-                        cross_correlations_accumulator=cross_correlations,
-                    )
-                else:
-                    correlation_batch_callback = None
                 param_ensemble_array[update_idx, :] = smoother_adaptive_es.assimilate(
                     X=X_local,
                     Y=S,
@@ -502,7 +484,6 @@ def analysis_ES(
                     correlation_threshold=module.correlation_threshold,
                     cov_YY=cov_YY,
                     progress_callback=adaptive_localization_progress_callback,
-                    correlation_callback=correlation_batch_callback,
                     # number of parallel jobs for joblib
                     n_jobs=NUM_JOBS_ADAPTIVE_LOC,
                 )
