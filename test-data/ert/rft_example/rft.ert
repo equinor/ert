@@ -21,4 +21,9 @@ FORWARD_MODEL TEMPLATE_RENDER( \
 
 FORWARD_MODEL FLOW
 
-RFT WELL:PROD DATE:2015-02-01 PROPERTIES:PRESSURE
+RFT WELL:PROD DATE:2015-02-01 PROPERTIES:PRESSURE,SWAT,SGAS,SOIL
+
+-- order,utm_x,utm_y,measured_depth,true_vertical_depth,zone,pressure,swat,sgas,soil,valid_zone,is_active,i,j,k,well,time,report_step,observed,error
+
+LOAD_WORKFLOW export_rft_workflow
+HOOK_WORKFLOW export_rft_workflow POST_SIMULATION
