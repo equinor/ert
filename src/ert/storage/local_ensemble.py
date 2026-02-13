@@ -1211,7 +1211,7 @@ class LocalEnsemble(BaseMode):
                 pl.col("response_key").str.extract(r"^([^:]+)").alias("well"),
                 pl.col("response_key").str.extract(r"^[^:]+:([^:]+)").alias("date"),
             ]
-        )
+        ).with_columns(pl.int_range(pl.len()).over("well").alias("order"))
 
         observed_cols = {
             k: observations_for_type[k].unique()
@@ -1254,27 +1254,12 @@ class LocalEnsemble(BaseMode):
                 values="values",
             )
 
-            if pivoted.is_empty():
-                # No responses for this realization - create NaN column
-                joined = observations_for_type.with_columns(
-                    [
-                        pl.lit(None).cast(pl.Int64).alias("i"),
-                        pl.lit(None).cast(pl.Int64).alias("j"),
-                        pl.lit(None).cast(pl.Int64).alias("k"),
-                        pl.Series(
-                            str(real),
-                            [np.nan] * len(observations_for_type),
-                            dtype=pl.Float32,
-                        ),
-                    ]
-                )
-            else:
-                joined = observations_for_type.join(
-                    pivoted,
-                    how="left",
-                    on=["well_and_date", *response_cls.primary_key],
-                    nulls_equal=True,
-                )
+            joined = observations_for_type.join(
+                pivoted,
+                how="left",
+                on=["well_and_date", *response_cls.primary_key],
+                nulls_equal=True,
+            )
 
             realization_columns.append(
                 joined.select(
@@ -1282,6 +1267,7 @@ class LocalEnsemble(BaseMode):
                         "well_and_date",
                         "well",
                         "date",
+                        "order",
                         "observations",
                         "std",
                         "east",
