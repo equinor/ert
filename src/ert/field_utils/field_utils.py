@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 import os
 from dataclasses import dataclass
+from enum import Enum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, NamedTuple, TypeAlias
 
@@ -18,6 +19,16 @@ if TYPE_CHECKING:
     import xtgeo
 
 _PathLike: TypeAlias = str | os.PathLike[str]
+
+
+class AxisOrientation(Enum):
+    """
+    Defines the orientation of the grid axes for the used coordinate system,
+    which can be either left-handed or right-handed.
+    """
+
+    LEFT_HANDED = auto()
+    RIGHT_HANDED = auto()
 
 
 class Shape(NamedTuple):
@@ -108,6 +119,7 @@ class ErtboxParameters:
     nx: int
     ny: int
     nz: int
+    axis_orientation: AxisOrientation | None = None
     xlength: float | None = None
     ylength: float | None = None
     xinc: float | None = None
@@ -116,9 +128,7 @@ class ErtboxParameters:
     origin: tuple[float, float] | None = None
 
 
-def calculate_ertbox_parameters(
-    grid: xtgeo.Grid, left_handed: bool = False
-) -> ErtboxParameters:
+def calculate_ertbox_parameters(grid: xtgeo.Grid) -> ErtboxParameters:
     """Calculate ERTBOX grid parameters from an XTGeo grid.
 
     Extracts geometric parameters including dimensions, cell increments,
@@ -126,17 +136,20 @@ def calculate_ertbox_parameters(
 
     Args:
         grid: XTGeo Grid3D object
-        left_handed: If True, use left-handed coordinate system (default: False)
 
     Returns:
         ErtboxParameters with grid dimensions, increments, rotation, and origin
     """
 
     (nx, ny, nz) = grid.dimensions
-
     corner_indices = []
+    axis_orientation = (
+        AxisOrientation.RIGHT_HANDED
+        if grid.ijk_handedness == "right"
+        else AxisOrientation.LEFT_HANDED
+    )
 
-    if left_handed:
+    if axis_orientation == AxisOrientation.LEFT_HANDED:
         origin_cell = (1, 1, 1)
         x_direction_cell = (nx, 1, 1)
         y_direction_cell = (1, ny, 1)
@@ -157,7 +170,7 @@ def calculate_ertbox_parameters(
         coord = grid.get_xyz_cell_corners(ijk=corner_index, activeonly=False)
         coord_cell.append(coord)
 
-    if left_handed:
+    if axis_orientation == AxisOrientation.LEFT_HANDED:
         # Origin: cell (1,1,1), corner 0
         x0 = coord_cell[0][0]
         y0 = coord_cell[0][1]
@@ -210,6 +223,7 @@ def calculate_ertbox_parameters(
         yinc=yinc,
         rotation_angle=angle,
         origin=(x0, y0),
+        axis_orientation=axis_orientation,
     )
 
 
