@@ -1,8 +1,13 @@
 from .ert_server import (
-    ErtServer,
+    ErtServerController,
     ErtServerExit,
     ServerBootFail,
     create_ertserver_client,
 )
 
-__all__ = ["ErtServer", "ErtServerExit", "ServerBootFail", "create_ertserver_client"]
+__all__ = [
+    "ErtServerController",
+    "ErtServerExit",
+    "ServerBootFail",
+    "create_ertserver_client",
+]

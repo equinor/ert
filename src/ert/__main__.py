@@ -41,7 +41,7 @@ from ert.mode_definitions import (
 from ert.namespace import Namespace
 from ert.plugins import ErtRuntimePlugins, get_site_plugins, setup_site_logging
 from ert.run_models.multiple_data_assimilation import MultipleDataAssimilationConfig
-from ert.services import ErtServer
+from ert.services import ErtServerController
 from ert.services._storage_main import add_parser_options as ert_api_add_parser_options
 from ert.shared.status.utils import get_ert_memory_usage
 from ert.storage import ErtStorageException, ErtStoragePermissionError
@@ -119,7 +119,7 @@ def run_convert_observations(
 
 
 def run_ert_storage(args: Namespace, _: ErtRuntimePlugins | None = None) -> None:
-    with ErtServer.start_server(
+    with ErtServerController.start_server(
         verbose=True,
         project=Path(ErtConfig.from_file(args.config).ens_path),
         parent_pid=os.getpid(),
