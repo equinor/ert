@@ -256,7 +256,7 @@ def test_that_objective_auto_scaling_with_zero_objectives_fails(ever_config):
 
 def test_that_infinite_objectives_are_converted_to_nan(ever_config):
     transforms = get_optimization_domain_transforms(
-        [c.to_ert_parameter_config() for c in ever_config.controls],
+        [param for c in ever_config.controls for param in c.to_ert_parameter_config()],
         ever_config.create_ert_objectives_config(),
         ever_config.input_constraints,
         ever_config.create_ert_output_constraints_config(),
@@ -363,7 +363,7 @@ def test_that_output_constraint_auto_scaling_with_zero_constraints_fails(ever_co
 
 def test_that_infinite_output_constraints_are_converted_to_nan(ever_config):
     transforms = get_optimization_domain_transforms(
-        [c.to_ert_parameter_config() for c in ever_config.controls],
+        [param for c in ever_config.controls for param in c.to_ert_parameter_config()],
         ever_config.create_ert_objectives_config(),
         ever_config.input_constraints,
         ever_config.create_ert_output_constraints_config(),
