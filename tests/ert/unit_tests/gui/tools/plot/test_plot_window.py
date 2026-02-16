@@ -7,7 +7,8 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QCheckBox, QLabel, QPushButton
 from pytestqt.qtbot import QtBot
 
-from ert.config.gen_kw_config import GenKwConfig
+from ert.config.distribution import RawSettings
+from ert.config.gen_kw_config import DataSource, GenKwConfig
 from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApi, PlotApiKeyDefinition
 from ert.gui.tools.plot.plot_widget import PlotWidget
 from ert.gui.tools.plot.plot_window import PlotWindow, create_error_dialog
@@ -149,3 +150,71 @@ def test_that_plotting_gen_kw_parameter_with_negative_values_hides_log_scale_che
     qtbot.waitUntil(log_checkbox.isVisible, timeout=5000)
     assert log_checkbox.isChecked(), "Log scale checkbox should still be checked"
     assert get_x_axis_scale() == "log", "Plot scale should still be log"
+
+
+@pytest.mark.integration_test
+def test_that_plot_window_ignores_negative_check_for_non_numeric_columns(
+    qtbot: QtBot, monkeypatch
+):
+    """Regression test: gen_kw data may include non-numeric columns if they are
+    from design matrix. Those values should be ignored when checking for
+    negative values to determine whether log scale is possible.
+    """
+
+    mock_plot_api_cls = MagicMock(spec=PlotApi)
+    mock_plot_api = MagicMock(spec=PlotApi)
+    mock_plot_api_cls.return_value = mock_plot_api
+
+    storage_version = "0.0"
+    mock_plot_api.api_version = storage_version
+    monkeypatch.setattr(
+        "ert.gui.tools.plot.plot_window.get_storage_api_version",
+        lambda: storage_version,
+    )
+    monkeypatch.setattr("ert.gui.tools.plot.plot_window.PlotApi", mock_plot_api_cls)
+
+    plot_api_key_def = PlotApiKeyDefinition(
+        "animal_type",
+        index_type=None,
+        metadata={"data_origin": "GEN_KW"},
+        observations=False,
+        dimensionality=1,
+        parameter=GenKwConfig(
+            name="animal_type",
+            distribution=RawSettings(),
+            group="DESIGN_MATRIX",
+            input_source=DataSource.DESIGN_MATRIX,
+        ),
+    )
+
+    mock_plot_api.responses_api_key_defs = []
+    mock_plot_api.parameters_api_key_defs = [plot_api_key_def]
+
+    def mixed_dtype_data_for_parameter(
+        ensemble_id: str, parameter_key: str
+    ) -> pd.DataFrame:
+        assert parameter_key == "animal_type"
+        return pd.DataFrame(
+            {
+                "animal_type": ["cat", "dog", "fish"],
+            }
+        )
+
+    mock_plot_api.data_for_parameter.side_effect = mixed_dtype_data_for_parameter
+    mock_plot_api.has_history_data.return_value = False
+    mock_plot_api.get_all_ensembles.return_value = [
+        EnsembleObject(
+            "ensemble",
+            "ensemble",
+            False,
+            "experiment",
+            "2026-01-01T00:00:00",
+        )
+    ]
+
+    plot_window = PlotWindow(config_file="", ens_path="", parent=None)
+    qtbot.addWidget(plot_window)
+    plot_window.show()
+
+    # This is the call that previously crashed with TypeError.
+    plot_window.updatePlot()
