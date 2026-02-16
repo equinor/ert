@@ -287,8 +287,8 @@ class PlotWindow(QMainWindow):
             negative_values_in_data = False
             if key_def.parameter is not None and key_def.parameter.type == "gen_kw":
                 for data in ensemble_to_data_map.values():
-                    data = data.T
-                    if data.le(0).any().any():
+                    numeric = data.select_dtypes(include=["number"])
+                    if not numeric.empty and numeric.le(0).any().any():
                         negative_values_in_data = True
                         break
 
