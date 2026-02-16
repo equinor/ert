@@ -16,6 +16,7 @@ from ert.services.ert_server import (
     ErtServerController,
     ServerBootFail,
     cleanup_service_files,
+    connect,
 )
 
 
@@ -224,7 +225,6 @@ def test_singleton_start(monkeypatch, server_script, tmp_path):
     assert not (tmp_path / _ERT_SERVER_CONNECTION_INFO_FILE).exists()
 
 
-@pytest.mark.integration_test
 @pytest.mark.script(
     """\
 time.sleep(1)
@@ -232,11 +232,19 @@ os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
 os.close(fd)
 """
 )
-def test_singleton_connect(monkeypatch, tmp_path, server_script):
-    monkeypatch.setattr(ert_server, "_ERT_SERVER_EXECUTABLE_FILE", server_script)
-    with _DummyService().start_server(".", timeout=10) as server:
-        client = _DummyService.connect(project=tmp_path, timeout=30)
-        assert server is client
+def test_that_connect_logs_permission_error(tmp_path, caplog):
+    tmp_path.chmod(0o000)
+    caplog.clear()
+    caplog.set_level("ERROR")
+    with pytest.raises(PermissionError):
+        connect(project=tmp_path, timeout=30)
+
+    tmp_path.chmod(0o755)
+
+    assert len(caplog.records) == 1
+    assert (
+        "cannot connect to ert server service due to permission issues." in caplog.text
+    )
 
 
 @pytest.mark.integration_test
@@ -261,7 +269,7 @@ def test_singleton_connect_early(server_script, tmp_path, monkeypatch):
         def run(self):
             start_event.set()
             try:
-                self.client = _DummyService.connect(project=tmp_path, timeout=30)
+                self.client = connect(project=tmp_path, timeout=30)
             except Exception as ex:
                 self.exception = ex
             ready_event.set()
