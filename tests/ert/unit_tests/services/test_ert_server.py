@@ -225,6 +225,28 @@ def test_singleton_start(monkeypatch, server_script, tmp_path):
     assert not (tmp_path / _ERT_SERVER_CONNECTION_INFO_FILE).exists()
 
 
+@pytest.mark.script(
+    """\
+time.sleep(1)
+os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
+os.close(fd)
+"""
+)
+def test_that_connect_logs_permission_error(tmp_path, caplog):
+    tmp_path.chmod(0o000)
+    caplog.clear()
+    caplog.set_level("ERROR")
+    with pytest.raises(PermissionError):
+        connect(project=tmp_path, timeout=30)
+
+    tmp_path.chmod(0o755)
+
+    assert len(caplog.records) == 1
+    assert (
+        "cannot connect to ert server service due to permission issues." in caplog.text
+    )
+
+
 @pytest.mark.integration_test
 @pytest.mark.script(
     """\
