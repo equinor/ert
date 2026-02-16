@@ -21,10 +21,6 @@ Example usage:
     # Create strategies
     strategies = factory.create_strategies()
 
-    # Initialize all strategies
-    for strategy in strategies:
-        strategy.initialize(context)
-
     # Update each parameter group
     for param_group in parameters:
         strategy = factory.get_strategy_for(param_config, strategies)
