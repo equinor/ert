@@ -285,6 +285,28 @@ class PlotApi:
             except ValueError:
                 return df
 
+    def data_for_gradient(self, ensemble_id: str, key: str) -> pd.DataFrame:
+        if "@" in key:
+            key = key.split("@", maxsplit=1)[0]
+        with create_ertserver_client(self.ens_path) as client:
+            http_response = client.get(
+                f"/ensembles/{ensemble_id}/gradients/{PlotApi.escape(key)}",
+                headers={"accept": "application/x-parquet"},
+                timeout=self._timeout,
+            )
+            self._check_http_response(http_response)
+
+            stream = io.BytesIO(http_response.content)
+            df = pd.read_parquet(stream)
+
+            return df.astype(
+                {
+                    "batch_id": int,
+                    "control_name": str,
+                    key: float,
+                }
+            )
+
     def data_for_parameter(self, ensemble_id: str, parameter_key: str) -> pd.DataFrame:
         with create_ertserver_client(self.ens_path) as client:
             http_response = client.get(
