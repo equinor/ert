@@ -38,6 +38,7 @@ from .plottery.plots import (
     CrossEnsembleStatisticsPlot,
     DistributionPlot,
     EnsemblePlot,
+    EverestGradientsPlot,
     GaussianKDEPlot,
     HistogramPlot,
     MisfitsPlot,
@@ -45,6 +46,7 @@ from .plottery.plots import (
     StdDevPlot,
     ValuesOverIterationsPlot,
 )
+from .widgets.everest_control_selection_widget import EverestControlSelectionWidget
 
 CROSS_ENSEMBLE_STATISTICS = "Cross ensemble statistics"
 DISTRIBUTION = "Distribution"
@@ -56,6 +58,7 @@ STD_DEV = "Std Dev"
 MISFITS = "Misfits"
 EVEREST_RESPONSES_PLOT = "Batch responses"
 EVEREST_CONTROLS_PLOT = "Batch controls"
+EVEREST_GRADIENTS_PLOT = "Batch Gradients"
 
 RESPONSE_DEFAULT = 0
 GEN_KW_DEFAULT = 3
@@ -213,6 +216,7 @@ class PlotWindow(QMainWindow):
                 self.addPlotWidget(ENSEMBLE, EnsemblePlot())
                 self.addPlotWidget(EVEREST_CONTROLS_PLOT, ValuesOverIterationsPlot())
                 self.addPlotWidget(EVEREST_RESPONSES_PLOT, ValuesOverIterationsPlot())
+                self.addPlotWidget(EVEREST_GRADIENTS_PLOT, EverestGradientsPlot())
 
             self._central_tab.currentChanged.connect(self.currentTabChanged)
             self.logPlotTabUsage(self._central_tab.tabText(0), default=True)
@@ -258,6 +262,21 @@ class PlotWindow(QMainWindow):
             )
             self.addDock("Plot ensemble", self._ensemble_selection_widget)
 
+            everest_parameters = [
+                kd.parameter.name
+                for kd in self._key_definitions
+                if kd.parameter and kd.parameter.type == "everest_parameters"
+            ]
+            self._everest_control_selection_widget = EverestControlSelectionWidget(
+                everest_parameters
+            )
+            self._everest_control_selection_widget.controlSelectionChanged.connect(
+                self.updatePlot
+            )
+            self._everest_dock = self.addDock(
+                "Everest Controls", self._everest_control_selection_widget
+            )
+            self._everest_dock.setVisible(False)
             self._data_type_keys_widget.selectDefault()
 
     def get_plot_api_version(self) -> str:
@@ -285,31 +304,53 @@ class PlotWindow(QMainWindow):
 
         plot_widget = cast(PlotWidget, self._central_tab.currentWidget())
 
+        is_gradient_plot = plot_widget.name == EVEREST_GRADIENTS_PLOT
+        self._everest_dock.setVisible(is_gradient_plot)
+
         if plot_widget._plotter.dimensionality == key_def.dimensionality or (
-            plot_widget.name in {EVEREST_RESPONSES_PLOT, EVEREST_CONTROLS_PLOT}
+            plot_widget.name
+            in {EVEREST_RESPONSES_PLOT, EVEREST_CONTROLS_PLOT, EVEREST_GRADIENTS_PLOT}
         ):
             selected_ensembles = (
                 self._ensemble_selection_widget.get_selected_ensembles()
             )
             ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame] = {}
-            for ensemble in selected_ensembles:
-                try:
-                    if key_def.response is not None:
-                        ensemble_to_data_map[ensemble] = self._api.data_for_response(
-                            ensemble_id=ensemble.id,
-                            response_key=key,
-                            filter_on=key_def.filter_on,
+
+            if is_gradient_plot:
+                selected_controls = (
+                    self._everest_control_selection_widget.get_selected_controls()
+                )
+                plot_widget._plotter.set_selected_controls(selected_controls)  # type: ignore
+                for ensemble in selected_ensembles:
+                    try:
+                        ensemble_to_data_map[ensemble] = self._api.data_for_gradient(
+                            ensemble.id, key
                         )
-                    elif key_def.parameter is not None and (
-                        key_def.parameter.type
-                        in {"gen_kw", "everest_parameters", "everest_objective"}
-                    ):
-                        ensemble_to_data_map[ensemble] = self._api.data_for_parameter(
-                            ensemble_id=ensemble.id,
-                            parameter_key=key_def.parameter.name,
-                        )
-                except BaseException as e:
-                    handle_exception(e)
+                    except BaseException as e:
+                        handle_exception(e)
+            else:
+                for ensemble in selected_ensembles:
+                    try:
+                        if key_def.response is not None:
+                            ensemble_to_data_map[ensemble] = (
+                                self._api.data_for_response(
+                                    ensemble_id=ensemble.id,
+                                    response_key=key,
+                                    filter_on=key_def.filter_on,
+                                )
+                            )
+                        elif key_def.parameter is not None and (
+                            key_def.parameter.type
+                            in {"gen_kw", "everest_parameters", "everest_objective"}
+                        ):
+                            ensemble_to_data_map[ensemble] = (
+                                self._api.data_for_parameter(
+                                    ensemble_id=ensemble.id,
+                                    parameter_key=key_def.parameter.name,
+                                )
+                            )
+                    except BaseException as e:
+                        handle_exception(e)
 
             negative_values_in_data = False
             if key_def.parameter is not None and key_def.parameter.type == "gen_kw":
@@ -435,7 +476,8 @@ class PlotWindow(QMainWindow):
         | CrossEnsembleStatisticsPlot
         | StdDevPlot
         | MisfitsPlot
-        | ValuesOverIterationsPlot,
+        | ValuesOverIterationsPlot
+        | EverestGradientsPlot,
         enabled: bool = True,
     ) -> None:
         plot_widget = PlotWidget(name, plotter)
@@ -504,6 +546,17 @@ class PlotWindow(QMainWindow):
                 available_widgets = [everest_control_widget]
             elif everest_control_widget in available_widgets:
                 available_widgets.remove(everest_control_widget)
+
+        everest_gradients_widget = next(
+            (w for w in self._plot_widgets if w.name == EVEREST_GRADIENTS_PLOT), None
+        )
+
+        if everest_gradients_widget:
+            if is_everest:
+                if everest_gradients_widget not in available_widgets:
+                    available_widgets.append(everest_gradients_widget)
+            elif everest_gradients_widget in available_widgets:
+                available_widgets.remove(everest_gradients_widget)
 
         # Enabling/disabling tab triggers the
         # currentTabChanged event which also triggers

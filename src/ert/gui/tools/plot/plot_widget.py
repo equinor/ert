@@ -25,6 +25,8 @@ from PyQt6.QtWidgets import (
 )
 from typing_extensions import override
 
+from ert.gui.tools.plot.plottery.plots import EverestGradientsPlot
+
 from .plot_api import EnsembleObject, PlotApiKeyDefinition
 
 if TYPE_CHECKING:
@@ -128,6 +130,7 @@ class PlotWidget(QWidget):
             "StdDevPlot",
             "ValuesOverIterationsPlot",
             "MisfitsPlot",
+            "EverestGradientsPlot",
         ],
         parent: QWidget | None = None,
     ) -> None:
