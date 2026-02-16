@@ -451,5 +451,6 @@
       "radius": null
     }
   ],
+  "type": "ensemble_experiment",
   "target_ensemble": "the_experiment"
 }

@@ -790,5 +790,6 @@
       "radius": 3.0
     }
   ],
+  "type": "ensemble_experiment",
   "target_ensemble": "the_experiment"
 }

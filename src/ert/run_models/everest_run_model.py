@@ -17,11 +17,11 @@ from enum import IntEnum, auto
 from functools import cached_property
 from pathlib import Path
 from types import TracebackType
-from typing import TYPE_CHECKING, Annotated, Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 import numpy as np
 from numpy.typing import NDArray
-from pydantic import Field, PrivateAttr, TypeAdapter, ValidationError
+from pydantic import PrivateAttr, ValidationError
 from ropt.enums import ExitCode as RoptExitCode
 from ropt.evaluator import EvaluatorContext, EvaluatorResult
 from ropt.results import FunctionResults, Results
@@ -49,14 +49,12 @@ from ert.config.model_config import DEFAULT_ECLBASE_FORMAT
 from ert.config.model_config import ModelConfig as ErtModelConfig
 from ert.config.parsing import ConfigWarning
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
+from ert.experiment_configs import EverestRunModelConfig
 from ert.plugins import ErtRuntimePlugins
 from ert.runpaths import Runpaths
 from everest.config import (
     ControlConfig,
     EverestConfig,
-    InputConstraintConfig,
-    ModelConfig,
-    OptimizationConfig,
 )
 from everest.config.forward_model_config import ForwardModelStepConfig, SummaryResults
 from everest.everest_storage import EverestStorage
@@ -72,7 +70,7 @@ from ..storage import ExperimentState, ExperimentStatus
 from ..storage.local_ensemble import EverestRealizationInfo
 from ..substitutions import Substitutions
 from .event import EverestBatchResultEvent, EverestStatusEvent
-from .run_model import RunModel, RunModelConfig, StatusEvents
+from .run_model import RunModel, StatusEvents
 
 if TYPE_CHECKING:
     from ert.storage import Ensemble, Experiment
@@ -219,33 +217,6 @@ def _get_workflows(
             res_hooks.append((ever_trigger, trigger2res[ever_trigger]))
             res_workflows.append((str(workflow_file), ever_trigger))
     return res_hooks, res_workflows
-
-
-EverestResponseTypes = (
-    EverestObjectivesConfig | EverestConstraintsConfig | SummaryConfig | GenDataConfig
-)
-
-EverestResponseTypesAdapter = TypeAdapter(  # type: ignore
-    Annotated[
-        EverestResponseTypes,
-        Field(discriminator="type"),
-    ]
-)
-
-
-class EverestRunModelConfig(RunModelConfig):
-    optimization_output_dir: str
-    simulation_dir: str
-
-    parameter_configuration: list[EverestControl]
-    response_configuration: list[EverestResponseTypes]
-
-    input_constraints: list[InputConstraintConfig]
-    optimization: OptimizationConfig
-    model: ModelConfig
-    keep_run_path: bool
-    experiment_name: str
-    target_ensemble: str
 
 
 class EverestRunModel(RunModel, EverestRunModelConfig):

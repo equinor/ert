@@ -805,6 +805,7 @@
       "radius": 3.0
     }
   ],
+  "type": "es_mda",
   "restart_run": false,
   "prior_ensemble_id": null,
   "weights": "4, 2, 1"

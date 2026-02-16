@@ -1,10 +1,17 @@
-from .ensemble_experiment import EnsembleExperiment, EnsembleExperimentConfig
+from ert.experiment_configs import (
+    EnsembleExperimentConfig,
+    EnsembleInformationFilterConfig,
+    EnsembleSmootherConfig,
+    EvaluateEnsembleConfig,
+    MultipleDataAssimilationConfig,
+    SingleTestRunConfig,
+)
+
+from .ensemble_experiment import EnsembleExperiment
 from .ensemble_information_filter import (
     EnsembleInformationFilter,
-    EnsembleInformationFilterConfig,
 )
-from .ensemble_smoother import EnsembleSmoother, EnsembleSmootherConfig
-from .evaluate_ensemble import EvaluateEnsembleConfig
+from .ensemble_smoother import EnsembleSmoother
 from .event import (
     RunModelEvent,
     RunModelStatusEvent,
@@ -15,7 +22,6 @@ from .event import (
 from .model_factory import create_model
 from .multiple_data_assimilation import (
     MultipleDataAssimilation,
-    MultipleDataAssimilationConfig,
 )
 from .run_model import (
     ErtRunError,
@@ -23,7 +29,7 @@ from .run_model import (
     RunModelAPI,
     StatusEvents,
 )
-from .single_test_run import SingleTestRun, SingleTestRunConfig
+from .single_test_run import SingleTestRun
 
 __all__ = [
     "EnsembleExperiment",

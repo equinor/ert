@@ -3,22 +3,16 @@ from __future__ import annotations
 import functools
 import logging
 
+from ert.experiment_configs import EnsembleInformationFilterConfig
 from ert.run_models.ensemble_smoother import EnsembleSmoother
 from ert.storage import Ensemble
 
 from ..analysis import enif_update
-from .initial_ensemble_run_model import InitialEnsembleRunModelConfig
-from .update_run_model import UpdateRunModelConfig
 
 logger = logging.getLogger(__name__)
 
 
-class EnsembleInformationFilterConfig(
-    InitialEnsembleRunModelConfig, UpdateRunModelConfig
-): ...
-
-
-class EnsembleInformationFilter(EnsembleSmoother, EnsembleInformationFilterConfig):
+class EnsembleInformationFilter(EnsembleInformationFilterConfig, EnsembleSmoother):
     def update_ensemble_parameters(
         self, prior: Ensemble, posterior: Ensemble, weight: float
     ) -> None:
