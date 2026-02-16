@@ -431,6 +431,13 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
                     "<ECLBASE>": runpath_config.summary_file_base_name,
                 }
             )
+        else:
+            substitutions.update(
+                {
+                    "<ECL_BASE>": DEFAULT_ECLBASE_FORMAT,
+                    "<ECLBASE>": DEFAULT_ECLBASE_FORMAT,
+                }
+            )
 
         for datafile, data in _get_internal_files(everest_config).items():
             datafile.parent.mkdir(exist_ok=True, parents=True)

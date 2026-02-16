@@ -43,7 +43,7 @@ from .forward_model_step import (
 )
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import DataSource, GenKwConfig
-from .model_config import ModelConfig
+from .model_config import DEFAULT_ECLBASE_FORMAT, ModelConfig
 from .parse_arg_types_list import parse_arg_types_list
 from .parsing import (
     ConfigDict,
@@ -909,6 +909,10 @@ class ErtConfig(BaseModel):
             if summary_file_base_name:
                 substitutions["<ECL_BASE>"] = summary_file_base_name
                 substitutions["<ECLBASE>"] = summary_file_base_name
+            else:
+                substitutions["<ECL_BASE>"] = DEFAULT_ECLBASE_FORMAT
+                substitutions["<ECLBASE>"] = DEFAULT_ECLBASE_FORMAT
+
         except ConfigValidationError as e:
             errors.append(e)
         except PydanticValidationError as err:

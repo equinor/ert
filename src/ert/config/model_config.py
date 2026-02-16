@@ -114,7 +114,7 @@ class ModelConfig(BaseModel):
                     config_dict.get(ConfigKeys.ECLBASE, DEFAULT_JOBNAME_FORMAT)
                 ),
             ),
-            eclbase_format_string=config_dict.get(
+            summary_file_base_name=config_dict.get(
                 ConfigKeys.ECLBASE,
                 config_dict.get(ConfigKeys.JOBNAME, DEFAULT_ECLBASE_FORMAT),
             ),
