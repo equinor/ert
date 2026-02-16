@@ -9,13 +9,11 @@ logger = logging.getLogger(__name__)
 
 
 def get_scaling_factor(nr_observations: int, nr_components: int) -> float:
-    """Calculates an observation scaling factor which is
-    sqrt(nr_observations / nr_components)
+    """Calculate the observation-error scaling factor.
 
     Args:
         nr_observations is the number of observations
-        nr_components is the number of primary components from PCA analysis
-            below a user threshold
+        nr_components is the number of principal components retained from PCA
     """
     if nr_components == 0:
         nr_components = 1
@@ -65,9 +63,9 @@ def cluster_responses(
     nr_clusters: int,
 ) -> npt.NDArray[np.int_]:
     """
-    Cluster responses using hierarchical clustering based on Spearman correlation.
-    Observations that tend to vary similarly across different simulation runs will
-    be clustered together.
+    Cluster responses using hierarchical clustering on absolute Spearman correlation.
+    Observations that vary similarly across realizations, regardless of whether
+    the relationship is positive or negative, will tend to be clustered together.
     """
     correlation = spearmanr(responses).statistic
     if isinstance(correlation, np.float64):
@@ -99,10 +97,10 @@ def main(
     The procedure involves several steps:
 
     1. Response Scaling:
-        Each response is divided by its observation error to normalize by uncertainty.
-        This scales down uncertain observations (large errors) and scales up
-        reliable observations (small errors), putting all responses on a
-        comparable scale for clustering and PCA analysis.
+        Each response is centered by subtracting its ensemble mean and then
+        divided by its ensemble standard deviation. This removes offsets and
+        puts all responses on a common unit-variance scale before the PCA and
+        clustering steps.
     2. PCA for Dimensionality Estimation:
         PCA is performed on the centered and scaled
         responses to estimate the intrinsic dimensionality of the data.
@@ -121,10 +119,10 @@ def main(
         an estimate of the intrinsic dimensionality of the data.
         Using this as the number of clusters assumes that each major direction of
         variance could correspond to a distinct cluster.
-        This methods allows the number of clusters to be data-driven rather than
+        This method allows the number of clusters to be data-driven rather than
         pre-determined, which can be advantageous in some scenarios.
         One potential issue is that data can have a certain number of significant
-        dimension but a different number of natural clusters.
+        dimensions but a different number of natural clusters.
     4. Cluster-Based PCA and Scaling:
         For each cluster, PCA is performed to determine the number of principal
         components that explain a specified percentage of variance within that cluster.
@@ -145,7 +143,10 @@ def main(
     responses : npt.NDArray[np.float_]
         2D array of response data. Shape: (n_observations, n_realizations)
     obs_errors : npt.NDArray[np.float_]
-        1D array of observation errors. Length: n_observations
+        1D array of observation errors. Only the length is used here to size the
+        outputs and to short-circuit when there are two or fewer observations;
+        the returned scale factors are applied to the observation errors by the
+        caller.
 
     Returns:
     --------
@@ -157,10 +158,12 @@ def main(
     """
     scale_factors = np.ones(len(obs_errors))
     nr_components = np.ones(len(obs_errors), dtype=int)
-    scaled_responses = responses / obs_errors.reshape(-1, 1)
+    scaled_responses = (
+        responses - responses.mean(axis=1).reshape(-1, 1)
+    ) / responses.std(axis=1).reshape(-1, 1)
 
     if len(obs_errors) <= 2:
-        logger.info("Observations not correlated or only correlated each other")
+        logger.info("Skipping auto scaling for two or fewer observations")
         return scale_factors, np.ones(len(obs_errors), dtype=int), nr_components
 
     prim_components = get_nr_primary_components(scaled_responses.T, threshold=0.95)
@@ -169,7 +172,7 @@ def main(
     for cluster in np.unique(clusters):
         index = np.where(clusters == cluster)[0]
         if len(index) == 1:
-            # Not correlated to anything
+            # A singleton cluster contributes one effective component.
             components = 1
         else:
             components = get_nr_primary_components(
@@ -179,5 +182,8 @@ def main(
         scale_factor = get_scaling_factor(len(index), components)
         nr_components[index] *= components
         scale_factors[index] *= scale_factor
-    logger.info(f"Calculated scaling factors for {len(scale_factors)} clusters")
+    logger.info(
+        f"Calculated scaling factors for {len(scale_factors)} observations across "
+        f"{len(np.unique(clusters))} clusters"
+    )
     return scale_factors, clusters, nr_components
