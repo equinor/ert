@@ -24,7 +24,7 @@ from ert.config import (
     SurfaceConfig,
 )
 from ert.field_utils import (
-    CoordinateSystem,
+    AxisOrientation,
     transform_local_ellipse_angle_to_local_coords,
     transform_positions_to_local_field_coordinates,
 )
@@ -374,8 +374,8 @@ def analysis_ES(
                 )
                 logger.info(log_msg)
 
-                if param_cfg.ertbox_params.coordinate_system is None:
-                    logger.warning("Coordinate system is not defined, do not update")
+                if param_cfg.ertbox_params.axis_orientation is None:
+                    logger.warning("Axis orientation is not defined, do not update")
                     continue
 
                 assert param_cfg.ertbox_params.xinc is not None, (
@@ -412,8 +412,8 @@ def analysis_ES(
                     obs_main_range,
                     obs_main_range,
                     ellipse_rotation,
-                    param_cfg.ertbox_params.coordinate_system
-                    == CoordinateSystem.RIGHT_HANDED,
+                    param_cfg.ertbox_params.axis_orientation
+                    == AxisOrientation.RIGHT_HANDED,
                 )
                 # right_handed - this needs to be retrieved from the grid
                 param_ensemble_array = smoother_distance_es.update_params(

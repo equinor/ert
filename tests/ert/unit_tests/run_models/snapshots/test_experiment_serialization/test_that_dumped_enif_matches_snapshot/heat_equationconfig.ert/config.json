@@ -236,7 +236,7 @@
         "nx": 10,
         "ny": 10,
         "nz": 1,
-        "coordinate_system": 1,
+        "axis_orientation": 1,
         "xlength": 10.0,
         "ylength": 10.0,
         "xinc": 1.0,

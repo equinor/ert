@@ -12,7 +12,7 @@ from ert.config.field import TRANSFORM_FUNCTIONS
 from ert.config.parameter_config import InvalidParameterFile
 from ert.config.parsing import parse_contents
 from ert.field_utils import (
-    CoordinateSystem,
+    AxisOrientation,
     ErtboxParameters,
     FieldFileFormat,
     Shape,
@@ -450,14 +450,14 @@ def field_with_ertbox_params():
 
 
 @pytest.mark.parametrize(
-    ("flip", "expected_coordinate_system"),
+    ("flip", "expected_axis_orientation"),
     [
-        (1, CoordinateSystem.LEFT_HANDED),
-        (-1, CoordinateSystem.RIGHT_HANDED),
+        (1, AxisOrientation.LEFT_HANDED),
+        (-1, AxisOrientation.RIGHT_HANDED),
     ],
 )
-def test_that_calculate_ertbox_parameters_detects_coordinate_system_from_egrid(
-    tmp_path, flip, expected_coordinate_system
+def test_that_calculate_ertbox_parameters_detects_axis_orientation_from_egrid(
+    tmp_path, flip, expected_axis_orientation
 ):
     nx, ny, nz = 10, 10, 10
     grid = xtgeo.create_box_grid((nx, ny, nz), flip=flip)
@@ -468,7 +468,7 @@ def test_that_calculate_ertbox_parameters_detects_coordinate_system_from_egrid(
     grid_from_file = xtgeo.grid_from_file(egrid_path, fformat="egrid")
     params = calculate_ertbox_parameters(grid_from_file)
 
-    assert params.coordinate_system == expected_coordinate_system
+    assert params.axis_orientation == expected_axis_orientation
     assert params.nx == nx
     assert params.ny == ny
     assert params.nz == nz

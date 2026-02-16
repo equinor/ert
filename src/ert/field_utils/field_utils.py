@@ -21,7 +21,12 @@ if TYPE_CHECKING:
 _PathLike: TypeAlias = str | os.PathLike[str]
 
 
-class CoordinateSystem(Enum):
+class AxisOrientation(Enum):
+    """
+    Defines the orientation of the grid axes for the used coordinate system,
+    which can be either left-handed or right-handed.
+    """
+
     LEFT_HANDED = auto()
     RIGHT_HANDED = auto()
 
@@ -114,7 +119,7 @@ class ErtboxParameters:
     nx: int
     ny: int
     nz: int
-    coordinate_system: CoordinateSystem | None = None
+    axis_orientation: AxisOrientation | None = None
     xlength: float | None = None
     ylength: float | None = None
     xinc: float | None = None
@@ -138,13 +143,13 @@ def calculate_ertbox_parameters(grid: xtgeo.Grid) -> ErtboxParameters:
 
     (nx, ny, nz) = grid.dimensions
     corner_indices = []
-    coordinate_system = (
-        CoordinateSystem.RIGHT_HANDED
+    axis_orientation = (
+        AxisOrientation.RIGHT_HANDED
         if grid.ijk_handedness == "right"
-        else CoordinateSystem.LEFT_HANDED
+        else AxisOrientation.LEFT_HANDED
     )
 
-    if coordinate_system == CoordinateSystem.LEFT_HANDED:
+    if axis_orientation == AxisOrientation.LEFT_HANDED:
         origin_cell = (1, 1, 1)
         x_direction_cell = (nx, 1, 1)
         y_direction_cell = (1, ny, 1)
@@ -165,7 +170,7 @@ def calculate_ertbox_parameters(grid: xtgeo.Grid) -> ErtboxParameters:
         coord = grid.get_xyz_cell_corners(ijk=corner_index, activeonly=False)
         coord_cell.append(coord)
 
-    if coordinate_system == CoordinateSystem.LEFT_HANDED:
+    if axis_orientation == AxisOrientation.LEFT_HANDED:
         # Origin: cell (1,1,1), corner 0
         x0 = coord_cell[0][0]
         y0 = coord_cell[0][1]
@@ -218,7 +223,7 @@ def calculate_ertbox_parameters(grid: xtgeo.Grid) -> ErtboxParameters:
         yinc=yinc,
         rotation_angle=angle,
         origin=(x0, y0),
-        coordinate_system=coordinate_system,
+        axis_orientation=axis_orientation,
     )
 
 
