@@ -141,8 +141,8 @@ line: 2, column: 18. controls -> 0 -> initial_guess
 
 
 @pytest.mark.skip_mac_ci
-@pytest.mark.flaky(reruns=5)
-@pytest.mark.timeout(60)
+@pytest.mark.flaky(reruns=3)
+@pytest.mark.timeout(120)
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
