@@ -273,9 +273,9 @@ class PlotWindow(QMainWindow):
                             response_key=key,
                             filter_on=key_def.filter_on,
                         )
-                    elif (
-                        key_def.parameter is not None
-                        and key_def.parameter.type == "gen_kw"
+                    elif key_def.parameter is not None and (
+                        key_def.parameter.type
+                        in {"gen_kw", "everest_parameters", "everest_objective"}
                     ):
                         ensemble_to_data_map[ensemble] = self._api.data_for_parameter(
                             ensemble_id=ensemble.id,
