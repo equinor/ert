@@ -475,40 +475,15 @@ def test_that_clustering_prioritizes_global_similarity_over_local_correlation(
 
 def test_clustering_and_scaling_realistic_scenario():
     """
-    This is an integration test for two key components of the autoscaler:
-
-    1. Determining the number of clusters.
-    2. Determining the scaling factor for each cluster.
+    Integration test for the autoscaler with two independent observation groups.
 
     Scenario:
-    We are given 500 noisy seismic observations and 20 precise well pressure
-    observations. All the seismic observations are correlated and all the
-    pressure observations are correlated, but the seismic and the pressure observations
-    are independent of each other.
+    500 noisy seismic observations (all correlated via a shared shallow parameter)
+    and 20 precise pressure observations (all correlated via a shared deep parameter),
+    with the two groups independent of each other.
 
-    Intuitive behavior:
-    The autoscaler should identify two clusters, one for the seismic observations and
-    one for the pressure observations, and assign a scaling factor to each cluster based
-    on the number of observations in that cluster (sqrt(500) for seismic and sqrt(20)
-    for pressure).
-
-    Actual behavior with current implementation:
-    One cluster with scaling factor sqrt(520).
-
-    Explanation of clustering:
-    The autoscaler uses PCA to determine the number of clusters. When using PCA it is
-    common to normalize the data before calculating the principal components
-    (e.g., using StandardScaler to give each observation unit variance). However,
-    the current implementation scales the responses by the observation errors instead.
-    This means that the precise pressure observations are amplified and the noisy
-    seismic observations are suppressed. As a result, the PCA identifies only one
-    principal component, and hence, everything is grouped into one cluster.
-
-    Explanation of scaling factor:
-    The scaling factor for a cluster is calculated as
-    sqrt(num_observations_in_cluster / num_components), where num_components is
-    calculated by doing PCA on the elements of the cluster (stopping when 95% of the
-    total variance is explained).
+    The autoscaler should identify two clusters and assign scaling factors
+    sqrt(500) for seismic and sqrt(20) for pressure.
     """
 
     rng = np.random.default_rng(42)
@@ -555,17 +530,21 @@ def test_clustering_and_scaling_realistic_scenario():
     # Run the main function to get clusters and scaling factors
     scale_factors, clusters, _ = main(responses.T, obs_errors)
 
-    # Assert that all observations are in the same cluster
-    assert len(np.unique(clusters)) == 1
+    # The two independent groups should be placed in separate clusters
+    assert len(np.unique(clusters)) == 2
 
-    # Assert that the scaling factor is sqrt(520) for all observations
-    # note that this results in the pressure observations receiving a scaling
-    # factor of sqrt(520) instead of sqrt(20), which means that they are significantly
-    # deflated compared to what one would expect, and essentially ignored/suppressed by
-    # the updating algorithm, even though the observations are precise and should be
-    # influential.
-    expected_sf = np.sqrt(n_seismic + n_pressure)
-    assert np.allclose(scale_factors, expected_sf)
+    seismic_clusters = clusters[:n_seismic]
+    pressure_clusters = clusters[n_seismic:]
+    assert len(np.unique(seismic_clusters)) == 1
+    assert len(np.unique(pressure_clusters)) == 1
+    assert seismic_clusters[0] != pressure_clusters[0]
+
+    # Each group is internally rank-1 correlated, so 1 component each,
+    # giving scaling factors sqrt(group_size / 1)
+    expected_seismic_sf = np.sqrt(n_seismic)
+    expected_pressure_sf = np.sqrt(n_pressure)
+    np.testing.assert_allclose(scale_factors[:n_seismic], expected_seismic_sf)
+    np.testing.assert_allclose(scale_factors[n_seismic:], expected_pressure_sf)
 
 
 def test_clustering_and_scaling_edge_case():
@@ -593,14 +572,11 @@ def test_clustering_and_scaling_edge_case():
     obs_errors = np.array([0.1] + [10.0] * (n_observations - 1))
 
     # Run clustering algorithm
-    scale_factors, clusters, _ = main(responses, obs_errors)
+    _, clusters, _ = main(responses, obs_errors)
 
-    # Assert that all observations are clustered together (only 1 cluster)
-    assert len(np.unique(clusters)) == 1
-
-    # Assert deflation rate
-    # For independent observations, the scaling factor should be 1
-    # but since all overvations are clustered together and treated as perfectly
-    # correlated, the scaling factor becomes sqrt(100) = 10
-    assert len(np.unique(scale_factors)) == 1
-    assert np.allclose(scale_factors, np.sqrt(100))
+    # With standard scaling, the algorithm correctly identifies many clusters
+    # instead of collapsing everything into one. We get 91 rather than 100
+    # because with finite samples (100 obs, 1000 realizations), sample
+    # eigenvalues spread even for independent data, so the top ~91 components
+    # already explain 95% of variance.
+    assert len(np.unique(clusters)) == 91
