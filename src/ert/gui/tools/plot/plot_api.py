@@ -264,14 +264,14 @@ class PlotApi:
 
     def data_for_parameter(self, ensemble_id: str, parameter_key: str) -> pd.DataFrame:
         with create_ertserver_client(self.ens_path) as client:
-            parameter = client.get(
+            http_response = client.get(
                 f"/ensembles/{ensemble_id}/parameters/{PlotApi.escape(parameter_key)}",
                 headers={"accept": "application/x-parquet"},
                 timeout=self._timeout,
             )
-            self._check_http_response(parameter)
+            self._check_http_response(http_response)
 
-            stream = io.BytesIO(parameter.content)
+            stream = io.BytesIO(http_response.content)
             df = pd.read_parquet(stream)
 
             try:
