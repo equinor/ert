@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 from textwrap import dedent
+from unittest.mock import MagicMock
 
 import numpy as np
 import orjson
@@ -17,6 +18,7 @@ from ert.config import (
     GenKwConfig,
     SurfaceConfig,
 )
+from ert.config.parsing import lark_parser
 from ert.plugins import get_site_plugins
 from ert.run_arg import create_run_arguments
 from ert.run_models._create_run_path import _make_param_substituter, create_run_path
@@ -28,6 +30,8 @@ from ert.storage import (
 )
 from ert.substitutions import Substitutions
 from tests.ert.unit_tests.config.summary_generator import simple_smspec, simple_unsmry
+
+EXPECTED_DATE = "2026-01-01"
 
 
 def test_that_default_runpath_is_absolute_and_with_iens_and_iter_substituded(
@@ -304,7 +308,7 @@ def test_that_substitutions_created_with_the_define_keyword_is_substituted_in_te
 @pytest.mark.parametrize(
     ("key", "expected"),
     [
-        ("<DATE>", datetime.date(datetime.today()).isoformat()),
+        ("<DATE>", EXPECTED_DATE),
         ("<NUM_CPU>", "1"),
         ("<CONFIG_FILE_BASE>", "config"),
         ("<CONFIG_FILE>", "config.ert"),
@@ -316,8 +320,18 @@ def test_that_substitutions_created_with_the_define_keyword_is_substituted_in_te
         ("<ITER>", "0"),
     ],
 )
-def test_that_pre_defines_are_substituted_templates(key, expected, make_run_path):
+def test_that_pre_defines_are_substituted_templates(
+    key, expected, make_run_path, monkeypatch
+):
+    fixed_date = datetime.fromisoformat(EXPECTED_DATE).date()
+    monkeypatch.setattr(
+        lark_parser.datetime,
+        "date",
+        MagicMock(today=MagicMock(return_value=fixed_date)),
+    )
+
     Path("template.tmpl").write_text(f"I WANT TO REPLACE:{key}", encoding="utf-8")
+
     ert_config = ErtConfig.from_file_contents(
         dedent(
             """\
@@ -370,7 +384,7 @@ def test_that_using_eclbase_as_a_runtemplate_target_produces_data_file_in_runpat
 @pytest.mark.parametrize(
     ("key", "expected"),
     [
-        ("<DATE>", datetime.date(datetime.today()).isoformat()),
+        ("<DATE>", EXPECTED_DATE),
         ("<NUM_CPU>", "1"),
         ("<CONFIG_FILE_BASE>", "config"),
         ("<CONFIG_FILE>", "config.ert"),
@@ -383,14 +397,23 @@ def test_that_using_eclbase_as_a_runtemplate_target_produces_data_file_in_runpat
     ],
 )
 def test_that_the_data_file_keyword_also_has_similar_behavior_to_run_template(
-    key, expected, make_run_path
+    key, expected, make_run_path, monkeypatch
 ):
     """
     This test that we copy the DATA_FILE into the runpath,
     do substitutions and rename it from the DATA_FILE name
     to ECLBASE
     """
+
+    fixed_date = datetime.fromisoformat(EXPECTED_DATE).date()
+    monkeypatch.setattr(
+        lark_parser.datetime,
+        "date",
+        MagicMock(today=MagicMock(return_value=fixed_date)),
+    )
+
     Path("MY_DATA_FILE.DATA").write_text(f"I WANT TO REPLACE:{key}", encoding="utf-8")
+
     ert_config = ErtConfig.from_file_contents(
         dedent(
             """\
