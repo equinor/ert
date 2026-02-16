@@ -8,7 +8,7 @@
     "num_realizations": 100,
     "runpath_format_string": "test-data/ert/poly_example.poly.ert/poly_out/realization-<IENS>/iter-<ITER>",
     "jobname_format_string": "<CONFIG_FILE>-<IENS>",
-    "summary_file_base_name": "ECLBASE<IENS>",
+    "summary_file_base_name": null,
     "gen_kw_export_name": "parameters"
   },
   "queue_config": {

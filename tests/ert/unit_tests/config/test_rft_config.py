@@ -412,6 +412,7 @@ def test_that_if_an_rft_observation_is_outside_the_zone_then_it_is_deactivated(
     config = ErtConfig.from_dict(
         {
             "ZONEMAP": "zonemap.txt",
+            "ECLBASE": "ECLBASE<IENS>",
             "OBS_CONFIG": (
                 "obsconf",
                 [
@@ -492,6 +493,7 @@ def test_that_same_point_observations_with_different_zone_are_disabled_independe
     config = ErtConfig.from_dict(
         {
             "ZONEMAP": "zonemap.txt",
+            "ECLBASE": "ECLBASE<IENS>",
             "OBS_CONFIG": (
                 "obsconf",
                 [
@@ -568,6 +570,7 @@ def test_that_observation_without_zones_are_not_disabled_by_zone_check(
     config = ErtConfig.from_dict(
         {
             "ZONEMAP": "zonemap.txt",
+            "ECLBASE": "ECLBASE<IENS>",
             "OBS_CONFIG": (
                 "obsconf",
                 [
@@ -645,6 +648,7 @@ def test_that_when_the_zonemap_is_an_absolute_path_then_the_runpath_is_not_prepe
     config = ErtConfig.from_dict(
         {
             "ZONEMAP": "/tmp/does_not_exist/zonemap.txt",
+            "ECLBASE": "ECLBASE<IENS>",
             "OBS_CONFIG": (
                 "obsconf",
                 [
@@ -722,6 +726,7 @@ def test_that_zone_with_multiple_layers_produces_single_matching_row(
     config = ErtConfig.from_dict(
         {
             "ZONEMAP": "zonemap.txt",
+            "ECLBASE": "ECLBASE<IENS>",
             "OBS_CONFIG": (
                 "obsconf",
                 [

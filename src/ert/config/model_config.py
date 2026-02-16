@@ -116,7 +116,7 @@ class ModelConfig(BaseModel):
             ),
             summary_file_base_name=config_dict.get(
                 ConfigKeys.ECLBASE,
-                config_dict.get(ConfigKeys.JOBNAME, DEFAULT_ECLBASE_FORMAT),
+                config_dict.get(ConfigKeys.JOBNAME),
             ),
             gen_kw_export_name=config_dict.get(
                 ConfigKeys.GEN_KW_EXPORT_NAME, DEFAULT_GEN_KW_EXPORT_NAME
