@@ -33,7 +33,7 @@ from ert.storage import (
     load_realization_parameters_and_responses,
 )
 from ert.trace import trace
-from ert.warnings import PostSimulationWarning
+from ert.warnings import PostExperimentWarning
 
 from .driver import Driver, FailedSubmit
 
@@ -535,7 +535,7 @@ async def log_warnings_from_forward_model(
                 f"Realization {iens} step {step.name}.{step_idx} "
                 f"warned {counter} time(s) in {filetype}: {line}"
             )
-            warnings.warn(warning_msg, PostSimulationWarning, stacklevel=2)
+            warnings.warn(warning_msg, PostExperimentWarning, stacklevel=2)
             logger.warning(warning_msg)
         return len(captured)
 
