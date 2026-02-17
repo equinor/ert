@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 class ExperimentConfigPanel(QWidget):
-    simulationConfigurationChanged = Signal()
+    experiment_configuration_changed = Signal()
 
     def __init__(self, simulation_model: type[RunModel]) -> None:
         super().__init__()
