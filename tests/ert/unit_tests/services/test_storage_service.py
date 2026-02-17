@@ -10,7 +10,7 @@ import pytest
 
 from ert.services import ErtServerController
 from ert.services._storage_main import _create_connection_info, _generate_certificate
-from ert.services.ert_server import connect
+from ert.services.ert_server import create_ert_server_controller
 from ert.shared import find_available_socket
 
 
@@ -60,7 +60,7 @@ def test_that_service_can_be_started_with_existing_conn_info_json(change_to_tmpd
 
     with open("storage_server.json", mode="w", encoding="utf-8") as f:
         json.dump(connection_info, f)
-    connect(project=Path(".").absolute())
+    create_ert_server_controller(project=Path(".").absolute())
 
 
 @pytest.mark.skip_mac_ci  # Slow/failing - fqdn issue?
