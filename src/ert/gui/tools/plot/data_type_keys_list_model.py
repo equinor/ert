@@ -4,7 +4,7 @@ from PyQt6.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt
 from PyQt6.QtGui import QColor, QIcon
 from typing_extensions import override
 
-from ert.gui import is_dark_mode
+from ert.gui.detect_mode import is_dark_mode
 
 from .plot_api import PlotApiKeyDefinition
 

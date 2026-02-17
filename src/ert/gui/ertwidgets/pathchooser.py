@@ -8,7 +8,7 @@ from PyQt6.QtCore import QSize
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QLineEdit, QToolButton, QWidget
 
-from .. import is_dark_mode
+from ..detect_mode import is_dark_mode
 from .validationsupport import ValidationSupport
 
 if TYPE_CHECKING:

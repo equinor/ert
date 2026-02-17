@@ -15,7 +15,7 @@ from PyQt6.QtWidgets import (
 )
 from typing_extensions import override
 
-from ert.gui import is_dark_mode
+from ert.gui.detect_mode import is_dark_mode
 
 from ..copy_button import CopyButton
 from ._colors import (
