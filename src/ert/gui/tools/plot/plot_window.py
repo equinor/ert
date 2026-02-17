@@ -308,9 +308,13 @@ class PlotWindow(QMainWindow):
         is_gradient_plot = plot_widget.name == EVEREST_GRADIENTS_PLOT
         self._everest_dock.setVisible(is_gradient_plot)
 
-        if plot_widget._plotter.dimensionality == key_def.dimensionality or (
-            plot_widget.name
-            in {EVEREST_RESPONSES_PLOT, EVEREST_CONTROLS_PLOT, EVEREST_GRADIENTS_PLOT}
+        if (
+            plot_widget._plotter.dimensionality == key_def.dimensionality
+            or (
+                plot_widget.name
+                in {EVEREST_RESPONSES_PLOT, EVEREST_CONTROLS_PLOT, EVEREST_GRADIENTS_PLOT}
+            )
+            or (key_def.metadata.get("data_origin") == "everest_batch_objectives")
         ):
             selected_ensembles = (
                 self._ensemble_selection_widget.get_selected_ensembles()
@@ -330,7 +334,8 @@ class PlotWindow(QMainWindow):
                     data = None
                     if is_gradient_plot:
                         data = self._api.data_for_gradient(ensemble.id, key)
-                    elif key_def.response is not None:
+                    elif (key_def.response is not None or key_def.metadata.get("data_origin")
+                            == "everest_batch_objectives"):
                         data = self._api.data_for_response(
                             ensemble_id=ensemble.id,
                             response_key=key,
@@ -532,7 +537,10 @@ class PlotWindow(QMainWindow):
         )
 
         if everest_widget:
-            if is_everest:
+            if (
+                is_everest
+                or key_def.metadata.get("data_origin") == "everest_batch_objectives"
+            ):
                 available_widgets = [everest_widget]
             elif everest_widget in available_widgets:
                 available_widgets.remove(everest_widget)
@@ -559,7 +567,10 @@ class PlotWindow(QMainWindow):
             if is_everest:
                 if everest_gradients_widget not in available_widgets:
                     available_widgets.append(everest_gradients_widget)
-            elif everest_gradients_widget in available_widgets:
+            elif (
+                key_def.metadata.get("data_origin") == "everest_batch_objectives"
+                and everest_gradients_widget in available_widgets
+            ) or everest_gradients_widget in available_widgets:
                 available_widgets.remove(everest_gradients_widget)
 
         # Enabling/disabling tab triggers the

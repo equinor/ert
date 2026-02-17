@@ -225,6 +225,18 @@ class PlotApi:
                                 )
                             )
 
+                if "everest_objectives" in experiment["responses"]:
+                    update_keydef(
+                        PlotApiKeyDefinition(
+                            key="total objective value",
+                            index_type="VALUE",
+                            observations=False,
+                            dimensionality=2,
+                            metadata={"data_origin": "everest_batch_objectives"},
+                            response=None,
+                        )
+                    )
+
         return list(key_defs.values())
 
     def data_for_response(
@@ -269,6 +281,26 @@ class PlotApi:
                     | {
                         "batch_id": int,
                         "realization": int,
+                    }
+                )
+
+            if (
+                key_def is not None
+                and key_def.metadata.get("data_origin") == "everest_batch_objectives"
+            ):
+                assert {"batch_id", "is_improvement"}.issubset(df.columns)
+
+                float_columns = [
+                    col
+                    for col in df.columns
+                    if col not in {"batch_id", "is_improvement"}
+                ]
+
+                return df.astype(
+                    dict.fromkeys(float_columns, float)
+                    | {
+                        "batch_id": int,
+                        "is_improvement": bool,
                     }
                 )
 

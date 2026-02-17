@@ -204,6 +204,38 @@ def _extract_response_type_and_key(
 def data_for_response(
     ensemble: Ensemble, key: str, filter_on: dict[str, Any] | None = None
 ) -> pd.DataFrame | pd.Series:
+    if key == "total objective value":
+        if ensemble.batch_objectives is None:
+            return pd.DataFrame()
+
+        df = ensemble.batch_objectives.clone()
+        improvements = {}
+        for ens in ensemble.experiment.ensembles:
+            improvements[ens.iteration] = ens.is_improvement
+
+        imp_df = pl.DataFrame(
+            {
+                "batch_id": list(improvements.keys()),
+                "is_improvement": list(improvements.values()),
+            },
+            schema={"batch_id": pl.Int64, "is_improvement": pl.Boolean},
+        )
+
+        df = df.join(imp_df, on="batch_id", how="left")
+        df = df.with_columns(pl.col("is_improvement").fill_null(False))
+
+        return (
+            df.select(["batch_id", "total_objective_value", "is_improvement"])
+            .to_pandas()
+            .astype(
+                {
+                    "batch_id": int,
+                    "total_objective_value": float,
+                    "is_improvement": bool,
+                }
+            )
+        )
+
     response_key, response_type = _extract_response_type_and_key(
         key, ensemble.experiment.response_key_to_response_type
     )

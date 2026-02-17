@@ -53,7 +53,43 @@ class ValuesOverIterationsPlot:
             if not df.empty:
                 all_dfs.append(df)
 
+        if not all_dfs:
+            return
+
         combined = pd.concat(all_dfs, ignore_index=True)
+
+        if "is_improvement" in combined.columns:
+            value_col = next(
+                c
+                for c in combined.columns
+                if c not in {"batch_id", "realization", "is_improvement"}
+            )
+            data = combined.sort_values("batch_id")
+
+            color = config.nextColor()
+            axes.plot(
+                data["batch_id"],
+                data[value_col],
+                "-",
+                color=color,
+                label=key_def.key if key_def else value_col,
+            )
+
+            colors = [
+                "red" if not row.is_improvement else color for _, row in data.iterrows()
+            ]
+            axes.scatter(
+                data["batch_id"], data[value_col], c=colors, s=20, zorder=5
+            )  # s is size
+
+            axes.set_xlabel("Iteration")
+            axes.set_ylabel(value_col)
+            axes.set_title(f"{value_col} over iterations")
+            axes.xaxis.set_major_locator(MaxNLocator(integer=True))
+
+            axes.grid(True)
+            figure.tight_layout()
+            return
 
         # Assume only one value is in the input data to make it same across
         # controls, constraints, and objectives
