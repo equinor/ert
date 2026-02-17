@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-import ert.gui as ert_gui
+from ert.shared import __version__
 
 
 class AboutDialog(QDialog):
@@ -58,7 +58,7 @@ class AboutDialog(QDialog):
         version = QLabel()
 
         version.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        version.setText(f"ert version:{ert_gui.__version__}")
+        version.setText(f"ert version:{__version__}")
         info_layout.addWidget(version)
 
         info_layout.addStretch(5)
