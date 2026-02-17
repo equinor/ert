@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pandas as pd
+from matplotlib.lines import Line2D
 from matplotlib.ticker import MaxNLocator
 
 if TYPE_CHECKING:
@@ -86,6 +87,28 @@ class ValuesOverIterationsPlot:
             axes.set_ylabel(value_col)
             axes.set_title(f"{value_col} over iterations")
             axes.xaxis.set_major_locator(MaxNLocator(integer=True))
+
+            legend_elements = [
+                Line2D(
+                    [0],
+                    [0],
+                    marker="o",
+                    color="w",
+                    label="Accepted",
+                    markerfacecolor=color,
+                    markersize=8,
+                ),
+                Line2D(
+                    [0],
+                    [0],
+                    marker="o",
+                    color="w",
+                    label="Rejected",
+                    markerfacecolor="red",
+                    markersize=8,
+                ),
+            ]
+            axes.legend(handles=legend_elements, loc="best")
 
             axes.grid(True)
             figure.tight_layout()
