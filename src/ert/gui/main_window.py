@@ -234,8 +234,8 @@ class ErtMainWindow(QMainWindow):
             widget.setVisible(False)
 
         run_dialog.setParent(self)
-        simulation_id = run_dialog.property("experiment_name")
-        self.central_panels_map[simulation_id] = run_dialog
+        experiment_name = run_dialog.property("experiment_name")
+        self.central_panels_map[experiment_name] = run_dialog
         self.run_dialog_counter += 1
         self.central_layout.addWidget(run_dialog)
 
@@ -245,12 +245,12 @@ class ErtMainWindow(QMainWindow):
                 font.setBold(action is action_to_mark)
                 action.setFont(font)
 
-        def add_sim_run_option(simulation_id: str) -> None:
+        def add_results_menu_item(experiment_name: str) -> None:
             menu = self.results_button.menu()
             if menu:
                 action_list = menu.actions()
-                act = QAction(text=simulation_id, parent=menu)
-                act.setProperty("index", simulation_id)
+                act = QAction(text=experiment_name, parent=menu)
+                act.setProperty("index", experiment_name)
                 act.triggered.connect(self.select_central_widget)
                 act.triggered.connect(lambda _: mark_action_bold(menu, act))
 
@@ -272,9 +272,9 @@ class ErtMainWindow(QMainWindow):
 
             for prev_date_time, widget in self.central_panels_map.items():
                 if isinstance(widget, RunDialog):
-                    add_sim_run_option(prev_date_time)
+                    add_results_menu_item(prev_date_time)
         elif self.run_dialog_counter > 2:
-            add_sim_run_option(simulation_id)
+            add_results_menu_item(experiment_name)
 
         self.results_button.setEnabled(True)
 
