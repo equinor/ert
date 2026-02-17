@@ -68,7 +68,7 @@ class ErtNotifier(QObject):
         return self.current_ensemble.name
 
     @property
-    def is_simulation_running(self) -> bool:
+    def is_experiment_running(self) -> bool:
         return self._is_experiment_running
 
     @Slot()

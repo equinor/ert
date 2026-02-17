@@ -133,7 +133,7 @@ class ManageExperimentsPanel(QTabWidget):
 
         @Slot()
         def update_button_state() -> None:
-            if self.notifier.is_simulation_running:
+            if self.notifier.is_experiment_running:
                 initialize_button.setEnabled(False)
             else:
                 initialize_button.setEnabled(ensemble_selector.count() > 0)

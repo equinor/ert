@@ -392,7 +392,7 @@ class ErtMainWindow(QMainWindow):
                 plot_window.close()
 
         if closeEvent is not None:
-            if self.notifier.is_simulation_running:
+            if self.notifier.is_experiment_running:
                 closeEvent.ignore()
             else:
                 self.close_signal.emit()
