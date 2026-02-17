@@ -23,7 +23,7 @@ from ert.ensemble_evaluator.evaluator import ParallelismViolation
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.plugins import ErtRuntimePlugins
 from ert.run_models.run_model import RunModel, UserCancelled
-from ert.warnings import PostSimulationWarning
+from ert.warnings import PostExperimentWarning
 
 
 @pytest.fixture(autouse=True)
@@ -707,5 +707,5 @@ def test_run_model_warns_about_cpu_over_spending_as_post_simulation_warning(
 
     with warnings.catch_warnings(record=True) as W:
         brm._evaluate_and_postprocess(MagicMock(), MagicMock(), MagicMock())
-        assert any(isinstance(w.message, PostSimulationWarning) for w in W)
+        assert any(isinstance(w.message, PostExperimentWarning) for w in W)
         assert any(expected_msg in str(w.message) for w in W)

@@ -69,7 +69,7 @@ from ert.storage import (
 )
 from ert.trace import tracer
 from ert.utils import log_duration
-from ert.warnings import PostSimulationWarning, capture_specific_warning
+from ert.warnings import PostExperimentWarning, capture_specific_warning
 from ert.workflow_runner import WorkflowRunner
 
 from ..base_model_context import BaseModelWithContextSupport
@@ -392,7 +392,7 @@ class RunModel(RunModelConfig, ABC):
         try:
             self.send_event(StartEvent(timestamp=start_timestamp))
             with (
-                capture_specific_warning(PostSimulationWarning, handle_captured_event),
+                capture_specific_warning(PostExperimentWarning, handle_captured_event),
                 captured_logs(error_messages),
             ):
                 self._set_default_env_context()
@@ -824,7 +824,7 @@ class RunModel(RunModelConfig, ABC):
             )
             warnings.warn(
                 self._max_parallelism_violation.message,
-                PostSimulationWarning,
+                PostExperimentWarning,
                 stacklevel=1,
             )
 
