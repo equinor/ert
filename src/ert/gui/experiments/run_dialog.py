@@ -246,12 +246,12 @@ class RunDialog(QFrame):
 
         date_time: str = datetime.now(UTC).isoformat(timespec="seconds")
         experiment_type = self._run_model_api.experiment_name
-        simulation_id = experiment_type + " : " + date_time
+        experiment_id = experiment_type + " : " + date_time
 
         self._experiment_name_label = QLabel(self)
-        self._experiment_name_label.setText(simulation_id)
+        self._experiment_name_label.setText(experiment_id)
         self._experiment_name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.setProperty("experiment_name", simulation_id)
+        self.setProperty("experiment_name", experiment_id)
 
         self._total_progress_bar = QProgressBar(self)
         self._total_progress_bar.setRange(0, 100)
@@ -375,7 +375,7 @@ class RunDialog(QFrame):
 
         self._latest_iteration = 0
 
-    def is_simulation_done(self) -> bool:
+    def is_experiment_done(self) -> bool:
         return self.flag_experiment_done
 
     def _current_tab_changed(self, index: int) -> None:
