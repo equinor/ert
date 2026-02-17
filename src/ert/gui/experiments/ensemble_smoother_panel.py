@@ -105,7 +105,7 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
 
         self._active_realizations_field = StringBox(
             ActiveRealizationsModel(len(active_realizations)),  # type: ignore
-            "config/simulation/active_realizations",
+            "config/experiment/active_realizations",
         )
         self._active_realizations_field.setValidator(
             RangeSubsetStringArgument(ActiveRange(active_realizations)),
