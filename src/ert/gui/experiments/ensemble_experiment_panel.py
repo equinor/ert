@@ -125,13 +125,13 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         self.setLayout(layout)
 
         self._active_realizations_field.getValidationSupport().validationChanged.connect(
-            self.simulationConfigurationChanged
+            self.experiment_configuration_changed
         )
         self._experiment_name_field.getValidationSupport().validationChanged.connect(
-            self.simulationConfigurationChanged
+            self.experiment_configuration_changed
         )
         self._ensemble_name_field.getValidationSupport().validationChanged.connect(
-            self.simulationConfigurationChanged
+            self.experiment_configuration_changed
         )
 
         self.notifier.ertChanged.connect(self._update_experiment_name_placeholder)

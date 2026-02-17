@@ -98,11 +98,11 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         layout.addRow("Active realizations", self._active_realizations_field)
 
         self._active_realizations_field.getValidationSupport().validationChanged.connect(
-            self.simulationConfigurationChanged
+            self.experiment_configuration_changed
         )
         self._ensemble_selector.ensemble_populated.connect(self._realizations_from_fs)
         self._ensemble_selector.ensemble_populated.connect(
-            self.simulationConfigurationChanged
+            self.experiment_configuration_changed
         )
         self._ensemble_selector.currentIndexChanged.connect(self._realizations_from_fs)
         self.setLayout(layout)
