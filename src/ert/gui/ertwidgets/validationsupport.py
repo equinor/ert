@@ -8,7 +8,7 @@ from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtGui import QColor, QEnterEvent
 from PyQt6.QtWidgets import QFrame, QLabel, QSizePolicy, QVBoxLayout, QWidget
 
-from ert.gui import is_dark_mode
+from ..detect_mode import is_dark_mode
 
 if TYPE_CHECKING:
     from PyQt6.QtCore import QEvent

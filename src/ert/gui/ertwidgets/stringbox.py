@@ -6,7 +6,7 @@ from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import QLineEdit
 from typing_extensions import override
 
-from .. import is_dark_mode
+from ..detect_mode import is_dark_mode
 from .validationsupport import ValidationSupport
 
 if TYPE_CHECKING:
