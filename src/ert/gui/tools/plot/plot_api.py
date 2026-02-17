@@ -149,10 +149,7 @@ class PlotApi:
             for experiment in http_response.json():
                 for metadata in experiment["parameters"].values():
                     param_cfg = parameter_config_adapter.validate_python(metadata)
-                    if group := metadata.get("group"):
-                        param_key = f"{group}:{metadata['name']}"
-                    else:
-                        param_key = metadata["name"]
+                    param_key = metadata["name"]
                     all_keys[param_key] = PlotApiKeyDefinition(
                         key=param_key,
                         index_type=None,
