@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (
 )
 from typing_extensions import override
 
-from .. import is_dark_mode
+from ..detect_mode import is_dark_mode
 from .validationsupport import ValidationSupport
 
 
