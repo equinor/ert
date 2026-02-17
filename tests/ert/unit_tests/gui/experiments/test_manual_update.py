@@ -4,7 +4,7 @@ from pytestqt.qtbot import QtBot
 from ert.config.analysis_config import AnalysisConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import EnsembleSelector, StringBox
-from ert.gui.simulation.manual_update_panel import ManualUpdatePanel
+from ert.gui.experiments.manual_update_panel import ManualUpdatePanel
 
 from .conftest import (
     REALIZATION_FINISHED_SUCCESSFULLY,

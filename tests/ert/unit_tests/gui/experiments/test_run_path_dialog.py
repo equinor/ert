@@ -8,11 +8,11 @@ from PyQt6.QtWidgets import QComboBox, QMessageBox, QToolButton, QWidget
 from pytestqt.qtbot import QtBot
 
 from ert.config import ErtConfig
+from ert.gui.experiments.ensemble_experiment_panel import EnsembleExperimentPanel
+from ert.gui.experiments.experiment_panel import ExperimentPanel
+from ert.gui.experiments.run_dialog import RunDialog
 from ert.gui.main import _setup_main_window
 from ert.gui.main_window import ErtMainWindow
-from ert.gui.simulation.ensemble_experiment_panel import EnsembleExperimentPanel
-from ert.gui.simulation.experiment_panel import ExperimentPanel
-from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.tools.event_viewer.panel import GUILogHandler
 from ert.run_models.ensemble_experiment import EnsembleExperiment
 

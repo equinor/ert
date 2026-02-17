@@ -25,9 +25,9 @@ from typing_extensions import override
 from ert.config import ErtConfig, ErtScriptWorkflow
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertnotifier import ErtNotifier
+from ert.gui.experiments import ExperimentPanel
+from ert.gui.experiments.run_dialog import RunDialog
 from ert.gui.find_ert_info import find_ert_info
-from ert.gui.simulation import ExperimentPanel
-from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.tools.event_viewer import EventViewerTool, GUILogHandler
 from ert.gui.tools.load_results import LoadResultsTool
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
@@ -142,8 +142,8 @@ class ErtMainWindow(QMainWindow):
         self._experiment_panel: ExperimentPanel | None = None
         self._plot_window: PlotWindow | None = None
         self._manage_experiments_panel: ManageExperimentsPanel | None = None
-        self.simulation_button = self._add_sidebar_button(
-            "Start simulation", QIcon("img:library_add.svg")
+        self.experiment_button = self._add_sidebar_button(
+            "Start experiment", QIcon("img:library_add.svg")
         )
         plot_button = self._add_sidebar_button("Create plot", QIcon("img:timeline.svg"))
         plot_button.setToolTip("Right click to open external window")
@@ -152,7 +152,7 @@ class ErtMainWindow(QMainWindow):
             "Simulation status", QIcon("img:in_progress.svg")
         )
         self.results_button.setEnabled(False)
-        self.simulation_button.click()
+        self.experiment_button.click()
         self.run_dialog_counter = 0
 
         self.vbox_layout.addStretch()
@@ -290,7 +290,7 @@ class ErtMainWindow(QMainWindow):
         )
         self.central_layout.addWidget(experiment_panel)
         self._experiment_panel = experiment_panel
-        self.central_panels_map["Start simulation"] = self._experiment_panel
+        self.central_panels_map["Start experiment"] = self._experiment_panel
 
         experiment_panel.experiment_started.connect(self.slot_add_widget)
 

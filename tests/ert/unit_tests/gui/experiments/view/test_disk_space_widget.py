@@ -3,8 +3,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from ert.gui.simulation.view import DiskSpaceWidget
-from ert.gui.simulation.view.disk_space_widget import (
+from ert.gui.experiments.view import DiskSpaceWidget
+from ert.gui.experiments.view.disk_space_widget import (
     CRITICAL_RED,
     NORMAL_GREEN,
     WARNING_YELLOW,
