@@ -27,17 +27,17 @@ from pytestqt.qtbot import QtBot
 from ert.base_model_context import use_runtime_plugins
 from ert.config import ErtConfig
 from ert.gui.ertwidgets import ClosableDialog, CreateExperimentDialog, EnsembleSelector
+from ert.gui.experiments.experiment_panel import ExperimentPanel
+from ert.gui.experiments.run_dialog import RunDialog
+from ert.gui.experiments.view import RealizationWidget
 from ert.gui.main import ErtMainWindow, _setup_main_window, add_gui_log_handler
-from ert.gui.simulation.experiment_panel import ExperimentPanel
-from ert.gui.simulation.run_dialog import RunDialog
-from ert.gui.simulation.view import RealizationWidget
 from ert.gui.tools.load_results.load_results_panel import LoadResultsPanel
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget
 from ert.plugins import get_site_plugins
 from ert.run_models import EnsembleExperiment, MultipleDataAssimilation
 from ert.storage import Storage
-from tests.ert.unit_tests.gui.simulation.test_run_path_dialog import (
+from tests.ert.unit_tests.gui.experiments.test_run_path_dialog import (
     handle_run_path_dialog,
 )
 

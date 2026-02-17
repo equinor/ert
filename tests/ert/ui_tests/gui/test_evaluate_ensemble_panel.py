@@ -1,9 +1,9 @@
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import QComboBox, QWidget
 
-from ert.gui.simulation import ExperimentPanel
-from ert.gui.simulation.evaluate_ensemble_panel import EvaluateEnsemblePanel
-from ert.gui.simulation.run_dialog import RunDialog
+from ert.gui.experiments import ExperimentPanel
+from ert.gui.experiments.evaluate_ensemble_panel import EvaluateEnsemblePanel
+from ert.gui.experiments.run_dialog import RunDialog
 from tests.ert.ui_tests.gui.conftest import (
     DEFAULT_NUM_REALIZATIONS,
     get_child,

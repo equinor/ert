@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import QTableWidget
 from pytestqt.qtbot import QtBot
 
 from ert.analysis.event import DataSection
-from ert.gui.simulation.view import UpdateWidget
+from ert.gui.experiments.view import UpdateWidget
 from ert.run_models.event import RunModelDataEvent
 
 

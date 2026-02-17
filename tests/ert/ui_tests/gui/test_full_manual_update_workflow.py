@@ -8,9 +8,9 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QComboBox, QToolButton, QTreeView, QWidget
 
 from ert.data import MeasuredData
-from ert.gui.simulation.evaluate_ensemble_panel import EvaluateEnsemblePanel
-from ert.gui.simulation.experiment_panel import ExperimentPanel
-from ert.gui.simulation.run_dialog import RunDialog
+from ert.gui.experiments.evaluate_ensemble_panel import EvaluateEnsemblePanel
+from ert.gui.experiments.experiment_panel import ExperimentPanel
+from ert.gui.experiments.run_dialog import RunDialog
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_widget import StorageWidget
 from ert.run_models.evaluate_ensemble import EvaluateEnsemble

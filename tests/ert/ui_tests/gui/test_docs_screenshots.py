@@ -10,22 +10,22 @@ from skimage import io, transform
 from skimage.metrics import structural_similarity as ssim
 
 from ert.gui.ertwidgets import CopyableLabel
-from ert.gui.simulation.experiment_panel import ExperimentPanel
-from ert.gui.simulation.run_dialog import RunDialog
-from ert.gui.simulation.single_test_run_panel import SingleTestRunPanel
-from ert.gui.simulation.view import RealizationWidget
-from ert.gui.simulation.view.disk_space_widget import DiskSpaceWidget
+from ert.gui.experiments.experiment_panel import ExperimentPanel
+from ert.gui.experiments.run_dialog import RunDialog
+from ert.gui.experiments.single_test_run_panel import SingleTestRunPanel
+from ert.gui.experiments.view import RealizationWidget
+from ert.gui.experiments.view.disk_space_widget import DiskSpaceWidget
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
 from ert.gui.tools.plot.plot_ensemble_selection_widget import EnsembleSelectionWidget
 from ert.run_models import EnsembleExperiment, EnsembleSmoother
 from ert.services import ErtServerController
 from ert.storage import open_storage
 from tests.ert.ui_tests.gui.conftest import open_gui_with_config
-from tests.ert.unit_tests.gui.simulation.test_run_path_dialog import (
-    handle_run_path_dialog,
-)
 
 from .conftest import get_child, wait_for_child
+from .test_run_path_dialog import (
+    handle_run_path_dialog,
+)
 
 # List of png files under docs that are either:
 #  - not screenshots of the gui
@@ -313,7 +313,7 @@ def test_that_poly_new_minimal_screenshots_are_up_to_date(
     # Set static values for disk space to not trigger false gui change detection
     monkeypatch.setattr(DiskSpaceWidget, "_get_status", lambda self: (50, "100 GB"))
     mocker.patch(
-        "ert.gui.simulation.run_dialog.get_mount_directory", return_value=Path("/")
+        "ert.gui.experiments.run_dialog.get_mount_directory", return_value=Path("/")
     )
 
     example_folder = "docs/ert/getting_started/configuration/poly_new/minimal"

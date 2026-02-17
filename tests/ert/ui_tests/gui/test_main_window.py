@@ -36,10 +36,10 @@ from ert.gui.ertwidgets import (
 )
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
 from ert.gui.ertwidgets.suggestor._suggestor_message import SuggestorMessage
+from ert.gui.experiments.experiment_panel import ExperimentPanel
+from ert.gui.experiments.run_dialog import RunDialog
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
 from ert.gui.main_window import SidebarToolButton
-from ert.gui.simulation.experiment_panel import ExperimentPanel
-from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.tools.event_viewer import add_gui_log_handler
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget
@@ -61,8 +61,10 @@ from ert.run_models import (
 )
 from ert.services import ErtServerController
 from ert.storage import open_storage
+from tests.ert.unit_tests.gui.experiments.test_run_path_dialog import (
+    handle_run_path_dialog,
+)
 
-from ...unit_tests.gui.simulation.test_run_path_dialog import handle_run_path_dialog
 from .conftest import (
     add_experiment_manually,
     get_child,

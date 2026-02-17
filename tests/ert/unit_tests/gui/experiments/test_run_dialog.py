@@ -27,18 +27,18 @@ from ert.ensemble_evaluator.event import (
     SnapshotUpdateEvent,
     WarningEvent,
 )
-from ert.gui.main import GUILogHandler, _setup_main_window
-from ert.gui.simulation.ensemble_experiment_panel import (
+from ert.gui.experiments.ensemble_experiment_panel import (
     DesignMatrixPanel,
     EnsembleExperimentPanel,
 )
-from ert.gui.simulation.ensemble_smoother_panel import EnsembleSmootherPanel
-from ert.gui.simulation.experiment_panel import ExperimentPanel
-from ert.gui.simulation.multiple_data_assimilation_panel import (
+from ert.gui.experiments.ensemble_smoother_panel import EnsembleSmootherPanel
+from ert.gui.experiments.experiment_panel import ExperimentPanel
+from ert.gui.experiments.multiple_data_assimilation_panel import (
     MultipleDataAssimilationPanel,
 )
-from ert.gui.simulation.run_dialog import RunDialog
-from ert.gui.simulation.view.realization import RealizationWidget
+from ert.gui.experiments.run_dialog import RunDialog
+from ert.gui.experiments.view.realization import RealizationWidget
+from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.gui.tools.file import FileDialog
 from ert.run_models import (
     EnsembleExperiment,
@@ -48,10 +48,11 @@ from ert.run_models import (
 from ert.scheduler.job import Job
 from tests.ert import SnapshotBuilder
 from tests.ert.ui_tests.gui.conftest import wait_for_child
-from tests.ert.unit_tests.gui.simulation.test_run_path_dialog import (
+from tests.ert.utils import wait_until
+
+from .test_run_path_dialog import (
     handle_run_path_dialog,
 )
-from tests.ert.utils import wait_until
 
 
 @pytest.fixture
