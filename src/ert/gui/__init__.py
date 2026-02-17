@@ -10,7 +10,7 @@ ert is not running with GUI.
 The module is organized around the :py:class:`main window
 <ert.gui.main_window.ErtMainWindow>`, which has the :py:class`experiment
 panel<ert.gui.experiments.experiment_panel.ExperimentPanel` centrally located
-initially. When the user presses "start simulation" this starts a simulation in
+initially. When the user presses "start experiment" this starts a experiment in
 the :py:class`run_dialog <ert.gui.experiments.run_dialg.RunDialog>`.
 
 Other situational tools are located in ert.gui.tools, such as plotting results,

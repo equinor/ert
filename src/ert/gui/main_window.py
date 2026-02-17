@@ -209,7 +209,7 @@ class ErtMainWindow(QMainWindow):
                 self.central_panels_map["Create plot"] = self._plot_window
 
             if index_name == "Experiment status":
-                # select the only available simulation
+                # select the only available experiments
                 for k, v in self.central_panels_map.items():
                     if isinstance(v, RunDialog):
                         index_name = k
