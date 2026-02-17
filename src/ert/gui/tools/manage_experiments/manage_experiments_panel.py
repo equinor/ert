@@ -143,7 +143,7 @@ class ManageExperimentsPanel(QTabWidget):
             initialize_button.setEnabled(False)
 
         self.notifier.experiment_started.connect(disableAdd)
-        self.notifier.simulationEnded.connect(update_button_state)
+        self.notifier.experiment_ended.connect(update_button_state)
 
         update_button_state()
         ensemble_selector.ensemble_populated.connect(update_button_state)

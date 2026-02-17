@@ -139,7 +139,7 @@ class StorageWidget(QWidget):
             disableAdd()
 
         notifier.experiment_started.connect(disableAdd)
-        notifier.simulationEnded.connect(enableAdd)
+        notifier.experiment_ended.connect(enableAdd)
 
         layout = QVBoxLayout()
         layout.addWidget(search_bar)

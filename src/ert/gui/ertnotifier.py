@@ -12,7 +12,7 @@ from ert.storage import Ensemble, Storage, open_storage
 class ErtNotifier(QObject):
     ertChanged = Signal()
     experiment_started = Signal()
-    simulationEnded = Signal()
+    experiment_ended = Signal()
     current_ensemble_changed = Signal(object, name="currentEnsembleChanged")
 
     def __init__(self) -> None:
@@ -20,7 +20,7 @@ class ErtNotifier(QObject):
         self._storage: Storage | None = None
         self._storage_path: str | None = None
         self._current_ensemble_id: UUID | None = None
-        self._is_simulation_running = False
+        self._is_experiment_running = False
 
     @property
     def is_storage_available(self) -> bool:
@@ -69,7 +69,7 @@ class ErtNotifier(QObject):
 
     @property
     def is_simulation_running(self) -> bool:
-        return self._is_simulation_running
+        return self._is_experiment_running
 
     @Slot()
     def emitErtChange(self) -> None:
@@ -92,8 +92,8 @@ class ErtNotifier(QObject):
 
     @Slot(bool)
     def set_is_simulation_running(self, is_running: bool) -> None:
-        self._is_simulation_running = is_running
-        if self._is_simulation_running:
+        self._is_experiment_running = is_running
+        if self._is_experiment_running:
             self.experiment_started.emit()
         else:
-            self.simulationEnded.emit()
+            self.experiment_ended.emit()
