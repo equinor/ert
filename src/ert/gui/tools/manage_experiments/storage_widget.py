@@ -138,7 +138,7 @@ class StorageWidget(QWidget):
         if self._notifier.is_simulation_running:
             disableAdd()
 
-        notifier.simulationStarted.connect(disableAdd)
+        notifier.experiment_started.connect(disableAdd)
         notifier.simulationEnded.connect(enableAdd)
 
         layout = QVBoxLayout()
