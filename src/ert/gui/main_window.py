@@ -148,7 +148,7 @@ class ErtMainWindow(QMainWindow):
         plot_button.setToolTip("Right click to open external window")
         self._add_sidebar_button("Manage experiments", QIcon("img:build_wrench.svg"))
         self.results_button = self._add_sidebar_button(
-            "Simulation status", QIcon("img:in_progress.svg")
+            "Experiment status", QIcon("img:in_progress.svg")
         )
         self.results_button.setEnabled(False)
         self.experiment_button.click()
@@ -208,7 +208,7 @@ class ErtMainWindow(QMainWindow):
                 self.central_layout.addWidget(self._plot_window)
                 self.central_panels_map["Create plot"] = self._plot_window
 
-            if index_name == "Simulation status":
+            if index_name == "Experiment status":
                 # select the only available simulation
                 for k, v in self.central_panels_map.items():
                     if isinstance(v, RunDialog):
