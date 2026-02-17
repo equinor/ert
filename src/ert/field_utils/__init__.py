@@ -3,9 +3,9 @@ from __future__ import annotations
 from .field_file_format import FieldFileFormat
 from .field_utils import (
     AxisOrientation,
-    ErtboxParameters,
+    GridGeometry,
     Shape,
-    calculate_ertbox_parameters,
+    calculate_grid_geometry,
     get_shape,
     localization_scaling_function,
     read_field,
@@ -17,10 +17,10 @@ from .field_utils import (
 
 __all__ = [
     "AxisOrientation",
-    "ErtboxParameters",
     "FieldFileFormat",
+    "GridGeometry",
     "Shape",
-    "calculate_ertbox_parameters",
+    "calculate_grid_geometry",
     "get_shape",
     "localization_scaling_function",
     "read_field",

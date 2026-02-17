@@ -306,7 +306,7 @@ class PlotWindow(QMainWindow):
 
             if isinstance(key_def.parameter, Field):
                 plot_widget.showLayerWidget.emit(True)
-                layers = key_def.parameter.ertbox_params.nz
+                layers = key_def.parameter.grid_geometry.nz
                 plot_widget.updateLayerWidget.emit(layers)
 
                 if layer is None:
