@@ -711,70 +711,46 @@ class LocalEnsemble(BaseMode):
 
         return parameters.with_columns(realizations_series)
 
-    def load_responses(self, key: str, realizations: tuple[int, ...]) -> pl.DataFrame:
-        """Load responses for key and realizations into xarray Dataset.
+    def load_responses(
+        self, response_key: str, realizations: tuple[int, ...]
+    ) -> pl.DataFrame:
+        """Load responses for requested key and realizations.
 
-        For each given realization, response data is loaded from the NetCDF
-        file whose filename matches the given key parameter.
-
-        Parameters
-        ----------
-        key : str
-            Response key to load.
-        realizations : tuple of int
-            Realization indices to load.
-
-        Returns
-        -------
-        responses : DataFrame
-            Loaded polars DataFrame with responses.
+        For each given realization, response data is loaded from a parquet file that
+        matches the given response key.
         """
 
-        return self._load_responses_lazy(key, realizations).collect(engine="streaming")
+        return self._load_responses_lazy(response_key, realizations).collect(
+            engine="streaming"
+        )
 
     def _load_responses_lazy(
-        self, key: str, realizations: tuple[int, ...]
+        self, response_key: str, realizations: tuple[int, ...]
     ) -> pl.LazyFrame:
-        """Load responses for key and realizations into xarray Dataset.
-
-        For each given realization, response data is loaded from the NetCDF
-        file whose filename matches the given key parameter.
-
-        Parameters
-        ----------
-        key : str
-            Response key to load.
-        realizations : tuple of int
-            Realization indices to load.
-
-        Returns
-        -------
-        responses : DataFrame
-            Loaded polars DataFrame with responses.
-        """
-
         select_key = False
         if (
-            key
+            response_key
             in self.experiment.response_configuration
             | self.experiment.derived_response_configuration
         ):
-            response_type = key
-        elif key not in self.experiment.response_key_to_response_type:
-            raise ValueError(f"{key} is not a response")
+            response_type = response_key
+        elif response_key not in self.experiment.response_key_to_response_type:
+            raise ValueError(f"{response_key} is not a response")
         else:
-            response_type = self.experiment.response_key_to_response_type[key]
+            response_type = self.experiment.response_key_to_response_type[response_key]
             select_key = True
 
         loaded = []
         for realization in realizations:
             input_path = self._realization_dir(realization) / f"{response_type}.parquet"
             if not input_path.exists():
-                raise KeyError(f"No response for key {key}, realization: {realization}")
+                raise KeyError(
+                    f"No response for key {response_key}, realization: {realization}"
+                )
             df = pl.scan_parquet(input_path)
 
             if select_key:
-                df = df.filter(pl.col("response_key") == key)
+                df = df.filter(pl.col("response_key") == response_key)
 
             loaded.append(df)
 
