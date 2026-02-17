@@ -9,9 +9,9 @@ from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import QComboBox, QMessageBox, QWidget
 
 from ert.gui.ertwidgets import StringBox
-from ert.gui.simulation.experiment_panel import ExperimentPanel
-from ert.gui.simulation.run_dialog import RunDialog
-from ert.gui.simulation.view import RealizationWidget
+from ert.gui.experiments.experiment_panel import ExperimentPanel
+from ert.gui.experiments.run_dialog import RunDialog
+from ert.gui.experiments.view import RealizationWidget
 
 from .conftest import wait_for_child
 

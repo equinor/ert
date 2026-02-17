@@ -12,9 +12,9 @@ from ert.ensemble_evaluator.state import (
     FORWARD_MODEL_STATE_START,
     REALIZATION_STATE_UNKNOWN,
 )
+from ert.gui.experiments.view.realization import RealizationWidget
 from ert.gui.model.node import ForwardModelStepNode, IterNode, RealNode, RootNode
 from ert.gui.model.snapshot import SnapshotModel
-from ert.gui.simulation.view.realization import RealizationWidget
 from tests.ert import SnapshotBuilder
 
 

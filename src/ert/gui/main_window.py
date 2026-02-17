@@ -25,9 +25,9 @@ from typing_extensions import override
 from ert.config import ErtConfig, ErtScriptWorkflow
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertnotifier import ErtNotifier
+from ert.gui.experiments import ExperimentPanel
+from ert.gui.experiments.run_dialog import RunDialog
 from ert.gui.find_ert_info import find_ert_info
-from ert.gui.simulation import ExperimentPanel
-from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.tools.event_viewer import EventViewerTool, GUILogHandler
 from ert.gui.tools.load_results import LoadResultsTool
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
