@@ -237,7 +237,7 @@ def valid_port_range(user_input: str) -> range:
 
 def run_gui_wrapper(args: Namespace, runtime_plugins: ErtRuntimePlugins) -> None:
     # Importing ert.gui on-demand saves ~0.5 seconds off `from ert import __main__`
-    from ert.gui.main import run_gui  # noqa: PLC0415
+    from ert.gui import run_gui  # noqa: PLC0415
 
     run_gui(args, runtime_plugins)
 
