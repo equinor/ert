@@ -30,6 +30,9 @@ class _Observation:
     errors: list[float]
     values: list[float]
     x_axis: list[Any]
+    east: list[float | None] | None = None
+    north: list[float | None] | None = None
+    radius: list[float | None] | None = None
     records: list[UUID] | None = None
 
 

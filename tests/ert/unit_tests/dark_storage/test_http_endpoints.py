@@ -257,6 +257,36 @@ def test_get_experiment_observations(poly_example_tmp_dir, dark_storage_client):
     assert len(response_json[0]["errors"]) == 5
     assert len(response_json[0]["values"]) == 5
     assert len(response_json[0]["x_axis"]) == 5
+    assert response_json[0]["east"] == 5 * [None]
+    assert response_json[0]["north"] == 5 * [None]
+    assert response_json[0]["radius"] == 5 * [None]
+
+
+@pytest.mark.integration_test
+def test_that_heat_equation_get_observations_with_locations(
+    symlink_heat_equation_storage_es, dark_storage_client_heat_equation
+):
+    resp: Response = dark_storage_client_heat_equation.get("/experiments")
+    experiment_json = resp.json()
+    experiment_id = experiment_json[0]["id"]
+
+    resp: Response = dark_storage_client_heat_equation.get(
+        f"/experiments/{experiment_id}/observations"
+    )
+    response_json = resp.json()
+    assert len(response_json) == 48
+
+    obs_by_name = {obs["name"]: obs for obs in response_json}
+
+    obs = obs_by_name["HEAT_5_7_132"]
+    assert obs["east"] == [4.5]
+    assert obs["north"] == [16.5]
+    assert obs["radius"] == [3]
+
+    obs = obs_by_name["HEAT_5_3_10"]
+    assert obs["east"] == [4.5]
+    assert obs["north"] == [12.5]
+    assert obs["radius"] == [3]
 
 
 @pytest.mark.integration_test
@@ -275,6 +305,8 @@ def test_get_record_observations(poly_example_tmp_dir, dark_storage_client):
     assert len(response_json[0]["errors"]) == 5
     assert len(response_json[0]["values"]) == 5
     assert len(response_json[0]["x_axis"]) == 5
+    assert response_json[0]["east"] == 5 * [None]
+    assert response_json[0]["north"] == 5 * [None]
 
 
 @pytest.mark.integration_test

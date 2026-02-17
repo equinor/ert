@@ -9,9 +9,7 @@ import polars as pl
 from fastapi import APIRouter, Body, Depends, HTTPException, Query
 
 from ert.dark_storage import json_schema as js
-from ert.dark_storage.common import (
-    get_storage,
-)
+from ert.dark_storage.common import get_storage
 from ert.dark_storage.endpoints.responses import response_to_pandas_x_axis_fns
 from ert.storage import Experiment, Storage
 
@@ -45,6 +43,9 @@ def get_observations(
             errors=observation["errors"],
             values=observation["values"],
             x_axis=observation["x_axis"],
+            east=observation["east"],
+            north=observation["north"],
+            radius=observation["radius"],
             name=observation["name"],
         )
         for observation in _get_observations(experiment)
@@ -98,6 +99,9 @@ async def get_observations_for_response(
             errors=obs["errors"],
             values=obs["values"],
             x_axis=obs["x_axis"],
+            east=obs["east"],
+            north=obs["north"],
+            radius=obs["radius"],
             name=obs["name"],
         )
         for obs in obss
@@ -153,6 +157,9 @@ def _get_observations(
                     "values": obs_df["values"].to_list(),
                     "errors": obs_df["errors"].to_list(),
                     "x_axis": obs_df["x_axis"].to_list(),
+                    "east": obs_df["east"].to_list(),
+                    "north": obs_df["north"].to_list(),
+                    "radius": obs_df["radius"].to_list(),
                 }
             )
 
