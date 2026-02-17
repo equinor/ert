@@ -162,16 +162,16 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         layout.addRow("Restart from:", self._ensemble_selector)
 
         self._experiment_name_field.getValidationSupport().validationChanged.connect(
-            self.simulationConfigurationChanged
+            self.experiment_configuration_changed
         )
         self._target_ensemble_format_field.getValidationSupport().validationChanged.connect(
-            self.simulationConfigurationChanged
+            self.experiment_configuration_changed
         )
         self._active_realizations_field.getValidationSupport().validationChanged.connect(
-            self.simulationConfigurationChanged
+            self.experiment_configuration_changed
         )
         self._relative_iteration_weights_box.getValidationSupport().validationChanged.connect(
-            self.simulationConfigurationChanged
+            self.experiment_configuration_changed
         )
 
         design_matrix = analysis_config.design_matrix

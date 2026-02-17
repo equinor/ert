@@ -253,7 +253,7 @@ class ExperimentPanel(QWidget):
                 style.standardIcon(QStyle.StandardPixmap.SP_MessageBoxWarning)
             )
 
-        panel.simulationConfigurationChanged.connect(self.validationStatusChanged)
+        panel.experiment_configuration_changed.connect(self.validationStatusChanged)
         self.experiment_type_changed.connect(panel.experimentTypeChanged)
 
     @staticmethod
