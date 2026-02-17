@@ -135,11 +135,11 @@ class StorageWidget(QWidget):
         def enableAdd() -> None:
             self._create_experiment_button.setEnabled(True)
 
-        if self._notifier.is_simulation_running:
+        if self._notifier.is_experiment_running:
             disableAdd()
 
         notifier.experiment_started.connect(disableAdd)
-        notifier.simulationEnded.connect(enableAdd)
+        notifier.experiment_ended.connect(enableAdd)
 
         layout = QVBoxLayout()
         layout.addWidget(search_bar)
