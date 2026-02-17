@@ -46,12 +46,9 @@ from ert.run_models import (
 )
 from ert.scheduler.job import Job
 from tests.ert import SnapshotBuilder
+from tests.ert.handle_run_path_dialog import handle_run_path_dialog
 from tests.ert.ui_tests.gui.conftest import wait_for_child
 from tests.ert.utils import wait_until
-
-from .test_run_path_dialog import (
-    handle_run_path_dialog,
-)
 
 
 @pytest.fixture

@@ -60,9 +60,7 @@ from ert.run_models import (
 )
 from ert.services import ErtServerController
 from ert.storage import open_storage
-from tests.ert.unit_tests.gui.experiments.test_run_path_dialog import (
-    handle_run_path_dialog,
-)
+from tests.ert.handle_run_path_dialog import handle_run_path_dialog
 
 from .conftest import (
     add_experiment_manually,

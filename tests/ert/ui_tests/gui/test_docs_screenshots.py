@@ -19,12 +19,10 @@ from ert.gui.tools.plot.plot_ensemble_selection_widget import EnsembleSelectionW
 from ert.run_models import EnsembleExperiment, EnsembleSmoother
 from ert.services import ErtServerController
 from ert.storage import open_storage
+from tests.ert.handle_run_path_dialog import handle_run_path_dialog
 from tests.ert.ui_tests.gui.conftest import open_gui_with_config
 
 from .conftest import get_child, wait_for_child
-from .test_run_path_dialog import (
-    handle_run_path_dialog,
-)
 
 # List of png files under docs that are either:
 #  - not screenshots of the gui
