@@ -197,7 +197,7 @@ def test_large_snapshot(
         lambda: run_dialog._tab_widget.count() == 2, timeout=timeout_per_iter
     )
     qtbot.waitUntil(
-        lambda: run_dialog.is_simulation_done() is True, timeout=timeout_per_iter
+        lambda: run_dialog.is_experiment_done() is True, timeout=timeout_per_iter
     )
 
 
@@ -390,7 +390,7 @@ def test_run_dialog(events, event_queue, tab_widget_count, qtbot: QtBot, run_dia
     qtbot.waitUntil(
         lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
     )
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=5000)
+    qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=5000)
 
 
 @pytest.mark.parametrize(
@@ -465,7 +465,7 @@ def test_run_dialog_memory_usage_showing(
     qtbot.waitUntil(
         lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
     )
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=5000)
+    qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=5000)
 
     # This is the container of realization boxes
     realization_box = run_dialog._tab_widget.widget(0)
@@ -566,7 +566,7 @@ def test_run_dialog_fm_label_show_correct_info(
     qtbot.waitUntil(
         lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
     )
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=5000)
+    qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=5000)
 
     # This is the container of realization boxes
     realization_box = run_dialog._tab_widget.widget(0)
@@ -642,7 +642,7 @@ def test_that_exception_in_run_model_is_displayed_in_a_suggestor_window_after_si
         # from assert_failure_in_error_dialog and stop waiting
         with qtbot.captureExceptions() as exceptions:
             qtbot.waitUntil(
-                lambda: run_dialog.is_simulation_done() is True or bool(exceptions),
+                lambda: run_dialog.is_experiment_done() is True or bool(exceptions),
                 timeout=100000,
             )
             qtbot.waitUntil(lambda: handler_done or bool(exceptions), timeout=100000)
@@ -681,7 +681,7 @@ def test_that_stdout_and_stderr_buttons_react_to_file_content(
     qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
     run_dialog = gui.findChild(RunDialog)
 
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=100000)
+    qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=100000)
 
     fm_step_overview = run_dialog._fm_step_overview
     qtbot.waitUntil(lambda: not fm_step_overview.isHidden(), timeout=20000)
@@ -867,7 +867,7 @@ def test_forward_model_overview_label_selected_on_tab_change(
     qtbot.waitUntil(
         lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
     )
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=5000)
+    qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=5000)
 
     qt_bot_click_tab_index(0)
     fm_step_label = run_dialog.findChild(QLabel, name="fm_step_label")
@@ -991,14 +991,14 @@ def test_that_file_dialog_close_when_run_dialog_hidden(qtbot: QtBot, run_dialog)
 def test_that_run_dialog_clears_warnings_when_rerun(
     events, event_queue, qtbot, monkeypatch, run_dialog
 ):
-    qtbot.wait_until(run_dialog.is_simulation_done, timeout=5000)
+    qtbot.wait_until(run_dialog.is_experiment_done, timeout=5000)
     assert len(run_dialog.post_experiment_warnings) > 0
 
     monkeypatch.setattr(
         QMessageBox, "exec", value=lambda _: QMessageBox.StandardButton.Ok
     )
     run_dialog.rerun_failed_realizations()
-    qtbot.wait_until(run_dialog.is_simulation_done, timeout=5000)
+    qtbot.wait_until(run_dialog.is_experiment_done, timeout=5000)
 
     assert len(run_dialog.post_experiment_warnings) == 0
 
@@ -1068,5 +1068,5 @@ def test_that_experiment_with_a_scheduler_warning_event_shows_a_warning_dialog(
     yes_button = next(b for b in dialog_buttons if "OK" in b.text())
     qtbot.mouseClick(yes_button, Qt.MouseButton.LeftButton)
 
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=10000)
+    qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=10000)
     assert run_dialog is not None
