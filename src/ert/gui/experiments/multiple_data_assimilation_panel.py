@@ -124,7 +124,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         layout.addRow("Analysis module:", self._analysis_module_edit)
         self._active_realizations_field = StringBox(
             ActiveRealizationsModel(len(active_realizations)),  # type: ignore
-            "config/simulation/active_realizations",
+            "config/experiment/active_realizations",
         )
         self._new_ensemble_realizations_validator = RangeSubsetStringArgument(
             ActiveRange(active_realizations)
