@@ -258,15 +258,6 @@ class LocalEnsemble(BaseMode):
         )
 
     def get_realization_mask_with_responses(self) -> npt.NDArray[np.bool_]:
-        """
-        Get a boolean mask indicating which realizations have responses loaded.
-
-        Returns
-        -------
-        ndarray of bool
-            Boolean array where True means responses are loaded.
-        """
-
         return np.array(
             [
                 RealizationStorageState.RESPONSES_LOADED in state
@@ -301,32 +292,10 @@ class LocalEnsemble(BaseMode):
         }
 
     def has_data(self) -> bool:
-        """
-        Check if the ensemble has any responses.
-
-        Returns
-        -------
-        bool
-            True if the ensemble has at least one realization with responses,
-            False otherwise.
-        """
+        """Returns True if at least one realization has response."""
         return len(self.get_realization_list_with_responses()) > 0
 
     def get_realization_list_with_responses(self) -> list[int]:
-        """
-        list of realization indices with associated responses.
-
-        Parameters
-        ----------
-        key : str, optional
-            Response key to filter realizations. If None, all responses are considered.
-
-        Returns
-        -------
-        realizations : list of int
-            list of realization indices with associated responses.
-        """
-
         mask = self.get_realization_mask_with_responses()
         return np.where(mask)[0].tolist()
 
@@ -336,19 +305,6 @@ class LocalEnsemble(BaseMode):
         failure_type: RealizationStorageState,
         message: str | None = None,
     ) -> None:
-        """
-        Record a failure for a given realization in ensemble.
-
-        Parameters
-        ----------
-        realization : int
-            Index of realization.
-        failure_type : RealizationStorageState
-            Type of failure.
-        message : str, optional
-            Optional message describing the failure.
-        """
-
         filename: Path = self._realization_dir(realization) / self._error_log_name
         error = _Failure(type=failure_type, message=message or "", time=datetime.now())
         if not filename.parent.parent.exists():
@@ -371,36 +327,12 @@ class LocalEnsemble(BaseMode):
             filename.unlink()
 
     def has_failure(self, realization: int) -> bool:
-        """
-        Check if given realization has a recorded failure.
-
-        Parameters
-        ----------
-        realization : int
-            Index of realization.
-
-        Returns
-        -------
-        has_failure : bool
-            True if realization has a recorded failure.
-        """
+        """Returns True if the given realization has a recorded failure."""
 
         return (self._realization_dir(realization) / self._error_log_name).exists()
 
     def get_failure(self, realization: int) -> _Failure | None:
-        """
-        Retrieve failure information for a given realization, if any.
-
-        Parameters
-        ----------
-        realization : int
-            Index of realization.
-
-        Returns
-        -------
-        failure : _Failure, optional
-            Failure information if recorded, otherwise None.
-        """
+        """Retrieve failure information for a given realization, if any."""
 
         if self.has_failure(realization):
             return _Failure.model_validate_json(
@@ -418,15 +350,6 @@ class LocalEnsemble(BaseMode):
 
     @lru_cache  # noqa: B019
     def get_ensemble_state(self) -> list[set[RealizationStorageState]]:
-        """
-        Retrieve the state of each realization within ensemble.
-
-        Returns
-        -------
-        states : list of RealizationStorageState
-            list of realization states.
-        """
-
         response_configs = self.experiment.response_configuration
         existing_scalars = self._existing_scalars
 
