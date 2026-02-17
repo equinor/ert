@@ -269,7 +269,7 @@ def run_experiment_fixture(request):
         with contextlib.suppress(FileNotFoundError):
             shutil.rmtree("poly_out")
 
-        button = gui.findChild(QToolButton, "button_Start_simulation")
+        button = gui.findChild(QToolButton, "button_Start_experiment")
         qtbot.mouseClick(button, Qt.MouseButton.LeftButton)
 
         # Select correct experiment in the simulation panel
