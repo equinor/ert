@@ -412,7 +412,7 @@ Simulated data
 --------------
 
 The datatypes in the *Simulated data* chapter correspond to datatypes which are
-used to load results from a forward model simulation and into ERT. In a model
+used to load results from a forward model :term:`simulation` and into ERT. In a model
 updating workflow instances of these datatypes are compared with observed values
 and that is used as basis for the update process. Also post processing tasks
 like plotting and QC is typically based on these data types.

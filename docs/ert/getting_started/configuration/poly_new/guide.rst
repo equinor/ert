@@ -22,7 +22,7 @@ Running ERT requires a dedicated configuration file, typically with the extensio
 
    .. literalinclude:: minimal/poly.ert
 
-:ref:`NUM_REALIZATIONS <num_realizations>` specifies how many simulations you want to run.
+:ref:`NUM_REALIZATIONS <num_realizations>` specifies how many :term:`simulations <simulation>` you want to run.
 
 Launch the user interface
 *************************
@@ -383,7 +383,7 @@ This should return something similar to:
         "c" : {"value" : 1.9495650072493478}
     }
 
-2. **Inspecting the results**: Each simulation generated a unique file named ``poly.out`` reflecting the varying outcomes.
+2. **Inspecting the results**: Each :term:`simulation` generated a unique file named ``poly.out`` reflecting the varying outcomes.
    A typical output from a realization might look like:
 
 .. code-block:: shell

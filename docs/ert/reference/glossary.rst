@@ -85,6 +85,16 @@ It is not about being correct, it is about being relevant and coherent.
         successful in at least one the two ensembles evaluations will be successful in
         the merged ensemble response.
 
+    experiment
+        An experiment consists of one or more ensembles, which may be related via
+        zero or more update steps. For example you might have a prior ensemble that
+        results in the posterior ensemble by running IES.
+
+    simulation
+        There are two uses of the word simulation:
+         * A synonym for running a realization, ie. executing all the forward model steps.
+         * Some forward model steps are simulators which do simulation, eg. OPM flow and eclipse.
+
     reservoir simulator
         Simulation of reservoir fields come in many forms, but for the purposes of
         ert we only consider simulators that produces

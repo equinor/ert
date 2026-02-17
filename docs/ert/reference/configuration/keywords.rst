@@ -716,8 +716,8 @@ knows if the DATA file is to be executed in parallel.
 
 .. _keywords_controlling_the_simulations:
 
-Keywords controlling the simulations
-------------------------------------
+Keywords controlling the experiment
+-----------------------------------
 
 .. _min_realizations:
 
@@ -725,7 +725,7 @@ MIN_REALIZATIONS
 ----------------
 
 MIN_REALIZATIONS is the minimum number of realizations that
-must have succeeded for the simulation to be regarded as a
+must have succeeded for the ensemble to be regarded as a
 success.
 
 MIN_REALIZATIONS can also be used in combination with
@@ -748,7 +748,7 @@ NUM_REALIZATIONS
 The MIN_REALIZATIONS key is optional, but if it has not been
 set *all* the realisations must succeed.
 
-Please note that MIN_REALIZATIONS = 0 means all simulations must succeed
+Please note that MIN_REALIZATIONS = 0 means all realizations must succeed
 (this happens to be the default value). Note MIN_REALIZATIONS is rounded up
 e.g. 2% of 20 realizations is rounded to 1.
 
@@ -1850,7 +1850,7 @@ The :code:`POST_SIMULATION` hook is typically used to trigger QC workflows.
    HOOK_WORKFLOW QC_WFLOW2        POST_SIMULATION
 
 In this example the workflow :code:`initWFLOW` will run after all the
-simulation directories have been created, just before the forward
+:term:`simulation` directories have been created, just before the forward
 model is submitted to the queue. The workflow :code:`preUpdateWFLOW`
 will be run before the update step and :code:`postUpdateWFLOW` will be
 run after the update step. When all the simulations have completed the
