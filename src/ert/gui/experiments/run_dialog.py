@@ -492,7 +492,7 @@ class RunDialog(QFrame):
             self._run_model_api.has_failed_realizations()
             and self._run_model_api.supports_rerunning_failed_realizations
         )
-        self._notifier.set_is_simulation_running(False)
+        self._notifier.set_is_experiment_running(False)
         self.flag_simulation_done = True
 
         if failed:

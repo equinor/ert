@@ -91,7 +91,7 @@ class ErtNotifier(QObject):
             self.current_ensemble_changed.emit(ensemble_id)
 
     @Slot(bool)
-    def set_is_simulation_running(self, is_running: bool) -> None:
+    def set_is_experiment_running(self, is_running: bool) -> None:
         self._is_experiment_running = is_running
         if self._is_experiment_running:
             self.experiment_started.emit()
