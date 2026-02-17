@@ -4,6 +4,7 @@ from pathlib import Path
 from textwrap import dedent
 
 import pytest
+from ert.tests.handle_run_path_dialog import handle_run_path_dialog
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import QComboBox, QToolButton, QWidget
 from skimage import io, transform
@@ -22,9 +23,6 @@ from ert.storage import open_storage
 from tests.ert.ui_tests.gui.conftest import open_gui_with_config
 
 from .conftest import get_child, wait_for_child
-from .test_run_path_dialog import (
-    handle_run_path_dialog,
-)
 
 # List of png files under docs that are either:
 #  - not screenshots of the gui
