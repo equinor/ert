@@ -4,7 +4,7 @@ import numpy as np
 import polars as pl
 import pytest
 
-from ert.config import GenKwConfig
+from ert.config import GenKwConfig, SurfaceConfig
 from ert.run_arg import create_run_arguments
 from ert.run_models._create_run_path import create_run_path
 from ert.runpaths import Runpaths
@@ -88,6 +88,77 @@ def test_create_run_path_load_scalar_keys_performance(
             0, pl.Series("realization", np.arange(reals, dtype=np.int32))
         )
         df.write_parquet(ensemble.mount_point / "SCALAR.parquet")
+
+        active = [True] * reals
+        counter = itertools.count()
+
+        def run():
+            idx = next(counter)
+            runpath_root = tmp_path / f"runpaths_{idx}"
+            runpaths = Runpaths(
+                jobname_format="job_<IENS>",
+                runpath_format=str(
+                    runpath_root / "realization-<IENS>" / "iteration-<ITER>"
+                ),
+                filename=runpath_root / ".ert_runpath_list",
+            )
+            run_args = create_run_arguments(runpaths, active, ensemble)
+
+            create_run_path(
+                run_args=run_args,
+                ensemble=ensemble,
+                user_config_file="perf.ert",
+                env_vars={},
+                env_pr_fm_step={},
+                forward_model_steps=[],
+                substitutions={},
+                parameters_file="parameters",
+                runpaths=runpaths,
+            )
+
+        benchmark(run)
+
+
+def test_create_run_path_surface_performance(tmp_path, benchmark):
+    storage_path = tmp_path / "storage"
+    reals = 2
+    num_surfaces = 2
+    nrow = 1250
+    ncol = 800
+
+    rng = np.random.default_rng(42)
+    data = rng.standard_normal(size=(nrow, ncol))
+
+    parameter_configs = [
+        SurfaceConfig(
+            name=f"some_name_{i}",
+            forward_init=False,
+            ncol=ncol,
+            nrow=nrow,
+            xori=3.0,
+            yori=4.0,
+            xinc=1.0,
+            yinc=2.0,
+            rotation=10,
+            yflip=-1,
+            forward_init_file="input_%d",
+            output_file=tmp_path / "output_%d",
+            base_surface_path="base_surface",
+            update=True,
+        )
+        for i in range(num_surfaces)
+    ]
+
+    with open_storage(storage_path, mode="w") as storage:
+        ensemble = storage.create_experiment(
+            experiment_config={"parameter_configuration": parameter_configs}
+        ).create_ensemble(name="default", ensemble_size=reals)
+
+        for config_node in parameter_configs:
+            for i in range(reals):
+                ensemble.save_parameters_numpy(
+                    data.reshape(-1, 1), config_node.name, np.array([i])
+                )
 
         active = [True] * reals
         counter = itertools.count()
