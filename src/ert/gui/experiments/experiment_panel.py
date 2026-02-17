@@ -400,7 +400,7 @@ class ExperimentPanel(QWidget):
             self._notifier.emitErtChange()
             self.toggleExperimentType()
 
-        self._dialog.simulation_done.connect(simulation_done_handler)
+        self._dialog.experiment_done.connect(simulation_done_handler)
 
     def toggleExperimentType(self) -> None:
         current_model = self.get_current_experiment_type()
