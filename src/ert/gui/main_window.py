@@ -142,17 +142,17 @@ class ErtMainWindow(QMainWindow):
         self._experiment_panel: ExperimentPanel | None = None
         self._plot_window: PlotWindow | None = None
         self._manage_experiments_panel: ManageExperimentsPanel | None = None
-        self.simulation_button = self._add_sidebar_button(
-            "Start simulation", QIcon("img:library_add.svg")
+        self.experiment_button = self._add_sidebar_button(
+            "Start experiment", QIcon("img:library_add.svg")
         )
         plot_button = self._add_sidebar_button("Create plot", QIcon("img:timeline.svg"))
         plot_button.setToolTip("Right click to open external window")
         self._add_sidebar_button("Manage experiments", QIcon("img:build_wrench.svg"))
         self.results_button = self._add_sidebar_button(
-            "Simulation status", QIcon("img:in_progress.svg")
+            "Experiment status", QIcon("img:in_progress.svg")
         )
         self.results_button.setEnabled(False)
-        self.simulation_button.click()
+        self.experiment_button.click()
         self.run_dialog_counter = 0
 
         self.vbox_layout.addStretch()
@@ -209,8 +209,8 @@ class ErtMainWindow(QMainWindow):
                 self.central_layout.addWidget(self._plot_window)
                 self.central_panels_map["Create plot"] = self._plot_window
 
-            if index_name == "Simulation status":
-                # select the only available simulation
+            if index_name == "Experiment status":
+                # select the only available experiments
                 for k, v in self.central_panels_map.items():
                     if isinstance(v, RunDialog):
                         index_name = k
@@ -290,7 +290,7 @@ class ErtMainWindow(QMainWindow):
         )
         self.central_layout.addWidget(experiment_panel)
         self._experiment_panel = experiment_panel
-        self.central_panels_map["Start simulation"] = self._experiment_panel
+        self.central_panels_map["Start experiment"] = self._experiment_panel
 
         experiment_panel.experiment_started.connect(self.slot_add_widget)
 

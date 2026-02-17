@@ -39,9 +39,9 @@ Launch the user interface
 The main elements relevant to this guide are:
 *********************************************
 
-* **Start simulation** (sidebar menu) with the following components:
+* **Start experiment** (sidebar menu) with the following components:
     * Top dropdown menu displays available algorithms. Only a limited set is available at this stage, as we have not fully configured ERT yet.
-    * The "play button" next to the dropdown, initiates an experiment with the current configuration and selected simulation mode.
+    * The "play button" next to the dropdown, initiates an experiment with the current configuration and selected mode.
     * Middle panel shows some help and the "Runpath", a configurable path determining where each realization of the experiment will be executed. The placeholders ``<IENS>`` and ``<ITER>`` will be replaced by the number of the realization and the number of iterations, respectively.
     * Lower panel shows the configuration summary: Initially empty, but will display what has been configured once you've set up your experiment.
 
@@ -50,10 +50,10 @@ Run an empty experiment
 
 To execute an empty experiment, follow these steps:
 
-1. **Select simulation mode**: Choose "Ensemble experiment" as the Simulation mode in the dropdown.
+1. **Select experiment mode**: Choose "Ensemble experiment" as the mode in the dropdown.
 2. **Start the experiment**: Click the "Run experiment" (play) button.
 
-The focus will be moved to the left sidebar menu item "Simulation status", displaying the status of the experiment.
+The focus will be moved to the left sidebar menu item "Experiment status", displaying the status of the experiment.
 
 .. image:: minimal/simulations.png
 

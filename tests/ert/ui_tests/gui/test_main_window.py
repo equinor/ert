@@ -857,28 +857,28 @@ def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
         qtbot.wait_until(lambda: dialog.is_simulation_done() is True, timeout=15000)
 
     # not clickable since no simulations started yet
-    find_and_click_button("button_Simulation_status", False, False)
-    find_and_click_button("button_Start_simulation", True, True)
+    find_and_click_button("button_Experiment_status", False, False)
+    find_and_click_button("button_Start_experiment", True, True)
 
     run_experiment()
     wait_for_simulation_completed()
 
     # just toggle to see if next button yields intended change
-    find_and_click_button("button_Start_simulation", True, True)
+    find_and_click_button("button_Start_experiment", True, True)
     experiments_panel = wait_for_child(gui, qtbot, ExperimentPanel)
     qtbot.wait_until(lambda: not experiments_panel.isHidden(), timeout=5000)
 
-    find_and_click_button("button_Simulation_status", True, True)
+    find_and_click_button("button_Experiment_status", True, True)
     run_dialog = wait_for_child(gui, qtbot, RunDialog)
     qtbot.wait_until(lambda: not run_dialog.isHidden(), timeout=5000)
 
     # verify no drop menu
     button_simulation_status = gui.findChild(
-        SidebarToolButton, "button_Simulation_status"
+        SidebarToolButton, "button_Experiment_status"
     )
     assert button_simulation_status.menu() is None
 
-    find_and_click_button("button_Start_simulation", True, True)
+    find_and_click_button("button_Start_experiment", True, True)
     QTimer.singleShot(500, lambda: handle_run_path_dialog(gui, qtbot, True))
     run_experiment()
     wait_for_simulation_completed()
@@ -886,16 +886,16 @@ def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
     # verify menu available
     assert len(button_simulation_status.menu().actions()) == 2
 
-    find_and_click_button("button_Start_simulation", True, True)
+    find_and_click_button("button_Start_experiment", True, True)
     QTimer.singleShot(500, lambda: handle_run_path_dialog(gui, qtbot, True))
     run_experiment()
     wait_for_simulation_completed()
 
     # click on something else just to shift focus
-    find_and_click_button("button_Start_simulation", True, True)
+    find_and_click_button("button_Start_experiment", True, True)
     # verify correct button in focus
-    find_and_check_selected("button_Start_simulation", True)
-    find_and_check_selected("button_Simulation_status", False)
+    find_and_check_selected("button_Start_experiment", True)
+    find_and_check_selected("button_Experiment_status", False)
 
     assert len(button_simulation_status.menu().actions()) == 3
     for choice in button_simulation_status.menu().actions():
@@ -903,8 +903,8 @@ def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
 
         # verify correct button in focus when selecting from drop-down
         choice.trigger()
-        find_and_check_selected("button_Start_simulation", False)
-        find_and_check_selected("button_Simulation_status", True)
+        find_and_check_selected("button_Start_experiment", False)
+        find_and_check_selected("button_Experiment_status", True)
 
 
 def test_that_visible_experiment_label_matches_bold_simulation_menu_action(
@@ -928,7 +928,7 @@ def test_that_visible_experiment_label_matches_bold_simulation_menu_action(
 
     def retrieve_existing_menu_actions(expected_actions_number):
         simulation_status_menu = gui.findChild(
-            SidebarToolButton, "button_Simulation_status"
+            SidebarToolButton, "button_Experiment_status"
         ).menu()
         assert len(simulation_status_menu.actions()) == expected_actions_number
         for action in simulation_status_menu.actions():
