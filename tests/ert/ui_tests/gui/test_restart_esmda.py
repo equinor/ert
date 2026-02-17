@@ -32,7 +32,7 @@ def test_restart_esmda(ensemble_experiment_has_run_no_failure, qtbot):
     qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
     run_dialog = gui.findChild(RunDialog)
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=60000)
+    qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=60000)
     assert (
         run_dialog._total_progress_label.text()
         == "Total progress 100% — Experiment completed."
@@ -56,7 +56,7 @@ def test_active_realizations_esmda(opened_main_window_poly, qtbot):
     qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
     run_dialog = gui.findChild(RunDialog)
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=15000)
+    qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=15000)
     assert (
         run_dialog._total_progress_label.text()
         == "Total progress 100% — Experiment completed."
@@ -107,7 +107,7 @@ def test_custom_weights_stored_and_retrieved_from_metadata_esmda(
     qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
     run_dialog = gui.findChild(RunDialog)
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=20000)
+    qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=20000)
     assert (
         run_dialog._total_progress_label.text()
         == "Total progress 100% — Experiment completed."
