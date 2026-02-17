@@ -3,13 +3,11 @@ from PyQt6.QtWidgets import QComboBox, QWidget
 
 from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.gui.experiments.evaluate_ensemble_panel import EvaluateEnsemblePanel
+from tests.ert.handle_run_path_dialog import handle_run_path_dialog
 from tests.ert.ui_tests.gui.conftest import (
     DEFAULT_NUM_REALIZATIONS,
     get_child,
     wait_for_child,
-)
-from tests.ert.ui_tests.gui.test_restart_ensemble_experiment import (
-    handle_run_path_dialog,
 )
 
 

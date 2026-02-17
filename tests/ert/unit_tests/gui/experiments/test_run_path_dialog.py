@@ -4,47 +4,16 @@ from unittest.mock import Mock, patch
 
 import pytest
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtWidgets import QComboBox, QMessageBox, QToolButton, QWidget
+from PyQt6.QtWidgets import QComboBox, QToolButton, QWidget
 from pytestqt.qtbot import QtBot
 
 from ert.config import ErtConfig
 from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.gui.experiments.ensemble_experiment_panel import EnsembleExperimentPanel
 from ert.gui.main import _setup_main_window
-from ert.gui.main_window import ErtMainWindow
 from ert.gui.tools.event_viewer.panel import GUILogHandler
 from ert.run_models.ensemble_experiment import EnsembleExperiment
-
-
-def handle_run_path_dialog(
-    gui: ErtMainWindow,
-    qtbot: QtBot,
-    delete_run_path: bool = True,
-    expect_error: bool = False,
-):
-    mb = gui.findChildren(QMessageBox, "RUN_PATH_WARNING_BOX")
-    mb = mb[-1] if mb else None
-
-    if mb is not None:
-        assert mb
-        assert isinstance(mb, QMessageBox)
-
-        if delete_run_path:
-            qtbot.mouseClick(mb.checkBox(), Qt.MouseButton.LeftButton)
-
-        qtbot.mouseClick(mb.buttons()[0], Qt.MouseButton.LeftButton)
-        if expect_error:
-            QTimer.singleShot(1000, lambda: handle_run_path_error_dialog(gui, qtbot))
-
-
-def handle_run_path_error_dialog(gui: ErtMainWindow, qtbot: QtBot):
-    mb = gui.findChild(QMessageBox, "RUN_PATH_ERROR_BOX")
-
-    if mb is not None:
-        assert mb
-        assert isinstance(mb, QMessageBox)
-        # Continue without deleting the runpath
-        qtbot.mouseClick(mb.buttons()[0], Qt.MouseButton.LeftButton)
+from tests.ert.handle_run_path_dialog import handle_run_path_dialog
 
 
 @pytest.mark.integration_test

@@ -36,9 +36,7 @@ from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWi
 from ert.plugins import get_site_plugins
 from ert.run_models import EnsembleExperiment, MultipleDataAssimilation
 from ert.storage import Storage
-from tests.ert.unit_tests.gui.experiments.test_run_path_dialog import (
-    handle_run_path_dialog,
-)
+from tests.ert.handle_run_path_dialog import handle_run_path_dialog
 
 DEFAULT_NUM_REALIZATIONS = 10
 
