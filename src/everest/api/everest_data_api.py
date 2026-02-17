@@ -212,7 +212,7 @@ class EverestDataAPI:
             try:
                 ensemble = experiment.get_ensemble_by_name(f"batch_{batch_id}")
                 summary = ensemble.load_responses(
-                    key="summary",
+                    response_key="summary",
                     realizations=tuple(self.simulations),
                 )
             except (ValueError, KeyError):
