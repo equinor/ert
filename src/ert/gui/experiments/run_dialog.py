@@ -227,7 +227,7 @@ class RunDialog(QFrame):
         self._event_queue = event_queue
         self._notifier = notifier
         self.fail_msg_box: Suggestor | None = None
-        self.post_simulation_warnings: list[str] = []
+        self.post_experiment_warnings: list[str] = []
 
         self._ticker = QTimer(self)
         self._ticker.timeout.connect(self._on_ticker)
@@ -367,16 +367,16 @@ class RunDialog(QFrame):
 
         self.kill_button.clicked.connect(self.killJobs)
         self.rerun_button.clicked.connect(self.rerun_failed_realizations)
-        self.experiment_done.connect(self._on_simulation_done)
+        self.experiment_done.connect(self._on_experiment_done)
 
         self.setMinimumSize(1200, 600)
         self._is_rerunning_failed_realizations = False
-        self.flag_simulation_done = False
+        self.flag_experiment_done = False
 
         self._latest_iteration = 0
 
     def is_simulation_done(self) -> bool:
-        return self.flag_simulation_done
+        return self.flag_experiment_done
 
     def _current_tab_changed(self, index: int) -> None:
         widget = self._tab_widget.widget(index)
@@ -447,7 +447,7 @@ class RunDialog(QFrame):
             self._fm_step_label.setText(text)
 
     def setup_event_monitoring(self, rerun_failed_realizations: bool = False) -> None:
-        self.flag_simulation_done = False
+        self.flag_experiment_done = False
         if rerun_failed_realizations is False:
             self._snapshot_model.reset()
             self._tab_widget.clear()
@@ -483,7 +483,7 @@ class RunDialog(QFrame):
         return kill_job
 
     @Slot(bool, str)
-    def _on_simulation_done(self, failed: bool, msg: str) -> None:
+    def _on_experiment_done(self, failed: bool, msg: str) -> None:
         self.processing_animation.setVisible(False)
         self.processing_stopped.setVisible(True)
         self.kill_button.setEnabled(False)
@@ -493,7 +493,7 @@ class RunDialog(QFrame):
             and self._run_model_api.supports_rerunning_failed_realizations
         )
         self._notifier.set_is_experiment_running(False)
-        self.flag_simulation_done = True
+        self.flag_experiment_done = True
 
         if failed:
             self.update_total_progress(1.0, "Failed")
@@ -502,10 +502,10 @@ class RunDialog(QFrame):
         else:
             self.update_total_progress(1.0, "Experiment completed.")
 
-        if failed or self.post_simulation_warnings:
+        if failed or self.post_experiment_warnings:
             self.fail_msg_box = Suggestor(
                 errors=[ErrorInfo(msg)] if failed else [],
-                warnings=[WarningInfo(msg) for msg in self.post_simulation_warnings],
+                warnings=[WarningInfo(msg) for msg in self.post_experiment_warnings],
                 deprecations=[],
                 continue_action=None,
                 widget_info=(
@@ -520,10 +520,10 @@ class RunDialog(QFrame):
             self.show_warnings_button.setToolTip("")
             self.fail_msg_box.show()
 
-        if self.post_simulation_warnings:
+        if self.post_experiment_warnings:
             logger.info(
                 f"Simulation finished with "
-                f"{len(self.post_simulation_warnings)} PostSimulationWarnings"
+                f"{len(self.post_experiment_warnings)} warnings"
             )
 
     def set_show_warning_button_to_initial_state(self) -> None:
@@ -565,7 +565,7 @@ class RunDialog(QFrame):
                 self.experiment_done.emit(failed, msg)
                 self._ticker.stop()
             case WarningEvent(msg=msg):
-                self.post_simulation_warnings.append(msg)
+                self.post_experiment_warnings.append(msg)
             case EnsembleEvaluationWarning(warning_message=msg):
                 self._show_warning(msg)
 
@@ -671,7 +671,7 @@ class RunDialog(QFrame):
         if result == QMessageBox.StandardButton.Ok:
             self.rerun_button.setEnabled(False)
             self.kill_button.setEnabled(True)
-            self.post_simulation_warnings.clear()
+            self.post_experiment_warnings.clear()
             self._is_rerunning_failed_realizations = True
             self.rerun_failed_realizations_experiment.emit()
             self.set_show_warning_button_to_initial_state()

@@ -15,7 +15,7 @@ from ert.config import (
 from ert.config._create_observation_dataframes import _handle_rft_observation
 from ert.config._observations import RFTObservation
 from ert.config.parsing import ConfigValidationError, ObservationType
-from ert.warnings import PostSimulationWarning
+from ert.warnings import PostExperimentWarning
 from tests.ert.rft_generator import cell_start, float_arr
 
 original_open = open
@@ -444,7 +444,7 @@ def test_that_if_an_rft_observation_is_outside_the_zone_then_it_is_deactivated(
             ("DEPTH   ", float_arr([0.1])),
         ],
     )
-    with pytest.warns(PostSimulationWarning, match="did not match expected zone"):
+    with pytest.warns(PostExperimentWarning, match="did not match expected zone"):
         config.ensemble_config.response_configs["rft"].read_from_file(
             "/tmp/does_not_exist", 1, 1
         )

@@ -24,7 +24,7 @@ from resfo_utilities import (
 )
 
 from ert.substitutions import substitute_runpath_name
-from ert.warnings import PostSimulationWarning
+from ert.warnings import PostExperimentWarning
 
 from .parsing import (
     ConfigDict,
@@ -139,7 +139,7 @@ class RFTConfig(ResponseConfig):
                         # zonemap is 1-indexed so +1
                         if zone not in zonemap.get(idx[-1] + 1, []):
                             warnings.warn(
-                                PostSimulationWarning(
+                                PostExperimentWarning(
                                     f"An RFT observation with location {loc.point}, "
                                     f"in iteration {iter_}, realization {iens} did "
                                     f"not match expected zone {zone}. The observation "

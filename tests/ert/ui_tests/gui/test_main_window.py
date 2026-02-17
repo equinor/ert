@@ -1028,7 +1028,7 @@ warnings.warn('Foobar')"""
         assert expected_message in messages
 
     # Regression test for total progress bar being green given
-    # PostSimulationWarning and no failures
+    # PostExperimentWarning and no failures
     assert (
         run_dialog._total_progress_label.text()
         == "Total progress 100% — Experiment completed."

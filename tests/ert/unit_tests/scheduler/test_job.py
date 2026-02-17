@@ -25,7 +25,7 @@ from ert.scheduler.job import (
     log_warnings_from_forward_model,
 )
 from ert.storage.load_status import LoadResult
-from ert.warnings import PostSimulationWarning
+from ert.warnings import PostExperimentWarning
 
 
 def create_scheduler():
@@ -473,7 +473,7 @@ async def test_log_warnings_from_forward_model(
         )
     ]
     if should_be_captured:
-        with pytest.warns(PostSimulationWarning):
+        with pytest.warns(PostExperimentWarning):
             await log_warnings_from_forward_model(realization, start_time - 1)
         assert (
             "Realization 0 step foo.0 warned "
@@ -537,7 +537,7 @@ async def test_long_warning_from_forward_model_is_truncated(
             stdout_file="foo.stdout",
         )
     ]
-    with pytest.warns(PostSimulationWarning):
+    with pytest.warns(PostExperimentWarning):
         await log_warnings_from_forward_model(realization, start_time - 1)
     for line in caplog.text.splitlines():
         if "Realization 0 step foo.0 warned" in line:
@@ -565,7 +565,7 @@ async def test_deduplication_of_repeated_warnings_from_forward_model(
             stdout_file="foo.stdout",
         )
     ]
-    with pytest.warns(PostSimulationWarning):
+    with pytest.warns(PostExperimentWarning):
         await log_warnings_from_forward_model(realization, start_time - 1)
     assert (
         f"Realization 0 step foo.0 warned 3 time(s) in stdout: {emitted_warning_str}"

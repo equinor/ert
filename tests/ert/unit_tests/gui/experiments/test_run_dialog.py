@@ -992,7 +992,7 @@ def test_that_run_dialog_clears_warnings_when_rerun(
     events, event_queue, qtbot, monkeypatch, run_dialog
 ):
     qtbot.wait_until(run_dialog.is_simulation_done, timeout=5000)
-    assert len(run_dialog.post_simulation_warnings) > 0
+    assert len(run_dialog.post_experiment_warnings) > 0
 
     monkeypatch.setattr(
         QMessageBox, "exec", value=lambda _: QMessageBox.StandardButton.Ok
@@ -1000,7 +1000,7 @@ def test_that_run_dialog_clears_warnings_when_rerun(
     run_dialog.rerun_failed_realizations()
     qtbot.wait_until(run_dialog.is_simulation_done, timeout=5000)
 
-    assert len(run_dialog.post_simulation_warnings) == 0
+    assert len(run_dialog.post_experiment_warnings) == 0
 
 
 @pytest.mark.timeout(10)
