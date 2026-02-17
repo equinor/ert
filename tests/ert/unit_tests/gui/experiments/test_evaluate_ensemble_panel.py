@@ -3,8 +3,8 @@ from unittest.mock import Mock
 import pytest
 
 import ert.gui
+from ert.gui.experiments import ExperimentPanel
 from ert.gui.experiments.evaluate_ensemble_panel import EvaluateEnsemblePanel
-from ert.gui.experiments.experiment_panel import ExperimentPanel
 from ert.gui.main import GUILogHandler
 from tests.ert.ui_tests.gui.conftest import (
     get_child,

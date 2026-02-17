@@ -36,8 +36,7 @@ from ert.gui.ertwidgets import (
 )
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
 from ert.gui.ertwidgets.suggestor._suggestor_message import SuggestorMessage
-from ert.gui.experiments.experiment_panel import ExperimentPanel
-from ert.gui.experiments.run_dialog import RunDialog
+from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
 from ert.gui.main_window import SidebarToolButton
 from ert.gui.tools.event_viewer import add_gui_log_handler

@@ -25,8 +25,6 @@ from typing_extensions import override
 from ert.config import ErtConfig, ErtScriptWorkflow
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.experiments import ExperimentPanel
-from ert.gui.experiments.run_dialog import RunDialog
 from ert.gui.find_ert_info import find_ert_info
 from ert.gui.tools.event_viewer import EventViewerTool, GUILogHandler
 from ert.gui.tools.load_results import LoadResultsTool
@@ -38,6 +36,7 @@ from ert.plugins import ErtRuntimePlugins
 from ert.trace import get_trace_id
 
 from .detect_mode import is_dark_mode, is_high_contrast_mode
+from .experiments import ExperimentPanel, RunDialog
 
 logger = logging.getLogger(__name__)
 BUTTON_STYLE_SHEET: str = """
