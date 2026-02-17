@@ -277,12 +277,12 @@ class ErtServerController:
         logging_config: str | None = None,
     ) -> ErtServerContext:
         try:
-            service = connect(
+            controller = create_ert_server_controller(
                 project=project or Path.cwd(), timeout=0, logging_config=logging_config
             )
             # Check the server is up and running
-            _ = service.fetch_url()
-            return ErtServerContext(service)
+            _ = controller.fetch_url()
+            return ErtServerContext(controller)
         except (TimeoutError, json.JSONDecodeError, KeyError) as e:
             logging.getLogger(__name__).warning(
                 "Failed locating existing storage service due to "
@@ -419,26 +419,24 @@ class ErtServerController:
 
 def create_ertserver_client(project: Path, timeout: int | None = None) -> Client:
     """Read connection info from file in path and create HTTP client."""
-    connection = connect(timeout=timeout, project=project)
-    info = connection.fetch_connection_info()
+    controller = create_ert_server_controller(timeout=timeout, project=project)
+    info = controller.fetch_connection_info()
     return Client(
         conn_info=ErtClientConnectionInfo(
-            base_url=connection.fetch_url(),
-            auth_token=connection.fetch_auth()[1],
+            base_url=controller.fetch_url(),
+            auth_token=controller.fetch_auth()[1],
             cert=info["cert"],
         )
     )
 
 
-def connect(
+def create_ert_server_controller(
     *,
     project: os.PathLike[str],
     timeout: int | None = None,
     logging_config: str | None = None,
 ) -> ErtServerController:
-    """Connect to an existing server, or start one if it doesn't exist."""
     path = Path(project)
-
     # Wait for storage_server.json file to appear
     try:
         if timeout is None:

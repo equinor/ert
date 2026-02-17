@@ -16,7 +16,7 @@ from ert.services.ert_server import (
     ErtServerController,
     ServerBootFail,
     cleanup_service_files,
-    connect,
+    create_ert_server_controller,
 )
 
 
@@ -237,7 +237,7 @@ def test_that_connect_logs_permission_error(tmp_path, caplog):
     caplog.clear()
     caplog.set_level("ERROR")
     with pytest.raises(PermissionError):
-        connect(project=tmp_path, timeout=30)
+        create_ert_server_controller(project=tmp_path, timeout=30)
 
     tmp_path.chmod(0o755)
 
@@ -269,7 +269,9 @@ def test_singleton_connect_early(server_script, tmp_path, monkeypatch):
         def run(self):
             start_event.set()
             try:
-                self.client = connect(project=tmp_path, timeout=30)
+                self.controller = create_ert_server_controller(
+                    project=tmp_path, timeout=30
+                )
             except Exception as ex:
                 self.exception = ex
             ready_event.set()
@@ -284,7 +286,7 @@ def test_singleton_connect_early(server_script, tmp_path, monkeypatch):
         assert not getattr(client_thread, "exception", None), (
             f"Exception from connect: {client_thread.exception}"
         )
-        client = client_thread.client
+        client = client_thread.controller
         assert client is not server
         assert client.fetch_connection_info() == server.fetch_connection_info()
 
