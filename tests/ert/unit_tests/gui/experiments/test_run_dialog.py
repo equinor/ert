@@ -105,7 +105,7 @@ def event_queue_large_snapshot(large_snapshot):
 def mock_set_is_simulation_running():
     mock = MagicMock()
     with patch(
-        "ert.gui.main_window.ErtNotifier.set_is_simulation_running", mock
+        "ert.gui.main_window.ErtNotifier.set_is_experiment_running", mock
     ) as _mock:
         yield _mock
 

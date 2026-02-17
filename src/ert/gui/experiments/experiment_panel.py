@@ -384,7 +384,7 @@ class ExperimentPanel(QWidget):
             )
             self._dialog.setup_event_monitoring(rerun_failed_realizations)
             simulation_thread.start()
-            self._notifier.set_is_simulation_running(True)
+            self._notifier.set_is_experiment_running(True)
 
         def rerun_failed_realizations() -> None:
             start_simulation_thread(rerun_failed_realizations=True)
