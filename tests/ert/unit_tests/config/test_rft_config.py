@@ -101,6 +101,9 @@ def test_that_rft_with_no_matching_well_and_dates_returns_empty_frame(mock_resfo
         "values",
         "east",
         "north",
+        "i",
+        "j",
+        "k",
         "tvd",
         "zone",
     }

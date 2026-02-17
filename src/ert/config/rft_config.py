@@ -242,6 +242,7 @@ class RFTConfig(ResponseConfig):
             )
         )
         locations = {}
+        connections = {}
         try:
             with RFTReader.open(f"{run_path}/{filename}") as rft:
                 for entry in rft:
@@ -260,6 +261,7 @@ class RFTConfig(ResponseConfig):
                                 )
                                 for c in entry.connections
                             ]
+                            connections[well, date] = entry.connections
                             if np.isdtype(values.dtype, np.float32):
                                 num_values = len(values)
                                 num_conns = len(entry.connections)
@@ -289,6 +291,9 @@ class RFTConfig(ResponseConfig):
                     "east": [],
                     "north": [],
                     "tvd": [],
+                    "i": [],
+                    "j": [],
+                    "k": [],
                     "zone": [],
                 }
             )
@@ -316,6 +321,7 @@ class RFTConfig(ResponseConfig):
                                     pl.List(pl.Array(pl.Float32, 3)), len(vals)
                                 ),
                             ),
+                            "connection": [connections[well, time].tolist()],
                             "zone": pl.Series(
                                 [
                                     [
@@ -330,7 +336,7 @@ class RFTConfig(ResponseConfig):
                             ),
                         }
                     )
-                    .explode("depth", "values", "location", "zone")
+                    .explode("depth", "values", "location", "connection", "zone")
                     .explode("location", "zone")
                     for (well, time), inner_dict in fetched.items()
                     for prop, vals in inner_dict.items()
@@ -346,7 +352,10 @@ class RFTConfig(ResponseConfig):
             east=pl.col("location").arr.get(0),
             north=pl.col("location").arr.get(1),
             tvd=pl.col("location").arr.get(2),
-        ).drop("location")
+            i=pl.col("connection").list.get(0),
+            j=pl.col("connection").list.get(1),
+            k=pl.col("connection").list.get(2),
+        ).drop("location", "connection")
 
     @property
     def response_type(self) -> str:
