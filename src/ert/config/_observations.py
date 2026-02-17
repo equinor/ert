@@ -347,6 +347,7 @@ class RFTObservation(BaseModel):
     north: float
     east: float
     tvd: float
+    md: float | None = None
     radius: float | None
     zone: str | None = None
 
@@ -427,6 +428,7 @@ class RFTObservation(BaseModel):
                 east=validate_float(str(row.EAST), "EAST"),
                 radius=radius,
                 tvd=validate_float(str(row.TVD), "TVD"),
+                md=validate_float(str(row.MD), "MD") if "MD" in csv_file else None,
                 zone=row.ZONE if "ZONE" in csv_file else None,
             )
             # A value of -1 and error of 0 is used by fmu.tools.rms create_rft_ertobs to
@@ -463,7 +465,7 @@ class RFTObservation(BaseModel):
         Supports two modes:
         1. CSV mode: Load observations from a CSV file specified by the CSV key.
         2. Direct mode: Create a single observation from individual keys
-           (WELL, PROPERTY, VALUE, ERROR, DATE, NORTH, EAST, TVD, ZONE).
+           (WELL, PROPERTY, VALUE, ERROR, DATE, NORTH, EAST, TVD, MD, ZONE).
 
         Args:
             directory: Base directory for resolving relative file paths.
@@ -486,6 +488,7 @@ class RFTObservation(BaseModel):
         east = None
         radius = None
         tvd = None
+        md = None
         zone = None
         for key, value in observation_dict.items():
             match key:
@@ -511,6 +514,8 @@ class RFTObservation(BaseModel):
                     csv_filename = value
                 case "ZONE":
                     zone = value
+                case "MD":
+                    md = validate_float(value, key)
                 case "LOCALIZATION":
                     validate_rft_localization(value, observation_dict["name"])
                     east, north, radius = extract_localization_values(value)
@@ -540,7 +545,6 @@ class RFTObservation(BaseModel):
             raise _missing_value_error(observation_dict["name"], "EAST")
         if tvd is None:
             raise _missing_value_error(observation_dict["name"], "TVD")
-
         obs_instance = cls(
             name=observation_dict["name"],
             well=well,
@@ -551,6 +555,7 @@ class RFTObservation(BaseModel):
             north=north,
             east=east,
             tvd=tvd,
+            md=md,
             zone=zone,
             radius=radius,
         )

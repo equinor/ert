@@ -332,6 +332,7 @@ def test_that_rft_config_is_created_from_observations():
                 "east": pl.Series([30.0], dtype=pl.Float32),
                 "north": pl.Series([71.0], dtype=pl.Float32),
                 "tvd": pl.Series([2000.0], dtype=pl.Float32),
+                "md": pl.Series([None], dtype=pl.Float32),
                 "zone": pl.Series([None], dtype=pl.String),
                 "observations": pl.Series([700.0], dtype=pl.Float32),
                 "std": pl.Series([0.1], dtype=pl.Float32),
