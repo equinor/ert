@@ -155,7 +155,7 @@ def test_that_terminating_experiment_shows_a_confirmation_dialog(
 ):
     monkeypatch.setattr(Job, "WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL", 0)
     kill_button = run_dialog.kill_button
-    with qtbot.waitSignal(run_dialog.simulation_done, timeout=10000):
+    with qtbot.waitSignal(run_dialog.experiment_done, timeout=10000):
         # Wait for ensemble to start evaluating before cancelling
         _ = wait_for_child(run_dialog, qtbot, RealizationWidget)
 
@@ -961,7 +961,7 @@ def test_that_ert_chooses_minimum_realization_with_design_matrix(
 
 @pytest.mark.integration_test
 def test_that_file_dialog_close_when_run_dialog_hidden(qtbot: QtBot, run_dialog):
-    with qtbot.waitSignal(run_dialog.simulation_done, timeout=10000):
+    with qtbot.waitSignal(run_dialog.experiment_done, timeout=10000):
         assert not run_dialog.findChild(FileDialog)  # No file dialog from fixture setup
 
         with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8") as tmp_file:

@@ -196,7 +196,7 @@ class FMStepOverview(QTableView):
 
 
 class RunDialog(QFrame):
-    simulation_done = Signal(bool, str)
+    experiment_done = Signal(bool, str)
     progress_update_event = Signal(dict, int)
     rerun_failed_realizations_experiment = Signal()
     _RUN_TIME_POLL_RATE = 1000
@@ -367,7 +367,7 @@ class RunDialog(QFrame):
 
         self.kill_button.clicked.connect(self.killJobs)
         self.rerun_button.clicked.connect(self.rerun_failed_realizations)
-        self.simulation_done.connect(self._on_simulation_done)
+        self.experiment_done.connect(self._on_simulation_done)
 
         self.setMinimumSize(1200, 600)
         self._is_rerunning_failed_realizations = False
@@ -460,7 +460,7 @@ class RunDialog(QFrame):
         self._worker.moveToThread(self._worker_thread)
 
         self._worker_thread.started.connect(self._worker.consume_and_emit)
-        self.simulation_done.connect(self._worker.stop)
+        self.experiment_done.connect(self._worker.stop)
         self.destroyed.connect(lambda: _stop_worker(self._worker_thread, self._worker))
         self._worker_thread.start()
         self._ticker.start(self._RUN_TIME_POLL_RATE)
@@ -562,7 +562,7 @@ class RunDialog(QFrame):
             case StartEvent():
                 self._start_time = event.timestamp
             case EndEvent(failed=failed, msg=msg):
-                self.simulation_done.emit(failed, msg)
+                self.experiment_done.emit(failed, msg)
                 self._ticker.stop()
             case WarningEvent(msg=msg):
                 self.post_simulation_warnings.append(msg)
