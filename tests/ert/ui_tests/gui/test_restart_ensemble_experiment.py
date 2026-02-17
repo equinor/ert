@@ -75,7 +75,7 @@ def test_rerun_failed_all_realizations(opened_main_window_poly, qtbot):
 
     # The Run dialog opens, wait until restart appears and the tab is ready
     run_dialog = wait_for_child(gui, qtbot, RunDialog)
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=60000)
+    qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=60000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
     run_model = opened_main_window_poly._experiment_panel._model
@@ -90,7 +90,7 @@ def test_rerun_failed_all_realizations(opened_main_window_poly, qtbot):
     QTimer.singleShot(500, handle_dialog)
     qtbot.mouseClick(run_dialog.rerun_button, Qt.MouseButton.LeftButton)
 
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=60000)
+    qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=60000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
     assert not any(run_model._create_mask_from_failed_realizations()), (
@@ -161,7 +161,7 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot, caplog):
 
     # The Run dialog opens, wait until restart appears and the tab is ready
     run_dialog = wait_for_child(gui, qtbot, RunDialog)
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=60000)
+    qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=60000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
     def verify_logged_realization_status(realization_count: int, failed_count: int):
@@ -201,7 +201,7 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot, caplog):
     QTimer.singleShot(500, handle_dialog)
     qtbot.mouseClick(run_dialog.rerun_button, Qt.MouseButton.LeftButton)
 
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=60000)
+    qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=60000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
     verify_logged_realization_status(
@@ -234,7 +234,7 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot, caplog):
     write_poly_eval(failing_reals=failing_reals_third_try)
     qtbot.mouseClick(run_dialog.rerun_button, Qt.MouseButton.LeftButton)
 
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=60000)
+    qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=60000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
     verify_logged_realization_status(
@@ -334,7 +334,7 @@ def test_rerun_failed_realizations_evaluate_ensemble(
     qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
     # The Run dialog opens, wait until restart appears and the tab is ready
     run_dialog = wait_for_child(gui, qtbot, RunDialog)
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=60000)
+    qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=60000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
     # Assert that the number of boxes in the detailed view is
@@ -367,7 +367,7 @@ def test_rerun_failed_realizations_evaluate_ensemble(
     QTimer.singleShot(500, handle_dialog)
     qtbot.mouseClick(run_dialog.rerun_button, Qt.MouseButton.LeftButton)
 
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=60000)
+    qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=60000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
     # We expect to have the same amount of realizations in list_model

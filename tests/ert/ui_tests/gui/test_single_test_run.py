@@ -29,7 +29,7 @@ def test_single_test_run_after_ensemble_experiment(
     run_experiment = get_child(experiment_panel, QWidget, name="run_experiment")
     qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
     run_dialog = wait_for_child(gui, qtbot, RunDialog)
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=100000)
+    qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=100000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
     storage = gui.notifier.storage

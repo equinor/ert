@@ -642,7 +642,7 @@ def test_that_a_failing_job_shows_error_message_with_context(
     run_dialog = wait_for_child(gui, qtbot, RunDialog)
 
     QTimer.singleShot(200, lambda: handle_error_dialog(run_dialog))
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=100000)
+    qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=100000)
 
 
 @pytest.mark.skip_mac_ci
@@ -851,7 +851,7 @@ def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
         run_dialogs = get_children(gui, RunDialog)
         dialog = run_dialogs[-1]
         qtbot.wait_until(lambda: not dialog.isHidden(), timeout=5000)
-        qtbot.wait_until(lambda: dialog.is_simulation_done() is True, timeout=15000)
+        qtbot.wait_until(lambda: dialog.is_experiment_done() is True, timeout=15000)
 
     # not clickable since no simulations started yet
     find_and_click_button("button_Simulation_status", False, False)
