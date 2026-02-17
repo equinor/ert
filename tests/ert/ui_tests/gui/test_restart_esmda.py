@@ -2,8 +2,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QCheckBox, QComboBox, QWidget
 
 from ert.gui.ertwidgets import StringBox
-from ert.gui.experiments.experiment_panel import ExperimentPanel
-from ert.gui.experiments.run_dialog import RunDialog
+from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.run_models import MultipleDataAssimilation, SingleTestRun
 
 from .conftest import get_child

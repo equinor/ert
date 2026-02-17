@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import (
 )
 
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.experiments.run_dialog import RunDialog
+from ert.gui.experiments import RunDialog
 from ert.plugins import ErtPluginManager
 from ert.services import create_ertserver_client
 from everest.config import ServerConfig

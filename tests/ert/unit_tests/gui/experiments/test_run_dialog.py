@@ -27,16 +27,15 @@ from ert.ensemble_evaluator.event import (
     SnapshotUpdateEvent,
     WarningEvent,
 )
+from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.gui.experiments.ensemble_experiment_panel import (
     DesignMatrixPanel,
     EnsembleExperimentPanel,
 )
 from ert.gui.experiments.ensemble_smoother_panel import EnsembleSmootherPanel
-from ert.gui.experiments.experiment_panel import ExperimentPanel
 from ert.gui.experiments.multiple_data_assimilation_panel import (
     MultipleDataAssimilationPanel,
 )
-from ert.gui.experiments.run_dialog import RunDialog
 from ert.gui.experiments.view.realization import RealizationWidget
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.gui.tools.file import FileDialog

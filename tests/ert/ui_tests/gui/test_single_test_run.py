@@ -4,8 +4,7 @@ import shutil
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QComboBox, QWidget
 
-from ert.gui.experiments.experiment_panel import ExperimentPanel
-from ert.gui.experiments.run_dialog import RunDialog
+from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.run_models import SingleTestRun
 
 from .conftest import get_child, wait_for_child
