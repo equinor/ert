@@ -100,7 +100,7 @@ class ExperimentPanel(QWidget):
             self._experiment_type_combo, 0, Qt.AlignmentFlag.AlignVCenter
         )
 
-        self._simulation_done: bool = True
+        self._experiment_done: bool = True
         self.run_button = QToolButton()
         self.run_button.setObjectName("run_experiment")
         self.run_button.setIcon(QIcon("img:play_circle.svg"))
@@ -372,8 +372,8 @@ class ExperimentPanel(QWidget):
             f"Queue system:\n{model.queue_config.queue_system.formatted_name}"
         )
         self.experiment_started.emit(self._dialog)
-        self._simulation_done = False
-        self.run_button.setEnabled(self._simulation_done)
+        self._experiment_done = False
+        self.run_button.setEnabled(self._experiment_done)
 
         def start_simulation_thread(rerun_failed_realizations: bool = False) -> None:
             simulation_thread = get_simulation_thread(
@@ -395,8 +395,8 @@ class ExperimentPanel(QWidget):
         start_simulation_thread(rerun_failed_realizations=False)
 
         def simulation_done_handler() -> None:
-            self._simulation_done = True
-            self.run_button.setEnabled(self._simulation_done)
+            self._experiment_done = True
+            self.run_button.setEnabled(self._experiment_done)
             self._notifier.emitErtChange()
             self.toggleExperimentType()
 
@@ -413,5 +413,5 @@ class ExperimentPanel(QWidget):
     def validationStatusChanged(self) -> None:
         widget = self._experiment_widgets[self.get_current_experiment_type()]
         self.run_button.setEnabled(
-            self._simulation_done and widget.isConfigurationValid()
+            self._experiment_done and widget.isConfigurationValid()
         )
