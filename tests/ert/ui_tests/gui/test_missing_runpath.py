@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import QLabel
 
 from ert.ensemble_evaluator.state import ENSEMBLE_STATE_FAILED
 from ert.gui.ertwidgets import Suggestor
-from ert.gui.experiments.run_dialog import RunDialog
+from ert.gui.experiments import RunDialog
 from ert.run_models import EnsembleExperiment
 
 from .conftest import open_gui_with_config, wait_for_child

@@ -4,7 +4,7 @@ import pytest
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QComboBox
 
-from ert.gui.experiments.experiment_panel import ExperimentPanel
+from ert.gui.experiments import ExperimentPanel
 from ert.run_models import (
     EnsembleExperiment,
     EnsembleSmoother,

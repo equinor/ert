@@ -10,8 +10,7 @@ from skimage import io, transform
 from skimage.metrics import structural_similarity as ssim
 
 from ert.gui.ertwidgets import CopyableLabel
-from ert.gui.experiments.experiment_panel import ExperimentPanel
-from ert.gui.experiments.run_dialog import RunDialog
+from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.gui.experiments.single_test_run_panel import SingleTestRunPanel
 from ert.gui.experiments.view import RealizationWidget
 from ert.gui.experiments.view.disk_space_widget import DiskSpaceWidget
