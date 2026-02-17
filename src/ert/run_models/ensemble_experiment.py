@@ -16,6 +16,7 @@ from ert.run_models.initial_ensemble_run_model import (
     InitialEnsembleRunModelConfig,
 )
 from ert.storage import Ensemble
+from ert.storage.local_experiment import ExperimentType
 from ert.trace import tracer
 
 logger = logging.getLogger(__name__)
@@ -83,3 +84,7 @@ class EnsembleExperiment(InitialEnsembleRunModel, EnsembleExperimentConfig):
     @classmethod
     def description(cls) -> str:
         return "Sample parameters → evaluate all realizations"
+
+    @classmethod
+    def _experiment_type(cls) -> ExperimentType:
+        return ExperimentType.ENSEMBLE

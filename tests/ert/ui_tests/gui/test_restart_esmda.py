@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import QCheckBox, QComboBox, QWidget
 from ert.gui.ertwidgets import StringBox
 from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.simulation.run_dialog import RunDialog
-from ert.run_models import MultipleDataAssimilation, SingleTestRun
+from ert.run_models import EnsembleExperiment, MultipleDataAssimilation
 
 from .conftest import get_child
 
@@ -40,19 +40,23 @@ def test_restart_esmda(ensemble_experiment_has_run_no_failure, qtbot):
     )
 
 
-def test_active_realizations_esmda(opened_main_window_poly, qtbot):
-    """This runs a single test run and then verifies that this does
-    not interfere with the activate realizations in the es_mda panel
-    unless the restart from that specific ensemble is checked.
+def test_that_esmda_active_realizations_are_set_only_when_restart_is_checked(
+    opened_main_window_poly, qtbot
+):
+    """This runs a experiment and then verifies that this does
+    not interfere with the activate realizations in the es_mda panel unless the
+    restart from that specific ensemble is checked.
     """
     gui = opened_main_window_poly
 
     experiment_panel = get_child(gui, ExperimentPanel)
     simulation_mode_combo = get_child(experiment_panel, QComboBox)
-    simulation_mode_combo.setCurrentText(SingleTestRun.display_name())
+    simulation_mode_combo.setCurrentText(EnsembleExperiment.display_name())
 
-    single_test_run_panel = gui.findChild(QWidget, name="Single_test_run_panel")
-    assert single_test_run_panel
+    ensemble_run_panel = gui.findChild(QWidget, name="Ensemble_experiment_panel")
+    assert ensemble_run_panel
+    ensemble_run_panel._active_realizations_field.setText("0-1")
+
     run_experiment = experiment_panel.findChild(QWidget, name="run_experiment")
     qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None)
@@ -73,7 +77,7 @@ def test_active_realizations_esmda(opened_main_window_poly, qtbot):
     assert restart_checkbox
     assert not restart_checkbox.isChecked()
     restart_checkbox.click()
-    assert active_reals.text() == "0"
+    assert active_reals.text() == "0-1"
     restart_checkbox.click()
     assert active_reals.text() == "0-9"
 

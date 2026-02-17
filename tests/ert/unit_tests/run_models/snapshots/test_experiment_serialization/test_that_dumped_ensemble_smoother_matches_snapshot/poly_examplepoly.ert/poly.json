@@ -309,5 +309,6 @@
       "north": null,
       "radius": null
     }
-  ]
+  ],
+  "experiment_type": "Ensemble Smoother"
 }

@@ -167,5 +167,6 @@
       "test-data/ert/snake_oil.snake_oil.ert/templates/snake_oil_template.txt",
       "snake_oil_params.txt"
     ]
-  ]
+  ],
+  "experiment_type": "Manual Update"
 }
