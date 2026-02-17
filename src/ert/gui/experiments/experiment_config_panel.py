@@ -13,13 +13,13 @@ if TYPE_CHECKING:
 class ExperimentConfigPanel(QWidget):
     experiment_configuration_changed = Signal()
 
-    def __init__(self, simulation_model: type[RunModel]) -> None:
+    def __init__(self, run_model: type[RunModel]) -> None:
         super().__init__()
         self.setContentsMargins(10, 10, 10, 10)
-        self.__simulation_model = simulation_model
+        self.__run_model = run_model
 
     def get_experiment_type(self) -> type[RunModel]:
-        return self.__simulation_model
+        return self.__run_model
 
     def isConfigurationValid(self) -> bool:
         return True
