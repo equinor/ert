@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from typing import TYPE_CHECKING, cast
 
 import numpy as np
@@ -320,36 +321,39 @@ class PlotWindow(QMainWindow):
                     self._everest_control_selection_widget.get_selected_controls()
                 )
                 plot_widget._plotter.set_selected_controls(selected_controls)  # type: ignore
-                for ensemble in selected_ensembles:
-                    try:
-                        ensemble_to_data_map[ensemble] = self._api.data_for_gradient(
-                            ensemble.id, key
+
+            def fetch_data(
+                ensemble: EnsembleObject,
+            ) -> tuple[EnsembleObject, pd.DataFrame | BaseException | None]:
+                try:
+                    data = None
+                    if is_gradient_plot:
+                        data = self._api.data_for_gradient(ensemble.id, key)
+                    elif key_def.response is not None:
+                        data = self._api.data_for_response(
+                            ensemble_id=ensemble.id,
+                            response_key=key,
+                            filter_on=key_def.filter_on,
                         )
-                    except BaseException as e:
-                        handle_exception(e)
-            else:
-                for ensemble in selected_ensembles:
-                    try:
-                        if key_def.response is not None:
-                            ensemble_to_data_map[ensemble] = (
-                                self._api.data_for_response(
-                                    ensemble_id=ensemble.id,
-                                    response_key=key,
-                                    filter_on=key_def.filter_on,
-                                )
-                            )
-                        elif key_def.parameter is not None and (
-                            key_def.parameter.type
-                            in {"gen_kw", "everest_parameters", "everest_objective"}
-                        ):
-                            ensemble_to_data_map[ensemble] = (
-                                self._api.data_for_parameter(
-                                    ensemble_id=ensemble.id,
-                                    parameter_key=key_def.parameter.name,
-                                )
-                            )
-                    except BaseException as e:
-                        handle_exception(e)
+                    elif key_def.parameter is not None and (
+                        key_def.parameter.type
+                        in {"gen_kw", "everest_parameters", "everest_objective"}
+                    ):
+                        data = self._api.data_for_parameter(
+                            ensemble_id=ensemble.id,
+                            parameter_key=key_def.parameter.name,
+                        )
+                except BaseException as e:
+                    return ensemble, e
+
+                return ensemble, data
+
+            with ThreadPoolExecutor() as executor:
+                for ensemble, result in executor.map(fetch_data, selected_ensembles):
+                    if isinstance(result, BaseException):
+                        handle_exception(result)
+                    elif result is not None:
+                        ensemble_to_data_map[ensemble] = result
 
             negative_values_in_data = False
             if key_def.parameter is not None and key_def.parameter.type == "gen_kw":
