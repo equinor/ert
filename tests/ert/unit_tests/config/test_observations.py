@@ -21,7 +21,10 @@ from ert.config import (
     ConfigWarning,
     ErtConfig,
 )
-from ert.config._create_observation_dataframes import create_observation_dataframes
+from ert.config._create_observation_dataframes import (
+    DEFAULT_LOCALIZATION_RADIUS,
+    create_observation_dataframes,
+)
 from ert.config._observations import extract_localization_values, make_observations
 from ert.config.parsing import parse_observations
 from ert.config.parsing.observations_parser import (
@@ -332,7 +335,7 @@ def test_that_rft_config_is_created_from_observations():
                 "zone": pl.Series([None], dtype=pl.String),
                 "observations": pl.Series([700.0], dtype=pl.Float32),
                 "std": pl.Series([0.1], dtype=pl.Float32),
-                "radius": pl.Series([None], dtype=pl.Float32),
+                "radius": pl.Series([DEFAULT_LOCALIZATION_RADIUS], dtype=pl.Float32),
             }
         ),
     )
