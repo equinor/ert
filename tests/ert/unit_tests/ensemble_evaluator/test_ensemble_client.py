@@ -34,7 +34,7 @@ async def test_retry():
     client_connection_error_set = False
     messages = ["test_1", "test_2", "test_3"]
     async with (
-        MockZMQServer(signal=2) as mock_server,
+        MockZMQServer(dont_ack_messages=True) as mock_server,
         Client(mock_server.uri, ack_timeout=0.5) as client,
     ):
         for message in messages:
@@ -42,7 +42,7 @@ async def test_retry():
                 await client.send(message, retries=1)
             except ClientConnectionError:
                 client_connection_error_set = True
-                mock_server.signal(0)
+                mock_server.dont_ack_messages = False
     assert client_connection_error_set
     assert mock_server.messages.count("test_1") == 2
     assert mock_server.messages.count("test_2") == 1
@@ -50,7 +50,7 @@ async def test_retry():
 
 
 async def test_reconnect_when_missing_heartbeat(monkeypatch):
-    async with MockZMQServer(signal=3) as mock_server:
+    async with MockZMQServer(filtered_message_types=[]) as mock_server:
         monkeypatch.setattr(_ert.forward_model_runner.client, "HEARTBEAT_TIMEOUT", 0.01)
         async with Client(mock_server.uri) as client:
             await client.send("start", retries=1)

@@ -170,7 +170,10 @@ def test_report_with_failed_reporter_but_finished_jobs():
             {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
         )
 
-        mock_server.signal(1)  # prevent router to receive messages
+        # prevent router to receive messages
+        mock_server.store_messages = False
+        mock_server.dont_ack_messages = True
+
         reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=100, rss=10)))
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=1100, rss=10)))
@@ -193,12 +196,19 @@ def test_report_with_reconnected_reporter_but_finished_jobs():
             {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
         )
 
-        mock_server.signal(1)  # prevent router to receive messages
+        # prevent router from receiving messages
+        mock_server.dont_ack_messages = True
+        mock_server.store_messages = False
+
         reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=100, rss=10)))
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=1100, rss=10)))
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=1100, rss=10)))
-        mock_server.signal(0)  # enable router to receive messages
+
+        # enable router receiving messages
+        mock_server.dont_ack_messages = False
+        mock_server.store_messages = True
+
         reporter.report(Finish())
         if reporter._event_publisher_thread.is_alive():
             reporter._event_publisher_thread.join()
@@ -208,25 +218,35 @@ def test_report_with_reconnected_reporter_but_finished_jobs():
 
 @pytest.mark.integration_test
 @pytest.mark.parametrize(
-    ("mocked_server_signal", "ack_timeout", "expected_message"),
+    ("mocked_server_params", "ack_timeout", "expected_message"),
     [
-        pytest.param(5, 0.01, "No ack for dealer connection", id="failed_connect"),
         pytest.param(
-            4, 0.25, "No ack for dealer disconnection", id="failed_disconnect"
+            {"no_response": True, "hold_connect": True},
+            0.01,
+            "No ack for dealer connection",
+            id="failed_connect",
         ),
-        pytest.param(1, 0.25, "Failed to send event", id="failed_to_send_event"),
+        pytest.param(
+            {"dont_ack_disconnect": True},
+            0.25,
+            "No ack for dealer disconnection",
+            id="failed_disconnect",
+        ),
+        pytest.param(
+            {"dont_ack_messages": True},
+            0.25,
+            "Failed to send event",
+            id="failed_to_send_event",
+        ),
     ],
 )
 def test_event_reporter_does_not_hang_after_failed(
-    mocked_server_signal, ack_timeout, expected_message, monkeypatch, caplog
+    mocked_server_params, ack_timeout, expected_message, monkeypatch, caplog
 ):
     monkeypatch.setattr(
         "_ert.forward_model_runner.reporting.event.Client.DEFAULT_MAX_RETRIES", 0
     )
-    with MockZMQServer(
-        signal=mocked_server_signal,
-        hold_connect_until_released=(mocked_server_signal == 5),
-    ) as mock_server:
+    with MockZMQServer(**mocked_server_params) as mock_server:
         reporter = Event(
             evaluator_url=mock_server.uri, ack_timeout=ack_timeout, max_retries=0
         )
@@ -237,7 +257,7 @@ def test_event_reporter_does_not_hang_after_failed(
         reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
         reporter.report(Start(fmstep1))
         reporter.report(Finish())
-        if mocked_server_signal == 5:
+        if mocked_server_params.get("hold_connect"):
             mock_server.release_connect_ack()
 
         reporter._event_publisher_thread.join(timeout=10)

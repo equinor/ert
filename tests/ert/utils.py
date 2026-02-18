@@ -74,24 +74,30 @@ def wait_until(func, interval=0.5, timeout=30):
 
 
 class MockZMQServer:
-    def __init__(self, signal=0, hold_connect_until_released: bool = False) -> None:
+    def __init__(
+        self,
+        *,
+        store_messages: bool = True,
+        filtered_message_types=(CONNECT_MSG, DISCONNECT_MSG),
+        hold_connect: bool = False,
+        no_response: bool = False,
+        dont_ack_disconnect: bool = False,
+        dont_ack_messages: bool = False,
+    ) -> None:
         """Mock ZMQ server for testing
-        signal = 0: normal operation, receive messages but don't store CONNECT
-                    and DISCONNECT messages
-        signal = 1: don't send ACK and don't receive messages
-        signal = 2: don't send ACK, but receive messages
-        signal = 3: normal operation, and store CONNECT and DISCONNECT messages
-        signal = 4: same as signal = 3, but do not ACK DISCONNECT messages.
-        signal = 5: don't respond to anything.
 
-        hold_connect_until_released: if True, CONNECT messages are held until
-                    release_connect_ack() is called.
+        store_messages: whether to store messages in self.messages
+        filtered_message_types: Collection of message types that gets filtered out.
+        hold_connect: CONNECT messages are held until release_connect_ack() is called.
+        no_response: Server will not respond to any messages.
+        dont_ack_disconnect: Server will ack, but not to disconnect messages.
+        dont_ack_messages: Server will not send ack to messages that are not connect
+           or disconnect (effected by the dont_ack_disconnect parameter).
         """
         self.messages = []
-        self.value = signal
-        self.hold_connect_until_released = hold_connect_until_released
+        self.hold_connect = hold_connect
         self._connect_release = asyncio.Event()
-        if not hold_connect_until_released:
+        if not hold_connect:
             self._connect_release.set()
         self.loop = None
         self.server_task = None
@@ -100,6 +106,12 @@ class MockZMQServer:
         self.no_dealers = asyncio.Event()
         self.no_dealers.set()
         self.uri = f"ipc:///tmp/socket-{uuid.uuid4().hex[:8]}"
+
+        self.filtered_message_types = filtered_message_types
+        self.store_messages = store_messages
+        self.no_response = no_response
+        self.dont_ack_disconnect = dont_ack_disconnect
+        self.dont_ack_messages = dont_ack_messages
 
     def start_event_loop(self):
         asyncio.set_event_loop(self.loop)
@@ -143,9 +155,6 @@ class MockZMQServer:
             self.router_socket.close()
             zmq_context.term()
 
-    def signal(self, value):
-        self.value = value
-
     def release_connect_ack(self) -> None:
         self._connect_release.set()
 
@@ -163,16 +172,14 @@ class MockZMQServer:
                 dealer, __, frame = await self.router_socket.recv_multipart()
                 if (
                     frame == CONNECT_MSG
-                    and self.hold_connect_until_released
+                    and self.hold_connect
                     and not self._connect_release.is_set()
                 ):
                     await self._connect_release.wait()
-                if self.value == 5:
-                    continue
-                if (
-                    self.value in {0, 2} and frame not in {CONNECT_MSG, DISCONNECT_MSG}
-                ) or self.value in {3, 4}:
+                if self.store_messages and frame not in self.filtered_message_types:
                     self.messages.append(frame.decode("utf-8"))
+                if self.no_response:
+                    continue
                 if frame == CONNECT_MSG:
                     self.dealers.add(dealer)
                     self.no_dealers.clear()
@@ -181,9 +188,9 @@ class MockZMQServer:
                     self.dealers.discard(dealer)
                     if not self.dealers:
                         self.no_dealers.set()
-                    if self.value != 4:
+                    if not self.dont_ack_disconnect:
                         await self.router_socket.send_multipart([dealer, b"", ACK_MSG])
-                elif self.value in {0, 3, 4}:
+                elif not self.dont_ack_messages:
                     await self.router_socket.send_multipart([dealer, b"", ACK_MSG])
             except asyncio.CancelledError:
                 break
