@@ -23,8 +23,21 @@ _PathLike: TypeAlias = str | os.PathLike[str]
 
 class AxisOrientation(Enum):
     """
-    Defines the orientation of the grid axes for the used coordinate system,
-    which can be either left-handed or right-handed.
+    Defines the grid index origin. It is ONLY related to the
+    order of the grid index, not the coordinates axis.
+    For a non-rotated grid, left-handed means that grid index origion
+    is lower left corner, the same as the local coordinate origin.
+    I-index is increasing in direction EAST or to the right,
+    J-index is increasing in direction NORTH or upwards
+    while K-index is increasing with depth (or into the paper/screen).
+    For C-indexing, the flatten index for the 3D field parameter
+    with cell index (I,J,K) is index = K + J*NZ + I*NZ*NY.
+    For right-handed, grid index origin is upper left corner,
+    the I-index is increasing in direction EAST or to the right,
+    the J-index is increasing in direction SOUTH or from top to bottom
+    of the paper/screen. For C-indexing, the flatten index for the
+    3D field parameter with cell index (I,J,K)
+    is index = K + (NY-J-1)*NZ + I*NZ*NY.
     """
 
     LEFT_HANDED = auto()
@@ -132,13 +145,21 @@ def calculate_ertbox_parameters(grid: xtgeo.Grid) -> ErtboxParameters:
     """Calculate ERTBOX grid parameters from an XTGeo grid.
 
     Extracts geometric parameters including dimensions, cell increments,
-    rotation angle, and origin coordinates needed for ERTBOX.
+    rotation angle, and origin coordinates needed for ERTBOX. Get the grid
+    index origin, called AxisOrientation which define the direction of the
+    J-index. For right-handed, the J-index increases in direction SOUTH
+    for non-rotated grid, for lef-handed, the J-index increases in
+    direction NORTH. Note that AxisOrientation does not change the
+    local coordinate axis which has its origin at lower left corner
+    with x-axis in direction EAST and y-axis in direction NORTH for
+    non-rotated ERTBOX grid.
 
     Args:
         grid: XTGeo Grid3D object
 
     Returns:
-        ErtboxParameters with grid dimensions, increments, rotation, and origin
+        ErtboxParameters with grid dimensions, increments, rotation, origi
+        and grid index origin.
     """
 
     (nx, ny, nz) = grid.dimensions
@@ -150,10 +171,14 @@ def calculate_ertbox_parameters(grid: xtgeo.Grid) -> ErtboxParameters:
     )
 
     if axis_orientation == AxisOrientation.LEFT_HANDED:
+        # Grid index origin is at lower left corner
+        # ERTBOX local coordinate origin is lower left corner
         origin_cell = (1, 1, 1)
         x_direction_cell = (nx, 1, 1)
         y_direction_cell = (1, ny, 1)
     else:
+        # Grid index origin is at upper left corner
+        # ERTBOX local coordinate origin is lower left corner
         origin_cell = (1, ny, 1)
         x_direction_cell = (nx, ny, 1)
         y_direction_cell = (1, 1, 1)
