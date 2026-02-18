@@ -22,3 +22,8 @@ class DerivedResponseConfig(BaseModel):
 
     def display_column(self, value: Any, column_name: str) -> str:
         return str(value)
+
+    @property
+    def filter_on(self) -> dict[str, dict[str, list[int]]] | None:
+        """Optional filters for this response."""
+        return None
