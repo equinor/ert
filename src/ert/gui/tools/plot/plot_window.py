@@ -210,6 +210,7 @@ class PlotWindow(QMainWindow):
                 )
                 self.addPlotWidget(STD_DEV, StdDevPlot())
             else:
+                self.addPlotWidget(ENSEMBLE, EnsemblePlot())
                 self.addPlotWidget(EVEREST_CONTROLS_PLOT, ValuesOverIterationsPlot())
                 self.addPlotWidget(EVEREST_RESPONSES_PLOT, ValuesOverIterationsPlot())
 
