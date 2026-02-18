@@ -51,7 +51,7 @@ ASCII_SURFACE_WARNING_MESSAGE = (
     "to binary, but Ert will temporarily still support ASCII surfaces. Binary "
     "surfaces are recommended, as it is faster to write and read from runpath. "
     "Forward model steps still importing/exporting surfaces in "
-    "ASCII format need to be updated"
+    "ASCII format need to be updated. %s"
 )
 
 logger = logging.getLogger(__name__)
@@ -132,7 +132,7 @@ class SurfaceConfig(ParameterConfig):
             except Exception:
                 surf = IrapSurface.from_ascii_file(Path(base_surface))
                 logger.info("Loaded surface in ascii format")
-                ConfigWarning.warn(ASCII_SURFACE_WARNING_MESSAGE)
+                ConfigWarning.warn(ASCII_SURFACE_WARNING_MESSAGE % base_surface)
                 file_format = "ascii"
             yflip = -1 if surf.header.yinc < 0 else 1
         except Exception as err:

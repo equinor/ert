@@ -10,7 +10,7 @@ from surfio import IrapHeader, IrapSurface
 
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, SurfaceConfig
 from ert.config.parameter_config import InvalidParameterFile
-from ert.config.surface_config import ASCII_SURFACE_WARNING_MESSAGE, SurfaceFileFormat
+from ert.config.surface_config import ASCII_SURFACE_WARNING_MESSAGE
 
 
 @pytest.fixture
@@ -31,8 +31,8 @@ def surface():
     )
 
 
-@pytest.mark.parametrize("use_ascii_surface", [True, False])
-def test_runpath_roundtrip(tmp_path, storage, surface, use_ascii_surface, caplog):
+@pytest.mark.parametrize("surface_format", ["ascii", "binary"])
+def test_runpath_roundtrip(tmp_path, storage, surface, surface_format, caplog):
     config = SurfaceConfig(
         name="some_name",
         forward_init=True,
@@ -48,15 +48,15 @@ def test_runpath_roundtrip(tmp_path, storage, surface, use_ascii_surface, caplog
         output_file=tmp_path / "output",
         base_surface_path="base_surface",
         update=True,
+        file_format=surface_format,
     )
     ensemble = storage.create_experiment(
         experiment_config={"parameter_configuration": [config]}
     ).create_ensemble(name="text", ensemble_size=1)
-    if use_ascii_surface:
-        surface.to_file(tmp_path / "input_0", fformat="irap_ascii")
-        config._file_format = SurfaceFileFormat.ASCII
-    else:
-        surface.to_file(tmp_path / "input_0", fformat="irap_binary")
+    surface.to_file(
+        tmp_path / "input_0",
+        fformat="irap_ascii" if surface_format == "ascii" else "irap_binary",
+    )
 
     # run_path -> storage
     ds = config.read_from_runpath(tmp_path, 0, 0)
@@ -71,10 +71,10 @@ def test_runpath_roundtrip(tmp_path, storage, surface, use_ascii_surface, caplog
     # that we only keep 6 significant digits
     actual_surface = xtgeo.surface_from_file(
         tmp_path / "output",
-        fformat="irap_binary" if not use_ascii_surface else "irap_ascii",
+        fformat="irap_binary" if surface_format == "binary" else "irap_ascii",
         dtype=np.float32,
     )
-    if use_ascii_surface:
+    if surface_format == "ascii":
         actual_surface_surfio = IrapSurface.from_ascii_file(tmp_path / "output")
     else:
         actual_surface_surfio = IrapSurface.from_binary_file(tmp_path / "output")
@@ -417,7 +417,9 @@ def test_that_ert_warns_if_ascii_surface_is_used(tmp_path, is_ascii_surface, cap
     )
 
     if is_ascii_surface:
-        with pytest.warns(ConfigWarning, match=ASCII_SURFACE_WARNING_MESSAGE):
+        with pytest.warns(
+            ConfigWarning, match=ASCII_SURFACE_WARNING_MESSAGE % base_surface_path
+        ):
             ErtConfig.from_file_contents(config_contents)
     else:
         caplog.set_level(logging.INFO)
