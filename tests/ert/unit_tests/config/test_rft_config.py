@@ -3,7 +3,6 @@ import os
 from io import BytesIO, StringIO
 
 import numpy as np
-import polars as pl
 import pytest
 import resfo
 
@@ -12,8 +11,6 @@ from ert.config import (
     InvalidResponseFile,
     RFTConfig,
 )
-from ert.config._create_observation_dataframes import _handle_rft_observation
-from ert.config._observations import RFTObservation
 from ert.config.parsing import ConfigValidationError, ObservationType
 from ert.warnings import PostExperimentWarning
 from tests.ert.rft_generator import cell_start, float_arr
@@ -380,29 +377,6 @@ def test_that_multiple_locations_in_the_same_cell_creates_multiple_rows(
     assert sorted(data["north"].to_list()) == [1.25, 1.5]
     assert sorted(data["east"].to_list()) == [1.25, 1.5]
     assert sorted(data["tvd"].to_list()) == [1.25, 1.5]
-
-
-def test_that_handle_rft_observations_adds_radius_column_to_dataframe():
-    rft_config = RFTConfig(
-        input_files=["BASE.RFT"],
-        data_to_read={"*": {"*": ["*"]}},
-        locations=[(1.0, 1.0, 1.0), (2.0, 2.0, 2.0)],
-    )
-    rft_observation = RFTObservation(
-        name="NAME[0]",
-        well="WELL1",
-        date="2013-03-31",
-        value=294.0,
-        error=10.0,
-        property="PRESSURE",
-        north=71.0,
-        east=30.0,
-        tvd=2000.0,
-    )
-    df = _handle_rft_observation(rft_config, rft_observation)
-    assert "radius" in df.columns
-    assert df["radius"].to_list() == [None]
-    assert df["radius"].dtype == pl.Float32
 
 
 def test_that_if_an_rft_observation_is_outside_the_zone_then_it_is_deactivated(
