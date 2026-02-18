@@ -746,9 +746,9 @@ def test_right_click_plot_button_opens_external_plotter(qtbot, use_tmpdir, monke
 
 
 def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_valid_cases(
-    qtbot, opened_main_window_poly, run_experiment
+    qtbot, opened_main_window_minimal_realizations, run_experiment
 ):
-    gui = opened_main_window_poly
+    gui = opened_main_window_minimal_realizations
 
     combo_box = get_child(gui, QComboBox, name="experiment_type")
     qtbot.mouseClick(combo_box, Qt.MouseButton.LeftButton)
@@ -765,17 +765,17 @@ def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_valid_cases(
 
     assert restart_button
 
-    assert len(ensemble_selector._ensemble_list()) == 0
+    assert ensemble_selector.count() == 0
     assert not restart_button.isEnabled()
 
     add_experiment_manually(qtbot, gui, ensemble_name="test_ensemble")
 
-    assert len(ensemble_selector._ensemble_list()) == 0
+    assert ensemble_selector.count() == 0
     assert not restart_button.isEnabled()
 
     run_experiment(EnsembleExperiment, gui)
-    assert len(ensemble_selector._ensemble_list()) == 1
 
+    assert ensemble_selector.count() == 1
     assert restart_button.isEnabled()
 
 

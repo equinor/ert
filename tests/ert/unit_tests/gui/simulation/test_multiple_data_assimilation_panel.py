@@ -173,7 +173,9 @@ class EnsInfo:
         ),
         pytest.param(
             [
-                EnsInfo("ensemble", "experiment", None, ExperimentType.ENSEMBLE),
+                EnsInfo(
+                    "ensemble", "experiment", None, ExperimentType.ENSEMBLE_EXPERIMENT
+                ),
                 EnsInfo("a", "mda", None, ExperimentType.UNDEFINED, 0),
                 EnsInfo("b", "mda", "a_ens", ExperimentType.UNDEFINED, 1),
             ],
@@ -195,10 +197,10 @@ def test_that_restart_ensemble_select_contains(
     notifier._storage = MockStorage()
     storage = notifier._storage
     ensembles_that_should_not_show_up = [
-        EnsInfo("test", "test", None, ExperimentType.TEST),
+        EnsInfo("test", "test", None, ExperimentType.SINGLE_TEST_RUN),
         EnsInfo("manual", "manual", None, ExperimentType.MANUAL),
-        EnsInfo("es0", "es", None, ExperimentType.ES, 0),
-        EnsInfo("es1", "es", "es0_ens", ExperimentType.ES, 1),
+        EnsInfo("es0", "es", None, ExperimentType.ENSEMBLE_SMOOTHER, 0),
+        EnsInfo("es1", "es", "es0_ens", ExperimentType.ENSEMBLE_SMOOTHER, 1),
     ]
     ensembles = ensembles_that_should_not_show_up + extra_ensembles
     for ensemble_info in ensembles:

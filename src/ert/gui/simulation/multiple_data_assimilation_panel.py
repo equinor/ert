@@ -146,9 +146,9 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             ensembles: Iterable[Ensemble],
         ) -> Iterable[Ensemble]:
             """
-            Only leafs of ES-MDA experiment are eligible for restart. Easiest
-            way to get those is to compare ensemble iteration with total number
-            of ES-MDA iterations."""
+            Only non-leafs of ES-MDA experiment are eligible for restart.
+            Easiest way to get those is to compare ensemble iteration with total
+            number of ES-MDA iterations found via relative weights list length."""
             return (
                 ensemble
                 for ensemble in ensembles
@@ -156,21 +156,23 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
                 and ensemble.iteration < ensemble.relative_weights.count(",") + 1
             )
 
-        def get_ensembles_of_ensemble_type(
+        def get_ensembles_of_ensemble__experiment_type(
             ensembles: Iterable[Ensemble],
         ) -> Iterable[Ensemble]:
-            """Ensemble type, which consists just from one iteration, is always
-            eligible for MDA "restart". Used to spare some computing time if
-            users decide to run ES-MDA based on Ensemble results."""
+            """Ensemble experiment type, which consists just from one iteration,
+            is always eligible for MDA "restart". Used to spare some computing
+            time if users decide to run ES-MDA based on Ensemble Experiment
+            results."""
             return (
                 ensemble
                 for ensemble in ensembles
-                if ensemble.experiment.experiment_type == ExperimentType.ENSEMBLE
+                if ensemble.experiment.experiment_type
+                == ExperimentType.ENSEMBLE_EXPERIMENT
             )
 
         filters: list[Callable[[Iterable[Ensemble]], Iterable[Ensemble]]] = [
             get_ensembles_that_are_not_last_es_mda_iteration,
-            get_ensembles_of_ensemble_type,
+            get_ensembles_of_ensemble__experiment_type,
         ]
 
         self._ensemble_selector = EnsembleSelector(notifier, filters=filters)
