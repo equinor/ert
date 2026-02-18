@@ -210,6 +210,7 @@ def test_rft_observation_declaration():
             property="PRESSURE",
             north=71.0,
             east=30.0,
+            radius=None,
             tvd=2000.0,
         )
     ]
@@ -246,6 +247,7 @@ def test_rft_observation_csv_declaration():
             property="PRESSURE",
             north=71.0,
             east=30.0,
+            radius=None,
             tvd=2000.0,
             zone="zone1",
         ),
@@ -258,8 +260,46 @@ def test_rft_observation_csv_declaration():
             property="PRESSURE",
             north=72.0,
             east=31.0,
+            radius=None,
             tvd=2100.0,
             zone="zone2",
+        ),
+    ]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_rft_csv_without_radius_column_gets_radius_defaulted_to_none():
+    Path("rft_observations.csv").write_text(
+        dedent(
+            """
+            WELL_NAME,DATE,MD,ZONE,PRESSURE,ERROR,TVD,NORTH,EAST,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str
+            WELL1,2013-03-31,2500,zone1,294.0,10,2000.0,71.0,30.0,123,1,zone1
+            """
+        ),
+        encoding="utf8",
+    )
+    assert make_observations(
+        "",
+        [
+            {
+                "type": ObservationType.RFT,
+                "name": "NAME",
+                "CSV": "rft_observations.csv",
+            }
+        ],
+    ) == [
+        RFTObservation(
+            name="NAME[0]",
+            well="WELL1",
+            date="2013-03-31",
+            value=294.0,
+            error=10.0,
+            property="PRESSURE",
+            north=71.0,
+            east=30.0,
+            radius=None,
+            tvd=2000.0,
+            zone="zone1",
         ),
     ]
 
@@ -404,6 +444,7 @@ def test_that_property_can_be_specified_for_rft_observation_csv_declaration():
             north=71.0,
             east=30.0,
             tvd=2000.0,
+            radius=None,
             zone="zone1",
         )
     ]
@@ -575,3 +616,70 @@ def test_that_breakthrough_observation_can_be_instantiated_with_localization():
     assert brt_obs.east == 10
     assert brt_obs.north == 20
     assert brt_obs.radius == 2500
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_rft_observation_raises_error_given_north_or_east_keys_in_config():
+    Path("rft_observations.csv").write_text(
+        dedent(
+            """
+            WELL_NAME,DATE,MD,ZONE,PRESSURE,ERROR,TVD,NORTH,EAST,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str
+            WELL1,2013-03-31,2500,zone1,294.0,10,2000.0,71.0,30.0,123,1,zone1
+            WELL2,2013-04-30,2600,zone2,295.0,11,2100.0,72.0,31.0,124,2,zone2
+            """
+        ),
+        encoding="utf8",
+    )
+    with pytest.raises(
+        ObservationConfigError,
+        match=r"Invalid key: 'EAST' in 'LOCALIZATION' for RFT observation: 'RFT_OBS'. "
+        r"The 'EAST' keyword must be defined outside the LOCALIZATION section "
+        r"for RFT observations - or in the CSV RFT configuration file.;"
+        r"Invalid key: 'NORTH' in 'LOCALIZATION' for RFT observation: 'RFT_OBS'. "
+        r"The 'NORTH' keyword must be defined outside the LOCALIZATION section for "
+        r"RFT observations - or in the CSV RFT configuration file.",
+    ):
+        make_observations(
+            "",
+            [
+                {
+                    "type": ObservationType.RFT,
+                    "name": "RFT_OBS",
+                    "CSV": "rft_observations.csv",
+                    "LOCALIZATION": {
+                        "NORTH": 30,
+                        "EAST": 10,
+                    },
+                }
+            ],
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_rft_observation_can_be_provided_radius_localization_keyword():
+    Path("rft_observations.csv").write_text(
+        dedent(
+            """
+            WELL_NAME,DATE,MD,ZONE,PRESSURE,ERROR,TVD,NORTH,EAST,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str
+            WELL1,2013-03-31,2500,zone1,294.0,10,2000.0,71.0,30.0,123,1,zone1
+            WELL2,2013-04-30,2600,zone2,295.0,11,2100.0,72.0,31.0,124,2,zone2
+            """
+        ),
+        encoding="utf8",
+    )
+
+    obss = make_observations(
+        "",
+        [
+            {
+                "type": ObservationType.RFT,
+                "name": "RFT_OBS",
+                "CSV": "rft_observations.csv",
+                "LOCALIZATION": {
+                    "RADIUS": 2500,
+                },
+            }
+        ],
+    )
+    for obs in obss:
+        assert obs.radius == 2500

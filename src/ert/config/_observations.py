@@ -347,6 +347,7 @@ class RFTObservation(BaseModel):
     north: float
     east: float
     tvd: float
+    radius: float | None
     zone: str | None = None
 
     @classmethod
@@ -356,6 +357,7 @@ class RFTObservation(BaseModel):
         observation_dict: ObservationDict,
         filename: str,
         observed_property: str = "PRESSURE",
+        radius: float | None = None,
     ) -> list[Self]:
         """Create RFT observations from a CSV file.
 
@@ -368,6 +370,8 @@ class RFTObservation(BaseModel):
             observation_dict: Dictionary containing the observation configuration.
             filename: Path to the CSV file containing RFT observations.
             observed_property: Property to observe (default: PRESSURE).
+            radius: Localization radius defined in observation config - outside CSV
+                file.
 
         Returns:
             List of RFTObservation instances created from the CSV file.
@@ -421,6 +425,7 @@ class RFTObservation(BaseModel):
                 error=validate_float(str(row.ERROR), "ERROR"),
                 north=validate_float(str(row.NORTH), "NORTH"),
                 east=validate_float(str(row.EAST), "EAST"),
+                radius=radius,
                 tvd=validate_float(str(row.TVD), "TVD"),
                 zone=row.ZONE if "ZONE" in csv_file else None,
             )
@@ -479,6 +484,7 @@ class RFTObservation(BaseModel):
         date = None
         north = None
         east = None
+        radius = None
         tvd = None
         zone = None
         for key, value in observation_dict.items():
@@ -505,6 +511,9 @@ class RFTObservation(BaseModel):
                     csv_filename = value
                 case "ZONE":
                     zone = value
+                case "LOCALIZATION":
+                    validate_rft_localization(value, observation_dict["name"])
+                    east, north, radius = extract_localization_values(value)
                 case _:
                     raise _unknown_key_error(str(key), observation_dict["name"])
         if csv_filename is not None:
@@ -513,6 +522,7 @@ class RFTObservation(BaseModel):
                 observation_dict,
                 csv_filename,
                 observed_property or "PRESSURE",
+                radius=radius,
             )
         if well is None:
             raise _missing_value_error(observation_dict["name"], "WELL")
@@ -542,6 +552,7 @@ class RFTObservation(BaseModel):
             east=east,
             tvd=tvd,
             zone=zone,
+            radius=radius,
         )
 
         # Bypass pydantic discarding context
@@ -711,6 +722,19 @@ def validate_positive_float(
     return v
 
 
+def validate_rft_localization(val: dict[str, Any], obs_name: str) -> None:
+    errors = []
+    if "EAST" in val:
+        errors.append(_invalid_rft_localization_key_error("EAST", f"{obs_name}"))
+    if "NORTH" in val:
+        errors.append(_invalid_rft_localization_key_error("NORTH", f"{obs_name}"))
+    for key in val:
+        if key not in {"EAST", "NORTH", "RADIUS"}:
+            errors.append(_unknown_key_error(key, f"LOCALIZATION for {obs_name}"))
+    if errors:
+        raise ObservationConfigError.from_collected(errors)
+
+
 def validate_localization(val: dict[str, Any], obs_name: str) -> None:
     errors = []
     if "EAST" not in val:
@@ -782,4 +806,13 @@ def _unknown_key_error(key: str, name: str) -> ObservationConfigError:
 def _unknown_observation_type_error(obs: ObservationDict) -> ObservationConfigError:
     return ObservationConfigError.with_context(
         f"Unexpected type in observations {obs}", obs["name"]
+    )
+
+
+def _invalid_rft_localization_key_error(key: str, name: str) -> ObservationConfigError:
+    return ObservationConfigError.with_context(
+        f"Invalid key: '{key}' in 'LOCALIZATION' for RFT observation: '{name}'. "
+        f"The '{key}' keyword must be defined outside the LOCALIZATION section for "
+        f"RFT observations - or in the CSV RFT configuration file.",
+        key,
     )
