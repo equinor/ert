@@ -45,16 +45,16 @@ It is not about being correct, it is about being relevant and coherent.
         :code:`x` consists of only deterministic variables and is hence much easier to
         simulate and reason about than the template model.
 
-    experiment
-        An experiment consists of one or more ensembles, which may be related via
-        zero or more update steps. For example you might have a prior ensemble that
-        results in the posterior ensemble by running IES.
-
     ensemble
         As the name hints towards, ERT's approach to studying a template model, is to
         create an ensemble of realisations. In particular, an ensemble is a list of
         realisations. The idea is that with a sufficiently large ensemble the
         uncertainty of the template model is represented by the ensemble.
+
+    experiment
+        An experiment consists of one or more ensembles, which may be related via
+        zero or more update steps. For example you might have a prior ensemble that
+        results in the posterior ensemble by running IES.
 
     evaluating an ensemble
         Recall that a realisation consists of a forward model :code:`fm` together with input
