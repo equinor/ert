@@ -49,7 +49,8 @@ def _plotObservations(
     # line style set to 'off' toggles errorbar visibility
     if not style.line_style:
         style.width = 0
-    if plot_config.depth_y_axis:
+
+    if plot_config.flip_response_axis:
         errorbar_data = {
             "x": data.loc["OBS"].to_numpy(),
             "y": data.loc["key_index"].to_numpy(),
