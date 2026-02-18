@@ -22,7 +22,7 @@ from ert.config import (
     ErtConfig,
 )
 from ert.config._create_observation_dataframes import create_observation_dataframes
-from ert.config._observations import make_observations
+from ert.config._observations import extract_localization_values, make_observations
 from ert.config.parsing import parse_observations
 from ert.config.parsing.observations_parser import (
     ObservationConfigError,
@@ -2078,3 +2078,37 @@ def test_that_combined_reachable_and_unreachable_breakthrough_thresholds_are_tur
         None,
     ]
     assert response_df["values"].to_list() == [24, None]
+
+
+@pytest.mark.parametrize(
+    "missing_localization_keys",
+    [
+        {"EAST"},
+        {"NORTH"},
+        {"RADIUS"},
+        {"EAST", "RADIUS"},
+        {"EAST", "NORTH"},
+        {"NORTH", "RADIUS"},
+    ],
+)
+def test_that_extract_localization_values_extracts_partially_defined_values(
+    missing_localization_keys,
+):
+    localization_keys = {"EAST", "NORTH", "RADIUS"}
+    present_keys = localization_keys - missing_localization_keys
+    values = dict.fromkeys(present_keys, 10)
+    east, north, radius = extract_localization_values(values)
+    assert east == (10 if "EAST" in present_keys else None)
+    assert north == (10 if "NORTH" in present_keys else None)
+    assert radius == (10 if "RADIUS" in present_keys else None)
+
+
+def test_that_extract_localization_values_raises_error_given_non_float():
+    for key in ["EAST", "NORTH", "RADIUS"]:
+        values = {key: "Not a float"}
+        with pytest.raises(
+            ObservationConfigError,
+            match=r"Could not convert Not a float to float. "
+            r'Failed to validate "Not a float"',
+        ):
+            extract_localization_values(values)
