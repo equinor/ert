@@ -3,6 +3,8 @@ from __future__ import annotations
 import math
 from typing import TYPE_CHECKING
 
+import numpy as np
+
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from pandas import DataFrame
@@ -57,6 +59,16 @@ def _plotObservations(
             "xerr": data.loc["STD"].to_numpy(),
         }
         axes.yaxis.set_inverted(True)
+    elif plot_config.flip_observation_axis:
+        errorbar_data = {
+            "x": np.array(
+                [np.datetime64(time) for time in data.loc["key_index"].to_list()]
+            ),
+            "y": data.loc["OBS"].to_numpy(),
+            "xerr": np.array(
+                [np.timedelta64(int(time), "h") for time in data.loc["STD"].to_list()]
+            ),
+        }
     else:
         errorbar_data = {
             "x": data.loc["key_index"].to_numpy(),
