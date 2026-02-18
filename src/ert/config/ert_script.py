@@ -226,8 +226,9 @@ class ErtScript:
         result = None
         for _, member in inspect.getmembers(
             module,
-            lambda member: inspect.isclass(member)
-            and member.__module__ == module.__name__,
+            lambda member: (
+                inspect.isclass(member) and member.__module__ == module.__name__
+            ),
         ):
             if ErtScript in inspect.getmro(member):
                 if result is not None:

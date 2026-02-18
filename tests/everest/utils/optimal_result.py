@@ -25,9 +25,11 @@ def get_optimal_result(output_dir: str) -> OptimalResult | None:
 
     if matching_batches:
         matching_batches.sort(
-            key=lambda item: -item.batch_objectives.select(
-                pl.col("total_objective_value").sample(n=1)
-            ).item()
+            key=lambda item: (
+                -item.batch_objectives.select(
+                    pl.col("total_objective_value").sample(n=1)
+                ).item()
+            )
         )
         batch = matching_batches[0]
         controls_dict = batch.realization_controls.drop(

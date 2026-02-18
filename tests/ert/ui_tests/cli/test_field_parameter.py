@@ -98,9 +98,11 @@ def _compare_ensemble_params(
         [
             (
                 pl.col(c).map_elements(
-                    lambda x: 0.0
-                    if abs(x) < outlier_threshold
-                    else (abs(x) - outlier_threshold),
+                    lambda x: (
+                        0.0
+                        if abs(x) < outlier_threshold
+                        else (abs(x) - outlier_threshold)
+                    ),
                 )
             )
             .cast(pl.Float32)
