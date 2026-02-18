@@ -20,7 +20,7 @@ from .parsing import (
 )
 from .rft_config import RFTConfig
 
-DEFAULT_LOCALIZATION_RADIUS = 3000
+DEFAULT_LOCALIZATION_RADIUS = 2000
 
 
 def create_observation_dataframes(
