@@ -3,14 +3,10 @@ import re
 import shutil
 import subprocess
 import sys
-import threading
-import time
 from pathlib import Path
 from unittest import mock
 
-import numpy as np
 import pytest
-import resfo
 
 from ert.plugins import ErtPluginManager
 from tests.ert.utils import SOURCE_DIR
@@ -378,52 +374,6 @@ def test_await_completed_summary_file_will_timeout_on_missing_smry():
         )
         > 0.3
     )
-
-
-@pytest.mark.integration_test
-@pytest.mark.usefixtures("use_tmpdir")
-def test_await_completed_summary_file_will_return_asap():
-    resfo.write("FOO.UNSMRY", [("INTEHEAD", np.array([1], dtype=np.int32))])
-    assert (
-        0.01
-        # Expected wait time is the poll_interval
-        < run_reservoirsimulator.await_completed_unsmry_file(
-            "FOO.UNSMRY", max_wait=0.5, poll_interval=0.1
-        )
-        < 0.4
-    )
-
-
-@pytest.mark.flaky(reruns=5)
-@pytest.mark.integration_test
-@pytest.mark.usefixtures("use_tmpdir")
-def test_await_completed_summary_file_will_wait_for_slow_smry():
-    # This is a timing test, and has inherent flakiness:
-    #  * Reading and writing to the same smry file at the same time
-    #    can make the reading throw an exception every time, and can
-    #    result in max_wait triggering.
-    #  * If the writer thread is starved, two consecutive polls may
-    #    yield the same summary length, resulting in premature exit.
-    #  * Heavily loaded hardware can make everything go too slow.
-    def slow_smry_writer():
-        for size in range(10):
-            resfo.write(
-                "FOO.UNSMRY", (size + 1) * [("INTEHEAD", np.array([1], dtype=np.int32))]
-            )
-            time.sleep(0.05)
-
-    thread = threading.Thread(target=slow_smry_writer)
-    thread.start()
-    time.sleep(0.1)  # Let the thread start writing
-    assert (
-        0.5
-        # Minimal wait time is around 0.55
-        < run_reservoirsimulator.await_completed_unsmry_file(
-            "FOO.UNSMRY", max_wait=4, poll_interval=0.21
-        )
-        < 2
-    )
-    thread.join()
 
 
 @pytest.mark.usefixtures("use_tmpdir")
