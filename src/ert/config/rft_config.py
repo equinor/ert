@@ -261,6 +261,18 @@ class RFTConfig(ResponseConfig):
                                 for c in entry.connections
                             ]
                             if np.isdtype(values.dtype, np.float32):
+                                num_values = len(values)
+                                num_conns = len(entry.connections)
+                                if num_values != num_conns:
+                                    raise InvalidResponseFile(
+                                        "Could not read RFT from "
+                                        f"{run_path}/{filename}: "
+                                        f"RFT property {rft_property} for well {well} "
+                                        f"at {date.isoformat()} has {num_values} "
+                                        f"value{'s' if num_values != 1 else ''} "
+                                        f"but {num_conns} well "
+                                        f"connection{'s' if num_conns != 1 else ''}"
+                                    )
                                 fetched[well, date][rft_property] = values
         except (FileNotFoundError, InvalidRFTError) as err:
             raise InvalidResponseFile(
