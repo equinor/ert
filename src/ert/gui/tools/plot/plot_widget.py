@@ -37,6 +37,9 @@ if TYPE_CHECKING:
     from .plottery.plots.misfits import MisfitsPlot
     from .plottery.plots.statistics import StatisticsPlot
     from .plottery.plots.std_dev import StdDevPlot
+    from .plottery.plots.values_over_iteration_plot import (
+        ValuesOverIterationsPlot,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -123,6 +126,7 @@ class PlotWidget(QWidget):
             "DistributionPlot",
             "CrossEnsembleStatisticsPlot",
             "StdDevPlot",
+            "ValuesOverIterationsPlot",
             "MisfitsPlot",
         ],
         parent: QWidget | None = None,

@@ -6,6 +6,7 @@ from .histogram import HistogramPlot
 from .misfits import MisfitsPlot
 from .statistics import StatisticsPlot
 from .std_dev import StdDevPlot
+from .values_over_iteration_plot import ValuesOverIterationsPlot
 
 __all__ = [
     "CrossEnsembleStatisticsPlot",
@@ -16,4 +17,5 @@ __all__ = [
     "MisfitsPlot",
     "StatisticsPlot",
     "StdDevPlot",
+    "ValuesOverIterationsPlot",
 ]

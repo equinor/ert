@@ -43,6 +43,7 @@ from .plottery.plots import (
     MisfitsPlot,
     StatisticsPlot,
     StdDevPlot,
+    ValuesOverIterationsPlot,
 )
 
 CROSS_ENSEMBLE_STATISTICS = "Cross ensemble statistics"
@@ -53,6 +54,8 @@ HISTOGRAM = "Histogram"
 STATISTICS = "Statistics"
 STD_DEV = "Std Dev"
 MISFITS = "Misfits"
+EVEREST_RESPONSES_PLOT = "Batch responses"
+EVEREST_CONTROLS_PLOT = "Batch controls"
 
 RESPONSE_DEFAULT = 0
 GEN_KW_DEFAULT = 3
@@ -174,6 +177,12 @@ class PlotWindow(QMainWindow):
                 self._key_definitions = []
             QApplication.restoreOverrideCursor()
 
+            is_everest = any(
+                k.metadata.get("data_origin")
+                in {"everest_parameters", "everest_objectives", "everest_constraints"}
+                for k in self._key_definitions
+            )
+
             self._plot_customizer = PlotCustomizer(self, self._key_definitions)
             self._plot_customizer.settingsChanged.connect(self.keySelected)
             self._central_tab = QTabWidget()
@@ -189,25 +198,40 @@ class PlotWindow(QMainWindow):
 
             self._plot_widgets: list[PlotWidget] = []
 
-            self.addPlotWidget(ENSEMBLE, EnsemblePlot())
-            self.addPlotWidget(STATISTICS, StatisticsPlot())
-            self.addPlotWidget(MISFITS, MisfitsPlot())
-            self.addPlotWidget(HISTOGRAM, HistogramPlot())
-            self.addPlotWidget(GAUSSIAN_KDE, GaussianKDEPlot())
-            self.addPlotWidget(DISTRIBUTION, DistributionPlot())
-            self.addPlotWidget(CROSS_ENSEMBLE_STATISTICS, CrossEnsembleStatisticsPlot())
-            self.addPlotWidget(STD_DEV, StdDevPlot())
+            if not is_everest:
+                self.addPlotWidget(ENSEMBLE, EnsemblePlot())
+                self.addPlotWidget(STATISTICS, StatisticsPlot())
+                self.addPlotWidget(MISFITS, MisfitsPlot())
+                self.addPlotWidget(HISTOGRAM, HistogramPlot())
+                self.addPlotWidget(GAUSSIAN_KDE, GaussianKDEPlot())
+                self.addPlotWidget(DISTRIBUTION, DistributionPlot())
+                self.addPlotWidget(
+                    CROSS_ENSEMBLE_STATISTICS, CrossEnsembleStatisticsPlot()
+                )
+                self.addPlotWidget(STD_DEV, StdDevPlot())
+            else:
+                self.addPlotWidget(EVEREST_CONTROLS_PLOT, ValuesOverIterationsPlot())
+                self.addPlotWidget(EVEREST_RESPONSES_PLOT, ValuesOverIterationsPlot())
+
             self._central_tab.currentChanged.connect(self.currentTabChanged)
             self.logPlotTabUsage(self._central_tab.tabText(0), default=True)
 
             self._prev_tab_widget_index = -1
             self._current_tab_index = -1
             self._prev_key_dimensionality = -1
-            self._prev_tab_widget_index_map: dict[int, int] = {
-                2: RESPONSE_DEFAULT,
-                1: GEN_KW_DEFAULT,
-                3: STD_DEV_DEFAULT,
-            }
+            self._prev_tab_widget_index_map: dict[int, int] = {}
+            if is_everest:
+                self._prev_tab_widget_index_map = {
+                    1: 0,
+                    2: 1,
+                    3: 0,  # Fallback
+                }
+            else:
+                self._prev_tab_widget_index_map = {
+                    2: RESPONSE_DEFAULT,
+                    1: GEN_KW_DEFAULT,
+                    3: STD_DEV_DEFAULT,
+                }
 
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
             try:
@@ -260,7 +284,9 @@ class PlotWindow(QMainWindow):
 
         plot_widget = cast(PlotWidget, self._central_tab.currentWidget())
 
-        if plot_widget._plotter.dimensionality == key_def.dimensionality:
+        if plot_widget._plotter.dimensionality == key_def.dimensionality or (
+            plot_widget.name in {EVEREST_RESPONSES_PLOT, EVEREST_CONTROLS_PLOT}
+        ):
             selected_ensembles = (
                 self._ensemble_selection_widget.get_selected_ensembles()
             )
@@ -407,7 +433,8 @@ class PlotWindow(QMainWindow):
         | DistributionPlot
         | CrossEnsembleStatisticsPlot
         | StdDevPlot
-        | MisfitsPlot,
+        | MisfitsPlot
+        | ValuesOverIterationsPlot,
         enabled: bool = True,
     ) -> None:
         plot_widget = PlotWidget(name, plotter)
@@ -449,6 +476,34 @@ class PlotWindow(QMainWindow):
             and (key_def.observations or not widget._plotter.requires_observations)
         ]
 
+        is_everest = key_def.metadata.get("data_origin") in {
+            "everest_objectives",
+            "everest_constraints",
+        }
+        everest_widget = next(
+            (w for w in self._plot_widgets if w.name == EVEREST_RESPONSES_PLOT), None
+        )
+
+        if everest_widget:
+            if is_everest:
+                available_widgets = [everest_widget]
+            elif everest_widget in available_widgets:
+                available_widgets.remove(everest_widget)
+
+        is_everest_control = (
+            key_def.parameter is not None
+            and key_def.parameter.type == "everest_parameters"
+        )
+        everest_control_widget = next(
+            (w for w in self._plot_widgets if w.name == EVEREST_CONTROLS_PLOT), None
+        )
+
+        if everest_control_widget:
+            if is_everest_control:
+                available_widgets = [everest_control_widget]
+            elif everest_control_widget in available_widgets:
+                available_widgets.remove(everest_control_widget)
+
         # Enabling/disabling tab triggers the
         # currentTabChanged event which also triggers
         # the updatePlot, which is slow and redundant.
@@ -472,6 +527,9 @@ class PlotWindow(QMainWindow):
                 self._prev_tab_widget_index_map[key_def.dimensionality]
             )
             self._current_tab_index = -1
+
+        if current_widget not in available_widgets and available_widgets:
+            current_widget = available_widgets[0]
 
         self._central_tab.setCurrentWidget(current_widget)
         self._central_tab.currentChanged.connect(self.currentTabChanged)
