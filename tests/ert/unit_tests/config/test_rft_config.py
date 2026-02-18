@@ -257,6 +257,28 @@ def test_that_missing_depth_raises_invalid_response_file(mock_resfo_file):
         rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
 
 
+def test_that_too_few_property_values_raises_invalid_response_file(mock_resfo_file):
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.RFT",
+        [
+            *cell_start(
+                date=(1, 1, 2000),
+                well_name="WELL1",
+                ijks=((1, 1, 1), (2, 2, 2)),  # two connections
+            ),
+            ("PRESSURE", float_arr([100.0])),  # only one pressure value
+            ("DEPTH   ", float_arr([20.0])),
+        ],
+    )
+
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={"*": {"2000-01-01": ["PRESSURE"]}},
+    )
+    with pytest.raises(InvalidResponseFile, match="has 1 value but 2 well connections"):
+        rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+
+
 def test_that_number_of_connections_can_be_different_per_well(mock_resfo_file):
     mock_resfo_file(
         "/tmp/does_not_exist/BASE.RFT",
