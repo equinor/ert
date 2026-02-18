@@ -45,6 +45,11 @@ It is not about being correct, it is about being relevant and coherent.
         :code:`x` consists of only deterministic variables and is hence much easier to
         simulate and reason about than the template model.
 
+    experiment
+        An experiment consists of one or more ensembles, which may be related via
+        zero or more update steps. For example you might have a prior ensemble that
+        results in the posterior ensemble by running IES.
+
     ensemble
         As the name hints towards, ERT's approach to studying a template model, is to
         create an ensemble of realisations. In particular, an ensemble is a list of
@@ -84,11 +89,6 @@ It is not about being correct, it is about being relevant and coherent.
         way to obtain a merged ensemble response where all realisations that was
         successful in at least one the two ensembles evaluations will be successful in
         the merged ensemble response.
-
-    experiment
-        An experiment consists of one or more ensembles, which may be related via
-        zero or more update steps. For example you might have a prior ensemble that
-        results in the posterior ensemble by running IES.
 
     simulation
         There are two uses of the word simulation:
