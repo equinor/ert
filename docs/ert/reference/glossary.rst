@@ -49,7 +49,21 @@ It is not about being correct, it is about being relevant and coherent.
         As the name hints towards, ERT's approach to studying a template model, is to
         create an ensemble of realisations. In particular, an ensemble is a list of
         realisations. The idea is that with a sufficiently large ensemble the
-        uncertainty of the template model is represented by the ensemble.
+        uncertainty of the template model is represented by the ensemble. An ensemble
+        consists of input parameters and the corresponding responses of the forward model, and
+        each ensemble can trace it´s lineage to its parent ensemble and the experiment.
+        When we talk about about prior and posterior ensembles this is in the context of
+        and update, where we load the responses of a prior ensemble, and use it together
+        with the observation values to create a posterior ensemble. An ensemble without
+        a parent has a special meaning, as that has sampled parameters which are not the
+        result of an update. The lineage in multiple data assimilation can be shown as:
+
+        .. code-block:: python
+
+           prior = sample_parameters()
+           for iteration, weight in enumerate(weights):
+               posterior = update(prior, weight)
+               prior = posterior
 
     experiment
         An experiment consists of one or more ensembles, which may be related via
