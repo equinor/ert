@@ -43,9 +43,11 @@ def test_run_poly_example_with_design_matrix(copy_poly_case_with_design_matrix, 
         "--experiment-name",
         "test-experiment",
     )
-
-    for param in ["a", "b", "c", "category"]:
-        assert f"Getting parameter {param} from design matrix" in caplog.text
+    params = ["a", "b", "c", "category"]
+    assert (
+        "Getting parameters: a, category, b, c "
+        "from design matrix for realizations [0 1 2 3 4 5 6 7 8 9]"
+    ) in caplog.text
 
     storage_path = ErtConfig.from_file("poly.ert").ens_path
     config_path = ErtConfig.from_file("poly.ert").config_path

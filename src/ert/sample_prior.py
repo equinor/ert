@@ -6,6 +6,7 @@ from pathlib import Path
 
 import polars as pl
 
+from ert.config.parameter_config import ParameterConfig
 from ert.utils import log_duration
 
 from .config import DataSource, GenKwConfig
@@ -35,6 +36,9 @@ def sample_prior(
     if parameters is None:
         parameters = list(parameter_configs.keys())
     complete_dataset: pl.DataFrame | None = None
+
+    log_params(parameter_configs, design_matrix_df, active_realizations)
+
     for parameter in parameters:
         config_node = parameter_configs[parameter]
         if config_node.forward_init:
@@ -46,10 +50,6 @@ def sample_prior(
                 config_node.input_source == DataSource.DESIGN_MATRIX
                 and design_matrix_df is not None
             ):
-                logger.info(
-                    f"Getting parameter {config_node.name} "
-                    f"from design matrix for realizations {active_realizations}"
-                )
                 cols = {"realization", config_node.name}
                 missing = cols - set(design_matrix_df.columns)
                 if missing:
@@ -62,10 +62,6 @@ def sample_prior(
                 if dataset.is_empty():
                     raise KeyError("Active realization mask is not in design matrix!")
             elif config_node.input_source == DataSource.SAMPLED:
-                logger.info(
-                    f"Sampling parameter {config_node.name} "
-                    f"for realizations {active_realizations}"
-                )
                 dataset = Ensemble.sample_parameter(
                     config_node,
                     list(active_realizations),
@@ -88,3 +84,38 @@ def sample_prior(
             dataset=complete_dataset,
         )
     ensemble.refresh_ensemble_state()
+
+
+def log_params(
+    param_configs: dict[str, ParameterConfig],
+    design_matrix_df: pl.DataFrame | None,
+    active_realizations: Iterable[int],
+) -> None:
+    sample_params: list[str] = [
+        p.name
+        for p in param_configs.values()
+        if (isinstance(p, GenKwConfig) and p.input_source == DataSource.SAMPLED)
+    ]
+    get_params: list[str] = [
+        p.name
+        for p in param_configs.values()
+        if (
+            isinstance(p, GenKwConfig)
+            and (
+                p.input_source == DataSource.DESIGN_MATRIX
+                and design_matrix_df is not None
+            )
+        )
+    ]
+
+    if len(sample_params) > 0:
+        logger.info(
+            f"Sampling parameters: {', '.join(sample_params)}"
+            f" for realizations {active_realizations}"
+        )
+
+    if len(get_params) > 0:
+        logger.info(
+            f"Getting parameters: {', '.join(get_params)}"
+            f" from design matrix for realizations {active_realizations}"
+        )
