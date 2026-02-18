@@ -38,10 +38,12 @@ deprecated_keywords_list = [
         DeprecationInfo(
             keyword=kw,
             message=partial(
-                lambda line, kw: f"Using {kw} with substitution strings "
-                "that are not of the form '<KEY>' is deprecated. "
-                f"Please change {line[0]} to "
-                f"<{line[0].replace('<', '').replace('>', '')}>",
+                lambda line, kw: (
+                    f"Using {kw} with substitution strings "
+                    "that are not of the form '<KEY>' is deprecated. "
+                    f"Please change {line[0]} to "
+                    f"<{line[0].replace('<', '').replace('>', '')}>"
+                ),
                 kw=kw,
             ),
             check=lambda line: not DeprecationInfo.is_angle_bracketed(str(line[0])),
@@ -59,18 +61,22 @@ deprecated_keywords_list = [
     DeprecationInfo(
         keyword="ANALYSIS_SET_VAR",
         message=partial(
-            lambda line: f"The {line[1]} keyword was removed in 2017 and has no "
-            "effect. It has been used in the past to force the subspace "
-            "dimension set using ENKF_NCOMP keyword. "
-            "This can be safely removed.",
+            lambda line: (
+                f"The {line[1]} keyword was removed in 2017 and has no "
+                "effect. It has been used in the past to force the subspace "
+                "dimension set using ENKF_NCOMP keyword. "
+                "This can be safely removed."
+            ),
         ),
         check=lambda line: str(line[1]) == "ENKF_FORCE_NCOMP",
     ),
     DeprecationInfo(
         keyword="RUNPATH",
-        message=lambda line: "RUNPATH keyword contains deprecated value "
-        f"placeholders: %d, instead use: "
-        f"{line[0].replace('%d', '<IENS>', 1).replace('%d', '<ITER>', 1)}",
+        message=lambda line: (
+            "RUNPATH keyword contains deprecated value "
+            f"placeholders: %d, instead use: "
+            f"{line[0].replace('%d', '<IENS>', 1).replace('%d', '<ITER>', 1)}"
+        ),
         check=lambda line: any("%d" in str(v) for v in line),
     ),
     *[
@@ -186,15 +192,18 @@ deprecated_keywords_list = [
         keyword="QUEUE_OPTION",
         message="Memory requirements in LSF should now be set using REALIZATION_MEMORY "
         "and not through the LSF_RESOURCE option.",
-        check=lambda line: "LSF_RESOURCE" in line
-        and "mem=" in cast(list[str], line)[-1],
+        check=lambda line: (
+            "LSF_RESOURCE" in line and "mem=" in cast(list[str], line)[-1]
+        ),
     ),
     DeprecationInfo(
         keyword="SIMULATION_JOB",
-        message=lambda args: "The SIMULATION_JOB keyword has been removed and no "
-        "longer has any effect. It has been used in the as a lightweight alternative "
-        "of FORWARD_MODEL. Please use FORWARD_MODEL keyword instead:\n"
-        f"FORWARD_MODEL {' '.join(args) if args else ''}",
+        message=lambda args: (
+            "The SIMULATION_JOB keyword has been removed and no "
+            "longer has any effect. It has been used in the as a lightweight "
+            "alternative of FORWARD_MODEL. Please use FORWARD_MODEL keyword instead:\n"
+            f"FORWARD_MODEL {' '.join(args) if args else ''}"
+        ),
     ),
     DeprecationInfo(
         keyword="CONFIG_DIRECTORY",

@@ -250,6 +250,8 @@ ignore = [
     "PLW1641", # eq-without-hash
     "PLR0904", # too-many-public-methods
     "PLR1702", # too-many-nested-blocks
+    "RUF067",  # code in __init__ files
+    "RUF069",  # unreliable floating point comparison
 ]
 
 # Allow EN DASH (U+2013)
