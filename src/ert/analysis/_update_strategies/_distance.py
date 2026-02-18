@@ -1,8 +1,7 @@
-"""Distance-based localization update strategies."""
+"""Distance-based localization update strategy."""
 
 from __future__ import annotations
 
-import abc
 import logging
 import time
 from typing import TYPE_CHECKING
@@ -29,50 +28,23 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class _DistanceLocalizationBase(abc.ABC):
-    """Base class for distance-based localization strategies.
+class DistanceLocalizationUpdate:
+    """Distance-based localization for Field and Surface parameters."""
 
-    Provides shared initialization logic (smoother setup) and the
-    update skeleton (log, compute rho, call smoother). Subclasses
-    implement ``_compute_rho_and_update`` for their specific parameter type.
-
-    Parameters
-    ----------
-    rng : np.random.Generator
-        Random number generator for reproducibility.
-
-    Attributes
-    ----------
-    _obs_loc : ObservationLocations | None
-        Observation locations and ranges (set after prepare()).
-    _smoother : DistanceESMDA | None
-        The distance ESMDA smoother instance (set after prepare()).
-    """
-
-    def __init__(self, rng: np.random.Generator) -> None:
+    def __init__(
+        self, rng: np.random.Generator, param_type: type[Field | SurfaceConfig]
+    ) -> None:
         self._rng = rng
+        self._param_type = param_type
         self._obs_loc: ObservationLocations | None = None
         self._smoother: DistanceESMDA | None = None
         self._ensemble_size: int = 0
 
     def prepare(self, obs_context: ObservationContext) -> None:
-        """Initialize smoother from observation context.
-
-        Parameters
-        ----------
-        obs_context : ObservationContext
-            Preprocessed observation and response data.
-
-        Raises
-        ------
-        RuntimeError
-            If obs_context.observation_locations is None.
-        """
         if obs_context.observation_locations is None:
             raise RuntimeError(
                 "Distance localization requires observation_locations in context"
             )
-
         self._obs_loc = obs_context.observation_locations
         self._ensemble_size = obs_context.ensemble_size
         self._smoother = DistanceESMDA(
@@ -82,30 +54,6 @@ class _DistanceLocalizationBase(abc.ABC):
             seed=self._rng,
         )
 
-    @abc.abstractmethod
-    def _compute_rho_and_update(
-        self,
-        param_ensemble: npt.NDArray[np.float64],
-        param_config: ParameterConfig,
-        smoother: DistanceESMDA,
-    ) -> npt.NDArray[np.float64]:
-        """Compute the correlation matrix and update parameters.
-
-        Parameters
-        ----------
-        param_ensemble : npt.NDArray[np.float64]
-            Parameter ensemble matrix.
-        param_config : ParameterConfig
-            Parameter configuration.
-        smoother : DistanceESMDA
-            Initialized smoother instance.
-
-        Returns
-        -------
-        npt.NDArray[np.float64]
-            Updated parameter ensemble.
-        """
-
     def update(
         self,
         param_group: str,
@@ -113,65 +61,38 @@ class _DistanceLocalizationBase(abc.ABC):
         param_config: ParameterConfig,
         non_zero_variance_mask: npt.NDArray[np.bool_],
     ) -> npt.NDArray[np.float64]:
-        """Update parameters using distance-based localization.
-
-        Parameters
-        ----------
-        param_group : str
-            Name of the parameter group.
-        param_ensemble : npt.NDArray[np.float64]
-            Parameter ensemble matrix (num_params x ensemble_size).
-        param_config : ParameterConfig
-            Parameter configuration.
-        non_zero_variance_mask : npt.NDArray[np.bool_]
-            Mask for parameters with non-zero variance.
-
-        Returns
-        -------
-        npt.NDArray[np.float64]
-            Updated parameter ensemble.
-
-        Raises
-        ------
-        RuntimeError
-            If prepare() was not called before update().
-        """
         if self._obs_loc is None or self._smoother is None:
             raise RuntimeError("prepare() must be called before update()")
 
-        param_type = type(param_config).__name__
         start = time.time()
-        log_msg = (
-            f"Running distance localization on {param_type}"
+        param_type_name = self._param_type.__name__
+        logger.info(
+            f"Running distance localization on {param_type_name}"
             f" with {param_ensemble.shape[0]} parameters,"
             f" {self._obs_loc.xpos.shape[0]} observations,"
             f" {self._ensemble_size} realizations"
         )
-        logger.info(log_msg)
 
-        param_ensemble = self._compute_rho_and_update(
-            param_ensemble, param_config, self._smoother
-        )
+        if self._param_type is Field:
+            assert isinstance(param_config, Field)
+            result = self._update_field(param_ensemble, param_config)
+        else:
+            assert isinstance(param_config, SurfaceConfig)
+            result = self._update_surface(param_ensemble, param_config)
 
         logger.info(
-            f"Distance Localization of {param_type} {param_group} completed "
+            f"Distance Localization of {param_type_name} {param_group} completed "
             f"in {(time.time() - start) / 60} minutes"
         )
+        return result
 
-        return param_ensemble
-
-
-class DistanceLocalizationFieldUpdate(_DistanceLocalizationBase):
-    """Distance-based localization for Field parameters."""
-
-    def _compute_rho_and_update(
+    def _update_field(
         self,
         param_ensemble: npt.NDArray[np.float64],
-        param_config: ParameterConfig,
-        smoother: DistanceESMDA,
+        param_config: Field,
     ) -> npt.NDArray[np.float64]:
-        if not isinstance(param_config, Field):
-            raise TypeError(f"Expected Field config, got {type(param_config)}")
+        assert self._obs_loc is not None
+        assert self._smoother is not None
 
         ertbox = param_config.ertbox_params
         if ertbox.xinc is None:
@@ -208,25 +129,20 @@ class DistanceLocalizationFieldUpdate(_DistanceLocalizationBase):
             right_handed_grid_indexing=True,
         )
 
-        return smoother.update_params(
+        return self._smoother.update_params(
             X=param_ensemble,
             Y=self._obs_loc.responses_with_loc,
             rho_input=rho_matrix,
             nz=ertbox.nz,
         )
 
-
-class DistanceLocalizationSurfaceUpdate(_DistanceLocalizationBase):
-    """Distance-based localization for Surface parameters."""
-
-    def _compute_rho_and_update(
+    def _update_surface(
         self,
         param_ensemble: npt.NDArray[np.float64],
-        param_config: ParameterConfig,
-        smoother: DistanceESMDA,
+        param_config: SurfaceConfig,
     ) -> npt.NDArray[np.float64]:
-        if not isinstance(param_config, SurfaceConfig):
-            raise TypeError(f"Expected SurfaceConfig, got {type(param_config)}")
+        assert self._obs_loc is not None
+        assert self._smoother is not None
 
         xpos, ypos = transform_positions_to_local_field_coordinates(
             (param_config.xori, param_config.yori),
@@ -235,11 +151,9 @@ class DistanceLocalizationSurfaceUpdate(_DistanceLocalizationBase):
             self._obs_loc.ypos,
         )
 
-        rotation_angle_of_localization_ellipse = (
-            transform_local_ellipse_angle_to_local_coords(
-                param_config.rotation,
-                np.zeros_like(self._obs_loc.main_range, dtype=np.float64),
-            )
+        rotation_angle = transform_local_ellipse_angle_to_local_coords(
+            param_config.rotation,
+            np.zeros_like(self._obs_loc.main_range, dtype=np.float64),
         )
 
         if param_config.yflip != 1:
@@ -256,11 +170,11 @@ class DistanceLocalizationSurfaceUpdate(_DistanceLocalizationBase):
             ypos,
             self._obs_loc.main_range,
             self._obs_loc.main_range,
-            rotation_angle_of_localization_ellipse,
+            rotation_angle,
             right_handed_grid_indexing=False,
         )
 
-        return smoother.update_params(
+        return self._smoother.update_params(
             X=param_ensemble,
             Y=self._obs_loc.responses_with_loc,
             rho_input=rho_matrix,

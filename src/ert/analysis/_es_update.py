@@ -21,8 +21,7 @@ from ._update_commons import (
 )
 from ._update_strategies import (
     AdaptiveLocalizationUpdate,
-    DistanceLocalizationFieldUpdate,
-    DistanceLocalizationSurfaceUpdate,
+    DistanceLocalizationUpdate,
     ObservationContext,
     ObservationLocations,
     StandardESUpdate,
@@ -267,10 +266,10 @@ def smoother_update(
     strategy_map: dict[str, UpdateStrategy] = {}
 
     if es_settings.distance_localization:
-        # Distance localization: Field/Surface use distance strategies,
+        # Distance localization: Field/Surface use distance strategy,
         # others use standard ES
-        field_strategy = DistanceLocalizationFieldUpdate(rng)
-        surface_strategy = DistanceLocalizationSurfaceUpdate(rng)
+        field_strategy = DistanceLocalizationUpdate(rng, Field)
+        surface_strategy = DistanceLocalizationUpdate(rng, SurfaceConfig)
         standard_strategy = StandardESUpdate(
             smoother_snapshot, es_settings, rng, progress_callback
         )

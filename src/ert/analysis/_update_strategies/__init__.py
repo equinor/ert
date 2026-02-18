@@ -49,10 +49,7 @@ Example usage:
 """
 
 from ._adaptive import AdaptiveLocalizationUpdate
-from ._distance import (
-    DistanceLocalizationFieldUpdate,
-    DistanceLocalizationSurfaceUpdate,
-)
+from ._distance import DistanceLocalizationUpdate
 from ._protocol import (
     ObservationContext,
     ObservationLocations,
@@ -63,8 +60,7 @@ from ._standard import StandardESUpdate
 
 __all__ = [
     "AdaptiveLocalizationUpdate",
-    "DistanceLocalizationFieldUpdate",
-    "DistanceLocalizationSurfaceUpdate",
+    "DistanceLocalizationUpdate",
     "ObservationContext",
     "ObservationLocations",
     "StandardESUpdate",
