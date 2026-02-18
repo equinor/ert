@@ -36,4 +36,4 @@ class SingleTestRun(EnsembleExperiment, SingleTestRunConfig):
 
     @classmethod
     def _experiment_type(cls) -> ExperimentType:
-        return ExperimentType.TEST
+        return ExperimentType.SINGLE_TEST_RUN

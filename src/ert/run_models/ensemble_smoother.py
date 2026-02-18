@@ -111,4 +111,4 @@ class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmoother
 
     @classmethod
     def _experiment_type(cls) -> ExperimentType:
-        return ExperimentType.ES
+        return ExperimentType.ENSEMBLE_SMOOTHER

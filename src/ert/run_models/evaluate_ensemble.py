@@ -73,4 +73,4 @@ class EvaluateEnsemble(RunModel, EvaluateEnsembleConfig):
 
     @classmethod
     def _experiment_type(cls) -> ExperimentType:
-        return ExperimentType.EVALUATE
+        return ExperimentType.EVALUATE_ENSEMBLE

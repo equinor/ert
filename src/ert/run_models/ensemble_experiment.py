@@ -87,4 +87,4 @@ class EnsembleExperiment(InitialEnsembleRunModel, EnsembleExperimentConfig):
 
     @classmethod
     def _experiment_type(cls) -> ExperimentType:
-        return ExperimentType.ENSEMBLE
+        return ExperimentType.ENSEMBLE_EXPERIMENT

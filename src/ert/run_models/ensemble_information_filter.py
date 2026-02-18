@@ -46,4 +46,4 @@ class EnsembleInformationFilter(EnsembleSmoother, EnsembleInformationFilterConfi
 
     @classmethod
     def _experiment_type(cls) -> ExperimentType:
-        return ExperimentType.EnIF
+        return ExperimentType.ENSEMBLE_INFORMATION_FILTER
