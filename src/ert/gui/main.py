@@ -12,9 +12,9 @@ from pathlib import Path
 from signal import SIG_DFL, SIGINT, signal
 
 from opentelemetry.trace import Status, StatusCode
-from PyQt6.QtCore import QDir
+from PyQt6.QtCore import QDir, Qt
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QApplication, QMessageBox, QWidget
+from PyQt6.QtWidgets import QApplication, QMessageBox, QProgressDialog, QWidget
 
 from ert.config import (
     ErrorInfo,
@@ -40,6 +40,19 @@ from ert.trace import trace, tracer
 from .ertwidgets import Suggestor
 
 logger = logging.getLogger(__name__)
+
+
+def _perform_migration_with_spinner(path: Path) -> None:
+    progress = QProgressDialog("Migrating storage", "", 0, 0)
+    progress.setCancelButton(None)
+    progress.setWindowModality(Qt.WindowModality.ApplicationModal)
+    progress.setMinimumDuration(0)
+    progress.show()
+
+    try:
+        LocalStorage.perform_migration(path)
+    finally:
+        progress.close()
 
 
 @tracer.start_as_current_span("ert.application.gui")
@@ -188,7 +201,7 @@ def _start_initial_gui_window(
                     logger.info("Storage migration cancelled by user")
                     os._exit(0)
 
-                LocalStorage.perform_migration(Path(ert_config.ens_path))
+                _perform_migration_with_spinner(Path(ert_config.ens_path))
             storage_path = ert_config.ens_path
         except ErtStorageException as err:
             validation_messages.errors.append(
