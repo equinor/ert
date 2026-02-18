@@ -26,7 +26,11 @@ from ert.config import (
     RFTConfig,
 )
 from ert.config._create_observation_dataframes import create_observation_dataframes
-from ert.config.ert_config import _split_string_into_sections, create_forward_model_json
+from ert.config.ert_config import (
+    RandomSeedGenerator,
+    _split_string_into_sections,
+    create_forward_model_json,
+)
 from ert.config.forward_model_step import (
     ForwardModelStepPlugin,
     SiteInstalledForwardModelStep,
@@ -2752,3 +2756,30 @@ def test_that_breakthrough_observations_can_be_internalized_in_ert_config():
     assert breakthrough_observations["east"].to_list() == [10]
     assert breakthrough_observations["north"].to_list() == [20]
     assert breakthrough_observations["radius"].to_list() == [2500]
+
+
+def test_that_random_seed_generator_always_returns_user_defined_seed():
+    generator = RandomSeedGenerator(user_defined_seed=12345)
+    assert generator.seed == 12345
+    assert generator.seed == 12345
+
+
+def test_that_random_seed_generator_generates_new_seed_each_call():
+    generator = RandomSeedGenerator(user_defined_seed=None)
+    seed1 = generator.seed
+    seed2 = generator.seed
+    assert seed1 != seed2
+
+
+def test_that_random_seed_is_logged_with_reproduction_instructions(caplog):
+    generator = RandomSeedGenerator()
+
+    with caplog.at_level(logging.INFO):
+        seed = generator.seed
+
+    assert "To repeat this experiment" in caplog.text
+
+    seed_logs = [line for line in caplog.text.splitlines() if "RANDOM_SEED" in line]
+    latest_seed_message = seed_logs[-1]
+    expected_seed_message = f"RANDOM_SEED {seed}"
+    assert latest_seed_message == expected_seed_message
