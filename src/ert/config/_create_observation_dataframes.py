@@ -148,6 +148,7 @@ def _handle_rft_observation(
     rft_observation: RFTObservation,
 ) -> pl.DataFrame:
     location = (rft_observation.east, rft_observation.north, rft_observation.tvd)
+    localization_radius = rft_observation.radius
     if location not in rft_config.locations:
         if (zone := rft_observation.zone) is not None:
             rft_config.locations.append((location, zone))
@@ -185,7 +186,9 @@ def _handle_rft_observation(
             "zone": pl.Series([rft_observation.zone], dtype=pl.String),
             "observations": pl.Series([rft_observation.value], dtype=pl.Float32),
             "std": pl.Series([rft_observation.error], dtype=pl.Float32),
-            "radius": pl.Series([None], dtype=pl.Float32),
+            "radius": pl.Series(
+                [localization_radius or DEFAULT_LOCALIZATION_RADIUS], dtype=pl.Float32
+            ),
         }
     )
 
