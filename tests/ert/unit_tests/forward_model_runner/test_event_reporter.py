@@ -223,8 +223,10 @@ def test_event_reporter_does_not_hang_after_failed(
     monkeypatch.setattr(
         "_ert.forward_model_runner.reporting.event.Client.DEFAULT_MAX_RETRIES", 0
     )
-
-    with MockZMQServer(signal=mocked_server_signal) as mock_server:
+    with MockZMQServer(
+        signal=mocked_server_signal,
+        hold_connect_until_released=(mocked_server_signal == 5),
+    ) as mock_server:
         reporter = Event(
             evaluator_url=mock_server.uri, ack_timeout=ack_timeout, max_retries=0
         )
@@ -235,6 +237,8 @@ def test_event_reporter_does_not_hang_after_failed(
         reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
         reporter.report(Start(fmstep1))
         reporter.report(Finish())
+        if mocked_server_signal == 5:
+            mock_server.release_connect_ack()
 
         reporter._event_publisher_thread.join(timeout=10)
         assert not reporter._event_publisher_thread.is_alive(), (

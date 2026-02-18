@@ -74,7 +74,7 @@ def wait_until(func, interval=0.5, timeout=30):
 
 
 class MockZMQServer:
-    def __init__(self, signal=0) -> None:
+    def __init__(self, signal=0, hold_connect_until_released: bool = False) -> None:
         """Mock ZMQ server for testing
         signal = 0: normal operation, receive messages but don't store CONNECT
                     and DISCONNECT messages
@@ -83,9 +83,16 @@ class MockZMQServer:
         signal = 3: normal operation, and store CONNECT and DISCONNECT messages
         signal = 4: same as signal = 3, but do not ACK DISCONNECT messages.
         signal = 5: don't respond to anything.
+
+        hold_connect_until_released: if True, CONNECT messages are held until
+                    release_connect_ack() is called.
         """
         self.messages = []
         self.value = signal
+        self.hold_connect_until_released = hold_connect_until_released
+        self._connect_release = asyncio.Event()
+        if not hold_connect_until_released:
+            self._connect_release.set()
         self.loop = None
         self.server_task = None
         self.handler_task = None
@@ -105,6 +112,7 @@ class MockZMQServer:
         return self
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
+        self._connect_release.set()
         if self.handler_task and not self.handler_task.done():
             self.loop.call_soon_threadsafe(self.handler_task.cancel)
         self.thread.join()
@@ -138,6 +146,9 @@ class MockZMQServer:
     def signal(self, value):
         self.value = value
 
+    def release_connect_ack(self) -> None:
+        self._connect_release.set()
+
     async def do_heartbeat(self):
         for dealer in self.dealers:
             await self.router_socket.send_multipart([dealer, b"", HEARTBEAT_MSG])
@@ -150,6 +161,12 @@ class MockZMQServer:
         while True:
             try:
                 dealer, __, frame = await self.router_socket.recv_multipart()
+                if (
+                    frame == CONNECT_MSG
+                    and self.hold_connect_until_released
+                    and not self._connect_release.is_set()
+                ):
+                    await self._connect_release.wait()
                 if self.value == 5:
                     continue
                 if (
