@@ -114,6 +114,22 @@ def get_parameter_std_dev(
 
 
 def data_for_parameter(ensemble: Ensemble, key: str) -> pd.DataFrame:
+    param_info = ensemble.experiment.parameter_info.get(key)
+
+    if (
+        param_info
+        and param_info.get("type") == "everest_parameters"
+        and (everest_controls := ensemble.realization_controls) is not None
+        and key in everest_controls.columns
+    ):
+        columns_to_select = [
+            col
+            for col in ["batch_id", "realization", key]
+            if col in everest_controls.columns
+        ]
+
+        return everest_controls.select(columns_to_select).to_pandas()
+
     try:
         df = ensemble.load_scalar_keys([key], transformed=True)
         if df.is_empty():
