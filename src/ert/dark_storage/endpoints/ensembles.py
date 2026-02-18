@@ -2,10 +2,10 @@ import logging
 from collections import Counter
 from uuid import UUID
 
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends
 
 from ert.dark_storage import json_schema as js
-from ert.dark_storage.common import get_storage
+from ert.dark_storage.common import get_storage, reraise_as_http_errors
 from ert.storage import Storage
 
 router = APIRouter(tags=["ensemble"])
@@ -21,14 +21,8 @@ def get_ensemble(
     storage: Storage = DEFAULT_STORAGE,
     ensemble_id: UUID,
 ) -> js.EnsembleOut:
-    try:
+    with reraise_as_http_errors(logger):
         ensemble = storage.get_ensemble(ensemble_id)
-    except KeyError as e:
-        logger.error(e)
-        raise HTTPException(status_code=404, detail="Ensemble not found") from e
-    except Exception as ex:
-        logger.exception(ex)
-        raise HTTPException(status_code=500, detail="Internal server error") from ex
 
     return js.EnsembleOut(
         id=ensemble_id,

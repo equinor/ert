@@ -8,11 +8,11 @@ from uuid import UUID
 
 import pandas as pd
 import polars as pl
-from fastapi import APIRouter, Body, Depends, Header, HTTPException, Query, status
+from fastapi import APIRouter, Body, Depends, Header, Query, status
 from fastapi.responses import Response
 from polars.exceptions import ColumnNotFoundError
 
-from ert.dark_storage.common import get_storage
+from ert.dark_storage.common import get_storage, reraise_as_http_errors
 from ert.storage import Ensemble, Storage
 
 router = APIRouter(tags=["responses"])
@@ -50,28 +50,14 @@ async def get_response(
     ] = None,
     accept: Annotated[str | None, Header()] = None,
 ) -> Response:
-    try:
+    with reraise_as_http_errors(logger):
         ensemble = storage.get_ensemble(ensemble_id)
-    except KeyError as e:
-        logger.error(e)
-        raise HTTPException(status_code=404, detail="Ensemble not found") from e
-    except Exception as ex:
-        logger.exception(ex)
-        raise HTTPException(status_code=500, detail="Internal server error") from ex
-
-    try:
         unquoted_rkey = unquote(response_key)
         dataframe = data_for_response(
             ensemble,
             unquoted_rkey,
             json.loads(filter_on) if filter_on is not None else None,
         )
-    except PermissionError as e:
-        logger.error(e)
-        raise HTTPException(status_code=401, detail=str(e)) from e
-    except Exception as ex:
-        logger.exception(ex)
-        raise HTTPException(status_code=500, detail="Internal server error") from ex
 
     media_type = accept if accept is not None else "text/csv"
     if media_type == "application/x-parquet":
@@ -115,11 +101,8 @@ async def get_gradient(
     key: str,
     accept: Annotated[str | None, Header()] = None,
 ) -> Response:
-    try:
+    with reraise_as_http_errors(logger):
         ensemble = storage.get_ensemble(ensemble_id)
-    except KeyError as e:
-        logger.error(e)
-        raise HTTPException(status_code=404, detail="Ensemble not found") from e
 
     unquoted_key = unquote(key)
     dataframe = data_for_gradient(ensemble, unquoted_key)

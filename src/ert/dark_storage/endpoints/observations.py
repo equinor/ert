@@ -6,10 +6,10 @@ from urllib.parse import unquote
 from uuid import UUID, uuid4
 
 import polars as pl
-from fastapi import APIRouter, Body, Depends, HTTPException, Query
+from fastapi import APIRouter, Body, Depends, Query
 
 from ert.dark_storage import json_schema as js
-from ert.dark_storage.common import get_storage
+from ert.dark_storage.common import get_storage, reraise_as_http_errors
 from ert.dark_storage.endpoints.responses import response_to_pandas_x_axis_fns
 from ert.storage import Experiment, Storage
 
@@ -27,14 +27,8 @@ DEFAULT_BODY = Body(...)
 def get_observations(
     *, storage: Storage = DEFAULT_STORAGE, experiment_id: UUID
 ) -> list[js.ObservationOut]:
-    try:
+    with reraise_as_http_errors(logger, {404: "Experiment not found"}):
         experiment = storage.get_experiment(experiment_id)
-    except KeyError as e:
-        logger.error(e)
-        raise HTTPException(status_code=404, detail="Experiment not found") from e
-    except Exception as ex:
-        logger.exception(ex)
-        raise HTTPException(status_code=500, detail="Internal server error") from ex
 
     return [
         js.ObservationOut(
@@ -63,14 +57,8 @@ async def get_observations_for_response(
     ] = None,
 ) -> list[js.ObservationOut]:
     response_key = unquote(response_key)
-    try:
+    with reraise_as_http_errors(logger):
         ensemble = storage.get_ensemble(ensemble_id)
-    except KeyError as e:
-        logger.error(e)
-        raise HTTPException(status_code=404, detail="Ensemble not found") from e
-    except Exception as ex:
-        logger.exception(ex)
-        raise HTTPException(status_code=500, detail="Internal server error") from ex
 
     experiment = ensemble.experiment
 
