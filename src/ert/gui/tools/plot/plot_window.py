@@ -351,7 +351,8 @@ class PlotWindow(QMainWindow):
             if key_def.response is not None and key_def.response.type == "rft":
                 plot_context.setXLabel(key.split(":")[-1])
                 plot_context.setYLabel("TVD")
-                plot_context.depth_y_axis = True
+                plot_context.flip_response_axis = True
+                plot_context.flip_observation_axis = True
                 for ekey, data in list(ensemble_to_data_map.items()):
                     ensemble_to_data_map[ekey] = data.interpolate(
                         method="linear", axis="columns"
