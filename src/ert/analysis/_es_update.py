@@ -48,7 +48,6 @@ logger = logging.getLogger(__name__)
 def perform_ensemble_update(
     parameters: Iterable[str],
     observations: Iterable[str],
-    rng: np.random.Generator,
     module: ESSettings,
     observation_settings: ObservationSettings,
     global_scaling: float,
@@ -75,8 +74,6 @@ def perform_ensemble_update(
         Names of parameter groups to update.
     observations : Iterable[str]
         Names of observations to use.
-    rng : np.random.Generator
-        Random number generator for reproducibility.
     module : ESSettings
         ES settings controlling update behavior.
     observation_settings : ObservationSettings
