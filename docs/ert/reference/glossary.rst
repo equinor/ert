@@ -54,7 +54,10 @@ It is not about being correct, it is about being relevant and coherent.
     experiment
         An experiment consists of one or more ensembles, which may be related via
         zero or more update steps. For example you might have a prior ensemble that
-        results in the posterior ensemble by running IES.
+        results in the posterior ensemble by running IES. We define an experiment
+        as a set of parameter definitions and a set of observation values. That means
+        tha the parameter definitions and the observation values as shared by all
+        ensembles in an experiment.
 
     evaluating an ensemble
         Recall that a realisation consists of a forward model :code:`fm` together with input
