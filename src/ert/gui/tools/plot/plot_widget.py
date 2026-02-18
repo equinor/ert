@@ -219,6 +219,7 @@ class PlotWidget(QWidget):
             )
             self._canvas.draw()
         except Exception as e:
+            logger.exception(e)
             exc_type, _, exc_tb = sys.exc_info()
             sys.stderr.write("-" * 80 + "\n")
             traceback.print_tb(exc_tb)
