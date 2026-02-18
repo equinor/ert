@@ -179,13 +179,9 @@ def perform_ensemble_update(
         observation_locations=observation_locations,
     )
 
-    # Prepare all unique strategies with context
-    prepared_strategies: set[int] = set()
-    for strategy in strategy_map.values():
-        strategy_id = id(strategy)
-        if strategy_id not in prepared_strategies:
-            strategy.prepare(context)
-            prepared_strategies.add(strategy_id)
+    # Prepare each unique strategy once (multiple params may share the same instance)
+    for strategy in set(strategy_map.values()):
+        strategy.prepare(context)
 
     # Update each parameter group
     for param_group in parameters:
