@@ -29,10 +29,10 @@ class EnsembleSelector(QComboBox):
     update_ert: bool, optional
         If True, changing the selection in this combo box will update the
         current ensemble in ERT.
-    filters: list of callables, optional
-        A list of "or" filter functions to apply to the ensemble list. If
+    filters: iterable of callables, optional
+        An iterable of "or" filter functions to apply to the ensemble list. If
         provided, only ensembles that pass at least one filter will be shown.
-        Default is None, which means no filtering is applied.
+        Default is an empty tuple, which means no filtering is applied.
     """
 
     ensemble_populated = Signal()
@@ -41,7 +41,7 @@ class EnsembleSelector(QComboBox):
         self,
         notifier: ErtNotifier,
         update_ert: bool = True,
-        filters: list[Callable[[Iterable[Ensemble]], Iterable[Ensemble]]] | None = None,
+        filters: Iterable[Callable[[Iterable[Ensemble]], Iterable[Ensemble]]] = (),
     ) -> None:
         super().__init__()
         self.notifier = notifier
@@ -49,10 +49,7 @@ class EnsembleSelector(QComboBox):
         # If true current ensemble of ert will be changed
         self._update_ert = update_ert
 
-        if filters is None:
-            self._or_filters = []
-        else:
-            self._or_filters = filters
+        self._or_filters = filters
 
         self.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
 
