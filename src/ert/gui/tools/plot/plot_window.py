@@ -22,6 +22,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ert.config import BreakthroughConfig
 from ert.config.field import Field
 from ert.dark_storage.common import get_storage_api_version
 from ert.gui.ertwidgets import CopyButton, showWaitCursorWhileWaiting
@@ -258,6 +259,18 @@ class PlotWindow(QMainWindow):
             return
         key = key_def.key
 
+        # We wish to plot the base summary key (lineplot) responses of a breakthrough
+        # observation instead of the derived breakthrough response (histogram)
+        if isinstance(key_def.response, BreakthroughConfig):
+            key = next(
+                (
+                    summary_key
+                    for summary_key in key_def.response.summary_keys
+                    if f"BREAKTHROUGH:{summary_key}" == key
+                ),
+                key,
+            )
+
         plot_widget = cast(PlotWidget, self._central_tab.currentWidget())
 
         if plot_widget._plotter.dimensionality == key_def.dimensionality:
@@ -297,7 +310,8 @@ class PlotWindow(QMainWindow):
             if key_def.observations and selected_ensembles:
                 try:
                     observations = self._api.observations_for_key(
-                        [ensembles.id for ensembles in selected_ensembles], key
+                        [ensembles.id for ensembles in selected_ensembles],
+                        key_def.key,
                     )
                 except BaseException as e:
                     handle_exception(e)
@@ -357,6 +371,9 @@ class PlotWindow(QMainWindow):
                     ensemble_to_data_map[ekey] = data.interpolate(
                         method="linear", axis="columns"
                     )
+
+            if key_def.response is not None and key_def.response.type == "breakthrough":
+                plot_context.flip_observation_axis = True
 
             for data in ensemble_to_data_map.values():
                 data = data.T
