@@ -13,8 +13,7 @@ import numpy.typing as npt
 from ert.analysis.event import AnalysisEvent, AnalysisTimeEvent
 
 if TYPE_CHECKING:
-    from ert.config import ESSettings, ParameterConfig
-    from ert.storage import Ensemble
+    from ert.config import ParameterConfig
 
 
 T = TypeVar("T")
@@ -113,12 +112,13 @@ class ObservationLocations:
     """Scaled observation errors filtered to observations with locations."""
 
 
-@dataclass
-class UpdateContext:
-    """Shared data needed by all update strategies.
+@dataclass(frozen=True)
+class ObservationContext:
+    """Preprocessed observation data for parameter updates.
 
-    This encapsulates all the common data required during parameter updates,
-    including response matrices, observation data, and ensemble information.
+    This is a minimal, immutable data container holding only the observation
+    and response data computed during preprocessing. Runtime dependencies
+    (rng, settings, progress_callback) are passed to strategies at construction.
     """
 
     responses: npt.NDArray[np.float64]
@@ -130,51 +130,44 @@ class UpdateContext:
     observation_errors: npt.NDArray[np.float64]
     """Scaled observation errors (standard deviations)."""
 
-    ensemble_size: int
-    """Number of active realizations."""
-
-    iens_active_index: npt.NDArray[np.int_]
-    """Indices of active realizations."""
-
-    rng: np.random.Generator
-    """Random number generator for reproducibility."""
-
-    progress_callback: Callable[[AnalysisEvent], None]
-    """Callback to report progress events."""
-
-    settings: ESSettings
-    """ES analysis settings."""
-
-    source_ensemble: Ensemble
-    """Source ensemble for reading parameters."""
-
     observation_locations: ObservationLocations | None = None
     """Observation locations for distance-based localization (optional)."""
+
+    @property
+    def ensemble_size(self) -> int:
+        """Number of active realizations (inferred from responses shape)."""
+        return self.responses.shape[1]
+
+    @property
+    def num_observations(self) -> int:
+        """Number of observations."""
+        return len(self.observation_values)
 
 
 class UpdateStrategy(Protocol):
     """Protocol for parameter update strategies.
 
     Each strategy implements a specific algorithm for updating ensemble
-    parameters based on observations. Strategies are created with configuration
-    and then prepared with context data before updates.
+    parameters based on observations. Strategies receive runtime dependencies
+    (rng, settings, progress_callback) at construction, and observation data
+    via prepare().
 
     Lifecycle:
-        1. Create strategy with configuration (e.g., SmootherSnapshot)
-        2. Call prepare(context) to initialize with observation data
+        1. Create strategy with dependencies (rng, settings, progress_callback)
+        2. Call prepare(obs_context) to initialize with observation data
         3. Call update() for each parameter group
     """
 
-    def prepare(self, context: UpdateContext) -> None:
-        """Initialize the strategy with context data.
+    def prepare(self, obs_context: ObservationContext) -> None:
+        """Initialize the strategy with observation data.
 
         Called once before any update() calls. Performs any expensive
         pre-computation (e.g., computing transition matrices).
 
         Parameters
         ----------
-        context : UpdateContext
-            Shared update context with observations and settings.
+        obs_context : ObservationContext
+            Preprocessed observation and response data.
         """
         ...
 
@@ -184,7 +177,6 @@ class UpdateStrategy(Protocol):
         param_ensemble: npt.NDArray[np.float64],
         param_config: ParameterConfig,
         non_zero_variance_mask: npt.NDArray[np.bool_],
-        context: UpdateContext,
     ) -> npt.NDArray[np.float64]:
         """Update parameters using this strategy's algorithm.
 
@@ -198,8 +190,6 @@ class UpdateStrategy(Protocol):
             Configuration for this parameter type.
         non_zero_variance_mask : npt.NDArray[np.bool_]
             Boolean mask for parameters with non-zero variance.
-        context : UpdateContext
-            Shared update context.
 
         Returns
         -------

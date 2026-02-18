@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 import iterative_ensemble_smoother as ies
@@ -10,15 +11,20 @@ import numpy as np
 import scipy
 
 from ert.analysis._update_commons import ErtAnalysisError
-from ert.analysis.event import AnalysisErrorEvent, AnalysisStatusEvent, DataSection
+from ert.analysis.event import (
+    AnalysisErrorEvent,
+    AnalysisEvent,
+    AnalysisStatusEvent,
+    DataSection,
+)
 from ert.analysis.snapshots import SmootherSnapshot
 
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.config import ParameterConfig
+    from ert.config import ESSettings, ParameterConfig
 
-    from ._protocol import UpdateContext
+    from ._protocol import ObservationContext
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +42,12 @@ class StandardESUpdate:
     ----------
     smoother_snapshot : SmootherSnapshot
         Snapshot object for error reporting.
+    settings : ESSettings
+        ES analysis settings.
+    rng : np.random.Generator
+        Random number generator for reproducibility.
+    progress_callback : Callable[[AnalysisEvent], None]
+        Callback to report progress events.
 
     Attributes
     ----------
@@ -48,31 +60,45 @@ class StandardESUpdate:
         If computing the transition matrix fails due to singular matrix.
     """
 
-    def __init__(self, smoother_snapshot: SmootherSnapshot) -> None:
+    def __init__(
+        self,
+        smoother_snapshot: SmootherSnapshot,
+        settings: ESSettings,
+        rng: np.random.Generator,
+        progress_callback: Callable[[AnalysisEvent], None],
+    ) -> None:
         self._smoother_snapshot = smoother_snapshot
+        self._settings = settings
+        self._rng = rng
+        self._progress_callback = progress_callback
         self._T: npt.NDArray[np.float64] | None = None
+        self._ensemble_size: int = 0
+        self._num_obs: int = 0
 
-    def prepare(self, context: UpdateContext) -> None:
-        """Compute the transition matrix from context data.
+    def prepare(self, obs_context: ObservationContext) -> None:
+        """Compute the transition matrix from observation data.
 
         Parameters
         ----------
-        context : UpdateContext
-            Shared update context with observations and settings.
+        obs_context : ObservationContext
+            Preprocessed observation and response data.
         """
+        self._ensemble_size = obs_context.ensemble_size
+        self._num_obs = obs_context.num_observations
+
         smoother = ies.ESMDA(
-            covariance=context.observation_errors**2,
-            observations=context.observation_values,
+            covariance=obs_context.observation_errors**2,
+            observations=obs_context.observation_values,
             alpha=1,
-            seed=context.rng,
-            inversion=context.settings.inversion.lower(),
+            seed=self._rng,
+            inversion=self._settings.inversion.lower(),
         )
 
         try:
             self._T = smoother.compute_transition_matrix(
-                Y=context.responses,
+                Y=obs_context.responses,
                 alpha=1.0,
-                truncation=context.settings.enkf_truncation,
+                truncation=self._settings.enkf_truncation,
             )
         except scipy.linalg.LinAlgError as err:
             msg = (
@@ -80,7 +106,7 @@ class StandardESUpdate:
                 "this might be due to outlier values in one "
                 f"or more realizations: {err}"
             )
-            context.progress_callback(
+            self._progress_callback(
                 AnalysisErrorEvent(
                     error_msg=msg,
                     data=DataSection(
@@ -101,7 +127,6 @@ class StandardESUpdate:
         param_ensemble: npt.NDArray[np.float64],
         param_config: ParameterConfig,
         non_zero_variance_mask: npt.NDArray[np.bool_],
-        context: UpdateContext,
     ) -> npt.NDArray[np.float64]:
         """Apply the transition matrix to update parameters.
 
@@ -117,8 +142,6 @@ class StandardESUpdate:
             Configuration for this parameter type.
         non_zero_variance_mask : npt.NDArray[np.bool_]
             Boolean mask for parameters with non-zero variance.
-        context : UpdateContext
-            Shared update context.
 
         Returns
         -------
@@ -133,12 +156,12 @@ class StandardESUpdate:
         if self._T is None:
             raise RuntimeError("prepare() must be called before update()")
 
-        num_obs = len(context.observation_values)
         log_msg = (
-            f"There are {num_obs} responses and {context.ensemble_size} realizations."
+            f"There are {self._num_obs} responses "
+            f"and {self._ensemble_size} realizations."
         )
         logger.info(log_msg)
-        context.progress_callback(AnalysisStatusEvent(msg=log_msg))
+        self._progress_callback(AnalysisStatusEvent(msg=log_msg))
 
         # In-place multiplication is not yet supported, therefore avoiding @=
         param_ensemble[non_zero_variance_mask] @= self._T.astype(param_ensemble.dtype)

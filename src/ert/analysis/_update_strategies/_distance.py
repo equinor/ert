@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
     from ert.config import ParameterConfig
 
-    from ._protocol import UpdateContext
+    from ._protocol import ObservationContext
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +36,11 @@ class _DistanceLocalizationBase(abc.ABC):
     update skeleton (log, compute rho, call smoother). Subclasses
     implement ``_compute_rho_and_update`` for their specific parameter type.
 
+    Parameters
+    ----------
+    rng : np.random.Generator
+        Random number generator for reproducibility.
+
     Attributes
     ----------
     _obs_loc : ObservationLocations | None
@@ -44,34 +49,37 @@ class _DistanceLocalizationBase(abc.ABC):
         The distance ESMDA smoother instance (set after prepare()).
     """
 
-    def __init__(self) -> None:
+    def __init__(self, rng: np.random.Generator) -> None:
+        self._rng = rng
         self._obs_loc: ObservationLocations | None = None
         self._smoother: DistanceESMDA | None = None
+        self._ensemble_size: int = 0
 
-    def prepare(self, context: UpdateContext) -> None:
-        """Initialize smoother from context observation locations.
+    def prepare(self, obs_context: ObservationContext) -> None:
+        """Initialize smoother from observation context.
 
         Parameters
         ----------
-        context : UpdateContext
-            Shared update context with observations and settings.
+        obs_context : ObservationContext
+            Preprocessed observation and response data.
 
         Raises
         ------
         RuntimeError
-            If context.observation_locations is None.
+            If obs_context.observation_locations is None.
         """
-        if context.observation_locations is None:
+        if obs_context.observation_locations is None:
             raise RuntimeError(
                 "Distance localization requires observation_locations in context"
             )
 
-        self._obs_loc = context.observation_locations
+        self._obs_loc = obs_context.observation_locations
+        self._ensemble_size = obs_context.ensemble_size
         self._smoother = DistanceESMDA(
             covariance=self._obs_loc.observation_errors**2,
             observations=self._obs_loc.observation_values,
             alpha=1,
-            seed=context.rng,
+            seed=self._rng,
         )
 
     @abc.abstractmethod
@@ -104,7 +112,6 @@ class _DistanceLocalizationBase(abc.ABC):
         param_ensemble: npt.NDArray[np.float64],
         param_config: ParameterConfig,
         non_zero_variance_mask: npt.NDArray[np.bool_],
-        context: UpdateContext,
     ) -> npt.NDArray[np.float64]:
         """Update parameters using distance-based localization.
 
@@ -118,8 +125,6 @@ class _DistanceLocalizationBase(abc.ABC):
             Parameter configuration.
         non_zero_variance_mask : npt.NDArray[np.bool_]
             Mask for parameters with non-zero variance.
-        context : UpdateContext
-            Shared context with observation data.
 
         Returns
         -------
@@ -140,7 +145,7 @@ class _DistanceLocalizationBase(abc.ABC):
             f"Running distance localization on {param_type}"
             f" with {param_ensemble.shape[0]} parameters,"
             f" {self._obs_loc.xpos.shape[0]} observations,"
-            f" {context.ensemble_size} realizations"
+            f" {self._ensemble_size} realizations"
         )
         logger.info(log_msg)
 

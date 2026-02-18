@@ -4,23 +4,23 @@ from __future__ import annotations
 
 import logging
 import time
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, TypeVar
 
 import numpy as np
 import psutil
 from iterative_ensemble_smoother.experimental import AdaptiveESMDA
 
-from ert.analysis.event import AnalysisStatusEvent
+from ert.analysis.event import AnalysisEvent, AnalysisStatusEvent
 
 from ._protocol import TimedIterator
 
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.config import ParameterConfig
+    from ert.config import ESSettings, ParameterConfig
 
-    from ._protocol import UpdateContext
+    from ._protocol import ObservationContext
 
 logger = logging.getLogger(__name__)
 
@@ -104,6 +104,15 @@ class AdaptiveLocalizationUpdate:
     by applying correlation thresholds during the update. Parameters are
     processed in batches to manage memory usage.
 
+    Parameters
+    ----------
+    settings : ESSettings
+        ES analysis settings.
+    rng : np.random.Generator
+        Random number generator for reproducibility.
+    progress_callback : Callable[[AnalysisEvent], None]
+        Callback to report progress events.
+
     Attributes
     ----------
     _smoother : AdaptiveESMDA | None
@@ -116,35 +125,47 @@ class AdaptiveLocalizationUpdate:
         Number of observations.
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        settings: ESSettings,
+        rng: np.random.Generator,
+        progress_callback: Callable[[AnalysisEvent], None],
+    ) -> None:
+        self._settings = settings
+        self._rng = rng
+        self._progress_callback = progress_callback
         self._smoother: AdaptiveESMDA | None = None
         self._cov_YY: npt.NDArray[np.float64] | None = None
         self._D: npt.NDArray[np.float64] | None = None
         self._num_obs: int = 0
+        self._ensemble_size: int = 0
+        self._responses: npt.NDArray[np.float64] | None = None
 
-    def prepare(self, context: UpdateContext) -> None:
-        """Initialize smoother and pre-compute matrices from context data.
+    def prepare(self, obs_context: ObservationContext) -> None:
+        """Initialize smoother and pre-compute matrices from observation data.
 
         Parameters
         ----------
-        context : UpdateContext
-            Shared update context with observations and settings.
+        obs_context : ObservationContext
+            Preprocessed observation and response data.
         """
         self._smoother = AdaptiveESMDA(
-            covariance=context.observation_errors**2,
-            observations=context.observation_values,
-            seed=context.rng,
+            covariance=obs_context.observation_errors**2,
+            observations=obs_context.observation_values,
+            seed=self._rng,
         )
 
         # Pre-calculate cov_YY for efficiency
-        self._cov_YY = np.atleast_2d(np.cov(context.responses))
+        self._cov_YY = np.atleast_2d(np.cov(obs_context.responses))
 
         # Perturb observations
         self._D = self._smoother.perturb_observations(
-            ensemble_size=context.ensemble_size, alpha=1.0
+            ensemble_size=obs_context.ensemble_size, alpha=1.0
         )
 
-        self._num_obs = len(context.observation_values)
+        self._num_obs = obs_context.num_observations
+        self._ensemble_size = obs_context.ensemble_size
+        self._responses = obs_context.responses
 
     def update(
         self,
@@ -152,7 +173,6 @@ class AdaptiveLocalizationUpdate:
         param_ensemble: npt.NDArray[np.float64],
         param_config: ParameterConfig,
         non_zero_variance_mask: npt.NDArray[np.bool_],
-        context: UpdateContext,
     ) -> npt.NDArray[np.float64]:
         """Update parameters using adaptive localization with batching.
 
@@ -166,8 +186,6 @@ class AdaptiveLocalizationUpdate:
             Configuration for this parameter type.
         non_zero_variance_mask : npt.NDArray[np.bool_]
             Boolean mask for parameters with non-zero variance.
-        context : UpdateContext
-            Shared update context.
 
         Returns
         -------
@@ -179,7 +197,12 @@ class AdaptiveLocalizationUpdate:
         RuntimeError
             If prepare() was not called before update().
         """
-        if self._smoother is None or self._cov_YY is None or self._D is None:
+        if (
+            self._smoother is None
+            or self._cov_YY is None
+            or self._D is None
+            or self._responses is None
+        ):
             raise RuntimeError("prepare() must be called before update()")
 
         num_params = param_ensemble.shape[0]
@@ -188,16 +211,16 @@ class AdaptiveLocalizationUpdate:
 
         log_msg = (
             f"Running localization on {num_params} parameters, "
-            f"{self._num_obs} responses, {context.ensemble_size} realizations "
+            f"{self._num_obs} responses, {self._ensemble_size} realizations "
             f"and {len(batches)} batches"
         )
         logger.info(log_msg)
-        context.progress_callback(AnalysisStatusEvent(msg=log_msg))
+        self._progress_callback(AnalysisStatusEvent(msg=log_msg))
 
         def progress_callback_wrapper(
             iterable: Sequence[T],
         ) -> TimedIterator[T]:
-            return TimedIterator(iterable, context.progress_callback)
+            return TimedIterator(iterable, self._progress_callback)
 
         start = time.time()
 
@@ -207,11 +230,11 @@ class AdaptiveLocalizationUpdate:
 
             param_ensemble[update_idx, :] = self._smoother.assimilate(
                 X=X_local,
-                Y=context.responses,
+                Y=self._responses,
                 D=self._D,
                 alpha=1.0,
-                correlation_threshold=context.settings.correlation_threshold(
-                    context.ensemble_size
+                correlation_threshold=self._settings.correlation_threshold(
+                    self._ensemble_size
                 ),
                 cov_YY=self._cov_YY,
                 progress_callback=progress_callback_wrapper,

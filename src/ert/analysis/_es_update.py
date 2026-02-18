@@ -23,9 +23,9 @@ from ._update_strategies import (
     AdaptiveLocalizationUpdate,
     DistanceLocalizationFieldUpdate,
     DistanceLocalizationSurfaceUpdate,
+    ObservationContext,
     ObservationLocations,
     StandardESUpdate,
-    UpdateContext,
     UpdateStrategy,
 )
 from .event import (
@@ -98,7 +98,6 @@ def perform_ensemble_update(
         Mapping from parameter group names to update strategies.
     """
     iens_active_index = np.flatnonzero(ens_mask)
-    ensemble_size = int(ens_mask.sum())
 
     # Preprocess observations and responses
     preprocessed_data = _preprocess_observations_and_responses(
@@ -165,23 +164,17 @@ def perform_ensemble_update(
             observation_errors=observation_errors[has_location],
         )
 
-    # Create update context with shared data
-    context = UpdateContext(
+    # Create observation context (minimal data container)
+    obs_context = ObservationContext(
         responses=responses,
         observation_values=observation_values,
         observation_errors=observation_errors,
-        ensemble_size=ensemble_size,
-        iens_active_index=iens_active_index,
-        rng=rng,
-        progress_callback=progress_callback,
-        settings=module,
-        source_ensemble=source_ensemble,
         observation_locations=observation_locations,
     )
 
     # Prepare each unique strategy once (multiple params may share the same instance)
     for strategy in set(strategy_map.values()):
-        strategy.prepare(context)
+        strategy.prepare(obs_context)
 
     # Update each parameter group
     for param_group in parameters:
@@ -219,7 +212,6 @@ def perform_ensemble_update(
             param_ensemble_array,
             param_cfg,
             non_zero_variance_mask,
-            context,
         )
 
         # Save updated parameters
@@ -277,9 +269,11 @@ def smoother_update(
     if es_settings.distance_localization:
         # Distance localization: Field/Surface use distance strategies,
         # others use standard ES
-        field_strategy = DistanceLocalizationFieldUpdate()
-        surface_strategy = DistanceLocalizationSurfaceUpdate()
-        standard_strategy = StandardESUpdate(smoother_snapshot)
+        field_strategy = DistanceLocalizationFieldUpdate(rng)
+        surface_strategy = DistanceLocalizationSurfaceUpdate(rng)
+        standard_strategy = StandardESUpdate(
+            smoother_snapshot, es_settings, rng, progress_callback
+        )
 
         for param_name in parameters:
             param_cfg = param_configs[param_name]
@@ -292,13 +286,17 @@ def smoother_update(
 
     elif es_settings.localization:
         # Adaptive localization for all parameters
-        adaptive_strategy = AdaptiveLocalizationUpdate()
+        adaptive_strategy = AdaptiveLocalizationUpdate(
+            es_settings, rng, progress_callback
+        )
         for param_name in parameters:
             strategy_map[param_name] = adaptive_strategy
 
     else:
         # Standard ES for all parameters
-        standard_strategy = StandardESUpdate(smoother_snapshot)
+        standard_strategy = StandardESUpdate(
+            smoother_snapshot, es_settings, rng, progress_callback
+        )
         for param_name in parameters:
             strategy_map[param_name] = standard_strategy
 
