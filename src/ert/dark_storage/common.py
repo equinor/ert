@@ -1,7 +1,11 @@
 import logging
 import os
 import re
+from collections.abc import Iterator
+from contextlib import contextmanager
 from importlib import metadata
+
+from fastapi import HTTPException
 
 from ert.dark_storage.exceptions import InternalServerError
 from ert.storage import (
@@ -38,3 +42,26 @@ def get_storage_api_version() -> str:
     if match:
         major, minor = match.groups()
     return f"{major}.{minor}"
+
+
+@contextmanager
+def reraise_as_http_errors(
+    custom_logger: logging.Logger = logger, details: dict[int, str] | None = None
+) -> Iterator[None]:
+    error_details = {404: "Ensemble not found", 500: "Internal server error"} | (
+        details or {}
+    )
+    try:
+        yield
+    except KeyError as e:
+        custom_logger.error(e)
+        raise HTTPException(status_code=404, detail=error_details[404]) from e
+    except ValueError as e:
+        logger.error(e)
+        raise HTTPException(status_code=404, detail="Data not found") from e
+    except PermissionError as e:
+        custom_logger.error(e)
+        raise HTTPException(status_code=401, detail=str(e)) from e
+    except Exception as ex:
+        custom_logger.exception(ex)
+        raise HTTPException(status_code=500, detail=error_details[500]) from ex

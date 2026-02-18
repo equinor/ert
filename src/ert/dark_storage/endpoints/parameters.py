@@ -9,7 +9,7 @@ import pandas as pd
 from fastapi import APIRouter, Body, Depends, Header, HTTPException, status
 from fastapi.responses import Response
 
-from ert.dark_storage.common import get_storage
+from ert.dark_storage.common import get_storage, reraise_as_http_errors
 from ert.storage import Ensemble, Storage
 
 router = APIRouter(tags=["ensemble"])
@@ -45,25 +45,10 @@ async def get_parameter(
     parameter_key: str,
     accept: Annotated[str | None, Header()] = None,
 ) -> Response:
-    try:
+    with reraise_as_http_errors(logger):
         ensemble = storage.get_ensemble(ensemble_id)
-    except KeyError as e:
-        logger.error(e)
-        raise HTTPException(status_code=404, detail="Ensemble not found") from e
-    except Exception as ex:
-        logger.exception(ex)
-        raise HTTPException(status_code=500, detail="Internal server error") from ex
-
-    unquoted_pkey = unquote(parameter_key)
-
-    try:
+        unquoted_pkey = unquote(parameter_key)
         dataframe = data_for_parameter(ensemble, unquoted_pkey)
-    except PermissionError as e:
-        logger.error(e)
-        raise HTTPException(status_code=401, detail=str(e)) from e
-    except Exception as ex:
-        logger.exception(ex)
-        raise HTTPException(status_code=500, detail="Internal server error") from ex
 
     media_type = accept if accept is not None else "text/csv"
     if media_type == "application/x-parquet":
@@ -88,18 +73,9 @@ def get_parameter_std_dev(
     *, storage: Storage = DEFAULT_STORAGE, ensemble_id: UUID, key: str, z: int
 ) -> Response:
     key = unquote(key)
-    try:
+    with reraise_as_http_errors(logger):
         ensemble = storage.get_ensemble(ensemble_id)
         da = ensemble.calculate_std_dev_for_parameter_group(key)
-    except ValueError as e:
-        logger.error(e)
-        raise HTTPException(status_code=404, detail="Data not found") from e
-    except KeyError as ke:
-        logger.error(ke)
-        raise HTTPException(status_code=404, detail="Ensemble not found") from ke
-    except Exception as ex:
-        logger.exception(ex)
-        raise HTTPException(status_code=500, detail="Internal server error") from ex
 
     if z >= int(da.shape[2]):
         logger.error("invalid z index")
@@ -130,17 +106,15 @@ def data_for_parameter(ensemble: Ensemble, key: str) -> pd.DataFrame:
 
         return everest_controls.select(columns_to_select).to_pandas()
 
-    try:
-        df = ensemble.load_scalar_keys([key], transformed=True)
-        if df.is_empty():
-            logger.warning(f"No data found for parameter '{key}'")
+    with reraise_as_http_errors(logger):
+        try:
+            df = ensemble.load_scalar_keys([key], transformed=True)
+            if df.is_empty():
+                logger.warning(f"No data found for parameter '{key}'")
+                return pd.DataFrame()
+        except KeyError as e:
+            logger.error(e)
             return pd.DataFrame()
-    except KeyError as e:
-        logger.error(e)
-        return pd.DataFrame()
-    except Exception as ex:
-        logger.exception(ex)
-        raise HTTPException(status_code=500, detail="Internal server error") from ex
 
     dataframe = df.to_pandas().set_index("realization")
     dataframe.columns.name = None
