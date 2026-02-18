@@ -29,20 +29,18 @@ class StandardESUpdate:
     This strategy computes a transition matrix T such that:
         X_posterior = X_prior @ T
 
-    The transition matrix is computed once during initialization and
-    applied to all parameter groups.
+    The transition matrix is computed once during prepare() and
+    applied to all parameter groups via update().
 
     Parameters
     ----------
     smoother_snapshot : SmootherSnapshot
         Snapshot object for error reporting.
-    context : UpdateContext
-        Shared update context with observations and settings.
 
     Attributes
     ----------
     _T : npt.NDArray[np.float64]
-        The computed transition matrix.
+        The computed transition matrix (set after prepare()).
 
     Raises
     ------
@@ -50,11 +48,18 @@ class StandardESUpdate:
         If computing the transition matrix fails due to singular matrix.
     """
 
-    def __init__(
-        self, smoother_snapshot: SmootherSnapshot, context: UpdateContext
-    ) -> None:
+    def __init__(self, smoother_snapshot: SmootherSnapshot) -> None:
         self._smoother_snapshot = smoother_snapshot
+        self._T: npt.NDArray[np.float64] | None = None
 
+    def prepare(self, context: UpdateContext) -> None:
+        """Compute the transition matrix from context data.
+
+        Parameters
+        ----------
+        context : UpdateContext
+            Shared update context with observations and settings.
+        """
         smoother = ies.ESMDA(
             covariance=context.observation_errors**2,
             observations=context.observation_values,
@@ -64,7 +69,7 @@ class StandardESUpdate:
         )
 
         try:
-            self._T: npt.NDArray[np.float64] = smoother.compute_transition_matrix(
+            self._T = smoother.compute_transition_matrix(
                 Y=context.responses,
                 alpha=1.0,
                 truncation=context.settings.enkf_truncation,
@@ -89,21 +94,6 @@ class StandardESUpdate:
 
         # Add identity in place for efficient computation: T = I + K @ H
         np.fill_diagonal(self._T, self._T.diagonal() + 1)
-
-    def can_handle(self, param_config: ParameterConfig) -> bool:
-        """Check if this strategy handles the parameter type.
-
-        Parameters
-        ----------
-        param_config : ParameterConfig
-            Configuration for the parameter.
-
-        Returns
-        -------
-        bool
-            Always True since standard update handles all types.
-        """
-        return True
 
     def update(
         self,
@@ -135,7 +125,14 @@ class StandardESUpdate:
         npt.NDArray[np.float64]
             Updated parameter ensemble array.
 
+        Raises
+        ------
+        RuntimeError
+            If prepare() was not called before update().
         """
+        if self._T is None:
+            raise RuntimeError("prepare() must be called before update()")
+
         num_obs = len(context.observation_values)
         log_msg = (
             f"There are {num_obs} responses and {context.ensemble_size} realizations."

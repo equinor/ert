@@ -34,31 +34,45 @@ class _DistanceLocalizationBase(abc.ABC):
 
     Provides shared initialization logic (smoother setup) and the
     update skeleton (log, compute rho, call smoother). Subclasses
-    implement ``can_handle`` and ``_compute_rho_and_update`` for
-    their specific parameter type.
+    implement ``_compute_rho_and_update`` for their specific parameter type.
 
-    Parameters
+    Attributes
     ----------
-    observation_locations : ObservationLocations
-        Pre-computed observation locations and ranges.
-    context : UpdateContext
-        Shared context containing observation data and settings.
+    _obs_loc : ObservationLocations | None
+        Observation locations and ranges (set after prepare()).
+    _smoother : DistanceESMDA | None
+        The distance ESMDA smoother instance (set after prepare()).
     """
 
-    def __init__(
-        self, observation_locations: ObservationLocations, context: UpdateContext
-    ) -> None:
-        self._obs_loc = observation_locations
+    def __init__(self) -> None:
+        self._obs_loc: ObservationLocations | None = None
+        self._smoother: DistanceESMDA | None = None
+
+    def prepare(self, context: UpdateContext) -> None:
+        """Initialize smoother from context observation locations.
+
+        Parameters
+        ----------
+        context : UpdateContext
+            Shared update context with observations and settings.
+
+        Raises
+        ------
+        RuntimeError
+            If context.observation_locations is None.
+        """
+        if context.observation_locations is None:
+            raise RuntimeError(
+                "Distance localization requires observation_locations in context"
+            )
+
+        self._obs_loc = context.observation_locations
         self._smoother = DistanceESMDA(
             covariance=self._obs_loc.observation_errors**2,
             observations=self._obs_loc.observation_values,
             alpha=1,
             seed=context.rng,
         )
-
-    @abc.abstractmethod
-    def can_handle(self, param_config: ParameterConfig) -> bool:
-        """Check if this strategy handles the given parameter type."""
 
     @abc.abstractmethod
     def _compute_rho_and_update(
@@ -112,7 +126,14 @@ class _DistanceLocalizationBase(abc.ABC):
         npt.NDArray[np.float64]
             Updated parameter ensemble.
 
+        Raises
+        ------
+        RuntimeError
+            If prepare() was not called before update().
         """
+        if self._obs_loc is None or self._smoother is None:
+            raise RuntimeError("prepare() must be called before update()")
+
         param_type = type(param_config).__name__
         start = time.time()
         log_msg = (
@@ -137,9 +158,6 @@ class _DistanceLocalizationBase(abc.ABC):
 
 class DistanceLocalizationFieldUpdate(_DistanceLocalizationBase):
     """Distance-based localization for Field parameters."""
-
-    def can_handle(self, param_config: ParameterConfig) -> bool:
-        return isinstance(param_config, Field)
 
     def _compute_rho_and_update(
         self,
@@ -195,9 +213,6 @@ class DistanceLocalizationFieldUpdate(_DistanceLocalizationBase):
 
 class DistanceLocalizationSurfaceUpdate(_DistanceLocalizationBase):
     """Distance-based localization for Surface parameters."""
-
-    def can_handle(self, param_config: ParameterConfig) -> bool:
-        return isinstance(param_config, SurfaceConfig)
 
     def _compute_rho_and_update(
         self,

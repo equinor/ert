@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, TextIO
 import numpy as np
 import polars as pl
 
-from ert.config import ObservationSettings
+from ert.config import Field, ObservationSettings, SurfaceConfig
 
 from ._update_commons import (
     ErtAnalysisError,
@@ -19,7 +19,15 @@ from ._update_commons import (
     _preprocess_observations_and_responses,
     noop_progress_callback,
 )
-from ._update_strategies import UpdateContext, UpdateStrategyFactory
+from ._update_strategies import (
+    AdaptiveLocalizationUpdate,
+    DistanceLocalizationFieldUpdate,
+    DistanceLocalizationSurfaceUpdate,
+    ObservationLocations,
+    StandardESUpdate,
+    UpdateContext,
+    UpdateStrategy,
+)
 from .event import (
     AnalysisCompleteEvent,
     AnalysisErrorEvent,
@@ -50,6 +58,7 @@ def perform_ensemble_update(
     source_ensemble: Ensemble,
     target_ensemble: Ensemble,
     progress_callback: Callable[[AnalysisEvent], None],
+    strategy_map: dict[str, UpdateStrategy],
 ) -> None:
     """
     Orchestrate ensemble-based parameter updates using configurable strategies.
@@ -57,8 +66,8 @@ def perform_ensemble_update(
     This function coordinates the parameter update process using a strategy pattern
     that supports multiple analysis algorithms (ES, IES, etc.). The workflow:
     1. Preprocessing observations and responses
-    2. Creating appropriate update strategies via the factory
-    3. Delegating parameter updates to the selected strategies
+    2. Preparing strategies with context data
+    3. Delegating parameter updates to the mapped strategies
     4. Saving updated parameters to the target ensemble
 
     Parameters
@@ -85,6 +94,8 @@ def perform_ensemble_update(
         Target ensemble to save updated parameters to.
     progress_callback : Callable[[AnalysisEvent], None]
         Callback for reporting progress.
+    strategy_map : dict[str, UpdateStrategy]
+        Mapping from parameter group names to update strategies.
     """
     iens_active_index = np.flatnonzero(ens_mask)
     ensemble_size = int(ens_mask.sum())
@@ -139,6 +150,21 @@ def perform_ensemble_update(
         )
         raise ErtAnalysisError(msg)
 
+    # Extract observation locations if distance localization is enabled
+    observation_locations: ObservationLocations | None = None
+    if module.distance_localization:
+        has_location = (
+            filtered_data["east"].is_not_null() & filtered_data["north"].is_not_null()
+        ).to_numpy()
+        observation_locations = ObservationLocations(
+            xpos=filtered_data["east"].to_numpy()[has_location],
+            ypos=filtered_data["north"].to_numpy()[has_location],
+            main_range=filtered_data["radius"].to_numpy()[has_location],
+            responses_with_loc=responses[has_location, :],
+            observation_values=observation_values[has_location],
+            observation_errors=observation_errors[has_location],
+        )
+
     # Create update context with shared data
     context = UpdateContext(
         responses=responses,
@@ -150,18 +176,16 @@ def perform_ensemble_update(
         progress_callback=progress_callback,
         settings=module,
         source_ensemble=source_ensemble,
+        observation_locations=observation_locations,
     )
 
-    # Create strategy factory and strategies
-    factory = UpdateStrategyFactory(module, smoother_snapshot)
-
-    # Extract observation locations for distance localization
-    if module.distance_localization:
-        factory.extract_observation_locations(
-            filtered_data, responses, observation_values, observation_errors
-        )
-
-    strategies = factory.create_strategies(context)
+    # Prepare all unique strategies with context
+    prepared_strategies: set[int] = set()
+    for strategy in strategy_map.values():
+        strategy_id = id(strategy)
+        if strategy_id not in prepared_strategies:
+            strategy.prepare(context)
+            prepared_strategies.add(strategy_id)
 
     # Update each parameter group
     for param_group in parameters:
@@ -191,7 +215,7 @@ def perform_ensemble_update(
             progress_callback(AnalysisStatusEvent(msg=log_msg))
 
         # Get appropriate strategy for this parameter type
-        strategy = factory.get_strategy_for(param_cfg, strategies)
+        strategy = strategy_map[param_group]
 
         # Delegate update to strategy
         param_ensemble_array = strategy.update(
@@ -250,6 +274,38 @@ def smoother_update(
         global_scaling=global_scaling,
     )
 
+    # Create strategies based on settings and parameter types
+    param_configs = prior_storage.experiment.parameter_configuration
+    strategy_map: dict[str, UpdateStrategy] = {}
+
+    if es_settings.distance_localization:
+        # Distance localization: Field/Surface use distance strategies,
+        # others use standard ES
+        field_strategy = DistanceLocalizationFieldUpdate()
+        surface_strategy = DistanceLocalizationSurfaceUpdate()
+        standard_strategy = StandardESUpdate(smoother_snapshot)
+
+        for param_name in parameters:
+            param_cfg = param_configs[param_name]
+            if isinstance(param_cfg, Field):
+                strategy_map[param_name] = field_strategy
+            elif isinstance(param_cfg, SurfaceConfig):
+                strategy_map[param_name] = surface_strategy
+            else:
+                strategy_map[param_name] = standard_strategy
+
+    elif es_settings.localization:
+        # Adaptive localization for all parameters
+        adaptive_strategy = AdaptiveLocalizationUpdate()
+        for param_name in parameters:
+            strategy_map[param_name] = adaptive_strategy
+
+    else:
+        # Standard ES for all parameters
+        standard_strategy = StandardESUpdate(smoother_snapshot)
+        for param_name in parameters:
+            strategy_map[param_name] = standard_strategy
+
     try:
         with warnings.catch_warnings():
             original_showwarning = warnings.showwarning
@@ -294,6 +350,7 @@ def smoother_update(
                 prior_storage,
                 posterior_storage,
                 progress_callback,
+                strategy_map,
             )
     except Exception as e:
         progress_callback(

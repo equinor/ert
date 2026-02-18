@@ -86,6 +86,34 @@ class TimedIterator(Generic[T]):
 
 
 @dataclass
+class ObservationLocations:
+    """Observation location data for distance-based localization methods.
+
+    Contains coordinates and correlation ranges for observations that have
+    spatial location information. All arrays are filtered to only include
+    observations that have valid location data.
+    """
+
+    xpos: npt.NDArray[np.float64]
+    """X coordinates of observations (easting)."""
+
+    ypos: npt.NDArray[np.float64]
+    """Y coordinates of observations (northing)."""
+
+    main_range: npt.NDArray[np.float64]
+    """Correlation range (radius) for each observation."""
+
+    responses_with_loc: npt.NDArray[np.float64]
+    """Response matrix filtered to observations with locations."""
+
+    observation_values: npt.NDArray[np.float64]
+    """Observation values filtered to observations with locations."""
+
+    observation_errors: npt.NDArray[np.float64]
+    """Scaled observation errors filtered to observations with locations."""
+
+
+@dataclass
 class UpdateContext:
     """Shared data needed by all update strategies.
 
@@ -120,55 +148,33 @@ class UpdateContext:
     source_ensemble: Ensemble
     """Source ensemble for reading parameters."""
 
-
-@dataclass
-class ObservationLocations:
-    """Observation location data for distance-based localization methods.
-
-    Contains coordinates and correlation ranges for observations that have
-    spatial location information. All arrays are filtered to only include
-    observations that have valid location data.
-    """
-
-    xpos: npt.NDArray[np.float64]
-    """X coordinates of observations (easting)."""
-
-    ypos: npt.NDArray[np.float64]
-    """Y coordinates of observations (northing)."""
-
-    main_range: npt.NDArray[np.float64]
-    """Correlation range (radius) for each observation."""
-
-    responses_with_loc: npt.NDArray[np.float64]
-    """Response matrix filtered to observations with locations."""
-
-    observation_values: npt.NDArray[np.float64]
-    """Observation values filtered to observations with locations."""
-
-    observation_errors: npt.NDArray[np.float64]
-    """Scaled observation errors filtered to observations with locations."""
+    observation_locations: ObservationLocations | None = None
+    """Observation locations for distance-based localization (optional)."""
 
 
 class UpdateStrategy(Protocol):
     """Protocol for parameter update strategies.
 
     Each strategy implements a specific algorithm for updating ensemble
-    parameters based on observations. Strategies are selected based on
-    the parameter type and ES settings.
+    parameters based on observations. Strategies are created with configuration
+    and then prepared with context data before updates.
+
+    Lifecycle:
+        1. Create strategy with configuration (e.g., SmootherSnapshot)
+        2. Call prepare(context) to initialize with observation data
+        3. Call update() for each parameter group
     """
 
-    def can_handle(self, param_config: ParameterConfig) -> bool:
-        """Check whether this strategy can handle the given parameter type.
+    def prepare(self, context: UpdateContext) -> None:
+        """Initialize the strategy with context data.
+
+        Called once before any update() calls. Performs any expensive
+        pre-computation (e.g., computing transition matrices).
 
         Parameters
         ----------
-        param_config : ParameterConfig
-            Configuration for the parameter to be updated.
-
-        Returns
-        -------
-        bool
-            True if this strategy should be used for the parameter.
+        context : UpdateContext
+            Shared update context with observations and settings.
         """
         ...
 

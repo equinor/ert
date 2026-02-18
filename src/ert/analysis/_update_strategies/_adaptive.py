@@ -104,24 +104,32 @@ class AdaptiveLocalizationUpdate:
     by applying correlation thresholds during the update. Parameters are
     processed in batches to manage memory usage.
 
-    Parameters
-    ----------
-    context : UpdateContext
-        Shared update context with observations and settings.
-
     Attributes
     ----------
-    _smoother : AdaptiveESMDA
-        The adaptive ESMDA smoother instance.
-    _cov_YY : npt.NDArray[np.float64]
-        Pre-computed response covariance matrix.
-    _D : npt.NDArray[np.float64]
-        Perturbed observations matrix.
+    _smoother : AdaptiveESMDA | None
+        The adaptive ESMDA smoother instance (set after prepare()).
+    _cov_YY : npt.NDArray[np.float64] | None
+        Pre-computed response covariance matrix (set after prepare()).
+    _D : npt.NDArray[np.float64] | None
+        Perturbed observations matrix (set after prepare()).
     _num_obs : int
         Number of observations.
     """
 
-    def __init__(self, context: UpdateContext) -> None:
+    def __init__(self) -> None:
+        self._smoother: AdaptiveESMDA | None = None
+        self._cov_YY: npt.NDArray[np.float64] | None = None
+        self._D: npt.NDArray[np.float64] | None = None
+        self._num_obs: int = 0
+
+    def prepare(self, context: UpdateContext) -> None:
+        """Initialize smoother and pre-compute matrices from context data.
+
+        Parameters
+        ----------
+        context : UpdateContext
+            Shared update context with observations and settings.
+        """
         self._smoother = AdaptiveESMDA(
             covariance=context.observation_errors**2,
             observations=context.observation_values,
@@ -137,21 +145,6 @@ class AdaptiveLocalizationUpdate:
         )
 
         self._num_obs = len(context.observation_values)
-
-    def can_handle(self, param_config: ParameterConfig) -> bool:
-        """Check if this strategy handles the parameter type.
-
-        Parameters
-        ----------
-        param_config : ParameterConfig
-            Configuration for the parameter.
-
-        Returns
-        -------
-        bool
-            Always True since adaptive localization handles all types.
-        """
-        return True
 
     def update(
         self,
@@ -181,7 +174,14 @@ class AdaptiveLocalizationUpdate:
         npt.NDArray[np.float64]
             Updated parameter ensemble array.
 
+        Raises
+        ------
+        RuntimeError
+            If prepare() was not called before update().
         """
+        if self._smoother is None or self._cov_YY is None or self._D is None:
+            raise RuntimeError("prepare() must be called before update()")
+
         num_params = param_ensemble.shape[0]
         batch_size = _calculate_adaptive_batch_size(num_params, self._num_obs)
         batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
