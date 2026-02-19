@@ -1110,10 +1110,6 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
                 )
             )
 
-            # The simulation IDs are also returned, these are implicitly
-            # defined as the range over the active control vectors:
-            sim_ids: NDArray[np.int32] = np.arange(num_simulations, dtype=np.int32)
-
             # Calculate auto-scales if necessary. Skip this if there are any
             # objectives or constraints where all realizations failed. In that
             # case the auto-scale calculations will fail, and the optimization
@@ -1135,7 +1131,6 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
             objectives = evaluator_context.insert_inactive_results(objectives)
             if constraints is not None:
                 constraints = evaluator_context.insert_inactive_results(constraints)
-            sim_ids = evaluator_context.insert_inactive_results(sim_ids, fill_value=-1)
         else:
             # Nothing to do, there may only have been inactive control vectors:
             num_all_simulations = control_values.shape[0]
@@ -1151,13 +1146,11 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
                 if self.output_constraints_config
                 else None
             )
-            sim_ids = np.array([-1] * num_all_simulations, dtype=np.int32)
 
         evaluator_result = EvaluatorResult(
             objectives=objectives,
             constraints=constraints,
             batch_id=self._batch_id,
-            evaluation_info={"sim_ids": sim_ids},
         )
 
         # increase the batch ID for the next evaluation:

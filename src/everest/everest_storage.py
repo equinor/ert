@@ -73,7 +73,6 @@ class EverestStorage:
             "perturbed_variables": "perturbed_control_value",
             "perturbed_objectives": "perturbed_objective_value",
             "perturbed_constraints": "perturbed_constraint_value",
-            "evaluation_info.sim_ids": "simulation_id",
         }
         return df.rename({k: v for k, v in renames.items() if k in df.columns})
 
