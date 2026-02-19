@@ -109,40 +109,8 @@ def test_ensembles_are_sorted_failed_first_then_by_start_time(storage):
     ]
 
 
-@pytest.mark.parametrize(
-    ("filters", "expected_ensembles_count"),
-    [
-        pytest.param(
-            None,
-            3,
-            id="filters are None",
-        ),
-        pytest.param(
-            [],
-            3,
-            id="filters are empty",
-        ),
-        pytest.param(
-            [
-                lambda ensembles: (e for e in ensembles if e.name == "b"),
-                lambda ensembles: (e for e in ensembles if e.name == "c"),
-            ],
-            2,
-            id="independent filters",
-        ),
-        pytest.param(
-            [
-                lambda ensembles: (e for e in ensembles if e.name == "a"),
-                lambda ensembles: (e for e in ensembles if e.parent is None),
-            ],
-            1,
-            id="duplicating filters",
-        ),
-    ],
-)
-def test_that_filters_are_applied(
-    qtbot, notifier, storage, filters, expected_ensembles_count
-):
+@pytest.fixture
+def storage_with_three_ensembles(storage, notifier):
     ensemble_a = storage.create_experiment().create_ensemble(name="a", ensemble_size=1)
     ensemble_b = storage.create_experiment().create_ensemble(
         name="b", ensemble_size=1, prior_ensemble=ensemble_a
@@ -153,6 +121,46 @@ def test_that_filters_are_applied(
 
     notifier.set_storage(str(storage.path))
 
-    widget = EnsembleSelector(notifier, filters=filters)
+
+def test_that_when_filters_are_not_provided_then_all_ensembles_are_selected(
+    qtbot, notifier, storage_with_three_ensembles
+):
+    widget = EnsembleSelector(notifier)
     qtbot.addWidget(widget)
-    assert widget.count() == expected_ensembles_count
+    assert widget.count() == 3
+
+
+def test_that_when_filters_are_empty_then_all_ensembles_are_selected(
+    qtbot, notifier, storage_with_three_ensembles
+):
+    widget = EnsembleSelector(notifier, filters=[])
+    qtbot.addWidget(widget)
+    assert widget.count() == 3
+
+
+def test_that_when_filters_are_independent_then_all_fitting_ensembles_are_selected(
+    qtbot, notifier, storage_with_three_ensembles
+):
+    widget = EnsembleSelector(
+        notifier,
+        filters=[
+            lambda ensembles: (e for e in ensembles if e.name == "b"),
+            lambda ensembles: (e for e in ensembles if e.name == "c"),
+        ],
+    )
+    qtbot.addWidget(widget)
+    assert widget.count() == 2
+
+
+def test_that_when_filters_are_interdependent_then_ensembles_are_not_duplicated(
+    qtbot, notifier, storage_with_three_ensembles
+):
+    widget = EnsembleSelector(
+        notifier,
+        filters=[
+            lambda ensembles: (e for e in ensembles if e.name == "a"),
+            lambda ensembles: (e for e in ensembles if e.parent is None),
+        ],
+    )
+    qtbot.addWidget(widget)
+    assert widget.count() == 1
