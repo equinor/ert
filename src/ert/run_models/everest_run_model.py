@@ -424,7 +424,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
             "<CONFIG_FILE>": Path(everest_config.config_file).stem,
         }
 
-        if runpath_config.summary_file_base_name:
+        if runpath_config.summary_file_base_name is not None:
             substitutions.update(
                 {
                     "<ECL_BASE>": runpath_config.summary_file_base_name,

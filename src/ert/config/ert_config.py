@@ -906,7 +906,7 @@ class ErtConfig(BaseModel):
             runpath = model_config.runpath_format_string
             summary_file_base_name = model_config.summary_file_base_name
             substitutions["<RUNPATH>"] = runpath
-            if summary_file_base_name:
+            if summary_file_base_name is not None:
                 substitutions["<ECL_BASE>"] = summary_file_base_name
                 substitutions["<ECLBASE>"] = summary_file_base_name
             else:
