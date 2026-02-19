@@ -77,6 +77,7 @@ class Client:
             await self.send(DISCONNECT_MSG)
         except ClientConnectionError:
             logger.error("No ack for dealer disconnection. Connection is down!")
+            raise
         finally:
             self.socket.disconnect(self.url)
             await self._term_receiver_task()
