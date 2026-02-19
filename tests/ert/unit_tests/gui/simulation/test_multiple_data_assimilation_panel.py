@@ -169,7 +169,7 @@ class EnsInfo:
                 "mda_exp : b_ens",
                 "mda_exp : c_ens",
             ],
-            id="ES-MDA which are not leafs in current ES_MDA run",
+            id="ES-MDA ensembles when not a leaf in the current ES_MDA",
         ),
         pytest.param(
             [
@@ -188,7 +188,7 @@ class EnsInfo:
         ),
     ],
 )
-def test_that_restart_ensemble_select_contains(
+def test_that_restart_ensemble_select_contains_elements(
     qtbot: QtBot, extra_ensembles, expected_ensembles
 ) -> None:
     config_num_realizations = 5
