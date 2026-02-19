@@ -50,22 +50,23 @@ async def get_parameter(
         unquoted_pkey = unquote(parameter_key)
         dataframe = data_for_parameter(ensemble, unquoted_pkey)
 
-    media_type = accept if accept is not None else "text/csv"
-    if media_type == "application/x-parquet":
-        dataframe.columns = [str(s) for s in dataframe.columns]
-        stream = io.BytesIO()
-        dataframe.to_parquet(stream)
-        return Response(
-            content=stream.getvalue(),
-            media_type="application/x-parquet",
-        )
-    elif media_type == "application/json":
-        return Response(dataframe.to_json(), media_type="application/json")
-    else:
-        return Response(
-            content=dataframe.to_csv().encode(),
-            media_type="text/csv",
-        )
+    match accept:
+        case "application/x-parquet":
+            dataframe.columns = [str(s) for s in dataframe.columns]
+            stream = io.BytesIO()
+            dataframe.to_parquet(stream)
+            return Response(
+                content=stream.getvalue(),
+                media_type="application/x-parquet",
+            )
+        case "application/json":
+            return Response(dataframe.to_json(), media_type="application/json")
+        case "text/csv" | None:
+            return Response(
+                content=dataframe.to_csv().encode(),
+                media_type="text/csv",
+            )
+    raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
 
 @router.get("/ensembles/{ensemble_id}/parameters/{key}/std_dev")
