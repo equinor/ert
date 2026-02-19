@@ -312,7 +312,11 @@ class PlotWindow(QMainWindow):
             plot_widget._plotter.dimensionality == key_def.dimensionality
             or (
                 plot_widget.name
-                in {EVEREST_RESPONSES_PLOT, EVEREST_CONTROLS_PLOT, EVEREST_GRADIENTS_PLOT}
+                in {
+                    EVEREST_RESPONSES_PLOT,
+                    EVEREST_CONTROLS_PLOT,
+                    EVEREST_GRADIENTS_PLOT,
+                }
             )
             or (key_def.metadata.get("data_origin") == "everest_batch_objectives")
         ):
@@ -334,8 +338,11 @@ class PlotWindow(QMainWindow):
                     data = None
                     if is_gradient_plot:
                         data = self._api.data_for_gradient(ensemble.id, key)
-                    elif (key_def.response is not None or key_def.metadata.get("data_origin")
-                            == "everest_batch_objectives"):
+                    elif (
+                        key_def.response is not None
+                        or key_def.metadata.get("data_origin")
+                        == "everest_batch_objectives"
+                    ):
                         data = self._api.data_for_response(
                             ensemble_id=ensemble.id,
                             response_key=key,
