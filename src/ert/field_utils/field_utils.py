@@ -395,3 +395,23 @@ def localization_scaling_function(
     scaling_factor[distances > 2] = 0.0
 
     return scaling_factor
+
+
+def write_rho_stacked_to_roff(
+    rho: npt.NDArray[np.double],
+    name: str,
+    output_path: _PathLike,
+    file_format: FieldFileFormat,
+) -> None:
+    output_path = Path(output_path)
+    rho_masked: np.ma.MaskedArray = np.ma.masked_array(rho)
+    print(f"Size of ROFF file with RHO. RHO.shape = {rho.shape}")
+    if file_format in ROFF_FORMATS:
+        export_roff(
+            rho_masked,
+            output_path,
+            name,
+            binary=file_format != FieldFileFormat.ROFF_ASCII,
+        )
+    else:
+        raise ValueError(f"Cannot export, invalid file format: {file_format}")

@@ -24,8 +24,10 @@ from ert.config import (
 )
 from ert.field_utils import (
     AxisOrientation,
+    FieldFileFormat,
     transform_local_ellipse_angle_to_local_coords,
     transform_positions_to_local_field_coordinates,
+    write_rho_stacked_to_roff,
 )
 
 from ._update_commons import (
@@ -188,6 +190,7 @@ def analysis_ES(
     target_ensemble: Ensemble,
     progress_callback: Callable[[AnalysisEvent], None],
 ) -> None:
+    write_rho_to_roff_file = True
     iens_active_index = np.flatnonzero(ens_mask)
 
     ensemble_size = ens_mask.sum()
@@ -349,6 +352,7 @@ def analysis_ES(
             assert obs_main_range is not None
             assert smoother_distance_es is not None
             assert S_with_loc is not None
+            assert obs_values_with_loc is not None
 
             if (
                 isinstance(param_cfg, Field)
@@ -390,7 +394,12 @@ def analysis_ES(
                     param_cfg.ertbox_params.rotation_angle,
                     np.zeros_like(obs_main_range, dtype=np.float64),
                 )
-
+                print(
+                    "Shape of ertbox: "
+                    f"( {param_cfg.ertbox_params.nx}, "
+                    f"{param_cfg.ertbox_params.ny}, "
+                    f"{param_cfg.ertbox_params.nz})"
+                )
                 rho_matrix = calc_rho_for_2d_grid_layer(
                     param_cfg.ertbox_params.nx,
                     param_cfg.ertbox_params.ny,
@@ -404,6 +413,29 @@ def analysis_ES(
                     param_cfg.ertbox_params.axis_orientation
                     == AxisOrientation.RIGHT_HANDED,
                 )
+                if write_rho_to_roff_file:
+                    name_rho = param_group + "_rho_per_obs"
+                    output_path_rho = name_rho + ".roff"
+                    print(f"Write file: {output_path_rho}")
+                    print(
+                        "Grid with grid index orientation: "
+                        f"{param_cfg.ertbox_params.axis_orientation}"
+                    )
+                    write_rho_stacked_to_roff(
+                        rho_matrix,
+                        "rho_per_obs",
+                        output_path_rho,
+                        FieldFileFormat.ROFF_BINARY,
+                    )
+                    filename_obs_used = "obs_used_in_DL.csv"
+                    write_obs(
+                        param_group,
+                        filename_obs_used,
+                        obs_xpos,
+                        obs_ypos,
+                        obs_main_range,
+                        obs_values_with_loc,
+                    )
                 # right_handed - this needs to be retrieved from the grid
                 param_ensemble_array = smoother_distance_es.update_params(
                     X=param_ensemble_array,
@@ -628,3 +660,24 @@ def smoother_update(
         )
     )
     return smoother_snapshot
+
+
+def write_obs(
+    param_group_name,
+    filename_obs_used,
+    obs_xpos,
+    obs_ypos,
+    obs_main_range,
+    obs_values_with_loc,
+):
+    with open(filename_obs_used, "w", encoding="utf-8") as file:
+        file.write(param_group_name)
+        file.write("\n")
+        file.write("xpos,  ypos,  range,  value")
+        file.write("\n")
+        for i in range(len(obs_xpos)):
+            file.write(
+                f"{obs_xpos[i]}  {obs_ypos[i]}  "
+                f"{obs_main_range[i]}  {obs_values_with_loc[i]}"
+            )
+            file.write("\n")

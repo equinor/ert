@@ -13,6 +13,7 @@ from .field_utils import (
     save_field,
     transform_local_ellipse_angle_to_local_coords,
     transform_positions_to_local_field_coordinates,
+    write_rho_stacked_to_roff,
 )
 
 __all__ = [
@@ -28,4 +29,5 @@ __all__ = [
     "save_field",
     "transform_local_ellipse_angle_to_local_coords",
     "transform_positions_to_local_field_coordinates",
+    "write_rho_stacked_to_roff",
 ]
