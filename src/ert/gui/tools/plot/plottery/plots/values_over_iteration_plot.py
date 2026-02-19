@@ -83,7 +83,6 @@ class ValuesOverIterationsPlot:
 
             axes.set_xlabel("Iteration")
             axes.set_ylabel(value_col)
-            axes.set_title(f"{value_col} over iterations")
             axes.xaxis.set_major_locator(MaxNLocator(integer=True))
 
             legend_elements = [
