@@ -1,3 +1,4 @@
+import io
 import logging
 import os
 import re
@@ -5,7 +6,9 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from importlib import metadata
 
-from fastapi import HTTPException
+import pandas as pd
+from fastapi import HTTPException, status
+from fastapi.responses import Response
 
 from ert.dark_storage.exceptions import InternalServerError
 from ert.storage import (
@@ -65,3 +68,26 @@ def reraise_as_http_errors(
     except Exception as ex:
         custom_logger.exception(ex)
         raise HTTPException(status_code=500, detail=error_details[500]) from ex
+
+
+def serialize_dataframe_to_response(
+    dataframe: pd.DataFrame | pd.Series, media_type: str | None
+) -> Response:
+    match media_type:
+        case "application/x-parquet":
+            dataframe.columns = [str(s) for s in dataframe.columns]
+            stream = io.BytesIO()
+            dataframe.to_parquet(stream)
+            return Response(
+                content=stream.getvalue(),
+                media_type="application/x-parquet",
+            )
+        case "application/json":
+            return Response(dataframe.to_json(), media_type="application/json")
+        case "text/csv" | None:
+            return Response(
+                content=dataframe.to_csv().encode(),
+                media_type="text/csv",
+            )
+        case _:
+            raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)

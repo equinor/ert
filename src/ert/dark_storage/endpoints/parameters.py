@@ -9,7 +9,11 @@ import pandas as pd
 from fastapi import APIRouter, Body, Depends, Header, HTTPException, status
 from fastapi.responses import Response
 
-from ert.dark_storage.common import get_storage, reraise_as_http_errors
+from ert.dark_storage.common import (
+    get_storage,
+    reraise_as_http_errors,
+    serialize_dataframe_to_response,
+)
 from ert.storage import Ensemble, Storage
 
 router = APIRouter(tags=["ensemble"])
@@ -49,23 +53,7 @@ async def get_parameter(
         ensemble = storage.get_ensemble(ensemble_id)
         unquoted_pkey = unquote(parameter_key)
         dataframe = data_for_parameter(ensemble, unquoted_pkey)
-
-    media_type = accept if accept is not None else "text/csv"
-    if media_type == "application/x-parquet":
-        dataframe.columns = [str(s) for s in dataframe.columns]
-        stream = io.BytesIO()
-        dataframe.to_parquet(stream)
-        return Response(
-            content=stream.getvalue(),
-            media_type="application/x-parquet",
-        )
-    elif media_type == "application/json":
-        return Response(dataframe.to_json(), media_type="application/json")
-    else:
-        return Response(
-            content=dataframe.to_csv().encode(),
-            media_type="text/csv",
-        )
+    return serialize_dataframe_to_response(dataframe, accept)
 
 
 @router.get("/ensembles/{ensemble_id}/parameters/{key}/std_dev")
@@ -115,7 +103,6 @@ def data_for_parameter(ensemble: Ensemble, key: str) -> pd.DataFrame:
         except KeyError as e:
             logger.error(e)
             return pd.DataFrame()
-
     dataframe = df.to_pandas().set_index("realization")
     dataframe.columns.name = None
     dataframe.index.name = "Realization"
