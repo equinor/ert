@@ -79,9 +79,7 @@ class ValuesOverIterationsPlot:
             colors = [
                 "red" if not row.is_improvement else color for _, row in data.iterrows()
             ]
-            axes.scatter(
-                data["batch_id"], data[value_col], c=colors, s=20, zorder=5
-            )  # s is size
+            axes.scatter(data["batch_id"], data[value_col], c=colors, s=20, zorder=5)
 
             axes.set_xlabel("Iteration")
             axes.set_ylabel(value_col)

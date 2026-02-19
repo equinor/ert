@@ -233,7 +233,6 @@ class PlotApi:
                             observations=False,
                             dimensionality=2,
                             metadata={"data_origin": "everest_batch_objectives"},
-                            response=None,
                         )
                     )
 
