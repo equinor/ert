@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pandas as pd
+from matplotlib.lines import Line2D
 from matplotlib.ticker import MaxNLocator
 
 if TYPE_CHECKING:
@@ -53,7 +54,62 @@ class ValuesOverIterationsPlot:
             if not df.empty:
                 all_dfs.append(df)
 
+        if not all_dfs:
+            return
+
         combined = pd.concat(all_dfs, ignore_index=True)
+
+        if "is_improvement" in combined.columns:
+            value_col = next(
+                c
+                for c in combined.columns
+                if c not in {"batch_id", "realization", "is_improvement"}
+            )
+            data = combined.sort_values("batch_id")
+
+            color = config.nextColor()
+            axes.plot(
+                data["batch_id"],
+                data[value_col],
+                "-",
+                color=color,
+                label=key_def.key if key_def else value_col,
+            )
+
+            colors = [
+                "red" if not row.is_improvement else color for _, row in data.iterrows()
+            ]
+            axes.scatter(data["batch_id"], data[value_col], c=colors, s=20, zorder=5)
+
+            axes.set_xlabel("Iteration")
+            axes.set_ylabel(value_col)
+            axes.xaxis.set_major_locator(MaxNLocator(integer=True))
+
+            legend_elements = [
+                Line2D(
+                    [0],
+                    [0],
+                    marker="o",
+                    color="w",
+                    label="Accepted",
+                    markerfacecolor=color,
+                    markersize=8,
+                ),
+                Line2D(
+                    [0],
+                    [0],
+                    marker="o",
+                    color="w",
+                    label="Rejected",
+                    markerfacecolor="red",
+                    markersize=8,
+                ),
+            ]
+            axes.legend(handles=legend_elements, loc="best")
+
+            axes.grid(True)
+            figure.tight_layout()
+            return
 
         # Assume only one value is in the input data to make it same across
         # controls, constraints, and objectives
