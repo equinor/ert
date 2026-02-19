@@ -331,7 +331,6 @@ def smoother_update(
             perform_ensemble_update(
                 parameters,
                 observations,
-                rng,
                 es_settings,
                 update_settings,
                 global_scaling,
