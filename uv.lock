@@ -966,7 +966,7 @@ requires-dist = [
     { name = "httpx" },
     { name = "httpx-retries" },
     { name = "humanize" },
-    { name = "iterative-ensemble-smoother", specifier = ">=0.6.0" },
+    { name = "iterative-ensemble-smoother", specifier = "==0.6.0" },
     { name = "jinja2", specifier = ">=2.10" },
     { name = "lark" },
     { name = "lxml" },
