@@ -151,10 +151,16 @@ def _get_observations(
         df = df.sort("x_axis")
 
         for obs_key, obs_df in df.group_by("name"):
+            values = obs_df["values"].to_list()
+            if all(
+                "BREAKTHROUGH" in response_key
+                for response_key in obs_df["response_key"].to_list()
+            ):
+                values = obs_df["threshold"].to_list()
             observations.append(
                 {
                     "name": obs_key[0],
-                    "values": obs_df["values"].to_list(),
+                    "values": values,
                     "errors": obs_df["errors"].to_list(),
                     "x_axis": obs_df["x_axis"].to_list(),
                     "east": obs_df["east"].to_list(),

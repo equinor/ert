@@ -25,4 +25,5 @@ class ExperimentOut(_Experiment):
     userdata: Mapping[str, Any]
     parameters: Mapping[str, dict[str, Any]]
     responses: Mapping[str, dict[str, Any]]
+    derived_responses: Mapping[str, dict[str, Any]]
     observations: Mapping[str, dict[str, list[str]]]

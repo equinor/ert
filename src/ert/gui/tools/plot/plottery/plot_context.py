@@ -48,12 +48,20 @@ class PlotContext:
         self._log_scale = False
 
     @property
-    def depth_y_axis(self) -> bool:
-        return self._plot_config.depth_y_axis
+    def flip_response_axis(self) -> bool:
+        return self._plot_config.flip_response_axis
 
-    @depth_y_axis.setter
-    def depth_y_axis(self, value: bool) -> None:
-        self._plot_config.depth_y_axis = value
+    @flip_response_axis.setter
+    def flip_response_axis(self, value: bool) -> None:
+        self._plot_config.flip_response_axis = value
+
+    @property
+    def flip_observation_axis(self) -> bool:
+        return self._plot_config.flip_observation_axis
+
+    @flip_observation_axis.setter
+    def flip_observation_axis(self, value: bool) -> None:
+        self._plot_config.flip_observation_axis = value
 
     def plotConfig(self) -> PlotConfig:
         return self._plot_config

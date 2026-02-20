@@ -235,6 +235,7 @@ def mocked_requests_get(*args, **kwargs):
                     "has_finalized_keys": True,
                 },
             },
+            "derived_responses": {},
             "observations": {
                 "summary": ["FOPR"],
                 "gen_data": ["SNAKE_OIL_WPR_DIFF@199"],
