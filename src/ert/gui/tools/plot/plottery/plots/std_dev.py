@@ -26,6 +26,7 @@ class StdDevPlot:
         ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
         std_dev_data: dict[str, npt.NDArray[np.float32]],
+        obs_loc: dict[str, npt.NDArray[np.float32]],
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         ensembles = plot_context.ensembles()
@@ -46,6 +47,7 @@ class StdDevPlot:
                 ax_heat = figure.add_subplot(gridspec[0, i - 1])
                 ax_box = figure.add_subplot(gridspec[1, i - 1])
                 data = std_dev_data[ensemble.name]
+                locations = obs_loc[ensemble.name]
                 if data.size == 0:
                     ax_heat.set_axis_off()
                     ax_box.set_axis_off()
@@ -61,6 +63,20 @@ class StdDevPlot:
                     vmax = max(vmax, float(np.max(data)))
 
                     im = ax_heat.imshow(data, cmap="viridis", aspect="equal")
+                    ny, _ = data.shape
+                    xs = locations[:, 0]
+                    ys = locations[:, 1]
+
+                    ys_img = (ny - 1) - ys
+                    ax_heat.scatter(
+                        xs,
+                        ys_img,
+                        c="red",
+                        marker="o",
+                        edgecolors="black",
+                        linewidths=0.5,
+                        label="Observations",
+                    )
                     heatmaps.append(im)
 
                     ax_box.boxplot(data.flatten(), orientation="vertical", widths=0.5)

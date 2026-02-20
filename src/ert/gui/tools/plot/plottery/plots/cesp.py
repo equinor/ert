@@ -46,6 +46,7 @@ class CrossEnsembleStatisticsPlot:
         ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
+        obs_loc: dict[str, npt.NDArray[np.float32]],
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         plotCrossEnsembleStatistics(

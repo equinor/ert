@@ -26,6 +26,7 @@ from PyQt6.QtWidgets import (
 from ert.config import BreakthroughConfig
 from ert.config.field import Field
 from ert.dark_storage.common import get_storage_api_version
+from ert.field_utils import transform_positions_to_local_field_coordinates
 from ert.gui.ertwidgets import CopyButton, showWaitCursorWhileWaiting
 from ert.services import ServerBootFail
 from ert.utils import log_duration
@@ -399,7 +400,7 @@ class PlotWindow(QMainWindow):
                     handle_exception(e)
 
             std_dev_images: dict[str, npt.NDArray[np.float32]] = {}
-
+            obs_loc: dict[str, npt.NDArray[np.float32]] = {}
             if isinstance(key_def.parameter, Field):
                 plot_widget.showLayerWidget.emit(True)
                 layers = key_def.parameter.ertbox_params.nz
@@ -414,6 +415,28 @@ class PlotWindow(QMainWindow):
                         std_dev_images[ensemble.name] = self._api.std_dev_for_parameter(
                             key, ensemble.id, layer
                         )
+                        # select observations with locations
+                        if (
+                            key_def.parameter.ertbox_params.origin is not None
+                            and key_def.parameter.ertbox_params.rotation_angle
+                            is not None
+                        ):
+                            obs_loc_df = self._api.observation_locations(
+                                ensemble_ids=[ensemble.id],
+                                param_cfg=key_def.parameter,
+                            )
+                            if not obs_loc_df.empty:
+                                xpos, ypos = (
+                                    transform_positions_to_local_field_coordinates(
+                                        key_def.parameter.ertbox_params.origin,
+                                        key_def.parameter.ertbox_params.rotation_angle,
+                                        obs_loc_df["east"].to_numpy(dtype=np.float64),
+                                        obs_loc_df["north"].to_numpy(dtype=np.float64),
+                                    )
+                                )
+                                obs_loc[ensemble.name] = np.column_stack(
+                                    (xpos, ypos)
+                                ).astype(np.float32)
                     except BaseException as e:
                         handle_exception(e)
             else:
@@ -471,6 +494,7 @@ class PlotWindow(QMainWindow):
                 ensemble_to_data_map,
                 observations,
                 std_dev_images,
+                obs_loc,
                 key_def,
             )
 

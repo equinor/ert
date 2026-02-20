@@ -46,6 +46,35 @@ def get_observations(
     ]
 
 
+@router.get("/ensembles/{ensemble_id}/observations")
+def get_observations_from_ensemble(
+    *, storage: Storage = DEFAULT_STORAGE, ensemble_id: UUID
+) -> list[js.ObservationOut]:
+    try:
+        ensemble = storage.get_ensemble(ensemble_id)
+    except KeyError as e:
+        logger.error(e)
+        raise HTTPException(status_code=404, detail="Ensemble not found") from e
+    except Exception as ex:
+        logger.exception(ex)
+        raise HTTPException(status_code=500, detail="Internal server error") from ex
+
+    return [
+        js.ObservationOut(
+            id=UUID(int=0),
+            userdata={},
+            errors=observation["errors"],
+            values=observation["values"],
+            x_axis=observation["x_axis"],
+            east=observation["east"],
+            north=observation["north"],
+            radius=observation["radius"],
+            name=observation["name"],
+        )
+        for observation in _get_observations(ensemble.experiment)
+    ]
+
+
 @router.get("/ensembles/{ensemble_id}/responses/{response_key}/observations")
 async def get_observations_for_response(
     *,
