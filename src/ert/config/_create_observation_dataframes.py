@@ -179,10 +179,13 @@ def _handle_rft_observation(
                 f"{rft_observation.date}:"
                 f"{rft_observation.property}"
             ),
+            "well": rft_observation.well,
+            "date": rft_observation.date,
             "observation_key": rft_observation.name,
             "east": pl.Series([location[0]], dtype=pl.Float32),
             "north": pl.Series([location[1]], dtype=pl.Float32),
             "tvd": pl.Series([location[2]], dtype=pl.Float32),
+            "md": pl.Series([rft_observation.md], dtype=pl.Float32),
             "zone": pl.Series([rft_observation.zone], dtype=pl.String),
             "observations": pl.Series([rft_observation.value], dtype=pl.Float32),
             "std": pl.Series([rft_observation.error], dtype=pl.Float32),

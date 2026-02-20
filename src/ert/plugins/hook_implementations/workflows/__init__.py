@@ -7,6 +7,7 @@ import ert
 from .csv_export import CSVExportJob
 from .disable_parameters import DisableParametersUpdate
 from .export_misfit_data import ExportMisfitDataJob
+from .export_rft import ExportRFTJob
 from .export_runpath import ExportRunpathJob
 from .gen_data_rft_export import GenDataRFTCSVExportJob
 from .misfit_preprocessor import MisfitPreprocessor
@@ -21,6 +22,7 @@ def ertscript_workflow(config: WorkflowConfigs) -> None:
         ExportMisfitDataJob, "EXPORT_MISFIT_DATA", category="observations.correlation"
     )
     config.add_workflow(ExportRunpathJob, "EXPORT_RUNPATH")
+    config.add_workflow(ExportRFTJob, "EXPORT_RFT")
     config.add_workflow(DisableParametersUpdate, "DISABLE_PARAMETERS")
     config.add_workflow(
         MisfitPreprocessor, "MISFIT_PREPROCESSOR", category="observations.correlation"
