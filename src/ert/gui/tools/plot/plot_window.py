@@ -393,6 +393,11 @@ class PlotWindow(QMainWindow):
                 layers = key_def.parameter.ertbox_params.nz
                 plot_widget.updateLayerWidget.emit(layers)
 
+                # select observations with locations
+                obs_loc = self._api.observations_locations(
+                    ensemble_ids=[selected_ensembles[0].id], param_cfg=key_def.parameter
+                )
+
                 if layer is None:
                     plot_widget.resetLayerWidget.emit()
                     layer = 0

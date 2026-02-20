@@ -363,6 +363,52 @@ class PlotApi:
                     df[col] = df[col].astype(float)
             return df
 
+    def observations_locations(self, ensemble_ids: list[str]) -> pd.DataFrame:
+        all_observations = pd.DataFrame()
+        for ensemble_id in ensemble_ids:
+            ensemble = self._get_ensemble_by_id(ensemble_id)
+            if not ensemble:
+                continue
+
+            with create_ertserver_client(self.ens_path) as client:
+                http_response = client.get(
+                    "/observations",
+                    timeout=self._timeout,
+                )
+                self._check_http_response(http_response)
+
+                try:
+                    observations = http_response.json()
+                    observations_dfs = []
+                    if not observations:
+                        continue
+
+                    observations[0]  # Just preserving the old logic/behavior
+                    # but this should really be revised
+                except (KeyError, IndexError, JSONDecodeError) as e:
+                    raise httpx.RequestError(
+                        f"Observation schema might have changed for ensemble_name={ensemble.name}, e={e}"
+                    ) from e
+
+                new_obs = pd.concat(
+                    (
+                        pd.DataFrame(
+                            {
+                                "east": obs["east"],
+                                "north": obs["north"],
+                                "radius": obs["radius"],
+                            }
+                        )
+                        for obs in observations
+                    ),
+                    ignore_index=True,
+                ).dropna()
+
+                all_observations = pd.concat(
+                    [all_observations, new_obs], ignore_index=True
+                )
+        return all_observations
+
     def observations_for_key(self, ensemble_ids: list[str], key: str) -> pd.DataFrame:
         """Returns a pandas DataFrame with the datapoints for a given observation key
         for a given ensembles. The row index is the realization number, and the column
