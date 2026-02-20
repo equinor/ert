@@ -25,6 +25,7 @@ from PyQt6.QtWidgets import (
 
 from ert.config.field import Field
 from ert.dark_storage.common import get_storage_api_version
+from ert.field_utils import transform_positions_to_local_field_coordinates
 from ert.gui.ertwidgets import CopyButton, showWaitCursorWhileWaiting
 from ert.services import ServerBootFail
 from ert.utils import log_duration
@@ -392,6 +393,24 @@ class PlotWindow(QMainWindow):
                 plot_widget.showLayerWidget.emit(True)
                 layers = key_def.parameter.ertbox_params.nz
                 plot_widget.updateLayerWidget.emit(layers)
+
+                # select observations with locations
+                if (
+                    key_def.parameter.ertbox_params.origin is not None
+                    and key_def.parameter.ertbox_params.rotation_angle is not None
+                ):
+                    obs_loc = self._api.observation_locations(
+                        ensemble_ids=[selected_ensembles[0].id],
+                        param_cfg=key_def.parameter,
+                    )
+                    obs_xpos = obs_loc["east"].to_numpy(dtype=np.float64)
+                    obs_ypos = obs_loc["north"].to_numpy(dtype=np.float64)
+                    xpos, ypos = transform_positions_to_local_field_coordinates(
+                        key_def.parameter.ertbox_params.origin,
+                        key_def.parameter.ertbox_params.rotation_angle,
+                        obs_xpos,
+                        obs_ypos,
+                    )
 
                 if layer is None:
                     plot_widget.resetLayerWidget.emit()
