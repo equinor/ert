@@ -182,7 +182,7 @@ def data_for_gradient(ensemble: Ensemble, key: str) -> pd.DataFrame:
 response_to_pandas_x_axis_fns: dict[str, Callable[[tuple[Any, ...]], Any]] = {
     "summary": lambda t: pd.Timestamp(t[2]).isoformat(),
     "gen_data": lambda t: str(t[3]),
-    "rft": lambda t: str(t[4]),
+    "rft": lambda t: str(t[6]),
 }
 
 
