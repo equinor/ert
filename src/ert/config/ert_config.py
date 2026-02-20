@@ -43,7 +43,7 @@ from .forward_model_step import (
 )
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import DataSource, GenKwConfig
-from .model_config import ModelConfig
+from .model_config import DEFAULT_ECLBASE_FORMAT, ModelConfig
 from .parse_arg_types_list import parse_arg_types_list
 from .parsing import (
     ConfigDict,
@@ -904,10 +904,15 @@ class ErtConfig(BaseModel):
         try:
             model_config = ModelConfig.from_dict(config_dict)
             runpath = model_config.runpath_format_string
-            eclbase = model_config.eclbase_format_string
+            summary_file_base_name = model_config.summary_file_base_name
             substitutions["<RUNPATH>"] = runpath
-            substitutions["<ECL_BASE>"] = eclbase
-            substitutions["<ECLBASE>"] = eclbase
+            if summary_file_base_name is not None:
+                substitutions["<ECL_BASE>"] = summary_file_base_name
+                substitutions["<ECLBASE>"] = summary_file_base_name
+            else:
+                substitutions["<ECL_BASE>"] = DEFAULT_ECLBASE_FORMAT
+                substitutions["<ECLBASE>"] = DEFAULT_ECLBASE_FORMAT
+
         except ConfigValidationError as e:
             errors.append(e)
         except PydanticValidationError as err:
@@ -1097,9 +1102,13 @@ class ErtConfig(BaseModel):
             has_rft_observations = any(
                 isinstance(o, RFTObservation) for o in obs_configs
             )
-            if has_rft_observations and "rft" not in ensemble_config.response_configs:
+            if (
+                has_rft_observations
+                and "rft" not in ensemble_config.response_configs
+                and summary_file_base_name
+            ):
                 ensemble_config.response_configs["rft"] = RFTConfig(
-                    input_files=[eclbase],
+                    input_files=[summary_file_base_name],
                     data_to_read={},
                     locations=[],
                     zonemap=cls_config.zonemap,
