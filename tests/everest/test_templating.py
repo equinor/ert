@@ -155,6 +155,7 @@ def test_render_multiple_input(change_to_tmpdir):
 
 
 @pytest.mark.integration_test
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_install_template(change_to_tmpdir):
     YAML(typ="safe", pure=True).dump(CONFIG, Path("config.yml"))
     Path("well_drill_info.tmpl").write_text(WELL_DRILL_TMPL, encoding="utf-8")
