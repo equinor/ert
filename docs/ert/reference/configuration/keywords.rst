@@ -1392,7 +1392,7 @@ use for this surface in ERT. The OUTPUT_FILE key is the name of surface file
 which ERT will generate for you, INIT_FILES points to a list of files which
 are used to initialize, and BASE_SURFACE must point to one existing surface
 file. When loading the surfaces ERT will check that all the headers are
-compatible. An example of a surface IRAP file is:
+compatible. An example of a surface IRAP file in ASCII format is:
 
 ::
 
@@ -1405,6 +1405,10 @@ compatible. An example of a surface IRAP file is:
         2731.5454    2731.4810    2730.4644    2730.5591    2729.8997    2726.2217
         2721.0996    2716.5913    2711.4338    2707.7791    2705.4504    2701.9187
         ....
+
+.. note::
+    Ert is moving from using SURFACE files in ASCII format to using binary format.
+    This change will lead to faster reading and writing of surface files.
 
 The surface data will typically be fed into other programs like Cohiba or RMS.
 The data can be updated using e.g. the smoother.

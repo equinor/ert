@@ -116,7 +116,7 @@ def test_that_non_existent_forward_init_surface_file_fails_gracefully(
         xinc=1.0,
         yinc=1.0,
         values=np.random.default_rng().standard_normal(size=(nx, ny)),
-    ).to_file(tmp_path / "surf_init_0.irap", fformat="irap_ascii")
+    ).to_file(tmp_path / "surf_init_0.irap", fformat="irap_binary")
     parameter_name = "TOP"
     (config_file := tmp_path / "config.ert").write_text(f"""
         NUM_REALIZATIONS 1
