@@ -157,7 +157,9 @@ def main(
     """
     scale_factors = np.ones(len(obs_errors))
     nr_components = np.ones(len(obs_errors), dtype=int)
-    scaled_responses = responses / obs_errors.reshape(-1, 1)
+    scaled_responses = (
+        responses - responses.mean(axis=1).reshape(-1, 1)
+    ) / responses.std(axis=1).reshape(-1, 1)
 
     if len(obs_errors) <= 2:
         logger.info("Observations not correlated or only correlated each other")
