@@ -8,6 +8,7 @@ import pytest
 from tabulate import tabulate
 
 from ert.analysis import ErtAnalysisError, ObservationStatus, smoother_update
+from ert.analysis._es_update import _create_combined_ensemble_mask
 from ert.analysis._update_commons import (
     _compute_observation_statuses,
     _OutlierColumns,
@@ -1141,3 +1142,41 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
     assert len(
         posterior_ens.load_parameters("PARAMETER")["realization"]
     ) == active_realizations.count(True)
+
+
+@pytest.mark.parametrize(
+    ("ens_mask", "active_realizations", "expected"),
+    [
+        pytest.param(
+            np.array([True, False, True, True]),
+            None,
+            np.array([True, False, True, True]),
+            id="no_active_realizations",
+        ),
+        pytest.param(
+            np.array([True, False, True, True]),
+            [True, True, False, True],
+            np.array([True, False, False, True]),
+            id="intersecting_masks_same_length",
+        ),
+        pytest.param(
+            np.array([True, False, False, True]),
+            [True, True],
+            np.array([True, False, False, False]),
+            id="intersecting_masks_different_length",
+        ),
+        pytest.param(
+            np.array([True, False, True, False]),
+            [False, True, False, True],
+            np.array([False, False, False, False]),
+            id="no_intersection",
+        ),
+    ],
+)
+def test_that_create_combined_ensemble_mask_handles_different_length_masks(
+    ens_mask: np.ndarray,
+    active_realizations: list[bool] | None,
+    expected: np.ndarray,
+) -> None:
+    result = _create_combined_ensemble_mask(ens_mask, active_realizations)
+    np.testing.assert_array_equal(result, expected)
