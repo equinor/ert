@@ -18,7 +18,7 @@ from pandas.api.types import is_numeric_dtype
 from pandas.errors import ParserError
 from resfo_utilities import history_key
 
-from ert.config import ParameterConfig
+from ert.config import Field, ParameterConfig, SurfaceConfig
 from ert.config.ensemble_config import ResponseConfig
 from ert.config.known_response_types import KnownResponseTypes
 from ert.services import create_ertserver_client
@@ -363,7 +363,9 @@ class PlotApi:
                     df[col] = df[col].astype(float)
             return df
 
-    def observations_locations(self, ensemble_ids: list[str]) -> pd.DataFrame:
+    def observation_locations(
+        self, ensemble_ids: list[str], param_cfg: Field | SurfaceConfig
+    ) -> pd.DataFrame:
         all_observations = pd.DataFrame()
         for ensemble_id in ensemble_ids:
             ensemble = self._get_ensemble_by_id(ensemble_id)
@@ -372,7 +374,7 @@ class PlotApi:
 
             with create_ertserver_client(self.ens_path) as client:
                 http_response = client.get(
-                    "/observations",
+                    f"/experiments/{ensemble.experiment_name}/observations",
                     timeout=self._timeout,
                 )
                 self._check_http_response(http_response)
