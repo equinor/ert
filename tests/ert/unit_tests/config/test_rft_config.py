@@ -96,6 +96,9 @@ def test_that_rft_with_no_matching_well_and_dates_returns_empty_frame(mock_resfo
     assert df.is_empty()
     assert set(df.columns) == {
         "response_key",
+        "date",
+        "well",
+        "property",
         "time",
         "depth",
         "values",

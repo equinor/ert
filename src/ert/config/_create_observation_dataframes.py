@@ -179,6 +179,8 @@ def _handle_rft_observation(
                 f"{rft_observation.date}:"
                 f"{rft_observation.property}"
             ),
+            "well": rft_observation.well,
+            "date": rft_observation.date,
             "observation_key": rft_observation.name,
             "east": pl.Series([location[0]], dtype=pl.Float32),
             "north": pl.Series([location[1]], dtype=pl.Float32),

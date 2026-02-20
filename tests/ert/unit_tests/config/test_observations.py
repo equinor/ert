@@ -328,6 +328,8 @@ def test_that_rft_config_is_created_from_observations():
         pl.DataFrame(
             {
                 "response_key": "well:2013-03-31:PRESSURE",
+                "well": "well",
+                "date": "2013-03-31",
                 "observation_key": "NAME",
                 "east": pl.Series([30.0], dtype=pl.Float32),
                 "north": pl.Series([71.0], dtype=pl.Float32),

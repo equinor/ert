@@ -27,6 +27,7 @@ from ert.config import (
     ParameterConfig,
     SummaryConfig,
 )
+from ert.exceptions import StorageError
 from ert.substitutions import substitute_runpath_name
 
 from .load_status import LoadResult
@@ -1085,6 +1086,149 @@ class LocalEnsemble(BaseMode):
             return pl.concat(dfs_per_response_type, how="vertical").with_columns(
                 pl.col("response_key").cast(pl.String).alias("response_key")
             )
+
+    def get_rft_observations_and_responses(
+        self,
+    ) -> pl.DataFrame:
+        """Fetches and aligns RFT observations with their corresponding
+        simulated responses from an ensemble.
+
+        Returns a DataFrame with observation/response data using
+        column names equal to the ones used by the subscript forward model
+        MERGE_RFT_ERTOBS, and compatible with the webviz-subsurface RftPlotter.
+        """
+        rft_observations = self.experiment.observations.get("rft")
+        if rft_observations is None or rft_observations.is_empty():
+            raise StorageError("No RFT observations found in experiment")
+
+        if "rft" not in self.experiment.response_configuration:
+            raise KeyError("No RFT response configuration found in experiment")
+
+        realizations = self.get_realization_list_with_responses()
+        if not realizations:
+            raise StorageError("No realizations with responses found")
+
+        # Build date-to-report_step mapping from summary responses if available
+        date_to_report_step: dict[str, int] = {}
+        if "summary" in self.experiment.response_configuration:
+            try:
+                summary_df = self.load_responses("summary", (realizations[0],))
+                times = summary_df["time"].unique().sort()
+                for report_step, time in enumerate(times):
+                    date_str = time.strftime("%Y-%m-%d")
+                    date_to_report_step[date_str] = report_step
+            except (KeyError, IndexError):
+                pass  # No summary data available, will use default
+
+        observations = rft_observations.with_columns(
+            pl.int_range(pl.len()).over("well").alias("order"),
+        )
+
+        join_keys = ["well", "date", "east", "north", "tvd"]
+        observed_values = {k: observations[k].unique() for k in join_keys}
+
+        pivot_index = [
+            "well",
+            "date",
+            "realization",
+            "response_zone",
+            "east",
+            "north",
+            "tvd",
+            "i",
+            "j",
+            "k",
+        ]
+
+        output_columns = [
+            "order",
+            "east",
+            "north",
+            "md",
+            "tvd",
+            "zone",
+            "pressure",
+            "swat",
+            "sgas",
+            "soil",
+            "valid_zone",
+            "is_active",
+            "i",
+            "j",
+            "k",
+            "well",
+            "date",
+            "realization",
+            "report_step",
+            "observations",
+            "std",
+        ]
+
+        result_frames: list[pl.DataFrame] = []
+
+        for real in sorted(realizations):
+            responses = (
+                self.load_responses("rft", (real,))
+                .with_columns(
+                    pl.col("property").str.to_lowercase(),
+                )
+                .rename({"zone": "response_zone"})
+            )
+
+            for col, values in observed_values.items():
+                responses = responses.filter(
+                    pl.col(col).is_in(values.implode(), nulls_equal=True)
+                )
+
+            pivoted = responses.pivot(
+                on="property",
+                index=pivot_index,
+                values="values",
+            )
+
+            for col in ["pressure", "sgas", "swat"]:
+                if col not in pivoted.columns:
+                    pivoted = pivoted.with_columns(
+                        pl.lit(None).cast(pl.Float32).alias(col)
+                    )
+
+            pivoted = pivoted.with_columns(
+                pl.col("pressure").is_not_null().alias("is_active")
+            )
+
+            joined = (
+                observations.join(
+                    pivoted,
+                    how="left",
+                    on=join_keys,
+                    nulls_equal=True,
+                )
+                .with_columns(
+                    pl.col("zone")
+                    .eq_missing(pl.col("response_zone"))
+                    .alias("valid_zone"),
+                    (1 - pl.col("sgas") - pl.col("swat")).alias("soil"),
+                    pl.col("is_active").fill_null(False),
+                    pl.col("date")
+                    .replace_strict(date_to_report_step, default=0)
+                    .alias("report_step"),
+                )
+                .select(output_columns)
+            )
+
+            result_frames.append(joined)
+
+        return pl.concat(result_frames, how="vertical").rename(
+            {
+                "east": "utm_x",
+                "north": "utm_y",
+                "md": "measured_depth",
+                "tvd": "true_vertical_depth",
+                "date": "time",
+                "observations": "observed",
+                "std": "error",
+            }
+        )
 
     @property
     def everest_realization_info(self) -> dict[int, EverestRealizationInfo] | None:
