@@ -335,14 +335,6 @@ def analysis_ES(
         # Create mask for non-zero variance parameters
         non_zero_variance_mask = ~np.isclose(param_variance, 0.0)
 
-        log_msg = (
-            f"Updating {np.sum(non_zero_variance_mask)} parameters "
-            f"{'with' if module.localization else 'without'} "
-            f"adaptive localization."
-        )
-        logger.info(log_msg)
-        progress_callback(AnalysisStatusEvent(msg=log_msg))
-
         if (param_count := (~non_zero_variance_mask).sum()) > 0:
             log_msg = (
                 f"There are {param_count} parameters with 0 variance "
@@ -369,6 +361,7 @@ def analysis_ES(
                     f"{obs_xpos.shape[0]} observations, {ensemble_size} realizations "
                 )
                 logger.info(log_msg)
+                progress_callback(AnalysisStatusEvent(msg=log_msg))
 
                 if param_cfg.ertbox_params.axis_orientation is None:
                     logger.warning("Axis orientation is not defined, do not update")
@@ -429,6 +422,9 @@ def analysis_ES(
                     f" with {param_ensemble_array.shape[0]} parameters, "
                     f"{obs_xpos.shape[0]} observations, {ensemble_size} realizations "
                 )
+                logger.info(log_msg)
+                progress_callback(AnalysisStatusEvent(msg=log_msg))
+
                 xpos, ypos = transform_positions_to_local_field_coordinates(
                     (param_cfg.xori, param_cfg.yori),
                     param_cfg.rotation,
@@ -470,7 +466,7 @@ def analysis_ES(
             batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
 
             log_msg = (
-                f"Running localization on {num_params} parameters, "
+                f"Running adaptive localization on {num_params} parameters, "
                 f"{num_obs} responses, {ensemble_size} realizations "
                 f"and {len(batches)} batches"
             )
@@ -503,6 +499,12 @@ def analysis_ES(
             module.distance_localization is False
             or (module.distance_localization and isinstance(param_cfg, GenKwConfig))
         ) and module.localization is False:
+            log_msg = (
+                f"Updating {np.sum(non_zero_variance_mask)} parameters "
+                "without localization."
+            )
+            logger.info(log_msg)
+            progress_callback(AnalysisStatusEvent(msg=log_msg))
             log_msg = f"There are {num_obs} responses and {ensemble_size} realizations."
             logger.info(log_msg)
             progress_callback(AnalysisStatusEvent(msg=log_msg))
