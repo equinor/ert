@@ -12,7 +12,7 @@ from fastapi import APIRouter, Body, Depends, Header, HTTPException, Query, stat
 from fastapi.responses import Response
 from polars.exceptions import ColumnNotFoundError
 
-from ert.dark_storage.common import get_storage
+from ert.dark_storage.common import get_storage, reraise_as_http_errors
 from ert.storage import Ensemble, Storage
 
 router = APIRouter(tags=["responses"])
@@ -50,45 +50,32 @@ async def get_response(
     ] = None,
     accept: Annotated[str | None, Header()] = None,
 ) -> Response:
-    try:
+    with reraise_as_http_errors(logger):
         ensemble = storage.get_ensemble(ensemble_id)
-    except KeyError as e:
-        logger.error(e)
-        raise HTTPException(status_code=404, detail="Ensemble not found") from e
-    except Exception as ex:
-        logger.exception(ex)
-        raise HTTPException(status_code=500, detail="Internal server error") from ex
-
-    try:
         unquoted_rkey = unquote(response_key)
         dataframe = data_for_response(
             ensemble,
             unquoted_rkey,
             json.loads(filter_on) if filter_on is not None else None,
         )
-    except PermissionError as e:
-        logger.error(e)
-        raise HTTPException(status_code=401, detail=str(e)) from e
-    except Exception as ex:
-        logger.exception(ex)
-        raise HTTPException(status_code=500, detail="Internal server error") from ex
 
-    media_type = accept if accept is not None else "text/csv"
-    if media_type == "application/x-parquet":
-        dataframe.columns = [str(s) for s in dataframe.columns]
-        stream = io.BytesIO()
-        dataframe.to_parquet(stream)
-        return Response(
-            content=stream.getvalue(),
-            media_type="application/x-parquet",
-        )
-    elif media_type == "application/json":
-        return Response(dataframe.to_json(), media_type="application/json")
-    else:
-        return Response(
-            content=dataframe.to_csv().encode(),
-            media_type="text/csv",
-        )
+    match accept:
+        case "application/x-parquet":
+            dataframe.columns = [str(s) for s in dataframe.columns]
+            stream = io.BytesIO()
+            dataframe.to_parquet(stream)
+            return Response(
+                content=stream.getvalue(),
+                media_type="application/x-parquet",
+            )
+        case "application/json":
+            return Response(dataframe.to_json(), media_type="application/json")
+        case "text/csv" | None:
+            return Response(
+                content=dataframe.to_csv().encode(),
+                media_type="text/csv",
+            )
+    raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
 
 @router.get(
@@ -115,31 +102,29 @@ async def get_gradient(
     key: str,
     accept: Annotated[str | None, Header()] = None,
 ) -> Response:
-    try:
+    with reraise_as_http_errors(logger):
         ensemble = storage.get_ensemble(ensemble_id)
-    except KeyError as e:
-        logger.error(e)
-        raise HTTPException(status_code=404, detail="Ensemble not found") from e
 
     unquoted_key = unquote(key)
     dataframe = data_for_gradient(ensemble, unquoted_key)
 
-    media_type = accept if accept is not None else "text/csv"
-    if media_type == "application/x-parquet":
-        dataframe.columns = [str(s) for s in dataframe.columns]
-        stream = io.BytesIO()
-        dataframe.to_parquet(stream)
-        return Response(
-            content=stream.getvalue(),
-            media_type="application/x-parquet",
-        )
-    elif media_type == "application/json":
-        return Response(dataframe.to_json(), media_type="application/json")
-    else:
-        return Response(
-            content=dataframe.to_csv().encode(),
-            media_type="text/csv",
-        )
+    match accept:
+        case "application/x-parquet":
+            dataframe.columns = [str(s) for s in dataframe.columns]
+            stream = io.BytesIO()
+            dataframe.to_parquet(stream)
+            return Response(
+                content=stream.getvalue(),
+                media_type="application/x-parquet",
+            )
+        case "application/json":
+            return Response(dataframe.to_json(), media_type="application/json")
+        case "text/csv" | None:
+            return Response(
+                content=dataframe.to_csv().encode(),
+                media_type="text/csv",
+            )
+    raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
 
 def data_for_gradient(ensemble: Ensemble, key: str) -> pd.DataFrame:
@@ -251,69 +236,69 @@ def data_for_response(
     if len(realizations_with_responses) == 0:
         return pd.DataFrame()
 
-    if response_type == "summary":
-        summary_data = ensemble.load_responses(
-            response_key,
-            tuple(realizations_with_responses),
-        )
-
-        df = (
-            summary_data.rename({"time": "Date", "realization": "Realization"})
-            .drop("response_key")
-            .to_pandas()
-        )
-        df = df.set_index(["Date", "Realization"])
-        # This performs the same aggragation by mean of duplicate values
-        # as in ert/analysis/_es_update.py
-        df = df.groupby(["Date", "Realization"]).mean()
-        data = df.reset_index().pivot_table(
-            index="Realization", columns="Date", values=df.columns[0]
-        )
-        return data.astype(float)
-
-    if response_type == "rft":
-        return (
-            ensemble.load_responses(
+    match response_type:
+        case "summary":
+            summary_data = ensemble.load_responses(
                 response_key,
                 tuple(realizations_with_responses),
             )
-            .rename({"realization": "Realization"})
-            .select(["Realization", "depth", "values"])
-            .unique()
-            .to_pandas()
-            .pivot_table(index="Realization", columns="depth", values="values")
-            .reset_index(drop=True)
-        )
 
-    if response_type == "gen_data":
-        data = ensemble.load_responses(response_key, tuple(realizations_with_responses))
-
-        try:
-            assert filter_on is not None
-            assert "report_step" in filter_on
-            report_step = int(filter_on["report_step"])
-            vals = data.filter(pl.col("report_step").eq(report_step))
-            pivoted = vals.drop("response_key", "report_step").pivot(  # noqa: PD010
-                on="index", values="values"
+            df = (
+                summary_data.rename({"time": "Date", "realization": "Realization"})
+                .drop("response_key")
+                .to_pandas()
             )
-            data = pivoted.to_pandas().set_index("realization")
-            data.columns = data.columns.astype(int)
-            data.columns.name = "axis"
+            df = df.set_index(["Date", "Realization"])
+            # This performs the same aggragation by mean of duplicate values
+            # as in ert/analysis/_es_update.py
+            df = df.groupby(["Date", "Realization"]).mean()
+            data = df.reset_index().pivot_table(
+                index="Realization", columns="Date", values=df.columns[0]
+            )
             return data.astype(float)
+        case "rft":
+            return (
+                ensemble.load_responses(
+                    response_key,
+                    tuple(realizations_with_responses),
+                )
+                .rename({"realization": "Realization"})
+                .select(["Realization", "depth", "values"])
+                .unique()
+                .to_pandas()
+                .pivot_table(index="Realization", columns="depth", values="values")
+                .reset_index(drop=True)
+            )
+        case "gen_data":
+            data = ensemble.load_responses(
+                response_key, tuple(realizations_with_responses)
+            )
 
-        except (ValueError, KeyError, ColumnNotFoundError):
+            try:
+                assert filter_on is not None
+                assert "report_step" in filter_on
+                report_step = int(filter_on["report_step"])
+                vals = data.filter(pl.col("report_step").eq(report_step))
+                pivoted = vals.drop("response_key", "report_step").pivot(  # noqa: PD010
+                    on="index", values="values"
+                )
+                data = pivoted.to_pandas().set_index("realization")
+                data.columns = data.columns.astype(int)
+                data.columns.name = "axis"
+                return data.astype(float)
+
+            except (ValueError, KeyError, ColumnNotFoundError):
+                return pd.DataFrame()
+        case "everest_objectives" | "everest_constraints":
+            df_pl = (
+                ensemble.realization_objectives
+                if response_type == "everest_objectives"
+                else ensemble.realization_constraints
+            )
+            if df_pl is None or response_key not in df_pl.columns:
+                return pd.DataFrame()
+
+            columns = ["batch_id", "realization", response_key]
+            return df_pl.select(columns).to_pandas()
+        case _:
             return pd.DataFrame()
-
-    if response_type in {"everest_objectives", "everest_constraints"}:
-        df_pl = (
-            ensemble.realization_objectives
-            if response_type == "everest_objectives"
-            else ensemble.realization_constraints
-        )
-        if df_pl is None or response_key not in df_pl.columns:
-            return pd.DataFrame()
-
-        columns = ["batch_id", "realization", response_key]
-        return df_pl.select(columns).to_pandas()
-
-    return pd.DataFrame()
