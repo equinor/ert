@@ -302,6 +302,7 @@ class ErtServerController:
         """Returns the url. Blocks while the server is starting"""
         if self._url is not None:
             return self._url
+        logs: list[tuple[str | int, str]] = []
 
         for url in self.fetch_connection_info()["urls"]:
             con_info = self.fetch_connection_info()
@@ -311,19 +312,17 @@ class ErtServerController:
                     auth=self.fetch_auth(),
                     verify=con_info["cert"],
                 )
-                logging.getLogger(__name__).info(
-                    f"Connecting to {url} got status: "
-                    f"{resp.status_code}, {resp.headers}, {resp.reason}, {resp.text}"
-                )
                 if resp.status_code == 200:
+                    logging.getLogger(__name__).info(f"Successfully connected to {url}")
                     self._url = url
                     return str(url)
+                logs.append((resp.status_code, f"{url}: {resp.reason}"))
 
             except requests.ConnectionError as ce:
-                logging.getLogger(__name__).info(
-                    f"Could not connect to {url}, but will try something else. "
-                    f"Error: {ce}"
-                )
+                logs.append(("ConnectionError", f"{url}: {ce}"))
+
+        logging.getLogger(__name__).info(f"Attempted urls: {logs}")
+
         raise TimeoutError(
             "None of the URLs provided for the ert storage server worked."
         )
