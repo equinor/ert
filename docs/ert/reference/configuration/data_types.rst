@@ -546,7 +546,7 @@ A custom filename can be specified as a parameter::
 
    To include SGAS, SWAT, and SOIL saturation values in the exported CSV,
    SGAS and SWAT properties must be listed in the :ref:`RFT <rft>` response
-   configuration no make ERT extract these properties from the RFT files. For example::
+   configuration to make ERT extract these properties from the RFT files. For example::
 
       RFT WELL:PROD DATE:2015-02-01 PROPERTIES:PRESSURE,SWAT,SGAS
 
