@@ -13,7 +13,7 @@ from surfio import IrapHeader, IrapSurface
 from ert.substitutions import substitute_runpath_name
 
 from ._str_to_bool import str_to_bool
-from .field import create_flattened_cube_graph
+from .graph_utils import create_flattened_cube_graph
 from .parameter_config import InvalidParameterFile, ParameterConfig
 from .parsing import ConfigValidationError, ErrorInfo
 

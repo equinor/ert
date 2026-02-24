@@ -25,6 +25,7 @@ from ert.substitutions import substitute_runpath_name
 from ert.utils import log_duration
 
 from ._str_to_bool import str_to_bool
+from .graph_utils import create_flattened_cube_graph
 from .parameter_config import ParameterConfig
 from .parsing import ConfigValidationError, ConfigWarning
 
@@ -34,18 +35,6 @@ if TYPE_CHECKING:
     from ert.storage import Ensemble
 
 _logger = logging.getLogger(__name__)
-
-
-def create_flattened_cube_graph(px: int, py: int, pz: int) -> nx.Graph[int]:
-    """Creates a grid graph for sparse precision estimation in EnIF updates.
-
-    The graph encodes spatial adjacency between parameter cells. Integer node
-    labels (0 to px*py*pz-1) match C-order flattening so precision matrix
-    indices align with parameter vector positions.
-    """
-    G_grid = nx.grid_graph(dim=[px, py, pz])
-    G_int = nx.convert_node_labels_to_integers(G_grid, ordering="sorted")
-    return G_int
 
 
 class Field(ParameterConfig):
