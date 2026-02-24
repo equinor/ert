@@ -51,11 +51,18 @@ def use_custom_setsid(use_tmpdir):
     os.chmod("setsid", 0o755)
 
 
+def write_executable(directory, contents, basename="dummy_executable"):
+    (directory / basename).write_text(contents, encoding="utf-8")
+    os.chmod(directory / basename, stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
+    return os.path.realpath(directory / basename)
+
+
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_custom_setsid")
-def test_terminate_steps():
+def test_terminate_steps(tmp_path):
     # Executes itself recursively and sleeps for 100 seconds
-    Path("dummy_executable").write_text(
+    executable = write_executable(
+        tmp_path,
         """#!/usr/bin/env python
 import sys, os, time
 counter = eval(sys.argv[1])
@@ -64,11 +71,7 @@ if counter > 0:
     os.execv(sys.argv[0],[sys.argv[0], str(counter - 1) ])
 else:
     time.sleep(100)""",
-        encoding="utf-8",
     )
-
-    executable = os.path.realpath("dummy_executable")
-    os.chmod("dummy_executable", stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
 
     fm_description = {
         "global_environment": {},
@@ -123,25 +126,25 @@ else:
 
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
-def test_memory_profile_is_logged_as_csv(monkeypatch):
+def test_memory_profile_is_logged_as_csv(monkeypatch, tmp_path):
     """This tests that a csv is produced and has basic validity.
     It does not try to verify the validity of the logged RSS values."""
     fm_stepname = "do_nothing"
     scriptname = fm_stepname + ".py"
     fm_step_repeats = 3
-    Path(scriptname).write_text(
+    executable = write_executable(
+        tmp_path,
         """#!/bin/sh
         sleep 0.5
         exit 0
         """,
-        encoding="utf-8",
+        basename=scriptname,
     )
-    os.chmod(scriptname, stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
     forward_model_steps = {
         "jobList": [
             {
                 "name": fm_stepname,
-                "executable": os.path.realpath(scriptname),
+                "executable": executable,
                 "argList": [""],
             }
         ]
@@ -166,18 +169,15 @@ def test_memory_profile_is_logged_as_csv(monkeypatch):
 
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_custom_setsid")
-def test_fm_dispatch_run_subset_specified_as_parameter():
-    Path("dummy_executable").write_text(
+def test_fm_dispatch_run_subset_specified_as_parameter(tmp_path):
+    executable = write_executable(
+        tmp_path,
         "#!/usr/bin/env python\n"
         "import sys, os\n"
         'filename = "step_{}.out".format(sys.argv[1])\n'
         'f = open(filename, "w", encoding="utf-8")\n'
         "f.close()\n",
-        encoding="utf-8",
     )
-
-    executable = os.path.realpath("dummy_executable")
-    os.chmod("dummy_executable", stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
 
     fm_description = {
         "global_environment": {},
@@ -407,16 +407,14 @@ def test_report_all_messages_drops_reporter_on_error():
 
 @pytest.fixture
 def sleep_executable(tmp_path):
-    (tmp_path / "dummy_executable").write_text(
+    return write_executable(
+        tmp_path,
         dedent("""\
                #!/usr/bin/env python
                import time
                time.sleep(180)
                """),
-        encoding="utf-8",
     )
-    os.chmod(tmp_path / "dummy_executable", stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
-    return os.path.realpath(tmp_path / "dummy_executable")
 
 
 @pytest.mark.timeout(30)
