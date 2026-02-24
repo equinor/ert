@@ -552,6 +552,13 @@ class PlotWindow(QMainWindow):
             and (key_def.observations or not widget._plotter.requires_observations)
         ]
 
+        # Disable misfit tab for breakthrough response key.
+        # Deriving the misfit of breakthrough is not yet implemented.
+        if key_def.response is not None and key_def.response.type == "breakthrough":
+            available_widgets = [
+                widget for widget in available_widgets if widget.name != MISFITS
+            ]
+
         is_everest = key_def.metadata.get("data_origin") in {
             "everest_objectives",
             "everest_constraints",
