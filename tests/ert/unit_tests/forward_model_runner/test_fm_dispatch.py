@@ -405,19 +405,24 @@ def test_report_all_messages_drops_reporter_on_error():
     reporter.report.assert_called_once_with(message1)
 
 
-@pytest.mark.timeout(30)
-@pytest.mark.integration_test
-@pytest.mark.usefixtures("use_custom_setsid")
-async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_sigterm():
-    Path("dummy_executable").write_text(
+@pytest.fixture
+def sleep_executable(tmp_path):
+    (tmp_path / "dummy_executable").write_text(
         """#!/usr/bin/env python
 import time
 time.sleep(180)""",
         encoding="utf-8",
     )
+    os.chmod(tmp_path / "dummy_executable", stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
+    return os.path.realpath(tmp_path / "dummy_executable")
 
-    executable = os.path.realpath("dummy_executable")
-    os.chmod("dummy_executable", stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
+
+@pytest.mark.timeout(30)
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("use_custom_setsid")
+async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_sigterm(
+    sleep_executable,
+):
     async with MockZMQServer() as zmq_server:
         fm_description = {
             "ens_id": "_id_",
@@ -425,7 +430,7 @@ time.sleep(180)""",
             "jobList": [
                 {
                     "name": "dummy_executable",
-                    "executable": executable,
+                    "executable": sleep_executable,
                     "stdout": "dummy.stdout",
                     "stderr": "dummy.stderr",
                 }
@@ -468,16 +473,9 @@ time.sleep(180)""",
 @pytest.mark.timeout(30)
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_custom_setsid")
-async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_terminate_msg():
-    Path("dummy_executable").write_text(
-        """#!/usr/bin/env python
-import time
-time.sleep(180)""",
-        encoding="utf-8",
-    )
-
-    executable = os.path.realpath("dummy_executable")
-    os.chmod("dummy_executable", stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
+async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_terminate_msg(
+    sleep_executable,
+):
     async with MockZMQServer() as zmq_server:
         fm_description = {
             "ens_id": "_id_",
@@ -485,7 +483,7 @@ time.sleep(180)""",
             "jobList": [
                 {
                     "name": "dummy_executable",
-                    "executable": executable,
+                    "executable": sleep_executable,
                     "stdout": "dummy.stdout",
                     "stderr": "dummy.stderr",
                 }
