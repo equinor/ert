@@ -55,9 +55,10 @@ def use_custom_setsid(use_tmpdir):
 def write_executable(
     directory: Path, contents: str, basename: Path | str = "dummy_executable"
 ) -> str:
-    (directory / basename).write_text(contents, encoding="utf-8")
-    os.chmod(directory / basename, stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
-    return os.path.realpath(directory / basename)
+    file_path = directory / basename
+    file_path.write_text(contents, encoding="utf-8")
+    os.chmod(file_path, stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
+    return str(file_path.resolve())
 
 
 def write_forward_model_description(contents: dict[str, Any]) -> None:
