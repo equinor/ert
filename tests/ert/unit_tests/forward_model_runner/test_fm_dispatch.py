@@ -57,6 +57,26 @@ def write_executable(directory, contents, basename="dummy_executable"):
     return os.path.realpath(directory / basename)
 
 
+def job_dict(executable, arglist, name="dummy_executable"):
+    return {
+        "name": name,
+        "executable": executable,
+        "target_file": None,
+        "error_file": None,
+        "start_file": None,
+        "stdout": "dummy.stdout",
+        "stderr": "dummy.stderr",
+        "stdin": None,
+        "argList": arglist,
+        "environment": None,
+        "license_path": None,
+        "max_running_minutes": None,
+        "min_arg": 1,
+        "arg_types": [],
+        "max_arg": None,
+    }
+
+
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_custom_setsid")
 def test_terminate_steps(tmp_path):
@@ -76,25 +96,7 @@ else:
     fm_description = {
         "global_environment": {},
         "global_update_path": {},
-        "jobList": [
-            {
-                "name": "dummy_executable",
-                "executable": executable,
-                "target_file": None,
-                "error_file": None,
-                "start_file": None,
-                "stdout": "dummy.stdout",
-                "stderr": "dummy.stderr",
-                "stdin": None,
-                "argList": ["3"],
-                "environment": None,
-                "license_path": None,
-                "max_running_minutes": None,
-                "min_arg": 1,
-                "arg_types": [],
-                "max_arg": None,
-            }
-        ],
+        "jobList": [job_dict(executable, ["3"])],
         "run_id": "",
         "ert_pid": "",
     }
@@ -183,57 +185,9 @@ def test_fm_dispatch_run_subset_specified_as_parameter(tmp_path):
         "global_environment": {},
         "global_update_path": {},
         "jobList": [
-            {
-                "name": "step_A",
-                "executable": executable,
-                "target_file": None,
-                "error_file": None,
-                "start_file": None,
-                "stdout": "dummy.stdout",
-                "stderr": "dummy.stderr",
-                "stdin": None,
-                "argList": ["A"],
-                "environment": None,
-                "license_path": None,
-                "max_running_minutes": None,
-                "min_arg": 1,
-                "arg_types": [],
-                "max_arg": None,
-            },
-            {
-                "name": "step_B",
-                "executable": executable,
-                "target_file": None,
-                "error_file": None,
-                "start_file": None,
-                "stdout": "dummy.stdout",
-                "stderr": "dummy.stderr",
-                "stdin": None,
-                "argList": ["B"],
-                "environment": None,
-                "license_path": None,
-                "max_running_minutes": None,
-                "min_arg": 1,
-                "arg_types": [],
-                "max_arg": None,
-            },
-            {
-                "name": "step_C",
-                "executable": executable,
-                "target_file": None,
-                "error_file": None,
-                "start_file": None,
-                "stdout": "dummy.stdout",
-                "stderr": "dummy.stderr",
-                "stdin": None,
-                "argList": ["C"],
-                "environment": None,
-                "license_path": None,
-                "max_running_minutes": None,
-                "min_arg": 1,
-                "arg_types": [],
-                "max_arg": None,
-            },
+            job_dict(executable, ["A"], "step_A"),
+            job_dict(executable, ["B"], "step_B"),
+            job_dict(executable, ["C"], "step_C"),
         ],
         "run_id": "",
         "ert_pid": "",
