@@ -57,6 +57,12 @@ def write_executable(directory, contents, basename="dummy_executable"):
     return os.path.realpath(directory / basename)
 
 
+def write_forward_model_description(contents):
+    Path(FORWARD_MODEL_DESCRIPTION_FILE).write_text(
+        json.dumps(contents), encoding="utf-8"
+    )
+
+
 def job_dict(executable, arglist, name="dummy_executable"):
     return {
         "name": name,
@@ -96,16 +102,14 @@ def test_terminate_steps(tmp_path):
         ),
     )
 
-    fm_description = {
-        "global_environment": {},
-        "global_update_path": {},
-        "jobList": [job_dict(executable, ["3"])],
-        "run_id": "",
-        "ert_pid": "",
-    }
-
-    Path(FORWARD_MODEL_DESCRIPTION_FILE).write_text(
-        json.dumps(fm_description), encoding="utf-8"
+    write_forward_model_description(
+        {
+            "global_environment": {},
+            "global_update_path": {},
+            "jobList": [job_dict(executable, ["3"])],
+            "run_id": "",
+            "ert_pid": "",
+        }
     )
 
     # (we wait for the process below)
@@ -141,19 +145,17 @@ def test_memory_profile_is_logged_as_csv(monkeypatch, tmp_path):
         """,
         basename=scriptname,
     )
-    forward_model_steps = {
-        "jobList": [
-            {
-                "name": fm_stepname,
-                "executable": executable,
-                "argList": [""],
-            }
-        ]
-        * fm_step_repeats,
-    }
-
-    Path(FORWARD_MODEL_DESCRIPTION_FILE).write_text(
-        json.dumps(forward_model_steps), encoding="utf-8"
+    write_forward_model_description(
+        {
+            "jobList": [
+                {
+                    "name": fm_stepname,
+                    "executable": executable,
+                    "argList": [""],
+                }
+            ]
+            * fm_step_repeats,
+        }
     )
 
     monkeypatch.setattr(
@@ -180,20 +182,18 @@ def test_fm_dispatch_run_subset_specified_as_parameter(tmp_path):
         "f.close()\n",
     )
 
-    fm_description = {
-        "global_environment": {},
-        "global_update_path": {},
-        "jobList": [
-            job_dict(executable, ["A"], "step_A"),
-            job_dict(executable, ["B"], "step_B"),
-            job_dict(executable, ["C"], "step_C"),
-        ],
-        "run_id": "",
-        "ert_pid": "",
-    }
-
-    Path(FORWARD_MODEL_DESCRIPTION_FILE).write_text(
-        json.dumps(fm_description), encoding="utf-8"
+    write_forward_model_description(
+        {
+            "global_environment": {},
+            "global_update_path": {},
+            "jobList": [
+                job_dict(executable, ["A"], "step_A"),
+                job_dict(executable, ["B"], "step_B"),
+                job_dict(executable, ["C"], "step_C"),
+            ],
+            "run_id": "",
+            "ert_pid": "",
+        }
     )
 
     # (we wait for the process below)
@@ -293,14 +293,11 @@ def test_fm_dispatch_kills_itself_after_unsuccessful_step():
             Finish().with_error("overall bad run"),
         ]
         mock_getpgid.return_value = 17
-        Path("jobs.json").write_text(
-            json.dumps(
-                {
-                    "ens_id": "_id_",
-                    "dispatch_url": zmq_server.uri,
-                }
-            ),
-            encoding="utf-8",
+        write_forward_model_description(
+            {
+                "ens_id": "_id_",
+                "dispatch_url": zmq_server.uri,
+            }
         )
 
         fm_dispatch(["script.py"])
@@ -371,21 +368,19 @@ async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_sigterm(
     sleep_executable,
 ):
     async with MockZMQServer() as zmq_server:
-        fm_description = {
-            "ens_id": "_id_",
-            "dispatch_url": zmq_server.uri,
-            "jobList": [
-                {
-                    "name": "dummy_executable",
-                    "executable": sleep_executable,
-                    "stdout": "dummy.stdout",
-                    "stderr": "dummy.stderr",
-                }
-            ],
-        }
-
-        Path(FORWARD_MODEL_DESCRIPTION_FILE).write_text(
-            json.dumps(fm_description), encoding="utf-8"
+        write_forward_model_description(
+            {
+                "ens_id": "_id_",
+                "dispatch_url": zmq_server.uri,
+                "jobList": [
+                    {
+                        "name": "dummy_executable",
+                        "executable": sleep_executable,
+                        "stdout": "dummy.stdout",
+                        "stderr": "dummy.stderr",
+                    }
+                ],
+            }
         )
 
         fm_dispatch_process = Popen(  # noqa: ASYNC220
@@ -420,21 +415,19 @@ async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_terminate_m
     sleep_executable,
 ):
     async with MockZMQServer() as zmq_server:
-        fm_description = {
-            "ens_id": "_id_",
-            "dispatch_url": zmq_server.uri,
-            "jobList": [
-                {
-                    "name": "dummy_executable",
-                    "executable": sleep_executable,
-                    "stdout": "dummy.stdout",
-                    "stderr": "dummy.stderr",
-                }
-            ],
-        }
-
-        Path(FORWARD_MODEL_DESCRIPTION_FILE).write_text(
-            json.dumps(fm_description), encoding="utf-8"
+        write_forward_model_description(
+            {
+                "ens_id": "_id_",
+                "dispatch_url": zmq_server.uri,
+                "jobList": [
+                    {
+                        "name": "dummy_executable",
+                        "executable": sleep_executable,
+                        "stdout": "dummy.stdout",
+                        "stderr": "dummy.stderr",
+                    }
+                ],
+            }
         )
 
         fm_dispatch_process = Popen(  # noqa: ASYNC220
