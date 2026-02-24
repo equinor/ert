@@ -361,6 +361,19 @@ def sleep_executable(tmp_path):
     )
 
 
+def wait_for_message(zmq_server):
+    async def inner(msg_type):
+        while True:
+            await asyncio.sleep(0.5)
+            if any(
+                msg_type in dispatcher_event_from_json(msg).event_type
+                for msg in zmq_server.messages
+            ):
+                return
+
+    return inner
+
+
 @pytest.mark.timeout(30)
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_custom_setsid")
@@ -388,14 +401,7 @@ async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_sigterm(
         )
         p = psutil.Process(fm_dispatch_process.pid)
 
-        async def wait_for_msg(msg_type):
-            while True:
-                await asyncio.sleep(0.5)
-                if any(
-                    msg_type in dispatcher_event_from_json(msg).event_type
-                    for msg in zmq_server.messages
-                ):
-                    return
+        wait_for_msg = wait_for_message(zmq_server)
 
         # wait for fm running
         await asyncio.wait_for(wait_for_msg("forward_model_step.start"), timeout=15)
@@ -434,14 +440,7 @@ async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_terminate_m
             [os.getcwd() + "/setsid", "fm_dispatch.py", os.getcwd()]
         )
 
-        async def wait_for_msg(msg_type):
-            while True:
-                await asyncio.sleep(0.1)
-                if any(
-                    msg_type in dispatcher_event_from_json(msg).event_type
-                    for msg in zmq_server.messages
-                ):
-                    return
+        wait_for_msg = wait_for_message(zmq_server)
 
         await asyncio.wait_for(wait_for_msg("forward_model_step.start"), timeout=15)
         await zmq_server.send_terminate_message()
