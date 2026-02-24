@@ -408,9 +408,11 @@ def test_report_all_messages_drops_reporter_on_error():
 @pytest.fixture
 def sleep_executable(tmp_path):
     (tmp_path / "dummy_executable").write_text(
-        """#!/usr/bin/env python
-import time
-time.sleep(180)""",
+        dedent("""\
+               #!/usr/bin/env python
+               import time
+               time.sleep(180)
+               """),
         encoding="utf-8",
     )
     os.chmod(tmp_path / "dummy_executable", stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
