@@ -110,11 +110,7 @@ def test_terminate_steps(tmp_path):
 
     # (we wait for the process below)
     fm_dispatch_process = Popen(
-        [
-            os.getcwd() + "/setsid",
-            "fm_dispatch.py",
-            os.getcwd(),
-        ]
+        [os.getcwd() + "/setsid", "fm_dispatch.py", os.getcwd()]
     )
 
     p = psutil.Process(fm_dispatch_process.pid)
@@ -202,13 +198,7 @@ def test_fm_dispatch_run_subset_specified_as_parameter(tmp_path):
 
     # (we wait for the process below)
     fm_dispatch_process = Popen(
-        [
-            os.getcwd() + "/setsid",
-            "fm_dispatch.py",
-            os.getcwd(),
-            "step_B",
-            "step_C",
-        ]
+        [os.getcwd() + "/setsid", "fm_dispatch.py", os.getcwd(), "step_B", "step_C"]
     )
 
     fm_dispatch_process.wait()
@@ -399,11 +389,7 @@ async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_sigterm(
         )
 
         fm_dispatch_process = Popen(  # noqa: ASYNC220
-            [
-                os.getcwd() + "/setsid",
-                "fm_dispatch.py",
-                os.getcwd(),
-            ]
+            [os.getcwd() + "/setsid", "fm_dispatch.py", os.getcwd()]
         )
         p = psutil.Process(fm_dispatch_process.pid)
 
@@ -452,11 +438,7 @@ async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_terminate_m
         )
 
         fm_dispatch_process = Popen(  # noqa: ASYNC220
-            [
-                os.getcwd() + "/setsid",
-                "fm_dispatch.py",
-                os.getcwd(),
-            ]
+            [os.getcwd() + "/setsid", "fm_dispatch.py", os.getcwd()]
         )
 
         async def wait_for_msg(msg_type):
