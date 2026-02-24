@@ -83,14 +83,17 @@ def test_terminate_steps(tmp_path):
     # Executes itself recursively and sleeps for 100 seconds
     executable = write_executable(
         tmp_path,
-        """#!/usr/bin/env python
-import sys, os, time
-counter = eval(sys.argv[1])
-if counter > 0:
-    os.fork()
-    os.execv(sys.argv[0],[sys.argv[0], str(counter - 1) ])
-else:
-    time.sleep(100)""",
+        dedent(
+            """\
+                #!/usr/bin/env python
+                import sys, os, time
+                counter = eval(sys.argv[1])
+                if counter > 0:
+                    os.fork()
+                    os.execv(sys.argv[0],[sys.argv[0], str(counter - 1) ])
+                else:
+                    time.sleep(100)""",
+        ),
     )
 
     fm_description = {
