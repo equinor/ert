@@ -11,6 +11,7 @@ from pathlib import Path
 from subprocess import Popen
 from textwrap import dedent
 from threading import Lock
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
@@ -51,19 +52,23 @@ def use_custom_setsid(use_tmpdir):
     os.chmod("setsid", 0o755)
 
 
-def write_executable(directory, contents, basename="dummy_executable"):
+def write_executable(
+    directory: Path, contents: str, basename: Path | str = "dummy_executable"
+) -> str:
     (directory / basename).write_text(contents, encoding="utf-8")
     os.chmod(directory / basename, stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
     return os.path.realpath(directory / basename)
 
 
-def write_forward_model_description(contents):
+def write_forward_model_description(contents: dict[str, Any]) -> None:
     Path(FORWARD_MODEL_DESCRIPTION_FILE).write_text(
         json.dumps(contents), encoding="utf-8"
     )
 
 
-def job_dict(executable, arglist, name="dummy_executable"):
+def job_dict(
+    executable: str, arglist: list[Any], name: str = "dummy_executable"
+) -> dict[str, Any]:
     return {
         "name": name,
         "executable": executable,
@@ -85,7 +90,7 @@ def job_dict(executable, arglist, name="dummy_executable"):
 
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_custom_setsid")
-def test_terminate_steps(tmp_path):
+def test_terminate_steps(tmp_path: Path):
     # Executes itself recursively and sleeps for 100 seconds
     executable = write_executable(
         tmp_path,
@@ -131,7 +136,9 @@ def test_terminate_steps(tmp_path):
 
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
-def test_memory_profile_is_logged_as_csv(monkeypatch, tmp_path):
+def test_memory_profile_is_logged_as_csv(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
     """This tests that a csv is produced and has basic validity.
     It does not try to verify the validity of the logged RSS values."""
     fm_stepname = "do_nothing"
@@ -172,7 +179,7 @@ def test_memory_profile_is_logged_as_csv(monkeypatch, tmp_path):
 
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_custom_setsid")
-def test_fm_dispatch_run_subset_specified_as_parameter(tmp_path):
+def test_fm_dispatch_run_subset_specified_as_parameter(tmp_path: Path):
     executable = write_executable(
         tmp_path,
         "#!/usr/bin/env python\n"
@@ -208,24 +215,26 @@ def test_fm_dispatch_run_subset_specified_as_parameter(tmp_path):
     assert os.path.isfile("step_C.out")
 
 
-def test_no_jobs_json_file_raises_IOError(tmp_path):
+def test_no_jobs_json_file_raises_IOError(tmp_path: Path):
     with pytest.raises(IOError, match=r"No such file or directory: 'jobs.json'"):
         fm_dispatch(["script.py", str(tmp_path)])
 
 
-def test_invalid_jobs_json_raises_OSError(tmp_path):
+def test_invalid_jobs_json_raises_OSError(tmp_path: Path):
     (tmp_path / FORWARD_MODEL_DESCRIPTION_FILE).write_text("not json")
 
     with pytest.raises(OSError, match="fm_dispatch failed to load JSON-file"):
         fm_dispatch(["script.py", str(tmp_path)])
 
 
-def test_missing_directory_exits(tmp_path):
+def test_missing_directory_exits(tmp_path: Path):
     with pytest.raises(SystemExit):
         fm_dispatch(["script.py", str(tmp_path / "non_existent")])
 
 
-def test_retry_of_jobs_json_file_read(tmp_path, monkeypatch, caplog):
+def test_retry_of_jobs_json_file_read(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+):
     lock = Lock()
     lock.acquire()
     monkeypatch.setattr(
@@ -262,7 +271,7 @@ def test_retry_of_jobs_json_file_read(tmp_path, monkeypatch, caplog):
     ("is_interactive_run", "ens_id"),
     [(False, None), (False, "1234"), (True, None), (True, "1234")],
 )
-def test_setup_reporters(is_interactive_run, ens_id):
+def test_setup_reporters(is_interactive_run: bool, ens_id: str | None):
     reporters = _setup_reporters(is_interactive_run, ens_id, "")
 
     if not is_interactive_run and not ens_id:
@@ -307,7 +316,7 @@ def test_fm_dispatch_kills_itself_after_unsuccessful_step():
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No oom_score on MacOS")
 @pytest.mark.usefixtures("use_custom_setsid")
-def test_killed_by_oom(tmp_path, monkeypatch):
+def test_killed_by_oom(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """Test out-of-memory detection for pid and descendants based
     on a mocked dmesg system utility."""
     parent_pid = 666
@@ -350,7 +359,7 @@ def test_report_all_messages_drops_reporter_on_error():
 
 
 @pytest.fixture
-def sleep_executable(tmp_path):
+def sleep_executable(tmp_path: Path):
     return write_executable(
         tmp_path,
         dedent("""\
@@ -361,7 +370,7 @@ def sleep_executable(tmp_path):
     )
 
 
-async def wait_for_msg(zmq_server, msg_type):
+async def wait_for_msg(zmq_server, msg_type: str) -> None:
     while True:
         await asyncio.sleep(0.5)
         if any(
@@ -375,7 +384,7 @@ async def wait_for_msg(zmq_server, msg_type):
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_custom_setsid")
 async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_sigterm(
-    sleep_executable,
+    sleep_executable: str,
 ):
     async with MockZMQServer() as zmq_server:
         write_forward_model_description(
@@ -417,7 +426,7 @@ async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_sigterm(
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_custom_setsid")
 async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_terminate_msg(
-    sleep_executable,
+    sleep_executable: str,
 ):
     async with MockZMQServer() as zmq_server:
         write_forward_model_description(
@@ -454,7 +463,9 @@ async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_terminate_m
         )
 
 
-async def test_fm_dispatch_main_signals_sigterm_on_exception(capsys):
+async def test_fm_dispatch_main_signals_sigterm_on_exception(
+    capsys: pytest.CaptureFixture[str],
+):
     def mock_fm_dispatch_raises(*args):
         raise RuntimeError("forward model critical error")
 
