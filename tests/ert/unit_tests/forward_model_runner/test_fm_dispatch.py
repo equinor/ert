@@ -361,17 +361,14 @@ def sleep_executable(tmp_path):
     )
 
 
-def wait_for_message(zmq_server):
-    async def inner(msg_type):
-        while True:
-            await asyncio.sleep(0.5)
-            if any(
-                msg_type in dispatcher_event_from_json(msg).event_type
-                for msg in zmq_server.messages
-            ):
-                return
-
-    return inner
+async def wait_for_msg(zmq_server, msg_type):
+    while True:
+        await asyncio.sleep(0.5)
+        if any(
+            msg_type in dispatcher_event_from_json(msg).event_type
+            for msg in zmq_server.messages
+        ):
+            return
 
 
 @pytest.mark.timeout(30)
@@ -401,13 +398,15 @@ async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_sigterm(
         )
         p = psutil.Process(fm_dispatch_process.pid)
 
-        wait_for_msg = wait_for_message(zmq_server)
-
         # wait for fm running
-        await asyncio.wait_for(wait_for_msg("forward_model_step.start"), timeout=15)
+        await asyncio.wait_for(
+            wait_for_msg(zmq_server, "forward_model_step.start"), timeout=15
+        )
         p.terminate()
         # wait for fm_dispatch has been terminated, and sends failure message
-        await asyncio.wait_for(wait_for_msg("forward_model_step.failure"), timeout=15)
+        await asyncio.wait_for(
+            wait_for_msg(zmq_server, "forward_model_step.failure"), timeout=15
+        )
         assert (
             dispatcher_event_from_json(zmq_server.messages[-1]).error_msg
             == FORWARD_MODEL_TERMINATED_MSG
@@ -440,11 +439,13 @@ async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_terminate_m
             [os.getcwd() + "/setsid", "fm_dispatch.py", os.getcwd()]
         )
 
-        wait_for_msg = wait_for_message(zmq_server)
-
-        await asyncio.wait_for(wait_for_msg("forward_model_step.start"), timeout=15)
+        await asyncio.wait_for(
+            wait_for_msg(zmq_server, "forward_model_step.start"), timeout=15
+        )
         await zmq_server.send_terminate_message()
-        await asyncio.wait_for(wait_for_msg("forward_model_step.failure"), timeout=15)
+        await asyncio.wait_for(
+            wait_for_msg(zmq_server, "forward_model_step.failure"), timeout=15
+        )
         await zmq_server.no_dealers.wait()
         fm_dispatch_process.wait(timeout=15)
         assert (
