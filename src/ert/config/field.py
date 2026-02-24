@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import itertools
 import logging
 import os
 from collections.abc import Callable, Iterator
@@ -26,6 +25,7 @@ from ert.substitutions import substitute_runpath_name
 from ert.utils import log_duration
 
 from ._str_to_bool import str_to_bool
+from .graph_utils import create_flattened_cube_graph
 from .parameter_config import ParameterConfig
 from .parsing import ConfigValidationError, ConfigWarning
 
@@ -35,34 +35,6 @@ if TYPE_CHECKING:
     from ert.storage import Ensemble
 
 _logger = logging.getLogger(__name__)
-
-
-def create_flattened_cube_graph(px: int, py: int, pz: int) -> nx.Graph[int]:
-    """graph created with nodes numbered from 0 to px*py*pz
-    corresponds to the "vectorization" or flattening of
-    a 3D cube with shape (px,py,pz) in the same way as
-    reshaping such a cube into a one-dimensional array.
-    The indexing scheme used to create the graph reflects
-    this flattening process"""
-
-    G: nx.Graph[int] = nx.Graph()
-    for x, y, z in itertools.product(range(px), range(py), range(pz)):
-        # Flatten the 3D index to a single index
-        index = x * py * pz + y * pz + z
-
-        # Connect to the right neighbor (y-direction)
-        if y < py - 1:
-            G.add_edge(index, index + pz)
-
-        # Connect to the bottom neighbor (x-direction)
-        if x < px - 1:
-            G.add_edge(index, index + py * pz)
-
-        # Connect to the neighbor in front (z-direction)
-        if z < pz - 1:
-            G.add_edge(index, index + 1)
-
-    return G
 
 
 class Field(ParameterConfig):
