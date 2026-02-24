@@ -1,3 +1,4 @@
+from operator import itemgetter
 from pathlib import Path
 
 import networkx as nx
@@ -229,7 +230,7 @@ def test_invalid_surface_files_gives_config_error():
         ((0, 0), [], []),
         ((1, 0), [], []),
         ((0, 1), [], []),
-        ((1, 1), [], []),
+        ((1, 1), [{"id": 0}], []),
         ((1, 2), [{"id": 0}, {"id": 1}], [{"source": 0, "target": 1}]),
         (
             (10, 1),
@@ -296,8 +297,12 @@ def test_surface_parameter_graph(shape, expected_nodes, expected_links):
 
     g = config.load_parameter_graph()
     data = nx.node_link_data(g, edges="links")
-    assert data["nodes"] == expected_nodes
-    assert data["links"] == expected_links
+    assert sorted(data["nodes"], key=itemgetter("id")) == sorted(
+        expected_nodes, key=itemgetter("id")
+    )
+    assert sorted(data["links"], key=itemgetter("source", "target")) == sorted(
+        expected_links, key=itemgetter("source", "target")
+    )
 
 
 def test_surface_create_storage_datasets_raises_surface_mismatch_error_when_the_number_of_surface_parameters_is_different_than_base_surface_size():  # noqa

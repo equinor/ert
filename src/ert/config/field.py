@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import itertools
 import logging
 import os
 from collections.abc import Callable, Iterator
@@ -38,31 +37,15 @@ _logger = logging.getLogger(__name__)
 
 
 def create_flattened_cube_graph(px: int, py: int, pz: int) -> nx.Graph[int]:
-    """graph created with nodes numbered from 0 to px*py*pz
-    corresponds to the "vectorization" or flattening of
-    a 3D cube with shape (px,py,pz) in the same way as
-    reshaping such a cube into a one-dimensional array.
-    The indexing scheme used to create the graph reflects
-    this flattening process"""
+    """Creates a grid graph for sparse precision estimation in EnIF updates.
 
-    G: nx.Graph[int] = nx.Graph()
-    for x, y, z in itertools.product(range(px), range(py), range(pz)):
-        # Flatten the 3D index to a single index
-        index = x * py * pz + y * pz + z
-
-        # Connect to the right neighbor (y-direction)
-        if y < py - 1:
-            G.add_edge(index, index + pz)
-
-        # Connect to the bottom neighbor (x-direction)
-        if x < px - 1:
-            G.add_edge(index, index + py * pz)
-
-        # Connect to the neighbor in front (z-direction)
-        if z < pz - 1:
-            G.add_edge(index, index + 1)
-
-    return G
+    The graph encodes spatial adjacency between parameter cells. Integer node
+    labels (0 to px*py*pz-1) match C-order flattening so precision matrix
+    indices align with parameter vector positions.
+    """
+    G_grid = nx.grid_graph(dim=[px, py, pz])
+    G_int = nx.convert_node_labels_to_integers(G_grid, ordering="sorted")
+    return G_int
 
 
 class Field(ParameterConfig):
