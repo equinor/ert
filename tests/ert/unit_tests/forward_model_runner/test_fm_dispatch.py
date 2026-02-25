@@ -235,7 +235,7 @@ def test_missing_directory_exits(tmp_path: Path):
         fm_dispatch(["script.py", str(tmp_path / "non_existent")])
 
 
-def test_retry_of_jobs_json_file_read(
+def test_that_fm_dispatch_retries_reading_description_file_when_it_is_missing(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ):
     lock = Lock()
