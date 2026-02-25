@@ -182,7 +182,9 @@ def test_memory_profile_is_logged_as_csv(
 
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_custom_setsid")
-def test_fm_dispatch_run_subset_specified_as_parameter(tmp_path: Path):
+def test_that_a_subset_of_jobs_to_run_can_be_specified_as_cmdline_arguments(
+    tmp_path: Path,
+):
     executable = write_executable(
         tmp_path,
         "#!/usr/bin/env python\n"
