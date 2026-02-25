@@ -744,12 +744,10 @@ def test_right_click_plot_button_opens_external_plotter(qtbot, use_tmpdir, monke
     gui.close()
 
 
-@pytest.mark.usefixtures("copy_poly_case")
-def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_cases(qtbot):
-    args = Mock()
-    args.config = "poly.ert"
-    gui, *_ = ert.gui.main._start_initial_gui_window(args, GUILogHandler())
-    assert gui.windowTitle().startswith("ERT - poly.ert")
+def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_valid_cases(
+    qtbot, opened_main_window_minimal_realizations, run_experiment
+):
+    gui = opened_main_window_minimal_realizations
 
     combo_box = get_child(gui, QComboBox, name="experiment_type")
     qtbot.mouseClick(combo_box, Qt.MouseButton.LeftButton)
@@ -766,12 +764,17 @@ def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_cases(qtbot):
 
     assert restart_button
 
-    assert len(ensemble_selector._ensemble_list()) == 0
+    assert ensemble_selector.count() == 0
     assert not restart_button.isEnabled()
 
     add_experiment_manually(qtbot, gui, ensemble_name="test_ensemble")
-    assert len(ensemble_selector._ensemble_list()) == 1
 
+    assert ensemble_selector.count() == 0
+    assert not restart_button.isEnabled()
+
+    run_experiment(EnsembleExperiment, gui)
+
+    assert ensemble_selector.count() == 1
     assert restart_button.isEnabled()
 
 

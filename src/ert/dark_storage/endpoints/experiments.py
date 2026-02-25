@@ -34,6 +34,10 @@ def get_experiments(
                 response_type: config.model_dump()
                 for response_type, config in experiment.response_configuration.items()
             },
+            derived_responses={
+                response_type: config.model_dump()
+                for response_type, config in experiment.derived_response_configuration.items()  # noqa: E501
+            },
             observations=experiment.response_key_to_observation_key,
         )
         for experiment in storage.experiments
