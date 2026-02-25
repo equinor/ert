@@ -1,4 +1,5 @@
 import logging
+import os
 import warnings
 from pathlib import Path
 
@@ -11,6 +12,11 @@ from surfio import IrapHeader, IrapSurface
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, SurfaceConfig
 from ert.config.parameter_config import InvalidParameterFile
 from ert.config.surface_config import ASCII_SURFACE_WARNING_MESSAGE
+from ert.run_arg import create_run_arguments
+from ert.run_models._create_run_path import create_run_path
+from ert.runpaths import Runpaths
+from ert.sample_prior import sample_prior
+from ert.storage import open_storage
 
 
 @pytest.fixture
@@ -57,7 +63,6 @@ def test_runpath_roundtrip(tmp_path, storage, surface, surface_format, caplog):
         tmp_path / "input_0",
         fformat="irap_ascii" if surface_format == "ascii" else "irap_binary",
     )
-
     # run_path -> storage
     ds = config.read_from_runpath(tmp_path, 0, 0)
     ensemble.save_parameters(ds, config.name, 0)
@@ -429,3 +434,97 @@ def test_that_ert_warns_if_ascii_surface_is_used(tmp_path, is_ascii_surface, cap
             assert caught_warnings == []
 
         assert "Loaded surface in binary format" in caplog.text
+
+
+@pytest.mark.parametrize("is_ascii_surface", [True, False])
+def test_that_ert_writes_surface_in_same_the_format_that_was_read(
+    is_ascii_surface, tmp_path, caplog
+):
+    os.chdir(tmp_path)
+    surf = IrapSurface(
+        header=IrapHeader(
+            ncol=2,
+            nrow=3,
+            xori=4.0,
+            yori=5.0,
+            xinc=6.0,
+            yinc=7.0,
+            rot=8.0,
+            xrot=4.0,
+            yrot=5.0,
+        ),
+        values=np.ones((2, 3), dtype=np.float32),
+    )
+    if is_ascii_surface:
+        surf.to_ascii_file("0surf.irap")
+    else:
+        surf.to_binary_file("0surf.irap")
+    config_path = Path("config.ert")
+
+    config_path.write_text(
+        "NUM_REALIZATIONS 1\n"
+        "SURFACE TOP INIT_FILES:%dsurf.irap OUTPUT_FILE:surf.irap "
+        "BASE_SURFACE:0surf.irap FORWARD_INIT:False ",
+        encoding="utf-8",
+    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=ConfigWarning)
+        ert_config = ErtConfig.from_file(config_path)
+        parameter_configs = ert_config.parameter_configurations_with_design_matrix
+        with open_storage("storage", mode="w") as storage:
+            ensemble = storage.create_experiment(
+                experiment_config={"parameter_configuration": parameter_configs}
+            ).create_ensemble(name="default", ensemble_size=1)
+            active_realizations = [True]
+
+            runpath_root = Path("runpaths")
+            runpaths = Runpaths(
+                jobname_format="job_<IENS>",
+                runpath_format=str(
+                    runpath_root / "realization-<IENS>" / "iteration-<ITER>"
+                ),
+                filename=runpath_root / ".ert_runpath_list",
+            )
+            run_args = create_run_arguments(runpaths, active_realizations, ensemble)
+            sample_prior(
+                ensemble,
+                np.where(active_realizations)[0],
+                parameters=[config.name for config in parameter_configs],
+                random_seed=123,
+                num_realizations=1,
+                design_matrix_df=None,
+            )
+            create_run_path(
+                run_args=run_args,
+                ensemble=ensemble,
+                user_config_file="config.ert",
+                env_vars={},
+                env_pr_fm_step={},
+                forward_model_steps=[],
+                substitutions={},
+                parameters_file="parameters",
+                runpaths=runpaths,
+            )
+            surface_path_in_runpath = Path(
+                "runpaths/realization-0/iteration-0/surf.irap"
+            )
+            assert surface_path_in_runpath.exists(), (
+                f"Expected surface file not found at {surface_path_in_runpath}"
+            )
+            INCORRECT_SURFACE_FORMAT_ERROR_MSG = "Failed to read irap headers"
+            if is_ascii_surface:
+                with pytest.raises(
+                    ValueError, match=INCORRECT_SURFACE_FORMAT_ERROR_MSG
+                ):
+                    # Trying to read ascii surface as binary should fail
+                    IrapSurface.from_binary_file(surface_path_in_runpath)
+
+                IrapSurface.from_ascii_file(surface_path_in_runpath)
+            else:
+                with pytest.raises(
+                    ValueError, match=INCORRECT_SURFACE_FORMAT_ERROR_MSG
+                ):
+                    # Trying to read binary surface as ascii should fail
+                    IrapSurface.from_ascii_file(surface_path_in_runpath)
+
+                IrapSurface.from_binary_file(surface_path_in_runpath)
