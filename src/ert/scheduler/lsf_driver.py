@@ -280,8 +280,8 @@ class LsfDriver(Driver):
         self._iens2jobid: MutableMapping[int, str] = {}
         self._max_attempt: int = 100
         self._sleep_time_between_bkills = 30
-        self._sleep_time_between_cmd_retries = 3
-        self._max_bsub_attempts = 10
+        self._sleep_time_between_cmd_retries = 30
+        self._max_bsub_attempts = 60
 
         self._poll_period = poll_period
 

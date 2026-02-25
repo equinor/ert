@@ -37,7 +37,7 @@ class FailedSubmit(RuntimeError):
 class Driver(ABC):
     """Adapter for the HPC cluster."""
 
-    POLLING_TIMEOUT_PERIOD = 600
+    POLLING_TIMEOUT_PERIOD = 60 * 30
 
     def __init__(self, activate_script: str = "") -> None:
         self._event_queue: asyncio.Queue[DriverEvent] | None = None
