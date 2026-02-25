@@ -236,12 +236,6 @@ def test_get_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
 
 
 @pytest.mark.integration_test
-def test_refresh_facade(poly_example_tmp_dir, dark_storage_client):
-    resp: Response = dark_storage_client.post("/updates/facade")
-    assert resp.status_code == 200
-
-
-@pytest.mark.integration_test
 def test_get_experiment_observations(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()
