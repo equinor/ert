@@ -206,11 +206,9 @@ def test_fm_dispatch_run_subset_specified_as_parameter(tmp_path: Path):
         }
     )
 
-    # (we wait for the process below)
     fm_dispatch_process = Popen(
         [os.getcwd() + "/setsid", "fm_dispatch.py", os.getcwd(), "step_B", "step_C"]
     )
-
     fm_dispatch_process.wait()
 
     assert not os.path.isfile("step_A.out")
