@@ -21,31 +21,6 @@ DEFAULT_STORAGE = Depends(get_storage)
 DEFAULT_BODY = Body(...)
 
 
-@router.get(
-    "/experiments/{experiment_id}/observations", response_model=list[js.ObservationOut]
-)
-def get_observations(
-    *, storage: Storage = DEFAULT_STORAGE, experiment_id: UUID
-) -> list[js.ObservationOut]:
-    with reraise_as_http_errors(logger, {404: "Experiment not found"}):
-        experiment = storage.get_experiment(experiment_id)
-
-    return [
-        js.ObservationOut(
-            id=UUID(int=0),
-            userdata={},
-            errors=observation["errors"],
-            values=observation["values"],
-            x_axis=observation["x_axis"],
-            east=observation["east"],
-            north=observation["north"],
-            radius=observation["radius"],
-            name=observation["name"],
-        )
-        for observation in _get_observations(experiment)
-    ]
-
-
 @router.get("/ensembles/{ensemble_id}/responses/{response_key}/observations")
 async def get_observations_for_response(
     *,
