@@ -91,7 +91,9 @@ def job_dict(
 
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_custom_setsid")
-def test_terminate_steps(tmp_path: Path):
+def test_that_all_subprocesses_of_a_job_are_cleaned_up_on_fm_dispatch_termination(
+    tmp_path: Path,
+):
     # Executes itself recursively and sleeps for 100 seconds
     executable = write_executable(
         tmp_path,
