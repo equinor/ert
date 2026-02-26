@@ -814,19 +814,6 @@ class RunModel(RunModelConfig, ABC):
 
         num_successful_realizations = len(successful_realizations)
         self.validate_successful_realizations_count()
-        logger.info(f"Experiment ran on QUEUESYSTEM: {self.queue_config.queue_system}")
-        logger.info(
-            f"Experiment ran with number of realizations: {len(starting_realizations)} "
-            f"out of a total {self.ensemble_size}"
-        )
-        logger.info(
-            f"Experiment run ended with number of realizations succeeding: "
-            f"{num_successful_realizations}"
-        )
-        logger.info(
-            f"Experiment run ended with number of realizations failing: "
-            f"{len(starting_realizations) - num_successful_realizations}"
-        )
 
         # 0 means no violation
         if self._max_parallelism_violation.amount > 0 and isinstance(
