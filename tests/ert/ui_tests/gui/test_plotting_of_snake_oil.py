@@ -132,6 +132,7 @@ def plot_figure(
 @pytest.mark.mpl_image_compare(tolerance=10.0)
 @pytest.mark.skip_mac_ci  # test is slow
 @pytest.mark.snapshot_test
+@pytest.mark.xdist_group(name="uses_heat_equation_storage")
 def test_that_all_snake_oil_visualisations_matches_snapshot(plot_figure):
     return plot_figure
 

@@ -21,6 +21,7 @@ from ert.storage import open_storage
 from .run_cli import run_cli
 
 
+@pytest.mark.xdist_group(name="uses_heat_equation_storage")
 def test_field_param_update_using_heat_equation_enif(
     symlinked_heat_equation_storage_enif,
 ):
@@ -177,6 +178,7 @@ def _compare_ensemble_params(
         )
 
 
+@pytest.mark.xdist_group(name="uses_heat_equation_storage")
 def test_field_param_update_using_heat_equation_enif_snapshot(
     symlinked_heat_equation_storage_enif, snapshot, request
 ):
@@ -219,6 +221,7 @@ def test_field_param_update_using_heat_equation_enif_snapshot(
         )
 
 
+@pytest.mark.xdist_group(name="uses_heat_equation_storage")
 def test_field_param_update_using_heat_equation(symlinked_heat_equation_storage_es):
     config = ErtConfig.from_file("config.ert")
     with open_storage(config.ens_path, mode="r") as storage:
@@ -403,6 +406,7 @@ if __name__ == "__main__":
 
 
 @pytest.mark.timeout(600)
+@pytest.mark.xdist_group(name="uses_heat_equation_storage")
 def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc(
     symlinked_heat_equation_storage_es, caplog
 ):
