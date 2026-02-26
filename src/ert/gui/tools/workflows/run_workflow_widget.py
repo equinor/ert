@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
-from PyQt6.QtGui import QIcon, QMovie
+from PyQt6.QtGui import QMovie
 from PyQt6.QtWidgets import (
     QComboBox,
     QFormLayout,
@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
 
 from _ert.threading import ErtThread
 from ert.gui.ertwidgets import EnsembleSelector
+from ert.gui.icon_utils import load_icon
 from ert.gui.tools.workflows.workflow_dialog import WorkflowDialog
 from ert.runpaths import Runpaths
 from ert.workflow_runner import WorkflowRunner
@@ -55,7 +56,7 @@ class RunWorkflowWidget(QWidget):
         self.run_button = QToolButton()
         self.run_button.setIconSize(QSize(32, 32))
         self.run_button.setText("Start workflow")
-        self.run_button.setIcon(QIcon("img:play_circle.svg"))
+        self.run_button.setIcon(load_icon("play_circle.svg"))
         self.run_button.clicked.connect(self.startWorkflow)
         self.run_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
 

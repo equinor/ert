@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 
 from PyQt6.QtCore import QSize, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
-from PyQt6.QtGui import QAction, QIcon, QStandardItemModel
+from PyQt6.QtGui import QAction, QStandardItemModel
 from PyQt6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -27,7 +27,9 @@ from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.run_models import RunModel, StatusEvents, create_model
 
+from ..detect_mode import is_dark_mode
 from ..find_ert_info import find_ert_info
+from ..icon_utils import load_icon
 from ..summarypanel import SummaryPanel
 from .combobox_with_description import QComboBoxWithDescription
 from .ensemble_experiment_panel import EnsembleExperimentPanel
@@ -103,7 +105,7 @@ class ExperimentPanel(QWidget):
         self._experiment_done: bool = True
         self.run_button = QToolButton()
         self.run_button.setObjectName("run_experiment")
-        self.run_button.setIcon(QIcon("img:play_circle.svg"))
+        self.run_button.setIcon(load_icon("play_circle.svg"))
         self.run_button.setToolTip(EXPERIMENT_IS_MANUAL_UPDATE_MESSAGE)
         self.run_button.setIconSize(QSize(32, 32))
         self.run_button.clicked.connect(self.run_experiment)
@@ -112,6 +114,26 @@ class ExperimentPanel(QWidget):
         self.run_button.setMinimumHeight(40)
         self.run_button.setStyleSheet(
             """
+            QToolButton {
+            border-radius: 10px;
+            background-color: qlineargradient(
+                x1:0, y1:0, x2:0, y2:1,
+                stop:0 #484848,
+                stop:1 #323232
+            );
+            border: 1px solid #1e1e1e;
+            padding: 5px;
+            }
+            QToolButton:hover {
+                background-color: qlineargradient(
+                x1:0, y1:0, x2:0, y2:1,
+                stop:0 #575757,
+                stop:1 #424242
+            );
+            }
+        """
+            if is_dark_mode()
+            else """
             QToolButton {
             border-radius: 10px;
             background-color: qlineargradient(

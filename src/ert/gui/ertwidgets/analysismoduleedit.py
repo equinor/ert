@@ -3,9 +3,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QMargins, Qt
-from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QWidget
 
+from ..icon_utils import load_icon
 from .analysismodulevariablespanel import AnalysisModuleVariablesPanel
 from .closabledialog import ClosableDialog
 
@@ -27,7 +27,7 @@ class AnalysisModuleEdit(QWidget):
 
         variables_popup_button = QPushButton("Edit")
         variables_popup_button.setObjectName("analysis_variables_popup_button")
-        variables_popup_button.setIcon(QIcon("img:edit.svg"))
+        variables_popup_button.setIcon(load_icon("edit.svg"))
         variables_popup_button.clicked.connect(self.showVariablesPopup)
 
         layout.addWidget(variables_popup_button, 0, Qt.AlignmentFlag.AlignLeft)

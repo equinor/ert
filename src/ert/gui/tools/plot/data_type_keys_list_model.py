@@ -1,10 +1,11 @@
 from typing import Any, overload
 
 from PyQt6.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt
-from PyQt6.QtGui import QColor, QIcon
+from PyQt6.QtGui import QColor
 from typing_extensions import override
 
 from ert.gui.detect_mode import is_dark_mode
+from ert.gui.icon_utils import load_icon
 
 from .plot_api import PlotApiKeyDefinition
 
@@ -17,7 +18,7 @@ class DataTypeKeysListModel(QAbstractItemModel):
     def __init__(self, keys: list[PlotApiKeyDefinition]) -> None:
         QAbstractItemModel.__init__(self)
         self._keys = keys
-        self.__icon = QIcon("img:star_filled.svg")
+        self.__icon = load_icon("star_filled.svg")
 
     @override
     def index(

@@ -14,7 +14,7 @@ from matplotlib.figure import Figure
 from PyQt6.QtCore import QStringListModel, Qt, pyqtBoundSignal
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtGui import QAction, QIcon
+from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -25,6 +25,7 @@ from PyQt6.QtWidgets import (
 )
 from typing_extensions import override
 
+from ert.gui.icon_utils import load_icon
 from ert.gui.tools.plot.plottery.plots import EverestGradientsPlot
 
 from .plot_api import EnsembleObject, PlotApiKeyDefinition
@@ -58,7 +59,7 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
     ) -> None:
         super().__init__(canvas, parent, coordinates)  # type: ignore
 
-        gear = QIcon("img:edit.svg")
+        gear = load_icon("edit.svg")
         customize_action = QAction(gear, "Customize", self)
         customize_action.setToolTip("Customize plot settings")
         customize_action.triggered.connect(self.customizationTriggered)

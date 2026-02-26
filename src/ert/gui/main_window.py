@@ -36,6 +36,7 @@ from ert.trace import get_trace_id
 
 from .detect_mode import is_dark_mode
 from .experiments import ExperimentPanel, RunDialog
+from .icon_utils import load_icon
 
 logger = logging.getLogger(__name__)
 BUTTON_STYLE_SHEET: str = """
@@ -127,13 +128,13 @@ class ErtMainWindow(QMainWindow):
         self._plot_window: PlotWindow | None = None
         self._manage_experiments_panel: ManageExperimentsPanel | None = None
         self.experiment_button = self._add_sidebar_button(
-            "Start experiment", QIcon("img:library_add.svg")
+            "Start experiment", load_icon("library_add.svg")
         )
-        plot_button = self._add_sidebar_button("Create plot", QIcon("img:timeline.svg"))
+        plot_button = self._add_sidebar_button("Create plot", load_icon("timeline.svg"))
         plot_button.setToolTip("Right click to open external window")
-        self._add_sidebar_button("Manage experiments", QIcon("img:build_wrench.svg"))
+        self._add_sidebar_button("Manage experiments", load_icon("build_wrench.svg"))
         self.results_button = self._add_sidebar_button(
-            "Experiment status", QIcon("img:in_progress.svg")
+            "Experiment status", load_icon("in_progress.svg")
         )
         self.results_button.setEnabled(False)
         self.experiment_button.click()

@@ -1,12 +1,12 @@
 import logging
 from typing import Any
 
-from PyQt6.QtGui import QIcon
 from typing_extensions import override
 
 from ert.config import ErtConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import ClosableDialog
+from ert.gui.icon_utils import load_icon
 from ert.gui.tools import Tool
 from ert.gui.tools.load_results import LoadResultsPanel
 
@@ -17,7 +17,7 @@ class LoadResultsTool(Tool):
     def __init__(self, config: ErtConfig, notifier: ErtNotifier) -> None:
         super().__init__(
             "Load results manually",
-            QIcon("img:upload.svg"),
+            load_icon("upload.svg"),
         )
         self._import_widget: LoadResultsPanel | None = None
         self._dialog: ClosableDialog | None = None
