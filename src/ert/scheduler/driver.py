@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import shlex
+import signal
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
@@ -117,6 +119,7 @@ class Driver(ABC):
         return_on_msgs: Iterable[str] = (),
         error_on_msgs: Iterable[str] = (),
         log_to_debug: bool | None = True,
+        attempt_timeout: float | None = None,
     ) -> tuple[bool, str]:
         logger = driverlogger or logging.getLogger(__name__)
         error_message: str | None = None
@@ -129,11 +132,28 @@ class Driver(ABC):
                     stdin=asyncio.subprocess.PIPE if stdin else None,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
+                    preexec_fn=os.setsid,
                 )
             except FileNotFoundError as e:
                 return (False, str(e))
 
-            stdout, stderr = await process.communicate(stdin)
+            try:
+                stdout, stderr = await asyncio.wait_for(
+                    process.communicate(stdin),
+                    timeout=attempt_timeout,
+                )
+            except TimeoutError:
+                os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+                stdout, stderr = await process.communicate()
+                outputs = (
+                    f'output: "{stdout.decode(errors="ignore").strip() or "<empty>"}", '
+                    f" and "
+                    f'error: "{stderr.decode(errors="ignore").strip() or "<empty>"}"'
+                )
+                logger.warning(
+                    f"bsub killed after timeout ({attempt_timeout} seconds), {outputs}"
+                )
+                continue
 
             assert process.returncode is not None
             outputs = (
