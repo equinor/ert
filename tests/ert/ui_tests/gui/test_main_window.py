@@ -518,7 +518,7 @@ def test_that_inversion_type_can_be_set_from_gui(qtbot, opened_main_window_poly)
 
     QTimer.singleShot(500, handle_analysis_module_panel)
     qtbot.mouseClick(
-        get_child(es_edit, QToolButton), Qt.MouseButton.LeftButton, delay=1
+        get_child(es_edit, QPushButton), Qt.MouseButton.LeftButton, delay=1
     )
 
 

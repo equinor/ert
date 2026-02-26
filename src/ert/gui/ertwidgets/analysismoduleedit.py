@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QMargins, Qt
 from PyQt6.QtGui import QIcon
-from PyQt6.QtWidgets import QHBoxLayout, QToolButton, QWidget
+from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QWidget
 
 from .analysismodulevariablespanel import AnalysisModuleVariablesPanel
 from .closabledialog import ClosableDialog
@@ -25,11 +25,10 @@ class AnalysisModuleEdit(QWidget):
 
         layout = QHBoxLayout()
 
-        variables_popup_button = QToolButton()
+        variables_popup_button = QPushButton("Edit")
         variables_popup_button.setObjectName("analysis_variables_popup_button")
         variables_popup_button.setIcon(QIcon("img:edit.svg"))
         variables_popup_button.clicked.connect(self.showVariablesPopup)
-        variables_popup_button.setMaximumSize(20, 20)
 
         layout.addWidget(variables_popup_button, 0, Qt.AlignmentFlag.AlignLeft)
         layout.setContentsMargins(QMargins(0, 0, 0, 0))
