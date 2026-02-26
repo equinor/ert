@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
     QCheckBox,
     QDialog,
     QDoubleSpinBox,
-    QToolButton,
+    QPushButton,
 )
 from pytestqt.qtbot import QtBot
 
@@ -157,7 +157,7 @@ def _open_and_capture_threshold(panel, qtbot):
 
     QTimer.singleShot(500, inspect_and_close_dialog)
 
-    button = panel.findChild(QToolButton, "analysis_variables_popup_button")
+    button = panel.findChild(QPushButton, "analysis_variables_popup_button")
     qtbot.mouseClick(button, Qt.MouseButton.LeftButton)
 
     assert captured_value is not None
