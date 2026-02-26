@@ -120,6 +120,7 @@ class Driver(ABC):
     ) -> tuple[bool, str]:
         logger = driverlogger or logging.getLogger(__name__)
         error_message: str | None = None
+        outputs: str = ""
 
         for i in range(total_attempts):
             try:
