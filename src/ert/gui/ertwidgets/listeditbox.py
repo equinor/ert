@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from uuid import UUID
 
 from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtGui import QIcon, QKeyEvent
+from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import (
     QCompleter,
     QHBoxLayout,
@@ -15,6 +15,7 @@ from PyQt6.QtWidgets import (
 from typing_extensions import override
 
 from ..detect_mode import is_dark_mode
+from ..icon_utils import load_icon
 from .validationsupport import ValidationSupport
 
 
@@ -104,7 +105,7 @@ class ListEditBox(QWidget):
         layout.addWidget(self._list_edit_line)
 
         dialog_button = QToolButton(self)
-        dialog_button.setIcon(QIcon("img:add_circle_outlined.svg"))
+        dialog_button.setIcon(load_icon("add_circle_outlined.svg"))
         dialog_button.setIconSize(QSize(16, 16))
         dialog_button.clicked.connect(self.addChoice)
 

@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QMenu
 from typing_extensions import override
 
+from ert.gui.icon_utils import load_icon
 from ert.gui.tools import Tool
 
 from .plugin_runner import PluginRunner
@@ -28,7 +28,7 @@ class PluginsTool(Tool):
         self.notifier = notifier
         super().__init__(
             "Plugins",
-            QIcon("img:widgets.svg"),
+            load_icon("widgets.svg"),
             enabled,
             popup_menu=True,
         )
@@ -43,7 +43,7 @@ class PluginsTool(Tool):
             self.__plugins[plugin] = plugin_runner
             plugin_action = self.menu.addAction(plugin.getName())
             assert plugin_action is not None
-            plugin_action.setIcon(QIcon("img:widgets.svg"))
+            plugin_action.setIcon(load_icon("widgets.svg"))
             plugin_action.setToolTip(plugin.getDescription())
             plugin_action.triggered.connect(plugin_runner.run)
 

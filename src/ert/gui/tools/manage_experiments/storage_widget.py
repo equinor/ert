@@ -12,7 +12,6 @@ from PyQt6.QtCore import (
 )
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLineEdit,
@@ -25,6 +24,7 @@ from PyQt6.QtWidgets import (
 from ert.config import ErrorInfo, ErtConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import CreateExperimentDialog, Suggestor
+from ert.gui.icon_utils import load_icon
 from ert.storage import Ensemble, Experiment
 from ert.storage.local_experiment import ExperimentType
 
@@ -50,7 +50,7 @@ class AddWidget(QWidget):
         super().__init__()
 
         self.addButton = QToolButton(self)
-        self.addButton.setIcon(QIcon("img:add_circle_outlined.svg"))
+        self.addButton.setIcon(load_icon("add_circle_outlined.svg"))
         self.addButton.setIconSize(QSize(16, 16))
         self.addButton.clicked.connect(addFunction)
 

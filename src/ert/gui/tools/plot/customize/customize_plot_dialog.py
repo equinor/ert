@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QObject, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
-from PyQt6.QtGui import QIcon, QKeyEvent
+from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import (
     QDialog,
     QHBoxLayout,
@@ -22,6 +22,7 @@ from PyQt6.QtWidgets import (
 )
 from typing_extensions import override
 
+from ert.gui.icon_utils import load_icon
 from ert.gui.tools.plot.plot_api import PlotApiKeyDefinition
 from ert.gui.tools.plot.plottery import PlotConfig, PlotConfigFactory, PlotConfigHistory
 from ert.gui.tools.plot.widgets import CopyStyleToDialog
@@ -220,23 +221,23 @@ class CustomizePlotDialog(QDialog):
         self._button_layout = QHBoxLayout()
 
         self._reset_button = QToolButton()
-        self._reset_button.setIcon(QIcon("img:format_color_reset.svg"))
+        self._reset_button.setIcon(load_icon("format_color_reset.svg"))
         self._reset_button.setToolTip("Reset all settings back to default")
         self._reset_button.clicked.connect(self.resetSettings)
 
         self._undo_button = QToolButton()
-        self._undo_button.setIcon(QIcon("img:undo.svg"))
+        self._undo_button.setIcon(load_icon("undo.svg"))
         self._undo_button.setToolTip("Undo")
         self._undo_button.clicked.connect(self.undoSettings)
 
         self._redo_button = QToolButton()
-        self._redo_button.setIcon(QIcon("img:redo.svg"))
+        self._redo_button.setIcon(load_icon("redo.svg"))
         self._redo_button.setToolTip("Redo")
         self._redo_button.clicked.connect(self.redoSettings)
         self._redo_button.setEnabled(False)
 
         self._copy_from_button = QToolButton()
-        self._copy_from_button.setIcon(QIcon("img:download.svg"))
+        self._copy_from_button.setIcon(load_icon("download.svg"))
         self._copy_from_button.setToolTip("Copy settings from another key")
         self._copy_from_button.setPopupMode(
             QToolButton.ToolButtonPopupMode.InstantPopup
@@ -244,7 +245,7 @@ class CustomizePlotDialog(QDialog):
         self._copy_from_button.setEnabled(False)
 
         self._copy_to_button = QToolButton()
-        self._copy_to_button.setIcon(QIcon("img:upload.svg"))
+        self._copy_to_button.setIcon(load_icon("upload.svg"))
         self._copy_to_button.setToolTip("Copy current plot settings to other keys")
         self._copy_to_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self._copy_to_button.clicked.connect(self.initiateCopyStyleToDialog)

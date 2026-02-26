@@ -14,7 +14,6 @@ from PyQt6.QtGui import (
     QColor,
     QCursor,
     QDropEvent,
-    QIcon,
     QMouseEvent,
     QPainter,
     QPen,
@@ -29,6 +28,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 from typing_extensions import override
+
+from ert.gui.icon_utils import load_icon
 
 from .plot_api import EnsembleObject
 
@@ -174,7 +175,7 @@ class EnsembleSelectListWidget(QListWidget):
 class CustomItemDelegate(QStyledItemDelegate):
     def __init__(self) -> None:
         super().__init__()
-        self.swap_pixmap = QIcon("img:reorder.svg").pixmap(QSize(20, 20))
+        self.swap_pixmap = load_icon("reorder.svg").pixmap(QSize(20, 20))
 
     @override
     def sizeHint(self, option: Any, index: Any) -> QSize:

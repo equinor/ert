@@ -5,10 +5,10 @@ import re
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QSize
-from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QLineEdit, QToolButton, QWidget
 
 from ..detect_mode import is_dark_mode
+from ..icon_utils import load_icon
 from .validationsupport import ValidationSupport
 
 if TYPE_CHECKING:
@@ -43,7 +43,7 @@ class PathChooser(QWidget):
         layout.addWidget(self._path_line)
 
         dialog_button = QToolButton(self)
-        dialog_button.setIcon(QIcon("img:folder_open.svg"))
+        dialog_button.setIcon(load_icon("folder_open.svg"))
         dialog_button.setIconSize(QSize(16, 16))
         dialog_button.clicked.connect(self.selectPath)
         layout.addWidget(dialog_button)

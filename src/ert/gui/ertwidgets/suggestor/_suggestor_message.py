@@ -28,7 +28,7 @@ from ._colors import (
 )
 
 
-def _svg_icon(image_name: str) -> QSvgWidget:
+def _load_icon(image_name: str) -> QSvgWidget:
     widget = QSvgWidget(f"img:{image_name}.svg")
     widget.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
     return widget
@@ -174,7 +174,7 @@ class SuggestorMessage(QWidget):
     @classmethod
     def error_msg(cls, message: str, locations: list[str]) -> Self:
         return cls(
-            "Error: ", RED_TEXT, RED_BACKGROUND, _svg_icon("error"), message, locations
+            "Error: ", RED_TEXT, RED_BACKGROUND, _load_icon("error"), message, locations
         )
 
     @classmethod
@@ -183,7 +183,7 @@ class SuggestorMessage(QWidget):
             "Warning: ",
             YELLOW_TEXT,
             YELLOW_BACKGROUND,
-            _svg_icon("warning"),
+            _load_icon("warning"),
             message,
             locations,
         )
@@ -194,7 +194,7 @@ class SuggestorMessage(QWidget):
             "Deprecation: ",
             BLUE_TEXT,
             BLUE_BACKGROUND,
-            _svg_icon("bell"),
+            _load_icon("bell"),
             message,
             locations,
         )

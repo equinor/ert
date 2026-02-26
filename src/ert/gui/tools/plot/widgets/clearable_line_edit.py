@@ -1,7 +1,9 @@
 from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtGui import QColor, QFocusEvent, QIcon, QKeyEvent, QResizeEvent
+from PyQt6.QtGui import QColor, QFocusEvent, QKeyEvent, QResizeEvent
 from PyQt6.QtWidgets import QLineEdit, QPushButton, QStyle
 from typing_extensions import override
+
+from ert.gui.icon_utils import load_icon
 
 
 class ClearableLineEdit(QLineEdit):
@@ -15,7 +17,7 @@ class ClearableLineEdit(QLineEdit):
         self._placeholder_active = False
 
         self._clear_button = QPushButton(self)
-        self._clear_button.setIcon(QIcon("img:remove_outlined.svg"))
+        self._clear_button.setIcon(load_icon("remove_outlined.svg"))
         self._clear_button.setFlat(True)
         self._clear_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self._clear_button.setFixedSize(17, 17)
