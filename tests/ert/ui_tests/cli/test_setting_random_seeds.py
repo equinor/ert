@@ -12,6 +12,7 @@ from ert.mode_definitions import (
 from .run_cli import run_cli
 
 
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize("experiment_type", [TEST_RUN_MODE, ENSEMBLE_EXPERIMENT_MODE])
 def test_that_cli_uses_config_random_seed_when_specified(
     caplog, use_tmpdir, experiment_type
@@ -36,6 +37,7 @@ def test_that_cli_uses_config_random_seed_when_specified(
     assert "'random_seed': 12345" in seed_logs[0]
 
 
+@pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.parametrize("experiment_type", [TEST_RUN_MODE, ENSEMBLE_EXPERIMENT_MODE])
 def test_that_cli_generates_different_seeds_for_consecutive_runs(
     caplog, use_tmpdir, experiment_type
