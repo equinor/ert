@@ -54,7 +54,7 @@ class BreakthroughConfig(DerivedResponseConfig):
                     obs_date, breakthrough_time
                 )
                 breakthrough_time_offsets.append(breakthrough_time_offset)
-                breakthrough_times.append(breakthrough_time)
+                breakthrough_times.append(obs_date)
 
         if all(time is None for time in breakthrough_times):
             time_series = pl.Series(breakthrough_times, dtype=pl.Datetime)
