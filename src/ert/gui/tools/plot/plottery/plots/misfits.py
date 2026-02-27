@@ -98,7 +98,7 @@ class MisfitsPlot:
         observation_data: pd.DataFrame,
         response_type: Literal["summary", "gen_data"],
     ) -> dict[tuple[str, str], pl.DataFrame]:
-        if response_type == "summary":
+        if response_type in {"summary", "breakthrough"}:
             key_index_with_correct_dtype = pl.col("key_index").str.to_datetime(
                 strict=False
             )
@@ -157,7 +157,7 @@ class MisfitsPlot:
             response_type,
         )
 
-        if response_type == "summary":
+        if response_type in {"summary", "breakthrough"}:
             self._plot_summary_misfits_boxplots(
                 figure,
                 data_with_misfits,

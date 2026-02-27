@@ -304,18 +304,16 @@ class PlotWindow(QMainWindow):
             return
         key = key_def.key
 
-        # Plot the response of corresponding summary key instead of breakthrough key
-        if isinstance(key_def.response, BreakthroughConfig):
-            key = next(
-                (
-                    summary_key
-                    for summary_key in key_def.response.summary_keys
-                    if f"BREAKTHROUGH:{summary_key}" == key
-                ),
-                key,
-            )
-
         plot_widget = cast(PlotWidget, self._central_tab.currentWidget())
+
+        # For Breakthrough responses, we want to plot summary_key timeseries, but use
+        # derived breakthrough responses for misfits.
+        selected_tab = plot_widget.name
+        if (
+            isinstance(key_def.response, BreakthroughConfig)
+            and selected_tab != "Misfits"
+        ):
+            key = key.replace("BREAKTHROUGH:", "")
 
         is_gradient_plot = plot_widget.name == EVEREST_GRADIENTS_PLOT
         self._everest_dock.setVisible(is_gradient_plot)
