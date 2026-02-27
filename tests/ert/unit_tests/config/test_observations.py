@@ -1963,12 +1963,12 @@ def test_that_breakthrough_observations_appends_to_breakthrough_config_responses
 
 def test_that_breakthrough_responses_are_derived_from_summary():
     key = "WWCT:OP_1"
-    date = "2012-12-01"
+    obs_date = "2012-12-01"
     threshold = 0.2
     obs_config_contents = f"""
             BREAKTHROUGH_OBSERVATION brt1 {{
                 KEY={key};
-                DATE={date};
+                DATE={obs_date};
                 ERROR=3;
                 THRESHOLD={threshold};
               }};"""
@@ -1996,7 +1996,7 @@ def test_that_breakthrough_responses_are_derived_from_summary():
 
     assert response_df["response_key"].to_list() == [f"BREAKTHROUGH:{key}"]
     assert response_df["threshold"].to_list() == [threshold]
-    assert response_df["time"].to_list() == [datetime.fromisoformat(breakthrough_date)]
+    assert response_df["time"].to_list() == [datetime.fromisoformat(obs_date)]
     assert response_df["values"].to_list() == [24]
 
 
@@ -2039,18 +2039,18 @@ def test_that_unreachable_breakthrough_thresholds_has_none_response():
 
 def test_that_combined_reachable_and_unreachable_breakthrough_thresholds_are_turned_into_responses():  # noqa: E501
     keys = ["WWCT:OP_1", "WWCT:OP_2"]
-    dates = ["2012-12-01", "2012-12-02"]
+    obs_dates = ["2012-12-01", "2012-12-02"]
     thresholds = [0.2, 0.8]
     obs_config_contents = f"""
             BREAKTHROUGH_OBSERVATION brt1 {{
                 KEY={keys[0]};
-                DATE={dates[0]};
+                DATE={obs_dates[0]};
                 ERROR=3;
                 THRESHOLD={thresholds[0]};
               }};
             BREAKTHROUGH_OBSERVATION brt1 {{
                 KEY={keys[1]};
-                DATE={dates[1]};
+                DATE={obs_dates[1]};
                 ERROR=3;
                 THRESHOLD={thresholds[1]};
               }};"""
@@ -2080,7 +2080,7 @@ def test_that_combined_reachable_and_unreachable_breakthrough_thresholds_are_tur
     ]
     assert response_df["threshold"].to_list() == thresholds
     assert response_df["time"].to_list() == [
-        datetime.fromisoformat(breakthrough_date),
+        datetime.fromisoformat(obs_dates[0]),
         None,
     ]
     assert response_df["values"].to_list() == [24, None]
