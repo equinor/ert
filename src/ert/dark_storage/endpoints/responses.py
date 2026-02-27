@@ -207,7 +207,7 @@ def data_for_response(
         return pd.DataFrame()
 
     match response_type:
-        case "summary":
+        case "summary" | "breakthrough":
             summary_data = ensemble.load_responses(
                 response_key,
                 tuple(realizations_with_responses),
@@ -222,8 +222,15 @@ def data_for_response(
             # This performs the same aggragation by mean of duplicate values
             # as in ert/analysis/_es_update.py
             df = df.groupby(["Date", "Realization"]).mean()
+            summary_value_col = 0
+            breakthrough_value_col = 1
+            value_column = (
+                summary_value_col
+                if response_type == "summary"
+                else breakthrough_value_col
+            )
             data = df.reset_index().pivot_table(
-                index="Realization", columns="Date", values=df.columns[0]
+                index="Realization", columns="Date", values=df.columns[value_column]
             )
             return data.astype(float)
         case "rft":
