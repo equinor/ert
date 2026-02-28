@@ -23,7 +23,7 @@ def test_short_definition_raises_config_error(tmp_path):
         GenKwConfig.from_config_list(
             [
                 "GEN",
-                str(parameter_file),
+                (str(parameter_file), parameter_file.read_text(encoding="utf-8")),
                 {},
             ]
         )
@@ -534,15 +534,15 @@ def test_gen_kw_config_validation():
                 "parameters_with_comments.txt",
                 dedent(
                     """\
-                            KEY1  UNIFORM 0 1 -- COMMENT
+                        KEY1  UNIFORM 0 1 -- COMMENT
 
 
-                            KEY2  UNIFORM 0 1
-                            --KEY3
-                            ---KEY3
-                            ------------
-                            KEY3  UNIFORM 0 1
-                            """
+                        KEY2  UNIFORM 0 1
+                        --KEY3
+                        ---KEY3
+                        ------------
+                        KEY3  UNIFORM 0 1
+                        """
                 ),
             ),
             {},
@@ -555,9 +555,9 @@ def test_gen_kw_config_validation():
         GenKwConfig.templates_from_config(
             [
                 "KEY",
-                make_context_string("no_template_here.txt", "config.ert"),
+                (make_context_string("no_template_here.txt", "config.ert"), ""),
                 "nothing_here.txt",
-                "parameters.txt",
+                ("parameters.txt", "KEY UNIFORM 0 1"),
                 {},
             ]
         )
@@ -846,7 +846,6 @@ def test_that_const_keyword_sets_update_to_false(tmpdir):
     with tmpdir.as_cwd():
         config = dedent(
             """
-        JOBNAME my_name%d
         NUM_REALIZATIONS 1
         GEN_KW CONST_TEST prior.txt UPDATE:TRUE
         """

@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import os
 from collections.abc import Iterator
+from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, Self, cast, overload
+from typing import TYPE_CHECKING, Any, Literal, Self, TypeAlias, cast, overload
 
 import networkx as nx
 import numpy as np
@@ -22,6 +23,12 @@ if TYPE_CHECKING:
     import numpy.typing as npt
 
     from ert.storage import Ensemble
+
+
+# Represents one parsed GEN_KW config line as produced by the lark parser.
+# Each element is either a plain string, an EXISTING_PATH_INLINE tuple
+# (resolved_path, file_contents), or the trailing options dict.
+GenKwConfigList: TypeAlias = list[str | tuple[str, str] | dict[str, str]]
 
 
 class PriorDict(TypedDict):
@@ -49,6 +56,46 @@ def _get_abs_path(file: str | None) -> str | None:
 class DataSource(StrEnum):
     DESIGN_MATRIX = "design_matrix"
     SAMPLED = "sampled"
+
+
+@dataclass(frozen=True)
+class GenKwOptions:
+    """Typed representation of GEN_KW keyword options."""
+
+    update: bool = True
+    # Deprecated – only kept to produce a helpful migration error.
+    init_files: str | None = None
+
+    @classmethod
+    def from_raw(cls, raw: dict[str, str]) -> GenKwOptions:
+        return cls(
+            update=str_to_bool(raw.get("UPDATE", "TRUE")),
+            init_files=raw.get("INIT_FILES"),
+        )
+
+
+@dataclass(frozen=True)
+class ParsedGenKwConfig:
+    """Structured representation of a parsed GEN_KW config line.
+
+    The three ``*_context`` fields typed as ``Any``
+    (``template_context``, ``output_context``, ``source_context``) are
+    opaque parser tokens (``FileContextToken`` / ``ContextList``) whose
+    sole purpose is to attach file/line information to error messages.
+    They are typed as ``Any`` because the error-reporting API
+    (``ErrorInfo.set_context``) already accepts ``Any``.
+    """
+
+    gen_kw_key: str
+    options: GenKwOptions
+    parameter_file_context: str
+    parameter_file_contents: str
+    template_file: str | None
+    output_file: str | None
+    # Opaque error-reporting tokens (FileContextToken / ContextList)
+    template_context: Any = None
+    output_context: Any = None
+    source_context: Any = None
 
 
 class GenKwConfig(ParameterConfig):
@@ -80,65 +127,41 @@ class GenKwConfig(ParameterConfig):
 
     @classmethod
     def templates_from_config(
-        cls, gen_kw: list[str | dict[str, str]]
+        cls, config_list: GenKwConfigList
     ) -> tuple[str, str] | None:
-        gen_kw_key = cast(str, gen_kw[0])
-        positional_args = cast(list[str], gen_kw[:-1])
-
-        if len(positional_args) == 4:
-            output_file = positional_args[2]
-            parameter_file_context = positional_args[3][0]
-            template_file = _get_abs_path(positional_args[1][0])
-            if not os.path.isfile(template_file):
-                raise ConfigValidationError.with_context(
-                    f"No such template file: {template_file}", positional_args[1]
-                )
-            elif Path(template_file).stat().st_size == 0:
-                token = getattr(parameter_file_context, "token", parameter_file_context)
-                ConfigWarning.deprecation_warn(
-                    f"The template file for GEN_KW ({gen_kw_key}) is empty. "
-                    "If templating is not needed, you "
-                    "can use GEN_KW with just the distribution file "
-                    f"instead: GEN_KW {gen_kw_key} {token}",
-                    positional_args[1],
-                )
-            if output_file.startswith("/"):
-                raise ConfigValidationError.with_context(
-                    f"Output file cannot have an absolute path {output_file}",
-                    positional_args[2],
-                )
-            return template_file, output_file
-        return None
+        return cls._templates_from_parsed(cls._parse_from_config_list(config_list))
 
     @classmethod
-    def from_config_list(cls, config_list: list[str | dict[str, str]]) -> list[Self]:
-        gen_kw_key = cast(str, config_list[0])
+    def _templates_from_parsed(
+        cls, parsed: ParsedGenKwConfig
+    ) -> tuple[str, str] | None:
+        if parsed.template_file is None or parsed.output_file is None:
+            return None
+        cls._validate_template_and_output(
+            gen_kw_key=parsed.gen_kw_key,
+            template_file=parsed.template_file,
+            output_file=parsed.output_file,
+            parameter_file_context=parsed.parameter_file_context,
+            template_context=parsed.template_context,
+            output_context=parsed.output_context,
+        )
+        return parsed.template_file, parsed.output_file
 
-        options = cast(dict[str, str], config_list[-1])
-        positional_args = cast(list[str | list[str]], config_list[:-1])
+    @classmethod
+    def from_config_list(cls, config_list: GenKwConfigList) -> list[Self]:
+        parsed = cls._parse_from_config_list(config_list)
+        gen_kw_key = parsed.gen_kw_key
         errors = []
-        update_parameter = str_to_bool(options.get("UPDATE", "TRUE"))
-        if _get_abs_path(options.get("INIT_FILES")):
+        if parsed.options.init_files:
             raise ConfigValidationError.with_context(
                 "INIT_FILES with GEN_KW has been removed. "
                 f"Please remove INIT_FILES from the GEN_KW {gen_kw_key} config. "
                 "Alternatively, use DESIGN_MATRIX to load parameters from files.",
-                config_list,
-            )
-
-        if len(positional_args) == 2:
-            parameter_file_contents = positional_args[1][1]
-            parameter_file_context = positional_args[1][0]
-        elif len(positional_args) == 4:
-            parameter_file_contents = positional_args[3][1]
-            parameter_file_context = positional_args[3][0]
-        else:
-            raise ConfigValidationError(
-                f"Unexpected positional arguments: {positional_args}"
+                parsed.source_context,
             )
 
         distributions_spec: list[list[str]] = []
-        for line_number, item in enumerate(parameter_file_contents.splitlines()):
+        for line_number, item in enumerate(parsed.parameter_file_contents.splitlines()):
             item = item.split("--")[0]  # remove comments
             if item.strip():  # only lines with content
                 items = item.split()
@@ -146,8 +169,8 @@ class GenKwConfig(ParameterConfig):
                     errors.append(
                         ConfigValidationError.with_context(
                             f"Too few values on line {line_number} in parameter "
-                            f"file {parameter_file_context}",
-                            config_list,
+                            f"file {parsed.parameter_file_context}",
+                            parsed.source_context,
                         )
                     )
                 else:
@@ -156,15 +179,15 @@ class GenKwConfig(ParameterConfig):
         if not distributions_spec:
             errors.append(
                 ConfigValidationError.with_context(
-                    f"No parameters specified in {parameter_file_context}",
-                    parameter_file_context,
+                    f"No parameters specified in {parsed.parameter_file_context}",
+                    parsed.parameter_file_context,
                 )
             )
 
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
-        if gen_kw_key == "PRED" and update_parameter:
+        if gen_kw_key == "PRED" and parsed.options.update:
             ConfigWarning.warn(
                 "GEN_KW PRED used to hold a special meaning and be "
                 "excluded from being updated.\n If the intention was "
@@ -180,7 +203,7 @@ class GenKwConfig(ParameterConfig):
                         params[0], params[1], params[2:]
                     ),
                     forward_init=False,
-                    update="CONST" not in params and update_parameter,
+                    update="CONST" not in params and parsed.options.update,
                 )
                 for params in distributions_spec
             ]
@@ -189,7 +212,84 @@ class GenKwConfig(ParameterConfig):
                 [err.set_context(gen_kw_key) for err in e.errors]
             ) from e
         except ValidationError as e:
-            raise ConfigValidationError.from_pydantic(e, config_list) from e
+            raise ConfigValidationError.from_pydantic(e, parsed.source_context) from e
+
+    @classmethod
+    def _parse_from_config_list(cls, config_list: GenKwConfigList) -> ParsedGenKwConfig:
+        # config_list layout:
+        #   2-arg: [KEY, (param_path, param_contents), options_dict]
+        #   4-arg: [KEY, (template_path, _), output_file,
+        #               (param_path, param_contents), options_dict]
+        gen_kw_key = cast(str, config_list[0])
+        options = GenKwOptions.from_raw(cast(dict[str, str], config_list[-1]))
+        positional_args = config_list[:-1]
+
+        if len(positional_args) == 2:
+            param_file = cast(tuple[str, str], positional_args[1])
+            parameter_file_context = param_file[0]
+            parameter_file_contents = param_file[1]
+            return ParsedGenKwConfig(
+                gen_kw_key=gen_kw_key,
+                options=options,
+                parameter_file_context=parameter_file_context,
+                parameter_file_contents=parameter_file_contents,
+                template_file=None,
+                output_file=None,
+                source_context=config_list,
+            )
+
+        if len(positional_args) == 4:
+            template_tuple = cast(tuple[str, str], positional_args[1])
+            template_file = _get_abs_path(template_tuple[0])
+            assert template_file is not None
+            output_file = cast(str, positional_args[2])
+            param_file = cast(tuple[str, str], positional_args[3])
+            parameter_file_context = param_file[0]
+            parameter_file_contents = param_file[1]
+            return ParsedGenKwConfig(
+                gen_kw_key=gen_kw_key,
+                options=options,
+                parameter_file_context=parameter_file_context,
+                parameter_file_contents=parameter_file_contents,
+                template_file=template_file,
+                output_file=output_file,
+                template_context=template_tuple[0],
+                output_context=positional_args[2],
+                source_context=config_list,
+            )
+
+        raise ConfigValidationError(
+            f"Unexpected positional arguments: {positional_args}"
+        )
+
+    @classmethod
+    def _validate_template_and_output(
+        cls,
+        gen_kw_key: str,
+        template_file: str,
+        output_file: str,
+        parameter_file_context: str,
+        template_context: str | tuple[str, str] | dict[str, str],
+        output_context: str | tuple[str, str] | dict[str, str],
+    ) -> None:
+        if not os.path.isfile(template_file):
+            raise ConfigValidationError.with_context(
+                f"No such template file: {template_file}", template_context
+            )
+        if Path(template_file).stat().st_size == 0:
+            token = getattr(parameter_file_context, "token", parameter_file_context)
+            ConfigWarning.deprecation_warn(
+                f"The template file for GEN_KW ({gen_kw_key}) is empty. "
+                "If templating is not needed, you "
+                "can use GEN_KW with just the distribution file "
+                f"instead: GEN_KW {gen_kw_key} {token}",
+                template_context,
+            )
+        if output_file.startswith("/"):
+            raise ConfigValidationError.with_context(
+                f"Output file cannot have an absolute path {output_file}",
+                output_context,
+            )
 
     def load_parameter_graph(self) -> nx.Graph[int]:
         # Create a graph with no edges
