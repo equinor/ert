@@ -265,7 +265,7 @@ def copy_poly_case_with_design_matrix(copy_case):
 
 @pytest.fixture
 def copy_snake_oil_field(copy_case):
-    copy_case("snake_oil_field")
+    copy_case("snake_oil")
     with open("snake_oil_field.ert", "a", encoding="utf-8") as fh:
         fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
 
