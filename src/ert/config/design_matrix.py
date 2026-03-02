@@ -9,6 +9,8 @@ import numpy as np
 import polars as pl
 from polars.exceptions import InvalidOperationError
 
+from ert.config.parsing.config_errors import ConfigWarning
+
 from .distribution import RawSettings
 from .gen_kw_config import DataSource, GenKwConfig
 from .parsing import ConfigValidationError, ErrorInfo
@@ -239,6 +241,25 @@ class DesignMatrix:
         )
         if design_matrix_df.is_empty():
             raise ValueError("Design sheet body is empty.")
+
+        # Design matrix does not support datetime columns,
+        # so we convert them to strings and warn the user.
+        datetime_cols = design_matrix_df.select(pl.col(pl.Date, pl.Datetime)).columns
+        if len(datetime_cols) > 0:
+            datetime_col_indices = [
+                design_matrix_df.columns.index(col) for col in datetime_cols
+            ]
+            ConfigWarning.warn(
+                (
+                    "The design matrix contains date/datetime columns which are not "
+                    "supported and will be converted to strings for internal use. "
+                ),
+                [param_names[i] for i in datetime_col_indices],
+            )
+            design_matrix_df = design_matrix_df.with_columns(
+                pl.col(pl.Date, pl.Datetime).cast(pl.String)
+            )
+
         string_cols = [
             col for col, dtype in design_matrix_df.schema.items() if dtype == pl.String
         ]
