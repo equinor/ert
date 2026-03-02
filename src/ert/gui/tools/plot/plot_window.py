@@ -437,13 +437,24 @@ class PlotWindow(QMainWindow):
                                         obs_loc_df["north"].to_numpy(dtype=np.float64),
                                     )
                                 )
+                                height, width = std_dev_images[ensemble.name].shape[:2]
                                 if (
                                     key_def.parameter.ertbox_params.axis_orientation
                                     == AxisOrientation.RIGHT_HANDED
                                 ):
-                                    ypos = std_dev_images[ensemble.name].shape[0] - ypos
+                                    ypos = height - ypos
+
+                                inside_box = (
+                                    np.isfinite(xpos)
+                                    & np.isfinite(ypos)
+                                    & (xpos >= 0)
+                                    & (xpos < width)
+                                    & (ypos >= 0)
+                                    & (ypos < height)
+                                )
+
                                 obs_loc[ensemble.name] = np.column_stack(
-                                    (xpos, ypos)
+                                    (xpos[inside_box], ypos[inside_box])
                                 ).astype(np.float32)
                     except BaseException as e:
                         handle_exception(e)
