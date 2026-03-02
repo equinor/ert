@@ -249,12 +249,12 @@ class DesignMatrix:
             datetime_col_indices = [
                 design_matrix_df.columns.index(col) for col in datetime_cols
             ]
+            affected_param_names = [param_names[i] for i in datetime_col_indices]
             ConfigWarning.warn(
-                (
-                    "The design matrix contains date/datetime columns which are not "
-                    "supported and will be converted to strings for internal use. "
-                ),
-                [param_names[i] for i in datetime_col_indices],
+                "The design matrix contains date/datetime columns which are not "
+                "supported and will be converted to strings for internal use. "
+                "The following columns will be converted to strings: "
+                f"{', '.join(map(str, affected_param_names))}."
             )
             design_matrix_df = design_matrix_df.with_columns(
                 pl.col(pl.Date, pl.Datetime).cast(pl.String)
