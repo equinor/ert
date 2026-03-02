@@ -15,7 +15,6 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QMainWindow,
     QMenu,
-    QMessageBox,
     QToolButton,
     QVBoxLayout,
     QWidget,
@@ -35,7 +34,7 @@ from ert.gui.tools.workflows import WorkflowsTool
 from ert.plugins import ErtRuntimePlugins
 from ert.trace import get_trace_id
 
-from .detect_mode import is_dark_mode, is_high_contrast_mode
+from .detect_mode import is_dark_mode
 from .experiments import ExperimentPanel, RunDialog
 
 logger = logging.getLogger(__name__)
@@ -119,20 +118,6 @@ class ErtMainWindow(QMainWindow):
         else:
             self.side_frame.setStyleSheet("background-color: lightgray;")
             logger.info("Running Ert with light mode")
-
-        if is_high_contrast_mode():
-            msg_box = QMessageBox()
-            msg_box.setText(
-                "High contrast mode detected. This is not supported by Ert "
-                "and some features may not work as expected."
-            )
-            msg_box.setWindowTitle("Warning")
-            msg_box.setStyleSheet(
-                "QMessageBox {color: black; background-color: white;} "
-                "QLabel {color: black;} QPushButton {color: black;}"
-            )
-            msg_box.update()
-            msg_box.exec()
 
         self.vbox_layout = QVBoxLayout(self.side_frame)
         self.side_frame.setLayout(self.vbox_layout)
