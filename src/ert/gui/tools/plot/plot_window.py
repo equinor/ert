@@ -26,7 +26,10 @@ from PyQt6.QtWidgets import (
 from ert.config import BreakthroughConfig
 from ert.config.field import Field
 from ert.dark_storage.common import get_storage_api_version
-from ert.field_utils import transform_positions_to_local_field_coordinates
+from ert.field_utils import (
+    AxisOrientation,
+    transform_positions_to_local_field_coordinates,
+)
 from ert.gui.ertwidgets import CopyButton, showWaitCursorWhileWaiting
 from ert.services import ServerBootFail
 from ert.utils import log_duration
@@ -434,6 +437,11 @@ class PlotWindow(QMainWindow):
                                         obs_loc_df["north"].to_numpy(dtype=np.float64),
                                     )
                                 )
+                                if (
+                                    key_def.parameter.ertbox_params.axis_orientation
+                                    == AxisOrientation.RIGHT_HANDED
+                                ):
+                                    ypos = std_dev_images[ensemble.name].shape[0] - ypos
                                 obs_loc[ensemble.name] = np.column_stack(
                                     (xpos, ypos)
                                 ).astype(np.float32)
