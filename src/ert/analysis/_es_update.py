@@ -45,6 +45,31 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def _create_combined_ensemble_mask(
+    ens_mask: npt.NDArray[np.bool_], active_realizations: list[bool] | None
+) -> npt.NDArray[np.bool_]:
+    if active_realizations is None:
+        return ens_mask
+
+    ens_mask_indices = set(np.flatnonzero(ens_mask))
+    active_realizations_indices = set(np.flatnonzero(active_realizations))
+
+    if len(ens_mask) >= len(active_realizations):
+        ens_mask_indices &= active_realizations_indices
+
+        new_mask = np.zeros_like(ens_mask, dtype=bool)
+        if ens_mask_indices:
+            new_mask[list(ens_mask_indices)] = True
+    else:
+        active_realizations_indices &= ens_mask_indices
+
+        new_mask = np.zeros_like(active_realizations, dtype=bool)
+        if active_realizations_indices:
+            new_mask[list(active_realizations_indices)] = True
+
+    return new_mask
+
+
 def perform_ensemble_update(
     parameters: Iterable[str],
     observations: Iterable[str],
@@ -238,8 +263,7 @@ def smoother_update(
         rng = np.random.default_rng()
 
     ens_mask = prior_storage.get_realization_mask_with_responses()
-    if active_realizations:
-        ens_mask &= active_realizations
+    ens_mask = _create_combined_ensemble_mask(ens_mask, active_realizations)
 
     smoother_snapshot = SmootherSnapshot(
         source_ensemble_name=prior_storage.name,
