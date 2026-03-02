@@ -123,7 +123,7 @@ def create_summary_observations(df_obs: pd.DataFrame):
     KEY     = HEAT_{coord.x}_{coord.y};
     LOCALIZATION {{
         EAST = {coord.x - 0.5};
-        NORTH = {NROW + coord.y - 0.5};
+        NORTH = {coord.y - 0.5};
         RADIUS = {RADIUS};
     }};
 }};
