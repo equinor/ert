@@ -256,6 +256,7 @@ class PlotWindow(QMainWindow):
             self._ensemble_selection_widget = EnsembleSelectionWidget(
                 plot_case_objects,
                 self._plot_customizer.getPlotConfig().getNumberOfColors(),
+                is_everest=is_everest,
             )
 
             self._ensemble_selection_widget.ensembleSelectionChanged.connect(
