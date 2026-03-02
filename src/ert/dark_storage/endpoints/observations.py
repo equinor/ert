@@ -50,14 +50,8 @@ def get_observations(
 def get_observations_from_ensemble(
     *, storage: Storage = DEFAULT_STORAGE, ensemble_id: UUID
 ) -> list[js.ObservationOut]:
-    try:
+    with reraise_as_http_errors(logger, {404: "Ensemble not found"}):
         ensemble = storage.get_ensemble(ensemble_id)
-    except KeyError as e:
-        logger.error(e)
-        raise HTTPException(status_code=404, detail="Ensemble not found") from e
-    except Exception as ex:
-        logger.exception(ex)
-        raise HTTPException(status_code=500, detail="Internal server error") from ex
 
     return [
         js.ObservationOut(
