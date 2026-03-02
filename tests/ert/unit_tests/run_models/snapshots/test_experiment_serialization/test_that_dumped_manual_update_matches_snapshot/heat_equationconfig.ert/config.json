@@ -12,7 +12,7 @@
     "num_realizations": 100,
     "runpath_format_string": "simulations/realization-<IENS>/iter-<ITER>",
     "jobname_format_string": "HEAT",
-    "eclbase_format_string": "HEAT",
+    "summary_file_base_name": "HEAT",
     "gen_kw_export_name": "parameters"
   },
   "queue_config": {

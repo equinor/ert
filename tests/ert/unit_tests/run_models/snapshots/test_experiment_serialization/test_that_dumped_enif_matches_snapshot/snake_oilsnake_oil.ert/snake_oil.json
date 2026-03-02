@@ -8,7 +8,7 @@
     "num_realizations": 25,
     "runpath_format_string": "test-data/ert/snake_oil.snake_oil.ert/storage/snake_oil/runpath/realization-<IENS>/iter-<ITER>",
     "jobname_format_string": "SNAKE_OIL_FIELD",
-    "eclbase_format_string": "SNAKE_OIL_FIELD",
+    "summary_file_base_name": "SNAKE_OIL_FIELD",
     "gen_kw_export_name": "parameters"
   },
   "queue_config": {
