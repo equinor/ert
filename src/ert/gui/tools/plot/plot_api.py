@@ -393,7 +393,8 @@ class PlotApi:
                     # but this should really be revised
                 except (KeyError, IndexError, JSONDecodeError) as e:
                     raise httpx.RequestError(
-                        f"Observation schema might have changed for ensemble_name={ensemble.name}, e={e}"
+                        "Observation schema might have changed"
+                        f" for ensemble_name={ensemble.name}, e={e}"
                     ) from e
 
                 new_obs = pd.concat(
