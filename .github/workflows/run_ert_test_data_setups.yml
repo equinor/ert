@@ -63,6 +63,7 @@ jobs:
 
     - name: Test snake_oil_field
       run: |
-        pushd test-data/ert/snake_oil_field
-        uv run ert test_run snake_oil.ert
+        pushd test-data/ert/snake_oil
+        uv pip install oil_reservoir_synthesizer resdata
+        uv run ert test_run snake_oil_field.ert
         popd
