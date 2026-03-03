@@ -285,7 +285,11 @@ def smoother_update(
             rng, SurfaceConfig, progress_callback
         )
         standard_strategy = StandardESUpdate(
-            smoother_snapshot, es_settings, rng, progress_callback
+            smoother_snapshot,
+            es_settings.inversion,
+            es_settings.enkf_truncation,
+            rng,
+            progress_callback,
         )
 
         for param_name in parameters:
@@ -308,7 +312,11 @@ def smoother_update(
     else:
         # Standard ES for all parameters
         standard_strategy = StandardESUpdate(
-            smoother_snapshot, es_settings, rng, progress_callback
+            smoother_snapshot,
+            es_settings.inversion,
+            es_settings.enkf_truncation,
+            rng,
+            progress_callback,
         )
         for param_name in parameters:
             strategy_map[param_name] = standard_strategy
