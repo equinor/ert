@@ -2783,3 +2783,31 @@ def test_that_random_seed_is_logged_with_reproduction_instructions(caplog):
     latest_seed_message = seed_logs[-1]
     expected_seed_message = f"RANDOM_SEED {seed}"
     assert latest_seed_message == expected_seed_message
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_corrupt_xlsx_design_matrix_raises_config_validation_error():
+    dm_file = "corrupt_design_matrix.xlsx"
+    Path("config.ert").write_text(
+        dedent(f"""
+            NUM_REALIZATIONS 1
+            DESIGN_MATRIX {dm_file}
+            """),
+        encoding="utf-8",
+    )
+    Path(dm_file).write_text(
+        dedent(
+            """
+            THIS IS NOT A VALID DESIGN MATRIX FILE
+            """
+        ),
+        encoding="utf-8",
+    )
+    with (
+        pytest.raises(
+            ConfigValidationError,
+            match=r"File could not be loaded. "
+            "It seems to be either invalid or corrupted",
+        ),
+    ):
+        ErtConfig.from_file("config.ert")
