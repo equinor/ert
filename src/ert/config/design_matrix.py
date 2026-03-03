@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import polars as pl
+from fastexcel import CalamineError
 from polars.exceptions import InvalidOperationError
 
 from .distribution import RawSettings
@@ -223,6 +224,10 @@ class DesignMatrix:
             )
         except pl.exceptions.NoDataError as err:
             raise ValueError("Design sheet headers are empty.") from err
+        except CalamineError as err:
+            raise ValueError(
+                "File could not be loaded. It seems to be either invalid or corrupted."
+            ) from err
         design_matrix_df = (
             pl.read_excel(
                 self.xls_filename,
