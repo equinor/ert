@@ -9,7 +9,7 @@ from ert.config.parsing.context_values import ContextList, ContextString, Contex
 
 from .parsing import ConfigValidationError, ErrorInfo, init_workflow_schema, parse
 from .parsing.types import Defines
-from .workflow_job import WorkflowJob
+from .workflow_job import ErtScriptWorkflow, WorkflowJob
 
 
 class Workflow(BaseModelWithContextSupport):
@@ -49,6 +49,12 @@ class Workflow(BaseModelWithContextSupport):
                 f"Job with name: {job_name_with_context} has too many arguments, "
                 f"expected at most: {job.max_args}, got: {instructions}"
             ).set_context(job_name_with_context)
+
+        if isinstance(job, ErtScriptWorkflow):
+            try:
+                job.load_ert_script_class().validate(instructions)
+            except ConfigValidationError as err:
+                return ErrorInfo(message=str(err)).set_context(job_name_with_context)
 
         return None
 
