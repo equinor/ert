@@ -35,7 +35,7 @@ def test_stddev_plot_shows_boxplot(plot_context: PlotContext):
         {},
         {},
         {"ensemble_1": std_dev_data},
-        {"ensemble_1": obs_loc},
+        obs_loc,
     )
     ax = figure.axes
     assert ax[0].get_title() == "experiment_1 : ensemble_1 layer=0"
