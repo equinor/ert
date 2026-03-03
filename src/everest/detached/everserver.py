@@ -58,6 +58,9 @@ def _configure_loggers(
             "uvicorn": {
                 "level": logging.WARNING,
             },
+            "httpcore": {
+                "level": logging.WARNING,
+            },
             EVERSERVER: {
                 "handlers": ["endpoint_log"],
                 "level": logging_level,
