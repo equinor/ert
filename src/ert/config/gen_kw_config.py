@@ -75,7 +75,7 @@ class GenKwOptions:
 
 
 @dataclass(frozen=True)
-class ParsedGenKwConfig:
+class _ParsedGenKwConfig:
     """Structured representation of a parsed GEN_KW config line.
 
     The three ``*_context`` fields typed as ``Any``
@@ -133,7 +133,7 @@ class GenKwConfig(ParameterConfig):
 
     @classmethod
     def _templates_from_parsed(
-        cls, parsed: ParsedGenKwConfig
+        cls, parsed: _ParsedGenKwConfig
     ) -> tuple[str, str] | None:
         if parsed.template_file is None or parsed.output_file is None:
             return None
@@ -215,7 +215,9 @@ class GenKwConfig(ParameterConfig):
             raise ConfigValidationError.from_pydantic(e, parsed.source_context) from e
 
     @classmethod
-    def _parse_from_config_list(cls, config_list: GenKwConfigList) -> ParsedGenKwConfig:
+    def _parse_from_config_list(
+        cls, config_list: GenKwConfigList
+    ) -> _ParsedGenKwConfig:
         # config_list layout:
         #   2-arg: [KEY, (param_path, param_contents), options_dict]
         #   4-arg: [KEY, (template_path, _), output_file,
@@ -228,7 +230,7 @@ class GenKwConfig(ParameterConfig):
             param_file = cast(tuple[str, str], positional_args[1])
             parameter_file_context = param_file[0]
             parameter_file_contents = param_file[1]
-            return ParsedGenKwConfig(
+            return _ParsedGenKwConfig(
                 gen_kw_key=gen_kw_key,
                 options=options,
                 parameter_file_context=parameter_file_context,
@@ -246,7 +248,7 @@ class GenKwConfig(ParameterConfig):
             param_file = cast(tuple[str, str], positional_args[3])
             parameter_file_context = param_file[0]
             parameter_file_contents = param_file[1]
-            return ParsedGenKwConfig(
+            return _ParsedGenKwConfig(
                 gen_kw_key=gen_kw_key,
                 options=options,
                 parameter_file_context=parameter_file_context,
