@@ -38,11 +38,14 @@ class EnsembleSelectionWidget(QWidget):
     ensembleSelectionChanged = Signal()
 
     def __init__(
-        self, ensembles: list[EnsembleObject], number_of_plot_colors: int
+        self,
+        ensembles: list[EnsembleObject],
+        number_of_plot_colors: int,
+        is_everest: bool = False,
     ) -> None:
         QWidget.__init__(self)
         self._selected_ensembles = EnsembleSelectListWidget(
-            ensembles, number_of_plot_colors
+            ensembles, number_of_plot_colors, is_everest=is_everest
         )
 
         self._ensemble_layout = QVBoxLayout()
@@ -72,7 +75,10 @@ class EnsembleSelectListWidget(QListWidget):
     MINIMUM_SELECTED = 1
 
     def __init__(
-        self, ensembles: list[EnsembleObject], number_of_plot_colors: int
+        self,
+        ensembles: list[EnsembleObject],
+        number_of_plot_colors: int,
+        is_everest: bool = False,
     ) -> None:
         super().__init__()
         self.available_colors = deque(
@@ -83,20 +89,22 @@ class EnsembleSelectListWidget(QListWidget):
         sorted_ensembles = sorted(
             ensembles, key=lambda ens: ens.started_at, reverse=True
         )
+        cutoff = self.MAXIMUM_SELECTED if is_everest else self.MINIMUM_SELECTED
         for i, ensemble in enumerate(sorted_ensembles):
             it = QListWidgetItem(f"{ensemble.experiment_name} : {ensemble.name}")
             it.setData(EnsembleSelectListWidgetItemDataRole.ENSEMBLE, ensemble)
             it.setData(
                 EnsembleSelectListWidgetItemDataRole.COLOR_INDEX,
-                self.assign_available_color(None) if i == 0 else None,
+                self.assign_available_color(None) if i < cutoff else None,
             )
-            it.setData(Qt.ItemDataRole.CheckStateRole, i == 0)
+            it.setData(Qt.ItemDataRole.CheckStateRole, i < cutoff)
             self.addItem(it)
             self._ensemble_count += 1
             it.setToolTip(
                 f"{ensemble.experiment_name} : {ensemble.name}\n"
-                "Toggle up to 5 plots or reorder by drag & drop\n"
-                "Order determines draw order and color"
+                f"Toggle up to {self.MAXIMUM_SELECTED} plots or reorder by"
+                "drag & drop\n"
+                f"Order determines draw order and color"
             )
 
         if (viewport := self.viewport()) is not None:
