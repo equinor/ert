@@ -859,3 +859,20 @@ def test_that_const_keyword_sets_update_to_false(tmpdir):
 
         gen_kw_config = ert_config.ensemble_config.parameter_configs["CONST_TEST"]
         assert gen_kw_config.update is False
+
+
+def test_that_unexpected_positional_arg_count_raises_validation_error(tmp_path):
+    parameter_file = tmp_path / "parameter.txt"
+    parameter_file.write_text("KEY NORMAL 0 1", encoding="utf-8")
+
+    with pytest.raises(ConfigValidationError, match="Unexpected positional arguments"):
+        GenKwConfig.from_config_list(
+            [
+                "GEN",
+                ("template.txt", ""),
+                "output.txt",
+                (str(parameter_file), parameter_file.read_text(encoding="utf-8")),
+                "extra_arg",
+                {},
+            ]
+        )
