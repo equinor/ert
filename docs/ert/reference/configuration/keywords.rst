@@ -25,6 +25,7 @@ Keyword name                                                            Required
 =====================================================================   ======================================  ==============================  ==============================================================================================================================================
 :ref:`ANALYSIS_SET_VAR <analysis_set_var>`                              NO                                                                      Set analysis module internal state variable
 :ref:`CASE_TABLE <case_table>`                                          NO                                                                      Deprecated
+:ref:`CREATE_WORKFLOW_FROM_JOB <create_workflow_from_job>`              NO                                                                      Define and register a single-job workflow inline
 :ref:`DATA_FILE <data_file>`                                            NO                                                                      Provide an ECLIPSE data file for the problem
 :ref:`DATA_KW <data_kw>`                                                NO                                                                      Replace strings in ECLIPSE .DATA files
 :ref:`DEFINE <define>`                                                  NO                                                                      Define keywords with config scope
@@ -40,6 +41,7 @@ Keyword name                                                            Required
 :ref:`GEN_KW <gen_kw>`                                                  NO                                                                      Add a scalar parameter
 :ref:`GRID <grid>`                                                      NO                                                                      Provide an ECLIPSE grid for the reservoir model
 :ref:`HOOK_WORKFLOW <hook_workflow>`                                    NO                                                                      Install a workflow to be run automatically
+:ref:`HOOK_WORKFLOW_JOB <hook_workflow_job>`                            NO                                                                      Define a single-job workflow inline and hook it to a runtime step
 :ref:`INCLUDE <include>`                                                NO                                                                      Include contents from another ert config
 :ref:`INSTALL_JOB <install_job>`                                        NO                                                                      Install a job for use in a forward model
 :ref:`INVERSION <inversion_algorithm>`                                  NO                                                                      Set inversion method for analysis module
@@ -1859,6 +1861,32 @@ two workflows :code:`QC_WFLOW1` and :code:`QC_WFLOW2` will be run.
 Observe that the workflows being 'hooked in' with the
 :code:`HOOK_WORKFLOW` must be loaded with the :code:`LOAD_WORKFLOW` keyword.
 
+.. _hook_workflow_job:
+
+HOOK_WORKFLOW_JOB
+-----------------
+
+:code:`HOOK_WORKFLOW_JOB` is a compact alternative to the
+:code:`CREATE_WORKFLOW_FROM_JOB` + :code:`HOOK_WORKFLOW` combination. It
+defines a single-job workflow inline and immediately hooks it to a runtime
+step, without requiring a separate workflow file and a
+:code:`LOAD_WORKFLOW` line.
+
+Syntax::
+
+   HOOK_WORKFLOW_JOB <workflow_name> <job_name> [args...] <runtime_step>
+
+The last argument must be one of the supported runtime step values:
+:code:`PRE_SIMULATION`, :code:`POST_SIMULATION`, :code:`PRE_UPDATE`,
+:code:`POST_UPDATE`, :code:`PRE_FIRST_UPDATE`, :code:`PRE_EXPERIMENT`,
+:code:`POST_EXPERIMENT`.
+
+*Example:*
+
+::
+
+   HOOK_WORKFLOW_JOB export_rft EXPORT_RFT some_path/rft.csv POST_SIMULATION
+
 .. _load_workflow:
 
 LOAD_WORKFLOW
@@ -1876,6 +1904,26 @@ argument. By default the workflow will be labeled with the filename
 internally in ERT, but you can optionally supply a second extra argument
 which will be used as the name for the workflow.  Alternatively,
 you can load a workflow interactively.
+
+.. _create_workflow_from_job:
+
+CREATE_WORKFLOW_FROM_JOB
+------------------------
+
+:code:`CREATE_WORKFLOW_FROM_JOB` defines and registers a named workflow that
+runs a single workflow job, without needing a separate workflow file.
+This is a compact alternative to writing a one-line workflow file and loading
+it with :code:`LOAD_WORKFLOW`.
+
+Syntax::
+
+   CREATE_WORKFLOW_FROM_JOB <workflow_name> <job_name> [args...]
+
+*Example:*
+
+::
+
+   CREATE_WORKFLOW_FROM_JOB export_rft EXPORT_RFT some_path/rft.csv
 
 .. _load_workflow_job:
 

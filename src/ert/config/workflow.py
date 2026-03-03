@@ -109,6 +109,22 @@ class Workflow(BaseModelWithContextSupport):
 
         return cls(src_file=src_file, cmd_list=cmd_list)
 
+    @classmethod
+    def from_instructions(
+        cls,
+        workflow_name: str,
+        instructions: ContextList[ContextValue],
+        job_dict: dict[str, WorkflowJob],
+    ) -> Workflow:
+        job_name_with_context = instructions.token
+        err = cls._validate_workflow_job(job_name_with_context, instructions, job_dict)
+        if err:
+            raise ConfigValidationError.from_info(err)
+        return cls(
+            src_file=workflow_name,
+            cmd_list=[(job_dict[job_name_with_context], instructions)],
+        )
+
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, type(self)):
             return False
