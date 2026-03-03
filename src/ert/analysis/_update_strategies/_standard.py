@@ -22,7 +22,7 @@ from ert.analysis.snapshots import SmootherSnapshot
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.config import ESSettings, ParameterConfig
+    from ert.config import ParameterConfig
 
     from ._protocol import ObservationContext
 
@@ -42,8 +42,10 @@ class StandardESUpdate:
     ----------
     smoother_snapshot : SmootherSnapshot
         Snapshot object for error reporting.
-    settings : ESSettings
-        ES analysis settings.
+    inversion : str
+        Inversion algorithm to use (e.g., "EXACT").
+    enkf_truncation : float
+        Singular value truncation threshold.
     rng : np.random.Generator
         Random number generator for reproducibility.
     progress_callback : Callable[[AnalysisEvent], None]
@@ -63,12 +65,14 @@ class StandardESUpdate:
     def __init__(
         self,
         smoother_snapshot: SmootherSnapshot,
-        settings: ESSettings,
+        inversion: str,
+        enkf_truncation: float,
         rng: np.random.Generator,
         progress_callback: Callable[[AnalysisEvent], None],
     ) -> None:
         self._smoother_snapshot = smoother_snapshot
-        self._settings = settings
+        self._inversion = inversion
+        self._enkf_truncation = enkf_truncation
         self._rng = rng
         self._progress_callback = progress_callback
         self._T: npt.NDArray[np.float64] | None = None
@@ -91,14 +95,14 @@ class StandardESUpdate:
             observations=obs_context.observation_values,
             alpha=1,
             seed=self._rng,
-            inversion=self._settings.inversion.lower(),
+            inversion=self._inversion.lower(),
         )
 
         try:
             self._T = smoother.compute_transition_matrix(
                 Y=obs_context.responses,
                 alpha=1.0,
-                truncation=self._settings.enkf_truncation,
+                truncation=self._enkf_truncation,
             )
         except scipy.linalg.LinAlgError as err:
             msg = (
