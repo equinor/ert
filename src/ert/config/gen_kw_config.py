@@ -194,6 +194,7 @@ class GenKwConfig(ParameterConfig):
                 "to exclude this from updates, set UPDATE:FALSE.\n",
                 gen_kw_key,
             )
+        # "CONST" not in params and parsed.option.update
         try:
             return [
                 cls(
@@ -203,7 +204,7 @@ class GenKwConfig(ParameterConfig):
                         params[0], params[1], params[2:]
                     ),
                     forward_init=False,
-                    update="CONST" not in params and parsed.options.update,
+                    update=params[1] != "CONST" and parsed.options.update,
                 )
                 for params in distributions_spec
             ]
