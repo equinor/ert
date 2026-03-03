@@ -172,7 +172,7 @@ def test_report_with_failed_reporter_but_finished_jobs():
 
         # prevent router to receive messages
         mock_server.store_messages = False
-        mock_server.dont_ack_messages = True
+        mock_server.ack_messages = False
 
         reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=100, rss=10)))
@@ -197,7 +197,7 @@ def test_report_with_reconnected_reporter_but_finished_jobs():
         )
 
         # prevent router from receiving messages
-        mock_server.dont_ack_messages = True
+        mock_server.ack_messages = False
         mock_server.store_messages = False
 
         reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
@@ -206,7 +206,7 @@ def test_report_with_reconnected_reporter_but_finished_jobs():
         reporter.report(Running(fmstep1, ProcessTreeStatus(max_rss=1100, rss=10)))
 
         # enable router receiving messages
-        mock_server.dont_ack_messages = False
+        mock_server.ack_messages = True
         mock_server.store_messages = True
 
         reporter.report(Finish())
