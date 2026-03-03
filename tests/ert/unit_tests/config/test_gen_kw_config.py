@@ -861,6 +861,25 @@ def test_that_const_keyword_sets_update_to_false(tmpdir):
         assert gen_kw_config.update is False
 
 
+def test_that_parameter_named_const_with_non_const_distribution_is_updatable(tmp_path):
+    """Regression: update flag should only check the distribution type,
+    not match "CONST" anywhere in the parameter definition.
+    """
+    parameter_file = tmp_path / "parameter.txt"
+    parameter_file.write_text("CONST NORMAL 0 1", encoding="utf-8")
+
+    configs = GenKwConfig.from_config_list(
+        [
+            "MY_KW",
+            (str(parameter_file), parameter_file.read_text(encoding="utf-8")),
+            {},
+        ]
+    )
+    assert len(configs) == 1
+    assert configs[0].name == "CONST"
+    assert configs[0].update is True
+
+
 def test_that_unexpected_positional_arg_count_raises_validation_error(tmp_path):
     parameter_file = tmp_path / "parameter.txt"
     parameter_file.write_text("KEY NORMAL 0 1", encoding="utf-8")
