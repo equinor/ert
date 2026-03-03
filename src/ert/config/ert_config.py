@@ -389,6 +389,51 @@ def workflow_jobs_from_dict(
     return workflow_jobs
 
 
+def _validate_fixtures(
+    hook_name: str, workflow: Workflow, mode: HookRuntime
+) -> list[ErrorInfo]:
+    errors = []
+    available_fixtures = fixtures_per_hook[mode]
+    for job, _ in workflow:
+        if isinstance(job, BaseErtScriptWorkflow):
+            ert_script_class = job.load_ert_script_class()
+            ert_script_instance = ert_script_class()
+            requested_fixtures = ert_script_instance.requested_fixtures
+
+            # Look for requested fixtures that are not available for the given
+            # mode
+            missing_fixtures = requested_fixtures - available_fixtures
+
+            if missing_fixtures:
+                ok_modes = [
+                    m
+                    for m in HookRuntime
+                    if not requested_fixtures - fixtures_per_hook[m]
+                ]
+
+                message_start = (
+                    f"Workflow job {job.name} .run function expected "
+                    f"fixtures: {missing_fixtures}, which are not available "
+                    f"in the fixtures for the runtime {mode}: "
+                    f"{available_fixtures}. "
+                )
+                message_end = (
+                    (
+                        f"It would work in these runtimes: "
+                        f"{', '.join(map(str, ok_modes))}"
+                    )
+                    if len(ok_modes) > 0
+                    else "This fixture is not available in any of the runtimes."
+                )
+
+                errors.append(
+                    ErrorInfo(message=message_start + message_end).set_context(
+                        hook_name
+                    )
+                )
+    return errors
+
+
 def create_and_hook_workflows(
     hook_workflow_info: list[tuple[str, HookRuntime]],
     workflow_info: list[tuple[str, str]],
@@ -430,45 +475,10 @@ def create_and_hook_workflows(
             )
             continue
 
-        wf = workflows[hook_name]
-        available_fixtures = fixtures_per_hook[mode]
-        for job, _ in wf.cmd_list:
-            if not isinstance(job, BaseErtScriptWorkflow):
-                continue
+        workflow = workflows[hook_name]
+        errors.extend(_validate_fixtures(hook_name, workflow, mode))
 
-            ert_script_class = job.load_ert_script_class()
-            ert_script_instance = ert_script_class()
-            requested_fixtures = ert_script_instance.requested_fixtures
-
-            # Look for requested fixtures that are not available for the given
-            # mode
-            missing_fixtures = requested_fixtures - available_fixtures
-
-            if missing_fixtures:
-                ok_modes = [
-                    m
-                    for m in HookRuntime
-                    if not requested_fixtures - fixtures_per_hook[m]
-                ]
-
-                message_start = (
-                    f"Workflow job {job.name} .run function expected "
-                    f"fixtures: {missing_fixtures}, which are not available "
-                    f"in the fixtures for the runtime {mode}: {available_fixtures}. "
-                )
-                message_end = (
-                    f"It would work in these runtimes: {', '.join(map(str, ok_modes))}"
-                    if len(ok_modes) > 0
-                    else "This fixture is not available in any of the runtimes."
-                )
-
-                errors.append(
-                    ErrorInfo(message=message_start + message_end).set_context(
-                        hook_name
-                    )
-                )
-
-        hooked_workflows[mode].append(workflows[hook_name])
+        hooked_workflows[mode].append(workflow)
 
     if errors:
         raise ConfigValidationError.from_collected(errors)
