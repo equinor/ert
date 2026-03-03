@@ -5,6 +5,7 @@ from collections.abc import Iterator
 from typing import Any
 
 from ert.base_model_context import BaseModelWithContextSupport
+from ert.config.parsing.context_values import ContextList, ContextString, ContextValue
 
 from .parsing import ConfigValidationError, ErrorInfo, init_workflow_schema, parse
 from .parsing.types import Defines
@@ -24,6 +25,33 @@ class Workflow(BaseModelWithContextSupport):
     def __iter__(self) -> Iterator[tuple[WorkflowJob, Any]]:  # type: ignore
         return iter(self.cmd_list)
 
+    @staticmethod
+    def _validate_workflow_job(
+        job_name_with_context: ContextString,
+        instructions: ContextList[ContextValue],
+        job_dict: dict[str, WorkflowJob],
+    ) -> ErrorInfo | None:
+        job = job_dict.get(job_name_with_context)
+
+        if job is None:
+            return ErrorInfo(
+                f"Job with name: {job_name_with_context} is not recognized"
+            ).set_context(job_name_with_context)
+
+        if job.min_args is not None and job.min_args > len(instructions):
+            return ErrorInfo(
+                f"Job with name: {job_name_with_context} does not have enough"
+                f" arguments, expected at least: {job.min_args}, got: {instructions}"
+            ).set_context(job_name_with_context)
+
+        if job.max_args is not None and job.max_args < len(instructions):
+            return ErrorInfo(
+                f"Job with name: {job_name_with_context} has too many arguments, "
+                f"expected at most: {job.max_args}, got: {instructions}"
+            ).set_context(job_name_with_context)
+
+        return None
+
     @classmethod
     def _parse_command_list(
         cls,
@@ -42,39 +70,19 @@ class Workflow(BaseModelWithContextSupport):
         for job_name in parsed_workflow_job_names:
             for instructions in config_dict[job_name]:
                 job_name_with_context = instructions.token
-                job = job_dict.get(job_name)
-                if job is None:
-                    errors.append(
-                        ErrorInfo(
-                            f"Job with name: {job_name} is not recognized"
-                        ).set_context(job_name_with_context)
-                    )
-                    continue
-                elif job.min_args is not None and job.min_args > len(instructions):
-                    errors.append(
-                        ErrorInfo(
-                            f"Job with name: {job_name} does not have enough arguments,"
-                            f" expected at least: {job.min_args}, got: {instructions}"
-                        ).set_context(job_name_with_context)
-                    )
-                    continue
-                elif job.max_args is not None and job.max_args < len(instructions):
-                    errors.append(
-                        ErrorInfo(
-                            f"Job with name: {job_name} has too many arguments, "
-                            f"expected at most: {job.min_args}, got: {instructions}"
-                        ).set_context(job_name_with_context)
-                    )
-                    continue
-
-                all_workflow_jobs.append((job_name_with_context, instructions))
-
+                err = cls._validate_workflow_job(
+                    job_name_with_context, instructions, job_dict
+                )
+                if err:
+                    errors.append(err)
+                else:
+                    all_workflow_jobs.append((job_name_with_context, instructions))
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
         # Order matters, so we need to sort it
         # by the line attached to the context token
-        all_workflow_jobs.sort(key=lambda x: x[0].line)
+        all_workflow_jobs.sort(key=lambda x: x[0].line or 0)
 
         return [
             (job_dict[name], instructions) for (name, instructions) in all_workflow_jobs
