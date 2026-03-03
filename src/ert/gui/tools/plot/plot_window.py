@@ -403,12 +403,46 @@ class PlotWindow(QMainWindow):
                     handle_exception(e)
 
             std_dev_images: dict[str, npt.NDArray[np.float32]] = {}
-            obs_loc: dict[str, npt.NDArray[np.float32]] = {}
+            obs_loc: npt.NDArray[np.float32] | None = None
             if isinstance(key_def.parameter, Field):
                 plot_widget.showLayerWidget.emit(True)
                 layers = key_def.parameter.ertbox_params.nz
                 plot_widget.updateLayerWidget.emit(layers)
+                # select observations with locations
+                if (
+                    key_def.parameter.ertbox_params.origin is not None
+                    and key_def.parameter.ertbox_params.rotation_angle is not None
+                ):
+                    obs_loc_df = self._api.observation_locations()
+                    if not obs_loc_df.empty:
+                        xpos, ypos = transform_positions_to_local_field_coordinates(
+                            key_def.parameter.ertbox_params.origin,
+                            key_def.parameter.ertbox_params.rotation_angle,
+                            obs_loc_df["east"].to_numpy(dtype=np.float64),
+                            obs_loc_df["north"].to_numpy(dtype=np.float64),
+                        )
+                        height, width = (
+                            key_def.parameter.ertbox_params.ny,
+                            key_def.parameter.ertbox_params.nx,
+                        )
+                        if (
+                            key_def.parameter.ertbox_params.axis_orientation
+                            == AxisOrientation.RIGHT_HANDED
+                        ):
+                            ypos = height - ypos
 
+                        inside_box = (
+                            np.isfinite(xpos)
+                            & np.isfinite(ypos)
+                            & (xpos >= 0)
+                            & (xpos < width)
+                            & (ypos >= 0)
+                            & (ypos < height)
+                        )
+
+                        obs_loc = np.column_stack(
+                            (xpos[inside_box], ypos[inside_box])
+                        ).astype(np.float32)
                 if layer is None:
                     plot_widget.resetLayerWidget.emit()
                     layer = 0
@@ -418,44 +452,6 @@ class PlotWindow(QMainWindow):
                         std_dev_images[ensemble.name] = self._api.std_dev_for_parameter(
                             key, ensemble.id, layer
                         )
-                        # select observations with locations
-                        if (
-                            key_def.parameter.ertbox_params.origin is not None
-                            and key_def.parameter.ertbox_params.rotation_angle
-                            is not None
-                        ):
-                            obs_loc_df = self._api.observation_locations(
-                                ensemble_ids=[ensemble.id],
-                                param_cfg=key_def.parameter,
-                            )
-                            if not obs_loc_df.empty:
-                                xpos, ypos = (
-                                    transform_positions_to_local_field_coordinates(
-                                        key_def.parameter.ertbox_params.origin,
-                                        key_def.parameter.ertbox_params.rotation_angle,
-                                        obs_loc_df["east"].to_numpy(dtype=np.float64),
-                                        obs_loc_df["north"].to_numpy(dtype=np.float64),
-                                    )
-                                )
-                                height, width = std_dev_images[ensemble.name].shape[:2]
-                                if (
-                                    key_def.parameter.ertbox_params.axis_orientation
-                                    == AxisOrientation.RIGHT_HANDED
-                                ):
-                                    ypos = height - ypos
-
-                                inside_box = (
-                                    np.isfinite(xpos)
-                                    & np.isfinite(ypos)
-                                    & (xpos >= 0)
-                                    & (xpos < width)
-                                    & (ypos >= 0)
-                                    & (ypos < height)
-                                )
-
-                                obs_loc[ensemble.name] = np.column_stack(
-                                    (xpos[inside_box], ypos[inside_box])
-                                ).astype(np.float32)
                     except BaseException as e:
                         handle_exception(e)
             else:

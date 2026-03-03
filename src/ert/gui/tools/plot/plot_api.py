@@ -18,7 +18,7 @@ from pandas.api.types import is_numeric_dtype
 from pandas.errors import ParserError
 from resfo_utilities import history_key
 
-from ert.config import DerivedResponseConfig, Field, ParameterConfig, SurfaceConfig
+from ert.config import DerivedResponseConfig, ParameterConfig
 from ert.config.ensemble_config import ResponseConfig
 from ert.config.known_derived_response_types import KnownDerivedResponseTypes
 from ert.config.known_response_types import KnownResponseTypes
@@ -368,53 +368,47 @@ class PlotApi:
                     df[col] = df[col].astype(float)
             return df
 
-    def observation_locations(
-        self, ensemble_ids: list[str], param_cfg: Field | SurfaceConfig
-    ) -> pd.DataFrame:
+    def observation_locations(self) -> pd.DataFrame:
+
         all_observations = pd.DataFrame()
-        for ensemble_id in ensemble_ids:
-            ensemble = self._get_ensemble_by_id(ensemble_id)
-            if not ensemble:
-                continue
-
-            with create_ertserver_client(self.ens_path) as client:
-                http_response = client.get(
-                    f"/ensembles/{ensemble_id}/observations",
-                    timeout=self._timeout,
-                )
+        with create_ertserver_client(self.ens_path) as client:
+            try:
+                http_response = client.get("/experiments", timeout=self._timeout)
                 self._check_http_response(http_response)
+                experiments = http_response.json()
+                for experiment in experiments:
+                    experiment_id = str(experiment["id"])
+                    http_response = client.get(
+                        f"/experiments/{experiment_id}/observations",
+                        timeout=self._timeout,
+                    )
+                    self._check_http_response(http_response)
 
-                try:
                     observations = http_response.json()
                     if not observations:
                         continue
+                    new_obs = pd.concat(
+                        (
+                            pd.DataFrame(
+                                {
+                                    "east": obs["east"],
+                                    "north": obs["north"],
+                                    "radius": obs["radius"],
+                                }
+                            )
+                            for obs in observations
+                        ),
+                        ignore_index=True,
+                    ).dropna()
 
-                    observations[0]  # Just preserving the old logic/behavior
-                    # but this should really be revised
-                except (KeyError, IndexError, JSONDecodeError) as e:
-                    raise httpx.RequestError(
-                        "Observation schema might have changed"
-                        f" for ensemble_name={ensemble.name}, e={e}"
-                    ) from e
-
-                new_obs = pd.concat(
-                    (
-                        pd.DataFrame(
-                            {
-                                "east": obs["east"],
-                                "north": obs["north"],
-                                "radius": obs["radius"],
-                            }
-                        )
-                        for obs in observations
-                    ),
-                    ignore_index=True,
-                ).dropna()
-
-                all_observations = pd.concat(
-                    [all_observations, new_obs], ignore_index=True
-                )
-        return all_observations
+                    all_observations = pd.concat(
+                        [all_observations, new_obs], ignore_index=True
+                    )
+            except (KeyError, IndexError, JSONDecodeError) as e:
+                raise httpx.RequestError(
+                    f"Experiment/Observation schema might have changed e={e}"
+                ) from e
+            return all_observations
 
     def observations_for_key(self, ensemble_ids: list[str], key: str) -> pd.DataFrame:
         """Returns a pandas DataFrame with the datapoints for a given observation key
