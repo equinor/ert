@@ -42,8 +42,7 @@ def api(tmpdir, source_root, monkeypatch):
         test_data_dir = os.path.join(test_data_root, "snake_oil")
         shutil.copytree(test_data_dir, "test_data")
         os.chdir("test_data")
-        api = PlotApi(test_data_dir)
-        yield api
+        yield PlotApi(test_data_dir)
 
 
 def mocked_requests_get(*args, **kwargs):
