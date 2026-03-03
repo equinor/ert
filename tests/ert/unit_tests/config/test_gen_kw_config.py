@@ -876,3 +876,19 @@ def test_that_unexpected_positional_arg_count_raises_validation_error(tmp_path):
                 {},
             ]
         )
+
+
+def test_that_init_files_option_raises_removal_error(tmp_path):
+    parameter_file = tmp_path / "parameter.txt"
+    parameter_file.write_text("KEY NORMAL 0 1", encoding="utf-8")
+
+    with pytest.raises(
+        ConfigValidationError, match="INIT_FILES with GEN_KW has been removed"
+    ):
+        GenKwConfig.from_config_list(
+            [
+                "GEN",
+                (str(parameter_file), parameter_file.read_text(encoding="utf-8")),
+                {"INIT_FILES": "init_%d"},
+            ]
+        )
