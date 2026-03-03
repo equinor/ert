@@ -9,7 +9,7 @@ from ert.config.parsing.context_values import ContextList, ContextString, Contex
 
 from .parsing import ConfigValidationError, ErrorInfo, init_workflow_schema, parse
 from .parsing.types import Defines
-from .workflow_job import ErtScriptWorkflow, WorkflowJob
+from .workflow_job import BaseErtScriptWorkflow, WorkflowJob
 
 
 class Workflow(BaseModelWithContextSupport):
@@ -50,7 +50,7 @@ class Workflow(BaseModelWithContextSupport):
                 f"expected at most: {job.max_args}, got: {instructions}"
             ).set_context(job_name_with_context)
 
-        if isinstance(job, ErtScriptWorkflow):
+        if isinstance(job, BaseErtScriptWorkflow):
             try:
                 job.load_ert_script_class().validate(instructions)
             except ConfigValidationError as err:
