@@ -31,6 +31,7 @@ jobs:
         uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
+          prune-cache: false
           python-version: '3.12'
       - run: |
           uv sync --group dev
