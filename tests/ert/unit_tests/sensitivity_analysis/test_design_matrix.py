@@ -1,3 +1,5 @@
+from datetime import date, datetime
+
 import numpy as np
 import polars as pl
 import pytest
@@ -5,6 +7,7 @@ from xlsxwriter import Workbook
 
 from ert.config import DataSource, DesignMatrix, GenKwConfig
 from ert.config.design_matrix import DESIGN_MATRIX_GROUP
+from ert.config.parsing.config_errors import ConfigWarning
 from tests.ert.conftest import _create_design_matrix
 
 
@@ -545,3 +548,33 @@ def test_that_numeric_string_columns_are_converted(tmp_path):
     np.testing.assert_equal(df["a"], np.array([1, 2, 3]))
     np.testing.assert_equal(df["b"], np.array([0, 2.2, 0.1]))
     np.testing.assert_equal(df["c"], np.array(["10", "high", "medium"]))
+
+
+def test_that_excel_datetime_columns_are_converted_to_strings_with_warning(tmp_path):
+    design_path = tmp_path / "design_matrix.xlsx"
+    with Workbook(design_path) as wb:
+        ws = wb.add_worksheet("DesignSheet")
+        date_format = wb.add_format({"num_format": "yyyy-mm-dd"})
+
+        ws.write(0, 0, "REAL")
+        ws.write(0, 1, "date_col")
+        ws.write(0, 2, "value")
+
+        ws.write(1, 0, 0)
+        ws.write_datetime(1, 1, date(2026, 3, 1), date_format)  # type: ignore[arg-type]
+        ws.write(1, 2, 1.5)
+
+        ws.write(2, 0, 1)
+        ws.write_datetime(2, 1, datetime(2026, 3, 2, 10, 30), date_format)
+        ws.write(2, 2, 2.5)
+
+    with pytest.warns(
+        ConfigWarning,
+        match="The design matrix contains date/datetime columns",
+    ):
+        design_matrix = DesignMatrix(design_path, "DesignSheet", None)
+
+    df = design_matrix.design_matrix_df
+    assert df.schema["date_col"] == pl.String
+    assert "2026-03-01" in df["date_col"][0]
+    assert "2026-03-02" in df["date_col"][1]
