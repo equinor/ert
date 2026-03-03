@@ -30,7 +30,7 @@ from .forward_model_step import (
     UserInstalledForwardModelStep,
 )
 from .gen_data_config import GenDataConfig
-from .gen_kw_config import DataSource, GenKwConfig, ParsedGenKwConfig, PriorDict
+from .gen_kw_config import DataSource, GenKwConfig, PriorDict
 from .known_derived_response_types import KnownDerivedResponseTypes
 from .known_response_types import KnownResponseTypes
 from .lint_file import lint_file
@@ -127,7 +127,6 @@ __all__ = [
     "OutlierSettings",
     "ParameterCardinality",
     "ParameterConfig",
-    "ParsedGenKwConfig",
     "PostExperimentFixtures",
     "PostSimulationFixtures",
     "PostUpdateFixtures",
