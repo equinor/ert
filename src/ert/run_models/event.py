@@ -19,6 +19,7 @@ from ert.ensemble_evaluator.event import (
     StartEvent,
     WarningEvent,
 )
+from ert.run_models._create_run_path import RunPathCreationEvent
 
 
 class RunModelEvent(BaseModel):
@@ -105,6 +106,7 @@ StatusEvents = (
     | StartEvent
     | WarningEvent
     | EnsembleEvaluationWarning
+    | RunPathCreationEvent
 )
 
 

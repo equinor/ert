@@ -62,6 +62,7 @@ from ert.run_models import (
     RunModelUpdateEndEvent,
     StatusEvents,
 )
+from ert.run_models._create_run_path import RunPathCreationEvent
 from ert.run_models.event import (
     EverestBatchResultEvent,
     RunModelDataEvent,
@@ -74,7 +75,13 @@ from ert.shared.status.utils import (
 )
 
 from .queue_emitter import QueueEmitter
-from .view import DiskSpaceWidget, ProgressWidget, RealizationWidget, UpdateWidget
+from .view import (
+    DiskSpaceWidget,
+    ProgressWidget,
+    RealizationWidget,
+    RunpathCreationProgressBar,
+    UpdateWidget,
+)
 from .view.disk_space_widget import MountType
 
 _TOTAL_PROGRESS_TEMPLATE = "Total progress {total_progress}% — {iteration_label}"
@@ -617,6 +624,22 @@ class RunDialog(QFrame):
                 self._tab_widget.setTabText(
                     event.batch, _batch_type_text(event.batch, batch_types)
                 )
+            case RunPathCreationEvent():
+                if event.sub_type == "StartingTotalRunPathCreation":
+                    runpath_creation_progress_widget = RunpathCreationProgressBar(self)
+                    tab_index = self._tab_widget.addTab(
+                        runpath_creation_progress_widget, "Creating runpaths..."
+                    )
+                    self._tab_widget.setCurrentIndex(tab_index)
+                    runpath_creation_progress_widget.handle_event(event)
+                elif event.sub_type == "FinishedTotalRunPathCreation":
+                    self._tab_widget.removeTab(self._tab_widget.count() - 1)
+                else:
+                    runpath_widget = self._tab_widget.widget(
+                        self._tab_widget.count() - 1
+                    )
+                    if isinstance(runpath_widget, RunpathCreationProgressBar):
+                        runpath_widget.handle_event(event)
 
     def _get_update_widget(self, iteration: int) -> UpdateWidget:
         for i in range(self._tab_widget.count()):

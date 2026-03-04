@@ -6,14 +6,15 @@ import math
 import os
 import time
 from collections import defaultdict
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from copy import deepcopy
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import orjson
 import polars as pl
+from pydantic import BaseModel
 
 from _ert.utils import file_safe_timestamp
 from ert.config import (
@@ -262,6 +263,17 @@ def _make_param_substituter(
     return param_substituter
 
 
+class RunPathCreationEvent(BaseModel):
+    event_type: Literal["RunPathCreationEvent"] = "RunPathCreationEvent"
+    sub_type: Literal[
+        "StartingTotalRunPathCreation",
+        "FinishedTotalRunPathCreation",
+        "TotalRunPathCreationUpdate",
+    ]
+    runpath_number: int | None = None
+    total_runpaths_to_create: int | None = None
+
+
 @log_duration(logger, logging.INFO)
 def create_run_path(
     run_args: list[RunArg],
@@ -274,6 +286,8 @@ def create_run_path(
     parameters_file: str,
     runpaths: Runpaths,
     context_env: dict[str, str] | None = None,
+    handle_run_path_creation_event: Callable[[RunPathCreationEvent], None]
+    | None = None,
 ) -> None:
     if context_env is None:
         context_env = {}
@@ -308,7 +322,15 @@ def create_run_path(
             for row in scalar_df.to_dicts()
         }
         timings["load_scalar_keys"] = time.perf_counter() - start_time
+    total_active_realizations = [run_arg.active for run_arg in run_args].count(True)
+    if handle_run_path_creation_event:
+        event = RunPathCreationEvent(
+            sub_type="StartingTotalRunPathCreation",
+            total_runpaths_to_create=total_active_realizations,
+        )
+        handle_run_path_creation_event(event)
 
+    runpath_count = 0
     for run_arg in run_args:
         run_path = Path(run_arg.runpath)
         if run_arg.active:
@@ -386,7 +408,20 @@ def create_run_path(
                 orjson.dumps(data, option=orjson.OPT_NON_STR_KEYS | orjson.OPT_INDENT_2)
             )
             timings["manifest_to_json"] = time.perf_counter() - start_time
+            runpath_count += 1
+            # Let upstream code know which runpath we just created
+            if handle_run_path_creation_event:
+                event = RunPathCreationEvent(
+                    runpath_number=runpath_count,
+                    total_runpaths_to_create=total_active_realizations,
+                    sub_type="TotalRunPathCreationUpdate",
+                )
+                handle_run_path_creation_event(event)
+
     logger.info(f"_create_run_path durations: {timings}")
     runpaths.write_runpath_list(
         [ensemble.iteration], [real.iens for real in run_args if real.active]
     )
+    if handle_run_path_creation_event:
+        event = RunPathCreationEvent(sub_type="FinishedTotalRunPathCreation")
+        handle_run_path_creation_event(event)
