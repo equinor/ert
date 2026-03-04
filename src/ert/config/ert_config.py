@@ -68,7 +68,6 @@ from .workflow_fixtures import fixtures_per_hook
 from .workflow_job import (
     BaseErtScriptWorkflow,
     ErtScriptLoadFailure,
-    ErtScriptWorkflow,
     WorkflowJob,
     workflow_job_from_file,
 )
@@ -410,13 +409,6 @@ def create_and_hook_workflows(
                 substitutions,
                 workflow_jobs,
             )
-            for job, args in workflow:
-                if isinstance(job, ErtScriptWorkflow):
-                    try:
-                        job.load_ert_script_class().validate(args)
-                    except ConfigValidationError as err:
-                        errors.append(ErrorInfo(message=str(err)).set_context(work[0]))
-                        continue
             workflows[filename] = workflow
             if existed:
                 ConfigWarning.warn(f"Workflow {filename!r} was added twice", work[0])
