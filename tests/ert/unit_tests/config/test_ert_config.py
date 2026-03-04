@@ -2752,7 +2752,7 @@ def test_that_breakthrough_observations_can_be_internalized_in_ert_config():
         "BREAKTHROUGH:WWCT:OP_1"
     ]
     assert breakthrough_observations["observations"].to_list() == [0]
-    assert breakthrough_observations["std"].to_list() == [72]
+    assert breakthrough_observations["std"].to_list() == [3]
     assert breakthrough_observations["east"].to_list() == [10]
     assert breakthrough_observations["north"].to_list() == [20]
     assert breakthrough_observations["radius"].to_list() == [2500]

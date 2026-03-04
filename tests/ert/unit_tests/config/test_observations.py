@@ -1889,27 +1889,6 @@ def obs_config_with_breakthrough_obs():
     return {"OBS_CONFIG": (None, [{"type": "BREAKTHROUGH_OBSERVATION"}])}
 
 
-def test_that_breakthrough_observation_error_is_converted_to_hours():
-    error_days = 3
-    obs_config_contents = (
-        """
-        BREAKTHROUGH_OBSERVATION name {
-        KEY=WWCT:OP_1;
-        DATE=2012-10-01;
-        """
-        f"ERROR={error_days};"
-        """
-        THRESHOLD=0.1;
-      };"""
-    )
-    ert_config = ert_config_from_parser(obs_config_contents)
-    brt_obs = create_observation_dataframes(
-        observations=ert_config.observation_declarations,
-        rft_config=None,
-    )["breakthrough"]
-    assert brt_obs["std"].to_list() == [error_days * 24]
-
-
 def test_that_breakthrough_observations_df_have_obs_value_zero():
     """This test ensures that the observed value is converted
     from a datetime to 0 as this will be the relative value
@@ -1997,7 +1976,7 @@ def test_that_breakthrough_responses_are_derived_from_summary():
     assert response_df["response_key"].to_list() == [f"BREAKTHROUGH:{key}"]
     assert response_df["threshold"].to_list() == [threshold]
     assert response_df["time"].to_list() == [datetime.fromisoformat(breakthrough_date)]
-    assert response_df["values"].to_list() == [24]
+    assert response_df["values"].to_list() == [1]
 
 
 def test_that_unreachable_breakthrough_thresholds_has_none_response():
@@ -2083,7 +2062,7 @@ def test_that_combined_reachable_and_unreachable_breakthrough_thresholds_are_tur
         datetime.fromisoformat(breakthrough_date),
         None,
     ]
-    assert response_df["values"].to_list() == [24, None]
+    assert response_df["values"].to_list() == [1, None]
 
 
 @pytest.mark.parametrize(

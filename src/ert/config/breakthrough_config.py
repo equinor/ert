@@ -10,11 +10,6 @@ from pydantic import Field
 from .derived_response_config import DerivedResponseConfig
 
 
-def datetime_hourly_difference(obs_date: datetime, response_date: datetime) -> float:
-    seconds_per_hour = 3600
-    return (response_date - obs_date).total_seconds() / seconds_per_hour
-
-
 class BreakthroughConfig(DerivedResponseConfig):
     type: Literal["breakthrough"] = "breakthrough"
     keys: list[str] = Field(default_factory=list)
@@ -50,10 +45,8 @@ class BreakthroughConfig(DerivedResponseConfig):
                 breakthrough_time_offsets.append(None)
                 breakthrough_times.append(None)
             else:
-                breakthrough_time_offset = datetime_hourly_difference(
-                    obs_date, breakthrough_time
-                )
-                breakthrough_time_offsets.append(breakthrough_time_offset)
+                breakthrough_time_offset_days = (breakthrough_time - obs_date).days
+                breakthrough_time_offsets.append(breakthrough_time_offset_days)
                 breakthrough_times.append(breakthrough_time)
 
         if all(time is None for time in breakthrough_times):
