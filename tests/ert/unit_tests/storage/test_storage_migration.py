@@ -12,7 +12,11 @@ import polars as pl
 import pytest
 
 from ert.__main__ import run_convert_observations
-from ert.analysis import ErtAnalysisError, smoother_update
+from ert.analysis import (
+    ErtAnalysisError,
+    build_strategy_map,
+    smoother_update,
+)
 from ert.config import ErtConfig, ESSettings, ObservationSettings
 from ert.plugins import get_site_plugins
 from ert.storage import RealizationStorageState, open_storage
@@ -411,6 +415,13 @@ def test_that_manual_update_from_migrated_storage_works(
             prior_ensemble=prior_ens,
         )
 
+        es_settings = ESSettings()
+        strategy_map = build_strategy_map(
+            parameters=list(ert_config.ensemble_config.parameters),
+            param_configs=prior_ens.experiment.parameter_configuration,
+            inversion=es_settings.inversion,
+            enkf_truncation=es_settings.enkf_truncation,
+        )
         with pytest.raises(
             ErtAnalysisError, match="No active observations for update step"
         ):
@@ -420,7 +431,7 @@ def test_that_manual_update_from_migrated_storage_works(
                 list(experiment.observation_keys),
                 list(ert_config.ensemble_config.parameters),
                 ObservationSettings(),
-                ESSettings(),
+                strategy_map,
             )
 
 

@@ -9,7 +9,11 @@ import pandas as pd
 import pytest
 from resdata.summary import Summary
 
-from ert.analysis import ErtAnalysisError, smoother_update
+from ert.analysis import (
+    ErtAnalysisError,
+    build_strategy_map,
+    smoother_update,
+)
 from ert.config import ErtConfig, ESSettings, ObservationSettings
 from ert.data import MeasuredData
 from ert.sample_prior import sample_prior
@@ -114,13 +118,20 @@ def test_that_reading_matching_time_is_ok(ert_config, storage, prior_ensemble):
         prior_ensemble=prior_ensemble,
     )
 
+    es_settings = ESSettings()
+    strategy_map = build_strategy_map(
+        parameters=ert_config.ensemble_config.parameters,
+        param_configs=prior_ensemble.experiment.parameter_configuration,
+        inversion=es_settings.inversion,
+        enkf_truncation=es_settings.enkf_truncation,
+    )
     smoother_update(
         prior_ensemble,
         target_ensemble,
         prior_ensemble.experiment.observation_keys,
         ert_config.ensemble_config.parameters,
         ObservationSettings(),
-        ESSettings(),
+        strategy_map,
     )
 
 
@@ -148,6 +159,13 @@ def test_that_mismatched_responses_give_error(ert_config, storage, prior_ensembl
         prior_ensemble=prior_ensemble,
     )
 
+    es_settings = ESSettings()
+    strategy_map = build_strategy_map(
+        parameters=ert_config.ensemble_config.parameters,
+        param_configs=prior_ensemble.experiment.parameter_configuration,
+        inversion=es_settings.inversion,
+        enkf_truncation=es_settings.enkf_truncation,
+    )
     with pytest.raises(ErtAnalysisError, match=re.escape("No active observations")):
         smoother_update(
             prior_ensemble,
@@ -155,7 +173,7 @@ def test_that_mismatched_responses_give_error(ert_config, storage, prior_ensembl
             prior_ensemble.experiment.observation_keys,
             ert_config.ensemble_config.parameters,
             ObservationSettings(),
-            ESSettings(),
+            strategy_map,
         )
 
 
@@ -188,13 +206,20 @@ def test_that_different_length_is_ok_as_long_as_observation_time_exists(
         prior_ensemble=prior_ensemble,
     )
 
+    es_settings = ESSettings()
+    strategy_map = build_strategy_map(
+        parameters=ert_config.ensemble_config.parameters,
+        param_configs=prior_ensemble.experiment.parameter_configuration,
+        inversion=es_settings.inversion,
+        enkf_truncation=es_settings.enkf_truncation,
+    )
     smoother_update(
         prior_ensemble,
         target_ensemble,
         prior_ensemble.experiment.observation_keys,
         ert_config.ensemble_config.parameters,
         ObservationSettings(),
-        ESSettings(),
+        strategy_map,
     )
 
 
@@ -242,13 +267,20 @@ def test_that_duplicate_summary_time_steps_does_not_fail(
         prior_ensemble=prior_ensemble,
     )
 
+    es_settings = ESSettings()
+    strategy_map = build_strategy_map(
+        parameters=ert_config.ensemble_config.parameters,
+        param_configs=prior_ensemble.experiment.parameter_configuration,
+        inversion=es_settings.inversion,
+        enkf_truncation=es_settings.enkf_truncation,
+    )
     smoother_update(
         prior_ensemble,
         target_ensemble,
         prior_ensemble.experiment.observation_keys,
         ert_config.ensemble_config.parameters,
         ObservationSettings(),
-        ESSettings(),
+        strategy_map,
     )
 
 

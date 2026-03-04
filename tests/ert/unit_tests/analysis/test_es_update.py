@@ -7,7 +7,12 @@ import polars as pl
 import pytest
 from tabulate import tabulate
 
-from ert.analysis import ErtAnalysisError, ObservationStatus, smoother_update
+from ert.analysis import (
+    ErtAnalysisError,
+    ObservationStatus,
+    build_strategy_map,
+    smoother_update,
+)
 from ert.analysis._es_update import _create_combined_ensemble_mask
 from ert.analysis._update_commons import (
     _compute_observation_statuses,
@@ -81,13 +86,21 @@ def test_update_report(
     )
     events = []
 
+    es_settings = ESSettings(inversion="SUBSPACE")
+    strategy_map = build_strategy_map(
+        parameters=ert_config.ensemble_config.parameters,
+        param_configs=prior_ens.experiment.parameter_configuration,
+        inversion=es_settings.inversion,
+        enkf_truncation=es_settings.enkf_truncation,
+        progress_callback=events.append,
+    )
     smoother_update(
         prior_ens,
         posterior_ens,
         experiment.observation_keys,
         ert_config.ensemble_config.parameters,
         ObservationSettings(auto_scale_observations=misfit_preprocess),
-        ESSettings(inversion="SUBSPACE"),
+        strategy_map,
         progress_callback=events.append,
     )
 
@@ -150,13 +163,21 @@ def test_update_report_with_different_observation_status_from_smoother_update(
     )
     events = []
 
+    es_settings = ESSettings(inversion="SUBSPACE")
+    strategy_map = build_strategy_map(
+        parameters=ert_config.ensemble_config.parameters,
+        param_configs=prior_ens.experiment.parameter_configuration,
+        inversion=es_settings.inversion,
+        enkf_truncation=es_settings.enkf_truncation,
+        progress_callback=events.append,
+    )
     ss = smoother_update(
         prior_ens,
         posterior_ens,
         experiment.observation_keys,
         ert_config.ensemble_config.parameters,
         update_settings,
-        ESSettings(inversion="SUBSPACE"),
+        strategy_map,
         progress_callback=events.append,
     )
 
@@ -282,13 +303,21 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
         )
         events = []
 
+        es_settings = ESSettings()
+        strategy_map = build_strategy_map(
+            parameters=["coeff_0"],
+            param_configs=prior.experiment.parameter_configuration,
+            inversion=es_settings.inversion,
+            enkf_truncation=es_settings.enkf_truncation,
+            progress_callback=events.append,
+        )
         ss = smoother_update(
             prior,
             posterior,
             experiment.observation_keys,
             ["coeff_0"],
             ObservationSettings(auto_scale_observations=[["OBS*"]]),
-            ESSettings(),
+            strategy_map,
             progress_callback=events.append,
         )
 
@@ -383,12 +412,18 @@ def test_update_raises_on_singular_matrix(tmp_path):
             prior_ensemble=prior,
         )
 
-        with (
-            pytest.raises(
-                ErtAnalysisError,
-                match=r"Failed while computing transition matrix."
-                "*(?:Matrix is singular|A singular matrix detected)",
-            ),
+        es_settings = ESSettings()
+        strategy_map = build_strategy_map(
+            parameters=["coeff_0"],
+            param_configs=prior.experiment.parameter_configuration,
+            inversion=es_settings.inversion,
+            enkf_truncation=es_settings.enkf_truncation,
+            rng=np.random.default_rng(1234),
+        )
+        with pytest.raises(
+            ErtAnalysisError,
+            match=r"Failed while computing transition matrix."
+            "*(?:Matrix is singular|A singular matrix detected)",
         ):
             _ = smoother_update(
                 prior,
@@ -396,8 +431,7 @@ def test_update_raises_on_singular_matrix(tmp_path):
                 experiment.observation_keys,
                 ["coeff_0"],
                 ObservationSettings(auto_scale_observations=[["OBS*"]]),
-                ESSettings(),
-                rng=np.random.default_rng(1234),
+                strategy_map,
             )
 
 
@@ -442,14 +476,21 @@ def test_update_snapshot(
     # Make sure we always have the same seed in updates
     rng = np.random.default_rng(42)
 
+    es_settings = ESSettings(inversion="SUBSPACE")
+    strategy_map = build_strategy_map(
+        parameters=list(ert_config.ensemble_config.parameters),
+        param_configs=prior_ens.experiment.parameter_configuration,
+        inversion=es_settings.inversion,
+        enkf_truncation=es_settings.enkf_truncation,
+        rng=rng,
+    )
     smoother_update(
         prior_ens,
         posterior_ens,
         experiment.observation_keys,
         list(ert_config.ensemble_config.parameters),
         ObservationSettings(),
-        ESSettings(inversion="SUBSPACE"),
-        rng=rng,
+        strategy_map,
     )
 
     sim_gen_kw = list(
@@ -568,6 +609,14 @@ def test_smoother_snapshot_alpha(
     )
 
     with expectation:
+        es_settings = ESSettings(inversion="SUBSPACE")
+        strategy_map = build_strategy_map(
+            parameters=["KEY_1"],
+            param_configs=prior_storage.experiment.parameter_configuration,
+            inversion=es_settings.inversion,
+            enkf_truncation=es_settings.enkf_truncation,
+            rng=rng,
+        )
         result_snapshot = smoother_update(
             prior_storage,
             posterior_storage,
@@ -576,8 +625,7 @@ def test_smoother_snapshot_alpha(
             update_settings=ObservationSettings(
                 outlier_settings=OutlierSettings(alpha=alpha)
             ),
-            es_settings=ESSettings(inversion="SUBSPACE"),
-            rng=rng,
+            strategy_map=strategy_map,
         )
         assert result_snapshot.alpha == alpha
         assert (
@@ -606,13 +654,21 @@ def test_update_only_using_subset_observations(
     )
     events = []
 
+    es_settings = ESSettings()
+    strategy_map = build_strategy_map(
+        parameters=ert_config.ensemble_config.parameters,
+        param_configs=prior_ens.experiment.parameter_configuration,
+        inversion=es_settings.inversion,
+        enkf_truncation=es_settings.enkf_truncation,
+        progress_callback=events.append,
+    )
     smoother_update(
         prior_ens,
         posterior_ens,
         ["WPR_DIFF_1"],
         ert_config.ensemble_config.parameters,
         ObservationSettings(),
-        ESSettings(),
+        strategy_map,
         progress_callback=events.append,
     )
 
@@ -964,6 +1020,13 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
         name="posterior",
         prior_ensemble=prior,
     )
+    es_settings = ESSettings()
+    strategy_map = build_strategy_map(
+        parameters=["KEY_1"],
+        param_configs=prior.experiment.parameter_configuration,
+        inversion=es_settings.inversion,
+        enkf_truncation=es_settings.enkf_truncation,
+    )
     with pytest.raises(
         ErtAnalysisError,
         match="No active observations",
@@ -974,7 +1037,7 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
             ["OBSERVATION"],
             ["KEY_1"],
             ObservationSettings(),
-            ESSettings(),
+            strategy_map,
         )
 
 
@@ -1029,13 +1092,21 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
     )
     events = []
 
+    es_settings = ESSettings()
+    strategy_map = build_strategy_map(
+        parameters=["KEY_1"],
+        param_configs=prior.experiment.parameter_configuration,
+        inversion=es_settings.inversion,
+        enkf_truncation=es_settings.enkf_truncation,
+        progress_callback=events.append,
+    )
     update_snapshot = smoother_update(
         prior,
         posterior_ens,
         ["OBSERVATION"],
         ["KEY_1"],
         ObservationSettings(),
-        ESSettings(),
+        strategy_map,
         progress_callback=events.append,
     )
 
@@ -1119,13 +1190,20 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
         name="posterior",
         prior_ensemble=prior,
     )
+    es_settings = ESSettings()
+    strategy_map = build_strategy_map(
+        parameters=["KEY_1"],
+        param_configs=prior.experiment.parameter_configuration,
+        inversion=es_settings.inversion,
+        enkf_truncation=es_settings.enkf_truncation,
+    )
     smoother_update(
         prior,
         posterior_ens,
         ["OBSERVATION"],
         ["KEY_1"],
         ObservationSettings(),
-        ESSettings(),
+        strategy_map,
         active_realizations=active_realizations,
     )
 

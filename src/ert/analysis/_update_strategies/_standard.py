@@ -12,12 +12,9 @@ import scipy
 
 from ert.analysis._update_commons import ErtAnalysisError
 from ert.analysis.event import (
-    AnalysisErrorEvent,
     AnalysisEvent,
     AnalysisStatusEvent,
-    DataSection,
 )
-from ert.analysis.snapshots import SmootherSnapshot
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -40,8 +37,6 @@ class StandardESUpdate:
 
     Parameters
     ----------
-    smoother_snapshot : SmootherSnapshot
-        Snapshot object for error reporting.
     inversion : str
         Inversion algorithm to use (e.g., "EXACT").
     enkf_truncation : float
@@ -64,13 +59,11 @@ class StandardESUpdate:
 
     def __init__(
         self,
-        smoother_snapshot: SmootherSnapshot,
         inversion: str,
         enkf_truncation: float,
         rng: np.random.Generator,
         progress_callback: Callable[[AnalysisEvent], None],
     ) -> None:
-        self._smoother_snapshot = smoother_snapshot
         self._inversion = inversion
         self._enkf_truncation = enkf_truncation
         self._rng = rng
@@ -105,22 +98,11 @@ class StandardESUpdate:
                 truncation=self._enkf_truncation,
             )
         except scipy.linalg.LinAlgError as err:
-            msg = (
+            raise ErtAnalysisError(
                 "Failed while computing transition matrix, "
                 "this might be due to outlier values in one "
                 f"or more realizations: {err}"
-            )
-            self._progress_callback(
-                AnalysisErrorEvent(
-                    error_msg=msg,
-                    data=DataSection(
-                        header=self._smoother_snapshot.header,
-                        data=self._smoother_snapshot.csv,
-                        extra=self._smoother_snapshot.extra,
-                    ),
-                )
-            )
-            raise ErtAnalysisError(msg) from err
+            ) from err
 
         # Add identity in place for efficient computation: T = I + K @ H
         np.fill_diagonal(self._T, self._T.diagonal() + 1)
