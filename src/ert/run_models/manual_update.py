@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import functools
 import logging
 from typing import Any
 from uuid import UUID
@@ -12,7 +11,6 @@ from ert.run_models.update_run_model import UpdateRunModel, UpdateRunModelConfig
 from ert.storage import Ensemble
 from ert.storage.local_experiment import ExperimentType
 
-from ..analysis import build_strategy_map, smoother_update
 from .run_model import ErtRunError
 
 logger = logging.getLogger(__name__)
@@ -65,37 +63,6 @@ class ManualUpdate(UpdateRunModel, ManualUpdateConfig):
             self._prior,
             self.target_ensemble % (self._prior.iteration + 1),
             target_experiment=target_experiment,
-        )
-
-    def update_ensemble_parameters(
-        self, prior: Ensemble, posterior: Ensemble, weight: float
-    ) -> None:
-        progress_callback = functools.partial(
-            self.send_smoother_event,
-            prior.iteration,
-            prior.id,
-        )
-        strategy_map = build_strategy_map(
-            parameters=prior.experiment.update_parameters,
-            param_configs=prior.experiment.parameter_configuration,
-            inversion=self.analysis_settings.inversion,
-            enkf_truncation=self.analysis_settings.enkf_truncation,
-            distance_localization=self.analysis_settings.distance_localization,
-            localization=self.analysis_settings.localization,
-            correlation_threshold=self.analysis_settings.correlation_threshold,
-            rng=self._rng,
-            progress_callback=progress_callback,
-        )
-        smoother_update(
-            prior,
-            posterior,
-            update_settings=self.update_settings,
-            strategy_map=strategy_map,
-            parameters=prior.experiment.update_parameters,
-            observations=prior.experiment.observation_keys,
-            global_scaling=weight,
-            progress_callback=progress_callback,
-            active_realizations=self.active_realizations,
         )
 
     @classmethod
