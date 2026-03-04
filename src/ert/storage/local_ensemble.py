@@ -652,7 +652,6 @@ class LocalEnsemble(BaseMode):
     def load_scalars(
         self, group: str | None = None, realizations: npt.NDArray[np.int_] | None = None
     ) -> pl.DataFrame:
-        dataframes = []
         gen_kws = [
             p
             for p in self.experiment.parameter_configuration.values()
@@ -661,22 +660,16 @@ class LocalEnsemble(BaseMode):
             and (group is None or p.group_name == group)
         ]
 
-        for config in gen_kws:
-            df = self.load_parameters(config.name, realizations, transformed=True)
-            assert isinstance(df, pl.DataFrame)
-            df = df.rename(
-                {
-                    col: f"{config.group_name}:{col}"
-                    for col in df.columns
-                    if col != "realization"
-                }
-            )
-            dataframes.append(df)
-
-        if not dataframes:
+        if not gen_kws:
             return pl.DataFrame()
 
-        return pl.concat(dataframes, how="align")
+        df = self.load_scalar_keys(
+            [config.name for config in gen_kws], realizations, transformed=True
+        )
+        df = df.rename(
+            {config.name: f"{config.group_name}:{config.name}" for config in gen_kws}
+        )
+        return df
 
     @require_write
     def save_observation_scaling_factors(self, dataset: pl.DataFrame) -> None:
