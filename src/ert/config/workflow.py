@@ -5,9 +5,8 @@ from collections.abc import Iterator
 from typing import Any
 
 from ert.base_model_context import BaseModelWithContextSupport
-from ert.config.parsing.context_values import ContextList, ContextString, ContextValue
 
-from .parsing import ConfigValidationError, ErrorInfo, init_workflow_schema, parse
+from .parsing import ConfigValidationError, init_workflow_schema, parse
 from .parsing.types import Defines
 from .workflow_job import BaseErtScriptWorkflow, WorkflowJob
 
@@ -26,37 +25,36 @@ class Workflow(BaseModelWithContextSupport):
         return iter(self.cmd_list)
 
     @staticmethod
-    def _validate_workflow_job(
-        job_name_with_context: ContextString,
-        instructions: ContextList[ContextValue],
+    def validate_workflow_job(
+        job_name: str,
+        args: list[Any],
         job_dict: dict[str, WorkflowJob],
-    ) -> ErrorInfo | None:
-        job = job_dict.get(job_name_with_context)
+    ) -> WorkflowJob:
+        job = job_dict.get(job_name)
 
         if job is None:
-            return ErrorInfo(
-                f"Job with name: {job_name_with_context} is not recognized"
-            ).set_context(job_name_with_context)
+            raise ConfigValidationError.with_context(
+                f"Job with name: {job_name} is not recognized", job_name
+            )
 
-        if job.min_args is not None and job.min_args > len(instructions):
-            return ErrorInfo(
-                f"Job with name: {job_name_with_context} does not have enough"
-                f" arguments, expected at least: {job.min_args}, got: {instructions}"
-            ).set_context(job_name_with_context)
+        if job.min_args is not None and job.min_args > len(args):
+            raise ConfigValidationError.with_context(
+                f"Job with name: {job_name} does not have enough"
+                f" arguments, expected at least: {job.min_args}, got: {args}",
+                job_name,
+            )
 
-        if job.max_args is not None and job.max_args < len(instructions):
-            return ErrorInfo(
-                f"Job with name: {job_name_with_context} has too many arguments, "
-                f"expected at most: {job.max_args}, got: {instructions}"
-            ).set_context(job_name_with_context)
+        if job.max_args is not None and job.max_args < len(args):
+            raise ConfigValidationError.with_context(
+                f"Job with name: {job_name} has too many arguments, "
+                f"expected at most: {job.max_args}, got: {args}",
+                job_name,
+            )
 
         if isinstance(job, BaseErtScriptWorkflow):
-            try:
-                job.load_ert_script_class().validate(instructions)
-            except ConfigValidationError as err:
-                return ErrorInfo(message=str(err)).set_context(job_name_with_context)
+            job.load_ert_script_class().validate(args)
 
-        return None
+        return job
 
     @classmethod
     def _parse_command_list(
@@ -76,13 +74,13 @@ class Workflow(BaseModelWithContextSupport):
         for job_name in parsed_workflow_job_names:
             for instructions in config_dict[job_name]:
                 job_name_with_context = instructions.token
-                err = cls._validate_workflow_job(
-                    job_name_with_context, instructions, job_dict
-                )
-                if err:
+                try:
+                    cls.validate_workflow_job(
+                        job_name_with_context, instructions, job_dict
+                    )
+                except ConfigValidationError as err:
                     errors.append(err)
-                else:
-                    all_workflow_jobs.append((job_name_with_context, instructions))
+                all_workflow_jobs.append((job_name_with_context, instructions))
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
@@ -108,22 +106,6 @@ class Workflow(BaseModelWithContextSupport):
         )
 
         return cls(src_file=src_file, cmd_list=cmd_list)
-
-    @classmethod
-    def from_instructions(
-        cls,
-        workflow_name: str,
-        instructions: ContextList[ContextValue],
-        job_dict: dict[str, WorkflowJob],
-    ) -> Workflow:
-        job_name_with_context = instructions.token
-        err = cls._validate_workflow_job(job_name_with_context, instructions, job_dict)
-        if err:
-            raise ConfigValidationError.from_info(err)
-        return cls(
-            src_file=workflow_name,
-            cmd_list=[(job_dict[job_name_with_context], instructions)],
-        )
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, type(self)):

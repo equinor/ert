@@ -18,8 +18,6 @@ from pydantic import BaseModel, Field, model_validator
 from pydantic import ValidationError as PydanticValidationError
 
 from ert.config._create_observation_dataframes import create_observation_dataframes
-from ert.config.parsing.context_values import ContextList, ContextValue
-from ert.config.parsing.file_context_token import FileContextToken
 from ert.substitutions import Substitutions
 
 from ._design_matrix_validator import DesignMatrixValidator
@@ -438,8 +436,8 @@ def _validate_fixtures(
 
 def create_and_hook_workflows(
     hook_workflow_info: list[tuple[str, HookRuntime]],
-    hook_workflow_job_info: list[ContextList[ContextValue]],
-    create_workflow_from_job_info: list[ContextList[ContextValue]],
+    hook_workflow_job_info: list[list[str]],
+    create_workflow_from_job_info: list[list[str]],
     workflow_info: list[tuple[str, str]],
     workflow_jobs: dict[str, WorkflowJob],
     substitutions: dict[str, str],
@@ -469,38 +467,15 @@ def create_and_hook_workflows(
                 work[0],
             )
 
-    def _create_workflow_from_job(
-        inline_workflow: ContextList[ContextValue],
-        keyword: str = ConfigKeys.CREATE_WORKFLOW_FROM_JOB,
-    ) -> ErrorInfo | ConfigValidationError | tuple[FileContextToken, Workflow]:
+    def _create_workflow_from_job(inline_workflow: list[str]) -> tuple[str, Workflow]:
         workflow_name = inline_workflow[0]
         job_name = inline_workflow[1]
-        job_args = inline_workflow[2:]
-        if not isinstance(workflow_name, FileContextToken):
-            return ErrorInfo(
-                message=f"First argument of {keyword} must be a "
-                f"valid workflow name, got {workflow_name!r}"
-            ).set_context(inline_workflow)
-
-        if not isinstance(job_name, FileContextToken):
-            return ErrorInfo(
-                message=f"Second argument of {keyword} must be a "
-                f"valid job name, got {job_name!r}"
-            ).set_context(inline_workflow)
-        instructions = ContextList.with_values(token=job_name, values=job_args)
-        try:
-            workflow = Workflow.from_instructions(
-                workflow_name, instructions, workflow_jobs
-            )
-        except ConfigValidationError as err:
-            return err
-        else:
-            return (workflow_name, workflow)
+        args = [inline_workflow[2:]]
+        job = Workflow.validate_workflow_job(job_name, args[0], workflow_jobs)
+        return (workflow_name, Workflow(src_file=workflow_name, cmd_list=[(job, args)]))
 
     def _register_workflow(
-        inline_workflow: ContextList[ContextValue],
-        workflow_name: str,
-        workflow: Workflow,
+        inline_workflow: Any, workflow_name: str, workflow: Workflow
     ) -> None:
         if workflow_name in workflows:
             ConfigWarning.warn(
@@ -509,12 +484,11 @@ def create_and_hook_workflows(
         workflows[workflow_name] = workflow
 
     for inline_workflow in create_workflow_from_job_info:
-        result = _create_workflow_from_job(inline_workflow)
-        if isinstance(result, ErrorInfo | ConfigValidationError):
-            errors.append(result)
-        else:
-            wf_name, wf = result
+        try:
+            wf_name, wf = _create_workflow_from_job(inline_workflow)
             _register_workflow(inline_workflow, wf_name, wf)
+        except ConfigValidationError as err:
+            errors.extend(err.errors)
 
     for hook_name, mode in hook_workflow_info:
         if hook_name not in workflows:
@@ -532,9 +506,7 @@ def create_and_hook_workflows(
         hooked_workflows[mode].append(workflow)
 
     for inline_workflow_hook in hook_workflow_job_info:
-        inline_workflow = ContextList.with_values(
-            token=inline_workflow_hook.token, values=inline_workflow_hook[:-1]
-        )
+        inline_workflow = inline_workflow_hook[:-1]
         raw_mode = inline_workflow_hook[-1]
         try:
             mode = HookRuntime(str(raw_mode))
@@ -546,16 +518,13 @@ def create_and_hook_workflows(
                 ).set_context(raw_mode)
             )
             continue
-        result = _create_workflow_from_job(
-            inline_workflow, ConfigKeys.HOOK_WORKFLOW_JOB
-        )
-        if isinstance(result, ErrorInfo | ConfigValidationError):
-            errors.append(result)
-        else:
-            wf_name, wf = result
+        try:
+            wf_name, wf = _create_workflow_from_job(inline_workflow)
             _register_workflow(inline_workflow, wf_name, wf)
             errors.extend(_validate_fixtures(wf_name, wf, mode))
             hooked_workflows[mode].append(wf)
+        except ConfigValidationError as err:
+            errors.extend(err.errors)
 
     if errors:
         raise ConfigValidationError.from_collected(errors)
