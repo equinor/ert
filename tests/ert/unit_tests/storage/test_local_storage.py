@@ -1789,8 +1789,8 @@ class StatefulStorageTest(RuleBasedStateMachine):
 def test_that_breakthrough_observations_and_responses_are_joined_in_endpoint(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
         response_key = "WWCT:OP1"
-        # This observed time will be 1 hour after derived breakthrough time
-        time = datetime(2000, 3, 1, 2, 0)
+        # This observed time will be 1 day and 12 hours after derived breakthrough time
+        time = datetime(2000, 3, 2, 13, 0)
 
         breakthrough_config = BreakthroughConfig(
             keys=[f"BREAKTHROUGH:{response_key}"],
@@ -1855,7 +1855,7 @@ def test_that_breakthrough_observations_and_responses_are_joined_in_endpoint(tmp
         assert obs_and_responses["response_key"].to_list() == ["BREAKTHROUGH:WWCT:OP1"]
         assert obs_and_responses["observation_key"].to_list() == ["BRT_OP1"]
         assert obs_and_responses["index"].to_list() == ["0.2"]
-        assert obs_and_responses["0"].to_list() == [-1]
+        assert obs_and_responses["0"].to_list() == [-1.5]
 
 
 TestStorage = pytest.mark.integration_test(StatefulStorageTest.TestCase)
