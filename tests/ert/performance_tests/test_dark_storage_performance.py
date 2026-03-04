@@ -18,7 +18,7 @@ import pytest
 from httpx import RequestError
 from starlette.testclient import TestClient
 
-from ert.config import SummaryConfig
+from ert.config import GenKwConfig, SummaryConfig
 from ert.dark_storage import common
 from ert.dark_storage.app import app
 from ert.dark_storage.endpoints import ensembles, experiments
@@ -323,6 +323,36 @@ def test_plot_api_big_summary_memory_usage(
     os.remove("memray.bin")
     total_memory_usage = stats.total_memory_allocated / (1024**2)
     assert total_memory_usage < max_memory_mb
+
+
+def test_that_load_scalars_handles_many_genkw_keys(benchmark, tmp_path):
+    storage_path = tmp_path / "storage"
+
+    reals = 100
+    num_keys = 10000
+    parameter_configs = [
+        GenKwConfig(
+            name=f"P{i}",
+            distribution={"name": "uniform", "min": 0.0, "max": 1.0},
+        )
+        for i in range(num_keys)
+    ]
+
+    with open_storage(storage_path, mode="w") as storage:
+        exp = storage.create_experiment(
+            experiment_config={"parameter_configs": parameter_configs},
+            name="perf-exp",
+        )
+        ensemble = exp.create_ensemble(ensemble_size=reals, name="default")
+        rng = np.random.default_rng(42)
+        values = rng.standard_normal(size=(reals, num_keys)).astype(np.float32)
+        df = pl.DataFrame(values, schema=[cfg.name for cfg in parameter_configs])
+        df = df.insert_column(
+            0, pl.Series("realization", np.arange(reals, dtype=np.int32))
+        )
+        df.write_parquet(ensemble.mount_point / "SCALAR.parquet")
+
+        benchmark(ensemble.load_scalars)
 
 
 def test_plotter_on_all_snake_oil_responses_time(api_and_snake_oil_storage, benchmark):
