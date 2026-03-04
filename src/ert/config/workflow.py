@@ -8,7 +8,7 @@ from ert.base_model_context import BaseModelWithContextSupport
 
 from .parsing import ConfigValidationError, ErrorInfo, init_workflow_schema, parse
 from .parsing.types import Defines
-from .workflow_job import WorkflowJob
+from .workflow_job import ErtScriptWorkflow, WorkflowJob
 
 
 class Workflow(BaseModelWithContextSupport):
@@ -66,6 +66,15 @@ class Workflow(BaseModelWithContextSupport):
                         ).set_context(job_name_with_context)
                     )
                     continue
+                if isinstance(job, ErtScriptWorkflow):
+                    try:
+                        job.load_ert_script_class().validate(instructions)
+                    except ConfigValidationError as err:
+                        errors.append(
+                            ErrorInfo(message=str(err)).set_context(
+                                job_name_with_context
+                            )
+                        )
 
                 all_workflow_jobs.append((job_name_with_context, instructions))
 
