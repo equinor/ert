@@ -51,8 +51,8 @@ pip install ert[everest]
 
 We use uv to have one synchronized development environment for all packages.
 See [installing uv](https://docs.astral.sh/uv/getting-started/installation/). We
-recommend either installing uv using your systems package manager, or creating
-a small virtual environment you intall base packages into (such as `uv` and `pre-commit`).
+recommend installing uv using your system's package manager, or into a small
+dedicated virtual environment.
 
 Once uv is installed, you can get a development environment by running:
 
@@ -121,18 +121,18 @@ uv run sphinx-autobuild docs docs/_build/html
 ### Style requirements
 
 There are a set of style requirements, which are gathered in the `pre-commit`
-configuration, to have it automatically run on each commit do:
+configuration. After running `uv sync --all-groups`, `pre-commit` is already
+available. To have it automatically run on each commit:
 
 ```sh
-pip install pre-commit
-pre-commit install
+uv run pre-commit install
 ```
 
 There is also a pre-push hook configured in `pre-commit` to run a collection of
 relatively fast tests, to install this hook:
 
 ```sh
-pre-commit install --hook-type pre-push
+uv run pre-commit install --hook-type pre-push
 ```
 
 
