@@ -4,6 +4,7 @@ import asyncio
 import itertools
 import json
 import logging
+import os
 import re
 import shlex
 import shutil
@@ -281,6 +282,13 @@ class LsfDriver(Driver):
         self._bsub_cmd = Path(bsub_cmd or shutil.which("bsub") or "bsub")
         self._bjobs_cmd = Path(bjobs_cmd or shutil.which("bjobs") or "bjobs")
         self._bkill_cmd = Path(bkill_cmd or shutil.which("bkill") or "bkill")
+
+        if not shutil.which(self._bsub_cmd):
+            logger.error(
+                "No bsub command found in PATH, "
+                f"job submissions are likely to fail, PATH={os.getenv('PATH')}, "
+                f"bsub_cmd={self._bsub_cmd}"
+            )
 
         self._jobs: MutableMapping[str, JobData] = {}
         self._iens2jobid: MutableMapping[int, str] = {}
