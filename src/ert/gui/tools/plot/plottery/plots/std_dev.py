@@ -28,7 +28,9 @@ class StdDevPlot:
         std_dev_data: dict[str, npt.NDArray[np.float32]],
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
-        ensemble_count = len(plot_context.ensembles())
+        ensembles = plot_context.ensembles()
+        if (ensemble_count := len(ensembles)) == 0:
+            return
         layer = plot_context.layer
         if layer is not None:
             vmin: float = np.inf
@@ -40,7 +42,7 @@ class StdDevPlot:
             figure.set_layout_engine("constrained")
             gridspec = figure.add_gridspec(2, ensemble_count, hspace=0.2)
 
-            for i, ensemble in enumerate(reversed(plot_context.ensembles()), start=1):
+            for i, ensemble in enumerate(reversed(ensembles), start=1):
                 ax_heat = figure.add_subplot(gridspec[0, i - 1])
                 ax_box = figure.add_subplot(gridspec[1, i - 1])
                 data = std_dev_data[ensemble.name]

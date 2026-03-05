@@ -49,3 +49,18 @@ def test_stddev_plot_shows_boxplot(plot_context: PlotContext):
         annotation[0].get_text()
         == f"Min: {min_value:.2f}\nMean: {mean_value:.2f}\nMax: {max_value:.2f}"
     )
+
+
+def test_that_stddev_plot_does_not_crash_and_returns_early_when_no_ensembles():
+    figure = Figure()
+    context = Mock(spec=PlotContext)
+    context.ensembles.return_value = []
+    context.layer = 0
+    StdDevPlot().plot(
+        figure,
+        context,
+        {},
+        {},
+        {},
+    )
+    assert len(figure.axes) == 0
