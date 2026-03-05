@@ -660,6 +660,9 @@ class LocalEnsemble(BaseMode):
             and (group is None or p.group_name == group)
         ]
 
+        if not gen_kws:
+            return pl.DataFrame()
+
         df = self.load_scalar_keys(
             [config.name for config in gen_kws], realizations, transformed=True
         )
