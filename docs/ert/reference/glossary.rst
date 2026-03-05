@@ -46,10 +46,10 @@ It is not about being correct, it is about being relevant and coherent.
         simulate and reason about than the template model.
 
     ensemble
-        As the name hints towards, ERT's approach to studying a template model, is to
-        create an ensemble of realisations. In particular, an ensemble is a list of
-        realisations. The idea is that with a sufficiently large ensemble the
-        uncertainty of the template model is represented by the ensemble. An ensemble
+        An ensemble is a list of realisations, i.e. a set of execution results of the
+        same iteration of the same forward model for various input values (parameters).
+        The idea is that with a sufficiently large ensemble the uncertainty of the model
+        is represented by the ensemble. An ensemble
         consists of input parameters and the corresponding responses of the forward model, and
         each ensemble can trace its lineage to its parent ensemble and the experiment.
         When we talk about about prior and posterior ensembles this is in the context of
@@ -66,12 +66,14 @@ It is not about being correct, it is about being relevant and coherent.
                prior = posterior
 
     experiment
-        An experiment consists of a set of ensembles, which are related via update
-        steps. For example you might have a prior ensemble that results in a
-        posterior ensemble by running the ensemble smoother algorithm.
-        We define an experiment as a set of parameter definitions and a set of
-        observation values. That means that the parameter definitions and the
-        observation values as shared by all ensembles in an experiment.
+        We define an experiment as a complete specification for running an ensemble of
+        models, which includes the parameter definitions and a set of observation values and
+        their responses. It also includes the specification of the forward model, and the
+        update method to be applied on the ensemble as well as the update settings. An
+        experiment consists of one or more ensembles, which are related via
+        zero or more update steps. In the case of ensemble smoother you will have one
+        prior ensemble and one posterior ensemble, while for multiple data assimilation
+        there will be multiple posterior ensembles.
 
     evaluating an ensemble
         Recall that a realisation consists of a forward model :code:`fm` together with input
