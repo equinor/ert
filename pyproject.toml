@@ -117,6 +117,7 @@ dev = [
     "scikit-image",
     "sphinx",
     "sphinx-argparse",
+    "sphinx-autobuild",
     "sphinx-autoapi",
     "sphinx-copybutton",
     "sphinxcontrib.datatemplates",
