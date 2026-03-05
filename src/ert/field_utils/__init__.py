@@ -12,6 +12,7 @@ from .field_utils import (
     read_mask,
     save_field,
     transform_local_ellipse_angle_to_local_coords,
+    transform_observation_locations,
     transform_positions_to_local_field_coordinates,
 )
 
@@ -27,5 +28,6 @@ __all__ = [
     "read_mask",
     "save_field",
     "transform_local_ellipse_angle_to_local_coords",
+    "transform_observation_locations",
     "transform_positions_to_local_field_coordinates",
 ]

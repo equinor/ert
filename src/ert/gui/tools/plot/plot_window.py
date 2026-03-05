@@ -26,10 +26,7 @@ from PyQt6.QtWidgets import (
 from ert.config import BreakthroughConfig
 from ert.config.field import Field
 from ert.dark_storage.common import get_storage_api_version
-from ert.field_utils import (
-    AxisOrientation,
-    transform_positions_to_local_field_coordinates,
-)
+from ert.field_utils import transform_observation_locations
 from ert.gui.ertwidgets import CopyButton, showWaitCursorWhileWaiting
 from ert.services import ServerBootFail
 from ert.utils import log_duration
@@ -408,41 +405,9 @@ class PlotWindow(QMainWindow):
                 plot_widget.showLayerWidget.emit(True)
                 layers = key_def.parameter.ertbox_params.nz
                 plot_widget.updateLayerWidget.emit(layers)
-                # select observations with locations
-                if (
-                    key_def.parameter.ertbox_params.origin is not None
-                    and key_def.parameter.ertbox_params.rotation_angle is not None
-                ):
-                    obs_loc_df = self._api.observation_locations()
-                    if not obs_loc_df.empty:
-                        xpos, ypos = transform_positions_to_local_field_coordinates(
-                            key_def.parameter.ertbox_params.origin,
-                            key_def.parameter.ertbox_params.rotation_angle,
-                            obs_loc_df["east"].to_numpy(dtype=np.float64),
-                            obs_loc_df["north"].to_numpy(dtype=np.float64),
-                        )
-                        height, width = (
-                            key_def.parameter.ertbox_params.ny,
-                            key_def.parameter.ertbox_params.nx,
-                        )
-                        if (
-                            key_def.parameter.ertbox_params.axis_orientation
-                            == AxisOrientation.RIGHT_HANDED
-                        ):
-                            ypos = height - ypos
-
-                        inside_box = (
-                            np.isfinite(xpos)
-                            & np.isfinite(ypos)
-                            & (xpos >= 0)
-                            & (xpos < width)
-                            & (ypos >= 0)
-                            & (ypos < height)
-                        )
-
-                        obs_loc = np.column_stack(
-                            (xpos[inside_box], ypos[inside_box])
-                        ).astype(np.float32)
+                obs_loc = transform_observation_locations(
+                    self._api.observation_locations(), key_def.parameter.ertbox_params
+                )
                 if layer is None:
                     plot_widget.resetLayerWidget.emit()
                     layer = 0
