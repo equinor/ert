@@ -115,8 +115,16 @@ and then open the generated `./ert_docs/index.html` or
 To automatically reload on changes you may use
 
 ```sh
-uv run sphinx-autobuild docs docs/_build/html
+uv run sphinx-autobuild docs/ert docs/ert/_build/html
 ```
+
+for ert and
+
+```sh
+uv run sphinx-autobuild docs/everest docs/everest/_build/html
+```
+
+for everest.
 
 ### Style requirements
 
