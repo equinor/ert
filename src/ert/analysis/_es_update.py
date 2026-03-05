@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, TextIO
 import numpy as np
 import polars as pl
 
-from ert.config import Field, ObservationSettings, SurfaceConfig
+from ert.config import ESSettings, Field, ObservationSettings, SurfaceConfig
 
 from ._update_commons import (
     ErtAnalysisError,
@@ -352,13 +352,24 @@ def smoother_update(
     posterior_storage: Ensemble,
     observations: Iterable[str],
     update_settings: ObservationSettings,
-    strategy_map: dict[str, UpdateStrategy],
+    strategy_map: dict[str, UpdateStrategy] | None = None,
     progress_callback: Callable[[AnalysisEvent], None] | None = None,
     global_scaling: float = 1.0,
     active_realizations: list[bool] | None = None,
 ) -> SmootherSnapshot:
     if not progress_callback:
         progress_callback = noop_progress_callback
+
+    if strategy_map is None:
+        settings = ESSettings()
+        experiment = prior_storage.experiment
+        strategy_map = build_strategy_map(
+            parameters=experiment.update_parameters,
+            param_configs=experiment.parameter_configuration,
+            inversion=settings.inversion,
+            enkf_truncation=settings.enkf_truncation,
+            progress_callback=progress_callback,
+        )
 
     ens_mask = prior_storage.get_realization_mask_with_responses()
     ens_mask = _create_combined_ensemble_mask(ens_mask, active_realizations)

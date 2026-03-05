@@ -301,20 +301,11 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
         )
         events = []
 
-        es_settings = ESSettings()
-        strategy_map = build_strategy_map(
-            parameters=["coeff_0"],
-            param_configs=prior.experiment.parameter_configuration,
-            inversion=es_settings.inversion,
-            enkf_truncation=es_settings.enkf_truncation,
-            progress_callback=events.append,
-        )
         ss = smoother_update(
             prior,
             posterior,
             experiment.observation_keys,
             ObservationSettings(auto_scale_observations=[["OBS*"]]),
-            strategy_map,
             progress_callback=events.append,
         )
 
@@ -648,20 +639,11 @@ def test_update_only_using_subset_observations(
     )
     events = []
 
-    es_settings = ESSettings()
-    strategy_map = build_strategy_map(
-        parameters=ert_config.ensemble_config.parameters,
-        param_configs=prior_ens.experiment.parameter_configuration,
-        inversion=es_settings.inversion,
-        enkf_truncation=es_settings.enkf_truncation,
-        progress_callback=events.append,
-    )
     smoother_update(
         prior_ens,
         posterior_ens,
         ["WPR_DIFF_1"],
         ObservationSettings(),
-        strategy_map,
         progress_callback=events.append,
     )
 
@@ -1013,13 +995,6 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
         name="posterior",
         prior_ensemble=prior,
     )
-    es_settings = ESSettings()
-    strategy_map = build_strategy_map(
-        parameters=["KEY_1"],
-        param_configs=prior.experiment.parameter_configuration,
-        inversion=es_settings.inversion,
-        enkf_truncation=es_settings.enkf_truncation,
-    )
     with pytest.raises(
         ErtAnalysisError,
         match="No active observations",
@@ -1029,7 +1004,6 @@ def test_gen_data_obs_data_mismatch(storage, uniform_parameter):
             posterior_ens,
             ["OBSERVATION"],
             ObservationSettings(),
-            strategy_map,
         )
 
 
@@ -1084,20 +1058,11 @@ def test_gen_data_missing(storage, uniform_parameter, obs):
     )
     events = []
 
-    es_settings = ESSettings()
-    strategy_map = build_strategy_map(
-        parameters=["KEY_1"],
-        param_configs=prior.experiment.parameter_configuration,
-        inversion=es_settings.inversion,
-        enkf_truncation=es_settings.enkf_truncation,
-        progress_callback=events.append,
-    )
     update_snapshot = smoother_update(
         prior,
         posterior_ens,
         ["OBSERVATION"],
         ObservationSettings(),
-        strategy_map,
         progress_callback=events.append,
     )
 
@@ -1181,19 +1146,11 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
         name="posterior",
         prior_ensemble=prior,
     )
-    es_settings = ESSettings()
-    strategy_map = build_strategy_map(
-        parameters=["KEY_1"],
-        param_configs=prior.experiment.parameter_configuration,
-        inversion=es_settings.inversion,
-        enkf_truncation=es_settings.enkf_truncation,
-    )
     smoother_update(
         prior,
         posterior_ens,
         ["OBSERVATION"],
         ObservationSettings(),
-        strategy_map,
         active_realizations=active_realizations,
     )
 

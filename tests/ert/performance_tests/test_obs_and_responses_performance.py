@@ -10,12 +10,10 @@ import polars as pl
 import pytest
 
 from ert.analysis import (
-    build_strategy_map,
     enif_update,
     smoother_update,
 )
 from ert.config import (
-    ESSettings,
     GenDataConfig,
     GenKwConfig,
     ObservationSettings,
@@ -535,21 +533,13 @@ def setup_es_benchmark(tmp_path, request):
     sys.platform.startswith("darwin"), reason="Currently failing on mac"
 )
 def test_memory_performance_of_doing_es_update(setup_es_benchmark, tmp_path):
-    _, prior, posterior, gen_kw_names, expected_performance = setup_es_benchmark
+    _, prior, posterior, _, expected_performance = setup_es_benchmark
     with memray.Tracker(tmp_path / "memray.bin"):
-        es_settings = ESSettings()
-        strategy_map = build_strategy_map(
-            parameters=gen_kw_names,
-            param_configs=prior.experiment.parameter_configuration,
-            inversion=es_settings.inversion,
-            enkf_truncation=es_settings.enkf_truncation,
-        )
         smoother_update(
             prior,
             posterior,
             prior.experiment.observation_keys,
             ObservationSettings(),
-            strategy_map,
         )
 
     stats = memray._memray.compute_statistics(str(tmp_path / "memray.bin"))
@@ -558,25 +548,17 @@ def test_memory_performance_of_doing_es_update(setup_es_benchmark, tmp_path):
 
 
 def test_speed_performance_of_doing_es_update(setup_es_benchmark, benchmark):
-    alias, prior, posterior, gen_kw_names, _ = setup_es_benchmark
+    alias, prior, posterior, _, _ = setup_es_benchmark
 
     if alias != "small":
         pytest.skip()
 
     def run():
-        es_settings = ESSettings()
-        strategy_map = build_strategy_map(
-            parameters=gen_kw_names,
-            param_configs=prior.experiment.parameter_configuration,
-            inversion=es_settings.inversion,
-            enkf_truncation=es_settings.enkf_truncation,
-        )
         smoother_update(
             prior,
             posterior,
             prior.experiment.observation_keys,
             ObservationSettings(),
-            strategy_map,
         )
 
     benchmark(run)
