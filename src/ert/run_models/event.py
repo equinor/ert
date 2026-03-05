@@ -19,7 +19,6 @@ from ert.ensemble_evaluator.event import (
     StartEvent,
     WarningEvent,
 )
-from ert.run_models._create_run_path import RunPathCreationEvent
 
 
 class RunModelEvent(BaseModel):
@@ -87,6 +86,17 @@ class RunModelErrorEvent(RunModelEvent):
     def write_as_csv(self, output_path: Path | None) -> None:
         if output_path and self.data:
             self.data.to_csv("Report", output_path / str(self.run_id))
+
+
+class RunPathCreationEvent(BaseModel):
+    event_type: Literal["RunPathCreationEvent"] = "RunPathCreationEvent"
+    sub_type: Literal[
+        "StartingTotalRunPathCreation",
+        "FinishedTotalRunPathCreation",
+        "TotalRunPathCreationUpdate",
+    ]
+    runpath_number: int | None = None
+    total_runpaths_to_create: int | None = None
 
 
 StatusEvents = (

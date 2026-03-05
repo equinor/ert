@@ -64,7 +64,11 @@ class RunpathCreationProgressBar(QWidget):
 
     def handle_event(self, event: RunPathCreationEvent) -> None:
         if event.sub_type == "StartingTotalRunPathCreation":
-            self._total = event.total_runpaths_to_create or 1
+            self._total = (
+                1
+                if event.total_runpaths_to_create is None
+                else event.total_runpaths_to_create
+            )
             self._bar.setRange(0, self._total)
             self._bar.setValue(0)
             self._label.setText(f"0 / {self._total} runpaths created")

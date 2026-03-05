@@ -62,11 +62,11 @@ from ert.run_models import (
     RunModelUpdateEndEvent,
     StatusEvents,
 )
-from ert.run_models._create_run_path import RunPathCreationEvent
 from ert.run_models.event import (
     EverestBatchResultEvent,
     RunModelDataEvent,
     RunModelErrorEvent,
+    RunPathCreationEvent,
 )
 from ert.shared.status.utils import (
     byte_with_unit,
@@ -633,7 +633,11 @@ class RunDialog(QFrame):
                     self._tab_widget.setCurrentIndex(tab_index)
                     runpath_creation_progress_widget.handle_event(event)
                 elif event.sub_type == "FinishedTotalRunPathCreation":
-                    self._tab_widget.removeTab(self._tab_widget.count() - 1)
+                    last_index = self._tab_widget.count() - 1
+                    runpath_widget = self._tab_widget.widget(last_index)
+                    self._tab_widget.removeTab(last_index)
+                    if isinstance(runpath_widget, RunpathCreationProgressBar):
+                        runpath_widget.deleteLater()
                 else:
                     runpath_widget = self._tab_widget.widget(
                         self._tab_widget.count() - 1

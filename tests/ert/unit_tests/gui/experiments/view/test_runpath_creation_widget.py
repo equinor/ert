@@ -3,7 +3,7 @@ from __future__ import annotations
 from pytestqt.qtbot import QtBot
 
 from ert.gui.experiments.view.runpath_creation_widget import RunpathCreationProgressBar
-from ert.run_models._create_run_path import RunPathCreationEvent
+from ert.run_models.event import RunPathCreationEvent
 
 
 def _start(total: int = 5) -> RunPathCreationEvent:

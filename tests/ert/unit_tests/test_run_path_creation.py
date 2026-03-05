@@ -22,10 +22,10 @@ from ert.config.parsing import lark_parser
 from ert.plugins import get_site_plugins
 from ert.run_arg import create_run_arguments
 from ert.run_models._create_run_path import (
-    RunPathCreationEvent,
     _make_param_substituter,
     create_run_path,
 )
+from ert.run_models.event import RunPathCreationEvent
 from ert.runpaths import Runpaths
 from ert.sample_prior import sample_prior
 from ert.storage import (

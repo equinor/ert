@@ -10,11 +10,10 @@ from collections.abc import Callable, Iterable, Mapping
 from copy import deepcopy
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any
 
 import orjson
 import polars as pl
-from pydantic import BaseModel
 
 from _ert.utils import file_safe_timestamp
 from ert.config import (
@@ -29,6 +28,7 @@ from ert.config import (
 from ert.config.design_matrix import DESIGN_MATRIX_GROUP
 from ert.config.distribution import LogNormalSettings, LogUnifSettings
 from ert.config.ert_config import create_forward_model_json
+from ert.run_models.event import RunPathCreationEvent
 from ert.substitutions import Substitutions, substitute_runpath_name
 from ert.utils import log_duration
 
@@ -261,17 +261,6 @@ def _make_param_substituter(
             param_substituter[f"<{param_name}>"] = formatted_value
 
     return param_substituter
-
-
-class RunPathCreationEvent(BaseModel):
-    event_type: Literal["RunPathCreationEvent"] = "RunPathCreationEvent"
-    sub_type: Literal[
-        "StartingTotalRunPathCreation",
-        "FinishedTotalRunPathCreation",
-        "TotalRunPathCreationUpdate",
-    ]
-    runpath_number: int | None = None
-    total_runpaths_to_create: int | None = None
 
 
 @log_duration(logger, logging.INFO)
