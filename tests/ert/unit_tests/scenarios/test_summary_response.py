@@ -9,8 +9,11 @@ import pandas as pd
 import pytest
 from resdata.summary import Summary
 
-from ert.analysis import ErtAnalysisError, smoother_update
-from ert.config import ErtConfig, ESSettings, ObservationSettings
+from ert.analysis import (
+    ErtAnalysisError,
+    smoother_update,
+)
+from ert.config import ErtConfig, ObservationSettings
 from ert.data import MeasuredData
 from ert.sample_prior import sample_prior
 from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
@@ -118,9 +121,7 @@ def test_that_reading_matching_time_is_ok(ert_config, storage, prior_ensemble):
         prior_ensemble,
         target_ensemble,
         prior_ensemble.experiment.observation_keys,
-        ert_config.ensemble_config.parameters,
         ObservationSettings(),
-        ESSettings(),
     )
 
 
@@ -153,9 +154,7 @@ def test_that_mismatched_responses_give_error(ert_config, storage, prior_ensembl
             prior_ensemble,
             target_ensemble,
             prior_ensemble.experiment.observation_keys,
-            ert_config.ensemble_config.parameters,
             ObservationSettings(),
-            ESSettings(),
         )
 
 
@@ -192,9 +191,7 @@ def test_that_different_length_is_ok_as_long_as_observation_time_exists(
         prior_ensemble,
         target_ensemble,
         prior_ensemble.experiment.observation_keys,
-        ert_config.ensemble_config.parameters,
         ObservationSettings(),
-        ESSettings(),
     )
 
 
@@ -246,9 +243,7 @@ def test_that_duplicate_summary_time_steps_does_not_fail(
         prior_ensemble,
         target_ensemble,
         prior_ensemble.experiment.observation_keys,
-        ert_config.ensemble_config.parameters,
         ObservationSettings(),
-        ESSettings(),
     )
 
 

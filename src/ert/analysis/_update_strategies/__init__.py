@@ -18,7 +18,7 @@ Example usage:
 
     # Create strategies with dependencies
     standard_strategy = StandardESUpdate(
-        smoother_snapshot, settings.inversion, settings.enkf_truncation,
+        settings.inversion, settings.enkf_truncation,
         rng, progress_callback,
     )
     adaptive_strategy = AdaptiveLocalizationUpdate(

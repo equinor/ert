@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import functools
 import logging
 
 import numpy as np
@@ -16,10 +15,8 @@ from ert.run_models.initial_ensemble_run_model import (
     InitialEnsembleRunModelConfig,
 )
 from ert.run_models.update_run_model import UpdateRunModel, UpdateRunModelConfig
-from ert.storage import Ensemble
 from ert.trace import tracer
 
-from ..analysis import smoother_update
 from ..run_arg import create_run_arguments
 from .run_model import ErtRunError, ExperimentType
 
@@ -79,26 +76,6 @@ class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmoother
                 storage=self._storage,
                 ensemble=posterior,
             ),
-        )
-
-    def update_ensemble_parameters(
-        self, prior: Ensemble, posterior: Ensemble, weight: float
-    ) -> None:
-        smoother_update(
-            prior,
-            posterior,
-            update_settings=self.update_settings,
-            es_settings=self.analysis_settings,
-            parameters=prior.experiment.update_parameters,
-            observations=prior.experiment.observation_keys,
-            global_scaling=weight,
-            rng=self._rng,
-            progress_callback=functools.partial(
-                self.send_smoother_event,
-                prior.iteration,
-                prior.id,
-            ),
-            active_realizations=self.active_realizations,
         )
 
     @classmethod
