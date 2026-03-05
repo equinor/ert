@@ -500,7 +500,6 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
                     new_prior,
                     new_posterior,
                     experiment.observation_keys,
-                    config.ensemble_config.parameters,
                     ObservationSettings(),
                     strategy_map,
                 )

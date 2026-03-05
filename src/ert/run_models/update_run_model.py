@@ -80,7 +80,6 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
             posterior,
             update_settings=self.update_settings,
             strategy_map=strategy_map,
-            parameters=prior.experiment.update_parameters,
             observations=prior.experiment.observation_keys,
             global_scaling=weight,
             progress_callback=progress_callback,

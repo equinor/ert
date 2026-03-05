@@ -548,7 +548,6 @@ def test_memory_performance_of_doing_es_update(setup_es_benchmark, tmp_path):
             prior,
             posterior,
             prior.experiment.observation_keys,
-            gen_kw_names,
             ObservationSettings(),
             strategy_map,
         )
@@ -576,7 +575,6 @@ def test_speed_performance_of_doing_es_update(setup_es_benchmark, benchmark):
             prior,
             posterior,
             prior.experiment.observation_keys,
-            gen_kw_names,
             ObservationSettings(),
             strategy_map,
         )

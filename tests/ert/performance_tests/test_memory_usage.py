@@ -81,7 +81,6 @@ def test_memory_smoothing(poly_template):
                 prior_ens,
                 posterior_ens,
                 list(experiment.observation_keys),
-                list(ert_config.ensemble_config.parameters),
                 ObservationSettings(),
                 strategy_map,
             )

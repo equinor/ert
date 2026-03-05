@@ -167,7 +167,6 @@ def test_and_benchmark_adaptive_localization_with_fields(
         prior_ensemble,
         posterior_ensemble,
         ["OBSERVATION"],
-        [param_group],
         ObservationSettings(),
         strategy_map,
     )

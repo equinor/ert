@@ -429,7 +429,6 @@ def test_that_manual_update_from_migrated_storage_works(
                 prior_ens,
                 posterior_ens,
                 list(experiment.observation_keys),
-                list(ert_config.ensemble_config.parameters),
                 ObservationSettings(),
                 strategy_map,
             )

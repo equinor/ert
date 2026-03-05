@@ -71,7 +71,6 @@ def _create_combined_ensemble_mask(
 
 
 def perform_ensemble_update(
-    parameters: Iterable[str],
     observations: Iterable[str],
     observation_settings: ObservationSettings,
     global_scaling: float,
@@ -93,8 +92,6 @@ def perform_ensemble_update(
 
     Parameters
     ----------
-    parameters : Iterable[str]
-        Names of parameter groups to update.
     observations : Iterable[str]
         Names of observations to use.
     observation_settings : ObservationSettings
@@ -117,6 +114,7 @@ def perform_ensemble_update(
     SmootherSnapshot
         Snapshot containing observation/response data and metadata.
     """
+    parameters = list(strategy_map.keys())
     iens_active_index = np.flatnonzero(ens_mask)
 
     # Preprocess observations and responses
@@ -353,7 +351,6 @@ def smoother_update(
     prior_storage: Ensemble,
     posterior_storage: Ensemble,
     observations: Iterable[str],
-    parameters: Iterable[str],
     update_settings: ObservationSettings,
     strategy_map: dict[str, UpdateStrategy],
     progress_callback: Callable[[AnalysisEvent], None] | None = None,
@@ -400,7 +397,6 @@ def smoother_update(
 
             warnings.showwarning = log_warning
             smoother_snapshot = perform_ensemble_update(
-                parameters,
                 observations,
                 update_settings,
                 global_scaling,
