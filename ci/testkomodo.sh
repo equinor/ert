@@ -39,7 +39,6 @@ run_ert_with_opm() {
 
 # Run everest eightcells test on the cluster
 run_everest_eightcells_test() {
-
     if [[ "$CI_RUNNER_LABEL" == "azure" ]]; then
         #RUNNER_ROOT="/lustre1/users/f_scout_ci/eightcells_tests"
         echo "Skip running everest eightcells test on azure for now"
@@ -63,7 +62,6 @@ run_everest_eightcells_test() {
 
     disable_komodo
     # shellcheck source=/dev/null
-    source "${_KOMODO_ROOT}/${_FULL_RELEASE_NAME}/enable"
 
     CONFIG="everest/model/config.yml"
     if [[ "$CI_RUNNER_LABEL" == "azure" ]]; then
@@ -73,6 +71,11 @@ run_everest_eightcells_test() {
         sed -i "s/name: local/name: lsf/g" "$CONFIG"
         export PATH=$PATH:/global/bin
     fi
+
+    source "${_KOMODO_ROOT}/${_FULL_RELEASE_NAME}/enable"
+    komodoenv some_env
+    source some_env/enable
+    pip install "${CI_SOURCE_ROOT}"
 
     everest run "$CONFIG" --skip-prompt --debug --disable-monitoring
     STATUS=$?

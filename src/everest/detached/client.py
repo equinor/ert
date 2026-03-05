@@ -45,6 +45,16 @@ async def start_server(config: EverestConfig, logging_level: int) -> Driver:
     """
     Start an Everest server running the optimization defined in the config
     """
+    import os
+    import shutil
+
+    print(
+        f"DEBUG_EVEREST_CLIENT: start_server called, "
+        f"queue_system={config.server.queue_system}, "
+        f"shutil.which('bsub')={shutil.which('bsub')}, "
+        f"PATH={os.getenv('PATH')}",
+        flush=True,
+    )
     driver = create_driver(config.server.queue_system, poll_period=0.1)  # type: ignore
     try:
         args = [

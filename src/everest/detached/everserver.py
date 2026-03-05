@@ -44,6 +44,7 @@ def _configure_loggers(
 
     logging_config = {
         "version": 1,
+        "disable_existing_loggers": False,
         "handlers": {
             "endpoint_log": make_handler_config(
                 log_dir / "everserver.log", logging_level

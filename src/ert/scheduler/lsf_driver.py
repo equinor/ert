@@ -283,6 +283,21 @@ class LsfDriver(Driver):
         self._bjobs_cmd = Path(bjobs_cmd or shutil.which("bjobs") or "bjobs")
         self._bkill_cmd = Path(bkill_cmd or shutil.which("bkill") or "bkill")
 
+        init_msg = (
+            "LSF driver initialized: "
+            f"bsub_cmd={self._bsub_cmd}, "
+            f"shutil.which('bsub')={shutil.which('bsub')}, "
+            f"shutil.which(self._bsub_cmd)={shutil.which(self._bsub_cmd)}, "
+            f"PATH={os.getenv('PATH')}, "
+            f"CWD={os.getcwd()}, "
+            f"logger.disabled={logger.disabled}, "
+            f"logger.level={logger.level}, "
+            f"logger.effectiveLevel={logger.getEffectiveLevel()}, "
+            f"logger.handlers={logger.handlers}, "
+            f"root.handlers={logging.getLogger().handlers}"
+        )
+        print(f"DEBUG_LSF_INIT: {init_msg}", flush=True)
+        logger.info(init_msg)
         if not shutil.which(self._bsub_cmd):
             logger.error(
                 "No bsub command found in PATH, "
@@ -371,7 +386,15 @@ class LsfDriver(Driver):
             self._submit_locks[iens] = asyncio.Lock()
 
         async with self._submit_locks[iens]:
-            logger.debug(f"Submitting to LSF with command {shlex.join(bsub_with_args)}")
+            submit_msg = (
+                f"Submitting to LSF with command {shlex.join(bsub_with_args)}, "
+                f"shutil.which(self._bsub_cmd)={shutil.which(self._bsub_cmd)}, "
+                f"PATH={os.getenv('PATH')}, "
+                f"env keys={sorted(os.environ.keys())}"
+            )
+            print(f"DEBUG_LSF_SUBMIT: {submit_msg}", flush=True)
+            logger.info(submit_msg)
+            await asyncio.sleep(10)
             process_success, process_message = await self._execute_with_retry(
                 bsub_with_args,
                 retry_on_empty_stdout=True,
