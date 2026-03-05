@@ -612,8 +612,9 @@ guidelines given in :ref:`Creating an observation file for use with ERT<Configur
         -- Use the observations in my_observations.txt
         OBS_CONFIG my_observations.txt
 
-The OBS_CONFIG keyword is optional, but for your own convenience, it is
-strongly recommended to provide an observation file.
+The OBS_CONFIG keyword is optional and is only required when assimilating observations
+in a history matching workflow.
+If ert is used purely for running forward models or sensitivity analysis, it can be omitted.
 
 .. _runpath:
 
