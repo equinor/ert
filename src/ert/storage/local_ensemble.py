@@ -27,6 +27,7 @@ from ert.config import (
     ParameterConfig,
     SummaryConfig,
 )
+from ert.config.field import Field, field_transform
 from ert.exceptions import StorageError
 from ert.substitutions import substitute_runpath_name
 
@@ -892,7 +893,11 @@ class LocalEnsemble(BaseMode):
         data = self.load_parameters(parameter_group)
         if isinstance(data, pl.DataFrame):
             return data.drop("realization").std().to_numpy().reshape(-1)
-        return data.std("realizations")["values"].to_numpy()
+        param_config = self.experiment.parameter_configuration.get(parameter_group)
+        values = data["values"]
+        if isinstance(param_config, Field) and param_config.output_transformation:
+            values = field_transform(values, param_config.output_transformation)
+        return values.std("realizations").to_numpy()
 
     def get_parameter_state(
         self, realization: int
