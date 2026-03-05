@@ -76,12 +76,11 @@ run_everest_eightcells_test() {
 
     everest run "$CONFIG" --skip-prompt --debug --disable-monitoring
     STATUS=$?
-    popd || exit 1
-
     if [ $STATUS -ne 0 ]; then
         echo "Everest eightcells test failed. Running everest kill"
         everest kill "$CONFIG"
     fi
+    popd || exit 1
 
     # Clean up the temp folder removing folders older than 7 days
     find "$RUNNER_ROOT" -maxdepth 1 -mtime +7 -user f_scout_ci -type d -exec rm -r {} \;
