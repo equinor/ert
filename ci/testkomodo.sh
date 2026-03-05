@@ -73,9 +73,6 @@ run_everest_eightcells_test() {
     fi
 
     source "${_KOMODO_ROOT}/${_FULL_RELEASE_NAME}/enable"
-    komodoenv some_env
-    source some_env/enable
-    pip install "${CI_SOURCE_ROOT}"
 
     everest run "$CONFIG" --skip-prompt --debug --disable-monitoring
     STATUS=$?
