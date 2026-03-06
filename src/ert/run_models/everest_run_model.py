@@ -447,7 +447,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         workflow_jobs = _get_workflow_jobs(everest_config)
         hooks, workflows = _get_workflows(everest_config)
         _, hooked_workflows = create_and_hook_workflows(
-            hooks, workflows, workflow_jobs, substitutions
+            hooks, [], [], workflows, workflow_jobs, substitutions
         )
 
         install_job_fm_steps = {

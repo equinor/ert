@@ -126,6 +126,15 @@ def hook_workflow_keyword() -> SchemaItem:
     )
 
 
+def hook_workflow_job_keyword() -> SchemaItem:
+    return SchemaItem(
+        kw=ConfigKeys.HOOK_WORKFLOW_JOB,
+        argc_min=3,
+        argc_max=None,
+        multi_occurrence=True,
+    )
+
+
 def set_env_keyword() -> SchemaItem:
     # You can set environment variables which will be applied to the run-time
     # environment.
@@ -163,6 +172,15 @@ def load_workflow_job_keyword() -> SchemaItem:
         argc_max=2,
         multi_occurrence=True,
         type_map=[SchemaItemType.EXISTING_PATH],
+    )
+
+
+def create_workflow_from_job_keyword() -> SchemaItem:
+    return SchemaItem(
+        kw=ConfigKeys.CREATE_WORKFLOW_FROM_JOB,
+        argc_min=2,
+        argc_max=None,
+        multi_occurrence=True,
     )
 
 
@@ -350,6 +368,8 @@ def init_user_config_schema() -> ConfigSchemaDict:
         install_job_keyword(),
         install_job_directory_keyword(),
         hook_workflow_keyword(),
+        hook_workflow_job_keyword(),
+        create_workflow_from_job_keyword(),
     ]:
         schema[item.kw] = item
         if item.kw in ConfigAliases:
