@@ -71,7 +71,7 @@ def test_missing_runpath_has_isolated_failures(
         return inner
 
     try:
-        for gui in open_gui_with_config(tmp_path / "config.ert"):
+        with open_gui_with_config(tmp_path / "config.ert") as gui:
             qtbot.addWidget(gui)
             run_experiment(EnsembleExperiment, gui, click_done=False)
             run_dialog = wait_for_child(gui, qtbot, RunDialog, timeout=10000)
@@ -127,7 +127,7 @@ def test_missing_runpath_does_not_show_waiting_bar(
         return inner
 
     try:
-        for gui in open_gui_with_config(tmp_path / "config.ert"):
+        with open_gui_with_config(tmp_path / "config.ert") as gui:
             qtbot.addWidget(gui)
             run_experiment(EnsembleExperiment, gui, click_done=False)
             run_dialog = wait_for_child(gui, qtbot, RunDialog, timeout=10000)

@@ -48,6 +48,7 @@ def setup_svg_search_path():
     )
 
 
+@contextmanager
 def open_gui_with_config(config_path) -> Iterator[ErtMainWindow]:
     with (
         _open_main_window(config_path) as (
@@ -65,7 +66,8 @@ def opened_main_window_poly(
 ) -> Iterator[ErtMainWindow]:
     monkeypatch.chdir(tmp_path)
     _new_poly_example(source_root, tmp_path)
-    yield from open_gui_with_config(tmp_path / "poly.ert")
+    with open_gui_with_config(tmp_path / "poly.ert") as gui:
+        yield gui
 
 
 def _new_poly_example(
@@ -109,7 +111,8 @@ def _open_main_window(path) -> Iterator[tuple[ErtMainWindow, Storage, ErtConfig]
 def opened_main_window_minimal_realizations(source_root, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     _new_poly_example(source_root, tmp_path, 2)
-    yield from open_gui_with_config(tmp_path / "poly.ert")
+    with open_gui_with_config(tmp_path / "poly.ert") as gui:
+        yield gui
 
 
 @pytest.fixture(scope="module")
@@ -256,7 +259,8 @@ def _ensemble_experiment_has_run(
         run_experiment, source_root, tmp_path_factory, failing_reals, with_templates
     )
     shutil.copytree(test_files, tmp_path, dirs_exist_ok=True)
-    yield from open_gui_with_config(tmp_path / "poly.ert")
+    with open_gui_with_config(tmp_path / "poly.ert") as gui:
+        yield gui
 
 
 @pytest.fixture(name="run_experiment", scope="module")
