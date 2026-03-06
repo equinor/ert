@@ -1,3 +1,4 @@
+import asyncio
 import math
 import re
 from pathlib import Path
@@ -219,16 +220,18 @@ def test_gen_kw_is_log_or_not(
             experiment_id, name="prior", ensemble_size=1
         )
         sample_prior(prior_ensemble, [0], 123, 1)
-        create_run_path(
-            run_args=run_args(ert_config, prior_ensemble),
-            ensemble=prior_ensemble,
-            runpaths=Runpaths.from_config(ert_config),
-            user_config_file=ert_config.user_config_file,
-            forward_model_steps=ert_config.forward_model_steps,
-            env_vars=ert_config.env_vars,
-            env_pr_fm_step=ert_config.env_pr_fm_step,
-            substitutions=ert_config.substitutions,
-            parameters_file="parameters",
+        asyncio.run(
+            create_run_path(
+                run_args=run_args(ert_config, prior_ensemble),
+                ensemble=prior_ensemble,
+                runpaths=Runpaths.from_config(ert_config),
+                user_config_file=ert_config.user_config_file,
+                forward_model_steps=ert_config.forward_model_steps,
+                env_vars=ert_config.env_vars,
+                env_pr_fm_step=ert_config.env_pr_fm_step,
+                substitutions=ert_config.substitutions,
+                parameters_file="parameters",
+            )
         )
         assert re.match(
             parameters_regex,

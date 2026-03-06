@@ -108,16 +108,18 @@ def test_that_create_run_path_overwrites_symlinks_by_file(
         random_seed=ert_config.random_seed,
         num_realizations=prior_ensemble.ensemble_size,
     )
-    create_run_path(
-        run_args=run_args,
-        ensemble=prior_ensemble,
-        user_config_file=ert_config.user_config_file,
-        forward_model_steps=ert_config.forward_model_steps,
-        env_vars=ert_config.env_vars,
-        env_pr_fm_step=ert_config.env_pr_fm_step,
-        substitutions=ert_config.substitutions,
-        parameters_file="parameters",
-        runpaths=runpaths,
+    asyncio.run(
+        create_run_path(
+            run_args=run_args,
+            ensemble=prior_ensemble,
+            user_config_file=ert_config.user_config_file,
+            forward_model_steps=ert_config.forward_model_steps,
+            env_vars=ert_config.env_vars,
+            env_pr_fm_step=ert_config.env_pr_fm_step,
+            substitutions=ert_config.substitutions,
+            parameters_file="parameters",
+            runpaths=runpaths,
+        )
     )
 
     # replace field file with symlink
@@ -129,16 +131,18 @@ def test_that_create_run_path_overwrites_symlinks_by_file(
     os.symlink(targetpath, linkpath)
 
     # recreate directory structure
-    create_run_path(
-        run_args=run_args,
-        ensemble=prior_ensemble,
-        user_config_file=ert_config.user_config_file,
-        forward_model_steps=ert_config.forward_model_steps,
-        env_vars=ert_config.env_vars,
-        env_pr_fm_step=ert_config.env_pr_fm_step,
-        substitutions=ert_config.substitutions,
-        parameters_file="parameters",
-        runpaths=runpaths,
+    asyncio.run(
+        create_run_path(
+            run_args=run_args,
+            ensemble=prior_ensemble,
+            user_config_file=ert_config.user_config_file,
+            forward_model_steps=ert_config.forward_model_steps,
+            env_vars=ert_config.env_vars,
+            env_pr_fm_step=ert_config.env_pr_fm_step,
+            substitutions=ert_config.substitutions,
+            parameters_file="parameters",
+            runpaths=runpaths,
+        )
     )
 
     # ensure field symlink is replaced by file
@@ -170,16 +174,18 @@ def make_run_path(run_args, storage):
         sample_prior(prior_ensemble, [0], 123, 1)
         runargs = run_args(ert_config, prior_ensemble, 1)
         runpaths = Runpaths.from_config(ert_config)
-        create_run_path(
-            run_args=runargs,
-            ensemble=prior_ensemble,
-            user_config_file=ert_config.user_config_file,
-            forward_model_steps=ert_config.forward_model_steps,
-            env_vars=ert_config.env_vars,
-            env_pr_fm_step=ert_config.env_pr_fm_step,
-            substitutions=ert_config.substitutions,
-            parameters_file="parameters",
-            runpaths=runpaths,
+        asyncio.run(
+            create_run_path(
+                run_args=runargs,
+                ensemble=prior_ensemble,
+                user_config_file=ert_config.user_config_file,
+                forward_model_steps=ert_config.forward_model_steps,
+                env_vars=ert_config.env_vars,
+                env_pr_fm_step=ert_config.env_pr_fm_step,
+                substitutions=ert_config.substitutions,
+                parameters_file="parameters",
+                runpaths=runpaths,
+            )
         )
         return prior_ensemble, runargs, runpaths
 
@@ -262,16 +268,18 @@ def test_that_run_template_replace_symlink_does_not_write_to_source(
         "I don't want to replace in this file", encoding="utf-8"
     )
     os.symlink("start.txt", run_path / "result.txt")
-    create_run_path(
-        run_args=run_arg,
-        ensemble=prior_ensemble,
-        user_config_file=ert_config.user_config_file,
-        env_vars=ert_config.env_vars,
-        env_pr_fm_step=ert_config.env_pr_fm_step,
-        forward_model_steps=ert_config.forward_model_steps,
-        substitutions=ert_config.substitutions,
-        parameters_file="parameters",
-        runpaths=Runpaths.from_config(ert_config),
+    asyncio.run(
+        create_run_path(
+            run_args=run_arg,
+            ensemble=prior_ensemble,
+            user_config_file=ert_config.user_config_file,
+            env_vars=ert_config.env_vars,
+            env_pr_fm_step=ert_config.env_pr_fm_step,
+            forward_model_steps=ert_config.forward_model_steps,
+            substitutions=ert_config.substitutions,
+            parameters_file="parameters",
+            runpaths=Runpaths.from_config(ert_config),
+        )
     )
     assert (run_path / "result.txt").read_text(
         encoding="utf-8"
@@ -640,16 +648,18 @@ def test_write_runpath_file(storage, itr):
         [True, True],
         prior_ensemble,
     )
-    create_run_path(
-        run_args=run_args,
-        ensemble=prior_ensemble,
-        user_config_file=ert_config.user_config_file,
-        env_vars=ert_config.env_vars,
-        env_pr_fm_step=ert_config.env_pr_fm_step,
-        forward_model_steps=ert_config.forward_model_steps,
-        substitutions=ert_config.substitutions,
-        parameters_file="parameters",
-        runpaths=run_path,
+    asyncio.run(
+        create_run_path(
+            run_args=run_args,
+            ensemble=prior_ensemble,
+            user_config_file=ert_config.user_config_file,
+            env_vars=ert_config.env_vars,
+            env_pr_fm_step=ert_config.env_pr_fm_step,
+            forward_model_steps=ert_config.forward_model_steps,
+            substitutions=ert_config.substitutions,
+            parameters_file="parameters",
+            runpaths=run_path,
+        )
     )
 
     for run_arg in run_args:
@@ -977,16 +987,18 @@ def test_when_manifest_files_are_written_loading_succeeds(storage, itr):
         prior_ensemble,
     )
 
-    create_run_path(
-        run_args=run_args,
-        ensemble=prior_ensemble,
-        user_config_file=config.user_config_file,
-        env_vars=config.env_vars,
-        env_pr_fm_step=config.env_pr_fm_step,
-        forward_model_steps=config.forward_model_steps,
-        substitutions=config.substitutions,
-        parameters_file="parameters",
-        runpaths=run_paths,
+    asyncio.run(
+        create_run_path(
+            run_args=run_args,
+            ensemble=prior_ensemble,
+            user_config_file=config.user_config_file,
+            env_vars=config.env_vars,
+            env_pr_fm_step=config.env_pr_fm_step,
+            forward_model_steps=config.forward_model_steps,
+            substitutions=config.substitutions,
+            parameters_file="parameters",
+            runpaths=run_paths,
+        )
     )
 
     for i, run_path in enumerate(run_paths.get_paths(range(num_realizations), itr)):
@@ -1068,16 +1080,18 @@ def test_that_contents_of_gridfile_is_logged(storage, caplog):
         prior_ensemble,
     )
 
-    create_run_path(
-        run_args=run_args,
-        ensemble=prior_ensemble,
-        user_config_file=config.user_config_file,
-        env_vars=config.env_vars,
-        env_pr_fm_step=config.env_pr_fm_step,
-        forward_model_steps=config.forward_model_steps,
-        substitutions=config.substitutions,
-        parameters_file="parameters",
-        runpaths=run_paths,
+    asyncio.run(
+        create_run_path(
+            run_args=run_args,
+            ensemble=prior_ensemble,
+            user_config_file=config.user_config_file,
+            env_vars=config.env_vars,
+            env_pr_fm_step=config.env_pr_fm_step,
+            forward_model_steps=config.forward_model_steps,
+            substitutions=config.substitutions,
+            parameters_file="parameters",
+            runpaths=run_paths,
+        )
     )
 
     for run_path in run_paths.get_paths(range(num_realizations), 0):
