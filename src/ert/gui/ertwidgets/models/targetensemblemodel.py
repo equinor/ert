@@ -32,8 +32,7 @@ class TargetEnsembleModel(ValueModel):
             ValueModel.setValue(self, value)
 
     def getDefaultValue(self) -> str | None:
-        ensemble_name = self.notifier.current_ensemble_name
-        return f"{ensemble_name}_%d"
+        return "iter-%d"
 
     def on_current_ensemble_changed(self, *args: Any) -> None:
         if not self._custom:
