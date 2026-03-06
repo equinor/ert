@@ -88,6 +88,17 @@ class RunModelErrorEvent(RunModelEvent):
             self.data.to_csv("Report", output_path / str(self.run_id))
 
 
+class RunPathCreationEvent(BaseModel):
+    event_type: Literal["RunPathCreationEvent"] = "RunPathCreationEvent"
+    sub_type: Literal[
+        "StartingTotalRunPathCreation",
+        "FinishedTotalRunPathCreation",
+        "TotalRunPathCreationUpdate",
+    ]
+    runpath_number: int | None = None
+    total_runpaths_to_create: int | None = None
+
+
 StatusEvents = (
     AnalysisStatusEvent
     | AnalysisTimeEvent
@@ -105,6 +116,7 @@ StatusEvents = (
     | StartEvent
     | WarningEvent
     | EnsembleEvaluationWarning
+    | RunPathCreationEvent
 )
 
 

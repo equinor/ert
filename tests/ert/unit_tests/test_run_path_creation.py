@@ -21,7 +21,11 @@ from ert.config import (
 from ert.config.parsing import lark_parser
 from ert.plugins import get_site_plugins
 from ert.run_arg import create_run_arguments
-from ert.run_models._create_run_path import _make_param_substituter, create_run_path
+from ert.run_models._create_run_path import (
+    _make_param_substituter,
+    create_run_path,
+)
+from ert.run_models.event import RunPathCreationEvent
 from ert.runpaths import Runpaths
 from ert.sample_prior import sample_prior
 from ert.storage import (
@@ -1116,3 +1120,48 @@ def test_that_parameters_as_magic_strings_are_substituted():
         ).substitute("<a> and <b>")
         == "1.01 and value"
     )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_create_run_path_emits_expected_events(prior_ensemble) -> None:
+    config = ErtConfig.from_dict({"NUM_REALIZATIONS": 5})
+    runpaths = Runpaths.from_config(config)
+    active_realizations = [False, True, False, False, True, True]
+    active_iens = [i for i, active in enumerate(active_realizations) if active]
+    assert active_iens == [1, 4, 5]
+
+    run_args = create_run_arguments(runpaths, active_realizations, prior_ensemble)
+
+    events: list[RunPathCreationEvent] = []
+    create_run_path(
+        run_args=run_args,
+        ensemble=prior_ensemble,
+        user_config_file=str(config.user_config_file),
+        forward_model_steps=config.forward_model_steps,
+        env_vars=config.env_vars,
+        env_pr_fm_step=config.env_pr_fm_step,
+        substitutions=config.substitutions,
+        parameters_file="parameters",
+        runpaths=runpaths,
+        handle_run_path_creation_event=events.append,
+    )
+
+    expected_count = len(active_iens)
+    assert len(events) == expected_count + 2
+
+    assert events[0].sub_type == "StartingTotalRunPathCreation"
+    assert events[0].total_runpaths_to_create == expected_count
+
+    update_events = events[1:-1]
+    # runpath_number must be a sequential creation counter (1, 2, 3),
+    # not the iens of the realization (1, 4, 5).
+    expected_runpath_numbers = list(range(1, expected_count + 1))
+    assert expected_runpath_numbers != active_iens  # confirm the two differ
+    for event, expected_number in zip(
+        update_events, expected_runpath_numbers, strict=True
+    ):
+        assert event.sub_type == "TotalRunPathCreationUpdate"
+        assert event.runpath_number == expected_number
+        assert event.total_runpaths_to_create == expected_count
+
+    assert events[-1].sub_type == "FinishedTotalRunPathCreation"
