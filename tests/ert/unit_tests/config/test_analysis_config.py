@@ -428,3 +428,50 @@ def test_config_wrong_module(config, expectation):
                 ConfigKeys.ANALYSIS_SET_VAR: config,
             }
         )
+
+
+def test_that_parameter_strategy_is_set_correctly():
+
+    parameter_settings = AnalysisConfig.from_dict(
+        {
+            ConfigKeys.ANALYSIS_SET_VAR: [
+                ["PARAMETERS", "FIELD", "DISTANCE"],
+                ["PARAMETERS", "GEN_KW", "ADAPTIVE"],
+            ],
+        }
+    ).parameter_settings
+
+    assert parameter_settings[0]
+    assert parameter_settings[0].parameter_type == "FIELD"
+    assert parameter_settings[0].strategy_name == "DISTANCE"
+    assert parameter_settings[1]
+    assert parameter_settings[1].parameter_type == "GEN_KW"
+    assert parameter_settings[1].strategy_name == "ADAPTIVE"
+
+
+def test_that_parameter_strategy_with_unknown_strategy_raises_validation_error():
+    with pytest.raises(
+        ConfigValidationError, match="Invalid strategy name 'UNKNOWN_STRATEGY'"
+    ):
+        AnalysisConfig.from_dict(
+            {
+                ConfigKeys.ANALYSIS_SET_VAR: [
+                    ["PARAMETERS", "FIELD", "DISTANCE"],
+                    ["PARAMETERS", "GEN_KW", "UNKNOWN_STRATEGY"],
+                ],
+            }
+        )
+
+
+def test_that_parameter_strategy_with_unknown_parameter_type_raises_validation_error():
+    with pytest.raises(
+        ConfigValidationError, match="Invalid parameter type 'UNKNOWN_TYPE'"
+    ):
+        AnalysisConfig.from_dict(
+            {
+                ConfigKeys.ANALYSIS_SET_VAR: [
+                    ["PARAMETERS", "UNKNOWN_TYPE", "ADAPTIVE"],
+                    ["PARAMETERS", "FIELD", "DISTANCE"],
+                ],
+            }
+        )
