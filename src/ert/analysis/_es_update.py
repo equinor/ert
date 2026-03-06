@@ -117,6 +117,8 @@ def perform_ensemble_update(
     parameters = list(strategy_map.keys())
     iens_active_index = np.flatnonzero(ens_mask)
 
+    progress_callback(AnalysisStatusEvent(msg="Loading observations and responses.."))
+
     # Preprocess observations and responses
     preprocessed_data = _preprocess_observations_and_responses(
         ensemble=source_ensemble,
@@ -136,7 +138,6 @@ def perform_ensemble_update(
     observation_values = filtered_data["observations"].to_numpy()
     observation_errors = filtered_data[_OutlierColumns.scaled_std].to_numpy()
 
-    progress_callback(AnalysisStatusEvent(msg="Loading observations and responses.."))
     num_obs = len(observation_values)
 
     smoother_snapshot = SmootherSnapshot(

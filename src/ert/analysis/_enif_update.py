@@ -124,7 +124,6 @@ def analysis_EnIF(
     observation_values = filtered_data["observations"].to_numpy()
     observation_errors = filtered_data["std"].to_numpy()
 
-    progress_callback(AnalysisStatusEvent(msg="Loading observations and responses.."))
     num_obs = len(observation_values)
 
     smoother_snapshot.observations_and_responses = preprocessed_data.drop(
