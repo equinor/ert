@@ -1,4 +1,5 @@
 import logging
+import threading
 from datetime import datetime
 from pathlib import Path
 
@@ -18,8 +19,8 @@ from ert.storage.local_ensemble import (
 
 
 @pytest.fixture
-def setup_case(storage, use_tmpdir, run_args):
-    def func(config_text):
+async def setup_case(storage, use_tmpdir, run_args):
+    async def func(config_text):
         ert_config = ErtConfig.from_file_contents(config_text)
         prior_ensemble = storage.create_ensemble(
             storage.create_experiment(
@@ -33,7 +34,7 @@ def setup_case(storage, use_tmpdir, run_args):
             name="prior",
             ensemble_size=ert_config.runpath_config.num_realizations,
         )
-        create_run_path(
+        await create_run_path(
             run_args=run_args(ert_config, prior_ensemble),
             ensemble=prior_ensemble,
             user_config_file=ert_config.user_config_file,
@@ -42,6 +43,7 @@ def setup_case(storage, use_tmpdir, run_args):
             forward_model_steps=ert_config.forward_model_steps,
             substitutions=ert_config.substitutions,
             parameters_file="parameters",
+            end_event=threading.Event(),
             runpaths=Runpaths.from_config(ert_config),
         )
         return prior_ensemble
@@ -120,7 +122,7 @@ def test_load_forward_model(snake_oil_default_storage):
     ],
 )
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
-def test_load_forward_model_summary(
+async def test_load_forward_model_summary(
     summary_configuration, storage, expected, caplog, run_args
 ):
     # Create refcase
@@ -147,7 +149,7 @@ def test_load_forward_model_summary(
         experiment_id, name="prior", ensemble_size=100
     )
 
-    create_run_path(
+    await create_run_path(
         run_args=run_args(ert_config, prior_ensemble),
         ensemble=prior_ensemble,
         user_config_file=ert_config.user_config_file,
@@ -156,6 +158,7 @@ def test_load_forward_model_summary(
         forward_model_steps=ert_config.forward_model_steps,
         substitutions=ert_config.substitutions,
         parameters_file="parameters",
+        end_event=threading.Event(),
         runpaths=Runpaths.from_config(ert_config),
     )
     with caplog.at_level(logging.ERROR):
@@ -168,8 +171,8 @@ def test_load_forward_model_summary(
         assert expected_log_message in "".join(caplog.messages)
 
 
-def test_load_forward_model_gen_data(setup_case):
-    prior_ensemble = setup_case(
+async def test_load_forward_model_gen_data(setup_case):
+    prior_ensemble = await setup_case(
         """\
         NUM_REALIZATIONS 1
         GEN_DATA RESPONSE RESULT_FILE:response_%d.out REPORT_STEPS:0,1
@@ -186,8 +189,8 @@ def test_load_forward_model_gen_data(setup_case):
     assert df.filter(filter_cond)["values"].to_list() == [1.0, 3.0]
 
 
-def test_single_valued_gen_data_with_active_info_is_loaded(setup_case):
-    prior_ensemble = setup_case(
+async def test_single_valued_gen_data_with_active_info_is_loaded(setup_case):
+    prior_ensemble = await setup_case(
         """\
         NUM_REALIZATIONS 1
         GEN_DATA RESPONSE RESULT_FILE:response_%d.out REPORT_STEPS:0
@@ -203,8 +206,8 @@ def test_single_valued_gen_data_with_active_info_is_loaded(setup_case):
     assert df["values"].to_list() == [1.0]
 
 
-def test_that_all_deactivated_values_are_loaded(setup_case):
-    prior_ensemble = setup_case(
+async def test_that_all_deactivated_values_are_loaded(setup_case):
+    prior_ensemble = await setup_case(
         """\
         NUM_REALIZATIONS 1
         GEN_DATA RESPONSE RESULT_FILE:response_%d.out REPORT_STEPS:0
@@ -222,7 +225,7 @@ def test_that_all_deactivated_values_are_loaded(setup_case):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_loading_gen_data_without_restart(storage, run_args):
+async def test_loading_gen_data_without_restart(storage, run_args):
     ert_config = ErtConfig.from_file_contents(
         """\
         NUM_REALIZATIONS 1
@@ -242,7 +245,7 @@ def test_loading_gen_data_without_restart(storage, run_args):
         ensemble_size=ert_config.runpath_config.num_realizations,
     )
 
-    create_run_path(
+    await create_run_path(
         run_args=run_args(ert_config, prior_ensemble),
         ensemble=prior_ensemble,
         user_config_file=ert_config.user_config_file,
@@ -251,6 +254,7 @@ def test_loading_gen_data_without_restart(storage, run_args):
         forward_model_steps=ert_config.forward_model_steps,
         substitutions=ert_config.substitutions,
         parameters_file="parameters",
+        end_event=threading.Event(),
         runpaths=Runpaths.from_config(ert_config),
     )
     run_path = Path("simulations/realization-0/iter-0/")
@@ -296,7 +300,7 @@ def test_that_the_states_are_set_correctly():
 
 @pytest.mark.parametrize("itr", [None, 0, 1, 2, 3])
 @pytest.mark.usefixtures("use_tmpdir")
-def test_loading_from_any_available_iter(storage, run_args, itr):
+async def test_loading_from_any_available_iter(storage, run_args, itr):
     ert_config = ErtConfig.from_file_contents(
         """\
         NUM_REALIZATIONS 1
@@ -317,7 +321,7 @@ def test_loading_from_any_available_iter(storage, run_args, itr):
         iteration=itr if itr is not None else 0,
     )
 
-    create_run_path(
+    await create_run_path(
         run_args=run_args(ert_config, prior_ensemble),
         ensemble=prior_ensemble,
         user_config_file=ert_config.user_config_file,
@@ -326,6 +330,7 @@ def test_loading_from_any_available_iter(storage, run_args, itr):
         forward_model_steps=ert_config.forward_model_steps,
         substitutions=ert_config.substitutions,
         parameters_file="parameters",
+        end_event=threading.Event(),
         runpaths=Runpaths.from_config(ert_config),
     )
     run_path = Path(f"simulations/realization-0/iter-{itr if itr is not None else 0}/")

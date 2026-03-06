@@ -75,7 +75,7 @@ def storage(tmp_path):
         ),
     ],
 )
-def test_surface_param(
+async def test_surface_param(
     storage,
     tmpdir,
     config_str,
@@ -99,9 +99,10 @@ def test_surface_param(
         expect_surface.to_file("surf.irap", fformat="irap_ascii")
         expect_surface.to_file("surf0.irap", fformat="irap_ascii")
 
-        with open("config.ert", mode="w", encoding="utf-8") as fh:
-            fh.writelines(f"NUM_REALIZATIONS 1\n{config_str}\n")
-        ensemble_config, fs = create_runpath(storage, "config.ert")
+        Path("config.ert").write_text(
+            f"NUM_REALIZATIONS 1\n{config_str}\n", encoding="utf-8"
+        )
+        ensemble_config, fs = await create_runpath(storage, "config.ert")
         assert ensemble_config["MY_PARAM"].forward_init is expect_forward_init
         # We try to load the parameters from the forward model, this would fail if
         # forward init was not set correctly
@@ -123,7 +124,7 @@ def test_surface_param(
                 # Once data has been internalised, ERT will generate the
                 # parameter files
                 fs._index.iteration = 1
-                create_runpath(storage, "config.ert", ensemble=fs)
+                await create_runpath(storage, "config.ert", ensemble=fs)
             expected_iter = 1 if expect_forward_init else 0
             actual_surface = surface_from_file(
                 f"simulations/realization-0/iter-{expected_iter}/surf.irap",
@@ -156,7 +157,7 @@ def test_surface_param(
         ),
     ],
 )
-def test_initialize_random_seed(
+async def test_initialize_random_seed(
     tmpdir, storage, caplog, check_random_seed, expectation
 ):
     """
@@ -171,13 +172,10 @@ def test_initialize_random_seed(
         GEN_KW KW_NAME template.txt kw.txt prior.txt
         """
         )
-        with open("config.ert", mode="w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("template.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-        with open("prior.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD NORMAL 0 1")
-        create_runpath(storage, "config.ert")
+        Path("config.ert").write_text(config, encoding="utf-8")
+        Path("template.txt").write_text("MY_KEYWORD <MY_KEYWORD>", encoding="utf-8")
+        Path("prior.txt").write_text("MY_KEYWORD NORMAL 0 1", encoding="utf-8")
+        await create_runpath(storage, "config.ert")
         # We read the first parameter value as a reference value
         expected = Path("simulations/realization-0/iter-0/kw.txt").read_text("utf-8")
 
@@ -196,14 +194,11 @@ def test_initialize_random_seed(
         )
         if check_random_seed:
             config += f"RANDOM_SEED {random_seed}"
-        with open("config_2.ert", mode="w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("template.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-        with open("prior.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD NORMAL 0 1")
+        Path("config_2.ert").write_text(config, encoding="utf-8")
+        Path("template.txt").write_text("MY_KEYWORD <MY_KEYWORD>", encoding="utf-8")
+        Path("prior.txt").write_text("MY_KEYWORD NORMAL 0 1", encoding="utf-8")
 
-        create_runpath(storage, "config_2.ert")
+        await create_runpath(storage, "config_2.ert")
         with expectation:
             assert (
                 Path("simulations/realization-0/iter-0/kw.txt").read_text("utf-8")
@@ -211,7 +206,7 @@ def test_initialize_random_seed(
             )
 
 
-def test_that_first_three_parameters_sampled_snapshot(tmpdir, storage):
+async def test_that_first_three_parameters_sampled_snapshot(tmpdir, storage):
     """
     Nothing special about the first three, but there was a regression
     in nr. 2, so added one extra.
@@ -225,13 +220,10 @@ def test_that_first_three_parameters_sampled_snapshot(tmpdir, storage):
         RANDOM_SEED 1234
         """
         )
-        with open("config.ert", mode="w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("template.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-        with open("prior.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD NORMAL 0 1")
-        _, fs = create_runpath(storage, "config.ert", [True] * 3)
+        Path("config.ert").write_text(config, encoding="utf-8")
+        Path("template.txt").write_text("MY_KEYWORD <MY_KEYWORD>", encoding="utf-8")
+        Path("prior.txt").write_text("MY_KEYWORD NORMAL 0 1", encoding="utf-8")
+        _, fs = await create_runpath(storage, "config.ert", [True] * 3)
         prior = fs.load_parameters_numpy("KW_NAME", np.arange(3)).flatten()
         expected = np.array([-0.8814228, 1.5847818, 1.009956])
         np.testing.assert_almost_equal(prior, expected)
@@ -402,7 +394,7 @@ def test_that_sub_sample_maintains_order(tmpdir, storage, mask, expected):
         ),
     ],
 )
-def test_gen_kw_optional_template(storage, tmpdir, config_str, expected):
+async def test_gen_kw_optional_template(storage, tmpdir, config_str, expected):
     with tmpdir.as_cwd():
         config = dedent(
             """
@@ -411,12 +403,10 @@ def test_gen_kw_optional_template(storage, tmpdir, config_str, expected):
         """
         )
         config += config_str
-        with open("config.ert", mode="w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("prior.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD NORMAL 0 1")
+        Path("config.ert").write_text(config, encoding="utf-8")
+        Path("prior.txt").write_text("MY_KEYWORD NORMAL 0 1", encoding="utf-8")
 
-        create_runpath(storage, "config.ert")
+        await create_runpath(storage, "config.ert")
 
         assert next(iter(storage.ensembles)).load_parameters_numpy(
             "KW_NAME", np.array([0])
@@ -440,7 +430,7 @@ def write_file(fname, contents):
         ),
     ],
 )
-def test_gen_kw(storage, tmpdir, config_str, expected, extra_files, expectation):
+async def test_gen_kw(storage, tmpdir, config_str, expected, extra_files, expectation):
     with tmpdir.as_cwd():
         config = dedent(
             """
@@ -449,17 +439,14 @@ def test_gen_kw(storage, tmpdir, config_str, expected, extra_files, expectation)
         """
         )
         config += config_str
-        with open("config.ert", mode="w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("template.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-        with open("prior.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD NORMAL 0 1")
+        Path("config.ert").write_text(config, encoding="utf-8")
+        Path("template.txt").write_text("MY_KEYWORD <MY_KEYWORD>", encoding="utf-8")
+        Path("prior.txt").write_text("MY_KEYWORD NORMAL 0 1", encoding="utf-8")
         for fname, contents in extra_files:
             write_file(fname, contents)
 
         with expectation:
-            create_runpath(storage, "config.ert")
+            await create_runpath(storage, "config.ert")
             assert (
                 Path("simulations/realization-0/iter-0/kw.txt").read_text(
                     encoding="utf-8"
@@ -486,7 +473,7 @@ def test_gen_kw(storage, tmpdir, config_str, expected, extra_files, expectation)
         ),
     ],
 )
-def test_gen_kw_missing_in_storage(storage, tmpdir, active_reals, expectation):
+async def test_gen_kw_missing_in_storage(storage, tmpdir, active_reals, expectation):
     with tmpdir.as_cwd():
         config = dedent(
             """
@@ -494,12 +481,10 @@ def test_gen_kw_missing_in_storage(storage, tmpdir, active_reals, expectation):
         GEN_KW KW_NAME prior.txt
         """
         )
-        with open("config.ert", mode="w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("prior.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD NORMAL 0 1")
+        Path("config.ert").write_text(config, encoding="utf-8")
+        Path("prior.txt").write_text("MY_KEYWORD NORMAL 0 1", encoding="utf-8")
         with expectation:
-            _, ensemble = create_runpath(storage, "config.ert", active_reals)
+            _, ensemble = await create_runpath(storage, "config.ert", active_reals)
             ensemble.load_parameters("KW_NAME", 0)
 
 
@@ -530,7 +515,7 @@ def test_gen_kw_missing_in_storage(storage, tmpdir, active_reals, expectation):
         ),
     ],
 )
-def test_gen_kw_templating(
+async def test_gen_kw_templating(
     storage,
     tmpdir,
     config_str,
@@ -546,13 +531,11 @@ def test_gen_kw_templating(
         """
         )
         config += config_str
-        with open("config.ert", mode="w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("prior.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD NORMAL 0 1")
+        Path("config.ert").write_text(config, encoding="utf-8")
+        Path("prior.txt").write_text("MY_KEYWORD NORMAL 0 1", encoding="utf-8")
         for fname, contents in extra_files:
             write_file(fname, contents)
-        create_runpath(storage, "config.ert")
+        await create_runpath(storage, "config.ert")
         assert (
             Path("simulations/realization-0/iter-0/kw.txt").read_text(encoding="utf-8")
             == expected
@@ -569,7 +552,9 @@ def test_gen_kw_templating(
         ("/tmp/somepath/", "Output file cannot have an absolute path"),
     ],
 )
-def test_gen_kw_outfile_will_use_paths(tmpdir, storage, relpath: str, err_msg: str):
+async def test_gen_kw_outfile_will_use_paths(
+    tmpdir, storage, relpath: str, err_msg: str
+):
     with tmpdir.as_cwd():
         config = dedent(
             f"""
@@ -579,19 +564,16 @@ def test_gen_kw_outfile_will_use_paths(tmpdir, storage, relpath: str, err_msg: s
         """
         )
 
-        with open("config.ert", mode="w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("template.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-        with open("prior.txt", mode="w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD NORMAL 0 1")
+        Path("config.ert").write_text(config, encoding="utf-8")
+        Path("template.txt").write_text("MY_KEYWORD <MY_KEYWORD>", encoding="utf-8")
+        Path("prior.txt").write_text("MY_KEYWORD NORMAL 0 1", encoding="utf-8")
         relpath = relpath.removeprefix("/")
         if err_msg:
             with pytest.raises(
                 ConfigValidationError,
                 match=err_msg,
             ):
-                create_runpath(storage, "config.ert")
+                await create_runpath(storage, "config.ert")
         else:
-            create_runpath(storage, "config.ert")
+            await create_runpath(storage, "config.ert")
             assert os.path.exists(f"simulations/realization-0/iter-0/{relpath}kw.txt")

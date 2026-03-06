@@ -1,4 +1,5 @@
 import itertools
+import threading
 
 import numpy as np
 import polars as pl
@@ -55,7 +56,7 @@ from ert.storage import open_storage
         ),
     ],
 )
-def test_create_run_path_load_scalar_keys_performance(
+async def test_create_run_path_load_scalar_keys_performance(
     benchmark, tmp_path, distribution_settings
 ):
     reals = 100
@@ -92,7 +93,7 @@ def test_create_run_path_load_scalar_keys_performance(
         active = [True] * reals
         counter = itertools.count()
 
-        def run():
+        async def run():
             idx = next(counter)
             runpath_root = tmp_path / f"runpaths_{idx}"
             runpaths = Runpaths(
@@ -104,7 +105,7 @@ def test_create_run_path_load_scalar_keys_performance(
             )
             run_args = create_run_arguments(runpaths, active, ensemble)
 
-            create_run_path(
+            await create_run_path(
                 run_args=run_args,
                 ensemble=ensemble,
                 user_config_file="perf.ert",
@@ -113,13 +114,14 @@ def test_create_run_path_load_scalar_keys_performance(
                 forward_model_steps=[],
                 substitutions={},
                 parameters_file="parameters",
+                end_event=threading.Event(),
                 runpaths=runpaths,
             )
 
         benchmark(run)
 
 
-def test_create_run_path_surface_performance(tmp_path, benchmark):
+async def test_create_run_path_surface_performance(tmp_path, benchmark):
     storage_path = tmp_path / "storage"
     reals = 2
     num_surfaces = 2
@@ -163,7 +165,7 @@ def test_create_run_path_surface_performance(tmp_path, benchmark):
         active = [True] * reals
         counter = itertools.count()
 
-        def run():
+        async def run():
             idx = next(counter)
             runpath_root = tmp_path / f"runpaths_{idx}"
             runpaths = Runpaths(
@@ -175,7 +177,7 @@ def test_create_run_path_surface_performance(tmp_path, benchmark):
             )
             run_args = create_run_arguments(runpaths, active, ensemble)
 
-            create_run_path(
+            await create_run_path(
                 run_args=run_args,
                 ensemble=ensemble,
                 user_config_file="perf.ert",
@@ -184,7 +186,8 @@ def test_create_run_path_surface_performance(tmp_path, benchmark):
                 forward_model_steps=[],
                 substitutions={},
                 parameters_file="parameters",
+                end_event=threading.Event(),
                 runpaths=runpaths,
             )
 
-        benchmark(run)
+        await benchmark(run)
