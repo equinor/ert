@@ -22,7 +22,7 @@ def test_no_updateable_parameters(qtbot):
             else:
                 print(line, end="")
 
-    for gui in open_gui_with_config("poly.ert"):
+    with open_gui_with_config("poly.ert") as gui:
         experiment_panel = get_child(gui, ExperimentPanel)
         simulation_mode_combo = get_child(experiment_panel, QComboBox)
         idx = simulation_mode_combo.findText(EnsembleSmoother.display_name())
