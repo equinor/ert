@@ -265,7 +265,7 @@ def _ensemble_experiment_has_run(
 
 @pytest.fixture(name="run_experiment", scope="module")
 def run_experiment_fixture(request):
-    def func(experiment_mode, gui, click_done=True):
+    def func(experiment_mode, gui, wait_done=True, check_realizations=True):
         qtbot = QtBot(request)
         with contextlib.suppress(FileNotFoundError):
             shutil.rmtree("poly_out")
@@ -299,27 +299,24 @@ def run_experiment_fixture(request):
             QTimer.singleShot(500, handle_dialog)
         qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
 
-        if click_done:
-            # The Run dialog opens, click show details and wait until done appears
-            # then click it
+        if wait_done or check_realizations:
             qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=10000)
             run_dialog = get_children(gui, RunDialog)[-1]
-            qtbot.waitUntil(
-                lambda: run_dialog.is_experiment_done() is True, timeout=200000
-            )
+            qtbot.waitUntil(run_dialog.is_experiment_done, timeout=200000)
             qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
-            # Assert that the number of boxes in the detailed view is
-            # equal to the number of realizations
-            realization_widget = run_dialog._tab_widget.currentWidget()
-            assert isinstance(realization_widget, RealizationWidget)
-            list_model = realization_widget._real_view.model()
-            expected_num_realizations = (
-                experiment_panel.config.runpath_config.num_realizations
-            )
-            if experiment_mode.name() == "Single realization test-run":
-                expected_num_realizations = 1
-            assert list_model.rowCount() == expected_num_realizations
+            if check_realizations:
+                # Assert that the number of boxes in the detailed view is
+                # equal to the number of realizations
+                realization_widget = run_dialog._tab_widget.currentWidget()
+                assert isinstance(realization_widget, RealizationWidget)
+                list_model = realization_widget._real_view.model()
+                expected_num_realizations = (
+                    experiment_panel.config.runpath_config.num_realizations
+                )
+                if experiment_mode.name() == "Single realization test-run":
+                    expected_num_realizations = 1
+                assert list_model.rowCount() == expected_num_realizations
 
     return func
 
