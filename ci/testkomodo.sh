@@ -62,8 +62,6 @@ run_everest_eightcells_test() {
     echo "EIGHTCELLS_RUNPATH: $EIGHTCELLS_RUNPATH"
 
     disable_komodo
-    # shellcheck source=/dev/null
-    source "${_KOMODO_ROOT}/${_FULL_RELEASE_NAME}/enable"
 
     CONFIG="everest/model/config.yml"
     if [[ "$CI_RUNNER_LABEL" == "azure" ]]; then
@@ -73,6 +71,9 @@ run_everest_eightcells_test() {
         sed -i "s/name: local/name: lsf/g" "$CONFIG"
         export PATH=$PATH:/global/bin
     fi
+
+    # shellcheck source=/dev/null
+    source "${_KOMODO_ROOT}/${_FULL_RELEASE_NAME}/enable"
 
     everest run "$CONFIG" --skip-prompt --debug --disable-monitoring
     STATUS=$?
