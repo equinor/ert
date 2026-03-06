@@ -11,7 +11,7 @@ from matplotlib.backends.backend_qt5agg import (  # type: ignore
     NavigationToolbar2QT,
 )
 from matplotlib.figure import Figure
-from PyQt6.QtCore import QStringListModel, Qt, pyqtBoundSignal
+from PyQt6.QtCore import QStringListModel, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtGui import QAction
@@ -37,6 +37,7 @@ if TYPE_CHECKING:
     from .plottery.plots.ensemble import EnsemblePlot
     from .plottery.plots.gaussian_kde import GaussianKDEPlot
     from .plottery.plots.histogram import HistogramPlot
+    from .plottery.plots.mean import MeanPlot
     from .plottery.plots.misfits import MisfitsPlot
     from .plottery.plots.statistics import StatisticsPlot
     from .plottery.plots.std_dev import StdDevPlot
@@ -114,6 +115,7 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
 class PlotWidget(QWidget):
     customizationTriggered = Signal()
     layerIndexChanged = Signal(int)
+    plotUpdateRequested = Signal()
     updateLayerWidget = Signal(int)
     resetLayerWidget = Signal()
     showLayerWidget = Signal(bool)
@@ -129,6 +131,7 @@ class PlotWidget(QWidget):
             "DistributionPlot",
             "CrossEnsembleStatisticsPlot",
             "StdDevPlot",
+            "MeanPlot",
             "ValuesOverIterationsPlot",
             "MisfitsPlot",
             "EverestGradientsPlot",
@@ -162,6 +165,7 @@ class PlotWidget(QWidget):
         self._log_checkbox.setVisible(False)
         self._log_checkbox.setToolTip("Toggle data domain to log scale and back")
         self._log_checkbox.clicked.connect(self.logLogScaleButtonUsage)
+        self._log_checkbox.toggled.connect(lambda _: self.plotUpdateRequested.emit())
 
         log_checkbox_row = QHBoxLayout()
         log_checkbox_row.addWidget(self._log_checkbox)
@@ -176,10 +180,6 @@ class PlotWidget(QWidget):
         self._dirty = True
         self._active = False
         self.resetPlot()
-
-    @property
-    def plotUpdateRequested(self) -> pyqtBoundSignal:
-        return self._log_checkbox.toggled
 
     def resetPlot(self) -> None:
         self._figure.clear()

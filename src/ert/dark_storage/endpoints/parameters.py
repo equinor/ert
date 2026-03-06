@@ -77,6 +77,27 @@ def get_parameter_std_dev(
     return Response(content=buffer.getvalue(), media_type="application/octet-stream")
 
 
+@router.get("/ensembles/{ensemble_id}/parameters/{key}/mean")
+def get_parameter_mean(
+    *, storage: Storage = DEFAULT_STORAGE, ensemble_id: UUID, key: str, z: int
+) -> Response:
+    key = unquote(key)
+    with reraise_as_http_errors(logger):
+        ensemble = storage.get_ensemble(ensemble_id)
+        da = ensemble.calculate_mean_for_parameter_group(key)
+
+    if z >= int(da.shape[2]):
+        logger.error("invalid z index")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+    data_2d = da[:, :, z]
+
+    buffer = io.BytesIO()
+    np.save(buffer, data_2d)
+
+    return Response(content=buffer.getvalue(), media_type="application/octet-stream")
+
+
 def data_for_parameter(ensemble: Ensemble, key: str) -> pd.DataFrame:
     param_info = ensemble.experiment.parameter_info.get(key)
 
