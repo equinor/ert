@@ -267,17 +267,35 @@ def _compute_observation_statuses(
      * scaled observation errors
      * status of (the responses of) each observation,
        corresponding to ObservationStatus
+     * missing realizations that lead to deactivation
     """
 
     df_with_status = observations_and_responses
 
-    obs_has_null_response_ = pl.any_horizontal(
-        [pl.col(c).is_nan() | pl.col(c).is_null() for c in active_realizations]
+    # For each active realization column, check if value is missing (NaN or null). If
+    # missing, include the realization name; otherwise, use None. Combine all missing
+    # realization names from one observation into a list, then join them into a
+    # comma-separated string. Set empty string for observations with no missing
+    # realizations.
+    missing_realizations_expr = (
+        pl.concat_list(
+            [
+                pl.when(pl.col(c).is_nan() | pl.col(c).is_null())
+                .then(pl.lit(c))
+                .otherwise(pl.lit(None))
+                for c in active_realizations
+            ]
+        )
+        .list.join(", ")
+        .fill_null("")
+        .alias("missing_realizations")
     )
+
+    df_with_status = df_with_status.with_columns(missing_realizations_expr)
 
     if outlier_settings is None:
         return df_with_status.with_columns(
-            pl.when(obs_has_null_response_)
+            pl.when(pl.col("missing_realizations") != "")  # noqa PLC1901
             .then(pl.lit(ObservationStatus.MISSING_RESPONSE))
             .otherwise(pl.lit(ObservationStatus.ACTIVE))
             .alias("status")
@@ -307,7 +325,7 @@ def _compute_observation_statuses(
     )
 
     df_with_status = df_with_status.with_columns(
-        pl.when(obs_has_null_response_)
+        pl.when(pl.col("missing_realizations") != "")  # noqa PLC1901
         .then(pl.lit(ObservationStatus.MISSING_RESPONSE))
         .when(pl.col(_OutlierColumns.response_std) <= outlier_settings.std_cutoff)
         .then(pl.lit(ObservationStatus.STD_CUTOFF))

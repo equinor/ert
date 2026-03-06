@@ -126,6 +126,7 @@ def analysis_EnIF(
         "observations",
         "std",
         "status",
+        "missing_realizations",
     )
 
     if num_obs == 0:
