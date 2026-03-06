@@ -6,7 +6,7 @@ SUMMARY_OBSERVATION HEAT_5_3_10
     KEY     = HEAT_5_3;
     LOCALIZATION {
         EAST = 4.5;
-        NORTH = 12.5;
+        NORTH = 2.5;
         RADIUS = 3;
     };
 };
@@ -19,7 +19,7 @@ SUMMARY_OBSERVATION HEAT_3_5_10
     KEY     = HEAT_3_5;
     LOCALIZATION {
         EAST = 2.5;
-        NORTH = 14.5;
+        NORTH = 4.5;
         RADIUS = 3;
     };
 };
@@ -32,7 +32,7 @@ SUMMARY_OBSERVATION HEAT_5_7_10
     KEY     = HEAT_5_7;
     LOCALIZATION {
         EAST = 4.5;
-        NORTH = 16.5;
+        NORTH = 6.5;
         RADIUS = 3;
     };
 };
@@ -45,7 +45,7 @@ SUMMARY_OBSERVATION HEAT_7_5_10
     KEY     = HEAT_7_5;
     LOCALIZATION {
         EAST = 6.5;
-        NORTH = 14.5;
+        NORTH = 4.5;
         RADIUS = 3;
     };
 };
@@ -58,7 +58,7 @@ SUMMARY_OBSERVATION HEAT_2_2_10
     KEY     = HEAT_2_2;
     LOCALIZATION {
         EAST = 1.5;
-        NORTH = 11.5;
+        NORTH = 1.5;
         RADIUS = 3;
     };
 };
@@ -71,7 +71,7 @@ SUMMARY_OBSERVATION HEAT_7_2_10
     KEY     = HEAT_7_2;
     LOCALIZATION {
         EAST = 6.5;
-        NORTH = 11.5;
+        NORTH = 1.5;
         RADIUS = 3;
     };
 };
@@ -84,7 +84,7 @@ SUMMARY_OBSERVATION HEAT_5_3_71
     KEY     = HEAT_5_3;
     LOCALIZATION {
         EAST = 4.5;
-        NORTH = 12.5;
+        NORTH = 2.5;
         RADIUS = 3;
     };
 };
@@ -97,7 +97,7 @@ SUMMARY_OBSERVATION HEAT_3_5_71
     KEY     = HEAT_3_5;
     LOCALIZATION {
         EAST = 2.5;
-        NORTH = 14.5;
+        NORTH = 4.5;
         RADIUS = 3;
     };
 };
@@ -110,7 +110,7 @@ SUMMARY_OBSERVATION HEAT_5_7_71
     KEY     = HEAT_5_7;
     LOCALIZATION {
         EAST = 4.5;
-        NORTH = 16.5;
+        NORTH = 6.5;
         RADIUS = 3;
     };
 };
@@ -123,7 +123,7 @@ SUMMARY_OBSERVATION HEAT_7_5_71
     KEY     = HEAT_7_5;
     LOCALIZATION {
         EAST = 6.5;
-        NORTH = 14.5;
+        NORTH = 4.5;
         RADIUS = 3;
     };
 };
@@ -136,7 +136,7 @@ SUMMARY_OBSERVATION HEAT_2_2_71
     KEY     = HEAT_2_2;
     LOCALIZATION {
         EAST = 1.5;
-        NORTH = 11.5;
+        NORTH = 1.5;
         RADIUS = 3;
     };
 };
@@ -149,7 +149,7 @@ SUMMARY_OBSERVATION HEAT_7_2_71
     KEY     = HEAT_7_2;
     LOCALIZATION {
         EAST = 6.5;
-        NORTH = 11.5;
+        NORTH = 1.5;
         RADIUS = 3;
     };
 };
@@ -162,7 +162,7 @@ SUMMARY_OBSERVATION HEAT_5_3_132
     KEY     = HEAT_5_3;
     LOCALIZATION {
         EAST = 4.5;
-        NORTH = 12.5;
+        NORTH = 2.5;
         RADIUS = 3;
     };
 };
@@ -175,7 +175,7 @@ SUMMARY_OBSERVATION HEAT_3_5_132
     KEY     = HEAT_3_5;
     LOCALIZATION {
         EAST = 2.5;
-        NORTH = 14.5;
+        NORTH = 4.5;
         RADIUS = 3;
     };
 };
@@ -188,7 +188,7 @@ SUMMARY_OBSERVATION HEAT_5_7_132
     KEY     = HEAT_5_7;
     LOCALIZATION {
         EAST = 4.5;
-        NORTH = 16.5;
+        NORTH = 6.5;
         RADIUS = 3;
     };
 };
@@ -201,7 +201,7 @@ SUMMARY_OBSERVATION HEAT_7_5_132
     KEY     = HEAT_7_5;
     LOCALIZATION {
         EAST = 6.5;
-        NORTH = 14.5;
+        NORTH = 4.5;
         RADIUS = 3;
     };
 };
@@ -214,7 +214,7 @@ SUMMARY_OBSERVATION HEAT_2_2_132
     KEY     = HEAT_2_2;
     LOCALIZATION {
         EAST = 1.5;
-        NORTH = 11.5;
+        NORTH = 1.5;
         RADIUS = 3;
     };
 };
@@ -227,7 +227,7 @@ SUMMARY_OBSERVATION HEAT_7_2_132
     KEY     = HEAT_7_2;
     LOCALIZATION {
         EAST = 6.5;
-        NORTH = 11.5;
+        NORTH = 1.5;
         RADIUS = 3;
     };
 };
@@ -240,7 +240,7 @@ SUMMARY_OBSERVATION HEAT_5_3_193
     KEY     = HEAT_5_3;
     LOCALIZATION {
         EAST = 4.5;
-        NORTH = 12.5;
+        NORTH = 2.5;
         RADIUS = 3;
     };
 };
@@ -253,7 +253,7 @@ SUMMARY_OBSERVATION HEAT_3_5_193
     KEY     = HEAT_3_5;
     LOCALIZATION {
         EAST = 2.5;
-        NORTH = 14.5;
+        NORTH = 4.5;
         RADIUS = 3;
     };
 };
@@ -266,7 +266,7 @@ SUMMARY_OBSERVATION HEAT_5_7_193
     KEY     = HEAT_5_7;
     LOCALIZATION {
         EAST = 4.5;
-        NORTH = 16.5;
+        NORTH = 6.5;
         RADIUS = 3;
     };
 };
@@ -279,7 +279,7 @@ SUMMARY_OBSERVATION HEAT_7_5_193
     KEY     = HEAT_7_5;
     LOCALIZATION {
         EAST = 6.5;
-        NORTH = 14.5;
+        NORTH = 4.5;
         RADIUS = 3;
     };
 };
@@ -292,7 +292,7 @@ SUMMARY_OBSERVATION HEAT_2_2_193
     KEY     = HEAT_2_2;
     LOCALIZATION {
         EAST = 1.5;
-        NORTH = 11.5;
+        NORTH = 1.5;
         RADIUS = 3;
     };
 };
@@ -305,7 +305,7 @@ SUMMARY_OBSERVATION HEAT_7_2_193
     KEY     = HEAT_7_2;
     LOCALIZATION {
         EAST = 6.5;
-        NORTH = 11.5;
+        NORTH = 1.5;
         RADIUS = 3;
     };
 };
@@ -318,7 +318,7 @@ SUMMARY_OBSERVATION HEAT_5_3_255
     KEY     = HEAT_5_3;
     LOCALIZATION {
         EAST = 4.5;
-        NORTH = 12.5;
+        NORTH = 2.5;
         RADIUS = 3;
     };
 };
@@ -331,7 +331,7 @@ SUMMARY_OBSERVATION HEAT_3_5_255
     KEY     = HEAT_3_5;
     LOCALIZATION {
         EAST = 2.5;
-        NORTH = 14.5;
+        NORTH = 4.5;
         RADIUS = 3;
     };
 };
@@ -344,7 +344,7 @@ SUMMARY_OBSERVATION HEAT_5_7_255
     KEY     = HEAT_5_7;
     LOCALIZATION {
         EAST = 4.5;
-        NORTH = 16.5;
+        NORTH = 6.5;
         RADIUS = 3;
     };
 };
@@ -357,7 +357,7 @@ SUMMARY_OBSERVATION HEAT_7_5_255
     KEY     = HEAT_7_5;
     LOCALIZATION {
         EAST = 6.5;
-        NORTH = 14.5;
+        NORTH = 4.5;
         RADIUS = 3;
     };
 };
@@ -370,7 +370,7 @@ SUMMARY_OBSERVATION HEAT_2_2_255
     KEY     = HEAT_2_2;
     LOCALIZATION {
         EAST = 1.5;
-        NORTH = 11.5;
+        NORTH = 1.5;
         RADIUS = 3;
     };
 };
@@ -383,7 +383,7 @@ SUMMARY_OBSERVATION HEAT_7_2_255
     KEY     = HEAT_7_2;
     LOCALIZATION {
         EAST = 6.5;
-        NORTH = 11.5;
+        NORTH = 1.5;
         RADIUS = 3;
     };
 };
@@ -396,7 +396,7 @@ SUMMARY_OBSERVATION HEAT_5_3_316
     KEY     = HEAT_5_3;
     LOCALIZATION {
         EAST = 4.5;
-        NORTH = 12.5;
+        NORTH = 2.5;
         RADIUS = 3;
     };
 };
@@ -409,7 +409,7 @@ SUMMARY_OBSERVATION HEAT_3_5_316
     KEY     = HEAT_3_5;
     LOCALIZATION {
         EAST = 2.5;
-        NORTH = 14.5;
+        NORTH = 4.5;
         RADIUS = 3;
     };
 };
@@ -422,7 +422,7 @@ SUMMARY_OBSERVATION HEAT_5_7_316
     KEY     = HEAT_5_7;
     LOCALIZATION {
         EAST = 4.5;
-        NORTH = 16.5;
+        NORTH = 6.5;
         RADIUS = 3;
     };
 };
@@ -435,7 +435,7 @@ SUMMARY_OBSERVATION HEAT_7_5_316
     KEY     = HEAT_7_5;
     LOCALIZATION {
         EAST = 6.5;
-        NORTH = 14.5;
+        NORTH = 4.5;
         RADIUS = 3;
     };
 };
@@ -448,7 +448,7 @@ SUMMARY_OBSERVATION HEAT_2_2_316
     KEY     = HEAT_2_2;
     LOCALIZATION {
         EAST = 1.5;
-        NORTH = 11.5;
+        NORTH = 1.5;
         RADIUS = 3;
     };
 };
@@ -461,7 +461,7 @@ SUMMARY_OBSERVATION HEAT_7_2_316
     KEY     = HEAT_7_2;
     LOCALIZATION {
         EAST = 6.5;
-        NORTH = 11.5;
+        NORTH = 1.5;
         RADIUS = 3;
     };
 };
@@ -474,7 +474,7 @@ SUMMARY_OBSERVATION HEAT_5_3_377
     KEY     = HEAT_5_3;
     LOCALIZATION {
         EAST = 4.5;
-        NORTH = 12.5;
+        NORTH = 2.5;
         RADIUS = 3;
     };
 };
@@ -487,7 +487,7 @@ SUMMARY_OBSERVATION HEAT_3_5_377
     KEY     = HEAT_3_5;
     LOCALIZATION {
         EAST = 2.5;
-        NORTH = 14.5;
+        NORTH = 4.5;
         RADIUS = 3;
     };
 };
@@ -500,7 +500,7 @@ SUMMARY_OBSERVATION HEAT_5_7_377
     KEY     = HEAT_5_7;
     LOCALIZATION {
         EAST = 4.5;
-        NORTH = 16.5;
+        NORTH = 6.5;
         RADIUS = 3;
     };
 };
@@ -513,7 +513,7 @@ SUMMARY_OBSERVATION HEAT_7_5_377
     KEY     = HEAT_7_5;
     LOCALIZATION {
         EAST = 6.5;
-        NORTH = 14.5;
+        NORTH = 4.5;
         RADIUS = 3;
     };
 };
@@ -526,7 +526,7 @@ SUMMARY_OBSERVATION HEAT_2_2_377
     KEY     = HEAT_2_2;
     LOCALIZATION {
         EAST = 1.5;
-        NORTH = 11.5;
+        NORTH = 1.5;
         RADIUS = 3;
     };
 };
@@ -539,7 +539,7 @@ SUMMARY_OBSERVATION HEAT_7_2_377
     KEY     = HEAT_7_2;
     LOCALIZATION {
         EAST = 6.5;
-        NORTH = 11.5;
+        NORTH = 1.5;
         RADIUS = 3;
     };
 };
@@ -552,7 +552,7 @@ SUMMARY_OBSERVATION HEAT_5_3_438
     KEY     = HEAT_5_3;
     LOCALIZATION {
         EAST = 4.5;
-        NORTH = 12.5;
+        NORTH = 2.5;
         RADIUS = 3;
     };
 };
@@ -565,7 +565,7 @@ SUMMARY_OBSERVATION HEAT_3_5_438
     KEY     = HEAT_3_5;
     LOCALIZATION {
         EAST = 2.5;
-        NORTH = 14.5;
+        NORTH = 4.5;
         RADIUS = 3;
     };
 };
@@ -578,7 +578,7 @@ SUMMARY_OBSERVATION HEAT_5_7_438
     KEY     = HEAT_5_7;
     LOCALIZATION {
         EAST = 4.5;
-        NORTH = 16.5;
+        NORTH = 6.5;
         RADIUS = 3;
     };
 };
@@ -591,7 +591,7 @@ SUMMARY_OBSERVATION HEAT_7_5_438
     KEY     = HEAT_7_5;
     LOCALIZATION {
         EAST = 6.5;
-        NORTH = 14.5;
+        NORTH = 4.5;
         RADIUS = 3;
     };
 };
@@ -604,7 +604,7 @@ SUMMARY_OBSERVATION HEAT_2_2_438
     KEY     = HEAT_2_2;
     LOCALIZATION {
         EAST = 1.5;
-        NORTH = 11.5;
+        NORTH = 1.5;
         RADIUS = 3;
     };
 };
@@ -617,7 +617,7 @@ SUMMARY_OBSERVATION HEAT_7_2_438
     KEY     = HEAT_7_2;
     LOCALIZATION {
         EAST = 6.5;
-        NORTH = 11.5;
+        NORTH = 1.5;
         RADIUS = 3;
     };
 };

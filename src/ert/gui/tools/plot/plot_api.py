@@ -261,9 +261,11 @@ class PlotApi:
             http_response = client.get(
                 f"/ensembles/{ensemble_id}/responses/{PlotApi.escape(response_key)}",
                 headers={"accept": "application/x-parquet"},
-                params={"filter_on": json.dumps(filter_on)}
-                if filter_on is not None
-                else None,
+                params=(
+                    {"filter_on": json.dumps(filter_on)}
+                    if filter_on is not None
+                    else None
+                ),
                 timeout=self._timeout,
             )
             self._check_http_response(http_response)
@@ -366,6 +368,48 @@ class PlotApi:
                     df[col] = df[col].astype(float)
             return df
 
+    def observation_locations(self) -> pd.DataFrame:
+
+        all_observations = pd.DataFrame()
+        with create_ertserver_client(self.ens_path) as client:
+            try:
+                http_response = client.get("/experiments", timeout=self._timeout)
+                self._check_http_response(http_response)
+                experiments = http_response.json()
+                for experiment in experiments:
+                    experiment_id = str(experiment["id"])
+                    http_response = client.get(
+                        f"/experiments/{experiment_id}/observations",
+                        timeout=self._timeout,
+                    )
+                    self._check_http_response(http_response)
+
+                    observations = http_response.json()
+                    if not observations:
+                        continue
+                    new_obs = pd.concat(
+                        (
+                            pd.DataFrame(
+                                {
+                                    "east": obs["east"],
+                                    "north": obs["north"],
+                                    "radius": obs["radius"],
+                                }
+                            )
+                            for obs in observations
+                        ),
+                        ignore_index=True,
+                    ).dropna()
+
+                    all_observations = pd.concat(
+                        [all_observations, new_obs], ignore_index=True
+                    )
+            except (KeyError, IndexError, JSONDecodeError) as e:
+                raise httpx.RequestError(
+                    f"Experiment/Observation schema might have changed e={e}"
+                ) from e
+            return all_observations
+
     def observations_for_key(self, ensemble_ids: list[str], key: str) -> pd.DataFrame:
         """Returns a pandas DataFrame with the datapoints for a given observation key
         for a given ensembles. The row index is the realization number, and the column
@@ -392,9 +436,11 @@ class PlotApi:
                 http_response = client.get(
                     f"/ensembles/{ensemble.id}/responses/{PlotApi.escape(actual_response_key)}/observations",
                     timeout=self._timeout,
-                    params={"filter_on": json.dumps(filter_on)}
-                    if filter_on is not None
-                    else None,
+                    params=(
+                        {"filter_on": json.dumps(filter_on)}
+                        if filter_on is not None
+                        else None
+                    ),
                 )
                 self._check_http_response(http_response)
 
