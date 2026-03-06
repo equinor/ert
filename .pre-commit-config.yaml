@@ -27,6 +27,7 @@ repos:
     rev: 0.10.7
     hooks:
       - id: uv-lock
+        args: ["--exclude-newer=P7D"]
 
 - repo: local
   hooks:
