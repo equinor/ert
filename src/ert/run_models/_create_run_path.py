@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import math
 import os
+import threading
 import time
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
@@ -28,6 +30,7 @@ from ert.config import (
 from ert.config.design_matrix import DESIGN_MATRIX_GROUP
 from ert.config.distribution import LogNormalSettings, LogUnifSettings
 from ert.config.ert_config import create_forward_model_json
+from ert.ensemble_evaluator.evaluator import UserCancelled
 from ert.substitutions import Substitutions, substitute_runpath_name
 from ert.utils import log_duration
 
@@ -35,6 +38,7 @@ if TYPE_CHECKING:
     from ert.run_arg import RunArg
     from ert.runpaths import Runpaths
     from ert.storage import Ensemble
+
 
 logger = logging.getLogger(__name__)
 
@@ -262,8 +266,106 @@ def _make_param_substituter(
     return param_substituter
 
 
+def _check_end_event(end_event: threading.Event) -> None:
+    if end_event.is_set():
+        raise UserCancelled("Run path creation cancelled due to end event being set.")
+
+
+def _create_one_run_path(
+    run_arg: RunArg,
+    ensemble: Ensemble,
+    user_config_file: str,
+    env_vars: dict[str, str],
+    env_pr_fm_step: dict[str, dict[str, Any]],
+    forward_model_steps: list[ForwardModelStep],
+    substituter: Substitutions,
+    substitutions: dict[str, str],
+    parameters_file: str,
+    scalar_data_by_realization: dict[int, dict[str, float | str]],
+    context_env: dict[str, str],
+    end_event: threading.Event,
+) -> None:
+    run_path = Path(run_arg.runpath)
+
+    if not run_arg.active:
+        return
+
+    print("A ", run_arg.iens)
+    import time
+
+    time.sleep(20)
+
+    _check_end_event(end_event)
+
+    run_path.mkdir(parents=True, exist_ok=True)
+    scalar_data = scalar_data_by_realization.get(run_arg.iens, {})
+
+    (param_data, _) = _generate_parameter_files(
+        ensemble.experiment.parameter_configuration.values(),
+        parameters_file,
+        run_path,
+        run_arg.iens,
+        ensemble,
+        ensemble.iteration,
+        scalar_data=scalar_data,
+    )
+
+    print("B ", run_arg.iens)
+    time.sleep(20)
+
+    _check_end_event(end_event)
+
+    real_iter_substituter = substituter.real_iter_substituter(
+        run_arg.iens, ensemble.iteration
+    )
+    param_substituter = _make_param_substituter(real_iter_substituter, param_data)
+    for (
+        source_file_content,
+        target_file,
+    ) in ensemble.experiment.templates_configuration:
+        target_file = real_iter_substituter.substitute(target_file)
+        result = param_substituter.substitute(source_file_content)
+        target = run_path / target_file
+        if not target.parent.exists():
+            os.makedirs(
+                target.parent,
+                exist_ok=True,
+            )
+        target.write_text(result)
+
+    print("C ", run_arg.iens)
+    time.sleep(20)
+
+    _check_end_event(end_event)
+
+    path = run_path / "jobs.json"
+    _backup_if_existing(path)
+    forward_model_output = create_forward_model_json(
+        context=substitutions,
+        forward_model_steps=forward_model_steps,
+        user_config_file=user_config_file,
+        env_vars={**env_vars, **context_env},
+        env_pr_fm_step=env_pr_fm_step,
+        run_id=run_arg.run_id,
+        iens=run_arg.iens,
+        itr=ensemble.iteration,
+    )
+    Path(run_path / "jobs.json").write_bytes(
+        orjson.dumps(
+            forward_model_output,
+            option=orjson.OPT_NON_STR_KEYS | orjson.OPT_INDENT_2,
+        )
+    )
+
+    # Write MANIFEST file to runpath use to avoid NFS sync issues
+    data = _manifest_to_json(ensemble, run_arg.iens, run_arg.itr)
+    Path(run_path / "manifest.json").write_bytes(
+        orjson.dumps(data, option=orjson.OPT_NON_STR_KEYS | orjson.OPT_INDENT_2)
+    )
+
+
 @log_duration(logger, logging.INFO)
-def create_run_path(
+async def create_run_path(
     run_args: list[RunArg],
     ensemble: Ensemble,
     user_config_file: str,
@@ -273,6 +375,7 @@ def create_run_path(
     substitutions: dict[str, str],
     parameters_file: str,
     runpaths: Runpaths,
+    end_event: threading.Event,
     context_env: dict[str, str] | None = None,
 ) -> None:
     if context_env is None:
@@ -309,84 +412,28 @@ def create_run_path(
         }
         timings["load_scalar_keys"] = time.perf_counter() - start_time
 
-    for run_arg in run_args:
-        run_path = Path(run_arg.runpath)
-        if run_arg.active:
-            run_path.mkdir(parents=True, exist_ok=True)
-            start_time = time.perf_counter()
-            scalar_data = scalar_data_by_realization.get(run_arg.iens, {})
-
-            (param_data, detailed_parameter_timings) = _generate_parameter_files(
-                ensemble.experiment.parameter_configuration.values(),
-                parameters_file,
-                run_path,
-                run_arg.iens,
+        tasks = [
+            asyncio.to_thread(
+                _create_one_run_path,
+                run_arg,
                 ensemble,
-                ensemble.iteration,
-                scalar_data=scalar_data,
+                user_config_file,
+                env_vars,
+                env_pr_fm_step,
+                forward_model_steps,
+                substituter,
+                substitutions,
+                parameters_file,
+                scalar_data_by_realization,
+                context_env,
+                end_event,
             )
-            for parameter_type, duration in detailed_parameter_timings.items():
-                if parameter_type not in timings:
-                    timings[parameter_type] = 0.0
-                timings[parameter_type] += duration
+            for run_arg in run_args
+        ]
+        await asyncio.gather(*tasks)
 
-            timings["generate_parameter_files"] += time.perf_counter() - start_time
-            real_iter_substituter = substituter.real_iter_substituter(
-                run_arg.iens, ensemble.iteration
-            )
-            param_substituter = _make_param_substituter(
-                real_iter_substituter, param_data
-            )
-            for (
-                source_file_content,
-                target_file,
-            ) in ensemble.experiment.templates_configuration:
-                start_time = time.perf_counter()
-                target_file = real_iter_substituter.substitute(target_file)
-                timings["substitute_real_iter"] += time.perf_counter() - start_time
-                start_time = time.perf_counter()
-                result = param_substituter.substitute(source_file_content)
-                timings["substitute_parameters"] += time.perf_counter() - start_time
-                start_time = time.perf_counter()
-                target = run_path / target_file
-                if not target.parent.exists():
-                    os.makedirs(
-                        target.parent,
-                        exist_ok=True,
-                    )
-                target.write_text(result)
-                timings["result_file_to_target"] += time.perf_counter() - start_time
-
-            path = run_path / "jobs.json"
-            start_time = time.perf_counter()
-            _backup_if_existing(path)
-            timings["backup_if_existing"] = time.perf_counter() - start_time
-            start_time = time.perf_counter()
-            forward_model_output = create_forward_model_json(
-                context=substitutions,
-                forward_model_steps=forward_model_steps,
-                user_config_file=user_config_file,
-                env_vars={**env_vars, **context_env},
-                env_pr_fm_step=env_pr_fm_step,
-                run_id=run_arg.run_id,
-                iens=run_arg.iens,
-                itr=ensemble.iteration,
-            )
-            Path(run_path / "jobs.json").write_bytes(
-                orjson.dumps(
-                    forward_model_output,
-                    option=orjson.OPT_NON_STR_KEYS | orjson.OPT_INDENT_2,
-                )
-            )
-            timings["jobs_to_json"] = time.perf_counter() - start_time
-            # Write MANIFEST file to runpath use to avoid NFS sync issues
-            start_time = time.perf_counter()
-            data = _manifest_to_json(ensemble, run_arg.iens, run_arg.itr)
-            Path(run_path / "manifest.json").write_bytes(
-                orjson.dumps(data, option=orjson.OPT_NON_STR_KEYS | orjson.OPT_INDENT_2)
-            )
-            timings["manifest_to_json"] = time.perf_counter() - start_time
     logger.info(f"_create_run_path durations: {timings}")
+
     runpaths.write_runpath_list(
         [ensemble.iteration], [real.iens for real in run_args if real.active]
     )

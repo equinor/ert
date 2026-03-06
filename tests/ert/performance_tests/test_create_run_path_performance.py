@@ -1,3 +1,4 @@
+import asyncio
 import itertools
 
 import numpy as np
@@ -104,16 +105,18 @@ def test_create_run_path_load_scalar_keys_performance(
             )
             run_args = create_run_arguments(runpaths, active, ensemble)
 
-            create_run_path(
-                run_args=run_args,
-                ensemble=ensemble,
-                user_config_file="perf.ert",
-                env_vars={},
-                env_pr_fm_step={},
-                forward_model_steps=[],
-                substitutions={},
-                parameters_file="parameters",
-                runpaths=runpaths,
+            asyncio.run(
+                create_run_path(
+                    run_args=run_args,
+                    ensemble=ensemble,
+                    user_config_file="perf.ert",
+                    env_vars={},
+                    env_pr_fm_step={},
+                    forward_model_steps=[],
+                    substitutions={},
+                    parameters_file="parameters",
+                    runpaths=runpaths,
+                )
             )
 
         benchmark(run)
@@ -175,16 +178,18 @@ def test_create_run_path_surface_performance(tmp_path, benchmark):
             )
             run_args = create_run_arguments(runpaths, active, ensemble)
 
-            create_run_path(
-                run_args=run_args,
-                ensemble=ensemble,
-                user_config_file="perf.ert",
-                env_vars={},
-                env_pr_fm_step={},
-                forward_model_steps=[],
-                substitutions={},
-                parameters_file="parameters",
-                runpaths=runpaths,
+            asyncio.run(
+                create_run_path(
+                    run_args=run_args,
+                    ensemble=ensemble,
+                    user_config_file="perf.ert",
+                    env_vars={},
+                    env_pr_fm_step={},
+                    forward_model_steps=[],
+                    substitutions={},
+                    parameters_file="parameters",
+                    runpaths=runpaths,
+                )
             )
 
         benchmark(run)

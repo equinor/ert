@@ -1,3 +1,5 @@
+import asyncio
+
 from ert.config import ErtConfig
 from ert.run_arg import create_run_arguments
 from ert.run_models._create_run_path import create_run_path
@@ -46,15 +48,17 @@ def create_runpath(
         random_seed=ert_config.random_seed,
         num_realizations=ert_config.runpath_config.num_realizations,
     )
-    create_run_path(
-        run_args=run_args,
-        ensemble=ensemble,
-        user_config_file=ert_config.user_config_file,
-        env_vars=ert_config.env_vars,
-        env_pr_fm_step=ert_config.env_pr_fm_step,
-        forward_model_steps=ert_config.forward_model_steps,
-        substitutions=ert_config.substitutions,
-        parameters_file="parameters",
-        runpaths=runpaths,
+    asyncio.run(
+        create_run_path(
+            run_args=run_args,
+            ensemble=ensemble,
+            user_config_file=ert_config.user_config_file,
+            env_vars=ert_config.env_vars,
+            env_pr_fm_step=ert_config.env_pr_fm_step,
+            forward_model_steps=ert_config.forward_model_steps,
+            substitutions=ert_config.substitutions,
+            parameters_file="parameters",
+            runpaths=runpaths,
+        )
     )
     return ert_config.ensemble_config, ensemble

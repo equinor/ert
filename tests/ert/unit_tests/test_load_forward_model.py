@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -33,16 +34,18 @@ def setup_case(storage, use_tmpdir, run_args):
             name="prior",
             ensemble_size=ert_config.runpath_config.num_realizations,
         )
-        create_run_path(
-            run_args=run_args(ert_config, prior_ensemble),
-            ensemble=prior_ensemble,
-            user_config_file=ert_config.user_config_file,
-            env_vars=ert_config.env_vars,
-            env_pr_fm_step=ert_config.env_pr_fm_step,
-            forward_model_steps=ert_config.forward_model_steps,
-            substitutions=ert_config.substitutions,
-            parameters_file="parameters",
-            runpaths=Runpaths.from_config(ert_config),
+        asyncio.run(
+            create_run_path(
+                run_args=run_args(ert_config, prior_ensemble),
+                ensemble=prior_ensemble,
+                user_config_file=ert_config.user_config_file,
+                env_vars=ert_config.env_vars,
+                env_pr_fm_step=ert_config.env_pr_fm_step,
+                forward_model_steps=ert_config.forward_model_steps,
+                substitutions=ert_config.substitutions,
+                parameters_file="parameters",
+                runpaths=Runpaths.from_config(ert_config),
+            )
         )
         return prior_ensemble
 
@@ -147,16 +150,18 @@ def test_load_forward_model_summary(
         experiment_id, name="prior", ensemble_size=100
     )
 
-    create_run_path(
-        run_args=run_args(ert_config, prior_ensemble),
-        ensemble=prior_ensemble,
-        user_config_file=ert_config.user_config_file,
-        env_vars=ert_config.env_vars,
-        env_pr_fm_step=ert_config.env_pr_fm_step,
-        forward_model_steps=ert_config.forward_model_steps,
-        substitutions=ert_config.substitutions,
-        parameters_file="parameters",
-        runpaths=Runpaths.from_config(ert_config),
+    asyncio.run(
+        create_run_path(
+            run_args=run_args(ert_config, prior_ensemble),
+            ensemble=prior_ensemble,
+            user_config_file=ert_config.user_config_file,
+            env_vars=ert_config.env_vars,
+            env_pr_fm_step=ert_config.env_pr_fm_step,
+            forward_model_steps=ert_config.forward_model_steps,
+            substitutions=ert_config.substitutions,
+            parameters_file="parameters",
+            runpaths=Runpaths.from_config(ert_config),
+        )
     )
     with caplog.at_level(logging.ERROR):
         loaded = load_parameters_and_responses_from_runpath(
@@ -242,16 +247,18 @@ def test_loading_gen_data_without_restart(storage, run_args):
         ensemble_size=ert_config.runpath_config.num_realizations,
     )
 
-    create_run_path(
-        run_args=run_args(ert_config, prior_ensemble),
-        ensemble=prior_ensemble,
-        user_config_file=ert_config.user_config_file,
-        env_vars=ert_config.env_vars,
-        env_pr_fm_step=ert_config.env_pr_fm_step,
-        forward_model_steps=ert_config.forward_model_steps,
-        substitutions=ert_config.substitutions,
-        parameters_file="parameters",
-        runpaths=Runpaths.from_config(ert_config),
+    asyncio.run(
+        create_run_path(
+            run_args=run_args(ert_config, prior_ensemble),
+            ensemble=prior_ensemble,
+            user_config_file=ert_config.user_config_file,
+            env_vars=ert_config.env_vars,
+            env_pr_fm_step=ert_config.env_pr_fm_step,
+            forward_model_steps=ert_config.forward_model_steps,
+            substitutions=ert_config.substitutions,
+            parameters_file="parameters",
+            runpaths=Runpaths.from_config(ert_config),
+        )
     )
     run_path = Path("simulations/realization-0/iter-0/")
     (run_path / "response.out").write_text("1\n2\n3", encoding="utf-8")
@@ -317,16 +324,18 @@ def test_loading_from_any_available_iter(storage, run_args, itr):
         iteration=itr if itr is not None else 0,
     )
 
-    create_run_path(
-        run_args=run_args(ert_config, prior_ensemble),
-        ensemble=prior_ensemble,
-        user_config_file=ert_config.user_config_file,
-        env_vars=ert_config.env_vars,
-        env_pr_fm_step=ert_config.env_pr_fm_step,
-        forward_model_steps=ert_config.forward_model_steps,
-        substitutions=ert_config.substitutions,
-        parameters_file="parameters",
-        runpaths=Runpaths.from_config(ert_config),
+    asyncio.run(
+        create_run_path(
+            run_args=run_args(ert_config, prior_ensemble),
+            ensemble=prior_ensemble,
+            user_config_file=ert_config.user_config_file,
+            env_vars=ert_config.env_vars,
+            env_pr_fm_step=ert_config.env_pr_fm_step,
+            forward_model_steps=ert_config.forward_model_steps,
+            substitutions=ert_config.substitutions,
+            parameters_file="parameters",
+            runpaths=Runpaths.from_config(ert_config),
+        )
     )
     run_path = Path(f"simulations/realization-0/iter-{itr if itr is not None else 0}/")
     (run_path / "response.out").write_text("1\n2\n3", encoding="utf-8")

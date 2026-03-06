@@ -1,3 +1,4 @@
+import asyncio
 import shutil
 from pathlib import Path
 from textwrap import dedent
@@ -54,16 +55,18 @@ def test_load_summary_response_restart_not_zero(
             ensemble_size=ert_config.runpath_config.num_realizations,
         )
 
-        create_run_path(
-            run_args=run_args(ert_config, ensemble),
-            ensemble=ensemble,
-            user_config_file=ert_config.user_config_file,
-            forward_model_steps=ert_config.forward_model_steps,
-            env_vars=ert_config.env_vars,
-            env_pr_fm_step=ert_config.env_pr_fm_step,
-            substitutions=ert_config.substitutions,
-            parameters_file="parameters",
-            runpaths=Runpaths.from_config(ert_config),
+        asyncio.run(
+            create_run_path(
+                run_args=run_args(ert_config, ensemble),
+                ensemble=ensemble,
+                user_config_file=ert_config.user_config_file,
+                forward_model_steps=ert_config.forward_model_steps,
+                env_vars=ert_config.env_vars,
+                env_pr_fm_step=ert_config.env_pr_fm_step,
+                substitutions=ert_config.substitutions,
+                parameters_file="parameters",
+                runpaths=Runpaths.from_config(ert_config),
+            )
         )
         shutil.copy(test_path / "PRED_RUN.SMSPEC", sim_path / "PRED_RUN.SMSPEC")
         shutil.copy(test_path / "PRED_RUN.UNSMRY", sim_path / "PRED_RUN.UNSMRY")
