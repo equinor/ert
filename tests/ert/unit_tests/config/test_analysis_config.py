@@ -470,8 +470,8 @@ def test_that_parameter_strategy_with_unknown_parameter_type_raises_validation_e
         AnalysisConfig.from_dict(
             {
                 ConfigKeys.ANALYSIS_SET_VAR: [
-                    ["PARAMETERS", "UNKNOWN_TYPE", "ADAPTIVE"],
                     ["PARAMETERS", "FIELD", "DISTANCE"],
+                    ["PARAMETERS", "UNKNOWN_TYPE", "ADAPTIVE"],
                 ],
             }
         )
