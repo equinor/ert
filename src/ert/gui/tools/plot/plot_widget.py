@@ -212,6 +212,7 @@ class PlotWidget(QWidget):
         ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observations: pd.DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
+        obs_loc: npt.NDArray[np.float32] | None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         self.resetPlot()
@@ -228,6 +229,7 @@ class PlotWidget(QWidget):
                 ensemble_to_data_map,
                 observations,
                 std_dev_images,
+                obs_loc,
                 key_def,
             )
             self._canvas.draw()
