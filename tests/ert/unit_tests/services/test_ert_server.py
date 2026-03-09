@@ -232,6 +232,13 @@ os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
 os.close(fd)
 """
 )
+@pytest.mark.skipif(
+    sys.version_info[0:2] == (3, 14),
+    reason="""
+        On python 3.14, PermissionError is not raised from
+        pathlib.Path.exists()
+        """,
+)
 def test_that_connect_logs_permission_error(tmp_path, caplog):
     tmp_path.chmod(0o000)
     caplog.clear()
