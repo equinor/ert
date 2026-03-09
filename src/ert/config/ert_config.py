@@ -436,6 +436,8 @@ def _validate_fixtures(
 
 def create_and_hook_workflows(
     hook_workflow_info: list[tuple[str, HookRuntime]],
+    hook_workflow_job_info: list[list[str]],
+    create_workflow_from_job_info: list[list[str]],
     workflow_info: list[tuple[str, str]],
     workflow_jobs: dict[str, WorkflowJob],
     substitutions: dict[str, str],
@@ -443,7 +445,7 @@ def create_and_hook_workflows(
     workflows = {}
     hooked_workflows = defaultdict(list)
 
-    errors = []
+    errors: list[ErrorInfo | ConfigValidationError] = []
 
     for work in workflow_info:
         filename = path.basename(work[0]) if len(work) == 1 else work[1]
@@ -465,6 +467,37 @@ def create_and_hook_workflows(
                 work[0],
             )
 
+    def _create_workflow_from_job(
+        inline_workflow: list[str],
+    ) -> tuple[str, Workflow]:
+        workflow_name = inline_workflow[0]
+        job_name = inline_workflow[1]
+        job_args = inline_workflow[2:]
+        return (
+            workflow_name,
+            Workflow.from_instructions(
+                workflow_name, job_name, job_args, workflow_jobs
+            ),
+        )
+
+    def _register_workflow(
+        inline_workflow: list[str],
+        workflow_name: str,
+        workflow: Workflow,
+    ) -> None:
+        if workflow_name in workflows:
+            ConfigWarning.warn(
+                f"Workflow {workflow_name!r} was added twice", inline_workflow
+            )
+        workflows[workflow_name] = workflow
+
+    for inline_workflow in create_workflow_from_job_info:
+        try:
+            wf_name, wf = _create_workflow_from_job(inline_workflow)
+            _register_workflow(inline_workflow, wf_name, wf)
+        except ConfigValidationError as err:
+            errors.append(err)
+
     for hook_name, mode in hook_workflow_info:
         if hook_name not in workflows:
             errors.append(
@@ -479,6 +512,27 @@ def create_and_hook_workflows(
         errors.extend(_validate_fixtures(hook_name, workflow, mode))
 
         hooked_workflows[mode].append(workflow)
+
+    for inline_workflow_hook in hook_workflow_job_info:
+        inline_workflow = inline_workflow_hook[:-1]
+        raw_mode = inline_workflow_hook[-1]
+        try:
+            mode = HookRuntime(str(raw_mode))
+        except ValueError:
+            errors.append(
+                ErrorInfo(
+                    message=f"Last argument of HOOK_WORKFLOW_JOB must be a known "
+                    f"HookRuntime ({', '.join(list(HookRuntime))}), got {raw_mode}"
+                ).set_context(raw_mode)
+            )
+            continue
+        try:
+            wf_name, wf = _create_workflow_from_job(inline_workflow)
+            _register_workflow(inline_workflow, wf_name, wf)
+            errors.extend(_validate_fixtures(wf_name, wf, mode))
+            hooked_workflows[mode].append(wf)
+        except ConfigValidationError as err:
+            errors.append(err)
 
     if errors:
         raise ConfigValidationError.from_collected(errors)
@@ -503,6 +557,8 @@ def workflows_from_dict(
     )
     workflows, hooked_workflows = create_and_hook_workflows(
         content_dict.get(ConfigKeys.HOOK_WORKFLOW, []),
+        content_dict.get(ConfigKeys.HOOK_WORKFLOW_JOB, []),
+        content_dict.get(ConfigKeys.CREATE_WORKFLOW_FROM_JOB, []),
         content_dict.get(ConfigKeys.LOAD_WORKFLOW, []),
         workflow_jobs,
         substitutions,

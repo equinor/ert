@@ -2811,3 +2811,135 @@ def test_that_corrupt_xlsx_design_matrix_raises_config_validation_error():
         ),
     ):
         ErtConfig.from_file("config.ert")
+
+
+@pytest.fixture
+def ert_config_with_job() -> type[ErtConfig]:
+    class MyJob(ErtScript):
+        def run(self) -> None:
+            pass
+
+    plugins = ErtRuntimePlugins(
+        installed_workflow_jobs={
+            "MY_JOB": ErtScriptWorkflow(name="MY_JOB", ert_script=MyJob)
+        }
+    )
+
+    return ErtConfig.with_plugins(plugins)
+
+
+def test_that_create_workflow_from_job_creates_and_registers_workflow(
+    ert_config_with_job,
+):
+    ert_config = ert_config_with_job.from_file_contents(
+        dedent("""
+        NUM_REALIZATIONS 1
+        CREATE_WORKFLOW_FROM_JOB my_wf MY_JOB foo bar
+        """),
+    )
+    assert "my_wf" in ert_config.workflows
+    wf = ert_config.workflows["my_wf"]
+    assert len(wf.cmd_list) == 1
+    job, args = wf.cmd_list[0]
+    assert job.name == "MY_JOB"
+    assert args == ["foo", "bar"]
+
+
+@pytest.mark.parametrize("mode", list(HookRuntime))
+def test_that_hook_workflow_job_registers_and_hooks_workflow(ert_config_with_job, mode):
+    """HOOK_WORKFLOW_JOB should both hook the workflow AND register it by name."""
+    ert_config = ert_config_with_job.from_file_contents(
+        dedent(f"""
+        NUM_REALIZATIONS 1
+        HOOK_WORKFLOW_JOB my_wf MY_JOB foo bar {mode.name}
+        """),
+    )
+    assert "my_wf" in ert_config.workflows
+    assert ert_config.workflows["my_wf"] in ert_config.hooked_workflows[mode]
+
+
+def test_that_create_workflow_from_job_with_unknown_job_name_raises_error():
+    with pytest.raises(
+        ConfigValidationError,
+        match="Job with name: NO_SUCH_JOB is not recognized",
+    ):
+        ErtConfig.from_file_contents(
+            dedent("""
+            NUM_REALIZATIONS 1
+            CREATE_WORKFLOW_FROM_JOB my_wf NO_SUCH_JOB foo bar
+            """)
+        )
+
+
+def test_that_hook_workflow_job_with_unknown_job_name_raises_error():
+    with pytest.raises(
+        ConfigValidationError,
+        match="Job with name: NO_SUCH_JOB is not recognized",
+    ):
+        ErtConfig.from_file_contents(
+            dedent("""
+            NUM_REALIZATIONS 1
+            HOOK_WORKFLOW_JOB my_wf NO_SUCH_JOB foo bar PRE_SIMULATION
+            """)
+        )
+
+
+def test_that_hook_workflow_job_with_invalid_runtime_raises_error():
+    with pytest.raises(
+        ConfigValidationError,
+        match="Last argument of HOOK_WORKFLOW_JOB must be a known HookRuntime",
+    ):
+        ErtConfig.from_file_contents(
+            dedent("""
+            NUM_REALIZATIONS 1
+            HOOK_WORKFLOW_JOB my_wf SOME_JOB foo bar NOT_A_RUNTIME
+            """)
+        )
+
+
+HOOK = "HOOK_WORKFLOW_JOB my_wf MY_JOB foo bar PRE_SIMULATION"
+CREATE = "CREATE_WORKFLOW_FROM_JOB my_wf MY_JOB foo bar"
+LOAD = "LOAD_WORKFLOW my_wf"
+
+
+@pytest.mark.parametrize(
+    ("workflow1", "workflow2"),
+    [
+        pytest.param(
+            CREATE,
+            CREATE,
+            id="create_workflow_from_job_twice",
+        ),
+        pytest.param(
+            CREATE,
+            HOOK,
+            id="create_workflow_from_job_and_hook_workflow_job",
+        ),
+        pytest.param(
+            HOOK,
+            HOOK,
+            id="hook_workflow_job_and_hook_workflow_job",
+        ),
+        pytest.param(
+            LOAD,
+            CREATE,
+            id="load_workflow_and_create_workflow_from_job",
+        ),
+        pytest.param(
+            LOAD,
+            HOOK,
+            id="load_workflow_and_hook_workflow_job",
+        ),
+    ],
+)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_reusing_workflow_name_warns(ert_config_with_job, workflow1, workflow2):
+    config = dedent(f"""
+    NUM_REALIZATIONS 1
+    {workflow1}
+    {workflow2}
+    """)
+    if "LOAD_WORKFLOW" in config:
+        Path("my_wf").write_text("MY_JOB\n", encoding="utf-8")
+    with pytest.warns(ConfigWarning, match=r"Workflow 'my_wf' was added twice"):
+        ert_config_with_job.from_file_contents(config)

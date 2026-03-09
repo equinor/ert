@@ -109,6 +109,20 @@ class Workflow(BaseModelWithContextSupport):
 
         return cls(src_file=src_file, cmd_list=cmd_list)
 
+    @classmethod
+    def from_instructions(
+        cls,
+        workflow_name: str,
+        job_name: str,
+        args: list[Any],
+        job_dict: dict[str, WorkflowJob],
+    ) -> Workflow:
+        job = cls.validate_workflow_job(job_name, args, job_dict)
+        return cls(
+            src_file=workflow_name,
+            cmd_list=[(job, args)],
+        )
+
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, type(self)):
             return False
