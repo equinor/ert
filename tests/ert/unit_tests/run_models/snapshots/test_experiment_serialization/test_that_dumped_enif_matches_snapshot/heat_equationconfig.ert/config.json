@@ -248,8 +248,8 @@
         ]
       },
       "file_format": "bgrdecl",
-      "output_transformation": null,
-      "input_transformation": null,
+      "output_transformation": "EXP",
+      "input_transformation": "LOG",
       "truncation_min": null,
       "truncation_max": null,
       "forward_init_file": "cond.bgrdecl",
