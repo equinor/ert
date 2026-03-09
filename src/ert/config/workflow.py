@@ -6,7 +6,7 @@ from typing import Any
 
 from ert.base_model_context import BaseModelWithContextSupport
 
-from .parsing import ConfigValidationError, ErrorInfo, init_workflow_schema, parse
+from .parsing import ConfigValidationError, init_workflow_schema, parse
 from .parsing.types import Defines
 from .workflow_job import BaseErtScriptWorkflow, WorkflowJob
 
@@ -23,6 +23,38 @@ class Workflow(BaseModelWithContextSupport):
 
     def __iter__(self) -> Iterator[tuple[WorkflowJob, Any]]:  # type: ignore
         return iter(self.cmd_list)
+
+    @staticmethod
+    def validate_workflow_job(
+        job_name: str,
+        args: list[Any],
+        job_dict: dict[str, WorkflowJob],
+    ) -> WorkflowJob:
+        job = job_dict.get(job_name)
+
+        if job is None:
+            raise ConfigValidationError.with_context(
+                f"Job with name: {job_name} is not recognized", job_name
+            )
+
+        if job.min_args is not None and job.min_args > len(args):
+            raise ConfigValidationError.with_context(
+                f"Job with name: {job_name} does not have enough"
+                f" arguments, expected at least: {job.min_args}, got: {args}",
+                job_name,
+            )
+
+        if job.max_args is not None and job.max_args < len(args):
+            raise ConfigValidationError.with_context(
+                f"Job with name: {job_name} has too many arguments, "
+                f"expected at most: {job.max_args}, got: {args}",
+                job_name,
+            )
+
+        if isinstance(job, BaseErtScriptWorkflow):
+            job.load_ert_script_class().validate(args)
+
+        return job
 
     @classmethod
     def _parse_command_list(
@@ -42,39 +74,12 @@ class Workflow(BaseModelWithContextSupport):
         for job_name in parsed_workflow_job_names:
             for instructions in config_dict[job_name]:
                 job_name_with_context = instructions.token
-                job = job_dict.get(job_name)
-                if job is None:
-                    errors.append(
-                        ErrorInfo(
-                            f"Job with name: {job_name} is not recognized"
-                        ).set_context(job_name_with_context)
+                try:
+                    cls.validate_workflow_job(
+                        job_name_with_context, instructions, job_dict
                     )
-                    continue
-                elif job.min_args is not None and job.min_args > len(instructions):
-                    errors.append(
-                        ErrorInfo(
-                            f"Job with name: {job_name} does not have enough arguments,"
-                            f" expected at least: {job.min_args}, got: {instructions}"
-                        ).set_context(job_name_with_context)
-                    )
-                    continue
-                elif job.max_args is not None and job.max_args < len(instructions):
-                    errors.append(
-                        ErrorInfo(
-                            f"Job with name: {job_name} has too many arguments, "
-                            f"expected at most: {job.min_args}, got: {instructions}"
-                        ).set_context(job_name_with_context)
-                    )
-                    continue
-                if isinstance(job, BaseErtScriptWorkflow):
-                    try:
-                        job.load_ert_script_class().validate(instructions)
-                    except ConfigValidationError as err:
-                        errors.append(
-                            ErrorInfo(message=str(err)).set_context(
-                                job_name_with_context
-                            )
-                        )
+                except ConfigValidationError as err:
+                    errors.append(err)
 
                 all_workflow_jobs.append((job_name_with_context, instructions))
 
