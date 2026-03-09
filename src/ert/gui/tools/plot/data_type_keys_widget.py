@@ -73,7 +73,7 @@ class _Legend(QWidget):
 class DataTypeKeysWidget(QWidget):
     dataTypeKeySelected = Signal()
 
-    def __init__(self, key_defs: list[PlotApiKeyDefinition]) -> None:
+    def __init__(self, key_defs: list[PlotApiKeyDefinition], is_everest: bool) -> None:
         QWidget.__init__(self)
 
         self.__filter_popup = FilterPopup(self, key_defs)
@@ -106,9 +106,10 @@ class DataTypeKeysWidget(QWidget):
         layout.addWidget(self.data_type_keys_widget, 2)
         layout.addStretch()
 
-        layout.addWidget(
-            _Legend("Observations available", DataTypeKeysListModel.HAS_OBSERVATIONS)
-        )
+        if(not is_everest):
+            layout.addWidget(
+                _Legend("Observations available", DataTypeKeysListModel.HAS_OBSERVATIONS)
+            )
 
         self.setLayout(layout)
 
