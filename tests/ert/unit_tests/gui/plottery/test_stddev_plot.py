@@ -28,12 +28,14 @@ def test_stddev_plot_shows_boxplot(plot_context: PlotContext):
     rng = np.random.default_rng()
     figure = Figure()
     std_dev_data = rng.random((5, 5))
+    obs_loc = np.array([[1, 2], [3, 4]])
     StdDevPlot().plot(
         figure,
         plot_context,
         {},
         {},
         {"ensemble_1": std_dev_data},
+        obs_loc,
     )
     ax = figure.axes
     assert ax[0].get_title() == "experiment_1 : ensemble_1 layer=0"
@@ -62,5 +64,6 @@ def test_that_stddev_plot_does_not_crash_and_returns_early_when_no_ensembles():
         {},
         {},
         {},
+        None,
     )
     assert len(figure.axes) == 0
