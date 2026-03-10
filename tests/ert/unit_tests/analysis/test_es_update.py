@@ -319,18 +319,17 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
 
 def test_update_raises_on_singular_matrix(tmp_path):
     """
-    This is a regression test for precision loss in calculating
-    standard deviation.
+    Tests that smoother_update raises ErtAnalysisError with a
+    "singular matrix" message when the transition matrix cannot be computed.
     """
     gen_kw = GenKwConfig(
         name="coeff_0",
         group="COEFFS",
         distribution={"name": "const", "value": 0.1},
     )
-    # The values given here are chosen so that when computing
-    # `ens_std = S.std(ddof=0, axis=1)`, ens_std[0] is not zero even though
-    # all responses have the same value: 5.08078746e07.
-    # This is due to precision loss.
+    # Two realizations with a near-zero observation error (1e-32) produce a
+    # rank-deficient system, triggering the singular matrix error when
+    # computing the transition matrix.
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment(
             name="ensemble_smoother",
