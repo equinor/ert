@@ -44,13 +44,24 @@ from tests.ert.conftest import _create_design_matrix
         pytest.param(
             pl.DataFrame(
                 {
-                    "REAL": [0, 1],
+                    "REAL": [1, 2],
                     "d": [1, 2],
                 }
             ),
             pl.DataFrame([["e", 1]], orient="row"),
-            r"Design Matrices .* and .* do not have the same active realizations!",
-            id="not_same_acitve_realizations",
+            "ok_merge_with_different_realizations",
+            id="not_same_active_realizations",
+        ),
+        pytest.param(
+            pl.DataFrame(
+                {
+                    "REAL": [3, 4],
+                    "d": [1, 2],
+                }
+            ),
+            pl.DataFrame([["e", 1]], orient="row"),
+            "Design Matrices .* and .* do not have any active realizations in common!",
+            id="no_overlap_in_active_realizations",
         ),
     ],
 )
@@ -90,8 +101,28 @@ def test_merge_multiple_occurrences(
     assert set(design_matrix_2.parameter_priority.values()) == {
         DataSource.DESIGN_MATRIX
     }
+    if error_msg == "ok_merge_with_different_realizations":
+        design_matrix_1.merge_with_other(design_matrix_2)
+        design_params = [cfg.name for cfg in design_matrix_1.parameter_configurations]
+        assert all(param in design_params for param in ("a", "b", "d"))
+        assert design_matrix_1.active_realizations == [False, True, True]
+        df = design_matrix_1.design_matrix_df
+        np.testing.assert_equal(df["a"], np.array([2, 3]))
+        np.testing.assert_equal(df["b"], np.array([2, 0]))
+        np.testing.assert_equal(df["d"], np.array([1, 2]))
 
-    if error_msg:
+        expected_priority = {
+            "a": (
+                DataSource.DESIGN_MATRIX
+                if "a" in design_sheet_pd.columns
+                else DataSource.SAMPLED
+            ),
+            "b": DataSource.SAMPLED,
+            "d": DataSource.DESIGN_MATRIX,
+            "e": DataSource.DESIGN_MATRIX,
+        }
+        assert design_matrix_1.parameter_priority == expected_priority
+    elif error_msg:
         with pytest.raises(ValueError, match=error_msg):
             design_matrix_1.merge_with_other(design_matrix_2)
     else:

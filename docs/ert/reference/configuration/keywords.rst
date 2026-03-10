@@ -305,8 +305,11 @@ specified in `REAL` column; i.e.; 0,1 and 3 in the example. If the `REAL` column
 as realization; i.e. 0,1 and 2 in the example.
 
 Multiple :code:`DESIGN_MATRIX` keywords can be added to the configuration file and ert will validate that
- - the realizations overlap on each instance of the keyword.
- - the parameter names are either unique or the values need to be the same for the overlapping parameters in the different instances of the keyword.
+the parameter names are either unique or the values need to be the same for the overlapping parameters
+in the different instances of the keyword.
+
+In case there is a different number of realizations in each instance, the intersection of the active realizations will be used
+and ert will raise a warning. If there are no common active realizations, ert will produce a ConfigValidationError.
 
 The combination with :ref:`GEN_KW <gen_kw>` parameters is supported. In case of overlapping names, eg. the ert config would contain:
 
