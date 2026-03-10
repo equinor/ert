@@ -32,7 +32,7 @@ class TargetEnsembleModel(ValueModel):
             ValueModel.setValue(self, value)
 
     def getDefaultValue(self) -> str | None:
-        return f"iter-%d"
+        return "iter-%d"
 
     def on_current_ensemble_changed(self, *args: Any) -> None:
         if not self._custom:
