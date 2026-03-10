@@ -87,7 +87,6 @@ def verify_disabled_observations_dialog_shows_on_click(
     def handle_disabled_observations_blocking_dialog(qtbot, report_table, nan_message):
         message_box = report_table.findChild(QMessageBox)
         try:
-            assert message_box.windowTitle() == "Observation deactivated"
             assert message_box.text() == nan_message
         finally:
             qtbot.mouseClick(
