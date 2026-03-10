@@ -1,16 +1,25 @@
 import fileinput
+import shutil
 
+import polars as pl
 import pytest
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QComboBox
+from PyQt6.QtWidgets import QComboBox, QListWidget
 
 from ert.gui.experiments import ExperimentPanel
+from ert.gui.experiments.run_dialog import RunDialog
+from ert.gui.experiments.view.update import UpdateWidget
 from ert.run_models import (
     EnsembleExperiment,
     EnsembleSmoother,
     MultipleDataAssimilation,
 )
-from tests.ert.ui_tests.gui.conftest import get_child, open_gui_with_config
+from ert.run_models.manual_update import ManualUpdate
+from tests.ert.ui_tests.gui.conftest import (
+    _new_poly_example,
+    get_child,
+    open_gui_with_config,
+)
 
 
 @pytest.mark.usefixtures("copy_poly_case")
@@ -37,3 +46,101 @@ def test_no_updateable_parameters(qtbot):
         assert (
             simulation_mode_combo.model().item(idx).flags() & Qt.ItemFlag.ItemIsEnabled
         )
+
+
+@pytest.fixture
+def copy_run_to_current_test(tmp_path, monkeypatch):
+    def _copy_case(src_path):
+        monkeypatch.chdir(tmp_path)
+
+        dst_path = tmp_path
+        shutil.copytree(src_path, dst_path, dirs_exist_ok=True)
+
+    return _copy_case
+
+
+def remove_responses_in_realization0(gui, indices_to_drop):
+    """Removes responses in the first realization of the only ensemble.
+    indices_to_drop are expected to correspond to observation indices that must
+    be disabled."""
+    ensemble_path = gui.notifier.storage._ensemble_path(
+        next(iter(gui.notifier.storage._ensembles.keys()))
+    )
+
+    realization0_response_file_path = ensemble_path / "realization-0/gen_data.parquet"
+    df = pl.read_parquet(realization0_response_file_path)
+
+    df = df.filter(~pl.Series(range(len(df))).is_in(indices_to_drop))
+    df.write_parquet(realization0_response_file_path)
+
+    gui.notifier.emitErtChange()
+
+
+@pytest.fixture(scope="module")
+def poly_example_with_missing_responses_dir(tmp_path_factory):
+    return tmp_path_factory.mktemp(
+        "poly_example_with_missing_responses_for_each_observation"
+    )
+
+
+@pytest.fixture(scope="module")
+def setup_poly_case_with_missing_response_for_each_observation(
+    source_root, run_experiment, poly_example_with_missing_responses_dir
+):
+    """
+    Sets up a poly case with removed responses corresponding to all
+    observations. Setup is used by several tests, so is created as a module
+    fixture to save time.
+    """
+    path = poly_example_with_missing_responses_dir
+    with pytest.MonkeyPatch.context() as mp:
+        mp.chdir(path)
+        _new_poly_example(source_root, path, 2)
+
+        with open_gui_with_config(path / "poly.ert") as gui:
+            run_experiment(EnsembleExperiment, gui)
+
+            # removed indexes are all indexes poly example has observations for
+            remove_responses_in_realization0(gui, indices_to_drop=[0, 2, 4, 6, 8])
+            yield gui
+
+
+@pytest.fixture
+def poly_case_with_missing_response_for_each_observation(
+    copy_run_to_current_test,
+    setup_poly_case_with_missing_response_for_each_observation,
+    poly_example_with_missing_responses_dir,
+    tmp_path,
+):
+    copy_run_to_current_test(poly_example_with_missing_responses_dir)
+    with open_gui_with_config(tmp_path / "poly.ert") as gui:
+        yield gui
+
+
+@pytest.mark.parametrize("update_method", ["ES Update", "EnIF Update (Experimental)"])
+def test_that_report_table_is_displayed_on_no_active_observations(
+    qtbot,
+    run_experiment,
+    update_method,
+    poly_case_with_missing_response_for_each_observation,
+):
+    gui = poly_case_with_missing_response_for_each_observation
+
+    run_experiment(
+        ManualUpdate, gui, check_realizations=False, update_method=update_method
+    )
+    run_dialog = gui.findChildren(RunDialog)[-1]
+
+    update_widget = run_dialog.findChild(UpdateWidget)
+    assert update_widget._tab_widget.count() == 2
+    assert update_widget._tab_widget.tabText(0) == "Status"
+    assert update_widget._tab_widget.tabText(1) == "Report"
+
+    status_list = update_widget._tab_widget.widget(0).findChild(QListWidget)
+
+    count = sum(
+        1
+        for i in range(status_list.count())
+        if "No active observations for update step" in status_list.item(i).text()
+    )
+    assert count == 1, "message is expected to appear just once on the list"
