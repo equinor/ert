@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import QComboBox, QListWidget
 
 from ert.gui.experiments import ExperimentPanel
 from ert.gui.experiments.run_dialog import RunDialog
-from ert.gui.experiments.view.update import UpdateWidget
+from ert.gui.experiments.view.update import UpdateLogTable, UpdateWidget
 from ert.run_models import (
     EnsembleExperiment,
     EnsembleSmoother,
@@ -144,3 +144,44 @@ def test_that_report_table_is_displayed_on_no_active_observations(
         if "No active observations for update step" in status_list.item(i).text()
     )
     assert count == 1, "message is expected to appear just once on the list"
+
+
+@pytest.fixture
+def poly_case_with_autoscale_observations_config(source_root, tmp_path, run_experiment):
+    _new_poly_example(source_root, tmp_path, 2)
+
+    config_path = tmp_path / "poly.ert"
+
+    with open(config_path, "a", encoding="utf-8") as f:
+        f.write("\nANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE *\n")
+
+    with open_gui_with_config(config_path) as gui:
+        run_experiment(EnsembleExperiment, gui)
+        yield gui
+
+
+def test_that_autoscale_tab_is_displayed_in_es_update(
+    qtbot, poly_case_with_autoscale_observations_config, run_experiment
+):
+    gui = poly_case_with_autoscale_observations_config
+
+    run_experiment(ManualUpdate, gui, check_realizations=False)
+
+    run_dialog = gui.findChildren(RunDialog)[-1]
+    update_widget = run_dialog.findChild(UpdateWidget)
+    assert update_widget._tab_widget.count() == 3
+    assert update_widget._tab_widget.tabText(0) == "Status"
+    assert update_widget._tab_widget.tabText(1) == "Auto scale: *"
+    assert update_widget._tab_widget.tabText(2) == "Report"
+
+    update_log_table = update_widget.findChild(UpdateLogTable)
+    expected_columns = [
+        "Observation",
+        "Index",
+        "Cluster",
+        "Nr components",
+        "Scaling factor",
+    ]
+
+    for i, name in enumerate(expected_columns):
+        assert update_log_table.horizontalHeaderItem(i).text() == name
