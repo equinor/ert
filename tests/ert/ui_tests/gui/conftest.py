@@ -41,6 +41,7 @@ from tests.ert.handle_run_path_dialog import handle_run_path_dialog
 DEFAULT_NUM_REALIZATIONS = 10
 ENSEMBLE_NAME = "iter"
 
+
 @pytest.fixture(scope="session", autouse=True)
 def setup_svg_search_path():
     QDir.addSearchPath(
