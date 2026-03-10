@@ -244,7 +244,6 @@ def data_for_response(
                 .unique()
                 .to_pandas()
                 .pivot_table(index="Realization", columns="depth", values="values")
-                .reset_index(drop=True)
             )
         case "gen_data":
             data = ensemble.load_responses(
