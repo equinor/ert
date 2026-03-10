@@ -211,5 +211,5 @@ class UpdateWidget(QWidget):
         self._progress_bar.setMaximum(1)
         self._progress_bar.setValue(1)
 
-        if (d := event.data) is not None:
-            self._insert_table_tab("Report", d)
+        if event.data is not None:
+            self._insert_report_tab(event.data)

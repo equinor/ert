@@ -81,7 +81,7 @@ class RunModelUpdateEndEvent(RunModelEvent):
 class RunModelErrorEvent(RunModelEvent):
     event_type: Literal["RunModelErrorEvent"] = "RunModelErrorEvent"
     error_msg: str
-    data: DataSection
+    data: DataSection | None
 
     def write_as_csv(self, output_path: Path | None) -> None:
         if output_path and self.data:

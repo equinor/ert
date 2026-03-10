@@ -352,7 +352,9 @@ def _all_parameters(
 
 
 class ErtAnalysisError(Exception):
-    pass
+    def __init__(self, message: str, data: DataSection | None = None) -> None:
+        super().__init__(message)
+        self.data = data
 
 
 def noop_progress_callback(_: AnalysisEvent) -> None:

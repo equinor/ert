@@ -265,7 +265,21 @@ def _ensemble_experiment_has_run(
 
 @pytest.fixture(name="run_experiment", scope="module")
 def run_experiment_fixture(request):
-    def func(experiment_mode, gui, wait_done=True, check_realizations=True):
+    def func(experiment_mode, gui, wait_done=True, check_realizations=True, **kwargs):
+        """
+        Runs experiment.
+
+        Parameters
+        ----------
+        wait_done : bool
+            whether to wait until the experiment is done before returning
+        check_realizations : bool
+            whether to check that the number of realizations on in the detailed
+            view is correct on finish
+        kwargs : additional keyword arguments. Supported:
+            - update_method: the update method to select in the dropdown when
+              running a manual update experiment
+        """
         qtbot = QtBot(request)
         with contextlib.suppress(FileNotFoundError):
             shutil.rmtree("poly_out")
@@ -282,6 +296,10 @@ def run_experiment_fixture(request):
         ]
         if hasattr(simulation_settings, "_ensemble_name_field"):
             simulation_settings._ensemble_name_field.setText("iter-0")
+
+        if experiment_mode.name() == "Manual update":
+            update_method = kwargs.get("update_method", "ES Update")
+            simulation_settings._update_method_dropdown.setCurrentText(update_method)
 
         # Click start simulation and agree to the message
         run_experiment = get_child(experiment_panel, QWidget, name="run_experiment")
