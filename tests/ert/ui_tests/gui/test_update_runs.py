@@ -70,6 +70,7 @@ def remove_responses_in_realization0(gui, indices_to_drop):
     realization0_response_file_path = ensemble_path / "realization-0/gen_data.parquet"
     df = pl.read_parquet(realization0_response_file_path)
 
+    assert len(df) == 10, "test setup is expected to have 10 responses"
     df = df.filter(~pl.Series(range(len(df))).is_in(indices_to_drop))
     df.write_parquet(realization0_response_file_path)
 
@@ -226,8 +227,8 @@ def test_that_report_table_is_displayed_on_missing_responses(
     expected_disabled_observations = [2, 4]
     for index, row in enumerate(update_log_table.data.data):
         if index in expected_disabled_observations:
-            assert row[status_index] == "nan"
+            assert row[status_index] == "nan", f"at row {index}"
             assert row[missing_realizations_index] == "0"
         else:
-            assert row[status_index] == "Active"
+            assert row[status_index] == "Active", f"at row {index}"
             assert not row[missing_realizations_index]
