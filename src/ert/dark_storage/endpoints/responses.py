@@ -258,7 +258,11 @@ def data_for_response(
                 pivoted = vals.drop("response_key", "report_step").pivot(  # noqa: PD010
                     on="index", values="values"
                 )
-                data = pivoted.to_pandas().set_index("realization")
+                data = (
+                    pivoted.rename({"realization": "Realization"})
+                    .to_pandas()
+                    .set_index("Realization")
+                )
                 data.columns = data.columns.astype(int)
                 data.columns.name = "axis"
                 return data.astype(float)

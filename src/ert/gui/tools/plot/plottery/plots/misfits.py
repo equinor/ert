@@ -189,7 +189,7 @@ class MisfitsPlot:
                 df.with_columns(pl.lit(key).alias("ensemble_key"))
                 for key, df in ensemble_to_misfit_df.items()
             ]
-        ).select(["realization", "key_index", "misfit", "ensemble_key"])
+        ).select(["Realization", "key_index", "misfit", "ensemble_key"])
 
         distinct_gendata_index = all_misfits["key_index"].unique().sort().to_list()
         num_gendata_index = len(distinct_gendata_index)
