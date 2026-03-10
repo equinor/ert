@@ -39,7 +39,7 @@ from ert.storage import Storage
 from tests.ert.handle_run_path_dialog import handle_run_path_dialog
 
 DEFAULT_NUM_REALIZATIONS = 10
-
+ENSEMBLE_NAME = "iter"
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_svg_search_path():
@@ -328,7 +328,7 @@ def active_realizations_fixture() -> Mock:
     return active_reals
 
 
-def load_results_manually(qtbot, gui, ensemble_name="default"):
+def load_results_manually(qtbot, gui, ensemble_name=ENSEMBLE_NAME):
     def handle_load_results_dialog():
         dialog = wait_for_child(gui, qtbot, ClosableDialog)
         panel = get_child(dialog, LoadResultsPanel)
@@ -361,7 +361,7 @@ def add_experiment_in_manage_experiment_dialog(
     qtbot,
     manage_experiment_dialog,
     experiment_name="My_experiment",
-    ensemble_name="default",
+    ensemble_name=ENSEMBLE_NAME,
 ):
     current_tab = manage_experiment_dialog.currentWidget()
     assert current_tab.objectName() == "create_new_ensemble_tab"
@@ -379,7 +379,7 @@ def add_experiment_in_manage_experiment_dialog(
 
 
 def add_experiment_manually(
-    qtbot, gui, experiment_name="My_experiment", ensemble_name="default"
+    qtbot, gui, experiment_name="My_experiment", ensemble_name=ENSEMBLE_NAME
 ):
     button_manage_experiments = get_child(
         gui, QToolButton, name="button_Manage_experiments"
