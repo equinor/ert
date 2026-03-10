@@ -185,3 +185,49 @@ def test_that_autoscale_tab_is_displayed_in_es_update(
 
     for i, name in enumerate(expected_columns):
         assert update_log_table.horizontalHeaderItem(i).text() == name
+
+
+@pytest.fixture
+def poly_case_with_one_missing_response(source_root, tmp_path, run_experiment):
+    """
+    Sets up a poly case with missing response in realization 0 at indices
+    corresponding to observations 2 and 4.
+    """
+    _new_poly_example(source_root, tmp_path, 2)
+    config_path = tmp_path / "poly.ert"
+
+    with open_gui_with_config(config_path) as gui:
+        run_experiment(EnsembleExperiment, gui)
+        # observations exist at response indices 0, 2, 4, 6, 8
+        remove_responses_in_realization0(gui, indices_to_drop=[4, 8])
+        yield gui
+
+
+def test_that_report_table_is_displayed_on_missing_responses(
+    qtbot, poly_case_with_one_missing_response, run_experiment
+):
+    gui = poly_case_with_one_missing_response
+
+    run_experiment(ManualUpdate, gui, check_realizations=False)
+
+    run_dialog = gui.findChildren(RunDialog)[-1]
+    update_widget = run_dialog.findChild(UpdateWidget)
+    assert update_widget._tab_widget.count() == 2
+    assert update_widget._tab_widget.tabText(0) == "Status"
+    assert update_widget._tab_widget.tabText(1) == "Report"
+
+    update_log_table = update_widget._tab_widget.widget(1).findChild(UpdateLogTable)
+
+    status_index = update_log_table.data.header.index("status")
+    missing_realizations_index = update_log_table.data.header.index(
+        "missing_realizations"
+    )
+
+    expected_disabled_observations = [2, 4]
+    for index, row in enumerate(update_log_table.data.data):
+        if index in expected_disabled_observations:
+            assert row[status_index] == "nan"
+            assert row[missing_realizations_index] == "0"
+        else:
+            assert row[status_index] == "Active"
+            assert not row[missing_realizations_index]
