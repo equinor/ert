@@ -68,6 +68,7 @@ def test_histogram(plot_context: PlotContext, ensemble_to_data_map):
         ensemble_to_data_map,
         pd.DataFrame(),
         {},
+        {},
     )
     return figure
 
@@ -101,6 +102,7 @@ def test_histogram_plot_for_constant_distribution(monkeypatch):
         context,
         data_map,
         pd.DataFrame(),
+        {},
         {},
     )
     mock_plot_histogram.assert_called_once_with(

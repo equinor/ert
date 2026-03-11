@@ -33,6 +33,7 @@ class StatisticsPlot:
         ensemble_to_data_map: dict[EnsembleObject, DataFrame],
         observation_data: DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
+        obs_loc: npt.NDArray[np.float32] | None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         config = plot_context.plotConfig()

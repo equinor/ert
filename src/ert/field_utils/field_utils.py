@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, NamedTuple, TypeAlias
 
 import numpy as np
+import pandas as pd
 import resfo
 
 from .field_file_format import ROFF_FORMATS, FieldFileFormat
@@ -395,3 +396,39 @@ def localization_scaling_function(
     scaling_factor[distances > 2] = 0.0
 
     return scaling_factor
+
+
+def transform_observation_locations(
+    obs_loc_df: pd.DataFrame, ertbox_params: ErtboxParameters
+) -> npt.NDArray[np.float32] | None:
+    if (
+        ertbox_params.origin is not None
+        and ertbox_params.rotation_angle is not None
+        and not obs_loc_df.empty
+    ):
+        xpos, ypos = transform_positions_to_local_field_coordinates(
+            ertbox_params.origin,
+            ertbox_params.rotation_angle,
+            obs_loc_df["east"].to_numpy(dtype=np.float64),
+            obs_loc_df["north"].to_numpy(dtype=np.float64),
+        )
+        height, width = (
+            ertbox_params.ny,
+            ertbox_params.nx,
+        )
+        if ertbox_params.axis_orientation == AxisOrientation.RIGHT_HANDED:
+            ypos = height - ypos
+
+        inside_box = (
+            np.isfinite(xpos)
+            & np.isfinite(ypos)
+            & (xpos >= 0)
+            & (xpos < width)
+            & (ypos >= 0)
+            & (ypos < height)
+        )
+        if inside_box.any():
+            return np.column_stack((xpos[inside_box], ypos[inside_box])).astype(
+                np.float32
+            )
+    return None

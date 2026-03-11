@@ -159,21 +159,17 @@ def perform_ensemble_update(
         "response_mean",
         "response_std",
         "status",
+        "missing_realizations",
     )
 
     if num_obs == 0:
         msg = "No active observations for update step"
-        progress_callback(
-            AnalysisErrorEvent(
-                error_msg=msg,
-                data=DataSection(
-                    header=smoother_snapshot.header,
-                    data=smoother_snapshot.csv,
-                    extra=smoother_snapshot.extra,
-                ),
-            )
+        data = DataSection(
+            header=smoother_snapshot.header,
+            data=smoother_snapshot.csv,
+            extra=smoother_snapshot.extra,
         )
-        raise ErtAnalysisError(msg)
+        raise ErtAnalysisError(msg, data=data)
 
     # Extract observation locations when location data is available
     observation_locations: ObservationLocations | None = None
@@ -419,25 +415,11 @@ def smoother_update(
                 strategy_map,
             )
     except Exception as e:
-        if smoother_snapshot is not None:
-            progress_callback(
-                AnalysisErrorEvent(
-                    error_msg=str(e),
-                    data=DataSection(
-                        header=smoother_snapshot.header,
-                        data=smoother_snapshot.csv,
-                        extra=smoother_snapshot.extra,
-                    ),
-                )
-            )
-        else:
-            progress_callback(
-                AnalysisErrorEvent(
-                    error_msg=str(e),
-                    data=DataSection(header=[], data=[]),
-                )
-            )
-        raise e
+        data = None
+        if isinstance(e, ErtAnalysisError):
+            data = e.data
+        progress_callback(AnalysisErrorEvent(error_msg=str(e), data=data))
+        raise
     progress_callback(
         AnalysisCompleteEvent(
             data=DataSection(

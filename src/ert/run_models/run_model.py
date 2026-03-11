@@ -784,6 +784,7 @@ class RunModel(RunModelConfig, ABC):
             parameters_file=self.runpath_config.gen_kw_export_name,
             runpaths=self._run_paths,
             context_env=self._context_env,
+            handle_run_path_creation_event=self.send_event,
         )
 
         self.run_workflows(

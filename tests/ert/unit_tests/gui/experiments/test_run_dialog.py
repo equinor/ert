@@ -1,5 +1,6 @@
 import tempfile
 from pathlib import Path
+from queue import SimpleQueue
 from unittest.mock import MagicMock, Mock, patch
 
 import pandas as pd
@@ -37,6 +38,9 @@ from ert.gui.experiments.multiple_data_assimilation_panel import (
     MultipleDataAssimilationPanel,
 )
 from ert.gui.experiments.view.realization import RealizationWidget
+from ert.gui.experiments.view.runpath_creation_widget import (
+    RunpathCreationProgressWidget,
+)
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.gui.tools.file import FileDialog
 from ert.run_models import (
@@ -44,6 +48,7 @@ from ert.run_models import (
     EnsembleSmoother,
     MultipleDataAssimilation,
 )
+from ert.run_models._create_run_path import RunPathCreationEvent
 from ert.scheduler.job import Job
 from tests.ert import SnapshotBuilder
 from tests.ert.handle_run_path_dialog import handle_run_path_dialog
@@ -1070,3 +1075,84 @@ def test_that_experiment_with_a_scheduler_warning_event_shows_a_warning_dialog(
 
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=10000)
     assert run_dialog is not None
+
+
+def test_that_runpath_creation_events_add_update_and_remove_tab(qtbot: QtBot) -> None:
+    """After runpath creation is done the progress tab is removed and a subsequent
+    snapshot event must still produce a RealizationWidget tab as normal.
+    """
+    queue: SimpleQueue = SimpleQueue()
+    mock_api = MagicMock()
+    mock_api.experiment_name = "test"
+    notifier = MagicMock()
+
+    dialog = RunDialog("Test", mock_api, queue, notifier)
+    qtbot.addWidget(dialog)
+    dialog.setup_event_monitoring()
+
+    assert dialog._tab_widget.count() == 0
+
+    queue.put(
+        RunPathCreationEvent(
+            sub_type="StartingTotalRunPathCreation",
+            total_runpaths_to_create=3,
+        )
+    )
+    qtbot.waitUntil(lambda: dialog._tab_widget.count() == 1, timeout=2000)
+    assert "Creating runpaths" in dialog._tab_widget.tabText(0)
+    assert dialog._tab_widget.currentIndex() == 0
+    progress_widget = dialog._tab_widget.widget(0)
+    assert isinstance(progress_widget, RunpathCreationProgressWidget)
+    assert progress_widget._bar.maximum() == 3
+    assert progress_widget._bar.value() == 0
+
+    queue.put(
+        RunPathCreationEvent(
+            sub_type="TotalRunPathCreationUpdate",
+            created_runpaths_count=1,
+            total_runpaths_to_create=3,
+        )
+    )
+    qtbot.waitUntil(lambda: progress_widget._bar.value() == 1, timeout=2000)
+    assert "1 / 3" in progress_widget._label.text()
+
+    queue.put(
+        RunPathCreationEvent(
+            sub_type="TotalRunPathCreationUpdate",
+            created_runpaths_count=3,
+            total_runpaths_to_create=3,
+        )
+    )
+    qtbot.waitUntil(lambda: progress_widget._bar.value() == 3, timeout=2000)
+    assert "3 / 3" in progress_widget._label.text()
+
+    queue.put(RunPathCreationEvent(sub_type="FinishedTotalRunPathCreation"))
+    qtbot.waitUntil(lambda: dialog._tab_widget.count() == 0, timeout=2000)
+
+    # After the progress tab is removed the snapshot model must still add a
+    # RealizationWidget tab via rowsInserted and on_snapshot_new_iteration.
+    queue.put(
+        FullSnapshotEvent(
+            snapshot=(
+                SnapshotBuilder()
+                .add_fm_step(
+                    fm_step_id="0",
+                    index="0",
+                    name="fm_step_0",
+                    status=state.FORWARD_MODEL_STATE_START,
+                )
+                .build(["0", "1"], state.REALIZATION_STATE_UNKNOWN)
+            ),
+            iteration_label="Iter 0",
+            total_iterations=1,
+            progress=0.0,
+            realization_count=2,
+            status_count={"Unknown": 2},
+            iteration=0,
+        )
+    )
+    queue.put(EndEvent(failed=False, msg=""))
+
+    qtbot.waitUntil(lambda: dialog._tab_widget.count() == 1, timeout=2000)
+    assert isinstance(dialog._tab_widget.widget(0), RealizationWidget)
+    qtbot.waitUntil(dialog.is_experiment_done, timeout=2000)

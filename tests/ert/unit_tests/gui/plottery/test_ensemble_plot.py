@@ -45,6 +45,7 @@ def test_ensemble_plot_handles_rate(plot_context: PlotContext):
             ),
             pd.DataFrame(),
             {},
+            {},
         )
         if is_rate(plot_context.key()):
             assert mock_plotLines.call_args[0][4] == "steps-pre"

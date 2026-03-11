@@ -81,11 +81,22 @@ class RunModelUpdateEndEvent(RunModelEvent):
 class RunModelErrorEvent(RunModelEvent):
     event_type: Literal["RunModelErrorEvent"] = "RunModelErrorEvent"
     error_msg: str
-    data: DataSection
+    data: DataSection | None
 
     def write_as_csv(self, output_path: Path | None) -> None:
         if output_path and self.data:
             self.data.to_csv("Report", output_path / str(self.run_id))
+
+
+class RunPathCreationEvent(BaseModel):
+    event_type: Literal["RunPathCreationEvent"] = "RunPathCreationEvent"
+    sub_type: Literal[
+        "StartingTotalRunPathCreation",
+        "FinishedTotalRunPathCreation",
+        "TotalRunPathCreationUpdate",
+    ]
+    created_runpaths_count: int | None = None
+    total_runpaths_to_create: int | None = None
 
 
 StatusEvents = (
@@ -105,6 +116,7 @@ StatusEvents = (
     | StartEvent
     | WarningEvent
     | EnsembleEvaluationWarning
+    | RunPathCreationEvent
 )
 
 
