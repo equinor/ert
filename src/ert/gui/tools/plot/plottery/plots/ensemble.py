@@ -111,5 +111,8 @@ class EnsemblePlot:
             zorder=zorder,
         )
 
+        for line, col in zip(lines, data.columns, strict=True):
+            line.set_label(f"Realization {col}")
+
         if len(lines) <= EnsemblePlot.LEGEND_THRESHOLD:
             plot_config.addLegendItem(ensemble_label, lines[0])
