@@ -29,7 +29,7 @@ class ValuesOverIterationsPlot:
     i.e., objective or control name) which is treated as the value to plot.
     """
 
-    LEGENDS_THRESHOLD = 5
+    LEGENDS_THRESHOLD = 1
 
     def __init__(self) -> None:
         self.dimensionality = 2

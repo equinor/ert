@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 
 class EnsemblePlot:
-    LEGEND_THRESHOLD = 5
+    LEGEND_THRESHOLD = 1
 
     def __init__(self) -> None:
         self.dimensionality = 2
