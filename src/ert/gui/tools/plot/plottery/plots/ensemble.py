@@ -14,15 +14,20 @@ if TYPE_CHECKING:
     import numpy.typing as npt
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
+    from matplotlib.lines import Line2D
 
     from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApiKeyDefinition
     from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
 
 
 class EnsemblePlot:
+    LEGEND_THRESHOLD = 5
+
     def __init__(self) -> None:
         self.dimensionality = 2
         self.requires_observations = False
+        self._axes: Axes | None = None
+        self._legend_count = 0
 
     def plot(
         self,
@@ -36,6 +41,7 @@ class EnsemblePlot:
     ) -> None:
         config = plot_context.plotConfig()
         axes = figure.add_subplot(111)
+        self._axes = axes
 
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.DATE_AXIS
@@ -53,6 +59,7 @@ class EnsemblePlot:
                     plot_context.deactivateDateSupport()
                     plot_context.x_axis = plot_context.INDEX_AXIS
                 config.setCurrentColor(color_index)
+                self._legend_count += len(data.columns)
                 self._plotLines(
                     axes,
                     config,
@@ -74,6 +81,10 @@ class EnsemblePlot:
             default_x_label=default_x_label,
             default_y_label="Value",
         )
+
+    def update_legend(self, line: Line2D) -> None:
+        if self._axes and self._legend_count > EnsemblePlot.LEGEND_THRESHOLD:
+            self._axes.legend(handles=[line], labels=[line.get_label()])
 
     @staticmethod
     def _plotLines(
@@ -109,5 +120,8 @@ class EnsemblePlot:
             zorder=zorder,
         )
 
-        if len(lines) > 0:
+        if len(lines) <= EnsemblePlot.LEGEND_THRESHOLD:
             plot_config.addLegendItem(ensemble_label, lines[0])
+        else:
+            for line, col in zip(lines, data.columns, strict=True):
+                line.set_label(f"Realization {col}")
