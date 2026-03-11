@@ -86,7 +86,7 @@ def test_update_report(
     )
     events = []
 
-    es_settings = ESSettings(inversion="SUBSPACE")
+    es_settings = ert_config.analysis_config.es_settings
     strategy_map = build_strategy_map(
         parameters=ert_config.ensemble_config.parameters,
         param_configs=prior_ens.experiment.parameter_configuration,
@@ -162,7 +162,7 @@ def test_update_report_with_different_observation_status_from_smoother_update(
     )
     events = []
 
-    es_settings = ESSettings(inversion="SUBSPACE")
+    es_settings = ert_config.analysis_config.es_settings
     strategy_map = build_strategy_map(
         parameters=ert_config.ensemble_config.parameters,
         param_configs=prior_ens.experiment.parameter_configuration,
@@ -446,9 +446,6 @@ def test_update_snapshot(
     ]
     ert_config = snake_oil_case_storage
 
-    # Making sure that row scaling with a row scaling factor of 1.0
-    # results in the same update as with ES.
-    # Note: seed must be the same!
     experiment = snake_oil_storage.get_experiment_by_name("ensemble-experiment")
     prior_ens = experiment.get_ensemble_by_name("default_0")
     posterior_ens = snake_oil_storage.create_ensemble(
@@ -459,10 +456,9 @@ def test_update_snapshot(
         prior_ensemble=prior_ens,
     )
 
-    # Make sure we always have the same seed in updates
     rng = np.random.default_rng(42)
 
-    es_settings = ESSettings(inversion="SUBSPACE")
+    es_settings = ert_config.analysis_config.es_settings
     strategy_map = build_strategy_map(
         parameters=list(ert_config.ensemble_config.parameters),
         param_configs=prior_ens.experiment.parameter_configuration,
