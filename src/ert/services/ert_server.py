@@ -288,6 +288,7 @@ class ErtServerController:
                 "Failed locating existing storage service due to "
                 f"{type(e).__name__}: {e}, starting new service"
             )
+            (Path(project) / _ERT_SERVER_CONNECTION_INFO_FILE).unlink(missing_ok=True)
             return cls.start_server(
                 project=project, timeout=timeout, logging_config=logging_config
             )

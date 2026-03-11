@@ -105,6 +105,44 @@ def test_that_service_can_be_started_with_empty_conn_info_json(
 
 
 @patch("ert.services.ErtServerController.start_server")
+@patch("ert.services.ert_server.ErtServerController.fetch_url")
+def test_that_stale_connection_info_file_is_removed_before_starting_new_service(
+    fetch_url_mock, start_server_mock, change_to_tmpdir
+):
+    """Regression test: when a storage_server.json is left behind from a
+    previous process (e.g. Ctrl+C killed the plotter without cleanup),
+    init_service must delete the stale file before starting a new server.
+
+    Without this, the new server's subprocess or any client calling
+    create_ert_server_controller will read the stale file and try to connect
+    to a dead server, causing a TimeoutError."""
+    stale_file = Path("storage_server.json")
+    connection_info = {
+        "urls": ["http://127.0.0.1:1"],
+        "authtoken": "stale_token",
+        "cert": "",
+        "host": "127.0.0.1",
+        "port": "1",
+        "auth": "",
+    }
+    stale_file.write_text(json.dumps(connection_info), encoding="utf-8")
+
+    fetch_url_mock.side_effect = TimeoutError("server is dead")
+
+    def assert_stale_file_deleted(**kwargs):
+        assert not stale_file.exists(), (
+            "Stale storage_server.json must be deleted before starting a new "
+            "server, otherwise clients calling create_ert_server_controller "
+            "will read dead connection info"
+        )
+
+    start_server_mock.side_effect = assert_stale_file_deleted
+
+    ErtServerController.init_service(project=Path(".").absolute())
+    start_server_mock.assert_called_once()
+
+
+@patch("ert.services.ErtServerController.start_server")
 def test_that_service_can_be_started_with_empty_json_content(
     start_server_mock, change_to_tmpdir
 ):
