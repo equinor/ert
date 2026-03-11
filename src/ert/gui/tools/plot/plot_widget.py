@@ -173,8 +173,6 @@ class PlotWidget(QWidget):
         self.setLayout(vbox)
 
         self._negative_values_in_data = False
-        self._dirty = True
-        self._active = False
         self.resetPlot()
 
     @property
