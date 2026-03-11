@@ -39,7 +39,7 @@ from .snapshots import ObservationStatus, SmootherSnapshot
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.config import InversionTypeES, ParameterConfig
+    from ert.config import ParameterConfig
     from ert.storage import Ensemble
 
 logger = logging.getLogger(__name__)
@@ -181,16 +181,26 @@ def perform_ensemble_update(
             xpos=filtered_data["east"].to_numpy()[has_location],
             ypos=filtered_data["north"].to_numpy()[has_location],
             main_range=filtered_data["radius"].to_numpy()[has_location],
-            responses_with_loc=responses[has_location, :],
-            observation_values=observation_values[has_location],
-            observation_errors=observation_errors[has_location],
+            responses_with_loc=responses[has_location, :].astype(
+                np.float32, copy=False
+            ),
+            observation_values=observation_values[has_location].astype(
+                np.float32, copy=False
+            ),
+            observation_errors=observation_errors[has_location].astype(
+                np.float32, copy=False
+            ),
         )
 
     # Create observation context (minimal data container)
+    # All arrays are cast to float32 because iterative_ensemble_smoother
+    # requires all inputs to share the same dtype, and Field/Surface
+    # parameters are natively float32. Using float32 everywhere avoids
+    # upcasting those (typically large) arrays to float64.
     obs_context = ObservationContext(
-        responses=responses,
-        observation_values=observation_values,
-        observation_errors=observation_errors,
+        responses=responses.astype(np.float32, copy=False),
+        observation_values=observation_values.astype(np.float32, copy=False),
+        observation_errors=observation_errors.astype(np.float32, copy=False),
         observation_locations=observation_locations,
     )
 
@@ -221,11 +231,13 @@ def perform_ensemble_update(
         strategy = strategy_map[param_group]
 
         # Delegate update to strategy
+        original_dtype = param_ensemble_array.dtype
         param_ensemble_array = strategy.update(
-            param_ensemble_array,
+            param_ensemble_array.astype(np.float32, copy=False),
             param_cfg,
             non_zero_variance_mask,
         )
+        param_ensemble_array = param_ensemble_array.astype(original_dtype, copy=False)
 
         # Save updated parameters
         start = time.time()
@@ -251,7 +263,6 @@ def perform_ensemble_update(
 def build_strategy_map(
     parameters: Iterable[str],
     param_configs: Mapping[str, ParameterConfig],
-    inversion: InversionTypeES,
     enkf_truncation: float,
     distance_localization: bool = False,
     localization: bool = False,
@@ -271,8 +282,6 @@ def build_strategy_map(
         Names of parameter groups to update.
     param_configs : Mapping[str, ParameterConfig]
         Parameter configuration mapping from the experiment.
-    inversion : InversionTypeES
-        Inversion algorithm (e.g. ``"EXACT"`` or ``"SUBSPACE"``).
     enkf_truncation : float
         Singular value truncation threshold (0, 1].
     distance_localization : bool
@@ -300,12 +309,13 @@ def build_strategy_map(
     strategy_map: dict[str, UpdateStrategy] = {}
 
     if distance_localization:
-        field_strategy = DistanceLocalizationUpdate(rng, Field, progress_callback)
+        field_strategy = DistanceLocalizationUpdate(
+            enkf_truncation, rng, Field, progress_callback
+        )
         surface_strategy = DistanceLocalizationUpdate(
-            rng, SurfaceConfig, progress_callback
+            enkf_truncation, rng, SurfaceConfig, progress_callback
         )
         standard_strategy = StandardESUpdate(
-            inversion,
             enkf_truncation,
             rng,
             progress_callback,
@@ -326,14 +336,13 @@ def build_strategy_map(
                 "correlation_threshold is required when localization is enabled"
             )
         adaptive_strategy = AdaptiveLocalizationUpdate(
-            correlation_threshold, rng, progress_callback
+            correlation_threshold, enkf_truncation, rng, progress_callback
         )
         for param_name in parameters:
             strategy_map[param_name] = adaptive_strategy
 
     else:
         standard_strategy = StandardESUpdate(
-            inversion,
             enkf_truncation,
             rng,
             progress_callback,
@@ -363,7 +372,6 @@ def smoother_update(
         strategy_map = build_strategy_map(
             parameters=experiment.update_parameters,
             param_configs=experiment.parameter_configuration,
-            inversion=settings.inversion,
             enkf_truncation=settings.enkf_truncation,
             progress_callback=progress_callback,
         )

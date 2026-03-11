@@ -37,7 +37,7 @@ dependencies = [
     "httpx",
     "httpx-retries",
     "humanize",
-    "iterative_ensemble_smoother==0.6.0",
+    "iterative-ensemble-smoother",
     "jinja2 >= 2.10",
     "lark",
     "lxml",
@@ -301,3 +301,6 @@ PYQT6 = true
 
 [tool.uv]
 fork-strategy = "requires-python"
+
+[tool.uv.sources]
+iterative-ensemble-smoother = { path = "../iterative_ensemble_smoother", editable = true }

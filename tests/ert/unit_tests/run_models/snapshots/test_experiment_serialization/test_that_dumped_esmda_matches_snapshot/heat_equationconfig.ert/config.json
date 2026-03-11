@@ -182,7 +182,7 @@
   "minimum_required_realizations": 2,
   "target_ensemble": "iter-<ITER>",
   "analysis_settings": {
-    "enkf_truncation": 0.98,
+    "enkf_truncation": 1.0,
     "inversion": "EXACT",
     "localization": true,
     "localization_correlation_threshold": 0.1,

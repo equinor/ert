@@ -4,16 +4,14 @@ from __future__ import annotations
 
 import logging
 import time
-from collections.abc import Callable, Sequence
-from typing import TYPE_CHECKING, TypeVar
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import numpy as np
 import psutil
-from iterative_ensemble_smoother.experimental import AdaptiveESMDA
+from iterative_ensemble_smoother import AdaptiveESMDA
 
 from ert.analysis.event import AnalysisEvent, AnalysisStatusEvent
-
-from ._protocol import TimedIterator
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -23,15 +21,6 @@ if TYPE_CHECKING:
     from ._protocol import ObservationContext
 
 logger = logging.getLogger(__name__)
-
-T = TypeVar("T")
-
-# When running adaptive localization we reserve some resources for
-# the GUI and other applications that might be running
-RESERVED_CPU_CORES = 2
-NUM_JOBS_ADAPTIVE_LOC = max(
-    1, ((psutil.cpu_count(logical=False) or 1) - RESERVED_CPU_CORES)
-)
 
 
 def _split_by_batchsize(
@@ -108,6 +97,8 @@ class AdaptiveLocalizationUpdate:
     ----------
     correlation_threshold : Callable[[int], float]
         Function that takes ensemble size and returns the correlation threshold.
+    enkf_truncation : float
+        Singular value truncation threshold for the smoother.
     rng : np.random.Generator
         Random number generator for reproducibility.
     progress_callback : Callable[[AnalysisEvent], None]
@@ -117,10 +108,6 @@ class AdaptiveLocalizationUpdate:
     ----------
     _smoother : AdaptiveESMDA | None
         The adaptive ESMDA smoother instance (set after prepare()).
-    _cov_YY : npt.NDArray[np.float64] | None
-        Pre-computed response covariance matrix (set after prepare()).
-    _D : npt.NDArray[np.float64] | None
-        Perturbed observations matrix (set after prepare()).
     _num_obs : int
         Number of observations.
     """
@@ -128,18 +115,17 @@ class AdaptiveLocalizationUpdate:
     def __init__(
         self,
         correlation_threshold: Callable[[int], float],
+        enkf_truncation: float,
         rng: np.random.Generator,
         progress_callback: Callable[[AnalysisEvent], None],
     ) -> None:
         self._correlation_threshold_fn = correlation_threshold
+        self._enkf_truncation = enkf_truncation
         self._rng = rng
         self._progress_callback = progress_callback
         self._smoother: AdaptiveESMDA | None = None
-        self._cov_YY: npt.NDArray[np.float64] | None = None
-        self._D: npt.NDArray[np.float64] | None = None
         self._num_obs: int = 0
         self._ensemble_size: int = 0
-        self._responses: npt.NDArray[np.float64] | None = None
 
     def prepare(self, obs_context: ObservationContext) -> None:
         """Initialize smoother and pre-compute matrices from observation data.
@@ -152,20 +138,18 @@ class AdaptiveLocalizationUpdate:
         self._smoother = AdaptiveESMDA(
             covariance=obs_context.observation_errors**2,
             observations=obs_context.observation_values,
+            alpha=1,
             seed=self._rng,
         )
 
-        # Pre-calculate cov_YY for efficiency
-        self._cov_YY = np.atleast_2d(np.cov(obs_context.responses))
-
-        # Perturb observations
-        self._D = self._smoother.perturb_observations(
-            ensemble_size=obs_context.ensemble_size, alpha=1.0
+        self._smoother.prepare_assimilation(
+            Y=obs_context.responses,
+            truncation=self._enkf_truncation,
+            overwrite=True,
         )
 
         self._num_obs = obs_context.num_observations
         self._ensemble_size = obs_context.ensemble_size
-        self._responses = obs_context.responses
 
     def update(
         self,
@@ -194,12 +178,7 @@ class AdaptiveLocalizationUpdate:
         RuntimeError
             If prepare() was not called before update().
         """
-        if (
-            self._smoother is None
-            or self._cov_YY is None
-            or self._D is None
-            or self._responses is None
-        ):
+        if self._smoother is None:
             raise RuntimeError("prepare() must be called before update()")
 
         num_params = param_ensemble.shape[0]
@@ -214,10 +193,13 @@ class AdaptiveLocalizationUpdate:
         logger.info(log_msg)
         self._progress_callback(AnalysisStatusEvent(msg=log_msg))
 
-        def progress_callback_wrapper(
-            iterable: Sequence[T],
-        ) -> TimedIterator[T]:
-            return TimedIterator(iterable, self._progress_callback)
+        threshold = self._correlation_threshold_fn(self._ensemble_size)
+
+        def correlation_callback(
+            corr_XY: npt.NDArray[np.float64],
+            observations_per_parameter: npt.NDArray[np.int_],
+        ) -> npt.NDArray[np.bool_]:
+            return np.abs(corr_XY) > threshold
 
         start = time.time()
 
@@ -225,17 +207,8 @@ class AdaptiveLocalizationUpdate:
             update_idx = param_batch_idx[non_zero_variance_mask[param_batch_idx]]
             X_local = param_ensemble[update_idx, :]
 
-            param_ensemble[update_idx, :] = self._smoother.assimilate(
-                X=X_local,
-                Y=self._responses,
-                D=self._D,
-                alpha=1.0,
-                correlation_threshold=self._correlation_threshold_fn(
-                    self._ensemble_size
-                ),
-                cov_YY=self._cov_YY,
-                progress_callback=progress_callback_wrapper,
-                n_jobs=NUM_JOBS_ADAPTIVE_LOC,
+            param_ensemble[update_idx, :] = self._smoother.assimilate_batch(
+                X=X_local, correlation_callback=correlation_callback, overwrite=True
             )
 
         logger.info(
