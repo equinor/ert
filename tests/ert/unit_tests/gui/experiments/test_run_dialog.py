@@ -48,7 +48,11 @@ from ert.run_models import (
     EnsembleSmoother,
     MultipleDataAssimilation,
 )
-from ert.run_models._create_run_path import RunPathCreationEvent
+from ert.run_models.event import (
+    FinishedTotalRunPathCreationEvent,
+    RunPathCreatedEvent,
+    StartingTotalRunPathCreationEvent,
+)
 from ert.scheduler.job import Job
 from tests.ert import SnapshotBuilder
 from tests.ert.handle_run_path_dialog import handle_run_path_dialog
@@ -1092,12 +1096,7 @@ def test_that_runpath_creation_events_add_update_and_remove_tab(qtbot: QtBot) ->
 
     assert dialog._tab_widget.count() == 0
 
-    queue.put(
-        RunPathCreationEvent(
-            sub_type="StartingTotalRunPathCreation",
-            total_runpaths_to_create=3,
-        )
-    )
+    queue.put(StartingTotalRunPathCreationEvent(total_runpaths_to_create=3))
     qtbot.waitUntil(lambda: dialog._tab_widget.count() == 1, timeout=2000)
     assert "Creating runpaths" in dialog._tab_widget.tabText(0)
     assert dialog._tab_widget.currentIndex() == 0
@@ -1106,27 +1105,16 @@ def test_that_runpath_creation_events_add_update_and_remove_tab(qtbot: QtBot) ->
     assert progress_widget._bar.maximum() == 3
     assert progress_widget._bar.value() == 0
 
-    queue.put(
-        RunPathCreationEvent(
-            sub_type="TotalRunPathCreationUpdate",
-            created_runpaths_count=1,
-            total_runpaths_to_create=3,
-        )
-    )
+    queue.put(RunPathCreatedEvent(iens=1))
     qtbot.waitUntil(lambda: progress_widget._bar.value() == 1, timeout=2000)
     assert "1 / 3" in progress_widget._label.text()
 
-    queue.put(
-        RunPathCreationEvent(
-            sub_type="TotalRunPathCreationUpdate",
-            created_runpaths_count=3,
-            total_runpaths_to_create=3,
-        )
-    )
+    queue.put(RunPathCreatedEvent(iens=2))
+    queue.put(RunPathCreatedEvent(iens=3))
     qtbot.waitUntil(lambda: progress_widget._bar.value() == 3, timeout=2000)
     assert "3 / 3" in progress_widget._label.text()
 
-    queue.put(RunPathCreationEvent(sub_type="FinishedTotalRunPathCreation"))
+    queue.put(FinishedTotalRunPathCreationEvent())
     qtbot.waitUntil(lambda: dialog._tab_widget.count() == 0, timeout=2000)
 
     # After the progress tab is removed the snapshot model must still add a

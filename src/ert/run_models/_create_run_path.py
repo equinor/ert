@@ -31,7 +31,12 @@ from ert.config.design_matrix import DESIGN_MATRIX_GROUP
 from ert.config.distribution import LogNormalSettings, LogUnifSettings
 from ert.config.ert_config import create_forward_model_json
 from ert.ensemble_evaluator.evaluator import UserCancelled
-from ert.run_models.event import RunPathCreationEvent
+from ert.run_models.event import (
+    FinishedTotalRunPathCreationEvent,
+    RunPathCreatedEvent,
+    StartingTotalRunPathCreationEvent,
+    StatusEvents,
+)
 from ert.substitutions import Substitutions, substitute_runpath_name
 from ert.utils import log_duration
 
@@ -289,9 +294,7 @@ def _create_one_run_path(
     scalar_data_by_realization: dict[int, dict[str, float | str]],
     context_env: dict[str, str],
     end_event: threading.Event,
-    total_active_realizations: int,
-    handle_run_path_creation_event: Callable[[RunPathCreationEvent], None]
-    | None = None,
+    handle_run_path_creation_event: Callable[[StatusEvents], None] | None = None,
 ) -> dict[str, float]:
     run_path = Path(run_arg.runpath)
 
@@ -381,14 +384,9 @@ def _create_one_run_path(
         orjson.dumps(data, option=orjson.OPT_NON_STR_KEYS | orjson.OPT_INDENT_2)
     )
     timings["manifest_to_json"] = time.perf_counter() - start_time
-    _runpath_count += 1
     # Let upstream code know which runpath we just created
     if handle_run_path_creation_event:
-        event = RunPathCreationEvent(
-            created_runpaths_count=_runpath_count,
-            total_runpaths_to_create=total_active_realizations,
-            sub_type="TotalRunPathCreationUpdate",
-        )
+        event = RunPathCreatedEvent(iens=run_arg.iens)
         handle_run_path_creation_event(event)
 
     return timings
@@ -407,12 +405,8 @@ async def create_run_path(
     runpaths: Runpaths,
     end_event: threading.Event,
     context_env: dict[str, str] | None = None,
-    handle_run_path_creation_event: Callable[[RunPathCreationEvent], None]
-    | None = None,
+    handle_run_path_creation_event: Callable[[StatusEvents], None] | None = None,
 ) -> None:
-    global _runpath_count
-    _runpath_count = 0
-
     if context_env is None:
         context_env = {}
     runpaths.set_ert_ensemble(ensemble.name)
@@ -443,11 +437,10 @@ async def create_run_path(
         timings["load_scalar_keys"] = time.perf_counter() - start_time
     total_active_realizations = [run_arg.active for run_arg in run_args].count(True)
     if handle_run_path_creation_event:
-        event = RunPathCreationEvent(
-            sub_type="StartingTotalRunPathCreation",
+        starting_event = StartingTotalRunPathCreationEvent(
             total_runpaths_to_create=total_active_realizations,
         )
-        handle_run_path_creation_event(event)
+        handle_run_path_creation_event(starting_event)
 
     try:
         async with asyncio.TaskGroup() as tg:
@@ -467,7 +460,6 @@ async def create_run_path(
                         scalar_data_by_realization,
                         context_env,
                         end_event,
-                        total_active_realizations,
                         handle_run_path_creation_event,
                     )
                 )
@@ -479,8 +471,8 @@ async def create_run_path(
         raise e
     finally:
         if handle_run_path_creation_event:
-            event = RunPathCreationEvent(sub_type="FinishedTotalRunPathCreation")
-            handle_run_path_creation_event(event)
+            finished_event = FinishedTotalRunPathCreationEvent()
+            handle_run_path_creation_event(finished_event)
 
     task_timings = [task.result() for task in tasks]
 

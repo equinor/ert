@@ -29,7 +29,12 @@ from ert.run_models._create_run_path import (
     _make_param_substituter,
     create_run_path,
 )
-from ert.run_models.event import RunPathCreationEvent
+from ert.run_models.event import (
+    FinishedTotalRunPathCreationEvent,
+    RunPathCreatedEvent,
+    RunPathCreationEvent,
+    StartingTotalRunPathCreationEvent,
+)
 from ert.runpaths import Runpaths
 from ert.sample_prior import sample_prior
 from ert.storage import (
@@ -1169,22 +1174,14 @@ async def test_that_create_run_path_emits_expected_events(prior_ensemble) -> Non
     expected_count = len(active_iens)
     assert len(events) == expected_count + 2
 
-    assert events[0].sub_type == "StartingTotalRunPathCreation"
+    assert isinstance(events[0], StartingTotalRunPathCreationEvent)
     assert events[0].total_runpaths_to_create == expected_count
 
-    update_events = events[1:-1]
-    # created_runpaths_count must be a sequential creation counter (1, 2, 3),
-    # not the iens of the realization (1, 4, 5).
-    expected_created_runpaths_counts = list(range(1, expected_count + 1))
-    assert expected_created_runpaths_counts != active_iens  # confirm the two differ
-    for event, expected_number in zip(
-        update_events, expected_created_runpaths_counts, strict=True
-    ):
-        assert event.sub_type == "TotalRunPathCreationUpdate"
-        assert event.created_runpaths_count == expected_number
-        assert event.total_runpaths_to_create == expected_count
+    for event in events[1:-1]:
+        assert isinstance(event, RunPathCreatedEvent)
+        assert event.iens in active_iens
 
-    assert events[-1].sub_type == "FinishedTotalRunPathCreation"
+    assert isinstance(events[-1], FinishedTotalRunPathCreationEvent)
 
 
 @pytest.mark.integration_test
