@@ -8,6 +8,7 @@ from ruamel.yaml import YAML
 
 import everest
 from ert.base_model_context import use_runtime_plugins
+from ert.config import ConfigWarning
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.plugins import get_site_plugins
 from ert.run_models.everest_run_model import EverestRunModel
@@ -162,7 +163,8 @@ def test_install_template(change_to_tmpdir):
     Path("the_optimal_template.tmpl").write_text(
         THE_OPTIMAL_TEMPLATE_TMPL, encoding="utf-8"
     )
-    config = EverestConfig.load_file("config.yml")
+    with pytest.warns(ConfigWarning, match="The `wells` section is deprecated"):
+        config = EverestConfig.load_file("config.yml")
     site_plugins = get_site_plugins()
     with use_runtime_plugins(get_site_plugins()):
         run_model = EverestRunModel.create(config, runtime_plugins=site_plugins)
