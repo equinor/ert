@@ -88,9 +88,6 @@ def test_that_optimization_config_is_initialized_with_cvar_config():
 
 def test_that_get_output_dir_returns_same_for_old_and_new():
     config_src = {
-        "wells": [
-            {"name": "w00"},
-        ],
         "controls": [
             {
                 "name": "group_0",
@@ -266,14 +263,6 @@ def test_that_log_level_property_is_consistent_with_environment_log_level():
     This test verifies that the computed setter/getter works as intended
     """
     config_src = {
-        "wells": [
-            {
-                "name": "dog",
-            },
-            {
-                "name": "w01",
-            },
-        ],
         "controls": [
             {
                 "name": "group_0",

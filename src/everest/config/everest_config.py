@@ -313,6 +313,8 @@ class EverestConfig(BaseModelWithContextSupport):
         default=None,
         description=dedent(
             """
+            [Deprecated]
+
             An optional list of well configurations.
 
             Each well configuration consists of a `name` field, and an optional
@@ -874,6 +876,12 @@ to read summary data from forward model, do:
         return self
 
     @model_validator(mode="after")
+    def deprecate_wells(self) -> Self:
+        if "wells" in self.model_fields_set:
+            ConfigWarning.deprecation_warn(_WELLS_DEPRECATION)
+        return self
+
+    @model_validator(mode="after")
     def validate_that_environment_sim_folder_is_writeable(self) -> Self:
         environment = self.environment
         config_path = self.config_path
@@ -1149,3 +1157,44 @@ to read summary data from forward model, do:
             upper_bounds=[c.upper_bound for c in self.output_constraints],
             lower_bounds=[c.lower_bound for c in self.output_constraints],
         )
+
+
+_WELLS_DEPRECATION = """
+The `wells` section is deprecated and will be removed in a future version.
+
+The contents of the `wells` section is currently saved as a `wells.json` file in
+the working directory of each forward model run. It may be used as an input by
+the forward model. After removal of the `wells` section this file will not be
+generated anymore.
+
+Please remove the `wells` section and replace its functionality using one of the
+following options:
+
+1. No action is needed if none of your forward models require `wells.json`.
+
+2. If only the well names are needed, the forward model can read them from the
+   generated control files. For each entry in the `controls` section of the
+   configuration file, Everest generates a JSON file with the name of the
+   `control` group. These can be used instead of `wells.json`.
+
+3. Consult the documentation of the forward models. Some support entering the
+   required information from the `wells` section directly into the configuration
+   of the forward model itself.
+
+4. As a last resort: Create a YAML or a JSON file with the same content as the
+   `wells` section, and install it using an `install_data` entry in the Everest
+   configuration file:
+
+      install_data:
+        - source: <path_to_file>/wells.yaml
+            target: wells.yaml
+
+   Or: copy the content of the `wells` into an `install_data` entry to generate
+   a JSON file:
+
+      install_data:
+        - target: wells.json
+            data:
+            - name: INJ
+            - name: PROD
+"""

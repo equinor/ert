@@ -47,9 +47,6 @@ def test_default_installed_jobs(tmp_path, monkeypatch):
     "config_yaml",
     [
         dedent("""
-    wells: [{ name: test}]
-    """),
-        dedent("""
     controls:
       - name: my_control
         type: well_control
