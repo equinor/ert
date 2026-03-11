@@ -85,7 +85,7 @@ class ParameterConfig(BaseModel):
     @abstractmethod
     def create_storage_datasets(
         self,
-        from_data: npt.NDArray[np.float64],
+        from_data: npt.NDArray[np.floating],
         iens_active_index: npt.NDArray[np.int_],
     ) -> Iterator[tuple[int | None, pl.DataFrame | xr.Dataset]]:
         """
@@ -96,7 +96,7 @@ class ParameterConfig(BaseModel):
     @abstractmethod
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
-    ) -> npt.NDArray[np.float64]:
+    ) -> npt.NDArray[np.floating]:
         """
         Load the parameter from internal storage for the given ensemble.
         Must return array of shape (number of parameters, number of realizations).
@@ -123,7 +123,7 @@ class ParameterConfig(BaseModel):
     def group_name(self) -> str | None:
         return self.name
 
-    def transform_numpy(self, x: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+    def transform_numpy(self, x: npt.NDArray[np.floating]) -> npt.NDArray[np.floating]:
         return x
 
     def transform_series(self, series: pl.Series) -> pl.Series:
@@ -137,7 +137,7 @@ class ParameterConfig(BaseModel):
 
     def sample_values(
         self, global_seed: str, active_realizations: list[int], num_realizations: int
-    ) -> npt.NDArray[np.double]:
+    ) -> npt.NDArray[np.floating]:
         """
         Generate reproducible standard-normal samples for active realizations.
 
@@ -155,7 +155,7 @@ class ParameterConfig(BaseModel):
         for a given global_seed regardless of currently active realizations.
 
         Returns:
-        - npt.NDArray[np.double]: Array of shape (len(active_realizations),
+        - npt.NDArray[np.floating]: Array of shape (len(active_realizations),
         containing sample values, one for each `active_realization`.
         """
         key_hash = sha256(

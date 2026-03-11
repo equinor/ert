@@ -594,7 +594,7 @@ class LocalEnsemble(BaseMode):
 
     def load_parameters_numpy(
         self, group: str, realizations: npt.NDArray[np.int_]
-    ) -> npt.NDArray[np.float64]:
+    ) -> npt.NDArray[np.floating]:
         if group in self.experiment.parameter_configuration:
             config = self.experiment.parameter_configuration[group]
             return config.load_parameters(self, realizations)
@@ -616,7 +616,7 @@ class LocalEnsemble(BaseMode):
 
     def save_parameters_numpy(
         self,
-        parameters: npt.NDArray[np.float64],
+        parameters: npt.NDArray[np.floating],
         param_group: str,
         iens_active_index: npt.NDArray[np.int_],
     ) -> None:
@@ -880,7 +880,7 @@ class LocalEnsemble(BaseMode):
 
     def calculate_std_dev_for_parameter_group(
         self, parameter_group: str
-    ) -> npt.NDArray[np.float64]:
+    ) -> npt.NDArray[np.floating]:
         data = self.load_parameters(parameter_group)
         if isinstance(data, pl.DataFrame):
             return data.drop("realization").std().to_numpy().reshape(-1)

@@ -173,15 +173,15 @@ class UpdateStrategy(Protocol):
 
     def update(
         self,
-        param_ensemble: npt.NDArray[np.float64],
+        param_ensemble: npt.NDArray[np.floating],
         param_config: ParameterConfig,
         non_zero_variance_mask: npt.NDArray[np.bool_],
-    ) -> npt.NDArray[np.float64]:
+    ) -> npt.NDArray[np.floating]:
         """Update parameters using this strategy's algorithm.
 
         Parameters
         ----------
-        param_ensemble : npt.NDArray[np.float64]
+        param_ensemble : npt.NDArray[np.floating]
             Parameter ensemble array (num_params x ensemble_size).
         param_config : ParameterConfig
             Configuration for this parameter type.
@@ -190,7 +190,7 @@ class UpdateStrategy(Protocol):
 
         Returns
         -------
-        npt.NDArray[np.float64]
+        npt.NDArray[np.floating]
             Updated parameter ensemble array.
         """
         ...

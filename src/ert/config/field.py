@@ -217,7 +217,7 @@ class Field(ParameterConfig):
 
     def create_storage_datasets(
         self,
-        from_data: npt.NDArray[np.float64],
+        from_data: npt.NDArray[np.floating],
         iens_active_index: npt.NDArray[np.int_],
     ) -> Iterator[tuple[int, xr.Dataset]]:
         dim_nx, dim_ny, dim_nz = (
@@ -233,7 +233,7 @@ class Field(ParameterConfig):
 
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
-    ) -> npt.NDArray[np.float64]:
+    ) -> npt.NDArray[np.floating]:
         ds = ensemble.load_parameters(self.name, realizations)
         assert isinstance(ds, xr.Dataset)
         ensemble_size = len(ds.realizations)
@@ -252,7 +252,7 @@ class Field(ParameterConfig):
 
     def _transform_data(
         self, data_array: xr.DataArray
-    ) -> np.ma.MaskedArray[Any, np.dtype[np.float32]]:
+    ) -> np.ma.MaskedArray[Any, np.dtype[np.floating]]:
         return np.ma.MaskedArray(
             _field_truncate(
                 field_transform(
