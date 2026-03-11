@@ -20,6 +20,8 @@ if TYPE_CHECKING:
 
 
 class EnsemblePlot:
+    LEGEND_THRESHOLD = 5
+
     def __init__(self) -> None:
         self.dimensionality = 2
         self.requires_observations = False
@@ -109,5 +111,5 @@ class EnsemblePlot:
             zorder=zorder,
         )
 
-        if len(lines) > 0:
+        if len(lines) <= EnsemblePlot.LEGEND_THRESHOLD:
             plot_config.addLegendItem(ensemble_label, lines[0])

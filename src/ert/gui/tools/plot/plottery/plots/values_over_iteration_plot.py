@@ -29,6 +29,8 @@ class ValuesOverIterationsPlot:
     i.e., objective or control name) which is treated as the value to plot.
     """
 
+    LEGENDS_THRESHOLD = 5
+
     def __init__(self) -> None:
         self.dimensionality = 2
         self.requires_observations = False
@@ -139,7 +141,10 @@ class ValuesOverIterationsPlot:
 
         axes.set_xlabel("Iteration")
         axes.set_ylabel(value_col)
-        axes.legend(title="Realization")
+
+        if len(realizations) <= ValuesOverIterationsPlot.LEGENDS_THRESHOLD:
+            axes.legend(title="Realization")
+
         axes.xaxis.set_major_locator(MaxNLocator(integer=True))
 
         axes.grid(True)
