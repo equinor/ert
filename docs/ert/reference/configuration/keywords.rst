@@ -1582,26 +1582,21 @@ ANALYSIS_SET_VAR keyword for the `STD_ENKF` module.
 INVERSION
 ^^^^^^^^^
 
-The analysis modules can specify inversion algorithm used.
-These can be manipulated from the config file using the
-ANALYSIS_SET_VAR keyword for the `STD_ENKF` module.
+Specifies the inversion algorithm used in the analysis step.
+Two options are available for the ``STD_ENKF`` module:
 
-**STD_ENKF**
+``EXACT`` — exact inversion using a Cholesky factorization (default)::
 
+    ANALYSIS_SET_VAR STD_ENKF INVERSION EXACT
 
-.. list-table:: Inversion Algorithms for Ensemble Smoother
-   :widths: 50 50 50
-   :header-rows: 1
+``SUBSPACE`` — approximate subspace inversion::
 
-   * - Description
-     - INVERSION
-     - Note
-   * - Exact inversion with diagonal R=I
-     - Deprecated: exact, 0
-     - Preferred name: EXACT
-   * - Subspace inversion with exact R
-     - Deprecated: SUBSPACE_EXACT_R, subspace, 1
-     - Preferred name: SUBSPACE
+    ANALYSIS_SET_VAR STD_ENKF INVERSION SUBSPACE
+
+When using ``SUBSPACE``, you may also want to tune the singular value
+truncation threshold (see :ref:`ENKF_TRUNCATION <enkf_truncation>`)::
+
+    ANALYSIS_SET_VAR STD_ENKF ENKF_TRUNCATION 0.95
 
 .. _localization:
 
