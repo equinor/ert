@@ -6,6 +6,7 @@ import logging
 import signal
 import socket
 import threading
+import time
 from functools import partial
 from pathlib import Path
 from textwrap import dedent
@@ -233,12 +234,17 @@ async def run_everest(options: argparse.Namespace) -> None:
 
     print("Waiting for server ...")
     logger.debug("Waiting for response from everserver")
+    wait_start_time: float = time.monotonic()
     client = create_ertserver_client(
         Path(ServerConfig.get_session_dir(options.config.output_dir))
     )
     wait_for_server(client, timeout=600)
     print("Everest server found!")
-    logger.info("Got response from everserver. Starting experiment")
+    logger.info(
+        "Got response from everserver after "
+        f"waiting for {time.monotonic() - wait_start_time:g} seconds. "
+        "Starting experiment"
+    )
 
     start_experiment(
         server_context=ServerConfig.get_server_context_from_conn_info(client.conn_info),
