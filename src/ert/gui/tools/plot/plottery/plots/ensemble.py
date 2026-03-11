@@ -14,17 +14,17 @@ if TYPE_CHECKING:
     import numpy.typing as npt
     from matplotlib.axes import Axes
     from matplotlib.figure import Figure
+    from matplotlib.lines import Line2D
 
     from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApiKeyDefinition
     from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
 
 
 class EnsemblePlot:
-    LEGEND_THRESHOLD = 1
-
     def __init__(self) -> None:
         self.dimensionality = 2
         self.requires_observations = False
+        self._axes: Axes | None = None
 
     def plot(
         self,
@@ -38,6 +38,7 @@ class EnsemblePlot:
     ) -> None:
         config = plot_context.plotConfig()
         axes = figure.add_subplot(111)
+        self._axes = axes
 
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.DATE_AXIS
@@ -77,6 +78,11 @@ class EnsemblePlot:
             default_y_label="Value",
         )
 
+    def update_legend(self, line: Line2D) -> None:
+        if self._axes is None:
+            return
+        self._axes.legend(handles=[line], labels=[line.get_label()])
+
     @staticmethod
     def _plotLines(
         axes: Axes,
@@ -113,6 +119,3 @@ class EnsemblePlot:
 
         for line, col in zip(lines, data.columns, strict=True):
             line.set_label(f"Realization {col}")
-
-        if len(lines) <= EnsemblePlot.LEGEND_THRESHOLD:
-            plot_config.addLegendItem(ensemble_label, lines[0])
