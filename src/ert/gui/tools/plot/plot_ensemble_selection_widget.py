@@ -91,7 +91,12 @@ class EnsembleSelectListWidget(QListWidget):
         )
         cutoff = self.MAXIMUM_SELECTED if is_everest else self.MINIMUM_SELECTED
         for i, ensemble in enumerate(sorted_ensembles):
-            it = QListWidgetItem(f"{ensemble.experiment_name} : {ensemble.name}")
+            item_text = (
+                f"{ensemble.experiment_name} : {ensemble.name}"
+                if not is_everest
+                else ensemble.name
+            )
+            it = QListWidgetItem(item_text)
             it.setData(EnsembleSelectListWidgetItemDataRole.ENSEMBLE, ensemble)
             it.setData(
                 EnsembleSelectListWidgetItemDataRole.COLOR_INDEX,
@@ -101,7 +106,7 @@ class EnsembleSelectListWidget(QListWidget):
             self.addItem(it)
             self._ensemble_count += 1
             it.setToolTip(
-                f"{ensemble.experiment_name} : {ensemble.name}\n"
+                f"{item_text}\n"
                 f"Toggle up to {self.MAXIMUM_SELECTED} plots or reorder by"
                 "drag & drop\n"
                 f"Order determines draw order and color"
