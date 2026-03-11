@@ -106,9 +106,11 @@ class DataTypeKeysWidget(QWidget):
         layout.addWidget(self.data_type_keys_widget, 2)
         layout.addStretch()
 
-        if(not is_everest):
+        if not is_everest:
             layout.addWidget(
-                _Legend("Observations available", DataTypeKeysListModel.HAS_OBSERVATIONS)
+                _Legend(
+                    "Observations available", DataTypeKeysListModel.HAS_OBSERVATIONS
+                )
             )
 
         self.setLayout(layout)
