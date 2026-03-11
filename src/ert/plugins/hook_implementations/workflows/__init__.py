@@ -9,7 +9,6 @@ from .disable_parameters import DisableParametersUpdate
 from .export_misfit_data import ExportMisfitDataJob
 from .export_rft import ExportRFTJob
 from .export_runpath import ExportRunpathJob
-from .gen_data_rft_export import GenDataRFTCSVExportJob
 from .misfit_preprocessor import MisfitPreprocessor
 
 if TYPE_CHECKING:
@@ -28,4 +27,3 @@ def ertscript_workflow(config: WorkflowConfigs) -> None:
         MisfitPreprocessor, "MISFIT_PREPROCESSOR", category="observations.correlation"
     )
     config.add_workflow(CSVExportJob, "CSV_EXPORT")
-    config.add_workflow(GenDataRFTCSVExportJob, "GEN_DATA_RFT")
