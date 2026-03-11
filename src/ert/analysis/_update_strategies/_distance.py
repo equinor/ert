@@ -62,10 +62,10 @@ class DistanceLocalizationUpdate:
 
     def update(
         self,
-        param_ensemble: npt.NDArray[np.float64],
+        param_ensemble: npt.NDArray[np.floating],
         param_config: ParameterConfig,
         non_zero_variance_mask: npt.NDArray[np.bool_],
-    ) -> npt.NDArray[np.float64]:
+    ) -> npt.NDArray[np.floating]:
         if self._obs_loc is None or self._smoother is None:
             raise RuntimeError("prepare() must be called before update()")
 
@@ -95,9 +95,9 @@ class DistanceLocalizationUpdate:
 
     def _update_field(
         self,
-        param_ensemble: npt.NDArray[np.float64],
+        param_ensemble: npt.NDArray[np.floating],
         param_config: Field,
-    ) -> npt.NDArray[np.float64]:
+    ) -> npt.NDArray[np.floating]:
         assert self._obs_loc is not None
         assert self._smoother is not None
 
@@ -120,7 +120,7 @@ class DistanceLocalizationUpdate:
 
         ellipse_rotation = transform_local_ellipse_angle_to_local_coords(
             ertbox.rotation_angle,
-            np.zeros_like(self._obs_loc.main_range, dtype=np.float64),
+            np.zeros_like(self._obs_loc.main_range),
         )
 
         rho_matrix = calc_rho_for_2d_grid_layer(
@@ -145,9 +145,9 @@ class DistanceLocalizationUpdate:
 
     def _update_surface(
         self,
-        param_ensemble: npt.NDArray[np.float64],
+        param_ensemble: npt.NDArray[np.floating],
         param_config: SurfaceConfig,
-    ) -> npt.NDArray[np.float64]:
+    ) -> npt.NDArray[np.floating]:
         assert self._obs_loc is not None
         assert self._smoother is not None
 
@@ -160,7 +160,7 @@ class DistanceLocalizationUpdate:
 
         rotation_angle = transform_local_ellipse_angle_to_local_coords(
             param_config.rotation,
-            np.zeros_like(self._obs_loc.main_range, dtype=np.float64),
+            np.zeros_like(self._obs_loc.main_range, dtype=np.floating),
         )
 
         if param_config.yflip != 1:

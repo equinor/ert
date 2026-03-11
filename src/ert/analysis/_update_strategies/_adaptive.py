@@ -169,15 +169,15 @@ class AdaptiveLocalizationUpdate:
 
     def update(
         self,
-        param_ensemble: npt.NDArray[np.float64],
+        param_ensemble: npt.NDArray[np.floating],
         param_config: ParameterConfig,
         non_zero_variance_mask: npt.NDArray[np.bool_],
-    ) -> npt.NDArray[np.float64]:
+    ) -> npt.NDArray[np.floating]:
         """Update parameters using adaptive localization with batching.
 
         Parameters
         ----------
-        param_ensemble : npt.NDArray[np.float64]
+        param_ensemble : npt.NDArray[np.floating]
             Parameter ensemble array.
         param_config : ParameterConfig
             Configuration for this parameter type.
@@ -186,7 +186,7 @@ class AdaptiveLocalizationUpdate:
 
         Returns
         -------
-        npt.NDArray[np.float64]
+        npt.NDArray[np.floating]
             Updated parameter ensemble array.
 
         Raises

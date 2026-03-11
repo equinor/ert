@@ -200,7 +200,7 @@ class EverestControl(ParameterConfig):
 
     def create_storage_datasets(
         self,
-        from_data: npt.NDArray[np.float64],
+        from_data: npt.NDArray[np.floating],
         iens_active_index: npt.NDArray[np.int_],
     ) -> Iterator[tuple[None, pl.DataFrame]]:
         df = pl.DataFrame(

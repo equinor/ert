@@ -109,17 +109,17 @@ class StandardESUpdate:
 
     def update(
         self,
-        param_ensemble: npt.NDArray[np.float64],
+        param_ensemble: npt.NDArray[np.floating],
         param_config: ParameterConfig,
         non_zero_variance_mask: npt.NDArray[np.bool_],
-    ) -> npt.NDArray[np.float64]:
+    ) -> npt.NDArray[np.floating]:
         """Apply the transition matrix to update parameters.
 
         Only parameters with non-zero variance are updated.
 
         Parameters
         ----------
-        param_ensemble : npt.NDArray[np.float64]
+        param_ensemble : npt.NDArray[np.floating]
             Parameter ensemble array.
         param_config : ParameterConfig
             Configuration for this parameter type.
@@ -128,7 +128,7 @@ class StandardESUpdate:
 
         Returns
         -------
-        npt.NDArray[np.float64]
+        npt.NDArray[np.floating]
             Updated parameter ensemble array.
 
         Raises

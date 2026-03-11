@@ -318,7 +318,7 @@ class GenKwConfig(ParameterConfig):
 
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
-    ) -> npt.NDArray[np.float64]:
+    ) -> npt.NDArray[np.floating]:
         return (
             ensemble.load_parameters(self.name, realizations)
             .drop("realization")
@@ -328,7 +328,7 @@ class GenKwConfig(ParameterConfig):
 
     def create_storage_datasets(
         self,
-        from_data: npt.NDArray[np.float64],
+        from_data: npt.NDArray[np.floating],
         iens_active_index: npt.NDArray[np.int_],
     ) -> Iterator[tuple[int | None, pl.DataFrame]]:
         yield (
@@ -351,7 +351,7 @@ class GenKwConfig(ParameterConfig):
             }
         ]
 
-    def transform_numpy(self, x: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+    def transform_numpy(self, x: npt.NDArray[np.floating]) -> npt.NDArray[np.floating]:
         return self.distribution.transform_numpy(x)
 
     @classmethod
