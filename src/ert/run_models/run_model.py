@@ -773,19 +773,27 @@ class RunModel(RunModelConfig, ABC):
         ensemble: Ensemble,
         evaluator_server_config: EvaluatorServerConfig,
     ) -> int:
-        create_run_path(
-            run_args=run_args,
-            ensemble=ensemble,
-            user_config_file=str(self.user_config_file),
-            env_vars=self.env_vars,
-            env_pr_fm_step=self.env_pr_fm_step,
-            forward_model_steps=self.forward_model_steps,
-            substitutions=self.substitutions,
-            parameters_file=self.runpath_config.gen_kw_export_name,
-            runpaths=self._run_paths,
-            context_env=self._context_env,
-            handle_run_path_creation_event=self.send_event,
-        )
+
+        try:
+            asyncio.run(
+                create_run_path(
+                    run_args=run_args,
+                    ensemble=ensemble,
+                    user_config_file=str(self.user_config_file),
+                    env_vars=self.env_vars,
+                    env_pr_fm_step=self.env_pr_fm_step,
+                    forward_model_steps=self.forward_model_steps,
+                    substitutions=self.substitutions,
+                    parameters_file=self.runpath_config.gen_kw_export_name,
+                    runpaths=self._run_paths,
+                    context_env=self._context_env,
+                    end_event=self._end_event,
+                    handle_run_path_creation_event=self.send_event,
+                )
+            )
+        except UserCancelled as e:
+            logger.debug("Run model cancelled - pre evaluation")
+            raise UserCancelled("Experiment cancelled by user in pre evaluation") from e
 
         self.run_workflows(
             fixtures=PreSimulationFixtures(

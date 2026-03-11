@@ -1,3 +1,5 @@
+import threading
+
 from ert.config import ErtConfig
 from ert.run_arg import create_run_arguments
 from ert.run_models._create_run_path import create_run_path
@@ -6,7 +8,7 @@ from ert.sample_prior import sample_prior
 from ert.storage import Ensemble
 
 
-def create_runpath(
+async def create_runpath(
     storage,
     config,
     active_mask=None,
@@ -46,7 +48,7 @@ def create_runpath(
         random_seed=ert_config.random_seed,
         num_realizations=ert_config.runpath_config.num_realizations,
     )
-    create_run_path(
+    await create_run_path(
         run_args=run_args,
         ensemble=ensemble,
         user_config_file=ert_config.user_config_file,
@@ -55,6 +57,7 @@ def create_runpath(
         forward_model_steps=ert_config.forward_model_steps,
         substitutions=ert_config.substitutions,
         parameters_file="parameters",
+        end_event=threading.Event(),
         runpaths=runpaths,
     )
     return ert_config.ensemble_config, ensemble

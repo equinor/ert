@@ -1,5 +1,6 @@
 import math
 import re
+import threading
 from pathlib import Path
 from textwrap import dedent
 
@@ -186,7 +187,7 @@ number_regex = r"[-+]?(?:\d*\.\d+|\d+)"
         ("TRIANGULAR 0 0.5 1", False, r"KW_NAME:MY_KEYWORD " + number_regex),
     ],
 )
-def test_gen_kw_is_log_or_not(
+async def test_gen_kw_is_log_or_not(
     tmpdir, storage, distribution, expect_log, parameters_regex, run_args
 ):
     with tmpdir.as_cwd():
@@ -197,12 +198,9 @@ def test_gen_kw_is_log_or_not(
         GEN_KW KW_NAME template.txt kw.txt prior.txt
         """
         )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("template.txt", "w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-        with open("prior.txt", "w", encoding="utf-8") as fh:
-            fh.writelines(f"MY_KEYWORD {distribution}")
+        Path("config.ert").write_text(config, encoding="utf-8")
+        Path("template.txt").write_text("MY_KEYWORD <MY_KEYWORD>", encoding="utf-8")
+        Path("prior.txt").write_text(f"MY_KEYWORD {distribution}", encoding="utf-8")
 
         ert_config = ErtConfig.from_file("config.ert")
 
@@ -219,7 +217,7 @@ def test_gen_kw_is_log_or_not(
             experiment_id, name="prior", ensemble_size=1
         )
         sample_prior(prior_ensemble, [0], 123, 1)
-        create_run_path(
+        await create_run_path(
             run_args=run_args(ert_config, prior_ensemble),
             ensemble=prior_ensemble,
             runpaths=Runpaths.from_config(ert_config),
@@ -228,8 +226,10 @@ def test_gen_kw_is_log_or_not(
             env_vars=ert_config.env_vars,
             env_pr_fm_step=ert_config.env_pr_fm_step,
             substitutions=ert_config.substitutions,
+            end_event=threading.Event(),
             parameters_file="parameters",
         )
+
         assert re.match(
             parameters_regex,
             Path("simulations/realization-0/iter-0/parameters.txt").read_text(

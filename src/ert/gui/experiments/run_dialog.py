@@ -64,9 +64,11 @@ from ert.run_models import (
 )
 from ert.run_models.event import (
     EverestBatchResultEvent,
+    FinishedTotalRunPathCreationEvent,
     RunModelDataEvent,
     RunModelErrorEvent,
-    RunPathCreationEvent,
+    RunPathCreatedEvent,
+    StartingTotalRunPathCreationEvent,
 )
 from ert.shared.status.utils import (
     byte_with_unit,
@@ -624,28 +626,23 @@ class RunDialog(QFrame):
                 self._tab_widget.setTabText(
                     event.batch, _batch_type_text(event.batch, batch_types)
                 )
-            case RunPathCreationEvent():
-                if event.sub_type == "StartingTotalRunPathCreation":
-                    runpath_creation_progress_widget = RunpathCreationProgressWidget(
-                        self
-                    )
-                    tab_index = self._tab_widget.addTab(
-                        runpath_creation_progress_widget, "Creating runpaths..."
-                    )
-                    self._tab_widget.setCurrentIndex(tab_index)
-                    runpath_creation_progress_widget.handle_event(event)
-                elif event.sub_type == "FinishedTotalRunPathCreation":
-                    last_index = self._tab_widget.count() - 1
-                    runpath_widget = self._tab_widget.widget(last_index)
-                    self._tab_widget.removeTab(last_index)
-                    if isinstance(runpath_widget, RunpathCreationProgressWidget):
-                        runpath_widget.deleteLater()
-                else:
-                    runpath_widget = self._tab_widget.widget(
-                        self._tab_widget.count() - 1
-                    )
-                    if isinstance(runpath_widget, RunpathCreationProgressWidget):
-                        runpath_widget.handle_event(event)
+            case StartingTotalRunPathCreationEvent():
+                runpath_creation_progress_widget = RunpathCreationProgressWidget(self)
+                tab_index = self._tab_widget.addTab(
+                    runpath_creation_progress_widget, "Creating runpaths..."
+                )
+                self._tab_widget.setCurrentIndex(tab_index)
+                runpath_creation_progress_widget.handle_event(event)
+            case FinishedTotalRunPathCreationEvent():
+                last_index = self._tab_widget.count() - 1
+                runpath_widget = self._tab_widget.widget(last_index)
+                self._tab_widget.removeTab(last_index)
+                if isinstance(runpath_widget, RunpathCreationProgressWidget):
+                    runpath_widget.deleteLater()
+            case RunPathCreatedEvent():
+                runpath_widget = self._tab_widget.widget(self._tab_widget.count() - 1)
+                if isinstance(runpath_widget, RunpathCreationProgressWidget):
+                    runpath_widget.handle_event(event)
 
     def _get_update_widget(self, iteration: int) -> UpdateWidget:
         for i in range(self._tab_widget.count()):

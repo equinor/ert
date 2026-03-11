@@ -89,14 +89,23 @@ class RunModelErrorEvent(RunModelEvent):
 
 
 class RunPathCreationEvent(BaseModel):
-    event_type: Literal["RunPathCreationEvent"] = "RunPathCreationEvent"
-    sub_type: Literal[
-        "StartingTotalRunPathCreation",
-        "FinishedTotalRunPathCreation",
-        "TotalRunPathCreationUpdate",
-    ]
-    created_runpaths_count: int | None = None
-    total_runpaths_to_create: int | None = None
+    pass
+
+
+class StartingTotalRunPathCreationEvent(RunPathCreationEvent):
+    event_type: Literal["StartingTotalRunPathCreation"] = "StartingTotalRunPathCreation"
+    total_runpaths_to_create: int
+
+
+class FinishedTotalRunPathCreationEvent(RunPathCreationEvent):
+    event_type: Literal["FinishedTotalRunPathCreationEvent"] = (
+        "FinishedTotalRunPathCreationEvent"
+    )
+
+
+class RunPathCreatedEvent(RunPathCreationEvent):
+    event_type: Literal["RunPathCreatedEvent"] = "RunPathCreatedEvent"
+    iens: int
 
 
 StatusEvents = (
@@ -116,7 +125,9 @@ StatusEvents = (
     | StartEvent
     | WarningEvent
     | EnsembleEvaluationWarning
-    | RunPathCreationEvent
+    | StartingTotalRunPathCreationEvent
+    | FinishedTotalRunPathCreationEvent
+    | RunPathCreatedEvent
 )
 
 
