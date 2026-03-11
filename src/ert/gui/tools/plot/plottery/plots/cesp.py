@@ -164,15 +164,12 @@ def _addStatisticsLegend(
             plot_config.addLegendItem(style.name, line)
 
 
-def _assertNumeric(data: pd.DataFrame) -> pd.Series:
+def _assertNumeric(data: pd.DataFrame) -> pd.Series | None:
     data_series = data[0]
-    if data_series.dtype == "object":
-        try:
-            data_series = pd.to_numeric(data_series, errors="coerce")
-        except AttributeError:
-            data_series = data_series.convert_objects(convert_numeric=True)
+    if not pd.api.types.is_numeric_dtype(data_series):
+        data_series = pd.to_numeric(data_series, errors="coerce")
 
-    if data_series.dtype == "object":
+    if not pd.api.types.is_numeric_dtype(data_series):
         data_series = None
     return data_series
 

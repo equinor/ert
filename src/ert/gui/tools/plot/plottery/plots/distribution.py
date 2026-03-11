@@ -107,13 +107,10 @@ def _plotDistribution(
 
     style = plot_config.distributionStyle()
 
-    if data.dtype == "object":
-        try:
-            data = pd.to_numeric(data, errors="coerce")
-        except AttributeError:
-            data = data.convert_objects(convert_numeric=True)
+    if not pd.api.types.is_numeric_dtype(data):
+        data = pd.to_numeric(data, errors="coerce")
 
-    if data.dtype == "object":
+    if not pd.api.types.is_numeric_dtype(data):
         dots = []
     else:
         dots = axes.plot(
