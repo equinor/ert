@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 def loadDesignMatrix(filename: str) -> pd.DataFrame:
-    dm = pd.read_csv(filename, delim_whitespace=True)
+    dm = pd.read_csv(filename, sep=r"\s+")
     dm = dm.rename(columns={dm.columns[0]: "Realization"})
     dm = dm.set_index(["Realization"])
     return dm
