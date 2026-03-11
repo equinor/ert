@@ -262,13 +262,19 @@ def test_field_param_update_using_heat_equation(symlinked_heat_equation_storage_
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_field_parameter_persistence_to_grdecl(tmpdir):
-    """
-    This replicates the poly example, only it uses FIELD parameter
+    """Test that FIELD parameters in GRDECL format are correctly persisted
+    and updated by the ensemble smoother.
+
+    Uses a polynomial forward model with three field-cell coefficients.
+    Verifies that the posterior has reduced uncertainty (smaller covariance
+    determinant), that field files differ between iterations, and that
+    the written GRDECL files have correct shape with no NaN values.
     """
     with tmpdir.as_cwd():
         config = dedent(
             """
             NUM_REALIZATIONS 5
+            RANDOM_SEED 1234
             OBS_CONFIG observations
             FIELD MY_PARAM PARAMETER my_param.grdecl \
                 INIT_FILES:my_param.grdecl FORWARD_INIT:True
@@ -298,7 +304,9 @@ import numpy as np
 import os
 if __name__ == "__main__":
     if not os.path.exists("my_param.grdecl"):
-        values = np.random.standard_normal({NCOL}*{NROW}*{NLAY})
+        seed = int(os.environ.get("_ERT_REALIZATION_NUMBER", 0))
+        rng = np.random.default_rng(seed)
+        values = rng.standard_normal({NCOL}*{NROW}*{NLAY})
         with open("my_param.grdecl", "w") as fout:
             fout.write("MY_PARAM\\n")
             fout.write(" ".join([str(val) for val in values]) + " /\\n")
