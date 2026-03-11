@@ -1,7 +1,8 @@
 import dataclasses
+import functools
 import uuid
-from abc import abstractmethod
 
+from ert.analysis import build_strategy_map, smoother_update
 from ert.analysis._update_commons import ErtAnalysisError
 from ert.analysis.event import (
     AnalysisCompleteEvent,
@@ -38,7 +39,6 @@ class UpdateRunModelConfig(RunModelConfig):
 
 
 class UpdateRunModel(RunModel, UpdateRunModelConfig):
-    @abstractmethod
     def update_ensemble_parameters(
         self, prior: Ensemble, posterior: Ensemble, weight: float
     ) -> None:
@@ -59,6 +59,32 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
         weight : float
             The weight applied to this update step (only used in esmda).
         """
+        progress_callback = functools.partial(
+            self.send_smoother_event,
+            prior.iteration,
+            prior.id,
+        )
+        strategy_map = build_strategy_map(
+            parameters=prior.experiment.update_parameters,
+            param_configs=prior.experiment.parameter_configuration,
+            inversion=self.analysis_settings.inversion,
+            enkf_truncation=self.analysis_settings.enkf_truncation,
+            distance_localization=self.analysis_settings.distance_localization,
+            localization=self.analysis_settings.localization,
+            correlation_threshold=self.analysis_settings.correlation_threshold,
+            rng=self._rng,
+            progress_callback=progress_callback,
+        )
+        smoother_update(
+            prior,
+            posterior,
+            update_settings=self.update_settings,
+            strategy_map=strategy_map,
+            observations=prior.experiment.observation_keys,
+            global_scaling=weight,
+            progress_callback=progress_callback,
+            active_realizations=self.active_realizations,
+        )
 
     def update(
         self,

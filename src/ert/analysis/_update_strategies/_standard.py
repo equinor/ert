@@ -12,17 +12,14 @@ import scipy
 
 from ert.analysis._update_commons import ErtAnalysisError
 from ert.analysis.event import (
-    AnalysisErrorEvent,
     AnalysisEvent,
     AnalysisStatusEvent,
-    DataSection,
 )
-from ert.analysis.snapshots import SmootherSnapshot
 
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.config import ESSettings, ParameterConfig
+    from ert.config import ParameterConfig
 
     from ._protocol import ObservationContext
 
@@ -40,10 +37,10 @@ class StandardESUpdate:
 
     Parameters
     ----------
-    smoother_snapshot : SmootherSnapshot
-        Snapshot object for error reporting.
-    settings : ESSettings
-        ES analysis settings.
+    inversion : str
+        Inversion algorithm to use (e.g., "EXACT").
+    enkf_truncation : float
+        Singular value truncation threshold.
     rng : np.random.Generator
         Random number generator for reproducibility.
     progress_callback : Callable[[AnalysisEvent], None]
@@ -62,13 +59,13 @@ class StandardESUpdate:
 
     def __init__(
         self,
-        smoother_snapshot: SmootherSnapshot,
-        settings: ESSettings,
+        inversion: str,
+        enkf_truncation: float,
         rng: np.random.Generator,
         progress_callback: Callable[[AnalysisEvent], None],
     ) -> None:
-        self._smoother_snapshot = smoother_snapshot
-        self._settings = settings
+        self._inversion = inversion
+        self._enkf_truncation = enkf_truncation
         self._rng = rng
         self._progress_callback = progress_callback
         self._T: npt.NDArray[np.float64] | None = None
@@ -91,32 +88,21 @@ class StandardESUpdate:
             observations=obs_context.observation_values,
             alpha=1,
             seed=self._rng,
-            inversion=self._settings.inversion.lower(),
+            inversion=self._inversion.lower(),
         )
 
         try:
             self._T = smoother.compute_transition_matrix(
                 Y=obs_context.responses,
                 alpha=1.0,
-                truncation=self._settings.enkf_truncation,
+                truncation=self._enkf_truncation,
             )
         except scipy.linalg.LinAlgError as err:
-            msg = (
+            raise ErtAnalysisError(
                 "Failed while computing transition matrix, "
                 "this might be due to outlier values in one "
                 f"or more realizations: {err}"
-            )
-            self._progress_callback(
-                AnalysisErrorEvent(
-                    error_msg=msg,
-                    data=DataSection(
-                        header=self._smoother_snapshot.header,
-                        data=self._smoother_snapshot.csv,
-                        extra=self._smoother_snapshot.extra,
-                    ),
-                )
-            )
-            raise ErtAnalysisError(msg) from err
+            ) from err
 
         # Add identity in place for efficient computation: T = I + K @ H
         np.fill_diagonal(self._T, self._T.diagonal() + 1)

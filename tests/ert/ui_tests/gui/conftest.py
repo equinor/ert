@@ -49,6 +49,7 @@ def setup_svg_search_path():
     )
 
 
+@contextmanager
 def open_gui_with_config(config_path) -> Iterator[ErtMainWindow]:
     with (
         _open_main_window(config_path) as (
@@ -66,7 +67,8 @@ def opened_main_window_poly(
 ) -> Iterator[ErtMainWindow]:
     monkeypatch.chdir(tmp_path)
     _new_poly_example(source_root, tmp_path)
-    yield from open_gui_with_config(tmp_path / "poly.ert")
+    with open_gui_with_config(tmp_path / "poly.ert") as gui:
+        yield gui
 
 
 def _new_poly_example(
@@ -110,7 +112,8 @@ def _open_main_window(path) -> Iterator[tuple[ErtMainWindow, Storage, ErtConfig]
 def opened_main_window_minimal_realizations(source_root, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     _new_poly_example(source_root, tmp_path, 2)
-    yield from open_gui_with_config(tmp_path / "poly.ert")
+    with open_gui_with_config(tmp_path / "poly.ert") as gui:
+        yield gui
 
 
 @pytest.fixture(scope="module")
@@ -257,12 +260,27 @@ def _ensemble_experiment_has_run(
         run_experiment, source_root, tmp_path_factory, failing_reals, with_templates
     )
     shutil.copytree(test_files, tmp_path, dirs_exist_ok=True)
-    yield from open_gui_with_config(tmp_path / "poly.ert")
+    with open_gui_with_config(tmp_path / "poly.ert") as gui:
+        yield gui
 
 
 @pytest.fixture(name="run_experiment", scope="module")
 def run_experiment_fixture(request):
-    def func(experiment_mode, gui, click_done=True):
+    def func(experiment_mode, gui, wait_done=True, check_realizations=True, **kwargs):
+        """
+        Runs experiment.
+
+        Parameters
+        ----------
+        wait_done : bool
+            whether to wait until the experiment is done before returning
+        check_realizations : bool
+            whether to check that the number of realizations on in the detailed
+            view is correct on finish
+        kwargs : additional keyword arguments. Supported:
+            - update_method: the update method to select in the dropdown when
+              running a manual update experiment
+        """
         qtbot = QtBot(request)
         with contextlib.suppress(FileNotFoundError):
             shutil.rmtree("poly_out")
@@ -280,6 +298,10 @@ def run_experiment_fixture(request):
         if hasattr(simulation_settings, "_ensemble_name_field"):
             simulation_settings._ensemble_name_field.setText("iter-0")
 
+        if experiment_mode.name() == "Manual update":
+            update_method = kwargs.get("update_method", "ES Update")
+            simulation_settings._update_method_dropdown.setCurrentText(update_method)
+
         # Click start simulation and agree to the message
         run_experiment = get_child(experiment_panel, QWidget, name="run_experiment")
 
@@ -296,27 +318,24 @@ def run_experiment_fixture(request):
             QTimer.singleShot(500, handle_dialog)
         qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
 
-        if click_done:
-            # The Run dialog opens, click show details and wait until done appears
-            # then click it
+        if wait_done or check_realizations:
             qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=10000)
             run_dialog = get_children(gui, RunDialog)[-1]
-            qtbot.waitUntil(
-                lambda: run_dialog.is_experiment_done() is True, timeout=200000
-            )
+            qtbot.waitUntil(run_dialog.is_experiment_done, timeout=200000)
             qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
-            # Assert that the number of boxes in the detailed view is
-            # equal to the number of realizations
-            realization_widget = run_dialog._tab_widget.currentWidget()
-            assert isinstance(realization_widget, RealizationWidget)
-            list_model = realization_widget._real_view.model()
-            expected_num_realizations = (
-                experiment_panel.config.runpath_config.num_realizations
-            )
-            if experiment_mode.name() == "Single realization test-run":
-                expected_num_realizations = 1
-            assert list_model.rowCount() == expected_num_realizations
+            if check_realizations:
+                # Assert that the number of boxes in the detailed view is
+                # equal to the number of realizations
+                realization_widget = run_dialog._tab_widget.currentWidget()
+                assert isinstance(realization_widget, RealizationWidget)
+                list_model = realization_widget._real_view.model()
+                expected_num_realizations = (
+                    experiment_panel.config.runpath_config.num_realizations
+                )
+                if experiment_mode.name() == "Single realization test-run":
+                    expected_num_realizations = 1
+                assert list_model.rowCount() == expected_num_realizations
 
     return func
 

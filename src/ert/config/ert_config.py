@@ -68,7 +68,6 @@ from .workflow_fixtures import fixtures_per_hook
 from .workflow_job import (
     BaseErtScriptWorkflow,
     ErtScriptLoadFailure,
-    ErtScriptWorkflow,
     WorkflowJob,
     workflow_job_from_file,
 )
@@ -390,60 +389,13 @@ def workflow_jobs_from_dict(
     return workflow_jobs
 
 
-def create_and_hook_workflows(
-    hook_workflow_info: list[tuple[str, HookRuntime]],
-    workflow_info: list[tuple[str, str]],
-    workflow_jobs: dict[str, WorkflowJob],
-    substitutions: dict[str, str],
-) -> tuple[dict[str, Workflow], defaultdict[HookRuntime, list[Workflow]]]:
-    workflows = {}
-    hooked_workflows = defaultdict(list)
-
+def _validate_fixtures(
+    hook_name: str, workflow: Workflow, mode: HookRuntime
+) -> list[ErrorInfo]:
     errors = []
-
-    for work in workflow_info:
-        filename = path.basename(work[0]) if len(work) == 1 else work[1]
-        try:
-            existed = filename in workflows
-            workflow = Workflow.from_file(
-                work[0],
-                substitutions,
-                workflow_jobs,
-            )
-            for job, args in workflow:
-                if isinstance(job, ErtScriptWorkflow):
-                    try:
-                        job.load_ert_script_class().validate(args)
-                    except ConfigValidationError as err:
-                        errors.append(ErrorInfo(message=str(err)).set_context(work[0]))
-                        continue
-            workflows[filename] = workflow
-            if existed:
-                ConfigWarning.warn(f"Workflow {filename!r} was added twice", work[0])
-        except ConfigValidationError as err:
-            ConfigWarning.warn(
-                f"Encountered the following error(s) while "
-                f"reading workflow {filename!r}. It will not be loaded: "
-                + err.cli_message(),
-                work[0],
-            )
-
-    for hook_name, mode in hook_workflow_info:
-        if hook_name not in workflows:
-            errors.append(
-                ErrorInfo(
-                    message="Cannot setup hook for non-existing"
-                    f" job name {hook_name!r}",
-                ).set_context(hook_name)
-            )
-            continue
-
-        wf = workflows[hook_name]
-        available_fixtures = fixtures_per_hook[mode]
-        for job, _ in wf.cmd_list:
-            if not isinstance(job, BaseErtScriptWorkflow):
-                continue
-
+    available_fixtures = fixtures_per_hook[mode]
+    for job, _ in workflow:
+        if isinstance(job, BaseErtScriptWorkflow):
             ert_script_class = job.load_ert_script_class()
             ert_script_instance = ert_script_class()
             requested_fixtures = ert_script_instance.requested_fixtures
@@ -462,10 +414,14 @@ def create_and_hook_workflows(
                 message_start = (
                     f"Workflow job {job.name} .run function expected "
                     f"fixtures: {missing_fixtures}, which are not available "
-                    f"in the fixtures for the runtime {mode}: {available_fixtures}. "
+                    f"in the fixtures for the runtime {mode}: "
+                    f"{available_fixtures}. "
                 )
                 message_end = (
-                    f"It would work in these runtimes: {', '.join(map(str, ok_modes))}"
+                    (
+                        f"It would work in these runtimes: "
+                        f"{', '.join(map(str, ok_modes))}"
+                    )
                     if len(ok_modes) > 0
                     else "This fixture is not available in any of the runtimes."
                 )
@@ -475,8 +431,108 @@ def create_and_hook_workflows(
                         hook_name
                     )
                 )
+    return errors
 
-        hooked_workflows[mode].append(workflows[hook_name])
+
+def create_and_hook_workflows(
+    hook_workflow_info: list[tuple[str, HookRuntime]],
+    hook_workflow_job_info: list[list[str]],
+    create_workflow_from_job_info: list[list[str]],
+    workflow_info: list[tuple[str, str]],
+    workflow_jobs: dict[str, WorkflowJob],
+    substitutions: dict[str, str],
+) -> tuple[dict[str, Workflow], defaultdict[HookRuntime, list[Workflow]]]:
+    workflows = {}
+    hooked_workflows = defaultdict(list)
+
+    errors: list[ErrorInfo | ConfigValidationError] = []
+
+    for work in workflow_info:
+        filename = path.basename(work[0]) if len(work) == 1 else work[1]
+        try:
+            existed = filename in workflows
+            workflow = Workflow.from_file(
+                work[0],
+                substitutions,
+                workflow_jobs,
+            )
+            workflows[filename] = workflow
+            if existed:
+                ConfigWarning.warn(f"Workflow {filename!r} was added twice", work[0])
+        except ConfigValidationError as err:
+            ConfigWarning.warn(
+                f"Encountered the following error(s) while "
+                f"reading workflow {filename!r}. It will not be loaded: "
+                + err.cli_message(),
+                work[0],
+            )
+
+    def _create_workflow_from_job(
+        inline_workflow: list[str],
+    ) -> tuple[str, Workflow]:
+        workflow_name = inline_workflow[0]
+        job_name = inline_workflow[1]
+        job_args = inline_workflow[2:]
+        return (
+            workflow_name,
+            Workflow.from_instructions(
+                workflow_name, job_name, job_args, workflow_jobs
+            ),
+        )
+
+    def _register_workflow(
+        inline_workflow: list[str],
+        workflow_name: str,
+        workflow: Workflow,
+    ) -> None:
+        if workflow_name in workflows:
+            ConfigWarning.warn(
+                f"Workflow {workflow_name!r} was added twice", inline_workflow
+            )
+        workflows[workflow_name] = workflow
+
+    for inline_workflow in create_workflow_from_job_info:
+        try:
+            wf_name, wf = _create_workflow_from_job(inline_workflow)
+            _register_workflow(inline_workflow, wf_name, wf)
+        except ConfigValidationError as err:
+            errors.append(err)
+
+    for hook_name, mode in hook_workflow_info:
+        if hook_name not in workflows:
+            errors.append(
+                ErrorInfo(
+                    message="Cannot setup hook for non-existing"
+                    f" job name {hook_name!r}",
+                ).set_context(hook_name)
+            )
+            continue
+
+        workflow = workflows[hook_name]
+        errors.extend(_validate_fixtures(hook_name, workflow, mode))
+
+        hooked_workflows[mode].append(workflow)
+
+    for inline_workflow_hook in hook_workflow_job_info:
+        inline_workflow = inline_workflow_hook[:-1]
+        raw_mode = inline_workflow_hook[-1]
+        try:
+            mode = HookRuntime(str(raw_mode))
+        except ValueError:
+            errors.append(
+                ErrorInfo(
+                    message=f"Last argument of HOOK_WORKFLOW_JOB must be a known "
+                    f"HookRuntime ({', '.join(list(HookRuntime))}), got {raw_mode}"
+                ).set_context(raw_mode)
+            )
+            continue
+        try:
+            wf_name, wf = _create_workflow_from_job(inline_workflow)
+            _register_workflow(inline_workflow, wf_name, wf)
+            errors.extend(_validate_fixtures(wf_name, wf, mode))
+            hooked_workflows[mode].append(wf)
+        except ConfigValidationError as err:
+            errors.append(err)
 
     if errors:
         raise ConfigValidationError.from_collected(errors)
@@ -501,6 +557,8 @@ def workflows_from_dict(
     )
     workflows, hooked_workflows = create_and_hook_workflows(
         content_dict.get(ConfigKeys.HOOK_WORKFLOW, []),
+        content_dict.get(ConfigKeys.HOOK_WORKFLOW_JOB, []),
+        content_dict.get(ConfigKeys.CREATE_WORKFLOW_FROM_JOB, []),
         content_dict.get(ConfigKeys.LOAD_WORKFLOW, []),
         workflow_jobs,
         substitutions,

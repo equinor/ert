@@ -26,6 +26,7 @@ from PyQt6.QtWidgets import (
 from ert.config import BreakthroughConfig
 from ert.config.field import Field
 from ert.dark_storage.common import get_storage_api_version
+from ert.field_utils import transform_observation_locations
 from ert.gui.ertwidgets import CopyButton, showWaitCursorWhileWaiting
 from ert.services import ServerBootFail
 from ert.utils import log_duration
@@ -257,6 +258,7 @@ class PlotWindow(QMainWindow):
             self._ensemble_selection_widget = EnsembleSelectionWidget(
                 plot_case_objects,
                 self._plot_customizer.getPlotConfig().getNumberOfColors(),
+                is_everest=is_everest,
             )
 
             self._ensemble_selection_widget.ensembleSelectionChanged.connect(
@@ -398,12 +400,14 @@ class PlotWindow(QMainWindow):
                     handle_exception(e)
 
             std_dev_images: dict[str, npt.NDArray[np.float32]] = {}
-
+            obs_loc: npt.NDArray[np.float32] | None = None
             if isinstance(key_def.parameter, Field):
                 plot_widget.showLayerWidget.emit(True)
                 layers = key_def.parameter.ertbox_params.nz
                 plot_widget.updateLayerWidget.emit(layers)
-
+                obs_loc = transform_observation_locations(
+                    self._api.observation_locations(), key_def.parameter.ertbox_params
+                )
                 if layer is None:
                     plot_widget.resetLayerWidget.emit()
                     layer = 0
@@ -470,6 +474,7 @@ class PlotWindow(QMainWindow):
                 ensemble_to_data_map,
                 observations,
                 std_dev_images,
+                obs_loc,
                 key_def,
             )
 

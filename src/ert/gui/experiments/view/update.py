@@ -28,6 +28,7 @@ from PyQt6.QtWidgets import (
 from typing_extensions import override
 
 from ert.analysis.event import DataSection
+from ert.analysis.snapshots import ObservationStatus
 from ert.ensemble_evaluator import state
 from ert.run_models import (
     RunModelEvent,
@@ -79,6 +80,64 @@ class UpdateLogTable(QTableWidget):
                 )
         else:
             super().keyPressEvent(e)
+
+
+class ReportLogTable(UpdateLogTable):
+    def __init__(self, data: DataSection, parent: QWidget | None = None) -> None:
+        super().__init__(data, parent)
+
+        self.data = data
+
+        if "status" not in data.header:
+            raise RuntimeError("'status' column should be present in the report table")
+        if "missing_realizations" not in data.header:
+            raise RuntimeError(
+                "'missing_realizations' column should be present in the report table"
+            )
+
+        self.status_column_index = data.header.index("status")
+        self.missing_realizations_col_index = data.header.index("missing_realizations")
+
+        self.hideColumn(self.missing_realizations_col_index)
+
+        self.itemClicked.connect(self._handle_item_click)
+        self._underline_missing_realization_status()
+
+    def _underline_missing_realization_status(self) -> None:
+        """
+        Underline 'status' of observations with missing responses to indicate
+        that they are clickable.
+        """
+        for i, row in enumerate(self.data.data):
+            str_val = str(row[self.status_column_index])
+            if str_val == ObservationStatus.MISSING_RESPONSE:
+                item = self.item(i, self.status_column_index)
+                if item is not None:
+                    font = item.font()
+                    font.setUnderline(True)
+                    item.setFont(font)
+
+    @Slot(QTableWidgetItem)
+    def _handle_item_click(self, item: QTableWidgetItem) -> None:
+        if (
+            self.status_column_index == item.column()
+            and item.text() == ObservationStatus.MISSING_RESPONSE
+        ):
+            hidden_item = self.item(item.row(), self.missing_realizations_col_index)
+            assert hidden_item is not None, (
+                "all items in the table should have been initialized"
+            )
+
+            missing_realizations = hidden_item.text()
+            reasoning = "Missing responses from active realizations: " + str(
+                missing_realizations
+            )
+            QMessageBox.information(
+                self,
+                "Observation deactivated",
+                reasoning,
+                QMessageBox.StandardButton.Ok,
+            )
 
 
 class UpdateWidget(QWidget):
@@ -138,12 +197,13 @@ class UpdateWidget(QWidget):
         self,
         name: str,
         data: DataSection,
+        table_type: type[UpdateLogTable] = UpdateLogTable,
     ) -> None:
         widget = QWidget()
         layout = QVBoxLayout()
         widget.setLayout(layout)
 
-        table = UpdateLogTable(data)
+        table = table_type(data)
         table.setObjectName("CSV_" + name)
         layout.addWidget(table)
 
@@ -158,6 +218,12 @@ class UpdateWidget(QWidget):
             layout.addLayout(grid_layout)
 
         self._tab_widget.setCurrentIndex(self._tab_widget.addTab(widget, name))
+
+    def _insert_report_tab(
+        self,
+        data: DataSection,
+    ) -> None:
+        self._insert_table_tab("Report", data, ReportLogTable)
 
     @Slot(RunModelUpdateBeginEvent)
     def begin(self, event: RunModelUpdateBeginEvent) -> None:
@@ -177,7 +243,7 @@ class UpdateWidget(QWidget):
         self._progress_bar.setMaximum(1)
         self._progress_bar.setValue(1)
 
-        self._insert_table_tab("Report", event.data)
+        self._insert_report_tab(event.data)
 
     @Slot(RunModelDataEvent)
     def add_table(self, event: RunModelDataEvent) -> None:
@@ -211,5 +277,5 @@ class UpdateWidget(QWidget):
         self._progress_bar.setMaximum(1)
         self._progress_bar.setValue(1)
 
-        if (d := event.data) is not None:
-            self._insert_table_tab("Report", d)
+        if event.data is not None:
+            self._insert_report_tab(event.data)

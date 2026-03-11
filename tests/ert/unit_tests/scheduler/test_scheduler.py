@@ -12,6 +12,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from _ert.events import (
+    ForwardModelStepChecksum,
     RealizationFailed,
     RealizationStoppedLongRunning,
     RealizationTimeout,
@@ -895,3 +896,44 @@ async def test_batch_killing_runs_batches_in_parallell(
     next_batch_ready_event.set()
     assert sch._kill_task is not None
     await sch._kill_task
+
+
+@pytest.mark.timeout(10)
+async def test_that_scheduler_kills_jobs_when_driver_lags_after_checksum(
+    realization, mock_driver, caplog
+):
+    """When all FM steps are done (checksum received) but the driver has not
+    reported the job as finished, the scheduler should kill the job after
+    ORPHAN_KILL_DELAY seconds.  This handles the case where orphaned child
+    processes (spawned outside the cluster job's process group) keep the
+    cluster job alive indefinitely."""
+    wait_started = asyncio.Event()
+    kill_called = asyncio.Event()
+
+    async def wait():
+        wait_started.set()
+        await asyncio.sleep(10)  # Simulate a job that never exits on its own
+
+    async def kill():
+        kill_called.set()
+
+    manifest_queue: asyncio.Queue[ForwardModelStepChecksum] = asyncio.Queue()
+    driver = mock_driver(wait=wait, kill=kill)
+    sch = scheduler.Scheduler(driver, [realization], manifest_queue=manifest_queue)
+    sch.ORPHAN_KILL_DELAY = 0  # Fire immediately after the next event-loop tick
+    sch.BATCH_KILLING_INTERVAL = 0.1
+
+    scheduler_task = asyncio.create_task(sch.execute())
+
+    await asyncio.wait_for(wait_started.wait(), timeout=5)
+
+    await manifest_queue.put(
+        ForwardModelStepChecksum(
+            real=str(realization.iens),
+            checksums={realization.run_arg.runpath: {}},
+        )
+    )
+    await asyncio.wait_for(scheduler_task, timeout=5)
+
+    assert kill_called.is_set(), "driver.kill was never called by the watchdog"
+    assert "orphaned child processes" in caplog.text

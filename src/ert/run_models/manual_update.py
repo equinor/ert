@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import functools
 import logging
 from typing import Any
 from uuid import UUID
@@ -12,7 +11,6 @@ from ert.run_models.update_run_model import UpdateRunModel, UpdateRunModelConfig
 from ert.storage import Ensemble
 from ert.storage.local_experiment import ExperimentType
 
-from ..analysis import smoother_update
 from .run_model import ErtRunError
 
 logger = logging.getLogger(__name__)
@@ -65,26 +63,6 @@ class ManualUpdate(UpdateRunModel, ManualUpdateConfig):
             self._prior,
             self.target_ensemble % (self._prior.iteration + 1),
             target_experiment=target_experiment,
-        )
-
-    def update_ensemble_parameters(
-        self, prior: Ensemble, posterior: Ensemble, weight: float
-    ) -> None:
-        smoother_update(
-            prior,
-            posterior,
-            update_settings=self.update_settings,
-            es_settings=self.analysis_settings,
-            parameters=prior.experiment.update_parameters,
-            observations=prior.experiment.observation_keys,
-            global_scaling=weight,
-            rng=self._rng,
-            progress_callback=functools.partial(
-                self.send_smoother_event,
-                prior.iteration,
-                prior.id,
-            ),
-            active_realizations=self.active_realizations,
         )
 
     @classmethod

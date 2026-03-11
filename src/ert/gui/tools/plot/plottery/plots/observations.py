@@ -60,14 +60,17 @@ def _plotObservations(
         }
         axes.yaxis.set_inverted(True)
     elif plot_config.flip_observation_axis:
+        # np.timedelta64 requires int input. To achieve hourly resolution (ERROR = 1.5),
+        # we convert the std to an hourly timedelta
+        xerr = np.array(
+            [np.timedelta64(int(time * 24), "h") for time in data.loc["STD"].to_list()]
+        )
         errorbar_data = {
             "x": np.array(
                 [np.datetime64(time) for time in data.loc["key_index"].to_list()]
             ),
             "y": data.loc["OBS"].to_numpy(),
-            "xerr": np.array(
-                [np.timedelta64(int(time), "h") for time in data.loc["STD"].to_list()]
-            ),
+            "xerr": xerr,
         }
     else:
         errorbar_data = {

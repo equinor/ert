@@ -280,12 +280,12 @@ def test_that_heat_equation_get_observations_with_locations(
 
     obs = obs_by_name["HEAT_5_7_132"]
     assert obs["east"] == [4.5]
-    assert obs["north"] == [16.5]
+    assert obs["north"] == [6.5]
     assert obs["radius"] == [3]
 
     obs = obs_by_name["HEAT_5_3_10"]
     assert obs["east"] == [4.5]
-    assert obs["north"] == [12.5]
+    assert obs["north"] == [2.5]
     assert obs["radius"] == [3]
 
 

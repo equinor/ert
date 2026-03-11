@@ -1,5 +1,6 @@
 import os.path
 import shutil
+from enum import StrEnum
 from pathlib import Path
 from textwrap import dedent
 
@@ -123,6 +124,19 @@ PLOT_OBS_PNG_THRESHOLD = 0.999
 PLOTS_PNG_THRESHOLD = 0.999
 POLY_PLOT_PNG_THRESHOLD = 0.999
 SIMULATIONS_PNG_THRESHOLD = 0.999
+
+
+class ExampleFolders(StrEnum):
+    MINIMAL = "minimal"
+    WITH_SIMPLE_SCRIPT = "with_simple_script"
+    WITH_RESULTS = "with_results"
+    WITH_OBSERVATIONS = "with_observations"
+    WITH_MORE_OBSERVATIONS = "with_more_observations"
+
+    @classmethod
+    def path(cls, example_folder):
+        base = "docs/ert/getting_started/configuration/poly_new"
+        return os.path.join(base, example_folder)
 
 
 def run_experiment(qtbot, experiment_mode, gui, click_done=True):
@@ -270,9 +284,14 @@ def clean_up_diplayed_runpath(gui: QWidget):
     runpath_label.label.setText(label_text.replace(current_directory, "&lt;cwd&gt;"))
 
 
-def open_gui_with_docs_example(
-    tmp_path, source_root, example_folder, config_file, random_seed=None
-):
+@pytest.fixture
+def open_gui_with_docs_example(monkeypatch, tmp_path, source_root, request):
+    example_folder = request.param.get("example_folder")
+    config_file = request.param.get("config_file")
+    random_seed = request.param.get("random_seed")
+
+    monkeypatch.chdir(tmp_path)
+
     def ignore_pngs(src, files):
         return [f for f in files if f.endswith(".png")]
 
@@ -292,29 +311,33 @@ def open_gui_with_docs_example(
 
         Path(config_file).write_text(combined_content, encoding="utf-8")
 
-    gui_generator = open_gui_with_config(tmp_path / config_file)
-    return next(gui_generator)
+    with open_gui_with_config(tmp_path / config_file) as gui:
+        yield gui
 
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.skip_mac_ci
+@pytest.mark.parametrize(
+    "open_gui_with_docs_example",
+    [
+        {
+            "example_folder": ExampleFolders.path(ExampleFolders.MINIMAL),
+            "config_file": "poly.ert",
+        }
+    ],
+    indirect=True,
+)
 def test_that_poly_new_minimal_screenshots_are_up_to_date(
-    tmp_path,
-    monkeypatch,
-    qtbot,
-    source_root,
-    mocker,
+    monkeypatch, qtbot, source_root, mocker, open_gui_with_docs_example
 ):
-    monkeypatch.chdir(tmp_path)
-
     # Set static values for disk space to not trigger false gui change detection
     monkeypatch.setattr(DiskSpaceWidget, "_get_status", lambda self: (50, "100 GB"))
     mocker.patch(
         "ert.gui.experiments.run_dialog.get_mount_directory", return_value=Path("/")
     )
 
-    example_folder = "docs/ert/getting_started/configuration/poly_new/minimal"
-    gui = open_gui_with_docs_example(tmp_path, source_root, example_folder, "poly.ert")
+    example_folder = ExampleFolders.path(ExampleFolders.MINIMAL)
+    gui = open_gui_with_docs_example
 
     gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
     gui_evaluator.compare_img_with_gui("ert.png", ERT_PNG_THRESHOLD)
@@ -335,19 +358,21 @@ def test_that_poly_new_minimal_screenshots_are_up_to_date(
 
 
 @pytest.mark.skip_mac_ci
+@pytest.mark.parametrize(
+    "open_gui_with_docs_example",
+    [
+        {
+            "example_folder": ExampleFolders.path(ExampleFolders.WITH_SIMPLE_SCRIPT),
+            "config_file": "poly.ert",
+        }
+    ],
+    indirect=True,
+)
 def test_that_poly_new_with_simple_script_screenshots_are_up_to_date(
-    tmp_path,
-    monkeypatch,
-    qtbot,
-    source_root,
+    qtbot, source_root, open_gui_with_docs_example
 ):
-    monkeypatch.chdir(tmp_path)
-
-    example_folder = (
-        "docs/ert/getting_started/configuration/poly_new/with_simple_script"
-    )
-
-    gui = open_gui_with_docs_example(tmp_path, source_root, example_folder, "poly.ert")
+    example_folder = ExampleFolders.path(ExampleFolders.WITH_SIMPLE_SCRIPT)
+    gui = open_gui_with_docs_example
 
     clean_up_diplayed_runpath(gui)
 
@@ -358,19 +383,23 @@ def test_that_poly_new_with_simple_script_screenshots_are_up_to_date(
 
 
 @pytest.mark.skip_mac_ci
+@pytest.mark.parametrize(
+    "open_gui_with_docs_example",
+    [
+        {
+            "example_folder": ExampleFolders.path(ExampleFolders.WITH_RESULTS),
+            "config_file": "poly.ert",
+            "random_seed": FIXED_RANDOM_SEED,
+        }
+    ],
+    indirect=True,
+)
 def test_that_poly_new_with_results_screenshots_are_up_to_date(
-    tmp_path,
-    monkeypatch,
-    qtbot,
-    source_root,
+    qtbot, source_root, open_gui_with_docs_example
 ):
-    monkeypatch.chdir(tmp_path)
+    example_folder = ExampleFolders.path(ExampleFolders.WITH_RESULTS)
 
-    example_folder = "docs/ert/getting_started/configuration/poly_new/with_results"
-
-    gui = open_gui_with_docs_example(
-        tmp_path, source_root, example_folder, "poly.ert", FIXED_RANDOM_SEED
-    )
+    gui = open_gui_with_docs_example
 
     run_experiment(qtbot, EnsembleExperiment, gui)
     open_storage(gui.ert_config.ens_path, mode="w")
@@ -393,19 +422,23 @@ def test_that_poly_new_with_results_screenshots_are_up_to_date(
 
 
 @pytest.mark.skip_mac_ci
+@pytest.mark.parametrize(
+    "open_gui_with_docs_example",
+    [
+        {
+            "example_folder": ExampleFolders.path(ExampleFolders.WITH_OBSERVATIONS),
+            "config_file": "poly_final.ert",
+            "random_seed": FIXED_RANDOM_SEED,
+        }
+    ],
+    indirect=True,
+)
 def test_that_poly_new_with_observations_screenshots_are_up_to_date(
-    tmp_path,
-    monkeypatch,
-    qtbot,
-    source_root,
+    qtbot, source_root, open_gui_with_docs_example
 ):
-    monkeypatch.chdir(tmp_path)
+    example_folder = ExampleFolders.path(ExampleFolders.WITH_OBSERVATIONS)
 
-    example_folder = "docs/ert/getting_started/configuration/poly_new/with_observations"
-
-    gui = open_gui_with_docs_example(
-        tmp_path, source_root, example_folder, "poly_final.ert", FIXED_RANDOM_SEED
-    )
+    gui = open_gui_with_docs_example
 
     run_experiment(qtbot, EnsembleSmoother, gui)
     open_storage(gui.ert_config.ens_path, mode="w")
@@ -443,21 +476,25 @@ def test_that_poly_new_with_observations_screenshots_are_up_to_date(
 
 
 @pytest.mark.skip_mac_ci
+@pytest.mark.parametrize(
+    "open_gui_with_docs_example",
+    [
+        {
+            "example_folder": ExampleFolders.path(
+                ExampleFolders.WITH_MORE_OBSERVATIONS
+            ),
+            "config_file": "poly_final.ert",
+            "random_seed": FIXED_RANDOM_SEED,
+        }
+    ],
+    indirect=True,
+)
 def test_that_poly_new_with_more_observations_screenshots_are_up_to_date(
-    tmp_path,
-    monkeypatch,
-    qtbot,
-    source_root,
+    qtbot, source_root, open_gui_with_docs_example
 ):
-    monkeypatch.chdir(tmp_path)
+    example_folder = ExampleFolders.path(ExampleFolders.WITH_MORE_OBSERVATIONS)
 
-    example_folder = (
-        "docs/ert/getting_started/configuration/poly_new/with_more_observations"
-    )
-
-    gui = open_gui_with_docs_example(
-        tmp_path, source_root, example_folder, "poly_final.ert", FIXED_RANDOM_SEED
-    )
+    gui = open_gui_with_docs_example
 
     run_experiment(qtbot, EnsembleSmoother, gui)
     open_storage(gui.ert_config.ens_path, mode="w")

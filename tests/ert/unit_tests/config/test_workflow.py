@@ -6,7 +6,13 @@ from pathlib import Path
 import pytest
 from hypothesis import given, strategies
 
+from ert import ErtScript
 from ert.config import ConfigValidationError, ExecutableWorkflow, Workflow
+from ert.config.workflow_job import (
+    SiteInstalledErtScriptWorkflow,
+    UserInstalledErtScriptWorkflow,
+)
+from ert.storage import Storage
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -184,3 +190,52 @@ def test_args_validation(config, expectation, min_args, max_args):
                 ),
             },
         )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_validate_is_called_for_user_installed_ertscript_workflows():
+    """Regression test: validate() should run for UserInstalledErtScriptWorkflow,
+    not only for SiteInstalledErtScriptWorkflow (ErtScriptWorkflow) on workflow load.
+    """
+    Path("user_installed_ertscript.py").write_text(
+        textwrap.dedent("""
+            from ert import ErtScript
+            from ert.config import ConfigValidationError
+            from ert.storage import Storage
+
+            class SomeWorkflowJob(ErtScript):
+                @staticmethod
+                def validate(args):
+                    raise ConfigValidationError("user_installed validation ran")
+
+                def run(self, storage: Storage):
+                    pass
+        """),
+        encoding="utf-8",
+    )
+    Path("workflow").write_text("MY_JOB\n", encoding="utf-8")
+
+    job = UserInstalledErtScriptWorkflow(
+        name="MY_JOB", source="user_installed_ertscript.py"
+    )
+
+    with pytest.raises(ConfigValidationError, match="user_installed validation ran"):
+        Workflow.from_file("workflow", None, {"MY_JOB": job})
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_validate_is_called_for_site_installed_ertscript_workflows():
+    class SomeWorkflowJob(ErtScript):
+        @staticmethod
+        def validate(args):
+            raise ConfigValidationError("site_installed validation ran")
+
+        def run(self, storage: Storage):
+            pass
+
+    Path("workflow").write_text("MY_JOB\n", encoding="utf-8")
+
+    job = SiteInstalledErtScriptWorkflow(name="MY_JOB", ert_script=SomeWorkflowJob)
+
+    with pytest.raises(ConfigValidationError, match="site_installed validation ran"):
+        Workflow.from_file("workflow", None, {"MY_JOB": job})

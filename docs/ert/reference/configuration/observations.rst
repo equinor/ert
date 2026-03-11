@@ -20,13 +20,18 @@ This information is configured in an observation file. The name/path
 to this observation file is declared in the main ERT config file using the
 :ref:`OBS_CONFIG <obs_config>` keyword.
 
-The observation file is a plain text file, and is in essence built around three
+The observation file is a plain text file, and is in essence built around four
 different classes of observations using the associated keywords:
 
  - :ref:`SUMMARY_OBSERVATION <summary_observation>`: For explicitly giving
    scalar observation values for responses that can be extracted from a
    reservoir simulator :term:`summary files`. Examples are rates from separator
    tests, water cut, GOR, shut in pressures, etc.
+
+ - :ref:`BREAKTHROUGH_OBSERVATION <breakthrough_observation>`: For defining observed dates
+   when a measured value surpassed a certain threshold. The observed value must
+   correspond to an existing response for a summary key which can be extracted from
+   :term:`summary files`.
 
  - :ref:`GENERAL_OBSERVATION <general_observation>`: All other observations.
    These observations are extracted from ascii files and allows for loading
@@ -202,6 +207,46 @@ for example water production rates.
 Note that the configuration parser does not treat carriage return
 different from space. Thus, the following statement is equivalent to
 the previous:
+
+
+.. _breakthrough_observation:
+
+BREAKTHROUGH_OBSERVATION keyword
+--------------------------------
+
+The ``BREAKTHROUGH_OBSERVATION`` keyword is used when the quantity of interest is the
+time at which a summary response first exceeds a threshold. A typical use case is water
+breakthrough in a producer. The response of a breakthrough observation in a simulator can
+be deduced from the response values across all simulated steps for a given summary key.
+
+The observed value is a time given by ``DATE``. The corresponding response is the first
+simulated time step where the summary key value exceeds the threshold.
+
+.. code-block:: none
+
+    BREAKTHROUGH_OBSERVATION OP1_BREAKTHROUGH
+    {
+        KEY       = WWCT:OP1;
+        DATE      = 2005-10-02;
+        THRESHOLD = 0.2;
+        ERROR     =   5;
+    };
+
+This defines an observation named ``OP1_BREAKTHROUGH`` where the response ``WWCT:OP1``
+is observed to cross the threshold ``0.2`` on ``2005-10-02`` with an uncertainty of
+``5`` days.
+
+Required items are:
+
+- ``KEY``: Summary key used to deduce breakthrough response (for example ``WWCT:OP1``).
+- ``DATE``: Observed breakthrough date in ISO 8601 format (``YYYY-MM-DD``).
+- ``THRESHOLD``: The value of the observed measurement on the observed date (same unit as the response).
+- ``ERROR``: Observation uncertainty associated with the breakthrough timing (days).
+
+The key must refer to an existing summary key available from the simulation output.
+
+Should the ``THRESHOLD`` value never be reached by the simulator, the observation
+will be deactivated for the update of that realization.
 
 .. _general_observation:
 

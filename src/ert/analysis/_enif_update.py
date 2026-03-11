@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import time
-import traceback
 from collections.abc import Callable, Iterable
 
 import numpy as np
@@ -71,18 +70,11 @@ def enif_update(
             progress_callback,
         )
     except Exception as e:
-        traceback.print_tb(e.__traceback__)
-        progress_callback(
-            AnalysisErrorEvent(
-                error_msg=str(e),
-                data=DataSection(
-                    header=smoother_snapshot.header,
-                    data=smoother_snapshot.csv,
-                    extra=smoother_snapshot.extra,
-                ),
-            )
-        )
-        raise e
+        data = None
+        if isinstance(e, ErtAnalysisError):
+            data = e.data
+        progress_callback(AnalysisErrorEvent(error_msg=str(e), data=data))
+        raise
     progress_callback(
         AnalysisCompleteEvent(
             data=DataSection(
@@ -124,7 +116,6 @@ def analysis_EnIF(
     observation_values = filtered_data["observations"].to_numpy()
     observation_errors = filtered_data["std"].to_numpy()
 
-    progress_callback(AnalysisStatusEvent(msg="Loading observations and responses.."))
     num_obs = len(observation_values)
 
     smoother_snapshot.observations_and_responses = preprocessed_data.drop(
@@ -135,12 +126,17 @@ def analysis_EnIF(
         "observations",
         "std",
         "status",
+        "missing_realizations",
     )
 
     if num_obs == 0:
         msg = "No active observations for update step"
-        progress_callback(AnalysisErrorEvent(error_msg=msg, data=smoother_snapshot))
-        raise ErtAnalysisError(msg)
+        data = DataSection(
+            header=smoother_snapshot.header,
+            data=smoother_snapshot.csv,
+            extra=smoother_snapshot.extra,
+        )
+        raise ErtAnalysisError(msg, data=data)
 
     # EnIF ###
     start_enif = time.time()

@@ -62,6 +62,9 @@ class SubmitSleeper:
 class Scheduler:
     BATCH_KILLING_INTERVAL = 1.5
 
+    # Seconds for driver to report job as finished after checksum arrival
+    ORPHAN_KILL_DELAY = 60
+
     def __init__(
         self,
         driver: Driver,
@@ -110,6 +113,7 @@ class Scheduler:
         self._realization_ids_to_kill: list[int] = []
         self._kill_task: asyncio.Task[None] | None = None
         self._stop_kill_task = asyncio.Event()
+        self._watchdog_tasks: list[asyncio.Task[None]] = []
 
     async def kill_all_jobs(self) -> None:
         await self.cancel_all_jobs()
@@ -197,7 +201,30 @@ class Scheduler:
             event = await self._manifest_queue.get()
             if type(event) is ForwardModelStepChecksum:
                 self.checksum.update(event.checksums)
+                iens = int(event.real)
+                task = asyncio.create_task(
+                    self._kill_if_driver_lags(iens),
+                    name=f"orphan-watchdog-{iens}",
+                )
+                self._watchdog_tasks.append(task)
             self._manifest_queue.task_done()
+
+    async def _kill_if_driver_lags(self, iens: int) -> None:
+        """Kill realization *iens* if the driver hasn't reported it
+        finished within the grace period after checksum arrival."""
+        job = self._jobs[iens]
+        try:
+            await asyncio.wait_for(
+                asyncio.shield(job.returncode), timeout=self.ORPHAN_KILL_DELAY
+            )
+        except TimeoutError:
+            logger.warning(
+                f"Realization {iens}: checksum received but driver has not "
+                f"reported the job as finished after {self.ORPHAN_KILL_DELAY}s. "
+                "Assuming orphaned child processes are keeping the cluster job "
+                "alive. Sending a signal to the queue system to kill the job now"
+            )
+            await self.schedule_kill(iens)
 
     async def _publisher(self) -> None:
         if self._ensemble_evaluator_queue is None:
@@ -335,6 +362,9 @@ class Scheduler:
             )
             if self._kill_task:
                 await self._kill_task
+            for watchdog_task in self._watchdog_tasks:
+                watchdog_task.cancel()
+            await asyncio.gather(*self._watchdog_tasks, return_exceptions=True)
         if self._cancelled:
             logger.debug("Scheduler has been cancelled, jobs are stopped.")
             return False
