@@ -444,15 +444,18 @@ def create_ert_server_controller(
         t = -1
         while t < timeout:
             storage_server_path = path / _ERT_SERVER_CONNECTION_INFO_FILE
-            if storage_server_path.exists() and storage_server_path.stat().st_size > 0:
-                with (path / _ERT_SERVER_CONNECTION_INFO_FILE).open() as f:
-                    storage_server_content = json.load(f)
+            try:
+                if storage_server_path.stat().st_size > 0:
+                    with storage_server_path.open() as f:
+                        storage_server_content = json.load(f)
 
-                return ErtServerController(
-                    storage_path=str(path),
-                    connection_info=storage_server_content,
-                    logging_config=logging_config,
-                )
+                    return ErtServerController(
+                        storage_path=str(path),
+                        connection_info=storage_server_content,
+                        logging_config=logging_config,
+                    )
+            except FileNotFoundError:
+                pass
 
             sleep(1)
             t += 1
