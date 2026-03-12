@@ -34,7 +34,7 @@ repos:
   - id: pytest
     name: pytest
     entry: uv
-    args: [run, --all-extras, just, rapid-tests]
+    args: [run, --all-groups, just, rapid-tests]
     language: system
     types: [python]
     stages: [pre-push]
