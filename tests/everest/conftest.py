@@ -57,7 +57,6 @@ def copy_testdata_tmpdir(
 def control_data_no_variables() -> dict[str, str | float]:
     return {
         "name": "group_0",
-        "type": "well_control",
         "min": 0.0,
         "max": 0.1,
         "perturbation_magnitude": 0.005,
@@ -96,7 +95,6 @@ def setup_minimal_everest_case(tmp_path) -> AbstractContextManager[str]:
                     "controls": [
                         {
                             "name": "the_control",
-                            "type": "generic_control",
                             "min": -1,
                             "max": 1,
                             "initial_guess": 0,
@@ -170,13 +168,6 @@ def control_config(
 @pytest.fixture
 def copy_math_func_test_data_to_tmp(tmp_path, monkeypatch):
     path = relpath("..", "..", "test-data", "everest", "math_func")
-    shutil.copytree(path, tmp_path, dirs_exist_ok=True)
-    monkeypatch.chdir(tmp_path)
-
-
-@pytest.fixture
-def copy_eightcells_test_data_to_tmp(tmp_path, monkeypatch):
-    path = relpath("..", "..", "test-data", "everest", "eightcells")
     shutil.copytree(path, tmp_path, dirs_exist_ok=True)
     monkeypatch.chdir(tmp_path)
 

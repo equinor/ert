@@ -123,7 +123,6 @@ def test_that_duplicate_control_names_raise_error():
             controls=[
                 {
                     "name": "group_0",
-                    "type": "well_control",
                     "min": 0,
                     "max": 0.1,
                     "perturbation_magnitude": 0.01,
@@ -133,7 +132,6 @@ def test_that_duplicate_control_names_raise_error():
                 },
                 {
                     "name": "group_0",
-                    "type": "well_control",
                     "min": 0,
                     "max": 0.1,
                     "perturbation_magnitude": 0.01,
@@ -151,7 +149,6 @@ def test_that_dot_not_in_control_names():
             controls=[
                 {
                     "name": "group_0.2",
-                    "type": "well_control",
                     "min": 0,
                     "max": 0.1,
                     "perturbation_magnitude": 0.01,
@@ -172,7 +169,6 @@ def test_that_scaled_range_is_valid_range():
             controls=[
                 {
                     "name": "group_0",
-                    "type": "well_control",
                     "min": 0,
                     "max": 0.1,
                     "perturbation_magnitude": 0.01,
@@ -229,7 +225,6 @@ def test_that_invalid_control_initial_guess_outside_bounds(
             controls=[
                 {
                     "name": "group_0",
-                    "type": "well_control",
                     "perturbation_magnitude": 0.01,
                     "variables": variables,
                 }
@@ -282,7 +277,6 @@ def test_that_invalid_control_unique_entry(variables, unique_key):
             controls=[
                 {
                     "name": "group_0",
-                    "type": "well_control",
                     "max": 0,
                     "min": 0.1,
                     "perturbation_magnitude": 0.01,
@@ -301,7 +295,6 @@ def test_that_perturbation_magnitude_is_required_when_one_variables_does_not_set
             controls=[
                 {
                     "name": "group_0",
-                    "type": "well_control",
                     "min": 0,
                     "max": 1,
                     "initial_guess": 0,
@@ -323,7 +316,6 @@ def test_that_perturbation_magnitude_is_required():
             controls=[
                 {
                     "name": "group_0",
-                    "type": "well_control",
                     "min": 0,
                     "max": 1,
                     "initial_guess": 0,
@@ -340,7 +332,6 @@ def test_that_perturbation_magnitude_can_be_set_per_variable():
         controls=[
             {
                 "name": "group_0",
-                "type": "well_control",
                 "min": 0,
                 "max": 1,
                 "initial_guess": 0,
@@ -357,7 +348,6 @@ def test_that_perturbation_magnitude_can_be_set_for_all_variables():
         controls=[
             {
                 "name": "group_0",
-                "type": "well_control",
                 "min": 0,
                 "max": 1,
                 "initial_guess": 0,
@@ -379,7 +369,6 @@ def test_that_invalid_control_undefined_fields():
             controls=[
                 {
                     "name": "group_0",
-                    "type": "well_control",
                     "perturbation_magnitude": 0.01,
                     "variables": [
                         {"name": "w00"},
@@ -397,7 +386,6 @@ def test_that_control_variables_index_is_defined_for_all_variables():
             controls=[
                 {
                     "name": "group_0",
-                    "type": "well_control",
                     "min": 0,
                     "max": 0.1,
                     "perturbation_magnitude": 0.01,
@@ -626,7 +614,6 @@ def test_install_data_with_invalid_templates(
             controls=[
                 {
                     "name": "initial_control",
-                    "type": "well_control",
                     "min": 0,
                     "max": 1,
                     "perturbation_magnitude": 0.01,
@@ -735,7 +722,8 @@ def test_that_install_data_with_inline_data_generates_a_file(
             }
         ],
     }
-    config = EverestConfig.model_validate(config_dict)
+    with pytest.warns(ConfigWarning, match="The `controls.type` field is deprecated"):
+        config = EverestConfig.model_validate(config_dict)
     runtime_plugins = get_site_plugins()
     run_model = EverestRunModel.create(config, runtime_plugins=runtime_plugins)
     run_model.run_experiment(EvaluatorServerConfig())
@@ -1209,7 +1197,6 @@ def test_load_file_with_errors(capsys):
             [
                 {
                     "name": "test",
-                    "type": "generic_control",
                     "initial_guess": 0.5,
                     "perturbation_magnitude": 0.01,
                     "variables": [
@@ -1371,7 +1358,6 @@ def test_that_nested_extra_types_are_validated_correctly(change_to_tmpdir):
 
         controls:
           - name: my_control
-            type: generic_control
             min: 0
             max: 1
             initial_guess: 0.5
@@ -1394,7 +1380,7 @@ def test_that_nested_extra_types_are_validated_correctly(change_to_tmpdir):
         EverestConfig.load_file("everest_config.yml")
 
     assert "ctx" in err.value.errors[0]
-    assert err.value.errors[0]["ctx"] == {"line_number": 18}
+    assert err.value.errors[0]["ctx"] == {"line_number": 17}
     assert err.value.errors[0]["type"] == "extra_forbidden"
 
 

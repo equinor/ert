@@ -191,7 +191,6 @@ class EverestConfig(BaseModelWithContextSupport):
             ```yaml
             controls:
               - name: point
-                type: generic_control
                 min: -1.0
                 max: 1.0
                 initial_guess: 0.1
@@ -228,7 +227,6 @@ class EverestConfig(BaseModelWithContextSupport):
                 min: -1.0
                 initial_guess: 0.25
                 perturbation_magnitude: 0.001
-                type: generic_control
                 variables:
                   - name: x
                     index: 1
@@ -254,7 +252,6 @@ class EverestConfig(BaseModelWithContextSupport):
                 max: 1.0
                 min: -1.0
                 perturbation_magnitude: 0.001
-                type: generic_control
                 variables:
                   - name: x
                     initial_guess: [0.25, 0.25, 0.25]

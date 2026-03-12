@@ -16,7 +16,6 @@ MIN_CONFIG = dedent(
     controls:
       -
         name: my_control
-        type: well_control
         min: 0
         max: 0.1
         perturbation_magnitude: 0.01

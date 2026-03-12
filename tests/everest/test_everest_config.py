@@ -43,7 +43,6 @@ def test_that_str_type_failures_are_propagated(tmp_path, monkeypatch):
 def test_that_control_config_is_initialized_with_control_variables():
     controls_dict = {
         "name": "hello",
-        "type": "generic_control",
         "min": 0,
         "max": 1,
         "perturbation_magnitude": 0.01,
@@ -91,7 +90,6 @@ def test_that_get_output_dir_returns_same_for_old_and_new():
         "controls": [
             {
                 "name": "group_0",
-                "type": "well_control",
                 "min": 0,
                 "max": 0.1,
                 "perturbation_magnitude": 0.01,
@@ -130,8 +128,7 @@ def test_that_invalid_keys_are_linted():
         "controls": [
             {
                 "name": "group_0",
-                "type": "well_control",
-                "inital_guss": "well_control",
+                "inital_guss": "foo",
                 "min": 0,
                 "max": 0.1,
                 "perturbation_magnitude": 0.01,
@@ -141,8 +138,7 @@ def test_that_invalid_keys_are_linted():
             },
             {
                 "name": "group_0",
-                "type": "well_control",
-                "initial_guess": "well_control",
+                "initial_guess": "bar",
                 "min": 0,
                 "max": 0.1,
                 "perturbation_magnitude": 0.01,
@@ -266,7 +262,6 @@ def test_that_log_level_property_is_consistent_with_environment_log_level():
         "controls": [
             {
                 "name": "group_0",
-                "type": "well_control",
                 "min": 0,
                 "max": 0.1,
                 "perturbation_magnitude": 0.01,
