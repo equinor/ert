@@ -13,7 +13,7 @@ from pandas.testing import assert_frame_equal
 from resfo_utilities import history_key
 from starlette.testclient import TestClient
 
-from ert.config import GenKwConfig, SummaryConfig
+from ert.config import EverestObjectivesConfig, GenKwConfig, SummaryConfig
 from ert.dark_storage import common
 from ert.dark_storage.app import app
 from ert.gui.tools.plot import plot_api
@@ -615,3 +615,81 @@ def test_that_response_keys_do_not_match_keys_that_are_substrings(
         """
     )
     assert api.data_for_response(str(ensemble.id), key).empty
+
+
+def _create_gradient_only_ensemble(storage):
+    """Create an Everest experiment+ensemble where all realizations
+    are gradient perturbations (perturbation >= 0) with no function evaluations
+    (perturbation == -1)."""
+    objective_key = "npv"
+    ensemble_size = 3
+
+    experiment = storage.create_experiment(
+        experiment_config={
+            "parameter_configuration": [],
+            "response_configuration": [
+                EverestObjectivesConfig(
+                    name="everest_objectives",
+                    input_files=[f"{objective_key}.json"],
+                    keys=[objective_key],
+                    scales=[1.0],
+                    weights=[1.0],
+                    objective_types=["mean"],
+                ).model_dump(mode="json")
+            ],
+            "ert_templates": {},
+            "observations": [],
+        }
+    )
+    ensemble = experiment.create_ensemble(
+        ensemble_size=ensemble_size, name="gradient_batch"
+    )
+
+    # All realizations are gradient perturbations (perturbation=0),
+    # none are function evaluations (perturbation=-1).
+    realization_info = {
+        i: {"model_realization": 0, "perturbation": i} for i in range(ensemble_size)
+    }
+    ensemble.save_everest_realization_info(realization_info)
+
+    # Save actual response data for these realizations
+    for i in range(ensemble_size):
+        ensemble.save_response(
+            "everest_objectives",
+            pl.DataFrame(
+                {
+                    "response_key": [objective_key],
+                    "values": pl.Series([float(i + 1)], dtype=pl.Float32),
+                }
+            ),
+            i,
+        )
+
+    return ensemble, objective_key
+
+
+def test_that_data_for_response_returns_empty_for_gradient_only_ensemble(
+    api_and_storage,
+):
+    api, storage = api_and_storage
+    ensemble, objective_key = _create_gradient_only_ensemble(storage)
+
+    # Gradient-only ensembles have no function evaluation results
+    # (no perturbation == -1), so realization_objectives is None and
+    # the endpoint returns an empty DataFrame. PlotApi must not crash.
+    result = api.data_for_response(str(ensemble.id), objective_key)
+    assert isinstance(result, pd.DataFrame)
+    assert result.empty
+
+
+def test_that_data_for_gradient_returns_empty_when_no_gradient_parquet_saved(
+    api_and_storage,
+):
+    api, storage = api_and_storage
+    ensemble, objective_key = _create_gradient_only_ensemble(storage)
+
+    # No batch_objective_gradient.parquet was saved, so the gradient
+    # endpoint returns an empty DataFrame. PlotApi must not crash.
+    result = api.data_for_gradient(str(ensemble.id), objective_key)
+    assert isinstance(result, pd.DataFrame)
+    assert result.empty
