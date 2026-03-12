@@ -41,8 +41,7 @@ class ErtServerExit(OSError):
 def cleanup_service_files(signum: int, frame: types.FrameType | None) -> None:
     for file_path in SERVICE_CONF_PATHS:
         file = Path(file_path)
-        if file.exists():
-            file.unlink()
+        file.unlink(missing_ok=True)
     raise ErtServerExit(f"Signal {signum} received.")
 
 
@@ -171,8 +170,7 @@ class _Proc(threading.Thread):
         Ensure that the JSON connection information file is deleted
         """
         with contextlib.suppress(OSError):
-            if self._service_config_path.exists():
-                self._service_config_path.unlink()
+            self._service_config_path.unlink(missing_ok=True)
 
     @property
     def logger(self) -> logging.Logger:
