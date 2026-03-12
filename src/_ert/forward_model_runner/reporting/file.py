@@ -10,7 +10,6 @@ if TYPE_CHECKING:
     from _ert.forward_model_runner.forward_model_step import ForwardModelStep
 import orjson
 
-from _ert.forward_model_runner.io import cond_unlink
 from _ert.forward_model_runner.reporting.base import Reporter
 from _ert.forward_model_runner.reporting.message import (
     STEP_EXIT_FAILED_STRING_TEMPLATE,
@@ -127,9 +126,9 @@ class File(Reporter):
     @staticmethod
     def _delete_old_status_files() -> None:
         logger.debug("Deleting old status files")
-        cond_unlink(ERROR_file)
-        cond_unlink(STATUS_file)
-        cond_unlink(OK_file)
+        Path(ERROR_file).unlink(missing_ok=True)
+        Path(STATUS_file).unlink(missing_ok=True)
+        Path(OK_file).unlink(missing_ok=True)
 
     @staticmethod
     def _write_status_file(msg: str) -> None:

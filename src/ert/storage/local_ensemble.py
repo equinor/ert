@@ -324,8 +324,7 @@ class LocalEnsemble(BaseMode):
         realization: int,
     ) -> None:
         filename: Path = self._realization_dir(realization) / self._error_log_name
-        if filename.exists():
-            filename.unlink()
+        filename.unlink(missing_ok=True)
 
     def has_failure(self, realization: int) -> bool:
         """Returns True if the given realization has a recorded failure."""

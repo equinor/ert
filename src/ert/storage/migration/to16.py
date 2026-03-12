@@ -18,8 +18,7 @@ def migrate_field_param(parameters_json: dict[str, Any]) -> dict[str, Any]:
 def delete_mask_file(experiment: Path) -> None:
     # delete grid mask file if it exists
     grid_mask_file = experiment / "grid_mask.npy"
-    if grid_mask_file.exists():
-        grid_mask_file.unlink()
+    grid_mask_file.unlink(missing_ok=True)
 
 
 def migrate_fields(experiment: Path) -> None:
