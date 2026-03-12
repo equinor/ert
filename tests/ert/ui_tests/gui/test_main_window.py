@@ -299,10 +299,10 @@ def test_that_the_plot_window_contains_the_expected_elements(
         project=os.path.abspath(gui.ert_config.ens_path),
     ):
         expected_ensembles = [
-            "es_mda : default_0",
-            "es_mda : default_1",
-            "es_mda : default_2",
-            "es_mda : default_3",
+            "es_mda : iter-0",
+            "es_mda : iter-1",
+            "es_mda : iter-2",
+            "es_mda : iter-3",
         ]
 
         # Click on Create plot after esmda has run
