@@ -5,26 +5,24 @@ from pytestqt.qtbot import QtBot
 from ert.gui.experiments.view.runpath_creation_widget import (
     RunpathCreationProgressWidget,
 )
-from ert.run_models.event import RunPathCreationEvent
+from ert.run_models.event import (
+    FinishedTotalRunPathCreationEvent,
+    RunPathCreatedEvent,
+    RunPathCreationEvent,
+    StartingTotalRunPathCreationEvent,
+)
 
 
 def _start(total: int = 5) -> RunPathCreationEvent:
-    return RunPathCreationEvent(
-        sub_type="StartingTotalRunPathCreation",
-        total_runpaths_to_create=total,
-    )
+    return StartingTotalRunPathCreationEvent(total_runpaths_to_create=total)
 
 
-def _update(n: int, total: int = 5) -> RunPathCreationEvent:
-    return RunPathCreationEvent(
-        sub_type="TotalRunPathCreationUpdate",
-        created_runpaths_count=n,
-        total_runpaths_to_create=total,
-    )
+def _update(iens: int) -> RunPathCreationEvent:
+    return RunPathCreatedEvent(iens=iens)
 
 
 def _finished() -> RunPathCreationEvent:
-    return RunPathCreationEvent(sub_type="FinishedTotalRunPathCreation")
+    return FinishedTotalRunPathCreationEvent()
 
 
 def test_that_widget_shows_correct_state_on_start(qtbot: QtBot) -> None:
@@ -44,11 +42,12 @@ def test_that_widget_updates_label_and_bar_on_progress_events(qtbot: QtBot) -> N
     qtbot.addWidget(widget)
     widget.handle_event(_start(total=4))
 
-    widget.handle_event(_update(1, total=4))
+    widget.handle_event(_update(1))
     assert widget._bar.value() == 1
     assert "1" in widget._label.text()
 
-    widget.handle_event(_update(3, total=4))
+    widget.handle_event(_update(2))
+    widget.handle_event(_update(3))
     assert widget._bar.value() == 3
     assert "3" in widget._label.text()
 

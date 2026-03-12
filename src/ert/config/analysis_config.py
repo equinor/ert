@@ -104,7 +104,6 @@ class AnalysisConfig:
             }
         }
         deprecated_keys = ["ENKF_NCOMP", "ENKF_SUBSPACE_DIMENSION"]
-        deprecated_inversion_keys = ["USE_EE", "USE_GE"]
         errors = []
         all_errors = []
 
@@ -130,16 +129,6 @@ class AnalysisConfig:
                 errors.append(var_name)
                 continue
             if var_name == "ENKF_FORCE_NCOMP":
-                continue
-            if var_name in deprecated_inversion_keys:
-                all_errors.append(
-                    ConfigValidationError(
-                        f"Keyword {var_name} has been replaced by INVERSION and "
-                        "has no effect.\n\nPlease see "
-                        "https://ert.readthedocs.io/en/latest/reference/configuration/keywords.html#inversion-algorithm "  # noqa: E501
-                        "for documentation how to use this instead."
-                    )
-                )
                 continue
             if var_name == "INVERSION":
                 if value in inversion_str_map[module_name]:

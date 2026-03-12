@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import threading
 from unittest.mock import MagicMock
 
 import numpy as np
@@ -51,6 +52,7 @@ def test_that_write_to_runpath_writes_json_with_correct_structure(tmp_path):
         iens=5,
         fs=mock_ensemble,
         iteration=0,
+        end_event=threading.Event(),
     )
 
     output_file = run_path / "point.json"
@@ -106,6 +108,7 @@ def test_that_write_to_runpath_writes_json_with_correct_structure_for_nested_con
         iens=5,
         fs=mock_ensemble,
         iteration=0,
+        end_event=threading.Event(),
     )
 
     output_file = run_path / "point.json"

@@ -14,7 +14,7 @@ import resfo
 import xtgeo
 
 from ert.analysis import build_strategy_map, smoother_update
-from ert.config import ErtConfig, ESSettings, ObservationSettings
+from ert.config import ErtConfig, ObservationSettings
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.storage import open_storage
 
@@ -486,7 +486,7 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
         with warnings.catch_warnings(record=True) as record:
             warnings.simplefilter("always")  # Ensure all warnings are always recorded
             with caplog.at_level(logging.INFO):
-                es_settings = ESSettings(localization=True)
+                es_settings = config.analysis_config.es_settings
                 strategy_map = build_strategy_map(
                     parameters=config.ensemble_config.parameters,
                     param_configs=new_prior.experiment.parameter_configuration,

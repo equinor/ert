@@ -251,7 +251,9 @@ class PlotWindow(QMainWindow):
 
             plot_case_objects = [obj for obj in ensembles if not obj.hidden]
 
-            self._data_type_keys_widget = DataTypeKeysWidget(self._key_definitions)
+            self._data_type_keys_widget = DataTypeKeysWidget(
+                self._key_definitions, is_everest
+            )
             self._data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
             self.addDock("Data types", self._data_type_keys_widget)
 

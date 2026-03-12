@@ -10,7 +10,11 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.run_models._create_run_path import RunPathCreationEvent
+from ert.run_models.event import (
+    RunPathCreatedEvent,
+    RunPathCreationEvent,
+    StartingTotalRunPathCreationEvent,
+)
 
 
 class RunpathCreationProgressWidget(QWidget):
@@ -20,6 +24,7 @@ class RunpathCreationProgressWidget(QWidget):
         super().__init__(parent)
 
         self._total: int = 1
+        self._completed_runpaths = 0
 
         spin_movie = QMovie("img:loading.gif")
         spin_movie.setSpeed(60)
@@ -63,19 +68,14 @@ class RunpathCreationProgressWidget(QWidget):
         layout.addStretch()
 
     def handle_event(self, event: RunPathCreationEvent) -> None:
-        if event.sub_type == "StartingTotalRunPathCreation":
-            self._total = (
-                1
-                if event.total_runpaths_to_create is None
-                else event.total_runpaths_to_create
-            )
+        if isinstance(event, StartingTotalRunPathCreationEvent):
+            self._total = event.total_runpaths_to_create
             self._bar.setRange(0, self._total)
             self._bar.setValue(0)
-            self._label.setText(f"0 / {self._total} runpaths created")
+        elif isinstance(event, RunPathCreatedEvent):
+            self._completed_runpaths += 1
+            self._bar.setValue(self._completed_runpaths)
 
-        elif event.sub_type == "TotalRunPathCreationUpdate":
-            if event.created_runpaths_count is not None:
-                self._bar.setValue(event.created_runpaths_count)
-                self._label.setText(
-                    f"{event.created_runpaths_count} / {self._total} runpaths created"
-                )
+        self._label.setText(
+            f"{self._completed_runpaths} / {self._total} runpaths created"
+        )
