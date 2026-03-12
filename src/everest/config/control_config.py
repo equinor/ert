@@ -66,12 +66,17 @@ class ControlConfig(BaseModel):
 
             Control group type.
 
-            Only two allowed control types are accepted:
+            Two control types are accepted:
 
-            * `"well_control"`: Standard built-in Everest control type designed
-              for field optimization
-            * `"generic_control"`: Enables the user to define controls types to
-              be employed for customized optimization jobs.
+            * `"well_control"`: Indicates that the variable names in the group
+              are used to denote wells.
+            * `"generic_control"`: Indicates a generic group of variables.
+
+            The `type` field is currently only used in combination with the
+            `wells` section to validate well names. The `wells` section will be
+            removed in a future version, and `type` is deprecated and slated for
+            removal at the same time. The `type` field is now optional and may
+            be removed from your configuration if no `wells` section is defined.
             """
         ),
     )
