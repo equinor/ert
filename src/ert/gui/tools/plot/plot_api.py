@@ -271,6 +271,9 @@ class PlotApi:
             stream = io.BytesIO(http_response.content)
             df = pd.read_parquet(stream)
 
+            if df.empty:
+                return df
+
             if is_everest:
                 assert {"batch_id", "realization"}.issubset(df.columns)
 
@@ -332,6 +335,9 @@ class PlotApi:
 
             stream = io.BytesIO(http_response.content)
             df = pd.read_parquet(stream)
+
+            if df.empty:
+                return df
 
             return df.astype(
                 {
