@@ -24,7 +24,6 @@ def test_discrete_optimizer(copy_math_func_test_data_to_tmp):
         "controls": [
             {
                 "name": "point",
-                "type": "generic_control",
                 "min": 0,
                 "max": 10,
                 "control_type": "integer",

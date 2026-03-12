@@ -12,7 +12,7 @@ from typing import (
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
 from ropt.enums import PerturbationType, VariableType
 
-from ert.config import EverestControl, SamplerConfig
+from ert.config import ConfigWarning, EverestControl, SamplerConfig
 
 from .control_variable_config import (
     ControlVariableConfig,
@@ -59,18 +59,26 @@ class ControlConfig(BaseModel):
         )
     )
     type: Literal["well_control", "generic_control"] = Field(
+        default="generic_control",
         description=dedent(
             r"""
+            [Deprecated]
+
             Control group type.
 
-            Only two allowed control types are accepted:
+            Two control types are accepted:
 
-            * `"well_control"`: Standard built-in Everest control type designed
-              for field optimization
-            * `"generic_control"`: Enables the user to define controls types to
-              be employed for customized optimization jobs.
+            * `"well_control"`: Indicates that the variable names in the group
+              are used to denote wells.
+            * `"generic_control"`: Indicates a generic group of variables.
+
+            The `type` field is currently only used in combination with the
+            `wells` section to validate well names. The `wells` section will be
+            removed in a future version, and `type` is deprecated and slated for
+            removal at the same time. The `type` field is now optional and may
+            be removed from your configuration if no `wells` section is defined.
             """
-        )
+        ),
     )
     variables: Annotated[
         ControlVariable,
@@ -286,6 +294,12 @@ class ControlConfig(BaseModel):
             raise ValueError(error)
         return self
 
+    @model_validator(mode="after")
+    def deprecate_wells(self) -> Self:
+        if "type" in self.model_fields_set:
+            ConfigWarning.deprecation_warn(_CONTROL_TYPE_DEPRECATION)
+        return self
+
     def __hash__(self) -> int:
         return hash(self.name)
 
@@ -388,3 +402,13 @@ class ControlConfig(BaseModel):
                 idx += 1
 
         return controls
+
+
+_CONTROL_TYPE_DEPRECATION = """
+The `controls.type` field is deprecated and will be removed in a future version.
+
+The `type` field in the `controls` section is used in combination with the
+`wells` section, which is also deprecated. The `type` section will removed
+together with the `wells` field in the future. It is an optional field now and
+may be removed from your configuration if no `wells` section is defined.
+"""

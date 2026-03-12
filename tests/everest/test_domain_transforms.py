@@ -13,7 +13,6 @@ def ever_config() -> EverestConfig:
         controls=[
             {
                 "name": "default",
-                "type": "generic_control",
                 "min": 0,
                 "max": 1.0,
                 "scaled_range": [0.3, 0.7],

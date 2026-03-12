@@ -49,7 +49,6 @@ def test_default_installed_jobs(tmp_path, monkeypatch):
         dedent("""
     controls:
       - name: my_control
-        type: well_control
         initial_guess: 0.1
         perturbation_magnitude: 0.01
         variables:

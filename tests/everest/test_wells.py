@@ -99,8 +99,10 @@ def test_well_config_to_wells_json(min_config, monkeypatch, tmp_path, config):
 )
 def test_controls_config_to_wells_json(min_config, monkeypatch, tmp_path, variables):
     monkeypatch.chdir(tmp_path)
+    min_config["controls"][0]["type"] = "well_control"
     min_config["controls"][0]["variables"] = variables
-    ever_config = EverestConfig(**min_config)
+    with pytest.warns(ConfigWarning, match="The `controls.type` field is deprecated"):
+        ever_config = EverestConfig(**min_config)
     for datafile, data in _get_internal_files(ever_config).items():
         datafile.parent.mkdir(exist_ok=True, parents=True)
         datafile.write_text(data, encoding="utf-8")
