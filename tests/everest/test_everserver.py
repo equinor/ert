@@ -12,6 +12,7 @@ from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
 import ert
+from ert.config import ConfigWarning
 from ert.dark_storage.app import app
 from ert.ensemble_evaluator import EndEvent
 from ert.scheduler.event import FinishedEvent
@@ -138,7 +139,8 @@ async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
         "optimization": {"algorithm": "optpp_q_newton", "max_batch_num": 1},
         "simulator": {"queue_system": {"name": "local", "max_running": 2}},
     }
-    config = EverestConfig.model_validate(config_dict)
+    with pytest.warns(ConfigWarning, match="The `controls.type` field is deprecated"):
+        config = EverestConfig.model_validate(config_dict)
 
     await wait_for_server_to_complete(config)
 
@@ -171,7 +173,8 @@ async def test_status_too_few_realizations_succeeded(copy_math_func_test_data_to
         {"name": "fail_simulation", "executable": "jobs/fail_simulation.py"}
     )
     config_dict["forward_model"].append("fail_simulation --fail realization_0")
-    config = EverestConfig.model_validate(config_dict)
+    with pytest.warns(ConfigWarning, match="The `controls.type` field is deprecated"):
+        config = EverestConfig.model_validate(config_dict)
 
     await wait_for_server_to_complete(config)
 
@@ -197,7 +200,8 @@ async def test_status_all_realizations_failed(copy_math_func_test_data_to_tmp):
     }
     config_dict["install_jobs"].append({"name": "fail", "executable": which("false")})
     config_dict["forward_model"].append("fail")
-    config = EverestConfig.model_validate(config_dict)
+    with pytest.warns(ConfigWarning, match="The `controls.type` field is deprecated"):
+        config = EverestConfig.model_validate(config_dict)
 
     await wait_for_server_to_complete(config)
 

@@ -1,6 +1,7 @@
 import pytest
 
 from ert.base_model_context import use_runtime_plugins
+from ert.config import ConfigWarning
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.plugins import get_site_plugins
 from ert.run_models.everest_run_model import EverestRunModel
@@ -27,7 +28,8 @@ def test_mathfunc_cvar(copy_math_func_test_data_to_tmp):
             )
         ],
     }
-    config = EverestConfig.model_validate(config_dict)
+    with pytest.warns(ConfigWarning, match="The `controls.type` field is deprecated"):
+        config = EverestConfig.model_validate(config_dict)
     # Act
     site_plugins = get_site_plugins()
     with use_runtime_plugins(site_plugins):

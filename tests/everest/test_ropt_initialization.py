@@ -17,7 +17,6 @@ def ever_config() -> EverestConfig:
         controls=[
             {
                 "name": "default",
-                "type": "generic_control",
                 "min": 0,
                 "max": 0.1,
                 "perturbation_magnitude": 0.01,

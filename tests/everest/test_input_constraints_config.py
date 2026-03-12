@@ -11,7 +11,6 @@ def test_input_constraint_control_references(tmp_path, capsys, monkeypatch):
     controls_config = [
         {
             "name": "dummy",
-            "type": "generic_control",
             "min": 0,
             "max": 1,
             "initial_guess": 0,

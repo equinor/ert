@@ -13,6 +13,7 @@ import yaml
 
 import ert
 from ert import plugin
+from ert.config import ConfigWarning
 from ert.config.queue_config import (
     LocalQueueOptions,
     LsfQueueOptions,
@@ -299,7 +300,8 @@ async def test_starting_not_in_folder(tmp_path, monkeypatch):
         **everest_config.model_dump(exclude_none=True),
         "config_path": str(Path("minimal_config.yml").absolute()),
     }
-    everest_config = EverestConfig.model_validate(config_dict)
+    with pytest.warns(ConfigWarning, match="The `controls.type` field is deprecated"):
+        everest_config = EverestConfig.model_validate(config_dict)
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("PATH", f".:{os.environ['PATH']}")
     everserver_path = Path("everserver")
