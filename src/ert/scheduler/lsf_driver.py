@@ -400,7 +400,7 @@ class LsfDriver(Driver):
             self._jobs[job_id] = JobData(
                 iens=iens,
                 job_state=QueuedJob(job_state="PEND"),
-                submitted_timestamp=time.time(),
+                submitted_timestamp=time.monotonic(),
             )
             self._iens2jobid[iens] = job_id
 
@@ -500,7 +500,7 @@ class LsfDriver(Driver):
             job_ids_found_in_bjobs_output = set(bjobs_states.keys())
             if (
                 missing_in_bjobs_output := filter_job_ids_on_submission_time(
-                    self._jobs, submitted_before=time.time() - self._poll_period
+                    self._jobs, submitted_before=time.monotonic() - self._poll_period
                 )
                 - job_ids_found_in_bjobs_output
             ):

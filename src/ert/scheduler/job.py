@@ -82,8 +82,8 @@ class Job:
         self._scheduler: Scheduler = scheduler
         self._message: str = ""
         self._requested_max_submit: int | None = None
-        self._start_time: float | None = None
-        self._end_time: float | None = None
+        self._start_time_monotonic: float | None = None
+        self._end_time_monotonic: float | None = None
         self._remaining_file_verification_time = self.DEFAULT_FILE_VERIFICATION_TIMEOUT
         self._previous_file_verification_time = self._remaining_file_verification_time
         self._started_killing_by_evaluator: bool = False
@@ -123,10 +123,10 @@ class Job:
 
     @property
     def running_duration(self) -> float:
-        if self._start_time:
-            if self._end_time:
-                return self._end_time - self._start_time
-            return time.time() - self._start_time
+        if self._start_time_monotonic:
+            if self._end_time_monotonic:
+                return self._end_time_monotonic - self._start_time_monotonic
+            return time.monotonic() - self._start_time_monotonic
         return 0
 
     async def _submit_and_run_once(self, sem: asyncio.BoundedSemaphore) -> None:
@@ -139,6 +139,7 @@ class Job:
                 await self._scheduler.submit_sleep_state.sleep_until_we_can_submit()
             await self._send(JobState.SUBMITTING)
             self.submit_time = time.time()
+            submit_time_monotonic = time.monotonic()
             try:
                 submit_task = asyncio.create_task(
                     self.driver.submit(
@@ -160,8 +161,8 @@ class Job:
 
             await self._send(JobState.PENDING)
             await self.started.wait()
-            self._start_time = time.time()
-            pending_time = self._start_time - self.submit_time
+            self._start_time_monotonic = time.monotonic()
+            pending_time = self._start_time_monotonic - submit_time_monotonic
             logger.info(
                 f"Pending time for realization {self.iens} "
                 f"was {pending_time:.2f} seconds "
@@ -438,7 +439,7 @@ class Job:
                 await self._handle_aborted()
             case JobState.COMPLETED:
                 event = RealizationSuccess(real=str(self.iens))
-                self._end_time = time.time()
+                self._end_time_monotonic = time.time()
                 await self._scheduler.completed_jobs.put(self.iens)
             case default:
                 assert_never(default)
