@@ -4,7 +4,7 @@ from fastapi import APIRouter, Body, Depends
 
 from ert.config import SurfaceConfig
 from ert.dark_storage import json_schema as js
-from ert.dark_storage.common import get_storage, reraise_as_http_errors
+from ert.dark_storage.common import get_storage
 from ert.storage import Storage
 
 router = APIRouter(tags=["experiment"])
