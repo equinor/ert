@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Union
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+from matplotlib.backend_bases import MouseEvent
 from matplotlib.backends.backend_qt5agg import (  # type: ignore
     FigureCanvas,
     NavigationToolbar2QT,
@@ -176,15 +177,13 @@ class PlotWidget(QWidget):
         self.resetPlot()
         self._canvas.mpl_connect("motion_notify_event", self._on_hover)
 
-    def _on_hover(self, event: object) -> None:
-        if (
-            event is None
-            or event.inaxes is None
-            or not isinstance(self._plotter, (EnsemblePlot, ValuesOverIterationsPlot))
+    def _on_hover(self, event: MouseEvent) -> None:
+        if event.inaxes is None or not isinstance(
+            self._plotter, (EnsemblePlot, ValuesOverIterationsPlot)
         ):
             return
 
-        for line in event.inaxes.get_lines():  # type: ignore[union-attr]
+        for line in event.inaxes.get_lines():
             contains, _ = line.contains(event)
             if contains and "Realization" in str(line.get_label()):
                 self._plotter.update_legend(line)
