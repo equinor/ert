@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 
 import iterative_ensemble_smoother as ies
 import numpy as np
-import scipy
 
 from ert.analysis._update_commons import ErtAnalysisError
 from ert.analysis.event import (
@@ -29,16 +28,11 @@ logger = logging.getLogger(__name__)
 class StandardESUpdate:
     """Standard ES update without localization.
 
-    This strategy computes a transition matrix T such that:
-        X_posterior = X_prior @ T
-
-    The transition matrix is computed once during prepare() and
-    applied to all parameter groups via update().
+    Pre-computes assimilation factors once during prepare() and
+    applies updates to each parameter group via update().
 
     Parameters
     ----------
-    inversion : str
-        Inversion algorithm to use (e.g., "EXACT").
     enkf_truncation : float
         Singular value truncation threshold.
     rng : np.random.Generator
@@ -46,34 +40,27 @@ class StandardESUpdate:
     progress_callback : Callable[[AnalysisEvent], None]
         Callback to report progress events.
 
-    Attributes
-    ----------
-    _T : npt.NDArray[np.float64]
-        The computed transition matrix (set after prepare()).
-
     Raises
     ------
     ErtAnalysisError
-        If computing the transition matrix fails due to singular matrix.
+        If preparing the assimilation fails.
     """
 
     def __init__(
         self,
-        inversion: str,
         enkf_truncation: float,
         rng: np.random.Generator,
         progress_callback: Callable[[AnalysisEvent], None],
     ) -> None:
-        self._inversion = inversion
         self._enkf_truncation = enkf_truncation
         self._rng = rng
         self._progress_callback = progress_callback
-        self._T: npt.NDArray[np.float64] | None = None
+        self._smoother: ies.ESMDA | None = None
         self._ensemble_size: int = 0
         self._num_obs: int = 0
 
     def prepare(self, obs_context: ObservationContext) -> None:
-        """Compute the transition matrix from observation data.
+        """Pre-compute assimilation factors from observation data.
 
         Parameters
         ----------
@@ -83,29 +70,25 @@ class StandardESUpdate:
         self._ensemble_size = obs_context.ensemble_size
         self._num_obs = obs_context.num_observations
 
-        smoother = ies.ESMDA(
+        self._smoother = ies.ESMDA(
             covariance=obs_context.observation_errors**2,
             observations=obs_context.observation_values,
             alpha=1,
             seed=self._rng,
-            inversion=self._inversion.lower(),
         )
 
         try:
-            self._T = smoother.compute_transition_matrix(
+            self._smoother.prepare_assimilation(
                 Y=obs_context.responses,
-                alpha=1.0,
                 truncation=self._enkf_truncation,
+                overwrite=True,
             )
-        except scipy.linalg.LinAlgError as err:
+        except Exception as err:
             raise ErtAnalysisError(
-                "Failed while computing transition matrix, "
+                "Failed while preparing assimilation, "
                 "this might be due to outlier values in one "
                 f"or more realizations: {err}"
             ) from err
-
-        # Add identity in place for efficient computation: T = I + K @ H
-        np.fill_diagonal(self._T, self._T.diagonal() + 1)
 
     def update(
         self,
@@ -136,7 +119,7 @@ class StandardESUpdate:
         RuntimeError
             If prepare() was not called before update().
         """
-        if self._T is None:
+        if self._smoother is None:
             raise RuntimeError("prepare() must be called before update()")
 
         log_msg = (
@@ -146,6 +129,10 @@ class StandardESUpdate:
         logger.info(log_msg)
         self._progress_callback(AnalysisStatusEvent(msg=log_msg))
 
-        param_ensemble[non_zero_variance_mask] @= self._T.astype(param_ensemble.dtype)
+        X = param_ensemble[non_zero_variance_mask]
+        param_ensemble[non_zero_variance_mask] = self._smoother.assimilate_batch(
+            X=X,
+            overwrite=True,
+        )
 
         return param_ensemble

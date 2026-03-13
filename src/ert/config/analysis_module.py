@@ -2,14 +2,15 @@ from __future__ import annotations
 
 import logging
 import math
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 
 logger = logging.getLogger(__name__)
 
 
-DEFAULT_ENKF_TRUNCATION = 0.98
+DEFAULT_ENKF_TRUNCATION_EXACT = 1.0
+DEFAULT_ENKF_TRUNCATION_SUBSPACE = 0.98
 DEFAULT_LOCALIZATION = False
 
 
@@ -19,15 +20,9 @@ def _upper(v: str) -> str:
 
 InversionTypeES = Annotated[Literal["EXACT", "SUBSPACE"], BeforeValidator(_upper)]
 es_description = """
-    The type of inversion used in the algorithm. Every inversion method
-    scales the variables. The options are:
-
-    * EXACT:
-        Computes an exact inversion which uses a Cholesky factorization in the
-        case of symmetric, positive definite matrices.
-    * SUBSPACE:
-        This is an approximate solution. The approximation is that when
-        U, w, V.T = svd(D_delta) then we assume that U @ U.T = I.
+    Deprecated. Use enkf_truncation instead.
+    truncation = 1.0 corresponds to EXACT inversion.
+    truncation < 1.0 corresponds to SUBSPACE inversion.
     """
 
 loc_description = """
@@ -48,10 +43,23 @@ class ESSettings(BaseModel):
     enkf_truncation: Annotated[
         float,
         Field(gt=0.0, le=1.0, title="Singular value truncation"),
-    ] = DEFAULT_ENKF_TRUNCATION
+    ] = DEFAULT_ENKF_TRUNCATION_EXACT
     inversion: Annotated[
         InversionTypeES, Field(title="Inversion algorithm", description=es_description)
     ] = "EXACT"
+
+    @model_validator(mode="before")
+    @classmethod
+    def _default_enkf_truncation_from_inversion(cls, data: Any) -> Any:
+        if isinstance(data, dict) and "enkf_truncation" not in data:
+            inversion = str(data.get("inversion", "EXACT")).upper()
+            data["enkf_truncation"] = (
+                DEFAULT_ENKF_TRUNCATION_SUBSPACE
+                if inversion == "SUBSPACE"
+                else DEFAULT_ENKF_TRUNCATION_EXACT
+            )
+        return data
+
     localization: Annotated[
         bool, Field(title="Enable adaptive localization", description=loc_description)
     ] = False

@@ -90,7 +90,6 @@ def test_update_report(
     strategy_map = build_strategy_map(
         parameters=ert_config.ensemble_config.parameters,
         param_configs=prior_ens.experiment.parameter_configuration,
-        inversion=es_settings.inversion,
         enkf_truncation=es_settings.enkf_truncation,
         progress_callback=events.append,
     )
@@ -166,7 +165,6 @@ def test_update_report_with_different_observation_status_from_smoother_update(
     strategy_map = build_strategy_map(
         parameters=ert_config.ensemble_config.parameters,
         param_configs=prior_ens.experiment.parameter_configuration,
-        inversion=es_settings.inversion,
         enkf_truncation=es_settings.enkf_truncation,
         progress_callback=events.append,
     )
@@ -317,19 +315,19 @@ def test_update_handles_precision_loss_in_std_dev(tmp_path):
         )
 
 
-def test_update_raises_on_singular_matrix(tmp_path):
+def test_that_observation_error_underflowing_to_zero_in_float32_raises(tmp_path):
     """
-    Tests that smoother_update raises ErtAnalysisError with a
-    "singular matrix" message when the transition matrix cannot be computed.
+    An observation with error=1e-32 has covariance=1e-64, which underflows
+    to 0.0 in float32. The STD_CUTOFF filter checks response ensemble spread
+    (not observation error), so this observation passes preprocessing as
+    ACTIVE and reaches ESMDA with zero covariance. ESMDA rejects covariance
+    arrays containing non-positive values.
     """
     gen_kw = GenKwConfig(
         name="coeff_0",
         group="COEFFS",
         distribution={"name": "const", "value": 0.1},
     )
-    # Two realizations with a near-zero observation error (1e-32) produce a
-    # rank-deficient system, triggering the singular matrix error when
-    # computing the transition matrix.
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment(
             name="ensemble_smoother",
@@ -403,16 +401,11 @@ def test_update_raises_on_singular_matrix(tmp_path):
         strategy_map = build_strategy_map(
             parameters=["coeff_0"],
             param_configs=prior.experiment.parameter_configuration,
-            inversion=es_settings.inversion,
             enkf_truncation=es_settings.enkf_truncation,
             rng=np.random.default_rng(1234),
         )
-        with pytest.raises(
-            ErtAnalysisError,
-            match=r"Failed while computing transition matrix."
-            "*(?:Matrix is singular|A singular matrix detected)",
-        ):
-            _ = smoother_update(
+        with pytest.raises(ValueError, match="strictly positive"):
+            smoother_update(
                 prior,
                 posterior,
                 experiment.observation_keys,
@@ -433,16 +426,16 @@ def test_update_snapshot(
     snapshots are correct, they are just documenting the current behavior.
     """
     expected_gen_kw = [
-        1.5869764915793436,
-        -1.2858230704199891,
-        0.3162194888177324,
-        -0.12117364067258538,
-        1.3057122879274696,
-        0.2396570079602591,
-        -1.7937542008198544,
-        -1.3154386958230617,
-        -1.6935607132367498,
-        0.9271220492158108,
+        0.3583003662668918,
+        -0.6963036481068505,
+        0.1692532536735615,
+        -0.25879474869247987,
+        0.4112094301295359,
+        0.1706147980215084,
+        -1.2846974848162178,
+        -0.8177209642885211,
+        -0.8612315289128175,
+        0.8531729483526392,
     ]
     ert_config = snake_oil_case_storage
 
@@ -462,7 +455,6 @@ def test_update_snapshot(
     strategy_map = build_strategy_map(
         parameters=list(ert_config.ensemble_config.parameters),
         param_configs=prior_ens.experiment.parameter_configuration,
-        inversion=es_settings.inversion,
         enkf_truncation=es_settings.enkf_truncation,
         rng=rng,
     )
@@ -590,11 +582,10 @@ def test_smoother_snapshot_alpha(
     )
 
     with expectation:
-        es_settings = ESSettings(inversion="SUBSPACE")
+        es_settings = ESSettings()
         strategy_map = build_strategy_map(
             parameters=["KEY_1"],
             param_configs=prior_storage.experiment.parameter_configuration,
-            inversion=es_settings.inversion,
             enkf_truncation=es_settings.enkf_truncation,
             rng=rng,
         )

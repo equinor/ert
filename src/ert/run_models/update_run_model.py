@@ -67,7 +67,6 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
         strategy_map = build_strategy_map(
             parameters=prior.experiment.update_parameters,
             param_configs=prior.experiment.parameter_configuration,
-            inversion=self.analysis_settings.inversion,
             enkf_truncation=self.analysis_settings.enkf_truncation,
             distance_localization=self.analysis_settings.distance_localization,
             localization=self.analysis_settings.localization,

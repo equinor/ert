@@ -105,10 +105,10 @@ class ObservationLocations:
     responses_with_loc: npt.NDArray[np.float64]
     """Response matrix filtered to observations with locations."""
 
-    observation_values: npt.NDArray[np.float64]
+    observation_values: npt.NDArray[np.float32]
     """Observation values filtered to observations with locations."""
 
-    observation_errors: npt.NDArray[np.float64]
+    observation_errors: npt.NDArray[np.float32]
     """Scaled observation errors filtered to observations with locations."""
 
 
@@ -124,10 +124,10 @@ class ObservationContext:
     responses: npt.NDArray[np.float64]
     """Response matrix (num_obs x ensemble_size)."""
 
-    observation_values: npt.NDArray[np.float64]
+    observation_values: npt.NDArray[np.float32]
     """Observation values."""
 
-    observation_errors: npt.NDArray[np.float64]
+    observation_errors: npt.NDArray[np.float32]
     """Scaled observation errors (standard deviations)."""
 
     observation_locations: ObservationLocations | None = None

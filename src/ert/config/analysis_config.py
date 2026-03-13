@@ -131,15 +131,31 @@ class AnalysisConfig:
             if var_name == "ENKF_FORCE_NCOMP":
                 continue
             if var_name == "INVERSION":
-                if value in inversion_str_map[module_name]:
-                    new_value = inversion_str_map[module_name][value]
-                    ConfigWarning.warn(
-                        f"Using {value} is deprecated, use:\n"
-                        f"ANALYSIS_SET_VAR {module_name} INVERSION {new_value}"
+                if value in inversion_str_map.get(module_name, {}):
+                    value = inversion_str_map[module_name][value]
+                ConfigWarning.warn(
+                    "The INVERSION keyword is deprecated and will be "
+                    "removed in a future version. "
+                    "Use ENKF_TRUNCATION instead: "
+                    "truncation = 1.0 gives the same result as EXACT "
+                    "inversion, and truncation < 1.0 (default 0.98) gives "
+                    "the same result as SUBSPACE inversion."
+                )
+                if value.upper() == "EXACT":
+                    options[module_name].setdefault("enkf_truncation", 1.0)
+                    options[module_name]["inversion"] = "EXACT"
+                elif value.upper() == "SUBSPACE":
+                    options[module_name].setdefault("enkf_truncation", 0.98)
+                    options[module_name]["inversion"] = "SUBSPACE"
+                else:
+                    all_errors.append(
+                        ConfigValidationError(
+                            f"Invalid INVERSION value '{value}'. "
+                            "Valid (but deprecated) values are "
+                            "EXACT and SUBSPACE."
+                        )
                     )
-                    value = new_value
-
-                var_name = "inversion"
+                continue
             key = var_name.lower()
             try:
                 options[module_name][key] = value

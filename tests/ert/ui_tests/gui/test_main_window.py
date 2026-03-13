@@ -491,7 +491,7 @@ def test_that_the_manage_experiments_tool_can_be_used(esmda_has_run, qtbot):
     qtbot.mouseClick(initialize_button, Qt.MouseButton.LeftButton)
 
 
-def test_that_inversion_type_can_be_set_from_gui(qtbot, opened_main_window_poly):
+def test_that_truncation_can_be_set_from_gui(qtbot, opened_main_window_poly):
     gui = opened_main_window_poly
 
     sim_mode = get_child(gui, QWidget, name="experiment_type")
@@ -503,16 +503,8 @@ def test_that_inversion_type_can_be_set_from_gui(qtbot, opened_main_window_poly)
     # https://github.com/pytest-dev/pytest-qt/issues/256
     def handle_analysis_module_panel():
         var_panel = wait_for_child(gui, qtbot, AnalysisModuleVariablesPanel)
-        dropdown = wait_for_child(var_panel, qtbot, QComboBox)
         spinner = wait_for_child(var_panel, qtbot, QDoubleSpinBox, "enkf_truncation")
-        assert [dropdown.itemText(i) for i in range(dropdown.count())] == [
-            "EXACT",
-            "SUBSPACE",
-        ]
-        for i in range(dropdown.count()):
-            dropdown.setCurrentIndex(i)
-            # spinner should be enabled if not rb0 set
-            assert spinner.isEnabled() == (i != 0)
+        assert spinner.isEnabled()
 
         var_panel.parent().close()
 
