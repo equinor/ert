@@ -77,18 +77,18 @@ class EverestDataAPI:
     def control_values(self) -> list[dict[str, Any]]:
         all_control_names = self._experiment.parameter_keys
 
-        new = []
+        new: list[dict[str, Any]] = []
         for ensemble in self._experiment.ensembles_with_function_results:
             assert ensemble.realization_controls is not None
             for controls_dict in ensemble.realization_controls.to_dicts():
-                for name in all_control_names:
-                    new.append(
-                        {
-                            "control": name,
-                            "batch": ensemble.iteration,
-                            "value": controls_dict[name],
-                        }
-                    )
+                new.extend(
+                    {
+                        "control": name,
+                        "batch": ensemble.iteration,
+                        "value": controls_dict[name],
+                    }
+                    for name in all_control_names
+                )
 
         return new
 

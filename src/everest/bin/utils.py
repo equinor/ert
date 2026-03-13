@@ -346,7 +346,7 @@ class _DetachedMonitor:
             v.get("message", "").replace(  # type: ignore[union-attr]
                 "status from done callback:", "Forward model error:"
             )
-            for _, v in snapshot.reals.items()
+            for v in snapshot.reals.values()
             if v.get("message")
         ]
         if jobs_status:

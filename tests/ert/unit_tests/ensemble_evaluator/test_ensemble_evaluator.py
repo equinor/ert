@@ -717,16 +717,14 @@ async def test_log_forward_model_steps_with_missing_status_updates(
             real="10", ensemble=ensemble.id_, exec_hosts=working_machine_name
         )
     ]
-    for i in range(10):
-        driver_events.append(
-            RealizationFailed(
-                real=str(i),
-                ensemble=ensemble.id_,
-                exec_hosts="foo_cluster_machine"
-                if i % 2 == 0
-                else "bar_cluster_machine",
-            )
+    driver_events.extend(
+        RealizationFailed(
+            real=str(i),
+            ensemble=ensemble.id_,
+            exec_hosts="foo_cluster_machine" if i % 2 == 0 else "bar_cluster_machine",
         )
+        for i in range(10)
+    )
 
     evaluator._ensemble.update_snapshot(driver_events)
     evaluator._log_forward_model_steps_with_missing_status_updates()

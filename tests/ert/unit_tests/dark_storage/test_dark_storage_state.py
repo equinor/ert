@@ -47,7 +47,7 @@ class DarkStorageStateTest(StatefulStorageTest):
         response = self.client.get(f"/experiments/{model_experiment.uuid}/observations")
         assert {r["name"] for r in response.json()} == {
             key
-            for _, ds in model_experiment.observations.items()
+            for ds in model_experiment.observations.values()
             for key in ds["observation_key"]
         }
 

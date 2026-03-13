@@ -159,7 +159,7 @@ class ListEditBox(QWidget):
             valid = False
             message = ListEditBox.NO_ITEMS_SPECIFIED_MSG
         else:
-            for _, name in items.items():
+            for name in items.values():
                 if name not in self._possible_items_dict.values():
                     valid = False
                     message = ListEditBox.ITEM_DOES_NOT_EXIST_MSG % name
