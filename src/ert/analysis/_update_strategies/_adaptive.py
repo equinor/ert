@@ -204,7 +204,7 @@ class AdaptiveLocalizationUpdate:
 
         self._progress_callback(
             AnalysisStatusEvent(
-                msg=f"Running localization on {num_params} parameters, "
+                msg=f"Running adaptive localization on {num_params} parameters, "
                 f"{self._num_obs} responses, {self._ensemble_size} realizations "
                 f"and {len(batches)} batches"
             )
