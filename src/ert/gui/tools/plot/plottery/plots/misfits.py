@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Literal, cast
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 import numpy as np
 import pandas as pd
 import polars as pl
 import seaborn as sns
 from matplotlib import pyplot as plt
-from matplotlib.axes import Axes
 from matplotlib.lines import Line2D
 
 if TYPE_CHECKING:
@@ -170,8 +169,6 @@ class MisfitsPlot:
         data_with_misfits: dict[tuple[str, str], pl.DataFrame],
         plot_context: PlotContext,
     ) -> None:
-        # Only plot ensembles with data (i.e., they pertain to an experiment
-        # with observations, and there are responses towards those in the ens)
         ensemble_to_misfit_df = {
             k: v for k, v in data_with_misfits.items() if not v.is_empty()
         }
@@ -185,7 +182,6 @@ class MisfitsPlot:
         ).select(["Realization", "key_index", "misfit", "ensemble_key"])
 
         distinct_gendata_index = all_misfits["key_index"].unique().sort().to_list()
-        num_gendata_index = len(distinct_gendata_index)
 
         color_map = self._make_ensemble_colors(sorted_ensemble_keys)
         self._draw_legend(
@@ -194,13 +190,11 @@ class MisfitsPlot:
             sorted_ensemble_keys=sorted_ensemble_keys,
         )
 
-        # Create subplot grid (2 rows, N columns)
-        axes = figure.subplots(
-            nrows=2, ncols=num_gendata_index, sharex="col", sharey=True
-        )
+        num_cols = len(distinct_gendata_index)
+        axes = figure.subplots(nrows=2, ncols=num_cols, sharex="col", sharey=True)
         axes = (
-            axes.reshape(2, num_gendata_index)
-            if num_gendata_index > 1
+            axes.reshape(2, num_cols)
+            if num_cols > 1
             else np.array([[axes[0]], [axes[1]]])
         )
         axes_top, axes_bottom = axes[0, :], axes[1, :]
@@ -239,7 +233,6 @@ class MisfitsPlot:
                 )
                 ax_top.plot(x_center, np.mean(mis_vals), "o", markersize=4, color=color)
 
-                # Bottom: Strip plot with dynamic marker size
                 num_points = len(mis_vals)
 
                 if num_points >= 200:
@@ -249,7 +242,6 @@ class MisfitsPlot:
                 else:
                     marker_size = 4
 
-                # Use stripplot as a robust alternative for dense data
                 sns.stripplot(
                     x=[x_center] * num_points,  # Plot all points at the same x-center
                     y=mis_vals,
@@ -257,7 +249,7 @@ class MisfitsPlot:
                     color=color,
                     size=marker_size,
                     alpha=0.35,
-                    jitter=True,  # Explicitly add jitter
+                    jitter=True,  # Spread points sharing same x-center horizontally
                 )
 
         y_min, y_max = self._compute_misfits_padded_minmax(all_misfits, 0.05)
@@ -280,32 +272,34 @@ class MisfitsPlot:
 
     def _style_boxplots(
         self,
-        axes: Axes,
+        axes: Any | np.ndarray[tuple[Any, ...], np.dtype[Any]],
         x_positions: np.ndarray[tuple[int]],
         y_max: float,
         y_min: float,
-    ):
-        # Axis/spine styling
+    ) -> None:
+        """Styles the frames containing individual misfit plots to create a prettier
+        collection of plots."""
         (n_rows, n_cols) = axes.shape
         for r_idx in range(n_rows):
             for c_idx in range(n_cols):
                 ax = axes[r_idx, c_idx]
-                is_first_col = c_idx == 0
-                is_bottom_row = r_idx == (n_rows - 1)
+                self._fade_axis_ticklabels(ax)
 
-                # Common styling
+                # Style horizontal dotted lines
                 ax.set(ylim=(y_min, y_max))
                 ax.axhline(0.0, color="black", linewidth=0.5, alpha=0.5)
                 ax.grid(True, axis="y", linestyle=":", alpha=0.4)
-                self._fade_axis_ticklabels(ax)
 
-                # Spines
+                is_first_col = c_idx == 0
+                is_bottom_row = r_idx == (n_rows - 1)
+
+                # Visualize only left-most and bottom-most borders
                 ax.spines["top"].set_visible(False)
                 ax.spines["right"].set_visible(False)
                 ax.spines["left"].set_visible(is_first_col)
                 ax.spines["bottom"].set_visible(is_bottom_row)
 
-                # Ticks
+                # Disable ticks on other than left-most and bottom-most borders
                 ax.set_xticks(x_positions, labels=[])
                 if not is_bottom_row:
                     ax.tick_params(axis="x", which="both", bottom=False)
