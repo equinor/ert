@@ -1418,7 +1418,7 @@ format. The surface keyword is configured like this:
   update step. Must be set to either ``TRUE`` or ``FALSE``.
   Defaults to ``TRUE``.
 
-An example of a surface IRAP file is:
+An example of a surface IRAP file in ASCII format is:
 
 ::
 
@@ -1431,6 +1431,10 @@ An example of a surface IRAP file is:
         2731.5454    2731.4810    2730.4644    2730.5591    2729.8997    2726.2217
         2721.0996    2716.5913    2711.4338    2707.7791    2705.4504    2701.9187
         ....
+
+.. note::
+    Ert is moving from using SURFACE files in ASCII format to using binary format.
+    This change will lead to faster reading and writing of surface files.
 
 The surface data will typically be fed into other programs like Cohiba or RMS.
 The data can be updated using e.g. the smoother.
