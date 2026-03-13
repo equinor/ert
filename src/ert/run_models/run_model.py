@@ -538,22 +538,33 @@ class RunModel(RunModelConfig, ABC):
 
     def calculate_current_progress(self) -> float:
         current_iter = max(list(self._iter_snapshot.keys()))
-        done_realizations = self.active_realizations.count(False)
         all_realizations = self._iter_snapshot[current_iter].reals
         current_progress = 0.0
 
+        initial_active_indices = [
+            i
+            for i, is_active in enumerate(self._initial_realizations_mask)
+            if is_active
+        ]
+        if (total_initial := len(initial_active_indices)) == 0:
+            return 0.0
+
+        done_realizations = sum(
+            1
+            for i in initial_active_indices
+            if i < len(self.active_realizations) and not self.active_realizations[i]
+        )
+
         if all_realizations:
-            for real in all_realizations.values():
-                if real["status"] in {
+            initial_id_str = {str(i) for i in initial_active_indices}
+            for real_id, real in all_realizations.items():
+                if real_id in initial_id_str and real.get("status") in {
                     REALIZATION_STATE_FINISHED,
                     REALIZATION_STATE_FAILED,
                 }:
                     done_realizations += 1
 
-            realization_progress = float(done_realizations) / len(
-                self.active_realizations
-            )
-
+            realization_progress = float(done_realizations) / float(total_initial)
             current_it_offset = current_iter - min(list(self._iter_snapshot.keys()))
 
             current_progress = (
