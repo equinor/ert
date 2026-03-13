@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import logging
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
@@ -22,8 +21,6 @@ if TYPE_CHECKING:
     from ert.config import ParameterConfig
 
     from ._protocol import ObservationContext
-
-logger = logging.getLogger(__name__)
 
 
 class StandardESUpdate:
@@ -139,12 +136,12 @@ class StandardESUpdate:
         if self._T is None:
             raise RuntimeError("prepare() must be called before update()")
 
-        log_msg = (
-            f"There are {self._num_obs} responses "
-            f"and {self._ensemble_size} realizations."
+        self._progress_callback(
+            AnalysisStatusEvent(
+                msg=f"There are {self._num_obs} responses "
+                f"and {self._ensemble_size} realizations."
+            )
         )
-        logger.info(log_msg)
-        self._progress_callback(AnalysisStatusEvent(msg=log_msg))
 
         param_ensemble[non_zero_variance_mask] @= self._T.astype(param_ensemble.dtype)
 
