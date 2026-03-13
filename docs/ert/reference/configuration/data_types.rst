@@ -527,20 +527,15 @@ responses to CSV files compatible with the webviz-subsurface RftPlotter plugin.
 This workflow job is a replacement for the `MERGE_RFT_ERTOBS` forward model when
 using :ref:`RFT_OBSERVATION <rft_observation>` instead of the legacy `GENDATA_RFT` method.
 
-To use it, create a workflow file e.g. ``export_rft_data`` with content::
+To use it, add the workflow job to your ERT configuration, e.g. with the `HOOK_WORKFLOW_JOB <keywords.html#hook-workflow-job>`_ keyword::
 
-   EXPORT_RFT
-
-Then add the workflow to your ERT configuration::
-
-   LOAD_WORKFLOW export_rft_data
-   HOOK_WORKFLOW export_rft_data POST_SIMULATION
+   HOOK_WORKFLOW_JOB export_rft_data EXPORT_RFT POST_SIMULATION
 
 By default, the output file is written to
 ``share/results/tables/rft_ert.csv`` in each realization's runpath.
 A custom filename can be specified as a parameter::
 
-   EXPORT_RFT custom_rft.csv
+   HOOK_WORKFLOW_JOB export_rft_data EXPORT_RFT custom_rft.csv POST_SIMULATION
 
 .. note::
 
