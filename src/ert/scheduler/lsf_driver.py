@@ -379,6 +379,7 @@ class LsfDriver(Driver):
                 total_attempts=self._max_bsub_attempts,
                 retry_interval=self._sleep_time_between_cmd_retries,
                 error_on_msgs=BSUB_FAILURE_MESSAGES,
+                attempt_timeout=7,
             )
             if not process_success:
                 self._job_error_message_by_iens[iens] = process_message
