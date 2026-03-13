@@ -8,7 +8,9 @@ import pandas as pd
 import polars as pl
 import seaborn as sns
 from matplotlib import pyplot as plt
+from matplotlib.axes import Axes
 from matplotlib.lines import Line2D
+from PyQt6.QtWidgets import QRadioButton
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -31,6 +33,10 @@ class MisfitsPlot:
     def __init__(self) -> None:
         self.dimensionality = 2
         self.requires_observations = True
+
+        self._toggle_boxplot = QRadioButton()
+        self._toggle_boxplot.setChecked(True)
+        self._toggle_scatterplot = QRadioButton()
 
     @staticmethod
     def _fade_axis_ticklabels(ax: plt.Axes) -> None:
@@ -157,13 +163,13 @@ class MisfitsPlot:
             response_type,
         )
 
-        self._misfit_boxplot(
+        self._misfit_plot(
             figure,
             data_with_misfits,
             plot_context,
         )
 
-    def _misfit_boxplot(
+    def _misfit_plot(
         self,
         figure: Figure,
         data_with_misfits: dict[tuple[str, str], pl.DataFrame],
@@ -193,19 +199,18 @@ class MisfitsPlot:
         )
 
         num_cols = len(distinct_gendata_index)
-        axes = figure.subplots(nrows=2, ncols=num_cols, sharex="col", sharey=True)
-        axes = (
-            axes.reshape(2, num_cols)
-            if num_cols > 1
-            else np.array([[axes[0]], [axes[1]]])
+        # Subplots returns an Axes object when there is only one axes and a
+        # np.ndarray given multiple axes. We will cast it to List[Axes]
+        axes = figure.subplots(ncols=num_cols, sharex="col", sharey=True)
+        axes_list: list[Axes] = (
+            axes.tolist() if isinstance(axes, np.ndarray) else [axes]
         )
-        axes_top, axes_bottom = axes[0, :], axes[1, :]
 
         x_positions = np.arange(len(sorted_ensemble_keys))
         box_width_relative = 0.6
 
-        for col_idx, key_index in enumerate(distinct_gendata_index):
-            ax_top, ax_bottom = axes_top[col_idx], axes_bottom[col_idx]
+        for i, key_index in enumerate(distinct_gendata_index):
+            ax = axes_list[i]
 
             for ens_idx, ens_key in enumerate(sorted_ensemble_keys):
                 color = color_map.get(ens_key, "C0")
@@ -221,46 +226,19 @@ class MisfitsPlot:
 
                 x_center = x_positions[ens_idx]
 
-                # Top: Boxplot
-                ax_top.boxplot(
-                    mis_vals,
-                    positions=[x_center],
-                    widths=box_width_relative,
-                    patch_artist=True,
-                    showfliers=False,
-                    boxprops={"facecolor": color, "alpha": 0.35},
-                    whiskerprops={"color": color, "alpha": 0.8},
-                    capprops={"color": color, "alpha": 0.8},
-                    medianprops={"color": color, "alpha": 0.8},
-                )
-                ax_top.plot(x_center, np.mean(mis_vals), "o", markersize=4, color=color)
-
-                num_points = len(mis_vals)
-
-                if num_points >= 200:
-                    marker_size = 2
-                elif num_points >= 100:
-                    marker_size = 3
+                if plot_context.misfit_boxplot:
+                    self._create_boxplot(
+                        ax, box_width_relative, color, mis_vals, x_center
+                    )
                 else:
-                    marker_size = 4
-
-                # Stripplot visualizes dense data better
-                sns.stripplot(
-                    x=[x_center] * num_points,  # Plot all points at the same x-center
-                    y=mis_vals,
-                    ax=ax_bottom,
-                    color=color,
-                    size=marker_size,
-                    alpha=0.35,
-                    jitter=True,  # Spread points sharing same x-center horizontally
-                )
+                    self._create_scatterplot(ax, color, mis_vals, x_center)
 
         y_min, y_max = self._compute_misfits_padded_minmax(all_misfits, 0.05)
-        self._style_boxplots(axes, x_positions, y_max, y_min)
+        self._style_boxplots(axes_list, x_positions, y_max, y_min)
 
-        for ax, key_val in zip(axes_bottom, distinct_gendata_index, strict=True):
+        for ax, key_val in zip(axes_list, distinct_gendata_index, strict=True):
             label = (
-                key_val.date()
+                str(key_val.date())
                 if isinstance(key_val, datetime)
                 else f"index={int(key_val)}"
             )
@@ -273,38 +251,74 @@ class MisfitsPlot:
         )
         figure.tight_layout(rect=(0.02, 0.02, 0.98, 0.88))
 
-    def _style_boxplots(
+    def _create_scatterplot(
+        self, ax: Axes, color: str, mis_vals: Any, x_center: Any
+    ) -> None:
+        """This really creates a stripplot (1D scatterplot) with 'jitter' (spread
+        accross 2D), but I think it will be less confusing for users and developers if
+        we call it Scatterplot consistently as most know what that means."""
+        num_points = len(mis_vals)
+        if num_points >= 200:
+            marker_size = 2
+        elif num_points >= 100:
+            marker_size = 3
+        else:
+            marker_size = 4
+        sns.stripplot(
+            x=[x_center] * num_points,  # Plot all points at the same x-center
+            y=mis_vals,
+            ax=ax,
+            color=color,
+            size=marker_size,
+            alpha=0.35,
+            jitter=True,  # Spread points sharing same x-center horizontally
+        )
+
+    def _create_boxplot(
         self,
-        axes: Any | np.ndarray[tuple[Any, ...], np.dtype[Any]],
-        x_positions: np.ndarray[tuple[int]],
-        y_max: float,
-        y_min: float,
+        ax: Axes,
+        box_width_relative: float,
+        color: str,
+        mis_vals: Any,
+        x_center: Any,
+    ) -> None:
+        ax.boxplot(
+            mis_vals,
+            positions=[x_center],
+            widths=box_width_relative,
+            patch_artist=True,
+            showfliers=False,
+            boxprops={"facecolor": color, "alpha": 0.35},
+            whiskerprops={"color": color, "alpha": 0.8},
+            capprops={"color": color, "alpha": 0.8},
+            medianprops={"color": color, "alpha": 0.8},
+        )
+        ax.plot(x_center, np.mean(mis_vals), "o", markersize=4, color=color)
+
+    def _style_boxplots(
+        self, axes: list[Axes], x_positions: Any, y_max: float, y_min: float
     ) -> None:
         """Styles the frames containing individual misfit plots to create a prettier
         collection of plots."""
-        (n_rows, n_cols) = axes.shape
-        for r_idx in range(n_rows):
-            for c_idx in range(n_cols):
-                ax = axes[r_idx, c_idx]
-                self._fade_axis_ticklabels(ax)
+        n_cols = len(axes)
+        for c_idx in range(n_cols):
+            ax = axes[c_idx]
+            self._fade_axis_ticklabels(ax)
 
-                # Style horizontal dotted lines
-                ax.set(ylim=(y_min, y_max))
-                ax.axhline(0.0, color="black", linewidth=0.5, alpha=0.5)
-                ax.grid(True, axis="y", linestyle=":", alpha=0.4)
+            # Style horizontal dotted lines
+            ax.set(ylim=(y_min, y_max))
+            ax.axhline(0.0, color="black", linewidth=0.5, alpha=0.5)
+            ax.grid(True, axis="y", linestyle=":", alpha=0.4)
 
-                is_first_col = c_idx == 0
-                is_bottom_row = r_idx == (n_rows - 1)
+            is_first_col = c_idx == 0
 
-                # Visualize only left-most and bottom-most borders
-                ax.spines["top"].set_visible(False)
-                ax.spines["right"].set_visible(False)
-                ax.spines["left"].set_visible(is_first_col)
-                ax.spines["bottom"].set_visible(is_bottom_row)
+            # Visualize only left-most and bottom-most borders
+            ax.spines["top"].set_visible(False)
+            ax.spines["right"].set_visible(False)
+            ax.spines["left"].set_visible(is_first_col)
 
-                # Disable ticks on other than left-most and bottom-most borders
-                ax.set_xticks(x_positions, labels=[])
-                if not is_bottom_row:
-                    ax.tick_params(axis="x", which="both", bottom=False)
-                if not is_first_col:
-                    ax.tick_params(axis="y", which="both", left=False)
+            # Disable ticks on other than left-most and bottom-most borders
+            ax.set_xticks(x_positions, labels=[])
+            ax.tick_params(axis="x", which="both", bottom=False)
+            if not is_first_col:
+                ax.tick_params(axis="y", which="both", left=False)

@@ -7,7 +7,7 @@ from unittest.mock import Mock
 import polars as pl
 import pytest
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QToolButton
+from PyQt6.QtWidgets import QRadioButton, QToolButton
 from pytestqt.qtbot import QtBot
 
 from ert.config import ErtConfig, ObservationType
@@ -52,7 +52,12 @@ def _iter_keys(key_model, data_model):
         yield item, key_model.index(key_index, 0)
 
 
-def select_plotter_figure(plot_window: PlotWindow, key: str, plot_tab_name: str):
+def select_plotter_figure(
+    plot_window: PlotWindow,
+    key: str,
+    plot_tab_name: str,
+    select_scatterplot: bool = False,
+):
     """the figure of the given key in the given plot tab"""
     central_tab = plot_window._central_tab
     data_types = get_child(plot_window, DataTypeKeysWidget)
@@ -74,6 +79,14 @@ def select_plotter_figure(plot_window: PlotWindow, key: str, plot_tab_name: str)
                             2000 / tab._figure.get_dpi(),
                             1000 / tab._figure.get_dpi(),
                         )
+                    if select_scatterplot:
+                        scatterplot_button = next(
+                            button
+                            for button in tab.findChildren(QRadioButton)
+                            if button.text() == "Scatterplot"
+                        )
+                        assert scatterplot_button
+                        scatterplot_button.click()
                     yield tab._figure.figure
     assert found_selected_key
 
@@ -143,7 +156,7 @@ def setup_storage(config):
             ensemble.save_response("breakthrough", breakthrough_response, r)
 
 
-def create_breakthrough_figure(plot_tab_name: str):
+def create_breakthrough_figure(plot_tab_name: str, select_scatterplot: bool = False):
     @pytest.fixture
     def plot_figure(use_tmpdir, qtbot: QtBot):
         config = _breakthrough_config()
@@ -154,7 +167,7 @@ def create_breakthrough_figure(plot_tab_name: str):
 
         with open_plotter(config, qtbot) as plot_window:
             yield from select_plotter_figure(
-                plot_window, "BREAKTHROUGH:WWCT:OP1", plot_tab_name
+                plot_window, "BREAKTHROUGH:WWCT:OP1", plot_tab_name, select_scatterplot
             )
 
     return plot_figure

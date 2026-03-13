@@ -46,6 +46,7 @@ class PlotContext:
         self._x_axis: str | None = None
         self._y_axis: str | None = None
         self._log_scale = False
+        self.misfit_boxplot = True
 
     @property
     def flip_response_axis(self) -> bool:
