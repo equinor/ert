@@ -1691,6 +1691,25 @@ proportional to the identity matrix.
 * Saetrom, J. and Omre, H. (2010). "Ensemble Kalman filtering with shrinkage regression techniques", Computational Geosciences (online first).
 
 
+PARAMETERS
+^^^^^^^^^^
+The PARAMETERS keyword allows users to define a default update strategy for parameters based on the parameter type. 
+
+DISTANCE
+
+ADAPTIVE
+
+
+::
+        ANALYSIS_SET_VAR PARAMETERS FIELD DISTANCE
+        ANALYSIS_SET_VAR PARAMETERS GEN_KW ADAPTIVE
+
+
+
+
+
+
+
 .. _keywords_controlling_the_es_algorithm:
 
 Keywords controlling the ES algorithm
