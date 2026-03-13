@@ -7,18 +7,14 @@ from uuid import UUID
 from pydantic import PrivateAttr
 
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.run_models.update_run_model import UpdateRunModel, UpdateRunModelConfig
+from ert.experiment_configs import ManualUpdateConfig
+from ert.experiment_types import ExperimentType
+from ert.run_models.update_run_model import UpdateRunModel
 from ert.storage import Ensemble
-from ert.storage.local_experiment import ExperimentType
 
 from .run_model import ErtRunError
 
 logger = logging.getLogger(__name__)
-
-
-class ManualUpdateConfig(UpdateRunModelConfig):
-    ensemble_id: str
-    ert_templates: list[tuple[str, str]]
 
 
 class ManualUpdate(UpdateRunModel, ManualUpdateConfig):
