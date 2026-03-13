@@ -681,26 +681,12 @@ class RunDialog(QFrame):
             )
 
     def rerun_failed_realizations(self) -> None:
-        msg = QMessageBox(self)
-        msg.setIcon(QMessageBox.Icon.Information)
-        msg.setText(
-            "Note that workflows will only be executed on the restarted "
-            "realizations and that this might have unexpected consequences."
-        )
-        msg.setWindowTitle("Restart failed realizations")
-        msg.setStandardButtons(
-            QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel
-        )
-        msg.setObjectName("restart_prompt")
-        result = msg.exec()
-
-        if result == QMessageBox.StandardButton.Ok:
-            self.rerun_button.setEnabled(False)
-            self.kill_button.setEnabled(True)
-            self.post_experiment_warnings.clear()
-            self._is_rerunning_failed_realizations = True
-            self.rerun_failed_realizations_experiment.emit()
-            self.set_show_warning_button_to_initial_state()
+        self.rerun_button.setEnabled(False)
+        self.kill_button.setEnabled(True)
+        self.post_experiment_warnings.clear()
+        self._is_rerunning_failed_realizations = True
+        self.rerun_failed_realizations_experiment.emit()
+        self.set_show_warning_button_to_initial_state()
 
     @override
     def hideEvent(self, event: QHideEvent | None) -> None:
