@@ -462,8 +462,8 @@ class PlotWindow(QMainWindow):
             if key_def.response is not None and key_def.response.type == "breakthrough":
                 plot_context.flip_observation_axis = True
 
-            for data in ensemble_to_data_map.values():
-                data = data.T
+            for untransposed_data in ensemble_to_data_map.values():
+                data = untransposed_data.T
 
                 if not data.empty and data.index.inferred_type == "datetime64":
                     self._preferred_ensemble_x_axis_format = PlotContext.DATE_AXIS

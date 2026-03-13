@@ -161,8 +161,10 @@ class GenKwConfig(ParameterConfig):
             )
 
         distributions_spec: list[list[str]] = []
-        for line_number, item in enumerate(parsed.parameter_file_contents.splitlines()):
-            item = item.split("--")[0]  # remove comments
+        for line_number, item_with_comments in enumerate(
+            parsed.parameter_file_contents.splitlines()
+        ):
+            item = item_with_comments.split("--")[0]
             if item.strip():  # only lines with content
                 items = item.split()
                 if len(items) < 2:

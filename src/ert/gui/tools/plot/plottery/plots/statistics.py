@@ -42,13 +42,13 @@ class StatisticsPlot:
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.DATE_AXIS
 
-        for (ensemble, data), color_index in zip(
+        for (ensemble, untransposed_data), color_index in zip(
             ensemble_to_data_map.items(),
             plot_context.ensembles_color_indexes(),
             strict=False,
         ):
             config.setCurrentColor(color_index)
-            data = data.T
+            data = untransposed_data.T
             if not data.empty:
                 if data.index.inferred_type != "datetime64":
                     plot_context.deactivateDateSupport()
