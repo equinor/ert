@@ -323,7 +323,7 @@ class SlurmDriver(Driver):
                     "scontrol did not give status for job_ids "
                     f"{missing_in_squeue_and_scontrol}, giving up for now."
                 )
-            self._last_successful_poll = time.time()
+            self._last_successful_poll = time.monotonic()
             await asyncio.sleep(self._poll_period)
 
     async def _process_job_update(self, job_id: str, new_info: JobInfo) -> None:
@@ -378,7 +378,7 @@ class SlurmDriver(Driver):
 
     async def _poll_once_by_scontrol(self, missing_job_id: str) -> ScontrolInfo | None:
         if (
-            time.time() - self._scontrol_cache_timestamp
+            time.monotonic() - self._scontrol_cache_timestamp
             < self._scontrol_required_cache_age
         ) and missing_job_id in self._scontrol_cache:
             return self._scontrol_cache[missing_job_id]
@@ -394,7 +394,7 @@ class SlurmDriver(Driver):
             info.exit_code = SLURM_TERMINATED_EXIT_CODE
 
         self._scontrol_cache[missing_job_id] = info
-        self._scontrol_cache_timestamp = time.time()
+        self._scontrol_cache_timestamp = time.monotonic()
         return info
 
     async def _run_scontrol(self, missing_job_id: str) -> ScontrolInfo | None:

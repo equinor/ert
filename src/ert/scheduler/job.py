@@ -84,6 +84,8 @@ class Job:
         self._requested_max_submit: int | None = None
         self._start_time: float | None = None
         self._end_time: float | None = None
+        self._start_monotonic: float | None = None
+        self._end_monotonic: float | None = None
         self._remaining_file_verification_time = self.DEFAULT_FILE_VERIFICATION_TIMEOUT
         self._previous_file_verification_time = self._remaining_file_verification_time
         self._started_killing_by_evaluator: bool = False
@@ -123,10 +125,10 @@ class Job:
 
     @property
     def running_duration(self) -> float:
-        if self._start_time:
-            if self._end_time:
-                return self._end_time - self._start_time
-            return time.time() - self._start_time
+        if self._start_monotonic is not None:
+            if self._end_monotonic is not None:
+                return self._end_monotonic - self._start_monotonic
+            return time.monotonic() - self._start_monotonic
         return 0
 
     async def _submit_and_run_once(self, sem: asyncio.BoundedSemaphore) -> None:
@@ -161,6 +163,7 @@ class Job:
             await self._send(JobState.PENDING)
             await self.started.wait()
             self._start_time = time.time()
+            self._start_monotonic = time.monotonic()
             pending_time = self._start_time - self.submit_time
             logger.info(
                 f"Pending time for realization {self.iens} "
@@ -439,6 +442,7 @@ class Job:
             case JobState.COMPLETED:
                 event = RealizationSuccess(real=str(self.iens))
                 self._end_time = time.time()
+                self._end_monotonic = time.monotonic()
                 await self._scheduler.completed_jobs.put(self.iens)
             case default:
                 assert_never(default)
