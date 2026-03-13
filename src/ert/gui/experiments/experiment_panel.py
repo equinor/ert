@@ -49,9 +49,9 @@ EXPERIMENT_IS_MANUAL_UPDATE_MESSAGE = "Execute Selected"
 
 
 def create_md_table(kv: dict[str, str], output: str) -> str:
-    for k, v in kv.items():
-        v = v.replace("_", r"\_")
-        output += f"| {k} | {v} |\n"
+    for key, unescaped_value in kv.items():
+        value = unescaped_value.replace("_", r"\_")
+        output += f"| {key} | {value} |\n"
     output += "\n"
     return output
 

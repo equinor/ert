@@ -91,18 +91,18 @@ def plotCrossEnsembleStatistics(
         std_dev_factor = config.getStandardDeviationFactor()
 
         if not data.empty:
-            data = _assertNumeric(data)
-            if data is not None:
+            numeric_data = _assertNumeric(data)
+            if numeric_data is not None:
                 ccs["index"].append(ensemble_index)
-                ccs["mean"][ensemble_index] = data.mean()
-                ccs["min"][ensemble_index] = data.min()
-                ccs["max"][ensemble_index] = data.max()
-                ccs["std"][ensemble_index] = data.std() * std_dev_factor
-                ccs["p10"][ensemble_index] = data.quantile(0.1)
-                ccs["p33"][ensemble_index] = data.quantile(0.33)
-                ccs["p50"][ensemble_index] = data.quantile(0.5)
-                ccs["p67"][ensemble_index] = data.quantile(0.67)
-                ccs["p90"][ensemble_index] = data.quantile(0.9)
+                ccs["mean"][ensemble_index] = numeric_data.mean()
+                ccs["min"][ensemble_index] = numeric_data.min()
+                ccs["max"][ensemble_index] = numeric_data.max()
+                ccs["std"][ensemble_index] = numeric_data.std() * std_dev_factor
+                ccs["p10"][ensemble_index] = numeric_data.quantile(0.1)
+                ccs["p33"][ensemble_index] = numeric_data.quantile(0.33)
+                ccs["p50"][ensemble_index] = numeric_data.quantile(0.5)
+                ccs["p67"][ensemble_index] = numeric_data.quantile(0.67)
+                ccs["p90"][ensemble_index] = numeric_data.quantile(0.9)
 
                 _plotCrossEnsembleStatistics(axes, config, ccs, ensemble_index)
 

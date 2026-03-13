@@ -104,13 +104,14 @@ def _get_observations(
 ) -> list[dict[str, Any]]:
     observations = []
 
-    for stored_response_type, df in experiment.observations.items():
+    for stored_response_type, stored_df in experiment.observations.items():
         if (
             requested_response_type is not None
             and stored_response_type != requested_response_type
         ):
             continue
 
+        df = stored_df
         if observation_keys is not None:
             df = df.filter(pl.col("observation_key").is_in(observation_keys))
 

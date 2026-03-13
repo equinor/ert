@@ -574,10 +574,10 @@ def installed_forward_model_steps_from_dict(
     for name, (fm_step_config_file, config_contents) in config_dict.get(
         ConfigKeys.INSTALL_JOB, []
     ):
-        fm_step_config_file = path.abspath(fm_step_config_file)
+        fm_step_config_abspath = path.abspath(fm_step_config_file)
         try:
             new_fm_step = forward_model_step_from_config_contents(
-                config_contents, name=name, config_file=fm_step_config_file
+                config_contents, name=name, config_file=fm_step_config_abspath
             )
         except ConfigValidationError as e:
             errors.append(e)
@@ -585,7 +585,7 @@ def installed_forward_model_steps_from_dict(
         if name in fm_steps:
             ConfigWarning.warn(
                 f"Duplicate forward model step with name {name!r}, choosing "
-                f"{fm_step_config_file!r} over {fm_steps[name].executable!r}",
+                f"{fm_step_config_abspath!r} over {fm_steps[name].executable!r}",
                 name,
             )
         fm_steps[name] = new_fm_step
@@ -1240,8 +1240,8 @@ class ErtConfig(BaseModel):
         but the easy ones are filtered out.
         """
         config_context = ""
-        for line in config_file_contents.split("\n"):
-            line = line.strip()
+        for unstripped_line in config_file_contents.split("\n"):
+            line = unstripped_line.strip()
             if not line or line.startswith("--"):
                 continue
             if "--" in line and not any(x in line for x in ['"', "'"]):

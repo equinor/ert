@@ -107,6 +107,7 @@ class ForwardModelRunner:
     def _set_environment(self) -> None:
         if self.global_environment:
             for key, value in self.global_environment.items():
+                expanded_value = value
                 for env_key, env_val in os.environ.items():
-                    value = value.replace(f"${env_key}", env_val)
-                os.environ[key] = value
+                    expanded_value = expanded_value.replace(f"${env_key}", env_val)
+                os.environ[key] = expanded_value

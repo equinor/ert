@@ -333,10 +333,10 @@ def _create_one_run_path(
     param_substituter = _make_param_substituter(real_iter_substituter, param_data)
     for (
         source_file_content,
-        target_file,
+        unsubstituted_target_file,
     ) in ensemble.experiment.templates_configuration:
         start_time = time.perf_counter()
-        target_file = real_iter_substituter.substitute(target_file)
+        target_file = real_iter_substituter.substitute(unsubstituted_target_file)
         timings["substitute_real_iter"] += time.perf_counter() - start_time
 
         start_time = time.perf_counter()
