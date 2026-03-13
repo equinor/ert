@@ -22,11 +22,11 @@ from PyQt6.QtWidgets import (
 )
 
 from ert.config import ErrorInfo, ErtConfig
+from ert.experiment_configs import ManualConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import CreateExperimentDialog, Suggestor
 from ert.gui.icon_utils import load_icon
 from ert.storage import Ensemble, Experiment
-from ert.storage.local_experiment import ExperimentType
 
 from .storage_model import (
     EnsembleModel,
@@ -177,22 +177,12 @@ class StorageWidget(QWidget):
                         self._ert_config.ensemble_config.response_configuration
                     )
                     ensemble = storage.create_experiment(
-                        experiment_config={
-                            "parameter_configuration": [
-                                c.model_dump(mode="json")
-                                for c in parameter_configuration
-                            ],
-                            "response_configuration": [
-                                c.model_dump(mode="json")
-                                for c in response_configuration
-                            ],
-                            "observations": [
-                                d.model_dump(mode="json")
-                                for d in self._ert_config.observation_declarations
-                            ],
-                            "ert_templates": self._ert_config.ert_templates,
-                            "experiment_type": ExperimentType.MANUAL,
-                        },
+                        experiment_config=ManualConfig(
+                            parameter_configuration=parameter_configuration,
+                            response_configuration=response_configuration,
+                            observations=self._ert_config.observation_declarations,
+                            ert_templates=self._ert_config.ert_templates,
+                        ),
                         name=create_experiment_dialog.experiment_name,
                     ).create_ensemble(
                         name=create_experiment_dialog.ensemble_name,

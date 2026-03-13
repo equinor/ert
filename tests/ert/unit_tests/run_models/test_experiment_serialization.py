@@ -41,6 +41,7 @@ from ert.config.queue_config import (
     SlurmQueueOptions,
     TorqueQueueOptions,
 )
+from ert.experiment_configs import MultipleDataAssimilationConfig
 from ert.mode_definitions import (
     ENIF_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
@@ -57,7 +58,6 @@ from ert.run_models import (
     MultipleDataAssimilation,
     create_model,
 )
-from ert.run_models.multiple_data_assimilation import MultipleDataAssimilationConfig
 from ert.storage import open_storage
 
 

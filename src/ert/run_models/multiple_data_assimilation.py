@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, ClassVar
+from typing import Any
 from uuid import UUID
 
 from pydantic import PrivateAttr
@@ -11,13 +11,12 @@ from ert.config import (
     PreExperimentFixtures,
 )
 from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.experiment_configs import MultipleDataAssimilationConfig
 from ert.run_models.initial_ensemble_run_model import (
     InitialEnsembleRunModel,
-    InitialEnsembleRunModelConfig,
 )
-from ert.run_models.update_run_model import UpdateRunModel, UpdateRunModelConfig
+from ert.run_models.update_run_model import UpdateRunModel
 from ert.storage import Ensemble
-from ert.storage.local_experiment import ExperimentType
 from ert.trace import tracer
 
 from ..run_arg import create_run_arguments
@@ -26,15 +25,6 @@ from .run_model import ErtRunError
 logger = logging.getLogger(__name__)
 
 MULTIPLE_DATA_ASSIMILATION_GROUP = "Parameter update"
-
-
-class MultipleDataAssimilationConfig(
-    InitialEnsembleRunModelConfig, UpdateRunModelConfig
-):
-    default_weights: ClassVar[str] = "4, 2, 1"
-    restart_run: bool
-    prior_ensemble_id: str | None
-    weights: str
 
 
 class MultipleDataAssimilation(
@@ -94,7 +84,7 @@ class MultipleDataAssimilation(
                         f"restart iteration = {prior.iteration + 1}"
                     )
                 target_experiment = self._storage.create_experiment(
-                    experiment_config=self.model_dump(mode="json"),
+                    experiment_config=self,
                     name=f"Restart from {prior.name}",
                 )
 
@@ -107,7 +97,7 @@ class MultipleDataAssimilation(
                 fixtures=PreExperimentFixtures(random_seed=self.random_seed),
             )
             experiment_storage = self._storage.create_experiment(
-                experiment_config=self.model_dump(mode="json"),
+                experiment_config=self,
                 name=self.experiment_name,
             )
 
@@ -198,7 +188,3 @@ class MultipleDataAssimilation(
     @classmethod
     def group(cls) -> str | None:
         return MULTIPLE_DATA_ASSIMILATION_GROUP
-
-    @classmethod
-    def _experiment_type(cls) -> ExperimentType:
-        return ExperimentType.ES_MDA

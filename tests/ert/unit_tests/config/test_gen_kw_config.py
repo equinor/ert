@@ -209,7 +209,10 @@ async def test_gen_kw_is_log_or_not(
         experiment_id = storage.create_experiment(
             experiment_config={
                 "parameter_configuration": (
-                    ert_config.ensemble_config.parameter_configuration
+                    [
+                        cfg.model_dump(mode="json")
+                        for cfg in ert_config.ensemble_config.parameter_configuration
+                    ]
                 )
             }
         )

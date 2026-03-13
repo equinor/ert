@@ -96,9 +96,10 @@ async def test_that_create_run_path_overwrites_symlinks_by_file(
     ert_config = snake_oil_field_example
     experiment_id = storage.create_experiment(
         experiment_config={
-            "parameter_configuration": (
-                ert_config.ensemble_config.parameter_configuration
-            )
+            "parameter_configuration": [
+                cfg.model_dump(mode="json")
+                for cfg in ert_config.ensemble_config.parameter_configuration
+            ]
         },
     )
     prior_ensemble = storage.create_ensemble(
@@ -172,9 +173,10 @@ async def make_run_path(run_args, storage):
     async def func(ert_config):
         experiment_id = storage.create_experiment(
             experiment_config={
-                "parameter_configuration": (
-                    ert_config.ensemble_config.parameter_configuration
-                ),
+                "parameter_configuration": [
+                    cfg.model_dump(mode="json")
+                    for cfg in ert_config.ensemble_config.parameter_configuration
+                ],
                 "ert_templates": ert_config.ert_templates,
             },
         )
@@ -516,9 +518,10 @@ def test_that_sampling_prior_makes_initialized_fs(storage):
     prior_ensemble = storage.create_ensemble(
         storage.create_experiment(
             experiment_config={
-                "parameter_configuration": (
-                    ert_config.ensemble_config.parameter_configuration
-                ),
+                "parameter_configuration": [
+                    cfg.model_dump(mode="json")
+                    for cfg in ert_config.ensemble_config.parameter_configuration
+                ],
             },
         ),
         name="prior",
@@ -632,9 +635,10 @@ async def test_write_runpath_file(storage, itr):
     num_realizations = ert_config.runpath_config.num_realizations
     experiment_id = storage.create_experiment(
         experiment_config={
-            "parameter_configuration": (
-                ert_config.ensemble_config.parameter_configuration
-            )
+            "parameter_configuration": [
+                pc.model_dump(mode="json")
+                for pc in ert_config.ensemble_config.parameter_configuration
+            ]
         },
     )
     prior_ensemble = storage.create_ensemble(
@@ -984,8 +988,14 @@ async def test_when_manifest_files_are_written_loading_succeeds(storage, itr):
 
     experiment_id = storage.create_experiment(
         experiment_config={
-            "parameter_configuration": config.ensemble_config.parameter_configuration,
-            "response_configuration": config.ensemble_config.response_configuration,
+            "parameter_configuration": [
+                cfg.model_dump(mode="json")
+                for cfg in config.ensemble_config.parameter_configuration
+            ],
+            "response_configuration": [
+                cfg.model_dump(mode="json")
+                for cfg in config.ensemble_config.response_configuration
+            ],
         },
     )
     prior_ensemble = storage.create_ensemble(
@@ -1081,8 +1091,14 @@ async def test_that_contents_of_gridfile_is_logged(storage, caplog):
 
     experiment_id = storage.create_experiment(
         experiment_config={
-            "parameter_configuration": config.ensemble_config.parameter_configuration,
-            "response_configuration": config.ensemble_config.response_configuration,
+            "parameter_configuration": [
+                cfg.model_dump(mode="json")
+                for cfg in config.ensemble_config.parameter_configuration
+            ],
+            "response_configuration": [
+                cfg.model_dump(mode="json")
+                for cfg in config.ensemble_config.response_configuration
+            ],
         },
     )
     prior_ensemble = storage.create_ensemble(
@@ -1196,9 +1212,10 @@ def test_that_generate_parameter_files_raises_when_end_event_is_set(storage):
     )
     experiment_id = storage.create_experiment(
         experiment_config={
-            "parameter_configuration": (
-                ert_config.ensemble_config.parameter_configuration
-            ),
+            "parameter_configuration": [
+                cfg.model_dump(mode="json")
+                for cfg in ert_config.ensemble_config.parameter_configuration
+            ],
         },
     )
     prior_ensemble = storage.create_ensemble(
@@ -1240,9 +1257,10 @@ async def test_that_create_run_path_raises_when_end_event_is_set(run_args, stora
     )
     experiment_id = storage.create_experiment(
         experiment_config={
-            "parameter_configuration": (
-                ert_config.ensemble_config.parameter_configuration
-            ),
+            "parameter_configuration": [
+                cfg.model_dump(mode="json")
+                for cfg in ert_config.ensemble_config.parameter_configuration
+            ],
         },
     )
     prior_ensemble = storage.create_ensemble(

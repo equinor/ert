@@ -15,6 +15,16 @@ from ert.config import (
     ObservationSettings,
     ParameterConfig,
 )
+from ert.experiment_configs import (
+    DictEncodedDataFrame,
+    EnsembleExperimentConfig,
+    EnsembleInformationFilterConfig,
+    EnsembleSmootherConfig,
+    EvaluateEnsembleConfig,
+    ManualUpdateConfig,
+    MultipleDataAssimilationConfig,
+    SingleTestRunConfig,
+)
 from ert.mode_definitions import (
     ENIF_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
@@ -27,22 +37,19 @@ from ert.mode_definitions import (
 )
 from ert.validation import ActiveRange
 
-from .ensemble_experiment import EnsembleExperiment, EnsembleExperimentConfig
+from .ensemble_experiment import EnsembleExperiment
 from .ensemble_information_filter import (
     EnsembleInformationFilter,
-    EnsembleInformationFilterConfig,
 )
-from .ensemble_smoother import EnsembleSmoother, EnsembleSmootherConfig
-from .evaluate_ensemble import EvaluateEnsemble, EvaluateEnsembleConfig
-from .initial_ensemble_run_model import DictEncodedDataFrame
-from .manual_update import ManualUpdate, ManualUpdateConfig
+from .ensemble_smoother import EnsembleSmoother
+from .evaluate_ensemble import EvaluateEnsemble
+from .manual_update import ManualUpdate
 from .manual_update_enif import ManualUpdateEnIF
 from .multiple_data_assimilation import (
     MultipleDataAssimilation,
-    MultipleDataAssimilationConfig,
 )
 from .run_model import RunModel
-from .single_test_run import SingleTestRun, SingleTestRunConfig
+from .single_test_run import SingleTestRun
 
 if TYPE_CHECKING:
     import numpy.typing as npt

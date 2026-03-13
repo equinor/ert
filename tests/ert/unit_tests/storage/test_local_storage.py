@@ -36,7 +36,11 @@ from ert.config import (
     SurfaceConfig,
 )
 from ert.config._create_observation_dataframes import create_observation_dataframes
-from ert.config._observations import BreakthroughObservation, GeneralObservation
+from ert.config._observations import (
+    BreakthroughObservation,
+    GeneralObservation,
+    Observation,
+)
 from ert.config.design_matrix import DESIGN_MATRIX_GROUP
 from ert.dark_storage.common import ErtStoragePermissionError
 from ert.field_utils import ErtboxParameters
@@ -1066,9 +1070,10 @@ def test_load_gen_kw_not_sorted(storage, tmpdir, snapshot):
 
         experiment_id = storage.create_experiment(
             experiment_config={
-                "parameter_configuration": (
-                    ert_config.ensemble_config.parameter_configuration
-                )
+                "parameter_configuration": [
+                    cfg.model_dump(mode="json")
+                    for cfg in ert_config.ensemble_config.parameter_configuration
+                ]
             }
         )
         ensemble_size = 10
@@ -1412,7 +1417,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         self,
         parameters: list[ParameterConfig],
         responses: list[ResponseConfig],
-        obs,
+        obs: list[Observation],
     ):
         experiment_id = self.storage.create_experiment(
             experiment_config={
@@ -1422,7 +1427,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
                 "response_configuration": [
                     r.model_dump(mode="json") for r in responses
                 ],
-                "observations": obs,
+                "observations": [o.model_dump(mode="json") for o in obs],
             }
         ).id
         model_experiment = Experiment(experiment_id)
@@ -1819,7 +1824,7 @@ def test_that_breakthrough_observations_and_responses_are_joined_in_endpoint(tmp
                         north=None,
                         east=None,
                         radius=None,
-                    )
+                    ).model_dump(mode="json")
                 ],
             }
         )

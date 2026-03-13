@@ -12,7 +12,7 @@ from functools import cached_property
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from textwrap import dedent
-from typing import Any, Self
+from typing import TYPE_CHECKING, Self
 from uuid import UUID, uuid4
 
 import polars as pl
@@ -28,6 +28,9 @@ from .local_ensemble import LocalEnsemble
 from .local_experiment import LocalExperiment
 from .mode import BaseMode, Mode, require_write
 from .realization_storage_state import RealizationStorageState
+
+if TYPE_CHECKING:
+    from ert.experiment_configs import ExperimentConfigsUnion
 
 logger = logging.getLogger(__name__)
 
@@ -322,8 +325,8 @@ class LocalStorage(BaseMode):
     @require_write
     def create_experiment(
         self,
-        experiment_config: dict[str, Any] | None = None,
-        name: str | None = None,
+        experiment_config: ExperimentConfigsUnion,
+        name: str,
     ) -> LocalExperiment:
         """
         Creates a new experiment in the storage.
@@ -348,8 +351,8 @@ class LocalStorage(BaseMode):
         local_experiment : LocalExperiment
             The newly created experiment.
         """
-        if experiment_config is None:
-            experiment_config = {}
+        # if experiment_config is None:
+        #    experiment_config = ExperimentConfig()
 
         exp_id = uuid4()
         path = self._experiment_path(exp_id)
