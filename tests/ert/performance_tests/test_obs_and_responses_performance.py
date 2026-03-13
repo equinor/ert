@@ -132,18 +132,17 @@ def create_experiment_args(
     gen_values = rng.normal(loc=10, scale=0.1, size=num_gen_data_obs)
     gen_stds = rng.normal(loc=0.2, scale=0.1, size=num_gen_data_obs)
 
-    gen_data_observations = []
-    for i in range(num_gen_data_obs):
-        gen_data_observations.append(
-            GeneralObservation(
-                name=gen_obs_keys[i],
-                data=gen_response_choices[i],
-                value=float(gen_values[i]),
-                error=max(1e-6, float(abs(gen_stds[i]))),
-                restart=int(gen_report_step_choices[i]),
-                index=int(gen_index_choices[i]),
-            ).model_dump(mode="json"),
-        )
+    gen_data_observations = [
+        GeneralObservation(
+            name=gen_obs_keys[i],
+            data=gen_response_choices[i],
+            value=float(gen_values[i]),
+            error=max(1e-6, float(abs(gen_stds[i]))),
+            restart=int(gen_report_step_choices[i]),
+            index=int(gen_index_choices[i]),
+        ).model_dump(mode="json")
+        for i in range(num_gen_data_obs)
+    ]
 
     _summary_time_delta = datetime.timedelta(30)
     summary_timesteps = [
@@ -184,17 +183,16 @@ def create_experiment_args(
     summary_values = rng.normal(loc=10, scale=0.1, size=num_summary_obs)
     summary_stds = rng.normal(loc=0.2, scale=0.1, size=num_summary_obs)
 
-    summary_observations = []
-    for i in range(num_summary_obs):
-        summary_observations.append(
-            SummaryObservation(
-                name=f"summary_obs_{i}",
-                key=summary_resp_choices[i],
-                date=summary_time_choices[i].date().isoformat(),
-                value=float(summary_values[i]),
-                error=max(1e-6, float(abs(summary_stds[i]))),
-            ).model_dump(mode="json"),
-        )
+    summary_observations = [
+        SummaryObservation(
+            name=f"summary_obs_{i}",
+            key=summary_resp_choices[i],
+            date=summary_time_choices[i].date().isoformat(),
+            value=float(summary_values[i]),
+            error=max(1e-6, float(abs(summary_stds[i]))),
+        ).model_dump(mode="json")
+        for i in range(num_summary_obs)
+    ]
 
     # JSONify parameter configs and collect names for sampling
     gen_kw_configs = [cfg.model_dump(mode="json") for cfg in gen_kw_configs_objs]

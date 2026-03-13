@@ -54,8 +54,10 @@ class GenDataConfig(ResponseConfig):
             if report_steps is None:
                 expected_files.append(input_file)
             else:
-                for report_step in report_steps:
-                    expected_files.append(input_file.replace("%d", str(report_step)))
+                expected_files.extend(
+                    input_file.replace("%d", str(report_step))
+                    for report_step in report_steps
+                )
 
         return expected_files
 

@@ -317,9 +317,9 @@ def test_that_the_plot_window_contains_the_expected_elements(
         )
 
         # Assert that the Case selection widget contains the expected ensembles
-        ensemble_names = []
-        for index in range(case_selection.count()):
-            ensemble_names.append(case_selection.item(index).text())
+        ensemble_names = [
+            case_selection.item(index).text() for index in range(case_selection.count())
+        ]
 
         assert sorted(ensemble_names) == expected_ensembles
 
@@ -709,11 +709,12 @@ def test_right_click_plot_button_opens_external_plotter(qtbot, use_tmpdir, monke
 
         def top_level_plotter_windows() -> list[PlotWindow]:
             plot_windows = gui.get_external_plot_windows()
-            top_level_plot_windows = []
 
-            for win in plot_windows:
-                if "Plotting" in win.windowTitle() and win.isVisible():
-                    top_level_plot_windows.append(win)
+            top_level_plot_windows = [
+                win
+                for win in plot_windows
+                if "Plotting" in win.windowTitle() and win.isVisible()
+            ]
             return top_level_plot_windows
 
         def right_click_plotter_button() -> None:

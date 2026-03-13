@@ -17,8 +17,7 @@ def migrate_everest_param(config: dict[str, Any]) -> dict[str, Any]:
     # It is a dict
     assert isinstance(input_keys, dict)
     for k, v in input_keys.items():
-        for subkey in v:
-            formatted_control_names.append(f"{name}.{k}.{subkey}")
+        formatted_control_names.extend(f"{name}.{k}.{subkey}" for subkey in v)
 
     return config | {"input_keys": formatted_control_names}
 

@@ -733,9 +733,11 @@ def validate_rft_localization(val: dict[str, Any], obs_name: str) -> None:
         errors.append(_invalid_rft_localization_key_error("EAST", f"{obs_name}"))
     if "NORTH" in val:
         errors.append(_invalid_rft_localization_key_error("NORTH", f"{obs_name}"))
-    for key in val:
-        if key not in {"EAST", "NORTH", "RADIUS"}:
-            errors.append(_unknown_key_error(key, f"LOCALIZATION for {obs_name}"))
+    errors.extend(
+        _unknown_key_error(key, f"LOCALIZATION for {obs_name}")
+        for key in val
+        if key not in {"EAST", "NORTH", "RADIUS"}
+    )
     if errors:
         raise ObservationConfigError.from_collected(errors)
 
@@ -746,9 +748,11 @@ def validate_localization(val: dict[str, Any], obs_name: str) -> None:
         errors.append(_missing_value_error(f"LOCALIZATION for {obs_name}", "EAST"))
     if "NORTH" not in val:
         errors.append(_missing_value_error(f"LOCALIZATION for {obs_name}", "NORTH"))
-    for key in val:
-        if key not in {"EAST", "NORTH", "RADIUS"}:
-            errors.append(_unknown_key_error(key, f"LOCALIZATION for {obs_name}"))
+    errors.extend(
+        _unknown_key_error(key, f"LOCALIZATION for {obs_name}")
+        for key in val
+        if key not in {"EAST", "NORTH", "RADIUS"}
+    )
     if errors:
         raise ObservationConfigError.from_collected(errors)
 

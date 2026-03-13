@@ -110,7 +110,7 @@ class ErtScript:
     def requested_fixtures(self) -> set[str]:
         return {
             k
-            for k, v in inspect.signature(self.run).parameters.items()
+            for k in inspect.signature(self.run).parameters.keys()
             if k in all_hooked_workflow_fixtures
         }
 

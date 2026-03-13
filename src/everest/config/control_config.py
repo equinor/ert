@@ -301,8 +301,10 @@ class ControlConfig(BaseModel):
         formatted_names = []
         for variable in self.variables:
             if isinstance(variable, ControlVariableGuessListConfig):
-                for index in range(1, len(variable.initial_guess) + 1):
-                    formatted_names.append(f"{self.name}.{variable.name}.{index}")
+                formatted_names.extend(
+                    f"{self.name}.{variable.name}.{index}"
+                    for index in range(1, len(variable.initial_guess) + 1)
+                )
             elif variable.index is not None:
                 formatted_names.append(f"{self.name}.{variable.name}.{variable.index}")
             else:
@@ -315,8 +317,10 @@ class ControlConfig(BaseModel):
         formatted_names = []
         for variable in self.variables:
             if isinstance(variable, ControlVariableGuessListConfig):
-                for index in range(1, len(variable.initial_guess) + 1):
-                    formatted_names.append(f"{self.name}.{variable.name}-{index}")
+                formatted_names.extend(
+                    f"{self.name}.{variable.name}-{index}"
+                    for index in range(1, len(variable.initial_guess) + 1)
+                )
             elif variable.index is not None:
                 formatted_names.append(f"{self.name}.{variable.name}-{variable.index}")
             else:

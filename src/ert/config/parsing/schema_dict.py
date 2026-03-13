@@ -61,11 +61,12 @@ class SchemaItemDict(UserDict[str, SchemaItem]):
         def push_deprecation(
             infos: list[DeprecationInfo], line: list[ContextString]
         ) -> None:
-            for info in infos:
-                if info.check is None or (
-                    callable(info.check) and info.check(cast(list[ContextValue], line))
-                ):
-                    detected_deprecations.append((info, line))
+            detected_deprecations.extend(
+                (info, line)
+                for info in infos
+                if info.check is None
+                or (callable(info.check) and info.check(cast(list[ContextValue], line)))
+            )
 
         for kw, v in config_dict.items():
             schema_info = self.get(kw)

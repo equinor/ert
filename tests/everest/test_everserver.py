@@ -304,8 +304,7 @@ def test_websocket_multiple_events_in_queue(setup_client):
     with client.websocket_connect(
         "/experiment_server/events", headers={"Authorization": f"Basic {credentials}"}
     ) as websocket:
-        for _ in expected:
-            event_msgs.append(websocket.receive_json())
+        event_msgs.extend(websocket.receive_json() for _ in expected)
     assert event_msgs == [jsonable_encoder(e) for e in expected]
 
 

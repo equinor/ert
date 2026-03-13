@@ -81,14 +81,14 @@ class EverestDataAPI:
         for ensemble in self._experiment.ensembles_with_function_results:
             assert ensemble.realization_controls is not None
             for controls_dict in ensemble.realization_controls.to_dicts():
-                for name in all_control_names:
-                    new.append(
-                        {
-                            "control": name,
-                            "batch": ensemble.iteration,
-                            "value": controls_dict[name],
-                        }
-                    )
+                new.extend(
+                    {
+                        "control": name,
+                        "batch": ensemble.iteration,
+                        "value": controls_dict[name],
+                    }
+                    for name in all_control_names
+                )
 
         return new
 
