@@ -139,8 +139,8 @@ class ListEditBox(QWidget):
             return self._possible_items_dict
 
         result = {}
-        for item in items:
-            item = item.strip()
+        for unstripped_item in items:
+            item = unstripped_item.strip()
             for uuid, name in self._possible_items_dict.items():
                 if name == item:
                     result[uuid] = name
