@@ -6,11 +6,10 @@ from typing_extensions import override
 
 from ert.config import AnalysisConfig, ParameterConfig
 from ert.gui.ertnotifier import ErtNotifier
-from ert.gui.ertwidgets import CopyableLabel
+from ert.gui.ertwidgets import CopyableLabel, get_parameters_button
 from ert.mode_definitions import TEST_RUN_MODE
 from ert.run_models import SingleTestRun
 
-from ..ertwidgets import get_parameters_button
 from ._design_matrix_panel import DesignMatrixPanel
 from .experiment_config_panel import ExperimentConfigPanel
 

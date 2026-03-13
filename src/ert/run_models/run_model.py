@@ -35,6 +35,7 @@ from _ert.events import (
     EESnapshotUpdate,
     EnsembleEvaluationWarning,
 )
+from ert.base_model_context import BaseModelWithContextSupport
 from ert.config import (
     ConfigValidationError,
     DesignMatrix,
@@ -64,6 +65,7 @@ from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FINISHED,
 )
 from ert.mode_definitions import MODULE_MODE
+from ert.run_arg import RunArg
 from ert.runpaths import Runpaths
 from ert.storage import (
     Ensemble,
@@ -77,8 +79,6 @@ from ert.utils import log_duration
 from ert.warnings import PostExperimentWarning, capture_specific_warning
 from ert.workflow_runner import WorkflowRunner
 
-from ..base_model_context import BaseModelWithContextSupport
-from ..run_arg import RunArg
 from ._create_run_path import create_run_path
 from .event import (
     EndEvent,

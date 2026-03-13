@@ -3,9 +3,9 @@ from __future__ import annotations
 import functools
 import logging
 
+from ert.analysis import enif_update
 from ert.storage import Ensemble
 
-from ..analysis import enif_update
 from .manual_update import ManualUpdate
 
 logger = logging.getLogger(__name__)

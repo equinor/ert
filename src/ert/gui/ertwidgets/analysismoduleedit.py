@@ -5,7 +5,8 @@ from typing import TYPE_CHECKING
 from PyQt6.QtCore import QMargins, Qt
 from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QWidget
 
-from ..icon_utils import load_icon
+from ert.gui.icon_utils import load_icon
+
 from .analysismodulevariablespanel import AnalysisModuleVariablesPanel
 from .closabledialog import ClosableDialog
 

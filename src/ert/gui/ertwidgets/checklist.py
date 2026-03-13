@@ -15,7 +15,8 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ..icon_utils import load_icon
+from ert.gui.icon_utils import load_icon
+
 from .searchbox import SearchBox
 
 if TYPE_CHECKING:

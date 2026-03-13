@@ -36,13 +36,13 @@ from _ert.forward_model_runner.client import (
     TERMINATE_MSG,
 )
 from _ert.forward_model_runner.fm_dispatch import FORWARD_MODEL_TERMINATED_MSG
+from ert.config import QueueSystem
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
 from ert.scheduler import create_driver
 from ert.scheduler.scheduler import Scheduler
 from ert.shared.net_utils import get_machine_name
 
-from ..config import QueueSystem
 from ._ensemble import FMStepSnapshot
 from ._ensemble import LegacyEnsemble as Ensemble
 from .config import EvaluatorServerConfig
