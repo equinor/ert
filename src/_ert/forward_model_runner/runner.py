@@ -108,5 +108,5 @@ class ForwardModelRunner:
         if self.global_environment:
             for key, value in self.global_environment.items():
                 for env_key, env_val in os.environ.items():
-                    value = value.replace(f"${env_key}", env_val)
+                    value = value.replace(f"${env_key}", env_val)  # noqa: PLW2901
                 os.environ[key] = value

@@ -41,12 +41,12 @@ class EnsemblePlot:
         plot_context.x_axis = plot_context.DATE_AXIS
         draw_style = "steps-pre" if is_rate(plot_context.key()) else None
         zorder = 0
-        for (ensemble, data), color_index in zip(
+        for (ensemble, untransposed_data), color_index in zip(
             ensemble_to_data_map.items(),
             plot_context.ensembles_color_indexes(),
             strict=False,
         ):
-            data = data.T
+            data = untransposed_data.T
 
             if not data.empty:
                 if data.index.inferred_type != "datetime64":

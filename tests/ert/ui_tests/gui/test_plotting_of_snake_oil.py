@@ -92,17 +92,17 @@ def plot_figure(
                 case_selection.slot_toggle_plot(item)
 
         found_selected_key = False
-        for i in range(key_model.rowCount()):
-            to_select = data_types.model.itemAt(data_types.model.index(i, 0))
+        for key_index in range(key_model.rowCount()):
+            to_select = data_types.model.itemAt(data_types.model.index(key_index, 0))
             assert to_select is not None
             if to_select.key == key:
-                index = key_model.index(i, 0)
+                index = key_model.index(key_index, 0)
                 key_list.setCurrentIndex(index)
                 selected_key = to_select
-                for i, tab in enumerate(plot_window._plot_widgets):
+                for widget_index, tab in enumerate(plot_window._plot_widgets):
                     if tab.name == plot_name:
                         found_selected_key = True
-                        if central_tab.isTabEnabled(i):
+                        if central_tab.isTabEnabled(widget_index):
                             central_tab.setCurrentWidget(tab)
                             assert (
                                 selected_key.dimensionality

@@ -223,6 +223,7 @@ select = [
     "PIE",   # flake8-pie
     "PL",    # pylint
     "PLE",
+    "PLW2901",
     "PT",    # pytest
     "PYI",
     "Q",
@@ -241,7 +242,6 @@ select = [
 preview = true
 ignore = [
     "G004",    # logging-f-string
-    "PLW2901", # redefined-loop-name
     "PLR2004", # magic-value-comparison
     "PLR0915", # too-many-statements
     "PLR0912", # too-many-branches
