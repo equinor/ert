@@ -6,7 +6,7 @@ info = "Migrate response and parameter configs to include type"
 
 
 def migrate_everest_param(config: dict[str, Any]) -> dict[str, Any]:
-    formatted_control_names = []
+    formatted_control_names: list[str] = []
 
     name = config["name"]
     input_keys = config["input_keys"]

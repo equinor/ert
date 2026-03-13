@@ -2,6 +2,8 @@ import abc
 from collections import UserDict
 from typing import cast
 
+from ert.config.parsing.file_context_token import FileContextToken
+
 from .config_dict import ConfigDict
 from .config_errors import ConfigValidationError, ConfigWarning
 from .config_schema_item import SchemaItem
@@ -56,7 +58,7 @@ class SchemaItemDict(UserDict[str, SchemaItem]):
         config_dict: ConfigDict,
         filename: str,
     ) -> None:
-        detected_deprecations = []
+        detected_deprecations: list[tuple[DeprecationInfo, list[FileContextToken]]] = []
 
         def push_deprecation(
             infos: list[DeprecationInfo], line: list[ContextString]

@@ -525,7 +525,7 @@ class EverestConfig(BaseModelWithContextSupport):
 
     @model_validator(mode="after")
     def validate_scales(self) -> Self:
-        errors = []
+        errors: list[str] = []
         if self.optimization.auto_scale:
             errors.extend(
                 "The auto_scale option in the optimization section and the "

@@ -1452,12 +1452,12 @@ def _get_files_in_directory(
 
 def _substitutions_from_dict(config_dict: ConfigDict) -> dict[str, str]:
 
-    substitutions = {key: val for key, val in config_dict.get("DEFINE", [])}
+    substitutions = dict(config_dict.get("DEFINE", []))
 
     if "<CONFIG_PATH>" not in substitutions:
         substitutions["<CONFIG_PATH>"] = os.getcwd()
 
-    substitutions.update({key: val for key, val in config_dict.get("DATA_KW", [])})
+    substitutions.update(dict(config_dict.get("DATA_KW", [])))
 
     return substitutions
 

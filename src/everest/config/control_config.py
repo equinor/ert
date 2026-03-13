@@ -298,7 +298,7 @@ class ControlConfig(BaseModel):
 
     @property
     def formatted_control_names(self) -> list[str]:
-        formatted_names = []
+        formatted_names: list[str] = []
         for variable in self.variables:
             if isinstance(variable, ControlVariableGuessListConfig):
                 formatted_names.extend(
@@ -314,7 +314,7 @@ class ControlConfig(BaseModel):
 
     @property
     def formatted_control_names_dotdash(self) -> list[str]:
-        formatted_names = []
+        formatted_names: list[str] = []
         for variable in self.variables:
             if isinstance(variable, ControlVariableGuessListConfig):
                 formatted_names.extend(
