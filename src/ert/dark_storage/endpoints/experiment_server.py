@@ -7,6 +7,7 @@ import queue
 import time
 import traceback
 import uuid
+import warnings
 from base64 import b64decode
 from queue import SimpleQueue
 from typing import Annotated
@@ -27,7 +28,7 @@ from starlette.responses import PlainTextResponse, Response
 from starlette.websockets import WebSocket
 
 from ert.base_model_context import use_runtime_plugins
-from ert.config import QueueSystem
+from ert.config import ConfigWarning, QueueSystem
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.ensemble_evaluator.event import FullSnapshotEvent, SnapshotUpdateEvent
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
@@ -192,7 +193,9 @@ async def start_experiment(
     _check_user(credentials)
     if shared_data.status.status == ExperimentState.pending:
         request_data = await request.json()
-        config = EverestConfig.with_plugins(request_data)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=ConfigWarning)
+            config = EverestConfig.with_plugins(request_data)
         runner = ExperimentRunner(config)
         try:
             background_tasks.add_task(runner.run)
