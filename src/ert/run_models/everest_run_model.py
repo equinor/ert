@@ -52,7 +52,6 @@ from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.experiment_configs import EverestRunModelConfig
 from ert.plugins import ErtRuntimePlugins
 from ert.runpaths import Runpaths
-from ert.storage.local_experiment import ExperimentType
 from everest.config import (
     ControlConfig,
     EverestConfig,
@@ -556,10 +555,6 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
     def description(cls) -> str:
         return "Run batches "
 
-    @classmethod
-    def _experiment_type(cls) -> ExperimentType:
-        return ExperimentType.EVEREST
-
     @property
     def exit_code(self) -> EverestExitCode | None:
         return self._exit_code
@@ -814,7 +809,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         self._eval_server_cfg = evaluator_server_config
 
         self._experiment = self._experiment or self._storage.create_experiment(
-            name=self.experiment_name, experiment_config=self.to_experiment_config()
+            name=self.experiment_name, experiment_config=self
         )
 
         self._experiment.status = ExperimentStatus(

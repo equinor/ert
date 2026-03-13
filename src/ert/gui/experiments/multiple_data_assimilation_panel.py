@@ -28,7 +28,6 @@ from ert.gui.ertwidgets import (
 )
 from ert.mode_definitions import ES_MDA_MODE
 from ert.run_models import MultipleDataAssimilation
-from ert.storage.local_experiment import ExperimentType
 from ert.storage.realization_storage_state import RealizationStorageState
 from ert.validation import (
     ExperimentValidation,
@@ -170,8 +169,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
             return (
                 ensemble
                 for ensemble in ensembles
-                if ensemble.experiment.experiment_type
-                == ExperimentType.ENSEMBLE_EXPERIMENT
+                if ensemble.experiment.experiment_type == "Ensemble Experiment"
             )
 
         filters: list[Callable[[Iterable[Ensemble]], Iterable[Ensemble]]] = [

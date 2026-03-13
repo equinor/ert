@@ -15,7 +15,6 @@ from uuid import UUID
 import polars as pl
 from pydantic import BaseModel, Field, TypeAdapter
 from surfio import IrapSurface
-from typing_extensions import TypedDict
 
 from ert.config import (
     DerivedResponseConfig,
@@ -34,10 +33,15 @@ from ert.config._create_observation_dataframes import (
     create_observation_dataframes,
 )
 from ert.config._observations import Observation
+from ert.experiment_configs import EverestRunModelConfig, HasResponseConfigurations
+from ert.experiment_type import ExperimentType
 
 from .mode import BaseMode, Mode, require_write
 
 if TYPE_CHECKING:
+    from ..experiment_configs import (
+        ExperimentConfigsUnion,
+    )
     from .local_ensemble import LocalEnsemble
     from .local_storage import LocalStorage
 
@@ -53,58 +57,6 @@ class ExperimentState(StrEnum):
     never_run = auto()
 
 
-class ExperimentType(StrEnum):
-    UNDEFINED = "Undefined"
-    SINGLE_TEST_RUN = "Single Test Run"
-    ENSEMBLE_EXPERIMENT = "Ensemble Experiment"
-    EVALUATE_ENSEMBLE = "Evaluate Ensemble"
-    ES_MDA = "Multiple Data Assimilation"
-    ENSEMBLE_SMOOTHER = "Ensemble Smoother"
-    ENSEMBLE_INFORMATION_FILTER = "Ensemble Information Filter"
-    MANUAL_UPDATE = "Manual Update"
-    MANUAL = "Manual"
-    EVEREST = "Everest"
-
-
-class ExperimentConfig(TypedDict, total=False):
-    """Experiment configuration stored in local storage.
-
-    Different experiment types persist different subsets of keys.
-    """
-
-    experiment_type: str
-
-    # Initial-ensemble fields
-    ert_templates: list[tuple[str, str]]
-    observations: list[dict[str, Any]]
-    design_matrix: dict[str, Any]
-    parameter_configuration: list[dict[str, Any]]
-    response_configuration: list[dict[str, Any]]
-    derived_response_configuration: list[dict[str, Any]]
-    target_ensemble: str
-
-    # Update-related fields
-    analysis_settings: dict[str, Any]
-    update_settings: dict[str, Any]
-
-    # Evaluate/manual update fields
-    ensemble_id: str
-
-    # ESMDA
-    restart_run: bool
-    prior_ensemble_id: str | None
-    weights: str
-
-    # Everest
-    optimization_output_dir: str
-    simulation_dir: str
-    input_constraints: list[dict[str, Any]]
-    optimization: dict[str, Any]
-    model: dict[str, Any]
-    keep_run_path: bool
-    experiment_name: str
-
-
 class ExperimentStatus(BaseModel):
     message: str = Field(default="")
     status: ExperimentState = Field(default=ExperimentState.pending)
@@ -117,9 +69,7 @@ class _Index(BaseModel):
     # from a different experiment. For example, a manual update
     # is a separate experiment from the one that created the prior.
     ensembles: list[UUID]
-    experiment: ExperimentConfig = Field(
-        default_factory=lambda: cast(ExperimentConfig, {})
-    )
+    experiment: ExperimentConfigsUnion
     status: ExperimentStatus | None = Field(default=None)
 
 
@@ -181,9 +131,15 @@ class LocalExperiment(BaseMode):
         storage: LocalStorage,
         uuid: UUID,
         path: Path,
-        experiment_config: ExperimentConfig,
+        experiment_config: ExperimentConfigsUnion,
         name: str | None = None,
     ) -> LocalExperiment:
+        from ..experiment_configs import (
+            HasErtTemplates,
+            HasObservations,
+            HasResponseConfigurations,
+        )
+
         if name is None:
             name = datetime.today().isoformat()
 
@@ -194,8 +150,8 @@ class LocalExperiment(BaseMode):
             .encode("utf-8"),
         )
 
-        templates = experiment_config.get("ert_templates")
-        if templates is not None:
+        if isinstance(experiment_config, HasErtTemplates):
+            templates = experiment_config.ert_templates
             templates_path = path / "templates"
             templates_path.mkdir(parents=True, exist_ok=True)
             templates_abs: list[tuple[str, str]] = []
@@ -212,25 +168,20 @@ class LocalExperiment(BaseMode):
                 json.dumps(templates_abs).encode("utf-8"),
             )
 
-        observation_declarations = experiment_config.get("observations")
-        if observation_declarations:
+        if (
+            isinstance(experiment_config, HasObservations)
+            and experiment_config.observations is not None
+        ):
+            obs_objs = experiment_config.observations  # .get("observations")
             output_path = path / "observations"
             output_path.mkdir(parents=True, exist_ok=True)
 
-            responses_list = experiment_config.get("response_configuration", [])
-            rft_config_json = next(
-                (r for r in responses_list if r.get("type") == "rft"), None
+            responses_list = (
+                experiment_config.response_configuration
+                if isinstance(experiment_config, HasResponseConfigurations)
+                else []
             )
-            rft_config = (
-                _responses_adapter.validate_python(rft_config_json)
-                if rft_config_json is not None
-                else None
-            )
-
-            obs_adapter = TypeAdapter(Observation)  # type: ignore
-            obs_objs: list[Observation] = []
-            for od in observation_declarations:
-                obs_objs.append(obs_adapter.validate_python(od))
+            rft_config = next((r for r in responses_list if r.type == "rft"), None)
 
             datasets = create_observation_dataframes(obs_objs, rft_config)
             for response_type, df in datasets.items():
@@ -323,13 +274,7 @@ class LocalExperiment(BaseMode):
 
     @property
     def experiment_type(self) -> ExperimentType:
-        experiment_type = self.experiment_config.get(
-            "experiment_type", ExperimentType.UNDEFINED.value
-        )
-        try:
-            return ExperimentType(experiment_type)
-        except ValueError:
-            return ExperimentType.UNDEFINED
+        return self.experiment_config.experiment_type
 
     @property
     def status(self) -> ExperimentStatus | None:
@@ -489,7 +434,14 @@ class LocalExperiment(BaseMode):
 
         rft_cfg = None
         try:
-            responses_list = self.experiment_config.get("response_configuration", [])
+            responses_list = (
+                self.experiment_config.response_configuration
+                if isinstance(
+                    self.experiment_config,
+                    (HasResponseConfigurations, EverestRunModelConfig),
+                )
+                else []
+            )
             for r in responses_list:
                 if r.get("type") == "rft":
                     rft_cfg = _responses_adapter.validate_python(r)
@@ -571,6 +523,10 @@ class LocalExperiment(BaseMode):
         that the response config saved in this storage has keys corresponding
         to the actual received responses.
         """
+        if not isinstance(
+            self.experiment_config, (HasResponseConfigurations, EverestRunModelConfig)
+        ):
+            raise RuntimeError("DOESNT SUPPORT RESPONSES")
         responses_configuration = (
             self.response_configuration | self.derived_response_configuration
         )
@@ -587,12 +543,10 @@ class LocalExperiment(BaseMode):
 
         response_index = next(
             i
-            for i, c in enumerate(self.experiment_config["response_configuration"])
-            if c["type"] == response_type
+            for i, c in enumerate(self.experiment_config.response_configuration)
+            if c.type == response_type
         )
-        self.experiment_config["response_configuration"][response_index] = (
-            config.model_dump(mode="json")
-        )
+        self.experiment_config.response_configuration[response_index] = config
 
         self._storage._write_transaction(
             self._path / self._index_file,
@@ -606,7 +560,7 @@ class LocalExperiment(BaseMode):
             del self.response_type_to_response_keys
 
     @property
-    def experiment_config(self) -> ExperimentConfig:
+    def experiment_config(self) -> ExperimentConfigsUnion:
         return self._index.experiment
 
     @property
@@ -614,7 +568,7 @@ class LocalExperiment(BaseMode):
         objectives_config = self.response_configuration.get("everest_objectives")
 
         assert objectives_config is not None
-        return cast(EverestObjectivesConfig, objectives_config)
+        return cast("EverestObjectivesConfig", objectives_config)
 
     @property
     def output_constraints(self) -> EverestConstraintsConfig | None:
@@ -622,7 +576,7 @@ class LocalExperiment(BaseMode):
         if constraints_config is None:
             return None
 
-        return cast(EverestConstraintsConfig, constraints_config)
+        return cast("EverestConstraintsConfig", constraints_config)
 
     @property
     def ensembles_with_function_results(

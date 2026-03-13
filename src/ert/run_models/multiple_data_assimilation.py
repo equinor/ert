@@ -17,7 +17,6 @@ from ert.run_models.initial_ensemble_run_model import (
 )
 from ert.run_models.update_run_model import UpdateRunModel
 from ert.storage import Ensemble
-from ert.storage.local_experiment import ExperimentType
 from ert.trace import tracer
 
 from ..run_arg import create_run_arguments
@@ -85,7 +84,7 @@ class MultipleDataAssimilation(
                         f"restart iteration = {prior.iteration + 1}"
                     )
                 target_experiment = self._storage.create_experiment(
-                    experiment_config=self.to_experiment_config(),
+                    experiment_config=self,
                     name=f"Restart from {prior.name}",
                 )
 
@@ -98,7 +97,7 @@ class MultipleDataAssimilation(
                 fixtures=PreExperimentFixtures(random_seed=self.random_seed),
             )
             experiment_storage = self._storage.create_experiment(
-                experiment_config=self.to_experiment_config(),
+                experiment_config=self,
                 name=self.experiment_name,
             )
 
@@ -189,7 +188,3 @@ class MultipleDataAssimilation(
     @classmethod
     def group(cls) -> str | None:
         return MULTIPLE_DATA_ASSIMILATION_GROUP
-
-    @classmethod
-    def _experiment_type(cls) -> ExperimentType:
-        return ExperimentType.ES_MDA

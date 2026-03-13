@@ -46,7 +46,7 @@ class EnsembleExperiment(InitialEnsembleRunModel, EnsembleExperimentConfig):
         self.run_workflows(fixtures=PreExperimentFixtures(random_seed=self.random_seed))
 
         experiment_storage = self._storage.create_experiment(
-            experiment_config=self.to_experiment_config(),
+            experiment_config=self,
             name=self.experiment_name,
         )
 

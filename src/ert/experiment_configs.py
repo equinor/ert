@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import dataclasses
 from collections import defaultdict
 from pathlib import Path
 from typing import Annotated, Any, ClassVar, Literal, Self
@@ -30,7 +29,7 @@ from ert.config import (
     Workflow,
 )
 from ert.config import Field as FieldConfig
-from ert.storage.local_experiment import ExperimentConfig, ExperimentType
+from ert.experiment_type import ExperimentType
 from everest.config import InputConstraintConfig, OptimizationConfig
 from everest.config import ModelConfig as EverestModelConfig
 
@@ -66,6 +65,38 @@ class DictEncodedDataFrame(BaseModel):
         )
 
 
+class HasErtTemplates(BaseModel):
+    ert_templates: list[tuple[str, str]]
+
+
+class HasObservations(BaseModel):
+    observations: list[Observation] | None = None
+
+
+class HasResponseConfigurations(BaseModel):
+    response_configuration: list[
+        Annotated[(KnownResponseTypes), Field(discriminator="type")]
+    ] = Field(default_factory=list)
+
+
+class HasDerivedResponseConfigurations(BaseModel):
+    derived_response_configuration: list[
+        Annotated[
+            (KnownDerivedResponseTypes),
+            Field(discriminator="type"),
+        ]
+    ] = Field(default_factory=list)
+
+
+class HasParameterConfigurations(BaseModel):
+    parameter_configuration: list[
+        Annotated[
+            (GenKwConfig | SurfaceConfig | FieldConfig | EverestControl),
+            Field(discriminator="type"),
+        ]
+    ] = Field(default_factory=list)
+
+
 class RunModelConfig(BaseModelWithContextSupport):
     storage_path: str
     runpath_file: Path
@@ -85,56 +116,16 @@ class RunModelConfig(BaseModelWithContextSupport):
     supports_rerunning_failed_realizations: ClassVar[bool] = False
 
 
-class InitialEnsembleRunModelConfig(RunModelConfig):
+class InitialEnsembleRunModelConfig(
+    RunModelConfig,
+    HasErtTemplates,
+    HasObservations,
+    HasResponseConfigurations,
+    HasDerivedResponseConfigurations,
+    HasParameterConfigurations,
+):
     experiment_name: str
     design_matrix: DictEncodedDataFrame | None
-    parameter_configuration: list[
-        Annotated[
-            (GenKwConfig | SurfaceConfig | FieldConfig | EverestControl),
-            Field(discriminator="type"),
-        ]
-    ]
-    response_configuration: list[
-        Annotated[
-            (KnownResponseTypes),
-            Field(discriminator="type"),
-        ]
-    ]
-    derived_response_configuration: list[
-        Annotated[
-            (KnownDerivedResponseTypes),
-            Field(discriminator="type"),
-        ]
-    ]
-    ert_templates: list[tuple[str, str]]
-    observations: list[Observation] | None = None
-
-    def _initial_ensemble_experiment_config(self) -> ExperimentConfig:
-        experiment_config: ExperimentConfig = {
-            "ert_templates": self.ert_templates,
-            "parameter_configuration": [
-                param.model_dump(mode="json") for param in self.parameter_configuration
-            ],
-            "response_configuration": [
-                resp.model_dump(mode="json") for resp in self.response_configuration
-            ],
-            "derived_response_configuration": [
-                resp.model_dump(mode="json")
-                for resp in self.derived_response_configuration
-            ],
-        }
-
-        if self.observations is not None:
-            experiment_config["observations"] = [
-                obs.model_dump(mode="json") for obs in self.observations
-            ]
-
-        if self.design_matrix is not None:
-            experiment_config["design_matrix"] = self.design_matrix.model_dump(
-                mode="json"
-            )
-
-        return experiment_config
 
 
 class UpdateRunModelConfig(RunModelConfig):
@@ -142,40 +133,17 @@ class UpdateRunModelConfig(RunModelConfig):
     analysis_settings: ESSettings
     update_settings: ObservationSettings
 
-    def _update_experiment_config(self) -> ExperimentConfig:
-        return {
-            "target_ensemble": self.target_ensemble,
-            "analysis_settings": self.analysis_settings.model_dump(mode="json"),
-            "update_settings": dataclasses.asdict(self.update_settings),
-        }
-
 
 class EnsembleSmootherConfig(InitialEnsembleRunModelConfig, UpdateRunModelConfig):
     experiment_type: Literal["Ensemble Smoother"] = (
         ExperimentType.ENSEMBLE_SMOOTHER.value
     )
 
-    def to_experiment_config(self) -> ExperimentConfig:
-        return {
-            "experiment_type": ExperimentType.ENSEMBLE_SMOOTHER.value,
-            **self._initial_ensemble_experiment_config(),
-            **self._update_experiment_config(),
-        }
 
-
-class EnsembleInformationFilterConfig(
-    InitialEnsembleRunModelConfig, UpdateRunModelConfig
-):
+class EnsembleInformationFilterConfig(UpdateRunModelConfig):
     experiment_type: Literal["Ensemble Information Filter"] = (
         ExperimentType.ENSEMBLE_INFORMATION_FILTER.value
     )
-
-    def to_experiment_config(self) -> ExperimentConfig:
-        return {
-            "experiment_type": ExperimentType.ENSEMBLE_INFORMATION_FILTER.value,
-            **self._initial_ensemble_experiment_config(),
-            **self._update_experiment_config(),
-        }
 
 
 class EnsembleExperimentConfig(InitialEnsembleRunModelConfig):
@@ -184,13 +152,6 @@ class EnsembleExperimentConfig(InitialEnsembleRunModelConfig):
     )
     target_ensemble: str
     supports_rerunning_failed_realizations: ClassVar[bool] = True
-
-    def to_experiment_config(self) -> ExperimentConfig:
-        return {
-            "experiment_type": ExperimentType.ENSEMBLE_EXPERIMENT.value,
-            **self._initial_ensemble_experiment_config(),
-            "target_ensemble": self.target_ensemble,
-        }
 
 
 class EvaluateEnsembleConfig(RunModelConfig):
@@ -227,50 +188,27 @@ class EverestRunModelConfig(RunModelConfig):
     experiment_name: str
     target_ensemble: str
 
-    def to_experiment_config(self) -> ExperimentConfig:
-        return {
-            "experiment_type": ExperimentType.EVEREST.value,
-            "optimization_output_dir": self.optimization_output_dir,
-            "simulation_dir": self.simulation_dir,
-            "parameter_configuration": [
-                param.model_dump(mode="json") for param in self.parameter_configuration
-            ],
-            "response_configuration": [
-                resp.model_dump(mode="json") for resp in self.response_configuration
-            ],
-            "input_constraints": [
-                c.model_dump(mode="json") for c in self.input_constraints
-            ],
-            "optimization": self.optimization.model_dump(mode="json"),
-            "model": self.model.model_dump(mode="json"),
-            "keep_run_path": self.keep_run_path,
-            "experiment_name": self.experiment_name,
-            "target_ensemble": self.target_ensemble,
-        }
 
-
-class ManualUpdateConfig(UpdateRunModelConfig):
+class ManualUpdateConfig(
+    UpdateRunModelConfig,
+    HasErtTemplates,
+    HasObservations,
+    HasResponseConfigurations,
+    HasDerivedResponseConfigurations,
+    HasParameterConfigurations,
+):
     experiment_type: Literal["Manual Update"] = ExperimentType.MANUAL_UPDATE.value
     ensemble_id: str
-    ert_templates: list[tuple[str, str]]
 
-    def to_experiment_config(
-        self, *, prior_experiment_config: ExperimentConfig
-    ) -> ExperimentConfig:
-        return {
-            "experiment_type": ExperimentType.MANUAL_UPDATE.value,
-            "ensemble_id": self.ensemble_id,
-            "ert_templates": self.ert_templates,
-            **self._update_experiment_config(),
-            "parameter_configuration": prior_experiment_config[
-                "parameter_configuration"
-            ],
-            "response_configuration": prior_experiment_config["response_configuration"],
-            "derived_response_configuration": prior_experiment_config.get(
-                "derived_response_configuration", []
-            ),
-            "observations": prior_experiment_config.get("observations", []),
-        }
+
+class ManualConfig(
+    BaseModelWithContextSupport,
+    HasParameterConfigurations,
+    HasResponseConfigurations,
+    HasObservations,
+    HasErtTemplates,
+):
+    experiment_type: Literal["Manual"] = ExperimentType.MANUAL.value
 
 
 class MultipleDataAssimilationConfig(
@@ -282,16 +220,6 @@ class MultipleDataAssimilationConfig(
     prior_ensemble_id: str | None
     weights: str
 
-    def to_experiment_config(self) -> ExperimentConfig:
-        return {
-            "experiment_type": ExperimentType.ES_MDA.value,
-            **self._initial_ensemble_experiment_config(),
-            **self._update_experiment_config(),
-            "restart_run": self.restart_run,
-            "prior_ensemble_id": self.prior_ensemble_id,
-            "weights": self.weights,
-        }
-
 
 class SingleTestRunConfig(InitialEnsembleRunModelConfig):
     experiment_type: Literal["Single Test Run"] = ExperimentType.SINGLE_TEST_RUN.value
@@ -299,3 +227,16 @@ class SingleTestRunConfig(InitialEnsembleRunModelConfig):
     supports_rerunning_failed_realizations: ClassVar[bool] = True
     active_realizations: list[bool] = Field(default_factory=lambda: [True])
     minimum_required_realizations: int = 1
+
+
+ExperimentConfigsUnion = (
+    SingleTestRunConfig
+    | EnsembleSmootherConfig
+    | EnsembleInformationFilterConfig
+    | EnsembleExperimentConfig
+    | EvaluateEnsembleConfig
+    | EverestRunModelConfig
+    | ManualConfig
+    | ManualUpdateConfig
+    | MultipleDataAssimilationConfig
+)

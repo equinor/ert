@@ -7,10 +7,15 @@ from uuid import UUID
 from pydantic import PrivateAttr
 
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.experiment_configs import ManualUpdateConfig
+from ert.experiment_configs import (
+    HasDerivedResponseConfigurations,
+    HasObservations,
+    HasParameterConfigurations,
+    HasResponseConfigurations,
+    ManualUpdateConfig,
+)
 from ert.run_models.update_run_model import UpdateRunModel
 from ert.storage import Ensemble
-from ert.storage.local_experiment import ExperimentType
 
 from .run_model import ErtRunError
 
@@ -37,14 +42,32 @@ class ManualUpdate(UpdateRunModel, ManualUpdateConfig):
     ) -> None:
         self.log_at_startup()
         prior_experiment = self._prior.experiment
+        prior_experiment_config = prior_experiment.experiment_config
 
         self.set_env_key("_ERT_EXPERIMENT_ID", str(prior_experiment.id))
         self.set_env_key("_ERT_ENSEMBLE_ID", str(self._prior.id))
 
-        experiment_config = self.to_experiment_config(
-            prior_experiment_config=prior_experiment.experiment_config
+        experiment_config = self.model_copy()
+        experiment_config.response_configuration = (
+            prior_experiment_config.response_configuration
+            if isinstance(prior_experiment_config, HasResponseConfigurations)
+            else []
         )
-
+        experiment_config.parameter_configuration = (
+            prior_experiment_config.parameter_configuration
+            if isinstance(prior_experiment_config, HasParameterConfigurations)
+            else []
+        )
+        experiment_config.derived_response_configuration = (
+            prior_experiment_config.derived_response_configuration
+            if isinstance(prior_experiment_config, HasDerivedResponseConfigurations)
+            else []
+        )
+        experiment_config.observations = (
+            prior_experiment_config.observations
+            if isinstance(prior_experiment_config, HasObservations)
+            else []
+        )
         target_experiment = self._storage.create_experiment(
             experiment_config=experiment_config,
             name=f"Manual update of {self._prior.name}",
@@ -62,10 +85,6 @@ class ManualUpdate(UpdateRunModel, ManualUpdateConfig):
     @classmethod
     def description(cls) -> str:
         return "Load parameters and responses from existing → update"
-
-    @classmethod
-    def _experiment_type(cls) -> ExperimentType:
-        return ExperimentType.MANUAL_UPDATE
 
     def check_if_runpath_exists(self) -> bool:
         # Will not run a forward model, so does not create files on runpath
