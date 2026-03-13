@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Union
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+from matplotlib.backend_bases import MouseEvent
 from matplotlib.backends.backend_qt5agg import (  # type: ignore
     FigureCanvas,
     NavigationToolbar2QT,
@@ -26,7 +27,11 @@ from PyQt6.QtWidgets import (
 from typing_extensions import override
 
 from ert.gui.icon_utils import load_icon
-from ert.gui.tools.plot.plottery.plots import EverestGradientsPlot
+from ert.gui.tools.plot.plottery.plots import (
+    EnsemblePlot,
+    EverestGradientsPlot,
+    ValuesOverIterationsPlot,
+)
 
 from .plot_api import EnsembleObject, PlotApiKeyDefinition
 
@@ -34,15 +39,11 @@ if TYPE_CHECKING:
     from .plottery import PlotContext
     from .plottery.plots.cesp import CrossEnsembleStatisticsPlot
     from .plottery.plots.distribution import DistributionPlot
-    from .plottery.plots.ensemble import EnsemblePlot
     from .plottery.plots.gaussian_kde import GaussianKDEPlot
     from .plottery.plots.histogram import HistogramPlot
     from .plottery.plots.misfits import MisfitsPlot
     from .plottery.plots.statistics import StatisticsPlot
     from .plottery.plots.std_dev import StdDevPlot
-    from .plottery.plots.values_over_iteration_plot import (
-        ValuesOverIterationsPlot,
-    )
 
 logger = logging.getLogger(__name__)
 
@@ -173,9 +174,21 @@ class PlotWidget(QWidget):
         self.setLayout(vbox)
 
         self._negative_values_in_data = False
-        self._dirty = True
-        self._active = False
         self.resetPlot()
+        self._canvas.mpl_connect("motion_notify_event", self._on_hover)
+
+    def _on_hover(self, event: MouseEvent) -> None:
+        if event.inaxes is None or not isinstance(
+            self._plotter, (EnsemblePlot, ValuesOverIterationsPlot)
+        ):
+            return
+
+        for line in event.inaxes.get_lines():
+            contains, _ = line.contains(event)
+            if contains and "Realization" in str(line.get_label()):
+                self._plotter.update_legend(line)
+                self._canvas.draw_idle()
+                break
 
     @property
     def plotUpdateRequested(self) -> pyqtBoundSignal:
