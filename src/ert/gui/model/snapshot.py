@@ -15,6 +15,7 @@ from ert.ensemble_evaluator.snapshot import (
     EnsembleSnapshotMetadata,
     convert_iso8601_to_datetime,
 )
+from ert.gui.detect_mode import is_dark_mode
 from ert.gui.model.node import (
     ForwardModelStepNode,
     IterNode,
@@ -24,8 +25,6 @@ from ert.gui.model.node import (
     RootNode,
 )
 from ert.shared.status.utils import byte_with_unit, file_has_content
-
-from ..detect_mode import is_dark_mode
 
 logger = logging.getLogger(__name__)
 

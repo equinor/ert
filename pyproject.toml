@@ -234,6 +234,7 @@ select = [
     "SIM",   # flake-8-simplify
     "SLOT",
     "TD",
+    "TID",
     "TRY203",
     "TRY300",
     "UP",    # pyupgrade

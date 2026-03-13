@@ -11,8 +11,8 @@ from ert.config.queue_config import (
     TorqueQueueOptions,
 )
 from ert.dark_storage.client import ErtClientConnectionInfo
+from everest.strings import SESSION_DIR
 
-from ..strings import SESSION_DIR
 from .simulator_config import check_removed_config
 
 

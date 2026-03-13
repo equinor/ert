@@ -11,6 +11,7 @@ from ert.config import (
     PreExperimentFixtures,
 )
 from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.run_arg import create_run_arguments
 from ert.run_models.initial_ensemble_run_model import (
     InitialEnsembleRunModel,
     InitialEnsembleRunModelConfig,
@@ -20,7 +21,6 @@ from ert.storage import Ensemble
 from ert.storage.local_experiment import ExperimentType
 from ert.trace import tracer
 
-from ..run_arg import create_run_arguments
 from .run_model import ErtRunError
 
 logger = logging.getLogger(__name__)

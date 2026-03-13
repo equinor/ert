@@ -23,7 +23,8 @@ from pydantic import (
 from pydantic_core.core_schema import ValidationInfo
 from typing_extensions import TypedDict, Unpack
 
-from ..base_model_context import BaseModelWithContextSupport
+from ert.base_model_context import BaseModelWithContextSupport
+
 from .parsing import ConfigValidationError, ConfigWarning, SchemaItemType
 
 if TYPE_CHECKING:
