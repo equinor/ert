@@ -714,12 +714,15 @@ class LocalExperiment(BaseMode):
                     if set(all_controls).issubset(set(bdf_.columns)) and set(
                         all_controls
                     ).issubset(set(batch_df_.columns)):
-                        bdf_ = bdf_.drop(all_controls)
-
-                    batch_df_ = batch_df_.join(
-                        bdf_,
-                        on=on,
-                    )
+                        batch_df_ = batch_df_.join(
+                            bdf_.drop(all_controls),
+                            on=on,
+                        )
+                    else:
+                        batch_df_ = batch_df_.join(
+                            bdf_,
+                            on=on,
+                        )
 
                 dfs_to_concat_.append(batch_df_)
 

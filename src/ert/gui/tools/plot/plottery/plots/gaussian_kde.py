@@ -62,10 +62,9 @@ def plotGaussianKDE(
         config.setCurrentColor(color_index)
         if data.empty:
             continue
-        data = data[0]
-        if not _array_is_constant(data):
+        if not _array_is_constant(data[0]):
             _plotGaussianKDE(
-                axes, config, data, f"{ensemble.experiment_name} : {ensemble.name}"
+                axes, config, data[0], f"{ensemble.experiment_name} : {ensemble.name}"
             )
 
     if plot_context.log_scale:
