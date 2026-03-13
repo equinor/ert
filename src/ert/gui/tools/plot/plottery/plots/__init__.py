@@ -4,6 +4,7 @@ from .ensemble import EnsemblePlot
 from .everest_gradients_plot import EverestGradientsPlot
 from .gaussian_kde import GaussianKDEPlot
 from .histogram import HistogramPlot
+from .mean import MeanPlot
 from .misfits import MisfitsPlot
 from .statistics import StatisticsPlot
 from .std_dev import StdDevPlot
@@ -16,6 +17,7 @@ __all__ = [
     "EverestGradientsPlot",
     "GaussianKDEPlot",
     "HistogramPlot",
+    "MeanPlot",
     "MisfitsPlot",
     "StatisticsPlot",
     "StdDevPlot",

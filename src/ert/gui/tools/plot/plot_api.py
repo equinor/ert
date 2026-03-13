@@ -530,3 +530,23 @@ class PlotApi:
                 return np.load(io.BytesIO(http_response.content))
             else:
                 return np.array([])
+
+    def mean_for_parameter(
+        self, key: str, ensemble_id: str, z: int
+    ) -> npt.NDArray[np.float32]:
+        ensemble = self._get_ensemble_by_id(ensemble_id)
+        if not ensemble:
+            return np.array([])
+
+        with create_ertserver_client(self.ens_path) as client:
+            http_response = client.get(
+                f"/ensembles/{ensemble.id}/parameters/{PlotApi.escape(key)}/mean",
+                params={"z": z},
+                timeout=self._timeout,
+            )
+
+            if http_response.status_code == 200:
+                # Deserialize the numpy array
+                return np.load(io.BytesIO(http_response.content))
+            else:
+                return np.array([])
