@@ -18,6 +18,8 @@ def test_that_gui_uses_config_random_seed_when_specified(
         """
         NUM_REALIZATIONS 1
         RANDOM_SEED 12345
+
+        QUEUE_SYSTEM LOCAL
         """
     )
     Path("config.ert").write_text(config_text, encoding="utf-8")
@@ -41,6 +43,8 @@ def test_that_gui_generates_different_seeds_for_consecutive_runs(
         """
         NUM_REALIZATIONS 1
         RUNPATH gui_random_seed/realization-<IENS>/iter-<ITER>
+
+        QUEUE_SYSTEM LOCAL
         """
     )
     Path("config.ert").write_text(config_text, encoding="utf-8")
