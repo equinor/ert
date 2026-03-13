@@ -373,7 +373,7 @@ def get_site_plugins(
         plugin_manager.get_legacy_ertscript_workflows().get_workflows()
     )
 
-    for _, job_path in installable_workflow_jobs.items():
+    for job_path in installable_workflow_jobs.values():
         wf_job = workflow_job_from_file(job_path, origin="site")
         all_workflow_jobs[wf_job.name] = wf_job
 

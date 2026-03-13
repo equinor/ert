@@ -186,9 +186,9 @@ class LocalExperiment(BaseMode):
             )
 
             obs_adapter = TypeAdapter(Observation)  # type: ignore
-            obs_objs: list[Observation] = []
-            for od in observation_declarations:
-                obs_objs.append(obs_adapter.validate_python(od))
+            obs_objs: list[Observation] = [
+                obs_adapter.validate_python(od) for od in observation_declarations
+            ]
 
             datasets = create_observation_dataframes(obs_objs, rft_config)
             for response_type, df in datasets.items():
@@ -451,9 +451,9 @@ class LocalExperiment(BaseMode):
             rft_cfg = None
 
         obs_adapter = TypeAdapter(Observation)  # type: ignore
-        obs_objs: list[Observation] = []
-        for od in serialized_observations:
-            obs_objs.append(obs_adapter.validate_python(od))
+        obs_objs: list[Observation] = [
+            obs_adapter.validate_python(od) for od in serialized_observations
+        ]
 
         datasets = create_observation_dataframes(obs_objs, rft_cfg)
         for response_type, df in datasets.items():

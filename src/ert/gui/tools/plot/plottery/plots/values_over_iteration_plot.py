@@ -50,10 +50,7 @@ class ValuesOverIterationsPlot:
         plot_context.x_axis = plot_context.INDEX_AXIS
         plot_context.deactivateDateSupport()
 
-        all_dfs = []
-        for _ensemble, df in ensemble_to_data_map.items():
-            if not df.empty:
-                all_dfs.append(df)
+        all_dfs = [df for df in ensemble_to_data_map.values() if not df.empty]
 
         if not all_dfs:
             return

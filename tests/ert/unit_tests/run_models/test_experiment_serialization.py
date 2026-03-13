@@ -279,7 +279,7 @@ def runmodel_args(draw, tmp_path_factory):
 
     hooked_workflows_dict = draw(hooked_workflows())
     installed_ertscripts = {}
-    for _, workflows in hooked_workflows_dict.items():
+    for workflows in hooked_workflows_dict.values():
         for workflow in workflows:
             for cmd, _ in workflow.cmd_list:
                 if isinstance(cmd, ErtScriptWorkflow):
