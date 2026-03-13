@@ -171,7 +171,7 @@ def analysis_EnIF(
 
         graph_u_sub = config_node.load_parameter_graph()
 
-        # This will work for dim(X_scaled) on order O(n^5)
+        # This works for up to ~10^5 parameters
         Prec_u_sub = fit_precision_cholesky_approximate(
             X_scaled,
             graph_u_sub,
