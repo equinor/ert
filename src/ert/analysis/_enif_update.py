@@ -214,13 +214,11 @@ def analysis_EnIF(
     X_full = X_full_scaler.inverse_transform(X_full).T
 
     # Iterate over parameters to store the updated ensemble
+    log_msg = f"Storing {len(updated_parameters)} updated parameter groups"
+    logger.info(log_msg)
+    progress_callback(AnalysisStatusEvent(msg=log_msg))
     parameters_updated = 0
     for param_group in updated_parameters:
-        log_msg = f"Storing data for {param_group}.."
-        logger.info(log_msg)
-        progress_callback(AnalysisStatusEvent(msg=log_msg))
-        start = time.time()
-
         param_ensemble_array = source_ensemble.load_parameters_numpy(
             param_group, iens_active_index
         )
@@ -235,10 +233,6 @@ def analysis_EnIF(
         )
         parameters_updated += parameters_to_update
 
-        logger.info(
-            f"Storing data for {param_group} completed in "
-            f"{(time.time() - start) / 60} minutes"
-        )
     _copy_unupdated_parameters(
         list(source_ensemble.experiment.parameter_configuration.keys()),
         updated_parameters,

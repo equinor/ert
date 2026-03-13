@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import re
-import time
 import warnings
 from collections.abc import Callable, Iterable, Mapping
 from typing import TYPE_CHECKING, TextIO
@@ -199,6 +198,10 @@ def perform_ensemble_update(
         strategy.prepare(obs_context)
 
     # Update each parameter group
+    logger.info(
+        f"Updating {len(parameters)} parameter groups "
+        f"with {num_obs} observations and {len(iens_active_index)} realizations"
+    )
     for param_group in parameters:
         param_cfg = source_ensemble.experiment.parameter_configuration[param_group]
         param_ensemble_array = source_ensemble.load_parameters_numpy(
@@ -228,13 +231,8 @@ def perform_ensemble_update(
         )
 
         # Save updated parameters
-        start = time.time()
         target_ensemble.save_parameters_numpy(
             param_ensemble_array, param_group, iens_active_index
-        )
-        logger.info(
-            f"Storing data for {param_group} completed in "
-            f"{(time.time() - start) / 60} minutes"
         )
 
     _copy_unupdated_parameters(

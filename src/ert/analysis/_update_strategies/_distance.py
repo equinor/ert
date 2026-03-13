@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import logging
-import time
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
@@ -26,8 +24,6 @@ if TYPE_CHECKING:
     from ert.config import ParameterConfig
 
     from ._protocol import ObservationContext
-
-logger = logging.getLogger(__name__)
 
 
 class DistanceLocalizationUpdate:
@@ -69,16 +65,15 @@ class DistanceLocalizationUpdate:
         if self._obs_loc is None or self._smoother is None:
             raise RuntimeError("prepare() must be called before update()")
 
-        start = time.time()
         param_type_name = self._param_type.__name__
-        log_msg = (
-            f"Running distance localization on {param_type_name}"
-            f" with {param_ensemble.shape[0]} parameters,"
-            f" {self._obs_loc.xpos.shape[0]} observations,"
-            f" {self._ensemble_size} realizations"
+        self._progress_callback(
+            AnalysisStatusEvent(
+                msg=f"Running distance localization on {param_type_name}"
+                f" with {param_ensemble.shape[0]} parameters,"
+                f" {self._obs_loc.xpos.shape[0]} observations,"
+                f" {self._ensemble_size} realizations"
+            )
         )
-        logger.info(log_msg)
-        self._progress_callback(AnalysisStatusEvent(msg=log_msg))
 
         if self._param_type is Field:
             assert isinstance(param_config, Field)
@@ -87,10 +82,6 @@ class DistanceLocalizationUpdate:
             assert isinstance(param_config, SurfaceConfig)
             result = self._update_surface(param_ensemble, param_config)
 
-        logger.info(
-            f"Distance Localization of {param_type_name} {param_config.name} completed "
-            f"in {(time.time() - start) / 60} minutes"
-        )
         return result
 
     def _update_field(

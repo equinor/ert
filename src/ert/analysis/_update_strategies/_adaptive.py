@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import logging
-import time
 from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, TypeVar
 
@@ -21,8 +19,6 @@ if TYPE_CHECKING:
     from ert.config import ParameterConfig
 
     from ._protocol import ObservationContext
-
-logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
@@ -206,20 +202,18 @@ class AdaptiveLocalizationUpdate:
         batch_size = _calculate_adaptive_batch_size(num_params, self._num_obs)
         batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
 
-        log_msg = (
-            f"Running localization on {num_params} parameters, "
-            f"{self._num_obs} responses, {self._ensemble_size} realizations "
-            f"and {len(batches)} batches"
+        self._progress_callback(
+            AnalysisStatusEvent(
+                msg=f"Running localization on {num_params} parameters, "
+                f"{self._num_obs} responses, {self._ensemble_size} realizations "
+                f"and {len(batches)} batches"
+            )
         )
-        logger.info(log_msg)
-        self._progress_callback(AnalysisStatusEvent(msg=log_msg))
 
         def progress_callback_wrapper(
             iterable: Sequence[T],
         ) -> TimedIterator[T]:
             return TimedIterator(iterable, self._progress_callback)
-
-        start = time.time()
 
         for param_batch_idx in batches:
             update_idx = param_batch_idx[non_zero_variance_mask[param_batch_idx]]
@@ -237,10 +231,5 @@ class AdaptiveLocalizationUpdate:
                 progress_callback=progress_callback_wrapper,
                 n_jobs=NUM_JOBS_ADAPTIVE_LOC,
             )
-
-        logger.info(
-            f"Adaptive Localization of {param_config.name} completed "
-            f"in {(time.time() - start) / 60} minutes"
-        )
 
         return param_ensemble
