@@ -1,3 +1,4 @@
+import json
 import math
 import re
 import threading
@@ -911,3 +912,56 @@ def test_that_init_files_option_raises_removal_error(tmp_path):
                 {"INIT_FILES": "init_%d"},
             ]
         )
+
+
+async def test_tht_gen_kw_substitutes_correctly(tmpdir, storage, run_args):
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        GEN_KW KW_NAME template.txt kw.txt prior.txt
+        """
+        )
+        Path("config.ert").write_text(config, encoding="utf-8")
+        Path("template.txt").write_text(
+            "11=<a_11>\n1=<a_1>\n111=<a_111>", encoding="utf-8"
+        )
+        Path("prior.txt").write_text(
+            "a_111 CONST 111\na_1 CONST 1\na_11 CONST 11", encoding="utf-8"
+        )
+
+        ert_config = ErtConfig.from_file("config.ert")
+
+        experiment_id = storage.create_experiment(
+            experiment_config={
+                "parameter_configuration": (
+                    ert_config.ensemble_config.parameter_configuration
+                )
+            }
+        )
+        prior_ensemble = storage.create_ensemble(
+            experiment_id, name="prior", ensemble_size=1
+        )
+        sample_prior(prior_ensemble, [0], 123, 1)
+        await create_run_path(
+            run_args=run_args(ert_config, prior_ensemble),
+            ensemble=prior_ensemble,
+            runpaths=Runpaths.from_config(ert_config),
+            user_config_file=ert_config.user_config_file,
+            forward_model_steps=ert_config.forward_model_steps,
+            env_vars=ert_config.env_vars,
+            env_pr_fm_step=ert_config.env_pr_fm_step,
+            substitutions=ert_config.substitutions,
+            end_event=threading.Event(),
+            parameters_file="parameters",
+        )
+
+        a = json.loads(
+            Path("simulations/realization-0/iter-0/parameters.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        assert int(a["a_1"]["value"]) == 1
+        assert int(a["a_11"]["value"]) == 11
+        assert int(a["a_111"]["value"]) == 111
