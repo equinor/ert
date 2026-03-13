@@ -509,17 +509,27 @@ class LocalEnsemble(BaseMode):
             keys = self.experiment.parameter_keys
 
         df_lazy = self._load_parameters_lazy(SCALAR_FILENAME)
-        names = df_lazy.collect_schema().names()
-        matches = [key for key in keys if any(key in item for item in names)]
-        if len(matches) != len(keys):
-            missing = set(keys) - set(matches)
-            raise KeyError(f"Parameters not registered to the experiment: {missing}")
+        names = set(df_lazy.collect_schema().names())
 
-        parameter_keys = [
-            key
-            for e in keys
-            for key in self.experiment.parameter_configuration[e].parameter_keys
+        missing_configs = [
+            k for k in keys if k not in self.experiment.parameter_configuration
         ]
+        if missing_configs:
+            raise KeyError(
+                f"Parameters not registered to the experiment: {set(missing_configs)}"
+            )
+
+        parameter_keys: list[str] = []
+        for config_key in keys:
+            parameter_keys.extend(
+                self.experiment.parameter_configuration[config_key].parameter_keys
+            )
+
+        missing_cols = set(parameter_keys) - names
+        if missing_cols:
+            raise KeyError(
+                f"Parameters not registered to the experiment: {missing_cols}"
+            )
         df_lazy_filtered = df_lazy.select(["realization", *parameter_keys])
 
         if realizations is not None:
@@ -535,15 +545,13 @@ class LocalEnsemble(BaseMode):
             )
 
         if transformed:
-            tmp_configuration: dict[str, ParameterConfig] = {}
-            for key in keys:
-                for col in df.columns:
-                    if col == "realization":
-                        continue
-                    if col.startswith(key):
-                        tmp_configuration[col] = (
-                            self.experiment.parameter_configuration[key]
-                        )
+            tmp_configuration: dict[str, ParameterConfig] = {
+                param_key: self.experiment.parameter_configuration[config_key]
+                for config_key in keys
+                for param_key in self.experiment.parameter_configuration[
+                    config_key
+                ].parameter_keys
+            }
 
             df = df.with_columns(
                 [
