@@ -8,6 +8,7 @@ import pandas as pd
 import polars as pl
 import seaborn as sns
 from matplotlib import pyplot as plt
+from matplotlib.axes import Axes
 from matplotlib.lines import Line2D
 
 if TYPE_CHECKING:
@@ -193,8 +194,6 @@ class MisfitsPlot:
             sorted_ensemble_keys=sorted_ensemble_keys,
         )
 
-        y_min, y_max = self._compute_misfits_padded_minmax(all_misfits, 0.05)
-
         # Create subplot grid (2 rows, N columns)
         axes = figure.subplots(
             nrows=2, ncols=num_gendata_index, sharex="col", sharey=True
@@ -261,6 +260,31 @@ class MisfitsPlot:
                     jitter=True,  # Explicitly add jitter
                 )
 
+        y_min, y_max = self._compute_misfits_padded_minmax(all_misfits, 0.05)
+        self._style_boxplots(axes, x_positions, y_max, y_min)
+
+        for ax, key_val in zip(axes_bottom, distinct_gendata_index, strict=True):
+            label = (
+                key_val.date()
+                if isinstance(key_val, datetime)
+                else f"index={int(key_val)}"
+            )
+            ax.set_xlabel(label, rotation=25, ha="right")
+
+        figure.suptitle(
+            f"{plot_context.key()} (Signed Chi-squared misfits)",
+            fontsize=14,
+            y=0.98,
+        )
+        figure.tight_layout(rect=(0.02, 0.02, 0.98, 0.88))
+
+    def _style_boxplots(
+        self,
+        axes: Axes,
+        x_positions: np.ndarray[tuple[int]],
+        y_max: float,
+        y_min: float,
+    ):
         # Axis/spine styling
         (n_rows, n_cols) = axes.shape
         for r_idx in range(n_rows):
@@ -287,18 +311,3 @@ class MisfitsPlot:
                     ax.tick_params(axis="x", which="both", bottom=False)
                 if not is_first_col:
                     ax.tick_params(axis="y", which="both", left=False)
-
-        for ax, key_val in zip(axes_bottom, distinct_gendata_index, strict=True):
-            label = (
-                key_val.date()
-                if isinstance(key_val, datetime)
-                else f"index={int(key_val)}"
-            )
-            ax.set_xlabel(label, rotation=25, ha="right")
-
-        figure.suptitle(
-            f"{plot_context.key()} (Signed Chi-squared misfits)",
-            fontsize=14,
-            y=0.98,
-        )
-        figure.tight_layout(rect=(0.02, 0.02, 0.98, 0.88))
