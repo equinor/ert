@@ -684,21 +684,20 @@ class RunModel(RunModelConfig, ABC):
         run_args: list[RunArg],
         experiment_id: uuid.UUID,
     ) -> EEEnsemble:
-        realizations = []
         job_script = shutil.which("fm_dispatch.py") or "fm_dispatch.py"
-        for run_arg in run_args:
-            realizations.append(
-                Realization(
-                    active=run_arg.active,
-                    iens=run_arg.iens,
-                    fm_steps=self.forward_model_steps,
-                    max_runtime=self.queue_config.max_runtime,
-                    run_arg=run_arg,
-                    num_cpu=self.queue_config.queue_options.num_cpu,
-                    job_script=job_script,
-                    realization_memory=self.queue_config.queue_options.realization_memory,
-                )
+        realizations = [
+            Realization(
+                active=run_arg.active,
+                iens=run_arg.iens,
+                fm_steps=self.forward_model_steps,
+                max_runtime=self.queue_config.max_runtime,
+                run_arg=run_arg,
+                num_cpu=self.queue_config.queue_options.num_cpu,
+                job_script=job_script,
+                realization_memory=self.queue_config.queue_options.realization_memory,
             )
+            for run_arg in run_args
+        ]
         return EEEnsemble(
             realizations,
             {},

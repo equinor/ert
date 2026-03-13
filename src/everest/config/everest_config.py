@@ -525,18 +525,18 @@ class EverestConfig(BaseModelWithContextSupport):
 
     @model_validator(mode="after")
     def validate_scales(self) -> Self:
-        errors = []
+        errors: list[str] = []
         if self.optimization.auto_scale:
-            for key in (
-                "objective_functions",
-                "input_constraints",
-                "output_constraints",
-            ):
-                if any(item.scale is not None for item in getattr(self, key)):
-                    errors.append(
-                        "The auto_scale option in the optimization section and the "
-                        f"scale options in the {key} section are mutually exclusive."
-                    )
+            errors.extend(
+                "The auto_scale option in the optimization section and the "
+                f"scale options in the {key} section are mutually exclusive."
+                for key in (
+                    "objective_functions",
+                    "input_constraints",
+                    "output_constraints",
+                )
+                if any(item.scale is not None for item in getattr(self, key))
+            )
             if len(errors) > 0:  # Revisit when pydantic supports ExceptionGroup.
                 raise ValueError(errors)
         return self

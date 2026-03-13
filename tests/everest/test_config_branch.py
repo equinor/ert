@@ -32,7 +32,7 @@ def test_get_controls_for_batch(cached_example):
         0.139,
     }
 
-    control_values = {v for k, v in opt_controls.items()}
+    control_values = set(opt_controls.values())
 
     assert sorted(control_values) == pytest.approx(
         sorted(expected_control_values), rel=1e-2
@@ -67,6 +67,6 @@ def test_update_controls_initial_guess(cached_example):
     for var in updated_ctl["variables"]:
         assert "initial_guess" in var
 
-    opt_ctrl_values = {v for k, v in opt_controls.items()}
+    opt_ctrl_values = set(opt_controls.values())
     updated_initial_guesses = {var["initial_guess"] for var in updated_ctl["variables"]}
     assert opt_ctrl_values == updated_initial_guesses

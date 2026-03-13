@@ -220,6 +220,7 @@ select = [
     "LOG",   # logging
     "NPY",   # numpy specific rules
     "PD",
+    "PERF",
     "PIE",   # flake8-pie
     "PL",    # pylint
     "PLE",
