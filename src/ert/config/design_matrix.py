@@ -99,16 +99,6 @@ class DesignMatrix:
 
     def merge_with_other(self, dm_other: DesignMatrix) -> None:
         errors = []
-        if self.active_realizations != dm_other.active_realizations:
-            errors.append(
-                ErrorInfo(
-                    f"Design Matrices '{self.xls_filename.name} ({self.design_sheet} "
-                    f"{self.default_sheet or ''})' and '{dm_other.xls_filename.name} "
-                    f"({dm_other.design_sheet} {dm_other.default_sheet or ''})' do not "
-                    "have the same active realizations!"
-                )
-            )
-
         common_keys = set(
             self.design_matrix_df.select(pl.exclude("realization")).columns
         ) & set(dm_other.design_matrix_df.columns)
@@ -123,17 +113,40 @@ class DesignMatrix:
                     f"{common_keys}!"
                 )
             )
-
+        if self.active_realizations != dm_other.active_realizations:
+            real_intersection = [
+                real_a and real_b
+                for real_a, real_b in zip(
+                    self.active_realizations, dm_other.active_realizations, strict=False
+                )
+            ]
+            if not any(real_intersection):
+                errors.append(
+                    ErrorInfo(
+                        f"Design Matrices '{self.xls_filename.name} "
+                        f"({self.design_sheet} {self.default_sheet or ''})' and "
+                        f"'{dm_other.xls_filename.name} "
+                        f"({dm_other.design_sheet} {dm_other.default_sheet or ''})' "
+                        "do not have any active realizations in common!"
+                    )
+                )
+            else:
+                ConfigWarning.warn(
+                    f"Design Matrices '{self.xls_filename.name} ({self.design_sheet} "
+                    f"{self.default_sheet or ''})' and '{dm_other.xls_filename.name} "
+                    f"({dm_other.design_sheet} {dm_other.default_sheet or ''})' "
+                    "do not have the same active realizations. The merged design "
+                    "matrix will only contain the realizations that are active "
+                    "in all instances."
+                )
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
         try:
-            self.design_matrix_df = pl.concat(
-                [
-                    self.design_matrix_df,
-                    dm_other.design_matrix_df.select(pl.exclude(["realization"])),
-                ],
-                how="horizontal",
+            self.design_matrix_df = self.design_matrix_df.join(
+                dm_other.design_matrix_df,
+                on="realization",
+                how="inner",
             )
         except ValueError as exc:
             raise ConfigValidationError(
@@ -143,6 +156,9 @@ class DesignMatrix:
                 f" and '{dm_other.xls_filename.name} ({dm_other.design_sheet} "
                 f"{dm_other.default_sheet or ''})': {exc}!"
             ) from exc
+
+        reals = self.design_matrix_df.get_column("realization").to_list()
+        self.active_realizations = [x in reals for x in range(max(reals) + 1)]
 
         self.parameter_configurations.extend(
             cfg
