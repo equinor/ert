@@ -24,13 +24,13 @@ from PyQt6.QtWidgets import (
 from _ert.threading import ErtThread
 from ert.config import QueueSystem
 from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.gui.detect_mode import is_dark_mode
 from ert.gui.ertnotifier import ErtNotifier
+from ert.gui.find_ert_info import find_ert_info
+from ert.gui.icon_utils import load_icon
+from ert.gui.summarypanel import SummaryPanel
 from ert.run_models import RunModel, StatusEvents, create_model
 
-from ..detect_mode import is_dark_mode
-from ..find_ert_info import find_ert_info
-from ..icon_utils import load_icon
-from ..summarypanel import SummaryPanel
 from .combobox_with_description import QComboBoxWithDescription
 from .ensemble_experiment_panel import EnsembleExperimentPanel
 from .ensemble_information_filter_panel import EnsembleInformationFilterPanel

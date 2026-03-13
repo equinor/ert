@@ -11,7 +11,8 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel, Field
 
-from ..validation import rangestring_to_list
+from ert.validation import rangestring_to_list
+
 from .parsing import (
     ConfigWarning,
     ErrorInfo,

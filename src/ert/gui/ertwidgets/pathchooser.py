@@ -7,8 +7,9 @@ from typing import TYPE_CHECKING
 from PyQt6.QtCore import QSize
 from PyQt6.QtWidgets import QFileDialog, QHBoxLayout, QLineEdit, QToolButton, QWidget
 
-from ..detect_mode import is_dark_mode
-from ..icon_utils import load_icon
+from ert.gui.detect_mode import is_dark_mode
+from ert.gui.icon_utils import load_icon
+
 from .validationsupport import ValidationSupport
 
 if TYPE_CHECKING:

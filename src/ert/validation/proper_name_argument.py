@@ -7,7 +7,7 @@ from .argument_definition import ArgumentDefinition
 from .validation_status import ValidationStatus
 
 if TYPE_CHECKING:
-    from ..storage import Storage
+    from ert.storage import Storage
 
 
 class ProperNameArgument(ArgumentDefinition):

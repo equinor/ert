@@ -7,10 +7,10 @@ from uuid import UUID
 import numpy as np
 
 from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.run_arg import create_run_arguments
 from ert.storage.local_experiment import ExperimentType
 from ert.trace import tracer
 
-from ..run_arg import create_run_arguments
 from .run_model import RunModel, RunModelConfig
 
 logger = logging.getLogger(__name__)

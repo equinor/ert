@@ -14,8 +14,9 @@ from PyQt6.QtWidgets import (
 )
 from typing_extensions import override
 
-from ..detect_mode import is_dark_mode
-from ..icon_utils import load_icon
+from ert.gui.detect_mode import is_dark_mode
+from ert.gui.icon_utils import load_icon
+
 from .validationsupport import ValidationSupport
 
 
