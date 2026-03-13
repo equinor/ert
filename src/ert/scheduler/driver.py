@@ -47,7 +47,7 @@ class Driver(ABC):
         self._poll_period = _POLL_PERIOD
 
         self._polling_timeout_period = Driver.POLLING_TIMEOUT_PERIOD
-        self._last_successful_poll = time.time()
+        self._last_successful_poll = time.monotonic()
         self._last_polling_error_message: str | None = None
         self._has_warned_evaluator_of_polling_error = False
 
@@ -192,7 +192,10 @@ class Driver(ABC):
 
     async def _warn_evaluator_if_polling_has_failed_for_some_time(self) -> None:
         if (
-            (self._last_successful_poll < time.time() - self._polling_timeout_period)
+            (
+                self._last_successful_poll
+                < time.monotonic() - self._polling_timeout_period
+            )
             and self._last_polling_error_message
             and not self._has_warned_evaluator_of_polling_error
         ):

@@ -302,7 +302,7 @@ class LsfDriver(Driver):
         self._bhist_cmd = Path(bhist_cmd or shutil.which("bhist") or "bhist")
         self._bhist_cache: dict[str, dict[str, int]] | None = None
         self._bhist_required_cache_age: float = 4
-        self._bhist_cache_timestamp: float = time.time()
+        self._bhist_cache_timestamp: float = time.monotonic()
 
         self._submit_locks: MutableMapping[int, asyncio.Lock] = {}
 
@@ -523,7 +523,7 @@ class LsfDriver(Driver):
                     "bhist did not give status for job_ids "
                     f"{missing_in_bhist_and_bjobs}, giving up for now."
                 )
-            self._last_successful_poll = time.time()
+            self._last_successful_poll = time.monotonic()
             await asyncio.sleep(self._poll_period)
 
     async def _process_job_update(self, job_id: str, new_state: AnyJob) -> None:
@@ -620,7 +620,10 @@ class LsfDriver(Driver):
     async def _poll_once_by_bhist(
         self, missing_job_ids: Iterable[str]
     ) -> dict[str, AnyJob]:
-        if time.time() - self._bhist_cache_timestamp < self._bhist_required_cache_age:
+        if (
+            time.monotonic() - self._bhist_cache_timestamp
+            < self._bhist_required_cache_age
+        ):
             return {}
 
         try:
@@ -672,7 +675,7 @@ class LsfDriver(Driver):
             ):
                 jobs[job_id] = "PEND"
         self._bhist_cache = data
-        self._bhist_cache_timestamp = time.time()
+        self._bhist_cache_timestamp = time.monotonic()
         return _parse_jobs_dict(jobs)
 
     def update_and_log_exec_hosts(self, bjobs_exec_hosts: dict[str, str]) -> None:
