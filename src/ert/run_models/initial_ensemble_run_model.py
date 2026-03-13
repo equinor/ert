@@ -1,82 +1,13 @@
-from typing import Annotated, Any, Literal, Self
-
 import numpy as np
 import polars as pl
-from polars.datatypes import DataTypeClass
-from pydantic import BaseModel, Field
 
-from ert.config import (
-    EverestControl,
-    GenKwConfig,
-    KnownDerivedResponseTypes,
-    KnownResponseTypes,
-    Observation,
-    SurfaceConfig,
-)
-from ert.config import Field as FieldConfig
 from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
+from ert.experiment_configs import InitialEnsembleRunModelConfig
 from ert.run_arg import create_run_arguments
-from ert.run_models.run_model import RunModel, RunModelConfig
+from ert.run_models.run_model import RunModel
 from ert.sample_prior import sample_prior
 from ert.storage.local_ensemble import LocalEnsemble
-
-# https://github.com/pola-rs/polars/issues/13152#issuecomment-1864600078
-# PS: Serializing/deserializing schema is scheduled to be added to polars core,
-# ref https://github.com/pola-rs/polars/issues/20426
-# then this workaround can be omitted.
-
-
-def str_to_dtype(dtype_str: str) -> pl.DataType:
-    dtype = eval(f"pl.{dtype_str}")
-    if isinstance(dtype, DataTypeClass):
-        dtype = dtype()
-    return dtype
-
-
-class DictEncodedDataFrame(BaseModel):
-    type: Literal["dicts"]
-    data: list[dict[str, Any]]
-    datatypes: dict[str, str]
-
-    @classmethod
-    def from_polars(cls, data: pl.DataFrame) -> Self:
-        str_schema = {k: str(dtype) for k, dtype in data.schema.items()}
-        return cls(type="dicts", data=data.to_dicts(), datatypes=str_schema)
-
-    def to_polars(self) -> pl.DataFrame:
-        return pl.from_dicts(
-            self.data,
-            schema={
-                col: str_to_dtype(dtype_str)
-                for col, dtype_str in self.datatypes.items()
-            },
-        )
-
-
-class InitialEnsembleRunModelConfig(RunModelConfig):
-    experiment_name: str
-    design_matrix: DictEncodedDataFrame | None
-    parameter_configuration: list[
-        Annotated[
-            (GenKwConfig | SurfaceConfig | FieldConfig | EverestControl),
-            Field(discriminator="type"),
-        ]
-    ]
-    response_configuration: list[
-        Annotated[
-            (KnownResponseTypes),
-            Field(discriminator="type"),
-        ]
-    ]
-    derived_response_configuration: list[
-        Annotated[
-            (KnownDerivedResponseTypes),
-            Field(discriminator="type"),
-        ]
-    ]
-    ert_templates: list[tuple[str, str]]
-    observations: list[Observation] | None = None
 
 
 class InitialEnsembleRunModel(RunModel, InitialEnsembleRunModelConfig):
