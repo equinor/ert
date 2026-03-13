@@ -82,12 +82,7 @@ def test_rerun_failed_all_realizations(opened_main_window_poly, qtbot):
     # Check that all realizations failed
     assert all(run_model._create_mask_from_failed_realizations())
 
-    def handle_dialog():
-        message_box = gui.findChildren(QMessageBox, name="restart_prompt")[-1]
-        qtbot.mouseClick(message_box.buttons()[0], Qt.MouseButton.LeftButton)
-
     write_poly_eval(failing_reals=False)
-    QTimer.singleShot(500, handle_dialog)
     qtbot.mouseClick(run_dialog.rerun_button, Qt.MouseButton.LeftButton)
 
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=60000)
@@ -192,13 +187,8 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot, caplog):
 
     assert set(failed_realizations) == failing_reals_first_try
 
-    def handle_dialog():
-        message_box = gui.findChildren(QMessageBox, name="restart_prompt")[-1]
-        qtbot.mouseClick(message_box.buttons()[0], Qt.MouseButton.LeftButton)
-
     failing_reals_second_try = {*random.sample(list(failing_reals_first_try), 3)}
     write_poly_eval(failing_reals=failing_reals_second_try)
-    QTimer.singleShot(500, handle_dialog)
     qtbot.mouseClick(run_dialog.rerun_button, Qt.MouseButton.LeftButton)
 
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=60000)
@@ -229,7 +219,6 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot, caplog):
         failing_reals_second_try.union(failing_reals_second_try)
     )
 
-    QTimer.singleShot(500, handle_dialog)
     failing_reals_third_try = {*random.sample(list(failing_reals_second_try), 2)}
     write_poly_eval(failing_reals=failing_reals_third_try)
     qtbot.mouseClick(run_dialog.rerun_button, Qt.MouseButton.LeftButton)
@@ -358,13 +347,8 @@ def test_rerun_failed_realizations_evaluate_ensemble(
 
     assert set(failed_realizations) == failing_reals_first_try
 
-    def handle_dialog():
-        message_box = gui.findChildren(QMessageBox, name="restart_prompt")[-1]
-        qtbot.mouseClick(message_box.buttons()[0], Qt.MouseButton.LeftButton)
-
     failing_reals_second_try = {*random.sample(list(failing_reals_first_try), 5)}
     write_poly_eval(failing_reals=failing_reals_second_try)
-    QTimer.singleShot(500, handle_dialog)
     qtbot.mouseClick(run_dialog.rerun_button, Qt.MouseButton.LeftButton)
 
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=60000)
