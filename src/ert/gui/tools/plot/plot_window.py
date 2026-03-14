@@ -521,7 +521,7 @@ class PlotWindow(QMainWindow):
         plot_widget = PlotWidget(name, plotter)
         plot_widget.customizationTriggered.connect(self.toggleCustomizeDialog)
         plot_widget.layerIndexChanged.connect(self.layerIndexChanged)
-        plot_widget.plotUpdateRequested.connect(self.updatePlot)
+        plot_widget.requestUpdatePlot.connect(self.updatePlot)
 
         index = self._central_tab.addTab(plot_widget, name)
         self._plot_widgets.append(plot_widget)

@@ -11,7 +11,7 @@ from matplotlib.backends.backend_qt5agg import (  # type: ignore
     NavigationToolbar2QT,
 )
 from matplotlib.figure import Figure
-from PyQt6.QtCore import QStringListModel, Qt, pyqtBoundSignal
+from PyQt6.QtCore import QStringListModel, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtGui import QAction
@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
     QHBoxLayout,
+    QRadioButton,
     QVBoxLayout,
     QWidget,
     QWidgetAction,
@@ -117,6 +118,7 @@ class PlotWidget(QWidget):
     updateLayerWidget = Signal(int)
     resetLayerWidget = Signal()
     showLayerWidget = Signal(bool)
+    requestUpdatePlot = Signal()
 
     def __init__(
         self,
@@ -162,12 +164,25 @@ class PlotWidget(QWidget):
         self._log_checkbox.setVisible(False)
         self._log_checkbox.setToolTip("Toggle data domain to log scale and back")
         self._log_checkbox.clicked.connect(self.logLogScaleButtonUsage)
+        self._log_checkbox.toggled.connect(self.requestUpdatePlot.emit)
 
-        log_checkbox_row = QHBoxLayout()
-        log_checkbox_row.addWidget(self._log_checkbox)
-        log_checkbox_row.setContentsMargins(16, 8, 16, 8)
-        log_checkbox_row.addStretch()
-        vbox.addLayout(log_checkbox_row)
+        # Only for misfits plot
+        self._misfit_boxplot_button = QRadioButton("Boxplot", self)
+        self._misfit_scatterplot_button = QRadioButton("Scatterplot", self)
+        self._misfit_boxplot_button.setVisible(False)
+        self._misfit_scatterplot_button.setVisible(False)
+        self._misfit_boxplot_button.setChecked(True)
+        self._misfit_boxplot_button.toggled.connect(self.requestUpdatePlot.emit)
+        self._misfit_scatterplot_button.toggled.connect(self.requestUpdatePlot.emit)
+
+        button_row = QHBoxLayout()
+        button_row.addWidget(self._log_checkbox)
+        button_row.addWidget(self._misfit_boxplot_button)
+        button_row.addWidget(self._misfit_scatterplot_button)
+        button_row.setContentsMargins(16, 8, 16, 8)
+        button_row.addStretch()
+
+        vbox.addLayout(button_row)
         vbox.addWidget(self._toolbar)
         vbox.addSpacing(8)
         self.setLayout(vbox)
@@ -176,10 +191,6 @@ class PlotWidget(QWidget):
         self._dirty = True
         self._active = False
         self.resetPlot()
-
-    @property
-    def plotUpdateRequested(self) -> pyqtBoundSignal:
-        return self._log_checkbox.toggled
 
     def resetPlot(self) -> None:
         self._figure.clear()
@@ -197,6 +208,11 @@ class PlotWidget(QWidget):
             self._log_checkbox.setVisible(True)
         else:
             self._log_checkbox.setVisible(False)
+
+    def _sync_misfit_radio_buttons(self) -> None:
+        if type(self._plotter).__name__ == "MisfitsPlot":
+            self._misfit_boxplot_button.setVisible(True)
+            self._misfit_scatterplot_button.setVisible(True)
 
     @property
     def name(self) -> str:
@@ -218,11 +234,13 @@ class PlotWidget(QWidget):
         self.resetPlot()
         try:
             self._sync_log_checkbox()
+            self._sync_misfit_radio_buttons()
             plot_context.log_scale = (
                 self._log_checkbox.isVisible()
                 and self._log_checkbox.isChecked()
                 and self._negative_values_in_data is False
             )
+            plot_context.misfit_boxplot = self._misfit_boxplot_button.isChecked()
             self._plotter.plot(
                 self._figure,
                 plot_context,

@@ -1,14 +1,16 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal, cast
+from datetime import datetime
+from typing import TYPE_CHECKING, Any, Literal, cast
 
-import matplotlib.dates as mdates
 import numpy as np
 import pandas as pd
 import polars as pl
 import seaborn as sns
 from matplotlib import pyplot as plt
+from matplotlib.axes import Axes
 from matplotlib.lines import Line2D
+from PyQt6.QtWidgets import QRadioButton
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -31,6 +33,10 @@ class MisfitsPlot:
     def __init__(self) -> None:
         self.dimensionality = 2
         self.requires_observations = True
+
+        self._toggle_boxplot = QRadioButton("Toggle boxplot")
+        self._toggle_boxplot.setChecked(True)
+        self._toggle_stripplot = QRadioButton("Toggle stripplot")
 
     @staticmethod
     def _fade_axis_ticklabels(ax: plt.Axes) -> None:
@@ -158,28 +164,18 @@ class MisfitsPlot:
             response_type,
         )
 
-        if response_type in {"summary", "breakthrough"}:
-            self._plot_summary_misfits_boxplots(
-                figure,
-                data_with_misfits,
-                plot_context,
-            )
+        self._misfit_plot(
+            figure,
+            data_with_misfits,
+            plot_context,
+        )
 
-        elif response_type in {"gen_data", "rft"}:
-            self._plot_gendata_misfits(
-                figure,
-                data_with_misfits,
-                plot_context,
-            )
-
-    def _plot_gendata_misfits(
+    def _misfit_plot(
         self,
         figure: Figure,
         data_with_misfits: dict[tuple[str, str], pl.DataFrame],
         plot_context: PlotContext,
     ) -> None:
-        # Only plot ensembles with data (i.e., they pertain to an experiment
-        # with observations, and there are responses towards those in the ens)
         ensemble_to_misfit_df = {
             k: v for k, v in data_with_misfits.items() if not v.is_empty()
         }
@@ -193,7 +189,6 @@ class MisfitsPlot:
         ).select(["Realization", "key_index", "misfit", "ensemble_key"])
 
         distinct_gendata_index = all_misfits["key_index"].unique().sort().to_list()
-        num_gendata_index = len(distinct_gendata_index)
 
         color_map = self._make_ensemble_colors(sorted_ensemble_keys)
         self._draw_legend(
@@ -202,24 +197,19 @@ class MisfitsPlot:
             sorted_ensemble_keys=sorted_ensemble_keys,
         )
 
-        y_min, y_max = self._compute_misfits_padded_minmax(all_misfits, 0.05)
-
-        # Create subplot grid (2 rows, N columns)
-        axes = figure.subplots(
-            nrows=2, ncols=num_gendata_index, sharex="col", sharey=True
+        num_cols = len(distinct_gendata_index)
+        # Subplots returns an Axes object when there is only one axes and a
+        # np.ndarray given multiple axes. We will cast it to List[Axes]
+        axes = figure.subplots(ncols=num_cols, sharex="col", sharey=True)
+        axes_list: list[Axes] = (
+            axes.tolist() if isinstance(axes, np.ndarray) else [axes]
         )
-        axes = (
-            axes.reshape(2, num_gendata_index)
-            if num_gendata_index > 1
-            else np.array([[axes[0]], [axes[1]]])
-        )
-        axes_top, axes_bottom = axes[0, :], axes[1, :]
 
         x_positions = np.arange(len(sorted_ensemble_keys))
         box_width_relative = 0.6
 
-        for col_idx, key_index in enumerate(distinct_gendata_index):
-            ax_top, ax_bottom = axes_top[col_idx], axes_bottom[col_idx]
+        for i, key_index in enumerate(distinct_gendata_index):
+            ax = axes_list[i]
 
             for ens_idx, ens_key in enumerate(sorted_ensemble_keys):
                 color = color_map.get(ens_key, "C0")
@@ -235,203 +225,96 @@ class MisfitsPlot:
 
                 x_center = x_positions[ens_idx]
 
-                # Top: Boxplot
-                ax_top.boxplot(
-                    mis_vals,
-                    positions=[x_center],
-                    widths=box_width_relative,
-                    patch_artist=True,
-                    showfliers=False,
-                    boxprops={"facecolor": color, "alpha": 0.35},
-                    whiskerprops={"color": color, "alpha": 0.8},
-                    capprops={"color": color, "alpha": 0.8},
-                    medianprops={"color": color, "alpha": 0.8},
-                )
-                ax_top.plot(x_center, np.mean(mis_vals), "o", markersize=4, color=color)
-
-                # Bottom: Strip plot with dynamic marker size
-                num_points = len(mis_vals)
-
-                if num_points >= 200:
-                    marker_size = 2
-                elif num_points >= 100:
-                    marker_size = 3
+                if plot_context.misfit_boxplot:
+                    self._create_boxplot(
+                        ax, box_width_relative, color, mis_vals, x_center
+                    )
                 else:
-                    marker_size = 4
+                    self._create_stripplot(ax, color, mis_vals, x_center)
 
-                # Use stripplot as a robust alternative for dense data
-                sns.stripplot(
-                    x=[x_center] * num_points,  # Plot all points at the same x-center
-                    y=mis_vals,
-                    ax=ax_bottom,
-                    color=color,
-                    size=marker_size,
-                    alpha=0.35,
-                    jitter=True,  # Explicitly add jitter
-                )
+        y_min, y_max = self._compute_misfits_padded_minmax(all_misfits, 0.05)
+        self._style_boxplots(axes_list, x_positions, y_max, y_min)
 
-        # Axis/spine styling
-        (n_rows, n_cols) = axes.shape
-        for r_idx in range(n_rows):
-            for c_idx in range(n_cols):
-                ax = axes[r_idx, c_idx]
-                is_first_col = c_idx == 0
-                is_bottom_row = r_idx == (n_rows - 1)
-
-                # Common styling
-                ax.set(ylim=(y_min, y_max))
-                ax.axhline(0.0, color="black", linewidth=0.5, alpha=0.5)
-                ax.grid(True, axis="y", linestyle=":", alpha=0.4)
-                self._fade_axis_ticklabels(ax)
-
-                # Spines
-                ax.spines["top"].set_visible(False)
-                ax.spines["right"].set_visible(False)
-                ax.spines["left"].set_visible(is_first_col)
-                ax.spines["bottom"].set_visible(is_bottom_row)
-
-                # Ticks
-                ax.set_xticks(x_positions, labels=[])
-                if not is_bottom_row:
-                    ax.tick_params(axis="x", which="both", bottom=False)
-                if not is_first_col:
-                    ax.tick_params(axis="y", which="both", left=False)
-
-        for ax, key_val in zip(axes_bottom, distinct_gendata_index, strict=True):
-            ax.set_xlabel(f"index={int(key_val)}", rotation=25, ha="right")
+        for ax, key_val in zip(axes_list, distinct_gendata_index, strict=True):
+            label = (
+                str(key_val.date())
+                if isinstance(key_val, datetime)
+                else f"index={int(key_val)}"
+            )
+            ax.set_xlabel(label, rotation=25, ha="right")
 
         figure.suptitle(
-            f"{plot_context.key()} (Signed Chi-squared misfits per index)",
+            f"{plot_context.key()} (Signed Chi-squared misfits)",
             fontsize=14,
             y=0.98,
         )
         figure.tight_layout(rect=(0.02, 0.02, 0.98, 0.88))
 
-    def _plot_summary_misfits_boxplots(
-        self,
-        figure: Figure,
-        data_with_misfits: dict[tuple[str, str], pl.DataFrame],
-        plot_context: PlotContext,
+    def _create_stripplot(
+        self, ax: Axes, color: str, mis_vals: Any, x_center: Any
     ) -> None:
-        # Calculate shared y-axis limits from all misfits
-        all_misfits = pl.concat(
-            [df.select("misfit") for df in data_with_misfits.values()]
+        num_points = len(mis_vals)
+        if num_points >= 200:
+            marker_size = 2
+        elif num_points >= 100:
+            marker_size = 3
+        else:
+            marker_size = 4
+        sns.stripplot(
+            x=[x_center] * num_points,  # Plot all points at the same x-center
+            y=mis_vals,
+            ax=ax,
+            color=color,
+            size=marker_size,
+            alpha=0.35,
+            jitter=True,  # Spread points sharing same x-center horizontally
         )
-        y_min, y_max = self._compute_misfits_padded_minmax(all_misfits, 0.05)
 
-        # Prepare ensemble colors and draw the legend
-        sorted_ensemble_keys = sorted(data_with_misfits.keys())
-        color_map = self._make_ensemble_colors(sorted_ensemble_keys)
-        self._draw_legend(
-            figure=figure,
-            ensemble_colors=color_map,
-            sorted_ensemble_keys=sorted_ensemble_keys,
+    def _create_boxplot(
+        self,
+        ax: Axes,
+        box_width_relative: float,
+        color: str,
+        mis_vals: Any,
+        x_center: Any,
+    ) -> None:
+        ax.boxplot(
+            mis_vals,
+            positions=[x_center],
+            widths=box_width_relative,
+            patch_artist=True,
+            showfliers=False,
+            boxprops={"facecolor": color, "alpha": 0.35},
+            whiskerprops={"color": color, "alpha": 0.8},
+            capprops={"color": color, "alpha": 0.8},
+            medianprops={"color": color, "alpha": 0.8},
         )
+        ax.plot(x_center, np.mean(mis_vals), "o", markersize=4, color=color)
 
-        # Create all subplots at once with shared axes
-        n_ens = len(sorted_ensemble_keys)
-        axes = figure.subplots(nrows=n_ens, ncols=1, sharex=True, sharey=True)
-        axes = [axes] if n_ens == 1 else axes.tolist()
-        axes[0].set_ylim(y_min, y_max)
-
-        for ax, ensemble_key in zip(axes, sorted_ensemble_keys, strict=True):
-            df = data_with_misfits[ensemble_key]
-            if df.is_empty():
-                continue
-
-            df = df.select(["key_index", "misfit"]).sort("key_index")
-            times_py = df["key_index"].unique(maintain_order=True).to_list()
-            positions = mdates.date2num(times_py)  # type: ignore[no-untyped-call]
-
-            # Calculate dynamic box width based on time spacing
-            min_dt = np.min(np.diff(positions)) if len(positions) > 1 else 1.0
-
-            # multiplier to downsize outlier sizes etc
-            # (without this, outliers, whiskers etc are sized way
-            # out of proportion when there are many tiny boxplots)
-            many_boxes_factor = min(1, len(times_py) / 50)
-            box_width = min_dt * (0.7 - 0.3 * (1 - many_boxes_factor))
-
-            # One boxplot per time step
-            grouped_misfits = df.group_by("key_index", maintain_order=True).agg(
-                pl.col("misfit")
-            )
-            data_for_boxes = [
-                s.to_numpy() if s.len() > 0 else np.array([np.nan])
-                for s in grouped_misfits["misfit"]
-            ]
-
-            color = color_map.get(ensemble_key)
-
-            # Draw the boxplots with inlined styles
-            bp = ax.boxplot(
-                data_for_boxes,
-                positions=positions,
-                widths=box_width,
-                whis=(5, 95),
-                showfliers=True,
-                manage_ticks=False,
-                patch_artist=True,
-                boxprops={
-                    "facecolor": color,
-                    "alpha": 0.18,
-                    "edgecolor": color,
-                    "linewidth": 0.7,
-                },
-                whiskerprops={"color": color, "alpha": 0.6, "linewidth": 0.7},
-                capprops={"color": color, "alpha": 0.6, "linewidth": 0.7},
-                medianprops={"color": color, "linewidth": 0.6, "alpha": 0.9},
-                flierprops={
-                    "marker": "o",
-                    "markersize": min(6, box_width * (0.4 - (0.2 * many_boxes_factor))),
-                    "alpha": 0.7,
-                    "markeredgewidth": 0.3 + (0.4 * (1 - many_boxes_factor)),
-                    "markeredgecolor": color,
-                    "markerfacecolor": "none",
-                },
-            )
-            plt.setp(bp["fliers"], zorder=1.5)  # Put fliers behind other elements
-
-            # Add ensemble name text and a horizontal line at y=0
-            ax.text(
-                0.01,
-                0.85,
-                f"{ensemble_key[0]}",
-                transform=ax.transAxes,
-                ha="left",
-                va="center",
-                fontsize=9,
-                alpha=0.75,
-            )
-            ax.axhline(0.0, color="black", linewidth=0.8, alpha=0.4, zorder=0)
-
-        # Apply common styling to all axes
-        for ax in axes:
-            ax.spines["top"].set_visible(False)
-            ax.spines["right"].set_visible(False)
-            ax.spines["left"].set_visible(True)
-            ax.tick_params(axis="y", labelsize=10, width=0.5, length=3)
-            ax.grid(True, axis="y", linestyle=":", linewidth=0.5, alpha=0.75)
+    def _style_boxplots(
+        self, axes: list[Axes], x_positions: Any, y_max: float, y_min: float
+    ) -> None:
+        """Styles the frames containing individual misfit plots to create a prettier
+        collection of plots."""
+        n_cols = len(axes)
+        for c_idx in range(n_cols):
+            ax = axes[c_idx]
             self._fade_axis_ticklabels(ax)
 
-        # Hide the x-axis on all but the last plot
-        for ax in axes[:-1]:
-            ax.spines["bottom"].set_visible(False)
-            ax.tick_params(axis="x", which="both", bottom=False, labelbottom=False)
+            # Style horizontal dotted lines
+            ax.set(ylim=(y_min, y_max))
+            ax.axhline(0.0, color="black", linewidth=0.5, alpha=0.5)
+            ax.grid(True, axis="y", linestyle=":", alpha=0.4)
 
-        # Style the x-axis only on the last plot
-        bottom_ax = axes[-1]
-        bottom_ax.spines["bottom"].set_visible(True)
-        bottom_ax.xaxis.set_major_locator(mdates.AutoDateLocator())  # type: ignore[no-untyped-call]
-        bottom_ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))  # type: ignore[no-untyped-call]
+            is_first_col = c_idx == 0
 
-        bottom_ax.tick_params(axis="x", labelsize=8, width=0.5, length=3)
-        plt.setp(bottom_ax.get_xticklabels(), rotation=25, ha="right")
+            # Visualize only left-most and bottom-most borders
+            ax.spines["top"].set_visible(False)
+            ax.spines["right"].set_visible(False)
+            ax.spines["left"].set_visible(is_first_col)
 
-        figure.suptitle(
-            f"{plot_context.key()} (Signed Chi-squared misfits over time)",
-            fontsize=14,
-            y=0.97,
-            alpha=0.9,
-        )
-        figure.tight_layout(rect=(0.02, 0.02, 0.98, 0.92))
+            # Disable ticks on other than left-most and bottom-most borders
+            ax.set_xticks(x_positions, labels=[])
+            ax.tick_params(axis="x", which="both", bottom=False)
+            if not is_first_col:
+                ax.tick_params(axis="y", which="both", left=False)
