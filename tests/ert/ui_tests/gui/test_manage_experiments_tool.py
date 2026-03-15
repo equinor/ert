@@ -628,6 +628,64 @@ def test_that_parameters_pane_is_populated_correctly(
     assert triggers == QAbstractItemView.EditTrigger.NoEditTriggers
 
 
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_sub_tab_persists_when_switching_ensembles(qtbot):
+    config = ErtConfig.from_file("poly.ert")
+    notifier = ErtNotifier()
+    notifier.set_storage(config.ens_path)
+
+    with notifier.write_storage() as storage:
+        exp = storage.create_experiment(
+            experiment_config={
+                "parameter_configuration": [
+                    pc.model_dump(mode="json")
+                    for pc in config.ensemble_config.parameter_configuration
+                ],
+                "response_configuration": [
+                    rc.model_dump(mode="json")
+                    for rc in config.ensemble_config.response_configuration
+                ],
+            },
+            name="my-experiment",
+        )
+        exp.create_ensemble(
+            ensemble_size=config.runpath_config.num_realizations, name="prior"
+        )
+        exp.create_ensemble(
+            ensemble_size=config.runpath_config.num_realizations, name="posterior"
+        )
+
+    tool = ManageExperimentsPanel(
+        config, notifier, config.runpath_config.num_realizations
+    )
+
+    storage_widget = tool.findChild(StorageWidget)
+    storage_widget._tree_view.expandAll()
+    experiment_index = storage_widget._tree_view.model().index(0, 0)
+
+    # Select first ensemble
+    first_ensemble_index = storage_widget._tree_view.model().index(
+        0, 0, experiment_index
+    )
+    storage_widget._tree_view.setCurrentIndex(first_ensemble_index)
+
+    ensemble_widget = tool._storage_info_widget._content_layout.currentWidget()
+    assert isinstance(ensemble_widget, _EnsembleWidget)
+
+    # Switch to STATE_TAB
+    ensemble_widget._tab_widget.setCurrentIndex(_EnsembleWidgetTabs.STATE_TAB)
+    assert ensemble_widget._tab_widget.currentIndex() == _EnsembleWidgetTabs.STATE_TAB
+
+    # Select second ensemble
+    second_ensemble_index = storage_widget._tree_view.model().index(
+        1, 0, experiment_index
+    )
+    storage_widget._tree_view.setCurrentIndex(second_ensemble_index)
+
+    # Tab should remain on STATE_TAB, not reset to ENSEMBLE_TAB
+    assert ensemble_widget._tab_widget.currentIndex() == _EnsembleWidgetTabs.STATE_TAB
+
+
 def test_that_export_parameters_button_opens_the_export_dialog(
     qtbot, snake_oil_case_storage: ErtConfig, snake_oil_storage: Storage
 ):
