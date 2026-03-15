@@ -462,7 +462,11 @@ class _EnsembleWidget(QWidget):
         self._name_label.setText(f"Name: {ensemble.name!s}")
         self._uuid_label.setText(f"UUID: {ensemble.id!s}")
 
-        self._tab_widget.setCurrentIndex(0)
+        current_index = self._tab_widget.currentIndex()
+        if current_index > 0:
+            self._currentTabChanged(current_index)
+        else:
+            self._tab_widget.setCurrentIndex(0)
 
     @Slot()
     def onClickExportMisfit(self) -> None:
