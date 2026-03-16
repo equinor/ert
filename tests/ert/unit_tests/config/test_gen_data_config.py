@@ -1,4 +1,3 @@
-import os
 from contextlib import suppress
 from pathlib import Path
 
@@ -147,7 +146,7 @@ def test_that_read_file_does_not_raise_unexpected_exceptions_on_invalid_file(con
             keys=["something"],
             report_steps_list=[None],
             input_files=["output"],
-        ).read_from_file(os.getcwd(), 0, 0)
+        ).read_from_file(Path.cwd(), 0, 0)
 
 
 def test_that_read_file_does_not_raise_unexpected_exceptions_on_missing_file(tmpdir):

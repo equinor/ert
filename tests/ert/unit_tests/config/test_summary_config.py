@@ -1,4 +1,3 @@
-import os
 import re
 from contextlib import suppress
 from pathlib import Path
@@ -55,7 +54,7 @@ def test_that_read_file_does_not_raise_unexpected_exceptions_on_invalid_file(
     with suppress(InvalidResponseFile):
         SummaryConfig(
             name="summary", input_files=["CASE"], keys=["FOPR"]
-        ).read_from_file(os.getcwd(), 1, 0)
+        ).read_from_file(Path.cwd(), 1, 0)
 
 
 def test_that_read_file_does_not_raise_unexpected_exceptions_on_missing_file(tmpdir):

@@ -230,7 +230,7 @@ async def test_submit_sets_stdout():
     driver = LsfDriver()
     driver._poll_period = 0.01
     await driver.submit(0, "sleep", name="myjobname")
-    expected_stdout_file = Path(os.getcwd()) / "myjobname.LSF-stdout"
+    expected_stdout_file = Path(Path.cwd()) / "myjobname.LSF-stdout"
     assert f"-o {expected_stdout_file}" in Path("captured_bsub_args").read_text(
         encoding="utf-8"
     )
@@ -240,7 +240,7 @@ async def test_submit_sets_stdout():
 async def test_submit_sets_stderr():
     driver = LsfDriver()
     await driver.submit(0, "sleep", name="myjobname")
-    expected_stderr_file = Path(os.getcwd()) / "myjobname.LSF-stderr"
+    expected_stderr_file = Path(Path.cwd()) / "myjobname.LSF-stderr"
     assert f"-e {expected_stderr_file}" in Path("captured_bsub_args").read_text(
         encoding="utf-8"
     )

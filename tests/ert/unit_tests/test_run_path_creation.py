@@ -722,7 +722,7 @@ async def test_assert_export(make_run_path):
     assert runpath_list_file.name == "test_runpath_list.txt"
     assert (
         runpath_list_file.read_text("utf-8")
-        == f"000  {os.getcwd()}/simulations/realization-0/iter-0  a_name_0  000\n"
+        == f"000  {Path.cwd()}/simulations/realization-0/iter-0  a_name_0  000\n"
     )
 
 
@@ -886,7 +886,7 @@ async def test_that_ertcase_is_replaced_in_runpath(placeholder, make_run_path):
     prior_ensemble, _, _ = await make_run_path(ert_config)
 
     runpath_file = (
-        f"{os.getcwd()}/simulations/{prior_ensemble.name}/realization-0/iter-0"
+        f"{Path.cwd()}/simulations/{prior_ensemble.name}/realization-0/iter-0"
     )
 
     assert (

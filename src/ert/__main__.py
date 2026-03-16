@@ -712,7 +712,7 @@ def main() -> None:
         site_plugins = get_site_plugins()
         setup_site_logging(logging.getLogger())
         with use_runtime_plugins(site_plugins):
-            logger.info(f"Running ert with {args} in {os.getcwd()}")
+            logger.info(f"Running ert with {args} in {Path.cwd()}")
             args.func(args, site_plugins)
     except ErtStoragePermissionError as err:
         logger.error(str(err))

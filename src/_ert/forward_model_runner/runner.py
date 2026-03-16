@@ -94,14 +94,14 @@ class ForwardModelRunner:
             for status_update in step.run():
                 yield status_update
                 if not status_update.success():
-                    yield Checksum(checksum_dict={}, run_path=os.getcwd())
+                    yield Checksum(checksum_dict={}, run_path=str(Path.cwd()))
                     yield Finish().with_error(
                         "Not all forward model steps completed successfully."
                     )
                     return
 
         checksum_dict = self._populate_checksums(self._read_manifest())
-        yield Checksum(checksum_dict=checksum_dict, run_path=os.getcwd())
+        yield Checksum(checksum_dict=checksum_dict, run_path=str(Path.cwd()))
         yield Finish()
 
     def _set_environment(self) -> None:

@@ -1,4 +1,3 @@
-import os
 import re
 import shutil
 import subprocess
@@ -531,11 +530,11 @@ def test_license_error_in_slave_is_caught():
  @--MESSAGE  AT TIME        0.0   DAYS    ( 1-JAN-2000):
  @           STARTING SLAVE SLAVE1   RUNNING EIGHTCEL
  @           ON HOST localhost                        IN DIRECTORY
- @           {os.getcwd()}/slave1
+ @           {Path.cwd()}/slave1
  @--MESSAGE  AT TIME        0.0   DAYS    ( 1-JAN-2000):
  @           STARTING SLAVE SLAVE2   RUNNING EIGHTCEL
  @           ON HOST localhost                        IN DIRECTORY
- @           {os.getcwd()}/slave2
+ @           {Path.cwd()}/slave2
 
 <various_output>
 
@@ -585,11 +584,11 @@ def test_crash_in_slave_is_not_mistaken_as_license():
  @--MESSAGE  AT TIME        0.0   DAYS    ( 1-JAN-2000):
  @           STARTING SLAVE SLAVE1   RUNNING EIGHTCEL
  @           ON HOST localhost                        IN DIRECTORY
- @           {os.getcwd()}/slave1
+ @           {Path.cwd()}/slave1
  @--MESSAGE  AT TIME        0.0   DAYS    ( 1-JAN-2000):
  @           STARTING SLAVE SLAVE2   RUNNING EIGHTCEL
  @           ON HOST localhost                        IN DIRECTORY
- @           {os.getcwd()}/slave2
+ @           {Path.cwd()}/slave2
 
 <various_output>
 
@@ -726,7 +725,7 @@ def test_slave_started_message_are_not_counted_as_errors():
  @--MESSAGE  AT TIME        0.0   DAYS    ( 1-JAN-2000):
  @           STARTING SLAVE SLAVE1   RUNNING EIGHTCEL
  @           ON HOST localhost                        IN DIRECTORY
- @           {os.getcwd()}/slave1"""
+ @           {Path.cwd()}/slave1"""
     eclend = """
  Error summary
  Comments               0

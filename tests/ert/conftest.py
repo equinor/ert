@@ -432,7 +432,7 @@ def _shared_snake_oil_case(request, monkeypatch, source_root):
     else:
         monkeypatch.chdir("test_data")
 
-    return os.getcwd()
+    return Path.cwd()
 
 
 @pytest.fixture
@@ -450,7 +450,7 @@ def _shared_heat_equation_es(request, monkeypatch, source_root):
     else:
         monkeypatch.chdir("test_data")
 
-    return os.getcwd()
+    return Path.cwd()
 
 
 @pytest.fixture
@@ -468,7 +468,7 @@ def _shared_heat_equation_esmda(request, monkeypatch, source_root):
     else:
         monkeypatch.chdir("test_data")
 
-    return os.getcwd()
+    return Path.cwd()
 
 
 @pytest.fixture
@@ -486,7 +486,7 @@ def _shared_heat_equation_enif(request, monkeypatch, source_root):
     else:
         monkeypatch.chdir("test_data")
 
-    return os.getcwd()
+    return Path.cwd()
 
 
 @pytest.fixture

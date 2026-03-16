@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 import sys
+from pathlib import Path
 
 
 def symlink(target: str, link_name: str) -> None:
@@ -29,7 +30,7 @@ def symlink(target: str, link_name: str) -> None:
     if os.path.islink(link_name):
         os.unlink(link_name)
     os.symlink(target, link_name)
-    print(f"Linking '{link_name}' -> '{target}' [ cwd:{os.getcwd()} ]")
+    print(f"Linking '{link_name}' -> '{target}' [ cwd:{Path.cwd()} ]")
 
 
 if __name__ == "__main__":

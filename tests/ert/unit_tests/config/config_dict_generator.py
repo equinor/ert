@@ -709,7 +709,7 @@ def config_generators(draw, use_eclbase=booleans):
 
 
 def to_config_file(filename, config_values):
-    config_dict = config_values.to_config_dict(filename, os.getcwd(), all_defines=False)
+    config_dict = config_values.to_config_dict(filename, Path.cwd(), all_defines=False)
     with Path(filename).open(mode="w+", encoding="utf-8") as config:
         config.write(
             f"{ConfigKeys.RUNPATH_FILE} {config_dict[ConfigKeys.RUNPATH_FILE]}\n"

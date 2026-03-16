@@ -215,7 +215,7 @@ def validate_forward_model(forward_model, forward_model_config):
 def generate_step_from_dict(forward_model_config):
     forward_model_config = copy.deepcopy(forward_model_config)
     forward_model_config["executable"] = os.path.join(
-        os.getcwd(), forward_model_config["executable"]
+        Path.cwd(), forward_model_config["executable"]
     )
     forward_model = _generate_step(
         forward_model_config["name"],
@@ -593,7 +593,7 @@ def test_that_config_path_is_the_directory_of_the_main_ert_config():
         user_config_file=ert_config.user_config_file,
         run_id="",
     )
-    assert data["jobList"][0]["argList"] == [os.getcwd()]
+    assert data["jobList"][0]["argList"] == [str(Path.cwd())]
 
 
 @pytest.mark.usefixtures("use_tmpdir")

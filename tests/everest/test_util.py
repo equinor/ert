@@ -51,7 +51,7 @@ def test_get_values(change_to_tmpdir):
 def test_show_scaled_controls_warning_user_info_file_present(
     change_to_tmpdir, monkeypatch, user_reply, existing_value, result
 ):
-    monkeypatch.setenv("HOME", os.getcwd())
+    monkeypatch.setenv("HOME", Path.cwd())
     if existing_value:
         monkeypatch.setattr("builtins.input", lambda _: user_reply)
 
@@ -83,7 +83,7 @@ def test_show_scaled_controls_warning_user_info_file_present(
 def test_show_scaled_controls_warning_no_user_info_file_present(
     change_to_tmpdir, monkeypatch, user_reply, result
 ):
-    monkeypatch.setenv("HOME", os.getcwd())
+    monkeypatch.setenv("HOME", Path.cwd())
     monkeypatch.setattr("builtins.input", lambda _: user_reply)
 
     assert not Path(".ert").exists()
@@ -117,7 +117,7 @@ def test_show_scaled_controls_warning_no_user_info_file_present(
 def test_show_scaled_controls_warning_error_reading_from_user_info(
     change_to_tmpdir, monkeypatch, user_reply, result
 ):
-    monkeypatch.setenv("HOME", os.getcwd())
+    monkeypatch.setenv("HOME", Path.cwd())
     monkeypatch.setattr("builtins.input", lambda _: user_reply)
 
     Path(".ert").write_text("{ not valid json ", encoding="utf-8")
@@ -155,7 +155,7 @@ def test_show_scaled_controls_warning_error_reading_from_user_info(
 def test_show_scaled_controls_warning_error_writing_user_info(
     change_to_tmpdir, monkeypatch, user_reply
 ):
-    monkeypatch.setenv("HOME", os.getcwd())
+    monkeypatch.setenv("HOME", Path.cwd())
     monkeypatch.setattr("builtins.input", lambda _: user_reply)
 
     Path(".ert").touch()
@@ -180,7 +180,7 @@ def test_show_scaled_controls_warning_error_writing_user_info(
 def test_show_scaled_controls_warning_preserves_extra_keys(
     change_to_tmpdir, monkeypatch, user_reply, existing_value, result
 ):
-    monkeypatch.setenv("HOME", os.getcwd())
+    monkeypatch.setenv("HOME", Path.cwd())
     if existing_value:
         monkeypatch.setattr("builtins.input", lambda _: user_reply)
 

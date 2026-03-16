@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 import argparse
-import os
 import sys
 import time
+from pathlib import Path
 
 
 def main(argv):
@@ -19,7 +19,7 @@ def main(argv):
     arg_parser.add_argument("--fail", type=str)
     options, _ = arg_parser.parse_known_args(args=argv)
 
-    if options.fail in os.getcwd():
+    if options.fail in str(Path.cwd()):
         raise Exception(f"Failing {options.fail} by request!")
 
     time.sleep(1)
