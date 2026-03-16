@@ -210,8 +210,8 @@ async def test_that_when_gen_kw_is_in_the_config_then_parameters_txt_is_created(
         config_contents.format(parameters="GEN_KW GENKW genkw")
     )
     await make_run_path(ert_config)
-    assert os.path.exists("simulations/realization-0/iter-0")
-    assert os.path.exists("simulations/realization-0/iter-0/parameters.txt")
+    assert Path("simulations/realization-0/iter-0").exists()
+    assert Path("simulations/realization-0/iter-0/parameters.txt").exists()
     assert len(os.listdir("simulations")) == 1
     assert len(os.listdir("simulations/realization-0")) == 1
 
@@ -222,8 +222,8 @@ async def test_that_when_gen_kw_is_not_in_the_config_then_parameters_txt_is_not_
 ):
     ert_config = ErtConfig.from_file_contents(config_contents.format(parameters=""))
     await make_run_path(ert_config)
-    assert os.path.exists("simulations/realization-0/iter-0")
-    assert not os.path.exists("simulations/realization-0/iter-0/parameters.txt")
+    assert Path("simulations/realization-0/iter-0").exists()
+    assert not Path("simulations/realization-0/iter-0/parameters.txt").exists()
     assert len(os.listdir("simulations")) == 1
     assert len(os.listdir("simulations/realization-0")) == 1
 
@@ -235,7 +235,7 @@ async def test_that_jobs_json_is_backed_up_when_run_path_is_recreated(make_run_p
         config_contents.format(parameters="GEN_KW GENKW genkw")
     )
     await make_run_path(ert_config)
-    assert os.path.exists("simulations/realization-0/iter-0/jobs.json")
+    assert Path("simulations/realization-0/iter-0/jobs.json").exists()
     await make_run_path(ert_config)
     iter0_output_files = os.listdir("simulations/realization-0/iter-0/")
     assert len([f for f in iter0_output_files if f.startswith("jobs.json")]) > 1, (

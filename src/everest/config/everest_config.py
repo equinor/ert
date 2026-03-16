@@ -936,7 +936,7 @@ to read summary data from forward model, do:
     @classmethod
     def validate_config_path_exists(cls, config_path):
         expanded_path = os.path.realpath(config_path)
-        if not os.path.exists(expanded_path):
+        if not Path(expanded_path).exists():
             raise ValueError(f"no such file or directory {expanded_path}")
         return config_path
 

@@ -191,7 +191,7 @@ class File(Reporter):
             file.write(f"  <reason>{error_msg}</reason>\n")
             stderr_file = None
             if fm_step.std_err:
-                if os.path.exists(fm_step.std_err):
+                if Path(fm_step.std_err).exists():
                     stderr = Path(fm_step.std_err).read_text(encoding="utf-8")
                     if stderr:
                         stderr_file = os.path.join(Path.cwd(), fm_step.std_err)

@@ -51,11 +51,11 @@ def test_logging_setup(copy_math_func_test_data_to_tmp):
     everest_log_path = os.path.join(everest_logs_dir_path, "everest.log")
     forward_model_log_path = os.path.join(everest_logs_dir_path, "forward_models.log")
 
-    assert os.path.exists(everest_output_path)
-    assert os.path.exists(everest_logs_dir_path)
-    assert os.path.exists(forward_model_log_path)
-    assert os.path.exists(everest_log_path)
-    assert os.path.exists(everserver_log_path)
+    assert Path(everest_output_path).exists()
+    assert Path(everest_logs_dir_path).exists()
+    assert Path(forward_model_log_path).exists()
+    assert Path(everest_log_path).exists()
+    assert Path(everserver_log_path).exists()
 
     assert "everest.detached.everserver INFO: Output directory:" in Path(
         everest_log_path

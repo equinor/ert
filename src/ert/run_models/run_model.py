@@ -115,7 +115,7 @@ class TooFewRealizationsSucceeded(ErtRunError):
 
 
 def delete_runpath(run_path: str) -> None:
-    if os.path.exists(run_path):
+    if Path(run_path).exists():
         shutil.rmtree(run_path)
 
 

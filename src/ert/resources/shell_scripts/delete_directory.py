@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import pathlib
 import sys
 
 
@@ -41,7 +42,7 @@ def delete_directory(path: str) -> None:
     """
     Will ignore if you are not owner.
     """
-    if os.path.exists(path):
+    if pathlib.Path(path).exists():
         if os.path.isdir(path):
             for root, dirs, files in os.walk(path, topdown=False, followlinks=False):
                 if not os.path.islink(root):

@@ -1,4 +1,5 @@
 import os
+import pathlib
 import shutil
 from collections.abc import Callable, Mapping, Sequence
 from enum import EnumType
@@ -183,7 +184,7 @@ class SchemaItem:
                             f"{self.kw} {token} is not a file.",
                             token,
                         )
-                    if not os.path.exists(str(path)):
+                    if not pathlib.Path(str(path)).exists():
                         err = f'Cannot find file or directory "{token.value}". '
                         if path != token:
                             err += f"The configured value was {path!r} "
@@ -214,7 +215,7 @@ class SchemaItem:
                     absolute_path = os.path.abspath(os.path.join(cwd, token))
                 else:
                     absolute_path = token
-                if not os.path.exists(absolute_path):
+                if not pathlib.Path(absolute_path).exists():
                     absolute_path = shutil.which(token)
                     is_command = True
 

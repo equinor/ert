@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -58,7 +57,7 @@ def test_run_path_deleted_error(snake_oil_case_storage: ErtConfig, qtbot: QtBot)
     run_dialog = gui.findChild(RunDialog)
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=100000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
-    assert os.path.exists(run_path / dummy_file.name)
+    assert Path(run_path / dummy_file.name).exists()
 
 
 @pytest.mark.integration_test
@@ -101,7 +100,7 @@ def test_run_path_is_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
     run_dialog = gui.findChild(RunDialog)
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=100000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
-    assert not os.path.exists(run_path / dummy_file.name)
+    assert not Path(run_path / dummy_file.name).exists()
 
 
 @pytest.mark.integration_test
@@ -142,4 +141,4 @@ def test_run_path_is_not_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot
     run_dialog = gui.findChild(RunDialog)
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=100000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
-    assert os.path.exists(run_path / dummy_file.name)
+    assert Path(run_path / dummy_file.name).exists()

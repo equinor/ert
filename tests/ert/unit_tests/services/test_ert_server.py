@@ -1,5 +1,4 @@
 import importlib
-import os
 import signal
 import sys
 import threading
@@ -206,7 +205,7 @@ def test_json_deleted(server):
     server.fetch_connection_info()  # wait for it to start
     time.sleep(2)  # ensure subprocess is done before calling shutdown()
 
-    assert not os.path.exists(_ERT_SERVER_CONNECTION_INFO_FILE)
+    assert not Path(_ERT_SERVER_CONNECTION_INFO_FILE).exists()
 
 
 @pytest.mark.script(

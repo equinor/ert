@@ -1,5 +1,4 @@
 import difflib
-from os.path import exists
 from pathlib import Path
 
 import pytest
@@ -17,7 +16,7 @@ def test_config_branch_entry(cached_example):
 
     config_branch_entry(["config_minimal.yml", "new_restart_config.yml", "-b", "1"])
 
-    assert exists("new_restart_config.yml")
+    assert Path("new_restart_config.yml").exists()
 
     old_config = load_yaml("config_minimal.yml")
     old_controls = old_config["controls"]
@@ -55,7 +54,7 @@ def test_config_branch_preserves_config_section_order(cached_example):
 
     config_branch_entry(["config_minimal.yml", "new_restart_config.yml", "-b", "1"])
 
-    assert exists("new_restart_config.yml")
+    assert Path("new_restart_config.yml").exists()
 
     diff_lines = []
     with (

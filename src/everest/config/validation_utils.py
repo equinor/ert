@@ -280,7 +280,7 @@ def check_path_exists(
     for exp_path in [as_abs_path(p, str(config_dir)) for p in expanded_paths]:
         if os.path.ismount(exp_path):
             raise ValueError(f"'{exp_path}' is a mount point and can't be handled")
-        if not os.path.exists(exp_path):
+        if not Path(exp_path).exists():
             raise ValueError(f"No such file or directory {exp_path}")
 
 

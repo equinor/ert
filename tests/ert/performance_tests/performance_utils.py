@@ -101,7 +101,7 @@ def make_poly_example(folder, source, **kwargs):
             **kwargs,
         )
 
-    if not os.path.exists(folder / "refcase"):
+    if not Path(folder / "refcase").exists():
         os.mkdir(folder / "refcase")
 
     use_resfo = True

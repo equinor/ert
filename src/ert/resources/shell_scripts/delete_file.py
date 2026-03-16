@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 import os
+import pathlib
 import sys
 
 
 def delete_file(filename: str) -> None:
-    if os.path.exists(filename):
+    if pathlib.Path(filename).exists():
         if os.path.isfile(filename):
             stat_info = os.stat(filename)
             uid = stat_info.st_uid
