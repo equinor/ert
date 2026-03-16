@@ -194,7 +194,7 @@ class File(Reporter):
                 if os.path.exists(fm_step.std_err):
                     stderr = Path(fm_step.std_err).read_text(encoding="utf-8")
                     if stderr:
-                        stderr_file = os.path.join(os.getcwd(), fm_step.std_err)
+                        stderr_file = os.path.join(Path.cwd(), fm_step.std_err)
                     else:
                         stderr = f"Empty stderr from {fm_step.name()}\n"
                 else:

@@ -121,9 +121,7 @@ def test_that_all_subprocesses_of_a_job_are_cleaned_up_on_fm_dispatch_terminatio
     )
 
     # (we wait for the process below)
-    fm_dispatch_process = Popen(
-        [os.getcwd() + "/setsid", "fm_dispatch.py", os.getcwd()]
-    )
+    fm_dispatch_process = Popen([Path.cwd() / "setsid", "fm_dispatch.py", Path.cwd()])
 
     p = psutil.Process(fm_dispatch_process.pid)
 
@@ -171,7 +169,7 @@ def test_memory_profile_is_logged_as_csv(
     monkeypatch.setattr(
         _ert.forward_model_runner.runner.ForwardModelStep, "MEMORY_POLL_PERIOD", 0.1
     )
-    fm_dispatch(["fm_dispatch", os.getcwd()])
+    fm_dispatch(["fm_dispatch", str(Path.cwd())])
     csv_files = glob.glob("logs/memory-profile*csv")
     mem_df = pd.read_csv(csv_files[0], parse_dates=True)
     assert mem_df["timestamp"].is_monotonic_increasing
@@ -209,7 +207,7 @@ def test_that_a_subset_of_jobs_to_run_can_be_specified_as_cmdline_arguments(
     )
 
     fm_dispatch_process = Popen(
-        [os.getcwd() + "/setsid", "fm_dispatch.py", os.getcwd(), "step_B", "step_C"]
+        [Path.cwd() / "setsid", "fm_dispatch.py", Path.cwd(), "step_B", "step_C"]
     )
     fm_dispatch_process.wait()
 
@@ -406,7 +404,7 @@ async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_sigterm(
         )
 
         fm_dispatch_process = Popen(  # noqa: ASYNC220
-            [os.getcwd() + "/setsid", "fm_dispatch.py", os.getcwd()]
+            [Path.cwd() / "setsid", "fm_dispatch.py", Path.cwd()]
         )
         p = psutil.Process(fm_dispatch_process.pid)
 
@@ -448,7 +446,7 @@ async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_terminate_m
         )
 
         fm_dispatch_process = Popen(  # noqa: ASYNC220
-            [os.getcwd() + "/setsid", "fm_dispatch.py", os.getcwd()]
+            [Path.cwd() / "setsid", "fm_dispatch.py", Path.cwd()]
         )
 
         await asyncio.wait_for(

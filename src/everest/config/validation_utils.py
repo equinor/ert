@@ -49,7 +49,7 @@ class InstallDataContext:
     ) -> None:
         self._install_data = install_data or []
         self._config_dir = str(config_path.parent)
-        self._cwd = os.getcwd()
+        self._cwd = Path.cwd()
 
     def __enter__(self) -> Self:
         self._temp_dir = tempfile.TemporaryDirectory()

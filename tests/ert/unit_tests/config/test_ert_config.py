@@ -76,8 +76,8 @@ def test_that_config_path_substitution_is_the_name_of_the_configs_directory():
     Path("minimal_config.ert").write_text("NUM_REALIZATIONS 1", encoding="utf-8")
     ert_config = ErtConfig.from_file("minimal_config.ert")
 
-    assert ert_config.config_path == os.getcwd()
-    assert ert_config.substitutions["<CONFIG_PATH>"] == os.getcwd()
+    assert ert_config.config_path == str(Path.cwd())
+    assert ert_config.substitutions["<CONFIG_PATH>"] == str(Path.cwd())
 
 
 def test_runpath_file_is_absolute(monkeypatch, tmp_path):
@@ -210,7 +210,7 @@ SUMMARY *"""
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_parsing_workflows_gives_expected():
-    cwd = os.getcwd()
+    cwd = str(Path.cwd())
 
     config_dict = {
         ConfigKeys.LOAD_WORKFLOW_JOB: [
@@ -421,7 +421,7 @@ def test_that_creating_ert_config_from_dict_is_same_as_from_file(
     filename = "config.ert"
     with config_generator(tmp_path_factory, filename) as config_values:
         config_from_dict = ErtConfig.from_dict(
-            config_values.to_config_dict("config.ert", os.getcwd())
+            config_values.to_config_dict("config.ert", str(Path.cwd()))
         )
         config_from_file = ErtConfig.from_file(filename)
 
@@ -438,7 +438,7 @@ def test_that_ert_config_is_serializable(tmp_path_factory, config_generator):
     filename = "config.ert"
     with config_generator(tmp_path_factory, filename) as config_values:
         ert_config = ErtConfig.from_dict(
-            config_values.to_config_dict("config.ert", os.getcwd())
+            config_values.to_config_dict("config.ert", str(Path.cwd()))
         )
         config_json = RootModel[ErtConfig](ert_config).model_dump(mode="json")
         from_json = ErtConfig(**config_json)
@@ -465,7 +465,7 @@ def test_that_parsing_ert_config_result_in_expected_values(
         assert ert_config.random_seed == config_values.random_seed
         assert ert_config.queue_config.max_submit == config_values.max_submit
         assert ert_config.user_config_file == os.path.abspath(filename)
-        assert ert_config.config_path == os.getcwd()
+        assert ert_config.config_path == str(Path.cwd())
         assert str(ert_config.runpath_file) == os.path.abspath(
             config_values.runpath_file
         )
@@ -487,7 +487,7 @@ def test_default_ens_path():
     dict_set_ens_path = ErtConfig.from_dict(
         {
             ConfigKeys.NUM_REALIZATIONS: 1,
-            "ENSPATH": os.path.join(os.getcwd(), "storage"),
+            "ENSPATH": os.path.join(Path.cwd(), "storage"),
         }
     ).ens_path
 
@@ -669,8 +669,8 @@ def test_that_magic_strings_get_substituted_in_workflow():
         script <ZERO>
         """
     )
-    script_file_path = os.path.join(os.getcwd(), "script")
-    workflow_file_path = os.path.join(os.getcwd(), "workflow")
+    script_file_path = os.path.join(Path.cwd(), "script")
+    workflow_file_path = os.path.join(Path.cwd(), "workflow")
     Path(script_file_path).write_text(script_file_contents, encoding="utf-8")
     Path(workflow_file_path).write_text(workflow_file_contents, encoding="utf-8")
 
@@ -742,7 +742,7 @@ def test_that_if_field_is_given_and_grid_is_missing_you_get_error(
     tmp_path_factory, config_generator
 ):
     with config_generator(tmp_path_factory) as config_values:
-        config_dict = config_values.to_config_dict("test.ert", os.getcwd())
+        config_dict = config_values.to_config_dict("test.ert", Path.cwd())
         del config_dict[ConfigKeys.GRID]
         assume(len(config_dict.get(ConfigKeys.FIELD, [])) > 0)
         with pytest.raises(
@@ -1423,8 +1423,8 @@ def test_parsing_workflow_with_multiple_args():
         script <ZERO>
         """
     )
-    script_file_path = os.path.join(os.getcwd(), "script")
-    workflow_file_path = os.path.join(os.getcwd(), "workflow")
+    script_file_path = os.path.join(Path.cwd(), "script")
+    workflow_file_path = os.path.join(Path.cwd(), "workflow")
     Path(script_file_path).write_text(script_file_contents, encoding="utf-8")
     Path(workflow_file_path).write_text(workflow_file_contents, encoding="utf-8")
 
@@ -1885,9 +1885,9 @@ def test_parsing_define_within_workflow():
         """
     )
 
-    script_file_path = os.path.join(os.getcwd(), "script")
-    workflow_file_path = os.path.join(os.getcwd(), "workflow")
-    workflow2_file_path = os.path.join(os.getcwd(), "workflow2")
+    script_file_path = os.path.join(Path.cwd(), "script")
+    workflow_file_path = os.path.join(Path.cwd(), "workflow")
+    workflow2_file_path = os.path.join(Path.cwd(), "workflow2")
 
     Path(script_file_path).write_text(script_file_contents, encoding="utf-8")
 
@@ -2113,7 +2113,7 @@ def test_run_template_raises_configvalidationerror_with_more_than_two_arguments(
 
 @pytest.fixture
 def setup_workflow_file():
-    workflow_file_path = os.path.join(os.getcwd(), "workflow")
+    workflow_file_path = os.path.join(Path.cwd(), "workflow")
     Path(workflow_file_path).write_text("TEST_SCRIPT", encoding="utf-8")
 
     Path("config.ert").write_text(
@@ -2208,7 +2208,7 @@ def test_ert_script_hook_pre_experiment_essettings_fails():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_ert_script_hook_valid_essettings_succeed():
-    workflow_file_path = os.path.join(os.getcwd(), "workflow")
+    workflow_file_path = os.path.join(Path.cwd(), "workflow")
     Path(workflow_file_path).write_text("TEST_SCRIPT", encoding="utf-8")
 
     Path("config.ert").write_text(

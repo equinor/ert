@@ -144,7 +144,7 @@ def test_when_manifest_file_is_not_created_by_fm_runner_checksum_contains_error(
     assert "md5sum" not in info
     assert "error" in info
     assert (
-        f"Expected file {os.getcwd()}/{file_name} not created by forward model!"
+        f"Expected file {Path.cwd()}/{file_name} not created by forward model!"
         in info["error"]
     )
 

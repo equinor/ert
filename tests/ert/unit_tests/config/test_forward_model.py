@@ -47,7 +47,7 @@ def test_load_forward_model():
     assert fm_step.stdout_file is None
     assert fm_step.stderr_file is None
 
-    assert fm_step.executable == os.path.join(os.getcwd(), "script.sh")
+    assert fm_step.executable == os.path.join(Path.cwd(), "script.sh")
     assert os.access(fm_step.executable, os.X_OK)
 
     assert fm_step.min_arg is None
@@ -221,7 +221,7 @@ def test_ert_config_throws_on_missing_forward_model_step(
             expected_exception=ValueError, match="Could not find forward model step"
         ):
             _ = ErtConfig.from_dict(
-                config_values.to_config_dict("test.ert", os.getcwd())
+                config_values.to_config_dict("test.ert", Path.cwd())
             )
 
 

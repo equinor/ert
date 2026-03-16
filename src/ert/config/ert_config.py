@@ -784,7 +784,7 @@ class ErtConfig(BaseModel):
         self.config_path = (
             path.dirname(path.abspath(self.user_config_file))
             if self.user_config_file
-            else os.getcwd()
+            else str(Path.cwd())
         )
         return self
 
@@ -1455,7 +1455,7 @@ def _substitutions_from_dict(config_dict: ConfigDict) -> dict[str, str]:
     substitutions = dict(config_dict.get("DEFINE", []))
 
     if "<CONFIG_PATH>" not in substitutions:
-        substitutions["<CONFIG_PATH>"] = os.getcwd()
+        substitutions["<CONFIG_PATH>"] = str(Path.cwd())
 
     substitutions.update(dict(config_dict.get("DATA_KW", [])))
 

@@ -4,6 +4,7 @@ import datetime
 import os
 import os.path
 from collections.abc import Iterator, Sequence
+from pathlib import Path
 from typing import Any, Self
 
 from lark import (
@@ -334,7 +335,7 @@ def _handle_includes(
             constraints = define_keyword()
             args = constraints.join_args(args)
             args = _substitute_args(args, constraints, defines)  # type: ignore
-            args = constraints.apply_constraints(args, kw, os.getcwd())  # type: ignore
+            args = constraints.apply_constraints(args, kw, Path.cwd())  # type: ignore
             defines.append(args)  # type: ignore
         if kw == "INCLUDE":
             if len(args) > 1:

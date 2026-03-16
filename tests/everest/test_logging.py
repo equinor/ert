@@ -45,7 +45,7 @@ def test_logging_setup(copy_math_func_test_data_to_tmp):
     everest_config.write_to_file("config_minimal.yml")
     start_everest(["everest", "run", "config_minimal.yml", "--skip-prompt"])
 
-    everest_output_path = os.path.join(os.getcwd(), "everest_output")
+    everest_output_path = os.path.join(Path.cwd(), "everest_output")
     everest_logs_dir_path = everest_config.log_dir
     everserver_log_path = os.path.join(everest_logs_dir_path, "everserver.log")
     everest_log_path = os.path.join(everest_logs_dir_path, "everest.log")

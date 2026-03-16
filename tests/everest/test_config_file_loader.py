@@ -1,5 +1,6 @@
 import os
 import string
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -85,7 +86,7 @@ def test_load_config_as_yaml(tmp_path):
 
 def test_configpath_in_defs(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    current_working_directory = os.getcwd()
+    current_working_directory = Path.cwd()
 
     definitions_for_yaml_creation = {
         "local_jobs_folder": "r{{ configpath }}/jobs",
@@ -107,7 +108,7 @@ def test_configpath_in_defs(tmp_path, monkeypatch):
 
 def test_dependent_definitions(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    current_working_directory = os.getcwd()
+    current_working_directory = str(Path.cwd())
 
     definitions_for_initial_config_object = {
         "numeric_key": 1,
