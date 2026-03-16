@@ -98,7 +98,7 @@ class Runpaths:
         :param realization_numbers: The list of realizations to write entries for
         """
         Path(self.runpath_list_filename).parent.mkdir(parents=True, exist_ok=True)
-        with open(self.runpath_list_filename, "w", encoding="utf-8") as filehandle:
+        with Path(self.runpath_list_filename).open("w", encoding="utf-8") as filehandle:
             for iteration in iteration_numbers:
                 for realization in realization_numbers:
                     real_iter_substituter = self.substitutions.real_iter_substituter(

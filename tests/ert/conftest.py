@@ -197,7 +197,7 @@ def _create_design_matrix(filename, design_sheet_df, default_sheet_df=None):
 @pytest.fixture
 def copy_poly_case(copy_case):
     copy_case("poly_example")
-    with open("poly.ert", "a", encoding="utf-8") as fh:
+    with Path("poly.ert").open("a", encoding="utf-8") as fh:
         fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
 
 
@@ -266,21 +266,21 @@ def copy_poly_case_with_design_matrix(copy_case):
 @pytest.fixture
 def copy_snake_oil_field(copy_case):
     copy_case("snake_oil_field")
-    with open("snake_oil_field.ert", "a", encoding="utf-8") as fh:
+    with Path("snake_oil_field.ert").open("a", encoding="utf-8") as fh:
         fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
 
 
 @pytest.fixture
 def copy_snake_oil_case(copy_case):
     copy_case("snake_oil")
-    with open("snake_oil.ert", "a", encoding="utf-8") as fh:
+    with Path("snake_oil.ert").open("a", encoding="utf-8") as fh:
         fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
 
 
 @pytest.fixture
 def copy_heat_equation(copy_case):
     copy_case("heat_equation")
-    with open("config.ert", "a", encoding="utf-8") as fh:
+    with Path("config.ert").open("a", encoding="utf-8") as fh:
         fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
 
 
@@ -402,7 +402,7 @@ def _run_heat_equation(source_root, run_mode):
         os.path.join(source_root, "test-data", "ert", "heat_equation"), "test_data"
     )
     os.chdir("test_data")
-    with open("config.ert", "a", encoding="utf-8") as fh:
+    with Path("config.ert").open("a", encoding="utf-8") as fh:
         fh.write("QUEUE_OPTION LOCAL MAX_RUNNING 2\n")
     parser = ArgumentParser(prog="test_main")
     parsed = ert_parser(

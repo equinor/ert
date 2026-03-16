@@ -132,7 +132,7 @@ class File(Reporter):
 
     @staticmethod
     def _write_status_file(msg: str) -> None:
-        with open(STATUS_file, "a", encoding="utf-8") as status_file:
+        with Path(STATUS_file).open("a", encoding="utf-8") as status_file:
             status_file.write(msg)
 
     def _init_status_file(self) -> None:
@@ -174,7 +174,7 @@ class File(Reporter):
 
     @staticmethod
     def _add_log_line(step: "ForwardModelStep") -> None:
-        with open(LOG_file, "a", encoding="utf-8") as f:
+        with Path(LOG_file).open("a", encoding="utf-8") as f:
             assert step.step_data["argList"] is not None
             args = " ".join(step.step_data["argList"])
             time_str = time.strftime(TIME_FORMAT, time.localtime())
@@ -182,7 +182,7 @@ class File(Reporter):
 
     @staticmethod
     def _dump_error_file(fm_step: "ForwardModelStep", error_msg: str | None) -> None:
-        with open(ERROR_file, "w", encoding="utf-8") as file:
+        with Path(ERROR_file).open("w", encoding="utf-8") as file:
             file.write("<error>\n")
             file.write(
                 f"  <time>{time.strftime(TIME_FORMAT, time.localtime())}</time>\n"

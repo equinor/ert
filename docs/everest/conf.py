@@ -54,7 +54,7 @@ config = GenerationConfiguration(
     markdown_options={"breaks": {"on_newline": False}},
     deprecated_from_description=True,
 )
-with open("config_schema.json", "w", encoding="utf-8") as fout:
+with Path("config_schema.json").open("w", encoding="utf-8") as fout:
     json.dump(EverestConfig.model_json_schema(), fout)
 
 generate_from_filename("config_schema.json", "config_schema.html", config=config)

@@ -13,7 +13,7 @@ def main(argv):
     arg_parser.add_argument("--out-suffix", type=str, default="")
     opts, _ = arg_parser.parse_known_args(args=argv)
 
-    with open(opts.controls_file, encoding="utf-8") as f:
+    with Path(opts.controls_file).open(encoding="utf-8") as f:
         controls = json.load(f)
 
     for name, indices in controls.items():

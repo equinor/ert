@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from ert.config import ErtConfig
@@ -39,7 +41,7 @@ def assert_variance_in_field(
 @pytest.mark.usefixtures("copy_snake_oil_field")
 @pytest.mark.integration_test
 def test_that_distance_localization_works_with_a_single_observation():
-    with open("snake_oil_field.ert", "r+", encoding="utf-8") as f:
+    with Path("snake_oil_field.ert").open("r+", encoding="utf-8") as f:
         lines = f.readlines()
 
     config_content = [
@@ -52,7 +54,7 @@ def test_that_distance_localization_works_with_a_single_observation():
         ]
     )
 
-    with open("snake_oil_field_dl.ert", "w", encoding="utf-8") as f:
+    with Path("snake_oil_field_dl.ert").open("w", encoding="utf-8") as f:
         f.writelines(config_content)
 
     run_cli(
@@ -77,7 +79,7 @@ def test_that_distance_localization_works_with_a_single_observation():
 @pytest.mark.usefixtures("copy_heat_equation")
 @pytest.mark.integration_test
 def test_that_distance_localization_runs_on_heat_equation():
-    with open("config.ert", encoding="utf-8") as fh:
+    with Path("config.ert").open(encoding="utf-8") as fh:
         lines = fh.readlines()
 
     config_content = [
@@ -89,7 +91,7 @@ def test_that_distance_localization_runs_on_heat_equation():
             "ENSPATH heat_storage_dl\n",
         ]
     )
-    with open("heat_dl.ert", "w", encoding="utf-8") as fh:
+    with Path("heat_dl.ert").open("w", encoding="utf-8") as fh:
         fh.writelines(config_content)
 
     run_cli(

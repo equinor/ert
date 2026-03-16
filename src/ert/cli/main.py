@@ -158,7 +158,7 @@ def run_cli(args: Namespace, runtime_plugins: ErtRuntimePlugins | None = None) -
     with contextlib.ExitStack() as exit_stack:
         out: TextIO
         if args.disable_monitoring:
-            out = exit_stack.enter_context(open(os.devnull, "w", encoding="utf-8"))
+            out = exit_stack.enter_context(Path(os.devnull).open("w", encoding="utf-8"))
         else:
             out = sys.stderr
         monitor = Monitor(out=out, color_always=args.color_always)

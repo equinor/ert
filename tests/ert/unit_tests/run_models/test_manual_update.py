@@ -25,7 +25,7 @@ def test_that_manual_update_from_ensemble_experiment_supports_all_update_modes(
     Path("some_template.txt").write_text("<IENS>", encoding="utf-8")
 
     run_template = "RUN_TEMPLATE some_template.txt TEMPLATE_FILE:poly.tmpl"
-    with open(config_file, "a", encoding="utf-8") as fh:
+    with Path(config_file).open("a", encoding="utf-8") as fh:
         fh.write(f"\n{run_template}\n")
         fh.write("\nNUM_REALIZATIONS 2\n")
 

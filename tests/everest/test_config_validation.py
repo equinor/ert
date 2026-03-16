@@ -1,6 +1,5 @@
 import json
 import os
-import pathlib
 import re
 from argparse import ArgumentParser
 from contextlib import ExitStack as does_not_raise
@@ -788,12 +787,12 @@ def test_that_non_existing_install_job_errors_deprecated(
 def test_that_existing_install_job_with_malformed_executable_errors_deprecated(
     install_keyword, change_to_tmpdir
 ):
-    with open("malformed.ert", "w+", encoding="utf-8") as f:
+    with Path("malformed.ert").open("w+", encoding="utf-8") as f:
         f.write(
             """EXECUTABLE
         """
         )
-    with open("malformed2.ert", "w+", encoding="utf-8") as f:
+    with Path("malformed2.ert").open("w+", encoding="utf-8") as f:
         f.write(
             """EXECUTABLE 1 two 3
                EXECUTABLE one two
@@ -832,13 +831,13 @@ def test_that_existing_install_job_with_malformed_executable_errors_deprecated(
 def test_that_existing_install_job_with_non_executable_executable_errors_deprecated(
     install_keyword, change_to_tmpdir
 ):
-    with open("exec.ert", "w+", encoding="utf-8") as f:
+    with Path("exec.ert").open("w+", encoding="utf-8") as f:
         f.write(
             """EXECUTABLE non_executable
         """
         )
 
-    with open("non_executable", "w+", encoding="utf-8") as f:
+    with Path("non_executable").open("w+", encoding="utf-8") as f:
         f.write("bla")
 
     os.chmod("non_executable", os.stat("non_executable").st_mode & ~0o111)
@@ -873,7 +872,7 @@ def test_that_existing_install_job_with_non_executable_executable_errors_depreca
 def test_that_existing_install_job_with_non_executable_executable_errors(
     install_keyword, change_to_tmpdir
 ):
-    with open("non_executable", "w+", encoding="utf-8") as f:
+    with Path("non_executable").open("w+", encoding="utf-8") as f:
         f.write("bla")
 
     os.chmod("non_executable", os.stat("non_executable").st_mode & ~0o111)
@@ -903,7 +902,7 @@ def test_that_existing_install_job_with_non_executable_executable_errors(
 def test_that_existing_install_job_with_non_existing_executable_errors_deprecated(
     install_keyword, change_to_tmpdir
 ):
-    with open("exec.ert", "w+", encoding="utf-8") as f:
+    with Path("exec.ert").open("w+", encoding="utf-8") as f:
         f.write(
             """EXECUTABLE non_existing
         """
@@ -1038,7 +1037,7 @@ def test_that_objective_function_weights_sum_is_positive(values, expect_error):
 
 def test_that_install_templates_must_have_unique_names(change_to_tmpdir):
     for f in ["hey", "hesy", "heyyy"]:
-        pathlib.Path(f).write_text(f, encoding="utf-8")
+        Path(f).write_text(f, encoding="utf-8")
 
     with pytest.raises(
         ValueError,
@@ -1266,7 +1265,7 @@ def test_load_file_undefined_substitutions(min_config, change_to_tmpdir, capsys)
         }
     ]
 
-    with open("config.yml", mode="w", encoding="utf-8") as f:
+    with Path("config.yml").open(mode="w", encoding="utf-8") as f:
         yaml.dump(config, f)
 
     parser = ArgumentParser(prog="test")
@@ -1305,7 +1304,7 @@ def test_export_deprecated_keys(key, value, min_config, change_to_tmpdir):
     config = min_config
     config["export"] = {key: value}
 
-    with open("config.yml", mode="w", encoding="utf-8") as f:
+    with Path("config.yml").open(mode="w", encoding="utf-8") as f:
         yaml.dump(config, f)
 
     parser = ArgumentParser(prog="test")

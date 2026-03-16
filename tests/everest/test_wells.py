@@ -1,5 +1,6 @@
 import json
 from contextlib import ExitStack as does_not_raise
+from pathlib import Path
 
 import pytest
 
@@ -79,7 +80,7 @@ def test_well_config_to_wells_json(min_config, monkeypatch, tmp_path, config):
     for datafile, data in _get_internal_files(ever_config).items():
         datafile.parent.mkdir(exist_ok=True, parents=True)
         datafile.write_text(data, encoding="utf-8")
-    with open("everest_output/.internal_data/wells.json", encoding="utf-8") as fin:
+    with Path("everest_output/.internal_data/wells.json").open(encoding="utf-8") as fin:
         wells_json = json.load(fin)
     assert wells_json == config
 
@@ -106,7 +107,7 @@ def test_controls_config_to_wells_json(min_config, monkeypatch, tmp_path, variab
     for datafile, data in _get_internal_files(ever_config).items():
         datafile.parent.mkdir(exist_ok=True, parents=True)
         datafile.write_text(data, encoding="utf-8")
-    with open("everest_output/.internal_data/wells.json", encoding="utf-8") as fin:
+    with Path("everest_output/.internal_data/wells.json").open(encoding="utf-8") as fin:
         wells_json = json.load(fin)
     assert wells_json == [{"name": "test"}]
 

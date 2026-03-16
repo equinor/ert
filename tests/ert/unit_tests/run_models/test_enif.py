@@ -38,7 +38,7 @@ def test_that_enif_update_does_not_update_design_matrix_parameters(
         ),
     )
 
-    with open(config_file, "a", encoding="utf-8") as fh:
+    with Path(config_file).open("a", encoding="utf-8") as fh:
         fh.write(f"NUM_REALIZATIONS {num_realizations}\n")
         fh.write("RANDOM_SEED 123456789\n")
         fh.write("DESIGN_MATRIX poly_design.xlsx\n")

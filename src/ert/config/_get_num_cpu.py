@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+from pathlib import Path
 from typing import TypeVar, overload
 
 from .parsing import ConfigWarning
@@ -77,7 +78,7 @@ def get_num_cpu_from_data_file(data_file: str) -> int | None:
 
     """
     try:
-        with open(data_file, encoding="utf-8") as file:
+        with Path(data_file).open(encoding="utf-8") as file:
             return _get_num_cpu(iter(file), data_file)
     except (OSError, UnicodeDecodeError) as err:
         ConfigWarning.warn(

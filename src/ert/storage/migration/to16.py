@@ -22,7 +22,7 @@ def delete_mask_file(experiment: Path) -> None:
 
 
 def migrate_fields(experiment: Path) -> None:
-    with open(experiment / "parameter.json", encoding="utf-8") as fin:
+    with Path(experiment / "parameter.json").open(encoding="utf-8") as fin:
         parameters_json = json.load(fin)
 
     new_parameter_configs = migrate_field_param(parameters_json)

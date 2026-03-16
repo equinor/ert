@@ -59,8 +59,8 @@ def test_config_branch_preserves_config_section_order(cached_example):
 
     diff_lines = []
     with (
-        open("config_minimal.yml", encoding="utf-8") as initial_config,
-        open("new_restart_config.yml", encoding="utf-8") as branch_config,
+        Path("config_minimal.yml").open(encoding="utf-8") as initial_config,
+        Path("new_restart_config.yml").open(encoding="utf-8") as branch_config,
     ):
         diff = difflib.unified_diff(
             initial_config.readlines(),

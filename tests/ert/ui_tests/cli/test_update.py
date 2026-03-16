@@ -174,7 +174,7 @@ def test_update_lowers_generalized_variance_or_deactivates_observations(
         os.chmod(py, mode.st_mode | stat.S_IEXEC)
 
         for i in range(num_groups):
-            with open("observations", mode="a", encoding="utf-8") as f:
+            with Path("observations").open(mode="a", encoding="utf-8") as f:
                 f.write(observation.format(i=i))
             Path(f"poly_obs_{i}.txt").write_text(
                 "\n".join(

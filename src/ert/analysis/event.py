@@ -49,7 +49,7 @@ class DataSection:
         f_path = output_path / fname
         f_path.parent.mkdir(parents=True, exist_ok=True)
         df = pd.DataFrame(self.data, columns=self.header)
-        with open(f_path.with_suffix(".report"), "w", encoding="utf-8") as fout:
+        with Path(f_path.with_suffix(".report")).open("w", encoding="utf-8") as fout:
             if self.extra:
                 fout.writelines(f"{k}: {v}\n" for k, v in self.extra.items())
             fout.write(df.to_markdown(tablefmt="simple_outline", floatfmt=".4f"))

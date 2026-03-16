@@ -4,6 +4,7 @@
 import datetime
 import json
 import sys
+from pathlib import Path
 
 import geostat
 import numpy as np
@@ -129,7 +130,7 @@ def sample_prior_conductivity(ensemble_size, nx, rng, corr_length):
 
 
 def load_parameters(filename):
-    with open(filename, encoding="utf-8") as f:
+    with Path(filename).open(encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -167,7 +168,7 @@ if __name__ == "__main__":
 
     index = sorted((obs.x, obs.y) for obs in obs_coordinates)
     for time_step in obs_times:
-        with open(f"gen_data_{time_step}.out", "w", encoding="utf-8") as f:
+        with Path(f"gen_data_{time_step}.out").open("w", encoding="utf-8") as f:
             f.writelines(f"{response[time_step][i]}\n" for i in index)
 
     time_map = []

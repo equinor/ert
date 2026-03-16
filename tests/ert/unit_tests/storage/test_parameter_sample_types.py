@@ -286,7 +286,7 @@ def test_that_sampling_is_fixed_from_name(
     only that name of the parameter and the global seed determine the values.
     """
     with tmpdir.as_cwd():
-        with open("template.txt", "w", encoding="utf-8") as fh:
+        with Path("template.txt").open("w", encoding="utf-8") as fh:
             fh.writelines(template)
         fs = storage.create_ensemble(
             storage.create_experiment(
@@ -351,11 +351,11 @@ def test_that_sub_sample_maintains_order(tmpdir, storage, mask, expected):
         GEN_KW KW_NAME template.txt kw.txt prior.txt
         """
         )
-        with open("config.ert", "w", encoding="utf-8") as fh:
+        with Path("config.ert").open("w", encoding="utf-8") as fh:
             fh.writelines(config)
-        with open("template.txt", "w", encoding="utf-8") as fh:
+        with Path("template.txt").open("w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-        with open("prior.txt", "w", encoding="utf-8") as fh:
+        with Path("prior.txt").open("w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
 
         ert_config = ErtConfig.from_file("config.ert")
@@ -414,7 +414,7 @@ async def test_gen_kw_optional_template(storage, tmpdir, config_str, expected):
 
 
 def write_file(fname, contents):
-    with open(fname, mode="w", encoding="utf-8") as fout:
+    with Path(fname).open(mode="w", encoding="utf-8") as fout:
         fout.writelines(contents)
 
 

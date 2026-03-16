@@ -343,7 +343,7 @@ def test_undefined_substitution(min_config, change_to_tmpdir, target, expected):
         {"source": "r{{configpath}}/../model/file.txt", "target": target}
     ]
 
-    with open("config.yml", mode="w", encoding="utf-8") as f:
+    with Path("config.yml").open(mode="w", encoding="utf-8") as f:
         yaml.dump(config, f)
     if expected:
         with pytest.raises(ValueError, match=expected) as e:
@@ -362,7 +362,7 @@ def test_commented_out_substitution(min_config, change_to_tmpdir):
         "step3 abc",
     ]
 
-    with open("config.yml", mode="w", encoding="utf-8") as f:
+    with Path("config.yml").open(mode="w", encoding="utf-8") as f:
         yaml.dump(config, f)
 
     with fileinput.input("config.yml", inplace=True) as fin:
@@ -410,7 +410,7 @@ def test_that_geo_id_is_deprecated(min_config, change_to_tmpdir, caplog, capsys)
     config = min_config
     config["forward_model"] = ["step1 <GEO_ID>"]
 
-    with open("config.yml", mode="w", encoding="utf-8") as f:
+    with Path("config.yml").open(mode="w", encoding="utf-8") as f:
         yaml.dump(config, f)
 
     config_dict = yaml_file_to_substituted_config_dict("config.yml")

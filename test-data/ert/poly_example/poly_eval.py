@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 def _load_coeffs(filename):
-    with open(filename, encoding="utf-8") as f:
+    with Path(filename).open(encoding="utf-8") as f:
         return json.load(f)
 
 

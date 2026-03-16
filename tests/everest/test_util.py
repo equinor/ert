@@ -57,14 +57,14 @@ def test_show_scaled_controls_warning_user_info_file_present(
 
     user_info = {EVEREST: {"show_scaling_warning": existing_value}}
 
-    with open(".ert", "w", encoding="utf-8") as f:
+    with Path(".ert").open("w", encoding="utf-8") as f:
         json.dump(user_info, f)
     if user_reply.lower() == "n":
         with pytest.raises(SystemExit):
             show_scaled_controls_warning()
     else:
         show_scaled_controls_warning()
-    with open(".ert", encoding="utf-8") as f:
+    with Path(".ert").open(encoding="utf-8") as f:
         user_info = json.load(f)
     assert user_info.get(EVEREST).get("show_scaling_warning") == result
 
@@ -96,7 +96,7 @@ def test_show_scaled_controls_warning_no_user_info_file_present(
 
     assert Path(".ert").exists()
 
-    with open(".ert", encoding="utf-8") as f:
+    with Path(".ert").open(encoding="utf-8") as f:
         user_info = json.load(f)
 
     assert user_info.get(EVEREST), "Expected everest key"
@@ -124,7 +124,7 @@ def test_show_scaled_controls_warning_error_reading_from_user_info(
 
     with (
         pytest.raises(json.decoder.JSONDecodeError),
-        open(".ert", encoding="utf-8") as f,
+        Path(".ert").open(encoding="utf-8") as f,
     ):
         json.load(f)
 
@@ -134,7 +134,7 @@ def test_show_scaled_controls_warning_error_reading_from_user_info(
     elif user_reply.lower() == "y":
         show_scaled_controls_warning()
 
-        with open(".ert", encoding="utf-8") as f:
+        with Path(".ert").open(encoding="utf-8") as f:
             user_info = json.load(f)
         assert user_info.get(EVEREST).get("show_scaling_warning") == result
     else:
@@ -189,7 +189,7 @@ def test_show_scaled_controls_warning_preserves_extra_keys(
         "ert": {"test_key": 42},
     }
 
-    with open(".ert", "w", encoding="utf-8") as f:
+    with Path(".ert").open("w", encoding="utf-8") as f:
         json.dump(user_info, f)
 
     if user_reply.lower() == "n":
@@ -198,7 +198,7 @@ def test_show_scaled_controls_warning_preserves_extra_keys(
     else:
         show_scaled_controls_warning()
 
-    with open(".ert", encoding="utf-8") as f:
+    with Path(".ert").open(encoding="utf-8") as f:
         user_info = json.load(f)
     assert user_info.get(EVEREST).get("show_scaling_warning") == result
     assert user_info.get("ert").get("test_key") == 42

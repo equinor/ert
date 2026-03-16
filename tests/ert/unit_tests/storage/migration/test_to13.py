@@ -61,7 +61,7 @@ def setup_experiments_and_ensembles(
     ensemble_uuids: list[uuid.UUID],
     ensemble_mapping: dict[uuid.UUID, uuid.UUID] | None = None,
 ) -> None:
-    with open("index.json", "w", encoding="utf-8") as f:
+    with Path("index.json").open("w", encoding="utf-8") as f:
         json.dump({"version": 12, "migrations": []}, f, indent=2)
 
     os.mkdir("experiments")
@@ -70,7 +70,7 @@ def setup_experiments_and_ensembles(
     for i, exp_id in enumerate(experiment_uuids):
         exp_path = Path("experiments", str(exp_id))
         os.mkdir(exp_path)
-        with open(Path(exp_path, "index.json"), "w", encoding="utf-8") as f:
+        with Path(exp_path, "index.json").open("w", encoding="utf-8") as f:
             json.dump(
                 {
                     "id": str(exp_id),
@@ -90,7 +90,7 @@ def setup_experiments_and_ensembles(
 
         ens_path = Path("ensembles", str(ens_id))
         os.mkdir(ens_path)
-        with open(Path(ens_path) / "index.json", "w", encoding="utf-8") as f:
+        with Path(Path(ens_path) / "index.json").open("w", encoding="utf-8") as f:
             json.dump(
                 {
                     "id": str(ens_id),
@@ -116,11 +116,11 @@ def test_that_experiments_point_to_ensembles_after_migration_one_to_one(use_tmpd
 
     for ens_id, exp_id in zip(ensemble_uuids, experiment_uuids, strict=False):
         with (
-            open(
-                Path("ensembles") / str(ens_id) / "index.json", encoding="utf-8"
+            Path(Path("ensembles") / str(ens_id) / "index.json").open(
+                encoding="utf-8"
             ) as ens_f,
-            open(
-                Path("experiments") / str(exp_id) / "index.json", encoding="utf-8"
+            Path(Path("experiments") / str(exp_id) / "index.json").open(
+                encoding="utf-8"
             ) as exp_f,
         ):
             ens_data = json.load(ens_f)
@@ -149,14 +149,14 @@ def test_that_experiments_point_to_ensembles_after_migration_many_ensembles_per_
     point_experiments_to_ensembles(Path.cwd())
 
     for exp_id in experiment_uuids:
-        with open(
-            Path("experiments") / str(exp_id) / "index.json", encoding="utf-8"
+        with Path(Path("experiments") / str(exp_id) / "index.json").open(
+            encoding="utf-8"
         ) as exp_f:
             exp_data = json.load(exp_f)
             assert exp_data["ensembles"] == sorted(expected_exp_to_ens[str(exp_id)])
             for ensemble_id in exp_data["ensembles"]:
-                with open(
-                    Path("ensembles") / ensemble_id / "index.json", encoding="utf-8"
+                with Path(Path("ensembles") / ensemble_id / "index.json").open(
+                    encoding="utf-8"
                 ) as ens_check_f:
                     ens_check_data = json.load(ens_check_f)
                     assert ens_check_data["experiment_id"] == str(exp_id)
@@ -180,9 +180,8 @@ def test_that_experiments_point_to_ensembles_after_migration_for_empty_experimen
     setup_experiments_and_ensembles(experiment_uuids, ensemble_uuids, ensemble_mapping)
     point_experiments_to_ensembles(Path.cwd())
 
-    with open(
-        Path("experiments") / str(empty_experiment_uuid) / "index.json",
-        encoding="utf-8",
+    with Path(Path("experiments") / str(empty_experiment_uuid) / "index.json").open(
+        encoding="utf-8"
     ) as exp_f:
         exp_data = json.load(exp_f)
         assert exp_data["ensembles"] == []

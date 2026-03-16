@@ -285,7 +285,7 @@ def test_field_parameter_persistence_to_grdecl(tmpdir):
             FORWARD_MODEL poly_eval
         """
         )
-        with open("config.ert", "w", encoding="utf-8") as fh:
+        with Path("config.ert").open("w", encoding="utf-8") as fh:
             fh.writelines(config)
 
         realizations = 5

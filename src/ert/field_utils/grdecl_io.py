@@ -6,6 +6,7 @@ import os
 from collections.abc import Iterator
 from contextlib import contextmanager
 from functools import reduce
+from pathlib import Path
 from typing import Any, TextIO
 
 import numpy as np
@@ -177,7 +178,7 @@ def open_grdecl(
         if keyword is not None:
             raise ValueError(f"Reached end of stream while reading {keyword}")
 
-    with open(grdecl_file, encoding="utf-8") as stream:
+    with Path(grdecl_file).open(encoding="utf-8") as stream:
         yield read_grdecl(stream)
 
 
@@ -230,7 +231,7 @@ def import_bgrdecl(
     dimensions: tuple[int, int, int],
 ) -> npt.NDArray[np.float32]:
     field_name = field_name.strip()
-    with open(file_path, "rb") as f:
+    with Path(file_path).open("rb") as f:
         for entry in resfo.lazy_read(f):
             keyword = str(entry.read_keyword()).strip()
             if keyword == field_name:
@@ -282,7 +283,7 @@ def export_grdecl(
         fmt = " ".join(["%3e"] * per_line)
         fmt = "\n".join([fmt] * iters) + "\n"
         with (
-            open(file_path, "wb+", 0) as fh,
+            Path(file_path).open("wb+", 0) as fh,
             io.BufferedWriter(fh, _BUFFER_SIZE) as bw,
             io.TextIOWrapper(bw, write_through=True, encoding="utf-8") as tw,
         ):

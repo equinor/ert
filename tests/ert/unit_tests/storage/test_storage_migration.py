@@ -285,13 +285,13 @@ def test_that_migrate_blockfs_creates_backup_folder(tmp_path, caplog):
     storage_experiments = storage_path / "experiments"
     storage_backup = storage_path / "_blockfs_backup"
 
-    with open(tmp_path / "config.ert", mode="w", encoding="utf-8") as f:
+    with Path(tmp_path / "config.ert").open(mode="w", encoding="utf-8") as f:
         f.writelines(["NUM_REALIZATIONS 1\n", "ENSPATH", str(storage_path)])
 
     for d in (storage_path, storage_ensembles, storage_experiments):
         os.makedirs(d, exist_ok=True)
 
-    with open(storage_path / "index.json", "w+", encoding="utf-8") as f:
+    with Path(storage_path / "index.json").open("w+", encoding="utf-8") as f:
         f.write("""{"version": 0}""")
 
     Path(storage_experiments / "exp_dummy.txt").write_text("", encoding="utf-8")
@@ -303,12 +303,12 @@ def test_that_migrate_blockfs_creates_backup_folder(tmp_path, caplog):
     assert storage_backup.exists()
     assert "Blockfs storage backed up" in caplog.messages
 
-    with open(storage_path / "index.json", encoding="utf-8") as f:
+    with Path(storage_path / "index.json").open(encoding="utf-8") as f:
         index = json.load(f)
         assert index["version"] == _LOCAL_STORAGE_VERSION
         assert index["migrations"] == []
 
-    with open(storage_backup / "index.json", encoding="utf-8") as f:
+    with Path(storage_backup / "index.json").open(encoding="utf-8") as f:
         index = json.load(f)
         assert index["version"] == 0
 

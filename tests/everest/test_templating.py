@@ -73,7 +73,7 @@ def test_render_invalid(change_to_tmpdir):
 
     prod_wells = {f"PROD{idx:d}": 0.3 * idx for idx in range(4)}
     prod_in = "well_drill_prod.json"
-    with open(prod_in, "w", encoding="utf-8") as fout:
+    with Path(prod_in).open("w", encoding="utf-8") as fout:
         json.dump(prod_wells, fout)
 
     wells_out = "wells.out"
@@ -103,13 +103,13 @@ def test_render(change_to_tmpdir):
     wells = {f"PROD{idx:d}": 0.2 * idx for idx in range(1, 5)}
     wells.update({f"INJ{idx:d}": 1 - 0.2 * idx for idx in range(1, 5)})
     wells_in = "well_drill.json"
-    with open(wells_in, "w", encoding="utf-8") as fout:
+    with Path(wells_in).open("w", encoding="utf-8") as fout:
         json.dump(wells, fout)
 
     wells_out = "wells.out"
     render(wells_in, template_file, wells_out)
 
-    with open(wells_out, encoding="utf-8") as fin:
+    with Path(wells_out).open(encoding="utf-8") as fin:
         output = fin.readlines()
 
     for idx, line in enumerate(output):
@@ -135,12 +135,12 @@ def test_render_multiple_input(change_to_tmpdir):
 
     wells_north = {f"PROD{idx:d}": 0.2 * idx for idx in range(1, 5)}
     wells_north_in = "well_drill_north.json"
-    with open(wells_north_in, "w", encoding="utf-8") as fout:
+    with Path(wells_north_in).open("w", encoding="utf-8") as fout:
         json.dump(wells_north, fout)
 
     wells_south = {f"PROD{idx:d}": 1 - 0.2 * idx for idx in range(1, 5)}
     wells_south_in = "well_drill_south.json"
-    with open(wells_south_in, "w", encoding="utf-8") as fout:
+    with Path(wells_south_in).open("w", encoding="utf-8") as fout:
         json.dump(wells_south, fout)
 
     wells_out = "sub_folder/wells.out"
