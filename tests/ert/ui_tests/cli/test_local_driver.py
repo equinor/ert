@@ -18,7 +18,7 @@ def create_ert_config(path: Path):
         ),
         encoding="utf-8",
     )
-    os.chmod(path / "test_script.sh", 0o755)
+    Path(path / "test_script.sh").chmod(0o755)
     ert_config_path.write_text(
         dedent(
             r"""

@@ -1,5 +1,6 @@
 import logging
 import os
+import pathlib
 import sys
 from unittest import mock
 from unittest.mock import MagicMock
@@ -59,7 +60,7 @@ def test_storage_exception_is_not_unexpected_error(caplog):
 def test_non_writable_log_directory_exits_with_message(monkeypatch, use_tmpdir):
     logs_dir = "logs_dir_without_write_access"
     os.mkdir(logs_dir)
-    os.chmod(logs_dir, 0o444)  # Read only access mode
+    pathlib.Path(logs_dir).chmod(0o444)  # Read only access mode
 
     expected_exit_messages = [
         "Could not configure log handler for files.",

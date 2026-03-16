@@ -252,12 +252,8 @@ def copy_poly_case_with_design_matrix(copy_case):
             encoding="utf-8",
         )
 
-        os.chmod(
-            "poly_eval.py",
-            os.stat("poly_eval.py").st_mode
-            | stat.S_IXUSR
-            | stat.S_IXGRP
-            | stat.S_IXOTH,
+        Path("poly_eval.py").chmod(
+            os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
         )
 
     return _create_poly_design_case

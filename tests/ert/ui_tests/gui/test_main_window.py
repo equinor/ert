@@ -596,9 +596,8 @@ def test_that_a_failing_job_shows_error_message_with_context(
         ),
         encoding="utf-8",
     )
-    os.chmod(
-        "poly_eval.py",
-        os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH,
+    Path("poly_eval.py").chmod(
+        os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
     )
 
     with contextlib.suppress(FileNotFoundError):
@@ -990,9 +989,8 @@ warnings.warn('Foobar')"""
 
     Path(script_file).write_text(dedent(script_file_content), encoding="utf-8")
 
-    os.chmod(
-        script_file,
-        os.stat(script_file).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH,
+    Path(script_file).chmod(
+        os.stat(script_file).st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
     )
 
     config_file = "config.ert"

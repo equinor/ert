@@ -190,12 +190,11 @@ def _ensemble_experiment_run(
                 encoding="utf-8",
             )
 
-            os.chmod(
-                "poly_eval.py",
+            Path("poly_eval.py").chmod(
                 os.stat("poly_eval.py").st_mode
                 | stat.S_IXUSR
                 | stat.S_IXGRP
-                | stat.S_IXOTH,
+                | stat.S_IXOTH
             )
         run_experiment(EnsembleExperiment, gui)
 

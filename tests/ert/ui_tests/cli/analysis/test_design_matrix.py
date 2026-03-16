@@ -165,9 +165,8 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values):
         encoding="utf-8",
     )
 
-    os.chmod(
-        "poly_eval.py",
-        os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH,
+    Path("poly_eval.py").chmod(
+        os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
     )
 
     with warnings.catch_warnings():
@@ -282,9 +281,8 @@ def test_run_poly_example_with_multiple_design_matrix_instances():
         encoding="utf-8",
     )
 
-    os.chmod(
-        "poly_eval.py",
-        os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH,
+    Path("poly_eval.py").chmod(
+        os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
     )
 
     with warnings.catch_warnings(record=True) as all_warnings:
@@ -406,9 +404,8 @@ def test_design_matrix_on_esmda(experiment_mode, ensemble_name, iterations):
         encoding="utf-8",
     )
 
-    os.chmod(
-        "poly_eval.py",
-        os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH,
+    Path("poly_eval.py").chmod(
+        os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
     )
 
     Path("coeff_priors_a").write_text("a UNIFORM 0 1", encoding="utf-8")
