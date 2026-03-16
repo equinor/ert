@@ -21,7 +21,7 @@ def read_file(file: str, token: FileContextToken | None = None) -> str:
 
         # Find the first line in the file with decode error
         bad_byte_lines: list[int] = []
-        with open(file, "rb") as f:
+        with Path(file).open("rb") as f:
             all_lines = list(f)
 
         for i, line in enumerate(all_lines):

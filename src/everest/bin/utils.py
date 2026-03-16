@@ -466,7 +466,7 @@ def show_scaled_controls_warning() -> None:
         case "y":
             everest_pref["show_scaling_warning"] = False
             try:
-                with open(user_info_path, mode="w", encoding="utf-8") as f:
+                with Path(user_info_path).open(mode="w", encoding="utf-8") as f:
                     json.dump(user_info, f, ensure_ascii=False, indent=4)
             except Exception as e:
                 logging.getLogger(EVEREST).error(str(e))

@@ -51,9 +51,9 @@ def ert_config(tmpdir):
         RANDOM_SEED 1234
         """
         )
-        with open("config.ert", "w", encoding="utf-8") as fh:
+        with Path("config.ert").open("w", encoding="utf-8") as fh:
             fh.writelines(config)
-        with open("observations", "w", encoding="utf-8") as fh:
+        with Path("observations").open("w", encoding="utf-8") as fh:
             obs_config = dedent(
                 """
                 SUMMARY_OBSERVATION FOPR_1
@@ -73,9 +73,9 @@ def ert_config(tmpdir):
                 """
             )
             fh.writelines(obs_config)
-        with open("template.txt", mode="w", encoding="utf-8") as fh:
+        with Path("template.txt").open(mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-        with open("prior.txt", mode="w", encoding="utf-8") as fh:
+        with Path("prior.txt").open(mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD NORMAL 0 1")
         yield ErtConfig.from_file("config.ert")
 

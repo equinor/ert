@@ -905,7 +905,7 @@ def test_that_non_numbers_in_obs_file_shows_informative_error_message(tmpdir):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_the_number_of_columns_in_obs_file_cannot_change():
-    with open("obs_data.txt", "w", encoding="utf-8") as fh:
+    with Path("obs_data.txt").open("w", encoding="utf-8") as fh:
         fh.writelines(f"{float(i)} 0.1\n" for i in range(5))
         fh.writelines("0.1\n")
     with pytest.raises(
@@ -928,7 +928,7 @@ def test_that_the_number_of_columns_in_obs_file_cannot_change():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_the_number_of_values_in_obs_file_must_be_even():
-    with open("obs_data.txt", "w", encoding="utf-8") as fh:
+    with Path("obs_data.txt").open("w", encoding="utf-8") as fh:
         fh.writelines(f"{float(i)} 0.1 0.1\n" for i in range(5))
     with pytest.raises(ConfigValidationError, match="Expected even number of values"):
         make_observations(
@@ -1236,7 +1236,7 @@ def test_that_obs_file_must_have_the_same_number_of_lines_as_the_length_of_index
     tmpdir,
 ):
     with tmpdir.as_cwd():
-        with open("obs_data.txt", "w", encoding="utf-8") as fh:
+        with Path("obs_data.txt").open("w", encoding="utf-8") as fh:
             fh.writelines(f"{float(i)} 0.1\n" for i in range(5))
 
         with pytest.raises(ConfigValidationError, match="must be of equal length"):

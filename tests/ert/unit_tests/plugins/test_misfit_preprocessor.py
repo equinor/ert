@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
@@ -8,10 +10,10 @@ from ert.plugins import get_site_plugins
 def test_that_misfit_preprocessor_raises():
     # Warning is given on LOAD_WORKFLOW.
     # Since LOAD_WORKFLOW failed error is raised on HOOK_WORKFLOW
-    with open("poly.ert", "a", encoding="utf-8") as fh:
+    with Path("poly.ert").open("a", encoding="utf-8") as fh:
         fh.writelines("LOAD_WORKFLOW config\n")
         fh.writelines("HOOK_WORKFLOW config PRE_FIRST_UPDATE\n")
-    with open("config", "w", encoding="utf-8") as fh:
+    with Path("config").open("w", encoding="utf-8") as fh:
         fh.writelines("MISFIT_PREPROCESSOR")
     with (
         pytest.warns(
@@ -34,10 +36,10 @@ def test_that_misfit_preprocessor_raises():
 def test_that_misfit_preprocessor_raises_with_config():
     # Warning is given on LOAD_WORKFLOW.
     # Since LOAD_WORKFLOW failed error is raised on HOOK_WORKFLOW
-    with open("poly.ert", "a", encoding="utf-8") as fh:
+    with Path("poly.ert").open("a", encoding="utf-8") as fh:
         fh.writelines("LOAD_WORKFLOW config\n")
         fh.writelines("HOOK_WORKFLOW config PRE_FIRST_UPDATE\n")
-    with open("config", "w", encoding="utf-8") as fh:
+    with Path("config").open("w", encoding="utf-8") as fh:
         fh.writelines("MISFIT_PREPROCESSOR my_config")
     with (
         pytest.warns(

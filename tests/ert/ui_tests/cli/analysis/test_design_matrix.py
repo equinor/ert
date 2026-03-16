@@ -67,7 +67,9 @@ def test_run_poly_example_with_design_matrix(copy_poly_case_with_design_matrix, 
         Path(config_path) / "poly_out" / "realization-0" / "iter-0" / "parameters.json"
     )
     assert real_0_iter_0_parameters_json_path.exists()
-    with open(real_0_iter_0_parameters_json_path, mode="r+", encoding="utf-8") as fs:
+    with Path(real_0_iter_0_parameters_json_path).open(
+        mode="r+", encoding="utf-8"
+    ) as fs:
         parameters_contents = json.load(fs)
     assert isinstance(parameters_contents, dict)
     for k, v in parameters_contents.items():
@@ -122,7 +124,7 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values):
 
     # This adds a dummy category and big_numbers parameter to COEFFS GENKW
     # which will be overridden by the design matrix entries
-    with open("coeff_priors", "a", encoding="utf-8") as f:
+    with Path("coeff_priors").open("a", encoding="utf-8") as f:
         f.write("category UNIFORM 0 1\n")
         f.write("big_numbers UNIFORM 0 1\n")
 
@@ -195,14 +197,14 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values):
         )
         np.testing.assert_array_equal(params["b"].to_list(), 10 * [1])
         np.testing.assert_array_equal(params["c"].to_list(), 10 * [2])
-    with open("poly_out/realization-0/iter-0/my_output", encoding="utf-8") as f:
+    with Path("poly_out/realization-0/iter-0/my_output").open(encoding="utf-8") as f:
         output = [line.strip() for line in f]
         assert output[0] == "a: 0"
         assert output[1] == "b: 1"
         assert output[2] == "c: 2"
         assert output[3] == "category: cat1"
         assert output[4] == "big_integer: 10000000000"
-    with open("poly_out/realization-5/iter-0/my_output", encoding="utf-8") as f:
+    with Path("poly_out/realization-5/iter-0/my_output").open(encoding="utf-8") as f:
         output = [line.strip() for line in f]
         assert output[0] == "a: 5"
         assert output[1] == "b: 1"
@@ -497,7 +499,7 @@ def test_design_matrix_on_esmda_fail_without_updateable_parameters(
         [["b", 1], ["c", 2]],
     )
 
-    with open("poly.ert", "a", encoding="utf-8") as f:
+    with Path("poly.ert").open("a", encoding="utf-8") as f:
         f.write(
             dedent(
                 """\
@@ -567,7 +569,7 @@ def test_run_poly_example_with_different_realization_count_chooses_smaller_and_w
     }
     default_list = [["b", 1], ["c", 2]]
     copy_poly_case_with_design_matrix(design_dict, default_list)
-    with open("poly.ert", "a+", encoding="utf-8") as f:
+    with Path("poly.ert").open("a+", encoding="utf-8") as f:
         f.write(f"\nNUM_REALIZATIONS {num_realizations_in_user_config}")
     with pytest.warns(ConfigWarning, match=expected_message):
         run_cli(
@@ -614,7 +616,7 @@ def test_run_poly_example_with_specified_realizations_finds_intersection_and_war
     }
     default_list = [["b", 1], ["c", 2]]
     copy_poly_case_with_design_matrix(design_dict, default_list)
-    with open("poly.ert", "a+", encoding="utf-8") as f:
+    with Path("poly.ert").open("a+", encoding="utf-8") as f:
         f.write("\nNUM_REALIZATIONS 20")
     if intersected_realizations_count > 0:
         run_cli(

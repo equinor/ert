@@ -73,9 +73,9 @@ def test_that_empty_grid_file_raises(tmpdir):
         GRID grid.GRDECL
         """
         )
-        with open("config.ert", "w", encoding="utf-8") as fh:
+        with Path("config.ert").open("w", encoding="utf-8") as fh:
             fh.writelines(config)
-        with open("grid.GRDECL", "w", encoding="utf-8") as fh:
+        with Path("grid.GRDECL").open("w", encoding="utf-8") as fh:
             fh.writelines("")
 
         with pytest.raises(

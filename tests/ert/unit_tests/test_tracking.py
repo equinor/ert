@@ -172,7 +172,7 @@ def test_tracking(
         extra_config,
     ]
 
-    with open("poly.ert", "a", encoding="utf-8") as fh:
+    with Path("poly.ert").open("a", encoding="utf-8") as fh:
         fh.writelines(config_lines)
 
     with fileinput.input("poly_eval.py", inplace=True) as fin:
@@ -369,7 +369,7 @@ def test_run_information_present_as_env_var_in_fm_context(
 
     # Check run information in job environment
     for path in model.paths:
-        with open(Path(path) / "jobs.json", encoding="utf-8") as f:
+        with Path(Path(path) / "jobs.json").open(encoding="utf-8") as f:
             jobs_data = json.load(f)
         for key in expected:
             assert key in jobs_data["global_environment"]

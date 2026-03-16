@@ -53,7 +53,7 @@ def test_that_name_is_removed_from_responses_json_file_for_all_experiments(use_t
         experiment_paths.append(experiment_path)
 
         # Add responses.json to each experiment
-        with open(experiment_path / "responses.json", "w", encoding="utf-8") as f:
+        with (experiment_path / "responses.json").open("w", encoding="utf-8") as f:
             json.dump(
                 {"gen_data": gendata_with_name, "summary": summary_with_name},
                 f,
@@ -64,7 +64,7 @@ def test_that_name_is_removed_from_responses_json_file_for_all_experiments(use_t
 
     # Validate responses.json files no longer contain 'name' field
     for experiment_path in experiment_paths:
-        with open(experiment_path / "responses.json", encoding="utf-8") as f:
+        with (experiment_path / "responses.json").open(encoding="utf-8") as f:
             migrated_responses = json.load(f)
 
         assert migrated_responses == {

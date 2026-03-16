@@ -44,7 +44,7 @@ def create_jobs_json(realization: Realization) -> None:
     }
     realization_run_path = Path(realization.run_arg.runpath)
     realization_run_path.mkdir()
-    with open(realization_run_path / "jobs.json", mode="w", encoding="utf-8") as f:
+    with Path(realization_run_path / "jobs.json").open(mode="w", encoding="utf-8") as f:
         json.dump(jobs, f)
 
 

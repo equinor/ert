@@ -148,8 +148,8 @@ def test_gui_shows_a_warning_and_disables_update_when_there_are_no_observations(
 @pytest.mark.usefixtures("copy_poly_case")
 def test_gui_shows_a_warning_and_disables_update_when_parameters_are_missing(qapp):
     with (
-        open("poly.ert", encoding="utf-8") as fin,
-        open("poly-no-gen-kw.ert", "w", encoding="utf-8") as fout,
+        Path("poly.ert").open(encoding="utf-8") as fin,
+        Path("poly-no-gen-kw.ert").open("w", encoding="utf-8") as fout,
     ):
         for line in fin:
             if "GEN_KW" not in line:
@@ -211,7 +211,7 @@ def test_that_the_run_workflow_tool_is_disabled_when_there_are_no_workflows(qapp
 def test_that_the_run_workflow_tool_is_enabled_when_there_are_workflows(qapp, tmp_path):
     config_file = tmp_path / "config.ert"
 
-    with open(config_file, "a+", encoding="utf-8") as ert_file:
+    with Path(config_file).open("a+", encoding="utf-8") as ert_file:
         ert_file.write("NUM_REALIZATIONS 1\n")
         ert_file.write("LOAD_WORKFLOW_JOB workflows/UBER_PRINT print_uber\n")
         ert_file.write("LOAD_WORKFLOW workflows/MAGIC_PRINT magic_print\n")

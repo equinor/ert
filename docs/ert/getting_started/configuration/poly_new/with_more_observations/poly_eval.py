@@ -2,7 +2,7 @@
 import json
 from pathlib import Path
 
-with open("parameters.json", encoding="utf-8") as f:
+with Path("parameters.json").open(encoding="utf-8") as f:
     coeffs = json.load(f)
 
 

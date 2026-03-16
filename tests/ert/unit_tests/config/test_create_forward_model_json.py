@@ -152,7 +152,7 @@ def _generate_step(
         elif val is not None:
             config_contents += f"{key} {val}\n"
 
-    with open(executable, "w", encoding="utf-8"):
+    with Path(executable).open("w", encoding="utf-8"):
         pass
     mode = os.stat(executable).st_mode
     mode |= stat.S_IXUSR | stat.S_IXGRP
@@ -701,7 +701,7 @@ def test_that_environment_variables_are_set_in_forward_model(
     monkeypatch.setenv("ENV", "env_value")
     Path("job_file").write_text(job, encoding="utf-8")
 
-    with open("config_file.ert", "w", encoding="utf-8") as fout:
+    with Path("config_file.ert").open("w", encoding="utf-8") as fout:
         # Write a minimal config file
         fout.write(
             dedent(

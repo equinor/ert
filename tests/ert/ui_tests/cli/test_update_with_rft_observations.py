@@ -39,7 +39,7 @@ def test_that_rft_example_with_rft_observation_keyword_yelds_same_result_as_gend
     if bool(request.config.getoption("--snapshot-update")):
         snapshot.assert_match(json.dumps(pressure, indent=2) + "\n", FILE_NAME)
 
-    with open(Path(snapshot.snapshot_dir, FILE_NAME), encoding="utf-8") as file:
+    with Path(snapshot.snapshot_dir, FILE_NAME).open(encoding="utf-8") as file:
         pressure_snapshot = json.load(file)
 
     assert isinstance(pressure, dict)

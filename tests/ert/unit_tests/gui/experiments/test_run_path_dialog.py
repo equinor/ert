@@ -45,8 +45,8 @@ def test_run_path_deleted_error(snake_oil_case_storage: ErtConfig, qtbot: QtBot)
             "<IENS>", "0"
         ).replace("<ITER>", "0")
     )
-    with open(run_path / "dummy", "w", encoding="utf-8") as dummy_file:
-        dummy_file.close()
+    dummy_file = run_path / "dummy"
+    dummy_file.touch()
 
     QTimer.singleShot(
         1000, lambda: handle_run_path_dialog(gui, qtbot, expect_error=True)
@@ -58,7 +58,7 @@ def test_run_path_deleted_error(snake_oil_case_storage: ErtConfig, qtbot: QtBot)
     run_dialog = gui.findChild(RunDialog)
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=100000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
-    assert os.path.exists(run_path / dummy_file.name)
+    assert dummy_file.exists()
 
 
 @pytest.mark.integration_test
@@ -89,8 +89,8 @@ def test_run_path_is_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
             "<IENS>", "0"
         ).replace("<ITER>", "0")
     )
-    with open(run_path / "dummy", "w", encoding="utf-8") as dummy_file:
-        dummy_file.close()
+    dummy_file = run_path / "dummy"
+    dummy_file.touch()
 
     QTimer.singleShot(
         1000, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=True)
@@ -101,7 +101,7 @@ def test_run_path_is_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot):
     run_dialog = gui.findChild(RunDialog)
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=100000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
-    assert not os.path.exists(run_path / dummy_file.name)
+    assert not dummy_file.exists()
 
 
 @pytest.mark.integration_test
@@ -130,8 +130,8 @@ def test_run_path_is_not_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot
     run_path = Path(
         snake_oil_case.runpath_config.runpath_format_string.replace("<IENS>", "0")
     ).parent
-    with open(run_path / "dummy", "w", encoding="utf-8") as dummy_file:
-        dummy_file.close()
+    dummy_file = run_path / "dummy"
+    dummy_file.touch()
 
     QTimer.singleShot(
         500, lambda: handle_run_path_dialog(gui, qtbot, delete_run_path=False)
@@ -142,4 +142,4 @@ def test_run_path_is_not_deleted(snake_oil_case_storage: ErtConfig, qtbot: QtBot
     run_dialog = gui.findChild(RunDialog)
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=100000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
-    assert os.path.exists(run_path / dummy_file.name)
+    assert dummy_file.exists()

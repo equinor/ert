@@ -67,7 +67,7 @@ def get_shape(
     grid_path: _PathLike,
 ) -> Shape | None:
     shape = None
-    with open(grid_path, "rb") as f:
+    with Path(grid_path).open("rb") as f:
         for entry in resfo.lazy_read(f):
             keyword = str(entry.read_keyword()).strip()
             if keyword == "GRIDHEAD":

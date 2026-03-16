@@ -28,8 +28,8 @@ def migrate(path: Path) -> None:
         ensembles = [*path.glob("ensembles/*")]
 
         with (
-            open(experiment / "index.json", encoding="utf-8") as f_experiment,
-            open(experiment / "responses.json", encoding="utf-8") as f_responses,
+            (experiment / "index.json").open(encoding="utf-8") as f_experiment,
+            (experiment / "responses.json").open(encoding="utf-8") as f_responses,
         ):
             exp_index = json.load(f_experiment)
             experiment_id = exp_index["id"]

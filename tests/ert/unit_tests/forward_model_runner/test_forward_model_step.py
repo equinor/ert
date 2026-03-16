@@ -1,10 +1,10 @@
 import contextlib
 import os
-import pathlib
 import stat
 import sys
 import textwrap
 from dataclasses import dataclass
+from pathlib import Path
 from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
@@ -46,7 +46,7 @@ def test_run_with_process_failing(mock_process, mock_popen, mock_check_executabl
 def test_memory_usage_counts_grandchildren():
     scriptname = "recursive_memory_hog.py"
     blobsize = 1e7
-    pathlib.Path(scriptname).write_text(
+    Path(scriptname).write_text(
         textwrap.dedent(
             """\
             #!/usr/bin/env python
@@ -137,10 +137,10 @@ def test_cpu_seconds_for_process_with_children():
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No oom_score on MacOS")
 def test_oom_score_is_max_over_processtree():
-    def read_text_side_effect(self: pathlib.Path, *args, **kwargs):
-        if self.absolute() == pathlib.Path("/proc/123/oom_score"):
+    def read_text_side_effect(self: Path, *args, **kwargs):
+        if self.absolute() == Path("/proc/123/oom_score"):
             return "234"
-        if self.absolute() == pathlib.Path("/proc/124/oom_score"):
+        if self.absolute() == Path("/proc/124/oom_score"):
             return "456"
 
     with patch("pathlib.Path.read_text", autospec=True) as mocked_read_text:
@@ -193,7 +193,7 @@ def test_run_with_defined_executable_but_missing():
 @pytest.mark.usefixtures("use_tmpdir")
 def test_run_with_empty_executable():
     empty_executable = os.path.join(os.getcwd(), "foo")
-    with open(empty_executable, "a", encoding="utf-8"):
+    with Path(empty_executable).open("a", encoding="utf-8"):
         pass
     st = os.stat(empty_executable)
     os.chmod(empty_executable, st.st_mode | stat.S_IEXEC)
@@ -219,7 +219,7 @@ def test_run_with_empty_executable():
 @pytest.mark.usefixtures("use_tmpdir")
 def test_run_with_defined_executable_no_exec_bit():
     non_executable = os.path.join(os.getcwd(), "foo")
-    with open(non_executable, "a", encoding="utf-8"):
+    with Path(non_executable).open("a", encoding="utf-8"):
         pass
 
     fmstep = ForwardModelStep(
@@ -351,7 +351,7 @@ def test_processtree_timer(
 def test_target_file_only_sets_error_if_specified_and_fm_step_succeeded(
     command, exit_code, expected_error_message, target_file_name
 ):
-    pathlib.Path("already_existing_file").touch()
+    Path("already_existing_file").touch()
     fmstep = ForwardModelStep(
         {
             "name": "target_file_test_fm_step ",

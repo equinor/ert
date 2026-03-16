@@ -1,5 +1,6 @@
 import fileinput
 import shutil
+from pathlib import Path
 
 import polars as pl
 import pytest
@@ -150,7 +151,7 @@ def poly_case_with_autoscale_observations_config(source_root, tmp_path, run_expe
 
     config_path = tmp_path / "poly.ert"
 
-    with open(config_path, "a", encoding="utf-8") as f:
+    with Path(config_path).open("a", encoding="utf-8") as f:
         f.write("\nANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE *\n")
 
     with open_gui_with_config(config_path) as gui:
@@ -194,7 +195,7 @@ def poly_case_with_one_missing_response(source_root, tmp_path, run_experiment):
     _new_poly_example(source_root, tmp_path, 2)
     config_path = tmp_path / "poly.ert"
     # ensures observations are not disabled due to unlucky responses
-    with open(config_path, "a", encoding="utf-8") as f:
+    with Path(config_path).open("a", encoding="utf-8") as f:
         f.write("\nRANDOM_SEED 1234\n")
 
     with open_gui_with_config(config_path) as gui:

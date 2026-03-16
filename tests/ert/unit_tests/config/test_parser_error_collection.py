@@ -38,7 +38,7 @@ class ExpectedErrorInfo:
 def write_files(files: dict[str, str | FileDetail] | None = None):
     if files is not None:
         for other_filename, content in files.items():
-            with open(other_filename, mode="w", encoding="utf-8") as fh:
+            with Path(other_filename).open(mode="w", encoding="utf-8") as fh:
                 if isinstance(content, FileDetail):
                     fh.writelines(content.contents)
 
@@ -668,7 +668,7 @@ def test_queue_option_max_running_negative():
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_that_unicode_decode_error_is_localized_first_line():
-    with open("test.ert", "ab") as f:
+    with Path("test.ert").open("ab") as f:
         f.write(b"\xff")
         f.write(
             bytes(
@@ -718,10 +718,10 @@ def test_that_unicode_decode_error_is_localized_random_line_single_insert():
 
         Path("test.ert").write_text("\n".join(before) + "\n", encoding="utf-8")
 
-        with open("test.ert", "ab") as f:
+        with Path("test.ert").open("ab") as f:
             f.write(b"\xff")
 
-        with open("test.ert", "a", encoding="utf-8") as f:
+        with Path("test.ert").open("a", encoding="utf-8") as f:
             f.write("\n" + "\n".join(after))
 
         with pytest.raises(
@@ -772,14 +772,14 @@ def test_that_unicode_decode_error_is_localized_multiple_random_inserts(
 
     for i, info in enumerate(write_infos):
         if info["type"] == "utf-8":
-            with open("test.ert", "w" if i == 0 else "a", encoding="utf-8") as f:
+            with Path("test.ert").open("w" if i == 0 else "a", encoding="utf-8") as f:
                 f.write(info["content"])
         elif info["type"] == "bytes":
-            with open("test.ert", "wb" if i == 0 else "ab") as f:
+            with Path("test.ert").open("wb" if i == 0 else "ab") as f:
                 f.write(info["content"])
 
         if i < (len(write_infos) - 1):
-            with open("test.ert", "a", encoding="utf-8") as f:
+            with Path("test.ert").open("a", encoding="utf-8") as f:
                 f.write("\n")
 
     with pytest.raises(
