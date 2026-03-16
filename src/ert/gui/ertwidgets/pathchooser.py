@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import re
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QSize
@@ -53,7 +54,7 @@ class PathChooser(QWidget):
             self._path_line.backgroundRole()
         )
 
-        self._path_line.setText(os.getcwd())
+        self._path_line.setText(str(Path.cwd()))
         self._editing = False
 
         self._model = model
@@ -144,8 +145,8 @@ class PathChooser(QWidget):
 
         if current_directory:
             if not self._model.pathMustBeAbsolute():
-                cwd = os.getcwd()
-                match = re.match(cwd + "/(.*)", current_directory)
+                cwd = Path.cwd()
+                match = re.match(str(cwd) + "/(.*)", current_directory)
                 if match:
                     current_directory = match.group(1)
 

@@ -143,7 +143,7 @@ def test_that_unopenable_observation_config_fails_gracefully():
     )
     line_with_observation_config = content_lines[index_line_with_observation_config]
     observation_config_rel_path = line_with_observation_config.split(" ")[1]
-    observation_config_abs_path = os.path.join(os.getcwd(), observation_config_rel_path)
+    observation_config_abs_path = os.path.join(Path.cwd(), observation_config_rel_path)
     os.chmod(observation_config_abs_path, 0o000)
 
     with pytest.raises(

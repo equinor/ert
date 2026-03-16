@@ -1,5 +1,4 @@
 import logging
-import os
 import tempfile
 from pathlib import Path
 from unittest.mock import MagicMock, patch
@@ -68,7 +67,7 @@ def test_everest_entry_debug(
     assert '"controls"' in logstream
     assert '"objective_functions"' in logstream
     assert '"name": "my_control"' in logstream
-    assert f'"config_path": "{os.getcwd()}/config.yml"' in logstream
+    assert f'"config_path": "{Path.cwd()}/config.yml"' in logstream
 
 
 @patch("everest.bin.everest_script.run_detached_monitor")

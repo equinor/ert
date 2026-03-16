@@ -18,7 +18,7 @@ from ._import_from_location import import_from_location
 
 @contextlib.contextmanager
 def pushd(path):
-    cwd0 = os.getcwd()
+    cwd0 = Path.cwd()
     os.chdir(path)
 
     yield

@@ -33,7 +33,7 @@ class GridFieldMismatchError(InvalidParameterFile):
         field_size = len(field_values)
         msg = (
             f"The FIELD '{field_name}' from file "
-            f"{os.path.relpath(file_path, os.getcwd())} "
+            f"{os.path.relpath(file_path, Path.cwd())} "
             f"is of size ({field_size}) which does not match the "
             f"size of the GRID ({grid_size}) - "
             f"derived from dimensions: {tuple(grid_dimensions)}."

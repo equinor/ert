@@ -279,7 +279,7 @@ def clean_up_diplayed_runpath(gui: QWidget):
     single_test_run_panel = get_child(experiment_panel, SingleTestRunPanel)
     runpath_label = get_child(single_test_run_panel, CopyableLabel)
 
-    current_directory = os.getcwd()
+    current_directory = str(Path.cwd())
     label_text = runpath_label.label.text()
     runpath_label.label.setText(label_text.replace(current_directory, "&lt;cwd&gt;"))
 

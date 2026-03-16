@@ -1,4 +1,3 @@
-import os
 import queue
 import string
 import unittest
@@ -653,7 +652,7 @@ def _create_and_verify_runmodel_snapshot(config, snapshot, cli_args, case):
     serialized = runmodel.model_dump_json(indent=2) + "\n"
 
     # Trim off cwd to make snapshots general
-    cwd = str(os.getcwd())
+    cwd = str(Path.cwd())
     serialized = serialized.replace(cwd, f"test-data/ert/{case}")
 
     snapshot.assert_match(
