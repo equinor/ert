@@ -58,7 +58,7 @@ def test_that_service_can_be_started_with_existing_conn_info_json(change_to_tmpd
         "authtoken": "dummytoken",
     }
 
-    with open("storage_server.json", mode="w", encoding="utf-8") as f:
+    with Path("storage_server.json").open(mode="w", encoding="utf-8") as f:
         json.dump(connection_info, f)
     create_ert_server_controller(project=Path(".").absolute())
 
@@ -87,7 +87,7 @@ def test_that_service_can_be_started_with_missing_cert_in_conn_info_json(
         ],
         "authtoken": "dummytoken",
     }
-    with open("storage_server.json", mode="w", encoding="utf-8") as f:
+    with Path("storage_server.json").open(mode="w", encoding="utf-8") as f:
         json.dump(connection_info, f)
     ErtServerController.init_service(project=Path(".").absolute())
     start_server_mock.assert_called_once()
@@ -170,7 +170,7 @@ def test_storage_logging(change_to_tmpdir):
 
     logfiles = glob.glob("api-log-storage*.txt")
     assert len(logfiles) == 1, "Expected exactly one log file"
-    with open(logfiles[0], encoding="utf-8") as logfile:
+    with Path(logfiles[0]).open(encoding="utf-8") as logfile:
         contents = logfile.readlines()
 
     # check for duplicated log entries

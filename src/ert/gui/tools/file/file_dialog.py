@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from PyQt6.QtCore import Qt, QThread
 from PyQt6.QtGui import (
     QClipboard,
@@ -40,7 +42,7 @@ class FileDialog(QDialog):
 
         try:
             # We take care to close this file in _quit_thread()
-            self._file = open(file_name, encoding="utf-8")  # noqa: SIM115
+            self._file = Path(file_name).open(encoding="utf-8")  # noqa: SIM115
         except OSError as error:
             self._mb = QMessageBox(
                 QMessageBox.Icon.Critical,

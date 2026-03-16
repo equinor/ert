@@ -42,12 +42,12 @@ def test_that_adaptive_localization_with_cutoff_1_equals_ensemble_prior():
         """
     )
 
-    with open("poly.ert", "r+", encoding="utf-8") as f:
+    with Path("poly.ert").open("r+", encoding="utf-8") as f:
         lines = f.readlines()
         lines.insert(2, random_seed_line)
         lines.insert(9, set_adaptive_localization_1)
 
-    with open("poly_localization_1.ert", "w", encoding="utf-8") as f:
+    with Path("poly_localization_1.ert").open("w", encoding="utf-8") as f:
         f.writelines(lines)
     prior_ensemble_id, posterior_ensemble_id, storage_path = run_cli_ES_with_case(
         "poly_localization_1.ert", "test_experiment"
@@ -77,7 +77,7 @@ def test_that_adaptive_localization_works_with_a_single_observation():
         """
     )
 
-    with open("poly.ert", "r+", encoding="utf-8") as f:
+    with Path("poly.ert").open("r+", encoding="utf-8") as f:
         lines = f.readlines()
         lines.insert(9, set_adaptive_localization_0)
 
@@ -239,16 +239,16 @@ def test_that_adaptive_localization_with_cutoff_0_equals_ESupdate():
         """
     )
 
-    with open("poly.ert", "r+", encoding="utf-8") as f:
+    with Path("poly.ert").open("r+", encoding="utf-8") as f:
         lines = f.readlines()
         lines.insert(2, random_seed_line)
 
-    with open("poly_no_localization.ert", "w", encoding="utf-8") as f:
+    with Path("poly_no_localization.ert").open("w", encoding="utf-8") as f:
         f.writelines(lines)
 
     lines.insert(9, set_adaptive_localization_0)
 
-    with open("poly_localization_0.ert", "w", encoding="utf-8") as f:
+    with Path("poly_localization_0.ert").open("w", encoding="utf-8") as f:
         f.writelines(lines)
 
     _, posterior_ensemble_loc0_id, storage_loc = run_cli_ES_with_case(
@@ -291,16 +291,16 @@ def test_that_posterior_generalized_variance_increases_in_cutoff():
         """
     )
 
-    with open("poly.ert", "r+", encoding="utf-8") as f:
+    with Path("poly.ert").open("r+", encoding="utf-8") as f:
         lines = f.readlines()
         lines.insert(2, random_seed_line)
         lines.insert(9, set_adaptive_localization_cutoff1)
-    with open("poly_localization_cutoff1.ert", "w", encoding="utf-8") as f:
+    with Path("poly_localization_cutoff1.ert").open("w", encoding="utf-8") as f:
         f.writelines(lines)
 
     lines.remove(set_adaptive_localization_cutoff1)
     lines.insert(9, set_adaptive_localization_cutoff2)
-    with open("poly_localization_cutoff2.ert", "w", encoding="utf-8") as f:
+    with Path("poly_localization_cutoff2.ert").open("w", encoding="utf-8") as f:
         f.writelines(lines)
 
     prior_ensemble_cutoff1_id, posterior_ensemble_cutoff1_id, storage_cutoff1 = (

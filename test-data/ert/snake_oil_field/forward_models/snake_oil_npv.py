@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from pathlib import Path
+
 from resdata.summary import Summary
 
 OIL_PRICES = {
@@ -89,7 +91,7 @@ if __name__ == "__main__":
         production_value = oil_price * production_sum
         npv += production_value
 
-    with open("snake_oil_npv.txt", "w", encoding="utf-8") as output_file:
+    with Path("snake_oil_npv.txt").open("w", encoding="utf-8") as output_file:
         output_file.write(f"NPV {npv}\n")
 
         if npv < 80000:

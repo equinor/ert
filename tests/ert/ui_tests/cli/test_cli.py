@@ -55,8 +55,8 @@ def test_test_run_on_lsf_configuration_works_with_no_errors(tmp_path):
 @pytest.mark.usefixtures("copy_poly_case")
 def test_that_the_cli_raises_exceptions_when_parameters_are_missing(mode):
     with (
-        open("poly.ert", encoding="utf-8") as fin,
-        open("poly-no-gen-kw.ert", "w", encoding="utf-8") as fout,
+        Path("poly.ert").open(encoding="utf-8") as fin,
+        Path("poly-no-gen-kw.ert").open("w", encoding="utf-8") as fout,
     ):
         for line in fin:
             if "GEN_KW" not in line:
@@ -166,8 +166,8 @@ def test_that_successful_realizations_less_than_minimum_realizations_fails_grace
     mode,
 ):
     with (
-        open("poly.ert", encoding="utf-8") as fin,
-        open("failing_realizations.ert", "w", encoding="utf-8") as fout,
+        Path("poly.ert").open(encoding="utf-8") as fin,
+        Path("failing_realizations.ert").open("w", encoding="utf-8") as fout,
     ):
         for line in fin:
             if "MIN_REALIZATIONS" in line:
@@ -263,7 +263,7 @@ def test_that_setenv_sets_environment_variables_in_steps(setenv_config):
     )
 
     # Then the environment variables are put into jobs.json
-    with open("simulations/realization-0/iter-0/jobs.json", encoding="utf-8") as f:
+    with Path("simulations/realization-0/iter-0/jobs.json").open(encoding="utf-8") as f:
         data = json.load(f)
         global_env = data.get("global_environment")
         for key in ["_ERT_ENSEMBLE_ID", "_ERT_EXPERIMENT_ID"]:
@@ -277,7 +277,9 @@ def test_that_setenv_sets_environment_variables_in_steps(setenv_config):
     path = os.environ["PATH"]
 
     # and then fm_dispatch should expand the variables on the compute side
-    with open("simulations/realization-0/iter-0/ECHO.stdout.0", encoding="utf-8") as f:
+    with Path("simulations/realization-0/iter-0/ECHO.stdout.0").open(
+        encoding="utf-8"
+    ) as f:
         lines = f.readlines()
         assert len(lines) == 4
         # the compute-nodes path is the same since it's running locally,
@@ -481,7 +483,7 @@ def test_that_stop_on_fail_workflow_jobs_stop_ert(
 
     Path("dump_failing_workflow").write_text("failjob", encoding="utf-8")
 
-    with open("poly.ert", mode="a", encoding="utf-8") as fh:
+    with Path("poly.ert").open(mode="a", encoding="utf-8") as fh:
         fh.write(
             dedent(
                 """
@@ -688,7 +690,7 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
 @pytest.mark.usefixtures("copy_poly_case")
 def test_failing_step_cli_error_message():
     # modify poly_eval.py
-    with open("poly_eval.py", mode="a", encoding="utf-8") as poly_script:
+    with Path("poly_eval.py").open(mode="a", encoding="utf-8") as poly_script:
         poly_script.writelines(["    raise RuntimeError('Argh')"])
 
     expected_substrings = [
@@ -715,7 +717,7 @@ def test_exclude_parameter_from_update():
             if "GEN_KW" in line:
                 print("GEN_KW ANOTHER_KW distribution.txt UPDATE:FALSE")
             print(line, end="")
-    with open("distribution.txt", mode="w", encoding="utf-8") as fh:
+    with Path("distribution.txt").open(mode="w", encoding="utf-8") as fh:
         fh.writelines("MY_KEYWORD NORMAL 0 1")
 
     run_cli(
@@ -766,8 +768,10 @@ def test_that_log_is_cleaned_up_from_repeated_forward_model_steps(caplog):
     there are repeated forward models
     """
     with (
-        open("poly.ert", encoding="utf-8") as fin,
-        open("poly_repeated_forward_model_steps.ert", "w", encoding="utf-8") as fout,
+        Path("poly.ert").open(encoding="utf-8") as fin,
+        Path("poly_repeated_forward_model_steps.ert").open(
+            "w", encoding="utf-8"
+        ) as fout,
     ):
         forward_model_steps = ["FORWARD_MODEL poly_eval\n"] * 5
         lines = fin.readlines() + forward_model_steps

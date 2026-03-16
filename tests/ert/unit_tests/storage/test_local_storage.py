@@ -63,7 +63,7 @@ def test_create_experiment(tmp_path):
         experiment_path = Path(storage.path / "experiments" / str(experiment.id))
         assert experiment_path.exists()
 
-        with open(experiment_path / "index.json", encoding="utf-8") as f:
+        with Path(experiment_path / "index.json").open(encoding="utf-8") as f:
             index = json.load(f)
             assert index["id"] == str(experiment.id)
             assert index["name"] == "test-experiment"
@@ -1053,13 +1053,13 @@ def test_load_gen_kw_not_sorted(storage, tmpdir, snapshot):
         RANDOM_SEED 1234
         """
         )
-        with open("config.ert", mode="w", encoding="utf-8") as fh:
+        with Path("config.ert").open(mode="w", encoding="utf-8") as fh:
             fh.writelines(config)
-        with open("template.txt", mode="w", encoding="utf-8") as fh:
+        with Path("template.txt").open(mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-        with open("prior1.txt", mode="w", encoding="utf-8") as fh:
+        with Path("prior1.txt").open(mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD1 LOGUNIF 0.1 1")
-        with open("prior2.txt", mode="w", encoding="utf-8") as fh:
+        with Path("prior2.txt").open(mode="w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD2 LOGUNIF 0.1 1")
 
         ert_config = ErtConfig.from_file("config.ert")

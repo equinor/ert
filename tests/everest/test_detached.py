@@ -106,7 +106,7 @@ def test_wait_for_server(mock_get_context, mock_is_running):
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_detached_mode_config_base(min_config, monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
-    with open("config.yml", "w", encoding="utf-8") as fout:
+    with Path("config.yml").open("w", encoding="utf-8") as fout:
         yaml.dump(min_config, fout)
     everest_config = EverestConfig.load_file("config.yml")
 

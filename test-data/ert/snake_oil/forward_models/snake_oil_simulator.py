@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import datetime
+from pathlib import Path
 
 import numpy as np
 import resfo
@@ -12,7 +13,7 @@ def globalIndex(i, j, k, nx=10, ny=10, nz=10):
 
 def readParameters(filename):
     params = {}
-    with open(filename, encoding="utf-8") as f:
+    with Path(filename).open(encoding="utf-8") as f:
         for line in f:
             key, value = line.split(":", 1)
             params[key] = value.strip()
@@ -213,5 +214,5 @@ if __name__ == "__main__":
     report_step_count = 200
     time_map = runSimulator(simulator, history_simulator, report_step_count)
 
-    with open("time_map.txt", "w", encoding="utf-8") as f:
+    with Path("time_map.txt").open("w", encoding="utf-8") as f:
         f.writelines(f"{t}\n" for t in time_map)

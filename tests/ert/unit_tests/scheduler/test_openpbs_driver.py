@@ -596,7 +596,7 @@ def test_openpbs_driver_with_poly_example_failing_submit_fails_ert_and_propagate
         return await mock_failure("Submit job failed", *args, **kwargs)
 
     monkeypatch.setattr(OpenPBSDriver, "submit", submit_that_fails)
-    with open("poly.ert", mode="a+", encoding="utf-8") as f:
+    with Path("poly.ert").open(mode="a+", encoding="utf-8") as f:
         f.write("QUEUE_SYSTEM TORQUE\nNUM_REALIZATIONS 2")
         f.write(queue_name_config)
     with pytest.raises(ErtCliError):
@@ -619,7 +619,7 @@ def test_openpbs_driver_with_poly_example_failing_poll_fails_ert_and_propagates_
         return await mock_failure("Status polling failed", *args, **kwargs)
 
     monkeypatch.setattr(OpenPBSDriver, "poll", poll_that_fails)
-    with open("poly.ert", mode="a+", encoding="utf-8") as f:
+    with Path("poly.ert").open(mode="a+", encoding="utf-8") as f:
         f.write("QUEUE_SYSTEM TORQUE\nNUM_REALIZATIONS 2")
         f.write(queue_name_config)
     with pytest.raises(ErtCliError):

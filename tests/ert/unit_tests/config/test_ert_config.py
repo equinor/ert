@@ -339,7 +339,7 @@ def test_data_file_with_non_utf_8_character_gives_error_message():
         ),
         encoding="utf-8",
     )
-    with open(data_file, "ab") as f:
+    with Path(data_file).open("ab") as f:
         f.write(b"\xff")
     data_file_path = str(Path.cwd() / data_file)
     with (
@@ -1571,10 +1571,10 @@ def test_that_context_types_are_json_serializable():
         "context_list": cl,
     }
 
-    with open("test.json", "w", encoding="utf-8") as f:
+    with Path("test.json").open("w", encoding="utf-8") as f:
         json.dump(payload, f, cls=ContextBoolEncoder)
 
-    with open("test.json", encoding="utf-8") as f:
+    with Path("test.json").open(encoding="utf-8") as f:
         r = json.load(f)
 
     assert isinstance(r["context_bool_false"], bool)
@@ -1647,15 +1647,15 @@ def test_that_empty_params_file_gives_reasonable_error(tmpdir, param_config):
         GEN_KW COEFFS """
         config += param_config
 
-        with open("config.ert", mode="w", encoding="utf-8") as fh:
+        with Path("config.ert").open(mode="w", encoding="utf-8") as fh:
             fh.writelines(config)
 
         # Create an empty file named 'coeffs_priors'
-        with open("coeffs_priors", mode="w", encoding="utf-8") as fh:
+        with Path("coeffs_priors").open(mode="w", encoding="utf-8") as fh:
             pass
 
         # Create an empty file named 'template.txt'
-        with open("template.txt", mode="w", encoding="utf-8") as fh:
+        with Path("template.txt").open(mode="w", encoding="utf-8") as fh:
             pass
 
         with pytest.raises(ConfigValidationError, match="No parameters specified in"):
@@ -2519,8 +2519,8 @@ def test_that_user_forward_models_overwrite_site_forward_models(
 def test_that_files_for_refcase_exists(existing_suffix, expected_suffix):
     refcase_file = "missing_refcase_file"
 
-    with open(
-        refcase_file + "." + existing_suffix, "w+", encoding="utf-8"
+    with Path(refcase_file + "." + existing_suffix).open(
+        "w+", encoding="utf-8"
     ) as refcase_writer:
         refcase_writer.write("")
 
@@ -2546,9 +2546,13 @@ _________________________________________     _____    ____________________
  |____|_  /_______  / \\___  /    \\______  /\\____|__  /_______  //_______  /
         \\/        \\/      \\/            \\/         \\/        \\/         \\/
 """
-    with open(refcase_file + ".UNSMRY", "w+", encoding="utf-8") as refcase_file_handler:
+    with Path(refcase_file + ".UNSMRY").open(
+        "w+", encoding="utf-8"
+    ) as refcase_file_handler:
         refcase_file_handler.write(refcase_file_content)
-    with open(refcase_file + ".SMSPEC", "w+", encoding="utf-8") as refcase_file_handler:
+    with Path(refcase_file + ".SMSPEC").open(
+        "w+", encoding="utf-8"
+    ) as refcase_file_handler:
         refcase_file_handler.write(refcase_file_content)
     with pytest.raises(expected_exception=ConfigValidationError, match=refcase_file):
         Refcase.from_config_dict(config_dict={ConfigKeys.REFCASE: refcase_file})

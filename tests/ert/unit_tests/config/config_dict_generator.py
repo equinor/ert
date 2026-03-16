@@ -3,7 +3,6 @@ import datetime
 import operator
 import os
 import os.path
-import pathlib
 import stat
 from collections import defaultdict
 from dataclasses import dataclass
@@ -56,8 +55,7 @@ words = st.text(
 
 
 def touch(filename):
-    with open(file=filename, mode="w", encoding="utf-8") as fh:
-        fh.write(" ")
+    Path(filename).write_text(" ", encoding="utf-8")
 
 
 file_names = words
@@ -343,7 +341,7 @@ class ErtConfigValues:
                     name,
                     (
                         fn,
-                        pathlib.Path(fn).read_text(encoding="utf-8"),
+                        Path(fn).read_text(encoding="utf-8"),
                     ),
                 )
                 for name, fn in self.install_job
@@ -678,7 +676,7 @@ def config_generators(draw, use_eclbase=booleans):
                 if not os.path.isfile(filename):
                     touch(filename)
 
-            with open(config_values.obs_config, "w", encoding="utf-8") as fh:
+            with Path(config_values.obs_config).open("w", encoding="utf-8") as fh:
                 for o in obs:
                     fh.write(as_obs_config_content(o))
                     fh.write("\n")
@@ -712,7 +710,7 @@ def config_generators(draw, use_eclbase=booleans):
 
 def to_config_file(filename, config_values):
     config_dict = config_values.to_config_dict(filename, os.getcwd(), all_defines=False)
-    with open(file=filename, mode="w+", encoding="utf-8") as config:
+    with Path(filename).open(mode="w+", encoding="utf-8") as config:
         config.write(
             f"{ConfigKeys.RUNPATH_FILE} {config_dict[ConfigKeys.RUNPATH_FILE]}\n"
         )

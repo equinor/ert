@@ -197,7 +197,7 @@ def test_env_var_available_inside_step_context():
         name=None,
         config_file="RUN_ENV",
     )
-    with open("jobs.json", mode="w", encoding="utf-8") as fptr:
+    with Path("jobs.json").open(mode="w", encoding="utf-8") as fptr:
         ert_config = ErtConfig(forward_model_steps=[step])
         json.dump(
             create_forward_model_json(
@@ -210,7 +210,7 @@ def test_env_var_available_inside_step_context():
             fptr,
         )
 
-    with open("jobs.json", encoding="utf-8") as f:
+    with Path("jobs.json").open(encoding="utf-8") as f:
         jobs_json = json.load(f)
 
     # Check ENV variable not available outside of step context
@@ -243,7 +243,7 @@ def test_default_env_variables_available_inside_fm_step_context():
     step = forward_model_step_from_config_contents(
         "EXECUTABLE run_me.py", name=None, config_file="RUN_ENV"
     )
-    with open("jobs.json", mode="w", encoding="utf-8") as fptr:
+    with Path("jobs.json").open(mode="w", encoding="utf-8") as fptr:
         ert_config = ErtConfig(
             forward_model_steps=[step],
             substitutions={"<RUNPATH>": "./"},
@@ -259,7 +259,7 @@ def test_default_env_variables_available_inside_fm_step_context():
             fptr,
         )
 
-    with open("jobs.json", encoding="utf-8") as f:
+    with Path("jobs.json").open(encoding="utf-8") as f:
         jobs_json = json.load(f)
 
     # Check default ENV variable not available outside of step context

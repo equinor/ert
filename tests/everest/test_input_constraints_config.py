@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from ruamel.yaml import YAML
 
@@ -48,7 +50,7 @@ def test_input_constraint_control_references(tmp_path, capsys, monkeypatch):
 
     yaml = YAML(typ="safe", pure=True)
 
-    with open("config_nowarns.yml", "w+", encoding="utf-8") as f:
+    with Path("config_nowarns.yml").open("w+", encoding="utf-8") as f:
         yaml.dump(
             {
                 "model": {"realizations": ["0", "2", "4"]},
@@ -59,7 +61,7 @@ def test_input_constraint_control_references(tmp_path, capsys, monkeypatch):
             f,
         )
 
-    with open("config_warns.yml", "w+", encoding="utf-8") as f:
+    with Path("config_warns.yml").open("w+", encoding="utf-8") as f:
         yaml.dump(
             {
                 "model": {"realizations": ["0", "2", "4"]},

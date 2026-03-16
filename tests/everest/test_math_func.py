@@ -71,14 +71,14 @@ def test_math_func_advanced(cached_example):
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_remove_run_path(copy_math_func_test_data_to_tmp):
-    with open("config_minimal.yml", encoding="utf-8") as file:
+    with Path("config_minimal.yml").open(encoding="utf-8") as file:
         config_yaml = yaml.safe_load(file)
         config_yaml["simulator"] = {"delete_run_path": True}
         config_yaml["install_jobs"].append(
             {"name": "toggle_failure", "executable": "jobs/fail_simulation.py"}
         )
         config_yaml["forward_model"].append("toggle_failure --fail perturbation_1")
-    with open("config.yml", "w", encoding="utf-8") as fout:
+    with Path("config.yml").open("w", encoding="utf-8") as fout:
         yaml.dump(config_yaml, fout)
     config = EverestConfig.load_file("config.yml")
 

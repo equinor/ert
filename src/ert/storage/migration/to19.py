@@ -20,11 +20,11 @@ def migrate_param(parameters_json: dict[str, Any]) -> dict[str, Any]:
 
 
 def migrate_parameters_for_experiment(experiment: Path) -> None:
-    with open(experiment / "parameter.json", encoding="utf-8") as fin:
+    with (experiment / "parameter.json").open(encoding="utf-8") as fin:
         parameters_json = json.load(fin)
 
     new_parameter_configs = migrate_param(parameters_json)
-    Path(experiment / "parameter.json").write_text(
+    (experiment / "parameter.json").write_text(
         json.dumps(new_parameter_configs, indent=2), encoding="utf-8"
     )
 

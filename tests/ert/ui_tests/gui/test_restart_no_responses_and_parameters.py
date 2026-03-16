@@ -60,7 +60,7 @@ def _open_main_window(
     INSTALL_JOB forward_model FORWARD_MODEL
     FORWARD_MODEL forward_model
     """)
-    with open("config.ert", "w", encoding="utf-8") as fh:
+    with Path("config.ert").open("w", encoding="utf-8") as fh:
         fh.writelines(config)
 
     config = ErtConfig.from_file(path / "config.ert")

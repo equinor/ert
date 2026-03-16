@@ -31,7 +31,7 @@ async def test_scheduler_receives_checksum_and_waits_for_disk_sync(
         Path("real_0/test").rename("real_0/job_test_file")
 
     def create_manifest_file():
-        with open("real_0/manifest.json", mode="w", encoding="utf-8") as f:
+        with Path("real_0/manifest.json").open(mode="w", encoding="utf-8") as f:
             json.dump({"file": "job_test_file"}, f)
 
     with tmpdir.as_cwd():

@@ -247,7 +247,7 @@ def create_poly_with_field(field_dim: tuple[int, int, int], realisations: int):
             FORWARD_MODEL poly_eval
             """
     )
-    with open("config.ert", "w", encoding="utf-8") as fh:
+    with Path("config.ert").open("w", encoding="utf-8") as fh:
         fh.writelines(config)
 
     grid = xtgeo.create_box_grid(dimension=field_dim)

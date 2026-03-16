@@ -116,10 +116,10 @@ def test_everest_main_lint_entry(cached_example):
     assert "config_minimal.yml is valid" in out.getvalue()
 
     # Make the config invalid
-    with open(config_file, encoding="utf-8") as f:
+    with Path(config_file).open(encoding="utf-8") as f:
         raw_config = YAML(typ="safe", pure=True).load(f)
     raw_config["controls"][0]["initial_guess"] = "invalid"
-    with open(config_file, "w", encoding="utf-8") as f:
+    with Path(config_file).open("w", encoding="utf-8") as f:
         yaml = YAML(typ="safe", pure=True)
         yaml.indent = 2
         yaml.default_flow_style = False

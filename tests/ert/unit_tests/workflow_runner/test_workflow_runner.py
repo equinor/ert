@@ -125,7 +125,7 @@ def test_deprecated_keywords(config, expected_result, monkeypatch, tmp_path):
 @pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
 def test_stop_on_fail_is_parsed_internal():
-    with open("fail_job", "w+", encoding="utf-8") as f:
+    with Path("fail_job").open("w+", encoding="utf-8") as f:
         f.write("INTERNAL True\n")
         f.write("SCRIPT fail_script.py\n")
         f.write("MIN_ARG 1\n")
@@ -133,7 +133,7 @@ def test_stop_on_fail_is_parsed_internal():
         f.write("ARG_TYPE 0 STRING\n")
         f.write("STOP_ON_FAIL True\n")
 
-    with open("fail_script.py", "w+", encoding="utf-8") as f:
+    with Path("fail_script.py").open("w+", encoding="utf-8") as f:
         f.write(
             """
 from ert import ErtScript
@@ -314,7 +314,7 @@ def test_workflow_success():
 @pytest.mark.usefixtures("use_tmpdir")
 def test_workflow_stops_with_stopping_job():
     WorkflowCommon.createExternalDumpJob()
-    with open("dump_failing_job", "a", encoding="utf-8") as f:
+    with Path("dump_failing_job").open("a", encoding="utf-8") as f:
         f.write("STOP_ON_FAIL True")
 
     Path("dump_failing_workflow").write_text("DUMP", encoding="utf-8")
@@ -332,7 +332,7 @@ def test_workflow_stops_with_stopping_job():
     with pytest.raises(RuntimeError, match="Workflow job dump_failing_job failed"):
         runner.run_blocking()
 
-    with open("dump_failing_job", "a", encoding="utf-8") as f:
+    with Path("dump_failing_job").open("a", encoding="utf-8") as f:
         f.write("\nSTOP_ON_FAIL False")
 
     job_successful_dump = workflow_job_from_file("dump_failing_job", origin="user")

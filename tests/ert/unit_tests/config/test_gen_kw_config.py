@@ -257,7 +257,7 @@ async def test_gen_kw_is_log_or_not(
 )
 def test_gen_kw_distribution_errors(tmpdir, distribution, mean, std, error):
     with tmpdir.as_cwd():
-        with open("template.txt", "w", encoding="utf-8") as fh:
+        with Path("template.txt").open("w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
 
         if distribution == "TRUNCATED_NORMAL":
@@ -468,7 +468,7 @@ def test_gen_kw_trans_func(tmpdir, params, xinput, expected):
 
 def test_gen_kw_objects_equal(tmpdir):
     with tmpdir.as_cwd():
-        with open("template.txt", "w", encoding="utf-8") as fh:
+        with Path("template.txt").open("w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
 
         g1 = GenKwConfig.from_config_list(
@@ -494,9 +494,9 @@ def test_gen_kw_objects_equal(tmpdir):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_gen_kw_pred_special_suggested_removal():
-    with open("coeff_priors.txt", "a", encoding="utf-8") as f:
+    with Path("coeff_priors.txt").open("a", encoding="utf-8") as f:
         f.write("a NORMAL 0 1")
-    with open("config.ert", "a", encoding="utf-8") as f:
+    with Path("config.ert").open("a", encoding="utf-8") as f:
         f.write(
             "NUM_REALIZATIONS 1\n"
             "GEN_KW PRED coeff_priors.txt coeff_priors.txt coeff_priors.txt\n"
@@ -603,7 +603,7 @@ def test_suggestion_on_empty_parameter_file():
 )
 def test_validation_unif_distribution(tmpdir, distribution, minimum, maximum, error):
     with tmpdir.as_cwd():
-        with open("template.txt", "w", encoding="utf-8") as fh:
+        with Path("template.txt").open("w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
         config_list = [
             "KW_NAME",
@@ -655,7 +655,7 @@ def test_validation_triangular_distribution(
     tmpdir, distribution, minimum, mode, maximum, error
 ):
     with tmpdir.as_cwd():
-        with open("template.txt", "w", encoding="utf-8") as fh:
+        with Path("template.txt").open("w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
         config_list = [
             "KW_NAME",
@@ -789,7 +789,7 @@ def test_validation_derrf_distribution(
     tmpdir, distribution, nbins, minimum, maximum, skew, width, error
 ):
     with tmpdir.as_cwd():
-        with open("template.txt", "w", encoding="utf-8") as fh:
+        with Path("template.txt").open("w", encoding="utf-8") as fh:
             fh.writelines("MY_KEYWORD <MY_KEYWORD>")
         config_list = [
             "KW_NAME",
@@ -852,9 +852,9 @@ def test_that_const_keyword_sets_update_to_false(tmpdir):
         GEN_KW CONST_TEST prior.txt UPDATE:TRUE
         """
         )
-        with open("config.ert", "w", encoding="utf-8") as fh:
+        with Path("config.ert").open("w", encoding="utf-8") as fh:
             fh.writelines(config)
-        with open("prior.txt", "w", encoding="utf-8") as fh:
+        with Path("prior.txt").open("w", encoding="utf-8") as fh:
             fh.writelines("CONST_TEST CONST 1")
 
         ert_config = ErtConfig.from_file("config.ert")
