@@ -63,7 +63,10 @@ def _plotObservations(
         # np.timedelta64 requires int input. To achieve hourly resolution (ERROR = 1.5),
         # we convert the std to an hourly timedelta
         xerr = np.array(
-            [np.timedelta64(int(time * 24), "h") for time in data.loc["STD"].to_list()]
+            [
+                np.timedelta64(round(time * 24), "h")
+                for time in data.loc["STD"].to_list()
+            ]
         )
         errorbar_data = {
             "x": np.array(

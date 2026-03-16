@@ -32,6 +32,8 @@ from ert.config.parsing.observations_parser import (
     ObservationType,
 )
 from ert.config.rft_config import RFTConfig
+from ert.gui.tools.plot.plottery import PlotConfig
+from ert.gui.tools.plot.plottery.plots.observations import _plotObservations
 from ert.namespace import Namespace
 
 pytestmark = pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
@@ -2097,3 +2099,35 @@ def test_that_extract_localization_values_raises_error_given_non_float():
             r'Failed to validate "Not a float"',
         ):
             extract_localization_values(values)
+
+
+def test_that_hours_are_rounded_to_closest_int_in_plot_observations():
+    unrounded_days = 10.7 / 24  # 10.7 hours converted to days
+    expected_rounded_hours = 11
+
+    def assertion_mock(**kwargs):
+        assert kwargs["xerr"] == [expected_rounded_hours]
+
+    axes_mock = MagicMock()
+    axes_mock.errorbar = assertion_mock
+
+    config = PlotConfig()
+    config.flip_observation_axis = True
+
+    data = DataFrame(
+        [
+            [
+                datetime.fromisoformat("2025-01-02"),
+            ],
+            [unrounded_days],
+            [0],
+        ],
+        index=["key_index", "STD", "OBS"],
+    )
+
+    _plotObservations(
+        axes_mock,
+        config,
+        data=data,
+        value_column="foo",
+    )
