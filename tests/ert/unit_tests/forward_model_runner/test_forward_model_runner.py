@@ -187,7 +187,7 @@ def test_env_var_available_inside_step_context():
         ),
         encoding="utf-8",
     )
-    os.chmod("run_me.py", stat.S_IEXEC + stat.S_IREAD)
+    Path("run_me.py").chmod(stat.S_IEXEC + stat.S_IREAD)
 
     step = forward_model_step_from_config_contents(
         """
@@ -238,7 +238,7 @@ def test_default_env_variables_available_inside_fm_step_context():
         ),
         encoding="utf-8",
     )
-    os.chmod("run_me.py", stat.S_IEXEC + stat.S_IREAD)
+    Path("run_me.py").chmod(stat.S_IEXEC + stat.S_IREAD)
 
     step = forward_model_step_from_config_contents(
         "EXECUTABLE run_me.py", name=None, config_file="RUN_ENV"

@@ -49,7 +49,7 @@ def use_custom_setsid(use_tmpdir):
         ),
         encoding="utf-8",
     )
-    os.chmod("setsid", 0o755)
+    Path("setsid").chmod(0o755)
 
 
 def write_executable(
@@ -57,7 +57,7 @@ def write_executable(
 ) -> str:
     file_path = directory / basename
     file_path.write_text(contents, encoding="utf-8")
-    os.chmod(file_path, stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
+    file_path.chmod(stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
     return str(file_path.resolve())
 
 

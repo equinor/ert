@@ -683,7 +683,7 @@ def config_generators(draw, use_eclbase=booleans):
 
             def make_executable(filename):
                 current_mode = os.stat(filename).st_mode
-                os.chmod(filename, current_mode | stat.S_IEXEC)
+                Path(filename).chmod(current_mode | stat.S_IEXEC)
 
             for job_file, executable_file in should_exist_job_configs:
                 path = Path(job_file).parent

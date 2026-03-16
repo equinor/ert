@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 from textwrap import dedent
 
@@ -219,7 +218,7 @@ def test_that_file_without_read_access_raises_config_validation_error(
     template_file = "file.txt"
 
     touch(template_file)
-    os.chmod(template_file, 0o000)  # Remove permissions
+    Path(template_file).chmod(0o000)  # Remove permissions
     Path(config_file_name).write_text(config_file_contents, encoding="utf-8")
     with pytest.raises(
         ConfigValidationError,

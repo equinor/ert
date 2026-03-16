@@ -30,11 +30,11 @@ class WorkflowCommon:
             encoding="utf-8",
         )
         st = os.stat("dump.py")
-        os.chmod(
-            "dump.py", st.st_mode | stat.S_IEXEC
+        Path("dump.py").chmod(
+            st.st_mode | stat.S_IEXEC
         )  # | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
         st = os.stat("dump_failing.py")
-        os.chmod("dump_failing.py", st.st_mode | stat.S_IEXEC)
+        Path("dump_failing.py").chmod(st.st_mode | stat.S_IEXEC)
 
         Path("dump_workflow").write_text(
             "DUMP dump1 dump_text_1\nDUMP dump2 dump_<PARAM>_2\n", encoding="utf-8"
@@ -97,8 +97,8 @@ class WorkflowCommon:
         )
 
         st = os.stat("external_wait_job.sh")
-        os.chmod(
-            "external_wait_job.sh", st.st_mode | stat.S_IEXEC
+        Path("external_wait_job.sh").chmod(
+            st.st_mode | stat.S_IEXEC
         )  # | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
 
         Path("wait_job").write_text(

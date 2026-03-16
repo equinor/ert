@@ -98,7 +98,7 @@ def make_ensemble(queue_config):
                 )
                 mode = os.stat(forward_model_exec).st_mode
                 mode |= stat.S_IXUSR | stat.S_IXGRP
-                os.chmod(forward_model_exec, stat.S_IMODE(mode))
+                Path(forward_model_exec).chmod(stat.S_IMODE(mode))
 
                 forward_model_list.append(
                     forward_model_step_from_config_contents(

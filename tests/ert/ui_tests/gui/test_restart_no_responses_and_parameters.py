@@ -42,12 +42,8 @@ def _open_main_window(
         encoding="utf-8",
     )
 
-    os.chmod(
-        "forward_model.py",
-        os.stat("forward_model.py").st_mode
-        | stat.S_IXUSR
-        | stat.S_IXGRP
-        | stat.S_IXOTH,
+    Path("forward_model.py").chmod(
+        os.stat("forward_model.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
     )
     Path("FORWARD_MODEL").write_text("EXECUTABLE forward_model.py", encoding="utf-8")
 

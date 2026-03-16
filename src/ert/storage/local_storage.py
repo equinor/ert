@@ -621,7 +621,7 @@ class LocalStorage(BaseMode):
         with NamedTemporaryFile(dir=self._swap_path, delete=False) as f:
             f.write(data)
             f.flush()
-            os.chmod(f.name, 0o660)
+            Path(f.name).chmod(0o660)
             os.rename(f.name, filename)
 
     def _to_netcdf_transaction(
@@ -636,7 +636,7 @@ class LocalStorage(BaseMode):
         self._swap_path.mkdir(parents=True, exist_ok=True)
         with NamedTemporaryFile(dir=self._swap_path, delete=False) as f:
             dataset.to_netcdf(f, engine="scipy")
-            os.chmod(f.name, 0o660)
+            Path(f.name).chmod(0o660)
             os.rename(f.name, filename)
 
     def _to_parquet_transaction(
@@ -651,7 +651,7 @@ class LocalStorage(BaseMode):
         self._swap_path.mkdir(parents=True, exist_ok=True)
         with NamedTemporaryFile(dir=self._swap_path, delete=False) as f:
             dataframe.write_parquet(f.name)
-            os.chmod(f.name, 0o660)
+            Path(f.name).chmod(0o660)
             os.rename(f.name, filename)
 
 

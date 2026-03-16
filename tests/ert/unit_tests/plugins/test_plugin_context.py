@@ -1,4 +1,3 @@
-import os
 import stat
 import tempfile
 from pathlib import Path
@@ -16,13 +15,13 @@ def mock_dummy_plugins(target_dir: Path):
     fm_disapatch_path = target_dir / "fm_dispatch_dummy.py"
     fm_disapatch_path.write_text("echo helloworld")
 
-    os.chmod(fm_disapatch_path, fm_disapatch_path.stat().st_mode | stat.S_IEXEC)
+    Path(fm_disapatch_path).chmod(fm_disapatch_path.stat().st_mode | stat.S_IEXEC)
 
     Path.mkdir(target_dir / "dummy/path", exist_ok=True, parents=True)
     executable_path = target_dir / "dummy/path/dummy_exec.sh"
 
     executable_path.write_text("#!/usr/bin/env bash\necho 'hello world'")
-    os.chmod(executable_path, 0o775)
+    Path(executable_path).chmod(0o775)
 
     (target_dir / "dummy/path/job1").write_text("EXECUTABLE dummy_exec.sh")
     (target_dir / "dummy/path/job2").write_text("EXECUTABLE dummy_exec.sh")

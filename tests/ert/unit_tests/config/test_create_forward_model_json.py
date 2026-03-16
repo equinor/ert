@@ -156,7 +156,7 @@ def _generate_step(
         pass
     mode = os.stat(executable).st_mode
     mode |= stat.S_IXUSR | stat.S_IXGRP
-    os.chmod(executable, stat.S_IMODE(mode))
+    Path(executable).chmod(stat.S_IMODE(mode))
 
     return forward_model_step_from_config_contents(config_contents, config_file, name)
 

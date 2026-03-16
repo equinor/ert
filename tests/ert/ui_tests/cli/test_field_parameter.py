@@ -322,12 +322,11 @@ if __name__ == "__main__":
             encoding="utf-8",
         )
 
-        os.chmod(
-            "forward_model",
+        Path("forward_model").chmod(
             os.stat("forward_model").st_mode
             | stat.S_IXUSR
             | stat.S_IXGRP
-            | stat.S_IXOTH,
+            | stat.S_IXOTH
         )
         Path("POLY_EVAL").write_text("EXECUTABLE forward_model", encoding="utf-8")
         Path("observations").write_text(

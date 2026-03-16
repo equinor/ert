@@ -43,10 +43,10 @@ def write_files(files: dict[str, str | FileDetail] | None = None):
                     fh.writelines(content.contents)
 
                     if not content.is_executable:
-                        os.chmod(other_filename, stat.S_IREAD)
+                        Path(other_filename).chmod(stat.S_IREAD)
 
                     if not content.is_readable:
-                        os.chmod(other_filename, ~0o400)
+                        Path(other_filename).chmod(~0o400)
                 else:
                     fh.write(content)
 

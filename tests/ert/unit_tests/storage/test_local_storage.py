@@ -356,7 +356,7 @@ def test_open_with_no_permissions(tmp_path):
         ensemble = storage.create_ensemble(experiment, name="foo", ensemble_size=1)
     path = Path(ensemble._path)
     mode = path.stat().st_mode
-    os.chmod(path, 0o000)  # no permissions
+    Path(path).chmod(0o000)  # no permissions
     try:
         with (
             pytest.raises(
@@ -367,7 +367,7 @@ def test_open_with_no_permissions(tmp_path):
         ):
             storage._load_experiments()
     finally:
-        os.chmod(path, mode)  # restore permissions
+        Path(path).chmod(mode)  # restore permissions
 
 
 def test_reload(tmp_path):

@@ -76,7 +76,7 @@ def test_memory_usage_counts_grandchildren():
         encoding="utf-8",
     )
     executable = os.path.realpath(scriptname)
-    os.chmod(scriptname, stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
+    Path(scriptname).chmod(stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
 
     def max_memory_per_subprocess_layer(layers: int) -> int:
         fmstep = ForwardModelStep(
@@ -196,7 +196,7 @@ def test_run_with_empty_executable():
     with Path(empty_executable).open("a", encoding="utf-8"):
         pass
     st = os.stat(empty_executable)
-    os.chmod(empty_executable, st.st_mode | stat.S_IEXEC)
+    Path(empty_executable).chmod(st.st_mode | stat.S_IEXEC)
 
     fmstep = ForwardModelStep(
         {
