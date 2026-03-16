@@ -206,9 +206,8 @@ def test_that_reals_with_load_failure_in_prior_become_parent_failure_in_posterio
         encoding="utf-8",
     )
 
-    os.chmod(
-        "poly_eval.py",
-        os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH,
+    Path("poly_eval.py").chmod(
+        os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
     )
 
     run_cli(

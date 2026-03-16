@@ -840,7 +840,7 @@ def test_that_existing_install_job_with_non_executable_executable_errors_depreca
     with Path("non_executable").open("w+", encoding="utf-8") as f:
         f.write("bla")
 
-    os.chmod("non_executable", os.stat("non_executable").st_mode & ~0o111)
+    Path("non_executable").chmod(os.stat("non_executable").st_mode & ~0o111)
     assert not os.access("non_executable", os.X_OK)
 
     with pytest.warns(
@@ -875,7 +875,7 @@ def test_that_existing_install_job_with_non_executable_executable_errors(
     with Path("non_executable").open("w+", encoding="utf-8") as f:
         f.write("bla")
 
-    os.chmod("non_executable", os.stat("non_executable").st_mode & ~0o111)
+    Path("non_executable").chmod(os.stat("non_executable").st_mode & ~0o111)
     assert not os.access("non_executable", os.X_OK)
 
     with pytest.raises(ValidationError, match="File not executable"):

@@ -36,7 +36,7 @@ def test_load_forward_model():
     Path(name).write_text("This is a script", encoding="utf-8")
     mode = os.stat(name).st_mode
     mode |= stat.S_IXUSR | stat.S_IXGRP
-    os.chmod(name, stat.S_IMODE(mode))
+    Path(name).chmod(stat.S_IMODE(mode))
     contents = """
         STDOUT null
         STDERR null
@@ -63,7 +63,7 @@ def test_load_forward_model_upgraded():
     Path(name).write_text("This is a script", encoding="utf-8")
     mode = os.stat(name).st_mode
     mode |= stat.S_IXUSR | stat.S_IXGRP
-    os.chmod(name, stat.S_IMODE(mode))
+    Path(name).chmod(stat.S_IMODE(mode))
     fm_step = forward_model_step_from_config_contents(
         """
         EXECUTABLE script.sh

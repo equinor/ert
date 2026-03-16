@@ -1,5 +1,4 @@
 import json
-import os.path
 from pathlib import Path
 
 import pytest
@@ -159,7 +158,7 @@ def test_show_scaled_controls_warning_error_writing_user_info(
     monkeypatch.setattr("builtins.input", lambda _: user_reply)
 
     Path(".ert").touch()
-    os.chmod(Path(".ert"), 0o444)
+    Path(".ert").chmod(0o444)
     if user_reply.lower() == "n":
         with pytest.raises(SystemExit):
             show_scaled_controls_warning()

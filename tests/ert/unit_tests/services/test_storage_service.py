@@ -241,9 +241,9 @@ def test_that_an_exception_is_raised_if_storage_server_file_has_no_permissions(
     file_path = Path("storage_server.json")
     file_path.write_text("{}", encoding="utf-8")
     mode = file_path.stat().st_mode
-    os.chmod(file_path, 0o000)  # no permissions
+    Path(file_path).chmod(0o000)  # no permissions
     try:
         with pytest.raises(PermissionError):
             ErtServerController.init_service(project=Path(".").absolute())
     finally:
-        os.chmod(file_path, mode)
+        Path(file_path).chmod(mode)

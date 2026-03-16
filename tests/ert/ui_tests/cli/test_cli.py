@@ -96,7 +96,7 @@ def test_that_the_cli_raises_exceptions_when_no_weight_provided_for_es_mda():
 def test_field_init_file_not_readable():
     config_file_name = "snake_oil_field.ert"
     field_file_rel_path = "fields/permx0.grdecl"
-    os.chmod(field_file_rel_path, 0o000)
+    Path(field_file_rel_path).chmod(0o000)
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=ConfigWarning)
@@ -144,7 +144,7 @@ def test_that_unopenable_observation_config_fails_gracefully():
     line_with_observation_config = content_lines[index_line_with_observation_config]
     observation_config_rel_path = line_with_observation_config.split(" ")[1]
     observation_config_abs_path = os.path.join(Path.cwd(), observation_config_rel_path)
-    os.chmod(observation_config_abs_path, 0o000)
+    Path(observation_config_abs_path).chmod(0o000)
 
     with pytest.raises(
         ConfigValidationError,
@@ -188,7 +188,7 @@ def test_that_successful_realizations_less_than_minimum_realizations_fails_grace
     Path("failing_fm.py").write_text(
         "#!/usr/bin/env python3\nraise RuntimeError('fm failed')", encoding="utf-8"
     )
-    os.chmod("failing_fm.py", 0o755)
+    Path("failing_fm.py").chmod(0o755)
 
     with pytest.raises(
         ErtCliError,
@@ -225,7 +225,7 @@ def setenv_config(tmp_path):
         'print(os.environ["FOURTH"])\n',
         encoding="utf-8",
     )
-    os.chmod(run_script, 0o755)
+    Path(run_script).chmod(0o755)
 
     (tmp_path / "ECHO.txt").write_text(
         dedent(
@@ -479,7 +479,7 @@ def test_that_stop_on_fail_workflow_jobs_stop_ert(
 
     Path(script_name).write_text(script_content, encoding="utf-8")
 
-    os.chmod(script_name, os.stat(script_name).st_mode | 0o111)
+    Path(script_name).chmod(os.stat(script_name).st_mode | 0o111)
 
     Path("dump_failing_workflow").write_text("failjob", encoding="utf-8")
 
@@ -812,7 +812,7 @@ def test_that_a_custom_eclrun_can_be_activated_through_setenv():
         ).strip(),
         encoding="utf-8",
     )
-    os.chmod(eclrun, os.stat(eclrun).st_mode | stat.S_IEXEC)
+    Path(eclrun).chmod(os.stat(eclrun).st_mode | stat.S_IEXEC)
 
     Path("FOO.DATA").touch()
     config_file = Path("config.ert")

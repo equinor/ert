@@ -88,7 +88,7 @@ def setup_minimal_everest_case(tmp_path) -> AbstractContextManager[str]:
                 """)
             )
 
-            os.chmod(job_path, job_path.stat().st_mode | stat.S_IEXEC)
+            Path(job_path).chmod(job_path.stat().st_mode | stat.S_IEXEC)
 
             config = EverestConfig.with_plugins(
                 {

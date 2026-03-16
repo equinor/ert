@@ -51,12 +51,8 @@ def test_rerun_failed_all_realizations(opened_main_window_poly, qtbot):
             encoding="utf-8",
         )
 
-        os.chmod(
-            "poly_eval.py",
-            os.stat("poly_eval.py").st_mode
-            | stat.S_IXUSR
-            | stat.S_IXGRP
-            | stat.S_IXOTH,
+        Path("poly_eval.py").chmod(
+            os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
         )
 
     write_poly_eval(failing_reals=True)
@@ -130,12 +126,8 @@ def test_rerun_failed_realizations(opened_main_window_poly, qtbot, caplog):
             encoding="utf-8",
         )
 
-        os.chmod(
-            "poly_eval.py",
-            os.stat("poly_eval.py").st_mode
-            | stat.S_IXUSR
-            | stat.S_IXGRP
-            | stat.S_IXOTH,
+        Path("poly_eval.py").chmod(
+            os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
         )
 
     experiment_panel = gui.findChild(ExperimentPanel)
@@ -292,12 +284,8 @@ def test_rerun_failed_realizations_evaluate_ensemble(
             encoding="utf-8",
         )
 
-        os.chmod(
-            "poly_eval.py",
-            os.stat("poly_eval.py").st_mode
-            | stat.S_IXUSR
-            | stat.S_IXGRP
-            | stat.S_IXOTH,
+        Path("poly_eval.py").chmod(
+            os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
         )
 
     experiment_panel = gui.findChild(ExperimentPanel)
