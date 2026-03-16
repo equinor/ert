@@ -26,10 +26,13 @@ def assert_variance_in_field(
         x=no_upd_pos[0], y=no_upd_pos[1]
     )
 
-    assert (
-        posterior_var_obs.mean() - prior_var_obs.mean()
-        > posterior_var_no_obs.mean() - prior_var_no_obs.mean()
-    ), f"Expecting stronger update on observation location than outside on {field_name}"
+    obs_reduction = prior_var_obs.mean() - posterior_var_obs.mean()
+    no_obs_reduction = prior_var_no_obs.mean() - posterior_var_no_obs.mean()
+
+    assert obs_reduction > no_obs_reduction, (
+        f"Expecting stronger variance reduction at observation location "
+        f"than outside on {field_name}"
+    )
 
 
 @pytest.mark.timeout(600)
