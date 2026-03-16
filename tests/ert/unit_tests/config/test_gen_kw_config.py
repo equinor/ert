@@ -1,6 +1,8 @@
+import json
 import math
 import re
 import threading
+from itertools import permutations
 from pathlib import Path
 from textwrap import dedent
 
@@ -911,3 +913,59 @@ def test_that_init_files_option_raises_removal_error(tmp_path):
                 {"INIT_FILES": "init_%d"},
             ]
         )
+
+
+@pytest.mark.parametrize("order", list(permutations([("A", 1), ("AA", 2), ("AAA", 3)])))
+async def test_that_gen_kw_substitutes_correctly(order, tmpdir, storage, run_args):
+    """This is a regression test to check that the substitution mechanism
+    works correctly when there are multiple parameters with similar names."""
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        GEN_KW KW_NAME prior.txt
+        """
+        )
+        Path("config.ert").write_text(config, encoding="utf-8")
+        Path("prior.txt").write_text(
+            "\n".join(
+                f"{param_name} CONST {param_value}"
+                for (param_name, param_value) in order
+            ),
+            encoding="utf-8",
+        )
+
+        ert_config = ErtConfig.from_file("config.ert")
+
+        experiment_id = storage.create_experiment(
+            experiment_config={
+                "parameter_configuration": (
+                    ert_config.ensemble_config.parameter_configuration
+                )
+            }
+        )
+        prior_ensemble = storage.create_ensemble(
+            experiment_id, name="prior", ensemble_size=1
+        )
+        sample_prior(prior_ensemble, [0], 123, 1)
+        await create_run_path(
+            run_args=run_args(ert_config, prior_ensemble),
+            ensemble=prior_ensemble,
+            runpaths=Runpaths.from_config(ert_config),
+            user_config_file=ert_config.user_config_file,
+            forward_model_steps=ert_config.forward_model_steps,
+            env_vars=ert_config.env_vars,
+            env_pr_fm_step=ert_config.env_pr_fm_step,
+            substitutions=ert_config.substitutions,
+            end_event=threading.Event(),
+            parameters_file="parameters",
+        )
+
+        param_json = json.loads(
+            Path("simulations/realization-0/iter-0/parameters.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        for param_name, param_value in order:
+            assert int(param_json[f"{param_name}"]["value"]) == param_value
