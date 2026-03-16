@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import pathlib
 import shutil
 import sys
 
@@ -10,7 +11,7 @@ def move_directory(src_dir: str, target: str) -> None:
 
     """
     if os.path.isdir(src_dir):
-        if os.path.exists(target):
+        if pathlib.Path(target).exists():
             shutil.rmtree(target)
         shutil.move(src_dir, target)
     else:

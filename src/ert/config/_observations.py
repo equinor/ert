@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+import pathlib
 from collections.abc import Mapping, Sequence
 from datetime import datetime
 from enum import StrEnum
@@ -384,7 +385,7 @@ class RFTObservation(BaseModel):
         """
         if not os.path.isabs(filename):
             filename = os.path.join(directory, filename)
-        if not os.path.exists(filename):
+        if not pathlib.Path(filename).exists():
             raise ObservationConfigError.with_context(
                 f"The CSV file ({filename}) does not exist or is not accessible.",
                 filename,
@@ -793,7 +794,7 @@ def _missing_value_error(name_token: str, value_key: str) -> ObservationConfigEr
 def _resolve_path(directory: str, filename: str) -> str:
     if not os.path.isabs(filename):
         filename = os.path.join(directory, filename)
-    if not os.path.exists(filename):
+    if not pathlib.Path(filename).exists():
         raise ObservationConfigError.with_context(
             f"The following keywords did not resolve to a valid path:\n {filename}",
             filename,

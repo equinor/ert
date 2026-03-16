@@ -576,4 +576,4 @@ async def test_gen_kw_outfile_will_use_paths(
                 await create_runpath(storage, "config.ert")
         else:
             await create_runpath(storage, "config.ert")
-            assert os.path.exists(f"simulations/realization-0/iter-0/{relpath}kw.txt")
+            assert Path(f"simulations/realization-0/iter-0/{relpath}kw.txt").exists()

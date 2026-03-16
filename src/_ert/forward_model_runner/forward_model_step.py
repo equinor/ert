@@ -247,7 +247,9 @@ class ForwardModelStep:
             return exited_message
 
         exited_message = Exited(self, exit_code)
-        if (error_file := self.step_data.get("error_file")) and path.exists(error_file):
+        if (error_file := self.step_data.get("error_file")) and Path(
+            error_file
+        ).exists():
             return exited_message.with_error(
                 f"Found the error file:{error_file} - step failed."
             )
@@ -337,15 +339,19 @@ class ForwardModelStep:
         of failed checks.
         """
         errors = []
-        if (stdin_file := self.step_data.get("stdin")) and not path.exists(stdin_file):
+        if (stdin_file := self.step_data.get("stdin")) and not Path(
+            stdin_file
+        ).exists():
             errors.append(f"Could not locate stdin file: {stdin_file}")
 
-        if (start_file := self.step_data.get("start_file")) and not path.exists(
+        if (start_file := self.step_data.get("start_file")) and not Path(
             start_file
-        ):
+        ).exists():
             errors.append(f"Could not locate start_file:{start_file}")
 
-        if (error_file := self.step_data.get("error_file")) and path.exists(error_file):
+        if (error_file := self.step_data.get("error_file")) and Path(
+            error_file
+        ).exists():
             os.unlink(error_file)
 
         if executable_error := check_executable(self.step_data.get("executable")):
@@ -363,7 +369,7 @@ class ForwardModelStep:
 
         start_time = time.time()
         while True:
-            if path.exists(target_file):
+            if Path(target_file).exists():
                 stat = os.stat(target_file)
                 if stat.st_mtime_ns > (existing_target_file_mtime or 0):
                     return None
@@ -374,7 +380,7 @@ class ForwardModelStep:
 
         # We have gone out of the loop via the break statement,
         # i.e. on a timeout.
-        if path.exists(target_file):
+        if Path(target_file).exists():
             stat = os.stat(target_file)
             return (
                 f"The target file:{target_file} has not been updated; "
@@ -386,7 +392,7 @@ class ForwardModelStep:
 
 def _get_existing_target_file_mtime(file: str | None) -> int | None:
     mtime = None
-    if file and path.exists(file):
+    if file and Path(file).exists():
         stat = os.stat(file)
         mtime = stat.st_mtime_ns
     return mtime

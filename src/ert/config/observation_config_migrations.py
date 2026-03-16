@@ -418,7 +418,7 @@ class LegacyGeneralObservation(_LegacyGeneralObservation):
                     filename = value
                     if not os.path.isabs(filename):
                         filename = os.path.join(directory, filename)
-                    if not os.path.exists(filename):
+                    if not Path(filename).exists():
                         raise ObservationConfigError.with_context(
                             "The following keywords did not"
                             f" resolve to a valid path:\n {key}",

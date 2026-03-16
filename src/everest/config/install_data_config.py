@@ -24,7 +24,7 @@ def _is_dir_all_model(source: str, model_realizations: list[int]) -> bool:
     is_dir = []
     for model_realization in model_realizations:
         model_source = source.replace("<REALIZATION_ID>", str(model_realization))
-        if not os.path.exists(model_source):
+        if not Path(model_source).exists():
             msg = (
                 "Expected source to exist for data installation, "
                 f"did not find: {model_source}"

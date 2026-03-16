@@ -179,27 +179,27 @@ def test_move_directory():
     mkdir("dir1")
     Path("dir1/file").write_text("Hei!", encoding="utf-8")
     move_directory("dir1", "dir2")
-    assert os.path.exists("dir2")
-    assert os.path.exists("dir2/file")
-    assert not os.path.exists("dir1")
+    assert Path("dir2").exists()
+    assert Path("dir2/file").exists()
+    assert not Path("dir1").exists()
 
     # Test overwriting directory
     mkdir("dir1")
     Path("dir1/file2").write_text("Hei!", encoding="utf-8")
     move_directory("dir1", "dir2")
-    assert os.path.exists("dir2")
-    assert os.path.exists("dir2/file2")
-    assert not os.path.exists("dir2/file")
-    assert not os.path.exists("dir1")
+    assert Path("dir2").exists()
+    assert Path("dir2/file2").exists()
+    assert not Path("dir2/file").exists()
+    assert not Path("dir1").exists()
 
     # Test moving directory inside already existing direcotry
     mkdir("dir1")
     Path("dir1/file3").write_text("Hei!", encoding="utf-8")
     move_directory("dir1", "dir2/dir1")
-    assert os.path.exists("dir2/dir1")
-    assert os.path.exists("dir2/file2")
-    assert os.path.exists("dir2/dir1/file3")
-    assert not os.path.exists("dir1")
+    assert Path("dir2/dir1").exists()
+    assert Path("dir2/file2").exists()
+    assert Path("dir2/dir1/file3").exists()
+    assert not Path("dir1").exists()
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -297,8 +297,8 @@ def test_that_delete_directory_does_not_follow_symlinks():
 
     symlink("../link_target", "path/link")
     delete_directory("path")
-    assert not os.path.exists("path")
-    assert os.path.exists("link_target/link_file")
+    assert not Path("path").exists()
+    assert Path("link_target/link_file").exists()
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -307,8 +307,8 @@ def test_that_delete_directory_on_a_symlink_to_file_fails():
     symlink("link_target", "link")
     with pytest.raises(IOError, match="is not a directory"):
         delete_directory("link")
-    assert os.path.exists("link_target")
-    assert os.path.exists("link")
+    assert Path("link_target").exists()
+    assert Path("link").exists()
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -317,8 +317,8 @@ def test_that_delete_directory_on_a_symlink_to_a_directory_only_deletes_link():
     Path("link_target/file").write_text("hei", encoding="utf-8")
     symlink("link_target", "link")
     delete_directory("link")
-    assert os.path.exists("link_target/file")
-    assert not os.path.exists("link")
+    assert Path("link_target/file").exists()
+    assert not Path("link").exists()
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -344,19 +344,19 @@ def test_that_delete_directory_on_a_symlink_to_a_directory_is_conditionally_igno
         delete_directory(f"link{trailing}")
 
     if trailing:
-        assert not os.path.exists("link_target/file")
+        assert not Path("link_target/file").exists()
 
         if sys.platform.startswith("darwin"):
             # Mac will also delete the symlink, while Linux will not
-            assert not os.path.exists("link")
-            assert not os.path.exists("link_target")
+            assert not Path("link").exists()
+            assert not Path("link_target").exists()
         else:
-            assert os.path.exists("link")
-            assert os.path.exists("link_target")
+            assert Path("link").exists()
+            assert Path("link_target").exists()
     else:
-        assert os.path.exists("link_target/file")
-        assert os.path.exists("link_target")
-        assert not os.path.exists("link")
+        assert Path("link_target/file").exists()
+        assert Path("link_target").exists()
+        assert not Path("link").exists()
 
 
 @pytest.mark.usefixtures("use_tmpdir")

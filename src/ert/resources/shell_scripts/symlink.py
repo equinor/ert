@@ -21,7 +21,7 @@ def symlink(target: str, link_name: str) -> None:
             os.makedirs(link_path)
         target_check = os.path.join(link_path, target)
 
-    if not os.path.exists(target_check):
+    if not Path(target_check).exists():
         raise OSError(
             f"{target} (target) and {link_name} (link_name) requested, "
             f"which implies that {target_check} must exist, but it does not."

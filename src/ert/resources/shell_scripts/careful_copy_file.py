@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import pathlib
 import shutil
 import sys
 
@@ -7,7 +8,7 @@ import sys
 def careful_copy_file(src: str, target: str | None = None) -> None:
     if target is None:
         target = os.path.basename(src)
-    if os.path.exists(target):
+    if pathlib.Path(target).exists():
         print(f"File: {target} already present - not updated")
         return
     if os.path.isfile(src):

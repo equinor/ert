@@ -196,7 +196,7 @@ def fm_dispatch(args: list[str]) -> None:
 
     # If run_path is defined, enter into that directory
     if parsed_args.run_path is not None:
-        if not os.path.exists(parsed_args.run_path):
+        if not Path(parsed_args.run_path).exists():
             sys.exit(f"No such directory: {parsed_args.run_path}")
         os.chdir(parsed_args.run_path)
 

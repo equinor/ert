@@ -1,4 +1,3 @@
-import os.path
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import patch
@@ -199,22 +198,22 @@ def test_workflow_thread_cancel_ert_script():
         assert workflow_runner.workflowResult() is None
 
         wait_until(workflow_runner.isRunning)
-        wait_until(lambda: os.path.exists("wait_started_0"))
+        wait_until(lambda: Path("wait_started_0").exists())
 
-        wait_until(lambda: os.path.exists("wait_finished_0"))
+        wait_until(lambda: Path("wait_finished_0").exists())
 
-        wait_until(lambda: os.path.exists("wait_started_1"))
+        wait_until(lambda: Path("wait_started_1").exists())
 
         workflow_runner.cancel()
 
-        wait_until(lambda: os.path.exists("wait_cancelled_1"))
+        wait_until(lambda: Path("wait_cancelled_1").exists())
 
         assert workflow_runner.isCancelled()
 
-    assert not os.path.exists("wait_finished_1")
-    assert not os.path.exists("wait_started_2")
-    assert not os.path.exists("wait_cancelled_2")
-    assert not os.path.exists("wait_finished_2")
+    assert not Path("wait_finished_1").exists()
+    assert not Path("wait_started_2").exists()
+    assert not Path("wait_cancelled_2").exists()
+    assert not Path("wait_finished_2").exists()
 
 
 @pytest.mark.integration_test
@@ -236,16 +235,16 @@ def test_workflow_thread_cancel_external():
 
     with workflow_runner:
         wait_until(workflow_runner.isRunning)
-        wait_until(lambda: os.path.exists("wait_started_0"))
-        wait_until(lambda: os.path.exists("wait_finished_0"))
-        wait_until(lambda: os.path.exists("wait_started_1"))
+        wait_until(lambda: Path("wait_started_0").exists())
+        wait_until(lambda: Path("wait_finished_0").exists())
+        wait_until(lambda: Path("wait_started_1").exists())
         workflow_runner.cancel()
         assert workflow_runner.isCancelled()
 
-    assert not os.path.exists("wait_finished_1")
-    assert not os.path.exists("wait_started_2")
-    assert not os.path.exists("wait_cancelled_2")
-    assert not os.path.exists("wait_finished_2")
+    assert not Path("wait_finished_1").exists()
+    assert not Path("wait_started_2").exists()
+    assert not Path("wait_cancelled_2").exists()
+    assert not Path("wait_finished_2").exists()
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -300,13 +299,13 @@ def test_workflow_success():
     assert not workflow_runner.isRunning()
     with workflow_runner:
         workflow_runner.wait()
-    assert os.path.exists("wait_started_0")
-    assert not os.path.exists("wait_cancelled_0")
-    assert os.path.exists("wait_finished_0")
+    assert Path("wait_started_0").exists()
+    assert not Path("wait_cancelled_0").exists()
+    assert Path("wait_finished_0").exists()
 
-    assert os.path.exists("wait_started_1")
-    assert not os.path.exists("wait_cancelled_1")
-    assert os.path.exists("wait_finished_1")
+    assert Path("wait_started_1").exists()
+    assert not Path("wait_cancelled_1").exists()
+    assert Path("wait_finished_1").exists()
 
     assert workflow_runner.workflowResult()
 

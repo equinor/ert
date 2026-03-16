@@ -114,7 +114,7 @@ def _migrate_response_datasets(path: Path) -> None:
                         ).expand_dims(name=[gendata_name], axis=1),
                     )
                     for gendata_name in gendata_keys
-                    if os.path.exists(real_dir / f"{gendata_name}.nc")
+                    if (real_dir / f"{gendata_name}.nc").exists()
                 ]
 
                 if gen_data_datasets:

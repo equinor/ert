@@ -227,6 +227,7 @@ select = [
     "PLW",
     "PT",    # pytest
     "PTH109",
+    "PTH110",
     "PTH123",
     "PYI",
     "Q",
