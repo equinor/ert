@@ -48,15 +48,13 @@ class SubmitSleeper:
 
     def __init__(self, submit_sleep: float) -> None:
         self._submit_sleep = submit_sleep
-        self._last_started = (
-            time.time() - submit_sleep
-        )  # Allow the first to start immediately
+        self._last_started = time.monotonic() - submit_sleep
 
     async def sleep_until_we_can_submit(self) -> None:
-        now = time.time()
+        now = time.monotonic()
         next_start_time = max(self._last_started + self._submit_sleep, now)
         self._last_started = next_start_time
-        await asyncio.sleep(max(0, next_start_time - now))
+        await asyncio.sleep(max(0.0, next_start_time - now))
 
 
 class Scheduler:

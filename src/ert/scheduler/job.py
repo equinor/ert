@@ -126,7 +126,7 @@ class Job:
         if self._start_time:
             if self._end_time:
                 return self._end_time - self._start_time
-            return time.time() - self._start_time
+            return time.monotonic() - self._start_time
         return 0
 
     async def _submit_and_run_once(self, sem: asyncio.BoundedSemaphore) -> None:
@@ -138,7 +138,7 @@ class Job:
             if self._scheduler.submit_sleep_state:
                 await self._scheduler.submit_sleep_state.sleep_until_we_can_submit()
             await self._send(JobState.SUBMITTING)
-            self.submit_time = time.time()
+            self.submit_time = time.monotonic()
             try:
                 submit_task = asyncio.create_task(
                     self.driver.submit(
@@ -160,7 +160,7 @@ class Job:
 
             await self._send(JobState.PENDING)
             await self.started.wait()
-            self._start_time = time.time()
+            self._start_time = time.monotonic()
             pending_time = self._start_time - self.submit_time
             logger.info(
                 f"Pending time for realization {self.iens} "
@@ -438,7 +438,7 @@ class Job:
                 await self._handle_aborted()
             case JobState.COMPLETED:
                 event = RealizationSuccess(real=str(self.iens))
-                self._end_time = time.time()
+                self._end_time = time.monotonic()
                 await self._scheduler.completed_jobs.put(self.iens)
             case default:
                 assert_never(default)
