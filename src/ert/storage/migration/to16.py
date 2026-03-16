@@ -22,11 +22,11 @@ def delete_mask_file(experiment: Path) -> None:
 
 
 def migrate_fields(experiment: Path) -> None:
-    with Path(experiment / "parameter.json").open(encoding="utf-8") as fin:
+    with (experiment / "parameter.json").open(encoding="utf-8") as fin:
         parameters_json = json.load(fin)
 
     new_parameter_configs = migrate_field_param(parameters_json)
-    Path(experiment / "parameter.json").write_text(
+    (experiment / "parameter.json").write_text(
         json.dumps(new_parameter_configs, indent=2), encoding="utf-8"
     )
 

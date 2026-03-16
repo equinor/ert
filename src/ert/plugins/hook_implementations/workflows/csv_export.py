@@ -1,5 +1,6 @@
 import json
 import os
+import pathlib
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
@@ -76,7 +77,7 @@ class CSVExportJob(ErtScript):
             ensembles.append(ensemble)
 
         if design_matrix_path is not None:
-            if not os.path.exists(design_matrix_path):
+            if not pathlib.Path(design_matrix_path).exists():
                 raise UserWarning("The design matrix file does not exist!")
 
             if not os.path.isfile(design_matrix_path):
