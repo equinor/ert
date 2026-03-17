@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-
+import numpy as np
 import pandas as pd
 from matplotlib.ticker import MaxNLocator
+from .plot_tools import ConditionalAxisFormatter, PlotTools
 
 if TYPE_CHECKING:
     import numpy as np
@@ -34,8 +35,8 @@ class EverestGradientsPlot:
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         if not self.selected_controls:
-            ax = figure.add_subplot(111)
-            ax.text(
+            axes = figure.add_subplot(111)
+            axes.text(
                 0.5,
                 0.5,
                 "Select control(s) from the side panel to view gradients",
@@ -45,85 +46,74 @@ class EverestGradientsPlot:
             return
 
         config = plot_context.plotConfig()
-
-        n_controls = len(self.selected_controls)
-        axs = figure.subplots(n_controls, 1, sharex=True, squeeze=False)
+        axes = figure.add_subplot(111)
 
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.INDEX_AXIS
         plot_context.deactivateDateSupport()
 
         response_key = key_def.key if key_def else "Response"
-        config.setTitle(f"Derivative of {response_key} wrt controls")
 
-        default_color = config.lineColorCycle()[0][0]
+        colors = config.lineColorCycle()
 
-        for i, control in enumerate(self.selected_controls):
-            ax = axs[i, 0]
-            ax.set_ylabel(control)
+        # Collect all data into one frame
+        all_frames = []
+        for df in ensemble_to_data_map.values():
+            if (
+                df.empty
+                or response_key not in df.columns
+                or "control_name" not in df.columns
+            ):
+                continue
+            filtered = df[df["control_name"].isin(self.selected_controls)]
 
-            ax.yaxis.grid(True, linestyle=":", linewidth=0.5, color="gray", alpha=0.5)
-            ax.xaxis.grid(False)
+            if not filtered.empty:
+                all_frames.append(filtered)
 
-            ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+        if not all_frames:
+            axes.text(0.5, 0.5, "No data", ha="center", va="center")
+            return
 
-            # (derivative is interesting to see go towards/away from 0)
-            # Hence thicker horizontal line at y=0
-            ax.axhline(0, color="black", linewidth=1.0, alpha=0.3)
+        combined = pd.concat(all_frames)
+        batch_ids = sorted(combined["batch_id"].unique())
 
-            ax.spines["top"].set_visible(False)
-            ax.spines["right"].set_visible(False)
+        pos = np.arange(len(self.selected_controls))  # one position per control
+        n_batches = len(batch_ids)
+        bar_width = 0.8 / n_batches
 
-            if i < n_controls - 1:
-                # Intermediate plots: thin gray line as separator
-                ax.spines["bottom"].set_visible(True)
-                ax.spines["bottom"].set_linewidth(0.5)
-                ax.spines["bottom"].set_color("lightgray")
-                ax.tick_params(axis="x", which="both", bottom=False, labelbottom=False)
-            else:
-                ax.spines["bottom"].set_visible(True)
-                ax.tick_params(axis="x", which="both", bottom=True, labelbottom=True)
+        for i, batch_id in enumerate(batch_ids):
+            color = colors[i % len(colors)][0]
+            batch_data = combined[combined["batch_id"] == batch_id]
 
-            # For normalizing y-axis across controls
-            max_abs_val = 0.0
+            values = []
+            for control in self.selected_controls:
+                match = batch_data[batch_data["control_name"] == control]
+                values.append(match[response_key].values[0] if not match.empty else 0.0)
 
-            data_frames = []
-            for df in ensemble_to_data_map.values():
-                if (
-                    df.empty
-                    or response_key not in df.columns
-                    or "control_name" not in df.columns
-                ):
-                    continue
+            offsets = pos + (i - n_batches / 2) * bar_width + bar_width / 2
+            axes.bar(
+                offsets,
+                values,
+                width=bar_width,
+                color=color,
+                alpha=0.7,
+                label=f"Batch {batch_id}",
+            )
 
-                control_data = df[df["control_name"] == control]
-                if not control_data.empty:
-                    data_frames.append(control_data)
+        axes.legend()
+        figure.tight_layout()
 
-            if data_frames:
-                r_data = pd.concat(data_frames).sort_values("batch_id")
 
-                current_max_abs = r_data[response_key].abs().max()
-                max_abs_val = max(max_abs_val, current_max_abs)
+        axes.set_xticks(pos)
+        rotation = 0
+        if len(self.selected_controls) > 3:
+            rotation = 30
 
-                ax.plot(
-                    r_data["batch_id"].to_numpy(),
-                    r_data[response_key].to_numpy(),
-                    "-o",
-                    markersize=5,
-                    linewidth=2,
-                    color=default_color,
-                    markerfacecolor=default_color,
-                )
+        axes.set_xticklabels(self.selected_controls, rotation=rotation)
+        # Not sure if this is needed
+        axes.yaxis.set_major_formatter(ConditionalAxisFormatter())
 
-                if max_abs_val > 0:
-                    limit = max_abs_val * 1.1  # Add some padding
-                    ax.set_ylim(-limit, limit)
-            else:
-                ax.text(0.5, 0.5, "No data", ha="center", va="center")
-
-        axs[-1, 0].set_xlabel("Iteration")
-
-        # Adjust layout to remove gaps if removing spines looks like 'sparklines'
-        figure.subplots_adjust(hspace=0.0)
-        figure.suptitle(f"Derivative of {response_key} wrt controls")
+        
+        PlotTools.finalizePlot(
+        plot_context, figure, axes, default_x_label="Control Variable", default_y_label="Gradient"
+        )
