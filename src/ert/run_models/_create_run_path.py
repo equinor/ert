@@ -10,7 +10,7 @@ from collections.abc import Iterable, Mapping
 from copy import deepcopy
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import orjson
 import polars as pl
@@ -194,7 +194,7 @@ def _generate_parameter_files(
 
         data: dict[str, Any] = {}
         for control in controls:
-            df = fs.load_parameters(control.name, iens)
+            df = cast(pl.DataFrame, fs.load_parameters(control.name, iens))
             assert isinstance(df, pl.DataFrame)
             value = df[control.input_key].item()
 
