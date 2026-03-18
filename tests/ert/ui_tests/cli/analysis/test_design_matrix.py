@@ -293,7 +293,13 @@ def test_run_poly_example_with_multiple_design_matrix_instances():
             "--experiment-name",
             "test-experiment",
         )
-    warning_messages = [str(warning.message) for warning in all_warnings]
+    warning_messages = [
+        str(warning.message)
+        for warning in all_warnings
+        if not str(warning.message).startswith(
+            "Use of legacy_ertscript_workflow is deprecated"
+        )
+    ]
     # there are two warnings, where one is about NUM_REALIZATIONS begin greater than
     # the number of realizations in the design matrix
     assert len(warning_messages) == 2
