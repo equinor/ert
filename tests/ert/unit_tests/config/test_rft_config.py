@@ -780,6 +780,78 @@ def test_that_when_the_zonemap_is_an_absolute_path_then_the_runpath_is_not_prepe
         )
 
 
+@pytest.mark.parametrize(
+    ("zonemap_path"),
+    [
+        pytest.param(
+            "zonemap<IENS>-<ITER>.txt",
+            id="when path is relative",
+        ),
+        pytest.param(
+            "/tmp/does_not_exist/zonemap<IENS>-<ITER>.txt",
+            id="when path is absolute",
+        ),
+    ],
+)
+def test_that_substitutions_are_applied_to_zonemap_filename(
+    mocked_files, mock_resfo_file, egrid, zonemap_path
+):
+    iens = 5
+    iter_ = 2
+    mocked_files[f"/tmp/does_not_exist/zonemap{iens}-{iter_}.txt"] = StringIO(
+        "zonemap_file_is_picked_correctly zone1"
+    )
+
+    mock_resfo_file(
+        f"/tmp/does_not_exist/ECLBASE{iens}.EGRID",
+        egrid,
+    )
+    mock_resfo_file(
+        f"/tmp/does_not_exist/ECLBASE{iens}.RFT",
+        [
+            *cell_start(
+                date=(1, 1, 2000),
+                well_name="WELL",
+                ijks=[(1, 1, 1), (1, 1, 2), (1, 1, 3)],
+            ),
+            ("PRESSURE", float_arr([0.0, 1.0, 2.0])),
+            ("DEPTH   ", float_arr([0.0, 1.0, 2.0])),
+        ],
+    )
+
+    config = ErtConfig.from_dict(
+        {
+            "ZONEMAP": zonemap_path,
+            "ECLBASE": "ECLBASE<IENS>",
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    {
+                        "type": ObservationType.RFT,
+                        "name": "NAME",
+                        "WELL": "WELL",
+                        "VALUE": "700",
+                        "ERROR": "0.1",
+                        "DATE": "2000-01-01",
+                        "PROPERTY": "PRESSURE",
+                        "NORTH": 1.0,
+                        "EAST": 1.0,
+                        "TVD": 0.5,
+                        "ZONE": "zone1",
+                    },
+                ],
+            ),
+        }
+    )
+    with pytest.raises(
+        ConfigValidationError,
+        match="must be an integer, was zonemap_file_is_picked_correctly",
+    ):
+        config.ensemble_config.response_configs["rft"].read_from_file(
+            "/tmp/does_not_exist", iens, iter_
+        )
+
+
 def test_that_missing_egrid_with_locations_raises_invalid_response_file(
     mock_resfo_file,
 ):
