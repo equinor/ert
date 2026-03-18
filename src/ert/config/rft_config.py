@@ -104,6 +104,34 @@ class RFTConfig(ResponseConfig):
 
         return [f"{base}.RFT"]
 
+    @staticmethod
+    def _rft_filepath(base_name: str, run_path: str, iens: int, iter_: int) -> str:
+        base_name = substitute_runpath_name(base_name, iens, iter_)
+        if base_name.upper().endswith(".DATA"):
+            # For backwards compatibility, it is
+            # allowed to give REFCASE and ECLBASE both
+            # with and without .DATA extensions
+            base_name = base_name[:-5]
+
+        return f"{run_path}/{base_name}"
+
+    @staticmethod
+    def _ergrid_filepath(rft_filepath: str) -> str:
+        grid_filepath = rft_filepath
+        if grid_filepath.upper().endswith(".RFT"):
+            grid_filepath = grid_filepath[:-4]
+        grid_filepath += ".EGRID"
+        return grid_filepath
+
+    @staticmethod
+    def _zonemap_filepath(
+        base_path: Path, run_path: str, iens: int, iter_: int
+    ) -> Path:
+        zonemap_filepath = Path(substitute_runpath_name(str(base_path), iens, iter_))
+        if not base_path.is_absolute():
+            zonemap_filepath = Path(run_path) / zonemap_filepath
+        return zonemap_filepath
+
     def _find_indices(
         self, egrid_file: str | os.PathLike[str] | IO[Any]
     ) -> dict[GridIndex | None, set[_ZonedPoint]]:
@@ -163,32 +191,22 @@ class RFTConfig(ResponseConfig):
         Points which were constrained to be in a given zone, but were not contained
         in that zone, is not labeled, and instead a warning is emitted.
         """
-        filename = substitute_runpath_name(self.input_files[0], iens, iter_)
+        rft_filepath = self._rft_filepath(self.input_files[0], run_path, iens, iter_)
+        grid_filepath = self._ergrid_filepath(rft_filepath)
+
         if self.zonemap:
-            zonemap_filename = Path(
-                substitute_runpath_name(str(self.zonemap), iens, iter_)
-            )
-            if not self.zonemap.is_absolute():
-                zonemap_filename = Path(run_path) / zonemap_filename
-            zonemap = parse_zonemap(str(zonemap_filename), zonemap_filename.read_text())
+            zonemap_path = self._zonemap_filepath(self.zonemap, run_path, iens, iter_)
+            zonemap = parse_zonemap(str(zonemap_path), zonemap_path.read_text())
         else:
             zonemap = {}
-        if filename.upper().endswith(".DATA"):
-            # For backwards compatibility, it is
-            # allowed to give REFCASE and ECLBASE both
-            # with and without .DATA extensions
-            filename = filename[:-5]
-        grid_filename = f"{run_path}/{filename}"
-        if grid_filename.upper().endswith(".RFT"):
-            grid_filename = grid_filename[:-4]
-        grid_filename += ".EGRID"
+
         fetched: dict[
             tuple[WellName, datetime.date], dict[RFTProperty, npt.NDArray[np.float32]]
         ] = defaultdict(dict)
         indices = {}
         if self.locations:
             indices = self._filter_zones(
-                self._find_indices(grid_filename), iens, iter_, zonemap
+                self._find_indices(grid_filepath), iens, iter_, zonemap
             )
         if None in indices:
             raise InvalidResponseFile(
@@ -244,7 +262,7 @@ class RFTConfig(ResponseConfig):
         locations = {}
         connections = {}
         try:
-            with RFTReader.open(f"{run_path}/{filename}") as rft:
+            with RFTReader.open(rft_filepath) as rft:
                 for entry in rft:
                     date = entry.date
                     well = entry.well
@@ -268,7 +286,7 @@ class RFTConfig(ResponseConfig):
                                 if num_values != num_conns:
                                     raise InvalidResponseFile(
                                         "Could not read RFT from "
-                                        f"{run_path}/{filename}: "
+                                        f"{rft_filepath}: "
                                         f"RFT property {rft_property} for well {well} "
                                         f"at {date.isoformat()} has {num_values} "
                                         f"value{'s' if num_values != 1 else ''} "
@@ -278,7 +296,7 @@ class RFTConfig(ResponseConfig):
                                 fetched[well, date][rft_property] = values
         except (FileNotFoundError, InvalidRFTError) as err:
             raise InvalidResponseFile(
-                f"Could not read RFT from {run_path}/{filename}: {err}"
+                f"Could not read RFT from {rft_filepath}: {err}"
             ) from err
 
         if not fetched:
@@ -351,7 +369,7 @@ class RFTConfig(ResponseConfig):
             )
         except KeyError as err:
             raise InvalidResponseFile(
-                f"Could not find {err.args[0]} in RFTFile {filename}"
+                f"Could not find {err.args[0]} in RFTFile {rft_filepath}"
             ) from err
 
         return df.with_columns(
