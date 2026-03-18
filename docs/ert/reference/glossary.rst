@@ -129,4 +129,9 @@ It is not about being correct, it is about being relevant and coherent.
     MD
         The length (along the well path) for a point along a well borehole.
 
+    well connection
+        A well connection is a single (i,j,k) grid cell that a well intersects in the
+        simulation grid. A well typically has multiple such connections, one for each
+        grid cell along its path.
+
 .. _OPM Flow manual: https://opm-project.org/wp-content/uploads/2023/06/OPM_Flow_Reference_Manual_2023-04_Rev-0_Reduced.pdf

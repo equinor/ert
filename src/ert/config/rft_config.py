@@ -260,7 +260,7 @@ class RFTConfig(ResponseConfig):
             )
         )
         locations = {}
-        connections = {}
+        well_connection_cells = {}
         try:
             with RFTReader.open(rft_filepath) as rft:
                 for entry in rft:
@@ -270,16 +270,6 @@ class RFTConfig(ResponseConfig):
                         key = f"{well}{sep}{date}{sep}{rft_property}"
                         if matcher.fullmatch(key) is not None:
                             values = entry[rft_property]
-                            locations[well, date] = [
-                                list(
-                                    indices.get(
-                                        (c[0] - 1, c[1] - 1, c[2] - 1),
-                                        [_ZonedPoint()],
-                                    )
-                                )
-                                for c in entry.connections
-                            ]
-                            connections[well, date] = entry.connections
                             if np.isdtype(values.dtype, np.float32):
                                 num_values = len(values)
                                 num_conns = len(entry.connections)
@@ -294,10 +284,25 @@ class RFTConfig(ResponseConfig):
                                         f"connection{'s' if num_conns != 1 else ''}"
                                     )
                                 fetched[well, date][rft_property] = values
+
+                    if (well, date) in fetched:
+                        well_connection_cells[well, date] = entry.connections
+
         except (FileNotFoundError, InvalidRFTError) as err:
             raise InvalidResponseFile(
                 f"Could not read RFT from {rft_filepath}: {err}"
             ) from err
+
+        for (well, date), cells in well_connection_cells.items():
+            locations[well, date] = [
+                list(
+                    indices.get(
+                        (c[0] - 1, c[1] - 1, c[2] - 1),
+                        [_ZonedPoint()],
+                    )
+                )
+                for c in cells
+            ]
 
         if not fetched:
             return pl.DataFrame(
@@ -345,7 +350,9 @@ class RFTConfig(ResponseConfig):
                                     pl.List(pl.Array(pl.Float32, 3)), len(vals)
                                 ),
                             ),
-                            "connection": [connections[well, time].tolist()],
+                            "well_connection_cell": [
+                                well_connection_cells[well, time].tolist()
+                            ],
                             "zone": pl.Series(
                                 [
                                     [
@@ -360,7 +367,9 @@ class RFTConfig(ResponseConfig):
                             ),
                         }
                     )
-                    .explode("depth", "values", "location", "connection", "zone")
+                    .explode(
+                        "depth", "values", "location", "well_connection_cell", "zone"
+                    )
                     .explode("location", "zone")
                     for (well, time), inner_dict in fetched.items()
                     for prop, vals in inner_dict.items()
@@ -376,10 +385,10 @@ class RFTConfig(ResponseConfig):
             east=pl.col("location").arr.get(0),
             north=pl.col("location").arr.get(1),
             tvd=pl.col("location").arr.get(2),
-            i=pl.col("connection").list.get(0),
-            j=pl.col("connection").list.get(1),
-            k=pl.col("connection").list.get(2),
-        ).drop("location", "connection")
+            i=pl.col("well_connection_cell").list.get(0),
+            j=pl.col("well_connection_cell").list.get(1),
+            k=pl.col("well_connection_cell").list.get(2),
+        ).drop("location", "well_connection_cell")
 
     @property
     def response_type(self) -> str:
