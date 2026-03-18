@@ -18,7 +18,7 @@ from .parsing import (
     ErrorInfo,
     ObservationConfigError,
 )
-from .rft_config import RFTConfig
+from .rft_config import Point, RFTConfig, ZoneName
 
 DEFAULT_LOCALIZATION_RADIUS = 2000
 
@@ -149,11 +149,12 @@ def _handle_rft_observation(
 ) -> pl.DataFrame:
     location = (rft_observation.east, rft_observation.north, rft_observation.tvd)
     localization_radius = rft_observation.radius
-    if location not in rft_config.locations:
-        if (zone := rft_observation.zone) is not None:
-            rft_config.locations.append((location, zone))
-        else:
-            rft_config.locations.append(location)
+
+    location_arg: Point | tuple[Point, ZoneName] = location
+    if (zone := rft_observation.zone) is not None:
+        location_arg = (location, zone)
+    if location_arg not in rft_config.locations:
+        rft_config.locations.append(location_arg)
 
     data_to_read = rft_config.data_to_read
     if rft_observation.well not in data_to_read:

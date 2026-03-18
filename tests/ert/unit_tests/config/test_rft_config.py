@@ -462,6 +462,51 @@ def test_that_handle_rft_observations_prioritize_provided_radius_over_default():
     assert df["radius"].dtype == pl.Float32
 
 
+@pytest.mark.parametrize(
+    ("zones"),
+    [
+        pytest.param(
+            [None, "zone1"],
+            id="Location with no zone followed by location with zone",
+        ),
+        pytest.param(
+            ["zone1", None],
+            id="Location with zone followed by location without zone",
+        ),
+        pytest.param(
+            ["zone1", "zone2"],
+            id="Location with zone followed by location with another zone",
+        ),
+    ],
+)
+def test_that_handle_rft_observations_adds_locations_both_with_zone_and_without(zones):
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={"*": {"*": ["*"]}},
+    )
+
+    def make_observation(zone):
+        return RFTObservation(
+            name="NAME[0]",
+            well="WELL1",
+            date="2013-03-31",
+            value=294.0,
+            error=10.0,
+            property="PRESSURE",
+            north=71.0,
+            east=30.0,
+            tvd=2000.0,
+            radius=2400,
+            zone=zone,
+        )
+
+    for zone in zones:
+        rft_observation = make_observation(zone)
+        _handle_rft_observation(rft_config, rft_observation)
+
+    assert len(rft_config.locations) == 2
+
+
 def test_that_if_an_rft_observation_is_outside_the_zone_then_it_is_deactivated(
     mock_resfo_file, egrid, mocked_files
 ):
