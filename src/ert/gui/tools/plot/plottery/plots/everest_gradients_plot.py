@@ -77,43 +77,37 @@ class EverestGradientsPlot:
         combined = pd.concat(all_frames)
         batch_ids = sorted(combined["batch_id"].unique())
 
-        pos = np.arange(len(self.selected_controls))  # one position per control
-        n_batches = len(batch_ids)
-        bar_width = 0.8 / n_batches
+        pos = np.arange(len(batch_ids))
+        n_controls = len(self.selected_controls)
+        bar_width = 0.8 / n_controls
 
-        for i, batch_id in enumerate(batch_ids):
+        for i, control in enumerate(self.selected_controls):
             color = colors[i % len(colors)][0]
-            batch_data = combined[combined["batch_id"] == batch_id]
-
             values = []
-            for control in self.selected_controls:
+            for batch_id in batch_ids:
+                batch_data = combined[combined["batch_id"] == batch_id]
                 match = batch_data[batch_data["control_name"] == control]
                 values.append(match[response_key].values[0] if not match.empty else 0.0)
 
-            offsets = pos + (i - n_batches / 2) * bar_width + bar_width / 2
-            axes.bar(
+            offsets = pos + (i - n_controls / 2) * bar_width + bar_width / 2
+
+            bars = axes.bar(
                 offsets,
                 values,
                 width=bar_width,
                 color=color,
                 alpha=0.7,
-                label=f"Batch {batch_id}",
             )
+            config.addLegendItem(control, bars[0])
 
-        axes.legend()
-        figure.tight_layout()
-
-
-        axes.set_xticks(pos)
         rotation = 0
-        if len(self.selected_controls) > 3:
+        if len(batch_ids) > 3:
             rotation = 30
 
-        axes.set_xticklabels(self.selected_controls, rotation=rotation)
-        # Not sure if this is needed
+        axes.set_xticks(pos)
+        axes.set_xticklabels([str(b) for b in batch_ids], rotation=rotation)
         axes.yaxis.set_major_formatter(ConditionalAxisFormatter())
 
-        
         PlotTools.finalizePlot(
-        plot_context, figure, axes, default_x_label="Control Variable", default_y_label="Gradient"
+            plot_context, figure, axes, default_x_label="Batch", default_y_label="Gradient"
         )
