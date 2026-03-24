@@ -323,7 +323,7 @@ class SlurmDriver(Driver):
                     "scontrol did not give status for job_ids "
                     f"{missing_in_squeue_and_scontrol}, giving up for now."
                 )
-            self._last_successful_poll = time.time()
+            self._last_successful_poll_monotonic = time.monotonic()
             await asyncio.sleep(self._poll_period)
 
     async def _process_job_update(self, job_id: str, new_info: JobInfo) -> None:

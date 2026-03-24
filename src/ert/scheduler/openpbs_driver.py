@@ -349,7 +349,7 @@ class OpenPBSDriver(Driver):
                 for job_id, job in parsed_jobs_dict.items():
                     await self._process_job_update(job_id, job)
 
-            self._last_successful_poll = time.time()
+            self._last_successful_poll_monotonic = time.monotonic()
             await asyncio.sleep(self._poll_period)
 
     async def _process_job_update(self, job_id: str, new_state: AnyJob) -> None:

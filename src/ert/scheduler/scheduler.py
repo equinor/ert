@@ -44,19 +44,19 @@ class _JobsJson:
 
 class SubmitSleeper:
     _submit_sleep: float
-    _last_started: float
+    _last_started_monotonic: float
 
     def __init__(self, submit_sleep: float) -> None:
         self._submit_sleep = submit_sleep
-        self._last_started = (
-            time.time() - submit_sleep
-        )  # Allow the first to start immediately
+        self._last_started_monotonic = time.monotonic() - submit_sleep
 
     async def sleep_until_we_can_submit(self) -> None:
-        now = time.time()
-        next_start_time = max(self._last_started + self._submit_sleep, now)
-        self._last_started = next_start_time
-        await asyncio.sleep(max(0, next_start_time - now))
+        monotonic_now = time.monotonic()
+        next_start_time = max(
+            self._last_started_monotonic + self._submit_sleep, monotonic_now
+        )
+        self._last_started_monotonic = next_start_time
+        await asyncio.sleep(max(0.0, next_start_time - monotonic_now))
 
 
 class Scheduler:
