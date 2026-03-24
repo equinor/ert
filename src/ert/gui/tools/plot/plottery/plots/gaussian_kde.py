@@ -59,7 +59,7 @@ def plotGaussianKDE(
         strict=False,
     ):
         config.setCurrentColor(color_index)
-        if data.empty:
+        if data.empty or not pd.api.types.is_numeric_dtype(data[0]):
             continue
         data = data[0]
         if not _array_is_constant(data):
