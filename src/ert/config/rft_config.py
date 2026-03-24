@@ -8,7 +8,7 @@ import re
 import warnings
 from collections import defaultdict
 from collections.abc import Container, Mapping
-from dataclasses import dataclass
+from dataclasses import InitVar, dataclass
 from pathlib import Path
 from typing import IO, Any, Literal, TypeAlias, cast
 
@@ -178,6 +178,31 @@ class RFTConfig(ResponseConfig):
                             locs.remove(loc)
         return indices
 
+    @dataclass(frozen=True)
+    class ValidRFTEntry:
+        property_values: dict[RFTProperty, npt.NDArray[np.float32]]
+        # See :term:`well connection` in glossary
+        well_connection_cells: npt.NDArray[np.integer]
+
+        filepath: InitVar[str]
+        well: InitVar[str]
+        date: InitVar[datetime.date]
+
+        def __post_init__(self, filepath: str, well: str, date: datetime.date) -> None:
+            num_conns = len(self.well_connection_cells)
+            for rft_property, values in self.property_values.items():
+                num_values = len(values)
+                if num_values != num_conns:
+                    raise InvalidResponseFile(
+                        "Could not read RFT from "
+                        f"{filepath}: "
+                        f"RFT property {rft_property} for well {well} "
+                        f"at {date.isoformat()} has {num_values} "
+                        f"value{'s' if num_values != 1 else ''} "
+                        f"but {num_conns} well "
+                        f"connection{'s' if num_conns != 1 else ''}"
+                    )
+
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
         """Reads the RFT values from <RUNPATH>/<ECLBASE>.RFT
 
@@ -200,9 +225,6 @@ class RFTConfig(ResponseConfig):
         else:
             zonemap = {}
 
-        fetched: dict[
-            tuple[WellName, datetime.date], dict[RFTProperty, npt.NDArray[np.float32]]
-        ] = defaultdict(dict)
         indices = {}
         if self.locations:
             indices = self._filter_zones(
@@ -260,40 +282,39 @@ class RFTConfig(ResponseConfig):
             )
         )
         locations = {}
-        well_connection_cells = {}
+
+        rft_data: dict[tuple[WellName, datetime.date], RFTConfig.ValidRFTEntry] = {}
         try:
             with RFTReader.open(rft_filepath) as rft:
                 for entry in rft:
                     date = entry.date
                     well = entry.well
+
+                    property_values: dict[str, np.ndarray] = {}
                     for rft_property in entry:
                         key = f"{well}{sep}{date}{sep}{rft_property}"
                         if matcher.fullmatch(key) is not None:
                             values = entry[rft_property]
                             if np.isdtype(values.dtype, np.float32):
-                                num_values = len(values)
-                                num_conns = len(entry.connections)
-                                if num_values != num_conns:
-                                    raise InvalidResponseFile(
-                                        "Could not read RFT from "
-                                        f"{rft_filepath}: "
-                                        f"RFT property {rft_property} for well {well} "
-                                        f"at {date.isoformat()} has {num_values} "
-                                        f"value{'s' if num_values != 1 else ''} "
-                                        f"but {num_conns} well "
-                                        f"connection{'s' if num_conns != 1 else ''}"
-                                    )
-                                fetched[well, date][rft_property] = values
+                                property_values[rft_property] = values
 
-                    if (well, date) in fetched:
-                        well_connection_cells[well, date] = entry.connections
+                    if property_values:
+                        valid_entry = RFTConfig.ValidRFTEntry(
+                            property_values=property_values,
+                            well_connection_cells=entry.connections,
+                            filepath=rft_filepath,
+                            well=well,
+                            date=date,
+                        )
+
+                        rft_data[well, date] = valid_entry
 
         except (FileNotFoundError, InvalidRFTError) as err:
             raise InvalidResponseFile(
                 f"Could not read RFT from {rft_filepath}: {err}"
             ) from err
 
-        for (well, date), cells in well_connection_cells.items():
+        for (well, date), rft_entry in rft_data.items():
             locations[well, date] = [
                 list(
                     indices.get(
@@ -301,10 +322,10 @@ class RFTConfig(ResponseConfig):
                         [_ZonedPoint()],
                     )
                 )
-                for c in cells
+                for c in rft_entry.well_connection_cells
             ]
 
-        if not fetched:
+        if not rft_data:
             return pl.DataFrame(
                 {
                     "response_key": [],
@@ -334,7 +355,7 @@ class RFTConfig(ResponseConfig):
                             "date": [time.isoformat()],
                             "property": [prop],
                             "time": [time],
-                            "depth": [fetched[well, time]["DEPTH"]],
+                            "depth": [rft_data[well, time].property_values["DEPTH"]],
                             "values": [vals],
                             "location": pl.Series(
                                 [
@@ -351,7 +372,7 @@ class RFTConfig(ResponseConfig):
                                 ),
                             ),
                             "well_connection_cell": [
-                                well_connection_cells[well, time].tolist()
+                                rft_data[well, time].well_connection_cells.tolist()
                             ],
                             "zone": pl.Series(
                                 [
@@ -371,8 +392,8 @@ class RFTConfig(ResponseConfig):
                         "depth", "values", "location", "well_connection_cell", "zone"
                     )
                     .explode("location", "zone")
-                    for (well, time), inner_dict in fetched.items()
-                    for prop, vals in inner_dict.items()
+                    for (well, time), inner_dict in rft_data.items()
+                    for prop, vals in inner_dict.property_values.items()
                     if prop != "DEPTH" and len(vals) > 0
                 ]
             )
