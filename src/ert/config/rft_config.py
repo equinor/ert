@@ -203,6 +203,76 @@ class RFTConfig(ResponseConfig):
                         f"connection{'s' if num_conns != 1 else ''}"
                     )
 
+    def _scan_rft(
+        self, filepath: str
+    ) -> dict[tuple[WellName, datetime.date], RFTConfig.ValidRFTEntry]:
+        # This is a somewhat complicated optimization in order to
+        # support wildcards in well names, dates and properties
+        # A python for loop is too slow so we use a compiled regex
+        # instead
+
+        sep = "\x31"
+
+        def _translate(pat: str) -> str:
+            """Translates fnmatch pattern to match anywhere"""
+            return fnmatch.translate(pat).replace("\\z", "").replace("\\Z", "")
+
+        def _props_matcher(props: list[str]) -> str:
+            """Regex for matching given props _and_ DEPTH"""
+            pattern = f"({'|'.join(_translate(p) for p in props)})"
+            if re.fullmatch(pattern, "DEPTH") is None:
+                return f"({'|'.join(_translate(p) for p in [*props, 'DEPTH'])})"
+            else:
+                return pattern
+
+        matcher = re.compile(
+            "|".join(
+                "("
+                + re.escape(sep).join(
+                    (
+                        _translate(well),
+                        _translate(time),
+                        _props_matcher(props),
+                    )
+                )
+                + ")"
+                for well, inner_dict in self.data_to_read.items()
+                for time, props in inner_dict.items()
+            )
+        )
+
+        rft_data: dict[tuple[WellName, datetime.date], RFTConfig.ValidRFTEntry] = {}
+        try:
+            with RFTReader.open(filepath) as rft:
+                for entry in rft:
+                    date = entry.date
+                    well = entry.well
+
+                    property_values: dict[str, np.ndarray] = {}
+                    for rft_property in entry:
+                        key = f"{well}{sep}{date}{sep}{rft_property}"
+                        if matcher.fullmatch(key) is not None:
+                            values = entry[rft_property]
+                            if np.isdtype(values.dtype, np.float32):
+                                property_values[rft_property] = values
+
+                    if property_values:
+                        valid_entry = RFTConfig.ValidRFTEntry(
+                            property_values=property_values,
+                            well_connection_cells=entry.connections,
+                            filepath=filepath,
+                            well=well,
+                            date=date,
+                        )
+                        rft_data[well, date] = valid_entry
+
+        except (FileNotFoundError, InvalidRFTError) as err:
+            raise InvalidResponseFile(
+                f"Could not read RFT from {filepath}: {err}"
+            ) from err
+
+        return rft_data
+
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
         """Reads the RFT values from <RUNPATH>/<ECLBASE>.RFT
 
@@ -234,10 +304,7 @@ class RFTConfig(ResponseConfig):
             raise InvalidResponseFile(
                 f"Did not find grid coordinate for location(s) {indices[None]}"
             )
-        # This is a somewhat complicated optimization in order to
-        # support wildcards in well names, dates and properties
-        # A python for loop is too slow so we use a compiled regex
-        # instead
+
         if not self.data_to_read:
             return pl.DataFrame(
                 {
@@ -252,68 +319,10 @@ class RFTConfig(ResponseConfig):
                 }
             )
 
-        sep = "\x31"
+        rft_data: dict[tuple[WellName, datetime.date], RFTConfig.ValidRFTEntry]
+        rft_data = self._scan_rft(rft_filepath)
 
-        def _translate(pat: str) -> str:
-            """Translates fnmatch pattern to match anywhere"""
-            return fnmatch.translate(pat).replace("\\z", "").replace("\\Z", "")
-
-        def _props_matcher(props: list[str]) -> str:
-            """Regex for matching given props _and_ DEPTH"""
-            pattern = f"({'|'.join(_translate(p) for p in props)})"
-            if re.fullmatch(pattern, "DEPTH") is None:
-                return f"({'|'.join(_translate(p) for p in [*props, 'DEPTH'])})"
-            else:
-                return pattern
-
-        matcher = re.compile(
-            "|".join(
-                "("
-                + re.escape(sep).join(
-                    (
-                        _translate(well),
-                        _translate(time),
-                        _props_matcher(props),
-                    )
-                )
-                + ")"
-                for well, inner_dict in self.data_to_read.items()
-                for time, props in inner_dict.items()
-            )
-        )
         locations = {}
-
-        rft_data: dict[tuple[WellName, datetime.date], RFTConfig.ValidRFTEntry] = {}
-        try:
-            with RFTReader.open(rft_filepath) as rft:
-                for entry in rft:
-                    date = entry.date
-                    well = entry.well
-
-                    property_values: dict[str, np.ndarray] = {}
-                    for rft_property in entry:
-                        key = f"{well}{sep}{date}{sep}{rft_property}"
-                        if matcher.fullmatch(key) is not None:
-                            values = entry[rft_property]
-                            if np.isdtype(values.dtype, np.float32):
-                                property_values[rft_property] = values
-
-                    if property_values:
-                        valid_entry = RFTConfig.ValidRFTEntry(
-                            property_values=property_values,
-                            well_connection_cells=entry.connections,
-                            filepath=rft_filepath,
-                            well=well,
-                            date=date,
-                        )
-
-                        rft_data[well, date] = valid_entry
-
-        except (FileNotFoundError, InvalidRFTError) as err:
-            raise InvalidResponseFile(
-                f"Could not read RFT from {rft_filepath}: {err}"
-            ) from err
-
         for (well, date), rft_entry in rft_data.items():
             locations[well, date] = [
                 list(
