@@ -63,54 +63,6 @@ def _make_shape(sequence: npt.NDArray[Any]) -> Shape:
     return Shape(*(int(val) for val in sequence))
 
 
-def read_mask(
-    grid_path: _PathLike,
-) -> tuple[npt.NDArray[np.bool_], Shape]:
-    actnum = None
-    shape = None
-    actnum_coords: list[tuple[int, int, int]] = []
-    with open(grid_path, "rb") as f:
-        for entry in resfo.lazy_read(f):
-            if actnum is not None and shape is not None:
-                break
-
-            keyword = str(entry.read_keyword()).strip()
-            if actnum is None:
-                if keyword == "COORDS":
-                    coord_array = _validate_array(
-                        "COORDS", grid_path, entry.read_array()
-                    )
-                    if coord_array[4]:
-                        actnum_coords.append(
-                            (coord_array[0], coord_array[1], coord_array[2])
-                        )
-                if keyword == "ACTNUM":
-                    actnum = _validate_array("ACTNUM", grid_path, entry.read_array())
-            if shape is None:
-                if keyword == "GRIDHEAD":
-                    arr = _validate_array("GRIDHEAD", grid_path, entry.read_array())
-                    shape = _make_shape(arr[1:4])
-                elif keyword == "DIMENS":
-                    arr = _validate_array("DIMENS", grid_path, entry.read_array())
-                    shape = _make_shape(arr[0:3])
-
-    # Could possibly read shape from actnum_coords if they were read.
-    if shape is None:
-        raise ValueError(f"Could not load shape from {grid_path}")
-
-    if actnum is None:
-        if actnum_coords and len(actnum_coords) != np.prod(shape):
-            actnum = np.ones(shape, dtype=bool)
-            for coord in actnum_coords:
-                actnum[coord[0] - 1, coord[1] - 1, coord[2] - 1] = False
-        else:
-            actnum = np.zeros(shape, dtype=bool)
-    else:
-        actnum = np.ascontiguousarray(np.logical_not(actnum.reshape(shape, order="F")))
-
-    return actnum, shape
-
-
 def get_shape(
     grid_path: _PathLike,
 ) -> Shape | None:
