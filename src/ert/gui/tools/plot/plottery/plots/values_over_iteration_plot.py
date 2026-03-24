@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 from matplotlib.lines import Line2D
 from matplotlib.ticker import MaxNLocator
+from .plot_tools import PlotTools
 
 if TYPE_CHECKING:
     import numpy as np
@@ -69,46 +70,38 @@ class ValuesOverIterationsPlot:
             data = combined.sort_values("batch_id")
 
             color = config.nextColor()
-            axes.plot(
-                data["batch_id"],
-                data[value_col],
+            improvement_data = data[data["is_improvement"]]
+
+            lines = axes.plot(
+                improvement_data["batch_id"],
+                improvement_data[value_col],
                 "-",
                 color=color,
-                label=key_def.key if key_def else value_col,
             )
 
             colors = [
                 "red" if not row.is_improvement else color for _, row in data.iterrows()
             ]
-            axes.scatter(data["batch_id"], data[value_col], c=colors, s=20, zorder=5)
+            scatter = axes.scatter(
+                data["batch_id"], data[value_col], c=colors, s=20, zorder=5
+            )
 
-            axes.set_xlabel("Iteration")
-            axes.set_ylabel(value_col)
+            config.addLegendItem("Accepted", lines[0])
+            config.addLegendItem(
+                "Rejected",
+                Line2D(
+                    [0], [0], marker="o", color="w", markerfacecolor="red", markersize=8
+                ),
+            )
             axes.xaxis.set_major_locator(MaxNLocator(integer=True))
 
-            legend_elements = [
-                Line2D(
-                    [0],
-                    [0],
-                    marker="o",
-                    color="w",
-                    label="Accepted",
-                    markerfacecolor=color,
-                    markersize=8,
-                ),
-                Line2D(
-                    [0],
-                    [0],
-                    marker="o",
-                    color="w",
-                    label="Rejected",
-                    markerfacecolor="red",
-                    markersize=8,
-                ),
-            ]
-            axes.legend(handles=legend_elements, loc="best")
-
-            axes.grid(True)
+            PlotTools.finalizePlot(
+                plot_context,
+                figure,
+                axes,
+                default_x_label="Iteration",
+                default_y_label="Value",
+            )
             figure.tight_layout()
             return
 
@@ -120,6 +113,7 @@ class ValuesOverIterationsPlot:
 
         realizations = sorted(combined["realization"].unique())
 
+        # This loop is the reason batch controls plot multiple identical plots for each realization.
         for realization in realizations:
             data = combined[combined["realization"] == realization].sort_values(
                 "batch_id"
@@ -128,19 +122,21 @@ class ValuesOverIterationsPlot:
                 continue
 
             color = config.nextColor()
-            axes.plot(
+            lines = axes.plot(
                 data["batch_id"],
                 data[value_col],
                 "-o",
-                label=f"Realization {int(realization)}",
                 color=color,
                 markersize=4,
             )
+            config.addLegendItem(f"Realization {int(realization)}", lines[0])
 
-        axes.set_xlabel("Iteration")
-        axes.set_ylabel(value_col)
-        axes.legend(title="Realization")
         axes.xaxis.set_major_locator(MaxNLocator(integer=True))
-
-        axes.grid(True)
+        PlotTools.finalizePlot(
+            plot_context,
+            figure,
+            axes,
+            default_x_label="Iteration",
+            default_y_label="Value",
+        )
         figure.tight_layout()

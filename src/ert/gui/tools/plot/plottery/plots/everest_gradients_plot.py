@@ -109,5 +109,9 @@ class EverestGradientsPlot:
         axes.yaxis.set_major_formatter(ConditionalAxisFormatter())
 
         PlotTools.finalizePlot(
-            plot_context, figure, axes, default_x_label="Batch", default_y_label="Gradient"
+            plot_context,
+            figure,
+            axes,
+            default_x_label="Batch",
+            default_y_label="Gradient",
         )
