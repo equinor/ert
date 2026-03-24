@@ -1,3 +1,4 @@
+import asyncio
 import itertools
 import threading
 
@@ -56,7 +57,7 @@ from ert.storage import open_storage
         ),
     ],
 )
-async def test_create_run_path_load_scalar_keys_performance(
+def test_create_run_path_load_scalar_keys_performance(
     benchmark, tmp_path, distribution_settings
 ):
     reals = 100
@@ -118,10 +119,10 @@ async def test_create_run_path_load_scalar_keys_performance(
                 runpaths=runpaths,
             )
 
-        benchmark(run)
+        benchmark(lambda: asyncio.run(run()))
 
 
-async def test_create_run_path_surface_performance(tmp_path, benchmark):
+def test_create_run_path_surface_performance(tmp_path, benchmark):
     storage_path = tmp_path / "storage"
     reals = 2
     num_surfaces = 2
@@ -190,4 +191,4 @@ async def test_create_run_path_surface_performance(tmp_path, benchmark):
                 runpaths=runpaths,
             )
 
-        await benchmark(run)
+        benchmark(lambda: asyncio.run(run()))
