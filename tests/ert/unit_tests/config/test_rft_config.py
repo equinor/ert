@@ -466,6 +466,55 @@ def test_that_connection_mismatch_leads_to_nullified_location(mock_resfo_file, e
     assert res["tvd"].to_list() == [None] * 3
 
 
+def test_that_location_outside_of_the_grid_raises_invalid_response_file(
+    mock_resfo_file, egrid
+):
+    config = ErtConfig.from_dict(
+        {
+            "ECLBASE": "ECLBASE<IENS>",
+            "OBS_CONFIG": (
+                "obsconf",
+                [
+                    {
+                        "type": ObservationType.RFT,
+                        "name": "NAME",
+                        "WELL": "WELL",
+                        "VALUE": "700",
+                        "ERROR": "0.1",
+                        "DATE": "2000-01-01",
+                        "PROPERTY": "PRESSURE",
+                        "NORTH": 1000.0,
+                        "EAST": 1000.0,
+                        "TVD": 1500.0,
+                    },
+                ],
+            ),
+        }
+    )
+
+    mock_resfo_file(
+        "/tmp/does_not_exist/ECLBASE1.EGRID",
+        egrid,
+    )
+    mock_resfo_file(
+        "/tmp/does_not_exist/ECLBASE1.RFT",
+        [
+            *cell_start(
+                date=(1, 1, 2000),
+                well_name="WELL",
+                ijks=[(1, 1, 1), (1, 1, 2), (1, 1, 3)],
+            ),
+            ("PRESSURE", float_arr([0.0, 1.0, 2.0])),
+            ("DEPTH   ", float_arr([0.0, 1.0, 2.0])),
+        ],
+    )
+
+    with pytest.raises(InvalidResponseFile, match="Did not find grid coordinate"):
+        config.ensemble_config.response_configs["rft"].read_from_file(
+            "/tmp/does_not_exist", 1, 1
+        )
+
+
 def test_that_handle_rft_observations_adds_defaulted_radius_column_to_dataframe():
     rft_config = RFTConfig(
         input_files=["BASE.RFT"],

@@ -132,51 +132,63 @@ class RFTConfig(ResponseConfig):
             zonemap_filepath = Path(run_path) / zonemap_filepath
         return zonemap_filepath
 
-    def _find_indices(
-        self, egrid_file: str | os.PathLike[str] | IO[Any]
-    ) -> dict[GridIndex | None, set[_ZonedPoint]]:
-        indices: dict[GridIndex | None, set[_ZonedPoint]] = defaultdict(set)
-        if not self._zoned_locations:
-            return indices
+    @staticmethod
+    def _map_locations_to_cells(
+        egrid_file: str | os.PathLike[str] | IO[Any], zoned_locations: list[_ZonedPoint]
+    ) -> dict[_ZonedPoint, GridIndex]:
+        """
+        For each location, find the corresponding connected grid cell, if it exists.
+        """
+
+        location_cell_map: dict[_ZonedPoint, GridIndex] = {}
+        if not zoned_locations:
+            return location_cell_map
         try:
             grid = CornerpointGrid.read_egrid(egrid_file)
         except (OSError, InvalidEgridFileError) as err:
             raise InvalidResponseFile(f"Could not read grid file: {err}") from err
-        for a, b in zip(
+
+        for zoned_location, cell in zip(
+            zoned_locations,
             grid.find_cell_containing_point(
-                [cast(Point, loc.point) for loc in self._zoned_locations]
+                [cast(Point, loc.point) for loc in zoned_locations]
             ),
-            self._zoned_locations,
             strict=True,
         ):
-            indices[a].add(b)
-        return indices
+            if cell is None:
+                raise InvalidResponseFile(
+                    f"Did not find grid coordinate for location(s) {zoned_location}"
+                )
+            # cells returned by grid are 0-based, while zonemap
+            # and RFTEntry.connections are 1-based, so unifying
+            location_cell_map[zoned_location] = (cell[0] + 1, cell[1] + 1, cell[2] + 1)
+        return location_cell_map
 
+    @staticmethod
     def _filter_zones(
-        self,
-        indices: dict[GridIndex | None, set[_ZonedPoint]],
+        location_cell_map: dict[_ZonedPoint, GridIndex],
         iens: int,
         iter_: int,
         zonemap: Mapping[int, Container[str]],
-    ) -> dict[GridIndex | None, set[_ZonedPoint]]:
-        for idx, locs in indices.items():
-            if idx is not None:
-                for loc in list(locs):
-                    if loc.has_zone():
-                        zone = cast(ZoneName, loc.zone_name)
-                        # zonemap is 1-indexed so +1
-                        if zone not in zonemap.get(idx[-1] + 1, []):
-                            warnings.warn(
-                                PostExperimentWarning(
-                                    f"An RFT observation with location {loc.point}, "
-                                    f"in iteration {iter_}, realization {iens} did "
-                                    f"not match expected zone {zone}. The observation "
-                                    "was deactivated",
-                                ),
-                                stacklevel=2,
-                            )
-                            locs.remove(loc)
-        return indices
+    ) -> dict[_ZonedPoint, GridIndex | None]:
+        filtered_map: dict[_ZonedPoint, GridIndex | None] = {}
+        for loc, cell in location_cell_map.items():
+            filtered_map[loc] = cell
+            if cell is not None and loc.has_zone():
+                zone = cast(ZoneName, loc.zone_name)
+                # zone is supposed to correspond to cell k index
+                if zone not in zonemap.get(cell[-1], []):
+                    warnings.warn(
+                        PostExperimentWarning(
+                            f"An RFT observation with location {loc.point}, "
+                            f"in iteration {iter_}, realization {iens} did "
+                            f"not match expected zone {zone}. The observation "
+                            "was deactivated",
+                        ),
+                        stacklevel=2,
+                    )
+                    filtered_map[loc] = None
+        return filtered_map
 
     @staticmethod
     def _assert_schema(df: pl.DataFrame, schema: dict[str, Any]) -> pl.DataFrame:
@@ -399,6 +411,8 @@ class RFTConfig(ResponseConfig):
         iter_: int,
         rft_data: dict[tuple[WellName, datetime.date], RFTConfig.RFTEntryExtract],
     ) -> dict[tuple[WellName, datetime.date], list[list[_ZonedPoint]]]:
+        zoned_locations = self._zoned_locations
+
         rft_filepath = self._rft_filepath(self.input_files[0], run_path, iens, iter_)
         grid_filepath = self._ergrid_filepath(rft_filepath)
 
@@ -408,27 +422,26 @@ class RFTConfig(ResponseConfig):
         else:
             zonemap = {}
 
-        indices = {}
-        if self.locations:
-            indices = self._filter_zones(
-                self._find_indices(grid_filepath), iens, iter_, zonemap
-            )
-        if None in indices:
-            raise InvalidResponseFile(
-                f"Did not find grid coordinate for location(s) {indices[None]}"
+        location_cell_map = {}
+        if zoned_locations:
+            location_cell_map = self._filter_zones(
+                self._map_locations_to_cells(grid_filepath, zoned_locations),
+                iens,
+                iter_,
+                zonemap,
             )
 
-        locations = {}
+        locations: dict[tuple[WellName, datetime.date], list[list[_ZonedPoint]]] = {}
         for (well, date), rft_entry in rft_data.items():
-            locations[well, date] = [
-                list(
-                    indices.get(
-                        (c[0] - 1, c[1] - 1, c[2] - 1),
-                        [_ZonedPoint()],
-                    )
-                )
-                for c in rft_entry.well_connection_cells
-            ]
+            locations[well, date] = []
+            for c in rft_entry.well_connection_cells:
+                locations_for_cell = []
+                for location, cell in location_cell_map.items():
+                    if cell == tuple(c):
+                        locations_for_cell.append(location)
+                if not locations_for_cell:
+                    locations_for_cell = [_ZonedPoint()]
+                locations[well, date].append(locations_for_cell)
         return locations
 
     @property
