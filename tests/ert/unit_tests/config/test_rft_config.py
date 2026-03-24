@@ -120,11 +120,17 @@ def test_that_rft_with_empty_data_to_read_returns_empty_df(mock_resfo_file):
     assert df.is_empty()
     assert set(df.columns) == {
         "response_key",
+        "date",
+        "well",
+        "property",
         "time",
         "depth",
         "values",
         "east",
         "north",
+        "i",
+        "j",
+        "k",
         "tvd",
         "zone",
     }
