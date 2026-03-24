@@ -100,12 +100,8 @@ class EverestGradientsPlot:
             )
             config.addLegendItem(control, bars[0])
 
-        rotation = 0
-        if len(batch_ids) > 3:
-            rotation = 30
-
         axes.set_xticks(pos)
-        axes.set_xticklabels([str(b) for b in batch_ids], rotation=rotation)
+        axes.set_xticklabels([str(b) for b in batch_ids], rotation=0)
         axes.yaxis.set_major_formatter(ConditionalAxisFormatter())
 
         PlotTools.finalizePlot(
