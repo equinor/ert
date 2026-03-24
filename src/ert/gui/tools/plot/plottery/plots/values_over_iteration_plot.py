@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 from matplotlib.lines import Line2D
 from matplotlib.ticker import MaxNLocator
+
 from .plot_tools import PlotTools
 
 if TYPE_CHECKING:
