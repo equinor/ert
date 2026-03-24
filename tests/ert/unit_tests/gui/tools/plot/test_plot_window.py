@@ -3,6 +3,7 @@ from unittest.mock import MagicMock
 
 import pandas as pd
 import pytest
+from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QCheckBox, QLabel, QPushButton
 from pytestqt.qtbot import QtBot
@@ -12,6 +13,8 @@ from ert.config.gen_kw_config import DataSource, GenKwConfig
 from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApi, PlotApiKeyDefinition
 from ert.gui.tools.plot.plot_widget import PlotWidget
 from ert.gui.tools.plot.plot_window import PlotWindow, create_error_dialog
+from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
+from ert.gui.tools.plot.plottery.plots.gaussian_kde import plotGaussianKDE
 from ert.services import ErtServerController
 
 
@@ -218,3 +221,27 @@ def test_that_plot_window_ignores_negative_check_for_non_numeric_columns(
 
     # This is the call that previously crashed with TypeError.
     plot_window.updatePlot()
+
+
+def test_that_gaussian_kde_plot_skips_categorical_data_without_raising():
+
+    ensemble = EnsembleObject(
+        "ensemble",
+        "ensemble",
+        False,
+        "experiment",
+        "2026-01-01T00:00:00",
+    )
+    categorical_df = pd.DataFrame({0: ["cat", "dog", "fish"], 1: [12, 12, 12]})
+
+    fig = Figure()
+    ctx = PlotContext(
+        PlotConfig(),
+        ensembles=[ensemble],
+        ensembles_color_indexes=[0],
+        key="animal_type",
+        layer=None,
+    )
+
+    # Should not raise (categorical data is simply skipped).
+    plotGaussianKDE(fig, ctx, {ensemble: categorical_df}, _observation_data=None)
