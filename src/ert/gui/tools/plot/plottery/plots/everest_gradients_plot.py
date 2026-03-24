@@ -35,8 +35,8 @@ class EverestGradientsPlot:
         obs_loc: npt.NDArray[np.float32] | None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
+        axes = figure.add_subplot(111)
         if not self.selected_controls:
-            axes = figure.add_subplot(111)
             axes.text(
                 0.5,
                 0.5,
@@ -47,7 +47,6 @@ class EverestGradientsPlot:
             return
 
         config = plot_context.plotConfig()
-        axes = figure.add_subplot(111)
 
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.INDEX_AXIS
