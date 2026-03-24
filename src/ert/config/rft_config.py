@@ -7,7 +7,6 @@ import os
 import re
 import warnings
 from collections import defaultdict
-from collections.abc import Container, Mapping
 from dataclasses import InitVar, dataclass
 from pathlib import Path
 from typing import IO, Any, Literal, TypeAlias, cast
@@ -165,32 +164,6 @@ class RFTConfig(ResponseConfig):
         return location_cell_map
 
     @staticmethod
-    def _filter_zones(
-        location_cell_map: dict[_ZonedPoint, GridIndex],
-        iens: int,
-        iter_: int,
-        zonemap: Mapping[int, Container[str]],
-    ) -> dict[_ZonedPoint, GridIndex | None]:
-        filtered_map: dict[_ZonedPoint, GridIndex | None] = {}
-        for loc, cell in location_cell_map.items():
-            filtered_map[loc] = cell
-            if cell is not None and loc.has_zone():
-                zone = cast(ZoneName, loc.zone_name)
-                # zone is supposed to correspond to cell k index
-                if zone not in zonemap.get(cell[-1], []):
-                    warnings.warn(
-                        PostExperimentWarning(
-                            f"An RFT observation with location {loc.point}, "
-                            f"in iteration {iter_}, realization {iens} did "
-                            f"not match expected zone {zone}. The observation "
-                            "was deactivated",
-                        ),
-                        stacklevel=2,
-                    )
-                    filtered_map[loc] = None
-        return filtered_map
-
-    @staticmethod
     def _assert_schema(df: pl.DataFrame, schema: dict[str, Any]) -> pl.DataFrame:
         if df.schema != schema:
             msg = f"Expected schema {schema}, got {df.schema}."
@@ -332,7 +305,7 @@ class RFTConfig(ResponseConfig):
         if not rft_data:
             return pl.DataFrame(schema=schema)
 
-        locations = self._obtain_locations(run_path, iens, iter_, rft_data)
+        location_metadata = self._obtain_location_metadata(run_path, iens, iter_)
 
         try:
             df = pl.concat(
@@ -346,41 +319,12 @@ class RFTConfig(ResponseConfig):
                             "time": [time],
                             "depth": [rft_data[well, time].property_values["DEPTH"]],
                             "values": [vals],
-                            "location": pl.Series(
-                                [
-                                    [
-                                        [loc.point for loc in locs]
-                                        for locs in locations.get(
-                                            (well, time),
-                                            [[_ZonedPoint()]] * len(vals),
-                                        )
-                                    ]
-                                ],
-                                dtype=pl.Array(
-                                    pl.List(pl.Array(pl.Float32, 3)), len(vals)
-                                ),
-                            ),
-                            "well_connection_cell": [
-                                rft_data[well, time].well_connection_cells.tolist()
-                            ],
-                            "zone": pl.Series(
-                                [
-                                    [
-                                        [loc.zone_name for loc in locs]
-                                        for locs in locations.get(
-                                            (well, time),
-                                            [[_ZonedPoint()]] * len(vals),
-                                        )
-                                    ]
-                                ],
-                                dtype=pl.Array(pl.List(pl.String), len(vals)),
+                            "well_connection_cell": pl.Series(
+                                [rft_data[well, time].well_connection_cells.tolist()],
+                                dtype=pl.List(pl.Array(pl.Int64, 3)),
                             ),
                         }
-                    )
-                    .explode(
-                        "depth", "values", "location", "well_connection_cell", "zone"
-                    )
-                    .explode("location", "zone")
+                    ).explode("depth", "values", "well_connection_cell")
                     for (well, time), inner_dict in rft_data.items()
                     for prop, vals in inner_dict.property_values.items()
                     if prop != "DEPTH" and len(vals) > 0
@@ -391,26 +335,26 @@ class RFTConfig(ResponseConfig):
                 f"Could not find {err.args[0]} in RFTFile {rft_filepath}"
             ) from err
 
-        return (
-            df.with_columns(
-                east=pl.col("location").arr.get(0),
-                north=pl.col("location").arr.get(1),
-                tvd=pl.col("location").arr.get(2),
-                i=pl.col("well_connection_cell").list.get(0),
-                j=pl.col("well_connection_cell").list.get(1),
-                k=pl.col("well_connection_cell").list.get(2),
-            )
-            .drop("location", "well_connection_cell")
-            .pipe(self._assert_schema, schema)
+        combined = self._combine_response_and_location_metadata(
+            df, location_metadata, iens, iter_
         )
 
-    def _obtain_locations(
+        return combined.pipe(self._assert_schema, schema)
+
+    def _obtain_location_metadata(
         self,
         run_path: str,
         iens: int,
         iter_: int,
-        rft_data: dict[tuple[WellName, datetime.date], RFTConfig.RFTEntryExtract],
-    ) -> dict[tuple[WellName, datetime.date], list[list[_ZonedPoint]]]:
+    ) -> pl.DataFrame:
+        """
+        Obtains location metadata for the observations from provided simulation run.
+        'location' and 'expected_zone' is data provided by the observations. 'location'
+        is a primary key, while 'expected_zone' is added for completeness.
+        'actual_zones' is a list of zones that the location belongs to according to the
+        zonemap, and 'actual_cell' is the grid cell that the location belongs to in
+        current simulation.
+        """
         zoned_locations = self._zoned_locations
 
         rft_filepath = self._rft_filepath(self.input_files[0], run_path, iens, iter_)
@@ -422,27 +366,83 @@ class RFTConfig(ResponseConfig):
         else:
             zonemap = {}
 
-        location_cell_map = {}
-        if zoned_locations:
-            location_cell_map = self._filter_zones(
-                self._map_locations_to_cells(grid_filepath, zoned_locations),
-                iens,
-                iter_,
-                zonemap,
+        location_cell_map = self._map_locations_to_cells(grid_filepath, zoned_locations)
+
+        return pl.DataFrame(
+            {
+                "location": pl.Series(
+                    [loc.point for loc in zoned_locations],
+                    dtype=pl.Array(pl.Float32, 3),
+                ),
+                "expected_zone": pl.Series(
+                    [loc.zone_name for loc in zoned_locations], dtype=pl.String
+                ),
+                "actual_zones": pl.Series(
+                    [
+                        zonemap.get(location_cell_map[loc][-1], [])
+                        for loc in zoned_locations
+                    ],
+                    dtype=pl.List(pl.String),
+                ),
+                "actual_cell": pl.Series(
+                    [location_cell_map[loc] for loc in zoned_locations],
+                    dtype=pl.Array(pl.Int64, 3),
+                ),
+            }
+        )
+
+    @staticmethod
+    def _combine_response_and_location_metadata(
+        responses: pl.DataFrame,
+        location_metadata: pl.DataFrame,
+        iens: int,
+        iter_: int,
+    ) -> pl.DataFrame:
+        result = responses.join(
+            location_metadata,
+            left_on="well_connection_cell",
+            right_on="actual_cell",
+            how="left",
+        )
+
+        is_zone_valid = pl.col("expected_zone").is_null() | pl.col(
+            "expected_zone"
+        ).is_in(pl.col("actual_zones"))
+
+        disabled_due_to_zone_mismatch = result.filter(
+            pl.col("expected_zone").is_not_null() & ~is_zone_valid
+        )
+        for row in disabled_due_to_zone_mismatch.iter_rows(named=True):
+            warnings.warn(
+                PostExperimentWarning(
+                    f"An RFT observation with location {row['location']}, "
+                    f"in iteration {iter_}, realization {iens} did "
+                    f"not match expected zone {row['expected_zone']}. The observation "
+                    "was deactivated",
+                ),
+                stacklevel=2,
+            )
+        result = result.filter(is_zone_valid)
+
+        def location_to_coordinate(index: int, name: str) -> pl.Expr:
+            return (
+                pl.when(pl.col("location").is_null())
+                .then(None)
+                .otherwise(pl.col("location").arr.get(index))
+                .alias(name)
             )
 
-        locations: dict[tuple[WellName, datetime.date], list[list[_ZonedPoint]]] = {}
-        for (well, date), rft_entry in rft_data.items():
-            locations[well, date] = []
-            for c in rft_entry.well_connection_cells:
-                locations_for_cell = []
-                for location, cell in location_cell_map.items():
-                    if cell == tuple(c):
-                        locations_for_cell.append(location)
-                if not locations_for_cell:
-                    locations_for_cell = [_ZonedPoint()]
-                locations[well, date].append(locations_for_cell)
-        return locations
+        return result.with_columns(
+            [
+                pl.col("expected_zone").alias("zone"),
+                location_to_coordinate(0, "east"),
+                location_to_coordinate(1, "north"),
+                location_to_coordinate(2, "tvd"),
+                pl.col("well_connection_cell").arr.get(0).alias("i"),
+                pl.col("well_connection_cell").arr.get(1).alias("j"),
+                pl.col("well_connection_cell").arr.get(2).alias("k"),
+            ]
+        ).drop(["location", "well_connection_cell", "expected_zone", "actual_zones"])
 
     @property
     def response_type(self) -> str:
