@@ -178,6 +178,13 @@ class RFTConfig(ResponseConfig):
                             locs.remove(loc)
         return indices
 
+    @staticmethod
+    def _assert_schema(df: pl.DataFrame, schema: dict[str, Any]) -> pl.DataFrame:
+        if df.schema != schema:
+            msg = f"Expected schema {schema}, got {df.schema}."
+            raise AssertionError(msg)
+        return df
+
     @dataclass(frozen=True)
     class ValidRFTEntry:
         property_values: dict[RFTProperty, npt.NDArray[np.float32]]
@@ -286,44 +293,32 @@ class RFTConfig(ResponseConfig):
         Points which were constrained to be in a given zone, but were not contained
         in that zone, is not labeled, and instead a warning is emitted.
         """
-        rft_filepath = self._rft_filepath(self.input_files[0], run_path, iens, iter_)
+        schema: dict[str, Any] = {
+            "response_key": pl.String,
+            "well": pl.String,
+            "date": pl.String,
+            "property": pl.String,
+            "time": pl.Date,
+            "depth": pl.Float32,
+            "values": pl.Float32,
+            "zone": pl.String,
+            "east": pl.Float32,
+            "north": pl.Float32,
+            "tvd": pl.Float32,
+            "i": pl.Int64,
+            "j": pl.Int64,
+            "k": pl.Int64,
+        }
 
         if not self.data_to_read:
-            return pl.DataFrame(
-                {
-                    "response_key": [],
-                    "time": [],
-                    "depth": [],
-                    "values": [],
-                    "east": [],
-                    "north": [],
-                    "tvd": [],
-                    "zone": [],
-                }
-            )
+            return pl.DataFrame(schema=schema)
 
+        rft_filepath = self._rft_filepath(self.input_files[0], run_path, iens, iter_)
         rft_data: dict[tuple[WellName, datetime.date], RFTConfig.ValidRFTEntry]
         rft_data = self._scan_rft(rft_filepath)
 
         if not rft_data:
-            return pl.DataFrame(
-                {
-                    "response_key": [],
-                    "well": [],
-                    "date": [],
-                    "property": [],
-                    "time": [],
-                    "depth": [],
-                    "values": [],
-                    "east": [],
-                    "north": [],
-                    "tvd": [],
-                    "i": [],
-                    "j": [],
-                    "k": [],
-                    "zone": [],
-                }
-            )
+            return pl.DataFrame(schema=schema)
 
         locations = self._obtain_locations(run_path, iens, iter_, rft_data)
 
@@ -384,14 +379,18 @@ class RFTConfig(ResponseConfig):
                 f"Could not find {err.args[0]} in RFTFile {rft_filepath}"
             ) from err
 
-        return df.with_columns(
-            east=pl.col("location").arr.get(0),
-            north=pl.col("location").arr.get(1),
-            tvd=pl.col("location").arr.get(2),
-            i=pl.col("well_connection_cell").list.get(0),
-            j=pl.col("well_connection_cell").list.get(1),
-            k=pl.col("well_connection_cell").list.get(2),
-        ).drop("location", "well_connection_cell")
+        return (
+            df.with_columns(
+                east=pl.col("location").arr.get(0),
+                north=pl.col("location").arr.get(1),
+                tvd=pl.col("location").arr.get(2),
+                i=pl.col("well_connection_cell").list.get(0),
+                j=pl.col("well_connection_cell").list.get(1),
+                k=pl.col("well_connection_cell").list.get(2),
+            )
+            .drop("location", "well_connection_cell")
+            .pipe(self._assert_schema, schema)
+        )
 
     def _obtain_locations(
         self,
