@@ -287,23 +287,6 @@ class RFTConfig(ResponseConfig):
         in that zone, is not labeled, and instead a warning is emitted.
         """
         rft_filepath = self._rft_filepath(self.input_files[0], run_path, iens, iter_)
-        grid_filepath = self._ergrid_filepath(rft_filepath)
-
-        if self.zonemap:
-            zonemap_path = self._zonemap_filepath(self.zonemap, run_path, iens, iter_)
-            zonemap = parse_zonemap(str(zonemap_path), zonemap_path.read_text())
-        else:
-            zonemap = {}
-
-        indices = {}
-        if self.locations:
-            indices = self._filter_zones(
-                self._find_indices(grid_filepath), iens, iter_, zonemap
-            )
-        if None in indices:
-            raise InvalidResponseFile(
-                f"Did not find grid coordinate for location(s) {indices[None]}"
-            )
 
         if not self.data_to_read:
             return pl.DataFrame(
@@ -321,18 +304,6 @@ class RFTConfig(ResponseConfig):
 
         rft_data: dict[tuple[WellName, datetime.date], RFTConfig.ValidRFTEntry]
         rft_data = self._scan_rft(rft_filepath)
-
-        locations = {}
-        for (well, date), rft_entry in rft_data.items():
-            locations[well, date] = [
-                list(
-                    indices.get(
-                        (c[0] - 1, c[1] - 1, c[2] - 1),
-                        [_ZonedPoint()],
-                    )
-                )
-                for c in rft_entry.well_connection_cells
-            ]
 
         if not rft_data:
             return pl.DataFrame(
@@ -353,6 +324,8 @@ class RFTConfig(ResponseConfig):
                     "zone": [],
                 }
             )
+
+        locations = self._obtain_locations(run_path, iens, iter_, rft_data)
 
         try:
             df = pl.concat(
@@ -419,6 +392,45 @@ class RFTConfig(ResponseConfig):
             j=pl.col("well_connection_cell").list.get(1),
             k=pl.col("well_connection_cell").list.get(2),
         ).drop("location", "well_connection_cell")
+
+    def _obtain_locations(
+        self,
+        run_path: str,
+        iens: int,
+        iter_: int,
+        rft_data: dict[tuple[WellName, datetime.date], RFTConfig.RFTEntryExtract],
+    ) -> dict[tuple[WellName, datetime.date], list[list[_ZonedPoint]]]:
+        rft_filepath = self._rft_filepath(self.input_files[0], run_path, iens, iter_)
+        grid_filepath = self._ergrid_filepath(rft_filepath)
+
+        if self.zonemap:
+            zonemap_path = self._zonemap_filepath(self.zonemap, run_path, iens, iter_)
+            zonemap = parse_zonemap(str(zonemap_path), zonemap_path.read_text())
+        else:
+            zonemap = {}
+
+        indices = {}
+        if self.locations:
+            indices = self._filter_zones(
+                self._find_indices(grid_filepath), iens, iter_, zonemap
+            )
+        if None in indices:
+            raise InvalidResponseFile(
+                f"Did not find grid coordinate for location(s) {indices[None]}"
+            )
+
+        locations = {}
+        for (well, date), rft_entry in rft_data.items():
+            locations[well, date] = [
+                list(
+                    indices.get(
+                        (c[0] - 1, c[1] - 1, c[2] - 1),
+                        [_ZonedPoint()],
+                    )
+                )
+                for c in rft_entry.well_connection_cells
+            ]
+        return locations
 
     @property
     def response_type(self) -> str:
