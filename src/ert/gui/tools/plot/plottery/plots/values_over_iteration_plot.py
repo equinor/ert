@@ -82,9 +82,7 @@ class ValuesOverIterationsPlot:
             colors = [
                 "red" if not row.is_improvement else color for _, row in data.iterrows()
             ]
-            scatter = axes.scatter(
-                data["batch_id"], data[value_col], c=colors, s=20, zorder=5
-            )
+            axes.scatter(data["batch_id"], data[value_col], c=colors, s=20, zorder=5)
 
             config.addLegendItem("Accepted", lines[0])
             config.addLegendItem(
@@ -113,7 +111,8 @@ class ValuesOverIterationsPlot:
 
         realizations = sorted(combined["realization"].unique())
 
-        # This loop is the reason batch controls plot multiple identical plots for each realization.
+        # This loop is the reason batch controls
+        # plot multiple identical plots for each realization.
         for realization in realizations:
             data = combined[combined["realization"] == realization].sort_values(
                 "batch_id"

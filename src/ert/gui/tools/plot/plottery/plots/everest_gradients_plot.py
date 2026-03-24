@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+
 import numpy as np
 import pandas as pd
-from matplotlib.ticker import MaxNLocator
+
 from .plot_tools import ConditionalAxisFormatter, PlotTools
 
 if TYPE_CHECKING:
@@ -87,7 +88,9 @@ class EverestGradientsPlot:
             for batch_id in batch_ids:
                 batch_data = combined[combined["batch_id"] == batch_id]
                 match = batch_data[batch_data["control_name"] == control]
-                values.append(match[response_key].values[0] if not match.empty else 0.0)
+                values.append(
+                    match[response_key].to_numpy()[0] if not match.empty else 0.0
+                )
 
             offsets = pos + (i - n_controls / 2) * bar_width + bar_width / 2
 
@@ -99,7 +102,7 @@ class EverestGradientsPlot:
                 alpha=0.7,
             )
             config.addLegendItem(control, bars[0])
-
+        axes.axhline(0, color="black", linewidth=1.0, alpha=0.3)
         axes.set_xticks(pos)
         axes.set_xticklabels([str(b) for b in batch_ids], rotation=0)
         axes.yaxis.set_major_formatter(ConditionalAxisFormatter())
