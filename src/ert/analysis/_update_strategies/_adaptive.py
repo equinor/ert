@@ -209,6 +209,7 @@ class AdaptiveLocalizationUpdate:
             AnalysisStatusEvent(
                 msg=f"Updating {param_config.name} ({param_config.type.upper()}) "
                 f"using adaptive localization, "
+                f"{num_params} parameters, "
                 f"{self._num_obs} observations, "
                 f"{self._ensemble_size} realizations"
                 f"{batch_info}"
