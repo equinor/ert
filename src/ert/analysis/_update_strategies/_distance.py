@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
@@ -65,22 +66,30 @@ class DistanceLocalizationUpdate:
         if self._obs_loc is None or self._smoother is None:
             raise RuntimeError("prepare() must be called before update()")
 
-        param_type_name = self._param_type.__name__
         self._progress_callback(
             AnalysisStatusEvent(
-                msg=f"Running distance localization on {param_type_name}"
-                f" with {param_ensemble.shape[0]} parameters,"
-                f" {self._obs_loc.xpos.shape[0]} observations,"
-                f" {self._ensemble_size} realizations"
+                msg=f"Updating {param_config.name} ({param_config.type.upper()}) "
+                f"using distance-based localization, "
+                f"{self._obs_loc.xpos.shape[0]} observations, "
+                f"{self._ensemble_size} realizations"
             )
         )
 
+        start_time = time.perf_counter()
         if self._param_type is Field:
             assert isinstance(param_config, Field)
             result = self._update_field(param_ensemble, param_config)
         else:
             assert isinstance(param_config, SurfaceConfig)
             result = self._update_surface(param_ensemble, param_config)
+        elapsed = time.perf_counter() - start_time
+
+        self._progress_callback(
+            AnalysisStatusEvent(
+                msg=f"Updated {param_config.name} ({param_config.type.upper()}) "
+                f"in {elapsed:.2f}s"
+            )
+        )
 
         return result
 

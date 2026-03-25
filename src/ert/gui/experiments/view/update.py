@@ -5,7 +5,6 @@ import time
 from datetime import timedelta
 
 import humanize
-from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtGui import QColor, QKeyEvent, QKeySequence
 from PyQt6.QtWidgets import (
@@ -15,13 +14,12 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QHeaderView,
     QLabel,
-    QListWidget,
-    QListWidgetItem,
     QMessageBox,
     QProgressBar,
     QTableWidget,
     QTableWidgetItem,
     QTabWidget,
+    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
@@ -159,8 +157,8 @@ class UpdateWidget(QWidget):
         msg_layout = QHBoxLayout()
         widget.setLayout(msg_layout)
 
-        self._msg_list = QListWidget()
-        self._msg_list.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
+        self._msg_list = QTextEdit()
+        self._msg_list.setReadOnly(True)
 
         msg_layout.addWidget(self._msg_list)
 
@@ -188,10 +186,10 @@ class UpdateWidget(QWidget):
         return self._iteration
 
     def _insert_status_message(self, message: str) -> None:
-        item = QListWidgetItem()
-        item.setText(message)
-        item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEnabled)
-        self._msg_list.addItem(item)
+        if message.startswith("Updated "):
+            self._msg_list.append(f'<span style="color: gray;">{message}</span>')
+        else:
+            self._msg_list.append(message)
 
     def _insert_table_tab(
         self,

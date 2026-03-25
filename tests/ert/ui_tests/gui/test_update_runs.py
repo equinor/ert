@@ -4,7 +4,7 @@ import shutil
 import polars as pl
 import pytest
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QComboBox, QListWidget
+from PyQt6.QtWidgets import QComboBox, QTextEdit
 
 from ert.gui.experiments import ExperimentPanel
 from ert.gui.experiments.run_dialog import RunDialog
@@ -137,14 +137,11 @@ def test_that_report_table_is_displayed_on_no_active_observations(
     assert update_widget._tab_widget.tabText(0) == "Status"
     assert update_widget._tab_widget.tabText(1) == "Report"
 
-    status_list = update_widget._tab_widget.widget(0).findChild(QListWidget)
+    status_text = update_widget._tab_widget.widget(0).findChild(QTextEdit)
 
-    count = sum(
-        1
-        for i in range(status_list.count())
-        if "No active observations for update step" in status_list.item(i).text()
-    )
-    assert count == 1, "message is expected to appear just once on the list"
+    content = status_text.toPlainText()
+    count = content.count("No active observations for update step")
+    assert count == 1, "message is expected to appear just once"
 
 
 @pytest.fixture

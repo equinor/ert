@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
@@ -138,11 +139,22 @@ class StandardESUpdate:
 
         self._progress_callback(
             AnalysisStatusEvent(
-                msg=f"There are {self._num_obs} responses "
-                f"and {self._ensemble_size} realizations."
+                msg=f"Updating {param_config.name} ({param_config.type.upper()}) "
+                f"without localization, "
+                f"{self._num_obs} observations, "
+                f"{self._ensemble_size} realizations"
             )
         )
 
+        start_time = time.perf_counter()
         param_ensemble[non_zero_variance_mask] @= self._T.astype(param_ensemble.dtype)
+        elapsed = time.perf_counter() - start_time
+
+        self._progress_callback(
+            AnalysisStatusEvent(
+                msg=f"Updated {param_config.name} ({param_config.type.upper()}) "
+                f"in {elapsed:.2f}s"
+            )
+        )
 
         return param_ensemble
