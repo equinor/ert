@@ -34,7 +34,7 @@ def migrate_fields(path: Path) -> None:
             (experiment / "parameter.json").read_text(encoding="utf-8")
         )
         new_parameter_configs = migrate_field_param(parameters_json)
-        Path(experiment / "parameter.json").write_text(
+        (experiment / "parameter.json").write_text(
             json.dumps(new_parameter_configs, indent=2), encoding="utf-8"
         )
 

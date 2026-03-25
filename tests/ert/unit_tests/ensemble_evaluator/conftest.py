@@ -109,7 +109,7 @@ def make_ensemble(queue_config):
                 )
             realizations = []
             for iens in range(num_reals):
-                run_path = Path(tmpdir / f"real_{iens}")
+                run_path = tmpdir / f"real_{iens}"
                 run_path.mkdir()
                 (run_path / "jobs.json").write_text(
                     json.dumps(

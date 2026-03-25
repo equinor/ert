@@ -279,23 +279,23 @@ def test_that_storage_works_with_missing_parameters_and_responses(
 
 
 @pytest.mark.integration_test
-def test_that_migrate_blockfs_creates_backup_folder(tmp_path, caplog):
+def test_that_migrate_blockfs_creates_backup_folder(tmp_path: Path, caplog):
     storage_path = tmp_path / "storage"
     storage_ensembles = storage_path / "ensembles"
     storage_experiments = storage_path / "experiments"
     storage_backup = storage_path / "_blockfs_backup"
 
-    with Path(tmp_path / "config.ert").open(mode="w", encoding="utf-8") as f:
+    with (tmp_path / "config.ert").open(mode="w", encoding="utf-8") as f:
         f.writelines(["NUM_REALIZATIONS 1\n", "ENSPATH", str(storage_path)])
 
     for d in (storage_path, storage_ensembles, storage_experiments):
         os.makedirs(d, exist_ok=True)
 
-    with Path(storage_path / "index.json").open("w+", encoding="utf-8") as f:
+    with (storage_path / "index.json").open("w+", encoding="utf-8") as f:
         f.write("""{"version": 0}""")
 
-    Path(storage_experiments / "exp_dummy.txt").write_text("", encoding="utf-8")
-    Path(storage_ensembles / "ens_dummy.txt").write_text("", encoding="utf-8")
+    (storage_experiments / "exp_dummy.txt").write_text("", encoding="utf-8")
+    (storage_ensembles / "ens_dummy.txt").write_text("", encoding="utf-8")
 
     with caplog.at_level(level=logging.INFO):
         run_cli("test_run", str(tmp_path / "config.ert"))
@@ -303,12 +303,12 @@ def test_that_migrate_blockfs_creates_backup_folder(tmp_path, caplog):
     assert storage_backup.exists()
     assert "Blockfs storage backed up" in caplog.messages
 
-    with Path(storage_path / "index.json").open(encoding="utf-8") as f:
+    with (storage_path / "index.json").open(encoding="utf-8") as f:
         index = json.load(f)
         assert index["version"] == _LOCAL_STORAGE_VERSION
         assert index["migrations"] == []
 
-    with Path(storage_backup / "index.json").open(encoding="utf-8") as f:
+    with (storage_backup / "index.json").open(encoding="utf-8") as f:
         index = json.load(f)
         assert index["version"] == 0
 

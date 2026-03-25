@@ -92,7 +92,7 @@ def make_poly_example(folder, source, **kwargs):
     render_template(
         folder, env.get_template("poly_eval.py.j2"), "poly_eval.py", **kwargs
     )
-    Path(folder / "poly_eval.py").chmod(0o775)
+    (folder / "poly_eval.py").chmod(0o775)
     for r in range(gen_obs_count):
         render_template(
             folder,
@@ -101,7 +101,7 @@ def make_poly_example(folder, source, **kwargs):
             **kwargs,
         )
 
-    if not Path(folder / "refcase").exists():
+    if not (folder / "refcase").exists():
         os.mkdir(folder / "refcase")
 
     use_resfo = True

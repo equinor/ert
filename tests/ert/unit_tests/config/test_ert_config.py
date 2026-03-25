@@ -1543,8 +1543,10 @@ def test_that_removed_analysis_module_keywords_raises_error(
         )
 
 
-def test_ert_config_parser_fails_gracefully_on_unreadable_config_file(caplog, tmp_path):
-    config_file = Path(tmp_path) / "config.ert"
+def test_ert_config_parser_fails_gracefully_on_unreadable_config_file(
+    caplog, tmp_path: Path
+):
+    config_file = tmp_path / "config.ert"
     config_file.write_text("")
     Path(config_file).chmod(0o000)
     caplog.set_level(logging.WARNING)
@@ -2261,9 +2263,9 @@ def test_queue_options_are_joined_after_option_name():
     ],
 )
 def test_validation_error_on_invalid_parameter_name(
-    invalid_parameter_definition_name, tmp_path
+    invalid_parameter_definition_name, tmp_path: Path
 ):
-    Path(tmp_path / "coeffs_priors").write_text(
+    (tmp_path / "coeffs_priors").write_text(
         invalid_parameter_definition_name, encoding="utf-8"
     )
     with pytest.raises(
