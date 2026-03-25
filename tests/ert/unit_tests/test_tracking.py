@@ -177,7 +177,8 @@ def test_tracking(
 
     with fileinput.input("poly_eval.py", inplace=True) as fin:
         for line in fin:
-            if line.strip().startswith("coeffs"):
+            if line.strip().startswith("parameters = json.loads("):
+                # Inject at the start of the __main__ section:
                 print(extra_poly_eval)
             print(line, end="")
 
