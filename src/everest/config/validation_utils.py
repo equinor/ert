@@ -83,7 +83,7 @@ class InstallDataContext:
             source = source.replace("<REALIZATION_ID>", str(realization))
             target = target.replace("<REALIZATION_ID>", str(realization))
 
-        tmp_target = Path(self._temp_dir.name) / Path(target)
+        tmp_target = Path(self._temp_dir.name) / target
         if tmp_target.exists():
             if tmp_target.is_dir() and not tmp_target.is_symlink():
                 raise ValueError(

@@ -208,7 +208,9 @@ def test_that_the_run_workflow_tool_is_disabled_when_there_are_no_workflows(qapp
 
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
-def test_that_the_run_workflow_tool_is_enabled_when_there_are_workflows(qapp, tmp_path):
+def test_that_the_run_workflow_tool_is_enabled_when_there_are_workflows(
+    qapp, tmp_path: Path
+):
     config_file = tmp_path / "config.ert"
 
     with Path(config_file).open("a+", encoding="utf-8") as ert_file:
@@ -218,12 +220,8 @@ def test_that_the_run_workflow_tool_is_enabled_when_there_are_workflows(qapp, tm
 
     os.mkdir(tmp_path / "workflows")
 
-    Path(tmp_path / "workflows/MAGIC_PRINT").write_text(
-        "print_uber\n", encoding="utf-8"
-    )
-    Path(tmp_path / "workflows/UBER_PRINT").write_text(
-        "EXECUTABLE ls\n", encoding="utf-8"
-    )
+    (tmp_path / "workflows/MAGIC_PRINT").write_text("print_uber\n", encoding="utf-8")
+    (tmp_path / "workflows/UBER_PRINT").write_text("EXECUTABLE ls\n", encoding="utf-8")
 
     args = Mock()
     args.config = str(config_file)

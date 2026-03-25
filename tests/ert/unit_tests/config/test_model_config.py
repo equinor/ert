@@ -91,9 +91,9 @@ def test_model_config_jobname_and_eclbase(extra_config, expected):
     ],
 )
 def test_that_when_the_runpath_disk_is_full_a_warning_is_given(
-    tmp_path, recwarn, total_space, used_space, to_warn, expected_warning
+    tmp_path: Path, recwarn, total_space, used_space, to_warn, expected_warning
 ):
-    Path(tmp_path / "simulations").mkdir()
+    (tmp_path / "simulations").mkdir()
     runpath = f"{tmp_path!s}/simulations/realization-%d/iter-%d"
     with patch(
         "ert.config.model_config.shutil.disk_usage",

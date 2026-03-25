@@ -60,10 +60,10 @@ def test_create_experiment(tmp_path):
     with open_storage(tmp_path, mode="w") as storage:
         experiment = storage.create_experiment(name="test-experiment")
 
-        experiment_path = Path(storage.path / "experiments" / str(experiment.id))
+        experiment_path = storage.path / "experiments" / str(experiment.id)
         assert experiment_path.exists()
 
-        with Path(experiment_path / "index.json").open(encoding="utf-8") as f:
+        with (experiment_path / "index.json").open(encoding="utf-8") as f:
             index = json.load(f)
             assert index["id"] == str(experiment.id)
             assert index["name"] == "test-experiment"
@@ -1259,7 +1259,7 @@ def test_that_permission_error_is_logged_in_load_ensembles(snake_oil_storage, ca
 
 
 def test_that_permission_error_is_logged_in_load_index(snake_oil_storage, caplog):
-    index_path = Path(snake_oil_storage.path / "index.json")
+    index_path = snake_oil_storage.path / "index.json"
     index_path.chmod(0o000)  # no permissions
     try:
         with caplog.at_level(logging.ERROR), pytest.raises(PermissionError):

@@ -136,11 +136,11 @@ async def test_that_killing_killed_job_does_not_raise(use_tmpdir):
 
 
 @pytest.mark.timeout(10)
-async def test_path_as_argument_is_valid(tmp_path, monkeypatch):
+async def test_path_as_argument_is_valid(tmp_path: Path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     driver = LocalDriver()
 
-    await driver.submit(42, "/usr/bin/env", "touch", Path(tmp_path) / "testfile")
+    await driver.submit(42, "/usr/bin/env", "touch", str(tmp_path / "testfile"))
     assert await driver.event_queue.get() == StartedEvent(iens=42)
     assert await driver.event_queue.get() == FinishedEvent(iens=42, returncode=0)
 
