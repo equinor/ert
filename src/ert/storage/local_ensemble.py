@@ -535,20 +535,12 @@ class LocalEnsemble(BaseMode):
             )
 
         if transformed:
-            tmp_configuration: dict[str, ParameterConfig] = {}
-            for key in keys:
-                for col in df.columns:
-                    if col == "realization":
-                        continue
-                    if col == key:
-                        tmp_configuration[col] = (
-                            self.experiment.parameter_configuration[key]
-                        )
-
             df = df.with_columns(
                 [
                     pl.col(col)
-                    .map_batches(tmp_configuration[col].transform_series)
+                    .map_batches(
+                        self.experiment.parameter_configuration[col].transform_series
+                    )
                     .cast(df[col].dtype)
                     .alias(col)
                     for col in df.columns
