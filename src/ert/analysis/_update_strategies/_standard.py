@@ -137,10 +137,12 @@ class StandardESUpdate:
         if self._T is None:
             raise RuntimeError("prepare() must be called before update()")
 
+        num_params = param_ensemble.shape[0]
         self._progress_callback(
             AnalysisStatusEvent(
                 msg=f"Updating {param_config.name} ({param_config.type.upper()}) "
                 f"without localization, "
+                f"{num_params} parameters, "
                 f"{self._num_obs} observations, "
                 f"{self._ensemble_size} realizations"
             )

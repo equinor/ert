@@ -66,10 +66,12 @@ class DistanceLocalizationUpdate:
         if self._obs_loc is None or self._smoother is None:
             raise RuntimeError("prepare() must be called before update()")
 
+        num_params = param_ensemble.shape[0]
         self._progress_callback(
             AnalysisStatusEvent(
                 msg=f"Updating {param_config.name} ({param_config.type.upper()}) "
                 f"using distance-based localization, "
+                f"{num_params} parameters, "
                 f"{self._obs_loc.xpos.shape[0]} observations, "
                 f"{self._ensemble_size} realizations"
             )
