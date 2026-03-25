@@ -181,7 +181,7 @@ def _generate_parameter_files(
                         f"{scalar_value} as it is invalid"
                     )
         else:
-            export_values = param.write_to_runpath(Path(run_path), iens, fs)
+            export_values = param.write_to_runpath(run_path, iens, fs)
 
         if export_values:
             for group, vals in export_values.items():
@@ -197,7 +197,7 @@ def _generate_parameter_files(
     # Write aggregated EverestControl JSON files
     start_time = time.perf_counter()
     for output_file, controls in everest_controls_by_file.items():
-        file_path: Path = Path(run_path) / substitute_runpath_name(
+        file_path: Path = run_path / substitute_runpath_name(
             output_file, iens, iteration
         )
         file_path.parent.mkdir(exist_ok=True, parents=True)
@@ -369,7 +369,7 @@ def _create_one_run_path(
         iens=run_arg.iens,
         itr=ensemble.iteration,
     )
-    Path(run_path / "jobs.json").write_bytes(
+    (run_path / "jobs.json").write_bytes(
         orjson.dumps(
             forward_model_output,
             option=orjson.OPT_NON_STR_KEYS | orjson.OPT_INDENT_2,
@@ -380,7 +380,7 @@ def _create_one_run_path(
     # Write MANIFEST file to runpath use to avoid NFS sync issues
     start_time = time.perf_counter()
     data = _manifest_to_json(ensemble, run_arg.iens, run_arg.itr)
-    Path(run_path / "manifest.json").write_bytes(
+    (run_path / "manifest.json").write_bytes(
         orjson.dumps(data, option=orjson.OPT_NON_STR_KEYS | orjson.OPT_INDENT_2)
     )
     timings["manifest_to_json"] = time.perf_counter() - start_time

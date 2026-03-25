@@ -36,7 +36,7 @@ def create_ert_config(path: Path):
     )
 
 
-async def test_that_forward_model_subprocesses_live_on_after_ert_dies(tmp_path):
+async def test_that_forward_model_subprocesses_live_on_after_ert_dies(tmp_path: Path):
     # Have ERT run a forward model that writes in PID to a file, then sleeps
     # Forcefully terminate ERT and assert that the child process is not terminated
     create_ert_config(tmp_path)
@@ -45,7 +45,7 @@ async def test_that_forward_model_subprocesses_live_on_after_ert_dies(tmp_path):
         "ert", "test_run", "ert_config.ert", cwd=tmp_path
     )
     check_path_retry, check_path_max_retries = 0, 200
-    expected_path = Path(tmp_path, "test_out/realization-0/iter-0/forward_model_pid")
+    expected_path = tmp_path / "test_out/realization-0/iter-0/forward_model_pid"
     while not expected_path.exists() and check_path_retry < check_path_max_retries:
         check_path_retry += 1
         await asyncio.sleep(0.5)

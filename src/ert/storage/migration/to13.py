@@ -111,7 +111,7 @@ def migrate_genkw(path: Path) -> None:
         )
 
         new_parameter_configs = migrate_gen_kw_param(parameters_json)
-        Path(experiment / "parameter.json").write_text(
+        (experiment / "parameter.json").write_text(
             json.dumps(new_parameter_configs, indent=2), encoding="utf-8"
         )
 

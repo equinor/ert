@@ -40,12 +40,12 @@ def test_flow_can_produce_output():
     assert Path("EIGHTCELLS.UNSMRY").exists()
 
 
-def test_flowrun_can_be_bypassed_when_flow_is_available(tmp_path, monkeypatch):
+def test_flowrun_can_be_bypassed_when_flow_is_available(tmp_path: Path, monkeypatch):
     # Set FLOWRUN_PATH to a path guaranteed not to contain flowrun
     monkeypatch.setenv("FLOWRUN_PATH", str(tmp_path))
     # Add a mocked flow to PATH
     monkeypatch.setenv("PATH", f"{tmp_path}:{os.environ['PATH']}")
-    mocked_flow = Path(tmp_path / "flow")
+    mocked_flow = tmp_path / "flow"
     mocked_flow.write_text("", encoding="utf-8")
     mocked_flow.chmod(mocked_flow.stat().st_mode | stat.S_IEXEC)
     (tmp_path / "DUMMY.DATA").write_text("", encoding="utf-8")
@@ -55,12 +55,12 @@ def test_flowrun_can_be_bypassed_when_flow_is_available(tmp_path, monkeypatch):
     assert runner.bypass_flowrun is True
 
 
-def test_flowrun_cannot_be_bypassed_for_parallel_runs(tmp_path, monkeypatch):
+def test_flowrun_cannot_be_bypassed_for_parallel_runs(tmp_path: Path, monkeypatch):
     # Set FLOWRUN_PATH to a path guaranteed not to contain flowrun
     monkeypatch.setenv("FLOWRUN_PATH", str(tmp_path))
     # Add a mocked flow to PATH
     monkeypatch.setenv("PATH", f"{tmp_path}:{os.environ['PATH']}")
-    mocked_flow = Path(tmp_path / "flow")
+    mocked_flow = tmp_path / "flow"
     mocked_flow.write_text("", encoding="utf-8")
     mocked_flow.chmod(mocked_flow.stat().st_mode | stat.S_IEXEC)
 

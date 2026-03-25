@@ -1,7 +1,6 @@
 from array import array
 from datetime import datetime, timedelta
 from itertools import zip_longest
-from pathlib import Path
 
 import hypothesis.strategies as st
 import pytest
@@ -109,12 +108,14 @@ def test_that_incorrect_summary_files_raises_informative_errors(
         read_summary(str(tmp_path / "test"), ["*"])
 
 
-def test_truncated_summary_file_raises_invalidresponsefile(tmp_path_factory):
+def test_truncated_summary_file_raises_invalidresponsefile(
+    tmp_path_factory: pytest.TempPathFactory,
+):
     tmp_path = tmp_path_factory.mktemp("summary")
     simple_unsmry().to_file(tmp_path / "TEST.UNSMRY")
     simple_smspec().to_file(tmp_path / "TEST.SMSPEC")
 
-    with Path(tmp_path / "TEST.UNSMRY").open("ba") as unsmry_file:
+    with (tmp_path / "TEST.UNSMRY").open("ba") as unsmry_file:
         unsmry_file.truncate(100)  # 112 bytes is the un-truncated size
 
     with pytest.raises(InvalidResponseFile, match="Unable to read summary data from"):

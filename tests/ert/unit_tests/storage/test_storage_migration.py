@@ -279,7 +279,7 @@ def test_that_storage_works_with_missing_parameters_and_responses(
 
 
 @pytest.mark.integration_test
-def test_that_migrate_blockfs_creates_backup_folder(tmp_path, caplog):
+def test_that_migrate_blockfs_creates_backup_folder(tmp_path: Path, caplog):
     storage_path = tmp_path / "storage"
     storage_ensembles = storage_path / "ensembles"
     storage_experiments = storage_path / "experiments"

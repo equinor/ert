@@ -33,6 +33,6 @@ def migrate(path: Path) -> None:
                         transform_function_definitions.append(tfd)
 
                 param["transform_function_definitions"] = transform_function_definitions
-        Path(experiment / "parameter.json").write_text(
+        (experiment / "parameter.json").write_text(
             json.dumps(parameters_json, indent=4), encoding="utf-8"
         )
