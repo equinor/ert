@@ -60,14 +60,11 @@ class EverestGradientsPlot:
         all_frames = []
         for df in ensemble_to_data_map.values():
             if (
-                df.empty
-                or response_key not in df.columns
-                or "control_name" not in df.columns
+                not df.empty
+                and response_key in df.columns
+                and "control_name" in df.columns
+                and (filtered := df[df["control_name"].isin(self.selected_controls)]).shape[0]
             ):
-                continue
-            filtered = df[df["control_name"].isin(self.selected_controls)]
-
-            if not filtered.empty:
                 all_frames.append(filtered)
 
         if not all_frames:
