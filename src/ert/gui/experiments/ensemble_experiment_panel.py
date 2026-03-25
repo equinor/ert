@@ -149,10 +149,6 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
 
     @override
     def isConfigurationValid(self) -> bool:
-        self.blockSignals(True)
-        self._experiment_name_field.validateString()
-        self._ensemble_name_field.validateString()
-        self.blockSignals(False)
         return (
             self._active_realizations_field.isValid()
             and self._experiment_name_field.isValid()
