@@ -57,17 +57,16 @@ class EverestGradientsPlot:
         colors = config.lineColorCycle()
 
         # Collect all data into one frame
-        all_frames = []
-        for df in ensemble_to_data_map.values():
-            if (
-                not df.empty
-                and response_key in df.columns
-                and "control_name" in df.columns
-                and (
-                    filtered := df[df["control_name"].isin(self.selected_controls)]
-                ).shape[0]
-            ):
-                all_frames.append(filtered)
+        all_frames = [
+            filtered
+            for df in ensemble_to_data_map.values()
+            if not df.empty
+            and response_key in df.columns
+            and "control_name" in df.columns
+            and (filtered := df[df["control_name"].isin(self.selected_controls)]).shape[
+                0
+            ]
+        ]
 
         if not all_frames:
             axes.text(0.5, 0.5, "No data", ha="center", va="center")
