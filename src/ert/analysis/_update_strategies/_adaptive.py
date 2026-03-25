@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from collections.abc import Callable, Sequence
 from typing import TYPE_CHECKING, TypeVar
 
@@ -201,12 +202,16 @@ class AdaptiveLocalizationUpdate:
         num_params = param_ensemble.shape[0]
         batch_size = _calculate_adaptive_batch_size(num_params, self._num_obs)
         batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
+        num_batches = len(batches)
 
+        batch_info = f" and {num_batches} batches" if num_batches > 1 else ""
         self._progress_callback(
             AnalysisStatusEvent(
-                msg=f"Running adaptive localization on {num_params} parameters, "
-                f"{self._num_obs} responses, {self._ensemble_size} realizations "
-                f"and {len(batches)} batches"
+                msg=f"Updating {param_config.name} ({param_config.type.upper()}) "
+                f"using adaptive localization, "
+                f"{self._num_obs} observations, "
+                f"{self._ensemble_size} realizations"
+                f"{batch_info}"
             )
         )
 
@@ -215,6 +220,7 @@ class AdaptiveLocalizationUpdate:
         ) -> TimedIterator[T]:
             return TimedIterator(iterable, self._progress_callback)
 
+        start_time = time.perf_counter()
         for param_batch_idx in batches:
             update_idx = param_batch_idx[non_zero_variance_mask[param_batch_idx]]
             X_local = param_ensemble[update_idx, :]
@@ -231,5 +237,13 @@ class AdaptiveLocalizationUpdate:
                 progress_callback=progress_callback_wrapper,
                 n_jobs=NUM_JOBS_ADAPTIVE_LOC,
             )
+        elapsed = time.perf_counter() - start_time
+
+        self._progress_callback(
+            AnalysisStatusEvent(
+                msg=f"Updated {param_config.name} ({param_config.type.upper()}) "
+                f"in {elapsed:.2f}s"
+            )
+        )
 
         return param_ensemble
