@@ -9,6 +9,7 @@ from _ert.events import (
     ForwardModelStepSuccess,
     dispatcher_event_from_json,
 )
+from _ert.forward_model_runner.client import ClientConnectionError
 from _ert.forward_model_runner.forward_model_step import ForwardModelStep
 from _ert.forward_model_runner.reporting import Event
 from _ert.forward_model_runner.reporting.message import (
@@ -254,14 +255,19 @@ def test_event_reporter_does_not_hang_after_failed(
             {"name": "fmstep1", "stdout": "stdout", "stderr": "stderr"}, 0
         )
 
-        reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
-        reporter.report(Start(fmstep1))
+        errored = False
         # May raise ClientConnectionError if connection retries already finished
         # in which case reporter._reporter_exception is set
-        if not reporter._reporter_exception:
+        try:
+            reporter.report(Init([fmstep1], 1, 19, ens_id="ens_id", real_id=0))
+            reporter.report(Start(fmstep1))
             reporter.report(Finish())
+        except ClientConnectionError:
+            errored = True
 
         reporter._event_publisher_thread.join(timeout=10)
         assert not reporter._event_publisher_thread.is_alive(), (
             "Event publisher thread is hanging"
         )
+        if not errored:
+            assert expected_message in caplog.text
