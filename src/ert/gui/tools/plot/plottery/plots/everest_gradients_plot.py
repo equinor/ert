@@ -63,7 +63,9 @@ class EverestGradientsPlot:
                 not df.empty
                 and response_key in df.columns
                 and "control_name" in df.columns
-                and (filtered := df[df["control_name"].isin(self.selected_controls)]).shape[0]
+                and (
+                    filtered := df[df["control_name"].isin(self.selected_controls)]
+                ).shape[0]
             ):
                 all_frames.append(filtered)
 
