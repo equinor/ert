@@ -37,14 +37,19 @@ if TYPE_CHECKING:
     from .plottery.plots.cesp import CrossEnsembleStatisticsPlot
     from .plottery.plots.distribution import DistributionPlot
     from .plottery.plots.ensemble import EnsemblePlot
+    from .plottery.plots.everest_batch_objective_function_plot import (
+        EverestBatchObjectiveFunctionPlot,
+    )
+    from .plottery.plots.everest_constraints_plot import EverestConstraintsPlot
+    from .plottery.plots.everest_controls_plot import EverestControlsPlot
+    from .plottery.plots.everest_objective_function_plot import (
+        EverestObjectiveFunctionPlot,
+    )
     from .plottery.plots.gaussian_kde import GaussianKDEPlot
     from .plottery.plots.histogram import HistogramPlot
     from .plottery.plots.misfits import MisfitsPlot
     from .plottery.plots.statistics import StatisticsPlot
     from .plottery.plots.std_dev import StdDevPlot
-    from .plottery.plots.values_over_iteration_plot import (
-        ValuesOverIterationsPlot,
-    )
 
 logger = logging.getLogger(__name__)
 
@@ -131,9 +136,12 @@ class PlotWidget(QWidget):
             "DistributionPlot",
             "CrossEnsembleStatisticsPlot",
             "StdDevPlot",
-            "ValuesOverIterationsPlot",
             "MisfitsPlot",
+            "EverestBatchObjectiveFunctionPlot",
+            "EverestConstraintsPlot",
+            "EverestControlsPlot",
             "EverestGradientsPlot",
+            "EverestObjectiveFunctionPlot",
         ],
         parent: QWidget | None = None,
     ) -> None:
