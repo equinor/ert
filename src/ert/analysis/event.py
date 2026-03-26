@@ -17,6 +17,7 @@ class AnalysisEvent(BaseModel):
 class AnalysisStatusEvent(AnalysisEvent):
     event_type: Literal["AnalysisStatusEvent"] = "AnalysisStatusEvent"
     msg: str
+    detail: bool = False
 
 
 class AnalysisTimeEvent(AnalysisEvent):

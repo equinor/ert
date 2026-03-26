@@ -156,9 +156,14 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
         self, iteration: int, run_id: uuid.UUID, event: AnalysisEvent
     ) -> None:
         match event:
-            case AnalysisStatusEvent(msg=msg):
+            case AnalysisStatusEvent(msg=msg, detail=detail):
                 self.send_event(
-                    RunModelStatusEvent(iteration=iteration, run_id=run_id, msg=msg)
+                    RunModelStatusEvent(
+                        iteration=iteration,
+                        run_id=run_id,
+                        msg=msg,
+                        detail=detail,
+                    )
                 )
             case AnalysisTimeEvent():
                 self.send_event(

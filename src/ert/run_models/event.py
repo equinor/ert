@@ -30,6 +30,7 @@ class RunModelEvent(BaseModel):
 class RunModelStatusEvent(RunModelEvent):
     event_type: Literal["RunModelStatusEvent"] = "RunModelStatusEvent"
     msg: str
+    detail: bool = False
 
 
 class EverestStatusEvent(BaseModel):
