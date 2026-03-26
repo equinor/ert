@@ -18,6 +18,7 @@ from ert.config import (
     PreSimulationFixtures,
     PreUpdateFixtures,
     QueueConfig,
+    ShapeRegistry,
     fixtures_per_hook,
 )
 from ert.run_models import (
@@ -143,6 +144,7 @@ def test_hook_call_order(monkeypatch, use_tmpdir, cls, extra_args, expected_call
         log_path=Path(""),
         status_queue=queue.SimpleQueue(),
         observations=[],
+        shape_registry=ShapeRegistry(),
     )
 
     test_class.run_ensemble_evaluator = MagicMock(return_value=[0])

@@ -29,6 +29,7 @@ from ._observations import (
     SummaryObservation,
     make_observations,
 )
+from ._shapes import ShapeRegistry
 from .analysis_config import AnalysisConfig
 from .breakthrough_config import BreakthroughConfig
 from .ensemble_config import EnsembleConfig
@@ -570,9 +571,11 @@ def workflows_from_dict(
 ]:
     workflow_jobs = workflow_jobs_from_dict(
         content_dict,
-        dict(copy.copy(site_installed_workflows_jobs))
-        if site_installed_workflows_jobs
-        else {},
+        (
+            dict(copy.copy(site_installed_workflows_jobs))
+            if site_installed_workflows_jobs
+            else {}
+        ),
     )
     workflows, hooked_workflows = create_and_hook_workflows(
         content_dict.get(ConfigKeys.HOOK_WORKFLOW, []),
@@ -817,6 +820,7 @@ class ErtConfig(BaseModel):
     random_seed_generator: RandomSeedGenerator = Field(
         default_factory=RandomSeedGenerator
     )
+    shape_registry: ShapeRegistry = Field(default_factory=ShapeRegistry)
 
     @model_validator(mode="after")
     def set_fields(self) -> Self:
@@ -1067,6 +1071,7 @@ class ErtConfig(BaseModel):
 
         obs_config_args = config_dict.get(ConfigKeys.OBS_CONFIG)
         obs_configs: list[Observation] = []
+        shape_registry = ShapeRegistry()
         try:
             if obs_config_args:
                 obs_config_file, obs_config_input = obs_config_args
@@ -1074,6 +1079,7 @@ class ErtConfig(BaseModel):
                 obs_configs = make_observations(
                     os.path.dirname(obs_config_file),
                     obs_config_input,
+                    shape_registry=shape_registry,
                 )
                 if not obs_configs:
                     raise ObservationConfigError.with_context(
@@ -1197,6 +1203,7 @@ class ErtConfig(BaseModel):
                 user_config_file=config_file_path,
                 observation_declarations=list(obs_configs),
                 zonemap=zonemap,
+                shape_registry=shape_registry,
             )
 
             # The observations are created here because create_observation_dataframes
@@ -1236,8 +1243,11 @@ class ErtConfig(BaseModel):
             # This mutates the rft config and is necessary for the moment
             # Consider changing this pattern
             _ = create_observation_dataframes(
-                obs_configs,
-                cast(RFTConfig | None, ensemble_config.response_configs.get("rft")),
+                observations=obs_configs,
+                rft_config=cast(
+                    RFTConfig | None, ensemble_config.response_configs.get("rft")
+                ),
+                shape_registry=shape_registry,
             )
 
             cls_config.random_seed_generator.user_defined_seed = config_dict.get(

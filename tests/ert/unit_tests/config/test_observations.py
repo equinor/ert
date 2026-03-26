@@ -16,16 +16,13 @@ from resdata.summary import Summary
 from resfo_utilities.testing import summaries
 
 from ert.__main__ import run_convert_observations
-from ert.config import (
-    ConfigValidationError,
-    ConfigWarning,
-    ErtConfig,
-)
-from ert.config._create_observation_dataframes import (
+from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, ShapeRegistry
+from ert.config._create_observation_dataframes import create_observation_dataframes
+from ert.config._observations import (
     DEFAULT_LOCALIZATION_RADIUS,
-    create_observation_dataframes,
+    extract_localization_values,
+    make_observations,
 )
-from ert.config._observations import extract_localization_values, make_observations
 from ert.config.parsing import parse_observations
 from ert.config.parsing.observations_parser import (
     ObservationConfigError,
@@ -118,7 +115,9 @@ def make_refcase_observations(
     run_convert_observations(Namespace(config="config.ert"))
 
     migrated_config = ErtConfig.from_file("config.ert")
-    return create_observation_dataframes(migrated_config.observation_declarations, None)
+    return create_observation_dataframes(
+        migrated_config.observation_declarations, None, migrated_config.shape_registry
+    )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -173,10 +172,10 @@ def test_date_parsing_in_observations(datestring, errors):
     ]
     if errors:
         with pytest.raises(ValueError, match="Please use ISO date format"):
-            make_observations("", obs)
+            make_observations("", obs, ShapeRegistry())
     else:
         with pytest.warns(ConfigWarning, match="Please use ISO date format"):
-            make_observations("", obs)
+            make_observations("", obs, ShapeRegistry())
 
 
 def test_that_using_summary_observations_without_eclbase_shows_user_error():
@@ -244,7 +243,9 @@ def test_that_summary_observations_can_use_restart_for_index_if_refcase_is_given
 
         migrated_config = ErtConfig.from_file("config.ert")
         observations = create_observation_dataframes(
-            migrated_config.observation_declarations, None
+            migrated_config.observation_declarations,
+            None,
+            migrated_config.shape_registry,
         )["summary"]
 
         assert len(observations["time"]) == 1
@@ -297,7 +298,7 @@ def test_that_summary_observations_can_use_restart_for_index_if_time_map_is_give
 
     migrated_config = ErtConfig.from_file("config.ert")
     observations = create_observation_dataframes(
-        migrated_config.observation_declarations, None
+        migrated_config.observation_declarations, None, migrated_config.shape_registry
     )["summary"]
 
     # RESTART is a 1-based index; Python lists are 0-based.
@@ -329,7 +330,7 @@ def test_that_rft_config_is_created_from_observations():
     )
     rft_config = cast(RFTConfig, ert_config.ensemble_config.response_configs["rft"])
     observations = create_observation_dataframes(
-        ert_config.observation_declarations, rft_config
+        ert_config.observation_declarations, rft_config, ert_config.shape_registry
     )["rft"]
     assert_frame_equal(
         observations,
@@ -386,7 +387,7 @@ def test_that_the_date_keyword_sets_the_summary_index_without_time_map_or_refcas
 
     migrated = ErtConfig.from_file("config.ert")
     observations = create_observation_dataframes(
-        migrated.observation_declarations, None
+        migrated.observation_declarations, None, migrated.shape_registry
     )["summary"]
 
     assert list(observations["time"]) == [datetime.fromisoformat(date)]
@@ -421,6 +422,7 @@ def test_that_general_observations_can_use_restart_even_without_refcase_and_time
     observations = create_observation_dataframes(
         observations=ert_config.observation_declarations,
         rft_config=None,
+        shape_registry=ert_config.shape_registry,
     )
 
     assert list(observations["gen_data"]["report_step"]) == [restart]
@@ -456,8 +458,9 @@ def test_that_the_date_keyword_sets_the_general_index_by_looking_up_time_map():
     Path("config.ert").write_text(config_content, encoding="utf-8")
 
     run_convert_observations(Namespace(config="config.ert"))
+    ert_config = ErtConfig.from_file("config.ert")
     observations = create_observation_dataframes(
-        ErtConfig.from_file("config.ert").observation_declarations, None
+        ert_config.observation_declarations, None, ert_config.shape_registry
     )
     assert observations["gen_data"].to_dicts()[0]["report_step"] == restart
 
@@ -524,8 +527,9 @@ def test_that_the_date_keyword_sets_the_report_step_by_looking_up_refcase(
         )
         Path("config.ert").write_text(config_content, encoding="utf-8")
         run_convert_observations(Namespace(config="config.ert"))
+        ert_config = ErtConfig.from_file("config.ert")
         observations = create_observation_dataframes(
-            ErtConfig.from_file("config.ert").observation_declarations, None
+            ert_config.observation_declarations, None, ert_config.shape_registry
         )
         assert observations["gen_data"].to_dicts()[0]["report_step"] == restart
 
@@ -547,6 +551,7 @@ def test_that_error_must_be_greater_than_zero_in_summary_observations(std):
                     "ERROR": str(std),
                 }
             ],
+            ShapeRegistry(),
         )
 
 
@@ -568,6 +573,7 @@ def test_that_computed_error_must_be_greater_than_zero_in_summary_observations()
                     "ERROR_MODE": "REL",
                 }
             ],
+            ShapeRegistry(),
         )
 
 
@@ -642,6 +648,7 @@ def test_that_error_must_be_greater_than_zero_in_general_observations(std):
                     "ERROR": str(std),
                 }
             ],
+            ShapeRegistry(),
         )
 
 
@@ -665,6 +672,7 @@ def test_that_all_errors_in_general_observations_must_be_greater_than_zero(tmpdi
                         "OBS_FILE": "obs_data.txt",
                     }
                 ],
+                ShapeRegistry(),
             )
 
 
@@ -756,10 +764,13 @@ def test_that_indices_from_file_and_list_are_read(tmpdir, indices_type, indices_
                     "OBS_FILE": "obs_data.txt",
                 }
             ],
+            ShapeRegistry(),
         )
+
         observations = create_observation_dataframes(
             observations=obs,
             rft_config=None,
+            shape_registry=None,
         )
         assert list(observations["gen_data"]["index"]) == [0, 2, 4, 6, 8]
 
@@ -812,6 +823,7 @@ def test_that_non_existent_obs_file_is_invalid():
                     "OBS_FILE": "does_not_exist/at_all",
                 }
             ],
+            ShapeRegistry(),
         )
 
 
@@ -866,6 +878,7 @@ def test_that_general_observation_cannot_contain_both_value_and_obs_file():
                     "ERROR": "0.1",
                 }
             ],
+            ShapeRegistry(),
         )
 
 
@@ -883,6 +896,7 @@ def test_that_general_observation_must_contain_either_value_or_obs_file():
                     "RESTART": "1",
                 }
             ],
+            ShapeRegistry(),
         )
 
 
@@ -906,6 +920,7 @@ def test_that_non_numbers_in_obs_file_shows_informative_error_message(tmpdir):
                         "OBS_FILE": "obs_data.txt",
                     }
                 ],
+                ShapeRegistry(),
             )
 
 
@@ -929,6 +944,7 @@ def test_that_the_number_of_columns_in_obs_file_cannot_change():
                     "OBS_FILE": "obs_data.txt",
                 }
             ],
+            ShapeRegistry(),
         )
 
 
@@ -949,6 +965,7 @@ def test_that_the_number_of_values_in_obs_file_must_be_even():
                     "OBS_FILE": "obs_data.txt",
                 }
             ],
+            ShapeRegistry(),
         )
 
 
@@ -973,6 +990,7 @@ def test_that_giving_both_index_file_and_index_list_raises_an_exception(tmpdir):
                         "ERROR": "0.1",
                     }
                 ],
+                ShapeRegistry(),
             )
 
 
@@ -1200,8 +1218,9 @@ def test_that_history_observations_values_are_fetched_from_refcase(
         Path("config.ert").write_text(config_content, encoding="utf-8")
 
         run_convert_observations(Namespace(config="config.ert"))
+        ert_config = ErtConfig.from_file("config.ert")
         observations = create_observation_dataframes(
-            ErtConfig.from_file("config.ert").observation_declarations, None
+            ert_config.observation_declarations, None, ert_config.shape_registry
         )["summary"]
 
         steps = len(unsmry.steps)
@@ -1381,8 +1400,9 @@ def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
         Path("config.ert").write_text(config_content, encoding="utf-8")
 
         run_convert_observations(Namespace(config="config.ert"))
+        ert_config = ErtConfig.from_file("config.ert")
         observations = create_observation_dataframes(
-            ErtConfig.from_file("config.ert").observation_declarations, None
+            ert_config.observation_declarations, None, ert_config.shape_registry
         )["summary"]
 
         assert list(observations["response_key"]) == ["FGPR", "FOPR", "FWPR"]
@@ -1424,8 +1444,9 @@ def test_that_segment_defaults_are_applied(tmpdir):
         Path("config.ert").write_text(config_content, encoding="utf-8")
 
         run_convert_observations(Namespace(config="config.ert"))
+        ert_config = ErtConfig.from_file("config.ert")
         observations = create_observation_dataframes(
-            ErtConfig.from_file("config.ert").observation_declarations, None
+            ert_config.observation_declarations, None, ert_config.shape_registry
         )["summary"]
 
         # default error_min is 0.1
@@ -1448,10 +1469,12 @@ def test_that_summary_default_error_min_is_applied():
                 "ERROR_MODE": "RELMIN",
             }
         ],
+        ShapeRegistry(),
     )
     observations = create_observation_dataframes(
         obs,
         rft_config=None,
+        shape_registry=None,
     )
 
     # default error_min is 0.1
@@ -1891,6 +1914,7 @@ def test_that_general_observations_are_instantiated_with_localization_attributes
     gen_obs = create_observation_dataframes(
         observations=ert_config.observation_declarations,
         rft_config=None,
+        shape_registry=ert_config.shape_registry,
     )["gen_data"]
     for loc_kw in ["east", "north", "radius"]:
         assert loc_kw in gen_obs.columns
@@ -1917,6 +1941,7 @@ def test_that_breakthrough_observations_df_have_obs_value_zero():
     brt_obs = create_observation_dataframes(
         observations=ert_config.observation_declarations,
         rft_config=None,
+        shape_registry=ert_config.shape_registry,
     )["breakthrough"]
     assert brt_obs["observations"].to_list() == [0]
 
@@ -1942,6 +1967,7 @@ def test_that_breakthrough_observations_appends_to_breakthrough_config_responses
     create_observation_dataframes(
         observations=ert_config.observation_declarations,
         rft_config=None,
+        shape_registry=ert_config.shape_registry,
     )
     breakthrough_config = ert_config.ensemble_config.derived_response_configs[
         "breakthrough"
@@ -1968,6 +1994,7 @@ def test_that_breakthrough_responses_are_derived_from_summary():
     create_observation_dataframes(
         observations=ert_config.observation_declarations,
         rft_config=None,
+        shape_registry=ert_config.shape_registry,
     )
 
     ensemble_mock = MagicMock()
@@ -2006,6 +2033,7 @@ def test_that_unreachable_breakthrough_thresholds_has_none_response():
     create_observation_dataframes(
         observations=ert_config.observation_declarations,
         rft_config=None,
+        shape_registry=ert_config.shape_registry,
     )
 
     ensemble_mock = MagicMock()
@@ -2050,6 +2078,7 @@ def test_that_combined_reachable_and_unreachable_breakthrough_thresholds_are_tur
     create_observation_dataframes(
         observations=ert_config.observation_declarations,
         rft_config=None,
+        shape_registry=ert_config.shape_registry,
     )
 
     ensemble_mock = MagicMock()

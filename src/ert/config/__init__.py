@@ -1,4 +1,5 @@
 from ._observations import Observation
+from ._shapes import CircleShapeConfig, ShapeConfig, ShapeRegistry
 from .analysis_config import (
     AnalysisConfig,
     ObservationGroups,
@@ -83,6 +84,7 @@ __all__ = [
     "AnalysisModule",
     "BaseErtScriptWorkflow",
     "BreakthroughConfig",
+    "CircleShapeConfig",
     "ConfigValidationError",
     "ConfigWarning",
     "DataSource",
@@ -140,6 +142,8 @@ __all__ = [
     "RFTConfig",
     "ResponseConfig",
     "SamplerConfig",
+    "ShapeConfig",
+    "ShapeRegistry",
     "SiteInstalledForwardModelStep",
     "SiteOrUserForwardModelStep",
     "SummaryConfig",

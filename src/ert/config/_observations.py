@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 
 from ert.validation import rangestring_to_list
 
+from ._shapes import CircleShapeConfig, ShapeConfig, ShapeRegistry
 from .parsing import (
     ConfigWarning,
     ErrorInfo,
@@ -40,9 +41,7 @@ class _SummaryValues(BaseModel):
     error: float
     key: str  #: The :term:`summary key` in the summary response
     date: str
-    east: float | None = None
-    north: float | None = None
-    radius: float | None = None
+    shape_id: int | None = None
 
 
 def _parse_date(date_str: str) -> datetime:
@@ -68,7 +67,10 @@ def _parse_date(date_str: str) -> datetime:
 class SummaryObservation(_SummaryValues):
     @classmethod
     def from_obs_dict(
-        cls, directory: str, observation_dict: ObservationDict
+        cls,
+        directory: str,
+        observation_dict: ObservationDict,
+        shape_registry: ShapeRegistry,
     ) -> list[Self]:
         error_mode = ErrorModes.ABS
         summary_key = None
@@ -144,14 +146,24 @@ class SummaryObservation(_SummaryValues):
             case default:
                 assert_never(default)
 
+        # Register geometry if localization is present
+        shape_id = None
+        if east is not None and north is not None:
+            radius = radius if radius is not None else DEFAULT_LOCALIZATION_RADIUS
+            shape_id = shape_registry.register(
+                CircleShapeConfig(
+                    east=east,
+                    north=north,
+                    radius=radius,
+                )
+            )
+
         obs_instance = cls(
             name=observation_dict["name"],
             error=error,
             key=summary_key,
             value=value,
-            east=east,
-            north=north,
-            radius=radius,
+            shape_id=shape_id,
             date=standardized_date,
         )
         # Bypass pydantic discarding context
@@ -160,6 +172,11 @@ class SummaryObservation(_SummaryValues):
         obs_instance.name = observation_dict["name"]
 
         return [obs_instance]
+
+    def shape(self, shape_registry: ShapeRegistry) -> ShapeConfig | None:
+        if self.shape_id is not None:
+            return shape_registry.get(self.shape_id)
+        return None
 
 
 class _GeneralObservation(BaseModel):
@@ -170,15 +187,16 @@ class _GeneralObservation(BaseModel):
     error: float
     restart: int
     index: int
-    east: float | None = None
-    north: float | None = None
-    radius: float | None = None
+    shape_id: int | None = None
 
 
 class GeneralObservation(_GeneralObservation):
     @classmethod
     def from_obs_dict(
-        cls, directory: str, observation_dict: ObservationDict
+        cls,
+        directory: str,
+        observation_dict: ObservationDict,
+        shape_registry: ShapeRegistry,
     ) -> list[Self]:
         try:
             data = observation_dict["DATA"]
@@ -265,6 +283,7 @@ class GeneralObservation(_GeneralObservation):
                 ),
                 restart=restart,
                 index=0,
+                shape_id=None,
             )
             # Bypass pydantic discarding context
             # only relevant for ERT config surfacing validation errors
@@ -324,6 +343,7 @@ class GeneralObservation(_GeneralObservation):
                 error=float(std),
                 restart=restart,
                 index=int(idx),
+                shape_id=None,
             )
             # Bypass pydantic discarding context
             # only relevant for ERT config surfacing validation errors
@@ -331,6 +351,10 @@ class GeneralObservation(_GeneralObservation):
             inst.name = observation_dict["name"]
             obs_instances.append(inst)
         return obs_instances
+
+    def shape(self, shape_registry: ShapeRegistry) -> ShapeConfig | None:
+        # General observations do not support localization
+        return None
 
 
 class RFTObservation(BaseModel):
@@ -347,11 +371,11 @@ class RFTObservation(BaseModel):
     property: str
     value: float
     error: float
-    north: float
     east: float
+    north: float
     tvd: float
     md: float | None = None
-    radius: float | None
+    shape_id: int | None = None
     zone: str | None = None
 
     @classmethod
@@ -360,6 +384,7 @@ class RFTObservation(BaseModel):
         directory: str,
         observation_dict: ObservationDict,
         filename: str,
+        shape_registry: ShapeRegistry,
         observed_property: str = "PRESSURE",
         radius: float | None = None,
     ) -> list[Self]:
@@ -418,6 +443,18 @@ class RFTObservation(BaseModel):
         rft_observations = []
         invalid_observations = []
         for row in csv_file.itertuples(index=True):
+            east_val = validate_float(str(row.EAST), "EAST")
+            north_val = validate_float(str(row.NORTH), "NORTH")
+            radius = radius if radius is not None else DEFAULT_LOCALIZATION_RADIUS
+
+            shape_id = shape_registry.register(
+                CircleShapeConfig(
+                    east=east_val,
+                    north=north_val,
+                    radius=radius,
+                )
+            )
+
             rft_observation = cls(
                 name=f"{observation_dict['name']}[{row.Index}]",
                 well=str(row.WELL_NAME),
@@ -427,12 +464,16 @@ class RFTObservation(BaseModel):
                     str(getattr(row, observed_property)), observed_property
                 ),
                 error=validate_float(str(row.ERROR), "ERROR"),
-                north=validate_float(str(row.NORTH), "NORTH"),
-                east=validate_float(str(row.EAST), "EAST"),
-                radius=radius if radius is not None else DEFAULT_LOCALIZATION_RADIUS,
+                east=east_val,
+                north=north_val,
+                shape_id=shape_id,
                 tvd=validate_float(str(row.TVD), "TVD"),
                 md=validate_float(str(row.MD), "MD") if "MD" in csv_file else None,
-                zone=row.ZONE if "ZONE" in csv_file else None,
+                zone=(
+                    str(row.ZONE)
+                    if "ZONE" in csv_file and row.ZONE is not None
+                    else None
+                ),
             )
             # A value of -1 and error of 0 is used by fmu.tools.rms create_rft_ertobs to
             # indicate missing data. If encountered in an rft observations csv file
@@ -461,7 +502,10 @@ class RFTObservation(BaseModel):
 
     @classmethod
     def from_obs_dict(
-        cls, directory: str, observation_dict: ObservationDict
+        cls,
+        directory: str,
+        observation_dict: ObservationDict,
+        shape_registry: ShapeRegistry,
     ) -> list[Self]:
         """Create RFT observations from an observation dictionary.
 
@@ -473,6 +517,7 @@ class RFTObservation(BaseModel):
         Args:
             directory: Base directory for resolving relative file paths.
             observation_dict: Dictionary containing the observation configuration.
+            shape_registry: ShapeRegistry for storing geometry.
 
         Returns:
             List of RFTObservation instances. Returns multiple observations when
@@ -522,6 +567,9 @@ class RFTObservation(BaseModel):
                 case "LOCALIZATION":
                     validate_rft_localization(value, observation_dict["name"])
                     east, north, radius = extract_localization_values(value)
+                    radius = (
+                        radius if radius is not None else DEFAULT_LOCALIZATION_RADIUS
+                    )
                 case _:
                     raise _unknown_key_error(str(key), observation_dict["name"])
         if csv_filename is not None:
@@ -529,6 +577,7 @@ class RFTObservation(BaseModel):
                 directory,
                 observation_dict,
                 csv_filename,
+                shape_registry,
                 observed_property or "PRESSURE",
                 radius=radius,
             )
@@ -548,6 +597,16 @@ class RFTObservation(BaseModel):
             raise _missing_value_error(observation_dict["name"], "EAST")
         if tvd is None:
             raise _missing_value_error(observation_dict["name"], "TVD")
+
+        radius = radius if radius is not None else DEFAULT_LOCALIZATION_RADIUS
+        shape_id = shape_registry.register(
+            CircleShapeConfig(
+                east=east,
+                north=north,
+                radius=radius,
+            )
+        )
+
         obs_instance = cls(
             name=observation_dict["name"],
             well=well,
@@ -560,7 +619,7 @@ class RFTObservation(BaseModel):
             tvd=tvd,
             md=md,
             zone=zone,
-            radius=radius if radius is not None else DEFAULT_LOCALIZATION_RADIUS,
+            shape_id=shape_id,
         )
 
         # Bypass pydantic discarding context
@@ -570,6 +629,11 @@ class RFTObservation(BaseModel):
 
         return [obs_instance]
 
+    def shape(self, shape_registry: ShapeRegistry) -> ShapeConfig | None:
+        if self.shape_id is not None:
+            return shape_registry.get(self.shape_id)
+        return None
+
 
 class BreakthroughObservation(BaseModel):
     type: Literal["breakthrough"] = "breakthrough"
@@ -578,12 +642,15 @@ class BreakthroughObservation(BaseModel):
     date: datetime
     error: float
     threshold: float
-    north: float | None
-    east: float | None
-    radius: float | None
+    shape_id: int | None = None
 
     @classmethod
-    def from_obs_dict(cls, directory: str, obs_dict: ObservationDict) -> list[Self]:
+    def from_obs_dict(
+        cls,
+        directory: str,
+        obs_dict: ObservationDict,
+        shape_registry: ShapeRegistry,
+    ) -> list[Self]:
         summary_key = None
         date = None
         error = None
@@ -618,6 +685,18 @@ class BreakthroughObservation(BaseModel):
         if threshold is None:
             raise _missing_value_error(obs_dict["name"], "THRESHOLD")
 
+        # Register shape if localization is present
+        shape_id = None
+        if east is not None and north is not None:
+            radius = radius if radius is not None else DEFAULT_LOCALIZATION_RADIUS
+            shape_id = shape_registry.register(
+                CircleShapeConfig(
+                    east=east,
+                    north=north,
+                    radius=radius,
+                )
+            )
+
         return [
             cls(
                 name=obs_dict["name"],
@@ -625,11 +704,14 @@ class BreakthroughObservation(BaseModel):
                 date=date,
                 error=error,
                 threshold=threshold,
-                north=north,
-                east=east,
-                radius=radius,
+                shape_id=shape_id,
             )
         ]
+
+    def shape(self, shape_registry: ShapeRegistry) -> ShapeConfig | None:
+        if self.shape_id is not None:
+            return shape_registry.get(self.shape_id)
+        return None
 
 
 Observation = Annotated[
@@ -653,14 +735,18 @@ LOCALIZATION_KEYS = Literal["east", "north", "radius"]
 
 
 def make_observations(
-    directory: str, observation_dicts: Sequence[ObservationDict]
+    directory: str,
+    observation_dicts: Sequence[ObservationDict],
+    shape_registry: ShapeRegistry,
 ) -> list[Observation]:
     """Takes observation dicts and returns validated observations.
 
     Param:
         directory: The name of the directory the observation config is located in.
             Used to disambiguate relative paths.
-        inp: The collection of statements to validate.
+        observation_dicts: The collection of observation dictionaries to validate.
+        shape_registry: ShapeRegistry for storing localization geometries.
+
     """
     result: list[Observation] = []
     error_list: list[ErrorInfo | ObservationConfigError] = []
@@ -677,7 +763,9 @@ def make_observations(
             continue
         try:
             result.extend(
-                _TYPE_TO_CLASS[obs_dict["type"]].from_obs_dict(directory, obs_dict)
+                _TYPE_TO_CLASS[obs_dict["type"]].from_obs_dict(
+                    directory, obs_dict, shape_registry=shape_registry
+                )
             )
         except KeyError as err:
             raise _unknown_observation_type_error(obs_dict) from err

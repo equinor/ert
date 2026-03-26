@@ -14,6 +14,7 @@ from hypothesis import strategies as st
 
 from ert.base_model_context import use_runtime_plugins
 from ert.config import (
+    CircleShapeConfig,
     ConfigWarning,
     ErtConfig,
     ErtScriptWorkflow,
@@ -27,6 +28,7 @@ from ert.config import (
     ModelConfig,
     ObservationSettings,
     OutlierSettings,
+    ShapeRegistry,
     SummaryConfig,
     SurfaceConfig,
     UserInstalledForwardModelStep,
@@ -296,6 +298,25 @@ def runmodel_args(draw, tmp_path_factory):
         st.dictionaries(realistic_text(), realistic_text(), max_size=5)
     )
 
+    shape_registry = ShapeRegistry()
+    num_shapes = draw(st.integers(min_value=1, max_value=5))
+    _ = [
+        shape_registry.register(
+            CircleShapeConfig(
+                east=draw(
+                    st.floats(min_value=1, allow_nan=False, allow_infinity=False)
+                ),
+                north=draw(
+                    st.floats(min_value=1, allow_nan=False, allow_infinity=False)
+                ),
+                radius=draw(
+                    st.floats(min_value=1, allow_nan=False, allow_infinity=False)
+                ),
+            )
+        )
+        for _ in range(num_shapes)
+    ]
+
     runtime_plugins = ErtRuntimePlugins(
         installed_forward_model_steps={},
         installed_workflow_jobs=installed_ertscripts,
@@ -322,6 +343,7 @@ def runmodel_args(draw, tmp_path_factory):
         "forward_model_steps": forward_model_step_list,
         "substitutions": substitutions,
         "hooked_workflows": hooked_workflows_dict,
+        "shape_registry": shape_registry,
     }, runtime_plugins
 
 

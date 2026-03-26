@@ -26,6 +26,9 @@
     "stop_long_running": false,
     "max_runtime": null
   },
+  "shape_registry": {
+    "shapes": {}
+  },
   "forward_model_steps": [
     {
       "name": "poly_eval",
@@ -243,9 +246,7 @@
       "error": 0.6,
       "restart": 0,
       "index": 0,
-      "east": null,
-      "north": null,
-      "radius": null
+      "shape_id": null
     },
     {
       "type": "general_observation",
@@ -255,9 +256,7 @@
       "error": 1.4,
       "restart": 0,
       "index": 2,
-      "east": null,
-      "north": null,
-      "radius": null
+      "shape_id": null
     },
     {
       "type": "general_observation",
@@ -267,9 +266,7 @@
       "error": 3.0,
       "restart": 0,
       "index": 4,
-      "east": null,
-      "north": null,
-      "radius": null
+      "shape_id": null
     },
     {
       "type": "general_observation",
@@ -279,9 +276,7 @@
       "error": 5.4,
       "restart": 0,
       "index": 6,
-      "east": null,
-      "north": null,
-      "radius": null
+      "shape_id": null
     },
     {
       "type": "general_observation",
@@ -291,9 +286,7 @@
       "error": 8.6,
       "restart": 0,
       "index": 8,
-      "east": null,
-      "north": null,
-      "radius": null
+      "shape_id": null
     }
   ],
   "target_ensemble": "the_experiment",

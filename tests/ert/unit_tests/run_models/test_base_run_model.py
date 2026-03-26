@@ -11,12 +11,7 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import pytest
 from pydantic import ConfigDict
 
-from ert.config import (
-    ErtConfig,
-    ModelConfig,
-    QueueConfig,
-    QueueSystem,
-)
+from ert.config import ErtConfig, ModelConfig, QueueConfig, QueueSystem, ShapeRegistry
 from ert.config.queue_config import LsfQueueOptions
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig, StartEvent
 from ert.ensemble_evaluator.evaluator import ParallelismViolation
@@ -53,6 +48,7 @@ def create_run_model(**kwargs):
         "active_realizations": MagicMock(spec=list),
         "random_seed": 123,
         "log_path": Path(""),
+        "shape_registry": ShapeRegistry(),
     }
 
     class RunModelWithMockSupport(RunModel):
