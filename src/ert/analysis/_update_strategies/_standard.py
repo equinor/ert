@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
+from datetime import timedelta
 from typing import TYPE_CHECKING
 
+import humanize
 import iterative_ensemble_smoother as ies
 import numpy as np
 import scipy
@@ -155,7 +157,7 @@ class StandardESUpdate:
         self._progress_callback(
             AnalysisStatusEvent(
                 msg=f"Updated {param_config.name} ({param_config.type.upper()}) "
-                f"in {elapsed:.2f}s",
+                f"in {humanize.precisedelta(timedelta(seconds=elapsed))}",
                 detail=True,
             )
         )
