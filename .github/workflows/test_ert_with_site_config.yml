@@ -1,5 +1,8 @@
 name: Run ERT tests against dummy site config
 
+permissions:
+  contents: read
+
 on:
  push:
    branches:
