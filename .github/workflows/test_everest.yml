@@ -91,7 +91,7 @@ jobs:
     - name: Upload coverage to Codecov
       if: inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc' && inputs.test-type != 'everviz-test'
       id: codecov1
-      uses: codecov/codecov-action@1af58845a975a7985b0beb0cbe6fbbb71a41dbad # v5.5.3
+      uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
       continue-on-error: true
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
@@ -103,7 +103,7 @@ jobs:
       run: |
         sleep 30
     - name: Codecov retry
-      uses: codecov/codecov-action@1af58845a975a7985b0beb0cbe6fbbb71a41dbad # v5.5.3
+      uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
       if: steps.codecov1.outcome == 'failure' && inputs.test-type != 'everest-docs-entry-test' && inputs.test-type != 'doc' && inputs.test-type != 'everviz-test'
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
