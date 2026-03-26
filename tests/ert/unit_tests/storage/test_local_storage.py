@@ -1190,9 +1190,6 @@ def test_that_breakthrough_observations_and_responses_are_joined_in_endpoint(tmp
                         date=time,
                         error=10,
                         threshold=0.2,
-                        north=None,
-                        east=None,
-                        radius=None,
                     )
                 ],
             }
