@@ -26,6 +26,9 @@
     "stop_long_running": false,
     "max_runtime": null
   },
+  "shape_registry": {
+    "shapes": {}
+  },
   "forward_model_steps": [
     {
       "name": "poly_eval",

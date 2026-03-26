@@ -221,6 +221,7 @@ class StorageWidget(QWidget):
                             ],
                             "ert_templates": self._ert_config.ert_templates,
                             "experiment_type": ExperimentType.MANUAL,
+                            "shape_registry": self._ert_config.shape_registry,
                         },
                         name=create_experiment_dialog.experiment_name,
                     ).create_ensemble(

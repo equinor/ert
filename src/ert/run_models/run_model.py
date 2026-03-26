@@ -48,6 +48,7 @@ from ert.config import (
     PostSimulationFixtures,
     PreSimulationFixtures,
     QueueConfig,
+    ShapeRegistry,
     SiteOrUserForwardModelStep,
     UserInstalledForwardModelStep,
     Workflow,
@@ -175,6 +176,7 @@ class RunModelConfig(BaseModelWithContextSupport):
     env_pr_fm_step: dict[str, dict[str, Any]]
     runpath_config: ModelConfig
     queue_config: QueueConfig
+    shape_registry: ShapeRegistry
     forward_model_steps: list[SiteOrUserForwardModelStep]
     substitutions: dict[str, str]
     hooked_workflows: defaultdict[HookRuntime, list[Workflow]]

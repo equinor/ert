@@ -2829,6 +2829,7 @@ def test_that_breakthrough_observations_can_be_internalized_in_ert_config():
     breakthrough_observations = create_observation_dataframes(
         config.observation_declarations,
         None,
+        config.shape_registry,
     )["breakthrough"]
     assert breakthrough_observations["observation_key"].to_list() == ["BRT_OBS"]
     assert breakthrough_observations["response_key"].to_list() == [

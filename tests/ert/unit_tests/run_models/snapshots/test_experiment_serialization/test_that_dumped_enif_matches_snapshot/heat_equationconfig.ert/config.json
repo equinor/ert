@@ -30,6 +30,52 @@
     "stop_long_running": false,
     "max_runtime": null
   },
+  "shape_registry": {
+    "shapes": {
+      "0": {
+        "shape_id": 0,
+        "type": "circle",
+        "east": 5.5,
+        "north": 3.5,
+        "radius": 15.0
+      },
+      "1": {
+        "shape_id": 1,
+        "type": "circle",
+        "east": 3.5,
+        "north": 5.5,
+        "radius": 15.0
+      },
+      "2": {
+        "shape_id": 2,
+        "type": "circle",
+        "east": 5.5,
+        "north": 7.5,
+        "radius": 15.0
+      },
+      "3": {
+        "shape_id": 3,
+        "type": "circle",
+        "east": 7.5,
+        "north": 5.5,
+        "radius": 15.0
+      },
+      "4": {
+        "shape_id": 4,
+        "type": "circle",
+        "east": 2.5,
+        "north": 2.5,
+        "radius": 15.0
+      },
+      "5": {
+        "shape_id": 5,
+        "type": "circle",
+        "east": 7.5,
+        "north": 2.5,
+        "radius": 15.0
+      }
+    }
+  },
   "forward_model_steps": [
     {
       "name": "heat_equation",
@@ -285,9 +331,7 @@
       "error": 0.16482328267562937,
       "key": "HEAT_5_3",
       "date": "2010-01-11T00:00:00",
-      "east": 5.5,
-      "north": 3.5,
-      "radius": 15.0
+      "shape_id": 0
     },
     {
       "type": "summary_observation",
@@ -296,9 +340,7 @@
       "error": 0.02019488439360088,
       "key": "HEAT_3_5",
       "date": "2010-01-11T00:00:00",
-      "east": 3.5,
-      "north": 5.5,
-      "radius": 15.0
+      "shape_id": 1
     },
     {
       "type": "summary_observation",
@@ -307,9 +349,7 @@
       "error": 0.7711986689522445,
       "key": "HEAT_5_7",
       "date": "2010-01-11T00:00:00",
-      "east": 5.5,
-      "north": 7.5,
-      "radius": 15.0
+      "shape_id": 2
     },
     {
       "type": "summary_observation",
@@ -318,9 +358,7 @@
       "error": 1.1721378322073848,
       "key": "HEAT_7_5",
       "date": "2010-01-11T00:00:00",
-      "east": 7.5,
-      "north": 5.5,
-      "radius": 15.0
+      "shape_id": 3
     },
     {
       "type": "summary_observation",
@@ -329,9 +367,7 @@
       "error": 3.079730973727218e-7,
       "key": "HEAT_2_2",
       "date": "2010-01-11T00:00:00",
-      "east": 2.5,
-      "north": 2.5,
-      "radius": 15.0
+      "shape_id": 4
     },
     {
       "type": "summary_observation",
@@ -340,9 +376,7 @@
       "error": 0.08703349479928242,
       "key": "HEAT_7_2",
       "date": "2010-01-11T00:00:00",
-      "east": 7.5,
-      "north": 2.5,
-      "radius": 15.0
+      "shape_id": 5
     },
     {
       "type": "summary_observation",
@@ -351,9 +385,7 @@
       "error": 0.2356693348137558,
       "key": "HEAT_5_3",
       "date": "2010-03-13T00:00:00",
-      "east": 5.5,
-      "north": 3.5,
-      "radius": 15.0
+      "shape_id": 0
     },
     {
       "type": "summary_observation",
@@ -362,9 +394,7 @@
       "error": 0.16236736528249898,
       "key": "HEAT_3_5",
       "date": "2010-03-13T00:00:00",
-      "east": 3.5,
-      "north": 5.5,
-      "radius": 15.0
+      "shape_id": 1
     },
     {
       "type": "summary_observation",
@@ -373,9 +403,7 @@
       "error": 0.3651414263739366,
       "key": "HEAT_5_7",
       "date": "2010-03-13T00:00:00",
-      "east": 5.5,
-      "north": 7.5,
-      "radius": 15.0
+      "shape_id": 2
     },
     {
       "type": "summary_observation",
@@ -384,9 +412,7 @@
       "error": 0.241688861656198,
       "key": "HEAT_7_5",
       "date": "2010-03-13T00:00:00",
-      "east": 7.5,
-      "north": 5.5,
-      "radius": 15.0
+      "shape_id": 3
     },
     {
       "type": "summary_observation",
@@ -395,9 +421,7 @@
       "error": 0.006459468053108617,
       "key": "HEAT_2_2",
       "date": "2010-03-13T00:00:00",
-      "east": 2.5,
-      "north": 2.5,
-      "radius": 15.0
+      "shape_id": 4
     },
     {
       "type": "summary_observation",
@@ -406,9 +430,7 @@
       "error": 0.09825818825456456,
       "key": "HEAT_7_2",
       "date": "2010-03-13T00:00:00",
-      "east": 7.5,
-      "north": 2.5,
-      "radius": 15.0
+      "shape_id": 5
     },
     {
       "type": "summary_observation",
@@ -417,9 +439,7 @@
       "error": 0.13250138129273847,
       "key": "HEAT_5_3",
       "date": "2010-05-13T00:00:00",
-      "east": 5.5,
-      "north": 3.5,
-      "radius": 15.0
+      "shape_id": 0
     },
     {
       "type": "summary_observation",
@@ -428,9 +448,7 @@
       "error": 0.15681634616330167,
       "key": "HEAT_3_5",
       "date": "2010-05-13T00:00:00",
-      "east": 3.5,
-      "north": 5.5,
-      "radius": 15.0
+      "shape_id": 1
     },
     {
       "type": "summary_observation",
@@ -439,9 +457,7 @@
       "error": 0.16395530223185706,
       "key": "HEAT_5_7",
       "date": "2010-05-13T00:00:00",
-      "east": 5.5,
-      "north": 7.5,
-      "radius": 15.0
+      "shape_id": 2
     },
     {
       "type": "summary_observation",
@@ -450,9 +466,7 @@
       "error": 0.09892536429471738,
       "key": "HEAT_7_5",
       "date": "2010-05-13T00:00:00",
-      "east": 7.5,
-      "north": 5.5,
-      "radius": 15.0
+      "shape_id": 3
     },
     {
       "type": "summary_observation",
@@ -461,9 +475,7 @@
       "error": 0.022178937646389424,
       "key": "HEAT_2_2",
       "date": "2010-05-13T00:00:00",
-      "east": 2.5,
-      "north": 2.5,
-      "radius": 15.0
+      "shape_id": 4
     },
     {
       "type": "summary_observation",
@@ -472,9 +484,7 @@
       "error": 0.04802326866273813,
       "key": "HEAT_7_2",
       "date": "2010-05-13T00:00:00",
-      "east": 7.5,
-      "north": 2.5,
-      "radius": 15.0
+      "shape_id": 5
     },
     {
       "type": "summary_observation",
@@ -483,9 +493,7 @@
       "error": 0.0852887062955658,
       "key": "HEAT_5_3",
       "date": "2010-07-13T00:00:00",
-      "east": 5.5,
-      "north": 3.5,
-      "radius": 15.0
+      "shape_id": 0
     },
     {
       "type": "summary_observation",
@@ -494,9 +502,7 @@
       "error": 0.12647358189561586,
       "key": "HEAT_3_5",
       "date": "2010-07-13T00:00:00",
-      "east": 3.5,
-      "north": 5.5,
-      "radius": 15.0
+      "shape_id": 1
     },
     {
       "type": "summary_observation",
@@ -505,9 +511,7 @@
       "error": 0.09129362898615401,
       "key": "HEAT_5_7",
       "date": "2010-07-13T00:00:00",
-      "east": 5.5,
-      "north": 7.5,
-      "radius": 15.0
+      "shape_id": 2
     },
     {
       "type": "summary_observation",
@@ -516,9 +520,7 @@
       "error": 0.05481999368163665,
       "key": "HEAT_7_5",
       "date": "2010-07-13T00:00:00",
-      "east": 7.5,
-      "north": 5.5,
-      "radius": 15.0
+      "shape_id": 3
     },
     {
       "type": "summary_observation",
@@ -527,9 +529,7 @@
       "error": 0.03025694175733248,
       "key": "HEAT_2_2",
       "date": "2010-07-13T00:00:00",
-      "east": 2.5,
-      "north": 2.5,
-      "radius": 15.0
+      "shape_id": 4
     },
     {
       "type": "summary_observation",
@@ -538,9 +538,7 @@
       "error": 0.029074626753866163,
       "key": "HEAT_7_2",
       "date": "2010-07-13T00:00:00",
-      "east": 7.5,
-      "north": 2.5,
-      "radius": 15.0
+      "shape_id": 5
     },
     {
       "type": "summary_observation",
@@ -549,9 +547,7 @@
       "error": 0.059704412976213254,
       "key": "HEAT_5_3",
       "date": "2010-09-13T00:00:00",
-      "east": 5.5,
-      "north": 3.5,
-      "radius": 15.0
+      "shape_id": 0
     },
     {
       "type": "summary_observation",
@@ -560,9 +556,7 @@
       "error": 0.09864794502197914,
       "key": "HEAT_3_5",
       "date": "2010-09-13T00:00:00",
-      "east": 3.5,
-      "north": 5.5,
-      "radius": 15.0
+      "shape_id": 1
     },
     {
       "type": "summary_observation",
@@ -571,9 +565,7 @@
       "error": 0.0578912754007102,
       "key": "HEAT_5_7",
       "date": "2010-09-13T00:00:00",
-      "east": 5.5,
-      "north": 7.5,
-      "radius": 15.0
+      "shape_id": 2
     },
     {
       "type": "summary_observation",
@@ -582,9 +574,7 @@
       "error": 0.03513379960968278,
       "key": "HEAT_7_5",
       "date": "2010-09-13T00:00:00",
-      "east": 7.5,
-      "north": 5.5,
-      "radius": 15.0
+      "shape_id": 3
     },
     {
       "type": "summary_observation",
@@ -593,9 +583,7 @@
       "error": 0.030970706785202192,
       "key": "HEAT_2_2",
       "date": "2010-09-13T00:00:00",
-      "east": 2.5,
-      "north": 2.5,
-      "radius": 15.0
+      "shape_id": 4
     },
     {
       "type": "summary_observation",
@@ -604,9 +592,7 @@
       "error": 0.019673050794904112,
       "key": "HEAT_7_2",
       "date": "2010-09-13T00:00:00",
-      "east": 7.5,
-      "north": 2.5,
-      "radius": 15.0
+      "shape_id": 5
     },
     {
       "type": "summary_observation",
@@ -615,9 +601,7 @@
       "error": 0.04439419910993733,
       "key": "HEAT_5_3",
       "date": "2010-11-13T00:00:00",
-      "east": 5.5,
-      "north": 3.5,
-      "radius": 15.0
+      "shape_id": 0
     },
     {
       "type": "summary_observation",
@@ -626,9 +610,7 @@
       "error": 0.07717531220547702,
       "key": "HEAT_3_5",
       "date": "2010-11-13T00:00:00",
-      "east": 3.5,
-      "north": 5.5,
-      "radius": 15.0
+      "shape_id": 1
     },
     {
       "type": "summary_observation",
@@ -637,9 +619,7 @@
       "error": 0.04024385452889148,
       "key": "HEAT_5_7",
       "date": "2010-11-13T00:00:00",
-      "east": 5.5,
-      "north": 7.5,
-      "radius": 15.0
+      "shape_id": 2
     },
     {
       "type": "summary_observation",
@@ -648,9 +628,7 @@
       "error": 0.02474437100142805,
       "key": "HEAT_7_5",
       "date": "2010-11-13T00:00:00",
-      "east": 7.5,
-      "north": 5.5,
-      "radius": 15.0
+      "shape_id": 3
     },
     {
       "type": "summary_observation",
@@ -659,9 +637,7 @@
       "error": 0.028125076404487734,
       "key": "HEAT_2_2",
       "date": "2010-11-13T00:00:00",
-      "east": 2.5,
-      "north": 2.5,
-      "radius": 15.0
+      "shape_id": 4
     },
     {
       "type": "summary_observation",
@@ -670,9 +646,7 @@
       "error": 0.014347799635254097,
       "key": "HEAT_7_2",
       "date": "2010-11-13T00:00:00",
-      "east": 7.5,
-      "north": 2.5,
-      "radius": 15.0
+      "shape_id": 5
     },
     {
       "type": "summary_observation",
@@ -681,9 +655,7 @@
       "error": 0.034056140511841845,
       "key": "HEAT_5_3",
       "date": "2011-01-13T00:00:00",
-      "east": 5.5,
-      "north": 3.5,
-      "radius": 15.0
+      "shape_id": 0
     },
     {
       "type": "summary_observation",
@@ -692,9 +664,7 @@
       "error": 0.06058558661201531,
       "key": "HEAT_3_5",
       "date": "2011-01-13T00:00:00",
-      "east": 3.5,
-      "north": 5.5,
-      "radius": 15.0
+      "shape_id": 1
     },
     {
       "type": "summary_observation",
@@ -703,9 +673,7 @@
       "error": 0.029445994399171317,
       "key": "HEAT_5_7",
       "date": "2011-01-13T00:00:00",
-      "east": 5.5,
-      "north": 7.5,
-      "radius": 15.0
+      "shape_id": 2
     },
     {
       "type": "summary_observation",
@@ -714,9 +682,7 @@
       "error": 0.018328942601053527,
       "key": "HEAT_7_5",
       "date": "2011-01-13T00:00:00",
-      "east": 7.5,
-      "north": 5.5,
-      "radius": 15.0
+      "shape_id": 3
     },
     {
       "type": "summary_observation",
@@ -725,9 +691,7 @@
       "error": 0.024116728326928134,
       "key": "HEAT_2_2",
       "date": "2011-01-13T00:00:00",
-      "east": 2.5,
-      "north": 2.5,
-      "radius": 15.0
+      "shape_id": 4
     },
     {
       "type": "summary_observation",
@@ -736,9 +700,7 @@
       "error": 0.010882878724937851,
       "key": "HEAT_7_2",
       "date": "2011-01-13T00:00:00",
-      "east": 7.5,
-      "north": 2.5,
-      "radius": 15.0
+      "shape_id": 5
     },
     {
       "type": "summary_observation",
@@ -747,9 +709,7 @@
       "error": 0.026578037415319125,
       "key": "HEAT_5_3",
       "date": "2011-03-15T00:00:00",
-      "east": 5.5,
-      "north": 3.5,
-      "radius": 15.0
+      "shape_id": 0
     },
     {
       "type": "summary_observation",
@@ -758,9 +718,7 @@
       "error": 0.04770972792113973,
       "key": "HEAT_3_5",
       "date": "2011-03-15T00:00:00",
-      "east": 3.5,
-      "north": 5.5,
-      "radius": 15.0
+      "shape_id": 1
     },
     {
       "type": "summary_observation",
@@ -769,9 +727,7 @@
       "error": 0.02222651207493663,
       "key": "HEAT_5_7",
       "date": "2011-03-15T00:00:00",
-      "east": 5.5,
-      "north": 7.5,
-      "radius": 15.0
+      "shape_id": 2
     },
     {
       "type": "summary_observation",
@@ -780,9 +736,7 @@
       "error": 0.013980361433931335,
       "key": "HEAT_7_5",
       "date": "2011-03-15T00:00:00",
-      "east": 7.5,
-      "north": 5.5,
-      "radius": 15.0
+      "shape_id": 3
     },
     {
       "type": "summary_observation",
@@ -791,9 +745,7 @@
       "error": 0.02005330502035694,
       "key": "HEAT_2_2",
       "date": "2011-03-15T00:00:00",
-      "east": 2.5,
-      "north": 2.5,
-      "radius": 15.0
+      "shape_id": 4
     },
     {
       "type": "summary_observation",
@@ -802,9 +754,7 @@
       "error": 0.008437608752033662,
       "key": "HEAT_7_2",
       "date": "2011-03-15T00:00:00",
-      "east": 7.5,
-      "north": 2.5,
-      "radius": 15.0
+      "shape_id": 5
     }
   ],
   "experiment_type": "Ensemble Information Filter"

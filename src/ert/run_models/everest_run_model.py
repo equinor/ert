@@ -37,6 +37,7 @@ from ert.config import (
     KnownQueueOptionsAdapter,
     QueueConfig,
     ResponseConfig,
+    ShapeRegistry,
     SummaryConfig,
     WorkflowJob,
 )
@@ -557,6 +558,8 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
             queue_config=queue_config,
             status_queue=status_queue,
             optimization_callback=optimization_callback,
+            shape_registry=ShapeRegistry(),  # this one is not expected to be used,
+            # but is needed for the observation localization
         )
 
     @property

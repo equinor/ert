@@ -8,23 +8,21 @@ from typing import assert_never
 import polars as pl
 
 from ._observations import (
-    DEFAULT_LOCALIZATION_RADIUS,
     BreakthroughObservation,
     GeneralObservation,
     Observation,
     RFTObservation,
     SummaryObservation,
 )
-from .parsing import (
-    ErrorInfo,
-    ObservationConfigError,
-)
+from ._shapes import CircleShapeConfig, ShapeRegistry
+from .parsing import ErrorInfo, ObservationConfigError
 from .rft_config import Point, RFTConfig, ZoneName
 
 
 def create_observation_dataframes(
     observations: Sequence[Observation],
     rft_config: RFTConfig | None,
+    shape_registry: ShapeRegistry | None = None,
 ) -> dict[str, pl.DataFrame]:
     if not observations:
         return {}
@@ -39,6 +37,7 @@ def create_observation_dataframes(
                         _handle_summary_observation(
                             obs,
                             obs.name,
+                            shape_registry,
                         )
                     )
                 case GeneralObservation():
@@ -54,11 +53,19 @@ def create_observation_dataframes(
                             "create_observation_dataframes requires "
                             "rft_config is not None when using RFTObservation"
                         )
-                    grouped["rft"].append(_handle_rft_observation(rft_config, obs))
+                    if shape_registry is None:
+                        raise TypeError(
+                            "create_observation_dataframes requires "
+                            "shape_registry is not None when using RFTObservation"
+                        )
+                    grouped["rft"].append(
+                        _handle_rft_observation(rft_config, obs, shape_registry)
+                    )
                 case BreakthroughObservation():
                     grouped["breakthrough"].append(
                         _handle_breakthrough_observation(
                             obs,
+                            shape_registry,
                         )
                     )
                 case default:
@@ -82,24 +89,24 @@ def create_observation_dataframes(
     return datasets
 
 
-def _has_localization(summary_dict: SummaryObservation) -> bool:
-    return summary_dict.east is not None and summary_dict.north is not None
-
-
 def _handle_summary_observation(
     summary_dict: SummaryObservation,
     obs_key: str,
+    shape_registry: ShapeRegistry | None = None,
 ) -> pl.DataFrame:
     summary_key = summary_dict.key
     value = summary_dict.value
     std_dev = summary_dict.error
     date = datetime.datetime.fromisoformat(summary_dict.date)
 
-    localization_radius = (
-        summary_dict.radius or DEFAULT_LOCALIZATION_RADIUS
-        if _has_localization(summary_dict)
-        else None
-    )
+    east = None
+    north = None
+    radius = None
+    shape = summary_dict.shape(shape_registry) if shape_registry is not None else None
+    if shape is not None and isinstance(shape, CircleShapeConfig):
+        east = shape.east
+        north = shape.north
+        radius = shape.radius
 
     return pl.DataFrame(
         {
@@ -108,9 +115,9 @@ def _handle_summary_observation(
             "time": pl.Series([date]).dt.cast_time_unit("ms"),
             "observations": pl.Series([value], dtype=pl.Float32),
             "std": pl.Series([std_dev], dtype=pl.Float32),
-            "east": pl.Series([summary_dict.east], dtype=pl.Float32),
-            "north": pl.Series([summary_dict.north], dtype=pl.Float32),
-            "radius": pl.Series([localization_radius], dtype=pl.Float32),
+            "east": pl.Series([east], dtype=pl.Float32),
+            "north": pl.Series([north], dtype=pl.Float32),
+            "radius": pl.Series([radius], dtype=pl.Float32),
         }
     )
 
@@ -122,6 +129,9 @@ def _handle_general_observation(
     response_key = general_observation.data
     restart = general_observation.restart
 
+    east = None
+    north = None
+    radius = None
     if general_observation.error <= 0:
         raise ObservationConfigError.with_context(
             "Observation uncertainty must be strictly > 0", obs_key
@@ -135,9 +145,9 @@ def _handle_general_observation(
             "index": pl.Series([general_observation.index], dtype=pl.UInt16),
             "observations": pl.Series([general_observation.value], dtype=pl.Float32),
             "std": pl.Series([general_observation.error], dtype=pl.Float32),
-            "east": pl.Series([general_observation.east], dtype=pl.Float32),
-            "north": pl.Series([general_observation.north], dtype=pl.Float32),
-            "radius": pl.Series([general_observation.radius], dtype=pl.Float32),
+            "east": pl.Series([east], dtype=pl.Float32),
+            "north": pl.Series([north], dtype=pl.Float32),
+            "radius": pl.Series([radius], dtype=pl.Float32),
         }
     )
 
@@ -145,9 +155,16 @@ def _handle_general_observation(
 def _handle_rft_observation(
     rft_config: RFTConfig,
     rft_observation: RFTObservation,
+    shape_registry: ShapeRegistry,
 ) -> pl.DataFrame:
     location = (rft_observation.east, rft_observation.north, rft_observation.tvd)
-    localization_radius = rft_observation.radius
+    localization_radius = None
+    shape = rft_observation.shape(shape_registry)
+    localization_radius = (
+        shape.radius
+        if shape is not None and isinstance(shape, CircleShapeConfig)
+        else None
+    )
 
     location_arg: Point | tuple[Point, ZoneName] = location
     if (zone := rft_observation.zone) is not None:
@@ -189,16 +206,23 @@ def _handle_rft_observation(
             "zone": pl.Series([rft_observation.zone], dtype=pl.String),
             "observations": pl.Series([rft_observation.value], dtype=pl.Float32),
             "std": pl.Series([rft_observation.error], dtype=pl.Float32),
-            "radius": pl.Series(
-                [localization_radius or DEFAULT_LOCALIZATION_RADIUS], dtype=pl.Float32
-            ),
+            "radius": pl.Series([localization_radius], dtype=pl.Float32),
         }
     )
 
 
 def _handle_breakthrough_observation(
     obs_config: BreakthroughObservation,
+    shape_registry: ShapeRegistry | None = None,
 ) -> pl.DataFrame:
+    east = None
+    north = None
+    radius = None
+    shape = obs_config.shape(shape_registry) if shape_registry is not None else None
+    if shape is not None and isinstance(shape, CircleShapeConfig):
+        east = shape.east
+        north = shape.north
+        radius = shape.radius
     return pl.DataFrame(
         {
             "observation_key": obs_config.name,
@@ -207,8 +231,8 @@ def _handle_breakthrough_observation(
             "observations": pl.Series([0], dtype=pl.Float32),
             "threshold": obs_config.threshold,
             "std": pl.Series([obs_config.error], dtype=pl.Float32),
-            "east": pl.Series([obs_config.east], dtype=pl.Float32),
-            "north": pl.Series([obs_config.north], dtype=pl.Float32),
-            "radius": pl.Series([obs_config.radius], dtype=pl.Float32),
+            "east": pl.Series([east], dtype=pl.Float32),
+            "north": pl.Series([north], dtype=pl.Float32),
+            "radius": pl.Series([radius], dtype=pl.Float32),
         }
     )

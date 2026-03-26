@@ -8,14 +8,13 @@ import pytest
 import resfo
 
 from ert.config import (
+    CircleShapeConfig,
     ErtConfig,
     InvalidResponseFile,
     RFTConfig,
+    ShapeRegistry,
 )
-from ert.config._create_observation_dataframes import (
-    DEFAULT_LOCALIZATION_RADIUS,
-    _handle_rft_observation,
-)
+from ert.config._create_observation_dataframes import _handle_rft_observation
 from ert.config._observations import RFTObservation
 from ert.config.parsing import ConfigValidationError, ObservationType
 from ert.warnings import PostExperimentWarning
@@ -515,30 +514,6 @@ def test_that_location_outside_of_the_grid_raises_invalid_response_file(
         )
 
 
-def test_that_handle_rft_observations_adds_defaulted_radius_column_to_dataframe():
-    rft_config = RFTConfig(
-        input_files=["BASE.RFT"],
-        data_to_read={"*": {"*": ["*"]}},
-        locations=[(1.0, 1.0, 1.0), (2.0, 2.0, 2.0)],
-    )
-    rft_observation = RFTObservation(
-        name="NAME[0]",
-        well="WELL1",
-        date="2013-03-31",
-        value=294.0,
-        error=10.0,
-        property="PRESSURE",
-        north=71.0,
-        east=30.0,
-        tvd=2000.0,
-        radius=None,
-    )
-    df = _handle_rft_observation(rft_config, rft_observation)
-    assert "radius" in df.columns
-    assert df["radius"].to_list() == [DEFAULT_LOCALIZATION_RADIUS]
-    assert df["radius"].dtype == pl.Float32
-
-
 def test_that_handle_rft_observations_prioritize_provided_radius_over_default():
     provided_radius = 2400
     rft_config = RFTConfig(
@@ -546,6 +521,14 @@ def test_that_handle_rft_observations_prioritize_provided_radius_over_default():
         data_to_read={"*": {"*": ["*"]}},
         locations=[(1.0, 1.0, 1.0), (2.0, 2.0, 2.0)],
     )
+    shape_registry = ShapeRegistry()
+    shape_id = shape_registry.register(
+        CircleShapeConfig(
+            east=30.0,
+            north=71.0,
+            radius=provided_radius,
+        )
+    )
     rft_observation = RFTObservation(
         name="NAME[0]",
         well="WELL1",
@@ -556,9 +539,9 @@ def test_that_handle_rft_observations_prioritize_provided_radius_over_default():
         north=71.0,
         east=30.0,
         tvd=2000.0,
-        radius=provided_radius,
+        shape_id=shape_id,
     )
-    df = _handle_rft_observation(rft_config, rft_observation)
+    df = _handle_rft_observation(rft_config, rft_observation, shape_registry)
     assert "radius" in df.columns
     assert df["radius"].to_list() == [provided_radius]
     assert df["radius"].dtype == pl.Float32
@@ -598,13 +581,12 @@ def test_that_handle_rft_observations_adds_locations_both_with_zone_and_without(
             north=71.0,
             east=30.0,
             tvd=2000.0,
-            radius=2400,
             zone=zone,
         )
 
     for zone in zones:
         rft_observation = make_observation(zone)
-        _handle_rft_observation(rft_config, rft_observation)
+        _handle_rft_observation(rft_config, rft_observation, ShapeRegistry())
 
     assert len(rft_config.locations) == 2
 

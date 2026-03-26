@@ -117,7 +117,11 @@ class InitialEnsembleRunModel(RunModel, InitialEnsembleRunModelConfig):
             None,
         )
 
+        shape_registry = self._storage.get_experiment_by_name(
+            self.experiment_name
+        ).shape_registry
         return create_observation_dataframes(
             observations=self.observations,
             rft_config=rft_config,
+            shape_registry=shape_registry,
         )

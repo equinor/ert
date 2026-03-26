@@ -155,6 +155,7 @@ def _setup_single_test_run(
         storage_path=config.ens_path,
         queue_config=config.queue_config.create_local_copy(),
         observations=config.observation_declarations,
+        shape_registry=config.shape_registry,
     )
 
     return SingleTestRun(
@@ -215,6 +216,7 @@ def _setup_ensemble_experiment(
         storage_path=config.ens_path,
         queue_config=config.queue_config,
         observations=config.observation_declarations,
+        shape_registry=config.shape_registry,
     )
 
     return EnsembleExperiment(
@@ -246,6 +248,7 @@ def _setup_evaluate_ensemble(
         substitutions=config.substitutions,
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
+        shape_registry=config.shape_registry,
     )
     return EvaluateEnsemble(**runmodel_config.model_dump(), status_queue=status_queue)
 
@@ -308,6 +311,7 @@ def _setup_manual_update(
         log_path=config.analysis_config.log_path,
         ert_templates=config.ert_templates,
         observations=config.observation_declarations,
+        shape_registry=config.shape_registry,
     )
     return ManualUpdate(**runmodel_config.model_dump(), status_queue=status_queue)
 
@@ -347,6 +351,7 @@ def _setup_manual_update_enif(
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
         observations=config.observation_declarations,
+        shape_registry=config.shape_registry,
     )
 
 
@@ -394,6 +399,7 @@ def _setup_ensemble_smoother(
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
         observations=config.observation_declarations,
+        shape_registry=config.shape_registry,
     )
     return EnsembleSmoother(**runmodel_config.model_dump(), status_queue=status_queue)
 
@@ -441,6 +447,7 @@ def _setup_ensemble_information_filter(
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
         observations=config.observation_declarations,
+        shape_registry=config.shape_registry,
     )
     return EnsembleInformationFilter(
         **runmodel_config.model_dump(), status_queue=status_queue
@@ -514,6 +521,7 @@ def _setup_multiple_data_assimilation(
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
         observations=config.observation_declarations,
+        shape_registry=config.shape_registry,
     )
     return MultipleDataAssimilation(
         **runmodel_config.model_dump(), status_queue=status_queue

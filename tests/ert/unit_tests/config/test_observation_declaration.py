@@ -19,6 +19,7 @@ from ert.config._observations import (
     SummaryObservation,
     make_observations,
 )
+from ert.config._shapes import CircleShapeConfig, ShapeRegistry
 from ert.config.observation_config_migrations import HistoryObservation
 from ert.config.parsing import parse_observations
 from ert.config.parsing.observations_parser import (
@@ -32,8 +33,11 @@ observation_contents = stlark.from_lark(observations_parser)
 
 
 def make_and_parse_observations(contents, filename):
+    registry = ShapeRegistry()
     return make_observations(
-        os.path.dirname(filename), parse_observations(contents, filename)
+        os.path.dirname(filename),
+        parse_observations(contents, filename),
+        shape_registry=registry,
     )
 
 
@@ -147,7 +151,9 @@ def test_that_make_observations_migrates_observations():
     # Re-parse the migrated obs_config and build the observation objects
     migrated_contents = Path("obs_config").read_text(encoding="utf8")
     parsed = parse_observations(migrated_contents, "obs_config")
-    observations = make_observations(os.path.dirname("obs_config"), parsed)
+    observations = make_observations(
+        os.path.dirname("obs_config"), parsed, ShapeRegistry()
+    )
 
     # Validate migrated observations contain expected entries and values
     names = [getattr(o, "name", None) for o in observations]
@@ -186,7 +192,8 @@ def test_that_make_observations_migrates_observations():
 
 
 def test_rft_observation_declaration():
-    assert make_observations(
+    shape_registry = ShapeRegistry()
+    obs = make_observations(
         "",
         [
             {
@@ -202,7 +209,9 @@ def test_rft_observation_declaration():
                 "TVD": 2000,
             }
         ],
-    ) == [
+        shape_registry=shape_registry,
+    )
+    assert obs == [
         RFTObservation(
             name="NAME",
             well="well",
@@ -212,10 +221,15 @@ def test_rft_observation_declaration():
             property="PRESSURE",
             north=71.0,
             east=30.0,
-            radius=DEFAULT_LOCALIZATION_RADIUS,
             tvd=2000.0,
+            shape_id=0,  # the first registered shape gets id 0
         )
     ]
+    shape = obs[0].shape(shape_registry)
+    assert isinstance(shape, CircleShapeConfig)
+    assert math.isclose(shape.east, 30.0)
+    assert math.isclose(shape.north, 71.0)
+    assert shape.radius == DEFAULT_LOCALIZATION_RADIUS
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -230,7 +244,8 @@ def test_rft_observation_csv_declaration():
         ),
         encoding="utf8",
     )
-    assert make_observations(
+    shape_registry = ShapeRegistry()
+    obs = make_observations(
         "",
         [
             {
@@ -239,7 +254,9 @@ def test_rft_observation_csv_declaration():
                 "CSV": "rft_observations.csv",
             }
         ],
-    ) == [
+        shape_registry=shape_registry,
+    )
+    assert obs == [
         RFTObservation(
             name="NAME[0]",
             well="WELL1",
@@ -249,10 +266,10 @@ def test_rft_observation_csv_declaration():
             property="PRESSURE",
             north=71.0,
             east=30.0,
-            radius=DEFAULT_LOCALIZATION_RADIUS,
             tvd=2000.0,
             md=2500.0,
             zone="zone1",
+            shape_id=0,  # the first registered shape gets id 0
         ),
         RFTObservation(
             name="NAME[1]",
@@ -263,12 +280,23 @@ def test_rft_observation_csv_declaration():
             property="PRESSURE",
             north=72.0,
             east=31.0,
-            radius=DEFAULT_LOCALIZATION_RADIUS,
             tvd=2100.0,
             md=2600.0,
             zone="zone2",
+            shape_id=1,  # the second registered shape gets id 1
         ),
     ]
+    shape = obs[0].shape(shape_registry)
+    assert isinstance(shape, CircleShapeConfig)
+    assert math.isclose(shape.east, 30.0)
+    assert math.isclose(shape.north, 71.0)
+    assert shape.radius == DEFAULT_LOCALIZATION_RADIUS
+
+    shape = obs[1].shape(shape_registry)
+    assert isinstance(shape, CircleShapeConfig)
+    assert math.isclose(shape.east, 31.0)
+    assert math.isclose(shape.north, 72.0)
+    assert shape.radius == DEFAULT_LOCALIZATION_RADIUS
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -282,7 +310,8 @@ def test_that_rft_csv_without_radius_column_gets_defaulted():
         ),
         encoding="utf8",
     )
-    assert make_observations(
+    shape_registry = ShapeRegistry()
+    obs = make_observations(
         "",
         [
             {
@@ -291,7 +320,9 @@ def test_that_rft_csv_without_radius_column_gets_defaulted():
                 "CSV": "rft_observations.csv",
             }
         ],
-    ) == [
+        shape_registry=shape_registry,
+    )
+    assert obs == [
         RFTObservation(
             name="NAME[0]",
             well="WELL1",
@@ -301,12 +332,15 @@ def test_that_rft_csv_without_radius_column_gets_defaulted():
             property="PRESSURE",
             north=71.0,
             east=30.0,
-            radius=DEFAULT_LOCALIZATION_RADIUS,
             tvd=2000.0,
             md=2500.0,
             zone="zone1",
+            shape_id=0,  # the first registered shape gets id 0
         ),
     ]
+    shape = obs[0].shape(shape_registry)
+    assert isinstance(shape, CircleShapeConfig)
+    assert shape.radius == DEFAULT_LOCALIZATION_RADIUS
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -325,6 +359,7 @@ def test_that_rft_observations_from_csv_with_no_rows_after_header_returns_empty_
                     "CSV": "rft_observations.csv",
                 }
             ],
+            shape_registry=ShapeRegistry(),
         )
         == []
     )
@@ -357,6 +392,7 @@ def test_that_observation_type_rft_is_compatible_with_create_rft_ertobs_handling
                     "CSV": "rft_observations.csv",
                 }
             ],
+            shape_registry=ShapeRegistry(),
         )
     assert dedent(
         """
@@ -389,6 +425,7 @@ def test_that_invalid_numeric_values_in_rft_observations_csv_raises_error():
                     "CSV": "rft_observations.csv",
                 }
             ],
+            shape_registry=ShapeRegistry(),
         )
 
     assert (
@@ -409,6 +446,7 @@ def test_that_non_existent_rft_observations_csv_file_raises_error():
                     "CSV": "rft_observations.csv",
                 }
             ],
+            shape_registry=ShapeRegistry(),
         )
 
     assert (
@@ -428,7 +466,8 @@ def test_that_property_can_be_specified_for_rft_observation_csv_declaration():
         ),
         encoding="utf8",
     )
-    assert make_observations(
+    shape_registry = ShapeRegistry()
+    obs = make_observations(
         "",
         [
             {
@@ -438,7 +477,9 @@ def test_that_property_can_be_specified_for_rft_observation_csv_declaration():
                 "PROPERTY": "SWAT",
             }
         ],
-    ) == [
+        shape_registry=shape_registry,
+    )
+    assert obs == [
         RFTObservation(
             name="NAME[0]",
             well="WELL1",
@@ -450,8 +491,8 @@ def test_that_property_can_be_specified_for_rft_observation_csv_declaration():
             east=30.0,
             tvd=2000.0,
             md=2500.0,
-            radius=DEFAULT_LOCALIZATION_RADIUS,
             zone="zone1",
+            shape_id=0,  # the first registered shape gets id 0
         )
     ]
 
@@ -478,6 +519,7 @@ def test_that_missing_user_specified_property_raises_error():
                     "PROPERTY": "SWAT",
                 }
             ],
+            shape_registry=ShapeRegistry(),
         )
 
     assert (
@@ -507,6 +549,7 @@ def test_that_missing_columns_in_rft_observations_file_raises_error():
                     "CSV": "rft_observations.csv",
                 }
             ],
+            shape_registry=ShapeRegistry(),
         )
 
     assert (
@@ -562,16 +605,17 @@ def test_that_breakthrough_observation_can_be_instantiated_from_config():
 
     Path("obs_config.txt").write_text(obs_config_str, encoding="utf8")
     parsed_obs_dict = parse_observations(obs_config_str, "obs_config.txt")
-    brt_obs = BreakthroughObservation.from_obs_dict("", parsed_obs_dict[0]).pop()
+    shape_registry = ShapeRegistry()
+    brt_obs = BreakthroughObservation.from_obs_dict(
+        "", parsed_obs_dict[0], shape_registry=shape_registry
+    ).pop()
     assert brt_obs.type == "breakthrough"
     assert brt_obs.name == "name"
     assert brt_obs.key == "WWCT:OP_1"
     assert brt_obs.date == datetime.fromisoformat("2012-10-01")
     assert brt_obs.error == 3
     assert math.isclose(brt_obs.threshold, 0.1)
-    assert brt_obs.east is None
-    assert brt_obs.north is None
-    assert brt_obs.radius is None
+    assert brt_obs.shape_id is None
 
 
 @pytest.mark.parametrize("missing_keyword", ["KEY", "DATE", "ERROR", "THRESHOLD"])
@@ -594,10 +638,13 @@ def test_that_breakthrough_observation_raises_error_when_missing_required_keywor
     obs_config_str = "\n".join(obs_config_lines)
     Path("obs_config.txt").write_text(obs_config_str, encoding="utf8")
     parsed_obs_dict = parse_observations(obs_config_str, "obs_config.txt")
+    shape_registry = ShapeRegistry()
     with pytest.raises(
         ObservationConfigError, match=f'Missing item "{missing_keyword}" in BRT_OBS'
     ):
-        BreakthroughObservation.from_obs_dict("", parsed_obs_dict[0])
+        BreakthroughObservation.from_obs_dict(
+            "", parsed_obs_dict[0], shape_registry=shape_registry
+        )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -618,10 +665,17 @@ def test_that_breakthrough_observation_can_be_instantiated_with_localization():
 
     Path("obs_config.txt").write_text(obs_config_str, encoding="utf8")
     parsed_obs_dict = parse_observations(obs_config_str, "obs_config.txt")
-    brt_obs = BreakthroughObservation.from_obs_dict("", parsed_obs_dict[0]).pop()
-    assert brt_obs.east == 10
-    assert brt_obs.north == 20
-    assert brt_obs.radius == 2500
+    shape_registry = ShapeRegistry()
+    brt_obs = BreakthroughObservation.from_obs_dict(
+        "", parsed_obs_dict[0], shape_registry=shape_registry
+    ).pop()
+    assert brt_obs.shape_id is not None
+    shape = brt_obs.shape(shape_registry)
+    assert isinstance(shape, CircleShapeConfig)
+    assert shape is not None
+    assert math.isclose(shape.east, 10)
+    assert math.isclose(shape.north, 20)
+    assert math.isclose(shape.radius, 2500)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -658,6 +712,7 @@ def test_that_rft_observation_raises_error_given_north_or_east_keys_in_config():
                     },
                 }
             ],
+            shape_registry=ShapeRegistry(),
         )
 
 
@@ -674,6 +729,7 @@ def test_that_rft_observation_can_be_provided_radius_localization_keyword():
         encoding="utf8",
     )
 
+    shape_registry = ShapeRegistry()
     obss = make_observations(
         "",
         [
@@ -686,6 +742,33 @@ def test_that_rft_observation_can_be_provided_radius_localization_keyword():
                 },
             }
         ],
+        shape_registry=shape_registry,
     )
     for obs in obss:
-        assert obs.radius == 2500
+        assert obs.shape_id is not None
+        shape = obs.shape(shape_registry)
+        assert shape is not None
+        assert isinstance(shape, CircleShapeConfig)
+        assert math.isclose(shape.radius, 2500)
+
+
+def test_that_shape_registry_reuses_identical_circle_shapes():
+    shape_registry = ShapeRegistry()
+    shape_id_1 = shape_registry.register(
+        CircleShapeConfig(east=10.0, north=20.0, radius=2500.0)
+    )
+    shape_id_2 = shape_registry.register(
+        CircleShapeConfig(east=10.0, north=20.0, radius=2500.0)
+    )
+    assert shape_id_1 == shape_id_2
+
+
+def test_that_shape_registry_assigns_new_id_for_different_shapes():
+    shape_registry = ShapeRegistry()
+    shape_id_1 = shape_registry.register(
+        CircleShapeConfig(east=10.0, north=20.0, radius=2500.0)
+    )
+    shape_id_2 = shape_registry.register(
+        CircleShapeConfig(east=10.0, north=20.0, radius=3000.0)
+    )
+    assert shape_id_1 != shape_id_2
