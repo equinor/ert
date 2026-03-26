@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable
+from datetime import timedelta
 from typing import TYPE_CHECKING
 
+import humanize
 import numpy as np
 from iterative_ensemble_smoother.experimental import DistanceESMDA
 from iterative_ensemble_smoother.utils import calc_rho_for_2d_grid_layer
@@ -89,7 +91,7 @@ class DistanceLocalizationUpdate:
         self._progress_callback(
             AnalysisStatusEvent(
                 msg=f"Updated {param_config.name} ({param_config.type.upper()}) "
-                f"in {elapsed:.2f}s",
+                f"in {humanize.precisedelta(timedelta(seconds=elapsed))}",
                 detail=True,
             )
         )

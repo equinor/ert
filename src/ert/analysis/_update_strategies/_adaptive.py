@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import time
 from collections.abc import Callable, Sequence
+from datetime import timedelta
 from typing import TYPE_CHECKING, TypeVar
 
+import humanize
 import numpy as np
 import psutil
 from iterative_ensemble_smoother.experimental import AdaptiveESMDA
@@ -243,7 +245,7 @@ class AdaptiveLocalizationUpdate:
         self._progress_callback(
             AnalysisStatusEvent(
                 msg=f"Updated {param_config.name} ({param_config.type.upper()}) "
-                f"in {elapsed:.2f}s",
+                f"in {humanize.precisedelta(timedelta(seconds=elapsed))}",
                 detail=True,
             )
         )
