@@ -103,11 +103,14 @@ class EverestGradientsPlot:
         axes.set_xticks(pos)
         axes.set_xticklabels([str(b) for b in batch_ids], rotation=0)
         axes.yaxis.set_major_formatter(ConditionalAxisFormatter())
+        axes.spines["right"].set_visible(False)
+        axes.spines["left"].set_visible(False)
+        axes.spines["top"].set_visible(False)
 
         PlotTools.finalizePlot(
             plot_context,
             figure,
             axes,
-            default_x_label="Batch",
+            default_x_label="Batch Iteration",
             default_y_label="Gradient",
         )

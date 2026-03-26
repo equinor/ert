@@ -42,13 +42,16 @@ from .plottery.plots import (
     CrossEnsembleStatisticsPlot,
     DistributionPlot,
     EnsemblePlot,
+    EverestBatchObjectiveFunctionPlot,
+    EverestConstraintsPlot,
+    EverestControlsPlot,
     EverestGradientsPlot,
+    EverestObjectiveFunctionPlot,
     GaussianKDEPlot,
     HistogramPlot,
     MisfitsPlot,
     StatisticsPlot,
     StdDevPlot,
-    ValuesOverIterationsPlot,
 )
 from .widgets.everest_control_selection_widget import EverestControlSelectionWidget
 
@@ -60,9 +63,11 @@ HISTOGRAM = "Histogram"
 STATISTICS = "Statistics"
 STD_DEV = "Std Dev"
 MISFITS = "Misfits"
-EVEREST_RESPONSES_PLOT = "Batch responses"
-EVEREST_CONTROLS_PLOT = "Batch controls"
-EVEREST_GRADIENTS_PLOT = "Batch Gradients"
+EVEREST_CONTROLS_PLOT = "Controls"
+EVEREST_GRADIENTS_PLOT = "Gradient"
+EVEREST_OBJECTIVE_FUNCTION_PLOT = "Objective function"
+EVEREST_BATCH_OBJECTIVE_FUNCTION_PLOT = "Aggregated objective values"
+EVEREST_CONSTRAINT_PLOT = "Constraints"
 
 RESPONSE_DEFAULT = 0
 GEN_KW_DEFAULT = 3
@@ -214,8 +219,15 @@ class PlotWindow(QMainWindow):
                 self.addPlotWidget(STD_DEV, StdDevPlot())
             else:
                 self.addPlotWidget(ENSEMBLE, EnsemblePlot())
-                self.addPlotWidget(EVEREST_CONTROLS_PLOT, ValuesOverIterationsPlot())
-                self.addPlotWidget(EVEREST_RESPONSES_PLOT, ValuesOverIterationsPlot())
+                self.addPlotWidget(
+                    EVEREST_OBJECTIVE_FUNCTION_PLOT, EverestObjectiveFunctionPlot()
+                )
+                self.addPlotWidget(
+                    EVEREST_BATCH_OBJECTIVE_FUNCTION_PLOT,
+                    EverestBatchObjectiveFunctionPlot(),
+                )
+                self.addPlotWidget(EVEREST_CONSTRAINT_PLOT, EverestConstraintsPlot())
+                self.addPlotWidget(EVEREST_CONTROLS_PLOT, EverestControlsPlot())
                 self.addPlotWidget(EVEREST_GRADIENTS_PLOT, EverestGradientsPlot())
 
             self._central_tab.currentChanged.connect(self.currentTabChanged)
@@ -262,13 +274,13 @@ class PlotWindow(QMainWindow):
             )
             self.addDock("Plot ensemble", self._ensemble_selection_widget)
 
-            everest_parameters = [
+            self._everest_parameters = [
                 kd.parameter.name
                 for kd in self._key_definitions
                 if kd.parameter and kd.parameter.type == "everest_parameters"
             ]
             self._everest_control_selection_widget = EverestControlSelectionWidget(
-                everest_parameters
+                self._everest_parameters
             )
             self._everest_control_selection_widget.controlSelectionChanged.connect(
                 self.updatePlot
@@ -314,16 +326,19 @@ class PlotWindow(QMainWindow):
             key = key.replace("BREAKTHROUGH:", "")
 
         is_gradient_plot = plot_widget.name == EVEREST_GRADIENTS_PLOT
-        self._everest_dock.setVisible(is_gradient_plot)
+        is_controls_plot = plot_widget.name == EVEREST_CONTROLS_PLOT
+        self._everest_dock.setVisible(is_gradient_plot or is_controls_plot)
 
         if (
             plot_widget._plotter.dimensionality == key_def.dimensionality
             or (
                 plot_widget.name
                 in {
-                    EVEREST_RESPONSES_PLOT,
+                    EVEREST_BATCH_OBJECTIVE_FUNCTION_PLOT,
+                    EVEREST_OBJECTIVE_FUNCTION_PLOT,
                     EVEREST_CONTROLS_PLOT,
                     EVEREST_GRADIENTS_PLOT,
+                    EVEREST_CONSTRAINT_PLOT,
                 }
             )
             or (key_def.metadata.get("data_origin") == "everest_batch_objectives")
@@ -333,7 +348,13 @@ class PlotWindow(QMainWindow):
             )
             ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame] = {}
 
-            if is_gradient_plot:
+            selected_controls: list[str] = []
+            if is_gradient_plot or is_controls_plot:
+                self._everest_control_selection_widget.set_pinned_control(
+                    key_def.parameter.name
+                    if is_controls_plot and key_def.parameter
+                    else None
+                )
                 selected_controls = (
                     self._everest_control_selection_widget.get_selected_controls()
                 )
@@ -355,6 +376,12 @@ class PlotWindow(QMainWindow):
                             ensemble_id=ensemble.id,
                             response_key=key,
                             filter_on=key_def.filter_on,
+                        )
+                    elif is_controls_plot:
+                        data = self._api.data_for_controls(
+                            ensemble_id=ensemble.id,
+                            parameter_keys=selected_controls
+                            or self._everest_parameters,
                         )
                     elif key_def.parameter is not None and (
                         key_def.parameter.type
@@ -508,8 +535,11 @@ class PlotWindow(QMainWindow):
         | CrossEnsembleStatisticsPlot
         | StdDevPlot
         | MisfitsPlot
-        | ValuesOverIterationsPlot
-        | EverestGradientsPlot,
+        | EverestBatchObjectiveFunctionPlot
+        | EverestConstraintsPlot
+        | EverestControlsPlot
+        | EverestGradientsPlot
+        | EverestObjectiveFunctionPlot,
         enabled: bool = True,
     ) -> None:
         plot_widget = PlotWidget(name, plotter)
@@ -544,53 +574,50 @@ class PlotWindow(QMainWindow):
             return
         self._plot_customizer.switchPlotConfigHistory(key_def)
 
+        is_everest_specific_widget = key_def.metadata.get("data_origin") in {
+            "everest_objectives",
+            "everest_constraints",
+            "everest_batch_objectives",
+        }
+
         available_widgets = [
             widget
             for widget in self._plot_widgets
             if widget._plotter.dimensionality == key_def.dimensionality
             and (key_def.observations or not widget._plotter.requires_observations)
+            and not is_everest_specific_widget
         ]
 
-        everest_widget = next(
-            (w for w in self._plot_widgets if w.name == EVEREST_RESPONSES_PLOT), None
-        )
+        def everest_data_origin_check(origin: list[str]) -> bool:
+            return key_def.metadata.get("data_origin") in origin
 
-        if everest_widget:
-            if (
-                self.is_everest
-                or key_def.metadata.get("data_origin") == "everest_batch_objectives"
-            ):
-                available_widgets = [everest_widget]
-            elif everest_widget in available_widgets:
-                available_widgets.remove(everest_widget)
+        def everest_widget_locator(widget_name: str) -> PlotWidget | None:
+            return next(
+                (w for w in self._plot_widgets if w.name == widget_name),
+                None,
+            )
 
-        is_everest_control = (
-            key_def.parameter is not None
-            and key_def.parameter.type == "everest_parameters"
-        )
-        everest_control_widget = next(
-            (w for w in self._plot_widgets if w.name == EVEREST_CONTROLS_PLOT), None
-        )
+        everest_plot_and_origin = [
+            (EVEREST_OBJECTIVE_FUNCTION_PLOT, ["everest_objectives"]),
+            (EVEREST_BATCH_OBJECTIVE_FUNCTION_PLOT, ["everest_batch_objectives"]),
+            (EVEREST_CONSTRAINT_PLOT, ["everest_constraints"]),
+            (EVEREST_CONTROLS_PLOT, ["everest_parameters"]),
+            (EVEREST_GRADIENTS_PLOT, ["everest_constraints", "everest_objectives"]),
+        ]
 
-        if everest_control_widget:
-            if is_everest_control:
-                available_widgets = [everest_control_widget]
-            elif everest_control_widget in available_widgets:
-                available_widgets.remove(everest_control_widget)
+        def everest_available_widget_selection(
+            widget_tuple_list: list[tuple[str, list[str]]],
+        ) -> None:
+            for widget_name, origin in widget_tuple_list:
+                widget = everest_widget_locator(widget_name)
+                if widget:
+                    if everest_data_origin_check(origin):
+                        if widget not in available_widgets:
+                            available_widgets.append(widget)
+                    elif widget in available_widgets:
+                        available_widgets.remove(widget)
 
-        everest_gradients_widget = next(
-            (w for w in self._plot_widgets if w.name == EVEREST_GRADIENTS_PLOT), None
-        )
-
-        if everest_gradients_widget:
-            if self.is_everest:
-                if everest_gradients_widget not in available_widgets:
-                    available_widgets.append(everest_gradients_widget)
-            elif (
-                key_def.metadata.get("data_origin") == "everest_batch_objectives"
-                and everest_gradients_widget in available_widgets
-            ) or everest_gradients_widget in available_widgets:
-                available_widgets.remove(everest_gradients_widget)
+        everest_available_widget_selection(everest_plot_and_origin)
 
         # Enabling/disabling tab triggers the
         # currentTabChanged event which also triggers

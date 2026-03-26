@@ -347,6 +347,28 @@ class PlotApi:
                 }
             )
 
+    def data_for_controls(
+        self, ensemble_id: str, parameter_keys: list[str]
+    ) -> pd.DataFrame:
+        frames = []
+
+        for parameter_key in parameter_keys:
+            df = self.data_for_parameter(ensemble_id, parameter_key)
+            if not df.empty and {"batch_id", "realization"}.issubset(df.columns):
+                value_cols = [
+                    c for c in df.columns if c not in {"batch_id", "realization"}
+                ]
+                melted = df.melt(
+                    id_vars=["batch_id", "realization"],
+                    value_vars=value_cols,
+                    var_name="control_name",
+                    value_name="control_value",
+                )
+                frames.append(melted)
+        if not frames:
+            return pd.DataFrame()
+        return pd.concat(frames, ignore_index=True)
+
     def data_for_parameter(self, ensemble_id: str, parameter_key: str) -> pd.DataFrame:
         with create_ertserver_client(self.ens_path) as client:
             http_response = client.get(
