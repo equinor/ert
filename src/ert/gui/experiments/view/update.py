@@ -185,11 +185,11 @@ class UpdateWidget(QWidget):
     def iteration(self) -> int:
         return self._iteration
 
-    def _insert_status_message(self, message: str) -> None:
-        if message.startswith("Updated "):
+    def _insert_status_message(self, message: str, detail: bool = False) -> None:
+        if detail:
             self._msg_list.append(f'<span style="color: gray;">{message}</span>')
         else:
-            self._msg_list.append(message)
+            self._msg_list.append(f"<span>{message}</span>")
 
     def _insert_table_tab(
         self,
@@ -250,8 +250,8 @@ class UpdateWidget(QWidget):
     @Slot(RunModelEvent)
     def update_status(self, event: RunModelEvent) -> None:
         match event:
-            case RunModelStatusEvent(msg=msg):
-                self._insert_status_message(msg)
+            case RunModelStatusEvent(msg=msg, detail=detail):
+                self._insert_status_message(msg, detail=detail)
             case RunModelTimeEvent(remaining_time=remaining_time):
                 self._progress_msg.setText(
                     f"Estimated remaining time for current step "

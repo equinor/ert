@@ -89,7 +89,8 @@ class DistanceLocalizationUpdate:
         self._progress_callback(
             AnalysisStatusEvent(
                 msg=f"Updated {param_config.name} ({param_config.type.upper()}) "
-                f"in {elapsed:.2f}s"
+                f"in {elapsed:.2f}s",
+                detail=True,
             )
         )
 
