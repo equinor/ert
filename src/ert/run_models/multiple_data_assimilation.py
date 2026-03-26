@@ -66,6 +66,16 @@ class MultipleDataAssimilation(
         self._start_iteration = start_iteration
         self._total_iterations = total_iterations
 
+    def _create_experiment_for_restart(
+        self, original_experiment: dict[str, Any]
+    ) -> dict[str, Any]:
+        new_experiment = self.model_dump(mode="json")
+        new_experiment["parameter_configuration"] = original_experiment.get(
+            "parameter_configuration", []
+        )
+        new_experiment["observations"] = original_experiment.get("observations", {})
+        return new_experiment
+
     @tracer.start_as_current_span(f"{__name__}.run_experiment")
     def run_experiment(
         self,
@@ -94,7 +104,9 @@ class MultipleDataAssimilation(
                         f"restart iteration = {prior.iteration + 1}"
                     )
                 target_experiment = self._storage.create_experiment(
-                    experiment_config=self.model_dump(mode="json"),
+                    experiment_config=self._create_experiment_for_restart(
+                        experiment.experiment_config
+                    ),
                     name=f"Restart from {prior.name}",
                 )
 
