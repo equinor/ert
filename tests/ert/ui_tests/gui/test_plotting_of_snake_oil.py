@@ -1,3 +1,4 @@
+from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
@@ -63,7 +64,7 @@ def plot_figure(
     log_handler = GUILogHandler()
     with (
         ErtServerController.init_service(
-            project=storage_config.ens_path,
+            project=Path(storage_config.ens_path).absolute(),
         ),
     ):
         gui = _setup_main_window(
@@ -147,7 +148,7 @@ def test_that_all_plotter_filter_boxes_yield_expected_filter_results(
     log_handler = GUILogHandler()
     with (
         ErtServerController.init_service(
-            project=snake_oil_case_storage.ens_path,
+            project=Path(snake_oil_case_storage.ens_path).absolute(),
         ),
     ):
         gui = _setup_main_window(

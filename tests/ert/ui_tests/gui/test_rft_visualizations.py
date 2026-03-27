@@ -124,7 +124,7 @@ def plot_figure(qtbot: QtBot, request, rft_config: ErtConfig):
     log_handler = GUILogHandler()
     with (
         ErtServerController.init_service(
-            project=rft_config.ens_path,
+            project=Path(rft_config.ens_path).absolute(),
         ),
     ):
         gui = _setup_main_window(

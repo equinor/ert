@@ -406,7 +406,7 @@ def test_that_poly_new_with_results_screenshots_are_up_to_date(
     gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
 
     with ErtServerController.init_service(
-        project=os.path.abspath(gui.ert_config.ens_path),
+        project=Path(gui.ert_config.ens_path).absolute(),
     ):
         button_plot_tool = get_child(gui, QToolButton, name="button_Create_plot")
         qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
@@ -445,7 +445,7 @@ def test_that_poly_new_with_observations_screenshots_are_up_to_date(
     gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
 
     with ErtServerController.init_service(
-        project=os.path.abspath(gui.ert_config.ens_path),
+        project=Path(gui.ert_config.ens_path).absolute(),
     ):
         button_plot_tool = get_child(gui, QToolButton, name="button_Create_plot")
         qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)
@@ -501,7 +501,7 @@ def test_that_poly_new_with_more_observations_screenshots_are_up_to_date(
     gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
 
     with ErtServerController.init_service(
-        project=os.path.abspath(gui.ert_config.ens_path),
+        project=Path(gui.ert_config.ens_path).absolute(),
     ):
         button_plot_tool = get_child(gui, QToolButton, name="button_Create_plot")
         qtbot.mouseClick(button_plot_tool, Qt.MouseButton.LeftButton)

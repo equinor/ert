@@ -294,7 +294,7 @@ def test_that_the_plot_window_contains_the_expected_elements(
     gui = esmda_has_run
     open_storage(gui.ert_config.ens_path, mode="r")
     with ErtServerController.init_service(
-        project=os.path.abspath(gui.ert_config.ens_path),
+        project=Path(gui.ert_config.ens_path).absolute(),
     ):
         expected_ensembles = [
             "es_mda : iter-0",
@@ -659,7 +659,7 @@ def test_that_gui_plotter_works_when_no_data(qtbot, monkeypatch, use_tmpdir):
     open_storage(ert_config.ens_path, mode="r")
 
     with ErtServerController.init_service(
-        project=os.path.abspath(ert_config.ens_path),
+        project=Path(ert_config.ens_path).absolute(),
     ):
         gui = _setup_main_window(
             ert_config, args_mock, GUILogHandler(), ert_config.ens_path
@@ -694,7 +694,7 @@ def test_right_click_plot_button_opens_external_plotter(qtbot, use_tmpdir, monke
     args_mock.config = config_file
     ert_config = ErtConfig.from_file(config_file)
     with ErtServerController.init_service(
-        project=os.path.abspath(ert_config.ens_path),
+        project=Path(ert_config.ens_path).absolute(),
     ):
         gui = _setup_main_window(
             ert_config, args_mock, GUILogHandler(), ert_config.ens_path
