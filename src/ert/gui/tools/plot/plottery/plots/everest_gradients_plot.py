@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import numpy as np
 import pandas as pd
-from matplotlib.ticker import MaxNLocator
+
+from .plot_tools import ConditionalAxisFormatter, PlotTools
 
 if TYPE_CHECKING:
     import numpy as np
@@ -33,9 +35,9 @@ class EverestGradientsPlot:
         obs_loc: npt.NDArray[np.float32] | None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
+        axes = figure.add_subplot(111)
         if not self.selected_controls:
-            ax = figure.add_subplot(111)
-            ax.text(
+            axes.text(
                 0.5,
                 0.5,
                 "Select control(s) from the side panel to view gradients",
@@ -46,84 +48,66 @@ class EverestGradientsPlot:
 
         config = plot_context.plotConfig()
 
-        n_controls = len(self.selected_controls)
-        axs = figure.subplots(n_controls, 1, sharex=True, squeeze=False)
-
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.INDEX_AXIS
         plot_context.deactivateDateSupport()
 
         response_key = key_def.key if key_def else "Response"
-        config.setTitle(f"Derivative of {response_key} wrt controls")
 
-        default_color = config.lineColorCycle()[0][0]
+        colors = config.lineColorCycle()
+
+        # Collect all data into one frame
+        all_frames = [
+            filtered
+            for df in ensemble_to_data_map.values()
+            if not df.empty
+            and response_key in df.columns
+            and "control_name" in df.columns
+            and (filtered := df[df["control_name"].isin(self.selected_controls)]).shape[
+                0
+            ]
+        ]
+
+        if not all_frames:
+            axes.text(0.5, 0.5, "No data", ha="center", va="center")
+            return
+
+        combined = pd.concat(all_frames)
+        batch_ids = sorted(combined["batch_id"].unique())
+
+        pos = np.arange(len(batch_ids))
+        n_controls = len(self.selected_controls)
+        bar_width = 0.8 / n_controls
 
         for i, control in enumerate(self.selected_controls):
-            ax = axs[i, 0]
-            ax.set_ylabel(control)
-
-            ax.yaxis.grid(True, linestyle=":", linewidth=0.5, color="gray", alpha=0.5)
-            ax.xaxis.grid(False)
-
-            ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-
-            # (derivative is interesting to see go towards/away from 0)
-            # Hence thicker horizontal line at y=0
-            ax.axhline(0, color="black", linewidth=1.0, alpha=0.3)
-
-            ax.spines["top"].set_visible(False)
-            ax.spines["right"].set_visible(False)
-
-            if i < n_controls - 1:
-                # Intermediate plots: thin gray line as separator
-                ax.spines["bottom"].set_visible(True)
-                ax.spines["bottom"].set_linewidth(0.5)
-                ax.spines["bottom"].set_color("lightgray")
-                ax.tick_params(axis="x", which="both", bottom=False, labelbottom=False)
-            else:
-                ax.spines["bottom"].set_visible(True)
-                ax.tick_params(axis="x", which="both", bottom=True, labelbottom=True)
-
-            # For normalizing y-axis across controls
-            max_abs_val = 0.0
-
-            data_frames = []
-            for df in ensemble_to_data_map.values():
-                if (
-                    df.empty
-                    or response_key not in df.columns
-                    or "control_name" not in df.columns
-                ):
-                    continue
-
-                control_data = df[df["control_name"] == control]
-                if not control_data.empty:
-                    data_frames.append(control_data)
-
-            if data_frames:
-                r_data = pd.concat(data_frames).sort_values("batch_id")
-
-                current_max_abs = r_data[response_key].abs().max()
-                max_abs_val = max(max_abs_val, current_max_abs)
-
-                ax.plot(
-                    r_data["batch_id"].to_numpy(),
-                    r_data[response_key].to_numpy(),
-                    "-o",
-                    markersize=5,
-                    linewidth=2,
-                    color=default_color,
-                    markerfacecolor=default_color,
+            color = colors[i % len(colors)][0]
+            values = []
+            for batch_id in batch_ids:
+                batch_data = combined[combined["batch_id"] == batch_id]
+                match = batch_data[batch_data["control_name"] == control]
+                values.append(
+                    match[response_key].to_numpy()[0] if not match.empty else 0.0
                 )
 
-                if max_abs_val > 0:
-                    limit = max_abs_val * 1.1  # Add some padding
-                    ax.set_ylim(-limit, limit)
-            else:
-                ax.text(0.5, 0.5, "No data", ha="center", va="center")
+            offsets = pos + (i - n_controls / 2) * bar_width + bar_width / 2
 
-        axs[-1, 0].set_xlabel("Iteration")
+            bars = axes.bar(
+                offsets,
+                values,
+                width=bar_width,
+                color=color,
+                alpha=0.7,
+            )
+            config.addLegendItem(control, bars[0])
+        axes.axhline(0, color="black", linewidth=1.0, alpha=0.3)
+        axes.set_xticks(pos)
+        axes.set_xticklabels([str(b) for b in batch_ids], rotation=0)
+        axes.yaxis.set_major_formatter(ConditionalAxisFormatter())
 
-        # Adjust layout to remove gaps if removing spines looks like 'sparklines'
-        figure.subplots_adjust(hspace=0.0)
-        figure.suptitle(f"Derivative of {response_key} wrt controls")
+        PlotTools.finalizePlot(
+            plot_context,
+            figure,
+            axes,
+            default_x_label="Batch",
+            default_y_label="Gradient",
+        )
