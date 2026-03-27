@@ -15,6 +15,7 @@ from ert.gui.tools.plot.plot_widget import PlotWidget
 from ert.gui.tools.plot.plot_window import PlotWindow, create_error_dialog
 from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
 from ert.gui.tools.plot.plottery.plots.gaussian_kde import plotGaussianKDE
+from ert.gui.tools.plot.plottery.plots.histogram import HistogramPlot
 from ert.services import ErtServerController
 
 
@@ -245,3 +246,71 @@ def test_that_gaussian_kde_plot_skips_categorical_data_without_raising():
 
     # Should not raise (categorical data is simply skipped).
     plotGaussianKDE(fig, ctx, {ensemble: categorical_df}, _observation_data=None)
+
+
+def test_that_plot_widget_hides_log_scale_checkbox_for_const_distribution(qtbot: QtBot):
+    ensemble = EnsembleObject(
+        "ensemble",
+        "ensemble",
+        False,
+        "experiment",
+        "2026-01-01T00:00:00",
+    )
+
+    ctx = PlotContext(
+        PlotConfig(),
+        ensembles=[ensemble],
+        ensembles_color_indexes=[0],
+        key="gen_kw",
+        layer=None,
+    )
+
+    plotter = HistogramPlot()
+    plotter.plot = MagicMock(return_value=None)
+    plot_widget = PlotWidget("Histogram", plotter)
+    qtbot.addWidget(plot_widget)
+    plot_widget.show()
+    qtbot.waitUntil(plot_widget.isVisible)
+
+    log_checkbox = plot_widget.findChild(QCheckBox, name="log_scale_checkbox")
+    assert log_checkbox is not None
+
+    non_const_key_def = PlotApiKeyDefinition(
+        "gen_kw_nonconst",
+        index_type=None,
+        metadata={"data_origin": "GEN_KW"},
+        observations=False,
+        dimensionality=1,
+        parameter=GenKwConfig(
+            name="gen_kw_nonconst",
+            distribution={"name": "uniform", "min": 0.0, "max": 1.0},
+        ),
+    )
+    plot_widget.updatePlot(
+        ctx,
+        {ensemble: pd.DataFrame({0: [0.1, 0.2, 0.3]})},
+        pd.DataFrame(),
+        {},
+        non_const_key_def,
+    )
+    assert log_checkbox.isVisible()
+
+    const_key_def = PlotApiKeyDefinition(
+        "gen_kw_const",
+        index_type=None,
+        metadata={"data_origin": "GEN_KW"},
+        observations=False,
+        dimensionality=1,
+        parameter=GenKwConfig(
+            name="gen_kw_const",
+            distribution={"name": "const", "value": 0.1},
+        ),
+    )
+    plot_widget.updatePlot(
+        ctx,
+        {ensemble: pd.DataFrame({0: [0.1, 0.1, 0.1]})},
+        pd.DataFrame(),
+        {},
+        const_key_def,
+    )
+    assert not log_checkbox.isVisible()

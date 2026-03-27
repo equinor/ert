@@ -25,6 +25,8 @@ from PyQt6.QtWidgets import (
 )
 from typing_extensions import override
 
+from ert.config.distribution import ConstSettings
+from ert.config.gen_kw_config import GenKwConfig
 from ert.gui.icon_utils import load_icon
 from ert.gui.tools.plot.plottery.plots import EverestGradientsPlot
 
@@ -184,7 +186,7 @@ class PlotWidget(QWidget):
     def resetPlot(self) -> None:
         self._figure.clear()
 
-    def _sync_log_checkbox(self) -> None:
+    def _sync_log_checkbox(self, key_def: PlotApiKeyDefinition | None = None) -> None:
         if (
             type(self._plotter).__name__
             in {
@@ -194,6 +196,13 @@ class PlotWidget(QWidget):
             }
             and self._negative_values_in_data is False
         ):
+            if key_def is not None:
+                a = key_def.parameter
+                if isinstance(a, GenKwConfig) and isinstance(
+                    a.distribution, ConstSettings
+                ):
+                    self._log_checkbox.setVisible(False)
+                    return
             self._log_checkbox.setVisible(True)
         else:
             self._log_checkbox.setVisible(False)
@@ -216,12 +225,13 @@ class PlotWidget(QWidget):
     ) -> None:
         self.resetPlot()
         try:
-            self._sync_log_checkbox()
+            self._sync_log_checkbox(key_def)
             plot_context.log_scale = (
                 self._log_checkbox.isVisible()
                 and self._log_checkbox.isChecked()
                 and self._negative_values_in_data is False
             )
+
             self._plotter.plot(
                 self._figure,
                 plot_context,
