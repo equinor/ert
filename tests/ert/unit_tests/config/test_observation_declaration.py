@@ -162,14 +162,14 @@ def test_that_make_observations_migrates_observations():
     assert wopr.value == 0.1
     assert wopr.key == "WOPR:OP1"
     # Migration converts RESTART 0 -> start date
-    assert wopr.date == "2010-03-31"
+    assert wopr.date == "2010-03-31T00:00:00"
 
     wopr = next(o for o in observations if getattr(o, "name", None) == "WOPR_OP2_7")
     assert isinstance(wopr, SummaryObservation)
     assert wopr.value == 0.2
     assert wopr.key == "WOPR:OP2"
     # Migration converts RESTART 1 -> second date
-    assert wopr.date == "2015-06-13"
+    assert wopr.date == "2015-06-13T00:00:00"
 
     wpr1 = next(o for o in observations if getattr(o, "name", None) == "WPR_DIFF_1")
     assert isinstance(wpr1, GeneralObservation)
