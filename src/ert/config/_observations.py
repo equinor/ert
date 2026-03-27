@@ -115,8 +115,7 @@ class SummaryObservation(_SummaryValues):
 
         assert date is not None
         # Raise errors if the date is off
-        parsed_date: datetime = _parse_date(date)
-        standardized_date = parsed_date.date().isoformat()
+        standardized_date: str = _parse_date(date).isoformat()
 
         value = float_values["VALUE"]
         input_error = float_values["ERROR"]
