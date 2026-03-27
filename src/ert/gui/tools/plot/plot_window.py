@@ -44,6 +44,7 @@ from .plottery.plots import (
     EverestGradientsPlot,
     GaussianKDEPlot,
     HistogramPlot,
+    MeanPlot,
     MisfitsPlot,
     StatisticsPlot,
     StdDevPlot,
@@ -58,6 +59,7 @@ ENSEMBLE = "Ensemble"
 HISTOGRAM = "Histogram"
 STATISTICS = "Statistics"
 STD_DEV = "Std Dev"
+MEAN = "Mean"
 MISFITS = "Misfits"
 EVEREST_RESPONSES_PLOT = "Batch responses"
 EVEREST_CONTROLS_PLOT = "Batch controls"
@@ -66,6 +68,7 @@ EVEREST_GRADIENTS_PLOT = "Batch Gradients"
 RESPONSE_DEFAULT = 0
 GEN_KW_DEFAULT = 3
 STD_DEV_DEFAULT = 7
+MEAN_DEFAULT = 8
 
 
 logger = logging.getLogger(__name__)
@@ -215,6 +218,7 @@ class PlotWindow(QMainWindow):
                     CROSS_ENSEMBLE_STATISTICS, CrossEnsembleStatisticsPlot()
                 )
                 self.addPlotWidget(STD_DEV, StdDevPlot())
+                self.addPlotWidget(MEAN, MeanPlot())
             else:
                 self.addPlotWidget(ENSEMBLE, EnsemblePlot())
                 self.addPlotWidget(EVEREST_CONTROLS_PLOT, ValuesOverIterationsPlot())
@@ -416,9 +420,14 @@ class PlotWindow(QMainWindow):
 
                 for ensemble in selected_ensembles:
                     try:
-                        std_dev_images[ensemble.name] = self._api.std_dev_for_parameter(
-                            key, ensemble.id, layer
-                        )
+                        if isinstance(plot_widget._plotter, MeanPlot):
+                            std_dev_images[ensemble.name] = (
+                                self._api.mean_for_parameter(key, ensemble.id, layer)
+                            )
+                        else:
+                            std_dev_images[ensemble.name] = (
+                                self._api.std_dev_for_parameter(key, ensemble.id, layer)
+                            )
                     except BaseException as e:
                         handle_exception(e)
             else:
@@ -513,6 +522,7 @@ class PlotWindow(QMainWindow):
         | DistributionPlot
         | CrossEnsembleStatisticsPlot
         | StdDevPlot
+        | MeanPlot
         | MisfitsPlot
         | ValuesOverIterationsPlot
         | EverestGradientsPlot,
