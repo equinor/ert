@@ -24,4 +24,6 @@ class ActiveRealizationsModel(ValueModel):
         self.setValue(mask_to_rangestring(mask))
 
     def getActiveRealizationsMask(self) -> list[bool]:
-        return ActiveRange(rangestring=self.getValue(), length=self.ensemble_size).mask
+        return ActiveRange(
+            rangestring=self.getValue() or "", length=self.ensemble_size
+        ).mask
