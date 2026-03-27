@@ -7,6 +7,7 @@ import queue
 import time
 import traceback
 import uuid
+import warnings
 from base64 import b64decode
 from queue import SimpleQueue
 from typing import Annotated
@@ -27,7 +28,7 @@ from starlette.responses import PlainTextResponse, Response
 from starlette.websockets import WebSocket
 
 from ert.base_model_context import use_runtime_plugins
-from ert.config import QueueSystem
+from ert.config import ConfigWarning, QueueSystem
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.ensemble_evaluator.event import FullSnapshotEvent, SnapshotUpdateEvent
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
@@ -192,7 +193,11 @@ async def start_experiment(
     _check_user(credentials)
     if shared_data.status.status == ExperimentState.pending:
         request_data = await request.json()
-        config = EverestConfig.with_plugins(request_data)
+        # The output of warnings is the task of the user interface, not
+        # of everserver. Therefore we suppress them here:
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=ConfigWarning)
+            config = EverestConfig.with_plugins(request_data)
         runner = ExperimentRunner(config)
         try:
             background_tasks.add_task(runner.run)
@@ -317,11 +322,9 @@ class ExperimentRunner:
             simulation_future = loop.run_in_executor(
                 None,
                 lambda: run_model.start_simulations_thread(
-                    EvaluatorServerConfig(
-                        use_ipc_protocol=run_model.queue_config.queue_system
-                        == QueueSystem.LOCAL,
-                        prioritize_private_ip_address=site_plugins.prioritize_private_ip_address,
-                    )
+                    EvaluatorServerConfig()
+                    if run_model.queue_config.queue_system == QueueSystem.LOCAL
+                    else EvaluatorServerConfig(use_ipc_protocol=False)
                 ),
             )
             while True:
@@ -340,7 +343,7 @@ class ExperimentRunner:
 
                 if isinstance(item, EndEvent):
                     # Wait for subscribers to receive final events
-                    for sub in shared_data.subscribers.values():
+                    for sub in list(shared_data.subscribers.values()):
                         await sub.is_done()
                     break
             await simulation_future

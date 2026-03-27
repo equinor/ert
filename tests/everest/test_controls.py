@@ -20,7 +20,6 @@ def test_that_duplicate_control_group_name_is_invalid(min_config):
     min_config["controls"].append(
         {
             "name": existing_name,
-            "type": "generic_control",
             "perturbation_magnitude": 0.01,
             "variables": [{"name": "var_b", "min": 0, "max": 1, "initial_guess": 0.9}],
         }
@@ -36,7 +35,6 @@ def test_that_duplicate_control_group_names_without_index_is_invalid():
     ):
         ControlConfig(
             name="group",
-            type="generic_control",
             initial_guess=0.5,
             variables=[
                 ControlVariableConfig(name="w00", min=0, max=1),
@@ -53,7 +51,6 @@ def test_that_partial_use_of_index_in_control_variables_is_invalid():
     ):
         ControlConfig(
             name="group",
-            type="generic_control",
             initial_guess=0.5,
             variables=[
                 ControlVariableConfig(name="w00", min=0, max=1),
@@ -68,7 +65,6 @@ def test_that_duplicate_control_variable_name_and_index_is_invalid():
     ):
         ControlConfig(
             name="group",
-            type="generic_control",
             initial_guess=0.5,
             perturbation_magnitude=0.01,
             variables=[
@@ -88,7 +84,6 @@ def test_that_unmatched_weight_name_due_to_missing_index_is_invalid():
             controls=[
                 ControlConfig(
                     name="group",
-                    type="generic_control",
                     initial_guess=0.5,
                     perturbation_magnitude=0.01,
                     variables=[
@@ -115,7 +110,6 @@ def test_that_input_constraint_with_deprecated_indexed_name_format_warns():
             controls=[
                 ControlConfig(
                     name="group",
-                    type="generic_control",
                     initial_guess=0.5,
                     perturbation_magnitude=0.01,
                     variables=[
@@ -140,7 +134,6 @@ def test_that_control_variable_with_initial_guess_below_min_is_invalid():
     with pytest.raises(ValidationError, match="initial_guess"):
         ControlConfig(
             name="my_control",
-            type="well_control",
             perturbation_magnitude=0.01,
             variables=[
                 ControlVariableConfig(name="w00", min=0.5, max=1.0, initial_guess=0.3)
@@ -152,7 +145,6 @@ def test_that_control_variable_with_initial_guess_above_max_is_invalid():
     with pytest.raises(ValidationError, match="initial_guess"):
         ControlConfig(
             name="my_control",
-            type="well_control",
             perturbation_magnitude=0.01,
             variables=[
                 ControlVariableConfig(name="w00", min=0.5, max=1.0, initial_guess=1.3)
@@ -173,18 +165,18 @@ def test_that_control_variable_name_with_too_many_dots_is_invalid(min_config):
 def test_that_control_variable_without_too_many_dots_does_not_raise(min_config):
     weirdo_name = "something/with-symbols_=/()*&%$#!"
     min_config["controls"][0]["variables"][0]["name"] = weirdo_name
-    min_config["wells"] = [{"name": weirdo_name}]
     new_config = EverestConfig.model_validate(min_config)
     EverestConfig.model_validate(new_config.to_dict())
 
 
 def test_that_control_variables_not_matching_any_well_name_is_invalid(min_config):
-    illegal_name = "nowell4sure"
-    min_config["controls"][0]["variables"][0]["name"] = illegal_name
     min_config["controls"][0]["type"] = "well_control"
-    with pytest.raises(
-        ValidationError,
-        match="Variable name does not match any well name",
+    with (
+        pytest.raises(
+            ValidationError,
+            match="Variable name does not match any well name",
+        ),
+        pytest.warns(ConfigWarning, match="The `controls.type` field is deprecated"),
     ):
         everest_config_with_defaults(**(min_config | {"wells": [{"name": "a"}]}))
 
@@ -192,7 +184,6 @@ def test_that_control_variables_not_matching_any_well_name_is_invalid(min_config
 def test_that_controls_ordering_is_the_same_for_ropt_and_everest_control():
     index_wise = ControlConfig(
         name="well_priorities",
-        type="well_control",
         variables=[
             {"name": "WELL-1", "initial_guess": [0.58, 0.54, 0.5, 0.52]},
             {"name": "WELL-2", "initial_guess": [0.5, 0.58, 0.56, 0.54]},
@@ -210,7 +201,6 @@ def test_that_controls_ordering_is_the_same_for_ropt_and_everest_control():
 
     var_wise = ControlConfig(
         name="well_priorities",
-        type="well_control",
         variables=[
             {"name": "WELL-1", "initial_guess": 0.58, "index": 1},
             {"name": "WELL-1", "initial_guess": 0.54, "index": 2},
@@ -245,7 +235,11 @@ def test_that_controls_ordering_is_the_same_for_ropt_and_everest_control():
     ever_config_index_wise = everest_config_with_defaults(controls=[index_wise])
 
     ropt_var_wise = everest2ropt(
-        [c.to_ert_parameter_config() for c in ever_config_var_wise.controls],
+        [
+            ctrl
+            for c in ever_config_var_wise.controls
+            for ctrl in c.to_ert_parameter_config()
+        ],
         ever_config_var_wise.create_ert_objectives_config(),
         ever_config_var_wise.input_constraints,
         ever_config_var_wise.create_ert_output_constraints_config(),
@@ -256,7 +250,11 @@ def test_that_controls_ordering_is_the_same_for_ropt_and_everest_control():
     )
 
     ropt_index_wise = everest2ropt(
-        [c.to_ert_parameter_config() for c in ever_config_index_wise.controls],
+        [
+            ctrl
+            for c in ever_config_index_wise.controls
+            for ctrl in c.to_ert_parameter_config()
+        ],
         ever_config_index_wise.create_ert_objectives_config(),
         ever_config_index_wise.input_constraints,
         ever_config_index_wise.create_ert_output_constraints_config(),
@@ -270,21 +268,18 @@ def test_that_controls_ordering_is_the_same_for_ropt_and_everest_control():
         ropt_var_wise[0]["names"]["variable"] == ropt_index_wise[0]["names"]["variable"]
     )
 
-    assert (
-        ropt_var_wise[0]["names"]["variable"]
-        == index_wise.to_ert_parameter_config().input_keys
-    )
+    assert ropt_var_wise[0]["names"]["variable"] == [
+        ctrl.input_key for ctrl in index_wise.to_ert_parameter_config()
+    ]
 
-    assert (
-        index_wise.to_ert_parameter_config().input_keys
-        == var_wise.to_ert_parameter_config().input_keys
-    )
+    assert [ctrl.input_key for ctrl in index_wise.to_ert_parameter_config()] == [
+        ctrl.input_key for ctrl in var_wise.to_ert_parameter_config()
+    ]
 
 
 def test_that_controls_ordering_disregards_index():
     var_wise = ControlConfig(
         name="well_priorities",
-        type="well_control",
         variables=[
             {"name": "WELL-1", "initial_guess": 0.54, "index": 2},
             {"name": "WELL-1", "initial_guess": 0.58, "index": 1},
@@ -307,7 +302,11 @@ def test_that_controls_ordering_disregards_index():
     ever_config_var_wise = everest_config_with_defaults(controls=[var_wise])
 
     ropt_var_wise = everest2ropt(
-        [c.to_ert_parameter_config() for c in ever_config_var_wise.controls],
+        [
+            ctrl
+            for c in ever_config_var_wise.controls
+            for ctrl in c.to_ert_parameter_config()
+        ],
         ever_config_var_wise.create_ert_objectives_config(),
         ever_config_var_wise.input_constraints,
         ever_config_var_wise.create_ert_output_constraints_config(),
@@ -330,13 +329,12 @@ def test_that_controls_ordering_disregards_index():
     ]
     assert (ropt_var_wise[0]["names"]["variable"]) == expected
 
-    assert var_wise.to_ert_parameter_config().input_keys == expected
+    assert [ctrl.input_key for ctrl in var_wise.to_ert_parameter_config()] == expected
 
 
 def test_that_setting_initial_guess_in_a_list_is_the_same_as_one_per_index():
     controls1 = ControlConfig(
         name="controls",
-        type="generic_control",
         variables=[
             {"name": "var", "initial_guess": [0.1, 0.2, 0.3]},
         ],
@@ -351,7 +349,6 @@ def test_that_setting_initial_guess_in_a_list_is_the_same_as_one_per_index():
 
     controls2 = ControlConfig(
         name="controls",
-        type="generic_control",
         variables=[
             {"name": "var", "initial_guess": 0.1, "index": 1},
             {"name": "var", "initial_guess": 0.2, "index": 2},
@@ -370,7 +367,7 @@ def test_that_setting_initial_guess_in_a_list_is_the_same_as_one_per_index():
     ever_config2 = everest_config_with_defaults(controls=[controls2])
 
     ropt_config1, initial1 = everest2ropt(
-        [c.to_ert_parameter_config() for c in ever_config1.controls],
+        [ctrl for c in ever_config1.controls for ctrl in c.to_ert_parameter_config()],
         ever_config1.create_ert_objectives_config(),
         ever_config1.input_constraints,
         ever_config1.create_ert_output_constraints_config(),
@@ -381,7 +378,7 @@ def test_that_setting_initial_guess_in_a_list_is_the_same_as_one_per_index():
     )
 
     ropt_config2, initial2 = everest2ropt(
-        [c.to_ert_parameter_config() for c in ever_config2.controls],
+        [ctrl for c in ever_config2.controls for ctrl in c.to_ert_parameter_config()],
         ever_config2.create_ert_objectives_config(),
         ever_config2.input_constraints,
         ever_config2.create_ert_output_constraints_config(),
@@ -422,3 +419,11 @@ def get_yaml_examples_from_pydantic_model_field_description(
 def test_controls_documentation_has_valid_examples(yaml_example, min_config):
     partial_config = yaml.safe_load(yaml_example)
     EverestConfig(**(min_config | partial_config))
+
+
+def test_that_control_types_is_deprecated(min_config, monkeypatch, tmp_path):
+    min_config["controls"][0]["type"] = "well_control"
+    min_config["controls"][0]["variables"] = [{"name": "test", "initial_guess": 0.1}]
+    monkeypatch.chdir(tmp_path)
+    with pytest.warns(ConfigWarning, match="The `controls.type` field is deprecated"):
+        EverestConfig(**min_config)

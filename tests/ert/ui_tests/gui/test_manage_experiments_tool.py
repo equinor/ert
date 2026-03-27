@@ -1,9 +1,7 @@
-import datetime
 import shutil
 from pathlib import Path
 
 import numpy as np
-import polars as pl
 import pytest
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
@@ -27,7 +25,11 @@ from ert.gui.tools.manage_experiments.storage_info_widget import (
     _WidgetType,
 )
 from ert.gui.tools.manage_experiments.storage_widget import StorageWidget
-from ert.storage import RealizationStorageState, Storage, open_storage
+from ert.storage import (
+    RealizationStorageState,
+    Storage,
+    open_storage,
+)
 from tests.ert.ui_tests.cli.analysis.test_adaptive_localization import (
     run_cli_ES_with_case,
 )
@@ -54,10 +56,18 @@ def test_design_matrix_in_manage_experiments_panel(
 
     with notifier.write_storage() as storage:
         storage.create_experiment(
-            parameters=list(
-                config.analysis_config.design_matrix.parameter_configurations
-            ),
-            responses=config.ensemble_config.response_configuration,
+            experiment_config={
+                "parameter_configuration": [
+                    pc.model_dump(mode="json")
+                    for pc in (
+                        config.analysis_config.design_matrix.parameter_configurations
+                    )
+                ],
+                "response_configuration": [
+                    rc.model_dump(mode="json")
+                    for rc in config.ensemble_config.response_configuration
+                ],
+            },
             name="my-experiment",
         ).create_ensemble(
             ensemble_size=config.runpath_config.num_realizations,
@@ -122,8 +132,16 @@ def test_init_prior(qtbot):
 
     with notifier.write_storage() as storage:
         ensemble = storage.create_experiment(
-            parameters=config.ensemble_config.parameter_configuration,
-            responses=config.ensemble_config.response_configuration,
+            experiment_config={
+                "parameter_configuration": [
+                    pc.model_dump(mode="json")
+                    for pc in config.ensemble_config.parameter_configuration
+                ],
+                "response_configuration": [
+                    rc.model_dump(mode="json")
+                    for rc in config.ensemble_config.response_configuration
+                ],
+            },
             name="my-experiment",
         ).create_ensemble(
             ensemble_size=config.runpath_config.num_realizations,
@@ -157,12 +175,24 @@ def test_that_init_updates_the_info_tab(qtbot):
     config = ErtConfig.from_file("poly.ert")
     notifier = ErtNotifier()
     notifier.set_storage(config.ens_path)
+    ensemble_config = config.ensemble_config
 
     with notifier.write_storage() as storage:
         ensemble = storage.create_experiment(
-            parameters=config.ensemble_config.parameter_configuration,
-            responses=config.ensemble_config.response_configuration,
-            observations=config.observations,
+            experiment_config={
+                "parameter_configuration": [
+                    pc.model_dump(mode="json")
+                    for pc in ensemble_config.parameter_configuration
+                ],
+                "response_configuration": [
+                    rc.model_dump(mode="json")
+                    for rc in ensemble_config.response_configuration
+                ],
+                "observations": [
+                    od.model_dump(mode="json") for od in config.observation_declarations
+                ],
+                "ert_templates": config.ert_templates,
+            },
             name="my-experiment",
         ).create_ensemble(
             ensemble_size=config.runpath_config.num_realizations, name="default"
@@ -288,24 +318,23 @@ def test_ensemble_view(
 
     ensemble_widget._tab_widget.setCurrentIndex(_EnsembleWidgetTabs.OBSERVATIONS_TAB)
     ensemble_widget._observations_tree_widget.expandAll()
-    assert ensemble_widget._observations_tree_widget.topLevelItemCount() == 3
-    assert ensemble_widget._observations_tree_widget.topLevelItem(0).childCount() == 200
-    assert ensemble_widget._observations_tree_widget.topLevelItem(1).childCount() == 4
-    assert ensemble_widget._observations_tree_widget.topLevelItem(2).childCount() == 6
+    assert ensemble_widget._observations_tree_widget.topLevelItemCount() == 2
+    assert ensemble_widget._observations_tree_widget.topLevelItem(0).childCount() == 4
+    assert ensemble_widget._observations_tree_widget.topLevelItem(1).childCount() == 6
 
     # simulate clicking some different entries in observation list
     ensemble_widget._observations_tree_widget.currentItemChanged.emit(
         ensemble_widget._observations_tree_widget.topLevelItem(0).child(10), None
     )
-    assert ensemble_widget._figure.get_axes()[0].get_title() == "FOPR"
+    assert ensemble_widget._figure.get_axes()[0].get_title() == "WPR_DIFF_1"
 
     ensemble_widget._observations_tree_widget.currentItemChanged.emit(
         ensemble_widget._observations_tree_widget.topLevelItem(1).child(2), None
     )
-    assert ensemble_widget._figure.get_axes()[0].get_title() == "WPR_DIFF_1"
+    assert ensemble_widget._figure.get_axes()[0].get_title() == "WOPR_OP1_72"
 
     ensemble_widget._observations_tree_widget.currentItemChanged.emit(
-        ensemble_widget._observations_tree_widget.topLevelItem(2).child(3), None
+        ensemble_widget._observations_tree_widget.topLevelItem(1).child(3), None
     )
     assert ensemble_widget._figure.get_axes()[0].get_title() == "WOPR_OP1_108"
 
@@ -450,25 +479,25 @@ def test_ensemble_observations_view_on_empty_ensemble(qtbot):
 
     with notifier.write_storage() as storage:
         notifier.set_storage(str(storage.path))
-        storage.create_experiment(
-            responses=[SummaryConfig(keys=["*"])],
-            observations={
-                "summary": pl.DataFrame(
-                    pl.DataFrame(
-                        {
-                            "response_key": ["FOPR"],
-                            "observation_key": ["O4"],
-                            "time": pl.Series(
-                                [datetime.datetime(2000, 1, 1)],
-                                dtype=pl.Datetime("ms"),
-                            ),
-                            "observations": pl.Series([10.2], dtype=pl.Float32),
-                            "std": pl.Series([0.1], dtype=pl.Float32),
-                        }
-                    )
-                ),
-            },
-        ).create_ensemble(
+        exp = storage.create_experiment(
+            experiment_config={
+                "response_configuration": [
+                    SummaryConfig(keys=["*"]).model_dump(mode="json")
+                ],
+                "observations": [
+                    {
+                        "type": "summary_observation",
+                        "name": "O4",
+                        "key": "FOPR",
+                        "date": "2000-01-01",
+                        "value": 10.2,
+                        "error": 0.1,
+                    }
+                ],
+            }
+        )
+
+        exp.create_ensemble(
             name="test", ensemble_size=config.runpath_config.num_realizations
         )
 
@@ -597,6 +626,64 @@ def test_that_parameters_pane_is_populated_correctly(
 
     triggers = parameters_frame.findChild(QTableWidget).editTriggers()
     assert triggers == QAbstractItemView.EditTrigger.NoEditTriggers
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_sub_tab_persists_when_switching_ensembles(qtbot):
+    config = ErtConfig.from_file("poly.ert")
+    notifier = ErtNotifier()
+    notifier.set_storage(config.ens_path)
+
+    with notifier.write_storage() as storage:
+        exp = storage.create_experiment(
+            experiment_config={
+                "parameter_configuration": [
+                    pc.model_dump(mode="json")
+                    for pc in config.ensemble_config.parameter_configuration
+                ],
+                "response_configuration": [
+                    rc.model_dump(mode="json")
+                    for rc in config.ensemble_config.response_configuration
+                ],
+            },
+            name="my-experiment",
+        )
+        exp.create_ensemble(
+            ensemble_size=config.runpath_config.num_realizations, name="prior"
+        )
+        exp.create_ensemble(
+            ensemble_size=config.runpath_config.num_realizations, name="posterior"
+        )
+
+    tool = ManageExperimentsPanel(
+        config, notifier, config.runpath_config.num_realizations
+    )
+
+    storage_widget = tool.findChild(StorageWidget)
+    storage_widget._tree_view.expandAll()
+    experiment_index = storage_widget._tree_view.model().index(0, 0)
+
+    # Select first ensemble
+    first_ensemble_index = storage_widget._tree_view.model().index(
+        0, 0, experiment_index
+    )
+    storage_widget._tree_view.setCurrentIndex(first_ensemble_index)
+
+    ensemble_widget = tool._storage_info_widget._content_layout.currentWidget()
+    assert isinstance(ensemble_widget, _EnsembleWidget)
+
+    # Switch to STATE_TAB
+    ensemble_widget._tab_widget.setCurrentIndex(_EnsembleWidgetTabs.STATE_TAB)
+    assert ensemble_widget._tab_widget.currentIndex() == _EnsembleWidgetTabs.STATE_TAB
+
+    # Select second ensemble
+    second_ensemble_index = storage_widget._tree_view.model().index(
+        1, 0, experiment_index
+    )
+    storage_widget._tree_view.setCurrentIndex(second_ensemble_index)
+
+    # Tab should remain on STATE_TAB, not reset to ENSEMBLE_TAB
+    assert ensemble_widget._tab_widget.currentIndex() == _EnsembleWidgetTabs.STATE_TAB
 
 
 def test_that_export_parameters_button_opens_the_export_dialog(

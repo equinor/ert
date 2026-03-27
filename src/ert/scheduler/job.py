@@ -33,7 +33,7 @@ from ert.storage import (
     load_realization_parameters_and_responses,
 )
 from ert.trace import trace
-from ert.warnings import PostSimulationWarning
+from ert.warnings import PostExperimentWarning
 
 from .driver import Driver, FailedSubmit
 
@@ -82,8 +82,8 @@ class Job:
         self._scheduler: Scheduler = scheduler
         self._message: str = ""
         self._requested_max_submit: int | None = None
-        self._start_time: float | None = None
-        self._end_time: float | None = None
+        self._start_time_monotonic: float | None = None
+        self._end_time_monotonic: float | None = None
         self._remaining_file_verification_time = self.DEFAULT_FILE_VERIFICATION_TIMEOUT
         self._previous_file_verification_time = self._remaining_file_verification_time
         self._started_killing_by_evaluator: bool = False
@@ -123,10 +123,10 @@ class Job:
 
     @property
     def running_duration(self) -> float:
-        if self._start_time:
-            if self._end_time:
-                return self._end_time - self._start_time
-            return time.time() - self._start_time
+        if self._start_time_monotonic:
+            if self._end_time_monotonic:
+                return self._end_time_monotonic - self._start_time_monotonic
+            return time.monotonic() - self._start_time_monotonic
         return 0
 
     async def _submit_and_run_once(self, sem: asyncio.BoundedSemaphore) -> None:
@@ -138,7 +138,7 @@ class Job:
             if self._scheduler.submit_sleep_state:
                 await self._scheduler.submit_sleep_state.sleep_until_we_can_submit()
             await self._send(JobState.SUBMITTING)
-            self.submit_time = time.time()
+            self.submit_time = time.monotonic()
             try:
                 submit_task = asyncio.create_task(
                     self.driver.submit(
@@ -160,8 +160,8 @@ class Job:
 
             await self._send(JobState.PENDING)
             await self.started.wait()
-            self._start_time = time.time()
-            pending_time = self._start_time - self.submit_time
+            self._start_time_monotonic = time.monotonic()
+            pending_time = self._start_time_monotonic - self.submit_time
             logger.info(
                 f"Pending time for realization {self.iens} "
                 f"was {pending_time:.2f} seconds "
@@ -438,7 +438,7 @@ class Job:
                 await self._handle_aborted()
             case JobState.COMPLETED:
                 event = RealizationSuccess(real=str(self.iens))
-                self._end_time = time.time()
+                self._end_time_monotonic = time.monotonic()
                 await self._scheduler.completed_jobs.put(self.iens)
             case default:
                 assert_never(default)
@@ -482,6 +482,7 @@ async def log_warnings_from_forward_model(
     real: Realization,
     job_submission_time: float,
     timeout_seconds: int = Job.DEFAULT_FILE_VERIFICATION_TIMEOUT,
+    max_logged_warnings: int = 200,
 ) -> int:
     """Parse all stdout and stderr files from running the forward model
     for anything that looks like a Warning, and log it.
@@ -513,11 +514,19 @@ async def log_warnings_from_forward_model(
         )
 
     async def log_warnings_from_file(
-        file: Path, iens: int, step: ForwardModelStep, step_idx: int, filetype: str
-    ) -> None:
+        file: Path,
+        iens: int,
+        step: ForwardModelStep,
+        step_idx: int,
+        filetype: str,
+        max_warnings_to_log: int,
+    ) -> int:
+        """Returns how many times a warning was logged"""
         captured: list[str] = []
         file_text = await anyio.Path(file).read_text(encoding="utf-8")
         for line in file_text.splitlines():
+            if len(captured) >= max_warnings_to_log:
+                break
             if line_contains_warning(line):
                 captured.append(line[:max_length])
 
@@ -526,8 +535,9 @@ async def log_warnings_from_forward_model(
                 f"Realization {iens} step {step.name}.{step_idx} "
                 f"warned {counter} time(s) in {filetype}: {line}"
             )
-            warnings.warn(warning_msg, PostSimulationWarning, stacklevel=2)
+            warnings.warn(warning_msg, PostExperimentWarning, stacklevel=2)
             logger.warning(warning_msg)
+        return len(captured)
 
     async def wait_for_file(file_path: Path, _timeout: int) -> int:
         if _timeout <= 0:
@@ -546,6 +556,7 @@ async def log_warnings_from_forward_model(
                 break
         return remaining_timeout
 
+    log_count = 0
     with suppress(KeyError):
         runpath = Path(real.run_arg.runpath)
         for step_idx, step in enumerate(real.fm_steps):
@@ -560,9 +571,18 @@ async def log_warnings_from_forward_model(
                     if timeout_seconds <= 0:
                         break
 
-                    await log_warnings_from_file(
-                        std_path, real.iens, step, step_idx, file_type
+                    log_count += await log_warnings_from_file(
+                        std_path,
+                        real.iens,
+                        step,
+                        step_idx,
+                        file_type,
+                        max_logged_warnings - log_count,
                     )
             if timeout_seconds <= 0:
                 break
+    if log_count >= max_logged_warnings:
+        logger.warning(
+            "Reached maximum number of forward model step warnings to extract"
+        )
     return timeout_seconds

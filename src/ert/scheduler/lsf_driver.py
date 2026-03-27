@@ -4,6 +4,7 @@ import asyncio
 import itertools
 import json
 import logging
+import os
 import re
 import shlex
 import shutil
@@ -263,6 +264,7 @@ class LsfDriver(Driver):
         bhist_cmd: str | None = None,
         activate_script: str = "",
         poll_period: float = _POLL_PERIOD,
+        max_runtime: int | None = None,
     ) -> None:
         super().__init__(activate_script)
         self._queue_name = queue_name
@@ -271,10 +273,22 @@ class LsfDriver(Driver):
         self._exclude_hosts = [
             host.strip() for host in (exclude_hosts.split(",") if exclude_hosts else [])
         ]
+        self._max_runtime = (
+            str((max_runtime + Driver._MAX_RUNTIME_QUEUE_SYSTEM_PADDING_SECONDS) // 60)
+            if (max_runtime is not None and max_runtime > 0)
+            else None
+        )
 
         self._bsub_cmd = Path(bsub_cmd or shutil.which("bsub") or "bsub")
         self._bjobs_cmd = Path(bjobs_cmd or shutil.which("bjobs") or "bjobs")
         self._bkill_cmd = Path(bkill_cmd or shutil.which("bkill") or "bkill")
+
+        if not shutil.which(self._bsub_cmd):
+            logger.error(
+                "No bsub command found in PATH, "
+                f"job submissions are likely to fail, PATH={os.getenv('PATH')}, "
+                f"bsub_cmd={self._bsub_cmd}"
+            )
 
         self._jobs: MutableMapping[str, JobData] = {}
         self._iens2jobid: MutableMapping[int, str] = {}
@@ -310,6 +324,8 @@ class LsfDriver(Driver):
 
         arg_queue_name = ["-q", self._queue_name] if self._queue_name else []
         arg_project_code = ["-P", self._project_code] if self._project_code else []
+        arg_max_runtime = ["-W", self._max_runtime] if self._max_runtime else []
+
         script = create_submit_script(runpath, executable, args, self.activate_script)
         script_path: Path | None = None
         try:
@@ -335,6 +351,7 @@ class LsfDriver(Driver):
             str(self._bsub_cmd),
             *arg_queue_name,
             *arg_project_code,
+            *arg_max_runtime,
             "-o",
             str(runpath / (name + ".LSF-stdout")),
             "-e",
@@ -506,7 +523,7 @@ class LsfDriver(Driver):
                     "bhist did not give status for job_ids "
                     f"{missing_in_bhist_and_bjobs}, giving up for now."
                 )
-            self._last_successful_poll = time.time()
+            self._last_successful_poll_monotonic = time.monotonic()
             await asyncio.sleep(self._poll_period)
 
     async def _process_job_update(self, job_id: str, new_state: AnyJob) -> None:

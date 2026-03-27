@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import Counter, defaultdict
 
 from typing_extensions import TypedDict
 
@@ -24,7 +24,10 @@ class ErtSummary:
         for config in self.ert_config.parameter_configurations_with_design_matrix:
             match config:
                 case GenKwConfig(name=key):
-                    genkw_groups[config.group_name] += 1
+                    if config.group_name:
+                        genkw_groups[config.group_name] += 1
+                    else:
+                        genkw_groups["gen_kw"] += 1
                     count += 1
                 case Field(name=key, nx=nx, ny=ny, nz=nz):
                     parameters.append(f"{key} ({nx}, {ny}, {nz})")
@@ -38,8 +41,22 @@ class ErtSummary:
         return sorted(parameters, key=lambda k: k.lower()), count
 
     def getObservations(self) -> list[ObservationCount]:
-        counts: list[ObservationCount] = []
-        for df in self.ert_config.observations.values():
-            counts.extend(df.group_by("observation_key").len(name="count").to_dicts())  # type: ignore
+        name_to_types = defaultdict(set)
+        for obs in self.ert_config.observation_declarations:
+            name_to_types[obs.name].add(obs.type)
 
-        return sorted(counts, key=lambda k: k["observation_key"].lower())
+        multi_type_names = {
+            name for name, types in name_to_types.items() if len(types) > 1
+        }
+
+        keys = (
+            f"{obs.name}[{obs.type}]" if obs.name in multi_type_names else obs.name
+            for obs in self.ert_config.observation_declarations
+        )
+        counts = Counter(keys)
+
+        counts_list = [
+            ObservationCount({"observation_key": key, "count": count})
+            for key, count in counts.items()
+        ]
+        return sorted(counts_list, key=lambda k: k["observation_key"].lower())

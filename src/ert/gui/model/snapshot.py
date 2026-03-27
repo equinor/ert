@@ -15,7 +15,7 @@ from ert.ensemble_evaluator.snapshot import (
     EnsembleSnapshotMetadata,
     convert_iso8601_to_datetime,
 )
-from ert.gui import is_dark_mode
+from ert.gui.detect_mode import is_dark_mode
 from ert.gui.model.node import (
     ForwardModelStepNode,
     IterNode,

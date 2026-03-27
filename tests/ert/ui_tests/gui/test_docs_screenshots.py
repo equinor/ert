@@ -1,5 +1,6 @@
 import os.path
 import shutil
+from enum import StrEnum
 from pathlib import Path
 from textwrap import dedent
 
@@ -10,20 +11,17 @@ from skimage import io, transform
 from skimage.metrics import structural_similarity as ssim
 
 from ert.gui.ertwidgets import CopyableLabel
-from ert.gui.simulation.experiment_panel import ExperimentPanel
-from ert.gui.simulation.run_dialog import RunDialog
-from ert.gui.simulation.single_test_run_panel import SingleTestRunPanel
-from ert.gui.simulation.view import RealizationWidget
-from ert.gui.simulation.view.disk_space_widget import DiskSpaceWidget
+from ert.gui.experiments import ExperimentPanel, RunDialog
+from ert.gui.experiments.single_test_run_panel import SingleTestRunPanel
+from ert.gui.experiments.view import RealizationWidget
+from ert.gui.experiments.view.disk_space_widget import DiskSpaceWidget
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
 from ert.gui.tools.plot.plot_ensemble_selection_widget import EnsembleSelectionWidget
 from ert.run_models import EnsembleExperiment, EnsembleSmoother
-from ert.services import ErtServer
+from ert.services import ErtServerController
 from ert.storage import open_storage
+from tests.ert.handle_run_path_dialog import handle_run_path_dialog
 from tests.ert.ui_tests.gui.conftest import open_gui_with_config
-from tests.ert.unit_tests.gui.simulation.test_run_path_dialog import (
-    handle_run_path_dialog,
-)
 
 from .conftest import get_child, wait_for_child
 
@@ -37,6 +35,27 @@ from .conftest import get_child, wait_for_child
 # they are listed as not applicable
 PNGS_NOT_APPLICABLE_FOR_GENERATION = [
     "docs/ert/theory/images/posterior_path.png",
+    "docs/ert/theory/images/intro_adaptive_localization.png",
+    "docs/ert/theory/images/intro_assisted_history_matching.png",
+    "docs/ert/theory/images/intro_corr_p_5_N_50.png",
+    "docs/ert/theory/images/intro_cross_covariance.png",
+    "docs/ert/theory/images/intro_distance_based_localization.png",
+    "docs/ert/theory/images/intro_distance_based_localization_2.png",
+    "docs/ert/theory/images/intro_es_equation.png",
+    "docs/ert/theory/images/intro_esmda.png",
+    "docs/ert/theory/images/intro_ies.png",
+    "docs/ert/theory/images/intro_intro.png",
+    "docs/ert/theory/images/intro_manual_history_matching.png",
+    "docs/ert/theory/images/intro_obs_error_covariance.png",
+    "docs/ert/theory/images/intro_parameter_matrix.png",
+    "docs/ert/theory/images/intro_perturbed_observations.png",
+    "docs/ert/theory/images/intro_response_covariance.png",
+    "docs/ert/theory/images/intro_response_matrix.png",
+    "docs/ert/theory/images/intro_result_of_updating.png",
+    "docs/ert/theory/images/intro_spurious_correlations.png",
+    "docs/ert/theory/images/intro_tiny_reservoir.png",
+    "docs/ert/theory/images/intro_uncertainty.png",
+    "docs/ert/theory/images/intro_updating.png",
     "docs/ert/about/v9_auto_scale.png",
     "docs/ert/about/v10_manage_experiments.png",
     "docs/ert/about/log_scale_button.png",
@@ -107,6 +126,19 @@ POLY_PLOT_PNG_THRESHOLD = 0.999
 SIMULATIONS_PNG_THRESHOLD = 0.999
 
 
+class ExampleFolders(StrEnum):
+    MINIMAL = "minimal"
+    WITH_SIMPLE_SCRIPT = "with_simple_script"
+    WITH_RESULTS = "with_results"
+    WITH_OBSERVATIONS = "with_observations"
+    WITH_MORE_OBSERVATIONS = "with_more_observations"
+
+    @classmethod
+    def path(cls, example_folder):
+        base = "docs/ert/getting_started/configuration/poly_new"
+        return os.path.join(base, example_folder)
+
+
 def run_experiment(qtbot, experiment_mode, gui, click_done=True):
     # Select correct experiment in the simulation panel
     experiment_panel = get_child(gui, ExperimentPanel)
@@ -132,7 +164,7 @@ def run_experiment(qtbot, experiment_mode, gui, click_done=True):
         # The Run dialog opens, click show details and wait until done appears
         # then click it
         run_dialog = wait_for_child(gui, qtbot, RunDialog, timeout=10000)
-        qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=600000)
+        qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=600000)
         qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
         # Assert that the number of boxes in the detailed view is
@@ -252,9 +284,14 @@ def clean_up_diplayed_runpath(gui: QWidget):
     runpath_label.label.setText(label_text.replace(current_directory, "&lt;cwd&gt;"))
 
 
-def open_gui_with_docs_example(
-    tmp_path, source_root, example_folder, config_file, random_seed=None
-):
+@pytest.fixture
+def open_gui_with_docs_example(monkeypatch, tmp_path, source_root, request):
+    example_folder = request.param.get("example_folder")
+    config_file = request.param.get("config_file")
+    random_seed = request.param.get("random_seed")
+
+    monkeypatch.chdir(tmp_path)
+
     def ignore_pngs(src, files):
         return [f for f in files if f.endswith(".png")]
 
@@ -274,39 +311,46 @@ def open_gui_with_docs_example(
 
         Path(config_file).write_text(combined_content, encoding="utf-8")
 
-    gui_generator = open_gui_with_config(tmp_path / config_file)
-    return next(gui_generator)
+    with open_gui_with_config(tmp_path / config_file) as gui:
+        yield gui
 
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 @pytest.mark.skip_mac_ci
+@pytest.mark.parametrize(
+    "open_gui_with_docs_example",
+    [
+        {
+            "example_folder": ExampleFolders.path(ExampleFolders.MINIMAL),
+            "config_file": "poly.ert",
+        }
+    ],
+    indirect=True,
+)
 def test_that_poly_new_minimal_screenshots_are_up_to_date(
-    tmp_path,
-    monkeypatch,
-    qtbot,
-    source_root,
-    mocker,
+    monkeypatch, qtbot, source_root, mocker, open_gui_with_docs_example
 ):
-    monkeypatch.chdir(tmp_path)
-
     # Set static values for disk space to not trigger false gui change detection
     monkeypatch.setattr(DiskSpaceWidget, "_get_status", lambda self: (50, "100 GB"))
     mocker.patch(
-        "ert.gui.simulation.run_dialog.get_mount_directory", return_value=Path("/")
+        "ert.gui.experiments.run_dialog.get_mount_directory", return_value=Path("/")
     )
 
-    example_folder = "docs/ert/getting_started/configuration/poly_new/minimal"
-    gui = open_gui_with_docs_example(tmp_path, source_root, example_folder, "poly.ert")
+    example_folder = ExampleFolders.path(ExampleFolders.MINIMAL)
+    gui = open_gui_with_docs_example
 
     gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
     gui_evaluator.compare_img_with_gui("ert.png", ERT_PNG_THRESHOLD)
 
     run_experiment(qtbot, EnsembleExperiment, gui)
 
-    # Set static values for running time to not trigger false gui change detection
+    # Set static values for dynamic labels to not trigger false gui change detection
     run_dialog = get_child(gui, RunDialog)
-    run_dialog._run_model_api.get_runtime = lambda: 2
     run_dialog._on_ticker()
+    run_dialog._experiment_name_label.setText(
+        "Ensemble experiment : 2026-01-01T00:00:00+00:00"
+    )
+    run_dialog.running_time.setText("Running time:\n2 seconds")
 
     gui_evaluator.compare_img_with_gui("simulations.png", SIMULATIONS_PNG_THRESHOLD)
 
@@ -314,19 +358,21 @@ def test_that_poly_new_minimal_screenshots_are_up_to_date(
 
 
 @pytest.mark.skip_mac_ci
+@pytest.mark.parametrize(
+    "open_gui_with_docs_example",
+    [
+        {
+            "example_folder": ExampleFolders.path(ExampleFolders.WITH_SIMPLE_SCRIPT),
+            "config_file": "poly.ert",
+        }
+    ],
+    indirect=True,
+)
 def test_that_poly_new_with_simple_script_screenshots_are_up_to_date(
-    tmp_path,
-    monkeypatch,
-    qtbot,
-    source_root,
+    qtbot, source_root, open_gui_with_docs_example
 ):
-    monkeypatch.chdir(tmp_path)
-
-    example_folder = (
-        "docs/ert/getting_started/configuration/poly_new/with_simple_script"
-    )
-
-    gui = open_gui_with_docs_example(tmp_path, source_root, example_folder, "poly.ert")
+    example_folder = ExampleFolders.path(ExampleFolders.WITH_SIMPLE_SCRIPT)
+    gui = open_gui_with_docs_example
 
     clean_up_diplayed_runpath(gui)
 
@@ -337,25 +383,29 @@ def test_that_poly_new_with_simple_script_screenshots_are_up_to_date(
 
 
 @pytest.mark.skip_mac_ci
+@pytest.mark.parametrize(
+    "open_gui_with_docs_example",
+    [
+        {
+            "example_folder": ExampleFolders.path(ExampleFolders.WITH_RESULTS),
+            "config_file": "poly.ert",
+            "random_seed": FIXED_RANDOM_SEED,
+        }
+    ],
+    indirect=True,
+)
 def test_that_poly_new_with_results_screenshots_are_up_to_date(
-    tmp_path,
-    monkeypatch,
-    qtbot,
-    source_root,
+    qtbot, source_root, open_gui_with_docs_example
 ):
-    monkeypatch.chdir(tmp_path)
+    example_folder = ExampleFolders.path(ExampleFolders.WITH_RESULTS)
 
-    example_folder = "docs/ert/getting_started/configuration/poly_new/with_results"
-
-    gui = open_gui_with_docs_example(
-        tmp_path, source_root, example_folder, "poly.ert", FIXED_RANDOM_SEED
-    )
+    gui = open_gui_with_docs_example
 
     run_experiment(qtbot, EnsembleExperiment, gui)
     open_storage(gui.ert_config.ens_path, mode="w")
     gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
 
-    with ErtServer.init_service(
+    with ErtServerController.init_service(
         project=os.path.abspath(gui.ert_config.ens_path),
     ):
         button_plot_tool = get_child(gui, QToolButton, name="button_Create_plot")
@@ -372,25 +422,29 @@ def test_that_poly_new_with_results_screenshots_are_up_to_date(
 
 
 @pytest.mark.skip_mac_ci
+@pytest.mark.parametrize(
+    "open_gui_with_docs_example",
+    [
+        {
+            "example_folder": ExampleFolders.path(ExampleFolders.WITH_OBSERVATIONS),
+            "config_file": "poly_final.ert",
+            "random_seed": FIXED_RANDOM_SEED,
+        }
+    ],
+    indirect=True,
+)
 def test_that_poly_new_with_observations_screenshots_are_up_to_date(
-    tmp_path,
-    monkeypatch,
-    qtbot,
-    source_root,
+    qtbot, source_root, open_gui_with_docs_example
 ):
-    monkeypatch.chdir(tmp_path)
+    example_folder = ExampleFolders.path(ExampleFolders.WITH_OBSERVATIONS)
 
-    example_folder = "docs/ert/getting_started/configuration/poly_new/with_observations"
-
-    gui = open_gui_with_docs_example(
-        tmp_path, source_root, example_folder, "poly_final.ert", FIXED_RANDOM_SEED
-    )
+    gui = open_gui_with_docs_example
 
     run_experiment(qtbot, EnsembleSmoother, gui)
     open_storage(gui.ert_config.ens_path, mode="w")
     gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
 
-    with ErtServer.init_service(
+    with ErtServerController.init_service(
         project=os.path.abspath(gui.ert_config.ens_path),
     ):
         button_plot_tool = get_child(gui, QToolButton, name="button_Create_plot")
@@ -422,27 +476,31 @@ def test_that_poly_new_with_observations_screenshots_are_up_to_date(
 
 
 @pytest.mark.skip_mac_ci
+@pytest.mark.parametrize(
+    "open_gui_with_docs_example",
+    [
+        {
+            "example_folder": ExampleFolders.path(
+                ExampleFolders.WITH_MORE_OBSERVATIONS
+            ),
+            "config_file": "poly_final.ert",
+            "random_seed": FIXED_RANDOM_SEED,
+        }
+    ],
+    indirect=True,
+)
 def test_that_poly_new_with_more_observations_screenshots_are_up_to_date(
-    tmp_path,
-    monkeypatch,
-    qtbot,
-    source_root,
+    qtbot, source_root, open_gui_with_docs_example
 ):
-    monkeypatch.chdir(tmp_path)
+    example_folder = ExampleFolders.path(ExampleFolders.WITH_MORE_OBSERVATIONS)
 
-    example_folder = (
-        "docs/ert/getting_started/configuration/poly_new/with_more_observations"
-    )
-
-    gui = open_gui_with_docs_example(
-        tmp_path, source_root, example_folder, "poly_final.ert", FIXED_RANDOM_SEED
-    )
+    gui = open_gui_with_docs_example
 
     run_experiment(qtbot, EnsembleSmoother, gui)
     open_storage(gui.ert_config.ens_path, mode="w")
     gui_evaluator = GuiEvaluator(source_root, example_folder, gui, qtbot)
 
-    with ErtServer.init_service(
+    with ErtServerController.init_service(
         project=os.path.abspath(gui.ert_config.ens_path),
     ):
         button_plot_tool = get_child(gui, QToolButton, name="button_Create_plot")

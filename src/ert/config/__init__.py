@@ -1,3 +1,4 @@
+from ._observations import Observation
 from .analysis_config import (
     AnalysisConfig,
     ObservationGroups,
@@ -5,7 +6,9 @@ from .analysis_config import (
     OutlierSettings,
 )
 from .analysis_module import AnalysisModule, ESSettings, InversionTypeES
+from .breakthrough_config import BreakthroughConfig
 from .capture_validation import capture_validation
+from .derived_response_config import DerivedResponseConfig
 from .design_matrix import DesignMatrix
 from .ensemble_config import EnsembleConfig
 from .ert_config import ErtConfig, forward_model_step_from_config_contents
@@ -28,6 +31,7 @@ from .forward_model_step import (
 )
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import DataSource, GenKwConfig, PriorDict
+from .known_derived_response_types import KnownDerivedResponseTypes
 from .known_response_types import KnownResponseTypes
 from .lint_file import lint_file
 from .model_config import ModelConfig
@@ -47,7 +51,7 @@ from .queue_config import (
     LocalQueueOptions,
     QueueConfig,
 )
-from .response_config import InvalidResponseFile, ResponseConfig, ResponseMetadata
+from .response_config import InvalidResponseFile, ResponseConfig
 from .rft_config import RFTConfig
 from .summary_config import SummaryConfig
 from .surface_config import SurfaceConfig
@@ -78,9 +82,11 @@ __all__ = [
     "AnalysisConfig",
     "AnalysisModule",
     "BaseErtScriptWorkflow",
+    "BreakthroughConfig",
     "ConfigValidationError",
     "ConfigWarning",
     "DataSource",
+    "DerivedResponseConfig",
     "DesignMatrix",
     "ESSettings",
     "EnsembleConfig",
@@ -107,12 +113,14 @@ __all__ = [
     "HookedWorkflowFixtures",
     "InvalidResponseFile",
     "InversionTypeES",
+    "KnownDerivedResponseTypes",
     "KnownQueueOptions",
     "KnownQueueOptionsAdapter",
     "KnownResponseTypes",
     "LegacyWorkflowConfigs",
     "LocalQueueOptions",
     "ModelConfig",
+    "Observation",
     "ObservationGroups",
     "ObservationSettings",
     "ObservationType",
@@ -131,7 +139,6 @@ __all__ = [
     "QueueSystem",
     "RFTConfig",
     "ResponseConfig",
-    "ResponseMetadata",
     "SamplerConfig",
     "SiteInstalledForwardModelStep",
     "SiteOrUserForwardModelStep",

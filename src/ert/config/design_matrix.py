@@ -7,7 +7,10 @@ from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import polars as pl
+from fastexcel import CalamineError
 from polars.exceptions import InvalidOperationError
+
+from ert.config.parsing.config_errors import ConfigWarning
 
 from .distribution import RawSettings
 from .gen_kw_config import DataSource, GenKwConfig
@@ -99,16 +102,6 @@ class DesignMatrix:
 
     def merge_with_other(self, dm_other: DesignMatrix) -> None:
         errors = []
-        if self.active_realizations != dm_other.active_realizations:
-            errors.append(
-                ErrorInfo(
-                    f"Design Matrices '{self.xls_filename.name} ({self.design_sheet} "
-                    f"{self.default_sheet or ''})' and '{dm_other.xls_filename.name} "
-                    f"({dm_other.design_sheet} {dm_other.default_sheet or ''})' do not "
-                    "have the same active realizations!"
-                )
-            )
-
         common_keys = set(
             self.design_matrix_df.select(pl.exclude("realization")).columns
         ) & set(dm_other.design_matrix_df.columns)
@@ -123,17 +116,40 @@ class DesignMatrix:
                     f"{common_keys}!"
                 )
             )
-
+        if self.active_realizations != dm_other.active_realizations:
+            real_intersection = [
+                real_a and real_b
+                for real_a, real_b in zip(
+                    self.active_realizations, dm_other.active_realizations, strict=False
+                )
+            ]
+            if not any(real_intersection):
+                errors.append(
+                    ErrorInfo(
+                        f"Design Matrices '{self.xls_filename.name} "
+                        f"({self.design_sheet} {self.default_sheet or ''})' and "
+                        f"'{dm_other.xls_filename.name} "
+                        f"({dm_other.design_sheet} {dm_other.default_sheet or ''})' "
+                        "do not have any active realizations in common!"
+                    )
+                )
+            else:
+                ConfigWarning.warn(
+                    f"Design Matrices '{self.xls_filename.name} ({self.design_sheet} "
+                    f"{self.default_sheet or ''})' and '{dm_other.xls_filename.name} "
+                    f"({dm_other.design_sheet} {dm_other.default_sheet or ''})' "
+                    "do not have the same active realizations. The merged design "
+                    "matrix will only contain the realizations that are active "
+                    "in all instances."
+                )
         if errors:
             raise ConfigValidationError.from_collected(errors)
 
         try:
-            self.design_matrix_df = pl.concat(
-                [
-                    self.design_matrix_df,
-                    dm_other.design_matrix_df.select(pl.exclude(["realization"])),
-                ],
-                how="horizontal",
+            self.design_matrix_df = self.design_matrix_df.join(
+                dm_other.design_matrix_df,
+                on="realization",
+                how="inner",
             )
         except ValueError as exc:
             raise ConfigValidationError(
@@ -143,6 +159,9 @@ class DesignMatrix:
                 f" and '{dm_other.xls_filename.name} ({dm_other.design_sheet} "
                 f"{dm_other.default_sheet or ''})': {exc}!"
             ) from exc
+
+        reals = self.design_matrix_df.get_column("realization").to_list()
+        self.active_realizations = [x in reals for x in range(max(reals) + 1)]
 
         self.parameter_configurations.extend(
             cfg
@@ -223,6 +242,10 @@ class DesignMatrix:
             )
         except pl.exceptions.NoDataError as err:
             raise ValueError("Design sheet headers are empty.") from err
+        except CalamineError as err:
+            raise ValueError(
+                "File could not be loaded. It seems to be either invalid or corrupted."
+            ) from err
         design_matrix_df = (
             pl.read_excel(
                 self.xls_filename,
@@ -239,6 +262,25 @@ class DesignMatrix:
         )
         if design_matrix_df.is_empty():
             raise ValueError("Design sheet body is empty.")
+
+        # Design matrix does not support datetime columns,
+        # so we convert them to strings and warn the user.
+        datetime_cols = design_matrix_df.select(pl.col(pl.Date, pl.Datetime)).columns
+        if len(datetime_cols) > 0:
+            datetime_col_indices = [
+                design_matrix_df.columns.index(col) for col in datetime_cols
+            ]
+            affected_param_names = [param_names[i] for i in datetime_col_indices]
+            ConfigWarning.warn(
+                "The design matrix contains date/datetime columns which are not "
+                "supported and will be converted to strings for internal use. "
+                "The following columns will be converted to strings: "
+                f"{', '.join(map(str, affected_param_names))}."
+            )
+            design_matrix_df = design_matrix_df.with_columns(
+                pl.col(pl.Date, pl.Datetime).cast(pl.String)
+            )
+
         string_cols = [
             col for col, dtype in design_matrix_df.schema.items() if dtype == pl.String
         ]

@@ -1,31 +1,15 @@
 from __future__ import annotations
 
-import functools
 import logging
 import re
-import time
 import warnings
-from collections.abc import Callable, Iterable, Sequence
-from typing import (
-    TYPE_CHECKING,
-    Generic,
-    Self,
-    TextIO,
-    TypeVar,
-)
+from collections.abc import Callable, Iterable, Mapping
+from typing import TYPE_CHECKING, TextIO
 
-import iterative_ensemble_smoother as ies
 import numpy as np
 import polars as pl
-import psutil
-import scipy
-from iterative_ensemble_smoother.experimental import AdaptiveESMDA
 
-from ert.config import (
-    ESSettings,
-    GenKwConfig,
-    ObservationSettings,
-)
+from ert.config import ESSettings, Field, ObservationSettings, SurfaceConfig
 
 from ._update_commons import (
     ErtAnalysisError,
@@ -34,171 +18,107 @@ from ._update_commons import (
     _preprocess_observations_and_responses,
     noop_progress_callback,
 )
+from ._update_strategies import (
+    AdaptiveLocalizationUpdate,
+    DistanceLocalizationUpdate,
+    ObservationContext,
+    ObservationLocations,
+    StandardESUpdate,
+    UpdateStrategy,
+)
 from .event import (
     AnalysisCompleteEvent,
     AnalysisErrorEvent,
     AnalysisEvent,
     AnalysisStatusEvent,
-    AnalysisTimeEvent,
     DataSection,
 )
-from .snapshots import (
-    ObservationStatus,
-    SmootherSnapshot,
-)
+from .snapshots import ObservationStatus, SmootherSnapshot
 
 if TYPE_CHECKING:
     import numpy.typing as npt
 
+    from ert.config import InversionTypeES, ParameterConfig
     from ert.storage import Ensemble
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar("T")
 
-# When running adaptive localization we reserve some resources for
-# the GUI and other applications that might be running
-RESERVED_CPU_CORES = 2
-# Testing on drogon seems to indicate that this is a
-# reasonable 'default' value for the parallel config of joblib
-NUM_JOBS_ADAPTIVE_LOC = max(
-    1, ((psutil.cpu_count(logical=False) or 1) - RESERVED_CPU_CORES)
-)
+def _create_combined_ensemble_mask(
+    ens_mask: npt.NDArray[np.bool_], active_realizations: list[bool] | None
+) -> npt.NDArray[np.bool_]:
+    if active_realizations is None:
+        return ens_mask
 
+    ens_mask_indices = set(np.flatnonzero(ens_mask))
+    active_realizations_indices = set(np.flatnonzero(active_realizations))
 
-class TimedIterator(Generic[T]):
-    SEND_FREQUENCY = 1.0  # seconds
+    if len(ens_mask) >= len(active_realizations):
+        ens_mask_indices &= active_realizations_indices
 
-    def __init__(
-        self, iterable: Sequence[T], callback: Callable[[AnalysisEvent], None]
-    ) -> None:
-        self._start_time = time.perf_counter()
-        self._iterable = iterable
-        self._callback = callback
-        self._index = 0
-        self._last_send_time = 0.0
+        new_mask = np.zeros_like(ens_mask, dtype=bool)
+        if ens_mask_indices:
+            new_mask[list(ens_mask_indices)] = True
+    else:
+        active_realizations_indices &= ens_mask_indices
 
-    def __iter__(self) -> Self:
-        return self
+        new_mask = np.zeros_like(active_realizations, dtype=bool)
+        if active_realizations_indices:
+            new_mask[list(active_realizations_indices)] = True
 
-    def __next__(self) -> T:
-        try:
-            result = self._iterable[self._index]
-        except IndexError as e:
-            raise StopIteration from e
-
-        if self._index != 0:
-            elapsed_time = time.perf_counter() - self._start_time
-            estimated_remaining_time = (elapsed_time / (self._index)) * (
-                len(self._iterable) - self._index
-            )
-            if elapsed_time - self._last_send_time > self.SEND_FREQUENCY:
-                self._callback(
-                    AnalysisTimeEvent(
-                        remaining_time=estimated_remaining_time,
-                        elapsed_time=elapsed_time,
-                    )
-                )
-                self._last_send_time = elapsed_time
-
-        self._index += 1
-        return result
+    return new_mask
 
 
-def _split_by_batchsize(
-    arr: npt.NDArray[np.int_], batch_size: int
-) -> list[npt.NDArray[np.int_]]:
-    """
-    Splits an array into sub-arrays of a specified batch size.
-
-    Examples
-    --------
-    >>> num_params = 10
-    >>> batch_size = 3
-    >>> s = np.arange(0, num_params)
-    >>> _split_by_batchsize(s, batch_size)
-    [array([0, 1, 2, 3]), array([4, 5, 6]), array([7, 8, 9])]
-
-    >>> num_params = 10
-    >>> batch_size = 10
-    >>> s = np.arange(0, num_params)
-    >>> _split_by_batchsize(s, batch_size)
-    [array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])]
-
-    >>> num_params = 10
-    >>> batch_size = 20
-    >>> s = np.arange(0, num_params)
-    >>> _split_by_batchsize(s, batch_size)
-    [array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])]
-    """
-    sections = 1 if batch_size > len(arr) else len(arr) // batch_size
-    return np.array_split(arr, sections)
-
-
-def _calculate_adaptive_batch_size(num_params: int, num_obs: int) -> int:
-    """Calculate adaptive batch size to optimize memory usage during Adaptive
-    Localization. Adaptive Localization calculates the cross-covariance between
-    parameters and responses. Cross-covariance is a matrix with shape num_params
-    x num_obs which may be larger than memory. Therefore, a batching algorithm is
-    used where only a subset of parameters is used when calculating cross-covariance.
-    This function calculates a batch size that can fit into the available memory,
-    accounting for a safety margin.
-
-    Derivation of formula:
-    ---------------------
-    available_memory = (amount of available memory on system) * memory_safety_factor
-    required_memory = num_params * num_obs * bytes_in_float32
-    num_params = required_memory / (num_obs * bytes_in_float32)
-    We want (required_memory < available_memory) so:
-    num_params < available_memory / (num_obs * bytes_in_float32)
-
-    The available memory is checked using the `psutil` library, which provides
-    information about system memory usage.
-    From `psutil` documentation:
-    - available:
-        the memory that can be given instantly to processes without the
-        system going into swap.
-        This is calculated by summing different memory values depending
-        on the platform and it is supposed to be used to monitor actual
-        memory usage in a cross platform fashion.
-    """
-    available_memory_in_bytes = psutil.virtual_memory().available
-    memory_safety_factor = 0.8
-    # Fields are stored as 32-bit floats.
-    bytes_in_float32 = 4
-    return min(
-        int(
-            np.floor(
-                (available_memory_in_bytes * memory_safety_factor)
-                / (num_obs * bytes_in_float32)
-            )
-        ),
-        num_params,
-    )
-
-
-def analysis_ES(
-    parameters: Iterable[str],
+def perform_ensemble_update(
     observations: Iterable[str],
-    rng: np.random.Generator,
-    module: ESSettings,
     observation_settings: ObservationSettings,
     global_scaling: float,
-    smoother_snapshot: SmootherSnapshot,
     ens_mask: npt.NDArray[np.bool_],
     source_ensemble: Ensemble,
     target_ensemble: Ensemble,
     progress_callback: Callable[[AnalysisEvent], None],
-) -> None:
+    strategy_map: dict[str, UpdateStrategy],
+) -> SmootherSnapshot:
+    """
+    Orchestrate ensemble-based parameter updates using configurable strategies.
+
+    This function coordinates the parameter update process using a strategy pattern
+    that supports multiple analysis algorithms (ES, IES, etc.). The workflow:
+    1. Preprocessing observations and responses
+    2. Preparing strategies with context data
+    3. Delegating parameter updates to the mapped strategies
+    4. Saving updated parameters to the target ensemble
+
+    Parameters
+    ----------
+    observations : Iterable[str]
+        Names of observations to use.
+    observation_settings : ObservationSettings
+        Settings for observation handling.
+    global_scaling : float
+        Global scaling factor for observations.
+    ens_mask : npt.NDArray[np.bool_]
+        Boolean mask for active realizations.
+    source_ensemble : Ensemble
+        Source ensemble to read parameters from.
+    target_ensemble : Ensemble
+        Target ensemble to save updated parameters to.
+    progress_callback : Callable[[AnalysisEvent], None]
+        Callback for reporting progress.
+    strategy_map : dict[str, UpdateStrategy]
+        Mapping from parameter group names to update strategies.
+
+    Returns
+    -------
+    SmootherSnapshot
+        Snapshot containing observation/response data and metadata.
+    """
+    parameters = list(strategy_map.keys())
     iens_active_index = np.flatnonzero(ens_mask)
 
-    ensemble_size = ens_mask.sum()
+    progress_callback(AnalysisStatusEvent(msg="Loading observations and responses.."))
 
-    def adaptive_localization_progress_callback(
-        iterable: Sequence[T],
-    ) -> TimedIterator[T]:
-        return TimedIterator(iterable, progress_callback)
-
+    # Preprocess observations and responses
     preprocessed_data = _preprocess_observations_and_responses(
         ensemble=source_ensemble,
         outlier_settings=observation_settings.outlier_settings,
@@ -213,13 +133,19 @@ def analysis_ES(
         pl.col("status") == ObservationStatus.ACTIVE
     )
 
-    S = filtered_data.select([*map(str, iens_active_index)]).to_numpy(order="c")
+    responses = filtered_data.select([*map(str, iens_active_index)]).to_numpy(order="c")
     observation_values = filtered_data["observations"].to_numpy()
     observation_errors = filtered_data[_OutlierColumns.scaled_std].to_numpy()
 
-    progress_callback(AnalysisStatusEvent(msg="Loading observations and responses.."))
     num_obs = len(observation_values)
 
+    smoother_snapshot = SmootherSnapshot(
+        source_ensemble_name=source_ensemble.name,
+        target_ensemble_name=target_ensemble.name,
+        alpha=observation_settings.outlier_settings.alpha,
+        std_cutoff=observation_settings.outlier_settings.std_cutoff,
+        global_scaling=global_scaling,
+    )
     smoother_snapshot.observations_and_responses = preprocessed_data.drop(
         [*map(str, iens_active_index), "response_key"]
     ).select(
@@ -232,96 +158,59 @@ def analysis_ES(
         "response_mean",
         "response_std",
         "status",
+        "missing_realizations",
     )
 
     if num_obs == 0:
         msg = "No active observations for update step"
-        progress_callback(
-            AnalysisErrorEvent(
-                error_msg=msg,
-                data=DataSection(
-                    header=smoother_snapshot.header,
-                    data=smoother_snapshot.csv,
-                    extra=smoother_snapshot.extra,
-                ),
-            )
+        data = DataSection(
+            header=smoother_snapshot.header,
+            data=smoother_snapshot.csv,
+            extra=smoother_snapshot.extra,
         )
-        raise ErtAnalysisError(msg)
+        raise ErtAnalysisError(msg, data=data)
 
-    smoother_es = ies.ESMDA(
-        covariance=observation_errors**2,
-        observations=observation_values,
-        # The user is responsible for scaling observation covariance (esmda usage):
-        alpha=1,
-        seed=rng,
-        inversion=module.inversion.lower(),
+    # Extract observation locations when location data is available
+    observation_locations: ObservationLocations | None = None
+    has_location = (
+        filtered_data["east"].is_not_null() & filtered_data["north"].is_not_null()
+    ).to_numpy()
+    if has_location.any():
+        observation_locations = ObservationLocations(
+            xpos=filtered_data["east"].to_numpy()[has_location],
+            ypos=filtered_data["north"].to_numpy()[has_location],
+            main_range=filtered_data["radius"].to_numpy()[has_location],
+            responses_with_loc=responses[has_location, :],
+            observation_values=observation_values[has_location],
+            observation_errors=observation_errors[has_location],
+        )
+
+    # Create observation context (minimal data container)
+    obs_context = ObservationContext(
+        responses=responses,
+        observation_values=observation_values,
+        observation_errors=observation_errors,
+        observation_locations=observation_locations,
     )
-    truncation = module.enkf_truncation
 
-    if module.localization:
-        smoother_adaptive_es = AdaptiveESMDA(
-            covariance=observation_errors**2,
-            observations=observation_values,
-            seed=rng,
-        )
+    # Prepare each unique strategy once (multiple params may share the same instance)
+    for strategy in set(strategy_map.values()):
+        strategy.prepare(obs_context)
 
-        # Pre-calculate cov_YY
-        cov_YY = np.atleast_2d(np.cov(S))
-
-        D = smoother_adaptive_es.perturb_observations(
-            ensemble_size=ensemble_size, alpha=1.0
-        )
-
-    else:
-        # Compute transition matrix so that
-        # X_posterior = X_prior @ T
-        try:
-            T = smoother_es.compute_transition_matrix(
-                Y=S, alpha=1.0, truncation=truncation
-            )
-        except scipy.linalg.LinAlgError as err:
-            msg = (
-                "Failed while computing transition matrix, "
-                "this might be due to outlier values in one "
-                f"or more realizations: {err}"
-            )
-            progress_callback(
-                AnalysisErrorEvent(
-                    error_msg=msg,
-                    data=DataSection(
-                        header=smoother_snapshot.header,
-                        data=smoother_snapshot.csv,
-                        extra=smoother_snapshot.extra,
-                    ),
-                )
-            )
-            raise ErtAnalysisError(msg) from err
-        # Add identity in place for fast computation
-        np.fill_diagonal(T, T.diagonal() + 1)
-
-    def correlation_callback(
-        cross_correlations_of_batch: npt.NDArray[np.float64],
-        cross_correlations_accumulator: list[npt.NDArray[np.float64]],
-    ) -> None:
-        cross_correlations_accumulator.append(cross_correlations_of_batch)
-
+    # Update each parameter group
+    logger.info(
+        f"Updating {len(parameters)} parameter groups "
+        f"with {num_obs} observations and {len(iens_active_index)} realizations"
+    )
     for param_group in parameters:
+        param_cfg = source_ensemble.experiment.parameter_configuration[param_group]
         param_ensemble_array = source_ensemble.load_parameters_numpy(
             param_group, iens_active_index
         )
 
         # Calculate variance for each parameter
         param_variance = np.var(param_ensemble_array, axis=1)
-        # Create mask for non-zero variance parameters
         non_zero_variance_mask = ~np.isclose(param_variance, 0.0)
-
-        log_msg = (
-            f"Updating {np.sum(non_zero_variance_mask)} parameters "
-            f"{'with' if module.localization else 'without'} "
-            f"adaptive localization."
-        )
-        logger.info(log_msg)
-        progress_callback(AnalysisStatusEvent(msg=log_msg))
 
         if (param_count := (~non_zero_variance_mask).sum()) > 0:
             log_msg = (
@@ -331,70 +220,19 @@ def analysis_ES(
             logger.info(log_msg)
             progress_callback(AnalysisStatusEvent(msg=log_msg))
 
-        if module.localization:
-            config_node = source_ensemble.experiment.parameter_configuration[
-                param_group
-            ]
-            num_params = param_ensemble_array.shape[0]
-            batch_size = _calculate_adaptive_batch_size(num_params, num_obs)
-            batches = _split_by_batchsize(np.arange(0, num_params), batch_size)
+        # Get appropriate strategy for this parameter type
+        strategy = strategy_map[param_group]
 
-            log_msg = (
-                f"Running localization on {num_params} parameters, "
-                f"{num_obs} responses, {ensemble_size} realizations "
-                f"and {len(batches)} batches"
-            )
-            logger.info(log_msg)
-            progress_callback(AnalysisStatusEvent(msg=log_msg))
+        # Delegate update to strategy
+        param_ensemble_array = strategy.update(
+            param_ensemble_array,
+            param_cfg,
+            non_zero_variance_mask,
+        )
 
-            start = time.time()
-            cross_correlations: list[npt.NDArray[np.float64]] = []
-            for param_batch_idx in batches:
-                update_idx = param_batch_idx[non_zero_variance_mask[param_batch_idx]]
-                X_local = param_ensemble_array[update_idx, :]
-                if isinstance(config_node, GenKwConfig):
-                    correlation_batch_callback = functools.partial(
-                        correlation_callback,
-                        cross_correlations_accumulator=cross_correlations,
-                    )
-                else:
-                    correlation_batch_callback = None
-                param_ensemble_array[update_idx, :] = smoother_adaptive_es.assimilate(
-                    X=X_local,
-                    Y=S,
-                    D=D,
-                    # The user is responsible for scaling observation covariance
-                    # (ESMDA usage)
-                    alpha=1.0,
-                    correlation_threshold=module.correlation_threshold,
-                    cov_YY=cov_YY,
-                    progress_callback=adaptive_localization_progress_callback,
-                    correlation_callback=correlation_batch_callback,
-                    # number of parallel jobs for joblib
-                    n_jobs=NUM_JOBS_ADAPTIVE_LOC,
-                )
-            logger.info(
-                f"Adaptive Localization of {param_group} completed "
-                f"in {(time.time() - start) / 60} minutes"
-            )
-
-        else:
-            log_msg = f"There are {num_obs} responses and {ensemble_size} realizations."
-            logger.info(log_msg)
-            progress_callback(AnalysisStatusEvent(msg=log_msg))
-
-            # In-place multiplication is not yet supported, therefore avoiding @=
-            param_ensemble_array[non_zero_variance_mask] = param_ensemble_array[  # noqa: PLR6104
-                non_zero_variance_mask
-            ] @ T.astype(param_ensemble_array.dtype)
-
-        start = time.time()
+        # Save updated parameters
         target_ensemble.save_parameters_numpy(
             param_ensemble_array, param_group, iens_active_index
-        )
-        logger.info(
-            f"Storing data for {param_group} completed in "
-            f"{(time.time() - start) / 60} minutes"
         )
 
     _copy_unupdated_parameters(
@@ -405,36 +243,133 @@ def analysis_ES(
         target_ensemble,
     )
 
+    return smoother_snapshot
+
+
+def build_strategy_map(
+    parameters: Iterable[str],
+    param_configs: Mapping[str, ParameterConfig],
+    inversion: InversionTypeES,
+    enkf_truncation: float,
+    distance_localization: bool = False,
+    localization: bool = False,
+    correlation_threshold: Callable[[int], float] | None = None,
+    rng: np.random.Generator | None = None,
+    progress_callback: Callable[[AnalysisEvent], None] | None = None,
+) -> dict[str, UpdateStrategy]:
+    """Build a mapping from parameter group names to update strategies.
+
+    Creates the appropriate update strategy for each parameter group based on
+    the provided settings (standard, adaptive localization, or distance
+    localization).
+
+    Parameters
+    ----------
+    parameters : Iterable[str]
+        Names of parameter groups to update.
+    param_configs : Mapping[str, ParameterConfig]
+        Parameter configuration mapping from the experiment.
+    inversion : InversionTypeES
+        Inversion algorithm (e.g. ``"EXACT"`` or ``"SUBSPACE"``).
+    enkf_truncation : float
+        Singular value truncation threshold (0, 1].
+    distance_localization : bool
+        Whether to use distance-based localization for Field/Surface params.
+    localization : bool
+        Whether to use adaptive localization.
+    correlation_threshold : Callable[[int], float] | None
+        Function that takes ensemble size and returns the correlation
+        threshold. Required when ``localization`` is True.
+    rng : np.random.Generator | None
+        Random number generator for reproducibility.
+    progress_callback : Callable[[AnalysisEvent], None] | None
+        Callback for reporting progress.
+
+    Returns
+    -------
+    dict[str, UpdateStrategy]
+        Mapping from parameter group names to update strategies.
+    """
+    if rng is None:
+        rng = np.random.default_rng()
+    if not progress_callback:
+        progress_callback = noop_progress_callback
+
+    strategy_map: dict[str, UpdateStrategy] = {}
+
+    if distance_localization:
+        field_strategy = DistanceLocalizationUpdate(rng, Field, progress_callback)
+        surface_strategy = DistanceLocalizationUpdate(
+            rng, SurfaceConfig, progress_callback
+        )
+        standard_strategy = StandardESUpdate(
+            inversion,
+            enkf_truncation,
+            rng,
+            progress_callback,
+        )
+
+        for param_name in parameters:
+            param_cfg = param_configs[param_name]
+            if isinstance(param_cfg, Field):
+                strategy_map[param_name] = field_strategy
+            elif isinstance(param_cfg, SurfaceConfig):
+                strategy_map[param_name] = surface_strategy
+            else:
+                strategy_map[param_name] = standard_strategy
+
+    elif localization:
+        if correlation_threshold is None:
+            raise ValueError(
+                "correlation_threshold is required when localization is enabled"
+            )
+        adaptive_strategy = AdaptiveLocalizationUpdate(
+            correlation_threshold, rng, progress_callback
+        )
+        for param_name in parameters:
+            strategy_map[param_name] = adaptive_strategy
+
+    else:
+        standard_strategy = StandardESUpdate(
+            inversion,
+            enkf_truncation,
+            rng,
+            progress_callback,
+        )
+        for param_name in parameters:
+            strategy_map[param_name] = standard_strategy
+
+    return strategy_map
+
 
 def smoother_update(
     prior_storage: Ensemble,
     posterior_storage: Ensemble,
     observations: Iterable[str],
-    parameters: Iterable[str],
     update_settings: ObservationSettings,
-    es_settings: ESSettings,
-    rng: np.random.Generator | None = None,
+    strategy_map: dict[str, UpdateStrategy] | None = None,
     progress_callback: Callable[[AnalysisEvent], None] | None = None,
     global_scaling: float = 1.0,
     active_realizations: list[bool] | None = None,
 ) -> SmootherSnapshot:
     if not progress_callback:
         progress_callback = noop_progress_callback
-    if rng is None:
-        rng = np.random.default_rng()
+
+    if strategy_map is None:
+        settings = ESSettings()
+        experiment = prior_storage.experiment
+        strategy_map = build_strategy_map(
+            parameters=experiment.update_parameters,
+            param_configs=experiment.parameter_configuration,
+            inversion=settings.inversion,
+            enkf_truncation=settings.enkf_truncation,
+            progress_callback=progress_callback,
+        )
 
     ens_mask = prior_storage.get_realization_mask_with_responses()
-    if active_realizations:
-        ens_mask &= active_realizations
+    ens_mask = _create_combined_ensemble_mask(ens_mask, active_realizations)
 
-    smoother_snapshot = SmootherSnapshot(
-        source_ensemble_name=prior_storage.name,
-        target_ensemble_name=posterior_storage.name,
-        alpha=update_settings.outlier_settings.alpha,
-        std_cutoff=update_settings.outlier_settings.std_cutoff,
-        global_scaling=global_scaling,
-    )
-
+    smoother_snapshot: SmootherSnapshot | None = None
     try:
         with warnings.catch_warnings():
             original_showwarning = warnings.showwarning
@@ -467,31 +402,22 @@ def smoother_update(
                     )
 
             warnings.showwarning = log_warning
-            analysis_ES(
-                parameters,
+            smoother_snapshot = perform_ensemble_update(
                 observations,
-                rng,
-                es_settings,
                 update_settings,
                 global_scaling,
-                smoother_snapshot,
                 ens_mask,
                 prior_storage,
                 posterior_storage,
                 progress_callback,
+                strategy_map,
             )
     except Exception as e:
-        progress_callback(
-            AnalysisErrorEvent(
-                error_msg=str(e),
-                data=DataSection(
-                    header=smoother_snapshot.header,
-                    data=smoother_snapshot.csv,
-                    extra=smoother_snapshot.extra,
-                ),
-            )
-        )
-        raise e
+        data = None
+        if isinstance(e, ErtAnalysisError):
+            data = e.data
+        progress_callback(AnalysisErrorEvent(error_msg=str(e), data=data))
+        raise
     progress_callback(
         AnalysisCompleteEvent(
             data=DataSection(

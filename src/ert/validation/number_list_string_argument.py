@@ -33,8 +33,8 @@ class NumberListStringArgument(ArgumentDefinition):
             else:
                 groups = token.split(",")
 
-                for group in groups:
-                    group = group.strip()
+                for unstripped_group in groups:
+                    group = unstripped_group.strip()
 
                     if len(group) > 0:
                         try:

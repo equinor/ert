@@ -22,6 +22,7 @@ from ert.config import (
     WorkflowJob,
     workflow_job_from_file,
 )
+from ert.shared import net_utils
 from ert.trace import add_span_processor
 
 logger = logging.getLogger(__name__)
@@ -321,6 +322,17 @@ class ErtPluginManager(pluggy.PluginManager):
         for handle in handles:
             logger.addHandler(handle)
 
+    def get_ip_address(self) -> str:
+        ip_address: list[str] = self.hook.get_ip_address()
+        if len(ip_address) > 1:
+            raise ValueError(
+                f"Only one plugin should provide the IP address, got {ip_address}"
+            )
+        if not ip_address:
+            return net_utils.get_ip_address()
+
+        return ip_address[0]
+
     def add_span_processor_to_trace_provider(self) -> None:
         span_processors = self.hook.add_span_processor()
         for span_processor in span_processors:
@@ -338,7 +350,6 @@ class ErtRuntimePlugins(BaseModel):
     environment_variables: Mapping[str, str] = Field(default_factory=dict)
     env_pr_fm_step: Mapping[str, Mapping[str, Any]] = Field(default_factory=dict)
     help_links: dict[str, str] = Field(default_factory=dict)
-    prioritize_private_ip_address: bool = False
 
 
 def get_site_plugins(
@@ -362,7 +373,7 @@ def get_site_plugins(
         plugin_manager.get_legacy_ertscript_workflows().get_workflows()
     )
 
-    for _, job_path in installable_workflow_jobs.items():
+    for job_path in installable_workflow_jobs.values():
         wf_job = workflow_job_from_file(job_path, origin="site")
         all_workflow_jobs[wf_job.name] = wf_job
 
@@ -387,9 +398,6 @@ def get_site_plugins(
         ),
         env_pr_fm_step=plugin_manager.get_forward_model_configuration(),
         help_links=plugin_manager.get_help_links(),
-        prioritize_private_ip_address=site_configurations.prioritize_private_ip_address
-        if site_configurations
-        else False,
     )
 
     return runtime_plugins
@@ -401,3 +409,8 @@ def setup_site_logging(root_logger: logging.Logger | None = None) -> None:
         pm.add_logging_handle_to_root(logger=root_logger)
 
     pm.add_span_processor_to_trace_provider()
+
+
+def get_ip_address() -> str:
+    pm = ErtPluginManager()
+    return pm.get_ip_address()

@@ -11,6 +11,7 @@ from pathlib import Path
 from subprocess import Popen
 from textwrap import dedent
 from threading import Lock
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
@@ -51,62 +52,77 @@ def use_custom_setsid(use_tmpdir):
     os.chmod("setsid", 0o755)
 
 
-@pytest.mark.integration_test
-@pytest.mark.usefixtures("use_custom_setsid")
-def test_terminate_steps():
-    # Executes itself recursively and sleeps for 100 seconds
-    Path("dummy_executable").write_text(
-        """#!/usr/bin/env python
-import sys, os, time
-counter = eval(sys.argv[1])
-if counter > 0:
-    os.fork()
-    os.execv(sys.argv[0],[sys.argv[0], str(counter - 1) ])
-else:
-    time.sleep(100)""",
-        encoding="utf-8",
+def write_executable(
+    directory: Path, contents: str, basename: Path | str = "dummy_executable"
+) -> str:
+    file_path = directory / basename
+    file_path.write_text(contents, encoding="utf-8")
+    os.chmod(file_path, stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
+    return str(file_path.resolve())
+
+
+def write_forward_model_description(contents: dict[str, Any]) -> None:
+    Path(FORWARD_MODEL_DESCRIPTION_FILE).write_text(
+        json.dumps(contents), encoding="utf-8"
     )
 
-    executable = os.path.realpath("dummy_executable")
-    os.chmod("dummy_executable", stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
 
-    fm_description = {
-        "global_environment": {},
-        "global_update_path": {},
-        "jobList": [
-            {
-                "name": "dummy_executable",
-                "executable": executable,
-                "target_file": None,
-                "error_file": None,
-                "start_file": None,
-                "stdout": "dummy.stdout",
-                "stderr": "dummy.stderr",
-                "stdin": None,
-                "argList": ["3"],
-                "environment": None,
-                "license_path": None,
-                "max_running_minutes": None,
-                "min_arg": 1,
-                "arg_types": [],
-                "max_arg": None,
-            }
-        ],
-        "run_id": "",
-        "ert_pid": "",
+def job_dict(
+    executable: str, arglist: list[Any], name: str = "dummy_executable"
+) -> dict[str, Any]:
+    return {
+        "name": name,
+        "executable": executable,
+        "target_file": None,
+        "error_file": None,
+        "start_file": None,
+        "stdout": "dummy.stdout",
+        "stderr": "dummy.stderr",
+        "stdin": None,
+        "argList": arglist,
+        "environment": None,
+        "license_path": None,
+        "max_running_minutes": None,
+        "min_arg": 1,
+        "arg_types": [],
+        "max_arg": None,
     }
 
-    Path(FORWARD_MODEL_DESCRIPTION_FILE).write_text(
-        json.dumps(fm_description), encoding="utf-8"
+
+@pytest.mark.integration_test
+@pytest.mark.usefixtures("use_custom_setsid")
+def test_that_all_subprocesses_of_a_job_are_cleaned_up_on_fm_dispatch_termination(
+    tmp_path: Path,
+):
+    # Executes itself recursively and sleeps for 100 seconds
+    executable = write_executable(
+        tmp_path,
+        dedent(
+            """\
+                #!/usr/bin/env python
+                import sys, os, time
+                counter = eval(sys.argv[1])
+                if counter > 0:
+                    os.fork()
+                    os.execv(sys.argv[0],[sys.argv[0], str(counter - 1) ])
+                else:
+                    time.sleep(100)""",
+        ),
+    )
+
+    write_forward_model_description(
+        {
+            "global_environment": {},
+            "global_update_path": {},
+            "jobList": [job_dict(executable, ["3"])],
+            "run_id": "",
+            "ert_pid": "",
+        }
     )
 
     # (we wait for the process below)
     fm_dispatch_process = Popen(
-        [
-            os.getcwd() + "/setsid",
-            "fm_dispatch.py",
-            os.getcwd(),
-        ]
+        [os.getcwd() + "/setsid", "fm_dispatch.py", os.getcwd()]
     )
 
     p = psutil.Process(fm_dispatch_process.pid)
@@ -123,33 +139,33 @@ else:
 
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_tmpdir")
-def test_memory_profile_is_logged_as_csv(monkeypatch):
+def test_memory_profile_is_logged_as_csv(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
     """This tests that a csv is produced and has basic validity.
     It does not try to verify the validity of the logged RSS values."""
     fm_stepname = "do_nothing"
     scriptname = fm_stepname + ".py"
     fm_step_repeats = 3
-    Path(scriptname).write_text(
+    executable = write_executable(
+        tmp_path,
         """#!/bin/sh
         sleep 0.5
         exit 0
         """,
-        encoding="utf-8",
+        basename=scriptname,
     )
-    os.chmod(scriptname, stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
-    forward_model_steps = {
-        "jobList": [
-            {
-                "name": fm_stepname,
-                "executable": os.path.realpath(scriptname),
-                "argList": [""],
-            }
-        ]
-        * fm_step_repeats,
-    }
-
-    Path(FORWARD_MODEL_DESCRIPTION_FILE).write_text(
-        json.dumps(forward_model_steps), encoding="utf-8"
+    write_forward_model_description(
+        {
+            "jobList": [
+                {
+                    "name": fm_stepname,
+                    "executable": executable,
+                    "argList": [""],
+                }
+            ]
+            * fm_step_repeats,
+        }
     )
 
     monkeypatch.setattr(
@@ -166,94 +182,35 @@ def test_memory_profile_is_logged_as_csv(monkeypatch):
 
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_custom_setsid")
-def test_fm_dispatch_run_subset_specified_as_parameter():
-    Path("dummy_executable").write_text(
+def test_that_a_subset_of_jobs_to_run_can_be_specified_as_cmdline_arguments(
+    tmp_path: Path,
+):
+    executable = write_executable(
+        tmp_path,
         "#!/usr/bin/env python\n"
         "import sys, os\n"
         'filename = "step_{}.out".format(sys.argv[1])\n'
         'f = open(filename, "w", encoding="utf-8")\n'
         "f.close()\n",
-        encoding="utf-8",
     )
 
-    executable = os.path.realpath("dummy_executable")
-    os.chmod("dummy_executable", stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
-
-    fm_description = {
-        "global_environment": {},
-        "global_update_path": {},
-        "jobList": [
-            {
-                "name": "step_A",
-                "executable": executable,
-                "target_file": None,
-                "error_file": None,
-                "start_file": None,
-                "stdout": "dummy.stdout",
-                "stderr": "dummy.stderr",
-                "stdin": None,
-                "argList": ["A"],
-                "environment": None,
-                "license_path": None,
-                "max_running_minutes": None,
-                "min_arg": 1,
-                "arg_types": [],
-                "max_arg": None,
-            },
-            {
-                "name": "step_B",
-                "executable": executable,
-                "target_file": None,
-                "error_file": None,
-                "start_file": None,
-                "stdout": "dummy.stdout",
-                "stderr": "dummy.stderr",
-                "stdin": None,
-                "argList": ["B"],
-                "environment": None,
-                "license_path": None,
-                "max_running_minutes": None,
-                "min_arg": 1,
-                "arg_types": [],
-                "max_arg": None,
-            },
-            {
-                "name": "step_C",
-                "executable": executable,
-                "target_file": None,
-                "error_file": None,
-                "start_file": None,
-                "stdout": "dummy.stdout",
-                "stderr": "dummy.stderr",
-                "stdin": None,
-                "argList": ["C"],
-                "environment": None,
-                "license_path": None,
-                "max_running_minutes": None,
-                "min_arg": 1,
-                "arg_types": [],
-                "max_arg": None,
-            },
-        ],
-        "run_id": "",
-        "ert_pid": "",
-    }
-
-    Path(FORWARD_MODEL_DESCRIPTION_FILE).write_text(
-        json.dumps(fm_description), encoding="utf-8"
+    write_forward_model_description(
+        {
+            "global_environment": {},
+            "global_update_path": {},
+            "jobList": [
+                job_dict(executable, ["A"], "step_A"),
+                job_dict(executable, ["B"], "step_B"),
+                job_dict(executable, ["C"], "step_C"),
+            ],
+            "run_id": "",
+            "ert_pid": "",
+        }
     )
 
-    # (we wait for the process below)
     fm_dispatch_process = Popen(
-        [
-            os.getcwd() + "/setsid",
-            "fm_dispatch.py",
-            os.getcwd(),
-            "step_B",
-            "step_C",
-        ]
+        [os.getcwd() + "/setsid", "fm_dispatch.py", os.getcwd(), "step_B", "step_C"]
     )
-
     fm_dispatch_process.wait()
 
     assert not os.path.isfile("step_A.out")
@@ -261,24 +218,26 @@ def test_fm_dispatch_run_subset_specified_as_parameter():
     assert os.path.isfile("step_C.out")
 
 
-def test_no_jobs_json_file_raises_IOError(tmp_path):
+def test_no_jobs_json_file_raises_IOError(tmp_path: Path):
     with pytest.raises(IOError, match=r"No such file or directory: 'jobs.json'"):
         fm_dispatch(["script.py", str(tmp_path)])
 
 
-def test_invalid_jobs_json_raises_OSError(tmp_path):
+def test_invalid_jobs_json_raises_OSError(tmp_path: Path):
     (tmp_path / FORWARD_MODEL_DESCRIPTION_FILE).write_text("not json")
 
     with pytest.raises(OSError, match="fm_dispatch failed to load JSON-file"):
         fm_dispatch(["script.py", str(tmp_path)])
 
 
-def test_missing_directory_exits(tmp_path):
+def test_missing_directory_exits(tmp_path: Path):
     with pytest.raises(SystemExit):
         fm_dispatch(["script.py", str(tmp_path / "non_existent")])
 
 
-def test_retry_of_jobs_json_file_read(tmp_path, monkeypatch, caplog):
+def test_that_fm_dispatch_retries_reading_description_file_when_it_is_missing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+):
     lock = Lock()
     lock.acquire()
     monkeypatch.setattr(
@@ -296,9 +255,9 @@ def test_retry_of_jobs_json_file_read(tmp_path, monkeypatch, caplog):
         def create_jobs_file_after_lock():
             wait_until(
                 lambda: (
-                    f"Could not find file {FORWARD_MODEL_DESCRIPTION_FILE}, retrying"
-                )
-                in caplog.text,
+                    (f"Could not find file {FORWARD_MODEL_DESCRIPTION_FILE}, retrying")
+                    in caplog.text
+                ),
                 interval=0.1,
                 timeout=2,
             )
@@ -315,7 +274,7 @@ def test_retry_of_jobs_json_file_read(tmp_path, monkeypatch, caplog):
     ("is_interactive_run", "ens_id"),
     [(False, None), (False, "1234"), (True, None), (True, "1234")],
 )
-def test_setup_reporters(is_interactive_run, ens_id):
+def test_setup_reporters(is_interactive_run: bool, ens_id: str | None):
     reporters = _setup_reporters(is_interactive_run, ens_id, "")
 
     if not is_interactive_run and not ens_id:
@@ -346,14 +305,11 @@ def test_fm_dispatch_kills_itself_after_unsuccessful_step():
             Finish().with_error("overall bad run"),
         ]
         mock_getpgid.return_value = 17
-        Path("jobs.json").write_text(
-            json.dumps(
-                {
-                    "ens_id": "_id_",
-                    "dispatch_url": zmq_server.uri,
-                }
-            ),
-            encoding="utf-8",
+        write_forward_model_description(
+            {
+                "ens_id": "_id_",
+                "dispatch_url": zmq_server.uri,
+            }
         )
 
         fm_dispatch(["script.py"])
@@ -363,7 +319,7 @@ def test_fm_dispatch_kills_itself_after_unsuccessful_step():
 
 @pytest.mark.skipif(sys.platform.startswith("darwin"), reason="No oom_score on MacOS")
 @pytest.mark.usefixtures("use_custom_setsid")
-def test_killed_by_oom(tmp_path, monkeypatch):
+def test_killed_by_oom(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """Test out-of-memory detection for pid and descendants based
     on a mocked dmesg system utility."""
     parent_pid = 666
@@ -405,60 +361,64 @@ def test_report_all_messages_drops_reporter_on_error():
     reporter.report.assert_called_once_with(message1)
 
 
+@pytest.fixture
+def sleep_executable(tmp_path: Path):
+    return write_executable(
+        tmp_path,
+        dedent("""\
+               #!/usr/bin/env python
+               import time
+               time.sleep(180)
+               """),
+    )
+
+
+async def wait_for_msg(zmq_server, msg_type: str) -> None:
+    while True:
+        await asyncio.sleep(0.5)
+        if any(
+            msg_type in dispatcher_event_from_json(msg).event_type
+            for msg in zmq_server.messages
+        ):
+            return
+
+
 @pytest.mark.timeout(30)
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_custom_setsid")
-async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_sigterm():
-    Path("dummy_executable").write_text(
-        """#!/usr/bin/env python
-import time
-time.sleep(180)""",
-        encoding="utf-8",
-    )
-
-    executable = os.path.realpath("dummy_executable")
-    os.chmod("dummy_executable", stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
+async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_sigterm(
+    sleep_executable: str,
+):
     async with MockZMQServer() as zmq_server:
-        fm_description = {
-            "ens_id": "_id_",
-            "dispatch_url": zmq_server.uri,
-            "jobList": [
-                {
-                    "name": "dummy_executable",
-                    "executable": executable,
-                    "stdout": "dummy.stdout",
-                    "stderr": "dummy.stderr",
-                }
-            ],
-        }
-
-        Path(FORWARD_MODEL_DESCRIPTION_FILE).write_text(
-            json.dumps(fm_description), encoding="utf-8"
+        write_forward_model_description(
+            {
+                "ens_id": "_id_",
+                "dispatch_url": zmq_server.uri,
+                "jobList": [
+                    {
+                        "name": "dummy_executable",
+                        "executable": sleep_executable,
+                        "stdout": "dummy.stdout",
+                        "stderr": "dummy.stderr",
+                    }
+                ],
+            }
         )
 
         fm_dispatch_process = Popen(  # noqa: ASYNC220
-            [
-                os.getcwd() + "/setsid",
-                "fm_dispatch.py",
-                os.getcwd(),
-            ]
+            [os.getcwd() + "/setsid", "fm_dispatch.py", os.getcwd()]
         )
         p = psutil.Process(fm_dispatch_process.pid)
 
-        async def wait_for_msg(msg_type):
-            while True:
-                await asyncio.sleep(0.5)
-                if any(
-                    msg_type in dispatcher_event_from_json(msg).event_type
-                    for msg in zmq_server.messages
-                ):
-                    return
-
         # wait for fm running
-        await asyncio.wait_for(wait_for_msg("forward_model_step.start"), timeout=15)
+        await asyncio.wait_for(
+            wait_for_msg(zmq_server, "forward_model_step.start"), timeout=15
+        )
         p.terminate()
         # wait for fm_dispatch has been terminated, and sends failure message
-        await asyncio.wait_for(wait_for_msg("forward_model_step.failure"), timeout=15)
+        await asyncio.wait_for(
+            wait_for_msg(zmq_server, "forward_model_step.failure"), timeout=15
+        )
         assert (
             dispatcher_event_from_json(zmq_server.messages[-1]).error_msg
             == FORWARD_MODEL_TERMINATED_MSG
@@ -468,65 +428,47 @@ time.sleep(180)""",
 @pytest.mark.timeout(30)
 @pytest.mark.integration_test
 @pytest.mark.usefixtures("use_custom_setsid")
-async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_terminate_msg():
-    Path("dummy_executable").write_text(
-        """#!/usr/bin/env python
-import time
-time.sleep(180)""",
-        encoding="utf-8",
-    )
-
-    executable = os.path.realpath("dummy_executable")
-    os.chmod("dummy_executable", stat.S_IRWXU | stat.S_IRWXO | stat.S_IRWXG)
+async def test_fm_dispatch_sends_exited_event_with_terminated_msg_on_terminate_msg(
+    sleep_executable: str,
+):
     async with MockZMQServer() as zmq_server:
-        fm_description = {
-            "ens_id": "_id_",
-            "dispatch_url": zmq_server.uri,
-            "jobList": [
-                {
-                    "name": "dummy_executable",
-                    "executable": executable,
-                    "stdout": "dummy.stdout",
-                    "stderr": "dummy.stderr",
-                }
-            ],
-        }
-
-        Path(FORWARD_MODEL_DESCRIPTION_FILE).write_text(
-            json.dumps(fm_description), encoding="utf-8"
+        write_forward_model_description(
+            {
+                "ens_id": "_id_",
+                "dispatch_url": zmq_server.uri,
+                "jobList": [
+                    {
+                        "name": "dummy_executable",
+                        "executable": sleep_executable,
+                        "stdout": "dummy.stdout",
+                        "stderr": "dummy.stderr",
+                    }
+                ],
+            }
         )
 
         fm_dispatch_process = Popen(  # noqa: ASYNC220
-            [
-                os.getcwd() + "/setsid",
-                "fm_dispatch.py",
-                os.getcwd(),
-            ]
+            [os.getcwd() + "/setsid", "fm_dispatch.py", os.getcwd()]
         )
 
-        async def wait_for_msg(msg_type):
-            while True:
-                await asyncio.sleep(0.1)
-                if any(
-                    msg_type in dispatcher_event_from_json(msg).event_type
-                    for msg in zmq_server.messages
-                ):
-                    return
-
-        await asyncio.wait_for(wait_for_msg("forward_model_step.start"), timeout=15)
+        await asyncio.wait_for(
+            wait_for_msg(zmq_server, "forward_model_step.start"), timeout=15
+        )
         await zmq_server.send_terminate_message()
-        await asyncio.wait_for(wait_for_msg("forward_model_step.failure"), timeout=15)
+        await asyncio.wait_for(
+            wait_for_msg(zmq_server, "forward_model_step.failure"), timeout=15
+        )
         await zmq_server.no_dealers.wait()
-        fm_dispatch_process.wait(
-            timeout=15
-        )  # Waiting for the fm_dispatch process to exit
+        fm_dispatch_process.wait(timeout=15)
         assert (
             dispatcher_event_from_json(zmq_server.messages[-1]).error_msg
             == FORWARD_MODEL_TERMINATED_MSG
         )
 
 
-async def test_fm_dispatch_main_signals_sigterm_on_exception(capsys):
+async def test_fm_dispatch_main_signals_sigterm_on_exception(
+    capsys: pytest.CaptureFixture[str],
+):
     def mock_fm_dispatch_raises(*args):
         raise RuntimeError("forward model critical error")
 

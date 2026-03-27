@@ -1,19 +1,20 @@
 from abc import abstractmethod
 
 from PyQt6.QtCore import QTimer
-from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QApplication, QMessageBox, QPushButton, QSizePolicy
+
+from ert.gui.icon_utils import load_icon
 
 
 class CopyButton(QPushButton):
     def __init__(self) -> None:
         super().__init__()
         self.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
-        self.setIcon(QIcon("img:copy.svg"))
+        self.setIcon(load_icon("copy.svg"))
         self.restore_timer = QTimer(self)
 
         def restore_text() -> None:
-            self.setIcon(QIcon("img:copy.svg"))
+            self.setIcon(load_icon("copy.svg"))
 
         self.restore_timer.timeout.connect(restore_text)
 
@@ -35,5 +36,5 @@ class CopyButton(QPushButton):
                 "system does not have a clipboard",
                 QMessageBox.StandardButton.Ok,
             )
-        self.setIcon(QIcon("img:check.svg"))
+        self.setIcon(load_icon("check.svg"))
         self.restore_timer.start(1000)

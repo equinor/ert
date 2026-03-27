@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import contextlib
 import json
+import logging
 import shutil
 from collections.abc import Generator
 from datetime import datetime
 from enum import StrEnum, auto
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any, cast
 from uuid import UUID
 
 import polars as pl
@@ -16,21 +17,30 @@ from pydantic import BaseModel, Field, TypeAdapter
 from surfio import IrapSurface
 
 from ert.config import (
+    DerivedResponseConfig,
+    EverestConstraintsConfig,
     EverestControl,
+    EverestObjectivesConfig,
     GenKwConfig,
+    KnownDerivedResponseTypes,
     KnownResponseTypes,
     ParameterConfig,
     ResponseConfig,
     SurfaceConfig,
 )
 from ert.config import Field as FieldConfig
-from ert.config.parsing.context_values import ContextBoolEncoder
+from ert.config._create_observation_dataframes import (
+    create_observation_dataframes,
+)
+from ert.config._observations import Observation
 
 from .mode import BaseMode, Mode, require_write
 
 if TYPE_CHECKING:
     from .local_ensemble import LocalEnsemble
     from .local_storage import LocalStorage
+
+logger = logging.getLogger(__name__)
 
 
 class ExperimentState(StrEnum):
@@ -40,6 +50,19 @@ class ExperimentState(StrEnum):
     stopped = auto()
     failed = auto()
     never_run = auto()
+
+
+class ExperimentType(StrEnum):
+    UNDEFINED = "Undefined"
+    SINGLE_TEST_RUN = "Single Test Run"
+    ENSEMBLE_EXPERIMENT = "Ensemble Experiment"
+    EVALUATE_ENSEMBLE = "Evaluate Ensemble"
+    ES_MDA = "Multiple Data Assimilation"
+    ENSEMBLE_SMOOTHER = "Ensemble Smoother"
+    ENSEMBLE_INFORMATION_FILTER = "Ensemble Information Filter"
+    MANUAL_UPDATE = "Manual Update"
+    MANUAL = "Manual"
+    EVEREST = "Everest"
 
 
 class ExperimentStatus(BaseModel):
@@ -54,12 +77,13 @@ class _Index(BaseModel):
     # from a different experiment. For example, a manual update
     # is a separate experiment from the one that created the prior.
     ensembles: list[UUID]
+    experiment: dict[str, Any] = {}
     status: ExperimentStatus | None = Field(default=None)
 
 
 _responses_adapter = TypeAdapter(  # type: ignore
     Annotated[
-        KnownResponseTypes,
+        KnownResponseTypes | KnownDerivedResponseTypes,
         Field(discriminator="type"),
     ]
 )
@@ -80,9 +104,6 @@ class LocalExperiment(BaseMode):
     arguments. Provides methods to create and access associated ensembles.
     """
 
-    _parameter_file = Path("parameter.json")
-    _responses_file = Path("responses.json")
-    _metadata_file = Path("metadata.json")
     _templates_file = Path("templates.json")
     _index_file = Path("index.json")
 
@@ -118,63 +139,21 @@ class LocalExperiment(BaseMode):
         storage: LocalStorage,
         uuid: UUID,
         path: Path,
-        *,
-        parameters: list[ParameterConfig] | None = None,
-        responses: list[ResponseConfig] | None = None,
-        observations: dict[str, pl.DataFrame] | None = None,
-        simulation_arguments: dict[Any, Any] | None = None,
+        experiment_config: dict[str, Any],
         name: str | None = None,
-        templates: list[tuple[str, str]] | None = None,
     ) -> LocalExperiment:
-        """
-        Create a new LocalExperiment and store its configuration data.
-
-        Parameters
-        ----------
-        storage : LocalStorage
-            Storage instance for experiment creation.
-        uuid : UUID
-            Unique identifier for the new experiment.
-        path : Path
-            File system path for storing experiment data.
-        parameters : list of ParameterConfig, optional
-            List of parameter configurations.
-        responses : list of ResponseConfig, optional
-            List of response configurations.
-        observations : dict of str to encoded observation datasets, optional
-            Observations dictionary.
-        simulation_arguments : SimulationArguments, optional
-            Simulation arguments for the experiment.
-        name : str, optional
-            Experiment name. Defaults to current date if None.
-        templates : list of tuple[str, str], optional
-            Run templates for the experiment. Defaults to None.
-
-        Returns
-        -------
-        local_experiment : LocalExperiment
-            Instance of the newly created experiment.
-        """
         if name is None:
             name = datetime.today().isoformat()
 
         storage._write_transaction(
             path / cls._index_file,
-            _Index(id=uuid, name=name, ensembles=[])
+            _Index(id=uuid, name=name, ensembles=[], experiment=experiment_config)
             .model_dump_json(indent=2, exclude_none=True)
             .encode("utf-8"),
         )
 
-        parameter_data = {}
-        for parameter in parameters or []:
-            parameter.save_experiment_data(path)
-            parameter_data.update({parameter.name: parameter.model_dump(mode="json")})
-        storage._write_transaction(
-            path / cls._parameter_file,
-            json.dumps(parameter_data, indent=2).encode("utf-8"),
-        )
-
-        if templates:
+        templates = experiment_config.get("ert_templates")
+        if templates is not None:
             templates_path = path / "templates"
             templates_path.mkdir(parents=True, exist_ok=True)
             templates_abs: list[tuple[str, str]] = []
@@ -191,27 +170,29 @@ class LocalExperiment(BaseMode):
                 json.dumps(templates_abs).encode("utf-8"),
             )
 
-        response_data = {}
-        for response in responses or []:
-            response_data.update({response.type: response.model_dump(mode="json")})
-        storage._write_transaction(
-            path / cls._responses_file,
-            json.dumps(response_data, default=str, indent=2).encode("utf-8"),
-        )
-
-        if observations:
+        observation_declarations = experiment_config.get("observations")
+        if observation_declarations:
             output_path = path / "observations"
-            output_path.mkdir()
-            for response_type, dataset in observations.items():
-                storage._to_parquet_transaction(
-                    output_path / f"{response_type}", dataset
-                )
+            output_path.mkdir(parents=True, exist_ok=True)
 
-        simulation_data = simulation_arguments or {}
-        storage._write_transaction(
-            path / cls._metadata_file,
-            json.dumps(simulation_data, cls=ContextBoolEncoder).encode("utf-8"),
-        )
+            responses_list = experiment_config.get("response_configuration", [])
+            rft_config_json = next(
+                (r for r in responses_list if r.get("type") == "rft"), None
+            )
+            rft_config = (
+                _responses_adapter.validate_python(rft_config_json)
+                if rft_config_json is not None
+                else None
+            )
+
+            obs_adapter = TypeAdapter(Observation)  # type: ignore
+            obs_objs: list[Observation] = [
+                obs_adapter.validate_python(od) for od in observation_declarations
+            ]
+
+            datasets = create_observation_dataframes(obs_objs, rft_config)
+            for response_type, df in datasets.items():
+                storage._to_parquet_transaction(output_path / response_type, df)
 
         return cls(storage, path, Mode.WRITE)
 
@@ -286,15 +267,9 @@ class LocalExperiment(BaseMode):
         raise KeyError(f"Ensemble with name '{name}' not found")
 
     @property
-    def metadata(self) -> dict[str, Any]:
-        path = self.mount_point / self._metadata_file
-        if not path.exists():
-            raise ValueError(f"{self._metadata_file!s} does not exist")
-        return json.loads(path.read_text(encoding="utf-8"))
-
-    @property
     def relative_weights(self) -> str:
-        return self.metadata.get("weights", "")
+        assert self.experiment_config is not None
+        return self.experiment_config.get("weights", "")
 
     @property
     def name(self) -> str:
@@ -303,6 +278,11 @@ class LocalExperiment(BaseMode):
     @property
     def id(self) -> UUID:
         return self._index.id
+
+    @property
+    def experiment_type(self) -> ExperimentType:
+        assert self.experiment_config is not None
+        return self.experiment_config.get("experiment_type", ExperimentType.UNDEFINED)
 
     @property
     def status(self) -> ExperimentStatus | None:
@@ -324,9 +304,8 @@ class LocalExperiment(BaseMode):
 
     @property
     def parameter_info(self) -> dict[str, Any]:
-        return json.loads(
-            (self.mount_point / self._parameter_file).read_text(encoding="utf-8")
-        )
+        parameters_list = self.experiment_config.get("parameter_configuration", [])
+        return {parameter["name"]: parameter for parameter in parameters_list}
 
     @property
     def templates_configuration(self) -> list[tuple[str, str]]:
@@ -348,9 +327,15 @@ class LocalExperiment(BaseMode):
 
     @property
     def response_info(self) -> dict[str, Any]:
-        return json.loads(
-            (self.mount_point / self._responses_file).read_text(encoding="utf-8")
+        responses_list = self.experiment_config.get("response_configuration", [])
+        return {response["type"]: response for response in responses_list}
+
+    @property
+    def derived_response_info(self) -> dict[str, Any]:
+        responses_list = self.experiment_config.get(
+            "derived_response_configuration", []
         )
+        return {response["type"]: response for response in responses_list}
 
     def get_surface(self, name: str) -> IrapSurface:
         """
@@ -405,7 +390,9 @@ class LocalExperiment(BaseMode):
         }
 
     @property
-    def response_configuration(self) -> dict[str, ResponseConfig]:
+    def response_configuration(
+        self,
+    ) -> dict[str, ResponseConfig]:
         responses = {}
 
         for data in self.response_info.values():
@@ -414,16 +401,68 @@ class LocalExperiment(BaseMode):
 
         return responses
 
+    @property
+    def derived_response_configuration(
+        self,
+    ) -> dict[str, DerivedResponseConfig]:
+        derived_responses = {}
+
+        for data in self.derived_response_info.values():
+            response_instance = _responses_adapter.validate_python(data)
+            derived_responses[response_instance.type] = response_instance
+
+        return derived_responses
+
     @cached_property
     def update_parameters(self) -> list[str]:
         return [p.name for p in self.parameter_configuration.values() if p.update]
 
     @cached_property
     def observations(self) -> dict[str, pl.DataFrame]:
-        observations = sorted(self.mount_point.glob("observations/*"))
+        obs_dir = self.mount_point / "observations"
+
+        if obs_dir.exists():
+            datasets: dict[str, pl.DataFrame] = {}
+            for p in obs_dir.iterdir():
+                if not p.is_file():
+                    continue
+                try:
+                    df = pl.read_parquet(p)
+                except Exception:
+                    continue
+                datasets[p.stem] = df
+            return datasets
+
+        serialized_observations = self.experiment_config.get("observations", None)
+        if not serialized_observations:
+            return {}
+
+        output_path = self.mount_point / "observations"
+        output_path.mkdir(parents=True, exist_ok=True)
+
+        rft_cfg = None
+        try:
+            responses_list = self.experiment_config.get("response_configuration", [])
+            for r in responses_list:
+                if r.get("type") == "rft":
+                    rft_cfg = _responses_adapter.validate_python(r)
+                    break
+        except Exception:
+            rft_cfg = None
+
+        obs_adapter = TypeAdapter(Observation)  # type: ignore
+        obs_objs: list[Observation] = [
+            obs_adapter.validate_python(od) for od in serialized_observations
+        ]
+
+        datasets = create_observation_dataframes(obs_objs, rft_cfg)
+        for response_type, df in datasets.items():
+            self._storage._to_parquet_transaction(output_path / response_type, df)
+
         return {
-            observation.name: pl.read_parquet(f"{observation}")
-            for observation in observations
+            p.stem: pl.read_parquet(p)
+            for p in (self.mount_point / "observations").iterdir()
+            if p.is_file()
         }
 
     @cached_property
@@ -441,7 +480,9 @@ class LocalExperiment(BaseMode):
     @cached_property
     def response_key_to_response_type(self) -> dict[str, str]:
         mapping = {}
-        for config in self.response_configuration.values():
+        for config in (
+            self.response_configuration | self.derived_response_configuration
+        ).values():
             for key in config.keys if config.has_finalized_keys else []:
                 mapping[key] = config.type
 
@@ -463,7 +504,9 @@ class LocalExperiment(BaseMode):
         return result
 
     def _has_finalized_response_keys(self, response_type: str) -> bool:
-        responses_configuration = self.response_configuration
+        responses_configuration = (
+            self.response_configuration | self.derived_response_configuration
+        )
         if response_type not in responses_configuration:
             raise KeyError(
                 f"Response type {response_type} does not "
@@ -481,7 +524,9 @@ class LocalExperiment(BaseMode):
         that the response config saved in this storage has keys corresponding
         to the actual received responses.
         """
-        responses_configuration = self.response_configuration
+        responses_configuration = (
+            self.response_configuration | self.derived_response_configuration
+        )
         if response_type not in responses_configuration:
             raise KeyError(
                 f"Response type {response_type} does not "
@@ -489,18 +534,22 @@ class LocalExperiment(BaseMode):
             )
 
         config = responses_configuration[response_type]
+
         config.keys = sorted(response_keys)
         config.has_finalized_keys = True
+
+        response_index = next(
+            i
+            for i, c in enumerate(self.experiment_config["response_configuration"])
+            if c["type"] == response_type
+        )
+        self.experiment_config["response_configuration"][response_index] = (
+            config.model_dump(mode="json")
+        )
+
         self._storage._write_transaction(
-            self._path / self._responses_file,
-            json.dumps(
-                {
-                    c.type: c.model_dump(mode="json")
-                    for c in responses_configuration.values()
-                },
-                default=str,
-                indent=2,
-            ).encode("utf-8"),
+            self._path / self._index_file,
+            self._index.model_dump_json(indent=2).encode("utf-8"),
         )
 
         if self.response_key_to_response_type is not None:
@@ -508,3 +557,244 @@ class LocalExperiment(BaseMode):
 
         if self.response_type_to_response_keys is not None:
             del self.response_type_to_response_keys
+
+    @property
+    def experiment_config(self) -> dict[str, Any]:
+        return self._index.experiment
+
+    @property
+    def objective_functions(self) -> EverestObjectivesConfig:
+        objectives_config = self.response_configuration.get("everest_objectives")
+
+        assert objectives_config is not None
+        return cast(EverestObjectivesConfig, objectives_config)
+
+    @property
+    def output_constraints(self) -> EverestConstraintsConfig | None:
+        constraints_config = self.response_configuration.get("everest_constraints")
+        if constraints_config is None:
+            return None
+
+        return cast(EverestConstraintsConfig, constraints_config)
+
+    @property
+    def ensembles_with_function_results(
+        self,
+    ) -> list[LocalEnsemble]:
+        return [
+            b
+            for b in sorted(self.ensembles, key=lambda ens: ens.iteration)
+            if b.has_function_results
+        ]
+
+    @property
+    def ensembles_with_gradient_results(
+        self,
+    ) -> list[LocalEnsemble]:
+        return [
+            b
+            for b in sorted(self.ensembles, key=lambda ens: ens.iteration)
+            if b.has_gradient_results
+        ]
+
+    def export_dataframes(
+        self,
+    ) -> tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame]:
+        if not self.ensembles:
+            return (pl.DataFrame(), pl.DataFrame(), pl.DataFrame())
+
+        batch_dfs_to_join = {}  # type: ignore
+        realization_dfs_to_join = {}  # type: ignore
+        perturbation_dfs_to_join = {}  # type: ignore
+
+        batch_ids = [b.iteration for b in self.ensembles]
+        all_controls = self.parameter_keys
+
+        def _try_append_df(
+            batch_id: int,
+            df: pl.DataFrame | None,
+            target: dict[str, list[pl.DataFrame]],
+        ) -> None:
+            if df is not None:
+                if batch_id not in target:  # type: ignore
+                    target[batch_id] = []  # type: ignore
+                target[batch_id].append(df)  # type: ignore
+
+        def try_append_batch_dfs(batch_id: int, *dfs: pl.DataFrame | None) -> None:
+            for df_ in dfs:
+                _try_append_df(batch_id, df_, batch_dfs_to_join)
+
+        def try_append_realization_dfs(
+            batch_id: int, *dfs: pl.DataFrame | None
+        ) -> None:
+            for df_ in dfs:
+                _try_append_df(batch_id, df_, realization_dfs_to_join)
+
+        def try_append_perturbation_dfs(
+            batch_id: int, *dfs: pl.DataFrame | None
+        ) -> None:
+            for df_ in dfs:
+                _try_append_df(
+                    batch_id,
+                    df_.drop("simulation_id") if df_ is not None else df_,
+                    perturbation_dfs_to_join,
+                )
+
+        def pivot_gradient(df: pl.DataFrame) -> pl.DataFrame:
+            pivoted_ = df.pivot(on="control_name", index="batch_id", separator=" wrt ")
+            return pivoted_.rename(
+                {
+                    col: f"grad({col})"
+                    for col in pivoted_.columns
+                    if col != "batch_id" and col not in all_controls
+                }
+            )
+
+        for ens in self.ensembles:
+            if not ens.has_data():
+                continue
+
+            try_append_perturbation_dfs(
+                ens.iteration,
+                ens.perturbation_objectives,
+                ens.perturbation_constraints,
+            )
+
+            try_append_realization_dfs(
+                ens.iteration,
+                ens.realization_objectives,
+                ens.realization_controls,
+                ens.realization_constraints,
+            )
+
+            try_append_perturbation_dfs(
+                ens.iteration,
+                ens.perturbation_controls,
+                ens.perturbation_constraints,
+            )
+
+            try_append_realization_dfs(
+                ens.iteration,
+                ens.realization_controls,
+                ens.realization_controls,
+                ens.realization_constraints,
+            )
+
+            if ens.batch_objective_gradient is not None:
+                try_append_batch_dfs(
+                    ens.iteration, pivot_gradient(ens.batch_objective_gradient)
+                )
+
+            if ens.batch_constraint_gradient is not None:
+                try_append_batch_dfs(
+                    ens.iteration,
+                    pivot_gradient(ens.batch_constraint_gradient),
+                )
+
+            try_append_batch_dfs(
+                ens.iteration,
+                ens.batch_objectives,
+                ens.batch_constraints,
+            )
+
+        def _join_by_batch(
+            dfs: dict[int, list[pl.DataFrame]], on: list[str]
+        ) -> list[pl.DataFrame]:
+            """
+            Creates one dataframe per batch, with one column per input/output,
+            including control, objective, constraint, gradient value.
+            """
+            dfs_to_concat_ = []
+            for batch_id in batch_ids:
+                if batch_id not in dfs:
+                    continue
+
+                batch_df_ = dfs[batch_id][0]
+                for bdf_ in dfs[batch_id][1:]:
+                    if set(all_controls).issubset(set(bdf_.columns)) and set(
+                        all_controls
+                    ).issubset(set(batch_df_.columns)):
+                        batch_df_ = batch_df_.join(
+                            bdf_.drop(all_controls),
+                            on=on,
+                        )
+                    else:
+                        batch_df_ = batch_df_.join(
+                            bdf_,
+                            on=on,
+                        )
+
+                dfs_to_concat_.append(batch_df_)
+
+            return dfs_to_concat_
+
+        batch_dfs_to_concat = _join_by_batch(batch_dfs_to_join, on=["batch_id"])
+        batch_df = pl.concat(batch_dfs_to_concat, how="diagonal")
+
+        realization_dfs_to_concat = _join_by_batch(
+            realization_dfs_to_join, on=["batch_id", "realization", "simulation_id"]
+        )
+        realization_df = pl.concat(realization_dfs_to_concat, how="diagonal")
+
+        perturbation_dfs_to_concat = _join_by_batch(
+            perturbation_dfs_to_join, on=["batch_id", "realization", "perturbation"]
+        )
+        if perturbation_dfs_to_concat:
+            # Perturbations exists, proceed as normal
+            perturbation_df = pl.concat(perturbation_dfs_to_concat, how="diagonal")
+            pert_real_df = pl.concat([realization_df, perturbation_df], how="diagonal")
+        else:
+            # Discrete methods never have perturbations,
+            # append an empty (i.e., null) column
+            pert_real_df = realization_df.with_columns(
+                pl.lit(None).alias("perturbation")
+            )
+
+        pert_real_df = pert_real_df.select(
+            "batch_id",
+            "realization",
+            "perturbation",
+            *list(
+                set(pert_real_df.columns) - {"batch_id", "realization", "perturbation"}
+            ),
+        )
+
+        # Avoid name collisions when joining with simulations
+        batch_df_renamed = batch_df.rename(
+            {
+                col: f"batch_{col}"
+                for col in batch_df.columns
+                if col != "batch_id" and not col.startswith("grad")
+            }
+        )
+        combined_df = pert_real_df.join(
+            batch_df_renamed, on="batch_id", how="full", coalesce=True
+        )
+
+        def _sort_df(df: pl.DataFrame, index: list[str]) -> pl.DataFrame:
+            sorted_cols = index + sorted(set(df.columns) - set(index))
+            df_ = df.select(sorted_cols).sort(by=index)
+            return df_
+
+        return (
+            _sort_df(
+                combined_df,
+                ["batch_id", "realization", "simulation_id", "perturbation"],
+            ),
+            _sort_df(
+                pert_real_df,
+                [
+                    "batch_id",
+                    "realization",
+                    "perturbation",
+                    "simulation_id",
+                ],
+            ),
+            _sort_df(batch_df, ["batch_id", "total_objective_value"]),
+        )
+
+    def export_everest_opt_results_to_csv(self) -> Path:
+        full_path = self._path / "experiment_results.csv"
+        combined_df, _, _ = self.export_dataframes()
+        combined_df.write_csv(full_path)
+        return full_path

@@ -19,7 +19,7 @@ from ert.gui.tools.plot.plot_window import (
     STD_DEV,
     PlotWindow,
 )
-from ert.services import ErtServer
+from ert.services import ErtServerController
 from ert.storage import open_storage
 
 from .conftest import get_child, wait_for_child
@@ -62,7 +62,7 @@ def plot_figure(
     open_storage(storage_config.ens_path, mode="r")
     log_handler = GUILogHandler()
     with (
-        ErtServer.init_service(
+        ErtServerController.init_service(
             project=storage_config.ens_path,
         ),
     ):
@@ -92,17 +92,17 @@ def plot_figure(
                 case_selection.slot_toggle_plot(item)
 
         found_selected_key = False
-        for i in range(key_model.rowCount()):
-            to_select = data_types.model.itemAt(data_types.model.index(i, 0))
+        for key_index in range(key_model.rowCount()):
+            to_select = data_types.model.itemAt(data_types.model.index(key_index, 0))
             assert to_select is not None
             if to_select.key == key:
-                index = key_model.index(i, 0)
+                index = key_model.index(key_index, 0)
                 key_list.setCurrentIndex(index)
                 selected_key = to_select
-                for i, tab in enumerate(plot_window._plot_widgets):
+                for widget_index, tab in enumerate(plot_window._plot_widgets):
                     if tab.name == plot_name:
                         found_selected_key = True
-                        if central_tab.isTabEnabled(i):
+                        if central_tab.isTabEnabled(widget_index):
                             central_tab.setCurrentWidget(tab)
                             assert (
                                 selected_key.dimensionality
@@ -131,6 +131,8 @@ def plot_figure(
 # mismatch of 58 which would fail the test by being above 10.0
 @pytest.mark.mpl_image_compare(tolerance=10.0)
 @pytest.mark.skip_mac_ci  # test is slow
+@pytest.mark.snapshot_test
+@pytest.mark.xdist_group(name="uses_heat_equation_storage")
 def test_that_all_snake_oil_visualisations_matches_snapshot(plot_figure):
     return plot_figure
 
@@ -144,7 +146,7 @@ def test_that_all_plotter_filter_boxes_yield_expected_filter_results(
 
     log_handler = GUILogHandler()
     with (
-        ErtServer.init_service(
+        ErtServerController.init_service(
             project=snake_oil_case_storage.ens_path,
         ),
     ):

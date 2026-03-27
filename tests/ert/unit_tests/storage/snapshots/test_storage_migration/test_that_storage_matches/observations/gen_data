@@ -1,2 +1,2 @@
-,response_key,observation_key,report_step,index,observations,std
-0,GEN,GEN,1,0,0.0,0.1
+,response_key,observation_key,report_step,index,observations,std,east,north,radius
+0,GEN,GEN,1,0,0.0,0.1,,,

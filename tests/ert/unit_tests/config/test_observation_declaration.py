@@ -11,6 +11,7 @@ from resdata.summary import Summary
 
 from ert.__main__ import run_convert_observations
 from ert.config._observations import (
+    BreakthroughObservation,
     GeneralObservation,
     RFTObservation,
     SummaryObservation,
@@ -42,10 +43,12 @@ def test_parsing_contents_succeeds_or_gives_config_error(contents):
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_make_observations():
-    Path("wpr_diff_idx.txt").write_text("", encoding="utf8")
-    Path("wpr_diff_obs.txt").write_text("", encoding="utf8")
-
+@pytest.mark.filterwarnings("ignore:.*Segment SEG does not contain any time steps")
+def test_that_make_observations_migrates_observations():
+    Path("wpr_diff_idx.txt").write_text("400\n800\n1200\n1800\n", encoding="utf8")
+    Path("wpr_diff_obs.txt").write_text(
+        "1.1 0.1\n2.2 0.2\n3.3 0.3\n4.4 0.4\n", encoding="utf8"
+    )
     obs_config_contents = dedent(
         """
         HISTORY_OBSERVATION FOPR {};
@@ -53,8 +56,15 @@ def test_make_observations():
         SUMMARY_OBSERVATION WOPR_OP1_9 {
             VALUE = 0.1;
             ERROR = 0.05;
-            DATE = 2010-03-31;
+            RESTART = 0;
             KEY = WOPR:OP1;
+        };
+
+        SUMMARY_OBSERVATION WOPR_OP2_7 {
+            VALUE = 0.2;
+            ERROR = 0.05;
+            RESTART = 1;
+            KEY = WOPR:OP2;
         };
 
         GENERAL_OBSERVATION WPR_DIFF_1 {
@@ -75,7 +85,7 @@ def test_make_observations():
             ERROR = 0.1;
             SEGMENT SEG {
                 START = 1;
-                STOP = 0;
+                STOP = 1;
                 ERROR = 0.25;
             };
         };
@@ -140,6 +150,7 @@ def test_make_observations():
     # Validate migrated observations contain expected entries and values
     names = [getattr(o, "name", None) for o in observations]
     assert "WOPR_OP1_9" in names
+    assert "WOPR_OP2_7" in names
     assert "WPR_DIFF_1" in names
     assert "WPR_DIFF_2" in names
     assert "FOPR" in names
@@ -150,18 +161,26 @@ def test_make_observations():
     assert isinstance(wopr, SummaryObservation)
     assert wopr.value == 0.1
     assert wopr.key == "WOPR:OP1"
+    # Migration converts RESTART 0 -> start date
     assert wopr.date == "2010-03-31"
+
+    wopr = next(o for o in observations if getattr(o, "name", None) == "WOPR_OP2_7")
+    assert isinstance(wopr, SummaryObservation)
+    assert wopr.value == 0.2
+    assert wopr.key == "WOPR:OP2"
+    # Migration converts RESTART 1 -> second date
+    assert wopr.date == "2015-06-13"
 
     wpr1 = next(o for o in observations if getattr(o, "name", None) == "WPR_DIFF_1")
     assert isinstance(wpr1, GeneralObservation)
     # Migration converts DATE -> RESTART, so accept either a date string or a restart
     assert wpr1.restart == 1
-    assert wpr1.obs_file.endswith("wpr_diff_obs.txt")
+    assert wpr1.data == "SNAKE_OIL_WPR_DIFF"
 
     wpr2 = next(o for o in observations if getattr(o, "name", None) == "WPR_DIFF_2")
     assert isinstance(wpr2, GeneralObservation)
     assert wpr2.restart == 1
-    assert wpr2.obs_file.endswith("wpr_diff_obs.txt")
+    assert wpr2.data == "SNAKE_OIL_WPR_DIFF"
 
 
 def test_rft_observation_declaration():
@@ -191,6 +210,7 @@ def test_rft_observation_declaration():
             property="PRESSURE",
             north=71.0,
             east=30.0,
+            radius=None,
             tvd=2000.0,
         )
     ]
@@ -227,7 +247,10 @@ def test_rft_observation_csv_declaration():
             property="PRESSURE",
             north=71.0,
             east=30.0,
+            radius=None,
             tvd=2000.0,
+            md=2500.0,
+            zone="zone1",
         ),
         RFTObservation(
             name="NAME[1]",
@@ -238,7 +261,48 @@ def test_rft_observation_csv_declaration():
             property="PRESSURE",
             north=72.0,
             east=31.0,
+            radius=None,
             tvd=2100.0,
+            md=2600.0,
+            zone="zone2",
+        ),
+    ]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_rft_csv_without_radius_column_gets_radius_defaulted_to_none():
+    Path("rft_observations.csv").write_text(
+        dedent(
+            """
+            WELL_NAME,DATE,MD,ZONE,PRESSURE,ERROR,TVD,NORTH,EAST,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str
+            WELL1,2013-03-31,2500,zone1,294.0,10,2000.0,71.0,30.0,123,1,zone1
+            """
+        ),
+        encoding="utf8",
+    )
+    assert make_observations(
+        "",
+        [
+            {
+                "type": ObservationType.RFT,
+                "name": "NAME",
+                "CSV": "rft_observations.csv",
+            }
+        ],
+    ) == [
+        RFTObservation(
+            name="NAME[0]",
+            well="WELL1",
+            date="2013-03-31",
+            value=294.0,
+            error=10.0,
+            property="PRESSURE",
+            north=71.0,
+            east=30.0,
+            radius=None,
+            tvd=2000.0,
+            md=2500.0,
+            zone="zone1",
         ),
     ]
 
@@ -262,6 +326,44 @@ def test_that_rft_observations_from_csv_with_no_rows_after_header_returns_empty_
         )
         == []
     )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_observation_type_rft_is_compatible_with_create_rft_ertobs_handling_of_missing_data():  # noqa: E501
+    """A value of -1 and error of 0 is used by fmu.tools.rms create_rft_ertobs to
+    indicate missing data. If encountered in an rft observations csv file
+    it should be skipped and create a user warning.
+    """
+    Path("rft_observations.csv").write_text(
+        dedent(
+            """
+            WELL_NAME,DATE,MD,ZONE,PRESSURE,ERROR,TVD,NORTH,EAST,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str
+            WELL1,2013-03-31,2500,zone1,-1,0,2000.0,71.0,30.0,123,1,zone1
+            WELL1,2013-04-30,2500,zone1,295,10,2000.0,71.0,30.0,123,1,zone1
+            WELL2,2014-03-31,2500,zone1,-1,0,2000.0,71.0,30.0,123,1,zone1
+            """
+        ),
+        encoding="utf8",
+    )
+    with pytest.raises(ObservationConfigError) as err:
+        make_observations(
+            "",
+            [
+                {
+                    "type": ObservationType.RFT,
+                    "name": "NAME",
+                    "CSV": "rft_observations.csv",
+                }
+            ],
+        )
+    assert dedent(
+        """
+            Invalid value=-1 and error=0 detected in rft_observations.csv for well(s):
+             - WELL1 at date 2013-03-31
+             - WELL2 at date 2014-03-31
+            The invalid observation(s) must be removed from the file.
+            """
+    ).strip() in str(err.value)
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -345,6 +447,9 @@ def test_that_property_can_be_specified_for_rft_observation_csv_declaration():
             north=71.0,
             east=30.0,
             tvd=2000.0,
+            md=2500.0,
+            radius=None,
+            zone="zone1",
         )
     ]
 
@@ -440,3 +545,145 @@ def test_that_multiple_segments_are_collected():
     observations = HistoryObservation.from_obs_dict("", parsed_obs_dict[0])
 
     assert len(observations[0].segments) == 2
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_breakthrough_observation_can_be_instantiated_from_config():
+    obs_config_str = """
+      BREAKTHROUGH_OBSERVATION name {
+        KEY=WWCT:OP_1;
+        DATE=2012-10-01;
+        ERROR=3; -- days
+        THRESHOLD=0.1;
+      };
+    """
+
+    Path("obs_config.txt").write_text(obs_config_str, encoding="utf8")
+    parsed_obs_dict = parse_observations(obs_config_str, "obs_config.txt")
+    brt_obs = BreakthroughObservation.from_obs_dict("", parsed_obs_dict[0]).pop()
+    assert brt_obs.type == "breakthrough"
+    assert brt_obs.name == "name"
+    assert brt_obs.key == "WWCT:OP_1"
+    assert brt_obs.date == datetime.fromisoformat("2012-10-01")
+    assert brt_obs.error == 3
+    assert brt_obs.threshold == 0.1
+    assert brt_obs.east is None
+    assert brt_obs.north is None
+    assert brt_obs.radius is None
+
+
+@pytest.mark.parametrize("missing_keyword", ["KEY", "DATE", "ERROR", "THRESHOLD"])
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_breakthrough_observation_raises_error_when_missing_required_keyword(
+    missing_keyword,
+):
+    obs_config_str = """
+      BREAKTHROUGH_OBSERVATION BRT_OBS {
+        KEY=WWCT:OP_1;
+        DATE=2012-10-01;
+        ERROR=3; -- days
+        THRESHOLD=0.1;
+      };
+    """
+    obs_config_lines = obs_config_str.splitlines()
+    obs_config_lines.pop(
+        next(i for i, line in enumerate(obs_config_lines) if missing_keyword in line)
+    )
+    obs_config_str = "\n".join(obs_config_lines)
+    Path("obs_config.txt").write_text(obs_config_str, encoding="utf8")
+    parsed_obs_dict = parse_observations(obs_config_str, "obs_config.txt")
+    with pytest.raises(
+        ObservationConfigError, match=f'Missing item "{missing_keyword}" in BRT_OBS'
+    ):
+        BreakthroughObservation.from_obs_dict("", parsed_obs_dict[0])
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_breakthrough_observation_can_be_instantiated_with_localization():
+    obs_config_str = """
+      BREAKTHROUGH_OBSERVATION name {
+        KEY=WWCT:OP_1;
+        DATE=2012-10-01;
+        ERROR=3; -- days
+        THRESHOLD=0.1;
+        LOCALIZATION {
+           EAST=10;
+           NORTH=20;
+           RADIUS=2500;
+        };
+      };
+    """
+
+    Path("obs_config.txt").write_text(obs_config_str, encoding="utf8")
+    parsed_obs_dict = parse_observations(obs_config_str, "obs_config.txt")
+    brt_obs = BreakthroughObservation.from_obs_dict("", parsed_obs_dict[0]).pop()
+    assert brt_obs.east == 10
+    assert brt_obs.north == 20
+    assert brt_obs.radius == 2500
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_rft_observation_raises_error_given_north_or_east_keys_in_config():
+    Path("rft_observations.csv").write_text(
+        dedent(
+            """
+            WELL_NAME,DATE,MD,ZONE,PRESSURE,ERROR,TVD,NORTH,EAST,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str
+            WELL1,2013-03-31,2500,zone1,294.0,10,2000.0,71.0,30.0,123,1,zone1
+            WELL2,2013-04-30,2600,zone2,295.0,11,2100.0,72.0,31.0,124,2,zone2
+            """
+        ),
+        encoding="utf8",
+    )
+    with pytest.raises(
+        ObservationConfigError,
+        match=r"Invalid key: 'EAST' in 'LOCALIZATION' for RFT observation: 'RFT_OBS'. "
+        r"The 'EAST' keyword must be defined outside the LOCALIZATION section "
+        r"for RFT observations - or in the CSV RFT configuration file.;"
+        r"Invalid key: 'NORTH' in 'LOCALIZATION' for RFT observation: 'RFT_OBS'. "
+        r"The 'NORTH' keyword must be defined outside the LOCALIZATION section for "
+        r"RFT observations - or in the CSV RFT configuration file.",
+    ):
+        make_observations(
+            "",
+            [
+                {
+                    "type": ObservationType.RFT,
+                    "name": "RFT_OBS",
+                    "CSV": "rft_observations.csv",
+                    "LOCALIZATION": {
+                        "NORTH": 30,
+                        "EAST": 10,
+                    },
+                }
+            ],
+        )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_rft_observation_can_be_provided_radius_localization_keyword():
+    Path("rft_observations.csv").write_text(
+        dedent(
+            """
+            WELL_NAME,DATE,MD,ZONE,PRESSURE,ERROR,TVD,NORTH,EAST,rms_cell_index,rms_cell_zone_val,rms_cell_zone_str
+            WELL1,2013-03-31,2500,zone1,294.0,10,2000.0,71.0,30.0,123,1,zone1
+            WELL2,2013-04-30,2600,zone2,295.0,11,2100.0,72.0,31.0,124,2,zone2
+            """
+        ),
+        encoding="utf8",
+    )
+
+    obss = make_observations(
+        "",
+        [
+            {
+                "type": ObservationType.RFT,
+                "name": "RFT_OBS",
+                "CSV": "rft_observations.csv",
+                "LOCALIZATION": {
+                    "RADIUS": 2500,
+                },
+            }
+        ],
+    )
+    for obs in obss:
+        assert obs.radius == 2500

@@ -98,6 +98,20 @@ async def test_numcpu_sets_ntasks(num_cpu):
 
 
 @pytest.mark.usefixtures("capturing_sbatch")
+async def test_that_submit_will_propagate_padded_max_runtime():
+    MAX_RUNTIME = 120
+    driver = SlurmDriver(max_runtime=MAX_RUNTIME)
+    driver._poll_period = 0.01
+    await driver.submit(0, "sleep", name="myjobname")
+    expected_time = _seconds_to_slurm_time_format(
+        MAX_RUNTIME + driver._MAX_RUNTIME_QUEUE_SYSTEM_PADDING_SECONDS
+    )
+    assert f"--time={expected_time}" in Path("captured_sbatch_args").read_text(
+        encoding="utf-8"
+    )
+
+
+@pytest.mark.usefixtures("capturing_sbatch")
 @given(memory_in_bytes=st.integers(min_value=1))
 @settings(max_examples=10)
 async def test_realization_memory(memory_in_bytes):
@@ -470,9 +484,12 @@ async def test_slurm_uses_sacct(
     assert "scontrol failed, trying sacct" in caplog.text
 
 
-async def test_slurm_timeout(caplog, pytestconfig, use_tmpdir):
+async def test_slurm_timeout(monkeypatch, caplog, pytestconfig, use_tmpdir):
     caplog.set_level(logging.INFO)
 
+    monkeypatch.setattr(
+        "ert.scheduler.driver.Driver._MAX_RUNTIME_QUEUE_SYSTEM_PADDING_SECONDS", 0
+    )
     if pytestconfig.getoption("slurm"):
         cmd = ["sleep 300"]
         kwargs = {"max_runtime": 10}

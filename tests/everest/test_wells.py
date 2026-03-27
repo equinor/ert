@@ -3,6 +3,7 @@ from contextlib import ExitStack as does_not_raise
 
 import pytest
 
+from ert.config import ConfigWarning
 from ert.run_models.everest_run_model import _get_internal_files
 from everest.config import EverestConfig, WellConfig
 
@@ -73,7 +74,8 @@ def test_that_well_names_must_be_unique(min_config):
 def test_well_config_to_wells_json(min_config, monkeypatch, tmp_path, config):
     monkeypatch.chdir(tmp_path)
     min_config["wells"] = config
-    ever_config = EverestConfig(**min_config)
+    with pytest.warns(ConfigWarning, match="The `wells` section is deprecated"):
+        ever_config = EverestConfig(**min_config)
     for datafile, data in _get_internal_files(ever_config).items():
         datafile.parent.mkdir(exist_ok=True, parents=True)
         datafile.write_text(data, encoding="utf-8")
@@ -97,11 +99,21 @@ def test_well_config_to_wells_json(min_config, monkeypatch, tmp_path, config):
 )
 def test_controls_config_to_wells_json(min_config, monkeypatch, tmp_path, variables):
     monkeypatch.chdir(tmp_path)
+    min_config["controls"][0]["type"] = "well_control"
     min_config["controls"][0]["variables"] = variables
-    ever_config = EverestConfig(**min_config)
+    with pytest.warns(ConfigWarning, match="The `controls.type` field is deprecated"):
+        ever_config = EverestConfig(**min_config)
     for datafile, data in _get_internal_files(ever_config).items():
         datafile.parent.mkdir(exist_ok=True, parents=True)
         datafile.write_text(data, encoding="utf-8")
     with open("everest_output/.internal_data/wells.json", encoding="utf-8") as fin:
         wells_json = json.load(fin)
     assert wells_json == [{"name": "test"}]
+
+
+def test_that_wells_section_is_deprecated(min_config, monkeypatch, tmp_path):
+    min_config["controls"][0]["variables"] = [{"name": "test", "initial_guess": 0.1}]
+    monkeypatch.chdir(tmp_path)
+    min_config["wells"] = [{"name": "test"}]
+    with pytest.warns(ConfigWarning, match="The `wells` section is deprecated"):
+        EverestConfig(**min_config)

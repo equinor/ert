@@ -42,22 +42,6 @@ class DarkStorageStateTest(StatefulStorageTest):
                 ens.id for ens in storage_experiment.ensembles
             }
 
-    @rule(model_experiment=StatefulStorageTest.experiments)
-    def get_observations_through_client(self, model_experiment):
-        response = self.client.get(f"/experiments/{model_experiment.uuid}/observations")
-        assert {r["name"] for r in response.json()} == {
-            key
-            for _, ds in model_experiment.observations.items()
-            for key in ds["observation_key"]
-        }
-
-    @rule(model_experiment=StatefulStorageTest.experiments)
-    def get_ensembles_through_client(self, model_experiment):
-        response = self.client.get(f"/experiments/{model_experiment.uuid}/ensembles")
-        assert {r["id"] for r in response.json()} == {
-            str(uuid) for uuid in model_experiment.ensembles
-        }
-
     @rule(model_ensemble=StatefulStorageTest.ensembles)
     def get_responses_through_client(self, model_ensemble):
         experiments = self.client.get("/experiments").json()
@@ -66,9 +50,9 @@ class DarkStorageStateTest(StatefulStorageTest):
         )
 
         response_keys_in_experiment = [
-            metadata["response_key"]
-            for metadatas in experiment["responses"].values()
-            for metadata in metadatas
+            key
+            for metadata in experiment["responses"].values()
+            for key in metadata["keys"]
         ]
 
         response_keys_in_ens = {

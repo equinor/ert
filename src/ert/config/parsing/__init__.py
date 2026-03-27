@@ -1,3 +1,4 @@
+from ._parse_zonemap import parse_zonemap
 from .config_dict import ConfigDict
 from .config_errors import ConfigValidationError, ConfigWarning
 from .config_keywords import ConfigKeys
@@ -36,7 +37,6 @@ __all__ = [
     "ObservationConfigError",
     "ObservationDict",
     "ObservationType",
-    "ObservationType",
     "QueueSystem",
     "SchemaItemType",
     "WarningInfo",
@@ -48,5 +48,6 @@ __all__ = [
     "parse",
     "parse_contents",
     "parse_observations",
+    "parse_zonemap",
     "read_file",
 ]

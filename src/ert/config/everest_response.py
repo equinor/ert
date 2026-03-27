@@ -7,7 +7,7 @@ import polars as pl
 from ert.substitutions import substitute_runpath_name
 
 from .parsing import ConfigDict
-from .response_config import InvalidResponseFile, ResponseConfig, ResponseMetadata
+from .response_config import InvalidResponseFile, ResponseConfig
 from .responses_index import responses_index
 
 
@@ -15,23 +15,11 @@ class EverestResponse(ResponseConfig):
     """Base class for EVEREST response configurations."""
 
     has_finalized_keys: bool = True
-    scales: list[float | None]
+    scales: list[float]
 
     @property
     def primary_key(self) -> list[str]:
         return []
-
-    @property
-    def metadata(self) -> list[ResponseMetadata]:
-        return [
-            ResponseMetadata(
-                response_type=self.type,
-                response_key=response_key,
-                finalized=self.has_finalized_keys,
-                filter_on=None,
-            )
-            for response_key in self.keys
-        ]
 
     @property
     def expected_input_files(self) -> list[str]:
@@ -91,8 +79,8 @@ class EverestResponse(ResponseConfig):
 class EverestConstraintsConfig(EverestResponse):
     type: Literal["everest_constraints"] = "everest_constraints"
     targets: list[float | None]
-    upper_bounds: list[float]
-    lower_bounds: list[float]
+    upper_bounds: list[float | None]
+    lower_bounds: list[float | None]
 
 
 responses_index.add_response_type(EverestConstraintsConfig)
@@ -100,7 +88,7 @@ responses_index.add_response_type(EverestConstraintsConfig)
 
 class EverestObjectivesConfig(EverestResponse):
     type: Literal["everest_objectives"] = "everest_objectives"
-    weights: list[float | None]
+    weights: list[float]
     objective_types: list[Literal["mean", "stddev"]]
 
 

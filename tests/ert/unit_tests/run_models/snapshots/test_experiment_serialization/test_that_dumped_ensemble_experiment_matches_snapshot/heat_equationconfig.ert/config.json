@@ -11,8 +11,8 @@
   "runpath_config": {
     "num_realizations": 100,
     "runpath_format_string": "simulations/realization-<IENS>/iter-<ITER>",
-    "jobname_format_string": "<CONFIG_FILE>-<IENS>",
-    "eclbase_format_string": "ECLBASE<IENS>",
+    "jobname_format_string": "HEAT",
+    "summary_file_base_name": "HEAT",
     "gen_kw_export_name": "parameters"
   },
   "queue_config": {
@@ -69,8 +69,8 @@
     "<CONFIG_FILE>": "config.ert",
     "<RUNPATH_FILE>": "test-data/ert/heat_equation.config.ert/.ert_runpath_list",
     "<RUNPATH>": "simulations/realization-<IENS>/iter-<ITER>",
-    "<ECL_BASE>": "ECLBASE<IENS>",
-    "<ECLBASE>": "ECLBASE<IENS>",
+    "<ECL_BASE>": "HEAT",
+    "<ECLBASE>": "HEAT",
     "<NUM_CPU>": "1"
   },
   "hooked_workflows": {},
@@ -221,14 +221,15 @@
         "nx": 10,
         "ny": 10,
         "nz": 1,
+        "axis_orientation": 1,
         "xlength": 10.0,
         "ylength": 10.0,
         "xinc": 1.0,
         "yinc": 1.0,
         "rotation_angle": 0.0,
         "origin": [
-          6.123233998228043e-16,
-          10.0
+          0.0,
+          0.0
         ]
       },
       "file_format": "bgrdecl",
@@ -243,427 +244,553 @@
   ],
   "response_configuration": [
     {
-      "type": "gen_data",
+      "type": "summary",
       "input_files": [
-        "gen_data_%d.out"
+        "HEAT"
       ],
       "keys": [
-        "MY_RESPONSE"
+        "HEAT_2_2",
+        "HEAT_3_5",
+        "HEAT_5_3",
+        "HEAT_5_7",
+        "HEAT_7_2",
+        "HEAT_7_5"
       ],
-      "has_finalized_keys": true,
-      "report_steps_list": [
-        [
-          10,
-          71,
-          132,
-          193,
-          255,
-          316,
-          377,
-          438
-        ]
-      ]
+      "has_finalized_keys": false
     }
   ],
+  "derived_response_configuration": [],
   "ert_templates": [],
-  "observations": {
-    "gen_data": {
-      "type": "dicts",
-      "data": [
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_10",
-          "report_step": 10,
-          "index": 0,
-          "observations": 5.644282737193862e-6,
-          "std": 3.0797309591434896e-7
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_10",
-          "report_step": 10,
-          "index": 1,
-          "observations": 0.4141034781932831,
-          "std": 0.0201948843896389
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_10",
-          "report_step": 10,
-          "index": 2,
-          "observations": 3.6679649353027344,
-          "std": 0.1648232787847519
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_10",
-          "report_step": 10,
-          "index": 3,
-          "observations": 16.248260498046875,
-          "std": 0.7711986899375916
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_10",
-          "report_step": 10,
-          "index": 4,
-          "observations": 1.76359224319458,
-          "std": 0.08703349530696869
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_10",
-          "report_step": 10,
-          "index": 5,
-          "observations": 22.16446876525879,
-          "std": 1.1721378564834595
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_132",
-          "report_step": 132,
-          "index": 0,
-          "observations": 0.447797030210495,
-          "std": 0.02217893674969673
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_132",
-          "report_step": 132,
-          "index": 1,
-          "observations": 3.248575448989868,
-          "std": 0.15681634843349457
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_132",
-          "report_step": 132,
-          "index": 2,
-          "observations": 2.7605044841766357,
-          "std": 0.13250137865543365
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_132",
-          "report_step": 132,
-          "index": 3,
-          "observations": 3.3842520713806152,
-          "std": 0.16395530104637146
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_132",
-          "report_step": 132,
-          "index": 4,
-          "observations": 0.9695985317230225,
-          "std": 0.04802326858043671
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_132",
-          "report_step": 132,
-          "index": 5,
-          "observations": 2.0614712238311768,
-          "std": 0.09892536699771881
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_193",
-          "report_step": 193,
-          "index": 0,
-          "observations": 0.5958134531974792,
-          "std": 0.03025694191455841
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_193",
-          "report_step": 193,
-          "index": 1,
-          "observations": 2.4593591690063477,
-          "std": 0.1264735758304596
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_193",
-          "report_step": 193,
-          "index": 2,
-          "observations": 1.5710086822509766,
-          "std": 0.08528870344161987
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_193",
-          "report_step": 193,
-          "index": 3,
-          "observations": 1.6568063497543335,
-          "std": 0.09129362553358078
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_193",
-          "report_step": 193,
-          "index": 4,
-          "observations": 0.5932408571243286,
-          "std": 0.02907462604343891
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_193",
-          "report_step": 193,
-          "index": 5,
-          "observations": 1.212605357170105,
-          "std": 0.054819993674755096
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_255",
-          "report_step": 255,
-          "index": 0,
-          "observations": 0.6227307319641113,
-          "std": 0.030970707535743713
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_255",
-          "report_step": 255,
-          "index": 1,
-          "observations": 1.9783726930618286,
-          "std": 0.09864794462919235
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_255",
-          "report_step": 255,
-          "index": 2,
-          "observations": 1.2544246912002563,
-          "std": 0.059704411774873734
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_255",
-          "report_step": 255,
-          "index": 3,
-          "observations": 1.187984585762024,
-          "std": 0.057891275733709335
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_255",
-          "report_step": 255,
-          "index": 4,
-          "observations": 0.3575505018234253,
-          "std": 0.019673051312565804
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_255",
-          "report_step": 255,
-          "index": 5,
-          "observations": 0.7009343504905701,
-          "std": 0.03513380140066147
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_316",
-          "report_step": 316,
-          "index": 0,
-          "observations": 0.5524614453315735,
-          "std": 0.02812507562339306
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_316",
-          "report_step": 316,
-          "index": 1,
-          "observations": 1.4124126434326172,
-          "std": 0.0771753117442131
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_316",
-          "report_step": 316,
-          "index": 2,
-          "observations": 0.9199307560920715,
-          "std": 0.044394198805093765
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_316",
-          "report_step": 316,
-          "index": 3,
-          "observations": 0.7604110240936279,
-          "std": 0.04024385288357735
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_316",
-          "report_step": 316,
-          "index": 4,
-          "observations": 0.283384770154953,
-          "std": 0.014347800053656101
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_316",
-          "report_step": 316,
-          "index": 5,
-          "observations": 0.5029466152191162,
-          "std": 0.024744370952248573
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_377",
-          "report_step": 377,
-          "index": 0,
-          "observations": 0.5145913362503052,
-          "std": 0.024116728454828262
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_377",
-          "report_step": 377,
-          "index": 1,
-          "observations": 1.2130120992660522,
-          "std": 0.060585588216781616
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_377",
-          "report_step": 377,
-          "index": 2,
-          "observations": 0.6612465381622314,
-          "std": 0.03405614197254181
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_377",
-          "report_step": 377,
-          "index": 3,
-          "observations": 0.6018131971359253,
-          "std": 0.029445994645357132
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_377",
-          "report_step": 377,
-          "index": 4,
-          "observations": 0.23849281668663025,
-          "std": 0.010882878676056862
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_377",
-          "report_step": 377,
-          "index": 5,
-          "observations": 0.3565286695957184,
-          "std": 0.018328942358493805
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_438",
-          "report_step": 438,
-          "index": 0,
-          "observations": 0.39953768253326416,
-          "std": 0.020053304731845856
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_438",
-          "report_step": 438,
-          "index": 1,
-          "observations": 0.9295898675918579,
-          "std": 0.04770972952246666
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_438",
-          "report_step": 438,
-          "index": 2,
-          "observations": 0.5497094392776489,
-          "std": 0.026578037068247795
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_438",
-          "report_step": 438,
-          "index": 3,
-          "observations": 0.448047935962677,
-          "std": 0.02222651243209839
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_438",
-          "report_step": 438,
-          "index": 4,
-          "observations": 0.17204797267913818,
-          "std": 0.008437608368694782
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_438",
-          "report_step": 438,
-          "index": 5,
-          "observations": 0.2758280634880066,
-          "std": 0.013980361633002758
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_71",
-          "report_step": 71,
-          "index": 0,
-          "observations": 0.1297244131565094,
-          "std": 0.0064594680443406105
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_71",
-          "report_step": 71,
-          "index": 1,
-          "observations": 3.4099514484405518,
-          "std": 0.16236735880374908
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_71",
-          "report_step": 71,
-          "index": 2,
-          "observations": 4.751474380493164,
-          "std": 0.2356693297624588
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_71",
-          "report_step": 71,
-          "index": 3,
-          "observations": 7.793057918548584,
-          "std": 0.3651414215564728
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_71",
-          "report_step": 71,
-          "index": 4,
-          "observations": 2.059583902359009,
-          "std": 0.09825818985700607
-        },
-        {
-          "response_key": "MY_RESPONSE",
-          "observation_key": "MY_OBS_71",
-          "report_step": 71,
-          "index": 5,
-          "observations": 4.514816761016846,
-          "std": 0.24168886244297028
-        }
-      ],
-      "datatypes": {
-        "response_key": "String",
-        "observation_key": "String",
-        "report_step": "UInt16",
-        "index": "UInt16",
-        "observations": "Float32",
-        "std": "Float32"
-      }
+  "observations": [
+    {
+      "type": "summary_observation",
+      "name": "HEAT_5_3_10",
+      "value": 3.667965046377087,
+      "error": 0.16482328266964485,
+      "key": "HEAT_5_3",
+      "date": "2010-01-11",
+      "east": 4.5,
+      "north": 2.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_3_5_10",
+      "value": 0.414103491360621,
+      "error": 0.020194884392031848,
+      "key": "HEAT_3_5",
+      "date": "2010-01-11",
+      "east": 2.5,
+      "north": 4.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_5_7_10",
+      "value": 16.248260777337972,
+      "error": 0.7711986690036174,
+      "key": "HEAT_5_7",
+      "date": "2010-01-11",
+      "east": 4.5,
+      "north": 6.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_7_5_10",
+      "value": 22.164467871698555,
+      "error": 1.1721378322359177,
+      "key": "HEAT_7_5",
+      "date": "2010-01-11",
+      "east": 6.5,
+      "north": 4.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_2_2_10",
+      "value": 5.644282889965334e-6,
+      "error": 3.0797309730884667e-7,
+      "key": "HEAT_2_2",
+      "date": "2010-01-11",
+      "east": 1.5,
+      "north": 1.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_7_2_10",
+      "value": 1.7635921858323615,
+      "error": 0.08703349480047246,
+      "key": "HEAT_7_2",
+      "date": "2010-01-11",
+      "east": 6.5,
+      "north": 1.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_5_3_71",
+      "value": 4.751474206163854,
+      "error": 0.23566933481297792,
+      "key": "HEAT_5_3",
+      "date": "2010-03-13",
+      "east": 4.5,
+      "north": 2.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_3_5_71",
+      "value": 3.409951366622384,
+      "error": 0.1623673652808328,
+      "key": "HEAT_3_5",
+      "date": "2010-03-13",
+      "east": 2.5,
+      "north": 4.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_5_7_71",
+      "value": 7.793057950630928,
+      "error": 0.3651414263886162,
+      "key": "HEAT_5_7",
+      "date": "2010-03-13",
+      "east": 4.5,
+      "north": 6.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_7_5_71",
+      "value": 4.5148165903553705,
+      "error": 0.24168886166430226,
+      "key": "HEAT_7_5",
+      "date": "2010-03-13",
+      "east": 6.5,
+      "north": 4.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_2_2_71",
+      "value": 0.12972441044285982,
+      "error": 0.006459468052434155,
+      "key": "HEAT_2_2",
+      "date": "2010-03-13",
+      "east": 1.5,
+      "north": 1.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_7_2_71",
+      "value": 2.0595838022397066,
+      "error": 0.09825818825584748,
+      "key": "HEAT_7_2",
+      "date": "2010-03-13",
+      "east": 6.5,
+      "north": 1.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_5_3_132",
+      "value": 2.7605044704042596,
+      "error": 0.13250138129473135,
+      "key": "HEAT_5_3",
+      "date": "2010-05-13",
+      "east": 4.5,
+      "north": 2.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_3_5_132",
+      "value": 3.248575451604436,
+      "error": 0.15681634616418458,
+      "key": "HEAT_3_5",
+      "date": "2010-05-13",
+      "east": 2.5,
+      "north": 4.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_5_7_132",
+      "value": 3.3842521445702993,
+      "error": 0.16395530223898866,
+      "key": "HEAT_5_7",
+      "date": "2010-05-13",
+      "east": 4.5,
+      "north": 6.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_7_5_132",
+      "value": 2.0614711879726264,
+      "error": 0.09892536429879605,
+      "key": "HEAT_7_5",
+      "date": "2010-05-13",
+      "east": 6.5,
+      "north": 4.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_2_2_132",
+      "value": 0.4477970257408774,
+      "error": 0.0221789376450451,
+      "key": "HEAT_2_2",
+      "date": "2010-05-13",
+      "east": 1.5,
+      "north": 1.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_7_2_132",
+      "value": 0.9695985099347255,
+      "error": 0.048023268663994166,
+      "key": "HEAT_7_2",
+      "date": "2010-05-13",
+      "east": 6.5,
+      "north": 1.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_5_3_193",
+      "value": 1.571008633233198,
+      "error": 0.0852887062975425,
+      "key": "HEAT_5_3",
+      "date": "2010-07-13",
+      "east": 4.5,
+      "north": 2.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_3_5_193",
+      "value": 2.459359160324736,
+      "error": 0.1264735818973257,
+      "key": "HEAT_3_5",
+      "date": "2010-07-13",
+      "east": 2.5,
+      "north": 4.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_5_7_193",
+      "value": 1.6568063803224278,
+      "error": 0.09129362899025228,
+      "key": "HEAT_5_7",
+      "date": "2010-07-13",
+      "east": 4.5,
+      "north": 6.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_7_5_193",
+      "value": 1.2126053149672966,
+      "error": 0.05481999368394121,
+      "key": "HEAT_7_5",
+      "date": "2010-07-13",
+      "east": 6.5,
+      "north": 4.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_2_2_193",
+      "value": 0.5958134294429186,
+      "error": 0.030256941756398356,
+      "key": "HEAT_2_2",
+      "date": "2010-07-13",
+      "east": 1.5,
+      "north": 1.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_7_2_193",
+      "value": 0.5932408395048415,
+      "error": 0.029074626754764594,
+      "key": "HEAT_7_2",
+      "date": "2010-07-13",
+      "east": 6.5,
+      "north": 1.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_5_3_255",
+      "value": 1.2544246608145861,
+      "error": 0.059704412977883904,
+      "key": "HEAT_5_3",
+      "date": "2010-09-13",
+      "east": 4.5,
+      "north": 2.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_3_5_255",
+      "value": 1.9783727462282157,
+      "error": 0.09864794502400005,
+      "key": "HEAT_3_5",
+      "date": "2010-09-13",
+      "east": 2.5,
+      "north": 4.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_5_7_255",
+      "value": 1.187984642846562,
+      "error": 0.05789127540333158,
+      "key": "HEAT_5_7",
+      "date": "2010-09-13",
+      "east": 4.5,
+      "north": 6.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_7_5_255",
+      "value": 0.7009343241421975,
+      "error": 0.0351337996111656,
+      "key": "HEAT_7_5",
+      "date": "2010-09-13",
+      "east": 6.5,
+      "north": 4.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_2_2_255",
+      "value": 0.6227307374286233,
+      "error": 0.030970706784917784,
+      "key": "HEAT_2_2",
+      "date": "2010-09-13",
+      "east": 1.5,
+      "north": 1.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_7_2_255",
+      "value": 0.3575504948232558,
+      "error": 0.019673050795566204,
+      "key": "HEAT_7_2",
+      "date": "2010-09-13",
+      "east": 6.5,
+      "north": 1.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_5_3_316",
+      "value": 0.9199307278232758,
+      "error": 0.04439419911136685,
+      "key": "HEAT_5_3",
+      "date": "2010-11-13",
+      "east": 4.5,
+      "north": 2.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_3_5_316",
+      "value": 1.4124126377638284,
+      "error": 0.07717531220755314,
+      "key": "HEAT_3_5",
+      "date": "2010-11-13",
+      "east": 2.5,
+      "north": 4.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_5_7_316",
+      "value": 0.760411004393888,
+      "error": 0.04024385453074509,
+      "key": "HEAT_5_7",
+      "date": "2010-11-13",
+      "east": 4.5,
+      "north": 6.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_7_5_316",
+      "value": 0.502946608482213,
+      "error": 0.0247443710024956,
+      "key": "HEAT_7_5",
+      "date": "2010-11-13",
+      "east": 6.5,
+      "north": 4.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_2_2_316",
+      "value": 0.5524614350578553,
+      "error": 0.028125076404686502,
+      "key": "HEAT_2_2",
+      "date": "2010-11-13",
+      "east": 1.5,
+      "north": 1.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_7_2_316",
+      "value": 0.2833847824638946,
+      "error": 0.014347799635777475,
+      "key": "HEAT_7_2",
+      "date": "2010-11-13",
+      "east": 6.5,
+      "north": 1.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_5_3_377",
+      "value": 0.6612465555365978,
+      "error": 0.03405614051309771,
+      "key": "HEAT_5_3",
+      "date": "2011-01-13",
+      "east": 4.5,
+      "north": 2.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_3_5_377",
+      "value": 1.2130120795019514,
+      "error": 0.06058558661402357,
+      "key": "HEAT_3_5",
+      "date": "2011-01-13",
+      "east": 2.5,
+      "north": 4.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_5_7_377",
+      "value": 0.6018131783410057,
+      "error": 0.02944599440057944,
+      "key": "HEAT_5_7",
+      "date": "2011-01-13",
+      "east": 4.5,
+      "north": 6.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_7_5_377",
+      "value": 0.3565286644622471,
+      "error": 0.018328942601884123,
+      "key": "HEAT_7_5",
+      "date": "2011-01-13",
+      "east": 6.5,
+      "north": 4.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_2_2_377",
+      "value": 0.5145913371785293,
+      "error": 0.024116728327414225,
+      "key": "HEAT_2_2",
+      "date": "2011-01-13",
+      "east": 1.5,
+      "north": 1.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_7_2_377",
+      "value": 0.23849281866416183,
+      "error": 0.010882878725375102,
+      "key": "HEAT_7_2",
+      "date": "2011-01-13",
+      "east": 6.5,
+      "north": 1.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_5_3_438",
+      "value": 0.5497094384825884,
+      "error": 0.026578037416440433,
+      "key": "HEAT_5_3",
+      "date": "2011-03-15",
+      "east": 4.5,
+      "north": 2.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_3_5_438",
+      "value": 0.9295898697178508,
+      "error": 0.04770972792301837,
+      "key": "HEAT_3_5",
+      "date": "2011-03-15",
+      "east": 2.5,
+      "north": 4.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_5_7_438",
+      "value": 0.44804794154769434,
+      "error": 0.02222651207606301,
+      "key": "HEAT_5_7",
+      "date": "2011-03-15",
+      "east": 4.5,
+      "north": 6.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_7_5_438",
+      "value": 0.27582807045559793,
+      "error": 0.013980361434612369,
+      "key": "HEAT_7_5",
+      "date": "2011-03-15",
+      "east": 6.5,
+      "north": 4.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_2_2_438",
+      "value": 0.3995376775661962,
+      "error": 0.020053305020982633,
+      "key": "HEAT_2_2",
+      "date": "2011-03-15",
+      "east": 1.5,
+      "north": 1.5,
+      "radius": 3.0
+    },
+    {
+      "type": "summary_observation",
+      "name": "HEAT_7_2_438",
+      "value": 0.17204797615805403,
+      "error": 0.008437608752411882,
+      "key": "HEAT_7_2",
+      "date": "2011-03-15",
+      "east": 6.5,
+      "north": 1.5,
+      "radius": 3.0
     }
-  },
-  "target_ensemble": "the_experiment"
+  ],
+  "target_ensemble": "the_experiment",
+  "experiment_type": "Ensemble Experiment"
 }

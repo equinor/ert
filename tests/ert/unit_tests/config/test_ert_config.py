@@ -25,7 +25,12 @@ from ert.config import (
     QueueSystem,
     RFTConfig,
 )
-from ert.config.ert_config import _split_string_into_sections, create_forward_model_json
+from ert.config._create_observation_dataframes import create_observation_dataframes
+from ert.config.ert_config import (
+    RandomSeedGenerator,
+    _split_string_into_sections,
+    create_forward_model_json,
+)
 from ert.config.forward_model_step import (
     ForwardModelStepPlugin,
     SiteInstalledForwardModelStep,
@@ -435,7 +440,7 @@ def test_that_ert_config_is_serializable(tmp_path_factory, config_generator):
         ert_config = ErtConfig.from_dict(
             config_values.to_config_dict("config.ert", os.getcwd())
         )
-        config_json = json.loads(RootModel[ErtConfig](ert_config).model_dump_json())
+        config_json = RootModel[ErtConfig](ert_config).model_dump(mode="json")
         from_json = ErtConfig(**config_json)
         assert from_json == ert_config
 
@@ -1518,8 +1523,6 @@ def test_validate_no_logs_when_overwriting_with_same_value(caplog):
 @pytest.mark.parametrize(
     ("obsolete_analysis_keyword", "error_msg"),
     [
-        ("USE_EE", "Keyword USE_EE has been replaced"),
-        ("USE_GE", "Keyword USE_GE has been replaced"),
         ("ENKF_NCOMP", r"ENKF_NCOMP keyword\(s\) has been removed"),
         (
             "ENKF_SUBSPACE_DIMENSION",
@@ -2010,12 +2013,6 @@ def test_two_design2params_validates_design_matrix_merging(
                     <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
                 """
         )
-    assert (
-        "Design matrix merging would have failed due to: "
-        f"Design Matrices '{design_matrix_file.name} (DesignSheet DefaultSheet)' "
-        f"and '{design_matrix_file2.name} (DesignSheet DefaultSheet)' "
-        "do not have the same active realizations" in caplog.text
-    )
 
 
 def test_three_design2params_validates_design_matrix_merging(
@@ -2073,12 +2070,6 @@ def test_three_design2params_validates_design_matrix_merging(
                     <designsheet>=DesignSheet,<defaultssheet>=DefaultSheet)
                 """
         )
-    assert (
-        "Design matrix merging would have failed due to: Design Matrices "
-        f"'{design_matrix_file.name} (DesignSheet DefaultSheet)' "
-        f"and '{design_matrix_file3.name} (DesignSheet DefaultSheet)' "
-        "do not have the same active realizations" in caplog.text
-    )
 
 
 def test_design_matrix_default_argument(tmp_path):
@@ -2686,3 +2677,255 @@ def test_history_observation_removal_error(caplog, monkeypatch):
         "must be specified as SUMMARY_OBSERVATION",
     ):
         ErtConfig.from_file(str(config_path))
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_zone_map_can_be_set_per_realization():
+    Path("zone_map.txt").write_text("1 zone1\n", encoding="utf-8")
+    config = ErtConfig.from_file_contents(
+        """
+        NUM_REALIZATIONS 1
+        ECLBASE BASE
+
+        RUNPATH /realizations-<REAL>/iter-<ITER>
+        ZONEMAP <RUNPATH>/rms/output/zone/layer_zone_table.txt
+        """,
+    )
+    assert (
+        str(config.zonemap)
+        == "/realizations-<REAL>/iter-<ITER>/rms/output/zone/layer_zone_table.txt"
+    )
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
+def test_that_breakthrough_observations_can_be_internalized_in_ert_config():
+    obs_path = Path("observations")
+
+    obs_path.write_text(
+        dedent(
+            """
+            BREAKTHROUGH_OBSERVATION BRT_OBS {
+              KEY=WWCT:OP_1;
+              DATE=2012-10-01;
+              ERROR=3; -- days
+              THRESHOLD=0.1;
+              LOCALIZATION {
+                EAST=10;
+                NORTH=20;
+                RADIUS=2500;
+              };
+            };
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    config = ErtConfig.from_file_contents(
+        """
+        NUM_REALIZATIONS 1
+        ECLBASE FOO
+        OBS_CONFIG observations
+        """,
+    )
+
+    breakthrough_observations = create_observation_dataframes(
+        config.observation_declarations,
+        None,
+    )["breakthrough"]
+    assert breakthrough_observations["observation_key"].to_list() == ["BRT_OBS"]
+    assert breakthrough_observations["response_key"].to_list() == [
+        "BREAKTHROUGH:WWCT:OP_1"
+    ]
+    assert breakthrough_observations["observations"].to_list() == [0]
+    assert breakthrough_observations["std"].to_list() == [3]
+    assert breakthrough_observations["east"].to_list() == [10]
+    assert breakthrough_observations["north"].to_list() == [20]
+    assert breakthrough_observations["radius"].to_list() == [2500]
+
+
+def test_that_random_seed_generator_always_returns_user_defined_seed():
+    generator = RandomSeedGenerator(user_defined_seed=12345)
+    assert generator.seed == 12345
+    assert generator.seed == 12345
+
+
+def test_that_random_seed_generator_generates_new_seed_each_call():
+    generator = RandomSeedGenerator(user_defined_seed=None)
+    seed1 = generator.seed
+    seed2 = generator.seed
+    assert seed1 != seed2
+
+
+def test_that_random_seed_is_logged_with_reproduction_instructions(caplog):
+    generator = RandomSeedGenerator()
+
+    with caplog.at_level(logging.INFO):
+        seed = generator.seed
+
+    assert "To repeat this experiment" in caplog.text
+
+    seed_logs = [line for line in caplog.text.splitlines() if "RANDOM_SEED" in line]
+    latest_seed_message = seed_logs[-1]
+    expected_seed_message = f"RANDOM_SEED {seed}"
+    assert latest_seed_message == expected_seed_message
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_corrupt_xlsx_design_matrix_raises_config_validation_error():
+    dm_file = "corrupt_design_matrix.xlsx"
+    Path("config.ert").write_text(
+        dedent(f"""
+            NUM_REALIZATIONS 1
+            DESIGN_MATRIX {dm_file}
+            """),
+        encoding="utf-8",
+    )
+    Path(dm_file).write_text(
+        dedent(
+            """
+            THIS IS NOT A VALID DESIGN MATRIX FILE
+            """
+        ),
+        encoding="utf-8",
+    )
+    with (
+        pytest.raises(
+            ConfigValidationError,
+            match=r"File could not be loaded. "
+            "It seems to be either invalid or corrupted",
+        ),
+    ):
+        ErtConfig.from_file("config.ert")
+
+
+@pytest.fixture
+def ert_config_with_job() -> type[ErtConfig]:
+    class MyJob(ErtScript):
+        def run(self) -> None:
+            pass
+
+    plugins = ErtRuntimePlugins(
+        installed_workflow_jobs={
+            "MY_JOB": ErtScriptWorkflow(name="MY_JOB", ert_script=MyJob)
+        }
+    )
+
+    return ErtConfig.with_plugins(plugins)
+
+
+def test_that_create_workflow_from_job_creates_and_registers_workflow(
+    ert_config_with_job,
+):
+    ert_config = ert_config_with_job.from_file_contents(
+        dedent("""
+        NUM_REALIZATIONS 1
+        CREATE_WORKFLOW_FROM_JOB my_wf MY_JOB foo bar
+        """),
+    )
+    assert "my_wf" in ert_config.workflows
+    wf = ert_config.workflows["my_wf"]
+    assert len(wf.cmd_list) == 1
+    job, args = wf.cmd_list[0]
+    assert job.name == "MY_JOB"
+    assert args == ["foo", "bar"]
+
+
+@pytest.mark.parametrize("mode", list(HookRuntime))
+def test_that_hook_workflow_job_registers_and_hooks_workflow(ert_config_with_job, mode):
+    """HOOK_WORKFLOW_JOB should both hook the workflow AND register it by name."""
+    ert_config = ert_config_with_job.from_file_contents(
+        dedent(f"""
+        NUM_REALIZATIONS 1
+        HOOK_WORKFLOW_JOB my_wf MY_JOB foo bar {mode.name}
+        """),
+    )
+    assert "my_wf" in ert_config.workflows
+    assert ert_config.workflows["my_wf"] in ert_config.hooked_workflows[mode]
+
+
+def test_that_create_workflow_from_job_with_unknown_job_name_raises_error():
+    with pytest.raises(
+        ConfigValidationError,
+        match="Job with name: NO_SUCH_JOB is not recognized",
+    ):
+        ErtConfig.from_file_contents(
+            dedent("""
+            NUM_REALIZATIONS 1
+            CREATE_WORKFLOW_FROM_JOB my_wf NO_SUCH_JOB foo bar
+            """)
+        )
+
+
+def test_that_hook_workflow_job_with_unknown_job_name_raises_error():
+    with pytest.raises(
+        ConfigValidationError,
+        match="Job with name: NO_SUCH_JOB is not recognized",
+    ):
+        ErtConfig.from_file_contents(
+            dedent("""
+            NUM_REALIZATIONS 1
+            HOOK_WORKFLOW_JOB my_wf NO_SUCH_JOB foo bar PRE_SIMULATION
+            """)
+        )
+
+
+def test_that_hook_workflow_job_with_invalid_runtime_raises_error():
+    with pytest.raises(
+        ConfigValidationError,
+        match="Last argument of HOOK_WORKFLOW_JOB must be a known HookRuntime",
+    ):
+        ErtConfig.from_file_contents(
+            dedent("""
+            NUM_REALIZATIONS 1
+            HOOK_WORKFLOW_JOB my_wf SOME_JOB foo bar NOT_A_RUNTIME
+            """)
+        )
+
+
+HOOK = "HOOK_WORKFLOW_JOB my_wf MY_JOB foo bar PRE_SIMULATION"
+CREATE = "CREATE_WORKFLOW_FROM_JOB my_wf MY_JOB foo bar"
+LOAD = "LOAD_WORKFLOW my_wf"
+
+
+@pytest.mark.parametrize(
+    ("workflow1", "workflow2"),
+    [
+        pytest.param(
+            CREATE,
+            CREATE,
+            id="create_workflow_from_job_twice",
+        ),
+        pytest.param(
+            CREATE,
+            HOOK,
+            id="create_workflow_from_job_and_hook_workflow_job",
+        ),
+        pytest.param(
+            HOOK,
+            HOOK,
+            id="hook_workflow_job_and_hook_workflow_job",
+        ),
+        pytest.param(
+            LOAD,
+            CREATE,
+            id="load_workflow_and_create_workflow_from_job",
+        ),
+        pytest.param(
+            LOAD,
+            HOOK,
+            id="load_workflow_and_hook_workflow_job",
+        ),
+    ],
+)
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_reusing_workflow_name_warns(ert_config_with_job, workflow1, workflow2):
+    config = dedent(f"""
+    NUM_REALIZATIONS 1
+    {workflow1}
+    {workflow2}
+    """)
+    if "LOAD_WORKFLOW" in config:
+        Path("my_wf").write_text("MY_JOB\n", encoding="utf-8")
+    with pytest.warns(ConfigWarning, match=r"Workflow 'my_wf' was added twice"):
+        ert_config_with_job.from_file_contents(config)

@@ -30,6 +30,7 @@ class RunModelEvent(BaseModel):
 class RunModelStatusEvent(RunModelEvent):
     event_type: Literal["RunModelStatusEvent"] = "RunModelStatusEvent"
     msg: str
+    detail: bool = False
 
 
 class EverestStatusEvent(BaseModel):
@@ -81,11 +82,31 @@ class RunModelUpdateEndEvent(RunModelEvent):
 class RunModelErrorEvent(RunModelEvent):
     event_type: Literal["RunModelErrorEvent"] = "RunModelErrorEvent"
     error_msg: str
-    data: DataSection
+    data: DataSection | None
 
     def write_as_csv(self, output_path: Path | None) -> None:
         if output_path and self.data:
             self.data.to_csv("Report", output_path / str(self.run_id))
+
+
+class RunPathCreationEvent(BaseModel):
+    pass
+
+
+class StartingTotalRunPathCreationEvent(RunPathCreationEvent):
+    event_type: Literal["StartingTotalRunPathCreation"] = "StartingTotalRunPathCreation"
+    total_runpaths_to_create: int
+
+
+class FinishedTotalRunPathCreationEvent(RunPathCreationEvent):
+    event_type: Literal["FinishedTotalRunPathCreationEvent"] = (
+        "FinishedTotalRunPathCreationEvent"
+    )
+
+
+class RunPathCreatedEvent(RunPathCreationEvent):
+    event_type: Literal["RunPathCreatedEvent"] = "RunPathCreatedEvent"
+    iens: int
 
 
 StatusEvents = (
@@ -105,6 +126,9 @@ StatusEvents = (
     | StartEvent
     | WarningEvent
     | EnsembleEvaluationWarning
+    | StartingTotalRunPathCreationEvent
+    | FinishedTotalRunPathCreationEvent
+    | RunPathCreatedEvent
 )
 
 

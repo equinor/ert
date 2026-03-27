@@ -31,6 +31,7 @@ class EnsemblePlot:
         ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
+        obs_loc: npt.NDArray[np.float32] | None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         config = plot_context.plotConfig()
@@ -40,12 +41,12 @@ class EnsemblePlot:
         plot_context.x_axis = plot_context.DATE_AXIS
         draw_style = "steps-pre" if is_rate(plot_context.key()) else None
         zorder = 0
-        for (ensemble, data), color_index in zip(
+        for (ensemble, untransposed_data), color_index in zip(
             ensemble_to_data_map.items(),
             plot_context.ensembles_color_indexes(),
             strict=False,
         ):
-            data = data.T
+            data = untransposed_data.T
 
             if not data.empty:
                 if data.index.inferred_type != "datetime64":
@@ -88,7 +89,7 @@ class EnsemblePlot:
         if len(data) == 1 and not style.marker:
             style.marker = "."
 
-        if plot_config.depth_y_axis:
+        if plot_config.flip_response_axis:
             x = data.to_numpy()
             y = data.index.to_numpy()
             axes.yaxis.set_inverted(True)

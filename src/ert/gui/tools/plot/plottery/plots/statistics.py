@@ -33,6 +33,7 @@ class StatisticsPlot:
         ensemble_to_data_map: dict[EnsembleObject, DataFrame],
         observation_data: DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
+        obs_loc: npt.NDArray[np.float32] | None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         config = plot_context.plotConfig()
@@ -41,13 +42,13 @@ class StatisticsPlot:
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.DATE_AXIS
 
-        for (ensemble, data), color_index in zip(
+        for (ensemble, untransposed_data), color_index in zip(
             ensemble_to_data_map.items(),
             plot_context.ensembles_color_indexes(),
             strict=False,
         ):
             config.setCurrentColor(color_index)
-            data = data.T
+            data = untransposed_data.T
             if not data.empty:
                 if data.index.inferred_type != "datetime64":
                     plot_context.deactivateDateSupport()
@@ -128,11 +129,11 @@ def _plotPercentiles(
     axes: Axes, plot_config: PlotConfig, data: DataFrame, ensemble_label: str
 ) -> None:
     style = plot_config.getStatisticsStyle("mean")
-    if plot_config.depth_y_axis:
+    if plot_config.flip_response_axis:
         axes.yaxis.set_inverted(True)
 
     def xy_order(x: Any, y: Any) -> tuple[Any, Any]:
-        if plot_config.depth_y_axis:
+        if plot_config.flip_response_axis:
             return (y, x)
         else:
             return (x, y)
@@ -168,7 +169,7 @@ def _plotPercentiles(
         data["std+"].values,
         data["std-"].values,
         0.5,
-        plot_config.depth_y_axis,
+        plot_config.flip_response_axis,
     )
 
     style = plot_config.getStatisticsStyle("min-max")
@@ -179,7 +180,7 @@ def _plotPercentiles(
         data["Maximum"].values,
         data["Minimum"].values,
         0.5,
-        plot_config.depth_y_axis,
+        plot_config.flip_response_axis,
     )
 
     style = plot_config.getStatisticsStyle("p10-p90")
@@ -190,7 +191,7 @@ def _plotPercentiles(
         data["p90"].values,
         data["p10"].values,
         0.5,
-        plot_config.depth_y_axis,
+        plot_config.flip_response_axis,
     )
 
     style = plot_config.getStatisticsStyle("p33-p67")
@@ -201,7 +202,7 @@ def _plotPercentiles(
         data["p67"].values,
         data["p33"].values,
         0.5,
-        plot_config.depth_y_axis,
+        plot_config.flip_response_axis,
     )
 
 

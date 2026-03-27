@@ -1,16 +1,13 @@
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import QComboBox, QWidget
 
-from ert.gui.simulation import ExperimentPanel
-from ert.gui.simulation.evaluate_ensemble_panel import EvaluateEnsemblePanel
-from ert.gui.simulation.run_dialog import RunDialog
+from ert.gui.experiments import ExperimentPanel, RunDialog
+from ert.gui.experiments.evaluate_ensemble_panel import EvaluateEnsemblePanel
+from tests.ert.handle_run_path_dialog import handle_run_path_dialog
 from tests.ert.ui_tests.gui.conftest import (
     DEFAULT_NUM_REALIZATIONS,
     get_child,
     wait_for_child,
-)
-from tests.ert.ui_tests.gui.test_restart_ensemble_experiment import (
-    handle_run_path_dialog,
 )
 
 
@@ -31,7 +28,7 @@ def test_evaluate_ensemble_active_realizations_resets_to_all_realizations_with_p
     qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
 
     run_dialog = wait_for_child(gui, qtbot, RunDialog)
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=60000)
+    qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=60000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
     evaluate_ensemble_active_realizations = get_child(

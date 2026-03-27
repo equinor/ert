@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Partial Differential Equations to use as forward models."""
 
+import datetime
 import json
 import sys
 
@@ -8,7 +9,72 @@ import geostat
 import numpy as np
 import numpy.typing as npt
 import resfo
-from definition import dx, k_end, k_start, nx, obs_coordinates, obs_times, u_init
+from definition import (
+    dx,
+    k_end,
+    k_start,
+    nx,
+    obs_coordinates,
+    obs_times,
+    summary_names,
+    u_init,
+)
+from resfo_utilities.testing import (
+    Date,
+    Simulator,
+    Smspec,
+    SmspecIntehead,
+    SummaryMiniStep,
+    SummaryStep,
+    UnitSystem,
+    Unsmry,
+)
+
+
+def create_summary_smspec_unsmry(
+    summary_vectors: dict[str, list[float]],
+    start_date: datetime.date,
+    time_step_in_days: float = 30,
+):
+    summary_keys = list(summary_vectors.keys())
+    num_time_steps = len(summary_vectors[summary_keys[0]])
+
+    unsmry = Unsmry(
+        steps=[
+            SummaryStep(
+                seqnum=0,
+                ministeps=[
+                    SummaryMiniStep(
+                        mini_step=0,
+                        params=[
+                            24 * time_step_in_days * step,
+                            *[summary_vectors[key][step] for key in summary_vectors],
+                        ],
+                    )
+                ],
+            )
+            for step in range(num_time_steps)
+        ]
+    )
+    smspec = Smspec(
+        nx=nx,
+        ny=nx,
+        nz=1,
+        restarted_from_step=0,
+        num_keywords=1 + len(summary_keys),
+        restart="        ",
+        keywords=["TIME    ", *summary_keys],
+        well_names=[":+:+:+:+", *([":+:+:+:+"] * len(summary_keys))],
+        region_numbers=[-32676, *([0] * len(summary_keys))],
+        units=["HOURS   ", *(["SM3"] * len(summary_keys))],
+        start_date=Date.from_datetime(start_date),
+        intehead=SmspecIntehead(
+            unit=UnitSystem.METRIC,
+            simulator=Simulator.ECLIPSE_100,
+        ),
+    )
+
+    return smspec, unsmry
 
 
 def heat_equation(
@@ -103,3 +169,26 @@ if __name__ == "__main__":
     for time_step in obs_times:
         with open(f"gen_data_{time_step}.out", "w", encoding="utf-8") as f:
             f.writelines(f"{response[time_step][i]}\n" for i in index)
+
+    time_map = []
+    start_date = datetime.date(2010, 1, 1)
+
+    summary_values = {name: [] for name in summary_names}
+    # for time_step in obs_times:
+    for time_step in range(k_start, k_end):
+        time_map.append(
+            (start_date + datetime.timedelta(days=float(time_step))).isoformat()
+        )
+        for obs in obs_coordinates:
+            summary_values[f"HEAT_{obs.x}_{obs.y}"].append(
+                response[time_step][obs.x, obs.y]
+            )
+
+    smspec, unsmry = create_summary_smspec_unsmry(
+        summary_vectors=summary_values,
+        start_date=datetime.datetime(2010, 1, 1),
+        time_step_in_days=1,
+    )
+
+    smspec.to_file("HEAT.SMSPEC")
+    unsmry.to_file("HEAT.UNSMRY")

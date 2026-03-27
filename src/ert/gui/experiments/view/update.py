@@ -1,0 +1,279 @@
+from __future__ import annotations
+
+import math
+import time
+from datetime import timedelta
+
+import humanize
+from PyQt6.QtCore import pyqtSlot as Slot
+from PyQt6.QtGui import QColor, QKeyEvent, QKeySequence
+from PyQt6.QtWidgets import (
+    QAbstractItemView,
+    QApplication,
+    QGridLayout,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QMessageBox,
+    QProgressBar,
+    QTableWidget,
+    QTableWidgetItem,
+    QTabWidget,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
+)
+from typing_extensions import override
+
+from ert.analysis.event import DataSection
+from ert.analysis.snapshots import ObservationStatus
+from ert.ensemble_evaluator import state
+from ert.run_models import (
+    RunModelEvent,
+    RunModelStatusEvent,
+    RunModelTimeEvent,
+    RunModelUpdateBeginEvent,
+    RunModelUpdateEndEvent,
+)
+from ert.run_models.event import RunModelDataEvent, RunModelErrorEvent
+
+
+class UpdateLogTable(QTableWidget):
+    def __init__(self, data: DataSection, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+
+        self.setColumnCount(len(data.header))
+        self.setAlternatingRowColors(True)
+        self.setRowCount(len(data.data))
+        self.setHorizontalHeaderLabels(data.header)
+        self.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        horizontal_header = self.horizontalHeader()
+        assert horizontal_header is not None
+        horizontal_header.setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        self.setSortingEnabled(True)
+        for i, row in enumerate(data.data):
+            for j, val in enumerate(row):
+                self.setItem(i, j, QTableWidgetItem(str(val)))
+
+    @override
+    def keyPressEvent(self, e: QKeyEvent | None) -> None:
+        if e is not None and e.matches(QKeySequence.StandardKey.Copy):
+            stream = ""
+            for i in self.selectedIndexes():
+                item = self.itemFromIndex(i)
+                assert item is not None
+                stream += item.text()
+                stream += "\n" if i.column() == self.columnCount() - 1 else "\t"
+            clipboard = QApplication.clipboard()
+            if clipboard is not None:
+                clipboard.setText(stream)
+            else:
+                QMessageBox.critical(
+                    None,
+                    "Error",
+                    "Cannot copy text to clipboard because your "
+                    "system does not have a clipboard",
+                    QMessageBox.StandardButton.Ok,
+                )
+        else:
+            super().keyPressEvent(e)
+
+
+class ReportLogTable(UpdateLogTable):
+    def __init__(self, data: DataSection, parent: QWidget | None = None) -> None:
+        super().__init__(data, parent)
+
+        self.data = data
+
+        if "status" not in data.header:
+            raise RuntimeError("'status' column should be present in the report table")
+        if "missing_realizations" not in data.header:
+            raise RuntimeError(
+                "'missing_realizations' column should be present in the report table"
+            )
+
+        self.status_column_index = data.header.index("status")
+        self.missing_realizations_col_index = data.header.index("missing_realizations")
+
+        self.hideColumn(self.missing_realizations_col_index)
+
+        self.itemClicked.connect(self._handle_item_click)
+        self._underline_missing_realization_status()
+
+    def _underline_missing_realization_status(self) -> None:
+        """
+        Underline 'status' of observations with missing responses to indicate
+        that they are clickable.
+        """
+        for i, row in enumerate(self.data.data):
+            str_val = str(row[self.status_column_index])
+            if str_val == ObservationStatus.MISSING_RESPONSE:
+                item = self.item(i, self.status_column_index)
+                if item is not None:
+                    font = item.font()
+                    font.setUnderline(True)
+                    item.setFont(font)
+
+    @Slot(QTableWidgetItem)
+    def _handle_item_click(self, item: QTableWidgetItem) -> None:
+        if (
+            self.status_column_index == item.column()
+            and item.text() == ObservationStatus.MISSING_RESPONSE
+        ):
+            hidden_item = self.item(item.row(), self.missing_realizations_col_index)
+            assert hidden_item is not None, (
+                "all items in the table should have been initialized"
+            )
+
+            missing_realizations = hidden_item.text()
+            reasoning = "Missing responses from active realizations: " + str(
+                missing_realizations
+            )
+            QMessageBox.information(
+                self,
+                "Observation deactivated",
+                reasoning,
+                QMessageBox.StandardButton.Ok,
+            )
+
+
+class UpdateWidget(QWidget):
+    def __init__(self, iteration: int, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+
+        self._iteration = iteration
+        self._start_time: float = 0.0
+
+        progress_label = QLabel("Progress:")
+        self._progress_msg = QLabel()
+
+        self._progress_bar = QProgressBar()
+        self._progress_bar.setTextVisible(False)
+        self._progress_bar.setMinimum(0)
+        self._progress_bar.setMaximum(0)
+
+        widget = QWidget()
+        msg_layout = QHBoxLayout()
+        widget.setLayout(msg_layout)
+
+        self._msg_list = QTextEdit()
+        self._msg_list.setReadOnly(True)
+
+        msg_layout.addWidget(self._msg_list)
+
+        self._tab_widget = QTabWidget()
+        self._tab_widget.addTab(widget, "Status")
+        self._tab_widget.setTabBarAutoHide(True)
+
+        layout = QVBoxLayout()
+        layout.setContentsMargins(100, 20, 100, 20)
+
+        top_layout = QHBoxLayout()
+        top_layout.addWidget(progress_label)
+        top_layout.addWidget(self._progress_msg)
+        top_layout.addStretch()
+
+        layout.addLayout(top_layout)
+        layout.addWidget(self._progress_bar)
+        layout.addWidget(self._tab_widget)
+
+        self.setMinimumHeight(400)
+        self.setLayout(layout)
+
+    @property
+    def iteration(self) -> int:
+        return self._iteration
+
+    def _insert_status_message(self, message: str, detail: bool = False) -> None:
+        if detail:
+            self._msg_list.append(f'<span style="color: gray;">{message}</span>')
+        else:
+            self._msg_list.append(f"<span>{message}</span>")
+
+    def _insert_table_tab(
+        self,
+        name: str,
+        data: DataSection,
+        table_type: type[UpdateLogTable] = UpdateLogTable,
+    ) -> None:
+        widget = QWidget()
+        layout = QVBoxLayout()
+        widget.setLayout(layout)
+
+        table = table_type(data)
+        table.setObjectName("CSV_" + name)
+        layout.addWidget(table)
+
+        if data.extra:
+            grid_layout = QGridLayout()
+            nr_each_column = math.ceil(len(data.extra) / 2)
+            for i, (k, v) in enumerate(data.extra.items()):
+                column = (i // nr_each_column) * 2
+                grid_layout.addWidget(QLabel(str(k) + ":"), i % nr_each_column, column)
+                grid_layout.addWidget(QLabel(str(v)), i % nr_each_column, column + 1)
+            layout.addSpacing(10)
+            layout.addLayout(grid_layout)
+
+        self._tab_widget.setCurrentIndex(self._tab_widget.addTab(widget, name))
+
+    def _insert_report_tab(
+        self,
+        data: DataSection,
+    ) -> None:
+        self._insert_table_tab("Report", data, ReportLogTable)
+
+    @Slot(RunModelUpdateBeginEvent)
+    def begin(self, event: RunModelUpdateBeginEvent) -> None:
+        self._start_time = time.perf_counter()
+
+    @Slot(RunModelUpdateEndEvent)
+    def end(self, event: RunModelUpdateEndEvent) -> None:
+        seconds_spent = timedelta(seconds=time.perf_counter() - self._start_time)
+        self._progress_msg.setText(
+            f"Update completed ({humanize.precisedelta(seconds_spent)})"
+        )
+        self._progress_bar.setStyleSheet(
+            f"QProgressBar::chunk {{ background: "
+            f"{QColor(*state.COLOR_FINISHED).name()}; }}"
+        )
+        self._progress_bar.setMinimum(0)
+        self._progress_bar.setMaximum(1)
+        self._progress_bar.setValue(1)
+
+        self._insert_report_tab(event.data)
+
+    @Slot(RunModelDataEvent)
+    def add_table(self, event: RunModelDataEvent) -> None:
+        self._insert_table_tab(event.name, event.data)
+
+    @Slot(RunModelEvent)
+    def update_status(self, event: RunModelEvent) -> None:
+        match event:
+            case RunModelStatusEvent(msg=msg, detail=detail):
+                self._insert_status_message(msg, detail=detail)
+            case RunModelTimeEvent(remaining_time=remaining_time):
+                self._progress_msg.setText(
+                    f"Estimated remaining time for current step "
+                    f"{humanize.precisedelta(int(remaining_time))}"
+                )
+
+    @Slot(RunModelErrorEvent)
+    def error(self, event: RunModelErrorEvent) -> None:
+        if event.error_msg:
+            self._insert_status_message(f"Error: {event.error_msg}")
+
+        seconds_spent = timedelta(seconds=time.perf_counter() - self._start_time)
+        self._progress_msg.setText(
+            f"Update failed ({humanize.precisedelta(seconds_spent)})"
+        )
+        self._progress_bar.setStyleSheet(
+            f"QProgressBar::chunk {{ "
+            f"background: {QColor(*state.COLOR_FAILED).name()}; }}"
+        )
+        self._progress_bar.setMinimum(0)
+        self._progress_bar.setMaximum(1)
+        self._progress_bar.setValue(1)
+
+        if event.data is not None:
+            self._insert_report_tab(event.data)

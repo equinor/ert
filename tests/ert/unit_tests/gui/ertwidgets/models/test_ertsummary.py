@@ -94,7 +94,7 @@ def test_getForwardModels(mock_ert):
 
 
 def test_getParameters(mock_ert):
-    expected_list = ["DEFAULT (3)", "field (10, 5, 3)", "surface (10, 7)"]
+    expected_list = ["field (10, 5, 3)", "gen_kw (3)", "surface (10, 7)"]
     parameter_list, parameter_count = ErtSummary(mock_ert).get_parameters()
     assert parameter_list == expected_list
     assert parameter_count == 223
@@ -165,7 +165,6 @@ def test_snake_oil(snake_oil_case):
     assert summary.get_parameters() == (["SNAKE_OIL_PARAM (10)"], 10)
 
     assert summary.getObservations() == [
-        {"observation_key": "FOPR", "count": 200},
         {"observation_key": "WOPR_OP1_108", "count": 1},
         {"observation_key": "WOPR_OP1_144", "count": 1},
         {"observation_key": "WOPR_OP1_190", "count": 1},

@@ -2,7 +2,6 @@ import asyncio
 import datetime
 import logging
 import uuid
-from functools import partial
 from threading import Event
 from unittest.mock import MagicMock
 
@@ -83,10 +82,13 @@ async def test_when_task_fails_evaluator_raises_exception(
         end_event=Event(),
     )
 
+    async def task_that_fails(*args, **kwargs):
+        return await mock_failure(error_msg, *args, **kwargs)
+
     monkeypatch.setattr(
         EnsembleEvaluator,
         task,
-        partial(mock_failure, error_msg),
+        task_that_fails,
     )
     with pytest.raises(RuntimeError, match=error_msg):
         await evaluator.run_and_get_successful_realizations()
@@ -715,16 +717,14 @@ async def test_log_forward_model_steps_with_missing_status_updates(
             real="10", ensemble=ensemble.id_, exec_hosts=working_machine_name
         )
     ]
-    for i in range(10):
-        driver_events.append(
-            RealizationFailed(
-                real=str(i),
-                ensemble=ensemble.id_,
-                exec_hosts="foo_cluster_machine"
-                if i % 2 == 0
-                else "bar_cluster_machine",
-            )
+    driver_events.extend(
+        RealizationFailed(
+            real=str(i),
+            ensemble=ensemble.id_,
+            exec_hosts="foo_cluster_machine" if i % 2 == 0 else "bar_cluster_machine",
         )
+        for i in range(10)
+    )
 
     evaluator._ensemble.update_snapshot(driver_events)
     evaluator._log_forward_model_steps_with_missing_status_updates()

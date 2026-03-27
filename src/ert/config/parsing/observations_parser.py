@@ -19,6 +19,7 @@ class ObservationType(StrEnum):
     SUMMARY = "SUMMARY_OBSERVATION"
     GENERAL = "GENERAL_OBSERVATION"
     RFT = "RFT_OBSERVATION"
+    BREAKTHROUGH = "BREAKTHROUGH_OBSERVATION"
 
 
 ObservationDict = dict[str, Any]
@@ -127,6 +128,7 @@ observations_parser = Lark(
       | "SUMMARY_OBSERVATION"
       | "GENERAL_OBSERVATION"
       | "RFT_OBSERVATION"
+      | "BREAKTHROUGH_OBSERVATION"
     type: TYPE
     ?value: object
           | STRING
@@ -169,14 +171,11 @@ class TreeToObservations(Transformer[FileContextToken, list[ObservationDict]]):
                 k: v for k, v in tree[2].items() if not isinstance(k, tuple)
             }
             segments = [(k[1], v) for k, v in tree[2].items() if isinstance(k, tuple)]
-            error_list = []
-            for unknown_key in ["type", "segments", "name"]:
-                if unknown_key in non_segments:
-                    error_list.append(
-                        ErrorInfo(f"Unknown {unknown_key} in {tree[1]}").set_context(
-                            tree[1]
-                        )
-                    )
+            error_list = [
+                ErrorInfo(f"Unknown {unknown_key} in {tree[1]}").set_context(tree[1])
+                for unknown_key in ["type", "segments", "name"]
+                if unknown_key in non_segments
+            ]
             if error_list:
                 raise ObservationConfigError.from_collected(error_list)
 

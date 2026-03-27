@@ -1,9 +1,13 @@
+import json
 import math
 import re
+import threading
+from itertools import permutations
 from pathlib import Path
 from textwrap import dedent
 
 import networkx as nx
+import numpy as np
 import pytest
 from lark import Token
 
@@ -22,7 +26,7 @@ def test_short_definition_raises_config_error(tmp_path):
         GenKwConfig.from_config_list(
             [
                 "GEN",
-                str(parameter_file),
+                (str(parameter_file), parameter_file.read_text(encoding="utf-8")),
                 {},
             ]
         )
@@ -185,7 +189,7 @@ number_regex = r"[-+]?(?:\d*\.\d+|\d+)"
         ("TRIANGULAR 0 0.5 1", False, r"KW_NAME:MY_KEYWORD " + number_regex),
     ],
 )
-def test_gen_kw_is_log_or_not(
+async def test_gen_kw_is_log_or_not(
     tmpdir, storage, distribution, expect_log, parameters_regex, run_args
 ):
     with tmpdir.as_cwd():
@@ -196,25 +200,26 @@ def test_gen_kw_is_log_or_not(
         GEN_KW KW_NAME template.txt kw.txt prior.txt
         """
         )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
-        with open("template.txt", "w", encoding="utf-8") as fh:
-            fh.writelines("MY_KEYWORD <MY_KEYWORD>")
-        with open("prior.txt", "w", encoding="utf-8") as fh:
-            fh.writelines(f"MY_KEYWORD {distribution}")
+        Path("config.ert").write_text(config, encoding="utf-8")
+        Path("template.txt").write_text("MY_KEYWORD <MY_KEYWORD>", encoding="utf-8")
+        Path("prior.txt").write_text(f"MY_KEYWORD {distribution}", encoding="utf-8")
 
         ert_config = ErtConfig.from_file("config.ert")
 
         gen_kw_config = ert_config.ensemble_config.parameter_configs["MY_KEYWORD"]
         assert isinstance(gen_kw_config, GenKwConfig)
         experiment_id = storage.create_experiment(
-            parameters=ert_config.ensemble_config.parameter_configuration
+            experiment_config={
+                "parameter_configuration": (
+                    ert_config.ensemble_config.parameter_configuration
+                )
+            }
         )
         prior_ensemble = storage.create_ensemble(
             experiment_id, name="prior", ensemble_size=1
         )
         sample_prior(prior_ensemble, [0], 123, 1)
-        create_run_path(
+        await create_run_path(
             run_args=run_args(ert_config, prior_ensemble),
             ensemble=prior_ensemble,
             runpaths=Runpaths.from_config(ert_config),
@@ -223,8 +228,10 @@ def test_gen_kw_is_log_or_not(
             env_vars=ert_config.env_vars,
             env_pr_fm_step=ert_config.env_pr_fm_step,
             substitutions=ert_config.substitutions,
+            end_event=threading.Event(),
             parameters_file="parameters",
         )
+
         assert re.match(
             parameters_regex,
             Path("simulations/realization-0/iter-0/parameters.txt").read_text(
@@ -453,7 +460,10 @@ def test_gen_kw_trans_func(tmpdir, params, xinput, expected):
             update=False,
             distribution=GenKwConfig._parse_distribution(name, dist_name, values),
         )
-        assert abs(cfg.distribution.transform(xinput) - expected) < 10**-15
+        out = float(
+            cfg.distribution.transform_numpy(np.asarray([xinput], dtype=np.float64))[0]
+        )
+        assert abs(out - expected) < 10**-15
 
 
 def test_gen_kw_objects_equal(tmpdir):
@@ -526,15 +536,15 @@ def test_gen_kw_config_validation():
                 "parameters_with_comments.txt",
                 dedent(
                     """\
-                            KEY1  UNIFORM 0 1 -- COMMENT
+                        KEY1  UNIFORM 0 1 -- COMMENT
 
 
-                            KEY2  UNIFORM 0 1
-                            --KEY3
-                            ---KEY3
-                            ------------
-                            KEY3  UNIFORM 0 1
-                            """
+                        KEY2  UNIFORM 0 1
+                        --KEY3
+                        ---KEY3
+                        ------------
+                        KEY3  UNIFORM 0 1
+                        """
                 ),
             ),
             {},
@@ -547,9 +557,9 @@ def test_gen_kw_config_validation():
         GenKwConfig.templates_from_config(
             [
                 "KEY",
-                make_context_string("no_template_here.txt", "config.ert"),
+                (make_context_string("no_template_here.txt", "config.ert"), ""),
                 "nothing_here.txt",
-                "parameters.txt",
+                ("parameters.txt", "KEY UNIFORM 0 1"),
                 {},
             ]
         )
@@ -838,7 +848,6 @@ def test_that_const_keyword_sets_update_to_false(tmpdir):
     with tmpdir.as_cwd():
         config = dedent(
             """
-        JOBNAME my_name%d
         NUM_REALIZATIONS 1
         GEN_KW CONST_TEST prior.txt UPDATE:TRUE
         """
@@ -852,3 +861,111 @@ def test_that_const_keyword_sets_update_to_false(tmpdir):
 
         gen_kw_config = ert_config.ensemble_config.parameter_configs["CONST_TEST"]
         assert gen_kw_config.update is False
+
+
+def test_that_parameter_named_const_with_non_const_distribution_is_updatable(tmp_path):
+    """Regression: update flag should only check the distribution type,
+    not match "CONST" anywhere in the parameter definition.
+    """
+    parameter_file = tmp_path / "parameter.txt"
+    parameter_file.write_text("CONST NORMAL 0 1", encoding="utf-8")
+
+    configs = GenKwConfig.from_config_list(
+        [
+            "MY_KW",
+            (str(parameter_file), parameter_file.read_text(encoding="utf-8")),
+            {},
+        ]
+    )
+    assert len(configs) == 1
+    assert configs[0].name == "CONST"
+    assert configs[0].update is True
+
+
+def test_that_unexpected_positional_arg_count_raises_validation_error(tmp_path):
+    parameter_file = tmp_path / "parameter.txt"
+    parameter_file.write_text("KEY NORMAL 0 1", encoding="utf-8")
+
+    with pytest.raises(ConfigValidationError, match="Unexpected positional arguments"):
+        GenKwConfig.from_config_list(
+            [
+                "GEN",
+                ("template.txt", ""),
+                "output.txt",
+                (str(parameter_file), parameter_file.read_text(encoding="utf-8")),
+                "extra_arg",
+                {},
+            ]
+        )
+
+
+def test_that_init_files_option_raises_removal_error(tmp_path):
+    parameter_file = tmp_path / "parameter.txt"
+    parameter_file.write_text("KEY NORMAL 0 1", encoding="utf-8")
+
+    with pytest.raises(
+        ConfigValidationError, match="INIT_FILES with GEN_KW has been removed"
+    ):
+        GenKwConfig.from_config_list(
+            [
+                "GEN",
+                (str(parameter_file), parameter_file.read_text(encoding="utf-8")),
+                {"INIT_FILES": "init_%d"},
+            ]
+        )
+
+
+@pytest.mark.parametrize("order", list(permutations([("A", 1), ("AA", 2), ("AAA", 3)])))
+async def test_that_gen_kw_substitutes_correctly(order, tmpdir, storage, run_args):
+    """This is a regression test to check that the substitution mechanism
+    works correctly when there are multiple parameters with similar names."""
+    with tmpdir.as_cwd():
+        config = dedent(
+            """
+        JOBNAME my_name%d
+        NUM_REALIZATIONS 1
+        GEN_KW KW_NAME prior.txt
+        """
+        )
+        Path("config.ert").write_text(config, encoding="utf-8")
+        Path("prior.txt").write_text(
+            "\n".join(
+                f"{param_name} CONST {param_value}"
+                for (param_name, param_value) in order
+            ),
+            encoding="utf-8",
+        )
+
+        ert_config = ErtConfig.from_file("config.ert")
+
+        experiment_id = storage.create_experiment(
+            experiment_config={
+                "parameter_configuration": (
+                    ert_config.ensemble_config.parameter_configuration
+                )
+            }
+        )
+        prior_ensemble = storage.create_ensemble(
+            experiment_id, name="prior", ensemble_size=1
+        )
+        sample_prior(prior_ensemble, [0], 123, 1)
+        await create_run_path(
+            run_args=run_args(ert_config, prior_ensemble),
+            ensemble=prior_ensemble,
+            runpaths=Runpaths.from_config(ert_config),
+            user_config_file=ert_config.user_config_file,
+            forward_model_steps=ert_config.forward_model_steps,
+            env_vars=ert_config.env_vars,
+            env_pr_fm_step=ert_config.env_pr_fm_step,
+            substitutions=ert_config.substitutions,
+            end_event=threading.Event(),
+            parameters_file="parameters",
+        )
+
+        param_json = json.loads(
+            Path("simulations/realization-0/iter-0/parameters.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        for param_name, param_value in order:
+            assert int(param_json[f"{param_name}"]["value"]) == param_value

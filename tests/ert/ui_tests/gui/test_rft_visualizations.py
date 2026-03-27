@@ -20,7 +20,7 @@ from ert.gui.tools.plot.plot_window import (
     STATISTICS,
     PlotWindow,
 )
-from ert.services import ErtServer
+from ert.services import ErtServerController
 from ert.storage import open_storage
 from tests.ert.rft_generator import cell_start
 
@@ -123,7 +123,7 @@ def plot_figure(qtbot: QtBot, request, rft_config: ErtConfig):
     open_storage(rft_config.ens_path, mode="r")
     log_handler = GUILogHandler()
     with (
-        ErtServer.init_service(
+        ErtServerController.init_service(
             project=rft_config.ens_path,
         ),
     ):
@@ -155,17 +155,17 @@ def plot_figure(qtbot: QtBot, request, rft_config: ErtConfig):
                 case_selection.slot_toggle_plot(item)
 
         found_selected_key = False
-        for i in range(key_model.rowCount()):
-            to_select = data_types.model.itemAt(data_types.model.index(i, 0))
+        for key_index in range(key_model.rowCount()):
+            to_select = data_types.model.itemAt(data_types.model.index(key_index, 0))
             assert to_select is not None
             if to_select.key == key:
-                index = key_model.index(i, 0)
+                index = key_model.index(key_index, 0)
                 key_list.setCurrentIndex(index)
                 selected_key = to_select
-                for i, tab in enumerate(plot_window._plot_widgets):
+                for widget_index, tab in enumerate(plot_window._plot_widgets):
                     if tab.name == plot_name:
                         found_selected_key = True
-                        if central_tab.isTabEnabled(i):
+                        if central_tab.isTabEnabled(widget_index):
                             central_tab.setCurrentWidget(tab)
                             assert (
                                 selected_key.dimensionality

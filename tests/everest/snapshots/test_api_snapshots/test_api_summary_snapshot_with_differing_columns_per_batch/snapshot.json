@@ -59,7 +59,7 @@
     "FOPR": 0.20000000298023224,
     "FOPT": 3.299999952316284,
     "batch": 3,
-    "realization": null,
+    "realization": 0,
     "WOPR": 1.0
   },
   {
@@ -68,7 +68,7 @@
     "FOPR": 0.20000000298023224,
     "FOPT": 3.299999952316284,
     "batch": 3,
-    "realization": null,
+    "realization": 0,
     "WOPR": 1.100000023841858
   }
 ]

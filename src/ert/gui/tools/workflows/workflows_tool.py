@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from PyQt6.QtGui import QIcon
 from typing_extensions import override
 
 from ert.gui.ertwidgets import ClosableDialog
+from ert.gui.icon_utils import load_icon
 from ert.gui.tools import Tool
 from ert.gui.tools.workflows import RunWorkflowWidget
 
@@ -21,7 +21,7 @@ class WorkflowsTool(Tool):
         enabled = len(config.workflows) > 0
         super().__init__(
             "Run workflow",
-            QIcon("img:playlist_play.svg"),
+            load_icon("playlist_play.svg"),
             enabled,
         )
 

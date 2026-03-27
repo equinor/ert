@@ -26,9 +26,12 @@ class StdDevPlot:
         ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
         std_dev_data: dict[str, npt.NDArray[np.float32]],
+        obs_loc: npt.NDArray[np.float32] | None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
-        ensemble_count = len(plot_context.ensembles())
+        ensembles = plot_context.ensembles()
+        if (ensemble_count := len(ensembles)) == 0:
+            return
         layer = plot_context.layer
         if layer is not None:
             vmin: float = np.inf
@@ -40,7 +43,7 @@ class StdDevPlot:
             figure.set_layout_engine("constrained")
             gridspec = figure.add_gridspec(2, ensemble_count, hspace=0.2)
 
-            for i, ensemble in enumerate(reversed(plot_context.ensembles()), start=1):
+            for i, ensemble in enumerate(reversed(ensembles), start=1):
                 ax_heat = figure.add_subplot(gridspec[0, i - 1])
                 ax_box = figure.add_subplot(gridspec[1, i - 1])
                 data = std_dev_data[ensemble.name]
@@ -59,6 +62,21 @@ class StdDevPlot:
                     vmax = max(vmax, float(np.max(data)))
 
                     im = ax_heat.imshow(data, cmap="viridis", aspect="equal")
+                    ny, _ = data.shape
+                    if obs_loc is not None:
+                        xs = obs_loc[:, 0]
+                        ys = obs_loc[:, 1]
+
+                        ys_img = (ny - 1) - ys
+                        ax_heat.scatter(
+                            xs,
+                            ys_img,
+                            c="red",
+                            marker="o",
+                            edgecolors="black",
+                            linewidths=0.5,
+                            label="Observations",
+                        )
                     heatmaps.append(im)
 
                     ax_box.boxplot(data.flatten(), orientation="vertical", widths=0.5)

@@ -29,6 +29,7 @@ class DistributionPlot:
         ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
+        obs_loc: npt.NDArray[np.float32] | None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         plotDistribution(figure, plot_context, ensemble_to_data_map, observation_data)
@@ -106,13 +107,10 @@ def _plotDistribution(
 
     style = plot_config.distributionStyle()
 
-    if data.dtype == "object":
-        try:
-            data = pd.to_numeric(data, errors="coerce")
-        except AttributeError:
-            data = data.convert_objects(convert_numeric=True)
+    if not pd.api.types.is_numeric_dtype(data):
+        data = pd.to_numeric(data, errors="coerce")
 
-    if data.dtype == "object":
+    if not pd.api.types.is_numeric_dtype(data):
         dots = []
     else:
         dots = axes.plot(

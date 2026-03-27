@@ -1,6 +1,6 @@
 from PyQt6.QtCore import QSize
 from PyQt6.QtCore import pyqtSignal as Signal
-from PyQt6.QtGui import QColor, QIcon, QPainter, QPaintEvent
+from PyQt6.QtGui import QColor, QPainter, QPaintEvent
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
 from typing_extensions import override
 
 from ert.gui.ertwidgets import SearchBox
+from ert.gui.icon_utils import load_icon
 
 from .data_type_keys_list_model import DataTypeKeysListModel
 from .data_type_proxy_model import DataTypeProxyModel
@@ -72,7 +73,7 @@ class _Legend(QWidget):
 class DataTypeKeysWidget(QWidget):
     dataTypeKeySelected = Signal()
 
-    def __init__(self, key_defs: list[PlotApiKeyDefinition]) -> None:
+    def __init__(self, key_defs: list[PlotApiKeyDefinition], is_everest: bool) -> None:
         QWidget.__init__(self)
 
         self.__filter_popup = FilterPopup(self, key_defs)
@@ -90,7 +91,7 @@ class DataTypeKeysWidget(QWidget):
         filter_layout.addWidget(self.search_box)
 
         filter_popup_button = QToolButton()
-        filter_popup_button.setIcon(QIcon("img:filter_list.svg"))
+        filter_popup_button.setIcon(load_icon("filter_list.svg"))
         filter_popup_button.clicked.connect(self.showFilterPopup)
         filter_layout.addWidget(filter_popup_button)
         layout.addLayout(filter_layout)
@@ -105,9 +106,12 @@ class DataTypeKeysWidget(QWidget):
         layout.addWidget(self.data_type_keys_widget, 2)
         layout.addStretch()
 
-        layout.addWidget(
-            _Legend("Observations available", DataTypeKeysListModel.HAS_OBSERVATIONS)
-        )
+        if not is_everest:
+            layout.addWidget(
+                _Legend(
+                    "Observations available", DataTypeKeysListModel.HAS_OBSERVATIONS
+                )
+            )
 
         self.setLayout(layout)
 

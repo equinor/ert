@@ -16,7 +16,10 @@ from ert.config import (
     InvalidResponseFile,
     SummaryConfig,
 )
-from ert.config._create_observation_dataframes import DEFAULT_LOCATION_RANGE_M
+from ert.config._create_observation_dataframes import (
+    DEFAULT_LOCALIZATION_RADIUS,
+    create_observation_dataframes,
+)
 
 
 @settings(max_examples=10)
@@ -102,7 +105,9 @@ def create_summary_observation(loc_config_lines):
     Path("prior.txt").write_text("MY_KEYWORD NORMAL 0 1", encoding="utf-8")
 
     ert_config = ErtConfig.from_file("config.ert")
-    return ert_config.observations["summary"]
+    return create_observation_dataframes(ert_config.observation_declarations, None)[
+        "summary"
+    ]
 
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
@@ -122,7 +127,7 @@ def test_that_summary_observations_can_be_instantiated_with_localization(
         assert all(
             loc_key in summary_observations.columns
             and summary_observations[loc_key][0] == 10
-            for loc_key in ["location_x", "location_y", "location_range"]
+            for loc_key in ["east", "north", "radius"]
         )
         assert len(summary_observations.columns) == 8
 
@@ -140,8 +145,8 @@ def test_that_summary_observations_without_radius_gets_defaulted(
             };
             """
         )
-        assert "location_range" in summary_observations.columns
-        assert summary_observations["location_range"][0] == DEFAULT_LOCATION_RANGE_M
+        assert "radius" in summary_observations.columns
+        assert summary_observations["radius"][0] == DEFAULT_LOCALIZATION_RADIUS
 
 
 @pytest.mark.parametrize(
@@ -183,6 +188,7 @@ def test_that_summary_observations_raises_error_given_unknown_localization_key(
 
 
 @pytest.mark.usefixtures("copy_snake_oil_case")
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
 def test_that_adding_one_localized_observation_to_snake_oil_case_can_be_internalized():
     obs_content = Path("observations/observations.txt").read_text(encoding="utf-8")
     obs_lines = obs_content.split("\n")
@@ -198,22 +204,25 @@ def test_that_adding_one_localized_observation_to_snake_oil_case_can_be_internal
         obs_lines.insert(observation_index + 2 + i, line)
     new_obs_content = "\n".join(obs_lines)
     Path("observations/observations.txt").write_text(new_obs_content, encoding="utf-8")
-    summary = ErtConfig.from_file("snake_oil.ert").observations["summary"]
-    assert summary["location_x"].dtype == pl.Float32
-    assert summary["location_y"].dtype == pl.Float32
-    assert summary["location_range"].dtype == pl.Float32
+    summary = create_observation_dataframes(
+        ErtConfig.from_file("snake_oil.ert").observation_declarations, None
+    )["summary"]
+    assert summary["east"].dtype == pl.Float32
+    assert summary["north"].dtype == pl.Float32
+    assert summary["radius"].dtype == pl.Float32
 
     localized_entry = summary.filter(
         pl.col("observation_key").str.contains("WOPR_OP1_36")
     )
-    assert localized_entry["location_x"].to_list() == [1]
-    assert localized_entry["location_y"].to_list() == [2]
-    assert localized_entry["location_range"].to_list() == [3]
+    assert localized_entry["east"].to_list() == [1]
+    assert localized_entry["north"].to_list() == [2]
+    assert localized_entry["radius"].to_list() == [3]
 
 
+@pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
 def test_that_defaulted_summary_obs_values_have_type_float32(tmpdir):
     with tmpdir.as_cwd():
         summary_observations = create_summary_observation(loc_config_lines="")
-    assert summary_observations["location_x"].dtype == pl.Float32
-    assert summary_observations["location_y"].dtype == pl.Float32
-    assert summary_observations["location_range"].dtype == pl.Float32
+    assert summary_observations["east"].dtype == pl.Float32
+    assert summary_observations["north"].dtype == pl.Float32
+    assert summary_observations["radius"].dtype == pl.Float32

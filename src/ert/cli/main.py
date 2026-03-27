@@ -59,7 +59,7 @@ def run_cli(args: Namespace, runtime_plugins: ErtRuntimePlugins | None = None) -
             f"Config contains forward model step {fm_step_name} {count} time(s)",
         )
 
-    if not ert_config.observations and args.mode not in {
+    if not ert_config.observation_declarations and args.mode not in {
         ENSEMBLE_EXPERIMENT_MODE,
         TEST_RUN_MODE,
         WORKFLOW_MODE,
@@ -133,7 +133,6 @@ def run_cli(args: Namespace, runtime_plugins: ErtRuntimePlugins | None = None) -
         if args.port_range is None
         else (min(args.port_range), max(args.port_range) + 1),
         use_ipc_protocol=using_local_queuesystem,
-        prioritize_private_ip_address=ert_config.prioritize_private_ip_address,
     )
 
     if model.check_if_runpath_exists():

@@ -38,15 +38,16 @@ class EnsembleRealizationsArgument(RangeStringArgument):
             return validation_status
         attempted_realizations = rangestring_to_list(token)
 
-        invalid_realizations = []
         found_realization_ids = [
             index
             for index, state in enumerate(ensemble.get_ensemble_state())
             if set(self._required_realization_storage_states).issubset(state)
         ]
-        for realization in attempted_realizations:
-            if realization not in found_realization_ids:
-                invalid_realizations.append(realization)
+        invalid_realizations = [
+            realization
+            for realization in attempted_realizations
+            if realization not in found_realization_ids
+        ]
 
         if invalid_realizations:
             validation_status.setFailed()

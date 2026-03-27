@@ -1,5 +1,5 @@
 from ._enif_update import enif_update
-from ._es_update import smoother_update
+from ._es_update import build_strategy_map, smoother_update
 from ._update_commons import ErtAnalysisError
 from .event import (
     AnalysisErrorEvent,
@@ -22,6 +22,7 @@ __all__ = [
     "ErtAnalysisError",
     "ObservationStatus",
     "SmootherSnapshot",
+    "build_strategy_map",
     "enif_update",
     "smoother_update",
 ]

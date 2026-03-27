@@ -14,7 +14,6 @@ from .parsing import ConfigDict, ConfigValidationError, ConfigWarning, ErrorInfo
 from .response_config import (
     InvalidResponseFile,
     ResponseConfig,
-    ResponseMetadata,
 )
 from .responses_index import responses_index
 
@@ -23,22 +22,6 @@ class GenDataConfig(ResponseConfig):
     type: Literal["gen_data"] = "gen_data"
     report_steps_list: list[list[int] | None] = Field(default_factory=list)
     has_finalized_keys: bool = True
-
-    @property
-    def metadata(self) -> list[ResponseMetadata]:
-        return [
-            ResponseMetadata(
-                response_type=self.type,
-                response_key=response_key,
-                finalized=self.has_finalized_keys,
-                filter_on={"report_step": report_steps}
-                if report_steps is not None
-                else {"report_step": [0]},
-            )
-            for response_key, report_steps in zip(
-                self.keys, self.report_steps_list, strict=False
-            )
-        ]
 
     def model_post_init(self, ctx: Any) -> None:
         if len(self.report_steps_list) == 0:
@@ -49,6 +32,20 @@ class GenDataConfig(ResponseConfig):
                     report_steps.sort()
 
     @property
+    def filter_on(self) -> dict[str, dict[str, list[int]]]:
+        """Filters for this response.
+
+        For ``GEN_DATA`` this is always supported: return
+        ``{response_key: {"report_step": [allowed_steps...]}}``.
+        """
+        return {
+            response_key: {"report_step": report_steps or [0]}
+            for response_key, report_steps in zip(
+                self.keys, self.report_steps_list, strict=False
+            )
+        }
+
+    @property
     def expected_input_files(self) -> list[str]:
         expected_files = []
         for input_file, report_steps in zip(
@@ -57,8 +54,10 @@ class GenDataConfig(ResponseConfig):
             if report_steps is None:
                 expected_files.append(input_file)
             else:
-                for report_step in report_steps:
-                    expected_files.append(input_file.replace("%d", str(report_step)))
+                expected_files.extend(
+                    input_file.replace("%d", str(report_step))
+                    for report_step in report_steps
+                )
 
         return expected_files
 

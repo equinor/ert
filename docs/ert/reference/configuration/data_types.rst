@@ -33,7 +33,7 @@ For detailed description and examples on how to use the ``GEN_KW`` keyword, see 
 The algorithms used for updating parameters expect normally distributed variables.
 ERT supports other types of distributions by transforming normal variables as outlined next.
 
-  1. ERT samples a random variable ``x ~ N(0,1)`` - before outputing to the
+  1. ERT samples a random variable ``x ~ N(0,1)`` - before outputting to the
      forward model this is *transformed* to ``y ~ F(Y)`` where the
      distribution ``F(Y)`` is the correct prior distribution.
 
@@ -209,7 +209,7 @@ To assign a log uniform distribution ranging from 0.00001 to 1 to a variable:
 
 Notes
 ~~~~~
-The log uniform dstribution is useful when modeling positve variables that are heavily skewed towards a boundary.
+The log uniform distribution is useful when modeling positive variables that are heavily skewed towards a boundary.
 
 CONST: Dirac Delta Distribution
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -341,7 +341,7 @@ Parameters
   - ``SKEWNESS > 0``: Shifts the distribution towards the right.
 - **WIDTH**: The shape of the distribution.
 
-  - ``WIDTH close to zero, for exampe 0.01``: Generates a uniform distribution.
+  - ``WIDTH close to zero, for example 0.01``: Generates a uniform distribution.
   - ``WIDTH > 1``: Leads to a unimodal, peaked distribution.
   - ``WIDTH < 1``: Forms a bimodal distribution with peaks.
 
@@ -412,7 +412,7 @@ Simulated data
 --------------
 
 The datatypes in the *Simulated data* chapter correspond to datatypes which are
-used to load results from a forward model simulation and into ERT. In a model
+used to load results from a forward model :term:`simulation` and into ERT. In a model
 updating workflow instances of these datatypes are compared with observed values
 and that is used as basis for the update process. Also post processing tasks
 like plotting and QC is typically based on these data types.
@@ -449,31 +449,105 @@ for all wells, all field related vectors and all group vectors from the ``NORTH`
 group.
 
 
+RFT data
+^^^^^^^^
+
+:term:`RFT` data represents measurements or simulated
+values of formation properties such as pressure and saturation at specific
+locations within wells. These measurements are typically taken at discrete depth
+points and specific times during the reservoir's production history.
+
+Understanding RFT files
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Reservoir simulators (e.g., ECLIPSE, OPM Flow) can generate RFT files that
+contain simulated pressure, saturation, and other formation properties at well
+measurement locations. These files are produced alongside summary files and use
+the same basename specified by the :ref:`ECLBASE <eclbase>` keyword.
+
+For example, if your configuration specifies::
+
+    ECLBASE MY_FIELD
+
+The simulator should generate files such as:
+  - ``MY_FIELD.RFT`` - Binary RFT file
+  - ``MY_FIELD.SMSPEC`` - Summary specification file
+  - ``MY_FIELD.UNSMRY`` - Summary data file
+
+Ert will expect the ``MY_FIELD.RFT`` to be produced by the reservoir simulator when
+either :ref:`rft observations <rft_observation>` or :ref:`rft responses <rft>`
+is used. When the :ref:`SUMMARY <summary>` keyword is used, ert expects ``MY_FIELD.SMSPEC``
+and ``MY_FIELD.UNSMRY`` to be produced by the reservoir simulator.
+
+For the OPM simulator, the keywords ``WRFT`` and ``WRFTPLT`` enables output of
+the RFT file.
+
+
+
+Working with RFT observations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+RFT data is loaded into ERT automatically when you define :ref:`RFT_OBSERVATION <rft_observation>`
+entries in your observation configuration file. ERT reads the RFT files generated
+by your forward model and extracts the simulated values at the locations
+(specified by NORTH, EAST, and :term:`TVD` coordinates) and times (DATE) defined
+in your observations.
+
+Each RFT observation specifies:
+  - **WELL**: The name of the well where the measurement was taken
+  - **DATE**: The date of the measurement in ISO format (YYYY-MM-DD)
+  - **PROPERTY**: The property being measured (e.g., PRESSURE, SWAT, SGAS)
+  - **VALUE**: The observed value
+  - **ERROR**: The measurement uncertainty
+  - **TVD**: True vertical depth below sea level
+  - **NORTH** and **EAST**: Horizontal coordinates of the measurement location
+
+Example observation configuration::
+
+   RFT_OBSERVATION prod_rft_2015 {
+      WELL=PROD_01;
+      DATE=2015-06-15;
+      PROPERTY=PRESSURE;
+      VALUE=3850;
+      ERROR=25;
+      TVD=2150.5;
+      EAST=456789.2;
+      NORTH=6789012.3;
+   };
+
+For loading multiple RFT observations from a CSV file, see the
+:ref:`RFT_OBSERVATION <rft_observation>` documentation.
+
+
+Exporting RFT data for visualization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The `EXPORT_RFT <../workflows/added_workflow_jobs.html#EXPORT_RFT>`_ workflow job exports RFT observations and simulated
+responses to CSV files compatible with the webviz-subsurface RftPlotter plugin.
+This workflow job is a replacement for the `MERGE_RFT_ERTOBS` forward model when
+using :ref:`RFT_OBSERVATION <rft_observation>` instead of the legacy `GENDATA_RFT` method.
+
+To use it, add the workflow job to your ERT configuration, e.g. with the `HOOK_WORKFLOW_JOB <keywords.html#hook-workflow-job>`_ keyword::
+
+   HOOK_WORKFLOW_JOB export_rft_data EXPORT_RFT POST_SIMULATION
+
+By default, the output file is written to
+``share/results/tables/rft_ert.csv`` in each realization's runpath.
+A custom filename can be specified as a parameter::
+
+   HOOK_WORKFLOW_JOB export_rft_data EXPORT_RFT custom_rft.csv POST_SIMULATION
+
+.. note::
+
+   To include SGAS, SWAT, and SOIL saturation values in the exported CSV,
+   SGAS and SWAT properties must be listed in the :ref:`RFT <rft>` response
+   configuration to make ERT extract these properties from the RFT files. For example::
+
+      RFT WELL:PROD DATE:2015-02-01 PROPERTIES:PRESSURE,SWAT,SGAS
+
 General data: ``GEN_DATA``
 --------------------------
 
 The ``GEN_DATA`` keyword is used to load text files which have been generated
 by the forward model.
 For detailed description and examples see :ref:`here <gen_data>`.
-
-EnKF heritage
--------------
-
-With regards to the datatypes in ERT this is a part of the application where the
-EnKF heritage shows through quite clearly, the datetypes offered by ERT would
-probably be different if ERT was made for Ensemble Smoother from the outset.
-Pecularites of EnKF heritage include:
-
-1. The `FIELD` implementation can behave both as a dynamic quantity, i.e.
-   pressure and saturation, and static property like porosity. In ERT it is
-   currently *only used* as a parameter.
-
-2. The parameter types have an internal pseudo time dependence corresponding to
-   the "update time" induced by the EnKF scheme. This pseudo time dependence is
-   not directly exposed to the user, but it is still part of the implementation
-   and e.g. when writing plugins which work with parameter data managed by ERT
-   you must relate to it.
-
-3. The time dependence of the `GEN_DATA` implementation. This is just too
-   complex, there have been numerous problems with people who configure the
-   `GEN_DATA` keywords incorrectly.

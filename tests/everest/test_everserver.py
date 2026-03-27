@@ -12,6 +12,7 @@ from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
 import ert
+from ert.config import ConfigWarning
 from ert.dark_storage.app import app
 from ert.ensemble_evaluator import EndEvent
 from ert.scheduler.event import FinishedEvent
@@ -26,7 +27,10 @@ from everest.detached import (
     wait_for_server,
 )
 from everest.everest_storage import EverestStorage
-from everest.strings import OPT_FAILURE_ALL_REALIZATIONS, OPT_FAILURE_REALIZATIONS
+from everest.strings import (
+    OPT_FAILURE_ALL_REALIZATIONS,
+    OPT_FAILURE_REALIZATIONS,
+)
 
 
 @pytest.fixture
@@ -135,7 +139,8 @@ async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
         "optimization": {"algorithm": "optpp_q_newton", "max_batch_num": 1},
         "simulator": {"queue_system": {"name": "local", "max_running": 2}},
     }
-    config = EverestConfig.model_validate(config_dict)
+    with pytest.warns(ConfigWarning, match="The `controls.type` field is deprecated"):
+        config = EverestConfig.model_validate(config_dict)
 
     await wait_for_server_to_complete(config)
 
@@ -144,11 +149,10 @@ async def test_status_max_batch_num(copy_math_func_test_data_to_tmp):
     # The server should complete without error.
     assert status.status == ExperimentState.completed
     assert status.message == "Maximum number of batches reached."
-    storage = EverestStorage(Path(config.optimization_output_dir))
-    storage.read_from_output_dir()
+    experiment = EverestStorage.get_everest_experiment(config.storage_dir)
 
     # Check that there is only one batch.
-    assert {b.batch_id for b in storage.data.batches} == {0}
+    assert {b.iteration for b in experiment.ensembles} == {0}
 
 
 @pytest.mark.skip_mac_ci
@@ -169,7 +173,8 @@ async def test_status_too_few_realizations_succeeded(copy_math_func_test_data_to
         {"name": "fail_simulation", "executable": "jobs/fail_simulation.py"}
     )
     config_dict["forward_model"].append("fail_simulation --fail realization_0")
-    config = EverestConfig.model_validate(config_dict)
+    with pytest.warns(ConfigWarning, match="The `controls.type` field is deprecated"):
+        config = EverestConfig.model_validate(config_dict)
 
     await wait_for_server_to_complete(config)
 
@@ -195,7 +200,8 @@ async def test_status_all_realizations_failed(copy_math_func_test_data_to_tmp):
     }
     config_dict["install_jobs"].append({"name": "fail", "executable": which("false")})
     config_dict["forward_model"].append("fail")
-    config = EverestConfig.model_validate(config_dict)
+    with pytest.warns(ConfigWarning, match="The `controls.type` field is deprecated"):
+        config = EverestConfig.model_validate(config_dict)
 
     await wait_for_server_to_complete(config)
 
@@ -302,8 +308,7 @@ def test_websocket_multiple_events_in_queue(setup_client):
     with client.websocket_connect(
         "/experiment_server/events", headers={"Authorization": f"Basic {credentials}"}
     ) as websocket:
-        for _ in expected:
-            event_msgs.append(websocket.receive_json())
+        event_msgs.extend(websocket.receive_json() for _ in expected)
     assert event_msgs == [jsonable_encoder(e) for e in expected]
 
 

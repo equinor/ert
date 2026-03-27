@@ -17,6 +17,7 @@ class AnalysisEvent(BaseModel):
 class AnalysisStatusEvent(AnalysisEvent):
     event_type: Literal["AnalysisStatusEvent"] = "AnalysisStatusEvent"
     msg: str
+    detail: bool = False
 
 
 class AnalysisTimeEvent(AnalysisEvent):
@@ -65,7 +66,7 @@ class AnalysisDataEvent(AnalysisEvent):
 class AnalysisErrorEvent(AnalysisEvent):
     event_type: Literal["AnalysisErrorEvent"] = "AnalysisErrorEvent"
     error_msg: str
-    data: DataSection
+    data: DataSection | None
 
 
 class AnalysisCompleteEvent(AnalysisEvent):

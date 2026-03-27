@@ -1,4 +1,5 @@
 import logging
+import math
 import os
 import stat
 import warnings
@@ -12,14 +13,15 @@ import pytest
 import resfo
 import xtgeo
 
-from ert.analysis import smoother_update
-from ert.config import ErtConfig, ESSettings, ObservationSettings
+from ert.analysis import build_strategy_map, smoother_update
+from ert.config import ErtConfig, ObservationSettings
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.storage import open_storage
 
 from .run_cli import run_cli
 
 
+@pytest.mark.xdist_group(name="uses_heat_equation_storage")
 def test_field_param_update_using_heat_equation_enif(
     symlinked_heat_equation_storage_enif,
 ):
@@ -97,9 +99,11 @@ def _compare_ensemble_params(
         [
             (
                 pl.col(c).map_elements(
-                    lambda x: 0.0
-                    if abs(x) < outlier_threshold
-                    else (abs(x) - outlier_threshold),
+                    lambda x: (
+                        0.0
+                        if abs(x) < outlier_threshold
+                        else (abs(x) - outlier_threshold)
+                    ),
                 )
             )
             .cast(pl.Float32)
@@ -136,7 +140,7 @@ def _compare_ensemble_params(
 
     def round_and_cast_(df: pl.DataFrame) -> pl.DataFrame:
         return df.cast(_schema).with_columns(
-            pl.col(pl.Float64).round(int(1 / outlier_threshold))
+            pl.col(pl.Float64).round(int(-math.log10(outlier_threshold)))
         )
 
     if update_snapshot and not round_and_cast_(actual).equals(
@@ -174,6 +178,7 @@ def _compare_ensemble_params(
         )
 
 
+@pytest.mark.xdist_group(name="uses_heat_equation_storage")
 def test_field_param_update_using_heat_equation_enif_snapshot(
     symlinked_heat_equation_storage_enif, snapshot, request
 ):
@@ -203,7 +208,7 @@ def test_field_param_update_using_heat_equation_enif_snapshot(
 
         result = pl.concat(data)
         result = result.sort(["iteration", "realizations", "x", "y", "z"])
-        result = result.pivot(on=["realizations"], values="values", sort_columns=True)
+        result = result.pivot(on=["realizations"], values="values")
 
         _compare_ensemble_params(
             actual=result,
@@ -216,6 +221,7 @@ def test_field_param_update_using_heat_equation_enif_snapshot(
         )
 
 
+@pytest.mark.xdist_group(name="uses_heat_equation_storage")
 def test_field_param_update_using_heat_equation(symlinked_heat_equation_storage_es):
     config = ErtConfig.from_file("config.ert")
     with open_storage(config.ens_path, mode="r") as storage:
@@ -256,13 +262,19 @@ def test_field_param_update_using_heat_equation(symlinked_heat_equation_storage_
 
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
 def test_field_parameter_persistence_to_grdecl(tmpdir):
-    """
-    This replicates the poly example, only it uses FIELD parameter
+    """Test that FIELD parameters in GRDECL format are correctly persisted
+    and updated by the ensemble smoother.
+
+    Uses a polynomial forward model with three field-cell coefficients.
+    Verifies that the posterior has reduced uncertainty (smaller covariance
+    determinant), that field files differ between iterations, and that
+    the written GRDECL files have correct shape with no NaN values.
     """
     with tmpdir.as_cwd():
         config = dedent(
             """
             NUM_REALIZATIONS 5
+            RANDOM_SEED 1234
             OBS_CONFIG observations
             FIELD MY_PARAM PARAMETER my_param.grdecl \
                 INIT_FILES:my_param.grdecl FORWARD_INIT:True
@@ -292,7 +304,9 @@ import numpy as np
 import os
 if __name__ == "__main__":
     if not os.path.exists("my_param.grdecl"):
-        values = np.random.standard_normal({NCOL}*{NROW}*{NLAY})
+        seed = int(os.environ.get("_ERT_REALIZATION_NUMBER", 0))
+        rng = np.random.default_rng(seed)
+        values = rng.standard_normal({NCOL}*{NROW}*{NLAY})
         with open("my_param.grdecl", "w") as fout:
             fout.write("MY_PARAM\\n")
             fout.write(" ".join([str(val) for val in values]) + " /\\n")
@@ -400,6 +414,7 @@ if __name__ == "__main__":
 
 
 @pytest.mark.timeout(600)
+@pytest.mark.xdist_group(name="uses_heat_equation_storage")
 def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc(
     symlinked_heat_equation_storage_es, caplog
 ):
@@ -432,9 +447,19 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
         corr_length = prior.load_parameters("CORR_LENGTH")
 
         new_experiment = storage.create_experiment(
-            parameters=config.ensemble_config.parameter_configuration,
-            responses=config.ensemble_config.response_configuration,
-            observations=config.observations,
+            experiment_config={
+                "parameter_configuration": [
+                    pc.model_dump(mode="json")
+                    for pc in config.ensemble_config.parameter_configuration
+                ],
+                "response_configuration": [
+                    rc.model_dump(mode="json")
+                    for rc in config.ensemble_config.response_configuration
+                ],
+                "observations": [
+                    od.model_dump(mode="json") for od in config.observation_declarations
+                ],
+            },
             name="exp-zero-var",
         )
         new_prior = storage.create_ensemble(
@@ -453,10 +478,10 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
         # Note that we ideally should generate new responses by running the
         # heat equation with the modified prior where parts of the field
         # are given a constant value.
-        responses = prior.load_responses("gen_data", tuple(range(prior.ensemble_size)))
+        responses = prior.load_responses("summary", tuple(range(prior.ensemble_size)))
         for realization in range(prior.ensemble_size):
             df = responses.filter(pl.col("realization") == realization)
-            new_prior.save_response("gen_data", df, realization)
+            new_prior.save_response("summary", df, realization)
 
         new_posterior = storage.create_ensemble(
             new_experiment,
@@ -469,13 +494,22 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
         with warnings.catch_warnings(record=True) as record:
             warnings.simplefilter("always")  # Ensure all warnings are always recorded
             with caplog.at_level(logging.INFO):
+                es_settings = config.analysis_config.es_settings
+                strategy_map = build_strategy_map(
+                    parameters=config.ensemble_config.parameters,
+                    param_configs=new_prior.experiment.parameter_configuration,
+                    inversion=es_settings.inversion,
+                    enkf_truncation=es_settings.enkf_truncation,
+                    distance_localization=es_settings.distance_localization,
+                    localization=es_settings.localization,
+                    correlation_threshold=es_settings.correlation_threshold,
+                )
                 smoother_update(
                     new_prior,
                     new_posterior,
                     experiment.observation_keys,
-                    config.ensemble_config.parameters,
                     ObservationSettings(),
-                    ESSettings(localization=True),
+                    strategy_map,
                 )
 
                 # Note that this used to fail since run time and user warnings were

@@ -1,7 +1,7 @@
 import queue
 import uuid
 from pathlib import Path
-from unittest.mock import ANY, MagicMock, call
+from unittest.mock import ANY, AsyncMock, MagicMock, call
 
 import pytest
 from pydantic import ConfigDict
@@ -62,7 +62,7 @@ EXPECTED_CALL_ORDER_WITHOUT_UPDATES = [
 
 @pytest.fixture
 def patch_run_model(monkeypatch):
-    monkeypatch.setattr(run_model, "create_run_path", MagicMock())
+    monkeypatch.setattr(run_model, "create_run_path", AsyncMock())
     monkeypatch.setattr(RunModel, "validate_successful_realizations_count", MagicMock())
     monkeypatch.setattr(RunModel, "set_env_key", MagicMock())
 
@@ -131,6 +131,7 @@ def test_hook_call_order(monkeypatch, use_tmpdir, cls, extra_args, expected_call
         design_matrix=None,
         parameter_configuration=[],
         response_configuration=[],
+        derived_response_configuration=[],
         ert_templates=MagicMock(),
         user_config_file=MagicMock(spec=Path),
         env_vars=MagicMock(spec=dict),
@@ -141,7 +142,7 @@ def test_hook_call_order(monkeypatch, use_tmpdir, cls, extra_args, expected_call
         hooked_workflows=MagicMock(spec=dict),
         log_path=Path(""),
         status_queue=queue.SimpleQueue(),
-        observations={},
+        observations=[],
     )
 
     test_class.run_ensemble_evaluator = MagicMock(return_value=[0])

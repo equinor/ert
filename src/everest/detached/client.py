@@ -128,24 +128,27 @@ def extract_errors_from_file(path: str) -> list[str]:
 
 def wait_for_server(client: Client, timeout: float) -> None:
     """
-    Waits until the everest server has started. Polls every second
+    Waits until the everest server has started. Polls
     for server availability until timeout (measured in seconds).
 
-    Raise an exception if no response within the timeout.
+    Timeout is not strict as the server status is polled periodically and
+    each underlying HTTP request has its own timeout, the wall-clock
+    duration may exceed the requested timeout slightly.
+
+    Raises an exception if no response within the timeout.
     """
-    sleep_time: float = 1.0
-    slept_time: float = 0.0
-    while slept_time <= timeout:
+    wait_start_time: float = time.monotonic()
+    while time.monotonic() - wait_start_time <= timeout:
         if server_is_running(
             *ServerConfig.get_server_context_from_conn_info(client.conn_info)
         ):
-            logger.info(f"Waited {slept_time:g} seconds before everest server was up")
             return
-        if slept_time + sleep_time > timeout:
-            break
-        time.sleep(sleep_time)
-        slept_time += sleep_time
-    raise RuntimeError(f"Failed to get reply from server within {slept_time:g} seconds")
+        until_timeout = max(0, timeout - (time.monotonic() - wait_start_time))
+        time.sleep(min(1, until_timeout))
+    raise RuntimeError(
+        "Failed to get reply from server "
+        f"within {time.monotonic() - wait_start_time:g} seconds"
+    )
 
 
 def wait_for_server_to_stop(

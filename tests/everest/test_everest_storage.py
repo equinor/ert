@@ -30,19 +30,10 @@ def test_csv_export(config_file, cached_example, snapshot):
     config_path, config_file, _, _ = cached_example(f"math_func/{config_file}")
     config = EverestConfig.load_file(Path(config_path) / config_file)
 
-    ever_storage = EverestStorage(output_dir=Path(config.optimization_output_dir))
-    ever_storage.init(
-        formatted_control_names=[
-            name
-            for control_config in config.controls
-            for name in control_config.formatted_control_names
-        ],
-        objective_functions=config.create_ert_objectives_config(),
-        output_constraints=config.create_ert_output_constraints_config(),
-        realizations=config.model.realizations,
+    experiment = EverestStorage.get_everest_experiment(
+        storage_path=config.storage_dir,
     )
-    ever_storage.read_from_output_dir()
-    combined_df, pert_real_df, batch_df = ever_storage.export_dataframes()
+    combined_df, pert_real_df, batch_df = experiment.export_dataframes()
 
     def _sort_df(df: pl.DataFrame) -> pl.DataFrame:
         df_ = df.select(df.columns)
@@ -109,9 +100,9 @@ def test_everest_data_stored_in_ert_local_storage(
         assert set(response_type_mapping.get("everest_constraints", [])) == constraints
         assert set(response_type_mapping.get("everest_objectives", [])) == objectives
 
-        local_storage_params = []
-        for param_config in experiment.parameter_configuration.values():
-            local_storage_params += param_config.input_keys
+        local_storage_params = [
+            cfg.input_key for cfg in experiment.parameter_configuration.values()
+        ]
 
         formatted_control_names = [
             name

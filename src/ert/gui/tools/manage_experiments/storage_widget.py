@@ -12,7 +12,6 @@ from PyQt6.QtCore import (
 )
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLineEdit,
@@ -25,7 +24,9 @@ from PyQt6.QtWidgets import (
 from ert.config import ErrorInfo, ErtConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import CreateExperimentDialog, Suggestor
+from ert.gui.icon_utils import load_icon
 from ert.storage import Ensemble, Experiment
+from ert.storage.local_experiment import ExperimentType
 
 from .storage_model import (
     EnsembleModel,
@@ -49,7 +50,7 @@ class AddWidget(QWidget):
         super().__init__()
 
         self.addButton = QToolButton(self)
-        self.addButton.setIcon(QIcon("img:add_circle_outlined.svg"))
+        self.addButton.setIcon(load_icon("add_circle_outlined.svg"))
         self.addButton.setIconSize(QSize(16, 16))
         self.addButton.clicked.connect(addFunction)
 
@@ -135,11 +136,11 @@ class StorageWidget(QWidget):
         def enableAdd() -> None:
             self._create_experiment_button.setEnabled(True)
 
-        if self._notifier.is_simulation_running:
+        if self._notifier.is_experiment_running:
             disableAdd()
 
-        notifier.simulationStarted.connect(disableAdd)
-        notifier.simulationEnded.connect(enableAdd)
+        notifier.experiment_started.connect(disableAdd)
+        notifier.experiment_ended.connect(enableAdd)
 
         layout = QVBoxLayout()
         layout.addWidget(search_bar)
@@ -169,12 +170,30 @@ class StorageWidget(QWidget):
         if create_experiment_dialog.exec():
             try:
                 with self._notifier.write_storage() as storage:
+                    parameter_configuration = (
+                        self._ert_config.parameter_configurations_with_design_matrix
+                    )
+                    response_configuration = (
+                        self._ert_config.ensemble_config.response_configuration
+                    )
                     ensemble = storage.create_experiment(
-                        parameters=self._ert_config.parameter_configurations_with_design_matrix,
-                        responses=self._ert_config.ensemble_config.response_configuration,
-                        observations=self._ert_config.observations,
+                        experiment_config={
+                            "parameter_configuration": [
+                                c.model_dump(mode="json")
+                                for c in parameter_configuration
+                            ],
+                            "response_configuration": [
+                                c.model_dump(mode="json")
+                                for c in response_configuration
+                            ],
+                            "observations": [
+                                d.model_dump(mode="json")
+                                for d in self._ert_config.observation_declarations
+                            ],
+                            "ert_templates": self._ert_config.ert_templates,
+                            "experiment_type": ExperimentType.MANUAL,
+                        },
                         name=create_experiment_dialog.experiment_name,
-                        templates=self._ert_config.ert_templates,
                     ).create_ensemble(
                         name=create_experiment_dialog.ensemble_name,
                         ensemble_size=self._ensemble_size,

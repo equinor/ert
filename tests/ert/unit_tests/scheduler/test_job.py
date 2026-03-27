@@ -25,7 +25,7 @@ from ert.scheduler.job import (
     log_warnings_from_forward_model,
 )
 from ert.storage.load_status import LoadResult
-from ert.warnings import PostSimulationWarning
+from ert.warnings import PostExperimentWarning
 
 
 def create_scheduler():
@@ -143,7 +143,12 @@ async def test_job_run_sends_expected_events(
     scheduler.driver._job_error_message_by_iens = {}
 
     job = Job(scheduler, realization)
-    job._verify_checksum = partial(job._verify_checksum, timeout=0)
+    original_verify_checksum = job._verify_checksum
+
+    async def verify_checksum_with_timeout(lock, _timeout=0):
+        return await original_verify_checksum(lock, timeout=_timeout)
+
+    job._verify_checksum = verify_checksum_with_timeout
     job.started.set()
 
     job_run_task = asyncio.create_task(
@@ -468,7 +473,7 @@ async def test_log_warnings_from_forward_model(
         )
     ]
     if should_be_captured:
-        with pytest.warns(PostSimulationWarning):
+        with pytest.warns(PostExperimentWarning):
             await log_warnings_from_forward_model(realization, start_time - 1)
         assert (
             "Realization 0 step foo.0 warned "
@@ -483,6 +488,7 @@ async def test_log_warnings_from_forward_model(
             warnings.simplefilter("error")
             await log_warnings_from_forward_model(realization, start_time - 1)
         assert emitted_warning_str not in caplog.text
+    assert "Reached maximum number" not in caplog.text
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -505,6 +511,7 @@ async def test_old_warnings_are_not_logged(realization, caplog, mocker):
     job_start_time = time.time() + 1  # Pretend that the job started in the future
     await log_warnings_from_forward_model(realization, job_start_time)
     assert "FutureWarning: Feature XYZ" not in caplog.text
+    assert "Reached maximum number" not in caplog.text
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -530,11 +537,12 @@ async def test_long_warning_from_forward_model_is_truncated(
             stdout_file="foo.stdout",
         )
     ]
-    with pytest.warns(PostSimulationWarning):
+    with pytest.warns(PostExperimentWarning):
         await log_warnings_from_forward_model(realization, start_time - 1)
     for line in caplog.text.splitlines():
         if "Realization 0 step foo.0 warned" in line:
             assert len(line) <= 2048 + 91
+    assert "Reached maximum number" not in caplog.text
 
 
 @pytest.mark.usefixtures("use_tmpdir")
@@ -557,13 +565,42 @@ async def test_deduplication_of_repeated_warnings_from_forward_model(
             stdout_file="foo.stdout",
         )
     ]
-    with pytest.warns(PostSimulationWarning):
+    with pytest.warns(PostExperimentWarning):
         await log_warnings_from_forward_model(realization, start_time - 1)
     assert (
         f"Realization 0 step foo.0 warned 3 time(s) in stdout: {emitted_warning_str}"
         in caplog.text
     )
     assert caplog.text.count(emitted_warning_str) == 1
+    assert "Reached maximum number" not in caplog.text
+
+
+@pytest.mark.filterwarnings("ignore:.*FutureWarning.*")
+@pytest.mark.parametrize("log_count_cap", [-10, -1, 0, 1, 3])
+@pytest.mark.usefixtures("use_tmpdir")
+async def test_excessive_warnings_from_fm_step_can_be_capped(
+    realization, caplog, mocker, log_count_cap
+):
+    # Mock asyncio.sleep to fast-forward time
+    mocker.patch("asyncio.sleep")
+    start_time = time.time()
+    Path(realization.run_arg.runpath).mkdir()
+    (Path(realization.run_arg.runpath) / "foo.stdout.0").write_text(
+        "\n".join([f"FutureWarning: {idx}" for idx in range(100)]),
+        encoding="utf-8",
+    )
+    realization.fm_steps = [
+        ForwardModelStep(
+            name="foo",
+            executable="foo",
+            stdout_file="foo.stdout",
+        )
+    ]
+    await log_warnings_from_forward_model(
+        realization, start_time - 1, max_logged_warnings=log_count_cap
+    )
+    assert caplog.text.count("FutureWarning") == max(0, log_count_cap)
+    assert "Reached maximum number" in caplog.text
 
 
 async def test_log_warnings_from_forward_model_can_detect_files_being_created_after_delay(  # noqa: E501

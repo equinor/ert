@@ -66,7 +66,7 @@ class InstallDataConfig(BaseModel):
             """
         ),
     )
-    data: dict[str, Any] | None = Field(
+    data: dict[str, Any] | list[Any] | None = Field(
         default=None,
         description=dedent(
             """

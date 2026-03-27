@@ -1,7 +1,6 @@
 import datetime
 
 from PyQt6.QtCore import QDate
-from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QCalendarWidget,
     QHBoxLayout,
@@ -10,6 +9,8 @@ from PyQt6.QtWidgets import (
     QWidget,
     QWidgetAction,
 )
+
+from ert.gui.icon_utils import load_icon
 
 from .clearable_line_edit import ClearableLineEdit
 
@@ -23,7 +24,7 @@ class CustomDateEdit(QWidget):
         self._calendar_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self._calendar_button.setFixedSize(26, 26)
         self._calendar_button.setAutoRaise(True)
-        self._calendar_button.setIcon(QIcon("img:calendar_date_range.svg"))
+        self._calendar_button.setIcon(load_icon("calendar_date_range.svg"))
         self._calendar_button.setStyleSheet(
             "QToolButton::menu-indicator { image: none; }"
         )

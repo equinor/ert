@@ -359,7 +359,7 @@ def test_that_resubmit_limit_is_set(create_runmodel) -> None:
 
 
 def test_that_general_user_queue_options_overrides_site_queue_options_via_runmodel(
-    min_config,
+    min_config, change_to_tmpdir
 ):
     local_queue_options = LocalQueueOptions(realization_memory="1110Gb", num_cpu=10)
 

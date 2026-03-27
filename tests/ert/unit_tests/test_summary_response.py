@@ -1,4 +1,5 @@
 import shutil
+import threading
 from pathlib import Path
 from textwrap import dedent
 
@@ -13,7 +14,7 @@ from ert.storage.local_ensemble import load_parameters_and_responses_from_runpat
 
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key")
-def test_load_summary_response_restart_not_zero(
+async def test_load_summary_response_restart_not_zero(
     tmpdir, snapshot, request, storage, run_args
 ):
     """
@@ -35,13 +36,18 @@ def test_load_summary_response_restart_not_zero(
         SUMMARY *
         """
         )
-        with open("config.ert", "w", encoding="utf-8") as fh:
-            fh.writelines(config)
+        Path("config.ert").write_text(config, encoding="utf-8")
+
         sim_path = Path("simulations") / "realization-0" / "iter-0"
         ert_config = ErtConfig.from_file("config.ert")
 
         experiment_id = storage.create_experiment(
-            responses=ert_config.ensemble_config.response_configuration
+            experiment_config={
+                "response_configuration": [
+                    rc.model_dump(mode="json")
+                    for rc in ert_config.ensemble_config.response_configuration
+                ]
+            },
         )
         ensemble = storage.create_ensemble(
             experiment_id,
@@ -49,7 +55,7 @@ def test_load_summary_response_restart_not_zero(
             ensemble_size=ert_config.runpath_config.num_realizations,
         )
 
-        create_run_path(
+        await create_run_path(
             run_args=run_args(ert_config, ensemble),
             ensemble=ensemble,
             user_config_file=ert_config.user_config_file,
@@ -58,8 +64,10 @@ def test_load_summary_response_restart_not_zero(
             env_pr_fm_step=ert_config.env_pr_fm_step,
             substitutions=ert_config.substitutions,
             parameters_file="parameters",
+            end_event=threading.Event(),
             runpaths=Runpaths.from_config(ert_config),
         )
+
         shutil.copy(test_path / "PRED_RUN.SMSPEC", sim_path / "PRED_RUN.SMSPEC")
         shutil.copy(test_path / "PRED_RUN.UNSMRY", sim_path / "PRED_RUN.UNSMRY")
 

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import itertools
 import logging
 import os
 from collections.abc import Callable, Iterator
@@ -17,18 +16,16 @@ from ert.field_utils import (
     ErtboxParameters,
     FieldFileFormat,
     Shape,
-    calc_rho_for_2d_grid_layer,
     calculate_ertbox_parameters,
     get_shape,
     read_field,
     save_field,
-    transform_local_ellipse_angle_to_local_coords,
-    transform_positions_to_local_field_coordinates,
 )
 from ert.substitutions import substitute_runpath_name
 from ert.utils import log_duration
 
 from ._str_to_bool import str_to_bool
+from .graph_utils import create_flattened_cube_graph
 from .parameter_config import ParameterConfig
 from .parsing import ConfigValidationError, ConfigWarning
 
@@ -40,43 +37,15 @@ if TYPE_CHECKING:
 _logger = logging.getLogger(__name__)
 
 
-def create_flattened_cube_graph(px: int, py: int, pz: int) -> nx.Graph[int]:
-    """graph created with nodes numbered from 0 to px*py*pz
-    corresponds to the "vectorization" or flattening of
-    a 3D cube with shape (px,py,pz) in the same way as
-    reshaping such a cube into a one-dimensional array.
-    The indexing scheme used to create the graph reflects
-    this flattening process"""
-
-    G: nx.Graph[int] = nx.Graph()
-    for x, y, z in itertools.product(range(px), range(py), range(pz)):
-        # Flatten the 3D index to a single index
-        index = x * py * pz + y * pz + z
-
-        # Connect to the right neighbor (y-direction)
-        if y < py - 1:
-            G.add_edge(index, index + pz)
-
-        # Connect to the bottom neighbor (x-direction)
-        if x < px - 1:
-            G.add_edge(index, index + py * pz)
-
-        # Connect to the neighbor in front (z-direction)
-        if z < pz - 1:
-            G.add_edge(index, index + 1)
-
-    return G
-
-
 class Field(ParameterConfig):
     type: Literal["field"] = "field"
     dimensionality: Literal[3] = 3
     ertbox_params: ErtboxParameters
     file_format: FieldFileFormat
-    output_transformation: str | None
-    input_transformation: str | None
-    truncation_min: float | None
-    truncation_max: float | None
+    output_transformation: str | None = None
+    input_transformation: str | None = None
+    truncation_min: float | None = None
+    truncation_max: float | None = None
     forward_init_file: str
     output_file: Path
     grid_file: str
@@ -248,7 +217,7 @@ class Field(ParameterConfig):
 
     def create_storage_datasets(
         self,
-        from_data: npt.NDArray[np.float64],
+        from_data: npt.NDArray[np.floating],
         iens_active_index: npt.NDArray[np.int_],
     ) -> Iterator[tuple[int, xr.Dataset]]:
         dim_nx, dim_ny, dim_nz = (
@@ -264,7 +233,7 @@ class Field(ParameterConfig):
 
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
-    ) -> npt.NDArray[np.float64]:
+    ) -> npt.NDArray[np.floating]:
         ds = ensemble.load_parameters(self.name, realizations)
         assert isinstance(ds, xr.Dataset)
         ensemble_size = len(ds.realizations)
@@ -283,7 +252,7 @@ class Field(ParameterConfig):
 
     def _transform_data(
         self, data_array: xr.DataArray
-    ) -> np.ma.MaskedArray[Any, np.dtype[np.float32]]:
+    ) -> np.ma.MaskedArray[Any, np.dtype[np.floating]]:
         return np.ma.MaskedArray(
             _field_truncate(
                 field_transform(
@@ -317,75 +286,6 @@ class Field(ParameterConfig):
     @property
     def nz(self) -> int:
         return self.ertbox_params.nz
-
-    def calc_rho_for_2d_grid_layer(
-        self,
-        obs_xpos: npt.NDArray[np.float64],
-        obs_ypos: npt.NDArray[np.float64],
-        obs_main_range: npt.NDArray[np.float64],
-        obs_perp_range: npt.NDArray[np.float64],
-        obs_anisotropy_angle: npt.NDArray[np.float64],
-        right_handed_grid_indexing: bool = True,
-    ) -> npt.NDArray[np.float64]:
-        """Function to calculate scaling values to be used in the RHO matrix
-        for distance-based localization.
-
-        Args:
-            obs_xpos: x-coordinates in global coordinates of observations
-            obs_ypos: y-coordinates in global coordinates of observations
-            obs_main_range: Size of influence ellipse main principal direction.
-            obs_perp_range: Size of influence ellipse second principal direction.
-            obs_anisotropy_angle: Rotation angle anticlock wise of main principal
-              direction of influence ellipse relative to global coordinate
-              system's x-axis.
-            right_handed_grid_indexing: When this is True the field parameters
-              grid index order counts J-index down from ny-1 to 0.
-              If the value is False, the grid index order is to count J index
-              from 0 to ny-1. As standard for 3D field parameters,
-              the grid index order follows the right_handed grid indexing.
-
-        Returns:
-            Scaling values (elements of the RHO matrix) as a numpy array
-              of shape=(nx,ny,nobservations)
-
-        """
-        # Can only be used if ertbox coordinate system is defined
-        assert self.ertbox_params.xinc is not None, (
-            "Parameter for grid resolution must be defined"
-        )
-        assert self.ertbox_params.yinc is not None, (
-            "Parameter for grid resolution must be defined"
-        )
-        assert self.ertbox_params.origin is not None, (
-            "Parameter for grid origin must be defined"
-        )
-        assert self.ertbox_params.rotation_angle is not None, (
-            "Parameter for grid rotation must be defined"
-        )
-        # Transform positions of observations into local coordinates
-        xpos, ypos = transform_positions_to_local_field_coordinates(
-            self.ertbox_params.origin,
-            self.ertbox_params.rotation_angle,
-            obs_xpos,
-            obs_ypos,
-        )
-        # Transform localization ellipse orientation to local coordinates
-        ellipse_rotation = transform_local_ellipse_angle_to_local_coords(
-            self.ertbox_params.rotation_angle, obs_anisotropy_angle
-        )
-
-        return calc_rho_for_2d_grid_layer(
-            self.ertbox_params.nx,
-            self.ertbox_params.ny,
-            self.ertbox_params.xinc,
-            self.ertbox_params.yinc,
-            xpos,
-            ypos,
-            obs_main_range,
-            obs_perp_range,
-            ellipse_rotation,
-            right_handed_grid_indexing=right_handed_grid_indexing,
-        )
 
 
 TRANSFORM_FUNCTIONS: Final[dict[str, Callable[[Any], Any]]] = {

@@ -51,37 +51,23 @@ def test_get_ensemble(poly_example_tmp_dir, dark_storage_client):
 
 
 @pytest.mark.integration_test
-def test_get_experiment_ensemble(poly_example_tmp_dir, dark_storage_client):
-    resp: Response = dark_storage_client.get("/experiments")
-    experiment_json = resp.json()
-    assert len(experiment_json) == 1
-    assert len(experiment_json[0]["ensemble_ids"]) == 2
-
-    experiment_id = experiment_json[0]["id"]
-
-    resp: Response = dark_storage_client.get(f"/experiments/{experiment_id}/ensembles")
-    ensembles_json = resp.json()
-
-    assert len(ensembles_json) == 2
-    assert ensembles_json[0]["experiment_id"] == experiment_json[0]["id"]
-    assert ensembles_json[0]["userdata"]["name"] in {"iter-0", "iter-1"}
-
-
-@pytest.mark.integration_test
 def test_get_responses_with_observations(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()[0]
 
     assert experiment_json["observations"] == {"gen_data": {"POLY_RES": ["POLY_OBS"]}}
     assert experiment_json["responses"] == {
-        "gen_data": [
-            {
-                "response_type": "gen_data",
-                "response_key": "POLY_RES",
-                "filter_on": {"report_step": [0]},
-                "finalized": True,
-            }
-        ]
+        "gen_data": {
+            "type": "gen_data",
+            "keys": ["POLY_RES"],
+            "has_finalized_keys": True,
+            "input_files": [
+                "poly.out",
+            ],
+            "report_steps_list": [
+                None,
+            ],
+        }
     }
 
 
@@ -142,14 +128,16 @@ def test_get_summary_response(
     copy_snake_oil_case_storage, dark_storage_client_snake_oil
 ):
     resp: Response = dark_storage_client_snake_oil.get("/experiments")
-    experiment_json = resp.json()
+    experiments_json = resp.json()
 
-    assert len(experiment_json) == 1
+    experiment_json = next(
+        e for e in experiments_json if e.get("name") == "ensemble-experiment"
+    )
 
     # ensemble_experiment, so only 1 ensemble
-    assert len(experiment_json[0]["ensemble_ids"]) == 1
+    assert len(experiment_json["ensemble_ids"]) == 1
 
-    ensemble_id = experiment_json[0]["ensemble_ids"][0]
+    ensemble_id = experiment_json["ensemble_ids"][0]
 
     resp_ensemble: Response = dark_storage_client_snake_oil.get(
         f"/ensembles/{ensemble_id}"
@@ -231,12 +219,6 @@ def test_get_ensemble_parameters(poly_example_tmp_dir, dark_storage_client):
 
 
 @pytest.mark.integration_test
-def test_refresh_facade(poly_example_tmp_dir, dark_storage_client):
-    resp: Response = dark_storage_client.post("/updates/facade")
-    assert resp.status_code == 200
-
-
-@pytest.mark.integration_test
 def test_get_experiment_observations(poly_example_tmp_dir, dark_storage_client):
     resp: Response = dark_storage_client.get("/experiments")
     experiment_json = resp.json()
@@ -252,6 +234,36 @@ def test_get_experiment_observations(poly_example_tmp_dir, dark_storage_client):
     assert len(response_json[0]["errors"]) == 5
     assert len(response_json[0]["values"]) == 5
     assert len(response_json[0]["x_axis"]) == 5
+    assert response_json[0]["east"] == 5 * [None]
+    assert response_json[0]["north"] == 5 * [None]
+    assert response_json[0]["radius"] == 5 * [None]
+
+
+@pytest.mark.integration_test
+def test_that_heat_equation_get_observations_with_locations(
+    symlink_heat_equation_storage_es, dark_storage_client_heat_equation
+):
+    resp: Response = dark_storage_client_heat_equation.get("/experiments")
+    experiment_json = resp.json()
+    experiment_id = experiment_json[0]["id"]
+
+    resp: Response = dark_storage_client_heat_equation.get(
+        f"/experiments/{experiment_id}/observations"
+    )
+    response_json = resp.json()
+    assert len(response_json) == 48
+
+    obs_by_name = {obs["name"]: obs for obs in response_json}
+
+    obs = obs_by_name["HEAT_5_7_132"]
+    assert obs["east"] == [4.5]
+    assert obs["north"] == [6.5]
+    assert obs["radius"] == [3]
+
+    obs = obs_by_name["HEAT_5_3_10"]
+    assert obs["east"] == [4.5]
+    assert obs["north"] == [2.5]
+    assert obs["radius"] == [3]
 
 
 @pytest.mark.integration_test
@@ -270,6 +282,8 @@ def test_get_record_observations(poly_example_tmp_dir, dark_storage_client):
     assert len(response_json[0]["errors"]) == 5
     assert len(response_json[0]["values"]) == 5
     assert len(response_json[0]["x_axis"]) == 5
+    assert response_json[0]["east"] == 5 * [None]
+    assert response_json[0]["north"] == 5 * [None]
 
 
 @pytest.mark.integration_test

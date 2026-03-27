@@ -651,7 +651,13 @@ def test_that_prior_is_not_overwritten_in_ensemble_experiment(
     num_realizations = ert_config.runpath_config.num_realizations
     with open_storage(ert_config.ens_path, mode="w") as storage:
         experiment_id = storage.create_experiment(
-            ert_config.ensemble_config.parameter_configuration, name="test-experiment"
+            experiment_config={
+                "parameter_configuration": [
+                    pc.model_dump(mode="json")
+                    for pc in ert_config.ensemble_config.parameter_configuration
+                ]
+            },
+            name="test-experiment",
         )
         ensemble = storage.create_ensemble(
             experiment_id, name="iter-0", ensemble_size=num_realizations

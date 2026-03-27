@@ -4,7 +4,6 @@ definitions:
 controls:
   -
     name: well_rate
-    type: generic_control
     perturbation_magnitude: 50
     variables:
       -

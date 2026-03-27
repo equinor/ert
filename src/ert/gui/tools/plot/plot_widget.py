@@ -14,7 +14,7 @@ from matplotlib.figure import Figure
 from PyQt6.QtCore import QStringListModel, Qt, pyqtBoundSignal
 from PyQt6.QtCore import pyqtSignal as Signal
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtGui import QAction, QIcon
+from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,
@@ -24,6 +24,9 @@ from PyQt6.QtWidgets import (
     QWidgetAction,
 )
 from typing_extensions import override
+
+from ert.gui.icon_utils import load_icon
+from ert.gui.tools.plot.plottery.plots import EverestGradientsPlot
 
 from .plot_api import EnsembleObject, PlotApiKeyDefinition
 
@@ -37,6 +40,9 @@ if TYPE_CHECKING:
     from .plottery.plots.misfits import MisfitsPlot
     from .plottery.plots.statistics import StatisticsPlot
     from .plottery.plots.std_dev import StdDevPlot
+    from .plottery.plots.values_over_iteration_plot import (
+        ValuesOverIterationsPlot,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +59,7 @@ class CustomNavigationToolbar(NavigationToolbar2QT):
     ) -> None:
         super().__init__(canvas, parent, coordinates)  # type: ignore
 
-        gear = QIcon("img:edit.svg")
+        gear = load_icon("edit.svg")
         customize_action = QAction(gear, "Customize", self)
         customize_action.setToolTip("Customize plot settings")
         customize_action.triggered.connect(self.customizationTriggered)
@@ -123,7 +129,9 @@ class PlotWidget(QWidget):
             "DistributionPlot",
             "CrossEnsembleStatisticsPlot",
             "StdDevPlot",
+            "ValuesOverIterationsPlot",
             "MisfitsPlot",
+            "EverestGradientsPlot",
         ],
         parent: QWidget | None = None,
     ) -> None:
@@ -164,6 +172,7 @@ class PlotWidget(QWidget):
         vbox.addSpacing(8)
         self.setLayout(vbox)
 
+        self._negative_values_in_data = False
         self._dirty = True
         self._active = False
         self.resetPlot()
@@ -176,11 +185,15 @@ class PlotWidget(QWidget):
         self._figure.clear()
 
     def _sync_log_checkbox(self) -> None:
-        if type(self._plotter).__name__ in {
-            "HistogramPlot",
-            "DistributionPlot",
-            "GaussianKDEPlot",
-        }:
+        if (
+            type(self._plotter).__name__
+            in {
+                "HistogramPlot",
+                "DistributionPlot",
+                "GaussianKDEPlot",
+            }
+            and self._negative_values_in_data is False
+        ):
             self._log_checkbox.setVisible(True)
         else:
             self._log_checkbox.setVisible(False)
@@ -199,12 +212,16 @@ class PlotWidget(QWidget):
         ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observations: pd.DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
+        obs_loc: npt.NDArray[np.float32] | None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         self.resetPlot()
         try:
+            self._sync_log_checkbox()
             plot_context.log_scale = (
-                self._log_checkbox.isVisible() and self._log_checkbox.isChecked()
+                self._log_checkbox.isVisible()
+                and self._log_checkbox.isChecked()
+                and self._negative_values_in_data is False
             )
             self._plotter.plot(
                 self._figure,
@@ -212,11 +229,12 @@ class PlotWidget(QWidget):
                 ensemble_to_data_map,
                 observations,
                 std_dev_images,
+                obs_loc,
                 key_def,
             )
             self._canvas.draw()
-            self._sync_log_checkbox()
         except Exception as e:
+            logger.exception(e)
             exc_type, _, exc_tb = sys.exc_info()
             sys.stderr.write("-" * 80 + "\n")
             traceback.print_tb(exc_tb)

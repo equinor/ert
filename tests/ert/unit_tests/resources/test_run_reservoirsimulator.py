@@ -105,12 +105,12 @@ def test_runner_can_extract_base_name(data_path: str, expected: str):
 
 @pytest.mark.usefixtures("use_tmpdir")
 def test_await_completed_summary_file_will_return_asap():
-    resfo.write("FOO.UNSMRY", [("INTEHEAD", np.array([1], dtype=np.int32))])
+    resfo.write("FOO_ASAP.UNSMRY", [("INTEHEAD", np.array([1], dtype=np.int32))])
     assert (
         0.01
         # Expected wait time is the poll_interval
         < run_reservoirsimulator.await_completed_unsmry_file(
-            "FOO.UNSMRY", max_wait=0.5, poll_interval=0.1
+            "FOO_ASAP.UNSMRY", max_wait=0.5, poll_interval=0.1
         )
         < 0.4
     )
@@ -130,7 +130,8 @@ def test_await_completed_summary_file_will_wait_for_slow_smry():
     def slow_smry_writer():
         for size in range(10):
             resfo.write(
-                "FOO.UNSMRY", (size + 1) * [("INTEHEAD", np.array([1], dtype=np.int32))]
+                "FOO_SLOW.UNSMRY",
+                (size + 1) * [("INTEHEAD", np.array([1], dtype=np.int32))],
             )
             time.sleep(0.05)
 
@@ -141,7 +142,7 @@ def test_await_completed_summary_file_will_wait_for_slow_smry():
         0.5
         # Minimal wait time is around 0.55
         < run_reservoirsimulator.await_completed_unsmry_file(
-            "FOO.UNSMRY", max_wait=4, poll_interval=0.21
+            "FOO_SLOW.UNSMRY", max_wait=4, poll_interval=0.21
         )
         < 2
     )

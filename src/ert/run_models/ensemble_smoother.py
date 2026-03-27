@@ -1,30 +1,24 @@
 from __future__ import annotations
 
-import functools
 import logging
-from typing import cast
 
 import numpy as np
 from pydantic import PrivateAttr
 
 from ert.config import (
-    ParameterConfig,
     PostExperimentFixtures,
     PreExperimentFixtures,
-    ResponseConfig,
 )
 from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.run_arg import create_run_arguments
 from ert.run_models.initial_ensemble_run_model import (
     InitialEnsembleRunModel,
     InitialEnsembleRunModelConfig,
 )
 from ert.run_models.update_run_model import UpdateRunModel, UpdateRunModelConfig
-from ert.storage import Ensemble
 from ert.trace import tracer
 
-from ..analysis import smoother_update
-from ..run_arg import create_run_arguments
-from .run_model import ErtRunError
+from .run_model import ErtRunError, ExperimentType
 
 logger = logging.getLogger(__name__)
 
@@ -48,13 +42,8 @@ class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmoother
         self.run_workflows(fixtures=PreExperimentFixtures(random_seed=self.random_seed))
 
         experiment_storage = self._storage.create_experiment(
-            parameters=cast(list[ParameterConfig], self.parameter_configuration),
-            observations={k: v.to_polars() for k, v in self.observations.items()}
-            if self.observations is not None
-            else None,
-            responses=cast(list[ResponseConfig], self.response_configuration),
+            experiment_config=self.model_dump(mode="json"),
             name=self.experiment_name,
-            templates=self.ert_templates,
         )
 
         prior = self._storage.create_ensemble(
@@ -89,26 +78,6 @@ class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmoother
             ),
         )
 
-    def update_ensemble_parameters(
-        self, prior: Ensemble, posterior: Ensemble, weight: float
-    ) -> None:
-        smoother_update(
-            prior,
-            posterior,
-            update_settings=self.update_settings,
-            es_settings=self.analysis_settings,
-            parameters=prior.experiment.update_parameters,
-            observations=prior.experiment.observation_keys,
-            global_scaling=weight,
-            rng=self._rng,
-            progress_callback=functools.partial(
-                self.send_smoother_event,
-                prior.iteration,
-                prior.id,
-            ),
-            active_realizations=self.active_realizations,
-        )
-
     @classmethod
     def name(cls) -> str:
         return "Ensemble smoother"
@@ -116,3 +85,7 @@ class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmoother
     @classmethod
     def description(cls) -> str:
         return "Sample parameters → evaluate → update → evaluate"
+
+    @classmethod
+    def _experiment_type(cls) -> ExperimentType:
+        return ExperimentType.ENSEMBLE_SMOOTHER

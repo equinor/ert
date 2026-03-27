@@ -262,13 +262,16 @@ class ObjectiveScaler(ObjectiveTransform):
     def to_optimizer(self, objectives: NDArray[np.float64]) -> NDArray[np.float64]:
         """Transform objectives to optimizer space.
 
+        Infinite values are converted  to Nan, which causes the corresponding
+        realization to be treated as failed.
+
         Args:
             objectives: The objectives to transform.
 
         Returns:
             The negative of the scaled objectives.
         """
-        return -objectives / self._scales
+        return np.where(np.isfinite(objectives), -objectives / self._scales, np.nan)
 
     def from_optimizer(self, objectives: NDArray[np.float64]) -> NDArray[np.float64]:
         """Transform objectives to user space.
@@ -357,13 +360,16 @@ class ConstraintScaler(NonLinearConstraintTransform):
     def to_optimizer(self, constraints: NDArray[np.float64]) -> NDArray[np.float64]:
         """Transform constraints to optimizer space.
 
+        Infinite values are converted  to Nan, which causes the corresponding
+        realization to be treated as failed.
+
         Args:
             constraints: The constraints to transform.
 
         Returns:
             The scaled constraints.
         """
-        return constraints / self._scales
+        return np.where(np.isfinite(constraints), constraints / self._scales, np.nan)
 
     def from_optimizer(self, constraints: NDArray[np.float64]) -> NDArray[np.float64]:
         """Transform constraints to user space.
@@ -434,14 +440,10 @@ def get_optimization_domain_transforms(
     auto_scale: bool,
 ) -> EverestOptModelTransforms:
     control_scaler = ControlScaler(
-        [min_ for control in controls for min_ in control.min],
-        [max_ for control in controls for max_ in control.max],
-        [
-            scaled_range
-            for control in controls
-            for scaled_range in control.scaled_ranges
-        ],
-        [type_ for control in controls for type_ in control.control_types],
+        [control.min for control in controls],
+        [control.max for control in controls],
+        [control.scaled_range for control in controls],
+        [control.control_type for control in controls],
         auto_scale_input_constraints=auto_scale,
         input_constraint_scales=(
             None
@@ -461,19 +463,15 @@ def get_optimization_domain_transforms(
 
     objective_scaler = ObjectiveScaler(
         auto_scale=auto_scale,
-        scales=[1.0 if scale is None else scale for scale in objectives.scales],
+        scales=objectives.scales,
         realization_weights=realization_weights,
-        objective_weights=[
-            1.0 if weight is None else weight for weight in objectives.weights
-        ],
+        objective_weights=objectives.weights,
     )
 
     constraint_scaler = (
         ConstraintScaler(
             auto_scale=auto_scale,
-            scales=[
-                1.0 if scale is None else scale for scale in output_constraints.scales
-            ],
+            scales=output_constraints.scales,
             realization_weights=realization_weights,
         )
         if output_constraints

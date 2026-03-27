@@ -12,8 +12,11 @@ import polars as pl
 import pytest
 
 from ert.__main__ import run_convert_observations
-from ert.analysis import ErtAnalysisError, smoother_update
-from ert.config import ErtConfig, ESSettings, ObservationSettings
+from ert.analysis import (
+    ErtAnalysisError,
+    smoother_update,
+)
+from ert.config import ErtConfig, ObservationSettings
 from ert.plugins import get_site_plugins
 from ert.storage import RealizationStorageState, open_storage
 from ert.storage.local_storage import (
@@ -143,22 +146,10 @@ def test_that_storage_matches(
         assert len(ensembles) == 1
         ensemble = ensembles[0]
 
-        response_config = experiment.response_configuration
-
         assert all(
             "has_finalized_keys" in config
             for config in experiment.response_info.values()
         )
-
-        with open(
-            experiment._path / experiment._responses_file, "w", encoding="utf-8"
-        ) as f:
-            json.dump(
-                {k: v.model_dump(mode="json") for k, v in response_config.items()},
-                f,
-                default=str,
-                indent=2,
-            )
 
         assert experiment.parameter_configuration["PORO"].ertbox_params.nx == 2
         assert experiment.parameter_configuration["PORO"].ertbox_params.ny == 3
@@ -377,6 +368,9 @@ def test_that_manual_update_from_migrated_storage_works(
             ("report_step", pl.UInt16),
             ("response_key", pl.String),
             ("std", pl.Float32),
+            ("east", pl.Float32),
+            ("north", pl.Float32),
+            ("radius", pl.Float32),
         }
 
         assert set(experiment.observations["summary"].schema.items()) == {
@@ -385,9 +379,9 @@ def test_that_manual_update_from_migrated_storage_works(
             ("response_key", pl.String),
             ("std", pl.Float32),
             ("time", pl.Datetime(time_unit="ms")),
-            ("location_x", pl.Float32),
-            ("location_y", pl.Float32),
-            ("location_range", pl.Float32),
+            ("east", pl.Float32),
+            ("north", pl.Float32),
+            ("radius", pl.Float32),
         }
 
         prior_gendata = prior_ens.load_responses(
@@ -427,9 +421,7 @@ def test_that_manual_update_from_migrated_storage_works(
                 prior_ens,
                 posterior_ens,
                 list(experiment.observation_keys),
-                list(ert_config.ensemble_config.parameters),
                 ObservationSettings(),
-                ESSettings(),
             )
 
 

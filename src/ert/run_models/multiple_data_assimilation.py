@@ -1,29 +1,26 @@
 from __future__ import annotations
 
-import functools
 import logging
-from typing import Any, ClassVar, cast
+from typing import Any, ClassVar
 from uuid import UUID
 
 from pydantic import PrivateAttr
 
 from ert.config import (
-    ParameterConfig,
     PostExperimentFixtures,
     PreExperimentFixtures,
-    ResponseConfig,
 )
 from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.run_arg import create_run_arguments
 from ert.run_models.initial_ensemble_run_model import (
     InitialEnsembleRunModel,
     InitialEnsembleRunModelConfig,
 )
 from ert.run_models.update_run_model import UpdateRunModel, UpdateRunModelConfig
 from ert.storage import Ensemble
+from ert.storage.local_experiment import ExperimentType
 from ert.trace import tracer
 
-from ..analysis import smoother_update
-from ..run_arg import create_run_arguments
 from .run_model import ErtRunError
 
 logger = logging.getLogger(__name__)
@@ -97,12 +94,8 @@ class MultipleDataAssimilation(
                         f"restart iteration = {prior.iteration + 1}"
                     )
                 target_experiment = self._storage.create_experiment(
-                    parameters=list(prior.experiment.parameter_configuration.values()),
-                    responses=list(prior.experiment.response_configuration.values()),
-                    observations=prior.experiment.observations,
-                    simulation_arguments=prior.experiment.metadata,
+                    experiment_config=self.model_dump(mode="json"),
                     name=f"Restart from {prior.name}",
-                    templates=self.ert_templates,
                 )
 
             except (KeyError, ValueError) as err:
@@ -113,16 +106,9 @@ class MultipleDataAssimilation(
             self.run_workflows(
                 fixtures=PreExperimentFixtures(random_seed=self.random_seed),
             )
-            sim_args = {"weights": self.weights}
             experiment_storage = self._storage.create_experiment(
-                parameters=cast(list[ParameterConfig], self.parameter_configuration),
-                observations={k: v.to_polars() for k, v in self.observations.items()}
-                if self.observations is not None
-                else None,
-                responses=cast(list[ResponseConfig], self.response_configuration),
+                experiment_config=self.model_dump(mode="json"),
                 name=self.experiment_name,
-                templates=self.ert_templates,
-                simulation_arguments=sim_args,
             )
 
             prior = self._storage.create_ensemble(
@@ -166,26 +152,6 @@ class MultipleDataAssimilation(
                 storage=self._storage,
                 ensemble=prior,
             ),
-        )
-
-    def update_ensemble_parameters(
-        self, prior: Ensemble, posterior: Ensemble, weight: float
-    ) -> None:
-        smoother_update(
-            prior,
-            posterior,
-            update_settings=self.update_settings,
-            es_settings=self.analysis_settings,
-            parameters=prior.experiment.update_parameters,
-            observations=prior.experiment.observation_keys,
-            global_scaling=weight,
-            rng=self._rng,
-            progress_callback=functools.partial(
-                self.send_smoother_event,
-                prior.iteration,
-                prior.id,
-            ),
-            active_realizations=self.active_realizations,
         )
 
     @staticmethod
@@ -232,3 +198,7 @@ class MultipleDataAssimilation(
     @classmethod
     def group(cls) -> str | None:
         return MULTIPLE_DATA_ASSIMILATION_GROUP
+
+    @classmethod
+    def _experiment_type(cls) -> ExperimentType:
+        return ExperimentType.ES_MDA

@@ -1,8 +1,8 @@
 from PyQt6.QtCore import QObject
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtGui import QIcon
 from typing_extensions import override
 
+from ert.gui.icon_utils import load_icon
 from ert.gui.tools import Tool
 
 from .panel import EventViewerPanel, GUILogHandler
@@ -14,7 +14,7 @@ class EventViewerTool(Tool, QObject):
     ) -> None:
         super().__init__(
             "Event viewer",
-            QIcon("img:notifications.svg"),
+            load_icon("notifications.svg"),
         )
         self.log_handler = gui_handler
         self.logging_window = EventViewerPanel(self.log_handler)

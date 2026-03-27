@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import datetime
 import functools
 import logging
 import webbrowser
@@ -16,7 +15,6 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QMainWindow,
     QMenu,
-    QMessageBox,
     QToolButton,
     QVBoxLayout,
     QWidget,
@@ -24,12 +22,9 @@ from PyQt6.QtWidgets import (
 from typing_extensions import override
 
 from ert.config import ErtConfig, ErtScriptWorkflow
-from ert.gui import is_dark_mode, is_high_contrast_mode
 from ert.gui.about_dialog import AboutDialog
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.find_ert_info import find_ert_info
-from ert.gui.simulation import ExperimentPanel
-from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.tools.event_viewer import EventViewerTool, GUILogHandler
 from ert.gui.tools.load_results import LoadResultsTool
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
@@ -38,6 +33,10 @@ from ert.gui.tools.plugins import PluginHandler, PluginsTool
 from ert.gui.tools.workflows import WorkflowsTool
 from ert.plugins import ErtRuntimePlugins
 from ert.trace import get_trace_id
+
+from .detect_mode import is_dark_mode
+from .experiments import ExperimentPanel, RunDialog
+from .icon_utils import load_icon
 
 logger = logging.getLogger(__name__)
 BUTTON_STYLE_SHEET: str = """
@@ -121,20 +120,6 @@ class ErtMainWindow(QMainWindow):
             self.side_frame.setStyleSheet("background-color: lightgray;")
             logger.info("Running Ert with light mode")
 
-        if is_high_contrast_mode():
-            msg_box = QMessageBox()
-            msg_box.setText(
-                "High contrast mode detected. This is not supported by Ert "
-                "and some features may not work as expected."
-            )
-            msg_box.setWindowTitle("Warning")
-            msg_box.setStyleSheet(
-                "QMessageBox {color: black; background-color: white;} "
-                "QLabel {color: black;} QPushButton {color: black;}"
-            )
-            msg_box.update()
-            msg_box.exec()
-
         self.vbox_layout = QVBoxLayout(self.side_frame)
         self.side_frame.setLayout(self.vbox_layout)
 
@@ -142,17 +127,17 @@ class ErtMainWindow(QMainWindow):
         self._experiment_panel: ExperimentPanel | None = None
         self._plot_window: PlotWindow | None = None
         self._manage_experiments_panel: ManageExperimentsPanel | None = None
-        self.simulation_button = self._add_sidebar_button(
-            "Start simulation", QIcon("img:library_add.svg")
+        self.experiment_button = self._add_sidebar_button(
+            "Start experiment", load_icon("library_add.svg")
         )
-        plot_button = self._add_sidebar_button("Create plot", QIcon("img:timeline.svg"))
+        plot_button = self._add_sidebar_button("Create plot", load_icon("timeline.svg"))
         plot_button.setToolTip("Right click to open external window")
-        self._add_sidebar_button("Manage experiments", QIcon("img:build_wrench.svg"))
+        self._add_sidebar_button("Manage experiments", load_icon("build_wrench.svg"))
         self.results_button = self._add_sidebar_button(
-            "Simulation status", QIcon("img:in_progress.svg")
+            "Experiment status", load_icon("in_progress.svg")
         )
         self.results_button.setEnabled(False)
-        self.simulation_button.click()
+        self.experiment_button.click()
         self.run_dialog_counter = 0
 
         self.vbox_layout.addStretch()
@@ -209,8 +194,8 @@ class ErtMainWindow(QMainWindow):
                 self.central_layout.addWidget(self._plot_window)
                 self.central_panels_map["Create plot"] = self._plot_window
 
-            if index_name == "Simulation status":
-                # select the only available simulation
+            if index_name == "Experiment status":
+                # select the only available experiments
                 for k, v in self.central_panels_map.items():
                     if isinstance(v, RunDialog):
                         index_name = k
@@ -235,27 +220,31 @@ class ErtMainWindow(QMainWindow):
             widget.setVisible(False)
 
         run_dialog.setParent(self)
-        date_time: str = datetime.datetime.now(datetime.UTC).isoformat(
-            timespec="seconds"
-        )
-        experiment_type = run_dialog._run_model_api.experiment_name
-        simulation_id = experiment_type + " : " + date_time
-        self.central_panels_map[simulation_id] = run_dialog
+        experiment_name = run_dialog.property("experiment_name")
+        self.central_panels_map[experiment_name] = run_dialog
         self.run_dialog_counter += 1
         self.central_layout.addWidget(run_dialog)
 
-        def add_sim_run_option(simulation_id: str) -> None:
+        def mark_action_bold(menu: QMenu, action_to_mark: QAction) -> None:
+            for action in menu.actions():
+                font = action.font()
+                font.setBold(action is action_to_mark)
+                action.setFont(font)
+
+        def add_results_menu_item(experiment_name: str) -> None:
             menu = self.results_button.menu()
             if menu:
                 action_list = menu.actions()
-                act = QAction(text=simulation_id, parent=menu)
-                act.setProperty("index", simulation_id)
+                act = QAction(text=experiment_name, parent=menu)
+                act.setProperty("index", experiment_name)
                 act.triggered.connect(self.select_central_widget)
+                act.triggered.connect(lambda _: mark_action_bold(menu, act))
 
                 if action_list:
                     menu.insertAction(action_list[0], act)
                 else:
                     menu.addAction(act)
+                mark_action_bold(menu, menu.actions()[0])
 
         if self.run_dialog_counter == 2:
             # swap from button to menu selection
@@ -269,9 +258,9 @@ class ErtMainWindow(QMainWindow):
 
             for prev_date_time, widget in self.central_panels_map.items():
                 if isinstance(widget, RunDialog):
-                    add_sim_run_option(prev_date_time)
+                    add_results_menu_item(prev_date_time)
         elif self.run_dialog_counter > 2:
-            add_sim_run_option(simulation_id)
+            add_results_menu_item(experiment_name)
 
         self.results_button.setEnabled(True)
 
@@ -286,7 +275,7 @@ class ErtMainWindow(QMainWindow):
         )
         self.central_layout.addWidget(experiment_panel)
         self._experiment_panel = experiment_panel
-        self.central_panels_map["Start simulation"] = self._experiment_panel
+        self.central_panels_map["Start experiment"] = self._experiment_panel
 
         experiment_panel.experiment_started.connect(self.slot_add_widget)
 
@@ -389,7 +378,7 @@ class ErtMainWindow(QMainWindow):
                 plot_window.close()
 
         if closeEvent is not None:
-            if self.notifier.is_simulation_running:
+            if self.notifier.is_experiment_running:
                 closeEvent.ignore()
             else:
                 self.close_signal.emit()

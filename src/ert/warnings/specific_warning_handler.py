@@ -7,7 +7,7 @@ from typing import TextIO
 @contextmanager
 def capture_specific_warning(
     warning_class_to_capture: type[Warning],
-    propagate_warning: Callable[[Warning | str], None],
+    propagate_warning: Callable[[Warning | str], None] | None = None,
 ) -> Generator[None, None, None]:
     original_warning_handler = warnings.showwarning
 
@@ -20,7 +20,8 @@ def capture_specific_warning(
         line: str | None = None,
     ) -> None:
         if issubclass(category, warning_class_to_capture):
-            propagate_warning(message)
+            if propagate_warning is not None:
+                propagate_warning(message)
         else:
             original_warning_handler(message, category, filename, lineno, file, line)
 

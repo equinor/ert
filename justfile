@@ -71,3 +71,15 @@ ert-tests:
 
 check-all:
     parallel -j8 ::: 'just ert-gui-tests' 'just ert-cli-tests' 'just ert-unit-tests' 'just ert-doc-tests' 'just everest-tests' 'just check-types' 'just build-everest-docs' 'just build-ert-docs'
+
+update-ert-snapshots:
+    pytest --snapshot-update --mpl --mpl-generate-path={{justfile_directory()}}/.pics {{pytest_args}} -m "snapshot_test" tests/ert
+    cp -r {{justfile_directory()}}/.pics/* {{justfile_directory()}}/tests/ert/ui_tests/gui/baseline
+    rm -rf .pics
+
+update-everest-snapshots:
+    pytest -m "snapshot_test" --snapshot-update {{pytest_args}} tests/everest
+
+update-snapshots:
+    just "update-everest-snapshots"
+    just "update-ert-snapshots"

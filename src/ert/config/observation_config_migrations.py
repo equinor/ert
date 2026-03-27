@@ -63,9 +63,9 @@ def _validate_segment_dict(name_token: str, inp: dict[str, Any]) -> Segment:
             case "STOP":
                 stop = validate_int(value, key)
             case "ERROR":
-                error = validate_positive_float(value, key)
+                error = validate_positive_float(value, key, strictly_positive=True)
             case "ERROR_MIN":
-                error_min = validate_positive_float(value, key)
+                error_min = validate_positive_float(value, key, strictly_positive=True)
             case "ERROR_MODE":
                 error_mode = validate_error_mode(value)
             case _:
@@ -111,9 +111,11 @@ class HistoryObservation(ObservationError):
                 case "type" | "name":
                     pass
                 case "ERROR":
-                    error = validate_positive_float(value, key)
+                    error = validate_positive_float(value, key, strictly_positive=True)
                 case "ERROR_MIN":
-                    error_min = validate_positive_float(value, key)
+                    error_min = validate_positive_float(
+                        value, key, strictly_positive=True
+                    )
                 case "ERROR_MODE":
                     error_mode = validate_error_mode(value)
                 case "segments":
@@ -324,7 +326,9 @@ class LegacySummaryObservation(
                 case "RESTART":
                     date_dict.restart = validate_positive_int(value, key)
                 case "ERROR" | "ERROR_MIN":
-                    float_values[str(key)] = validate_positive_float(value, key)
+                    float_values[str(key)] = validate_positive_float(
+                        value, key, strictly_positive=True
+                    )
                 case "DAYS" | "HOURS":
                     setattr(
                         date_dict, str(key).lower(), validate_positive_float(value, key)
@@ -774,7 +778,7 @@ def _handle_history_observation(
             ConfigWarning.warn(
                 f"Segment {segment.name} does not"
                 " contain any time steps. The interval "
-                f"[{start}, {stop}) does not intersect with steps in the"
+                f"[{start}, {stop}) does not intersect with steps in the "
                 "time map.",
                 segment.name,
             )
@@ -782,7 +786,8 @@ def _handle_history_observation(
     dates_series = pl.Series(refcase.dates).dt.cast_time_unit("ms")
     if (std_dev <= 0).any():
         raise ObservationConfigError.with_context(
-            "Observation uncertainty must be strictly > 0", summary_key
+            "Observation uncertainty must be given a strictly positive value",
+            summary_key,
         ) from None
 
     return pl.DataFrame(
@@ -810,7 +815,5 @@ def _read_time_map(file_contents: str) -> list[datetime]:
             )
             return datetime.strptime(date_str, "%d/%m/%Y")
 
-    dates = []
-    for line in file_contents.splitlines():
-        dates.append(str_to_datetime(line.strip()))
+    dates = [str_to_datetime(line.strip()) for line in file_contents.splitlines()]
     return dates

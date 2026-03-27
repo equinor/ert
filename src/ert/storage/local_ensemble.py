@@ -21,8 +21,13 @@ import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import TypedDict
 
-from ert.config import ParameterCardinality, ParameterConfig, SummaryConfig
-from ert.config.response_config import InvalidResponseFile
+from ert.config import (
+    InvalidResponseFile,
+    ParameterCardinality,
+    ParameterConfig,
+    SummaryConfig,
+)
+from ert.exceptions import StorageError
 from ert.substitutions import substitute_runpath_name
 
 from .load_status import LoadResult
@@ -46,6 +51,16 @@ class EverestRealizationInfo(TypedDict):
 SCALAR_FILENAME = "SCALAR"
 
 
+class BatchDataframes(TypedDict, total=False):
+    batch_objectives: pl.DataFrame | None
+    batch_constraints: pl.DataFrame | None
+    batch_bound_constraint_violations: pl.DataFrame | None
+    batch_input_constraint_violations: pl.DataFrame | None
+    batch_output_constraint_violations: pl.DataFrame | None
+    batch_objective_gradient: pl.DataFrame | None
+    batch_constraint_gradient: pl.DataFrame | None
+
+
 class _Index(BaseModel):
     id: UUID
     experiment_id: UUID
@@ -55,6 +70,7 @@ class _Index(BaseModel):
     prior_ensemble_id: UUID | None
     started_at: datetime
     everest_realization_info: dict[int, EverestRealizationInfo] | None = None
+    is_improvement: bool | None = None
 
 
 class _Failure(BaseModel):
@@ -243,15 +259,6 @@ class LocalEnsemble(BaseMode):
         )
 
     def get_realization_mask_with_responses(self) -> npt.NDArray[np.bool_]:
-        """
-        Get a boolean mask indicating which realizations have responses loaded.
-
-        Returns
-        -------
-        ndarray of bool
-            Boolean array where True means responses are loaded.
-        """
-
         return np.array(
             [
                 RealizationStorageState.RESPONSES_LOADED in state
@@ -286,32 +293,10 @@ class LocalEnsemble(BaseMode):
         }
 
     def has_data(self) -> bool:
-        """
-        Check if the ensemble has any responses.
-
-        Returns
-        -------
-        bool
-            True if the ensemble has at least one realization with responses,
-            False otherwise.
-        """
+        """Returns True if at least one realization has response."""
         return len(self.get_realization_list_with_responses()) > 0
 
     def get_realization_list_with_responses(self) -> list[int]:
-        """
-        list of realization indices with associated responses.
-
-        Parameters
-        ----------
-        key : str, optional
-            Response key to filter realizations. If None, all responses are considered.
-
-        Returns
-        -------
-        realizations : list of int
-            list of realization indices with associated responses.
-        """
-
         mask = self.get_realization_mask_with_responses()
         return np.where(mask)[0].tolist()
 
@@ -321,19 +306,6 @@ class LocalEnsemble(BaseMode):
         failure_type: RealizationStorageState,
         message: str | None = None,
     ) -> None:
-        """
-        Record a failure for a given realization in ensemble.
-
-        Parameters
-        ----------
-        realization : int
-            Index of realization.
-        failure_type : RealizationStorageState
-            Type of failure.
-        message : str, optional
-            Optional message describing the failure.
-        """
-
         filename: Path = self._realization_dir(realization) / self._error_log_name
         error = _Failure(type=failure_type, message=message or "", time=datetime.now())
         if not filename.parent.parent.exists():
@@ -352,40 +324,15 @@ class LocalEnsemble(BaseMode):
         realization: int,
     ) -> None:
         filename: Path = self._realization_dir(realization) / self._error_log_name
-        if filename.exists():
-            filename.unlink()
+        filename.unlink(missing_ok=True)
 
     def has_failure(self, realization: int) -> bool:
-        """
-        Check if given realization has a recorded failure.
-
-        Parameters
-        ----------
-        realization : int
-            Index of realization.
-
-        Returns
-        -------
-        has_failure : bool
-            True if realization has a recorded failure.
-        """
+        """Returns True if the given realization has a recorded failure."""
 
         return (self._realization_dir(realization) / self._error_log_name).exists()
 
     def get_failure(self, realization: int) -> _Failure | None:
-        """
-        Retrieve failure information for a given realization, if any.
-
-        Parameters
-        ----------
-        realization : int
-            Index of realization.
-
-        Returns
-        -------
-        failure : _Failure, optional
-            Failure information if recorded, otherwise None.
-        """
+        """Retrieve failure information for a given realization, if any."""
 
         if self.has_failure(realization):
             return _Failure.model_validate_json(
@@ -403,15 +350,6 @@ class LocalEnsemble(BaseMode):
 
     @lru_cache  # noqa: B019
     def get_ensemble_state(self) -> list[set[RealizationStorageState]]:
-        """
-        Retrieve the state of each realization within ensemble.
-
-        Returns
-        -------
-        states : list of RealizationStorageState
-            list of realization states.
-        """
-
         response_configs = self.experiment.response_configuration
         existing_scalars = self._existing_scalars
 
@@ -569,29 +507,48 @@ class LocalEnsemble(BaseMode):
     ) -> pl.DataFrame:
         if keys is None:
             keys = self.experiment.parameter_keys
-        elif set(keys) - set(self.experiment.parameter_keys):
-            missing = set(keys) - set(self.experiment.parameter_keys)
-            raise KeyError(f"Parameters not registered to the experiment: {missing}")
 
         df_lazy = self._load_parameters_lazy(SCALAR_FILENAME)
-        df_lazy = df_lazy.select(["realization", *keys])
+        names = df_lazy.collect_schema().names()
+        matches = [key for key in keys if any(key in item for item in names)]
+        if len(matches) != len(keys):
+            missing = set(keys) - set(matches)
+            raise KeyError(f"Parameters not registered to the experiment: {missing}")
+
+        parameter_keys = [
+            key
+            for e in keys
+            for key in self.experiment.parameter_configuration[e].parameter_keys
+        ]
+        df_lazy_filtered = df_lazy.select(["realization", *parameter_keys])
+
         if realizations is not None:
             if isinstance(realizations, int):
                 realizations = np.array([realizations])
-            df_lazy = df_lazy.filter(pl.col("realization").is_in(realizations))
-        df = df_lazy.collect(engine="streaming")
+            df_lazy_filtered = df_lazy_filtered.filter(
+                pl.col("realization").is_in(realizations)
+            )
+        df = df_lazy_filtered.collect(engine="streaming")
         if df.is_empty():
             raise IndexError(
                 f"No matching realizations {realizations} found for {keys}"
             )
 
         if transformed:
+            tmp_configuration: dict[str, ParameterConfig] = {}
+            for key in keys:
+                for col in df.columns:
+                    if col == "realization":
+                        continue
+                    if col == key:
+                        tmp_configuration[col] = (
+                            self.experiment.parameter_configuration[key]
+                        )
+
             df = df.with_columns(
                 [
                     pl.col(col)
-                    .map_elements(
-                        self.experiment.parameter_configuration[col].transform_data(),
-                    )
+                    .map_batches(tmp_configuration[col].transform_series)
                     .cast(df[col].dtype)
                     .alias(col)
                     for col in df.columns
@@ -617,13 +574,11 @@ class LocalEnsemble(BaseMode):
             for p in self.experiment.parameter_configuration.values()
             if group in {p.name, p.group_name}
         ]
-
         if not cfgs:
             raise KeyError(f"{group} is not registered to the experiment.")
 
         # if group refers to a group name, we expect the same cardinality
         cardinality = next(cfg.cardinality for cfg in cfgs)
-
         if cardinality == ParameterCardinality.multiple_configs_per_ensemble_dataset:
             return self.load_scalar_keys(
                 [cfg.name for cfg in cfgs], realizations, transformed
@@ -639,7 +594,7 @@ class LocalEnsemble(BaseMode):
 
     def load_parameters_numpy(
         self, group: str, realizations: npt.NDArray[np.int_]
-    ) -> npt.NDArray[np.float64]:
+    ) -> npt.NDArray[np.floating]:
         if group in self.experiment.parameter_configuration:
             config = self.experiment.parameter_configuration[group]
             return config.load_parameters(self, realizations)
@@ -661,7 +616,7 @@ class LocalEnsemble(BaseMode):
 
     def save_parameters_numpy(
         self,
-        parameters: npt.NDArray[np.float64],
+        parameters: npt.NDArray[np.floating],
         param_group: str,
         iens_active_index: npt.NDArray[np.int_],
     ) -> None:
@@ -696,7 +651,6 @@ class LocalEnsemble(BaseMode):
     def load_scalars(
         self, group: str | None = None, realizations: npt.NDArray[np.int_] | None = None
     ) -> pl.DataFrame:
-        dataframes = []
         gen_kws = [
             p
             for p in self.experiment.parameter_configuration.values()
@@ -705,22 +659,16 @@ class LocalEnsemble(BaseMode):
             and (group is None or p.group_name == group)
         ]
 
-        for config in gen_kws:
-            df = self.load_parameters(config.name, realizations, transformed=True)
-            assert isinstance(df, pl.DataFrame)
-            df = df.rename(
-                {
-                    col: f"{config.group_name}:{col}"
-                    for col in df.columns
-                    if col != "realization"
-                }
-            )
-            dataframes.append(df)
-
-        if not dataframes:
+        if not gen_kws:
             return pl.DataFrame()
 
-        return pl.concat(dataframes, how="align")
+        df = self.load_scalar_keys(
+            [config.name for config in gen_kws], realizations, transformed=True
+        )
+        df = df.rename(
+            {config.name: f"{config.group_name}:{config.name}" for config in gen_kws}
+        )
+        return df
 
     @require_write
     def save_observation_scaling_factors(self, dataset: pl.DataFrame) -> None:
@@ -756,66 +704,46 @@ class LocalEnsemble(BaseMode):
 
         return parameters.with_columns(realizations_series)
 
-    def load_responses(self, key: str, realizations: tuple[int, ...]) -> pl.DataFrame:
-        """Load responses for key and realizations into xarray Dataset.
+    def load_responses(
+        self, response_key: str, realizations: tuple[int, ...]
+    ) -> pl.DataFrame:
+        """Load responses for requested key and realizations.
 
-        For each given realization, response data is loaded from the NetCDF
-        file whose filename matches the given key parameter.
-
-        Parameters
-        ----------
-        key : str
-            Response key to load.
-        realizations : tuple of int
-            Realization indices to load.
-
-        Returns
-        -------
-        responses : DataFrame
-            Loaded polars DataFrame with responses.
+        For each given realization, response data is loaded from a parquet file that
+        matches the given response key.
         """
 
-        return self._load_responses_lazy(key, realizations).collect(engine="streaming")
+        return self._load_responses_lazy(response_key, realizations).collect(
+            engine="streaming"
+        )
 
     def _load_responses_lazy(
-        self, key: str, realizations: tuple[int, ...]
+        self, response_key: str, realizations: tuple[int, ...]
     ) -> pl.LazyFrame:
-        """Load responses for key and realizations into xarray Dataset.
-
-        For each given realization, response data is loaded from the NetCDF
-        file whose filename matches the given key parameter.
-
-        Parameters
-        ----------
-        key : str
-            Response key to load.
-        realizations : tuple of int
-            Realization indices to load.
-
-        Returns
-        -------
-        responses : DataFrame
-            Loaded polars DataFrame with responses.
-        """
-
         select_key = False
-        if key in self.experiment.response_configuration:
-            response_type = key
-        elif key not in self.experiment.response_key_to_response_type:
-            raise ValueError(f"{key} is not a response")
+        if (
+            response_key
+            in self.experiment.response_configuration
+            | self.experiment.derived_response_configuration
+        ):
+            response_type = response_key
+        elif response_key not in self.experiment.response_key_to_response_type:
+            raise ValueError(f"{response_key} is not a response")
         else:
-            response_type = self.experiment.response_key_to_response_type[key]
+            response_type = self.experiment.response_key_to_response_type[response_key]
             select_key = True
 
         loaded = []
         for realization in realizations:
             input_path = self._realization_dir(realization) / f"{response_type}.parquet"
             if not input_path.exists():
-                raise KeyError(f"No response for key {key}, realization: {realization}")
+                raise KeyError(
+                    f"No response for key {response_key}, realization: {realization}"
+                )
             df = pl.scan_parquet(input_path)
 
             if select_key:
-                df = df.filter(pl.col("response_key") == key)
+                df = df.filter(pl.col("response_key") == response_key)
 
             loaded.append(df)
 
@@ -952,7 +880,7 @@ class LocalEnsemble(BaseMode):
 
     def calculate_std_dev_for_parameter_group(
         self, parameter_group: str
-    ) -> npt.NDArray[np.float64]:
+    ) -> npt.NDArray[np.floating]:
         data = self.load_parameters(parameter_group)
         if isinstance(data, pl.DataFrame):
             return data.drop("realization").std().to_numpy().reshape(-1)
@@ -993,11 +921,17 @@ class LocalEnsemble(BaseMode):
         iens_active_index: npt.NDArray[np.int_],
     ) -> pl.DataFrame:
         """Fetches and aligns selected observations with their
-        corresponding simulated responses from an ensemble."""
+        corresponding simulated responses from an ensemble.
+
+        The returned DataFrame includes an "index" column containing a
+        comma-separated string of the response type's primary key values:
+        - Summary: "2024-01-15 00:00:00" (time)
+        - GenData: "0, 42" (report_step, index)
+        - RFT: "123.5, 456.7, 2500.0, ZONE_A" (east, north, tvd, zone)
+        """
         known_observations = self.experiment.observation_keys
-        unknown_observations = [
-            obs for obs in selected_observations if obs not in known_observations
-        ]
+
+        unknown_observations = set(selected_observations) - set(known_observations)
 
         if unknown_observations:
             raise KeyError(
@@ -1011,7 +945,10 @@ class LocalEnsemble(BaseMode):
             for (
                 response_type,
                 response_cls,
-            ) in self.experiment.response_configuration.items():
+            ) in (
+                self.experiment.response_configuration
+                | self.experiment.derived_response_configuration
+            ).items():
                 if response_type not in observations_by_type:
                     continue
 
@@ -1020,13 +957,7 @@ class LocalEnsemble(BaseMode):
                     .filter(
                         pl.col("observation_key").is_in(list(selected_observations))
                     )
-                    .with_columns(
-                        [
-                            pl.col("response_key")
-                            .cast(pl.Categorical)
-                            .alias("response_key")
-                        ]
-                    )
+                    .with_columns([pl.col("response_key").cast(pl.Categorical)])
                 )
 
                 observed_cols = {
@@ -1034,27 +965,23 @@ class LocalEnsemble(BaseMode):
                     for k in ["response_key", *response_cls.primary_key]
                 }
 
-                reals = iens_active_index.tolist()
-                reals.sort()
-                # too much memory to do it all at once, go per realization
+                reals = np.sort(iens_active_index).tolist()
+
+                # Load and join one realization at a time to reduce peak memory usage
                 first_columns: pl.DataFrame | None = None
                 realization_columns: list[pl.DataFrame] = []
                 for real in reals:
                     responses = self._load_responses_lazy(
                         response_type, (real,)
-                    ).with_columns(
-                        [
-                            pl.col("response_key")
-                            .cast(pl.Categorical)
-                            .alias("response_key")
-                        ]
-                    )
+                    ).with_columns([pl.col("response_key").cast(pl.Categorical)])
 
                     # Filter out responses without observations
                     for col, observed_values in observed_cols.items():
                         if col != "time":
                             responses = responses.filter(
-                                pl.col(col).is_in(observed_values.implode())
+                                pl.col(col).is_in(
+                                    observed_values.implode(), nulls_equal=True
+                                )
                             )
 
                     pivoted = responses.collect(engine="streaming").pivot(
@@ -1097,8 +1024,14 @@ class LocalEnsemble(BaseMode):
                             pivoted,
                             how="left",
                             on=["response_key", *response_cls.primary_key],
+                            nulls_equal=True,
                         )
 
+                    # Do not drop primary keys which
+                    # overlap with localization attributes
+                    primary_keys_to_drop = set(response_cls.primary_key).difference(
+                        {"north", "east", "radius"}
+                    )
                     joined = (
                         joined.with_columns(
                             pl.concat_str(
@@ -1108,7 +1041,7 @@ class LocalEnsemble(BaseMode):
                                 # Avoid potential collisions w/ primary key
                             )
                         )
-                        .drop(response_cls.primary_key)
+                        .drop(primary_keys_to_drop)
                         .rename({"__tmp_index_key__": "index"})
                     )
 
@@ -1124,6 +1057,9 @@ class LocalEnsemble(BaseMode):
                                 "observation_key",
                                 "observations",
                                 "std",
+                                "east",
+                                "north",
+                                "radius",
                             ]
                         )
 
@@ -1142,6 +1078,149 @@ class LocalEnsemble(BaseMode):
             return pl.concat(dfs_per_response_type, how="vertical").with_columns(
                 pl.col("response_key").cast(pl.String).alias("response_key")
             )
+
+    def get_rft_observations_and_responses(
+        self,
+    ) -> pl.DataFrame:
+        """Fetches and aligns RFT observations with their corresponding
+        simulated responses from an ensemble.
+
+        Returns a DataFrame with observation/response data using
+        column names equal to the ones used by the subscript forward model
+        MERGE_RFT_ERTOBS, and compatible with the webviz-subsurface RftPlotter.
+        """
+        rft_observations = self.experiment.observations.get("rft")
+        if rft_observations is None or rft_observations.is_empty():
+            raise StorageError("No RFT observations found in experiment")
+
+        if "rft" not in self.experiment.response_configuration:
+            raise KeyError("No RFT response configuration found in experiment")
+
+        realizations = self.get_realization_list_with_responses()
+        if not realizations:
+            raise StorageError("No realizations with responses found")
+
+        # Build date-to-report_step mapping from summary responses if available
+        date_to_report_step: dict[str, int] = {}
+        if "summary" in self.experiment.response_configuration:
+            try:
+                summary_df = self.load_responses("summary", (realizations[0],))
+                times = summary_df["time"].unique().sort()
+                for report_step, time in enumerate(times):
+                    date_str = time.strftime("%Y-%m-%d")
+                    date_to_report_step[date_str] = report_step
+            except (KeyError, IndexError):
+                pass  # No summary data available, will use default
+
+        observations = rft_observations.with_columns(
+            pl.int_range(pl.len()).over("well").alias("order"),
+        )
+
+        join_keys = ["well", "date", "east", "north", "tvd"]
+        observed_values = {k: observations[k].unique() for k in join_keys}
+
+        pivot_index = [
+            "well",
+            "date",
+            "realization",
+            "response_zone",
+            "east",
+            "north",
+            "tvd",
+            "i",
+            "j",
+            "k",
+        ]
+
+        output_columns = [
+            "order",
+            "east",
+            "north",
+            "md",
+            "tvd",
+            "zone",
+            "pressure",
+            "swat",
+            "sgas",
+            "soil",
+            "valid_zone",
+            "is_active",
+            "i",
+            "j",
+            "k",
+            "well",
+            "date",
+            "realization",
+            "report_step",
+            "observations",
+            "std",
+        ]
+
+        result_frames: list[pl.DataFrame] = []
+
+        for real in sorted(realizations):
+            responses = (
+                self.load_responses("rft", (real,))
+                .with_columns(
+                    pl.col("property").str.to_lowercase(),
+                )
+                .rename({"zone": "response_zone"})
+            )
+
+            for col, values in observed_values.items():
+                responses = responses.filter(
+                    pl.col(col).is_in(values.implode(), nulls_equal=True)
+                )
+
+            pivoted = responses.pivot(
+                on="property",
+                index=pivot_index,
+                values="values",
+            )
+
+            for col in ["pressure", "sgas", "swat"]:
+                if col not in pivoted.columns:
+                    pivoted = pivoted.with_columns(
+                        pl.lit(None).cast(pl.Float32).alias(col)
+                    )
+
+            pivoted = pivoted.with_columns(
+                pl.col("pressure").is_not_null().alias("is_active")
+            )
+
+            joined = (
+                observations.join(
+                    pivoted,
+                    how="left",
+                    on=join_keys,
+                    nulls_equal=True,
+                )
+                .with_columns(
+                    pl.col("zone")
+                    .eq_missing(pl.col("response_zone"))
+                    .alias("valid_zone"),
+                    (1 - pl.col("sgas") - pl.col("swat")).alias("soil"),
+                    pl.col("is_active").fill_null(False),
+                    pl.col("date")
+                    .replace_strict(date_to_report_step, default=0)
+                    .alias("report_step"),
+                )
+                .select(output_columns)
+            )
+
+            result_frames.append(joined)
+
+        return pl.concat(result_frames, how="vertical").rename(
+            {
+                "east": "utm_x",
+                "north": "utm_y",
+                "md": "measured_depth",
+                "tvd": "true_vertical_depth",
+                "date": "time",
+                "observations": "observed",
+                "std": "error",
+            }
+        )
 
     @property
     def everest_realization_info(self) -> dict[int, EverestRealizationInfo] | None:
@@ -1180,6 +1259,328 @@ class LocalEnsemble(BaseMode):
         self._index.everest_realization_info = realization_info
         self._storage._write_transaction(
             self._path / "index.json", self._index.model_dump_json().encode("utf-8")
+        )
+
+    def save_batch_dataframes(self, dataframes: BatchDataframes) -> None:
+        for df_name, df in dataframes.items():
+            if isinstance(df, pl.DataFrame):
+                df.write_parquet(self._path / f"{df_name}.parquet")
+
+    @property
+    def has_function_results(self) -> bool:
+        return (self._path / "batch_objectives.parquet").exists()
+
+    @property
+    def has_gradient_results(self) -> bool:
+        if self._index.everest_realization_info is None:
+            return False
+
+        return any(
+            info["perturbation"] != -1 for _, info in self.simulations_with_responses
+        )
+
+    @staticmethod
+    def _read_df_if_exists(path: Path) -> pl.DataFrame | None:
+        if path.exists():
+            return pl.read_parquet(path)
+        return None
+
+    @property
+    def realization_controls(self) -> pl.DataFrame | None:
+        simulations = [
+            (ert_realization, info["model_realization"])
+            for ert_realization, info in self.simulations
+            if info["perturbation"] == -1
+        ]
+
+        if not simulations:
+            return None
+
+        dfs: list[pl.DataFrame] = []
+        for param_group in self.experiment.parameter_configuration:
+            data = self.load_parameters(
+                param_group,
+                realizations=np.array(
+                    [ert_realization for ert_realization, _ in simulations]
+                ),
+            )
+            assert isinstance(data, pl.DataFrame)
+            dfs.append(data)
+
+        if not dfs:
+            return None
+
+        result = dfs[0]
+        for df in dfs[1:]:
+            result = result.join(df, on="realization", how="left")
+
+        header_columns = ["batch_id", "realization", "simulation_id"]
+        return (
+            result.rename({"realization": "simulation_id"})
+            .join(
+                pl.DataFrame(
+                    list(zip(*simulations, strict=True)),
+                    schema=["simulation_id", "realization"],
+                ),
+                on="simulation_id",
+            )
+            .with_columns(pl.lit(self.iteration, dtype=pl.UInt32).alias("batch_id"))
+            .select(
+                pl.col(header_columns),
+                pl.exclude(header_columns),
+            )
+        )
+
+    @property
+    def perturbation_controls(self) -> pl.DataFrame | None:
+        simulations = [
+            (ert_realization, info["model_realization"], info["perturbation"])
+            for ert_realization, info in self.simulations
+            if info["perturbation"] != -1
+        ]
+
+        if not simulations:
+            return None
+
+        dfs: list[pl.DataFrame] = []
+        for param_group in self.experiment.parameter_configuration:
+            data = self.load_parameters(
+                param_group,
+                realizations=np.array(
+                    [ert_realization for ert_realization, _, _ in simulations]
+                ),
+            )
+            assert isinstance(data, pl.DataFrame)
+            dfs.append(data)
+
+        if not dfs:
+            return None
+
+        result = dfs[0]
+        for df in dfs[1:]:
+            result = result.join(df, on="realization", how="left")
+
+        header_columns = ["batch_id", "realization", "simulation_id", "perturbation"]
+        return (
+            result.rename({"realization": "simulation_id"})
+            .join(
+                pl.DataFrame(
+                    list(zip(*simulations, strict=True)),
+                    schema=["simulation_id", "realization", "perturbation"],
+                ),
+                on="simulation_id",
+            )
+            .with_columns(pl.lit(self.iteration, dtype=pl.UInt32).alias("batch_id"))
+            .select(
+                pl.col(header_columns),
+                pl.exclude(header_columns),
+            )
+        )
+
+    @property
+    def batch_objectives(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(self._path / "batch_objectives.parquet")
+
+    @property
+    def realization_objectives(self) -> pl.DataFrame | None:
+        simulations = [
+            (ert_realization, info["model_realization"])
+            for ert_realization, info in self.simulations_with_responses
+            if info["perturbation"] == -1
+        ]
+
+        if not simulations:
+            return None
+
+        header_columns = ["batch_id", "realization", "simulation_id"]
+        return (
+            self.load_responses(
+                "everest_objectives",
+                tuple(sorted([ert_realization for ert_realization, _ in simulations])),
+            )
+            .pivot(on="response_key", values="values")
+            .rename({"realization": "simulation_id"})
+            .join(
+                pl.DataFrame(
+                    list(zip(*simulations, strict=True)),
+                    schema=["simulation_id", "realization"],
+                ),
+                on="simulation_id",
+            )
+            .with_columns(pl.lit(self.iteration, dtype=pl.UInt32).alias("batch_id"))
+            .select(
+                pl.col(header_columns),
+                pl.exclude(header_columns),
+            )
+        )
+
+    @property
+    def batch_constraints(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(self._path / "batch_constraints.parquet")
+
+    @property
+    def realization_constraints(self) -> pl.DataFrame | None:
+        simulations = [
+            (ert_realization, info["model_realization"])
+            for ert_realization, info in self.simulations_with_responses
+            if info["perturbation"] == -1
+        ]
+
+        if (
+            not simulations
+            or "everest_constraints" not in self.experiment.response_configuration
+        ):
+            return None
+
+        header_columns = ["batch_id", "realization", "simulation_id"]
+        return (
+            self.load_responses(
+                "everest_constraints",
+                tuple(sorted([ert_realization for ert_realization, _ in simulations])),
+            )
+            .pivot(on="response_key", values="values")
+            .rename({"realization": "simulation_id"})
+            .join(
+                pl.DataFrame(
+                    list(zip(*simulations, strict=True)),
+                    schema=["simulation_id", "realization"],
+                ),
+                on="simulation_id",
+            )
+            .with_columns(pl.lit(self.iteration, dtype=pl.UInt32).alias("batch_id"))
+            .select(
+                pl.col(header_columns),
+                pl.exclude(header_columns),
+            )
+        )
+
+    @property
+    def batch_bound_constraint_violations(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(
+            self._path / "batch_bound_constraint_violations.parquet"
+        )
+
+    @property
+    def batch_input_constraint_violations(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(
+            self._path / "batch_input_constraint_violations.parquet"
+        )
+
+    @property
+    def batch_output_constraint_violations(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(
+            self._path / "batch_output_constraint_violations.parquet"
+        )
+
+    @property
+    def batch_objective_gradient(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(self._path / "batch_objective_gradient.parquet")
+
+    @property
+    def simulations(self) -> list[tuple[int, EverestRealizationInfo]]:
+        everest_realization_info = self._index.everest_realization_info
+        assert everest_realization_info is not None
+
+        return [
+            (ert_realization, info)
+            for ert_realization, info in everest_realization_info.items()
+        ]
+
+    @property
+    def simulations_with_responses(self) -> list[tuple[int, EverestRealizationInfo]]:
+        realizations_with_responses = self.get_realization_list_with_responses()
+        return [
+            (sim_id, info)
+            for sim_id, info in self.simulations
+            if sim_id in realizations_with_responses
+        ]
+
+    @property
+    def perturbation_objectives(self) -> pl.DataFrame | None:
+        simulations = [
+            (ert_realization, info["model_realization"], info["perturbation"])
+            for ert_realization, info in self.simulations_with_responses
+            if info["perturbation"] != -1
+        ]
+
+        if not simulations:
+            return None
+
+        header_columns = ["batch_id", "realization", "simulation_id", "perturbation"]
+        return (
+            self.load_responses(
+                "everest_objectives",
+                tuple(
+                    sorted([ert_realization for ert_realization, _, _ in simulations])
+                ),
+            )
+            .pivot(on="response_key", values="values")
+            .rename({"realization": "simulation_id"})
+            .join(
+                pl.DataFrame(
+                    list(zip(*simulations, strict=True)),
+                    schema=["simulation_id", "realization", "perturbation"],
+                ),
+                on="simulation_id",
+            )
+            .with_columns(pl.lit(self.iteration, dtype=pl.UInt32).alias("batch_id"))
+            .select(
+                pl.col(header_columns),
+                pl.exclude(header_columns),
+            )
+        )
+
+    @property
+    def batch_constraint_gradient(self) -> pl.DataFrame | None:
+        return self._read_df_if_exists(self._path / "batch_constraint_gradient.parquet")
+
+    @property
+    def perturbation_constraints(self) -> pl.DataFrame | None:
+        simulations = [
+            (ert_realization, info["model_realization"], info["perturbation"])
+            for ert_realization, info in self.simulations_with_responses
+            if info["perturbation"] != -1
+        ]
+
+        if (
+            not simulations
+            or "everest_constraints" not in self.experiment.response_configuration
+        ):
+            return None
+
+        header_columns = ["batch_id", "realization", "simulation_id", "perturbation"]
+        return (
+            self.load_responses(
+                "everest_constraints",
+                tuple(
+                    sorted([ert_realization for ert_realization, _, _ in simulations])
+                ),
+            )
+            .pivot(on="response_key", values="values")
+            .rename({"realization": "simulation_id"})
+            .join(
+                pl.DataFrame(
+                    list(zip(*simulations, strict=True)),
+                    schema=["simulation_id", "realization", "perturbation"],
+                ),
+                on="simulation_id",
+            )
+            .with_columns(pl.lit(self.iteration, dtype=pl.UInt32).alias("batch_id"))
+            .select(
+                pl.col(header_columns),
+                pl.exclude(header_columns),
+            )
+        )
+
+    @property
+    def is_improvement(self) -> bool:
+        return bool(self._index.is_improvement)
+
+    def update_improvement_flag(self, is_improvement: bool) -> None:
+        self._index.is_improvement = is_improvement
+        self._storage._write_transaction(
+            self._path / "index.json",
+            self._index.model_dump_json(indent=2).encode("utf-8"),
         )
 
 
@@ -1300,6 +1701,10 @@ async def _write_responses_to_storage(
                 exc_info=err,
             )
             continue
+
+    for config_ in ensemble.experiment.derived_response_configuration.values():
+        ds = config_.derive_from_storage(ensemble.iteration, realization, ensemble)
+        ensemble.save_response(config_.type, ds, realization)
 
     if errors:
         return LoadResult.failure("\n".join(errors))

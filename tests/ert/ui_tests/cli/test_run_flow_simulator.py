@@ -40,6 +40,7 @@ def test_numcpu_maps_to_mpi_processes_with_flow(num_cpu):
 
 
 @pytest.mark.usefixtures("eightcells")
+@pytest.mark.xfail(reason="flowrc43 does not any longer respect the --threads option")
 @pytest.mark.skipif(not shutil.which("flowrun"), reason="flowrun not available")
 def test_user_can_specify_threads_and_oversubscribe_compute_node():
     Path("flow.ert").write_text(
@@ -61,6 +62,7 @@ def test_user_can_specify_threads_and_oversubscribe_compute_node():
 
 
 @pytest.mark.usefixtures("eightcells")
+@pytest.mark.xfail(reason="flowrc43 does not any longer respect the --threads option")
 @pytest.mark.skipif(not shutil.which("flowrun"), reason="flowrun not available")
 def test_user_can_specify_threads_and_mpi_processes_and_oversubscribe_compute_node():
     Path("flow.ert").write_text(

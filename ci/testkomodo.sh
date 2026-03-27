@@ -13,7 +13,7 @@ copy_test_files() {
 }
 
 install_test_dependencies() {
-    pip install ".[dev]"
+    pip install --group dev
 }
 
 run_ert_with_opm() {
@@ -36,9 +36,6 @@ run_ert_with_opm() {
     popd || exit 1
     return "$STATUS"
 }
-
-
-
 
 # Run everest eightcells test on the cluster
 run_everest_eightcells_test() {
@@ -65,8 +62,6 @@ run_everest_eightcells_test() {
     echo "EIGHTCELLS_RUNPATH: $EIGHTCELLS_RUNPATH"
 
     disable_komodo
-    # shellcheck source=/dev/null
-    source "${_KOMODO_ROOT}/${_FULL_RELEASE_NAME}/enable"
 
     CONFIG="everest/model/config.yml"
     if [[ "$CI_RUNNER_LABEL" == "azure" ]]; then
@@ -77,22 +72,22 @@ run_everest_eightcells_test() {
         export PATH=$PATH:/global/bin
     fi
 
+    # shellcheck source=/dev/null
+    source "${_KOMODO_ROOT}/${_FULL_RELEASE_NAME}/enable"
+
     everest run "$CONFIG" --skip-prompt --debug --disable-monitoring
     STATUS=$?
-    popd || exit 1
-
     if [ $STATUS -ne 0 ]; then
         echo "EVEREST eightcells test failed. Running everest kill"
         everest kill "$CONFIG"
     fi
+    popd || exit 1
 
     # Clean up the temp folder removing folders older than 7 days
     find "$RUNNER_ROOT" -maxdepth 1 -mtime +7 -user f_scout_ci -type d -exec rm -r {} \;
 
     return $STATUS
 }
-
-
 
 start_tests() {
     export NO_PROXY=localhost,127.0.0.1

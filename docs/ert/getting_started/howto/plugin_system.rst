@@ -254,3 +254,20 @@ Minimal example to log to a new file:
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         fh.setFormatter(formatter)
         return fh
+
+
+IP address configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~
+The way Ert chooses IP addresses for communicating with cluster jobs can be configured by plugins.
+
+.. autofunction:: ert.plugins.hook_specifications.net_utils.get_ip_address
+
+Minimal example to override how Ert chooses the IP address:
+
+.. code-block:: python
+
+   import ert
+
+    @ert.plugin(name="my_plugin")
+    def get_ip_address():
+        return "127.0.0.1"

@@ -7,7 +7,7 @@ import xarray as xr
 import xtgeo
 from scipy.ndimage import gaussian_filter
 
-from ert.analysis import smoother_update
+from ert.analysis import build_strategy_map, smoother_update
 from ert.config import ESSettings, Field, GenDataConfig, ObservationSettings
 from ert.field_utils import Shape
 
@@ -19,10 +19,10 @@ def test_and_benchmark_adaptive_localization_with_fields(
 
     rng = np.random.default_rng(42)
 
-    num_grid_cells = 500
+    num_grid_cells = 250
     num_parameters = num_grid_cells * num_grid_cells
-    num_observations = 50
-    num_ensemble = 25
+    num_observations = 10
+    num_ensemble = 20
 
     # Create a tridiagonal matrix that maps responses to parameters.
     # Being tridiagonal, it ensures that each response is influenced
@@ -74,17 +74,19 @@ def test_and_benchmark_adaptive_localization_with_fields(
     grid = xtgeo.create_box_grid(dimension=(shape.nx, shape.ny, shape.nz))
     grid.to_file("MY_EGRID.EGRID", "egrid")
 
-    resp = GenDataConfig(keys=["RESPONSE"])
-    obs = pl.DataFrame(
+    response_config = GenDataConfig(keys=["RESPONSE"])
+    obs = [
         {
-            "response_key": "RESPONSE",
-            "observation_key": "OBSERVATION",
-            "report_step": 0,
-            "index": np.arange(len(observations)),
-            "observations": observations,
-            "std": observation_noise,
+            "type": "general_observation",
+            "name": "OBSERVATION",
+            "data": "RESPONSE",
+            "restart": 0,
+            "index": i,
+            "value": float(observations[i]),
+            "error": abs(observation_noise[i]),
         }
-    )
+        for i in range(len(observations))
+    ]
 
     param_group = "PARAM_FIELD"
 
@@ -102,9 +104,11 @@ def test_and_benchmark_adaptive_localization_with_fields(
     )
 
     experiment = storage.create_experiment(
-        parameters=[config],
-        responses=[resp],
-        observations={"gen_data": obs},
+        experiment_config={
+            "parameter_configuration": [config.model_dump(mode="json")],
+            "response_configuration": [response_config.model_dump(mode="json")],
+            "observations": obs,
+        }
     )
 
     prior_ensemble = storage.create_ensemble(
@@ -149,14 +153,22 @@ def test_and_benchmark_adaptive_localization_with_fields(
         prior_ensemble=prior_ensemble,
     )
 
+    es_settings = ESSettings(localization=True)
+    strategy_map = build_strategy_map(
+        parameters=[param_group],
+        param_configs=prior_ensemble.experiment.parameter_configuration,
+        inversion=es_settings.inversion,
+        enkf_truncation=es_settings.enkf_truncation,
+        localization=es_settings.localization,
+        correlation_threshold=es_settings.correlation_threshold,
+    )
     smoother_update_run = partial(
         smoother_update,
         prior_ensemble,
         posterior_ensemble,
         ["OBSERVATION"],
-        [param_group],
         ObservationSettings(),
-        ESSettings(localization=True),
+        strategy_map,
     )
     benchmark(smoother_update_run)
 

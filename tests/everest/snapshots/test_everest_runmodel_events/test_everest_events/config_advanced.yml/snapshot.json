@@ -17,6 +17,7 @@
       "result_type": "FunctionResult",
       "results": {
         "controls": {
+          "batch_id": 0,
           "point.x.0": 0.25,
           "point.x.1": 0.25,
           "point.x.2": 0.25
@@ -24,6 +25,18 @@
         "objectives": {
           "distance": -1.6875
         },
+        "realization_constraints": [
+          {
+            "realization": 0,
+            "simulation_id": 0,
+            "x-0_coord": 0.25
+          },
+          {
+            "realization": 2,
+            "simulation_id": 1,
+            "x-0_coord": 0.25
+          }
+        ],
         "realization_objectives": [
           {
             "distance": -6.1875,
@@ -79,82 +92,62 @@
         "perturbation_constraints": [
           {
             "perturbation": 0,
-            "point.x.0": 0.253828,
-            "point.x.1": 0.247517,
-            "point.x.2": 0.239746,
             "realization": 0,
+            "simulation_id": 2,
             "x-0_coord": 0.253828
           },
           {
             "perturbation": 1,
-            "point.x.0": 0.249969,
-            "point.x.1": 0.252633,
-            "point.x.2": 0.247436,
             "realization": 0,
+            "simulation_id": 3,
             "x-0_coord": 0.249969
           },
           {
             "perturbation": 2,
-            "point.x.0": 0.248531,
-            "point.x.1": 0.246518,
-            "point.x.2": 0.252336,
             "realization": 0,
+            "simulation_id": 4,
             "x-0_coord": 0.248531
           },
           {
             "perturbation": 3,
-            "point.x.0": 0.244271,
-            "point.x.1": 0.257228,
-            "point.x.2": 0.252833,
             "realization": 0,
+            "simulation_id": 5,
             "x-0_coord": 0.244271
           },
           {
             "perturbation": 4,
-            "point.x.0": 0.250644,
-            "point.x.1": 0.249406,
-            "point.x.2": 0.258399,
             "realization": 0,
+            "simulation_id": 6,
             "x-0_coord": 0.250644
           },
           {
             "perturbation": 0,
-            "point.x.0": 0.252331,
-            "point.x.1": 0.246925,
-            "point.x.2": 0.25071,
             "realization": 2,
+            "simulation_id": 7,
             "x-0_coord": 0.252331
           },
           {
             "perturbation": 1,
-            "point.x.0": 0.253385,
-            "point.x.1": 0.245517,
-            "point.x.2": 0.254311,
             "realization": 2,
+            "simulation_id": 8,
             "x-0_coord": 0.253385
           },
           {
             "perturbation": 2,
-            "point.x.0": 0.248917,
-            "point.x.1": 0.251705,
-            "point.x.2": 0.250752,
             "realization": 2,
+            "simulation_id": 9,
             "x-0_coord": 0.248917
           },
           {
             "perturbation": 3,
-            "point.x.0": 0.241123,
-            "point.x.1": 0.24738,
-            "point.x.2": 0.253258,
             "realization": 2,
+            "simulation_id": 10,
             "x-0_coord": 0.241123
           },
           {
             "perturbation": 4,
-            "point.x.0": 0.240045,
-            "point.x.1": 0.243321,
-            "point.x.2": 0.252575,
             "realization": 2,
+            "simulation_id": 11,
             "x-0_coord": 0.240045
           }
         ],
@@ -162,82 +155,62 @@
           {
             "distance": -6.19746,
             "perturbation": 0,
-            "point.x.0": 0.253828,
-            "point.x.1": 0.247517,
-            "point.x.2": 0.239746,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 2
           },
           {
             "distance": -6.1979,
             "perturbation": 1,
-            "point.x.0": 0.249969,
-            "point.x.1": 0.252633,
-            "point.x.2": 0.247436,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 3
           },
           {
             "distance": -6.16902,
             "perturbation": 2,
-            "point.x.0": 0.248531,
-            "point.x.1": 0.246518,
-            "point.x.2": 0.252336,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 4
           },
           {
             "distance": -6.19142,
             "perturbation": 3,
-            "point.x.0": 0.244271,
-            "point.x.1": 0.257228,
-            "point.x.2": 0.252833,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 5
           },
           {
             "distance": -6.18355,
             "perturbation": 4,
-            "point.x.0": 0.250644,
-            "point.x.1": 0.249406,
-            "point.x.2": 0.258399,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 6
           },
           {
             "distance": -0.187533,
             "perturbation": 0,
-            "point.x.0": 0.252331,
-            "point.x.1": 0.246925,
-            "point.x.2": 0.25071,
-            "realization": 2
+            "realization": 2,
+            "simulation_id": 7
           },
           {
             "distance": -0.185943,
             "perturbation": 1,
-            "point.x.0": 0.253385,
-            "point.x.1": 0.245517,
-            "point.x.2": 0.254311,
-            "realization": 2
+            "realization": 2,
+            "simulation_id": 8
           },
           {
             "distance": -0.186818,
             "perturbation": 2,
-            "point.x.0": 0.248917,
-            "point.x.1": 0.251705,
-            "point.x.2": 0.250752,
-            "realization": 2
+            "realization": 2,
+            "simulation_id": 9
           },
           {
             "distance": -0.191715,
             "perturbation": 3,
-            "point.x.0": 0.241123,
-            "point.x.1": 0.24738,
-            "point.x.2": 0.253258,
-            "realization": 2
+            "realization": 2,
+            "simulation_id": 10
           },
           {
             "distance": -0.19468,
             "perturbation": 4,
-            "point.x.0": 0.240045,
-            "point.x.1": 0.243321,
-            "point.x.2": 0.252575,
-            "realization": 2
+            "realization": 2,
+            "simulation_id": 11
           }
         ]
       }
@@ -259,6 +232,7 @@
       "result_type": "FunctionResult",
       "results": {
         "controls": {
+          "batch_id": 1,
           "point.x.0": 0.258899,
           "point.x.1": 0.138638,
           "point.x.2": 0.172665
@@ -266,6 +240,18 @@
         "objectives": {
           "distance": -1.693398
         },
+        "realization_constraints": [
+          {
+            "realization": 0,
+            "simulation_id": 0,
+            "x-0_coord": 0.258899
+          },
+          {
+            "realization": 2,
+            "simulation_id": 1,
+            "x-0_coord": 0.258899
+          }
+        ],
         "realization_objectives": [
           {
             "distance": -5.88601,
@@ -321,82 +307,62 @@
         "perturbation_constraints": [
           {
             "perturbation": 0,
-            "point.x.0": 0.256877,
-            "point.x.1": 0.138791,
-            "point.x.2": 0.165397,
             "realization": 0,
+            "simulation_id": 2,
             "x-0_coord": 0.256877
           },
           {
             "perturbation": 1,
-            "point.x.0": 0.257713,
-            "point.x.1": 0.139735,
-            "point.x.2": 0.172838,
             "realization": 0,
+            "simulation_id": 3,
             "x-0_coord": 0.257713
           },
           {
             "perturbation": 2,
-            "point.x.0": 0.253974,
-            "point.x.1": 0.14513,
-            "point.x.2": 0.167599,
             "realization": 0,
+            "simulation_id": 4,
             "x-0_coord": 0.253974
           },
           {
             "perturbation": 3,
-            "point.x.0": 0.255048,
-            "point.x.1": 0.146912,
-            "point.x.2": 0.165798,
             "realization": 0,
+            "simulation_id": 5,
             "x-0_coord": 0.255048
           },
           {
             "perturbation": 4,
-            "point.x.0": 0.26144,
-            "point.x.1": 0.137908,
-            "point.x.2": 0.166974,
             "realization": 0,
+            "simulation_id": 6,
             "x-0_coord": 0.26144
           },
           {
             "perturbation": 0,
-            "point.x.0": 0.262106,
-            "point.x.1": 0.144886,
-            "point.x.2": 0.177062,
             "realization": 2,
+            "simulation_id": 7,
             "x-0_coord": 0.262106
           },
           {
             "perturbation": 1,
-            "point.x.0": 0.261361,
-            "point.x.1": 0.137812,
-            "point.x.2": 0.175112,
             "realization": 2,
+            "simulation_id": 8,
             "x-0_coord": 0.261361
           },
           {
             "perturbation": 2,
-            "point.x.0": 0.249344,
-            "point.x.1": 0.139261,
-            "point.x.2": 0.163124,
             "realization": 2,
+            "simulation_id": 9,
             "x-0_coord": 0.249344
           },
           {
             "perturbation": 3,
-            "point.x.0": 0.256409,
-            "point.x.1": 0.144068,
-            "point.x.2": 0.177942,
             "realization": 2,
+            "simulation_id": 10,
             "x-0_coord": 0.256409
           },
           {
             "perturbation": 4,
-            "point.x.0": 0.260034,
-            "point.x.1": 0.143388,
-            "point.x.2": 0.170629,
             "realization": 2,
+            "simulation_id": 11,
             "x-0_coord": 0.260034
           }
         ],
@@ -404,82 +370,62 @@
           {
             "distance": -5.88421,
             "perturbation": 0,
-            "point.x.0": 0.256877,
-            "point.x.1": 0.138791,
-            "point.x.2": 0.165397,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 2
           },
           {
             "distance": -5.88532,
             "perturbation": 1,
-            "point.x.0": 0.257713,
-            "point.x.1": 0.139735,
-            "point.x.2": 0.172838,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 3
           },
           {
             "distance": -5.89337,
             "perturbation": 2,
-            "point.x.0": 0.253974,
-            "point.x.1": 0.14513,
-            "point.x.2": 0.167599,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 4
           },
           {
             "distance": -5.9042,
             "perturbation": 3,
-            "point.x.0": 0.255048,
-            "point.x.1": 0.146912,
-            "point.x.2": 0.165798,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 5
           },
           {
             "distance": -5.89632,
             "perturbation": 4,
-            "point.x.0": 0.26144,
-            "point.x.1": 0.137908,
-            "point.x.2": 0.166974,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 6
           },
           {
             "distance": -0.286988,
             "perturbation": 0,
-            "point.x.0": 0.262106,
-            "point.x.1": 0.144886,
-            "point.x.2": 0.177062,
-            "realization": 2
+            "realization": 2,
+            "simulation_id": 7
           },
           {
             "distance": -0.293681,
             "perturbation": 1,
-            "point.x.0": 0.261361,
-            "point.x.1": 0.137812,
-            "point.x.2": 0.175112,
-            "realization": 2
+            "realization": 2,
+            "simulation_id": 8
           },
           {
             "distance": -0.306447,
             "perturbation": 2,
-            "point.x.0": 0.249344,
-            "point.x.1": 0.139261,
-            "point.x.2": 0.163124,
-            "realization": 2
+            "realization": 2,
+            "simulation_id": 9
           },
           {
             "distance": -0.289746,
             "perturbation": 3,
-            "point.x.0": 0.256409,
-            "point.x.1": 0.144068,
-            "point.x.2": 0.177942,
-            "realization": 2
+            "realization": 2,
+            "simulation_id": 10
           },
           {
             "distance": -0.293241,
             "perturbation": 4,
-            "point.x.0": 0.260034,
-            "point.x.1": 0.143388,
-            "point.x.2": 0.170629,
-            "realization": 2
+            "realization": 2,
+            "simulation_id": 11
           }
         ]
       }
@@ -501,6 +447,7 @@
       "result_type": "FunctionResult",
       "results": {
         "controls": {
+          "batch_id": 2,
           "point.x.0": 0.321688,
           "point.x.1": -0.002276,
           "point.x.2": 0.136291
@@ -508,6 +455,18 @@
         "objectives": {
           "distance": -1.735773
         },
+        "realization_constraints": [
+          {
+            "realization": 0,
+            "simulation_id": 0,
+            "x-0_coord": 0.321688
+          },
+          {
+            "realization": 2,
+            "simulation_id": 1,
+            "x-0_coord": 0.321688
+          }
+        ],
         "realization_objectives": [
           {
             "distance": -5.69401,
@@ -563,82 +522,62 @@
         "perturbation_constraints": [
           {
             "perturbation": 0,
-            "point.x.0": 0.318116,
-            "point.x.1": -0.002287,
-            "point.x.2": 0.142958,
             "realization": 0,
+            "simulation_id": 2,
             "x-0_coord": 0.318116
           },
           {
             "perturbation": 1,
-            "point.x.0": 0.319231,
-            "point.x.1": -0.005347,
-            "point.x.2": 0.139462,
             "realization": 0,
+            "simulation_id": 3,
             "x-0_coord": 0.319231
           },
           {
             "perturbation": 2,
-            "point.x.0": 0.324475,
-            "point.x.1": -0.006365,
-            "point.x.2": 0.136027,
             "realization": 0,
+            "simulation_id": 4,
             "x-0_coord": 0.324475
           },
           {
             "perturbation": 3,
-            "point.x.0": 0.317759,
-            "point.x.1": -0.000186,
-            "point.x.2": 0.133255,
             "realization": 0,
+            "simulation_id": 5,
             "x-0_coord": 0.317759
           },
           {
             "perturbation": 4,
-            "point.x.0": 0.333093,
-            "point.x.1": 0.002281,
-            "point.x.2": 0.134699,
             "realization": 0,
+            "simulation_id": 6,
             "x-0_coord": 0.333093
           },
           {
             "perturbation": 0,
-            "point.x.0": 0.320777,
-            "point.x.1": 0.003863,
-            "point.x.2": 0.131835,
             "realization": 2,
+            "simulation_id": 7,
             "x-0_coord": 0.320777
           },
           {
             "perturbation": 1,
-            "point.x.0": 0.323673,
-            "point.x.1": -0.006806,
-            "point.x.2": 0.142812,
             "realization": 2,
+            "simulation_id": 8,
             "x-0_coord": 0.323673
           },
           {
             "perturbation": 2,
-            "point.x.0": 0.320718,
-            "point.x.1": 0.001721,
-            "point.x.2": 0.134322,
             "realization": 2,
+            "simulation_id": 9,
             "x-0_coord": 0.320718
           },
           {
             "perturbation": 3,
-            "point.x.0": 0.327552,
-            "point.x.1": 0.003118,
-            "point.x.2": 0.135305,
             "realization": 2,
+            "simulation_id": 10,
             "x-0_coord": 0.327552
           },
           {
             "perturbation": 4,
-            "point.x.0": 0.324056,
-            "point.x.1": 0.003636,
-            "point.x.2": 0.13623,
             "realization": 2,
+            "simulation_id": 11,
             "x-0_coord": 0.324056
           }
         ],
@@ -646,82 +585,62 @@
           {
             "distance": -5.67617,
             "perturbation": 0,
-            "point.x.0": 0.318116,
-            "point.x.1": -0.002287,
-            "point.x.2": 0.142958,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 2
           },
           {
             "distance": -5.67357,
             "perturbation": 1,
-            "point.x.0": 0.319231,
-            "point.x.1": -0.005347,
-            "point.x.2": 0.139462,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 3
           },
           {
             "distance": -5.69213,
             "perturbation": 2,
-            "point.x.0": 0.324475,
-            "point.x.1": -0.006365,
-            "point.x.2": 0.136027,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 4
           },
           {
             "distance": -5.68819,
             "perturbation": 3,
-            "point.x.0": 0.317759,
-            "point.x.1": -0.000186,
-            "point.x.2": 0.133255,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 5
           },
           {
             "distance": -5.75052,
             "perturbation": 4,
-            "point.x.0": 0.333093,
-            "point.x.1": 0.002281,
-            "point.x.2": 0.134699,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 6
           },
           {
             "distance": -0.413819,
             "perturbation": 0,
-            "point.x.0": 0.320777,
-            "point.x.1": 0.003863,
-            "point.x.2": 0.131835,
-            "realization": 2
+            "realization": 2,
+            "simulation_id": 7
           },
           {
             "distance": -0.415527,
             "perturbation": 1,
-            "point.x.0": 0.323673,
-            "point.x.1": -0.006806,
-            "point.x.2": 0.142812,
-            "realization": 2
+            "realization": 2,
+            "simulation_id": 8
           },
           {
             "distance": -0.414145,
             "perturbation": 2,
-            "point.x.0": 0.320718,
-            "point.x.1": 0.001721,
-            "point.x.2": 0.134322,
-            "realization": 2
+            "realization": 2,
+            "simulation_id": 9
           },
           {
             "distance": -0.409632,
             "perturbation": 3,
-            "point.x.0": 0.327552,
-            "point.x.1": 0.003118,
-            "point.x.2": 0.135305,
-            "realization": 2
+            "realization": 2,
+            "simulation_id": 10
           },
           {
             "distance": -0.409662,
             "perturbation": 4,
-            "point.x.0": 0.324056,
-            "point.x.1": 0.003636,
-            "point.x.2": 0.13623,
-            "realization": 2
+            "realization": 2,
+            "simulation_id": 11
           }
         ]
       }
@@ -743,6 +662,7 @@
       "result_type": "FunctionResult",
       "results": {
         "controls": {
+          "batch_id": 3,
           "point.x.0": 0.242329,
           "point.x.1": 0.025213,
           "point.x.2": 0.245514
@@ -750,6 +670,18 @@
         "objectives": {
           "distance": -1.624123
         },
+        "realization_constraints": [
+          {
+            "realization": 0,
+            "simulation_id": 0,
+            "x-0_coord": 0.242329
+          },
+          {
+            "realization": 2,
+            "simulation_id": 1,
+            "x-0_coord": 0.242329
+          }
+        ],
         "realization_objectives": [
           {
             "distance": -5.42675,
@@ -805,82 +737,62 @@
         "perturbation_constraints": [
           {
             "perturbation": 0,
-            "point.x.0": 0.237494,
-            "point.x.1": 0.024435,
-            "point.x.2": 0.242956,
             "realization": 0,
+            "simulation_id": 2,
             "x-0_coord": 0.237494
           },
           {
             "perturbation": 1,
-            "point.x.0": 0.236602,
-            "point.x.1": 0.02674,
-            "point.x.2": 0.245355,
             "realization": 0,
+            "simulation_id": 3,
             "x-0_coord": 0.236602
           },
           {
             "perturbation": 2,
-            "point.x.0": 0.239089,
-            "point.x.1": 0.029865,
-            "point.x.2": 0.25122,
             "realization": 0,
+            "simulation_id": 4,
             "x-0_coord": 0.239089
           },
           {
             "perturbation": 3,
-            "point.x.0": 0.246967,
-            "point.x.1": 0.024548,
-            "point.x.2": 0.252433,
             "realization": 0,
+            "simulation_id": 5,
             "x-0_coord": 0.246967
           },
           {
             "perturbation": 4,
-            "point.x.0": 0.249236,
-            "point.x.1": 0.028828,
-            "point.x.2": 0.248158,
             "realization": 0,
+            "simulation_id": 6,
             "x-0_coord": 0.249236
           },
           {
             "perturbation": 0,
-            "point.x.0": 0.24609,
-            "point.x.1": 0.026934,
-            "point.x.2": 0.24772,
             "realization": 2,
+            "simulation_id": 7,
             "x-0_coord": 0.24609
           },
           {
             "perturbation": 1,
-            "point.x.0": 0.247335,
-            "point.x.1": 0.02403,
-            "point.x.2": 0.250975,
             "realization": 2,
+            "simulation_id": 8,
             "x-0_coord": 0.247335
           },
           {
             "perturbation": 2,
-            "point.x.0": 0.250589,
-            "point.x.1": 0.022697,
-            "point.x.2": 0.242098,
             "realization": 2,
+            "simulation_id": 9,
             "x-0_coord": 0.250589
           },
           {
             "perturbation": 3,
-            "point.x.0": 0.242067,
-            "point.x.1": 0.020648,
-            "point.x.2": 0.251463,
             "realization": 2,
+            "simulation_id": 10,
             "x-0_coord": 0.242067
           },
           {
             "perturbation": 4,
-            "point.x.0": 0.247702,
-            "point.x.1": 0.019679,
-            "point.x.2": 0.247786,
             "realization": 2,
+            "simulation_id": 11,
             "x-0_coord": 0.247702
           }
         ],
@@ -888,82 +800,62 @@
           {
             "distance": -5.40886,
             "perturbation": 0,
-            "point.x.0": 0.237494,
-            "point.x.1": 0.024435,
-            "point.x.2": 0.242956,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 2
           },
           {
             "distance": -5.41157,
             "perturbation": 1,
-            "point.x.0": 0.236602,
-            "point.x.1": 0.02674,
-            "point.x.2": 0.245355,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 3
           },
           {
             "distance": -5.42681,
             "perturbation": 2,
-            "point.x.0": 0.239089,
-            "point.x.1": 0.029865,
-            "point.x.2": 0.25122,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 4
           },
           {
             "distance": -5.43743,
             "perturbation": 3,
-            "point.x.0": 0.246967,
-            "point.x.1": 0.024548,
-            "point.x.2": 0.252433,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 5
           },
           {
             "distance": -5.46057,
             "perturbation": 4,
-            "point.x.0": 0.249236,
-            "point.x.1": 0.028828,
-            "point.x.2": 0.248158,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 6
           },
           {
             "distance": -0.351907,
             "perturbation": 0,
-            "point.x.0": 0.24609,
-            "point.x.1": 0.026934,
-            "point.x.2": 0.24772,
-            "realization": 2
+            "realization": 2,
+            "simulation_id": 7
           },
           {
             "distance": -0.3524,
             "perturbation": 1,
-            "point.x.0": 0.247335,
-            "point.x.1": 0.02403,
-            "point.x.2": 0.250975,
-            "realization": 2
+            "realization": 2,
+            "simulation_id": 8
           },
           {
             "distance": -0.356538,
             "perturbation": 2,
-            "point.x.0": 0.250589,
-            "point.x.1": 0.022697,
-            "point.x.2": 0.242098,
-            "realization": 2
+            "realization": 2,
+            "simulation_id": 9
           },
           {
             "distance": -0.358079,
             "perturbation": 3,
-            "point.x.0": 0.242067,
-            "point.x.1": 0.020648,
-            "point.x.2": 0.251463,
-            "realization": 2
+            "realization": 2,
+            "simulation_id": 10
           },
           {
             "distance": -0.357974,
             "perturbation": 4,
-            "point.x.0": 0.247702,
-            "point.x.1": 0.019679,
-            "point.x.2": 0.247786,
-            "realization": 2
+            "realization": 2,
+            "simulation_id": 11
           }
         ]
       }
@@ -985,6 +877,7 @@
       "result_type": "FunctionResult",
       "results": {
         "controls": {
+          "batch_id": 4,
           "point.x.0": 0.144529,
           "point.x.1": 0.017082,
           "point.x.2": 0.365267
@@ -992,6 +885,18 @@
         "objectives": {
           "distance": -1.539335
         },
+        "realization_constraints": [
+          {
+            "realization": 0,
+            "simulation_id": 0,
+            "x-0_coord": 0.144529
+          },
+          {
+            "realization": 2,
+            "simulation_id": 1,
+            "x-0_coord": 0.144529
+          }
+        ],
         "realization_objectives": [
           {
             "distance": -5.02417,
@@ -1047,82 +952,62 @@
         "perturbation_constraints": [
           {
             "perturbation": 0,
-            "point.x.0": 0.144783,
-            "point.x.1": 0.01364,
-            "point.x.2": 0.358424,
             "realization": 0,
+            "simulation_id": 2,
             "x-0_coord": 0.144783
           },
           {
             "perturbation": 1,
-            "point.x.0": 0.145042,
-            "point.x.1": 0.018576,
-            "point.x.2": 0.362139,
             "realization": 0,
+            "simulation_id": 3,
             "x-0_coord": 0.145042
           },
           {
             "perturbation": 2,
-            "point.x.0": 0.143989,
-            "point.x.1": 0.015704,
-            "point.x.2": 0.370601,
             "realization": 0,
+            "simulation_id": 4,
             "x-0_coord": 0.143989
           },
           {
             "perturbation": 3,
-            "point.x.0": 0.149685,
-            "point.x.1": 0.017056,
-            "point.x.2": 0.361114,
             "realization": 0,
+            "simulation_id": 5,
             "x-0_coord": 0.149685
           },
           {
             "perturbation": 4,
-            "point.x.0": 0.147193,
-            "point.x.1": 0.024758,
-            "point.x.2": 0.367145,
             "realization": 0,
+            "simulation_id": 6,
             "x-0_coord": 0.147193
           },
           {
             "perturbation": 0,
-            "point.x.0": 0.146072,
-            "point.x.1": 0.0206,
-            "point.x.2": 0.360123,
             "realization": 2,
+            "simulation_id": 7,
             "x-0_coord": 0.146072
           },
           {
             "perturbation": 1,
-            "point.x.0": 0.149509,
-            "point.x.1": 0.016904,
-            "point.x.2": 0.365241,
             "realization": 2,
+            "simulation_id": 8,
             "x-0_coord": 0.149509
           },
           {
             "perturbation": 2,
-            "point.x.0": 0.138879,
-            "point.x.1": 0.017932,
-            "point.x.2": 0.366705,
             "realization": 2,
+            "simulation_id": 9,
             "x-0_coord": 0.138879
           },
           {
             "perturbation": 3,
-            "point.x.0": 0.136368,
-            "point.x.1": 0.019326,
-            "point.x.2": 0.354306,
             "realization": 2,
+            "simulation_id": 10,
             "x-0_coord": 0.136368
           },
           {
             "perturbation": 4,
-            "point.x.0": 0.145124,
-            "point.x.1": 0.018452,
-            "point.x.2": 0.366302,
             "realization": 2,
+            "simulation_id": 11,
             "x-0_coord": 0.145124
           }
         ],
@@ -1130,82 +1015,62 @@
           {
             "distance": -5.01646,
             "perturbation": 0,
-            "point.x.0": 0.144783,
-            "point.x.1": 0.01364,
-            "point.x.2": 0.358424,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 2
           },
           {
             "distance": -5.03124,
             "perturbation": 1,
-            "point.x.0": 0.145042,
-            "point.x.1": 0.018576,
-            "point.x.2": 0.362139,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 3
           },
           {
             "distance": -5.0168,
             "perturbation": 2,
-            "point.x.0": 0.143989,
-            "point.x.1": 0.015704,
-            "point.x.2": 0.370601,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 4
           },
           {
             "distance": -5.04221,
             "perturbation": 3,
-            "point.x.0": 0.149685,
-            "point.x.1": 0.017056,
-            "point.x.2": 0.361114,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 5
           },
           {
             "distance": -5.05578,
             "perturbation": 4,
-            "point.x.0": 0.147193,
-            "point.x.1": 0.024758,
-            "point.x.2": 0.367145,
-            "realization": 0
+            "realization": 0,
+            "simulation_id": 6
           },
           {
             "distance": -0.374655,
             "perturbation": 0,
-            "point.x.0": 0.146072,
-            "point.x.1": 0.0206,
-            "point.x.2": 0.360123,
-            "realization": 2
+            "realization": 2,
+            "simulation_id": 7
           },
           {
             "distance": -0.374386,
             "perturbation": 1,
-            "point.x.0": 0.149509,
-            "point.x.1": 0.016904,
-            "point.x.2": 0.365241,
-            "realization": 2
+            "realization": 2,
+            "simulation_id": 8
           },
           {
             "distance": -0.380565,
             "perturbation": 2,
-            "point.x.0": 0.138879,
-            "point.x.1": 0.017932,
-            "point.x.2": 0.366705,
-            "realization": 2
+            "realization": 2,
+            "simulation_id": 9
           },
           {
             "distance": -0.384502,
             "perturbation": 3,
-            "point.x.0": 0.136368,
-            "point.x.1": 0.019326,
-            "point.x.2": 0.354306,
-            "realization": 2
+            "realization": 2,
+            "simulation_id": 10
           },
           {
             "distance": -0.3757,
             "perturbation": 4,
-            "point.x.0": 0.145124,
-            "point.x.1": 0.018452,
-            "point.x.2": 0.366302,
-            "realization": 2
+            "realization": 2,
+            "simulation_id": 11
           }
         ]
       }

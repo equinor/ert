@@ -3,15 +3,18 @@ from typing import Annotated, Any, Literal, Self
 import numpy as np
 import polars as pl
 from polars.datatypes import DataTypeClass
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 from ert.config import (
     EverestControl,
     GenKwConfig,
+    KnownDerivedResponseTypes,
     KnownResponseTypes,
+    Observation,
     SurfaceConfig,
 )
 from ert.config import Field as FieldConfig
+from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.run_arg import create_run_arguments
 from ert.run_models.run_model import RunModel, RunModelConfig
@@ -66,28 +69,14 @@ class InitialEnsembleRunModelConfig(RunModelConfig):
             Field(discriminator="type"),
         ]
     ]
+    derived_response_configuration: list[
+        Annotated[
+            (KnownDerivedResponseTypes),
+            Field(discriminator="type"),
+        ]
+    ]
     ert_templates: list[tuple[str, str]]
-    observations: dict[str, DictEncodedDataFrame] | None = None
-
-    @field_validator("observations", mode="before")
-    @classmethod
-    def make_dict_encoded_observations(
-        cls, v: dict[str, pl.DataFrame | DictEncodedDataFrame | dict[str, Any]] | None
-    ) -> dict[str, DictEncodedDataFrame] | None:
-        if v is None:
-            return None
-
-        encoded = {}
-        for k, df in v.items():
-            match df:
-                case DictEncodedDataFrame():
-                    encoded[k] = df
-                case pl.DataFrame():
-                    encoded[k] = DictEncodedDataFrame.from_polars(df)
-                case dict():
-                    encoded[k] = DictEncodedDataFrame.model_validate(df)
-
-        return encoded
+    observations: list[Observation] | None = None
 
 
 class InitialEnsembleRunModel(RunModel, InitialEnsembleRunModelConfig):
@@ -118,3 +107,17 @@ class InitialEnsembleRunModel(RunModel, InitialEnsembleRunModelConfig):
             evaluator_server_config,
         )
         return ensemble_storage
+
+    def observation_dataframes(self) -> dict[str, pl.DataFrame]:
+        if self.observations is None:
+            return {}
+
+        rft_config = next(
+            (r for r in self.response_configuration if r.type == "rft"),
+            None,
+        )
+
+        return create_observation_dataframes(
+            observations=self.observations,
+            rft_config=rft_config,
+        )

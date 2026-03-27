@@ -1,6 +1,7 @@
 import pytest
 
 from ert.base_model_context import use_runtime_plugins
+from ert.config import ConfigWarning
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.plugins import get_site_plugins
 from ert.run_models.everest_run_model import EverestRunModel
@@ -32,7 +33,8 @@ def test_objective_type(copy_math_func_test_data_to_tmp):
         ],
         "simulator": {"queue_system": {"name": "local", "max_running": 2}},
     }
-    config = EverestConfig.model_validate(config_dict)
+    with pytest.warns(ConfigWarning, match="The `controls.type` field is deprecated"):
+        config = EverestConfig.model_validate(config_dict)
     # Act
     runtime_plugins = get_site_plugins()
     with use_runtime_plugins(runtime_plugins):
@@ -41,7 +43,7 @@ def test_objective_type(copy_math_func_test_data_to_tmp):
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
 
-    optimal_result = get_optimal_result(config.optimization_output_dir)
+    optimal_result = get_optimal_result(config.storage_dir)
 
     # Assert
     x0, x1, x2 = (optimal_result.controls["point." + p] for p in ["x", "y", "z"])

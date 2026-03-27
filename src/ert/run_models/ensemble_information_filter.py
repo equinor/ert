@@ -3,10 +3,11 @@ from __future__ import annotations
 import functools
 import logging
 
+from ert.analysis import enif_update
 from ert.run_models.ensemble_smoother import EnsembleSmoother
 from ert.storage import Ensemble
+from ert.storage.local_experiment import ExperimentType
 
-from ..analysis import enif_update
 from .initial_ensemble_run_model import InitialEnsembleRunModelConfig
 from .update_run_model import UpdateRunModelConfig
 
@@ -42,3 +43,7 @@ class EnsembleInformationFilter(EnsembleSmoother, EnsembleInformationFilterConfi
     @classmethod
     def description(cls) -> str:
         return "Sample parameters → evaluate → EnIF update → evaluate"
+
+    @classmethod
+    def _experiment_type(cls) -> ExperimentType:
+        return ExperimentType.ENSEMBLE_INFORMATION_FILTER

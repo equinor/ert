@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import datetime
 import logging
 import threading
 import traceback
@@ -35,13 +36,13 @@ from _ert.forward_model_runner.client import (
     TERMINATE_MSG,
 )
 from _ert.forward_model_runner.fm_dispatch import FORWARD_MODEL_TERMINATED_MSG
+from ert.config import QueueSystem
 from ert.ensemble_evaluator import identifiers as ids
 from ert.ensemble_evaluator import state
 from ert.scheduler import create_driver
 from ert.scheduler.scheduler import Scheduler
 from ert.shared.net_utils import get_machine_name
 
-from ..config import QueueSystem
 from ._ensemble import FMStepSnapshot
 from ._ensemble import LegacyEnsemble as Ensemble
 from .config import EvaluatorServerConfig
@@ -311,23 +312,40 @@ class EnsembleEvaluator:
     async def _stopped_handler(self, events: Sequence[EnsembleSucceeded]) -> None:
         if self.ensemble.status == ENSEMBLE_STATE_FAILED:
             return
+        await self.log_cpu_and_memory_consumption()
+        await self._append_message(self.ensemble.update_snapshot(events))
 
+    async def log_cpu_and_memory_consumption(self) -> None:
         max_memory_usage = -1
+        walltime_seconds: float = 0.0
+        cputime_seconds: float = 0.0
+        num_cpu = -1
+
+        # Max memory is the max over all realizations
+        # Seconds are summed over all realizations
         for (real_id, _), fm_step in self.ensemble.snapshot.get_all_fm_steps().items():
-            # Infer max memory usage
             memory_usage = fm_step.get(ids.MAX_MEMORY_USAGE) or "-1"
             max_memory_usage = max(int(memory_usage), max_memory_usage)
 
-            self.detect_overspent_cpu(
-                self.ensemble.reals[int(real_id)].num_cpu, real_id, fm_step
-            )
+            now = datetime.datetime.now()
+            walltime_seconds += (
+                (fm_step.get(ids.END_TIME) or now)
+                - (fm_step.get(ids.START_TIME) or now)
+            ).total_seconds()
+            cputime_seconds += fm_step.get(ids.CPU_SECONDS) or 0
+
+            num_cpu = self.ensemble.reals[int(real_id)].num_cpu
+            self.detect_overspent_cpu(num_cpu, real_id, fm_step)
+
+        logger.info(
+            f"Ensemble resource usage: {walltime_seconds=:g} {cputime_seconds=:g} "
+            f"{num_cpu=} {max_memory_usage=}"
+        )  # num_cpu is asserted constant over ensemble
 
         logger.info(
             "Ensemble ran with maximum memory usage for a "
             f"single realization job: {max_memory_usage}"
         )
-
-        await self._append_message(self.ensemble.update_snapshot(events))
 
     async def _cancelled_handler(self, events: Sequence[EnsembleCancelled]) -> None:
         if self.ensemble.status != ENSEMBLE_STATE_FAILED:

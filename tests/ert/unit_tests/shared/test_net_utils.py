@@ -1,12 +1,11 @@
 import contextlib
 import socket
 import threading
-from unittest.mock import MagicMock, patch
 
 import psutil
 import pytest
 
-from ert.shared import find_available_socket, get_ip_address, get_machine_name
+from ert.shared import find_available_socket, get_machine_name
 from ert.shared.net_utils import (
     NoPortsInRangeException,
     get_family,
@@ -292,95 +291,3 @@ def test_socket_can_not_rebind_immediately_after_close_if_used(unused_tcp_port):
     # Immediately trying to bind to the same port fails
     with pytest.raises(NoPortsInRangeException):
         find_available_socket(port_range=port_range, host="127.0.0.1")
-
-
-# Helper to create psutil-like address objects
-class FakeAddr:
-    def __init__(self, address, family_name="AF_INET") -> None:
-        self.address = address
-        self.family = MagicMock()
-        self.family.name = family_name
-
-
-test_cases_prioritze_private = [
-    pytest.param(
-        {"eth0": [FakeAddr("192.168.1.10")], "eth1": [FakeAddr("8.8.8.8")]},
-        "192.168.1.10",
-        id="private_and_public_interface_prioritize_private",
-    ),
-    pytest.param(
-        {"eth0": [FakeAddr("10.0.0.5")], "eth1": [FakeAddr("8.8.8.8")]},
-        "10.0.0.5",
-        id="private_10_x_x_x_and_public_interface_prioritize_private",
-    ),
-    pytest.param(
-        {"eth0": [FakeAddr("172.16.5.10")], "eth1": [FakeAddr("8.8.8.8")]},
-        "172.16.5.10",
-        id="private_172_16_x_x_and_public_interface_prioritize_private",
-    ),
-    pytest.param(
-        {"lo": [FakeAddr("127.0.0.1")]},
-        "127.0.0.1",
-        id="only_loopback_interface_return_it",
-    ),
-]
-
-
-@pytest.mark.parametrize(
-    ("mock_psutils_if_addrs", "expected"), test_cases_prioritze_private
-)
-def test_that_get_ip_address_prioritizes_private_when_told(
-    mock_psutils_if_addrs, expected
-):
-    with patch("psutil.net_if_addrs", return_value=mock_psutils_if_addrs):
-        assert get_ip_address(prioritize_private=True) == expected
-
-
-test_cases_default_prioritize_public = [
-    pytest.param({}, "127.0.0.1", id="no_ipv4_addresses_disconnected"),
-    pytest.param(
-        {"lo": [FakeAddr("127.0.0.1")], "eth0": [FakeAddr("192.168.1.10")]},
-        "192.168.1.10",
-        id="private_and_loopback_interface",
-    ),
-    pytest.param(
-        {"lo": [FakeAddr("127.0.0.1")], "eth0": [FakeAddr("8.8.8.8")]},
-        "8.8.8.8",
-        id="public_and_loopback_interface",
-    ),
-    pytest.param(
-        {"eth0": [FakeAddr("192.168.1.10")], "eth1": [FakeAddr("8.8.8.8")]},
-        "8.8.8.8",
-        id="private_and_public_interface",
-    ),
-    pytest.param(
-        {"eth0": [FakeAddr("8.8.8.8")]},
-        "8.8.8.8",
-        id="only_public_interface",
-    ),
-    pytest.param(
-        {"eth0": [FakeAddr("10.0.0.5")], "eth1": [FakeAddr("8.8.8.8")]},
-        "8.8.8.8",
-        id="private_10_x_x_x_and_public_interface",
-    ),
-    pytest.param(
-        {"eth0": [FakeAddr("172.16.5.10")], "eth1": [FakeAddr("8.8.8.8")]},
-        "8.8.8.8",
-        id="private_172_16_x_x_and_public_interface",
-    ),
-    pytest.param(
-        {"lo": [FakeAddr("127.0.0.1")]},
-        "127.0.0.1",
-        id="only_loopback_interface_return_it",
-    ),
-]
-
-
-@pytest.mark.parametrize(
-    ("mock_psutils_if_addrs", "expected"), test_cases_default_prioritize_public
-)
-def test_that_get_ip_address_prioritizes_public_by_default(
-    mock_psutils_if_addrs, expected
-):
-    with patch("psutil.net_if_addrs", return_value=mock_psutils_if_addrs):
-        assert get_ip_address() == expected

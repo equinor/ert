@@ -41,8 +41,7 @@ class ErtServerExit(OSError):
 def cleanup_service_files(signum: int, frame: types.FrameType | None) -> None:
     for file_path in SERVICE_CONF_PATHS:
         file = Path(file_path)
-        if file.exists():
-            file.unlink()
+        file.unlink(missing_ok=True)
     raise ErtServerExit(f"Signal {signum} received.")
 
 
@@ -171,8 +170,7 @@ class _Proc(threading.Thread):
         Ensure that the JSON connection information file is deleted
         """
         with contextlib.suppress(OSError):
-            if self._service_config_path.exists():
-                self._service_config_path.unlink()
+            self._service_config_path.unlink(missing_ok=True)
 
     @property
     def logger(self) -> logging.Logger:
@@ -184,10 +182,10 @@ _ERT_SERVER_EXECUTABLE_FILE = str(Path(__file__).parent / "_storage_main.py")
 
 
 class ErtServerContext:
-    def __init__(self, service: ErtServer) -> None:
+    def __init__(self, service: ErtServerController) -> None:
         self._service = service
 
-    def __enter__(self) -> ErtServer:
+    def __enter__(self) -> ErtServerController:
         return self._service
 
     def __exit__(
@@ -200,8 +198,8 @@ class ErtServerContext:
         return exc_type is None
 
 
-class ErtServer:
-    _instance: ErtServer | None = None
+class ErtServerController:
+    _instance: ErtServerController | None = None
 
     def __init__(
         self,
@@ -212,9 +210,6 @@ class ErtServer:
         verbose: bool = False,
         logging_config: str | None = None,  # Only used from everserver
     ) -> None:
-        if timeout is None:
-            timeout = 120
-
         self._storage_path = storage_path
         self._connection_info: ErtServerConnectionInfo | Exception | None = (
             connection_info
@@ -280,17 +275,18 @@ class ErtServer:
         logging_config: str | None = None,
     ) -> ErtServerContext:
         try:
-            service = cls.connect(
+            controller = create_ert_server_controller(
                 project=project or Path.cwd(), timeout=0, logging_config=logging_config
             )
             # Check the server is up and running
-            _ = service.fetch_url()
-            return ErtServerContext(service)
+            _ = controller.fetch_url()
+            return ErtServerContext(controller)
         except (TimeoutError, json.JSONDecodeError, KeyError) as e:
             logging.getLogger(__name__).warning(
                 "Failed locating existing storage service due to "
                 f"{type(e).__name__}: {e}, starting new service"
             )
+            (Path(project) / _ERT_SERVER_CONNECTION_INFO_FILE).unlink(missing_ok=True)
             return cls.start_server(
                 project=project, timeout=timeout, logging_config=logging_config
             )
@@ -305,6 +301,7 @@ class ErtServer:
         """Returns the url. Blocks while the server is starting"""
         if self._url is not None:
             return self._url
+        logs: list[tuple[str | int, str]] = []
 
         for url in self.fetch_connection_info()["urls"]:
             con_info = self.fetch_connection_info()
@@ -314,19 +311,17 @@ class ErtServer:
                     auth=self.fetch_auth(),
                     verify=con_info["cert"],
                 )
-                logging.getLogger(__name__).info(
-                    f"Connecting to {url} got status: "
-                    f"{resp.status_code}, {resp.headers}, {resp.reason}, {resp.text}"
-                )
                 if resp.status_code == 200:
+                    logging.getLogger(__name__).info(f"Successfully connected to {url}")
                     self._url = url
                     return str(url)
+                logs.append((resp.status_code, f"{url}: {resp.reason}"))
 
             except requests.ConnectionError as ce:
-                logging.getLogger(__name__).info(
-                    f"Could not connect to {url}, but will try something else. "
-                    f"Error: {ce}"
-                )
+                logs.append(("ConnectionError", f"{url}: {ce}"))
+
+        logging.getLogger(__name__).info(f"Attempted urls: {logs}")
+
         raise TimeoutError(
             "None of the URLs provided for the ert storage server worked."
         )
@@ -345,52 +340,6 @@ class ErtServer:
         self._thread_that_starts_server_process = None
 
         return error_code
-
-    @classmethod
-    def connect(
-        cls,
-        *,
-        project: os.PathLike[str],
-        timeout: int | None = None,
-        logging_config: str | None = None,
-    ) -> ErtServer:
-        if cls._instance is not None:
-            cls._instance.wait_until_ready()
-            assert isinstance(cls._instance, cls)
-            return cls._instance
-
-        path = Path(project)
-
-        # Wait for storage_server.json file to appear
-        try:
-            if timeout is None:
-                timeout = 240
-            t = -1
-            while t < timeout:
-                storage_server_path = path / _ERT_SERVER_CONNECTION_INFO_FILE
-                if (
-                    storage_server_path.exists()
-                    and storage_server_path.stat().st_size > 0
-                ):
-                    with (path / _ERT_SERVER_CONNECTION_INFO_FILE).open() as f:
-                        storage_server_content = json.load(f)
-
-                    return ErtServer(
-                        storage_path=str(path),
-                        connection_info=storage_server_content,
-                        logging_config=logging_config,
-                    )
-
-                sleep(1)
-                t += 1
-
-            raise TimeoutError("Server not started")
-        except PermissionError as pe:
-            logging.getLogger(__name__).error(
-                f"{type(pe).__name__}: {pe}, cannot connect to ert server service "
-                f"due to permission issues."
-            )
-            raise pe
 
     @classmethod
     def start_server(
@@ -468,12 +417,51 @@ class ErtServer:
 
 def create_ertserver_client(project: Path, timeout: int | None = None) -> Client:
     """Read connection info from file in path and create HTTP client."""
-    connection = ErtServer.connect(timeout=timeout, project=project)
-    info = connection.fetch_connection_info()
+    controller = create_ert_server_controller(timeout=timeout, project=project)
+    info = controller.fetch_connection_info()
     return Client(
         conn_info=ErtClientConnectionInfo(
-            base_url=connection.fetch_url(),
-            auth_token=connection.fetch_auth()[1],
+            base_url=controller.fetch_url(),
+            auth_token=controller.fetch_auth()[1],
             cert=info["cert"],
         )
     )
+
+
+def create_ert_server_controller(
+    *,
+    project: os.PathLike[str],
+    timeout: int | None = None,
+    logging_config: str | None = None,
+) -> ErtServerController:
+    path = Path(project)
+    # Wait for storage_server.json file to appear
+    try:
+        if timeout is None:
+            timeout = 240
+        t = -1
+        while t < timeout:
+            storage_server_path = path / _ERT_SERVER_CONNECTION_INFO_FILE
+            try:
+                if storage_server_path.stat().st_size > 0:
+                    with storage_server_path.open() as f:
+                        storage_server_content = json.load(f)
+
+                    return ErtServerController(
+                        storage_path=str(path),
+                        connection_info=storage_server_content,
+                        logging_config=logging_config,
+                    )
+            except FileNotFoundError:
+                pass
+
+            sleep(1)
+            t += 1
+
+        raise TimeoutError("Server not started")
+    except PermissionError as pe:
+        logging.getLogger(__name__).error(
+            f"{type(pe).__name__}: {pe}, cannot connect to ert server service "
+            f"due to permission issues."
+        )
+        raise pe

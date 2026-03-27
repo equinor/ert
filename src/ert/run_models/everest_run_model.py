@@ -17,11 +17,11 @@ from enum import IntEnum, auto
 from functools import cached_property
 from pathlib import Path
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, Protocol, cast
+from typing import TYPE_CHECKING, Annotated, Any, Protocol
 
 import numpy as np
 from numpy.typing import NDArray
-from pydantic import PrivateAttr, ValidationError
+from pydantic import Field, PrivateAttr, TypeAdapter, ValidationError
 from ropt.enums import ExitCode as RoptExitCode
 from ropt.evaluator import EvaluatorContext, EvaluatorResult
 from ropt.results import FunctionResults, Results
@@ -36,7 +36,6 @@ from ert.config import (
     GenDataConfig,
     HookRuntime,
     KnownQueueOptionsAdapter,
-    ParameterConfig,
     QueueConfig,
     ResponseConfig,
     SummaryConfig,
@@ -51,7 +50,12 @@ from ert.config.model_config import ModelConfig as ErtModelConfig
 from ert.config.parsing import ConfigWarning
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.plugins import ErtRuntimePlugins
+from ert.run_arg import RunArg, create_run_arguments
 from ert.runpaths import Runpaths
+from ert.storage import ExperimentState, ExperimentStatus
+from ert.storage.local_ensemble import EverestRealizationInfo
+from ert.storage.local_experiment import ExperimentType
+from ert.substitutions import Substitutions
 from everest.config import (
     ControlConfig,
     EverestConfig,
@@ -68,10 +72,6 @@ from everest.optimizer.opt_model_transforms import (
 )
 from everest.strings import EVEREST
 
-from ..run_arg import RunArg, create_run_arguments
-from ..storage import ExperimentState, ExperimentStatus
-from ..storage.local_ensemble import EverestRealizationInfo
-from ..substitutions import Substitutions
 from .event import EverestBatchResultEvent, EverestStatusEvent
 from .run_model import RunModel, RunModelConfig, StatusEvents
 
@@ -222,12 +222,24 @@ def _get_workflows(
     return res_hooks, res_workflows
 
 
+EverestResponseTypes = (
+    EverestObjectivesConfig | EverestConstraintsConfig | SummaryConfig | GenDataConfig
+)
+
+EverestResponseTypesAdapter = TypeAdapter(  # type: ignore
+    Annotated[
+        EverestResponseTypes,
+        Field(discriminator="type"),
+    ]
+)
+
+
 class EverestRunModelConfig(RunModelConfig):
     optimization_output_dir: str
     simulation_dir: str
 
-    parameter_configuration: list[ParameterConfig]
-    response_configuration: list[ResponseConfig]
+    parameter_configuration: list[EverestControl]
+    response_configuration: list[EverestResponseTypes]
 
     input_constraints: list[InputConstraintConfig]
     optimization: OptimizationConfig
@@ -242,7 +254,6 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
     _experiment: Experiment | None = PrivateAttr(default=None)
     _eval_server_cfg: EvaluatorServerConfig | None = PrivateAttr(default=None)
     _batch_id: int = PrivateAttr(default=0)
-    _ever_storage: EverestStorage | None = PrivateAttr(default=None)
 
     def __init__(self, **data: Any) -> None:
         super().__init__(**data)
@@ -285,7 +296,9 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         )
 
         parameter_configs = [
-            control.to_ert_parameter_config() for control in everest_config.controls
+            ert_control
+            for control in everest_config.controls
+            for ert_control in control.to_ert_parameter_config()
         ]
 
         response_configs: list[ResponseConfig] = []
@@ -407,12 +420,25 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         substitutions = {
             "<RUNPATH_FILE>": str(runpath_file),
             "<RUNPATH>": runpath_config.runpath_format_string,
-            "<ECL_BASE>": runpath_config.eclbase_format_string,
-            "<ECLBASE>": runpath_config.eclbase_format_string,
             "<NUM_CPU>": str(queue_config.queue_options.num_cpu),
             "<CONFIG_PATH>": everest_config.config_directory,
             "<CONFIG_FILE>": Path(everest_config.config_file).stem,
         }
+
+        if runpath_config.summary_file_base_name is not None:
+            substitutions.update(
+                {
+                    "<ECL_BASE>": runpath_config.summary_file_base_name,
+                    "<ECLBASE>": runpath_config.summary_file_base_name,
+                }
+            )
+        else:
+            substitutions.update(
+                {
+                    "<ECL_BASE>": DEFAULT_ECLBASE_FORMAT,
+                    "<ECLBASE>": DEFAULT_ECLBASE_FORMAT,
+                }
+            )
 
         for datafile, data in _get_internal_files(everest_config).items():
             datafile.parent.mkdir(exist_ok=True, parents=True)
@@ -421,7 +447,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         workflow_jobs = _get_workflow_jobs(everest_config)
         hooks, workflows = _get_workflows(everest_config)
         _, hooked_workflows = create_and_hook_workflows(
-            hooks, workflows, workflow_jobs, substitutions
+            hooks, [], [], workflows, workflow_jobs, substitutions
         )
 
         install_job_fm_steps = {
@@ -528,7 +554,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
             forward_model_steps=forward_model_steps,
             substitutions=substitutions,
             hooked_workflows=hooked_workflows,
-            storage_path=everest_config.storage_dir,
+            storage_path=str(everest_config.storage_dir),
             queue_config=queue_config,
             status_queue=status_queue,
             optimization_callback=optimization_callback,
@@ -536,13 +562,9 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
 
     @property
     def _everest_control_configs(self) -> list[EverestControl]:
-        controls = [
+        return [
             c for c in self.parameter_configuration if c.type == "everest_parameters"
         ]
-
-        # There will and must always be one EverestControl config for an
-        # EVEREST optimization.
-        return cast(list[EverestControl], controls)
 
     @cached_property
     def _transforms(self) -> EverestOptModelTransforms:
@@ -562,6 +584,10 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
     @classmethod
     def description(cls) -> str:
         return "Run batches "
+
+    @classmethod
+    def _experiment_type(cls) -> ExperimentType:
+        return ExperimentType.EVEREST
 
     @property
     def exit_code(self) -> EverestExitCode | None:
@@ -619,19 +645,107 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
             )
 
     def _handle_optimizer_results(self, results: tuple[Results, ...]) -> None:
-        assert self._ever_storage is not None
-        self._ever_storage.on_batch_evaluation_finished(results)
+        assert self._experiment is not None
+
+        batch_dataframes = EverestStorage.unpack_ropt_results(results)
+
+        for batch_id, batch_dict in batch_dataframes.items():
+            target_ensemble = self._experiment.get_ensemble_by_name(f"batch_{batch_id}")
+            target_ensemble.save_batch_dataframes(dataframes=batch_dict)
+            target_ensemble.update_improvement_flag(is_improvement=False)
 
         for r in results:
-            storage_batches = (
-                self._ever_storage.data.batches_with_function_results
+            batches = (
+                self._experiment.ensembles_with_function_results
                 if isinstance(r, FunctionResults)
-                else self._ever_storage.data.batches_with_gradient_results
+                else self._experiment.ensembles_with_gradient_results
             )
-            batch_data = next(
-                (b for b in storage_batches if b.batch_id == r.batch_id),
-                None,
-            )
+            ens = next((ens for ens in batches if ens.iteration == r.batch_id), None)
+            if ens is None:
+                continue
+
+            results_dict: dict[str, Any] | None = None
+            if isinstance(r, FunctionResults):
+                results_dict = {}
+                if ens.realization_controls is not None:
+                    results_dict |= {
+                        "controls": ens.realization_controls.drop(
+                            "realization", "simulation_id"
+                        ).to_dicts()[0],
+                    }
+
+                if ens.realization_objectives is not None:
+                    results_dict |= {
+                        "realization_objectives": ens.realization_objectives.drop(
+                            "batch_id"
+                        ).to_dicts()
+                    }
+
+                if ens.batch_objectives is not None:
+                    results_dict |= {
+                        "objectives": ens.batch_objectives.drop(
+                            "batch_id", "total_objective_value"
+                        ).to_dicts()[0],
+                        "total_objective_value": ens.batch_objectives[
+                            "total_objective_value"
+                        ].item(),
+                    }
+
+                if ens.realization_constraints is not None:
+                    results_dict |= {
+                        "realization_constraints": ens.realization_constraints.drop(
+                            "batch_id"
+                        ).to_dicts()
+                    }
+            else:
+                results_dict = {}
+                objective_gradient = (
+                    ens.batch_objective_gradient.drop("batch_id")
+                    .sort("control_name")
+                    .to_dicts()
+                    if ens.batch_objective_gradient is not None
+                    else None
+                )
+
+                if objective_gradient is not None:
+                    results_dict |= {"objective_gradient_values": objective_gradient}
+
+                perturbation_objectives = (
+                    (
+                        ens.perturbation_objectives.drop("batch_id")
+                        .sort("realization", "perturbation")
+                        .to_dicts()
+                    )
+                    if ens.perturbation_objectives is not None
+                    else None
+                )
+
+                if perturbation_objectives is not None:
+                    results_dict |= {"perturbation_objectives": perturbation_objectives}
+
+                constraint_gradient_dicts = (
+                    ens.batch_constraint_gradient.drop("batch_id")
+                    .sort("control_name")
+                    .to_dicts()
+                    if ens.batch_constraint_gradient is not None
+                    else None
+                )
+
+                if constraint_gradient_dicts is not None:
+                    results_dict |= {"constraint_gradient": constraint_gradient_dicts}
+
+                perturbation_gradient_dicts = (
+                    ens.perturbation_constraints.drop("batch_id")
+                    .sort("realization", "perturbation")
+                    .to_dicts()
+                    if ens.perturbation_constraints is not None
+                    else None
+                )
+
+                if perturbation_gradient_dicts is not None:
+                    results_dict |= {
+                        "perturbation_constraints": perturbation_gradient_dicts
+                    }
 
             self.send_event(
                 EverestBatchResultEvent(
@@ -640,7 +754,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
                     result_type="FunctionResult"
                     if isinstance(r, FunctionResults)
                     else "GradientResult",
-                    results=batch_data.to_dict() if batch_data else None,
+                    results=results_dict,
                 )
             )
 
@@ -667,6 +781,59 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         assert isinstance(obj_config, EverestObjectivesConfig)
         return obj_config
 
+    def _update_ensemble_improvement_flags(self) -> None:
+        assert self._experiment is not None
+
+        # This a somewhat arbitrary threshold, this should be a user choice
+        # during visualization:
+        CONSTRAINT_TOL = 1e-6
+
+        max_total_objective = -np.inf
+        for ensemble in self._experiment.ensembles_with_function_results:
+            assert ensemble.batch_objectives is not None
+            total_objective = ensemble.batch_objectives["total_objective_value"].item()
+            bound_constraint_violation = (
+                0.0
+                if ensemble.batch_bound_constraint_violations is None
+                else (
+                    ensemble.batch_bound_constraint_violations.drop("batch_id")
+                    .to_numpy()
+                    .min()
+                    .item()
+                )
+            )
+            input_constraint_violation = (
+                0.0
+                if ensemble.batch_input_constraint_violations is None
+                else (
+                    ensemble.batch_input_constraint_violations.drop("batch_id")
+                    .to_numpy()
+                    .min()
+                    .item()
+                )
+            )
+            output_constraint_violation = (
+                0.0
+                if ensemble.batch_output_constraint_violations is None
+                else (
+                    ensemble.batch_output_constraint_violations.drop("batch_id")
+                    .to_numpy()
+                    .min()
+                    .item()
+                )
+            )
+            if (
+                max(
+                    bound_constraint_violation,
+                    input_constraint_violation,
+                    output_constraint_violation,
+                )
+                < CONSTRAINT_TOL
+                and total_objective > max_total_objective
+            ):
+                ensemble.update_improvement_flag(is_improvement=True)
+                max_total_objective = total_objective
+
     def run_experiment(
         self,
         evaluator_server_config: EvaluatorServerConfig,
@@ -676,9 +843,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         self._eval_server_cfg = evaluator_server_config
 
         self._experiment = self._experiment or self._storage.create_experiment(
-            name=self.experiment_name,
-            parameters=self.parameter_configuration,
-            responses=self.response_configuration,
+            name=self.experiment_name, experiment_config=self.model_dump(mode="json")
         )
 
         self._experiment.status = ExperimentStatus(
@@ -688,34 +853,21 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         # Initialize the ropt optimizer:
         optimizer, initial_guesses = self._create_optimizer()
 
-        self._ever_storage = EverestStorage(
-            output_dir=Path(self.optimization_output_dir),
-        )
-
-        formatted_control_names = [
-            name
-            for config in self._everest_control_configs
-            for name in config.input_keys
-        ]
-        self._ever_storage.init(
-            formatted_control_names=formatted_control_names,
-            objective_functions=self.objectives_config,
-            output_constraints=self.output_constraints_config,
-            realizations=self.model.realizations,
-        )
+        # ROPT expects this folder to exist wrt stdout/stderr redirect files
+        Path(self.optimization_output_dir).mkdir(exist_ok=True)
         optimizer.set_results_callback(self._handle_optimizer_results)
 
         # Run the optimization:
         optimizer_exit_code = optimizer.run(initial_guesses)
 
         # Store some final results.
-        self._ever_storage.on_optimization_finished()
+        self._update_ensemble_improvement_flags()
         if (
             optimizer_exit_code is not RoptExitCode.UNKNOWN
             and optimizer_exit_code is not RoptExitCode.TOO_FEW_REALIZATIONS
             and optimizer_exit_code is not RoptExitCode.USER_ABORT
         ):
-            self._ever_storage.export_everest_opt_results_to_csv()
+            self._experiment.export_everest_opt_results_to_csv()
 
         experiment_status = None
         if self._exit_code is None:
@@ -764,7 +916,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
 
     def _create_optimizer(self) -> tuple[BasicOptimizer, list[float]]:
         enopt_config, initial_guesses = everest2ropt(
-            cast(list[EverestControl], self.parameter_configuration),
+            self.parameter_configuration,
             self.objectives_config,
             self.input_constraints,
             self.output_constraints_config,
@@ -831,19 +983,18 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
 
         ensemble.save_everest_realization_info(realization_info)
 
-        for sim_id in range(sim_to_control_vector.shape[0]):
-            sim_controls = sim_to_control_vector[sim_id]
-            offset = 0
-            for control_config in self._everest_control_configs:
-                n_param_keys = len(control_config.parameter_keys)
-
-                # Save controls to ensemble
-                ensemble.save_parameters_numpy(
-                    sim_controls[offset : (offset + n_param_keys)].reshape(-1, 1),
-                    control_config.name,
-                    np.array([sim_id]),
-                )
-                offset += n_param_keys
+        iens = sim_to_control_vector.shape[0]
+        offset = 0
+        for control_config in self._everest_control_configs:
+            n_param_keys = len(control_config.parameter_keys)
+            name = control_config.name
+            parameters = sim_to_control_vector[:, offset : offset + n_param_keys]
+            ensemble.save_parameters_numpy(
+                parameters.reshape(-1, n_param_keys),
+                name,
+                np.arange(iens),
+            )
+            offset += n_param_keys
 
         # Evaluate the batch:
         run_args = self._get_run_args(
@@ -977,10 +1128,6 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
                 )
             )
 
-            # The simulation IDs are also returned, these are implicitly
-            # defined as the range over the active control vectors:
-            sim_ids: NDArray[np.int32] = np.arange(num_simulations, dtype=np.int32)
-
             # Calculate auto-scales if necessary. Skip this if there are any
             # objectives or constraints where all realizations failed. In that
             # case the auto-scale calculations will fail, and the optimization
@@ -1002,7 +1149,6 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
             objectives = evaluator_context.insert_inactive_results(objectives)
             if constraints is not None:
                 constraints = evaluator_context.insert_inactive_results(constraints)
-            sim_ids = evaluator_context.insert_inactive_results(sim_ids, fill_value=-1)
         else:
             # Nothing to do, there may only have been inactive control vectors:
             num_all_simulations = control_values.shape[0]
@@ -1018,13 +1164,11 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
                 if self.output_constraints_config
                 else None
             )
-            sim_ids = np.array([-1] * num_all_simulations, dtype=np.int32)
 
         evaluator_result = EvaluatorResult(
             objectives=objectives,
             constraints=constraints,
             batch_id=self._batch_id,
-            evaluation_info={"sim_ids": sim_ids},
         )
 
         # increase the batch ID for the next evaluation:
@@ -1096,7 +1240,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
             runpath_format=self.runpath_config.runpath_format_string,
             filename=str(self.runpath_file),
             substitutions=substitutions,
-            eclbase=self.runpath_config.eclbase_format_string,
+            eclbase=self.runpath_config.summary_file_base_name,
         )
         return create_run_arguments(
             run_paths,

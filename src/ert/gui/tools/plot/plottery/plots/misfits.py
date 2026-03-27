@@ -98,11 +98,11 @@ class MisfitsPlot:
         observation_data: pd.DataFrame,
         response_type: Literal["summary", "gen_data"],
     ) -> dict[tuple[str, str], pl.DataFrame]:
-        if response_type == "summary":
+        if response_type in {"summary", "breakthrough"}:
             key_index_with_correct_dtype = pl.col("key_index").str.to_datetime(
                 strict=False
             )
-        elif response_type == "gen_data":
+        elif response_type in {"gen_data", "rft"}:
             key_index_with_correct_dtype = (
                 pl.col("key_index").cast(pl.Float32).cast(pl.UInt16)
             )
@@ -147,6 +147,7 @@ class MisfitsPlot:
         ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
+        obs_loc: npt.NDArray[np.float32] | None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         assert key_def is not None
@@ -157,14 +158,14 @@ class MisfitsPlot:
             response_type,
         )
 
-        if response_type == "summary":
+        if response_type in {"summary", "breakthrough"}:
             self._plot_summary_misfits_boxplots(
                 figure,
                 data_with_misfits,
                 plot_context,
             )
 
-        elif response_type == "gen_data":
+        elif response_type in {"gen_data", "rft"}:
             self._plot_gendata_misfits(
                 figure,
                 data_with_misfits,
@@ -189,7 +190,7 @@ class MisfitsPlot:
                 df.with_columns(pl.lit(key).alias("ensemble_key"))
                 for key, df in ensemble_to_misfit_df.items()
             ]
-        ).select(["realization", "key_index", "misfit", "ensemble_key"])
+        ).select(["Realization", "key_index", "misfit", "ensemble_key"])
 
         distinct_gendata_index = all_misfits["key_index"].unique().sort().to_list()
         num_gendata_index = len(distinct_gendata_index)

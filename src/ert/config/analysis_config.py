@@ -104,7 +104,6 @@ class AnalysisConfig:
             }
         }
         deprecated_keys = ["ENKF_NCOMP", "ENKF_SUBSPACE_DIMENSION"]
-        deprecated_inversion_keys = ["USE_EE", "USE_GE"]
         errors = []
         all_errors = []
 
@@ -131,29 +130,19 @@ class AnalysisConfig:
                 continue
             if var_name == "ENKF_FORCE_NCOMP":
                 continue
-            if var_name in deprecated_inversion_keys:
-                all_errors.append(
-                    ConfigValidationError(
-                        f"Keyword {var_name} has been replaced by INVERSION and "
-                        "has no effect.\n\nPlease see "
-                        "https://ert.readthedocs.io/en/latest/reference/configuration/keywords.html#inversion-algorithm "  # noqa: E501
-                        "for documentation how to use this instead."
-                    )
+            if var_name == "INVERSION" and value in inversion_str_map[module_name]:
+                new_value = inversion_str_map[module_name][value]
+                ConfigWarning.warn(
+                    f"Using {value} is deprecated, use:\n"
+                    f"ANALYSIS_SET_VAR {module_name} INVERSION {new_value}"
                 )
-                continue
-            if var_name == "INVERSION":
-                if value in inversion_str_map[module_name]:
-                    new_value = inversion_str_map[module_name][value]
-                    ConfigWarning.warn(
-                        f"Using {value} is deprecated, use:\n"
-                        f"ANALYSIS_SET_VAR {module_name} INVERSION {new_value}"
-                    )
-                    value = new_value
+                value_to_store = new_value
+            else:
+                value_to_store = value
 
-                var_name = "inversion"
             key = var_name.lower()
             try:
-                options[module_name][key] = value
+                options[module_name][key] = value_to_store
             except KeyError:
                 all_errors.append(
                     ConfigValidationError(

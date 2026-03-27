@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from uuid import UUID
 
 from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtGui import QIcon, QKeyEvent
+from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import (
     QCompleter,
     QHBoxLayout,
@@ -14,7 +14,9 @@ from PyQt6.QtWidgets import (
 )
 from typing_extensions import override
 
-from .. import is_dark_mode
+from ert.gui.detect_mode import is_dark_mode
+from ert.gui.icon_utils import load_icon
+
 from .validationsupport import ValidationSupport
 
 
@@ -104,7 +106,7 @@ class ListEditBox(QWidget):
         layout.addWidget(self._list_edit_line)
 
         dialog_button = QToolButton(self)
-        dialog_button.setIcon(QIcon("img:add_circle_outlined.svg"))
+        dialog_button.setIcon(load_icon("add_circle_outlined.svg"))
         dialog_button.setIconSize(QSize(16, 16))
         dialog_button.clicked.connect(self.addChoice)
 
@@ -138,8 +140,8 @@ class ListEditBox(QWidget):
             return self._possible_items_dict
 
         result = {}
-        for item in items:
-            item = item.strip()
+        for unstripped_item in items:
+            item = unstripped_item.strip()
             for uuid, name in self._possible_items_dict.items():
                 if name == item:
                     result[uuid] = name
@@ -158,7 +160,7 @@ class ListEditBox(QWidget):
             valid = False
             message = ListEditBox.NO_ITEMS_SPECIFIED_MSG
         else:
-            for _, name in items.items():
+            for name in items.values():
                 if name not in self._possible_items_dict.values():
                     valid = False
                     message = ListEditBox.ITEM_DOES_NOT_EXIST_MSG % name

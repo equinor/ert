@@ -6,12 +6,10 @@ from urllib.parse import unquote
 from uuid import UUID, uuid4
 
 import polars as pl
-from fastapi import APIRouter, Body, Depends, HTTPException, Query
+from fastapi import APIRouter, Body, Depends, Query
 
 from ert.dark_storage import json_schema as js
-from ert.dark_storage.common import (
-    get_storage,
-)
+from ert.dark_storage.common import get_storage, reraise_as_http_errors
 from ert.dark_storage.endpoints.responses import response_to_pandas_x_axis_fns
 from ert.storage import Experiment, Storage
 
@@ -29,14 +27,8 @@ DEFAULT_BODY = Body(...)
 def get_observations(
     *, storage: Storage = DEFAULT_STORAGE, experiment_id: UUID
 ) -> list[js.ObservationOut]:
-    try:
+    with reraise_as_http_errors(logger, {404: "Experiment not found"}):
         experiment = storage.get_experiment(experiment_id)
-    except KeyError as e:
-        logger.error(e)
-        raise HTTPException(status_code=404, detail="Experiment not found") from e
-    except Exception as ex:
-        logger.exception(ex)
-        raise HTTPException(status_code=500, detail="Internal server error") from ex
 
     return [
         js.ObservationOut(
@@ -45,6 +37,9 @@ def get_observations(
             errors=observation["errors"],
             values=observation["values"],
             x_axis=observation["x_axis"],
+            east=observation["east"],
+            north=observation["north"],
+            radius=observation["radius"],
             name=observation["name"],
         )
         for observation in _get_observations(experiment)
@@ -62,14 +57,8 @@ async def get_observations_for_response(
     ] = None,
 ) -> list[js.ObservationOut]:
     response_key = unquote(response_key)
-    try:
+    with reraise_as_http_errors(logger):
         ensemble = storage.get_ensemble(ensemble_id)
-    except KeyError as e:
-        logger.error(e)
-        raise HTTPException(status_code=404, detail="Ensemble not found") from e
-    except Exception as ex:
-        logger.exception(ex)
-        raise HTTPException(status_code=500, detail="Internal server error") from ex
 
     experiment = ensemble.experiment
 
@@ -98,6 +87,9 @@ async def get_observations_for_response(
             errors=obs["errors"],
             values=obs["values"],
             x_axis=obs["x_axis"],
+            east=obs["east"],
+            north=obs["north"],
+            radius=obs["radius"],
             name=obs["name"],
         )
         for obs in obss
@@ -112,13 +104,14 @@ def _get_observations(
 ) -> list[dict[str, Any]]:
     observations = []
 
-    for stored_response_type, df in experiment.observations.items():
+    for stored_response_type, stored_df in experiment.observations.items():
         if (
             requested_response_type is not None
             and stored_response_type != requested_response_type
         ):
             continue
 
+        df = stored_df
         if observation_keys is not None:
             df = df.filter(pl.col("observation_key").is_in(observation_keys))
 
@@ -147,12 +140,18 @@ def _get_observations(
         df = df.sort("x_axis")
 
         for obs_key, obs_df in df.group_by("name"):
+            values = obs_df["values"].to_list()
+            if stored_response_type == "breakthrough":
+                values = obs_df["threshold"].to_list()
             observations.append(
                 {
                     "name": obs_key[0],
-                    "values": obs_df["values"].to_list(),
+                    "values": values,
                     "errors": obs_df["errors"].to_list(),
                     "x_axis": obs_df["x_axis"].to_list(),
+                    "east": obs_df["east"].to_list(),
+                    "north": obs_df["north"].to_list(),
+                    "radius": obs_df["radius"].to_list(),
                 }
             )
 

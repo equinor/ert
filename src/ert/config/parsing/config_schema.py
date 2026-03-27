@@ -126,10 +126,12 @@ def hook_workflow_keyword() -> SchemaItem:
     )
 
 
-def prioritize_private_ip_address_keyword() -> SchemaItem:
+def hook_workflow_job_keyword() -> SchemaItem:
     return SchemaItem(
-        kw=ConfigKeys.PRIORITIZE_PRIVATE_IP_ADDRESS,
-        type_map=[SchemaItemType.BOOL],
+        kw=ConfigKeys.HOOK_WORKFLOW_JOB,
+        argc_min=3,
+        argc_max=None,
+        multi_occurrence=True,
     )
 
 
@@ -170,6 +172,15 @@ def load_workflow_job_keyword() -> SchemaItem:
         argc_max=2,
         multi_occurrence=True,
         type_map=[SchemaItemType.EXISTING_PATH],
+    )
+
+
+def create_workflow_from_job_keyword() -> SchemaItem:
+    return SchemaItem(
+        kw=ConfigKeys.CREATE_WORKFLOW_FROM_JOB,
+        argc_min=2,
+        argc_max=None,
+        multi_occurrence=True,
     )
 
 
@@ -340,6 +351,7 @@ def init_user_config_schema() -> ConfigSchemaDict:
         existing_path_inline_keyword(
             ConfigKeys.OBS_CONFIG, parser=lambda f, c: parse_observations(c, f)
         ),
+        string_keyword(ConfigKeys.ZONEMAP),
         existing_path_inline_keyword(ConfigKeys.TIME_MAP),
         single_arg_keyword(ConfigKeys.GEN_KW_EXPORT_NAME),
         history_source_keyword(),
@@ -356,7 +368,8 @@ def init_user_config_schema() -> ConfigSchemaDict:
         install_job_keyword(),
         install_job_directory_keyword(),
         hook_workflow_keyword(),
-        prioritize_private_ip_address_keyword(),
+        hook_workflow_job_keyword(),
+        create_workflow_from_job_keyword(),
     ]:
         schema[item.kw] = item
         if item.kw in ConfigAliases:

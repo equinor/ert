@@ -27,21 +27,19 @@ from pytestqt.qtbot import QtBot
 from ert.base_model_context import use_runtime_plugins
 from ert.config import ErtConfig
 from ert.gui.ertwidgets import ClosableDialog, CreateExperimentDialog, EnsembleSelector
+from ert.gui.experiments import ExperimentPanel, RunDialog
+from ert.gui.experiments.view import RealizationWidget
 from ert.gui.main import ErtMainWindow, _setup_main_window, add_gui_log_handler
-from ert.gui.simulation.experiment_panel import ExperimentPanel
-from ert.gui.simulation.run_dialog import RunDialog
-from ert.gui.simulation.view import RealizationWidget
 from ert.gui.tools.load_results.load_results_panel import LoadResultsPanel
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget
 from ert.plugins import get_site_plugins
 from ert.run_models import EnsembleExperiment, MultipleDataAssimilation
 from ert.storage import Storage
-from tests.ert.unit_tests.gui.simulation.test_run_path_dialog import (
-    handle_run_path_dialog,
-)
+from tests.ert.handle_run_path_dialog import handle_run_path_dialog
 
 DEFAULT_NUM_REALIZATIONS = 10
+ENSEMBLE_NAME = "iter"
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -51,6 +49,7 @@ def setup_svg_search_path():
     )
 
 
+@contextmanager
 def open_gui_with_config(config_path) -> Iterator[ErtMainWindow]:
     with (
         _open_main_window(config_path) as (
@@ -68,7 +67,8 @@ def opened_main_window_poly(
 ) -> Iterator[ErtMainWindow]:
     monkeypatch.chdir(tmp_path)
     _new_poly_example(source_root, tmp_path)
-    yield from open_gui_with_config(tmp_path / "poly.ert")
+    with open_gui_with_config(tmp_path / "poly.ert") as gui:
+        yield gui
 
 
 def _new_poly_example(
@@ -112,7 +112,8 @@ def _open_main_window(path) -> Iterator[tuple[ErtMainWindow, Storage, ErtConfig]
 def opened_main_window_minimal_realizations(source_root, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     _new_poly_example(source_root, tmp_path, 2)
-    yield from open_gui_with_config(tmp_path / "poly.ert")
+    with open_gui_with_config(tmp_path / "poly.ert") as gui:
+        yield gui
 
 
 @pytest.fixture(scope="module")
@@ -259,15 +260,34 @@ def _ensemble_experiment_has_run(
         run_experiment, source_root, tmp_path_factory, failing_reals, with_templates
     )
     shutil.copytree(test_files, tmp_path, dirs_exist_ok=True)
-    yield from open_gui_with_config(tmp_path / "poly.ert")
+    with open_gui_with_config(tmp_path / "poly.ert") as gui:
+        yield gui
 
 
 @pytest.fixture(name="run_experiment", scope="module")
 def run_experiment_fixture(request):
-    def func(experiment_mode, gui, click_done=True):
+    def func(experiment_mode, gui, wait_done=True, check_realizations=True, **kwargs):
+        """
+        Runs experiment.
+
+        Parameters
+        ----------
+        wait_done : bool
+            whether to wait until the experiment is done before returning
+        check_realizations : bool
+            whether to check that the number of realizations on in the detailed
+            view is correct on finish
+        kwargs : additional keyword arguments. Supported:
+            - update_method: the update method to select in the dropdown when
+              running a manual update experiment
+        """
         qtbot = QtBot(request)
         with contextlib.suppress(FileNotFoundError):
             shutil.rmtree("poly_out")
+
+        button = gui.findChild(QToolButton, "button_Start_experiment")
+        qtbot.mouseClick(button, Qt.MouseButton.LeftButton)
+
         # Select correct experiment in the simulation panel
         experiment_panel = get_child(gui, ExperimentPanel)
         simulation_mode_combo = get_child(experiment_panel, QComboBox)
@@ -277,6 +297,10 @@ def run_experiment_fixture(request):
         ]
         if hasattr(simulation_settings, "_ensemble_name_field"):
             simulation_settings._ensemble_name_field.setText("iter-0")
+
+        if experiment_mode.name() == "Manual update":
+            update_method = kwargs.get("update_method", "ES Update")
+            simulation_settings._update_method_dropdown.setCurrentText(update_method)
 
         # Click start simulation and agree to the message
         run_experiment = get_child(experiment_panel, QWidget, name="run_experiment")
@@ -294,24 +318,24 @@ def run_experiment_fixture(request):
             QTimer.singleShot(500, handle_dialog)
         qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
 
-        if click_done:
-            # The Run dialog opens, click show details and wait until done appears
-            # then click it
-            run_dialog = wait_for_child(gui, qtbot, RunDialog, timeout=10000)
-            qtbot.waitUntil(
-                lambda: run_dialog.is_simulation_done() is True, timeout=200000
-            )
+        if wait_done or check_realizations:
+            qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=10000)
+            run_dialog = get_children(gui, RunDialog)[-1]
+            qtbot.waitUntil(run_dialog.is_experiment_done, timeout=200000)
             qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
-            # Assert that the number of boxes in the detailed view is
-            # equal to the number of realizations
-            realization_widget = run_dialog._tab_widget.currentWidget()
-            assert isinstance(realization_widget, RealizationWidget)
-            list_model = realization_widget._real_view.model()
-            assert (
-                list_model.rowCount()
-                == experiment_panel.config.runpath_config.num_realizations
-            )
+            if check_realizations:
+                # Assert that the number of boxes in the detailed view is
+                # equal to the number of realizations
+                realization_widget = run_dialog._tab_widget.currentWidget()
+                assert isinstance(realization_widget, RealizationWidget)
+                list_model = realization_widget._real_view.model()
+                expected_num_realizations = (
+                    experiment_panel.config.runpath_config.num_realizations
+                )
+                if experiment_mode.name() == "Single realization test-run":
+                    expected_num_realizations = 1
+                assert list_model.rowCount() == expected_num_realizations
 
     return func
 
@@ -324,18 +348,7 @@ def active_realizations_fixture() -> Mock:
     return active_reals
 
 
-@pytest.fixture
-def runmodel(active_realizations) -> Mock:
-    brm = Mock()
-    brm.get_runtime = Mock(return_value=100)
-    brm.format_error = Mock(return_value="")
-    brm.supports_rerunning_failed_realizations = True
-    brm.simulation_arguments = {"active_realizations": active_realizations}
-    brm.has_failed_realizations = lambda: False
-    return brm
-
-
-def load_results_manually(qtbot, gui, ensemble_name="default"):
+def load_results_manually(qtbot, gui, ensemble_name=ENSEMBLE_NAME):
     def handle_load_results_dialog():
         dialog = wait_for_child(gui, qtbot, ClosableDialog)
         panel = get_child(dialog, LoadResultsPanel)
@@ -368,7 +381,7 @@ def add_experiment_in_manage_experiment_dialog(
     qtbot,
     manage_experiment_dialog,
     experiment_name="My_experiment",
-    ensemble_name="default",
+    ensemble_name=ENSEMBLE_NAME,
 ):
     current_tab = manage_experiment_dialog.currentWidget()
     assert current_tab.objectName() == "create_new_ensemble_tab"
@@ -386,7 +399,7 @@ def add_experiment_in_manage_experiment_dialog(
 
 
 def add_experiment_manually(
-    qtbot, gui, experiment_name="My_experiment", ensemble_name="default"
+    qtbot, gui, experiment_name="My_experiment", ensemble_name=ENSEMBLE_NAME
 ):
     button_manage_experiments = get_child(
         gui, QToolButton, name="button_Manage_experiments"

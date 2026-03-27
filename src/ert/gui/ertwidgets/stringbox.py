@@ -6,7 +6,8 @@ from PyQt6.QtGui import QPalette
 from PyQt6.QtWidgets import QLineEdit
 from typing_extensions import override
 
-from .. import is_dark_mode
+from ert.gui.detect_mode import is_dark_mode
+
 from .validationsupport import ValidationSupport
 
 if TYPE_CHECKING:
@@ -27,12 +28,6 @@ class StringBox(QLineEdit):
         placeholder_text: str = "",
         minimum_width: int = 250,
     ) -> None:
-        """
-        :type model: ert.gui.ertwidgets.models.valuemodel.ValueModel
-        :type help_link: str
-        :type default_string: str
-        :type continuous_update: bool
-        """
         QLineEdit.__init__(self)
         self.setMinimumWidth(minimum_width)
         self._validation = ValidationSupport(self)

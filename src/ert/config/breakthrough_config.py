@@ -1,0 +1,77 @@
+from __future__ import annotations
+
+from datetime import datetime
+from typing import Any, Literal
+
+import polars as pl
+from polars import Float32
+from pydantic import Field
+
+from .derived_response_config import DerivedResponseConfig
+
+
+class BreakthroughConfig(DerivedResponseConfig):
+    type: Literal["breakthrough"] = "breakthrough"
+    keys: list[str] = Field(default_factory=list)
+    summary_keys: list[str] = Field(default_factory=list)
+    thresholds: list[float] = Field(default_factory=list)
+    observed_dates: list[datetime] = Field(default_factory=list)
+    has_finalized_keys: bool = True
+
+    def derive_from_storage(
+        self, iter_: int, realization: int, ensemble: Any
+    ) -> pl.DataFrame:
+        breakthrough_times: list[datetime | None] = []
+        breakthrough_time_offsets: list[float | None] = []
+        for summary_key, threshold, obs_date in zip(
+            self.summary_keys,
+            self.thresholds,
+            self.observed_dates,
+            strict=True,
+        ):
+            response_df = ensemble.load_responses(summary_key, [realization])
+            times = response_df["time"].to_list()
+            values = response_df["values"].to_list()
+
+            breakthrough_time = next(
+                (
+                    time
+                    for time, value in zip(times, values, strict=True)
+                    if value >= threshold
+                ),
+                None,
+            )
+            if breakthrough_time is None:
+                breakthrough_time_offsets.append(None)
+                breakthrough_times.append(None)
+            else:
+                offset_seconds = (breakthrough_time - obs_date).total_seconds()
+                offset_days = offset_seconds / (60 * 60 * 24)
+                breakthrough_time_offsets.append(offset_days)
+                breakthrough_times.append(obs_date)
+
+        if all(time is None for time in breakthrough_times):
+            time_series = pl.Series(breakthrough_times, dtype=pl.Datetime)
+            time_offset_series = pl.Series(breakthrough_time_offsets, dtype=pl.Float32)
+        else:
+            time_offset_series = pl.Series(breakthrough_time_offsets, dtype=Float32)
+            time_series = pl.Series(breakthrough_times).dt.cast_time_unit("ms")
+
+        return pl.DataFrame(
+            {
+                "response_key": self.keys,
+                "threshold": self.thresholds,
+                "time": time_series,
+                "values": time_offset_series,
+            }
+        )
+
+    @property
+    def primary_key(self) -> list[str]:
+        return ["threshold"]
+
+    def display_column(self, value: Any, column_name: str) -> str:
+        if column_name == "time":
+            return value.strftime("%Y-%m-%d")
+
+        return str(value)

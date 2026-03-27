@@ -126,6 +126,10 @@ METADATA = EnsembleSnapshotMetadata(
         ),
         pytest.param(AnalysisStatusEvent(msg="hello"), id="AnalysisStatusEvent"),
         pytest.param(
+            AnalysisStatusEvent(msg="hello", detail=True),
+            id="AnalysisStatusEvent_detail",
+        ),
+        pytest.param(
             AnalysisTimeEvent(remaining_time=22.2, elapsed_time=200.42),
             id="AnalysisTimeEvent",
         ),
@@ -133,6 +137,12 @@ METADATA = EnsembleSnapshotMetadata(
         pytest.param(
             RunModelStatusEvent(iteration=1, run_id=uuid.uuid1(), msg="Hello"),
             id="RunModelStatusEvent",
+        ),
+        pytest.param(
+            RunModelStatusEvent(
+                iteration=1, run_id=uuid.uuid1(), msg="Hello", detail=True
+            ),
+            id="RunModelStatusEvent_detail",
         ),
         pytest.param(
             RunModelTimeEvent(

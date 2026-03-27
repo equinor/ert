@@ -261,10 +261,8 @@ error covariance for the measurements. We can then write the posterior distribut
 
 .. math::
 
-   \begin{align}
    f(x|d) & \propto \exp\{-\frac{1}{2}(x-x^f)^T C_{xx}^{-1}(x-x^f)\} \\
           & \times \exp\{-\frac{1}{2}(g(x)-d)^T C_{dd}^{-1}(g(x)-d)\}.
-   \end{align}
 
 The smoother methods in ERT approximately sample the posterior PDF through various routes.
 These are derived exploiting the fact that maximizing f(x|d) is equivalent to minimizing
@@ -272,10 +270,8 @@ the negative log posterior
 
 .. math::
 
-   \begin{align}
    \mathcal{J}(x) & = \frac{1}{2}(x-x^f)^T C_{xx}^{-1}(x-x^f) \\
           & + \frac{1}{2}(g(x)-d)^T C_{dd}^{-1}(g(x)-d).
-   \end{align}
 
 Solving :math:`\frac{\delta\mathcal{J(x)}}{\delta x} = 0`, using a linearization of :math:`g(x)`,
 and using an averaged or best-fit model sensitivity represented by the linear regression
@@ -301,10 +297,8 @@ cost functions
 
 .. math::
 
-   \begin{align}
    \mathcal{J}(x_j) & = \frac{1}{2}(x_j-x_j^f)^T C_{xx}^{-1}(x_j-x_j^f) \\
           & + \frac{1}{2}(g(x_j)-d_j)^T C_{dd}^{-1}(g(x_j)-d_j).
-   \end{align}
 
 Here probability distributions are represented by a collection of realizations, called an
 ensemble. Specifically, we introduce the prior ensemble
@@ -341,10 +335,8 @@ Covariances :math:`\bar{C}_{xy}`, :math:`\bar{C}_{yy}`, and :math:`\bar{C}_{dd}`
 estimated from the ensemble and the state vector is updated according to:
 
 .. math::
-   \begin{align}
    x_j^a &= x_j^f + \bar{C}_{xy}(\bar{C}_{yy} + \bar{C}_{dd})^{-1}(d_j - y_j^f)\\
    X^a &= X^f + \bar{C}_{xy}(\bar{C}_{yy} + \bar{C}_{dd})^{-1}(D - Y_f).
-   \end{align}
 
 The model responses are then solved indirectly by evaluating the forward model
 
@@ -372,11 +364,9 @@ ES MDA iterates by introducing the observations gradually. The posterior distrib
 can be rewritten:
 
 .. math::
-   \begin{align}
    f(x|d) & \propto f(d|g(x))f(x)\\
           & \propto f(d|y)^{\frac{1}{\alpha_N}} \dots f(d|y)^{\frac{1}{\alpha_2}}f(d|y)^{\frac{1}{\alpha_1}}f(x) \\
 	  & f(d|y)^{(\sum_{i=1}^N \frac{1}{\alpha_i})}f(x)
-   \end{align}
 
 with :math:`\sum_{i=1}^N \frac{1}{\alpha_i} = 1`.
 
@@ -393,24 +383,18 @@ in the process assimilating measurements :math:`d` that are linear in :math:`\ps
 is performed by the Kalman methods by employing the following equations
 
 .. math::
-   \begin{align}
    \mu_{\psi|d} &= \mu_{\psi} + K(d-M\mu_{\psi}),\\
    \Sigma_{\psi|d} &= (I-KM) \Sigma_{\psi}
-   \end{align}
 
 where
 
 .. math::
-   \begin{align}
    K = \Sigma_{\psi}M^\top (M\Sigma_{\psi}M^\top + \Sigma_{d})^{-1}
-   \end{align}
 
 is called tha Kalman gain, and :math:`M` is the linear measurement operator (i.e., a matrix), so that
 
 .. math::
-   \begin{align}
    \hat{d} = M\mu_{\psi}
-   \end{align}
 
 is the best estimate of :math:`d` under the prior knowledge, and the error is assumed Gaussian with covariance :math:`\Sigma_d`.
 The ensemble variants draw an :math:`N`-sample :math:`\{\psi\}_{i=1}^N` from the prior,
@@ -419,19 +403,15 @@ The perturbations are guaranteed to sum to zero over the sample.
 A posterior sample is then formed from updating the prior with the equation for the posterior mean above
 
 .. math::
-   \begin{align}
    \{\psi_i | d_i\} = \psi_i + \hat{K}(d_i-M \psi_i),
-   \end{align}
 
 where the estimated Kalman gain :math:`\hat{K}` is found by exchanging the prior covariance with an estimate based on its sample.
 Thus, the ensemble methods combine a sample from the prior with a sample from the likelihood of observed data, to form a new sample from the posterior.
 The posterior distribution that the posterior sample is conceptually sampled from, has mean and covariance found by
 
 .. math::
-   \begin{align}
    \hat{\mu}_{\psi|d} &= \bar{\psi} + \hat{K}(\bar{d}-M\bar{\psi}),\\
    \hat{\Sigma}_{\psi|d} &= (I-\hat{K}M) \hat{\Sigma}_{\psi}
-   \end{align}
 
 From this, it is seen that when the sample size tends to infinity and estimates converge to the corresponding population quantities,
 then the ensemble variants converge to the standard Kalman filter in the linear Gaussian case.
@@ -446,9 +426,7 @@ the determinant of the posterior covariance tends to zero from above.
 The maximum likelihood estimate is found by minimizing the relevant part of the negative log-likelihood of the data
 
 .. math::
-   \begin{align}
    \hat{\mu}_{ml} = \arg\min_{\mu} |d-M\mu|_2
-   \end{align}
 
 Furthermore, for a strictly decreasing sequence in belief in measurements, the distance between the
 posterior and the maximum likelihood estimate will be strictly decreasing as well.

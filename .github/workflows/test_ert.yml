@@ -23,7 +23,7 @@ jobs:
     runs-on: ${{ inputs.os }}
     timeout-minutes: 30
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         fetch-depth: 0
         submodules: true
@@ -36,20 +36,21 @@ jobs:
       with:
         os: ${{ inputs.os }}
 
-    - uses: actions/setup-python@v6
+    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       id: setup_python
       with:
         python-version: ${{ inputs.python-version }}
 
     - name: Install uv
-      uses: astral-sh/setup-uv@v7
+      uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7.6.0
       with:
         enable-cache: true
+        prune-cache: false
         python-version: ${{ inputs.python-version }}
 
     - name: Install ert
       run: |
-        uv sync --extra dev
+        uv sync --group dev
 
     - name: GUI Test
       if: inputs.test-type == 'gui-tests'
@@ -61,7 +62,7 @@ jobs:
         rm storage
 
     - name: Upload artifact images
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       if: ${{ failure() }}
       continue-on-error: true
       with:
@@ -85,14 +86,14 @@ jobs:
         touch storage
         chmod 000 storage
         uv run just ert-unit-tests
-        ERT_PYTEST_ARGS='--cov=ert --cov=everest --cov=_ert --cov-report=xml:cov_docs.xml --junit-xml=junit.xml -o junit_family=legacy -v --durations=25 --benchmark-disable' uv run just ert-doc-tests
-        ERT_PYTEST_ARGS='--cov=ert --cov=everest --cov=_ert --cov-report=xml:cov_mem.xml --junit-xml=junit.xml -o junit_family=legacy -v --durations=25 --benchmark-disable' uv run just ert-memory-tests
+        ERT_PYTEST_ARGS='--cov=ert --cov=everest --cov=_ert --cov-report=xml:cov_docs.xml --junit-xml=junit-doc.xml -o junit_family=legacy -v --durations=25 --benchmark-disable' uv run just ert-doc-tests
+        ERT_PYTEST_ARGS='--cov=ert --cov=everest --cov=_ert --cov-report=xml:cov_mem.xml --junit-xml=junit-mem.xml -o junit_family=legacy -v --durations=25 --benchmark-disable' uv run just ert-memory-tests
         chmod 700 storage
         rm storage
 
     - name: Upload coverage to Codecov
       id: codecov1
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
       continue-on-error: true
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
@@ -104,7 +105,7 @@ jobs:
       run: |
         sleep 30
     - name: Codecov retry
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
       if: steps.codecov1.outcome == 'failure'
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
@@ -112,15 +113,15 @@ jobs:
         flags: ${{ inputs.test-type }}
         fail_ci_if_error: ${{ github.ref == 'refs/heads/main' }}
 
-    - uses: test-summary/action@v2
+    - uses: test-summary/action@31493c76ec9e7aa675f1585d3ed6f1da69269a86 # v2.4
       if: ${{ !cancelled() }}
       continue-on-error: true
       with:
-        paths: junit.xml
+        paths: junit*.xml
 
     - name: Upload test results to Codecov
       if: ${{ !cancelled() }}
-      uses: codecov/test-results-action@v1
+      uses: codecov/test-results-action@0fa95f0e1eeaafde2c782583b36b28ad0d8c77d3 # v1.2.1
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
 
@@ -133,7 +134,7 @@ jobs:
         # Remove things we have generated on purpose:
         ls -la
         rm -rf .coverage
-        rm -f coverage.xml cov_main.xml cov_docs.xml cov_mem.xml junit.xml
+        rm -f coverage.xml cov_main.xml cov_docs.xml cov_mem.xml junit*.xml
         rm -f ert.*.whl
         rm -f codecov.SHA*
         rm -f codecov

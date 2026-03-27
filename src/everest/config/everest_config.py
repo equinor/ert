@@ -50,17 +50,17 @@ from everest.config.validation_utils import (
     unique_items,
     validate_forward_model_configs,
 )
-from everest.util.forward_models import (
-    validate_forward_model_step_arguments,
-)
-
-from ..config_file_loader import yaml_file_to_substituted_config_dict
-from ..strings import (
+from everest.config_file_loader import yaml_file_to_substituted_config_dict
+from everest.strings import (
     DEFAULT_OUTPUT_DIR,
     OPTIMIZATION_LOG_DIR,
     OPTIMIZATION_OUTPUT_DIR,
     STORAGE_DIR,
 )
+from everest.util.forward_models import (
+    validate_forward_model_step_arguments,
+)
+
 from .control_config import ControlConfig
 from .environment_config import EnvironmentConfig
 from .export_config import ExportConfig
@@ -191,7 +191,6 @@ class EverestConfig(BaseModelWithContextSupport):
             ```yaml
             controls:
               - name: point
-                type: generic_control
                 min: -1.0
                 max: 1.0
                 initial_guess: 0.1
@@ -228,7 +227,6 @@ class EverestConfig(BaseModelWithContextSupport):
                 min: -1.0
                 initial_guess: 0.25
                 perturbation_magnitude: 0.001
-                type: generic_control
                 variables:
                   - name: x
                     index: 1
@@ -254,7 +252,6 @@ class EverestConfig(BaseModelWithContextSupport):
                 max: 1.0
                 min: -1.0
                 perturbation_magnitude: 0.001
-                type: generic_control
                 variables:
                   - name: x
                     initial_guess: [0.25, 0.25, 0.25]
@@ -313,6 +310,8 @@ class EverestConfig(BaseModelWithContextSupport):
         default=None,
         description=dedent(
             """
+            [Deprecated]
+
             An optional list of well configurations.
 
             Each well configuration consists of a `name` field, and an optional
@@ -523,18 +522,18 @@ class EverestConfig(BaseModelWithContextSupport):
 
     @model_validator(mode="after")
     def validate_scales(self) -> Self:
-        errors = []
+        errors: list[str] = []
         if self.optimization.auto_scale:
-            for key in (
-                "objective_functions",
-                "input_constraints",
-                "output_constraints",
-            ):
-                if any(item.scale is not None for item in getattr(self, key)):
-                    errors.append(
-                        "The auto_scale option in the optimization section and the "
-                        f"scale options in the {key} section are mutually exclusive."
-                    )
+            errors.extend(
+                "The auto_scale option in the optimization section and the "
+                f"scale options in the {key} section are mutually exclusive."
+                for key in (
+                    "objective_functions",
+                    "input_constraints",
+                    "output_constraints",
+                )
+                if any(item.scale is not None for item in getattr(self, key))
+            )
             if len(errors) > 0:  # Revisit when pydantic supports ExceptionGroup.
                 raise ValueError(errors)
         return self
@@ -874,6 +873,12 @@ to read summary data from forward model, do:
         return self
 
     @model_validator(mode="after")
+    def deprecate_wells(self) -> Self:
+        if "wells" in self.model_fields_set:
+            ConfigWarning.deprecation_warn(_WELLS_DEPRECATION)
+        return self
+
+    @model_validator(mode="after")
     def validate_that_environment_sim_folder_is_writeable(self) -> Self:
         environment = self.environment
         config_path = self.config_path
@@ -995,8 +1000,8 @@ to read summary data from forward model, do:
         return self._get_output_subdirectory(OPTIMIZATION_OUTPUT_DIR)
 
     @property
-    def storage_dir(self) -> str:
-        return self._get_output_subdirectory(STORAGE_DIR)
+    def storage_dir(self) -> Path:
+        return Path(self._get_output_subdirectory(STORAGE_DIR))
 
     @property
     def log_dir(self) -> str:
@@ -1123,8 +1128,14 @@ to read summary data from forward model, do:
         return EverestObjectivesConfig(
             keys=objective_names,
             input_files=objective_names,
-            weights=[o.weight for o in self.objective_functions],
-            scales=[o.scale for o in self.objective_functions],
+            weights=[
+                o.weight if o.weight is not None else 1.0
+                for o in self.objective_functions
+            ],
+            scales=[
+                o.scale if o.scale is not None else 1.0
+                for o in self.objective_functions
+            ],
             objective_types=[o.type for o in self.objective_functions],
         )
 
@@ -1136,8 +1147,51 @@ to read summary data from forward model, do:
         return EverestConstraintsConfig(
             keys=constraint_names,
             input_files=constraint_names,
-            scales=[c.scale for c in self.output_constraints],
+            scales=[
+                c.scale if c.scale is not None else 1.0 for c in self.output_constraints
+            ],
             targets=[c.target for c in self.output_constraints],
             upper_bounds=[c.upper_bound for c in self.output_constraints],
             lower_bounds=[c.lower_bound for c in self.output_constraints],
         )
+
+
+_WELLS_DEPRECATION = """
+The `wells` section is deprecated and will be removed in a future version.
+
+The contents of the `wells` section is currently saved as a `wells.json` file in
+the working directory of each forward model run. It may be used as an input by
+the forward model. After removal of the `wells` section this file will not be
+generated anymore.
+
+Please remove the `wells` section and replace its functionality using one of the
+following options:
+
+1. No action is needed if none of your forward models require `wells.json`.
+
+2. If only the well names are needed, the forward model can read them from the
+   generated control files. For each entry in the `controls` section of the
+   configuration file, Everest generates a JSON file with the name of the
+   `control` group. These can be used instead of `wells.json`.
+
+3. Consult the documentation of the forward models. Some support entering the
+   required information from the `wells` section directly into the configuration
+   of the forward model itself.
+
+4. As a last resort: Create a YAML or a JSON file with the same content as the
+   `wells` section, and install it using an `install_data` entry in the Everest
+   configuration file:
+
+      install_data:
+        - source: <path_to_file>/wells.yaml
+            target: wells.yaml
+
+   Or: copy the content of the `wells` into an `install_data` entry to generate
+   a JSON file:
+
+      install_data:
+        - target: wells.json
+            data:
+            - name: INJ
+            - name: PROD
+"""

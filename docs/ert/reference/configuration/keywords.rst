@@ -25,6 +25,7 @@ Keyword name                                                            Required
 =====================================================================   ======================================  ==============================  ==============================================================================================================================================
 :ref:`ANALYSIS_SET_VAR <analysis_set_var>`                              NO                                                                      Set analysis module internal state variable
 :ref:`CASE_TABLE <case_table>`                                          NO                                                                      Deprecated
+:ref:`CREATE_WORKFLOW_FROM_JOB <create_workflow_from_job>`              NO                                                                      Define and register a single-job workflow inline
 :ref:`DATA_FILE <data_file>`                                            NO                                                                      Provide an ECLIPSE data file for the problem
 :ref:`DATA_KW <data_kw>`                                                NO                                                                      Replace strings in ECLIPSE .DATA files
 :ref:`DEFINE <define>`                                                  NO                                                                      Define keywords with config scope
@@ -40,6 +41,7 @@ Keyword name                                                            Required
 :ref:`GEN_KW <gen_kw>`                                                  NO                                                                      Add a scalar parameter
 :ref:`GRID <grid>`                                                      NO                                                                      Provide an ECLIPSE grid for the reservoir model
 :ref:`HOOK_WORKFLOW <hook_workflow>`                                    NO                                                                      Install a workflow to be run automatically
+:ref:`HOOK_WORKFLOW_JOB <hook_workflow_job>`                            NO                                                                      Define a single-job workflow inline and hook it to a runtime step
 :ref:`INCLUDE <include>`                                                NO                                                                      Include contents from another ert config
 :ref:`INSTALL_JOB <install_job>`                                        NO                                                                      Install a job for use in a forward model
 :ref:`INVERSION <inversion_algorithm>`                                  NO                                                                      Set inversion method for analysis module
@@ -55,10 +57,10 @@ Keyword name                                                            Required
 :ref:`NUM_CPU <num_cpu>`                                                NO                                      1                               Set the number of CPUs. Intepretation varies depending on context
 :ref:`NUM_REALIZATIONS <num_realizations>`                              YES                                                                     Set the number of reservoir realizations to use
 :ref:`OBS_CONFIG <obs_config>`                                          NO                                                                      File specifying observations with uncertainties
-:ref:`PRIORITIZE_PRIVATE_IP_ADDRESS <prioritize_private_ip_address>`    NO                                      FALSE                           Prioritize using a private IP address over public IP address for communicating with jobs running on the cluster.
 :ref:`QUEUE_OPTION <queue_option>`                                      NO                                                                      Set options for an ERT queue system
 :ref:`QUEUE_SYSTEM <queue_system>`                                      NO                                      LOCAL_DRIVER                    System used for running simulation jobs
 :ref:`REALIZATION_MEMORY <realization_memory>`                          NO                                                                      Set the expected memory requirements for a realization
+:ref:`RFT <rft>`                                                        NO                                                                      Specify which RFT data to load from simulator output
 :ref:`RUNPATH <runpath>`                                                NO                                      realization-<IENS>/iter-<ITER>  Directory to run simulations; simulations/realization-<IENS>/iter-<ITER>
 :ref:`RUNPATH_FILE <runpath_file>`                                      NO                                      .ert_runpath_list               Name of file with path for all forward models that ERT has run. To be used by user defined scripts to find the realizations
 :ref:`RUN_TEMPLATE <run_template>`                                      NO                                                                      Install arbitrary files in the runpath directory
@@ -69,6 +71,7 @@ Keyword name                                                            Required
 :ref:`SURFACE <surface>`                                                NO                                                                      Surface parameter read from RMS IRAP file
 :ref:`UPDATE_LOG_PATH  <update_log_path>`                               NO                                      update_log                      Summary of the update steps are stored in this directory
 :ref:`WORKFLOW_JOB_DIRECTORY  <workflow_job_directory>`                 NO                                                                      Directory containing workflow jobs
+:ref:`ZONEMAP <zonemap>`                                                NO                                                                      Map grid layers to geological zone names for RFT validation
 =====================================================================   ======================================  ==============================  ==============================================================================================================================================
 
 
@@ -302,8 +305,11 @@ specified in `REAL` column; i.e.; 0,1 and 3 in the example. If the `REAL` column
 as realization; i.e. 0,1 and 2 in the example.
 
 Multiple :code:`DESIGN_MATRIX` keywords can be added to the configuration file and ert will validate that
- - the realizations overlap on each instance of the keyword.
- - the parameter names are either unique or the values need to be the same for the overlapping parameters in the different instances of the keyword.
+the parameter names are either unique or the values need to be the same for the overlapping parameters
+in the different instances of the keyword.
+
+In case there is a different number of realizations in each instance, the intersection of the active realizations will be used
+and ert will raise a warning. If there are no common active realizations, ert will produce a ConfigValidationError.
 
 The combination with :ref:`GEN_KW <gen_kw>` parameters is supported. In case of overlapping names, eg. the ert config would contain:
 
@@ -611,29 +617,9 @@ guidelines given in :ref:`Creating an observation file for use with ERT<Configur
         -- Use the observations in my_observations.txt
         OBS_CONFIG my_observations.txt
 
-The OBS_CONFIG keyword is optional, but for your own convenience, it is
-strongly recommended to provide an observation file.
-
-.. _prioritize_private_ip_address:
-
-PRIORITIZE_PRIVATE_IP_ADDRESS
------------------------------
-
-The PRIORITIZE_PRIVATE_IP_ADDRESS key is used to specify if the IP address
-picked by Ert to communicate with jobs running on the cluster should be
-private or public. Some network setups require private IP for communication
-between Ert and forward models. This defaults to FALSE, therefore
-using the public IP address of the machine running Ert.
-
-*Example:*
-
-::
-
-        -- Have Ert use the private IP address of the machine running Ert
-        PRIORITIZE_PRIVATE_IP_ADDRESS TRUE
-
-The PRIORITIZE_PRIVATE_IP_ADDRESS key is optional.
-
+The OBS_CONFIG keyword is optional and is only required when assimilating observations
+in a history matching workflow.
+If ert is used purely for running forward models or sensitivity analysis, it can be omitted.
 
 .. _runpath:
 
@@ -736,8 +722,8 @@ knows if the DATA file is to be executed in parallel.
 
 .. _keywords_controlling_the_simulations:
 
-Keywords controlling the simulations
-------------------------------------
+Keywords controlling the experiment
+-----------------------------------
 
 .. _min_realizations:
 
@@ -745,7 +731,7 @@ MIN_REALIZATIONS
 ----------------
 
 MIN_REALIZATIONS is the minimum number of realizations that
-must have succeeded for the simulation to be regarded as a
+must have succeeded for the ensemble to be regarded as a
 success.
 
 MIN_REALIZATIONS can also be used in combination with
@@ -768,7 +754,7 @@ NUM_REALIZATIONS
 The MIN_REALIZATIONS key is optional, but if it has not been
 set *all* the realisations must succeed.
 
-Please note that MIN_REALIZATIONS = 0 means all simulations must succeed
+Please note that MIN_REALIZATIONS = 0 means all realizations must succeed
 (this happens to be the default value). Note MIN_REALIZATIONS is rounded up
 e.g. 2% of 20 realizations is rounded to 1.
 
@@ -869,7 +855,7 @@ Field parameters (e.g. porosity, permeability or Gaussian Random Fields from APS
 
 ::
 
-        FIELD  ID  PARAMETER  <OUTPUT_FILE>  INIT_FILES:/path/<IENS>  FORWARD_INIT:True  INIT_TRANSFORM:FUNC  OUTPUT_TRANSFORM:FUNC  MIN:X  MAX:Y GRID:CASE.EGRID
+        FIELD  ID  PARAMETER  <OUTPUT_FILE>  INIT_FILES:/path/<IENS>  FORWARD_INIT:True  INIT_TRANSFORM:FUNC  OUTPUT_TRANSFORM:FUNC  MIN:X  MAX:Y  GRID:CASE.EGRID  UPDATE:TRUE
 
 - **ID**
   String identifier with maximum 8 characters that must match the name of the parameter specified in ``INIT_FILES``.
@@ -915,6 +901,11 @@ Field parameters (e.g. porosity, permeability or Gaussian Random Fields from APS
 - **GRID** (Optional)
   Specifies the grid file to use for this specific field parameter, e.g., GRID:CASE.EGRID.
   If not specified, the global grid from the :ref:`GRID<grid>` keyword will be used.
+
+- **UPDATE** (Optional)
+  Specifies whether this field parameter should be included during the history matching
+  update step. Must be set to either ``TRUE`` or ``FALSE``.
+  Defaults to ``TRUE``.
 
 .. _init-files:
 
@@ -1405,14 +1396,32 @@ format. The surface keyword is configured like this:
 
 ::
 
-        SURFACE TOP   OUTPUT_FILE:surf.irap   INIT_FILES:Surfaces/surf<IENS>.irap   BASE_SURFACE:Surfaces/surf0.irap
+        SURFACE  ID  OUTPUT_FILE:surf.irap  INIT_FILES:Surfaces/surf<IENS>.irap  BASE_SURFACE:Surfaces/surf0.irap  FORWARD_INIT:True  UPDATE:TRUE
 
-The first argument, TOP in the example above, is the identifier you want to
-use for this surface in ERT. The OUTPUT_FILE key is the name of surface file
-which ERT will generate for you, INIT_FILES points to a list of files which
-are used to initialize, and BASE_SURFACE must point to one existing surface
-file. When loading the surfaces ERT will check that all the headers are
-compatible. An example of a surface IRAP file is:
+- **ID**
+  The identifier you want to use for this surface in ERT.
+
+- **OUTPUT_FILE**
+  The name of the surface file which ERT will generate for you.
+
+- **INIT_FILES**
+  Points to a list of files used to initialize. Must contain ``<IENS>`` if ``FORWARD_INIT``
+  is set to ``False``.
+
+- **BASE_SURFACE**
+  Must point to one existing surface file. When loading the surfaces ERT will check
+  that all the headers are compatible.
+
+- **FORWARD_INIT** (Optional)
+  If set to ``True``, indicates that the surface files are generated by the forward model.
+  Defaults to ``False``. See the section on initializing from the forward model below.
+
+- **UPDATE** (Optional)
+  Specifies whether this surface parameter should be included during the history matching
+  update step. Must be set to either ``TRUE`` or ``FALSE``.
+  Defaults to ``TRUE``.
+
+An example of a surface IRAP file is:
 
 ::
 
@@ -1500,6 +1509,54 @@ the corresponding :term:`summary key` matches the pattern.
     diagnostic. I.e. they have no effect on the sensitivity analysis or
     history match.
 
+.. _rft:
+
+RFT
+---
+
+The RFT keyword is used to specify which :term:`RFT` data should be loaded from
+the simulator's RFT output files. This keyword tells ERT which wells, dates,
+and properties to read from the RFT files produced by the forward model.
+
+The RFT keyword requires three pieces of information specified using keyword arguments:
+
+- **WELL**: The name of the well to read RFT data from
+- **DATE**: The date when the RFT measurement was taken (ISO format: YYYY-MM-DD)
+- **PROPERTIES**: Comma-separated list of properties to load (e.g., PRESSURE, SWAT, SGAS, SOIL)
+
+The RFT files are read from the location specified by :ref:`ECLBASE <eclbase>`.
+For example, if ``ECLBASE`` is set to ``MY_FIELD``, ERT will look for the file
+``MY_FIELD.RFT`` in each realization's runpath.
+
+*Example:*
+
+::
+
+        -- Load pressure and water saturation from well PROD_01 on two dates
+        RFT WELL:PROD_01 DATE:2015-03-15 PROPERTIES:PRESSURE,SWAT
+        RFT WELL:PROD_01 DATE:2015-06-20 PROPERTIES:PRESSURE,SWAT
+
+        -- Load pressure from multiple wells
+        RFT WELL:INJ_01 DATE:2015-01-01 PROPERTIES:PRESSURE
+        RFT WELL:INJ_02 DATE:2015-01-01 PROPERTIES:PRESSURE
+
+The RFT keyword can be repeated multiple times to specify different wells, dates,
+and properties. This allows ERT to load the simulated RFT data that can be compared
+with :ref:`RFT_OBSERVATION <rft_observation>` entries in your observation file.
+
+**Wildcard support:**
+
+The RFT keyword supports wildcards (``*``) in well names, dates, and properties,
+allowing you to load data for multiple wells or properties at once:
+
+::
+
+        -- Load pressure from all wells on a specific date
+        RFT WELL:* DATE:2015-03-15 PROPERTIES:PRESSURE
+
+        -- Load all properties for a specific well and date
+        RFT WELL:PROD_01 DATE:2015-03-15 PROPERTIES:*
+
 .. _analysis_module:
 
 Analysis module
@@ -1528,26 +1585,21 @@ ANALYSIS_SET_VAR keyword for the `STD_ENKF` module.
 INVERSION
 ^^^^^^^^^
 
-The analysis modules can specify inversion algorithm used.
-These can be manipulated from the config file using the
-ANALYSIS_SET_VAR keyword for the `STD_ENKF` module.
+Specifies the inversion algorithm used in the analysis step.
+Two options are available for the ``STD_ENKF`` module:
 
-**STD_ENKF**
+``EXACT`` — exact inversion using a Cholesky factorization (default)::
 
+    ANALYSIS_SET_VAR STD_ENKF INVERSION EXACT
 
-.. list-table:: Inversion Algorithms for Ensemble Smoother
-   :widths: 50 50 50
-   :header-rows: 1
+``SUBSPACE`` — approximate subspace inversion::
 
-   * - Description
-     - INVERSION
-     - Note
-   * - Exact inversion with diagonal R=I
-     - Deprecated: exact, 0
-     - Preferred name: EXACT
-   * - Subspace inversion with exact R
-     - Deprecated: SUBSPACE_EXACT_R, subspace, 1
-     - Preferred name: SUBSPACE
+    ANALYSIS_SET_VAR STD_ENKF INVERSION SUBSPACE
+
+When using ``SUBSPACE``, you may also want to tune the singular value
+truncation threshold (see :ref:`ENKF_TRUNCATION <enkf_truncation>`)::
+
+    ANALYSIS_SET_VAR STD_ENKF ENKF_TRUNCATION 0.95
 
 .. _localization:
 
@@ -1822,7 +1874,7 @@ The :code:`POST_SIMULATION` hook is typically used to trigger QC workflows.
    HOOK_WORKFLOW QC_WFLOW2        POST_SIMULATION
 
 In this example the workflow :code:`initWFLOW` will run after all the
-simulation directories have been created, just before the forward
+:term:`simulation` directories have been created, just before the forward
 model is submitted to the queue. The workflow :code:`preUpdateWFLOW`
 will be run before the update step and :code:`postUpdateWFLOW` will be
 run after the update step. When all the simulations have completed the
@@ -1830,6 +1882,32 @@ two workflows :code:`QC_WFLOW1` and :code:`QC_WFLOW2` will be run.
 
 Observe that the workflows being 'hooked in' with the
 :code:`HOOK_WORKFLOW` must be loaded with the :code:`LOAD_WORKFLOW` keyword.
+
+.. _hook_workflow_job:
+
+HOOK_WORKFLOW_JOB
+-----------------
+
+:code:`HOOK_WORKFLOW_JOB` is a compact alternative to the
+:code:`CREATE_WORKFLOW_FROM_JOB` + :code:`HOOK_WORKFLOW` combination. It
+defines a single-job workflow inline and immediately hooks it to a runtime
+step, without requiring a separate workflow file and a
+:code:`LOAD_WORKFLOW` line.
+
+Syntax::
+
+   HOOK_WORKFLOW_JOB <workflow_name> <job_name> [args...] <runtime_step>
+
+The last argument must be one of the supported runtime step values:
+:code:`PRE_SIMULATION`, :code:`POST_SIMULATION`, :code:`PRE_UPDATE`,
+:code:`POST_UPDATE`, :code:`PRE_FIRST_UPDATE`, :code:`PRE_EXPERIMENT`,
+:code:`POST_EXPERIMENT`.
+
+*Example:*
+
+::
+
+   HOOK_WORKFLOW_JOB export_rft EXPORT_RFT some_path/rft.csv POST_SIMULATION
 
 .. _load_workflow:
 
@@ -1848,6 +1926,26 @@ argument. By default the workflow will be labeled with the filename
 internally in ERT, but you can optionally supply a second extra argument
 which will be used as the name for the workflow.  Alternatively,
 you can load a workflow interactively.
+
+.. _create_workflow_from_job:
+
+CREATE_WORKFLOW_FROM_JOB
+------------------------
+
+:code:`CREATE_WORKFLOW_FROM_JOB` defines and registers a named workflow that
+runs a single workflow job, without needing a separate workflow file.
+This is a compact alternative to writing a one-line workflow file and loading
+it with :code:`LOAD_WORKFLOW`.
+
+Syntax::
+
+   CREATE_WORKFLOW_FROM_JOB <workflow_name> <job_name> [args...]
+
+*Example:*
+
+::
+
+   CREATE_WORKFLOW_FROM_JOB export_rft EXPORT_RFT some_path/rft.csv
 
 .. _load_workflow_job:
 
@@ -1888,6 +1986,47 @@ should be job configuration files. The jobs loaded in this way will
 all get the name of the file as the name of the job. The
 :code:`WORKFLOW_JOB_DIRECTORY` keyword will *not* load configuration
 files recursively.
+
+.. _zonemap:
+
+ZONEMAP
+-------
+
+The ZONEMAP keyword specifies a file that maps simulation grid layers (K indices)
+to geological zone names. This is primarily used to validate :ref:`RFT_OBSERVATION <rft_observation>`
+locations to ensure that observations fall within the expected geological zones.
+
+The zonemap file format is simple: each line contains a K-layer index (1-indexed)
+followed by one or more zone names that apply to that layer:
+
+::
+
+    -- Format: K_layer zone1 [zone2 ...]
+    1  TopZone
+    2  TopZone
+    3  MiddleZone
+    4  MiddleZone
+    5  BottomZone
+    6  BottomZone
+
+*Example usage:*
+
+::
+
+        ZONEMAP my_zones.txt
+
+The file my_zones.txt should be located in the runpath in the above example. In
+general, when the ZONEMAP is set to a relative path then it is interpreted as relative
+to the runpath, otherwise it should be located at the absolute path.
+
+When RFT observations include a ZONE specification (either in the CSV file or
+directly in the observation), ERT will validate that the observation's grid
+location matches the expected zone from the ZONEMAP. If an observation is
+located in a different zone than specified, it will be deactivated with a warning.
+
+.. note::
+    Grid layers are 1-indexed in the ZONEMAP file. Multiple zone names can be
+    specified for a single layer if it spans multiple geological zones.
 
 Manipulating the environment variables
 --------------------------------------

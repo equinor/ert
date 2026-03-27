@@ -1,4 +1,3 @@
-import json
 import shutil
 from datetime import datetime
 from pathlib import Path
@@ -119,13 +118,13 @@ def test_api_summary_snapshot(config_file, snapshot, cached_example):
         response_config = experiment.response_configuration
         response_config["summary"] = SummaryConfig(keys=["*"])
 
+        experiment.experiment_config["response_configuration"] = [
+            c.model_dump(mode="json") for c in response_config.values()
+        ]
+
         experiment._storage._write_transaction(
-            experiment._path / experiment._responses_file,
-            json.dumps(
-                {c.type: c.model_dump(mode="json") for c in response_config.values()},
-                default=str,
-                indent=2,
-            ).encode("utf-8"),
+            experiment._path / experiment._index_file,
+            experiment._index.model_dump_json(indent=2).encode("utf-8"),
         )
 
         smry_data = pl.DataFrame(
@@ -162,13 +161,13 @@ def test_api_summary_snapshot_missing_batch(snapshot, cached_example):
         response_config = experiment.response_configuration
         response_config["summary"] = SummaryConfig(keys=["*"])
 
+        experiment.experiment_config["response_configuration"] = [
+            c.model_dump(mode="json") for c in response_config.values()
+        ]
+
         experiment._storage._write_transaction(
-            experiment._path / experiment._responses_file,
-            json.dumps(
-                {c.type: c.model_dump(mode="json") for c in response_config.values()},
-                default=str,
-                indent=2,
-            ).encode("utf-8"),
+            experiment._path / experiment._index_file,
+            experiment._index.model_dump_json(indent=2).encode("utf-8"),
         )
 
         smry_data = pl.DataFrame(
@@ -211,13 +210,13 @@ def test_api_summary_snapshot_with_differing_columns_per_batch(
         response_config = experiment.response_configuration
         response_config["summary"] = SummaryConfig(keys=["*"])
 
+        experiment.experiment_config["response_configuration"] = [
+            c.model_dump(mode="json") for c in response_config.values()
+        ]
+
         experiment._storage._write_transaction(
-            experiment._path / experiment._responses_file,
-            json.dumps(
-                {c.type: c.model_dump(mode="json") for c in response_config.values()},
-                default=str,
-                indent=2,
-            ).encode("utf-8"),
+            experiment._path / experiment._index_file,
+            experiment._index.model_dump_json(indent=2).encode("utf-8"),
         )
 
         smry_data = pl.DataFrame(

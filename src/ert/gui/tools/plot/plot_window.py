@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from typing import TYPE_CHECKING, cast
 
 import numpy as np
@@ -22,8 +23,10 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ert.config import BreakthroughConfig
 from ert.config.field import Field
 from ert.dark_storage.common import get_storage_api_version
+from ert.field_utils import transform_observation_locations
 from ert.gui.ertwidgets import CopyButton, showWaitCursorWhileWaiting
 from ert.services import ServerBootFail
 from ert.utils import log_duration
@@ -38,12 +41,15 @@ from .plottery.plots import (
     CrossEnsembleStatisticsPlot,
     DistributionPlot,
     EnsemblePlot,
+    EverestGradientsPlot,
     GaussianKDEPlot,
     HistogramPlot,
     MisfitsPlot,
     StatisticsPlot,
     StdDevPlot,
+    ValuesOverIterationsPlot,
 )
+from .widgets.everest_control_selection_widget import EverestControlSelectionWidget
 
 CROSS_ENSEMBLE_STATISTICS = "Cross ensemble statistics"
 DISTRIBUTION = "Distribution"
@@ -53,6 +59,9 @@ HISTOGRAM = "Histogram"
 STATISTICS = "Statistics"
 STD_DEV = "Std Dev"
 MISFITS = "Misfits"
+EVEREST_RESPONSES_PLOT = "Batch responses"
+EVEREST_CONTROLS_PLOT = "Batch controls"
+EVEREST_GRADIENTS_PLOT = "Batch Gradients"
 
 RESPONSE_DEFAULT = 0
 GEN_KW_DEFAULT = 3
@@ -174,6 +183,12 @@ class PlotWindow(QMainWindow):
                 self._key_definitions = []
             QApplication.restoreOverrideCursor()
 
+            is_everest = any(
+                k.metadata.get("data_origin")
+                in {"everest_parameters", "everest_objectives", "everest_constraints"}
+                for k in self._key_definitions
+            )
+
             self._plot_customizer = PlotCustomizer(self, self._key_definitions)
             self._plot_customizer.settingsChanged.connect(self.keySelected)
             self._central_tab = QTabWidget()
@@ -189,25 +204,42 @@ class PlotWindow(QMainWindow):
 
             self._plot_widgets: list[PlotWidget] = []
 
-            self.addPlotWidget(ENSEMBLE, EnsemblePlot())
-            self.addPlotWidget(STATISTICS, StatisticsPlot())
-            self.addPlotWidget(MISFITS, MisfitsPlot())
-            self.addPlotWidget(HISTOGRAM, HistogramPlot())
-            self.addPlotWidget(GAUSSIAN_KDE, GaussianKDEPlot())
-            self.addPlotWidget(DISTRIBUTION, DistributionPlot())
-            self.addPlotWidget(CROSS_ENSEMBLE_STATISTICS, CrossEnsembleStatisticsPlot())
-            self.addPlotWidget(STD_DEV, StdDevPlot())
+            if not is_everest:
+                self.addPlotWidget(ENSEMBLE, EnsemblePlot())
+                self.addPlotWidget(STATISTICS, StatisticsPlot())
+                self.addPlotWidget(MISFITS, MisfitsPlot())
+                self.addPlotWidget(HISTOGRAM, HistogramPlot())
+                self.addPlotWidget(GAUSSIAN_KDE, GaussianKDEPlot())
+                self.addPlotWidget(DISTRIBUTION, DistributionPlot())
+                self.addPlotWidget(
+                    CROSS_ENSEMBLE_STATISTICS, CrossEnsembleStatisticsPlot()
+                )
+                self.addPlotWidget(STD_DEV, StdDevPlot())
+            else:
+                self.addPlotWidget(ENSEMBLE, EnsemblePlot())
+                self.addPlotWidget(EVEREST_CONTROLS_PLOT, ValuesOverIterationsPlot())
+                self.addPlotWidget(EVEREST_RESPONSES_PLOT, ValuesOverIterationsPlot())
+                self.addPlotWidget(EVEREST_GRADIENTS_PLOT, EverestGradientsPlot())
+
             self._central_tab.currentChanged.connect(self.currentTabChanged)
             self.logPlotTabUsage(self._central_tab.tabText(0), default=True)
 
             self._prev_tab_widget_index = -1
             self._current_tab_index = -1
             self._prev_key_dimensionality = -1
-            self._prev_tab_widget_index_map: dict[int, int] = {
-                2: RESPONSE_DEFAULT,
-                1: GEN_KW_DEFAULT,
-                3: STD_DEV_DEFAULT,
-            }
+            self._prev_tab_widget_index_map: dict[int, int] = {}
+            if is_everest:
+                self._prev_tab_widget_index_map = {
+                    1: 0,
+                    2: 1,
+                    3: 0,  # Fallback
+                }
+            else:
+                self._prev_tab_widget_index_map = {
+                    2: RESPONSE_DEFAULT,
+                    1: GEN_KW_DEFAULT,
+                    3: STD_DEV_DEFAULT,
+                }
 
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
             try:
@@ -219,13 +251,16 @@ class PlotWindow(QMainWindow):
 
             plot_case_objects = [obj for obj in ensembles if not obj.hidden]
 
-            self._data_type_keys_widget = DataTypeKeysWidget(self._key_definitions)
+            self._data_type_keys_widget = DataTypeKeysWidget(
+                self._key_definitions, is_everest
+            )
             self._data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
             self.addDock("Data types", self._data_type_keys_widget)
 
             self._ensemble_selection_widget = EnsembleSelectionWidget(
                 plot_case_objects,
                 self._plot_customizer.getPlotConfig().getNumberOfColors(),
+                is_everest=is_everest,
             )
 
             self._ensemble_selection_widget.ensembleSelectionChanged.connect(
@@ -233,6 +268,21 @@ class PlotWindow(QMainWindow):
             )
             self.addDock("Plot ensemble", self._ensemble_selection_widget)
 
+            everest_parameters = [
+                kd.parameter.name
+                for kd in self._key_definitions
+                if kd.parameter and kd.parameter.type == "everest_parameters"
+            ]
+            self._everest_control_selection_widget = EverestControlSelectionWidget(
+                everest_parameters
+            )
+            self._everest_control_selection_widget.controlSelectionChanged.connect(
+                self.updatePlot
+            )
+            self._everest_dock = self.addDock(
+                "Everest Controls", self._everest_control_selection_widget
+            )
+            self._everest_dock.setVisible(False)
             self._data_type_keys_widget.selectDefault()
 
     def get_plot_api_version(self) -> str:
@@ -260,46 +310,106 @@ class PlotWindow(QMainWindow):
 
         plot_widget = cast(PlotWidget, self._central_tab.currentWidget())
 
-        if plot_widget._plotter.dimensionality == key_def.dimensionality:
+        # For Breakthrough responses, we want to plot summary_key timeseries, but use
+        # derived breakthrough responses for misfits.
+        selected_tab = plot_widget.name
+        if (
+            isinstance(key_def.response, BreakthroughConfig)
+            and selected_tab != "Misfits"
+        ):
+            key = key.replace("BREAKTHROUGH:", "")
+
+        is_gradient_plot = plot_widget.name == EVEREST_GRADIENTS_PLOT
+        self._everest_dock.setVisible(is_gradient_plot)
+
+        if (
+            plot_widget._plotter.dimensionality == key_def.dimensionality
+            or (
+                plot_widget.name
+                in {
+                    EVEREST_RESPONSES_PLOT,
+                    EVEREST_CONTROLS_PLOT,
+                    EVEREST_GRADIENTS_PLOT,
+                }
+            )
+            or (key_def.metadata.get("data_origin") == "everest_batch_objectives")
+        ):
             selected_ensembles = (
                 self._ensemble_selection_widget.get_selected_ensembles()
             )
             ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame] = {}
-            for ensemble in selected_ensembles:
+
+            if is_gradient_plot:
+                selected_controls = (
+                    self._everest_control_selection_widget.get_selected_controls()
+                )
+                plot_widget._plotter.set_selected_controls(selected_controls)  # type: ignore
+
+            def fetch_data(
+                ensemble: EnsembleObject,
+            ) -> tuple[EnsembleObject, pd.DataFrame | BaseException | None]:
                 try:
-                    if key_def.response_metadata is not None:
-                        ensemble_to_data_map[ensemble] = self._api.data_for_response(
+                    data = None
+                    if is_gradient_plot:
+                        data = self._api.data_for_gradient(ensemble.id, key)
+                    elif (
+                        key_def.response is not None
+                        or key_def.metadata.get("data_origin")
+                        == "everest_batch_objectives"
+                    ):
+                        data = self._api.data_for_response(
                             ensemble_id=ensemble.id,
-                            response_key=key_def.response_metadata.response_key,
+                            response_key=key,
                             filter_on=key_def.filter_on,
                         )
-                    elif (
-                        key_def.parameter is not None
-                        and key_def.parameter.type == "gen_kw"
+                    elif key_def.parameter is not None and (
+                        key_def.parameter.type
+                        in {"gen_kw", "everest_parameters", "everest_objective"}
                     ):
-                        ensemble_to_data_map[ensemble] = self._api.data_for_parameter(
+                        data = self._api.data_for_parameter(
                             ensemble_id=ensemble.id,
                             parameter_key=key_def.parameter.name,
                         )
                 except BaseException as e:
-                    handle_exception(e)
+                    return ensemble, e
 
+                return ensemble, data
+
+            with ThreadPoolExecutor() as executor:
+                for ensemble, result in executor.map(fetch_data, selected_ensembles):
+                    if isinstance(result, BaseException):
+                        handle_exception(result)
+                    elif result is not None:
+                        ensemble_to_data_map[ensemble] = result
+
+            negative_values_in_data = False
+            if key_def.parameter is not None and key_def.parameter.type == "gen_kw":
+                for data in ensemble_to_data_map.values():
+                    numeric = data.select_dtypes(include=["number"])
+                    if not numeric.empty and numeric.le(0).any().any():
+                        negative_values_in_data = True
+                        break
+
+            plot_widget._negative_values_in_data = negative_values_in_data
             observations = None
             if key_def.observations and selected_ensembles:
                 try:
                     observations = self._api.observations_for_key(
-                        [ensembles.id for ensembles in selected_ensembles], key
+                        [ensembles.id for ensembles in selected_ensembles],
+                        key_def.key,
                     )
                 except BaseException as e:
                     handle_exception(e)
 
             std_dev_images: dict[str, npt.NDArray[np.float32]] = {}
-
+            obs_loc: npt.NDArray[np.float32] | None = None
             if isinstance(key_def.parameter, Field):
                 plot_widget.showLayerWidget.emit(True)
                 layers = key_def.parameter.ertbox_params.nz
                 plot_widget.updateLayerWidget.emit(layers)
-
+                obs_loc = transform_observation_locations(
+                    self._api.observation_locations(), key_def.parameter.ertbox_params
+                )
                 if layer is None:
                     plot_widget.resetLayerWidget.emit()
                     layer = 0
@@ -339,20 +449,21 @@ class PlotWindow(QMainWindow):
                     handle_exception(e)
                     plot_context.history_data = None
 
-            if (
-                key_def.response_metadata is not None
-                and key_def.response_metadata.response_type == "rft"
-            ):
+            if key_def.response is not None and key_def.response.type == "rft":
                 plot_context.setXLabel(key.split(":")[-1])
                 plot_context.setYLabel("TVD")
-                plot_context.depth_y_axis = True
+                plot_context.flip_response_axis = True
+                plot_context.flip_observation_axis = True
                 for ekey, data in list(ensemble_to_data_map.items()):
                     ensemble_to_data_map[ekey] = data.interpolate(
                         method="linear", axis="columns"
                     )
 
-            for data in ensemble_to_data_map.values():
-                data = data.T
+            if key_def.response is not None and key_def.response.type == "breakthrough":
+                plot_context.flip_observation_axis = True
+
+            for untransposed_data in ensemble_to_data_map.values():
+                data = untransposed_data.T
 
                 if not data.empty and data.index.inferred_type == "datetime64":
                     self._preferred_ensemble_x_axis_format = PlotContext.DATE_AXIS
@@ -365,6 +476,7 @@ class PlotWindow(QMainWindow):
                 ensemble_to_data_map,
                 observations,
                 std_dev_images,
+                obs_loc,
                 key_def,
             )
 
@@ -401,7 +513,9 @@ class PlotWindow(QMainWindow):
         | DistributionPlot
         | CrossEnsembleStatisticsPlot
         | StdDevPlot
-        | MisfitsPlot,
+        | MisfitsPlot
+        | ValuesOverIterationsPlot
+        | EverestGradientsPlot,
         enabled: bool = True,
     ) -> None:
         plot_widget = PlotWidget(name, plotter)
@@ -443,6 +557,51 @@ class PlotWindow(QMainWindow):
             and (key_def.observations or not widget._plotter.requires_observations)
         ]
 
+        is_everest = key_def.metadata.get("data_origin") in {
+            "everest_objectives",
+            "everest_constraints",
+        }
+        everest_widget = next(
+            (w for w in self._plot_widgets if w.name == EVEREST_RESPONSES_PLOT), None
+        )
+
+        if everest_widget:
+            if (
+                is_everest
+                or key_def.metadata.get("data_origin") == "everest_batch_objectives"
+            ):
+                available_widgets = [everest_widget]
+            elif everest_widget in available_widgets:
+                available_widgets.remove(everest_widget)
+
+        is_everest_control = (
+            key_def.parameter is not None
+            and key_def.parameter.type == "everest_parameters"
+        )
+        everest_control_widget = next(
+            (w for w in self._plot_widgets if w.name == EVEREST_CONTROLS_PLOT), None
+        )
+
+        if everest_control_widget:
+            if is_everest_control:
+                available_widgets = [everest_control_widget]
+            elif everest_control_widget in available_widgets:
+                available_widgets.remove(everest_control_widget)
+
+        everest_gradients_widget = next(
+            (w for w in self._plot_widgets if w.name == EVEREST_GRADIENTS_PLOT), None
+        )
+
+        if everest_gradients_widget:
+            if is_everest:
+                if everest_gradients_widget not in available_widgets:
+                    available_widgets.append(everest_gradients_widget)
+            elif (
+                key_def.metadata.get("data_origin") == "everest_batch_objectives"
+                and everest_gradients_widget in available_widgets
+            ) or everest_gradients_widget in available_widgets:
+                available_widgets.remove(everest_gradients_widget)
+
         # Enabling/disabling tab triggers the
         # currentTabChanged event which also triggers
         # the updatePlot, which is slow and redundant.
@@ -466,6 +625,9 @@ class PlotWindow(QMainWindow):
                 self._prev_tab_widget_index_map[key_def.dimensionality]
             )
             self._current_tab_index = -1
+
+        if current_widget not in available_widgets and available_widgets:
+            current_widget = available_widgets[0]
 
         self._central_tab.setCurrentWidget(current_widget)
         self._central_tab.currentChanged.connect(self.currentTabChanged)

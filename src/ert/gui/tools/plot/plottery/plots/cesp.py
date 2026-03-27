@@ -46,6 +46,7 @@ class CrossEnsembleStatisticsPlot:
         ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
+        obs_loc: npt.NDArray[np.float32] | None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         plotCrossEnsembleStatistics(
@@ -90,18 +91,18 @@ def plotCrossEnsembleStatistics(
         std_dev_factor = config.getStandardDeviationFactor()
 
         if not data.empty:
-            data = _assertNumeric(data)
-            if data is not None:
+            numeric_data = _assertNumeric(data)
+            if numeric_data is not None:
                 ccs["index"].append(ensemble_index)
-                ccs["mean"][ensemble_index] = data.mean()
-                ccs["min"][ensemble_index] = data.min()
-                ccs["max"][ensemble_index] = data.max()
-                ccs["std"][ensemble_index] = data.std() * std_dev_factor
-                ccs["p10"][ensemble_index] = data.quantile(0.1)
-                ccs["p33"][ensemble_index] = data.quantile(0.33)
-                ccs["p50"][ensemble_index] = data.quantile(0.5)
-                ccs["p67"][ensemble_index] = data.quantile(0.67)
-                ccs["p90"][ensemble_index] = data.quantile(0.9)
+                ccs["mean"][ensemble_index] = numeric_data.mean()
+                ccs["min"][ensemble_index] = numeric_data.min()
+                ccs["max"][ensemble_index] = numeric_data.max()
+                ccs["std"][ensemble_index] = numeric_data.std() * std_dev_factor
+                ccs["p10"][ensemble_index] = numeric_data.quantile(0.1)
+                ccs["p33"][ensemble_index] = numeric_data.quantile(0.33)
+                ccs["p50"][ensemble_index] = numeric_data.quantile(0.5)
+                ccs["p67"][ensemble_index] = numeric_data.quantile(0.67)
+                ccs["p90"][ensemble_index] = numeric_data.quantile(0.9)
 
                 _plotCrossEnsembleStatistics(axes, config, ccs, ensemble_index)
 
@@ -163,15 +164,12 @@ def _addStatisticsLegend(
             plot_config.addLegendItem(style.name, line)
 
 
-def _assertNumeric(data: pd.DataFrame) -> pd.Series:
+def _assertNumeric(data: pd.DataFrame) -> pd.Series | None:
     data_series = data[0]
-    if data_series.dtype == "object":
-        try:
-            data_series = pd.to_numeric(data_series, errors="coerce")
-        except AttributeError:
-            data_series = data_series.convert_objects(convert_numeric=True)
+    if not pd.api.types.is_numeric_dtype(data_series):
+        data_series = pd.to_numeric(data_series, errors="coerce")
 
-    if data_series.dtype == "object":
+    if not pd.api.types.is_numeric_dtype(data_series):
         data_series = None
     return data_series
 

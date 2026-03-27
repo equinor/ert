@@ -9,8 +9,11 @@ import pandas as pd
 import pytest
 from resdata.summary import Summary
 
-from ert.analysis import ErtAnalysisError, smoother_update
-from ert.config import ErtConfig, ESSettings, ObservationSettings
+from ert.analysis import (
+    ErtAnalysisError,
+    smoother_update,
+)
+from ert.config import ErtConfig, ObservationSettings
 from ert.data import MeasuredData
 from ert.sample_prior import sample_prior
 from ert.storage.local_ensemble import load_parameters_and_responses_from_runpath
@@ -19,9 +22,20 @@ from ert.storage.local_ensemble import load_parameters_and_responses_from_runpat
 @pytest.fixture
 def prior_ensemble(storage, ert_config):
     return storage.create_experiment(
-        parameters=ert_config.ensemble_config.parameter_configuration,
-        responses=ert_config.ensemble_config.response_configuration,
-        observations=ert_config.observations,
+        name="prior",
+        experiment_config={
+            "parameter_configuration": [
+                pc.model_dump(mode="json")
+                for pc in ert_config.ensemble_config.parameter_configuration
+            ],
+            "response_configuration": [
+                rc.model_dump(mode="json")
+                for rc in ert_config.ensemble_config.response_configuration
+            ],
+            "observations": [
+                od.model_dump(mode="json") for od in ert_config.observation_declarations
+            ],
+        },
     ).create_ensemble(ensemble_size=3, name="prior")
 
 
@@ -107,9 +121,7 @@ def test_that_reading_matching_time_is_ok(ert_config, storage, prior_ensemble):
         prior_ensemble,
         target_ensemble,
         prior_ensemble.experiment.observation_keys,
-        ert_config.ensemble_config.parameters,
         ObservationSettings(),
-        ESSettings(),
     )
 
 
@@ -142,9 +154,7 @@ def test_that_mismatched_responses_give_error(ert_config, storage, prior_ensembl
             prior_ensemble,
             target_ensemble,
             prior_ensemble.experiment.observation_keys,
-            ert_config.ensemble_config.parameters,
             ObservationSettings(),
-            ESSettings(),
         )
 
 
@@ -181,9 +191,7 @@ def test_that_different_length_is_ok_as_long_as_observation_time_exists(
         prior_ensemble,
         target_ensemble,
         prior_ensemble.experiment.observation_keys,
-        ert_config.ensemble_config.parameters,
         ObservationSettings(),
-        ESSettings(),
     )
 
 
@@ -235,9 +243,7 @@ def test_that_duplicate_summary_time_steps_does_not_fail(
         prior_ensemble,
         target_ensemble,
         prior_ensemble.experiment.observation_keys,
-        ert_config.ensemble_config.parameters,
         ObservationSettings(),
-        ESSettings(),
     )
 
 

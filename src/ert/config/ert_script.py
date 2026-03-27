@@ -110,7 +110,7 @@ class ErtScript:
     def requested_fixtures(self) -> set[str]:
         return {
             k
-            for k, v in inspect.signature(self.run).parameters.items()
+            for k in inspect.signature(self.run).parameters
             if k in all_hooked_workflow_fixtures
         }
 
@@ -226,8 +226,9 @@ class ErtScript:
         result = None
         for _, member in inspect.getmembers(
             module,
-            lambda member: inspect.isclass(member)
-            and member.__module__ == module.__name__,
+            lambda member: (
+                inspect.isclass(member) and member.__module__ == module.__name__
+            ),
         ):
             if ErtScript in inspect.getmro(member):
                 if result is not None:

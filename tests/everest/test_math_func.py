@@ -5,6 +5,7 @@ import pytest
 import yaml
 
 from ert.base_model_context import use_runtime_plugins
+from ert.config import ConfigWarning
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.plugins import get_site_plugins
 from ert.run_models.everest_run_model import EverestRunModel
@@ -24,7 +25,7 @@ def test_math_func_multiobj(cached_example):
 
     config = EverestConfig.load_file(Path(config_path) / config_file)
 
-    result = get_optimal_result(config.optimization_output_dir)
+    result = get_optimal_result(config.storage_dir)
 
     # Check resulting points
     x, y, z = (result.controls["point." + p] for p in ("x", "y", "z"))
@@ -43,7 +44,7 @@ def test_math_func_advanced(cached_example):
     config_path, config_file, _, _ = cached_example("math_func/config_advanced.yml")
 
     config = EverestConfig.load_file(Path(config_path) / config_file)
-    result = get_optimal_result(config.optimization_output_dir)
+    result = get_optimal_result(config.storage_dir)
 
     point_names = ["x.0", "x.1", "x.2"]
 
@@ -150,7 +151,8 @@ def test_math_func_auto_scaled_controls(copy_math_func_test_data_to_tmp):
         ],
         "simulator": {"queue_system": {"name": "local", "max_running": 2}},
     }
-    config = EverestConfig.model_validate(config_dict)
+    with pytest.warns(ConfigWarning, match="The `controls.type` field is deprecated"):
+        config = EverestConfig.model_validate(config_dict)
 
     # Act
     site_plugins = get_site_plugins()
@@ -159,7 +161,7 @@ def test_math_func_auto_scaled_controls(copy_math_func_test_data_to_tmp):
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
 
-    optimal_result = get_optimal_result(config.optimization_output_dir)
+    optimal_result = get_optimal_result(config.storage_dir)
 
     # Assert
     x, y, z = (optimal_result.controls["point." + p] for p in ("x", "y", "z"))
@@ -184,23 +186,25 @@ def test_math_func_auto_scaled_objectives(copy_math_func_test_data_to_tmp):
     del config_dict["objective_functions"][0]["scale"]
 
     config_dict["environment"]["output_folder"] = "output_no_auto_scale"
-    config = EverestConfig.model_validate(config_dict)
+    with pytest.warns(ConfigWarning, match="The `controls.type` field is deprecated"):
+        config = EverestConfig.model_validate(config_dict)
     site_plugins = get_site_plugins()
     with use_runtime_plugins(site_plugins):
         run_model = EverestRunModel.create(config, runtime_plugins=site_plugins)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
-    optim1 = get_optimal_result(config.optimization_output_dir).total_objective
+    optim1 = get_optimal_result(config.storage_dir).total_objective
 
     config_dict["environment"]["output_folder"] = "output_auto_scale"
     config_dict["optimization"]["auto_scale"] = True
-    config = EverestConfig.model_validate(config_dict)
+    with pytest.warns(ConfigWarning, match="The `controls.type` field is deprecated"):
+        config = EverestConfig.model_validate(config_dict)
     site_plugins = get_site_plugins()
     with use_runtime_plugins(site_plugins):
         run_model = EverestRunModel.create(config, runtime_plugins=site_plugins)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
-    optim2 = get_optimal_result(config.optimization_output_dir).total_objective
+    optim2 = get_optimal_result(config.storage_dir).total_objective
 
     assert optim1 != optim2
     assert optim1 == pytest.approx(optim2, abs=0.001)
@@ -216,23 +220,25 @@ def test_math_func_auto_scaled_constraints(copy_math_func_test_data_to_tmp):
     del config_dict["output_constraints"][0]["scale"]
 
     config_dict["environment"]["output_folder"] = "output_no_auto_scale"
-    config = EverestConfig.model_validate(config_dict)
+    with pytest.warns(ConfigWarning, match="The `controls.type` field is deprecated"):
+        config = EverestConfig.model_validate(config_dict)
     site_plugins = get_site_plugins()
     with use_runtime_plugins(site_plugins):
         run_model = EverestRunModel.create(config, runtime_plugins=site_plugins)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
-    optim1 = get_optimal_result(config.optimization_output_dir).total_objective
+    optim1 = get_optimal_result(config.storage_dir).total_objective
 
     config_dict["environment"]["output_folder"] = "output_auto_scale"
     config_dict["optimization"]["auto_scale"] = True
-    config = EverestConfig.model_validate(config_dict)
+    with pytest.warns(ConfigWarning, match="The `controls.type` field is deprecated"):
+        config = EverestConfig.model_validate(config_dict)
     site_plugins = get_site_plugins()
     with use_runtime_plugins(site_plugins):
         run_model = EverestRunModel.create(config, runtime_plugins=site_plugins)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
-    optim2 = get_optimal_result(config.optimization_output_dir).total_objective
+    optim2 = get_optimal_result(config.storage_dir).total_objective
 
     assert optim1 != optim2
     assert optim1 == pytest.approx(optim2, abs=0.01)
@@ -261,13 +267,14 @@ def test_that_math_func_violating_output_constraints_has_no_result(
     config_dict["optimization"]["max_batch_num"] = 1
     config_dict["controls"][0]["initial_guess"] = 0.05
 
-    config = EverestConfig.model_validate(config_dict)
+    with pytest.warns(ConfigWarning, match="The `controls.type` field is deprecated"):
+        config = EverestConfig.model_validate(config_dict)
     site_plugins = get_site_plugins()
     with use_runtime_plugins(site_plugins):
         run_model = EverestRunModel.create(config, runtime_plugins=site_plugins)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
-    optimal_result = get_optimal_result(config.optimization_output_dir)
+    optimal_result = get_optimal_result(config.storage_dir)
     assert optimal_result is None  # No feasible result
 
 
@@ -285,13 +292,14 @@ def test_that_math_func_violating_output_constraints_has_a_result(
     config_dict["optimization"]["max_batch_num"] = 2
     config_dict["controls"][0]["initial_guess"] = 0.05
 
-    config = EverestConfig.model_validate(config_dict)
+    with pytest.warns(ConfigWarning, match="The `controls.type` field is deprecated"):
+        config = EverestConfig.model_validate(config_dict)
     site_plugins = get_site_plugins()
     with use_runtime_plugins(site_plugins):
         run_model = EverestRunModel.create(config, runtime_plugins=site_plugins)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
-    optimal_result = get_optimal_result(config.optimization_output_dir)
+    optimal_result = get_optimal_result(config.storage_dir)
     assert optimal_result is not None  # Feasible result
 
 
@@ -309,13 +317,14 @@ def test_that_math_func_violating_input_constraints_has_no_result(
     config_dict["optimization"]["max_batch_num"] = 1
     config_dict["controls"][0]["initial_guess"] = 0.5
 
-    config = EverestConfig.model_validate(config_dict)
+    with pytest.warns(ConfigWarning, match="The `controls.type` field is deprecated"):
+        config = EverestConfig.model_validate(config_dict)
     site_plugins = get_site_plugins()
     with use_runtime_plugins(site_plugins):
         run_model = EverestRunModel.create(config, runtime_plugins=site_plugins)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
-    optimal_result = get_optimal_result(config.optimization_output_dir)
+    optimal_result = get_optimal_result(config.storage_dir)
     assert optimal_result is None  # No feasible result
 
 
@@ -333,11 +342,12 @@ def test_that_math_func_violating_input_constraints_has_a_result(
     config_dict["optimization"]["max_batch_num"] = 2
     config_dict["controls"][0]["initial_guess"] = 0.5
 
-    config = EverestConfig.model_validate(config_dict)
+    with pytest.warns(ConfigWarning, match="The `controls.type` field is deprecated"):
+        config = EverestConfig.model_validate(config_dict)
     site_plugins = get_site_plugins()
     with use_runtime_plugins(site_plugins):
         run_model = EverestRunModel.create(config, runtime_plugins=site_plugins)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
-    optimal_result = get_optimal_result(config.optimization_output_dir)
+    optimal_result = get_optimal_result(config.storage_dir)
     assert optimal_result is not None  # Feasible result

@@ -12,7 +12,7 @@ from typing import (
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
 from ropt.enums import PerturbationType, VariableType
 
-from ert.config import EverestControl, SamplerConfig
+from ert.config import ConfigWarning, EverestControl, SamplerConfig
 
 from .control_variable_config import (
     ControlVariableConfig,
@@ -59,18 +59,26 @@ class ControlConfig(BaseModel):
         )
     )
     type: Literal["well_control", "generic_control"] = Field(
+        default="generic_control",
         description=dedent(
             r"""
+            [Deprecated]
+
             Control group type.
 
-            Only two allowed control types are accepted:
+            Two control types are accepted:
 
-            * `"well_control"`: Standard built-in EVEREST control type designed
-              for field optimization
-            * `"generic_control"`: Enables the user to define controls types to
-              be employed for customized optimization jobs.
+            * `"well_control"`: Indicates that the variable names in the group
+              are used to denote wells.
+            * `"generic_control"`: Indicates a generic group of variables.
+
+            The `type` field is currently only used in combination with the
+            `wells` section to validate well names. The `wells` section will be
+            removed in a future version, and `type` is deprecated and slated for
+            removal at the same time. The `type` field is now optional and may
+            be removed from your configuration if no `wells` section is defined.
             """
-        )
+        ),
     )
     variables: Annotated[
         ControlVariable,
@@ -286,6 +294,12 @@ class ControlConfig(BaseModel):
             raise ValueError(error)
         return self
 
+    @model_validator(mode="after")
+    def deprecate_wells(self) -> Self:
+        if "type" in self.model_fields_set:
+            ConfigWarning.deprecation_warn(_CONTROL_TYPE_DEPRECATION)
+        return self
+
     def __hash__(self) -> int:
         return hash(self.name)
 
@@ -298,11 +312,13 @@ class ControlConfig(BaseModel):
 
     @property
     def formatted_control_names(self) -> list[str]:
-        formatted_names = []
+        formatted_names: list[str] = []
         for variable in self.variables:
             if isinstance(variable, ControlVariableGuessListConfig):
-                for index in range(1, len(variable.initial_guess) + 1):
-                    formatted_names.append(f"{self.name}.{variable.name}.{index}")
+                formatted_names.extend(
+                    f"{self.name}.{variable.name}.{index}"
+                    for index in range(1, len(variable.initial_guess) + 1)
+                )
             elif variable.index is not None:
                 formatted_names.append(f"{self.name}.{variable.name}.{variable.index}")
             else:
@@ -312,11 +328,13 @@ class ControlConfig(BaseModel):
 
     @property
     def formatted_control_names_dotdash(self) -> list[str]:
-        formatted_names = []
+        formatted_names: list[str] = []
         for variable in self.variables:
             if isinstance(variable, ControlVariableGuessListConfig):
-                for index in range(1, len(variable.initial_guess) + 1):
-                    formatted_names.append(f"{self.name}.{variable.name}-{index}")
+                formatted_names.extend(
+                    f"{self.name}.{variable.name}-{index}"
+                    for index in range(1, len(variable.initial_guess) + 1)
+                )
             elif variable.index is not None:
                 formatted_names.append(f"{self.name}.{variable.name}-{variable.index}")
             else:
@@ -328,69 +346,73 @@ class ControlConfig(BaseModel):
         extra="forbid",
     )
 
-    def to_ert_parameter_config(self) -> EverestControl:
-        types = []
-        initial_guesses = []
-        control_types = []
-        enabled = []
-        mins = []
-        maxs = []
-        perturbation_types = []
-        perturbation_magnitudes = []
-        scaled_ranges = []
-        samplers = []
+    def to_ert_parameter_config(self) -> list[EverestControl]:
+        """Convert this control group to a list of EverestControl objects.
 
-        def _parse_variable(
-            variable: ControlVariableConfig | ControlVariableGuessListConfig,
-            initial_guess: float | None = None,
-        ) -> None:
-            types.append(self.type)
-            initial_guesses.append(
-                initial_guess
-                if initial_guess is not None
-                else variable.initial_guess
-                if variable.initial_guess is not None
-                else self.initial_guess
-            )
-            control_types.append(self.control_type)
-            enabled.append(
-                variable.enabled if variable.enabled is not None else self.enabled
-            )
-            mins.append(variable.min if variable.min is not None else self.min)
-            maxs.append(variable.max if variable.max is not None else self.max)
-            perturbation_types.append(variable.perturbation_type)
-            perturbation_magnitudes.append(
-                variable.perturbation_magnitude
-                if variable.perturbation_magnitude is not None
-                else self.perturbation_magnitude
-            )
-            scaled_ranges.append(
-                variable.scaled_range
-                if variable.scaled_range is not None
-                else self.scaled_range
-            )
-            samplers.append(variable.sampler or self.sampler)
+        Each variable in the control group becomes its own EverestControl object,
+        allowing each to map to a single scalar value.
+        """
+        controls: list[EverestControl] = []
+        formatted_names = self.formatted_control_names
+        formatted_names_dotdash = self.formatted_control_names_dotdash
 
+        idx = 0
         for variable in self.variables:
-            if isinstance(variable, ControlVariableConfig):
-                _parse_variable(variable)
-            else:
-                for initial_guess in variable.initial_guess:
-                    _parse_variable(variable, initial_guess=initial_guess)
+            num_entries = (
+                len(variable.initial_guess)
+                if isinstance(variable, ControlVariableGuessListConfig)
+                else 1
+            )
 
-        return EverestControl(
-            name=self.name,
-            input_keys=self.formatted_control_names,
-            input_keys_dotdash=self.formatted_control_names_dotdash,
-            output_file=self.name + ".json",
-            types=types,
-            initial_guesses=initial_guesses,
-            control_types=control_types,
-            enabled=enabled,
-            min=mins,
-            max=maxs,
-            perturbation_types=perturbation_types,
-            perturbation_magnitudes=perturbation_magnitudes,
-            scaled_ranges=scaled_ranges,
-            samplers=samplers,
-        )
+            for i in range(num_entries):
+                initial_guess_value = (
+                    variable.initial_guess[i]
+                    if isinstance(variable, ControlVariableGuessListConfig)
+                    else (
+                        variable.initial_guess
+                        if variable.initial_guess is not None
+                        else self.initial_guess
+                    )
+                )
+
+                control = EverestControl(
+                    name=formatted_names[idx],
+                    input_key=formatted_names[idx],
+                    input_key_dotdash=formatted_names_dotdash[idx],
+                    output_file=self.name + ".json",
+                    group=self.name,
+                    control_type_=self.type,
+                    initial_guess=initial_guess_value,
+                    control_type=self.control_type,
+                    enabled=variable.enabled
+                    if variable.enabled is not None
+                    else self.enabled,
+                    min=variable.min if variable.min is not None else self.min,
+                    max=variable.max if variable.max is not None else self.max,
+                    perturbation_type=variable.perturbation_type,
+                    perturbation_magnitude=(
+                        variable.perturbation_magnitude
+                        if variable.perturbation_magnitude is not None
+                        else self.perturbation_magnitude
+                    ),
+                    scaled_range=(
+                        variable.scaled_range
+                        if variable.scaled_range is not None
+                        else self.scaled_range
+                    ),
+                    sampler=variable.sampler or self.sampler,
+                )
+                controls.append(control)
+                idx += 1
+
+        return controls
+
+
+_CONTROL_TYPE_DEPRECATION = """
+The `controls.type` field is deprecated and will be removed in a future version.
+
+The `type` field in the `controls` section is used in combination with the
+`wells` section, which is also deprecated. The `type` section will removed
+together with the `wells` field in the future. It is an optional field now and
+may be removed from your configuration if no `wells` section is defined.
+"""

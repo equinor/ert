@@ -46,10 +46,10 @@ executable:
 NB: note that relative paths are resolved from the location of the job
 configuration file, not the configuration file provided to ert.
 
-Stop Ert execution upon job failure
------------------------------------
-By default, failing jobs (both internal and external) will not stop the entire ert simulation.
-In some cases it is best to cancel the entire simulation if a job fails.
+Stop workflow execution upon job failure
+----------------------------------------
+By default, failing workflow jobs (both internal and external) will not stop the entire workflow.
+In some cases it is best to cancel the entire workflow if a job fails.
 This behavior can be achieved by adding the below line to the job file:
 
 ::

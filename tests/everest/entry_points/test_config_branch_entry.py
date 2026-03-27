@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from everest.bin.config_branch_script import config_branch_entry
+from everest.config import EverestConfig
 from everest.config_file_loader import load_yaml
 from everest.everest_storage import EverestStorage
 
@@ -12,7 +13,7 @@ from everest.everest_storage import EverestStorage
 @pytest.mark.integration_test
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
 def test_config_branch_entry(cached_example):
-    path, _, _, _ = cached_example("math_func/config_minimal.yml")
+    config_path, config_file, _, _ = cached_example("math_func/config_minimal.yml")
 
     config_branch_entry(["config_minimal.yml", "new_restart_config.yml", "-b", "1"])
 
@@ -30,15 +31,15 @@ def test_config_branch_entry(cached_example):
     assert len(new_controls) == len(old_controls)
     assert len(new_controls[0]["variables"]) == len(old_controls[0]["variables"])
 
-    storage = EverestStorage(Path(path) / "everest_output" / "optimization_output")
-    storage.read_from_output_dir()
+    config = EverestConfig.load_file(Path(config_path) / config_file)
+    experiment = EverestStorage.get_everest_experiment(config.storage_dir)
 
     new_controls_initial_guesses = {
         var["initial_guess"] for var in new_controls[0]["variables"]
     }
 
-    control_names = storage.data.controls["control_name"]
-    batch_1_info = next(b for b in storage.data.batches if b.batch_id == 1)
+    control_names = experiment.parameter_keys
+    batch_1_info = next(b for b in experiment.ensembles if b.iteration == 1)
     realization_control_vals = batch_1_info.realization_controls.select(
         *control_names
     ).to_dicts()[0]
@@ -50,7 +51,7 @@ def test_config_branch_entry(cached_example):
 @pytest.mark.integration_test
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
 def test_config_branch_preserves_config_section_order(cached_example):
-    path, _, _, _ = cached_example("math_func/config_minimal.yml")
+    config_path, config_file, _, _ = cached_example("math_func/config_minimal.yml")
 
     config_branch_entry(["config_minimal.yml", "new_restart_config.yml", "-b", "1"])
 
@@ -78,10 +79,10 @@ def test_config_branch_preserves_config_section_order(cached_example):
     assert len(diff_lines) == 4
     assert "-initial_guess:0.1" in diff_lines
 
-    storage = EverestStorage(Path(path) / "everest_output" / "optimization_output")
-    storage.read_from_output_dir()
-    control_names = storage.data.controls["control_name"]
-    batch_1_info = next(b for b in storage.data.batches if b.batch_id == 1)
+    config = EverestConfig.load_file(Path(config_path) / config_file)
+    experiment = EverestStorage.get_everest_experiment(config.storage_dir)
+    control_names = experiment.parameter_keys
+    batch_1_info = next(b for b in experiment.ensembles if b.iteration == 1)
     realization_control_vals = batch_1_info.realization_controls.select(
         *control_names
     ).to_dicts()[0]

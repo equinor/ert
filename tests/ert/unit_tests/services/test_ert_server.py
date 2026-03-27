@@ -13,9 +13,10 @@ from ert.services import ert_server
 from ert.services.ert_server import (
     _ERT_SERVER_CONNECTION_INFO_FILE,
     SERVICE_CONF_PATHS,
-    ErtServer,
+    ErtServerController,
     ServerBootFail,
     cleanup_service_files,
+    create_ert_server_controller,
 )
 
 
@@ -48,7 +49,7 @@ def local_exec_args(script_args: str | list[str]) -> list[str]:
     return [sys.executable, str(services_folder / script), *rest]
 
 
-class _DummyService(ErtServer):
+class _DummyService(ErtServerController):
     service_name = "dummy"
 
     def __init__(self, *args, **kwargs) -> None:
@@ -224,7 +225,6 @@ def test_singleton_start(monkeypatch, server_script, tmp_path):
     assert not (tmp_path / _ERT_SERVER_CONNECTION_INFO_FILE).exists()
 
 
-@pytest.mark.integration_test
 @pytest.mark.script(
     """\
 time.sleep(1)
@@ -232,11 +232,19 @@ os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
 os.close(fd)
 """
 )
-def test_singleton_connect(monkeypatch, tmp_path, server_script):
-    monkeypatch.setattr(ert_server, "_ERT_SERVER_EXECUTABLE_FILE", server_script)
-    with _DummyService().start_server(".", timeout=10) as server:
-        client = _DummyService.connect(project=tmp_path, timeout=30)
-        assert server is client
+def test_that_connect_logs_permission_error(tmp_path, caplog):
+    tmp_path.chmod(0o000)
+    caplog.clear()
+    caplog.set_level("ERROR")
+    with pytest.raises(PermissionError):
+        create_ert_server_controller(project=tmp_path, timeout=30)
+
+    tmp_path.chmod(0o755)
+
+    assert len(caplog.records) == 1
+    assert (
+        "cannot connect to ert server service due to permission issues." in caplog.text
+    )
 
 
 @pytest.mark.integration_test
@@ -261,7 +269,9 @@ def test_singleton_connect_early(server_script, tmp_path, monkeypatch):
         def run(self):
             start_event.set()
             try:
-                self.client = _DummyService.connect(project=tmp_path, timeout=30)
+                self.controller = create_ert_server_controller(
+                    project=tmp_path, timeout=30
+                )
             except Exception as ex:
                 self.exception = ex
             ready_event.set()
@@ -276,7 +286,7 @@ def test_singleton_connect_early(server_script, tmp_path, monkeypatch):
         assert not getattr(client_thread, "exception", None), (
             f"Exception from connect: {client_thread.exception}"
         )
-        client = client_thread.client
+        client = client_thread.controller
         assert client is not server
         assert client.fetch_connection_info() == server.fetch_connection_info()
 
@@ -309,14 +319,7 @@ def test_cleanup_service_files(tmpdir):
         assert storage_service_file.exists()
         SERVICE_CONF_PATHS.add(tmpdir / storage_service_file)
 
-        webviz_service_name = "webviz-ert"
-        webviz_service_file = Path(f"{webviz_service_name}_server.json")
-        webviz_service_file.write_text("webviz-ert info", encoding="utf-8")
-        assert webviz_service_file.exists()
-        SERVICE_CONF_PATHS.add(tmpdir / webviz_service_file)
-
         with pytest.raises(OSError, match="Signal 99 received"):
             cleanup_service_files(signum=99, frame=None)
 
         assert not storage_service_file.exists()
-        assert not webviz_service_file.exists()

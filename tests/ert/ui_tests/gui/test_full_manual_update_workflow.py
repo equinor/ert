@@ -8,9 +8,8 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QComboBox, QToolButton, QTreeView, QWidget
 
 from ert.data import MeasuredData
-from ert.gui.simulation.evaluate_ensemble_panel import EvaluateEnsemblePanel
-from ert.gui.simulation.experiment_panel import ExperimentPanel
-from ert.gui.simulation.run_dialog import RunDialog
+from ert.gui.experiments import ExperimentPanel, RunDialog
+from ert.gui.experiments.evaluate_ensemble_panel import EvaluateEnsemblePanel
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_widget import StorageWidget
 from ert.run_models.evaluate_ensemble import EvaluateEnsemble
@@ -45,7 +44,7 @@ def test_manual_analysis_workflow(ensemble_experiment_has_run, qtbot, mode):
     qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
     # The Run dialog opens, wait until done appears, then click done
     run_dialog = wait_for_child(gui, qtbot, RunDialog)
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=10000)
+    qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=10000)
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
     button_manage_experiments = gui.findChild(QToolButton, "button_Manage_experiments")
@@ -68,7 +67,7 @@ def test_manual_analysis_workflow(ensemble_experiment_has_run, qtbot, mode):
     assert model.rowCount() == 2
     assert model.data(model.index(1, 0)) == "ensemble_experiment"
     assert model.data(model.index(0, 0)) == "Manual update of iter-0"
-    assert "iter-0_1" in model.index(0, 0, model.index(0, 0)).data(0)
+    assert "iter-1" in model.index(0, 0, model.index(0, 0)).data(0)
 
     experiments_panel.close()
 
@@ -77,7 +76,7 @@ def test_manual_analysis_workflow(ensemble_experiment_has_run, qtbot, mode):
     simulation_mode_combo.setCurrentText(EvaluateEnsemble.name())
 
     idx = simulation_settings._ensemble_selector.findData(
-        "Manual update of iter-0 : iter-0_1",
+        "Manual update of iter-0 : iter-1",
         Qt.ItemDataRole.DisplayRole,
         Qt.MatchFlag.MatchStartsWith,
     )
@@ -98,7 +97,7 @@ def test_manual_analysis_workflow(ensemble_experiment_has_run, qtbot, mode):
     df_prior: pl.DataFrame = ensemble_prior.load_scalars()
 
     exp_posterior = storage.get_experiment_by_name("Manual update of iter-0")
-    ensemble_posterior = exp_posterior.get_ensemble_by_name("iter-0_1")
+    ensemble_posterior = exp_posterior.get_ensemble_by_name("iter-1")
     df_posterior: pl.DataFrame = ensemble_posterior.load_scalars()
 
     # Making sure measured data works with failed realizations

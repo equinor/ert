@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import functools
 import logging
 from typing import Any
 from uuid import UUID
@@ -10,8 +9,8 @@ from pydantic import PrivateAttr
 from ert.ensemble_evaluator import EvaluatorServerConfig
 from ert.run_models.update_run_model import UpdateRunModel, UpdateRunModelConfig
 from ert.storage import Ensemble
+from ert.storage.local_experiment import ExperimentType
 
-from ..analysis import smoother_update
 from .run_model import ErtRunError
 
 logger = logging.getLogger(__name__)
@@ -46,38 +45,24 @@ class ManualUpdate(UpdateRunModel, ManualUpdateConfig):
         self.set_env_key("_ERT_EXPERIMENT_ID", str(prior_experiment.id))
         self.set_env_key("_ERT_ENSEMBLE_ID", str(self._prior.id))
 
+        experiment_config = self.model_dump(mode="json") | {
+            "parameter_configuration": prior_experiment.experiment_config[
+                "parameter_configuration"
+            ],
+            "response_configuration": prior_experiment.experiment_config[
+                "response_configuration"
+            ],
+            "observations": prior_experiment.experiment_config["observations"],
+        }
+
         target_experiment = self._storage.create_experiment(
-            parameters=list(prior_experiment.parameter_configuration.values()),
-            responses=list(prior_experiment.response_configuration.values()),
-            observations=prior_experiment.observations,
-            simulation_arguments=prior_experiment.metadata,
+            experiment_config=experiment_config,
             name=f"Manual update of {self._prior.name}",
-            templates=self.ert_templates,
         )
         self.update(
             self._prior,
             self.target_ensemble % (self._prior.iteration + 1),
             target_experiment=target_experiment,
-        )
-
-    def update_ensemble_parameters(
-        self, prior: Ensemble, posterior: Ensemble, weight: float
-    ) -> None:
-        smoother_update(
-            prior,
-            posterior,
-            update_settings=self.update_settings,
-            es_settings=self.analysis_settings,
-            parameters=prior.experiment.update_parameters,
-            observations=prior.experiment.observation_keys,
-            global_scaling=weight,
-            rng=self._rng,
-            progress_callback=functools.partial(
-                self.send_smoother_event,
-                prior.iteration,
-                prior.id,
-            ),
-            active_realizations=self.active_realizations,
         )
 
     @classmethod
@@ -87,6 +72,10 @@ class ManualUpdate(UpdateRunModel, ManualUpdateConfig):
     @classmethod
     def description(cls) -> str:
         return "Load parameters and responses from existing → update"
+
+    @classmethod
+    def _experiment_type(cls) -> ExperimentType:
+        return ExperimentType.MANUAL_UPDATE
 
     def check_if_runpath_exists(self) -> bool:
         # Will not run a forward model, so does not create files on runpath

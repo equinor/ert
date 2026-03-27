@@ -34,7 +34,6 @@ everest_config.yml::
     controls:
       -
         name: point
-        type: generic_control
         min: -1.0
         max: 1.0
         initial_guess: 0
@@ -59,7 +58,6 @@ everest_config.yml::
     controls:
       -
         name: point
-        type: generic_control
         initial_guess: 0
         perturbation_magnitude : 0.001
         variables:
@@ -223,7 +221,6 @@ everest_config.yml::
     controls:
       -
         name: point
-        type: generic_control
         min: -1.0
         max: 1.0
         initial_guess: 0

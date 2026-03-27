@@ -33,6 +33,7 @@ class HistogramPlot:
         ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
+        obs_loc: npt.NDArray[np.float32] | None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         plotHistogram(figure, plot_context, ensemble_to_data_map)
@@ -76,15 +77,10 @@ def plotHistogram(
 
         data[ensemble.id] = datas[0]
 
-        if data[ensemble.id].dtype == "object":
-            try:
-                data[ensemble.id] = convert_to_numeric(data[ensemble.id])
-            except AttributeError:
-                data[ensemble.id] = data[ensemble.id].convert_objects(
-                    convert_numeric=True
-                )
+        if not pd.api.types.is_numeric_dtype(data[ensemble.id]):
+            data[ensemble.id] = convert_to_numeric(data[ensemble.id])
 
-        if data[ensemble.id].dtype == "object":
+        if not pd.api.types.is_numeric_dtype(data[ensemble.id]):
             categorical = True
 
         if categorical:

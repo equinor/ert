@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import math
 import os
+from dataclasses import dataclass
+from enum import Enum, auto
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, NamedTuple, TypeAlias
 
 import numpy as np
+import pandas as pd
 import resfo
-from pydantic.dataclasses import dataclass
 
 from .field_file_format import ROFF_FORMATS, FieldFileFormat
 from .grdecl_io import export_grdecl, import_bgrdecl, import_grdecl
@@ -18,6 +20,29 @@ if TYPE_CHECKING:
     import xtgeo
 
 _PathLike: TypeAlias = str | os.PathLike[str]
+
+
+class AxisOrientation(Enum):
+    """
+    Defines the grid index origin. It is ONLY related to the
+    order of the grid index, not the coordinates axis.
+    For a non-rotated grid, left-handed means that grid index origion
+    is lower left corner, the same as the local coordinate origin.
+    I-index is increasing in direction EAST or to the right,
+    J-index is increasing in direction NORTH or upwards
+    while K-index is increasing with depth (or into the paper/screen).
+    For C-indexing, the flatten index for the 3D field parameter
+    with cell index (I,J,K) is index = K + J*NZ + I*NZ*NY.
+    For right-handed, grid index origin is upper left corner,
+    the I-index is increasing in direction EAST or to the right,
+    the J-index is increasing in direction SOUTH or from top to bottom
+    of the paper/screen. For C-indexing, the flatten index for the
+    3D field parameter with cell index (I,J,K)
+    is index = K + (NY-J-1)*NZ + I*NZ*NY.
+    """
+
+    LEFT_HANDED = auto()
+    RIGHT_HANDED = auto()
 
 
 class Shape(NamedTuple):
@@ -36,54 +61,6 @@ def _validate_array(
 
 def _make_shape(sequence: npt.NDArray[Any]) -> Shape:
     return Shape(*(int(val) for val in sequence))
-
-
-def read_mask(
-    grid_path: _PathLike,
-) -> tuple[npt.NDArray[np.bool_], Shape]:
-    actnum = None
-    shape = None
-    actnum_coords: list[tuple[int, int, int]] = []
-    with open(grid_path, "rb") as f:
-        for entry in resfo.lazy_read(f):
-            if actnum is not None and shape is not None:
-                break
-
-            keyword = str(entry.read_keyword()).strip()
-            if actnum is None:
-                if keyword == "COORDS":
-                    coord_array = _validate_array(
-                        "COORDS", grid_path, entry.read_array()
-                    )
-                    if coord_array[4]:
-                        actnum_coords.append(
-                            (coord_array[0], coord_array[1], coord_array[2])
-                        )
-                if keyword == "ACTNUM":
-                    actnum = _validate_array("ACTNUM", grid_path, entry.read_array())
-            if shape is None:
-                if keyword == "GRIDHEAD":
-                    arr = _validate_array("GRIDHEAD", grid_path, entry.read_array())
-                    shape = _make_shape(arr[1:4])
-                elif keyword == "DIMENS":
-                    arr = _validate_array("DIMENS", grid_path, entry.read_array())
-                    shape = _make_shape(arr[0:3])
-
-    # Could possibly read shape from actnum_coords if they were read.
-    if shape is None:
-        raise ValueError(f"Could not load shape from {grid_path}")
-
-    if actnum is None:
-        if actnum_coords and len(actnum_coords) != np.prod(shape):
-            actnum = np.ones(shape, dtype=bool)
-            for coord in actnum_coords:
-                actnum[coord[0] - 1, coord[1] - 1, coord[2] - 1] = False
-        else:
-            actnum = np.zeros(shape, dtype=bool)
-    else:
-        actnum = np.ascontiguousarray(np.logical_not(actnum.reshape(shape, order="F")))
-
-    return actnum, shape
 
 
 def get_shape(
@@ -108,6 +85,7 @@ class ErtboxParameters:
     nx: int
     ny: int
     nz: int
+    axis_orientation: AxisOrientation | None = None
     xlength: float | None = None
     ylength: float | None = None
     xinc: float | None = None
@@ -116,31 +94,44 @@ class ErtboxParameters:
     origin: tuple[float, float] | None = None
 
 
-def calculate_ertbox_parameters(
-    grid: xtgeo.Grid, left_handed: bool = False
-) -> ErtboxParameters:
+def calculate_ertbox_parameters(grid: xtgeo.Grid) -> ErtboxParameters:
     """Calculate ERTBOX grid parameters from an XTGeo grid.
 
     Extracts geometric parameters including dimensions, cell increments,
-    rotation angle, and origin coordinates needed for ERTBOX.
+    rotation angle, and origin coordinates needed for ERTBOX. Get the grid
+    index origin, called AxisOrientation which define the direction of the
+    J-index. For right-handed, the J-index increases in direction SOUTH
+    for non-rotated grid, for lef-handed, the J-index increases in
+    direction NORTH. Note that AxisOrientation does not change the
+    local coordinate axis which has its origin at lower left corner
+    with x-axis in direction EAST and y-axis in direction NORTH for
+    non-rotated ERTBOX grid.
 
     Args:
         grid: XTGeo Grid3D object
-        left_handed: If True, use left-handed coordinate system (default: False)
 
     Returns:
-        ErtboxParameters with grid dimensions, increments, rotation, and origin
+        ErtboxParameters with grid dimensions, increments, rotation, origi
+        and grid index origin.
     """
 
     (nx, ny, nz) = grid.dimensions
-
     corner_indices = []
+    axis_orientation = (
+        AxisOrientation.RIGHT_HANDED
+        if grid.ijk_handedness == "right"
+        else AxisOrientation.LEFT_HANDED
+    )
 
-    if left_handed:
+    if axis_orientation == AxisOrientation.LEFT_HANDED:
+        # Grid index origin is at lower left corner
+        # ERTBOX local coordinate origin is lower left corner
         origin_cell = (1, 1, 1)
         x_direction_cell = (nx, 1, 1)
         y_direction_cell = (1, ny, 1)
     else:
+        # Grid index origin is at upper left corner
+        # ERTBOX local coordinate origin is lower left corner
         origin_cell = (1, ny, 1)
         x_direction_cell = (nx, ny, 1)
         y_direction_cell = (1, 1, 1)
@@ -157,7 +148,7 @@ def calculate_ertbox_parameters(
         coord = grid.get_xyz_cell_corners(ijk=corner_index, activeonly=False)
         coord_cell.append(coord)
 
-    if left_handed:
+    if axis_orientation == AxisOrientation.LEFT_HANDED:
         # Origin: cell (1,1,1), corner 0
         x0 = coord_cell[0][0]
         y0 = coord_cell[0][1]
@@ -210,6 +201,7 @@ def calculate_ertbox_parameters(
         yinc=yinc,
         rotation_angle=angle,
         origin=(x0, y0),
+        axis_orientation=axis_orientation,
     )
 
 
@@ -358,117 +350,37 @@ def localization_scaling_function(
     return scaling_factor
 
 
-def calc_rho_for_2d_grid_layer(
-    nx: int,
-    ny: int,
-    xinc: float,
-    yinc: float,
-    obs_xpos: npt.NDArray[np.float64],
-    obs_ypos: npt.NDArray[np.float64],
-    obs_main_range: npt.NDArray[np.float64],
-    obs_perp_range: npt.NDArray[np.float64],
-    obs_anisotropy_angle: npt.NDArray[np.float64],
-    right_handed_grid_indexing: bool = True,
-) -> npt.NDArray[np.float64]:
-    """Calculate scaling values (RHO matrix elements) for a set of observations
-    with associated localization ellipse. The method will first
-    calculate the distances from each observation position to each grid cell
-    center point of all grid cells for a 2D grid.
-    The localization method will only consider lateral distances, and it is
-    therefore sufficient to calculate the distances in 2D.
-    All input observation positions are in the local grid coordinate system
-    to simplify the calculation of the distances.
+def transform_observation_locations(
+    obs_loc_df: pd.DataFrame, ertbox_params: ErtboxParameters
+) -> npt.NDArray[np.float32] | None:
+    if (
+        ertbox_params.origin is not None
+        and ertbox_params.rotation_angle is not None
+        and not obs_loc_df.empty
+    ):
+        xpos, ypos = transform_positions_to_local_field_coordinates(
+            ertbox_params.origin,
+            ertbox_params.rotation_angle,
+            obs_loc_df["east"].to_numpy(dtype=np.float64),
+            obs_loc_df["north"].to_numpy(dtype=np.float64),
+        )
+        height, width = (
+            ertbox_params.ny,
+            ertbox_params.nx,
+        )
+        if ertbox_params.axis_orientation == AxisOrientation.RIGHT_HANDED:
+            ypos = height - ypos
 
-    The position: xpos[n], ypos[n] and
-    localization ellipse defined by obs_main_range[n],obs_perp_range[n],
-    obs_anisotropy_angle[n]) refers to observation[n].
-
-    The distance between an observation with index n and a grid cell (i,j) is
-    d[m,n] = dist((xpos_obs[n],ypos_obs[n]),(xpos_field[i,j],ypos_field[i,j]))
-
-    RHO[[m,n] = scaling(d)
-    where m = j + i * ny for left-handed grid index origo and
-          m = (ny - j - 1) + i * ny for right-handed grid index origo
-    Note that since d[m,n] does only depend on observation index n and
-    grid cell index (i,j). The values for RHO is
-    calculated for the combination ((i,j), n) and this covers
-    one grid layer in ertbox grid or a 2D surface grid.
-
-    Args:
-        nx: Number of grid cells in x-direction of local coordinate system.
-        ny: Number of grid cells in y-direction of local coordinate system.
-        xinc: Grid cell size in x-direction.
-        yinc: Grid cell size in y-direction.
-        obs_xpos: Observations x coordinates in local coordinates
-        obs_ypos: Observatiopns y coordinates in local coordinates
-        obs_main_range: Localization ellipse first range
-        obs_perp_range: Localization ellipse second range
-        obs_anisotropy_angle: Localization ellipse orientation relative
-        to local coordinate system in degrees
-
-    Returns:
-        Rho matrix values for one layer of the 3D ertbox grid or for a 2D surface grid.
-    """
-    # Center points of each grid cell in field parameter grid
-    x_local = (np.arange(nx, dtype=np.float64) + 0.5) * xinc
-    if right_handed_grid_indexing:
-        # y coordinate descreases from max to min
-        y_local = (np.arange(ny - 1, -1, -1, dtype=np.float64) + 0.5) * yinc
-    else:
-        # y coordinate increases from min to max
-        y_local = (np.arange(ny, dtype=np.float64) + 0.5) * yinc
-    mesh_x_coord, mesh_y_coord = np.meshgrid(x_local, y_local, indexing="ij")
-
-    # Number of observations
-    nobs = len(obs_xpos)
-    assert nobs == len(obs_ypos), (
-        "Number of coordinates must match number of observations"
-    )
-    assert nobs == len(obs_anisotropy_angle), (
-        "Number of ellipse orientation angles must match number of observations"
-    )
-    assert nobs == len(obs_main_range), (
-        "Number of ellipse main range values must match number of observations"
-    )
-    assert nobs == len(obs_perp_range), (
-        "Number of ellipse second range values must match number of observations"
-    )
-    assert np.all(obs_main_range > 0.0), (
-        "All range values for all observations must be positive"
-    )
-    assert np.all(obs_perp_range > 0.0), (
-        "All range values for all observations must be positive"
-    )
-
-    # Expand grid coordinates to match observations
-    mesh_x_coord_flat = mesh_x_coord.flatten()[:, np.newaxis]  # (nx * ny, 1)
-    mesh_y_coord_flat = mesh_y_coord.flatten()[:, np.newaxis]  # (nx * ny, 1)
-
-    # Observation coordinates and parameters
-    obs_xpos = obs_xpos[np.newaxis, :]  # (1, nobs)
-    obs_ypos = obs_ypos[np.newaxis, :]  # (1, nobs)
-    obs_main_range = obs_main_range[np.newaxis, :]  # (1, nobs)
-    obs_perp_range = obs_perp_range[np.newaxis, :]  # (1, nobs)
-    obs_anisotropy_angle = obs_anisotropy_angle[np.newaxis, :]  # (1, nobs)
-
-    # Compute displacement between grid points and observations
-    dX = mesh_x_coord_flat - obs_xpos  # (nx * ny, nobs)
-    dY = mesh_y_coord_flat - obs_ypos  # (nx * ny, nobs)
-
-    # Compute rotation parameters
-    rotation = np.deg2rad(obs_anisotropy_angle)
-    cos_angle = np.cos(rotation)  # (1, nobs)
-    sin_angle = np.sin(rotation)  # (1, nobs)
-
-    # Rotate and scale displacements to local coordinate system defined
-    # by the two half axes of the influence ellipse. First coordinate (local x) is in
-    # direction defined by anisotropy angle and local y is perpendicular to that.
-    # Scale the distance by the ranges to get a normalized distance
-    # (with value 1 at the edge of the ellipse)
-    dX_ellipse = (dX * cos_angle + dY * sin_angle) / obs_main_range  # (nx * ny, nobs)
-    dY_ellipse = (-dX * sin_angle + dY * cos_angle) / obs_perp_range  # (nx * ny, nobs)
-
-    # Compute distances in the elliptical coordinate system
-    distances = np.hypot(dX_ellipse, dY_ellipse)  # (nx * ny, nobs)
-    # Apply the scaling function
-    return localization_scaling_function(distances).reshape((nx, ny, nobs))
+        inside_box = (
+            np.isfinite(xpos)
+            & np.isfinite(ypos)
+            & (xpos >= 0)
+            & (xpos < width)
+            & (ypos >= 0)
+            & (ypos < height)
+        )
+        if inside_box.any():
+            return np.column_stack((xpos[inside_box], ypos[inside_box])).astype(
+                np.float32
+            )
+    return None

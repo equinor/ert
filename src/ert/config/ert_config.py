@@ -7,27 +7,30 @@ import pprint
 import re
 from collections import Counter, defaultdict
 from collections.abc import Mapping
+from dataclasses import dataclass
 from functools import cached_property
 from os import path
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Self, cast, overload
 
-import polars as pl
 from numpy.random import SeedSequence
-from pydantic import BaseModel, Field, PrivateAttr, model_validator
+from pydantic import BaseModel, Field, model_validator
 from pydantic import ValidationError as PydanticValidationError
 
+from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.substitutions import Substitutions
 
-from ._create_observation_dataframes import create_observation_dataframes
 from ._design_matrix_validator import DesignMatrixValidator
 from ._observations import (
+    BreakthroughObservation,
+    GeneralObservation,
     Observation,
     RFTObservation,
     SummaryObservation,
     make_observations,
 )
 from .analysis_config import AnalysisConfig
+from .breakthrough_config import BreakthroughConfig
 from .ensemble_config import EnsembleConfig
 from .forward_model_step import (
     ForwardModelJSON,
@@ -41,7 +44,7 @@ from .forward_model_step import (
 )
 from .gen_data_config import GenDataConfig
 from .gen_kw_config import DataSource, GenKwConfig
-from .model_config import ModelConfig
+from .model_config import DEFAULT_ECLBASE_FORMAT, ModelConfig
 from .parse_arg_types_list import parse_arg_types_list
 from .parsing import (
     ConfigDict,
@@ -65,7 +68,6 @@ from .workflow_fixtures import fixtures_per_hook
 from .workflow_job import (
     BaseErtScriptWorkflow,
     ErtScriptLoadFailure,
-    ErtScriptWorkflow,
     WorkflowJob,
     workflow_job_from_file,
 )
@@ -85,19 +87,23 @@ ECL_BASE_DEPRECATION_MSG = (
 )
 
 
-def _seed_sequence(seed: int | None) -> int:
-    # Set up RNG
-    if seed is None:
+@dataclass
+class RandomSeedGenerator:
+    user_defined_seed: int | None = None
+
+    @property
+    def seed(self) -> int:
+        if self.user_defined_seed is not None:
+            return self.user_defined_seed
+
         int_seed = SeedSequence().entropy
         logger.info(
             "To repeat this experiment, "
             "add the following random seed to your config file:\n"
             f"RANDOM_SEED {int_seed}"
         )
-    else:
-        int_seed = seed
-    assert isinstance(int_seed, int)
-    return int_seed
+        assert isinstance(int_seed, int)
+        return int_seed
 
 
 def create_forward_model_json(
@@ -383,60 +389,13 @@ def workflow_jobs_from_dict(
     return workflow_jobs
 
 
-def create_and_hook_workflows(
-    hook_workflow_info: list[tuple[str, HookRuntime]],
-    workflow_info: list[tuple[str, str]],
-    workflow_jobs: dict[str, WorkflowJob],
-    substitutions: dict[str, str],
-) -> tuple[dict[str, Workflow], defaultdict[HookRuntime, list[Workflow]]]:
-    workflows = {}
-    hooked_workflows = defaultdict(list)
-
+def _validate_fixtures(
+    hook_name: str, workflow: Workflow, mode: HookRuntime
+) -> list[ErrorInfo]:
     errors = []
-
-    for work in workflow_info:
-        filename = path.basename(work[0]) if len(work) == 1 else work[1]
-        try:
-            existed = filename in workflows
-            workflow = Workflow.from_file(
-                work[0],
-                substitutions,
-                workflow_jobs,
-            )
-            for job, args in workflow:
-                if isinstance(job, ErtScriptWorkflow):
-                    try:
-                        job.load_ert_script_class().validate(args)
-                    except ConfigValidationError as err:
-                        errors.append(ErrorInfo(message=str(err)).set_context(work[0]))
-                        continue
-            workflows[filename] = workflow
-            if existed:
-                ConfigWarning.warn(f"Workflow {filename!r} was added twice", work[0])
-        except ConfigValidationError as err:
-            ConfigWarning.warn(
-                f"Encountered the following error(s) while "
-                f"reading workflow {filename!r}. It will not be loaded: "
-                + err.cli_message(),
-                work[0],
-            )
-
-    for hook_name, mode in hook_workflow_info:
-        if hook_name not in workflows:
-            errors.append(
-                ErrorInfo(
-                    message="Cannot setup hook for non-existing"
-                    f" job name {hook_name!r}",
-                ).set_context(hook_name)
-            )
-            continue
-
-        wf = workflows[hook_name]
-        available_fixtures = fixtures_per_hook[mode]
-        for job, _ in wf.cmd_list:
-            if not isinstance(job, BaseErtScriptWorkflow):
-                continue
-
+    available_fixtures = fixtures_per_hook[mode]
+    for job, _ in workflow:
+        if isinstance(job, BaseErtScriptWorkflow):
             ert_script_class = job.load_ert_script_class()
             ert_script_instance = ert_script_class()
             requested_fixtures = ert_script_instance.requested_fixtures
@@ -455,10 +414,14 @@ def create_and_hook_workflows(
                 message_start = (
                     f"Workflow job {job.name} .run function expected "
                     f"fixtures: {missing_fixtures}, which are not available "
-                    f"in the fixtures for the runtime {mode}: {available_fixtures}. "
+                    f"in the fixtures for the runtime {mode}: "
+                    f"{available_fixtures}. "
                 )
                 message_end = (
-                    f"It would work in these runtimes: {', '.join(map(str, ok_modes))}"
+                    (
+                        f"It would work in these runtimes: "
+                        f"{', '.join(map(str, ok_modes))}"
+                    )
                     if len(ok_modes) > 0
                     else "This fixture is not available in any of the runtimes."
                 )
@@ -468,8 +431,108 @@ def create_and_hook_workflows(
                         hook_name
                     )
                 )
+    return errors
 
-        hooked_workflows[mode].append(workflows[hook_name])
+
+def create_and_hook_workflows(
+    hook_workflow_info: list[tuple[str, HookRuntime]],
+    hook_workflow_job_info: list[list[str]],
+    create_workflow_from_job_info: list[list[str]],
+    workflow_info: list[tuple[str, str]],
+    workflow_jobs: dict[str, WorkflowJob],
+    substitutions: dict[str, str],
+) -> tuple[dict[str, Workflow], defaultdict[HookRuntime, list[Workflow]]]:
+    workflows = {}
+    hooked_workflows = defaultdict(list)
+
+    errors: list[ErrorInfo | ConfigValidationError] = []
+
+    for work in workflow_info:
+        filename = path.basename(work[0]) if len(work) == 1 else work[1]
+        try:
+            existed = filename in workflows
+            workflow = Workflow.from_file(
+                work[0],
+                substitutions,
+                workflow_jobs,
+            )
+            workflows[filename] = workflow
+            if existed:
+                ConfigWarning.warn(f"Workflow {filename!r} was added twice", work[0])
+        except ConfigValidationError as err:
+            ConfigWarning.warn(
+                f"Encountered the following error(s) while "
+                f"reading workflow {filename!r}. It will not be loaded: "
+                + err.cli_message(),
+                work[0],
+            )
+
+    def _create_workflow_from_job(
+        inline_workflow: list[str],
+    ) -> tuple[str, Workflow]:
+        workflow_name = inline_workflow[0]
+        job_name = inline_workflow[1]
+        job_args = inline_workflow[2:]
+        return (
+            workflow_name,
+            Workflow.from_instructions(
+                workflow_name, job_name, job_args, workflow_jobs
+            ),
+        )
+
+    def _register_workflow(
+        inline_workflow: list[str],
+        workflow_name: str,
+        workflow: Workflow,
+    ) -> None:
+        if workflow_name in workflows:
+            ConfigWarning.warn(
+                f"Workflow {workflow_name!r} was added twice", inline_workflow
+            )
+        workflows[workflow_name] = workflow
+
+    for inline_workflow in create_workflow_from_job_info:
+        try:
+            wf_name, wf = _create_workflow_from_job(inline_workflow)
+            _register_workflow(inline_workflow, wf_name, wf)
+        except ConfigValidationError as err:
+            errors.append(err)
+
+    for hook_name, mode in hook_workflow_info:
+        if hook_name not in workflows:
+            errors.append(
+                ErrorInfo(
+                    message="Cannot setup hook for non-existing"
+                    f" job name {hook_name!r}",
+                ).set_context(hook_name)
+            )
+            continue
+
+        workflow = workflows[hook_name]
+        errors.extend(_validate_fixtures(hook_name, workflow, mode))
+
+        hooked_workflows[mode].append(workflow)
+
+    for inline_workflow_hook in hook_workflow_job_info:
+        inline_workflow = inline_workflow_hook[:-1]
+        raw_mode = inline_workflow_hook[-1]
+        try:
+            mode = HookRuntime(str(raw_mode))
+        except ValueError:
+            errors.append(
+                ErrorInfo(
+                    message=f"Last argument of HOOK_WORKFLOW_JOB must be a known "
+                    f"HookRuntime ({', '.join(list(HookRuntime))}), got {raw_mode}"
+                ).set_context(raw_mode)
+            )
+            continue
+        try:
+            wf_name, wf = _create_workflow_from_job(inline_workflow)
+            _register_workflow(inline_workflow, wf_name, wf)
+            errors.extend(_validate_fixtures(wf_name, wf, mode))
+            hooked_workflows[mode].append(wf)
+        except ConfigValidationError as err:
+            errors.append(err)
 
     if errors:
         raise ConfigValidationError.from_collected(errors)
@@ -494,6 +557,8 @@ def workflows_from_dict(
     )
     workflows, hooked_workflows = create_and_hook_workflows(
         content_dict.get(ConfigKeys.HOOK_WORKFLOW, []),
+        content_dict.get(ConfigKeys.HOOK_WORKFLOW_JOB, []),
+        content_dict.get(ConfigKeys.CREATE_WORKFLOW_FROM_JOB, []),
         content_dict.get(ConfigKeys.LOAD_WORKFLOW, []),
         workflow_jobs,
         substitutions,
@@ -509,10 +574,10 @@ def installed_forward_model_steps_from_dict(
     for name, (fm_step_config_file, config_contents) in config_dict.get(
         ConfigKeys.INSTALL_JOB, []
     ):
-        fm_step_config_file = path.abspath(fm_step_config_file)
+        fm_step_config_abspath = path.abspath(fm_step_config_file)
         try:
             new_fm_step = forward_model_step_from_config_contents(
-                config_contents, name=name, config_file=fm_step_config_file
+                config_contents, name=name, config_file=fm_step_config_abspath
             )
         except ConfigValidationError as e:
             errors.append(e)
@@ -520,7 +585,7 @@ def installed_forward_model_steps_from_dict(
         if name in fm_steps:
             ConfigWarning.warn(
                 f"Duplicate forward model step with name {name!r}, choosing "
-                f"{fm_step_config_file!r} over {fm_steps[name].executable!r}",
+                f"{fm_step_config_abspath!r} over {fm_steps[name].executable!r}",
                 name,
             )
         fm_steps[name] = new_fm_step
@@ -688,13 +753,11 @@ class ErtConfig(BaseModel):
     QUEUE_OPTIONS: ClassVar[KnownQueueOptions | None] = None
     RESERVED_KEYWORDS: ClassVar[list[str]] = RESERVED_KEYWORDS
     ENV_VARS: ClassVar[dict[str, str]] = {}
-    PRIORITIZE_PRIVATE_IP_ADDRESS: ClassVar[bool] = False
 
     substitutions: dict[str, str] = Field(default_factory=dict)
     ensemble_config: EnsembleConfig = Field(default_factory=EnsembleConfig)
     ens_path: str = DEFAULT_ENSPATH
     env_vars: dict[str, str] = Field(default_factory=dict)
-    random_seed: int = Field(default_factory=lambda: _seed_sequence(None))
     analysis_config: AnalysisConfig = Field(default_factory=AnalysisConfig)
     queue_config: QueueConfig = Field(default_factory=QueueConfig)
     workflow_jobs: dict[str, WorkflowJob] = Field(default_factory=dict)
@@ -703,7 +766,6 @@ class ErtConfig(BaseModel):
         default_factory=lambda: defaultdict(lambda: cast(list[Workflow], []))
     )
     runpath_file: Path = Path(DEFAULT_RUNPATH_FILE)
-    prioritize_private_ip_address: bool = False
 
     ert_templates: list[tuple[str, str]] = Field(default_factory=list)
 
@@ -712,37 +774,10 @@ class ErtConfig(BaseModel):
     user_config_file: str = "no_config"
     config_path: str = Field(init=False, default="")
     observation_declarations: list[Observation] = Field(default_factory=list)
-    _observations: dict[str, pl.DataFrame] | None = PrivateAttr(None)
-
-    @property
-    def observations(self) -> dict[str, pl.DataFrame]:
-        if self._observations is None:
-            has_rft_observations = any(
-                isinstance(o, RFTObservation) for o in self.observation_declarations
-            )
-            if (
-                has_rft_observations
-                and "rft" not in self.ensemble_config.response_configs
-            ):
-                self.ensemble_config.response_configs["rft"] = RFTConfig(
-                    input_files=[self.runpath_config.eclbase_format_string],
-                    data_to_read={},
-                    locations=[],
-                )
-            computed = create_observation_dataframes(
-                self.observation_declarations,
-                cast(
-                    GenDataConfig | None,
-                    self.ensemble_config.response_configs.get("gen_data", None),
-                ),
-                cast(
-                    RFTConfig | None,
-                    self.ensemble_config.response_configs.get("rft", None),
-                ),
-            )
-            self._observations = computed
-            return computed
-        return self._observations
+    zonemap: Path | None = None
+    random_seed_generator: RandomSeedGenerator = Field(
+        default_factory=RandomSeedGenerator
+    )
 
     @model_validator(mode="after")
     def set_fields(self) -> Self:
@@ -797,27 +832,45 @@ class ErtConfig(BaseModel):
         )
         return self
 
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, ErtConfig):
-            return False
+    @model_validator(mode="after")
+    def validate_observations_against_responses(self) -> Self:
+        gen_data_config = cast(
+            GenDataConfig | None,
+            self.ensemble_config.response_configs.get("gen_data", None),
+        )
 
-        for attr in vars(self):
-            if attr == "observations":
-                if self.observations.keys() != other.observations.keys():
-                    return False
+        errors: list[ErrorInfo] = []
+        for obs in self.observation_declarations:
+            if isinstance(obs, GeneralObservation):
+                response_key = obs.data
+                if gen_data_config is None or response_key not in gen_data_config.keys:
+                    errors.append(
+                        ErrorInfo(
+                            message=(
+                                f"Problem with GENERAL_OBSERVATION {obs.name}:"
+                                f" No GEN_DATA with name {response_key!r} found"
+                            )
+                        ).set_context(response_key)
+                    )
+                    continue
+                assert isinstance(gen_data_config, GenDataConfig)
+                _, report_steps = gen_data_config.get_args_for_key(response_key)
+                response_report_steps = [] if report_steps is None else report_steps
+                if response_report_steps and obs.restart not in response_report_steps:
+                    errors.append(
+                        ErrorInfo(
+                            message=(
+                                f"The GEN_DATA node:{response_key} is not configured "
+                                f"to load from report step:{obs.restart} for the "
+                                f"observation:{obs.name}"
+                            )
+                        ).set_context(response_key)
+                    )
 
-                if not all(
-                    self.observations[k].equals(other.observations[k])
-                    for k in self.observations
-                ):
-                    return False
+        if errors:
+            raise ConfigValidationError.from_collected(errors)
 
-                continue
-
-            if getattr(self, attr) != getattr(other, attr):
-                return False
-
-        return True
+        return self
 
     @staticmethod
     def with_plugins(runtime_plugins: ErtRuntimePlugins) -> type[ErtConfig]:
@@ -833,9 +886,6 @@ class ErtConfig(BaseModel):
             )
             ENV_VARS = dict(runtime_plugins.environment_variables)
             QUEUE_OPTIONS = runtime_plugins.queue_options
-            PRIORITIZE_PRIVATE_IP_ADDRESS = (
-                runtime_plugins.prioritize_private_ip_address
-            )
 
         ErtConfigWithPlugins.model_rebuild()
         assert issubclass(ErtConfigWithPlugins, ErtConfig)
@@ -919,10 +969,15 @@ class ErtConfig(BaseModel):
         try:
             model_config = ModelConfig.from_dict(config_dict)
             runpath = model_config.runpath_format_string
-            eclbase = model_config.eclbase_format_string
+            summary_file_base_name = model_config.summary_file_base_name
             substitutions["<RUNPATH>"] = runpath
-            substitutions["<ECL_BASE>"] = eclbase
-            substitutions["<ECLBASE>"] = eclbase
+            if summary_file_base_name is not None:
+                substitutions["<ECL_BASE>"] = summary_file_base_name
+                substitutions["<ECLBASE>"] = summary_file_base_name
+            else:
+                substitutions["<ECL_BASE>"] = DEFAULT_ECLBASE_FORMAT
+                substitutions["<ECLBASE>"] = DEFAULT_ECLBASE_FORMAT
+
         except ConfigValidationError as e:
             errors.append(e)
         except PydanticValidationError as err:
@@ -991,15 +1046,15 @@ class ErtConfig(BaseModel):
 
         try:
             if obs_configs:
-                summary_obs = {
+                obs_summary_keys = {
                     obs.key
                     for obs in obs_configs
-                    if isinstance(obs, SummaryObservation)
+                    if isinstance(obs, SummaryObservation | BreakthroughObservation)
                 }
-                if summary_obs:
+                if obs_summary_keys:
                     summary_keys = ErtConfig._read_summary_keys(config_dict)
                     config_dict[ConfigKeys.SUMMARY] = [summary_keys] + [
-                        [key] for key in summary_obs if key not in summary_keys
+                        [key] for key in obs_summary_keys if key not in summary_keys
                     ]
             ensemble_config = EnsembleConfig.from_dict(config_dict=config_dict)
         except ConfigValidationError as err:
@@ -1075,26 +1130,18 @@ class ErtConfig(BaseModel):
             user_configured_.add(key)
             env_vars[key] = substituter.substitute(val)
 
-        prioritize_private_ip_address: bool = cls.PRIORITIZE_PRIVATE_IP_ADDRESS
-        if ConfigKeys.PRIORITIZE_PRIVATE_IP_ADDRESS in config_dict:
-            user_prioritize_private_ip_address = bool(
-                config_dict[ConfigKeys.PRIORITIZE_PRIVATE_IP_ADDRESS]
-            )
-            if prioritize_private_ip_address != user_prioritize_private_ip_address:
-                logger.warning(
-                    "PRIORITIZE_PRIVATE_IP_ADDRESS was overwritten by user: "
-                    f"{prioritize_private_ip_address} -> "
-                    f"{user_prioritize_private_ip_address}"
-                )
-                prioritize_private_ip_address = user_prioritize_private_ip_address
+        if errors:
+            raise ObservationConfigError.from_collected(errors)
 
+        zonemap = config_dict.get(ConfigKeys.ZONEMAP)
+        if zonemap:
+            zonemap = substituter.substitute(zonemap)
         try:
             cls_config = cls(
                 substitutions=substitutions,
                 ensemble_config=ensemble_config,
                 ens_path=config_dict.get(ConfigKeys.ENSPATH, ErtConfig.DEFAULT_ENSPATH),
                 env_vars=env_vars,
-                random_seed=_seed_sequence(config_dict.get(ConfigKeys.RANDOM_SEED)),
                 analysis_config=analysis_config,
                 queue_config=queue_config,
                 workflow_jobs=workflow_jobs,
@@ -1110,7 +1157,7 @@ class ErtConfig(BaseModel):
                 runpath_config=model_config,
                 user_config_file=config_file_path,
                 observation_declarations=list(obs_configs),
-                prioritize_private_ip_address=prioritize_private_ip_address,
+                zonemap=zonemap,
             )
 
             # The observations are created here because create_observation_dataframes
@@ -1119,23 +1166,45 @@ class ErtConfig(BaseModel):
             has_rft_observations = any(
                 isinstance(o, RFTObservation) for o in obs_configs
             )
-            if has_rft_observations and "rft" not in ensemble_config.response_configs:
+            if (
+                has_rft_observations
+                and "rft" not in ensemble_config.response_configs
+                and summary_file_base_name
+            ):
                 ensemble_config.response_configs["rft"] = RFTConfig(
-                    input_files=[eclbase],
+                    input_files=[summary_file_base_name],
                     data_to_read={},
                     locations=[],
+                    zonemap=cls_config.zonemap,
                 )
-            cls_config._observations = create_observation_dataframes(
+
+            bt_obs = [o for o in obs_configs if isinstance(o, BreakthroughObservation)]
+
+            if (
+                bt_obs
+                and "breakthrough" not in ensemble_config.derived_response_configs
+            ):
+                ensemble_config.derived_response_configs["breakthrough"] = (
+                    BreakthroughConfig(
+                        keys=[f"BREAKTHROUGH:{o.key}" for o in bt_obs],
+                        summary_keys=[o.key for o in bt_obs],
+                        thresholds=[o.threshold for o in bt_obs],
+                        observed_dates=[o.date for o in bt_obs],
+                    )
+                )
+
+            # PS:
+            # This mutates the rft config and is necessary for the moment
+            # Consider changing this pattern
+            _ = create_observation_dataframes(
                 obs_configs,
-                cast(
-                    GenDataConfig | None,
-                    ensemble_config.response_configs.get("gen_data", None),
-                ),
-                cast(
-                    RFTConfig | None,
-                    ensemble_config.response_configs.get("rft", None),
-                ),
+                cast(RFTConfig | None, ensemble_config.response_configs.get("rft")),
             )
+
+            cls_config.random_seed_generator.user_defined_seed = config_dict.get(
+                ConfigKeys.RANDOM_SEED
+            )
+
         except PydanticValidationError as err:
             raise ConfigValidationError.from_pydantic(err) from err
         return cls_config
@@ -1171,8 +1240,8 @@ class ErtConfig(BaseModel):
         but the easy ones are filtered out.
         """
         config_context = ""
-        for line in config_file_contents.split("\n"):
-            line = line.strip()
+        for unstripped_line in config_file_contents.split("\n"):
+            line = unstripped_line.strip()
             if not line or line.startswith("--"):
                 continue
             if "--" in line and not any(x in line for x in ['"', "'"]):
@@ -1336,6 +1405,14 @@ class ErtConfig(BaseModel):
     def env_pr_fm_step(self) -> dict[str, dict[str, Any]]:
         return self.ENV_PR_FM_STEP
 
+    @property
+    def random_seed(self) -> int:
+        return self.random_seed_generator.seed
+
+    @random_seed.setter
+    def random_seed(self, value: int | None) -> None:
+        self.random_seed_generator.user_defined_seed = value
+
 
 def _split_string_into_sections(string: str, section_length: int) -> list[str]:
     """
@@ -1374,16 +1451,13 @@ def _get_files_in_directory(
 
 
 def _substitutions_from_dict(config_dict: ConfigDict) -> dict[str, str]:
-    substitutions = {}
 
-    for key, val in config_dict.get("DEFINE", []):
-        substitutions[key] = val
+    substitutions = dict(config_dict.get("DEFINE", []))
 
     if "<CONFIG_PATH>" not in substitutions:
         substitutions["<CONFIG_PATH>"] = os.getcwd()
 
-    for key, val in config_dict.get("DATA_KW", []):
-        substitutions[key] = val
+    substitutions.update(dict(config_dict.get("DATA_KW", [])))
 
     return substitutions
 

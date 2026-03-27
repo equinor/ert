@@ -43,9 +43,11 @@ def test_run_poly_example_with_design_matrix(copy_poly_case_with_design_matrix, 
         "--experiment-name",
         "test-experiment",
     )
-
-    for param in ["a", "b", "c", "category"]:
-        assert f"Getting parameter {param} from design matrix" in caplog.text
+    params = ["a", "b", "c", "category"]
+    assert (
+        "Getting parameters: a, category, b, c "
+        "from design matrix for realizations [0 1 2 3 4 5 6 7 8 9]"
+    ) in caplog.text
 
     storage_path = ErtConfig.from_file("poly.ert").ens_path
     config_path = ErtConfig.from_file("poly.ert").config_path
@@ -214,6 +216,7 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values):
 )
 def test_run_poly_example_with_multiple_design_matrix_instances():
     num_realizations = 10
+    expected_num_realizations_in_merged_design_matrix = 5
     a_values = list(range(num_realizations))
     _create_design_matrix(
         "poly_design_1.xlsx",
@@ -229,8 +232,8 @@ def test_run_poly_example_with_multiple_design_matrix_instances():
         "poly_design_2.xlsx",
         pl.DataFrame(
             {
-                "REAL": list(range(num_realizations)),
-                "d": num_realizations * [3],
+                "REAL": list(range(expected_num_realizations_in_merged_design_matrix)),
+                "d": expected_num_realizations_in_merged_design_matrix * [3],
             }
         ),
         pl.DataFrame([["g", 4]], orient="row"),
@@ -282,24 +285,56 @@ def test_run_poly_example_with_multiple_design_matrix_instances():
         os.stat("poly_eval.py").st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH,
     )
 
-    run_cli(
-        ENSEMBLE_EXPERIMENT_MODE,
-        "--disable-monitoring",
-        "poly.ert",
-        "--experiment-name",
-        "test-experiment",
-    )
+    with warnings.catch_warnings(record=True) as all_warnings:
+        run_cli(
+            ENSEMBLE_EXPERIMENT_MODE,
+            "--disable-monitoring",
+            "poly.ert",
+            "--experiment-name",
+            "test-experiment",
+        )
+    warning_messages = [
+        str(warning.message)
+        for warning in all_warnings
+        if not str(warning.message).startswith(
+            "Use of legacy_ertscript_workflow is deprecated"
+        )
+    ]
+    # there are two warnings, where one is about NUM_REALIZATIONS begin greater than
+    # the number of realizations in the design matrix
+    assert len(warning_messages) == 2
+    assert (
+        "Design Matrices 'poly_design_1.xlsx (DesignSheet DefaultSheet)' and "
+        "'poly_design_2.xlsx (DesignSheet DefaultSheet)' do not have the same active "
+        "realizations. The merged design matrix will only contain the "
+        "realizations that are active in all instances."
+    ) in warning_messages
     storage_path = ErtConfig.from_file("poly.ert").ens_path
     with open_storage(storage_path) as storage:
         experiment = storage.get_experiment_by_name("test-experiment")
         params = experiment.get_ensemble_by_name("default").load_parameters(
             "DESIGN_MATRIX"
         )
-        np.testing.assert_array_equal(params["a"].to_list(), a_values)
-        np.testing.assert_array_equal(params["b"].to_list(), 10 * [1])
-        np.testing.assert_array_equal(params["c"].to_list(), 10 * [2])
-        np.testing.assert_array_equal(params["d"].to_list(), 10 * [3])
-        np.testing.assert_array_equal(params["g"].to_list(), 10 * [4])
+        np.testing.assert_array_equal(
+            params["a"].to_list(),
+            a_values[:expected_num_realizations_in_merged_design_matrix],
+        )
+        np.testing.assert_array_equal(
+            params["b"].to_list(),
+            expected_num_realizations_in_merged_design_matrix * [1],
+        )
+        np.testing.assert_array_equal(
+            params["c"].to_list(),
+            expected_num_realizations_in_merged_design_matrix * [2],
+        )
+        np.testing.assert_array_equal(
+            params["d"].to_list(),
+            expected_num_realizations_in_merged_design_matrix * [3],
+        )
+        np.testing.assert_array_equal(
+            params["g"].to_list(),
+            expected_num_realizations_in_merged_design_matrix * [4],
+        )
 
 
 @pytest.mark.usefixtures(

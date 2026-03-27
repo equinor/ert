@@ -42,6 +42,8 @@ def pytest_collection_modifyitems(config, items):
         fixtures = getattr(item, "fixturenames", ())
         if "qtbot" in fixtures or "qapp" in fixtures or "qtmodeltester" in fixtures:
             item.add_marker("requires_window_manager")
+        if "unused_tcp_port" in fixtures:
+            item.add_marker(pytest.mark.flaky(rerun=3))
         if any(
             f in fixtures
             for f in [
@@ -62,6 +64,9 @@ def pytest_collection_modifyitems(config, items):
             "--eclipse-simulator"
         ):
             item.add_marker(pytest.mark.skip("Requires eclipse"))
+
+        if "snapshot" in getattr(item, "fixturenames", ()):
+            item.add_marker(pytest.mark.snapshot_test)
 
     if os.environ.get("ERT_TESTS_RUN_ON_MAC_CI"):
         for item in items:

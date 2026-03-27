@@ -42,8 +42,7 @@ def api(tmpdir, source_root, monkeypatch):
         test_data_dir = os.path.join(test_data_root, "snake_oil")
         shutil.copytree(test_data_dir, "test_data")
         os.chdir("test_data")
-        api = PlotApi(test_data_dir)
-        yield api
+        yield PlotApi(test_data_dir)
 
 
 def mocked_requests_get(*args, **kwargs):
@@ -221,35 +220,21 @@ def mocked_requests_get(*args, **kwargs):
                 },
             },
             "responses": {
-                "summary": [
-                    {
-                        "response_type": "summary",
-                        "response_key": "BPR:1,3,8",
-                        "filter_on": {},
-                        "finalized": True,
-                    },
-                    {
-                        "response_type": "summary",
-                        "response_key": "FOPR",
-                        "filter_on": {},
-                        "finalized": True,
-                    },
-                    {
-                        "response_type": "summary",
-                        "response_key": "WOPPER",
-                        "filter_on": {},
-                        "finalized": True,
-                    },
-                ],
-                "gen_data": [
-                    {
-                        "response_type": "gen_data",
-                        "response_key": "SNAKE_OIL_WPR_DIFF",
-                        "filter_on": {"report_steps": [199]},
-                        "finalized": True,
-                    }
-                ],
+                "summary": {
+                    "type": "summary",
+                    "keys": ["BPR:1,3,8", "FOPR", "WOPPER"],
+                    "has_finalized_keys": True,
+                },
+                "gen_data": {
+                    "type": "gen_data",
+                    "keys": ["SNAKE_OIL_WPR_DIFF"],
+                    "report_steps_list": [
+                        [199],
+                    ],
+                    "has_finalized_keys": True,
+                },
             },
+            "derived_responses": {},
             "observations": {
                 "summary": ["FOPR"],
                 "gen_data": ["SNAKE_OIL_WPR_DIFF@199"],

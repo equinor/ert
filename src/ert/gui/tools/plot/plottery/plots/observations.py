@@ -3,6 +3,8 @@ from __future__ import annotations
 import math
 from typing import TYPE_CHECKING
 
+import numpy as np
+
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
     from pandas import DataFrame
@@ -49,13 +51,30 @@ def _plotObservations(
     # line style set to 'off' toggles errorbar visibility
     if not style.line_style:
         style.width = 0
-    if plot_config.depth_y_axis:
+
+    if plot_config.flip_response_axis:
         errorbar_data = {
             "x": data.loc["OBS"].to_numpy(),
             "y": data.loc["key_index"].to_numpy(),
             "xerr": data.loc["STD"].to_numpy(),
         }
         axes.yaxis.set_inverted(True)
+    elif plot_config.flip_observation_axis:
+        # np.timedelta64 requires int input. To achieve hourly resolution (ERROR = 1.5),
+        # we convert the std to an hourly timedelta
+        xerr = np.array(
+            [
+                np.timedelta64(round(time * 24), "h")
+                for time in data.loc["STD"].to_list()
+            ]
+        )
+        errorbar_data = {
+            "x": np.array(
+                [np.datetime64(time) for time in data.loc["key_index"].to_list()]
+            ),
+            "y": data.loc["OBS"].to_numpy(),
+            "xerr": xerr,
+        }
     else:
         errorbar_data = {
             "x": data.loc["key_index"].to_numpy(),

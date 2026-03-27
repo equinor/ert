@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from ert.analysis.misfit_preprocessor import (
+    cluster_responses,
     get_nr_primary_components,
     get_scaling_factor,
     main,
@@ -142,34 +143,33 @@ def test_that_correlated_and_independent_observations_are_grouped_separately(
     np.testing.assert_equal(obs_errors, obs_error_copy)
 
 
-@pytest.mark.parametrize("nr_observations", [0, 1, 2])
-def test_edge_cases_with_few_observations_return_default_values(nr_observations):
-    """Test that edge cases with 0-2 observations return default scaling values.
-    We do not know why this is the case.
+def test_edge_cases_with_few_observations_return_default_values():
+    """
+    Test that edge cases with 2 observations return default scaling values.
+    We create an example of a response matrix where all rows are perfectly correlated,
+    which should lead to a single cluster with 1 component and a scaling factor of
+    sqrt(num_observations / num_components) = sqrt(2).
+    However, since the number of observations is <= 2, the function should skip the
+    clustering and PCA and return default values of 1.0 for all scaling factors
     """
     nr_realizations = 1000
+    nr_observations = 2
     Y = np.ones((nr_observations, nr_realizations))
 
     rng = np.random.default_rng(1234)
     parameters_a = rng.normal(10, 1, nr_realizations)
 
+    # create response matrix
     for i in range(nr_observations):
         Y[i] = (i + 1) * parameters_a
 
-    scale_factors, clusters, nr_components = main(Y, Y.mean(axis=1))
+    # Add observation errors
+    obs_errors = np.ones(nr_observations) * 0.1
+
+    scale_factors, *_ = main(Y, obs_errors)
 
     np.testing.assert_equal(
         scale_factors,
-        np.array(nr_observations * [1.0]),
-    )
-
-    np.testing.assert_equal(
-        clusters,
-        np.array(nr_observations * [1.0]),
-    )
-
-    np.testing.assert_equal(
-        nr_components,
         np.array(nr_observations * [1.0]),
     )
 
@@ -340,3 +340,267 @@ def test_autoscale_clusters_observations_by_correlation_pattern_ignoring_sign(
         expected_scale_factors[cluster_indices] = expected_sf
 
     np.testing.assert_allclose(scale_factors, expected_scale_factors)
+
+
+@pytest.mark.parametrize(
+    ("corr_de_target", "expect_de_merged"),
+    [
+        (0.55, True),  # Above threshold ~0.42: D-E merges first
+        (0.50, True),
+        (0.45, True),
+        (0.40, False),  # Below threshold: A-B or B-C merges first
+        (0.30, False),
+    ],
+)
+def test_that_clustering_prioritizes_global_similarity_over_local_correlation(
+    corr_de_target, expect_de_merged
+):
+    """
+    This test demonstrates that the current clustering implementation (using
+    Euclidean distance on correlation rows) can behave unintuitively by prioritizing
+    pairs with LOWER direct correlation for merging over pairs with HIGHER direct
+    correlation. This happens when the higher-correlation pair disagrees strongly on
+    other variables.
+
+    "Prioritizing" here means that the hierarchical clustering algorithm considers
+    the lower-correlation pair to be "closer" (more similar) and thus merges them
+    earlier in the bottom-up clustering process.
+
+    Scenario:
+    - Group 1: A, B, C.
+      A and C are independent.
+      B = A + C (correlated ~0.707 with both).
+      In other words, A and B are correlated ~0.7, the same is true for B and C.
+      However, the Euclidean distance between A's and B's correlation rows is large
+      because of the disagreement on C
+
+    - Group 2: D, E.
+      D and E are isolated and correlated with strength rho (varied by parametrization).
+      They agree perfectly on A, B, C (zero correlation with all).
+      The Euclidean distance between D's and E's correlation rows is relatively
+      small because they have consistent (zero) correlations with everything else.
+
+    Each variable's correlation row (the corresponding row in the correlation matrix)
+    includes its correlation with all variables, including itself (1.0 on diagonal).
+    For D and E we have:
+
+    D's row: [corr(D,A)=0, corr(D,B)=0, corr(D,C)=0, corr(D,D)=1.0, corr(D,E)=rho]
+    E's row: [corr(E,A)=0, corr(E,B)=0, corr(E,C)=0, corr(E,D)=rho, corr(E,E)=1.0]
+
+    For A, B and C we have:
+    A's row: [corr(A,A)=1.0, corr(A,B)=0.7, corr(A,C)=0, corr(A,D)=0, corr(A,E)=0]
+    B's row: [corr(B,A)=0.7, corr(B,B)=1.0, corr(B,C)=0.7, corr(B,D)=0, corr(B,E)=0]
+    C's row: [corr(C,A)=0, corr(C,B)=0.7, corr(C,C)=1.0, corr(C,D)=0, corr(C,E)=0]
+
+    Threshold calculations (based on Euclidean distance between correlation rows):
+      dist(D,E) = sqrt((0-0)^2 + (0-0)^2 + (0-0)^2 + (1-rho)^2 + (rho-1)^2))
+                = sqrt(2 * (1 - rho)^2)
+      dist(A,B) = dist(B,C) = sqrt((1-0.7)^2 + (0.7-1)^2 + (0-0.7)^2 + (0-0)^2+(0-0)^2))
+                = 0.82
+
+      Solve dist(D,E) < dist(A,B) for rho:
+      sqrt(2 * (1 - rho)^2) < 0.82
+        2 * (1 - rho)^2 < 0.82^2
+        (1 - rho)^2 < 0.82^2 / 2
+        1 - rho < sqrt(0.82^2 / 2)
+        rho > 1 - sqrt(0.82^2 / 2) ≈ 0.42
+      Hence, when rho > 0.42, D-E merges first; otherwise either A-B or B-C merges first
+      (depending on random variation in the sampling).
+
+    This test is parametrized to verify both regimes:
+    - rho > 0.42: D-E merges first despite corr(A,B) > rho and corr(B,C) > rho
+    - rho < 0.42: D-E no longer the closest pair (either A-B or B-C merges first)
+    """
+
+    rng = np.random.default_rng(42)
+    N_realizations = 10000
+
+    # Construct A, B, C
+    A = rng.standard_normal(N_realizations)
+    C = rng.standard_normal(N_realizations)
+    # B = A + C. Normalize everyone.
+    A = (A - np.mean(A)) / np.std(A)
+    C = (C - np.mean(C)) / np.std(C)
+    B = A + C
+    B = (B - np.mean(B)) / np.std(B)
+
+    # Construct D, E with target correlation
+    D = rng.standard_normal(N_realizations)
+    noise = rng.standard_normal(N_realizations)
+    E = corr_de_target * D + np.sqrt(1 - corr_de_target**2) * noise
+    D = (D - np.mean(D)) / np.std(D)
+    E = (E - np.mean(E)) / np.std(E)
+
+    dataset = np.array([A, B, C, D, E]).T
+
+    # Verify correlations
+    corr = np.corrcoef(dataset, rowvar=False)
+    # The return type of corrcoef is ambiguous (float | ndarray) in stubs,
+    # so we assert it is an array to silence static analysis warnings about indexing.
+    assert isinstance(corr, np.ndarray)
+    corr_AB = corr[0, 1]
+    corr_BC = corr[1, 2]
+    corr_DE = corr[3, 4]
+
+    assert np.isclose(corr_AB, 0.707, atol=0.05), (
+        f"Setup error: A-B corr {corr_AB} != 0.707"
+    )
+    assert np.isclose(corr_BC, 0.707, atol=0.05), (
+        f"Setup error: B-C corr {corr_BC} != 0.707"
+    )
+    assert np.isclose(corr_DE, corr_de_target, atol=0.05), (
+        f"Setup error: D-E corr {corr_DE} != {corr_de_target}"
+    )
+
+    # We ask for a clustering that would force exactly ONE merge.
+    # Total items = 5 (A, B, C, D, E).
+    # If we ask for 4 clusters, the algorithm must pick the single "best" pair
+    # to merge and leave the others as singletons.
+    clusters = cluster_responses(dataset, nr_clusters=4)
+
+    is_DE_merged = clusters[3] == clusters[4]
+    is_AB_merged = clusters[0] == clusters[1]
+    is_BC_merged = clusters[1] == clusters[2]
+
+    failure_msg = (
+        f"DE_merged={is_DE_merged}, AB_merged={is_AB_merged}, BC_merged={is_BC_merged}."
+        f"Correlations: AB={corr_AB:.3f}, BC={corr_BC:.3f}, DE={corr_DE:.3f}"
+    )
+    assert is_DE_merged == expect_de_merged, failure_msg
+    # When D-E merges first, A-B and B-Cshould not (they stay separate)
+    if expect_de_merged:
+        assert not is_AB_merged, failure_msg
+        assert not is_BC_merged, failure_msg
+
+
+def test_clustering_and_scaling_realistic_scenario():
+    """
+    This is an integration test for two key components of the autoscaler:
+
+    1. Determining the number of clusters.
+    2. Determining the scaling factor for each cluster.
+
+    Scenario:
+    We are given 500 noisy seismic observations and 20 precise well pressure
+    observations. All the seismic observations are correlated and all the
+    pressure observations are correlated, but the seismic and the pressure observations
+    are independent of each other.
+
+    Intuitive behavior:
+    The autoscaler should identify two clusters, one for the seismic observations and
+    one for the pressure observations, and assign a scaling factor to each cluster based
+    on the number of observations in that cluster (sqrt(500) for seismic and sqrt(20)
+    for pressure).
+
+    Actual behavior with current implementation:
+    One cluster with scaling factor sqrt(520).
+
+    Explanation of clustering:
+    The autoscaler uses PCA to determine the number of clusters. When using PCA it is
+    common to normalize the data before calculating the principal components
+    (e.g., using StandardScaler to give each observation unit variance). However,
+    the current implementation scales the responses by the observation errors instead.
+    This means that the precise pressure observations are amplified and the noisy
+    seismic observations are suppressed. As a result, the PCA identifies only one
+    principal component, and hence, everything is grouped into one cluster.
+
+    Explanation of scaling factor:
+    The scaling factor for a cluster is calculated as
+    sqrt(num_observations_in_cluster / num_components), where num_components is
+    calculated by doing PCA on the elements of the cluster (stopping when 95% of the
+    total variance is explained).
+    """
+
+    rng = np.random.default_rng(42)
+    n_realizations = 100
+
+    n_seismic = 500
+    n_pressure = 20
+
+    # Two independent underlying parameters
+    param_shallow = rng.normal(0, 1, size=(n_realizations, 1))
+    param_deep = rng.normal(0, 1, size=(n_realizations, 1))
+
+    # Initialize data by using broadcasting to create the correlated structures:
+
+    # - Seismic responses = param_shallow * sensitivity,
+    #   (all 500 seismic obs are linear combinations of the same parameter to create
+    #   within-group correlation)
+
+    # - Pressure responses = param_deep * sensitivity,
+    #   (all 20 pressure obs are linear combinations of a different parameter)
+
+    # - Since param_shallow and param_deep are independent, this results in
+    #   the seismic responses being independent from the pressure responses.
+
+    # Seismic: sensitive to shallow param
+    seismic_sensitivity = rng.uniform(0.5, 1.5, size=(1, n_seismic))
+    seismic_responses = param_shallow @ seismic_sensitivity
+    # Add noise
+    seismic_responses += rng.normal(0, 0.1, size=(n_realizations, n_seismic))
+
+    # Pressure: sensitive to deep param (independent of seismic)
+    pressure_sensitivity = rng.uniform(0.5, 1.5, size=(1, n_pressure))
+    pressure_responses = param_deep @ pressure_sensitivity
+    # Add noise
+    pressure_responses += rng.normal(0, 0.1, size=(n_realizations, n_pressure))
+
+    responses = np.hstack([seismic_responses, pressure_responses])
+
+    # Observation errors: seismic is NOISY, pressure is PRECISE
+    seismic_errors = np.full(n_seismic, 2.0)
+    pressure_errors = np.full(n_pressure, 0.05)
+    obs_errors = np.hstack([seismic_errors, pressure_errors])
+
+    # Run the main function to get clusters and scaling factors
+    scale_factors, clusters, _ = main(responses.T, obs_errors)
+
+    # Assert that all observations are in the same cluster
+    assert len(np.unique(clusters)) == 1
+
+    # Assert that the scaling factor is sqrt(520) for all observations
+    # note that this results in the pressure observations receiving a scaling
+    # factor of sqrt(520) instead of sqrt(20), which means that they are significantly
+    # deflated compared to what one would expect, and essentially ignored/suppressed by
+    # the updating algorithm, even though the observations are precise and should be
+    # influential.
+    expected_sf = np.sqrt(n_seismic + n_pressure)
+    assert np.allclose(scale_factors, expected_sf)
+
+
+def test_clustering_and_scaling_edge_case():
+    """
+    This test demonstrates that when observations have irregular errors, the
+    current clustering approach can lead to unintuitive results where independent
+    observations are clustered together, and treated as correlated.
+
+    Scenario:
+    Suppose we have 100 independent observations r_1,r_2,...,r_100 with corresponding
+    observation errors, where r_1 has a small error, and r_2,...,r_100 have large
+    errors. The error-scaling step amplifies r_1's response and suppresses
+    r_2,...,r_100, leading to one cluster instead of 100 clusters. As a result, the
+    history matching update is deflated as if all 100 observations were
+    perfectly correlated, even though they are all independent.
+    """
+
+    # Create 100 independent responses
+    rng = np.random.default_rng(42)
+    n_observations = 100
+    n_realizations = 1000
+    responses = rng.standard_normal((n_observations, n_realizations))
+
+    # Create irregular observation errors: one small, the rest large
+    obs_errors = np.array([0.1] + [10.0] * (n_observations - 1))
+
+    # Run clustering algorithm
+    scale_factors, clusters, _ = main(responses, obs_errors)
+
+    # Assert that all observations are clustered together (only 1 cluster)
+    assert len(np.unique(clusters)) == 1
+
+    # Assert deflation rate
+    # For independent observations, the scaling factor should be 1
+    # but since all overvations are clustered together and treated as perfectly
+    # correlated, the scaling factor becomes sqrt(100) = 10
+    assert len(np.unique(scale_factors)) == 1
+    assert np.allclose(scale_factors, np.sqrt(100))

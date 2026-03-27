@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QDialog,
     QFormLayout,
@@ -13,6 +12,7 @@ from PyQt6.QtWidgets import (
 )
 
 from ert.gui.ertwidgets import CheckList
+from ert.gui.icon_utils import load_icon
 
 from .filter_popup import FilterPopup
 from .filterable_kw_list_model import FilterableKwListModel
@@ -41,7 +41,7 @@ class CopyStyleToDialog(QDialog):
         self._filter_popup.filterSettingsChanged.connect(self.filterSettingsChanged)
 
         filter_popup_button = QToolButton()
-        filter_popup_button.setIcon(QIcon("img:filter_list.svg"))
+        filter_popup_button.setIcon(load_icon("filter_list.svg"))
         filter_popup_button.clicked.connect(self._filter_popup.show)
 
         self._list_model = FilterableKwListModel(key_defs)

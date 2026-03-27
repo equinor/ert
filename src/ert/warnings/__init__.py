@@ -1,8 +1,8 @@
-from ._warnings import ErtWarning, PostSimulationWarning
+from ._warnings import ErtWarning, PostExperimentWarning
 from .specific_warning_handler import capture_specific_warning
 
 __all__ = [
     "ErtWarning",
-    "PostSimulationWarning",
+    "PostExperimentWarning",
     "capture_specific_warning",
 ]

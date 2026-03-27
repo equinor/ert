@@ -30,6 +30,7 @@ class GaussianKDEPlot:
         ensemble_to_data_map: dict[EnsembleObject, pd.DataFrame],
         observation_data: pd.DataFrame,
         std_dev_images: dict[str, npt.NDArray[np.float32]],
+        obs_loc: npt.NDArray[np.float32] | None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         plotGaussianKDE(figure, plot_context, ensemble_to_data_map, observation_data)
@@ -59,12 +60,11 @@ def plotGaussianKDE(
         strict=False,
     ):
         config.setCurrentColor(color_index)
-        if data.empty:
+        if data.empty or not pd.api.types.is_numeric_dtype(data[0]):
             continue
-        data = data[0]
-        if not _array_is_constant(data):
+        if not _array_is_constant(data[0]):
             _plotGaussianKDE(
-                axes, config, data, f"{ensemble.experiment_name} : {ensemble.name}"
+                axes, config, data[0], f"{ensemble.experiment_name} : {ensemble.name}"
             )
 
     if plot_context.log_scale:

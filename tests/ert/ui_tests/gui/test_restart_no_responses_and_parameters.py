@@ -11,10 +11,10 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QComboBox
 
 from ert.config import ErtConfig
+from ert.gui.experiments.evaluate_ensemble_panel import EvaluateEnsemblePanel
+from ert.gui.experiments.experiment_panel import ExperimentPanel
 from ert.gui.main import _setup_main_window
 from ert.gui.main_window import ErtMainWindow
-from ert.gui.simulation.evaluate_ensemble_panel import EvaluateEnsemblePanel
-from ert.gui.simulation.experiment_panel import ExperimentPanel
 from ert.gui.tools.event_viewer import GUILogHandler
 from ert.run_models import EnsembleExperiment
 from ert.run_models.evaluate_ensemble import EvaluateEnsemble

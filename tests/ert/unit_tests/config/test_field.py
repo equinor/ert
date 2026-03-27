@@ -12,6 +12,7 @@ from ert.config.field import TRANSFORM_FUNCTIONS
 from ert.config.parameter_config import InvalidParameterFile
 from ert.config.parsing import parse_contents
 from ert.field_utils import (
+    AxisOrientation,
     ErtboxParameters,
     FieldFileFormat,
     Shape,
@@ -28,7 +29,9 @@ def test_write_to_runpath_produces_the_transformed_field_in_storage(
 ):
     ensemble_config = snake_oil_field_example.ensemble_config
     experiment_id = storage.create_experiment(
-        parameters=ensemble_config.parameter_configuration
+        experiment_config={
+            "parameter_configuration": ensemble_config.parameter_configuration
+        }
     )
     prior_ensemble = storage.create_ensemble(
         experiment_id, name="prior", ensemble_size=5
@@ -447,59 +450,30 @@ def field_with_ertbox_params():
 
 
 @pytest.mark.parametrize(
-    ("xpos", "ypos", "main_range", "perp_range", "anisotropy_angle"),
+    ("flip", "expected_axis_orientation"),
     [
-        (
-            [1050.0, 1250.0, 1250.0, 1250.0, 1000.0, 1250.0, 1250.0],  # xpos
-            [1150.0, 1650.0, 1650.0, 1650.0, 1100.0, 1650.0, 1650.0],  # ypos
-            [100.0, 600.0, 600.0, 600.0, 1000.0, 300.0, 300.0],  # main_range
-            [100.0, 200.0, 200.0, 200.0, 1000.0, 10.0, 100.0],  # perp_range
-            [0.0, 35.0, 135.0, -135.0, 0.0, 45.0, -270.0],  # angle
-        ),
+        (1, AxisOrientation.LEFT_HANDED),
+        (-1, AxisOrientation.RIGHT_HANDED),
     ],
 )
-def test_calc_rho_for_2d_grid_layer(
-    snapshot,
-    field_with_ertbox_params,
-    xpos: list[float],
-    ypos: list[float],
-    main_range: list[float],
-    perp_range: list[float],
-    anisotropy_angle: list[float],
+def test_that_calculate_ertbox_parameters_detects_axis_orientation_from_egrid(
+    tmp_path, flip, expected_axis_orientation
 ):
-    write_roff_param = False
-    nx = field_with_ertbox_params.ertbox_params.nx
-    ny = field_with_ertbox_params.ertbox_params.ny
+    nx, ny, nz = 10, 10, 10
+    grid = xtgeo.create_box_grid((nx, ny, nz), flip=flip)
 
-    xposition = np.array(xpos)
-    yposition = np.array(ypos)
-    mainrange = np.array(main_range)
-    perprange = np.array(perp_range)
-    angles = np.array(anisotropy_angle)
+    egrid_path = tmp_path / f"test_grid_flip_{flip}.EGRID"
+    grid.to_file(egrid_path, "egrid")
 
-    #   Dimension of rho_for_one_grid_layer is (nx,ny,nobs)
-    rho_for_one_grid_layer = field_with_ertbox_params.calc_rho_for_2d_grid_layer(
-        xposition,
-        yposition,
-        mainrange,
-        perprange,
-        angles,
-        right_handed_grid_indexing=True,
-    )
-    # Ensure -0 and +0 will be 0
-    rho_for_one_grid_layer = np.where(
-        rho_for_one_grid_layer == 0, 0.0, rho_for_one_grid_layer
-    )
+    grid_from_file = xtgeo.grid_from_file(egrid_path, fformat="egrid")
+    params = calculate_ertbox_parameters(grid_from_file)
 
-    snapshot.assert_match(
-        str(rho_for_one_grid_layer) + "\n", "testdata_rho_for_one_grid_layer.txt"
-    )
-    if write_roff_param:
-        # Write to 3D grid parameter in ROFF for visual inspection
-        filename = "tmp_2d_rho_per_obs.roff"
-        nobs = rho_for_one_grid_layer.shape[2]
-        rho_param = xtgeo.GridProperty(
-            ncol=nx, nrow=ny, nlay=nobs, name="rho", values=rho_for_one_grid_layer
-        )
-        print(f"Write file: {filename}")
-        rho_param.to_file(filename, fformat="roff")
+    assert params.axis_orientation == expected_axis_orientation
+    assert params.nx == nx
+    assert params.ny == ny
+    assert params.nz == nz
+    assert params.rotation_angle == 0.0
+    if flip == 1:
+        assert params.origin == (0, 0)
+    if flip == -1:
+        assert params.origin == (0, -10)

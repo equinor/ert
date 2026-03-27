@@ -36,10 +36,9 @@ from ert.gui.ertwidgets import (
 )
 from ert.gui.ertwidgets.analysismodulevariablespanel import AnalysisModuleVariablesPanel
 from ert.gui.ertwidgets.suggestor._suggestor_message import SuggestorMessage
+from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.gui.main import ErtMainWindow, GUILogHandler, _setup_main_window
 from ert.gui.main_window import SidebarToolButton
-from ert.gui.simulation.experiment_panel import ExperimentPanel
-from ert.gui.simulation.run_dialog import RunDialog
 from ert.gui.tools.event_viewer import add_gui_log_handler
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
 from ert.gui.tools.manage_experiments.storage_widget import AddWidget, StorageWidget
@@ -59,10 +58,10 @@ from ert.run_models import (
     MultipleDataAssimilation,
     SingleTestRun,
 )
-from ert.services import ErtServer
+from ert.services import ErtServerController
 from ert.storage import open_storage
+from tests.ert.handle_run_path_dialog import handle_run_path_dialog
 
-from ...unit_tests.gui.simulation.test_run_path_dialog import handle_run_path_dialog
 from .conftest import (
     add_experiment_manually,
     get_child,
@@ -296,14 +295,14 @@ def test_that_the_plot_window_contains_the_expected_elements(
 ):
     gui = esmda_has_run
     open_storage(gui.ert_config.ens_path, mode="r")
-    with ErtServer.init_service(
+    with ErtServerController.init_service(
         project=os.path.abspath(gui.ert_config.ens_path),
     ):
         expected_ensembles = [
-            "es_mda : default_0",
-            "es_mda : default_1",
-            "es_mda : default_2",
-            "es_mda : default_3",
+            "es_mda : iter-0",
+            "es_mda : iter-1",
+            "es_mda : iter-2",
+            "es_mda : iter-3",
         ]
 
         # Click on Create plot after esmda has run
@@ -318,9 +317,9 @@ def test_that_the_plot_window_contains_the_expected_elements(
         )
 
         # Assert that the Case selection widget contains the expected ensembles
-        ensemble_names = []
-        for index in range(case_selection.count()):
-            ensemble_names.append(case_selection.item(index).text())
+        ensemble_names = [
+            case_selection.item(index).text() for index in range(case_selection.count())
+        ]
 
         assert sorted(ensemble_names) == expected_ensembles
 
@@ -519,7 +518,7 @@ def test_that_inversion_type_can_be_set_from_gui(qtbot, opened_main_window_poly)
 
     QTimer.singleShot(500, handle_analysis_module_panel)
     qtbot.mouseClick(
-        get_child(es_edit, QToolButton), Qt.MouseButton.LeftButton, delay=1
+        get_child(es_edit, QPushButton), Qt.MouseButton.LeftButton, delay=1
     )
 
 
@@ -643,7 +642,7 @@ def test_that_a_failing_job_shows_error_message_with_context(
     run_dialog = wait_for_child(gui, qtbot, RunDialog)
 
     QTimer.singleShot(200, lambda: handle_error_dialog(run_dialog))
-    qtbot.waitUntil(lambda: run_dialog.is_simulation_done() is True, timeout=100000)
+    qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=100000)
 
 
 @pytest.mark.skip_mac_ci
@@ -662,7 +661,7 @@ def test_that_gui_plotter_works_when_no_data(qtbot, monkeypatch, use_tmpdir):
     # Not creating will result in dark storage hanging/lagging
     open_storage(ert_config.ens_path, mode="r")
 
-    with ErtServer.init_service(
+    with ErtServerController.init_service(
         project=os.path.abspath(ert_config.ens_path),
     ):
         gui = _setup_main_window(
@@ -697,7 +696,7 @@ def test_right_click_plot_button_opens_external_plotter(qtbot, use_tmpdir, monke
     args_mock = Mock()
     args_mock.config = config_file
     ert_config = ErtConfig.from_file(config_file)
-    with ErtServer.init_service(
+    with ErtServerController.init_service(
         project=os.path.abspath(ert_config.ens_path),
     ):
         gui = _setup_main_window(
@@ -710,11 +709,12 @@ def test_right_click_plot_button_opens_external_plotter(qtbot, use_tmpdir, monke
 
         def top_level_plotter_windows() -> list[PlotWindow]:
             plot_windows = gui.get_external_plot_windows()
-            top_level_plot_windows = []
 
-            for win in plot_windows:
-                if "Plotting" in win.windowTitle() and win.isVisible():
-                    top_level_plot_windows.append(win)
+            top_level_plot_windows = [
+                win
+                for win in plot_windows
+                if "Plotting" in win.windowTitle() and win.isVisible()
+            ]
             return top_level_plot_windows
 
         def right_click_plotter_button() -> None:
@@ -745,12 +745,10 @@ def test_right_click_plot_button_opens_external_plotter(qtbot, use_tmpdir, monke
     gui.close()
 
 
-@pytest.mark.usefixtures("copy_poly_case")
-def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_cases(qtbot):
-    args = Mock()
-    args.config = "poly.ert"
-    gui, *_ = ert.gui.main._start_initial_gui_window(args, GUILogHandler())
-    assert gui.windowTitle().startswith("ERT - poly.ert")
+def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_valid_cases(
+    qtbot, opened_main_window_minimal_realizations, run_experiment
+):
+    gui = opened_main_window_minimal_realizations
 
     combo_box = get_child(gui, QComboBox, name="experiment_type")
     qtbot.mouseClick(combo_box, Qt.MouseButton.LeftButton)
@@ -767,12 +765,17 @@ def test_that_es_mda_restart_run_box_is_disabled_when_there_are_no_cases(qtbot):
 
     assert restart_button
 
-    assert len(ensemble_selector._ensemble_list()) == 0
+    assert ensemble_selector.count() == 0
     assert not restart_button.isEnabled()
 
     add_experiment_manually(qtbot, gui, ensemble_name="test_ensemble")
-    assert len(ensemble_selector._ensemble_list()) == 1
 
+    assert ensemble_selector.count() == 0
+    assert not restart_button.isEnabled()
+
+    run_experiment(EnsembleExperiment, gui)
+
+    assert ensemble_selector.count() == 1
     assert restart_button.isEnabled()
 
 
@@ -852,31 +855,31 @@ def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
         run_dialogs = get_children(gui, RunDialog)
         dialog = run_dialogs[-1]
         qtbot.wait_until(lambda: not dialog.isHidden(), timeout=5000)
-        qtbot.wait_until(lambda: dialog.is_simulation_done() is True, timeout=15000)
+        qtbot.wait_until(lambda: dialog.is_experiment_done() is True, timeout=15000)
 
     # not clickable since no simulations started yet
-    find_and_click_button("button_Simulation_status", False, False)
-    find_and_click_button("button_Start_simulation", True, True)
+    find_and_click_button("button_Experiment_status", False, False)
+    find_and_click_button("button_Start_experiment", True, True)
 
     run_experiment()
     wait_for_simulation_completed()
 
     # just toggle to see if next button yields intended change
-    find_and_click_button("button_Start_simulation", True, True)
+    find_and_click_button("button_Start_experiment", True, True)
     experiments_panel = wait_for_child(gui, qtbot, ExperimentPanel)
     qtbot.wait_until(lambda: not experiments_panel.isHidden(), timeout=5000)
 
-    find_and_click_button("button_Simulation_status", True, True)
+    find_and_click_button("button_Experiment_status", True, True)
     run_dialog = wait_for_child(gui, qtbot, RunDialog)
     qtbot.wait_until(lambda: not run_dialog.isHidden(), timeout=5000)
 
     # verify no drop menu
     button_simulation_status = gui.findChild(
-        SidebarToolButton, "button_Simulation_status"
+        SidebarToolButton, "button_Experiment_status"
     )
     assert button_simulation_status.menu() is None
 
-    find_and_click_button("button_Start_simulation", True, True)
+    find_and_click_button("button_Start_experiment", True, True)
     QTimer.singleShot(500, lambda: handle_run_path_dialog(gui, qtbot, True))
     run_experiment()
     wait_for_simulation_completed()
@@ -884,16 +887,16 @@ def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
     # verify menu available
     assert len(button_simulation_status.menu().actions()) == 2
 
-    find_and_click_button("button_Start_simulation", True, True)
+    find_and_click_button("button_Start_experiment", True, True)
     QTimer.singleShot(500, lambda: handle_run_path_dialog(gui, qtbot, True))
     run_experiment()
     wait_for_simulation_completed()
 
     # click on something else just to shift focus
-    find_and_click_button("button_Start_simulation", True, True)
+    find_and_click_button("button_Start_experiment", True, True)
     # verify correct button in focus
-    find_and_check_selected("button_Start_simulation", True)
-    find_and_check_selected("button_Simulation_status", False)
+    find_and_check_selected("button_Start_experiment", True)
+    find_and_check_selected("button_Experiment_status", False)
 
     assert len(button_simulation_status.menu().actions()) == 3
     for choice in button_simulation_status.menu().actions():
@@ -901,8 +904,73 @@ def test_that_simulation_status_button_adds_menu_on_subsequent_runs(
 
         # verify correct button in focus when selecting from drop-down
         choice.trigger()
-        find_and_check_selected("button_Start_simulation", False)
-        find_and_check_selected("button_Simulation_status", True)
+        find_and_check_selected("button_Start_experiment", False)
+        find_and_check_selected("button_Experiment_status", True)
+
+
+def test_that_visible_experiment_label_matches_bold_simulation_menu_action(
+    opened_main_window_poly, qtbot, run_experiment
+):
+    gui = opened_main_window_poly
+
+    runs = {}
+    actions = {}
+    titles = []
+
+    def retrieve_latest_dialog_title(expected_dialogs_number):
+        run_dialogs = get_children(gui, RunDialog)
+        assert len(run_dialogs) == expected_dialogs_number
+        latest_run_dialog = run_dialogs[-1]
+        latest_run_title = latest_run_dialog._experiment_name_label.text()
+        # all titles should be different because run_experiment fixture takes >1s
+        assert latest_run_title not in titles
+        titles.append(latest_run_title)
+        runs[latest_run_title] = latest_run_dialog
+
+    def retrieve_existing_menu_actions(expected_actions_number):
+        simulation_status_menu = gui.findChild(
+            SidebarToolButton, "button_Experiment_status"
+        ).menu()
+        assert len(simulation_status_menu.actions()) == expected_actions_number
+        for action in simulation_status_menu.actions():
+            actions[action.text()] = action
+
+    def verify_only_latest_run_is_marked_bold_and_dialog_visible_on_new_experiment():
+        for title in titles[:-1]:
+            assert not actions[title].font().bold()
+            assert runs[title].isHidden()
+
+        latest_run_title = titles[-1]
+        assert actions[latest_run_title].font().bold()
+        assert not runs[latest_run_title].isHidden()
+
+    def verify_clicking_on_action_changes_bold_action_and_visible_dialog():
+        first_run_title = titles[0]
+        first_run_dialog = runs[first_run_title]
+
+        latest_run_title = titles[-1]
+        currently_active_dialog = runs[latest_run_title]
+
+        first_run_action = actions[first_run_title]
+        first_run_action.trigger()
+        qtbot.wait_until(currently_active_dialog.isHidden, timeout=5000)
+        assert not first_run_dialog.isHidden()
+        assert actions[first_run_title].font().bold()
+
+    run_experiment(SingleTestRun, gui)
+    retrieve_latest_dialog_title(1)
+
+    run_experiment(SingleTestRun, gui)
+    retrieve_latest_dialog_title(2)
+    retrieve_existing_menu_actions(2)
+    verify_only_latest_run_is_marked_bold_and_dialog_visible_on_new_experiment()
+    verify_clicking_on_action_changes_bold_action_and_visible_dialog()
+
+    run_experiment(SingleTestRun, gui)
+    retrieve_latest_dialog_title(3)
+    retrieve_existing_menu_actions(3)
+    verify_only_latest_run_is_marked_bold_and_dialog_visible_on_new_experiment()
+    verify_clicking_on_action_changes_bold_action_and_visible_dialog()
 
 
 def test_warnings_from_forward_model_are_propagated_to_ert_main_window_post_simulation(
@@ -964,7 +1032,7 @@ warnings.warn('Foobar')"""
         assert expected_message in messages
 
     # Regression test for total progress bar being green given
-    # PostSimulationWarning and no failures
+    # PostExperimentWarning and no failures
     assert (
         run_dialog._total_progress_label.text()
         == "Total progress 100% — Experiment completed."

@@ -22,7 +22,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Protocol, cast
 
 import numpy as np
-from pydantic import PrivateAttr, field_validator
+from pydantic import (
+    PrivateAttr,
+    computed_field,
+    field_validator,
+)
 from pydantic_core.core_schema import ValidationInfo
 
 from _ert.events import (
@@ -31,6 +35,7 @@ from _ert.events import (
     EESnapshotUpdate,
     EnsembleEvaluationWarning,
 )
+from ert.base_model_context import BaseModelWithContextSupport
 from ert.config import (
     ConfigValidationError,
     DesignMatrix,
@@ -60,6 +65,7 @@ from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FINISHED,
 )
 from ert.mode_definitions import MODULE_MODE
+from ert.run_arg import RunArg
 from ert.runpaths import Runpaths
 from ert.storage import (
     Ensemble,
@@ -67,13 +73,12 @@ from ert.storage import (
     Storage,
     open_storage,
 )
+from ert.storage.local_experiment import ExperimentType
 from ert.trace import tracer
 from ert.utils import log_duration
-from ert.warnings import PostSimulationWarning, capture_specific_warning
+from ert.warnings import PostExperimentWarning, capture_specific_warning
 from ert.workflow_runner import WorkflowRunner
 
-from ..base_model_context import BaseModelWithContextSupport
-from ..run_arg import RunArg
 from ._create_run_path import create_run_path
 from .event import (
     EndEvent,
@@ -222,7 +227,7 @@ class RunModel(RunModelConfig, ABC):
             runpath_format=self.runpath_config.runpath_format_string,
             filename=str(self.runpath_file),
             substitutions=self.substitutions,
-            eclbase=self.runpath_config.eclbase_format_string,
+            eclbase=self.runpath_config.summary_file_base_name,
         )
 
     @property
@@ -323,6 +328,15 @@ class RunModel(RunModelConfig, ABC):
         """
         return None
 
+    @classmethod
+    @abstractmethod
+    def _experiment_type(cls) -> ExperimentType: ...
+
+    @computed_field(return_type=str)  # type: ignore[prop-decorator]
+    @property
+    def experiment_type(self) -> ExperimentType:
+        return self.__class__._experiment_type()
+
     def send_event(self, event: StatusEvents) -> None:
         self._status_queue.put(event)
 
@@ -392,7 +406,7 @@ class RunModel(RunModelConfig, ABC):
         try:
             self.send_event(StartEvent(timestamp=start_timestamp))
             with (
-                capture_specific_warning(PostSimulationWarning, handle_captured_event),
+                capture_specific_warning(PostExperimentWarning, handle_captured_event),
                 captured_logs(error_messages),
             ):
                 self._set_default_env_context()
@@ -670,21 +684,20 @@ class RunModel(RunModelConfig, ABC):
         run_args: list[RunArg],
         experiment_id: uuid.UUID,
     ) -> EEEnsemble:
-        realizations = []
         job_script = shutil.which("fm_dispatch.py") or "fm_dispatch.py"
-        for run_arg in run_args:
-            realizations.append(
-                Realization(
-                    active=run_arg.active,
-                    iens=run_arg.iens,
-                    fm_steps=self.forward_model_steps,
-                    max_runtime=self.queue_config.max_runtime,
-                    run_arg=run_arg,
-                    num_cpu=self.queue_config.queue_options.num_cpu,
-                    job_script=job_script,
-                    realization_memory=self.queue_config.queue_options.realization_memory,
-                )
+        realizations = [
+            Realization(
+                active=run_arg.active,
+                iens=run_arg.iens,
+                fm_steps=self.forward_model_steps,
+                max_runtime=self.queue_config.max_runtime,
+                run_arg=run_arg,
+                num_cpu=self.queue_config.queue_options.num_cpu,
+                job_script=job_script,
+                realization_memory=self.queue_config.queue_options.realization_memory,
             )
+            for run_arg in run_args
+        ]
         return EEEnsemble(
             realizations,
             {},
@@ -759,18 +772,27 @@ class RunModel(RunModelConfig, ABC):
         ensemble: Ensemble,
         evaluator_server_config: EvaluatorServerConfig,
     ) -> int:
-        create_run_path(
-            run_args=run_args,
-            ensemble=ensemble,
-            user_config_file=str(self.user_config_file),
-            env_vars=self.env_vars,
-            env_pr_fm_step=self.env_pr_fm_step,
-            forward_model_steps=self.forward_model_steps,
-            substitutions=self.substitutions,
-            parameters_file=self.runpath_config.gen_kw_export_name,
-            runpaths=self._run_paths,
-            context_env=self._context_env,
-        )
+
+        try:
+            asyncio.run(
+                create_run_path(
+                    run_args=run_args,
+                    ensemble=ensemble,
+                    user_config_file=str(self.user_config_file),
+                    env_vars=self.env_vars,
+                    env_pr_fm_step=self.env_pr_fm_step,
+                    forward_model_steps=self.forward_model_steps,
+                    substitutions=self.substitutions,
+                    parameters_file=self.runpath_config.gen_kw_export_name,
+                    runpaths=self._run_paths,
+                    context_env=self._context_env,
+                    end_event=self._end_event,
+                    handle_run_path_creation_event=self.send_event,
+                )
+            )
+        except UserCancelled as e:
+            logger.debug("Run model cancelled - pre evaluation")
+            raise UserCancelled("Experiment cancelled by user in pre evaluation") from e
 
         self.run_workflows(
             fixtures=PreSimulationFixtures(
@@ -824,7 +846,7 @@ class RunModel(RunModelConfig, ABC):
             )
             warnings.warn(
                 self._max_parallelism_violation.message,
-                PostSimulationWarning,
+                PostExperimentWarning,
                 stacklevel=1,
             )
 

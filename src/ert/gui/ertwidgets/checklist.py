@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from PyQt6.QtCore import QPoint, QSize, Qt
-from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QHBoxLayout,
@@ -15,6 +14,8 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+from ert.gui.icon_utils import load_icon
 
 from .searchbox import SearchBox
 
@@ -85,13 +86,13 @@ class CheckList(QWidget):
 
     def _createCheckButtons(self) -> None:
         self._checkAllButton = QToolButton()
-        self._checkAllButton.setIcon(QIcon("img:check.svg"))
+        self._checkAllButton.setIcon(load_icon("check.svg"))
         self._checkAllButton.setIconSize(QSize(16, 16))
         self._checkAllButton.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
         self._checkAllButton.setAutoRaise(True)
         self._checkAllButton.setToolTip("Select all")
         self._uncheckAllButton = QToolButton()
-        self._uncheckAllButton.setIcon(QIcon("img:checkbox_outline.svg"))
+        self._uncheckAllButton.setIcon(load_icon("checkbox_outline.svg"))
         self._uncheckAllButton.setIconSize(QSize(16, 16))
         self._uncheckAllButton.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
         self._uncheckAllButton.setAutoRaise(True)

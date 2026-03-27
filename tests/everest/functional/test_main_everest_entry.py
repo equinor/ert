@@ -43,6 +43,7 @@ def test_everest_main_entry_bad_command():
 
 
 @pytest.mark.xdist_group("math_func/config_minimal.yml")
+@pytest.mark.integration_test
 def test_everest_entry_render(cached_example):
     _, config_file, _, _ = cached_example("math_func/config_minimal.yml")
     with capture_streams() as (out, _):
@@ -73,7 +74,7 @@ def test_everest_entry_run(cached_example):
     )
 
     config = EverestConfig.load_file(config_file)
-    optimal = get_optimal_result(config.optimization_output_dir)
+    optimal = get_optimal_result(config.storage_dir)
     assert optimal.controls["point.x"] == pytest.approx(0.5, abs=0.05)
     assert optimal.controls["point.y"] == pytest.approx(0.5, abs=0.05)
     assert optimal.controls["point.z"] == pytest.approx(0.5, abs=0.05)
@@ -141,7 +142,7 @@ line: 2, column: 18. controls -> 0 -> initial_guess
 
 @pytest.mark.skip_mac_ci
 @pytest.mark.flaky(reruns=3)
-@pytest.mark.timeout(60)
+@pytest.mark.timeout(120)
 @pytest.mark.integration_test
 @pytest.mark.xdist_group(name="starts_everest")
 @pytest.mark.usefixtures("use_site_configurations_with_no_queue_options")
