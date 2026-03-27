@@ -337,28 +337,26 @@ def test_num_realizations_0_means_all():
 
 
 @pytest.mark.parametrize(
-    ("config", "expected"),
+    ("config", "expected_truncation"),
     [
-        ("exact", "EXACT"),
-        ("0", "EXACT"),
-        ("subspace", "SUBSPACE"),
-        ("1", "SUBSPACE"),
-        ("subspace_exact_r", "SUBSPACE"),
-        ("SUBSPACE_EXACT_R", "SUBSPACE"),
+        ("exact", 1.0),
+        ("0", 1.0),
+        ("EXACT", 1.0),
+        ("subspace", 0.98),
+        ("1", 0.98),
+        ("subspace_exact_r", 0.98),
+        ("SUBSPACE_EXACT_R", 0.98),
+        ("SUBSPACE", 0.98),
     ],
 )
-def test_incorrect_variable_deprecation_warning(config, expected):
-    with pytest.warns(
-        match=(
-            f"Using {config} is deprecated, use:\n"
-            f"ANALYSIS_SET_VAR STD_ENKF INVERSION {expected}"
-        )
-    ):
-        AnalysisConfig.from_dict(
+def test_that_inversion_keyword_is_deprecated(config, expected_truncation):
+    with pytest.warns(match="The INVERSION keyword is deprecated"):
+        analysis_config = AnalysisConfig.from_dict(
             {
                 ConfigKeys.ANALYSIS_SET_VAR: [["STD_ENKF", "INVERSION", config]],
             }
         )
+    assert analysis_config.es_settings.enkf_truncation == expected_truncation
 
 
 @pytest.mark.parametrize(
@@ -372,10 +370,10 @@ def test_incorrect_variable_deprecation_warning(config, expected):
         ("subspace_ee_r"),
     ],
 )
-def test_incorrect_variable_inversion(config):
+def test_that_invalid_inversion_value_gives_error(config):
     with pytest.raises(
         ConfigValidationError,
-        match=f"Input should be 'EXACT' or 'SUBSPACE'.*{config.upper()}",
+        match="Invalid INVERSION value",
     ):
         AnalysisConfig.from_dict(
             {
@@ -421,7 +419,8 @@ def test_misfit_configuration(config, expected):
         (
             [["FOO", "INVERSION", "EXACT"]],
             pytest.raises(
-                ConfigValidationError, match="ANALYSIS_SET_VAR FOO INVERSION"
+                ConfigValidationError,
+                match="ANALYSIS_SET_VAR FOO INVERSION",
             ),
         ),
     ],

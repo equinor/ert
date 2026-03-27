@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import cast, get_args
+from typing import cast
 
 from annotated_types import Ge, Gt, Le
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QCheckBox,
-    QComboBox,
     QDoubleSpinBox,
     QFormLayout,
     QFrame,
@@ -18,10 +17,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.config import (
-    AnalysisModule,
-    InversionTypeES,
-)
+from ert.config import AnalysisModule
 
 
 class AnalysisModuleVariablesPanel(QWidget):
@@ -36,18 +32,6 @@ class AnalysisModuleVariablesPanel(QWidget):
 
         self.blockSignals(True)
 
-        layout.addRow(QLabel("Inversion Algorithm"))
-        dropdown = QComboBox(self)
-        options = AnalysisModule.model_fields["inversion"]
-        layout.addRow(QLabel(options.description))
-        default_index = 0
-        for i, option in enumerate(get_args(options.annotation)):
-            dropdown.addItem(option.upper())
-            if analysis_module.inversion == option:
-                default_index = i
-        dropdown.setCurrentIndex(default_index)
-        dropdown.currentTextChanged.connect(self.update_inversion_algorithm)
-        layout.addRow(dropdown)
         var_name = "enkf_truncation"
         metadata = AnalysisModule.model_fields[var_name]
         self.truncation_spinner = self.createDoubleSpinBox(
@@ -58,7 +42,6 @@ class AnalysisModuleVariablesPanel(QWidget):
             cast(float, next(v for v in metadata.metadata if isinstance(v, Le)).le),
             0.01,
         )
-        self.truncation_spinner.setEnabled(False)
         layout.addRow("Singular value truncation", self.truncation_spinner)
 
         layout.addRow(self.create_horizontal_line())
@@ -126,12 +109,6 @@ class AnalysisModuleVariablesPanel(QWidget):
 
         self.setLayout(layout)
         self.blockSignals(False)
-
-    def update_inversion_algorithm(self, text: InversionTypeES) -> None:
-        self.truncation_spinner.setEnabled(
-            not any(val in text.upper() for val in ["DIRECT", "EXACT"])
-        )
-        self.analysis_module.inversion = text
 
     @staticmethod
     def create_horizontal_line() -> QFrame:

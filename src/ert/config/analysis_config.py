@@ -141,18 +141,33 @@ class AnalysisConfig:
                 continue
             if var_name == "ENKF_FORCE_NCOMP":
                 continue
-            module_inversions = inversion_str_map.get(module_name, {})
-            if var_name == "INVERSION" and value in module_inversions:
-                new_value = module_inversions[value]
+            if var_name == "INVERSION":
+                mapped_value = inversion_str_map.get(module_name, {}).get(value, value)
                 ConfigWarning.warn(
-                    f"Using {value} is deprecated, use:\n"
-                    f"ANALYSIS_SET_VAR {module_name} INVERSION {new_value}"
+                    "The INVERSION keyword is deprecated and will be "
+                    "removed in a future version. "
+                    "Use ENKF_TRUNCATION instead: "
+                    "truncation = 1.0 gives the same result as EXACT "
+                    "inversion, and truncation < 1.0 (default 0.98) gives "
+                    "the same result as SUBSPACE inversion."
                 )
-                value_to_store = new_value
-            else:
-                value_to_store = value
-
-            module_options[var_name.lower()] = value_to_store
+                if mapped_value.upper() == "EXACT":
+                    module_options.setdefault("enkf_truncation", 1.0)
+                    module_options["inversion"] = "EXACT"
+                elif mapped_value.upper() == "SUBSPACE":
+                    module_options.setdefault("enkf_truncation", 0.98)
+                    module_options["inversion"] = "SUBSPACE"
+                else:
+                    all_errors.append(
+                        ConfigValidationError(
+                            f"Invalid INVERSION value '{mapped_value}'. "
+                            "Valid (but deprecated) values are "
+                            "EXACT and SUBSPACE."
+                        )
+                    )
+                continue
+            key = var_name.lower()
+            module_options[key] = value
 
         if errors:
             all_errors.append(

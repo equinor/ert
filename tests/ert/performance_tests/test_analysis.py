@@ -157,7 +157,6 @@ def test_and_benchmark_adaptive_localization_with_fields(
     strategy_map = build_strategy_map(
         parameters=[param_group],
         param_configs=prior_ensemble.experiment.parameter_configuration,
-        inversion=es_settings.inversion,
         enkf_truncation=es_settings.enkf_truncation,
         localization=es_settings.localization,
         correlation_threshold=es_settings.correlation_threshold,

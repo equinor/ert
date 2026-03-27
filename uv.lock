@@ -17,7 +17,7 @@ resolution-markers = [
 ]
 
 [options]
-exclude-newer = "2026-03-30T08:41:22.223114519Z"
+exclude-newer = "2026-03-31T10:10:37.352018Z"
 exclude-newer-span = "P7D"
 
 [options.exclude-newer-package]
@@ -26,7 +26,6 @@ resfo-utilities = false
 oil-reservoir-synthesizer = false
 ropt-dakota = false
 xtgeo = false
-cryptography = "2026-03-26T00:00:00Z"
 ropt = false
 resfo = false
 resdata = false
@@ -1166,7 +1165,7 @@ requires-dist = [
     { name = "httpx" },
     { name = "httpx-retries" },
     { name = "humanize" },
-    { name = "iterative-ensemble-smoother", specifier = "==0.6.0" },
+    { name = "iterative-ensemble-smoother", specifier = ">=1.1.0" },
     { name = "jinja2", specifier = ">=2.10" },
     { name = "lark" },
     { name = "lxml" },
@@ -1952,7 +1951,7 @@ wheels = [
 
 [[package]]
 name = "iterative-ensemble-smoother"
-version = "0.6.0"
+version = "1.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "joblib" },
@@ -1960,9 +1959,9 @@ dependencies = [
     { name = "psutil" },
     { name = "scipy" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/25/88/1ca4be3aec9fb4781425c73e769c54025c6b5e69cebbae5541376f47ea22/iterative_ensemble_smoother-0.6.0.tar.gz", hash = "sha256:5eb9e4827398ca2fb22409abe1bbc214ad1a89a0e448b01cbb163d17f19ea9a4", size = 178947, upload-time = "2026-02-12T15:05:05.803Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e7/27/1f6b9563a3811f97bad82b6b21be5c0e25ec87e34eff2495a30c2eae9431/iterative_ensemble_smoother-1.1.0.tar.gz", hash = "sha256:3959c5639d1a66f31a9802c0861474c65a8474a7119c05973b0f2ee89b73a7bf", size = 181308, upload-time = "2026-03-27T08:51:11.839Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d9/fd/9a396ac6fffc1c14303d3647d6ba43beab207f3c1be3c66fa016b6f8dee1/iterative_ensemble_smoother-0.6.0-py3-none-any.whl", hash = "sha256:f0674dc555526b74bd58b199edf1ea69168d4613491d9237e620c8c7af10aa43", size = 49511, upload-time = "2026-02-12T15:05:04.416Z" },
+    { url = "https://files.pythonhosted.org/packages/c5/76/d63e7670b6f84ebfaaacf11b424a7671bc77d9c178579a1697ab90228ca6/iterative_ensemble_smoother-1.1.0-py3-none-any.whl", hash = "sha256:f5449c9d7642d4122e199c0721512b31d81711172ff450d64c26f0849c91e7a5", size = 51440, upload-time = "2026-03-27T08:51:10.3Z" },
 ]
 
 [[package]]

@@ -18,11 +18,12 @@ Example usage:
 
     # Create strategies with dependencies
     standard_strategy = StandardESUpdate(
-        settings.inversion, settings.enkf_truncation,
+        settings.enkf_truncation,
         rng, progress_callback,
     )
     adaptive_strategy = AdaptiveLocalizationUpdate(
-        settings.correlation_threshold, rng, progress_callback
+        settings.correlation_threshold, settings.enkf_truncation,
+        rng, progress_callback,
     )
 
     # Build strategy map (parameter_name -> strategy)
