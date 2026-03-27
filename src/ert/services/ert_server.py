@@ -276,28 +276,36 @@ class ErtServerController:
         timeout: int = 0,
         logging_config: str | None = None,
     ) -> ErtServerContext:
+        conn_info_path = project / _ERT_SERVER_CONNECTION_INFO_FILE
+
         try:
-            controller = create_ert_server_controller(
-                project=project or Path.cwd(), timeout=0, logging_config=logging_config
-            )
-            # Check the server is up and running
-            _ = controller.fetch_url()
-            return ErtServerContext(controller)
-        except (TimeoutError, json.JSONDecodeError, KeyError) as e:
+            if conn_info_path.stat().st_size > 0:
+                conn_info = json.loads(conn_info_path.read_text(encoding="utf-8"))
+                controller = ErtServerController(
+                    storage_path=str(project),
+                    connection_info=conn_info,
+                    logging_config=logging_config,
+                )
+                controller.fetch_url()
+                return ErtServerContext(controller)
+        except FileNotFoundError:
+            pass
+        except (json.JSONDecodeError, KeyError, TimeoutError) as e:
             logger.warning(
-                "Failed locating existing storage service due to "
+                "Failed connecting to existing storage service: "
                 f"{type(e).__name__}: {e}, starting new service"
             )
-            (Path(project) / _ERT_SERVER_CONNECTION_INFO_FILE).unlink(missing_ok=True)
-            return cls.start_server(
-                project=project, timeout=timeout, logging_config=logging_config
-            )
+            conn_info_path.unlink(missing_ok=True)
         except PermissionError as pe:
             logger.error(
                 f"{type(pe).__name__}: {pe}, cannot connect to storage service "
                 "due to permission issues.",
             )
             raise
+
+        return cls.start_server(
+            project=project, timeout=timeout, logging_config=logging_config
+        )
 
     def fetch_url(self) -> str:
         """Returns the url. Blocks while the server is starting"""
@@ -446,8 +454,9 @@ def create_ert_server_controller(
             storage_server_path = path / _ERT_SERVER_CONNECTION_INFO_FILE
             try:
                 if storage_server_path.stat().st_size > 0:
-                    with storage_server_path.open() as f:
-                        storage_server_content = json.load(f)
+                    storage_server_content = json.loads(
+                        storage_server_path.read_text(encoding="utf-8")
+                    )
 
                     return ErtServerController(
                         storage_path=str(path),
