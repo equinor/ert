@@ -22,6 +22,8 @@ import requests
 from ert.dark_storage.client import Client, ErtClientConnectionInfo
 from ert.trace import get_traceparent
 
+logger = logging.getLogger(__name__)
+
 SERVICE_CONF_PATHS: set[str] = set()
 
 
@@ -282,7 +284,7 @@ class ErtServerController:
             _ = controller.fetch_url()
             return ErtServerContext(controller)
         except (TimeoutError, json.JSONDecodeError, KeyError) as e:
-            logging.getLogger(__name__).warning(
+            logger.warning(
                 "Failed locating existing storage service due to "
                 f"{type(e).__name__}: {e}, starting new service"
             )
@@ -291,11 +293,11 @@ class ErtServerController:
                 project=project, timeout=timeout, logging_config=logging_config
             )
         except PermissionError as pe:
-            logging.getLogger(__name__).error(
+            logger.error(
                 f"{type(pe).__name__}: {pe}, cannot connect to storage service "
-                f"due to permission issues."
+                "due to permission issues.",
             )
-            raise pe
+            raise
 
     def fetch_url(self) -> str:
         """Returns the url. Blocks while the server is starting"""
@@ -312,7 +314,7 @@ class ErtServerController:
                     verify=con_info["cert"],
                 )
                 if resp.status_code == 200:
-                    logging.getLogger(__name__).info(f"Successfully connected to {url}")
+                    logger.info(f"Successfully connected to {url}")
                     self._url = url
                     return str(url)
                 logs.append((resp.status_code, f"{url}: {resp.reason}"))
@@ -320,7 +322,7 @@ class ErtServerController:
             except requests.ConnectionError as ce:
                 logs.append(("ConnectionError", f"{url}: {ce}"))
 
-        logging.getLogger(__name__).info(f"Attempted urls: {logs}")
+        logger.info(f"Attempted urls: {logs}")
 
         raise TimeoutError(
             "None of the URLs provided for the ert storage server worked."
@@ -460,8 +462,8 @@ def create_ert_server_controller(
 
         raise TimeoutError("Server not started")
     except PermissionError as pe:
-        logging.getLogger(__name__).error(
+        logger.error(
             f"{type(pe).__name__}: {pe}, cannot connect to ert server service "
-            f"due to permission issues."
+            "due to permission issues.",
         )
-        raise pe
+        raise
