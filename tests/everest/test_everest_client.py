@@ -244,18 +244,16 @@ def test_that_multiple_everest_clients_can_connect_to_server(
     assert all(first == other for other in client_event_lists[1:])
 
     everest_event_types = (EverestStatusEvent, EverestBatchResultEvent)
-    
+
     first_everevents = [
         e.event_type for e in first if isinstance(e, everest_event_types)
     ]
-    assert (len(first_everevents) > 0)
-    
+    assert len(first_everevents) > 0
+
     server_everevents = [
-        e.event_type
-        for e in server_events_list
-        if isinstance(e, everest_event_types)
+        e.event_type for e in server_events_list if isinstance(e, everest_event_types)
     ]
-    assert (len(server_everevents) > 0)
+    assert len(server_everevents) > 0
 
     # Compare only everest events, as the events from the forward model
     # are (at time of writing) not deterministic enough to expect equality
