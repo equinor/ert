@@ -34,7 +34,7 @@ def test_stddev_plot_shows_boxplot(plot_context: PlotContext):
         plot_context,
         {},
         {},
-        {"ensemble_1": std_dev_data},
+        {"id": std_dev_data},
         obs_loc,
     )
     ax = figure.axes
