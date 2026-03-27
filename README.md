@@ -64,7 +64,7 @@ uv sync --all-groups
 
 ### Test setup
 
-The tests can be ran with pytest directly, but this is very slow:
+The tests can be run with pytest directly, but this is very slow:
 
 ```sh
 uv run pytest tests/
