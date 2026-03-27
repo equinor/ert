@@ -184,7 +184,7 @@ class EverestControl(ParameterConfig):
 
     def load_parameters(
         self, ensemble: Ensemble, realizations: npt.NDArray[np.int_]
-    ) -> npt.NDArray[np.float64]:
+    ) -> npt.NDArray[np.floating]:
         raise NotImplementedError
 
     def load_parameter_graph(self) -> nx.Graph[int]:

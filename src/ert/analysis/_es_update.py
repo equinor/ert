@@ -38,7 +38,7 @@ from .snapshots import ObservationStatus, SmootherSnapshot
 if TYPE_CHECKING:
     import numpy.typing as npt
 
-    from ert.config import InversionTypeES, ParameterConfig
+    from ert.config import ParameterConfig
     from ert.storage import Ensemble
 
 logger = logging.getLogger(__name__)
@@ -133,9 +133,17 @@ def perform_ensemble_update(
         pl.col("status") == ObservationStatus.ACTIVE
     )
 
-    responses = filtered_data.select([*map(str, iens_active_index)]).to_numpy(order="c")
-    observation_values = filtered_data["observations"].to_numpy()
-    observation_errors = filtered_data[_OutlierColumns.scaled_std].to_numpy()
+    # Upcast to float64: the iterative ensemble smoother requires matching
+    # dtypes, and benefits from higher precision during matrix inversions.
+    responses = (
+        filtered_data.select([*map(str, iens_active_index)])
+        .to_numpy(order="c")
+        .astype(np.float64)
+    )
+    observation_values = filtered_data["observations"].to_numpy().astype(np.float64)
+    observation_errors = (
+        filtered_data[_OutlierColumns.scaled_std].to_numpy().astype(np.float64)
+    )
 
     num_obs = len(observation_values)
 
@@ -185,7 +193,6 @@ def perform_ensemble_update(
             observation_errors=observation_errors[has_location],
         )
 
-    # Create observation context (minimal data container)
     obs_context = ObservationContext(
         responses=responses,
         observation_values=observation_values,
@@ -249,7 +256,6 @@ def perform_ensemble_update(
 def build_strategy_map(
     parameters: Iterable[str],
     param_configs: Mapping[str, ParameterConfig],
-    inversion: InversionTypeES,
     enkf_truncation: float,
     distance_localization: bool = False,
     localization: bool = False,
@@ -269,8 +275,6 @@ def build_strategy_map(
         Names of parameter groups to update.
     param_configs : Mapping[str, ParameterConfig]
         Parameter configuration mapping from the experiment.
-    inversion : InversionTypeES
-        Inversion algorithm (e.g. ``"EXACT"`` or ``"SUBSPACE"``).
     enkf_truncation : float
         Singular value truncation threshold (0, 1].
     distance_localization : bool
@@ -298,12 +302,13 @@ def build_strategy_map(
     strategy_map: dict[str, UpdateStrategy] = {}
 
     if distance_localization:
-        field_strategy = DistanceLocalizationUpdate(rng, Field, progress_callback)
+        field_strategy = DistanceLocalizationUpdate(
+            enkf_truncation, rng, Field, progress_callback
+        )
         surface_strategy = DistanceLocalizationUpdate(
-            rng, SurfaceConfig, progress_callback
+            enkf_truncation, rng, SurfaceConfig, progress_callback
         )
         standard_strategy = StandardESUpdate(
-            inversion,
             enkf_truncation,
             rng,
             progress_callback,
@@ -324,14 +329,13 @@ def build_strategy_map(
                 "correlation_threshold is required when localization is enabled"
             )
         adaptive_strategy = AdaptiveLocalizationUpdate(
-            correlation_threshold, rng, progress_callback
+            correlation_threshold, enkf_truncation, rng, progress_callback
         )
         for param_name in parameters:
             strategy_map[param_name] = adaptive_strategy
 
     else:
         standard_strategy = StandardESUpdate(
-            inversion,
             enkf_truncation,
             rng,
             progress_callback,
@@ -361,7 +365,6 @@ def smoother_update(
         strategy_map = build_strategy_map(
             parameters=experiment.update_parameters,
             param_configs=experiment.parameter_configuration,
-            inversion=settings.inversion,
             enkf_truncation=settings.enkf_truncation,
             progress_callback=progress_callback,
         )

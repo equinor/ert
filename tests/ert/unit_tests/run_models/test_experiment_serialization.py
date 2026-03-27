@@ -363,7 +363,6 @@ def update_runmodels(draw):
         "target_ensemble": draw(realistic_text()),
         "analysis_settings": ESSettings(
             enkf_truncation=draw(st.floats(min_value=1e-10, max_value=1.0)),
-            inversion=draw(st.sampled_from(["EXACT", "SUBSPACE"])),
             localization=draw(st.booleans()),
             localization_correlation_threshold=draw(
                 st.one_of(st.none(), st.floats(min_value=0.0, max_value=1.0))

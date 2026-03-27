@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 import humanize
 import numpy as np
-from iterative_ensemble_smoother.experimental import DistanceESMDA
+from iterative_ensemble_smoother import LocalizedESMDA
 from iterative_ensemble_smoother.utils import calc_rho_for_2d_grid_layer
 
 from ert.analysis.event import AnalysisEvent, AnalysisStatusEvent
@@ -34,15 +34,17 @@ class DistanceLocalizationUpdate:
 
     def __init__(
         self,
+        enkf_truncation: float,
         rng: np.random.Generator,
         param_type: type[Field | SurfaceConfig],
         progress_callback: Callable[[AnalysisEvent], None],
     ) -> None:
+        self._enkf_truncation = enkf_truncation
         self._rng = rng
         self._param_type = param_type
         self._progress_callback = progress_callback
         self._obs_loc: ObservationLocations | None = None
-        self._smoother: DistanceESMDA | None = None
+        self._smoother: LocalizedESMDA | None = None
         self._ensemble_size: int = 0
 
     def prepare(self, obs_context: ObservationContext) -> None:
@@ -52,11 +54,16 @@ class DistanceLocalizationUpdate:
             )
         self._obs_loc = obs_context.observation_locations
         self._ensemble_size = obs_context.ensemble_size
-        self._smoother = DistanceESMDA(
+        self._smoother = LocalizedESMDA(
             covariance=self._obs_loc.observation_errors**2,
             observations=self._obs_loc.observation_values,
             alpha=1,
             seed=self._rng,
+        )
+        self._smoother.prepare_assimilation(
+            Y=self._obs_loc.responses_with_loc,
+            truncation=self._enkf_truncation,
+            overwrite=True,
         )
 
     def update(
@@ -141,11 +148,19 @@ class DistanceLocalizationUpdate:
             right_handed_grid_indexing=True,
         )
 
-        return self._smoother.update_params(
+        # Reshape 2D rho to (nx*ny, nobs), tile across nz layers for 3D fields
+        rho_2d = rho_matrix.reshape(ertbox.nx * ertbox.ny, -1)
+        rho_full = np.tile(rho_2d, (ertbox.nz, 1)) if ertbox.nz > 1 else rho_2d
+
+        def localization_callback(
+            K: npt.NDArray[np.floating],
+        ) -> npt.NDArray[np.floating]:
+            return K * rho_full
+
+        return self._smoother.assimilate_batch(
             X=param_ensemble,
-            Y=self._obs_loc.responses_with_loc,
-            rho_input=rho_matrix,
-            nz=ertbox.nz,
+            localization_callback=localization_callback,
+            overwrite=True,
         )
 
     def _update_surface(
@@ -165,7 +180,7 @@ class DistanceLocalizationUpdate:
 
         rotation_angle = transform_local_ellipse_angle_to_local_coords(
             param_config.rotation,
-            np.zeros_like(self._obs_loc.main_range, dtype=np.floating),
+            np.zeros_like(self._obs_loc.main_range, dtype=np.float64),
         )
 
         if param_config.yflip != 1:
@@ -186,8 +201,15 @@ class DistanceLocalizationUpdate:
             right_handed_grid_indexing=False,
         )
 
-        return self._smoother.update_params(
+        rho_flat = rho_matrix.reshape(-1, rho_matrix.shape[-1])
+
+        def localization_callback(
+            K: npt.NDArray[np.floating],
+        ) -> npt.NDArray[np.floating]:
+            return K * rho_flat
+
+        return self._smoother.assimilate_batch(
             X=param_ensemble,
-            Y=self._obs_loc.responses_with_loc,
-            rho_input=rho_matrix,
+            localization_callback=localization_callback,
+            overwrite=True,
         )

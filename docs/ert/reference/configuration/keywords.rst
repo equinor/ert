@@ -44,7 +44,7 @@ Keyword name                                                            Required
 :ref:`HOOK_WORKFLOW_JOB <hook_workflow_job>`                            NO                                                                      Define a single-job workflow inline and hook it to a runtime step
 :ref:`INCLUDE <include>`                                                NO                                                                      Include contents from another ert config
 :ref:`INSTALL_JOB <install_job>`                                        NO                                                                      Install a job for use in a forward model
-:ref:`INVERSION <inversion_algorithm>`                                  NO                                                                      Set inversion method for analysis module
+:ref:`INVERSION <inversion_algorithm>`                                  NO                                                                      Deprecated. Set inversion method for analysis module
 :ref:`JOBNAME <jobname>`                                                NO                                      <CONFIG_FILE>-<IENS>            Name used for simulation files.
 :ref:`LOAD_WORKFLOW <load_workflow>`                                    NO                                                                      Load a workflow into ERT
 :ref:`LOAD_WORKFLOW_JOB <load_workflow_job>`                            NO                                                                      Load a workflow job into ERT
@@ -1582,8 +1582,8 @@ ANALYSIS_SET_VAR keyword for the `STD_ENKF` module.
 
 .. _inversion_algorithm:
 
-INVERSION
-^^^^^^^^^
+INVERSION (deprecated)
+^^^^^^^^^^^^^^^^^^^^^^
 
 Specifies the inversion algorithm used in the analysis step.
 Two options are available for the ``STD_ENKF`` module:

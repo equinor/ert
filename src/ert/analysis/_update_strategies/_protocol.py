@@ -93,22 +93,22 @@ class ObservationLocations:
     observations that have valid location data.
     """
 
-    xpos: npt.NDArray[np.float64]
+    xpos: npt.NDArray[np.floating]
     """X coordinates of observations (easting)."""
 
-    ypos: npt.NDArray[np.float64]
+    ypos: npt.NDArray[np.floating]
     """Y coordinates of observations (northing)."""
 
-    main_range: npt.NDArray[np.float64]
+    main_range: npt.NDArray[np.floating]
     """Correlation range (radius) for each observation."""
 
-    responses_with_loc: npt.NDArray[np.float64]
+    responses_with_loc: npt.NDArray[np.floating]
     """Response matrix filtered to observations with locations."""
 
-    observation_values: npt.NDArray[np.float64]
+    observation_values: npt.NDArray[np.floating]
     """Observation values filtered to observations with locations."""
 
-    observation_errors: npt.NDArray[np.float64]
+    observation_errors: npt.NDArray[np.floating]
     """Scaled observation errors filtered to observations with locations."""
 
 
@@ -121,13 +121,13 @@ class ObservationContext:
     (rng, settings, progress_callback) are passed to strategies at construction.
     """
 
-    responses: npt.NDArray[np.float64]
+    responses: npt.NDArray[np.floating]
     """Response matrix (num_obs x ensemble_size)."""
 
-    observation_values: npt.NDArray[np.float64]
+    observation_values: npt.NDArray[np.floating]
     """Observation values."""
 
-    observation_errors: npt.NDArray[np.float64]
+    observation_errors: npt.NDArray[np.floating]
     """Scaled observation errors (standard deviations)."""
 
     observation_locations: ObservationLocations | None = None

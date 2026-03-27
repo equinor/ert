@@ -259,9 +259,9 @@ def save_field(
 def transform_positions_to_local_field_coordinates(
     coordsys_origin: tuple[float, float],
     coordsys_rotation_angle: float,
-    utmx: npt.NDArray[np.float64],
-    utmy: npt.NDArray[np.float64],
-) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+    utmx: npt.NDArray[np.floating],
+    utmy: npt.NDArray[np.floating],
+) -> tuple[npt.NDArray[np.floating], npt.NDArray[np.floating]]:
     """Calculates coordinate transformation from global to local coordinates.
 
     Args:
