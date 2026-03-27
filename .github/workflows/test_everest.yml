@@ -59,7 +59,7 @@ jobs:
         prune-cache: false
         python-version: ${{ inputs.python-version }}
 
-    - name: Install Everest and dependencies
+    - name: Install EVEREST and dependencies
       run: |
         uv sync --group dev
 

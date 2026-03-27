@@ -48,7 +48,7 @@ Having defined the controls we aim to optimize, we must define a function to be 
 * Production Objectives: Recovery factor, Sweep Efficiency
 * Risk Objectives: Uncertainty based risk measures
 
-Thus optimization is the process which aims to find an *optimal* set of controls which will provide the *best possible* objective function value for the problem being optimized. Optimization process can either be manual or automated. Manual optimization is time consuming and prone to human bias and errors. Automated optimization on the other hand is quicker and less prone to human bias and errors. However the results from automated optimization workflows need to be analysed through human intervention. Everest focuses on state-of-the-art automated workflows for performing optimizations, with the goal of achieving solutions of significant practical value, using computationally efficient techniques.
+Thus optimization is the process which aims to find an *optimal* set of controls which will provide the *best possible* objective function value for the problem being optimized. Optimization process can either be manual or automated. Manual optimization is time consuming and prone to human bias and errors. Automated optimization on the other hand is quicker and less prone to human bias and errors. However the results from automated optimization workflows need to be analysed through human intervention. EVEREST focuses on state-of-the-art automated workflows for performing optimizations, with the goal of achieving solutions of significant practical value, using computationally efficient techniques.
 
 
 .. _en-opt-label:
@@ -58,7 +58,7 @@ Ensemble optimization (EnOpt)
 
 There are numerous methods for model-based optimization for petroleum/reservoir engineering objectives.
 These methods can be classified into two general classes, *derivative-based* and *derivative free* techniques.
-Derivative/Gradient-based methods have been shown to be computationally more efficient than derivative free methods and thus have been used in this Everest toolbox.
+Derivative/Gradient-based methods have been shown to be computationally more efficient than derivative free methods and thus have been used in this EVEREST toolbox.
 Among the gradient-based methods the adjoint approach (see :ref:`Jansen 2011 <jansen2011>` for an overview), provides the most accurate gradient and is computationally very efficient.
 However the adjoint approach has the disadvantage that it requires access to the simulation code to be implemented.
 
@@ -77,7 +77,7 @@ The following is a diagrammatic representation of the EnOpt method. Imagine a tw
 To approximate the gradient the following steps are taken:
 
 #. A user must choose an initial assignment of the controls. For instance in :numref:`fig_enopt_objfunc` the point ``(u1 = -1, u2 = 0)`` has been chosen.
-#. Around this initial choice of ``u1`` and ``u2``, Everest will generate a set of normally (Gaussian) distributed perturbed controls which can be seen as blue dots in :numref:`fig_enopt_objfunc`.
+#. Around this initial choice of ``u1`` and ``u2``, EVEREST will generate a set of normally (Gaussian) distributed perturbed controls which can be seen as blue dots in :numref:`fig_enopt_objfunc`.
 #. Then, the objective function value for each of these blue dots will be evaluated. These are represented as the red dots.
 #. Now we have all the information required to approximate the gradient of the objective function. An estimate of the gradient at the initial point is determined by computing the linear regression through the red dots (green line).
 #. We use a simple line-search algorithm to take a step along the gradient direction and to find an "updated" set of controls.
@@ -118,7 +118,7 @@ For large field scale models this would be computationally expensive.
 .. figure:: images/deter_vs_robust.png
     :align: center
     :width: 700px
-    :alt: Diagrammatic representation of the difference between deterministic and robust optimization when using Everest.
+    :alt: Diagrammatic representation of the difference between deterministic and robust optimization when using EVEREST.
 
 
 Chen 2008 suggested a computationally efficient technique to estimate the robust ensemble gradient.
@@ -128,13 +128,13 @@ This method is computationally attractive and can be applied to large scale opti
 :ref:`Fonseca et al. 2016 <fonseca2016>` showed that the assumptions introduced by Chen 2008 were not theoretically valid.
 They also introduced a theoretically robust version of the formulation introduced by Chen 2008.
 The new formulation, called **Stochastic Simplex Gradients (StoSAG)** introduced, retains the computational attractive feature of Chen 2008, i.e. the use of 1 perturbed control sample for each model realization.
-Everest supports the StoSAG formulation for estimating the gradient in robust optimization problems.
+EVEREST supports the StoSAG formulation for estimating the gradient in robust optimization problems.
 
 
 Multi-objective optimization (MOO)
 ===================================
 
-Most real-world design and planning problems must also satisfy multiple objectives. Very often these objectives are in conflict with each other, which means that one objective must be decreased to increase the other objective. In such cases it is not trivial to find solutions which satisfy different objectives. When the problem includes two or more performance indicators, Everest employs the widely used weighted sum method to balance the objective functions. This approach aims to optimize a weighted objective function that combines multiple objectives in a single function according to:
+Most real-world design and planning problems must also satisfy multiple objectives. Very often these objectives are in conflict with each other, which means that one objective must be decreased to increase the other objective. In such cases it is not trivial to find solutions which satisfy different objectives. When the problem includes two or more performance indicators, EVEREST employs the widely used weighted sum method to balance the objective functions. This approach aims to optimize a weighted objective function that combines multiple objectives in a single function according to:
 
 .. math::
 

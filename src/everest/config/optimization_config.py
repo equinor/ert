@@ -15,7 +15,7 @@ class OptimizationConfig(BaseModel, extra="forbid"):
         default="optpp_q_newton",
         description=dedent(
             """
-            The optimization algorithm used by Everest.  Defaults to
+            The optimization algorithm used by EVEREST.  Defaults to
             `optpp_q_newton`, a quasi-Newton algorithm in Dakota's OPT++
             library.
             """

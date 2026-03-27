@@ -12,6 +12,7 @@ import yaml
 from fastapi import FastAPI
 from starlette.responses import Response
 
+from ert.run_models.event import EverestBatchResultEvent, EverestStatusEvent
 from ert.services import create_ertserver_client
 from ert.shared import find_available_socket
 from everest.bin.everest_script import everest_entry
@@ -101,7 +102,7 @@ def test_that_stop_invokes_correct_endpoint(
     with caplog.at_level(logging.INFO):
         client.stop()
 
-    assert "Cancelled experiment from Everest" in caplog.messages
+    assert "Cancelled experiment from EVEREST" in caplog.messages
     server_thread.should_exit = True
 
 
@@ -122,7 +123,7 @@ def test_that_stop_errors_on_non_ok_httpcode(
         client.stop()
 
     assert any(
-        "Failed to cancel Everest experiment" in m
+        "Failed to cancel EVEREST experiment" in m
         and "server responded with status 505" in m
         for m in caplog.messages
     )
@@ -137,7 +138,7 @@ def test_that_stop_errors_on_server_down(
         client.stop()
 
     assert any(
-        "Connection error when cancelling Everest experiment" in m
+        "Connection error when cancelling EVEREST experiment" in m
         for m in caplog.messages
     )
 
@@ -242,10 +243,17 @@ def test_that_multiple_everest_clients_can_connect_to_server(
     first = client_event_lists[0]
     assert all(first == other for other in client_event_lists[1:])
 
-    first_everevents = [e.event_type for e in first if "Everest" in e.event_type]
-    server_everevents = [
-        e.event_type for e in server_events_list if "Everest" in e.event_type
+    everest_event_types = (EverestStatusEvent, EverestBatchResultEvent)
+
+    first_everevents = [
+        e.event_type for e in first if isinstance(e, everest_event_types)
     ]
+    assert len(first_everevents) > 0
+
+    server_everevents = [
+        e.event_type for e in server_events_list if isinstance(e, everest_event_types)
+    ]
+    assert len(server_everevents) > 0
 
     # Compare only everest events, as the events from the forward model
     # are (at time of writing) not deterministic enough to expect equality

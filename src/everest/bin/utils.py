@@ -452,7 +452,7 @@ def show_scaled_controls_warning() -> None:
 
     user_input = input(
         dedent("""
-        From Everest version: 14.0.3, Everest will output auto-scaled control values.
+        From EVEREST version: 14.0.3, EVEREST will output auto-scaled control values.
         Control values should now be specified in real-world units instead of the
         optimizer's internal scale. The 'scaled_range' property can still be used
         to configure the optimizer's range for each control.

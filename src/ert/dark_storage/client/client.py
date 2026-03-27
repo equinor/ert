@@ -11,7 +11,7 @@ class Client(httpx.Client):
     Wrapper class for httpx.Client that provides a user-friendly way to
     interact with ERT Storage's API
 
-    Stores 'conn_info' to bridge the gap to the Everest client setup
+    Stores 'conn_info' to bridge the gap to the EVEREST client setup
     """
 
     def __init__(self, conn_info: ErtClientConnectionInfo | None = None) -> None:

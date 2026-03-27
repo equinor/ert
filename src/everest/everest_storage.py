@@ -54,7 +54,7 @@ class EverestStorage:
         """
         scaled_cols = [c for c in df.columns if c.lower().startswith("scaled")]
         if len(scaled_cols) > 0:
-            raise ValueError("Scaled columns should not be stored into Everest storage")
+            raise ValueError("Scaled columns should not be stored into EVEREST storage")
 
         # Keys are ROPT column keys
         # values are corresponding column keys we present to the user

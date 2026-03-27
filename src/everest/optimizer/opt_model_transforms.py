@@ -257,7 +257,7 @@ class ObjectiveScaler(ObjectiveTransform):
         self._objective_weights /= np.sum(self._objective_weights)
 
     # The transform methods below all return the negative of the objectives.
-    # This is because Everest maximizes the objectives, while ropt is a minimizer.
+    # This is because EVEREST maximizes the objectives, while ropt is a minimizer.
 
     def to_optimizer(self, objectives: NDArray[np.float64]) -> NDArray[np.float64]:
         """Transform objectives to optimizer space.

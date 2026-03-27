@@ -4,7 +4,7 @@
 Custom forward model jobs
 *************************
 
-To use a custom job in everest, it needs to be added to the ``install_jobs``
+To use a custom job in EVEREST, it needs to be added to the ``install_jobs``
 section of the config file:
 
 .. code-block:: yaml
@@ -187,7 +187,7 @@ prioritized first, in the correct order:
 Deploying the new script:
 -------------------------
 
-To make our new script useful in a Everest case, it needs to be added to the
+To make our new script useful in a EVEREST case, it needs to be added to the
 ``install_jobs`` section of the configuration file. This requires the location
 where we saved the script, and it requires the script to be executable. This is
 most conveniently done by adding a so-called "shebang" line at the beginning of

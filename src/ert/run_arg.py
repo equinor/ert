@@ -21,7 +21,7 @@ class RunArg:
     runpath: str
     job_name: str
     active: bool = True
-    # Below here is legacy related to Everest
+    # Below here is legacy related to EVEREST
     queue_index: int | None = None
 
 

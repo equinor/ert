@@ -279,9 +279,9 @@ def test_cores_per_node_is_ignored_num_cpu_is_set(
     ],
 )
 def test_everest_to_ert_queue_config(config, config_class, create_runmodel):
-    """Note that these objects are used directly in the Everest
+    """Note that these objects are used directly in the EVEREST
     config, and if you have to make changes to this test, it is likely
-    that it is a breaking change to Everest"""
+    that it is a breaking change to EVEREST"""
     general_queue_options = {"max_running": 10}
     general_options = {"resubmit_limit": 7}
 

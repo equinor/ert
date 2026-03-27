@@ -78,7 +78,7 @@ run_everest_eightcells_test() {
     everest run "$CONFIG" --skip-prompt --debug --disable-monitoring
     STATUS=$?
     if [ $STATUS -ne 0 ]; then
-        echo "Everest eightcells test failed. Running everest kill"
+        echo "EVEREST eightcells test failed. Running everest kill"
         everest kill "$CONFIG"
     fi
     popd || exit 1

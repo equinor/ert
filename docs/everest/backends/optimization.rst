@@ -3,7 +3,7 @@
 Optimization backends
 =====================
 
-Everest offers various optimization backends that allow the user a wide
+EVEREST offers various optimization backends that allow the user a wide
 selection of low-level optimization algorithms to perform ensemble optimization.
 Most of the options that can be set in the ``optimization`` section will be
 implemented by all algorithms. These options are documented in the section
@@ -12,7 +12,7 @@ to pass generic options via the ``options`` keyword. To find the generic options
 that are supported by a backend, consult their documenation.
 
 
-Out of the box, Everest supports Dakota and SciPy backends.
+Out of the box, EVEREST supports Dakota and SciPy backends.
 
 The Dakota backend
 ------------------
@@ -26,7 +26,7 @@ optimization package. Information on two commonly used algorithms
 
 	For more information regarding specific optimizer settings please refer to
 	the official `Dakota manual <https://snl-dakota.github.io>`_. To find the
-	algorithms and options that are supported in Everest, consult the manual of
+	algorithms and options that are supported in EVEREST, consult the manual of
 	the corresponding ``ropt`` plugin: `ropt-dakota
 	<https://tno-ropt.github.io/ropt-dakota>`_.
 
@@ -62,7 +62,7 @@ The SciPy backend is based on the optimization algorithms implemented in the
 	For more information regarding specific optimizer settings please refer to
 	the `scipy.optimize
 	<https://docs.scipy.org/doc/scipy/tutorial/optimize.html>`_ manual. To find
-	the algorithms and options that are supported in Everest, consult the
+	the algorithms and options that are supported in EVEREST, consult the
 	``ropt`` manual: `https://scipy.org/
 	<https://tno-ropt.github.io/ropt/dev/reference/scipy_optimizer_plugin/>`_.
 

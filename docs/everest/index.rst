@@ -1,11 +1,11 @@
-Everest™ documentation
+EVEREST™ documentation
 ======================
 
-This guide serves as documentation for the *Everest* decision-making tool.
+This guide serves as documentation for the *EVEREST* decision-making tool.
 
 * The intended readers are reservoir engineers and others involved in reservoir management and well planning.
-* Everest is developed with the use of multiple realization models/ensemble models in mind. Everest can be used both for optimization on single realizations and multiple realizations.
-* Everest could for example be used as decision support tool for well planning (drilling order) and drainage strategy optimization.
+* EVEREST is developed with the use of multiple realization models/ensemble models in mind. EVEREST can be used both for optimization on single realizations and multiple realizations.
+* EVEREST could for example be used as decision support tool for well planning (drilling order) and drainage strategy optimization.
 
 
 .. toctree::
