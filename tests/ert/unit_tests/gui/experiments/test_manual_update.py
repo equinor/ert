@@ -8,6 +8,7 @@ from ert.gui.experiments.manual_update_panel import ManualUpdatePanel
 
 from .conftest import (
     REALIZATION_FINISHED_SUCCESSFULLY,
+    REALIZATION_ONLY_RESPONSES,
     REALIZATION_UNDEFINED,
     MockStorage,
 )
@@ -130,4 +131,44 @@ def test_that_manual_update_ensemble_selector_only_shows_ensembles_with_data(
     assert index == -1  # Invalid index, because it is not available
     ensemble_selector.setCurrentIndex(index)
     assert not ensemble_selector.currentText()
+    assert not panel.isConfigurationValid()
+
+
+def test_that_panel_does_not_crash_when_no_realization_has_parameters(
+    qtbot: QtBot,
+) -> None:
+    """Regression test for https://github.com/equinor/ert/issues/13194.
+
+    When an ensemble has responses loaded but no parameters loaded, the active
+    realizations mask is all-False, which converts to an empty rangestring.
+    The panel must not crash in this case.
+    """
+    notifier = ErtNotifier()
+    notifier._storage = MockStorage()
+    notifier._storage._setup_mocked_run(
+        "ensemble_with_responses_only",
+        "experiment_responses_only",
+        [REALIZATION_ONLY_RESPONSES, REALIZATION_ONLY_RESPONSES],
+    )
+    panel = ManualUpdatePanel(
+        analysis_config=AnalysisConfig(minimum_required_realizations=1),
+        run_path="",
+        notifier=notifier,
+    )
+    qtbot.addWidget(panel)
+
+    ensemble_selector = panel.findChild(EnsembleSelector)
+    assert ensemble_selector is not None
+
+    index = ensemble_selector.findText(
+        "ensemble_with_responses_only", Qt.MatchFlag.MatchContains
+    )
+    # The ensemble has data (responses), so it must be selectable
+    assert index != -1
+    ensemble_selector.setCurrentIndex(index)
+
+    # Panel should not crash and active realizations should be empty
+    realization_selector = panel.findChild(StringBox, "active_realizations_box")
+    assert realization_selector is not None
+    assert not realization_selector.text()
     assert not panel.isConfigurationValid()
