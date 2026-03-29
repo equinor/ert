@@ -47,6 +47,6 @@ def test_mathfunc_cvar(copy_math_func_test_data_to_tmp):
     assert x1 == pytest.approx(0.5, 0.05)
     assert x2 == pytest.approx(0.5, 0.05)
 
-    total_objective = optimal_result.total_objective
+    total_objective = optimal_result.objectives["distance"]
     assert total_objective <= 0.001
     assert total_objective >= -0.001

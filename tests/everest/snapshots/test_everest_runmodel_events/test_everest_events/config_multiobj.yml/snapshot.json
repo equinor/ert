@@ -34,7 +34,7 @@
             "simulation_id": 0
           }
         ],
-        "total_objective_value": -2.083333
+        "total_objective_value": 2.333333
       }
     },
     {
@@ -47,23 +47,23 @@
           {
             "control_name": "point.x",
             "distance_p": 0.995893,
-            "distance_p.total": -0.337593,
+            "distance_p.total": 0.005629,
             "distance_q": -3.004565,
-            "distance_q.total": -0.337593
+            "distance_q.total": 0.005629
           },
           {
             "control_name": "point.y",
             "distance_p": 0.988662,
-            "distance_p.total": -0.344688,
+            "distance_p.total": 0.015134,
             "distance_q": -3.011388,
-            "distance_q.total": -0.344688
+            "distance_q.total": 0.015134
           },
           {
             "control_name": "point.z",
             "distance_p": 1.004652,
-            "distance_p.total": 1.004598,
+            "distance_p.total": -1.339482,
             "distance_q": 1.004489,
-            "distance_q.total": 1.004598
+            "distance_q.total": -1.339482
           }
         ],
         "perturbation_objectives": [
@@ -139,7 +139,7 @@
             "simulation_id": 0
           }
         ],
-        "total_objective_value": -2.078311
+        "total_objective_value": 2.333526
       }
     },
     {
@@ -176,7 +176,7 @@
             "simulation_id": 0
           }
         ],
-        "total_objective_value": -1.830787
+        "total_objective_value": 2.000048
       }
     }
   ],

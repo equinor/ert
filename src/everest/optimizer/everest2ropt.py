@@ -2,6 +2,11 @@ import os
 from typing import Any
 
 from ropt.enums import PerturbationType, VariableType
+from ropt.transforms import (
+    NonlinearConstraintTransform,
+    ObjectiveTransform,
+    VariableTransform,
+)
 
 from ert.config import EverestConstraintsConfig, EverestControl, EverestObjectivesConfig
 from everest.config import (
@@ -33,6 +38,7 @@ def _parse_controls(
         "mask": [control.enabled for control in controls],
         "seed": random_seed,
         "samplers": sampler_indices,
+        "transforms": [0],
     }
 
     ropt_samplers = [
@@ -77,7 +83,7 @@ def _parse_objectives(
             function_estimators.append({"method": objective_type})
         function_estimator_indices.append(function_estimator_idx)
 
-    ropt_objectives: dict[str, Any] = {"weights": weights}
+    ropt_objectives: dict[str, Any] = {"weights": weights, "transforms": [0]}
     ropt_function_estimators: list[dict[str, Any]] = []
     if function_estimators:
         # Only needed if we specified at least one objective type:
@@ -172,22 +178,25 @@ def _parse_optimization(
     realizations_weights: list[float],
     has_output_constraints: bool,
     optimization_output_dir: str,
-) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]]:
-    ropt_optimizer: dict[str, Any] = {
+) -> tuple[
+    dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]
+]:
+    ropt_backend: dict[str, Any] = {
         "output_dir": os.path.abspath(optimization_output_dir),
         "stdout": "optimizer.stdout",
         "stderr": "optimizer.stderr",
     }
+    ropt_optimizer: dict[str, Any] = {}
 
     ropt_gradient: dict[str, Any] = {}
     ropt_realizations: dict[str, Any] = {"weights": realizations_weights}
     cvar_config: dict[str, Any] = {}
 
     if ever_opt is not None:
-        ropt_optimizer["method"] = ever_opt.algorithm
+        ropt_backend["method"] = ever_opt.algorithm
 
         if ever_opt.max_iterations is not None:
-            ropt_optimizer["max_iterations"] = ever_opt.max_iterations
+            ropt_backend["max_iterations"] = ever_opt.max_iterations
 
         if ever_opt.max_function_evaluations is not None:
             ropt_optimizer["max_functions"] = ever_opt.max_function_evaluations
@@ -196,7 +205,7 @@ def _parse_optimization(
             ropt_optimizer["max_batches"] = ever_opt.max_batch_num
 
         if ever_opt.convergence_tolerance is not None:
-            ropt_optimizer["tolerance"] = ever_opt.convergence_tolerance
+            ropt_backend["convergence_tolerance"] = ever_opt.convergence_tolerance
 
         if ever_opt.speculative:
             ropt_gradient["evaluation_policy"] = "speculative"
@@ -221,9 +230,9 @@ def _parse_optimization(
             options += [f"constraint_tolerance = {ever_opt.constraint_tolerance}"]
 
         if options:
-            ropt_optimizer["options"] = options
+            ropt_backend["options"] = options
 
-        ropt_optimizer["parallel"] = ever_opt.parallel
+        ropt_backend["parallel"] = ever_opt.parallel
 
         if ever_opt.perturbation_num is not None:
             ropt_gradient["number_of_perturbations"] = ever_opt.perturbation_num
@@ -258,7 +267,7 @@ def _parse_optimization(
                     },
                 }
 
-    return ropt_optimizer, ropt_gradient, ropt_realizations, cvar_config
+    return ropt_optimizer, ropt_backend, ropt_gradient, ropt_realizations, cvar_config
 
 
 def everest2ropt(
@@ -270,16 +279,21 @@ def everest2ropt(
     model: ModelConfig,
     random_seed: int,
     optimization_output_dir: str,
+    variable_transform: VariableTransform | None,
+    objective_transform: ObjectiveTransform | None,
+    nonlinear_constraint_transform: NonlinearConstraintTransform | None,
 ) -> tuple[dict[str, Any], list[float]]:
     ropt_variables, ropt_samplers = _parse_controls(controls, random_seed)
     ropt_objectives, ropt_function_estimators = _parse_objectives(objective_functions)
     ropt_linear_constraints = _parse_input_constraints(input_constraints, controls)
     ropt_nonlinear_constraints = _parse_output_constraints(output_constraints)
-    ropt_optimizer, ropt_gradient, ropt_realizations, cvar_config = _parse_optimization(
-        ever_opt=optimization,
-        realizations_weights=model.realizations_weights,
-        has_output_constraints=bool(output_constraints),
-        optimization_output_dir=optimization_output_dir,
+    ropt_optimizer, ropt_backend, ropt_gradient, ropt_realizations, cvar_config = (
+        _parse_optimization(
+            ever_opt=optimization,
+            realizations_weights=model.realizations_weights,
+            has_output_constraints=bool(output_constraints),
+            optimization_output_dir=optimization_output_dir,
+        )
     )
     ropt_realization_filters: list[dict[str, Any]] = []
 
@@ -304,6 +318,9 @@ def everest2ropt(
         "objectives": ropt_objectives,
         "realizations": ropt_realizations,
         "optimizer": ropt_optimizer,
+        "backend": ropt_backend,
+        "variable_transforms": [variable_transform],
+        "objective_transforms": [objective_transform],
         "names": {
             "variable": [control.input_key for control in controls],
             "objective": objective_functions.keys,
@@ -316,7 +333,11 @@ def everest2ropt(
     if ropt_linear_constraints:
         ropt_config["linear_constraints"] = ropt_linear_constraints
     if ropt_nonlinear_constraints:
+        ropt_nonlinear_constraints["transforms"] = [0]
         ropt_config["nonlinear_constraints"] = ropt_nonlinear_constraints
+        ropt_config["nonlinear_constraint_transforms"] = [
+            nonlinear_constraint_transform
+        ]
     if ropt_gradient:
         ropt_config["gradient"] = ropt_gradient
     if ropt_realization_filters:

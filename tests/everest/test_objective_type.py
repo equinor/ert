@@ -51,4 +51,4 @@ def test_objective_type(copy_math_func_test_data_to_tmp):
     assert x1 == pytest.approx(0.5, abs=0.025)
     assert x2 == pytest.approx(0.5, abs=0.025)
 
-    assert optimal_result.total_objective < 0.0
+    assert optimal_result.objectives["stddev"] < 0.0

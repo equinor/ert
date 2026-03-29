@@ -272,7 +272,7 @@ class EverestConfig(BaseModelWithContextSupport):
         default_factory=OptimizationConfig,
         description=dedent(
             """
-            Optimizer options.
+            Backend optimizer options.
 
             Ensemble-based optimization in EVEREST is handled internally by the
             `ropt` library for robust optimization, which in turn uses a plugin

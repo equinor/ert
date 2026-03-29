@@ -11,7 +11,7 @@ from everest.everest_storage import EverestStorage
 class OptimalResult:
     batch: int
     controls: dict[str, Any]
-    total_objective: float
+    objectives: dict[str, Any]
 
 
 def get_optimal_result(output_dir: str) -> OptimalResult | None:
@@ -25,11 +25,9 @@ def get_optimal_result(output_dir: str) -> OptimalResult | None:
 
     if matching_batches:
         matching_batches.sort(
-            key=lambda item: (
-                -item.batch_objectives.select(
-                    pl.col("total_objective_value").sample(n=1)
-                ).item()
-            )
+            key=lambda item: item.batch_objectives.select(
+                pl.col("total_objective_value").sample(n=1)
+            ).item()
         )
         batch = matching_batches[0]
         controls_dict = batch.realization_controls.drop(
@@ -42,12 +40,18 @@ def get_optimal_result(output_dir: str) -> OptimalResult | None:
 
         experiment._storage.close()
 
+        objectives = {
+            key: value[0]
+            for key, value in batch.batch_objectives.drop(
+                "batch_id", "total_objective_value"
+            )
+            .to_dict(as_series=False)
+            .items()
+        }
         return OptimalResult(
             batch=batch.iteration,
             controls=controls_dict,
-            total_objective=batch.batch_objectives.select(
-                pl.col("total_objective_value")
-            ).item(),
+            objectives=objectives,
         )
 
     experiment._storage.close()
