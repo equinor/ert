@@ -32,7 +32,7 @@
             "simulation_id": 0
           }
         ],
-        "total_objective_value": -0.48
+        "total_objective_value": 0.48
       }
     },
     {
@@ -45,17 +45,17 @@
           {
             "control_name": "point.x",
             "distance": 0.800386,
-            "distance.total": 0.800386
+            "distance.total": -0.800386
           },
           {
             "control_name": "point.y",
             "distance": 0.800548,
-            "distance.total": 0.800548
+            "distance.total": -0.800548
           },
           {
             "control_name": "point.z",
             "distance": 0.799338,
-            "distance.total": 0.799338
+            "distance.total": -0.799338
           }
         ],
         "perturbation_objectives": [
@@ -124,7 +124,7 @@
             "simulation_id": 0
           }
         ],
-        "total_objective_value": -0.480218
+        "total_objective_value": 0.480218
       }
     },
     {
@@ -159,7 +159,7 @@
             "simulation_id": 0
           }
         ],
-        "total_objective_value": -0.0
+        "total_objective_value": 0.0
       }
     },
     {
@@ -182,17 +182,17 @@
           {
             "control_name": "point.x",
             "distance": -0.00259,
-            "distance.total": -0.00259
+            "distance.total": 0.00259
           },
           {
             "control_name": "point.y",
             "distance": -0.002198,
-            "distance.total": -0.002198
+            "distance.total": 0.002198
           },
           {
             "control_name": "point.z",
             "distance": 0.002055,
-            "distance.total": 0.002055
+            "distance.total": -0.002055
           }
         ],
         "perturbation_objectives": [

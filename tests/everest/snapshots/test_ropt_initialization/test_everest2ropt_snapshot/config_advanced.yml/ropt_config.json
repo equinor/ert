@@ -1,4 +1,11 @@
 {
+  "backend": {
+    "method": "optpp_q_newton",
+    "output_dir": "not_relevant",
+    "parallel": true,
+    "stderr": "optimizer.stderr",
+    "stdout": "optimizer.stdout"
+  },
   "function_estimators": [
     {
       "method": "mean"
@@ -41,16 +48,28 @@
       "point.x.2"
     ]
   },
+  "nonlinear_constraint_transforms": [
+    null
+  ],
   "nonlinear_constraints": {
     "lower_bounds": [
       0.1
+    ],
+    "transforms": [
+      0
     ],
     "upper_bounds": [
       null
     ]
   },
+  "objective_transforms": [
+    null
+  ],
   "objectives": {
     "function_estimators": [
+      0
+    ],
+    "transforms": [
       0
     ],
     "weights": [
@@ -58,12 +77,7 @@
     ]
   },
   "optimizer": {
-    "max_batches": 5,
-    "method": "optpp_q_newton",
-    "output_dir": "not_relevant",
-    "parallel": true,
-    "stderr": "optimizer.stderr",
-    "stdout": "optimizer.stdout"
+    "max_batches": 5
   },
   "realizations": {
     "weights": [
@@ -73,6 +87,9 @@
   },
   "samplers": [
     {}
+  ],
+  "variable_transforms": [
+    null
   ],
   "variables": {
     "lower_bounds": [
@@ -101,6 +118,9 @@
       0
     ],
     "seed": 999,
+    "transforms": [
+      0
+    ],
     "types": [
       1,
       1,

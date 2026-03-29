@@ -79,7 +79,7 @@ def test_everest_entry_run(cached_example):
     assert optimal.controls["point.y"] == pytest.approx(0.5, abs=0.05)
     assert optimal.controls["point.z"] == pytest.approx(0.5, abs=0.05)
 
-    assert optimal.total_objective == pytest.approx(0.0, abs=0.0005)
+    assert optimal.objectives["distance"] == pytest.approx(0.0, abs=0.0005)
 
     with capture_streams():
         start_everest(["everest", "monitor", config_file])

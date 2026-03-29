@@ -4,7 +4,7 @@ from textwrap import dedent
 from typing import Any, Self
 
 from pydantic import BaseModel, Field, model_validator
-from ropt.workflow import find_optimizer_plugin, validate_optimizer_options
+from ropt.workflow import find_backend_plugin, validate_backend_options
 
 from everest.config.cvar_config import CVaRConfig
 from everest.strings import EVEREST
@@ -348,7 +348,7 @@ class OptimizationConfig(BaseModel, extra="forbid"):
         )
 
         try:
-            plugin_name = find_optimizer_plugin(algorithm)
+            plugin_name = find_backend_plugin(algorithm)
         except ValueError:
             raise
         except Exception as exc:
@@ -362,12 +362,12 @@ class OptimizationConfig(BaseModel, extra="forbid"):
             )
             raise RuntimeError(msg) from exc
         if plugin_name is None:
-            raise ValueError(f"Optimizer algorithm '{algorithm}' not found")
+            raise ValueError(f"Backend algorithm '{algorithm}' not found")
         self._optimization_plugin_name = plugin_name
 
         options = self.options or self.backend_options
         if options:
-            validate_optimizer_options(algorithm, options)
+            validate_backend_options(algorithm, options)
 
         self.backend = None
         self.algorithm = algorithm

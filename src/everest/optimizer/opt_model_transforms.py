@@ -6,7 +6,7 @@ from typing import Literal, TypedDict
 import numpy as np
 from numpy.typing import NDArray
 from ropt.transforms.base import (
-    NonLinearConstraintTransform,
+    NonlinearConstraintTransform,
     ObjectiveTransform,
     VariableTransform,
 )
@@ -64,24 +64,49 @@ class ControlScaler(VariableTransform):
              auto_scale_input_constraints: Auto-scale any input constraint equations.
              input_constraint_scales:      Optional scaling factors of input constraints
         """
-        self._scaling_factors = [
-            (ub - lb) / (sr[1] - sr[0]) if ct == "real" else 1.0
-            for lb, ub, sr, ct in zip(
-                lower_bounds, upper_bounds, scaled_ranges, control_types, strict=True
-            )
-        ]
-        self._offsets = [
-            lb - sr[0] * sc if ct == "real" else 0.0
-            for lb, sc, sr, ct in zip(
-                lower_bounds,
-                self._scaling_factors,
-                scaled_ranges,
-                control_types,
-                strict=True,
-            )
-        ]
+        self._scaling_factors = np.asarray(
+            [
+                (ub - lb) / (sr[1] - sr[0]) if ct == "real" else 1.0
+                for lb, ub, sr, ct in zip(
+                    lower_bounds,
+                    upper_bounds,
+                    scaled_ranges,
+                    control_types,
+                    strict=True,
+                )
+            ],
+            dtype=np.float64,
+        )
+        self._offsets = np.asarray(
+            [
+                lb - sr[0] * sc if ct == "real" else 0.0
+                for lb, sc, sr, ct in zip(
+                    lower_bounds,
+                    self._scaling_factors,
+                    scaled_ranges,
+                    control_types,
+                    strict=True,
+                )
+            ],
+            dtype=np.float64,
+        )
         self._auto_scale_input_constraints = auto_scale_input_constraints
         self._input_constraint_scales = input_constraint_scales
+        self._mask: NDArray[np.bool_] | None = None
+
+    def init(self, mask: NDArray[np.bool_]) -> None:
+        """Set the mask for the transformation.
+
+        The mask is used to indicate which variables are transformed by this
+        object. The scaling factors and offsets of the inactive variables are
+        set to 1 and 0, respectively, so that these variables are not
+        transformed.
+
+        Args:
+            mask: A boolean array indicating which variables are active.
+        """
+        self._scaling_factors = np.where(mask, self._scaling_factors, 1.0)
+        self._offsets = np.where(mask, self._offsets, 0.0)
 
     def to_optimizer(self, values: NDArray[np.float64]) -> NDArray[np.float64]:
         """Transform values to the optimizer domain.
@@ -255,6 +280,18 @@ class ObjectiveScaler(ObjectiveTransform):
         self._realization_weights = np.asarray(realization_weights, dtype=np.float64)
         self._objective_weights = np.asarray(objective_weights, dtype=np.float64)
         self._objective_weights /= np.sum(self._objective_weights)
+        self._mask: NDArray[np.bool_] | None = None
+
+    def init(self, mask: NDArray[np.bool_]) -> None:
+        """Set the mask for the transformation.
+
+        The mask is used to indicate which objectives are transformed by this object.
+
+        Args:
+            mask: A boolean array indicating which variables are active.
+        """
+        self._scales = np.where(mask, self._scales, 1.0)
+        self._mask = mask
 
     # The transform methods below all return the negative of the objectives.
     # This is because EVEREST maximizes the objectives, while ropt is a minimizer.
@@ -309,7 +346,9 @@ class ObjectiveScaler(ObjectiveTransform):
                 realizations, self._realization_weights, objectives, error_msg
             )
             self._scales = np.abs(np.dot(avg_objectives, self._objective_weights))
-            if self._scales < np.finfo(np.float64).eps:
+            if self._mask is not None:
+                self._scales = np.where(self._mask, self._scales, 1.0)
+            if np.any(self._scales < np.finfo(np.float64).eps):
                 raise RuntimeError(error_msg)
         self._auto_scale = False
 
@@ -319,7 +358,7 @@ class ObjectiveScaler(ObjectiveTransform):
         return self._auto_scale
 
 
-class ConstraintScaler(NonLinearConstraintTransform):
+class ConstraintScaler(NonlinearConstraintTransform):
     """Transformation object for linearly scaling constraints.
 
     Constraints are transformed to the optimizer domain by division with a
@@ -342,6 +381,18 @@ class ConstraintScaler(NonLinearConstraintTransform):
         self._auto_scale = auto_scale
         self._scales = np.asarray(scales, dtype=np.float64)
         self._realization_weights = np.asarray(realization_weights, dtype=np.float64)
+        self._mask: NDArray[np.bool_] | None = None
+
+    def init(self, mask: NDArray[np.bool_]) -> None:
+        """Set the mask for the transformation.
+
+        The mask is used to indicate which constraints are transformed by this object.
+
+        Args:
+            mask: A boolean array indicating which constraints are active.
+        """
+        self._scales = np.where(mask, self._scales, 1.0)
+        self._mask = mask
 
     def bounds_to_optimizer(
         self, lower_bounds: NDArray[np.float64], upper_bounds: NDArray[np.float64]
@@ -421,6 +472,8 @@ class ConstraintScaler(NonLinearConstraintTransform):
                 realizations, self._realization_weights, constraints, error_msg
             )
             self._scales = np.abs(avg_constraints)
+            if self._mask is not None:
+                self._scales = np.where(self._mask, self._scales, 1.0)
             if np.any(self._scales < np.finfo(np.float64).eps):
                 raise RuntimeError(error_msg)
         self._auto_scale = False

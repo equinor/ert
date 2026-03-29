@@ -25,7 +25,6 @@ from pydantic import Field, PrivateAttr, TypeAdapter, ValidationError
 from ropt.enums import ExitCode as RoptExitCode
 from ropt.evaluator import EvaluatorContext, EvaluatorResult
 from ropt.results import FunctionResults, Results
-from ropt.transforms import OptModelTransforms
 from ropt.workflow import BasicOptimizer
 from typing_extensions import TypedDict
 
@@ -788,7 +787,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         # during visualization:
         CONSTRAINT_TOL = 1e-6
 
-        max_total_objective = -np.inf
+        max_total_objective = np.inf
         for ensemble in self._experiment.ensembles_with_function_results:
             assert ensemble.batch_objectives is not None
             total_objective = ensemble.batch_objectives["total_objective_value"].item()
@@ -829,7 +828,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
                     output_constraint_violation,
                 )
                 < CONSTRAINT_TOL
-                and total_objective > max_total_objective
+                and total_objective < max_total_objective
             ):
                 ensemble.update_improvement_flag(is_improvement=True)
                 max_total_objective = total_objective
@@ -924,21 +923,13 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
             self.model,
             self.random_seed,
             self.optimization_output_dir,
-        )
-        transforms = (
-            OptModelTransforms(
-                variables=self._transforms["control_scaler"],
-                objectives=self._transforms["objective_scaler"],
-                nonlinear_constraints=self._transforms["constraint_scaler"],
-            )
-            if self._transforms
-            else None
+            self._transforms["control_scaler"],
+            self._transforms["objective_scaler"],
+            self._transforms["constraint_scaler"],
         )
         try:
             optimizer = BasicOptimizer(
-                enopt_config=enopt_config,
-                transforms=transforms,
-                evaluator=self._forward_model_evaluator,
+                config=enopt_config, evaluator=self._forward_model_evaluator
             )
         except ValidationError as exc:
             ert_version = importlib.metadata.version("ert")

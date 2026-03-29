@@ -215,7 +215,7 @@ def cached_example(pytestconfig):
             optimal_result_json = {
                 "batch": optimal_result.batch,
                 "controls": optimal_result.controls,
-                "total_objective": optimal_result.total_objective,
+                "objectives": optimal_result.objectives,
             }
 
             events_list = []

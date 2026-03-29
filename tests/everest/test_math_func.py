@@ -32,9 +32,9 @@ def test_math_func_multiobj(cached_example):
     assert y == pytest.approx(0.0, abs=0.05)
     assert z == pytest.approx(0.5, abs=0.05)
 
-    # The overall optimum is a weighted average of the objectives
-    expected = -(0.5 * 2 * 0.5**2 + 0.25 * 2 * 1.5**2) / 0.75
-    assert result.total_objective == pytest.approx(expected, abs=0.01)
+    # Check objectives
+    assert result.objectives["distance_p"] == pytest.approx(-2 * 0.5**2, abs=0.05)
+    assert result.objectives["distance_q"] == pytest.approx(-2 * 1.5**2, abs=0.05)
 
 
 @pytest.mark.xdist_group("math_func/config_advanced.yml")
@@ -54,7 +54,7 @@ def test_math_func_advanced(cached_example):
     assert x2 == pytest.approx(0.4, abs=0.05)
 
     # Check optimum value
-    assert pytest.approx(result.total_objective, abs=0.1) == -(
+    assert pytest.approx(result.objectives["distance"], abs=0.1) == -(
         0.25 * (1.6**2 + 1.5**2 + 0.1**2) + 0.75 * (0.4**2 + 0.5**2 + 0.1**2)
     )
     # Expected distance is the weighted average of the (squared) distances
@@ -64,7 +64,7 @@ def test_math_func_advanced(cached_example):
     dist_0 = (x0 + 1.5) ** 2 + (x1 + 1.5) ** 2 + (x2 - 0.5) ** 2
     dist_1 = (x0 - 0.5) ** 2 + (x1 - 0.5) ** 2 + (x2 - 0.5) ** 2
     expected_opt = -(w[0] * (dist_0) + w[1] * (dist_1))
-    assert expected_opt == pytest.approx(result.total_objective, abs=0.001)
+    assert expected_opt == pytest.approx(result.objectives["distance"], abs=0.001)
 
 
 @pytest.mark.integration_test
@@ -170,7 +170,7 @@ def test_math_func_auto_scaled_controls(copy_math_func_test_data_to_tmp):
     assert z == pytest.approx(0.5, abs=0.05)
 
     # Check optimum value
-    optim = -optimal_result.total_objective  # distance is provided as -distance
+    optim = -optimal_result.objectives["distance"]  # distance is provided as -distance
     expected_dist = 0.25**2 + 0.25**2
     assert expected_dist == pytest.approx(optim, abs=0.05)
 
@@ -192,7 +192,8 @@ def test_math_func_auto_scaled_objectives(copy_math_func_test_data_to_tmp):
         run_model = EverestRunModel.create(config, runtime_plugins=site_plugins)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
-    optim1 = get_optimal_result(config.storage_dir).total_objective
+    optim1_p = get_optimal_result(config.storage_dir).objectives["distance_p"]
+    optim1_q = get_optimal_result(config.storage_dir).objectives["distance_q"]
 
     config_dict["environment"]["output_folder"] = "output_auto_scale"
     config_dict["optimization"]["auto_scale"] = True
@@ -203,10 +204,13 @@ def test_math_func_auto_scaled_objectives(copy_math_func_test_data_to_tmp):
         run_model = EverestRunModel.create(config, runtime_plugins=site_plugins)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
-    optim2 = get_optimal_result(config.storage_dir).total_objective
+    optim2_p = get_optimal_result(config.storage_dir).objectives["distance_p"]
+    optim2_q = get_optimal_result(config.storage_dir).objectives["distance_q"]
 
-    assert optim1 != optim2
-    assert optim1 == pytest.approx(optim2, abs=0.001)
+    assert optim1_p != optim2_p
+    assert optim1_p == pytest.approx(optim2_p, abs=0.05)
+    assert optim1_q != optim2_q
+    assert optim1_q == pytest.approx(optim2_q, abs=0.05)
 
 
 @pytest.mark.integration_test
@@ -226,7 +230,7 @@ def test_math_func_auto_scaled_constraints(copy_math_func_test_data_to_tmp):
         run_model = EverestRunModel.create(config, runtime_plugins=site_plugins)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
-    optim1 = get_optimal_result(config.storage_dir).total_objective
+    optim1 = get_optimal_result(config.storage_dir).objectives["distance"]
 
     config_dict["environment"]["output_folder"] = "output_auto_scale"
     config_dict["optimization"]["auto_scale"] = True
@@ -237,7 +241,7 @@ def test_math_func_auto_scaled_constraints(copy_math_func_test_data_to_tmp):
         run_model = EverestRunModel.create(config, runtime_plugins=site_plugins)
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
-    optim2 = get_optimal_result(config.storage_dir).total_objective
+    optim2 = get_optimal_result(config.storage_dir).objectives["distance"]
 
     assert optim1 != optim2
     assert optim1 == pytest.approx(optim2, abs=0.01)

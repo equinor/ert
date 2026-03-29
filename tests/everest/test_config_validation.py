@@ -502,7 +502,7 @@ def test_that_model_realizations_weights_must_correspond_to_realizations():
 
 
 def test_that_missing_optimization_algorithm_errors():
-    with pytest.raises(ValueError, match="Optimizer algorithm 'ddlygldt' not found"):
+    with pytest.raises(ValueError, match="Backend algorithm 'ddlygldt' not found"):
         everest_config_with_defaults(optimization={"algorithm": "ddlygldt"})
 
 

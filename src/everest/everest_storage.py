@@ -60,7 +60,7 @@ class EverestStorage:
         # values are corresponding column keys we present to the user
         renames = {
             "objective": "objective_name",
-            "weighted_objective": "total_objective_value",
+            "target_objective": "total_objective_value",
             "variable": "control_name",
             "variables": "control_value",
             "objectives": "objective_value",
@@ -176,7 +176,7 @@ class EverestStorage:
         batch_objectives = cls._ropt_to_df(
             results,
             "functions",
-            values=["objectives", "weighted_objective"],
+            values=["objectives", "target_objective"],
             select=["batch_id", "objective"],
         )
         batch_objectives = batch_objectives.pivot(
@@ -252,7 +252,7 @@ class EverestStorage:
                 results,
                 "gradients",
                 values=(
-                    ["weighted_objective", "objectives"]
+                    ["target_objective", "objectives"]
                     + (["constraints"] if have_constraints else [])
                 ),
                 select=(
@@ -324,7 +324,7 @@ class EverestStorage:
 
         results: list[FunctionResults | GradientResults] = []
 
-        best_value = -np.inf
+        best_value = np.inf
         best_results = None
         for item in optimizer_results:
             if isinstance(item, GradientResults):
@@ -332,9 +332,9 @@ class EverestStorage:
             if (
                 isinstance(item, FunctionResults)
                 and item.functions is not None
-                and item.functions.weighted_objective > best_value
+                and item.functions.target_objective < best_value
             ):
-                best_value = float(item.functions.weighted_objective)
+                best_value = float(item.functions.target_objective)
                 best_results = item
 
         if best_results is not None:

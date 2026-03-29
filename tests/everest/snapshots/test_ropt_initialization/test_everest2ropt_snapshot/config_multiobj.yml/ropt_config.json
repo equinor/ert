@@ -1,4 +1,12 @@
 {
+  "backend": {
+    "convergence_tolerance": 0.005,
+    "method": "optpp_q_newton",
+    "output_dir": "not_relevant",
+    "parallel": true,
+    "stderr": "optimizer.stderr",
+    "stdout": "optimizer.stdout"
+  },
   "function_estimators": [
     {
       "method": "mean"
@@ -23,9 +31,15 @@
       "point.z"
     ]
   },
+  "objective_transforms": [
+    null
+  ],
   "objectives": {
     "function_estimators": [
       0,
+      0
+    ],
+    "transforms": [
       0
     ],
     "weights": [
@@ -34,13 +48,7 @@
     ]
   },
   "optimizer": {
-    "max_batches": 3,
-    "method": "optpp_q_newton",
-    "output_dir": "not_relevant",
-    "parallel": true,
-    "stderr": "optimizer.stderr",
-    "stdout": "optimizer.stdout",
-    "tolerance": 0.005
+    "max_batches": 3
   },
   "realizations": {
     "weights": [
@@ -49,6 +57,9 @@
   },
   "samplers": [
     {}
+  ],
+  "variable_transforms": [
+    null
   ],
   "variables": {
     "lower_bounds": [
@@ -77,6 +88,9 @@
       0
     ],
     "seed": 999,
+    "transforms": [
+      0
+    ],
     "types": [
       1,
       1,

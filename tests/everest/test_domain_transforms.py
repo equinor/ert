@@ -61,6 +61,9 @@ def test_transforms_controls_scaling(ever_config):
         ever_config.model,
         ever_config.environment.random_seed,
         ever_config.optimization_output_dir,
+        None,
+        None,
+        None,
     )
     transforms = get_optimization_domain_transforms(
         [ctrl for c in ever_config.controls for ctrl in c.to_ert_parameter_config()],
@@ -102,6 +105,9 @@ def test_transforms_controls_input_constraint_scaling(ever_config, scaling):
         ever_config.model,
         ever_config.environment.random_seed,
         ever_config.optimization_output_dir,
+        None,
+        None,
+        None,
     )
 
     controls = [

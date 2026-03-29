@@ -326,7 +326,9 @@
       "point.x.1": 0.0170816,
       "point.x.2": 0.36526727
     },
-    "total_objective": -1.53933474
+    "objectives": {
+      "distance": -1.53933474
+    }
   },
   "output_constraint_names": [
     "x-0_coord"
@@ -343,27 +345,27 @@
     {
       "accepted": 1,
       "batch": 0,
-      "objective": -1.6875
+      "objective": 1.6875
     },
     {
       "accepted": 0,
       "batch": 1,
-      "objective": -1.6933983
+      "objective": 1.6933983
     },
     {
       "accepted": 0,
       "batch": 2,
-      "objective": -1.7357732
+      "objective": 1.7357732
     },
     {
       "accepted": 1,
       "batch": 3,
-      "objective": -1.62412254
+      "objective": 1.62412254
     },
     {
       "accepted": 1,
       "batch": 4,
-      "objective": -1.53933474
+      "objective": 1.53933474
     }
   ]
 }
