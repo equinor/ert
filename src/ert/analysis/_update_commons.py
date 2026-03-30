@@ -352,23 +352,6 @@ class _OutlierColumns(StrEnum):
     scaled_std = "scaled_obs_error"
 
 
-def _all_parameters(
-    ensemble: Ensemble,
-    iens_active_index: npt.NDArray[np.int_],
-) -> npt.NDArray[np.float64]:
-    """Return all parameters in assimilation problem"""
-
-    groups_to_update = [
-        k for k, v in ensemble.experiment.parameter_configuration.items() if v.update
-    ]
-    param_arrays = [
-        ensemble.load_parameters_numpy(param_group, iens_active_index)
-        for param_group in groups_to_update
-    ]
-
-    return np.vstack(param_arrays)
-
-
 class ErtAnalysisError(Exception):
     def __init__(self, message: str, data: DataSection | None = None) -> None:
         super().__init__(message)

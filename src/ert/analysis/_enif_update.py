@@ -19,7 +19,6 @@ from ert.storage import Ensemble
 
 from ._update_commons import (
     ErtAnalysisError,
-    _all_parameters,
     _copy_unupdated_parameters,
     _preprocess_observations_and_responses,
     noop_progress_callback,
@@ -141,11 +140,19 @@ def analysis_EnIF(
     # EnIF ###
     start_enif = time.time()
 
-    # Load all parameters at once
-    X_full = _all_parameters(
-        ensemble=source_ensemble,
-        iens_active_index=iens_active_index,
-    )
+    updated_parameters = [
+        p
+        for p in parameters
+        if source_ensemble.experiment.parameter_configuration[p].update
+    ]
+
+    # Load each parameter group once and reuse throughout
+    param_arrays = {
+        group: source_ensemble.load_parameters_numpy(group, iens_active_index)
+        for group in updated_parameters
+    }
+
+    X_full = np.vstack(list(param_arrays.values()))
 
     X_full_scaler = StandardScaler()
     X_full_scaled = X_full_scaler.fit_transform(X_full.T)
@@ -156,18 +163,13 @@ def analysis_EnIF(
         Y=S.T,
         verbose_level=5,
     )
-    updated_parameters = [
-        p
-        for p, config in source_ensemble.experiment.parameter_configuration.items()
-        if config.update
-    ]
+
     # Learn the precision matrix block-sparse over parameter groups
     Prec_u = sp.sparse.csc_matrix((0, 0), dtype=float)
     for param_group in updated_parameters:
         config_node = source_ensemble.experiment.parameter_configuration[param_group]
-        X_local = source_ensemble.load_parameters_numpy(param_group, iens_active_index)
         X_local_scaler = StandardScaler()
-        X_scaled = X_local_scaler.fit_transform(X_local.T)
+        X_scaled = X_local_scaler.fit_transform(param_arrays[param_group].T)
 
         graph_u_sub = config_node.load_parameter_graph()
 
@@ -219,10 +221,7 @@ def analysis_EnIF(
     progress_callback(AnalysisStatusEvent(msg=log_msg))
     parameters_updated = 0
     for param_group in updated_parameters:
-        param_ensemble_array = source_ensemble.load_parameters_numpy(
-            param_group, iens_active_index
-        )
-        parameters_to_update = param_ensemble_array.shape[0]
+        parameters_to_update = param_arrays[param_group].shape[0]
         param_group_indices = np.arange(
             parameters_updated, parameters_updated + parameters_to_update
         )
