@@ -194,6 +194,20 @@ def test_no_parameters_json():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_that_output_directory_is_created_when_rendering_to_subdirectory():
+    Path("template").write_text("{{ input.value }}", encoding="utf-8")
+    Path("input.json").write_text(json.dumps({"value": 42}), encoding="utf-8")
+    Path("parameters.json").write_text(json.dumps(default_parameters), encoding="utf-8")
+
+    output_path = "non_existent_dir/output.txt"
+    assert not Path("non_existent_dir").exists()
+
+    render_template("input.json", "template", output_path)
+
+    assert Path(output_path).read_text(encoding="utf-8") == "42"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.integration_test
 def test_template_executable():
     Path("template").write_text(

@@ -2,7 +2,6 @@ import json
 import os
 from pathlib import Path
 
-import jinja2
 import pytest
 from ruamel.yaml import YAML
 
@@ -53,7 +52,6 @@ PROD2 takes value {{ well_drill.PROD2 }}, implying \
 {%- endfor %}
 """
 THE_OPTIMAL_TEMPLATE_TMPL = "{{ well_drill.values() | sum() }}"
-DUAL_INPUT_TMPL = "{{ well_drill_north.PROD1 }} vs {{ well_drill_south.PROD1 }}"
 
 
 template_render = import_from_location(
@@ -63,90 +61,6 @@ template_render = import_from_location(
         "src/ert/resources/forward_models/template_render.py",
     ),
 )
-
-
-def test_render_invalid(change_to_tmpdir):
-    template_file = "well_drill_info.tmpl"
-    Path(template_file).write_text(WELL_DRILL_TMPL, encoding="utf-8")
-
-    render = template_render.render_template
-
-    prod_wells = {f"PROD{idx:d}": 0.3 * idx for idx in range(4)}
-    prod_in = "well_drill_prod.json"
-    with open(prod_in, "w", encoding="utf-8") as fout:
-        json.dump(prod_wells, fout)
-
-    wells_out = "wells.out"
-
-    with pytest.raises(jinja2.exceptions.UndefinedError):
-        render(None, template_file, wells_out)
-
-    with pytest.raises(ValueError, match=r"Input file: .* does not exist"):
-        render(2 * prod_in, template_file, wells_out)
-
-    with pytest.raises(TypeError):
-        render(prod_in, None, wells_out)
-
-    with pytest.raises(ValueError, match=r"Template file: .* does not exist"):
-        render(prod_in, template_file + "nogo", wells_out)
-
-    with pytest.raises(TypeError):
-        render(prod_in, template_file, None)
-
-
-def test_render(change_to_tmpdir):
-    template_file = "well_drill_info.tmpl"
-    Path(template_file).write_text(WELL_DRILL_TMPL, encoding="utf-8")
-
-    render = template_render.render_template
-
-    wells = {f"PROD{idx:d}": 0.2 * idx for idx in range(1, 5)}
-    wells.update({f"INJ{idx:d}": 1 - 0.2 * idx for idx in range(1, 5)})
-    wells_in = "well_drill.json"
-    with open(wells_in, "w", encoding="utf-8") as fout:
-        json.dump(wells, fout)
-
-    wells_out = "wells.out"
-    render(wells_in, template_file, wells_out)
-
-    with open(wells_out, encoding="utf-8") as fin:
-        output = fin.readlines()
-
-    for idx, line in enumerate(output):
-        split = line.split(" ")
-        if len(split) == 1:
-            assert idx == 2
-            assert line == "----------------------------------\n"
-        else:
-            on_off = "on" if wells[split[0]] >= 0.5 else "off"
-            expected_string = (
-                f"{split[0]} takes value {wells[split[0]]}, implying {on_off}\n"
-            )
-            if idx == len(output) - 1:
-                expected_string = expected_string[:-1]
-            assert expected_string == line
-
-
-def test_render_multiple_input(change_to_tmpdir):
-    template_file = "dual_input.tmpl"
-    Path(template_file).write_text(DUAL_INPUT_TMPL, encoding="utf-8")
-
-    render = template_render.render_template
-
-    wells_north = {f"PROD{idx:d}": 0.2 * idx for idx in range(1, 5)}
-    wells_north_in = "well_drill_north.json"
-    with open(wells_north_in, "w", encoding="utf-8") as fout:
-        json.dump(wells_north, fout)
-
-    wells_south = {f"PROD{idx:d}": 1 - 0.2 * idx for idx in range(1, 5)}
-    wells_south_in = "well_drill_south.json"
-    with open(wells_south_in, "w", encoding="utf-8") as fout:
-        json.dump(wells_south, fout)
-
-    wells_out = "sub_folder/wells.out"
-    render((wells_north_in, wells_south_in), template_file, wells_out)
-
-    assert Path(wells_out).read_text(encoding="utf-8").splitlines() == ["0.2 vs 0.8"]
 
 
 @pytest.mark.integration_test
