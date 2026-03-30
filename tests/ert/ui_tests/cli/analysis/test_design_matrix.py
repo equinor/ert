@@ -211,6 +211,7 @@ def test_run_poly_example_with_design_matrix_and_genkw_merge(default_values):
         assert output[4] == "big_integer: 10000000005"
 
 
+@pytest.mark.filterwarnings("ignore:Use of legacy_ertscript_workflow is deprecated")
 @pytest.mark.usefixtures(
     "copy_poly_case", "use_site_configurations_with_no_queue_options"
 )
