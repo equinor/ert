@@ -17,6 +17,8 @@ updates:
       all-deps:
         patterns:
           - "*"
+    cooldown:
+      default-days: 7
 
   - package-ecosystem: "pre-commit"
     directory: "/"
