@@ -477,3 +477,29 @@ def test_that_calculate_ertbox_parameters_detects_axis_orientation_from_egrid(
         assert params.origin == (0, 0)
     if flip == -1:
         assert params.origin == (0, -10)
+
+
+@pytest.mark.parametrize("input_dtype", [np.float32, np.float64])
+def test_that_create_storage_datasets_produces_float32_values(input_dtype):
+    nx, ny, nz = 2, 3, 4
+    n_reals = 3
+    field = Field(
+        name="TEST",
+        forward_init=False,
+        update=True,
+        ertbox_params=ErtboxParameters(nx=nx, ny=ny, nz=nz),
+        file_format=FieldFileFormat.GRDECL,
+        forward_init_file="init_%d.grdecl",
+        output_file=Path("output.grdecl"),
+        grid_file="grid.EGRID",
+    )
+    from_data = np.ones((nx * ny * nz, n_reals), dtype=input_dtype)
+    iens = np.array([0, 1, 2])
+
+    results = list(field.create_storage_datasets(from_data, iens))
+
+    assert len(results) == n_reals
+    for real_idx, (real_id, ds) in enumerate(results):
+        assert real_id == real_idx
+        assert ds["values"].dtype == np.float32
+        assert ds["values"].shape == (nx, ny, nz)

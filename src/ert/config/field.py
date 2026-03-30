@@ -227,7 +227,9 @@ class Field(ParameterConfig):
         )
 
         for i, realization in enumerate(iens_active_index):
-            values = from_data[:, i].reshape((dim_nx, dim_ny, dim_nz))
+            values = (
+                from_data[:, i].reshape((dim_nx, dim_ny, dim_nz)).astype(np.float32)
+            )
             ds = xr.Dataset({"values": (["x", "y", "z"], values)})
             yield int(realization), ds
 

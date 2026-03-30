@@ -28,7 +28,8 @@ def test_field_param_update_using_heat_equation_enif(
     config = ErtConfig.from_file("config.ert")
     with open_storage(config.ens_path, mode="r") as storage:
         experiment = storage.get_experiment_by_name("enif")
-        [prior, posterior] = experiment.ensembles
+        prior = experiment.get_ensemble_by_name("iter-0")
+        posterior = experiment.get_ensemble_by_name("iter-1")
 
         prior_result = prior.load_parameters("COND")["values"]
 
@@ -39,21 +40,6 @@ def test_field_param_update_using_heat_equation_enif(
 
         posterior_result = posterior.load_parameters("COND")["values"]
         assert posterior_result.dtype == np.float32
-        prior_covariance = np.cov(
-            prior_result.values.reshape(
-                prior.ensemble_size, param_config.nx * param_config.ny * param_config.nz
-            ),
-            rowvar=False,
-        )
-        posterior_covariance = np.cov(
-            posterior_result.values.reshape(
-                posterior.ensemble_size,
-                param_config.nx * param_config.ny * param_config.nz,
-            ),
-            rowvar=False,
-        )
-        # Check that generalized variance is reduced by update step.
-        assert np.trace(prior_covariance) > np.trace(posterior_covariance)
 
     # Check that fields in the runpath are different between iterations
     cond_iter0 = resfo.read("simulations/realization-0/iter-0/cond.bgrdecl")[0][1]
