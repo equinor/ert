@@ -40,9 +40,7 @@ class ObservationDatasetInfo:
 
         df = df.with_columns(observation_key=pl.lit(observation_key))
 
-        primary_key = (
-            ["time"] if response_type == "summary" else ["report_step", "index"]
-        )
+        match_key = ["time"] if response_type == "summary" else ["report_step", "index"]
         if response_type == "summary":
             df = df.rename({"name": "response_key"})
 
@@ -51,9 +49,7 @@ class ObservationDatasetInfo:
                 response_key=pl.lit(response_key),
             )
 
-        df = df[
-            ["response_key", "observation_key", *primary_key, "observations", "std"]
-        ]
+        df = df[["response_key", "observation_key", *match_key, "observations", "std"]]
 
         return cls(df, response_type, path)
 

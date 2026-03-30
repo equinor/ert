@@ -67,7 +67,7 @@ class BreakthroughConfig(DerivedResponseConfig):
         )
 
     @property
-    def primary_key(self) -> list[str]:
+    def match_key(self) -> list[str]:
         return ["threshold"]
 
     def display_column(self, value: Any, column_name: str) -> str:

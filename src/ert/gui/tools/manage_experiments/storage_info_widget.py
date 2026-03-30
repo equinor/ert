@@ -247,7 +247,7 @@ class _EnsembleWidget(QWidget):
         response_config = self._ensemble.experiment.response_configuration[
             response_type
         ]
-        x_axis_col = response_config.primary_key[-1]
+        x_axis_col = response_config.match_key[-1]
 
         def _filter_on_observation_label(df: pl.DataFrame) -> pl.DataFrame:
             # We add a column with the display name of the x axis column
@@ -287,7 +287,7 @@ class _EnsembleWidget(QWidget):
             if scaling_df is None:
                 return None
 
-            index_col = pl.concat_str(response_config.primary_key, separator=", ")
+            index_col = pl.concat_str(response_config.match_key, separator=", ")
             joined = obs.with_columns(index_col.alias("_tmp_index")).join(
                 scaling_df,
                 how="left",
@@ -396,7 +396,7 @@ class _EnsembleWidget(QWidget):
                         pl.col("observation_key").eq(obs_key)
                     )
                     response_config = exp.response_configuration[response_type]
-                    column_to_display = response_config.primary_key[-1]
+                    column_to_display = response_config.match_key[-1]
                     for t in obs_ds[column_to_display].to_list():
                         QTreeWidgetItem(
                             root,
