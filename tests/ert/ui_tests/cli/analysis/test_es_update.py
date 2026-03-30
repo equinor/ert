@@ -9,7 +9,6 @@ import pytest
 from scipy.ndimage import gaussian_filter
 from xtgeo import RegularSurface, surface_from_file
 
-from ert.analysis._update_commons import _all_parameters
 from ert.config import ErtConfig, GenKwConfig
 from ert.mode_definitions import ENSEMBLE_SMOOTHER_MODE
 from ert.storage import RealizationStorageState, open_storage
@@ -162,8 +161,21 @@ def test_update_multiple_param():
     prior_ensemble = experiment.get_ensemble_by_name("iter-0")
     posterior_ensemble = experiment.get_ensemble_by_name("iter-1")
 
-    prior_array = _all_parameters(prior_ensemble, list(range(10)))
-    posterior_array = _all_parameters(posterior_ensemble, list(range(10)))
+    iens = list(range(10))
+    prior_array = np.vstack(
+        [
+            prior_ensemble.load_parameters_numpy(g, iens)
+            for g, c in prior_ensemble.experiment.parameter_configuration.items()
+            if c.update
+        ]
+    )
+    posterior_array = np.vstack(
+        [
+            posterior_ensemble.load_parameters_numpy(g, iens)
+            for g, c in posterior_ensemble.experiment.parameter_configuration.items()
+            if c.update
+        ]
+    )
 
     # We expect that ERT's update step lowers the
     # generalized variance for the parameters.
