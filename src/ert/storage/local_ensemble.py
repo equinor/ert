@@ -924,7 +924,7 @@ class LocalEnsemble(BaseMode):
         corresponding simulated responses from an ensemble.
 
         The returned DataFrame includes an "index" column containing a
-        comma-separated string of the response type's primary key values:
+        comma-separated string of the response type's match key values:
         - Summary: "2024-01-15 00:00:00" (time)
         - GenData: "0, 42" (report_step, index)
         - RFT: "123.5, 456.7, 2500.0, ZONE_A" (east, north, tvd, zone)
@@ -962,7 +962,7 @@ class LocalEnsemble(BaseMode):
 
                 observed_cols = {
                     k: observations_for_type[k].unique()
-                    for k in ["response_key", *response_cls.primary_key]
+                    for k in ["response_key", *response_cls.match_key]
                 }
 
                 reals = np.sort(iens_active_index).tolist()
@@ -986,7 +986,7 @@ class LocalEnsemble(BaseMode):
 
                     pivoted = responses.collect(engine="streaming").pivot(
                         on="realization",
-                        index=["response_key", *response_cls.primary_key],
+                        index=["response_key", *response_cls.match_key],
                         values="values",
                         aggregate_function="mean",
                     )
@@ -1007,7 +1007,7 @@ class LocalEnsemble(BaseMode):
                     elif "time" in pivoted:
                         by_cols = [
                             "response_key",
-                            *[k for k in response_cls.primary_key if k != "time"],
+                            *[k for k in response_cls.match_key if k != "time"],
                         ]
                         joined = observations_for_type.sort(
                             by=[*by_cols, "time"]
@@ -1023,25 +1023,23 @@ class LocalEnsemble(BaseMode):
                         joined = observations_for_type.join(
                             pivoted,
                             how="left",
-                            on=["response_key", *response_cls.primary_key],
+                            on=["response_key", *response_cls.match_key],
                             nulls_equal=True,
                         )
 
-                    # Do not drop primary keys which
+                    # Do not drop match keys which
                     # overlap with localization attributes
-                    primary_keys_to_drop = set(response_cls.primary_key).difference(
+                    match_keys_to_drop = set(response_cls.match_key).difference(
                         {"north", "east", "radius"}
                     )
                     joined = (
                         joined.with_columns(
-                            pl.concat_str(
-                                response_cls.primary_key, separator=", "
-                            ).alias(
+                            pl.concat_str(response_cls.match_key, separator=", ").alias(
                                 "__tmp_index_key__"
-                                # Avoid potential collisions w/ primary key
+                                # Avoid potential collisions w/ match key
                             )
                         )
-                        .drop(primary_keys_to_drop)
+                        .drop(match_keys_to_drop)
                         .rename({"__tmp_index_key__": "index"})
                     )
 

@@ -76,12 +76,12 @@ def mock_resfo_file(mocked_files):
     return inner
 
 
-def test_that_rfts_primary_key_is_east_north_tvd_and_zone():
+def test_that_rfts_match_key_is_east_north_tvd_and_zone():
     assert set(
         RFTConfig(
             input_files=["BASE.RFT"],
             data_to_read={"*": {"*": ["*"]}},
-        ).primary_key
+        ).match_key
     ) == {"east", "north", "tvd", "zone"}
 
 

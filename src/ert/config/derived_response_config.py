@@ -16,9 +16,10 @@ class DerivedResponseConfig(BaseModel):
 
     @property
     @abstractmethod
-    def primary_key(self) -> list[str]:
-        """Primary key of this response data.
-        For example 'time' for summary and ['index','report_step'] for gen data"""
+    def match_key(self) -> list[str]:
+        """Identification columns for observations and responses. Along with
+        'response_key' they create the key on which response data should match
+        observation data."""
 
     def display_column(self, value: Any, column_name: str) -> str:
         return str(value)

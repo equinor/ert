@@ -449,7 +449,7 @@ class RFTConfig(ResponseConfig):
         return "rft"
 
     @property
-    def primary_key(self) -> list[str]:
+    def match_key(self) -> list[str]:
         return ["east", "north", "tvd", "zone"]
 
     @classmethod

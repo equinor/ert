@@ -215,7 +215,7 @@ class GenDataConfig(ResponseConfig):
         return None, None
 
     @property
-    def primary_key(self) -> list[str]:
+    def match_key(self) -> list[str]:
         return ["report_step", "index"]
 
 

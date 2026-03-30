@@ -130,8 +130,8 @@ def data_for_gradient(ensemble: Ensemble, key: str) -> pd.DataFrame:
 
 
 # indexing below is based on observation ds columns:
-# [ "observation_key", "response_key", *primary_key ]
-# for gen_data primary_key is ["report_step", "index"]
+# [ "observation_key", "response_key", *match_key ]
+# for gen_data match_key is ["report_step", "index"]
 # for summary it is ["time"]
 response_to_pandas_x_axis_fns: dict[str, Callable[[tuple[Any, ...]], Any]] = {
     "summary": lambda t: pd.Timestamp(t[2]).isoformat(),

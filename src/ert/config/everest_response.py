@@ -18,7 +18,7 @@ class EverestResponse(ResponseConfig):
     scales: list[float]
 
     @property
-    def primary_key(self) -> list[str]:
+    def match_key(self) -> list[str]:
         return []
 
     @property
