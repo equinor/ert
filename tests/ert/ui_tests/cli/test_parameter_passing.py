@@ -406,7 +406,7 @@ class SurfaceParameter(Parameter):
             )
 
 
-@settings(max_examples=10)
+@settings(max_examples=30)
 @given(
     io_source=st.builds(IoProvider, data=st.data()),
     grid_format=st.sampled_from(["grid", "egrid"]),
