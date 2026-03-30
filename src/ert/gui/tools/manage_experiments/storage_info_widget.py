@@ -131,9 +131,11 @@ class _EnsembleWidget(QWidget):
         info_frame = QFrame()
         self._name_label = QLabel()
         self._uuid_label = QLabel()
+        self._iteration_label = QLabel()
 
         info_layout = QVBoxLayout()
         info_layout.addWidget(self._name_label)
+        info_layout.addWidget(self._iteration_label)
         info_layout.addWidget(self._uuid_label)
         info_layout.addStretch()
 
@@ -461,6 +463,7 @@ class _EnsembleWidget(QWidget):
 
         self._name_label.setText(f"Name: {ensemble.name!s}")
         self._uuid_label.setText(f"UUID: {ensemble.id!s}")
+        self._iteration_label.setText(f"Iteration: {ensemble.iteration:d}")
 
         current_index = self._tab_widget.currentIndex()
         if current_index > 0:
