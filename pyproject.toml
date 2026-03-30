@@ -308,3 +308,15 @@ PYQT6 = true
 
 [tool.uv]
 fork-strategy = "requires-python"
+exclude-newer = "7 days"
+
+[tool.uv.exclude-newer-package]
+cryptography = "2026-03-26T00:00:00Z" # Exception from 7 days cooldown due to security update 68580eedf552c8bb83e0a8a551acdf1f7e0ac3eb
+iterative_ensemble_smoother = false # Developed by Equinor
+oil_reservoir_synthesizer = false # Developed by Equinor
+resdata = false # Developed by Equinor
+resfo = false # Developed by Equinor
+resfo-utilities = false # Developed by Equinor
+ropt = false # Developed in cooperation with Equinor
+ropt-dakota = false # Developed in cooperation with Equinor
+xtgeo = false # Developed by Equinor

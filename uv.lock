@@ -16,6 +16,21 @@ resolution-markers = [
     "python_full_version < '3.12' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 
+[options]
+exclude-newer = "2026-03-23T13:36:15.514331Z"
+exclude-newer-span = "P7D"
+
+[options.exclude-newer-package]
+iterative-ensemble-smoother = false
+resfo-utilities = false
+oil-reservoir-synthesizer = false
+ropt-dakota = false
+xtgeo = false
+cryptography = "2026-03-26T00:00:00Z"
+ropt = false
+resfo = false
+resdata = false
+
 [[package]]
 name = "accessible-pygments"
 version = "0.0.5"
