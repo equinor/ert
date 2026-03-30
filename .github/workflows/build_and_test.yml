@@ -50,7 +50,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test-type: [ 'performance-and-unit-tests', 'gui-tests', 'cli-tests' ]
+        test-type: [ 'performance-and-unit-tests', 'gui-tests', 'cli-tests', 'fuzz' ]
         python-version: [ '3.11', '3.12', '3.13', '3.14' ]
         os: [ ubuntu-latest ]
     uses: ./.github/workflows/test_ert.yml

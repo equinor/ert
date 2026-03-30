@@ -33,6 +33,9 @@ ert-rapid-tests:
 continuous_tests:
     fswatch -r -o --event Created --event Updated --event Removed --event Renamed src/ tests/ --exclude="\.egg-info|__pycache__" | while IFS= read -r _; do nice just ert-rapid-tests; done
 
+fuzz:
+    OMP_NUM_THREADS=1 pytest {{pytest_args}} -m "fuzzing" --hypothesis-profile=fuzz tests/ert
+
 ert-gui-tests:
     pytest {{pytest_args}} --mpl tests/ert/ui_tests/gui
 

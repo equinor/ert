@@ -133,6 +133,22 @@ are subdirectories.
 
 Tests that runtime and memory performance does not degrade.
 
+
+## Coverage for different test categories
+
+Our github actions collect test coverage per test category (See the flags tab on codecov).
+You also get a comment to the PR describing the coverage. Of particular interest is the
+'performance-and-unit-tests' and 'fuzz' categories.
+
+The 'unit-test' part of 'performance-and-unit-tests' coverage is important as
+it shows (approximately) what code is covered by tests that are exceptionally
+reliable and fast. These tests are used frequently during development and should
+cover as much code as is practical. 100% coverage is preferred.
+
+The 'fuzz' coverage shows what code is covered by fuzzing. Any code critical for
+data integrity should be covered by fuzzing. This includes e.g. `ert.storage`, `ert.field_utils`,
+`ert.config._read_summary`.
+
 ## Type hints
 
 mypy is used to check type hints of all code in src/. This is to discover

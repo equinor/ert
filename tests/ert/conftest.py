@@ -86,6 +86,14 @@ settings.register_profile(
     max_examples=1,
 )
 
+settings.register_profile(
+    "fuzz",
+    deadline=None,
+    suppress_health_check=[HealthCheck.too_slow],
+    print_blob=True,
+    max_examples=300,
+)
+
 
 @pytest.fixture(scope="session", name="source_root")
 def fixture_source_root():

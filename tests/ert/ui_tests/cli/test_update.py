@@ -127,6 +127,7 @@ POLY_EVAL = "EXECUTABLE poly_eval.py"
     distributions=st.lists(distributions, min_size=1, max_size=10),
     data=st.data(),
 )
+@pytest.mark.fuzzing
 def test_update_lowers_generalized_variance_or_deactivates_observations(
     tmp_path_factory: pytest.TempPathFactory,
     num_realizations: int,
