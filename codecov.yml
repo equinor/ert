@@ -5,3 +5,4 @@ comment:
     # The code coverage is made up of several test runs so only after all coverage
     # reports have been uploaded will the comparison be sane
     after_n_builds: 9
+    layout:  "diff, flags, files"

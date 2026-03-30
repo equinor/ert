@@ -426,6 +426,7 @@ class SurfaceParameter(Parameter):
     ),
 )
 @pytest.mark.skip_mac_ci  # test is slow
+@pytest.mark.fuzzing
 def test_that_parameters_are_placed_in_the_runpath_as_expected(
     io_source: IoProvider,
     grid_format: Literal["grid", "egrid"],

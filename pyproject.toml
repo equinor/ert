@@ -178,6 +178,7 @@ markers = [
     "unreliable",
     "high_utilization",
     "skip_mac_ci",
+    "fuzzing"
 ]
 log_cli = "false"
 asyncio_mode = "auto"
