@@ -64,7 +64,7 @@ def observations() -> Callable[[bool], str]:
                 """
                 GENERAL_OBSERVATION POLY_OBS {
                     DATA       = POLY_RES;
-                    INDEX_LIST = 0,2;
+                    INDEX_LIST = 0,2,4,6,8,10;
                     OBS_FILE   = obs_data.txt;
                 };
                 """
@@ -73,7 +73,7 @@ def observations() -> Callable[[bool], str]:
             """
             GENERAL_OBSERVATION POLY_OBS {
                 DATA       = POLY_RES;
-                INDEX_LIST = 0;
+                INDEX_LIST = 0,2,4,6,8;
                 OBS_FILE   = obs_data.txt;
             };
             """
@@ -87,6 +87,10 @@ def observations_data() -> str:
     return dedent(
         """
         2.0 0.5
+        9.0 1.5
+        15.0 3.0
+        30.0 6.0
+        50.0 12.0
         """
     )
 
@@ -166,10 +170,10 @@ def test_that_running_esmda_from_restart_uses_previous_observations_and_paramete
 
     assert_series_equal(
         experiment.observations["gen_data"]["observations"],
-        Series("observations", [2.0], dtype=Float32),
+        Series("observations", [2.0, 9.0, 15.0, 30.0, 50.0], dtype=Float32),
     )
 
     assert_series_equal(
         experiment.observations["gen_data"]["std"],
-        Series("std", [0.5], dtype=Float32),
+        Series("std", [0.5, 1.5, 3.0, 6.0, 12.0], dtype=Float32),
     )
