@@ -209,8 +209,6 @@ def test_tracking(
             snapshots[event.iteration] = event.snapshot
         if isinstance(event, SnapshotUpdateEvent) and event.snapshot is not None:
             snapshots[event.iteration].merge_snapshot(event.snapshot)
-        if isinstance(event, EndEvent):
-            pass
 
     assert len(snapshots) == num_iters
     for snapshot in snapshots.values():
@@ -298,8 +296,6 @@ def test_setting_env_context_during_run(
             for key in expected:
                 assert key in environment
             assert environment.get("_ERT_SIMULATION_MODE") == mode
-        if isinstance(event, EndEvent):
-            pass
 
     # Check environment is clean after the model run ends.
     assert not model._context_env
