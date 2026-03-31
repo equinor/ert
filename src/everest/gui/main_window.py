@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.experiments import RunDialog
-from ert.gui.experiments.experiment_client import EverestClient
+from ert.gui.experiments.experiment_client import ExperimentClient
 from ert.plugins import ErtPluginManager
 from ert.services import create_ertserver_client
 from everest.config import ServerConfig
@@ -57,7 +57,7 @@ class EverestMainWindow(QMainWindow):
         ssl_context.load_verify_locations(cafile=cert)
         username, password = auth
 
-        client = EverestClient(
+        client = ExperimentClient(
             url=url,
             cert_file=cert,
             username=username,
