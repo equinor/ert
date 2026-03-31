@@ -7,7 +7,6 @@ import queue
 import time
 import traceback
 import uuid
-import warnings
 from base64 import b64decode
 from queue import SimpleQueue
 from typing import Annotated
@@ -28,7 +27,7 @@ from starlette.responses import PlainTextResponse, Response
 from starlette.websockets import WebSocket
 
 from ert.base_model_context import use_runtime_plugins
-from ert.config import ConfigWarning, QueueSystem
+from ert.config import QueueSystem
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.ensemble_evaluator.event import FullSnapshotEvent, SnapshotUpdateEvent
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
@@ -186,18 +185,19 @@ def stop(
 @router.post("/" + EverEndpoints.start_experiment)
 async def start_experiment(
     request: Request,
+    config: EverestConfig,
     background_tasks: BackgroundTasks,
     credentials: Annotated[HTTPBasicCredentials, Depends(security)],
 ) -> Response:
     _log(request)
     _check_user(credentials)
     if shared_data.status.status == ExperimentState.pending:
-        request_data = await request.json()
-        # The output of warnings is the task of the user interface, not
-        # of everserver. Therefore we suppress them here:
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=ConfigWarning)
-            config = EverestConfig.with_plugins(request_data)
+        missing_jobs = config.validate_forward_model_job_name_installed()
+        if missing_jobs:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={"missing_jobs": missing_jobs},
+            )
         runner = ExperimentRunner(config)
         try:
             background_tasks.add_task(runner.run)
