@@ -12,7 +12,7 @@ import yaml
 from fastapi import FastAPI
 from starlette.responses import Response
 
-from ert.gui.experiments.experiment_client import EverestClient
+from ert.gui.experiments.experiment_client import ExperimentClient
 from ert.run_models.event import EverestBatchResultEvent, EverestStatusEvent
 from ert.services import create_ertserver_client
 from ert.shared import find_available_socket
@@ -24,7 +24,7 @@ from tests.ert.utils import wait_until
 
 
 @pytest.fixture
-def client_server_mock() -> tuple[FastAPI, threading.Thread, EverestClient]:
+def client_server_mock() -> tuple[FastAPI, threading.Thread, ExperimentClient]:
     server_app = FastAPI()
     host = "127.0.0.1"
     port = find_available_socket(host, range(5000, 5800)).getsockname()[1]
@@ -43,7 +43,7 @@ def client_server_mock() -> tuple[FastAPI, threading.Thread, EverestClient]:
         daemon=True,
     )
 
-    everest_client = EverestClient(
+    everest_client = ExperimentClient(
         url=server_url,
         cert_file="N/A",
         username="",
@@ -88,7 +88,7 @@ def client_server_mock() -> tuple[FastAPI, threading.Thread, EverestClient]:
 @pytest.mark.slow
 @pytest.mark.flaky(rerun=2)
 def test_that_stop_invokes_correct_endpoint(
-    caplog, client_server_mock: tuple[FastAPI, threading.Thread, EverestClient]
+    caplog, client_server_mock: tuple[FastAPI, threading.Thread, ExperimentClient]
 ):
     server_app, server_thread, client, wait_until_alive = client_server_mock
 
@@ -108,7 +108,7 @@ def test_that_stop_invokes_correct_endpoint(
 
 @pytest.mark.slow
 def test_that_stop_errors_on_non_ok_httpcode(
-    caplog, client_server_mock: tuple[FastAPI, threading.Thread, EverestClient]
+    caplog, client_server_mock: tuple[FastAPI, threading.Thread, ExperimentClient]
 ):
     server_app, server_thread, client, wait_until_alive = client_server_mock
 
@@ -130,7 +130,7 @@ def test_that_stop_errors_on_non_ok_httpcode(
 
 
 def test_that_stop_errors_on_server_down(
-    caplog, client_server_mock: tuple[FastAPI, threading.Thread, EverestClient]
+    caplog, client_server_mock: tuple[FastAPI, threading.Thread, ExperimentClient]
 ):
     _, _, client, _ = client_server_mock
 
@@ -145,7 +145,7 @@ def test_that_stop_errors_on_server_down(
 
 @pytest.mark.slow
 def test_that_stop_errors_on_server_up_but_endpoint_down(
-    caplog, client_server_mock: tuple[FastAPI, threading.Thread, EverestClient]
+    caplog, client_server_mock: tuple[FastAPI, threading.Thread, ExperimentClient]
 ):
     _, server_thread, client, wait_until_alive = client_server_mock
 
@@ -211,7 +211,7 @@ def test_that_multiple_everest_clients_can_connect_to_server(
     client_event_queues = []
     monitor_threads = []
     for _ in range(5):
-        client = EverestClient(
+        client = ExperimentClient(
             url=url,
             cert_file=cert,
             username=username,
