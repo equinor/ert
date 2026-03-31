@@ -12,11 +12,11 @@ from PyQt6.QtWidgets import (
 
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.experiments import RunDialog
+from ert.gui.experiments.experiment_client import EverestClient
 from ert.plugins import ErtPluginManager
 from ert.services import create_ertserver_client
 from everest.config import ServerConfig
 from everest.detached import wait_for_server
-from everest.gui.everest_client import EverestClient
 
 
 class EverestMainWindow(QMainWindow):
