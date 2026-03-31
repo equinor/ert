@@ -24,7 +24,7 @@ from everest.strings import EverEndpoints
 logger = logging.getLogger(__name__)
 
 
-class EverestClient:
+class ExperimentClient:
     def __init__(
         self,
         url: str,
