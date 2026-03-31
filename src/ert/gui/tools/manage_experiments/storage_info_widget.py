@@ -278,6 +278,7 @@ class _EnsembleWidget(QWidget):
                 reals_with_responses,
             )
             if reals_with_responses
+            and response_key in self._ensemble.experiment.response_key_to_response_type
             else None
         )
 
