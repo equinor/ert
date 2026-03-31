@@ -12,13 +12,13 @@ import yaml
 from fastapi import FastAPI
 from starlette.responses import Response
 
+from ert.gui.experiments.experiment_client import EverestClient
 from ert.run_models.event import EverestBatchResultEvent, EverestStatusEvent
 from ert.services import create_ertserver_client
 from ert.shared import find_available_socket
 from everest.bin.everest_script import everest_entry
 from everest.config import EverestConfig, ServerConfig
 from everest.detached import server_is_running
-from everest.gui.everest_client import EverestClient
 from everest.strings import EverEndpoints
 from tests.ert.utils import wait_until
 
