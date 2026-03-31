@@ -18,12 +18,14 @@ from ert.storage.local_experiment import ExperimentState
 from ert.trace import tracer
 from ert.utils import makedirs_if_needed
 from everest.config import ServerConfig
+from everest.detached import get_runs
 from everest.strings import (
     DEFAULT_LOGGING_FORMAT,
     EVEREST,
     EVERSERVER,
     EXPERIMENT_SERVER,
     OPTIMIZATION_LOG_DIR,
+    EverEndpoints,
 )
 from everest.util import version_info
 
@@ -164,7 +166,6 @@ def main() -> None:
             logger.info(f"Output directory: {output_dir}")
             # Starting the server
             server_path = os.path.abspath(ServerConfig.get_session_dir(output_dir))
-            status = ""
             with ErtServerController.init_service(
                 timeout=240, project=Path(server_path), logging_config=log_file.name
             ) as server:
@@ -172,14 +173,22 @@ def main() -> None:
                 with create_ertserver_client(Path(server_path)) as client:
                     done = False
                     while not done:
-                        response = client.get(
-                            "/experiment_server/status", auth=server.fetch_auth()
+                        run_ids = get_runs(
+                            ServerConfig.get_server_context_from_conn_info(
+                                client.conn_info
+                            )
                         )
-                        status = ExperimentStatus(**response.json())
-                        done = status.status not in {
-                            ExperimentState.pending,
-                            ExperimentState.running,
-                        }
+                        active = [
+                            ExperimentStatus(
+                                **client.get(
+                                    f"/experiment_server/{EverEndpoints.status}/{run_id}",
+                                    auth=server.fetch_auth(),
+                                ).json()
+                            ).status
+                            in {ExperimentState.pending, ExperimentState.running}
+                            for run_id in run_ids
+                        ]
+                        done = run_ids and not any(active)
                         time.sleep(0.5)
         except ErtServerExit:
             # Server exit, happens on normal shutdown and keyboard interrupt

@@ -27,12 +27,14 @@ logger = logging.getLogger(__name__)
 class ExperimentClient:
     def __init__(
         self,
+        run_id: str,
         url: str,
         cert_file: str,
         username: str,
         password: str,
         ssl_context: ssl.SSLContext,
     ) -> None:
+        self._run_id = run_id
         self._url = url
         self._cert = cert_file
         self._username = username
@@ -42,7 +44,7 @@ class ExperimentClient:
         self._is_alive = False
         self._start_time: int | None = None
 
-    def _http_get(self, endpoint: EverEndpoints) -> requests.Response:
+    def _http_get(self, endpoint: str) -> requests.Response:
         return requests.get(
             f"{self._url}/{endpoint}",
             verify=self._cert,
@@ -50,7 +52,7 @@ class ExperimentClient:
             proxies={"http": None, "https": None},  # type: ignore
         )
 
-    def _http_post(self, endpoint: EverEndpoints) -> requests.Response:
+    def _http_post(self, endpoint: str) -> requests.Response:
         return requests.post(
             f"{self._url}/{endpoint}",
             verify=self._cert,
@@ -60,7 +62,7 @@ class ExperimentClient:
 
     @property
     def config(self) -> dict[str, str]:
-        return self._http_get(EverEndpoints.config_path).json()
+        return self._http_get(f"{EverEndpoints.config_path}/{self._run_id}").json()
 
     @property
     def credentials(self) -> str:
@@ -77,7 +79,8 @@ class ExperimentClient:
         def passthrough_ws_events() -> None:
             try:
                 with connect(
-                    self._url.replace("https://", "wss://") + "/events",
+                    self._url.replace("https://", "wss://")
+                    + f"/{EverEndpoints.events}/{self._run_id}",
                     ssl=self._ssl_context,
                     open_timeout=open_timeout,
                     additional_headers={"Authorization": f"Basic {self.credentials}"},

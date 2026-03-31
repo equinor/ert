@@ -97,11 +97,32 @@ def stop_server(
     return False
 
 
+def get_runs(
+    server_context: tuple[str, str, tuple[str, str]],
+    retries: int = 5,
+) -> list[str]:
+    for retry in range(retries):
+        try:
+            url, cert, auth = server_context
+            response = requests.get(
+                f"{url}/{EverEndpoints.runs}",
+                verify=cert,
+                auth=auth,
+                proxies=PROXY,
+            )
+            response.raise_for_status()
+            return response.json()["run_ids"]
+        except Exception:
+            logger.debug(traceback.format_exc())
+            time.sleep(retry)
+    raise RuntimeError("Failed to get run_ids")
+
+
 def start_experiment(
     server_context: tuple[str, str, tuple[str, str]],
     config: EverestConfig,
     retries: int = 5,
-) -> None:
+) -> str:
     for retry in range(retries):
         try:
             url, cert, auth = server_context
@@ -114,11 +135,10 @@ def start_experiment(
                 json=config.to_dict(),
             )
             response.raise_for_status()
+            return response.json()["run_id"]
         except Exception:
             logger.debug(traceback.format_exc())
             time.sleep(retry)
-        else:
-            return
     raise RuntimeError("Failed to start experiment")
 
 
@@ -211,6 +231,7 @@ def get_opt_status_from_batch_result_event(
 def start_monitor(
     server_context: tuple[str, str, tuple[str, str]],
     callback: Callable[..., None],
+    run_id: str,
     polling_interval: float = 0.1,
 ) -> None:
     """
@@ -226,7 +247,7 @@ def start_monitor(
 
     try:
         with connect(
-            url.replace("https://", "wss://") + "/events",
+            url.replace("https://", "wss://") + f"/{EverEndpoints.events}/{run_id}",
             ssl=ssl_context,
             open_timeout=30,
             additional_headers={"Authorization": f"Basic {credentials}"},

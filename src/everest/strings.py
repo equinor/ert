@@ -31,3 +31,6 @@ class EverEndpoints(StrEnum):
     start_experiment = "start_experiment"
     config_path = "config_path"
     start_time = "start_time_unix"
+    runs = "runs"
+    status = "status"
+    events = "events"
