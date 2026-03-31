@@ -4,16 +4,16 @@ from base64 import b64encode
 from dataclasses import dataclass
 from pathlib import Path
 from shutil import which
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
-import ert
 from ert.config import ConfigWarning
 from ert.dark_storage.app import app
+from ert.dark_storage.endpoints.experiment_server import ExperimentRunnerState, _runs
 from ert.ensemble_evaluator import EndEvent
 from ert.scheduler.event import FinishedEvent
 from ert.services import create_ertserver_client
@@ -35,27 +35,23 @@ from everest.strings import (
 
 @pytest.fixture
 def setup_client(monkeypatch):
+    original = dict(_runs)
+
     def func(events=None):
         events = [EndEvent(failed=False, msg="Complete")] if events is None else events
-        subscribers = {}
-        server_config_mock = MagicMock()
-        monkeypatch.setattr(
-            ert.dark_storage.endpoints.experiment_server.shared_data, "events", events
-        )
-        monkeypatch.setattr(
-            ert.dark_storage.endpoints.experiment_server.shared_data,
-            "subscribers",
-            subscribers,
-        )
 
-        def getitem(*_):
-            return "password"
+        _runs.clear()
+        run_id = "test-run-id"
+        state = ExperimentRunnerState()
+        state.events = events
+        _runs[run_id] = state
 
         monkeypatch.setenv("ERT_STORAGE_TOKEN", "password")
-        server_config_mock.__getitem__.side_effect = getitem
-        return TestClient(app), subscribers
+        return TestClient(app), state.subscribers, run_id
 
-    return func
+    yield func
+    _runs.clear()
+    _runs.update(original)
 
 
 async def wait_for_server_to_complete(config):
@@ -236,9 +232,9 @@ async def test_status_contains_max_runtime_failure(change_to_tmpdir, min_config)
 
 
 def test_websocket_no_authentication(setup_client):
-    client, _ = setup_client()
+    client, _, run_id = setup_client()
     with (
-        client.websocket_connect("/experiment_server/events") as websocket,
+        client.websocket_connect(f"/experiment_server/events/{run_id}") as websocket,
         pytest.raises(WebSocketDisconnect) as exception,
     ):
         websocket.receive_json()
@@ -246,11 +242,11 @@ def test_websocket_no_authentication(setup_client):
 
 
 def test_websocket_wrong_password(setup_client):
-    client, _ = setup_client()
+    client, _, run_id = setup_client()
     credentials = b64encode(b"username:wrong_password").decode()
     with (
         client.websocket_connect(
-            "/experiment_server/events",
+            f"/experiment_server/events/{run_id}",
             headers={"Authorization": f"Basic {credentials}"},
         ) as websocket,
         pytest.raises(WebSocketDisconnect) as exception,
@@ -261,15 +257,17 @@ def test_websocket_wrong_password(setup_client):
 
 @pytest.mark.flaky(rerun=3)
 def test_websocket_multiple_connections(setup_client):
-    client, subscribers = setup_client()
+    client, subscribers, run_id = setup_client()
     credentials = b64encode(b"username:password").decode()
     with client.websocket_connect(
-        "/experiment_server/events", headers={"Authorization": f"Basic {credentials}"}
+        f"/experiment_server/events/{run_id}",
+        headers={"Authorization": f"Basic {credentials}"},
     ) as websocket:
         event = websocket.receive_json()
         websocket.close()
     with client.websocket_connect(
-        "/experiment_server/events", headers={"Authorization": f"Basic {credentials}"}
+        f"/experiment_server/events/{run_id}",
+        headers={"Authorization": f"Basic {credentials}"},
     ) as websocket:
         event_2 = websocket.receive_json()
     assert len(subscribers) == 2
@@ -277,15 +275,16 @@ def test_websocket_multiple_connections(setup_client):
 
 
 def test_websocket_multiple_connections_one_fails(setup_client):
-    client, subscribers = setup_client()
+    client, subscribers, run_id = setup_client()
     credentials = b64encode(b"username:password").decode()
     with (
-        client.websocket_connect("/experiment_server/events") as websocket,
+        client.websocket_connect(f"/experiment_server/events/{run_id}") as websocket,
         pytest.raises(WebSocketDisconnect),
     ):
         websocket.receive_json()
     with client.websocket_connect(
-        "/experiment_server/events", headers={"Authorization": f"Basic {credentials}"}
+        f"/experiment_server/events/{run_id}",
+        headers={"Authorization": f"Basic {credentials}"},
     ) as websocket:
         event = websocket.receive_json()
     assert len(subscribers) == 1
@@ -302,25 +301,68 @@ def test_websocket_multiple_events_in_queue(setup_client):
         TestEvent("event_2"),
         EndEvent(failed=False, msg="Done"),
     ]
-    client, _ = setup_client(expected)
+    client, _, run_id = setup_client(expected)
     credentials = b64encode(b"username:password").decode()
     event_msgs = []
     with client.websocket_connect(
-        "/experiment_server/events", headers={"Authorization": f"Basic {credentials}"}
+        f"/experiment_server/events/{run_id}",
+        headers={"Authorization": f"Basic {credentials}"},
     ) as websocket:
         event_msgs.extend(websocket.receive_json() for _ in expected)
     assert event_msgs == [jsonable_encoder(e) for e in expected]
 
 
+def test_that_multiple_started_experiments_each_receive_distinct_run_ids(
+    monkeypatch,
+):
+    monkeypatch.setenv("ERT_STORAGE_TOKEN", "password")
+    original = dict(_runs)
+    _runs.clear()
+    try:
+        credentials = b64encode(b"username:password").decode()
+        auth_headers = {"Authorization": f"Basic {credentials}"}
+        client = TestClient(app)
+        mock_runner = MagicMock()
+        mock_runner.run = AsyncMock()
+        with (
+            patch.object(EverestConfig, "with_plugins", return_value=MagicMock()),
+            patch(
+                "ert.dark_storage.endpoints.experiment_server.ExperimentRunner",
+                return_value=mock_runner,
+            ),
+        ):
+            r1 = client.post(
+                "/experiment_server/start_experiment",
+                json={"type": "everest_config"},
+                headers=auth_headers,
+            )
+            r2 = client.post(
+                "/experiment_server/start_experiment",
+                json={"type": "everest_config"},
+                headers=auth_headers,
+            )
+        assert r1.status_code == r2.status_code == 200
+        run_id_1 = r1.json()["run_id"]
+        run_id_2 = r2.json()["run_id"]
+        assert run_id_1 != run_id_2
+        runs_response = client.get("/experiment_server/runs", headers=auth_headers)
+        assert runs_response.status_code == 200
+        assert set(runs_response.json()["run_ids"]) >= {run_id_1, run_id_2}
+    finally:
+        _runs.clear()
+        _runs.update(original)
+
+
 async def test_websocket_no_events_on_connect(setup_client):
     events = []
-    client, subs = setup_client(events)
+    client, subs, run_id = setup_client(events)
     credentials = b64encode(b"username:password").decode()
     result = []
     expected_result = EndEvent(failed=False, msg="Test message")
 
     with client.websocket_connect(
-        "experiment_server/events", headers={"Authorization": f"Basic {credentials}"}
+        f"/experiment_server/events/{run_id}",
+        headers={"Authorization": f"Basic {credentials}"},
     ) as websocket:
 
         def receive_event():

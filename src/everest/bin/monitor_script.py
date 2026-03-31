@@ -10,6 +10,7 @@ from textwrap import dedent
 from ert.services import create_ertserver_client
 from ert.storage import ErtStorageException, ExperimentState
 from everest.config import EverestConfig, ServerConfig
+from everest.detached.client import get_runs
 from everest.everest_storage import EverestStorage
 
 from .utils import (
@@ -88,7 +89,8 @@ def monitor_everest(options: argparse.Namespace) -> None:
             server_context = ServerConfig.get_server_context_from_conn_info(
                 client.conn_info
             )
-            run_detached_monitor(server_context=server_context)
+            run_id = get_runs(server_context)[-1]
+            run_detached_monitor(server_context=server_context, run_id=run_id)
 
             try:
                 experiment_status = get_experiment_status(str(config.storage_dir))
