@@ -984,6 +984,7 @@ def test_that_file_dialog_close_when_run_dialog_hidden(qtbot: QtBot, run_dialog)
             assert not file_dialog.isVisible()
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize(
     ("events"),
     [
