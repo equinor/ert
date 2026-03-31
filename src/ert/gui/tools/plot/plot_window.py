@@ -416,7 +416,7 @@ class PlotWindow(QMainWindow):
 
                 for ensemble in selected_ensembles:
                     try:
-                        std_dev_images[ensemble.name] = self._api.std_dev_for_parameter(
+                        std_dev_images[ensemble.id] = self._api.std_dev_for_parameter(
                             key, ensemble.id, layer
                         )
                     except BaseException as e:

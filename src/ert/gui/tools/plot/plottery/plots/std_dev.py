@@ -46,7 +46,7 @@ class StdDevPlot:
             for i, ensemble in enumerate(reversed(ensembles), start=1):
                 ax_heat = figure.add_subplot(gridspec[0, i - 1])
                 ax_box = figure.add_subplot(gridspec[1, i - 1])
-                data = std_dev_data[ensemble.name]
+                data = std_dev_data[ensemble.id]
                 if data.size == 0:
                     ax_heat.set_axis_off()
                     ax_box.set_axis_off()
