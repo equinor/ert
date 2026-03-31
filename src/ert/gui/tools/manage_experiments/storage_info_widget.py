@@ -244,9 +244,13 @@ class _EnsembleWidget(QWidget):
 
         obs_for_type = observations_dict[response_type]
 
-        response_config = self._ensemble.experiment.response_configuration[
-            response_type
-        ]
+        configs = (
+            self._ensemble.experiment.response_configuration
+            | self._ensemble.experiment.derived_response_configuration
+        )
+        if response_type not in configs:
+            return
+        response_config = configs[response_type]
         x_axis_col = response_config.match_key[-1]
 
         def _filter_on_observation_label(df: pl.DataFrame) -> pl.DataFrame:
@@ -396,7 +400,12 @@ class _EnsembleWidget(QWidget):
                     obs_ds = obs_ds_for_type.filter(
                         pl.col("observation_key").eq(obs_key)
                     )
-                    response_config = exp.response_configuration[response_type]
+                    configs = (
+                        exp.response_configuration | exp.derived_response_configuration
+                    )
+                    if response_type not in configs:
+                        continue
+                    response_config = configs[response_type]
                     column_to_display = response_config.match_key[-1]
                     for t in obs_ds[column_to_display].to_list():
                         QTreeWidgetItem(
