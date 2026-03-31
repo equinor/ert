@@ -624,8 +624,8 @@ parameter_configs = st.lists(
         st.builds(
             SurfaceConfig,
             name=words,
-            ncol=st.integers(min_value=1),
-            nrow=st.integers(min_value=1),
+            ncol=st.integers(min_value=1, max_value=100),
+            nrow=st.integers(min_value=1, max_value=100),
             xori=st.floats(allow_infinity=False, allow_nan=False),
             yori=st.floats(allow_infinity=False, allow_nan=False),
             xinc=st.floats(allow_infinity=False, allow_nan=False),
@@ -1441,12 +1441,12 @@ class StatefulStorageTest(RuleBasedStateMachine):
 
     @rule(
         model_ensemble=ensembles,
-        field_data=grid.flatmap(
-            lambda g: arrays(np.float32, shape=(g[1].ncol, g[1].nrow, g[1].nlay))
-        ),
+        data=st.data(),
+        grid=grid,
     )
-    def save_field(self, model_ensemble: Ensemble, field_data):
+    def save_parameters(self, model_ensemble: Ensemble, grid, data):
         storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
+        parameters = storage_ensemble.experiment.parameter_configuration
 
         # Ensembles w/ parent failure will never have parameters written to them
         assume(
@@ -1454,19 +1454,47 @@ class StatefulStorageTest(RuleBasedStateMachine):
             != RealizationStorageState.FAILURE_IN_PARENT
         )
 
-        parameters = model_ensemble.parameter_values.values()
-        fields = [p for p in parameters if isinstance(p, Field)]
-        for f in fields:
-            model_ensemble.parameter_values[f.name] = field_data
-            storage_ensemble.save_parameters(
-                xr.DataArray(
-                    field_data,
-                    name="values",
-                    dims=["x", "y", "z"],  # type: ignore
-                ).to_dataset(),
-                f.name,
-                1,
-            )
+        for p in parameters.values():
+            match p:
+                case Field():
+                    field_data = xr.DataArray(
+                        data.draw(
+                            arrays(
+                                np.float32,
+                                shape=(grid[1].ncol, grid[1].nrow, grid[1].nlay),
+                            )
+                        ),
+                        name="values",
+                        dims=["x", "y", "z"],  # type: ignore
+                    ).to_dataset()
+
+                    model_ensemble.parameter_values[p.name] = field_data
+                    storage_ensemble.save_parameters(
+                        field_data,
+                        p.name,
+                        self.iens_to_edit,
+                    )
+                case GenKwConfig():
+                    scalar_value = data.draw(
+                        st.floats(allow_infinity=False, allow_nan=False)
+                    )
+                    model_ensemble.parameter_values[p.name] = scalar_value
+                    storage_ensemble.save_parameters(
+                        pl.DataFrame(
+                            {p.name: [scalar_value]},
+                            schema={p.name: pl.Float64},
+                        ).with_columns(pl.Series("realization", [self.iens_to_edit]))
+                    )
+                case SurfaceConfig():
+                    surface_data = xr.DataArray(
+                        data.draw(arrays(np.float32, shape=(p.ncol, p.nrow))),
+                        name="values",
+                        dims=["x", "y"],  # type: ignore
+                    ).to_dataset()
+                    model_ensemble.parameter_values[p.name] = surface_data
+                    storage_ensemble.save_parameters(
+                        surface_data, p.name, self.iens_to_edit
+                    )
 
     @rule(
         model_ensemble=ensembles,
@@ -1514,19 +1542,33 @@ class StatefulStorageTest(RuleBasedStateMachine):
             self.iens_to_edit
         ]
 
-    @rule(
-        model_ensemble=ensembles,
-    )
+    @rule(model_ensemble=ensembles)
     def get_parameters(self, model_ensemble: Ensemble):
         storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
-        parameter_names = model_ensemble.parameter_values.keys()
+        parameters = storage_ensemble.experiment.parameter_configuration
 
-        for f in parameter_names:
-            parameter_data = storage_ensemble.load_parameters(f, self.iens_to_edit)
-            xr.testing.assert_equal(
-                model_ensemble.parameter_values[f],
-                parameter_data["values"],
-            )
+        for name, config in parameters.items():
+            if name in model_ensemble.parameter_values:
+                parameter_data = storage_ensemble.load_parameters(
+                    name,
+                    self.iens_to_edit,
+                )
+                match config:
+                    case Field():
+                        xr.testing.assert_equal(
+                            model_ensemble.parameter_values[name],
+                            parameter_data,
+                        )
+                    case GenKwConfig():
+                        assert (
+                            model_ensemble.parameter_values[name]
+                            == parameter_data[name][0]
+                        )
+                    case SurfaceConfig():
+                        xr.testing.assert_equal(
+                            model_ensemble.parameter_values[name],
+                            parameter_data,
+                        )
 
     @rule(model_ensemble=ensembles, data=st.data())
     def save_summary(self, model_ensemble: Ensemble, data):
