@@ -38,6 +38,7 @@ from ert.config import (
 from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.config._observations import BreakthroughObservation, GeneralObservation
 from ert.config.design_matrix import DESIGN_MATRIX_GROUP
+from ert.config.distribution import DISTRIBUTION_CLASSES
 from ert.dark_storage.common import ErtStoragePermissionError
 from ert.field_utils import ErtboxParameters
 from ert.sample_prior import sample_prior
@@ -619,7 +620,9 @@ parameter_configs = st.lists(
             name=words,
             group_name=st.text(),
             update=st.booleans(),
-            distribution=st.just({"name": "uniform", "min": 0, "max": 1}),
+            distribution=st.sampled_from(
+                [clas.lower() for clas in DISTRIBUTION_CLASSES]
+            ).map(lambda c: {"name": c}),
         ),
         st.builds(
             SurfaceConfig,
@@ -1542,16 +1545,15 @@ class StatefulStorageTest(RuleBasedStateMachine):
             self.iens_to_edit
         ]
 
-    @rule(model_ensemble=ensembles)
-    def get_parameters(self, model_ensemble: Ensemble):
+    @rule(model_ensemble=ensembles, transformed=st.booleans())
+    def get_parameters(self, model_ensemble: Ensemble, transformed: bool):
         storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
         parameters = storage_ensemble.experiment.parameter_configuration
 
         for name, config in parameters.items():
             if name in model_ensemble.parameter_values:
                 parameter_data = storage_ensemble.load_parameters(
-                    name,
-                    self.iens_to_edit,
+                    name, self.iens_to_edit, transformed=transformed
                 )
                 match config:
                     case Field():
@@ -1560,10 +1562,18 @@ class StatefulStorageTest(RuleBasedStateMachine):
                             parameter_data,
                         )
                     case GenKwConfig():
+                        parameter_value = model_ensemble.parameter_values[name]
+                        if transformed:
+                            parameter_value = config.transform_series(
+                                pl.Series(
+                                    [parameter_value],
+                                    dtype=pl.Float64,
+                                )
+                            )[0]
                         assert (
-                            model_ensemble.parameter_values[name]
-                            == parameter_data[name][0]
-                        )
+                            np.isnan(parameter_value)
+                            and np.isnan(parameter_data[name][0])
+                        ) or parameter_value == parameter_data[name][0]
                     case SurfaceConfig():
                         xr.testing.assert_equal(
                             model_ensemble.parameter_values[name],
