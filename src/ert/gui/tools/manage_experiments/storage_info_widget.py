@@ -29,6 +29,8 @@ from PyQt6.QtWidgets import (
 )
 
 from ert import LibresFacade
+from ert.config.derived_response_config import DerivedResponseConfig
+from ert.config.response_config import ResponseConfig
 from ert.storage import Ensemble, Experiment, RealizationStorageState
 from ert.warnings import capture_specific_warning
 
@@ -121,6 +123,56 @@ class _ExperimentWidget(QWidget):
             html += f"<tr><td>{obs_name}</td></tr>"
         html += "</table>"
         self._observations_text_edit.setHtml(html)
+
+
+class _ObservationTreeWidgetItem(QTreeWidgetItem):
+    def __init__(
+        self,
+        parent: QTreeWidgetItem,
+        observation_key: str,
+        observation_data: dict[str, object],
+        response_config: ResponseConfig | DerivedResponseConfig,
+    ) -> None:
+        self.observation_key = observation_key
+        self.observation_data = observation_data
+        self.response_config = response_config
+        super().__init__(parent, [self.display_label, observation_key])
+
+    @property
+    def match_key_data(self) -> dict[str, object]:
+        return {
+            col: self.observation_data[col] for col in self.response_config.match_key
+        }
+
+    @property
+    def display_label(self) -> str:
+        return ", ".join(
+            self.response_config.display_column(val, col)
+            for col, val in self.match_key_data.items()
+        )
+
+    def __lt__(self, other: QTreeWidgetItem) -> bool:
+        assert isinstance(other, _ObservationTreeWidgetItem)
+        assert self.response_config.match_key == other.response_config.match_key, (
+            "Expecting items being compared to be of the same response type"
+        )
+
+        for val, other_val in zip(
+            self.match_key_data.values(),
+            other.match_key_data.values(),
+            strict=True,
+        ):
+            if isinstance(val, (int, float)) and isinstance(other_val, (int, float)):
+                if val != other_val:
+                    return val < other_val
+                continue
+
+            val_str = str(val)
+            other_val_str = str(other_val)
+            if val_str != other_val_str:
+                return val_str < other_val_str
+
+        return False
 
 
 class _EnsembleWidget(QWidget):
@@ -223,76 +275,26 @@ class _EnsembleWidget(QWidget):
     def _currentItemChanged(
         self, selected: QTreeWidgetItem, _: QTreeWidgetItem
     ) -> None:
-        if not selected:
+        if not selected or not isinstance(selected, _ObservationTreeWidgetItem):
             return
 
-        observation_key = selected.data(1, Qt.ItemDataRole.DisplayRole)
-        parent = selected.parent()
-
-        if not observation_key or not parent:
-            return
-
-        response_type = parent.data(0, Qt.ItemDataRole.UserRole)
-        observation_label = selected.data(0, Qt.ItemDataRole.DisplayRole)
         assert self._ensemble is not None
-        observations_dict = self._ensemble.experiment.observations
 
         self._figure.clear()
         ax = self._figure.add_subplot(111)
-        ax.set_title(observation_key)
+        ax.set_title(selected.observation_key)
         ax.grid(True)
 
-        obs_for_type = observations_dict[response_type]
-
-        configs = (
-            self._ensemble.experiment.response_configuration
-            | self._ensemble.experiment.derived_response_configuration
-        )
-        if response_type not in configs:
-            return
-        response_config = configs[response_type]
-        x_axis_col = response_config.match_key[-1]
-
-        def _filter_on_observation_label(df: pl.DataFrame) -> pl.DataFrame:
-            # We add a column with the display name of the x axis column
-            # to correctly compare it to the observation_label
-            # (which is also such a display name)
-            return df.with_columns(
-                df[x_axis_col]
-                .map_elements(
-                    lambda x: response_config.display_column(x, x_axis_col),
-                )
-                .cast(pl.String)
-                .alias("temp")
-            ).filter(pl.col("temp").eq(observation_label))[
-                [x for x in df.columns if x != "temp"]
-            ]
-
-        obs = obs_for_type.filter(pl.col("observation_key").eq(observation_key))
-        obs = _filter_on_observation_label(obs)
-
-        response_key = obs["response_key"].unique().to_list()[0]
-        reals_with_responses = tuple(
-            self._ensemble.get_realization_list_with_responses()
-        )
-
-        response_ds = (
-            self._ensemble.load_responses(
-                response_key,
-                reals_with_responses,
-            )
-            if reals_with_responses
-            and response_key in self._ensemble.experiment.response_key_to_response_type
-            else None
-        )
-
+        obs = pl.DataFrame(selected.observation_data)
         scaling_df = self._ensemble.load_observation_scaling_factors()
 
         def _try_render_scaled_obs() -> None:
             if scaling_df is None:
                 return None
 
-            index_col = pl.concat_str(response_config.match_key, separator=", ")
+            index_col = pl.concat_str(
+                selected.response_config.match_key, separator=", "
+            )
             joined = obs.with_columns(index_col.alias("_tmp_index")).join(
                 scaling_df,
                 how="left",
@@ -318,8 +320,32 @@ class _EnsembleWidget(QWidget):
                 color="black",
             )
 
+        def _filter_by_match_key(df: pl.DataFrame) -> pl.DataFrame:
+            """
+            Filter df to match 'selected' observation on match keys.
+            """
+            mask = pl.lit(True)
+            for col, val in selected.match_key_data.items():
+                mask &= pl.col(col).eq_missing(val)
+            return df.filter(mask)
+
+        response_key = str(selected.observation_data["response_key"])
+        reals_with_responses = tuple(
+            self._ensemble.get_realization_list_with_responses()
+        )
+
+        response_ds = (
+            self._ensemble.load_responses(
+                response_key,
+                reals_with_responses,
+            )
+            if reals_with_responses
+            and response_key in self._ensemble.experiment.response_key_to_response_type
+            else None
+        )
+
         if response_ds is not None and not response_ds.is_empty():
-            response_ds_for_label = _filter_on_observation_label(response_ds).rename(
+            response_ds_for_label = _filter_by_match_key(response_ds).rename(
                 {"values": "Responses"}
             )[["response_key", "Responses"]]
 
@@ -373,6 +399,13 @@ class _EnsembleWidget(QWidget):
             exp = self._ensemble.experiment
 
             for response_type, obs_ds_for_type in exp.observations.items():
+                configs = (
+                    exp.response_configuration | exp.derived_response_configuration
+                )
+                if response_type not in configs:
+                    continue
+                response_config = configs[response_type]
+
                 for obs_key, response_key in (
                     obs_ds_for_type.select(["observation_key", "response_key"])
                     .unique()
@@ -399,21 +432,11 @@ class _EnsembleWidget(QWidget):
 
                     obs_ds = obs_ds_for_type.filter(
                         pl.col("observation_key").eq(obs_key)
-                    )
-                    configs = (
-                        exp.response_configuration | exp.derived_response_configuration
-                    )
-                    if response_type not in configs:
-                        continue
-                    response_config = configs[response_type]
-                    column_to_display = response_config.match_key[-1]
-                    for t in obs_ds[column_to_display].to_list():
-                        QTreeWidgetItem(
-                            root,
-                            [
-                                response_config.display_column(t, column_to_display),
-                                obs_key,
-                            ],
+                    ).unique()
+
+                    for observation_data in obs_ds.to_dicts():
+                        _ObservationTreeWidgetItem(
+                            root, obs_key, observation_data, response_config
                         )
 
             self._observations_tree_widget.sortItems(0, Qt.SortOrder.AscendingOrder)
