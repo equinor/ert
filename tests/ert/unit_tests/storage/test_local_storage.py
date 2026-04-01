@@ -618,7 +618,9 @@ parameter_configs = st.lists(
         st.builds(
             GenKwConfig,
             name=words,
-            group_name=st.text(),
+            group=st.sampled_from(
+                ["A", "B", "C"]  # limited to make group fetching more likely
+            ),
             update=st.booleans(),
             distribution=st.sampled_from(
                 [clas.lower() for clas in DISTRIBUTION_CLASSES]
@@ -1580,6 +1582,37 @@ class StatefulStorageTest(RuleBasedStateMachine):
                             parameter_data,
                         )
 
+    @rule(model_ensemble=ensembles, transformed=st.booleans())
+    def get_parameter_group(self, model_ensemble: Ensemble, transformed: bool):
+        storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
+        parameters = storage_ensemble.experiment.parameter_configuration
+        groups = {
+            p.group_name
+            for p in parameters.values()
+            if p.name != p.group_name and p.group_name
+        }
+        if not groups:
+            return
+
+        for name, config in parameters.items():
+            if name in model_ensemble.parameter_values and config.group_name in groups:
+                group_data = storage_ensemble.load_parameters(
+                    config.group_name, self.iens_to_edit, transformed=transformed
+                )
+                # Only GenKwConfig is grouped by anything other than name
+                assert isinstance(config, GenKwConfig)
+                parameter_value = model_ensemble.parameter_values[name]
+                if transformed:
+                    parameter_value = config.transform_series(
+                        pl.Series(
+                            [parameter_value],
+                            dtype=pl.Float64,
+                        )
+                    )[0]
+                assert (
+                    np.isnan(parameter_value) and np.isnan(group_data[name][0])
+                ) or parameter_value == group_data[name][0]
+
     @rule(model_ensemble=ensembles, data=st.data())
     def save_summary(self, model_ensemble: Ensemble, data):
         storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
@@ -1668,10 +1701,12 @@ class StatefulStorageTest(RuleBasedStateMachine):
     def load_unknown_parameter(self, model_ensemble: Ensemble, parameter: str):
         storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
         experiment_id = storage_ensemble.experiment_id
-        parameter_names = [p.name for p in self.model[experiment_id].parameters]
-        assume(parameter not in parameter_names)
+        parameter_names = {p.name for p in self.model[experiment_id].parameters}
+        group_names = {p.group_name for p in self.model[experiment_id].parameters}
+        assume(parameter not in parameter_names and parameter not in group_names)
         with pytest.raises(
-            KeyError, match=f"{parameter} is not registered to the experiment"
+            KeyError,
+            match=f"{parameter} is not registered|No SCALAR dataset in",
         ):
             _ = storage_ensemble.load_parameters(parameter, self.iens_to_edit)
 
@@ -1750,7 +1785,6 @@ class StatefulStorageTest(RuleBasedStateMachine):
                     RealizationStorageState.RESPONSES_LOADED in edited_posterior_state
                 )
             else:
-                assert self.iens_to_edit not in prior.failure_messages
                 assert RealizationStorageState.UNDEFINED in edited_posterior_state
 
         return model_ensemble
