@@ -597,132 +597,6 @@ def test_get_unique_experiment_name_ignores_non_numeric_suffixes(tmp_path):
         assert storage.get_unique_experiment_name("es_mda") == "es_mda_0"
 
 
-def add_to_name(prefix: str):
-    def _inner(params):
-        for param in params:
-            param.name = prefix + param.name
-        return params
-
-    return _inner
-
-
-words = st.text(
-    min_size=1,
-    max_size=8,
-    alphabet=st.characters(min_codepoint=ord("A"), max_codepoint=ord("Z")),
-)
-
-
-parameter_configs = st.lists(
-    st.one_of(
-        st.builds(
-            GenKwConfig,
-            name=words,
-            group=st.sampled_from(
-                ["A", "B", "C"]  # limited to make group fetching more likely
-            ),
-            update=st.booleans(),
-            distribution=st.sampled_from(
-                [clas.lower() for clas in DISTRIBUTION_CLASSES]
-            ).map(lambda c: {"name": c}),
-        ),
-        st.builds(
-            SurfaceConfig,
-            name=words,
-            ncol=st.integers(min_value=1, max_value=100),
-            nrow=st.integers(min_value=1, max_value=100),
-            xori=st.floats(allow_infinity=False, allow_nan=False),
-            yori=st.floats(allow_infinity=False, allow_nan=False),
-            xinc=st.floats(allow_infinity=False, allow_nan=False),
-            yinc=st.floats(allow_infinity=False, allow_nan=False),
-            rotation=st.floats(allow_infinity=False, allow_nan=False),
-            yflip=st.sampled_from([-1, 1]),
-        ),
-    ),
-    unique_by=lambda x: x.name,
-    min_size=1,
-).map(add_to_name("parameter_"))
-
-summary_selectors = st.one_of(
-    summary_variables(), st.just("*"), summary_variables().map(lambda x: x + "*")
-)
-
-response_configs = st.lists(
-    st.one_of(
-        st.builds(
-            GenDataConfig,
-        ),
-        st.builds(
-            SummaryConfig,
-            input_files=st.lists(
-                st.text(
-                    alphabet=st.characters(
-                        min_codepoint=ord("A"), max_codepoint=ord("Z")
-                    )
-                ),
-                min_size=1,
-                max_size=1,
-            ),
-            keys=st.lists(summary_selectors, min_size=1),
-        ),
-    ),
-    unique_by=lambda x: x.type,
-    min_size=1,
-)
-
-ensemble_sizes = st.integers(min_value=1, max_value=1000)
-coordinates = st.integers(min_value=1, max_value=100)
-
-
-def vectors(elements, size):
-    return st.lists(elements, min_size=size, max_size=size)
-
-
-general_observations = st.builds(
-    GeneralObservation,
-    name=words,
-    data=words,
-    restart=st.integers(min_value=1, max_value=10000),
-    index=st.integers(min_value=1, max_value=10000),
-    value=st.floats(allow_nan=False, allow_infinity=False),
-    error=st.floats(allow_nan=False, allow_infinity=False, min_value=0.001),
-    east=st.floats(allow_nan=False, allow_infinity=False, min_value=0.001),
-    north=st.floats(allow_nan=False, allow_infinity=False, min_value=0.001),
-)
-
-observations = st.lists(
-    general_observations,
-    min_size=0,
-    max_size=10,
-)
-
-
-small_ints = st.integers(min_value=1, max_value=10)
-
-
-@st.composite
-def fields(draw, egrid, num_fields=small_ints) -> list[Field]:
-    grid_file, grid = egrid
-    nx = grid.ncol
-    ny = grid.nrow
-    nz = grid.nlay
-    return [
-        draw(
-            st.builds(
-                Field,
-                ertbox_params=st.builds(
-                    ErtboxParameters, nx=st.just(nx), ny=st.just(ny), nz=st.just(nz)
-                ),
-                name=st.just(f"Field{i}"),
-                file_format=st.just("roff_binary"),
-                grid_file=st.just(grid_file),
-                output_file=st.just(Path(f"field{i}.roff")),
-            )
-        )
-        for i in range(draw(num_fields))
-    ]
-
-
 @pytest.mark.usefixtures("use_tmpdir")
 @given(st.binary())
 def test_write_transaction(data):
@@ -1356,6 +1230,132 @@ def test_that_breakthrough_observations_and_responses_are_joined_in_endpoint(tmp
         assert obs_and_responses["observation_key"].to_list() == ["BRT_OP1"]
         assert obs_and_responses["index"].to_list() == ["0.2"]
         assert obs_and_responses["0"].to_list() == [-1.5]
+
+
+def add_to_name(prefix: str):
+    def _inner(params):
+        for param in params:
+            param.name = prefix + param.name
+        return params
+
+    return _inner
+
+
+words = st.text(
+    min_size=1,
+    max_size=8,
+    alphabet=st.characters(min_codepoint=ord("A"), max_codepoint=ord("Z")),
+)
+
+
+parameter_configs = st.lists(
+    st.one_of(
+        st.builds(
+            GenKwConfig,
+            name=words,
+            group=st.sampled_from(
+                ["A", "B", "C"]  # limited to make group fetching more likely
+            ),
+            update=st.booleans(),
+            distribution=st.sampled_from(
+                [clas.lower() for clas in DISTRIBUTION_CLASSES]
+            ).map(lambda c: {"name": c}),
+        ),
+        st.builds(
+            SurfaceConfig,
+            name=words,
+            ncol=st.integers(min_value=1, max_value=100),
+            nrow=st.integers(min_value=1, max_value=100),
+            xori=st.floats(allow_infinity=False, allow_nan=False),
+            yori=st.floats(allow_infinity=False, allow_nan=False),
+            xinc=st.floats(allow_infinity=False, allow_nan=False),
+            yinc=st.floats(allow_infinity=False, allow_nan=False),
+            rotation=st.floats(allow_infinity=False, allow_nan=False),
+            yflip=st.sampled_from([-1, 1]),
+        ),
+    ),
+    unique_by=lambda x: x.name,
+    min_size=1,
+).map(add_to_name("parameter_"))
+
+summary_selectors = st.one_of(
+    summary_variables(), st.just("*"), summary_variables().map(lambda x: x + "*")
+)
+
+response_configs = st.lists(
+    st.one_of(
+        st.builds(
+            GenDataConfig,
+        ),
+        st.builds(
+            SummaryConfig,
+            input_files=st.lists(
+                st.text(
+                    alphabet=st.characters(
+                        min_codepoint=ord("A"), max_codepoint=ord("Z")
+                    )
+                ),
+                min_size=1,
+                max_size=1,
+            ),
+            keys=st.lists(summary_selectors, min_size=1),
+        ),
+    ),
+    unique_by=lambda x: x.type,
+    min_size=1,
+)
+
+ensemble_sizes = st.integers(min_value=1, max_value=1000)
+coordinates = st.integers(min_value=1, max_value=100)
+
+
+def vectors(elements, size):
+    return st.lists(elements, min_size=size, max_size=size)
+
+
+general_observations = st.builds(
+    GeneralObservation,
+    name=words,
+    data=words,
+    restart=st.integers(min_value=1, max_value=10000),
+    index=st.integers(min_value=1, max_value=10000),
+    value=st.floats(allow_nan=False, allow_infinity=False),
+    error=st.floats(allow_nan=False, allow_infinity=False, min_value=0.001),
+    east=st.floats(allow_nan=False, allow_infinity=False, min_value=0.001),
+    north=st.floats(allow_nan=False, allow_infinity=False, min_value=0.001),
+)
+
+observations = st.lists(
+    general_observations,
+    min_size=0,
+    max_size=10,
+)
+
+
+small_ints = st.integers(min_value=1, max_value=10)
+
+
+@st.composite
+def fields(draw, egrid, num_fields=small_ints) -> list[Field]:
+    grid_file, grid = egrid
+    nx = grid.ncol
+    ny = grid.nrow
+    nz = grid.nlay
+    return [
+        draw(
+            st.builds(
+                Field,
+                ertbox_params=st.builds(
+                    ErtboxParameters, nx=st.just(nx), ny=st.just(ny), nz=st.just(nz)
+                ),
+                name=st.just(f"Field{i}"),
+                file_format=st.just("roff_binary"),
+                grid_file=st.just(grid_file),
+                output_file=st.just(Path(f"field{i}.roff")),
+            )
+        )
+        for i in range(draw(num_fields))
+    ]
 
 
 @dataclass
