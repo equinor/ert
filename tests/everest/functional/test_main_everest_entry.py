@@ -1,3 +1,6 @@
+import builtins
+import importlib
+import sys
 import threading
 import time
 from pathlib import Path
@@ -179,3 +182,41 @@ def test_that_keyboard_interrupt_stops_optimization_with_a_graceful_shutdown(
 
         status = get_experiment_status(config.storage_dir)
         assert status.status == ExperimentState.stopped
+
+
+@pytest.mark.xdist_group(name="starts_everest")
+def test_that_cli_commands_without_gui_do_not_require_gui_modules(monkeypatch):
+    main = setup_main_without_visualization_module(monkeypatch)
+
+    with capture_streams() as (out, _), pytest.raises(SystemExit):
+        main.start_everest(["everest", "--version"])
+
+    assert everest_version in out.getvalue()
+
+
+@pytest.mark.xdist_group(name="starts_everest")
+def test_that_cli_gui_commands_fail_without_visualization_module(monkeypatch):
+    main = setup_main_without_visualization_module(monkeypatch)
+
+    with pytest.raises(ImportError, match="No GUI dependencies"):
+        main.start_everest(["everest", "results"])
+
+
+def setup_main_without_visualization_module(monkeypatch):
+    # Remove module from cache to force reimport
+    sys.modules.pop("everest.bin.visualization_script", None)
+
+    original_import = builtins.__import__
+
+    def mock_import(import_name, *args, **kwargs):
+        if import_name == "everest.bin.visualization_script":
+            raise ImportError("No GUI dependencies")
+        return original_import(import_name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", mock_import)
+
+    # Reimport main
+    from everest.bin import main  # noqa: PLC0415
+
+    importlib.reload(main)
+    return main
