@@ -1243,7 +1243,7 @@ def add_to_name(prefix: str):
 
 words = st.text(
     min_size=1,
-    max_size=8,
+    max_size=4,
     alphabet=st.characters(min_codepoint=ord("A"), max_codepoint=ord("Z")),
 )
 
@@ -1253,9 +1253,7 @@ parameter_configs = st.lists(
         st.builds(
             GenKwConfig,
             name=words,
-            group=st.sampled_from(
-                ["A", "B", "C"]  # limited to make group fetching more likely
-            ),
+            group=words,
             update=st.booleans(),
             distribution=st.sampled_from(
                 [clas.lower() for clas in DISTRIBUTION_CLASSES]
@@ -1406,6 +1404,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
 
     experiments = Bundle("experiments")
     ensembles = Bundle("ensembles")
+    ensembles_with_parameters = Bundle("ensembles_with_parameters")
     field_list = Bundle("field_list")
     grid = Bundle("grid")
 
@@ -1484,6 +1483,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
         model_ensemble=ensembles,
         data=st.data(),
         grid=grid,
+        target=ensembles_with_parameters,
     )
     def save_parameters(self, model_ensemble: Ensemble, grid, data):
         storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
@@ -1536,6 +1536,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
                     storage_ensemble.save_parameters(
                         surface_data, p.name, self.iens_to_edit
                     )
+        return model_ensemble
 
     @rule(
         model_ensemble=ensembles,
@@ -1583,7 +1584,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
             self.iens_to_edit
         ]
 
-    @rule(model_ensemble=ensembles, transformed=st.booleans())
+    @rule(model_ensemble=ensembles_with_parameters, transformed=st.booleans())
     def get_parameters(self, model_ensemble: Ensemble, transformed: bool):
         storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
         parameters = storage_ensemble.experiment.parameter_configuration
@@ -1618,7 +1619,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
                             parameter_data,
                         )
 
-    @rule(model_ensemble=ensembles, transformed=st.booleans())
+    @rule(model_ensemble=ensembles_with_parameters, transformed=st.booleans())
     def get_parameter_group(self, model_ensemble: Ensemble, transformed: bool):
         storage_ensemble = self.storage.get_ensemble(model_ensemble.uuid)
         parameters = storage_ensemble.experiment.parameter_configuration
