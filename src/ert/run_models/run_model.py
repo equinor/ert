@@ -538,29 +538,74 @@ class RunModel(RunModelConfig, ABC):
 
     def calculate_current_progress(self) -> float:
         current_iter = max(list(self._iter_snapshot.keys()))
-        done_realizations = self.active_realizations.count(False)
         all_realizations = self._iter_snapshot[current_iter].reals
         current_progress = 0.0
 
+        filtered_active_realizations = [
+            active
+            for active, initial in zip(
+                self.active_realizations,
+                self._initial_realizations_mask,
+                strict=False,
+            )
+            if initial
+        ]
+
+        initial_active_indices = np.flatnonzero(self._initial_realizations_mask)
+        total_initial = len(initial_active_indices)
+        if total_initial == 0:
+            return current_progress
+
         if all_realizations:
-            for real in all_realizations.values():
-                if real["status"] in {
-                    REALIZATION_STATE_FINISHED,
-                    REALIZATION_STATE_FAILED,
-                }:
-                    done_realizations += 1
+            initial_id_str = {str(i) for i in initial_active_indices}
+            done_realizations = [
+                (real_id in initial_id_str)
+                and (
+                    real.get("status")
+                    in {REALIZATION_STATE_FINISHED, REALIZATION_STATE_FAILED}
+                )
+                for real_id, real in all_realizations.items()
+            ].count(True)
 
-            realization_progress = float(done_realizations) / len(
-                self.active_realizations
-            )
+            if self._total_iterations != 1:
+                start_iter = min(self._iter_snapshot)
 
-            current_it_offset = current_iter - min(list(self._iter_snapshot.keys()))
+                completed_realizations = 0
+                for it in range(start_iter, current_iter):
+                    iter_reals = self._iter_snapshot[it].reals
+                    if iter_reals:
+                        completed_realizations += [
+                            (real_id in initial_id_str) for real_id in iter_reals
+                        ].count(True)
+                    else:
+                        completed_realizations += total_initial
 
-            current_progress = (
-                (current_it_offset + realization_progress) / self._total_iterations
-                if self._total_iterations != 1
-                else realization_progress
-            )
+                current_iter_attempted = [
+                    (real_id in initial_id_str) for real_id in all_realizations
+                ].count(True)
+
+                current_iter_active = [
+                    (real_id in initial_id_str)
+                    and (real.get("status") != REALIZATION_STATE_FAILED)
+                    for real_id, real in all_realizations.items()
+                ].count(True)
+
+                remaining_iters = start_iter + self._total_iterations - current_iter - 1
+                total_realizations = (
+                    completed_realizations
+                    + current_iter_attempted
+                    + remaining_iters * current_iter_active
+                )
+
+                if total_realizations == 0:
+                    current_progress = 1.0
+                else:
+                    current_done = completed_realizations + done_realizations
+                    current_progress = float(current_done) / float(total_realizations)
+            else:
+                num_active = filtered_active_realizations.count(True)
+                if num_active > 0:
+                    current_progress = float(done_realizations) / float(num_active)
 
         return current_progress
 

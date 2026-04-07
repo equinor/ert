@@ -480,6 +480,7 @@ async def test_terminate_in_post_evaluation(evaluator, use_tmpdir):
         "start_iteration",
         "total_iterations",
         "expected_result",
+        "initial_active_mask",
     ),
     [
         pytest.param(
@@ -488,6 +489,7 @@ async def test_terminate_in_post_evaluation(evaluator, use_tmpdir):
             1,
             1,
             0.67,
+            None,
             id="progress_with_single_offset_iteration",
         ),
         pytest.param(
@@ -496,6 +498,7 @@ async def test_terminate_in_post_evaluation(evaluator, use_tmpdir):
             0,
             1,
             0.33,
+            None,
             id="progress_with_partial_completed",
         ),
         pytest.param(
@@ -504,6 +507,7 @@ async def test_terminate_in_post_evaluation(evaluator, use_tmpdir):
             0,
             1,
             0.0,
+            None,
             id="progress_with_none_finished",
         ),
         pytest.param(
@@ -512,6 +516,7 @@ async def test_terminate_in_post_evaluation(evaluator, use_tmpdir):
             0,
             1,
             1.0,
+            None,
             id="progress_with_all_completed",
         ),
         pytest.param(
@@ -520,6 +525,7 @@ async def test_terminate_in_post_evaluation(evaluator, use_tmpdir):
             2,
             3,
             0.22,
+            None,
             id="progress_with_extended_offset_iterations",
         ),
         pytest.param(
@@ -528,6 +534,7 @@ async def test_terminate_in_post_evaluation(evaluator, use_tmpdir):
             2,
             3,
             0.55,
+            None,
             id="progress_with_extended_offset_iterations",
         ),
         pytest.param(
@@ -536,7 +543,17 @@ async def test_terminate_in_post_evaluation(evaluator, use_tmpdir):
             3,
             7,
             0.38,
+            None,
             id="progress_with_another_extended_offset_iterations",
+        ),
+        pytest.param(
+            {"0": "Running", "1": "Finished", "2": "Finished", "3": "Finished"},
+            0,
+            0,
+            1,
+            0.5,
+            [True, True, False, False],
+            id="progress_uses_initial_active_mask_ignores_non_active_reals",
         ),
     ],
 )
@@ -546,12 +563,20 @@ def test_progress_calculations(
     start_iteration: int,
     total_iterations: int,
     expected_result: float,
+    initial_active_mask: list | None,
     use_tmpdir,
 ):
+    # If an explicit initial mask is provided, use it; otherwise, default to all-True
+    initial_mask = (
+        initial_active_mask
+        if initial_active_mask is not None
+        else [True] * len(real_status_dict)
+    )
+
     brm = create_run_model(
         start_iteration=start_iteration,
         _total_iterations=total_iterations,
-        active_realizations=[True] * len(real_status_dict),
+        active_realizations=initial_mask,
     )
 
     for i in range(start_iteration, start_iteration + total_iterations):
