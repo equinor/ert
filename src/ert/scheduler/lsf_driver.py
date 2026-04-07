@@ -447,17 +447,15 @@ class LsfDriver(Driver):
             return_on_msgs=(JOB_ALREADY_FINISHED_BKILL_MSG),
         )
 
-        async def kill_task() -> int:
-            proc = await asyncio.create_subprocess_shell(
-                f"sleep {self._sleep_time_between_bkills}; "
-                f"{self._bkill_cmd} -s SIGKILL {' '.join(job_ids_to_kill)}",
-                start_new_session=True,
-                stdout=asyncio.subprocess.DEVNULL,
-                stderr=asyncio.subprocess.DEVNULL,
-            )
-            return await proc.wait()
+        proc = await asyncio.create_subprocess_shell(
+            f"sleep {self._sleep_time_between_bkills}; "
+            f"{self._bkill_cmd} -s SIGKILL {' '.join(job_ids_to_kill)}",
+            start_new_session=True,
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.DEVNULL,
+        )
 
-        task = asyncio.create_task(kill_task())
+        task = asyncio.create_task(proc.wait())
         self._bkill_tasks.add(task)
         task.add_done_callback(self._bkill_tasks.discard)
 
