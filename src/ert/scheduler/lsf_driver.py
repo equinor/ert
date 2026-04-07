@@ -306,6 +306,8 @@ class LsfDriver(Driver):
 
         self._submit_locks: MutableMapping[int, asyncio.Lock] = {}
 
+        self._bkill_tasks: set[asyncio.Task] = set()
+
     async def submit(
         self,
         iens: int,
@@ -444,13 +446,20 @@ class LsfDriver(Driver):
             retry_interval=self._sleep_time_between_cmd_retries,
             return_on_msgs=(JOB_ALREADY_FINISHED_BKILL_MSG),
         )
-        await asyncio.create_subprocess_shell(
-            f"sleep {self._sleep_time_between_bkills}; "
-            f"{self._bkill_cmd} -s SIGKILL {' '.join(job_ids_to_kill)}",
-            start_new_session=True,
-            stdout=asyncio.subprocess.DEVNULL,
-            stderr=asyncio.subprocess.DEVNULL,
-        )
+
+        async def kill_task() -> int:
+            proc = await asyncio.create_subprocess_shell(
+                f"sleep {self._sleep_time_between_bkills}; "
+                f"{self._bkill_cmd} -s SIGKILL {' '.join(job_ids_to_kill)}",
+                start_new_session=True,
+                stdout=asyncio.subprocess.DEVNULL,
+                stderr=asyncio.subprocess.DEVNULL,
+            )
+            return await proc.wait()
+
+        task = asyncio.create_task(kill_task())
+        self._bkill_tasks.add(task)
+        task.add_done_callback(self._bkill_tasks.discard)
 
         for line in process_message.strip().split("\n"):
             if not ("is being terminated" in line or "is being signaled" in line):
