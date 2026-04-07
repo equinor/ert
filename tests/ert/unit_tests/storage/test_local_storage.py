@@ -1312,6 +1312,78 @@ def test_that_multiple_save_parameters_numpy_calls_overwrite_previous_values(tmp
     assert saved_ens.to_list() == [2.2 for _ in range(num_reals)]
 
 
+def test_that_breakthrough_observations_and_responses_are_joined_in_endpoint(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        response_key = "WWCT:OP1"
+        # This observed time will be 1 day and 12 hours after derived breakthrough time
+        time = datetime(2000, 3, 2, 13, 0)
+
+        breakthrough_config = BreakthroughConfig(
+            keys=[f"BREAKTHROUGH:{response_key}"],
+            summary_keys=[response_key],
+            thresholds=[0.2],
+            observed_dates=[time],
+        )
+
+        experiment = storage.create_experiment(
+            experiment_config={
+                "response_configuration": [
+                    SummaryConfig(keys=["*"], input_files=["not_relevant"]).model_dump(
+                        mode="json"
+                    )
+                ],
+                "derived_response_configuration": [
+                    breakthrough_config.model_dump(mode="json")
+                ],
+                "observations": [
+                    BreakthroughObservation(
+                        name="BRT_OP1",
+                        key=response_key,
+                        date=time,
+                        error=10,
+                        threshold=0.2,
+                        north=None,
+                        east=None,
+                        radius=None,
+                    )
+                ],
+            }
+        )
+
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="prior"
+        )
+
+        response_dataframe = pl.DataFrame(
+            {
+                "realization": [0] * 10,
+                "response_key": ["WWCT:OP1"] * 10,
+                "time": [datetime(2000, month, 1, 1, 0) for month in range(1, 11)],
+                "values": [n / 10 for n in range(10)],
+            }
+        )
+        ensemble.save_response("summary", response_dataframe, 0)
+
+        breakthrough_derived_response = (
+            ensemble.experiment.derived_response_configuration.get(
+                "breakthrough"
+            ).derive_from_storage(0, 0, ensemble)
+        )
+
+        ensemble.save_response("breakthrough", breakthrough_derived_response, 0)
+
+        iens_active_index = np.array([0])
+
+        obs_and_responses = ensemble.get_observations_and_responses(
+            ["BRT_OP1"], iens_active_index
+        )
+
+        assert obs_and_responses["response_key"].to_list() == ["BREAKTHROUGH:WWCT:OP1"]
+        assert obs_and_responses["observation_key"].to_list() == ["BRT_OP1"]
+        assert obs_and_responses["index"].to_list() == ["0.2"]
+        assert obs_and_responses["0"].to_list() == [-1.5]
+
+
 @dataclass
 class Ensemble:
     uuid: UUID
@@ -1870,78 +1942,6 @@ class StatefulStorageTest(RuleBasedStateMachine):
             self.storage.close()
         if self.tmpdir is not None:
             shutil.rmtree(self.tmpdir)
-
-
-def test_that_breakthrough_observations_and_responses_are_joined_in_endpoint(tmp_path):
-    with open_storage(tmp_path, mode="w") as storage:
-        response_key = "WWCT:OP1"
-        # This observed time will be 1 day and 12 hours after derived breakthrough time
-        time = datetime(2000, 3, 2, 13, 0)
-
-        breakthrough_config = BreakthroughConfig(
-            keys=[f"BREAKTHROUGH:{response_key}"],
-            summary_keys=[response_key],
-            thresholds=[0.2],
-            observed_dates=[time],
-        )
-
-        experiment = storage.create_experiment(
-            experiment_config={
-                "response_configuration": [
-                    SummaryConfig(keys=["*"], input_files=["not_relevant"]).model_dump(
-                        mode="json"
-                    )
-                ],
-                "derived_response_configuration": [
-                    breakthrough_config.model_dump(mode="json")
-                ],
-                "observations": [
-                    BreakthroughObservation(
-                        name="BRT_OP1",
-                        key=response_key,
-                        date=time,
-                        error=10,
-                        threshold=0.2,
-                        north=None,
-                        east=None,
-                        radius=None,
-                    )
-                ],
-            }
-        )
-
-        ensemble = storage.create_ensemble(
-            experiment, ensemble_size=1, iteration=0, name="prior"
-        )
-
-        response_dataframe = pl.DataFrame(
-            {
-                "realization": [0] * 10,
-                "response_key": ["WWCT:OP1"] * 10,
-                "time": [datetime(2000, month, 1, 1, 0) for month in range(1, 11)],
-                "values": [n / 10 for n in range(10)],
-            }
-        )
-        ensemble.save_response("summary", response_dataframe, 0)
-
-        breakthrough_derived_response = (
-            ensemble.experiment.derived_response_configuration.get(
-                "breakthrough"
-            ).derive_from_storage(0, 0, ensemble)
-        )
-
-        ensemble.save_response("breakthrough", breakthrough_derived_response, 0)
-
-        iens_active_index = np.array([0])
-
-        obs_and_responses = ensemble.get_observations_and_responses(
-            ["BRT_OP1"], iens_active_index
-        )
-
-        assert obs_and_responses["response_key"].to_list() == ["BREAKTHROUGH:WWCT:OP1"]
-        assert obs_and_responses["observation_key"].to_list() == ["BRT_OP1"]
-        assert obs_and_responses["index"].to_list() == ["0.2"]
-        assert obs_and_responses["0"].to_list() == [-1.5]
 
 
 TestStorage = pytest.mark.fuzzing(pytest.mark.slow(StatefulStorageTest.TestCase))
