@@ -427,11 +427,11 @@ def _shared_snake_oil_case(request, monkeypatch, source_root):
     this is quite slow, but the results will be cached. If something comes
     out of sync, clear the cache and start again.
     """
-    snake_path = request.config.cache.mkdir(
+    cache_path = request.config.cache.mkdir(
         "snake_oil_data" + os.environ.get("PYTEST_XDIST_WORKER", "")
     )
-    monkeypatch.chdir(snake_path)
-    if not (snake_path / "test_data").exists():
+    monkeypatch.chdir(cache_path)
+    if not (cache_path / "test_data").exists():
         _run_snake_oil(source_root)
     else:
         monkeypatch.chdir("test_data")
@@ -445,11 +445,11 @@ def _shared_heat_equation_es(request, monkeypatch, source_root):
     this is quite slow, but the results will be cached. If something comes
     out of sync, clear the cache and start again.
     """
-    snake_path = request.config.cache.mkdir(
+    cache_path = request.config.cache.mkdir(
         "heat_equation_data_es" + os.environ.get("PYTEST_XDIST_WORKER", "")
     )
-    monkeypatch.chdir(snake_path)
-    if not os.listdir(snake_path):
+    monkeypatch.chdir(cache_path)
+    if not os.listdir(cache_path):
         _run_heat_equation(source_root, ENSEMBLE_SMOOTHER_MODE)
     else:
         monkeypatch.chdir("test_data")
@@ -463,11 +463,11 @@ def _shared_heat_equation_esmda(request, monkeypatch, source_root):
     this is quite slow, but the results will be cached. If something comes
     out of sync, clear the cache and start again.
     """
-    snake_path = request.config.cache.mkdir(
+    cache_path = request.config.cache.mkdir(
         "heat_equation_data_esmda" + os.environ.get("PYTEST_XDIST_WORKER", "")
     )
-    monkeypatch.chdir(snake_path)
-    if not os.listdir(snake_path):
+    monkeypatch.chdir(cache_path)
+    if not os.listdir(cache_path):
         _run_heat_equation(source_root, ES_MDA_MODE)
     else:
         monkeypatch.chdir("test_data")
@@ -481,11 +481,11 @@ def _shared_heat_equation_enif(request, monkeypatch, source_root):
     this is quite slow, but the results will be cached. If something comes
     out of sync, clear the cache and start again.
     """
-    snake_path = request.config.cache.mkdir(
+    cache_path = request.config.cache.mkdir(
         "heat_equation_data_enif" + os.environ.get("PYTEST_XDIST_WORKER", "")
     )
-    monkeypatch.chdir(snake_path)
-    if not os.listdir(snake_path):
+    monkeypatch.chdir(cache_path)
+    if not os.listdir(cache_path):
         _run_heat_equation(source_root, ENIF_MODE)
     else:
         monkeypatch.chdir("test_data")
