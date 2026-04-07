@@ -7,7 +7,6 @@ from pathlib import Path
 from textwrap import dedent
 
 import numpy as np
-import numpy.testing
 import polars as pl
 import pytest
 import resfo
@@ -182,7 +181,7 @@ def _compare_ensemble_params(
 def test_field_param_update_using_heat_equation_enif_snapshot(
     symlinked_heat_equation_storage_enif, snapshot, request
 ):
-    config = ErtConfig.from_file("config.ert")
+    config = symlinked_heat_equation_storage_enif
     with open_storage(config.ens_path, mode="r") as storage:
         experiment = storage.get_experiment_by_name("enif")
         prior = experiment.get_ensemble_by_name("iter-0")
@@ -223,7 +222,7 @@ def test_field_param_update_using_heat_equation_enif_snapshot(
 
 @pytest.mark.xdist_group(name="uses_heat_equation_storage")
 def test_field_param_update_using_heat_equation(symlinked_heat_equation_storage_es):
-    config = ErtConfig.from_file("config.ert")
+    config = symlinked_heat_equation_storage_es
     with open_storage(config.ens_path, mode="r") as storage:
         experiment = storage.get_experiment_by_name("es")
         prior = experiment.get_ensemble_by_name("iter-0")
