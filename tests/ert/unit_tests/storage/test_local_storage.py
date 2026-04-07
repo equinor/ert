@@ -951,32 +951,6 @@ def test_that_saving_invalid_everest_realization_info_raises_error(
             ensemble.save_everest_realization_info(bad_realization_info)
 
 
-_ensemble_realization_infos = [
-    [
-        {"model_realization": 0, "perturbation": -1},
-        {"model_realization": 5, "perturbation": -1},
-    ],
-    [
-        {"model_realization": 0, "perturbation": 0},
-        {"model_realization": 0, "perturbation": 1},
-        {"model_realization": 0, "perturbation": 2},
-        {"model_realization": 5, "perturbation": 0},
-        {"model_realization": 5, "perturbation": 1},
-        {"model_realization": 5, "perturbation": 2},
-    ],
-    [
-        {"model_realization": 0, "perturbation": -1},
-        {"model_realization": 5, "perturbation": -1},
-        {"model_realization": 0, "perturbation": 0},
-        {"model_realization": 0, "perturbation": 1},
-        {"model_realization": 0, "perturbation": 2},
-        {"model_realization": 5, "perturbation": 0},
-        {"model_realization": 5, "perturbation": 1},
-        {"model_realization": 5, "perturbation": 2},
-    ],
-]
-
-
 @pytest.mark.parametrize(
     ("reals", "expect_error"),
     [
