@@ -306,7 +306,7 @@ class LsfDriver(Driver):
 
         self._submit_locks: MutableMapping[int, asyncio.Lock] = {}
 
-        self._bkill_tasks: set[asyncio.Task] = set()
+        self._bkill_tasks: set[asyncio.Task[None]] = set()
 
     async def submit(
         self,
