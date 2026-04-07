@@ -28,6 +28,7 @@ def run_gui(output_dir: str) -> None:
         ["everest"]
     )  # Early so that QT is initialized before other imports
     app.setWindowIcon(QIcon("img:ert_icon.svg"))
+    app.setApplicationName("EVEREST")
 
     # Add arg parser if we are to pass more opts
 

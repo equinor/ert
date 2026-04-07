@@ -30,6 +30,7 @@ from PyQt6.QtWidgets import (
 from typing_extensions import override
 
 from ert.gui.icon_utils import load_icon
+from ert.gui.utils import IS_EVEREST_APPLICATION
 
 from .plot_api import EnsembleObject
 
@@ -41,11 +42,10 @@ class EnsembleSelectionWidget(QWidget):
         self,
         ensembles: list[EnsembleObject],
         number_of_plot_colors: int,
-        is_everest: bool = False,
     ) -> None:
         QWidget.__init__(self)
         self._selected_ensembles = EnsembleSelectListWidget(
-            ensembles, number_of_plot_colors, is_everest=is_everest
+            ensembles, number_of_plot_colors
         )
 
         self._ensemble_layout = QVBoxLayout()
@@ -78,7 +78,6 @@ class EnsembleSelectListWidget(QListWidget):
         self,
         ensembles: list[EnsembleObject],
         number_of_plot_colors: int,
-        is_everest: bool = False,
     ) -> None:
         super().__init__()
         self.available_colors = deque(
@@ -89,11 +88,13 @@ class EnsembleSelectListWidget(QListWidget):
         sorted_ensembles = sorted(
             ensembles, key=lambda ens: ens.started_at, reverse=True
         )
-        cutoff = self.MAXIMUM_SELECTED if is_everest else self.MINIMUM_SELECTED
+        cutoff = (
+            self.MAXIMUM_SELECTED if IS_EVEREST_APPLICATION else self.MINIMUM_SELECTED
+        )
         for i, ensemble in enumerate(sorted_ensembles):
             item_text = (
                 f"{ensemble.experiment_name} : {ensemble.name}"
-                if not is_everest
+                if not IS_EVEREST_APPLICATION
                 else ensemble.name
             )
             it = QListWidgetItem(item_text)
