@@ -1306,13 +1306,6 @@ response_configs = st.lists(
 )
 
 ensemble_sizes = st.integers(min_value=1, max_value=1000)
-coordinates = st.integers(min_value=1, max_value=100)
-
-
-def vectors(elements, size):
-    return st.lists(elements, min_size=size, max_size=size)
-
-
 general_observations = st.builds(
     GeneralObservation,
     name=words,
@@ -1324,14 +1317,11 @@ general_observations = st.builds(
     east=st.floats(allow_nan=False, allow_infinity=False, min_value=0.001),
     north=st.floats(allow_nan=False, allow_infinity=False, min_value=0.001),
 )
-
 observations = st.lists(
     general_observations,
     min_size=0,
     max_size=10,
 )
-
-
 small_ints = st.integers(min_value=1, max_value=10)
 
 
