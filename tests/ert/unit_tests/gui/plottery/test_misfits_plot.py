@@ -2,9 +2,55 @@ from datetime import datetime
 
 import pandas as pd
 import polars as pl
+from matplotlib.figure import Figure
 from polars.testing import assert_frame_equal
 
+from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApiKeyDefinition
+from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
 from ert.gui.tools.plot.plottery.plots.misfits import MisfitsPlot
+
+
+def test_that_misfits_plot_renders_empty_state_when_observations_are_missing():
+    ensemble = EnsembleObject(
+        "ensemble",
+        "ensemble",
+        False,
+        "experiment",
+        "2026-01-01T00:00:00",
+    )
+    plot_context = PlotContext(
+        PlotConfig(),
+        ensembles=[ensemble],
+        ensembles_color_indexes=[0],
+        key="FOPR",
+        layer=None,
+    )
+    key_def = PlotApiKeyDefinition(
+        "FOPR",
+        index_type=None,
+        metadata={"data_origin": "summary"},
+        observations=True,
+        dimensionality=2,
+    )
+    figure = Figure()
+
+    MisfitsPlot().plot(
+        figure,
+        plot_context,
+        {
+            ensemble: pd.DataFrame(
+                {"2023-01-01": [12.0]},
+                index=pd.Index([0], name="Realization"),
+            )
+        },
+        observation_data=pd.DataFrame(),
+        std_dev_images={},
+        obs_loc=None,
+        key_def=key_def,
+    )
+
+    assert len(figure.axes) == 1
+    assert figure.axes[0].texts[0].get_text() == "No observations available"
 
 
 def test_that_misfit_conversion_for_summary_casts_key_index_to_datetime():

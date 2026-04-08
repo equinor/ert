@@ -22,7 +22,6 @@ def plotObservations(
     if (
         config.isObservationsEnabled()
         and len(ensemble_list) > 0
-        and observation_data is not None
         and not observation_data.empty
     ):
         _plotObservations(axes, config, observation_data, value_column=key)
