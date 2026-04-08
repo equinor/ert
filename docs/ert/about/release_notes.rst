@@ -526,7 +526,7 @@ user feedback.
 
 Open job logs from the GUI
 #############################
-Open the montoring by pressing `details`. If you select a realization and then
+Open the monitoring by pressing `details`. If you select a realization and then
 click either its `stdout` or `stderr` you will get the corresponding output
 displayed in the GUI for easier debugging.
 
@@ -544,7 +544,7 @@ colors etc is added to the monitoring window.
 
 Debug after ensemble failure
 ####################################
-The above capablilities are available also after the entire ensemble has
+The above capabilities are available also after the entire ensemble has
 finished.
 
 See :ref:`change log <version_2_5_notes>`: for full details.
@@ -820,7 +820,7 @@ Improvements:
   - Add queue option validation to queue config (`link <https://github.com/equinor/ert/pull/6413>`__)
   - Set default case_name for ES_MDA when none provided (`link <https://github.com/equinor/ert/pull/6594>`__)
   - Have restart_from combobox in es_mda be default disabled (`link <https://github.com/equinor/ert/pull/6548>`__)
-  - Fix bug where RANDOM_SEED was not taken into accout with multiple runs (`link <https://github.com/equinor/ert/pull/6536>`__)
+  - Fix bug where RANDOM_SEED was not taken into account with multiple runs (`link <https://github.com/equinor/ert/pull/6536>`__)
   - Replace analysismodule spinner with group of radiobuttons (`link <https://github.com/equinor/ert/pull/6550>`__)
   - Disable add-cases-button when no case data (`link <https://github.com/equinor/ert/pull/6475>`__)
   - Merge ForwardModel with ExtJob (`link <https://github.com/equinor/ert/pull/6489>`__)
@@ -927,7 +927,7 @@ Bugfixes:
   - Fix check for empty target case `#5125 <https://github.com/equinor/ert/pull/5125>`_)
   - Scale obs errors before outlier detection (`#5126 <https://github.com/equinor/ert/pull/5126>`_)
   - Fix bug where timed out realizations would be marked as success (`#5113 <https://github.com/equinor/ert/pull/5113>`_)
-  - Raise expection if no file for refcase `#5163 <https://github.com/equinor/ert/pull/5163>`_)
+  - Raise exception if no file for refcase `#5163 <https://github.com/equinor/ert/pull/5163>`_)
   - Declare qsub jobs as not rerunnable (`#5173 <https://github.com/equinor/ert/pull/5173>`_)
   - Validate distribution parameters (`#5160 <https://github.com/equinor/ert/pull/5160>`_)
   - Solve race condition in qstat_proxy.sh (`#5182 <https://github.com/equinor/ert/pull/5182>`_)
@@ -1398,7 +1398,7 @@ Miscellaneous:
   - Type and clean enkf_fs_manager (`#3491 <https://github.com/equinor/ert/pull/3491>`_)
   - Update github issue template for bugs (`#3503 <https://github.com/equinor/ert/pull/3503>`_)
   - Remove unused param arg (`#3507 <https://github.com/equinor/ert/pull/3507>`_)
-  - Remove unecessary fs version checks (`#3510 <https://github.com/equinor/ert/pull/3510>`_)
+  - Remove unnecessary fs version checks (`#3510 <https://github.com/equinor/ert/pull/3510>`_)
   - Use async context manager for ens_evaluator client (`#3484 <https://github.com/equinor/ert/pull/3484>`_)
   - Remove unused function get_observation_count (`#3513 <https://github.com/equinor/ert/pull/3513>`_)
   - Replace util_split_string and util_alloc_joined_string with C++ (`#3500 <https://github.com/equinor/ert/pull/3500>`_)
@@ -1467,7 +1467,7 @@ Breaking changes:
   - Remove unused functions on EnKFMain (`#3400 <https://github.com/equinor/ert/pull/3400>`_)
 
 Bugfixes:
-  - Fix edit analysis varables for run_analysis_panel (`#3330 <https://github.com/equinor/ert/pull/3330>`_)
+  - Fix edit analysis variables for run_analysis_panel (`#3330 <https://github.com/equinor/ert/pull/3330>`_)
   - Fix iteration nr bug in IES and add ies cli integration test (`#3457 <https://github.com/equinor/ert/pull/3457>`_)
 
 New features:
@@ -1499,7 +1499,7 @@ Improvements:
     `#3526 <https://github.com/equinor/ert/pull/3526>`_,
     `#3467 <https://github.com/equinor/ert/pull/3467>`_
     )
-  - Various improvments to stability of status tracking (
+  - Various improvements to stability of status tracking (
     `#3481 <https://github.com/equinor/ert/pull/3481>`_,
     `#3466 <https://github.com/equinor/ert/pull/3466>`_,
     `#3483 <https://github.com/equinor/ert/pull/3483>`_,
@@ -1510,7 +1510,7 @@ Improvements:
     `#3408 <https://github.com/equinor/ert/pull/3408>`_,
     `#3360 <https://github.com/equinor/ert/pull/3360>`_
     )
-  - Various improvments reading/writing to storage (
+  - Various improvements reading/writing to storage (
     `#3429 <https://github.com/equinor/ert/pull/3429>`_,
     `#3513 <https://github.com/equinor/ert/pull/3513>`_,
     `#3530 <https://github.com/equinor/ert/pull/3530>`_,
@@ -1568,7 +1568,7 @@ Improvements:
   - Remove unused function enkf_analysis_deactivate_std_zero (`#3176 <https://github.com/equinor/ert/pull/3176>`_)
   - Remove `thread_pool.cpp`, `arg_pack.cpp` et al (`#3117 <https://github.com/equinor/ert/pull/3117>`_)
   - Undo pinning of click in dev-requirements (`#3208 <https://github.com/equinor/ert/pull/3208>`_)
-  - Fix typo recieved (`#3220 <https://github.com/equinor/ert/pull/3220>`_)
+  - Fix typo received (`#3220 <https://github.com/equinor/ert/pull/3220>`_)
   - Use explicit int-value from enum (`#3221 <https://github.com/equinor/ert/pull/3221>`_)
   - Delete unused test_analysis_test_external_module.c (`#3206 <https://github.com/equinor/ert/pull/3206>`_)
   - Extend flake8 linting to ert-directory and ert_tests (`#3203 <https://github.com/equinor/ert/pull/3203>`_)
@@ -1658,7 +1658,7 @@ Improvements:
   - Reduce log level for MAX_RUNTIME reached and only log once (`#2770 <https://github.com/equinor/ert/pull/2770>`_)
   - Rename test to avoid conflict (`#3098 <https://github.com/equinor/ert/pull/3098>`_)
   - Test tracker progress (`#3110 <https://github.com/equinor/ert/pull/3110>`_)
-  - Fix typo, successfull -> successful (`#3107 <https://github.com/equinor/ert/pull/3107>`_)
+  - Fix typo, successful -> successful (`#3107 <https://github.com/equinor/ert/pull/3107>`_)
   - Automatically increase softlimit for max open files while running tests (`#3112 <https://github.com/equinor/ert/pull/3112>`_)
   - Start statically checking code in ert_shared/models (`#3094 <https://github.com/equinor/ert/pull/3094>`_)
   - Remove global ert (`#3118 <https://github.com/equinor/ert/pull/3118>`_)
@@ -2182,7 +2182,7 @@ Improvements:
   - Rename: userdata and ensemble_ids endpoints
   - Add section on how to restart ES-MDA in GUI (`#1290 <https://github.com/equinor/ert/issues/1290>`_)
   - Generate narratives on the fly when building the docs
-  - Support building the documenation on ReadTheDocs (`#1610 <https://github.com/equinor/ert/issues/1610>`_)
+  - Support building the documentation on ReadTheDocs (`#1610 <https://github.com/equinor/ert/issues/1610>`_)
   - ert2 use servermonitor for fetching ert-storage auth
   - Add ert-storage, clean experiment and webviz-ert to spe1-README (`#1736 <https://github.com/equinor/ert/issues/1736>`_)
   - Fix typo in RMS documantion and CLI (`#1438 <https://github.com/equinor/ert/issues/1438>`_)
@@ -2204,11 +2204,11 @@ Miscellaneous:
   - Move all the libres code into the ert repository
   - ert3: Introduce common RecordIndex
   - Add integration tests for post_update_data (`#1671 <https://github.com/equinor/ert/issues/1671>`_)
-  - Add some temporary debuging of events
+  - Add some temporary debugging of events
   - Make cancel test more consistent (`#1755 <https://github.com/equinor/ert/issues/1755>`_)
   - Fix flaky prefect retry test by ignoring order of events in the test (`#1730 <https://github.com/equinor/ert/issues/1730>`_)
   - Use example servers in comments
-  - Ignore some numpy type annotions that are difficult to handle in python
+  - Ignore some numpy type annotations that are difficult to handle in python
   - Added Docs Section In README.md
   - Split ERT 3 parameters into separate records
   - Have mypy ignore missing numpy imports
@@ -2409,7 +2409,7 @@ Version 2.21
 Bugfixes:
   - Set correct phase count in ESMDA model
   - Prevent double startup of storage server
-  - Seperate Update creation from ensemble creation and link observation transformation
+  - Separate Update creation from ensemble creation and link observation transformation
   - Don't assume singular snapshot in CLI. Fixes a problem where ERT would crash on iiteration 1 if a realization failed in iteration 0.
 
 New features:
@@ -2446,7 +2446,7 @@ Improvements:
   - Export shared rng to Python
 
 Deprecations:
-  - Depecate loading functions
+  - Deprecate loading functions
 
 Miscellaneous:
   - Turn monitor into a context manager (`#1332 <https://github.com/equinor/ert/issues/1332>`_)
@@ -2474,7 +2474,7 @@ Miscellaneous:
   - Stop using single character variable names in tests
   - Stop storing unused return values in tests
   - Fix deprecated escape characters
-  - Drop support for variables, input and ouput data in storage
+  - Drop support for variables, input and output data in storage
   - Pass data as records in ert3
   - Move conftest out to tests/gui
   - Keep ensemble config nodes in an ordered data structure to avoid sampling differences over different build machines
@@ -2898,7 +2898,7 @@ New jobs (Ported from ert-statoil for python 3):
   - DESIGN2PARAM
   - DESIGN_KW
 
-Add komodo_job_dispatch from equlibrium
+Add komodo_job_dispatch from equilibrium
 
 .. _version_2_6_notes:
 
@@ -2924,7 +2924,7 @@ Improvements:
   - Algorithm recommendations in menu
   - Check for observation data
   - Better support for lsf-nodes with unknown status
-  - Communicate analysis completetion
+  - Communicate analysis completion
   - Various improvements to the documentation
   - Document RMS job
   - Help links in the GUI
@@ -3190,7 +3190,7 @@ Misc:
    libecl [`27 <https://github.com/Equinor/res/pull/27/>`__, `68 <https://github.com/Equinor/res/pull/68/>`__, `74 <https://github.com/Equinor/res/pull/74/>`__].
  - Do not generate parameters.txt if no GEN_KW is specified.[`89 <https://github.com/Equinor/res/pull/89/>`__]
  - Started using RES_VERSION [`91 <https://github.com/Equinor/res/pull/91/>`__].
- - CONFIG_PATH subtitution settings - bug fixed[`43 <https://github.com/Equinor/res/pull/43/>`__, `96 <https://github.com/Equinor/res/pull/96/>`__].
+ - CONFIG_PATH substitution settings - bug fixed[`43 <https://github.com/Equinor/res/pull/43/>`__, `96 <https://github.com/Equinor/res/pull/96/>`__].
  - Will load summary if GEN_DATA is present [`123 <https://github.com/Equinor/res/pull/123/>`__, `127 <https://github.com/Equinor/res/pull/127/>`__]
 
 
@@ -3201,7 +3201,7 @@ Build and test fixes:
  - removed stale binaries [`7 <https://github.com/Equinor/res/pull/7/>`__, `9 <https://github.com/Equinor/res/pull/9/>`__]
  - travis will build all repositories [`23 <https://github.com/Equinor/res/pull/23/>`__].
  - Travis + OSX [`69 <https://github.com/Equinor/res/pull/69/>`__, `72 <https://github.com/Equinor/res/pull/72/>`__]
- - Remove equinor specific settings from build sytem [`38 <https://github.com/Equinor/res/pull/38/>`__].
+ - Remove equinor specific settings from build system [`38 <https://github.com/Equinor/res/pull/38/>`__].
  - Travis split for parallel builds [`79 <https://github.com/Equinor/res/pull/79/>`__].
 
 
@@ -3219,7 +3219,7 @@ Config refactor:
 Queue layer:
 
  - Improved logging [`17 <https://github.com/Equinor/res/pull/17/>`__, `37 <https://github.com/Equinor/res/pull/37/>`__].
- - Funcionality to create a queue_config object copy [`36 <https://github.com/Equinor/res/pull/36/>`__].
+ - Functionality to create a queue_config object copy [`36 <https://github.com/Equinor/res/pull/36/>`__].
 
  As part of this development cycle the job_dispatch script has been
  included in the libres distribution. There are many PR's related to
@@ -3272,7 +3272,7 @@ Build & testing:
  - Fix broken behavior with internal test data [`97 <https://github.com/Equinor/libecl/pull/97/>`__].
  - Travis - compile with -Werror [`122 <https://github.com/Equinor/libecl/pull/122/>`__, `123 <https://github.com/Equinor/libecl/pull/123/>`__, `127 <https://github.com/Equinor/libecl/pull/127/>`__, `130 <https://github.com/Equinor/libecl/pull/130/>`__]
  - Started to support Python3 syntax [`150 <https://github.com/Equinor/libecl/pull/150/>`__, `161 <https://github.com/Equinor/libecl/pull/161/>`__]
- - Add support for paralell builds on Travis [`149 <https://github.com/Equinor/libecl/pull/149/>`__]
+ - Add support for parallel builds on Travis [`149 <https://github.com/Equinor/libecl/pull/149/>`__]
 
 libecl now fully supports OSX. On Travis it is compiled with
 -Werror=all which should protect against future warnings.
@@ -3307,7 +3307,7 @@ Core:
 
 Misc:
 
- - Added legacy pacakge ert/ [`48 <https://github.com/Equinor/libecl/pull/48/>`__, `99 <https://github.com/Equinor/libecl/pull/99/>`__]
+ - Added legacy package ert/ [`48 <https://github.com/Equinor/libecl/pull/48/>`__, `99 <https://github.com/Equinor/libecl/pull/99/>`__]
  - Improved logging - adding enums for og levels [`90 <https://github.com/Equinor/libecl/pull/90/>`__, `140 <https://github.com/Equinor/libecl/pull/140/>`__, `141 <https://github.com/Equinor/libecl/pull/141/>`__]
  - Refactored to use snake_case instead of CamelCase [`144 <https://github.com/Equinor/libecl/pull/144/>`__, `145 <https://github.com/Equinor/libecl/pull/145/>`__]
 
@@ -3373,7 +3373,7 @@ Eclipse library:
  - Add nnc index to the information exported by ecl_nnc_export() [1204].
  - Marked solvent related total keywords ?NIT and ?NPT.* as totals [1241].
  - Top active cell in grid [1322].
- - Added absolute epsilon to ecl_kw comparsion [1345,1351].
+ - Added absolute epsilon to ecl_kw comparison [1345,1351].
 
 Smoother, updates and 'running':
 
@@ -3385,7 +3385,7 @@ Smoother, updates and 'running':
  - Removes the ability to update dynamic variables [1189].
  - Allow max CV FOLD to be the number of ensembles [1205, 1208].
  - Fix for min_realizations logic [1206].
- - Can assign a specific analyis module for one local update [1224].
+ - Can assign a specific analysis module for one local update [1224].
  - Handle updates when some summary relaisations are "too short" [1400, 1405].
  - Extending hook manager to support PRE_UPDATE and POST_UPDATE hooks [1340,1360].
  - RML logging is on by default [1318].
@@ -3411,9 +3411,9 @@ Python code:
  - Added EclKW.numpyView( ) and EclKW.numpyCopy( ) [1188].
  - Bug in EclKW slice access [1203].
  - Expose active_list better in Python [1392].
- - @TYPE@_vector suppports negative indices in __getitem__ and
+ - @TYPE@_vector supports negative indices in __getitem__ and
    __setitem__; added repr method [1378].
- - added root() methdo ert/__init__.py [1293].
+ - added root() method ert/__init__.py [1293].
 
 GUI / Configuration / Documentation
 

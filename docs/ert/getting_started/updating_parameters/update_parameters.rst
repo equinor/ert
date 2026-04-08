@@ -3,7 +3,7 @@
 Sampling prior
 ==============
 
-The process begins wth parameterization of the model. After that, the next step is to evaluate the coverage of that
+The process begins with parameterization of the model. After that, the next step is to evaluate the coverage of that
 prior, i.e., how are the responses of the ensemble compared with the observations. If the prior response is not able
 to cover the observations, there might be a problem with the parameterization.
 

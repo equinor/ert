@@ -55,7 +55,7 @@ The `conmin_mfd` option of the conmin optimizer will activate its *Method of Fea
 
 	∇f(x_k )s_k^T<0 \;\; and \;\; ∇c(x_k )s_k^T≤0
 
-are statisfied. Where :math:`∇f(x_k)` and :math:`∇c(x_k)` are the objective function and constraint function gradients respectively, which are calculated by EVEREST.  *The method of Zoutendijk* is used internally to find such a search vector. The method can be seen as a generalization of steepest ascent method for unconstrained optimization. Different from **opt++**, the method does not use approximations of second derivates.
+are satisfied. Where :math:`∇f(x_k)` and :math:`∇c(x_k)` are the objective function and constraint function gradients respectively, which are calculated by EVEREST.  *The method of Zoutendijk* is used internally to find such a search vector. The method can be seen as a generalization of steepest ascent method for unconstrained optimization. Different from **opt++**, the method does not use approximations of second derivates.
 
 .. note::
 

@@ -162,7 +162,7 @@ equation for how the boat moves in time, and at selected points in time :math:`t
    This is the position estimated from :math:`x_{k-1}` using :math:`g(x,t)`, but
    before the observed data :math:`d_k` are taken into account.
 
-:math:`\sigma_k^{\ast}`: The uncertainty of estimate / forcast.
+:math:`\sigma_k^{\ast}`: The uncertainty of estimate / forecast.
 
 :math:`d_k`: The observed values that are used in the updating process.
    The :math:`d_k` values are measured with a process external to the model updating.
@@ -391,7 +391,7 @@ where
 .. math::
    K = \Sigma_{\psi}M^\top (M\Sigma_{\psi}M^\top + \Sigma_{d})^{-1}
 
-is called tha Kalman gain, and :math:`M` is the linear measurement operator (i.e., a matrix), so that
+is called the Kalman gain, and :math:`M` is the linear measurement operator (i.e., a matrix), so that
 
 .. math::
    \hat{d} = M\mu_{\psi}

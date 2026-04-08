@@ -103,7 +103,7 @@ inserted (and substituted) in the `run_path` for each `model_realization`.
 
     Different meaning of `realization` and `simulation`.
 
-The mapping from data models in EVEREST to ERT is done in EVEREST, meaning `realization` (ERT) to `<MODEL_ID>` and `pertubation`-number (EVEREST).
+The mapping from data models in EVEREST to ERT is done in EVEREST, meaning `realization` (ERT) to `<MODEL_ID>` and `perturbation`-number (EVEREST).
 `Batches` in EVEREST can contain several different configurations depending on the algorithm used. Gradient-based algorithms can have a single function
 evaluation (`unperturbed controls`) per `<MODEL_ID>`, a set of `perturbed controls` per `<MODEL_ID>` to evaluate the gradient, or both.
 Derivative-free methods can have several function evaluations per `<MODEL_ID>` and no `perturbed controls`.

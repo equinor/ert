@@ -172,7 +172,7 @@ the whole definition shall end with a semi-colon.
 If ERROR_MODE is set to REL, all observation errors will be set to the
 observed values multiplied by ERROR. Thus, the following will
 condition on water injection rate for the whole field with 20%
-observation uncertainity:
+observation uncertainty:
 
 .. code-block:: none
 
