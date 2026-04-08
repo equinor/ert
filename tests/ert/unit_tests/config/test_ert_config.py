@@ -1520,6 +1520,96 @@ def test_validate_no_logs_when_overwriting_with_same_value(caplog):
     ) not in caplog.text
 
 
+def test_that_unresolved_forward_model_placeholders_are_logged_at_startup(caplog):
+    class FM(ForwardModelStepPlugin):
+        def __init__(self) -> None:
+            super().__init__(name="FM", command=["something", "<arg1>", "<arg2>"])
+
+    with caplog.at_level(logging.INFO, logger="ert.config.ert_config"):
+        ert_config = ErtConfig.with_plugins(
+            ErtRuntimePlugins(installed_forward_model_steps={"FM": FM()})
+        ).from_dict(
+            {
+                ConfigKeys.NUM_REALIZATIONS: 1,
+                ConfigKeys.FORWARD_MODEL: [
+                    [
+                        "FM",
+                        [
+                            ["<arg1>", "<UNDEFINED_VARIABLE>"],
+                            ["<arg2>", "A/<ANOTHER_UNDEFINED_VARIABLE>"],
+                            "positional/<POSITIONAL_UNDEFINED>",
+                        ],
+                    ]
+                ],
+            }
+        )
+        fm_json = create_forward_model_json(
+            context=ert_config.substitutions,
+            forward_model_steps=ert_config.forward_model_steps,
+            env_vars=ert_config.env_vars,
+            user_config_file=ert_config.user_config_file,
+            run_id="id",
+            iens=0,
+            itr=0,
+        )
+
+    assert ("Forward model step FM has unsubstituted variables: ") in caplog.text
+    assert "<UNDEFINED_VARIABLE>" in caplog.text
+    assert "<ANOTHER_UNDEFINED_VARIABLE>" in caplog.text
+    assert "<POSITIONAL_UNDEFINED>" in caplog.text
+    assert fm_json["jobList"][0]["argList"] == [
+        "<UNDEFINED_VARIABLE>",
+        "A/<ANOTHER_UNDEFINED_VARIABLE>",
+        "positional/<POSITIONAL_UNDEFINED>",
+    ]
+
+
+def test_that_successfully_substituted_forward_model_args_are_not_logged(caplog):
+    class FM(ForwardModelStepPlugin):
+        def __init__(self) -> None:
+            super().__init__(name="FM", command=["something", "<arg1>", "<arg2>"])
+
+    with caplog.at_level(logging.INFO, logger="ert.config.ert_config"):
+        ert_config = ErtConfig.with_plugins(
+            ErtRuntimePlugins(installed_forward_model_steps={"FM": FM()})
+        ).from_dict(
+            {
+                ConfigKeys.NUM_REALIZATIONS: 1,
+                ConfigKeys.DEFINE: [
+                    ["<ARG1>", "configured-value"],
+                    ["<ARG2>", "resolved"],
+                    ["<POSITIONAL>", "done"],
+                ],
+                ConfigKeys.FORWARD_MODEL: [
+                    [
+                        "FM",
+                        [
+                            ["<arg1>", "<ARG1>"],
+                            ["<arg2>", "A/<ARG2>"],
+                            "positional/<POSITIONAL>",
+                        ],
+                    ]
+                ],
+            }
+        )
+        fm_json = create_forward_model_json(
+            context=ert_config.substitutions,
+            forward_model_steps=ert_config.forward_model_steps,
+            env_vars=ert_config.env_vars,
+            user_config_file=ert_config.user_config_file,
+            run_id="id",
+            iens=0,
+            itr=0,
+        )
+
+    assert "Forward model step FM has unsubstituted variables" not in caplog.text
+    assert fm_json["jobList"][0]["argList"] == [
+        "configured-value",
+        "A/resolved",
+        "positional/done",
+    ]
+
+
 @pytest.mark.parametrize(
     ("obsolete_analysis_keyword", "error_msg"),
     [
