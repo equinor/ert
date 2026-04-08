@@ -50,7 +50,7 @@ def option_dict(option_list: Sequence[str], offset: int) -> dict[str, str]:
             if val and key:
                 if key in result:
                     raise ConfigValidationError.with_context(
-                        f"Option {key} occured multiple times.", option_pair
+                        f"Option {key} occurred multiple times.", option_pair
                     )
                 result[key] = val
             else:

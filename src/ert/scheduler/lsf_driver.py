@@ -94,7 +94,7 @@ FLAKY_SSH_RETURNCODE = 255
 JOB_ALREADY_FINISHED_BKILL_MSG = "Job has already finished"
 BSUB_FAILURE_MESSAGES = (
     "Error in rusage section",
-    "Expeced number, string",
+    "Expected number, string",
     "No such queue",
     "Too many processors requested",
     "cannot be used in the resource requirement section",

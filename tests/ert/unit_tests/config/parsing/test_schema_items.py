@@ -30,7 +30,7 @@ def test_that_schema_options_cannot_be_repeated():
         OPTIONS=SchemaItem(kw="OPTIONS", argc_max=1, options_after=0)
     )
     with pytest.raises(
-        ConfigValidationError, match="Option foo occured multiple times"
+        ConfigValidationError, match="Option foo occurred multiple times"
     ):
         parse_contents("OPTIONS foo:bar foo:com", schema, "dummy_filename")
 
