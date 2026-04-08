@@ -66,6 +66,12 @@ class MisfitsPlot:
         )
 
     @staticmethod
+    def _show_no_data(figure: Figure, message: str) -> None:
+        axes = figure.add_subplot(111)
+        axes.text(0.5, 0.5, message, ha="center", va="center")
+        axes.set_axis_off()
+
+    @staticmethod
     def _make_ensemble_colors(
         sorted_ensemble_keys: list[tuple[str, str]],
     ) -> dict[tuple[str, str], str]:
@@ -151,6 +157,10 @@ class MisfitsPlot:
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
         assert key_def is not None
+        if observation_data.empty:
+            self._show_no_data(figure, "No observations available")
+            return
+
         response_type = key_def.metadata["data_origin"]
         data_with_misfits = self._wide_pandas_to_long_polars_with_misfits(
             {(eo.name, eo.id): df for eo, df in ensemble_to_data_map.items()},

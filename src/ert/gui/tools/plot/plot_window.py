@@ -391,7 +391,7 @@ class PlotWindow(QMainWindow):
                         break
 
             plot_widget._negative_values_in_data = negative_values_in_data
-            observations = None
+            observations = pd.DataFrame()
             if key_def.observations and selected_ensembles:
                 try:
                     observations = self._api.observations_for_key(
