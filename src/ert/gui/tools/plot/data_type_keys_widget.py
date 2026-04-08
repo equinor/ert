@@ -13,7 +13,7 @@ from typing_extensions import override
 
 from ert.gui.ertwidgets import SearchBox
 from ert.gui.icon_utils import load_icon
-from ert.gui.utils import IS_EVEREST_APPLICATION
+from ert.gui.utils import is_everest_application
 
 from .data_type_keys_list_model import DataTypeKeysListModel
 from .data_type_proxy_model import DataTypeProxyModel
@@ -107,7 +107,9 @@ class DataTypeKeysWidget(QWidget):
         layout.addWidget(self.data_type_keys_widget, 2)
         layout.addStretch()
 
-        if not IS_EVEREST_APPLICATION:
+        is_everest = is_everest_application()
+
+        if not is_everest:
             layout.addWidget(
                 _Legend(
                     "Observations available", DataTypeKeysListModel.HAS_OBSERVATIONS

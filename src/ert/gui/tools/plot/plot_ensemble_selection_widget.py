@@ -30,7 +30,7 @@ from PyQt6.QtWidgets import (
 from typing_extensions import override
 
 from ert.gui.icon_utils import load_icon
-from ert.gui.utils import IS_EVEREST_APPLICATION
+from ert.gui.utils import is_everest_application
 
 from .plot_api import EnsembleObject
 
@@ -88,13 +88,12 @@ class EnsembleSelectListWidget(QListWidget):
         sorted_ensembles = sorted(
             ensembles, key=lambda ens: ens.started_at, reverse=True
         )
-        cutoff = (
-            self.MAXIMUM_SELECTED if IS_EVEREST_APPLICATION else self.MINIMUM_SELECTED
-        )
+        is_everest = is_everest_application()
+        cutoff = self.MAXIMUM_SELECTED if is_everest else self.MINIMUM_SELECTED
         for i, ensemble in enumerate(sorted_ensembles):
             item_text = (
                 f"{ensemble.experiment_name} : {ensemble.name}"
-                if not IS_EVEREST_APPLICATION
+                if not is_everest
                 else ensemble.name
             )
             it = QListWidgetItem(item_text)
