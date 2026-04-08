@@ -168,6 +168,10 @@ class MisfitsPlot:
             response_type,
         )
 
+        if all(df.is_empty() for df in data_with_misfits.values()):
+            self._show_no_data(figure, "No misfit data available")
+            return
+
         if response_type in {"summary", "breakthrough"}:
             self._plot_summary_misfits_boxplots(
                 figure,

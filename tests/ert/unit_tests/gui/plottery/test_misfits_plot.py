@@ -10,7 +10,7 @@ from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
 from ert.gui.tools.plot.plottery.plots.misfits import MisfitsPlot
 
 
-def test_that_misfits_plot_renders_empty_state_when_observations_are_missing():
+def test_that_misfits_plot_is_empty_when_observations_are_missing():
     ensemble = EnsembleObject(
         "ensemble",
         "ensemble",
@@ -113,6 +113,54 @@ def test_that_misfit_conversion_for_summary_converts_to_equivalent_long_polars_d
     ).with_columns(pl.col("key_index").cast(pl.Datetime))
 
     assert_frame_equal(result_df, expected_df)
+
+
+def test_that_misfits_plot_is_empty_when_no_misfit_data_is_available():
+    ensemble = EnsembleObject(
+        "ensemble",
+        "ensemble",
+        False,
+        "experiment",
+        "2026-01-01T00:00:00",
+    )
+    plot_context = PlotContext(
+        PlotConfig(),
+        ensembles=[ensemble],
+        ensembles_color_indexes=[0],
+        key="FOPR",
+        layer=None,
+    )
+    key_def = PlotApiKeyDefinition(
+        "FOPR",
+        index_type=None,
+        metadata={"data_origin": "summary"},
+        observations=True,
+        dimensionality=2,
+    )
+    figure = Figure()
+
+    MisfitsPlot().plot(
+        figure,
+        plot_context,
+        {
+            ensemble: pd.DataFrame(
+                {"2023-01-01": [12.0]},
+                index=pd.Index([0], name="Realization"),
+            )
+        },
+        observation_data=pd.DataFrame(
+            data={
+                0: [1.0, 10.0, "2023-01-02"],
+            },
+            index=["STD", "OBS", "key_index"],
+        ),
+        std_dev_images={},
+        obs_loc=None,
+        key_def=key_def,
+    )
+
+    assert len(figure.axes) == 1
+    assert figure.axes[0].texts[0].get_text() == "No misfit data available"
 
 
 def test_that_misfit_conversion_for_gen_data_casts_key_index_to_uint16():
