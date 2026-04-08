@@ -20,7 +20,7 @@ def job_documentation(job_name: str) -> PluginResponse[dict[str, str] | None]:
     Valid fields:
     description: RST markdown as a string. Example: "This is a **dummy** description"
     examples: RST markdown as a string. Example: "This is an example"
-    category: Dot seperated list categories (main_category.sub_category) for job.
+    category: Dot separated list categories (main_category.sub_category) for job.
               Example: "simulator.reservoir". When generating documentation in ERT the
               main category (category before the first dot) will be used to group
               the jobs into sections.

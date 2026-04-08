@@ -21,7 +21,7 @@ class Substitutions(UserDict[str, str]):
         """Perform a search-replace on the first argument
 
         The `context` argument may be used to add information to warnings
-        emitted during subsitution.
+        emitted during substitution.
 
         """
         return _substitute(self, to_substitute, context, max_iterations, warn_max_iter)
@@ -70,7 +70,7 @@ def _substitute(
     """Perform a search-replace on the first argument
 
     The `context` argument may be used to add information to warnings
-    emitted during subsitution.
+    emitted during substitution.
 
     """
     substituted_string = to_substitute

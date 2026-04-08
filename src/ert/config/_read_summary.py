@@ -49,7 +49,7 @@ def read_summary(
 
     """
     if summary_basename.lower().endswith(".data"):
-        # For backwards compatability, it is
+        # For backwards compatibility, it is
         # allowed to give REFCASE and ECLBASE both
         # with and without .DATA extensions
         summary_basename = summary_basename[:-5]
@@ -166,7 +166,7 @@ def _read_spec(
         if should_load_key(key):
             if key in index_mapping:
                 # only keep the index of the last occurrence of a key
-                # this is done for backwards compatability
+                # this is done for backwards compatibility
                 # and to have unique keys
                 indices[index_mapping[key]] = i
             else:

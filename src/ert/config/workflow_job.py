@@ -265,7 +265,7 @@ class SiteInstalledErtScriptWorkflow(BaseErtScriptWorkflow):
         }
 
 
-# We keep the old name for compatability with .legacy_ertscript_workflow
+# We keep the old name for compatibility with .legacy_ertscript_workflow
 # all of which add ErtScriptWorkflow (always through plugins, i.e., site-installed)
 ErtScriptWorkflow = SiteInstalledErtScriptWorkflow
 

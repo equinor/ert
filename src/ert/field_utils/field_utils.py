@@ -26,7 +26,7 @@ class AxisOrientation(Enum):
     """
     Defines the grid index origin. It is ONLY related to the
     order of the grid index, not the coordinates axis.
-    For a non-rotated grid, left-handed means that grid index origion
+    For a non-rotated grid, left-handed means that grid index origin
     is lower left corner, the same as the local coordinate origin.
     I-index is increasing in direction EAST or to the right,
     J-index is increasing in direction NORTH or upwards

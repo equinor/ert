@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class LegacyErtScriptWorkflow:
-    """This is a wrapper around ErtScriptWorkflow to keep backwards compatability"""
+    """This is a wrapper around ErtScriptWorkflow to keep backwards compatibility"""
 
     def __init__(
         self, actual_workflow: ErtScriptWorkflow, workflow_configs: WorkflowConfigs

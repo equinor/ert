@@ -1161,7 +1161,7 @@ class ErtConfig(BaseModel):
             )
 
             # The observations are created here because create_observation_dataframes
-            # will perform additonal validation which needs the context in
+            # will perform additional validation which needs the context in
             # obs_configs which is stripped by pydantic
             has_rft_observations = any(
                 isinstance(o, RFTObservation) for o in obs_configs
@@ -1266,9 +1266,9 @@ class ErtConfig(BaseModel):
 
     @classmethod
     def _log_config_dict(cls, content_dict: dict[str, Any]) -> None:
-        # The content of the message is sanitized before beeing sendt to App Insights
-        # to make sure GDPR-rules are not violated. In doing do, the message length
-        # will typically increase a bit. To Avoid hiting the App Insights' hard limit
+        # The content of the message is sanitized before being sendt to App Insights
+        # to make sure GDPR-rules are not violated. In doing so, the message length
+        # will typically increase a bit. To Avoid hitting the App Insights' hard limit
         # of message length, the limit is set to 80% of
         # MAX_MESSAGE_LENGTH_APP_INSIGHTS = 32768
         SAFE_MESSAGE_LENGTH_LIMIT = 26214  # <= MAX_MESSAGE_LENGTH_APP_INSIGHTS * 0.8

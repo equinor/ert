@@ -74,7 +74,7 @@ class ExportRunpathJob(ErtScript):
         if not args:
             return (
                 f"0-{number_of_realizations - 1}",
-                "0-0",  # weird default behavior, kept for backwards compatability
+                "0-0",  # weird default behavior, kept for backwards compatibility
             )
         if "|" not in args:
             raise ValueError("Expected | in EXPORT_RUNPATH arguments")

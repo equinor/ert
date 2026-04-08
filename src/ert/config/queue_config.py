@@ -337,7 +337,7 @@ def _log_duplicated_queue_options(
 
 def _raise_for_defaulted_invalid_options(queue_config_list: list[list[str]]) -> None:
     # Invalid options names with no values (i.e. defaulted) are not passed to
-    # the validation system, thus we neeed to catch them expliclitly
+    # the validation system, thus we need to catch them explicitly
     for queue_system, option_name, *_ in queue_config_list:
         if option_name not in valid_options[queue_system]:
             raise ConfigValidationError.with_context(

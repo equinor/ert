@@ -219,7 +219,7 @@ def data_for_response(
                 .to_pandas()
             )
             df = df.set_index(["Date", "Realization"])
-            # This performs the same aggragation by mean of duplicate values
+            # This performs the same aggregation by mean of duplicate values
             # as in ert/analysis/_es_update.py
             df = df.groupby(["Date", "Realization"]).mean()
             summary_value_col = 0

@@ -67,8 +67,8 @@ def find_unsmry(basepath: Path) -> Path | None:
     def _is_unsmry(base: str, path: str) -> bool:
         if "." not in path:
             return False
-        splitted = path.split(".")
-        return splitted[-2].endswith(base) and splitted[-1].lower() in {
+        split = path.split(".")
+        return split[-2].endswith(base) and split[-1].lower() in {
             "unsmry",
             "funsmry",
         }

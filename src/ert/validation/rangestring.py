@@ -63,7 +63,7 @@ def rangestring_to_mask(rangestring: str, length: int) -> list[bool]:
     """
     mask = [False] * length
     if not rangestring:
-        # An empty string means no active indecies. Note that an
+        # An empty string means no active indices. Note that an
         # IndexRange-typed instance being None means the opposite
         return mask
     for range_ in rangestring.split(","):
