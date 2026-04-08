@@ -49,7 +49,7 @@ def test_that_get_machine_name_is_predictive(mocker):
     # as an implementation detail.
     expected_resolved_name = ptr_records[0].rstrip(".")
 
-    # Avoid possibility of flakyness in code paths not relevant
+    # Avoid possibility of flakiness in code paths not relevant
     # for this test:
     mocker.patch("socket.gethostname", return_value=None)
     mocker.patch("socket.gethostbyname", return_value=None)

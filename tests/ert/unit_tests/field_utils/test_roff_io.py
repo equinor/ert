@@ -27,7 +27,7 @@ def test_that_attempting_to_export_infty_fails(infty_val):
     "dtype",
     [
         pytest.param(np.float32, id="usually float is used internally for field"),
-        pytest.param(np.float64, id="roff parameter must be float for compatability"),
+        pytest.param(np.float64, id="roff parameter must be float for compatibility"),
     ],
 )
 def test_that_outputting_masked_results_in_rms_undefined(dtype):

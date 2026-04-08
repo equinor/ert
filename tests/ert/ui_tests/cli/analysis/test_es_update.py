@@ -98,7 +98,7 @@ def test_that_surfaces_retain_their_order_when_loaded_and_saved_by_ert():
         )
         surf.to_file(f"surface/surf_init_{i}.irap", fformat="irap_ascii")
 
-    # Single observation with a large ERROR to make sure the udpate is minimal.
+    # Single observation with a large ERROR to make sure the update is minimal.
     obs = """
     SUMMARY_OBSERVATION WOPR_OP1_9
     {

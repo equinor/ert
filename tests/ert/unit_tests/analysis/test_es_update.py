@@ -884,7 +884,7 @@ def setup_dataframe_for_compute_observation_statuses(
 
     for obs_index in overspread_responses:
         for real in range(num_reals):
-            # Make the responses deviate ALOT from the observation
+            # Make the responses deviate A LOT from the observation
             # (Approximating to JUST ABOVE the cutoff would require some more logic)
             # Also ensure mean deviates from obs to avoid collapse
             responses_per_real[obs_index, real] += 3333 if real % 2 == 0 else -6666

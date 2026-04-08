@@ -9,7 +9,7 @@ The tests are run onprem in a komodo-releases workflow called run_ert_pytest_sto
 
 Make sure you update the baseline after adding new tests, or changing their definition in any way, so that the comparison can be done. This can be done by running the Github Actions job, which will create a PR with the new result (if you check off the "save_on_success" option). The benchmark baseline version is set in the workflow as an env variable, and has to be changed there. This is to avoid having regression over time (in regards to the initial result).
 
-Don't allow the performance to gradually change inadvertantly when adding a new baseline.
+Don't allow the performance to gradually change inadvertently when adding a new baseline.
 
 ## Fixture with example data
 
