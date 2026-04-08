@@ -86,6 +86,8 @@ ECL_BASE_DEPRECATION_MSG = (
     "will be removed in the future. Please use <ECLBASE> instead."
 )
 
+PLACEHOLDER_PATTERN = re.compile(r"<[^<>]+>")
+
 
 @dataclass
 class RandomSeedGenerator:
@@ -104,6 +106,23 @@ class RandomSeedGenerator:
         )
         assert isinstance(int_seed, int)
         return int_seed
+
+
+def _log_unsubstituted_forward_model_args(
+    step_name: str, substituted_arg_values: list[str]
+) -> None:
+    unresolved_values: set[str] = set()
+    for value in substituted_arg_values:
+        unresolved_values.update(PLACEHOLDER_PATTERN.findall(value))
+
+    if not unresolved_values:
+        return
+
+    logger.info(
+        "Forward model step %s has unsubstituted variables: %s",
+        step_name,
+        ", ".join(unresolved_values),
+    )
 
 
 def create_forward_model_json(
@@ -626,6 +645,7 @@ def create_list_of_forward_model_steps_to_run(
     errors = []
     fm_steps: list[ForwardModelStep] = []
 
+    user_positional_args_by_step: dict[int, list[str]] = {}
     substituter = Substitutions(substitutions)
     env_vars = {}
     for key, val in config_dict.get("SETENV", []):
@@ -655,12 +675,16 @@ def create_list_of_forward_model_steps_to_run(
             continue
 
         fm_step.private_args = {}
+        user_positional_args: list[str] = []
         for arg in args:
             match arg:
                 case key, val:
                     fm_step.private_args[key] = val
                 case val:
                     fm_step.arglist.append(val)
+                    user_positional_args.append(val)
+
+        user_positional_args_by_step[id(fm_step)] = user_positional_args
 
         try:
             fm_step.check_required_keywords()
@@ -673,6 +697,17 @@ def create_list_of_forward_model_steps_to_run(
     for fm_step in fm_steps:
         if fm_step.name == "DESIGN2PARAMS":
             dm_validator.validate_design_matrix(fm_step.private_args)
+
+        real_iter_substituter = substituter.real_iter_substituter(0, 0)
+        substituted_arg_values = [
+            real_iter_substituter.substitute(value)
+            for value in fm_step.private_args.values()
+        ]
+        substituted_arg_values.extend(
+            real_iter_substituter.substitute(value)
+            for value in user_positional_args_by_step.get(id(fm_step), [])
+        )
+        _log_unsubstituted_forward_model_args(fm_step.name, substituted_arg_values)
 
         if fm_step.name in preinstalled_forward_model_steps:
             if "<ECL_BASE>" in str(fm_step):
