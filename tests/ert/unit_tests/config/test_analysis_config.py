@@ -418,6 +418,12 @@ def test_misfit_configuration(config, expected):
             [["NOT_A_THING", "AUTO_SCALE", "OBS_*"]],
             pytest.raises(ConfigValidationError, match="ANALYSIS_SET_VAR NOT_A_THING"),
         ),
+        (
+            [["FOO", "INVERSION", "EXACT"]],
+            pytest.raises(
+                ConfigValidationError, match="ANALYSIS_SET_VAR FOO INVERSION"
+            ),
+        ),
     ],
 )
 def test_config_wrong_module(config, expectation):
