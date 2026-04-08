@@ -16,7 +16,7 @@ this to work, Qt needs to have complete control over the process.
 
 Python, like Javascript, is mostly single-threaded. While Javascript in
 the browser is explicitly single-threaded, Python supports creating
-threads, but the Global Intepreter Lock makes Python non-concurrent. Because
+threads, but the Global Interpreter Lock makes Python non-concurrent. Because
 Qt needs to have complete control over the process, Python functions
 should be expected to be short and complete quickly. In our code-base,
 this is often not the case. This is equivalent to a web browser having

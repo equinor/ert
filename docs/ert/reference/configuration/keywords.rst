@@ -54,7 +54,7 @@ Keyword name                                                            Required
 :ref:`MAX_RUNTIME <max_runtime>`                                        NO                                      0                               Set the maximum runtime in seconds for a realization (0 means no runtime limit)
 :ref:`MAX_SUBMIT <max_submit>`                                          NO                                      2                               How many times the queue system should retry a simulation
 :ref:`MIN_REALIZATIONS <min_realizations>`                              NO                                      0                               Set the number of minimum realizations that has to succeed in order for the run to continue (0 means identical to NUM_REALIZATIONS - all must pass).
-:ref:`NUM_CPU <num_cpu>`                                                NO                                      1                               Set the number of CPUs. Intepretation varies depending on context
+:ref:`NUM_CPU <num_cpu>`                                                NO                                      1                               Set the number of CPUs. Interpretation varies depending on context
 :ref:`NUM_REALIZATIONS <num_realizations>`                              YES                                                                     Set the number of reservoir realizations to use
 :ref:`OBS_CONFIG <obs_config>`                                          NO                                                                      File specifying observations with uncertainties
 :ref:`QUEUE_OPTION <queue_option>`                                      NO                                                                      Set options for an ERT queue system
@@ -631,7 +631,7 @@ simulations are executed. It should contain <IENS> and <ITER>, which
 will be replaced by the realization number and iteration number when ERT creates the folders.
 By default, RUNPATH is set to "simulations/realization-<IENS>/iter-<ITER>".
 
-Deprecated syntax still allow use of two `%d` specifers. Use of more than two `%d` specifiers,
+Deprecated syntax still allow use of two `%d` specifiers. Use of more than two `%d` specifiers,
 using multiple `<IENS>` or `<ITER>` keywords or mixing styles is prohibited.
 
 *Example:*
@@ -645,7 +645,7 @@ using multiple `<IENS>` or `<ITER>` keywords or mixing styles is prohibited.
 
 ::
 
-        -- Using RUNPATH with two %d specifers.
+        -- Using RUNPATH with two %d specifiers.
         RUNPATH /mnt/my_scratch_disk/realization-%d/iteration-%d
 
 The RUNPATH keyword is optional.
@@ -778,7 +778,7 @@ STOP_LONG_RUNNING
 The STOP_LONG_RUNNING key is used in combination with the MIN_REALIZATIONS key
 to control the runtime of simulations. When STOP_LONG_RUNNING is set to TRUE,
 MIN_REALIZATIONS is the minimum number of realizations run before the
-simulation is stopped. After MIN_REALIZATIONS have succeded successfully, the
+simulation is stopped. After MIN_REALIZATIONS have succeeded successfully, the
 realizations left are allowed to run for 25% of the average runtime for
 successful realizations, and then killed.
 
@@ -1325,7 +1325,7 @@ config file:
 
         GEN_KW  MY-FAULTS   MULTFLT.tmpl   MULTFLT.INC   MULTFLT.txt
 
-Here ``MY-FAULTS`` is the (arbitrary) key assigned to the fault multiplers,
+Here ``MY-FAULTS`` is the (arbitrary) key assigned to the fault multipliers,
 ``MULTFLT.tmpl`` is the template file, which can look like this:
 
 ::

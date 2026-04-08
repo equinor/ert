@@ -202,7 +202,7 @@ fix minor details (formatting, linting, moving, simple refactoring ...) in the
 vicinity of your work.
 
 If you find that you want to do lots of changes that are not directly related
-to the issue you're working on, create a seperate PR for them so as to avoid
+to the issue you're working on, create a separate PR for them so as to avoid
 noise in the review process.
 
 ## Pull Request Process

@@ -9,7 +9,7 @@ Most of the options that can be set in the ``optimization`` section will be
 implemented by all algorithms. These options are documented in the section
 :ref:`cha_config_reference`. In addition to these standard option it is possible
 to pass generic options via the ``options`` keyword. To find the generic options
-that are supported by a backend, consult their documenation.
+that are supported by a backend, consult their documentation.
 
 
 Out of the box, EVEREST supports Dakota and SciPy backends.

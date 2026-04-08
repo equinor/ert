@@ -321,7 +321,7 @@ Slurm systems
 -------------
 
 `Slurm <https://slurm.schedmd.com/>`_ is an open source queue system with many
-of the same capabilites as LSF. The Slurm support in ERT assumes that the
+of the same capabilities as LSF. The Slurm support in ERT assumes that the
 computer you are running on is part of the Slurm cluster and no capabilities
 for ``ssh`` forwarding, shell to use and so on is provided.
 

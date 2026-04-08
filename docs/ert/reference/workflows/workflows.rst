@@ -58,7 +58,7 @@ state of the experiment that is running:
 
 .. note::
     The current ensemble will depend on the context. For hooked workflows the ensemble will be:
-    `PRE_SIMULATION`: parameters and no reponses in ensemble
+    `PRE_SIMULATION`: parameters and no responses in ensemble
     `POST_SIMULATION`: parameters and responses in ensemble
     `PRE_FIRST_UPDATE`/`PRE_UPDATE`: parameters and responses in ensemble
     `POST_UPDATE`: parameters and responses in ensemble
