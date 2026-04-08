@@ -79,7 +79,7 @@ def run_gui(args: Namespace, plugins: ErtRuntimePlugins | None = None) -> int:
         """A custom exception hook is needed in order to fully propagate spans and logs
         through OpenTelemetry when exceptions happen in the Qt event loop.
 
-        Note: Any exception occuring in this function will deadlock the application."""
+        Note: Any exception occurring in this function will deadlock the application."""
         span.set_status(Status(StatusCode.ERROR))
         try:
             span.record_exception(value)

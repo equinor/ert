@@ -416,7 +416,7 @@ class DesignMatrix:
         """
         Construct a dict of keys and values to be used as defaults from the
         first two columns in a spreadsheet. Only returns the keys that are
-        different from the exisiting parameters.
+        different from the existing parameters.
 
         Returns a dict of default values
 

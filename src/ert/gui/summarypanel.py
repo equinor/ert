@@ -147,7 +147,7 @@ class SummaryPanel(QFrame):
         """Runlength encode a list of strings.
 
         Returns a list of tuples, first element is the string, and the second
-        element is the count of consecutive occurences of the string at the current
+        element is the count of consecutive occurrences of the string at the current
         position."""
         string_counts: list[tuple[str, int]] = []
         for string in strings:

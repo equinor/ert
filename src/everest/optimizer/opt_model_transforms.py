@@ -397,7 +397,7 @@ class ConstraintScaler(NonlinearConstraintTransform):
     def bounds_to_optimizer(
         self, lower_bounds: NDArray[np.float64], upper_bounds: NDArray[np.float64]
     ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
-        """Transform the bounds of teh constraints to the optimizer domain.
+        """Transform the bounds of the constraints to the optimizer domain.
 
         Args:
              lower_bounds:  Lower bounds in the user domain.

@@ -116,7 +116,7 @@ def parse_qstat(qstat_output: str) -> dict[str, dict[str, str]]:
 
 
 class OpenPBSDriver(Driver):
-    """Driver targetting OpenPBS (https://github.com/openpbs/openpbs) / PBS Pro"""
+    """Driver targeting OpenPBS (https://github.com/openpbs/openpbs) / PBS Pro"""
 
     def __init__(
         self,

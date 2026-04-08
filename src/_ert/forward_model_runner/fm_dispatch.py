@@ -33,7 +33,7 @@ if TYPE_CHECKING:
         experiment_id: str | None
 
 
-# This is incorrecty named, but is kept to avoid a breaking change.
+# This is incorrectly named, but is kept to avoid a breaking change.
 # "job" was previously used for what is now called a "forward_model_step".
 FORWARD_MODEL_DESCRIPTION_FILE = "jobs.json"
 

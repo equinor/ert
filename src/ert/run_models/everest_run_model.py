@@ -1207,7 +1207,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         substitutions = self.substitutions
         self.active_realizations = [True] * len(sim_to_model_realization)
 
-        # Function evalutions do not have a number/id yet, so we index
+        # Function evaluations do not have a number/id yet, so we index
         # them from zero in each model realization:
         eval_idx: defaultdict[int, int] = defaultdict(lambda: 0)
         for sim_id, (model_realization, perturbation) in enumerate(

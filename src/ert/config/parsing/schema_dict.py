@@ -47,7 +47,7 @@ class SchemaItemDict(UserDict[str, SchemaItem]):
     def add_deprecations(self, deprecated_keywords_list: list[DeprecationInfo]) -> None:
         for info in deprecated_keywords_list:
             # Add it to the schema only so that it is
-            # catched by the parser
+            # caught by the parser
             if info.keyword not in self:
                 self[info.keyword] = SchemaItem.deprecated_dummy_keyword(info)
             else:

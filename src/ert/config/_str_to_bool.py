@@ -9,7 +9,7 @@ def str_to_bool(txt: str) -> bool:
     """This function converts text to boolean values according to the rules of
     the FORWARD_INIT keyword.
 
-    The rules for str_to_bool is keep for backwards compatability
+    The rules for str_to_bool is keep for backwards compatibility
 
     First, any upper/lower case true/false value is converted to the corresponding
     boolean value:
