@@ -65,7 +65,7 @@ def test_search_bar_highlight_all(qtbot: QtBot):
     text_box = QPlainTextEdit()
 
     # This string has GUI starting at position 8 and 30
-    # The higlight of yellow (correctly) starts after the character, so from position 9
+    # The highlight of yellow (correctly) starts after the character, so from position 9
     input_text = "Testing GUI is so fun. I love GUI forever"
     text_box.setPlainText(input_text)
     search_bar = SearchBar(text_box)

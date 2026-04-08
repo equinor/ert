@@ -192,7 +192,7 @@ def test_move_directory():
     assert not Path("dir2/file").exists()
     assert not Path("dir1").exists()
 
-    # Test moving directory inside already existing direcotry
+    # Test moving directory inside already existing directory
     mkdir("dir1")
     Path("dir1/file3").write_text("Hei!", encoding="utf-8")
     move_directory("dir1", "dir2/dir1")
@@ -333,7 +333,7 @@ def test_that_delete_directory_on_a_symlink_to_a_directory_is_conditionally_igno
     directory name (the symlink), then the link itself is kept, but the directory
     it links to will be removed."
 
-    This is true for Linux, but there is an oddity for Mac in which this is slighly
+    This is true for Linux, but there is an oddity for Mac in which this is slightly
     altered as documented by this test.
     """
     mkdir("link_target")
@@ -433,7 +433,7 @@ def test_copy_directory_reports_multiple_errors():
     with pytest.raises(OSError, match="No such file or directory") as exc_info:
         copy_directory(somedir, "copydir")
 
-    # (The order of occurence of the filenames in the string is non-deterministic)
+    # (The order of occurrence of the filenames in the string is non-deterministic)
     assert some_symlink in str(exc_info.value)
     assert some_other_symlink in str(exc_info.value)
 

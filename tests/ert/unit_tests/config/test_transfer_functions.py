@@ -110,7 +110,7 @@ def valid_derrf_parameters():
 
 @given(nice_floats(), valid_derrf_parameters())
 def test_that_derrf_is_within_bounds(x, arg):
-    """The result shold always be between (or equal) min and max"""
+    """The result should always be between (or equal) min and max"""
     dist = get_distribution("DERRF", arg)
     assert arg[1] <= transform_scalar(dist, x) <= arg[2]
 
@@ -127,7 +127,7 @@ def test_that_derrf_creates_at_least_steps_or_less_distinct_values(xlist, arg):
 
 @given(nice_floats(), valid_derrf_parameters())
 def test_that_derrf_corresponds_scaled_binned_normal_cdf(x, arg):
-    """Check correspondance to normal cdf with -mu=_skew and sd=_width"""
+    """Check correspondence to normal cdf with -mu=_skew and sd=_width"""
     steps, min_, max_, skew, width = arg
     q_values = np.linspace(start=0, stop=1, num=steps)
     q_checks = np.linspace(start=0, stop=1, num=steps + 1)[1:]

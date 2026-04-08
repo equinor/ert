@@ -826,7 +826,7 @@ async def test_schedule_kills_in_batches(
 async def test_batch_killing_runs_batches_in_parallell(
     tmp_path, mock_driver, monkeypatch, storage, caplog
 ):
-    """This is a test that makes sure the batches run in parallell and not in series.
+    """This is a test that makes sure the batches run in parallel and not in series.
     Previously, this ran in series, and caused jobs to time out as bkill of hundreds
     of jobs at the same time often takes more than 10 seconds.
     """
@@ -880,7 +880,7 @@ async def test_batch_killing_runs_batches_in_parallell(
         )
 
     assert driver_kill_call_count == 2, (
-        "Batch killing did not run multiple batches in parallell"
+        "Batch killing did not run multiple batches in parallel"
     )
     # Multiple batches should now be waiting for this event to be set
     driver_kill_event.set()

@@ -85,7 +85,7 @@ def test_rerun_failed_all_realizations(opened_main_window_poly, qtbot):
     qtbot.waitUntil(lambda: run_dialog._tab_widget.currentWidget() is not None)
 
     assert not any(run_model._create_mask_from_failed_realizations()), (
-        "Not all realizations were successfull"
+        "Not all realizations were successful"
     )
 
 
