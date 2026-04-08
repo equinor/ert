@@ -3,6 +3,7 @@ from __future__ import annotations
 import time
 from collections.abc import Callable, Iterable
 
+import networkx as nx
 import numpy as np
 import polars as pl
 import scipy as sp
@@ -34,6 +35,23 @@ from .snapshots import (
     ObservationStatus,
     SmootherSnapshot,
 )
+
+
+def prune_nan_nodes(
+    graph: nx.Graph[int], nan_mask: npt.NDArray[np.bool_]
+) -> nx.Graph[int]:
+    """Remove NaN-flagged nodes from a parameter graph and relabel to 0..n-1.
+
+    After removal, the remaining nodes are relabeled to contiguous integers
+    so that node k corresponds to column k in the NaN-filtered parameter array.
+    Spatial adjacency between surviving nodes is preserved; no new edges are added.
+    """
+    nan_nodes = set(np.where(nan_mask)[0].tolist())
+    graph = graph.copy()
+    graph.remove_nodes_from(nan_nodes)
+    return nx.convert_node_labels_to_integers(  # type: ignore[call-overload]
+        graph, first_label=0, ordering="sorted"
+    )
 
 
 def enif_update(
@@ -154,12 +172,40 @@ def analysis_EnIF(
 
     X_full = np.vstack(list(param_arrays.values()))
 
-    X_full_scaler = StandardScaler()
-    X_full_scaled = X_full_scaler.fit_transform(X_full.T)
+    nan_row_mask = np.any(np.isnan(X_full), axis=1)
+    if nan_row_mask.any():
+        num_nan = int(nan_row_mask.sum())
+        num_all_nan = int(np.all(np.isnan(X_full), axis=1).sum())
+        num_partial_nan = num_nan - num_all_nan
+        log_msg = (
+            f"EnIF: Excluding {num_nan}/{len(nan_row_mask)} parameter rows "
+            f"containing NaN ({num_all_nan} fully inactive"
+        )
+        if num_partial_nan > 0:
+            log_msg += (
+                f", {num_partial_nan} partially active — "
+                f"these will not be updated for any realization"
+            )
+        log_msg += ")"
+        logger.info(log_msg)
+        progress_callback(AnalysisStatusEvent(msg=log_msg))
+
+    X_clean = X_full[~nan_row_mask]
+    if X_clean.shape[0] == 0:
+        msg = "All parameter rows contain NaN — cannot run EnIF update"
+        data = DataSection(
+            header=smoother_snapshot.header,
+            data=smoother_snapshot.csv,
+            extra=smoother_snapshot.extra,
+        )
+        raise ErtAnalysisError(msg, data=data)
+
+    X_clean_scaler = StandardScaler()
+    X_clean_scaled = X_clean_scaler.fit_transform(X_clean.T)
 
     # Call fit: Learn sparse linear map only
     H = linear_boost_ic_regression(
-        U=X_full_scaled,
+        U=X_clean_scaled,
         Y=S.T,
         verbose_level=5,
     )
@@ -168,10 +214,20 @@ def analysis_EnIF(
     Prec_u = sp.sparse.csc_matrix((0, 0), dtype=float)
     for param_group in updated_parameters:
         config_node = source_ensemble.experiment.parameter_configuration[param_group]
+        X_local = param_arrays[param_group]
+
+        local_nan_mask = np.any(np.isnan(X_local), axis=1)
+        X_local_clean = X_local[~local_nan_mask]
+
+        if X_local_clean.shape[0] == 0:
+            continue
+
         X_local_scaler = StandardScaler()
-        X_scaled = X_local_scaler.fit_transform(param_arrays[param_group].T)
+        X_scaled = X_local_scaler.fit_transform(X_local_clean.T)
 
         graph_u_sub = config_node.load_parameter_graph()
+        if local_nan_mask.any():
+            graph_u_sub = prune_nan_nodes(graph_u_sub, local_nan_mask)
 
         # This works for up to ~10^5 parameters
         Prec_u_sub = fit_precision_cholesky_approximate(
@@ -204,8 +260,8 @@ def analysis_EnIF(
         neighbor_propagation_order=15, verbose_level=1
     )
 
-    X_full = gtmap.transport(
-        X_full_scaled,
+    X_updated = gtmap.transport(
+        X_clean_scaled,
         S.T,
         observation_values,
         update_indices=update_indices,
@@ -213,7 +269,9 @@ def analysis_EnIF(
         verbose_level=5,
         seed=random_seed,
     )
-    X_full = X_full_scaler.inverse_transform(X_full).T
+    X_updated = X_clean_scaler.inverse_transform(X_updated).T
+
+    X_full[~nan_row_mask] = X_updated
 
     # Iterate over parameters to store the updated ensemble
     log_msg = f"Storing {len(updated_parameters)} updated parameter groups"
