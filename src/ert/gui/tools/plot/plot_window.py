@@ -28,6 +28,7 @@ from ert.config.field import Field
 from ert.dark_storage.common import get_storage_api_version
 from ert.field_utils import transform_observation_locations
 from ert.gui.ertwidgets import CopyButton, showWaitCursorWhileWaiting
+from ert.gui.utils import IS_EVEREST_APPLICATION
 from ert.services import ServerBootFail
 from ert.utils import log_duration
 
@@ -183,12 +184,6 @@ class PlotWindow(QMainWindow):
                 self._key_definitions = []
             QApplication.restoreOverrideCursor()
 
-            is_everest = any(
-                k.metadata.get("data_origin")
-                in {"everest_parameters", "everest_objectives", "everest_constraints"}
-                for k in self._key_definitions
-            )
-
             self._plot_customizer = PlotCustomizer(self, self._key_definitions)
             self._plot_customizer.settingsChanged.connect(self.keySelected)
             self._central_tab = QTabWidget()
@@ -204,7 +199,7 @@ class PlotWindow(QMainWindow):
 
             self._plot_widgets: list[PlotWidget] = []
 
-            if not is_everest:
+            if not IS_EVEREST_APPLICATION:
                 self.addPlotWidget(ENSEMBLE, EnsemblePlot())
                 self.addPlotWidget(STATISTICS, StatisticsPlot())
                 self.addPlotWidget(MISFITS, MisfitsPlot())
@@ -228,7 +223,7 @@ class PlotWindow(QMainWindow):
             self._current_tab_index = -1
             self._prev_key_dimensionality = -1
             self._prev_tab_widget_index_map: dict[int, int] = {}
-            if is_everest:
+            if IS_EVEREST_APPLICATION:
                 self._prev_tab_widget_index_map = {
                     1: 0,
                     2: 1,
@@ -251,16 +246,13 @@ class PlotWindow(QMainWindow):
 
             plot_case_objects = [obj for obj in ensembles if not obj.hidden]
 
-            self._data_type_keys_widget = DataTypeKeysWidget(
-                self._key_definitions, is_everest
-            )
+            self._data_type_keys_widget = DataTypeKeysWidget(self._key_definitions)
             self._data_type_keys_widget.dataTypeKeySelected.connect(self.keySelected)
             self.addDock("Data types", self._data_type_keys_widget)
 
             self._ensemble_selection_widget = EnsembleSelectionWidget(
                 plot_case_objects,
                 self._plot_customizer.getPlotConfig().getNumberOfColors(),
-                is_everest=is_everest,
             )
 
             self._ensemble_selection_widget.ensembleSelectionChanged.connect(
@@ -557,17 +549,13 @@ class PlotWindow(QMainWindow):
             and (key_def.observations or not widget._plotter.requires_observations)
         ]
 
-        is_everest = key_def.metadata.get("data_origin") in {
-            "everest_objectives",
-            "everest_constraints",
-        }
         everest_widget = next(
             (w for w in self._plot_widgets if w.name == EVEREST_RESPONSES_PLOT), None
         )
 
         if everest_widget:
             if (
-                is_everest
+                IS_EVEREST_APPLICATION
                 or key_def.metadata.get("data_origin") == "everest_batch_objectives"
             ):
                 available_widgets = [everest_widget]
@@ -593,7 +581,7 @@ class PlotWindow(QMainWindow):
         )
 
         if everest_gradients_widget:
-            if is_everest:
+            if IS_EVEREST_APPLICATION:
                 if everest_gradients_widget not in available_widgets:
                     available_widgets.append(everest_gradients_widget)
             elif (

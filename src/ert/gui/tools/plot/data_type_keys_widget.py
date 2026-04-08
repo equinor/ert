@@ -13,6 +13,7 @@ from typing_extensions import override
 
 from ert.gui.ertwidgets import SearchBox
 from ert.gui.icon_utils import load_icon
+from ert.gui.utils import IS_EVEREST_APPLICATION
 
 from .data_type_keys_list_model import DataTypeKeysListModel
 from .data_type_proxy_model import DataTypeProxyModel
@@ -73,7 +74,7 @@ class _Legend(QWidget):
 class DataTypeKeysWidget(QWidget):
     dataTypeKeySelected = Signal()
 
-    def __init__(self, key_defs: list[PlotApiKeyDefinition], is_everest: bool) -> None:
+    def __init__(self, key_defs: list[PlotApiKeyDefinition]) -> None:
         QWidget.__init__(self)
 
         self.__filter_popup = FilterPopup(self, key_defs)
@@ -106,7 +107,7 @@ class DataTypeKeysWidget(QWidget):
         layout.addWidget(self.data_type_keys_widget, 2)
         layout.addStretch()
 
-        if not is_everest:
+        if not IS_EVEREST_APPLICATION:
             layout.addWidget(
                 _Legend(
                     "Observations available", DataTypeKeysListModel.HAS_OBSERVATIONS
