@@ -98,7 +98,7 @@ class EverestClient:
 
                         time.sleep(refresh_interval)
             except ConnectionClosedError:
-                logger.debug("Connetion closed by server")
+                logger.debug("Connection closed by server")
             except Exception:
                 logger.debug(traceback.format_exc())
 
