@@ -125,13 +125,25 @@ class AnalysisConfig:
                         )
                     )
                 continue
+
+            module_options = options.get(module_name)
+            if module_options is None:
+                all_errors.append(
+                    ConfigValidationError(
+                        "Invalid configuration: ANALYSIS_SET_VAR "
+                        f"{module_name} {var_name}"
+                    )
+                )
+                continue
+
             if var_name in deprecated_keys:
                 errors.append(var_name)
                 continue
             if var_name == "ENKF_FORCE_NCOMP":
                 continue
-            if var_name == "INVERSION" and value in inversion_str_map[module_name]:
-                new_value = inversion_str_map[module_name][value]
+            module_inversions = inversion_str_map.get(module_name, {})
+            if var_name == "INVERSION" and value in module_inversions:
+                new_value = module_inversions[value]
                 ConfigWarning.warn(
                     f"Using {value} is deprecated, use:\n"
                     f"ANALYSIS_SET_VAR {module_name} INVERSION {new_value}"
@@ -140,16 +152,7 @@ class AnalysisConfig:
             else:
                 value_to_store = value
 
-            key = var_name.lower()
-            try:
-                options[module_name][key] = value_to_store
-            except KeyError:
-                all_errors.append(
-                    ConfigValidationError(
-                        "Invalid configuration: ANALYSIS_SET_VAR "
-                        f"{module_name} {var_name}"
-                    )
-                )
+            module_options[var_name.lower()] = value_to_store
 
         if errors:
             all_errors.append(
