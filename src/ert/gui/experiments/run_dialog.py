@@ -54,7 +54,7 @@ from ert.gui.model.snapshot import (
     SnapshotModel,
 )
 from ert.gui.tools.file import FileDialog
-from ert.gui.utils import IS_EVEREST_APPLICATION
+from ert.gui.utils import is_everest_application
 from ert.run_models import (
     RunModelAPI,
     RunModelStatusEvent,
@@ -241,7 +241,9 @@ class RunDialog(QFrame):
         self._ticker = QTimer(self)
         self._ticker.timeout.connect(self._on_ticker)
 
-        if IS_EVEREST_APPLICATION:
+        self.is_everest = is_everest_application()
+
+        if self.is_everest:
             self._batch_result_types: list[set[str]] = []
 
         self._total_progress_label = QLabel(
@@ -403,7 +405,7 @@ class RunDialog(QFrame):
             iter_row = start
             self._iteration_progress_label.setText(
                 f"Progress for iteration {iteration}"
-                if not IS_EVEREST_APPLICATION
+                if not self.is_everest
                 else f"Progress for batch {iteration}"
             )
 
@@ -415,13 +417,13 @@ class RunDialog(QFrame):
             tab_index = self._tab_widget.addTab(
                 widget,
                 f"Realizations for iteration {iteration}"
-                if not IS_EVEREST_APPLICATION
+                if not self.is_everest
                 else f"Batch {iteration}...",
             )
             if self._tab_widget.currentIndex() == self._tab_widget.count() - 2:
                 self._tab_widget.setCurrentIndex(tab_index)
 
-            if IS_EVEREST_APPLICATION:
+            if self.is_everest:
                 self._batch_result_types.append(set())
 
     @Slot(QModelIndex)
@@ -439,7 +441,7 @@ class RunDialog(QFrame):
 
             self._fm_step_overview.set_realization(iter_, real)
 
-            if not IS_EVEREST_APPLICATION:
+            if not self.is_everest:
                 text = (
                     f"Realization id {index.data(RealIens)} in "
                     f"iteration {index.data(IterNum)}"
@@ -665,7 +667,7 @@ class RunDialog(QFrame):
 
         self._total_progress_bar.setValue(progress)
 
-        if IS_EVEREST_APPLICATION:
+        if self.is_everest:
             self._total_progress_label.setText(
                 _EVEREST_TOTAL_PROGRESS_TEMPLATE.format(
                     total_progress=progress, iteration=iteration

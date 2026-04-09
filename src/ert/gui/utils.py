@@ -1,3 +1,5 @@
 from PyQt6.QtWidgets import QApplication
 
-IS_EVEREST_APPLICATION = QApplication.applicationName().lower() == "everest"
+
+def is_everest_application() -> bool:
+    return QApplication.applicationName().lower() == "everest"

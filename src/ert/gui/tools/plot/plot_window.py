@@ -28,7 +28,7 @@ from ert.config.field import Field
 from ert.dark_storage.common import get_storage_api_version
 from ert.field_utils import transform_observation_locations
 from ert.gui.ertwidgets import CopyButton, showWaitCursorWhileWaiting
-from ert.gui.utils import IS_EVEREST_APPLICATION
+from ert.gui.utils import is_everest_application
 from ert.services import ServerBootFail
 from ert.utils import log_duration
 
@@ -199,7 +199,9 @@ class PlotWindow(QMainWindow):
 
             self._plot_widgets: list[PlotWidget] = []
 
-            if not IS_EVEREST_APPLICATION:
+            self.is_everest = is_everest_application()
+
+            if not self.is_everest:
                 self.addPlotWidget(ENSEMBLE, EnsemblePlot())
                 self.addPlotWidget(STATISTICS, StatisticsPlot())
                 self.addPlotWidget(MISFITS, MisfitsPlot())
@@ -223,7 +225,7 @@ class PlotWindow(QMainWindow):
             self._current_tab_index = -1
             self._prev_key_dimensionality = -1
             self._prev_tab_widget_index_map: dict[int, int] = {}
-            if IS_EVEREST_APPLICATION:
+            if self.is_everest:
                 self._prev_tab_widget_index_map = {
                     1: 0,
                     2: 1,
@@ -555,7 +557,7 @@ class PlotWindow(QMainWindow):
 
         if everest_widget:
             if (
-                IS_EVEREST_APPLICATION
+                self.is_everest
                 or key_def.metadata.get("data_origin") == "everest_batch_objectives"
             ):
                 available_widgets = [everest_widget]
@@ -581,7 +583,7 @@ class PlotWindow(QMainWindow):
         )
 
         if everest_gradients_widget:
-            if IS_EVEREST_APPLICATION:
+            if self.is_everest:
                 if everest_gradients_widget not in available_widgets:
                     available_widgets.append(everest_gradients_widget)
             elif (
