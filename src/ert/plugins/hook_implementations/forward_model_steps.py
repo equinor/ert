@@ -350,6 +350,19 @@ class Flow(ForwardModelStepPlugin):
 
     def validate_pre_experiment(self, fm_json: ForwardModelStepJSON) -> None:
         allowed_args = {"<VERSION>", "<NUM_CPU>", "<OPTS>", "<ECLBASE>"}
+        if "--np" in self.private_args.get("<OPTS>", ""):
+            raise ForwardModelStepWarning(
+                "Do not supply --np as an option to FLOW, "
+                "set NUM_CPU in the Ert config instead. This will be "
+                "a hard error in the next version of Ert."
+            )
+        if "--threads" in self.private_args.get("<OPTS>", ""):
+            raise ForwardModelStepWarning(
+                "Do not supply --threads as an option to FLOW, "
+                "set NUM_CPU in the Ert config instead. This will be "
+                "a hard error in the next version of Ert."
+            )
+
         if unknowns := set(self.private_args) - allowed_args:
             raise ForwardModelStepWarning(
                 f"Unknown option(s) supplied to Flow: {sorted(unknowns)}"
