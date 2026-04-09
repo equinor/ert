@@ -11,6 +11,7 @@ from .plot_tools import PlotTools
 if TYPE_CHECKING:
     import numpy as np
     import numpy.typing as npt
+    from matplotlib.axes import Axes
     from matplotlib.figure import Figure
 
     from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApiKeyDefinition
@@ -31,9 +32,22 @@ class ValuesOverIterationsPlot:
     i.e., objective or control name) which is treated as the value to plot.
     """
 
+    LEGEND_THRESHOLD = 5
+
     def __init__(self) -> None:
         self.dimensionality = 2
         self.requires_observations = False
+        self._axes: Axes | None = None
+        self.is_improvement = False
+        self._legend_count = 0
+
+    def update_legend(self, line: Line2D) -> None:
+        if (
+            self._axes
+            and not self.is_improvement
+            and self._legend_count > ValuesOverIterationsPlot.LEGEND_THRESHOLD
+        ):
+            self._axes.legend(handles=[line], labels=[line.get_label()])
 
     def plot(
         self,
@@ -45,8 +59,9 @@ class ValuesOverIterationsPlot:
         obs_loc: npt.NDArray[np.float32] | None,
         key_def: PlotApiKeyDefinition | None = None,
     ) -> None:
+        self.is_improvement = False
         config = plot_context.plotConfig()
-        axes = figure.add_subplot(111)
+        self._axes = figure.add_subplot(111)
 
         plot_context.y_axis = plot_context.VALUE_AXIS
         plot_context.x_axis = plot_context.INDEX_AXIS
@@ -60,6 +75,7 @@ class ValuesOverIterationsPlot:
         combined = pd.concat(all_dfs, ignore_index=True)
 
         if "is_improvement" in combined.columns:
+            self.is_improvement = True
             value_col = next(
                 c
                 for c in combined.columns
@@ -70,7 +86,7 @@ class ValuesOverIterationsPlot:
             color = config.nextColor()
             improvement_data = data[data["is_improvement"]]
 
-            lines = axes.plot(
+            lines = self._axes.plot(
                 improvement_data["batch_id"],
                 improvement_data[value_col],
                 "-",
@@ -80,7 +96,9 @@ class ValuesOverIterationsPlot:
             colors = [
                 "red" if not row.is_improvement else color for _, row in data.iterrows()
             ]
-            axes.scatter(data["batch_id"], data[value_col], c=colors, s=20, zorder=5)
+            self._axes.scatter(
+                data["batch_id"], data[value_col], c=colors, s=20, zorder=5
+            )
 
             config.addLegendItem("Accepted", lines[0])
             config.addLegendItem(
@@ -89,12 +107,12 @@ class ValuesOverIterationsPlot:
                     [0], [0], marker="o", color="w", markerfacecolor="red", markersize=8
                 ),
             )
-            axes.xaxis.set_major_locator(MaxNLocator(integer=True))
+            self._axes.xaxis.set_major_locator(MaxNLocator(integer=True))
 
             PlotTools.finalizePlot(
                 plot_context,
                 figure,
-                axes,
+                self._axes,
                 default_x_label="Iteration",
                 default_y_label="Value",
             )
@@ -108,6 +126,7 @@ class ValuesOverIterationsPlot:
         )
 
         realizations = sorted(combined["realization"].unique())
+        self._legend_count = len(realizations)
 
         # This loop is the reason batch controls
         # plot multiple identical plots for each realization.
@@ -119,21 +138,24 @@ class ValuesOverIterationsPlot:
                 continue
 
             color = config.nextColor()
-            lines = axes.plot(
+            lines = self._axes.plot(
                 data["batch_id"],
                 data[value_col],
                 "-o",
+                label=f"Realization {int(realization)}",
                 color=color,
                 markersize=4,
             )
-            config.addLegendItem(f"Realization {int(realization)}", lines[0])
+            if self._legend_count <= ValuesOverIterationsPlot.LEGEND_THRESHOLD:
+                config.addLegendItem(f"Realization {int(realization)}", lines[0])
 
-        axes.xaxis.set_major_locator(MaxNLocator(integer=True))
+        self._axes.xaxis.set_major_locator(MaxNLocator(integer=True))
         PlotTools.finalizePlot(
             plot_context,
             figure,
-            axes,
+            self._axes,
             default_x_label="Iteration",
             default_y_label="Value",
         )
+
         figure.tight_layout()
