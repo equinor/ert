@@ -89,6 +89,7 @@ from .event import (
 )
 
 if TYPE_CHECKING:
+    from ert.gui.experiments.view.runpath_progress_widget import RunpathProgressWidget
     from ert.plugins import ErtRuntimePlugins
 
 logger = logging.getLogger(__name__)
@@ -787,9 +788,27 @@ class RunModel(RunModelConfig, ABC):
         return self.active_realizations.count(True)
 
     @log_duration(logger, logging.INFO)
-    def rm_run_path(self) -> None:
+    def rm_run_path(
+        self,
+        progress_tracker: RunpathProgressWidget | None = None,
+        progress_callback: Callable[[], None] | None = None,
+    ) -> None:
+        run_paths = self.paths
+        if progress_tracker is not None:
+            progress_tracker.start(len(run_paths))
+        if progress_callback is not None:
+            progress_callback()
+
         with concurrent.futures.ThreadPoolExecutor() as executor:
-            executor.map(delete_runpath, self.paths)
+            futures = [
+                executor.submit(delete_runpath, run_path) for run_path in run_paths
+            ]
+            for future in concurrent.futures.as_completed(futures):
+                future.result()
+                if progress_tracker is not None:
+                    progress_tracker.advance()
+                if progress_callback is not None:
+                    progress_callback()
 
     def validate_successful_realizations_count(self) -> None:
         successful_realizations_count = self.get_number_of_successful_realizations()

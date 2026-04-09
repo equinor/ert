@@ -11,6 +11,7 @@ from PyQt6.QtGui import QAction, QStandardItemModel
 from PyQt6.QtWidgets import (
     QApplication,
     QCheckBox,
+    QDialog,
     QFrame,
     QHBoxLayout,
     QMessageBox,
@@ -41,6 +42,7 @@ from .manual_update_panel import ManualUpdatePanel
 from .multiple_data_assimilation_panel import MultipleDataAssimilationPanel
 from .run_dialog import RunDialog
 from .single_test_run_panel import SingleTestRunPanel
+from .view.runpath_progress_widget import RunpathProgressWidget
 
 if TYPE_CHECKING:
     from ert.config import ErtConfig
@@ -354,11 +356,32 @@ class ExperimentPanel(QWidget):
                 return
 
             if delete_runpath_checkbox.checkState() == Qt.CheckState.Checked:
-                QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+                progress_dialog = QDialog(self)
+                progress_dialog.setObjectName("RUN_PATH_PROGRESS_DIALOG")
+                progress_dialog.setWindowTitle("Deleting runpaths")
+                progress_dialog.setWindowModality(Qt.WindowModality.ApplicationModal)
+                progress_layout = QVBoxLayout(progress_dialog)
+                progress_layout.setContentsMargins(0, 0, 0, 0)
+
+                progress_widget = RunpathProgressWidget(
+                    progress_dialog,
+                    initial_status_text="Deleting runpaths...",
+                    completed_action="deleted",
+                )
+                progress_layout.addWidget(progress_widget)
+                progress_dialog.resize(420, 120)
+                progress_dialog.show()
+                QApplication.processEvents()
+
                 try:
-                    model.rm_run_path()
+                    model.rm_run_path(
+                        progress_tracker=progress_widget,
+                        # Force UI update during long deletion process
+                        progress_callback=QApplication.processEvents,
+                    )
                 except OSError as e:
-                    QApplication.restoreOverrideCursor()
+                    progress_dialog.close()
+                    progress_dialog.deleteLater()
                     msg_box = QMessageBox(self)
                     msg_box.setObjectName("RUN_PATH_ERROR_BOX")
                     msg_box.setIcon(QMessageBox.Icon.Warning)
@@ -374,7 +397,9 @@ class ExperimentPanel(QWidget):
                     msg_box_res = msg_box.exec()
                     if msg_box_res == QMessageBox.StandardButton.No:
                         return
-                QApplication.restoreOverrideCursor()
+                else:
+                    progress_dialog.close()
+                    progress_dialog.deleteLater()
 
         self.configuration_summary.log_summary(
             args.mode, model.get_number_of_active_realizations()

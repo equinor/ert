@@ -38,9 +38,7 @@ from ert.gui.experiments.multiple_data_assimilation_panel import (
     MultipleDataAssimilationPanel,
 )
 from ert.gui.experiments.view.realization import RealizationWidget
-from ert.gui.experiments.view.runpath_creation_widget import (
-    RunpathCreationProgressWidget,
-)
+from ert.gui.experiments.view.runpath_progress_widget import RunpathProgressWidget
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.gui.tools.file import FileDialog
 from ert.run_models import (
@@ -1091,7 +1089,7 @@ def test_that_runpath_creation_events_add_update_and_remove_tab(qtbot: QtBot) ->
     assert "Creating runpaths" in dialog._tab_widget.tabText(0)
     assert dialog._tab_widget.currentIndex() == 0
     progress_widget = dialog._tab_widget.widget(0)
-    assert isinstance(progress_widget, RunpathCreationProgressWidget)
+    assert isinstance(progress_widget, RunpathProgressWidget)
     assert progress_widget._bar.maximum() == 3
     assert progress_widget._bar.value() == 0
 
