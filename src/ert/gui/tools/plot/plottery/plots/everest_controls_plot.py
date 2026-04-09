@@ -33,6 +33,7 @@ class EverestControlsPlot:
         self.dimensionality = 2
         self.requires_observations = False
         self.selected_controls: list[str] = []
+        self.LEGEND_THRESHOLD = 5
 
     def set_selected_controls(self, controls: list[str]) -> None:
         self.selected_controls = controls
@@ -61,20 +62,32 @@ class EverestControlsPlot:
 
         combined = pd.concat(all_dfs, ignore_index=True)
 
-        for control in self.selected_controls:
+        n_colors = config.getNumberOfColors()
+        for i, control in (
+            enumerate(self.selected_controls) if self.selected_controls else []
+        ):
             data = combined[combined["control_name"] == control].sort_values("batch_id")
             if data.empty:
                 continue
 
             color = config.nextColor()
+            if i < n_colors:
+                style = "-o"
+            elif i < n_colors * 2:
+                style = "--o"
+            elif i < n_colors * 3:
+                style = ":o"
+            else:
+                style = "-.o"
             lines = axes.plot(
                 data["batch_id"],
                 data["control_value"],
-                "-o",
+                style,
                 color=color,
                 markersize=4,
             )
-            config.addLegendItem(control, lines[0])
+            if len(self.selected_controls) <= self.LEGEND_THRESHOLD:
+                config.addLegendItem(control, lines[0])
             if len(control) <= 20:
                 axes.annotate(
                     control,
