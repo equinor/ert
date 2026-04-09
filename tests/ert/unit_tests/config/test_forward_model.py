@@ -584,6 +584,24 @@ def test_that_flow_fm_step_check_version_availability(plugins_ert_config):
         )
 
 
+def test_that_flow_fm_gives_warning_on_np_in_opts(plugins_ert_config):
+    with pytest.warns(
+        ConfigWarning, match=r".*Do not supply --np as an option to FLOW*"
+    ):
+        plugins_ert_config.from_file_contents(
+            'NUM_REALIZATIONS 1\nFORWARD_MODEL FLOW(<OPTS>="--np=4")\n'
+        )
+
+
+def test_that_flow_fm_gives_warning_on_threads_in_opts(plugins_ert_config):
+    with pytest.warns(
+        ConfigWarning, match=r".*Do not supply --threads as an option to FLOW*"
+    ):
+        plugins_ert_config.from_file_contents(
+            'NUM_REALIZATIONS 1\nFORWARD_MODEL FLOW(<OPTS>="--threads=2")\n'
+        )
+
+
 def test_that_flow_fm_gives_config_warning_on_unknown_options(plugins_ert_config):
     with pytest.warns(ConfigWarning, match=r".*Unknown option.*Flow: .*DUMMY.*"):
         plugins_ert_config.from_file_contents(
