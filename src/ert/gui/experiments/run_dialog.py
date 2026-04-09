@@ -82,7 +82,7 @@ from .view import (
     DiskSpaceWidget,
     ProgressWidget,
     RealizationWidget,
-    RunpathCreationProgressWidget,
+    RunpathProgressWidget,
     UpdateWidget,
 )
 from .view.disk_space_widget import MountType
@@ -627,22 +627,28 @@ class RunDialog(QFrame):
                     event.batch, _batch_type_text(event.batch, batch_types)
                 )
             case StartingTotalRunPathCreationEvent():
-                runpath_creation_progress_widget = RunpathCreationProgressWidget(self)
+                runpath_creation_progress_widget = RunpathProgressWidget(
+                    self,
+                    initial_status_text="Preparing runpaths...",
+                    completed_action="created",
+                )
                 tab_index = self._tab_widget.addTab(
                     runpath_creation_progress_widget, "Creating runpaths..."
                 )
                 self._tab_widget.setCurrentIndex(tab_index)
-                runpath_creation_progress_widget.handle_event(event)
+                runpath_creation_progress_widget.start(event.total_runpaths_to_create)
             case FinishedTotalRunPathCreationEvent():
                 last_index = self._tab_widget.count() - 1
                 runpath_widget = self._tab_widget.widget(last_index)
                 self._tab_widget.removeTab(last_index)
-                if isinstance(runpath_widget, RunpathCreationProgressWidget):
+                if isinstance(runpath_widget, RunpathProgressWidget):
                     runpath_widget.deleteLater()
             case RunPathCreatedEvent():
                 runpath_widget = self._tab_widget.widget(self._tab_widget.count() - 1)
-                if isinstance(runpath_widget, RunpathCreationProgressWidget):
-                    runpath_widget.handle_event(event)
+                if isinstance(runpath_widget, RunpathProgressWidget) and isinstance(
+                    event, RunPathCreatedEvent
+                ):
+                    runpath_widget.advance()
 
     def _get_update_widget(self, iteration: int) -> UpdateWidget:
         for i in range(self._tab_widget.count()):

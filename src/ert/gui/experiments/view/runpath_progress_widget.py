@@ -10,21 +10,21 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from ert.run_models.event import (
-    RunPathCreatedEvent,
-    RunPathCreationEvent,
-    StartingTotalRunPathCreationEvent,
-)
 
+class RunpathProgressWidget(QWidget):
+    """Progress bar shown while runpaths are being processed."""
 
-class RunpathCreationProgressWidget(QWidget):
-    """Progress bar shown as a tab while runpaths are being created."""
-
-    def __init__(self, parent: QWidget | None = None) -> None:
+    def __init__(
+        self,
+        parent: QWidget | None = None,
+        initial_status_text: str = "",
+        completed_action: str = "",
+    ) -> None:
         super().__init__(parent)
 
         self._total: int = 1
-        self._completed_runpaths = 0
+        self._processed_runpaths = 0
+        self._completed_action = completed_action
 
         spin_movie = QMovie("img:loading.gif")
         spin_movie.setSpeed(60)
@@ -34,7 +34,7 @@ class RunpathCreationProgressWidget(QWidget):
         self._spinner.setFixedSize(QSize(16, 16))
         self._spinner.setMovie(spin_movie)
 
-        self._label = QLabel("Preparing runpaths...")
+        self._label = QLabel(initial_status_text)
 
         self._bar = QProgressBar()
         self._bar.setRange(0, 1)
@@ -67,15 +67,20 @@ class RunpathCreationProgressWidget(QWidget):
         layout.addLayout(spinner_row)
         layout.addStretch()
 
-    def handle_event(self, event: RunPathCreationEvent) -> None:
-        if isinstance(event, StartingTotalRunPathCreationEvent):
-            self._total = event.total_runpaths_to_create
-            self._bar.setRange(0, self._total)
-            self._bar.setValue(0)
-        elif isinstance(event, RunPathCreatedEvent):
-            self._completed_runpaths += 1
-            self._bar.setValue(self._completed_runpaths)
+    def start(self, total_runpaths: int) -> None:
+        self._total = total_runpaths
+        self._processed_runpaths = 0
+        self._bar.setRange(0, total_runpaths)
+        self._bar.setValue(0)
+        self._update_label()
 
+    def advance(self) -> None:
+        self._processed_runpaths += 1
+        self._bar.setValue(self._processed_runpaths)
+        self._update_label()
+
+    def _update_label(self) -> None:
         self._label.setText(
-            f"{self._completed_runpaths} / {self._total} runpaths created"
+            f"{self._processed_runpaths} / {self._total} runpaths "
+            f"{self._completed_action}"
         )
