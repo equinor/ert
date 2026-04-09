@@ -66,6 +66,7 @@ class EverestObjectiveFunctionPlot:
 
         realizations = sorted(combined["realization"].unique())
 
+        color = config.nextColor()
         for realization in realizations:
             data = combined[combined["realization"] == realization].sort_values(
                 "batch_id"
@@ -73,7 +74,6 @@ class EverestObjectiveFunctionPlot:
             if data.empty:
                 continue
 
-            color = config.nextColor()
             lines = axes.plot(
                 data["batch_id"],
                 data[value_col],
@@ -82,6 +82,7 @@ class EverestObjectiveFunctionPlot:
                 markersize=4,
             )
             if len(realizations) <= self.LEGEND_THRESHOLD:
+                color = config.nextColor()
                 config.addLegendItem(f"Realization {int(realization)}", lines[0])
 
         axes.spines["right"].set_visible(False)
