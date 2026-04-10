@@ -11,6 +11,7 @@ from resdata.summary import Summary
 
 from ert.__main__ import run_convert_observations
 from ert.config._observations import (
+    DEFAULT_LOCALIZATION_RADIUS,
     BreakthroughObservation,
     GeneralObservation,
     RFTObservation,
@@ -210,7 +211,7 @@ def test_rft_observation_declaration():
             property="PRESSURE",
             north=71.0,
             east=30.0,
-            radius=None,
+            radius=DEFAULT_LOCALIZATION_RADIUS,
             tvd=2000.0,
         )
     ]
@@ -247,7 +248,7 @@ def test_rft_observation_csv_declaration():
             property="PRESSURE",
             north=71.0,
             east=30.0,
-            radius=None,
+            radius=DEFAULT_LOCALIZATION_RADIUS,
             tvd=2000.0,
             md=2500.0,
             zone="zone1",
@@ -261,7 +262,7 @@ def test_rft_observation_csv_declaration():
             property="PRESSURE",
             north=72.0,
             east=31.0,
-            radius=None,
+            radius=DEFAULT_LOCALIZATION_RADIUS,
             tvd=2100.0,
             md=2600.0,
             zone="zone2",
@@ -270,7 +271,7 @@ def test_rft_observation_csv_declaration():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_rft_csv_without_radius_column_gets_radius_defaulted_to_none():
+def test_that_rft_csv_without_radius_column_gets_defaulted():
     Path("rft_observations.csv").write_text(
         dedent(
             """
@@ -299,7 +300,7 @@ def test_that_rft_csv_without_radius_column_gets_radius_defaulted_to_none():
             property="PRESSURE",
             north=71.0,
             east=30.0,
-            radius=None,
+            radius=DEFAULT_LOCALIZATION_RADIUS,
             tvd=2000.0,
             md=2500.0,
             zone="zone1",
@@ -448,7 +449,7 @@ def test_that_property_can_be_specified_for_rft_observation_csv_declaration():
             east=30.0,
             tvd=2000.0,
             md=2500.0,
-            radius=None,
+            radius=DEFAULT_LOCALIZATION_RADIUS,
             zone="zone1",
         )
     ]

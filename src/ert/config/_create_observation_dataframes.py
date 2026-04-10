@@ -8,6 +8,7 @@ from typing import assert_never
 import polars as pl
 
 from ._observations import (
+    DEFAULT_LOCALIZATION_RADIUS,
     BreakthroughObservation,
     GeneralObservation,
     Observation,
@@ -19,8 +20,6 @@ from .parsing import (
     ObservationConfigError,
 )
 from .rft_config import Point, RFTConfig, ZoneName
-
-DEFAULT_LOCALIZATION_RADIUS = 2000
 
 
 def create_observation_dataframes(
