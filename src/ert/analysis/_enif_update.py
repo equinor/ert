@@ -58,7 +58,6 @@ def enif_update(
     prior_storage: Ensemble,
     posterior_storage: Ensemble,
     observations: Iterable[str],
-    parameters: Iterable[str],
     random_seed: int,
     progress_callback: Callable[[AnalysisEvent], None] | None = None,
 ) -> SmootherSnapshot:
@@ -77,7 +76,6 @@ def enif_update(
 
     try:
         analysis_EnIF(
-            parameters,
             observations,
             random_seed,
             smoother_snapshot,
@@ -106,8 +104,32 @@ def enif_update(
     return smoother_snapshot
 
 
+def _load_numeric_parameters(
+    source_ensemble: Ensemble,
+    iens_active_index: npt.NDArray[np.int_],
+) -> tuple[list[str], dict[str, npt.NDArray[np.floating]]]:
+    """Load all numeric parameter groups from the ensemble.
+
+    Returns parameter group names and their arrays. Non-numeric parameters
+    (e.g. categorical design matrix columns) are skipped.
+    """
+    h_map_parameters: list[str] = []
+    param_arrays: dict[str, npt.NDArray[np.floating]] = {}
+
+    for name in source_ensemble.experiment.parameter_configuration:
+        arr = source_ensemble.load_parameters_numpy(name, iens_active_index)
+        if not np.issubdtype(arr.dtype, np.number):
+            logger.info(f"EnIF: Skipping non-numeric parameter group '{name}'")
+            continue
+        h_map_parameters.append(name)
+        param_arrays[name] = (
+            arr.astype(np.float64) if np.issubdtype(arr.dtype, np.integer) else arr
+        )
+
+    return h_map_parameters, param_arrays
+
+
 def analysis_EnIF(
-    parameters: Iterable[str],
     observations: Iterable[str],
     random_seed: int | None,
     smoother_snapshot: SmootherSnapshot,
@@ -162,19 +184,34 @@ def analysis_EnIF(
     # EnIF ###
     start_enif = time.time()
 
-    updated_parameters = [
-        p
-        for p in parameters
-        if source_ensemble.experiment.parameter_configuration[p].update
-    ]
+    config_map = source_ensemble.experiment.parameter_configuration
 
-    # Load each parameter group once and reuse throughout
-    param_arrays = {
-        group: source_ensemble.load_parameters_numpy(group, iens_active_index)
-        for group in updated_parameters
-    }
+    # Load all numeric parameters for building the H map and precision matrix.
+    # Non-numeric params (e.g. categorical design matrix columns) are skipped.
+    h_map_parameters, param_arrays = _load_numeric_parameters(
+        source_ensemble, iens_active_index
+    )
 
-    X_full = np.vstack(list(param_arrays.values()))
+    updated_parameters = [p for p in h_map_parameters if config_map[p].update]
+    updated_parameters_set = set(updated_parameters)
+
+    if not h_map_parameters:
+        msg = "No numeric parameter groups found — cannot run EnIF update"
+        data = DataSection(
+            header=smoother_snapshot.header,
+            data=smoother_snapshot.csv,
+            extra=smoother_snapshot.extra,
+        )
+        raise ErtAnalysisError(msg, data=data)
+
+    log_msg = (
+        f"EnIF: Using {len(h_map_parameters)} numeric parameter groups for H map, "
+        f"{len(updated_parameters)} will be updated"
+    )
+    logger.info(log_msg)
+    progress_callback(AnalysisStatusEvent(msg=log_msg))
+
+    X_full = np.vstack([param_arrays[g] for g in h_map_parameters])
 
     nan_row_mask = np.any(np.isnan(X_full), axis=1)
     if nan_row_mask.any():
@@ -209,14 +246,14 @@ def analysis_EnIF(
     X_clean_scaler = StandardScaler()
     X_clean_scaled = X_clean_scaler.fit_transform(X_clean.T)
 
-    # Call fit: Learn sparse linear map only
+    # Call fit: Learn sparse linear map from all numeric params to responses
     H = linear_boost_ic_regression(
         U=X_clean_scaled,
         Y=S.T,
         verbose_level=5,
     )
 
-    # Learn the precision matrix block-sparse over parameter groups
+    # Learn the precision matrix block-sparse over all numeric parameter groups
     Prec_u = sp.sparse.csc_array((0, 0), dtype=float)
     for param_group in updated_parameters:
         config_node = source_ensemble.experiment.parameter_configuration[param_group]
@@ -284,25 +321,23 @@ def analysis_EnIF(
 
     X_full[~nan_row_mask] = X_updated
 
-    # Iterate over parameters to store the updated ensemble
+    # Store only the updateable parameter groups
     log_msg = f"Storing {len(updated_parameters)} updated parameter groups"
     logger.info(log_msg)
     progress_callback(AnalysisStatusEvent(msg=log_msg))
-    parameters_updated = 0
-    for param_group in updated_parameters:
-        parameters_to_update = param_arrays[param_group].shape[0]
-        param_group_indices = np.arange(
-            parameters_updated, parameters_updated + parameters_to_update
-        )
-        target_ensemble.save_parameters_numpy(
-            X_full[param_group_indices, :],
-            param_group,
-            iens_active_index,
-        )
-        parameters_updated += parameters_to_update
+    row_offset = 0
+    for param_group in h_map_parameters:
+        n_rows = param_arrays[param_group].shape[0]
+        if param_group in updated_parameters_set:
+            target_ensemble.save_parameters_numpy(
+                X_full[row_offset : row_offset + n_rows, :],
+                param_group,
+                iens_active_index,
+            )
+        row_offset += n_rows
 
     _copy_unupdated_parameters(
-        list(source_ensemble.experiment.parameter_configuration.keys()),
+        list(config_map.keys()),
         updated_parameters,
         iens_active_index,
         source_ensemble,
