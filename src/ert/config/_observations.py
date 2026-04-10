@@ -24,6 +24,8 @@ from .parsing import (
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_LOCALIZATION_RADIUS = 2000
+
 
 class ErrorModes(StrEnum):
     REL = "REL"
@@ -427,7 +429,7 @@ class RFTObservation(BaseModel):
                 error=validate_float(str(row.ERROR), "ERROR"),
                 north=validate_float(str(row.NORTH), "NORTH"),
                 east=validate_float(str(row.EAST), "EAST"),
-                radius=radius,
+                radius=radius if radius is not None else DEFAULT_LOCALIZATION_RADIUS,
                 tvd=validate_float(str(row.TVD), "TVD"),
                 md=validate_float(str(row.MD), "MD") if "MD" in csv_file else None,
                 zone=row.ZONE if "ZONE" in csv_file else None,
@@ -558,7 +560,7 @@ class RFTObservation(BaseModel):
             tvd=tvd,
             md=md,
             zone=zone,
-            radius=radius,
+            radius=radius if radius is not None else DEFAULT_LOCALIZATION_RADIUS,
         )
 
         # Bypass pydantic discarding context
