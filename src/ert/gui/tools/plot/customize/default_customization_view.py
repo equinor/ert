@@ -2,6 +2,8 @@ from typing import TYPE_CHECKING
 
 from typing_extensions import override
 
+from ert.gui.utils import is_everest_application
+
 from .customization_view import CustomizationView, WidgetProperty
 
 if TYPE_CHECKING:
@@ -54,10 +56,13 @@ class DefaultCustomizationView(CustomizationView):
         self.addSpacing()
         self.addCheckBox("legend", "Legend", "Toggle legend visibility.")
         self.addCheckBox("grid", "Grid", "Toggle grid visibility.")
-        self.addCheckBox("history", "History", "Toggle history visibility.")
-        self.addCheckBox(
-            "observations", "Observations", "Toggle observations visibility."
-        )
+
+        self.is_everest = is_everest_application()
+        if not self.is_everest:
+            self.addCheckBox("history", "History", "Toggle history visibility.")
+            self.addCheckBox(
+                "observations", "Observations", "Toggle observations visibility."
+            )
 
     @override
     def applyCustomization(self, plot_config: "PlotConfig") -> None:
@@ -68,8 +73,9 @@ class DefaultCustomizationView(CustomizationView):
 
         plot_config.setLegendEnabled(self.legend)
         plot_config.setGridEnabled(self.grid)
-        plot_config.setHistoryEnabled(self.history)
-        plot_config.setObservationsEnabled(self.observations)
+        if not self.is_everest:
+            plot_config.setHistoryEnabled(self.history)
+            plot_config.setObservationsEnabled(self.observations)
 
     @override
     def revertCustomization(self, plot_config: "PlotConfig") -> None:
@@ -83,5 +89,6 @@ class DefaultCustomizationView(CustomizationView):
 
         self.legend = plot_config.isLegendEnabled()
         self.grid = plot_config.isGridEnabled()
-        self.history = plot_config.isHistoryEnabled()
-        self.observations = plot_config.isObservationsEnabled()
+        if not self.is_everest:
+            self.history = plot_config.isHistoryEnabled()
+            self.observations = plot_config.isObservationsEnabled()
