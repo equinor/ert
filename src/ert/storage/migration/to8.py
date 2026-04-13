@@ -32,7 +32,7 @@ class ObservationDatasetInfo:
             }
             if response_type == "gen_data"
             else {
-                "time": pl.Datetime("ms"),  # type: ignore
+                "time": pl.Datetime("ms"),
                 "observations": pl.Float32,
                 "std": pl.Float32,
             },
