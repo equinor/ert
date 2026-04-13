@@ -15,6 +15,7 @@ from hypothesis import HealthCheck, assume, given, settings
 from hypothesis import strategies as st
 from lark import Token
 from pydantic import RootModel, TypeAdapter
+from xlsxwriter import Workbook
 
 from ert import ErtScript, ErtScriptWorkflow
 from ert.config import (
@@ -3025,3 +3026,39 @@ def test_that_reusing_workflow_name_warns(ert_config_with_job, workflow1, workfl
         Path("my_wf").write_text("MY_JOB\n", encoding="utf-8")
     with pytest.warns(ConfigWarning, match=r"Workflow 'my_wf' was added twice"):
         ert_config_with_job.from_file_contents(config)
+
+
+def test_that_using_too_long_sheetname_in_design_matrix_raises_validation_error(
+    tmp_path,
+):
+    design_matrix_file = tmp_path / "my_design_matrix.xlsx"
+    long_sheet_name = (
+        "A" * 35
+    )  # Excel sheet names have a max length of 31, so this is definitely too long
+    long_default_sheet_name = "B" * 35
+    design_matrix_df = pl.DataFrame()
+    with Workbook(design_matrix_file) as xl_write:
+        design_matrix_df.write_excel(xl_write)
+
+    expected_error = (
+        r"Excel sheet name error\(s\):\n"
+        f"Design sheet name '{long_sheet_name}' exceeds maximum length "
+        r"of 31 characters\.\n"
+        f"Default sheet name '{long_default_sheet_name}' exceeds maximum "
+        r"length of 31 characters\."
+    )
+
+    with pytest.raises(
+        ConfigValidationError,
+        match=expected_error,
+    ):
+        ErtConfig.from_file_contents(
+            dedent(
+                f"""
+                NUM_REALIZATIONS 1
+                DESIGN_MATRIX {design_matrix_file} \
+                DESIGN_SHEET:{long_sheet_name} \
+                DEFAULT_SHEET:{long_default_sheet_name}
+                """
+            )
+        )
