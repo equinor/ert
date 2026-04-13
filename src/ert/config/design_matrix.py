@@ -229,6 +229,25 @@ class DesignMatrix:
         # preserved exactly as they appear in the Excel sheet. By doing this, we
         # can properly validate variable names, including detecting duplicates or
         # missing names.
+        sheet_name_errors: list[str] = []
+        MAX_EXCEL_SHEET_NAME_LENGTH = 31
+        if len(self.design_sheet) > MAX_EXCEL_SHEET_NAME_LENGTH:
+            sheet_name_errors.append(
+                f"Design sheet name '{self.design_sheet}' exceeds maximum length of "
+                f"{MAX_EXCEL_SHEET_NAME_LENGTH} characters."
+            )
+        if (
+            self.default_sheet is not None
+            and len(self.default_sheet) > MAX_EXCEL_SHEET_NAME_LENGTH
+        ):
+            sheet_name_errors.append(
+                f"Default sheet name '{self.default_sheet}' exceeds maximum length of "
+                f"{MAX_EXCEL_SHEET_NAME_LENGTH} characters."
+            )
+        if sheet_name_errors:
+            error_msg = "\n".join(sheet_name_errors)
+            raise ValueError(f"Excel sheet name error(s):\n{error_msg}")
+
         try:
             param_names = (
                 pl.read_excel(
