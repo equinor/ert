@@ -10,11 +10,12 @@ from typing import TYPE_CHECKING
 import humanize
 import numpy as np
 from iterative_ensemble_smoother import LocalizedESMDA
-from iterative_ensemble_smoother.utils import calc_rho_for_2d_grid_layer
 
 from ert.analysis.event import AnalysisEvent, AnalysisStatusEvent
 from ert.config import Field, SurfaceConfig
 from ert.field_utils import (
+    AxisOrientation,
+    calc_rho_for_2d_grid_layer,
     transform_local_ellipse_angle_to_local_coords,
     transform_positions_to_local_field_coordinates,
 )
@@ -136,16 +137,16 @@ class DistanceLocalizationUpdate:
         )
 
         rho_matrix = calc_rho_for_2d_grid_layer(
-            ertbox.nx,
-            ertbox.ny,
-            ertbox.xinc,
-            ertbox.yinc,
-            xpos,
-            ypos,
-            self._obs_loc.main_range,
-            self._obs_loc.main_range,
-            ellipse_rotation,
-            right_handed_grid_indexing=True,
+            nx=ertbox.nx,
+            ny=ertbox.ny,
+            xinc=ertbox.xinc,
+            yinc=ertbox.yinc,
+            obs_xpos=xpos,
+            obs_ypos=ypos,
+            obs_main_range=self._obs_loc.main_range,
+            obs_perp_range=self._obs_loc.main_range,
+            obs_anisotropy_angle=ellipse_rotation,
+            axis_orientation=AxisOrientation.RIGHT_HANDED,
         )
 
         # Reshape 2D rho to (nx*ny, nobs), tile across nz layers for 3D fields
@@ -189,16 +190,16 @@ class DistanceLocalizationUpdate:
             )
 
         rho_matrix = calc_rho_for_2d_grid_layer(
-            param_config.ncol,
-            param_config.nrow,
-            param_config.xinc,
-            param_config.yinc,
-            xpos,
-            ypos,
-            self._obs_loc.main_range,
-            self._obs_loc.main_range,
-            rotation_angle,
-            right_handed_grid_indexing=False,
+            nx=param_config.ncol,
+            ny=param_config.nrow,
+            xinc=param_config.xinc,
+            yinc=param_config.yinc,
+            obs_xpos=xpos,
+            obs_ypos=ypos,
+            obs_main_range=self._obs_loc.main_range,
+            obs_perp_range=self._obs_loc.main_range,
+            obs_anisotropy_angle=rotation_angle,
+            axis_orientation=AxisOrientation.LEFT_HANDED,
         )
 
         rho_flat = rho_matrix.reshape(-1, rho_matrix.shape[-1])
