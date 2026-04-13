@@ -9,7 +9,7 @@ import warnings
 from collections import defaultdict
 from dataclasses import InitVar, dataclass
 from pathlib import Path
-from typing import IO, Any, Literal, TypeAlias, cast
+from typing import IO, Any, Literal, TypeAlias
 
 import numpy as np
 import numpy.typing as npt
@@ -133,34 +133,32 @@ class RFTConfig(ResponseConfig):
 
     @staticmethod
     def _map_locations_to_cells(
-        egrid_file: str | os.PathLike[str] | IO[Any], zoned_locations: list[_ZonedPoint]
-    ) -> dict[_ZonedPoint, GridIndex]:
+        egrid_file: str | os.PathLike[str] | IO[Any], locations: list[Point]
+    ) -> dict[Point, GridIndex]:
         """
         For each location, find the corresponding connected grid cell, if it exists.
         """
 
-        location_cell_map: dict[_ZonedPoint, GridIndex] = {}
-        if not zoned_locations:
+        location_cell_map: dict[Point, GridIndex] = {}
+        if not locations:
             return location_cell_map
         try:
             grid = CornerpointGrid.read_egrid(egrid_file)
         except (OSError, InvalidEgridFileError) as err:
             raise InvalidResponseFile(f"Could not read grid file: {err}") from err
 
-        for zoned_location, cell in zip(
-            zoned_locations,
-            grid.find_cell_containing_point(
-                [cast(Point, loc.point) for loc in zoned_locations]
-            ),
+        for location, cell in zip(
+            locations,
+            grid.find_cell_containing_point(locations),
             strict=True,
         ):
             if cell is None:
                 raise InvalidResponseFile(
-                    f"Did not find grid coordinate for location(s) {zoned_location}"
+                    f"Did not find grid coordinate for location(s) {location}"
                 )
             # cells returned by grid are 0-based, while zonemap
             # and RFTEntry.connections are 1-based, so unifying
-            location_cell_map[zoned_location] = (cell[0] + 1, cell[1] + 1, cell[2] + 1)
+            location_cell_map[location] = (cell[0] + 1, cell[1] + 1, cell[2] + 1)
         return location_cell_map
 
     @staticmethod
@@ -265,6 +263,19 @@ class RFTConfig(ResponseConfig):
 
         return rft_data
 
+    @staticmethod
+    def response_schema() -> dict[str, Any]:
+        return {
+            "response_key": pl.String,
+            "well": pl.String,
+            "date": pl.String,
+            "property": pl.String,
+            "time": pl.Date,
+            "depth": pl.Float32,
+            "values": pl.Float32,
+            "well_connection_cell": pl.Array(pl.Int64, 3),
+        }
+
     def read_from_file(self, run_path: str, iens: int, iter_: int) -> pl.DataFrame:
         """Reads the RFT values from <RUNPATH>/<ECLBASE>.RFT
 
@@ -305,8 +316,6 @@ class RFTConfig(ResponseConfig):
         if not rft_data:
             return pl.DataFrame(schema=schema)
 
-        location_metadata = self._obtain_location_metadata(run_path, iens, iter_)
-
         try:
             df = pl.concat(
                 [
@@ -335,27 +344,68 @@ class RFTConfig(ResponseConfig):
                 f"Could not find {err.args[0]} in RFTFile {rft_filepath}"
             ) from err
 
+        df.pipe(self._assert_schema, self.response_schema())
+
+        pseudo_observations = pl.DataFrame(
+            {
+                "east": pl.Series(
+                    [location.point[0] for location in self._zoned_locations],
+                    dtype=pl.Float32,
+                ),
+                "north": pl.Series(
+                    [location.point[1] for location in self._zoned_locations],
+                    dtype=pl.Float32,
+                ),
+                "tvd": pl.Series(
+                    [location.point[2] for location in self._zoned_locations],
+                    dtype=pl.Float32,
+                ),
+                "zone": pl.Series(
+                    [location.zone_name for location in self._zoned_locations],
+                    dtype=pl.String,
+                ),
+            }
+        )
+
+        location_metadata = self._obtain_location_metadata(
+            run_path, iens, iter_, pseudo_observations
+        )
+
         combined = self._combine_response_and_location_metadata(
-            df, location_metadata, iens, iter_
+            df, pseudo_observations, location_metadata, iens, iter_
         )
 
         return combined.pipe(self._assert_schema, schema)
+
+    @staticmethod
+    def location_metadata_schema() -> dict[str, Any]:
+        return {
+            "east": pl.Float32,
+            "north": pl.Float32,
+            "tvd": pl.Float32,
+            "actual_zones": pl.List(pl.String),
+            "well_connection_cell": pl.Array(pl.Int64, 3),
+        }
 
     def _obtain_location_metadata(
         self,
         run_path: str,
         iens: int,
         iter_: int,
+        observations: pl.DataFrame,
     ) -> pl.DataFrame:
         """
         Obtains location metadata for the observations from provided simulation run.
-        'location' and 'expected_zone' is data provided by the observations. 'location'
-        is a primary key, while 'expected_zone' is added for completeness.
-        'actual_zones' is a list of zones that the location belongs to according to the
-        zonemap, and 'actual_cell' is the grid cell that the location belongs to in
-        current simulation.
+        'east', 'north', and 'tvd' make a unique location. 'actual_zones' is a list of
+        zones that the location belongs to according to the zonemap, and
+        'well_connection_cell' is the grid cell that the location belongs to in current
+        simulation.
         """
-        zoned_locations = self._zoned_locations
+        locations: list[Point] = []
+        for row in observations.iter_rows(named=True):
+            location = (row["east"], row["north"], row["tvd"])
+            if location not in locations:
+                locations.append(location)
 
         rft_filepath = self._rft_filepath(self.input_files[0], run_path, iens, iter_)
         grid_filepath = self._ergrid_filepath(rft_filepath)
@@ -366,42 +416,49 @@ class RFTConfig(ResponseConfig):
         else:
             zonemap = {}
 
-        location_cell_map = self._map_locations_to_cells(grid_filepath, zoned_locations)
+        location_cell_map = self._map_locations_to_cells(grid_filepath, locations)
 
         return pl.DataFrame(
             {
-                "location": pl.Series(
-                    [loc.point for loc in zoned_locations],
-                    dtype=pl.Array(pl.Float32, 3),
-                ),
-                "expected_zone": pl.Series(
-                    [loc.zone_name for loc in zoned_locations], dtype=pl.String
-                ),
-                "actual_zones": pl.Series(
-                    [
-                        zonemap.get(location_cell_map[loc][-1], [])
-                        for loc in zoned_locations
-                    ],
-                    dtype=pl.List(pl.String),
-                ),
-                "actual_cell": pl.Series(
-                    [location_cell_map[loc] for loc in zoned_locations],
-                    dtype=pl.Array(pl.Int64, 3),
-                ),
-            }
+                "east": [loc[0] for loc in locations],
+                "north": [loc[1] for loc in locations],
+                "tvd": [loc[2] for loc in locations],
+                "actual_zones": [
+                    zonemap.get(location_cell_map[loc][-1], []) for loc in locations
+                ],
+                "well_connection_cell": [location_cell_map[loc] for loc in locations],
+            },
+            schema=self.location_metadata_schema(),
         )
 
     @staticmethod
     def _combine_response_and_location_metadata(
         responses: pl.DataFrame,
+        observations: pl.DataFrame,
         location_metadata: pl.DataFrame,
         iens: int,
         iter_: int,
     ) -> pl.DataFrame:
-        result = responses.join(
+        observations_with_metadata = observations.join(
             location_metadata,
+            left_on=["east", "north", "tvd"],
+            right_on=["east", "north", "tvd"],
+            how="left",
+        ).select(
+            [
+                pl.col("zone").alias("expected_zone"),
+                "east",
+                "north",
+                "tvd",
+                "actual_zones",
+                "well_connection_cell",
+            ]
+        )
+
+        result = responses.join(
+            observations_with_metadata,
             left_on="well_connection_cell",
-            right_on="actual_cell",
+            right_on="well_connection_cell",
             how="left",
         )
 
@@ -413,9 +470,10 @@ class RFTConfig(ResponseConfig):
             pl.col("expected_zone").is_not_null() & ~is_zone_valid
         )
         for row in disabled_due_to_zone_mismatch.iter_rows(named=True):
+            location = (row["east"], row["north"], row["tvd"])
             warnings.warn(
                 PostExperimentWarning(
-                    f"An RFT observation with location {row['location']}, "
+                    f"An RFT observation with location {location}, "
                     f"in iteration {iter_}, realization {iens} did "
                     f"not match expected zone {row['expected_zone']}. The observation "
                     "was deactivated",
@@ -423,26 +481,20 @@ class RFTConfig(ResponseConfig):
                 stacklevel=2,
             )
         result = result.filter(is_zone_valid)
-
-        def location_to_coordinate(index: int, name: str) -> pl.Expr:
-            return (
-                pl.when(pl.col("location").is_null())
-                .then(None)
-                .otherwise(pl.col("location").arr.get(index))
-                .alias(name)
+        return (
+            result.rename({"expected_zone": "zone"})
+            .with_columns(
+                [
+                    pl.col("east").cast(pl.Float32),
+                    pl.col("north").cast(pl.Float32),
+                    pl.col("tvd").cast(pl.Float32),
+                    pl.col("well_connection_cell").arr.get(0).alias("i"),
+                    pl.col("well_connection_cell").arr.get(1).alias("j"),
+                    pl.col("well_connection_cell").arr.get(2).alias("k"),
+                ]
             )
-
-        return result.with_columns(
-            [
-                pl.col("expected_zone").alias("zone"),
-                location_to_coordinate(0, "east"),
-                location_to_coordinate(1, "north"),
-                location_to_coordinate(2, "tvd"),
-                pl.col("well_connection_cell").arr.get(0).alias("i"),
-                pl.col("well_connection_cell").arr.get(1).alias("j"),
-                pl.col("well_connection_cell").arr.get(2).alias("k"),
-            ]
-        ).drop(["location", "well_connection_cell", "expected_zone", "actual_zones"])
+            .drop(["well_connection_cell", "actual_zones"])
+        )
 
     @property
     def response_type(self) -> str:
