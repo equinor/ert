@@ -308,46 +308,252 @@ def transform_local_ellipse_angle_to_local_coords(
     return ellipse_anisotropy_angle - coordsys_rotation_angle
 
 
-def localization_scaling_function(
-    distances: npt.NDArray[np.float64],
-) -> npt.NDArray[np.float64]:
-    """Calculate scaling factor to be used as values in
-    RHO matrix in distance-based localization.
-    The scaling function implements the commonly
-    used function published by Gaspari and Cohn.
-    For input normalized distance >= 2, the value will be 0.
+def gaspari_cohn(
+    distances: npt.NDArray[np.floating],
+) -> npt.NDArray[np.floating]:
+    """Gaspari--Cohn distance-based localization scaling function.
 
-    Args:
-        distances: Vector of values for normalized distances.
+    For each normalised distance d, returns a scaling factor in [0, 1]
+    used as elements in the localization matrix (rho).
+    For d >= 2 the value is 0.
 
-    Returns:
+    This is an implementation of Eq. (4.10) in Section 4.3
+    ("Compactly supported 5th-order piecewise rational functions") of
+    Gaspari and Cohn (1999).
+
+    References
+    ----------
+    Gaspari, G. and Cohn, S.E. (1999), Construction of correlation functions
+    in two and three dimensions. Q.J.R. Meteorol. Soc., 125: 723-757.
+    https://doi.org/10.1002/qj.49712555417
+
+    Parameters
+    ----------
+    distances : np.ndarray
+        Vector of values for normalized distances.
+
+    Returns
+    -------
+    np.ndarray
         Values of scaling factors for each value of input distance.
+
+    Examples
+    --------
+    The function equals 1 at d=0, 5/24 at d=1, and 0 for d>=2:
+
+    >>> import numpy as np
+    >>> gaspari_cohn(np.array([0.0, 1.0, 2.0, 3.0]))
+    array([1.        , 0.20833333, 0.        , 0.        ])
+
+    The input array is not modified:
+
+    >>> d = np.array([0.5, 1.5])
+    >>> _ = gaspari_cohn(d)
+    >>> d
+    array([0.5, 1.5])
     """
-    # "gaspari-cohn"
-    # Commonly used in distance-based localization
-    # Is exact 0 for normalized distance > 2.
-    scaling_factor = distances
+    if not np.all(distances >= 0):
+        raise ValueError(f"Distances must be positive. Min: {np.min(distances)}")
+    scaling_factor = np.zeros_like(distances)
+
     d2 = distances**2
     d3 = d2 * distances
     d4 = d3 * distances
     d5 = d4 * distances
-    s = -1 / 4 * d5 + 1 / 2 * d4 + 5 / 8 * d3 - 5 / 3 * d2 + 1
-    scaling_factor[distances <= 1] = s[distances <= 1]
-    s = (
-        1 / 12 * d5
-        - 1 / 2 * d4
-        + 5 / 8 * d3
-        + 5 / 3 * d2
-        - 5 * distances
-        + 4
-        - 2 / 3 * 1 / distances
-    )
-    scaling_factor[(distances > 1) & (distances <= 2)] = s[
-        (distances > 1) & (distances <= 2)
-    ]
-    scaling_factor[distances > 2] = 0.0
 
+    near = distances <= 1
+    scaling_factor[near] = (
+        -1 / 4 * d5[near] + 1 / 2 * d4[near] + 5 / 8 * d3[near] - 5 / 3 * d2[near] + 1
+    )
+
+    mid = (distances > 1) & (distances <= 2)
+    scaling_factor[mid] = (
+        1 / 12 * d5[mid]
+        - 1 / 2 * d4[mid]
+        + 5 / 8 * d3[mid]
+        + 5 / 3 * d2[mid]
+        - 5 * distances[mid]
+        + 4
+        - 2 / 3 / distances[mid]
+    )
+
+    # Clip to [0, 1] to suppress tiny negative artefacts from
+    # floating-point arithmetic at the d=2 boundary.
+    np.clip(scaling_factor, 0.0, 1.0, out=scaling_factor)
     return scaling_factor
+
+
+def calc_rho_for_2d_grid_layer(
+    *,
+    nx: int,
+    ny: int,
+    xinc: float,
+    yinc: float,
+    obs_xpos: npt.NDArray[np.floating],
+    obs_ypos: npt.NDArray[np.floating],
+    obs_main_range: npt.NDArray[np.floating],
+    obs_perp_range: npt.NDArray[np.floating],
+    obs_anisotropy_angle: npt.NDArray[np.floating],
+    axis_orientation: AxisOrientation = AxisOrientation.RIGHT_HANDED,
+) -> npt.NDArray[np.floating]:
+    """Calculate elements of the localization matrix (rho) for a 2D grid layer.
+
+    For each observation, the distance to every grid cell centre is computed
+    and passed through the Gaspari--Cohn scaling function to obtain rho.
+    Only lateral distances (horizontal distances in the (x, y) plane,
+    ignoring depth) are considered, so every depth layer of a 3D grid
+    shares the same cell centres and produces identical rho values;
+    a single 2D calculation therefore covers all depth layers.
+    All observation positions are given in the local grid coordinate
+    system.
+
+    Each observation n is described by its position
+    (obs_xpos[n], obs_ypos[n]) and its localization ellipse
+    (obs_main_range[n], obs_perp_range[n], obs_anisotropy_angle[n]).
+
+    Grid cells are addressed by a flat index m that encodes the 2D cell
+    index (i, j):
+        m = j + i * ny                (left-handed grid indexing)
+        m = (ny - j - 1) + i * ny    (right-handed grid indexing)
+
+    The 2D distance from observation n to grid cell m = (i, j) is:
+        d[m, n] = dist(
+            (obs_xpos[n], obs_ypos[n]),
+            ((i + 0.5) * xinc, (j + 0.5) * yinc),
+        )
+
+    where (i + 0.5) * xinc and (j + 0.5) * yinc are the x- and y-coordinates
+    of the centre of grid cell (i, j) in the local coordinate system.
+
+    The localization matrix element for cell m and observation n is:
+        rho[m, n] = gaspari_cohn(d[m, n])
+
+    Parameters
+    ----------
+    nx : int
+        Number of grid cells in x-direction of local coordinate system.
+    ny : int
+        Number of grid cells in y-direction of local coordinate system.
+    xinc : float
+        Grid cell size in x-direction.
+    yinc : float
+        Grid cell size in y-direction.
+    obs_xpos : np.ndarray
+        Observations x coordinates in local coordinates.
+    obs_ypos : np.ndarray
+        Observations y coordinates in local coordinates.
+    obs_main_range : np.ndarray
+        Semi-axis length of the localization ellipse along the principal axis
+        (the axis oriented at ``obs_anisotropy_angle`` relative to the
+        local x-axis).
+    obs_perp_range : np.ndarray
+        Semi-axis length of the localization ellipse perpendicular to the
+        principal axis. Equal to ``obs_main_range`` gives a circle; smaller
+        gives an elongated ellipse.
+    obs_anisotropy_angle : np.ndarray
+        Orientation of the principal axis of the localization ellipse in
+        degrees relative to the local x-axis. An angle of 0 aligns the
+        principal axis with the x-axis of the local coordinate system.
+    axis_orientation : AxisOrientation, optional
+        Grid index origin convention. Default is ``RIGHT_HANDED``.
+
+    Returns
+    -------
+    np.ndarray
+        Localization matrix (rho) of shape ``(nx, ny, nobs)`` for one
+        layer of a 3D grid or for a 2D surface grid.
+    """
+    if nx <= 0:
+        raise ValueError("`nx` must be positive")
+    if ny <= 0:
+        raise ValueError("`ny` must be positive")
+
+    if xinc <= 0.0:
+        raise ValueError("`xinc` must be positive")
+    if yinc <= 0.0:
+        raise ValueError("`yinc` must be positive")
+
+    # Center points of each grid cell in field parameter grid
+    x_local = (np.arange(nx) + 0.5) * xinc
+    if axis_orientation == AxisOrientation.RIGHT_HANDED:
+        # y coordinate decreases from max to min
+        y_local = (np.arange(ny - 1, -1, -1) + 0.5) * yinc
+    else:
+        # y coordinate increases from min to max
+        y_local = (np.arange(ny) + 0.5) * yinc
+
+    # Validate that all observation arrays are 1-D
+    for name, arr in [
+        ("obs_xpos", obs_xpos),
+        ("obs_ypos", obs_ypos),
+        ("obs_main_range", obs_main_range),
+        ("obs_perp_range", obs_perp_range),
+        ("obs_anisotropy_angle", obs_anisotropy_angle),
+    ]:
+        if arr.ndim != 1:
+            raise ValueError(f"`{name}` must be 1-D, got {arr.ndim}-D")
+
+    # Number of observations
+    nobs = obs_xpos.shape[0]
+    if obs_ypos.shape[0] != nobs:
+        raise ValueError("Number of coordinates must match number of observations")
+    if obs_anisotropy_angle.shape[0] != nobs:
+        raise ValueError(
+            "Number of ellipse orientation angles must match number of observations"
+        )
+    if obs_main_range.shape[0] != nobs:
+        raise ValueError(
+            "Number of ellipse main range values must match number of observations"
+        )
+    if obs_perp_range.shape[0] != nobs:
+        raise ValueError(
+            "Number of ellipse perpendicular range values must match number"
+            " of observations"
+        )
+    if np.any(obs_main_range <= 0.0):
+        raise ValueError("All main-range values for all observations must be positive")
+    if np.any(obs_perp_range <= 0.0):
+        raise ValueError(
+            "All perpendicular-range values for all observations must be positive"
+        )
+
+    # Build flattened grid coordinates directly, avoiding intermediate
+    # (nx, ny) arrays.
+    # With "ij" indexing, meshgrid followed by flatten is equivalent to:
+    #   x repeated ny times per x-value: [x0,x0,...,x1,x1,...,xn,xn,...]
+    #   y tiled nx times:                [y0,y1,...,y0,y1,...,y0,y1,...]
+    mesh_x_coord_flat = np.repeat(x_local, ny).reshape(-1, 1)  # (nx * ny, 1)
+    mesh_y_coord_flat = np.tile(y_local, nx).reshape(-1, 1)  # (nx * ny, 1)
+
+    # Observation coordinates and parameters
+    obs_xpos = obs_xpos[np.newaxis, :]  # (1, nobs)
+    obs_ypos = obs_ypos[np.newaxis, :]  # (1, nobs)
+    obs_main_range = obs_main_range[np.newaxis, :]  # (1, nobs)
+    obs_perp_range = obs_perp_range[np.newaxis, :]  # (1, nobs)
+    obs_anisotropy_angle = obs_anisotropy_angle[np.newaxis, :]  # (1, nobs)
+
+    # Compute displacement between grid points and observations
+    dX = mesh_x_coord_flat - obs_xpos  # (nx * ny, nobs)
+    dY = mesh_y_coord_flat - obs_ypos  # (nx * ny, nobs)
+
+    # Compute rotation parameters
+    rotation = np.deg2rad(obs_anisotropy_angle)
+    cos_angle = np.cos(rotation)  # (1, nobs)
+    sin_angle = np.sin(rotation)  # (1, nobs)
+
+    # Rotate and scale displacements to local coordinate system defined by
+    # the two half axes of the influence ellipse. First coordinate (local x)
+    # is in direction defined by anisotropy angle and local y is
+    # perpendicular to that.
+    # Scale the distance by the ranges to get a normalized distance
+    # (with value 1 at the edge of the ellipse)
+    dX_ellipse = (dX * cos_angle + dY * sin_angle) / obs_main_range  # (nx * ny, nobs)
+    dY_ellipse = (-dX * sin_angle + dY * cos_angle) / obs_perp_range  # (nx * ny, nobs)
+
+    # Compute distances in the elliptical coordinate system
+    distances = np.hypot(dX_ellipse, dY_ellipse)  # (nx * ny, nobs)
+    # Apply the scaling function
+    return gaspari_cohn(distances).reshape((nx, ny, nobs))
 
 
 def transform_observation_locations(
