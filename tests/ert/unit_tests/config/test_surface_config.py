@@ -1,5 +1,6 @@
 import logging
 import os
+import threading
 import warnings
 from pathlib import Path
 
@@ -437,7 +438,7 @@ def test_that_ert_warns_if_ascii_surface_is_used(tmp_path, is_ascii_surface, cap
 
 
 @pytest.mark.parametrize("is_ascii_surface", [True, False])
-def test_that_ert_writes_surface_in_same_the_format_that_was_read(
+async def test_that_ert_writes_surface_in_same_the_format_that_was_read(
     is_ascii_surface, tmp_path, caplog
 ):
     os.chdir(tmp_path)
@@ -494,7 +495,7 @@ def test_that_ert_writes_surface_in_same_the_format_that_was_read(
                 num_realizations=1,
                 design_matrix_df=None,
             )
-            create_run_path(
+            await create_run_path(
                 run_args=run_args,
                 ensemble=ensemble,
                 user_config_file="config.ert",
@@ -504,6 +505,7 @@ def test_that_ert_writes_surface_in_same_the_format_that_was_read(
                 substitutions={},
                 parameters_file="parameters",
                 runpaths=runpaths,
+                end_event=threading.Event(),
             )
             surface_path_in_runpath = Path(
                 "runpaths/realization-0/iteration-0/surf.irap"
