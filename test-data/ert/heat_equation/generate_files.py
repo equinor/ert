@@ -95,12 +95,12 @@ def generate_priors():
 
 
 START_DATE = datetime.date(2010, 1, 1)
-RADIUS = 3
+RADIUS = 15
 
 
 def create_summary_observations(df_obs: pd.DataFrame):
     # This includes locations to be stored
-    # grid is left hand; hence starting at (0,0)->(Nx,Ny)
+    # grid is left-handed; hence starting at (0,0)->(Nx,Ny)
     # observations are centered in the middle of the cell; -(0.5,0.5)
     # radius is set to 3
 
@@ -123,8 +123,8 @@ def create_summary_observations(df_obs: pd.DataFrame):
     DATE    = {obs_date:%Y-%m-%d};
     KEY     = HEAT_{coord.x}_{coord.y};
     LOCALIZATION {{
-        EAST = {coord.x - 0.5};
-        NORTH = {coord.y - 0.5};
+        EAST = {coord.x + 0.5};
+        NORTH = {coord.y + 0.5};
         RADIUS = {RADIUS};
     }};
 }};
