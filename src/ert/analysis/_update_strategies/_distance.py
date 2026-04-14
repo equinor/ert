@@ -123,6 +123,8 @@ class DistanceLocalizationUpdate:
             raise ValueError("Field grid origin must be defined")
         if ertbox.rotation_angle is None:
             raise ValueError("Field grid rotation angle must be defined")
+        if ertbox.axis_orientation is None:
+            raise ValueError("Field grid axis orientation must be defined")
 
         xpos, ypos = transform_positions_to_local_field_coordinates(
             ertbox.origin,
@@ -146,7 +148,7 @@ class DistanceLocalizationUpdate:
             obs_main_range=self._obs_loc.main_range,
             obs_perp_range=self._obs_loc.main_range,
             obs_anisotropy_angle=ellipse_rotation,
-            axis_orientation=AxisOrientation.RIGHT_HANDED,
+            axis_orientation=ertbox.axis_orientation,
         )
 
         # Reshape 2D rho to (nx*ny, nobs), tile across nz layers for 3D fields
