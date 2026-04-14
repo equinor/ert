@@ -395,22 +395,33 @@ class PlotApi:
             return df
 
     def observation_locations(self) -> pd.DataFrame:
-
-        all_observations = pd.DataFrame()
         with create_ertserver_client(self.ens_path) as client:
+            http_response = client.get("/experiments", timeout=self._timeout)
+            self._check_http_response(http_response)
             try:
-                http_response = client.get("/experiments", timeout=self._timeout)
-                self._check_http_response(http_response)
                 experiments = http_response.json()
-                for experiment in experiments:
-                    experiment_id = str(experiment["id"])
-                    http_response = client.get(
-                        f"/experiments/{experiment_id}/observations",
-                        timeout=self._timeout,
-                    )
-                    self._check_http_response(http_response)
+            except JSONDecodeError as e:
+                raise httpx.RequestError(
+                    f"Failed to parse experiments response: {e}"
+                ) from e
 
+            all_observations_list = []
+            for experiment in experiments:
+                experiment_id = str(experiment["id"])
+                http_response = client.get(
+                    f"/experiments/{experiment_id}/observations",
+                    timeout=self._timeout,
+                )
+                self._check_http_response(http_response)
+                try:
                     observations = http_response.json()
+                except JSONDecodeError as e:
+                    raise httpx.RequestError(
+                        f"Failed to parse observations for"
+                        f" experiment {experiment_id}: {e}"
+                    ) from e
+
+                try:
                     if not observations:
                         continue
                     new_obs = pd.concat(
@@ -426,15 +437,17 @@ class PlotApi:
                         ),
                         ignore_index=True,
                     ).dropna()
+                    if not new_obs.empty:
+                        all_observations_list.append(new_obs)
+                except KeyError as e:
+                    raise httpx.RequestError(
+                        f"Observation payload missing coordinate key {e} for"
+                        f" experiment {experiment_id}"
+                    ) from e
 
-                    all_observations = pd.concat(
-                        [all_observations, new_obs], ignore_index=True
-                    )
-            except (KeyError, IndexError, JSONDecodeError) as e:
-                raise httpx.RequestError(
-                    f"Experiment/Observation schema might have changed e={e}"
-                ) from e
-            return all_observations
+            if not all_observations_list:
+                return pd.DataFrame()
+            return pd.concat(all_observations_list, ignore_index=True)
 
     def observations_for_key(self, ensemble_ids: list[str], key: str) -> pd.DataFrame:
         """Returns a pandas DataFrame with the datapoints for a given observation key
