@@ -24,6 +24,7 @@ NLAY = 1
 
 
 def create_egrid_file():
+    # create_box_grid defaults to flip=1, i.e., left-handed (origin at lower left)
     grid = xtgeo.create_box_grid(dimension=(NCOL, NROW, NLAY))
     grid.to_file("CASE.EGRID", "egrid")
 
@@ -99,7 +100,7 @@ RADIUS = 3
 
 def create_summary_observations(df_obs: pd.DataFrame):
     # This includes locations to be stored
-    # grid is right hand; hence starting at (0,Ny)->(Nx,2*Ny)
+    # grid is left hand; hence starting at (0,0)->(Nx,Ny)
     # observations are centered in the middle of the cell; -(0.5,0.5)
     # radius is set to 3
 
