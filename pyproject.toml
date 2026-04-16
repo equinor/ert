@@ -205,6 +205,7 @@ select = [
     "B",     # flake-8-bugbear
     "C4",    # flake8-comprehensions
     "DJ",
+    "DTZ",
     "E",     # pycodestyle
     "EXE",
     "F",     # pyflakes

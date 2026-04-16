@@ -1,4 +1,5 @@
 import copy
+from datetime import UTC
 from datetime import datetime as dt
 
 import pytest
@@ -27,8 +28,8 @@ def full_snapshot() -> EnsembleSnapshot:
         exec_hosts="COMP-01",
         fm_steps={
             "0": FMStepSnapshot(
-                start_time=dt.now(),
-                end_time=dt.now(),
+                start_time=dt.now(tz=UTC),
+                end_time=dt.now(tz=UTC),
                 name="poly_eval",
                 index="0",
                 status=FORWARD_MODEL_STATE_START,
@@ -39,8 +40,8 @@ def full_snapshot() -> EnsembleSnapshot:
                 max_memory_usage=312,
             ),
             "1": FMStepSnapshot(
-                start_time=dt.now(),
-                end_time=dt.now(),
+                start_time=dt.now(tz=UTC),
+                end_time=dt.now(tz=UTC),
                 name="poly_postval",
                 index="1",
                 status=FORWARD_MODEL_STATE_START,
@@ -51,7 +52,7 @@ def full_snapshot() -> EnsembleSnapshot:
                 max_memory_usage=312,
             ),
             "2": FMStepSnapshot(
-                start_time=dt.now(),
+                start_time=dt.now(tz=UTC),
                 end_time=None,
                 name="poly_post_mortem",
                 index="2",
@@ -63,7 +64,7 @@ def full_snapshot() -> EnsembleSnapshot:
                 max_memory_usage=312,
             ),
             "3": FMStepSnapshot(
-                start_time=dt.now(),
+                start_time=dt.now(tz=UTC),
                 end_time=None,
                 name="poly_not_started",
                 index="3",
@@ -90,8 +91,8 @@ def fail_snapshot() -> EnsembleSnapshot:
         active=True,
         fm_steps={
             "0": FMStepSnapshot(
-                start_time=dt.now(),
-                end_time=dt.now(),
+                start_time=dt.now(tz=UTC),
+                end_time=dt.now(tz=UTC),
                 name="poly_eval",
                 index="0",
                 status=FORWARD_MODEL_STATE_FINISHED,
@@ -125,8 +126,8 @@ def large_snapshot() -> EnsembleSnapshot:
             status=FORWARD_MODEL_STATE_START,
             stdout=f"job_{i}.stdout",
             stderr=f"job_{i}.stderr",
-            start_time=dt(1999, 1, 1),
-            end_time=dt(2019, 1, 1),
+            start_time=dt(1999, 1, 1, tzinfo=UTC),
+            end_time=dt(2019, 1, 1, tzinfo=UTC),
         )
     real_ids = [str(i) for i in range(150)]
     return builder.build(real_ids, REALIZATION_STATE_UNKNOWN)

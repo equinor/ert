@@ -1,3 +1,4 @@
+from datetime import UTC
 from datetime import datetime as dt
 
 import pytest
@@ -31,8 +32,8 @@ def small_snapshot() -> EnsembleSnapshot:
             status=FORWARD_MODEL_STATE_START,
             stdout=f"job_{i}.stdout",
             stderr=f"job_{i}.stderr",
-            start_time=dt(1999, 1, 1),
-            end_time=dt(2019, 1, 1),
+            start_time=dt(1999, 1, 1, tzinfo=UTC),
+            end_time=dt(2019, 1, 1, tzinfo=UTC),
         )
     real_ids = [str(i) for i in range(5)]
     return builder.build(real_ids, REALIZATION_STATE_UNKNOWN)

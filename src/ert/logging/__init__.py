@@ -36,7 +36,9 @@ _FORMATS = _FORMATS_ANSI if os.isatty(sys.stderr.fileno()) else _FORMATS_NO_COLO
 
 class TimestampedFileHandler(logging.FileHandler):
     def __init__(self, filename: str, *args: Any, **kwargs: Any) -> None:
-        timestamp = file_safe_timestamp(datetime.now().isoformat(timespec="minutes"))
+        timestamp = file_safe_timestamp(
+            datetime.now().astimezone().isoformat(timespec="minutes")
+        )
 
         filename, extension = os.path.splitext(filename)
 

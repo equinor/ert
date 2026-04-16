@@ -50,7 +50,7 @@ def _parse_date(date_str: str) -> datetime:
         return datetime.fromisoformat(date_str)
     except ValueError:
         try:
-            date = datetime.strptime(date_str, "%d/%m/%Y")
+            date = datetime.strptime(date_str, "%d/%m/%Y")  # noqa: DTZ007
         except ValueError as err:
             raise ObservationConfigError.with_context(
                 f"Unsupported date format {date_str}. Please use ISO date format",

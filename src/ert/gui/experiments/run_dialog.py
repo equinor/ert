@@ -253,7 +253,7 @@ class RunDialog(QFrame):
             self,
         )
 
-        date_time: str = datetime.now(UTC).isoformat(timespec="seconds")
+        date_time: str = datetime.now(tz=UTC).isoformat(timespec="seconds")
         experiment_type = self._run_model_api.experiment_name
         experiment_id = experiment_type + " : " + date_time
 
@@ -549,7 +549,9 @@ class RunDialog(QFrame):
     def _on_ticker(self) -> None:
         if self._start_time:
             humanized_runtime = humanize.precisedelta(
-                datetime.now() - self._start_time, minimum_unit="seconds", format="%d"
+                datetime.now(tz=UTC) - self._start_time,
+                minimum_unit="seconds",
+                format="%d",
             )
             self.running_time.setText(f"Running time:\n{humanized_runtime}")
 

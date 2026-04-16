@@ -525,7 +525,9 @@ def test_that_storages_with_failed_realizations_are_migrated_without_errors(
                 {
                     "type": 1,
                     "message": "this is undefined",
-                    "time": datetime.datetime(2000, 1, 5).isoformat(),
+                    "time": datetime.datetime(
+                        2000, 1, 5, tzinfo=datetime.UTC
+                    ).isoformat(),
                 },
                 RealizationStorageState.UNDEFINED,
             ),
@@ -534,7 +536,9 @@ def test_that_storages_with_failed_realizations_are_migrated_without_errors(
                 {
                     "type": 8,
                     "message": "this is failure",
-                    "time": datetime.datetime(2000, 1, 5).isoformat(),
+                    "time": datetime.datetime(
+                        2000, 1, 5, tzinfo=datetime.UTC
+                    ).isoformat(),
                 },
                 RealizationStorageState.FAILURE_IN_CURRENT,
             ),
@@ -543,7 +547,9 @@ def test_that_storages_with_failed_realizations_are_migrated_without_errors(
                 {
                     "type": 16,
                     "message": "this is parent failure",
-                    "time": datetime.datetime(2000, 1, 5).isoformat(),
+                    "time": datetime.datetime(
+                        2000, 1, 5, tzinfo=datetime.UTC
+                    ).isoformat(),
                 },
                 RealizationStorageState.FAILURE_IN_PARENT,
             ),

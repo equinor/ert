@@ -187,7 +187,7 @@ if __name__ == "__main__":
 
     smspec, unsmry = create_summary_smspec_unsmry(
         summary_vectors=summary_values,
-        start_date=datetime.datetime(2010, 1, 1),
+        start_date=datetime.datetime(2010, 1, 1),  # noqa: DTZ001
         time_step_in_days=1,
     )
 

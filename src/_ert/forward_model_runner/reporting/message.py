@@ -1,5 +1,5 @@
 import dataclasses
-from datetime import datetime as dt
+import datetime
 from typing import TYPE_CHECKING, Literal, NotRequired, Self
 
 import psutil
@@ -41,7 +41,7 @@ class ProcessTreeStatus:
     oom_score: int | None = None
 
     def __post_init__(self) -> None:
-        self.timestamp = dt.now().isoformat()
+        self.timestamp = datetime.datetime.now(tz=datetime.UTC).isoformat()
         self.free = psutil.virtual_memory().available
 
     def __repr__(self) -> str:
@@ -60,7 +60,7 @@ class _MetaMessage(type):
 
 class Message(metaclass=_MetaMessage):
     def __init__(self, step: "ForwardModelStep | None" = None) -> None:
-        self.timestamp = dt.now()
+        self.timestamp = datetime.datetime.now(tz=datetime.UTC)
         self.step = step
         self.error_message: str | None = None
 

@@ -596,7 +596,7 @@ def test_that_excel_datetime_columns_are_converted_to_strings_with_warning(tmp_p
         ws.write(1, 2, 1.5)
 
         ws.write(2, 0, 1)
-        ws.write_datetime(2, 1, datetime(2026, 3, 2, 10, 30), date_format)
+        ws.write_datetime(2, 1, datetime(2026, 3, 2, 10, 30), date_format)  # noqa: DTZ001
         ws.write(2, 2, 2.5)
 
     with pytest.warns(

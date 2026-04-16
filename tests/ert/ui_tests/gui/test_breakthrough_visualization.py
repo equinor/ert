@@ -91,7 +91,10 @@ def summary_response(realization: int) -> pl.DataFrame:
     return pl.DataFrame(
         {
             "response_key": ["WWCT:OP1"] * num_points,
-            "time": [datetime(2000, 1, day) for day in range(1, num_points + 1)],
+            "time": [
+                datetime(2000, 1, day)  # noqa: DTZ001
+                for day in range(1, num_points + 1)
+            ],
             "values": pl.Series(values, dtype=pl.Float32),
         }
     )

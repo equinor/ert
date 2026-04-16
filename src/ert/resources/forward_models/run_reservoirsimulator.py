@@ -104,9 +104,11 @@ def await_completed_unsmry_file(
     interval is specified in seconds.
 
     The return value is the waited time (in seconds)"""
-    start_time = datetime.datetime.now()
+    start_time = datetime.datetime.now(tz=datetime.UTC)
     prev_len = 0
-    while (datetime.datetime.now() - start_time).total_seconds() < max_wait:
+    while (
+        datetime.datetime.now(tz=datetime.UTC) - start_time
+    ).total_seconds() < max_wait:
         try:
             resfo_sum = [r.read_keyword() for r in resfo.lazy_read(smry_path)]
         except Exception:
@@ -122,7 +124,7 @@ def await_completed_unsmry_file(
 
         time.sleep(poll_interval)
 
-    return (datetime.datetime.now() - start_time).total_seconds()
+    return (datetime.datetime.now(tz=datetime.UTC) - start_time).total_seconds()
 
 
 class RunReservoirSimulator:

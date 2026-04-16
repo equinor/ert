@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from unittest.mock import patch
 
 import pytest
@@ -58,8 +58,8 @@ def test_changes(full_snapshot):
     assert model.index(0, _id_to_col(ids.STATUS)).data() == FORWARD_MODEL_STATE_START
 
     snapshot = full_snapshot
-    start_time = datetime(year=2020, month=10, day=27, hour=12)
-    end_time = datetime(year=2020, month=10, day=28, hour=13)
+    start_time = datetime(year=2020, month=10, day=27, hour=12, tzinfo=UTC)
+    end_time = datetime(year=2020, month=10, day=28, hour=13, tzinfo=UTC)
     snapshot.update_fm_step(
         "0",
         "0",

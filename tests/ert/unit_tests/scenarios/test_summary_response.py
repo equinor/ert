@@ -110,7 +110,12 @@ def test_that_reading_matching_time_is_ok(ert_config, storage, prior_ensemble):
 
     create_responses(
         prior_ensemble,
-        ert_config.runpath_config.num_realizations * [[datetime(2014, 9, 9, 1, 11)]],
+        ert_config.runpath_config.num_realizations
+        * [
+            [
+                datetime(2014, 9, 9, 1, 11)  # noqa: DTZ001
+            ]
+        ],
     )
 
     target_ensemble = storage.create_ensemble(
@@ -139,9 +144,9 @@ def test_that_mismatched_responses_give_error(ert_config, storage, prior_ensembl
     )
 
     response_times = [
-        [datetime(2014, 9, 9)],
-        [datetime(2014, 9, 9)],
-        [datetime(2017, 9, 9)],
+        [datetime(2014, 9, 9)],  # noqa: DTZ001
+        [datetime(2014, 9, 9)],  # noqa: DTZ001
+        [datetime(2017, 9, 9)],  # noqa: DTZ001
     ]
     create_responses(prior_ensemble, response_times)
 
@@ -175,11 +180,11 @@ def test_that_different_length_is_ok_as_long_as_observation_time_exists(
         prior_ensemble.ensemble_size,
     )
     response_times = [
-        [datetime(2014, 9, 9, 1, 11)],
-        [datetime(2014, 9, 9, 1, 11)],
-        [datetime(2014, 9, 9, 1, 11), datetime(2017, 9, 9)],
-        [datetime(2014, 9, 9, 1, 11)],
-        [datetime(2014, 9, 9, 1, 11), datetime(1988, 9, 9)],
+        [datetime(2014, 9, 9, 1, 11)],  # noqa: DTZ001
+        [datetime(2014, 9, 9, 1, 11)],  # noqa: DTZ001
+        [datetime(2014, 9, 9, 1, 11), datetime(2017, 9, 9)],  # noqa: DTZ001
+        [datetime(2014, 9, 9, 1, 11)],  # noqa: DTZ001
+        [datetime(2014, 9, 9, 1, 11), datetime(1988, 9, 9)],  # noqa: DTZ001
     ]
     create_responses(prior_ensemble, response_times)
 
@@ -227,11 +232,11 @@ def test_that_duplicate_summary_time_steps_does_not_fail(
         prior_ensemble.ensemble_size,
     )
     response_times = [
-        [datetime(2014, 9, 9, 1, 11)],
-        [datetime(2014, 9, 9, 1, 11)],
-        [datetime(2014, 9, 9, 1, 11), datetime(2014, 9, 9)],
-        [datetime(2014, 9, 9, 1, 11)],
-        [datetime(2014, 9, 9, 1, 11), datetime(1988, 9, 9)],
+        [datetime(2014, 9, 9, 1, 11)],  # noqa: DTZ001
+        [datetime(2014, 9, 9, 1, 11)],  # noqa: DTZ001
+        [datetime(2014, 9, 9, 1, 11), datetime(2014, 9, 9)],  # noqa: DTZ001
+        [datetime(2014, 9, 9, 1, 11)],  # noqa: DTZ001
+        [datetime(2014, 9, 9, 1, 11), datetime(1988, 9, 9)],  # noqa: DTZ001
     ]
     create_responses(prior_ensemble, response_times)
 
@@ -262,9 +267,9 @@ def test_that_mismatched_responses_gives_nan_measured_data(prior_ensemble):
     )
 
     response_times = [
-        [datetime(2014, 9, 9, 1, 11)],
-        [datetime(2014, 9, 9, 1, 11)],
-        [datetime(2017, 9, 9)],
+        [datetime(2014, 9, 9, 1, 11)],  # noqa: DTZ001
+        [datetime(2014, 9, 9, 1, 11)],  # noqa: DTZ001
+        [datetime(2017, 9, 9)],  # noqa: DTZ001
     ]
     create_responses(prior_ensemble, response_times)
 
@@ -297,7 +302,7 @@ def test_reading_past_2263_is_ok(ert_config, prior_ensemble):
 
     create_responses(
         prior_ensemble,
-        ert_config.runpath_config.num_realizations * [[datetime(2500, 9, 9)]],
+        ert_config.runpath_config.num_realizations * [[datetime(2500, 9, 9)]],  # noqa: DTZ001
     )
 
     responses = prior_ensemble.load_responses("summary", (0, 1, 2))
@@ -309,16 +314,16 @@ def test_reading_past_2263_is_ok(ert_config, prior_ensemble):
         {
             "realization": 0,
             "response_key": "FOPR",
-            "time": datetime(2500, 9, 10, 0, 0),
+            "time": datetime(2500, 9, 10, 0, 0),  # noqa: DTZ001
         },
         {
             "realization": 1,
             "response_key": "FOPR",
-            "time": datetime(2500, 9, 10, 0, 0),
+            "time": datetime(2500, 9, 10, 0, 0),  # noqa: DTZ001
         },
         {
             "realization": 2,
             "response_key": "FOPR",
-            "time": datetime(2500, 9, 10, 0, 0),
+            "time": datetime(2500, 9, 10, 0, 0),  # noqa: DTZ001
         },
     ]

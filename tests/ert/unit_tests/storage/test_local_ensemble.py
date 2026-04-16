@@ -526,7 +526,7 @@ def test_that_get_rft_observations_and_responses_maps_report_step_from_summary_t
         {
             "response_key": ["FOPR"] * 3,
             "time": pl.Series(
-                [datetime(2020, 1, 1), datetime(2020, 1, 15), datetime(2020, 2, 15)]
+                [datetime(2020, 1, 1), datetime(2020, 1, 15), datetime(2020, 2, 15)]  # noqa: DTZ001
             ).dt.cast_time_unit("ms"),
             "values": pl.Series([100.0, 200.0, 300.0], dtype=pl.Float32),
         }

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from ert.storage.local_ensemble import LocalEnsemble
@@ -32,7 +32,7 @@ class MockEnsemble(LocalEnsemble):
             iteration=iteration,
             name=ensemble_name,
             prior_ensemble_id=None,
-            started_at=datetime.now(),
+            started_at=datetime.now(tz=UTC),
         )
         self._storage_state = storage_states
         self._storage = storage

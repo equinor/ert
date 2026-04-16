@@ -83,7 +83,9 @@ def _setup_logging(directory: str = "logs") -> None:
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
-    timestamp = file_safe_timestamp(datetime.now().isoformat(timespec="minutes"))
+    timestamp = file_safe_timestamp(
+        datetime.now().astimezone().isoformat(timespec="minutes")
+    )
 
     filename = f"forward-model-runner-log-{timestamp}.txt"
     csv_filename = f"memory-profile-{timestamp}.csv"

@@ -268,7 +268,7 @@ def test_plot_api_big_summary_memory_usage(
     dates = []
 
     for i in range(num_keys):
-        dates += [datetime(2000, 1, 1) + timedelta(days=i)] * num_dates
+        dates += [datetime(2000, 1, 1) + timedelta(days=i)] * num_dates  # noqa: DTZ001
 
     dates_df = pl.Series(dates, dtype=pl.Datetime).dt.cast_time_unit("ms")
 

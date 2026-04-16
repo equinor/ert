@@ -499,7 +499,7 @@ def _transform_tree(
         pre_defines = [
             ["<CONFIG_PATH>", config_dir],
             ["<CONFIG_FILE_BASE>", config_file_base],
-            ["<DATE>", datetime.date.today().isoformat()],
+            ["<DATE>", datetime.datetime.now().astimezone().date().isoformat()],
             ["<CWD>", config_dir],
             ["<CONFIG_FILE>", os.path.basename(file)],
         ]

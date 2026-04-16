@@ -1,5 +1,6 @@
 import uuid
 from collections import defaultdict
+from datetime import UTC
 from datetime import datetime as dt
 
 import pytest
@@ -47,7 +48,7 @@ METADATA = EnsembleSnapshotMetadata(
                         max_memory_usage="1000",
                         stdout="job_fm_step_0.stdout",
                         stderr="job_fm_step_0.stderr",
-                        start_time=dt(1999, 1, 1),
+                        start_time=dt(1999, 1, 1, tzinfo=UTC),
                     )
                     .add_fm_step(
                         fm_step_id="1",
@@ -58,13 +59,13 @@ METADATA = EnsembleSnapshotMetadata(
                         max_memory_usage="1000",
                         stdout="job_fm_step_1.stdout",
                         stderr="job_fm_step_1.stderr",
-                        start_time=dt(1999, 1, 1),
+                        start_time=dt(1999, 1, 1, tzinfo=UTC),
                         end_time=None,
                     )
                     .build(
                         real_ids=["0", "1"],
                         status=state.REALIZATION_STATE_UNKNOWN,
-                        start_time=dt(1999, 1, 1),
+                        start_time=dt(1999, 1, 1, tzinfo=UTC),
                         exec_hosts="12121.121",
                         message="Some message",
                     )
@@ -86,7 +87,7 @@ METADATA = EnsembleSnapshotMetadata(
                     index="0",
                     status=state.FORWARD_MODEL_STATE_FINISHED,
                     name="fm_step_0",
-                    end_time=dt(2019, 1, 1),
+                    end_time=dt(2019, 1, 1, tzinfo=UTC),
                 )
                 .build(
                     real_ids=["1"],
@@ -113,7 +114,7 @@ METADATA = EnsembleSnapshotMetadata(
                 .build(
                     real_ids=["0"],
                     status=state.REALIZATION_STATE_FAILED,
-                    end_time=dt(2019, 1, 1),
+                    end_time=dt(2019, 1, 1, tzinfo=UTC),
                 ),
                 iteration_label="Foo",
                 total_iterations=1,

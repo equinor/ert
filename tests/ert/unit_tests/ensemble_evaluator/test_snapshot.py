@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 from _ert.events import (
     ForwardModelStepFailure,
@@ -19,8 +19,8 @@ def test_snapshot_merge(snapshot: EnsembleSnapshot):
         fm_step=FMStepSnapshot(
             status="Finished",
             index="0",
-            start_time=datetime(year=2020, month=10, day=27),
-            end_time=datetime(year=2020, month=10, day=28),
+            start_time=datetime(year=2020, month=10, day=27, tzinfo=UTC),
+            end_time=datetime(year=2020, month=10, day=28, tzinfo=UTC),
         ),
     )
     update_event.update_fm_step(
@@ -29,7 +29,7 @@ def test_snapshot_merge(snapshot: EnsembleSnapshot):
         fm_step=FMStepSnapshot(
             status="Running",
             index="1",
-            start_time=datetime(year=2020, month=10, day=27),
+            start_time=datetime(year=2020, month=10, day=27, tzinfo=UTC),
         ),
     )
     update_event.update_fm_step(
@@ -38,7 +38,7 @@ def test_snapshot_merge(snapshot: EnsembleSnapshot):
         fm_step=FMStepSnapshot(
             status="Running",
             index="0",
-            start_time=datetime(year=2020, month=10, day=27),
+            start_time=datetime(year=2020, month=10, day=27, tzinfo=UTC),
         ),
     )
 
@@ -49,15 +49,15 @@ def test_snapshot_merge(snapshot: EnsembleSnapshot):
     assert snapshot.get_fm_step(real_id="1", fm_step_id="0") == FMStepSnapshot(
         status="Finished",
         index="0",
-        start_time=datetime(year=2020, month=10, day=27),
-        end_time=datetime(year=2020, month=10, day=28),
+        start_time=datetime(year=2020, month=10, day=27, tzinfo=UTC),
+        end_time=datetime(year=2020, month=10, day=28, tzinfo=UTC),
         name="forward_model0",
     )
 
     assert snapshot.get_fm_step(real_id="1", fm_step_id="1") == FMStepSnapshot(
         status="Running",
         index="1",
-        start_time=datetime(year=2020, month=10, day=27),
+        start_time=datetime(year=2020, month=10, day=27, tzinfo=UTC),
         name="forward_model1",
     )
 
@@ -65,7 +65,7 @@ def test_snapshot_merge(snapshot: EnsembleSnapshot):
     assert snapshot.get_fm_step(real_id="9", fm_step_id="0") == FMStepSnapshot(
         status="Running",
         index="0",
-        start_time=datetime(year=2020, month=10, day=27),
+        start_time=datetime(year=2020, month=10, day=27, tzinfo=UTC),
         name="forward_model0",
     )
 

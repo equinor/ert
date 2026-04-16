@@ -36,7 +36,7 @@ def create_experiment_from_config(config: ErtConfig, storage):
 def test_that_missing_response_for_observation_response_key_does_not_crash(
     qtbot, storage
 ):
-    date = datetime(year=2000, month=1, day=1)
+    date = datetime(year=2000, month=1, day=1)  # noqa: DTZ001
     observation_key = "FOPR"
     requested_keys = ["*"]
     received_keys = ["WRONG"]
@@ -87,7 +87,7 @@ def test_that_missing_response_for_observation_response_key_does_not_crash(
 
 
 def test_that_breakthrough_experiment_does_not_crash(qtbot, storage):
-    date = datetime(year=2000, month=1, day=1)
+    date = datetime(year=2000, month=1, day=1)  # noqa: DTZ001
     key = "WWCT:OP1"
 
     config = ErtConfig.from_dict(
@@ -140,7 +140,7 @@ def test_that_breakthrough_experiment_does_not_crash(qtbot, storage):
 
 
 def test_that_rft_experiment_without_a_zone_does_not_crash(qtbot, storage):
-    date = datetime(year=2000, month=1, day=1).date()
+    date = datetime(year=2000, month=1, day=1).date()  # noqa: DTZ001
     config = ErtConfig.from_dict(
         {
             "NUM_REALIZATIONS": 1,
@@ -200,7 +200,7 @@ def test_that_rft_experiment_without_a_zone_does_not_crash(qtbot, storage):
 
 
 def test_that_both_observations_with_same_data_are_displayed(qtbot, storage):
-    date = datetime(year=2000, month=1, day=1).date()
+    date = datetime(year=2000, month=1, day=1).date()  # noqa: DTZ001
     config = ErtConfig.from_dict(
         {
             "NUM_REALIZATIONS": 1,
@@ -265,7 +265,7 @@ def test_that_both_observations_with_same_data_are_displayed(qtbot, storage):
                     "name": "BRT_OP1",
                     "KEY": "WWCT:OP1",
                     "ERROR": "3",
-                    "DATE": datetime(year=2000, month=1, day=1).isoformat(),
+                    "DATE": datetime(year=2000, month=1, day=1).isoformat(),  # noqa: DTZ001
                     "THRESHOLD": 0.4,
                 },
                 {
@@ -273,7 +273,7 @@ def test_that_both_observations_with_same_data_are_displayed(qtbot, storage):
                     "name": "BRT_OP2",
                     "KEY": "WWCT:OP1",
                     "ERROR": "3",
-                    "DATE": datetime(year=2000, month=1, day=9).isoformat(),
+                    "DATE": datetime(year=2000, month=1, day=9).isoformat(),  # noqa: DTZ001
                     "THRESHOLD": 0.7,
                 },
             ],
