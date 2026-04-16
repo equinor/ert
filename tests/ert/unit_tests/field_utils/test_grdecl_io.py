@@ -1,3 +1,4 @@
+import math
 from string import ascii_letters
 
 import hypothesis.strategies as st
@@ -53,8 +54,8 @@ def test_that_importing_missing_keyword_in_bgrdecl_fails(tmp_path):
 
 def test_that_import_picks_just_the_field_with_given_name(tmp_path):
     (tmp_path / "test.grdecl").write_text("KEYWORD1\n 1.0 /\nKEYWORD2\n 2.0 /")
-    assert (
-        import_grdecl(tmp_path / "test.grdecl", "KEYWORD2", (1, 1, 1))[0, 0, 0] == 2.0
+    assert math.isclose(
+        import_grdecl(tmp_path / "test.grdecl", "KEYWORD2", (1, 1, 1))[0, 0, 0], 2.0
     )
 
 

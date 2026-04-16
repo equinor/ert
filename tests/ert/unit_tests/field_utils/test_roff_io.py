@@ -1,3 +1,4 @@
+import math
 import re
 from dataclasses import dataclass
 from io import BytesIO, StringIO
@@ -333,7 +334,7 @@ def test_that_once_parameter_and_dimensions_are_read_rest_of_file_is_not_conside
     """
     )
 
-    assert import_roff(StringIO(content), "parameter")[0] == 1.0
+    assert math.isclose(import_roff(StringIO(content), "parameter")[0], 1.0)
 
 
 def test_that_values_are_correctly_shaped():

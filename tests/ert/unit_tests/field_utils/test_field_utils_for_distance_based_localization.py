@@ -189,7 +189,7 @@ def test_that_calc_rho_for_2d_grid_layer_ignores_obs_outside_the_grid():
     assert np.any(rho_inside > 0), "Observation inside the grid should have nonzero rho"
 
     rho_outside = rho[:, :, 1]
-    assert np.all(rho_outside == 0.0), (
+    assert np.allclose(rho_outside, 0.0), (
         "Observation outside the grid should have all zero rho values"
     )
 

@@ -1,3 +1,4 @@
+import math
 import os
 from contextlib import suppress
 from datetime import datetime
@@ -160,14 +161,14 @@ def test_that_make_observations_migrates_observations():
     # Check specific properties
     wopr = next(o for o in observations if getattr(o, "name", None) == "WOPR_OP1_9")
     assert isinstance(wopr, SummaryObservation)
-    assert wopr.value == 0.1
+    assert math.isclose(wopr.value, 0.1)
     assert wopr.key == "WOPR:OP1"
     # Migration converts RESTART 0 -> start date
     assert wopr.date == "2010-03-31T00:00:00"
 
     wopr = next(o for o in observations if getattr(o, "name", None) == "WOPR_OP2_7")
     assert isinstance(wopr, SummaryObservation)
-    assert wopr.value == 0.2
+    assert math.isclose(wopr.value, 0.2)
     assert wopr.key == "WOPR:OP2"
     # Migration converts RESTART 1 -> second date
     assert wopr.date == "2015-06-13T00:00:00"
@@ -567,7 +568,7 @@ def test_that_breakthrough_observation_can_be_instantiated_from_config():
     assert brt_obs.key == "WWCT:OP_1"
     assert brt_obs.date == datetime.fromisoformat("2012-10-01")
     assert brt_obs.error == 3
-    assert brt_obs.threshold == 0.1
+    assert math.isclose(brt_obs.threshold, 0.1)
     assert brt_obs.east is None
     assert brt_obs.north is None
     assert brt_obs.radius is None

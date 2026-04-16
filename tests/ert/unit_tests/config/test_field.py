@@ -1,3 +1,4 @@
+import math
 import os
 from pathlib import Path
 
@@ -472,7 +473,7 @@ def test_that_calculate_ertbox_parameters_detects_axis_orientation_from_egrid(
     assert params.nx == nx
     assert params.ny == ny
     assert params.nz == nz
-    assert params.rotation_angle == 0.0
+    assert math.isclose(params.rotation_angle, 0.0)
     if flip == 1:
         assert params.origin == (0, 0)
     if flip == -1:
