@@ -3,6 +3,7 @@ import os
 import os.path
 import shutil
 import stat
+from argparse import ArgumentParser
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import patch
@@ -11,7 +12,9 @@ import pytest
 from hypothesis import given, settings
 from pydantic import TypeAdapter
 
+from ert.__main__ import ert_parser
 from ert.base_model_context import use_runtime_plugins
+from ert.cli.main import ErtCliError, run_cli
 from ert.config import ConfigValidationError, ConfigWarning, ErtConfig
 from ert.config.ert_config import (
     create_forward_model_json,
@@ -25,6 +28,7 @@ from ert.config.forward_model_step import (
     SiteOrUserForwardModelStep,
 )
 from ert.config.parsing import SchemaItemType
+from ert.mode_definitions import TEST_RUN_MODE
 from ert.plugins import ErtRuntimePlugins, get_site_plugins
 
 from .config_dict_generator import config_generators
@@ -741,6 +745,96 @@ def test_that_plugin_forward_model_validation_failure_propagates(tmp_path):
             iens=0,
             itr=0,
         )
+
+
+@pytest.mark.slow
+def test_that_validate_pre_realization_run_is_called_when_runmodel_is_evaluated(
+    tmp_path,
+):
+    (tmp_path / "test.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS  1
+            FORWARD_MODEL WILL_FAIL_VALIDATION()
+            """
+        )
+    )
+
+    class FM(ForwardModelStepPlugin):
+        def __init__(self) -> None:
+            super().__init__(
+                name="WILL_FAIL_VALIDATION",
+                command=["echo"],
+            )
+
+        def validate_pre_realization_run(
+            self, fm_step_json: ForwardModelStepJSON
+        ) -> ForwardModelStepJSON:
+            raise ForwardModelStepValidationError("No go")
+
+    parser = ArgumentParser(prog="test_main")
+    args = ert_parser(
+        parser,
+        [TEST_RUN_MODE, "--disable-monitoring", str(tmp_path / "test.ert")],
+    )
+    runtime_plugins = ErtRuntimePlugins(
+        installed_forward_model_steps={"WILL_FAIL_VALIDATION": FM()}
+    )
+    original_cwd = Path.cwd()
+    try:
+        with pytest.raises(ErtCliError) as exc_info:
+            run_cli(args, runtime_plugins)
+    finally:
+        os.chdir(original_cwd)
+    assert (
+        "Validation failed for forward model step WILL_FAIL_VALIDATION: No go"
+        in str(exc_info.value)
+    )
+
+
+@pytest.mark.slow
+def test_that_validate_pre_realization_run_is_not_called_when_user_defined_step_overwrites(  # noqa: E501
+    tmp_path,
+):
+    """If a site plugin defines a forward model step that will fail validation, but
+    the user has defined her own step that does not have any validation,
+    the site-installed step validation should not run"""
+    (tmp_path / "A_POPULAR_STEP_NAME").write_text("EXECUTABLE echo", encoding="utf-8")
+    (tmp_path / "test.ert").write_text(
+        dedent(
+            """
+            NUM_REALIZATIONS  1
+            INSTALL_JOB A_POPULAR_STEP_NAME A_POPULAR_STEP_NAME
+            FORWARD_MODEL A_POPULAR_STEP_NAME()
+            """
+        )
+    )
+
+    class FM(ForwardModelStepPlugin):
+        def __init__(self) -> None:
+            super().__init__(
+                name="A_POPULAR_STEP_NAME",
+                command=["echo"],
+            )
+
+        def validate_pre_realization_run(
+            self, fm_step_json: ForwardModelStepJSON
+        ) -> ForwardModelStepJSON:
+            raise ForwardModelStepValidationError("No go from site-installed step")
+
+    parser = ArgumentParser(prog="test_main")
+    args = ert_parser(
+        parser,
+        [TEST_RUN_MODE, "--disable-monitoring", str(tmp_path / "test.ert")],
+    )
+    runtime_plugins = ErtRuntimePlugins(
+        installed_forward_model_steps={"A_POPULAR_STEP_NAME": FM()}
+    )
+    original_cwd = Path.cwd()
+    try:
+        run_cli(args, runtime_plugins)
+    finally:
+        os.chdir(original_cwd)
 
 
 def test_that_plugin_forward_model_validation_accepts_valid_args(tmp_path):
