@@ -35,6 +35,6 @@ def test_that_is_improvement_flag_handles_multiple_constraints(
     evaluator_server_config = EvaluatorServerConfig()
     run_model.run_experiment(evaluator_server_config)
 
-    # Check that the first variable remains fixed:
+    # The `is_improvement` flag should be False, no valid result:
     optimal_result = get_optimal_result(config.storage_dir)
     assert optimal_result is None
