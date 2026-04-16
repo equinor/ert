@@ -19,13 +19,14 @@ from collections.abc import Callable, Generator, MutableSequence
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, Protocol, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Protocol, Self, cast
 
 import numpy as np
 from pydantic import (
     PrivateAttr,
     computed_field,
     field_validator,
+    model_validator,
 )
 from pydantic_core.core_schema import ValidationInfo
 
@@ -35,7 +36,7 @@ from _ert.events import (
     EESnapshotUpdate,
     EnsembleEvaluationWarning,
 )
-from ert.base_model_context import BaseModelWithContextSupport
+from ert.base_model_context import BaseModelWithContextSupport, init_context_var
 from ert.config import (
     ConfigValidationError,
     DesignMatrix,
@@ -47,6 +48,8 @@ from ert.config import (
     PostSimulationFixtures,
     PreSimulationFixtures,
     QueueConfig,
+    SiteOrUserForwardModelStep,
+    UserInstalledForwardModelStep,
     Workflow,
     create_workflow_fixtures_from_hooked,
 )
@@ -172,7 +175,7 @@ class RunModelConfig(BaseModelWithContextSupport):
     env_pr_fm_step: dict[str, dict[str, Any]]
     runpath_config: ModelConfig
     queue_config: QueueConfig
-    forward_model_steps: list[ForwardModelStep]
+    forward_model_steps: list[SiteOrUserForwardModelStep]
     substitutions: dict[str, str]
     hooked_workflows: defaultdict[HookRuntime, list[Workflow]]
     active_realizations: list[bool]
@@ -181,6 +184,29 @@ class RunModelConfig(BaseModelWithContextSupport):
     start_iteration: int = 0
     minimum_required_realizations: int = 0
     supports_rerunning_failed_realizations: ClassVar[bool] = False
+
+    @model_validator(mode="after")
+    def _restore_plugin_forward_model_step_subclasses(self) -> Self:
+        runtime_plugins = init_context_var.get()
+        if runtime_plugins is None:
+            return self
+        restored = []
+        for step in self.forward_model_steps:
+            installed = runtime_plugins.installed_forward_model_steps.get(step.name)
+            if installed is not None and not isinstance(
+                step, (UserInstalledForwardModelStep, type(installed))
+            ):
+                fm_step = installed.model_copy(
+                    update={
+                        field: getattr(step, field)
+                        for field in ForwardModelStep.model_fields
+                    }
+                )
+                restored.append(fm_step)
+            else:
+                restored.append(step)
+        self.forward_model_steps = restored
+        return self
 
 
 class RunModel(RunModelConfig, ABC):

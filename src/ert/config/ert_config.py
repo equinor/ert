@@ -127,7 +127,7 @@ def _log_unsubstituted_forward_model_args(
 
 def create_forward_model_json(
     context: dict[str, str],
-    forward_model_steps: list[ForwardModelStep],
+    forward_model_steps: list[SiteOrUserForwardModelStep],
     run_id: str | None,
     iens: int = 0,
     itr: int = 0,
@@ -636,14 +636,14 @@ def installed_forward_model_steps_from_dict(
 
 
 def create_list_of_forward_model_steps_to_run(
-    installed_steps: dict[str, ForwardModelStep],
+    installed_steps: dict[str, SiteOrUserForwardModelStep],
     substitutions: dict[str, str],
     config_dict: ConfigDict,
-    preinstalled_forward_model_steps: Mapping[str, ForwardModelStep],
+    preinstalled_forward_model_steps: Mapping[str, SiteInstalledForwardModelStep],
     env_pr_fm_step: dict[str, dict[str, Any]],
-) -> list[ForwardModelStep]:
+) -> list[SiteOrUserForwardModelStep]:
     errors = []
-    fm_steps: list[ForwardModelStep] = []
+    fm_steps: list[SiteOrUserForwardModelStep] = []
 
     user_positional_args_by_step: dict[int, list[str]] = {}
     substituter = Substitutions(substitutions)
@@ -659,7 +659,9 @@ def create_list_of_forward_model_steps_to_run(
             args = []
         fm_step_name = substituter.substitute(unsubstituted_step_name)
         try:
-            fm_step = copy.deepcopy(installed_steps[fm_step_name])
+            fm_step: SiteOrUserForwardModelStep = copy.deepcopy(
+                installed_steps[fm_step_name]
+            )
 
             # Preserve as ContextString
             fm_step.name = fm_step_name
@@ -781,7 +783,9 @@ USER_CONFIG_SCHEMA = init_user_config_schema()
 class ErtConfig(BaseModel):
     DEFAULT_ENSPATH: ClassVar[str] = "storage"
     DEFAULT_RUNPATH_FILE: ClassVar[str] = ".ert_runpath_list"
-    PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[Mapping[str, ForwardModelStep]] = {}
+    PREINSTALLED_FORWARD_MODEL_STEPS: ClassVar[
+        Mapping[str, SiteInstalledForwardModelStep]
+    ] = {}
     PREINSTALLED_WORKFLOWS: ClassVar[dict[str, WorkflowJob]] = {}
     ENV_PR_FM_STEP: ClassVar[dict[str, dict[str, Any]]] = {}
     ENV_VARIABLES: ClassVar[dict[str, str]] = {}
@@ -1247,10 +1251,10 @@ class ErtConfig(BaseModel):
     @classmethod
     def _create_list_of_forward_model_steps_to_run(
         cls,
-        installed_steps: dict[str, ForwardModelStep],
+        installed_steps: dict[str, SiteOrUserForwardModelStep],
         substitutions: dict[str, str],
         config_dict: ConfigDict,
-    ) -> list[ForwardModelStep]:
+    ) -> list[SiteOrUserForwardModelStep]:
         return create_list_of_forward_model_steps_to_run(
             installed_steps,
             substitutions,

@@ -21,7 +21,6 @@ from ert.config import (
     ExecutableWorkflow,
     ExternalErtScript,
     Field,
-    ForwardModelStep,
     GenDataConfig,
     GenKwConfig,
     HookRuntime,
@@ -30,6 +29,7 @@ from ert.config import (
     OutlierSettings,
     SummaryConfig,
     SurfaceConfig,
+    UserInstalledForwardModelStep,
     Workflow,
 )
 from ert.config.parsing import SchemaItemType
@@ -145,7 +145,7 @@ def optional_file(draw):
 
 def forward_model_steps(substitutions):
     return st.builds(
-        ForwardModelStep,
+        UserInstalledForwardModelStep,
         stdin_file=optional_file(),
         stdout_file=optional_file(),
         stderr_file=optional_file(),

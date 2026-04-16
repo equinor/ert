@@ -48,7 +48,8 @@
         "_ERT_RUNPATH": "<RUNPATH>"
       },
       "default_mapping": {},
-      "private_args": {}
+      "private_args": {},
+      "type": "user_installed"
     }
   ],
   "substitutions": {
