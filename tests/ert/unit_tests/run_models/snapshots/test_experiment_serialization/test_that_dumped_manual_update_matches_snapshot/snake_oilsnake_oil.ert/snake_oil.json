@@ -48,7 +48,8 @@
         "_ERT_RUNPATH": "<RUNPATH>"
       },
       "default_mapping": {},
-      "private_args": {}
+      "private_args": {},
+      "type": "user_installed"
     },
     {
       "name": "SNAKE_OIL_NPV",
@@ -71,7 +72,8 @@
         "_ERT_RUNPATH": "<RUNPATH>"
       },
       "default_mapping": {},
-      "private_args": {}
+      "private_args": {},
+      "type": "user_installed"
     },
     {
       "name": "SNAKE_OIL_DIFF",
@@ -94,7 +96,8 @@
         "_ERT_RUNPATH": "<RUNPATH>"
       },
       "default_mapping": {},
-      "private_args": {}
+      "private_args": {},
+      "type": "user_installed"
     }
   ],
   "substitutions": {

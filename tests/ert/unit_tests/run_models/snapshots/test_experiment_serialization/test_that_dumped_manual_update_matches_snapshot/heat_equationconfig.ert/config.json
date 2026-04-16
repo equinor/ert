@@ -58,7 +58,8 @@
       "private_args": {
         "<ARG0>": "<IENS>",
         "<ARG1>": "<ITER>"
-      }
+      },
+      "type": "user_installed"
     }
   ],
   "substitutions": {
