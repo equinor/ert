@@ -21,7 +21,6 @@ from _ert.utils import file_safe_timestamp
 from ert.config import (
     EverestControl,
     Field,
-    ForwardModelStep,
     GenKwConfig,
     ParameterCardinality,
     ParameterConfig,
@@ -30,6 +29,7 @@ from ert.config import (
 from ert.config.design_matrix import DESIGN_MATRIX_GROUP
 from ert.config.distribution import LogNormalSettings, LogUnifSettings
 from ert.config.ert_config import create_forward_model_json
+from ert.config.forward_model_step import SiteOrUserForwardModelStep
 from ert.ensemble_evaluator.evaluator import UserCancelled
 from ert.run_models.event import (
     FinishedTotalRunPathCreationEvent,
@@ -287,7 +287,7 @@ def _create_one_run_path(
     user_config_file: str,
     env_vars: dict[str, str],
     env_pr_fm_step: dict[str, dict[str, Any]],
-    forward_model_steps: list[ForwardModelStep],
+    forward_model_steps: list[SiteOrUserForwardModelStep],
     substituter: Substitutions,
     substitutions: dict[str, str],
     parameters_file: str,
@@ -399,7 +399,7 @@ async def create_run_path(
     user_config_file: str,
     env_vars: dict[str, str],
     env_pr_fm_step: dict[str, dict[str, Any]],
-    forward_model_steps: list[ForwardModelStep],
+    forward_model_steps: list[SiteOrUserForwardModelStep],
     substitutions: dict[str, str],
     parameters_file: str,
     runpaths: Runpaths,
