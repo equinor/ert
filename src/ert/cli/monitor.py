@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+import datetime
 import sys
-from datetime import datetime, timedelta
 from pathlib import Path
 from queue import SimpleQueue
 from typing import TextIO
@@ -60,7 +60,7 @@ class Monitor:
     def __init__(self, out: TextIO = sys.stdout, color_always: bool = False) -> None:
         self._out = out
         self._snapshots: dict[int, EnsembleSnapshot] = {}
-        self._start_time: datetime | None = None
+        self._start_time: datetime.datetime | None = None
         self._colorize = ansi_color
         # If out is not (like) a tty, disable colors.
         if not out.isatty() and not color_always:
@@ -75,7 +75,7 @@ class Monitor:
         event_queue: SimpleQueue[StatusEvents],
         output_path: Path | None = None,
     ) -> EndEvent:
-        self._start_time = datetime.now()
+        self._start_time = datetime.datetime.now(tz=datetime.UTC)
         while True:
             match event_queue.get():
                 case FullSnapshotEvent(
@@ -144,9 +144,9 @@ class Monitor:
     def _print_progress(self, event: SnapshotUpdateEvent) -> None:
         current_iteration = min(event.total_iterations, event.iteration + 1)
         if self._start_time is not None:
-            elapsed = datetime.now() - self._start_time
+            elapsed = datetime.datetime.now(tz=datetime.UTC) - self._start_time
         else:
-            elapsed = timedelta()
+            elapsed = datetime.timedelta()
 
         nphase = f" {current_iteration}/{event.total_iterations}"
 
