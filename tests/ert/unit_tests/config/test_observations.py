@@ -2101,6 +2101,7 @@ def test_that_extract_localization_values_raises_error_given_non_float():
             extract_localization_values(values)
 
 
+@pytest.mark.slow
 def test_that_hours_are_rounded_to_closest_int_in_plot_observations():
     unrounded_days = 10.7 / 24  # 10.7 hours converted to days
     expected_rounded_hours = 11
