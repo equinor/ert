@@ -6,7 +6,6 @@ import logging
 from dataclasses import dataclass
 from functools import cached_property
 from itertools import combinations as combi
-from json.decoder import JSONDecodeError
 from typing import TYPE_CHECKING, Any, NamedTuple
 from urllib.parse import quote
 
@@ -398,12 +397,7 @@ class PlotApi:
         with create_ertserver_client(self.ens_path) as client:
             http_response = client.get("/experiments", timeout=self._timeout)
             self._check_http_response(http_response)
-            try:
-                experiments = http_response.json()
-            except JSONDecodeError as e:
-                raise httpx.RequestError(
-                    f"Failed to parse experiments response: {e}"
-                ) from e
+            experiments = http_response.json()
 
             all_observations_list = []
             for experiment in experiments:
@@ -413,13 +407,7 @@ class PlotApi:
                     timeout=self._timeout,
                 )
                 self._check_http_response(http_response)
-                try:
-                    observations = http_response.json()
-                except JSONDecodeError as e:
-                    raise httpx.RequestError(
-                        f"Failed to parse observations for"
-                        f" experiment {experiment_id}: {e}"
-                    ) from e
+                observations = http_response.json()
 
                 try:
                     if not observations:
@@ -481,15 +469,15 @@ class PlotApi:
                 )
                 self._check_http_response(http_response)
 
+                observations = http_response.json()
                 try:
-                    observations = http_response.json()
                     observations_dfs = []
                     if not observations:
                         continue
 
                     observations[0]  # Just preserving the old logic/behavior
                     # but this should really be revised
-                except (KeyError, IndexError, JSONDecodeError) as e:
+                except (KeyError, IndexError) as e:
                     raise httpx.RequestError(
                         f"Observation schema might have changed key={key}, "
                         f"ensemble_name={ensemble.name}, e={e}"
