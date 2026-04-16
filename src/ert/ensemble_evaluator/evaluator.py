@@ -327,7 +327,7 @@ class EnsembleEvaluator:
             memory_usage = fm_step.get(ids.MAX_MEMORY_USAGE) or "-1"
             max_memory_usage = max(int(memory_usage), max_memory_usage)
 
-            now = datetime.datetime.now()
+            now = datetime.datetime.now(tz=datetime.UTC)
             walltime_seconds += (
                 (fm_step.get(ids.END_TIME) or now)
                 - (fm_step.get(ids.START_TIME) or now)

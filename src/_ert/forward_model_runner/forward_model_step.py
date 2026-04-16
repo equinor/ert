@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import datetime
 import io
 import logging
 import os
@@ -11,7 +12,6 @@ import time
 import uuid
 from collections.abc import Generator, Sequence
 from dataclasses import dataclass, field
-from datetime import datetime as dt
 from os import path
 from pathlib import Path
 from subprocess import Popen, run
@@ -165,7 +165,7 @@ class ForwardModelStep:
         existing_target_file_mtime: int | None = _get_existing_target_file_mtime(
             target_file
         )
-        run_start_time = dt.now()
+        run_start_time = datetime.datetime.now(tz=datetime.UTC)
         try:
             proc = Popen(
                 arg_list,
@@ -289,11 +289,11 @@ class ForwardModelStep:
         self,
         exit_code: int | None,
         proc: Popen[Process],  # type: ignore
-        run_start_time: dt,
+        run_start_time: datetime.datetime,
     ) -> Exited | None:
         max_running_minutes = self.step_data.get("max_running_minutes")
 
-        run_time = dt.now() - run_start_time
+        run_time = datetime.datetime.now(tz=datetime.UTC) - run_start_time
         if max_running_minutes is None or run_time.seconds < max_running_minutes * 60:
             return None
 
