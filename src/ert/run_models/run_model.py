@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import concurrent.futures
 import copy
+import datetime
 import functools
 import logging
 import os
@@ -17,7 +18,6 @@ from collections import defaultdict
 from collections.abc import Callable, Generator, MutableSequence
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, Protocol, cast
 
@@ -402,7 +402,7 @@ class RunModel(RunModelConfig, ABC):
         def handle_captured_event(message: Warning | str) -> None:
             self.send_event(WarningEvent(msg=str(message)))
 
-        start_timestamp = datetime.now()
+        start_timestamp = datetime.datetime.now(tz=datetime.UTC)
         try:
             self.send_event(StartEvent(timestamp=start_timestamp))
             with (
@@ -473,10 +473,10 @@ class RunModel(RunModelConfig, ABC):
                     ),
                 )
             )
-            logger.info(
-                "Experiment run finished in: "
-                f"{(datetime.now() - start_timestamp).total_seconds():g}s"
-            )
+            seconds_used = (
+                datetime.datetime.now(tz=datetime.UTC) - start_timestamp
+            ).total_seconds()
+            logger.info(f"Experiment run finished in: {seconds_used:g}s")
 
     @abstractmethod
     def run_experiment(

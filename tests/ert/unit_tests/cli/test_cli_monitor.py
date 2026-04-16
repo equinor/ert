@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from io import StringIO
 
 from ert.cli.monitor import Monitor
@@ -74,7 +74,7 @@ def test_print_progress():
             str(i), RealizationSnapshot(status=status, active=True)
         )
     monitor._snapshots[0] = snapshot
-    monitor._start_time = datetime.now()
+    monitor._start_time = datetime.now(tz=UTC)
     general_event = SnapshotUpdateEvent(
         iteration_label="Test Phase",
         total_iterations=2,
