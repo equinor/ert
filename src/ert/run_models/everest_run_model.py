@@ -798,7 +798,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
                 else (
                     ensemble.batch_bound_constraint_violations.drop("batch_id")
                     .to_numpy()
-                    .min()
+                    .max()
                     .item()
                 )
             )
@@ -808,7 +808,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
                 else (
                     ensemble.batch_input_constraint_violations.drop("batch_id")
                     .to_numpy()
-                    .min()
+                    .max()
                     .item()
                 )
             )
@@ -818,7 +818,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
                 else (
                     ensemble.batch_output_constraint_violations.drop("batch_id")
                     .to_numpy()
-                    .min()
+                    .max()
                     .item()
                 )
             )
