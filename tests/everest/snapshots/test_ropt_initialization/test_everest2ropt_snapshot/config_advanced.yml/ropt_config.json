@@ -1,10 +1,7 @@
 {
   "backend": {
     "method": "optpp_q_newton",
-    "output_dir": "not_relevant",
-    "parallel": true,
-    "stderr": "optimizer.stderr",
-    "stdout": "optimizer.stdout"
+    "parallel": true
   },
   "function_estimators": [
     {
@@ -77,7 +74,10 @@
     ]
   },
   "optimizer": {
-    "max_batches": 5
+    "max_batches": 5,
+    "output_dir": "not_relevant",
+    "stderr": "optimizer.stderr",
+    "stdout": "optimizer.stdout"
   },
   "realizations": {
     "weights": [

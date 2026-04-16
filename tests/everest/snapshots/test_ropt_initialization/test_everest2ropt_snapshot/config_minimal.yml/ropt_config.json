@@ -2,10 +2,7 @@
   "backend": {
     "convergence_tolerance": 0.001,
     "method": "optpp_q_newton",
-    "output_dir": "not_relevant",
-    "parallel": true,
-    "stderr": "optimizer.stderr",
-    "stdout": "optimizer.stdout"
+    "parallel": true
   },
   "function_estimators": [
     {
@@ -41,7 +38,10 @@
     ]
   },
   "optimizer": {
-    "max_batches": 4
+    "max_batches": 4,
+    "output_dir": "not_relevant",
+    "stderr": "optimizer.stderr",
+    "stdout": "optimizer.stdout"
   },
   "realizations": {
     "weights": [
