@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 from ert.config import ErtConfig
@@ -8,8 +9,8 @@ from ert.storage import open_storage
 from tests.ert.ui_tests.cli.run_cli import run_cli
 
 
-def assert_variance_in_field(
-    prior_ensemble, posterior_ensemble, field_name, obs_pos, no_upd_pos
+def assert_stronger_variance_reduction_at_observation_location(
+    prior_ensemble, posterior_ensemble, field_name, obs_pos, unobserved_pos
 ):
     prior_data = prior_ensemble.load_parameters(field_name)
     posterior_data = posterior_ensemble.load_parameters(field_name)
@@ -22,10 +23,10 @@ def assert_variance_in_field(
     )
 
     prior_var_no_obs = prior_data.var(dim="realizations", ddof=1).sel(
-        x=no_upd_pos[0], y=no_upd_pos[1]
+        x=unobserved_pos[0], y=unobserved_pos[1]
     )
     posterior_var_no_obs = posterior_data.var(dim="realizations", ddof=1).sel(
-        x=no_upd_pos[0], y=no_upd_pos[1]
+        x=unobserved_pos[0], y=unobserved_pos[1]
     )
 
     obs_reduction = prior_var_obs.mean() - posterior_var_obs.mean()
@@ -38,47 +39,9 @@ def assert_variance_in_field(
 
 
 @pytest.mark.timeout(600)
-@pytest.mark.usefixtures("copy_snake_oil_field")
-@pytest.mark.slow
-def test_that_distance_localization_works_with_a_single_observation():
-    with Path("snake_oil_field.ert").open("r+", encoding="utf-8") as f:
-        lines = f.readlines()
-
-    config_content = [
-        line for line in lines if not line.lstrip().startswith("OBS_CONFIG")
-    ]
-    config_content.extend(
-        [
-            "ANALYSIS_SET_VAR STD_ENKF DISTANCE_LOCALIZATION True\n",
-            "OBS_CONFIG observations/observations_loc.txt\n",
-        ]
-    )
-
-    with Path("snake_oil_field_dl.ert").open("w", encoding="utf-8") as f:
-        f.writelines(config_content)
-
-    run_cli(
-        ENSEMBLE_SMOOTHER_MODE,
-        "--disable-monitoring",
-        "snake_oil_field_dl.ert",
-        "--experiment-name",
-        "dl",
-    )
-
-    ert_config = ErtConfig.from_file("snake_oil_field_dl.ert")
-    assert ert_config.analysis_config.es_settings.distance_localization is True
-    storage = open_storage(ert_config.ens_path)
-    experiment = storage.get_experiment_by_name("dl")
-    ens_prior = experiment.get_ensemble_by_name("iter-0")
-    ens_posterior = experiment.get_ensemble_by_name("iter-1")
-
-    assert_variance_in_field(ens_prior, ens_posterior, "PORO", (5, 5), (9, 9))
-
-
-@pytest.mark.timeout(600)
 @pytest.mark.usefixtures("copy_heat_equation")
 @pytest.mark.slow
-def test_that_distance_localization_runs_on_heat_equation():
+def test_that_distance_localization_reduces_posterior_variance():
     with Path("config.ert").open(encoding="utf-8") as fh:
         lines = fh.readlines()
 
@@ -108,4 +71,48 @@ def test_that_distance_localization_runs_on_heat_equation():
         experiment = storage.get_experiment_by_name("heat_dl")
         prior = experiment.get_ensemble_by_name("iter-0")
         posterior = experiment.get_ensemble_by_name("iter-1")
-        assert_variance_in_field(prior, posterior, "COND", (2, 2), (9, 9))
+
+        assert_stronger_variance_reduction_at_observation_location(
+            prior, posterior, "COND", obs_pos=(2, 2), unobserved_pos=(9, 9)
+        )
+
+        df_scalars_prior = prior.load_scalars()
+        df_scalars_posterior = posterior.load_scalars()
+
+        assert (
+            0
+            < np.linalg.det(
+                np.cov(
+                    df_scalars_posterior.drop("realization").to_numpy(), rowvar=False
+                )
+            )
+            < np.linalg.det(
+                np.cov(df_scalars_prior.drop("realization").to_numpy(), rowvar=False)
+            )
+        )
+
+        prior_cond = prior.load_parameters("COND")
+        posterior_cond = posterior.load_parameters("COND")
+
+        param_config = config.ensemble_config.parameter_configs["COND"]
+
+        prior_cov = np.cov(
+            prior_cond["values"]
+            .to_numpy()
+            .reshape(
+                prior.ensemble_size,
+                param_config.nx * param_config.ny * param_config.nz,
+            ),
+            rowvar=False,
+        )
+        posterior_cov = np.cov(
+            posterior_cond["values"]
+            .to_numpy()
+            .reshape(
+                posterior.ensemble_size,
+                param_config.nx * param_config.ny * param_config.nz,
+            ),
+            rowvar=False,
+        )
+
+        assert np.trace(posterior_cov) < np.trace(prior_cov)
