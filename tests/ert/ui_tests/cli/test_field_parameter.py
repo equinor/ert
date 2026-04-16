@@ -102,7 +102,7 @@ def _compare_ensemble_params(
         [
             pl.concat_list(columns)
             .map_elements(
-                lambda row: sum(1 for x in row if x != 0.0) / len(row),
+                lambda row: sum(1 for x in row if not math.isclose(x, 0.0)) / len(row),
             )
             .cast(pl.Float32)
             .alias("outlier_percentage")

@@ -47,10 +47,10 @@ def test_plot_style_test_defaults():
     assert style.name == "Test"
     assert style.color == "#000000"
     assert style.line_style == "-"
-    assert style.alpha == 1.0
+    assert math.isclose(style.alpha, 1.0)
     assert style.marker == ""  # noqa: PLC1901
-    assert style.width == 1.0
-    assert style.size == 7.5
+    assert math.isclose(style.width, 1.0)
+    assert math.isclose(style.size, 7.5)
     assert style.isEnabled()
 
     style.line_style = None
@@ -76,16 +76,16 @@ def test_plot_style_builtin_checks():
     assert style.marker == ""  # noqa: PLC1901
 
     style.width = -1
-    assert style.width == 0.0
+    assert math.isclose(style.width, 0.0)
 
     style.size = -1
-    assert style.size == 0.0
+    assert math.isclose(style.size, 0.0)
 
     style.alpha = 1.1
-    assert style.alpha == 1.0
+    assert math.isclose(style.alpha, 1.0)
 
     style.alpha = -0.1
-    assert style.alpha == 0.0
+    assert math.isclose(style.alpha, 0.0)
 
     style.setEnabled(False)
     assert not style.isEnabled()

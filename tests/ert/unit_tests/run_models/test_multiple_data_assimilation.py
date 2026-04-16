@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 import pytest
 
@@ -16,7 +18,7 @@ from ert.run_models import MultipleDataAssimilation as mda
 def test_weights(weights, expected):
     weights = mda.parse_weights(weights)
     assert weights == expected
-    assert np.reciprocal(weights).sum() == 1.0
+    assert math.isclose(np.reciprocal(weights).sum(), 1.0)
 
 
 def test_invalid_weights():

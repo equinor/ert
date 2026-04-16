@@ -1,3 +1,5 @@
+import math
+
 import pytest
 from orjson import orjson
 from pydantic import ValidationError
@@ -78,7 +80,7 @@ def test_tutorial_everest2ropt(ever_config):
     )
     realizations = ropt_config["realizations"]
     assert len(realizations["weights"]) == 2
-    assert realizations["weights"][0] == 0.2
+    assert math.isclose(realizations["weights"][0], 0.2)
 
 
 def test_everest2ropt_controls(ever_config):
@@ -315,7 +317,9 @@ def test_everest2ropt_cvar(ever_config):
     assert len(ropt_config["realization_filters"]) == 1
     assert ropt_config["realization_filters"][0]["method"] == "cvar-objective"
     assert ropt_config["realization_filters"][0]["options"]["sort"] == [0]
-    assert ropt_config["realization_filters"][0]["options"]["percentile"] == 0.3
+    assert math.isclose(
+        ropt_config["realization_filters"][0]["options"]["percentile"], 0.3
+    )
 
 
 def test_everest2ropt_arbitrary_backend_options(ever_config):
