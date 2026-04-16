@@ -69,7 +69,13 @@ def run_simulator(summary_values=SUMMARY_VALUES):
     Create :term:`summary files` with one value for FOPR (1) and a different
     for FOPRH (2) so we can assert on the difference.
     """
-    summary = Summary.writer("MY_REFCASE", datetime(2000, 1, 1), 10, 10, 10)
+    summary = Summary.writer(
+        "MY_REFCASE",
+        datetime(2000, 1, 1),  # noqa: DTZ001
+        10,
+        10,
+        10,
+    )
 
     for key in summary_values:
         summary.add_variable(key, unit="SM3/DAY")
@@ -991,7 +997,12 @@ def run_sim(start_date, keys=None, values=None, days=None):
 @pytest.mark.parametrize(
     ("time_map_statement", "time_map_creator"),
     [
-        ({"REFCASE": "ECLIPSE_CASE"}, lambda: run_sim(datetime(2014, 9, 10))),
+        (
+            {"REFCASE": "ECLIPSE_CASE"},
+            lambda: run_sim(
+                datetime(2014, 9, 10)  # noqa: DTZ001
+            ),
+        ),
         (
             {"TIME_MAP": ("time_map.txt", "2014-09-10\n2014-09-11\n")},
             lambda: None,
@@ -1119,7 +1130,7 @@ def test_that_loading_summary_obs_with_days_is_within_tolerance(
 def test_that_out_of_bounds_segments_are_truncated(tmpdir, start, stop, message):
     with tmpdir.as_cwd():
         run_sim(
-            datetime(2014, 9, 10),
+            datetime(2014, 9, 10),  # noqa: DTZ001
             [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
         )
 
@@ -1331,7 +1342,7 @@ def test_that_general_observation_restart_must_match_gen_data_report_step():
 def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
     with tmpdir.as_cwd():
         run_sim(
-            datetime(2014, 9, 10),
+            datetime(2014, 9, 10),  # noqa: DTZ001
             [
                 (k, "SM3/DAY", None)
                 for k in ["FOPR", "FWPR", "FOPRH", "FWPRH", "FGPR", "FGPRH"]
@@ -1382,7 +1393,7 @@ def test_that_history_observation_errors_are_calculated_correctly(tmpdir):
 def test_that_segment_defaults_are_applied(tmpdir):
     with tmpdir.as_cwd():
         run_sim(
-            datetime(2014, 9, 10),
+            datetime(2014, 9, 10),  # noqa: DTZ001
             [("FOPR", "SM3/DAY", None), ("FOPRH", "SM3/DAY", None)],
             days=range(10),
         )

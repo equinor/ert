@@ -262,7 +262,7 @@ class EverestRunModel(RunModel, EverestRunModelConfig):
         cls,
         everest_config: EverestConfig,
         experiment_name: str = (
-            f"EnOpt@{datetime.datetime.now().isoformat(timespec='seconds')}"
+            f"EnOpt@{datetime.datetime.now().astimezone().isoformat(timespec='seconds')}"
         ),
         target_ensemble: str = "batch",
         optimization_callback: OptimizerCallback | None = None,

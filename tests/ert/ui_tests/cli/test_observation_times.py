@@ -22,7 +22,7 @@ from tests.ert.unit_tests.config.observations_generator import (
 
 from .run_cli import run_cli
 
-start = datetime(1969, 1, 1)
+start = datetime(1969, 1, 1)  # noqa: DTZ001
 observation_times = st.dates(
     min_value=date.fromordinal((start + timedelta(hours=1)).toordinal()),
     max_value=date(2024, 1, 1),

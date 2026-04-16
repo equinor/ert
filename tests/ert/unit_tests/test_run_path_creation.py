@@ -337,13 +337,13 @@ async def test_that_substitutions_created_with_the_define_keyword_is_substituted
     ],
 )
 async def test_that_pre_defines_are_substituted_templates(
-    key, expected, make_run_path, monkeypatch
+    key, expected: str, make_run_path, monkeypatch
 ):
-    fixed_date = datetime.fromisoformat(EXPECTED_DATE).date()
+    fixed_datetime = datetime.fromisoformat(EXPECTED_DATE)
     monkeypatch.setattr(
         lark_parser.datetime,
-        "date",
-        MagicMock(today=MagicMock(return_value=fixed_date)),
+        "datetime",
+        MagicMock(now=MagicMock(return_value=fixed_datetime)),
     )
 
     Path("template.tmpl").write_text(f"I WANT TO REPLACE:{key}", encoding="utf-8")
@@ -421,11 +421,11 @@ async def test_that_the_data_file_keyword_also_has_similar_behavior_to_run_templ
     to ECLBASE
     """
 
-    fixed_date = datetime.fromisoformat(EXPECTED_DATE).date()
+    fixed_datetime = datetime.fromisoformat(EXPECTED_DATE)
     monkeypatch.setattr(
         lark_parser.datetime,
-        "date",
-        MagicMock(today=MagicMock(return_value=fixed_date)),
+        "datetime",
+        MagicMock(now=MagicMock(return_value=fixed_datetime)),
     )
 
     Path("MY_DATA_FILE.DATA").write_text(f"I WANT TO REPLACE:{key}", encoding="utf-8")

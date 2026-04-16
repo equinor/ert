@@ -160,7 +160,7 @@ def test_that_saving_response_updates_configs(tmp_path):
             {
                 "response_key": ["FOPR", "FOPT:OP1", "FOPR:OP3", "FLAP", "F*"],
                 "time": pl.Series(
-                    [datetime(2000, 1, i) for i in range(1, 6)]
+                    [datetime(2000, 1, i) for i in range(1, 6)]  # noqa: DTZ001
                 ).dt.cast_time_unit("ms"),
                 "values": pl.Series([0.0, 1.0, 2.0, 3.0, 4.0], dtype=pl.Float32),
             }
@@ -414,7 +414,7 @@ def test_that_reader_storage_reads_most_recent_response_configs(tmp_path):
         {
             "response_key": ["FOPR", "FOPR", "WOPR", "WOPR", "FOPT", "FOPT"],
             "time": pl.Series(
-                [datetime.now() + timedelta(days=i) for i in range(6)]
+                [datetime.now() + timedelta(days=i) for i in range(6)]  # noqa: DTZ005
             ).dt.cast_time_unit("ms"),
             "values": pl.Series([0.2, 0.2, 1.0, 1.1, 3.3, 3.3], dtype=pl.Float32),
         }
@@ -679,7 +679,7 @@ def test_asof_joining_summary(tmp_path, perturb_observations, perturb_responses)
     with open_storage(tmp_path, mode="w") as storage:
         response_keys = ["FOPR", "FOPT_OP1", "FOPR:OP3", "FLAP", "F*"]
         obs_keys = [f"o_{k}" for k in response_keys]
-        times = [datetime(2000, 1, 1, 1, 0)] * len(response_keys)
+        times = [datetime(2000, 1, 1, 1, 0)] * len(response_keys)  # noqa: DTZ001
         summary_observations = [
             {
                 "type": "summary_observation",
@@ -1056,7 +1056,7 @@ def test_save_response_will_create_realization_directory(storage):
         pl.DataFrame(
             {
                 "response_key": ["DUMMY"],
-                "time": pl.Series([datetime(2000, 1, 1)]).dt.cast_time_unit("ms"),
+                "time": pl.Series([datetime(2000, 1, 1)]).dt.cast_time_unit("ms"),  # noqa: DTZ001
                 "values": pl.Series([0.0], dtype=pl.Float32),
             }
         ),
@@ -1082,7 +1082,7 @@ def test_save_response_will_not_recreate_ensemble_directory(storage):
             pl.DataFrame(
                 {
                     "response_key": ["DUMMY"],
-                    "time": pl.Series([datetime(2000, 1, 1)]).dt.cast_time_unit("ms"),
+                    "time": pl.Series([datetime(2000, 1, 1)]).dt.cast_time_unit("ms"),  # noqa: DTZ001
                     "values": pl.Series([0.0], dtype=pl.Float32),
                 }
             ),
@@ -1164,7 +1164,7 @@ def test_that_breakthrough_observations_and_responses_are_joined_in_endpoint(tmp
     with open_storage(tmp_path, mode="w") as storage:
         response_key = "WWCT:OP1"
         # This observed time will be 1 day and 12 hours after derived breakthrough time
-        time = datetime(2000, 3, 2, 13, 0)
+        time = datetime(2000, 3, 2, 13, 0)  # noqa: DTZ001
 
         breakthrough_config = BreakthroughConfig(
             keys=[f"BREAKTHROUGH:{response_key}"],
@@ -1206,7 +1206,7 @@ def test_that_breakthrough_observations_and_responses_are_joined_in_endpoint(tmp
             {
                 "realization": [0] * 10,
                 "response_key": ["WWCT:OP1"] * 10,
-                "time": [datetime(2000, month, 1, 1, 0) for month in range(1, 11)],
+                "time": [datetime(2000, month, 1, 1, 0) for month in range(1, 11)],  # noqa: DTZ001
                 "values": [n / 10 for n in range(10)],
             }
         )
@@ -1677,8 +1677,8 @@ class StatefulStorageTest(RuleBasedStateMachine):
         summaries_strategy = summaries(
             summary_keys=expected_summary_keys,
             start_date=st.datetimes(
-                min_value=datetime.strptime("1969-1-1", "%Y-%m-%d"),
-                max_value=datetime.strptime("2010-1-1", "%Y-%m-%d"),
+                min_value=datetime.strptime("1969-1-1", "%Y-%m-%d"),  # noqa: DTZ007
+                max_value=datetime.strptime("2010-1-1", "%Y-%m-%d"),  # noqa: DTZ007
             ),
             time_deltas=st.lists(
                 st.floats(

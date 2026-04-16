@@ -1,10 +1,10 @@
+import datetime
 import json
 import logging
 import os
 import os.path
 import stat
 import warnings
-from datetime import date
 from pathlib import Path
 from textwrap import dedent
 from unittest.mock import MagicMock
@@ -396,7 +396,7 @@ def test_that_the_date_magic_string_is_substituted_with_todays_date():
     Path(test_config_file_name).write_text(test_config_contents, encoding="utf-8")
     ert_config = ErtConfig.from_file(test_config_file_name)
 
-    date_string = date.today().isoformat()
+    date_string = datetime.datetime.now().astimezone().date().isoformat()
     expected_storage = os.path.abspath(f"storage/{test_config_file_base}-{date_string}")
     expected_run_path = f"{expected_storage}/runpath/realization-<IENS>/iter-<ITER>"
     expected_ens_path = f"{expected_storage}/ensemble"

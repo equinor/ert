@@ -117,7 +117,11 @@ def make_poly_example(folder, source, **kwargs):
         )
     else:
         summary = Summary.writer(
-            str(folder) + "/refcase/REFCASE", datetime.datetime(2010, 1, 1), 10, 10, 10
+            str(folder) + "/refcase/REFCASE",
+            datetime.datetime(2010, 1, 1),  # noqa: DTZ001
+            10,
+            10,
+            10,
         )
         for s in range(summary_count):
             summary.add_variable(f"PSUM{s}")

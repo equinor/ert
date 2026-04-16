@@ -1,7 +1,7 @@
 import json
 import string
 from collections import defaultdict
-from datetime import datetime
+from datetime import UTC, datetime
 from functools import partial
 from unittest.mock import MagicMock, patch
 
@@ -41,7 +41,7 @@ def full_snapshot_event():
         max_memory_usage="1000",
         stdout="job_fm_step_0.stdout",
         stderr="job_fm_step_0.stderr",
-        start_time=datetime(1999, 1, 1),
+        start_time=datetime(1999, 1, 1, tzinfo=UTC),
     )
     for i, command in enumerate(all_shell_script_fm_steps):
         snapshot.add_fm_step(
@@ -53,13 +53,13 @@ def full_snapshot_event():
             max_memory_usage="1000",
             stdout=None,
             stderr=None,
-            start_time=datetime(1999, 1, 1),
+            start_time=datetime(1999, 1, 1, tzinfo=UTC),
         )
     event = FullSnapshotEvent(
         snapshot=snapshot.build(
             real_ids=["0", "1"],
             status=state.REALIZATION_STATE_PENDING,
-            start_time=datetime(1999, 1, 1),
+            start_time=datetime(1999, 1, 1, tzinfo=UTC),
             exec_hosts="12121.121",
             message="",
         ),
@@ -86,7 +86,7 @@ def snapshot_update_event():
             name=None,
             index="0",
             status=state.FORWARD_MODEL_STATE_FINISHED,
-            end_time=datetime(2019, 1, 1),
+            end_time=datetime(2019, 1, 1, tzinfo=UTC),
         )
         .build(
             real_ids=["1"],
@@ -111,7 +111,7 @@ def snapshot_update_failure_event():
             name=None,
             index="0",
             status=state.FORWARD_MODEL_STATE_FAILURE,
-            end_time=datetime(2019, 1, 1),
+            end_time=datetime(2019, 1, 1, tzinfo=UTC),
             error="The run is cancelled due to reaching MAX_RUNTIME",
         )
         .build(
@@ -137,7 +137,7 @@ def snapshot_update_event_with_fm_message():
             name=None,
             index="0",
             status=state.FORWARD_MODEL_STATE_FINISHED,
-            end_time=datetime(2019, 1, 1),
+            end_time=datetime(2019, 1, 1, tzinfo=UTC),
         )
         .build(
             real_ids=["1"],

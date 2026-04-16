@@ -7,7 +7,7 @@ import os
 import time
 from collections import Counter
 from collections.abc import Iterable
-from datetime import datetime
+from datetime import UTC, datetime
 from functools import cache, cached_property, lru_cache
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
@@ -172,7 +172,7 @@ class LocalEnsemble(BaseMode):
             iteration=iteration,
             name=name,
             prior_ensemble_id=prior_ensemble_id,
-            started_at=datetime.now(),
+            started_at=datetime.now(tz=UTC),
         )
 
         storage._write_transaction(
@@ -203,6 +203,12 @@ class LocalEnsemble(BaseMode):
 
     @property
     def started_at(self) -> datetime:
+        if self._index.started_at.tzinfo is None:
+            logger.warning(
+                "Assuming local timezone for 'started_at' "
+                f"property of ensemble named {self.name}"
+            )
+            return self._index.started_at.astimezone()
         return self._index.started_at
 
     @property
@@ -307,7 +313,9 @@ class LocalEnsemble(BaseMode):
         message: str | None = None,
     ) -> None:
         filename: Path = self._realization_dir(realization) / self._error_log_name
-        error = _Failure(type=failure_type, message=message or "", time=datetime.now())
+        error = _Failure(
+            type=failure_type, message=message or "", time=datetime.now(tz=UTC)
+        )
         if not filename.parent.parent.exists():
             logger.warning(
                 f"Storage {filename.parent.parent} does not exist, "

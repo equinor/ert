@@ -5,7 +5,7 @@ import json
 import logging
 import shutil
 from collections.abc import Generator
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import StrEnum, auto
 from functools import cached_property
 from pathlib import Path
@@ -143,7 +143,7 @@ class LocalExperiment(BaseMode):
         name: str | None = None,
     ) -> LocalExperiment:
         if name is None:
-            name = datetime.today().isoformat()
+            name = datetime.now(tz=UTC).date().isoformat()
 
         storage._write_transaction(
             path / cls._index_file,

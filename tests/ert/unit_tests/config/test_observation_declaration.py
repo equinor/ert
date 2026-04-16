@@ -97,14 +97,14 @@ def test_that_make_observations_migrates_observations():
     Path("obs_config").write_text(obs_config_contents, encoding="utf8")
 
     # Create a simple refcase so the migration can read history values
-    summary = Summary.writer("MY_REFCASE", datetime(2000, 1, 1), 10, 10, 10)
+    summary = Summary.writer("MY_REFCASE", datetime(2000, 1, 1), 10, 10, 10)  # noqa: DTZ001
     summary.add_variable("FOPR", unit="SM3/DAY")
     summary.add_variable("FOPRH", unit="SM3/DAY")
     summary.add_variable("FWPR", unit="SM3/DAY")
     summary.add_variable("FWPRH", unit="SM3/DAY")
 
     # Create two timesteps: the explicit dates used in the test
-    start_date = datetime(2010, 3, 31)
+    start_date = datetime(2010, 3, 31)  # noqa: DTZ001
     # overwrite writer start date by recreating with desired start
     summary = Summary.writer("MY_REFCASE", start_date, 10, 10, 10)
     summary.add_variable("FOPR", unit="SM3/DAY")
@@ -120,7 +120,7 @@ def test_that_make_observations_migrates_observations():
     t0["FWPRH"] = 4
 
     # second step: 2015-06-13
-    second_date = datetime(2015, 6, 13)
+    second_date = datetime(2015, 6, 13)  # noqa: DTZ001
     days_between = (second_date - start_date).days
     t1 = summary.addTStep(1, sim_days=days_between)
     t1["FOPR"] = 1

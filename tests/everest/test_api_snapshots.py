@@ -131,7 +131,7 @@ def test_api_summary_snapshot(config_file, snapshot, cached_example):
             {
                 "response_key": ["FOPR", "FOPR", "WOPR", "WOPR", "FOPT", "FOPT"],
                 "time": pl.Series(
-                    [datetime(2000, 1, 1), datetime(2000, 1, 2)] * 3
+                    [datetime(2000, 1, 1), datetime(2000, 1, 2)] * 3  # noqa: DTZ001
                 ).dt.cast_time_unit("ms"),
                 "values": pl.Series([0.2, 0.2, 1.0, 1.1, 3.3, 3.3], dtype=pl.Float32),
             }
@@ -174,7 +174,7 @@ def test_api_summary_snapshot_missing_batch(snapshot, cached_example):
             {
                 "response_key": ["FOPR", "FOPR", "WOPR", "WOPR", "FOPT", "FOPT"],
                 "time": pl.Series(
-                    [datetime(2000, 1, 1), datetime(2000, 1, 2)] * 3
+                    [datetime(2000, 1, 1), datetime(2000, 1, 2)] * 3  # noqa: DTZ001
                 ).dt.cast_time_unit("ms"),
                 "values": pl.Series([0.2, 0.2, 1.0, 1.1, 3.3, 3.3], dtype=pl.Float32),
             }
@@ -223,7 +223,7 @@ def test_api_summary_snapshot_with_differing_columns_per_batch(
             {
                 "response_key": ["FOPR", "FOPR", "WOPR", "WOPR", "FOPT", "FOPT"],
                 "time": pl.Series(
-                    [datetime(2000, 1, 1), datetime(2000, 1, 2)] * 3
+                    [datetime(2000, 1, 1), datetime(2000, 1, 2)] * 3  # noqa: DTZ001
                 ).dt.cast_time_unit("ms"),
                 "values": pl.Series([0.2, 0.2, 1.0, 1.1, 3.3, 3.3], dtype=pl.Float32),
             }

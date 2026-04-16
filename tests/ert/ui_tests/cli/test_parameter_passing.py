@@ -411,7 +411,7 @@ class SurfaceParameter(Parameter):
     io_source=st.builds(IoProvider, data=st.data()),
     grid_format=st.sampled_from(["grid", "egrid"]),
     summary=summaries(
-        start_date=st.just(datetime(1996, 1, 1)),
+        start_date=st.just(datetime(1996, 1, 1)),  # noqa: DTZ001
         time_deltas=st.just([1.0, 2.0]),
         summary_keys=st.just(["FOPR"]),
     ),

@@ -126,7 +126,7 @@ async def test_load_forward_model_summary(
     summary_configuration, storage, expected, caplog, run_args
 ):
     # Create refcase
-    ecl_sum = run_simulator(1, datetime(2014, 9, 10))
+    ecl_sum = run_simulator(1, datetime(2014, 9, 10))  # noqa: DTZ001
     ecl_sum.fwrite()
 
     ert_config = ErtConfig.from_file_contents(

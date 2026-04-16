@@ -1,4 +1,4 @@
-# test_migrate.py
+# ruff: noqa: DTZ005  # Timezones were not present in old storages
 import json
 from datetime import datetime
 from pathlib import Path
@@ -13,6 +13,7 @@ def test_add_experiment_status_to_index_json():
     input_json = {
         "type": 8,
         "message": "An error occurred.",
+        # timezone is not included as it was not present until Ert version 21.1
         "time": datetime.now().isoformat(),
     }
 

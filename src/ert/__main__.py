@@ -106,7 +106,7 @@ def run_convert_observations(
 
     os.rename(
         changes.obs_config_path,
-        f"{changes.obs_config_path}-{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}.old",
+        f"{changes.obs_config_path}-{datetime.now().astimezone().strftime('%Y-%m-%d-%H-%M-%S')}.old",
     )
     os.rename(obs_config_to_edit_path, changes.obs_config_path)
     msg = (

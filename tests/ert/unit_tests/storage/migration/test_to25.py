@@ -74,7 +74,7 @@ def test_that_migration_creates_experiment_index_with_params_responses_and_obs_c
             {
                 "response_key": "FOPR",
                 "observation_key": "FOPR",
-                "time": datetime(2020, 1, 1),
+                "time": datetime(2020, 1, 1),  # noqa: DTZ001
                 "observations": 3.21,
                 "std": 0.05,
             }

@@ -369,7 +369,7 @@ class ErtConfigValues:
         result = [
             ("<CONFIG_PATH>", cwd),
             ("<CONFIG_FILE_BASE>", config_file_name.split(".")[0]),
-            ("<DATE>", datetime.date.today().isoformat()),
+            ("<DATE>", datetime.datetime.now().astimezone().date().isoformat()),
             ("<CWD>", cwd),
             ("<CONFIG_FILE>", config_file_name),
         ]
@@ -424,7 +424,7 @@ def ert_config_values(draw, use_eclbase=booleans):
         )
     )
     sum_keys = draw(small_list(summary_variables(), min_size=1))
-    first_date = datetime.datetime.strptime("1999-1-1", "%Y-%m-%d")
+    first_date = datetime.datetime.strptime("1999-1-1", "%Y-%m-%d")  # noqa: DTZ007
     smspec = draw(
         smspecs(
             sum_keys=st.just(sum_keys),
@@ -539,7 +539,7 @@ def sim_job(installed_jobs):
 
 def get_date(observation, start):
     if observation.date is not None:
-        return datetime.datetime.strptime(observation.date, "%Y-%m-%d")
+        return datetime.datetime.strptime(observation.date, "%Y-%m-%d")  # noqa: DTZ007
     delta = datetime.timedelta(days=0)
     if observation.days is not None:
         delta += datetime.timedelta(days=observation.days)

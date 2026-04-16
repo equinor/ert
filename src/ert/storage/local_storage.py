@@ -7,7 +7,7 @@ import re
 import shutil
 import types
 from collections.abc import Generator, MutableSequence
-from datetime import datetime
+from datetime import UTC, datetime
 from functools import cached_property
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -36,7 +36,7 @@ _LOCAL_STORAGE_VERSION = 26
 
 class _Migrations(BaseModel):
     ert_version: str = __version__
-    timestamp: datetime = Field(default_factory=datetime.now)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(tz=UTC))
     name: str
     version_range: tuple[int, int]
 
