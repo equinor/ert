@@ -380,7 +380,7 @@ def test_everest2ropt_snapshot(case, snapshot):
         None,
         None,
     )
-    ropt_config_dict["backend"]["output_dir"] = "not_relevant"
+    ropt_config_dict["optimizer"]["output_dir"] = "not_relevant"
 
     ropt_config_str = (
         orjson.dumps(

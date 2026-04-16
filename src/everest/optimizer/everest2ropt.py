@@ -181,12 +181,12 @@ def _parse_optimization(
 ) -> tuple[
     dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]
 ]:
-    ropt_backend: dict[str, Any] = {
+    ropt_backend: dict[str, Any] = {}
+    ropt_optimizer: dict[str, Any] = {
         "output_dir": os.path.abspath(optimization_output_dir),
         "stdout": "optimizer.stdout",
         "stderr": "optimizer.stderr",
     }
-    ropt_optimizer: dict[str, Any] = {}
 
     ropt_gradient: dict[str, Any] = {}
     ropt_realizations: dict[str, Any] = {"weights": realizations_weights}
