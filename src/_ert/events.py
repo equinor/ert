@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Annotated, Any, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
@@ -62,7 +62,7 @@ class Id:
 
 class BaseEvent(BaseModel):
     model_config = ConfigDict(strict=True, extra="forbid")
-    time: datetime = Field(default_factory=datetime.now)
+    time: datetime = Field(default_factory=lambda: datetime.now(tz=UTC))
 
 
 class ForwardModelStepBaseEvent(BaseEvent):
