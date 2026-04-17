@@ -1,4 +1,5 @@
 import shutil
+import time
 from pathlib import Path
 
 import numpy as np
@@ -441,10 +442,18 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
         # select the ensemble
         storage_widget = tool.findChild(StorageWidget)
         storage_widget._tree_view.expandAll()
-        model_index = storage_widget._tree_view.model().index(
-            0, 0, storage_widget._tree_view.model().index(0, 0)
-        )
-        storage_widget._tree_view.setCurrentIndex(model_index)
+
+        model = storage_widget._tree_view.model()
+        experiment_index = model.index(0, 0)
+
+        target_index = None
+        for r in range(model.rowCount(experiment_index)):
+            idx = model.index(r, 0, experiment_index)
+            if model.data(idx, Qt.ItemDataRole.DisplayRole) == "iter-0":
+                target_index = idx
+                break
+        assert target_index is not None
+        storage_widget._tree_view.setCurrentIndex(target_index)
         assert (
             tool._storage_info_widget._content_layout.currentIndex()
             == _WidgetType.ENSEMBLE_WIDGET
@@ -716,3 +725,76 @@ def test_that_export_parameters_button_opens_the_export_dialog(
     parameters_frame = ensemble_widget._tab_widget.currentWidget()
     parameters_frame.findChild(QPushButton).click()
     assert isinstance(QApplication.activeModalWidget(), ExportDialog)
+
+
+def _child_names_under(model, parent_index):
+    return [
+        model.data(model.index(r, 0, parent_index), Qt.ItemDataRole.DisplayRole)
+        for r in range(model.rowCount(parent_index))
+    ]
+
+
+def _find_root_row_by_name(model, name: str):
+    for r in range(model.rowCount()):
+        idx = model.index(r, 0)
+        if model.data(idx, Qt.ItemDataRole.DisplayRole) == name:
+            return idx
+    return None
+
+
+@pytest.mark.usefixtures("copy_poly_case")
+def test_that_storage_widget_sorts_by_name_and_created(qtbot):
+    config = ErtConfig.from_file("poly.ert")
+    notifier = ErtNotifier()
+    notifier.set_storage(config.ens_path)
+
+    with notifier.write_storage() as storage:
+        exp = storage.create_experiment(
+            experiment_config={
+                "parameter_configuration": [
+                    pc.model_dump(mode="json")
+                    for pc in config.ensemble_config.parameter_configuration
+                ],
+                "response_configuration": [
+                    rc.model_dump(mode="json")
+                    for rc in config.ensemble_config.response_configuration
+                ],
+            },
+            name="exp-sort",
+        )
+
+        # Create two ensembles with a small delay to ensure distinct started_at
+        exp.create_ensemble(
+            name="a-ens", ensemble_size=config.runpath_config.num_realizations
+        )
+        time.sleep(1)
+        exp.create_ensemble(
+            name="b-ens", ensemble_size=config.runpath_config.num_realizations
+        )
+
+    tool = ManageExperimentsPanel(
+        config, notifier, config.runpath_config.num_realizations
+    )
+    storage_widget = tool.findChild(StorageWidget)
+    assert storage_widget is not None
+
+    tree_view = storage_widget._tree_view
+    tree_view.expandAll()
+    model = tree_view.model()
+    exp_index = _find_root_row_by_name(model, "exp-sort")
+    assert exp_index is not None
+
+    def current_child_names():
+        return _child_names_under(model, exp_index)
+
+    tree_view.sortByColumn(0, Qt.SortOrder.AscendingOrder)
+    qtbot.waitUntil(lambda: current_child_names() == ["a-ens", "b-ens"], timeout=500)
+
+    tree_view.sortByColumn(0, Qt.SortOrder.DescendingOrder)
+    qtbot.waitUntil(lambda: current_child_names() == ["b-ens", "a-ens"], timeout=500)
+
+    tree_view.sortByColumn(1, Qt.SortOrder.AscendingOrder)
+    qtbot.waitUntil(lambda: current_child_names() == ["a-ens", "b-ens"], timeout=500)
+
+    tree_view.sortByColumn(1, Qt.SortOrder.DescendingOrder)
+    qtbot.waitUntil(lambda: current_child_names() == ["b-ens", "a-ens"], timeout=500)

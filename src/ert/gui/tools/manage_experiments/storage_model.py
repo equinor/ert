@@ -18,7 +18,7 @@ class _Column(IntEnum):
 _NUM_COLUMNS = max(_Column).value + 1
 _COLUMN_TEXT = {
     0: "Name",
-    1: "Created at",
+    1: "Created",
 }
 
 
@@ -83,6 +83,11 @@ class EnsembleModel:
         elif role == Qt.ItemDataRole.ToolTipRole:
             if col == _Column.TIME:
                 return str(self._start_time)
+        elif role == Qt.ItemDataRole.UserRole:
+            if col == _Column.TIME:
+                return self._start_time
+            if col == _Column.NAME:
+                return self._name
 
         return None
 
@@ -118,6 +123,11 @@ class ExperimentModel:
                     if self._children
                     else "None"
                 )
+        elif role == Qt.ItemDataRole.UserRole:
+            if col == _Column.NAME:
+                return self._name
+            if col == _Column.TIME:
+                return self._children[0]._start_time if self._children else None
 
         return None
 

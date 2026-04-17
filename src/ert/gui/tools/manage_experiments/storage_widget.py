@@ -1,4 +1,5 @@
 import logging
+import re
 from collections.abc import Callable
 from typing import cast
 
@@ -67,21 +68,46 @@ class _SortingProxyModel(QSortFilterProxyModel):
         self.setSourceModel(model)
 
     def lessThan(self, left: QModelIndex, right: QModelIndex) -> bool:
-        left_data = left.data()
-        right_data = right.data()
-
+        left_display = left.data(Qt.ItemDataRole.DisplayRole)
+        right_display = right.data(Qt.ItemDataRole.DisplayRole)
         if (
-            isinstance(left_data, str)
-            and "Realization" in left_data
-            and isinstance(right_data, str)
-            and "Realization" in right_data
+            isinstance(left_display, str)
+            and left_display.startswith("Realization ")
+            and isinstance(right_display, str)
+            and right_display.startswith("Realization ")
         ):
-            left_realization_number = int(left_data.split(" ")[1])
-            right_realization_number = int(right_data.split(" ")[1])
+            try:
+                left_num = int(left_display.split(" ")[1])
+                right_num = int(right_display.split(" ")[1])
+            except (IndexError, ValueError):
+                return left_display.lower() < right_display.lower()
+            return left_num < right_num
 
-            return left_realization_number < right_realization_number
+        role = int(self.sortRole())
+        left_data = left.data(role)
+        right_data = right.data(role)
 
-        return super().lessThan(left, right)
+        if left_data is None and right_data is None:
+            return False
+        if left_data is None:
+            return False
+        if right_data is None:
+            return True
+
+        if isinstance(left_data, str) and isinstance(right_data, str):
+
+            def natural_key(s: str) -> list[int | str]:
+                return [
+                    int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", s)
+                ]
+
+            lk = natural_key(left_data)
+            rk = natural_key(right_data)
+            if lk == rk:
+                return left_data.lower() < right_data.lower()
+            return lk < rk
+
+        return left_data < right_data
 
 
 class StorageWidget(QWidget):
@@ -110,9 +136,16 @@ class StorageWidget(QWidget):
         proxy_model = _SortingProxyModel(storage_model)
         proxy_model.setFilterKeyColumn(-1)  # Search all columns.
         proxy_model.setSourceModel(storage_model)
-        proxy_model.sort(0, Qt.SortOrder.AscendingOrder)
+        proxy_model.setSortRole(Qt.ItemDataRole.UserRole)
+        proxy_model.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+        proxy_model.setDynamicSortFilter(True)
+        proxy_model.sort(1, Qt.SortOrder.DescendingOrder)
 
         self._tree_view.setModel(proxy_model)
+        self._tree_view.setSortingEnabled(True)
+        header = self._tree_view.header()
+        if header is not None:
+            header.setSortIndicatorShown(True)
         search_bar.textChanged.connect(proxy_model.setFilterFixedString)
 
         self._sel_model = QItemSelectionModel(proxy_model)
