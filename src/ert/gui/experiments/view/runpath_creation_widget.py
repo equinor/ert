@@ -35,6 +35,7 @@ class RunpathCreationProgressWidget(QWidget):
         self._spinner.setMovie(spin_movie)
 
         self._label = QLabel("Preparing runpaths...")
+        self._label.setMinimumWidth(220)
 
         self._bar = QProgressBar()
         self._bar.setRange(0, 1)
