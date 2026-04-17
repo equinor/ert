@@ -194,7 +194,6 @@ def test_that_controls_ordering_is_the_same_for_ropt_and_everest_control():
         control_type="real",
         min=0.0,
         max=1.0,
-        perturbation_type="absolute",
         perturbation_magnitude=0.05,
         scaled_range=[0.0, 1.0],
     )
@@ -226,7 +225,6 @@ def test_that_controls_ordering_is_the_same_for_ropt_and_everest_control():
         control_type="real",
         min=0.0,
         max=1.0,
-        perturbation_type="absolute",
         perturbation_magnitude=0.05,
         scaled_range=(0.0, 1.0),
     )
@@ -300,7 +298,6 @@ def test_that_controls_ordering_disregards_index():
         control_type="real",
         min=0.0,
         max=1.0,
-        perturbation_type="absolute",
         perturbation_magnitude=0.05,
         scaled_range=(0.0, 1.0),
     )
@@ -350,7 +347,6 @@ def test_that_setting_initial_guess_in_a_list_is_the_same_as_one_per_index():
         control_type="real",
         min=0.0,
         max=1.0,
-        perturbation_type="relative",
         perturbation_magnitude=5,
         scaled_range=[1.0, 2.0],
         enabled=False,
@@ -366,7 +362,6 @@ def test_that_setting_initial_guess_in_a_list_is_the_same_as_one_per_index():
         control_type="real",
         min=0.0,
         max=1.0,
-        perturbation_type="relative",
         perturbation_magnitude=5,
         scaled_range=[1.0, 2.0],
         enabled=False,
@@ -409,7 +404,6 @@ def test_that_setting_initial_guess_in_a_list_is_the_same_as_one_per_index():
         "lower_bounds",
         "upper_bounds",
         "perturbation_magnitudes",
-        "perturbation_types",
         "mask",
     ]:
         assert ropt_config1["variables"][key] == ropt_config2["variables"][key]

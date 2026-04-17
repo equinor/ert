@@ -10,7 +10,7 @@ from typing import (
 )
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
-from ropt.enums import PerturbationType, VariableType
+from ropt.enums import VariableType
 
 from ert.config import ConfigWarning, EverestControl, SamplerConfig
 
@@ -162,18 +162,6 @@ class ControlConfig(BaseModel):
             """
         ),
     )
-    perturbation_type: Literal["absolute", "relative"] = Field(
-        default="absolute",
-        description=dedent(
-            """
-            The perturbation type for the control group.
-
-            The `perturbation_type` keyword defines whether the perturbation
-            magnitude (`perturbation_magnitude`) should be treated as an
-            absolute value or as relative to the dynamic range of the controls.
-            """
-        ),
-    )
     perturbation_magnitude: float | None = Field(
         default=None,
         description=dedent(
@@ -185,15 +173,7 @@ class ControlConfig(BaseModel):
             deviation in case of a normal distribution) of controls, used to
             approximate the gradient.
 
-            The interpretation of this field depends on the value of the
-            `perturbation_type` field:
-
-            - `absolute`: The given value is used as-is.
-            - `relative`: The perturbation magnitude is calculated by
-              multiplying the given by value by the difference between the `max`
-              and `min` fields.
-
-            This default value can be overridden at the variable level.
+            This value can be overridden at the variable level.
 
             This field is required unless it is explicitly set for all variables.
             """
@@ -241,9 +221,17 @@ class ControlConfig(BaseModel):
         ),
     )
 
-    @property
-    def ropt_perturbation_type(self) -> PerturbationType:
-        return PerturbationType[self.perturbation_type.upper()]
+    @model_validator(mode="before")
+    @classmethod
+    def check_for_perturbation_type(cls, values: dict[str, Any]) -> dict[str, Any]:
+        if "perturbation_type" in values:
+            raise ValueError(
+                "Support for the perturbation_type keyword has been removed.\n"
+                "This used to specify if the perturbation magnitudes were "
+                "`absolute` or `relative`.\n"
+                "Now perturbation magnitudes will always be `absolute`."
+            )
+        return values
 
     @property
     def ropt_control_type(self) -> VariableType:
@@ -389,7 +377,6 @@ class ControlConfig(BaseModel):
                     else self.enabled,
                     min=variable.min if variable.min is not None else self.min,
                     max=variable.max if variable.max is not None else self.max,
-                    perturbation_type=variable.perturbation_type,
                     perturbation_magnitude=(
                         variable.perturbation_magnitude
                         if variable.perturbation_magnitude is not None

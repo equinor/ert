@@ -1,7 +1,7 @@
 import os
 from typing import Any
 
-from ropt.enums import PerturbationType, VariableType
+from ropt.enums import VariableType
 from ropt.transforms import (
     NonlinearConstraintTransform,
     ObjectiveTransform,
@@ -29,9 +29,6 @@ def _parse_controls(
         "variable_count": len(initial_guesses),
         "lower_bounds": [control.min for control in controls],
         "upper_bounds": [control.max for control in controls],
-        "perturbation_types": [
-            PerturbationType[control.perturbation_type.upper()] for control in controls
-        ],
         "perturbation_magnitudes": [
             control.perturbation_magnitude for control in controls
         ],
