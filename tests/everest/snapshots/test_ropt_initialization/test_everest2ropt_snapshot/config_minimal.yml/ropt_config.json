@@ -70,11 +70,6 @@
       0.001,
       0.001
     ],
-    "perturbation_types": [
-      1,
-      1,
-      1
-    ],
     "samplers": [
       0,
       0,

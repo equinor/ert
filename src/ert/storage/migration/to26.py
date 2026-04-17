@@ -53,7 +53,6 @@ def migrate_everest_control_format(path: Path) -> None:
                             "enabled": param["enabled"][i],
                             "min": param["min"][i],
                             "max": param["max"][i],
-                            "perturbation_type": param["perturbation_types"][i],
                             "perturbation_magnitude": param["perturbation_magnitudes"][
                                 i
                             ],

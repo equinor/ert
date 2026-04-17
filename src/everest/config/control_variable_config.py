@@ -99,20 +99,6 @@ class _ControlVariable(BaseModel):
             """
         ),
     )
-    perturbation_type: Literal["absolute", "relative"] = Field(
-        default="absolute",
-        description=dedent(
-            """
-            The perturbation type for the control group.
-
-            The `perturbation_type` keyword defines whether the perturbation
-            magnitude (`perturbation_magnitude`) should be treated as an
-            absolute value or as relative to the dynamic range of the controls.
-
-            Overrides the value of `perturbation_type` in the control group.
-            """
-        ),
-    )
     perturbation_magnitude: PositiveFloat | None = Field(
         default=None,
         description=dedent(
@@ -122,14 +108,6 @@ class _ControlVariable(BaseModel):
             This controls the magnitude of perturbations (e.g. the standard
             deviation in case of a normal distribution) of controls, used to
             approximate the gradient.
-
-            The interpretation of this field depends on the value of the
-            `perturbation_type` field:
-
-            - `absolute`: The given value is used as-is.
-            - `relative`: The perturbation magnitude is calculated by
-              multiplying the given by value by the difference between the `max`
-              and `min` fields.
 
             Overrides the value of `perturbation_magnitude` in the control group.
             """
@@ -171,6 +149,16 @@ class _ControlVariable(BaseModel):
         if "auto_scale" in values:
             raise ValueError(
                 "auto_scale is deprecated for everest controls, and is on by default."
+            )
+        return values
+
+    @model_validator(mode="before")
+    @classmethod
+    def check_for_perturbation_type(cls, values: dict[str, Any]) -> dict[str, Any]:
+        if "perturbation_type" in values:
+            raise ValueError(
+                "perturbation_type is deprecated, and is ignored. "
+                "Perturbation type is now always 'absolute'."
             )
         return values
 
