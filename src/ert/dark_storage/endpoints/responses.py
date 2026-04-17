@@ -279,6 +279,19 @@ def data_for_response(
                 return pd.DataFrame()
 
             columns = ["batch_id", "realization", response_key]
+
+            if response_type == "everest_constraints":
+                constraints = ensemble.experiment.output_constraints
+                if constraints is not None and response_key in constraints.keys:
+                    idx = constraints.keys.index(response_key)
+                    return (
+                        df_pl.select(columns)
+                        .with_columns(
+                            pl.lit(constraints.lower_bounds[idx]).alias("lower_bound"),
+                            pl.lit(constraints.upper_bounds[idx]).alias("upper_bound"),
+                        )
+                        .to_pandas()
+                    )
             return df_pl.select(columns).to_pandas()
         case _:
             return pd.DataFrame()
