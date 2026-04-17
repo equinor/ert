@@ -3,8 +3,10 @@ import os
 from fastapi import HTTPException, Security, status
 from fastapi.security import APIKeyHeader
 
-DEFAULT_TOKEN = "hunter2"
 _security_header = APIKeyHeader(name="Token", auto_error=False)
+
+if not os.getenv("ERT_STORAGE_NO_TOKEN") and not os.getenv("ERT_STORAGE_TOKEN"):
+    raise RuntimeError("ERT_STORAGE_TOKEN must be set")
 
 
 async def security(*, token: str | None = Security(_security_header)) -> None:
@@ -14,7 +16,7 @@ async def security(*, token: str | None = Security(_security_header)) -> None:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Not authenticated"
         )
-    real_token = os.getenv("ERT_STORAGE_TOKEN", DEFAULT_TOKEN)
+    real_token = os.getenv("ERT_STORAGE_TOKEN")
     if token == real_token:
         # Success
         return
