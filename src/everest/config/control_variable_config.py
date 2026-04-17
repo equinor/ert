@@ -157,8 +157,10 @@ class _ControlVariable(BaseModel):
     def check_for_perturbation_type(cls, values: dict[str, Any]) -> dict[str, Any]:
         if "perturbation_type" in values:
             raise ValueError(
-                "perturbation_type is deprecated, and is ignored. "
-                "Perturbation type is now always 'absolute'."
+                "Support for the perturbation_type keyword has been removed.\n"
+                "This used to specify if the perturbation magnitudes were "
+                "`absolute` or `relative`.\n"
+                "Now perturbation magnitudes will always be `absolute`."
             )
         return values
 
