@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterable, Iterator
 from typing import TYPE_CHECKING
 
-from PyQt6.QtCore import QObject, Qt
+from PyQt6.QtCore import QObject, QSignalBlocker, Qt
 from PyQt6.QtCore import pyqtSignal as Signal
+from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtGui import QKeyEvent
 from PyQt6.QtWidgets import (
     QDialog,
@@ -34,6 +36,8 @@ from .style_customization_view import StyleCustomizationView
 
 if TYPE_CHECKING:
     from .customization_view import CustomizationView
+
+logger = logging.getLogger(__name__)
 
 
 class PlotCustomizer(QObject):
@@ -191,6 +195,7 @@ class CustomizePlotDialog(QDialog):
     resetSettings = Signal()
     copySettings = Signal(str)
     copySettingsToOthers = Signal(list)
+    tabChanged = Signal(int)
 
     def __init__(
         self,
@@ -215,6 +220,7 @@ class CustomizePlotDialog(QDialog):
         layout = QVBoxLayout()
 
         self._tabs = QTabWidget()
+        self._tabs.currentChanged.connect(self.log_tabs)
         layout.addWidget(self._tabs)
         layout.setSizeConstraint(QLayout.SizeConstraint.SetFixedSize)
 
@@ -224,16 +230,19 @@ class CustomizePlotDialog(QDialog):
         self._reset_button.setIcon(load_icon("format_color_reset.svg"))
         self._reset_button.setToolTip("Reset all settings back to default")
         self._reset_button.clicked.connect(self.resetSettings)
+        self._reset_button.clicked.connect(lambda: self.log_fn("Reset"))
 
         self._undo_button = QToolButton()
         self._undo_button.setIcon(load_icon("undo.svg"))
         self._undo_button.setToolTip("Undo")
         self._undo_button.clicked.connect(self.undoSettings)
+        self._undo_button.clicked.connect(lambda: self.log_fn("Undo"))
 
         self._redo_button = QToolButton()
         self._redo_button.setIcon(load_icon("redo.svg"))
         self._redo_button.setToolTip("Redo")
         self._redo_button.clicked.connect(self.redoSettings)
+        self._redo_button.clicked.connect(lambda: self.log_fn("Redo"))
         self._redo_button.setEnabled(False)
 
         self._copy_from_button = QToolButton()
@@ -249,6 +258,7 @@ class CustomizePlotDialog(QDialog):
         self._copy_to_button.setToolTip("Copy current plot settings to other keys")
         self._copy_to_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self._copy_to_button.clicked.connect(self.initiateCopyStyleToDialog)
+        self._copy_to_button.clicked.connect(lambda: self.log_fn("Copy to"))
         self._copy_to_button.setEnabled(True)
 
         tool_menu = QMenu(self._copy_from_button)
@@ -259,11 +269,13 @@ class CustomizePlotDialog(QDialog):
         action.setDefaultWidget(self._popup_list)
         tool_menu.addAction(action)
         self._copy_from_button.setMenu(tool_menu)
+        tool_menu.aboutToShow.connect(lambda: self.log_fn("Copy from"))
 
         self._apply_button = QPushButton("Apply")
         self._apply_button.setToolTip("Apply the new settings")
         self._apply_button.clicked.connect(self.applySettings)
         self._apply_button.setDefault(True)
+        self._apply_button.clicked.connect(lambda: self.log_fn("Apply"))
 
         self._close_button = QPushButton("Close")
         self._close_button.setToolTip("Hide this dialog")
@@ -298,6 +310,9 @@ class CustomizePlotDialog(QDialog):
     def currentPlotKeyChanged(self, new_key: str | None) -> None:
         self.current_key = new_key
 
+    def log_fn(self, action: str) -> None:
+        logger.info(f"Customization dialog action: {action}")
+
     @override
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
         # Hide when pressing Escape instead of QDialog.keyPressEvent(KeyEscape)
@@ -310,7 +325,8 @@ class CustomizePlotDialog(QDialog):
     def addTab(
         self, attribute_name: str, title: str, widget: CustomizationView
     ) -> None:
-        self._tabs.addTab(widget, title)
+        with QSignalBlocker(self._tabs):
+            self._tabs.addTab(widget, title)
         self._tab_map[attribute_name] = widget
         self._tab_order.append(attribute_name)
 
@@ -325,3 +341,9 @@ class CustomizePlotDialog(QDialog):
         self._undo_button.setEnabled(undo)
         self._redo_button.setEnabled(redo)
         self._copy_from_button.setEnabled(copy)
+
+    @Slot(int)
+    def log_tabs(self, index: int) -> None:
+        tab_title = self._tabs.tabText(index)
+
+        self.log_fn(tab_title)
