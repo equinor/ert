@@ -619,42 +619,32 @@ def test_that_exception_in_run_model_is_displayed_in_a_suggestor_window_after_si
         qtbot.addWidget(gui)
         run_experiment = gui.findChild(QToolButton, name="run_experiment")
 
-        handler_done = False
-
-        def assert_failure_in_error_dialog(run_dialog):
-            nonlocal handler_done
-            wait_until(lambda: run_dialog.fail_msg_box is not None, timeout=10000)
-            suggestor_termination_window = run_dialog.fail_msg_box
-            assert suggestor_termination_window
-            text = (
-                suggestor_termination_window.findChild(
-                    QWidget, name="suggestor_messages"
-                )
-                .findChild(QLabel)
-                .text()
-            )
-            assert "I failed :(" in text
-            button = suggestor_termination_window.findChild(
-                QPushButton, name="close_button"
-            )
-            assert button
-            button.click()
-            handler_done = True
-
         simulation_mode_combo = gui.findChild(QComboBox)
         simulation_mode_combo.setCurrentText("Single realization test-run")
         qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
         run_dialog = wait_for_child(gui, qtbot, RunDialog)
 
-        QTimer.singleShot(100, lambda: assert_failure_in_error_dialog(run_dialog))
-        # Capturing exceptions in order to catch an assertion error
-        # from assert_failure_in_error_dialog and stop waiting
+        qtbot.waitUntil(lambda: run_dialog.fail_msg_box is not None, timeout=10000)
+        suggestor_termination_window = run_dialog.fail_msg_box
+        assert suggestor_termination_window
+
+        text = (
+            suggestor_termination_window.findChild(QWidget, name="suggestor_messages")
+            .findChild(QLabel)
+            .text()
+        )
+        assert "I failed :(" in text
+
+        button = suggestor_termination_window.findChild(
+            QPushButton, name="close_button"
+        )
+        assert button
+        qtbot.mouseClick(button, Qt.MouseButton.LeftButton)
         with qtbot.captureExceptions() as exceptions:
             qtbot.waitUntil(
                 lambda: run_dialog.is_experiment_done() is True or bool(exceptions),
                 timeout=100000,
             )
-            qtbot.waitUntil(lambda: handler_done or bool(exceptions), timeout=100000)
         if exceptions:
             raise AssertionError(
                 f"Exception(s) happened in Qt event loop: {exceptions}"
