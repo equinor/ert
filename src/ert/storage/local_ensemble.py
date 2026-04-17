@@ -708,7 +708,7 @@ class LocalEnsemble(BaseMode):
             {parameter.name: parameter_values},
             schema={parameter.name: pl.Float64},
         )
-        realizations_series = pl.Series("realization", list(active_realizations))
+        realizations_series = pl.Series("realization", active_realizations)
 
         return parameters.with_columns(realizations_series)
 
