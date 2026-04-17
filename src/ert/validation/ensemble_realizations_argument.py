@@ -1,5 +1,5 @@
 from collections.abc import Callable, Iterable
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 from .range_string_argument import RangeStringArgument
 from .rangestring import rangestring_to_list
@@ -16,7 +16,7 @@ class EnsembleRealizationsArgument(RangeStringArgument):
 
     def __init__(
         self,
-        ensemble: Callable[[], Union["Ensemble", None]],
+        ensemble: Callable[[], Ensemble | None],
         required_realization_storage_states: Iterable["RealizationStorageState"],
         **kwargs: bool,
     ) -> None:

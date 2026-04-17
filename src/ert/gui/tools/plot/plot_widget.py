@@ -1,7 +1,7 @@
 import logging
 import sys
 import traceback
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
@@ -128,21 +128,19 @@ class PlotWidget(QWidget):
     def __init__(
         self,
         name: str,
-        plotter: Union[
-            "EnsemblePlot",
-            "StatisticsPlot",
-            "HistogramPlot",
-            "GaussianKDEPlot",
-            "DistributionPlot",
-            "CrossEnsembleStatisticsPlot",
-            "StdDevPlot",
-            "MisfitsPlot",
-            "EverestBatchObjectiveFunctionPlot",
-            "EverestConstraintsPlot",
-            "EverestControlsPlot",
-            "EverestGradientsPlot",
-            "EverestObjectiveFunctionPlot",
-        ],
+        plotter: EnsemblePlot
+        | StatisticsPlot
+        | HistogramPlot
+        | GaussianKDEPlot
+        | DistributionPlot
+        | CrossEnsembleStatisticsPlot
+        | StdDevPlot
+        | MisfitsPlot
+        | EverestBatchObjectiveFunctionPlot
+        | EverestConstraintsPlot
+        | EverestControlsPlot
+        | EverestGradientsPlot
+        | EverestObjectiveFunctionPlot,
         parent: QWidget | None = None,
     ) -> None:
         QWidget.__init__(self, parent)
