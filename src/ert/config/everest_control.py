@@ -159,7 +159,7 @@ class EverestControl(ParameterConfig):
     enabled: bool
     min: float
     max: float
-    perturbation_type: Literal["absolute", "relative"]
+    perturbation_type: Literal["absolute", "relative"] = "absolute"
     perturbation_magnitude: float
     scaled_range: tuple[float, float]
     sampler: SamplerConfig | None
