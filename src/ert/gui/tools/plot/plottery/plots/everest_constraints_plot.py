@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pandas as pd
+from matplotlib.patches import Patch
 from matplotlib.ticker import MaxNLocator
 
 from .plot_tools import PlotTools
@@ -25,8 +26,8 @@ class EverestConstraintsPlot:
         Glyphs: One line chart per realization, with a dot at each iteration.
 
     Input data: assumed to be a dictionary of DataFrames, where
-    each DataFrame contains columns for 'batch_id', 'realization', and
-    constraint value.
+    each DataFrame contains columns for 'batch_id', 'realization',
+    constraint value and upper/lower bounds.
     """
 
     def __init__(self) -> None:
@@ -83,6 +84,36 @@ class EverestConstraintsPlot:
             )
             if len(realizations) <= self.LEGEND_THRESHOLD:
                 config.addLegendItem(f"Realization {int(realization)}", lines[0])
+
+        if "lower_bound" in combined.columns or "upper_bound" in combined.columns:
+            ylim = axes.get_ylim()
+            config.addLegendItem(
+                "Outside of bounds",
+                Patch(facecolor="red", alpha=0.15, edgecolor="none"),
+            )
+            for bound in ["lower_bound", "upper_bound"]:
+                if bound in combined.columns:
+                    bound_min = bound_max = combined[bound].iloc[0]
+
+                    if bound == "lower_bound":
+                        bound_min = -abs(bound_min * 1e10)
+                    else:
+                        bound_max = abs(bound_max * 1e10)
+
+                    axes.axhspan(
+                        bound_min,
+                        bound_max,
+                        alpha=0.15,
+                        color="red",
+                        zorder=0,
+                    )
+                    axes.axhline(
+                        bound_max if bound == "lower_bound" else bound_min,
+                        color="grey",
+                        linestyle="--",
+                        alpha=0.7,
+                    )
+            axes.set_ylim(ylim)
 
         axes.xaxis.set_major_locator(MaxNLocator(integer=True))
         axes.spines["right"].set_visible(False)
