@@ -92,13 +92,15 @@ def enif_update(
             data = e.data
         progress_callback(AnalysisErrorEvent(error_msg=str(e), data=data))
         raise
+
     progress_callback(
         AnalysisCompleteEvent(
             data=DataSection(
                 header=smoother_snapshot.header,
                 data=smoother_snapshot.csv,
                 extra=smoother_snapshot.extra,
-            )
+            ),
+            posterior_id=str(posterior_storage.id),
         )
     )
     return smoother_snapshot
@@ -148,12 +150,14 @@ def analysis_EnIF(
 
     if num_obs == 0:
         msg = "No active observations for update step"
-        data = DataSection(
-            header=smoother_snapshot.header,
-            data=smoother_snapshot.csv,
-            extra=smoother_snapshot.extra,
+        raise ErtAnalysisError(
+            msg,
+            data=DataSection(
+                header=smoother_snapshot.header,
+                data=smoother_snapshot.csv,
+                extra=smoother_snapshot.extra,
+            ),
         )
-        raise ErtAnalysisError(msg, data=data)
 
     # EnIF ###
     start_enif = time.time()
@@ -193,12 +197,14 @@ def analysis_EnIF(
     X_clean = X_full[~nan_row_mask]
     if X_clean.shape[0] == 0:
         msg = "All parameter rows contain NaN — cannot run EnIF update"
-        data = DataSection(
-            header=smoother_snapshot.header,
-            data=smoother_snapshot.csv,
-            extra=smoother_snapshot.extra,
+        raise ErtAnalysisError(
+            msg,
+            data=DataSection(
+                header=smoother_snapshot.header,
+                data=smoother_snapshot.csv,
+                extra=smoother_snapshot.extra,
+            ),
         )
-        raise ErtAnalysisError(msg, data=data)
 
     X_clean_scaler = StandardScaler()
     X_clean_scaled = X_clean_scaler.fit_transform(X_clean.T)

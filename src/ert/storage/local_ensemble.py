@@ -49,6 +49,7 @@ class EverestRealizationInfo(TypedDict):
 
 
 SCALAR_FILENAME = "SCALAR"
+TRANSITION_DATA_DIR = "transition_data"
 
 
 class BatchDataframes(TypedDict, total=False):
@@ -1265,6 +1266,15 @@ class LocalEnsemble(BaseMode):
         self._index.everest_realization_info = realization_info
         self._storage._write_transaction(
             self._path / "index.json", self._index.model_dump_json().encode("utf-8")
+        )
+
+    def save_transition_data(self, name: str, data: str) -> None:
+        path = self._path / TRANSITION_DATA_DIR / name
+        Path.mkdir(path.parent, exist_ok=True)
+        Path.write_text(
+            self._path / TRANSITION_DATA_DIR / f"{name}.txt",
+            data,
+            encoding="utf-8",
         )
 
     def save_batch_dataframes(self, dataframes: BatchDataframes) -> None:
