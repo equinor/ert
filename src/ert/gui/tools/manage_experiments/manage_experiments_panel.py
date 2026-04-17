@@ -73,7 +73,7 @@ class ManageExperimentsPanel(QTabWidget):
             self._storage_info_widget.setRealization
         )
 
-        self.addTab(panel, "Create new experiment")
+        self.addTab(panel, "Experiments Overview")
 
     def _add_initialize_from_scratch_tab(self) -> None:
         panel = QWidget()
