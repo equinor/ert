@@ -466,6 +466,27 @@ def test_gen_kw_trans_func(tmpdir, params, xinput, expected):
         assert abs(out - expected) < 10**-15
 
 
+def test_that_dunif_transform_does_not_exceed_max_for_extreme_input_values(tmpdir):
+    """ndtr(x) returns exactly 1.0 for x >= ~8.3 due to floating-point limits."""
+    with tmpdir.as_cwd():
+        cfg = GenKwConfig(
+            name="MYNAME",
+            forward_init=False,
+            update=False,
+            distribution=GenKwConfig._parse_distribution(
+                "MYNAME", "DUNIF", ["5", "1", "5"]
+            ),
+        )
+        for x in [8.3, 100]:
+            result = float(
+                cfg.distribution.transform_numpy(np.asarray([x], dtype=np.float64))[0]
+            )
+            assert result <= 5.0, f"DUNIF result {result} exceeds max=5.0 for x={x}"
+            assert result >= 5.0, (
+                f"DUNIF result {result} != 5.0 (max) for extreme x={x}"
+            )
+
+
 def test_gen_kw_objects_equal(tmpdir):
     with tmpdir.as_cwd():
         with Path("template.txt").open("w", encoding="utf-8") as fh:
