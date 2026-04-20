@@ -100,7 +100,7 @@ class EnsembleInformationFilterPanel(ExperimentConfigPanel):
         merged_parameters = parameter_configuration
         if design_matrix is not None:
             layout.addRow(
-                "Design Matrix",
+                "Design matrix",
                 DesignMatrixPanel.get_design_matrix_button(
                     design_matrix,
                     number_of_realizations_label,

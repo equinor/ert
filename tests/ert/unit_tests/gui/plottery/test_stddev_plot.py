@@ -39,7 +39,7 @@ def test_stddev_plot_shows_boxplot(plot_context: PlotContext):
     )
     ax = figure.axes
     assert ax[0].get_title() == "experiment_1 : ensemble_1 layer=0"
-    assert ax[1].get_ylabel() == "Standard Deviation"
+    assert ax[1].get_ylabel() == "Standard deviation"
     annotation = [
         child for child in ax[1].get_children() if isinstance(child, plt.Annotation)
     ]

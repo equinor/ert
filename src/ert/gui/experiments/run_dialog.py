@@ -705,7 +705,7 @@ class RunDialog(QFrame):
         msg_box = QMessageBox(self)
         msg_box.setObjectName("EnsembleEvaluationWarningBox")
         msg_box.setIcon(QMessageBox.Icon.Warning)
-        msg_box.setWindowTitle("Ensemble Evaluation Warning")
+        msg_box.setWindowTitle("Ensemble evaluation warning")
         msg_box.setText(msg)
         msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
         msg_box.show()

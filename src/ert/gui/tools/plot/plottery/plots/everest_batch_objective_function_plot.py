@@ -116,8 +116,8 @@ class EverestBatchObjectiveFunctionPlot:
                 plot_context,
                 figure,
                 axes,
-                default_x_label="Batch Iteration",
-                default_y_label="Aggregated Objective Value",
+                default_x_label="Batch iteration",
+                default_y_label="Aggregated objective value",
             )
             figure.tight_layout()
             return

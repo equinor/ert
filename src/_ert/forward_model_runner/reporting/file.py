@@ -59,7 +59,7 @@ class File(Reporter):
             fm_step_status = self.status_dict["steps"][msg.step.index]
 
         if isinstance(msg, Init):
-            logger.debug("Init Message Instance")
+            logger.debug("Init message instance")
             self._delete_old_status_files()
             self._init_status_file()
             self.status_dict = self._init_step_status_dict(
