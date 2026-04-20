@@ -113,7 +113,8 @@ class DUnifSettings(TransSettingsValidation):
         y = ndtr(x)
         span = self.max - self.min
         steps_denom = float(self.steps - 1)
-        return (np.floor(y * self.steps) / steps_denom) * span + self.min
+        bin_index = np.minimum(np.floor(y * self.steps), self.steps - 1)
+        return (bin_index / steps_denom) * span + self.min
 
 
 class NormalSettings(TransSettingsValidation):
