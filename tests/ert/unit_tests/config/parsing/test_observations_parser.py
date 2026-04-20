@@ -247,3 +247,45 @@ def test_that_breakthrough_observations_can_be_parsed_with_localization():
     assert breakthrough_obs["LOCALIZATION"]["EAST"] == "10"
     assert breakthrough_obs["LOCALIZATION"]["NORTH"] == "20"
     assert breakthrough_obs["LOCALIZATION"]["RADIUS"] == "2500"
+
+
+def test_that_parser_sets_undefined_observation_names_to_none():
+    all_observations = """
+        GENERAL_OBSERVATION
+        {
+           DATA       = POLY_RES;
+           INDEX_LIST = 0,2,4,6,8;
+           OBS_FILE   = poly_obs_data.txt;
+        };
+        SUMMARY_OBSERVATION
+        {
+            VALUE   = 0.2;
+            ERROR   = 0.035;
+            DATE    = 2013-12-10;
+            KEY     = WOPR:OP1;
+        };
+        RFT_OBSERVATION
+        {
+            WELL=PROD;
+            DATE=2015-02-01;
+            PROPERTY=PRESSURE;
+            VALUE=3800;
+            ERROR=10;
+            TVD=8400;
+            EAST=9500;
+            NORTH=9500;
+        };
+        BREAKTHROUGH_OBSERVATION
+        {
+            KEY=WWCT:OP_1;
+            DATE=2012-10-01;
+            ERROR=3;
+            THRESHOLD=0.1;
+        };
+    """
+    parsed_obs = parse_observations(
+        content=all_observations,
+        filename="",
+    )
+    for obs in parsed_obs:
+        assert obs["name"] is None

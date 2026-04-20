@@ -166,8 +166,14 @@ class SummaryObservation(_SummaryValues):
                 )
             )
 
+        name = (
+            observation_dict["name"]
+            if observation_dict["name"] is not None
+            else f"{summary_key}:{date}"
+        )
+
         obs_instance = cls(
-            name=observation_dict["name"],
+            name=name,
             error=error,
             key=summary_key,
             value=value,
@@ -177,7 +183,7 @@ class SummaryObservation(_SummaryValues):
         # Bypass pydantic discarding context
         # only relevant for ERT config surfacing validation errors
         # irrelevant for runmodels etc.
-        obs_instance.name = observation_dict["name"]
+        obs_instance.name = name
 
         return [obs_instance]
 
@@ -282,21 +288,28 @@ class GeneralObservation(_GeneralObservation):
                     context=observation_dict.context,
                 )
 
+            index = 0
+            name = (
+                observation_dict["name"]
+                if observation_dict["name"] is not None
+                else f"{data}:{restart}:{index}"
+            )
+
             obs_instance = cls(
-                name=observation_dict["name"],
+                name=name,
                 data=data,
                 value=validate_float(observation_dict["VALUE"], "VALUE"),
                 error=validate_positive_float(
                     observation_dict["ERROR"], "ERROR", strictly_positive=True
                 ),
                 restart=restart,
-                index=0,
+                index=index,
                 shape_id=None,
             )
             # Bypass pydantic discarding context
             # only relevant for ERT config surfacing validation errors
             # irrelevant for runmodels etc.
-            obs_instance.name = observation_dict["name"]
+            obs_instance.name = name
             return [obs_instance]
 
         obs_filename = _resolve_path(directory, observation_dict["OBS_FILE"])
@@ -332,20 +345,25 @@ class GeneralObservation(_GeneralObservation):
                     f"{values}), error ({stds}) and index list ({indices}) "
                     "must be of equal length"
                 ),
-                observation_dict["name"],
+                observation_dict.context,
             )
 
         if np.any(stds <= 0):
             raise ObservationConfigError.with_context(
                 "Observation uncertainty must be strictly > 0",
-                observation_dict["name"],
+                observation_dict.context,
             )
 
         obs_instances: list[Self] = []
         for _pos, (val, std, idx) in enumerate(zip(values, stds, indices, strict=True)):
             # index should reflect the index provided by INDEX_FILE / INDEX_LIST
+            name = (
+                observation_dict["name"]
+                if observation_dict["name"] is not None
+                else f"{data}:{restart}:{int(idx)}"
+            )
             inst = cls(
-                name=observation_dict["name"],
+                name=name,
                 data=data,
                 value=float(val),
                 error=float(std),
@@ -356,7 +374,7 @@ class GeneralObservation(_GeneralObservation):
             # Bypass pydantic discarding context
             # only relevant for ERT config surfacing validation errors
             # irrelevant for runmodels etc.
-            inst.name = observation_dict["name"]
+            inst.name = name
             obs_instances.append(inst)
         return obs_instances
 
@@ -606,6 +624,15 @@ class RFTObservation(BaseObservation):
         if tvd is None:
             raise _missing_value_error(observation_dict.context, "TVD")
 
+        name = (
+            observation_dict["name"]
+            if observation_dict["name"] is not None
+            else (
+                f"{well}:{date}:{observed_property}:{east}:{north}:{tvd}"
+                + (f":{zone}" if zone is not None else "")
+            )
+        )
+
         radius = radius if radius is not None else DEFAULT_LOCALIZATION_RADIUS
         shape_id = shape_registry.register(
             CircleShapeConfig(
@@ -616,7 +643,7 @@ class RFTObservation(BaseObservation):
         )
 
         obs_instance = cls(
-            name=observation_dict["name"],
+            name=name,
             well=well,
             property=observed_property,
             value=observed_value,
@@ -633,7 +660,7 @@ class RFTObservation(BaseObservation):
         # Bypass pydantic discarding context
         # only relevant for ERT config surfacing validation errors
         # irrelevant for runmodels etc.
-        obs_instance.name = observation_dict["name"]
+        obs_instance.name = name
 
         return [obs_instance]
 
@@ -705,9 +732,14 @@ class BreakthroughObservation(BaseObservation):
                 )
             )
 
+        name = (
+            obs_dict["name"]
+            if obs_dict["name"] is not None
+            else f"BREAKTHROUGH:{summary_key}:{threshold}"
+        )
         return [
             cls(
-                name=obs_dict["name"],
+                name=name,
                 key=summary_key,
                 date=date,
                 error=error,
@@ -921,8 +953,7 @@ def _invalid_rft_localization_key_error(
     key: str, context: FileContextToken
 ) -> ObservationConfigError:
     return ObservationConfigError.with_context(
-        f"Invalid key: '{key}' in 'LOCALIZATION' for "
-        f"RFT observation: '{context!s}'. "
+        f"Invalid key: '{key}' in LOCALIZATION for RFT_OBSERVATION. "
         f"The '{key}' keyword must be defined outside the LOCALIZATION section for "
         f"RFT observations - or in the CSV RFT configuration file.",
         context,
