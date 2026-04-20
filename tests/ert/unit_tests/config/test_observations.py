@@ -25,7 +25,7 @@ from ert.config._observations import (
     extract_localization_values,
     make_observations,
 )
-from ert.config.parsing import parse_observations
+from ert.config.parsing import ObservationDict, parse_observations
 from ert.config.parsing.observations_parser import (
     ObservationConfigError,
     ObservationType,
@@ -654,7 +654,9 @@ def test_that_error_must_be_greater_than_zero_in_general_observations(std):
         )
 
 
-def test_that_all_errors_in_general_observations_must_be_greater_than_zero(tmpdir):
+def test_that_all_errors_in_general_observations_must_be_greater_than_zero(
+    tmpdir, file_context_token
+):
     with tmpdir.as_cwd():
         # First error value will be 0
         Path("obs_data.txt").write_text(
@@ -666,13 +668,16 @@ def test_that_all_errors_in_general_observations_must_be_greater_than_zero(tmpdi
             make_observations(
                 "",
                 [
-                    {
-                        "type": ObservationType.GENERAL,
-                        "name": "OBS",
-                        "DATA": "GEN",
-                        "RESTART": 1,
-                        "OBS_FILE": "obs_data.txt",
-                    }
+                    ObservationDict(
+                        {
+                            "type": ObservationType.GENERAL,
+                            "name": "OBS",
+                            "DATA": "GEN",
+                            "RESTART": 1,
+                            "OBS_FILE": "obs_data.txt",
+                        },
+                        context=file_context_token(),
+                    )
                 ],
                 ShapeRegistry(),
             )
@@ -747,7 +752,9 @@ def test_that_having_no_refcase_but_history_observations_causes_exception():
         ("INDEX_FILE", "obs_idx.txt"),
     ],
 )
-def test_that_indices_from_file_and_list_are_read(tmpdir, indices_type, indices_value):
+def test_that_indices_from_file_and_list_are_read(
+    tmpdir, indices_type, indices_value, file_context_token
+):
     with tmpdir.as_cwd():
         if indices_type == "INDEX_FILE":
             Path("obs_idx.txt").write_text("0\n2\n4\n6\n8", encoding="utf-8")
@@ -757,14 +764,17 @@ def test_that_indices_from_file_and_list_are_read(tmpdir, indices_type, indices_
         obs = make_observations(
             "",
             [
-                {
-                    "type": ObservationType.GENERAL,
-                    "name": "OBS",
-                    "DATA": "GEN",
-                    f"{indices_type}": f"{indices_value}",
-                    "RESTART": "1",
-                    "OBS_FILE": "obs_data.txt",
-                }
+                ObservationDict(
+                    {
+                        "type": ObservationType.GENERAL,
+                        "name": "OBS",
+                        "DATA": "GEN",
+                        f"{indices_type}": f"{indices_value}",
+                        "RESTART": "1",
+                        "OBS_FILE": "obs_data.txt",
+                    },
+                    context=file_context_token(),
+                ),
             ],
             ShapeRegistry(),
         )
@@ -808,7 +818,7 @@ def test_that_invalid_time_map_file_raises_config_validation_error():
         run_convert_observations(Namespace(config="config.ert"))
 
 
-def test_that_non_existent_obs_file_is_invalid():
+def test_that_non_existent_obs_file_is_invalid(file_context_token):
     with pytest.raises(
         expected_exception=ConfigValidationError,
         match="did not resolve to a valid path",
@@ -816,14 +826,17 @@ def test_that_non_existent_obs_file_is_invalid():
         make_observations(
             "",
             [
-                {
-                    "type": ObservationType.GENERAL,
-                    "name": "OBS",
-                    "DATA": "RES",
-                    "INDEX_LIST": "0,2,4,6,8",
-                    "RESTART": "0",
-                    "OBS_FILE": "does_not_exist/at_all",
-                }
+                ObservationDict(
+                    {
+                        "type": ObservationType.GENERAL,
+                        "name": "OBS",
+                        "DATA": "RES",
+                        "INDEX_LIST": "0,2,4,6,8",
+                        "RESTART": "0",
+                        "OBS_FILE": "does_not_exist/at_all",
+                    },
+                    context=file_context_token(),
+                )
             ],
             ShapeRegistry(),
         )
@@ -858,7 +871,9 @@ def test_that_non_existent_time_map_file_is_invalid():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_general_observation_cannot_contain_both_value_and_obs_file():
+def test_that_general_observation_cannot_contain_both_value_and_obs_file(
+    file_context_token,
+):
     Path("obs_idx.txt").write_text("0\n2\n4\n6\n8", encoding="utf-8")
     Path("obs_data.txt").write_text(
         "\n".join(f"{float(i)} 0.1" for i in range(5)), encoding="utf-8"
@@ -869,40 +884,50 @@ def test_that_general_observation_cannot_contain_both_value_and_obs_file():
         make_observations(
             "",
             [
-                {
-                    "type": ObservationType.GENERAL,
-                    "name": "OBS",
-                    "DATA": "GEN",
-                    "RESTART": "1",
-                    "INDEX_FILE": "obs_idx.txt",
-                    "OBS_FILE": "obs_data.txt",
-                    "VALUE": "1.0",
-                    "ERROR": "0.1",
-                }
+                ObservationDict(
+                    {
+                        "type": ObservationType.GENERAL,
+                        "name": "OBS",
+                        "DATA": "GEN",
+                        "RESTART": "1",
+                        "INDEX_FILE": "obs_idx.txt",
+                        "OBS_FILE": "obs_data.txt",
+                        "VALUE": "1.0",
+                        "ERROR": "0.1",
+                    },
+                    context=file_context_token(),
+                )
             ],
             ShapeRegistry(),
         )
 
 
-def test_that_general_observation_must_contain_either_value_or_obs_file():
+def test_that_general_observation_must_contain_either_value_or_obs_file(
+    file_context_token,
+):
     with pytest.raises(
         ConfigValidationError, match=r"must contain either VALUE.*OBS_FILE"
     ):
         make_observations(
             "",
             [
-                {
-                    "type": ObservationType.GENERAL,
-                    "name": "OBS",
-                    "DATA": "GEN",
-                    "RESTART": "1",
-                }
+                ObservationDict(
+                    {
+                        "type": ObservationType.GENERAL,
+                        "name": "OBS",
+                        "DATA": "GEN",
+                        "RESTART": "1",
+                    },
+                    context=file_context_token(),
+                ),
             ],
             ShapeRegistry(),
         )
 
 
-def test_that_non_numbers_in_obs_file_shows_informative_error_message(tmpdir):
+def test_that_non_numbers_in_obs_file_shows_informative_error_message(
+    tmpdir, file_context_token
+):
     with tmpdir.as_cwd():
         Path("obs_data.txt").write_text("not_an_int 0.1\n", encoding="utf-8")
         with pytest.raises(
@@ -913,21 +938,24 @@ def test_that_non_numbers_in_obs_file_shows_informative_error_message(tmpdir):
             make_observations(
                 "",
                 [
-                    {
-                        "type": ObservationType.GENERAL,
-                        "name": "OBS",
-                        "DATA": "GEN",
-                        "INDEX_LIST": "0,2,4,6,8",
-                        "RESTART": 1,
-                        "OBS_FILE": "obs_data.txt",
-                    }
+                    ObservationDict(
+                        {
+                            "type": ObservationType.GENERAL,
+                            "name": "OBS",
+                            "DATA": "GEN",
+                            "INDEX_LIST": "0,2,4,6,8",
+                            "RESTART": 1,
+                            "OBS_FILE": "obs_data.txt",
+                        },
+                        context=file_context_token(),
+                    )
                 ],
                 ShapeRegistry(),
             )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_the_number_of_columns_in_obs_file_cannot_change():
+def test_that_the_number_of_columns_in_obs_file_cannot_change(file_context_token):
     with Path("obs_data.txt").open("w", encoding="utf-8") as fh:
         fh.writelines(f"{float(i)} 0.1\n" for i in range(5))
         fh.writelines("0.1\n")
@@ -937,41 +965,49 @@ def test_that_the_number_of_columns_in_obs_file_cannot_change():
         make_observations(
             "",
             [
-                {
-                    "type": ObservationType.GENERAL,
-                    "name": "OBS",
-                    "DATA": "GEN",
-                    "INDEX_LIST": "0,2,4,6,8",
-                    "RESTART": 1,
-                    "OBS_FILE": "obs_data.txt",
-                }
+                ObservationDict(
+                    {
+                        "type": ObservationType.GENERAL,
+                        "name": "OBS",
+                        "DATA": "GEN",
+                        "INDEX_LIST": "0,2,4,6,8",
+                        "RESTART": 1,
+                        "OBS_FILE": "obs_data.txt",
+                    },
+                    context=file_context_token(),
+                )
             ],
             ShapeRegistry(),
         )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_the_number_of_values_in_obs_file_must_be_even():
+def test_that_the_number_of_values_in_obs_file_must_be_even(file_context_token):
     with Path("obs_data.txt").open("w", encoding="utf-8") as fh:
         fh.writelines(f"{float(i)} 0.1 0.1\n" for i in range(5))
     with pytest.raises(ConfigValidationError, match="Expected even number of values"):
         make_observations(
             "",
             [
-                {
-                    "type": ObservationType.GENERAL,
-                    "name": "OBS",
-                    "DATA": "GEN",
-                    "INDEX_LIST": "0,2,4,6,8",
-                    "RESTART": "1",
-                    "OBS_FILE": "obs_data.txt",
-                }
+                ObservationDict(
+                    {
+                        "type": ObservationType.GENERAL,
+                        "name": "OBS",
+                        "DATA": "GEN",
+                        "INDEX_LIST": "0,2,4,6,8",
+                        "RESTART": "1",
+                        "OBS_FILE": "obs_data.txt",
+                    },
+                    context=file_context_token(),
+                )
             ],
             ShapeRegistry(),
         )
 
 
-def test_that_giving_both_index_file_and_index_list_raises_an_exception(tmpdir):
+def test_that_giving_both_index_file_and_index_list_raises_an_exception(
+    tmpdir, file_context_token
+):
     with tmpdir.as_cwd():
         Path("obs_idx.txt").write_text("0\n2\n4\n6\n8", encoding="utf-8")
         with pytest.raises(
@@ -981,16 +1017,19 @@ def test_that_giving_both_index_file_and_index_list_raises_an_exception(tmpdir):
             make_observations(
                 "",
                 [
-                    {
-                        "type": ObservationType.GENERAL,
-                        "name": "OBS",
-                        "DATA": "GEN",
-                        "INDEX_LIST": "0,2,4,6,8",
-                        "INDEX_FILE": "obs_idx.txt",
-                        "RESTART": "1",
-                        "VALUE": "0.0",
-                        "ERROR": "0.1",
-                    }
+                    ObservationDict(
+                        {
+                            "type": ObservationType.GENERAL,
+                            "name": "OBS",
+                            "DATA": "GEN",
+                            "INDEX_LIST": "0,2,4,6,8",
+                            "INDEX_FILE": "obs_idx.txt",
+                            "RESTART": "1",
+                            "VALUE": "0.0",
+                            "ERROR": "0.1",
+                        },
+                        context=file_context_token(),
+                    )
                 ],
                 ShapeRegistry(),
             )
@@ -1237,7 +1276,9 @@ def test_that_history_observations_values_are_fetched_from_refcase(
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_obs_file_must_have_the_same_number_of_lines_as_the_index_file():
+def test_that_obs_file_must_have_the_same_number_of_lines_as_the_index_file(
+    file_context_token,
+):
     Path("obs_idx.txt").write_text("0\n2\n4\n6", encoding="utf-8")
     Path("obs_data.txt").write_text(
         "\n".join(f"{float(i)} 0.1" for i in range(5)), encoding="utf-8"
@@ -1251,13 +1292,16 @@ def test_that_obs_file_must_have_the_same_number_of_lines_as_the_index_file():
                 "OBS_CONFIG": (
                     "obsconf",
                     [
-                        {
-                            "type": ObservationType.GENERAL,
-                            "name": "OBS",
-                            "DATA": "RES",
-                            "INDEX_FILE": "obs_idx.txt",  # shorter than obs_file
-                            "OBS_FILE": "obs_data.txt",
-                        }
+                        ObservationDict(
+                            {
+                                "type": ObservationType.GENERAL,
+                                "name": "OBS",
+                                "DATA": "RES",
+                                "INDEX_FILE": "obs_idx.txt",  # shorter than obs_file
+                                "OBS_FILE": "obs_data.txt",
+                            },
+                            context=file_context_token(),
+                        )
                     ],
                 ),
             }
@@ -1265,7 +1309,7 @@ def test_that_obs_file_must_have_the_same_number_of_lines_as_the_index_file():
 
 
 def test_that_obs_file_must_have_the_same_number_of_lines_as_the_length_of_index_list(
-    tmpdir,
+    tmpdir, file_context_token
 ):
     with tmpdir.as_cwd():
         with Path("obs_data.txt").open("w", encoding="utf-8") as fh:
@@ -1283,13 +1327,16 @@ def test_that_obs_file_must_have_the_same_number_of_lines_as_the_length_of_index
                     "OBS_CONFIG": (
                         "obsconf",
                         [
-                            {
-                                "type": ObservationType.GENERAL,
-                                "name": "OBS",
-                                "DATA": "RES",
-                                "INDEX_LIST": "200",  # shorter than obs_file
-                                "OBS_FILE": "obs_data.txt",
-                            }
+                            ObservationDict(
+                                {
+                                    "type": ObservationType.GENERAL,
+                                    "name": "OBS",
+                                    "DATA": "RES",
+                                    "INDEX_LIST": "200",  # shorter than obs_file
+                                    "OBS_FILE": "obs_data.txt",
+                                },
+                                context=file_context_token(),
+                            )
                         ],
                     ),
                 }
@@ -1297,7 +1344,7 @@ def test_that_obs_file_must_have_the_same_number_of_lines_as_the_length_of_index
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_general_observations_data_must_match_a_gen_datas_name():
+def test_that_general_observations_data_must_match_a_gen_datas_name(file_context_token):
     with pytest.raises(
         ConfigValidationError,
         match="No GEN_DATA with name 'RES' found",
@@ -1309,15 +1356,18 @@ def test_that_general_observations_data_must_match_a_gen_datas_name():
                 "OBS_CONFIG": (
                     "obsconf",
                     [
-                        {
-                            "type": ObservationType.GENERAL,
-                            "name": "OBS",
-                            "DATA": "RES",
-                            "INDEX_LIST": "0,2,4,6,8",
-                            "RESTART": "0",
-                            "VALUE": "1",
-                            "ERROR": "1",
-                        }
+                        ObservationDict(
+                            {
+                                "type": ObservationType.GENERAL,
+                                "name": "OBS",
+                                "DATA": "RES",
+                                "INDEX_LIST": "0,2,4,6,8",
+                                "RESTART": "0",
+                                "VALUE": "1",
+                                "ERROR": "1",
+                            },
+                            context=file_context_token(),
+                        )
                     ],
                 ),
             }
@@ -1325,7 +1375,9 @@ def test_that_general_observations_data_must_match_a_gen_datas_name():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_general_observation_restart_must_match_gen_data_report_step():
+def test_that_general_observation_restart_must_match_gen_data_report_step(
+    file_context_token,
+):
     with pytest.raises(
         ConfigValidationError,
         match="is not configured to load from report step",
@@ -1345,15 +1397,18 @@ def test_that_general_observation_restart_must_match_gen_data_report_step():
                 "OBS_CONFIG": (
                     "obsconf",
                     [
-                        {
-                            "type": ObservationType.GENERAL,
-                            "name": "OBS",
-                            "DATA": "RES",
-                            "INDEX_LIST": "0,2,4,6,8",
-                            "RESTART": "0",
-                            "VALUE": "1",
-                            "ERROR": "1",
-                        }
+                        ObservationDict(
+                            {
+                                "type": ObservationType.GENERAL,
+                                "name": "OBS",
+                                "DATA": "RES",
+                                "INDEX_LIST": "0,2,4,6,8",
+                                "RESTART": "0",
+                                "VALUE": "1",
+                                "ERROR": "1",
+                            },
+                            context=file_context_token(),
+                        )
                     ],
                 ),
             }

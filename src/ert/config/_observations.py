@@ -22,6 +22,7 @@ from .parsing import (
     ObservationDict,
     ObservationType,
 )
+from .parsing.file_context_token import FileContextToken
 
 logger = logging.getLogger(__name__)
 
@@ -115,16 +116,16 @@ class SummaryObservation(_SummaryValues):
                 case "DATE":
                     date = value
                 case "LOCALIZATION":
-                    validate_localization(value, observation_dict["name"])
+                    validate_localization(value, observation_dict.context)
                     east, north, radius = extract_localization_values(value)
                 case _:
-                    raise _unknown_key_error(str(key), observation_dict["name"])
+                    raise _unknown_key_error(str(key), observation_dict.context)
         if "VALUE" not in float_values:
-            raise _missing_value_error(observation_dict["name"], "VALUE")
+            raise _missing_value_error(observation_dict.context, "VALUE")
         if summary_key is None:
-            raise _missing_value_error(observation_dict["name"], "KEY")
+            raise _missing_value_error(observation_dict.context, "KEY")
         if "ERROR" not in float_values:
-            raise _missing_value_error(observation_dict["name"], "ERROR")
+            raise _missing_value_error(observation_dict.context, "ERROR")
 
         assert date is not None
         # Raise errors if the date is off
@@ -208,7 +209,7 @@ class GeneralObservation(_GeneralObservation):
         try:
             data = observation_dict["DATA"]
         except KeyError as err:
-            raise _missing_value_error(observation_dict["name"], "DATA") from err
+            raise _missing_value_error(observation_dict.context, "DATA") from err
 
         allowed = {
             "type",
@@ -227,7 +228,7 @@ class GeneralObservation(_GeneralObservation):
 
         extra = set(observation_dict.keys()) - allowed
         if extra:
-            raise _unknown_key_error(str(next(iter(extra))), observation_dict["name"])
+            raise _unknown_key_error(str(next(iter(extra))), observation_dict.context)
 
         if any(k in observation_dict for k in ("DATE", "DAYS", "HOURS")):
             bad_key = next(
@@ -248,7 +249,7 @@ class GeneralObservation(_GeneralObservation):
         ):
             raise ObservationConfigError.with_context(
                 "GENERAL_OBSERVATION cannot contain both VALUE/ERROR and OBS_FILE",
-                observation_dict["name"],
+                observation_dict.context,
             )
 
         if "INDEX_FILE" in observation_dict and "INDEX_LIST" in observation_dict:
@@ -257,7 +258,7 @@ class GeneralObservation(_GeneralObservation):
                     "GENERAL_OBSERVATION "
                     f"{observation_dict['name']} has both INDEX_FILE and INDEX_LIST."
                 ),
-                observation_dict["name"],
+                observation_dict.context,
             )
 
         restart = (
@@ -271,14 +272,14 @@ class GeneralObservation(_GeneralObservation):
                 raise ObservationConfigError.with_context(
                     f"For GENERAL_OBSERVATION {observation_dict['name']}, with"
                     f" VALUE = {observation_dict['VALUE']}, ERROR must also be given.",
-                    observation_dict["name"],
+                    observation_dict.context,
                 )
 
             if "VALUE" not in observation_dict and "ERROR" not in observation_dict:
                 raise ObservationConfigError.with_context(
                     "GENERAL_OBSERVATION must contain either VALUE "
                     "and ERROR or OBS_FILE",
-                    context=observation_dict["name"],
+                    context=observation_dict.context,
                 )
 
             obs_instance = cls(
@@ -572,13 +573,13 @@ class RFTObservation(BaseObservation):
                 case "MD":
                     md = validate_float(value, key)
                 case "LOCALIZATION":
-                    validate_rft_localization(value, observation_dict["name"])
+                    validate_rft_localization(value, observation_dict.context)
                     east, north, radius = extract_localization_values(value)
                     radius = (
                         radius if radius is not None else DEFAULT_LOCALIZATION_RADIUS
                     )
                 case _:
-                    raise _unknown_key_error(str(key), observation_dict["name"])
+                    raise _unknown_key_error(str(key), observation_dict.context)
         if csv_filename is not None:
             return cls.from_csv(
                 directory,
@@ -589,21 +590,21 @@ class RFTObservation(BaseObservation):
                 radius=radius,
             )
         if well is None:
-            raise _missing_value_error(observation_dict["name"], "WELL")
+            raise _missing_value_error(observation_dict.context, "WELL")
         if observed_value is None:
-            raise _missing_value_error(observation_dict["name"], "VALUE")
+            raise _missing_value_error(observation_dict.context, "VALUE")
         if observed_property is None:
-            raise _missing_value_error(observation_dict["name"], "PROPERTY")
+            raise _missing_value_error(observation_dict.context, "PROPERTY")
         if error is None:
-            raise _missing_value_error(observation_dict["name"], "ERROR")
+            raise _missing_value_error(observation_dict.context, "ERROR")
         if date is None:
-            raise _missing_value_error(observation_dict["name"], "DATE")
+            raise _missing_value_error(observation_dict.context, "DATE")
         if north is None:
-            raise _missing_value_error(observation_dict["name"], "NORTH")
+            raise _missing_value_error(observation_dict.context, "NORTH")
         if east is None:
-            raise _missing_value_error(observation_dict["name"], "EAST")
+            raise _missing_value_error(observation_dict.context, "EAST")
         if tvd is None:
-            raise _missing_value_error(observation_dict["name"], "TVD")
+            raise _missing_value_error(observation_dict.context, "TVD")
 
         radius = radius if radius is not None else DEFAULT_LOCALIZATION_RADIUS
         shape_id = shape_registry.register(
@@ -678,19 +679,19 @@ class BreakthroughObservation(BaseObservation):
                 case "THRESHOLD":
                     threshold = validate_float(value, key)
                 case "LOCALIZATION":
-                    validate_localization(value, obs_dict["name"])
+                    validate_localization(value, obs_dict.context)
                     east, north, radius = extract_localization_values(value)
                 case _:
-                    raise _unknown_key_error(str(key), value)
+                    raise _unknown_key_error(str(key), obs_dict.context)
 
         if summary_key is None:
-            raise _missing_value_error(obs_dict["name"], "KEY")
+            raise _missing_value_error(obs_dict.context, "KEY")
         if date is None:
-            raise _missing_value_error(obs_dict["name"], "DATE")
+            raise _missing_value_error(obs_dict.context, "DATE")
         if error is None:
-            raise _missing_value_error(obs_dict["name"], "ERROR")
+            raise _missing_value_error(obs_dict.context, "ERROR")
         if threshold is None:
-            raise _missing_value_error(obs_dict["name"], "THRESHOLD")
+            raise _missing_value_error(obs_dict.context, "THRESHOLD")
 
         # Register shape if localization is present
         shape_id = None
@@ -825,14 +826,14 @@ def validate_positive_float(
     return v
 
 
-def validate_rft_localization(val: dict[str, Any], obs_name: str) -> None:
+def validate_rft_localization(val: dict[str, Any], context: FileContextToken) -> None:
     errors = []
     if "EAST" in val:
-        errors.append(_invalid_rft_localization_key_error("EAST", f"{obs_name}"))
+        errors.append(_invalid_rft_localization_key_error("EAST", context))
     if "NORTH" in val:
-        errors.append(_invalid_rft_localization_key_error("NORTH", f"{obs_name}"))
+        errors.append(_invalid_rft_localization_key_error("NORTH", context))
     errors.extend(
-        _unknown_key_error(key, f"LOCALIZATION for {obs_name}")
+        _unknown_key_error(key, context)
         for key in val
         if key not in {"EAST", "NORTH", "RADIUS"}
     )
@@ -840,14 +841,15 @@ def validate_rft_localization(val: dict[str, Any], obs_name: str) -> None:
         raise ObservationConfigError.from_collected(errors)
 
 
-def validate_localization(val: dict[str, Any], obs_name: str) -> None:
+def validate_localization(val: dict[str, Any], context: FileContextToken) -> None:
     errors = []
+    localization_context = context.update(value=f"LOCALIZATION for {context!s}")
     if "EAST" not in val:
-        errors.append(_missing_value_error(f"LOCALIZATION for {obs_name}", "EAST"))
+        errors.append(_missing_value_error(localization_context, "EAST"))
     if "NORTH" not in val:
-        errors.append(_missing_value_error(f"LOCALIZATION for {obs_name}", "NORTH"))
+        errors.append(_missing_value_error(localization_context, "NORTH"))
     errors.extend(
-        _unknown_key_error(key, f"LOCALIZATION for {obs_name}")
+        _unknown_key_error(key, localization_context)
         for key in val
         if key not in {"EAST", "NORTH", "RADIUS"}
     )
@@ -879,9 +881,11 @@ def validate_positive_int(val: str, key: str) -> int:
     return v
 
 
-def _missing_value_error(name_token: str, value_key: str) -> ObservationConfigError:
+def _missing_value_error(
+    context: FileContextToken, value_key: str
+) -> ObservationConfigError:
     return ObservationConfigError.with_context(
-        f'Missing item "{value_key}" in {name_token}', name_token
+        f'Missing item "{value_key}" in {context!s}', context
     )
 
 
@@ -903,20 +907,23 @@ def _conversion_error(token: str, value: Any, type_name: str) -> ObservationConf
     )
 
 
-def _unknown_key_error(key: str, name: str) -> ObservationConfigError:
-    raise ObservationConfigError.with_context(f"Unknown {key} in {name}", key)
+def _unknown_key_error(key: str, context: FileContextToken) -> ObservationConfigError:
+    raise ObservationConfigError.with_context(f"Unknown {key} in {context!s}", context)
 
 
 def _unknown_observation_type_error(obs: ObservationDict) -> ObservationConfigError:
     return ObservationConfigError.with_context(
-        f"Unexpected type in observations {obs}", obs["name"]
+        f"Unexpected type in observations {obs}", obs.context
     )
 
 
-def _invalid_rft_localization_key_error(key: str, name: str) -> ObservationConfigError:
+def _invalid_rft_localization_key_error(
+    key: str, context: FileContextToken
+) -> ObservationConfigError:
     return ObservationConfigError.with_context(
-        f"Invalid key: '{key}' in 'LOCALIZATION' for RFT observation: '{name}'. "
+        f"Invalid key: '{key}' in 'LOCALIZATION' for "
+        f"RFT observation: '{context!s}'. "
         f"The '{key}' keyword must be defined outside the LOCALIZATION section for "
         f"RFT observations - or in the CSV RFT configuration file.",
-        key,
+        context,
     )

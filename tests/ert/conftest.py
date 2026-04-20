@@ -16,6 +16,7 @@ import polars as pl
 import pytest
 from hypothesis import HealthCheck, settings
 from hypothesis import strategies as st
+from lark import Token
 from PyQt6.QtCore import QDir
 from PyQt6.QtWidgets import QApplication
 from xlsxwriter import Workbook
@@ -25,6 +26,7 @@ from _ert.threading import set_signal_handler
 from ert.__main__ import ert_parser
 from ert.cli.main import run_cli
 from ert.config import ConfigWarning, ErtConfig
+from ert.config.parsing.file_context_token import FileContextToken
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
 from ert.mode_definitions import (
     ENIF_MODE,
@@ -566,3 +568,14 @@ def set_multiprocessing_method():
         and multiprocessing.get_start_method(allow_none=True) != "forkserver"
     ):
         multiprocessing.set_start_method("forkserver")
+
+
+@pytest.fixture
+def file_context_token():
+    def _file_context_token(obs_type="SUMMARY_OBSERVATION"):
+        return FileContextToken(
+            Token(type="foo", line=2, column=5, end_column=13, value=obs_type),
+            "observations.txt",
+        )
+
+    return _file_context_token
