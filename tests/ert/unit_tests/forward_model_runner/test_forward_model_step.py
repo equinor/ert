@@ -1,4 +1,5 @@
 import contextlib
+import datetime
 import os
 import pathlib
 import stat
@@ -373,3 +374,39 @@ def test_target_file_only_sets_error_if_specified_and_fm_step_succeeded(
         assert expected_error_message in statuses[1].error_message
     else:
         assert statuses[1].error_message is None
+
+
+def test_that_max_running_minutes_timeout_triggers_for_jobs_running_over_24_hours():
+    fmstep = ForwardModelStep({"name": "timeout_step", "max_running_minutes": 1440}, 0)
+    mock_proc = MagicMock()
+    mock_proc.pid = os.getpid()
+
+    # Simulate a job that has been running for 25 hours (exceeds 1440-min limit)
+    run_start_time = datetime.datetime.now(tz=datetime.UTC) - datetime.timedelta(
+        hours=25
+    )
+    result = fmstep.handle_process_timeout_and_create_exited_msg(
+        0, mock_proc, run_start_time
+    )
+
+    assert result is not None, (
+        "Timeout should have triggered for a job running 25h with a 1440-minute limit"
+    )
+    assert "explicitly killed" in result.error_message
+
+
+def test_that_max_running_minutes_timeout_does_not_trigger_before_limit():
+    fmstep = ForwardModelStep({"name": "timeout_step", "max_running_minutes": 1440}, 0)
+    mock_proc = MagicMock()
+
+    # Simulate a job that has been running for 23 hours (within the 24-hour limit)
+    run_start_time = datetime.datetime.now(tz=datetime.UTC) - datetime.timedelta(
+        hours=23
+    )
+    result = fmstep.handle_process_timeout_and_create_exited_msg(
+        0, mock_proc, run_start_time
+    )
+
+    assert result is None, (
+        "Timeout should not trigger for a job running 23h with a 1440-minute limit"
+    )

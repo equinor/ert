@@ -294,7 +294,10 @@ class ForwardModelStep:
         max_running_minutes = self.step_data.get("max_running_minutes")
 
         run_time = datetime.datetime.now(tz=datetime.UTC) - run_start_time
-        if max_running_minutes is None or run_time.seconds < max_running_minutes * 60:
+        if (
+            max_running_minutes is None
+            or run_time.total_seconds() < max_running_minutes * 60
+        ):
             return None
 
         # If the spawned process is not in the same process group as
