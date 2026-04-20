@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from io import StringIO
 
 from ert.cli.monitor import Monitor
@@ -107,3 +107,35 @@ def test_print_progress():
 """  # noqa: E501
 
     assert out.getvalue().replace("\r", "\n") == expected
+
+
+def test_that_print_progress_shows_correct_elapsed_time_beyond_24_hours():
+    """timedelta.seconds wraps at 86400; total_seconds() gives the true elapsed."""
+    out = StringIO()
+    monitor = Monitor(out=out)
+    snapshot = EnsembleSnapshot()
+    snapshot._ensemble_state = ""
+    for i in range(10):
+        snapshot.add_realization(
+            str(i), RealizationSnapshot(status=REALIZATION_STATE_RUNNING, active=True)
+        )
+    monitor._snapshots[0] = snapshot
+    # Simulate a run that has been going for 25 hours
+    monitor._start_time = datetime.now(tz=UTC) - timedelta(hours=25)
+    event = SnapshotUpdateEvent(
+        iteration_label="Long Phase",
+        total_iterations=1,
+        progress=0.5,
+        realization_count=10,
+        status_count={"Running": 10},
+        iteration=0,
+    )
+
+    monitor._print_progress(event)
+
+    output = out.getvalue()
+    # The running time line must contain "1 day" (not "1 hour", which is
+    # what the buggy timedelta.seconds expression would produce: 25*3600 % 86400
+    # = 3600 seconds = 1 hour).
+    assert "1 day" in output
+    assert "1 hour" in output
