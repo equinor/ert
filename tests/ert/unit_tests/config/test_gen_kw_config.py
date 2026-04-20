@@ -354,7 +354,10 @@ def test_that_very_high_mean_stddev_lognormal_gives_error():
             "The width -1.0 must be greater than 0 for errf distribution",
         ),
         ("MYNAME DERRF 3 1 2 3 4", None),
-        ("MYNAME LOGUNIF 0 1", None),
+        (
+            "MYNAME LOGUNIF 0 1",
+            "Minimum 0.0 must be strictly greater than 0 for log uniform distribution",
+        ),
         ("MYNAME CONST 0", None),
         ("MYNAME RAW", None),
         (
@@ -621,6 +624,14 @@ def test_validation_unif_distribution(tmpdir, distribution, minimum, maximum, er
                 GenKwConfig.from_config_list(config_list)
         else:
             GenKwConfig.from_config_list(config_list)
+
+
+def test_that_logunif_rejects_non_positive_min():
+    with pytest.raises(ConfigValidationError, match="strictly greater than 0"):
+        GenKwConfig._parse_distribution("MYNAME", "LOGUNIF", ["0", "1"])
+
+    with pytest.raises(ConfigValidationError, match="strictly greater than 0"):
+        GenKwConfig._parse_distribution("MYNAME", "LOGUNIF", ["-1", "1"])
 
 
 @pytest.mark.parametrize(
