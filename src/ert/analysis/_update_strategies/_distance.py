@@ -151,9 +151,9 @@ class DistanceLocalizationUpdate:
             axis_orientation=ertbox.axis_orientation,
         )
 
-        # Reshape 2D rho to (nx*ny, nobs), tile across nz layers for 3D fields
+        # Expand 2D rho (nx*ny, nobs) to 3D by repeating each xy cell across nz layers
         rho_2d = rho_matrix.reshape(ertbox.nx * ertbox.ny, -1)
-        rho_full = np.tile(rho_2d, (ertbox.nz, 1)) if ertbox.nz > 1 else rho_2d
+        rho_full = np.repeat(rho_2d, ertbox.nz, axis=0) if ertbox.nz > 1 else rho_2d
 
         def localization_callback(
             K: npt.NDArray[np.floating],
