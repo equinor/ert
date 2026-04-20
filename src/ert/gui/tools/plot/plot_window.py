@@ -61,7 +61,7 @@ GAUSSIAN_KDE = "Gaussian KDE"
 ENSEMBLE = "Ensemble"
 HISTOGRAM = "Histogram"
 STATISTICS = "Statistics"
-STD_DEV = "Std Dev"
+STD_DEV = "Std dev"
 MISFITS = "Misfits"
 EVEREST_CONTROLS_PLOT = "Controls"
 EVEREST_GRADIENTS_PLOT = "Gradient"
@@ -286,7 +286,7 @@ class PlotWindow(QMainWindow):
                 self.updatePlot
             )
             self._everest_dock = self.addDock(
-                "Everest Controls", self._everest_control_selection_widget
+                "Everest controls", self._everest_control_selection_widget
             )
             self._everest_dock.setVisible(False)
             self._data_type_keys_widget.selectDefault()

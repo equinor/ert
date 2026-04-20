@@ -169,7 +169,7 @@ def test_that_collapse_expand_happens_when_button_clicked(viewer, qtbot):
     [
         ("Updatable", [True]),
         ("Non-updatable", [False]),
-        ("All Parameters", [True, False]),
+        ("All parameters", [True, False]),
     ],
 )
 def test_that_filtering_shows_expected_nodes(
