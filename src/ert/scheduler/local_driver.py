@@ -53,10 +53,8 @@ class LocalDriver(Driver):
 
             except KeyError:
                 logger.info(f"Realization {realization} is already killed")
-            except Exception:
-                logger.error(
-                    f"Killing realization {realization} failed with error {realization}"
-                )
+            except Exception as e:
+                logger.error(f"Killing realization {realization} failed with error {e}")
 
     async def finish(self) -> None:
         results = await asyncio.gather(*self._tasks.values(), return_exceptions=True)
