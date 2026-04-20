@@ -51,16 +51,28 @@ class UnifSettings(TransSettingsValidation):
 
 class LogUnifSettings(TransSettingsValidation):
     name: Literal["logunif"] = "logunif"
-    min: float = 0.0
+    min: float = 0.1
     max: float = 1.0
 
     @model_validator(mode="after")
     def valid_logunif_params(self) -> Self:
-        if not (self.min < self.max):
-            raise ConfigValidationError(
-                f"Minimum {self.min} must be strictly less than the maximum {self.max}"
-                " for log uniform distribution"
+        errors = []
+        if not (self.min > 0):
+            errors.append(
+                ErrorInfo(
+                    message=f"Minimum {self.min} must be strictly greater than 0"
+                    " for log uniform distribution"
+                )
             )
+        if not (self.min < self.max):
+            errors.append(
+                ErrorInfo(
+                    message=f"Minimum {self.min} must be strictly less than"
+                    f" the maximum {self.max} for log uniform distribution"
+                )
+            )
+        if errors:
+            raise ConfigValidationError.from_collected(errors)
         return self
 
     def transform_numpy(self, x: np.ndarray) -> np.ndarray:
