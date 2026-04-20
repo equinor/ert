@@ -123,6 +123,12 @@ def env_save():
 
 
 @pytest.fixture
+def use_site_configurations_with_no_site_logging():
+    with patch("ert.__main__.setup_site_logging", lambda *args, **kwargs: None):
+        yield
+
+
+@pytest.fixture
 def use_site_configurations_with_no_queue_options():
     def ErtRuntimePluginsWithNoQueueOptions(**kwargs):
         return ErtRuntimePlugins(**(kwargs | {"queue_options": None}))

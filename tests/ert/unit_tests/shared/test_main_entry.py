@@ -12,7 +12,9 @@ import ert.__main__ as main
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_main_logging(monkeypatch, caplog):
+def test_main_logging(
+    monkeypatch, caplog, use_site_configurations_with_no_site_logging
+):
     parser_mock = MagicMock()
     parser_mock.func.side_effect = ValueError("This is a test")
     monkeypatch.setattr(logging.config, "dictConfig", MagicMock())
