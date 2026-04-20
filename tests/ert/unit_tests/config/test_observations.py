@@ -2234,3 +2234,114 @@ def test_that_base_observation_fails_validation_with_unknown_kwarg():
 
     with pytest.raises(ValidationError):
         BaseObservation(random_kwarg=42)
+
+
+def test_that_missing_rft_observations_name_is_defaulted_to_primary_keys():
+    well = "PROD"
+    date = "2015-02-01"
+    property_ = "PRESSURE"
+    east = "9500.0"
+    north = "10000.0"
+    tvd = "8400.0"
+    obs_config_contents = (
+        """
+        RFT_OBSERVATION {
+        VALUE=3800;
+        ERROR=10;"""
+        f"EAST={east};\n"
+        f"NORTH={north};\n"
+        f"WELL={well};\n"
+        f"DATE={date};\n"
+        f"PROPERTY={property_};\n"
+        f"TVD={tvd};\n"
+        "};"
+    )
+    ert_config = ert_config_from_parser(obs_config_contents)
+    obs_name = ert_config.observation_declarations[0].name
+    assert obs_name == f"{well}:{date}:{property_}:{east}:{north}:{tvd}"
+
+
+def test_that_missing_summary_observations_name_is_defaulted_to_primary_key():
+    key = "WOPR:OP1"
+    date = "2011-12-21"
+    obs_config_contents = (
+        """
+        SUMMARY_OBSERVATION
+        {
+            VALUE   = 0.5;
+            ERROR   = 0.05;
+            """
+        f"KEY={key};\n"
+        f"DATE={date};\n"
+        """
+        };"""
+    )
+    ert_config = ert_config_from_parser(obs_config_contents)
+    obs_name = ert_config.observation_declarations[0].name
+    assert obs_name == f"{key}:{date}"
+
+
+def test_that_missing_gen_obs_name_is_defaulted_to_primary_key_without_obs_file(
+    use_tmpdir,
+):
+    obs_config_contents = """
+        GENERAL_OBSERVATION {
+           DATA    = GEN;
+           VALUE   = 5;
+           ERROR   = 0.2;
+           RESTART = 1;
+        };
+        """
+    ert_config = ert_config_from_parser(obs_config_contents)
+    obs_name = ert_config.observation_declarations[0].name
+    assert obs_name == "GEN:1:0"
+
+
+def test_that_missing_gen_obs_name_is_defaulted_to_primary_key_with_obs_file(
+    use_tmpdir,
+):
+    obs_content = "1 0.1"
+    Path("foo.txt").write_text(obs_content, encoding="utf-8")
+    obs_config_contents = """
+        GENERAL_OBSERVATION {
+           DATA       = GEN;
+           INDEX_LIST = 0;
+           OBS_FILE   = foo.txt;
+           RESTART = 1;
+        };
+        """
+    ert_config = ert_config_from_parser(obs_config_contents)
+    obs_name = ert_config.observation_declarations[0].name
+    assert obs_name == "GEN:1:0"
+
+
+def test_that_missing_breakthrough_name_is_defaulted_to_primary_keys():
+    key = "WWCT:OP1"
+    threshold = 0.5
+    obs_config_contents = (
+        """
+        BREAKTHROUGH_OBSERVATION {
+            DATE=2012-10-01;
+            ERROR=3;
+            """
+        f"KEY={key};"
+        f"THRESHOLD={threshold};"
+        "};"
+    )
+    ert_config = ert_config_from_parser(obs_config_contents)
+    obs_name = ert_config.observation_declarations[0].name
+    assert obs_name == "BREAKTHROUGH:WWCT:OP1:0.5"
+
+
+@pytest.mark.parametrize(
+    "obs_content",
+    [
+        "SUMMARY_OBSERVATION;",
+        "BREAKTHROUGH_OBSERVATION;",
+        "RFT_OBSERVATION;",
+    ],
+)
+def test_that_providing_no_name_or_object_to_obs_raises_config_error(obs_content):
+    expected_error = r'Missing item "(.+)" in ' + obs_content.replace(";", "")
+    with pytest.raises(ConfigValidationError, match=expected_error):
+        ert_config_from_parser(obs_content)

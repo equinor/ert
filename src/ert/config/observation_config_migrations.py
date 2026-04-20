@@ -353,7 +353,7 @@ class LegacySummaryObservation(
                 case "LOCATION_RANGE":
                     localization_values["range"] = validate_float(value, key)
                 case _:
-                    raise _unknown_key_error(str(key), observation_dict["name"])
+                    raise _unknown_key_error(str(key), observation_dict.context)
         if "VALUE" not in float_values:
             raise _missing_value_error(observation_dict.context, "VALUE")
         if summary_key is None:
@@ -433,12 +433,12 @@ class LegacyGeneralObservation(_LegacyGeneralObservation):
                 case "DATA":
                     output.data = value
                 case _:
-                    raise _unknown_key_error(str(key), observation_dict["name"])
+                    raise _unknown_key_error(str(key), observation_dict.context)
         if output.value is not None and output.error is None:
             raise ObservationConfigError.with_context(
-                f"For GENERAL_OBSERVATION {observation_dict['name']}, with"
+                f"For GENERAL_OBSERVATION, with"
                 f" VALUE = {output.value}, ERROR must also be given.",
-                observation_dict["name"],
+                observation_dict.context,
             )
         return [output]
 

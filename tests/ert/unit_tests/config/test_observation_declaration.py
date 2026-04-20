@@ -233,6 +233,40 @@ def test_rft_observation_declaration():
     assert shape.radius == DEFAULT_LOCALIZATION_RADIUS
 
 
+def test_that_rft_observations_defaults_name_to_key_combination():
+    assert make_observations(
+        "",
+        [
+            {
+                "type": ObservationType.RFT,
+                "name": None,
+                "WELL": "well_name",
+                "VALUE": "700",
+                "ERROR": "0.1",
+                "DATE": "2020-01-01",
+                "PROPERTY": "PRESSURE",
+                "NORTH": 71.0,
+                "EAST": 30.0,
+                "TVD": 8600.0,
+            },
+        ],
+        shape_registry=ShapeRegistry(),
+    ) == [
+        RFTObservation(
+            name="well_name:2020-01-01:PRESSURE:30.0:71.0:8600.0",
+            well="well_name",
+            date="2020-01-01",
+            value=700.0,
+            error=0.1,
+            property="PRESSURE",
+            north=71.0,
+            east=30.0,
+            shape_id=0,
+            tvd=8600.0,
+        )
+    ]
+
+
 @pytest.mark.usefixtures("use_tmpdir")
 def test_rft_observation_csv_declaration():
     Path("rft_observations.csv").write_text(
@@ -703,11 +737,11 @@ def test_that_rft_observation_raises_error_given_north_or_east_keys_in_config(
         ObservationConfigError,
         match=(
             r"observations.txt: Line 2 \(Column 5-13\): Invalid key: 'EAST' in "
-            r"'LOCALIZATION' for RFT observation: 'RFT_OBSERVATION'. The 'EAST' "
+            r"LOCALIZATION for RFT_OBSERVATION. The 'EAST' "
             r"keyword must be defined outside the LOCALIZATION section for RFT "
             r"observations - or in the CSV RFT configuration file.;"
             r"observations.txt: Line 2 \(Column 5-13\): Invalid key: 'NORTH' in "
-            r"'LOCALIZATION' for RFT observation: 'RFT_OBSERVATION'. The 'NORTH' "
+            r"LOCALIZATION for RFT_OBSERVATION. The 'NORTH' "
             r"keyword must be defined outside the LOCALIZATION section for RFT "
             r"observations - or in the CSV RFT configuration file."
         ),
