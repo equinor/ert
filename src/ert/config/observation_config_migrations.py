@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from itertools import starmap
 from pathlib import Path
 from typing import Any, Self, assert_never, cast
 
@@ -31,6 +30,7 @@ from .parsing import (
     read_file,
 )
 from .parsing.config_errors import ConfigValidationError, ConfigWarning
+from .parsing.file_context_token import FileContextToken
 from .refcase import Refcase
 
 DEFAULT_TIME_DELTA = timedelta(seconds=30)
@@ -50,7 +50,9 @@ class Segment(ObservationError):
     stop: int
 
 
-def _validate_segment_dict(name_token: str, inp: dict[str, Any]) -> Segment:
+def _validate_segment_dict(
+    name_token: str, inp: dict[str, Any], context: FileContextToken
+) -> Segment:
     start = None
     stop = None
     error_mode = ErrorModes.RELMIN
@@ -69,12 +71,12 @@ def _validate_segment_dict(name_token: str, inp: dict[str, Any]) -> Segment:
             case "ERROR_MODE":
                 error_mode = validate_error_mode(value)
             case _:
-                raise _unknown_key_error(key, name_token)
+                raise _unknown_key_error(key, context)
 
     if start is None:
-        raise _missing_value_error(name_token, "START")
+        raise _missing_value_error(context, "START")
     if stop is None:
-        raise _missing_value_error(name_token, "STOP")
+        raise _missing_value_error(context, "STOP")
     return Segment(
         name=name_token,
         start=start,
@@ -119,9 +121,12 @@ class HistoryObservation(ObservationError):
                 case "ERROR_MODE":
                     error_mode = validate_error_mode(value)
                 case "segments":
-                    segments = list(starmap(_validate_segment_dict, value))
+                    segments = [
+                        _validate_segment_dict(name, seg, observation_dict.context)
+                        for name, seg in value
+                    ]
                 case _:
-                    raise _unknown_key_error(str(key), observation_dict["name"])
+                    raise _unknown_key_error(str(key), observation_dict.context)
 
         instance = cls(
             name=observation_dict["name"],
@@ -350,11 +355,11 @@ class LegacySummaryObservation(
                 case _:
                     raise _unknown_key_error(str(key), observation_dict["name"])
         if "VALUE" not in float_values:
-            raise _missing_value_error(observation_dict["name"], "VALUE")
+            raise _missing_value_error(observation_dict.context, "VALUE")
         if summary_key is None:
-            raise _missing_value_error(observation_dict["name"], "KEY")
+            raise _missing_value_error(observation_dict.context, "KEY")
         if "ERROR" not in float_values:
-            raise _missing_value_error(observation_dict["name"], "ERROR")
+            raise _missing_value_error(observation_dict.context, "ERROR")
 
         return [
             cls(
@@ -396,7 +401,7 @@ class LegacyGeneralObservation(_LegacyGeneralObservation):
         try:
             data = observation_dict["DATA"]
         except KeyError as err:
-            raise _missing_value_error(observation_dict["name"], "DATA") from err
+            raise _missing_value_error(observation_dict.context, "DATA") from err
 
         output = cls(name=observation_dict["name"], data=data)
         for key, value in observation_dict.items():

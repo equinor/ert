@@ -1,3 +1,4 @@
+from collections import UserDict
 from enum import StrEnum
 from typing import Any, assert_never, no_type_check
 
@@ -22,7 +23,15 @@ class ObservationType(StrEnum):
     BREAKTHROUGH = "BREAKTHROUGH_OBSERVATION"
 
 
-ObservationDict = dict[str, Any]
+class ObservationDict(UserDict[str, Any]):
+    def __init__(
+        self,
+        *args: Any,
+        context: FileContextToken,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.context = context
 
 
 def parse_observations(content: str, filename: str) -> list[ObservationDict]:
@@ -161,32 +170,40 @@ class TreeToObservations(Transformer[FileContextToken, list[ObservationDict]]):
     @staticmethod
     @no_type_check
     def observation(tree):
-        if len(tree) == 2:
-            return {
-                "type": ObservationType(tree[0].children[0]),
-                "name": tree[1],
-            }
-        else:
-            non_segments = {
-                k: v for k, v in tree[2].items() if not isinstance(k, tuple)
-            }
-            segments = [(k[1], v) for k, v in tree[2].items() if isinstance(k, tuple)]
-            error_list = [
-                ErrorInfo(f"Unknown {unknown_key} in {tree[1]}").set_context(tree[1])
-                for unknown_key in ["type", "segments", "name"]
-                if unknown_key in non_segments
-            ]
-            if error_list:
-                raise ObservationConfigError.from_collected(error_list)
+        context_token = tree[0].children[0]
+        observation_type = ObservationType(context_token)
 
-            res = {
-                "type": ObservationType(tree[0].children[0]),
-                "name": tree[1],
-                **non_segments,
-            }
-            if segments:
-                res["segments"] = segments
-            return res
+        name = tree[1] if len(tree) > 1 and isinstance(tree[1], str) else None
+        object_ = tree[-1] if isinstance(tree[-1], dict) else None
+
+        res = {
+            "type": observation_type,
+            "name": name,
+        }
+
+        if object_ is None or len(tree) == 1:
+            return ObservationDict(res, context=context_token)
+
+        non_segments = {k: v for k, v in object_.items() if not isinstance(k, tuple)}
+        segments = [(k[1], v) for k, v in object_.items() if isinstance(k, tuple)]
+        error_list = [
+            ErrorInfo(f"Unknown {unknown_key} in {observation_type!s}").set_context(
+                context_token
+            )
+            for unknown_key in ["type", "segments", "name"]
+            if unknown_key in non_segments
+        ]
+        if error_list:
+            raise ObservationConfigError.from_collected(error_list)
+
+        res = {
+            **res,
+            **non_segments,
+        }
+
+        if segments:
+            res["segments"] = segments
+        return ObservationDict(res, context=context_token)
 
     @staticmethod
     @no_type_check

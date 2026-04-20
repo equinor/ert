@@ -168,7 +168,9 @@ def test_that_summary_observations_raises_error_when_east_or_north_are_undefined
     with pytest.raises(ConfigValidationError) as e, tmpdir.as_cwd():
         create_summary_observation("LOCALIZATION {" + loc_config_lines + "};")
     for kw in missing_keywords:
-        assert f'Missing item "{kw}" in LOCALIZATION for FOPR_1' in str(e.value)
+        assert f'Missing item "{kw}" in LOCALIZATION for SUMMARY_OBSERVATION' in str(
+            e.value
+        )
 
 
 @pytest.mark.filterwarnings("ignore:Config contains a SUMMARY key but no forward model")
@@ -177,7 +179,8 @@ def test_that_summary_observations_raises_error_given_unknown_localization_key(
 ):
     with (
         pytest.raises(
-            ConfigValidationError, match="Unknown FOO in LOCALIZATION for FOPR_1"
+            ConfigValidationError,
+            match=r"Unknown FOO in LOCALIZATION for SUMMARY_OBSERVATION",
         ),
         tmpdir.as_cwd(),
     ):

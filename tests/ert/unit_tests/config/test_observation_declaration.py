@@ -24,6 +24,7 @@ from ert.config.observation_config_migrations import HistoryObservation
 from ert.config.parsing import parse_observations
 from ert.config.parsing.observations_parser import (
     ObservationConfigError,
+    ObservationDict,
     ObservationType,
     observations_parser,
 )
@@ -639,8 +640,14 @@ def test_that_breakthrough_observation_raises_error_when_missing_required_keywor
     Path("obs_config.txt").write_text(obs_config_str, encoding="utf8")
     parsed_obs_dict = parse_observations(obs_config_str, "obs_config.txt")
     shape_registry = ShapeRegistry()
+
+    match = (
+        r"obs_config.txt: Line \d+ \(Column \d+-\d+\): "
+        f'Missing item "{missing_keyword}" in BREAKTHROUGH_OBSERVATION'
+    )
     with pytest.raises(
-        ObservationConfigError, match=f'Missing item "{missing_keyword}" in BRT_OBS'
+        ObservationConfigError,
+        match=match,
     ):
         BreakthroughObservation.from_obs_dict(
             "", parsed_obs_dict[0], shape_registry=shape_registry
@@ -679,7 +686,9 @@ def test_that_breakthrough_observation_can_be_instantiated_with_localization():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_rft_observation_raises_error_given_north_or_east_keys_in_config():
+def test_that_rft_observation_raises_error_given_north_or_east_keys_in_config(
+    file_context_token,
+):
     Path("rft_observations.csv").write_text(
         dedent(
             """
@@ -692,32 +701,41 @@ def test_that_rft_observation_raises_error_given_north_or_east_keys_in_config():
     )
     with pytest.raises(
         ObservationConfigError,
-        match=r"Invalid key: 'EAST' in 'LOCALIZATION' for RFT observation: 'RFT_OBS'. "
-        r"The 'EAST' keyword must be defined outside the LOCALIZATION section "
-        r"for RFT observations - or in the CSV RFT configuration file.;"
-        r"Invalid key: 'NORTH' in 'LOCALIZATION' for RFT observation: 'RFT_OBS'. "
-        r"The 'NORTH' keyword must be defined outside the LOCALIZATION section for "
-        r"RFT observations - or in the CSV RFT configuration file.",
+        match=(
+            r"observations.txt: Line 2 \(Column 5-13\): Invalid key: 'EAST' in "
+            r"'LOCALIZATION' for RFT observation: 'RFT_OBSERVATION'. The 'EAST' "
+            r"keyword must be defined outside the LOCALIZATION section for RFT "
+            r"observations - or in the CSV RFT configuration file.;"
+            r"observations.txt: Line 2 \(Column 5-13\): Invalid key: 'NORTH' in "
+            r"'LOCALIZATION' for RFT observation: 'RFT_OBSERVATION'. The 'NORTH' "
+            r"keyword must be defined outside the LOCALIZATION section for RFT "
+            r"observations - or in the CSV RFT configuration file."
+        ),
     ):
         make_observations(
             "",
             [
-                {
-                    "type": ObservationType.RFT,
-                    "name": "RFT_OBS",
-                    "CSV": "rft_observations.csv",
-                    "LOCALIZATION": {
-                        "NORTH": 30,
-                        "EAST": 10,
+                ObservationDict(
+                    {
+                        "type": ObservationType.RFT,
+                        "name": "RFT_OBS",
+                        "CSV": "rft_observations.csv",
+                        "LOCALIZATION": {
+                            "NORTH": 30,
+                            "EAST": 10,
+                        },
                     },
-                }
+                    context=file_context_token(obs_type="RFT_OBSERVATION"),
+                )
             ],
             shape_registry=ShapeRegistry(),
         )
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_that_rft_observation_can_be_provided_radius_localization_keyword():
+def test_that_rft_observation_can_be_provided_radius_localization_keyword(
+    file_context_token,
+):
     Path("rft_observations.csv").write_text(
         dedent(
             """
@@ -733,14 +751,17 @@ def test_that_rft_observation_can_be_provided_radius_localization_keyword():
     obss = make_observations(
         "",
         [
-            {
-                "type": ObservationType.RFT,
-                "name": "RFT_OBS",
-                "CSV": "rft_observations.csv",
-                "LOCALIZATION": {
-                    "RADIUS": 2500,
+            ObservationDict(
+                {
+                    "type": ObservationType.RFT,
+                    "name": "RFT_OBS",
+                    "CSV": "rft_observations.csv",
+                    "LOCALIZATION": {
+                        "RADIUS": 2500,
+                    },
                 },
-            }
+                context=file_context_token(obs_type="RFT_OBSERVATION"),
+            )
         ],
         shape_registry=shape_registry,
     )

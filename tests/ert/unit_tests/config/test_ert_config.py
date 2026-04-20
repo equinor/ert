@@ -45,7 +45,7 @@ from ert.config.parsing.context_values import (
     ContextList,
     ContextString,
 )
-from ert.config.parsing.observations_parser import ObservationType
+from ert.config.parsing.observations_parser import ObservationDict, ObservationType
 from ert.config.queue_config import LocalQueueOptions
 from ert.config.refcase import Refcase
 from ert.plugins import ErtPluginManager, ErtRuntimePlugins, get_site_plugins
@@ -1680,7 +1680,9 @@ def test_that_context_types_are_json_serializable():
     assert isinstance(r["context_list"], list)
 
 
-def test_that_multiple_errors_are_shown_when_validating_observation_config():
+def test_that_multiple_errors_are_shown_when_validating_observation_config(
+    file_context_token,
+):
     with pytest.raises(ConfigValidationError) as err:
         ErtConfig.from_dict(
             {
@@ -1688,27 +1690,33 @@ def test_that_multiple_errors_are_shown_when_validating_observation_config():
                 "OBS_CONFIG": (
                     "obs_config",
                     [
-                        {
-                            "type": ObservationType.SUMMARY,
-                            "name": "SUM1",
-                            "VALUE": "0.7",
-                            "ERROR": "0.07",
-                            "DATE": "2010-12-26",
-                        },
-                        {
-                            "type": ObservationType.SUMMARY,
-                            "name": "SUM2",
-                            "ERROR": "0.05",
-                            "DATE": "2011-12-21",
-                            "KEY": "WOPR:OP1",
-                        },
+                        ObservationDict(
+                            {
+                                "type": ObservationType.SUMMARY,
+                                "name": "SUM1",
+                                "VALUE": "0.7",
+                                "ERROR": "0.07",
+                                "DATE": "2010-12-26",
+                            },
+                            context=file_context_token(),
+                        ),
+                        ObservationDict(
+                            {
+                                "type": ObservationType.SUMMARY,
+                                "name": "SUM2",
+                                "ERROR": "0.05",
+                                "DATE": "2011-12-21",
+                                "KEY": "WOPR:OP1",
+                            },
+                            context=file_context_token(),
+                        ),
                     ],
                 ),
             }
         )
     expected_errors = [
-        'Missing item "KEY" in SUM1',
-        'Missing item "VALUE" in SUM2',
+        'Missing item "KEY" in SUMMARY_OBSERVATION',
+        'Missing item "VALUE" in SUMMARY_OBSERVATION',
     ]
 
     for error in expected_errors:
