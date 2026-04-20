@@ -47,7 +47,7 @@ from .view.runpath_progress_widget import RunpathProgressWidget
 if TYPE_CHECKING:
     from ert.config import ErtConfig
 
-EXPERIMENT_IS_MANUAL_UPDATE_MESSAGE = "Execute Selected"
+EXPERIMENT_IS_MANUAL_UPDATE_MESSAGE = "Execute selected"
 
 
 def create_md_table(kv: dict[str, str], output: str) -> str:

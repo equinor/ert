@@ -115,7 +115,7 @@ class StdDevPlot:
 
                     ax_heat.set_ylabel("")
                     ax_box.set_ylabel(
-                        "Standard Deviation", fontsize=8
+                        "Standard deviation", fontsize=8
                     )  # Reduced font size
 
                     self._colorbar(im)

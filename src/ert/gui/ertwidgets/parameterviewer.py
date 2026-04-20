@@ -24,7 +24,7 @@ class ParametersViewer(QDialog):
     ) -> None:
         super().__init__(parent)
         self._parameter_configurations = parameter_configurations
-        self.setWindowTitle("Parameter Viewer")
+        self.setWindowTitle("Parameter viewer")
 
         main_layout = QVBoxLayout(self)
         # Add a horizontal layout for the collapse/expand and update filter buttons
@@ -40,7 +40,7 @@ class ParametersViewer(QDialog):
         # Add Update parameter label and dropdown
         self.update_filter_combo = QComboBox()
         self.update_filter_combo.addItems(
-            ["All Parameters", "Updatable", "Non-updatable"]
+            ["All parameters", "Updatable", "Non-updatable"]
         )
         self.update_filter_combo.currentIndexChanged.connect(self.filter_parameters)
         menu_layout.addWidget(QLabel("Show parameters:"))
@@ -114,7 +114,7 @@ class ParametersViewer(QDialog):
         selected = self.update_filter_combo.currentText()
         for parameter_node in self.parameter_nodes:
             update_val = parameter_node.data(0, Qt.ItemDataRole.UserRole)
-            if selected == "All Parameters":
+            if selected == "All parameters":
                 show = True
             elif selected == "Updatable":
                 show = update_val

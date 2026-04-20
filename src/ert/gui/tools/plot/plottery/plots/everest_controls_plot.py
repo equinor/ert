@@ -110,7 +110,7 @@ class EverestControlsPlot:
             plot_context,
             figure,
             axes,
-            default_x_label="Batch Iteration",
-            default_y_label="Control Value",
+            default_x_label="Batch iteration",
+            default_y_label="Control value",
         )
         figure.tight_layout()

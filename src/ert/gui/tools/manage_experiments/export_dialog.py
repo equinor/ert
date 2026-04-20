@@ -134,7 +134,7 @@ class ExportDialog(QDialog):
     @Slot()
     def browse_file(self) -> None:
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Select Output File", "", "All Files (*)"
+            self, "Select output file", "", "All Files (*)"
         )
         if file_path:
             self._file_path_edit.setText(file_path)
