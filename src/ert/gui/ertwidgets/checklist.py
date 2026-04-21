@@ -154,12 +154,14 @@ class CheckList(QWidget):
         self._model.unselectAll()
 
     def checkSelected(self) -> None:
-        for item in self._list.selectedItems():
-            self._model.selectValue(str(item.text()))
+        selected_values = [str(item.text()) for item in self._list.selectedItems()]
+        for value in selected_values:
+            self._model.selectValue(value)
 
     def uncheckSelected(self) -> None:
-        for item in self._list.selectedItems():
-            self._model.unselectValue(str(item.text()))
+        selected_values = [str(item.text()) for item in self._list.selectedItems()]
+        for value in selected_values:
+            self._model.unselectValue(value)
 
     def showContextMenu(self, point: QPoint) -> None:
         p = self._list.mapToGlobal(point)
