@@ -123,7 +123,7 @@ def parse_observations(content: str, filename: str) -> list[ObservationDict]:
 observations_parser = Lark(
     r"""
     start: observation*
-    ?observation: type OBSERVATION_NAME object? ";"
+    observation: type OBSERVATION_NAME object? ";"
     TYPE: "HISTORY_OBSERVATION"
       | "SUMMARY_OBSERVATION"
       | "GENERAL_OBSERVATION"
