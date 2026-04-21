@@ -156,15 +156,22 @@ def test_long_lived(server, tmp_path):
 @pytest.mark.slow
 @pytest.mark.script(
     """\
-time.sleep(30)
+time.sleep(10)
 sys.exit(2)
 """
 )
-def test_not_respond(server):
-    server._timeout = 1
-    with pytest.raises(TimeoutError):
-        server.fetch_connection_info()
-    assert server.shutdown() == -signal.SIGTERM
+def test_that_fetch_connection_info_times_out_when_server_does_not_respond(
+    monkeypatch, server_script
+):
+    monkeypatch.setattr(ert_server, "_ERT_SERVER_EXECUTABLE_FILE", server_script)
+    server = _DummyService(timeout=2)
+    server.start()
+    try:
+        with pytest.raises(TimeoutError):
+            server.fetch_connection_info()
+    finally:
+        returncode = server.shutdown()
+    assert returncode == -signal.SIGTERM
 
 
 @pytest.mark.script(
@@ -290,6 +297,32 @@ def test_singleton_connect_early(server_script, tmp_path, monkeypatch):
         assert client.fetch_connection_info() == server.fetch_connection_info()
 
     assert not (tmp_path / _ERT_SERVER_CONNECTION_INFO_FILE).exists()
+
+
+@pytest.mark.script(
+    """\
+os.write(fd, b"This isn't valid json (I hope)")
+"""
+)
+def test_that_wait_until_ready_returns_false_on_boot_failure(server):
+    assert server.wait_until_ready(timeout=10) is False
+
+
+@pytest.mark.slow
+@pytest.mark.script(
+    """\
+time.sleep(10)
+sys.exit(2)
+"""
+)
+def test_that_wait_until_ready_returns_false_on_timeout(monkeypatch, server_script):
+    monkeypatch.setattr(ert_server, "_ERT_SERVER_EXECUTABLE_FILE", server_script)
+    server = _DummyService(timeout=2)
+    server.start()
+    try:
+        assert server.wait_until_ready(timeout=1) is False
+    finally:
+        server.shutdown()
 
 
 @pytest.mark.parametrize(
