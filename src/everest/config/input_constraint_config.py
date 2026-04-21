@@ -71,7 +71,7 @@ class InputConstraintConfig(BaseModel, extra="forbid"):
             Scaling of input constraints.
 
             `scale` is a normalization factor which can be used to scale the
-            input constraint. The bounds or target, and the weights will be
+            input constraint. The bounds, target and the weights will be
             scaled with this number.
 
             This option will be disabled if `auto_scale` is set in the
