@@ -325,6 +325,27 @@ def test_that_wait_until_ready_returns_false_on_timeout(monkeypatch, server_scri
         server.shutdown()
 
 
+@pytest.mark.script(
+    """\
+os.write(fd, b'{"authtoken": "test123", "urls": ["url"]}')
+os.close(fd)
+time.sleep(10)
+"""
+)
+def test_that_fetch_connection_info_raises_when_storage_path_does_not_exist(
+    monkeypatch, server_script, tmp_path
+):
+    monkeypatch.setattr(ert_server, "_ERT_SERVER_EXECUTABLE_FILE", server_script)
+    nonexistent = str(tmp_path / "does_not_exist")
+    proc = _DummyService(storage_path=nonexistent)
+    proc.start()
+    try:
+        with pytest.raises(RuntimeError, match="No storage exists at"):
+            proc.fetch_connection_info()
+    finally:
+        proc.shutdown()
+
+
 @pytest.mark.parametrize(
     ("script", "should_exist"), [("storage", True), ("foobar", False)]
 )
