@@ -16,3 +16,34 @@ def test_checklist(qtbot):
 
     for item in checklist._model.getList():
         assert not checklist._model.isValueSelected(item)
+
+
+def test_that_check_and_uncheck_selected_items_does_not_crash_after_model_refresh(
+    qtbot,
+):
+    checklist = CheckList(SelectableListModel(items=["1", "2", "3"]))
+    qtbot.addWidget(checklist)
+
+    checklist._model.unselectAll()
+
+    for index in [0, 1]:
+        item = checklist._list.item(index)
+        assert item is not None
+        item.setSelected(True)
+
+    checklist.checkSelected()
+
+    assert checklist._model.isValueSelected("1")
+    assert checklist._model.isValueSelected("2")
+    assert not checklist._model.isValueSelected("3")
+
+    for index in [0, 1]:
+        item = checklist._list.item(index)
+        assert item is not None
+        item.setSelected(True)
+
+    checklist.uncheckSelected()
+
+    assert not checklist._model.isValueSelected("1")
+    assert not checklist._model.isValueSelected("2")
+    assert not checklist._model.isValueSelected("3")
