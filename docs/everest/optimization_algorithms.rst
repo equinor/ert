@@ -10,7 +10,7 @@ A general formulation of a constrained optimization problem with inequality cons
 
 .. math::
 
-	min_{x} f(x) \; , \; subject \; to \; c(x) <= 0
+	\min_{x} f(x) \; , \; \text{subject to} \; c(x) <= 0
 
 
 where :math:`x` is a vector containing e.g. well rates, pressures or any other controls that are defined in the EVEREST configuration file. :math:`f(x) = -J(x)` is the expected objective function value, where in reservoir applications :math:`J(x)` is typically the average NPV evaluated over all model realizations. :math:`c(x) = [c_1 (x),…,c_n (x)]`  is a constraint vector function, that is, it may consist of one or more constraint functions :math:`c_i` that each produce a single scalar value. Examples are a maximum field injection rate (which is a linear input constraint if well injection rates are controls, since it is computed as the sum of the controls), and a maximum limit on the total water production from the field (which must be computed from simulator output). If the constraint above can be formulated as :math:`c(x) = 0` , we are dealing with an equality constraint. An example is the constraint that all produced gas has to be re-injected. Bound constraints are usually formulated separately as :math:`\; a ≤ x ≤ b`.
@@ -53,7 +53,7 @@ The `conmin_mfd` option of the conmin optimizer will activate its *Method of Fea
 
 .. math::
 
-	∇f(x_k )s_k^T<0 \;\; and \;\; ∇c(x_k )s_k^T≤0
+	∇f(x_k )s_k^T<0 \;\; \text{and} \;\; ∇c(x_k )s_k^T≤0
 
 are satisfied. Where :math:`∇f(x_k)` and :math:`∇c(x_k)` are the objective function and constraint function gradients respectively, which are calculated by EVEREST.  *The method of Zoutendijk* is used internally to find such a search vector. The method can be seen as a generalization of steepest ascent method for unconstrained optimization. Different from **opt++**, the method does not use approximations of second derivates.
 
