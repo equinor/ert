@@ -9,7 +9,8 @@ import signal
 import sys
 import threading
 import types
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Sequence
+from concurrent.futures import Future
 from pathlib import Path
 from select import PIPE_BUF, select
 from subprocess import Popen, TimeoutExpired
@@ -63,7 +64,7 @@ class _Proc(threading.Thread):
         exec_args: Sequence[str],
         timeout: int,
         on_connection_info_received: Callable[
-            [ErtServerConnectionInfo | Exception | None], None
+            [ErtServerConnectionInfo | Exception], None
         ],
         project: Path,
     ) -> None:
@@ -101,9 +102,11 @@ class _Proc(threading.Thread):
             self._propagate_connection_info_from_childproc(TimeoutError())
             return  # _read_conn_info() has already cleaned up in this case
 
-        conn_info: ErtServerConnectionInfo | Exception | None = None
+        conn_info: ErtServerConnectionInfo | Exception
         try:
             conn_info = json.loads(comm)
+            if not isinstance(conn_info, dict):
+                conn_info = ServerBootFail()
         except json.JSONDecodeError:
             conn_info = ServerBootFail()
         except Exception as exc:
@@ -208,24 +211,19 @@ class ErtServerController:
         storage_path: str,
         timeout: int = 120,
         parent_pid: int | None = None,
-        connection_info: ErtServerConnectionInfo | Exception | None = None,
+        connection_info: ErtServerConnectionInfo | None = None,
         verbose: bool = False,
         logging_config: str | None = None,  # Only used from everserver
     ) -> None:
         self._storage_path = storage_path
-        self._connection_info: ErtServerConnectionInfo | Exception | None = (
-            connection_info
-        )
-        self._on_connection_info_received_event = threading.Event()
+        self._connection_info_future: Future[ErtServerConnectionInfo] = Future()
         self._timeout = timeout
         self._url: str | None = None
 
-        if self._connection_info is not None:
-            # This means that server is already running
-            if isinstance(connection_info, Mapping) and "urls" not in connection_info:
+        if connection_info is not None:
+            if "urls" not in connection_info:
                 raise KeyError("No URLs found in connection info")
-
-            self._on_connection_info_received_event.set()
+            self._connection_info_future.set_result(connection_info)
             self._thread_that_starts_server_process = None
             return
 
@@ -374,51 +372,47 @@ class ErtServerController:
         return ErtServerContext(obj)
 
     def on_connection_info_received_from_server_process(
-        self, info: ErtServerConnectionInfo | Exception | None
+        self, info: ErtServerConnectionInfo | Exception
     ) -> None:
-        if self._connection_info is not None:
+        if self._connection_info_future.done():
             raise ValueError("Connection information already set")
-        if info is None:
-            raise ValueError
-        self._connection_info = info
 
-        if self._storage_path is not None:
-            if not Path(self._storage_path).exists():
-                raise RuntimeError(f"No storage exists at : {self._storage_path}")
-            path = f"{self._storage_path}/{_ERT_SERVER_CONNECTION_INFO_FILE}"
-        else:
-            path = _ERT_SERVER_CONNECTION_INFO_FILE
+        if isinstance(info, Exception):
+            self._connection_info_future.set_exception(info)
+            return
 
-        if isinstance(info, Mapping):
-            with NamedTemporaryFile(dir=f"{self._storage_path}", delete=False) as f:
+        try:
+            storage = Path(self._storage_path)
+            if not storage.exists():
+                raise RuntimeError(f"No storage exists at: {self._storage_path}")
+            path = str(storage / _ERT_SERVER_CONNECTION_INFO_FILE)
+
+            with NamedTemporaryFile(dir=storage, delete=False) as f:
                 f.write(json.dumps(info, indent=4).encode("utf-8"))
                 f.flush()
                 os.rename(f.name, path)
+        except Exception as exc:
+            self._connection_info_future.set_exception(exc)
+            return
 
-        self._on_connection_info_received_event.set()
+        self._connection_info_future.set_result(info)
 
     def wait_until_ready(self, timeout: int | None = None) -> bool:
         if timeout is None:
             timeout = self._timeout
-
-        if self._on_connection_info_received_event.wait(timeout):
-            return not (
-                self._connection_info is None
-                or isinstance(self._connection_info, Exception)
-            )
-        if isinstance(self._connection_info, TimeoutError):
+        try:
+            self._connection_info_future.result(timeout=timeout)
+        except TimeoutError:
             self.logger.critical(f"startup exceeded defined timeout {timeout}s")
-        return False  # Timeout reached
+            return False
+        except Exception as exc:
+            self.logger.critical(f"server startup failed: {exc}")
+            return False
+        else:
+            return True
 
     def fetch_connection_info(self) -> ErtServerConnectionInfo:
-        is_ready = self.wait_until_ready(self._timeout)
-        if isinstance(self._connection_info, Exception):
-            raise self._connection_info
-        if not is_ready:
-            raise TimeoutError
-        if self._connection_info is None:
-            raise ValueError("conn_info is None")
-        return self._connection_info
+        return self._connection_info_future.result(timeout=self._timeout)
 
     def wait(self) -> None:
         if self._thread_that_starts_server_process is not None:
