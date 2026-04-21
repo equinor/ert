@@ -933,10 +933,13 @@ class LocalEnsemble(BaseMode):
         corresponding simulated responses from an ensemble.
 
         The returned DataFrame includes an "index" column containing a
-        comma-separated string of the response type's match key values:
+        comma-separated string of the response type's index key values.
+        Missing components are rendered as the literal "None" so that
+        positional meaning is preserved:
         - Summary: "2024-01-15 00:00:00" (time)
         - GenData: "0, 42" (report_step, index)
         - RFT: "123.5, 456.7, 2500.0, ZONE_A" (east, north, tvd, zone)
+                or "123.5, 456.7, 2500.0, None" when zone is missing
         """
         known_observations = self.experiment.observation_keys
 
@@ -1036,21 +1039,14 @@ class LocalEnsemble(BaseMode):
                             nulls_equal=True,
                         )
 
-                    # Do not drop match keys which
-                    # overlap with localization attributes
-                    match_keys_to_drop = set(response_cls.match_key).difference(
-                        {"north", "east", "radius"}
+                    # Avoid potential collision with "index" column (it could be a part
+                    # of the index_key)
+                    joined = joined.with_columns(
+                        response_cls.index_column_expr().alias("__tmp_index_key__")
                     )
-                    joined = (
-                        joined.with_columns(
-                            pl.concat_str(response_cls.match_key, separator=", ").alias(
-                                "__tmp_index_key__"
-                                # Avoid potential collisions w/ match key
-                            )
-                        )
-                        .drop(match_keys_to_drop)
-                        .rename({"__tmp_index_key__": "index"})
-                    )
+                    if "index" in joined.columns:
+                        joined = joined.drop("index")
+                    joined = joined.rename({"__tmp_index_key__": "index"})
 
                     if first_columns is None:
                         # The "leftmost" index columns are not yet collected.

@@ -224,7 +224,7 @@ def test_that_both_observations_with_same_data_are_displayed(qtbot, storage):
                     },
                     {
                         "type": ObservationType.RFT,
-                        "name": "RFT_match_key_duplicate",
+                        "name": "RFT_index_key_duplicate",
                         "WELL": "WELL",
                         "VALUE": "700",
                         "ERROR": "0.1",
@@ -399,7 +399,7 @@ def test_that_both_observations_with_same_data_are_displayed(qtbot, storage):
         ),
     ],
 )
-def test_that_observations_are_identified_and_sorted_by_full_match_key(
+def test_that_observations_are_identified_and_sorted_by_full_index_key(
     qtbot, storage, tmp_path, observations, expected_name_order
 ):
     def patch_gen_obs_file(observations_list):
