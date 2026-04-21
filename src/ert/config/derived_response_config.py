@@ -17,9 +17,25 @@ class DerivedResponseConfig(BaseModel):
     @property
     @abstractmethod
     def match_key(self) -> list[str]:
-        """Identification columns for observations and responses. Along with
+        """Matching columns for observations and responses. Along with
         'response_key' they create the key on which response data should match
         observation data."""
+
+    @property
+    def index_key(self) -> list[str]:
+        """Identification columns for observations."""
+        return self.match_key
+
+    def index_column_expr(self) -> pl.Expr:
+        """Polars expression building the textual "index" column.
+
+        Concatenates `index_key` columns with ", ". Null components are
+        rendered as the literal "None" so positional meaning is preserved.
+        """
+        return pl.concat_str(
+            [pl.col(c).cast(pl.String).fill_null("None") for c in self.index_key],
+            separator=", ",
+        )
 
     def display_column(self, value: Any, column_name: str) -> str:
         return str(value)

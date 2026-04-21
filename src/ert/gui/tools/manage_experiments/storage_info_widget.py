@@ -155,21 +155,27 @@ class _ObservationTreeWidgetItem(QTreeWidgetItem):
         }
 
     @property
+    def index_key_data(self) -> dict[str, object]:
+        return {
+            col: self.observation_data[col] for col in self.response_config.index_key
+        }
+
+    @property
     def display_label(self) -> str:
         return ", ".join(
             self.response_config.display_column(val, col)
-            for col, val in self.match_key_data.items()
+            for col, val in self.index_key_data.items()
         )
 
     def __lt__(self, other: QTreeWidgetItem) -> bool:
         assert isinstance(other, _ObservationTreeWidgetItem)
-        assert self.response_config.match_key == other.response_config.match_key, (
+        assert self.response_config.index_key == other.response_config.index_key, (
             "Expecting items being compared to be of the same response type"
         )
 
         for val, other_val in zip(
-            self.match_key_data.values(),
-            other.match_key_data.values(),
+            self.index_key_data.values(),
+            other.index_key_data.values(),
             strict=True,
         ):
             if isinstance(val, (int, float)) and isinstance(other_val, (int, float)):
@@ -302,9 +308,7 @@ class _EnsembleWidget(QWidget):
             if scaling_df is None:
                 return None
 
-            index_col = pl.concat_str(
-                selected.response_config.match_key, separator=", "
-            )
+            index_col = selected.response_config.index_column_expr()
             joined = obs.with_columns(index_col.alias("_tmp_index")).join(
                 scaling_df,
                 how="left",

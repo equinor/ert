@@ -504,6 +504,10 @@ class RFTConfig(ResponseConfig):
     def match_key(self) -> list[str]:
         return ["east", "north", "tvd", "zone"]
 
+    @property
+    def index_key(self) -> list[str]:
+        return ["east", "north", "tvd", "zone"]
+
     @classmethod
     def from_config_dict(cls, config_dict: ConfigDict) -> RFTConfig | None:
         if rfts := config_dict.get(ConfigKeys.RFT, []):
