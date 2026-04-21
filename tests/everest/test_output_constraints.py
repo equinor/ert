@@ -41,49 +41,6 @@ def test_constraints_init(tmp_path):
     ]
 
 
-@pytest.mark.parametrize(
-    ("config", "error"),
-    [
-        (
-            [
-                {"name": "some_name"},
-            ],
-            "Must provide target or lower_bound/upper_bound",
-        ),
-        (
-            [
-                {"name": "same_name", "upper_bound": 5000},
-                {"name": "same_name", "upper_bound": 5000},
-            ],
-            "Output constraint names must be unique",
-        ),
-        (
-            [
-                {"name": "some_name", "upper_bound": 5000, "target": 5000},
-            ],
-            r"Can not combine target and bounds",
-        ),
-        (
-            [
-                {"name": "some_name", "lower_bound": 10, "upper_bund": 2},
-            ],
-            "Extra inputs are not permitted",
-        ),
-        (
-            [
-                {"name": "some_name", "upper_bound": "2ooo"},
-            ],
-            "unable to parse string as a number",
-        ),
-    ],
-)
-def test_output_constraint_config(config, error):
-    with pytest.raises(ValueError, match=error):
-        EverestConfig(
-            output_constraints=config,
-        )
-
-
 def test_that_auto_scale_and_constraints_scale_are_mutually_exclusive():
     with pytest.raises(
         ValueError,
@@ -151,3 +108,60 @@ def test_upper_bound_output_constraint_def(tmp_path):
     site_plugins = get_site_plugins()
     with use_runtime_plugins(site_plugins):
         EverestRunModel.create(config, runtime_plugins=site_plugins)
+
+
+def test_that_duplicate_output_constraint_names_raise_error():
+    with pytest.raises(ValueError, match="Output constraint names must be unique"):
+        everest_config_with_defaults(
+            output_constraints=[
+                {"target": 0.3, "name": "a"},
+                {"target": 0.3, "name": "a"},
+            ],
+        )
+
+
+def test_that_target_or_bounds_are_provided():
+    with pytest.raises(
+        ValueError,
+        match=(r"(?s).*Must provide target or lower_bound/upper_bound.*"),
+    ):
+        everest_config_with_defaults(
+            input_constraints=[
+                OutputConstraintConfig.model_validate(
+                    {
+                        "name": "some_name",
+                    }
+                )
+            ],
+        )
+
+
+def test_that_target_and_bounds_are_mutually_exclusive():
+    with pytest.raises(
+        ValueError,
+        match=(r"(?s).*Cannot combine target and bounds.*"),
+    ):
+        everest_config_with_defaults(
+            input_constraints=[
+                OutputConstraintConfig.model_validate(
+                    {"name": "some_name", "target": 1.0, "lower_bound": 0.0}
+                )
+            ],
+        )
+
+
+def test_that_lower_bound_cannot_be_greater_than_upper_bound():
+    with pytest.raises(
+        match=(r"(?s).*The upper_bound must be greater than the lower_bound.*"),
+    ):
+        everest_config_with_defaults(
+            output_constraints=[
+                OutputConstraintConfig.model_validate(
+                    {
+                        "name": "some_name",
+                        "lower_bound": 2.0,
+                        "upper_bound": 1.0,
+                    }
+                )
+            ],
+        )

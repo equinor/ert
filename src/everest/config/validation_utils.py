@@ -131,6 +131,14 @@ def control_variables_validation(
         error.append(
             _VARIABLE_ERROR_MESSAGE.format(name=name, variable_type="initial_guess")
         )
+    if error:
+        return error
+
+    assert min_ is not None
+    assert max_ is not None
+    if min_ >= max_:
+        return ["The control minimum value must be less than the maximum value"]
+
     if isinstance(initial_guess, float):
         initial_guess = [initial_guess]
     if (

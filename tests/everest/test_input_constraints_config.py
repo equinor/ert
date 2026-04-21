@@ -33,7 +33,8 @@ def test_input_constraint_control_references(tmp_path, capsys, monkeypatch):
                 "dummy.x.1": 1.0,
                 "dummy.x.2": 1.0,
                 "dummy.y.0": 1.0,
-            }
+            },
+            "target": 1.0,
         }
     ]
 
@@ -44,7 +45,8 @@ def test_input_constraint_control_references(tmp_path, capsys, monkeypatch):
                 "dummy.x-1": 1.0,
                 "dummy.x-2": 1.0,
                 "dummy.y-0": 1.0,
-            }
+            },
+            "target": 1.0,
         }
     ]
 
@@ -101,5 +103,49 @@ def test_that_auto_scale_and_input_constraints_scale_are_mutually_exclusive():
                     {"upper_bound": 1.0, "weights": {"a": 1.0, "b": 1.0}, "scale": 2.0}
                 )
                 for i in range(2)
+            ],
+        )
+
+
+def test_that_target_or_bounds_are_provided():
+    with pytest.raises(
+        ValueError,
+        match=(r"(?s).*Must provide target or lower_bound/upper_bound.*"),
+    ):
+        everest_config_with_defaults(
+            input_constraints=[
+                InputConstraintConfig.model_validate({"weights": {"a": 1.0, "b": 1.0}})
+            ],
+        )
+
+
+def test_that_target_and_bounds_are_mutually_exclusive():
+    with pytest.raises(
+        ValueError,
+        match=(r"(?s).*Cannot combine target and bounds.*"),
+    ):
+        everest_config_with_defaults(
+            input_constraints=[
+                InputConstraintConfig.model_validate(
+                    {"target": 1.0, "weights": {"a": 1.0, "b": 1.0}, "lower_bound": 0.0}
+                )
+            ],
+        )
+
+
+def test_that_lower_bound_cannot_be_greater_than_upper_bound():
+    with pytest.raises(
+        ValueError,
+        match=(r"(?s).*The upper_bound must be greater than the lower_bound.*"),
+    ):
+        everest_config_with_defaults(
+            input_constraints=[
+                InputConstraintConfig.model_validate(
+                    {
+                        "weights": {"a": 1.0, "b": 1.0},
+                        "lower_bound": 2.0,
+                        "upper_bound": 1.0,
+                    }
+                )
             ],
         )
