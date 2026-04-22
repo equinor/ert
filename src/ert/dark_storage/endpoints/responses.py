@@ -5,6 +5,7 @@ from typing import Annotated, Any
 from urllib.parse import unquote
 from uuid import UUID
 
+import numpy as np
 import pandas as pd
 import polars as pl
 from fastapi import APIRouter, Body, Depends, Header, Query, status
@@ -163,24 +164,61 @@ def data_for_response(
         if ensemble.batch_objectives is None:
             return pd.DataFrame()
 
-        df = ensemble.batch_objectives.clone()
-        improvements = {}
-        for ens in ensemble.experiment.ensembles:
-            improvements[ens.iteration] = ens.is_improvement
+        def constraint_violation_check(violation: pl.DataFrame | None) -> float:
+            if violation is None:
+                return 0.0
+            return violation.drop("batch_id").to_numpy().max().item()
 
-        imp_df = pl.DataFrame(
-            {
-                "batch_id": list(improvements.keys()),
-                "is_improvement": list(improvements.values()),
-            },
-            schema={"batch_id": pl.Int64, "is_improvement": pl.Boolean},
+        CONSTRAINT_TOL = 1e-6
+        accepted_batches = []
+        max_total_objective = np.inf
+        for current_ensemble in ensemble.experiment.ensembles_with_function_results:
+            if current_ensemble.batch_objectives is None:
+                raise ValueError(
+                    f"Ensemble {current_ensemble.id} does not have batch objectives"
+                )
+            total_objective = current_ensemble.batch_objectives[
+                "total_objective_value"
+            ].item()
+
+            bound_constraint_violation = constraint_violation_check(
+                current_ensemble.batch_bound_constraint_violations
+            )
+            input_constraint_violation = constraint_violation_check(
+                current_ensemble.batch_input_constraint_violations
+            )
+            output_constraint_violation = constraint_violation_check(
+                current_ensemble.batch_output_constraint_violations
+            )
+
+            if (
+                max(
+                    bound_constraint_violation,
+                    input_constraint_violation,
+                    output_constraint_violation,
+                )
+                < CONSTRAINT_TOL
+                and total_objective < max_total_objective
+            ):
+                accepted_batches.append(current_ensemble)
+                max_total_objective = total_objective
+
+        objective_value_df = ensemble.batch_objectives.clone().select(
+            ["batch_id", "total_objective_value"]
         )
 
-        df = df.join(imp_df, on="batch_id", how="left")
-        df = df.with_columns(pl.col("is_improvement").fill_null(False))
-
         return (
-            df.select(["batch_id", "total_objective_value", "is_improvement"])
+            objective_value_df.join(
+                pl.DataFrame(
+                    {
+                        "batch_id": [batch.iteration for batch in accepted_batches],
+                        "is_improvement": [True] * len(accepted_batches),
+                    }
+                ),
+                on="batch_id",
+                how="left",
+            )
+            .with_columns(pl.col("is_improvement").fill_null(False))
             .to_pandas()
             .astype(
                 {
