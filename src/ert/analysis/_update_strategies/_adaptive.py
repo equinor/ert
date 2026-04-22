@@ -154,7 +154,7 @@ class AdaptiveLocalizationUpdate:
         self._smoother.prepare_assimilation(
             Y=obs_context.responses,
             truncation=self._enkf_truncation,
-            overwrite=True,
+            overwrite=False,
         )
 
         self._num_obs = obs_context.num_observations

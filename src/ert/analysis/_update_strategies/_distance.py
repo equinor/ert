@@ -70,7 +70,7 @@ class DistanceLocalizationUpdate:
         self._smoother.prepare_assimilation(
             Y=responses,
             truncation=self._enkf_truncation,
-            overwrite=True,
+            overwrite=False,
         )
 
     def update(
