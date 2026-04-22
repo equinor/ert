@@ -26,9 +26,6 @@
     "stop_long_running": false,
     "max_runtime": null
   },
-  "shape_registry": {
-    "shapes": {}
-  },
   "forward_model_steps": [
     {
       "name": "poly_eval",
@@ -304,8 +301,11 @@
       "shape_id": null
     }
   ],
+  "shape_registry": {
+    "shapes": {}
+  },
+  "experiment_type": "Multiple Data Assimilation",
   "restart_run": false,
   "prior_ensemble_id": null,
-  "weights": "4, 2, 1",
-  "experiment_type": "Multiple Data Assimilation"
+  "weights": "4, 2, 1"
 }

@@ -30,38 +30,6 @@
     "stop_long_running": false,
     "max_runtime": null
   },
-  "shape_registry": {
-    "shapes": {
-      "0": {
-        "shape_id": 0,
-        "type": "circle",
-        "east": 10.5,
-        "north": 25.5,
-        "radius": 20.0
-      },
-      "1": {
-        "shape_id": 1,
-        "type": "circle",
-        "east": 25.5,
-        "north": 10.5,
-        "radius": 20.0
-      },
-      "2": {
-        "shape_id": 2,
-        "type": "circle",
-        "east": 40.5,
-        "north": 25.5,
-        "radius": 20.0
-      },
-      "3": {
-        "shape_id": 3,
-        "type": "circle",
-        "east": 25.5,
-        "north": 40.5,
-        "radius": 20.0
-      }
-    }
-  },
   "forward_model_steps": [
     {
       "name": "heat_equation",
@@ -213,6 +181,6 @@
   "random_seed": 1,
   "start_iteration": 0,
   "minimum_required_realizations": 3,
-  "ensemble_id": "00000000-0000-0000-0000-000000000000",
-  "experiment_type": "Evaluate Ensemble"
+  "experiment_type": "Evaluate Ensemble",
+  "ensemble_id": "00000000-0000-0000-0000-000000000000"
 }

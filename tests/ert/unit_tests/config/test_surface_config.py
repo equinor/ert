@@ -58,7 +58,7 @@ def test_runpath_roundtrip(tmp_path, storage, surface, surface_format, caplog):
         file_format=surface_format,
     )
     ensemble = storage.create_experiment(
-        experiment_config={"parameter_configuration": [config]}
+        experiment_config={"parameter_configuration": [config.model_dump(mode="json")]},
     ).create_ensemble(name="text", ensemble_size=1)
     surface.to_file(
         tmp_path / "input_0",
@@ -474,7 +474,11 @@ async def test_that_ert_writes_surface_in_same_the_format_that_was_read(
         parameter_configs = ert_config.parameter_configurations_with_design_matrix
         with open_storage("storage", mode="w") as storage:
             ensemble = storage.create_experiment(
-                experiment_config={"parameter_configuration": parameter_configs}
+                experiment_config={
+                    "parameter_configuration": [
+                        cfg.model_dump(mode="json") for cfg in parameter_configs
+                    ]
+                }
             ).create_ensemble(name="default", ensemble_size=1)
             active_realizations = [True]
 
