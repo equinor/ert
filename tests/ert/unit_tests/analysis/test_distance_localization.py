@@ -85,9 +85,7 @@ def test_that_distance_localization_updates_all_z_layers_at_observation_xy(
         xpos=obs_x,
         ypos=obs_y,
         main_range=main_range,
-        responses_with_loc=responses,
-        observation_values=obs_values,
-        observation_errors=obs_errors,
+        location_mask=np.ones(responses.shape[0], dtype=bool),
     )
 
     obs_context = ObservationContext(
