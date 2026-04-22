@@ -89,8 +89,7 @@ class ObservationLocations:
     """Observation location data for distance-based localization methods.
 
     Contains coordinates and correlation ranges for observations that have
-    spatial location information. All arrays are filtered to only include
-    observations that have valid location data.
+    spatial location information.
     """
 
     xpos: npt.NDArray[np.floating]
@@ -102,14 +101,8 @@ class ObservationLocations:
     main_range: npt.NDArray[np.floating]
     """Correlation range (radius) for each observation."""
 
-    responses_with_loc: npt.NDArray[np.floating]
-    """Response matrix filtered to observations with locations."""
-
-    observation_values: npt.NDArray[np.floating]
-    """Observation values filtered to observations with locations."""
-
-    observation_errors: npt.NDArray[np.floating]
-    """Scaled observation errors filtered to observations with locations."""
+    location_mask: npt.NDArray[np.bool_]
+    """Boolean mask indicating which observations have valid location data."""
 
 
 @dataclass(frozen=True)

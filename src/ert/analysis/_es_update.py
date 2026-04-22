@@ -188,9 +188,7 @@ def perform_ensemble_update(
             xpos=filtered_data["east"].to_numpy()[has_location],
             ypos=filtered_data["north"].to_numpy()[has_location],
             main_range=filtered_data["radius"].to_numpy()[has_location],
-            responses_with_loc=responses[has_location, :],
-            observation_values=observation_values[has_location],
-            observation_errors=observation_errors[has_location],
+            location_mask=has_location,
         )
 
     obs_context = ObservationContext(
