@@ -11,7 +11,7 @@ import numpy.typing as npt
 import pandas as pd
 import resfo
 import xtgeo
-from definition import Coordinate, obs_coordinates, obs_times
+from definition import Coordinate, nz, obs_coordinates, obs_times, u_init
 from heat_equation import heat_equation, sample_prior_conductivity
 
 # Some seeds produce priors that yield poor results.
@@ -20,7 +20,7 @@ rng = np.random.default_rng(1234)
 
 NCOL = 10
 NROW = 10
-NLAY = 1
+NLAY = nz
 
 
 def create_egrid_file():
@@ -47,6 +47,7 @@ def make_observations(
             "k": pd.Series(dtype=int),
             "x": pd.Series(dtype=int),
             "y": pd.Series(dtype=int),
+            "z": pd.Series(dtype=int),
             "value": pd.Series(dtype=float),
             "sd": pd.Series(dtype=float),
         }
@@ -55,22 +56,25 @@ def make_observations(
     # Create dataframe with observations and necessary meta data.
     for coordinate in coordinates:
         for k in times:
-            # The reason for u[k, y, x] instead of the perhaps more natural u[k, x, y],
-            # is due to a convention followed by matplotlib's `pcolormesh`
-            # See documentation for details.
-            value = field[k, coordinate.x, coordinate.y]
-            sd = error(value)
-            df_ = pd.DataFrame(
-                {
-                    "k": [k],
-                    "x": [coordinate.x],
-                    "y": [coordinate.y],
-                    "value": [value + rng.normal(loc=0.0, scale=sd)],
-                    "sd": [sd],
-                }
-            )
-            d = pd.concat([d, df_])
-    d = d.set_index(["k", "x", "y"], verify_integrity=True)
+            for z in range(nz):
+                # The reason for u[k, y, x] instead of the perhaps more
+                # natural u[k, x, y],
+                # is due to a convention followed by matplotlib's `pcolormesh`
+                # See documentation for details.
+                value = field[k, coordinate.x, coordinate.y, z]
+                sd = error(value)
+                df_ = pd.DataFrame(
+                    {
+                        "k": [k],
+                        "x": [coordinate.x],
+                        "y": [coordinate.y],
+                        "z": [z],
+                        "value": [value + rng.normal(loc=0.0, scale=sd)],
+                        "sd": [sd],
+                    }
+                )
+                d = pd.concat([d, df_])
+    d = d.set_index(["k", "x", "y", "z"], verify_integrity=True)
 
     return d
 
@@ -86,7 +90,7 @@ def generate_priors():
     corr_lengths = rng.normal(loc=0.8, scale=0.1, size=10)
     for i in range(10):
         cond = sample_prior_conductivity(
-            ensemble_size=1, nx=nx, rng=rng, corr_length=corr_lengths[i]
+            ensemble_size=1, nx=nx, nz=nz, rng=rng, corr_length=corr_lengths[i]
         )
         resfo.write(
             f"cond_{i}.bgrdecl",
@@ -110,18 +114,19 @@ def create_summary_observations(df_obs: pd.DataFrame):
             obs_date = START_DATE + datetime.timedelta(days=int(t))
 
             for coord in obs_coordinates:
-                idx = (int(t), int(coord.x), int(coord.y))
-                row = df_obs.loc[idx]
-                value = float(row["value"])
-                error = float(row["sd"])
+                for z in range(nz):
+                    idx = (int(t), int(coord.x), int(coord.y), int(z))
+                    row = df_obs.loc[idx]
+                    value = float(row["value"])
+                    error = float(row["sd"])
 
-                f.write(
-                    f"""SUMMARY_OBSERVATION HEAT_{coord.x}_{coord.y}_{t}
+                    f.write(
+                        f"""SUMMARY_OBSERVATION HEAT_{coord.x}_{coord.y}_{z}_{t}
 {{
     VALUE   = {value:.16e};
     ERROR   = {error:.16e};
     DATE    = {obs_date:%Y-%m-%d};
-    KEY     = HEAT_{coord.x}_{coord.y};
+    KEY     = HEAT_{coord.x}_{coord.y}_{z};
     LOCALIZATION {{
         EAST = {coord.x + 0.5};
         NORTH = {coord.y + 0.5};
@@ -130,7 +135,7 @@ def create_summary_observations(df_obs: pd.DataFrame):
 }};
 
 """
-                )
+                    )
 
 
 if __name__ == "__main__":
@@ -143,15 +148,9 @@ if __name__ == "__main__":
     k_start = 0
     k_end = 500
 
-    # Define initial condition, i.e., the initial temperature distribution.
-    # How you define initial conditions will effect the spread of results,
-    # i.e., how similar different realisations are.
-    u_init = np.zeros((k_end, nx, nx))
-    u_init[:, 5:7, 5:7] = 100
-
     cond_truth = sample_prior_conductivity(
-        ensemble_size=1, nx=nx, rng=rng, corr_length=0.8
-    ).reshape(nx, nx)
+        ensemble_size=1, nx=nx, nz=nz, rng=rng, corr_length=0.8
+    ).reshape(nx, nx, nz)
 
     # Resolution in the x-direction (nothing to worry about really)
     dx = 1
@@ -159,7 +158,8 @@ if __name__ == "__main__":
     # Calculate maximum `dt`.
     # If higher values are used, the numerical solution will become unstable.
     # Note that this could be avoided if we used an implicit solver.
-    dt = dx**2 / (4 * np.max(cond_truth))
+    neighbors = 6 if nz > 1 else 4
+    dt = dx**2 / (neighbors * np.max(cond_truth))
 
     u_t = heat_equation(u_init, cond_truth, dx, dt, k_start, k_end, rng=rng)
 
