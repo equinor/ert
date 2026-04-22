@@ -116,3 +116,22 @@ def test_that_distance_localization_reduces_posterior_variance():
         )
 
         assert np.trace(posterior_cov) < np.trace(prior_cov)
+
+        obs_keys = list(experiment.observation_keys)
+
+        def mean_normalized_misfit(ensemble) -> float:
+            real_indices = np.array(ensemble.get_realization_list_with_responses())
+            df = ensemble.get_observations_and_responses(obs_keys, real_indices)
+            obs = df["observations"].to_numpy()
+            std = df["std"].to_numpy()
+            realization_cols = [str(r) for r in real_indices]
+            simulated = df.select(realization_cols).to_numpy()
+            normalized_residuals = (
+                (simulated - obs[:, np.newaxis]) / std[:, np.newaxis]
+            ) ** 2
+            return float(normalized_residuals.mean())
+
+        assert mean_normalized_misfit(posterior) < mean_normalized_misfit(prior), (
+            "Expected posterior responses to have a lower normalized misfit "
+            "against observations than the prior"
+        )
