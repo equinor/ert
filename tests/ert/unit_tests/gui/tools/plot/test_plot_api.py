@@ -230,7 +230,7 @@ def test_plot_api_handles_urlescape(api_and_storage):
                     keys=[key],
                 ).model_dump(mode="json")
             ],
-            "ert_templates": {},
+            "ert_templates": [],
             "observations": [
                 {
                     "type": "summary_observation",
@@ -290,8 +290,8 @@ def test_plot_api_handles_empty_gen_kw(api_and_storage):
                 ).model_dump(mode="json"),
             ],
             "response_configuration": [],
-            "ert_templates": {},
-            "observations": {},
+            "ert_templates": [],
+            "observations": [],
         }
     )
     ensemble = storage.create_ensemble(experiment.id, ensemble_size=10)
@@ -324,8 +324,8 @@ def test_plot_api_handles_non_existant_gen_kw(api_and_storage):
                 ).model_dump(mode="json"),
             ],
             "response_configuration": [],
-            "ert_templates": {},
-            "observations": {},
+            "ert_templates": [],
+            "observations": [],
         }
     )
     ensemble = storage.create_ensemble(experiment.id, ensemble_size=10)
@@ -346,8 +346,8 @@ def test_plot_api_handles_colons_in_parameter_keys(api_and_storage):
                 ).model_dump(mode="json"),
             ],
             "response_configuration": [],
-            "ert_templates": {},
-            "observations": {},
+            "ert_templates": [],
+            "observations": [],
         }
     )
     ensemble = storage.create_ensemble(experiment.id, ensemble_size=10)
@@ -377,7 +377,7 @@ def test_that_multiple_observations_are_parsed_correctly(api_and_storage):
                     has_finalized_keys=True,
                 ).model_dump(mode="json")
             ],
-            "ert_templates": {},
+            "ert_templates": [],
             "observations": [
                 {
                     "type": "summary_observation",
@@ -423,8 +423,8 @@ def test_that_observations_for_empty_ensemble_returns_empty_data(api_and_storage
                     name="summary", input_files=[""], keys=["NAIMFRAC"]
                 ).model_dump(mode="json")
             ],
-            "ert_templates": {},
-            "observations": {},
+            "ert_templates": [],
+            "observations": [],
         },
         name=None,
     )
@@ -449,8 +449,8 @@ def test_that_data_for_response_is_empty_for_ensembles_without_responses(
                     has_finalized_keys=True,
                 ).model_dump(mode="json")
             ],
-            "ert_templates": {},
-            "observations": {},
+            "ert_templates": [],
+            "observations": [],
         },
     )
 
@@ -479,7 +479,7 @@ def test_that_response_key_has_observation_when_only_one_experiment_has_observat
                     keys=["FOPR"],
                 ).model_dump(mode="json")
             ],
-            "ert_templates": {},
+            "ert_templates": [],
             "observations": [
                 {
                     "type": "summary_observation",
@@ -504,8 +504,8 @@ def test_that_response_key_has_observation_when_only_one_experiment_has_observat
                     keys=["FOPR"],
                 ).model_dump(mode="json")
             ],
-            "ert_templates": {},
-            "observations": {},
+            "ert_templates": [],
+            "observations": [],
         }
     )
 
@@ -568,7 +568,7 @@ def test_that_response_keys_do_not_match_keys_that_are_substrings(
                     keys=[key, history_key(key), "FOPR"],
                 ).model_dump(mode="json")
             ],
-            "ert_templates": {},
+            "ert_templates": [],
             "observations": [
                 {
                     "type": "summary_observation",
@@ -629,7 +629,7 @@ def _create_gradient_only_ensemble(storage):
                     objective_types=["mean"],
                 ).model_dump(mode="json")
             ],
-            "ert_templates": {},
+            "ert_templates": [],
             "observations": [],
         }
     )

@@ -154,7 +154,11 @@ def test_create_run_path_surface_performance(tmp_path, benchmark):
 
     with open_storage(storage_path, mode="w") as storage:
         ensemble = storage.create_experiment(
-            experiment_config={"parameter_configuration": parameter_configs}
+            experiment_config={
+                "parameter_configuration": [
+                    pc.model_dump(mode="json") for pc in parameter_configs
+                ]
+            }
         ).create_ensemble(name="default", ensemble_size=reals)
 
         for config_node in parameter_configs:

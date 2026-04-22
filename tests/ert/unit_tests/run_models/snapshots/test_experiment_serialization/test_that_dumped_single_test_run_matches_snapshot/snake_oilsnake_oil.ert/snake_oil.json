@@ -115,52 +115,13 @@
   },
   "hooked_workflows": {},
   "active_realizations": [
-    false,
-    true,
-    true,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false
+    true
   ],
   "log_path": "test-data/ert/snake_oil.snake_oil.ert/update_log",
   "random_seed": 1,
   "start_iteration": 0,
-  "minimum_required_realizations": 2,
-  "target_ensemble": "iter-<ITER>",
-  "analysis_settings": {
-    "enkf_truncation": 0.98,
-    "inversion": "EXACT",
-    "localization": false,
-    "localization_correlation_threshold": null,
-    "distance_localization": false
-  },
-  "update_settings": {
-    "outlier_settings": {
-      "alpha": 3.0,
-      "std_cutoff": 1e-6
-    },
-    "auto_scale_observations": []
-  },
-  "experiment_name": "es-mda",
+  "minimum_required_realizations": 1,
+  "experiment_name": "single-test-run",
   "design_matrix": null,
   "parameter_configuration": [
     {
@@ -452,8 +413,6 @@
   "shape_registry": {
     "shapes": {}
   },
-  "experiment_type": "Multiple Data Assimilation",
-  "restart_run": false,
-  "prior_ensemble_id": null,
-  "weights": "4, 2, 1"
+  "experiment_type": "Single Test Run",
+  "target_ensemble": "single_test_run"
 }

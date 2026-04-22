@@ -26,9 +26,6 @@
     "stop_long_running": false,
     "max_runtime": null
   },
-  "shape_registry": {
-    "shapes": {}
-  },
   "forward_model_steps": [
     {
       "name": "SNAKE_OIL_SIMULATOR",
@@ -437,6 +434,9 @@
       "shape_id": null
     }
   ],
-  "target_ensemble": "the_experiment",
-  "experiment_type": "Ensemble Experiment"
+  "shape_registry": {
+    "shapes": {}
+  },
+  "experiment_type": "Ensemble Experiment",
+  "target_ensemble": "the_experiment"
 }
