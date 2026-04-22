@@ -27,7 +27,6 @@ def _create_rft_ensemble(ensemble_size):
             error=5.0,
             north=200.0,
             east=100.0,
-            radius=None,
             tvd=25.0,
             md=50.0,
             zone=None,
