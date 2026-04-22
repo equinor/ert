@@ -7,18 +7,14 @@ from uuid import UUID
 from pydantic import PrivateAttr
 
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.run_models.update_run_model import UpdateRunModel, UpdateRunModelConfig
+from ert.experiment_configs import ManualUpdateConfig
+from ert.run_models.update_run_model import UpdateRunModel
 from ert.storage import Ensemble
 from ert.storage.local_experiment import ExperimentType
 
 from .run_model import ErtRunError
 
 logger = logging.getLogger(__name__)
-
-
-class ManualUpdateConfig(UpdateRunModelConfig):
-    ensemble_id: str
-    ert_templates: list[tuple[str, str]]
 
 
 class ManualUpdate(UpdateRunModel, ManualUpdateConfig):
@@ -45,15 +41,9 @@ class ManualUpdate(UpdateRunModel, ManualUpdateConfig):
         self.set_env_key("_ERT_EXPERIMENT_ID", str(prior_experiment.id))
         self.set_env_key("_ERT_ENSEMBLE_ID", str(self._prior.id))
 
-        experiment_config = self.model_dump(mode="json") | {
-            "parameter_configuration": prior_experiment.experiment_config[
-                "parameter_configuration"
-            ],
-            "response_configuration": prior_experiment.experiment_config[
-                "response_configuration"
-            ],
-            "observations": prior_experiment.experiment_config["observations"],
-        }
+        experiment_config = self.to_experiment_config(
+            prior_experiment_config=prior_experiment.experiment_config
+        )
 
         target_experiment = self._storage.create_experiment(
             experiment_config=experiment_config,

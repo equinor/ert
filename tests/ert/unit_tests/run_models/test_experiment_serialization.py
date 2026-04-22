@@ -40,6 +40,7 @@ from ert.config.queue_config import (
     SlurmQueueOptions,
     TorqueQueueOptions,
 )
+from ert.experiment_configs import MultipleDataAssimilationConfig
 from ert.mode_definitions import (
     ENIF_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
@@ -47,6 +48,7 @@ from ert.mode_definitions import (
     ES_MDA_MODE,
     EVALUATE_ENSEMBLE_MODE,
     MANUAL_UPDATE_MODE,
+    TEST_RUN_MODE,
 )
 from ert.plugins import ErtRuntimePlugins
 from ert.run_models import (
@@ -56,7 +58,6 @@ from ert.run_models import (
     MultipleDataAssimilation,
     create_model,
 )
-from ert.run_models.multiple_data_assimilation import MultipleDataAssimilationConfig
 from ert.storage import open_storage
 
 
@@ -835,6 +836,30 @@ def test_that_dumped_esmda_matches_snapshot(
             restart_run=False,
             prior_ensemble_id=None,
             experiment_name="es-mda",
+        ),
+        case=f"{config_dir}.{config_file}",
+    )
+
+
+@pytest.mark.filterwarnings("ignore::ert.config.ConfigWarning")
+@pytest.mark.parametrize("case", cases_to_test)
+def test_that_dumped_single_test_run_matches_snapshot(
+    case, copy_case, snapshot, change_to_tmpdir
+):
+    config_dir, config_file = case.split("/")
+    copy_case(config_dir)
+
+    config = ErtConfig.from_file(config_file)
+    config.random_seed = 1  # Ensure deterministic
+
+    _create_and_verify_runmodel_snapshot(
+        config,
+        snapshot,
+        cli_args=Namespace(
+            mode=TEST_RUN_MODE,
+            realizations=None,
+            experiment_name=None,
+            current_ensemble="single_test_run",
         ),
         case=f"{config_dir}.{config_file}",
     )

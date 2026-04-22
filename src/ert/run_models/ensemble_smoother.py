@@ -10,20 +10,17 @@ from ert.config import (
     PreExperimentFixtures,
 )
 from ert.ensemble_evaluator import EvaluatorServerConfig
+from ert.experiment_configs import EnsembleSmootherConfig
 from ert.run_arg import create_run_arguments
 from ert.run_models.initial_ensemble_run_model import (
     InitialEnsembleRunModel,
-    InitialEnsembleRunModelConfig,
 )
-from ert.run_models.update_run_model import UpdateRunModel, UpdateRunModelConfig
+from ert.run_models.update_run_model import UpdateRunModel
 from ert.trace import tracer
 
-from .run_model import ErtRunError, ExperimentType
+from .run_model import ErtRunError
 
 logger = logging.getLogger(__name__)
-
-
-class EnsembleSmootherConfig(InitialEnsembleRunModelConfig, UpdateRunModelConfig): ...
 
 
 class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmootherConfig):
@@ -42,7 +39,7 @@ class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmoother
         self.run_workflows(fixtures=PreExperimentFixtures(random_seed=self.random_seed))
 
         experiment_storage = self._storage.create_experiment(
-            experiment_config=self.model_dump(mode="json"),
+            experiment_config=self.to_experiment_config(),
             name=self.experiment_name,
         )
 
@@ -85,7 +82,3 @@ class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmoother
     @classmethod
     def description(cls) -> str:
         return "Sample parameters → evaluate → update → evaluate"
-
-    @classmethod
-    def _experiment_type(cls) -> ExperimentType:
-        return ExperimentType.ENSEMBLE_SMOOTHER
