@@ -150,7 +150,7 @@ if __name__ == "__main__":
             "cond.bgrdecl", [("COND    ", cond.flatten(order="F").astype(np.float32))]
         )
     else:
-        cond = resfo.read("cond.bgrdecl")[0][1].reshape(nx, nx)
+        cond = resfo.read("cond.bgrdecl")[0][1].reshape(nx, nx, order="F")
 
     # The update may give non-physical parameter values, which here means
     # negative heat conductivity. Setting negative values to a small positive
