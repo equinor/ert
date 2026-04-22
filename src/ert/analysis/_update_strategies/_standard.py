@@ -81,7 +81,7 @@ class StandardESUpdate:
             self._smoother.prepare_assimilation(
                 Y=obs_context.responses,
                 truncation=self._enkf_truncation,
-                overwrite=True,
+                overwrite=False,
             )
         except Exception as err:
             raise ErtAnalysisError(
