@@ -25,20 +25,7 @@ from .utils import ArgParseFormatter
 
 def _build_args_parser() -> argparse.ArgumentParser:
     arg_parser = argparse.ArgumentParser(
-        description=dedent(
-            """
-            Start an everest visualization plugin.
-
-            If no visualization plugin is installed the message: ``No
-            visualization plugin installed!`` will be displayed in the console.
-
-            The recommended open-source everest visualization plugin is Everviz:
-
-            https://github.com/equinor/everviz
-
-            It can be installed using ``pip install everviz``.
-            """
-        ),
+        description=dedent("""Start a visualization tool for Everest data."""),
         formatter_class=ArgParseFormatter,
         usage="""everest results <config_file>""",
     )
@@ -84,6 +71,19 @@ def visualization_entry(args: list[str] | None = None) -> None:
             return
 
         if not options.ert_plotter:
+            print()
+            print(
+                "==============================================================================="
+            )
+            print()
+            print("Everviz is deprecated and will be replaced in the next release.")
+            print("Use the command `everest result --ert_plotter <config_file>` to use")
+            print("the upcoming visualization tool.")
+            print()
+            print(
+                "==============================================================================="
+            )
+            print()
             pm = EverestPluginManager()
             pm.hook.visualize_data(api=EverestDataAPI(options.config))
         else:
