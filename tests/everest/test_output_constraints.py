@@ -126,7 +126,7 @@ def test_that_target_or_bounds_are_provided():
         match=(r"(?s).*Must provide target or lower_bound/upper_bound.*"),
     ):
         everest_config_with_defaults(
-            input_constraints=[
+            output_constraints=[
                 OutputConstraintConfig.model_validate(
                     {
                         "name": "some_name",
@@ -142,7 +142,7 @@ def test_that_target_and_bounds_are_mutually_exclusive():
         match=(r"(?s).*Cannot combine target and bounds.*"),
     ):
         everest_config_with_defaults(
-            input_constraints=[
+            output_constraints=[
                 OutputConstraintConfig.model_validate(
                     {"name": "some_name", "target": 1.0, "lower_bound": 0.0}
                 )
@@ -152,7 +152,10 @@ def test_that_target_and_bounds_are_mutually_exclusive():
 
 def test_that_lower_bound_cannot_be_greater_than_upper_bound():
     with pytest.raises(
-        match=(r"(?s).*The upper_bound must be greater than the lower_bound.*"),
+        match=(
+            r"(?s).*Error in output constraint some_name: lower_bound must "
+            r"be less than the upper_bound : 2.0 >= 1.0.*"
+        ),
     ):
         everest_config_with_defaults(
             output_constraints=[

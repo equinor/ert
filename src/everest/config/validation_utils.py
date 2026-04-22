@@ -137,7 +137,7 @@ def control_variables_validation(
     assert min_ is not None
     assert max_ is not None
     if min_ >= max_:
-        return ["The control minimum value must be less than the maximum value"]
+        return [f"Control {name} must respect min < max: {min_} >= {max_}"]
 
     if isinstance(initial_guess, float):
         initial_guess = [initial_guess]

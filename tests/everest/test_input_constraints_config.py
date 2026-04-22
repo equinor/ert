@@ -136,7 +136,10 @@ def test_that_target_and_bounds_are_mutually_exclusive():
 def test_that_lower_bound_cannot_be_greater_than_upper_bound():
     with pytest.raises(
         ValueError,
-        match=(r"(?s).*The upper_bound must be greater than the lower_bound.*"),
+        match=(
+            r"(?s).*Error in input constraint: lower_bound must "
+            r"be less than the upper_bound : 2.0 >= 1.0.*"
+        ),
     ):
         everest_config_with_defaults(
             input_constraints=[

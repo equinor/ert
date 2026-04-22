@@ -198,7 +198,7 @@ def test_that_control_minimum_is_less_than_maximum(
 ):
     with pytest.raises(
         ValueError,
-        match=r"(?s).*The control minimum value must be less than the maximum value.*",
+        match=r"(?s).*Control group_0.w00 must respect min < max: 1.0 >= 0.0.*",
     ):
         everest_config_with_defaults(
             controls=[

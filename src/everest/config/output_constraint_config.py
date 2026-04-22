@@ -86,7 +86,10 @@ class OutputConstraintConfig(BaseModel, extra="forbid"):
     @model_validator(mode="after")
     def validate_bounds(self) -> Self:
         if self.target is None and (self.lower_bound >= self.upper_bound):
-            raise ValueError("The upper_bound must be greater than the lower_bound")
+            raise ValueError(
+                f"Error in output constraint {self.name}: lower_bound must be less "
+                f"than the upper_bound : {self.lower_bound} >= {self.upper_bound}"
+            )
         return self
 
     @model_validator(mode="before")
