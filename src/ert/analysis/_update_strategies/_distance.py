@@ -55,14 +55,20 @@ class DistanceLocalizationUpdate:
             )
         self._obs_loc = obs_context.observation_locations
         self._ensemble_size = obs_context.ensemble_size
+
+        mask = self._obs_loc.location_mask
+        responses = obs_context.responses[mask, :]
+        obs_values = obs_context.observation_values[mask]
+        obs_errors = obs_context.observation_errors[mask]
+
         self._smoother = LocalizedESMDA(
-            covariance=self._obs_loc.observation_errors**2,
-            observations=self._obs_loc.observation_values,
+            covariance=obs_errors**2,
+            observations=obs_values,
             alpha=1,
             seed=self._rng,
         )
         self._smoother.prepare_assimilation(
-            Y=self._obs_loc.responses_with_loc,
+            Y=responses,
             truncation=self._enkf_truncation,
             overwrite=True,
         )
