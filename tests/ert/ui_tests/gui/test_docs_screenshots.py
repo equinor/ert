@@ -14,7 +14,7 @@ from skimage.metrics import structural_similarity as ssim
 from ert.gui.ertwidgets import CopyableLabel
 from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.gui.experiments.single_test_run_panel import SingleTestRunPanel
-from ert.gui.experiments.view import RealizationWidget
+from ert.gui.experiments.view import IterationWidget, RealizationWidget
 from ert.gui.experiments.view.disk_space_widget import DiskSpaceWidget
 from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
 from ert.gui.tools.plot.plot_ensemble_selection_widget import EnsembleSelectionWidget
@@ -171,7 +171,10 @@ def run_experiment(
 
         # Assert that the number of boxes in the detailed view is
         # equal to the number of realizations
-        realization_widget = run_dialog._tab_widget.currentWidget()
+        iteration_widget = run_dialog._tab_widget.currentWidget()
+        assert isinstance(iteration_widget, IterationWidget)
+
+        realization_widget = iteration_widget._tab_widget.currentWidget()
         assert isinstance(realization_widget, RealizationWidget)
 
         list_model = realization_widget._real_view.model()
