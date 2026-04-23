@@ -6,7 +6,7 @@ from dataclasses import field
 from math import ceil
 from os.path import realpath
 from pathlib import Path
-from typing import Any, Final
+from typing import Any, Final, Literal, get_args
 
 from pydantic import Field, PositiveFloat, ValidationError
 from pydantic.dataclasses import dataclass
@@ -23,6 +23,8 @@ from .parsing import (
 logger = logging.getLogger(__name__)
 
 ObservationGroups = list[str]
+
+StrategyName = Literal["DISTANCE", "ADAPTIVE"]
 
 
 @dataclass
@@ -49,6 +51,7 @@ class AnalysisConfig:
     )
     num_iterations: int = 1
     design_matrix: DesignMatrix | None = None
+    parameter_settings: dict[str, StrategyName] = field(default_factory=dict)
 
     @classmethod
     def from_dict(cls, config_dict: ConfigDict) -> AnalysisConfig:
@@ -106,8 +109,35 @@ class AnalysisConfig:
         deprecated_keys = ["ENKF_NCOMP", "ENKF_SUBSPACE_DIMENSION"]
         errors = []
         all_errors = []
+        parameter_settings: dict[str, StrategyName] = {}
 
         for module_name, var_name, value in analysis_set_var:
+            if module_name == "PARAMETERS":
+                parameter_type = var_name
+                strategy_name = value
+                if parameter_type not in {"FIELD", "SURFACE", "GEN_KW"}:
+                    all_errors.append(
+                        ConfigValidationError(
+                            f"Invalid parameter type {parameter_type!r} for "
+                            "ANALYSIS_SET_VAR PARAMETERS TYPE\nValid options are: "
+                            "{'FIELD', 'SURFACE', 'GEN_KW'}"
+                        )
+                    )
+                    continue
+
+                if strategy_name not in get_args(StrategyName):
+                    all_errors.append(
+                        ConfigValidationError(
+                            f"Invalid strategy name {strategy_name!r} for "
+                            "ANALYSIS_SET_VAR PARAMETERS STRATEGY\nValid options are: "
+                            f"{get_args(StrategyName)}"
+                        )
+                    )
+                    continue
+
+                parameter_settings[parameter_type] = strategy_name
+                continue
+
             if module_name == "IES_ENKF":
                 ConfigWarning.warn(
                     f"{module_name} has been removed and has no effect, valid "
@@ -224,6 +254,7 @@ class AnalysisConfig:
             observation_settings=obs_settings,
             es_settings=es_settings,
             design_matrix=design_matrix,
+            parameter_settings=parameter_settings,
         )
         return config
 
