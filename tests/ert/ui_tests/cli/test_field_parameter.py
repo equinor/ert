@@ -1,5 +1,4 @@
 import logging
-import math
 import os
 import stat
 import warnings
@@ -46,126 +45,9 @@ def test_field_param_update_using_heat_equation_enif(
     assert (cond_iter0 != cond_iter1).all()
 
 
-def _compare_ensemble_params(
-    actual: pl.DataFrame,
-    reference_path: Path,
-    index_columns: list[str],
-    outlier_threshold: float = 1e-6,
-    outlier_percentage_max: float = 0.05,
-    outlier_deviation_max: float = 1e-1,
-    update_snapshot: bool = False,
-) -> pl.DataFrame:
-    if not reference_path.exists():
-        if update_snapshot:
-            actual.write_csv(reference_path)
-            raise AssertionError(f"Snapshot @ {reference_path} changed")
-        else:
-            raise AssertionError(
-                f"No snapshot @ {reference_path} found. "
-                "Run with --snapshot-update to create a new snapshot."
-            )
-
-    expected = pl.read_csv(reference_path)
-    if actual.shape != expected.shape:
-        raise ValueError("DataFrames must have the same shape")
-    if set(actual.columns) != set(expected.columns):
-        raise ValueError("DataFrames must have the same columns")
-    # To avoid depending on the ordering of the columns
-    expected = expected.select(actual.columns)
-
-    actual_numbers = actual.drop(index_columns)
-    expected_numbers = expected.drop(index_columns)
-    columns = actual_numbers.columns
-
-    diff_df = actual_numbers - expected_numbers
-
-    # Truncate small differences to zero
-    truncated_df = diff_df.select(
-        [
-            (
-                pl.col(c).map_elements(
-                    lambda x: (
-                        0.0
-                        if abs(x) < outlier_threshold
-                        else (abs(x) - outlier_threshold)
-                    ),
-                )
-            )
-            .cast(pl.Float32)
-            .alias(c)
-            for c in columns
-        ]
-    )
-
-    # Compute per-row percentage of non-zero (i.e., outlier) values
-    outlier_percentage = truncated_df.select(
-        [
-            pl.concat_list(columns)
-            .map_elements(
-                lambda row: sum(1 for x in row if not math.isclose(x, 0.0)) / len(row),
-            )
-            .cast(pl.Float32)
-            .alias("outlier_percentage")
-        ]
-    )["outlier_percentage"]
-
-    max_deviance = truncated_df.select(
-        [
-            pl.concat_list(columns)
-            .map_elements(lambda row: max(x for x in row))
-            .cast(pl.Float32)
-            .alias("max_deviance")
-        ]
-    )["max_deviance"]
-
-    unacceptable_n_outliers = (outlier_percentage > outlier_percentage_max).any()
-    unacceptable_outlier_deviation = (max_deviance > outlier_deviation_max).any()
-
-    _schema = expected.schema
-
-    def round_and_cast_(df: pl.DataFrame) -> pl.DataFrame:
-        return df.cast(_schema).with_columns(
-            pl.col(pl.Float64).round(int(-math.log10(outlier_threshold)))
-        )
-
-    if update_snapshot and not round_and_cast_(actual).equals(
-        round_and_cast_(expected)
-    ):
-        actual.write_csv(reference_path)
-        raise AssertionError(f"Snapshot @ {reference_path} changed!")
-
-    if unacceptable_n_outliers or unacceptable_outlier_deviation:
-        summary_table = actual.with_columns(outlier_percentage, max_deviance)
-        realizations = sorted(map(int, set(actual.columns) - set(index_columns)))
-
-        summary_str = "\n".join(
-            [
-                "".join(
-                    [f"{i}: ".rjust(6)]
-                    + ["x" if row[str(r)] > 0 else " " for r in realizations]
-                    + [f"  outliers: {100 * row['outlier_percentage']:.1f}%, ".rjust(4)]
-                    + [f"max deviance={row['max_deviance']:.2e}"]
-                )
-                for i, row in enumerate(
-                    summary_table.filter(
-                        (outlier_percentage > outlier_percentage_max)
-                        | (max_deviance > outlier_deviation_max)
-                    ).to_dicts()
-                )
-            ]
-        )
-
-        raise AssertionError(
-            f"Changes in snapshot detected.\n"
-            f"Max row-wise outlier percentage: {max(outlier_percentage) * 100}%\n"
-            f"Max param deviation from reference: {max(max_deviance)}\n"
-            f":\n{summary_str}"
-        )
-
-
 @pytest.mark.xdist_group(name="uses_heat_equation_storage")
 def test_field_param_update_using_heat_equation_enif_snapshot(
-    symlinked_heat_equation_storage_enif, snapshot, request
+    symlinked_heat_equation_storage_enif, snapshot
 ):
     config = symlinked_heat_equation_storage_enif
     with open_storage(config.ens_path, mode="r") as storage:
@@ -194,15 +76,17 @@ def test_field_param_update_using_heat_equation_enif_snapshot(
         result = pl.concat(data)
         result = result.sort(["iteration", "realizations", "x", "y", "z"])
         result = result.pivot(on=["realizations"], values="values")
+        index_columns = ["iteration", "x", "y", "z"]
+        realization_columns = sorted(
+            (column for column in result.columns if column not in index_columns),
+            key=int,
+        )
 
-        _compare_ensemble_params(
-            actual=result,
-            reference_path=snapshot.snapshot_dir / "enif_heat_snapshot.csv",
-            outlier_threshold=0.01,
-            index_columns=result.columns[:4],
-            outlier_percentage_max=0.03,
-            outlier_deviation_max=0.1,
-            update_snapshot=bool(request.config.getoption("--snapshot-update")),
+        snapshot.assert_match(
+            result.select(index_columns + realization_columns).write_csv(
+                float_precision=3
+            ),
+            "enif_heat_snapshot.csv",
         )
 
 

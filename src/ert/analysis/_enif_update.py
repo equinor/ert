@@ -266,12 +266,17 @@ def analysis_EnIF(
         neighbor_propagation_order=15, verbose_level=1
     )
 
+    # Using iterative=False because the non-iterative solvers
+    # is more deterministic across macos / linux than the
+    # iterative solver, which makes testing easier.
+    # However, the iterative solver probably uses less memory,
+    # so this could be revisited in the future if memory usage becomes an issue.
     X_updated = gtmap.transport(
         X_clean_scaled,
         S.T,
         observation_values,
         update_indices=update_indices,
-        iterative=True,
+        iterative=False,
         verbose_level=5,
         seed=random_seed,
     )
