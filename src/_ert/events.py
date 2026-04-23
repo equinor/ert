@@ -3,6 +3,8 @@ from typing import Annotated, Any, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
+from _ert.hook_runtime import HookRuntime
+
 
 class Id:
     FORWARD_MODEL_STEP_START_TYPE = Literal["forward_model_step.start"]
@@ -239,3 +241,40 @@ def dispatcher_event_from_json(raw_msg: str | bytes) -> DispatcherEvent:
 
 def dispatcher_event_to_json(event: DispatcherEvent) -> str:
     return event.model_dump_json()
+
+
+class _WorkflowEvent(BaseModel):
+    hook: HookRuntime
+    iteration: int | None = None
+
+
+class WorkflowBatchStartedEvent(_WorkflowEvent):
+    event_type: Literal["WorkflowBatchStartedEvent"] = "WorkflowBatchStartedEvent"
+    workflow_names: list[str]
+
+
+class WorkflowBatchFinishedEvent(_WorkflowEvent):
+    event_type: Literal["WorkflowBatchFinishedEvent"] = "WorkflowBatchFinishedEvent"
+    status: Literal["success", "failure"]
+    workflow_names: list[str]
+
+
+class WorkflowStartedEvent(_WorkflowEvent):
+    event_type: Literal["WorkflowStartedEvent"] = "WorkflowStartedEvent"
+    workflow_name: str
+
+
+class WorkflowFinishedEvent(_WorkflowEvent):
+    event_type: Literal["WorkflowFinishedEvent"] = "WorkflowFinishedEvent"
+    workflow_name: str
+    status: Literal["success", "failure"]
+    stdout: str | None = None
+    stderr: str | None = None
+
+
+WorkflowEvent = (
+    WorkflowBatchStartedEvent
+    | WorkflowBatchFinishedEvent
+    | WorkflowStartedEvent
+    | WorkflowFinishedEvent
+)

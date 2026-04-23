@@ -3,7 +3,9 @@ from textwrap import dedent
 from unittest.mock import patch
 
 import pytest
+from ert.config.parsing.hook_runtime import HookRuntime
 
+from _ert.events import WorkflowFinishedEvent, WorkflowStartedEvent
 from ert.config import ConfigWarning, Workflow
 from ert.config.workflow_job import (
     ExecutableWorkflow,
@@ -176,6 +178,40 @@ def test_workflow_run():
 
     assert Path("dump1").read_text(encoding="utf-8") == "dump_text_1"
     assert Path("dump2").read_text(encoding="utf-8") == "dump_text_2"
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_workflow_runner_emits_events_with_hook_and_iteration():
+    WorkflowCommon.createExternalDumpJob()
+
+    dump_job = workflow_job_from_file("dump_job", name="DUMP", origin="user")
+    workflow = Workflow.from_file(
+        "dump_workflow", {"<PARAM>": "text"}, {"DUMP": dump_job}
+    )
+
+    events: list[WorkflowStartedEvent | WorkflowFinishedEvent] = []
+
+    WorkflowRunner(
+        workflow,
+        fixtures={},
+        hook=HookRuntime.PRE_EXPERIMENT,
+        iteration=3,
+        workflow_name="prepare_case",
+        send_event=events.append,
+    ).run_blocking()
+
+    assert [type(event) for event in events] == [
+        WorkflowStartedEvent,
+        WorkflowFinishedEvent,
+    ]
+    assert events[0].hook == HookRuntime.PRE_EXPERIMENT
+    assert events[0].iteration == 3
+    assert events[0].workflow_name == "prepare_case"
+    assert events[1].hook == HookRuntime.PRE_EXPERIMENT
+    assert events[1].iteration == 3
+    assert events[1].workflow_name == "prepare_case"
+    assert events[1].status == "success"
+    assert events[1].stdout == "Hello World\n\nHello World\n"
 
 
 @pytest.mark.slow

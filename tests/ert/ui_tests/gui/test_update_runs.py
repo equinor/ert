@@ -1,19 +1,32 @@
 import fileinput
 import shutil
 from pathlib import Path
+from queue import SimpleQueue
+from unittest.mock import Mock
+from uuid import uuid4
 
 import polars as pl
 import pytest
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QComboBox, QTextEdit
 
+from _ert.events import (
+    WorkflowBatchFinishedEvent,
+    WorkflowBatchStartedEvent,
+    WorkflowFinishedEvent,
+    WorkflowStartedEvent,
+)
+from ert.config import HookRuntime
 from ert.gui.experiments import ExperimentPanel
 from ert.gui.experiments.run_dialog import RunDialog
+from ert.gui.experiments.view import IterationWidget
 from ert.gui.experiments.view.update import UpdateLogTable, UpdateWidget
 from ert.run_models import (
     EnsembleExperiment,
     EnsembleSmoother,
     MultipleDataAssimilation,
+    RunModelAPI,
+    RunModelUpdateBeginEvent,
 )
 from ert.run_models.manual_update import ManualUpdate
 from tests.ert.ui_tests.gui.conftest import (
@@ -233,3 +246,349 @@ def test_that_report_table_is_displayed_on_missing_responses(
         else:
             assert row[status_index] == "Active", f"at row {index}"
             assert not row[missing_realizations_index]
+
+
+def test_run_dialog_displays_workflow_tabs_before_and_after_ensemble(qtbot, tmp_path):
+    run_model_api = RunModelAPI(
+        experiment_name="Ensemble experiment",
+        supports_rerunning_failed_realizations=False,
+        start_simulations_thread=lambda *_args, **_kwargs: None,
+        cancel=lambda: None,
+        has_failed_realizations=lambda: False,
+    )
+    notifier = Mock()
+
+    run_dialog = RunDialog(
+        "Running experiment",
+        run_model_api,
+        SimpleQueue(),
+        notifier,
+        output_path=tmp_path,
+        run_path=tmp_path,
+        storage_path=tmp_path,
+    )
+    qtbot.addWidget(run_dialog)
+
+    pre_workflows = ["prepare_case", "seed_data"]
+    run_dialog._on_event(
+        WorkflowBatchStartedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            iteration=None,
+            workflow_names=pre_workflows,
+        )
+    )
+
+    pre_widget = run_dialog._ensure_workflow_widget(HookRuntime.PRE_EXPERIMENT, None)
+    assert run_dialog._tab_widget.tabText(0) == "Pre-experiment workflows"
+    assert pre_widget._table.columnCount() == 4
+    assert pre_widget._table.horizontalHeaderItem(2).text() == "Stdout"
+    assert pre_widget._table.horizontalHeaderItem(3).text() == "Stderr"
+    assert pre_widget.workflow_status("prepare_case") == "Pending"
+    assert pre_widget.workflow_status("seed_data") == "Pending"
+
+    run_dialog._on_event(
+        WorkflowStartedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            iteration=None,
+            workflow_name="prepare_case",
+        )
+    )
+    run_dialog._on_event(
+        WorkflowFinishedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            iteration=None,
+            workflow_name="prepare_case",
+            status="success",
+            stdout="prepare stdout",
+            stderr="",
+        )
+    )
+    run_dialog._on_event(
+        WorkflowBatchFinishedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            iteration=None,
+            workflow_names=pre_workflows,
+            status="success",
+        )
+    )
+
+    assert pre_widget.workflow_status("prepare_case") == "Finished"
+    assert pre_widget.workflow_status("seed_data") == "Finished"
+    assert pre_widget.summary_text() == "Pre-experiment workflows completed"
+    assert pre_widget.workflow_output("prepare_case") == ("prepare stdout", "-")
+    status_item = pre_widget._table.item(0, 1)
+    stderr_item = pre_widget._table.item(0, 3)
+    assert status_item is not None
+    assert stderr_item is not None
+    assert status_item.background().color().getRgb()[:3] == (127, 201, 127)
+    assert status_item.foreground().color().getRgb()[:3] == (0, 0, 0)
+    assert not stderr_item.toolTip()
+
+    post_workflows = ["archive_results"]
+    run_dialog._on_event(
+        WorkflowBatchStartedEvent(
+            hook=HookRuntime.POST_EXPERIMENT,
+            iteration=None,
+            workflow_names=post_workflows,
+        )
+    )
+
+    post_widget = run_dialog._ensure_workflow_widget(HookRuntime.POST_EXPERIMENT, None)
+    assert run_dialog._tab_widget.tabText(1) == "Post-experiment workflows"
+    assert run_dialog._tab_widget.currentWidget() is post_widget
+
+    run_dialog._on_event(
+        WorkflowStartedEvent(
+            hook=HookRuntime.POST_EXPERIMENT,
+            iteration=None,
+            workflow_name="archive_results",
+        )
+    )
+    run_dialog._on_event(
+        WorkflowFinishedEvent(
+            hook=HookRuntime.POST_EXPERIMENT,
+            iteration=None,
+            workflow_name="archive_results",
+            status="failure",
+            stdout="archive stdout",
+            stderr="archive stderr",
+        )
+    )
+    run_dialog._on_event(
+        WorkflowBatchFinishedEvent(
+            hook=HookRuntime.POST_EXPERIMENT,
+            iteration=None,
+            workflow_names=post_workflows,
+            status="failure",
+        )
+    )
+
+    assert post_widget.workflow_status("archive_results") == "Failed"
+    assert post_widget.summary_text() == "Post-experiment workflows failed"
+    assert post_widget.workflow_output("archive_results") == (
+        "archive stdout",
+        "archive stderr",
+    )
+    stderr_item = post_widget._table.item(0, 3)
+    assert stderr_item is not None
+    assert stderr_item.toolTip() == "archive stderr"
+
+
+def test_run_dialog_marks_unstarted_workflows_as_not_run_on_failure(qtbot, tmp_path):
+    run_model_api = RunModelAPI(
+        experiment_name="Ensemble experiment",
+        supports_rerunning_failed_realizations=False,
+        start_simulations_thread=lambda *_args, **_kwargs: None,
+        cancel=lambda: None,
+        has_failed_realizations=lambda: False,
+    )
+    notifier = Mock()
+
+    run_dialog = RunDialog(
+        "Running experiment",
+        run_model_api,
+        SimpleQueue(),
+        notifier,
+        output_path=tmp_path,
+        run_path=tmp_path,
+        storage_path=tmp_path,
+    )
+    qtbot.addWidget(run_dialog)
+
+    workflow_names = ["prepare_case", "seed_data"]
+    run_dialog._on_event(
+        WorkflowBatchStartedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            iteration=None,
+            workflow_names=workflow_names,
+        )
+    )
+    run_dialog._on_event(
+        WorkflowFinishedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            iteration=None,
+            workflow_name="prepare_case",
+            status="failure",
+            stdout="",
+            stderr="prepare failed",
+        )
+    )
+    run_dialog._on_event(
+        WorkflowBatchFinishedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            iteration=None,
+            workflow_names=workflow_names,
+            status="failure",
+        )
+    )
+
+    workflow_widget = run_dialog._ensure_workflow_widget(
+        HookRuntime.PRE_EXPERIMENT, None
+    )
+    assert workflow_widget.workflow_status("prepare_case") == "Failed"
+    assert workflow_widget.workflow_status("seed_data") == "Not run"
+    assert workflow_widget.workflow_output("prepare_case") == ("-", "prepare failed")
+
+
+def test_run_dialog_handles_duplicate_workflow_names(qtbot, tmp_path):
+    run_model_api = RunModelAPI(
+        experiment_name="Ensemble experiment",
+        supports_rerunning_failed_realizations=False,
+        start_simulations_thread=lambda *_args, **_kwargs: None,
+        cancel=lambda: None,
+        has_failed_realizations=lambda: False,
+    )
+    notifier = Mock()
+
+    run_dialog = RunDialog(
+        "Running experiment",
+        run_model_api,
+        SimpleQueue(),
+        notifier,
+        output_path=tmp_path,
+        run_path=tmp_path,
+        storage_path=tmp_path,
+    )
+    qtbot.addWidget(run_dialog)
+
+    workflow_names = ["PRINT", "PRINT"]
+    run_dialog._on_event(
+        WorkflowBatchStartedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            iteration=None,
+            workflow_names=workflow_names,
+        )
+    )
+    run_dialog._on_event(
+        WorkflowStartedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            iteration=None,
+            workflow_name="PRINT",
+        )
+    )
+    run_dialog._on_event(
+        WorkflowFinishedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            iteration=None,
+            workflow_name="PRINT",
+            status="success",
+            stdout="first stdout",
+            stderr="",
+        )
+    )
+    run_dialog._on_event(
+        WorkflowStartedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            iteration=None,
+            workflow_name="PRINT",
+        )
+    )
+    run_dialog._on_event(
+        WorkflowFinishedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            iteration=None,
+            workflow_name="PRINT",
+            status="failure",
+            stdout="second stdout",
+            stderr="second stderr",
+        )
+    )
+
+    workflow_widget = run_dialog._ensure_workflow_widget(
+        HookRuntime.PRE_EXPERIMENT, None
+    )
+    assert workflow_widget.workflow_status("PRINT", occurrence=0) == "Finished"
+    assert workflow_widget.workflow_status("PRINT", occurrence=1) == "Failed"
+    assert workflow_widget.workflow_output("PRINT", occurrence=0) == (
+        "first stdout",
+        "-",
+    )
+    assert workflow_widget.workflow_output("PRINT", occurrence=1) == (
+        "second stdout",
+        "second stderr",
+    )
+
+
+def test_run_dialog_displays_workflow_tabs_between_iterations(qtbot, tmp_path):
+    run_model_api = RunModelAPI(
+        experiment_name="Ensemble smoother",
+        supports_rerunning_failed_realizations=False,
+        start_simulations_thread=lambda *_args, **_kwargs: None,
+        cancel=lambda: None,
+        has_failed_realizations=lambda: False,
+    )
+    notifier = Mock()
+
+    run_dialog = RunDialog(
+        "Running experiment",
+        run_model_api,
+        SimpleQueue(),
+        notifier,
+        output_path=tmp_path,
+        run_path=tmp_path,
+        storage_path=tmp_path,
+    )
+    qtbot.addWidget(run_dialog)
+
+    run_dialog._on_event(
+        WorkflowBatchStartedEvent(
+            hook=HookRuntime.PRE_SIMULATION,
+            iteration=0,
+            workflow_names=["prepare_iteration_0"],
+        )
+    )
+    run_dialog._on_event(
+        WorkflowBatchStartedEvent(
+            hook=HookRuntime.POST_SIMULATION,
+            iteration=0,
+            workflow_names=["collect_iteration_0"],
+        )
+    )
+    run_dialog._on_event(
+        WorkflowBatchStartedEvent(
+            hook=HookRuntime.PRE_UPDATE,
+            iteration=0,
+            workflow_names=["pre_update_iteration_0"],
+        )
+    )
+    run_dialog._on_event(
+        WorkflowBatchStartedEvent(
+            hook=HookRuntime.POST_UPDATE,
+            iteration=0,
+            workflow_names=["post_update_iteration_0"],
+        )
+    )
+    run_dialog._on_event(RunModelUpdateBeginEvent(iteration=0, run_id=uuid4()))
+    run_dialog._on_event(
+        WorkflowBatchStartedEvent(
+            hook=HookRuntime.PRE_SIMULATION,
+            iteration=1,
+            workflow_names=["prepare_iteration_1"],
+        )
+    )
+
+    assert run_dialog._tab_widget.tabText(0) == "iteration-0"
+    assert run_dialog._tab_widget.tabText(1) == "update-0"
+    assert run_dialog._tab_widget.tabText(2) == "iteration-1"
+
+    first_iteration_widget = run_dialog._tab_widget.widget(0)
+    update_widget = run_dialog._tab_widget.widget(1)
+    second_iteration_widget = run_dialog._tab_widget.widget(2)
+    assert isinstance(first_iteration_widget, IterationWidget)
+    assert isinstance(update_widget, IterationWidget)
+    assert isinstance(second_iteration_widget, IterationWidget)
+
+    assert first_iteration_widget._tab_widget.tabText(0) == "Pre-simulation workflows"
+    assert first_iteration_widget._tab_widget.tabText(1) == "Post-simulation workflows"
+    assert update_widget._tab_widget.tabText(0) == "Pre-update workflows"
+    assert update_widget._tab_widget.tabText(1) == "Update"
+    assert update_widget._tab_widget.tabText(2) == "Post-update workflows"
+    assert second_iteration_widget._tab_widget.tabText(0) == "Pre-simulation workflows"
+
+    first_pre_simulation_widget = run_dialog._ensure_workflow_widget(
+        HookRuntime.PRE_SIMULATION, 0
+    )
+    second_pre_simulation_widget = run_dialog._ensure_workflow_widget(
+        HookRuntime.PRE_SIMULATION, 1
+    )
+    assert first_pre_simulation_widget is not second_pre_simulation_widget

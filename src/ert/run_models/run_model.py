@@ -35,6 +35,8 @@ from _ert.events import (
     EESnapshot,
     EESnapshotUpdate,
     EnsembleEvaluationWarning,
+    WorkflowBatchFinishedEvent,
+    WorkflowBatchStartedEvent,
 )
 from ert.base_model_context import BaseModelWithContextSupport, init_context_var
 from ert.config import (
@@ -852,11 +854,64 @@ class RunModel(RunModelConfig, ABC):
         self,
         fixtures: HookedWorkflowFixtures,
     ) -> None:
-        for workflow in self.hooked_workflows[fixtures.hook]:
-            WorkflowRunner(
-                workflow=workflow,
-                fixtures=create_workflow_fixtures_from_hooked(fixtures),
-            ).run_blocking()
+        workflows = self.hooked_workflows[fixtures.hook]
+        if not workflows:
+            return
+
+        workflow_iteration = self._workflow_iteration(fixtures)
+        workflow_names = [self._workflow_name(workflow) for workflow in workflows]
+        self._status_queue.put(
+            WorkflowBatchStartedEvent(
+                hook=fixtures.hook,
+                iteration=workflow_iteration,
+                workflow_names=workflow_names,
+            )
+        )
+        workflow_failed = False
+        for workflow in workflows:
+            try:
+                WorkflowRunner(
+                    workflow=workflow,
+                    fixtures=create_workflow_fixtures_from_hooked(fixtures),
+                    hook=fixtures.hook,
+                    iteration=workflow_iteration,
+                    workflow_name=self._workflow_name(workflow),
+                    send_event=self._status_queue.put,
+                ).run_blocking()
+            except Exception as e:
+                workflow_failed = True
+                logger.exception(
+                    f"Workflow {workflow.src_file} failed with exception: {e}"
+                )
+                break
+        self._status_queue.put(
+            WorkflowBatchFinishedEvent(
+                hook=fixtures.hook,
+                iteration=workflow_iteration,
+                workflow_names=workflow_names,
+                status="failure" if workflow_failed else "success",
+            )
+        )
+
+    def _workflow_iteration(self, fixtures: HookedWorkflowFixtures) -> int | None:
+        per_iteration_hooks = {
+            HookRuntime.PRE_SIMULATION,
+            HookRuntime.POST_SIMULATION,
+            HookRuntime.PRE_FIRST_UPDATE,
+            HookRuntime.PRE_UPDATE,
+            HookRuntime.POST_UPDATE,
+        }
+        if fixtures.hook not in per_iteration_hooks:
+            return None
+
+        ensemble = getattr(fixtures, "ensemble", None)
+        if ensemble is None:
+            return None
+
+        return ensemble.iteration
+
+    def _workflow_name(self, workflow: Workflow) -> str:
+        return Path(workflow.src_file).stem
 
     def _evaluate_and_postprocess(
         self,
