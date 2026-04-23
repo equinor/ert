@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING
 import pandas as pd
 from matplotlib.ticker import MaxNLocator
 
+from ert.gui.utils import LEGEND_THRESHOLD
+
 from .plot_tools import PlotTools
 
 if TYPE_CHECKING:
@@ -33,7 +35,6 @@ class EverestControlsPlot:
         self.dimensionality = 2
         self.requires_observations = False
         self.selected_controls: list[str] = []
-        self.LEGEND_THRESHOLD = 5
 
     def set_selected_controls(self, controls: list[str]) -> None:
         self.selected_controls = controls
@@ -86,7 +87,7 @@ class EverestControlsPlot:
                 color=color,
                 markersize=4,
             )
-            if len(self.selected_controls) <= self.LEGEND_THRESHOLD:
+            if len(self.selected_controls) <= LEGEND_THRESHOLD:
                 config.addLegendItem(control, lines[0])
             if len(control) <= 20:
                 axes.annotate(

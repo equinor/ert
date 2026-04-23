@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING
 import pandas as pd
 from matplotlib.ticker import MaxNLocator
 
+from ert.gui.utils import LEGEND_THRESHOLD
+
 from .plot_tools import PlotTools
 
 if TYPE_CHECKING:
@@ -32,7 +34,6 @@ class EverestObjectiveFunctionPlot:
     def __init__(self) -> None:
         self.dimensionality = 2
         self.requires_observations = False
-        self.LEGEND_THRESHOLD = 5
 
     def plot(
         self,
@@ -81,7 +82,7 @@ class EverestObjectiveFunctionPlot:
                 color=color,
                 markersize=4,
             )
-            if len(realizations) <= self.LEGEND_THRESHOLD:
+            if len(realizations) <= LEGEND_THRESHOLD:
                 color = config.nextColor()
                 config.addLegendItem(f"Realization {int(realization)}", lines[0])
 
