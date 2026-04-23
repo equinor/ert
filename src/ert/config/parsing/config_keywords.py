@@ -59,6 +59,7 @@ class ConfigKeys(StrEnum):
     REALIZATION_MEMORY = "REALIZATION_MEMORY"
     SUBMIT_SLEEP = "SUBMIT_SLEEP"
     MAX_RUNNING = "MAX_RUNNING"
+    SEISMIC_4D_ATTRIBUTE = "SEISMIC_4D_ATTRIBUTE"
 
     def __repr__(self) -> str:
         return f"{self.value!r}"
