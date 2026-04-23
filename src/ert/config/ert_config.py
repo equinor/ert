@@ -477,6 +477,7 @@ def create_and_hook_workflows(
                 work[0],
                 substitutions,
                 workflow_jobs,
+                workflow_name=filename,
             )
             workflows[filename] = workflow
             if existed:
