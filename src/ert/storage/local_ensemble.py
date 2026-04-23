@@ -1268,15 +1268,13 @@ class LocalEnsemble(BaseMode):
             self._path / "index.json", self._index.model_dump_json().encode("utf-8")
         )
 
-    def save_transition_data(self, name: str, data: str) -> None:
-        path = self._path / TRANSITION_DATA_DIR / name
+    @require_write
+    def save_transition_data(self, file_name: str, data: str) -> None:
+        path = self._path / TRANSITION_DATA_DIR / file_name
         Path.mkdir(path.parent, exist_ok=True)
-        Path.write_text(
-            self._path / TRANSITION_DATA_DIR / f"{name}.txt",
-            data,
-            encoding="utf-8",
-        )
+        self._storage._write_transaction(path, data.encode("utf-8"))
 
+    @require_write
     def save_batch_dataframes(self, dataframes: BatchDataframes) -> None:
         for df_name, df in dataframes.items():
             if isinstance(df, pl.DataFrame):
