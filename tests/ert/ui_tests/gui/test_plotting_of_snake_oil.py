@@ -129,8 +129,9 @@ def plot_figure(
 # was put on an inner function. That makes any failure not
 # report so it has to be on a top level test.
 # The tolerance is chosen by guess, in one bug we observed a
-# mismatch of 58 which would fail the test by being above 10.0
-@pytest.mark.mpl_image_compare(tolerance=10.0)
+# where locations of observations in the standard deviation plot
+# were off, we needed a tolerance of 5 to get tests to fail.
+@pytest.mark.mpl_image_compare(tolerance=5.0)
 @pytest.mark.skip_mac_ci  # test is slow
 @pytest.mark.snapshot_test
 @pytest.mark.xdist_group(name="uses_heat_equation_storage")
