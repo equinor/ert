@@ -33,6 +33,9 @@ from _ert.events import (
     EESnapshot,
     EESnapshotUpdate,
     EnsembleEvaluationWarning,
+    WorkflowBatchFinishedEvent,
+    WorkflowBatchStartedEvent,
+    WorkflowStatus,
 )
 from ert.config import (
     ConfigValidationError,
@@ -46,6 +49,9 @@ from ert.config import (
     create_workflow_fixtures_from_hooked,
 )
 from ert.config.queue_config import KnownQueueOptionsAdapter
+from ert.config.workflow_fixtures import (
+    PreFirstUpdateFixtures,
+)
 from ert.ensemble_evaluator import Ensemble as EEEnsemble
 from ert.ensemble_evaluator import (
     EnsembleEvaluator,
@@ -828,23 +834,88 @@ class RunModel(RunModelConfig, ABC):
         self,
         fixtures: HookedWorkflowFixtures,
     ) -> None:
-        for workflow in self.hooked_workflows[fixtures.hook]:
+        workflows = self.hooked_workflows[fixtures.hook]
+        if not workflows:
+            return
+
+        workflow_iteration = self._workflow_iteration(fixtures)
+        workflow_names = [workflow.name for workflow in workflows]
+        self._status_queue.put(
+            WorkflowBatchStartedEvent(
+                hook=fixtures.hook,
+                iteration=workflow_iteration,
+                workflow_names=workflow_names,
+            )
+        )
+        for workflow in workflows:
             workflow_runner = WorkflowRunner(
                 workflow=workflow,
                 fixtures=create_workflow_fixtures_from_hooked(fixtures),
+                send_event=self.send_event,
+                hook=fixtures.hook,
+                iteration=workflow_iteration,
             )
             self._workflow_runner = workflow_runner
             try:
                 if self._end_event.is_set():
-                    workflow_runner.cancel()
+                    self._status_queue.put(
+                        WorkflowBatchFinishedEvent(
+                            hook=fixtures.hook,
+                            iteration=workflow_iteration,
+                            workflow_names=workflow_names,
+                            status=WorkflowStatus.CANCELLED,
+                        )
+                    )
                     raise UserCancelled("Experiment cancelled by user during workflows")
 
                 workflow_runner.run_blocking()
+                if self._workflow_runner.isCancelled():
+                    self._status_queue.put(
+                        WorkflowBatchFinishedEvent(
+                            hook=fixtures.hook,
+                            iteration=workflow_iteration,
+                            workflow_names=workflow_names,
+                            status=WorkflowStatus.CANCELLED,
+                        )
+                    )
+                    raise UserCancelled("Experiment cancelled by user during workflows")
+            except UserCancelled:
+                raise
+            except Exception as e:
+                logger.exception(
+                    f"Workflow {workflow.src_file} failed with exception: {e}"
+                )
+                self._status_queue.put(
+                    WorkflowBatchFinishedEvent(
+                        hook=fixtures.hook,
+                        iteration=workflow_iteration,
+                        workflow_names=workflow_names,
+                        status=WorkflowStatus.FAILED,
+                    )
+                )
+                raise
             finally:
                 self._workflow_runner = None
 
             if self._end_event.is_set():
                 raise UserCancelled("Experiment cancelled by user during workflows")
+        self._status_queue.put(
+            WorkflowBatchFinishedEvent(
+                hook=fixtures.hook,
+                iteration=workflow_iteration,
+                workflow_names=workflow_names,
+                status=WorkflowStatus.FINISHED,
+            )
+        )
+
+    def _workflow_iteration(self, fixtures: HookedWorkflowFixtures) -> int | None:
+        fixtures_with_iteration = (
+            PreSimulationFixtures,
+            PreFirstUpdateFixtures,
+        )
+        if isinstance(fixtures, fixtures_with_iteration):
+            return fixtures.ensemble.iteration
+        return None
 
     def _evaluate_and_postprocess(
         self,
