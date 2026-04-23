@@ -4,6 +4,7 @@ import math
 from typing import TYPE_CHECKING
 
 import numpy as np
+from matplotlib.container import ErrorbarContainer
 
 if TYPE_CHECKING:
     from matplotlib.axes import Axes
@@ -14,7 +15,7 @@ if TYPE_CHECKING:
 
 def plotObservations(
     observation_data: DataFrame, plot_context: PlotContext, axes: Axes
-) -> None:
+) -> ErrorbarContainer | None:
     key = plot_context.key()
     config = plot_context.plotConfig()
     ensemble_list = plot_context.ensembles()
@@ -24,7 +25,7 @@ def plotObservations(
         and len(ensemble_list) > 0
         and not observation_data.empty
     ):
-        _plotObservations(axes, config, observation_data, value_column=key)
+        return _plotObservations(axes, config, observation_data, value_column=key)
 
 
 def _plotObservations(
@@ -32,7 +33,7 @@ def _plotObservations(
     plot_config: PlotConfig,
     data: DataFrame,
     value_column: str,
-) -> None:
+) -> ErrorbarContainer:
     """
     Observations are always plotted on top. z-order set to 1000
 
@@ -81,7 +82,7 @@ def _plotObservations(
             "yerr": data.loc["STD"].to_numpy(),
         }
 
-    axes.errorbar(
+    return axes.errorbar(
         **errorbar_data,
         fmt=style.line_style,
         ecolor=style.color,

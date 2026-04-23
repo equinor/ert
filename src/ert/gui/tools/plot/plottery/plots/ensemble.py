@@ -63,7 +63,7 @@ class EnsemblePlot:
                 )
                 zorder -= 1
 
-        plotObservations(observation_data, plot_context, axes)
+        observation_bars = plotObservations(observation_data, plot_context, axes)
         plotHistory(plot_context, axes)
 
         default_x_label = "Date" if plot_context.isDateSupportActive() else "Index"
@@ -74,6 +74,33 @@ class EnsemblePlot:
             default_x_label=default_x_label,
             default_y_label="Value",
         )
+
+        def hover(event):
+            if not observation_bars:
+                return
+
+            observation_lines = observation_bars.lines[2][0]
+            observation_dots = observation_bars.lines[0]
+            contains_cursor, index = observation_lines.contains(event)
+            if contains_cursor:
+                annotation.set_visible(True)
+                index = int(index["ind"][0])
+                x, y = observation_dots.properties()["xydata"][index]
+                annotation.xy = (x, y)
+            else:
+                annotation.set_visible(False)
+
+            figure.canvas.draw_idle()
+
+        annotation = axes.annotate(
+            "Test",
+            xy=(0, 0),
+            xytext=(20, 20),
+            textcoords="offset points",
+            bbox={"boxstyle": "round", "fc": "w"},
+        )
+        annotation.set_visible(False)
+        figure.canvas.mpl_connect("motion_notify_event", hover)
 
     @staticmethod
     def _plotLines(
