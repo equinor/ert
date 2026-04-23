@@ -62,15 +62,14 @@ class StdDevPlot:
                     vmax = max(vmax, float(np.max(data)))
 
                     im = ax_heat.imshow(data, cmap="viridis", aspect="equal")
-                    ny, _ = data.shape
-                    if obs_loc is not None:
-                        xs = obs_loc[:, 0]
-                        ys = obs_loc[:, 1]
 
-                        ys_img = (ny - 1) - ys
+                    if obs_loc is not None:
+                        xs = obs_loc[:, 0] - 0.5
+                        ys = obs_loc[:, 1] - 0.5
+
                         ax_heat.scatter(
                             xs,
-                            ys_img,
+                            ys,
                             c="red",
                             marker="o",
                             edgecolors="black",
