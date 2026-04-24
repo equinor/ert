@@ -15,6 +15,7 @@ from uuid import UUID
 import polars as pl
 from pydantic import BaseModel, Field, TypeAdapter
 from surfio import IrapSurface
+from typing_extensions import TypedDict
 
 from ert.config import (
     DerivedResponseConfig,
@@ -65,6 +66,45 @@ class ExperimentType(StrEnum):
     EVEREST = "Everest"
 
 
+class ExperimentConfig(TypedDict, total=False):
+    """Experiment configuration stored in local storage.
+
+    Different experiment types persist different subsets of keys.
+    """
+
+    experiment_type: ExperimentType
+
+    # Initial-ensemble fields
+    ert_templates: list[tuple[str, str]]
+    observations: list[dict[str, Any]]
+    design_matrix: dict[str, Any] | None
+    parameter_configuration: list[dict[str, Any]]
+    response_configuration: list[dict[str, Any]]
+    derived_response_configuration: list[dict[str, Any]]
+    target_ensemble: str
+
+    # Update-related fields
+    analysis_settings: dict[str, Any]
+    update_settings: dict[str, Any]
+
+    # Evaluate/manual update fields
+    ensemble_id: str
+
+    # ESMDA
+    restart_run: bool
+    prior_ensemble_id: str | None
+    weights: str
+
+    # Everest
+    optimization_output_dir: str
+    simulation_dir: str
+    input_constraints: list[dict[str, Any]]
+    optimization: dict[str, Any]
+    model: dict[str, Any]
+    keep_run_path: bool
+    experiment_name: str
+
+
 class ExperimentStatus(BaseModel):
     message: str = Field(default="")
     status: ExperimentState = Field(default=ExperimentState.pending)
@@ -77,7 +117,7 @@ class _Index(BaseModel):
     # from a different experiment. For example, a manual update
     # is a separate experiment from the one that created the prior.
     ensembles: list[UUID]
-    experiment: dict[str, Any] = {}
+    experiment: ExperimentConfig = Field(default_factory=ExperimentConfig)
     status: ExperimentStatus | None = Field(default=None)
 
 
@@ -129,6 +169,8 @@ class LocalExperiment(BaseMode):
         super().__init__(mode)
         self._storage = storage
         self._path = path
+        data = (path / self._index_file).read_text(encoding="utf-8")
+        print(f"{data=}")
         self._index = _Index.model_validate_json(
             (path / self._index_file).read_text(encoding="utf-8")
         )
@@ -139,12 +181,12 @@ class LocalExperiment(BaseMode):
         storage: LocalStorage,
         uuid: UUID,
         path: Path,
-        experiment_config: dict[str, Any],
+        experiment_config: ExperimentConfig,
         name: str | None = None,
     ) -> LocalExperiment:
         if name is None:
             name = datetime.now(tz=UTC).date().isoformat()
-
+        print(f"{experiment_config=}")
         storage._write_transaction(
             path / cls._index_file,
             _Index(id=uuid, name=name, ensembles=[], experiment=experiment_config)
@@ -559,7 +601,7 @@ class LocalExperiment(BaseMode):
             del self.response_type_to_response_keys
 
     @property
-    def experiment_config(self) -> dict[str, Any]:
+    def experiment_config(self) -> ExperimentConfig:
         return self._index.experiment
 
     @property

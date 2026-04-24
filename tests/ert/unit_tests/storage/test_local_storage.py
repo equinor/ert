@@ -919,9 +919,10 @@ def test_load_gen_kw_not_sorted(storage, tmpdir, snapshot):
 
         experiment_id = storage.create_experiment(
             experiment_config={
-                "parameter_configuration": (
-                    ert_config.ensemble_config.parameter_configuration
-                )
+                "parameter_configuration": [
+                    cfg.model_dump(mode="json")
+                    for cfg in ert_config.ensemble_config.parameter_configuration
+                ]
             }
         )
         ensemble_size = 10
@@ -1193,7 +1194,7 @@ def test_that_breakthrough_observations_and_responses_are_joined_in_endpoint(tmp
                         north=None,
                         east=None,
                         radius=None,
-                    )
+                    ).model_dump(mode="json")
                 ],
             }
         )
@@ -1462,7 +1463,7 @@ class StatefulStorageTest(RuleBasedStateMachine):
                 "response_configuration": [
                     r.model_dump(mode="json") for r in responses
                 ],
-                "observations": obs,
+                "observations": [o.model_dump(mode="json") for o in obs],
             }
         ).id
         model_experiment = Experiment(experiment_id)

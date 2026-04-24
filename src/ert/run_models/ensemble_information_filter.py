@@ -5,21 +5,13 @@ import logging
 
 from ert.analysis import enif_update
 from ert.run_models.ensemble_smoother import EnsembleSmoother
+from ert.run_models.run_model_configs import EnsembleInformationFilterConfig
 from ert.storage import Ensemble
-from ert.storage.local_experiment import ExperimentType
-
-from .initial_ensemble_run_model import InitialEnsembleRunModelConfig
-from .update_run_model import UpdateRunModelConfig
 
 logger = logging.getLogger(__name__)
 
 
-class EnsembleInformationFilterConfig(
-    InitialEnsembleRunModelConfig, UpdateRunModelConfig
-): ...
-
-
-class EnsembleInformationFilter(EnsembleSmoother, EnsembleInformationFilterConfig):
+class EnsembleInformationFilter(EnsembleInformationFilterConfig, EnsembleSmoother):
     def update_ensemble_parameters(
         self, prior: Ensemble, posterior: Ensemble, weight: float
     ) -> None:
@@ -43,7 +35,3 @@ class EnsembleInformationFilter(EnsembleSmoother, EnsembleInformationFilterConfi
     @classmethod
     def description(cls) -> str:
         return "Sample parameters → evaluate → EnIF update → evaluate"
-
-    @classmethod
-    def _experiment_type(cls) -> ExperimentType:
-        return ExperimentType.ENSEMBLE_INFORMATION_FILTER

@@ -210,9 +210,10 @@ async def test_gen_kw_is_log_or_not(
         assert isinstance(gen_kw_config, GenKwConfig)
         experiment_id = storage.create_experiment(
             experiment_config={
-                "parameter_configuration": (
-                    ert_config.ensemble_config.parameter_configuration
-                )
+                "parameter_configuration": [
+                    cfg.model_dump(mode="json")
+                    for cfg in ert_config.ensemble_config.parameter_configuration
+                ]
             }
         )
         prior_ensemble = storage.create_ensemble(
@@ -972,9 +973,10 @@ async def test_that_gen_kw_substitutes_correctly(order, tmpdir, storage, run_arg
 
         experiment_id = storage.create_experiment(
             experiment_config={
-                "parameter_configuration": (
-                    ert_config.ensemble_config.parameter_configuration
-                )
+                "parameter_configuration": [
+                    cfg.model_dump(mode="json")
+                    for cfg in ert_config.ensemble_config.parameter_configuration
+                ]
             }
         )
         prior_ensemble = storage.create_ensemble(

@@ -40,7 +40,7 @@ from ert.mode_definitions import (
 )
 from ert.namespace import Namespace
 from ert.plugins import ErtRuntimePlugins, get_site_plugins, setup_site_logging
-from ert.run_models.multiple_data_assimilation import MultipleDataAssimilationConfig
+from ert.run_models.run_model_configs import MultipleDataAssimilationConfig
 from ert.services import ErtServerController
 from ert.services._storage_main import add_parser_options as ert_api_add_parser_options
 from ert.shared.status.utils import get_ert_memory_usage

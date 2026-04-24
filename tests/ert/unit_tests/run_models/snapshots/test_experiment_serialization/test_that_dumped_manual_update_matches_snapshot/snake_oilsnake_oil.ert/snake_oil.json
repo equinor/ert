@@ -160,6 +160,7 @@
     },
     "auto_scale_observations": []
   },
+  "experiment_type": "Manual Update",
   "ensemble_id": "00000000-0000-0000-0000-000000000000",
   "ert_templates": [
     [
@@ -170,6 +171,5 @@
       "test-data/ert/snake_oil.snake_oil.ert/templates/snake_oil_template.txt",
       "snake_oil_params.txt"
     ]
-  ],
-  "experiment_type": "Manual Update"
+  ]
 }

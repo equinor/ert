@@ -115,37 +115,13 @@
   },
   "hooked_workflows": {},
   "active_realizations": [
-    false,
-    true,
-    true,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false
+    true
   ],
   "log_path": "test-data/ert/snake_oil.snake_oil.ert/update_log",
   "random_seed": 1,
   "start_iteration": 0,
-  "minimum_required_realizations": 2,
-  "experiment_name": "default_name",
+  "minimum_required_realizations": 1,
+  "experiment_name": "single-test-run",
   "design_matrix": null,
   "parameter_configuration": [
     {
@@ -454,6 +430,6 @@
       "radius": null
     }
   ],
-  "experiment_type": "Ensemble Experiment",
-  "target_ensemble": "the_experiment"
+  "experiment_type": "Single Test Run",
+  "target_ensemble": "single_test_run"
 }
