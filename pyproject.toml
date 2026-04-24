@@ -313,7 +313,7 @@ exclude-newer = "7 days"
 
 [tool.uv.exclude-newer-package]
 iterative_ensemble_smoother = false # Developed by Equinor
-mypy = false # To avoid circumventing a bug in mypy, can remove after 20.04.2026
+graphite-maps = false # Developed by Equinor
 oil_reservoir_synthesizer = false # Developed by Equinor
 resdata = false # Developed by Equinor
 resfo = false # Developed by Equinor
