@@ -13,6 +13,7 @@ import polars as pl
 import xarray as xr
 from pydantic import ValidationError
 from typing_extensions import TypedDict
+
 from ._get_update_from_options import get_update_from_options
 from .distribution import DISTRIBUTION_CLASSES, DistributionSettings, get_distribution
 from .parameter_config import ParameterCardinality, ParameterConfig

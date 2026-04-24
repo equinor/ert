@@ -24,12 +24,11 @@ from ert.field_utils import (
 from ert.substitutions import substitute_runpath_name
 from ert.utils import log_duration
 
+from ._get_update_from_options import get_update_from_options
 from ._str_to_bool import str_to_bool
 from .graph_utils import create_flattened_cube_graph
 from .parameter_config import ParameterConfig
 from .parsing import ConfigValidationError, ConfigWarning
-
-from ._get_update_from_options import get_update_from_options
 
 if TYPE_CHECKING:
     import numpy.typing as npt
