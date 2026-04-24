@@ -445,12 +445,9 @@ def test_that_parameter_strategy_is_set_correctly():
         }
     ).parameter_settings
 
-    assert parameter_settings[0]
-    assert parameter_settings[0].parameter_type == "FIELD"
-    assert parameter_settings[0].strategy_name == "DISTANCE"
-    assert parameter_settings[1]
-    assert parameter_settings[1].parameter_type == "GEN_KW"
-    assert parameter_settings[1].strategy_name == "ADAPTIVE"
+    assert len(parameter_settings) == 2
+    assert parameter_settings["FIELD"] == "DISTANCE"
+    assert parameter_settings["GEN_KW"] == "ADAPTIVE"
 
 
 def test_that_parameter_strategy_with_unknown_strategy_raises_validation_error():

@@ -43,7 +43,7 @@ class ParameterConfig(BaseModel):
     type: str
     name: str
     forward_init: bool
-    update: bool
+    update: str | None
 
     @property
     @abstractmethod

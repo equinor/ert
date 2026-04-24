@@ -13,8 +13,7 @@ import polars as pl
 import xarray as xr
 from pydantic import ValidationError
 from typing_extensions import TypedDict
-
-from ._str_to_bool import str_to_bool
+from ._get_update_from_options import get_update_from_options
 from .distribution import DISTRIBUTION_CLASSES, DistributionSettings, get_distribution
 from .parameter_config import ParameterCardinality, ParameterConfig
 from .parsing import ConfigValidationError, ConfigWarning
@@ -62,14 +61,15 @@ class DataSource(StrEnum):
 class GenKwOptions:
     """Typed representation of GEN_KW keyword options."""
 
-    update: bool = True
+    update: str | None = "ADAPTIVE"
     # Deprecated – only kept to produce a helpful migration error.
     init_files: str | None = None
 
     @classmethod
     def from_raw(cls, raw: dict[str, str]) -> GenKwOptions:
+        update = get_update_from_options(raw, "ADAPTIVE")
         return cls(
-            update=str_to_bool(raw.get("UPDATE", "TRUE")),
+            update=update,
             init_files=raw.get("INIT_FILES"),
         )
 
@@ -103,7 +103,7 @@ class GenKwConfig(ParameterConfig):
     dimensionality: Literal[1] = 1
     distribution: DistributionSettings
     forward_init: bool = False
-    update: bool = True
+    update: str | None = "ADAPTIVE"  # default true
     group: str | None = None
     input_source: DataSource = DataSource.SAMPLED
 
@@ -206,7 +206,7 @@ class GenKwConfig(ParameterConfig):
                         params[0], params[1], params[2:]
                     ),
                     forward_init=False,
-                    update=params[1] != "CONST" and parsed.options.update,
+                    update=None if params[1] == "CONST" else parsed.options.update,
                 )
                 for params in distributions_spec
             ]
