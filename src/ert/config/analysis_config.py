@@ -6,11 +6,12 @@ from dataclasses import field
 from math import ceil
 from os.path import realpath
 from pathlib import Path
-from typing import Any, Final, Literal, get_args
+from typing import Any, Final, get_args
 
 from pydantic import Field, PositiveFloat, ValidationError
 from pydantic.dataclasses import dataclass
 
+from ._get_update_from_options import StrategyName
 from .analysis_module import ESSettings
 from .design_matrix import DesignMatrix
 from .parsing import (
@@ -23,8 +24,6 @@ from .parsing import (
 logger = logging.getLogger(__name__)
 
 ObservationGroups = list[str]
-
-StrategyName = Literal["DISTANCE", "ADAPTIVE"]
 
 
 @dataclass

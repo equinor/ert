@@ -1181,6 +1181,14 @@ class ErtConfig(BaseModel):
         # update strategies
         for param_config in ensemble_config.parameter_configs.values():
             if (
+                param_config.update is None
+                and str(param_config.type).upper() in analysis_config.parameter_settings
+            ):
+                param_config.update = str(
+                    analysis_config.parameter_settings[str(param_config.type).upper()]
+                )
+
+            if (
                 strategy := analysis_config.parameter_settings.get(
                     str(param_config.type).upper()
                 )
