@@ -1,4 +1,4 @@
-from ert.experiment_configs import (
+from ert.run_models.run_model_configs import (
     EnsembleExperimentConfig,
     EnsembleInformationFilterConfig,
     EnsembleSmootherConfig,

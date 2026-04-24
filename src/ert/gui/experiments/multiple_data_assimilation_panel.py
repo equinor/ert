@@ -12,7 +12,6 @@ from PyQt6.QtWidgets import QCheckBox, QFormLayout, QHBoxLayout, QLabel, QWidget
 from typing_extensions import override
 
 from ert.config import ErrorInfo, ParameterConfig
-from ert.experiment_configs import MultipleDataAssimilationConfig
 from ert.gui.ertnotifier import ErtNotifier
 from ert.gui.ertwidgets import (
     ActiveRealizationsModel,
@@ -28,6 +27,7 @@ from ert.gui.ertwidgets import (
 )
 from ert.mode_definitions import ES_MDA_MODE
 from ert.run_models import MultipleDataAssimilation
+from ert.run_models.run_model_configs import MultipleDataAssimilationConfig
 from ert.storage.local_experiment import ExperimentType
 from ert.storage.realization_storage_state import RealizationStorageState
 from ert.validation import (

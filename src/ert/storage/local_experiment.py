@@ -77,7 +77,7 @@ class ExperimentConfig(TypedDict, total=False):
     # Initial-ensemble fields
     ert_templates: list[tuple[str, str]]
     observations: list[dict[str, Any]]
-    design_matrix: dict[str, Any]
+    design_matrix: dict[str, Any] | None
     parameter_configuration: list[dict[str, Any]]
     response_configuration: list[dict[str, Any]]
     derived_response_configuration: list[dict[str, Any]]
@@ -169,6 +169,8 @@ class LocalExperiment(BaseMode):
         super().__init__(mode)
         self._storage = storage
         self._path = path
+        data = (path / self._index_file).read_text(encoding="utf-8")
+        print(f"{data=}")
         self._index = _Index.model_validate_json(
             (path / self._index_file).read_text(encoding="utf-8")
         )
@@ -184,7 +186,7 @@ class LocalExperiment(BaseMode):
     ) -> LocalExperiment:
         if name is None:
             name = datetime.now(tz=UTC).date().isoformat()
-
+        print(f"{experiment_config=}")
         storage._write_transaction(
             path / cls._index_file,
             _Index(id=uuid, name=name, ensembles=[], experiment=experiment_config)

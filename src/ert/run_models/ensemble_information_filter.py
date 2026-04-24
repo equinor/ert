@@ -4,8 +4,8 @@ import functools
 import logging
 
 from ert.analysis import enif_update
-from ert.experiment_configs import EnsembleInformationFilterConfig
 from ert.run_models.ensemble_smoother import EnsembleSmoother
+from ert.run_models.run_model_configs import EnsembleInformationFilterConfig
 from ert.storage import Ensemble
 
 logger = logging.getLogger(__name__)

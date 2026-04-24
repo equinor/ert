@@ -3,9 +3,9 @@ import polars as pl
 
 from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.ensemble_evaluator.config import EvaluatorServerConfig
-from ert.experiment_configs import InitialEnsembleRunModelConfig
 from ert.run_arg import create_run_arguments
 from ert.run_models.run_model import RunModel
+from ert.run_models.run_model_configs import InitialEnsembleRunModelConfig
 from ert.sample_prior import sample_prior
 from ert.storage.local_ensemble import LocalEnsemble
 

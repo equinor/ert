@@ -7,9 +7,9 @@ from typing import Annotated, Any, ClassVar, Literal, Self
 
 import polars as pl
 from polars.datatypes import DataTypeClass
-from pydantic import BaseModel, Field, TypeAdapter
+from pydantic import BaseModel, Field, TypeAdapter, model_validator
 
-from ert.base_model_context import BaseModelWithContextSupport
+from ert.base_model_context import BaseModelWithContextSupport, init_context_var
 from ert.config import (
     ESSettings,
     EverestConstraintsConfig,
@@ -30,6 +30,10 @@ from ert.config import (
     Workflow,
 )
 from ert.config import Field as FieldConfig
+from ert.config.forward_model_step import (
+    SiteOrUserForwardModelStep,
+    UserInstalledForwardModelStep,
+)
 from ert.storage.local_experiment import ExperimentConfig, ExperimentType
 from everest.config import InputConstraintConfig, OptimizationConfig
 from everest.config import ModelConfig as EverestModelConfig
@@ -74,7 +78,7 @@ class RunModelConfig(BaseModelWithContextSupport):
     env_pr_fm_step: dict[str, dict[str, Any]]
     runpath_config: ModelConfig
     queue_config: QueueConfig
-    forward_model_steps: list[ForwardModelStep]
+    forward_model_steps: list[SiteOrUserForwardModelStep]
     substitutions: dict[str, str]
     hooked_workflows: defaultdict[HookRuntime, list[Workflow]]
     active_realizations: list[bool]
@@ -84,10 +88,33 @@ class RunModelConfig(BaseModelWithContextSupport):
     minimum_required_realizations: int = 0
     supports_rerunning_failed_realizations: ClassVar[bool] = False
 
+    @model_validator(mode="after")
+    def _restore_plugin_forward_model_step_subclasses(self) -> Self:
+        runtime_plugins = init_context_var.get()
+        if runtime_plugins is None:
+            return self
+        restored = []
+        for step in self.forward_model_steps:
+            installed = runtime_plugins.installed_forward_model_steps.get(step.name)
+            if installed is not None and not isinstance(
+                step, (UserInstalledForwardModelStep, type(installed))
+            ):
+                fm_step = installed.model_copy(
+                    update={
+                        field: getattr(step, field)
+                        for field in ForwardModelStep.model_fields
+                    }
+                )
+                restored.append(fm_step)
+            else:
+                restored.append(step)
+        self.forward_model_steps = restored
+        return self
+
 
 class InitialEnsembleRunModelConfig(RunModelConfig):
     experiment_name: str
-    design_matrix: DictEncodedDataFrame | None
+    design_matrix: DictEncodedDataFrame | None = None
     parameter_configuration: list[
         Annotated[
             (GenKwConfig | SurfaceConfig | FieldConfig | EverestControl),
@@ -130,6 +157,8 @@ class InitialEnsembleRunModelConfig(RunModelConfig):
             ]
 
         if self.design_matrix is not None:
+            some_json = self.design_matrix.model_dump(mode="json")
+            print(f"{some_json=}")
             experiment_config["design_matrix"] = self.design_matrix.model_dump(
                 mode="json"
             )
@@ -155,7 +184,7 @@ class EnsembleSmootherConfig(InitialEnsembleRunModelConfig, UpdateRunModelConfig
 
     def to_experiment_config(self) -> ExperimentConfig:
         return {
-            "experiment_type": self.experiment_type,
+            "experiment_type": ExperimentType.ENSEMBLE_SMOOTHER,
             **self._initial_ensemble_experiment_config(),
             **self._update_experiment_config(),
         }
@@ -168,7 +197,7 @@ class EnsembleInformationFilterConfig(
 
     def to_experiment_config(self) -> ExperimentConfig:
         return {
-            "experiment_type": self.experiment_type,
+            "experiment_type": ExperimentType.ENSEMBLE_INFORMATION_FILTER,
             **self._initial_ensemble_experiment_config(),
             **self._update_experiment_config(),
         }
@@ -221,7 +250,7 @@ class EverestRunModelConfig(RunModelConfig):
 
     def to_experiment_config(self) -> ExperimentConfig:
         return {
-            "experiment_type": self.experiment_type,
+            "experiment_type": ExperimentType.EVEREST,
             "optimization_output_dir": self.optimization_output_dir,
             "simulation_dir": self.simulation_dir,
             "parameter_configuration": [
@@ -250,7 +279,7 @@ class ManualUpdateConfig(UpdateRunModelConfig):
         self, *, prior_experiment_config: ExperimentConfig
     ) -> ExperimentConfig:
         return {
-            "experiment_type": self.experiment_type,
+            "experiment_type": ExperimentType.MANUAL_UPDATE,
             "ensemble_id": self.ensemble_id,
             "ert_templates": self.ert_templates,
             **self._update_experiment_config(),
@@ -276,7 +305,7 @@ class MultipleDataAssimilationConfig(
 
     def to_experiment_config(self) -> ExperimentConfig:
         return {
-            "experiment_type": self.experiment_type,
+            "experiment_type": ExperimentType.ES_MDA,
             **self._initial_ensemble_experiment_config(),
             **self._update_experiment_config(),
             "restart_run": self.restart_run,

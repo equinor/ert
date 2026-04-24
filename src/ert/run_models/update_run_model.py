@@ -18,7 +18,6 @@ from ert.config import (
     PreFirstUpdateFixtures,
     PreUpdateFixtures,
 )
-from ert.experiment_configs import UpdateRunModelConfig
 from ert.run_models.event import (
     RunModelDataEvent,
     RunModelErrorEvent,
@@ -28,6 +27,7 @@ from ert.run_models.event import (
     RunModelUpdateEndEvent,
 )
 from ert.run_models.run_model import ErtRunError, RunModel
+from ert.run_models.run_model_configs import UpdateRunModelConfig
 from ert.storage import Ensemble, LocalExperiment
 
 

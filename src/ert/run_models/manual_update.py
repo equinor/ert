@@ -7,7 +7,7 @@ from uuid import UUID
 from pydantic import PrivateAttr
 
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.experiment_configs import ManualUpdateConfig
+from ert.run_models.run_model_configs import ManualUpdateConfig
 from ert.run_models.update_run_model import UpdateRunModel
 from ert.storage import Ensemble
 from ert.storage.local_experiment import ExperimentType

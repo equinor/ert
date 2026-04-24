@@ -48,9 +48,9 @@ from ert.config.model_config import DEFAULT_ECLBASE_FORMAT
 from ert.config.model_config import ModelConfig as ErtModelConfig
 from ert.config.parsing import ConfigWarning
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
-from ert.experiment_configs import EverestRunModelConfig
 from ert.plugins import ErtRuntimePlugins
 from ert.run_arg import RunArg, create_run_arguments
+from ert.run_models.run_model_configs import EverestRunModelConfig
 from ert.runpaths import Runpaths
 from ert.storage import ExperimentState, ExperimentStatus
 from ert.storage.local_ensemble import EverestRealizationInfo

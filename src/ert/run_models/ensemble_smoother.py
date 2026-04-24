@@ -10,11 +10,11 @@ from ert.config import (
     PreExperimentFixtures,
 )
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.experiment_configs import EnsembleSmootherConfig
 from ert.run_arg import create_run_arguments
 from ert.run_models.initial_ensemble_run_model import (
     InitialEnsembleRunModel,
 )
+from ert.run_models.run_model_configs import EnsembleSmootherConfig
 from ert.run_models.update_run_model import UpdateRunModel
 from ert.trace import tracer
 

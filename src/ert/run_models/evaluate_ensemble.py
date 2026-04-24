@@ -7,8 +7,8 @@ from uuid import UUID
 import numpy as np
 
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.experiment_configs import EvaluateEnsembleConfig
 from ert.run_arg import create_run_arguments
+from ert.run_models.run_model_configs import EvaluateEnsembleConfig
 from ert.trace import tracer
 
 from .run_model import RunModel

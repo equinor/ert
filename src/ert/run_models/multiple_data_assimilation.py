@@ -11,11 +11,11 @@ from ert.config import (
     PreExperimentFixtures,
 )
 from ert.ensemble_evaluator import EvaluatorServerConfig
-from ert.experiment_configs import MultipleDataAssimilationConfig
 from ert.run_arg import create_run_arguments
 from ert.run_models.initial_ensemble_run_model import (
     InitialEnsembleRunModel,
 )
+from ert.run_models.run_model_configs import MultipleDataAssimilationConfig
 from ert.run_models.update_run_model import UpdateRunModel
 from ert.storage import Ensemble
 from ert.storage.local_experiment import ExperimentConfig, ExperimentType

@@ -59,9 +59,9 @@ from ert.ensemble_evaluator.state import (
     REALIZATION_STATE_FAILED,
     REALIZATION_STATE_FINISHED,
 )
-from ert.experiment_configs import RunModelConfig
 from ert.mode_definitions import MODULE_MODE
 from ert.run_arg import RunArg
+from ert.run_models.run_model_configs import RunModelConfig
 from ert.runpaths import Runpaths
 from ert.storage import (
     Ensemble,

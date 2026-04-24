@@ -15,16 +15,6 @@ from ert.config import (
     ObservationSettings,
     ParameterConfig,
 )
-from ert.experiment_configs import (
-    DictEncodedDataFrame,
-    EnsembleExperimentConfig,
-    EnsembleInformationFilterConfig,
-    EnsembleSmootherConfig,
-    EvaluateEnsembleConfig,
-    ManualUpdateConfig,
-    MultipleDataAssimilationConfig,
-    SingleTestRunConfig,
-)
 from ert.mode_definitions import (
     ENIF_MODE,
     ENSEMBLE_EXPERIMENT_MODE,
@@ -34,6 +24,16 @@ from ert.mode_definitions import (
     MANUAL_ENIF_UPDATE_MODE,
     MANUAL_UPDATE_MODE,
     TEST_RUN_MODE,
+)
+from ert.run_models.run_model_configs import (
+    DictEncodedDataFrame,
+    EnsembleExperimentConfig,
+    EnsembleInformationFilterConfig,
+    EnsembleSmootherConfig,
+    EvaluateEnsembleConfig,
+    ManualUpdateConfig,
+    MultipleDataAssimilationConfig,
+    SingleTestRunConfig,
 )
 from ert.validation import ActiveRange
 

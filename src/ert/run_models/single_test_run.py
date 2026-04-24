@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from ert.experiment_configs import SingleTestRunConfig
 from ert.run_models.ensemble_experiment import EnsembleExperiment
+from ert.run_models.run_model_configs import SingleTestRunConfig
 from ert.storage.local_experiment import ExperimentType
 
 SINGLE_TEST_RUN_GROUP = "Forward model evaluation"
