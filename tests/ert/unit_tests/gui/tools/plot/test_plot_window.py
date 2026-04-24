@@ -10,6 +10,8 @@ from pytestqt.qtbot import QtBot
 
 from ert.config.distribution import RawSettings
 from ert.config.gen_kw_config import DataSource, GenKwConfig
+from ert.gui.tools.plot.data_type_keys_list_model import DataTypeSeparator
+from ert.gui.tools.plot.data_type_keys_widget import DataTypeKeysWidget
 from ert.gui.tools.plot.plot_api import EnsembleObject, PlotApi, PlotApiKeyDefinition
 from ert.gui.tools.plot.plot_widget import PlotWidget
 from ert.gui.tools.plot.plot_window import PlotWindow, create_error_dialog
@@ -17,6 +19,30 @@ from ert.gui.tools.plot.plottery import PlotConfig, PlotContext
 from ert.gui.tools.plot.plottery.plots.gaussian_kde import plotGaussianKDE
 from ert.gui.tools.plot.plottery.plots.histogram import HistogramPlot
 from ert.services import ErtServerController
+
+EVEREST_KEY_DEFS = [
+    PlotApiKeyDefinition(
+        "obj1",
+        index_type="VALUE",
+        metadata={"data_origin": "everest_objectives"},
+        observations=False,
+        dimensionality=2,
+    ),
+    PlotApiKeyDefinition(
+        "ctrl1",
+        index_type=None,
+        metadata={"data_origin": "everest_parameters"},
+        observations=False,
+        dimensionality=1,
+    ),
+    PlotApiKeyDefinition(
+        "con1",
+        index_type="VALUE",
+        metadata={"data_origin": "everest_constraints"},
+        observations=False,
+        dimensionality=2,
+    ),
+]
 
 
 def test_pressing_copy_button_in_error_dialog(qtbot: QtBot):
@@ -225,7 +251,6 @@ def test_that_plot_window_ignores_negative_check_for_non_numeric_columns(
 
 
 def test_that_gaussian_kde_plot_skips_categorical_data_without_raising():
-
     ensemble = EnsembleObject(
         "ensemble",
         "ensemble",
@@ -316,3 +341,52 @@ def test_that_plot_widget_hides_log_scale_checkbox_for_const_distribution(qtbot:
         const_key_def,
     )
     assert not log_checkbox.isVisible()
+
+
+def test_that_separators_are_included_in_everest(
+    qtbot: QtBot,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "ert.gui.tools.plot.data_type_keys_widget.is_everest_application",
+        lambda: True,
+    )
+
+    widget = DataTypeKeysWidget(EVEREST_KEY_DEFS)
+    qtbot.addWidget(widget)
+    model = widget.model
+    assert any(isinstance(item, DataTypeSeparator) for item in model._keys)
+
+
+def test_that_datatype_separators_are_not_selectable(
+    qtbot: QtBot,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "ert.gui.tools.plot.data_type_keys_widget.is_everest_application",
+        lambda: True,
+    )
+    widget = DataTypeKeysWidget(EVEREST_KEY_DEFS)
+    qtbot.addWidget(widget)
+    model = widget.model
+    for i, item in enumerate(model._keys):
+        if isinstance(item, DataTypeSeparator):
+            idx = model.index(i, 0)
+            flags = model.flags(idx)
+            assert not (flags & Qt.ItemFlag.ItemIsSelectable)
+
+
+def test_that_datatype_separators_are_never_set_as_default(
+    qtbot: QtBot,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "ert.gui.tools.plot.data_type_keys_widget.is_everest_application",
+        lambda: True,
+    )
+    widget = DataTypeKeysWidget(EVEREST_KEY_DEFS)
+    qtbot.addWidget(widget)
+    widget.selectDefault()
+    selected = widget.getSelectedItem()
+    assert selected is not None
+    assert isinstance(selected, PlotApiKeyDefinition)

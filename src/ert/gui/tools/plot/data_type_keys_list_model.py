@@ -1,7 +1,8 @@
+from dataclasses import dataclass
 from typing import Any, overload
 
 from PyQt6.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt
-from PyQt6.QtGui import QColor
+from PyQt6.QtGui import QColor, QFont
 from typing_extensions import override
 
 from ert.gui.detect_mode import is_dark_mode
@@ -10,12 +11,17 @@ from ert.gui.icon_utils import load_icon
 from .plot_api import PlotApiKeyDefinition
 
 
+@dataclass(frozen=True)
+class DataTypeSeparator:
+    label: str
+
+
 class DataTypeKeysListModel(QAbstractItemModel):
     DEFAULT_DATA_TYPE = QColor(255, 255, 255)
     HAS_OBSERVATIONS = QColor(237, 218, 116)
     GROUP_ITEM = QColor(64, 64, 64)
 
-    def __init__(self, keys: list[PlotApiKeyDefinition]) -> None:
+    def __init__(self, keys: list[PlotApiKeyDefinition | DataTypeSeparator]) -> None:
         QAbstractItemModel.__init__(self)
         self._keys = keys
         self.__icon = load_icon("star_filled.svg")
@@ -43,13 +49,37 @@ class DataTypeKeysListModel(QAbstractItemModel):
         return 1
 
     @override
+    def flags(self, index: QModelIndex) -> Qt.ItemFlag:
+        if index.isValid() and index.row() < len(self._keys):
+            item = self._keys[index.row()]
+            if isinstance(item, DataTypeSeparator):
+                return Qt.ItemFlag.ItemIsEnabled
+        else:
+            return Qt.ItemFlag.NoItemFlags
+        return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable
+
+    @override
     def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> Any:
         assert isinstance(index, QModelIndex)
 
         if index.isValid():
-            items = self._keys
             row = index.row()
-            item = items[row]
+            item = self._keys[row]
+
+            if isinstance(item, DataTypeSeparator):
+                if role == Qt.ItemDataRole.DisplayRole:
+                    return item.label
+                if role == Qt.ItemDataRole.FontRole:
+                    font = QFont()
+                    font.setBold(True)
+                    return font
+                if role == Qt.ItemDataRole.ForegroundRole:
+                    return (
+                        QColor(Qt.GlobalColor.white)
+                        if is_dark_mode()
+                        else QColor(Qt.GlobalColor.black)
+                    )
+                return None
 
             if role == Qt.ItemDataRole.DisplayRole:
                 return item.key
@@ -69,6 +99,9 @@ class DataTypeKeysListModel(QAbstractItemModel):
 
         if index.isValid():
             row = index.row()
-            return self._keys[row]
+            item = self._keys[row]
+            if isinstance(item, DataTypeSeparator):
+                return None
+            return item
 
         return None

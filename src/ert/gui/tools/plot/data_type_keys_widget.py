@@ -15,10 +15,46 @@ from ert.gui.ertwidgets import SearchBox
 from ert.gui.icon_utils import load_icon
 from ert.gui.utils import is_everest_application
 
-from .data_type_keys_list_model import DataTypeKeysListModel
+from .data_type_keys_list_model import DataTypeKeysListModel, DataTypeSeparator
 from .data_type_proxy_model import DataTypeProxyModel
 from .plot_api import PlotApiKeyDefinition
 from .widgets import FilterPopup
+
+_EVEREST_GROUP_ORDER = [
+    "everest_objectives",
+    "everest_batch_objectives",
+    "everest_constraints",
+    "everest_parameters",
+]
+
+_EVEREST_GROUP_LABELS: dict[str, str] = {
+    "everest_objectives": "Objectives",
+    "everest_batch_objectives": "Aggregated objective values",
+    "everest_constraints": "Constraints",
+    "everest_parameters": "Controls",
+}
+
+
+def _group_everest_keys(
+    key_defs: list[PlotApiKeyDefinition],
+) -> list[PlotApiKeyDefinition | DataTypeSeparator]:
+    groups: dict[str, list[PlotApiKeyDefinition]] = {}
+    for key_def in key_defs:
+        origin = key_def.metadata.get("data_origin", "")
+        groups.setdefault(origin, []).append(key_def)
+
+    ordered_origins = _EVEREST_GROUP_ORDER + [
+        origin for origin in groups if origin not in _EVEREST_GROUP_ORDER
+    ]
+
+    result: list[PlotApiKeyDefinition | DataTypeSeparator] = []
+    for origin in ordered_origins:
+        if origin not in groups:
+            continue
+        label = _EVEREST_GROUP_LABELS.get(origin, origin)
+        result.append(DataTypeSeparator(label=f"— {label} —"))
+        result.extend(groups[origin])
+    return result
 
 
 class _LegendMarker(QWidget):
@@ -82,7 +118,11 @@ class DataTypeKeysWidget(QWidget):
 
         layout = QVBoxLayout()
 
-        self.model = DataTypeKeysListModel(key_defs)
+        is_everest = is_everest_application()
+        model_items: list[PlotApiKeyDefinition | DataTypeSeparator] = (
+            _group_everest_keys(key_defs) if is_everest else list(key_defs)
+        )
+        self.model = DataTypeKeysListModel(model_items)
         self.filter_model = DataTypeProxyModel(self, self.model)
 
         filter_layout = QHBoxLayout()
@@ -106,8 +146,6 @@ class DataTypeKeysWidget(QWidget):
         layout.addSpacing(15)
         layout.addWidget(self.data_type_keys_widget, 2)
         layout.addStretch()
-
-        is_everest = is_everest_application()
 
         if not is_everest:
             layout.addWidget(
@@ -134,7 +172,13 @@ class DataTypeKeysWidget(QWidget):
         return item
 
     def selectDefault(self) -> None:
-        self.data_type_keys_widget.setCurrentIndex(self.filter_model.index(0, 0))
+        for i in range(self.filter_model.rowCount()):
+            # Need to skip the DataTypeSeparators
+            index = self.filter_model.index(i, 0)
+            source_index = self.filter_model.mapToSource(index)
+            if self.model.itemAt(source_index) is not None:
+                self.data_type_keys_widget.setCurrentIndex(index)
+                return
 
     def setSearchString(self, filter_: str | None) -> None:
         self.filter_model.setFilterFixedString(filter_ or "")

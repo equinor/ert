@@ -24,14 +24,17 @@ class DataTypeProxyModel(QSortFilterProxyModel):
 
     @override
     def filterAcceptsRow(self, source_row: int, source_parent: QModelIndex) -> bool:
+        source_model = self.sourceModel()
+        source_index = source_model.index(source_row, 0, source_parent)
+        key = source_model.itemAt(source_index)
+
+        if key is None:
+            # Separator items are always shown
+            return True
+
         show = QSortFilterProxyModel.filterAcceptsRow(self, source_row, source_parent)
 
         if show:
-            source_model = self.sourceModel()
-            source_index = source_model.index(source_row, 0, source_parent)
-            key = source_model.itemAt(source_index)
-            assert key is not None
-
             for meta_key, values in self._metadata_filters.items():
                 for value, visible in values.items():
                     if (
