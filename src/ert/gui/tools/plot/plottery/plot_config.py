@@ -4,6 +4,9 @@ import itertools
 from copy import copy
 from typing import Any
 
+from matplotlib import colors as mcolors
+from matplotlib import pyplot as plt
+
 from .plot_limits import PlotLimits
 from .plot_style import PlotStyle
 
@@ -24,14 +27,17 @@ class PlotConfig:
         if self._plot_settings is None:
             self._plot_settings = {"SHOW_HISTORY": True}
 
-        # Blueish, Greenlike, Beigeoid, Pinkness, Orangy-Brown with alpha=1.0
+        colour_map_positions = [0.25, 1.0, 0.5, 0.0, 0.75]
+
+        # Scale (0,1) interval to (0,0.9) to avoid the lightest shade:
+        colour_map_positions = [val / (1 / 0.9) for val in colour_map_positions]
+
+        colour_map = plt.get_cmap("viridis")
+        alpha_value = 1.0
         self.setLineColorCycle(
             [
-                ("#386CB0", 1.0),
-                ("#7FC97F", 1.0),
-                ("#FDC086", 1.0),
-                ("#F0027F", 1.0),
-                ("#BF5B17", 1.0),
+                (mcolors.to_hex(colour_map(pos)).upper(), alpha_value)
+                for pos in colour_map_positions
             ]
         )
 
