@@ -45,17 +45,17 @@ class SmootherSnapshot:
                     pl.col("status") == ObservationStatus.ACTIVE
                 ).height
             ),
-            "Deactivated observations - missing respons(es)": str(
+            "Deactivated observations: missing respons(es)": str(
                 self.observations_and_responses.filter(
                     pl.col("status") == ObservationStatus.MISSING_RESPONSE
                 ).height
             ),
-            "Deactivated observations - ensemble_std > STD_CUTOFF": str(
+            "Deactivated observations: ensemble_std < STD_CUTOFF": str(
                 self.observations_and_responses.filter(
                     pl.col("status") == ObservationStatus.STD_CUTOFF
                 ).height
             ),
-            "Deactivated observations - outliers": str(
+            "Deactivated observations: outliers": str(
                 self.observations_and_responses.filter(
                     pl.col("status") == ObservationStatus.OUTLIER
                 ).height
