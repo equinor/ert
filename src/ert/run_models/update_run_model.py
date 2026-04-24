@@ -2,6 +2,8 @@ import dataclasses
 import functools
 import uuid
 
+import numpy as np
+
 from ert.analysis import build_strategy_map, smoother_update
 from ert.analysis._update_commons import ErtAnalysisError
 from ert.analysis.event import (
@@ -9,6 +11,7 @@ from ert.analysis.event import (
     AnalysisDataEvent,
     AnalysisErrorEvent,
     AnalysisEvent,
+    AnalysisMatrixEvent,
     AnalysisStatusEvent,
     AnalysisTimeEvent,
 )
@@ -23,6 +26,7 @@ from ert.config import (
 from ert.run_models.event import (
     RunModelDataEvent,
     RunModelErrorEvent,
+    RunModelMatrixEvent,
     RunModelStatusEvent,
     RunModelTimeEvent,
     RunModelUpdateBeginEvent,
@@ -190,6 +194,23 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                         name=event.name,
                         data=event.data,
                     )
+                )
+            case AnalysisMatrixEvent():
+                self.send_event(
+                    RunModelMatrixEvent(
+                        iteration=iteration,
+                        run_id=run_id,
+                        name=event.name,
+                    )
+                )
+                ensemble = self._storage.get_ensemble(event.posterior_id)
+                transition_path = ensemble.mount_point / "transition"
+                file_path = transition_path / f"{event.name}.npy"
+                file_path.parent.mkdir(parents=True, exist_ok=True)
+                np.save(file_path, event.matrix)
+                ensemble.save_transition_data(
+                    f"{AnalysisMatrixEvent.__name__}_{uuid.uuid4().hex[:8]}.json",
+                    event.model_dump_json(),
                 )
             case AnalysisCompleteEvent():
                 self._storage.get_ensemble(event.posterior_id).save_transition_data(

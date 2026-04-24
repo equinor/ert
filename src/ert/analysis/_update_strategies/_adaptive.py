@@ -13,7 +13,7 @@ import numpy as np
 import psutil
 from iterative_ensemble_smoother import AdaptiveESMDA
 
-from ert.analysis.event import AnalysisEvent, AnalysisStatusEvent
+from ert.analysis.event import AnalysisEvent, AnalysisMatrixEvent, AnalysisStatusEvent
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -135,6 +135,7 @@ class AdaptiveLocalizationUpdate:
         self._smoother: AdaptiveESMDA | None = None
         self._num_obs: int = 0
         self._ensemble_size: int = 0
+        self._posterior_id: str = ""
 
     def prepare(self, obs_context: ObservationContext) -> None:
         """Initialize smoother and pre-compute matrices from observation data.
@@ -209,10 +210,13 @@ class AdaptiveLocalizationUpdate:
 
         threshold = self._correlation_threshold_fn(self._ensemble_size)
 
+        corr_XY_batches: list[npt.NDArray[np.float64]] = []
+
         def correlation_callback(
             corr_XY: npt.NDArray[np.float64],
             observations_per_parameter: npt.NDArray[np.int_],
         ) -> npt.NDArray[np.bool_]:
+            corr_XY_batches.append(corr_XY.copy())
             return np.abs(corr_XY) > threshold
 
         start_time = time.perf_counter()
@@ -227,6 +231,16 @@ class AdaptiveLocalizationUpdate:
                 n_jobs=NUM_JOBS_ADAPTIVE_LOC,
             )
         elapsed = time.perf_counter() - start_time
+
+        if corr_XY_batches:
+            corr_XY_matrix = np.concatenate(corr_XY_batches, axis=0)
+            self._progress_callback(
+                AnalysisMatrixEvent(
+                    name=f"corr_XY_{param_config.name}",
+                    posterior_id=self._posterior_id,
+                    matrix=corr_XY_matrix,
+                )
+            )
 
         self._progress_callback(
             AnalysisStatusEvent(

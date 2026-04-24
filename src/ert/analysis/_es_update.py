@@ -202,6 +202,8 @@ def perform_ensemble_update(
 
     # Prepare each unique strategy once (multiple params may share the same instance)
     for strategy in set(strategy_map.values()):
+        if isinstance(strategy, AdaptiveLocalizationUpdate):
+            strategy._posterior_id = str(target_ensemble.id)
         strategy.prepare(obs_context)
 
     # Update each parameter group
@@ -288,7 +290,6 @@ def build_strategy_map(
         Random number generator for reproducibility.
     progress_callback : Callable[[AnalysisEvent], None] | None
         Callback for reporting progress.
-
     Returns
     -------
     dict[str, UpdateStrategy]

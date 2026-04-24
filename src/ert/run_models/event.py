@@ -70,6 +70,11 @@ class RunModelDataEvent(RunModelEvent):
             self.data.to_csv(self.name, output_path / str(self.run_id))
 
 
+class RunModelMatrixEvent(RunModelEvent):
+    event_type: Literal["RunModelMatrixEvent"] = "RunModelMatrixEvent"
+    name: str
+
+
 class RunModelUpdateEndEvent(RunModelEvent):
     event_type: Literal["RunModelUpdateEndEvent"] = "RunModelUpdateEndEvent"
     data: DataSection
@@ -118,6 +123,7 @@ StatusEvents = (
     | FullSnapshotEvent
     | RunModelDataEvent
     | RunModelErrorEvent
+    | RunModelMatrixEvent
     | RunModelStatusEvent
     | RunModelTimeEvent
     | RunModelUpdateBeginEvent
