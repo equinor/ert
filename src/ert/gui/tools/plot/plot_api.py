@@ -294,10 +294,13 @@ class PlotApi:
             ):
                 assert {"batch_id", "is_improvement"}.issubset(df.columns)
 
+                float_columns_names = (
+                    {"batch_id", "is_improvement", "constraint_violation_type"}
+                    if "constraint_violation_type" in df.columns
+                    else {"batch_id", "is_improvement"}
+                )
                 float_columns = [
-                    col
-                    for col in df.columns
-                    if col not in {"batch_id", "is_improvement"}
+                    col for col in df.columns if col not in float_columns_names
                 ]
 
                 return df.astype(
@@ -305,6 +308,14 @@ class PlotApi:
                     | {
                         "batch_id": int,
                         "is_improvement": bool,
+                        "improvement_value": float,
+                        "constraint_violation_type": str,
+                    }
+                    if "constraint_violation_type" in df.columns
+                    else {
+                        "batch_id": int,
+                        "is_improvement": bool,
+                        "improvement_value": float,
                     }
                 )
 
