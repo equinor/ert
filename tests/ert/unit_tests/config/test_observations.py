@@ -354,7 +354,6 @@ def test_that_rft_config_is_created_from_observations():
         ),
     )
     assert rft_config.data_to_read == {"well": {"2013-03-31": ["PRESSURE"]}}
-    assert rft_config.locations == [(30.0, 71.0, 2000.0)]
 
 
 @pytest.mark.usefixtures("use_tmpdir")

@@ -48,17 +48,6 @@ DateString: TypeAlias = str
 RFTProperty: TypeAlias = str
 
 
-@dataclass(frozen=True)
-class _ZonedPoint:
-    """A point optionally constrained to be in a given zone."""
-
-    point: tuple[float | None, float | None, float | None] = (None, None, None)
-    zone_name: ZoneName | None = None
-
-    def has_zone(self) -> bool:
-        return self.zone_name is not None
-
-
 class RFTConfig(ResponseConfig):
     """:term:`RFT` response from a :term:`reservoir simulator`.
 
@@ -71,8 +60,6 @@ class RFTConfig(ResponseConfig):
 
     Parameters:
         data_to_read: dictionary of the values that should be read from the rft file.
-        loations: list of optionally zone constrained points that the rft values should
-            be labeled with.
         zonemap: The mapping from grid layer index to zone name.
     """
 
@@ -82,15 +69,7 @@ class RFTConfig(ResponseConfig):
     data_to_read: dict[WellName, dict[DateString, list[RFTProperty]]] = Field(
         default_factory=dict
     )
-    locations: list[Point | tuple[Point, ZoneName]] = Field(default_factory=list)
     zonemap: Path | None = None
-
-    @property
-    def _zoned_locations(self) -> list[_ZonedPoint]:
-        return [
-            _ZonedPoint(*p) if isinstance(p[1], ZoneName) else _ZonedPoint(p)
-            for p in self.locations
-        ]
 
     @property
     def expected_input_files(self) -> list[str]:
