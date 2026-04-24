@@ -8,4 +8,4 @@ from .observation import (
 )
 from .prior import Prior
 from .record import RecordOut
-from .update import UpdateIn, UpdateOut
+from .update import ArtifactOut, UpdateIn, UpdateOut

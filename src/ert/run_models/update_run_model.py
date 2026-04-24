@@ -12,6 +12,7 @@ from ert.analysis.event import (
     AnalysisDataEvent,
     AnalysisErrorEvent,
     AnalysisEvent,
+    AnalysisMatrixEvent,
     AnalysisStatusEvent,
     AnalysisTimeEvent,
 )
@@ -24,6 +25,7 @@ from ert.config import (
 from ert.run_models.event import (
     RunModelDataEvent,
     RunModelErrorEvent,
+    RunModelMatrixEvent,
     RunModelStatusEvent,
     RunModelTimeEvent,
     RunModelUpdateBeginEvent,
@@ -32,6 +34,7 @@ from ert.run_models.event import (
 from ert.run_models.run_model import ErtRunError, RunModel
 from ert.run_models.run_model_configs import UpdateRunModelConfig
 from ert.storage import Ensemble, LocalExperiment
+from ert.storage.blob_data import BlobType
 
 
 class UpdateRunModel(RunModel, UpdateRunModelConfig):
@@ -59,6 +62,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
             self.send_smoother_event,
             prior.iteration,
             prior.id,
+            posterior,
         )
         strategy_map = build_strategy_map(
             parameters=prior.experiment.update_parameters,
@@ -148,7 +152,11 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
         return posterior
 
     def send_smoother_event(
-        self, iteration: int, run_id: uuid.UUID, event: AnalysisEvent
+        self,
+        iteration: int,
+        run_id: uuid.UUID,
+        ensemble: Ensemble,
+        event: AnalysisEvent,
     ) -> None:
         match event:
             case AnalysisStatusEvent():
@@ -187,15 +195,25 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                         data=event.data,
                     )
                 )
+            case AnalysisMatrixEvent():
+                self.send_event(
+                    RunModelMatrixEvent(
+                        iteration=iteration,
+                        run_id=run_id,
+                        name=event.name,
+                    )
+                )
+                ensemble.save_blob(event.matrix, blob_type=BlobType.MATRIX)
             case AnalysisCompleteEvent():
-                ensemble = self._storage.get_ensemble(event.ensemble_id)
                 buf = io.BytesIO()
                 pl.DataFrame(
                     event.data.data,
                     schema=event.data.header,
                     orient="row",
                 ).write_parquet(buf)
-                ensemble.save_blob(buf.getvalue())
+                ensemble.save_blob(
+                    buf.getvalue(), blob_type=BlobType.OBSERVATION_REPORT
+                )
                 self.send_event(
                     RunModelUpdateEndEvent(
                         iteration=iteration, run_id=run_id, data=event.data

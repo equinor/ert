@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import io
 import logging
 import time
 from collections.abc import Callable
@@ -13,7 +14,7 @@ import numpy as np
 import psutil
 from iterative_ensemble_smoother import AdaptiveESMDA
 
-from ert.analysis.event import AnalysisEvent, AnalysisStatusEvent
+from ert.analysis.event import AnalysisEvent, AnalysisMatrixEvent, AnalysisStatusEvent
 
 from ._batching import calculate_localization_batch_size, split_by_batch_size
 
@@ -147,10 +148,13 @@ class AdaptiveLocalizationUpdate:
 
         threshold = self._correlation_threshold_fn(self._ensemble_size)
 
+        corr_XY_batches: list[npt.NDArray[np.float64]] = []
+
         def correlation_callback(
             corr_XY: npt.NDArray[np.float64],
             observations_per_parameter: npt.NDArray[np.int_],
         ) -> npt.NDArray[np.bool_]:
+            corr_XY_batches.append(corr_XY.copy())
             return np.abs(corr_XY) > threshold
 
         start_time = time.perf_counter()
@@ -165,6 +169,18 @@ class AdaptiveLocalizationUpdate:
                 n_jobs=NUM_JOBS_ADAPTIVE_LOC,
             )
         elapsed = time.perf_counter() - start_time
+
+        if corr_XY_batches:
+            corr_XY_matrix = np.concatenate(corr_XY_batches, axis=0)
+            corr_XY_matrix[np.abs(corr_XY_matrix) <= threshold] = 0.0
+            buf = io.BytesIO()
+            np.save(buf, corr_XY_matrix)
+            self._progress_callback(
+                AnalysisMatrixEvent(
+                    name=f"corr_XY_{param_config.name}",
+                    matrix=buf.getvalue(),
+                )
+            )
 
         self._progress_callback(
             AnalysisStatusEvent(

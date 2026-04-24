@@ -2,6 +2,7 @@ import io
 import json
 import re
 
+import numpy as np
 import pandas as pd
 import pytest
 from requests import Response
@@ -10,7 +11,7 @@ from starlette.testclient import TestClient
 from ert.config._observations import SummaryObservation
 from ert.config._shapes import CircleShapeConfig, ShapeRegistry
 from ert.dark_storage.common import get_storage_api_version
-from ert.storage import open_storage
+from ert.storage import BlobType, open_storage
 
 
 @pytest.mark.slow
@@ -346,3 +347,59 @@ def test_get_coeffs_records(poly_example_tmp_dir, dark_storage_client, coeffs):
     assert all(dataframe.index.to_numpy() == [1, 2, 4])
     assert dataframe.index.name == "Realization"
     assert dataframe.shape == (3, 1)
+
+
+def test_that_get_update_artifacts_returns_blob_storage_data(
+    tmp_path, monkeypatch, dark_storage_app
+):
+    storage_path = tmp_path / "storage"
+    with open_storage(storage_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = experiment.create_ensemble(name="ensemble", ensemble_size=1)
+        ensemble_id = str(ensemble.id)
+
+        dense_matrix = np.ones((10, 5))
+        buf = io.BytesIO()
+        np.save(buf, dense_matrix)
+        ensemble.save_blob(buf.getvalue(), blob_type=BlobType.MATRIX)
+
+        sparse_matrix = np.zeros((20, 10))
+        sparse_matrix[0, 0] = 1.0
+        buf = io.BytesIO()
+        np.save(buf, sparse_matrix)
+        ensemble.save_blob(buf.getvalue(), blob_type=BlobType.MATRIX)
+
+        ensemble.save_blob(
+            b"observation report data", blob_type=BlobType.OBSERVATION_REPORT
+        )
+        ensemble.save_blob(
+            b"observation report data 2", blob_type=BlobType.OBSERVATION_REPORT
+        )
+
+    monkeypatch.setenv("ERT_STORAGE_ENS_PATH", str(storage_path))
+
+    with TestClient(dark_storage_app) as client:
+        resp = client.get(f"/ensembles/{ensemble_id}/update/artifacts")
+        assert resp.status_code == 200
+        artifacts = resp.json()
+        assert len(artifacts) == 4
+
+        dense_artifacts = [
+            a for a in artifacts if a["blob_type"] == "matrix" and not a["sparse"]
+        ]
+        sparse_artifacts = [a for a in artifacts if a["sparse"]]
+        report_artifacts = [
+            a for a in artifacts if a["blob_type"] == "observation_report"
+        ]
+
+        assert len(dense_artifacts) == 1
+        assert dense_artifacts[0]["ensemble_id"] == ensemble_id
+        assert dense_artifacts[0]["file_size"] > 0
+
+        assert len(sparse_artifacts) == 1
+        assert sparse_artifacts[0]["ensemble_id"] == ensemble_id
+        assert sparse_artifacts[0]["file_size"] > 0
+
+        assert len(report_artifacts) == 2
+        assert report_artifacts[0]["ensemble_id"] == ensemble_id
+        assert report_artifacts[0]["file_size"] > 0

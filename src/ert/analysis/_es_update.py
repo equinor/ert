@@ -305,7 +305,6 @@ def build_strategy_map(
         threshold. Required when ``localization`` is True.
     progress_callback : Callable[[AnalysisEvent], None] | None
         Callback for reporting progress.
-
     Returns
     -------
     dict[str, UpdateStrategy]
@@ -444,7 +443,6 @@ def smoother_update(
                 data=smoother_snapshot.csv,
                 extra=smoother_snapshot.extra,
             ),
-            ensemble_id=str(posterior_storage.id),
         )
     )
     return smoother_snapshot
