@@ -21,10 +21,6 @@ from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, ShapeReg
 from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.config._observations import (
     DEFAULT_LOCALIZATION_RADIUS,
-    extract_localization_values,
-    make_observations,
-)
-from ert.config._observations import (
     BaseObservation,
     extract_localization_values,
     make_observations,

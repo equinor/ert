@@ -246,7 +246,6 @@ def _create_rft_observation(
         error=error,
         north=north,
         east=east,
-        radius=None,
         tvd=tvd,
         md=md,
         zone=zone,
