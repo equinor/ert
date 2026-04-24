@@ -1057,7 +1057,7 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
     no_update_param = GenKwConfig(
         name="KEY_2",
         group="EXTRA_PARAMETER",
-        update=False,
+        update=None,
         distribution={"name": "uniform", "min": 0, "max": 1},
     )
     response_config = GenDataConfig(keys=["RESPONSE"]).model_dump(mode="json")

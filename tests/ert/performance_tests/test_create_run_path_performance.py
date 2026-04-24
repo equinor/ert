@@ -147,7 +147,7 @@ def test_create_run_path_surface_performance(tmp_path, benchmark):
             forward_init_file="input_%d",
             output_file=tmp_path / "output_%d",
             base_surface_path="base_surface",
-            update=True,
+            update="ADAPTIVE",
         )
         for i in range(num_surfaces)
     ]
