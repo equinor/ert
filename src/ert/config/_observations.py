@@ -10,7 +10,7 @@ from typing import Annotated, Any, Literal, Self, assert_never
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from ert.validation import rangestring_to_list
 
@@ -34,7 +34,11 @@ class ErrorModes(StrEnum):
     RELMIN = "RELMIN"
 
 
-class _SummaryValues(BaseModel):
+class BaseObservation(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
+class _SummaryValues(BaseObservation):
     type: Literal["summary_observation"] = "summary_observation"
     name: str
     value: float
@@ -65,6 +69,9 @@ def _parse_date(date_str: str) -> datetime:
 
 
 class SummaryObservation(_SummaryValues):
+    error_mode: ErrorModes | None = Field(default=None, exclude=True)
+    error_min: float | None = Field(default=None, exclude=True)
+
     @classmethod
     def from_obs_dict(
         cls,
@@ -179,7 +186,7 @@ class SummaryObservation(_SummaryValues):
         return None
 
 
-class _GeneralObservation(BaseModel):
+class _GeneralObservation(BaseObservation):
     type: Literal["general_observation"] = "general_observation"
     name: str
     data: str
@@ -357,7 +364,7 @@ class GeneralObservation(_GeneralObservation):
         return None
 
 
-class RFTObservation(BaseModel):
+class RFTObservation(BaseObservation):
     """Represents an RFT (Repeat Formation Tester) observation.
 
     RFT observations are used to condition on pressure, saturation, or other
@@ -635,7 +642,7 @@ class RFTObservation(BaseModel):
         return None
 
 
-class BreakthroughObservation(BaseModel):
+class BreakthroughObservation(BaseObservation):
     type: Literal["breakthrough"] = "breakthrough"
     name: str
     key: str
@@ -852,12 +859,9 @@ def extract_localization_values(value: Mapping[str, Any]) -> tuple[float | None,
     east = value.get("EAST")
     north = value.get("NORTH")
     radius = value.get("RADIUS")
-    if east is not None:
-        validate_float(east, "EAST")
-    if north is not None:
-        validate_float(north, "NORTH")
-    if radius is not None:
-        validate_float(radius, "RADIUS")
+    east = validate_float(east, "EAST") if east is not None else None
+    north = validate_float(north, "NORTH") if north is not None else None
+    radius = validate_float(radius, "RADIUS") if radius is not None else None
     return east, north, radius
 
 

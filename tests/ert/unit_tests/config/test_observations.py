@@ -12,6 +12,7 @@ import pytest
 from hypothesis import assume, given
 from pandas import DataFrame
 from polars.testing import assert_frame_equal
+from pydantic import ValidationError
 from resdata.summary import Summary
 from resfo_utilities.testing import summaries
 
@@ -20,6 +21,7 @@ from ert.config import ConfigValidationError, ConfigWarning, ErtConfig, ShapeReg
 from ert.config._create_observation_dataframes import create_observation_dataframes
 from ert.config._observations import (
     DEFAULT_LOCALIZATION_RADIUS,
+    BaseObservation,
     extract_localization_values,
     make_observations,
 )
@@ -2171,3 +2173,9 @@ def test_that_hours_are_rounded_to_closest_int_in_plot_observations():
         data=data,
         value_column="foo",
     )
+
+
+def test_that_base_observation_fails_validation_with_unknown_kwarg():
+
+    with pytest.raises(ValidationError):
+        BaseObservation(random_kwarg=42)

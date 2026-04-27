@@ -239,9 +239,7 @@ def test_plot_api_handles_urlescape(api_and_storage):
                     "date": date.isoformat(),
                     "value": 1.0,
                     "error": 1.0,
-                    "east": None,
-                    "north": None,
-                    "radius": None,
+                    "shape_id": None,
                 }
             ],
         }
@@ -388,9 +386,7 @@ def test_that_multiple_observations_are_parsed_correctly(api_and_storage):
                     "date": d.isoformat(),
                     "value": float(v),
                     "error": float(s),
-                    "east": None,
-                    "north": None,
-                    "radius": None,
+                    "shape_id": None,
                 }
                 for i, (d, v, s) in enumerate(
                     zip(
@@ -492,9 +488,7 @@ def test_that_response_key_has_observation_when_only_one_experiment_has_observat
                     "date": date.isoformat(),
                     "value": 1.0,
                     "error": 1.0,
-                    "east": None,
-                    "north": None,
-                    "radius": None,
+                    "shape_id": None,
                 }
             ],
         }
@@ -583,9 +577,7 @@ def test_that_response_keys_do_not_match_keys_that_are_substrings(
                     "date": date.isoformat(),
                     "value": value,
                     "error": error,
-                    "east": None,
-                    "north": None,
-                    "radius": None,
+                    "shape_id": None,
                 }
                 for name, value, error in [
                     (key, 0.2, 0.1),

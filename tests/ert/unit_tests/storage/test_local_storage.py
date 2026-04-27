@@ -1309,8 +1309,6 @@ general_observations = st.builds(
     index=st.integers(min_value=1, max_value=10000),
     value=st.floats(allow_nan=False, allow_infinity=False),
     error=st.floats(allow_nan=False, allow_infinity=False, min_value=0.001),
-    east=st.floats(allow_nan=False, allow_infinity=False, min_value=0.001),
-    north=st.floats(allow_nan=False, allow_infinity=False, min_value=0.001),
 )
 observations = st.lists(
     general_observations,
