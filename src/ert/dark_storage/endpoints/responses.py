@@ -218,6 +218,7 @@ def data_for_response(
                 on="batch_id",
                 how="left",
             )
+            .with_columns(pl.col("total_objective_value").neg())
             .with_columns(pl.col("is_improvement").fill_null(False))
             .to_pandas()
             .astype(
