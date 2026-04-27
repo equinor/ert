@@ -4,6 +4,9 @@ import itertools
 from copy import copy
 from typing import Any
 
+from matplotlib import colors as mcolors
+from matplotlib import pyplot as plt
+
 from .plot_limits import PlotLimits
 from .plot_style import PlotStyle
 
@@ -24,14 +27,18 @@ class PlotConfig:
         if self._plot_settings is None:
             self._plot_settings = {"SHOW_HISTORY": True}
 
-        # Blueish, Greenlike, Beigeoid, Pinkness, Orangy-Brown with alpha=1.0
+        # This is a modified van der Corput sequence in base 2 with
+        # 0 and 1 added explicitly at the start. This gives us maximal
+        # colour separation, and with the biggest separation between the
+        # first colours, and then diminishing.
+        colour_map_positions = [0.0, 1.0, 0.5, 0.75, 0.25]
+
+        colour_map = plt.get_cmap("viridis")
+        alpha_value = 1.0
         self.setLineColorCycle(
             [
-                ("#386CB0", 1.0),
-                ("#7FC97F", 1.0),
-                ("#FDC086", 1.0),
-                ("#F0027F", 1.0),
-                ("#BF5B17", 1.0),
+                (mcolors.to_hex(colour_map(pos)).upper(), alpha_value)
+                for pos in colour_map_positions
             ]
         )
 
