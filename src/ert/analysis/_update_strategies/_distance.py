@@ -157,14 +157,28 @@ class DistanceLocalizationUpdate:
             axis_orientation=ertbox.axis_orientation,
         )
 
-        # Expand 2D rho (nx*ny, nobs) to 3D by repeating each xy cell across nz layers
-        rho_2d = rho_matrix.reshape(ertbox.nx * ertbox.ny, -1)
-        rho_full = np.repeat(rho_2d, ertbox.nz, axis=0) if ertbox.nz > 1 else rho_2d
+        nxy = ertbox.nx * ertbox.ny
+        rho_2d = rho_matrix.reshape(nxy, -1)
 
-        def localization_callback(
-            K: npt.NDArray[np.floating],
-        ) -> npt.NDArray[np.floating]:
-            return K * rho_full
+        if ertbox.nz > 1:
+            nz = ertbox.nz
+            # Parameters are stored in C-order (nxy slow, nz fast), so reshape K
+            # to (nxy, nz, nobs) and broadcast rho across the nz axis to avoid
+            # copying rho data nz times as np.repeat would.
+            rho_broadcast = np.broadcast_to(
+                rho_2d[:, np.newaxis, :], (nxy, nz, rho_2d.shape[1])
+            )
+
+            def localization_callback(
+                K: npt.NDArray[np.floating],
+            ) -> npt.NDArray[np.floating]:
+                return (K.reshape(nxy, nz, -1) * rho_broadcast).reshape(K.shape)
+        else:
+
+            def localization_callback(
+                K: npt.NDArray[np.floating],
+            ) -> npt.NDArray[np.floating]:
+                return K * rho_2d
 
         return self._smoother.assimilate_batch(
             X=param_ensemble,
