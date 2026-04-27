@@ -193,7 +193,8 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                 )
             case AnalysisCompleteEvent():
                 self._storage.get_ensemble(event.posterior_id).save_transition_data(
-                    f"{AnalysisCompleteEvent.__name__}.json", event.model_dump_json()
+                    f"{AnalysisCompleteEvent.__name__}_{uuid.uuid4().hex[:8]}.json",
+                    event.model_dump_json(),
                 )
                 self.send_event(
                     RunModelUpdateEndEvent(

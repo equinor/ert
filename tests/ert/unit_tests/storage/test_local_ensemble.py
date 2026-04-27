@@ -12,6 +12,7 @@ from ert.config import GenKwConfig, RFTConfig, SummaryConfig
 from ert.config._observations import RFTObservation
 from ert.exceptions import StorageError
 from ert.storage import open_storage
+from ert.storage.mode import ModeError
 
 
 def test_that_load_scalar_keys_loads_all_parameters(tmp_path):
@@ -540,3 +541,43 @@ def test_that_get_rft_observations_and_responses_maps_report_step_from_summary_t
 
         assert "report_step" in result.columns
         assert result["report_step"].to_list() == [1, 2]
+
+
+def test_that_save_transition_data_writes_file_to_disk(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="prior"
+        )
+
+        ensemble.save_transition_data("report.json", '{"key": "value"}')
+
+        written = (ensemble._path / "transition" / "report.json").read_text(
+            encoding="utf-8"
+        )
+        assert written == '{"key": "value"}'
+
+
+def test_that_save_transition_data_creates_transition_directory(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="prior"
+        )
+
+        transition_dir = ensemble._path / "transition"
+        assert not transition_dir.exists()
+
+        ensemble.save_transition_data("report.json", "data")
+        assert transition_dir.is_dir()
+
+
+def test_that_save_transition_data_raises_in_read_mode(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        storage.create_ensemble(experiment, ensemble_size=1, iteration=0, name="prior")
+
+    with open_storage(tmp_path, mode="r") as storage:
+        ensemble = next(iter(storage.ensembles))
+        with pytest.raises(ModeError):
+            ensemble.save_transition_data("report.json", "data")

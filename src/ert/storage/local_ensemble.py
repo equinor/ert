@@ -49,7 +49,7 @@ class EverestRealizationInfo(TypedDict):
 
 
 SCALAR_FILENAME = "SCALAR"
-TRANSITION_DATA_DIR = "transition_data"
+TRANSITION_DATA_DIR = "transition"
 
 
 class BatchDataframes(TypedDict, total=False):

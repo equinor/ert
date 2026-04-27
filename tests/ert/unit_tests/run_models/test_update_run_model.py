@@ -26,8 +26,7 @@ def test_that_send_smoother_event_persists_observation_report_on_analysis_comple
     model._storage.get_ensemble.assert_called_once_with(posterior_id)
     mock_ensemble.save_transition_data.assert_called_once()
 
-    saved_name, saved_json = mock_ensemble.save_transition_data.call_args[0]
-    assert saved_name == f"{AnalysisCompleteEvent.__name__}.json"
+    _, saved_json = mock_ensemble.save_transition_data.call_args[0]
     parsed = json.loads(saved_json)
     assert parsed["posterior_id"] == posterior_id
     assert parsed["data"]["header"] == ["observation_key", "status"]
