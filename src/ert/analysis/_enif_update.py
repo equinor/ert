@@ -217,7 +217,7 @@ def analysis_EnIF(
     )
 
     # Learn the precision matrix block-sparse over parameter groups
-    Prec_u = sp.sparse.csc_matrix((0, 0), dtype=float)
+    Prec_u = sp.sparse.csc_array((0, 0), dtype=float)
     for param_group in updated_parameters:
         config_node = source_ensemble.experiment.parameter_configuration[param_group]
         X_local = param_arrays[param_group]
@@ -248,7 +248,7 @@ def analysis_EnIF(
         Prec_u = sp.sparse.block_diag((Prec_u, Prec_u_sub), format="csc")
 
     # Precision of observation errors
-    Prec_eps = sp.sparse.diags(
+    Prec_eps = sp.sparse.diags_array(
         [1.0 / observation_errors**2],
         offsets=[0],
         shape=(num_obs, num_obs),
