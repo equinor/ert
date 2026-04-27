@@ -155,13 +155,13 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
         self, iteration: int, run_id: uuid.UUID, event: AnalysisEvent
     ) -> None:
         match event:
-            case AnalysisStatusEvent(msg=msg, detail=detail):
+            case AnalysisStatusEvent():
                 self.send_event(
                     RunModelStatusEvent(
                         iteration=iteration,
                         run_id=run_id,
-                        msg=msg,
-                        detail=detail,
+                        msg=event.msg,
+                        detail=event.detail,
                     )
                 )
             case AnalysisTimeEvent():
@@ -182,13 +182,20 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                         data=event.data,
                     )
                 )
-            case AnalysisDataEvent(name=name, data=data):
+            case AnalysisDataEvent():
                 self.send_event(
                     RunModelDataEvent(
-                        iteration=iteration, run_id=run_id, name=name, data=data
+                        iteration=iteration,
+                        run_id=run_id,
+                        name=event.name,
+                        data=event.data,
                     )
                 )
             case AnalysisCompleteEvent():
+                self._storage.get_ensemble(event.posterior_id).save_transition_data(
+                    f"{AnalysisCompleteEvent.__name__}_{uuid.uuid4().hex[:8]}.json",
+                    event.model_dump_json(),
+                )
                 self.send_event(
                     RunModelUpdateEndEvent(
                         iteration=iteration, run_id=run_id, data=event.data

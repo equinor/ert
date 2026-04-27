@@ -72,3 +72,4 @@ class AnalysisErrorEvent(AnalysisEvent):
 class AnalysisCompleteEvent(AnalysisEvent):
     event_type: Literal["AnalysisCompleteEvent"] = "AnalysisCompleteEvent"
     data: DataSection
+    posterior_id: str
