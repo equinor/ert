@@ -3,8 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from PyQt6.QtCore import Qt
 from PyQt6.QtCore import pyqtSlot as Slot
-from PyQt6.QtWidgets import QFormLayout, QLabel, QWidget
+from PyQt6.QtWidgets import QFormLayout, QHBoxLayout, QLabel, QWidget
 from typing_extensions import override
 
 from ert.gui.ertnotifier import ErtNotifier
@@ -54,6 +55,7 @@ class EnsembleInformationFilterPanel(ExperimentConfigPanel):
         self.notifier = notifier
 
         layout = QFormLayout()
+        layout.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         self.setObjectName("enif_panel")
 
         self._experiment_name_field = StringBox(
@@ -72,8 +74,16 @@ class EnsembleInformationFilterPanel(ExperimentConfigPanel):
         runpath_label = CopyableLabel(text=run_path)
         layout.addRow("Runpath:", runpath_label)
 
+        number_of_realizations_container = QWidget()
+        number_of_realizations_layout = QHBoxLayout(number_of_realizations_container)
+        number_of_realizations_layout.setContentsMargins(0, 0, 0, 0)
         number_of_realizations_label = QLabel(f"<b>{len(active_realizations)}</b>")
-        layout.addRow(QLabel("Number of realizations:"), number_of_realizations_label)
+        number_of_realizations_label.setObjectName("num_reals_label")
+        number_of_realizations_layout.addWidget(number_of_realizations_label)
+
+        layout.addRow(
+            QLabel("Number of realizations:"), number_of_realizations_container
+        )
 
         self._ensemble_format_model = TargetEnsembleModel(analysis_config, notifier)
         self._ensemble_format_field = StringBox(

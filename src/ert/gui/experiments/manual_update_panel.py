@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import cast
 
 import numpy as np
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtCore import pyqtSlot as Slot
 from PyQt6.QtWidgets import QComboBox, QFormLayout, QLabel, QWidget
 from typing_extensions import override
@@ -52,6 +52,7 @@ class ManualUpdatePanel(ExperimentConfigPanel):
         self.setObjectName("Manual_update_panel")
 
         layout = QFormLayout()
+        layout.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         self._update_method_dropdown = QComboBox()
         self._update_method_dropdown.addItems(
             ["ES Update", "EnIF Update (Experimental)"]

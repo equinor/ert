@@ -57,9 +57,7 @@ class EnsembleSmootherPanel(ExperimentConfigPanel):
         self.setObjectName("ensemble_smoother_panel")
 
         layout = QFormLayout()
-        lab = QLabel(EnsembleSmoother.name())
-        lab.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        layout.addRow(lab)
+        layout.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
 
         self._experiment_name_field = StringBox(
             TextModel(""),

@@ -52,10 +52,7 @@ class EnsembleExperimentPanel(ExperimentConfigPanel):
         self.setObjectName("Ensemble_experiment_panel")
 
         layout = QFormLayout()
-        lab = QLabel(" ".join(EnsembleExperiment.__doc__.split()))  # type: ignore
-        lab.setWordWrap(True)
-        lab.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        layout.addRow(lab)
+        layout.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
 
         self._experiment_name_field = StringBox(
             TextModel(""),
