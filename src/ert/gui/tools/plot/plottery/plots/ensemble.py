@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 from resfo_utilities import is_rate
 
+from ert.gui.utils import is_everest_application
+
 from .history import plotHistory
 from .observations import plotObservations
 from .plot_tools import PlotTools
@@ -57,7 +59,9 @@ class EnsemblePlot:
                     axes,
                     config,
                     data,
-                    f"{ensemble.experiment_name} : {ensemble.name}",
+                    f"{ensemble.name}"
+                    if is_everest_application()
+                    else f"{ensemble.experiment_name} : {ensemble.name}",
                     draw_style,
                     zorder=zorder,
                 )
@@ -65,6 +69,10 @@ class EnsemblePlot:
 
         plotObservations(observation_data, plot_context, axes)
         plotHistory(plot_context, axes)
+
+        axes.spines["right"].set_visible(False)
+        axes.spines["left"].set_visible(False)
+        axes.spines["top"].set_visible(False)
 
         default_x_label = "Date" if plot_context.isDateSupportActive() else "Index"
         PlotTools.finalizePlot(
