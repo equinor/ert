@@ -75,10 +75,7 @@ class MultipleDataAssimilationPanel(ExperimentConfigPanel):
         self.notifier = notifier
 
         layout = QFormLayout()
-        lab = QLabel(" ".join(MultipleDataAssimilation.__doc__.split()))  # type: ignore
-        lab.setWordWrap(True)
-        lab.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        layout.addRow(lab)
+        layout.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         self.setObjectName("ES_MDA_panel")
 
         self._experiment_name_field = StringBox(

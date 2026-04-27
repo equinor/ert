@@ -40,10 +40,7 @@ class EvaluateEnsemblePanel(ExperimentConfigPanel):
         self.setObjectName("Evaluate_parameters_panel")
 
         layout = QFormLayout()
-        lab = QLabel(" ".join(EvaluateEnsemble.__doc__.split()))  # type: ignore
-        lab.setWordWrap(True)
-        lab.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        layout.addRow(lab)
+        layout.setFormAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
 
         def show_only_no_children_filter(
             ensembles: Iterable[Ensemble],
