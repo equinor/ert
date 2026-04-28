@@ -6,10 +6,7 @@ from typing import Any
 
 DEFAULT_LOCALIZATION_RADIUS = 2000
 
-info = (
-    "Migrate observation localization (east/north/radius) into ShapeRegistry"
-    "and update 'update' field from bool to strategy string"
-)
+info = "Migrate observation localization (east/north/radius) into ShapeRegistry"
 
 
 def _register_shape(
@@ -97,33 +94,5 @@ def _migrate_observations(path: Path) -> None:
         index_file.write_text(json.dumps(index_data, indent=2), encoding="utf-8")
 
 
-def _migrate_update_bool_to_strategy(path: Path) -> None:
-    experiments_dir = path / "experiments"
-    if not experiments_dir.exists():
-        return
-
-    for exp_dir in experiments_dir.iterdir():
-        if not exp_dir.is_dir():
-            continue
-
-        index_file = exp_dir / "index.json"
-        if not index_file.exists():
-            continue
-
-        index_data = json.loads(index_file.read_text(encoding="utf-8"))
-        experiment_data = index_data.get("experiment", {})
-        params_config = experiment_data.get("parameter_configuration", [])
-
-        modified = False
-        for param in params_config:
-            if "update" in param and isinstance(param["update"], bool):
-                param["update"] = "ADAPTIVE" if param["update"] else None
-                modified = True
-
-        if modified:
-            index_file.write_text(json.dumps(index_data, indent=2), encoding="utf-8")
-
-
 def migrate(path: Path) -> None:
     _migrate_observations(path)
-    _migrate_update_bool_to_strategy(path)
