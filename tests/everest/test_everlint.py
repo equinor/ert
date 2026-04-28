@@ -156,7 +156,7 @@ def test_extra_key(min_config):
             "output_folder\n.* str type expected",
         ),
         (
-            {"input_constraints": [{"weights": {"not_exists": 1.0}}]},
+            {"input_constraints": [{"weights": {"not_exists": 1.0}, "target": 1.0}]},
             "not_exists.*not match any instance of control_name.variable_name",
         ),
     ],
@@ -252,7 +252,9 @@ def test_well_ref_validation(min_config):
 
 
 def test_control_ref_validation(min_config):
-    min_config["input_constraints"] = [{"weights": {"my_control.test": 1.0}}]
+    min_config["input_constraints"] = [
+        {"weights": {"my_control.test": 1.0}, "target": 1.0}
+    ]
     EverestConfig(**min_config)
 
 

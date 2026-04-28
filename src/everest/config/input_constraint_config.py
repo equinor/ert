@@ -1,7 +1,8 @@
 from textwrap import dedent
+from typing import Self
 
 import numpy as np
-from pydantic import BaseModel, Field, PositiveFloat, field_validator
+from pydantic import BaseModel, Field, PositiveFloat, field_validator, model_validator
 
 
 class InputConstraintConfig(BaseModel, extra="forbid"):
@@ -86,3 +87,24 @@ class InputConstraintConfig(BaseModel, extra="forbid"):
         if weights is None or weights == {}:
             raise ValueError("Input weight data required for input constraints")
         return weights
+
+    @model_validator(mode="after")
+    def validate_target_and_bounds(self) -> Self:
+        if self.target is not None and (
+            np.isfinite(self.lower_bound) or np.isfinite(self.upper_bound)
+        ):
+            raise ValueError("Cannot combine target and bounds")
+        if self.target is None and not (
+            np.isfinite(self.lower_bound) or np.isfinite(self.upper_bound)
+        ):
+            raise ValueError("Must provide target or lower_bound/upper_bound")
+        return self
+
+    @model_validator(mode="after")
+    def validate_bounds(self) -> Self:
+        if self.target is None and (self.lower_bound >= self.upper_bound):
+            raise ValueError(
+                "Error in input constraint: lower_bound must be less "
+                f"than the upper_bound : {self.lower_bound} >= {self.upper_bound}"
+            )
+        return self
