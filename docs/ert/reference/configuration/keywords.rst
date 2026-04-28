@@ -855,7 +855,7 @@ Field parameters (e.g. porosity, permeability or Gaussian Random Fields from APS
 
 ::
 
-        FIELD  ID  PARAMETER  <OUTPUT_FILE>  INIT_FILES:/path/<IENS>  FORWARD_INIT:True  INIT_TRANSFORM:FUNC  OUTPUT_TRANSFORM:FUNC  MIN:X  MAX:Y  GRID:CASE.EGRID  UPDATE:TRUE
+        FIELD  ID  PARAMETER  <OUTPUT_FILE>  INIT_FILES:/path/<IENS>  FORWARD_INIT:True  INIT_TRANSFORM:FUNC  OUTPUT_TRANSFORM:FUNC  MIN:X  MAX:Y  GRID:CASE.EGRID  UPDATE:ADAPTIVE
 
 - **ID**
   String identifier with maximum 8 characters that must match the name of the parameter specified in ``INIT_FILES``.
@@ -903,9 +903,10 @@ Field parameters (e.g. porosity, permeability or Gaussian Random Fields from APS
   If not specified, the global grid from the :ref:`GRID<grid>` keyword will be used.
 
 - **UPDATE** (Optional)
-  Specifies whether this field parameter should be included during the history matching
-  update step. Must be set to either ``TRUE`` or ``FALSE``.
-  Defaults to ``TRUE``.
+  Specifies the update strategy for this field parameter during the history matching
+  update step. Accepted values are ``ADAPTIVE``, ``DISTANCE``, or ``NONE``.
+  ``TRUE`` and ``FALSE`` are accepted for backward compatibility and map to
+  ``ADAPTIVE`` and ``NONE`` respectively. Defaults to ``ADAPTIVE``.
 
 .. _init-files:
 
@@ -1192,10 +1193,13 @@ Keyword arguments:
 
 ::
 
-        GEN_KW  ... UPDATE:TRUE/FALSE
+        GEN_KW  ... UPDATE:ADAPTIVE
 
-Where the :code:`UPDATE` keyword argument specifies whether a parameter group should be included during the
-history matching process. It must be set to either TRUE or FALSE. The parameters are still sampled in the prior.
+Where the :code:`UPDATE` keyword argument specifies the update strategy for a parameter group during the
+history matching process. Accepted values are ``ADAPTIVE``, ``DISTANCE``, or ``NONE``.
+``TRUE`` and ``FALSE`` are accepted for backward compatibility and map to ``ADAPTIVE`` and ``NONE``
+respectively. A per-type default can be set using :ref:`ANALYSIS_SET_VAR PARAMETERS <parameters_section>`.
+Defaults to ``ADAPTIVE``. The parameters are still sampled in the prior regardless of the update strategy.
 
 .. note::
 
@@ -1396,7 +1400,7 @@ format. The surface keyword is configured like this:
 
 ::
 
-        SURFACE  ID  OUTPUT_FILE:surf.irap  INIT_FILES:Surfaces/surf<IENS>.irap  BASE_SURFACE:Surfaces/surf0.irap  FORWARD_INIT:True  UPDATE:TRUE
+        SURFACE  ID  OUTPUT_FILE:surf.irap  INIT_FILES:Surfaces/surf<IENS>.irap  BASE_SURFACE:Surfaces/surf0.irap  FORWARD_INIT:True  UPDATE:ADAPTIVE
 
 - **ID**
   The identifier you want to use for this surface in ERT.
@@ -1417,9 +1421,12 @@ format. The surface keyword is configured like this:
   Defaults to ``False``. See the section on initializing from the forward model below.
 
 - **UPDATE** (Optional)
-  Specifies whether this surface parameter should be included during the history matching
-  update step. Must be set to either ``TRUE`` or ``FALSE``.
-  Defaults to ``TRUE``.
+  Specifies the update strategy for this surface parameter during the history matching
+  update step. Accepted values are ``ADAPTIVE``, ``DISTANCE``, or ``NONE``.
+  ``TRUE`` and ``FALSE`` are accepted for backward compatibility and map to
+  ``ADAPTIVE`` and ``NONE`` respectively. A per-type default can be set using
+  :ref:`ANALYSIS_SET_VAR PARAMETERS <parameters_section>`.
+  Defaults to ``ADAPTIVE``.
 
 An example of a surface IRAP file in ASCII format is:
 
@@ -1698,21 +1705,45 @@ proportional to the identity matrix.
 * Saetrom, J. and Omre, H. (2010). "Ensemble Kalman filtering with shrinkage regression techniques", Computational Geosciences (online first).
 
 
+.. _parameters_section:
+
 PARAMETERS
 ^^^^^^^^^^
-The PARAMETERS keyword allows users to define a default update strategy for parameters based on the parameter type.
+The ``PARAMETERS`` module of ``ANALYSIS_SET_VAR`` allows you to set a default update strategy
+for all parameters of a given type. Individual ``UPDATE:`` options on parameter keywords
+(``FIELD``, ``GEN_KW``, ``SURFACE``) take precedence over the per-type default.
 
-DISTANCE
+The available strategies are:
 
-ADAPTIVE
+- ``ADAPTIVE`` — Use adaptive localization during the update step. This is the default
+  strategy for all parameter types.
+- ``DISTANCE`` — Use distance-based localization during the update step, which applies
+  spatial correlation to determine how strongly each observation influences each parameter.
 
+To set the default strategy for a parameter type:
 
 ::
+
         ANALYSIS_SET_VAR PARAMETERS FIELD DISTANCE
         ANALYSIS_SET_VAR PARAMETERS GEN_KW ADAPTIVE
+        ANALYSIS_SET_VAR PARAMETERS SURFACE DISTANCE
 
+For example, to use distance-based localization for all ``FIELD`` parameters while keeping
+adaptive localization for ``GEN_KW``:
 
+::
 
+        ANALYSIS_SET_VAR PARAMETERS FIELD DISTANCE
+
+        FIELD  PORO  PARAMETER  poro.grdecl  INIT_FILES:poro_%d.grdecl
+        FIELD  PERMX PARAMETER  permx.grdecl INIT_FILES:permx_%d.grdecl
+        GEN_KW COEFFS coeff_priors
+
+In this example both ``PORO`` and ``PERMX`` will use distance-based localization,
+while ``COEFFS`` will use adaptive localization (the default).
+
+A parameter can opt out of the update step entirely by setting ``UPDATE:NONE`` on the
+parameter keyword directly.
 
 
 
