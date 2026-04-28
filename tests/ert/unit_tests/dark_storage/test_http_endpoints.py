@@ -5,8 +5,12 @@ import re
 import pandas as pd
 import pytest
 from requests import Response
+from starlette.testclient import TestClient
 
+from ert.config._observations import SummaryObservation
+from ert.config._shapes import CircleShapeConfig, ShapeRegistry
 from ert.dark_storage.common import get_storage_api_version
+from ert.storage import open_storage
 
 
 @pytest.mark.slow
@@ -239,31 +243,60 @@ def test_get_experiment_observations(poly_example_tmp_dir, dark_storage_client):
     assert response_json[0]["radius"] == 5 * [None]
 
 
-@pytest.mark.slow
-def test_that_heat_equation_get_observations_with_locations(
-    symlink_heat_equation_storage_es, dark_storage_client_heat_equation
+def test_that_experiment_observations_endpoint_returns_localization(
+    tmp_path, monkeypatch, dark_storage_app
 ):
-    resp: Response = dark_storage_client_heat_equation.get("/experiments")
-    experiment_json = resp.json()
-    experiment_id = experiment_json[0]["id"]
+    storage_path = tmp_path / "storage"
+    with open_storage(storage_path, mode="w") as storage:
+        shape_registry = ShapeRegistry()
+        first_shape_id = shape_registry.register(
+            CircleShapeConfig(east=5.5, north=7.5, radius=15.0)
+        )
+        second_shape_id = shape_registry.register(
+            CircleShapeConfig(east=9.5, north=3.5, radius=20.0)
+        )
+        experiment = storage.create_experiment(
+            name="test-experiment",
+            experiment_config={
+                "observations": [
+                    SummaryObservation(
+                        name="OBSERVATION_1",
+                        value=1.23,
+                        error=0.1,
+                        key="FOPR",
+                        date="2010-05-13",
+                        shape_id=first_shape_id,
+                    ).model_dump(mode="json"),
+                    SummaryObservation(
+                        name="OBSERVATION_2",
+                        value=2.34,
+                        error=0.2,
+                        key="FGPR",
+                        date="2010-05-14",
+                        shape_id=second_shape_id,
+                    ).model_dump(mode="json"),
+                ],
+                "shape_registry": shape_registry.model_dump(mode="json"),
+            },
+        )
+        experiment.create_ensemble(name="prior", ensemble_size=1)
 
-    resp: Response = dark_storage_client_heat_equation.get(
-        f"/experiments/{experiment_id}/observations"
-    )
+    monkeypatch.setenv("ERT_STORAGE_ENS_PATH", str(storage_path))
+    with TestClient(dark_storage_app) as client:
+        resp: Response = client.get(f"/experiments/{experiment.id}/observations")
+
     response_json = resp.json()
-    assert len(response_json) == 48
+    assert len(response_json) == 2
 
-    obs_by_name = {obs["name"]: obs for obs in response_json}
+    observations_by_name = {obs["name"]: obs for obs in response_json}
 
-    obs = obs_by_name["HEAT_5_7_132"]
-    assert obs["east"] == [5.5]
-    assert obs["north"] == [7.5]
-    assert obs["radius"] == [15]
+    assert observations_by_name["OBSERVATION_1"]["east"] == [5.5]
+    assert observations_by_name["OBSERVATION_1"]["north"] == [7.5]
+    assert observations_by_name["OBSERVATION_1"]["radius"] == [15.0]
 
-    obs = obs_by_name["HEAT_5_3_10"]
-    assert obs["east"] == [5.5]
-    assert obs["north"] == [3.5]
-    assert obs["radius"] == [15]
+    assert observations_by_name["OBSERVATION_2"]["east"] == [9.5]
+    assert observations_by_name["OBSERVATION_2"]["north"] == [3.5]
+    assert observations_by_name["OBSERVATION_2"]["radius"] == [20.0]
 
 
 @pytest.mark.slow
