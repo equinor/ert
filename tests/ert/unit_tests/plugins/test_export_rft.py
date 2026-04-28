@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -48,28 +49,49 @@ def _create_rft_response_df(
     well: str = "WELL1",
     date: str = "2020-01-01",
     prop: str = "PRESSURE",
+    depth: float = 8000.0,
     value: float = 148.0,
-    east: float = 100.0,
-    north: float = 200.0,
-    tvd: float = 25.0,
-    zone: str | None = None,
+    i: int = 1,
+    j: int = 2,
+    k: int = 3,
 ) -> pl.DataFrame:
-    return pl.DataFrame(
+    time = datetime.strptime(date, "%Y-%m-%d").date()  # noqa: DTZ007
+    df = pl.DataFrame(
         {
             "response_key": [f"{well}:{date}:{prop}"],
             "well": [well],
             "date": [date],
             "property": [prop],
+            "time": [time],
+            "depth": pl.Series([depth], dtype=pl.Float32),
             "values": pl.Series([value], dtype=pl.Float32),
+            "well_connection_cell": pl.Series([(i, j, k)], dtype=pl.Array(pl.Int64, 3)),
+        }
+    )
+    return RFTConfig._assert_schema(df, RFTConfig.response_schema())
+
+
+def _create_rft_location_metadata_df(
+    *,
+    east: float = 100.0,
+    north: float = 200.0,
+    tvd: float = 25.0,
+    zone: str | None = None,
+    i: int = 1,
+    j: int = 2,
+    k: int = 3,
+) -> pl.DataFrame:
+    zones = [zone] if zone is not None else []
+    df = pl.DataFrame(
+        {
             "east": pl.Series([east], dtype=pl.Float32),
             "north": pl.Series([north], dtype=pl.Float32),
             "tvd": pl.Series([tvd], dtype=pl.Float32),
-            "zone": pl.Series([zone], dtype=pl.String),
-            "i": pl.Series([0], dtype=pl.Int32),
-            "j": pl.Series([0], dtype=pl.Int32),
-            "k": pl.Series([0], dtype=pl.Int32),
+            "actual_zones": pl.Series([zones], dtype=pl.List(pl.String)),
+            "well_connection_cell": pl.Series([(i, j, k)], dtype=pl.Array(pl.Int64, 3)),
         }
     )
+    return RFTConfig._assert_schema(df, RFTConfig.location_metadata_schema())
 
 
 def test_that_export_rft_job_is_registered_in_plugin_manager():
@@ -97,6 +119,9 @@ def test_that_export_rft_writes_csv_files_to_runpaths():
     with _create_rft_ensemble(ensemble_size=2) as ensemble:
         for i, (_, response) in enumerate(runpath_values):
             ensemble.save_response("rft", response, i)
+            ensemble.save_observation_location_metadata(
+                _create_rft_location_metadata_df(), i
+            )
 
         ExportRFTJob().run(
             _mock_runpath([str(rp) for rp, _ in runpath_values]), ensemble, []
@@ -122,7 +147,12 @@ def test_that_export_rft_uses_custom_filename():
     runpath0.mkdir()
 
     with _create_rft_ensemble(ensemble_size=1) as ensemble:
-        ensemble.save_response("rft", responses_real0, 0)
+        realization = 0
+        ensemble.save_response("rft", responses_real0, realization)
+        ensemble.save_observation_location_metadata(
+            _create_rft_location_metadata_df(),
+            realization,
+        )
 
         ExportRFTJob().run(_mock_runpath([str(runpath0)]), ensemble, ["custom_rft.csv"])
 

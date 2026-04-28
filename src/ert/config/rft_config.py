@@ -289,32 +289,15 @@ class RFTConfig(ResponseConfig):
         Points which were constrained to be in a given zone, but were not contained
         in that zone, is not labeled, and instead a warning is emitted.
         """
-        schema: dict[str, Any] = {
-            "response_key": pl.String,
-            "well": pl.String,
-            "date": pl.String,
-            "property": pl.String,
-            "time": pl.Date,
-            "depth": pl.Float32,
-            "values": pl.Float32,
-            "zone": pl.String,
-            "east": pl.Float32,
-            "north": pl.Float32,
-            "tvd": pl.Float32,
-            "i": pl.Int64,
-            "j": pl.Int64,
-            "k": pl.Int64,
-        }
-
         if not self.data_to_read:
-            return pl.DataFrame(schema=schema)
+            return pl.DataFrame(schema=self.response_schema())
 
         rft_filepath = self._rft_filepath(self.input_files[0], run_path, iens, iter_)
         rft_data: dict[tuple[WellName, datetime.date], RFTConfig.ValidRFTEntry]
         rft_data = self._scan_rft(rft_filepath)
 
         if not rft_data:
-            return pl.DataFrame(schema=schema)
+            return pl.DataFrame(schema=self.response_schema())
 
         try:
             df = pl.concat(
@@ -339,43 +322,11 @@ class RFTConfig(ResponseConfig):
                     if prop != "DEPTH" and len(vals) > 0
                 ]
             )
+            return df.pipe(self._assert_schema, self.response_schema())
         except KeyError as err:
             raise InvalidResponseFile(
                 f"Could not find {err.args[0]} in RFTFile {rft_filepath}"
             ) from err
-
-        df.pipe(self._assert_schema, self.response_schema())
-
-        pseudo_observations = pl.DataFrame(
-            {
-                "east": pl.Series(
-                    [location.point[0] for location in self._zoned_locations],
-                    dtype=pl.Float32,
-                ),
-                "north": pl.Series(
-                    [location.point[1] for location in self._zoned_locations],
-                    dtype=pl.Float32,
-                ),
-                "tvd": pl.Series(
-                    [location.point[2] for location in self._zoned_locations],
-                    dtype=pl.Float32,
-                ),
-                "zone": pl.Series(
-                    [location.zone_name for location in self._zoned_locations],
-                    dtype=pl.String,
-                ),
-            }
-        )
-
-        location_metadata = self._obtain_location_metadata(
-            run_path, iens, iter_, pseudo_observations
-        )
-
-        combined = self._combine_response_and_location_metadata(
-            df, pseudo_observations, location_metadata, iens, iter_
-        )
-
-        return combined.pipe(self._assert_schema, schema)
 
     @staticmethod
     def location_metadata_schema() -> dict[str, Any]:
@@ -387,7 +338,7 @@ class RFTConfig(ResponseConfig):
             "well_connection_cell": pl.Array(pl.Int64, 3),
         }
 
-    def _obtain_location_metadata(
+    def obtain_location_metadata(
         self,
         run_path: str,
         iens: int,
@@ -432,19 +383,16 @@ class RFTConfig(ResponseConfig):
         )
 
     @staticmethod
-    def _combine_response_and_location_metadata(
-        responses: pl.DataFrame,
+    def enrich_observations_with_metadata(
         observations: pl.DataFrame,
         location_metadata: pl.DataFrame,
-        iens: int,
-        iter_: int,
     ) -> pl.DataFrame:
         observations_with_metadata = observations.join(
             location_metadata,
             left_on=["east", "north", "tvd"],
             right_on=["east", "north", "tvd"],
             how="left",
-        ).select(
+        ).with_columns(
             [
                 pl.col("zone").alias("expected_zone"),
                 "east",
@@ -454,20 +402,27 @@ class RFTConfig(ResponseConfig):
                 "well_connection_cell",
             ]
         )
+        return observations_with_metadata
 
-        result = responses.join(
-            observations_with_metadata,
-            left_on="well_connection_cell",
-            right_on="well_connection_cell",
-            how="left",
+    @staticmethod
+    def is_zone_valid() -> pl.Expr:
+        return pl.col("expected_zone").is_null() | pl.col("expected_zone").is_in(
+            pl.col("actual_zones")
         )
 
-        is_zone_valid = pl.col("expected_zone").is_null() | pl.col(
-            "expected_zone"
-        ).is_in(pl.col("actual_zones"))
+    @staticmethod
+    def enrich_observations_with_metadata_and_warn_on_zone_mismatch(
+        observations: pl.DataFrame,
+        location_metadata: pl.DataFrame,
+        iens: int,
+        iter_: int,
+    ) -> pl.DataFrame:
+        observations_with_metadata = RFTConfig.enrich_observations_with_metadata(
+            observations, location_metadata
+        )
 
-        disabled_due_to_zone_mismatch = result.filter(
-            pl.col("expected_zone").is_not_null() & ~is_zone_valid
+        disabled_due_to_zone_mismatch = observations_with_metadata.filter(
+            pl.col("expected_zone").is_not_null() & ~RFTConfig.is_zone_valid()
         )
         for row in disabled_due_to_zone_mismatch.iter_rows(named=True):
             location = (row["east"], row["north"], row["tvd"])
@@ -480,21 +435,11 @@ class RFTConfig(ResponseConfig):
                 ),
                 stacklevel=2,
             )
-        result = result.filter(is_zone_valid)
-        return (
-            result.rename({"expected_zone": "zone"})
-            .with_columns(
-                [
-                    pl.col("east").cast(pl.Float32),
-                    pl.col("north").cast(pl.Float32),
-                    pl.col("tvd").cast(pl.Float32),
-                    pl.col("well_connection_cell").arr.get(0).alias("i"),
-                    pl.col("well_connection_cell").arr.get(1).alias("j"),
-                    pl.col("well_connection_cell").arr.get(2).alias("k"),
-                ]
-            )
-            .drop(["well_connection_cell", "actual_zones"])
+
+        result = observations_with_metadata.with_columns(
+            RFTConfig.is_zone_valid().alias("is_valid"),
         )
+        return result
 
     @property
     def response_type(self) -> str:
@@ -502,7 +447,7 @@ class RFTConfig(ResponseConfig):
 
     @property
     def match_key(self) -> list[str]:
-        return ["east", "north", "tvd", "zone"]
+        return ["well_connection_cell"]
 
     @property
     def index_key(self) -> list[str]:
