@@ -122,6 +122,7 @@ def analysis_EnIF(
     progress_callback(AnalysisStatusEvent(msg="Loading observations and responses.."))
     preprocessed_data = _preprocess_observations_and_responses(
         source_ensemble,
+        target_ensemble,
         selected_observations=observations,
         iens_active_index=iens_active_index,
         global_std_scaling=global_scaling,
