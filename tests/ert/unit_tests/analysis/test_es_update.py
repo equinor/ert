@@ -5,6 +5,7 @@ from unittest.mock import patch
 import numpy as np
 import polars as pl
 import pytest
+import xarray as xr
 from tabulate import tabulate
 
 from ert.analysis import (
@@ -22,11 +23,13 @@ from ert.analysis._update_commons import (
 from ert.analysis.event import AnalysisCompleteEvent
 from ert.config import (
     ESSettings,
+    Field,
     GenDataConfig,
     GenKwConfig,
     ObservationSettings,
     OutlierSettings,
 )
+from ert.field_utils import AxisOrientation, ErtboxParameters, FieldFileFormat
 from ert.storage import Ensemble, open_storage
 
 
@@ -1185,3 +1188,90 @@ def test_that_create_combined_ensemble_mask_handles_different_length_masks(
 ) -> None:
     result = _create_combined_ensemble_mask(ens_mask, active_realizations)
     np.testing.assert_array_equal(result, expected)
+
+
+def test_that_field_parameter_with_update_false_is_copied_to_posterior(
+    storage, uniform_parameter, obs
+):
+    ensemble_size = 4
+    nx, ny, nz = 2, 2, 1
+    field_config = Field(
+        name="MY_FIELD",
+        forward_init=False,
+        update=False,
+        ertbox_params=ErtboxParameters(
+            nx=nx,
+            ny=ny,
+            nz=nz,
+            xinc=1.0,
+            yinc=1.0,
+            origin=(0.0, 0.0),
+            rotation_angle=0.0,
+            axis_orientation=AxisOrientation.LEFT_HANDED,
+        ),
+        file_format=FieldFileFormat.ROFF,
+        forward_init_file="init_%d.roff",
+        output_file="field.roff",
+        grid_file="grid.grdecl",
+    )
+    response_config = GenDataConfig(keys=["RESPONSE"]).model_dump(mode="json")
+    experiment = storage.create_experiment(
+        name="ensemble_smoother",
+        experiment_config={
+            "parameter_configuration": [
+                uniform_parameter,
+                field_config.model_dump(mode="json"),
+            ],
+            "response_configuration": [response_config],
+            "observations": obs,
+        },
+    )
+    prior = storage.create_ensemble(
+        experiment,
+        ensemble_size=ensemble_size,
+        iteration=0,
+        name="prior",
+    )
+    rng = np.random.default_rng(1234)
+    genkw_frames = []
+    for iens in range(ensemble_size):
+        genkw_frames.append(
+            pl.DataFrame({"KEY_1": [rng.uniform(0, 1)], "realization": iens})
+        )
+        prior.save_parameters(
+            xr.DataArray(
+                rng.standard_normal((nx, ny, nz)).astype(np.float32),
+                name="values",
+                dims=["x", "y", "z"],
+            ).to_dataset(),
+            "MY_FIELD",
+            iens,
+        )
+        prior.save_response(
+            "gen_data",
+            pl.DataFrame(
+                {
+                    "response_key": "RESPONSE",
+                    "report_step": pl.Series([0] * 10, dtype=pl.UInt16),
+                    "index": pl.Series(range(10), dtype=pl.UInt16),
+                    "values": pl.Series(rng.uniform(0.8, 1, 10), dtype=pl.Float32),
+                }
+            ),
+            iens,
+        )
+    prior.save_parameters(pl.concat(genkw_frames, how="vertical"))
+
+    posterior = storage.create_ensemble(
+        prior.experiment_id,
+        ensemble_size=ensemble_size,
+        iteration=1,
+        name="posterior",
+        prior_ensemble=prior,
+    )
+    smoother_update(prior, posterior, ["OBSERVATION"], ObservationSettings())
+
+    for iens in range(ensemble_size):
+        xr.testing.assert_equal(
+            prior.load_parameters("MY_FIELD", iens),
+            posterior.load_parameters("MY_FIELD", iens),
+        )
