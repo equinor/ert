@@ -11,21 +11,27 @@ import numpy.typing as npt
 import pandas as pd
 import resfo
 import xtgeo
-from definition import Coordinate, obs_coordinates, obs_times
+from definition import (
+    Coordinate,
+    dx,
+    k_end,
+    k_start,
+    nx,
+    obs_coordinates,
+    obs_times,
+    room_temperature,
+    u_init,
+)
 from heat_equation import heat_equation, sample_prior_conductivity
 
 # Some seeds produce priors that yield poor results.
 # Worth playing around with.
 rng = np.random.default_rng(1234)
 
-NCOL = 10
-NROW = 10
-NLAY = 1
-
 
 def create_egrid_file():
     # create_box_grid defaults to flip=1, i.e., left-handed (origin at lower left)
-    grid = xtgeo.create_box_grid(dimension=(NCOL, NROW, NLAY))
+    grid = xtgeo.create_box_grid(dimension=(nx, nx, 1))
     grid.to_file("CASE.EGRID", "egrid")
 
 
@@ -59,7 +65,7 @@ def make_observations(
             # is due to a convention followed by matplotlib's `pcolormesh`
             # See documentation for details.
             value = field[k, coordinate.x, coordinate.y]
-            sd = error(value)
+            sd = max(error(value), 0.1)
             df_ = pd.DataFrame(
                 {
                     "k": [k],
@@ -70,7 +76,8 @@ def make_observations(
                 }
             )
             d = pd.concat([d, df_])
-    d = d.set_index(["k", "x", "y"], verify_integrity=True)
+    d = d.set_index(["k", "x", "y"])
+    assert d.index.is_unique
 
     return d
 
@@ -95,7 +102,7 @@ def generate_priors():
 
 
 START_DATE = datetime.date(2010, 1, 1)
-RADIUS = 15
+RADIUS = 20
 
 
 def create_summary_observations(df_obs: pd.DataFrame):
@@ -136,25 +143,9 @@ def create_summary_observations(df_obs: pd.DataFrame):
 if __name__ == "__main__":
     create_egrid_file()
 
-    # Number of grid-cells in x and y direction
-    nx = 10
-
-    # time steps
-    k_start = 0
-    k_end = 500
-
-    # Define initial condition, i.e., the initial temperature distribution.
-    # How you define initial conditions will effect the spread of results,
-    # i.e., how similar different realisations are.
-    u_init = np.zeros((k_end, nx, nx))
-    u_init[:, 5:7, 5:7] = 100
-
     cond_truth = sample_prior_conductivity(
         ensemble_size=1, nx=nx, rng=rng, corr_length=0.8
     ).reshape(nx, nx)
-
-    # Resolution in the x-direction (nothing to worry about really)
-    dx = 1
 
     # Calculate maximum `dt`.
     # If higher values are used, the numerical solution will become unstable.
@@ -164,7 +155,10 @@ if __name__ == "__main__":
     u_t = heat_equation(u_init, cond_truth, dx, dt, k_start, k_end, rng=rng)
 
     d = make_observations(
-        obs_coordinates, obs_times, u_t, lambda value: abs(0.05 * value)
+        obs_coordinates,
+        obs_times,
+        u_t,
+        lambda value: abs(0.1 * (value - room_temperature)),
     )
 
     generate_priors()

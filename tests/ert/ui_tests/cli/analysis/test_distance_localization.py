@@ -73,7 +73,7 @@ def test_that_distance_localization_reduces_posterior_variance():
         posterior = experiment.get_ensemble_by_name("iter-1")
 
         assert_stronger_variance_reduction_at_observation_location(
-            prior, posterior, "COND", obs_pos=(2, 2), unobserved_pos=(9, 9)
+            prior, posterior, "COND", obs_pos=(25, 25), unobserved_pos=(5, 5)
         )
 
         df_scalars_prior = prior.load_scalars()
