@@ -473,8 +473,6 @@ def calc_rho_for_2d_grid_layer(
     if yinc <= 0.0:
         raise ValueError("`yinc` must be positive")
 
-    # Center points of each grid cell in field parameter grid
-    x_local = (np.arange(nx) + 0.5) * xinc
     if axis_orientation == AxisOrientation.RIGHT_HANDED:
         # y coordinate decreases from max to min
         y_local = (np.arange(ny - 1, -1, -1) + 0.5) * yinc
@@ -493,7 +491,6 @@ def calc_rho_for_2d_grid_layer(
         if arr.ndim != 1:
             raise ValueError(f"`{name}` must be 1-D, got {arr.ndim}-D")
 
-    # Number of observations
     nobs = obs_xpos.shape[0]
     if obs_ypos.shape[0] != nobs:
         raise ValueError("Number of coordinates must match number of observations")
@@ -517,43 +514,43 @@ def calc_rho_for_2d_grid_layer(
             "All perpendicular-range values for all observations must be positive"
         )
 
-    # Build flattened grid coordinates directly, avoiding intermediate
-    # (nx, ny) arrays.
-    # With "ij" indexing, meshgrid followed by flatten is equivalent to:
-    #   x repeated ny times per x-value: [x0,x0,...,x1,x1,...,xn,xn,...]
-    #   y tiled nx times:                [y0,y1,...,y0,y1,...,y0,y1,...]
-    mesh_x_coord_flat = np.repeat(x_local, ny).reshape(-1, 1)  # (nx * ny, 1)
-    mesh_y_coord_flat = np.tile(y_local, nx).reshape(-1, 1)  # (nx * ny, 1)
-
     # Observation coordinates and parameters
-    obs_xpos = obs_xpos[np.newaxis, :]  # (1, nobs)
-    obs_ypos = obs_ypos[np.newaxis, :]  # (1, nobs)
-    obs_main_range = obs_main_range[np.newaxis, :]  # (1, nobs)
-    obs_perp_range = obs_perp_range[np.newaxis, :]  # (1, nobs)
-    obs_anisotropy_angle = obs_anisotropy_angle[np.newaxis, :]  # (1, nobs)
+    obs_xpos = obs_xpos[np.newaxis, np.newaxis, :]  # (1, 1, nobs)
+    obs_ypos = obs_ypos[np.newaxis, np.newaxis, :]  # (1, 1, nobs)
+    obs_main_range = obs_main_range[np.newaxis, np.newaxis, :]  # (1, 1, nobs)
+    obs_perp_range = obs_perp_range[np.newaxis, np.newaxis, :]  # (1, 1, nobs)
+    # (1, 1, nobs)
+    obs_anisotropy_angle = obs_anisotropy_angle[np.newaxis, np.newaxis, :]
 
-    # Compute displacement between grid points and observations
-    dX = mesh_x_coord_flat - obs_xpos  # (nx * ny, nobs)
-    dY = mesh_y_coord_flat - obs_ypos  # (nx * ny, nobs)
+    # Center points of each grid cell in field parameter grid
+    x_local = (np.arange(nx) + 0.5) * xinc
+
+    # Use 3D broadcasting to avoid allocating memory
+    x_local = x_local[:, np.newaxis, np.newaxis]  # (nx, 1, 1)
+    y_local = y_local[np.newaxis, :, np.newaxis]  # (1, ny, 1)
+
+    # Compute displacement in x and y directions between each grid point
+    # and each observation point.
+    dX = x_local - obs_xpos  # (nx, 1, nobs)
+    dY = y_local - obs_ypos  # (1, ny, nobs)
 
     # Compute rotation parameters
-    rotation = np.deg2rad(obs_anisotropy_angle)
-    cos_angle = np.cos(rotation)  # (1, nobs)
-    sin_angle = np.sin(rotation)  # (1, nobs)
+    rotation = np.deg2rad(obs_anisotropy_angle)  # (1, 1, nobs)
+    cos_angle = np.cos(rotation)  # (1, 1, nobs)
+    sin_angle = np.sin(rotation)  # (1, 1, nobs)
 
-    # Rotate and scale displacements to local coordinate system defined by
-    # the two half axes of the influence ellipse. First coordinate (local x)
-    # is in direction defined by anisotropy angle and local y is
-    # perpendicular to that.
-    # Scale the distance by the ranges to get a normalized distance
-    # (with value 1 at the edge of the ellipse)
-    dX_ellipse = (dX * cos_angle + dY * sin_angle) / obs_main_range  # (nx * ny, nobs)
-    dY_ellipse = (-dX * sin_angle + dY * cos_angle) / obs_perp_range  # (nx * ny, nobs)
+    # Rotate displacements into a coordinate system aligned with the semi-axes
+    # of the influence ellipse for each observation. The new x-axis aligns
+    # with the anisotropy angle, and the new y-axis is perpendicular to it.
+    # The rotated displacements are then scaled by the respective semi-axis
+    # lengths (ranges) so that points on the ellipse boundary have a distance of 1.
+    dX_ellipse = (dX * cos_angle + dY * sin_angle) / obs_main_range
+    dY_ellipse = (-dX * sin_angle + dY * cos_angle) / obs_perp_range
 
     # Compute distances in the elliptical coordinate system
-    distances = np.hypot(dX_ellipse, dY_ellipse)  # (nx * ny, nobs)
-    # Apply the scaling function
-    return gaspari_cohn(distances).reshape((nx, ny, nobs))
+    distances = np.hypot(dX_ellipse, dY_ellipse)  # (nx, ny, nobs)
+
+    return gaspari_cohn(distances)
 
 
 def transform_observation_locations(
