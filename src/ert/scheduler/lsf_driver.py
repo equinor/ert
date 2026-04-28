@@ -562,7 +562,7 @@ class LsfDriver(Driver):
                 exec_hosts=self._jobs[job_id].exec_hosts,
             )
         elif isinstance(new_state, FinishedJobSuccess):
-            logger.debug(
+            logger.info(
                 f"Realization {iens} (LSF-id: {self._iens2jobid[iens]}) succeeded"
             )
             event = FinishedEvent(
