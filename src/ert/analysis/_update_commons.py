@@ -70,7 +70,12 @@ def _copy_unupdated_parameters(
             else:
                 complete_df = complete_df.join(data, on="realization")
         else:
-            target_ensemble.save_parameters(dataset=data)
+            for realization in data.realizations.values:
+                target_ensemble.save_parameters(
+                    dataset=data,
+                    group=parameter_group,
+                    realization=int(realization),
+                )
 
     if complete_df is not None:
         target_ensemble.save_parameters(complete_df)
