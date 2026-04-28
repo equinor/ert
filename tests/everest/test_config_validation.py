@@ -221,6 +221,48 @@ def test_that_control_minimum_is_less_than_maximum(
 
 
 @pytest.mark.parametrize(
+    ("control_min", "control_max", "var_min", "var_max", "msg"),
+    [
+        (None, 1.0, None, 1.0, "min value"),
+        (0.0, None, 0.0, None, "max value"),
+        (None, None, None, None, "min and max values"),
+    ],
+)
+def test_that_control_minimum_or_maximum_is_defined(
+    control_min: float | None,
+    control_max: float | None,
+    var_min: float | None,
+    var_max: float | None,
+    msg: str,
+):
+    with pytest.raises(
+        ValueError,
+        match=(
+            rf"(?s).*Variable group_0.w00 must define {msg} "
+            r"either at control level or at variable level.*"
+        ),
+    ):
+        everest_config_with_defaults(
+            controls=[
+                {
+                    "name": "group_0",
+                    "min": control_min,
+                    "max": control_max,
+                    "perturbation_magnitude": 0.01,
+                    "variables": [
+                        {
+                            "name": "w00",
+                            "initial_guess": 0.5,
+                            "min": var_min,
+                            "max": var_max,
+                        },
+                    ],
+                }
+            ]
+        )
+
+
+@pytest.mark.parametrize(
     ("variables", "count"),
     [
         pytest.param(
@@ -398,18 +440,24 @@ def test_that_perturbation_magnitude_can_be_set_for_all_variables():
     )
 
 
-def test_that_invalid_control_undefined_fields():
+@pytest.mark.parametrize("var_guess", [None, []])
+def test_that_an_initial_guess_is_defined(var_guess: list | None):
     with pytest.raises(
         ValueError,
-        match=r"define min.* value.*define max*. value.*define initial_guess.* value",
+        match=(
+            r"(?s).*Variable group_0.w00 must define an initial_guess "
+            r"either at control level or at variable level.*"
+        ),
     ):
         everest_config_with_defaults(
             controls=[
                 {
                     "name": "group_0",
+                    "min": 0,
+                    "max": 1,
                     "perturbation_magnitude": 0.01,
                     "variables": [
-                        {"name": "w00"},
+                        {"name": "w00", "initial_guess": var_guess},
                     ],
                 }
             ]

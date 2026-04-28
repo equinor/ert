@@ -19,7 +19,7 @@ from everest.util.forward_models import (
 from .install_job_config import InstallForwardModelStepConfig
 
 _VARIABLE_ERROR_MESSAGE = (
-    "Variable {name} must define {variable_type} value either"
+    "Variable {name} must define {variable_type} either"
     " at control level or variable level"
 )
 
@@ -122,38 +122,50 @@ def control_variables_validation(
     max_: float | None,
     initial_guess: float | list[float] | None,
 ) -> list[str]:
-    error = []
-    if min_ is None:
-        error.append(_VARIABLE_ERROR_MESSAGE.format(name=name, variable_type="min"))
-    if max_ is None:
-        error.append(_VARIABLE_ERROR_MESSAGE.format(name=name, variable_type="max"))
-    if initial_guess is None:
-        error.append(
-            _VARIABLE_ERROR_MESSAGE.format(name=name, variable_type="initial_guess")
+    errors = []
+
+    msg: str | None
+    match (min_, max_):
+        case (None, None):
+            msg = "min and max values"
+        case (None, _):
+            msg = "min value"
+        case (_, None):
+            msg = "max value"
+        case _:
+            msg = None
+    if msg is not None:
+        errors.append(
+            f"Variable {name} must define {msg} either at "
+            "control level or at variable level"
         )
-    if error:
-        return error
+
+    if initial_guess is None or (isinstance(initial_guess, list) and not initial_guess):
+        errors.append(
+            f"Variable {name} must define an initial_guess either at "
+            "control level or at variable level"
+        )
+
+    if errors:
+        return errors
 
     assert min_ is not None
     assert max_ is not None
+
     if min_ >= max_:
         return [f"Control {name} must respect min < max: {min_} >= {max_}"]
 
+    assert initial_guess is not None
+
     if isinstance(initial_guess, float):
         initial_guess = [initial_guess]
-    if (
-        min_ is not None
-        and max_ is not None
-        and (
-            msg := ", ".join(
-                str(guess) for guess in initial_guess or [] if not min_ <= guess <= max_
-            )
-        )
+    if msg := ", ".join(
+        str(guess) for guess in initial_guess if not min_ <= guess <= max_
     ):
-        error.append(
+        return [
             f"Variable {name} must respect {min_} <= initial_guess <= {max_}: {msg}"
-        )
-    return error
+        ]
+    return []
 
 
 def no_dots_in_string(value: str) -> str:
