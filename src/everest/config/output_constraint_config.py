@@ -1,5 +1,5 @@
 from textwrap import dedent
-from typing import Any
+from typing import Any, Self
 
 import numpy as np
 from pydantic import BaseModel, Field, PositiveFloat, model_validator
@@ -71,22 +71,26 @@ class OutputConstraintConfig(BaseModel, extra="forbid"):
         ),
     )
 
-    @model_validator(mode="before")
-    @classmethod
-    def validate_target_or_bounds(cls, values: dict[str, Any]) -> dict[str, Any]:
-        if (values.get("target") is not None) and (
-            "lower_bound" in values or "upper_bound" in values
+    @model_validator(mode="after")
+    def validate_target_and_bounds(self) -> Self:
+        if self.target is not None and (
+            np.isfinite(self.lower_bound) or np.isfinite(self.upper_bound)
         ):
-            raise ValueError("Can not combine target and bounds")
-        elif not any(
-            (
-                (values.get("target") is not None),
-                "lower_bound" in values,
-                "upper_bound" in values,
-            )
+            raise ValueError("Cannot combine target and bounds")
+        if self.target is None and not (
+            np.isfinite(self.lower_bound) or np.isfinite(self.upper_bound)
         ):
             raise ValueError("Must provide target or lower_bound/upper_bound")
-        return values
+        return self
+
+    @model_validator(mode="after")
+    def validate_bounds(self) -> Self:
+        if self.target is None and (self.lower_bound >= self.upper_bound):
+            raise ValueError(
+                f"Error in output constraint {self.name}: lower_bound must be less "
+                f"than the upper_bound : {self.lower_bound} >= {self.upper_bound}"
+            )
+        return self
 
     @model_validator(mode="before")
     @classmethod

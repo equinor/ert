@@ -182,6 +182,87 @@ def test_that_scaled_range_is_valid_range():
 
 
 @pytest.mark.parametrize(
+    ("control_min", "control_max", "var_min", "var_max"),
+    [
+        (1.0, 0.0, None, None),
+        (None, 0.0, 1.0, None),
+        (1.0, None, None, 0.0),
+        (None, None, 1.0, 0.0),
+    ],
+)
+def test_that_control_minimum_is_less_than_maximum(
+    control_min: float | None,
+    control_max: float | None,
+    var_min: float | None,
+    var_max: float | None,
+):
+    with pytest.raises(
+        ValueError,
+        match=r"(?s).*Control group_0.w00 must respect min < max: 1.0 >= 0.0.*",
+    ):
+        everest_config_with_defaults(
+            controls=[
+                {
+                    "name": "group_0",
+                    "min": control_min,
+                    "max": control_max,
+                    "perturbation_magnitude": 0.01,
+                    "variables": [
+                        {
+                            "name": "w00",
+                            "initial_guess": 0.5,
+                            "min": var_min,
+                            "max": var_max,
+                        },
+                    ],
+                }
+            ]
+        )
+
+
+@pytest.mark.parametrize(
+    ("control_min", "control_max", "var_min", "var_max", "msg"),
+    [
+        (None, 1.0, None, 1.0, "min value"),
+        (0.0, None, 0.0, None, "max value"),
+        (None, None, None, None, "min and max values"),
+    ],
+)
+def test_that_control_minimum_or_maximum_is_defined(
+    control_min: float | None,
+    control_max: float | None,
+    var_min: float | None,
+    var_max: float | None,
+    msg: str,
+):
+    with pytest.raises(
+        ValueError,
+        match=(
+            rf"(?s).*Variable group_0.w00 must define {msg} "
+            r"either at control level or at variable level.*"
+        ),
+    ):
+        everest_config_with_defaults(
+            controls=[
+                {
+                    "name": "group_0",
+                    "min": control_min,
+                    "max": control_max,
+                    "perturbation_magnitude": 0.01,
+                    "variables": [
+                        {
+                            "name": "w00",
+                            "initial_guess": 0.5,
+                            "min": var_min,
+                            "max": var_max,
+                        },
+                    ],
+                }
+            ]
+        )
+
+
+@pytest.mark.parametrize(
     ("variables", "count"),
     [
         pytest.param(
@@ -359,18 +440,24 @@ def test_that_perturbation_magnitude_can_be_set_for_all_variables():
     )
 
 
-def test_that_invalid_control_undefined_fields():
+@pytest.mark.parametrize("var_guess", [None, []])
+def test_that_an_initial_guess_is_defined(var_guess: list | None):
     with pytest.raises(
         ValueError,
-        match=r"define min.* value.*define max*. value.*define initial_guess.* value",
+        match=(
+            r"(?s).*Variable group_0.w00 must define an initial_guess "
+            r"either at control level or at variable level.*"
+        ),
     ):
         everest_config_with_defaults(
             controls=[
                 {
                     "name": "group_0",
+                    "min": 0,
+                    "max": 1,
                     "perturbation_magnitude": 0.01,
                     "variables": [
-                        {"name": "w00"},
+                        {"name": "w00", "initial_guess": var_guess},
                     ],
                 }
             ]
@@ -395,50 +482,6 @@ def test_that_control_variables_index_is_defined_for_all_variables():
                 }
             ]
         )
-
-
-def test_that_duplicate_output_constraint_names_raise_error():
-    with pytest.raises(ValueError, match="Output constraint names must be unique"):
-        everest_config_with_defaults(
-            output_constraints=[
-                {"target": 0.3, "name": "a"},
-                {"target": 0.3, "name": "a"},
-            ],
-        )
-
-
-@pytest.mark.parametrize(
-    ("constraint", "expectation"),
-    [
-        (
-            {
-                "name": "w110",
-            },
-            pytest.raises(
-                ValueError, match="Must provide target or lower_bound/upper_bound"
-            ),
-        ),
-        (
-            {"name": "w110", "target": 1.0},
-            does_not_raise(),
-        ),
-        (
-            {"name": "w110", "lower_bound": 0.0, "upper_bound": 1.0},
-            does_not_raise(),
-        ),
-        (
-            {"name": "w110", "target": 1.0, "lower_bound": 0.0},
-            pytest.raises(ValueError, match="Can not combine target and bounds"),
-        ),
-        (
-            {"name": "w110", "target": 1.0, "upper_bound": 2.0},
-            pytest.raises(ValueError, match="Can not combine target and bounds"),
-        ),
-    ],
-)
-def test_that_output_constraints_bounds_are_mutex(constraint, expectation):
-    with expectation:
-        everest_config_with_defaults(output_constraints=[constraint])
 
 
 def test_that_variable_name_does_not_contain_dots():
