@@ -279,7 +279,7 @@ class ControlConfig(BaseModel):
         if error := list(
             chain.from_iterable(
                 control_variables_validation(
-                    variable.name,
+                    f"{self.name}.{variable.name}",
                     self.min if variable.min is None else variable.min,
                     self.max if variable.max is None else variable.max,
                     (
