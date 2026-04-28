@@ -35,44 +35,30 @@
       "0": {
         "shape_id": 0,
         "type": "circle",
-        "east": 5.5,
-        "north": 3.5,
-        "radius": 15.0
+        "east": 10.5,
+        "north": 25.5,
+        "radius": 20.0
       },
       "1": {
         "shape_id": 1,
         "type": "circle",
-        "east": 3.5,
-        "north": 5.5,
-        "radius": 15.0
+        "east": 25.5,
+        "north": 10.5,
+        "radius": 20.0
       },
       "2": {
         "shape_id": 2,
         "type": "circle",
-        "east": 5.5,
-        "north": 7.5,
-        "radius": 15.0
+        "east": 40.5,
+        "north": 25.5,
+        "radius": 20.0
       },
       "3": {
         "shape_id": 3,
         "type": "circle",
-        "east": 7.5,
-        "north": 5.5,
-        "radius": 15.0
-      },
-      "4": {
-        "shape_id": 4,
-        "type": "circle",
-        "east": 2.5,
-        "north": 2.5,
-        "radius": 15.0
-      },
-      "5": {
-        "shape_id": 5,
-        "type": "circle",
-        "east": 7.5,
-        "north": 2.5,
-        "radius": 15.0
+        "east": 25.5,
+        "north": 40.5,
+        "radius": 20.0
       }
     }
   },
