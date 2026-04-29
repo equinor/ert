@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from PyQt6.QtCore import pyqtSignal as Signal
-from PyQt6.QtWidgets import QComboBox, QStackedWidget, QTabWidget, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QTabWidget, QVBoxLayout, QWidget
 
 from _ert.hook_runtime import HookRuntime
 
@@ -99,79 +99,3 @@ class IterationWidget(QWidget):
             return 40
 
         return 100
-
-
-class IterationsWidget(QWidget):
-    currentPageChanged = Signal()
-
-    def __init__(self, parent: QWidget | None = None) -> None:
-        super().__init__(parent)
-        self._selector = QComboBox(self)
-        self._selector.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
-        self._stack = QStackedWidget(self)
-        self._pages: dict[tuple[int, bool], IterationWidget] = {}
-
-        self._selector.currentIndexChanged.connect(self._stack.setCurrentIndex)
-        self._selector.currentIndexChanged.connect(
-            lambda _index: self.currentPageChanged.emit()
-        )
-
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._selector)
-        layout.addWidget(self._stack)
-
-    def current_page(self) -> IterationWidget | None:
-        widget = self._stack.currentWidget()
-        return widget if isinstance(widget, IterationWidget) else None
-
-    def current_widget(self) -> QWidget | None:
-        page = self.current_page()
-        return page.current_widget() if page is not None else None
-
-    def ensure_run_page(self, iteration: int) -> IterationWidget:
-        return self._ensure_page(iteration, is_update=False)
-
-    def ensure_update_page(self, iteration: int) -> IterationWidget:
-        return self._ensure_page(iteration, is_update=True)
-
-    def set_current_page(self, page: IterationWidget) -> None:
-        index = self._stack.indexOf(page)
-        if index >= 0:
-            self._selector.setCurrentIndex(index)
-
-    def _ensure_page(self, iteration: int, is_update: bool) -> IterationWidget:
-        key = (iteration, is_update)
-        existing = self._pages.get(key)
-        if existing is not None:
-            return existing
-
-        page = IterationWidget(iteration, self)
-        page.currentTabChanged.connect(self.currentPageChanged)
-
-        insert_at = self._stack.count()
-        for index in range(self._stack.count()):
-            existing_widget = self._stack.widget(index)
-            if not isinstance(existing_widget, IterationWidget):
-                continue
-
-            existing_key = self._page_key(existing_widget)
-            if existing_key is not None and existing_key > key:
-                insert_at = index
-                break
-
-        self._pages[key] = page
-        self._stack.insertWidget(insert_at, page)
-        self._selector.insertItem(insert_at, self._page_title(iteration, is_update))
-        self.set_current_page(page)
-        return page
-
-    def _page_key(self, page: IterationWidget) -> tuple[int, bool] | None:
-        for key, widget in self._pages.items():
-            if widget is page:
-                return key
-        return None
-
-    @staticmethod
-    def _page_title(iteration: int, is_update: bool) -> str:
-        return f"update-{iteration}" if is_update else f"iteration-{iteration}"
