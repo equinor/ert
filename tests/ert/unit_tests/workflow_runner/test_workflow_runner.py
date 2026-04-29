@@ -3,9 +3,9 @@ from textwrap import dedent
 from unittest.mock import patch
 
 import pytest
-from ert.config.parsing.hook_runtime import HookRuntime
 
 from _ert.events import WorkflowFinishedEvent, WorkflowStartedEvent
+from _ert.hook_runtime import HookRuntime
 from ert.config import ConfigWarning, Workflow
 from ert.config.workflow_job import (
     ExecutableWorkflow,

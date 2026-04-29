@@ -38,6 +38,7 @@ from ert.gui.experiments.ensemble_smoother_panel import EnsembleSmootherPanel
 from ert.gui.experiments.multiple_data_assimilation_panel import (
     MultipleDataAssimilationPanel,
 )
+from ert.gui.experiments.view.iteration import IterationWidget
 from ert.gui.experiments.view.realization import RealizationWidget
 from ert.gui.experiments.view.runpath_progress_widget import RunpathProgressWidget
 from ert.gui.main import GUILogHandler, _setup_main_window
@@ -520,9 +521,10 @@ def test_run_dialog_memory_usage_showing(
         lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
     )
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=5000)
-
+    iteration_widget = run_dialog._tab_widget.widget(0)
+    assert type(iteration_widget) is IterationWidget
     # This is the container of realization boxes
-    realization_box = run_dialog._tab_widget.widget(0)
+    realization_box = iteration_widget._tab_widget.widget(0)
     assert type(realization_box) is RealizationWidget
     # Click the first realization box
     qtbot.mouseClick(realization_box, Qt.MouseButton.LeftButton)
@@ -621,9 +623,10 @@ def test_run_dialog_fm_label_show_correct_info(
         lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
     )
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=5000)
-
+    iteration_widget = run_dialog._tab_widget.widget(0)
+    assert type(iteration_widget) is IterationWidget
     # This is the container of realization boxes
-    realization_box = run_dialog._tab_widget.widget(0)
+    realization_box = iteration_widget._tab_widget.widget(0)
     assert type(realization_box) is RealizationWidget
     # Click the first realization box
     qtbot.mouseClick(realization_box, Qt.MouseButton.LeftButton)
@@ -894,7 +897,8 @@ def test_forward_model_overview_label_selected_on_tab_change(
     events, event_queue, tab_widget_count, qtbot: QtBot, run_dialog
 ):
     def qt_bot_click_realization(realization_index: int, iteration: int) -> None:
-        view = run_dialog._tab_widget.widget(iteration)._real_view
+        iteration_widget: IterationWidget = run_dialog._tab_widget.widget(iteration)
+        view = iteration_widget._tab_widget.widget(0)._real_view
         model_index = view.model().index(realization_index, 0)
         view.scrollTo(model_index)
         rect = view.visualRect(model_index)
@@ -1177,5 +1181,7 @@ def test_that_runpath_creation_events_add_update_and_remove_tab(qtbot: QtBot) ->
     queue.put(EndEvent(failed=False, msg=""))
 
     qtbot.waitUntil(lambda: dialog._tab_widget.count() == 1, timeout=2000)
-    assert isinstance(dialog._tab_widget.widget(0), RealizationWidget)
+    iteration_widget: IterationWidget = dialog._tab_widget.widget(0)
+
+    assert isinstance(iteration_widget._tab_widget.widget(0), RealizationWidget)
     qtbot.waitUntil(dialog.is_experiment_done, timeout=2000)
