@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import Field
 
 from ert.run_models import EnsembleExperiment
@@ -10,11 +12,12 @@ SINGLE_TEST_RUN_GROUP = "Forward model evaluation"
 
 
 class SingleTestRunConfig(EnsembleExperimentConfig):
+    type: Literal["single_test_run"] = "single_test_run"
     active_realizations: list[bool] = Field(default_factory=lambda: [True])
     minimum_required_realizations: int = 1
 
 
-class SingleTestRun(EnsembleExperiment, SingleTestRunConfig):
+class SingleTestRun(SingleTestRunConfig, EnsembleExperiment):
     """
     Single test is equivalent to EnsembleExperiment, in that it
     samples the prior and evaluates it.<br>There are two key differences:<br>

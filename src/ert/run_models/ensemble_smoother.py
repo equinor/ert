@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Literal
 
 import numpy as np
 from pydantic import PrivateAttr
@@ -23,7 +24,8 @@ from .run_model import ErtRunError, ExperimentType
 logger = logging.getLogger(__name__)
 
 
-class EnsembleSmootherConfig(InitialEnsembleRunModelConfig, UpdateRunModelConfig): ...
+class EnsembleSmootherConfig(InitialEnsembleRunModelConfig, UpdateRunModelConfig):
+    type: Literal["ensemble_smoother"] = "ensemble_smoother"
 
 
 class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmootherConfig):
