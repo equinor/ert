@@ -7,7 +7,7 @@ from _ert.hook_runtime import HookRuntime
 
 from .realization import RealizationWidget
 from .update import UpdateWidget
-from .workflow import WorkflowWidget, workflow_tab_title
+from .workflow import WorkflowWidget
 
 
 class IterationWidget(QWidget):
@@ -66,10 +66,9 @@ class IterationWidget(QWidget):
 
         widget = WorkflowWidget(
             hook,
-            iteration=self.iteration,
             workflow_names=workflow_names,
             parent=self,
         )
-        self._tab_widget.addTab(widget, workflow_tab_title(hook))
+        self._tab_widget.addTab(widget, hook.workflow_tab_title())
         self._tab_widget.setCurrentWidget(widget)
         return widget

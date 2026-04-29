@@ -93,7 +93,6 @@ from .view import (
     RunpathProgressWidget,
     UpdateWidget,
     WorkflowWidget,
-    workflow_tab_title,
 )
 from .view.disk_space_widget import MountType
 
@@ -757,17 +756,15 @@ class RunDialog(QFrame):
             if (
                 isinstance(existing_widget, WorkflowWidget)
                 and existing_widget.hook == hook
-                and existing_widget.iteration == iteration
             ):
                 return existing_widget
 
         widget = WorkflowWidget(
             hook,
-            iteration=iteration,
             workflow_names=workflow_names,
             parent=self,
         )
-        tab_index = self._tab_widget.addTab(widget, workflow_tab_title(hook, iteration))
+        tab_index = self._tab_widget.addTab(widget, hook.workflow_tab_title())
         self._tab_widget.setCurrentIndex(tab_index)
         return widget
 

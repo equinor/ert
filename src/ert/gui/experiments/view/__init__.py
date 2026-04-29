@@ -4,7 +4,7 @@ from .progress_widget import ProgressWidget
 from .realization import RealizationWidget
 from .runpath_progress_widget import RunpathProgressWidget
 from .update import UpdateWidget
-from .workflow import WorkflowWidget, workflow_tab_title
+from .workflow import WorkflowWidget
 
 __all__ = [
     "DiskSpaceWidget",
@@ -14,5 +14,4 @@ __all__ = [
     "RunpathProgressWidget",
     "UpdateWidget",
     "WorkflowWidget",
-    "workflow_tab_title",
 ]

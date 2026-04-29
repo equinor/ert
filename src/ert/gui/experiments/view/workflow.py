@@ -25,38 +25,18 @@ _STATUS_TO_BACKGROUND = {
 _ROW_FOREGROUND = QColor(Qt.GlobalColor.black)
 
 
-def workflow_tab_title(hook: HookRuntime, iteration: int | None = None) -> str:
-    title = {
-        HookRuntime.PRE_EXPERIMENT: "Pre-experiment workflows",
-        HookRuntime.POST_EXPERIMENT: "Post-experiment workflows",
-        HookRuntime.PRE_SIMULATION: "Pre-simulation workflows",
-        HookRuntime.POST_SIMULATION: "Post-simulation workflows",
-        HookRuntime.PRE_FIRST_UPDATE: "Pre-first-update workflows",
-        HookRuntime.PRE_UPDATE: "Pre-update workflows",
-        HookRuntime.POST_UPDATE: "Post-update workflows",
-    }[hook]
-    if iteration is None:
-        return title
-
-    return f"{title} for iteration {iteration}"
-
-
 class WorkflowWidget(QWidget):
     def __init__(
         self,
         hook: HookRuntime,
-        iteration: int | None = None,
         workflow_names: list[str] | None = None,
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
         self.hook = hook
-        self.iteration = iteration
         self._rows_by_name: dict[str, list[int]] = {}
 
-        self._status_label = QLabel(
-            f"{workflow_tab_title(self.hook, self.iteration)} queued"
-        )
+        self._status_label = QLabel(f"{self.hook.workflow_tab_title()} queued")
 
         self._table = QTableWidget(0, 4, self)
         self._table.setHorizontalHeaderLabels(
@@ -92,9 +72,7 @@ class WorkflowWidget(QWidget):
         for workflow_name in workflow_names:
             self._set_row(workflow_name, "Pending")
         self._resize_columns()
-        self._status_label.setText(
-            f"{workflow_tab_title(self.hook, self.iteration)} running"
-        )
+        self._status_label.setText(f"{self.hook.workflow_tab_title()} running")
 
     def start_workflow(self, workflow_name: str) -> None:
         row = self._match_row(workflow_name, preferred_statuses=("Pending",))
@@ -128,9 +106,7 @@ class WorkflowWidget(QWidget):
                     self._set_status(row, "Not run")
 
         outcome = "completed" if status == "success" else "failed"
-        self._status_label.setText(
-            f"{workflow_tab_title(self.hook, self.iteration)} {outcome}"
-        )
+        self._status_label.setText(f"{self.hook.workflow_tab_title()} {outcome}")
 
     def workflow_status(self, workflow_name: str, occurrence: int = 0) -> str:
         row = self._row_for_name(workflow_name, occurrence)
