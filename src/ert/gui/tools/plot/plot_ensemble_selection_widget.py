@@ -57,6 +57,13 @@ class EnsembleSelectionWidget(QWidget):
             self.ensembleSelectionChanged.emit
         )
 
+    def apply_ensemble_filter(
+        self, require_func_eval: bool, require_gradient: bool
+    ) -> None:
+        self._selected_ensembles.apply_ensemble_filter(
+            require_func_eval, require_gradient
+        )
+
     def get_selected_ensembles(self) -> list[EnsembleObject]:
         return self._selected_ensembles.get_checked_ensembles()
 
@@ -117,6 +124,25 @@ class EnsembleSelectListWidget(QListWidget):
         self.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
         self.setItemDelegate(CustomItemDelegate())
         self.itemClicked.connect(self.slot_toggle_plot)
+
+    def apply_ensemble_filter(
+        self, require_func_eval: bool, require_gradient: bool
+    ) -> None:
+        for index in range(self._ensemble_count):
+            item = self.item(index)
+            assert item is not None
+            ensemble: EnsembleObject = item.data(
+                EnsembleSelectListWidgetItemDataRole.ENSEMBLE
+            )
+            hidden = (require_func_eval and not ensemble.has_func_eval) or (
+                require_gradient and not ensemble.has_gradient
+            )
+            item.setHidden(hidden)
+            if hidden and item.data(Qt.ItemDataRole.CheckStateRole):
+                self.release_color(
+                    item.data(EnsembleSelectListWidgetItemDataRole.COLOR_INDEX)
+                )
+                item.setData(Qt.ItemDataRole.CheckStateRole, False)
 
     def get_checked_ensembles(self) -> list[EnsembleObject]:
         def _iter() -> Iterator[EnsembleObject]:
