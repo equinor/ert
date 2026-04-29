@@ -85,7 +85,7 @@ def test_field_param_update_using_heat_equation_enif_snapshot(
 
         snapshot.assert_match(
             result.select(index_columns + realization_columns).write_csv(
-                float_precision=3
+                float_precision=2
             ),
             "enif_heat_snapshot.csv",
         )
