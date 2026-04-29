@@ -867,7 +867,6 @@ class RunModel(RunModelConfig, ABC):
                 workflow_names=workflow_names,
             )
         )
-        workflow_failed = False
         for workflow in workflows:
             try:
                 WorkflowRunner(
@@ -879,17 +878,24 @@ class RunModel(RunModelConfig, ABC):
                     send_event=self._status_queue.put,
                 ).run_blocking()
             except Exception as e:
-                workflow_failed = True
                 logger.exception(
                     f"Workflow {workflow.src_file} failed with exception: {e}"
                 )
-                break
+                self._status_queue.put(
+                    WorkflowBatchFinishedEvent(
+                        hook=fixtures.hook,
+                        iteration=workflow_iteration,
+                        workflow_names=workflow_names,
+                        status="failure",
+                    )
+                )
+                raise
         self._status_queue.put(
             WorkflowBatchFinishedEvent(
                 hook=fixtures.hook,
                 iteration=workflow_iteration,
                 workflow_names=workflow_names,
-                status="failure" if workflow_failed else "success",
+                status="success",
             )
         )
 

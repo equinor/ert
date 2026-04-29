@@ -29,6 +29,7 @@ from ert.config import ErtConfig
 from ert.gui.ertwidgets import ClosableDialog, CreateExperimentDialog, EnsembleSelector
 from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.gui.experiments.view import RealizationWidget
+from ert.gui.experiments.view.iteration import IterationWidget
 from ert.gui.main import ErtMainWindow, _setup_main_window, add_gui_log_handler
 from ert.gui.tools.load_results.load_results_panel import LoadResultsPanel
 from ert.gui.tools.manage_experiments import ManageExperimentsPanel
@@ -326,7 +327,9 @@ def run_experiment_fixture(request):
             if check_realizations:
                 # Assert that the number of boxes in the detailed view is
                 # equal to the number of realizations
-                realization_widget = run_dialog._tab_widget.currentWidget()
+                iteration_widget = run_dialog._tab_widget.currentWidget()
+                assert isinstance(iteration_widget, IterationWidget)
+                realization_widget = iteration_widget._tab_widget.currentWidget()
                 assert isinstance(realization_widget, RealizationWidget)
                 list_model = realization_widget._real_view.model()
                 expected_num_realizations = (
