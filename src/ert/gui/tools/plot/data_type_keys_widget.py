@@ -25,6 +25,7 @@ _EVEREST_GROUP_ORDER = [
     "everest_objectives",
     "everest_parameters",
     "everest_constraints",
+    "gen_data",
     "summary",
 ]
 
@@ -33,7 +34,8 @@ _EVEREST_GROUP_LABELS: dict[str, str] = {
     "everest_constraints": "Constraints",
     "everest_objectives": "Objectives",
     "everest_parameters": "Controls",
-    "summary": "Summary vectors",
+    "gen_data": "Generic results",
+    "summary": "Summary results",
 }
 
 
