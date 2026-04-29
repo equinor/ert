@@ -452,5 +452,6 @@
       "shape_id": null
     }
   ],
+  "type": "ensemble_smoother",
   "experiment_type": "Ensemble Smoother"
 }
