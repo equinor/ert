@@ -7,8 +7,11 @@ from pydantic import BaseModel, ConfigDict, field_serializer, field_validator
 from .snapshot import EnsembleSnapshot
 
 
-class _UpdateEvent(BaseModel):
+class BaseEvent(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
+
+
+class _UpdateEvent(BaseEvent):
     iteration_label: str
     total_iterations: int
     progress: float
@@ -43,19 +46,17 @@ class SnapshotUpdateEvent(_UpdateEvent):
     event_type: Literal["SnapshotUpdateEvent"] = "SnapshotUpdateEvent"
 
 
-class StartEvent(BaseModel):
+class StartEvent(BaseEvent):
     event_type: Literal["StartEvent"] = "StartEvent"
     timestamp: datetime
 
 
-class EndEvent(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
+class EndEvent(BaseEvent):
     event_type: Literal["EndEvent"] = "EndEvent"
     failed: bool
     msg: str
 
 
-class WarningEvent(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
+class WarningEvent(BaseEvent):
     event_type: Literal["WarningEvent"] = "WarningEvent"
     msg: str
