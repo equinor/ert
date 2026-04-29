@@ -21,10 +21,11 @@ from .plot_api import PlotApiKeyDefinition
 from .widgets import FilterPopup
 
 _EVEREST_GROUP_ORDER = [
-    "everest_objectives",
     "everest_batch_objectives",
-    "everest_constraints",
+    "everest_objectives",
     "everest_parameters",
+    "everest_constraints",
+    "summary",
 ]
 
 _EVEREST_GROUP_LABELS: dict[str, str] = {
