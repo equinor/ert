@@ -37,7 +37,7 @@ class EnsembleSmoother(InitialEnsembleRunModel, UpdateRunModel, EnsembleSmoother
     ) -> None:
         self.log_at_startup()
         if rerun_failed_realizations:
-            raise ErtRunError("Ensemble Information Filter does not support restart")
+            raise ErtRunError("Ensemble Smoother does not support restart")
 
         self.run_workflows(fixtures=PreExperimentFixtures(random_seed=self.random_seed))
 
