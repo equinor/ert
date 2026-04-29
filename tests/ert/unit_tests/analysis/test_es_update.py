@@ -1198,7 +1198,7 @@ def test_that_field_parameter_with_update_false_is_copied_to_posterior(
     field_config = Field(
         name="MY_FIELD",
         forward_init=False,
-        update=False,
+        update=None,
         ertbox_params=ErtboxParameters(
             nx=nx,
             ny=ny,
