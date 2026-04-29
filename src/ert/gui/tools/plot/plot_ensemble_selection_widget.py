@@ -57,6 +57,13 @@ class EnsembleSelectionWidget(QWidget):
             self.ensembleSelectionChanged.emit
         )
 
+    def apply_ensemble_filtering(
+        self, require_func_eval: bool, require_gradient: bool
+    ) -> None:
+        self._selected_ensembles.apply_ensemble_filtering(
+            require_func_eval, require_gradient
+        )
+
     def get_selected_ensembles(self) -> list[EnsembleObject]:
         return self._selected_ensembles.get_checked_ensembles()
 
@@ -118,11 +125,34 @@ class EnsembleSelectListWidget(QListWidget):
         self.setItemDelegate(CustomItemDelegate())
         self.itemClicked.connect(self.slot_toggle_plot)
 
+    def apply_ensemble_filtering(
+        self, require_func_eval: bool, require_gradient: bool
+    ) -> None:
+        for index in range(self._ensemble_count):
+            if (item := self.item(index)) is None:
+                raise ValueError(
+                    f"Expected ensemble at index {index} in ensemble selection list"
+                )
+            ensemble: EnsembleObject = item.data(
+                EnsembleSelectListWidgetItemDataRole.ENSEMBLE
+            )
+            hidden = (require_func_eval and not ensemble.has_func_eval) or (
+                require_gradient and not ensemble.has_gradient
+            )
+            item.setHidden(hidden)
+            if hidden and item.data(Qt.ItemDataRole.CheckStateRole):
+                self.release_color(
+                    item.data(EnsembleSelectListWidgetItemDataRole.COLOR_INDEX)
+                )
+                item.setData(Qt.ItemDataRole.CheckStateRole, False)
+
     def get_checked_ensembles(self) -> list[EnsembleObject]:
         def _iter() -> Iterator[EnsembleObject]:
             for index in range(self._ensemble_count):
-                item = self.item(index)
-                assert item is not None
+                if (item := self.item(index)) is None:
+                    raise ValueError(
+                        f"Expected ensemble at index {index} in ensemble selection list"
+                    )
                 if item.data(Qt.ItemDataRole.CheckStateRole):
                     yield item.data(EnsembleSelectListWidgetItemDataRole.ENSEMBLE)
 
@@ -131,8 +161,10 @@ class EnsembleSelectListWidget(QListWidget):
     def get_checked_color_indexes(self) -> list[int]:
         def _iter() -> Iterator[int]:
             for index in range(self._ensemble_count):
-                item = self.item(index)
-                assert item is not None
+                if (item := self.item(index)) is None:
+                    raise ValueError(
+                        f"Expected ensemble at index {index} in ensemble selection list"
+                    )
                 if item.data(Qt.ItemDataRole.CheckStateRole):
                     yield item.data(EnsembleSelectListWidgetItemDataRole.COLOR_INDEX)
 

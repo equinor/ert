@@ -327,7 +327,17 @@ class PlotWindow(QMainWindow):
 
         is_gradient_plot = plot_widget.name == EVEREST_GRADIENTS_PLOT
         is_controls_plot = plot_widget.name == EVEREST_CONTROLS_PLOT
+        is_objective_plot = plot_widget.name in {
+            EVEREST_BATCH_OBJECTIVE_FUNCTION_PLOT,
+            EVEREST_OBJECTIVE_FUNCTION_PLOT,
+        }
+        is_everest_ensemble = plot_widget.name == ENSEMBLE and self.is_everest
         self._everest_dock.setVisible(is_gradient_plot or is_controls_plot)
+
+        self._ensemble_selection_widget.apply_ensemble_filtering(
+            require_func_eval=is_objective_plot or is_everest_ensemble,
+            require_gradient=is_gradient_plot,
+        )
 
         if (
             plot_widget._plotter.dimensionality == key_def.dimensionality

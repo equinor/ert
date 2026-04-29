@@ -154,6 +154,8 @@ def test_get_summary_response(
     expected_userdata = {
         "name": "default_0",
         "experiment_name": "ensemble-experiment",
+        "has_func_eval": False,
+        "has_gradient": False,
     }
     assert all(
         userdata[key] == expected_userdata[key]
