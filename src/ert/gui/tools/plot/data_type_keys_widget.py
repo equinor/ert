@@ -28,10 +28,11 @@ _EVEREST_GROUP_ORDER = [
 ]
 
 _EVEREST_GROUP_LABELS: dict[str, str] = {
-    "everest_objectives": "Objectives",
     "everest_batch_objectives": "Aggregated objective values",
     "everest_constraints": "Constraints",
+    "everest_objectives": "Objectives",
     "everest_parameters": "Controls",
+    "summary": "Summary vectors",
 }
 
 
