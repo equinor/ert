@@ -15,7 +15,7 @@ class IterationWidget(QWidget):
 
     def __init__(self, iteration: int, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self._iteration = iteration
+        self.iteration = iteration
         self._tab_widget = QTabWidget(self)
         self._tab_widget.currentChanged.connect(
             lambda _index: self.currentTabChanged.emit()
@@ -24,10 +24,6 @@ class IterationWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._tab_widget)
-
-    @property
-    def iteration(self) -> int:
-        return self._iteration
 
     def current_widget(self) -> QWidget | None:
         return self._tab_widget.currentWidget()
@@ -38,7 +34,7 @@ class IterationWidget(QWidget):
             if isinstance(widget, RealizationWidget):
                 return widget
 
-        widget = RealizationWidget(self._iteration, self)
+        widget = RealizationWidget(self.iteration, self)
         self._insert_tab(widget, "Run", self._tab_order(widget))
         return widget
 
@@ -48,7 +44,7 @@ class IterationWidget(QWidget):
             if isinstance(widget, UpdateWidget):
                 return widget
 
-        widget = UpdateWidget(self._iteration, self)
+        widget = UpdateWidget(self.iteration, self)
         self._insert_tab(widget, "Update", self._tab_order(widget))
         return widget
 
@@ -64,7 +60,7 @@ class IterationWidget(QWidget):
 
         widget = WorkflowWidget(
             hook,
-            iteration=self._iteration,
+            iteration=self.iteration,
             workflow_names=workflow_names,
             parent=self,
         )

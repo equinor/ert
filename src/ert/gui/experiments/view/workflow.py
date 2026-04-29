@@ -50,11 +50,13 @@ class WorkflowWidget(QWidget):
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
-        self._hook = hook
-        self._iteration = iteration
+        self.hook = hook
+        self.iteration = iteration
         self._rows_by_name: dict[str, list[int]] = {}
 
-        self._status_label = QLabel(f"{workflow_tab_title(hook, iteration)} queued")
+        self._status_label = QLabel(
+            f"{workflow_tab_title(self.hook, self.iteration)} queued"
+        )
 
         self._table = QTableWidget(0, 4, self)
         self._table.setHorizontalHeaderLabels(
@@ -84,14 +86,6 @@ class WorkflowWidget(QWidget):
         if workflow_names:
             self.set_workflows(workflow_names)
 
-    @property
-    def hook(self) -> HookRuntime:
-        return self._hook
-
-    @property
-    def iteration(self) -> int | None:
-        return self._iteration
-
     def set_workflows(self, workflow_names: list[str]) -> None:
         self._rows_by_name.clear()
         self._table.setRowCount(0)
@@ -99,7 +93,7 @@ class WorkflowWidget(QWidget):
             self._set_row(workflow_name, "Pending")
         self._resize_columns()
         self._status_label.setText(
-            f"{workflow_tab_title(self._hook, self._iteration)} running"
+            f"{workflow_tab_title(self.hook, self.iteration)} running"
         )
 
     def start_workflow(self, workflow_name: str) -> None:
@@ -135,7 +129,7 @@ class WorkflowWidget(QWidget):
 
         outcome = "completed" if status == "success" else "failed"
         self._status_label.setText(
-            f"{workflow_tab_title(self._hook, self._iteration)} {outcome}"
+            f"{workflow_tab_title(self.hook, self.iteration)} {outcome}"
         )
 
     def workflow_status(self, workflow_name: str, occurrence: int = 0) -> str:
