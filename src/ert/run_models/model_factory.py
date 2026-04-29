@@ -3,9 +3,10 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 from queue import SimpleQueue
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated
 
 import numpy as np
+from pydantic import Field
 
 from ert.config import (
     ConfigValidationError,
@@ -34,6 +35,7 @@ from .ensemble_information_filter import (
 )
 from .ensemble_smoother import EnsembleSmoother, EnsembleSmootherConfig
 from .evaluate_ensemble import EvaluateEnsemble, EvaluateEnsembleConfig
+from .everest_run_model import EverestRunModelConfig
 from .initial_ensemble_run_model import DictEncodedDataFrame
 from .manual_update import ManualUpdate, ManualUpdateConfig
 from .manual_update_enif import ManualUpdateEnIF
@@ -50,6 +52,18 @@ if TYPE_CHECKING:
     from ert.namespace import Namespace
     from ert.run_models.event import StatusEvents
 
+
+RunModelConfigs = Annotated[
+    MultipleDataAssimilationConfig
+    | EnsembleSmootherConfig
+    | EnsembleInformationFilterConfig
+    | SingleTestRunConfig
+    | EnsembleExperimentConfig
+    | ManualUpdateConfig
+    | EvaluateEnsembleConfig
+    | EverestRunModelConfig,
+    Field(discriminator="type"),
+]
 
 logger = logging.getLogger(__name__)
 
