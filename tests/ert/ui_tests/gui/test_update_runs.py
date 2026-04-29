@@ -278,7 +278,9 @@ def test_run_dialog_displays_workflow_tabs_before_and_after_ensemble(qtbot, tmp_
         )
     )
 
-    pre_widget = run_dialog._ensure_workflow_widget(HookRuntime.PRE_EXPERIMENT, None)
+    pre_widget = run_dialog._select_or_create_workflow_tab(
+        HookRuntime.PRE_EXPERIMENT, None
+    )
     assert run_dialog._tab_widget.tabText(0) == "Pre-experiment workflows"
     assert pre_widget._table.columnCount() == 4
     assert pre_widget._table.horizontalHeaderItem(2).text() == "Stdout"
@@ -333,7 +335,9 @@ def test_run_dialog_displays_workflow_tabs_before_and_after_ensemble(qtbot, tmp_
         )
     )
 
-    post_widget = run_dialog._ensure_workflow_widget(HookRuntime.POST_EXPERIMENT, None)
+    post_widget = run_dialog._select_or_create_workflow_tab(
+        HookRuntime.POST_EXPERIMENT, None
+    )
     assert run_dialog._tab_widget.tabText(1) == "Post-experiment workflows"
     assert run_dialog._tab_widget.currentWidget() is post_widget
 
@@ -422,7 +426,7 @@ def test_run_dialog_marks_unstarted_workflows_as_not_run_on_failure(qtbot, tmp_p
         )
     )
 
-    workflow_widget = run_dialog._ensure_workflow_widget(
+    workflow_widget = run_dialog._select_or_create_workflow_tab(
         HookRuntime.PRE_EXPERIMENT, None
     )
     assert workflow_widget.workflow_status("prepare_case") == "Failed"
@@ -494,7 +498,7 @@ def test_run_dialog_handles_duplicate_workflow_names(qtbot, tmp_path):
         )
     )
 
-    workflow_widget = run_dialog._ensure_workflow_widget(
+    workflow_widget = run_dialog._select_or_create_workflow_tab(
         HookRuntime.PRE_EXPERIMENT, None
     )
     assert workflow_widget.workflow_status("PRINT", occurrence=0) == "Finished"
@@ -551,6 +555,7 @@ def test_run_dialog_displays_workflow_tabs_between_iterations(qtbot, tmp_path):
             workflow_names=["pre_update_iteration_0"],
         )
     )
+    run_dialog._on_event(RunModelUpdateBeginEvent(iteration=0, run_id=uuid4()))
     run_dialog._on_event(
         WorkflowBatchStartedEvent(
             hook=HookRuntime.POST_UPDATE,
@@ -558,7 +563,6 @@ def test_run_dialog_displays_workflow_tabs_between_iterations(qtbot, tmp_path):
             workflow_names=["post_update_iteration_0"],
         )
     )
-    run_dialog._on_event(RunModelUpdateBeginEvent(iteration=0, run_id=uuid4()))
     run_dialog._on_event(
         WorkflowBatchStartedEvent(
             hook=HookRuntime.PRE_SIMULATION,
@@ -585,10 +589,10 @@ def test_run_dialog_displays_workflow_tabs_between_iterations(qtbot, tmp_path):
     assert update_widget._tab_widget.tabText(2) == "Post-update workflows"
     assert second_iteration_widget._tab_widget.tabText(0) == "Pre-simulation workflows"
 
-    first_pre_simulation_widget = run_dialog._ensure_workflow_widget(
+    first_pre_simulation_widget = run_dialog._select_or_create_workflow_tab(
         HookRuntime.PRE_SIMULATION, 0
     )
-    second_pre_simulation_widget = run_dialog._ensure_workflow_widget(
+    second_pre_simulation_widget = run_dialog._select_or_create_workflow_tab(
         HookRuntime.PRE_SIMULATION, 1
     )
     assert first_pre_simulation_widget is not second_pre_simulation_widget

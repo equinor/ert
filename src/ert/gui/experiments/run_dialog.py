@@ -407,10 +407,7 @@ class RunDialog(QFrame):
             self.fm_step_frame.setHidden(isinstance(current_widget, UpdateWidget))
             return
 
-        if isinstance(widget, RealizationWidget):
-            widget.refresh_current_selection()
-
-        self.fm_step_frame.setHidden(isinstance(widget, UpdateWidget))
+        self.fm_step_frame.setHidden(False)
 
     @Slot(QModelIndex, int, int)
     def on_snapshot_new_iteration(
@@ -426,8 +423,10 @@ class RunDialog(QFrame):
                 else f"Progress for batch {iteration}"
             )
 
-            iteration_widget = self._ensure_iteration_widget(iteration, is_update=False)
-            widget = iteration_widget.ensure_realization_widget()
+            iteration_widget = self._get_or_create_iteration_tab(
+                iteration, is_update=False
+            )
+            widget = iteration_widget.select_or_create_realization_tab()
             widget.setSnapshotModel(self._snapshot_model)
             widget.itemClicked.connect(self._select_real)
             widget.setProperty("identifier", f"tab-iter-{iteration}")
@@ -593,14 +592,14 @@ class RunDialog(QFrame):
             case WorkflowBatchStartedEvent(
                 hook=hook, iteration=iteration, workflow_names=workflow_names
             ):
-                workflow_widget = self._ensure_workflow_widget(
+                workflow_widget = self._select_or_create_workflow_tab(
                     hook, iteration, workflow_names
                 )
                 workflow_widget.set_workflows(workflow_names)
             case WorkflowStartedEvent(
                 hook=hook, iteration=iteration, workflow_name=workflow_name
             ):
-                self._ensure_workflow_widget(hook, iteration).start_workflow(
+                self._select_or_create_workflow_tab(hook, iteration).start_workflow(
                     workflow_name
                 )
             case WorkflowFinishedEvent(
@@ -611,13 +610,13 @@ class RunDialog(QFrame):
                 stdout=stdout,
                 stderr=stderr,
             ):
-                self._ensure_workflow_widget(hook, iteration).finish_workflow(
+                self._select_or_create_workflow_tab(hook, iteration).finish_workflow(
                     workflow_name, status, stdout=stdout, stderr=stderr
                 )
             case WorkflowBatchFinishedEvent(
                 hook=hook, iteration=iteration, status=status
             ):
-                self._ensure_workflow_widget(hook, iteration).finish(status)
+                self._select_or_create_workflow_tab(hook, iteration).finish(status)
 
             case FullSnapshotEvent(
                 status_count=status_count, realization_count=realization_count
@@ -643,23 +642,23 @@ class RunDialog(QFrame):
                 )
                 self.progress_update_event.emit(status_count, realization_count)
             case RunModelUpdateBeginEvent(iteration=iteration):
-                iteration_widget = self._ensure_iteration_widget(
+                iteration_widget = self._get_or_create_iteration_tab(
                     iteration, is_update=True
                 )
-                widget = iteration_widget.ensure_update_widget()
+                widget = iteration_widget.select_or_create_update_tab()
                 self._tab_widget.setCurrentWidget(iteration_widget)
                 widget.begin(event)
             case RunModelUpdateEndEvent():
                 self._progress_widget.stop_waiting_progress_bar()
-                self._get_update_widget(event.iteration).end(event)
+                self._get_or_create_update_tab(event.iteration).end(event)
                 event.write_as_csv(self.output_path)
             case RunModelStatusEvent() | RunModelTimeEvent():
-                self._get_update_widget(event.iteration).update_status(event)
+                self._get_or_create_update_tab(event.iteration).update_status(event)
             case RunModelDataEvent():
-                self._get_update_widget(event.iteration).add_table(event)
+                self._get_or_create_update_tab(event.iteration).add_table(event)
                 event.write_as_csv(self.output_path)
             case RunModelErrorEvent():
-                self._get_update_widget(event.iteration).error(event)
+                self._get_or_create_update_tab(event.iteration).error(event)
                 event.write_as_csv(self.output_path)
             case EverestBatchResultEvent():
                 batch_types = self._batch_result_types[event.batch]
@@ -692,20 +691,12 @@ class RunDialog(QFrame):
                 ):
                     runpath_widget.advance()
 
-    def _get_update_widget(self, iteration: int) -> UpdateWidget:
-        for i in range(self._tab_widget.count()):
-            widget = self._tab_widget.widget(i)
-            if (
-                isinstance(widget, IterationWidget)
-                and widget.iteration == iteration
-                and bool(widget.property("is_update_page"))
-            ):
-                return widget.ensure_update_widget()
-            if isinstance(widget, UpdateWidget) and widget.iteration == iteration:
-                return widget
-        raise ValueError("Could not find UpdateWidget")
+    def _get_or_create_update_tab(self, iteration: int) -> UpdateWidget:
+        return self._get_or_create_iteration_tab(
+            iteration, is_update=True
+        ).select_or_create_update_tab()
 
-    def _ensure_iteration_widget(
+    def _get_or_create_iteration_tab(
         self, iteration: int, is_update: bool
     ) -> IterationWidget:
         for index in range(self._tab_widget.count()):
@@ -713,43 +704,19 @@ class RunDialog(QFrame):
             if (
                 isinstance(widget, IterationWidget)
                 and widget.iteration == iteration
-                and bool(widget.property("is_update_page")) == is_update
+                and widget.is_update_page == is_update
             ):
                 return widget
 
         widget = IterationWidget(iteration, self)
-        widget.setProperty("is_update_page", is_update)
+        widget.is_update_page = is_update
         widget.currentTabChanged.connect(
             lambda iteration_widget=widget: self._on_iteration_tab_changed(
                 iteration_widget
             )
         )
 
-        insert_at = self._tab_widget.count()
-        for index in range(self._tab_widget.count()):
-            existing_widget = self._tab_widget.widget(index)
-            if isinstance(existing_widget, IterationWidget):
-                existing_key = (
-                    existing_widget.iteration,
-                    bool(existing_widget.property("is_update_page")),
-                )
-                new_key = (iteration, is_update)
-                if existing_key > new_key:
-                    insert_at = index
-                    break
-                continue
-
-            if isinstance(existing_widget, WorkflowWidget):
-                if (
-                    existing_widget.iteration is None
-                    and existing_widget.hook == HookRuntime.POST_EXPERIMENT
-                ):
-                    insert_at = index
-                    break
-                continue
-
-        self._tab_widget.insertTab(
-            insert_at,
+        self._tab_widget.addTab(
             widget,
             f"update-{iteration}" if is_update else f"iteration-{iteration}",
         )
@@ -767,7 +734,7 @@ class RunDialog(QFrame):
             HookRuntime.POST_UPDATE,
         }
 
-    def _ensure_workflow_widget(
+    def _select_or_create_workflow_tab(
         self,
         hook: HookRuntime,
         iteration: int | None,
@@ -775,11 +742,13 @@ class RunDialog(QFrame):
     ) -> WorkflowWidget:
         if iteration is not None:
             iteration_widget = (
-                self._ensure_iteration_widget(iteration, is_update=True)
+                self._get_or_create_iteration_tab(iteration, is_update=True)
                 if self._workflow_belongs_to_update(hook)
-                else self._ensure_iteration_widget(iteration, is_update=False)
+                else self._get_or_create_iteration_tab(iteration, is_update=False)
             )
-            widget = iteration_widget.ensure_workflow_widget(hook, workflow_names)
+            widget = iteration_widget.select_or_create_workflow_tab(
+                hook, workflow_names
+            )
             self._tab_widget.setCurrentWidget(iteration_widget)
             return widget
 

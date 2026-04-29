@@ -93,17 +93,6 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
         target_experiment: LocalExperiment | None = None,
     ) -> Ensemble:
         self.validate_successful_realizations_count()
-        self.send_event(
-            RunModelUpdateBeginEvent(iteration=prior.iteration, run_id=prior.id)
-        )
-        self.send_event(
-            RunModelStatusEvent(
-                iteration=prior.iteration,
-                run_id=prior.id,
-                msg="Creating posterior ensemble..",
-            )
-        )
-
         pre_first_update_fixtures = PreFirstUpdateFixtures(
             storage=self._storage,
             ensemble=prior,
@@ -135,6 +124,16 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
             fixtures=PreUpdateFixtures(
                 **{**update_args_dict, "hook": HookRuntime.PRE_UPDATE}
             ),
+        )
+        self.send_event(
+            RunModelUpdateBeginEvent(iteration=prior.iteration, run_id=prior.id)
+        )
+        self.send_event(
+            RunModelStatusEvent(
+                iteration=prior.iteration,
+                run_id=prior.id,
+                msg="Creating posterior ensemble..",
+            )
         )
         try:
             self.update_ensemble_parameters(prior, posterior, weight)
