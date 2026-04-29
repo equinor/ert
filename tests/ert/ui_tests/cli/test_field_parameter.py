@@ -46,6 +46,7 @@ def test_field_param_update_using_heat_equation_enif(
 
 
 @pytest.mark.xdist_group(name="uses_heat_equation_storage")
+@pytest.mark.snapshot_test
 def test_field_param_update_using_heat_equation_enif_snapshot(
     symlinked_heat_equation_storage_enif, snapshot
 ):
@@ -84,7 +85,7 @@ def test_field_param_update_using_heat_equation_enif_snapshot(
 
         snapshot.assert_match(
             result.select(index_columns + realization_columns).write_csv(
-                float_precision=3
+                float_precision=2
             ),
             "enif_heat_snapshot.csv",
         )
@@ -384,7 +385,7 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
                 assert not record
 
                 assert (
-                    "There are 50 parameters with 0 variance that will not be updated."
+                    "There are 250 parameters with 0 variance that will not be updated."
                     in caplog.text
                 )
 

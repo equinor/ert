@@ -6,7 +6,7 @@ import json
 import sys
 from pathlib import Path
 
-import geostat
+import gaussianfft as grf
 import numpy as np
 import numpy.typing as npt
 import resfo
@@ -17,6 +17,7 @@ from definition import (
     nx,
     obs_coordinates,
     obs_times,
+    room_temperature,
     summary_names,
     u_init,
 )
@@ -125,8 +126,18 @@ def heat_equation(
 
 
 def sample_prior_conductivity(ensemble_size, nx, rng, corr_length):
-    mesh = np.meshgrid(np.linspace(0, 1, nx), np.linspace(0, 1, nx))
-    return np.exp(geostat.gaussian_fields(mesh, rng, ensemble_size, r=corr_length))
+    dx = 1.0 / (nx - 1)
+    grf.seed(int(rng.integers(0, 2**31)))
+    variogram = grf.variogram(grf.VariogramType.EXPONENTIAL, corr_length)
+    fields = np.stack(
+        [
+            np.reshape(
+                grf.simulate(variogram, nx=nx, dx=dx, ny=nx, dy=dx), (nx, nx), order="F"
+            )
+            for _ in range(ensemble_size)
+        ]
+    )
+    return np.exp(fields)
 
 
 def load_parameters(filename):
@@ -162,7 +173,8 @@ if __name__ == "__main__":
     # Note that this could be avoided if we used an implicit solver.
     dt = dx**2 / (4 * np.max(cond))
 
-    scaled_u_init = u_init * float(parameters["t"]["value"])
+    t = float(parameters["t"]["value"])
+    scaled_u_init = room_temperature + (u_init - room_temperature) * t
 
     response = heat_equation(scaled_u_init, cond, dx, dt, k_start, k_end, rng)
 
