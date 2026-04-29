@@ -28,6 +28,7 @@ from ert.ensemble_evaluator.event import (
     SnapshotUpdateEvent,
     WarningEvent,
 )
+from ert.gui.ertwidgets.suggestor.suggestor import Suggestor
 from ert.gui.experiments import ExperimentPanel, RunDialog
 from ert.gui.experiments.ensemble_experiment_panel import (
     DesignMatrixPanel,
@@ -55,7 +56,6 @@ from ert.scheduler.job import Job
 from tests.ert import SnapshotBuilder
 from tests.ert.handle_run_path_dialog import handle_run_path_dialog
 from tests.ert.ui_tests.gui.conftest import wait_for_child
-from tests.ert.utils import wait_until
 
 
 @pytest.fixture
@@ -155,12 +155,58 @@ def run_dialog(qtbot: QtBot, use_tmpdir, mock_set_env_key, monkeypatch):
     return run_dialog
 
 
+@pytest.mark.usefixtures("use_tmpdir")
 @pytest.mark.timeout(10)
 @pytest.mark.slow
 def test_that_terminating_experiment_shows_a_confirmation_dialog(
-    qtbot: QtBot, run_dialog: RunDialog, monkeypatch
+    qtbot: QtBot, monkeypatch
 ):
+    config_file = "minimal_config.ert"
+    monkeypatch.setattr("ert.scheduler.Scheduler.BATCH_KILLING_INTERVAL", 0.01)
+    monkeypatch.setattr(
+        "ert.ensemble_evaluator.EnsembleEvaluator.BATCHING_INTERVAL", 0.01
+    )
     monkeypatch.setattr(Job, "WAIT_PERIOD_FOR_TERM_MESSAGE_TO_CANCEL", 0)
+    sleep_script = Path("sleep.sh")
+    sleep_script.write_text("#!/bin/sh\nsleep 5", encoding="utf-8")
+    sleep_script.chmod(0o755)
+
+    sleep_job_config = Path("SLEEP")
+    sleep_job_config.write_text("EXECUTABLE sleep.sh", encoding="utf-8")
+
+    ert_config = ErtConfig.from_dict(
+        {
+            "NUM_REALIZATIONS": 1,
+            "QUEUE_SYSTEM": "LOCAL",
+            "INSTALL_JOB": [
+                (
+                    "sleep",
+                    (
+                        str(sleep_job_config),
+                        sleep_job_config.read_text(encoding="utf-8"),
+                    ),
+                )
+            ],
+            "FORWARD_MODEL": [("sleep",)],
+        }
+    )
+    args_mock = Mock()
+    args_mock.config = config_file
+    gui = _setup_main_window(ert_config, args_mock, GUILogHandler(), "storage")
+    qtbot.addWidget(gui)
+    experiment_panel = gui.findChild(ExperimentPanel)
+    assert experiment_panel
+    simulation_mode_combo = experiment_panel.findChild(QComboBox)
+    assert simulation_mode_combo
+    simulation_mode_combo.setCurrentText(EnsembleExperiment.name())
+    simulation_settings = gui.findChild(EnsembleExperimentPanel)
+    simulation_settings._experiment_name_field.setText("new_experiment_name")
+    run_experiment = experiment_panel.findChild(QToolButton, name="run_experiment")
+    assert run_experiment
+    qtbot.mouseClick(run_experiment, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: gui.findChild(RunDialog) is not None, timeout=5000)
+    run_dialog = gui.findChild(RunDialog)
+    assert run_dialog
     kill_button = run_dialog.kill_button
     with qtbot.waitSignal(run_dialog.experiment_done, timeout=10000):
         # Wait for ensemble to start evaluating before cancelling
@@ -178,7 +224,8 @@ def test_that_terminating_experiment_shows_a_confirmation_dialog(
         qtbot.mouseClick(run_dialog.kill_button, Qt.MouseButton.LeftButton)
         assert not kill_button.isEnabled()
         assert kill_button.text() == "Terminating"
-    wait_until(lambda: run_dialog.fail_msg_box is not None, timeout=5000)
+    wait_for_child(run_dialog, qtbot, Suggestor)
+    assert run_dialog.fail_msg_box is not None
     assert kill_button.text() == "Terminate experiment"
     assert not kill_button.isEnabled()
     assert (
