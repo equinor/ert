@@ -49,9 +49,10 @@ RFTProperty: TypeAlias = str
 
 
 @dataclass(frozen=True)
-class _ZonedPoint:
-    """A point optionally constrained to be in a given zone."""
+class WellPoint:
+    """A well path point optionally constrained to be in a given zone."""
 
+    well_name: str | None = None
     point: tuple[float | None, float | None, float | None] = (None, None, None)
     zone_name: ZoneName | None = None
 
@@ -71,8 +72,8 @@ class RFTConfig(ResponseConfig):
 
     Parameters:
         data_to_read: dictionary of the values that should be read from the rft file.
-        loations: list of optionally zone constrained points that the rft values should
-            be labeled with.
+        well_locations: list of optionally zone constrained well points that the rft
+        values should be labeled with.
         zonemap: The mapping from grid layer index to zone name.
     """
 
@@ -82,15 +83,8 @@ class RFTConfig(ResponseConfig):
     data_to_read: dict[WellName, dict[DateString, list[RFTProperty]]] = Field(
         default_factory=dict
     )
-    locations: list[Point | tuple[Point, ZoneName]] = Field(default_factory=list)
+    well_locations: list[WellPoint] = Field(default_factory=list)
     zonemap: Path | None = None
-
-    @property
-    def _zoned_locations(self) -> list[_ZonedPoint]:
-        return [
-            _ZonedPoint(*p) if isinstance(p[1], ZoneName) else _ZonedPoint(p)
-            for p in self.locations
-        ]
 
     @property
     def expected_input_files(self) -> list[str]:
@@ -133,13 +127,13 @@ class RFTConfig(ResponseConfig):
 
     @staticmethod
     def _map_locations_to_cells(
-        egrid_file: str | os.PathLike[str] | IO[Any], zoned_locations: list[_ZonedPoint]
-    ) -> dict[_ZonedPoint, GridIndex]:
+        egrid_file: str | os.PathLike[str] | IO[Any], zoned_locations: list[WellPoint]
+    ) -> dict[WellPoint, GridIndex]:
         """
         For each location, find the corresponding connected grid cell, if it exists.
         """
 
-        location_cell_map: dict[_ZonedPoint, GridIndex] = {}
+        location_cell_map: dict[WellPoint, GridIndex] = {}
         if not zoned_locations:
             return location_cell_map
         try:
@@ -355,7 +349,6 @@ class RFTConfig(ResponseConfig):
         zonemap, and 'actual_cell' is the grid cell that the location belongs to in
         current simulation.
         """
-        zoned_locations = self._zoned_locations
 
         rft_filepath = self._rft_filepath(self.input_files[0], run_path, iens, iter_)
         grid_filepath = self._ergrid_filepath(rft_filepath)
@@ -366,26 +359,28 @@ class RFTConfig(ResponseConfig):
         else:
             zonemap = {}
 
-        location_cell_map = self._map_locations_to_cells(grid_filepath, zoned_locations)
+        location_cell_map = self._map_locations_to_cells(
+            grid_filepath, self.well_locations
+        )
 
         return pl.DataFrame(
             {
                 "location": pl.Series(
-                    [loc.point for loc in zoned_locations],
+                    [loc.point for loc in self.well_locations],
                     dtype=pl.Array(pl.Float32, 3),
                 ),
                 "expected_zone": pl.Series(
-                    [loc.zone_name for loc in zoned_locations], dtype=pl.String
+                    [loc.zone_name for loc in self.well_locations], dtype=pl.String
                 ),
                 "actual_zones": pl.Series(
                     [
                         zonemap.get(location_cell_map[loc][-1], [])
-                        for loc in zoned_locations
+                        for loc in self.well_locations
                     ],
                     dtype=pl.List(pl.String),
                 ),
                 "actual_cell": pl.Series(
-                    [location_cell_map[loc] for loc in zoned_locations],
+                    [location_cell_map[loc] for loc in self.well_locations],
                     dtype=pl.Array(pl.Int64, 3),
                 ),
             }

@@ -16,7 +16,7 @@ from ._observations import (
 )
 from ._shapes import CircleShapeConfig, ShapeRegistry
 from .parsing import ErrorInfo, ObservationConfigError
-from .rft_config import Point, RFTConfig, ZoneName
+from .rft_config import RFTConfig, WellPoint
 
 
 def create_observation_dataframes(
@@ -157,7 +157,11 @@ def _handle_rft_observation(
     rft_observation: RFTObservation,
     shape_registry: ShapeRegistry,
 ) -> pl.DataFrame:
-    location = (rft_observation.east, rft_observation.north, rft_observation.tvd)
+    well_location = WellPoint(
+        rft_observation.well,
+        (rft_observation.east, rft_observation.north, rft_observation.tvd),
+        rft_observation.zone,
+    )
     localization_radius = None
     shape = rft_observation.shape(shape_registry)
     localization_radius = (
@@ -166,11 +170,8 @@ def _handle_rft_observation(
         else None
     )
 
-    location_arg: Point | tuple[Point, ZoneName] = location
-    if (zone := rft_observation.zone) is not None:
-        location_arg = (location, zone)
-    if location_arg not in rft_config.locations:
-        rft_config.locations.append(location_arg)
+    if well_location not in rft_config.well_locations:
+        rft_config.well_locations.append(well_location)
 
     data_to_read = rft_config.data_to_read
     if rft_observation.well not in data_to_read:
@@ -199,9 +200,9 @@ def _handle_rft_observation(
             "well": rft_observation.well,
             "date": rft_observation.date,
             "observation_key": rft_observation.name,
-            "east": pl.Series([location[0]], dtype=pl.Float32),
-            "north": pl.Series([location[1]], dtype=pl.Float32),
-            "tvd": pl.Series([location[2]], dtype=pl.Float32),
+            "east": pl.Series([rft_observation.east], dtype=pl.Float32),
+            "north": pl.Series([rft_observation.north], dtype=pl.Float32),
+            "tvd": pl.Series([rft_observation.tvd], dtype=pl.Float32),
             "md": pl.Series([rft_observation.md], dtype=pl.Float32),
             "zone": pl.Series([rft_observation.zone], dtype=pl.String),
             "observations": pl.Series([rft_observation.value], dtype=pl.Float32),

@@ -17,6 +17,7 @@ from ert.config import (
 from ert.config._create_observation_dataframes import _handle_rft_observation
 from ert.config._observations import RFTObservation
 from ert.config.parsing import ConfigValidationError, ObservationType
+from ert.config.rft_config import WellPoint
 from ert.warnings import PostExperimentWarning
 from tests.ert.rft_generator import cell_start, float_arr
 
@@ -377,7 +378,7 @@ def test_that_locations_are_found_in_corresponding_grid_and_added_to_response_da
     rft_config = RFTConfig(
         input_files=["BASE.RFT"],
         data_to_read={"*": {"*": ["*"]}},
-        locations=[(1.0, 1.0, 1.0)],
+        well_locations=[WellPoint("WELL2", (1.0, 1.0, 1.0))],
     )
     data = rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
     assert data["response_key"].to_list() == [
@@ -406,7 +407,10 @@ def test_that_multiple_locations_in_the_same_cell_creates_multiple_rows(
     rft_config = RFTConfig(
         input_files=["BASE.RFT"],
         data_to_read={"*": {"*": ["*"]}},
-        locations=[(1.25, 1.25, 1.25), (1.5, 1.5, 1.5)],
+        well_locations=[
+            WellPoint("WELL2", (1.25, 1.25, 1.25)),
+            WellPoint("WELL2", (1.5, 1.5, 1.5)),
+        ],
     )
     data = rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
     assert data["response_key"].to_list() == [
@@ -519,7 +523,6 @@ def test_that_handle_rft_observations_prioritize_provided_radius_over_default():
     rft_config = RFTConfig(
         input_files=["BASE.RFT"],
         data_to_read={"*": {"*": ["*"]}},
-        locations=[(1.0, 1.0, 1.0), (2.0, 2.0, 2.0)],
     )
     shape_registry = ShapeRegistry()
     shape_id = shape_registry.register(
@@ -588,7 +591,7 @@ def test_that_handle_rft_observations_adds_locations_both_with_zone_and_without(
         rft_observation = make_observation(zone)
         _handle_rft_observation(rft_config, rft_observation, ShapeRegistry())
 
-    assert len(rft_config.locations) == 2
+    assert len(rft_config.well_locations) == 2
 
 
 def test_that_if_an_rft_observation_is_outside_the_zone_then_it_is_deactivated(
@@ -966,7 +969,7 @@ def test_that_missing_egrid_with_locations_raises_invalid_response_file(
     rft_config = RFTConfig(
         input_files=["BASE.RFT"],
         data_to_read={"*": {"*": ["PRESSURE"]}},
-        locations=[(1.0, 1.0, 1.0)],
+        well_locations=[WellPoint("WELL", (1.0, 1.0, 1.0))],
     )
 
     with pytest.raises(InvalidResponseFile):
