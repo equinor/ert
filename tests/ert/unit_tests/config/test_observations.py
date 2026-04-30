@@ -2263,7 +2263,6 @@ def test_that_missing_rft_observations_name_is_defaulted_to_primary_keys():
 
 def test_that_missing_summary_observations_name_is_defaulted_to_primary_key():
     key = "WOPR:OP1"
-    date = "2011-12-21"
     obs_config_contents = (
         """
         SUMMARY_OBSERVATION
@@ -2271,14 +2270,14 @@ def test_that_missing_summary_observations_name_is_defaulted_to_primary_key():
             VALUE   = 0.5;
             ERROR   = 0.05;
             """
-        f"KEY={key};\n"
-        f"DATE={date};\n"
+        f"KEY={key};"
         """
+        DATE=2012-01-02;
         };"""
     )
     ert_config = ert_config_from_parser(obs_config_contents)
     obs_name = ert_config.observation_declarations[0].name
-    assert obs_name == f"{key}:{date}"
+    assert obs_name == key
 
 
 def test_that_missing_gen_obs_name_is_defaulted_to_primary_key_without_obs_file(

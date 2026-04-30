@@ -169,7 +169,7 @@ class SummaryObservation(_SummaryValues):
         name = (
             observation_dict["name"]
             if observation_dict["name"] is not None
-            else f"{summary_key}:{date}"
+            else summary_key
         )
 
         obs_instance = cls(
