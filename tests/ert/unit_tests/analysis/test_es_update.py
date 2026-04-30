@@ -1057,7 +1057,7 @@ def test_update_subset_parameters(storage, uniform_parameter, obs):
     no_update_param = GenKwConfig(
         name="KEY_2",
         group="EXTRA_PARAMETER",
-        update=False,
+        update_strategy=None,
         distribution={"name": "uniform", "min": 0, "max": 1},
     )
     response_config = GenDataConfig(keys=["RESPONSE"]).model_dump(mode="json")
@@ -1198,7 +1198,7 @@ def test_that_field_parameter_with_update_false_is_copied_to_posterior(
     field_config = Field(
         name="MY_FIELD",
         forward_init=False,
-        update=False,
+        update_strategy=None,
         ertbox_params=ErtboxParameters(
             nx=nx,
             ny=ny,

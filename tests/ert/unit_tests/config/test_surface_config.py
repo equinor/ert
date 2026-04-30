@@ -54,7 +54,7 @@ def test_runpath_roundtrip(tmp_path, storage, surface, surface_format, caplog):
         forward_init_file="input_%d",
         output_file=tmp_path / "output",
         base_surface_path="base_surface",
-        update=True,
+        update_strategy="GLOBAL",
         file_format=surface_format,
     )
     ensemble = storage.create_experiment(
@@ -300,7 +300,7 @@ def test_surface_parameter_graph(shape, expected_nodes, expected_links):
     config = SurfaceConfig(
         name="surf",
         forward_init=False,
-        update=True,
+        update_strategy="GLOBAL",
         ncol=shape[0],
         nrow=shape[1],
         xori=0,
@@ -330,7 +330,7 @@ def test_surface_create_storage_datasets_raises_surface_mismatch_error_when_the_
     config = SurfaceConfig(
         name=surface_name,
         forward_init=False,
-        update=True,
+        update_strategy="GLOBAL",
         ncol=base_surface_col,
         nrow=base_surface_row,
         xori=0,
@@ -379,7 +379,7 @@ def surface_for_dl():
         type="surface",
         name="MySurface",
         forward_init=True,
-        update=True,
+        update_strategy="GLOBAL",
         ncol=nx,
         nrow=ny,
         xori=xori,
