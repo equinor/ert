@@ -3,8 +3,15 @@ from textwrap import dedent
 from unittest.mock import patch
 
 import pytest
+from hypothesis import HealthCheck, given, settings
+from hypothesis import strategies as st
 
-from _ert.events import WorkflowFinishedEvent, WorkflowStartedEvent
+from _ert.events import (
+    WorkflowCancelledEvent,
+    WorkflowFinishedEvent,
+    WorkflowStartedEvent,
+    WorkflowStatus,
+)
 from _ert.hook_runtime import HookRuntime
 from ert.config import ConfigWarning, Workflow
 from ert.config.workflow_job import (
@@ -181,7 +188,21 @@ def test_workflow_run():
 
 
 @pytest.mark.usefixtures("use_tmpdir")
-def test_workflow_runner_emits_events_with_hook_and_iteration():
+@settings(
+    max_examples=25,
+    deadline=None,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
+@given(
+    hook=st.sampled_from(list(HookRuntime)),
+    iteration=st.none() | st.integers(min_value=0, max_value=9),
+    workflow_name=st.text(min_size=1),
+)
+def test_that_workflow_runner_emits_events_with_hook_and_iteration(
+    hook: HookRuntime,
+    iteration: int | None,
+    workflow_name: str,
+):
     WorkflowCommon.createExternalDumpJob()
 
     dump_job = workflow_job_from_file("dump_job", name="DUMP", origin="user")
@@ -194,9 +215,9 @@ def test_workflow_runner_emits_events_with_hook_and_iteration():
     WorkflowRunner(
         workflow,
         fixtures={},
-        hook=HookRuntime.PRE_EXPERIMENT,
-        iteration=3,
-        workflow_name="prepare_case",
+        hook=hook,
+        iteration=iteration,
+        workflow_name=workflow_name,
         send_event=events.append,
     ).run_blocking()
 
@@ -204,13 +225,13 @@ def test_workflow_runner_emits_events_with_hook_and_iteration():
         WorkflowStartedEvent,
         WorkflowFinishedEvent,
     ]
-    assert events[0].hook == HookRuntime.PRE_EXPERIMENT
-    assert events[0].iteration == 3
-    assert events[0].workflow_name == "prepare_case"
-    assert events[1].hook == HookRuntime.PRE_EXPERIMENT
-    assert events[1].iteration == 3
-    assert events[1].workflow_name == "prepare_case"
-    assert events[1].status == "success"
+    assert events[0].hook == hook
+    assert events[0].iteration == iteration
+    assert events[0].workflow_name == workflow_name
+    assert events[1].hook == hook
+    assert events[1].iteration == iteration
+    assert events[1].workflow_name == workflow_name
+    assert events[1].status == WorkflowStatus.SUCCESS
     assert events[1].stdout == "Hello World\n\nHello World\n"
 
 
@@ -246,6 +267,53 @@ def test_workflow_thread_cancel_ert_script():
 
         assert workflow_runner.isCancelled()
 
+    assert not Path("wait_finished_1").exists()
+    assert not Path("wait_started_2").exists()
+    assert not Path("wait_cancelled_2").exists()
+    assert not Path("wait_finished_2").exists()
+
+
+@pytest.mark.slow
+@pytest.mark.usefixtures("use_tmpdir")
+@pytest.mark.filterwarnings("ignore:.*Deprecated keywords, SCRIPT and INTERNAL")
+def test_that_workflow_thread_cancel_ert_script_emits_expected_events():
+    WorkflowCommon.createWaitJob()
+
+    wait_job = workflow_job_from_file("wait_job", name="WAIT", origin="user")
+
+    workflow = Workflow.from_file("wait_workflow", {}, {"WAIT": wait_job})
+
+    assert len(workflow) == 3
+    events: list[
+        WorkflowStartedEvent | WorkflowFinishedEvent | WorkflowCancelledEvent
+    ] = []
+    workflow_runner = WorkflowRunner(workflow, fixtures={}, send_event=events.append)
+
+    assert not workflow_runner.isRunning()
+
+    with workflow_runner:
+        assert workflow_runner.workflowResult() is None
+
+        wait_until(workflow_runner.isRunning)
+        wait_until(lambda: Path("wait_started_1").exists())
+
+        workflow_runner.cancel()
+
+        wait_until(lambda: Path("wait_cancelled_1").exists())
+
+        assert workflow_runner.isCancelled()
+    assert [type(event) for event in events] == [
+        WorkflowStartedEvent,
+        WorkflowCancelledEvent,
+    ]
+    assert events[0].hook is None
+    assert events[0].iteration is None
+    assert events[0].workflow_name == "wait_workflow"
+    assert events[1].hook is None
+    assert events[1].iteration is None
+    assert events[1].workflow_name == "wait_workflow"
+    assert not events[1].stdout
+    assert not events[1].stderr
     assert not Path("wait_finished_1").exists()
     assert not Path("wait_started_2").exists()
     assert not Path("wait_cancelled_2").exists()

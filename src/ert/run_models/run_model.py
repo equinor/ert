@@ -37,6 +37,7 @@ from _ert.events import (
     EnsembleEvaluationWarning,
     WorkflowBatchFinishedEvent,
     WorkflowBatchStartedEvent,
+    WorkflowStatus,
 )
 from ert.base_model_context import BaseModelWithContextSupport, init_context_var
 from ert.config import (
@@ -886,7 +887,7 @@ class RunModel(RunModelConfig, ABC):
                         hook=fixtures.hook,
                         iteration=workflow_iteration,
                         workflow_names=workflow_names,
-                        status="failure",
+                        status=WorkflowStatus.FAILURE,
                     )
                 )
                 raise
@@ -895,7 +896,7 @@ class RunModel(RunModelConfig, ABC):
                 hook=fixtures.hook,
                 iteration=workflow_iteration,
                 workflow_names=workflow_names,
-                status="success",
+                status=WorkflowStatus.SUCCESS,
             )
         )
 

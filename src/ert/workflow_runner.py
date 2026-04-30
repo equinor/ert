@@ -8,7 +8,12 @@ from concurrent.futures import Future
 from contextlib import suppress
 from typing import Any, Self
 
-from _ert.events import WorkflowFinishedEvent, WorkflowStartedEvent, WorkflowStatus
+from _ert.events import (
+    WorkflowCancelledEvent,
+    WorkflowFinishedEvent,
+    WorkflowStartedEvent,
+    WorkflowStatus,
+)
 from ert import ErtScript
 from ert.config import (
     BaseErtScriptWorkflow,
@@ -110,7 +115,10 @@ class WorkflowRunner:
         self,
         workflow: Workflow,
         fixtures: WorkflowFixtures,
-        send_event: Callable[[WorkflowStartedEvent | WorkflowFinishedEvent], None]
+        send_event: Callable[
+            [WorkflowStartedEvent | WorkflowFinishedEvent | WorkflowCancelledEvent],
+            None,
+        ]
         | None = None,
         workflow_name: str | None = None,
         hook: HookRuntime | None = None,
@@ -157,13 +165,14 @@ class WorkflowRunner:
         # Reset status
         self.__status = {}
         self.__running = True
+        workflow_failed = False
         workflow_stdout: list[str] = []
         workflow_stderr: list[str] = []
 
         if self.send_event is not None:
             self.send_event(
                 WorkflowStartedEvent(
-                    hook=self._event_hook,
+                    hook=self._hook,
                     iteration=self._iteration,
                     workflow_name=self._workflow_name,
                 )
@@ -192,7 +201,7 @@ class WorkflowRunner:
                     if self.send_event is not None:
                         self.send_event(
                             WorkflowFinishedEvent(
-                                hook=self._event_hook,
+                                hook=self._hook,
                                 iteration=self._iteration,
                                 workflow_name=self._workflow_name,
                                 status=WorkflowStatus.FAILURE,
@@ -224,8 +233,20 @@ class WorkflowRunner:
                 }
 
                 if jobrunner.hasFailed():
+                    workflow_failed = True
                     if jobrunner.stop_on_fail:
                         self.__running = False
+                        if self.send_event is not None:
+                            self.send_event(
+                                WorkflowFinishedEvent(
+                                    hook=self._hook,
+                                    iteration=self._iteration,
+                                    workflow_name=self._workflow_name,
+                                    status=WorkflowStatus.FAILURE,
+                                    stderr="\n".join(workflow_stderr),
+                                    stdout="\n".join(workflow_stdout),
+                                )
+                            )
                         raise RuntimeError(
                             f"Workflow job {info['job_name']}"
                             f" failed with error: {info['stderr']}"
@@ -240,24 +261,36 @@ class WorkflowRunner:
 
         self.__current_job = None
         self.__running = False
+
+        if self.__cancelled:
+            if self.send_event is not None:
+                self.send_event(
+                    WorkflowCancelledEvent(
+                        hook=self._hook,
+                        iteration=self._iteration,
+                        workflow_name=self._workflow_name,
+                        stdout="\n".join(workflow_stdout),
+                        stderr="\n".join(workflow_stderr),
+                    )
+                )
+            return
+
         self.__workflow_result = True
         if self.send_event is not None:
             self.send_event(
                 WorkflowFinishedEvent(
-                    hook=self._event_hook,
+                    hook=self._hook,
                     iteration=self._iteration,
                     workflow_name=self._workflow_name,
-                    status=WorkflowStatus.SUCCESS,
+                    status=(
+                        WorkflowStatus.FAILURE
+                        if workflow_failed
+                        else WorkflowStatus.SUCCESS
+                    ),
                     stdout="\n".join(workflow_stdout),
                     stderr="\n".join(workflow_stderr),
                 )
             )
-
-    @property
-    def _event_hook(self) -> str:
-        if self._hook is None:
-            raise ValueError("hook is required when sending workflow events")
-        return str(self._hook)
 
     def isRunning(self) -> bool:
         if self.__running:

@@ -252,7 +252,7 @@ class WorkflowStatus(StrEnum):
 
 
 class _WorkflowEvent(BaseModel):
-    hook: HookRuntime
+    hook: HookRuntime | None = None
     iteration: int | None = None
 
 
@@ -280,9 +280,17 @@ class WorkflowFinishedEvent(_WorkflowEvent):
     stderr: str | None = None
 
 
+class WorkflowCancelledEvent(_WorkflowEvent):
+    event_type: Literal["WorkflowCancelledEvent"] = "WorkflowCancelledEvent"
+    workflow_name: str
+    stdout: str | None = None
+    stderr: str | None = None
+
+
 WorkflowEvent = (
     WorkflowBatchStartedEvent
     | WorkflowBatchFinishedEvent
     | WorkflowStartedEvent
     | WorkflowFinishedEvent
+    | WorkflowCancelledEvent
 )
