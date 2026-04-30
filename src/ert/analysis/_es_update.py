@@ -21,9 +21,9 @@ from ._update_commons import (
 from ._update_strategies import (
     AdaptiveLocalizationUpdate,
     DistanceLocalizationUpdate,
+    GlobalESUpdate,
     ObservationContext,
     ObservationLocations,
-    StandardESUpdate,
     UpdateStrategy,
 )
 from .event import (
@@ -308,7 +308,7 @@ def build_strategy_map(
         surface_strategy = DistanceLocalizationUpdate(
             enkf_truncation, rng, SurfaceConfig, progress_callback
         )
-        standard_strategy = StandardESUpdate(
+        global_strategy = GlobalESUpdate(
             enkf_truncation,
             rng,
             progress_callback,
@@ -321,7 +321,7 @@ def build_strategy_map(
             elif isinstance(param_cfg, SurfaceConfig):
                 strategy_map[param_name] = surface_strategy
             else:
-                strategy_map[param_name] = standard_strategy
+                strategy_map[param_name] = global_strategy
 
     elif localization:
         if correlation_threshold is None:
@@ -335,13 +335,13 @@ def build_strategy_map(
             strategy_map[param_name] = adaptive_strategy
 
     else:
-        standard_strategy = StandardESUpdate(
+        global_strategy = GlobalESUpdate(
             enkf_truncation,
             rng,
             progress_callback,
         )
         for param_name in parameters:
-            strategy_map[param_name] = standard_strategy
+            strategy_map[param_name] = global_strategy
 
     return strategy_map
 

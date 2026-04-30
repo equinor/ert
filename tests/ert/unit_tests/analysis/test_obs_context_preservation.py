@@ -5,11 +5,11 @@ import pytest
 
 from ert.analysis._update_strategies._adaptive import AdaptiveLocalizationUpdate
 from ert.analysis._update_strategies._distance import DistanceLocalizationUpdate
+from ert.analysis._update_strategies._global import GlobalESUpdate
 from ert.analysis._update_strategies._protocol import (
     ObservationContext,
     ObservationLocations,
 )
-from ert.analysis._update_strategies._standard import StandardESUpdate
 from ert.config import Field
 
 
@@ -42,11 +42,11 @@ def _make_context(
     )
 
 
-def test_that_standard_es_prepare_does_not_mutate_obs_context_responses() -> None:
+def test_that_global_es_prepare_does_not_mutate_obs_context_responses() -> None:
     ctx = _make_context()
     original = ctx.responses.copy()
 
-    strat = StandardESUpdate(
+    strat = GlobalESUpdate(
         enkf_truncation=1.0,
         rng=np.random.default_rng(0),
         progress_callback=_noop,
@@ -95,10 +95,10 @@ def test_that_distance_localization_innovation_is_independent_of_prepare_order()
 ):
     """
     The distance smoother's internal D_obs_minus_D must not depend on whether
-    StandardESUpdate.prepare ran before or after DistanceLocalizationUpdate.prepare.
+    GlobalESUpdate.prepare ran before or after DistanceLocalizationUpdate.prepare.
     """
 
-    def _prepare_pair(standard_first: bool) -> np.ndarray:
+    def _prepare_pair(global_first: bool) -> np.ndarray:
         ctx = _make_context()
         dist = DistanceLocalizationUpdate(
             enkf_truncation=1.0,
@@ -106,12 +106,12 @@ def test_that_distance_localization_innovation_is_independent_of_prepare_order()
             param_type=Field,
             progress_callback=_noop,
         )
-        std = StandardESUpdate(
+        std = GlobalESUpdate(
             enkf_truncation=1.0,
             rng=np.random.default_rng(7),
             progress_callback=_noop,
         )
-        if standard_first:
+        if global_first:
             std.prepare(ctx)
             dist.prepare(ctx)
         else:
@@ -120,14 +120,14 @@ def test_that_distance_localization_innovation_is_independent_of_prepare_order()
         assert dist._smoother is not None
         return np.asarray(dist._smoother.D_obs_minus_D).copy()
 
-    innov_distance_first = _prepare_pair(standard_first=False)
-    innov_standard_first = _prepare_pair(standard_first=True)
+    innov_distance_first = _prepare_pair(global_first=False)
+    innov_global_first = _prepare_pair(global_first=True)
 
     np.testing.assert_allclose(
         innov_distance_first,
-        innov_standard_first,
+        innov_global_first,
         err_msg=(
-            "Distance smoother innovation depends on whether StandardESUpdate "
+            "Distance smoother innovation depends on whether GlobalESUpdate "
             "was prepared first — obs_context.responses is being mutated."
         ),
     )
@@ -136,8 +136,8 @@ def test_that_distance_localization_innovation_is_independent_of_prepare_order()
 @pytest.mark.parametrize(
     ("first_strategy_cls", "second_strategy_cls"),
     [
-        (StandardESUpdate, DistanceLocalizationUpdate),
-        (DistanceLocalizationUpdate, StandardESUpdate),
+        (GlobalESUpdate, DistanceLocalizationUpdate),
+        (DistanceLocalizationUpdate, GlobalESUpdate),
     ],
 )
 def test_that_obs_context_responses_survive_two_strategy_prepares(
@@ -147,8 +147,8 @@ def test_that_obs_context_responses_survive_two_strategy_prepares(
     original = ctx.responses.copy()
 
     def _make(cls: type) -> object:
-        if cls is StandardESUpdate:
-            return StandardESUpdate(
+        if cls is GlobalESUpdate:
+            return GlobalESUpdate(
                 enkf_truncation=1.0,
                 rng=np.random.default_rng(0),
                 progress_callback=_noop,
