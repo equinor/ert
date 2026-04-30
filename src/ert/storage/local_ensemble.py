@@ -1289,7 +1289,7 @@ class LocalEnsemble(BaseMode):
         transition_dir.mkdir(exist_ok=True)
 
         sparsity = 1.0 - np.count_nonzero(matrix) / matrix.size
-        is_sparse = sparsity > 0.5
+        is_sparse = bool(sparsity > 0.5)
 
         if is_sparse:
             sparse_matrix = sp.sparse.csc_array(matrix)
