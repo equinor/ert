@@ -541,7 +541,8 @@ def test_that_deserializing_ensemble_experiment_is_the_inverse_of_serializing(
         runmodel._storage.close()
 
         runmodel_from_serialized = EnsembleExperiment.model_validate(
-            runmodel.model_dump(mode="json") | {"status_queue": queue.SimpleQueue()}
+            runmodel.model_dump(mode="json", exclude={"experiment_type"})
+            | {"status_queue": queue.SimpleQueue()}
         )
 
         assert (
@@ -578,7 +579,8 @@ def test_that_deserializing_ensemble_smoother_is_the_inverse_of_serializing(
         runmodel._storage.close()
 
         runmodel_from_serialized = EnsembleSmoother.model_validate(
-            runmodel.model_dump(mode="json") | {"status_queue": queue.SimpleQueue()}
+            runmodel.model_dump(mode="json", exclude={"experiment_type"})
+            | {"status_queue": queue.SimpleQueue()}
         )
 
         assert (
@@ -615,7 +617,8 @@ def test_that_deserializing_ensemble_information_filter_is_the_inverse_of_serial
         runmodel._storage.close()
 
         runmodel_from_serialized = EnsembleInformationFilter.model_validate(
-            runmodel.model_dump(mode="json") | {"status_queue": queue.SimpleQueue()}
+            runmodel.model_dump(mode="json", exclude={"experiment_type"})
+            | {"status_queue": queue.SimpleQueue()}
         )
 
         assert (
@@ -655,7 +658,8 @@ def test_that_deserializing_esmda_is_the_inverse_of_serializing(
         runmodel._storage.close()
 
         runmodel_from_serialized = MultipleDataAssimilation.model_validate(
-            runmodel.model_dump() | {"status_queue": queue.SimpleQueue()}
+            runmodel.model_dump(mode="json", exclude={"experiment_type"})
+            | {"status_queue": queue.SimpleQueue()}
         )
 
     assert runmodel_from_serialized.model_dump(mode="json") == runmodel.model_dump(
