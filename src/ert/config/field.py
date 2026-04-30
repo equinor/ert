@@ -24,6 +24,7 @@ from ert.field_utils import (
 from ert.substitutions import substitute_runpath_name
 from ert.utils import log_duration
 
+from ._get_update_from_options import get_update_from_options
 from ._str_to_bool import str_to_bool
 from .graph_utils import create_flattened_cube_graph
 from .parameter_config import ParameterConfig
@@ -72,7 +73,7 @@ class Field(ParameterConfig):
         forward_init = str_to_bool(options.get("FORWARD_INIT", "FALSE"))
         output_transform = options.get("OUTPUT_TRANSFORM")
         input_transform = options.get("INPUT_TRANSFORM")
-        update_parameter = str_to_bool(options.get("UPDATE", "TRUE"))
+        update = get_update_from_options(options, "ADAPTIVE")
         min_ = options.get("MIN")
         max_ = options.get("MAX")
         init_files = options.get("INIT_FILES")
@@ -166,7 +167,7 @@ class Field(ParameterConfig):
             forward_init_file=init_files,
             output_file=out_file,
             grid_file=os.path.abspath(grid_file_path),
-            update=update_parameter,
+            update=update,
         )
 
     def __len__(self) -> int:

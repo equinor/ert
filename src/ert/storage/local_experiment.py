@@ -432,7 +432,11 @@ class LocalExperiment(BaseMode):
 
     @cached_property
     def update_parameters(self) -> list[str]:
-        return [p.name for p in self.parameter_configuration.values() if p.update]
+        return [
+            p.name
+            for p in self.parameter_configuration.values()
+            if p.update is not None
+        ]
 
     @cached_property
     def observations(self) -> dict[str, pl.DataFrame]:
