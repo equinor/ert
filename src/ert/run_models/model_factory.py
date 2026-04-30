@@ -103,7 +103,9 @@ def _merge_parameters(
         parameter_configs
     )
 
-    if require_updateable_param and not any(p.update for p in merged_parameter_configs):
+    if require_updateable_param and not any(
+        p.update_strategy for p in merged_parameter_configs
+    ):
         raise ConfigValidationError(
             "No parameters to update as all parameters were set to update:false!"
         )

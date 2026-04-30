@@ -12,6 +12,7 @@ import xarray as xr
 import xtgeo
 from pydantic import field_serializer
 
+from ert.config._get_update_from_options import get_update_from_options
 from ert.field_utils import (
     ErtboxParameters,
     FieldFileFormat,
@@ -72,7 +73,7 @@ class Field(ParameterConfig):
         forward_init = str_to_bool(options.get("FORWARD_INIT", "FALSE"))
         output_transform = options.get("OUTPUT_TRANSFORM")
         input_transform = options.get("INPUT_TRANSFORM")
-        update_parameter = str_to_bool(options.get("UPDATE", "TRUE"))
+        update_strategy = get_update_from_options(options, "GLOBAL")
         min_ = options.get("MIN")
         max_ = options.get("MAX")
         init_files = options.get("INIT_FILES")
@@ -166,7 +167,7 @@ class Field(ParameterConfig):
             forward_init_file=init_files,
             output_file=out_file,
             grid_file=os.path.abspath(grid_file_path),
-            update=update_parameter,
+            update_strategy=update_strategy,
         )
 
     def __len__(self) -> int:
