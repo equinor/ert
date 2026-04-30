@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 from functools import cache, cached_property, lru_cache
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 from uuid import UUID
 
 import numpy as np
@@ -27,6 +27,7 @@ from ert.config import (
     ParameterConfig,
     SummaryConfig,
 )
+from ert.config.rft_config import RFTConfig
 from ert.exceptions import StorageError
 from ert.substitutions import substitute_runpath_name
 
@@ -924,6 +925,19 @@ class LocalEnsemble(BaseMode):
             for e in response_configs
         }
 
+    @require_write
+    def save_observation_location_metadata(
+        self, dataset: pl.DataFrame, realization: int
+    ) -> None:
+        filename = "rft_observation_location_metadata.parquet"
+        output_path = self._realization_dir(realization) / filename
+        self._storage._to_parquet_transaction(output_path, dataset)
+
+    def load_observation_location_metadata(self, realization: int) -> pl.DataFrame:
+        filename = "rft_observation_location_metadata.parquet"
+        ds_path = self._realization_dir(realization) / filename
+        return pl.read_parquet(ds_path)
+
     def get_observations_and_responses(
         self,
         selected_observations: Iterable[str],
@@ -933,10 +947,13 @@ class LocalEnsemble(BaseMode):
         corresponding simulated responses from an ensemble.
 
         The returned DataFrame includes an "index" column containing a
-        comma-separated string of the response type's match key values:
+        comma-separated string of the response type's index key values.
+        Missing components are rendered as the literal "None" so that
+        positional meaning is preserved:
         - Summary: "2024-01-15 00:00:00" (time)
         - GenData: "0, 42" (report_step, index)
         - RFT: "123.5, 456.7, 2500.0, ZONE_A" (east, north, tvd, zone)
+                or "123.5, 456.7, 2500.0, None" when zone is missing
         """
         known_observations = self.experiment.observation_keys
 
@@ -969,17 +986,30 @@ class LocalEnsemble(BaseMode):
                     .with_columns([pl.col("response_key").cast(pl.Categorical)])
                 )
 
-                observed_cols = {
-                    k: observations_for_type[k].unique()
-                    for k in ["response_key", *response_cls.match_key]
-                }
-
                 reals = np.sort(iens_active_index).tolist()
 
                 # Load and join one realization at a time to reduce peak memory usage
                 first_columns: pl.DataFrame | None = None
                 realization_columns: list[pl.DataFrame] = []
                 for real in reals:
+                    if response_type == "rft":
+                        observation_metadata_in_realization = (
+                            self.load_observation_location_metadata(real)
+                        )
+                        observations = RFTConfig.enrich_observations_with_metadata_and_warn_on_zone_mismatch(  # noqa: E501
+                            observations_for_type,
+                            observation_metadata_in_realization,
+                            real,
+                            self.iteration,
+                        )
+                    else:
+                        observations = observations_for_type
+
+                    observed_cols = {
+                        k: observations[k].unique()
+                        for k in ["response_key", *response_cls.match_key]
+                    }
+
                     responses = self._load_responses_lazy(
                         response_type, (real,)
                     ).with_columns([pl.col("response_key").cast(pl.Categorical)])
@@ -1006,10 +1036,10 @@ class LocalEnsemble(BaseMode):
                         # to represent this. We are basically saying that
                         # for this realization, each observation points
                         # to a NaN response.
-                        joined = observations_for_type.with_columns(
+                        joined = observations.with_columns(
                             pl.Series(
                                 str(real),
-                                [np.nan] * len(observations_for_type),
+                                [np.nan] * len(observations),
                                 dtype=pl.Float32,
                             )
                         )
@@ -1018,7 +1048,7 @@ class LocalEnsemble(BaseMode):
                             "response_key",
                             *[k for k in response_cls.match_key if k != "time"],
                         ]
-                        joined = observations_for_type.sort(
+                        joined = observations.sort(
                             by=[*by_cols, "time"]
                         ).join_asof(
                             pivoted.sort(by=[*by_cols, "time"]),
@@ -1029,28 +1059,29 @@ class LocalEnsemble(BaseMode):
                             tolerance="1s",
                         )
                     else:
-                        joined = observations_for_type.join(
+                        joined = observations.join(
                             pivoted,
                             how="left",
                             on=["response_key", *response_cls.match_key],
                             nulls_equal=True,
                         )
 
-                    # Do not drop match keys which
-                    # overlap with localization attributes
-                    match_keys_to_drop = set(response_cls.match_key).difference(
-                        {"north", "east", "radius"}
+                    # Avoid potential collision with "index" column (it could be a part
+                    # of the index_key)
+                    joined = joined.with_columns(
+                        response_cls.index_column_expr().alias("__tmp_index_key__")
                     )
-                    joined = (
-                        joined.with_columns(
-                            pl.concat_str(response_cls.match_key, separator=", ").alias(
-                                "__tmp_index_key__"
-                                # Avoid potential collisions w/ match key
-                            )
+                    if "index" in joined.columns:
+                        joined = joined.drop("index")
+                    joined = joined.rename({"__tmp_index_key__": "index"})
+
+                    if "is_valid" in joined.columns:
+                        joined = joined.with_columns(
+                            pl.when(pl.col("is_valid"))
+                            .then(pl.col(str(real)))
+                            .otherwise(pl.lit(None, dtype=pl.Float32))
+                            .alias(str(real))
                         )
-                        .drop(match_keys_to_drop)
-                        .rename({"__tmp_index_key__": "index"})
-                    )
 
                     if first_columns is None:
                         # The "leftmost" index columns are not yet collected.
@@ -1119,24 +1150,15 @@ class LocalEnsemble(BaseMode):
             except (KeyError, IndexError):
                 pass  # No summary data available, will use default
 
-        observations = rft_observations.with_columns(
+        pure_observations = rft_observations.with_columns(
             pl.int_range(pl.len()).over("well").alias("order"),
         )
-
-        join_keys = ["well", "date", "east", "north", "tvd"]
-        observed_values = {k: observations[k].unique() for k in join_keys}
 
         pivot_index = [
             "well",
             "date",
             "realization",
-            "response_zone",
-            "east",
-            "north",
-            "tvd",
-            "i",
-            "j",
-            "k",
+            "well_connection_cell",
         ]
 
         output_columns = [
@@ -1166,13 +1188,19 @@ class LocalEnsemble(BaseMode):
         result_frames: list[pl.DataFrame] = []
 
         for real in sorted(realizations):
-            responses = (
-                self.load_responses("rft", (real,))
-                .with_columns(
-                    pl.col("property").str.to_lowercase(),
-                )
-                .rename({"zone": "response_zone"})
+            responses = self.load_responses("rft", (real,)).with_columns(
+                pl.col("property").str.to_lowercase(),
             )
+            observation_metadata_in_realization = (
+                self.load_observation_location_metadata(real)
+            )
+            observations = RFTConfig.enrich_observations_with_metadata(
+                pure_observations,
+                observation_metadata_in_realization,
+            )
+
+            join_keys = ["well", "date", "well_connection_cell"]
+            observed_values = {k: observations[k].unique() for k in join_keys}
 
             for col, values in observed_values.items():
                 responses = responses.filter(
@@ -1203,14 +1231,15 @@ class LocalEnsemble(BaseMode):
                     nulls_equal=True,
                 )
                 .with_columns(
-                    pl.col("zone")
-                    .eq_missing(pl.col("response_zone"))
-                    .alias("valid_zone"),
+                    RFTConfig.is_zone_valid().alias("valid_zone"),
                     (1 - pl.col("sgas") - pl.col("swat")).alias("soil"),
                     pl.col("is_active").fill_null(False),
                     pl.col("date")
                     .replace_strict(date_to_report_step, default=0)
                     .alias("report_step"),
+                    pl.col("well_connection_cell").arr.get(0).alias("i"),
+                    pl.col("well_connection_cell").arr.get(1).alias("j"),
+                    pl.col("well_connection_cell").arr.get(2).alias("k"),
                 )
                 .select(output_columns)
             )
@@ -1699,6 +1728,21 @@ async def _write_responses_to_storage(
                 f"Loaded {config.type}",
                 extra={"Time": f"{(time.perf_counter() - start_time):.4f}s"},
             )
+
+            if config.type == "rft":
+                try:
+                    _write_observation_metadata(run_path, realization, ensemble)
+                    await asyncio.sleep(0)
+                except Exception as err:
+                    errors.append(str(err))
+                    logger.exception(
+                        "Unexpected exception while reading from runpath or "
+                        "writing RFT observation metadata "
+                        f"for realization {realization}",
+                        exc_info=err,
+                    )
+                    continue
+
             start_time = time.perf_counter()
             ensemble.save_response(config.type, ds, realization)
             await asyncio.sleep(0)
@@ -1723,6 +1767,29 @@ async def _write_responses_to_storage(
     if errors:
         return LoadResult.failure("\n".join(errors))
     return LoadResult.success()
+
+
+def _write_observation_metadata(
+    run_path: str,
+    realization: int,
+    ensemble: LocalEnsemble,
+) -> None:
+    """To quality control observations in the update step, additional
+    observation-related data from simulations must be obtained and saved in the storage.
+    As simulation files containing required information are not copied from runpath to
+    storage due to their size, extract of observation metadata must be stored
+    instead."""
+
+    rft_config = cast(RFTConfig, ensemble.experiment.response_configuration["rft"])
+    rft_observations = ensemble.experiment.observations.get("rft")
+    if rft_observations is None or rft_observations.is_empty():
+        return
+    location_metadata = rft_config.obtain_location_metadata(
+        run_path, realization, ensemble.iteration, rft_observations
+    )
+    output_path = ensemble._realization_dir(realization)
+    Path(output_path).mkdir(exist_ok=True)
+    ensemble.save_observation_location_metadata(location_metadata, realization)
 
 
 async def load_realization_parameters_and_responses(

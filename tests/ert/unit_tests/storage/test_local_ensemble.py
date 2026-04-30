@@ -1,6 +1,8 @@
+import asyncio
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
+from unittest.mock import patch
 
 import hypothesis.strategies as st
 import numpy as np
@@ -10,8 +12,10 @@ from hypothesis import given
 
 from ert.config import GenKwConfig, RFTConfig, SummaryConfig
 from ert.config._observations import RFTObservation
+from ert.config.response_config import InvalidResponseFile
 from ert.exceptions import StorageError
 from ert.storage import open_storage
+from ert.storage.local_ensemble import _write_responses_to_storage
 from ert.storage.mode import ModeError
 
 
@@ -258,7 +262,30 @@ def _create_rft_response_df(
     well: str = "WELL1",
     date: str = "2020-01-01",
     prop: str = "PRESSURE",
+    depth: float = 8000.0,
     value: float = 148.0,
+    i: int = 1,
+    j: int = 2,
+    k: int = 3,
+) -> pl.DataFrame:
+    time = datetime.strptime(date, "%Y-%m-%d").date()  # noqa: DTZ007
+    df = pl.DataFrame(
+        {
+            "response_key": [f"{well}:{date}:{prop}"],
+            "well": [well],
+            "date": [date],
+            "property": [prop],
+            "time": [time],
+            "depth": pl.Series([depth], dtype=pl.Float32),
+            "values": pl.Series([value], dtype=pl.Float32),
+            "well_connection_cell": pl.Series([(i, j, k)], dtype=pl.Array(pl.Int64, 3)),
+        }
+    )
+    return RFTConfig._assert_schema(df, RFTConfig.response_schema())
+
+
+def _create_rft_location_metadata_df(
+    *,
     east: float = 100.0,
     north: float = 200.0,
     tvd: float = 25.0,
@@ -267,22 +294,17 @@ def _create_rft_response_df(
     j: int = 2,
     k: int = 3,
 ) -> pl.DataFrame:
-    return pl.DataFrame(
+    zones = [zone] if zone is not None else []
+    df = pl.DataFrame(
         {
-            "response_key": [f"{well}:{date}:{prop}"],
-            "well": [well],
-            "date": [date],
-            "property": [prop],
-            "values": pl.Series([value], dtype=pl.Float32),
             "east": pl.Series([east], dtype=pl.Float32),
             "north": pl.Series([north], dtype=pl.Float32),
             "tvd": pl.Series([tvd], dtype=pl.Float32),
-            "zone": pl.Series([zone], dtype=pl.String),
-            "i": pl.Series([i], dtype=pl.Int32),
-            "j": pl.Series([j], dtype=pl.Int32),
-            "k": pl.Series([k], dtype=pl.Int32),
+            "actual_zones": pl.Series([zones], dtype=pl.List(pl.String)),
+            "well_connection_cell": pl.Series([(i, j, k)], dtype=pl.Array(pl.Int64, 3)),
         }
     )
+    return RFTConfig._assert_schema(df, RFTConfig.location_metadata_schema())
 
 
 @contextmanager
@@ -316,16 +338,21 @@ def test_that_get_rft_observations_and_responses_returns_joined_data():
     with _create_rft_ensemble(
         1, [_create_rft_observation(zone="Z1")], zonemap="1 Z1"
     ) as ensemble:
+        realization = 0
         ensemble.save_response(
             "rft",
             pl.concat(
                 [
-                    _create_rft_response_df(zone="Z1", prop="PRESSURE", value=148.0),
-                    _create_rft_response_df(zone="Z1", prop="SGAS", value=0.1),
-                    _create_rft_response_df(zone="Z1", prop="SWAT", value=0.2),
+                    _create_rft_response_df(prop="PRESSURE", value=148.0),
+                    _create_rft_response_df(prop="SGAS", value=0.1),
+                    _create_rft_response_df(prop="SWAT", value=0.2),
                 ]
             ),
-            0,
+            realization,
+        )
+        ensemble.save_observation_location_metadata(
+            _create_rft_location_metadata_df(zone="Z1"),
+            realization,
         )
 
         result = ensemble.get_rft_observations_and_responses()
@@ -370,7 +397,13 @@ def test_that_get_rft_observations_is_active_based_on_matching_pressure_response
     ]
 
     with _create_rft_ensemble(1, observations) as ensemble:
-        ensemble.save_response("rft", pl.concat([_create_rft_response_df()]), 0)
+        realization = 0
+        ensemble.save_response(
+            "rft", pl.concat([_create_rft_response_df()]), realization
+        )
+        ensemble.save_observation_location_metadata(
+            _create_rft_location_metadata_df(), realization
+        )
 
         result = ensemble.get_rft_observations_and_responses().sort(
             "true_vertical_depth"
@@ -401,17 +434,22 @@ def test_that_get_rft_observations_and_responses_sets_valid_zone_with_null_equal
         ),
     ]
 
+    realization = 0
     with _create_rft_ensemble(1, observations, zonemap="1 Z1\n2 Z2\n") as ensemble:
         ensemble.save_response(
             "rft",
+            _create_rft_response_df(),
+            realization,
+        )
+        ensemble.save_observation_location_metadata(
             pl.concat(
                 [
-                    _create_rft_response_df(zone="Z1", tvd=25.0),
-                    _create_rft_response_df(zone=None, tvd=30.0),
-                    _create_rft_response_df(zone="Z1", tvd=35.0),
+                    _create_rft_location_metadata_df(zone="Z1", tvd=25.0),
+                    _create_rft_location_metadata_df(zone=None, tvd=30.0),
+                    _create_rft_location_metadata_df(zone="Z1", tvd=35.0),
                 ]
             ),
-            0,
+            realization,
         )
 
         result = ensemble.get_rft_observations_and_responses().sort(
@@ -434,7 +472,14 @@ def test_that_get_rft_observations_and_responses_order_is_row_index_within_well(
     ]
 
     with _create_rft_ensemble(1, observations) as ensemble:
-        ensemble.save_response("rft", pl.concat([_create_rft_response_df()]), 0)
+        realization = 0
+        ensemble.save_response(
+            "rft", pl.concat([_create_rft_response_df()]), realization
+        )
+        ensemble.save_observation_location_metadata(
+            _create_rft_location_metadata_df(),
+            realization,
+        )
 
         result = ensemble.get_rft_observations_and_responses().sort(
             ["well", "true_vertical_depth"]
@@ -461,6 +506,10 @@ def test_that_get_rft_observations_and_responses_handles_multiple_realizations(
         for i, r in enumerate(response_values):
             ensemble.save_response(
                 "rft", _create_rft_response_df(value=r, prop=prop), i
+            )
+            ensemble.save_observation_location_metadata(
+                _create_rft_location_metadata_df(),
+                i,
             )
 
         result = ensemble.get_rft_observations_and_responses().sort("realization")
@@ -491,10 +540,23 @@ def test_that_get_rft_observations_and_responses_raises_error_when_response_not_
 
 
 @pytest.mark.usefixtures("use_tmpdir")
+def test_that_get_rft_observations_and_responses_raises_error_when_location_metadata_not_saved():  # noqa: E501
+    with _create_rft_ensemble(1, [_create_rft_observation()]) as ensemble:
+        ensemble.save_response("rft", _create_rft_response_df(), 0)
+        with pytest.raises(FileNotFoundError, match="observation_location_metadata"):
+            ensemble.get_rft_observations_and_responses()
+
+
+@pytest.mark.usefixtures("use_tmpdir")
 def test_that_get_rft_observations_and_responses_adds_missing_saturation_columns():
+    realization = 0
     with _create_rft_ensemble(1, [_create_rft_observation()]) as ensemble:
         # Save a response that does not contain saturations
-        ensemble.save_response("rft", _create_rft_response_df(), 0)
+        ensemble.save_response("rft", _create_rft_response_df(), realization)
+        ensemble.save_observation_location_metadata(
+            _create_rft_location_metadata_df(),
+            realization,
+        )
 
         result = ensemble.get_rft_observations_and_responses()
 
@@ -533,13 +595,92 @@ def test_that_get_rft_observations_and_responses_maps_report_step_from_summary_t
     )
 
     with _create_rft_ensemble(1, observations, with_summary=True) as ensemble:
-        ensemble.save_response("rft", rft_responses, 0)
-        ensemble.save_response("summary", summary_responses, 0)
+        realization = 0
+        ensemble.save_response("rft", rft_responses, realization)
+        ensemble.save_response("summary", summary_responses, realization)
+        ensemble.save_observation_location_metadata(
+            _create_rft_location_metadata_df(),
+            realization,
+        )
 
         result = ensemble.get_rft_observations_and_responses().sort("time")
 
         assert "report_step" in result.columns
         assert result["report_step"].to_list() == [1, 2]
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_rft_artifacts_are_saved_atomically():
+    def read_from_file_mock(run_path, iens, iter_):
+        if iens in {0, 2}:
+            return _create_rft_response_df()
+        elif iens == 1:
+            raise InvalidResponseFile("Mock error for realization 1")
+
+    def location_metadata_mock(run_path, iens, iter_, observations):
+        if iens in {0, 1}:
+            return _create_rft_location_metadata_df()
+        elif iens == 2:
+            raise InvalidResponseFile("Mock error for realization 2")
+
+    async def run_test():
+        with (
+            patch.object(RFTConfig, "read_from_file", side_effect=read_from_file_mock),
+            patch.object(
+                RFTConfig,
+                "obtain_location_metadata",
+                side_effect=location_metadata_mock,
+            ),
+        ):
+            num_realizations = 3
+            observations = [
+                _create_rft_observation(),
+            ]
+
+            with _create_rft_ensemble(num_realizations, observations) as ensemble:
+                await _write_responses_to_storage("", 0, ensemble)
+                await _write_responses_to_storage("", 1, ensemble)
+                await _write_responses_to_storage("", 2, ensemble)
+
+                ensemble.load_responses("rft", (0,))
+                with pytest.raises(KeyError):
+                    ensemble.load_responses("rft", (1,))
+
+                with pytest.raises(KeyError):
+                    ensemble.load_responses("rft", (2,))
+
+                ensemble.load_observation_location_metadata(0)
+                with pytest.raises(FileNotFoundError):
+                    ensemble.load_observation_location_metadata(1)
+                with pytest.raises(FileNotFoundError):
+                    ensemble.load_observation_location_metadata(2)
+
+                assert ensemble.get_realization_list_with_responses() == [0]
+
+    asyncio.run(run_test())
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_that_location_metadata_file_is_not_created_when_no_observations():
+    def read_from_file_mock(run_path, iens, iter_):
+        return _create_rft_response_df()
+
+    async def run_test():
+        with (
+            patch.object(RFTConfig, "read_from_file", side_effect=read_from_file_mock),
+        ):
+            num_realizations = 1
+            observations = []
+
+            with _create_rft_ensemble(num_realizations, observations) as ensemble:
+                await _write_responses_to_storage("", 0, ensemble)
+
+                ensemble.load_responses("rft", (0,))
+                with pytest.raises(FileNotFoundError):
+                    ensemble.load_observation_location_metadata(0)
+                assert ensemble.get_realization_list_with_responses() == [0]
+
+    asyncio.run(run_test())
 
 
 def test_that_save_transition_data_writes_file_to_disk(tmp_path):

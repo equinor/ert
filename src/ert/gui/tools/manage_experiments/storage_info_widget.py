@@ -31,6 +31,7 @@ from PyQt6.QtWidgets import (
 from ert import LibresFacade
 from ert.config.derived_response_config import DerivedResponseConfig
 from ert.config.response_config import ResponseConfig
+from ert.config.rft_config import RFTConfig
 from ert.storage import Ensemble, Experiment, RealizationStorageState
 from ert.warnings import capture_specific_warning
 
@@ -140,36 +141,54 @@ class _ObservationTreeWidgetItem(QTreeWidgetItem):
         self,
         parent: QTreeWidgetItem,
         observation_key: str,
-        observation_data: dict[str, object],
+        observation_data: pl.DataFrame,
         response_config: ResponseConfig | DerivedResponseConfig,
     ) -> None:
+        assert len(observation_data) == 1
         self.observation_key = observation_key
         self.observation_data = observation_data
         self.response_config = response_config
         super().__init__(parent, [self.display_label, observation_key])
 
+    def match_key_data(self, metadata: pl.DataFrame | None) -> dict[str, object]:
+        response_type = self.response_config.type
+        if response_type == "rft":
+            assert metadata is not None
+            observation_data = RFTConfig.enrich_observations_with_metadata(
+                self.observation_data, metadata
+            )
+            observation_data = observation_data.filter(RFTConfig.is_zone_valid())
+        else:
+            observation_data = self.observation_data
+
+        if observation_data.is_empty():
+            return {}
+        return observation_data.select(self.response_config.match_key).row(
+            0, named=True
+        )
+
     @property
-    def match_key_data(self) -> dict[str, object]:
-        return {
-            col: self.observation_data[col] for col in self.response_config.match_key
-        }
+    def index_key_data(self) -> dict[str, object]:
+        return self.observation_data.select(self.response_config.index_key).row(
+            0, named=True
+        )
 
     @property
     def display_label(self) -> str:
         return ", ".join(
             self.response_config.display_column(val, col)
-            for col, val in self.match_key_data.items()
+            for col, val in self.index_key_data.items()
         )
 
     def __lt__(self, other: QTreeWidgetItem) -> bool:
         assert isinstance(other, _ObservationTreeWidgetItem)
-        assert self.response_config.match_key == other.response_config.match_key, (
+        assert self.response_config.index_key == other.response_config.index_key, (
             "Expecting items being compared to be of the same response type"
         )
 
         for val, other_val in zip(
-            self.match_key_data.values(),
-            other.match_key_data.values(),
+            self.index_key_data.values(),
+            other.index_key_data.values(),
             strict=True,
         ):
             if isinstance(val, (int, float)) and isinstance(other_val, (int, float)):
@@ -294,17 +313,14 @@ class _EnsembleWidget(QWidget):
         ax = self._figure.add_subplot(111)
         ax.set_title(selected.observation_key)
         ax.grid(True)
-
-        obs = pl.DataFrame(selected.observation_data)
+        obs = selected.observation_data
         scaling_df = self._ensemble.load_observation_scaling_factors()
 
         def _try_render_scaled_obs() -> None:
             if scaling_df is None:
                 return None
 
-            index_col = pl.concat_str(
-                selected.response_config.match_key, separator=", "
-            )
+            index_col = selected.response_config.index_column_expr()
             joined = obs.with_columns(index_col.alias("_tmp_index")).join(
                 scaling_df,
                 how="left",
@@ -330,34 +346,55 @@ class _EnsembleWidget(QWidget):
                 color="black",
             )
 
-        def _filter_by_match_key(df: pl.DataFrame) -> pl.DataFrame:
-            """
-            Filter df to match 'selected' observation on match keys.
-            """
-            mask = pl.lit(True)
-            for col, val in selected.match_key_data.items():
-                mask &= pl.col(col).eq_missing(val)
-            return df.filter(mask)
-
-        response_key = str(selected.observation_data["response_key"])
+        response_type = selected.response_config.type
+        response_key = str(obs["response_key"].item())
         reals_with_responses = tuple(
             self._ensemble.get_realization_list_with_responses()
         )
 
-        response_ds = (
-            self._ensemble.load_responses(
-                response_key,
-                reals_with_responses,
-            )
-            if reals_with_responses
-            and response_key in self._ensemble.experiment.response_key_to_response_type
-            else None
-        )
+        def _filter_by_match_key(
+            df: pl.DataFrame, observation_metadata: pl.DataFrame | None
+        ) -> pl.DataFrame:
+            """
+            Filter df to match 'selected' observation on match keys.
+            """
+            match_data = selected.match_key_data(observation_metadata)
+            if not match_data:
+                return df.filter(pl.lit(False))
+
+            mask = pl.lit(True)
+            for col, val in match_data.items():
+                mask &= pl.col(col).eq_missing(val)
+            return df.filter(mask)
+
+        def _load_and_filter_responses() -> pl.DataFrame | None:
+            assert self._ensemble is not None
+            ens = self._ensemble
+
+            if not reals_with_responses:
+                return None
+
+            if response_key not in ens.experiment.response_key_to_response_type:
+                return None
+
+            if response_type == "rft":
+                per_realization: list[pl.DataFrame] = []
+                for real in reals_with_responses:
+                    response = ens.load_responses(response_key, (real,))
+                    observation_metadata = ens.load_observation_location_metadata(real)
+                    res = _filter_by_match_key(response, observation_metadata)
+                    per_realization.append(res)
+                return pl.concat(per_realization)
+
+            responses = ens.load_responses(response_key, reals_with_responses)
+            return _filter_by_match_key(responses, None)
+
+        response_ds = _load_and_filter_responses()
 
         if response_ds is not None and not response_ds.is_empty():
-            response_ds_for_label = _filter_by_match_key(response_ds).rename(
-                {"values": "Responses"}
-            )[["response_key", "Responses"]]
+            response_ds_for_label = response_ds.rename({"values": "Responses"})[
+                ["response_key", "Responses"]
+            ]
 
             ax.errorbar(
                 x="Observation",
@@ -444,7 +481,7 @@ class _EnsembleWidget(QWidget):
                         pl.col("observation_key").eq(obs_key)
                     ).unique()
 
-                    for observation_data in obs_ds.to_dicts():
+                    for observation_data in obs_ds.iter_slices(n_rows=1):
                         _ObservationTreeWidgetItem(
                             root, obs_key, observation_data, response_config
                         )

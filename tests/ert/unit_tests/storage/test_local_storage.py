@@ -36,9 +36,14 @@ from ert.config import (
     SurfaceConfig,
 )
 from ert.config._create_observation_dataframes import create_observation_dataframes
-from ert.config._observations import BreakthroughObservation, GeneralObservation
+from ert.config._observations import (
+    BreakthroughObservation,
+    GeneralObservation,
+    RFTObservation,
+)
 from ert.config.design_matrix import DESIGN_MATRIX_GROUP
 from ert.config.distribution import DISTRIBUTION_CLASSES
+from ert.config.rft_config import RFTConfig
 from ert.dark_storage.common import ErtStoragePermissionError
 from ert.field_utils import ErtboxParameters
 from ert.sample_prior import sample_prior
@@ -1227,6 +1232,232 @@ def test_that_breakthrough_observations_and_responses_are_joined_in_endpoint(tmp
         assert obs_and_responses["observation_key"].to_list() == ["BRT_OP1"]
         assert obs_and_responses["index"].to_list() == ["0.2"]
         assert obs_and_responses["0"].to_list() == [-1.5]
+
+
+def test_that_get_observations_and_responses_applies_rft_metadata(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        date = datetime(2000, 1, 1).date()  # noqa: DTZ001
+
+        rft_config = RFTConfig(
+            input_files=["BASE.RFT"],
+            data_to_read={"WELL": {"2000-01-01": ["SWAT"]}},
+        )
+
+        rft_observation1 = RFTObservation(
+            name="RFT_OBS1",
+            well="WELL",
+            date=date.isoformat(),
+            property="SWAT",
+            value=100.0,
+            error=10.0,
+            east=100.0,
+            north=105.0,
+            tvd=1000.0,
+            zone=None,
+        )
+        rft_observation2 = RFTObservation(
+            name="RFT_OBS2",
+            well="WELL",
+            date=date.isoformat(),
+            property="SWAT",
+            value=100.0,
+            error=10.0,
+            east=300.0,
+            north=405.0,
+            tvd=2000.0,
+            zone=None,
+        )
+
+        experiment = storage.create_experiment(
+            experiment_config={
+                "response_configuration": [rft_config.model_dump(mode="json")],
+                "observations": [
+                    rft_observation1.model_dump(mode="json"),
+                    rft_observation2.model_dump(mode="json"),
+                ],
+            }
+        )
+
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=2, iteration=0, name="prior"
+        )
+
+        def rft_response(*, values) -> pl.DataFrame:
+            df = pl.DataFrame(
+                {
+                    "response_key": ["WELL:2000-01-01:SWAT"],
+                    "well": ["WELL"],
+                    "date": [date.isoformat()],
+                    "property": ["SWAT"],
+                    "time": [date],
+                    "depth": [1006.6],
+                    "values": [values],
+                    "well_connection_cell": pl.Series(
+                        [[10, 10, 10]], dtype=pl.Array(pl.Int64, 3)
+                    ),
+                },
+                schema=RFTConfig.response_schema(),
+            )
+            RFTConfig._assert_schema(df, RFTConfig.response_schema())
+            return df
+
+        def location_metadata() -> pl.DataFrame:
+            df = pl.DataFrame(
+                [
+                    {
+                        "east": 100.0,
+                        "north": 105.0,
+                        "tvd": 1000.0,
+                        "actual_zones": ["zone1"],
+                        "well_connection_cell": [10, 10, 10],
+                    },
+                    {
+                        "east": 300.0,
+                        "north": 405.0,
+                        "tvd": 2000.0,
+                        "actual_zones": ["zone2"],
+                        "well_connection_cell": [10, 10, 10],
+                    },
+                ],
+                schema=RFTConfig.location_metadata_schema(),
+            )
+            RFTConfig._assert_schema(df, RFTConfig.location_metadata_schema())
+            return df
+
+        ensemble.save_response("rft", rft_response(values=200.0), 0)
+        ensemble.save_observation_location_metadata(location_metadata(), 0)
+
+        ensemble.save_response("rft", rft_response(values=300.0), 1)
+        ensemble.save_observation_location_metadata(location_metadata(), 1)
+
+        iens_active_index = np.array([0, 1])
+        active_observations = ["RFT_OBS1"]
+
+        obs_and_responses = ensemble.get_observations_and_responses(
+            active_observations, iens_active_index
+        )
+
+        assert obs_and_responses["response_key"].to_list() == ["WELL:2000-01-01:SWAT"]
+        assert obs_and_responses["index"].to_list() == ["100.0, 105.0, 1000.0, None"]
+        assert obs_and_responses["observation_key"].to_list() == ["RFT_OBS1"]
+        assert obs_and_responses["0"].to_list() == [200.0]
+        assert obs_and_responses["1"].to_list() == [300.0]
+
+
+@pytest.mark.filterwarnings("ignore:.*did not match expected zone")
+def test_that_get_observations_and_responses_disables_observation(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        date = datetime(2000, 1, 1).date()  # noqa: DTZ001
+
+        rft_config = RFTConfig(
+            input_files=["BASE.RFT"],
+            data_to_read={"WELL": {"2000-01-01": ["SWAT"]}},
+        )
+
+        rft_observation1 = RFTObservation(
+            name="RFT_OBS1",
+            well="WELL",
+            date=date.isoformat(),
+            property="SWAT",
+            value=100.0,
+            error=10.0,
+            east=100.0,
+            north=105.0,
+            tvd=1000.0,
+            zone="zone2",
+        )
+        rft_observation2 = RFTObservation(
+            name="RFT_OBS2",
+            well="WELL",
+            date=date.isoformat(),
+            property="SWAT",
+            value=100.0,
+            error=10.0,
+            east=300.0,
+            north=405.0,
+            tvd=2000.0,
+            zone="zone3",
+        )
+
+        experiment = storage.create_experiment(
+            experiment_config={
+                "response_configuration": [rft_config.model_dump(mode="json")],
+                "observations": [
+                    rft_observation1.model_dump(mode="json"),
+                    rft_observation2.model_dump(mode="json"),
+                ],
+            }
+        )
+
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=2, iteration=0, name="prior"
+        )
+
+        def rft_response(*, values) -> pl.DataFrame:
+            df = pl.DataFrame(
+                {
+                    "response_key": ["WELL:2000-01-01:SWAT"],
+                    "well": ["WELL"],
+                    "date": [date.isoformat()],
+                    "property": ["SWAT"],
+                    "time": [date],
+                    "depth": [1006.6],
+                    "values": [values],
+                    "well_connection_cell": pl.Series(
+                        [[10, 10, 10]], dtype=pl.Array(pl.Int64, 3)
+                    ),
+                },
+                schema=RFTConfig.response_schema(),
+            )
+            RFTConfig._assert_schema(df, RFTConfig.response_schema())
+            return df
+
+        def location_metadata(*, zones1, zones2) -> pl.DataFrame:
+            df = pl.DataFrame(
+                [
+                    {
+                        "east": 100.0,
+                        "north": 105.0,
+                        "tvd": 1000.0,
+                        "actual_zones": zones1,
+                        "well_connection_cell": [10, 10, 10],
+                    },
+                    {
+                        "east": 300.0,
+                        "north": 405.0,
+                        "tvd": 2000.0,
+                        "actual_zones": zones2,
+                        "well_connection_cell": [10, 10, 10],
+                    },
+                ],
+                schema=RFTConfig.location_metadata_schema(),
+            )
+            RFTConfig._assert_schema(df, RFTConfig.location_metadata_schema())
+            return df
+
+        ensemble.save_response("rft", rft_response(values=200.0), 0)
+        ensemble.save_observation_location_metadata(
+            location_metadata(zones1=["zone1"], zones2=["zone3"]), 0
+        )
+
+        ensemble.save_response("rft", rft_response(values=300.0), 1)
+        ensemble.save_observation_location_metadata(
+            location_metadata(zones1=["zone2"], zones2=["zone3"]), 1
+        )
+
+        iens_active_index = np.array([0, 1])
+        active_observations = ["RFT_OBS1", "RFT_OBS2"]
+
+        obs_and_responses = ensemble.get_observations_and_responses(
+            active_observations, iens_active_index
+        )
+
+        assert obs_and_responses["observation_key"].to_list() == [
+            "RFT_OBS1",
+            "RFT_OBS2",
+        ]
+        assert obs_and_responses["0"].to_list() == [None, 200.0]
+        assert obs_and_responses["1"].to_list() == [300.0, 300.0]
 
 
 def add_to_name(prefix: str):
