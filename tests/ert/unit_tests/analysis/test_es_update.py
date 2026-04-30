@@ -545,8 +545,8 @@ def _mock_preprocess_observations_and_responses(
     observation_settings,
     global_std_scaling,
     progress_callback,
-    source_ensemble,
-    target_ensemble,
+    prior_ensemble,
+    posterior_ensemble,
 ):
     """
     Runs through _preprocess_observations_and_responses with mocked values for
@@ -558,8 +558,8 @@ def _mock_preprocess_observations_and_responses(
         mock_obs_n_responses.return_value = observations_and_responses
 
         return _preprocess_observations_and_responses(
-            source_ensemble=source_ensemble,
-            target_ensemble=target_ensemble,
+            prior_ensemble=prior_ensemble,
+            posterior_ensemble=posterior_ensemble,
             outlier_settings=observation_settings.outlier_settings,
             auto_scale_observations=observation_settings.auto_scale_observations,
             global_std_scaling=global_std_scaling,
@@ -599,9 +599,11 @@ def test_that_autoscaling_applies_to_scaled_errors(storage):
             return None
 
         experiment = storage.create_experiment(name="dummyexp")
-        source_ensemble = experiment.create_ensemble(name="dummy", ensemble_size=10)
-        target_ensemble = experiment.create_ensemble(
-            name="dummy_target", ensemble_size=10
+        prior_ensemble = experiment.create_ensemble(
+            name="dummy_prior", ensemble_size=10
+        )
+        posterior_ensemble = experiment.create_ensemble(
+            name="dummy_posterior", ensemble_size=10
         )
 
         scaled_errors_with_autoscale = (
@@ -613,8 +615,8 @@ def test_that_autoscaling_applies_to_scaled_errors(storage):
                 ),
                 global_std_scaling=global_std_scaling,
                 progress_callback=progress_callback,
-                source_ensemble=source_ensemble,
-                target_ensemble=target_ensemble,
+                prior_ensemble=prior_ensemble,
+                posterior_ensemble=posterior_ensemble,
             )
             .filter(pl.col("status") == ObservationStatus.ACTIVE)[
                 _OutlierColumns.scaled_std
@@ -630,8 +632,8 @@ def test_that_autoscaling_applies_to_scaled_errors(storage):
                 ),
                 global_std_scaling=global_std_scaling,
                 progress_callback=progress_callback,
-                source_ensemble=source_ensemble,
-                target_ensemble=target_ensemble,
+                prior_ensemble=prior_ensemble,
+                posterior_ensemble=posterior_ensemble,
             )
             .filter(pl.col("status") == ObservationStatus.ACTIVE)[
                 _OutlierColumns.scaled_std
@@ -833,8 +835,10 @@ def test_that_autoscaling_ignores_typos_in_observation_names(storage, caplog):
     )
 
     experiment = storage.create_experiment(name="dummyexp")
-    source_ensemble = experiment.create_ensemble(name="dummy", ensemble_size=10)
-    target_ensemble = experiment.create_ensemble(name="dummy_target", ensemble_size=10)
+    prior_ensemble = experiment.create_ensemble(name="dummy_prior", ensemble_size=10)
+    posterior_ensemble = experiment.create_ensemble(
+        name="dummy_posterior", ensemble_size=10
+    )
 
     _mock_preprocess_observations_and_responses(
         observations_and_responses,
@@ -844,8 +848,8 @@ def test_that_autoscaling_ignores_typos_in_observation_names(storage, caplog):
         ),
         global_std_scaling=1,
         progress_callback=lambda _: None,
-        source_ensemble=source_ensemble,
-        target_ensemble=target_ensemble,
+        prior_ensemble=prior_ensemble,
+        posterior_ensemble=posterior_ensemble,
     )
     logged_messages = str(caplog.messages)  # NB: The code also prints to the terminal
     assert "Could not auto-scale the observations" in logged_messages
@@ -866,8 +870,10 @@ def test_that_deactivated_observations_are_logged(storage, caplog):
     )
 
     experiment = storage.create_experiment(name="dummyexp")
-    source_ensemble = experiment.create_ensemble(name="dummy", ensemble_size=10)
-    target_ensemble = experiment.create_ensemble(name="dummy_target", ensemble_size=10)
+    prior_ensemble = experiment.create_ensemble(name="dummy_prior", ensemble_size=10)
+    posterior_ensemble = experiment.create_ensemble(
+        name="dummy_posterior", ensemble_size=10
+    )
 
     _mock_preprocess_observations_and_responses(
         observations_and_responses,
@@ -877,8 +883,8 @@ def test_that_deactivated_observations_are_logged(storage, caplog):
         ),
         global_std_scaling=1,
         progress_callback=lambda _: None,
-        source_ensemble=source_ensemble,
-        target_ensemble=target_ensemble,
+        prior_ensemble=prior_ensemble,
+        posterior_ensemble=posterior_ensemble,
     )
     assert (
         "Deactivating observations: ['obs1_1', 'obs1_2', 'obs2', 'obs3']"
@@ -905,8 +911,10 @@ def test_that_activate_observations_are_not_logged_as_deactivated(storage, caplo
     )
 
     experiment = storage.create_experiment(name="dummyexp")
-    source_ensemble = experiment.create_ensemble(name="dummy", ensemble_size=10)
-    target_ensemble = experiment.create_ensemble(name="dummy_target", ensemble_size=10)
+    prior_ensemble = experiment.create_ensemble(name="dummy_prior", ensemble_size=10)
+    posterior_ensemble = experiment.create_ensemble(
+        name="dummy_posterior", ensemble_size=10
+    )
 
     _mock_preprocess_observations_and_responses(
         observations_and_responses,
@@ -916,8 +924,8 @@ def test_that_activate_observations_are_not_logged_as_deactivated(storage, caplo
         ),
         global_std_scaling=1,
         progress_callback=lambda _: None,
-        source_ensemble=source_ensemble,
-        target_ensemble=target_ensemble,
+        prior_ensemble=prior_ensemble,
+        posterior_ensemble=posterior_ensemble,
     )
     assert not any("Deactivating observations" in m for m in caplog.messages)
 
