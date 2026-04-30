@@ -1,6 +1,8 @@
 import io
 import os
 from io import BytesIO, StringIO
+from pathlib import Path
+from typing import Any
 
 import numpy as np
 import polars as pl
@@ -17,6 +19,7 @@ from ert.config import (
 from ert.config._create_observation_dataframes import _handle_rft_observation
 from ert.config._observations import RFTObservation
 from ert.config.parsing import ConfigValidationError, ObservationType
+from ert.config.rft_config import WellPoint
 from ert.warnings import PostExperimentWarning
 from tests.ert.rft_generator import cell_start, float_arr
 
@@ -318,6 +321,46 @@ def pad_to(lst: list[int], target_len: int):
     )
 
 
+def _egrid(nx, ny, nz, x_width, y_width, layer_height):
+    """EGrid file contents with nz layers, nx cells in the i direction and ny cells in
+    the j direction.
+
+    Each cell has width x_width in the i direction and y_width in the j direction and
+    height layer_height in the z direction.
+    """
+
+    height = nz * layer_height
+    cells_per_layer = nx * ny
+
+    coord = np.array(
+        [
+            [i * x_width, j * y_width, 0, i * x_width, j * y_width, height]
+            for j in range(ny + 1)
+            for i in range(nx + 1)
+        ],
+        dtype=">f4",
+    )
+
+    zcoord = np.array(
+        [
+            [z * layer_height] * (cells_per_layer * 4)
+            + [(z + 1) * layer_height] * (cells_per_layer * 4)
+            for z in range(nz)
+        ],
+        dtype=">f4",
+    )
+    return [
+        ("FILEHEAD", pad_to([3, 2007, 0, 0, 0, 0, 1], 100)),
+        ("MAPAXES ", np.array([0.0, 1.0, 0.0, 0.0, 1.0, 0.0], dtype=">f4")),
+        ("GRIDUNIT", np.array([b"METRES  ", b"        "], dtype="|S8")),
+        ("GRIDHEAD", pad_to([1, nx, ny, nz], 100)),
+        ("COORD   ", coord.ravel()),
+        ("ZCORN   ", zcoord.ravel()),
+        ("ACTNUM  ", np.ones(nx * ny * nz, dtype=">i4")),
+        ("ENDGRID ", np.array([], dtype=">i4")),
+    ]
+
+
 @pytest.fixture
 def egrid():
     """EGrid file contents with three layers.
@@ -330,33 +373,7 @@ def egrid():
     Third layer depth is from 2.0 to 3.0
 
     """
-    coord = np.array(
-        [
-            [0, 0, 0, 0, 0, 100],
-            [50, 0, 0, 50, 0, 100],
-            [100, 0, 0, 100, 0, 100],
-            [0, 50, 0, 0, 50, 100],
-            [50, 50, 0, 50, 50, 100],
-            [100, 50, 0, 100, 50, 100],
-            [0, 100, 0, 0, 100, 100],
-            [50, 100, 0, 50, 100, 100],
-            [100, 100, 0, 100, 100, 100],
-        ],
-        dtype=">f4",
-    )
-    return [
-        ("FILEHEAD", pad_to([3, 2007, 0, 0, 0, 0, 1], 100)),
-        ("MAPAXES ", np.array([0.0, 1.0, 0.0, 0.0, 1.0, 0.0], dtype=">f4")),
-        ("GRIDUNIT", np.array([b"METRES  ", b"        "], dtype="|S8")),
-        ("GRIDHEAD", pad_to([1, 2, 2, 3], 100)),
-        ("COORD   ", coord.ravel()),
-        (
-            "ZCORN   ",
-            np.array([0.0] * 16 + [1.0] * 32 + [2.0] * 32 + [3.0] * 16, dtype=">f4"),
-        ),
-        ("ACTNUM  ", np.ones((8,), dtype=">i4")),
-        ("ENDGRID ", np.array([], dtype=">i4")),
-    ]
+    return _egrid(2, 2, 3, 50.0, 50.0, 1.0)
 
 
 def test_that_locations_are_found_in_corresponding_grid_and_added_to_response_dataframe(
@@ -377,7 +394,7 @@ def test_that_locations_are_found_in_corresponding_grid_and_added_to_response_da
     rft_config = RFTConfig(
         input_files=["BASE.RFT"],
         data_to_read={"*": {"*": ["*"]}},
-        locations=[(1.0, 1.0, 1.0)],
+        well_locations=[WellPoint("WELL2", (1.0, 1.0, 1.0))],
     )
     data = rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
     assert data["response_key"].to_list() == [
@@ -406,7 +423,10 @@ def test_that_multiple_locations_in_the_same_cell_creates_multiple_rows(
     rft_config = RFTConfig(
         input_files=["BASE.RFT"],
         data_to_read={"*": {"*": ["*"]}},
-        locations=[(1.25, 1.25, 1.25), (1.5, 1.5, 1.5)],
+        well_locations=[
+            WellPoint("WELL2", (1.25, 1.25, 1.25)),
+            WellPoint("WELL2", (1.5, 1.5, 1.5)),
+        ],
     )
     data = rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
     assert data["response_key"].to_list() == [
@@ -519,7 +539,6 @@ def test_that_handle_rft_observations_prioritize_provided_radius_over_default():
     rft_config = RFTConfig(
         input_files=["BASE.RFT"],
         data_to_read={"*": {"*": ["*"]}},
-        locations=[(1.0, 1.0, 1.0), (2.0, 2.0, 2.0)],
     )
     shape_registry = ShapeRegistry()
     shape_id = shape_registry.register(
@@ -588,7 +607,7 @@ def test_that_handle_rft_observations_adds_locations_both_with_zone_and_without(
         rft_observation = make_observation(zone)
         _handle_rft_observation(rft_config, rft_observation, ShapeRegistry())
 
-    assert len(rft_config.locations) == 2
+    assert len(rft_config.well_locations) == 2
 
 
 def test_that_if_an_rft_observation_is_outside_the_zone_then_it_is_deactivated(
@@ -966,7 +985,7 @@ def test_that_missing_egrid_with_locations_raises_invalid_response_file(
     rft_config = RFTConfig(
         input_files=["BASE.RFT"],
         data_to_read={"*": {"*": ["PRESSURE"]}},
-        locations=[(1.0, 1.0, 1.0)],
+        well_locations=[WellPoint("WELL", (1.0, 1.0, 1.0))],
     )
 
     with pytest.raises(InvalidResponseFile):
@@ -1126,3 +1145,257 @@ def test_that_specific_well_with_wildcard_property_reads_all_float_arrays(
             "WELL:2000-01-01:SGAS",
         ]
     )
+
+
+def _rft_file_content(
+    well="WELL",
+    date=(1, 1, 2000),
+    k_connections=(1, 5),
+    i_connections=None,
+    j_connections=None,
+    pressures=(100.0, 200.0, None, None, 200.0, 1000.0),
+    swat=(0.1, 0.2, None, None, 0.2, 0.3),
+    sgas=(0.2, 0.3, None, None, 0.3, 0.2),
+    depth=(5.0, 15.0, 25.0, 35.0, 45.0, 55.0),
+):
+    if i_connections is None:
+        i_connections = [1] * len(k_connections)
+    if j_connections is None:
+        j_connections = [1] * len(k_connections)
+
+    return [
+        *cell_start(
+            date=date,
+            well_name=well,
+            ijks=tuple(zip(i_connections, j_connections, k_connections, strict=True)),
+        ),
+        ("PRESSURE", float_arr([pressures[i - 1] for i in k_connections])),
+        ("SWAT    ", float_arr([swat[i - 1] for i in k_connections])),
+        ("SGAS    ", float_arr([sgas[i - 1] for i in k_connections])),
+        ("HOSTGRID", ["        "]),
+        ("DEPTH   ", float_arr([depth[i - 1] for i in k_connections])),
+    ]
+
+
+ONE_ZONE = "1 zone1\n2 zone1\n3 zone1\n4 zone1\n5 zone1\n6 zone1"
+TWO_ZONES = "1 zone1\n2 zone1\n3 zone1\n4 zone1\n5 zone1\n6 zone2"
+
+
+def _well_point(well="WELL", connection=(5.0, 5.0, 25.0), zone: str | None = "zone1"):
+    return WellPoint(well, connection, zone)
+
+
+def _expected_interpolated_values(
+    interpolatded_values: tuple[float, float, float] | None,
+):
+    if interpolatded_values:
+        return {
+            "PRESSURE": pytest.approx(interpolatded_values[0]),
+            "SWAT": pytest.approx(interpolatded_values[1]),
+            "SGAS": pytest.approx(interpolatded_values[2]),
+        }
+    return {}
+
+
+@pytest.mark.parametrize(
+    (
+        "rft_file_content",
+        "zones",
+        "well_locations",
+        "interpolate_missing_values",
+        "expected_interpolated_values",
+    ),
+    [
+        pytest.param(
+            _rft_file_content(),
+            ONE_ZONE,
+            [_well_point()],
+            False,
+            None,
+            id="Test that rft values are not interpolated when the option is disabled",
+        ),
+        pytest.param(
+            _rft_file_content(),
+            ONE_ZONE,
+            [_well_point()],
+            True,
+            (150.0, 0.15, 0.25),
+            id="Test that rft values are interpolated when the option is enabled",
+        ),
+        pytest.param(
+            _rft_file_content(k_connections=[1, 2]),
+            ONE_ZONE,
+            [_well_point()],
+            True,
+            (300.0, 0.3, 0.4),
+            id="Test that rft values are extrapolated if interpolation is not possible",
+        ),
+        pytest.param(
+            _rft_file_content(k_connections=[1, 2, 6]),
+            ONE_ZONE,
+            [_well_point()],
+            True,
+            (400.0, 0.225, 0.275),
+            id=(
+                "Test that rft value approximation prefers interpolation over "
+                "extrapolation"
+            ),
+        ),
+        pytest.param(
+            _rft_file_content(k_connections=[1, 2, 6]),
+            TWO_ZONES,
+            [_well_point()],
+            True,
+            (300.0, 0.3, 0.4),
+            id="Test that interpolation/extrapolation does not cross zones",
+        ),
+        pytest.param(
+            _rft_file_content(k_connections=[1, 6]),
+            TWO_ZONES,
+            [_well_point()],
+            True,
+            None,
+            id="Test that approximation is not done when only one known value in zone",
+        ),
+        pytest.param(
+            [
+                *_rft_file_content(k_connections=[1]),
+                *_rft_file_content(k_connections=[1, 2], well="WELL2"),
+            ],
+            ONE_ZONE,
+            [_well_point()],
+            True,
+            None,
+            id="Test that interpolation does not use values from a different well",
+        ),
+        pytest.param(
+            [
+                *_rft_file_content(k_connections=[1]),
+                *_rft_file_content(
+                    k_connections=[1, 2],
+                    date=(1, 2, 2000),
+                ),
+            ],
+            ONE_ZONE,
+            [_well_point()],
+            True,
+            None,
+            id="Test that interpolation does not use values from a different date",
+        ),
+        pytest.param(
+            _rft_file_content(k_connections=[1]),
+            ONE_ZONE,
+            [
+                _well_point(),
+                _well_point(connection=(5.0, 5.0, 4.0)),
+                _well_point(connection=(5.0, 5.0, 6.0)),
+            ],
+            True,
+            None,
+            id=(
+                "Test that interpolation is not done from multiple candidates points "
+                "in same cell"
+            ),
+        ),
+        pytest.param(
+            _rft_file_content(),
+            ONE_ZONE,
+            [
+                _well_point(zone=None),
+            ],
+            True,
+            None,
+            id=(
+                "Test that interpolation is not done when wellpoint zone info is not "
+                "available"
+            ),
+        ),
+        pytest.param(
+            _rft_file_content(),
+            None,
+            [
+                _well_point(),
+            ],
+            True,
+            None,
+            id="Test that interpolation is not done when zonemap is not available",
+        ),
+    ],
+)
+def test_rft_value_approximation(
+    mock_resfo_file,
+    mocked_files,
+    rft_file_content,
+    zones,
+    well_locations,
+    interpolate_missing_values,
+    expected_interpolated_values,
+):
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.EGRID",
+        _egrid(1, 1, 6, 10.0, 10.0, 10.0),
+    )
+
+    mock_resfo_file("/tmp/does_not_exist/BASE.RFT", rft_file_content)
+
+    if zones:
+        mocked_files["/tmp/does_not_exist/zonemap.txt"] = StringIO(zones)
+
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={"WELL": {"2000-01-01": ["*"]}},
+        well_locations=well_locations,
+        zonemap=Path("zonemap.txt") if zones else None,
+        interpolate_missing_values=interpolate_missing_values,
+    )
+
+    data = rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+    interpolated_values = data.filter(pl.col("k") == 3)
+
+    assert dict(
+        zip(
+            interpolated_values["property"].to_list(),
+            interpolated_values["values"].to_list(),
+            strict=True,
+        )
+    ) == _expected_interpolated_values(expected_interpolated_values)
+
+
+@pytest.mark.parametrize(
+    ("interpolate_rft_values", "expected_setting"),
+    [(None, False), (False, False), (True, True)],
+)
+@pytest.mark.parametrize(
+    ("rft_response_config", "rft_obs_config"),
+    [(False, True), (True, False), (True, True)],
+)
+def test_that_interpolate_rft_values_keyword_sets_interpolation_to_true_on_rft_config(
+    interpolate_rft_values, expected_setting, rft_response_config, rft_obs_config
+):
+    config_dict: dict[str, Any] = {"ECLBASE": "BASE"}
+    if interpolate_rft_values is not None:
+        config_dict["INTERPOLATE_RFT_VALUES"] = interpolate_rft_values
+    if rft_response_config:
+        config_dict["RFT"] = [{"WELL": "*", "DATE": "*", "PROPERTIES": "*"}]
+    if rft_obs_config:
+        config_dict["OBS_CONFIG"] = (
+            "obsconf",
+            [
+                {
+                    "type": ObservationType.RFT,
+                    "name": "NAME",
+                    "WELL": "WELL",
+                    "VALUE": "700",
+                    "ERROR": "0.1",
+                    "DATE": "2000-01-01",
+                    "PROPERTY": "PRESSURE",
+                    "NORTH": 1.0,
+                    "EAST": 1.0,
+                    "TVD": 0.5,
+                }
+            ],
+        )
+
+    config = ErtConfig.from_dict(config_dict)
+    rft_config = config.ensemble_config.response_configs["rft"]
+    assert rft_config.interpolate_missing_values is expected_setting

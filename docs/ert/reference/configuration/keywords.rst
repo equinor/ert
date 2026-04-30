@@ -61,6 +61,7 @@ Keyword name                                                            Required
 :ref:`QUEUE_SYSTEM <queue_system>`                                      NO                                      LOCAL_DRIVER                    System used for running simulation jobs
 :ref:`REALIZATION_MEMORY <realization_memory>`                          NO                                                                      Set the expected memory requirements for a realization
 :ref:`RFT <rft>`                                                        NO                                                                      Specify which RFT data to load from simulator output
+:ref:`INTERPOLATE_RFT_VALUES <interpolate_rft_values>`                  NO                                      FALSE                           Interpolate/extrapolate RFT values for observation locations with missing simulator responses
 :ref:`RUNPATH <runpath>`                                                NO                                      realization-<IENS>/iter-<ITER>  Directory to run simulations; simulations/realization-<IENS>/iter-<ITER>
 :ref:`RUNPATH_FILE <runpath_file>`                                      NO                                      .ert_runpath_list               Name of file with path for all forward models that ERT has run. To be used by user defined scripts to find the realizations
 :ref:`RUN_TEMPLATE <run_template>`                                      NO                                                                      Install arbitrary files in the runpath directory
@@ -1560,6 +1561,31 @@ allowing you to load data for multiple wells or properties at once:
 
         -- Load all properties for a specific well and date
         RFT WELL:PROD_01 DATE:2015-03-15 PROPERTIES:*
+
+.. _interpolate_rft_values:
+
+INTERPOLATE_RFT_VALUES
+----------------------
+
+When set to ``TRUE``, ERT will approximate RFT responses for observation
+locations whose target grid cell is missing a simulator response (for
+example because the cell is inactive). Values are approximated by linear
+interpolation — or extrapolation when the target lies outside the range of
+known values — along the well trajectory.
+
+Interpolation candidates are restricted to the same well and the same zone as
+the observation. At least two known response points in the zone are required;
+if fewer exist, missing responses will not be approximated. Interpolation
+is always preferred over extrapolation when both are possible.
+
+For this keyword to have an effect, a :ref:`ZONEMAP <zonemap>` is required and
+observations must be assigned to zones.
+
+*Example:*
+
+::
+
+        INTERPOLATE_RFT_VALUES TRUE
 
 .. _analysis_module:
 

@@ -1220,8 +1220,11 @@ class ErtConfig(BaseModel):
                 ensemble_config.response_configs["rft"] = RFTConfig(
                     input_files=[summary_file_base_name],
                     data_to_read={},
-                    locations=[],
+                    well_locations=[],
                     zonemap=cls_config.zonemap,
+                    interpolate_missing_values=config_dict.get(
+                        ConfigKeys.INTERPOLATE_RFT_VALUES, False
+                    ),
                 )
 
             bt_obs = [o for o in obs_configs if isinstance(o, BreakthroughObservation)]
