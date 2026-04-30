@@ -132,10 +132,6 @@ def test_extra_key(min_config):
             "executable\n.* should be a valid string",
         ),
         (
-            {"forward_model": ["not_a_job"]},
-            "unknown job not_a_job",
-        ),
-        (
             {"environment": {"simulation_folder": "/usr/bin/unwriteable"}},
             "User does not have write access to",
         ),
@@ -166,6 +162,12 @@ def test_invalid_subconfig(extra_config, min_config, expected):
         min_config[k] = v
     with pytest.raises(ValidationError, match=expected):
         EverestConfig(**min_config)
+
+
+def test_context_validation_of_config(min_config):
+    min_config["forward_model"] = ["not_a_job"]
+    config = EverestConfig(**min_config)
+    assert config.validate_forward_model_job_name_installed() == ["not_a_job"]
 
 
 @pytest.mark.parametrize(
