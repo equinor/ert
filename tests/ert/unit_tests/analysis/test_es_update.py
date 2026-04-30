@@ -645,6 +645,59 @@ def test_that_autoscaling_applies_to_scaled_errors(storage):
         assert scaled_errors_without_autoscale == [1, 2]
 
 
+def test_that_autoscaling_saves_scaling_factors_to_posterior_ensemble(storage):
+    with patch("ert.analysis.misfit_preprocessor.main") as misfit_main:
+        misfit_main.return_value = (
+            np.array([2, 3]),
+            np.array([1, 1]),
+            np.array([1, 1]),
+        )
+
+        observations_and_responses = pl.DataFrame(
+            {
+                "response_key": ["RESPONSE", "RESPONSE", "RESPONSE", "RESPONSE"],
+                "index": ["rs00", "rs0", "rs0", "rs1"],
+                "observation_key": ["obs1_1", "obs1_2", "obs2", "obs2"],
+                "observations": pl.Series([2, 4, 3, 3], dtype=pl.Float32),
+                "std": pl.Series([1, 2, 1, 1], dtype=pl.Float32),
+                "1": pl.Series([1, 4, 7, 8], dtype=pl.Float32),
+                "2": pl.Series([2, 5, 8, 11], dtype=pl.Float32),
+                "3": pl.Series([3, 6, 9, 12], dtype=pl.Float32),
+            }
+        )
+
+        experiment = storage.create_experiment(name="dummyexp")
+        prior_ensemble = experiment.create_ensemble(
+            name="dummy_prior", ensemble_size=10
+        )
+        posterior_ensemble = experiment.create_ensemble(
+            name="dummy_posterior", ensemble_size=10
+        )
+
+        _mock_preprocess_observations_and_responses(
+            observations_and_responses,
+            observation_settings=ObservationSettings(
+                outlier_settings=OutlierSettings(alpha=1, std_cutoff=0.05),
+                auto_scale_observations=[["obs1*"]],
+            ),
+            global_std_scaling=1,
+            progress_callback=lambda _: None,
+            prior_ensemble=prior_ensemble,
+            posterior_ensemble=posterior_ensemble,
+        )
+
+        scaling_factors = posterior_ensemble.load_observation_scaling_factors()
+        assert scaling_factors is not None
+        assert "input_group" in scaling_factors.columns
+        assert "obs_key" in scaling_factors.columns
+        assert "scaling_factor" in scaling_factors.columns
+        assert scaling_factors["obs_key"].to_list() == ["obs1_1", "obs1_2"]
+        assert scaling_factors["scaling_factor"].to_list() == [2.0, 3.0]
+
+        # Verify nothing was saved to the prior ensemble
+        assert prior_ensemble.load_observation_scaling_factors() is None
+
+
 @pytest.mark.parametrize(
     ("nan_responses", "deactivated_observations"),
     [
