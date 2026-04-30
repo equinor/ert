@@ -62,7 +62,6 @@ def snapshot():
 @pytest.fixture(name="queue_config")
 def queue_config_fixture():
     return QueueConfig(
-        job_script="fm_dispatch.py",
         max_submit=1,
         queue_system=QueueSystem.LOCAL,
         queue_options=LocalQueueOptions(max_running=50),
