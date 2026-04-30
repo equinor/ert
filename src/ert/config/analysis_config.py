@@ -139,8 +139,6 @@ class AnalysisConfig:
             if var_name in deprecated_keys:
                 errors.append(var_name)
                 continue
-            if var_name == "ENKF_FORCE_NCOMP":
-                continue
             if var_name == "INVERSION":
                 mapped_value = inversion_str_map.get(module_name, {}).get(value, value)
                 ConfigWarning.warn(
