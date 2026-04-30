@@ -1,6 +1,6 @@
 import json
 import uuid
-from unittest.mock import MagicMock, PropertyMock
+from unittest.mock import MagicMock
 
 import numpy as np
 
@@ -42,11 +42,14 @@ def test_that_send_smoother_event_persists_observation_report_on_analysis_comple
     ]
 
 
-def test_that_send_smoother_event_saves_matrix_npy_on_analysis_matrix_event(tmp_path):
+def test_that_send_smoother_event_delegates_matrix_to_save_transition_matrix():
     model = MagicMock(spec=UpdateRunModel)
     model._storage = MagicMock()
     mock_ensemble = MagicMock()
-    type(mock_ensemble).mount_point = PropertyMock(return_value=tmp_path)
+    mock_ensemble.save_transition_matrix.return_value = (
+        "/some/path/corr_XY_PARAM.npy",
+        False,
+    )
     model._storage.get_ensemble.return_value = mock_ensemble
 
     posterior_id = str(uuid.uuid4())
@@ -61,16 +64,17 @@ def test_that_send_smoother_event_saves_matrix_npy_on_analysis_matrix_event(tmp_
         model, iteration=0, run_id=uuid.uuid4(), event=event
     )
 
-    npy_path = tmp_path / "transition" / "corr_XY_PARAM.npy"
-    assert npy_path.exists()
-    loaded = np.load(npy_path)
-    np.testing.assert_array_equal(loaded, matrix)
-
     model._storage.get_ensemble.assert_called_once_with(posterior_id)
-    mock_ensemble.save_transition_data.assert_called_once()
+    mock_ensemble.save_transition_matrix.assert_called_once()
+    call_args = mock_ensemble.save_transition_matrix.call_args[0]
+    assert call_args[0] == "corr_XY_PARAM"
+    np.testing.assert_array_equal(call_args[1], matrix)
 
-    _, saved_json = mock_ensemble.save_transition_data.call_args[0]
+    mock_ensemble.save_transition_data.assert_called_once()
+    file_name, saved_json = mock_ensemble.save_transition_data.call_args[0]
+    assert file_name == "corr_XY_PARAM.json"
     parsed = json.loads(saved_json)
-    assert parsed["name"] == "corr_XY_PARAM"
-    assert parsed["posterior_id"] == posterior_id
-    assert "matrix" not in parsed
+    assert parsed["event_type"] == "AnalysisStorageEvent"
+    assert parsed["uri"] == "/some/path/corr_XY_PARAM.npy"
+    assert parsed["ensemble_id"] == posterior_id
+    assert parsed["sparse"] is False

@@ -6,6 +6,7 @@ import hypothesis.strategies as st
 import numpy as np
 import polars as pl
 import pytest
+import scipy as sp
 from hypothesis import given
 
 from ert.config import GenKwConfig, RFTConfig, SummaryConfig
@@ -580,3 +581,41 @@ def test_that_save_transition_data_raises_in_read_mode(tmp_path):
         ensemble = next(iter(storage.ensembles))
         with pytest.raises(ModeError):
             ensemble.save_transition_data("report.json", "data")
+
+
+def test_that_save_transition_matrix_saves_dense_npy_for_dense_matrix(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="prior"
+        )
+
+        matrix = np.array([[1.0, 2.0], [3.0, 4.0]])
+        uri, is_sparse = ensemble.save_transition_matrix("corr_XY_PARAM", matrix)
+
+        npy_path = ensemble._path / "transition" / "corr_XY_PARAM.npy"
+        assert npy_path.exists()
+        np.testing.assert_array_equal(np.load(npy_path), matrix)
+        assert uri == str(npy_path)
+        assert is_sparse is False
+
+
+def test_that_save_transition_matrix_saves_sparse_npz_for_sparse_matrix(tmp_path):
+    with open_storage(tmp_path, mode="w") as storage:
+        experiment = storage.create_experiment()
+        ensemble = storage.create_ensemble(
+            experiment, ensemble_size=1, iteration=0, name="prior"
+        )
+
+        matrix = np.zeros((10, 10))
+        matrix[0, 0] = 1.0
+        matrix[5, 3] = 2.0
+        uri, is_sparse = ensemble.save_transition_matrix("corr_XY_SPARSE", matrix)
+
+        npz_path = ensemble._path / "transition" / "corr_XY_SPARSE.npz"
+        assert npz_path.exists()
+        assert uri == str(npz_path)
+        assert is_sparse is True
+
+        loaded = sp.sparse.load_npz(npz_path).toarray()
+        np.testing.assert_array_equal(loaded, matrix)

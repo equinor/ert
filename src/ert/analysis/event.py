@@ -81,3 +81,10 @@ class AnalysisMatrixEvent(AnalysisEvent):
     name: str
     posterior_id: str
     matrix: np.ndarray = Field(exclude=True)
+
+
+class AnalysisStorageEvent(AnalysisEvent):
+    event_type: Literal["AnalysisStorageEvent"] = "AnalysisStorageEvent"
+    uri: str
+    ensemble_id: str
+    sparse: bool = False

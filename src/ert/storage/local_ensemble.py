@@ -17,6 +17,7 @@ from uuid import UUID
 import numpy as np
 import polars as pl
 import resfo
+import scipy as sp
 import xarray as xr
 from pydantic import BaseModel
 from typing_extensions import TypedDict
@@ -694,6 +695,12 @@ class LocalEnsemble(BaseMode):
 
         return None
 
+    def list_transition_data(self) -> list[str]:
+        transition_dir = self.mount_point / TRANSITION_DATA_DIR
+        if not transition_dir.exists():
+            return []
+        return [str(p) for p in transition_dir.iterdir()]
+
     @staticmethod
     def sample_parameter(
         parameter: ParameterConfig,
@@ -1273,6 +1280,26 @@ class LocalEnsemble(BaseMode):
         path = self._path / TRANSITION_DATA_DIR / file_name
         Path.mkdir(path.parent, exist_ok=True)
         self._storage._write_transaction(path, data.encode("utf-8"))
+
+    @require_write
+    def save_transition_matrix(
+        self, name: str, matrix: npt.NDArray[np.floating]
+    ) -> tuple[str, bool]:
+        transition_dir = self._path / TRANSITION_DATA_DIR
+        transition_dir.mkdir(exist_ok=True)
+
+        sparsity = 1.0 - np.count_nonzero(matrix) / matrix.size
+        is_sparse = sparsity > 0.5
+
+        if is_sparse:
+            sparse_matrix = sp.sparse.csc_array(matrix)
+            path = transition_dir / f"{name}.npz"
+            sp.sparse.save_npz(path, sparse_matrix)
+        else:
+            path = transition_dir / f"{name}.npy"
+            np.save(path, matrix)
+
+        return str(path), is_sparse
 
     @require_write
     def save_batch_dataframes(self, dataframes: BatchDataframes) -> None:
