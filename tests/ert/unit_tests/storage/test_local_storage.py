@@ -1251,7 +1251,7 @@ parameter_configs = st.lists(
             GenKwConfig,
             name=words,
             group=words,
-            update=st.booleans(),
+            update_strategy=st.sampled_from([None, "GLOBAL", "ADAPTIVE", "DISTANCE"]),
             distribution=st.sampled_from(
                 [clas.lower() for clas in DISTRIBUTION_CLASSES]
             ).map(lambda c: {"name": c}),

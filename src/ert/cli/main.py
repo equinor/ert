@@ -81,7 +81,8 @@ def run_cli(args: Namespace, runtime_plugins: ErtRuntimePlugins | None = None) -
                 f"needed.\nPlease add to file {args.config}"
             )
         if not any(
-            p.update for p in ert_config.ensemble_config.parameter_configs.values()
+            p.update_strategy
+            for p in ert_config.ensemble_config.parameter_configs.values()
         ):
             raise ErtCliError(
                 f"All parameters are set to UPDATE:FALSE in {args.config}"

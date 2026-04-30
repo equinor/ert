@@ -199,8 +199,10 @@ class DesignMatrix:
                 new_param_configs += [
                     GenKwConfig(
                         name=param_cfg.name,
-                        update=(
-                            input_source == DataSource.SAMPLED and param_cfg.update
+                        update_strategy=(
+                            param_cfg.update_strategy
+                            if input_source == DataSource.SAMPLED
+                            else None
                         ),
                         distribution=(
                             RawSettings()
@@ -369,7 +371,7 @@ class DesignMatrix:
         parameter_configurations: list[GenKwConfig] = [
             GenKwConfig(
                 name=col,
-                update=False,
+                update_strategy=None,
                 group=DESIGN_MATRIX_GROUP,
                 input_source=DataSource.DESIGN_MATRIX,
                 distribution={"name": "raw"},

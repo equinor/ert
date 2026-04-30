@@ -11,6 +11,7 @@ import xarray as xr
 from pydantic import field_serializer
 from surfio import IrapHeader, IrapSurface
 
+from ert.config._get_update_from_options import get_update_from_options
 from ert.config.parsing.config_errors import ConfigWarning
 from ert.substitutions import substitute_runpath_name
 
@@ -93,7 +94,7 @@ class SurfaceConfig(ParameterConfig):
         out_file = options.get("OUTPUT_FILE")
         base_surface = options.get("BASE_SURFACE")
         forward_init = str_to_bool(options.get("FORWARD_INIT", "FALSE"))
-        update_parameter = str_to_bool(options.get("UPDATE", "TRUE"))
+        update_strategy = get_update_from_options(options, "GLOBAL")
         errors = []
         if not out_file:
             errors.append(
@@ -153,7 +154,7 @@ class SurfaceConfig(ParameterConfig):
             forward_init_file=init_file,
             output_file=Path(out_file),
             base_surface_path=base_surface,
-            update=update_parameter,
+            update_strategy=update_strategy,
             file_format=file_format,
         )
 

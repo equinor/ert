@@ -45,7 +45,7 @@ def test_that_distance_localization_updates_all_z_layers_at_observation_xy(
         file_format=FieldFileFormat.ROFF,
         forward_init_file="init_%d.roff",
         forward_init=False,
-        update=True,
+        update_strategy="GLOBAL",
         output_file="output.roff",
         grid_file="dummy.grdecl",
     )
