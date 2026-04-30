@@ -11,14 +11,32 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import pytest
 from pydantic import ConfigDict
 
-from ert.config import ErtConfig, ModelConfig, QueueConfig, QueueSystem, ShapeRegistry
+from _ert.events import (
+    WorkflowBatchFinishedEvent,
+    WorkflowBatchStartedEvent,
+    WorkflowFinishedEvent,
+    WorkflowStartedEvent,
+    WorkflowStatus,
+)
+from ert.config import (
+    ErtConfig,
+    HookRuntime,
+    ModelConfig,
+    PreSimulationFixtures,
+    QueueConfig,
+    QueueSystem,
+    ShapeRegistry,
+    Workflow,
+)
 from ert.config.queue_config import LsfQueueOptions
+from ert.config.workflow_job import workflow_job_from_file
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig, StartEvent
 from ert.ensemble_evaluator.evaluator import ParallelismViolation
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
 from ert.plugins import ErtRuntimePlugins
 from ert.run_models.run_model import RunModel, UserCancelled
 from ert.warnings import PostExperimentWarning
+from tests.ert.unit_tests.workflow_runner.workflow_common import WorkflowCommon
 
 
 @pytest.fixture(autouse=True)
@@ -178,6 +196,85 @@ def test_get_number_of_existing_runpaths(
     )
 
     assert brm.get_number_of_existing_runpaths() == expected_number
+
+
+@pytest.mark.usefixtures("use_tmpdir")
+def test_run_workflows_emits_events_for_following_workflow_after_non_stopping_failure():
+    WorkflowCommon.createExternalDumpJob()
+    with Path("dump_failing_job").open("a", encoding="utf-8") as file_handle:
+        file_handle.write("STOP_ON_FAIL False")
+
+    Path("dump_failing_workflow").write_text("DUMP", encoding="utf-8")
+    Path("dump_following_workflow").write_text(
+        "DUMP dump_after after_text", encoding="utf-8"
+    )
+
+    failing_job = workflow_job_from_file(
+        name="DUMP",
+        config_file="dump_failing_job",
+        origin="user",
+    )
+    succeeding_job = workflow_job_from_file(
+        name="DUMP",
+        config_file="dump_job",
+        origin="user",
+    )
+    failing_workflow = Workflow.from_file(
+        "dump_failing_workflow", {}, {"DUMP": failing_job}
+    )
+    following_workflow = Workflow.from_file(
+        "dump_following_workflow", {}, {"DUMP": succeeding_job}
+    )
+
+    status_queue: SimpleQueue = SimpleQueue()
+    run_model = create_run_model(
+        status_queue=status_queue,
+        hooked_workflows={
+            HookRuntime.PRE_SIMULATION: [failing_workflow, following_workflow]
+        },
+    )
+    ensemble = MagicMock()
+    ensemble.iteration = 0
+
+    run_model.run_workflows(
+        PreSimulationFixtures(
+            random_seed=123,
+            reports_dir="reports",
+            run_paths=MagicMock(),
+            storage=MagicMock(),
+            ensemble=ensemble,
+        )
+    )
+
+    events = [status_queue.get() for _ in range(6)]
+
+    assert [type(event) for event in events] == [
+        WorkflowBatchStartedEvent,
+        WorkflowStartedEvent,
+        WorkflowFinishedEvent,
+        WorkflowStartedEvent,
+        WorkflowFinishedEvent,
+        WorkflowBatchFinishedEvent,
+    ]
+    assert events[0].hook == HookRuntime.PRE_SIMULATION
+    assert events[0].iteration == 0
+    assert events[0].workflow_names == [
+        "dump_failing_workflow",
+        "dump_following_workflow",
+    ]
+    assert events[1].workflow_name == "dump_failing_workflow"
+    assert events[2].workflow_name == "dump_failing_workflow"
+    assert events[2].status == WorkflowStatus.FAILURE
+    assert events[3].workflow_name == "dump_following_workflow"
+    assert events[4].workflow_name == "dump_following_workflow"
+    assert events[4].status == WorkflowStatus.SUCCESS
+    assert events[5].hook == HookRuntime.PRE_SIMULATION
+    assert events[5].iteration == 0
+    assert events[5].workflow_names == [
+        "dump_failing_workflow",
+        "dump_following_workflow",
+    ]
+    assert events[5].status == WorkflowStatus.SUCCESS
 
 
 @pytest.mark.parametrize(

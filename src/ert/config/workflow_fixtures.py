@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Literal
 
 from typing_extensions import TypedDict
 
-from ert.config.parsing.hook_runtime import HookRuntime
+from _ert.hook_runtime import HookRuntime
 
 if TYPE_CHECKING:
     from PyQt6.QtWidgets import QWidget

@@ -31,7 +31,15 @@ from PyQt6.QtWidgets import (
 )
 from typing_extensions import override
 
-from _ert.events import EnsembleEvaluationWarning
+from _ert.events import (
+    EnsembleEvaluationWarning,
+    WorkflowBatchFinishedEvent,
+    WorkflowBatchStartedEvent,
+    WorkflowCancelledEvent,
+    WorkflowFinishedEvent,
+    WorkflowStartedEvent,
+)
+from _ert.hook_runtime import HookRuntime
 from ert.config import ErrorInfo, WarningInfo
 from ert.ensemble_evaluator import (
     EndEvent,
@@ -80,10 +88,12 @@ from ert.shared.status.utils import (
 from .queue_emitter import QueueEmitter
 from .view import (
     DiskSpaceWidget,
+    IterationWidget,
     ProgressWidget,
     RealizationWidget,
     RunpathProgressWidget,
     UpdateWidget,
+    WorkflowWidget,
 )
 from .view.disk_space_widget import MountType
 
@@ -389,10 +399,15 @@ class RunDialog(QFrame):
 
     def _current_tab_changed(self, index: int) -> None:
         widget = self._tab_widget.widget(index)
-        if isinstance(widget, RealizationWidget):
-            widget.refresh_current_selection()
+        if isinstance(widget, IterationWidget):
+            current_widget = widget.current_widget()
+            if isinstance(current_widget, RealizationWidget):
+                current_widget.refresh_current_selection()
 
-        self.fm_step_frame.setHidden(isinstance(widget, UpdateWidget))
+            self.fm_step_frame.setHidden(isinstance(current_widget, UpdateWidget))
+            return
+
+        self.fm_step_frame.setHidden(False)
 
     @Slot(QModelIndex, int, int)
     def on_snapshot_new_iteration(
@@ -402,26 +417,21 @@ class RunDialog(QFrame):
             index = self._snapshot_model.index(start, 0, parent)
             iteration = int(cast(IterNode, index.internalPointer()).id_)
             self._latest_iteration = iteration
-            iter_row = start
             self._iteration_progress_label.setText(
                 f"Progress for iteration {iteration}"
                 if not self.is_everest
                 else f"Progress for batch {iteration}"
             )
 
-            widget = RealizationWidget(iter_row)
+            iteration_widget = self._get_or_create_iteration_tab(
+                iteration, is_update=False
+            )
+            widget = iteration_widget.select_or_create_realization_tab()
             widget.setSnapshotModel(self._snapshot_model)
             widget.itemClicked.connect(self._select_real)
             widget.setProperty("identifier", f"tab-iter-{iteration}")
             self._select_real(widget._real_list_model.index(0, 0))
-            tab_index = self._tab_widget.addTab(
-                widget,
-                f"Realizations for iteration {iteration}"
-                if not self.is_everest
-                else f"Batch {iteration}...",
-            )
-            if self._tab_widget.currentIndex() == self._tab_widget.count() - 2:
-                self._tab_widget.setCurrentIndex(tab_index)
+            self._tab_widget.setCurrentWidget(iteration_widget)
 
             if self.is_everest:
                 self._batch_result_types.append(set())
@@ -579,6 +589,24 @@ class RunDialog(QFrame):
                 self.post_experiment_warnings.append(msg)
             case EnsembleEvaluationWarning(warning_message=msg):
                 self._show_warning(msg)
+            case WorkflowBatchStartedEvent(
+                hook=hook, iteration=iteration, workflow_names=workflow_names
+            ):
+                self._select_or_create_workflow_tab(hook, iteration, workflow_names)
+            case WorkflowStartedEvent(hook=hook, iteration=iteration):
+                self._select_or_create_workflow_tab(hook, iteration).handle_event(event)
+            case WorkflowFinishedEvent(
+                hook=hook,
+                iteration=iteration,
+            ):
+                self._select_or_create_workflow_tab(hook, iteration).handle_event(event)
+            case WorkflowCancelledEvent(
+                hook=hook,
+                iteration=iteration,
+            ):
+                self._select_or_create_workflow_tab(hook, iteration).handle_event(event)
+            case WorkflowBatchFinishedEvent(hook=hook, iteration=iteration):
+                self._select_or_create_workflow_tab(hook, iteration).handle_event(event)
 
             case FullSnapshotEvent(
                 status_count=status_count, realization_count=realization_count
@@ -604,22 +632,23 @@ class RunDialog(QFrame):
                 )
                 self.progress_update_event.emit(status_count, realization_count)
             case RunModelUpdateBeginEvent(iteration=iteration):
-                widget = UpdateWidget(iteration)
-                tab_index = self._tab_widget.addTab(widget, f"Update {iteration}")
-                if self._tab_widget.currentIndex() == self._tab_widget.count() - 2:
-                    self._tab_widget.setCurrentIndex(tab_index)
+                iteration_widget = self._get_or_create_iteration_tab(
+                    iteration, is_update=True
+                )
+                widget = iteration_widget.select_or_create_update_tab()
+                self._tab_widget.setCurrentWidget(iteration_widget)
                 widget.begin(event)
             case RunModelUpdateEndEvent():
                 self._progress_widget.stop_waiting_progress_bar()
-                self._get_update_widget(event.iteration).end(event)
+                self._get_or_create_update_tab(event.iteration).end(event)
                 event.write_as_csv(self.output_path)
             case RunModelStatusEvent() | RunModelTimeEvent():
-                self._get_update_widget(event.iteration).update_status(event)
+                self._get_or_create_update_tab(event.iteration).update_status(event)
             case RunModelDataEvent():
-                self._get_update_widget(event.iteration).add_table(event)
+                self._get_or_create_update_tab(event.iteration).add_table(event)
                 event.write_as_csv(self.output_path)
             case RunModelErrorEvent():
-                self._get_update_widget(event.iteration).error(event)
+                self._get_or_create_update_tab(event.iteration).error(event)
                 event.write_as_csv(self.output_path)
             case EverestBatchResultEvent():
                 batch_types = self._batch_result_types[event.batch]
@@ -652,12 +681,85 @@ class RunDialog(QFrame):
                 ):
                     runpath_widget.advance()
 
-    def _get_update_widget(self, iteration: int) -> UpdateWidget:
-        for i in range(self._tab_widget.count()):
-            widget = self._tab_widget.widget(i)
-            if isinstance(widget, UpdateWidget) and widget.iteration == iteration:
+    def _get_or_create_update_tab(self, iteration: int) -> UpdateWidget:
+        return self._get_or_create_iteration_tab(
+            iteration, is_update=True
+        ).select_or_create_update_tab()
+
+    def _get_or_create_iteration_tab(
+        self, iteration: int, is_update: bool
+    ) -> IterationWidget:
+        for index in range(self._tab_widget.count()):
+            widget = self._tab_widget.widget(index)
+            if (
+                isinstance(widget, IterationWidget)
+                and widget.iteration == iteration
+                and widget.is_update_page == is_update
+            ):
                 return widget
-        raise ValueError("Could not find UpdateWidget")
+
+        widget = IterationWidget(iteration, self)
+        widget.is_update_page = is_update
+        widget.currentTabChanged.connect(
+            lambda iteration_widget=widget: self._on_iteration_tab_changed(
+                iteration_widget
+            )
+        )
+
+        self._tab_widget.addTab(
+            widget,
+            f"update-{iteration}" if is_update else f"iteration-{iteration}",
+        )
+        return widget
+
+    def _on_iteration_tab_changed(self, iteration_widget: IterationWidget) -> None:
+        if self._tab_widget.currentWidget() is iteration_widget:
+            self._current_tab_changed(self._tab_widget.currentIndex())
+
+    @staticmethod
+    def _workflow_belongs_to_update(hook: HookRuntime) -> bool:
+        return hook in {
+            HookRuntime.PRE_FIRST_UPDATE,
+            HookRuntime.PRE_UPDATE,
+            HookRuntime.POST_UPDATE,
+        }
+
+    def _select_or_create_workflow_tab(
+        self,
+        hook: HookRuntime | None,
+        iteration: int | None,
+        workflow_names: list[str] | None = None,
+    ) -> WorkflowWidget:
+        assert hook is not None
+        if iteration is not None:
+            iteration_widget = (
+                self._get_or_create_iteration_tab(iteration, is_update=True)
+                if self._workflow_belongs_to_update(hook)
+                else self._get_or_create_iteration_tab(iteration, is_update=False)
+            )
+            widget = iteration_widget.select_or_create_workflow_tab(
+                hook, workflow_names
+            )
+            self._tab_widget.setCurrentWidget(iteration_widget)
+            return widget
+
+        for index in range(self._tab_widget.count()):
+            existing_widget = self._tab_widget.widget(index)
+            if (
+                isinstance(existing_widget, WorkflowWidget)
+                and existing_widget.hook == hook
+            ):
+                return existing_widget
+
+        if workflow_names is None:
+            raise RuntimeError(
+                "Workflow tab must be created from WorkflowBatchStartedEvent"
+            )
+
+        widget = WorkflowWidget(hook, workflow_names, parent=self)
+        tab_index = self._tab_widget.addTab(widget, hook.workflow_tab_title())
+        self._tab_widget.setCurrentIndex(tab_index)
+        return widget
 
     def update_total_progress(
         self, progress_value: float, iteration_label: str, iteration: int | None = None

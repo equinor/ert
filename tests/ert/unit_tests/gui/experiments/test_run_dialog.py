@@ -19,7 +19,15 @@ from PyQt6.QtWidgets import (
 from pytestqt.qtbot import QtBot
 
 import ert.run_models
-from _ert.events import EnsembleEvaluationWarning
+from _ert.events import (
+    EnsembleEvaluationWarning,
+    WorkflowBatchFinishedEvent,
+    WorkflowBatchStartedEvent,
+    WorkflowFinishedEvent,
+    WorkflowStartedEvent,
+    WorkflowStatus,
+)
+from _ert.hook_runtime import HookRuntime
 from ert.config import ErtConfig
 from ert.ensemble_evaluator import state
 from ert.ensemble_evaluator.event import (
@@ -38,8 +46,10 @@ from ert.gui.experiments.ensemble_smoother_panel import EnsembleSmootherPanel
 from ert.gui.experiments.multiple_data_assimilation_panel import (
     MultipleDataAssimilationPanel,
 )
+from ert.gui.experiments.view.iteration import IterationWidget
 from ert.gui.experiments.view.realization import RealizationWidget
 from ert.gui.experiments.view.runpath_progress_widget import RunpathProgressWidget
+from ert.gui.experiments.view.workflow import WorkflowWidget
 from ert.gui.main import GUILogHandler, _setup_main_window
 from ert.gui.tools.file import FileDialog
 from ert.run_models import (
@@ -52,6 +62,7 @@ from ert.run_models.event import (
     RunPathCreatedEvent,
     StartingTotalRunPathCreationEvent,
 )
+from ert.run_models.run_model import RunModelAPI
 from ert.scheduler.job import Job
 from tests.ert import SnapshotBuilder
 from tests.ert.handle_run_path_dialog import handle_run_path_dialog
@@ -520,9 +531,10 @@ def test_run_dialog_memory_usage_showing(
         lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
     )
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=5000)
-
+    iteration_widget = run_dialog._tab_widget.widget(0)
+    assert type(iteration_widget) is IterationWidget
     # This is the container of realization boxes
-    realization_box = run_dialog._tab_widget.widget(0)
+    realization_box = iteration_widget._tab_widget.widget(0)
     assert type(realization_box) is RealizationWidget
     # Click the first realization box
     qtbot.mouseClick(realization_box, Qt.MouseButton.LeftButton)
@@ -621,9 +633,10 @@ def test_run_dialog_fm_label_show_correct_info(
         lambda: run_dialog._tab_widget.count() == tab_widget_count, timeout=5000
     )
     qtbot.waitUntil(lambda: run_dialog.is_experiment_done() is True, timeout=5000)
-
+    iteration_widget = run_dialog._tab_widget.widget(0)
+    assert type(iteration_widget) is IterationWidget
     # This is the container of realization boxes
-    realization_box = run_dialog._tab_widget.widget(0)
+    realization_box = iteration_widget._tab_widget.widget(0)
     assert type(realization_box) is RealizationWidget
     # Click the first realization box
     qtbot.mouseClick(realization_box, Qt.MouseButton.LeftButton)
@@ -894,7 +907,8 @@ def test_forward_model_overview_label_selected_on_tab_change(
     events, event_queue, tab_widget_count, qtbot: QtBot, run_dialog
 ):
     def qt_bot_click_realization(realization_index: int, iteration: int) -> None:
-        view = run_dialog._tab_widget.widget(iteration)._real_view
+        iteration_widget: IterationWidget = run_dialog._tab_widget.widget(iteration)
+        view = iteration_widget._tab_widget.widget(0)._real_view
         model_index = view.model().index(realization_index, 0)
         view.scrollTo(model_index)
         rect = view.visualRect(model_index)
@@ -1177,5 +1191,174 @@ def test_that_runpath_creation_events_add_update_and_remove_tab(qtbot: QtBot) ->
     queue.put(EndEvent(failed=False, msg=""))
 
     qtbot.waitUntil(lambda: dialog._tab_widget.count() == 1, timeout=2000)
-    assert isinstance(dialog._tab_widget.widget(0), RealizationWidget)
+    iteration_widget: IterationWidget = dialog._tab_widget.widget(0)
+
+    assert isinstance(iteration_widget._tab_widget.widget(0), RealizationWidget)
     qtbot.waitUntil(dialog.is_experiment_done, timeout=2000)
+
+
+def test_that_run_dialog_displays_workflow_tabs_before_and_after_iteration_tab(
+    qtbot: QtBot, tmp_path
+):
+    run_model_api = RunModelAPI(
+        experiment_name="Ensemble experiment",
+        supports_rerunning_failed_realizations=False,
+        start_simulations_thread=lambda *_args, **_kwargs: None,
+        cancel=lambda: None,
+        has_failed_realizations=lambda: False,
+    )
+    notifier = Mock()
+    queue = SimpleQueue()
+    run_dialog = RunDialog(
+        "Test",
+        run_model_api,
+        queue,
+        notifier,
+        output_path=tmp_path,
+        run_path=tmp_path,
+        storage_path=tmp_path,
+    )
+    qtbot.addWidget(run_dialog)
+    run_dialog.setup_event_monitoring()
+
+    pre_experiment_workflows = ["prepare_case"]
+    queue.put(
+        WorkflowBatchStartedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            iteration=None,  # No iteration for pre/post experiment workflows
+            workflow_names=pre_experiment_workflows,
+        )
+    )
+
+    qtbot.waitUntil(lambda: run_dialog._tab_widget.count() == 1, timeout=5000)
+    assert run_dialog._tab_widget.tabText(0) == "Pre-experiment workflows"
+    pre_experiment_workflow_widget: WorkflowWidget = run_dialog._tab_widget.widget(0)
+
+    def _get_row_data(workflow_widget: WorkflowWidget, row: int, column: int) -> str:
+        return workflow_widget._table.item(row, column).text()
+
+    queue.put(
+        WorkflowStartedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            iteration=None,
+            workflow_name="prepare_case",
+        )
+    )
+    # Might have to wait for event to be processed before checking the table
+    assert (
+        pre_experiment_workflow_widget._status_label.text()
+        == "Pre-experiment workflows running"
+    )
+    queue.put(
+        WorkflowFinishedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            iteration=None,
+            workflow_name="prepare_case",
+            status=WorkflowStatus.FAILED,
+            stdout="prepare stdout",
+            stderr="prepare stderr",
+        )
+    )
+    queue.put(
+        WorkflowBatchFinishedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            iteration=None,
+            workflow_names=pre_experiment_workflows,
+            status=WorkflowStatus.FAILED,
+        )
+    )
+
+    # Make sure the event is actually forwarded to the widget
+    qtbot.waitUntil(
+        lambda: (
+            pre_experiment_workflow_widget._status_label.text()
+            == "Pre-experiment workflows failed"
+        ),
+        timeout=5000,
+    )
+
+    evaluation_events = [
+        FullSnapshotEvent(
+            snapshot=(
+                SnapshotBuilder()
+                .add_fm_step(
+                    fm_step_id="0",
+                    index="0",
+                    name="fm_step_0",
+                    max_memory_usage="1000",
+                    current_memory_usage="500",
+                    status=state.FORWARD_MODEL_STATE_START,
+                )
+                .build(["0"], state.REALIZATION_STATE_UNKNOWN)
+            ),
+            iteration_label="Foo",
+            total_iterations=0,
+            progress=0.25,
+            realization_count=4,
+            status_count={"Finished": 1, "Pending": 1, "Unknown": 2},
+            iteration=0,
+        ),
+        SnapshotUpdateEvent(
+            snapshot=SnapshotBuilder().build(
+                ["0"], status=state.REALIZATION_STATE_FINISHED
+            ),
+            iteration_label="Foo",
+            total_iterations=0,
+            progress=0.5,
+            realization_count=4,
+            status_count={"Finished": 2, "Unknown": 2},
+            iteration=0,
+        ),
+    ]
+    for event in evaluation_events:
+        queue.put(event)
+
+    qtbot.waitUntil(lambda: run_dialog._tab_widget.count() == 2, timeout=5000)
+    assert run_dialog._tab_widget.tabText(1) == "iteration-0"
+    iteration_widget: IterationWidget = run_dialog._tab_widget.currentWidget()
+    assert isinstance(iteration_widget, IterationWidget)
+    assert iteration_widget._tab_widget.count() == 1
+    realization_widget = iteration_widget._tab_widget.currentWidget()
+    assert isinstance(realization_widget, RealizationWidget)
+
+    post_experiment_workflows = ["archive_results"]
+    queue.put(
+        WorkflowBatchStartedEvent(
+            hook=HookRuntime.POST_EXPERIMENT,
+            iteration=None,
+            workflow_names=post_experiment_workflows,
+        )
+    )
+
+    qtbot.waitUntil(lambda: run_dialog._tab_widget.count() == 3, timeout=5000)
+
+    assert run_dialog._tab_widget.tabText(2) == "Post-experiment workflows"
+    assert isinstance(run_dialog._tab_widget.currentWidget(), WorkflowWidget)
+
+    queue.put(
+        WorkflowStartedEvent(
+            hook=HookRuntime.POST_EXPERIMENT,
+            iteration=None,
+            workflow_name="archive_results",
+        )
+    )
+    queue.put(
+        WorkflowFinishedEvent(
+            hook=HookRuntime.POST_EXPERIMENT,
+            iteration=None,
+            workflow_name="archive_results",
+            status=WorkflowStatus.FINISHED,
+            stdout="archive stdout",
+            stderr="archive stderr",
+        )
+    )
+    queue.put(
+        WorkflowBatchFinishedEvent(
+            hook=HookRuntime.POST_EXPERIMENT,
+            iteration=None,
+            workflow_names=post_experiment_workflows,
+            status=WorkflowStatus.FINISHED,
+        )
+    )
+    queue.put(EndEvent(failed=False, msg=""))
+    qtbot.waitUntil(run_dialog.is_experiment_done, timeout=10000)

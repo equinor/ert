@@ -6,7 +6,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
 
-from _ert.events import EnsembleEvaluationWarning
+from _ert.events import EnsembleEvaluationWarning, WorkflowEvent
 from ert.analysis import (
     AnalysisStatusEvent,
     AnalysisTimeEvent,
@@ -125,6 +125,7 @@ StatusEvents = (
     | SnapshotUpdateEvent
     | StartEvent
     | WarningEvent
+    | WorkflowEvent
     | EnsembleEvaluationWarning
     | StartingTotalRunPathCreationEvent
     | FinishedTotalRunPathCreationEvent
