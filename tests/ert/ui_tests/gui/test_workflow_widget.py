@@ -1,7 +1,9 @@
+import pytest
 from PyQt6.QtGui import QColor
 from pytestqt.qtbot import QtBot
 
 from _ert.events import (
+    WorkflowBatchFinishedEvent,
     WorkflowCancelledEvent,
     WorkflowFinishedEvent,
     WorkflowStartedEvent,
@@ -19,16 +21,64 @@ from ert.gui.experiments.view.workflow import (
 
 
 def _get_row_data(workflow_widget: WorkflowWidget, row: int, column: int) -> str:
-    return workflow_widget._table.item(row, column).text()
+    item = workflow_widget._table.item(row, column)
+    assert item is not None
+    return item.text()
 
 
+def _assert_row_color(widget: WorkflowWidget, row: int, color: QColor) -> None:
+    for column in range(widget._table.columnCount()):
+        item = widget._table.item(row, column)
+        assert item is not None
+        assert item.background().color() == color
+
+
+@pytest.mark.parametrize(
+    ("hook", "expected_label"),
+    [
+        (HookRuntime.PRE_EXPERIMENT, "Pre-experiment workflows running"),
+        (HookRuntime.PRE_SIMULATION, "Pre-simulation workflows running"),
+        (HookRuntime.POST_EXPERIMENT, "Post-experiment workflows running"),
+    ],
+)
 def test_that_workflow_widget_updates_label_correctly_on_new_events(
     qtbot: QtBot,
+    hook: HookRuntime,
+    expected_label: str,
 ) -> None:
-    pass
+    widget = WorkflowWidget(hook, ["generate files"])
+    qtbot.addWidget(widget)
+
+    assert widget._status_label.text() == expected_label
+
+    widget.handle_event(
+        WorkflowBatchFinishedEvent(
+            hook=hook,
+            workflow_names=["generate files"],
+            status=WorkflowStatus.FINISHED,
+        )
+    )
+    assert widget._status_label.text() == f"{hook.workflow_tab_title()} finished"
+
+    widget.handle_event(
+        WorkflowBatchFinishedEvent(
+            hook=hook,
+            workflow_names=["generate files"],
+            status=WorkflowStatus.FAILED,
+        )
+    )
+    assert widget._status_label.text() == f"{hook.workflow_tab_title()} failed"
+
+    widget.handle_event(
+        WorkflowBatchFinishedEvent(
+            hook=hook,
+            workflow_names=["generate files"],
+            status=WorkflowStatus.CANCELLED,
+        )
+    )
+    assert widget._status_label.text() == f"{hook.workflow_tab_title()} cancelled"
 
 
-# parametrize hook runtime to test the title label is correct
 def test_that_workflow_widget_initializes_with_correct_headers(qtbot: QtBot) -> None:
     widget = WorkflowWidget(HookRuntime.PRE_EXPERIMENT, [])
     qtbot.addWidget(widget)
@@ -57,20 +107,78 @@ def test_that_workflow_widget_initializes_with_all_workflows_as_pending(
 
 
 def test_that_workflows_give_tooltip_on_hover(qtbot: QtBot) -> None:
-    pass
+    widget = WorkflowWidget(HookRuntime.PRE_EXPERIMENT, ["generate files"])
+    qtbot.addWidget(widget)
+
+    widget.handle_event(
+        WorkflowStartedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            workflow_name="generate files",
+        )
+    )
+    widget.handle_event(
+        WorkflowFinishedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            workflow_name="generate files",
+            status=WorkflowStatus.FAILED,
+            stdout="stdout text",
+            stderr="stderr text",
+        )
+    )
+
+    stdout_item = widget._table.item(0, STDOUT_COLUMN)
+    stderr_item = widget._table.item(0, STDERR_COLUMN)
+    assert stdout_item is not None
+    assert stderr_item is not None
+    assert stdout_item.toolTip() == "stdout text"
+    assert stderr_item.toolTip() == "stderr text"
 
 
-def test_that_workflow_widget_gives_empty_string_for_none_outputs(qtbot: QtBot) -> None:
-    """Workflows with no stdout/stderr should show empty when it is
-    still running, but there is no output yet"""
+def test_that_workflow_widget_keeps_output_cells_empty_while_running(
+    qtbot: QtBot,
+) -> None:
+    widget = WorkflowWidget(HookRuntime.PRE_EXPERIMENT, ["generate files"])
+    qtbot.addWidget(widget)
+
+    widget.handle_event(
+        WorkflowStartedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            workflow_name="generate files",
+        )
+    )
+
+    assert _get_row_data(widget, 0, STATUS_COLUMN) == WorkflowStatus.RUNNING.value
+    assert _get_row_data(widget, 0, STDOUT_COLUMN) == ""  # noqa: PLC1901
+    assert _get_row_data(widget, 0, STDERR_COLUMN) == ""  # noqa: PLC1901
 
 
 def test_that_workflow_widget_gives_dash_for_empty_outputs(qtbot: QtBot) -> None:
-    """Workflows that have completed but have no output should show a
-    dash to indicate they have been run"""
+    widget = WorkflowWidget(HookRuntime.PRE_EXPERIMENT, ["generate files"])
+    qtbot.addWidget(widget)
+
+    widget.handle_event(
+        WorkflowStartedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            workflow_name="generate files",
+        )
+    )
+    widget.handle_event(
+        WorkflowFinishedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            workflow_name="generate files",
+            status=WorkflowStatus.FINISHED,
+            stdout="",
+            stderr="",
+        )
+    )
+
+    assert _get_row_data(widget, 0, STDOUT_COLUMN) == "-"
+    assert _get_row_data(widget, 0, STDERR_COLUMN) == "-"
 
 
-def test_that_workflow_widget_paints_rows_based_on_status(qtbot: QtBot) -> None:
+def test_that_workflow_widget_paints_rows_based_on_status(
+    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+) -> None:
     pending_job_name = "pending_job"
     running_job_name = "running_job"
     failed_job_name = "failed_job"
@@ -88,10 +196,18 @@ def test_that_workflow_widget_paints_rows_based_on_status(qtbot: QtBot) -> None:
     )
     qtbot.addWidget(widget)
 
+    monkeypatch.setattr(widget, "_cancel_pending_rows", lambda: None)
+
     widget.handle_event(
         WorkflowStartedEvent(
             hook=HookRuntime.PRE_EXPERIMENT,
             workflow_name=running_job_name,
+        )
+    )
+    widget.handle_event(
+        WorkflowStartedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            workflow_name=failed_job_name,
         )
     )
     widget.handle_event(
@@ -104,12 +220,24 @@ def test_that_workflow_widget_paints_rows_based_on_status(qtbot: QtBot) -> None:
         )
     )
     widget.handle_event(
+        WorkflowStartedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            workflow_name=finished_job_name,
+        )
+    )
+    widget.handle_event(
         WorkflowFinishedEvent(
             hook=HookRuntime.PRE_EXPERIMENT,
             workflow_name=finished_job_name,
             status=WorkflowStatus.FINISHED,
             stdout=None,
             stderr=None,
+        )
+    )
+    widget.handle_event(
+        WorkflowStartedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            workflow_name=cancelled_job_name,
         )
     )
     widget.handle_event(
@@ -121,55 +249,42 @@ def test_that_workflow_widget_paints_rows_based_on_status(qtbot: QtBot) -> None:
         )
     )
 
-    def assert_row_name_status_and_color(
-        row: int, expected_name: str, expected_status: str, expected_color: QColor
-    ):
-        assert _get_row_data(widget, row, WORKFLOW_JOB_NAME_COLUMN) == expected_name
-        assert _get_row_data(widget, row, STATUS_COLUMN) == expected_status
-        for column in range(widget._table.columnCount()):
-            item = widget._table.item(row, column)
-            assert item is not None
-            assert item.background().color() == expected_color
+    assert _get_row_data(widget, 0, WORKFLOW_JOB_NAME_COLUMN) == pending_job_name
+    assert _get_row_data(widget, 0, STATUS_COLUMN) == WorkflowStatus.PENDING.value
 
-    assert_row_name_status_and_color(
-        0, pending_job_name, WorkflowStatus.PENDING.value, QColor(*state.COLOR_PENDING)
-    )
-    assert_row_name_status_and_color(
-        1, running_job_name, WorkflowStatus.RUNNING.value, QColor(*state.COLOR_RUNNING)
-    )
-    assert_row_name_status_and_color(
-        2, failed_job_name, WorkflowStatus.FAILED.value, QColor(*state.COLOR_FAILED)
-    )
-    assert_row_name_status_and_color(
-        3,
-        cancelled_job_name,
-        WorkflowStatus.CANCELLED.value,
-        QColor(*state.COLOR_CANCELLED),
-    )
-    assert_row_name_status_and_color(
-        4,
-        finished_job_name,
-        WorkflowStatus.FINISHED.value,
-        QColor(*state.COLOR_FINISHED),
-    )
+    assert _get_row_data(widget, 1, WORKFLOW_JOB_NAME_COLUMN) == running_job_name
+    assert _get_row_data(widget, 1, STATUS_COLUMN) == WorkflowStatus.RUNNING.value
+    _assert_row_color(widget, 1, QColor(*state.COLOR_RUNNING))
+
+    assert _get_row_data(widget, 2, WORKFLOW_JOB_NAME_COLUMN) == failed_job_name
+    assert _get_row_data(widget, 2, STATUS_COLUMN) == WorkflowStatus.FAILED.value
+    _assert_row_color(widget, 2, QColor(*state.COLOR_FAILED))
+
+    assert _get_row_data(widget, 3, WORKFLOW_JOB_NAME_COLUMN) == cancelled_job_name
+    assert _get_row_data(widget, 3, STATUS_COLUMN) == WorkflowStatus.CANCELLED.value
+    _assert_row_color(widget, 3, QColor(*state.COLOR_CANCELLED))
+
+    assert _get_row_data(widget, 4, WORKFLOW_JOB_NAME_COLUMN) == finished_job_name
+    assert _get_row_data(widget, 4, STATUS_COLUMN) == WorkflowStatus.FINISHED.value
+    _assert_row_color(widget, 4, QColor(*state.COLOR_FINISHED))
 
 
-def test_that_workflow_widget_updates_on_workflow_event(qtbot: QtBot):
+def test_that_workflow_widget_updates_on_workflow_event(qtbot: QtBot) -> None:
     widget = WorkflowWidget(HookRuntime.PRE_EXPERIMENT, ["generate files"])
     qtbot.addWidget(widget)
 
     widget.handle_event(
         WorkflowStartedEvent(
-            hook=HookRuntime.POST_EXPERIMENT,
+            hook=HookRuntime.PRE_EXPERIMENT,
             workflow_name="generate files",
         )
     )
-    assert _get_row_data(widget, 0, STATUS_COLUMN) == WorkflowStatus.PENDING.value
+    assert _get_row_data(widget, 0, STATUS_COLUMN) == WorkflowStatus.RUNNING.value
     assert _get_row_data(widget, 0, STDOUT_COLUMN) == ""  # noqa: PLC1901
     assert _get_row_data(widget, 0, STDERR_COLUMN) == ""  # noqa: PLC1901
     widget.handle_event(
         WorkflowFinishedEvent(
-            hook=HookRuntime.POST_EXPERIMENT,
+            hook=HookRuntime.PRE_EXPERIMENT,
             workflow_name="generate files",
             status=WorkflowStatus.FAILED,
             stdout="",
@@ -182,6 +297,31 @@ def test_that_workflow_widget_updates_on_workflow_event(qtbot: QtBot):
     assert _get_row_data(widget, 0, STDERR_COLUMN) == "failed to generate files"
 
 
-def test_that_workflow_batch_finished_event_sets_remaining_jobs_as_cancelled():
-    """In case something happens that causes the remaining workflows to never
-    be ran, they should be marked as non-pending/cancelled"""
+def test_that_workflow_cancelled_event_sets_remaining_jobs_as_cancelled(
+    qtbot: QtBot,
+) -> None:
+    widget = WorkflowWidget(
+        HookRuntime.PRE_EXPERIMENT,
+        ["generate files", "delete files", "archive files"],
+    )
+    qtbot.addWidget(widget)
+
+    widget.handle_event(
+        WorkflowStartedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            workflow_name="generate files",
+        )
+    )
+    widget.handle_event(
+        WorkflowCancelledEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            workflow_name="generate files",
+            stdout=None,
+            stderr=None,
+        )
+    )
+
+    assert _get_row_data(widget, 0, STATUS_COLUMN) == WorkflowStatus.CANCELLED.value
+    assert _get_row_data(widget, 1, STATUS_COLUMN) == WorkflowStatus.CANCELLED.value
+    assert _get_row_data(widget, 2, STATUS_COLUMN) == WorkflowStatus.CANCELLED.value
+    assert widget._status_label.text() == "Pre-experiment workflows cancelled"

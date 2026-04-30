@@ -180,6 +180,7 @@ class WorkflowWidget(QWidget):
         )
         self._table.setItem(row, HEADER_TO_COLUMN["STDOUT"], QTableWidgetItem())
         self._table.setItem(row, HEADER_TO_COLUMN["STDERR"], QTableWidgetItem())
+        self._apply_row_style(row, status)
 
     def _set_output(self, row: int, stdout: str | None, stderr: str | None) -> None:
         stderr_item = self._table.item(row, HEADER_TO_COLUMN["STDERR"])
