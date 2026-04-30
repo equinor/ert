@@ -73,13 +73,13 @@ class AnalysisErrorEvent(AnalysisEvent):
 class AnalysisCompleteEvent(AnalysisEvent):
     event_type: Literal["AnalysisCompleteEvent"] = "AnalysisCompleteEvent"
     data: DataSection
-    posterior_id: str
+    ensemble_id: str
 
 
 class AnalysisMatrixEvent(AnalysisEvent):
     event_type: Literal["AnalysisMatrixEvent"] = "AnalysisMatrixEvent"
     name: str
-    posterior_id: str
+    ensemble_id: str
     matrix: np.ndarray = Field(exclude=True)
 
 

@@ -23,7 +23,7 @@ def test_that_send_smoother_event_persists_observation_report_on_analysis_comple
         header=["observation_key", "status"],
         data=[("OBS_1", "Active"), ("OBS_2", "Deactivated, outlier")],
     )
-    event = AnalysisCompleteEvent(data=data_section, posterior_id=posterior_id)
+    event = AnalysisCompleteEvent(data=data_section, ensemble_id=posterior_id)
 
     UpdateRunModel.send_smoother_event(
         model, iteration=0, run_id=uuid.uuid4(), event=event
@@ -34,7 +34,7 @@ def test_that_send_smoother_event_persists_observation_report_on_analysis_comple
 
     _, saved_json = mock_ensemble.save_transition_data.call_args[0]
     parsed = json.loads(saved_json)
-    assert parsed["posterior_id"] == posterior_id
+    assert parsed["ensemble_id"] == posterior_id
     assert parsed["data"]["header"] == ["observation_key", "status"]
     assert parsed["data"]["data"] == [
         ["OBS_1", "Active"],
@@ -56,7 +56,7 @@ def test_that_send_smoother_event_delegates_matrix_to_save_transition_matrix():
     matrix = np.array([[0.1, 0.2], [0.3, 0.4]])
     event = AnalysisMatrixEvent(
         name="corr_XY_PARAM",
-        posterior_id=posterior_id,
+        ensemble_id=posterior_id,
         matrix=matrix,
     )
 

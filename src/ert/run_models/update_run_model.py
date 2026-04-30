@@ -202,13 +202,13 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                         name=event.name,
                     )
                 )
-                ensemble = self._storage.get_ensemble(event.posterior_id)
+                ensemble = self._storage.get_ensemble(event.ensemble_id)
                 uri, is_sparse = ensemble.save_transition_matrix(
                     event.name, event.matrix
                 )
                 storage_event = AnalysisStorageEvent(
                     uri=uri,
-                    ensemble_id=event.posterior_id,
+                    ensemble_id=event.ensemble_id,
                     sparse=is_sparse,
                 )
                 ensemble.save_transition_data(
@@ -216,7 +216,7 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                     storage_event.model_dump_json(),
                 )
             case AnalysisCompleteEvent():
-                self._storage.get_ensemble(event.posterior_id).save_transition_data(
+                self._storage.get_ensemble(event.ensemble_id).save_transition_data(
                     f"{AnalysisCompleteEvent.__name__}_{uuid.uuid4().hex[:8]}.json",
                     event.model_dump_json(),
                 )

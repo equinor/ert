@@ -135,7 +135,7 @@ class AdaptiveLocalizationUpdate:
         self._smoother: AdaptiveESMDA | None = None
         self._num_obs: int = 0
         self._ensemble_size: int = 0
-        self._posterior_id: str = ""
+        self._ensemble_id: str = ""
 
     def prepare(self, obs_context: ObservationContext) -> None:
         """Initialize smoother and pre-compute matrices from observation data.
@@ -237,7 +237,7 @@ class AdaptiveLocalizationUpdate:
             self._progress_callback(
                 AnalysisMatrixEvent(
                     name=f"corr_XY_{param_config.name}",
-                    posterior_id=self._posterior_id,
+                    ensemble_id=self._ensemble_id,
                     matrix=corr_XY_matrix,
                 )
             )

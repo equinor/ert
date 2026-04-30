@@ -203,7 +203,7 @@ def perform_ensemble_update(
     # Prepare each unique strategy once (multiple params may share the same instance)
     for strategy in set(strategy_map.values()):
         if isinstance(strategy, AdaptiveLocalizationUpdate):
-            strategy._posterior_id = str(target_ensemble.id)
+            strategy._ensemble_id = str(target_ensemble.id)
         strategy.prepare(obs_context)
 
     # Update each parameter group
@@ -430,7 +430,7 @@ def smoother_update(
                 data=smoother_snapshot.csv,
                 extra=smoother_snapshot.extra,
             ),
-            posterior_id=str(posterior_storage.id),
+            ensemble_id=str(posterior_storage.id),
         )
     )
     return smoother_snapshot
