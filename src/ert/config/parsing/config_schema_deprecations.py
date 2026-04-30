@@ -59,18 +59,6 @@ deprecated_keywords_list = [
         check=lambda line: "JOB_PREFIX" in line,
     ),
     DeprecationInfo(
-        keyword="ANALYSIS_SET_VAR",
-        message=partial(
-            lambda line: (
-                f"The {line[1]} keyword was removed in 2017 and has no "
-                "effect. It has been used in the past to force the subspace "
-                "dimension set using ENKF_NCOMP keyword. "
-                "This can be safely removed."
-            ),
-        ),
-        check=lambda line: str(line[1]) == "ENKF_FORCE_NCOMP",
-    ),
-    DeprecationInfo(
         keyword="RUNPATH",
         message=lambda line: (
             "RUNPATH keyword contains deprecated value "

@@ -933,7 +933,6 @@ DELETE_RUNPATH
 PLOT_SETTINGS
 UPDATE_PATH A B
 UPDATE_SETTINGS A
-ANALYSIS_SET_VAR STD_ENKF ENKF_FORCE_NCOMP true
 DEFINE A <2>
 """,
             [
@@ -1010,12 +1009,6 @@ DEFINE A <2>
                     column=1,
                     end_column=12,
                     match="UPDATE_PATH keyword has been removed",
-                ),
-                ExpectedErrorInfo(
-                    line=36,
-                    column=1,
-                    end_column=17,
-                    match="The ENKF_FORCE_NCOMP keyword was removed in 2017",
                 ),
             ],
         )
