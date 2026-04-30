@@ -21,6 +21,7 @@ class ObservationType(StrEnum):
     GENERAL = "GENERAL_OBSERVATION"
     RFT = "RFT_OBSERVATION"
     BREAKTHROUGH = "BREAKTHROUGH_OBSERVATION"
+    SUMMARY_COMMON_CONFIG = "SUMMARY"
 
 
 class ObservationDict(UserDict[str, Any]):
@@ -100,7 +101,7 @@ def parse_observations(content: str, filename: str) -> list[ObservationDict]:
                 )
             case UnexpectedToken(
                 token=unexpected_token,
-            ), ["TYPE"]:
+            ), ["COMMON_TYPE", "TYPE"]:
                 message = (
                     f"Unknown observation type '{unexpected_token}', "
                     f"expected either 'RFT_OBSERVATION', 'GENERAL_OBSERVATION', "
@@ -132,13 +133,15 @@ def parse_observations(content: str, filename: str) -> list[ObservationDict]:
 observations_parser = Lark(
     r"""
     start: observation*
-    observation: type OBSERVATION_NAME? object? ";"
+    observation: type OBSERVATION_NAME? object? ";" | common_type summary_object ";"
     TYPE: "HISTORY_OBSERVATION"
       | "SUMMARY_OBSERVATION"
       | "GENERAL_OBSERVATION"
       | "RFT_OBSERVATION"
       | "BREAKTHROUGH_OBSERVATION"
     type: TYPE
+    COMMON_TYPE: "SUMMARY"
+    common_type: COMMON_TYPE
     ?value: object
           | STRING
 
@@ -146,6 +149,7 @@ observations_parser = Lark(
     CHAR: /[^; \t\n{}=]/
     STRING : CHAR+
     OBSERVATION_NAME : CHAR+
+    WELL_NAME : CHAR+
     PARAMETER_NAME : CHAR+
     object : "{" [(declaration";")*] "}"
     ?declaration: "SEGMENT" STRING object -> segment
@@ -153,6 +157,11 @@ observations_parser = Lark(
                 | pair
     pair   : PARAMETER_NAME "=" value
 
+    summary_object : "{" [(summary_declaration";")*] "}"
+    ?summary_declaration: "BREAKTHROUGH" object -> breakthrough
+                | "WELL" WELL_NAME summary_object -> well
+                | "LOCALIZATION" object -> localization
+                | pair
 
     %import common.WS
     %ignore WS
@@ -169,7 +178,7 @@ class TreeToObservations(Transformer[FileContextToken, list[ObservationDict]]):
 
     @staticmethod
     @no_type_check
-    def observation(tree):
+    def observation(tree) -> ObservationDict:
         context_token = tree[0].children[0]
         observation_type = ObservationType(context_token)
 
@@ -217,7 +226,35 @@ class TreeToObservations(Transformer[FileContextToken, list[ObservationDict]]):
 
     @staticmethod
     @no_type_check
+    def well(tree):
+        # Keys must be unique, therefore we append well name to WELL
+        return (f"WELL {tree[0]}", tree[1])
+
+    @staticmethod
+    @no_type_check
+    def breakthrough(tree):
+        return ("BREAKTHROUGH", tree[0])
+
+    @staticmethod
+    @no_type_check
     def object(tree):
+        keys = set()
+        error_list: list[ErrorInfo] = []
+        for key, *_ in tree:
+            if key in keys:
+                error_list.append(
+                    ErrorInfo(f"Observation contains duplicate key {key}").set_context(
+                        key
+                    )
+                )
+            keys.add(key)
+        if error_list:
+            raise ObservationConfigError.from_collected(error_list)
+        return dict(tree)
+
+    @staticmethod
+    @no_type_check
+    def summary_object(tree):
         keys = set()
         error_list: list[ErrorInfo] = []
         for key, *_ in tree:
