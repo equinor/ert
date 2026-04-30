@@ -310,7 +310,6 @@ def _setup_manual_update(
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
         ert_templates=config.ert_templates,
-        observations=config.observation_declarations,
         shape_registry=config.shape_registry,
     )
     return ManualUpdate(**runmodel_config.model_dump(), status_queue=status_queue)
