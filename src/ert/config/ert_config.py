@@ -1222,6 +1222,9 @@ class ErtConfig(BaseModel):
                     data_to_read={},
                     well_locations=[],
                     zonemap=cls_config.zonemap,
+                    interpolate_missing_values=config_dict.get(
+                        ConfigKeys.INTERPOLATE_RFT_VALUES, False
+                    ),
                 )
 
             bt_obs = [o for o in obs_configs if isinstance(o, BreakthroughObservation)]

@@ -74,6 +74,13 @@ def rft_keyword() -> SchemaItem:
     )
 
 
+def interpolate_rft_values_keyword() -> SchemaItem:
+    return SchemaItem(
+        kw=ConfigKeys.INTERPOLATE_RFT_VALUES,
+        type_map=[SchemaItemType.BOOL],
+    )
+
+
 def define_keyword() -> SchemaItem:
     return SchemaItem(
         kw=ConfigKeys.DEFINE,
@@ -333,6 +340,7 @@ def init_user_config_schema() -> ConfigSchemaDict:
         gen_data_keyword(),
         summary_keyword(),
         rft_keyword(),
+        interpolate_rft_values_keyword(),
         surface_keyword(),
         field_keyword(),
         single_arg_keyword(ConfigKeys.ECLBASE),

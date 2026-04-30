@@ -3,13 +3,12 @@ from __future__ import annotations
 import datetime
 import fnmatch
 import logging
-import os
 import re
 import warnings
 from collections import defaultdict
 from dataclasses import InitVar, dataclass
 from pathlib import Path
-from typing import IO, Any, Literal, TypeAlias, cast
+from typing import Any, Literal, TypeAlias, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -75,6 +74,8 @@ class RFTConfig(ResponseConfig):
         well_locations: list of optionally zone constrained well points that the rft
         values should be labeled with.
         zonemap: The mapping from grid layer index to zone name.
+        interpolate_missing_values: option to fill missing values by interpolating
+            between points within same zone.
     """
 
     type: Literal["rft"] = "rft"
@@ -85,6 +86,7 @@ class RFTConfig(ResponseConfig):
     )
     well_locations: list[WellPoint] = Field(default_factory=list)
     zonemap: Path | None = None
+    interpolate_missing_values: bool = False
 
     @property
     def expected_input_files(self) -> list[str]:
@@ -125,9 +127,16 @@ class RFTConfig(ResponseConfig):
             zonemap_filepath = Path(run_path) / zonemap_filepath
         return zonemap_filepath
 
+    def _read_grid(self, egrid_file: str) -> CornerpointGrid:
+        try:
+            grid = CornerpointGrid.read_egrid(egrid_file)
+        except (OSError, InvalidEgridFileError) as err:
+            raise InvalidResponseFile(f"Could not read grid file: {err}") from err
+        return grid
+
     @staticmethod
     def _map_locations_to_cells(
-        egrid_file: str | os.PathLike[str] | IO[Any], zoned_locations: list[WellPoint]
+        grid: CornerpointGrid | None, zoned_locations: list[WellPoint]
     ) -> dict[WellPoint, GridIndex]:
         """
         For each location, find the corresponding connected grid cell, if it exists.
@@ -136,11 +145,12 @@ class RFTConfig(ResponseConfig):
         location_cell_map: dict[WellPoint, GridIndex] = {}
         if not zoned_locations:
             return location_cell_map
-        try:
-            grid = CornerpointGrid.read_egrid(egrid_file)
-        except (OSError, InvalidEgridFileError) as err:
-            raise InvalidResponseFile(f"Could not read grid file: {err}") from err
 
+        if grid is None:
+            raise InvalidResponseFile(
+                "RFTConfig is configured with well locations but "
+                "no grid could be read to map those locations to cells."
+            )
         for zoned_location, cell in zip(
             zoned_locations,
             grid.find_cell_containing_point(
@@ -299,7 +309,9 @@ class RFTConfig(ResponseConfig):
         if not rft_data:
             return pl.DataFrame(schema=schema)
 
-        location_metadata = self._obtain_location_metadata(run_path, iens, iter_)
+        grid_filepath = self._ergrid_filepath(rft_filepath)
+        grid = self._read_grid(grid_filepath) if self.well_locations else None
+        location_metadata = self._obtain_location_metadata(grid, run_path, iens, iter_)
 
         try:
             df = pl.concat(
@@ -329,14 +341,44 @@ class RFTConfig(ResponseConfig):
                 f"Could not find {err.args[0]} in RFTFile {rft_filepath}"
             ) from err
 
+        if self.zonemap:
+            zonemap_path = self._zonemap_filepath(self.zonemap, run_path, iens, iter_)
+            zonemap = parse_zonemap(str(zonemap_path), zonemap_path.read_text())
+        else:
+            zonemap = {}
+
+        df = df.with_columns(
+            pl.col("well_connection_cell")
+            .arr.get(2)
+            .replace_strict(zonemap, default=None, return_dtype=pl.List(pl.String))
+            .alias("actual_zones")
+        )
+
         combined = self._combine_response_and_location_metadata(
             df, location_metadata, iens, iter_
         )
 
-        return combined.pipe(self._assert_schema, schema)
+        if self.interpolate_missing_values:
+            if grid is not None:
+                combined = self._approximate_missing_rft_responses(
+                    combined, location_metadata, grid
+                )
+            else:
+                warnings.warn(
+                    ConfigWarning(
+                        "RFTConfig is configured to interpolate missing values but no "
+                        "grid could be read. Missing values will not be interpolated."
+                    ),
+                    stacklevel=2,
+                )
+
+        return combined.drop("well_name", "actual_zones").pipe(
+            self._assert_schema, schema
+        )
 
     def _obtain_location_metadata(
         self,
+        grid: CornerpointGrid | None,
         run_path: str,
         iens: int,
         iter_: int,
@@ -350,18 +392,7 @@ class RFTConfig(ResponseConfig):
         current simulation.
         """
 
-        rft_filepath = self._rft_filepath(self.input_files[0], run_path, iens, iter_)
-        grid_filepath = self._ergrid_filepath(rft_filepath)
-
-        if self.zonemap:
-            zonemap_path = self._zonemap_filepath(self.zonemap, run_path, iens, iter_)
-            zonemap = parse_zonemap(str(zonemap_path), zonemap_path.read_text())
-        else:
-            zonemap = {}
-
-        location_cell_map = self._map_locations_to_cells(
-            grid_filepath, self.well_locations
-        )
+        location_cell_map = self._map_locations_to_cells(grid, self.well_locations)
 
         return pl.DataFrame(
             {
@@ -372,19 +403,165 @@ class RFTConfig(ResponseConfig):
                 "expected_zone": pl.Series(
                     [loc.zone_name for loc in self.well_locations], dtype=pl.String
                 ),
-                "actual_zones": pl.Series(
-                    [
-                        zonemap.get(location_cell_map[loc][-1], [])
-                        for loc in self.well_locations
-                    ],
-                    dtype=pl.List(pl.String),
-                ),
                 "actual_cell": pl.Series(
                     [location_cell_map[loc] for loc in self.well_locations],
                     dtype=pl.Array(pl.Int64, 3),
                 ),
+                "well_name": pl.Series(
+                    [loc.well_name for loc in self.well_locations], dtype=pl.String
+                ),
             }
         )
+
+    @staticmethod
+    def _approximate_missing_rft_responses(
+        responses: pl.DataFrame,
+        location_metadata: pl.DataFrame,
+        grid: CornerpointGrid,
+    ) -> pl.DataFrame:
+        """Attempts to fill missing response values by interpolation or extrapolation
+        from nearby points
+
+        In some cases rft responses may be missing for well connection points,  e.g.
+        due to inactive cells. This function projects the point missing a response onto
+        the line through the two nearest RFT responses that allows for interpolation
+        within the same zone, using cell centers computed from the EGRID.
+        Falls back to extrapolation from the two nearest responses if no pair of points
+        allowing for interpolation is found.
+        """
+        locations_with_missing_response = location_metadata.with_columns(
+            pl.col("actual_cell").arr.get(0).alias("i"),
+            pl.col("actual_cell").arr.get(1).alias("j"),
+            pl.col("actual_cell").arr.get(2).alias("k"),
+        ).join(
+            responses,
+            left_on=["well_name", "i", "j", "k"],
+            right_on=["well", "i", "j", "k"],
+            how="anti",
+        )
+
+        if not locations_with_missing_response.is_empty():
+
+            def _find_best_pair_for_value_approximation(
+                point_to_approximate: tuple[float, float, float],
+                points_with_responses: npt.NDArray[np.float32],
+            ) -> tuple[int, int, float] | None:
+                """
+                Finds the two nearest points among points_with_responses to the
+                point_to_approximate that allows for interpolation. If no such pair
+                exists it falls back to the best pair for extrapolation. If there are
+                not at least two non overlapping points in points_with_responses,
+                returns None.
+                """
+                dists = np.linalg.norm(
+                    points_with_responses - point_to_approximate, axis=1
+                )
+                order = np.argsort(dists)
+                best_pair = None
+                for a_idx in range(len(order)):
+                    for b_idx in range(a_idx + 1, len(order)):
+                        ia, ib = int(order[a_idx]), int(order[b_idx])
+                        seg = points_with_responses[ib] - points_with_responses[ia]
+                        seg_len_sq = float(np.dot(seg, seg))
+                        if seg_len_sq > 0:
+                            t = (
+                                float(
+                                    np.dot(
+                                        point_to_approximate
+                                        - points_with_responses[ia],
+                                        seg,
+                                    )
+                                )
+                                / seg_len_sq
+                            )
+                            if 0.0 <= t <= 1.0:
+                                return (ia, ib, t)
+                            elif best_pair is None:
+                                # This is the best pair for extrapolation if no
+                                # interpolating pair is found
+                                best_pair = (ia, ib, t)
+                return best_pair
+
+            def _cell_center(i: int, j: int, k: int) -> npt.NDArray[np.float32]:
+                return grid.cell_corners(i - 1, j - 1, k - 1).mean(axis=0)
+
+            approximated_rows: list[dict[str, Any]] = []
+
+            for missing in locations_with_missing_response.iter_rows(named=True):
+                missing_response_point = (
+                    missing["location"][0],
+                    missing["location"][1],
+                    missing["location"][2],
+                )
+
+                # Find candidate points for interpolation/extrapolation within the same
+                # zone and belonging to the same well.
+                candidate_points = responses.filter(
+                    (
+                        (
+                            pl.col("zone").is_not_null()
+                            & (pl.col("zone") == missing["expected_zone"])
+                        )
+                        | (
+                            pl.col("zone").is_null()
+                            & pl.col("actual_zones").list.contains(
+                                missing["expected_zone"]
+                            )
+                        )
+                    )
+                    & (pl.col("well") == missing["well_name"])
+                )
+                response_keys = candidate_points["response_key"].unique().to_list()
+                for rk in response_keys:
+                    date_and_prop_candidates = candidate_points.filter(
+                        pl.col("response_key") == rk
+                    )
+                    if len(date_and_prop_candidates) >= 2:
+                        # Compute cell centers for all candidate response rows
+                        centers = np.array(
+                            [
+                                _cell_center(
+                                    int(row["i"]), int(row["j"]), int(row["k"])
+                                )
+                                for row in date_and_prop_candidates.iter_rows(
+                                    named=True
+                                )
+                            ],
+                            dtype=np.float32,
+                        )
+
+                        best_pair = _find_best_pair_for_value_approximation(
+                            missing_response_point, centers
+                        )
+
+                        if best_pair:
+                            ia, ib, t = best_pair
+                            v0 = float(date_and_prop_candidates["values"][ia])
+                            v1 = float(date_and_prop_candidates["values"][ib])
+
+                            template = date_and_prop_candidates.row(ia, named=True)
+                            approximated_rows.append(
+                                {
+                                    **template,
+                                    "depth": float(missing_response_point[2]),
+                                    "values": np.float32(v0 + t * (v1 - v0)),
+                                    "east": float(missing_response_point[0]),
+                                    "north": float(missing_response_point[1]),
+                                    "tvd": float(missing_response_point[2]),
+                                    "i": missing["actual_cell"][0],
+                                    "j": missing["actual_cell"][1],
+                                    "k": missing["actual_cell"][2],
+                                }
+                            )
+
+            if approximated_rows:
+                responses = pl.concat(
+                    [
+                        responses,
+                        pl.DataFrame(approximated_rows, schema=responses.schema),
+                    ]
+                )
+        return responses
 
     @staticmethod
     def _combine_response_and_location_metadata(
@@ -437,7 +614,13 @@ class RFTConfig(ResponseConfig):
                 pl.col("well_connection_cell").arr.get(1).alias("j"),
                 pl.col("well_connection_cell").arr.get(2).alias("k"),
             ]
-        ).drop(["location", "well_connection_cell", "expected_zone", "actual_zones"])
+        ).drop(
+            [
+                "location",
+                "well_connection_cell",
+                "expected_zone",
+            ]
+        )
 
     @property
     def response_type(self) -> str:
@@ -499,6 +682,9 @@ class RFTConfig(ResponseConfig):
                 keys=keys,
                 data_to_read=data_to_read,
                 zonemap=config_dict.get(ConfigKeys.ZONEMAP),
+                interpolate_missing_values=config_dict.get(
+                    ConfigKeys.INTERPOLATE_RFT_VALUES, False
+                ),
             )
 
         return None

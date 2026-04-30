@@ -1,6 +1,8 @@
 import io
 import os
 from io import BytesIO, StringIO
+from pathlib import Path
+from typing import Any
 
 import numpy as np
 import polars as pl
@@ -1143,3 +1145,257 @@ def test_that_specific_well_with_wildcard_property_reads_all_float_arrays(
             "WELL:2000-01-01:SGAS",
         ]
     )
+
+
+def _rft_file_content(
+    well="WELL",
+    date=(1, 1, 2000),
+    k_connections=(1, 5),
+    i_connections=None,
+    j_connections=None,
+    pressures=(100.0, 200.0, None, None, 200.0, 1000.0),
+    swat=(0.1, 0.2, None, None, 0.2, 0.3),
+    sgas=(0.2, 0.3, None, None, 0.3, 0.2),
+    depth=(5.0, 15.0, 25.0, 35.0, 45.0, 55.0),
+):
+    if i_connections is None:
+        i_connections = [1] * len(k_connections)
+    if j_connections is None:
+        j_connections = [1] * len(k_connections)
+
+    return [
+        *cell_start(
+            date=date,
+            well_name=well,
+            ijks=tuple(zip(i_connections, j_connections, k_connections, strict=True)),
+        ),
+        ("PRESSURE", float_arr([pressures[i - 1] for i in k_connections])),
+        ("SWAT    ", float_arr([swat[i - 1] for i in k_connections])),
+        ("SGAS    ", float_arr([sgas[i - 1] for i in k_connections])),
+        ("HOSTGRID", ["        "]),
+        ("DEPTH   ", float_arr([depth[i - 1] for i in k_connections])),
+    ]
+
+
+ONE_ZONE = "1 zone1\n2 zone1\n3 zone1\n4 zone1\n5 zone1\n6 zone1"
+TWO_ZONES = "1 zone1\n2 zone1\n3 zone1\n4 zone1\n5 zone1\n6 zone2"
+
+
+def _well_point(well="WELL", connection=(5.0, 5.0, 25.0), zone: str | None = "zone1"):
+    return WellPoint(well, connection, zone)
+
+
+def _expected_interpolated_values(
+    interpolatded_values: tuple[float, float, float] | None,
+):
+    if interpolatded_values:
+        return {
+            "PRESSURE": pytest.approx(interpolatded_values[0]),
+            "SWAT": pytest.approx(interpolatded_values[1]),
+            "SGAS": pytest.approx(interpolatded_values[2]),
+        }
+    return {}
+
+
+@pytest.mark.parametrize(
+    (
+        "rft_file_content",
+        "zones",
+        "well_locations",
+        "interpolate_missing_values",
+        "expected_interpolated_values",
+    ),
+    [
+        pytest.param(
+            _rft_file_content(),
+            ONE_ZONE,
+            [_well_point()],
+            False,
+            None,
+            id="Test that rft values are not interpolated when the option is disabled",
+        ),
+        pytest.param(
+            _rft_file_content(),
+            ONE_ZONE,
+            [_well_point()],
+            True,
+            (150.0, 0.15, 0.25),
+            id="Test that rft values are interpolated when the option is enabled",
+        ),
+        pytest.param(
+            _rft_file_content(k_connections=[1, 2]),
+            ONE_ZONE,
+            [_well_point()],
+            True,
+            (300.0, 0.3, 0.4),
+            id="Test that rft values are extrapolated if interpolation is not possible",
+        ),
+        pytest.param(
+            _rft_file_content(k_connections=[1, 2, 6]),
+            ONE_ZONE,
+            [_well_point()],
+            True,
+            (400.0, 0.225, 0.275),
+            id=(
+                "Test that rft value approximation prefers interpolation over "
+                "extrapolation"
+            ),
+        ),
+        pytest.param(
+            _rft_file_content(k_connections=[1, 2, 6]),
+            TWO_ZONES,
+            [_well_point()],
+            True,
+            (300.0, 0.3, 0.4),
+            id="Test that interpolation/extrapolation does not cross zones",
+        ),
+        pytest.param(
+            _rft_file_content(k_connections=[1, 6]),
+            TWO_ZONES,
+            [_well_point()],
+            True,
+            None,
+            id="Test that approximation is not done when only one known value in zone",
+        ),
+        pytest.param(
+            [
+                *_rft_file_content(k_connections=[1]),
+                *_rft_file_content(k_connections=[1, 2], well="WELL2"),
+            ],
+            ONE_ZONE,
+            [_well_point()],
+            True,
+            None,
+            id="Test that interpolation does not use values from a different well",
+        ),
+        pytest.param(
+            [
+                *_rft_file_content(k_connections=[1]),
+                *_rft_file_content(
+                    k_connections=[1, 2],
+                    date=(1, 2, 2000),
+                ),
+            ],
+            ONE_ZONE,
+            [_well_point()],
+            True,
+            None,
+            id="Test that interpolation does not use values from a different date",
+        ),
+        pytest.param(
+            _rft_file_content(k_connections=[1]),
+            ONE_ZONE,
+            [
+                _well_point(),
+                _well_point(connection=(5.0, 5.0, 4.0)),
+                _well_point(connection=(5.0, 5.0, 6.0)),
+            ],
+            True,
+            None,
+            id=(
+                "Test that interpolation is not done from multiple candidates points "
+                "in same cell"
+            ),
+        ),
+        pytest.param(
+            _rft_file_content(),
+            ONE_ZONE,
+            [
+                _well_point(zone=None),
+            ],
+            True,
+            None,
+            id=(
+                "Test that interpolation is not done when wellpoint zone info is not "
+                "available"
+            ),
+        ),
+        pytest.param(
+            _rft_file_content(),
+            None,
+            [
+                _well_point(),
+            ],
+            True,
+            None,
+            id="Test that interpolation is not done when zonemap is not available",
+        ),
+    ],
+)
+def test_rft_value_approximation(
+    mock_resfo_file,
+    mocked_files,
+    rft_file_content,
+    zones,
+    well_locations,
+    interpolate_missing_values,
+    expected_interpolated_values,
+):
+    mock_resfo_file(
+        "/tmp/does_not_exist/BASE.EGRID",
+        _egrid(1, 1, 6, 10.0, 10.0, 10.0),
+    )
+
+    mock_resfo_file("/tmp/does_not_exist/BASE.RFT", rft_file_content)
+
+    if zones:
+        mocked_files["/tmp/does_not_exist/zonemap.txt"] = StringIO(zones)
+
+    rft_config = RFTConfig(
+        input_files=["BASE.RFT"],
+        data_to_read={"WELL": {"2000-01-01": ["*"]}},
+        well_locations=well_locations,
+        zonemap=Path("zonemap.txt") if zones else None,
+        interpolate_missing_values=interpolate_missing_values,
+    )
+
+    data = rft_config.read_from_file("/tmp/does_not_exist", 1, 1)
+    interpolated_values = data.filter(pl.col("k") == 3)
+
+    assert dict(
+        zip(
+            interpolated_values["property"].to_list(),
+            interpolated_values["values"].to_list(),
+            strict=True,
+        )
+    ) == _expected_interpolated_values(expected_interpolated_values)
+
+
+@pytest.mark.parametrize(
+    ("interpolate_rft_values", "expected_setting"),
+    [(None, False), (False, False), (True, True)],
+)
+@pytest.mark.parametrize(
+    ("rft_response_config", "rft_obs_config"),
+    [(False, True), (True, False), (True, True)],
+)
+def test_that_interpolate_rft_values_keyword_sets_interpolation_to_true_on_rft_config(
+    interpolate_rft_values, expected_setting, rft_response_config, rft_obs_config
+):
+    config_dict: dict[str, Any] = {"ECLBASE": "BASE"}
+    if interpolate_rft_values is not None:
+        config_dict["INTERPOLATE_RFT_VALUES"] = interpolate_rft_values
+    if rft_response_config:
+        config_dict["RFT"] = [{"WELL": "*", "DATE": "*", "PROPERTIES": "*"}]
+    if rft_obs_config:
+        config_dict["OBS_CONFIG"] = (
+            "obsconf",
+            [
+                {
+                    "type": ObservationType.RFT,
+                    "name": "NAME",
+                    "WELL": "WELL",
+                    "VALUE": "700",
+                    "ERROR": "0.1",
+                    "DATE": "2000-01-01",
+                    "PROPERTY": "PRESSURE",
+                    "NORTH": 1.0,
+                    "EAST": 1.0,
+                    "TVD": 0.5,
+                }
+            ],
+        )
+
+    config = ErtConfig.from_dict(config_dict)
+    rft_config = config.ensemble_config.response_configs["rft"]
+    assert rft_config.interpolate_missing_values is expected_setting
