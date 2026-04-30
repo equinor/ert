@@ -247,8 +247,9 @@ def dispatcher_event_to_json(event: DispatcherEvent) -> str:
 class WorkflowStatus(StrEnum):
     PENDING = "Pending"
     RUNNING = "Running"
-    SUCCESS = "Success"
-    FAILURE = "Failed"
+    FINISHED = "Finished"
+    FAILED = "Failed"
+    CANCELLED = "Cancelled"
 
 
 class _WorkflowEvent(BaseModel):

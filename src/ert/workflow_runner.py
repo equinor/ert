@@ -204,7 +204,7 @@ class WorkflowRunner:
                                 hook=self._hook,
                                 iteration=self._iteration,
                                 workflow_name=self._workflow_name,
-                                status=WorkflowStatus.FAILURE,
+                                status=WorkflowStatus.FAILED,
                                 stderr="\n".join(workflow_stderr),
                                 stdout="\n".join(workflow_stdout),
                             )
@@ -242,7 +242,7 @@ class WorkflowRunner:
                                     hook=self._hook,
                                     iteration=self._iteration,
                                     workflow_name=self._workflow_name,
-                                    status=WorkflowStatus.FAILURE,
+                                    status=WorkflowStatus.FAILED,
                                     stderr="\n".join(workflow_stderr),
                                     stdout="\n".join(workflow_stdout),
                                 )
@@ -283,9 +283,9 @@ class WorkflowRunner:
                     iteration=self._iteration,
                     workflow_name=self._workflow_name,
                     status=(
-                        WorkflowStatus.FAILURE
+                        WorkflowStatus.FAILED
                         if workflow_failed
-                        else WorkflowStatus.SUCCESS
+                        else WorkflowStatus.FINISHED
                     ),
                     stdout="\n".join(workflow_stdout),
                     stderr="\n".join(workflow_stderr),

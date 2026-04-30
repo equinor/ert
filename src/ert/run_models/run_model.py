@@ -887,7 +887,7 @@ class RunModel(RunModelConfig, ABC):
                         hook=fixtures.hook,
                         iteration=workflow_iteration,
                         workflow_names=workflow_names,
-                        status=WorkflowStatus.FAILURE,
+                        status=WorkflowStatus.FAILED,
                     )
                 )
                 raise
@@ -896,7 +896,7 @@ class RunModel(RunModelConfig, ABC):
                 hook=fixtures.hook,
                 iteration=workflow_iteration,
                 workflow_names=workflow_names,
-                status=WorkflowStatus.SUCCESS,
+                status=WorkflowStatus.FINISHED,
             )
         )
 

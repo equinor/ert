@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import QComboBox, QTextEdit
 from _ert.events import (
     WorkflowBatchFinishedEvent,
     WorkflowBatchStartedEvent,
+    WorkflowCancelledEvent,
     WorkflowFinishedEvent,
     WorkflowStartedEvent,
 )
@@ -434,6 +435,66 @@ def test_run_dialog_marks_unstarted_workflows_as_not_run_on_failure(qtbot, tmp_p
     assert workflow_widget.workflow_status("prepare_case") == "Failed"
     assert workflow_widget.workflow_status("seed_data") == "Not run"
     assert workflow_widget.workflow_outputs("prepare_case") == [("-", "prepare failed")]
+
+
+def test_run_dialog_marks_remaining_workflows_cancelled_on_workflow_cancel(
+    qtbot, tmp_path
+):
+    run_model_api = RunModelAPI(
+        experiment_name="Ensemble experiment",
+        supports_rerunning_failed_realizations=False,
+        start_simulations_thread=lambda *_args, **_kwargs: None,
+        cancel=lambda: None,
+        has_failed_realizations=lambda: False,
+    )
+    notifier = Mock()
+
+    run_dialog = RunDialog(
+        "Running experiment",
+        run_model_api,
+        SimpleQueue(),
+        notifier,
+        output_path=tmp_path,
+        run_path=tmp_path,
+        storage_path=tmp_path,
+    )
+    qtbot.addWidget(run_dialog)
+
+    workflow_names = ["prepare_case", "seed_data"]
+    run_dialog._on_event(
+        WorkflowBatchStartedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            iteration=None,
+            workflow_names=workflow_names,
+        )
+    )
+    run_dialog._on_event(
+        WorkflowStartedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            iteration=None,
+            workflow_name="prepare_case",
+        )
+    )
+    run_dialog._on_event(
+        WorkflowCancelledEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            iteration=None,
+            workflow_name="prepare_case",
+        )
+    )
+
+    workflow_widget = run_dialog._select_or_create_workflow_tab(
+        HookRuntime.PRE_EXPERIMENT, None
+    )
+    first_status = workflow_widget._table.item(0, 1)
+    second_status = workflow_widget._table.item(1, 1)
+    assert first_status is not None
+    assert second_status is not None
+    assert first_status.text() == "Cancelled"
+    assert second_status.text() == "Cancelled"
+    assert workflow_widget.summary_text() == "Pre-experiment workflows cancelled"
+    assert first_status.background().color().getRgb()[:3] == (235, 242, 246)
+    assert second_status.background().color().getRgb()[:3] == (235, 242, 246)
 
 
 def test_run_dialog_handles_duplicate_workflow_names(qtbot, tmp_path):

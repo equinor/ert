@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
 )
 
 from _ert.events import (
+    WorkflowCancelledEvent,
     WorkflowFinishedEvent,
     WorkflowStartedEvent,
     WorkflowStatus,
@@ -23,8 +24,9 @@ from ert.ensemble_evaluator import state
 _STATUS_TO_BACKGROUND = {
     WorkflowStatus.PENDING: QColor(*state.COLOR_PENDING),
     WorkflowStatus.RUNNING: QColor(*state.COLOR_RUNNING),
-    WorkflowStatus.SUCCESS: QColor(*state.COLOR_FINISHED),
-    WorkflowStatus.FAILURE: QColor(*state.COLOR_FAILED),
+    WorkflowStatus.FINISHED: QColor(*state.COLOR_FINISHED),
+    WorkflowStatus.FAILED: QColor(*state.COLOR_FAILED),
+    WorkflowStatus.CANCELLED: QColor(*state.COLOR_CANCELLED),
 }
 _ROW_FOREGROUND = QColor(Qt.GlobalColor.black)
 HEADER_TO_COLUMN = {
@@ -74,7 +76,10 @@ class WorkflowWidget(QWidget):
         for row, workflow_name in enumerate(workflow_names):
             self._add_row(row, workflow_name, WorkflowStatus.PENDING)
 
-    def handle_event(self, event: WorkflowStartedEvent | WorkflowFinishedEvent) -> None:
+    def handle_event(
+        self,
+        event: WorkflowStartedEvent | WorkflowFinishedEvent | WorkflowCancelledEvent,
+    ) -> None:
         match event:
             case WorkflowStartedEvent(workflow_name=workflow_name):
                 row = self._match_first_row_with_status(
@@ -88,7 +93,7 @@ class WorkflowWidget(QWidget):
                 stdout=stdout,
                 stderr=stderr,
             ):
-                assert status in {WorkflowStatus.SUCCESS, WorkflowStatus.FAILURE}
+                assert status in {WorkflowStatus.FINISHED, WorkflowStatus.FAILED}
                 row = self._match_first_row_with_status(
                     workflow_name,
                     status=WorkflowStatus.RUNNING,
@@ -96,6 +101,17 @@ class WorkflowWidget(QWidget):
                 assert row is not None
                 self._set_output(row, stdout, stderr)
                 self._set_status(row, status)
+            case WorkflowCancelledEvent(workflow_name=workflow_name):
+                row = self._match_first_row_with_status(
+                    workflow_name,
+                    status=WorkflowStatus.RUNNING,
+                )
+                assert row is not None
+                self._set_status(row, WorkflowStatus.CANCELLED)
+                self._cancel_pending_rows()
+                self._status_label.setText(
+                    f"{self.hook.workflow_tab_title()} cancelled"
+                )
 
     def workflow_status(self, workflow_name: str) -> list[WorkflowStatus]:
         workflow_status = []
@@ -175,6 +191,13 @@ class WorkflowWidget(QWidget):
         assert stderr_item is not None
         self._set_output_item(stdout_item, stdout)
         self._set_output_item(stderr_item, stderr)
+
+    def _cancel_pending_rows(self) -> None:
+        for row in range(self._table.rowCount()):
+            status_item = self._table.item(row, HEADER_TO_COLUMN["Status"])
+            assert status_item is not None
+            if status_item.text() == WorkflowStatus.PENDING.value:
+                self._set_status(row, WorkflowStatus.CANCELLED)
 
     def _apply_row_style(self, row: int, status: WorkflowStatus) -> None:
         background = _STATUS_TO_BACKGROUND.get(status, QColor(*state.COLOR_UNKNOWN))

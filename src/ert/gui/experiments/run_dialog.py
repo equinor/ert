@@ -35,6 +35,7 @@ from _ert.events import (
     EnsembleEvaluationWarning,
     WorkflowBatchFinishedEvent,
     WorkflowBatchStartedEvent,
+    WorkflowCancelledEvent,
     WorkflowFinishedEvent,
     WorkflowStartedEvent,
 )
@@ -599,6 +600,11 @@ class RunDialog(QFrame):
                 iteration=iteration,
             ):
                 self._select_or_create_workflow_tab(hook, iteration).handle_event(event)
+            case WorkflowCancelledEvent(
+                hook=hook,
+                iteration=iteration,
+            ):
+                self._select_or_create_workflow_tab(hook, iteration).handle_event(event)
             case WorkflowBatchFinishedEvent(hook=hook, iteration=iteration):
                 pass
 
@@ -720,10 +726,11 @@ class RunDialog(QFrame):
 
     def _select_or_create_workflow_tab(
         self,
-        hook: HookRuntime,
+        hook: HookRuntime | None,
         iteration: int | None,
         workflow_names: list[str] | None = None,
     ) -> WorkflowWidget:
+        assert hook is not None
         if iteration is not None:
             iteration_widget = (
                 self._get_or_create_iteration_tab(iteration, is_update=True)
