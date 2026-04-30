@@ -1,7 +1,7 @@
 """Update strategies for ensemble parameter updates.
 
 This package provides different update strategies for parameter updates,
-allowing different update methods (standard ES, adaptive localization,
+allowing different update methods (global ES, adaptive localization,
 distance-based localization) to be applied to different parameters.
 
 Strategy Lifecycle:
@@ -11,13 +11,13 @@ Strategy Lifecycle:
 
 Example usage:
     from ert.analysis._update_strategies import (
-        StandardESUpdate,
+        GlobalESUpdate,
         AdaptiveLocalizationUpdate,
         ObservationContext,
     )
 
     # Create strategies with dependencies
-    standard_strategy = StandardESUpdate(
+    global_strategy = GlobalESUpdate(
         settings.enkf_truncation,
         rng, progress_callback,
     )
@@ -29,7 +29,7 @@ Example usage:
     # Build strategy map (parameter_name -> strategy)
     strategy_map = {
         "PORO": adaptive_strategy,
-        "PERM": standard_strategy,
+        "PERM": global_strategy,
     }
 
     # Create observation context from preprocessed data
@@ -50,20 +50,20 @@ Example usage:
 
 from ._adaptive import AdaptiveLocalizationUpdate
 from ._distance import DistanceLocalizationUpdate
+from ._global import GlobalESUpdate
 from ._protocol import (
     ObservationContext,
     ObservationLocations,
     TimedIterator,
     UpdateStrategy,
 )
-from ._standard import StandardESUpdate
 
 __all__ = [
     "AdaptiveLocalizationUpdate",
     "DistanceLocalizationUpdate",
+    "GlobalESUpdate",
     "ObservationContext",
     "ObservationLocations",
-    "StandardESUpdate",
     "TimedIterator",
     "UpdateStrategy",
 ]

@@ -1,4 +1,4 @@
-"""Standard ES update strategy without localization."""
+"""Global ES update strategy without localization."""
 
 from __future__ import annotations
 
@@ -25,8 +25,8 @@ if TYPE_CHECKING:
     from ._protocol import ObservationContext
 
 
-class StandardESUpdate:
-    """Standard ES update without localization.
+class GlobalESUpdate:
+    """Global ES update without localization.
 
     Pre-computes assimilation factors once during prepare() and
     applies updates to each parameter group via update().
