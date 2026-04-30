@@ -176,97 +176,102 @@ def test_that_workflow_widget_gives_dash_for_empty_outputs(qtbot: QtBot) -> None
     assert _get_row_data(widget, 0, STDERR_COLUMN) == "-"
 
 
+@pytest.mark.parametrize(
+    ("workflow_name", "events", "expected_status", "expected_color"),
+    [
+        pytest.param(
+            "pending_job",
+            [],
+            WorkflowStatus.PENDING,
+            QColor(*state.COLOR_PENDING),
+            id="pending",
+        ),
+        pytest.param(
+            "running_job",
+            [
+                WorkflowStartedEvent(
+                    hook=HookRuntime.PRE_EXPERIMENT,
+                    workflow_name="running_job",
+                )
+            ],
+            WorkflowStatus.RUNNING,
+            QColor(*state.COLOR_RUNNING),
+            id="running",
+        ),
+        pytest.param(
+            "failed_job",
+            [
+                WorkflowStartedEvent(
+                    hook=HookRuntime.PRE_EXPERIMENT,
+                    workflow_name="failed_job",
+                ),
+                WorkflowFinishedEvent(
+                    hook=HookRuntime.PRE_EXPERIMENT,
+                    workflow_name="failed_job",
+                    status=WorkflowStatus.FAILED,
+                    stdout=None,
+                    stderr=None,
+                ),
+            ],
+            WorkflowStatus.FAILED,
+            QColor(*state.COLOR_FAILED),
+            id="failed",
+        ),
+        pytest.param(
+            "cancelled_job",
+            [
+                WorkflowStartedEvent(
+                    hook=HookRuntime.PRE_EXPERIMENT,
+                    workflow_name="cancelled_job",
+                ),
+                WorkflowCancelledEvent(
+                    hook=HookRuntime.PRE_EXPERIMENT,
+                    workflow_name="cancelled_job",
+                    stdout=None,
+                    stderr=None,
+                ),
+            ],
+            WorkflowStatus.CANCELLED,
+            QColor(*state.COLOR_CANCELLED),
+            id="cancelled",
+        ),
+        pytest.param(
+            "finished_job",
+            [
+                WorkflowStartedEvent(
+                    hook=HookRuntime.PRE_EXPERIMENT,
+                    workflow_name="finished_job",
+                ),
+                WorkflowFinishedEvent(
+                    hook=HookRuntime.PRE_EXPERIMENT,
+                    workflow_name="finished_job",
+                    status=WorkflowStatus.FINISHED,
+                    stdout=None,
+                    stderr=None,
+                ),
+            ],
+            WorkflowStatus.FINISHED,
+            QColor(*state.COLOR_FINISHED),
+            id="finished",
+        ),
+    ],
+)
 def test_that_workflow_widget_paints_rows_based_on_status(
-    qtbot: QtBot, monkeypatch: pytest.MonkeyPatch
+    qtbot: QtBot,
+    workflow_name: str,
+    events: list[WorkflowStartedEvent | WorkflowFinishedEvent | WorkflowCancelledEvent],
+    expected_status: WorkflowStatus,
+    expected_color: QColor,
 ) -> None:
-    pending_job_name = "pending_job"
-    running_job_name = "running_job"
-    failed_job_name = "failed_job"
-    cancelled_job_name = "cancelled_job"
-    finished_job_name = "finished_job"
-    widget = WorkflowWidget(
-        HookRuntime.PRE_EXPERIMENT,
-        [
-            pending_job_name,
-            running_job_name,
-            failed_job_name,
-            cancelled_job_name,
-            finished_job_name,
-        ],
-    )
+    widget = WorkflowWidget(HookRuntime.PRE_EXPERIMENT, [workflow_name])
     qtbot.addWidget(widget)
 
-    monkeypatch.setattr(widget, "_cancel_pending_rows", lambda: None)
+    for event in events:
+        widget.handle_event(event)
 
-    widget.handle_event(
-        WorkflowStartedEvent(
-            hook=HookRuntime.PRE_EXPERIMENT,
-            workflow_name=running_job_name,
-        )
-    )
-    widget.handle_event(
-        WorkflowStartedEvent(
-            hook=HookRuntime.PRE_EXPERIMENT,
-            workflow_name=failed_job_name,
-        )
-    )
-    widget.handle_event(
-        WorkflowFinishedEvent(
-            hook=HookRuntime.PRE_EXPERIMENT,
-            workflow_name=failed_job_name,
-            status=WorkflowStatus.FAILED,
-            stdout=None,
-            stderr=None,
-        )
-    )
-    widget.handle_event(
-        WorkflowStartedEvent(
-            hook=HookRuntime.PRE_EXPERIMENT,
-            workflow_name=finished_job_name,
-        )
-    )
-    widget.handle_event(
-        WorkflowFinishedEvent(
-            hook=HookRuntime.PRE_EXPERIMENT,
-            workflow_name=finished_job_name,
-            status=WorkflowStatus.FINISHED,
-            stdout=None,
-            stderr=None,
-        )
-    )
-    widget.handle_event(
-        WorkflowStartedEvent(
-            hook=HookRuntime.PRE_EXPERIMENT,
-            workflow_name=cancelled_job_name,
-        )
-    )
-    widget.handle_event(
-        WorkflowCancelledEvent(
-            hook=HookRuntime.PRE_EXPERIMENT,
-            workflow_name=cancelled_job_name,
-            stdout=None,
-            stderr=None,
-        )
-    )
-
-    assert _get_row_data(widget, 0, WORKFLOW_JOB_NAME_COLUMN) == pending_job_name
-    assert _get_row_data(widget, 0, STATUS_COLUMN) == WorkflowStatus.PENDING.value
-
-    assert _get_row_data(widget, 1, WORKFLOW_JOB_NAME_COLUMN) == running_job_name
-    assert _get_row_data(widget, 1, STATUS_COLUMN) == WorkflowStatus.RUNNING.value
-    _assert_row_color(widget, 1, QColor(*state.COLOR_RUNNING))
-
-    assert _get_row_data(widget, 2, WORKFLOW_JOB_NAME_COLUMN) == failed_job_name
-    assert _get_row_data(widget, 2, STATUS_COLUMN) == WorkflowStatus.FAILED.value
-    _assert_row_color(widget, 2, QColor(*state.COLOR_FAILED))
-
-    assert _get_row_data(widget, 3, WORKFLOW_JOB_NAME_COLUMN) == cancelled_job_name
-    assert _get_row_data(widget, 3, STATUS_COLUMN) == WorkflowStatus.CANCELLED.value
-    _assert_row_color(widget, 3, QColor(*state.COLOR_CANCELLED))
-
-    assert _get_row_data(widget, 4, WORKFLOW_JOB_NAME_COLUMN) == finished_job_name
-    assert _get_row_data(widget, 4, STATUS_COLUMN) == WorkflowStatus.FINISHED.value
-    _assert_row_color(widget, 4, QColor(*state.COLOR_FINISHED))
+    assert _get_row_data(widget, 0, WORKFLOW_JOB_NAME_COLUMN) == workflow_name
+    assert _get_row_data(widget, 0, STATUS_COLUMN) == expected_status.value
+    _assert_row_color(widget, 0, expected_color)
 
 
 def test_that_workflow_widget_updates_on_workflow_event(qtbot: QtBot) -> None:
@@ -295,6 +300,42 @@ def test_that_workflow_widget_updates_on_workflow_event(qtbot: QtBot) -> None:
     assert _get_row_data(widget, 0, STATUS_COLUMN) == WorkflowStatus.FAILED.value
     assert _get_row_data(widget, 0, STDOUT_COLUMN) == "-"
     assert _get_row_data(widget, 0, STDERR_COLUMN) == "failed to generate files"
+
+
+def test_that_updating_one_workflow_does_not_affect_other_rows(qtbot: QtBot) -> None:
+    widget = WorkflowWidget(
+        HookRuntime.PRE_EXPERIMENT,
+        ["generate files", "delete files", "archive files"],
+    )
+    qtbot.addWidget(widget)
+
+    widget.handle_event(
+        WorkflowStartedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            workflow_name="delete files",
+        )
+    )
+    widget.handle_event(
+        WorkflowFinishedEvent(
+            hook=HookRuntime.PRE_EXPERIMENT,
+            workflow_name="delete files",
+            status=WorkflowStatus.FINISHED,
+            stdout="deleted",
+            stderr="",
+        )
+    )
+
+    assert _get_row_data(widget, 0, STATUS_COLUMN) == WorkflowStatus.PENDING.value
+    assert _get_row_data(widget, 0, STDOUT_COLUMN) == ""  # noqa: PLC1901
+    assert _get_row_data(widget, 0, STDERR_COLUMN) == ""  # noqa: PLC1901
+
+    assert _get_row_data(widget, 1, STATUS_COLUMN) == WorkflowStatus.FINISHED.value
+    assert _get_row_data(widget, 1, STDOUT_COLUMN) == "deleted"
+    assert _get_row_data(widget, 1, STDERR_COLUMN) == "-"
+
+    assert _get_row_data(widget, 2, STATUS_COLUMN) == WorkflowStatus.PENDING.value
+    assert _get_row_data(widget, 2, STDOUT_COLUMN) == ""  # noqa: PLC1901
+    assert _get_row_data(widget, 2, STDERR_COLUMN) == ""  # noqa: PLC1901
 
 
 def test_that_workflow_cancelled_event_sets_remaining_jobs_as_cancelled(

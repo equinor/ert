@@ -192,7 +192,7 @@ class WorkflowWidget(QWidget):
 
     def _cancel_pending_rows(self) -> None:
         for row in range(self._table.rowCount()):
-            status_item = self._table.item(row, HEADER_TO_COLUMN["Status"])
+            status_item = self._table.item(row, HEADER_TO_COLUMN["STATUS"])
             assert status_item is not None
             if status_item.text() == WorkflowStatus.PENDING.value:
                 self._set_status(row, WorkflowStatus.CANCELLED)
