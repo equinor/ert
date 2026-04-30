@@ -304,5 +304,6 @@
       "shape_id": null
     }
   ],
+  "type": "ensemble_information_filter",
   "experiment_type": "Ensemble Information Filter"
 }

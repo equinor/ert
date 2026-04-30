@@ -2,16 +2,21 @@ from __future__ import annotations
 
 import functools
 import logging
+from typing import Literal
 
 from ert.analysis import enif_update
 from ert.storage import Ensemble
 
-from .manual_update import ManualUpdate
+from .manual_update import ManualUpdate, ManualUpdateConfig
 
 logger = logging.getLogger(__name__)
 
 
-class ManualUpdateEnIF(ManualUpdate):
+class ManualUpdateEnIFConfig(ManualUpdateConfig):
+    type: Literal["manual_update_enif"] = "manual_update_enif"
+
+
+class ManualUpdateEnIF(ManualUpdateEnIFConfig, ManualUpdate):
     @classmethod
     def name(cls) -> str:
         return "Manual EnIF update (Experimental)"

@@ -1,6 +1,5 @@
 import asyncio
 import dataclasses
-import datetime
 import logging
 import os
 import queue
@@ -8,7 +7,6 @@ import signal
 import time
 import traceback
 import uuid
-import warnings
 from base64 import b64decode
 from queue import SimpleQueue
 from typing import Annotated
@@ -23,20 +21,19 @@ from fastapi import (
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from pydantic import TypeAdapter
 from starlette import status
 from starlette.requests import Request
 from starlette.responses import PlainTextResponse, Response
 from starlette.websockets import WebSocket
 
-from ert.base_model_context import use_runtime_plugins
-from ert.config import ConfigWarning, QueueSystem
+from ert.config import QueueSystem
 from ert.ensemble_evaluator import EndEvent, EvaluatorServerConfig
 from ert.ensemble_evaluator.event import FullSnapshotEvent, SnapshotUpdateEvent
 from ert.ensemble_evaluator.snapshot import EnsembleSnapshot
-from ert.plugins import get_site_plugins
 from ert.run_models import StatusEvents
-from ert.run_models.everest_run_model import EverestExitCode, EverestRunModel
-from everest.config import EverestConfig
+from ert.run_models.everest_run_model import EverestExitCode
+from ert.run_models.model_factory import RunModelConfigs, _instantiate_run_model
 from everest.detached.everserver import (
     ExperimentState,
     ExperimentStatus,
@@ -218,11 +215,8 @@ async def start_experiment(
     run_state = ExperimentRunnerState()
     _runs[run_id] = run_state
     request_data = await request.json()
-    # The output of warnings is the task of the user interface, not
-    # of everserver. Therefore we suppress them here:
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=ConfigWarning)
-        config = EverestConfig.with_plugins(request_data)
+    adapter = TypeAdapter(RunModelConfigs)
+    config = adapter.validate_python(request_data)
     runner = ExperimentRunner(config, run_id)
     try:
         background_tasks.add_task(runner.run)
@@ -328,28 +322,19 @@ async def _get_event(subscriber_id: str, run_id: str) -> StatusEvents:
 class ExperimentRunner:
     def __init__(
         self,
-        everest_config: EverestConfig,
+        config: RunModelConfigs,
         run_id: str,
     ) -> None:
         super().__init__()
 
-        self._everest_config = everest_config
+        self._config = config
         self._run_id = run_id
 
     async def run(self) -> None:
         run = _runs[self._run_id]
         status_queue: SimpleQueue[StatusEvents] = SimpleQueue()
-        run_model: EverestRunModel | None = None
         try:
-            site_plugins = get_site_plugins()
-            with use_runtime_plugins(site_plugins):
-                run_model = EverestRunModel.create(
-                    everest_config=self._everest_config,
-                    experiment_name=f"EnOpt@{datetime.datetime.now().astimezone().isoformat(timespec='seconds')}",
-                    target_ensemble="batch",
-                    status_queue=status_queue,
-                    runtime_plugins=site_plugins,
-                )
+            run_model = _instantiate_run_model(self._config, status_queue)
             run.status = ExperimentStatus(
                 message="Experiment started", status=ExperimentState.running
             )

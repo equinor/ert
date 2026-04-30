@@ -1034,7 +1034,7 @@ to read summary data from forward model, do:
 
     def to_dict(self) -> dict[str, Any]:
         the_dict = self.model_dump(exclude_none=True, exclude_unset=True)
-
+        the_dict["type"] = self.type
         if "config_path" in the_dict:
             the_dict["config_path"] = str(the_dict["config_path"])
 
