@@ -3,6 +3,7 @@ import logging
 import numpy as np
 import numpy.typing as npt
 from scipy.cluster.hierarchy import fcluster, linkage
+from scipy.spatial.distance import squareform
 from scipy.stats import spearmanr
 
 logger = logging.getLogger(__name__)
@@ -68,16 +69,22 @@ def cluster_responses(
     the relationship is positive or negative, will tend to be clustered together.
     """
     correlation = spearmanr(responses).statistic
-    if isinstance(correlation, np.float64):
+    if np.ndim(correlation) == 0:
         correlation = np.array([[1, correlation], [correlation, 1]])
-    # Take absolute value to cluster based on correlation strength rather
-    # than direction.
-    # This ensures that strong negative correlations (-0.9) are
-    # treated as similar to
-    # strong positive correlations (+0.9), since both represent
-    # strong relationships.
-    correlation = np.abs(correlation)
-    linkage_matrix = linkage(correlation, "average", "euclidean")
+    if np.any(np.isnan(correlation)):
+        raise ValueError(
+            "Spearman correlation matrix contains NaN values. "
+            "This typically happens when an observation is constant across "
+            "all realizations."
+        )
+    # Use distance = 1 - |correlation| so that both strong positive and
+    # strong negative correlations map to small distances.
+    distance_matrix = 1.0 - np.abs(correlation)
+    distance_matrix = (distance_matrix + distance_matrix.T) / 2.0
+    np.fill_diagonal(distance_matrix, 0.0)
+    np.clip(distance_matrix, 0.0, None, out=distance_matrix)
+    condensed_distance = squareform(distance_matrix)
+    linkage_matrix = linkage(condensed_distance, method="average")
     return fcluster(linkage_matrix, nr_clusters, criterion="maxclust")
 
 
