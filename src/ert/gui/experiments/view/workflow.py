@@ -29,11 +29,16 @@ _STATUS_TO_BACKGROUND = {
     WorkflowStatus.FAILED: QColor(*state.COLOR_FAILED),
     WorkflowStatus.CANCELLED: QColor(*state.COLOR_CANCELLED),
 }
+WORKFLOW_JOB_NAME_COLUMN = 0
+STATUS_COLUMN = 1
+STDOUT_COLUMN = 2
+STDERR_COLUMN = 3
+
 HEADER_TO_COLUMN = {
-    "WORKFLOW": 0,
-    "STATUS": 1,
-    "STDOUT": 2,
-    "STDERR": 3,
+    "WORKFLOW": WORKFLOW_JOB_NAME_COLUMN,
+    "STATUS": STATUS_COLUMN,
+    "STDOUT": STDOUT_COLUMN,
+    "STDERR": STDERR_COLUMN,
 }
 
 
@@ -136,27 +141,6 @@ class WorkflowWidget(QWidget):
                 assert status_item is not None
                 workflow_status.append(WorkflowStatus(status_item.text()))
         return workflow_status
-
-    def summary_text(self) -> str:
-        return self._status_label.text()
-
-    def workflow_outputs(
-        self, workflow_name: str
-    ) -> list[tuple[str | None, str | None]]:
-        workflow_outputs: list[tuple[str | None, str | None]] = []
-        for row in range(self._table.rowCount()):
-            name_item = self._table.item(row, HEADER_TO_COLUMN["WORKFLOW"])
-            assert name_item is not None
-            if name_item.text() == workflow_name:
-                stdout = self._table.item(row, HEADER_TO_COLUMN["STDOUT"])
-                stderr = self._table.item(row, HEADER_TO_COLUMN["STDERR"])
-                workflow_outputs.append(
-                    (
-                        stdout.text() if stdout else None,
-                        stderr.text() if stderr else None,
-                    )
-                )
-        return workflow_outputs
 
     def _set_status(
         self,

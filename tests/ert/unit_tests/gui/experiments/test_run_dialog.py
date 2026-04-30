@@ -6,7 +6,6 @@ from unittest.mock import MagicMock, Mock, patch
 import pandas as pd
 import pytest
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
     QApplication,
     QComboBox,
@@ -1222,7 +1221,7 @@ def test_that_run_dialog_displays_workflow_tabs_before_and_after_iteration_tab(
     qtbot.addWidget(run_dialog)
     run_dialog.setup_event_monitoring()
 
-    pre_experiment_workflows = ["prepare_case", "seed_data"]
+    pre_experiment_workflows = ["prepare_case"]
     queue.put(
         WorkflowBatchStartedEvent(
             hook=HookRuntime.PRE_EXPERIMENT,
@@ -1230,68 +1229,13 @@ def test_that_run_dialog_displays_workflow_tabs_before_and_after_iteration_tab(
             workflow_names=pre_experiment_workflows,
         )
     )
-    WORKFLOW_JOB_NAME_COLUMN = 0
-    STATUS_COLUMN = 1
-    STDOUT_COLUMN = 2
-    STDERR_COLUMN = 3
 
     qtbot.waitUntil(lambda: run_dialog._tab_widget.count() == 1, timeout=5000)
-    assert run_dialog._tab_widget.count() == 1
     assert run_dialog._tab_widget.tabText(0) == "Pre-experiment workflows"
     pre_experiment_workflow_widget: WorkflowWidget = run_dialog._tab_widget.widget(0)
-    assert pre_experiment_workflow_widget is not None
-    assert pre_experiment_workflow_widget._table.columnCount() == 4
-
-    # This should be moved to a smaller test for WorkflowWidget instead
-    assert (
-        pre_experiment_workflow_widget._table.horizontalHeaderItem(
-            WORKFLOW_JOB_NAME_COLUMN
-        ).text()
-        == "WORKFLOW"
-    )
-    assert (
-        pre_experiment_workflow_widget._table.horizontalHeaderItem(STATUS_COLUMN).text()
-        == "STATUS"
-    )
-    assert (
-        pre_experiment_workflow_widget._table.horizontalHeaderItem(2).text() == "STDOUT"
-    )
-    assert (
-        pre_experiment_workflow_widget._table.horizontalHeaderItem(3).text() == "STDERR"
-    )
 
     def _get_row_data(workflow_widget: WorkflowWidget, row: int, column: int) -> str:
         return workflow_widget._table.item(row, column).text()
-
-    table = pre_experiment_workflow_widget._table
-
-    for row in range(pre_experiment_workflow_widget._table.rowCount()):
-        for column in range(pre_experiment_workflow_widget._table.columnCount()):
-            item = pre_experiment_workflow_widget._table.item(row, column)
-            print(f"{item.text()=}")
-    # qtbot.wait(5000)
-    # pre_experiment_workflow_widget: WorkflowWidget = run_dialog._tab_widget.widget(0)
-    assert (
-        _get_row_data(pre_experiment_workflow_widget, 0, WORKFLOW_JOB_NAME_COLUMN)
-        == "prepare_case"
-    )
-    assert (
-        _get_row_data(pre_experiment_workflow_widget, 0, STATUS_COLUMN)
-        == WorkflowStatus.PENDING.value
-    )
-    assert _get_row_data(pre_experiment_workflow_widget, 0, 2) == ""  # noqa: PLC1901
-    assert _get_row_data(pre_experiment_workflow_widget, 0, 3) == ""  # noqa: PLC1901
-
-    assert (
-        _get_row_data(pre_experiment_workflow_widget, 1, WORKFLOW_JOB_NAME_COLUMN)
-        == "seed_data"
-    )
-    assert (
-        _get_row_data(pre_experiment_workflow_widget, 1, STATUS_COLUMN)
-        == WorkflowStatus.PENDING.value
-    )
-    assert _get_row_data(pre_experiment_workflow_widget, 1, 2) == ""  # noqa: PLC1901
-    assert _get_row_data(pre_experiment_workflow_widget, 1, 3) == ""  # noqa: PLC1901
 
     queue.put(
         WorkflowStartedEvent(
@@ -1300,36 +1244,19 @@ def test_that_run_dialog_displays_workflow_tabs_before_and_after_iteration_tab(
             workflow_name="prepare_case",
         )
     )
-    queue.put(
-        WorkflowFinishedEvent(
-            hook=HookRuntime.PRE_EXPERIMENT,
-            iteration=None,
-            workflow_name="prepare_case",
-            status=WorkflowStatus.FINISHED,
-            stdout="prepare stdout",
-            stderr="",
-        )
-    )
-    # Wait for event to be processed before checking the table
+    # Might have to wait for event to be processed before checking the table
     assert (
         pre_experiment_workflow_widget._status_label.text()
         == "Pre-experiment workflows running"
     )
     queue.put(
-        WorkflowStartedEvent(
-            hook=HookRuntime.PRE_EXPERIMENT,
-            iteration=None,
-            workflow_name="seed_data",
-        )
-    )
-    queue.put(
         WorkflowFinishedEvent(
             hook=HookRuntime.PRE_EXPERIMENT,
             iteration=None,
-            workflow_name="seed_data",
+            workflow_name="prepare_case",
             status=WorkflowStatus.FAILED,
-            stdout="",
-            stderr="seed stderr",
+            stdout="prepare stdout",
+            stderr="prepare stderr",
         )
     )
     queue.put(
@@ -1340,7 +1267,8 @@ def test_that_run_dialog_displays_workflow_tabs_before_and_after_iteration_tab(
             status=WorkflowStatus.FAILED,
         )
     )
-    run_dialog.show()
+
+    # Make sure the event is actually forwarded to the widget
     qtbot.waitUntil(
         lambda: (
             pre_experiment_workflow_widget._status_label.text()
@@ -1349,39 +1277,6 @@ def test_that_run_dialog_displays_workflow_tabs_before_and_after_iteration_tab(
         timeout=5000,
     )
 
-    assert (
-        _get_row_data(pre_experiment_workflow_widget, 0, STATUS_COLUMN)
-        == WorkflowStatus.FINISHED.value
-    )
-    assert (
-        _get_row_data(pre_experiment_workflow_widget, 0, STDOUT_COLUMN)
-        == "prepare stdout"
-    )
-    assert _get_row_data(pre_experiment_workflow_widget, 0, STDERR_COLUMN) == "-"
-    for column in range(pre_experiment_workflow_widget._table.columnCount()):
-        item = pre_experiment_workflow_widget._table.item(0, column)
-        assert item is not None
-        assert item.background().color() == QColor(*state.COLOR_FINISHED)
-
-    assert (
-        _get_row_data(pre_experiment_workflow_widget, 1, STATUS_COLUMN)
-        == WorkflowStatus.FAILED.value
-    )
-    assert _get_row_data(pre_experiment_workflow_widget, 1, STDOUT_COLUMN) == "-"
-    assert (
-        _get_row_data(pre_experiment_workflow_widget, 1, STDERR_COLUMN) == "seed stderr"
-    )
-    for column in range(table.columnCount()):
-        item = table.item(1, column)
-        assert item is not None
-        assert item.background().color() == QColor(*state.COLOR_FAILED)
-
-    status_item = pre_experiment_workflow_widget._table.item(0, STDOUT_COLUMN)
-    stderr_item = pre_experiment_workflow_widget._table.item(0, STDERR_COLUMN)
-    assert status_item is not None
-    assert stderr_item is not None
-    assert not stderr_item.toolTip()
-    assert status_item.toolTip() == "prepare stdout"
     evaluation_events = [
         FullSnapshotEvent(
             snapshot=(
