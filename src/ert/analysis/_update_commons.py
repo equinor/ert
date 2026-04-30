@@ -189,7 +189,8 @@ def _auto_scale_observations(
 
 
 def _preprocess_observations_and_responses(
-    ensemble: Ensemble,
+    prior_ensemble: Ensemble,
+    posterior_ensemble: Ensemble,
     iens_active_index: npt.NDArray[np.int_],
     global_std_scaling: float,
     selected_observations: Iterable[str],
@@ -197,7 +198,7 @@ def _preprocess_observations_and_responses(
     auto_scale_observations: list[ObservationGroups] | None = None,
     progress_callback: Callable[[AnalysisEvent], None] | None = None,
 ) -> pl.DataFrame:
-    observations_and_responses = ensemble.get_observations_and_responses(
+    observations_and_responses = prior_ensemble.get_observations_and_responses(
         selected_observations,
         iens_active_index,
     )
@@ -232,7 +233,7 @@ def _preprocess_observations_and_responses(
         )
 
         if updated_std_scales is not None and scaling_factors_df is not None:
-            ensemble.save_observation_scaling_factors(scaling_factors_df)
+            posterior_ensemble.save_observation_scaling_factors(scaling_factors_df)
 
             # Recompute with updated scales
             observations_and_responses = observations_and_responses.with_columns(

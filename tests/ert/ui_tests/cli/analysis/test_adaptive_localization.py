@@ -212,11 +212,11 @@ ANALYSIS_SET_VAR OBSERVATIONS AUTO_SCALE POLY_OBS1_*
         ("POLY_OBS1_*", "POLY_OBS1_2", "0, 4"),
     }
 
-    prior_ens_id, _, storage_path = run_cli_ES_with_case(
+    _, posterior_ens_id, storage_path = run_cli_ES_with_case(
         "poly_localization_0.ert", "test_experiment"
     )
     with open_storage(storage_path) as storage:
-        sf = storage.get_ensemble(prior_ens_id).load_observation_scaling_factors()
+        sf = storage.get_ensemble(posterior_ens_id).load_observation_scaling_factors()
         assert sf is not None
         records_from_pl = (
             sf.select(["input_group", "obs_key", "index"]).to_numpy().tolist()

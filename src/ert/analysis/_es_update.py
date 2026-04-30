@@ -120,7 +120,8 @@ def perform_ensemble_update(
 
     # Preprocess observations and responses
     preprocessed_data = _preprocess_observations_and_responses(
-        ensemble=source_ensemble,
+        prior_ensemble=source_ensemble,
+        posterior_ensemble=target_ensemble,
         outlier_settings=observation_settings.outlier_settings,
         auto_scale_observations=observation_settings.auto_scale_observations,
         iens_active_index=iens_active_index,
