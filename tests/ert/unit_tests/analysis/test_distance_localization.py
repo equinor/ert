@@ -7,7 +7,7 @@ from ert.analysis._update_strategies._protocol import (
     ObservationContext,
     ObservationLocations,
 )
-from ert.config import Field, SurfaceConfig
+from ert.config import Field, SurfaceConfig, LocalizationType
 from ert.field_utils import AxisOrientation, ErtboxParameters, FieldFileFormat
 from ert.storage import open_storage
 
@@ -32,7 +32,7 @@ def _field_config(nx: int, ny: int, nz: int) -> Field:
         file_format=FieldFileFormat.ROFF,
         forward_init_file="init_%d.roff",
         forward_init=False,
-        update=True,
+        update_strategy=LocalizationType.GLOBAL,
         output_file="output.roff",
         grid_file="dummy.grdecl",
     )
@@ -42,7 +42,7 @@ def _surface_config(ncol: int, nrow: int) -> SurfaceConfig:
     return SurfaceConfig(
         name="TEST_SURFACE",
         forward_init=False,
-        update=True,
+        update_strategy=LocalizationType.GLOBAL,
         ncol=ncol,
         nrow=nrow,
         xori=0.0,

@@ -392,8 +392,6 @@ def test_field_param_update_using_heat_equation_zero_var_params_and_adaptive_loc
                     parameters=config.ensemble_config.parameters,
                     param_configs=new_prior.experiment.parameter_configuration,
                     enkf_truncation=es_settings.enkf_truncation,
-                    distance_localization=es_settings.distance_localization,
-                    localization=es_settings.localization,
                     correlation_threshold=es_settings.correlation_threshold,
                 )
                 smoother_update(

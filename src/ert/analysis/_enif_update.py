@@ -165,7 +165,7 @@ def analysis_EnIF(
     updated_parameters = [
         p
         for p in parameters
-        if source_ensemble.experiment.parameter_configuration[p].update
+        if source_ensemble.experiment.parameter_configuration[p].update_strategy
     ]
 
     # Load each parameter group once and reuse throughout

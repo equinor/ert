@@ -39,6 +39,7 @@ def test_that_adaptive_localization_with_cutoff_1_equals_ensemble_prior():
         """
         ANALYSIS_SET_VAR STD_ENKF LOCALIZATION True
         ANALYSIS_SET_VAR STD_ENKF LOCALIZATION_CORRELATION_THRESHOLD 1.0
+        ANALYSIS_SET_VAR PARAMETERS GEN_KW ADAPTIVE
         """
     )
 

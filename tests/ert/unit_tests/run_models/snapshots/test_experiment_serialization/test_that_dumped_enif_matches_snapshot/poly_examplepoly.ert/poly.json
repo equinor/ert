@@ -26,6 +26,9 @@
     "stop_long_running": false,
     "max_runtime": null
   },
+  "shape_registry": {
+    "shapes": {}
+  },
   "forward_model_steps": [
     {
       "name": "poly_eval",
@@ -193,7 +196,7 @@
       "type": "gen_kw",
       "name": "a",
       "forward_init": false,
-      "update": true,
+      "update_strategy": "global",
       "dimensionality": 1,
       "distribution": {
         "name": "uniform",
@@ -207,7 +210,7 @@
       "type": "gen_kw",
       "name": "b",
       "forward_init": false,
-      "update": true,
+      "update_strategy": "global",
       "dimensionality": 1,
       "distribution": {
         "name": "uniform",
@@ -221,10 +224,10 @@
       "type": "gen_kw",
       "name": "c",
       "forward_init": false,
-      "update": true,
+      "update_strategy": "global",
       "dimensionality": 1,
       "distribution": {
-        "name": "uniform",
+        "name": "uniform",f
         "min": 0.0,
         "max": 5.0
       },
@@ -301,8 +304,5 @@
       "shape_id": null
     }
   ],
-  "shape_registry": {
-    "shapes": {}
-  },
   "experiment_type": "Ensemble Information Filter"
 }

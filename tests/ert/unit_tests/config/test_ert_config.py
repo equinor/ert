@@ -3071,3 +3071,101 @@ def test_that_using_too_long_sheetname_in_design_matrix_raises_validation_error(
                 """
             )
         )
+
+
+def test_that_analysis_set_var_parameters_do_not_update_strategy_when_update_is_false(
+    tmp_path,
+):
+    (tmp_path / "prior.txt").write_text("MY_PARAM NORMAL 0 1", encoding="utf-8")
+    (tmp_path / "config.ert").write_text(
+        dedent("""\
+            NUM_REALIZATIONS 1
+            GEN_KW MY_KW prior.txt UPDATE:FALSE
+            ANALYSIS_SET_VAR PARAMETERS GEN_KW DISTANCE
+        """),
+        encoding="utf-8",
+    )
+    os.chdir(tmp_path)
+    ert_config = ErtConfig.from_file("config.ert")
+    param = ert_config.ensemble_config.parameter_configs["MY_PARAM"]
+    assert param.update_strategy is None
+
+
+def test_that_analysis_set_var_parameters_updates_update_strategy_when_update_is_true(
+    tmp_path,
+):
+    (tmp_path / "prior.txt").write_text("MY_PARAM NORMAL 0 1", encoding="utf-8")
+    (tmp_path / "config.ert").write_text(
+        dedent("""\
+            NUM_REALIZATIONS 1
+            GEN_KW MY_KW prior.txt UPDATE:TRUE
+            ANALYSIS_SET_VAR PARAMETERS GEN_KW DISTANCE
+        """),
+        encoding="utf-8",
+    )
+    os.chdir(tmp_path)
+    ert_config = ErtConfig.from_file("config.ert")
+    param = ert_config.ensemble_config.parameter_configs["MY_PARAM"]
+    assert param.update_strategy == "DISTANCE"
+
+
+# is this what we want for CONST?
+def test_that_analysis_set_var_parameters_overrides_const_gen_kw(tmp_path):
+    (tmp_path / "prior.txt").write_text("MY_PARAM CONST 1", encoding="utf-8")
+    (tmp_path / "config.ert").write_text(
+        dedent("""\
+            NUM_REALIZATIONS 1
+            GEN_KW MY_KW prior.txt
+            ANALYSIS_SET_VAR PARAMETERS GEN_KW DISTANCE
+        """),
+        encoding="utf-8",
+    )
+    os.chdir(tmp_path)
+    ert_config = ErtConfig.from_file("config.ert")
+    param = ert_config.ensemble_config.parameter_configs["MY_PARAM"]
+    assert param.update_strategy is None
+
+
+def test_that_gen_kw_defaults_to_global_without_analysis_set_var(tmp_path):
+    (tmp_path / "prior.txt").write_text("MY_PARAM NORMAL 0 1", encoding="utf-8")
+    (tmp_path / "config.ert").write_text(
+        dedent("""\
+            NUM_REALIZATIONS 1
+            GEN_KW MY_KW prior.txt
+        """),
+        encoding="utf-8",
+    )
+    os.chdir(tmp_path)
+    ert_config = ErtConfig.from_file("config.ert")
+    param = ert_config.ensemble_config.parameter_configs["MY_PARAM"]
+    assert param.update_strategy == "GLOBAL"
+
+
+def test_that_gen_kw_defaults_to_global_with_update_true(tmp_path):
+    (tmp_path / "prior.txt").write_text("MY_PARAM NORMAL 0 1", encoding="utf-8")
+    (tmp_path / "config.ert").write_text(
+        dedent("""\
+            NUM_REALIZATIONS 1
+            GEN_KW MY_KW prior.txt UPDATE:TRUE
+        """),
+        encoding="utf-8",
+    )
+    os.chdir(tmp_path)
+    ert_config = ErtConfig.from_file("config.ert")
+    param = ert_config.ensemble_config.parameter_configs["MY_PARAM"]
+    assert param.update_strategy == "GLOBAL"
+
+
+def test_that_gen_kw_defaults_to_none_with_update_false(tmp_path):
+    (tmp_path / "prior.txt").write_text("MY_PARAM NORMAL 0 1", encoding="utf-8")
+    (tmp_path / "config.ert").write_text(
+        dedent("""\
+            NUM_REALIZATIONS 1
+            GEN_KW MY_KW prior.txt UPDATE:FALSE
+        """),
+        encoding="utf-8",
+    )
+    os.chdir(tmp_path)
+    ert_config = ErtConfig.from_file("config.ert")
+    param = ert_config.ensemble_config.parameter_configs["MY_PARAM"]
+    assert param.update_strategy is None

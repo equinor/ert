@@ -1179,6 +1179,20 @@ class ErtConfig(BaseModel):
         if errors:
             raise ObservationConfigError.from_collected(errors)
 
+        # update strategies
+        for param_config in ensemble_config.parameter_configs.values():
+            if param_config.update_strategy is not None:
+                if (
+                    str(param_config.type).upper()
+                    in analysis_config.parameter_strategies
+                ):
+                    strategy: str = analysis_config.parameter_strategies[
+                        str(param_config.type).upper()
+                    ]
+                    param_config.update_strategy = strategy
+                else:
+                    strategy = param_config.update_strategy = "GLOBAL"
+
         zonemap = config_dict.get(ConfigKeys.ZONEMAP)
         if zonemap:
             zonemap = substituter.substitute(zonemap)

@@ -152,7 +152,7 @@ class EverestControl(ParameterConfig):
     forward_init: bool = False
     output_file: str = ""
     forward_init_file: str = ""
-    update: bool = False
+    update_strategy: str | None = None
     control_type_: Literal["well_control", "generic_control"]
     initial_guess: float
     control_type: Literal["real", "integer"]
