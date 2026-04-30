@@ -757,6 +757,7 @@
       "shape_id": 5
     }
   ],
+  "type": "multiple_data_assimilation",
   "restart_run": false,
   "prior_ensemble_id": null,
   "weights": "4, 2, 1",

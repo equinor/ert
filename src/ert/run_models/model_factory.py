@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 from pathlib import Path
 from queue import SimpleQueue
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Annotated
 
 import numpy as np
+from pydantic import Field
 
+from ert.base_model_context import use_runtime_plugins
 from ert.config import (
     ConfigValidationError,
     ConfigWarning,
@@ -25,7 +28,9 @@ from ert.mode_definitions import (
     MANUAL_UPDATE_MODE,
     TEST_RUN_MODE,
 )
+from ert.plugins import get_site_plugins
 from ert.validation import ActiveRange
+from everest.config import EverestConfig
 
 from .ensemble_experiment import EnsembleExperiment, EnsembleExperimentConfig
 from .ensemble_information_filter import (
@@ -34,9 +39,10 @@ from .ensemble_information_filter import (
 )
 from .ensemble_smoother import EnsembleSmoother, EnsembleSmootherConfig
 from .evaluate_ensemble import EvaluateEnsemble, EvaluateEnsembleConfig
+from .everest_run_model import EverestRunModel
 from .initial_ensemble_run_model import DictEncodedDataFrame
 from .manual_update import ManualUpdate, ManualUpdateConfig
-from .manual_update_enif import ManualUpdateEnIF
+from .manual_update_enif import ManualUpdateEnIF, ManualUpdateEnIFConfig
 from .multiple_data_assimilation import (
     MultipleDataAssimilation,
     MultipleDataAssimilationConfig,
@@ -50,6 +56,18 @@ if TYPE_CHECKING:
     from ert.namespace import Namespace
     from ert.run_models.event import StatusEvents
 
+
+RunModelConfigs = Annotated[
+    MultipleDataAssimilationConfig
+    | EnsembleSmootherConfig
+    | EnsembleInformationFilterConfig
+    | SingleTestRunConfig
+    | EnsembleExperimentConfig
+    | ManualUpdateConfig
+    | EvaluateEnsembleConfig
+    | EverestConfig,
+    Field(discriminator="type"),
+]
 
 logger = logging.getLogger(__name__)
 
@@ -66,29 +84,60 @@ def create_model(
             "ensemble_size": config.runpath_config.num_realizations,
         },
     )
+    runmodel_config = build_run_model_config(config, args)
+    return _instantiate_run_model(runmodel_config, status_queue)
+
+
+def build_run_model_config(config: ErtConfig, args: Namespace):
     update_settings = config.analysis_config.observation_settings
 
     if args.mode == TEST_RUN_MODE:
-        return _setup_single_test_run(config, args, status_queue)
+        return _setup_single_test_run(config, args)
     if args.mode == ENSEMBLE_EXPERIMENT_MODE:
-        return _setup_ensemble_experiment(config, args, status_queue)
+        return _setup_ensemble_experiment(config, args)
     if args.mode == EVALUATE_ENSEMBLE_MODE:
-        return _setup_evaluate_ensemble(config, args, status_queue)
+        return _setup_evaluate_ensemble(config, args)
     if args.mode == ENSEMBLE_SMOOTHER_MODE:
-        return _setup_ensemble_smoother(config, args, update_settings, status_queue)
+        return _setup_ensemble_smoother(config, args, update_settings)
     if args.mode == ENIF_MODE:
-        return _setup_ensemble_information_filter(
-            config, args, update_settings, status_queue
-        )
+        return _setup_ensemble_information_filter(config, args, update_settings)
     if args.mode == ES_MDA_MODE:
-        return _setup_multiple_data_assimilation(
-            config, args, update_settings, status_queue
-        )
+        return _setup_multiple_data_assimilation(config, args, update_settings)
     if args.mode == MANUAL_UPDATE_MODE:
-        return _setup_manual_update(config, args, update_settings, status_queue)
+        return _setup_manual_update(config, args, update_settings)
     if args.mode == MANUAL_ENIF_UPDATE_MODE:
-        return _setup_manual_update_enif(config, args, update_settings, status_queue)
+        return _setup_manual_update_enif(config, args, update_settings)
     raise NotImplementedError(f"Run type not supported {args.mode}")
+
+
+def _instantiate_run_model(
+    runmodel_config: RunModelConfigs,
+    status_queue: SimpleQueue[StatusEvents],
+) -> RunModel:
+    """Instantiate a RunModel from a config object."""
+    if isinstance(runmodel_config, EverestConfig):
+        site_plugins = get_site_plugins()
+        with use_runtime_plugins(site_plugins):
+            return EverestRunModel.create(
+                everest_config=runmodel_config,
+                experiment_name=f"EnOpt@{datetime.now().astimezone().isoformat(timespec='seconds')}",
+                target_ensemble="batch",
+                status_queue=status_queue,
+                runtime_plugins=site_plugins,
+            )
+
+    model_map: dict[str, type[RunModel]] = {
+        "single_test_run": SingleTestRun,
+        "ensemble_experiment": EnsembleExperiment,
+        "evaluate_ensemble": EvaluateEnsemble,
+        "ensemble_smoother": EnsembleSmoother,
+        "ensemble_information_filter": EnsembleInformationFilter,
+        "multiple_data_assimilation": MultipleDataAssimilation,
+        "manual_update": ManualUpdate,
+        "manual_update_enif": ManualUpdateEnIF,
+    }
+    model_cls = model_map[runmodel_config.type]
+    return model_cls(**runmodel_config.model_dump(), status_queue=status_queue)
 
 
 def _merge_parameters(
@@ -116,8 +165,7 @@ def _merge_parameters(
 def _setup_single_test_run(
     config: ErtConfig,
     args: Namespace,
-    status_queue: SimpleQueue[StatusEvents],
-) -> SingleTestRun:
+) -> SingleTestRunConfig:
     experiment_name = (
         "single-test-run" if args.experiment_name is None else args.experiment_name
     )
@@ -132,7 +180,7 @@ def _setup_single_test_run(
         parameter_configs=config.ensemble_config.parameter_configuration,
     )
 
-    runmodel_config = SingleTestRunConfig(
+    return SingleTestRunConfig(
         random_seed=config.random_seed,
         runpath_file=config.runpath_file,
         active_realizations=[True],
@@ -158,11 +206,6 @@ def _setup_single_test_run(
         shape_registry=config.shape_registry,
     )
 
-    return SingleTestRun(
-        **runmodel_config.model_dump(),
-        status_queue=status_queue,
-    )
-
 
 def validate_minimum_realizations(
     config: ErtConfig, active_realizations: list[bool]
@@ -181,8 +224,7 @@ def validate_minimum_realizations(
 def _setup_ensemble_experiment(
     config: ErtConfig,
     args: Namespace,
-    status_queue: SimpleQueue[StatusEvents],
-) -> EnsembleExperiment:
+) -> EnsembleExperimentConfig:
     active_realizations = _get_and_validate_active_realizations_list(args, config)
     validate_minimum_realizations(config, active_realizations)
     experiment_name = args.experiment_name
@@ -193,7 +235,7 @@ def _setup_ensemble_experiment(
         parameter_configs=config.ensemble_config.parameter_configuration,
     )
 
-    runmodel_config = EnsembleExperimentConfig(
+    return EnsembleExperimentConfig(
         random_seed=config.random_seed,
         runpath_file=config.runpath_file,
         active_realizations=active_realizations,
@@ -219,20 +261,14 @@ def _setup_ensemble_experiment(
         shape_registry=config.shape_registry,
     )
 
-    return EnsembleExperiment(
-        **runmodel_config.model_dump(),
-        status_queue=status_queue,
-    )
-
 
 def _setup_evaluate_ensemble(
     config: ErtConfig,
     args: Namespace,
-    status_queue: SimpleQueue[StatusEvents],
-) -> EvaluateEnsemble:
+) -> EvaluateEnsembleConfig:
     active_realizations = _get_and_validate_active_realizations_list(args, config)
     validate_minimum_realizations(config, active_realizations)
-    runmodel_config = EvaluateEnsembleConfig(
+    return EvaluateEnsembleConfig(
         random_seed=config.random_seed,
         active_realizations=active_realizations,
         ensemble_id=args.ensemble_id,
@@ -250,7 +286,6 @@ def _setup_evaluate_ensemble(
         log_path=config.analysis_config.log_path,
         shape_registry=config.shape_registry,
     )
-    return EvaluateEnsemble(**runmodel_config.model_dump(), status_queue=status_queue)
 
 
 def _get_and_validate_active_realizations_list(
@@ -285,12 +320,11 @@ def _setup_manual_update(
     config: ErtConfig,
     args: Namespace,
     update_settings: ObservationSettings,
-    status_queue: SimpleQueue[StatusEvents],
-) -> ManualUpdate:
+) -> ManualUpdateConfig:
     active_realizations = _realizations(args, config.runpath_config.num_realizations)
     validate_minimum_realizations(config, active_realizations.tolist())
 
-    runmodel_config = ManualUpdateConfig(
+    return ManualUpdateConfig(
         random_seed=config.random_seed,
         active_realizations=active_realizations.tolist(),
         ensemble_id=args.ensemble_id,
@@ -310,37 +344,28 @@ def _setup_manual_update(
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
         ert_templates=config.ert_templates,
-        observations=config.observation_declarations,
         shape_registry=config.shape_registry,
     )
-    return ManualUpdate(**runmodel_config.model_dump(), status_queue=status_queue)
 
 
 def _setup_manual_update_enif(
     config: ErtConfig,
     args: Namespace,
     update_settings: ObservationSettings,
-    status_queue: SimpleQueue[StatusEvents],
-) -> ManualUpdate:
+) -> ManualUpdateEnIFConfig:
     active_realizations = _realizations(args, config.runpath_config.num_realizations)
 
-    return ManualUpdateEnIF(
+    return ManualUpdateEnIFConfig(
         random_seed=config.random_seed,
         active_realizations=active_realizations.tolist(),
         ensemble_id=args.ensemble_id,
         minimum_required_realizations=config.analysis_config.minimum_required_realizations,
         target_ensemble=args.target_ensemble,
-        config=config,
         storage_path=config.ens_path,
         queue_config=config.queue_config,
         analysis_settings=config.analysis_config.es_settings,
         update_settings=update_settings,
-        status_queue=status_queue,
         runpath_file=config.runpath_file,
-        design_matrix=config.analysis_config.design_matrix,
-        parameter_configuration=config.ensemble_config.parameter_configuration,
-        response_configuration=config.ensemble_config.response_configuration,
-        derived_response_configuration=config.ensemble_config.derived_response_configuration,
         ert_templates=config.ert_templates,
         user_config_file=Path(config.user_config_file),
         env_vars=config.env_vars,
@@ -350,7 +375,6 @@ def _setup_manual_update_enif(
         substitutions=config.substitutions,
         hooked_workflows=config.hooked_workflows,
         log_path=config.analysis_config.log_path,
-        observations=config.observation_declarations,
         shape_registry=config.shape_registry,
     )
 
@@ -359,8 +383,7 @@ def _setup_ensemble_smoother(
     config: ErtConfig,
     args: Namespace,
     update_settings: ObservationSettings,
-    status_queue: SimpleQueue[StatusEvents],
-) -> EnsembleSmoother:
+) -> EnsembleSmootherConfig:
     active_realizations = _get_and_validate_active_realizations_list(args, config)
     validate_minimum_realizations(config, active_realizations)
     if sum(active_realizations) < 2:
@@ -374,7 +397,7 @@ def _setup_ensemble_smoother(
         require_updateable_param=True,
     )
 
-    runmodel_config = EnsembleSmootherConfig(
+    return EnsembleSmootherConfig(
         target_ensemble=args.target_ensemble,
         experiment_name=getattr(args, "experiment_name", ""),
         active_realizations=active_realizations,
@@ -401,15 +424,13 @@ def _setup_ensemble_smoother(
         observations=config.observation_declarations,
         shape_registry=config.shape_registry,
     )
-    return EnsembleSmoother(**runmodel_config.model_dump(), status_queue=status_queue)
 
 
 def _setup_ensemble_information_filter(
     config: ErtConfig,
     args: Namespace,
     update_settings: ObservationSettings,
-    status_queue: SimpleQueue[StatusEvents],
-) -> EnsembleInformationFilter:
+) -> EnsembleInformationFilterConfig:
     active_realizations = _get_and_validate_active_realizations_list(args, config)
     validate_minimum_realizations(config, active_realizations)
     if sum(active_realizations) < 2:
@@ -422,7 +443,7 @@ def _setup_ensemble_information_filter(
         parameter_configs=config.ensemble_config.parameter_configuration,
     )
 
-    runmodel_config = EnsembleInformationFilterConfig(
+    return EnsembleInformationFilterConfig(
         target_ensemble=args.target_ensemble,
         experiment_name=getattr(args, "experiment_name", ""),
         active_realizations=active_realizations,
@@ -448,9 +469,6 @@ def _setup_ensemble_information_filter(
         log_path=config.analysis_config.log_path,
         observations=config.observation_declarations,
         shape_registry=config.shape_registry,
-    )
-    return EnsembleInformationFilter(
-        **runmodel_config.model_dump(), status_queue=status_queue
     )
 
 
@@ -477,8 +495,7 @@ def _setup_multiple_data_assimilation(
     config: ErtConfig,
     args: Namespace,
     update_settings: ObservationSettings,
-    status_queue: SimpleQueue[StatusEvents],
-) -> MultipleDataAssimilation:
+) -> MultipleDataAssimilationConfig:
     restart_run, prior_ensemble = _determine_restart_info(args)
     active_realizations = _get_and_validate_active_realizations_list(args, config)
     validate_minimum_realizations(config, active_realizations)
@@ -493,7 +510,7 @@ def _setup_multiple_data_assimilation(
         require_updateable_param=True,
     )
 
-    runmodel_config = MultipleDataAssimilationConfig(
+    return MultipleDataAssimilationConfig(
         random_seed=config.random_seed,
         active_realizations=active_realizations,
         target_ensemble=_iterative_ensemble_format(args),
@@ -522,9 +539,6 @@ def _setup_multiple_data_assimilation(
         log_path=config.analysis_config.log_path,
         observations=config.observation_declarations,
         shape_registry=config.shape_registry,
-    )
-    return MultipleDataAssimilation(
-        **runmodel_config.model_dump(), status_queue=status_queue
     )
 
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import ClassVar
+from typing import ClassVar, Literal
 from uuid import UUID
 
 from pydantic import PrivateAttr
@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 class EnsembleExperimentConfig(InitialEnsembleRunModelConfig):
+    type: Literal["ensemble_experiment"] = "ensemble_experiment"
     target_ensemble: str
     supports_rerunning_failed_realizations: ClassVar[bool] = True
 

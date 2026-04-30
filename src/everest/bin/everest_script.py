@@ -246,7 +246,7 @@ async def run_everest(options: argparse.Namespace) -> None:
         "Starting experiment"
     )
 
-    start_experiment(
+    run_id = start_experiment(
         server_context=ServerConfig.get_server_context_from_conn_info(client.conn_info),
         config=options.config,
     )
@@ -260,7 +260,10 @@ async def run_everest(options: argparse.Namespace) -> None:
             if options.disable_monitoring
             else run_detached_monitor,
             name="EVEREST CLI monitor thread",
-            args=[ServerConfig.get_server_context_from_conn_info(client.conn_info)],
+            args=[
+                ServerConfig.get_server_context_from_conn_info(client.conn_info),
+                run_id,
+            ],
             daemon=True,
         )
         monitor_thread.start()
@@ -270,13 +273,15 @@ async def run_everest(options: argparse.Namespace) -> None:
         run_empty_detached_monitor(
             server_context=ServerConfig.get_server_context_from_conn_info(
                 client.conn_info
-            )
+            ),
+            run_id=run_id,
         )
     else:
         run_detached_monitor(
             server_context=ServerConfig.get_server_context_from_conn_info(
                 client.conn_info
-            )
+            ),
+            run_id=run_id,
         )
 
     msg: str = ""
