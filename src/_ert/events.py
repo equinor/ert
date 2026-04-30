@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from enum import StrEnum
 from typing import Annotated, Any, Final, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
@@ -243,6 +244,13 @@ def dispatcher_event_to_json(event: DispatcherEvent) -> str:
     return event.model_dump_json()
 
 
+class WorkflowStatus(StrEnum):
+    PENDING = "Pending"
+    RUNNING = "Running"
+    SUCCESS = "Success"
+    FAILURE = "Failed"
+
+
 class _WorkflowEvent(BaseModel):
     hook: HookRuntime
     iteration: int | None = None
@@ -255,7 +263,7 @@ class WorkflowBatchStartedEvent(_WorkflowEvent):
 
 class WorkflowBatchFinishedEvent(_WorkflowEvent):
     event_type: Literal["WorkflowBatchFinishedEvent"] = "WorkflowBatchFinishedEvent"
-    status: Literal["success", "failure"]
+    status: WorkflowStatus
     workflow_names: list[str]
 
 
@@ -267,7 +275,7 @@ class WorkflowStartedEvent(_WorkflowEvent):
 class WorkflowFinishedEvent(_WorkflowEvent):
     event_type: Literal["WorkflowFinishedEvent"] = "WorkflowFinishedEvent"
     workflow_name: str
-    status: Literal["success", "failure"]
+    status: WorkflowStatus
     stdout: str | None = None
     stderr: str | None = None
 

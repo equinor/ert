@@ -591,31 +591,16 @@ class RunDialog(QFrame):
             case WorkflowBatchStartedEvent(
                 hook=hook, iteration=iteration, workflow_names=workflow_names
             ):
-                workflow_widget = self._select_or_create_workflow_tab(
-                    hook, iteration, workflow_names
-                )
-                workflow_widget.set_workflows(workflow_names)
-            case WorkflowStartedEvent(
-                hook=hook, iteration=iteration, workflow_name=workflow_name
-            ):
-                self._select_or_create_workflow_tab(hook, iteration).start_workflow(
-                    workflow_name
-                )
+                self._select_or_create_workflow_tab(hook, iteration, workflow_names)
+            case WorkflowStartedEvent(hook=hook, iteration=iteration):
+                self._select_or_create_workflow_tab(hook, iteration).handle_event(event)
             case WorkflowFinishedEvent(
                 hook=hook,
                 iteration=iteration,
-                workflow_name=workflow_name,
-                status=status,
-                stdout=stdout,
-                stderr=stderr,
             ):
-                self._select_or_create_workflow_tab(hook, iteration).finish_workflow(
-                    workflow_name, status, stdout=stdout, stderr=stderr
-                )
-            case WorkflowBatchFinishedEvent(
-                hook=hook, iteration=iteration, status=status
-            ):
-                self._select_or_create_workflow_tab(hook, iteration).finish(status)
+                self._select_or_create_workflow_tab(hook, iteration).handle_event(event)
+            case WorkflowBatchFinishedEvent(hook=hook, iteration=iteration):
+                pass
 
             case FullSnapshotEvent(
                 status_count=status_count, realization_count=realization_count
@@ -759,11 +744,12 @@ class RunDialog(QFrame):
             ):
                 return existing_widget
 
-        widget = WorkflowWidget(
-            hook,
-            workflow_names=workflow_names,
-            parent=self,
-        )
+        if workflow_names is None:
+            raise RuntimeError(
+                "Workflow tab must be created from WorkflowBatchStartedEvent"
+            )
+
+        widget = WorkflowWidget(hook, workflow_names, parent=self)
         tab_index = self._tab_widget.addTab(widget, hook.workflow_tab_title())
         self._tab_widget.setCurrentIndex(tab_index)
         return widget

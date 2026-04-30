@@ -317,7 +317,7 @@ def test_run_dialog_displays_workflow_tabs_before_and_after_ensemble(qtbot, tmp_
     assert pre_widget.workflow_status("prepare_case") == "Finished"
     assert pre_widget.workflow_status("seed_data") == "Finished"
     assert pre_widget.summary_text() == "Pre-experiment workflows completed"
-    assert pre_widget.workflow_output("prepare_case") == ("prepare stdout", "-")
+    assert pre_widget.workflow_outputs("prepare_case") == [("prepare stdout", "-")]
     status_item = pre_widget._table.item(0, 1)
     stderr_item = pre_widget._table.item(0, 3)
     assert status_item is not None
@@ -369,10 +369,12 @@ def test_run_dialog_displays_workflow_tabs_before_and_after_ensemble(qtbot, tmp_
 
     assert post_widget.workflow_status("archive_results") == "Failed"
     assert post_widget.summary_text() == "Post-experiment workflows failed"
-    assert post_widget.workflow_output("archive_results") == (
-        "archive stdout",
-        "archive stderr",
-    )
+    assert post_widget.workflow_outputs("archive_results") == [
+        (
+            "archive stdout",
+            "archive stderr",
+        )
+    ]
     stderr_item = post_widget._table.item(0, 3)
     assert stderr_item is not None
     assert stderr_item.toolTip() == "archive stderr"
@@ -431,7 +433,7 @@ def test_run_dialog_marks_unstarted_workflows_as_not_run_on_failure(qtbot, tmp_p
     )
     assert workflow_widget.workflow_status("prepare_case") == "Failed"
     assert workflow_widget.workflow_status("seed_data") == "Not run"
-    assert workflow_widget.workflow_output("prepare_case") == ("-", "prepare failed")
+    assert workflow_widget.workflow_outputs("prepare_case") == [("-", "prepare failed")]
 
 
 def test_run_dialog_handles_duplicate_workflow_names(qtbot, tmp_path):
@@ -503,14 +505,12 @@ def test_run_dialog_handles_duplicate_workflow_names(qtbot, tmp_path):
     )
     assert workflow_widget.workflow_status("PRINT", occurrence=0) == "Finished"
     assert workflow_widget.workflow_status("PRINT", occurrence=1) == "Failed"
-    assert workflow_widget.workflow_output("PRINT", occurrence=0) == (
-        "first stdout",
-        "-",
-    )
-    assert workflow_widget.workflow_output("PRINT", occurrence=1) == (
-        "second stdout",
-        "second stderr",
-    )
+    assert workflow_widget.workflow_outputs("PRINT", occurrence=0) == [
+        ("first stdout", "-"),
+    ]
+    assert workflow_widget.workflow_outputs("PRINT", occurrence=1) == [
+        ("second stdout", "second stderr"),
+    ]
 
 
 def test_run_dialog_displays_workflow_tabs_between_iterations(qtbot, tmp_path):

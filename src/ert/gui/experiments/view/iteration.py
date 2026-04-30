@@ -64,11 +64,8 @@ class IterationWidget(QWidget):
                 self._tab_widget.setCurrentWidget(widget)
                 return widget
 
-        widget = WorkflowWidget(
-            hook,
-            workflow_names=workflow_names,
-            parent=self,
-        )
+        assert workflow_names is not None
+        widget = WorkflowWidget(hook, workflow_names, parent=self)
         self._tab_widget.addTab(widget, hook.workflow_tab_title())
         self._tab_widget.setCurrentWidget(widget)
         return widget

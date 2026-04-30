@@ -8,7 +8,7 @@ from concurrent.futures import Future
 from contextlib import suppress
 from typing import Any, Self
 
-from _ert.events import WorkflowFinishedEvent, WorkflowStartedEvent
+from _ert.events import WorkflowFinishedEvent, WorkflowStartedEvent, WorkflowStatus
 from ert import ErtScript
 from ert.config import (
     BaseErtScriptWorkflow,
@@ -195,7 +195,7 @@ class WorkflowRunner:
                                 hook=self._event_hook,
                                 iteration=self._iteration,
                                 workflow_name=self._workflow_name,
-                                status="failure",
+                                status=WorkflowStatus.FAILURE,
                                 stderr="\n".join(workflow_stderr),
                                 stdout="\n".join(workflow_stdout),
                             )
@@ -247,7 +247,7 @@ class WorkflowRunner:
                     hook=self._event_hook,
                     iteration=self._iteration,
                     workflow_name=self._workflow_name,
-                    status="success",
+                    status=WorkflowStatus.SUCCESS,
                     stdout="\n".join(workflow_stdout),
                     stderr="\n".join(workflow_stderr),
                 )
