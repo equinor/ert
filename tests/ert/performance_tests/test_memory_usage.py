@@ -99,7 +99,6 @@ def test_memory_enif_update(poly_template):
                 prior_ens,
                 posterior_ens,
                 list(experiment.observation_keys),
-                list(ert_config.ensemble_config.parameters),
                 1234567,
             )
 
