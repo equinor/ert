@@ -100,7 +100,7 @@ def enif_update(
                 data=smoother_snapshot.csv,
                 extra=smoother_snapshot.extra,
             ),
-            posterior_id=str(posterior_storage.id),
+            ensemble_id=str(posterior_storage.id),
         )
     )
     return smoother_snapshot

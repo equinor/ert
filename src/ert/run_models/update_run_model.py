@@ -9,7 +9,9 @@ from ert.analysis.event import (
     AnalysisDataEvent,
     AnalysisErrorEvent,
     AnalysisEvent,
+    AnalysisMatrixEvent,
     AnalysisStatusEvent,
+    AnalysisStorageEvent,
     AnalysisTimeEvent,
 )
 from ert.config import (
@@ -23,6 +25,7 @@ from ert.config import (
 from ert.run_models.event import (
     RunModelDataEvent,
     RunModelErrorEvent,
+    RunModelMatrixEvent,
     RunModelStatusEvent,
     RunModelTimeEvent,
     RunModelUpdateBeginEvent,
@@ -191,8 +194,29 @@ class UpdateRunModel(RunModel, UpdateRunModelConfig):
                         data=event.data,
                     )
                 )
+            case AnalysisMatrixEvent():
+                self.send_event(
+                    RunModelMatrixEvent(
+                        iteration=iteration,
+                        run_id=run_id,
+                        name=event.name,
+                    )
+                )
+                ensemble = self._storage.get_ensemble(event.ensemble_id)
+                uri, is_sparse = ensemble.save_transition_matrix(
+                    event.name, event.matrix
+                )
+                storage_event = AnalysisStorageEvent(
+                    uri=uri,
+                    ensemble_id=event.ensemble_id,
+                    sparse=is_sparse,
+                )
+                ensemble.save_transition_data(
+                    f"{event.name}.json",
+                    storage_event.model_dump_json(),
+                )
             case AnalysisCompleteEvent():
-                self._storage.get_ensemble(event.posterior_id).save_transition_data(
+                self._storage.get_ensemble(event.ensemble_id).save_transition_data(
                     f"{AnalysisCompleteEvent.__name__}_{uuid.uuid4().hex[:8]}.json",
                     event.model_dump_json(),
                 )

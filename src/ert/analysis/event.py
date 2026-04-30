@@ -6,8 +6,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
+import numpy as np
 import pandas as pd
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class AnalysisEvent(BaseModel):
@@ -72,4 +73,18 @@ class AnalysisErrorEvent(AnalysisEvent):
 class AnalysisCompleteEvent(AnalysisEvent):
     event_type: Literal["AnalysisCompleteEvent"] = "AnalysisCompleteEvent"
     data: DataSection
-    posterior_id: str
+    ensemble_id: str
+
+
+class AnalysisMatrixEvent(AnalysisEvent):
+    event_type: Literal["AnalysisMatrixEvent"] = "AnalysisMatrixEvent"
+    name: str
+    ensemble_id: str
+    matrix: np.ndarray = Field(exclude=True)
+
+
+class AnalysisStorageEvent(AnalysisEvent):
+    event_type: Literal["AnalysisStorageEvent"] = "AnalysisStorageEvent"
+    uri: str
+    ensemble_id: str
+    sparse: bool = False
