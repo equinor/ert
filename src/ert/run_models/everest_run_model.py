@@ -26,7 +26,7 @@ from ropt.enums import ExitCode as RoptExitCode
 from ropt.evaluator import EvaluatorContext, EvaluatorResult
 from ropt.results import FunctionResults, Results
 from ropt.workflow import BasicOptimizer
-from typing_extensions import TypedDict
+from typing_extensions import TypedDict, runtime_checkable
 
 from ert.config import (
     EverestConstraintsConfig,
@@ -62,6 +62,7 @@ from everest.config import (
     EverestConfig,
 )
 from everest.config.forward_model_config import ForwardModelStepConfig, SummaryResults
+from everest.config.validation_utils import unique_items
 from everest.everest_storage import EverestStorage
 from everest.optimizer.everest2ropt import everest2ropt
 from everest.optimizer.opt_model_transforms import (
@@ -97,6 +98,7 @@ class SimulationCallback(Protocol):
     def __call__(self, simulation_status: SimulationStatus | None) -> str | None: ...
 
 
+@runtime_checkable
 class OptimizerCallback(Protocol):
     def __call__(self) -> str | None: ...
 
